@@ -119,10 +119,27 @@ test('module policy is read from the store on every request with the service key
  const reads=f.calls.filter(isPolicyRead);assert.equal(reads.length,2);
  for(const read of reads){assert.equal(read.headers.authorization,'Bearer server-secret');assert.equal(read.headers.apikey,'server-secret');assert.deepEqual(JSON.parse(read.body),{p_module:'environment'});}
 });
+/* E=UP slice S0 (2026-11-19), changed on purpose: a module never installed (the store's EUM01, no policy row: production since
+   2026-11-17) is OFF, 404 module_disabled, exactly as an installed and disabled module answers; it was the outage's 503 before, so
+   "never installed" and a store incident read alike (docs/control-plane/EUP-EVENT-TIMELINE.md, S0) */
+test('a module never installed (EUM01) is off: 404 module_disabled for reads and writes, the disabled answer, with only the policy read',async()=>{
+ for(const [suffix,method,auth] of [['','GET',false],['/team','GET',true],['/team','POST',true],[`/missions/${MISSION}/join`,'POST',true],['/oversight','GET',true]]) {
+  const f=fake({owner:true,policy:()=>json({code:'EUM01',message:'module_not_installed'},400)});
+  const r=await handleWorldEnvironment(req(suffix,method,method==='POST'?{join:true}:undefined,auth),env,f);
+  assert.equal(r.status,404,`${method} ${suffix}`);assert.deepEqual(await r.json(),{ok:false,code:'module_disabled'});
+  assert.equal(r.headers.get('cache-control'),'private, no-store');assert.equal(r.headers.get('vary'),'origin, authorization');
+  assert.equal(f.calls.length,1,`${method} ${suffix}: only the policy read`);assert.ok(isPolicyRead(f.calls[0]));
+ }
+ /* the same bytes as a disabled module: a visitor cannot tell how far the owner got */
+ const off=await handleWorldEnvironment(req('', 'GET',undefined,false),env,fake({policy:()=>json({code:'EUM01',message:'module_not_installed'},400)}));
+ const disabled=await handleWorldEnvironment(req('', 'GET',undefined,false),env,fake({policy:policyOf('disabled',2)}));
+ assert.equal(await off.text(),await disabled.text());assert.equal(off.status,disabled.status);
+});
 test('a missing, unapplied, unreachable or malformed policy answers 503 module_policy_unavailable and nothing else is fetched',async()=>{
  const refusals=[
-  ['module not installed (EUM01)',json({code:'EUM01',message:'module_not_installed'},400)],
   ['policy schema not applied (PGRST202)',json({code:'PGRST202',message:'Could not find the function public.eup_module_policy_read(p_module) in the schema cache'},404)],
+  ['a policy function missing (42883): the schema, not the owner',json({code:'42883',message:'function public.eup_module_policy_json(text, text, bigint) does not exist'},404)],
+  ['no house organisation (EUM00)',json({code:'EUM00',message:'module_policy_unavailable'},400)],
   ['store answers 500',json({message:'boom'},500)],
   ['store redirects',new Response(null,{status:302,headers:{location:'https://elsewhere.example/'}})],
   ['store unreachable',new Error('offline')],

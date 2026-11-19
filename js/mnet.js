@@ -44,7 +44,7 @@
     missionFeed: { all: null, loading: null, error: "", details: {}, asked: {}, detailsAbsent: false, shown: 20 },
     /* the environmental observation posts (js/world-environment-posts.js), by id and in the order the panel's feed gave them; whether
        the module is unavailable right now and the gate's code when it refused */
-    environment: { posts: {}, order: [], unavailable: false, code: null },
+    environment: { posts: {}, order: [], unavailable: false, code: null, shown: 20 },
     /* a line the World owes the visitor that the feed's own reads must not wipe: a shared ?mission= link whose mission is gone
        (release review RS-8); dropped when the visitor picks another tab */
     feedNotice: "",
@@ -2109,22 +2109,42 @@
   }
   /* the Equity Uprise tab: every open mission, a page at a time (Load more), the search narrowing them as it narrows the feed;
      a country tapped on the globe never leaves the tab (hu:country): the list narrows to the place's missions under one line
-     that says so, and the Environmental Justice panel stays */
+     that says so, and the Environmental Justice panel stays.
+     TWO LISTS, NEVER ONE BY TIME (event timeline slice S0, 2026-11-19; decision D8, default adopted pending Matthew's confirmation): the
+     missions first, a page of twenty at a time, then the environmental observations under their own heading, a page at a time with
+     their own button. One list by time put the Drawdown missions behind every current observation (USGS alone keeps up to 150 rows
+     a day). Each list pages with its own button right under it, so the feed's own Load more stays hidden in this tab. */
+  var OBS_PAGE = 20;
   function paintMissionFeed(host) {
     var f = state.missionFeed, query = state.world.query, place = state.world.country ? localPlace() : "";
-    /* the observation posts the tab carries beside the missions (every one, each clearly typed), a page at a time with them; the
-       missions never depend on them (js/world-environment-posts.js may be absent, as it is where this function runs alone in its test) */
+    /* the observation posts the tab carries after the missions (every one, each clearly typed), in their own list; the missions never
+       depend on them (js/world-environment-posts.js may be absent, as it is where this function runs alone in its test) */
     var observations = typeof tabObservations === "function" ? tabObservations() : [];
-    var merge = function (missions) { return observations.length && typeof ENV_POSTS !== "undefined" && ENV_POSTS ? ENV_POSTS.interleaveByTime(missions, observations, { pageSize: f.shown }) : missions.slice(0, f.shown); };
-    var draw = function (x) { return x.observationPost ? observationPostHtml(x) : missionPostHtml(x); };
-    var bindObservations = function () { if (typeof bindObservationPosts === "function") bindObservationPosts(host); };
+    var env = state.environment || {}, obsShown = env.shown > 0 ? env.shown : OBS_PAGE;
+    var observationList = function () {
+      if (!observations.length || typeof observationPostHtml !== "function") return "";
+      return '<section class="mn__obs-list" aria-labelledby="mnObsHeading" data-observation-list>' +
+        '<h2 class="mn__obs-heading" id="mnObsHeading">Environmental observations</h2>' +
+        /* newest first, the undated after the dated, each once (the pure module's own order, with no missions in it) */
+        (typeof ENV_POSTS !== "undefined" && ENV_POSTS ? ENV_POSTS.interleaveByTime([], observations, { pageSize: obsShown }) : observations.slice(0, obsShown)).map(observationPostHtml).join("") +
+        (observations.length > obsShown ? '<button class="mn__more" type="button" data-observations-more>Show more observations</button>' : "") +
+        '</section>';
+    };
+    var missionMore = function (list) { return list.length > f.shown ? '<button class="mn__more" type="button" data-mission-feed-more>Load more missions</button>' : ""; };
+    var bindObservations = function () {
+      if (typeof bindObservationPosts === "function") bindObservationPosts(host);
+      var more = host.querySelector("[data-observations-more]");
+      if (more) more.onclick = function () { env.shown = obsShown + OBS_PAGE; renderFeed(false); };
+      var missions = host.querySelector("[data-mission-feed-more]");
+      if (missions) missions.onclick = function () { f.shown += MISSION_POSTS ? MISSION_POSTS.PAGE : 20; renderFeed(false); };
+    };
     if (!f.all) {
       if (MISSION_POSTS && !f.loading && !f.error) loadOpenMissions();
       /* the missions' own shapes, or their error with its retry, stay above the observation posts */
       host.innerHTML = (MISSION_POSTS && (f.loading || !f.error) ? skeleton(3)
         : '<div class="mn__empty" data-mission-feed-error>' + esc(f.error || "The open missions could not load right now.") +
           (MISSION_POSTS ? '<p class="mn__empty-row"><button class="mn__world-filter" type="button" data-mission-feed-retry>Try again</button></p>' : '') + '</div>') +
-        merge([]).map(draw).join("");
+        observationList();
       var retry = host.querySelector("[data-mission-feed-retry]");
       if (retry) retry.onclick = function () { if (retryOpenMissions()) renderFeed(false); };
       bindObservations();
@@ -2136,10 +2156,11 @@
         place ? "No open mission can be done in " + place + " right now." : "No missions are open right now.") + '</div>';
       return;
     }
-    /* one list by time: the mission posts and the observation posts, newest first (js/world-environment-posts.js, interleaveByTime) */
-    var page = merge(list);
+    /* the missions' own page, then the observations' own list (D8) */
+    var page = list.slice(0, f.shown);
     host.innerHTML = (place ? '<p class="mn__feed-note" data-mission-feed-place>' + esc("Missions in " + place + ": the ones pinned there and the ones that can be done anywhere.") + '</p>' : "") +
-      page.map(draw).join("");
+      (list.length ? page.map(missionPostHtml).join("") + missionMore(list) : '<div class="mn__empty" data-mission-feed-empty>' + esc(query ? "No open mission matches \u201c" + query + "\u201d." : place ? "No open mission can be done in " + place + " right now." : "No missions are open right now.") + '</div>') +
+      observationList();
     bindMissionPosts(host);
     bindObservations();
     wantMissionDetails(page);
@@ -2416,9 +2437,9 @@
       more.hidden = !(state.placeNews.before || (state.placeScope.enabled && state.placeScope.postBefore));
       return;
     }
-    /* the Equity Uprise tab pages its missions and observation posts the way the feed pages its posts */
+    /* the Equity Uprise tab pages its two lists with their own buttons, right under each (paintMissionFeed, event timeline slice S0) */
     if (state.feedScope === "equity") {
-      more.hidden = missionTabList().length + tabObservations().length <= state.missionFeed.shown;
+      more.hidden = true;
       return;
     }
     more.hidden = !(state.nextBefore || (state.newsBefore && !(focus && focus.filter)));

@@ -13,7 +13,8 @@
      time, labelled as such; else "Time not supplied by provider". A fetch time never stands in the recorded slot.
    - observationPosts: one post per event id, by the system author "Environmental desk", typed "Environmental observation";
      fires are summarised per 1-degree area (never one post per detection); perimeters post with their acres and dates.
-   - interleaveByTime: the Equity Uprise tab's one list of mission posts and observation posts, newest first.
+   - interleaveByTime: one list of mission posts and observation posts, newest first (kept for its tests; since event timeline slice S0,
+     2026-11-19, the Equity Uprise tab draws the missions and the observations as two lists, decision D8: js/mnet.js).
    - withObservations: Global carries the significant ones, one after every six other items, each once, never padding. */
 (function (root, factory) {
   const api = factory();
@@ -190,11 +191,15 @@
     const rims = layers.perimeters;
     if (rims && typeof rims === 'object' && Array.isArray(rims.top)) {
       for (const r of rims.top.slice(0, 10)) {
-        if (!r || typeof r !== 'object' || typeof r.id !== 'string' || !r.id || seen.has(r.id)) continue;
-        seen.add(r.id);
+        if (!r || typeof r !== 'object' || typeof r.id !== 'string' || !r.id) continue;
+        /* ONE ID FOR THE POST AND THE GLOBE (event timeline slice S0, E2): the globe keys a perimeter wfigs:<NIFC id> (js/environment-layers.js,
+           the contract's pick id) while the digest carries NIFC's own id, so Show on globe found nothing for a perimeter post */
+        const gid = /^wfigs:/.test(r.id) ? r.id : 'wfigs:' + r.id;
+        if (seen.has(gid)) continue;
+        seen.add(gid);
         const acres = num(r.gis_acres), captured = iso(r.polygon_captured_at), edited = iso(r.last_edited_at), found = iso(r.discovered_at), on = placed(r);
         out.push(finish({
-          observationPost: true, id: r.id, globe_id: r.id, kind: 'perimeter', type: TYPE, author: AUTHOR, icon: 'fire',
+          observationPost: true, id: gid, globe_id: gid, kind: 'perimeter', type: TYPE, author: AUTHOR, icon: 'fire',
           title: line((line(r.name, 120) || 'Unnamed') + ' fire perimeter', 160),
           facts: [{ label: 'GIS acres', value: acres === null ? 'not supplied' : acres.toLocaleString() }, { label: 'Captured', value: captured ? localTime(captured) : 'not supplied' },
             { label: 'Last edited', value: edited ? localTime(edited) : 'not supplied' }, { label: 'Discovered', value: found ? localTime(found) : 'not supplied' }],

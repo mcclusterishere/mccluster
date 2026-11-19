@@ -254,3 +254,23 @@ test('G1R-7: the page repaints the feed only when an observation post changed, n
   fire({ events: [], sources: [], unavailable: true, code: 'module_policy_unavailable' });
   assert.equal(draws.length, 4); assert.deepEqual(state.environment.order, []);
 });
+
+/* E=UP slice S0 (2026-11-19), E2: the perimeter seam. The globe keys a perimeter `wfigs:<NIFC id>` (js/environment-layers.js, the
+   contract's pick id), but the digest it hands the page carries NIFC's own id, as built here from the real fixture exactly as the
+   globe's DIGESTS.perimeters builds it. The test above fed an already-prefixed digest, so Show on globe silently found nothing for a
+   perimeter post and no test saw it. */
+test('S0: a perimeter post from the globe\'s real, unprefixed digest carries the globe\'s own id, wfigs:<NIFC id>, for its post and for Show on globe', () => {
+  const RIMS = JSON.parse(read('scripts/e2e/fixtures/environment/layers-perimeters.json'));
+  const firstVertex = (polygons) => { const r = polygons && polygons[0] && polygons[0][0]; const v = Array.isArray(r) && Array.isArray(r[0]) ? r[0] : [null, null]; return { lon: v[0], lat: v[1] }; };
+  const top = RIMS.perimeters.slice(0, 10).map((p) => ({ id: p.id, name: p.name, gis_acres: p.gis_acres, polygon_captured_at: p.polygon_captured_at, last_edited_at: p.last_edited_at, discovered_at: p.discovered_at, ...firstVertex(p.polygons) }));
+  assert.ok(top.every((r) => !r.id.startsWith('wfigs:')), 'the digest carries NIFC\'s own ids');
+  const rims = P.observationPosts(detail({ events: [], layers: { perimeters: { status: 'available', label: 'NIFC WFIGS perimeters', url: 'https://data-nifc.opendata.arcgis.com/', top } } }), NOW).filter((p) => p.kind === 'perimeter');
+  assert.equal(rims.length, 10);
+  for (const [i, post] of rims.entries()) {
+    assert.equal(post.globe_id, 'wfigs:' + top[i].id, 'the globe\'s pick id');
+    assert.equal(post.id, post.globe_id, 'one id for the post and the globe');
+  }
+  /* an id already prefixed is never prefixed twice, and the two spellings of one perimeter are one post */
+  const twice = P.observationPosts(detail({ events: [], layers: { perimeters: { status: 'available', top: [{ ...top[0], id: 'wfigs:' + top[0].id }, top[0]] } } }), NOW).filter((p) => p.kind === 'perimeter');
+  assert.deepEqual(twice.map((p) => p.globe_id), ['wfigs:' + top[0].id]);
+});

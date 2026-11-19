@@ -29,6 +29,11 @@
    no card in the panel (review V2-M2); Show on globe from Global keeps the clicked event selected over ten seconds of watching,
    where the panel's older selection used to echo back and take the globe (the G1 close-out's flip).
 
+   E=UP slice S0 (2026-11-19; docs/control-plane/EUP-EVENT-TIMELINE.md): the tab's missions and observations are two lists, the
+   missions first (decision D8); off (404) and an outage (503) each have their own line on the page and in the frame's legend, and
+   four activations of the tab ask the layer routes once; every source answering with nothing has its own line; a perimeter post's
+   Show on globe selects its wfigs: perimeter.
+
    The review of the release polish (2026-11-18): the scene Next brings with the tour paused opens its card and presses its row at
    every width, and under reduced motion Next and Previous each do so without a flight (RP-1); a row chosen with the keyboard deep in
    the open list keeps its place, its pressed state and the focus (RP-2).
@@ -53,7 +58,7 @@ catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/n
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.glb': 'model/gltf-binary', '.wasm': 'application/wasm', '.woff2': 'font/woff2', '.ico': 'image/x-icon' };
 const FIXTURE_DIR = join(ROOT, 'scripts/e2e/fixtures/environment');
 const FIX = {};
-for (const name of ['feed', 'feed-policy-503', 'feed-policy-404', 'layers-fires', 'layers-perimeters', 'layers-alerts', 'layers-eonet', 'layers-tides', 'shakemap-us7000tyhr', 'shakemap-us7000tyca', 'shakemap-none', 'policy-503', 'policy-404']) FIX[name] = JSON.parse(await readFile(join(FIXTURE_DIR, name + '.json'), 'utf8'));
+for (const name of ['feed', 'feed-empty', 'feed-policy-503', 'feed-policy-404', 'layers-fires', 'layers-perimeters', 'layers-alerts', 'layers-eonet', 'layers-tides', 'shakemap-us7000tyhr', 'shakemap-us7000tyca', 'shakemap-none', 'policy-503', 'policy-404']) FIX[name] = JSON.parse(await readFile(join(FIXTURE_DIR, name + '.json'), 'utf8'));
 const P = require(join(ROOT, 'js/world-environment-posts.js'));
 const SIGNIFICANT = new Set(FIX.feed.events.filter(P.significance).map((e) => e.id));
 const TILE = await readFile(join(ROOT, 'assets/img/closet/seek-first/sf-33.jpg'));
@@ -74,7 +79,7 @@ const NEWS = [1, 2, 3, 4, 5, 6].map((k) => ({ id: `ffffffff-ffff-4fff-8fff-00000
 const firstSource = (body) => (Array.isArray(body.sources) ? body.sources.slice().sort((a, b) => String(b.fetched_at).localeCompare(String(a.fetched_at)))[0] : null) || {};
 const DIGEST_LAYERS = {
   fires: { status: 'available', reason: null, fetched_at: firstSource(FIX['layers-fires']).fetched_at, label: firstSource(FIX['layers-fires']).label, url: firstSource(FIX['layers-fires']).url, coverage: firstSource(FIX['layers-fires']).coverage, attribution: firstSource(FIX['layers-fires']).attribution, license: firstSource(FIX['layers-fires']).license, generated_at: FIX['layers-fires'].generated_at, cell_degrees: 1, cells: FIX['layers-fires'].summary.cells.slice(0, 10) },
-  perimeters: { status: 'available', reason: null, fetched_at: firstSource(FIX['layers-perimeters']).fetched_at, label: firstSource(FIX['layers-perimeters']).label, url: firstSource(FIX['layers-perimeters']).url, coverage: firstSource(FIX['layers-perimeters']).coverage, attribution: firstSource(FIX['layers-perimeters']).attribution, license: firstSource(FIX['layers-perimeters']).license, top: FIX['layers-perimeters'].perimeters.slice(0, 10).map((p) => { const ring = p.polygons && p.polygons[0] && p.polygons[0][0]; const v = Array.isArray(ring) && Array.isArray(ring[0]) ? ring[0] : [null, null]; return { id: 'wfigs:' + p.id, name: p.name, gis_acres: p.gis_acres, polygon_captured_at: p.polygon_captured_at, last_edited_at: p.last_edited_at, discovered_at: p.discovered_at, lon: v[0], lat: v[1] }; }) }
+  perimeters: { status: 'available', reason: null, fetched_at: firstSource(FIX['layers-perimeters']).fetched_at, label: firstSource(FIX['layers-perimeters']).label, url: firstSource(FIX['layers-perimeters']).url, coverage: firstSource(FIX['layers-perimeters']).coverage, attribution: firstSource(FIX['layers-perimeters']).attribution, license: firstSource(FIX['layers-perimeters']).license, top: FIX['layers-perimeters'].perimeters.slice(0, 10).map((p) => { const ring = p.polygons && p.polygons[0] && p.polygons[0][0]; const v = Array.isArray(ring) && Array.isArray(ring[0]) ? ring[0] : [null, null]; return { id: p.id, name: p.name, gis_acres: p.gis_acres, polygon_captured_at: p.polygon_captured_at, last_edited_at: p.last_edited_at, discovered_at: p.discovered_at, lon: v[0], lat: v[1] }; }) }
 };
 
 const server = createServer(async (req, res) => {
@@ -142,13 +147,13 @@ async function openPage(size, { daylight = 'night', feed = 'available', fail = n
   /* the browser's own resource log for a deliberate 500/503/404/401/403 fixture answer is the scenario, not an error of the page */
   page.on('console', (m) => { const t = m.text(); if (m.type() === 'error' && !/Failed to load resource: the server responded with a status of (500|503|404|401|403)/.test(t)) errors.push('console: ' + t.slice(0, 300)); else if (/TypeError|ReferenceError|SyntaxError/.test(t)) errors.push('console: ' + t.slice(0, 300)); if (process.env.E2E_DEBUG) console.error('console:', m.type(), t.slice(0, 200)); });
   const by = (route) => { try { return route.request().frame() === page.mainFrame() ? 'page' : 'globe'; } catch (e) { return 'unknown'; } };
-  const policy = feed === 'available' ? null : FIX['feed-policy-' + feed];
+  const policy = feed === 'available' || feed === 'empty' ? null : FIX['feed-policy-' + feed];
   await page.route((url) => !url.href.startsWith(BASE) && !/(^|\.)cesium\.com$/.test(url.hostname), async (route) => {
     const request = route.request(), url = new URL(request.url()), p = url.pathname;
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
     if (url.hostname === 'api.mccluster.org') {
       requests.push({ path: p, by: by(route) });
-      if (p === '/v1/world/environment') return policy ? json(route, policy, Number(feed)) : json(route, FIX.feed);
+      if (p === '/v1/world/environment') return policy ? json(route, policy, Number(feed)) : json(route, feed === 'empty' ? FIX['feed-empty'] : FIX.feed);
       const layer = /^\/v1\/world\/environment\/layers\/(fires|perimeters|alerts|eonet|tides)$/.exec(p);
       if (layer) { if (policy) return json(route, policy, Number(feed)); if (fail === layer[1]) return json(route, { error: 'fixture failure' }, 500); return json(route, FIX['layers-' + layer[1]]); }
       const sm = /^\/v1\/world\/environment\/quakes\/([a-z0-9]+)\/shakemap$/.exec(p);
@@ -200,7 +205,7 @@ async function settle(frame) { await frame.waitForFunction(() => window.__huGlob
 async function layersReady(frame, ms = 150000) {
   return until(frame, () => { const s = window.__mccEnvironmentLayers && window.__mccEnvironmentLayers(); return !!s && s.on && s.ready && s.counts.events === 62; }, null, ms);
 }
-const feedSeq = (page) => page.evaluate(() => [...document.querySelectorAll('#mnFeed > article')].map((a) => a.hasAttribute('data-observation-post') ? 'o:' + a.getAttribute('data-observation-post') : a.hasAttribute('data-mission-post') ? 'm:' + a.getAttribute('data-mission-post') : a.hasAttribute('data-news-id') ? 'n' : a.hasAttribute('data-post-id') ? 'p' : '?'));
+const feedSeq = (page) => page.evaluate(() => [...document.querySelectorAll('#mnFeed > article, #mnFeed > [data-observation-list] > article')].map((a) => a.hasAttribute('data-observation-post') ? 'o:' + a.getAttribute('data-observation-post') : a.hasAttribute('data-mission-post') ? 'm:' + a.getAttribute('data-mission-post') : a.hasAttribute('data-news-id') ? 'n' : a.hasAttribute('data-post-id') ? 'p' : '?'));
 /* the page, the panel and the feed must not scroll sideways; the feed's action rows bleed 6 px into the gutter by design */
 const fits = (page) => page.evaluate(() => { const feed = document.getElementById('mnFeed'), edge = feed.getBoundingClientRect().right + 0.5; const over = [...feed.querySelectorAll('*')].filter((el) => el.getBoundingClientRect().right > edge && el.getClientRects().length).slice(0, 8).map((el) => el.tagName.toLowerCase() + '.' + [...el.classList].join('.') + '@' + Math.round(el.getBoundingClientRect().right - edge)); return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, psw: document.getElementById('wePanel').scrollWidth, pcw: document.getElementById('wePanel').clientWidth, over }; });
 const frameWidths = (frame) => frame.evaluate(() => ({ scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth }));
@@ -299,16 +304,21 @@ for (const size of SIZES) {
   /* review G1R-10: the panel handed the frame the feed's own provider terms with the pins; the frame keeps no copy of its own */
   check(scope, 'the frame holds the feed providers\' terms the panel sent with the pins (usgs, nws, eonet, nhc)', JSON.stringify((await env(frame)).feedTerms) === JSON.stringify(['eonet', 'nhc', 'nws', 'usgs']), (await env(frame)).feedTerms);
   check(scope, 'no refusal line while the gate allows the layers', await page.evaluate(() => document.getElementById('weLayersNote').hidden === true));
-  /* the tab's one list by time: the mission posts and every observation post (the fire areas and the largest perimeters from the
-     frame's digests among them), exactly as the pure module orders them, each clearly typed */
+  /* E=UP slice S0 (2026-11-19), changed on purpose (decision D8, default adopted pending Matthew's confirmation): the tab's TWO
+     lists, never one by time: the missions first, newest first, a page of twenty, then the observations (the fire areas and the
+     largest perimeters from the frame's digests among them) under their own heading, newest first, a page of twenty, exactly as the
+     pure module orders them, each clearly typed. One list by time put the missions behind every current observation. */
   await page.waitForFunction(() => document.querySelectorAll('#mnFeed [data-mission-post]').length > 0 && document.querySelectorAll('#mnFeed .mn__observation-post').length > 0, null, { timeout: 30000 });
-  const expected = P.interleaveByTime(MISSIONS.map((m) => ({ missionPost: true, id: m.id, created_at: m.created_at })), P.observationPosts({ events: FIX.feed.events, sources: FIX.feed.sources, unavailable: false, layers: DIGEST_LAYERS }, Date.now()), { pageSize: 20 }).map((x) => x.missionPost ? 'm:' + x.id : 'o:' + x.id);
+  const expected = [...MISSIONS].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at)).map((m) => 'm:' + m.id)
+    .concat(P.interleaveByTime([], P.observationPosts({ events: FIX.feed.events, sources: FIX.feed.sources, unavailable: false, layers: DIGEST_LAYERS }, Date.now()), { pageSize: 20 }).map((x) => 'o:' + x.id));
   const tab = await feedSeq(page);
-  check(scope, 'the Equity Uprise tab lists the missions and the observations (fire areas and perimeters from the globe\'s digests among them) in one list by time, as the pure module orders them', JSON.stringify(tab) === JSON.stringify(expected), { got: tab, want: expected });
-  const heads = await page.evaluate(() => [...document.querySelectorAll('#mnFeed > article')].map((a) => a.hasAttribute('data-observation-post') ? { obs: a.getAttribute('data-observation-post'), sub: a.querySelector('.mn__author-sub').textContent, author: a.querySelector('.mn__author-name').textContent } : { mission: a.getAttribute('data-mission-post'), head: a.querySelector('.mn__author-name').textContent }));
+  check(scope, 'the Equity Uprise tab lists the missions first, then the observations in their own list, each newest first, as the pure module orders them (D8)', JSON.stringify(tab) === JSON.stringify(expected), { got: tab, want: expected });
+  const lists = await page.evaluate(() => { const sec = document.querySelector('#mnFeed > [data-observation-list]'), h = sec && sec.querySelector('#mnObsHeading'), last = [...document.querySelectorAll('#mnFeed > [data-mission-post]')].pop(); return { heading: h ? h.textContent : null, labelled: sec ? sec.getAttribute('aria-labelledby') : null, after: !!(sec && last && (last.compareDocumentPosition(sec) & Node.DOCUMENT_POSITION_FOLLOWING)), feedMore: document.getElementById('mnMore').hidden, more: !!(sec && sec.querySelector('[data-observations-more]')) }; });
+  check(scope, 'the observations sit after every mission under their own heading, with their own "Show more observations"; the feed\'s Load more stays hidden in the tab', lists.heading === 'Environmental observations' && lists.labelled === 'mnObsHeading' && lists.after && lists.feedMore === true && lists.more === true, lists);
+  const heads = await page.evaluate(() => [...document.querySelectorAll('#mnFeed > article, #mnFeed > [data-observation-list] > article')].map((a) => a.hasAttribute('data-observation-post') ? { obs: a.getAttribute('data-observation-post'), sub: a.querySelector('.mn__author-sub').textContent, author: a.querySelector('.mn__author-name').textContent } : { mission: a.getAttribute('data-mission-post'), head: a.querySelector('.mn__author-name').textContent }));
   check(scope, 'every post in the tab is typed: Civic mission or Environmental observation by the Environmental desk, stamped recorded or retrieved', heads.length > 0 && heads.every((h) => h.mission ? /^Civic mission/.test(h.head) : h.author === 'Environmental desk' && /^Environmental observation · /.test(h.sub) && / · (Recorded|Retrieved) /.test(h.sub)), heads.slice(0, 4));
   const newest = heads.find((h) => h.obs === 'usgs:fx-gen-50');
-  check(scope, 'the newest quake leads the tab, stamped with its recorded time in local time', tab[0] === 'o:usgs:fx-gen-50' && !!newest && new RegExp('Recorded ' + esc(new Date(NEWEST_QUAKE.observed_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }))).test(newest.sub), newest && newest.sub);
+  check(scope, 'the newest mission leads the tab and the newest quake leads the observations, stamped with its recorded time in local time', tab[0] === 'm:' + MISSIONS[0].id && tab.find((x) => x.startsWith('o:')) === 'o:usgs:fx-gen-50' && !!newest && new RegExp('Recorded ' + esc(new Date(NEWEST_QUAKE.observed_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }))).test(newest.sub), newest && newest.sub);
   /* the list opens compact: the first post within about a screen and a half of the feed's row; the toggle opens every observation
      from the keyboard, moves the focus to the first row it revealed, and closes again with the focus kept on it. The gap is measured
      on the panel as a visitor first gets it: the health-row checks above opened "Sources, coverage and limitations", so it is closed
@@ -413,6 +423,13 @@ for (const size of SIZES) {
   const stationOk = await until(page, () => /Selected on the globe/.test(document.getElementById('weDetail').textContent) && /The Battery/.test(document.getElementById('weDetail').textContent), null, 10000);
   const station = await page.locator('#weDetail').textContent();
   check(scope, 'a station chosen on the globe: the card shows Observed 15:48 and Retrieved 19:56 (the readings), never the catalogue\'s 08:00', stationOk && station.includes('Observed' + localTime('2026-11-17T15:48:00.000Z')) && station.includes('Retrieved' + localTime('2026-11-17T19:56:00.000Z')) && !station.includes(localTime('2026-11-17T08:00:00.000Z')) && /1\.024 m above MLLW/.test(station), station.slice(0, 300));
+  /* E=UP slice S0, E2: a perimeter post's Show on globe selects the globe's own perimeter, wfigs:<NIFC id> (the post carried NIFC's
+     bare id, so the focus waited for an entry that never came) */
+  for (let i = 0; i < 6 && await page.locator('#mnFeed [data-observations-more]').count(); i++) { await page.locator('#mnFeed [data-observations-more]').click(); await page.waitForTimeout(150); }
+  const rimPost = await page.evaluate(() => { const b = document.querySelector('#mnFeed [data-observation-post^="wfigs:"] [data-observation-globe]'); return b ? b.getAttribute('data-observation-globe') : null; });
+  if (rimPost) { const b = page.locator(`#mnFeed [data-observation-globe="${rimPost}"]`).first(); await b.scrollIntoViewIfNeeded(); await b.click(); }
+  const rimShown = !!rimPost && await until(frame, (id) => { const s = window.__mccEnvironmentLayers(); return !!s.selected && s.selected.id === id && s.selected.layer === 'perimeters'; }, rimPost, 20000);
+  check(scope, 'a perimeter post\'s Show on globe selects its own wfigs: perimeter on the globe (one id for the post and the globe)', rimShown, { rimPost, selected: (await env(frame)).selected });
   /* Show on globe from the tab */
   const button = page.locator('#mnFeed [data-observation-globe="usgs:fx-gen-50"]').first();
   await button.scrollIntoViewIfNeeded(); await button.click();
@@ -562,25 +579,58 @@ for (const size of SIZES) {
   await ctx.close();
 }
 
-/* ---------- the gate refuses (390): 503 module_policy_unavailable and 404 module_disabled ---------- */
+/* ---------- the gate refuses (390): 503 module_policy_unavailable and 404 module_disabled ----------
+   E=UP slice S0 (2026-11-19), changed on purpose: off (404 module_disabled: the module never installed or disabled) and an outage
+   (503) are two lines on the page and two in the frame's legend, no longer one sentence for both; and leaving the tab and coming
+   back asks no layer route again while the refusal is held (the release review counted 6, 11, 16 and 21 requests after four
+   activations) */
 for (const code of ['503', '404']) {
   const scope = `390-policy-${code}`;
   const reason = code === '503' ? 'module_policy_unavailable' : 'module_disabled';
+  const state = code === '503' ? 'unavailable' : 'off', noteId = code === '503' ? 'weUnavailable' : 'weOff';
+  const line = code === '503' ? 'Environmental reports are not available right now.' : 'Environmental reports are turned off for now.';
+  const legendLine = code === '503' ? 'Environmental layers are not available right now' : 'Environmental layers are turned off for now';
   const { ctx, page, errors, requests } = await openPage(SIZES[0], { feed: code });
   const frame = await globeFrame(page);
-  await page.waitForFunction(() => document.documentElement.getAttribute('data-we-feed') === 'unavailable', null, { timeout: 30000 });
+  await page.waitForFunction((v) => document.documentElement.getAttribute('data-we-feed') === v, state, { timeout: 30000 });
   await setScope(page, 'equity');
   await page.waitForFunction(() => document.querySelectorAll('#mnFeed [data-mission-post]').length > 0, null, { timeout: 30000 });
-  const tab = await page.evaluate(() => ({ note: getComputedStyle(document.getElementById('weUnavailable')).display, text: document.getElementById('weUnavailable').textContent.trim(), panel: getComputedStyle(document.getElementById('wePanel')).display, posts: document.querySelectorAll('#mnFeed .mn__observation-post').length, missions: document.querySelectorAll('#mnFeed [data-mission-post]').length }));
-  check(scope, 'the honest line, no panel, zero observation posts, the missions untouched', tab.note === 'block' && tab.text === 'Environmental reports are not available right now.' && tab.panel === 'none' && tab.posts === 0 && tab.missions === 3, tab);
+  const tab = await page.evaluate((id) => ({ note: getComputedStyle(document.getElementById(id)).display, text: document.getElementById(id).textContent.trim(), shown: [...document.querySelectorAll('.mn__we-note')].filter((n) => getComputedStyle(n).display !== 'none').map((n) => n.id), panel: getComputedStyle(document.getElementById('wePanel')).display, posts: document.querySelectorAll('#mnFeed .mn__observation-post').length, missions: document.querySelectorAll('#mnFeed [data-mission-post]').length }), noteId);
+  check(scope, `the ${state} line and no other, no panel, zero observation posts, the missions untouched`, tab.note === 'block' && tab.text === line && JSON.stringify(tab.shown) === JSON.stringify([noteId]) && tab.panel === 'none' && tab.posts === 0 && tab.missions === 3, tab);
   const gated = await until(frame, (c) => { const s = window.__mccEnvironmentLayers && window.__mccEnvironmentLayers(); return !!s && s.policy === true && ['fires', 'perimeters', 'alerts', 'eonet', 'tides'].every((l) => s.states[l] && s.states[l].status === 'policy' && s.states[l].reason === c); }, reason, 60000);
   const s = await env(frame);
-  check(scope, `inside the frame every layer is in the policy state with reason ${reason} and the legend says the layers are not available`, gated && s.legend.includes('Environmental layers are not available right now') && s.counts.firesNear === 0 && s.counts.perimeters === 0, s && s.states);
+  check(scope, `inside the frame every layer is in the policy state with reason ${reason} and the legend says "${legendLine}"`, gated && s.legend.includes(legendLine) && s.counts.firesNear === 0 && s.counts.perimeters === 0, s && { states: s.states, legend: s.legend });
   const before = requests.filter((r) => r.path.startsWith('/v1/world/environment/')).length;
   await page.waitForTimeout(10000);
   const after = requests.filter((r) => r.path.startsWith('/v1/world/environment/')).length;
   check(scope, 'no retry against the refusing gate within 10 s, and one read of the feed', before === after && before <= 5 && requests.filter((r) => r.path === '/v1/world/environment').length === 1, { before, after });
+  /* three more activations of the tab: the refusal is held, so the frame says the same state again and asks nothing */
+  for (let i = 0; i < 3; i++) {
+    await setScope(page, 'global');
+    await until(frame, () => !window.__mccEnvironmentLayers().on, null, 15000);
+    await setScope(page, 'equity');
+    await until(frame, () => window.__mccEnvironmentLayers().on, null, 15000);
+    await page.waitForTimeout(1500);
+  }
+  const again = await env(frame), afterFour = requests.filter((r) => r.path.startsWith('/v1/world/environment/')).length;
+  check(scope, 'four activations of the tab ask the layer routes once (the release review counted 6, 11, 16 and 21 requests), and the frame keeps saying the same state', afterFour === after && again.policy === true && again.legend.includes(legendLine), { requests: afterFour, first: after, legend: again.legend });
   { const re = await renderError(frame); if (re) console.log(`INFO [${scope}] render error record ${JSON.stringify(re)}`); check(scope, 'no page errors', errors.length === 0, { errors, renderError: re && { message: re.message, position: re.position, bad: re.badPrimitives } }); }
+  await ctx.close();
+}
+
+/* ---------- no data (390): every source answered and none reported an event (E=UP slice S0) ----------
+   the one line for it, no panel, no observation post, the missions untouched; the frame's layers still answer for themselves */
+{
+  const scope = '390-empty';
+  const { ctx, page, errors } = await openPage(SIZES[0], { feed: 'empty' });
+  await page.waitForFunction(() => document.documentElement.getAttribute('data-we-feed') === 'empty', null, { timeout: 30000 });
+  await setScope(page, 'equity');
+  await page.waitForFunction(() => document.querySelectorAll('#mnFeed [data-mission-post]').length > 0, null, { timeout: 30000 });
+  const tab = await page.evaluate(() => ({ text: document.getElementById('weEmpty').textContent.trim(), shown: [...document.querySelectorAll('.mn__we-note')].filter((n) => getComputedStyle(n).display !== 'none').map((n) => n.id), panel: getComputedStyle(document.getElementById('wePanel')).display, posts: document.querySelectorAll('#mnFeed .mn__observation-post').length, missions: document.querySelectorAll('#mnFeed [data-mission-post]').length }));
+  check(scope, 'no data has its own line and no other, no panel, no observation post, the missions untouched', tab.text === 'No qualifying environmental events right now.' && JSON.stringify(tab.shown) === JSON.stringify(['weEmpty']) && tab.panel === 'none' && tab.posts === 0 && tab.missions === 3, tab);
+  const dims = await fits(page);
+  check(scope, 'nothing scrolls sideways at 390', dims.sw === dims.cw, dims);
+  check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }
 

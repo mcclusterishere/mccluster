@@ -115,10 +115,20 @@ test('the release guard leaves the public environmental paths to their own gate 
   } finally { globalThis.fetch = original; }
 });
 
+/* E=UP slice S0 (2026-11-19), changed on purpose: a module never installed (EUM01) is off on every layer route, the disabled answer */
+test('a module never installed (EUM01) is off on every new route: 404 module_disabled, before any provider is asked', async () => {
+  for (const path of LAYER_PATHS) {
+    const f = world(undefined, { policy: () => json({ code: 'EUM01', message: 'module_not_installed' }, 400) });
+    const r = await handleWorldEnvironment(req(path), { ...ENV, FIRMS_MAP_KEY: FIRMS_KEY }, { fetchImpl: f, cacheImpl: memoryCache() });
+    assert.equal(r.status, 404, path); headersOk(r);
+    assert.deepEqual(await r.json(), { ok: false, code: 'module_disabled' }, path);
+    assert.equal(f.calls.length, 1, `${path}: only the policy read`); assert.ok(isPolicyRead(f.calls[0]));
+  }
+});
 test('a missing, unapplied, unreachable or malformed policy is 503 module_policy_unavailable on every new route, before any provider is asked', async () => {
   const refusals = [
-    ['module not installed (EUM01)', json({ code: 'EUM01', message: 'module_not_installed' }, 400)],
     ['policy schema not applied (PGRST202)', json({ code: 'PGRST202', message: 'Could not find the function' }, 404)],
+    ['a policy function missing (42883)', json({ code: '42883', message: 'function does not exist' }, 404)],
     ['store answers 500', json({ message: 'boom' }, 500)],
     ['store redirects', new Response(null, { status: 302, headers: { location: 'https://elsewhere.example/' } })],
     ['store unreachable', new Error('offline')],

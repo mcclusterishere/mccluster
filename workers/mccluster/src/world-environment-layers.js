@@ -31,11 +31,13 @@
    last good copy (status stale, with the reason) for up to 6 h while it is down. */
 import { reply } from './lib/http.js';
 import { UpstreamError } from './lib/safe-fetch.js';
-import { healthReason, sourceHealth, trackedLayer, upstream } from './world-layers.js';
+import { healthReason, sourceHealth, upstream } from './world-layers.js';
 import { NIFC_PERIMETERS_URL, clip, finite, isoFromMs, latOf, lonOf, normalizeRing, parseFirmsCsv, providerUrl, within } from './world-halo-layers.js';
 import { boundedEventJson, normalizeAlert, normalizeNatural } from './world-events.js';
 import { STATION_ID, TIDES, boundedJson, normalizeStation, normalizeWaterLevel, waterLevelUrl } from './world-halo-ops.js';
 import { environmentRouteForPath } from '../../../packages/release-policy/globe.mjs';
+/* every kept copy below is read through sharedLayer: concurrent misses share one provider read (release security review SEC-2) */
+import { sharedLayer } from './world-environment-guard.js';
 
 const ROOT = '/v1/world/environment';
 /* the namespaces this module answers for; anything else under them is 404 after the gate */
@@ -154,7 +156,7 @@ async function firesAnswer(env, fetchImpl, cacheImpl) {
   const parts = await Promise.all(FIRES.satellites.map(async (sat) => {
     /* without the key nobody is asked and nothing kept is read: an honest not_configured */
     const outcome = configured
-      ? await trackedLayer({ layer: 'fires', key: `consumer-environment-v1-firms-${sat.product}`, ttl: FIRES.ttl, rows: 'detections', fetcher: (e, f) => fetchFirmsSatellite(e, f, sat) }, env, fetchImpl, cacheImpl)
+      ? await sharedLayer({ layer: 'fires', key: `consumer-environment-v1-firms-${sat.product}`, ttl: FIRES.ttl, rows: 'detections', fetcher: (e, f) => fetchFirmsSatellite(e, f, sat) }, env, fetchImpl, cacheImpl)
       : { body: { unavailable: true, fetched_at: null, upstream_error: 'not_configured' }, stale: false, last_success_at: null };
     return { sat, outcome, body: outcome.body && !outcome.body.unavailable ? outcome.body : null };
   }));
@@ -313,7 +315,7 @@ export async function fetchPublicPerimeters(env, fetchImpl) {
   return { total: data.features.length, count: perimeters.length, dropped, polygons_dropped: polygonsDropped, more_available: more, perimeters };
 }
 async function perimetersAnswer(env, fetchImpl, cacheImpl) {
-  const outcome = await trackedLayer({ layer: 'perimeters', key: 'consumer-environment-v1-wfigs', ttl: PERIMETERS.ttl, rows: 'perimeters', fetcher: fetchPublicPerimeters }, env, fetchImpl, cacheImpl);
+  const outcome = await sharedLayer({ layer: 'perimeters', key: 'consumer-environment-v1-wfigs', ttl: PERIMETERS.ttl, rows: 'perimeters', fetcher: fetchPublicPerimeters }, env, fetchImpl, cacheImpl);
   const b = outcome.body && !outcome.body.unavailable ? outcome.body : {};
   const perimeters = Array.isArray(b.perimeters) ? b.perimeters : [];
   return {
@@ -362,7 +364,7 @@ export async function fetchPublicAlerts(env, fetchImpl) {
   return { total: data.features.length, current: alerts.length, truncated: alerts.length > listed.length, alerts: listed };
 }
 async function alertsAnswer(env, fetchImpl, cacheImpl) {
-  const outcome = await trackedLayer({ layer: 'alerts', key: 'consumer-environment-v1-nws-alerts', ttl: ALERTS.ttl, rows: 'alerts', fetcher: fetchPublicAlerts }, env, fetchImpl, cacheImpl);
+  const outcome = await sharedLayer({ layer: 'alerts', key: 'consumer-environment-v1-nws-alerts', ttl: ALERTS.ttl, rows: 'alerts', fetcher: fetchPublicAlerts }, env, fetchImpl, cacheImpl);
   const b = outcome.body && !outcome.body.unavailable ? outcome.body : {};
   const now = Date.now();
   const alerts = (Array.isArray(b.alerts) ? b.alerts : []).filter((a) => alertEnd(a) > now);
@@ -428,7 +430,7 @@ export async function fetchPublicNatural(env, fetchImpl) {
   return { total: data.events.length, skipped, truncated: data.events.length >= EONET.max, events };
 }
 async function naturalAnswer(env, fetchImpl, cacheImpl) {
-  const outcome = await trackedLayer({ layer: 'eonet', key: 'consumer-environment-v1-eonet-tracks', ttl: EONET.ttl, rows: 'events', fetcher: fetchPublicNatural }, env, fetchImpl, cacheImpl);
+  const outcome = await sharedLayer({ layer: 'eonet', key: 'consumer-environment-v1-eonet-tracks', ttl: EONET.ttl, rows: 'events', fetcher: fetchPublicNatural }, env, fetchImpl, cacheImpl);
   const b = outcome.body && !outcome.body.unavailable ? outcome.body : {};
   const events = Array.isArray(b.events) ? b.events : [];
   return {
@@ -453,7 +455,7 @@ async function naturalAnswer(env, fetchImpl, cacheImpl) {
    be in NOAA's water-level list (while the list can be read); a station NOAA marks as not tidal (the Great
    Lakes and other non-tidal gauges) has no MLLW and is refused rather than asked. The Halo station
    normalizer and water-level reader (./world-halo-ops.js) do the checking. */
-export const TIDES_PUBLIC = Object.freeze({ latestTtl: 900, latestBytes: 64000, latestTimeoutMs: 8000, concurrency: 2, gapMs: 100, waterTimeoutMs: 10000 });
+export const TIDES_PUBLIC = Object.freeze({ latestTtl: 900, latestBytes: 64000, latestTimeoutMs: 8000, latestDeadlineMs: 15000, concurrency: 2, gapMs: 100, waterTimeoutMs: 10000 });
 export const TIDE_LATEST_STATIONS = Object.freeze([
   ['8443970', 'Boston, MA'], ['8461490', 'New London, CT'], ['8518750', 'The Battery, NY'], ['8534720', 'Atlantic City, NJ'],
   ['8638610', 'Sewells Point, VA'], ['8658120', 'Wilmington, NC'], ['8665530', 'Charleston, SC'], ['8723214', 'Virginia Key, FL'],
@@ -486,14 +488,24 @@ export async function fetchPublicTideStations(env, fetchImpl) {
   }
   return { total: data.stations.length, truncated: seen.size > stations.length, count: stations.length, stations };
 }
-export async function fetchLatestWaterLevels(env, fetchImpl, { gapMs = TIDES_PUBLIC.gapMs } = {}) {
+/* THE CRAWL ENDS ON TIME (release security review SEC-2: with every NOAA request hanging one GET /layers/tides took 81 s, past the
+   browser client's 20 s, so each visitor started the whole crawl again): no station is asked once `deadlineMs` has passed since the
+   first, each request gets at most what remains (and at least a second), and a station never asked is unavailable, reason timeout */
+export async function fetchLatestWaterLevels(env, fetchImpl, { gapMs = TIDES_PUBLIC.gapMs, deadlineMs = TIDES_PUBLIC.latestDeadlineMs } = {}) {
   const list = TIDE_LATEST_STATIONS, readings = new Array(list.length), codes = [];
+  const ends = Date.now() + deadlineMs;
   let next = 0;
   async function worker() {
     while (next < list.length) {
       const i = next++, { id, place } = list[i];
+      const left = ends - Date.now();
+      if (left <= 0) {
+        codes.push('upstream_timeout');
+        readings[i] = { station: id, place, name: null, lon: null, lat: null, value_m: null, observed_at: null, quality: null, q: null, status: 'unavailable', reason: 'timeout' };
+        continue;
+      }
       try {
-        const body = normalizeWaterLevel(await upstream(latestWaterLevelUrl(id), {}, fetchImpl, boundedJson(TIDES_PUBLIC.latestBytes), TIDES_PUBLIC.latestTimeoutMs), id);
+        const body = normalizeWaterLevel(await upstream(latestWaterLevelUrl(id), {}, fetchImpl, boundedJson(TIDES_PUBLIC.latestBytes), Math.max(1000, Math.min(TIDES_PUBLIC.latestTimeoutMs, left))), id);
         const last = body.observations[body.observations.length - 1];
         readings[i] = { station: id, place, name: body.station.name, lon: body.station.lon, lat: body.station.lat, value_m: last[1], observed_at: last[0], quality: last[2], q: qOf(last[2]), status: 'available', reason: null };
       } catch (error) {
@@ -501,7 +513,7 @@ export async function fetchLatestWaterLevels(env, fetchImpl, { gapMs = TIDES_PUB
         codes.push(code);
         readings[i] = { station: id, place, name: null, lon: null, lat: null, value_m: null, observed_at: null, quality: null, q: null, status: 'unavailable', reason: healthReason(code) || 'upstream_error' };
       }
-      if (gapMs > 0 && next < list.length) await pause(gapMs);
+      if (gapMs > 0 && next < list.length && Date.now() < ends) await pause(gapMs);
     }
   }
   await Promise.all(Array.from({ length: Math.min(TIDES_PUBLIC.concurrency, list.length) }, worker));
@@ -509,11 +521,11 @@ export async function fetchLatestWaterLevels(env, fetchImpl, { gapMs = TIDES_PUB
   if (!answered) throw new UpstreamError(codes[0] || 'upstream_error', 'no station answered');
   return { asked: list.length, answered, readings };
 }
-const tideStationsLayer = (env, fetchImpl, cacheImpl) => trackedLayer({ layer: 'tides', key: 'consumer-environment-v1-tide-stations', ttl: TIDES.stationsTtl, rows: 'stations', fetcher: fetchPublicTideStations }, env, fetchImpl, cacheImpl);
-async function tidesAnswer(env, fetchImpl, cacheImpl, gapMs) {
+const tideStationsLayer = (env, fetchImpl, cacheImpl) => sharedLayer({ layer: 'tides', key: 'consumer-environment-v1-tide-stations', ttl: TIDES.stationsTtl, rows: 'stations', fetcher: fetchPublicTideStations }, env, fetchImpl, cacheImpl);
+async function tidesAnswer(env, fetchImpl, cacheImpl, gapMs, deadlineMs) {
   const [stations, latest] = await Promise.all([
     tideStationsLayer(env, fetchImpl, cacheImpl),
-    trackedLayer({ layer: 'water_level_latest', key: 'consumer-environment-v1-tide-latest', ttl: TIDES_PUBLIC.latestTtl, rows: 'readings', fetcher: (e, f) => fetchLatestWaterLevels(e, f, { gapMs }) }, env, fetchImpl, cacheImpl)
+    sharedLayer({ layer: 'water_level_latest', key: 'consumer-environment-v1-tide-latest', ttl: TIDES_PUBLIC.latestTtl, rows: 'readings', fetcher: (e, f) => fetchLatestWaterLevels(e, f, { gapMs, deadlineMs }) }, env, fetchImpl, cacheImpl)
   ]);
   const sb = stations.body && !stations.body.unavailable ? stations.body : {}, lb = latest.body && !latest.body.unavailable ? latest.body : null;
   const rows = Array.isArray(sb.stations) ? sb.stations : [];
@@ -548,10 +560,10 @@ async function waterLevelAnswer(request, env, id, fetchImpl, cacheImpl) {
   const row = list ? list.find((r) => r[0] === id) || null : null;
   if (list && !row) return refuse(request, env, 'unknown_station', 404);
   if (row && row[5] === false) return refuse(request, env, 'no_mllw_datum', 404);
-  const outcome = await trackedLayer({
+  const outcome = await sharedLayer({
     layer: 'water_level', key: `consumer-environment-v1-water-${id}`, ttl: TIDES.waterTtl, rows: 'observations',
     fetcher: async (e, f) => normalizeWaterLevel(await upstream(waterLevelUrl(id), {}, f, boundedJson(TIDES.waterBytes), TIDES_PUBLIC.waterTimeoutMs), id)
-  }, env, fetchImpl, cacheImpl);
+  }, env, fetchImpl, cacheImpl, { lookup: true });
   const b = outcome.body && !outcome.body.unavailable ? outcome.body : {};
   const observations = Array.isArray(b.observations) ? b.observations : [];
   const last = observations[observations.length - 1] || null;
@@ -661,7 +673,7 @@ export function readShakemapContours(fc, limits = SHAKEMAP) {
 const keyPart = (v) => String(v === null || v === undefined ? 'x' : v).replace(/[^a-z0-9]/gi, '').slice(0, 40) || 'x';
 async function shakemapAnswer(request, env, id, fetchImpl, cacheImpl) {
   if (!USGS_EVENT_ID.test(id)) return refuse(request, env, 'invalid_event', 400);
-  const detail = await trackedLayer({ layer: 'shakemap_detail', key: `consumer-environment-v1-shakemap-${id}`, ttl: SHAKEMAP.detailTtl, rows: 'products', fetcher: (e, f) => fetchShakemapDetail(id, f) }, env, fetchImpl, cacheImpl);
+  const detail = await sharedLayer({ layer: 'shakemap_detail', key: `consumer-environment-v1-shakemap-${id}`, ttl: SHAKEMAP.detailTtl, rows: 'products', fetcher: (e, f) => fetchShakemapDetail(id, f) }, env, fetchImpl, cacheImpl, { lookup: true });
   const sources = [sourceHealth(LAYER_SOURCES.usgs_event, detail)];
   const base = {
     ok: true, schema: 'world-environment-shakemap/v1', event_id: id, generated_at: isoNow(), sources, modelled: true, units: 'MMI',
@@ -678,10 +690,10 @@ async function shakemapAnswer(request, env, id, fetchImpl, cacheImpl) {
   const product = { usgs_preferred_id: d.preferred_id, version: sm.version, process_time: sm.process_time, review_status: sm.review_status, map_status: sm.map_status, max_mmi: sm.max_mmi, update_time: sm.update_time, product_code: sm.code, product_source: sm.source };
   if (!sm.contours_url) return send(request, env, { ...base, ...product, available: false, reason: 'no_contours', contours: [] });
   const versionKey = [sm.source, sm.code, sm.version, Date.parse(sm.update_time)].map(keyPart).join('-');
-  const contours = await trackedLayer({
+  const contours = await sharedLayer({
     layer: 'shakemap_contours', key: `consumer-environment-v1-shakemap-${id}-${versionKey}`, ttl: SHAKEMAP.contoursTtl, rows: 'contours',
     fetcher: async (e, f) => readShakemapContours(await upstream(sm.contours_url, {}, f, boundedJson(SHAKEMAP.contourBytes), SHAKEMAP.timeoutMs))
-  }, env, fetchImpl, cacheImpl);
+  }, env, fetchImpl, cacheImpl, { lookup: true });
   sources.push(sourceHealth(LAYER_SOURCES.usgs_shakemap, contours));
   const c = contours.body && !contours.body.unavailable ? contours.body : null;
   if (!c) return send(request, env, { ...base, ...product, available: false, reason: 'source_unavailable', contours: [] });
@@ -701,7 +713,7 @@ function inNamespace(path) {
 
 /* null when the path is not one of these routes (the pinned product answers the rest).
    `gate` is required: without one, nothing is served. */
-export async function handleEnvironmentLayers(request, env, { fetchImpl = fetch, cacheImpl = null, gate = null, tideGapMs = TIDES_PUBLIC.gapMs } = {}) {
+export async function handleEnvironmentLayers(request, env, { fetchImpl = fetch, cacheImpl = null, gate = null, tideGapMs = TIDES_PUBLIC.gapMs, tideDeadlineMs = TIDES_PUBLIC.latestDeadlineMs } = {}) {
   const path = new URL(request.url).pathname.replace(/\/+$/, '') || '/';
   const route = environmentRouteForPath(path);
   if (route && route.id === 'feed') return null;
@@ -715,7 +727,7 @@ export async function handleEnvironmentLayers(request, env, { fetchImpl = fetch,
   if (route.id === 'perimeters') return send(request, env, await perimetersAnswer(env, fetchImpl, cacheImpl));
   if (route.id === 'alerts') return send(request, env, await alertsAnswer(env, fetchImpl, cacheImpl));
   if (route.id === 'eonet') return send(request, env, await naturalAnswer(env, fetchImpl, cacheImpl));
-  if (route.id === 'tides') return send(request, env, await tidesAnswer(env, fetchImpl, cacheImpl, tideGapMs));
+  if (route.id === 'tides') return send(request, env, await tidesAnswer(env, fetchImpl, cacheImpl, tideGapMs, tideDeadlineMs));
   if (route.id === 'water-level') return waterLevelAnswer(request, env, route.param, fetchImpl, cacheImpl);
   if (route.id === 'shakemap') return shakemapAnswer(request, env, route.param, fetchImpl, cacheImpl);
   return refuse(request, env, 'not_found', 404);
