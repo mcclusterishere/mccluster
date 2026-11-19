@@ -7,15 +7,15 @@ This checkpoint updates the dated release snapshot below. The recovered release 
 `e92a2cd4` handoff. It already contains Music M1, M4 and M2, the World source page, and the public environmental
 timeline client. The recovered branch is 229 commits ahead of `main` at
 `fc1986ec0f4c473f9df8db4578058f1f39f3bd52`, with 499 changed files before the continuation. It also contains
-the separately gated Core/laptop work described below. It is not a four-file hotfix.
+the separately gated Core/laptop work described below. This is a broad inherited release candidate.
 
-The continuation lives on `codex/four-build-recovery-20261119`, preserving that original history. Its draft
-pull request is a review and CI candidate. No merge, production deploy, SQL application, module activation,
+The continuation lives on `codex/four-build-recovery-20261119`, preserving that original history. Draft
+[PR #818](https://github.com/mcclusterishere/mccluster/pull/818) is the review and CI candidate. No merge, production deploy, SQL application, module activation,
 mission publication or permission attestation was performed during recovery.
 
 | Stream | Recovered implementation | Recovery repairs and remaining gate |
 | --- | --- | --- |
-| Music | Background audio, shared account state and one Now Playing owner were already committed. | Studio submission now captures and locks the form before asynchronous work, reports accepted releases accurately, and bounds duration probing. Playback cancels stale selection, eligibility, metadata, claim and automatic-next effects. The phone header reserves the account chip's space. See `docs/music/MUSIC-RELEASE-20261119.md` for the exact remaining cross-page continuity, album intake and device acceptance work. |
+| Music | Background audio, shared account state and one Now Playing owner were already committed. | Studio submission now captures and locks the form before asynchronous work, reports accepted releases accurately, and bounds duration probing. Playback cancels stale selection, eligibility, metadata, claim and automatic-next effects. The phone header reserves the account chip's space. Native Control now verifies and plays the pinned master, then supplies its hash and the displayed release version to Publish; stale accounts, changed versions, duplicate taps and uncertain outcomes are guarded. See `docs/music/MUSIC-RELEASE-20261119.md` for the exact remaining cross-page continuity, album intake and device acceptance work. |
 | Environmental timeline | USGS event storage/routes, quake visuals and the timeline client were already committed. | Module withdrawal and newer selections invalidate pending reads; held/missing events leave the cache and selection; replacement records at the same revision are accepted. The SQL and module/ingest enablement remain separately gated. |
 | Project Drawdown source page | The source door, nine areas, search, credits, sharing, history and owner preview were already committed. | A browser suite now covers the shipped page at 390, 820 and 1280px, including guest navigation, owner preview, hidden/draft/denied responses, retry and overflow. Database publication and the owner's permission-scope attestation remain separate steps. |
 | Connections consent | The exact pending guard and rollback already existed. | Independent static, caller, disposable-database and mutation proofs pass. The live permission preflight still matches the vulnerable grants/policies; the guard remains unapplied pending approval of its exact text under section 13 of `supabase/pending/PROMOTION-ORDER.md`. |
@@ -25,14 +25,17 @@ Read-only production checks during recovery found 376 migration records, latest
 `mission_catalog_sources` is absent. Direct public-site reads from this executor were blocked by Cloudflare
 error 1010; that is not an observed site outage or a new live-deployment receipt.
 
-Verification uses Node 22.23.5. The complete root run after the World browser repairs passed 2,973 tests, with seven skipped and none
-failed (2,980 total); the Python suite passed 7/7. The complete Worker run with its offline network guard passed 2,022 tests,
+Verification uses Node 22.23.5. The complete root run after the native publishing repair passed 2,990 tests, with seven skipped and none
+failed (2,997 total); the Python suite passed 7/7. The complete Worker run with its offline network guard passed 2,022 tests,
 with nine skipped and none failed. The focused music run passed 123/123; its seven new submission regressions
 and twelve reproduced playback failures fail against the recovered implementation and pass after the repairs.
 The focused World client run passed 45/45, the Worker source/timeline routes 24/24, and their disposable PGlite
 SQL proofs 18/18. Connections passed 7/7 static/caller checks and 137/137 PGlite checks; removing each of the
 seven security statements made the proof fail. These focused counts overlap the full repository suites.
-The repository source-coverage validator passed all 2,962 checks without a classification change.
+The native publishing slice passed 112/112 focused contracts, including seventeen new state/behavior cases;
+its real-Control browser suite is wired into Music Platform CI. Independent review caught and reproduced both
+an unseen backend metadata version and a pending decision lock lost on a failed queue read; each is repaired
+and covered. The repository source-coverage validator passed all 2,962 checks without a classification change.
 
 The first PR run exposed the default runner moving to Ubuntu 26.04: pinned Playwright 1.57.0 could not install
 its browser, and the native RLS job could not install PostgreSQL 16. The fifteen affected job definitions now
@@ -45,6 +48,15 @@ reads and all subpath reads after a refused gate. The broad Node run also reache
 checks: its Arc name matcher is aligned with the canonical detector, and declining browser installation must
 leave the explicit disabled setting and every configuration byte unchanged. The PR records the post-repair CI
 results. These Windows changes do not install or activate anything on a device.
+
+The complete World sign-in-door browser suite on that head finished 575/577. Its two failures exposed a
+2px overlap with the phone form's fade and a timing measurement that included browser round trips, Back
+navigation and an intentional 500ms wait. The continuation reduces only the notice-visible field gaps,
+preserving the sheet cap, control sizes and geometry assertion. The timing probe now observes the member
+transition and hidden door on the page's clock, asserts the stated 260ms limit, and checks member/history/Back
+behavior separately. The general sign-in suite also retains its existing open/close deadlines while polling
+DOM state independently of animation frames and recording passive diagnostics on failure. Their new browser
+results belong to the PR's next exact-head run.
 
 Local Chromium could not launch because this executor refused its socket creation. The new source-page and
 music-header browser checks are wired into the existing Human Uprise Editorial and Music Platform CI workflows;
@@ -59,6 +71,29 @@ publication follows the deployed feed and cache window. Its source-page
 SQL and showing require their own approval and real permission evidence. Environmental SQL and activation remain
 their own approval. The source history and the remaining tasks are preserved; this checkpoint does not declare
 the whole release or every music slice complete.
+
+### The older consent PR still needs a scoped disposition
+
+The recovery review compared open PR [#760](https://github.com/mcclusterishere/mccluster/pull/760),
+head `8c7d60db90935659418ef1f1e6308913ced5febc`, with this candidate. It is not fully redundant:
+its unique product change is an agree-or-exit wall on every page, ignoring a previous dismissal and
+using Go back or Escape to leave. The candidate already preserves the substantive analytics,
+identifier, service-worker and account/cookie consent boundaries.
+
+Do not merge #760 unchanged. Its removal of the banner would contradict the newer November 17
+owner direction for immediate public access to the World. A scratch three-way comparison found
+five conflict regions in `js/live-content.js`; a textually clean merge elsewhere does not establish
+behavioral compatibility. The current focused privacy, account and World contracts passed 42/42.
+The unchanged twelve World assertions against #760's exact `live-content.js` passed two and failed
+ten, including the banner contract for all four World entry URLs.
+
+Before the production merge, either explicitly supersede/defer #760 or reconcile only its
+non-World agree-or-exit behavior. That reconciliation must preserve the World's existing
+`mcc-privacy-notice=banner` and `mcc-privacy-notice-seen=answered` contract, in-place agreement,
+dialog/navigation clearance and public mission access. A World dismissal must not bypass a
+non-World agreement requirement. Policy copy and tests must then describe both scopes. No consent
+behavior or PR state was changed during this review. The open PR is a release-coordination gate;
+it does not itself change the candidate's running behavior.
 
 ## Original release snapshot and deployment runbook
 

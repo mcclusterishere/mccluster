@@ -464,6 +464,52 @@ including all **18 new header geometry and hit-target checks**. The same run pas
 checks and its database checks; Label Artists run `44548378897` passed. These are Chromium results, not physical
 iPhone lock-screen or AirPlay receipts. The optional dedicated header screenshot capture was not enabled.
 
+### Native Control publication review
+
+The active desk at `control.html#sell:music:catalog` loaded `js/control-room/music-ops.js`, whose Publish button
+sent only the track, decision and note. The existing `music-access` backend requires the reviewed release version
+and verified master SHA-256 before publication. The older `js/music-admin.js` supplied them, but its HTML page
+now redirects into Control, leaving that verification flow unreachable from the active desk.
+
+The native release row now uses the same existing `operator-review-prepare` and `operator-review` actions:
+
+- **Verify + listen** prepares the pinned master, shows its player and short hash, and enables Publish only for a
+  valid response naming that track, its version, a complete SHA-256 and the canonical signed master URL.
+- Preparation must name the version the row displays. `music_prepare_review` reads the release timestamp before
+  pinning its master; pinning is not a reason to accept unseen metadata. A dashboard V1 / backend V2 mismatch
+  requires a queue refresh and verification of V2. Publish carries that matching backend timestamp and hash.
+- Refresh, failed verification, an audio-load failure or a publication attempt removes the prior preparation.
+  An account change also removes and stops the private player. Calls and late replies are fenced to the account
+  that started them; a same-account token renewal preserves the review.
+- Repeated taps retain one pending verification or decision. A failed ancillary queue read cannot release an
+  in-flight decision's lock. A lost or incomplete response is not retried; Refresh queue must read the outcome
+  before another decision is available. Stale decisions also require refresh and verification.
+- The success receipt says **Published.** only after a matching response confirms `published` and `cleared`.
+  That acknowledgement survives a failed subsequent queue read. Existing operator authority, rights requirements,
+  pinned-asset checks and license activation rules remain on the server.
+
+Node **22.23.5**, synthetic records only:
+
+```
+node --test scripts/test/control-music-review.test.mjs \
+  scripts/test/music-platform.test.mjs scripts/test/music-payment-integrity.test.mjs \
+  scripts/test/control-surface.test.mjs scripts/test/control-room-lifecycle.test.mjs \
+  scripts/test/control-room-authority.test.mjs
+```
+
+**112 passed, 0 failed, 0 skipped**, including **17 native-review cases** executing the real module and its
+rendered actions. The same 17 cases fail against the prior native module. Independent review reran all 17 and
+the two reproduced boundary failures: unseen backend metadata and an in-flight write surviving a failed queue
+read. JavaScript syntax, scoped whitespace and workflow parsing/path checks passed.
+
+`scripts/e2e/control-music-review.e2e.mjs` is wired into the existing Music Platform browser job. It defines
+**49 checks across eight scenarios** on the real `control.html`, with all requests intercepted and synthetic
+audio: verification and playback, the exact publication payload and readback/reload at 390 and 1280px,
+verification failure, metadata changing before and after verification, an uncertain publication, sign-out during
+verification and a refused operator. It measures horizontal overflow and 44px targets and captures the verified
+player at both widths. **Its browser proof is pending CI.** Local Chromium execution remains blocked by socket
+creation restrictions. **No authenticated production upload or publication was performed.**
+
 ### Complete-song evidence and remaining work
 
 The measured public file lengths still match `data/albums.json` and the server's track registry. The engine lets a
@@ -486,5 +532,72 @@ its URL. This continuation changes no duration cap, purchase authorization, revi
 
 The separate November 19 music maps referenced above were not present in the recovered repository, so their full
 remaining M3/M5/M6 acceptance criteria cannot be reconstructed from this record alone. Physical iPhone/iPad background
-endurance, lock-screen controls, AirPlay, the new header's browser result, and authenticated production
-upload/publication still need their own receipts.
+endurance, lock-screen controls, AirPlay, the native publication desk's new browser flow, and authenticated
+production upload/publication still need their own receipts. The header geometry already has the Chromium
+receipt recorded above.
+
+### Bounded finish order after this recovery
+
+These are next slices grounded in the current code, not a reconstruction of the missing November 19 maps.
+Finish the native review browser run above first; an authenticated upload/review/publication receipt remains
+separate from synthetic CI and must use the existing operator flow.
+
+#### 1. M3: interrupted streams, then real next-song transitions
+
+Use `js/music-engine.js`, the deck in `album.html`, `js/gated-audio.js` and `js/listen-ledger.js`; retain
+`js/now-playing.js` as the one device-controls owner. The delivery authorities are the existing
+`workers/mccluster/src/music/router.js` and `supabase/functions/music-access/index.ts` / `delivery.ts`.
+The Worker accepts Range requests while its play token remains valid (300 seconds / 16 requests); an expired
+or spent token refuses a later request. Creator streams are signed for 3600 seconds after their existing
+entitlement and asset checks. Neither client resolver currently retains the returned `expires_in` value.
+
+Start with controlled slow reads, a mid-track interruption, a resumed Range request and an expired URL on the
+public, entitled-creator and gated paths. Repair demonstrated recovery failures through those same resolvers;
+for sources whose authorization permits resuming, retain the interrupted position instead of starting from zero.
+An expired earned play must remain subject to its existing server decision. Do not increase its allowance or
+spend another claim silently to make a test pass.
+
+Acceptance: full audio reaches its media end once, previews still stop at their declared boundary, failed
+delivery is not recorded as completion, retries cannot override a newer selection or Pause, and an uncertain
+or expired earned play does not trigger an automatic second claim. Extend `music-playback-races.test.mjs` and
+the existing background/continuity browser fixtures; keep the Worker Range/410 tests and delivery integrity
+tests passing.
+
+Then record physical iPhone Safari playback through at least two consecutive full songs while locked, on
+both Listen and the album, with reduced motion on and off. Include the album's wait for the previous listen
+receipt before claiming its gated closer, a slow next-source response, lock-screen Next/Pause and return to the
+page. Record the actual gap and each next song's title/position. This needs the real private master's duration
+and an authorized complete play; Chromium fixtures do not establish it. Do not label the result gapless without
+that evidence.
+
+#### 2. M5: retain one player across music navigation
+
+First scope the retained-document work to `listen.html` and `music-creator.html`, which already use
+`MCC_MUSIC`; then connect `album.html` through its existing deck controls. Reuse the ownership, history and
+handoff pattern documented in `MUSIC-WORLD-CONTINUITY.md` and implemented by `js/world-audio-continuity.js`
+and `js/tabbar.js`. `js/pip.js` / `listener_state` remain position recovery, not proof of uninterrupted audio.
+This is a browser navigation slice using the current players, auth and gates; it needs no new backend.
+
+Acceptance: during supported music links and Back/Forward, the same audio element, source and buffer survive,
+its clock advances, only one player owns sound and Now Playing, and pause/mute remain deliberate. Choosing a
+different track still follows the existing resolver and queue. Preserve exact artist/album deep links, account
+changes, purchase/preview restrictions and the current Music-to-World behavior. A refresh or tab eviction still
+has the documented recovery behavior; do not mistake a timestamp restore for continuity. Establish this for the
+first pair before expanding the route set.
+
+#### 3. Album batch intake through the existing submission path
+
+The current input in `creator.html` selects one master. Reuse the validated submission sequence in
+`js/music-creator-studio.js` for each selected track: its captured metadata and rights, `creator-upload-url`,
+immutable upload paths, `creator_tracks`, attestations, `pending_review`, cautious rollback and accepted-release
+receipt. Reuse `saveSettings()` and `js/music-creator-page.js` album normalization for grouping/order; respect
+their existing file, album and track limits. Extract that one-track operation before adding a small sequential
+batch controller, so a batch cannot become a second submission or publication implementation.
+
+Acceptance: the creator can review each track's metadata, preview, lyrics and rights before transfer; completed
+tracks keep their receipts and album order; a failed middle track does not undo accepted submissions or upload
+them again; a retry targets only the failed item; account changes stop later work under the old account; an
+album removed or filled during intake is reported without losing the accepted release. Reload shows the saved
+group and statuses. Every track still goes through the native operator's existing verification and publication
+checks. Batch selection and resumable byte transfer are separate capabilities; the current signed-upload call
+does not yet provide a resumable transfer implementation.
