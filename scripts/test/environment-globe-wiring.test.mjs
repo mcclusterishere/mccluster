@@ -6,11 +6,12 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import vm from 'node:vm';
 const read = path => readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
-const NEW_FILES = ['js/environment-layers.js', 'js/environment-layers-client.js', 'js/globe-render-governor.js', 'js/globe-scene-director.js', 'js/environment-pins.js'];
+/* event timeline slice S5 (2026-11-19) adds the quake marks, the ripple and the push: the same rules hold for them */
+const NEW_FILES = ['js/environment-layers.js', 'js/environment-layers-client.js', 'js/globe-render-governor.js', 'js/globe-scene-director.js', 'js/environment-pins.js', 'js/environment-quake-marks.js', 'js/environment-ripple.js', 'js/environment-camera.js'];
 
 test('action-globe.html loads the four new scripts, in order, before environment-pins.js, and carries the collapsed legend', () => {
   const html = read('action-globe.html');
-  const order = ['js/globe-render-governor.js?v=__STAMP__', 'js/globe-scene-director.js?v=__STAMP__', 'js/environment-layers-client.js?v=__STAMP__', 'js/environment-layers.js?v=__STAMP__', 'js/environment-pins.js?v=__STAMP__', 'js/world-countries.js', 'js/action-globe.js?v=__STAMP__'];
+  const order = ['js/globe-render-governor.js?v=__STAMP__', 'js/globe-scene-director.js?v=__STAMP__', 'js/environment-layers-client.js?v=__STAMP__', 'js/environment-quake-marks.js?v=__STAMP__', 'js/environment-ripple.js?v=__STAMP__', 'js/environment-camera.js?v=__STAMP__', 'js/environment-layers.js?v=__STAMP__', 'js/environment-pins.js?v=__STAMP__', 'js/world-countries.js', 'js/action-globe.js?v=__STAMP__'];
   const at = order.map(src => html.indexOf(`<script src="${src}"></script>`));
   assert.ok(at.every(i => i > 0), 'every tag present with the stamp: ' + JSON.stringify(at));
   for (let i = 1; i < at.length; i++) assert.ok(at[i - 1] < at[i], `${order[i - 1]} before ${order[i]}`);
@@ -41,13 +42,15 @@ test('action-globe.js: delegation before the pins line, governor and director in
   const mount = js.indexOf('window.MCC_ENVIRONMENT_LAYERS?.mount({'), draw = js.indexOf('environmentPins?.draw();');
   assert.ok(styled > 0 && governor > styled && director > governor && mount > director && mount < draw, JSON.stringify({ styled, governor, director, mount, draw }));
   assert.match(js, /function syncLegacyHold\(\)\{/);
-  assert.match(js, /MCC_GLOBE_GOVERNOR\.legacyAnimators\(\{pulse:PULSE,halos:missionHalos\.length,livePins:livePins\.length,dataLayersOn:Object\.keys\(DATA_LAYERS\)\.some\(k=>layerState\[k\]\.on\),intelOn:intel\.on,cctvOn:cctv\.on,haloObjects:haloObjects!==null\}\)/);
+  /* event timeline slice S5, decision D16 (changed on purpose): while the environmental layers are on, the pulse takes no legacy hold */
+  assert.match(js, /MCC_GLOBE_GOVERNOR\.legacyAnimators\(\{pulse:PULSE&&!envStill\(\),halos:missionHalos\.length,livePins:livePins\.length,dataLayersOn:Object\.keys\(DATA_LAYERS\)\.some\(k=>layerState\[k\]\.on\),intelOn:intel\.on,cctvOn:cctv\.on,haloObjects:haloObjects!==null\}\)/);
   const calls = (js.match(/syncLegacyHold\(\)/g) || []).length;
   assert.ok(calls >= 11, 'draw, drawLivePlaces, toggleLayer (on and off), clearLayer, toggleIntel, intelOff, toggleCctv, cctvOff, objects.start, objects.stop: ' + calls);
   for (const site of ['new Cesium.DistanceDisplayCondition(0,2400000)}})));syncLegacyHold()}', 'window.__huLivePlaces=()=>Object.fromEntries(total);syncLegacyHold()', 'L.count=0;if(haloObjects)haloObjects.refresh();syncLegacyHold()', "tell({type:'hu:layer',layer:'intel',on:false,creditHeight:creditHeight()});syncLegacyHold()", "tell({type:'hu:layer',layer:'cctv',on:false,creditHeight:creditHeight()});syncLegacyHold()", 'haloObjects.refresh();syncLegacyHold()},stop(){if(haloObjects)haloObjects.destroy();haloObjects=null;syncLegacyHold()}'])
     assert.ok(js.includes(site), 'call site present: ' + site.slice(0, 60));
   assert.match(js, /governor:\(\)=>governor,environment:\(\)=>environmentLayers/);
-  assert.match(js, /if\(window\.HaloConsole&&HaloConsole\.pick\(e\)\)return;if\(environmentPins\?\.pick\(e\)\)return;if\(window\.BridgeportSlice\?\.pick\(e,p\.position\)\)return;/);
+  /* the pick order is unchanged; slice S5 (on purpose) hands the tap's position on, so a quake's glyph answers a tap within 22 px */
+  assert.match(js, /if\(window\.HaloConsole&&HaloConsole\.pick\(e\)\)return;if\(environmentPins\?\.pick\(e,p\.position\)\)return;if\(window\.BridgeportSlice\?\.pick\(e,p\.position\)\)return;/);
   assert.match(js, /document\.addEventListener\('visibilitychange',\(\)=>\{if\(document\.hidden\)director\?\.pause\('hidden'\)\}\)/);
   assert.match(js, /addEventListener\('pagehide',\(\)=>\{environmentLayers\?\.destroy\(\);director\?\.destroy\(\);governor\?\.destroy\(\)\}\)/);
   assert.match(js, /function tell\(msg\)\{if\(EXPLORE\)exploreTell\(msg\);if\(!parentFrame\)return;/, 'tell unchanged');
@@ -134,4 +137,18 @@ test('the new files carry no per-frame geometry callback, no credential, no stor
   assert.doesNotMatch(layers, /fetch\(/, 'the layers module fetches nothing itself');
   assert.doesNotMatch(layers, /Equity Uprise|Human Uprise/, 'no brand name on the globe');
   assert.match(read('js/environment-layers-client.js'), /credentials:\s*'omit'/);
+});
+
+test('D16 (event timeline slice S5): while the environmental layers are on, the halos and the live badges stand still and take no legacy hold', () => {
+  const js = read('js/action-globe.js');
+  assert.match(js, /const envStill=\(\)=>!!\(environmentLayers&&typeof environmentLayers\.isOn==='function'&&environmentLayers\.isOn\(\)\);/);
+  assert.match(js, /scale:PULSE\?new Cesium\.CallbackProperty\(\(\)=>envStill\(\)\?1\.12:1\+\.24\*Math\.sin\(Date\.now\(\)\/280\+phase\),false\):1\.12/, 'a halo rests at its still size');
+  assert.match(js, /scale:PULSE\?new Cesium\.CallbackProperty\(\(\)=>envStill\(\)\?1:1\+\.07\*Math\.sin\(Date\.now\(\)\/320\),false\):1\}/, 'a live badge rests at its still size');
+  assert.match(js, /window\.MCC_ENVIRONMENT_LAYERS\?\.mount\(\{viewer,Cesium,tell:m=>tell\(m\),governor,director,document,onActive:\(\)=>syncLegacyHold\(\)\}\);/, 'the hold is synced when the layers go on and off');
+  const layers = read('js/environment-layers.js');
+  assert.match(layers, /isOn: \(\) => mounted && on,/);
+  assert.match(layers, /on = true;\n    if \(governor\) governor\.enable\(\);\n    onActive\(true\);/);
+  assert.match(layers, /on = false;\n    onActive\(false\);/);
+  /* the halos are unchanged elsewhere, and reduced motion still keeps them still */
+  assert.match(js, /const missionHalos=\[\],PULSE=!matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches;/);
 });

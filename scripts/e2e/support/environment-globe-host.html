@@ -10,7 +10,8 @@
 <!-- A same-origin stand-in for the World page: it embeds the globe frame exactly as mnet.html does and plays the
      panel's part of the message spine (hu:environment-layers, then hu:environment-pins on hu:globe-ready; the pins carry the
      feed providers' terms as the panel copies them from the feed's own source records, review G1R-10).
-     Query: ?layers=on|off  ?replay=quakes-24h  ?pins=0 (no pins message)  ?v=<stamp>. Test harness only. -->
+     Query: ?layers=on|off  ?replay=quakes-24h  ?pins=0 (no pins message)  ?missions=1 (the frame draws the missions' pins, for
+     slice S5's halo check)  ?v=<stamp>. Test harness only. -->
 <iframe id="mnWorldFrame" title="Environmental globe under test" src="/action-globe.html?embedded=1&amp;surface=network&amp;missions=0&amp;v=test"></iframe>
 <script>
 (function () {
@@ -19,6 +20,7 @@
   var replay = q.get('replay') === 'quakes-24h' ? 'quakes-24h' : null;
   var sendPins = q.get('pins') !== '0';
   var frame = document.getElementById('mnWorldFrame');
+  if (q.get('missions') === '1') frame.src = '/action-globe.html?embedded=1&surface=network&v=test';
   window.__fromGlobe = [];
   window.__ready = false;
   window.__pinsFixture = null;

@@ -49,6 +49,12 @@
 .we-scene,.we-view { display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0;min-width:0; }
 .we-scene-status { flex:1 1 100%;margin:0;min-height:1.5em; }
 .we-scene button[aria-pressed="true"],.we-view button[aria-pressed="true"] { border-color:var(--we-accent);background:var(--we-pressed); }
+/* event timeline slice S5 (2026-11-19): on a phone the title holds one line and the tour's controls (right under the
+   description since the panel patch S5-TOUR) and the sources toolbar sit a little closer, so at rest on a 390 x 844 phone none
+   of them lies under the World's floating app bar; wider screens keep the earlier sizes */
+.we-panel h2 { font-size:21px; }
+.we-panel .we-scene,.we-panel .we-toolbar { margin:8px 0; }
+@media (min-width:600px) { .we-panel h2 { font-size:25px; } .we-panel .we-scene,.we-panel .we-toolbar { margin:12px 0; } }
 
 /* SOURCE HEALTH (target 11): one card per feed source and per globe layer, its status word in a colour that reads 4.5:1 or
    better on its ground by night and by day, the rest in the panel's dim ink; two columns only once there is room */

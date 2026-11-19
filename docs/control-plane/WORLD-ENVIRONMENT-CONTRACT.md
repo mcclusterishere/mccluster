@@ -88,6 +88,7 @@ and `world-environment-sources.test.mjs`.
 | `/v1/world/environment/layers/tides` | CO-OPS water-level stations and the latest level at 20 documented stations | `coops_stations`, `coops_latest` |
 | `/v1/world/environment/tides/{station}` | One CO-OPS station's observed water level, last 24 hours | `coops_water_level` |
 | `/v1/world/environment/quakes/{usgs-event-id}/shakemap` | One earthquake's ShakeMap intensity contours | `usgs_event`, then `usgs_shakemap` |
+| `/v1/world/environment/quakes/{usgs-event-id}/rupture` | One earthquake's documented rupture: the modelled up-dip edge of a USGS finite-fault plane (E=UP slice S5) | `usgs_event`, then `usgs_rupture` |
 
 **Gate.** Every route is public and unauthenticated, and every one is gated by
 the same persisted module policy as `GET /v1/world/environment`:
@@ -169,6 +170,7 @@ Cloudflare location.
 | One station | `consumer-environment-v1-water-{station}` | 6 min | 6 h |
 | ShakeMap event detail | `consumer-environment-v1-shakemap-{event}` | 5 min | 6 h |
 | ShakeMap contours | `consumer-environment-v1-shakemap-{event}-{source}-{code}-{version}-{updateTime}` | 24 h (a version does not change) | 6 h |
+| Rupture file | `consumer-environment-v1-rupture-{event}-{source}-{code}-{version}-{updateTime}` (the event detail is the ShakeMap's, shared) | 24 h | 6 h |
 | Last success | `cache.mccluster.internal/world/health/{key}` | 7 days | none |
 
 A failure is never stored as an answer.
@@ -277,6 +279,26 @@ keeps every k-th position and both ends. A ShakeMap can exist with no contour
 (a deep event): `available: true`, `contours: []`. ShakeMap is the USGS's
 modelled estimate of shaking intensity, versioned, never a measurement at every
 place, and is labelled so.
+
+**`quakes/{usgs-event-id}/rupture`** (`world-environment-rupture/v1`, E=UP slice
+S5, decision D13): the same id rule (400 `invalid_event`) and the same event
+detail as the ShakeMap route (one read, shared), then the preferred ShakeMap's
+`download/rupture.json` from USGS's own host (200 kB at most, 12 s), counted as a
+look-up. Always `event_id`, `modelled: true`, `label: "modelled rupture plane
+(USGS finite fault)"`, `edges` and `notes`. Only a Polygon or MultiPolygon whose
+`metadata.reference` names a finite fault is drawn, and only each plane's up-dip
+edge (its shallowest side: the longest run of vertices within 2 % of the plane's
+depth range of its top): `available: true`, `edges: [[[lon, lat], ...]]` (at most
+8 planes of 64 vertices), `top_depth_km`, `bottom_depth_km`, `reference`,
+`reviewed`, `model_created`, `usgs_preferred_id`, `version`, `product_code`,
+`product_source`, `update_time`. Otherwise `available: false`, `edges: []` and
+`reason` `point_source` (a Point: USGS models the quake as a point, the usual
+case), `not_finite_fault`, `no_edge`, `no_rupture` (no rupture file listed, or a
+link off USGS's host), `no_shakemap`, `event_not_found`, `withdrawn` or
+`source_unavailable`. The file's `rupture type` decides nothing (it reads
+`rupture extent` for a point too). The edge is a model, never a mapped crack, and
+the globe asks for it only for a selected quake of M6 or more (USGS made 12
+finite-fault models in the year to 2026-11-19, all M6.5 and up).
 
 ### Geometry rules
 
