@@ -685,13 +685,29 @@ try {
       /* a sign-in that works: the door is gone within 260 ms of the session, and Back does not bring it back */
       await page.click('#mnSignInTab');
       await page.fill('#mnEmail', 'member@example.invalid'); await page.fill('#mnPassword', 'fixture-password-1');
+      /* Measure the DOM transitions on the page's clock. Browser round trips and the separate Back check must not be
+         counted as the door's exit time. The leaving timestamp distinguishes preparation from the 220 ms exit. */
+      await page.evaluate(() => {
+        const root = document.documentElement, door = document.getElementById('mnSignedOut');
+        const timing = window.__gateSignInTiming = { memberAt: null, leavingAt: null, hiddenAt: null };
+        const observer = new MutationObserver(() => {
+          const now = performance.now();
+          if (timing.memberAt === null && !root.classList.contains('mn-guest')) timing.memberAt = now;
+          if (timing.memberAt !== null && timing.leavingAt === null && door.classList.contains('is-leaving')) timing.leavingAt = now;
+          if (timing.memberAt !== null && door.hidden) { timing.hiddenAt = now; observer.disconnect(); }
+        });
+        observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(door, { attributes: true, attributeFilter: ['class', 'hidden'] });
+      });
       await page.click('#mnAuthGo');
       await page.waitForFunction(() => !document.documentElement.classList.contains('mn-guest'), null, { timeout: 15000 });
-      const t0 = Date.now();
       const gone = await closed(page);
-      const after = await page.evaluate(() => ({ hist: history.state && history.state.mccDoor, app: !document.getElementById('mnApp').hidden }));
+      const after = await page.evaluate(() => ({ hist: history.state && history.state.mccDoor, app: !document.getElementById('mnApp').hidden, member: !document.documentElement.classList.contains('mn-guest'), timing: window.__gateSignInTiming }));
+      const { memberAt, hiddenAt } = after.timing;
+      const ms = memberAt !== null && hiddenAt !== null ? hiddenAt - memberAt : null;
+      check('success', 'after a sign-in the door is gone within 260 ms of the member transition', gone && ms !== null && ms >= 0 && ms <= 260, { gone, ms, timing: after.timing });
       await page.evaluate(() => history.back()); await page.waitForTimeout(500);
-      check('success', 'after a sign-in the door is gone within 260 ms, the World is the member\'s, no history entry, Back does not reopen', gone && Date.now() - t0 <= 1000 && !after.hist && after.app && await page.evaluate(() => document.getElementById('mnSignedOut').hidden), { gone, after, ms: Date.now() - t0 });
+      check('success', 'after a sign-in the World is the member\'s, no history entry, Back does not reopen', gone && after.member && !after.hist && after.app && await page.evaluate(() => document.getElementById('mnSignedOut').hidden), { gone, after });
       const n = noise(world);
       check('close', 'no console error and no 4xx', n.console.length === 0 && n.bad.length === 0 && world.errors.length === 0, { ...n, errors: world.errors });
     } finally { await ctx.close(); }

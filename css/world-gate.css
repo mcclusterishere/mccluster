@@ -226,7 +226,9 @@ html.mn-door-open body.has-appbar #mccPrivacyNotice { bottom: calc(8px + env(saf
 #mnSignedOut[data-banner] .wg-title { margin-top: 6px; }
 #mnSignedOut[data-banner] .mn__panel { margin-top: 10px; }
 #mnSignedOut[data-banner] .mn__auth-tab { min-height: 52px; }
-#mnSignedOut[data-banner] .wg-field { margin-top: 8px; }
+/* At 390 x 844 the notice leaves 538 px above it. Three 6 px field gaps keep Create account's action above the fade
+   within that cap, without shrinking any control or moving the sheet over Back. */
+#mnSignedOut[data-banner] .wg-field { margin-top: 6px; }
 
 /* why it was asked for */
 #mnSignedOut .mn__gate-why {
