@@ -248,7 +248,7 @@ Five pending parts and one rollback, `supabase/pending/20261119100000_eup_enviro
 `20261119100000_eup_environment_events_v1.rollback.sql` (`supabase/pending/PROMOTION-ORDER.md` section 12). Nothing is applied.
 
 - **Seven tables**, row level security on, no policy, every privilege taken back from `PUBLIC`, `anon`, `authenticated` and
-  `service_role` before the one grant (EXECUTE on seven entry points, to `service_role` only): `eup_environment_providers` (ingest
+  `service_role` before the one grant (EXECUTE on seven entry points, eight since S3's read below, to `service_role` only): `eup_environment_providers` (ingest
   active or paused, publication shown or hidden, the publication rule, a revision), `eup_environment_events` (one row per canonical
   event: state, revision, the snapshot at that revision, observed, USGS-updated, retrieved, revised and first-published times),
   `eup_environment_event_revisions` (append-only: every revision's snapshot, its change old -> new, its cause, the source and fetch
@@ -479,3 +479,149 @@ General-news and Drawdown-mission tests are unchanged.
 - Setting the USGS rule, and any hold, withdrawal or rollback, in production: owner commands, his own acts, once the parts are applied.
 - Install, then Enable, of the environment module (D3): in Overview › Modules, unchanged by this slice.
 - Decisions D1 and D11 as adopted defaults. Nothing was applied, installed, enabled, flagged or published.
+
+## S3. The USGS ingest into the store (private, flag off)
+
+### Present before
+
+At `4f9a304b` (the head this slice started from):
+
+- S1's pending store could take USGS events (`eup_environment_ingest`, with its field-by-field input check, the alias table, the
+  substantive-change rule and the tombstones), and S2's Control showed each provider's last ingest run and let the owner set the
+  USGS rule, pause it or hide it, but nothing called the ingest. The only USGS reader on the public side was the layers' first
+  hop, `normalizeQuake` (`workers/mccluster/src/world-halo-layers.js`), which drops `ids`, `updated`, `status`, `net`, `code`, `sig`
+  and `magType`; the private intel collector (`workers/mccluster/src/intel/usgs-collector.js`) re-reads only the hour before its
+  cursor, never asks for deletions and keys `usgs:<id>:<updated>`, so it cannot be the timeline's source of revisions or
+  withdrawals.
+- No service-role read could tell an ingest which published events to look for while the module is off: the public reads are
+  gated in SQL (EUM01 / EUM03) and the owner's reads need an owner as actor.
+- The ShakeMap route reported a deleted event (USGS answers 409) as `source_unavailable`, an outage it was not (lane 06 inferred
+  it from the code; this slice's test showed it at `4f9a304b`).
+
+### Integrated
+
+- **The normaliser** (`workers/mccluster/src/eup/environment/usgs.js`, new, pure: no network, store or clock). A USGS GeoJSON event,
+  a summary-feed row or an FDSN answer by id, becomes exactly the store's input: the preferred id, every id USGS associates
+  (the preferred one first, at most 50), status (automatic, reviewed, deleted), origin time, USGS `updated`, position and depth,
+  magnitude and its type, place, title, the USGS event page, significance, PAGER alert, tsunami flag, net and code. Values are the
+  event's own properties, never a product's (an FDSN answer by id lists every origin, and with `includesuperseded` every
+  superseded version too). A row the store would refuse (no id, an unknown status, no origin time, no position) is dropped and
+  counted, never guessed; a link off USGS's host becomes the USGS event page; control characters never reach the store.
+  `normalizeQuake` is untouched: the owner's Halo layer and the news pairing read it.
+- **One run per cron tick** (`workers/mccluster/src/eup/environment/ingest.js`, new):
+  1. the store's view first, `eup_environment_ingest_state`: with the parts not applied, no USGS rule yet, or an unreadable
+     store, the run stops and asks USGS nothing; a paused provider records its health row (`paused`) and asks USGS nothing;
+  2. the real-time summary feed for the owner's rule, through `upstream()` (`workers/mccluster/src/world-layers.js`: no
+     cross-host redirect, typed failures, 15 s): the M2.5+ day, or the M1.0+ day or every magnitude when the rule's minimum is
+     lower; a failed read is the run's health (`unavailable`, `upstream_error`, `timeout` or `invalid_data`, with USGS's status)
+     and nothing else;
+  3. published events the feed no longer lists while they are still inside its day: at most five FDSN look-ups by id a run,
+     newest first, `jsonerror=true`. A 409 is a deletion (the store withdraws the event and keeps its tombstone), another
+     preferred id is followed (the store resolves the alias, or merges two stored events), a 404 is asked again on a later run
+     and changes nothing. Events within 30 minutes of the start of the feed's day are ageing out and never "missing"; events
+     below the feed's magnitude floor are not looked for;
+  4. once a day, on the 03:10 UTC tick, one FDSN search for what USGS updated in the last 48 hours, deletions included
+     (`updatedafter`, `includedeleted=true`, origins from 30 days back), kept to the events the store has published in those 30
+     days: late corrections and late deletions. 48 hours, so a missed day is still covered;
+  5. one `eup_environment_ingest` call with everything read (one answer per event, the newest by USGS's own update time; past
+     1,800 the smallest magnitudes are dropped and counted, deletions never), so one health row a run. The run id is the tick
+     (`usgs-20261119T0450Z`, `-sweep` on the sweep tick): a tick delivered twice records once (the store refuses the second,
+     EUE05). Identity (D5: the canonical id is the first one the store saw), what makes a revision (D6), what qualifies (D7) and
+     the tombstones (D12) are the store's own rules, decided in the same transaction as the alias table; the Worker sends what
+     USGS says.
+- **The store's read** (`supabase/pending/20261119100000_eup_environment_events_v1_03.sql`, still pending, part 03 now 31,085 bytes):
+  `eup_environment_ingest_state(provider, since, limit)`, read-only and EXECUTE for `service_role` only, answers the provider's
+  switches and rule and the events ever published that are neither withdrawn nor merged (held and retracted ones included: USGS
+  can still delete them), each with its aliases and last magnitude. It reads no person, decision or coverage and is not gated by
+  the module (the ingest fills the store before anything is public). Part 01's header lists it, the rollback drops it, and
+  `supabase/pending/live-callers.json` names it and `eup_environment_ingest` as `pending_only` callers of part 03.
+- **The flag and the hook**: `workers/mccluster/src/entry.js` runs the ingest on the existing five-minute cron only when
+  `EUP_ENVIRONMENT_USGS_INGEST_ENABLED` is `"true"`; `workers/mccluster/wrangler.toml` sets `"false"`. Off, the hook makes no
+  network call and no store call (decision D20, **default adopted pending Matthew's confirmation**: the Worker cron, like the
+  private collector). The report it logs carries counts and codes, never a store or provider message or a credential.
+- **ShakeMap for a deleted event** (`workers/mccluster/src/world-environment-layers.js`, two lines): USGS's 409 is `reason`
+  `withdrawn`, the source is reported as answering, not down (`docs/control-plane/WORLD-ENVIRONMENT-CONTRACT.md` lists the reason).
+- **Recorded USGS answers** (`workers/mccluster/test/fixtures/environment/usgs-ingest/`, nine files, 35,855 bytes): read from
+  earthquake.usgs.gov on 2026-11-19 between 04:50:41 and 05:02:16 UTC, each wrapped with its request, retrieval time, HTTP status,
+  content type and what was trimmed (whole rows or bulky product listings only): 15 of the 35 rows of the M2.5+ day, the alias
+  look-up `attn6uqd` (answers `us6000u3jl`), a deleted event (`aka2026wpvhsf`, M3.8) answered three ways (200 with
+  `metadata.status` 409 under `jsonerror`, the plain 409, and the `includedeleted` record) plus the detail feed's own 409, an
+  unknown id (404 under `jsonerror`), the `includesuperseded` history of `us6000u3jl` (five origin versions: NTWC M6.6 automatic,
+  PTWC M6.6, NEIC M6.3 and two relocations), and a sweep answer holding one deleted and one automatic row. What a test builds
+  from them (a feed envelope at an earlier time, the event as ComCat showed it at a moment of its history, a deleted event's row
+  before its deletion) is built in `workers/mccluster/test/support/usgs-ingest-fixtures.mjs` and labelled BUILT. No test reaches
+  the network: the Worker suite's guard refuses any unmocked fetch.
+- Decisions D5, D6, D7 and D20 as used here, and the bounds above (the feed floor, five look-ups, the 03:10 sweep over 48 hours
+  and 30 days), are **defaults adopted pending Matthew's confirmation**. No production read was needed for this slice.
+
+### Touched paths
+
+`workers/mccluster/src/eup/environment/usgs.js` (new), `workers/mccluster/src/eup/environment/ingest.js` (new),
+`workers/mccluster/src/entry.js`, `workers/mccluster/wrangler.toml`, `workers/mccluster/src/world-environment-layers.js`,
+`workers/mccluster/test/eup-environment-usgs.test.mjs` (new), `workers/mccluster/test/support/usgs-ingest-fixtures.mjs` (new),
+`workers/mccluster/test/fixtures/environment/usgs-ingest/` (new, nine files), `scripts/test/eup-environment-ingest.integration.mjs`
+(new), `supabase/pending/20261119100000_eup_environment_events_v1_01.sql` (header line), `_03.sql` (the read),
+`supabase/pending/20261119100000_eup_environment_events_v1.rollback.sql`, `supabase/pending/live-callers.json`,
+`supabase/pending/PROMOTION-ORDER.md` (section 12), `supabase/pending/README.md`, `scripts/test/support/eup-environment-database.mjs`,
+`scripts/test/eup-environment-events.integration.mjs`, `scripts/test/eup-environment-events.native.integration.mjs`,
+`.github/workflows/human-uprise-editorial.yml` (matrix entry `environment-ingest`, its paths in the filter),
+`docs/control-plane/WORLD-ENVIRONMENT-CONTRACT.md`, the source map
+(`docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json` with its generated coverage report), and
+this section.
+
+### Tests
+
+E=UP-only assertions changed on purpose, named in the commit: S1's store tests now count eight entry points and 29 functions
+(`scripts/test/eup-environment-events.integration.mjs`, `.native.integration.mjs`, `scripts/test/support/eup-environment-database.mjs`).
+General-news and Drawdown-mission tests are unchanged.
+
+| Command | Result | Before the change |
+| --- | --- | --- |
+| `cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/eup-environment-usgs.test.mjs` | 17/17 pass | at `4f9a304b` the file cannot load (`usgs.js` does not exist) |
+| the same, with only `src/world-environment-layers.js` set back to `4f9a304b` | 16/17: "ShakeMap: a deleted event is withdrawn by USGS, not a source outage" fails (`source_unavailable`) | |
+| the same, with only `src/entry.js` set back | 16/17: "the cron hook runs the ingest only with the flag, and the hook is wired" fails | |
+| the same, with only `wrangler.toml` set back | 16/17: "flag off: no network call and no store call" fails (no committed `"false"`) | |
+| `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-ingest.integration.mjs` (the CI line) | 7/7 pass (about 6 s): flag off makes no call; not applied and no rule ask USGS nothing; the recorded day publishes 9 of 15 (M4.5+) and keeps 6 candidates, a rerun changes nothing; the recorded history `attn6uqd` -> `pt26293000` -> `us6000u3jl` replayed tick by tick stays one event `usgs:attn6uqd` with revisions 1-6 (a DYFI-only tick and a ground-failure tick refresh without one; the 2026-11-10 relocation arrives by the sweep); the alias look-up follows `attn6uqd` to `us6000u3jl`; a recorded 409 withdraws a published event by look-up and by the sweep; paused, unavailable and a re-delivered tick each record what they should | at `4f9a304b` the file cannot load (`ingest.js` does not exist); with only part 03 set back: 0/7 |
+| `PGLITE_MODULE=... node scripts/test/eup-environment-events.integration.mjs` | 294 assertions pass | |
+| `ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=<16 or 17> PG_MODULE=<node-postgres 8.23.1> node scripts/test/eup-environment-events.native.integration.mjs` | 29 checks pass on PostgreSQL 16.15 and 17.7; no server or data directory left behind | |
+| `node --test scripts/test/eup-environment-events-sql.test.mjs scripts/test/rpc-names-exist.test.mjs scripts/test/editorial-ci-partition.test.mjs` | 7/7, 3/3, 1/1 | `rpc-names-exist` failed until both callers were listed |
+| `cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/world-environment-layers.test.mjs test/world-environment.test.mjs test/world-environment-guard.test.mjs test/eup-environment-owner.test.mjs test/eup-router.test.mjs test/eup-modules.test.mjs test/intel-mission-loop.test.mjs test/media-operation-recovery.test.mjs` | 218/218 pass | |
+| `python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py` | 2,906/2,906 checks pass (the new Worker test mapped) | failed on the unmapped test file |
+| `nice -n 15 node --test scripts/test/*.test.mjs` (the root suite, once; load 4.4 rising to 6.0) | 2,787 tests: 2,780 pass, 0 fail, 7 skipped (71.1 s) | |
+| `cd workers/mccluster && nice -n 15 node --import ./test/support/offline-network.mjs --test test/*.test.mjs` (the whole Worker suite, what its `npm test` runs) | 1,997 tests: 1,976 pass, 9 skipped, 12 fail, all twelve in `test/mnet-mission-flow.test.mjs` (it reads only `js/mnet.js` and `js/world-mission-posts.js`, which this slice does not touch; S0 and S2 recorded the same twelve) | |
+
+### Deviations from the plan, with reasons
+
+- **A store read in pending SQL.** The plan gave S3 no SQL, but its step 4 (look up published events the feed no longer lists)
+  needs to know which events are published, and no entry point answers that while the module is off. Part 03 gained one
+  read-only, service-role function rather than a sixth part (one approval of the ingest's part), and S1's tests count it.
+- **Steps 2 and 3 are the store's.** S1 put alias resolution and the substantive diff inside `eup_environment_ingest`, in the same
+  transaction as the alias table; resolving them again in the Worker would be a second, racing copy. The Worker sends what USGS
+  says.
+- **The feed follows the owner's rule.** D7's minimum magnitude is owner-adjustable (0 to 10), so the run reads the M2.5+ day
+  unless the rule asks lower. Significance above 600, a PAGER alert and a tsunami flag are read only at or above the feed's floor
+  (in the week lane 06 read, PAGER alerts began at M4.9, significance above 600 at M5.3, and no event carried a tsunami flag).
+- **`types` is not kept.** The plan's field list named it, but the store's input refuses unknown fields and has no column for it;
+  the rupture route (S5) reads USGS's product list directly.
+- **The sweep is bounded to published events.** Sweeping every stored candidate would insert older events the timeline never
+  showed; the sweep keeps what USGS changed for events published in the last 30 days, at the feed's magnitude floor, with FDSN's
+  `limit` at 2,000 (the 48-hour window above M2.5 read at 04:52 UTC held 251 events).
+- **`includesuperseded` is read, not asked.** The normaliser reads an `includesuperseded` answer correctly (the event's own
+  values, every id), and the tests replay the recorded history through the real ingest and SQL; no production path asks for it,
+  because a look-up by id already lists every associated id. In the replay, the tsunami flag is held at its recorded value and
+  significance is left out: the history carries neither.
+- **The globe shows the new reason raw** ("no contours shown: withdrawn"): the globe's wording lives in files S5 is changing.
+- **Candidates are stored.** Every row of the feed is sent, so events below the rule are kept as candidates (never public; the
+  owner's review queue lists them): in the day recorded here, 19 of the feed's 35 rows; 16 qualify under the D7 default.
+
+### Waiting for Matthew's separate go
+
+- Applying S1's five parts in production, now with the ingest's read in part 03: each on his approval of its exact text, after
+  the mission publish (`supabase/pending/PROMOTION-ORDER.md` section 12). Until then a run stops at its first read.
+- Setting the USGS rule in Control (his own command, once the parts are applied).
+- Turning the ingest on: `EUP_ENVIRONMENT_USGS_INGEST_ENABLED = "true"` is a committed configuration change, so a pull request he
+  approves and its merge (also the Worker's deploy). It stays `"false"` here.
+- Nothing the ingest stores is public until the public routes (S4) ship and the environment module is installed and then enabled
+  (D3), each its own go.
+- Decisions D5, D6, D7 and D20, and the bounds above, as adopted defaults. Nothing was applied, installed, enabled, flagged or
+  published.
