@@ -139,8 +139,9 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXE
    deliberate absences; every console error and 4xx is recorded, and a scenario allows only the ones it names. */
 /* missions / detailRows: the rows the fake database holds; missionsDelay: ms before the list read answers; missionsStatus: the
    list read's status, or a list of statuses answering one read each (the last one again); joinAnswer: 'ok', 'denied' (400 with a
-   message) or 'malformed' (200 with no assignment), never named join, which is node:path's inside open(); joinDelay: ms before the join answers. */
-async function open(device, path, { owner = false, member = false, details = 'present', environment = 'available', missions = MISSIONS, detailRows = DETAILS, missionsDelay = 0, missionsStatus = 200, joinAnswer = 'ok', joinDelay = 0 } = {}) {
+   message) or 'malformed' (200 with no assignment), never named join, which is node:path's inside open(); holdJoin keeps the
+   join response pending until the test has processed both taps and explicitly releases it. */
+async function open(device, path, { owner = false, member = false, details = 'present', environment = 'available', missions = MISSIONS, detailRows = DETAILS, missionsDelay = 0, missionsStatus = 200, joinAnswer = 'ok', holdJoin = false } = {}) {
   const signedIn = owner || member, missionsStatuses = Array.isArray(missionsStatus) ? missionsStatus.slice() : [missionsStatus];
   const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: device.viewport, deviceScaleFactor: 1, isMobile: device.mobile, hasTouch: device.mobile });
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
@@ -155,6 +156,24 @@ async function open(device, path, { owner = false, member = false, details = 'pr
       if (house) localStorage.setItem('mcc_world_owner', JSON.stringify({ sub: who, at: new Date().toISOString() }));
     }
   }, { who: signedIn ? ME.m_uid : null, house: owner });
+  if (holdJoin) await ctx.addInitScript(() => {
+    /* mnet.parse reads response.text(), then JSON.parse. Count consumption without altering the response; the test waits
+       one more task after this counter so openMission/acceptWorldMission have processed the second assignment read. */
+    window.__missionAssignmentReadsConsumed = 0;
+    const fetch = window.fetch;
+    window.fetch = function (...args) {
+      return fetch.apply(this, args).then((response) => {
+        const url = new URL(response.url);
+        if (url.pathname === '/rest/v1/action_mission_assignments' && url.searchParams.has('mission_id')) {
+          const text = response.text.bind(response);
+          response.text = () => text().then((body) => { window.__missionAssignmentReadsConsumed++; return body; });
+        }
+        return response;
+      });
+    };
+  });
+  let joinHeld = holdJoin, releaseHeldJoin = () => {};
+  const joinGate = holdJoin ? new Promise((resolve) => { releaseHeldJoin = () => { joinHeld = false; resolve(); }; }) : null;
   const world = { requests: [], rpc: [], calls: [], details: 0, missionsList: 0, missionsAnswered: 0, dialogs: [], bad: [], console: [] };
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' }, body: JSON.stringify(body) });
   await ctx.route('https://api.mccluster.org/**', (route) => {
@@ -210,7 +229,7 @@ async function open(device, path, { owner = false, member = false, details = 'pr
     if (rpc === 'action_globe_public_region_missions') return json(route, PINS);
     if (rpc === 'action_record') return json(route, { verified_actions: 0, points: 0, in_progress: 0, missions: [], skills: [], cohorts: [] });
     if (rpc === 'join_action_mission') {
-      if (joinDelay) await new Promise((r) => setTimeout(r, joinDelay));
+      if (joinGate) await joinGate;
       if (joinAnswer === 'denied') return json(route, { code: 'P0001', message: 'This mission is full.' }, 400);
       if (joinAnswer === 'malformed') return json(route, {});
       return json(route, { assignment_id: '7a5e0000-0000-4000-8000-000000000001', status: 'in_progress' });
@@ -235,7 +254,7 @@ async function open(device, path, { owner = false, member = false, details = 'pr
   page.on('response', (r) => { if (r.status() >= 400) world.bad.push({ status: r.status(), url: r.url().slice(0, 200) }); });
   await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => !!window.MCC_WORLD_MODE && !!window.MCC_FEED_SCOPE && document.documentElement.classList.contains('mn-world-on'), null, { timeout: 60000 });
-  return { ctx, page, world, errors };
+  return { ctx, page, world, errors, releaseHeldJoin, isJoinHeld: () => joinHeld };
 }
 const fits = (page) => page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
 const globeOf = (page) => page.frame({ url: /action-globe\.html/ });
@@ -627,18 +646,23 @@ try {
   for (const [kind, opts, expect] of [
     ['denied', { member: true, joinAnswer: 'denied' }, { status: /This mission is full\./, join: true }],
     ['malformed', { member: true, joinAnswer: 'malformed' }, { status: /has not returned an active assignment/, join: true }],
-    ['in-flight', { member: true, joinDelay: 1500 }, { status: /Mission started/, join: false }]
+    ['in-flight', { member: true, holdJoin: true }, { status: /Mission started/, join: false }]
   ]) {
     const scope = `member-join-${kind}-390`;
-    const { ctx, page, world, errors } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night', opts);
+    const { ctx, page, world, errors, releaseHeldJoin, isJoinHeld } = await open(VIEWPORTS[0], '/mnet.html?view=feed&daylight=night', opts);
     try {
       await page.waitForSelector(`#mnFeed [data-mission-post="${MANURE.row.id}"] [data-mission-join]`, { timeout: 30000 });
       await page.click(`#mnFeed [data-mission-post="${MANURE.row.id}"] [data-mission-join]`);
       if (kind === 'in-flight') {
-        await page.waitForFunction(() => document.getElementById('mnMissionDialog').open && document.getElementById('mnMissionJoin').disabled, null, { timeout: 15000 }).catch(() => {});
-        await page.waitForTimeout(700);
+        await page.waitForFunction(() => document.getElementById('mnMissionDialog').open && document.getElementById('mnMissionJoin').disabled, null, { timeout: 15000, polling: 100 });
+        const consumed = await page.evaluate(() => window.__missionAssignmentReadsConsumed);
         /* the second tap, on the post's emblem behind the dialog, while the first join is still out */
         await page.evaluate((id) => document.querySelector(`#mnFeed [data-mission-post="${id}"] [data-mission-join]`).click(), MANURE.row.id);
+        await page.waitForFunction((before) => window.__missionAssignmentReadsConsumed > before, consumed, { timeout: 15000, polling: 100 });
+        await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 0)));
+        const pending = { held: isJoinHeld(), joins: world.calls.filter((c) => /^join_action_mission/.test(c.rpc)).length, disabled: await page.locator('#mnMissionJoin').isDisabled() };
+        check(scope, 'both taps finish processing while the first join response is held, with one pending join', pending.held && pending.joins === 1 && pending.disabled, pending);
+        releaseHeldJoin();
       }
       await page.waitForFunction((re) => new RegExp(re).test(document.getElementById('mnMissionDialogStatus').textContent), expect.status.source, { timeout: 20000 }).catch(() => {});
       await page.waitForTimeout(600);
@@ -651,7 +675,7 @@ try {
       const heard = noise(world, [/api\.mccluster\.org\/v1\/status$/, /\/rest\/v1\/rpc\/join_action_mission$/]);
       check(scope, 'zero console errors and no 4xx besides the house-owner check\'s 403 and the refused join', heard.console.length === 0 && heard.bad.length === 0, heard);
       check(scope, 'no JavaScript errors', errors.length === 0, errors);
-    } finally { await ctx.close(); }
+    } finally { releaseHeldJoin(); await ctx.close(); }
   }
 
   /* ---------- hostile rows: nothing a catalog editor writes runs on the World ---------- */
