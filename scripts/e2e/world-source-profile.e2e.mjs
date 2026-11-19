@@ -121,6 +121,8 @@ try {
 
   const door = await open(390, { path: '/mnet.html?mission=' + MISSIONS[0].id });
   try {
+    await door.page.waitForSelector('#mnMissionDialog[open]');
+    check('door', 'a deep-linked mission waits for its credit before opening', await door.page.locator('#mnMissionCredit').count(), 1);
     await door.page.locator('#mnMissionSource button').click();
     await ready(door.page);
     check('door', 'the mission source door opens the source page and closes the mission', await door.page.evaluate(() => [document.getElementById('mnSourceDialog').open, document.getElementById('mnMissionDialog').open, new URLSearchParams(location.search).get('source')]), [true, false, 'project-drawdown']);

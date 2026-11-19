@@ -189,9 +189,14 @@ The source Worker suite passes 13/13 with the offline network guard. The existin
 against the real pending SQL in disposable PGlite, including owner enforcement in both the route and SQL, the dated Show
 attestation, public visibility after Show and Hide, and replay after a lost response.
 The browser launch is **blocked in this workspace**, before a page opens: system Chromium reports
-`ProcessSingleton socket() failed: Operation not permitted`. The new suite is syntax-checked and wired into CI; it has no
-passing browser result or screenshots yet. A green CI run and visual review remain release evidence to collect. No production SQL was
-applied and no page or Worker deployed by this review.
+`ProcessSingleton socket() failed: Operation not permitted`. CI run `44548378772`, at `62277515c349900a206a1f9f3c982b2617cc056e`,
+passed all 48 main source-page browser checks at 390, 820 and 1280 px. Its screenshots were reviewed: the controls and text fit
+at each size. The separate mission-to-source door then timed out. The underlying detail loader marked a mission as asked
+before its response arrived, so a concurrent dialog could draw without its credit and catalog and never receive the door.
+The loader now waits for that mission's pending read, preserving the forty-ID batches, cache and absent-table refusal. Three
+focused regression cases fail before the change and pass after; the combined mission/source/area suites pass 40/40 on Node
+22.23.5. A passing post-repair browser run is still required; the preview, unavailable-page and retry scenarios had not run when
+that first browser job stopped. No production SQL was applied and no page or Worker deployed by this review.
 
 ## Facts used, with sources and dates
 

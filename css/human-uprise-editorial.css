@@ -216,13 +216,14 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
    a plain line icon of what kind of work it is (never a mark); where the name and handle are, the mission's kind and field, then
    its difficulty and points; the title in two lines at most; the description clamped to two; a quiet source line that opens the
    credit; and Join (the supplied emblem alone at the strip's size, the variant made for the ground: white by night, the dark mark
-   by day, css/daylight.css), Details and Share. Tight spacing keeps it in the size of a post: a post is its head, two or three
-   lines of body and a 40px action row; a mission post spends the same room on its head (the source line sits in the head's second
+   by day, css/daylight.css), Details and Share. Compact 16px block padding leaves room for the full wrapped source and 44px
+   action targets. A mission post spends the same room on its head (the source line sits in the head's second
    line beside the difficulty and points, where a post keeps its handle, wrapping rather than cut so the licence stays in view),
-   its title (15px, two lines at most), two lines of description at the size the feed's media cards use (15px) and the same 40px
-   row (the emblem is 40px, the join's tap target 44px wide). What a post does not have is the title line; a sourced mission's head
+   its title (15px, two lines at most), two lines of description at the size the feed's media cards use (15px) and a 44px
+   row (the emblem stays 40px). What a post does not have is the title line; a sourced mission's head
    is one line taller at phone width (scripts/e2e/world-missions-guest.e2e.mjs measures mission posts against the ordinary posts
    around them). */
+.hu-editorial #mnFeed .mn__mission-post {padding-block:16px;}
 .mn__mission-post-icon {flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--mn-rule-2);color:var(--mn-ink);}
 .mn__mission-post-icon svg {width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
 .hu-editorial #mnFeed .mn__mission-post .mn__post-head {margin:0 0 6px;}
@@ -232,6 +233,7 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
 .mn__mission-post-source {display:inline;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;text-decoration:underline;text-decoration-color:var(--mn-rule-2);text-underline-offset:3px;cursor:pointer;overflow-wrap:anywhere;}
 .mn__mission-post-source:hover {color:var(--mn-ink);}
 .hu-editorial #mnFeed .mn__mission-post .mn__post-actions {margin-top:6px;}
+.hu-editorial #mnFeed .mn__mission-post .mn__action {min-width:44px;min-height:44px;}
 .mn__mission-join {justify-content:center;min-width:44px;min-height:40px;padding:0 2px;}
 .mn__mission-join .mn__eup {width:40px;height:40px;}
 .mn__mission-join .mn__eup--dark {display:none;}

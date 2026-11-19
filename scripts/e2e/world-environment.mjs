@@ -181,7 +181,12 @@ try{
    if(url.hostname==='api.mccluster.org'){
     requests.push(p);
     if(p==='/v1/world/environment')return environment==='available'?json(route,FEED):json(route,POLICY[environment],Number(environment));
-    if(p.startsWith('/v1/world/environment/'))return json(route,{ok:false,code:'not_found'},404); /* the page itself never asks for a layer route */
+    if(p==='/v1/world/environment/events'&&environment==='available'){
+     assert.equal(request.method(),'GET','the public timeline is a read only after the feed gate opens');
+     /* S4 reads the public timeline in Equity Uprise. Its store is deliberately unavailable in this live-feed/layer harness. */
+     return json(route,{ok:false,code:'events_unavailable',reason:'store_not_applied'},503);
+    }
+    if(p.startsWith('/v1/world/environment/'))return json(route,{ok:false,code:'not_found'},404); /* all other layer/private routes remain denied */
     if(p==='/v1/mnet/public-feed')return json(route,{items:POSTS,scope:'public',next_before:null});
     if(p==='/v1/world/news')return json(route,{ok:true,items:NEWS,next_before:null,attribution:{name:'The GDELT Project',url:'https://www.gdeltproject.org/'}});
     if(p==='/v1/world/place-scope')return json(route,{ok:true,enabled:false,country:null});
@@ -259,8 +264,10 @@ try{
   assert.equal(pinsOn.items.length,62);assert.equal(pinsOn.items.filter(i=>i.significant).length,16);assert.equal(JSON.stringify(pinsOn).includes('notice'),false,'the pins carry the public fields only');
   /* G1R-10: the pins carry the feed providers' terms, the six public fields of the feed's own source records, for the globe to answer with */
   assert.deepEqual(pinsOn.sources,FEED.sources.map(x=>({id:x.id,label:x.label,url:x.url,attribution:x.attribution,license:x.license,coverage:x.coverage})),'the feed\'s own terms ride with the pins');
-  /* the feed route is read once by the panel; the page never reads a layer route */
-  assert.equal(requests.filter(p=>p==='/v1/world/environment').length,1,JSON.stringify(requests));assert.equal(requests.some(p=>p.startsWith('/v1/world/environment/')),false);
+  /* The panel reads the feed once; S4 reads its public timeline once. The page still never reads a layer or private route. */
+  assert.equal(requests.filter(p=>p==='/v1/world/environment').length,1,JSON.stringify(requests));
+  assert.equal(requests.filter(p=>p==='/v1/world/environment/events').length,1,JSON.stringify(requests));
+  assert.deepEqual(requests.filter(p=>p.startsWith('/v1/world/environment/')&&p!=='/v1/world/environment/events'),[],'no layer or private environment reads: '+JSON.stringify(requests));
   /* Show on globe from the tab: hu:environment-focus to the frame with the event's id */
   const before=(await got(page)).length;
   await page.locator('#mnFeed [data-observation-globe="usgs:fx-gen-50"]').click();
@@ -379,6 +386,7 @@ try{
   await page.waitForFunction(()=>document.querySelectorAll('#mnFeed > article').length>0,null,{timeout:10000});
   assert.equal(await page.locator('#mnFeed .mn__observation-post').count(),0);
   assert.equal(requests.filter(p=>p==='/v1/world/environment').length,1,'one read, no retry loop against a refusing gate');
+  assert.equal(requests.some(p=>p.startsWith('/v1/world/environment/')),false,'a '+code+' feed refusal prevents timeline, layer and private reads: '+JSON.stringify(requests));
   assert.deepEqual(errors,[]);
   console.log(`PASS ${code} 390px: the ${state} line, no panel, zero observation posts, the missions untouched.`);
   await context.close();

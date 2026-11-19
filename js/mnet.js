@@ -41,7 +41,7 @@
     /* the open missions, as posts (js/world-mission-posts.js): every open mission, newest first (all: null until read), their
        details (proof hint, safety line, credit) by id, whether that table is absent here, and how many the Equity Uprise tab
        shows before Load more */
-    missionFeed: { all: null, loading: null, error: "", details: {}, asked: {}, detailsAbsent: false, shown: 20 },
+    missionFeed: { all: null, loading: null, error: "", details: {}, asked: {}, detailReads: {}, detailsAbsent: false, shown: 20 },
     /* the environmental observation posts (js/world-environment-posts.js), by id and in the order the panel's feed gave them; whether
        the module is unavailable right now and the gate's code when it refused */
     environment: { posts: {}, order: [], unavailable: false, code: null, shown: 20 },
@@ -1989,14 +1989,17 @@
   /* the details of these missions (proof hint, safety line, credit), each asked for once, in reads of forty. The table is
      supabase/migrations/20261118021521_action_mission_details.sql, applied to production on 2026-11-18; an installation without it
      answers the first read with 404 (PGRST205), and that is remembered for the session, so nothing more is asked and the posts are
-     drawn without source lines. Resolves true when something new arrived; never rejects. */
+     drawn without source lines. A dialog shares any pending read for its mission: "asked" alone must not let it draw
+     before the credit and source catalog arrive. Resolves true when something new arrived; never rejects. */
   function loadMissionDetails(ids) {
     var f = state.missionFeed, got = false, chunks = [];
+    if (!MISSION_POSTS || f.detailsAbsent) return Promise.resolve(false);
+    var pending = (ids || []).map(function (id) { return f.detailReads[id]; }).filter(Boolean);
     var want = (ids || []).filter(function (id) { return MISSION_ID.test(String(id)) && !f.asked[id]; });
-    if (!MISSION_POSTS || f.detailsAbsent || !want.length) return Promise.resolve(false);
+    if (!want.length) return Promise.all(pending).then(function (results) { return results.some(Boolean); });
     want.forEach(function (id) { f.asked[id] = true; });
     for (var i = 0; i < want.length; i += 40) chunks.push(want.slice(i, i + 40));
-    return chunks.reduce(function (step, chunk) {
+    var read = chunks.reduce(function (step, chunk) {
       return step.then(function () {
         if (f.detailsAbsent) return;
         return sbRest("action_mission_details?select=" + MISSION_DETAIL_FIELDS + "&mission_id=in.(" + chunk.join(",") + ")").then(function (rows) {
@@ -2009,7 +2012,12 @@
           try { sessionStorage.setItem(DETAILS_ABSENT, "1"); } catch (_) {}
         });
       });
-    }, Promise.resolve()).then(function () { return got; });
+    }, Promise.resolve()).then(function () {
+      want.forEach(function (id) { delete f.detailReads[id]; });
+      return got;
+    });
+    want.forEach(function (id) { f.detailReads[id] = read; });
+    return Promise.all(pending.concat([read])).then(function (results) { return results.some(Boolean); });
   }
   /* the details of what is on screen now; when any arrive, the screen is drawn again with them (each mission is asked for once,
      so this never loops) */

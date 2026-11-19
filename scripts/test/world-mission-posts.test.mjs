@@ -164,7 +164,7 @@ test('the page wires them: one read of the open missions, the details asked once
   assert.doesNotMatch(js.slice(js.indexOf('function loadOpenMissions'), js.indexOf('function wantMissionDetails')), /sbRpc\(/, 'no RPC: the open missions are the plain anonymous table read (the policy "public reads open missions")');
   assert.match(js, /sbRest\("action_mission_details\?select=" \+ MISSION_DETAIL_FIELDS \+ "&mission_id=in\.\(" \+ chunk\.join\(","\) \+ "\)"\)/);
   assert.match(js, /if \(!MISSION_POSTS\.detailsAbsent\(e && e\.status, e && e\.data\)\) return;\s*f\.detailsAbsent = true;\s*try \{ sessionStorage\.setItem\(DETAILS_ABSENT, "1"\); \} catch \(_\) \{\}/, 'absence is remembered for the session');
-  assert.match(js, /if \(!MISSION_POSTS \|\| f\.detailsAbsent \|\| !want\.length\) return Promise\.resolve\(false\);/, 'and nothing more is asked');
+  assert.match(js, /if \(!MISSION_POSTS \|\| f\.detailsAbsent\) return Promise\.resolve\(false\);/, 'and nothing more is asked');
   assert.match(js, /drawn = withMissions\(interleaveFeed\(items, news\), feedMissions\)/, 'Global and Local: the missions into the one stream');
   assert.match(js, /if \(scope === "local" && c && state\.world\.pinsKnown\) return MISSION_POSTS\.placeMissions\(all, state\.world\.pins, c\.missionIds \|\| \[\]\);/);
   assert.match(js, /cell\(placeMissionCount\(c\), "missions"\)/, 'the place card counts them');
@@ -219,6 +219,73 @@ function fnSource(src, name) {
   return src.slice(at, i + 1);
 }
 const slice = (src, from, to) => { const a = src.indexOf(from), b = src.indexOf(to, a + 1); assert.ok(a > 0 && b > a, 'js/mnet.js still has ' + from.trim()); return src.slice(a, b); };
+
+function detailsReader() {
+  const state = { missionFeed: { details: {}, asked: {}, detailReads: {}, detailsAbsent: false } }, requests = [], stored = [];
+  const ctx = { state, MISSION_POSTS: P, MISSION_ID: /^[0-9a-f-]{36}$/i, MISSION_DETAIL_FIELDS: 'mission_id,catalog,credit_line',
+    DETAILS_ABSENT: 'mcc.missionDetails.absent', sessionStorage: { setItem: (...args) => stored.push(args) },
+    sbRest(path) { return new Promise((resolve, reject) => requests.push({ path, resolve, reject })); } };
+  const source = slice(read('js/mnet.js'), '  function loadMissionDetails(ids) {', '  /* the details of what is on screen now;');
+  const load = new Function(...Object.keys(ctx), source + '\nreturn loadMissionDetails;')(...Object.values(ctx));
+  return { load, state, requests, stored };
+}
+const detail = (n) => ({ mission_id: id(n), catalog: 'drawdown', credit_line: 'Fixture credit ' + n });
+const flushDetails = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+
+test('a mission dialog waits for the feed\'s pending details before it draws the credit and source door', async () => {
+  const h = detailsReader(), feed = h.load([id(1), id(2)]);
+  await flushDetails();
+  let drawn = false;
+  const dialog = h.load([id(1)]).then(() => { drawn = true; return h.state.missionFeed.details[id(1)]; });
+  await flushDetails();
+  assert.equal(drawn, false, 'an asked ID is still pending, not ready to render without its credit');
+  assert.equal(h.requests.length, 1, 'the dialog shares the feed\'s request');
+  h.requests[0].resolve([detail(1), detail(2)]);
+  await feed;
+  assert.equal((await dialog).catalog, 'drawdown', 'the first dialog draw has the source catalog');
+  assert.equal(h.state.missionFeed.details[id(1)].credit_line, 'Fixture credit 1');
+  assert.equal(await h.load([id(1)]), false, 'an answered ID needs no further read or redraw');
+  assert.equal(h.requests.length, 1);
+});
+
+test('overlapping detail reads keep forty-ID batches, wait for queued IDs and do not block unrelated IDs', async () => {
+  const h = detailsReader(), feed = h.load(Array.from({ length: 41 }, (_, i) => id(i + 1)));
+  await flushDetails();
+  let selectedReady = false;
+  const selected = h.load([id(41)]).then(() => { selectedReady = true; });
+  const unrelated = h.load([id(42)]);
+  await flushDetails();
+  assert.equal(selectedReady, false, 'an ID in the queued second batch must wait');
+  assert.equal(h.requests.length, 2, 'the unrelated read starts without waiting for the first batch');
+  h.requests[1].resolve([detail(42), detail(99)]);
+  await unrelated;
+  assert.equal(h.state.missionFeed.details[id(99)], undefined, 'a row outside the requested IDs is excluded');
+  assert.equal(selectedReady, false);
+  h.requests[0].resolve(Array.from({ length: 40 }, (_, i) => detail(i + 1)));
+  await flushDetails();
+  assert.equal(h.requests.length, 3, 'the original second batch is sent once');
+  h.requests[2].resolve([detail(41)]);
+  await Promise.all([feed, selected]);
+  assert.equal(h.state.missionFeed.details[id(41)].catalog, 'drawdown');
+  const batches = h.requests.map((r) => r.path.match(/mission_id=in\.\(([^)]+)\)/)[1].split(','));
+  assert.deepEqual(batches.map((b) => b.length), [40, 1, 1]);
+  assert.equal(new Set(batches.flat()).size, 42, 'no overlapping request spends a second read on an ID');
+});
+
+test('a missing details table releases concurrent readers and suppresses queued and future reads', async () => {
+  const h = detailsReader(), feed = h.load(Array.from({ length: 41 }, (_, i) => id(i + 1)));
+  await flushDetails();
+  let done = false;
+  const dialog = h.load([id(41)]).then((got) => { done = true; return got; });
+  await flushDetails();
+  assert.equal(done, false);
+  h.requests[0].reject({ status: 404, data: { code: 'PGRST205' } });
+  assert.deepEqual(await Promise.all([feed, dialog]), [false, false]);
+  assert.equal(await h.load([id(42)]), false);
+  assert.equal(h.requests.length, 1, 'no next batch or retry while the table is absent');
+  assert.deepEqual(h.stored, [['mcc.missionDetails.absent', '1']]);
+  assert.deepEqual(h.state.missionFeed.details, {});
+});
 
 test('a mission post escapes every word of its row and its details, and its attributes carry only its id', () => {
   const js = read('js/mnet.js');

@@ -375,6 +375,10 @@ try {
         check(scope, 'Global keeps posts and news as they were, one for one', seq.filter((x) => !x.startsWith('m:')).join('') === others.join(''), seq);
         check(scope, 'Global puts one mission after every three other items, newest first, each once, then the rest up to the page', JSON.stringify(seq) === JSON.stringify(expectedSeq(others, NEWEST))
           && new Set(seq.filter((x) => x.startsWith('m:'))).size === MISSIONS.length, { seq, expected: expectedSeq(others, NEWEST) });
+        await page.evaluate(async () => {
+          await document.fonts.ready;
+          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        });
         const sizes = await page.evaluate(() => ({ posts: [...document.querySelectorAll('#mnFeed article[data-post-id]')].map((a) => Math.round(a.getBoundingClientRect().height)),
           missions: [...document.querySelectorAll('#mnFeed article[data-mission-post]')].map((a) => Math.round(a.getBoundingClientRect().height)),
           cards: [...document.querySelectorAll('#mnFeed article[data-mission-post]')].every((a) => a.classList.contains('mn__post-card') && !a.hasAttribute('data-post-id')) }));

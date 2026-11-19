@@ -25,14 +25,26 @@ Read-only production checks during recovery found 376 migration records, latest
 `mission_catalog_sources` is absent. Direct public-site reads from this executor were blocked by Cloudflare
 error 1010; that is not an observed site outage or a new live-deployment receipt.
 
-Verification uses Node 22.23.5. The final complete root run passed 2,970 tests, with seven skipped and none
-failed (2,977 total); the Python suite passed 7/7. The complete Worker run with its offline network guard passed 2,022 tests,
+Verification uses Node 22.23.5. The complete root run after the World browser repairs passed 2,973 tests, with seven skipped and none
+failed (2,980 total); the Python suite passed 7/7. The complete Worker run with its offline network guard passed 2,022 tests,
 with nine skipped and none failed. The focused music run passed 123/123; its seven new submission regressions
 and twelve reproduced playback failures fail against the recovered implementation and pass after the repairs.
 The focused World client run passed 45/45, the Worker source/timeline routes 24/24, and their disposable PGlite
 SQL proofs 18/18. Connections passed 7/7 static/caller checks and 137/137 PGlite checks; removing each of the
 seven security statements made the proof fail. These focused counts overlap the full repository suites.
 The repository source-coverage validator passed all 2,962 checks without a classification change.
+
+The first PR run exposed the default runner moving to Ubuntu 26.04: pinned Playwright 1.57.0 could not install
+its browser, and the native RLS job could not install PostgreSQL 16. The fifteen affected job definitions now
+use Ubuntu 24.04, preserving their dependency pins, commands and triggers. On `62277515`, the complete database
+reset/schema comparison, native RLS checks, music browser suites, all three Curated World widths and the 72-check
+timeline browser suite passed. Browser tests then reproduced the mission-source loading race and two feed
+spacing/overflow defects; the continuation repairs those with unchanged geometry tolerances and 44px actions.
+An obsolete environmental-route assertion now admits the exact public timeline route while still denying layer
+reads and all subpath reads after a refused gate. The broad Node run also reached previously skipped PowerShell
+checks: its Arc name matcher is aligned with the canonical detector, and declining browser installation must
+leave the explicit disabled setting and every configuration byte unchanged. The PR records the post-repair CI
+results. These Windows changes do not install or activate anything on a device.
 
 Local Chromium could not launch because this executor refused its socket creation. The new source-page and
 music-header browser checks are wired into the existing Human Uprise Editorial and Music Platform CI workflows;

@@ -106,7 +106,11 @@ html.mn-feed-equity[data-we-feed="unavailable"] #weUnavailable,html.mn-feed-equi
 .hu-editorial #mnFeed .mn__observation-post .mn__author-sub { white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35; }
 .mn__observation-post-title { margin:0;color:var(--mn-ink);font:600 15px/1.3 var(--mn-ui);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
 .hu-editorial #mnFeed .mn__observation-post .mn__post-body { margin:2px 0 0;font-size:15px;line-height:1.4;white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
-.hu-editorial #mnFeed .mn__observation-post .mn__post-actions { margin-top:6px; }
+/* Source names stay readable when the two actions need separate rows on a phone. */
+.hu-editorial #mnFeed .mn__observation-post .mn__post-actions { margin:6px 0 0;min-width:0;max-width:100%;flex-wrap:wrap; }
+.mn__observation-post .mn__action { min-width:44px;min-height:44px;max-width:100%;box-sizing:border-box; }
+.mn__observation-post .mn__action-label { min-width:0;white-space:normal;overflow-wrap:anywhere; }
+.mn__observation-post .mn__action svg { flex:none; }
 .mn__observation-post .mn__post-actions a.mn__action { text-decoration:none;color:inherit; }
 .mn__observation-post .mn__action:disabled { opacity:.6;cursor:default; }
 

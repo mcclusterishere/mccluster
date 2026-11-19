@@ -457,8 +457,12 @@ album inline scripts and the scoped whitespace check also pass.
 The existing `music-accounts.e2e.mjs` now has a `music_contextbar` scenario: both Listen and the artist page at
 320, 390 and 1280px, checking actual chip/link intersection, a reachable 44px target, and horizontal overflow.
 The existing Music Platform CI runs it alongside the account scenarios and now runs the submission and playback tests.
-This new browser scenario has **not** passed locally: the executor refused Chromium's local socket creation.
-Its CI result and phone screenshots remain required before claiming the header is visually verified.
+Local Chromium execution is blocked because the executor refused socket creation. On recovered head
+`62277515c349900a206a1f9f3c982b2617cc056e`, Music Platform CI run `44548378615` passed **128/128 account checks**,
+including all **18 new header geometry and hit-target checks**. The same run passed 47/47 background-playback,
+125 Music-to-World/privacy and 125/125 Now Playing checks. Direct Sales run `44548378961` passed all 40 browser
+checks and its database checks; Label Artists run `44548378897` passed. These are Chromium results, not physical
+iPhone lock-screen or AirPlay receipts. The optional dedicated header screenshot capture was not enabled.
 
 ### Complete-song evidence and remaining work
 
