@@ -11,6 +11,8 @@
      companies  company identity, sourced locations, filings, awards
      sources    connector registry, rights/configuration, review queue, refresh/pause
      modules    persisted module policy: install, enable, drain, disable (owner commands)
+     environment  the E=UP environmental event timeline's owner controls: source health (off, outage, no data), review,
+                rollback and the owner preview, honest while the pending event store is not applied (./environment/owner.js)
    This router does not touch the consumer `/v1/world/environment` contract.
 
    ONE explicit exception to "owner-only": the League member branch, PREFIX.member of ./league-contract.js
@@ -27,12 +29,13 @@ import { handleCivic } from './civic.js';
 import { handleCompanies } from './companies.js';
 import { handleSources } from './sources.js';
 import { handleModules } from './modules.js';
+import { handleEnvironmentOwner } from './environment/owner.js';
 
 export const EUP_PREFIX = '/v1/eup';
-export const EUP_SECTIONS = Object.freeze(['overview', 'league', 'civic', 'companies', 'sources', 'modules']);
+export const EUP_SECTIONS = Object.freeze(['overview', 'league', 'civic', 'companies', 'sources', 'modules', 'environment']);
 /* The one prefix under EUP_PREFIX that a signed-in account which is not a house owner can reach. */
 export const EUP_MEMBER_LEAGUE_PREFIX = PREFIX.member;
-const SECTION_HANDLERS = { overview: handleOverview, league: handleLeague, civic: handleCivic, companies: handleCompanies, sources: handleSources, modules: handleModules };
+const SECTION_HANDLERS = { overview: handleOverview, league: handleLeague, civic: handleCivic, companies: handleCompanies, sources: handleSources, modules: handleModules, environment: handleEnvironmentOwner };
 const fail = (status, message, reason) => Object.assign(new Error(message), { status, reason });
 
 /* The error body every E=Up answer uses: a fixed sentence and a reason, never upstream text for a 5xx. */
