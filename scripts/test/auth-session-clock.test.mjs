@@ -20,15 +20,17 @@ const MEMBER = { sub: 'fixture-member', email: 'fixture@example.test' };
 /* The auth server issues one-hour tokens on its own clock. later(s) moves both clocks on together.
    seed(issue): what an earlier visit stored. answer(issue): the auth server's answer to a refresh, when it is not
    simply a new session (answerWith swaps it later; null restores that). fast: timers run in at most 10ms, so a
-   12-second bound passes at once. */
+   12-second bound passes at once. issue(who) carries who.meta as the token's user_metadata; requests lists every
+   request the page made, in order. */
 function tab(ahead, { modules = ['js/backend.js'], seed, answer = null, fast = false } = {}) {
   let elapsed = 0, serial = 0;
   const serverNow = () => Math.floor(Date.now() / 1000) + elapsed;
-  const counts = { refresh: 0, writes: 0 };
+  const counts = { refresh: 0, writes: 0 }, requests = [];
   const issue = (who = MEMBER) => {
     const iat = serverNow(), n = ++serial;
+    const payload = { sub: who.sub, email: who.email, iat, exp: iat + HOUR, n, ...(who.meta ? { user_metadata: who.meta } : {}) };
     return {
-      access_token: 'fixture.' + Buffer.from(JSON.stringify({ sub: who.sub, email: who.email, iat, exp: iat + HOUR, n })).toString('base64url') + '.fixture',
+      access_token: 'fixture.' + Buffer.from(JSON.stringify(payload)).toString('base64url') + '.fixture',
       refresh_token: 'fixture-refresh-' + n, token_type: 'bearer', expires_in: HOUR, expires_at: iat + HOUR, user: { id: who.sub }
     };
   };
@@ -39,6 +41,7 @@ function tab(ahead, { modules = ['js/backend.js'], seed, answer = null, fast = f
   if (seed) store(seed(issue));
   const fetch = async (url, init = {}) => {
     const u = new URL(url);
+    requests.push({ url: String(url), method: init.method || 'GET', body: init.body });
     if (u.pathname === '/auth/v1/token') {
       if (u.searchParams.get('grant_type') === 'refresh_token') { counts.refresh++; if (answer) return answer(issue); }
       return reply(issue());
@@ -69,7 +72,7 @@ function tab(ahead, { modules = ['js/backend.js'], seed, answer = null, fast = f
   for (const path of modules) vm.runInContext(read(path), context, { filename: path });
   return {
     window, counts, serverNow, deviceNow: () => serverNow() + ahead, later: (seconds) => { elapsed += seconds; },
-    issue, store, answerWith: (next) => { answer = next; },
+    issue, store, requests, answerWith: (next) => { answer = next; },
     stored: () => JSON.parse(shelf.get('mccdb_session') || 'null'),
     keep: () => JSON.parse(shelf.get('mcc_sess_keep') || 'null'),
     globe: () => entry.textContent === 'Enter the World →' ? 'signed in' : entry.textContent ? 'guest' : 'unpainted'
@@ -263,4 +266,36 @@ test('a late backend.js answer for a token the same member refreshed elsewhere h
     assert.deepEqual(shelves(t), [elsewhere, elsewhere]);
     assert.equal(t.counts.writes, 0, 'the late answer wrote nothing');
   }
+});
+
+/* ---------- A TOKEN'S CLAIMS, READ AS THE SERVER WROTE THEM (js/backend.js claims()) ----------
+   A JWT's payload is base64url-encoded UTF-8. Plain atob refuses base64url's - and _ and reads one character per byte,
+   so these members either could not be read at all (an avatar URL's query is enough) or came back with a garbled name.
+   Each one is stored the way an older write or a sign-in link stored it, without its own expiry, so the token's exp
+   claim decides whether it is fresh. Pat Lee is the control that always worked. */
+const READ_AS_WRITTEN = [
+  { sub: '7f3e9c1a-0b6d-4a2e-9c5f-1d2e3f4a5b6c', email: 'jose@example.test', meta: { name: 'José Núñez' } },
+  { sub: '2b8d4f60-31c7-4e9a-8f12-6a5b4c3d2e1f', email: 'zoe@example.test', meta: { name: 'Zoë Brontë', avatar_url: 'https://platform-lookaside.fbsbx.com/platform/profilepic/?asid=1&height=100&width=100' } },
+  { sub: 'c41a7e2d-9b3f-4d58-a6e1-0f2c3b4a5d6e', email: 'soren@example.test', meta: { name: 'Søren Ølgaard' } },
+  { sub: 'e9d8c7b6-a5f4-4e3d-b2c1-0a9f8e7d6c5b', email: 'li@example.test', meta: { name: '李雷' } },
+  { sub: '5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d', email: 'renee@example.test', meta: { name: 'Renée O’Neil', picture: 'https://example.test/a.png?s=96&d=retro' } },
+  { sub: '0f1e2d3c-4b5a-4968-8776-655443322110', email: 'pat@example.test', meta: { name: 'Pat Lee' } }
+];
+test('backend.js reads the member, their name and their token\'s expiry from tokens plain atob refused or garbled', async () => {
+  const plainly = (token) => { try { return JSON.parse(atob(token.split('.')[1])).user_metadata.name; } catch { return null; } };
+  const refused = [], garbled = [];
+  for (const who of READ_AS_WRITTEN) {
+    const t = tab(0, { seed: (issue) => { const s = issue(who); return { access_token: s.access_token, refresh_token: s.refresh_token }; } });
+    const token = t.stored().access_token, plain = plainly(token);
+    if (plain === null) refused.push(who.meta.name); else if (plain !== who.meta.name) garbled.push(who.meta.name);
+    assert.deepEqual({ ...t.window.MCC_DB.user() }, { id: who.sub, email: who.email, name: who.meta.name, phone: '' }, who.meta.name);   // copied out of the page's realm
+    assert.equal(t.window.MCC_SUPA.uid(), who.sub, `${who.meta.name}: the id every module asks for`);
+    assert.equal(await t.window.MCC_SUPA.token(), token, `${who.meta.name}: an hour left by its exp claim, handed out as it is`);
+    assert.equal(t.counts.refresh, 0, `${who.meta.name}: no refresh for a fresh token`);
+    await t.window.MCC_DB.like('fixture-item', true);
+    const write = t.requests.find((r) => r.method === 'POST' && new URL(r.url).pathname === '/rest/v1/likes');
+    assert.equal(JSON.parse(write.body).user_id, who.sub, `${who.meta.name}: a write names its owner`);
+  }
+  assert.deepEqual(refused, ['Zoë Brontë', 'Renée O’Neil'], 'the fixture holds tokens plain atob refuses outright');
+  assert.deepEqual(garbled, ['José Núñez', 'Søren Ølgaard', '李雷'], 'and tokens it reads with the name garbled');
 });

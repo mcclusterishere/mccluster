@@ -82,7 +82,28 @@
     } catch (e) {}
   })();
   function session() { return jget("session", null); }
-  function jwtExp(tok) { try { return JSON.parse(atob(tok.split(".")[1])).exp * 1000; } catch (e) { return 0; } }
+  /* A TOKEN'S CLAIMS, READ AS THE BAR READS THEM (js/tabbar.js jwtPayload).
+     A JWT's segments are base64url and its payload is UTF-8 JSON. atob alone
+     refuses base64url's - and _, and hands back one character per byte, so
+     the plain JSON.parse(atob(...)) this file used failed for every payload
+     whose encoding carried either letter (an accented name or an avatar
+     URL's query in user_metadata is enough) and garbled any non-ASCII name it
+     did read. For those members uid() and email() came back null: the live
+     mission page asked a signed-in member to sign in, the player's
+     cross-device resume (js/pip.js) stayed off, and jwtExp() read 0, so a
+     session stored without its own expiry was refreshed however fresh it
+     was. Swapped back, padded and read as UTF-8, any well-formed token
+     decodes. */
+  function claims(tok) {
+    try {
+      var raw = String(tok).split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (raw.length % 4) raw += "=";
+      return JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(raw), function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(""))) || {};
+    } catch (e) { return {}; }
+  }
+  function jwtExp(tok) { var exp = Number(claims(tok).exp); return exp > 0 ? exp * 1000 : 0; }
   /* ONE CLOCK, as js/mcc-auth.js keeps it. A token's exp claim is a time on
      the auth server's clock and Date.now() is this device's, so a device an
      hour ahead read every token as expired and refreshed on every call, and
@@ -172,9 +193,6 @@
        token the bar refreshed a moment earlier is still that member here. */
   var REJECTED = ["refresh_token_not_found", "refresh_token_already_used", "session_expired", "session_not_found", "user_banned", "user_not_found"];
   var refreshFlight = null;
-  function claims(tok) { // a JWT's segments are base64url, which atob refuses until its two letters are swapped back
-    try { return JSON.parse(atob(String(tok).split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))) || {}; } catch (e) { return {}; }
-  }
   function askRefresh(refreshToken) {
     var controller = typeof AbortController === "function" ? new AbortController() : null, timer;
     var late = new Promise(function (_, reject) {
@@ -239,18 +257,20 @@
   function uid() {
     var s = session();
     if (!s) return null;
-    try { return JSON.parse(atob(s.access_token.split(".")[1])).sub; } catch (e) { return null; }
+    var sub = claims(s.access_token).sub;
+    return sub == null ? null : sub;
   }
   function email() {
     var s = session();
     if (!s) return null;
-    try { return JSON.parse(atob(s.access_token.split(".")[1])).email; } catch (e) { return null; }
+    var address = claims(s.access_token).email;
+    return address == null ? null : address;
   }
   /* the profile the account carries: name, phone, whatever signup filed */
   function meta() {
     var s = session();
     if (!s) return {};
-    try { return JSON.parse(atob(s.access_token.split(".")[1])).user_metadata || {}; } catch (e) { return {}; }
+    return claims(s.access_token).user_metadata || {};
   }
 
   /* ---------- supabase driver (signed in) ---------- */
