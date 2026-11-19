@@ -1157,6 +1157,13 @@
       "rationale": "Reviewed song/series release proposal and capability boundary documentation only."
     },
     {
+      "path": "docs/control-plane/EUP-EVENT-TIMELINE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Record of the E=UP environmental event timeline work in the consumer World (gate answers, visitor states, tests, what waits for the owner); names the Equity Uprise tab. No building capability, program or geometry."
+    },
+    {
       "path": "docs/control-plane/GMAIL-CONNECT.md",
       "classification": "documentation_support",
       "capability_ids": [],

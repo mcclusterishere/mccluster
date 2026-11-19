@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 749,
+  "candidate_count": 750,
   "capability_source_count": 104,
-  "support_only_count": 645,
-  "checks_total": 2894,
-  "checks_passed": 2894,
+  "support_only_count": 646,
+  "checks_total": 2898,
+  "checks_passed": 2898,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -158,6 +158,7 @@
     "docs/control-plane/EQUITY-PRODUCT-CONSUMER.md",
     "docs/control-plane/EQUITY-UPRISE-CLIPPING.md",
     "docs/control-plane/EQUITY-UPRISE-MISSION-SERIES-AND-SONG-CTA.md",
+    "docs/control-plane/EUP-EVENT-TIMELINE.md",
     "docs/control-plane/GMAIL-CONNECT.md",
     "docs/control-plane/HALO-INTEL-IMPLEMENTATION-MAP.md",
     "docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md",
@@ -763,7 +764,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "749 entries"
+      "detail": "750 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3572,6 +3573,26 @@
     },
     {
       "name": "docs/control-plane/EQUITY-UPRISE-MISSION-SERIES-AND-SONG-CTA.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/EUP-EVENT-TIMELINE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/EUP-EVENT-TIMELINE.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/EUP-EVENT-TIMELINE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/EUP-EVENT-TIMELINE.md support rationale present",
       "passed": true,
       "detail": ""
     },

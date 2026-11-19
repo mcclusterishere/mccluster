@@ -93,13 +93,34 @@ and `world-environment-sources.test.mjs`.
 the same persisted module policy as `GET /v1/world/environment`:
 `readModulePolicy(env, fetchImpl, 'environment')` with the service key on every
 request, judged by the pinned product's own rules (`environmentGate` in
-`world-environment.js`, using the vendored `module-policy.mjs`). A missing,
-unapplied, unreachable or malformed policy answers 503
-`module_policy_unavailable` before any provider is asked; `disabled` answers
-404 `module_disabled`; `draining` still answers these reads. Nothing defaults to
-on and the decision is never cached. Production applied the policy SQL on
-2026-11-17 but has not installed or enabled the module, so these routes, like
-the feed, answer 503 there until the owner enables it. Other errors:
+`world-environment.js`, using the vendored `module-policy.mjs`). Off, outage
+and no data are three answers (E=UP slice S0, 2026-11-19; the store's policy is
+read once per request, `world-environment-guard.js`):
+
+| Case | Answer |
+| --- | --- |
+| Off: the module never installed (the store's own EUM01, no policy row), or installed and `disabled` | 404 `module_disabled`, the same bytes for both (decision D2, default adopted pending Matthew's confirmation) |
+| Outage: the policy store unreachable or refusing, its schema or a function missing (PGRST202, 42883), the Worker's two Supabase secrets absent, a redirect, a malformed answer | 503 `module_policy_unavailable` |
+| No data: the module on, the providers answering with nothing | 200 with zero events or zero items, every source `available` |
+
+A refusal is answered before any provider is asked; `draining` still answers
+these reads. Nothing defaults to on and the decision is never cached across
+requests. Production applied the policy SQL on 2026-11-17 but has not installed
+the module (zero policy rows, re-read 2026-11-19 02:53 UTC), so `main` answers
+503 there; with this branch's Worker it answers 404 `module_disabled` until the
+owner installs and then enables it (Install answers 404 too: a fresh install is
+`disabled`).
+
+**Bounds on the public reads** (release security review SEC-2,
+`world-environment-guard.js`): concurrent requests that miss the same kept copy
+share one provider read per Worker isolate; at most 16 on-demand lookups (a
+quake's ShakeMap, one station's water level) are fetched at once per isolate,
+and past that a lookup is answered from the kept copy or as unavailable; a
+client address (`cf-connecting-ip`, an IPv6 address by its /64, held in isolate
+memory only) gets 120 public GETs at once refilled at 2 a second, and 30
+lookups refilled at one every 2 s, past which the answer is 429
+`rate_limited` with `retry-after`; the water-level crawl ends by a 15 s
+deadline. Private routes are not limited here. Other errors:
 405 `method_not_allowed` (anything but GET), 404 `not_found` (another path under
 `layers/`, `tides/` or `quakes/`), 400 `invalid_station` or `invalid_event`,
 404 `unknown_station`, 404 `no_mllw_datum`. Answers are `private, no-store`,
