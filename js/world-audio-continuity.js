@@ -32,6 +32,11 @@
      cannot carry Safari's media activation); the child only displays state. */
   var headlineBase = null, lyricCache = {}, lyricLine = "", lyricSlug = "", lyricAt = 0, remoteState = null;
 
+  /* Before every play(): the World's song is music to the device as well. The
+     one helper every player asks (js/now-playing.js, loaded just before this
+     file by js/tabbar.js) sets the playback audio session where the browser has
+     one, the kind iOS keeps going with the screen locked. */
+  function audioSession() { if (root.MCC_NOW_PLAYING) root.MCC_NOW_PLAYING.claim(); }
   function readPreference() {
     try { var p = JSON.parse(localStorage.getItem(PREF) || "null"); return p && typeof p === "object" ? p : {}; } catch (_) { return {}; }
   }
@@ -88,7 +93,7 @@
     var deck = doc.getElementById("deck");
     if (deck && (deck.currentSrc || deck.getAttribute("src"))) {
       return {audio:deck, title:lastAnnouncement.title || doc.getElementById("tpTitle")?.textContent || "Your music",
-        play:function () { return root.MCC_NP_PLAY ? root.MCC_NP_PLAY() : deck.play(); }, pause:function () { deck.pause(); }};
+        play:function () { audioSession(); return root.MCC_NP_PLAY ? root.MCC_NP_PLAY() : deck.play(); }, pause:function () { deck.pause(); }};
     }
     return null;
   }
@@ -280,7 +285,7 @@
     audio.addEventListener("ended", function () {
       songEvent("song_end");
       loadSong(pickSong());
-      try { var p = audio.play(); if (p && p.catch) p.catch(paint); } catch (_) {}
+      try { audioSession(); var p = audio.play(); if (p && p.catch) p.catch(paint); } catch (_) {}
       paint();
     });
     audio.addEventListener("volumechange", function () {
@@ -299,7 +304,7 @@
     audio.setAttribute("playsinline", "");
     audio.muted = preference.muted === true; soundWas = {muted:audio.muted, volume:audio.volume};
     theme = {audio:audio, title:"", access:"full",
-      play:function () { return audio.play(); }, pause:function () { audio.pause(); }};
+      play:function () { audioSession(); return audio.play(); }, pause:function () { audio.pause(); }};
     // the source is set synchronously; rollUnplayed redraws it from the whole catalog once that arrives
     loadSong(pickSong());
     watch(audio); reactions(audio);
@@ -311,7 +316,7 @@
     if (!p.audio.paused) return;
     // Synchronous with the owning document's click/touch. postMessage does not
     // transfer Safari's media activation and is never used to start this sound.
-    try { var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
+    try { audioSession(); var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
     ensureControls(); paint();
   }
   function touch() {
@@ -326,7 +331,7 @@
     var p = player() || ensureTheme();
     if (!p.audio.paused && !p.audio.ended) { pause(); return; }
     preference.paused = false; savePreference();
-    try { var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
+    try { audioSession(); var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
     paint();
   }
   function mute() {

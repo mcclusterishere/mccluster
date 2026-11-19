@@ -140,6 +140,13 @@ first-gesture theme playback and exact artist destinations. The actual globe
 script's graceful renderer-unavailable path is used here; renderer fidelity,
 GPS permissions and route geometry have separate World/Travel suites.
 
+Since music slice M1 (`docs/music/MUSIC-RELEASE-20261119.md`) the suite also
+plays the listen page and the album with default motion, where the album room's
+light is on, and after the Globe tap suspends every `AudioContext` the page made,
+as iOS does in the background: the same element must keep advancing. The earlier
+runs used reduced motion only, where the room never wired its light, so they could
+not see the album go quiet.
+
 The delayed-script regression holds the parent helper request while actual
 audio plays, taps Globe, and checks that the same element keeps advancing before
 and after the helper arrives. It also covers load failure, visible phone-sized

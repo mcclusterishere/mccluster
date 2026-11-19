@@ -1,25 +1,36 @@
 /* ============================================================
    THE FILAMENT — the seek bar is the record's own waveform.
 
-   When a track loads, its audio is decoded and folded into ~170
-   peaks; the sheet's seek line becomes that exact shape. The
-   played side burns in the track's own pulse color, the unplayed
-   side waits in cream, and the whole filament scrubs live under
-   the finger. If the decode is refused (old Safari, data saver,
-   a codec mood) the classic line stays — playback never pays.
+   The sheet's seek line is the record's own shape: 168 peaks
+   measured once from the very file the deck plays
+   (scripts/music-peaks.mjs → data/peaks/<file>.json, read through
+   js/peaks.js). The played side burns in the track's own pulse
+   color, the unplayed side waits in cream, and the whole filament
+   scrubs live under the finger.
+
+   IT NEVER TOUCHES THE SONG. This used to download every track a
+   second time and decode all of it in a second AudioContext to find
+   those peaks: about 50 MB of samples for a median song, on every
+   track change, in the background too, and a second request against
+   an earned play's one-play token (music map 00 G-8, 01 PB-11). The
+   shape is read from a small file now, once per song, and only while
+   the page is seen; a hidden page draws nothing. A record nobody
+   measured (the gated closer's private master, a creator's cut)
+   draws a quiet, even line. If the file cannot be read the classic
+   line stays — playback never pays.
    ============================================================ */
 (function () {
   "use strict";
   var deck = document.getElementById("deck");
   var seek = document.getElementById("nowSeek");
-  if (!deck || !seek) return;
-  if (navigator.connection && navigator.connection.saveData) return; // their data, their call
+  var PEAKS = window.MCC_PEAKS;
+  if (!deck || !seek || !PEAKS) return;
 
   var cv = document.createElement("canvas");
   cv.setAttribute("aria-hidden", "true");
   var g = cv.getContext("2d");
   var BARS = 168;
-  var peaks = null, want = "", cache = {}, actx = null;
+  var peaks = null, want = "";
 
   function pulse() {
     return (getComputedStyle(document.documentElement).getPropertyValue("--pulse") || "#e5383b").trim();
@@ -35,7 +46,7 @@
   }
 
   function draw() {
-    if (!peaks) return;
+    if (!peaks || document.hidden) return;
     var W = cv.width, H = cv.height, mid = H / 2;
     g.clearRect(0, 0, W, H);
     var frac = deck.duration ? deck.currentTime / deck.duration : 0;
@@ -47,63 +58,28 @@
     }
   }
 
+  function show(bars) {
+    peaks = bars;
+    seek.classList.add("wave-on");
+    if (!cv.parentNode) seek.appendChild(cv);
+    fit();
+  }
+  function flat() {
+    var out = [];
+    for (var i = 0; i < BARS; i++) out.push(PEAKS.flat);
+    return out;
+  }
+  /* the shape of whatever the deck is playing, once per song, while seen */
   function build(src) {
-    if (!src) return;
-    /* The query is dropped for the CACHE KEY only, so the same record read
-       through two URLs is drawn once. It must never be dropped from the
-       REQUEST: a gated track plays from a signed Supabase URL whose token
-       lives in that query, and fetching the stripped URL asks storage for
-       the object with no authorization. That comes back as a JSON error,
-       which then goes into decodeAudioData and throws "Unable to decode
-       audio data" on every gated record. Fetch what the deck is playing. */
-    var key = src.split("?")[0];
-    want = key;
-    if (cache[key]) {
-      peaks = cache[key];
-      seek.classList.add("wave-on");
-      if (!cv.parentNode) seek.appendChild(cv);
-      fit();
-      return;
-    }
-    fetch(src)
-      .then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); })
-      .then(function (buf) {
-        if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-        /* Modern browsers ALSO return a promise from decodeAudioData, and
-           reject it when the bytes are not audio, on top of calling the
-           error callback. That returned promise was dropped on the floor,
-           so a file the browser cannot decode surfaced as an unhandled
-           "Unable to decode audio data" rejection although this chain
-           already handles it. Catch the returned one too. */
-        return new Promise(function (res, rej) {
-          var p = actx.decodeAudioData(buf, res, rej);
-          if (p && typeof p.catch === "function") p.catch(rej);
-        });
-      })
-      .then(function (ab) {
-        var ch = ab.getChannelData(0), per = Math.floor(ch.length / BARS);
-        var out = new Float32Array(BARS), max = 0;
-        for (var i = 0; i < BARS; i++) {
-          var m = 0, base = i * per;
-          for (var j = 0; j < per; j += 64) {
-            var v = Math.abs(ch[base + j]);
-            if (v > m) m = v;
-          }
-          out[i] = m;
-          if (m > max) max = m;
-        }
-        if (max > 0) for (var k = 0; k < BARS; k++) out[k] /= max;
-        cache[key] = out;
-        if (want === key) {
-          peaks = out;
-          seek.classList.add("wave-on");
-          if (!cv.parentNode) seek.appendChild(cv);
-          fit();
-        }
-      })
-      .catch(function () {
-        if (want === key) { peaks = null; seek.classList.remove("wave-on"); }
-      });
+    if (!src || document.hidden) return;
+    if (src === want && peaks) return;
+    want = src;
+    if (!PEAKS.keyOf(src)) { show(flat()); return; }
+    PEAKS.load(src).then(function (p) {
+      if (want !== src) return;
+      if (p && p.bars && p.bars.length === BARS) show(p.bars);
+      else { peaks = null; seek.classList.remove("wave-on"); }
+    });
   }
 
   /* the filament follows the finger live */
@@ -125,6 +101,10 @@
   deck.addEventListener("loadedmetadata", function () { build(deck.currentSrc || deck.src); });
   deck.addEventListener("timeupdate", draw);
   addEventListener("resize", fit);
+  /* back in view: the song may have changed while the page was hidden */
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) { build(deck.currentSrc || deck.src); draw(); }
+  });
 
   /* the sheet opens after the load sometimes; measure once it shows */
   var now = document.getElementById("now");
