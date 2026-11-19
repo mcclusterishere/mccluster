@@ -179,6 +179,13 @@
        client fails the call, this one hands it the stored token, as it
        always did offline: good until its own expiry (the refresh starts a
        minute early), refused by the database after it.
+     - A 429 is the server asking to be asked less, so that session is not
+       refreshed again for 30 seconds (the rest the bar keeps between its own
+       lookups, js/tabbar.js AUTH_REST), or for as long as a Retry-After the
+       page can read says, five minutes at most. Calls in between get the
+       stored token without a request. Without the rest every heartbeat and
+       poll on the page asked again while the server was refusing. The
+       canonical client has no rest of its own; the bar rests for it.
      - Calls that need a refresh while one is in the air share it, so a page
        spends its refresh token once instead of racing itself through the
        token's rotation, where the loser's refresh_token_already_used would
@@ -192,7 +199,7 @@
        null. The canonical client gives null either way; a member whose
        token the bar refreshed a moment earlier is still that member here. */
   var REJECTED = ["refresh_token_not_found", "refresh_token_already_used", "session_expired", "session_not_found", "user_banned", "user_not_found"];
-  var refreshFlight = null;
+  var refreshFlight = null, refreshRest = null;
   function askRefresh(refreshToken) {
     var controller = typeof AbortController === "function" ? new AbortController() : null, timer;
     var late = new Promise(function (_, reject) {
@@ -204,7 +211,8 @@
       body: JSON.stringify({ refresh_token: refreshToken }),
       signal: controller ? controller.signal : undefined,
     }).then(function (r) {
-      return r.json().catch(function () { return null; }).then(function (j) { return { ok: r.ok, status: r.status, body: j || {} }; });
+      var wait = Number(r.headers && r.headers.get && r.headers.get("retry-after"));
+      return r.json().catch(function () { return null; }).then(function (j) { return { ok: r.ok, status: r.status, body: j || {}, wait: wait > 0 ? wait : 0 }; });
     });
     return Promise.race([asked, late]).finally(function () { clearTimeout(timer); });
   }
@@ -212,6 +220,7 @@
     var s = session();
     if (!s || !s.refresh_token) return Promise.resolve(null);
     if (refreshFlight && refreshFlight.token === s.refresh_token && refreshFlight.access === s.access_token) return refreshFlight.promise;
+    if (refreshRest && refreshRest.token === s.refresh_token && Date.now() < refreshRest.until) return Promise.resolve(s);
     var flight = { token: s.refresh_token, access: s.access_token };
     function stillCurrent() {
       var now = session();
@@ -226,6 +235,7 @@
       var j = a.body;
       if (a.ok && j.access_token && j.refresh_token) { saveSession(kept(j)); return session(); }
       if (a.status >= 400 && a.status < 500 && REJECTED.indexOf(j.error_code || j.code) !== -1) { forgetSession(); return null; }
+      if (a.status === 429) refreshRest = { token: s.refresh_token, until: Date.now() + Math.min(a.wait || 30, 300) * 1000 };
       return s;
     }, function () {
       return stillCurrent() ? s : moved();

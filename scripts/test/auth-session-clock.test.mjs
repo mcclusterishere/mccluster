@@ -156,17 +156,46 @@ const UNAVAILABLE = {
 /* an answer the test hands over when it chooses */
 const held = () => { let give; const answer = new Promise((resolve) => { give = resolve; }); return { answer: () => answer, give }; };
 
-for (const status of [429, 500, 503]) test(`backend.js keeps the session through a refresh answered ${status}, and the next call asks again`, async () => {
+for (const status of [429, 500, 503]) test(`backend.js keeps the session through a refresh answered ${status}, and asks again ${status === 429 ? 'once the 429\'s 30-second rest is over' : 'on the next call'}`, async () => {
   const t = spent({ answer: UNAVAILABLE[status] });
   const before = t.stored();
   assert.equal(await t.window.MCC_SUPA.token(), before.access_token, 'the stored token, as offline: the database still checks it');
   assert.deepEqual(shelves(t), [before, before], 'both shelves untouched');
   assert.equal(t.window.MCC_DB.user().id, MEMBER.sub, 'still the member to every other call on the page');
   t.answerWith(null);                                // the auth server is answering again
+  if (status === 429) {
+    t.later(29);
+    assert.equal(await t.window.MCC_SUPA.token(), before.access_token, 'inside the rest: the stored token again');
+    assert.equal(t.counts.refresh, 1, 'and no request while the server asked to be asked less');
+    t.later(1);
+  }
   const next = await t.window.MCC_SUPA.token();
   assert.equal(t.counts.refresh, 2, 'the next call asked again');
   assert.notEqual(next, before.access_token);
   assert.equal(next, t.stored().access_token, 'and stored the new session');
+});
+
+test('a 429 rests only the session it answered, for as long as a Retry-After the page can read says, five minutes at most', async () => {
+  const limited = (seconds) => () => ({ ...UNAVAILABLE[429](), headers: { get: (name) => (String(name).toLowerCase() === 'retry-after' ? String(seconds) : null) } });
+  const told = spent({ answer: limited(120) });
+  await told.window.MCC_SUPA.token();
+  told.later(119);
+  await told.window.MCC_SUPA.token();
+  assert.equal(told.counts.refresh, 1, 'still inside the two minutes the server asked for');
+  told.later(1);
+  await told.window.MCC_SUPA.token();
+  assert.equal(told.counts.refresh, 2, 'asked again once they were over');
+  const day = spent({ answer: limited(86400) });
+  await day.window.MCC_SUPA.token();
+  day.later(300);
+  await day.window.MCC_SUPA.token();
+  assert.equal(day.counts.refresh, 2, 'a day is read as five minutes');
+  const other = spent({ answer: limited(120) });
+  await other.window.MCC_SUPA.token();
+  other.store({ ...other.issue(ANOTHER), expires_at: 1 });   // another account, signed in here with a token already spent
+  other.answerWith(null);
+  await other.window.MCC_SUPA.token();
+  assert.equal(other.counts.refresh, 2, 'the rest belonged to the session the 429 answered, not to the next one');
 });
 
 for (const code of REJECTED) test(`backend.js clears both shelves when the auth server rejects the session: ${code}`, async () => {
