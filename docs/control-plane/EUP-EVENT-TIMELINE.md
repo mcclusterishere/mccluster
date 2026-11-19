@@ -320,3 +320,128 @@ COMMIT as whoever commits; it only reads).
 - Setting the USGS rule in production (an owner command, once S2's route ships), the ingest flag (S3), and Install then Enable of
   the environment module (D3).
 - Nothing was applied, installed, enabled, flagged or published.
+
+## S2. Owner controls first: source health, review and rollback
+
+### Present before
+
+At `171bcaad` (the head this slice started from):
+
+- The owner's E=UP controls were module-level only: Control › System › E=Up › Overview › Modules installs, enables, drains and
+  disables the environment unit with a reason, a revision and a key (`js/control-room/eup.js`, `workers/mccluster/src/eup/modules.js`).
+  Nothing showed the owner the environmental providers while the module is off: their health lived only inside the gated public
+  answers, which refuse before any provider is asked. Control's Sources & Review tab covers the intake connectors, not one
+  environmental provider.
+- S1's pending store had the owner's three entry points (`eup_environment_owner_read`, `_owner_preview`, `_owner_command`) but no
+  route called them, so there was no review queue, no hold, withdrawal, restore or rollback of one event, no provider pause or rule,
+  and no owner preview.
+
+### Integrated
+
+- **Owner routes** (`workers/mccluster/src/eup/environment/owner.js`, new; one section entry in `workers/mccluster/src/eup/router.js`),
+  behind the existing house-owner check (`requireHouseOwner`, `workers/mccluster/src/index.js`): a signed-out request is 401 and a
+  signed-in account that is not a house owner 403 before anything is read; every answer is `private, no-store`; the acting owner is
+  always the session user, never a body field, and the store checks the owner again (42501).
+  - `GET /v1/eup/environment/health`: every E=UP source, three facts each. **What a signed-out visitor gets now**: off (the module
+    not installed or disabled, 404 `module_disabled`; or the provider not configured here, FIRMS without the Worker secret
+    `FIRMS_MAP_KEY`, named, never read into an answer), outage (the module policy unreadable, 503; or the provider failing, a kept
+    copy marked `stale` still served), no data (the provider answered with nothing) or reporting. **What the provider answers now**:
+    a live read of every public surface (the feed's four sources and the five globe layers) through the public routes' own code and
+    kept copies (the Cache API keys `consumer-environment-v1-*` and S0's shared in-flight reads), whatever the module's state, so an
+    owner check never asks a provider twice for what a visitor's page is asking. **What the store recorded**: the provider's rule,
+    ingest active or paused, timeline shown or hidden, its last ingest run (ok, empty, unavailable, paused) and last success, from
+    S1's durable log.
+  - `GET /v1/eup/environment/review`: the queue (candidates with whether they would qualify, held, withdrawn by the owner,
+    withdrawn by USGS, merged, corrected, coverage waiting), the providers and the decision log. `GET /v1/eup/environment/events/:id`:
+    one event in full (its revisions with their changes, aliases, coverage, decisions and its public shape).
+  - `GET /v1/eup/environment/preview` (decision D11, **default adopted pending Matthew's confirmation**): the public timeline page
+    exactly as the store projects it, readable while the module is off. It is an **authorization addition** (the owner reads what
+    the public cannot yet) and ships only with Matthew's approval of the pull request.
+  - `POST /v1/eup/environment/commands`: `hold`, `release`, `retract` (the owner's withdrawal, labelled Withdraw), `restore`,
+    `rollback {to_revision}` (restore an older revision as a new one); `set_rule` (without a rule: the D7 default),
+    `pause_provider`, `resume_provider`, `hide_provider`, `show_provider`; `attach_coverage`, `reject_coverage`, `retract_coverage`.
+    The module policy's body rules (`modules.js`): a key of 8-128 safe characters, a reason of 1-500 characters on one line, the
+    revision that was read; every one is checked before the store is called, and `gdelt` (news) is refused as a provider. The same
+    key and command answer the stored receipt (idempotent); a moved revision is 409 `revision_conflict`; a key reused for another
+    command is 409 `idempotency_conflict`. Store text and provider messages never reach the owner: codes and fixed sentences.
+  - **Honest before anything is applied.** Until the five pending parts are applied their functions do not exist: a read answers 200
+    with `store.status` `not_applied` (and the parts' paths) and everything else it knows (the module, the providers now); a
+    command answers 503 `store_not_applied` and records nothing. An unreachable store is `store.status` `unavailable` on the health
+    read and 503 `storage_unavailable` elsewhere; on a command that is an unknown outcome. While the module is off every route still
+    answers: the owner sees sources, review and preview before anything is public, and nothing here installs, enables or changes
+    the module.
+- **Control** (`js/control-room/eup-environment.js`, new, `window.CR.eupEnvironment`; created by `js/control-room/eup.js` as the
+  League tab is; `control.html` loads it and `css/control-eup-environment.css`): a sixth local tab, **Environmental events**, in the
+  existing E=Up workspace, with four views. *Sources*: the module and the store in a sentence each, then every source with its public
+  state and its provider state as chips and in words (never colour alone), each surface's health, the store's line, and for USGS the
+  rule form (minimum magnitude, automatic events, significance, PAGER alert, tsunami), Set this rule, Set the default rule, and once a
+  rule exists Pause or Resume the ingest and Hide or Show on the timeline. *Review*: the queue, Read again, and an opened event with
+  its revisions (old → new), Hold, Release, Withdraw, Restore, "Restore revision N as revision M" (rollback), coverage decisions and
+  the decisions on it. *Preview*: what it is (D11), what the public answers now, the projection with corrections and tombstones,
+  paging. *Decisions*: the append-only log. Commands follow the module policy card: a required reason, the revision that was read, a
+  fresh key, buttons that wait (aria-disabled, still focusable) while one is pending, a read-back after each; a timeout, a lost
+  answer or an unreadable answer is an unknown outcome that is never resent by itself: the decision log is read back and searched for
+  its key (found: recorded; absent: the same key and body can be sent by hand). The slow live check gets its own requester with a
+  45 s deadline; every other read keeps eup.js's 15 s. Mobile first: one column at phone width, full-width 44 px buttons and 16 px
+  fields, room at 720 and 1024 px with `min-width` queries only and `minmax(0, 1fr)` tracks; the four views are a row of tabs that
+  scrolls inside itself.
+- **The staging stand-in** (decision D1): `scripts/test/support/eup-environment-owner-plane.mjs`, the real Worker router for `/v1/eup`
+  over the real module policy and the five pending parts in PGlite, with PostgREST bound by argument name and declared type (the
+  League plane's emulation, reused unchanged), so the Worker's argument names are checked against the real SQL; the providers are
+  small built answers; faults drop a committed answer.
+
+### Touched paths
+
+`workers/mccluster/src/eup/environment/owner.js` (new), `workers/mccluster/src/eup/router.js`,
+`workers/mccluster/test/eup-environment-owner.test.mjs` (new), `workers/mccluster/test/eup-router.test.mjs`,
+`supabase/pending/live-callers.json` (the three owner functions as `pending_only` of their parts),
+`scripts/test/support/eup-environment-owner-plane.mjs` (new), `scripts/test/eup-environment-owner.integration.mjs` (new),
+`js/control-room/eup-environment.js` (new), `js/control-room/eup.js`, `control.html`, `css/control-eup-environment.css` (new),
+`scripts/test/control-eup-environment.test.mjs` (new), `scripts/test/control-eup.test.mjs`,
+`scripts/e2e/control-eup-environment.e2e.mjs` (new), `.github/workflows/human-uprise-editorial.yml` (matrix entries
+`environment-owner` and `environment-control`, their paths in the filter), `docs/control-plane/EUP-ADMIN-WORKSPACE.md`, this
+section, and the source map (the Worker test; `docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json`
+with its generated coverage report).
+
+### Tests
+
+E=UP-only assertions changed on purpose, each named in its commit: `workers/mccluster/test/eup-router.test.mjs` lists `environment`
+among the E=Up sections, and `scripts/test/control-eup.test.mjs` counts six local tabs (End now reaches Environmental events).
+General-news and Drawdown-mission tests are unchanged.
+
+| Command | Result | At `171bcaad` (before) |
+| --- | --- | --- |
+| `cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/eup-environment-owner.test.mjs` | 15/15 pass | the file cannot load (`owner.js` does not exist) |
+| `... --test test/eup-router.test.mjs test/eup-modules.test.mjs test/eup-overview-status.test.mjs test/world-environment.test.mjs test/world-environment-layers.test.mjs test/world-environment-guard.test.mjs` | 105/105 pass | |
+| `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-owner.integration.mjs` | 8/8 pass | 7 fail, 1 passes (the owner-only routing already existed) |
+| `node --test scripts/test/control-eup-environment.test.mjs scripts/test/control-eup.test.mjs scripts/test/control-eup-league.test.mjs` | 62/62 pass | `control-eup-environment.test.mjs` cannot load; with the view file but without the `eup.js` hook 7 of its 8 fail (only the pure helpers pass) |
+| `node --test scripts/test/rpc-names-exist.test.mjs` and `scripts/test/editorial-ci-partition.test.mjs` | 3/3 and 1/1 pass | |
+| after merging the branch head `5d801add` (release review RS-9): the owner and router Worker tests, `world-gate` and `world-news-tint` unit tests, the owner integration | 22/22, 28/28, 8/8 pass | |
+| `nice -n 15 node --test scripts/test/*.test.mjs` (the root suite, once; load 4.3 rising to 7.0) | 2,786 tests: 2,779 pass, 0 fail, 7 skipped (76.4 s) | |
+| `cd workers/mccluster && nice -n 15 node --import ./test/support/offline-network.mjs --test test/*.test.mjs` (the whole Worker suite, what its `npm test` runs) | 1,980 tests: 1,959 pass, 9 skipped, 12 fail, all twelve in `test/mnet-mission-flow.test.mjs`, which fail the same way at `171bcaad` (0/12; recorded by S0 as well) | the same 12 fail |
+| `python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py` | 2,902/2,902 checks pass | |
+| `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> PLAYWRIGHT_DIR=<node_modules> node scripts/e2e/control-eup-environment.e2e.mjs <out>` (under the shared browser lock) | queued behind other agents' browser runs when this section was written; its result is recorded under "Browser run" below once it has run | |
+
+### Deviations from the plan, with reasons
+
+- **A new browser suite.** The plan named `scripts/e2e/control-eup.e2e.mjs`; the proof is a new file,
+  `scripts/e2e/control-eup-environment.e2e.mjs`, at 390, 820 and 1440, with its own CI matrix entry. Several agents edit this branch at
+  once (new files over shared ones), and `control-eup.e2e.mjs` is in no CI workflow today.
+- **The store's command names.** The plan's "withdraw" is the store's `retract` (labelled Withdraw) and "restore revision N" is
+  `rollback {to_revision}`; the store's `restore` undoes a withdrawal, and its coverage commands are offered on the opened event.
+- **The live check is slow on a cold cache.** It reads every provider with the public routes' own timeouts (FIRMS up to 25 s) and
+  answers when all have settled; Control gives that one read a 45 s deadline. A provider that does not answer within its own timeout
+  is an outage with reason `timeout`, as the public route would report it.
+- **"Store not applied" is a state, not a failure** on reads (200 with `store.status`), and a settled refusal on commands (503
+  `store_not_applied`: nothing was recorded), so the owner sees the providers and the module before Matthew applies anything.
+- **The sixth tab is appended**, so the existing tab order and keyboard paths keep their meaning; only End moves.
+- **No provider other than USGS takes a command**: the store refuses them (`provider_not_supported`) until their ingests exist (S9).
+
+### Waiting for Matthew's separate go
+
+- The pull request and its merge (also the Worker deploy). The owner preview (D11) is an authorization addition that ships only
+  with his approval of that pull request.
+- Applying S1's five parts in production: until then every route here answers "store not applied" and records nothing.
+- Setting the USGS rule, and any hold, withdrawal or rollback, in production: owner commands, his own acts, once the parts are applied.
+- Install, then Enable, of the environment module (D3): in Overview › Modules, unchanged by this slice.
+- Decisions D1 and D11 as adopted defaults. Nothing was applied, installed, enabled, flagged or published.
