@@ -9,7 +9,7 @@ test('Creator Studio exposes real paid website controls',async()=>{
 });
 test('Creator Studio authenticates paid publishing and renders returned URL safely',async()=>{
  const src=await read('js/mccluster-creator-account.js');
- assert.match(src,/session\.access_token/);
+ assert.match(src,/MCC\.authFetch\(apiOrigin\+path/, 'the shared auth carries a fresh token (music slice M4, ACC-6)');
  assert.match(src,/\/v1\/creator-billing\/entitlement/);
  assert.match(src,/\/v1\/creator-sites\/publish/);
  assert.match(src,/url\.origin!==apiOrigin/);

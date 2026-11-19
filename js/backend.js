@@ -63,26 +63,59 @@
      same device stays the same member, same numbers. A real sign-out
      clears both shelves on purpose, and so does the auth server's
      explicit no to a refresh (refresh() below): neither is an accident. */
+  /* A SIGN-OUT STAYS SIGNED OUT, as js/mcc-auth.js keeps it (music slice M4, accounts lane ACC-8): a sign-out
+     leaves a mark naming the session it ended (a hash of its refresh token, never the token, the same hash as
+     there), removes the keep before the main copy, and a copy of that session is never restored. Another open tab
+     reading between the two removals used to write the keep back and sign the member in again. */
+  var SIGNED_OUT = "mcc_sess_out";
+  function fingerprint(raw) {
+    var s = raw;
+    if (typeof raw === "string") { try { s = JSON.parse(raw); } catch (e) { return ""; } }
+    var key = s && (s.refresh_token || s.access_token);
+    if (!key) return "";
+    var a = 0x811c9dc5, b = 5381;
+    for (var i = 0; i < key.length; i++) {
+      var c = key.charCodeAt(i);
+      a = Math.imul(a ^ c, 0x01000193) >>> 0;
+      b = (Math.imul(b, 33) + c) >>> 0;
+    }
+    return "v1." + a.toString(36) + "." + b.toString(36) + "." + key.length;
+  }
+  function signedOutCopy(raw) {
+    try { var mark = localStorage.getItem(SIGNED_OUT); return !!mark && mark === fingerprint(raw); } catch (e) { return false; }
+  }
   function saveSession(s) {
+    try { localStorage.removeItem(SIGNED_OUT); } catch (e) {}
     jset("session", s);
     try { localStorage.setItem("mcc_sess_keep", JSON.stringify(s)); } catch (e) {}
   }
   function forgetSession() {
-    jdel("session");
+    try {
+      var mark = fingerprint(localStorage.getItem(NS + "session") || localStorage.getItem("mcc_sess_keep"));
+      if (mark) localStorage.setItem(SIGNED_OUT, mark);
+    } catch (e) {}
     try { localStorage.removeItem("mcc_sess_keep"); } catch (e) {}
+    jdel("session");
   }
   (function restoreKeep() {
     try {
-      if (!localStorage.getItem("mccdb_session")) {
+      var main = localStorage.getItem("mccdb_session");
+      if (main && signedOutCopy(main)) {
+        localStorage.removeItem("mcc_sess_keep"); localStorage.removeItem("mccdb_session");
+      } else if (!main) {
         var kept = localStorage.getItem("mcc_sess_keep");
-        if (kept) localStorage.setItem("mccdb_session", kept);
+        if (kept && signedOutCopy(kept)) localStorage.removeItem("mcc_sess_keep");
+        else if (kept) localStorage.setItem("mccdb_session", kept);
       } else {
-        localStorage.setItem("mcc_sess_keep", localStorage.getItem("mccdb_session"));
+        localStorage.setItem("mcc_sess_keep", main);
       }
     } catch (e) {}
   })();
-  function session() { return jget("session", null); }
-  function jwtExp(tok) { try { return JSON.parse(atob(tok.split(".")[1])).exp * 1000; } catch (e) { return 0; } }
+  function session() {
+    var s = jget("session", null);
+    return s && signedOutCopy(s) ? null : s;
+  }
+  function jwtExp(tok) { var exp = Number(claims(tok).exp); return exp > 0 ? exp * 1000 : 0; }
   /* ONE CLOCK, as js/mcc-auth.js keeps it. A token's exp claim is a time on
      the auth server's clock and Date.now() is this device's, so a device an
      hour ahead read every token as expired and refreshed on every call, and
@@ -172,8 +205,17 @@
        token the bar refreshed a moment earlier is still that member here. */
   var REJECTED = ["refresh_token_not_found", "refresh_token_already_used", "session_expired", "session_not_found", "user_banned", "user_not_found"];
   var refreshFlight = null;
-  function claims(tok) { // a JWT's segments are base64url, which atob refuses until its two letters are swapped back
-    try { return JSON.parse(atob(String(tok).split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))) || {}; } catch (e) { return {}; }
+  function claims(tok) {
+    /* A JWT's segments are base64url, which atob refuses until its two letters are swapped back, and the text inside
+       is UTF-8, which atob hands back one byte per letter: "José" read as "JosÃ©". Read both ways, as js/tabbar.js
+       does (music slice M4, accounts lane ACC-9: uid() and email() were null for some members' tokens). */
+    try {
+      var raw = String(tok).split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (raw.length % 4) raw += "=";
+      return JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(raw), function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(""))) || {};
+    } catch (e) { return {}; }
   }
   function askRefresh(refreshToken) {
     var controller = typeof AbortController === "function" ? new AbortController() : null, timer;
@@ -238,19 +280,16 @@
 
   function uid() {
     var s = session();
-    if (!s) return null;
-    try { return JSON.parse(atob(s.access_token.split(".")[1])).sub; } catch (e) { return null; }
+    return (s && claims(s.access_token).sub) || null;
   }
   function email() {
     var s = session();
-    if (!s) return null;
-    try { return JSON.parse(atob(s.access_token.split(".")[1])).email; } catch (e) { return null; }
+    return (s && claims(s.access_token).email) || null;
   }
   /* the profile the account carries: name, phone, whatever signup filed */
   function meta() {
     var s = session();
-    if (!s) return {};
-    try { return JSON.parse(atob(s.access_token.split(".")[1])).user_metadata || {}; } catch (e) { return {}; }
+    return (s && claims(s.access_token).user_metadata) || {};
   }
 
   /* ---------- supabase driver (signed in) ---------- */

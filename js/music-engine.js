@@ -441,15 +441,17 @@
         ? { state: "preview", url: preview, reason: "account" }
         : { state: "unavailable", reason: "preview-missing" });
     }
-    return fetch(SB_URL + "/functions/v1/music-access", {
+    /* the shared auth's token for this call, renewed first and asked again once after a 401 (js/mcc-auth.js
+       authFetch): the stored one, an hour old, turned a member's full track into a preview (music slice M4) */
+    var init = {
       method: "POST",
-      headers: {
-        apikey: SB_KEY,
-        authorization: "Bearer " + token,
-        "content-type": "application/json"
-      },
+      headers: { apikey: SB_KEY, "content-type": "application/json" },
       body: JSON.stringify({ action: "stream", track_id: t.creatorTrackId })
-    }).then(function (r) {
+    };
+    var call = root.MCC && root.MCC.authFetch
+      ? root.MCC.authFetch(SB_URL + "/functions/v1/music-access", init)
+      : fetch(SB_URL + "/functions/v1/music-access", Object.assign(init, { headers: { apikey: SB_KEY, authorization: "Bearer " + token, "content-type": "application/json" } }));
+    return call.then(function (r) {
       if (r.ok) return r.json().then(function (d) {
         return d && d.url ? { state: "full", url: d.url } : { state: "unavailable", reason: "no-url" };
       });

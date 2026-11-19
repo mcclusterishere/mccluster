@@ -126,7 +126,9 @@ test('Creator Studio saves albums through the same rules and never clobbers newe
   assert.match(js, /"&updated_at=eq\." \+ encodeURIComponent\(rows\[0\]\.updated_at\)/, 'writes only over the version it read');
   assert.doesNotMatch(js, /settings: Object\.assign\(\{\}, profile && profile\.settings/, 'the profile form never writes back an old copy of the settings');
   assert.match(js, /await saveSettings\(\(s\) => \{ s\.experience_theme = theme; \}\);/);
-  assert.match(js, /function ownerStorage\(\) \{[\s\S]*?Authorization: "Bearer " \+ session\.access_token/, 'deletes carry the owner\'s session');
+  /* the owner's session, never its boot token: the shared auth's token for each call (music slice M4, accounts lane ACC-3) */
+  assert.match(js, /function ownerStorage\(\) \{[\s\S]*?accessToken: \(\) => window\.MCC\.freshToken\(\),\s+global: \{ fetch: studioFetch \}/, 'deletes carry the owner\'s session');
+  assert.doesNotMatch(js, /session\.access_token/, 'no call is sent with the token the page opened with');
   assert.match(js, /async function removeUpload\(bucket, path\) \{\s+if \(!bucket \|\| !path\) return;\s+const supabase = ownerStorage\(\);/);
   assert.match(js, /"Uploaded\. Submitted for rights and publication review\."\) \+ licenseWarning/, 'a derivative upload shows its warnings too');
   assert.match(js, /uploadGrant\("creator-artwork", cover\)/);
