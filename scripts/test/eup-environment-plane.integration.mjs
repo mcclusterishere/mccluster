@@ -43,13 +43,16 @@ test('enabled, the providers answering with rows: 200 with events, the layer wit
   const cache = memoryCache();
   const feed = await plane.get(FEED, { cache });
   assert.equal(feed.status, 200); assert.equal(feed.body.schema, 'world-environment/v1');
-  assert.ok(feed.body.events.some((e) => e.id === 'usgs:usplane01'), 'the quake is an event');
   assert.ok(feed.body.events.some((e) => e.id === 'eonet:EONET_PLANE_1'));
   assert.equal(feed.body.missions_unavailable, true, 'the missions table is not in production either');
   assert.equal(feed.policyReads, 1);
+  /* E=UP slice S4 (changed on purpose): the public feed's USGS rows come from the event store, which this plane does not have
+     (its parts are pending SQL): USGS says so, unavailable with its reason, and USGS's live feed is never read for a second id.
+     The quake with rows, its canonical id and E6's origin time are proven over the real store in
+     scripts/test/eup-environment-timeline.integration.mjs. */
+  assert.ok(!feed.body.events.some((e) => e.id.startsWith('usgs:')), 'no live quake with a second id');
   const usgs = feed.body.sources.find((s) => s.id === 'usgs');
-  assert.equal(usgs.status, 'available');
-  assert.equal(usgs.observed_at, feed.body.events.find((e) => e.id === 'usgs:usplane01').observed_at, 'E6: the latest observation is the quake\'s origin time');
+  assert.deepEqual([usgs.status, usgs.reason], ['unavailable', 'store_not_applied']);
   const layer = await plane.get(EONET, { cache: memoryCache() });
   assert.equal(layer.status, 200); assert.equal(layer.body.count, 1); assert.equal(layer.body.sources[0].status, 'available');
   assert.equal(layer.policyReads, 1);
@@ -59,7 +62,9 @@ test('enabled, the providers answering with nothing: no data, 200 with zero even
   plane.providers = 'empty';
   const feed = await plane.get(FEED, { cache: memoryCache() });
   assert.equal(feed.status, 200); assert.equal(feed.body.events.length, 0);
-  assert.ok(feed.body.sources.every((s) => s.status === 'available'), 'no data is not an outage');
+  /* slice S4 (changed on purpose): USGS is the event store's, not applied in this plane; the live providers' no data stands */
+  assert.ok(feed.body.sources.filter((s) => s.id !== 'usgs').every((s) => s.status === 'available'), 'no data is not an outage');
+  assert.equal(feed.body.sources.find((s) => s.id === 'usgs').reason, 'store_not_applied');
   const layer = await plane.get(EONET, { cache: memoryCache() });
   assert.deepEqual([layer.status, layer.body.count, layer.body.sources[0].status], [200, 0, 'available']);
   /* and a provider down is said per source, still 200: the module is on */

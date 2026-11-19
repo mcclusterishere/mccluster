@@ -24,13 +24,18 @@ function memoryCache() {
   return { raw, async match(k) { return raw.has(k.url) ? new Response(raw.get(k.url)) : undefined; }, async put(k, r) { raw.set(k.url, await r.text()); } };
 }
 const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
-/* the policy store plus the providers a test supplies; every call is logged */
-function world(providers, { policy = () => json(policyOf()) } = {}) {
+/* the policy store plus the providers a test supplies; every call is logged. E=UP slice S4 (changed on purpose): the public
+   feed's USGS rows come from the event store's public page, so the store answers it: by default USGS read a minute ago with
+   nothing to report (no data, available) */
+const STORE_PAGE_RPC = '/rest/v1/rpc/eup_environment_public_events';
+const emptyStorePage = () => json({ schema: 'mccluster.environment-events/v1', events: [], next_cursor: null, sources: [{ provider: 'usgs', status: 'empty', checked_at: new Date(Date.now() - 60e3).toISOString(), last_success_at: new Date(Date.now() - 60e3).toISOString() }] });
+function world(providers, { policy = () => json(policyOf()), storePage = emptyStorePage } = {}) {
   const calls = [];
   const impl = async (url, init = {}) => {
     const u = String(url);
     calls.push(u);
     if (u.endsWith(POLICY_RPC)) return policy();
+    if (u.endsWith(STORE_PAGE_RPC)) return storePage();
     if (u.startsWith('https://db.example/')) return json([]);
     return providers(new URL(u), init);
   };
@@ -114,7 +119,11 @@ test('SEC-2: the feed\'s four providers are shared the same way: 30 concurrent f
   await tick(20); release();
   const answers = await Promise.all(pending);
   assert.ok(answers.every((r) => r.status === 200));
-  assert.equal(f.providerCalls().length, 4, `provider requests: ${f.providerCalls().length}`);
+  /* E=UP slice S4 (changed on purpose): USGS is read from the event store, shared the same way, so three providers are asked
+     (it was four) and the store's page once; USGS itself never */
+  assert.equal(f.providerCalls().length, 3, `provider requests: ${f.providerCalls().length}`);
+  assert.equal(f.calls.filter((u) => u.includes('earthquake.usgs.gov')).length, 0);
+  assert.equal(f.calls.filter((u) => u.endsWith(STORE_PAGE_RPC)).length, 1, '30 feeds, one store read');
 });
 
 test('SEC-2: a waiter whose leader never answers asks on its own after its wait, so a cancelled request strands nobody', async () => {

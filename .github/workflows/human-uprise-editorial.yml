@@ -97,6 +97,9 @@ on:
       - 'scripts/test/eup-environment-owner*.mjs'
       - 'scripts/test/support/eup-environment-owner-plane.mjs'
       - 'scripts/test/eup-environment-ingest*.mjs'
+      - 'scripts/test/eup-environment-timeline*.mjs'
+      - 'scripts/test/support/eup-environment-timeline-plane.mjs'
+      - 'packages/release-policy/globe.mjs'
       - 'workers/mccluster/test/support/usgs-ingest-fixtures.mjs'
       - 'supabase/pending/20261119062110_network_connections_consent_guard_v1*'
       - 'scripts/test/network-connections-consent*.mjs'
@@ -140,7 +143,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-missions-guest, world-first-visit, world-gate, sign-in, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode, world-environment, environment-globe, environment-world, environment-unit, environment-plane, environment-store, environment-owner, environment-control, environment-ingest, connections-consent, mission-sources-store, mission-sources-owner]
+        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, creator-onboarding, mission-pins, world-missions-guest, world-first-visit, world-gate, sign-in, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode, world-environment, environment-globe, environment-world, environment-unit, environment-plane, environment-store, environment-owner, environment-control, environment-ingest, connections-consent, mission-sources-store, mission-sources-owner, environment-timeline]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -200,6 +203,7 @@ jobs:
             environment-owner) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/eup-environment-owner.integration.mjs ;;
             environment-control) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/e2e/control-eup-environment.e2e.mjs /tmp/hu-proof/environment-control ;;
             environment-ingest) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/eup-environment-ingest.integration.mjs ;;
+            environment-timeline) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/eup-environment-timeline.integration.mjs ;;
             connections-consent) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/network-connections-consent.integration.mjs ;;
             mission-sources-store) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/mission-catalog-sources.integration.mjs ;;
             mission-sources-owner) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/mission-sources-owner.integration.mjs ;;

@@ -30,6 +30,9 @@ export function globeRelease(feature, env = {}) {
 export const ENVIRONMENT_MODULE = 'environment';
 export const ENVIRONMENT_PUBLIC_ROUTES = Object.freeze([
   Object.freeze({ id: 'feed', pattern: /^\/v1\/world\/environment$/ }),
+  /* the timeline from the event store, and one event for a deep link (event timeline slice S4) */
+  Object.freeze({ id: 'events', pattern: /^\/v1\/world\/environment\/events$/ }),
+  Object.freeze({ id: 'event', pattern: /^\/v1\/world\/environment\/events\/([^/]+)$/ }),
   Object.freeze({ id: 'fires', pattern: /^\/v1\/world\/environment\/layers\/fires$/ }),
   Object.freeze({ id: 'perimeters', pattern: /^\/v1\/world\/environment\/layers\/perimeters$/ }),
   Object.freeze({ id: 'alerts', pattern: /^\/v1\/world\/environment\/layers\/alerts$/ }),

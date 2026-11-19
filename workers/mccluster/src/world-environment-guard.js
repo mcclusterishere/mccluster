@@ -158,6 +158,7 @@ export function limitPublicRead(request, env, limits = DEFAULT_LIMITS) {
   const id = clientKey(request.headers.get('cf-connecting-ip'));
   if (!id) return null;
   let wait = limits.reads.take(id);
-  if (!wait && (route.id === 'shakemap' || route.id === 'rupture' || route.id === 'water-level')) wait = limits.lookups.take(id);
+  /* a deep link's one event (slice S4) is a lookup too: a key per event */
+  if (!wait && (route.id === 'shakemap' || route.id === 'rupture' || route.id === 'water-level' || route.id === 'event')) wait = limits.lookups.take(id);
   return wait ? gateAnswer(request, env, { ok: false, code: 'rate_limited' }, 429, { 'retry-after': String(wait) }) : null;
 }
