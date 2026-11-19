@@ -6,6 +6,11 @@
    the shading and its legend while keeping the counts (a country's card still says how many stories); leaving the tab brings the
    same shading back. Run on fakes here; the real page and frame by night and by day at 390, 820 and 1280 are
    scripts/e2e/environment-world.e2e.mjs.
+   CHANGED ON PURPOSE BY DECISION D9 (event timeline slice S4, 2026-11-19; default adopted pending Matthew's confirmation; owner
+   direction 2026-11-19: no news on the E=UP globe): in the tab the news LAYER is off, not only its tint (on:false, tint:false): no
+   heat read, no shading or legend, no story pin, and no news count on a country's card; leaving the tab brings it back. The
+   assertions that pinned "the news layer itself stays on" in the tab and behind the sign-in door now pin it off (carried release
+   item 6: the door's backdrop goes as quiet as the tab).
      node --test scripts/test/world-news-tint.test.mjs */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -44,21 +49,25 @@ function newsGlobe({ scope = 'global', mode = 'posts', door = false } = {}) {
   };
 }
 
-test('the page tells the globe to hide the news tint exactly while the feed\'s scope is the Equity Uprise tab, over the message it already sends', () => {
+test('the page tells the globe to turn the news off (the layer and its tint) exactly while the feed\'s scope is the Equity Uprise tab, over the message it already sends', () => {
   const g = newsGlobe();
   assert.deepEqual(g.last(), { type: 'hu:world-news-pins', on: true, tint: true, items: [{ id: 'n1', lat: 41.76, lon: -72.68 }] }, 'Global: the news on, the tint shown');
   assert.equal(g.sent[0].origin, ORIGIN, 'same origin only');
   g.setScope('equity');
   const quiet = g.last();
   assert.equal(quiet.tint, false, 'the Equity Uprise tab: the tint steps aside');
-  assert.equal(quiet.on, true, 'the news layer itself stays on, so the globe keeps its counts for a country\'s card');
+  /* D9, on purpose: the news layer itself is off in the tab (it stayed on before slice S4) */
+  assert.equal(quiet.on, false, 'D9: the news layer is off in the tab: no heat read and no news count on a country\'s card');
+  assert.deepEqual(quiet.items, [], 'and no story is sent while it is off');
   /* a globe that (re)booted while the tab is open is told again, with the tint still quiet */
   const before = g.sent.length;
   g.ready();
   assert.equal(g.sent.length, before + 1);
   assert.equal(g.last().tint, false, 'hu:globe-ready while on the tab: still quiet');
+  assert.equal(g.last().on, false, 'and still off');
   g.setScope('global');
   assert.equal(g.last().tint, true, 'leaving the tab brings the tint back');
+  assert.deepEqual(g.last(), { type: 'hu:world-news-pins', on: true, tint: true, items: [{ id: 'n1', lat: 41.76, lon: -72.68 }] }, 'and the news layer, as it was on Global');
   g.setScope('local');
   assert.equal(g.last().tint, true, 'Local keeps the tint');
   g.setScope('news');
@@ -69,10 +78,10 @@ test('the page tells the globe to hide the news tint exactly while the feed\'s s
   assert.deepEqual(g.last().items, []);
 });
 
-test('a page that lands on the Equity Uprise tab tells the globe the tint is quiet from the first message', () => {
+test('a page that lands on the Equity Uprise tab tells the globe the news is off from the first message', () => {
   const g = newsGlobe({ scope: 'equity' });
   assert.equal(g.last().tint, false);
-  assert.equal(g.last().on, true);
+  assert.equal(g.last().on, false, 'D9, on purpose: off from the first message (it was on before slice S4)');
 });
 
 /* js/world-countries.js mounted on a fake viewer (the shapes never arrive here, so nothing is drawn): the legend and the counts */
@@ -155,12 +164,43 @@ test('the tint steps aside while the sign-in door is open and comes back when it
   assert.equal(g.last().tint, true);
   g.setDoor(true);
   assert.equal(g.last().tint, false, 'the door open: no shading behind the card');
-  assert.equal(g.last().on, true, 'the news itself stays on');
+  /* carried release item 6 with D9, on purpose: the door's backdrop goes as quiet as the tab (the news stayed on before slice S4) */
+  assert.equal(g.last().on, false, 'the door open: the news layer is off behind the card, as in the Equity Uprise tab');
   g.setDoor(false);
   assert.equal(g.last().tint, true, 'the door closed: the shading is back');
+  assert.equal(g.last().on, true, 'and the news layer');
   g.setScope('equity');
   g.setDoor(true); g.setDoor(false);
   assert.equal(g.last().tint, false, 'closing the door over the Equity Uprise tab leaves the tint quiet');
+  assert.equal(g.last().on, false, 'and the news layer stays off');
   const landed = newsGlobe({ door: true });
   assert.equal(landed.last().tint, false, 'a page that opens with the door up says so from the first message');
+  assert.equal(landed.last().on, false);
+  /* Travel's own off is unchanged: the news off, the tint flag kept, so a country's card keeps its dash */
+  const travel = newsGlobe({ mode: 'travel' });
+  assert.deepEqual([travel.last().on, travel.last().tint], [false, true]);
+});
+
+/* D9 (event timeline slice S4): while the page has the news off for the tab or the door (on:false with tint:false), the frame tells
+   the countries, which drop the card's news count (never a dash for a layer that is off) and say so to the page, whose own card
+   drops it too; Travel's off (the tint flag kept) leaves both cards as they were */
+test('D9: with the news off for the tab or the door, a country\'s card says nothing about news, and says so again when it is on', () => {
+  const { api } = countries();
+  assert.equal(typeof api.newsOff, 'function', 'the countries take the flag');
+  assert.equal(api.state().newsOff, false, 'the news on by default');
+  api.newsOff(true);
+  assert.equal(api.state().newsOff, true);
+  api.newsOff(true);
+  assert.equal(api.state().newsOff, true, 'asking twice changes nothing');
+  api.newsOff(false);
+  assert.equal(api.state().newsOff, false, 'the news back: the card counts it again');
+  const globe = read('js/action-globe.js'), c = read('js/world-countries.js'), page = read('js/mnet.js');
+  assert.match(globe, /function newsCardOff\(\)\{if\(countries&&countries\.newsOff\)countries\.newsOff\(!publicNewsOn&&newsTintQuiet\)\}/, 'off for the tab or the door only: on:false with tint:false');
+  assert.match(globe, /publicNewsOn=on===true;newsTintQuiet=tint===false;quietNewsTint\(\);newsCardOff\(\);/, 'every message applies it');
+  assert.match(globe, /\}\}\);newsCardOff\(\);quietNewsTint\(\);loadNewsHeat\(\);loadMembers\(\)\}/, 'and the countries\' mount, for a flag that came first');
+  assert.match(globe, /if\(!publicNewsOn\|\|travelMode\|\|ANALYTICS\)\{countries\.heat\(null\);clearTimeout\(newsHeatTimer\);newsHeatTimer=0;return\}/, 'the news off: no heat read, the timer stopped');
+  assert.match(c, /'<div class="country-card__stats">' \+ \(stats\.newsOff \? '' : cell\(stats\.news, 'news · 24 h'\)\)/, 'the frame\'s card drops the cell');
+  assert.match(c, /return \{ news, newsOff: st\.newsOff === true, /, 'and tells the page');
+  assert.match(page, /'<div class="mn__place-stats">' \+ \(s\.newsOff \? "" : cell\(s\.news, "news \\u00b7 24 h"\)\)/, 'the page\'s card drops it too');
+  assert.match(page, /newsOff: s\.newsOff === true/, 'from the globe\'s own word');
 });

@@ -541,7 +541,9 @@ pending now say what production holds. Nothing is deployed; production still ans
   states and the legend and keep the counts, so a country's card still says how many stories. Any other tab, or a page that never
   sends the flag, keeps the tint, and leaving the tab brings back the same shading and legend
   (`scripts/test/world-news-tint.test.mjs`; `scripts/e2e/environment-world.e2e.mjs`, over the whole Earth on Global, in the tab and
-  after it, by night and by day at 390, 820 and 1280).
+  after it, by night and by day at 390, 820 and 1280). Since E=UP slice S4 (2026-11-19, decision D9, default adopted pending
+  Matthew's confirmation) the news layer itself is off in the tab and behind the sign-in door: no counts are kept there and a
+  country's card has no news count (`docs/control-plane/EUP-EVENT-TIMELINE.md`, S4).
 - **V2-M2, a list of 65 observations before the first post.** The panel listed every observation above the posts, so the first post
   sat 6,964 px (8.25 screens) below the feed's row at 390 with the fixtures (6,650 px at 820, 6,748 px at 1280; measured on the
   unchanged panel right after it rendered). The list now opens on two rows: the significant observations (the host's rule, what the

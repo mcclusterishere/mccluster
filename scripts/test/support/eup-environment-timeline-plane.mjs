@@ -11,7 +11,8 @@
 //   await plane.enable(); await plane.store.command('set_rule', 'usgs', 0);   // the owner turns the module on and sets USGS's rule
 //   await plane.store.ingest([usgsEvent({ provider_id: 'us7000abcd' })]);     // what the S3 ingest writes on its cron
 //   const r = await plane.get('/v1/world/environment/events');                // { status, body, headers, storeReads, providerCalls }
-//   await plane.attach(browserContext);                                       // Playwright: the plane answers /v1/world/environment*
+//   await plane.attach(page);                                                 // Playwright: the plane answers /v1/world/environment*
+//   createTimelinePlane({ origins: ['http://127.0.0.1:<port>'] })              // a test page's own origin, allowed as the Worker allows its sites
 //   await plane.close();
 //
 // WHAT IS REAL: the Worker handler and everything it imports, the SQL with its functions, grants, gates, revisions, aliases and
@@ -25,6 +26,8 @@
 //      perimeter) and NOAA CO-OPS (one station and reading); USGS answers only a ShakeMap detail look-up (404: no such product).
 //      The public feed never asks USGS for quakes: they come from the store. FIRMS is never asked (no FIRMS_MAP_KEY here).
 //   3. The clock, when a test passes `now` (the edge cache's minute).
+//   4. A browser test's page origin (http://127.0.0.1:<port>) added to ALLOWED_ORIGINS beside the World's own sites, so the
+//      Worker's own CORS rule answers that page as it answers https://mccluster.org.
 import { createEnvironmentStoreDatabase, environmentStoreRpc, usgsEvent, DEFAULT_USGS_RULE, OWNER } from './eup-environment-database.mjs';
 import { installModule, enableModule, setModuleState, disableModule, asServiceRole } from './eup-module-policy-database.mjs';
 import { postgrestStatus } from './eup-environment-plane.mjs';
@@ -59,8 +62,9 @@ function providerAnswer(url, now, mode) {
   }
 }
 
-export async function createTimelinePlane({ apply = true, now = () => Date.now() } = {}) {
+export async function createTimelinePlane({ apply = true, now = () => Date.now(), origins = [] } = {}) {
   const store = await createEnvironmentStoreDatabase({ apply });
+  const env = Object.freeze({ ...ENV, ALLOWED_ORIGINS: [ENV.ALLOWED_ORIGINS, ...origins].join(',') });
   const db = store.db;
   const log = { storeReads: 0, policyReads: 0, providerCalls: [] };
   const memoryCache = () => {
@@ -68,7 +72,7 @@ export async function createTimelinePlane({ apply = true, now = () => Date.now()
     return { raw, async match(k) { return raw.has(k.url) ? new Response(raw.get(k.url)) : undefined; }, async put(k, r) { raw.set(k.url, await r.text()); } };
   };
   const plane = {
-    db, store, env: ENV, providers: 'rows', storeDown: false, now, log,
+    db, store, env, providers: 'rows', storeDown: false, now, log,
     cache: memoryCache(),
     freshCache() { plane.cache = memoryCache(); return plane.cache; },
     install: () => installModule(db, 'environment', OWNER),
@@ -104,7 +108,7 @@ export async function createTimelinePlane({ apply = true, now = () => Date.now()
     /* one GET as a signed-out visitor's page sends it: { status, body, headers, storeReads, policyReads, providerCalls } */
     async get(path, { cache = plane.cache, origin = 'https://mccluster.org' } = {}) {
       const before = { store: log.storeReads, policy: log.policyReads, providers: log.providerCalls.length };
-      const response = await handleWorldEnvironment(new Request(API_ORIGIN + path, { headers: { origin, accept: 'application/json' } }), ENV,
+      const response = await handleWorldEnvironment(new Request(API_ORIGIN + path, { headers: { origin, accept: 'application/json' } }), env,
         { fetchImpl: plane.fetchImpl, cacheImpl: cache, limits: null, now: plane.now });
       const text = await response.text();
       let body = null;
@@ -120,9 +124,9 @@ export async function createTimelinePlane({ apply = true, now = () => Date.now()
         const req = pwRoute.request();
         if (!owns(req.url())) return pwRoute.fallback();
         const headers = Object.fromEntries(Object.entries(await req.allHeaders()).filter(([k]) => !k.startsWith(':') && !['host', 'content-length', 'connection'].includes(k.toLowerCase())));
-        if (req.method() === 'OPTIONS') return pwRoute.fulfill({ status: 204, headers: corsHeaders(new Request(req.url(), { headers }), ENV) });
+        if (req.method() === 'OPTIONS') return pwRoute.fulfill({ status: 204, headers: corsHeaders(new Request(req.url(), { headers }), env) });
         try {
-          const response = await handleWorldEnvironment(new Request(req.url(), { method: req.method(), headers }), ENV, { fetchImpl: plane.fetchImpl, cacheImpl: plane.cache, limits: null, now: plane.now });
+          const response = await handleWorldEnvironment(new Request(req.url(), { method: req.method(), headers }), env, { fetchImpl: plane.fetchImpl, cacheImpl: plane.cache, limits: null, now: plane.now });
           await pwRoute.fulfill({ status: response.status, headers: Object.fromEntries(response.headers.entries()), body: Buffer.from(await response.arrayBuffer()) });
         } catch { await pwRoute.abort('failed').catch(() => {}); }
       };
