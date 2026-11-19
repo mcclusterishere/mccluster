@@ -29,6 +29,12 @@
     if (typeof mag !== 'number' || !Number.isFinite(mag)) return null;
     return clamp(25000 * 10 ** (0.75 * (mag - 5)), 300, 1000000);
   }
+  /* the disc is an orbit-scale comparison (event timeline slice S5, 2026-11-19): it steps back once the camera is within five of its
+     radii, 600 km at the least, so a regional frame (the push lands 120-300 km away) shows the ground, the ripple, the ShakeMap
+     contours and the glyph rather than one flat ellipse over everything; out again, it returns */
+  function discNearM(radiusM) {
+    return Math.max(600000, typeof radiusM === 'number' && Number.isFinite(radiusM) ? 5 * radiusM : 0);
+  }
   function depthColour(km) {
     if (typeof km !== 'number' || !Number.isFinite(km)) return GREY;
     return km < 33 ? '#ff5a3c' : km < 70 ? '#ffb347' : km < 300 ? '#ffe066' : '#8bb8ff';
@@ -202,7 +208,7 @@
   const NETWORK_LINE = 'Environmental layers could not be reached from this browser';
   const LAYER_TITLES = Object.freeze({ fires: 'Fires', perimeters: 'Fire perimeters', alerts: 'Alerts', eonet: 'Natural events', tides: 'Water levels' });
   const noneLine = layer => `${LAYER_TITLES[layer] || layer}: none reported right now`;
-  const encodings = Object.freeze({ quakeRadiusM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellPx, CELL_ALPHA, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, RUPTURE_LABEL, ruptureLine, POLICY_LINE, OFF_LINE, NETWORK_LINE, noneLine });
+  const encodings = Object.freeze({ quakeRadiusM, discNearM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellPx, CELL_ALPHA, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, RUPTURE_LABEL, ruptureLine, POLICY_LINE, OFF_LINE, NETWORK_LINE, noneLine });
   /* ENCODINGS_END */
 
   /* THE FEED PROVIDERS' TERMS ARRIVE WITH THE PINS (review G1R-10): the panel copies them from the feed's own source records (which
@@ -329,7 +335,11 @@
         const q = quakeFromFacts(item.facts), r = quakeRadiusM(q.mag);
         colour = q.mag === null ? GREY : depthColour(q.depth_km); size = 6; e.radius = r; e.mag = q.mag;
         if (r !== null && groundOk()) {
-          discs.push(new Cesium.GeometryInstance({ geometry: new Cesium.EllipseGeometry({ center: degrees(item.lon, item.lat), semiMajorAxis: r, semiMinorAxis: r, granularity: Math.PI / 32, vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT }), id: e.pick, attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(css(colour, 0.35)), show: new Cesium.ShowGeometryInstanceAttribute(true) } }));
+          /* 48 points round its rim (Cesium 1.131's EllipseGeometry steps round the rim by eight times its granularity at any radius, so
+             the PI / 32 used before drew every disc as an octagon, plain once the push brings the camera to a regional frame) */
+          const attributes = { color: Cesium.ColorGeometryInstanceAttribute.fromColor(css(colour, 0.35)), show: new Cesium.ShowGeometryInstanceAttribute(true) };
+          if (Cesium.DistanceDisplayConditionGeometryInstanceAttribute) attributes.distanceDisplayCondition = new Cesium.DistanceDisplayConditionGeometryInstanceAttribute(discNearM(r), Number.MAX_VALUE);
+          discs.push(new Cesium.GeometryInstance({ geometry: new Cesium.EllipseGeometry({ center: degrees(item.lon, item.lat), semiMajorAxis: r, semiMinorAxis: r, granularity: Math.PI / 192, vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT }), id: e.pick, attributes }));
           e.fills.push({ primitive: () => prims.events.discs, colour: css(colour, 0.35) });
           counts.quakeDiscs += 1;
         }

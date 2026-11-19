@@ -147,6 +147,6 @@ test('a flight whose callbacks never come still settles through its safety timer
 
 test('the source: original code, no per-frame callback, no storage, the reference name nowhere', () => {
   assert.doesNotMatch(source, /CallbackProperty|localStorage|sessionStorage|fetch\(/);
-  assert.doesNotMatch(source, /God's Eye View|gods-eye-view/i);
+  assert.doesNotMatch(source, /god\W?s\W?eye\W?view/i);
   assert.deepEqual([...P.INPUTS], ['pointerdown', 'touchstart', 'wheel']);
 });

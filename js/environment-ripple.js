@@ -92,7 +92,9 @@
       let prim;
       try {
         prim = new Cesium.GroundPrimitive({
-          geometryInstances: new Cesium.GeometryInstance({ geometry: new Cesium.EllipseGeometry({ center: Cesium.Cartesian3.fromDegrees(s.lon, s.lat), semiMajorAxis: r, semiMinorAxis: r, granularity: Math.PI / 90 }) }),
+          /* 96 points round the rim (EllipseGeometry steps round it by eight times the granularity, at any radius; PI / 90 gave 24),
+             so the rings are never cut by flats once the push lands */
+          geometryInstances: new Cesium.GeometryInstance({ geometry: new Cesium.EllipseGeometry({ center: Cesium.Cartesian3.fromDegrees(s.lon, s.lat), semiMajorAxis: r, semiMinorAxis: r, granularity: Math.PI / 384 }) }),
           appearance: new Cesium.MaterialAppearance({ material: material(still), flat: true, translucent: true }), allowPicking: false, asynchronous: true
         });
       } catch (err) { return null; }
