@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 765,
+  "candidate_count": 766,
   "capability_source_count": 104,
-  "support_only_count": 661,
-  "checks_total": 2958,
-  "checks_passed": 2958,
+  "support_only_count": 662,
+  "checks_total": 2962,
+  "checks_passed": 2962,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -340,6 +340,7 @@
     "js/mnet-tour.js",
     "js/mnet.js",
     "js/music-creator-profile.js",
+    "js/now-playing.js",
     "js/offers.js",
     "js/onboard.js",
     "js/payments.js",
@@ -779,7 +780,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "765 entries"
+      "detail": "766 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7158,6 +7159,26 @@
     },
     {
       "name": "js/music-creator-profile.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/now-playing.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/now-playing.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/now-playing.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/now-playing.js support rationale present",
       "passed": true,
       "detail": ""
     },

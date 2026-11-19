@@ -2476,6 +2476,13 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
     },
     {
+      "path": "js/now-playing.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The one Now Playing owner for every music player (music slice M2); its cover registry names each album cover in data/albums.json by path, the Docket 516R release's supplied emblem file among them. Shared frontend code; adds no distinct program capability."
+    },
+    {
       "path": "js/offers.js",
       "classification": "capability_source",
       "capability_ids": [
