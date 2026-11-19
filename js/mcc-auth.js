@@ -543,7 +543,13 @@
        protocol-relative //host, a backslash or a control character is
        refused outright; anything else is resolved against this page and
        kept only when it lands on this origin over http(s). The answer is
-       the path, query and fragment, or "" for no usable destination. */
+       the path, query and fragment, or "" for no usable destination.
+       The answer is itself handed to location, so it is held to the same
+       rule: resolving collapses dot segments, and "/.//host" (or
+       "/%2e//host", "/x/..//host") comes out as the path "//host", which
+       location reads as another site (release review SEC-1, 2026-11-19).
+       A path that starts with two slashes is refused, and the answer must
+       resolve to this origin again. */
     safeNext: function (raw) {
       raw = String(raw == null ? '' : raw).trim();
       if (!raw || raw.length > 2000) return '';
@@ -551,7 +557,9 @@
       try {
         var target = new URL(raw, root.location.href);
         if (target.origin !== root.location.origin || !/^https?:$/.test(target.protocol)) return '';
-        return target.pathname + target.search + target.hash;
+        var out = target.pathname + target.search + target.hash;
+        if (/^[\/\\]{2}/.test(out) || new URL(out, root.location.href).origin !== root.location.origin) return '';
+        return out;
       } catch (_) { return ''; }
     },
 
