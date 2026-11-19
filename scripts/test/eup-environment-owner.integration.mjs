@@ -16,6 +16,8 @@
 //                                 is on, and still answering when the module is disabled again
 //   source health                 off (module not installed, disabled; FIRMS without its key), outage (provider down, policy
 //                                 unreadable) and no data (provider answered with nothing) per source; the store's last run
+//   coverage                      a story waiting for the owner attached, rejected or retracted against the event's revision;
+//                                 only an attached story is on the public page
 //   PGLITE_MODULE=<PGlite 0.3.x dist/index.js> node scripts/test/eup-environment-owner.integration.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -230,4 +232,37 @@ test('source health per source: off while disabled, the provider states when ena
   await plane.store.ingest([], { health: { status: 'unavailable', reason: 'timeout' } });
   h = (await plane.call('owner', 'GET', `${P}/health`)).body;
   assert.equal(h.sources.find((s) => s.provider === 'usgs').store.state, 'outage');
+});
+
+test('coverage: stories that wait for the owner are attached, rejected and retracted through the route, against the event\'s revision; the public page carries only what is attached', async () => {
+  const ID = 'usgs:us7000cov1';
+  await plane.store.ingest([usgsEvent({ provider_id: 'us7000cov1', magnitude: 5.3, observed_at: '2026-11-18T12:00:00.000Z', source_updated_at: '2026-11-18T12:30:00.000Z' })]);
+  /* a type + place + time match (decision D10): the place USGS named, the kind of event, within 72 h; it waits for the owner */
+  const story = (article) => ({ event_id: ID, event_revision: 1, article_key: `gdelt:${article}`, url: `https://news.example.org/2026/${article}`,
+    title: 'Earthquake near Example shakes the coast', domain: 'news.example.org', seen_at: '2026-11-18T14:00:00.000Z',
+    basis: 'type_place_time', basis_detail: { place_term: 'Example', type_term: 'earthquake' } });
+  const proposed = await plane.store.propose([story('cov-one'), story('cov-two')]);
+  assert.deepEqual(proposed.results.map((x) => x.state), ['proposed', 'proposed'], 'nothing is attached without the owner');
+  const [first, second] = proposed.results.map((x) => x.id);
+  const queue = (await plane.call('owner', 'GET', `${P}/review`)).body.review.coverage.filter((c) => c.event_id === ID);
+  assert.deepEqual(queue.map((c) => c.id).sort(), [first, second].sort(), 'both wait in the review queue');
+  const before = await decisions(plane);
+  const stale = await cmd(plane, { command: 'attach_coverage', target: first, expected_revision: 0 });
+  assert.equal(stale.status, 409); assert.equal(stale.body.reason, 'revision_conflict', 'the expected revision is the event\'s current one');
+  const attach = await cmd(plane, { command: 'attach_coverage', target: first, expected_revision: 1 });
+  assert.equal(attach.status, 200); assert.equal(attach.body.receipt.target_kind, 'coverage'); assert.equal(attach.body.receipt.result.state, 'attached');
+  const reject = await cmd(plane, { command: 'reject_coverage', target: second, expected_revision: 1 });
+  assert.equal(reject.status, 200); assert.equal(reject.body.receipt.result.state, 'rejected');
+  let page = (await plane.call('owner', 'GET', `${P}/preview?limit=50`)).body.events.find((x) => x.id === ID);
+  assert.deepEqual(page.news_coverage.map((c) => [c.basis, c.event_revision]), [['type_place_time', 1]], 'only the attached story is on the public page');
+  const retract = await cmd(plane, { command: 'retract_coverage', target: first, expected_revision: 1 });
+  assert.equal(retract.status, 200); assert.equal(retract.body.receipt.result.state, 'retracted');
+  page = (await plane.call('owner', 'GET', `${P}/preview?limit=50`)).body.events.find((x) => x.id === ID);
+  assert.deepEqual(page.news_coverage, [], 'a retracted story leaves the page');
+  const e = await event(plane, ID);
+  assert.deepEqual(Object.fromEntries(e.coverage.map((c) => [c.id, c.state])), { [first]: 'retracted', [second]: 'rejected' });
+  assert.deepEqual(e.decisions.map((d) => d.command), ['retract_coverage', 'reject_coverage', 'attach_coverage'], 'the event lists the decisions on its stories, newest first');
+  assert.equal(await decisions(plane), before + 3, 'three decisions; the refused attach is not one');
+  const missing = await cmd(plane, { command: 'attach_coverage', target: randomUUID(), expected_revision: 1 });
+  assert.equal(missing.status, 404); assert.equal(missing.body.reason, 'not_found');
 });

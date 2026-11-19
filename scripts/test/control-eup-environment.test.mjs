@@ -193,6 +193,29 @@ test('review: open an event, hold it with its revision, restore an older revisio
   assert.match(m.q('[data-eup-env-outcome="event:usgs:us7000own1|done"]').text, /recorded · state held · rev 3/);
 });
 
+test('coverage on an opened event: a waiting story is attached or rejected, an attached one retracted, each with its own reason and the event\'s revision', async () => {
+  const WAITING = '11111111-1111-4111-8111-111111111111', ATTACHED = '22222222-2222-4222-8222-222222222222', OLD = '33333333-3333-4333-8333-333333333333';
+  const story = (id, state, extra = {}) => ({ id, event_id: 'usgs:us7000own1', event_revision: 2, title: 'Earthquake near Example', domain: 'news.example.org', state, basis: 'type_place_time', ...extra });
+  const ev = eventOf();
+  ev.event.coverage = [story(WAITING, 'proposed'), story(ATTACHED, 'attached', { basis: 'official_identifier' }), story(OLD, 'proposed', { event_revision: 1 })];
+  const routes = { ['GET ' + P + '/health']: healthOf({ store: { status: 'applied' }, usgsStore: usgsStore() }), ['GET ' + P + '/review']: reviewOf(), ['GET ' + P + '/preview']: previewOf(),
+    ['GET ' + P + '/events/usgs%3Aus7000own1']: () => ev,
+    ['POST ' + P + '/commands']: (path, opts) => ({ ok: true, receipt: { schema: 'mccluster.environment-decision/v1', command: opts.body.command, target_kind: 'coverage', target: opts.body.target, changed: true, prior: {}, result: { state: 'attached', event_revision: 2 }, recorded_at: NOW } }) };
+  const m = await open(routes);
+  await m.view('review');
+  m.q('[data-eup-env-open="usgs:us7000own1"]').click(); await settle();
+  assert.deepEqual(m.all('[data-eup-env-coverage-command]').map((b) => b.attrs['data-eup-env-coverage-command']),
+    [WAITING + '|attach_coverage', WAITING + '|reject_coverage', ATTACHED + '|retract_coverage', OLD + '|reject_coverage'], 'a story matched to an older revision can only be rejected');
+  m.q('[data-eup-env-coverage-command="' + WAITING + '|attach_coverage"]').click(); await settle();
+  assert.equal(posts(m.log).length, 0, 'nothing is sent without a reason');
+  type(m, 'coverage:' + WAITING, 'the story names the quake');
+  m.q('[data-eup-env-coverage-command="' + WAITING + '|attach_coverage"]').click(); await settle();
+  const [post] = posts(m.log);
+  assert.deepEqual([post.body.command, post.body.target, post.body.expected_revision, post.body.reason, post.body.payload], ['attach_coverage', WAITING, 2, 'the story names the quake', undefined],
+    'the target is the story; the expected revision is the event\'s');
+  assert.match(m.q('[data-eup-env-outcome="coverage:' + WAITING + '|done"]').text, /^Attach · 1{8}-[0-9a-f-]+: recorded · state attached/);
+});
+
 test('an unknown outcome is never resent by itself: its key found in the decision log settles it; absent, the same key and body are offered', async () => {
   for (const found of [true, false]) {
     let review = reviewOf();

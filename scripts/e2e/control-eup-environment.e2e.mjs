@@ -178,7 +178,7 @@ async function proof(width) {
     await page.locator('[data-eup-env-outcome="event:usgs:us7000e2e1|conflict"]').waitFor();
     check(scope, 'a moved revision is a conflict that changed nothing', /changed elsewhere since it was read\. This command changed nothing/.test(await page.locator('[data-eup-env-outcome="event:usgs:us7000e2e1|conflict"]').innerText()));
     await page.waitForFunction(() => document.querySelector('[data-eup-env-event]')?.getAttribute('data-eup-env-event-state') === 'published:4');
-    check(scope, 'the event is read again at the new revision', true);
+    check(scope, 'the event is read again at the new revision', await attr(page, '[data-eup-env-event]', 'data-eup-env-event-state') === 'published:4');
     await noOverflow('conflict');
 
     await view(page, 'preview');
