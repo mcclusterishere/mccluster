@@ -20,7 +20,8 @@
    while it is, and the server counts only the time they cover.
 
    Nothing here throws and nothing here blocks playback: a listener who is
-   signed out, offline, or on an old session simply is not counted.
+   signed out or offline, or whose session the auth server has ended, simply
+   is not counted. An old token is renewed first, not given up on.
    ============================================================ */
 (function (root) {
   "use strict";
@@ -49,16 +50,24 @@
     return (src.split("/").pop() || "").replace(/\.[a-z0-9]+$/i, "").replace(/-preview$/, "").toLowerCase();
   }
 
+  /* The token is the shared auth's, renewed for this call when it is near
+     its end and asked again once after a 401 (js/mcc-auth.js authFetch).
+     The stored one, an hour old, was refused and the song never counted
+     (music slice M4; delivery lane DEL-3). */
   function post(path, body) {
     var t = token();
     if (!t) return Promise.resolve(null);
-    return fetch(API + path, {
+    var init = {
       method: "POST",
-      headers: { authorization: "Bearer " + t, "content-type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(body || {}),
       /* the last song of a visit often ends as the tab is closing */
       keepalive: true
-    }).then(function (r) { return r.ok ? r.json() : null; })
+    };
+    var call = root.MCC && root.MCC.authFetch
+      ? root.MCC.authFetch(API + path, init)
+      : fetch(API + path, Object.assign(init, { headers: { authorization: "Bearer " + t, "content-type": "application/json" } }));
+    return call.then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; });
   }
 

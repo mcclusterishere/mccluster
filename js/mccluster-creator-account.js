@@ -1,31 +1,60 @@
 import {createClient} from '../vendor/supabase-js-2.57.0.mjs';
-const db=createClient('https://zmnhbrjyhxzhkxmhkexs.supabase.co','sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4',{auth:{persistSession:true,autoRefreshToken:true}});
-const status=document.getElementById('accountStatus');
-async function importLegacySession(){
- const {data:{session}}=await db.auth.getSession();
- if(session)return;
- for(const key of ['mccdb_session','mcc_sess_keep']){
-  let legacy;
-  try{legacy=JSON.parse(localStorage.getItem(key)||'null')}catch(_){continue}
-  if(!legacy?.access_token||!legacy?.refresh_token)continue;
-  const {error}=await db.auth.setSession({access_token:legacy.access_token,refresh_token:legacy.refresh_token});
-  if(!error)break;
- }
+/* ONE SESSION, THE SITE'S (music slice M4, 2026-11-19; accounts lane ACC-6). This studio used to run a second
+   supabase-js session with its own copy of the refresh token, seeded once from the site's. A member signed in on the
+   site was asked to sign in here three times; after a switch of accounts the studio still read and saved as the
+   previous one; after a sign-out it still loaded that account's profile; and when it renewed its copy it spent the
+   shared refresh token, so the site's next renewal was refused and the member was signed out of every page. Now
+   supabase-js keeps no session at all: every call carries the token the shared auth (js/mcc-auth.js, the site's one
+   session) holds for that call, renewed there when it is near its end and asked again once after a 401; nothing here
+   refreshes or rotates anything; and the page follows the account signed in on the site, in this tab or another.
+   Each thing the page does is done as one account, the one signed in when it began: its calls are refused, never
+   sent, once the site is signed in as someone else or nobody, and what it read is not painted for the next account. */
+const SB='https://zmnhbrjyhxzhkxmhkexs.supabase.co',KEY='sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
+const clients=new Map();
+function dbAs(account){
+ const key=account||'';
+ if(!clients.has(key))clients.set(key,createClient(SB,KEY,{
+  accessToken:()=>window.MCC?window.MCC.freshToken():Promise.resolve(null),
+  global:{fetch:(url,init)=>window.MCC?window.MCC.authFetch(url,init,account?{account}:undefined):fetch(url,init)}
+ }));
+ return clients.get(key);
 }
-
-async function refresh(){status.textContent='Checking account…';try{const {data,error}=await db.auth.getUser();if(error)throw error;status.textContent=data.user?'Signed in as '+(data.user.email||'McCluster member')+'. You can save your profile to your account.':'Not signed in. Sign in to your McCluster account to save your creator profile.'}catch(_){status.textContent='Could not verify account status. Try again or open the account page.'}}
+function who(){try{return window.MCC?window.MCC.account():null}catch(_){return null}}
+const status=document.getElementById('accountStatus');
+const signInLink=document.getElementById('accountSignIn');
+function stored(){try{const s=window.MCC&&window.MCC.session();return s&&s.access_token?s:null}catch(_){return null}}
+/* the account as the auth server knows it now, or null: signed out, or a session it no longer accepts. A lookup
+   that loses its renewal to another tab finds a new token stored and asks once more with it. */
+async function siteUser(){
+ for(let tries=0;tries<2;tries++){
+  const before=stored();
+  if(!before)return null;
+  let user=null;try{user=await window.MCC.user()}catch(_){}
+  if(user)return user;
+  const after=stored();
+  if(!after||after.access_token===before.access_token)return null;
+ }
+ return null;
+}
+async function refresh(){
+ status.textContent='Checking account…';
+ if(!window.MCC){status.textContent='Could not verify account status. Try again or open the account page.';return null}
+ const user=await siteUser();
+ if(user){status.textContent='Signed in as '+(user.email||'McCluster member')+'. You can save your profile to your account.';if(signInLink)signInLink.hidden=true;return user}
+ if(stored()){status.textContent='Could not verify account status. Try again or open the account page.';if(signInLink)signInLink.hidden=true;return null}
+ status.textContent='Not signed in. Sign in to your McCluster account to save your creator profile.';if(signInLink)signInLink.hidden=false;
+ return null;
+}
 document.getElementById('refreshAccount').addEventListener('click',refresh);
-db.auth.onAuthStateChange(()=>{setTimeout(refresh,0)});
-const sessionReady=importLegacySession().catch(()=>{});
-sessionReady.finally(refresh);
 
 // Persist through the existing owner-checked Equity Uprise RPC; never write directly to network_profiles.
 const save=document.getElementById('saveAccount');
 if(save)save.addEventListener('click',async()=>{
   save.disabled=true;
   try{
-    const {data:{user},error:authError}=await db.auth.getUser();
-    if(authError||!user)throw new Error('Sign in before saving to your account.');
+    const user=await siteUser();
+    if(!user)throw new Error('Sign in before saving to your account.');
+    const db=dbAs(who());
     const name=document.getElementById('name').value.trim();
     const bio=document.getElementById('bio').value.trim();
     const website=document.getElementById('portfolio').value.trim();
@@ -52,24 +81,34 @@ if(save)save.addEventListener('click',async()=>{
 
 const load=document.getElementById('loadAccount');
 /* NEVER RETYPE WHAT THE PROFILE HAS (owner, 2026-10-20): a signed-in member with no draft on this device opens the
-   editor already filled from their profile; a draft they saved here is theirs and is not replaced. */
+   editor already filled from their profile; a draft they saved here is theirs and is not replaced. The account the
+   editor was filled from is remembered, so a sign-out or another account never leaves that profile on screen to be
+   saved as somebody else's. */
+let filledFrom=null;
 async function fillFromProfile(){
  let draft=null;try{draft=localStorage.getItem('mccluster.creatorStudio.draft.v1')}catch(_){}
- if(draft)return;
- const {data:{user}}=await db.auth.getUser();
- if(user&&load)load.click();
+ if(draft||!load)return;
+ await loadIntoEditor(true);
 }
-sessionReady.then(fillFromProfile).catch(()=>{});
-if(load)load.addEventListener('click',async()=>{
+function clearEditor(){
+ const set=(id,v)=>{const el=document.getElementById(id);if(!el)return;if(el.tagName==='SELECT')el.selectedIndex=0;else el.value=v;el.dispatchEvent(new Event('input'))};
+ set('name','Your creator name');set('role','');set('bio','');set('portfolio','');set('social','');set('accent','');set('visibility','');
+ const area=document.getElementById('publicProfileLink');if(area)area.replaceChildren();
+}
+/* auto: the editor filled for a signed-in member on opening (above). The account line then keeps naming the account,
+   and a profile that cannot be read leaves it as it was: only a tap on Load reports what went wrong. */
+async function loadIntoEditor(auto){
  load.disabled=true;
  try{
-  const {data:{user},error:authError}=await db.auth.getUser();
-  if(authError||!user)throw new Error('Sign in to load your profile.');
+  const user=await siteUser();
+  if(!user){if(auto)return;throw new Error('Sign in to load your profile.')}
+  const as=who(),db=dbAs(as);
   const {data:id,error:idError}=await db.rpc('current_m_uid');
   if(idError||!id)throw new Error('Your McCluster member identity is not ready.');
   const {data:p,error}=await db.from('network_profiles').select('display_name,headline,bio,website_url,visibility').eq('m_uid',id).maybeSingle();
   if(error)throw new Error(error.message);
   if(!p)throw new Error('No readable profile exists for this account yet.');
+  if(who()!==as)return;
   document.getElementById('name').value=p.display_name||'';
   document.getElementById('bio').value=p.bio||'';
   document.getElementById('portfolio').value=p.website_url||'';
@@ -78,17 +117,19 @@ if(load)load.addEventListener('click',async()=>{
   if([...role.options].some(o=>o.value===p.headline))role.value=p.headline;
   ['name','bio','portfolio','role'].forEach(id=>document.getElementById(id).dispatchEvent(new Event('input')));
   showLink(id,p.visibility);
-  status.textContent='Account profile loaded. Unsaved local edits were replaced.';
- }catch(e){status.textContent='Account load failed: '+(e.message||'Unknown error');}
+  filledFrom=as;
+  status.textContent=auto?'Signed in as '+(user.email||'McCluster member')+'. Your saved profile is in the editor.':'Account profile loaded. Unsaved local edits were replaced.';
+ }catch(e){if(!auto)status.textContent='Account load failed: '+(e.message||'Unknown error');}
  finally{load.disabled=false;}
-});
+}
+if(load)load.addEventListener('click',()=>loadIntoEditor(false));
 
 const publish=document.getElementById('publishProfile');
 publish.addEventListener('click',async()=>{
  publish.disabled=true;
  try{
-  const auth=await db.auth.getUser();
-  if(auth.error||!auth.data.user)throw Error('Sign in first.');
+  if(!await siteUser())throw Error('Sign in first.');
+  const db=dbAs(who());
   const identity=await db.rpc('current_m_uid');
   if(identity.error||!identity.data)throw Error('Member identity unavailable.');
   const visibility=document.getElementById('visibility').value;
@@ -108,24 +149,36 @@ const websiteStatus=document.getElementById('websiteStatus');
 const websiteSelect=document.getElementById('websiteWorkspace');
 const websitePublish=document.getElementById('publishWebsite');
 const apiOrigin='https://api.mccluster.org';
-async function creatorApi(path,method='GET',body){
- const {data:{session},error}=await db.auth.getSession();
- if(error||!session?.access_token)throw new Error('Sign in before managing a paid website.');
- const response=await fetch(apiOrigin+path,{
-  method,headers:{authorization:'Bearer '+session.access_token,...(body?{'content-type':'application/json'}:{})},
+/* the workspaces listed belong to the account that asked; publishing to one is asked as that account only */
+let websiteFrom=null;
+async function creatorApi(path,method='GET',body,account){
+ if(!stored())throw new Error('Sign in before managing a paid website.');
+ const response=await window.MCC.authFetch(apiOrigin+path,{
+  method,headers:body?{'content-type':'application/json'}:{},
   ...(body?{body:JSON.stringify(body)}:{})
- });
+ },account?{account}:undefined);
  const data=await response.json().catch(()=>({}));
  if(!response.ok)throw new Error(data.error||'Website service unavailable ('+response.status+').');
  return data;
+}
+function resetWebsite(){
+ websiteFrom=null;
+ websiteSelect.replaceChildren();
+ const option=document.createElement('option');option.value='';option.textContent='Check access to load workspaces';websiteSelect.append(option);
+ websitePublish.disabled=true;
+ websiteStatus.textContent='No paid workspace selected.';
+ document.getElementById('websiteLink').replaceChildren();
 }
 async function checkWebsiteAccess(){
  websiteStatus.textContent='Checking subscription and workspace access…';
  websitePublish.disabled=true;
  websiteSelect.replaceChildren();
  const option=document.createElement('option');option.value='';option.textContent='Choose a workspace';websiteSelect.append(option);
+ const as=who();
  try{
-  const data=await creatorApi('/v1/creator-billing/entitlement');
+  const data=await creatorApi('/v1/creator-billing/entitlement','GET',undefined,as);
+  if(who()!==as)return;
+  websiteFrom=as;
   for(const workspace of data.workspaces||[]){
    if(!workspace.org_id)continue;
    const item=document.createElement('option');
@@ -143,12 +196,12 @@ websitePublish?.addEventListener('click',async()=>{
  websiteStatus.textContent='Checking payment and publishing…';
  try{
   const org_id=websiteSelect.value;
-  if(!org_id)throw new Error('Select your workspace.');
+  if(!org_id||!websiteFrom)throw new Error('Select your workspace.');
   const title=document.getElementById('name').value.trim();
   const tagline=document.getElementById('role').value.trim();
   const bio=document.getElementById('bio').value.trim();
   if(!title||title.length>120||tagline.length>300||bio.length>4000)throw new Error('Check your website title and biography.');
-  const data=await creatorApi('/v1/creator-sites/publish','POST',{org_id,title,tagline,bio});
+  const data=await creatorApi('/v1/creator-sites/publish','POST',{org_id,title,tagline,bio},websiteFrom);
   const url=new URL(data.url);
   if(url.origin!==apiOrigin||!url.pathname.startsWith('/v1/creator-sites/view/'))throw new Error('Unexpected published URL.');
   const link=document.getElementById('websiteLink');link.replaceChildren();
@@ -162,24 +215,35 @@ websitePublish?.addEventListener('click',async()=>{
 // Free service offers are tied to the signed-in member identity, not paid creator workspaces.
 const serviceStatus=document.getElementById('serviceStatus');
 const serviceLaunchStatus=document.getElementById('serviceLaunchStatus');
+/* the service form, once filled from an account's offer, leaves the screen with that account */
+let serviceFrom=null;
+function clearService(){
+ serviceFrom=null;
+ ['serviceTitle','serviceDescription','serviceUrl'].forEach((id)=>{const el=document.getElementById(id);if(el)el.value='';});
+ const price=document.getElementById('servicePrice');if(price)price.value='0';
+ serviceStatus.textContent='';serviceLaunchStatus.textContent='';
+}
 async function refreshServiceReadiness(){
  try{
-  const {data:{user}}=await db.auth.getUser();
-  if(!user){serviceLaunchStatus.textContent='Sign in to set up your first service.';return}
+  const user=await siteUser();
+  if(!user){serviceLaunchStatus.textContent='Sign in to set up your first service.';serviceStatus.textContent='Sign in to publish a service.';return}
+  if(/^Sign in/.test(serviceStatus.textContent))serviceStatus.textContent='';
+  const as=who(),db=dbAs(as);
   const identity=await db.rpc('current_m_uid');
   if(identity.error||!identity.data)throw Error('Member identity unavailable');
   const result=await db.from('creator_service_offers').select('title,description,price_cents,action_url,status').eq('m_uid',identity.data).eq('status','published').order('created_at',{ascending:true}).limit(1);
   if(result.error)throw result.error;
+  if(who()!==as)return;
   const offer=result.data?.[0];
   serviceLaunchStatus.textContent=offer?'Service-ready: '+offer.title+'. Your free profile can link clients to this offer.':'Not service-ready yet. Publish at least one actionable service.';
-  if(offer){document.getElementById('serviceTitle').value=offer.title;document.getElementById('serviceDescription').value=offer.description||'';document.getElementById('servicePrice').value=(offer.price_cents/100).toFixed(2);document.getElementById('serviceUrl').value=offer.action_url;}
+  if(offer){serviceFrom=as;document.getElementById('serviceTitle').value=offer.title;document.getElementById('serviceDescription').value=offer.description||'';document.getElementById('servicePrice').value=(offer.price_cents/100).toFixed(2);document.getElementById('serviceUrl').value=offer.action_url;}
  }catch(e){serviceLaunchStatus.textContent='Service readiness unavailable: '+(e.message||'Unknown error')}
 }
 document.getElementById('saveService')?.addEventListener('click',async()=>{
  const button=document.getElementById('saveService');button.disabled=true;
  try{
-  const {data:{user},error}=await db.auth.getUser();
-  if(error||!user)throw Error('Sign in first');
+  if(!await siteUser())throw Error('Sign in first');
+  const db=dbAs(who());
   const identity=await db.rpc('current_m_uid');
   if(identity.error||!identity.data)throw Error('Member identity unavailable');
   const title=document.getElementById('serviceTitle').value.trim();
@@ -199,4 +263,18 @@ document.getElementById('saveService')?.addEventListener('click',async()=>{
  }catch(e){serviceStatus.textContent='Could not publish service: '+(e.message||'Unknown error')}
  finally{button.disabled=false}
 });
-refreshServiceReadiness();
+
+/* Who is looking decides everything above, and it is asked once the page knows: first the account line, then the
+   service line and the editor. A sign-in or sign-out on the site, here or in another tab, asks again; what was filled
+   from an account (the editor, the service form, the workspaces) leaves the screen with it. */
+function lookAgain(){
+ return refresh().then(()=>{refreshServiceReadiness();return fillFromProfile()}).catch(()=>{});
+}
+lookAgain();
+if(window.MCC&&window.MCC.onAccountChange)window.MCC.onAccountChange(()=>{
+ const now=who();
+ if(filledFrom&&filledFrom!==now){filledFrom=null;clearEditor();}
+ if(serviceFrom&&serviceFrom!==now)clearService();
+ if(websiteFrom!==now)resetWebsite();
+ lookAgain();
+});

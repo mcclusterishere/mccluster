@@ -1299,6 +1299,13 @@
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
     },
     {
+      "path": "docs/control-plane/WORLD-MISSION-SOURCES.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Record of Project Drawdown's source page in the World (what it is and is not, decisions D1 to D14 each a default adopted pending the owner's confirmation, the data, the owner's controls, what stays gated, the tests, the facts and their sources); names the Equity Uprise tab, the existing equity-uprise organization row and the Control path. No building capability, program or geometry."
+    },
+    {
       "path": "docs/control-plane/WORLD-RELEASE-20261118.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -2153,6 +2160,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/control-room/mission-sources.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control, System, Equity Uprise ops, Missions & fellows, Mission sources: the house owner's card for a mission catalog's source page (Project Drawdown's: Draft, Show only with the recorded permission confirmation, Hide, Edit, history), over the owner-only route /v1/mission-sources. Names the brand only in the path of its location comment; adds no building capability, program or geometry."
     },
     {
       "path": "js/control-room/music-label.js",
@@ -3351,6 +3365,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unit test of the Control E=Up workspace including the module-policy controls; names Equity Uprise in fixture copy. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "scripts/test/control-mission-sources.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the Control Room's Mission sources card (states, words, refusals, the send and read-back machine, wiring, mobile-first CSS); names the brand only to assert the card's copy never writes it out. No building capability."
     },
     {
       "path": "scripts/test/creator-action-distribution.test.mjs",

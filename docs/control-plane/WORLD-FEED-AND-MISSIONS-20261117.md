@@ -36,6 +36,7 @@ owner's approval of the exact change.
 | Owner 2026-10-19: the strip reads Local, Global, Live, News, People; "Global is everything" | The default tab is labelled Everything (same `global` key) and the strip gains the Equity Uprise tab. |
 | Owner 2026-11-17: the strip reads Local · Everything (key `global`) · the Equity Uprise tab · Live · News · People | Owner 2026-11-18: the row reads Local · the Equity Uprise tab · Global · Live · News · People. The whole stream is labelled Global again (same `global` key, still chosen on load), and a signed-out visitor sees nothing above the row. |
 | PR #726, owner 2026-11-03: the explorer's mission feed and pin detail are owner-only (`css/globe-games.css`) | Mission pins, their detail and their join are public. The games controls stay owner-only. |
+| data/missions/drawdown/README.md, 2026-11-17: Drawdown's name "appears only in credit lines" | 2026-11-19, a default adopted pending Matthew's confirmation: also as the heading of Project Drawdown's source page in the World and on its door in each Drawdown mission's dialog, only to identify the source. The logo still appears nowhere and nothing implies endorsement. |
 
 ## The target
 
@@ -290,6 +291,24 @@ up, global, live news people."
   row's edge in the 491px feed column with no sign that the row scrolls). The phone and the stacked tablet keep one dragging
   row; at 820 the six tabs still fit on it. `scripts/e2e/world-missions-guest.e2e.mjs` checks every tab at 16px or more at each
   width and, from 1000px, every tab inside the row's box.
+
+## Owner request, 2026-11-19 (Project Drawdown's page in the World)
+
+The owner asked for a profile of Project Drawdown on this site where people can "go look at … their ecosystem, but from
+our website, not leaving our website", "just making a profile for them on our website", and to "credit them". He called
+it "their own corporate account, like business account on here". What this work builds, each part a default adopted
+pending Matthew's confirmation (the record is `docs/control-plane/WORLD-MISSION-SOURCES.md`): a public source page that
+McCluster Corp makes and keeps, not an account. Project Drawdown has not asked for or agreed to an account here, its
+Terms of Use forbid using another's name to impersonate it, and the repository's precedent for a third party's named
+page is a page with no account (`docs/control-plane/VAUNT-PROJECT-PAGE.md`). No one signs in as Project Drawdown, and it
+posts nothing.
+
+He said "they're the ones who have created all those missions for the environments". The record: the missions were written
+by this site from Project Drawdown's climate solutions; the wording is original (`data/missions/drawdown/README.md`, "Where
+the content comes from"). The page says so, and its public word for Project Drawdown's role is Source.
+
+The owner handles any message to Project Drawdown outside this repository; no agent of this work sends, drafts, schedules
+or records one.
 
 ## The environmental globe
 

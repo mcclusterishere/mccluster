@@ -32,6 +32,17 @@ on:
       - 'scripts/test/music-peaks.test.mjs'
       - 'scripts/e2e/music-background.e2e.mjs'
       - 'scripts/e2e/music-world-continuity.e2e.mjs'
+      - 'js/mcc-auth.js'
+      - 'js/backend.js'
+      - 'js/gated-audio.js'
+      - 'js/listen-ledger.js'
+      - 'js/creator-onboarding.js'
+      - 'js/comments.js'
+      - 'js/mccluster-creator-account.js'
+      - 'mccluster-creator-studio.html'
+      - 'scripts/test/music-accounts.test.mjs'
+      - 'scripts/e2e/music-accounts.e2e.mjs'
+      - 'scripts/e2e/support/music-accounts-plane.mjs'
       - '.github/workflows/music-platform-ci.yml'
   push:
     branches: [main]
@@ -65,6 +76,17 @@ on:
       - 'scripts/test/music-peaks.test.mjs'
       - 'scripts/e2e/music-background.e2e.mjs'
       - 'scripts/e2e/music-world-continuity.e2e.mjs'
+      - 'js/mcc-auth.js'
+      - 'js/backend.js'
+      - 'js/gated-audio.js'
+      - 'js/listen-ledger.js'
+      - 'js/creator-onboarding.js'
+      - 'js/comments.js'
+      - 'js/mccluster-creator-account.js'
+      - 'mccluster-creator-studio.html'
+      - 'scripts/test/music-accounts.test.mjs'
+      - 'scripts/e2e/music-accounts.e2e.mjs'
+      - 'scripts/e2e/support/music-accounts-plane.mjs'
 
 permissions:
   contents: read
@@ -99,6 +121,8 @@ jobs:
         run: |
           node scripts/music-peaks.mjs --check
           node --test scripts/test/music-peaks.test.mjs
+      - name: The module knows who is listening (a token per call, sign-out, offers by state)
+        run: node --test scripts/test/music-accounts.test.mjs
 
   music-edge:
     runs-on: ubuntu-latest
@@ -137,6 +161,10 @@ jobs:
         env:
           PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
         run: node scripts/e2e/music-world-continuity.e2e.mjs /tmp/music-proof/world
+      - name: Who is listening, in Chromium (personas, races, expiry, other tabs; 390px)
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/music-accounts.e2e.mjs /tmp/music-proof/accounts
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:

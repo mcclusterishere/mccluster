@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 762,
+  "candidate_count": 765,
   "capability_source_count": 104,
-  "support_only_count": 658,
-  "checks_total": 2946,
-  "checks_passed": 2946,
+  "support_only_count": 661,
+  "checks_total": 2958,
+  "checks_passed": 2958,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -178,6 +178,7 @@
     "docs/control-plane/WORLD-ENVIRONMENT.md",
     "docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md",
     "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md",
+    "docs/control-plane/WORLD-MISSION-SOURCES.md",
     "docs/control-plane/WORLD-RELEASE-20261118.md",
     "docs/control-plane/admin-evidence-20261020/README.md",
     "docs/control-plane/admin-evidence-20261020/event-taxonomy-snapshot.json",
@@ -297,6 +298,7 @@
     "js/control-room/clipping.js",
     "js/control-room/identity-review.js",
     "js/control-room/instagram.js",
+    "js/control-room/mission-sources.js",
     "js/control-room/music-label.js",
     "js/control-room/nav.js",
     "js/control-room/profile-edit-review.js",
@@ -461,6 +463,7 @@
     "scripts/test/antisocial-three-levels.test.mjs",
     "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/control-eup.test.mjs",
+    "scripts/test/control-mission-sources.test.mjs",
     "scripts/test/creator-action-distribution.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/environment-globe-wiring.test.mjs",
@@ -776,7 +779,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "762 entries"
+      "detail": "765 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3984,6 +3987,26 @@
       "detail": ""
     },
     {
+      "name": "docs/control-plane/WORLD-MISSION-SOURCES.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/WORLD-MISSION-SOURCES.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/WORLD-MISSION-SOURCES.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/WORLD-MISSION-SOURCES.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/control-plane/WORLD-RELEASE-20261118.md capability ids known",
       "passed": true,
       "detail": ""
@@ -6320,6 +6343,26 @@
     },
     {
       "name": "js/control-room/instagram.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/mission-sources.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/mission-sources.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/control-room/mission-sources.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/mission-sources.js support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -9515,6 +9558,26 @@
     },
     {
       "name": "scripts/test/control-eup.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/control-mission-sources.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/control-mission-sources.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/control-mission-sources.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/control-mission-sources.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

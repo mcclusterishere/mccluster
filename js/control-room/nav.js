@@ -139,7 +139,7 @@
       v("apps", "Apps", "apps", ["#apps", "Apps", "whip", "prim3", "manufacture", "specialized workspaces"]),
       v("build", "Build", "create.build", ["#create:build", "Create · Build", "build code", "code", "draft pull request"]),
       v("uprise", "Equity Uprise ops", null, [], { views: [
-        v("missions", "Missions & fellows", "create.action-network", ["#create:action-network", "Create · Action network", "missions", "fellows", "identity review", "memos", "uprise", "mobilize"]),
+        v("missions", "Missions & fellows", "create.action-network", ["#create:action-network", "Create · Action network", "missions", "fellows", "identity review", "memos", "uprise", "mobilize", "mission sources", "source page", "project drawdown"]),
         v("funding", "Funding", "create.funding", ["#create:funding", "Create · Funding", "grants", "opportunity intelligence", "bounties"])
       ] }),
       /* Owner, 2026-11-09: the deeper E=Up experience ships first as an

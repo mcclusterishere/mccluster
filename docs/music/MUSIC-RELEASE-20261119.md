@@ -158,3 +158,108 @@ evidence, not in the repository).
       ×, and nothing redirects; then play and lock.
 * Not in this slice: navigation still ends the song (C1 cause 2, slice M5), the lock screen's title and buttons
   (C2, slice M2), next songs that wait on the network (EXT-5, slice M3).
+
+## M4: the module knows who is listening
+
+Base `1cb28842`. C5 and the member side of C3 (accounts lane ACC-1 to ACC-6, ACC-8, ACC-9, ACC-12; delivery lane
+DEL-3). Browser code only: no SQL, no Worker change, no new store of sessions and no second sign-in. D-10 keeps its
+default: the two hosts keep separate sessions in this release.
+
+### Why
+
+The music scripts sent the access token as it sat in storage, and the shared auth renews it only when a call asks
+it to. A member back after the token's hour was a guest to every music call while the bar said signed in: the house
+owner's gated record said "0/3 MISSIONS+ identity verification" (it should say PLAY · owner), a listen was refused
+and never counted, an account-only creator track played its preview, the artist lost "Edit my artist page", and
+Creator Studio answered "JWT expired" on a save. The pages decided who was looking once, at load: a sign-in or
+sign-out in another tab changed nothing until a reload, and Creator Studio kept saving as the account it opened with.
+Listen offered "Become a creator" to everyone, guests and creators included. A sign-out removed the session's two
+copies one at a time, and another open music tab that read in between wrote the keep copy back: both tabs ended
+signed in. `js/backend.js` read the token's payload with plain `atob`, so any member whose token carried `-` or `_`
+had no uid or e-mail there and accented names came out garbled. The Creator Website Studio ran a second supabase-js
+session seeded from the site's: it asked signed-in members to sign in, acted as a previous account after a switch,
+and when it renewed its copy it spent the shared refresh token, so the site's own renewal was refused and the member
+was signed out of every page. The album's comment box still promised a sign-in "with one tap, no password" that no
+longer exists.
+
+### What changed
+
+1. **One token per call, and one more try.** The shared auth (`js/mcc-auth.js`, the one session store, the same two
+   storage keys) gains `MCC.freshToken()` (the token for the call about to be made, renewed first when it has under
+   a minute left), `MCC.authFetch(url, init, { account })` (that token, and after a 401 one renewal and one more
+   try, never a third; a call made for one account is refused, never sent, when the session stored now is someone
+   else's or nobody's), `MCC.account()` (the JWT's subject, read as base64url and UTF-8) and
+   `MCC.onAccountChange(fn)` (a sign-in or sign-out here, in another tab or while the page was away; a renewed token
+   for the same account is not a change). Its `safeNext` is untouched.
+2. Every music call goes through it: the gate and the one play (`js/gated-audio.js`), listens (`js/listen-ledger.js`),
+   an account-only creator track (`js/music-engine.js`), the artist's own tools and licence checkout
+   (`js/music-creator-profile.js`), every Creator Studio call and upload clean-up (`js/music-creator-studio.js`, which
+   no longer keeps the token it opened with), and the one tap (`js/creator-onboarding.js`).
+3. **Pages follow the account.** The gated rows repaint, the artist's tools appear or go, Listen's offer changes,
+   and Creator Studio closes and opens again for whoever is signed in now, without a reload. A save that is running
+   when the account changes is let fail (its next call is refused) and an answer that arrives for the closed
+   account is never painted.
+4. **Offers by state** (Listen and the artist page's footer, `js/creator-onboarding.js`): a guest is asked to sign
+   in (and offered Create an account); a member who is not a creator gets "Become a creator"; a creator gets "Open
+   Creator Studio"; the house owner also gets "Your tools: Music review & catalog" (the Control Room's music review),
+   shown only after the bar's own server check. "Creator or not" is the server's answer (`music_creator_state`); until
+   it comes the offer keeps its space unseen, and if none comes (no script, a server that never answers) the neutral
+   Open Creator Studio shows after 6 s.
+5. **A sign-out stays signed out.** It leaves a mark naming the session it ended (`mcc_sess_out`, a hash of its
+   refresh token, never the token), removes the keep copy before the main one, and neither `js/mcc-auth.js` nor
+   `js/backend.js` restores a copy of that session. A new sign-in is a new session and clears the mark.
+6. `js/backend.js` reads JWT payloads as base64url and UTF-8 ("José", not "JosÃ©"; uid and e-mail for every member).
+7. **The Creator Website Studio uses the site's one session** (`js/mccluster-creator-account.js`,
+   `mccluster-creator-studio.html`): supabase-js keeps no session (`accessToken` and `fetch` come from the shared
+   auth); nothing is renewed or stored here; a signed-in member is not asked to sign in and the account line names
+   them; each thing the page does is done as the account that began it; the editor, the service form and the listed
+   workspaces leave the screen with their account. The `sb-…-auth-token` key an earlier version left behind is not
+   deleted: the OAuth consent page on the same origin still uses its own supabase-js session.
+8. The album's comment box: "Sign in to speak, with your M Account.", and the sign-in comes back to the album.
+9. **CI.** `music-platform-ci.yml`: the unit test in `music-contract`, the Chromium suite in the `browser` job, the
+   new files and the shared auth in its paths. No new workflow and no new trigger.
+
+### Tests: failing at the base, passing after
+
+| Test | At `1cb28842` | After |
+| --- | --- | --- |
+| `scripts/test/music-accounts.test.mjs` (15 tests; the real page scripts in Node, one storage area with storage events between tabs) | 13 of 15 fail; the 2 that pass are guards (a keep copy still restores a live session; the token is read per call) | 15 of 15 |
+| `scripts/e2e/music-accounts.e2e.mjs` (Chromium; personas on Listen, the album, an artist page and Creator Studio, each also back after the token's hour; the refresh answered after 0, 300 and 1500 ms; a save after the token expired; sign-in and sign-out in another tab X1 to X5; the Creator Website Studio D1a to D1c; an account-only creator track) | 50 of 104 checks fail: the owner's row "0/3 MISSIONS+ identity verification", creators offered Become a creator, "JWT expired", the sign-out written back in both tabs, the Website Studio acting as the previous account, the member signed out on Music after the Website Studio spent the refresh token | 110 of 110 (six checks added since: the album's comment box as a guest, the Website Studio's editor) |
+| Four existing tests that asserted the defects: `creator-profile-publishing` (a second session via `auth.setSession`), `creator-studio-paid-publish` and `music-creator-page` (the token kept from boot), `creator-onboarding` (the same, in the one tap) | each fails against the base code | pass |
+| Root suite `node --test scripts/test/*.test.mjs` | | 2855 tests, 0 failures; 2885 and 0 merged with the branch head `fea2edb0` |
+
+Every fix was also taken away on its own and its test failed: each changed file put back one at a time
+(`js/mcc-auth.js` 7 tests, `js/backend.js` 2, `js/gated-audio.js` 3, `js/listen-ledger.js` 3, `js/music-engine.js`
+and `js/music-creator-profile.js` 1 each, whose behaviour is also proven in Chromium, `js/music-creator-studio.js` 3,
+`js/creator-onboarding.js` 1, `js/comments.js` 1, `js/mccluster-creator-account.js` 3,
+`mccluster-creator-studio.html` 2), and inside the shared auth: no retry after a 401 (2), no renewal before the call
+(2), no sign-out mark in either client (1 each), base64url without UTF-8 (1). The removal order alone fails nothing:
+the mark and the order each keep a sign-out signed out, and the two removed together fail X5.
+
+The suites these files touch, run on the change: creator onboarding, music and World continuity, direct checkout,
+the World sign-in door (174 of 174), the Control Room account lifecycle (34 of 34) and the three account suites
+(network recovery, clock skew, the bar's refresh). 390 px (`scrollWidth === clientWidth`): Listen for every persona,
+the album, an artist page, Creator Studio and the Creator Website Studio. Renders for Matthew at device scale 2:
+Listen's offer for a guest, a member, a creator and the owner, the Creator Website Studio for a member, an artist's
+own tools and the album's comment box (kept with the workflow's evidence, not in the repository).
+
+### What is Inferred
+
+* Safari on iPhone and iPad delivering the same storage, `pageshow` and visibility events: the pages follow another
+  tab's sign-in by them. Chromium only stands in.
+* How long Supabase Auth's real refresh-token reuse window is (the stand-in uses 3 s) and what the production gate
+  answers a real member back after an hour: the tests use stand-ins built from the lane's probes.
+
+### What waits for Matthew
+
+* **The Worker's answer to a token it refuses.** Today a bad token on a `GET` is answered as a guest (200), so only a
+  `POST` comes back 401 and is asked again. Renewing the token before every call makes a refused one rare; a 401 on
+  the Worker's `GET`s is a Worker change for his decision.
+* **D-10**: one session across his site and the company's World, or two. This release keeps two: a sign-in or
+  sign-out on one does not change the other.
+* Not in this slice: purchases on the account (SQL), the viewer answer (`GET /v1/me`).
+* **His devices**: on an iPhone, open the album in two Safari tabs, sign out in one, return to the other (it should
+  read signed out, with the gated row as a guest's); and come back to the album after an hour away (the owner's row
+  should read PLAY · owner).
+* Seen, not changed here: at 390 px the bar's account chip covers the "Creator Studio" link in the music context bar
+  on Listen and the artist page.

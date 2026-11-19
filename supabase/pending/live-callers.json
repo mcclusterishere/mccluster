@@ -452,6 +452,13 @@
         "workers/mccluster/src/mission-sources.js"
       ]
     },
+    "mission_catalog_sources": {
+      "kind": "table",
+      "pending": "20261119140000_mission_catalog_sources_v1.sql",
+      "callers": [
+        "js/world-source-profile.js"
+      ]
+    },
     "music_gate_claim_rule": {
       "kind": "function",
       "pending": "gated_track_mission_identity_v1.sql",

@@ -83,6 +83,12 @@ member through the REST API (two production-only policies and the member grants)
 INSERT, UPDATE and DELETE from `authenticated`, keeping the member read policy, SELECT and the RPCs the World uses. It defines no
 name, so `live-callers.json` does not change. Not applied; Matthew's approval required.
 
+Pending (2026-11-19): mission catalog sources, `20261119140000_mission_catalog_sources_v1.sql` with
+`20261119140000_mission_catalog_sources_v1.rollback.sql` (`PROMOTION-ORDER.md` section 14): Project Drawdown's organization row
+(public the moment it is inserted), the catalog-keyed link to its source page in the World and the house owner's two functions.
+Applied only on Matthew's approval of the exact text, after the mission publish and its record; it refuses before the publish.
+`live-callers.json` lists its names as pending only (the two functions; the table once the World's page reads it). Not applied.
+
 Still pending: the publish, `20261117100300_action_mission_drawdown_publish.sql` (10.4). The owner decided it runs in
 the deploy window, after the new feed ships: the live build reads open missions straight from the database (its swipe
 deck, guest door and Worker lists), so all 125 show on the live site the moment it commits. It refuses until all 125

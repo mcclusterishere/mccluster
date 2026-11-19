@@ -159,19 +159,31 @@
      seen nothing like that, to be able to edit my profile"). Signed in as the account behind this page, the artist sees
      where to edit it (Creator Studio) and where to build their front page (front-studio.html). Nobody else sees them,
      and both editors check the account again themselves. */
+  /* The question is asked with the shared auth's token for this call (renewed when it is near its end, asked again
+     once after a 401), and asked again whenever the account signed in here changes, here or in another tab: an
+     artist back after the token's hour, or one who signs in elsewhere, sees the tools; one who signs out loses them
+     (music slice M4; accounts lane ACC-5). */
+  var ownerAsk = 0;
+  function dropOwnerDoors() {
+    ["apOwnerEdit", "apOwnerFront"].forEach(function (id) { var n = doc.getElementById(id); if (n && n.parentNode) n.parentNode.removeChild(n); });
+  }
   function ownerDoors(p) {
+    var ask = ++ownerAsk;
     var session = root.MCC && root.MCC.session && root.MCC.session();
-    if (!session || !session.access_token) return;
-    fetch(SB + "/rest/v1/rpc/current_m_uid", { method: "POST", headers: { apikey: KEY, authorization: "Bearer " + session.access_token, "content-type": "application/json" }, body: "{}" })
+    if (!session || !session.access_token || !root.MCC.authFetch) { dropOwnerDoors(); return; }
+    root.MCC.authFetch(SB + "/rest/v1/rpc/current_m_uid", { method: "POST", headers: { apikey: KEY, "content-type": "application/json" }, body: "{}" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (mine) {
-        if (!mine || mine !== p.m_uid || !$("apDoors") || doc.getElementById("apOwnerEdit")) return;
+        if (ask !== ownerAsk) return;
+        if (!mine || mine !== p.m_uid) { dropOwnerDoors(); return; }
+        if (!$("apDoors") || doc.getElementById("apOwnerEdit")) return;
         var edit = doc.createElement("a"); edit.id = "apOwnerEdit"; edit.className = "ap-door ap-door--lead"; edit.href = "creator.html?edit=profile"; edit.textContent = "Edit my artist page";
         var build = doc.createElement("a"); build.id = "apOwnerFront"; build.className = "ap-door"; build.href = "front-studio.html"; build.textContent = "Build my front page";
         $("apDoors").insertBefore(build, $("apDoors").firstChild);
         $("apDoors").insertBefore(edit, $("apDoors").firstChild);
       }).catch(function () {});
   }
+  if (root.MCC && root.MCC.onAccountChange) root.MCC.onAccountChange(function () { if (state.p) ownerDoors(state.p); });
 
   /* ---------- the rate sheet and booking requests ---------- */
   function renderRates(p) {
@@ -379,15 +391,12 @@
     }
     b.disabled = true;
     b.textContent = "Opening checkout…";
-    fetch(SB + "/functions/v1/music-checkout", {
-      method: "POST",
-      headers: {
-        apikey: KEY,
-        authorization: "Bearer " + session.access_token,
-        "content-type": "application/json"
-      },
-      body: JSON.stringify({ offer_id: offerId })
-    }).then(function (r) { return r.json().then(function (d) { return { ok:r.ok, data:d }; }); })
+    /* the shared auth's token for this call, renewed first and asked again once after a 401 (music slice M4) */
+    var checkout = { method: "POST", headers: { apikey: KEY, "content-type": "application/json" }, body: JSON.stringify({ offer_id: offerId }) };
+    (root.MCC.authFetch
+      ? root.MCC.authFetch(SB + "/functions/v1/music-checkout", checkout)
+      : fetch(SB + "/functions/v1/music-checkout", Object.assign(checkout, { headers: { apikey: KEY, authorization: "Bearer " + session.access_token, "content-type": "application/json" } }))
+    ).then(function (r) { return r.json().then(function (d) { return { ok:r.ok, data:d }; }); })
       .then(function (out) {
         if (!out.ok || !out.data.url) throw new Error(out.data.error || "Checkout unavailable");
         if (root.MCC_TRACK) root.MCC_TRACK("music_license_checkout_start", { offer_id: offerId, creator: handle });

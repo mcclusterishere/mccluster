@@ -26,21 +26,53 @@ function slugify(value) {
 function fileName(file) {
   return String(file?.name || "upload").replace(/[^a-zA-Z0-9._-]+/g, "-");
 }
+/* NEVER THE BOOT TOKEN (music slice M4, 2026-11-19; accounts lane ACC-3). This page used to take the session once,
+   when it opened, and send that token with every save and upload after it: an hour into an album upload every call
+   answered "JWT expired" while the bar still said signed in. Every call now takes the shared auth's token for that
+   call (renewed when it is near its end, asked again once after a 401: js/mcc-auth.js authFetch), and only for the
+   account this studio opened for: if the site is now signed in as someone else, or signed out, the call is refused
+   here and the studio closes and opens again for whoever is signed in now (boot, below). */
+let account = null;
+function studioFetch(url, init) {
+  /* "-" matches nobody: while the studio is closed between two accounts, every call is refused */
+  return window.MCC.authFetch(url, init, { account: account || "-" });
+}
+/* A save or an upload that is running when the account changes is let fail (its next call is refused) and the
+   studio opens again for the new account once it has: nothing it started is ever sent as someone else. */
+let running = 0;
+let reopenWhenDone = false;
+function guarded(handler) {
+  return async function (...args) {
+    running++;
+    try { return await handler.apply(this, args); }
+    finally {
+      running--;
+      if (!running && reopenWhenDone) { reopenWhenDone = false; closeStudio(); boot(); }
+    }
+  };
+}
 async function authed() {
-  session = await window.MCC.refreshIfNeeded();
+  session = await window.MCC.refreshIfNeeded().catch(() => null);
+  /* another tab (or the bar) may have won the refresh: what is stored now is the session */
+  if (!session?.access_token) session = window.MCC.session();
   if (!session?.access_token) return false;
+  account = window.MCC.account();
   mUid = await window.MCC.mUid();
   return Boolean(mUid);
 }
+/* An answer that comes back after the studio closed for its account (a sign-out or another sign-in, here or in
+   another tab) is never painted or acted on: the studio has opened again for whoever is signed in now. */
+const ACCOUNT_CHANGED = "You signed in as someone else, or signed out, in another tab. Creator Studio has reopened for the account signed in now.";
 async function rest(path, init = {}) {
+  const asked = account;
   const headers = {
     apikey: KEY,
-    authorization: "Bearer " + session.access_token,
     "content-type": "application/json",
     ...(init.headers || {})
   };
-  const res = await fetch(SB + "/rest/v1/" + path, { ...init, headers });
+  const res = await studioFetch(SB + "/rest/v1/" + path, { ...init, headers });
   const text = await res.text();
+  if (account !== asked) throw new Error(ACCOUNT_CHANGED);
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (_) { data = text; }
   if (!res.ok) {
@@ -50,16 +82,14 @@ async function rest(path, init = {}) {
   return data;
 }
 async function fn(action, body = {}) {
-  const res = await fetch(SB + "/functions/v1/music-access", {
+  const asked = account;
+  const res = await studioFetch(SB + "/functions/v1/music-access", {
     method: "POST",
-    headers: {
-      apikey: KEY,
-      authorization: "Bearer " + session.access_token,
-      "content-type": "application/json"
-    },
+    headers: { apikey: KEY, "content-type": "application/json" },
     body: JSON.stringify({ action, ...body })
   });
   const data = await res.json().catch(() => ({}));
+  if (account !== asked) throw new Error(ACCOUNT_CHANGED);
   if (!res.ok) throw new Error(data.error || ("Music service " + res.status));
   return data;
 }
@@ -132,11 +162,12 @@ async function uploadGrant(bucket, file) {
    authenticated creator remove files under their own folder. The module
    client above is anonymous (uploads go through signed URLs and need no
    session), so a delete through it was refused and every rollback left its
-   files behind. Each removal uses a client carrying the creator's token. */
+   files behind. Each removal uses a client carrying the creator's token: the
+   shared auth's, for that call (accessToken), never one kept from boot. */
 function ownerStorage() {
   return createClient(SB, KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: "Bearer " + session.access_token } }
+    accessToken: () => window.MCC.freshToken(),
+    global: { fetch: studioFetch }
   });
 }
 async function removeUpload(bucket, path) {
@@ -371,7 +402,7 @@ $("albumForm").addEventListener("click", (e) => {
   if (remove) list.splice(Number(remove.getAttribute("data-album-remove")), 1);
   if (add || move || remove) renderAlbumTracks();
 });
-$("deleteAlbum").addEventListener("click", async () => {
+$("deleteAlbum").addEventListener("click", guarded(async () => {
   if (!editingAlbum || !confirm("Delete this album? Its tracks stay in your releases.")) return;
   const id = editingAlbum.id;
   try {
@@ -379,8 +410,8 @@ $("deleteAlbum").addEventListener("click", async () => {
     closeAlbum();
     if (window.MCC_TRACK) window.MCC_TRACK("creator_album_deleted", {});
   } catch (err) { status("albumStatus", err.message || "Could not delete the album.", "bad"); }
-});
-$("albumForm").addEventListener("submit", async (e) => {
+}));
+$("albumForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   if (!editingAlbum) return;
   const save = $("saveAlbum");
@@ -433,7 +464,7 @@ $("albumForm").addEventListener("submit", async (e) => {
   } finally {
     save.disabled = false;
   }
-});
+}));
 
 /* ---------- rate sheet (music_creator_profiles.settings.services) ---------- */
 
@@ -469,7 +500,7 @@ function closeService() { editingService = null; $("serviceForm").hidden = true;
 
 $("newService").addEventListener("click", () => openService(null));
 $("cancelService").addEventListener("click", () => { closeService(); status("serviceStatus", ""); });
-$("creatorServices").addEventListener("click", async (e) => {
+$("creatorServices").addEventListener("click", guarded(async (e) => {
   const edit = e.target.closest("[data-edit-service]");
   const move = e.target.closest("[data-service-move]");
   if (edit) {
@@ -489,8 +520,8 @@ $("creatorServices").addEventListener("click", async (e) => {
       s.services = list;
     });
   } catch (err) { status("serviceStatus", err.message || "Could not reorder your rates.", "bad"); }
-});
-$("deleteService").addEventListener("click", async () => {
+}));
+$("deleteService").addEventListener("click", guarded(async () => {
   if (!editingService || !confirm("Delete this rate from your page?")) return;
   const id = editingService.id;
   try {
@@ -498,8 +529,8 @@ $("deleteService").addEventListener("click", async () => {
     closeService();
     status("serviceStatus", "Rate deleted.", "good");
   } catch (err) { status("serviceStatus", err.message || "Could not delete the rate.", "bad"); }
-});
-$("serviceForm").addEventListener("submit", async (e) => {
+}));
+$("serviceForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   if (!editingService) return;
   const save = $("saveService");
@@ -533,7 +564,7 @@ $("serviceForm").addEventListener("submit", async (e) => {
   } finally {
     save.disabled = false;
   }
-});
+}));
 
 /* Profile photo and front-page photo: uploaded to creator-artwork once the
    profile exists (an upload grant needs an active creator profile). */
@@ -572,7 +603,7 @@ function experienceFromForm() {
   };
 }
 
-$("profileForm").addEventListener("submit", async (e) => {
+$("profileForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   try {
     status("profileStatus", "Saving…");
@@ -612,7 +643,7 @@ $("profileForm").addEventListener("submit", async (e) => {
   } catch (err) {
     status("profileStatus", err.message || "Could not save profile.", "bad");
   }
-});
+}));
 
 $("isDerivative").addEventListener("change", () => {
   $("derivativeField").hidden = !$("isDerivative").checked;
@@ -623,7 +654,7 @@ $("trackAccess").addEventListener("change", () => {
     : "Required for account-only and licensable tracks.";
 });
 
-$("trackForm").addEventListener("submit", async (e) => {
+$("trackForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   const submit = $("submitTrack");
   const uploaded = [];
@@ -810,7 +841,7 @@ $("trackForm").addEventListener("submit", async (e) => {
   } finally {
     submit.disabled = false;
   }
-});
+}));
 
 /* ---------- onboarding: one click, shown only until the server says creator ---------- */
 
@@ -822,7 +853,8 @@ let onboardState = null;
    applied the same answer built from the member's own rows, with the same two writes
    (the picture from the member's profile included). */
 function onboardClient() {
-  return ONBOARD.client({ token: session.access_token, mUid, userId: session?.user?.id || "" });
+  /* the token travels with each call (studioFetch), so the client is handed none of its own */
+  return ONBOARD.client({ token: "", mUid, userId: session?.user?.id || "", fetch: studioFetch });
 }
 async function creatorState() {
   return onboardClient().state();
@@ -891,7 +923,7 @@ async function showStudio(editing) {
   await loadTracks();
 }
 
-$("cobForm").addEventListener("submit", async (e) => {
+$("cobForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   const go = $("cobGo");
   const say = (msg, tone) => { $("cobStatus").textContent = msg || ""; if (tone) $("cobStatus").dataset.tone = tone; else delete $("cobStatus").dataset.tone; };
@@ -930,7 +962,7 @@ $("cobForm").addEventListener("submit", async (e) => {
   } finally {
     go.disabled = false;
   }
-});
+}));
 
 /* the card is a live preview: what they type is what their page will say */
 $("cobNameInput").addEventListener("input", () => {
@@ -947,16 +979,41 @@ $("cobHandleInput").addEventListener("input", () => {
   $("cobHandleHelp").textContent = ONBOARD.handleHelp({});
 });
 
-(async function boot() {
+/* WHOEVER IS SIGNED IN NOW (music slice M4; accounts lane ACC-1). A sign-in or sign-out in another tab used to leave
+   this page as it was: "Sign in to publish." to a member who had just signed in, the open studio to someone who had
+   just signed out. The page now follows the account stored for this site: what the previous account loaded is taken
+   off the screen, and the studio opens again for whoever is signed in now, or closes to "Sign in to publish.". */
+const GATE_TEXT = $("creatorGate").querySelector("p").textContent;
+let boots = 0;
+function closeStudio() {
+  session = null; mUid = null; account = null; profile = null; tracksCache = []; onboardState = null;
+  editingAlbum = null; editingService = null;
+  $("creatorOnboard").hidden = true;
+  $("creatorApp").hidden = true;
+  $("creatorSummary").hidden = true;
+  $("creatorIdentity").hidden = true;
+  $("albumForm").hidden = true;
+  $("serviceForm").hidden = true;
+  ["profileForm", "trackForm", "albumForm", "serviceForm", "cobForm"].forEach((id) => { const f = $(id); if (f && f.reset) f.reset(); });
+  ["creatorTracks", "creatorAlbums", "creatorServices"].forEach((id) => { const n = $(id); if (n) n.replaceChildren(); });
+  ["profileStatus", "trackStatus", "albumStatus", "serviceStatus", "cobStatus"].forEach((id) => { const n = $(id); if (n) n.textContent = ""; });
+  $("publicProfile").hidden = true;
+  $("creatorGate").querySelector("p").textContent = GATE_TEXT;
+  $("creatorGate").hidden = false;
+}
+async function boot() {
+  const run = ++boots;
   try {
     const ok = await authed();
     const state = ok ? await creatorState() : null;
+    if (run !== boots) return;
     const v = ONBOARD.view({ signedIn: ok, state, editing: ONBOARD.wantsEdit(location.search) });
     if (v === "signin") return;
     if (v === "onboard") {
       /* ONE SIGN-UP (owner, 2026-10-20): a profile that is not done goes through the three pages on the World,
          which come back here for the one tap; nothing is asked twice on this page */
-      const done = await ONBOARD.profileDone({ token: session.access_token });
+      const done = await ONBOARD.profileDone({ token: "", fetch: studioFetch });
+      if (run !== boots) return;
       if (done === false) { location.replace(ONBOARD.FINISH_URL); return; }
     }
     $("creatorGate").hidden = true;
@@ -967,7 +1024,17 @@ $("cobHandleInput").addEventListener("input", () => {
     }
     await showStudio(v === "edit");
   } catch (err) {
+    if (run !== boots) return;
     $("creatorGate").hidden = false;
     $("creatorGate").querySelector("p").textContent = err.message || "Could not open Creator Studio.";
   }
-})();
+}
+boot();
+if (window.MCC.onAccountChange) {
+  window.MCC.onAccountChange(() => {
+    account = null;
+    if (running) { reopenWhenDone = true; return; }
+    closeStudio();
+    boot();
+  });
+}

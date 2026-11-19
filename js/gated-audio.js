@@ -45,15 +45,18 @@
   function keyOf(gated) { return String((gated && gated.object) || "").split("/")[0]; }
 
   /* A signed-out GET is allowed: the gate answers what the full track
-     takes before anyone has an account. A play always needs a session. */
+     takes before anyone has an account. A play always needs a session.
+     The token is the shared auth's, renewed for this call when it is near
+     its end, and asked again once after a 401 (js/mcc-auth.js authFetch):
+     the stored one, an hour old, made the owner a guest (music slice M4). */
   function ask(path, method) {
     var token = sessionToken();
     if (!token && method === "POST") return Promise.resolve({ status: 401, data: null });
-    return fetch(API + path, {
-      method: method || "GET",
-      headers: token ? { authorization: "Bearer " + token } : {},
-      cache: "no-store"
-    }).then(function (r) {
+    var init = { method: method || "GET", cache: "no-store" };
+    var call = root.MCC && root.MCC.authFetch
+      ? root.MCC.authFetch(API + path, init)
+      : fetch(API + path, Object.assign(init, { headers: token ? { authorization: "Bearer " + token } : {} }));
+    return call.then(function (r) {
       return r.json().catch(function () { return null; }).then(function (d) { return { status: r.status, data: d }; });
     }).catch(function () { return { status: 0, data: null }; });
   }
@@ -71,11 +74,12 @@
   function resolve(gated) {
     var key = keyOf(gated);
     if (!key) return Promise.resolve({ state: "unavailable", reason: "unconfigured" });
-    var signedIn = !!sessionToken();
     var hit = cache[key];
     if (hit && hit.inflight) return hit.inflight;
     if (hit && Date.now() - hit.at < STATE_MS) return Promise.resolve(hit.out);
     var p = ask("/v1/music/gates/" + encodeURIComponent(key)).then(function (r) {
+      /* signed in is decided when the answer is back: a session the server ended on the way is a guest's answer */
+      var signedIn = !!sessionToken();
       var out = r.status === 200
           ? (signedIn ? fromGate(r.data && r.data.gate) : { state: "preview", reason: "account", gate: r.data && r.data.gate })
         : r.status === 401 ? { state: "preview", reason: "account" }
@@ -174,9 +178,12 @@
     signedIn: function () { return !!sessionToken(); }
   };
 
-  /* The session is in localStorage, so another tab signing in or out
-     is a storage event here. */
-  if (root.addEventListener) {
+  /* A sign-in or sign-out, here or in another tab, repaints every gated
+     row; a renewed token for the same account does not (js/mcc-auth.js
+     onAccountChange). Without the shared auth, the storage event. */
+  if (root.MCC && root.MCC.onAccountChange) {
+    root.MCC.onAccountChange(forget);
+  } else if (root.addEventListener) {
     root.addEventListener("storage", function (e) {
       if (e && e.key === "mccdb_session") forget();
     });
