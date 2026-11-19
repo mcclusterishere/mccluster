@@ -31,8 +31,46 @@ function check(scope, name, ok, detail) {
 }
 const fits = (page) => page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
 const calls = (page) => page.evaluate(() => (window.__authCalls || []).slice());
-const opened = (page) => page.waitForFunction(() => { const d = document.getElementById('mnSignedOut'); return d && !d.hidden && !d.classList.contains('is-leaving'); }, null, { timeout: 10000 });
-const closed = (page) => page.waitForFunction(() => document.getElementById('mnSignedOut').hidden, null, { timeout: 5000 });
+/* These predicates inspect DOM state, not a painted frame. Software-rendered Cesium can delay animation frames while
+   the door closes, so poll independently of requestAnimationFrame without extending either deadline. A passive probe
+   distinguishes a missing click, an unstarted close and an unfinished hide if the state still fails to arrive. */
+async function doorProbe(page) {
+  await page.evaluate(() => {
+    if (window.__signInDoorProbe) return;
+    const state = () => {
+      const d = document.getElementById('mnSignedOut');
+      return { at: Math.round(performance.now()), hidden: d ? d.hidden : null, leaving: !!d && d.classList.contains('is-leaving'),
+        gateOpen: window.MCC_GATE ? window.MCC_GATE.isOpen() : null, historyDoor: !!(history.state && history.state.mccDoor),
+        focus: document.activeElement && document.activeElement.id };
+    };
+    const probe = window.__signInDoorProbe = { clicks: [], state };
+    document.addEventListener('click', (e) => {
+      if (!e.target?.closest?.('#mnSignedOutBack')) return;
+      const click = { before: state() };
+      probe.clicks.push(click);
+      setTimeout(() => { click.afterDispatch = state(); }, 0);
+      setTimeout(() => { click.after400ms = state(); }, 400);
+    }, { capture: true, passive: true });
+  });
+}
+async function waitDoor(page, expected) {
+  await doorProbe(page);
+  try {
+    await page.waitForFunction((expected) => {
+      const d = document.getElementById('mnSignedOut');
+      return !!d && (expected === 'closed' ? d.hidden : !d.hidden && !d.classList.contains('is-leaving'));
+    }, expected, { timeout: expected === 'closed' ? 5000 : 10000, polling: 100 });
+  } catch (error) {
+    const detail = await page.evaluate(() => {
+      const p = window.__signInDoorProbe;
+      return p ? { current: p.state(), clicks: p.clicks.slice(-2) } : { probe: 'unavailable' };
+    }).catch((e) => ({ diagnosticsError: e.message }));
+    console.error('DOOR STATE TIMEOUT ' + expected + ': ' + JSON.stringify(detail));
+    throw error;
+  }
+}
+const opened = (page) => waitDoor(page, 'opened');
+const closed = (page) => waitDoor(page, 'closed');
 /* who has the focus, as a reader would name it */
 const focusName = (page) => page.evaluate(() => {
   const a = document.activeElement;
