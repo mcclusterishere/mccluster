@@ -87,7 +87,8 @@
       </form>
     </dialog>
 
-    <p class="ap-foot">On McCluster Music · <a href="music-creator-terms.html">Creator terms</a> · <a href="creator.html" data-creator-door>Make your own artist page</a> <span class="ap-foot__terms">(one tap with your profile; accepts the Creator terms)</span></p>
+    <!-- the offer for whoever is looking (js/creator-onboarding.js, music slice M4): a guest is asked to sign in, a member who is not a creator gets the one tap, a creator opens Creator Studio -->
+    <p class="ap-foot">On McCluster Music · <a href="music-creator-terms.html">Creator terms</a> · <span data-creator-offer><span data-offer="become" hidden><a href="creator.html" data-creator-door>Make your own artist page</a> <span class="ap-foot__terms">(one tap with your profile; accepts the Creator terms)</span></span><span data-offer="studio"><a href="creator.html">Open Creator Studio</a></span><span data-offer="signin" hidden><a href="account.html?next=creator.html">Sign in to make your own artist page</a></span></span></p>
   </main>
 
   <script src="js/analytics.js?v=__STAMP__"></script>
@@ -95,6 +96,7 @@
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/gated-audio.js?v=__STAMP__"></script>
+  <script src="js/now-playing.js?v=__STAMP__"></script>
   <script src="js/music-engine.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/music-creator-page.js?v=__STAMP__"></script>

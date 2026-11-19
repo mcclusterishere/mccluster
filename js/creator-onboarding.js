@@ -140,7 +140,7 @@
   /* true: done; false: not done; null: the bootstrap could not answer (the card then asks only what is missing) */
   function profileDone(o) {
     var f = o.fetch || fetch;
-    return f(API + "/v1/mnet/bootstrap?app_key=mccluster-web", { headers: { authorization: "Bearer " + o.token } })
+    return f(API + "/v1/mnet/bootstrap?app_key=mccluster-web", { headers: o.token ? { authorization: "Bearer " + o.token } : {} })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (boot) { return boot ? !profileUnfinished(boot) : null; })
       .catch(function () { return null; });
@@ -153,7 +153,9 @@
     var f = o.fetch || fetch;
     var enc = encodeURIComponent;
     var headers = function (extra) {
-      var h = { apikey: KEY, authorization: "Bearer " + o.token, "content-type": "application/json" };
+      /* o.token may be empty when o.fetch brings the token for each call (js/mcc-auth.js authFetch) */
+      var h = { apikey: KEY, "content-type": "application/json" };
+      if (o.token) h.authorization = "Bearer " + o.token;
       for (var k in extra || {}) h[k] = extra[k];
       return h;
     };
@@ -249,13 +251,15 @@
       w.location.assign(dest);
     };
     a.setAttribute("aria-busy", "true");
+    /* every call takes the shared auth's token for that call and asks again once after a 401 (music slice M4) */
+    var authed = M.authFetch ? function (u, i) { return M.authFetch(u, i); } : undefined;
     return M.refreshIfNeeded().then(function (s) {
       if (!s || !s.access_token) return go();
       a.textContent = "Making your page…";
-      return Promise.all([M.mUid(), profileDone({ token: s.access_token })]).then(function (r) {
+      return Promise.all([M.mUid(), profileDone({ token: s.access_token, fetch: authed })]).then(function (r) {
         if (!r[0]) return go();
         if (r[1] === false) return go(FINISH_URL);
-        var c = client({ token: s.access_token, mUid: r[0], userId: (s.user && s.user.id) || subOf(s.access_token) });
+        var c = client({ token: s.access_token, mUid: r[0], userId: (s.user && s.user.id) || subOf(s.access_token), fetch: authed });
         return c.state().then(function (st) {
           if (!st || st.creator === true || !ready(st)) return go();
           return c.become({}).then(function (after) {
@@ -283,11 +287,78 @@
   }
   if (typeof window !== "undefined" && window.document) bindDoors(window);
 
+  /* OFFERS BY STATE (owner, 2026-11-17: "It should know if someone is logged in and what they've opted into such as
+     the creator account opt in ... not serving 'sign up' suggestions to people who are already signed up"; music
+     slice M4, accounts lane ACC-4). An offer block, <… data-creator-offer>, holds one child per answer, each marked
+     data-offer="signin" | "become" | "studio" | "review", and shows only the ones for whoever is looking:
+       a guest                          -> asked to sign in
+       a member who is not a creator    -> Become a creator (the one tap above)
+       a creator                        -> Open Creator Studio
+       the house owner, in addition     -> his review desk (the bar's own server check, GET /v1/status)
+     "Creator or not" is the server's answer (music_creator_state); when it cannot be had, the neutral door to
+     Creator Studio, which decides for itself. It is asked again whenever the account here changes. */
+  function offerFor(input) {
+    var i = input || {};
+    if (!i.signedIn) return { door: "signin", review: false };
+    return { door: i.creator === false ? "become" : "studio", review: !!i.owner };
+  }
+  function creatorStateFor(w) {
+    var M = w.MCC;
+    var authed = function (u, i) { return M.authFetch(u, i); };
+    return client({ token: "", fetch: authed }).rpc("music_creator_state").then(function (out) {
+      if (!out.missingRpc) return out.data;
+      return M.mUid().then(function (mUid) { return mUid ? client({ token: "", mUid: mUid, fetch: authed }).state() : null; });
+    });
+  }
+  function bindOffers(w) {
+    var doc = w.document;
+    if (!doc || w.__mccCreatorOffers) return;
+    var boxes = Array.prototype.slice.call(doc.querySelectorAll("[data-creator-offer]"));
+    if (!boxes.length) return;
+    w.__mccCreatorOffers = true;
+    var asked = 0, known = null;
+    function owner() { return !!(doc.body && doc.body.hasAttribute("data-appbar-admin")); }
+    function show(state) {
+      known = state;
+      var offer = offerFor({ signedIn: state.signedIn, creator: state.creator, owner: owner() });
+      boxes.forEach(function (box) {
+        Array.prototype.forEach.call(box.querySelectorAll("[data-offer]"), function (el) {
+          var k = el.getAttribute("data-offer");
+          el.hidden = k === "review" ? !offer.review : k !== offer.door;
+        });
+        box.removeAttribute("data-offer-pending");
+        box.setAttribute("data-offer-state", offer.door);
+      });
+    }
+    function paint() {
+      var ask = ++asked;
+      var M = w.MCC, s = M && M.session && M.session();
+      if (!s || !s.access_token || !M.authFetch) { show({ signedIn: false }); return; }
+      /* signed in: the space is kept (the neutral door, unseen) until the server says creator or not */
+      boxes.forEach(function (box) { if (!known || !known.signedIn) box.setAttribute("data-offer-pending", ""); });
+      creatorStateFor(w).then(function (st) {
+        if (ask !== asked) return;
+        if (st && st.error === "not_signed_in") { show({ signedIn: false }); return; }
+        show({ signedIn: true, creator: st && typeof st.creator === "boolean" ? st.creator : null });
+      }, function () {
+        if (ask === asked) show({ signedIn: true, creator: null });
+      });
+    }
+    paint();
+    if (w.MCC && w.MCC.onAccountChange) w.MCC.onAccountChange(paint);
+    w.addEventListener("mcc:appbar-admin", function () { if (known) show(known); });
+  }
+  if (typeof window !== "undefined" && window.document) {
+    if (window.document.readyState === "loading") window.document.addEventListener("DOMContentLoaded", function () { bindOffers(window); });
+    else bindOffers(window);
+  }
+
   return {
     HANDLE: HANDLE, FIELDS: FIELDS, TERMS_VERSION: TERMS_VERSION, EDIT_URL: EDIT_URL, FINISH_URL: FINISH_URL,
     normalizeHandle: normalizeHandle, validHandle: validHandle, suggestHandle: suggestHandle,
     view: view, wantsEdit: wantsEdit, askFor: askFor, ready: ready,
     fallbackState: fallbackState, rpcMissing: rpcMissing, handleHelp: handleHelp,
-    profileUnfinished: profileUnfinished, profileDone: profileDone, client: client, openDoor: openDoor
+    profileUnfinished: profileUnfinished, profileDone: profileDone, client: client, openDoor: openDoor,
+    offerFor: offerFor
   };
 });

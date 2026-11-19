@@ -71,6 +71,9 @@ export async function createEnvironmentPlane() {
             return json({ code: error.code, message: error.message, details: null, hint: null }, postgrestStatus(error.code));
           }
         }
+        /* any other function is not in this plane's database (the event store's parts are not applied here): PostgREST's own
+           answer for a missing function (E=UP slice S4: the public feed's USGS rows are read from that store) */
+        if (url.pathname.startsWith('/rest/v1/rpc/')) return json({ code: 'PGRST202', message: 'Could not find the function in the schema cache' }, 404);
         if (url.pathname.startsWith('/rest/v1/')) return json({ code: 'PGRST205', message: 'Could not find the table in the schema cache' }, 404);
         return json({ message: 'not found' }, 404);
       }

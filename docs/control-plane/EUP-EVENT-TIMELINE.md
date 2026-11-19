@@ -625,3 +625,259 @@ General-news and Drawdown-mission tests are unchanged.
   (D3), each its own go.
 - Decisions D5, D6, D7 and D20, and the bounds above, as adopted defaults. Nothing was applied, installed, enabled, flagged or
   published.
+
+## S5. Recognisable quakes, the expanding ripple, a cancellable push, contours and documented rupture
+
+### Present before
+
+At `c7c8731e` (the head this slice started from; the screenshots below compare with `2855a4e9`, the release review's head):
+
+- Every quake was a 6 px dot over a translucent energy disc, picked through Cesium's 3 x 3 px default window
+  (`js/action-globe.js`): from orbit nothing said "earthquake", which, how big or where. The release review read the white fire
+  summary cells (up to 80 px across) as "plain white circles" over the quakes.
+- A chosen quake got one alpha-only ground pulse (adapted from the MIT-licensed reference credited in `THIRD-PARTY-NOTICES`),
+  15 km wide up to M4.4, under a bounded hold; under reduced motion nothing. A tap selected without moving the camera; a post's
+  Show on globe or a panel row flew straight down to 900 km (1,600 km from M7), and nothing could cancel that flight.
+- The selected event's label was one LabelCollection entry with a depth test: at 390 px it ran off the frame and under the
+  page's Sign in (polish-390-equity.png, "...ture event 48"), at 1280 px behind the limb.
+- ShakeMap contours on selection; no rupture source anywhere (lane 06: about a dozen quakes a year carry a USGS finite-fault
+  model, all M6.5 and up).
+- The mission halos breathed through a `CallbackProperty` under the governor's unbounded `legacy` hold, so with any mission pin
+  on the globe the Equity Uprise tab never rendered on demand.
+- At 390 x 844 the World's floating app bar lay over the tour's Replay button at rest (360 x 780: over Play, Previous and Next).
+
+### Integrated
+
+- **The quake marks** (`js/environment-quake-marks.js`, new). Each quake is a glyph: the World's own quake pictogram (the
+  seismograph trace of the quake posts' icon, `OBS_ICON.quake` in `js/mnet.js`; an icon, never anyone's mark) in a dark round
+  badge ringed in its depth colour with a soft glow, 14 px at M2.5 to 44 px at M8, in one BillboardCollection, each image drawn
+  once per colour and size and kept. The largest (M4.5 and up, at most 24 candidates) carry a two-line label, "M6.3" over a
+  short upper-case place ("ANAMIZU, JAPAN" from "20 km NW of Anamizu, Japan"), laid out greedily by magnitude: right of the
+  glyph, else left, above or below; never over another label or over the glyph of a quake as large or larger; never in the
+  frame's band under the page's header (64 px measured at every width) or its foot (the legend and credits), never in the
+  corners where the page lays its headline, its music and full-screen buttons and, wide, its app bar (measured on the World at
+  390 x 844, 375 x 667, 430 x 932 and 1280 x 800); never behind the Earth or along its limb; 3 labels on a phone's frame, up to 14
+  wide. The selected quake's label is always shown (the others yield to it), revealed over 0.32 s (at once under reduced
+  motion), and its glyph gains a white ring. Nothing is built per frame: the layout runs on frames drawn anyway, and only when
+  the camera's view has changed.
+- **The tap target.** A tap within 22 CSS px of a glyph's centre (a 44 px target) selects that quake, the nearest one, the
+  larger on a tie, when nothing else claimed the tap: a mission pin, a satellite or an aircraft keep theirs, while a fire cell's
+  or an alert's fill under the finger does not hide the quake (`environmentPins.pick(e, p.position)`, one argument added in
+  `js/action-globe.js`). The quake's dot is gone; its energy disc stays.
+- **Fire cells de-emphasised**: drawn 1.1 times their radius across (44 px at most, no longer 80) at half opacity. (The release
+  review's "plain white circles" are these cells: the hottest class of the fire colour ramp is white, as the legend says.)
+- **Round where the push lands**: the quake energy discs are drawn with 48 points round their rims, the ripple's ellipse with 96.
+  Cesium 1.131's `EllipseGeometry` steps round a rim by eight times its granularity whatever the radius (counted with Cesium's
+  own build in Node: pi/32 gives 8 points, pi/90 24, pi/192 48, pi/384 96), so the pi/32 used before drew every disc as an
+  octagon, plain once the push brings the camera to a regional frame. A first attempt here scaled the step to each disc's
+  radius: that gave the M3.1 disc of the test fixture 54,308 rim points, and Chromium's renderer crashed ("Target crashed") in
+  a perf run and a screenshot run; the step is now fixed, and the tests pin 48 and 96.
+- **The energy disc steps back at a regional frame** (`discNearM` in the encodings): a quake's energy disc compares magnitudes
+  from orbit, so it is hidden while the camera is within five of its radii, 600 km at the least, through Cesium's per-instance
+  distance condition on the one ground primitive (the GPU decides; nothing is rebuilt or written per frame). The push lands
+  120-300 km away, so the landing shows the ground, the travelling rings, the ShakeMap contours and the glyph, where the first
+  renders after the push showed one flat grey ellipse over the whole frame (an M5.7's 84 km disc seen from 150 km). Zoomed
+  out again, the discs return.
+- **The ripple** (`js/environment-ripple.js`, new; D17, **default adopted pending Matthew's confirmation**). Two rings travel
+  outward over the ground from the epicentre to a stated regional radius, 50 km below M5 rising 125 km a magnitude unit to 300 km
+  from M7, each in 1.6 s with an ease-out, the second 0.8 s after the first, all over in 2.4 s; labelled "Ripple is illustrative:
+  not a recording of shaking" in the selection and the legend. One GroundPrimitive (an ellipse at the full radius) is built once
+  per selection, asynchronously, with an original ring material whose two uniforms are the only thing written per frame, under
+  the bounded `env-ripple` hold (6 s at most, a timer ends it even when frames are sparse); no `CallbackProperty`, no geometry
+  rebuilt, no pulse on every quake (Hitman's Halo's breathing discs, 32.4 ms a frame against 1.4 ms static, stay retired). When
+  the camera is pushing in, the rings wait for the landing (2.5 s at most). Under reduced motion the same radius is a still
+  outline, kept while the quake is selected, asking for no frame once built. The adapted alpha-only pulse is gone, so
+  `THIRD-PARTY-NOTICES` now says so (the entry stays for its history).
+- **The push** (`js/environment-camera.js`, new; D14, **default adopted pending Matthew's confirmation**). An explicit choice (a
+  tap on a glyph, a post's Show on globe, a panel row, a deep link) pushes the camera in to the event: for a quake about 120 km
+  away at M4.5 out to 300 km from M7.5, looking down -45 to -60 degrees, its heading kept, 1.6 s within view up to 2 s across a
+  hemisphere, Cesium's cubic in-out, the event at the centre; any other kind keeps the frame its focus always had, now
+  cancellable. The visitor's hand wins: a pointer, a touch, a wheel or a key on the globe cancels the push at once and the camera
+  stays where it is; a new choice cancels it too. The tour and the replay never push (their flights are the director's).
+  Under reduced motion a tap moves nothing and a chosen post or row jumps to the same frame with no flight. The push holds
+  `env-focus` only while it flies, bounded by its duration plus 0.6 s.
+- **The documented rupture** (D13, **default adopted pending Matthew's confirmation**). `GET
+  /v1/world/environment/quakes/:event/rupture` (`workers/mccluster/src/world-environment-layers.js`, behind the persisted
+  environment module policy like every environment route, counted as a look-up): through the very event read the ShakeMap route
+  makes, the preferred ShakeMap's own `download/rupture.json` from USGS's host, kept a day per product version; only a Polygon
+  or MultiPolygon whose reference names a finite fault is answered, and only its up-dip edge (the plane's shallowest side),
+  called a model ("modelled rupture plane (USGS finite fault)"), never a mapped crack. A Point (the usual case), a plane naming
+  no finite fault, no clear top edge, a withdrawn event, no ShakeMap or rupture file, and an unreachable USGS each say why
+  nothing is drawn. The frame asks for it only for a selected quake of M6 or more (`js/environment-layers-client.js`
+  `rupture()`), draws the edge as a dark underlay with a hot core on the ground, adds a Rupture fact to the selection ("modelled
+  rupture plane (USGS finite fault): up-dip edge drawn, top at 0.1 km depth, model of 2026-11-03") and a legend line.
+- **Halos stand still in the tab** (D16, **default adopted pending Matthew's confirmation**): while the environmental layers are
+  on, the mission halos and the live badges rest at their still size and take no `legacy` hold, so the globe renders on demand
+  there; with the layers off they breathe as before (`js/action-globe.js`: `envStill()`, the frame told through `onActive`).
+- **The selected label clear of the page**: a quake's label is its glyph's (inside the free area above); any other selected
+  event's label now draws over the limb and reads towards the centre.
+- **The tour's controls above the app bar** (vendored panel, recorded local patch `S5-TOUR` in
+  `vendor/equity-uprise/product-source.lock.json`): the tour's group (Play, Previous, Next, Replay and its status line) follows
+  the panel's description, before the sources toolbar and the feed status, in the markup as on screen, so a keyboard meets them
+  in the order shown; on a phone the title holds one line and the group and the toolbar sit 4 px closer
+  (`css/world-environment.css`, restored from 600 px). At rest on a 390 x 844 phone no tour control, and no button, lies under
+  the floating app bar (on a 360 x 780 phone the Refresh button's top 30 px still do, until the page scrolls).
+
+### Art direction (references for pacing and composition only; no code or asset copied)
+
+Studied before coding: lane 05's map of the MIT-licensed reference globe credited in `THIRD-PARTY-NOTICES` (its source read in a
+local clone), Hitman's Halo (read only) and lane 04's notes on the World's own marks.
+
+- **Recognisable before the click.** The reference labels a quake in screen space ("M6.4" over the epicentre, about 15 px
+  above), largest first, with collision and a horizon cull; Hitman's Halo pairs a glowing mark with an upper-case place line.
+  Taken: magnitude first and large, the place small and tracked under it, priority by magnitude, nothing behind the Earth. Made
+  our own: the World's seismograph pictogram as the mark (the reference and Halo use circles), the depth colour as its ring and
+  the label's hairline (colour has one job), labels that avoid the page's own furniture.
+- **Focus by de-emphasis.** The reference makes the chosen thing loud by making the rest quieter; here the fire cells step back
+  (smaller, half opacity), the chosen glyph gains a white ring and its label, nothing else changes.
+- **The camera: pause, then move.** The reference flies 2 s to about 120 km at -45 degrees, heading kept, and cancels its flight
+  on any input; Halo's fly-in arrives before anything else moves. Taken: a regional oblique frame scaled by magnitude, the
+  heading kept (no disorienting spin), cubic in-out, the hand always winning, and the rings waiting for the landing so the wave
+  is seen from where the visitor arrives.
+- **The wave, once.** The reference's pulse breathes in place; Halo's discs breathed on every quake at 32 ms a frame. Ours
+  travels outward twice and is gone, regional in size, written as two numbers a frame, labelled illustrative.
+- **The official record first.** Every drawn claim names its source and model (ShakeMap modelled, rupture modelled, ripple
+  illustrative); a point source says so in words instead of drawing a guess.
+
+### The screenshots, art-directed
+
+Rendered at device scale 2 by night on the World page (the real frame, the e2e fixtures, two mission pins), the Equity Uprise tab
+at 390 x 844 and 1280 x 800, at this slice's code and at `2855a4e9` for comparison; the tap is a real click on the M5.7
+fixture quake at both. Measured with each frame in `after-measure.json` and `before-measure.json`. Judged in Matthew's words:
+not just dots on the board, cinematic, recognisable before you click.
+
+- **From orbit (`*-orbit`).** Before: every quake a 6 px dot among the alerts' dots, the two loudest marks on the globe white fire
+  cells, the selected event's label cut under Sign in at 390 ("...ture event 48") and behind the limb at 1280. After: each quake
+  is the World's seismograph glyph ringed in its depth colour, and the largest read "M5.7 / FIXTURE EVENT 12", "M4.7 / FIXTURE
+  EVENT 22", "M5.2 / FIXTURE EVENT 27" before anyone clicks, every label inside the free area, none under the header, the
+  headline or the buttons. The fire cells step back (still white at the hottest class, as the legend says, at half the size and
+  opacity). Recognisable before the click: yes. Still to watch: a glyph can sit under the page's headline at the top left
+  (geography puts it there; labels avoid it, glyphs cannot), and the hottest fire cell is still the brightest thing that is not
+  a quake.
+- **The wave (`*-ripple-1..3`, the globe's own canvas).** Before, 0.5, 1.2 and 2 s after the tap: nothing moves where the quake
+  is (the old pulse was 15 km wide, seen from 8,300 km). After: the camera has pushed in to a regional, oblique frame and two
+  soft rings travel out from the glyph to the stated 137.5 km radius, the second following the first (fronts 0.64; 0.92 and
+  0.38; 0.75 at 390, the same beats at 1280), then they are gone. This is the cinematic beat, seen from where the visitor
+  lands. The ocean is flat in these frames because the test page serves no close imagery tiles; the live World draws imagery
+  there.
+- **Where the push ends (`*-landed`).** Before: straight down from 900 km, an octagonal grey disc with a dot and a plain label.
+  After: an oblique regional frame, the glyph and its label at the centre of the free globe area, the ground clear. The first
+  render of this frame showed one flat grey ellipse over everything (the energy disc seen from 150 km), the most board-like
+  image of all; the disc distance rule is the answer.
+- **Reduced motion (`*-reduced`).** Before: a dot and a plain label. After: the tap selects without moving the camera, the
+  glyph gains its white ring and its label; the still outline is drawn at the same regional radius but, from orbit, it is a
+  few pixels under a 30-40 px glyph, so it shows only once the visitor zooms in. An honest gap rather than a motion.
+
+### Touched paths
+
+`js/environment-quake-marks.js` (new), `js/environment-ripple.js` (new), `js/environment-camera.js` (new),
+`js/environment-layers.js`, `js/environment-layers-client.js`, `js/environment-pins.js`, `js/action-globe.js`, `action-globe.html`
+(three script tags), `css/world-environment.css`, `vendor/equity-uprise/src/environment/panel.mjs` and
+`vendor/equity-uprise/product-source.lock.json` (patch S5-TOUR), `THIRD-PARTY-NOTICES`, `packages/release-policy/globe.mjs`,
+`workers/mccluster/src/world-environment-layers.js`, `workers/mccluster/src/world-environment-guard.js`,
+`workers/mccluster/test/world-environment-rupture.test.mjs` (new) with four recorded USGS files in
+`workers/mccluster/test/fixtures/environment/` (new), `workers/mccluster/test/world-environment-layers.test.mjs`,
+`scripts/test/environment-quake-marks.test.mjs`, `environment-ripple.test.mjs`, `environment-camera.test.mjs`,
+`environment-quake-selection.test.mjs` (all new), `scripts/test/environment-globe-wiring.test.mjs`,
+`environment-layers-client.test.mjs`, `environment-layers-encodings.test.mjs`, `world-environment-panel.test.mjs`,
+`scripts/e2e/environment-globe.e2e.mjs`, `scripts/e2e/environment-world.e2e.mjs`, `scripts/e2e/support/environment-globe-host.html`,
+`scripts/e2e/fixtures/environment/rupture-us6000u43g.json` (new: the Worker's own answer for the recorded USGS files, its clock
+times set to the recording time), `scripts/perf/environment-globe-perf.mjs` (`--missions`),
+`docs/control-plane/WORLD-ENVIRONMENT-CONTRACT.md`, the source map with its generated coverage report, and this section.
+
+### Tests
+
+E=UP-only assertions changed on purpose, named in the commits: the wiring pins in `scripts/test/environment-globe-wiring.test.mjs`
+(the new scripts' order, the pick line passing the tap position, the legacy hold's `PULSE&&!envStill()`), the route-id pins in
+`scripts/test/environment-layers-client.test.mjs` and `workers/mccluster/test/world-environment-layers.test.mjs` (`rupture`
+added), and the reduced-motion focus in `scripts/e2e/environment-globe.e2e.mjs` and `scripts/e2e/environment-world.e2e.mjs` (the
+jump now lands on the regional frame, about 132 km up, with a still ripple outline labelled illustrative, where it was 900 km
+straight down with no ripple). General-news and Drawdown-mission tests are unchanged.
+
+| Command | Result | Before the change |
+| --- | --- | --- |
+| `node --test scripts/test/environment-quake-marks.test.mjs` | 11/11 pass | at `c7c8731e` the file cannot load (`js/environment-quake-marks.js` does not exist) |
+| `node --test scripts/test/environment-ripple.test.mjs scripts/test/environment-camera.test.mjs` | 7/7, 13/13 | at `c7c8731e` neither can load |
+| `node --test scripts/test/environment-quake-selection.test.mjs` (the layers with the three modules in one realm) | 11/11 | at `c7c8731e` with only the three new modules copied in (the layers unchanged): 0/9 (the rim and distance tests came later; see the next two rows) |
+| the same file with `scripts/test/environment-ripple.test.mjs` (the rims) | 18/18 | with the earlier steps restored (pi/32, pi/90) the two rim tests fail (8 and 24 points); with the radius-scaled step they fail (220, 2,884 and 54,308 points on the three discs, 440 on the ripple) |
+| the disc distance test in the same file | passes | with the distance condition taken out: fails (no near distance on any disc) |
+| `node --test scripts/test/environment-globe-wiring.test.mjs scripts/test/environment-layers-client.test.mjs scripts/test/environment-layers-encodings.test.mjs` | all pass | at `c7c8731e`: 11 of 41 fail (the new pins, the D16 test, the rupture look-up, the cell size, the legend) |
+| `node --test scripts/test/world-environment-panel.test.mjs scripts/test/equity-product-consumer.test.mjs` | all pass (the new S5-TOUR test; the lock's hash and patch entry) | the consumer test refused the patch until each regression test named S5-TOUR |
+| `node --test scripts/test/world-environment*.test.mjs scripts/test/environment-*.test.mjs scripts/test/globe-*.test.mjs` (CI `environment-unit`, its exact command) | 243/243 at the final state; with `scripts/test/equity-product-consumer.test.mjs`, 247/247 | |
+| `cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/world-environment-rupture.test.mjs` | 8/8 | at `c7c8731e` the file cannot load (no `RUPTURE` export) |
+| `... --test test/world-environment-rupture.test.mjs test/world-environment-layers.test.mjs test/world-environment-guard.test.mjs test/world-environment.test.mjs test/eup-environment-usgs.test.mjs` | 93/93 (with S3's ingest test, after S3's 409 change landed) | |
+| `python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py` | 2,930/2,930 at the final state (2,914 before the mission-source commits merged in) | failed on the two unmapped test files |
+| `nice -n 15 node --test scripts/test/*.test.mjs` (the root suite, once, at 07:00 UTC: after the rim fix, before the disc distance rule, which touches only `js/environment-layers.js` and the selection test, both in the environment suite run after it) | 2,841 tests: 2,834 pass, 0 fail, 7 skipped (82.7 s; load 4.0 rising to 7.4) | |
+| `cd workers/mccluster && nice -n 15 node --import ./test/support/offline-network.mjs --test test/*.test.mjs` (the whole Worker suite) | at the final state: 2,020 tests, 2,011 pass, 0 fail, 9 skipped (28.2 s); at `1cb28842` with the rim fix: 2,007, 1,998 pass, 0 fail, 9 skipped. The twelve `test/mnet-mission-flow.test.mjs` failures S0 to S3 recorded are gone (repaired on the branch before these runs) | |
+
+### Browser runs
+
+One browser at a time under the shared lock, Chromium with SwiftShader (software GL), Cesium 1.131 served locally under the CDN
+URL; WebKit was not run and no real device was used (D18), so nothing here claims Safari or device acceptance. The final runs
+are on the branch head `1cb28842` with this slice's last changes (the mission-source commits merged after them touch no file
+these pages load).
+
+- `CESIUM_DIR=<Cesium 1.131 Build/Cesium> node scripts/e2e/environment-globe.e2e.mjs <out>`: **148/148 checks** (390 and 1280,
+  the three refusals, reduced motion, D16 with mission pins, the perf self-test; 1-minute load 3.5 at its end).
+- `CESIUM_DIR=... node scripts/e2e/environment-world.e2e.mjs <out>`: **231/231 checks** at 390, 820 and 1280 by night and day,
+  the S5-TOUR at-rest check among them (1-minute load 8.3 at its end).
+- `node scripts/perf/environment-globe-perf.mjs --missions --modes off,on --sizes 390,1280 <out>` (two mission pins with their
+  halos, 10 s idle after 12 s settling):
+
+  | Size, layers | Before (`2855a4e9`): task s / frames | After: task s / frames | Flight frame mean, before / after |
+  | --- | --- | --- | --- |
+  | 390, off | 10.05 / 29 | 10.22 / 33 | 501 / 363 ms |
+  | 390, on | 10.54 / 22 | **0.18 / 0** | 558 / 388 ms |
+  | 1280, off | 10.14 / 18 | 10.19 / 16 | 654 / 686 ms |
+  | 1280, on | 10.31 / 18 | **0.14 / 0** | 667 / 771 ms |
+
+  With the layers on, the globe now renders on demand with mission pins present (D16); with them off the halos breathe as
+  before, by design. Heap with the layers on 32 and 33 MB (before 32 and 32). The flight frames are software-GL frames of a few
+  samples each; 1280's push runs about 100 ms a frame heavier than before, which a GPU pass should measure (no device here).
+- Runs recorded as they were. Earlier e2e runs at this slice's first commit: the globe suite failed two S5 checks at 1280 only
+  (a 1.7 s push had landed before the read, and the cancel came after the landing; the checks now accept the flight's record
+  once it has landed and press right after a fresh tap), then stopped once on a script error (a `setView` during a push; the
+  harness now stops the flight first), then passed 148/148; the World suite failed one check that predates this slice ("with
+  the tour paused the globe renders on demand" at 390: the `camera` hold read just after every hold had gone, load about 4)
+  and passed 231/231 on its re-run. Two perf runs and one screenshot run crashed Chromium's renderer ("Target crashed") on the
+  radius-scaled rim step described above. Two globe runs were stopped by hand and are not counted: one overlapped the moment the
+  rim fix was set back to prove its tests fail, the other ran on code without the disc distance rule.
+- The 390 overlap, measured before the fix (`probe-layout`, the World page with the real frame): the app bar at y 762-830 lies
+  over Replay at 390 x 844, over Play, Previous and Next at 360 x 780; nothing at 414 x 896 or 1280 x 800. After the patch: the
+  tour's controls at y 564-660 (390 x 844), 537-633 (360 x 780), 586-682 (414 x 896), clear of the bar; `scrollWidth ===
+  clientWidth` at every size.
+
+### Deviations from the plan, with reasons
+
+- **The e2e cancels the push with a press, not a wheel.** Under software GL the wheel reached the page about 3 s late while frames
+  were drawn (a probe measured 3.2 s), after a 1.6-2 s push had landed. The e2e presses and drags right after a fresh tap; the unit
+  tests cancel with each of pointerdown, touchstart, wheel and keydown, and with a new choice.
+- **The tour's controls moved in the vendored panel.** The plan named the 390 overlap but no file. Moving the tour's group up in the
+  panel's markup is the one change that keeps every control clear of the World's floating app bar at rest without hiding anything:
+  recorded local patch `S5-TOUR` (hash and regression tests in the lock), with a smaller title and margins on a phone.
+- **Labels keep out of the page's furniture by measured rectangles.** The frame cannot see the page around it, so the header band,
+  the headline, the music and full-screen buttons and, wide, the app bar are rectangles measured on the World (constants in
+  `js/environment-quake-marks.js`). A new World layout needs them measured again.
+- **The "plain white circles" were fire cells.** They are the fire summary's hottest class (white, as the legend says), not quake
+  discs. They were made smaller and half as opaque rather than recoloured, so the fire ramp and its legend stay as they were.
+- **The disc distance rule is not in the plan.** It came from the first renders after the push (one flat ellipse over the landing).
+  It belongs to the push's composition, so it shares D14's status: default adopted pending Matthew's confirmation.
+- **The rupture is asked from M6, for USGS ids only.** Lane 06 found finite-fault models only at M6.5 and up; M6 leaves a margin
+  for a model published lower. Ids that are not USGS event ids (other providers, the fixtures' hyphenated ids) are never asked.
+- **The ShakeMap fact keeps its wire words** ("no contours shown: no_shakemap", the S3 note): S5's plan names no wording change
+  for it, while the new rupture fact has words of its own. Left for a later slice.
+- **V10 stays partial.** Every new motion (the push, the ripple, the label reveal) follows reduced motion, but `PULSE` is still
+  read once at load and there is no in-app switch; S6 and S7 carry the rest of V10.
+- **`--missions` is a flag.** The plan asked for the perf run with mission pins; the script's default stays `[]` so earlier
+  records remain comparable.
+
+### Waiting for Matthew's separate go
+
+- D13 (the rupture drawing), D14 (the push on every explicit choice, with the disc distance rule as part of its landing), D16
+  (still halos while the layers are on), D17 (the ripple's scale) and D21 (the reference's name only in licence attribution):
+  each a **default adopted pending Matthew's confirmation**.
+- Nothing is live. The branch is not merged or deployed; the rupture route ships with the Worker's next deploy and answers only
+  behind the persisted environment module policy, which stays off until he turns it on.
+- A real-device pass (D18: WebKit was not run here and no device was used): on an iPhone at 390 px, the glyphs read from orbit,
+  a tap lands within the 44 px target, a touch stops the push, the rings are seen from where the camera lands, and the tour's
+  controls sit clear of the app bar at rest; then an iPad and desktop Safari.
