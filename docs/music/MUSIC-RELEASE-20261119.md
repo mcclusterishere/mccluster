@@ -263,3 +263,140 @@ own tools and the album's comment box (kept with the workflow's evidence, not in
   should read PLAY · owner).
 * Seen, not changed here: at 390 px the bar's account chip covers the "Creator Studio" link in the music context bar
   on Listen and the artist page.
+
+## M2: one Now Playing on every player
+
+Base `fc001103`. C2 (PB-7, PB-9, PB-10, EXT-3, EXT-6) and the player share of L-4. Decisions D-4 (previous and next
+on every music surface, no 15-second skips) and D-8 (the AirPlay picker where WebKit offers it, and resume where
+you left off across devices through the existing `listener_state` row; no remote control) are the recommended
+defaults, built for Matthew to see before anything merges.
+
+### Why
+
+Nine players can reach the lock screen, and each spoke to it on its own terms or not at all (lane 03 probe E1,
+reproduced at the base by the new Chromium suite):
+
+* The album (`js/label.js`) put 15-second skips on the lock screen and handed one cover over as 96, 192 and 512 px,
+  always as a JPEG: a 1024 x 682 photograph was declared a 512 px square, a PNG was declared a JPEG.
+* The listen engine named the album's tagline as its artist ("Have no fear.") and never set `playbackState` or the
+  position, so the scrubber stood still.
+* The pocket had no previous, and handed over the film's poster as its art.
+* The World soundtrack, the gateway, the docket release, the music video feed, the embed and the album shelf's
+  previews handed nothing over: WebKit then shows its own default commands (15-second skips) and the page's title.
+  The gateway and the docket also never asked for the playback audio session (slice M1 covered four players).
+* The embed credited Matthew McCluster for every album, PRIM3's songs among them.
+* The record left on another device was asked for only when this device had nothing of its own, and the listen
+  page, which does not load `js/backend.js`, could not ask at all.
+
+### What changed
+
+1. **One owner.** `js/now-playing.js` (slice M1's audio-session helper) is now the only file that speaks to
+   `navigator.mediaSession`. A player calls `MCC_NOW_PLAYING.bind(media, spec)` with what is playing (title,
+   artist, album, cover) and what play, pause, previous, next and seek mean on that surface. The owner writes the
+   metadata, the handlers (play, pause, previoustrack, nexttrack, seekto, stop; `seekbackward` and `seekforward`
+   are set to nothing), `playbackState`, and `setPositionState` on play, pause, seek and rate changes and at most
+   once a second while playing, never with an unknown, endless or zero length, and always clamped to it. Whichever player
+   played last owns the lock screen, and only the owner can clear it. A browser without Media Session plays as
+   before.
+2. **Covers whole, at their true size and type.** `scripts/music-artwork.mjs` reads each cover's header (PNG,
+   JPEG, WebP, GIF; nothing decoded, cropped or re-encoded) and writes the registry inside `js/now-playing.js`;
+   `--check` fails on a stale or missing entry. Every cover is handed over as supplied, once, with its own size and
+   type. Three are not square (below).
+3. **Every player bound to it**: the listen engine, the album deck, the album shelf's previews, the pocket, the World
+   soundtrack (`js/world-audio-continuity.js`: each rotation song's title, artist and cover; next moves along the
+   shelf, previous goes back to the song before or to the top after 4 s), the gateway, the docket release, the music
+   video feed and the embed. Previous and next move each surface's own queue (D-4). The pocket (on its × and when
+   its list runs out), the docket at the end of its release, the embed at the end of its song and the shelf's
+   previews when they stop hand the lock screen back. The engine names the album's billed artist
+   (`data/albums.json` `artist`, Matthew McCluster where there is none); the album and its playlists name each
+   row's own record and artist, on the lock screen and in the open sheet; the embed's card and lock screen credit
+   the album's billed artist. The gateway, the docket, the music video feed and the embed ask for the playback audio
+   session before every play.
+4. **AirPlay where WebKit offers it (D-8).** `MCC_NOW_PLAYING.airplay(button, media)` shows a button only where
+   `webkitShowPlaybackTargetPicker` exists, and only while WebKit reports a device in range: in the listen page's
+   Now sheet, the album's sheet (its beam; the Remote Playback picker stays where WebKit is absent), the pocket's
+   tile (a 44 px target) and every card of the music video feed. Hidden everywhere else. The album sheet's transport
+   style (`display: grid`) overrode `hidden`, so a held-back button showed anyway: `.now__tp button[hidden]` now
+   stays out of sight.
+5. **Resume where you left off, across devices (D-8).** The pocket store (`js/pip.js`) reaches the existing
+   `listener_state` row through `MCC_SUPA` where `js/backend.js` loads, and through the shared sign-in
+   (`MCC.authFetch`, slice M4) on the listen and artist pages, as the member with the member's own token. The newer
+   record wins. The listen engine banks what it plays and offers the held record in its mini player ("Pick up at
+   m:ss"); the album opens on the record left on another device, paused at its second, when nothing on the page has
+   been chosen. The album's own seat restore ran inside `init()` before the Now sheet's elements were bound:
+   `load()` threw on the unbound film (a `TypeError`, swallowed) and stopped short of the rows, the deck, the
+   sheet's artist and the lock screen. It now runs at the end of `init()`. Because the listen page now banks its
+   record where the album banks its own, the pocket carries a listen-page record onto the next page exactly as it
+   carries the album's (navigation itself is slice M5). No remote control, and no new table, Worker route or store.
+6. **Not wired, and why**: the home page's scene engine (`js/main.js`, on `index.html` and `front.html`: hard rule 3,
+   and it plays a scene soundtrack, not a queue); `js/game-hub/player.mjs` (no page loads it); the owner's tools
+   (the Control Room's lyric review, the unlinked `js/music-admin.js`, Creator Studio's length probe), which are not
+   listening surfaces; the World's member audio posts (`js/mnet.js`) and Live voice rooms (`js/mnet-audio.js`),
+   which carry members' media and voices, not the catalogue, in files other builds are changing in this release.
+   The World soundtrack, the gateway, the docket and the embed get no AirPlay button: none has a player sheet or a
+   transport row to hold one (the World's sound is one corner control, the gateway and the docket one play button
+   each, the embed a frame in someone else's page). Adding one there is a design call for Matthew.
+
+### Tests: failing at the base, passing after
+
+| Test | At `fc001103` | After |
+| --- | --- | --- |
+| `scripts/test/now-playing-contract.test.mjs` (13 tests: probe E1's bar matrix, one owner, covers, metadata, position, controls, two players, clearing, no Media Session, the audio session, names, AirPlay, resume) | 0 of 13 (0 of 13 at `fea2edb0` too) | 13 of 13 |
+| `scripts/e2e/now-playing.e2e.mjs` (Chromium: after play on listen, the album, a playlist, the shelf, the World soundtrack, the pocket, the gateway, the docket, the video feed and the embed, the title, artist, album, cover, `playbackState` and position; previous and next move each queue; AirPlay; resume across devices; 390 px) | 24 of the 97 checks it reached (a scenario stops at the first handler that is missing) | 125 of 125 |
+| `scripts/test/music-platform.test.mjs`, `gated-audio.test.mjs` (two assertions moved from the engine's and the album's own Media Session calls to the owner) | the moved assertions fail | pass |
+| Root suite `node --test scripts/test/*.test.mjs` | 2907 tests, 13 failures: the new contract test's 13 | 2907 tests, 0 failures; 2947 and 0 (7 skipped) on the branch head `1d379869` with this slice |
+
+Every fix was also taken away one at a time, its base version put back, and the contract test failed each time:
+`js/now-playing.js` (8 of its tests fail), `js/music-engine.js` (5), `album.html` (7), `js/label.js` (4),
+`js/pip.js` (5), `js/world-audio-continuity.js` (2), `js/gateway.js` (4), `docket-516.html` (5),
+`music-videos.html` (4) and `embed.html` (5); with all of them in place, 65 of 65. Sixteen mutants were killed too:
+the position throttle off, no clamp at the end, an unknown or endless length reported, a length of 0 reported, the
+15-second skips left as they were, any player clearing the owner, stop leaving the card up, seek past the end,
+AirPlay shown before a device is in range, no `playbackState`, the engine crediting the tagline, the album's seat
+restored before its sheet, the embed crediting the house, the World losing previous, the pocket's × leaving the
+lock screen, and a cover relabelled 512 x 512 (`--check` exits 1 as well). The first round let one through (an
+unknown length: the test's stand-in session threw where a browser does, which hid the call); the stand-in now sees
+every call, and that mutant fails.
+
+The browser suites caught four more before they were fixed: the album sheet's AirPlay button showing with no device
+in range (the `hidden` rule), the playlist's sheet crediting the house for a PRIM3 song (the seat restore), the
+docket's next track read before its length was known (a timing in the new suite), and, in the World continuity
+suite, the listen page reading the whole catalogue as it opened, to look for a held record before there was one: it
+changed what played after a one-use master ended. The engine now reads the catalogue for that only when a record is
+banked here or on another device.
+
+The other music suites, on the branch head `1d379869` with this slice: `music-background` 47 of 47,
+`music-world-continuity` 125 checks (after the fix above), `music-accounts` and `music-direct-checkout` every check
+passing; the new suite 125 of 125 there too, at device scale 1 and again at 2. 390 px (`scrollWidth === clientWidth`): listen with
+the Now sheet and AirPlay, listen with a held record, the album with its sheet open, the World, the catalogue with
+the pocket and AirPlay, the gateway, the docket, the music video feed and the embed. Renders for Matthew at device
+scale 2 (kept with the workflow's evidence, not in the repository): the listen page's Now sheet and the album's
+sheet with AirPlay, the pocket on the catalogue with AirPlay, the video feed's rail with AirPlay, the embed
+crediting PRIM3, and the listen page holding a record from another device.
+
+### What is Inferred
+
+* What iOS and iPadOS draw: which cover the lock screen picks, that previous and next replace the 15-second skips,
+  that `stop` and an empty `playbackState` take the card away. Chromium only stands in: a wrapper records the
+  handlers and positions a page sets, and Chromium draws nothing.
+* AirPlay: Chromium has no picker, and the suite stands in `webkitShowPlaybackTargetPicker` and WebKit's
+  availability event. Whether the button shows with an Apple TV or a HomePod in range is row 17.
+* AirPods and Control Center reach the same handlers (row 5).
+* Resume across devices for a real member on two devices: the suites stand in the shared row and the sign-in.
+
+### What waits for Matthew
+
+* **Square covers.** Three covers are not square and are handed over whole, as supplied, never cropped (hard
+  rule 10): `assets/img/cia-mind-control-cover.jpg` (544 x 246), `assets/img/here-cover.jpg` (1024 x 682) and
+  `assets/img/wing-whip-poster.jpg` (1280 x 890). Lock screens and Control Center show the cover in a square
+  (Inferred), so each needs a square variant only he can supply; `node scripts/music-artwork.mjs` then registers
+  it.
+* **D-4** (previous and next everywhere, no 15-second skips) and **D-8** (AirPlay where WebKit offers it; resume
+  across devices through `listener_state`; no remote control): defaults built for his review, not merged.
+* **His devices** (music map 00, section 7):
+  4. The lock screen on the album, the listen page and the World: the buttons, then next. It should now show
+     previous and next on all three, with each song's title, artist and cover.
+  5. Control Center and an AirPods double-press: skip a song on each surface.
+  17. iPad, Safari, the album and the listen page: rows 1 to 5 again, then AirPlay from the album's sheet, the
+      listen page's sheet and the pocket.
+* Not in this slice: songs that end at navigation (slice M5), next songs that wait on the network (slice M3).
