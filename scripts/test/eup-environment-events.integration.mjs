@@ -372,6 +372,9 @@ try {
   await enableModule(db, 'environment');
   const page = await store.publicEvents({ limit: 200 });
   eq(page.schema, 'mccluster.environment-events/v1', 'the page names its schema');
+  eq(page.sources.map((x) => [x.provider, x.status, Object.keys(x).sort().join(',')]), [['usgs', 'empty', 'checked_at,last_success_at,provider,status']],
+    'the page names each shown provider\'s last run (here a read with no events), so no data is told from an outage');
+  ok(page.sources[0].last_success_at !== null && page.sources[0].checked_at !== null, 'with when it was checked and its last successful read');
   eq(page, await store.preview({ limit: 200 }), 'the owner preview is exactly the public page once the module is enabled');
   const published = page.events.filter((e) => e.state === 'published');
   const tombs = page.events.filter((e) => e.state !== 'published');
@@ -462,7 +465,8 @@ try {
     await store.command('set_rule', 'usgs', 4, { payload: { rule: DEFAULT_USGS_RULE } });
     const hidden = await store.command('hide_provider', 'usgs', 5);
     eq([hidden.changed, hidden.result.publication, hidden.result.ingest, hidden.result.revision], [true, 'hidden', 'active', 6], 'the owner hides USGS from the public view (revision 6); the ingest goes on');
-    eq((await store.publicEvents()).events, [], 'the page shows none of its events');
+    const hiddenPage = await store.publicEvents();
+    eq([hiddenPage.events, hiddenPage.sources], [[], []], 'the page shows none of its events and does not list the provider');
     eq((await store.publicEvent('usgs:us6000u43g')).status, 'not_available', 'and its deep links answer not available');
     await store.command('show_provider', 'usgs', 6);
     ok(ids(await store.publicEvents({ limit: 200 })).includes('usgs:us6000u43g'), 'shown again');

@@ -191,3 +191,130 @@ The browser suites (`scripts/e2e/environment-world.e2e.mjs` at 390, 820 and 1280
   answer 404 off).
 - Decisions D1, D2 and D8 as adopted defaults; a staging resource, if he wants one.
 - Nothing was applied, installed, enabled, flagged or published.
+
+## S1. Canonical event store, as pending SQL only
+
+### Present before
+
+At `2855a4e9` (and at `5e5397d3`, the head this slice merged before its records):
+
+- No event store. Posts were rebuilt in page memory from the providers' current windows on every read; the only identity was the
+  string `<provider>:<id>` built from whatever id the provider sent that minute. USGS `updated`, `ids`, `status`, `net`, `code`,
+  `sig` and `magType` were dropped at the first hop (`normalizeQuake`, `workers/mccluster/src/world-halo-layers.js`, which this slice
+  leaves untouched: the owner's Halo layer and the news pairing read it), so a preferred-id change (`attn6uqd` became `us6000u3jl`)
+  made a new, unlinked post, a correction overwrote the old value, and a USGS deletion vanished silently.
+- No durable source health (the Cache API, per Cloudflare location, 7 days), no per-event or per-provider owner control, no decision
+  log for either, no place to bind news coverage to an event and its revision. The pending `20261107120000_world_environment_v1.sql`
+  covers mission review only and has no rollback file.
+- The pattern to follow was there: the applied module policy (`supabase/migrations/20261117144103_eup_module_policy_v1.sql`), with
+  its owner-only commands, idempotency keys, expected revisions, reasons and append-only command log.
+
+### Integrated
+
+Five pending parts and one rollback, `supabase/pending/20261119100000_eup_environment_events_v1_01.sql` to `_05.sql` and
+`20261119100000_eup_environment_events_v1.rollback.sql` (`supabase/pending/PROMOTION-ORDER.md` section 12). Nothing is applied.
+
+- **Seven tables**, row level security on, no policy, every privilege taken back from `PUBLIC`, `anon`, `authenticated` and
+  `service_role` before the one grant (EXECUTE on seven entry points, to `service_role` only): `eup_environment_providers` (ingest
+  active or paused, publication shown or hidden, the publication rule, a revision), `eup_environment_events` (one row per canonical
+  event: state, revision, the snapshot at that revision, observed, USGS-updated, retrieved, revised and first-published times),
+  `eup_environment_event_revisions` (append-only: every revision's snapshot, its change old -> new, its cause, the source and fetch
+  times), `eup_environment_event_aliases` (append-only: provider id -> canonical id), `eup_environment_source_health` (append-only,
+  one row per ingest run: ok, empty, unavailable or paused, with counts and reasons; rows older than 30 days leave through the
+  ingest's own purge only), `eup_environment_decisions` (the owner's append-only decision log, the module policy's command-log rules)
+  and `eup_environment_coverage` (news coverage bound to a canonical event and its revision).
+- **Identity (D5, default adopted pending Matthew's confirmation)**: the canonical id is `<provider>:<the provider's preferred id
+  when the store first saw the event>`, never reassigned; every id the provider lists is an alias; a read by any alias answers the
+  canonical event with `redirected_from`; when the provider lists ids of two stored events as one, the one published later becomes a
+  redirect (`merged`).
+- **Revisions (D6, default adopted pending Matthew's confirmation)**: a new revision only for origin time (1 s or more), location (1
+  km or more), depth (1 km or more), magnitude or its type, review status, tsunami flag, PAGER alert or deletion; USGS `updated` and
+  significance are kept and shown but never make a revision; a rerun of the same content writes no event row at all.
+- **Publication (D7, default adopted pending Matthew's confirmation)**: M4.5+ worldwide, automatic events included (the public
+  shape carries `review_status`), plus significance above 600, a PAGER alert or a tsunami flag, as an owner rule with a revision
+  (`set_rule` without a rule stores this default). A rule change applies from each event's next ingest; a published event is never
+  unpublished, by a rule change or by a downward correction.
+- **States (D12, default adopted pending Matthew's confirmation)**: `candidate` (stored, not qualifying, never public), `published`,
+  `held` (owner; hidden, its deep link answers `not_available`), `withdrawn_by_source` (a tombstone with no coordinates, so no globe
+  object; its deep link answers it), `retracted` (owner; the same tombstone), `merged` (a redirect). The state is decided by the facts
+  (a CHECK holds every row to it), and the owner's hold, release, retract and restore never move the content's revision.
+- **Entry points**: `eup_environment_ingest` (one call per run, idempotent per run id, one health row per run, USGS only),
+  `eup_environment_public_events` (a keyset page, newest observation first, whitelisted fields, with each shown provider's last run
+  and last successful read, so no data is told from an outage) and `eup_environment_public_event` (canonical id or any alias), both
+  gated in SQL by the environment module policy as the Worker gates them (EUM01 not installed, EUM03 disabled; draining still reads); `eup_environment_owner_preview` (the same page while the module is off; decision D11, an
+  authorization addition that ships only with Matthew's approval of the pull request that calls it); `eup_environment_owner_read`
+  (every provider with its rule, last run and last success, the health log, the review queue, the decisions; one event in full);
+  `eup_environment_owner_command` (hold, release, retract, restore, rollback to revision N as a new revision, provider pause, resume,
+  hide, show and rule, coverage attach, reject and retract; the house owner only, a reason of 1-500 characters, an idempotency key
+  and the expected revision, 409 when it moved); `eup_environment_coverage_propose` (what a matcher found).
+- **Coverage** (the store's half of E5; the matcher is S8): accepted only for a published event at its current revision, on an
+  official identifier that is one of the event's own aliases (found in the article's URL or headline; attaches at once, stays
+  retractable) or on the incident type, a place term from USGS's own place text found in the headline and a time within 72 hours
+  (waits for the owner, decision D10). The basis carries words and identifiers only, never coordinates, so a GDELT mention point
+  cannot be the evidence. A correction makes type-place-time matches stale and moves official-identifier matches to the new
+  revision; a withdrawal, merge or owner retraction retracts them; a rejection, or an owner's retraction, sticks.
+- **Only government providers (E4, E8)**: `usgs`, `nws`, `nhc`, `eonet`, `firms`, `wfigs`, `coops`; `gdelt` is refused by every
+  table's CHECK, by the ingest and by the owner's commands; news can never create, revise or publish an event.
+- **For the later slices**: `scripts/test/support/eup-environment-database.mjs` applies the policy and the five parts in PGlite and
+  carries `ENVIRONMENT_STORE_RPC`, a PostgREST stand-in for the owner routes (S2), the ingest (S3) and the public routes (S4).
+
+### Touched paths
+
+`supabase/pending/20261119100000_eup_environment_events_v1_01.sql` to `_05.sql` (new),
+`supabase/pending/20261119100000_eup_environment_events_v1.rollback.sql` (new), `supabase/pending/PROMOTION-ORDER.md` (section 12),
+`supabase/pending/README.md`, `scripts/test/support/eup-environment-database.mjs` (new),
+`scripts/test/eup-environment-events.integration.mjs` (new), `scripts/test/eup-environment-events.native.integration.mjs` (new),
+`scripts/test/eup-environment-events-sql.test.mjs` (new), `.github/workflows/human-uprise-editorial.yml` (matrix entry
+`environment-store`, its paths in the filter), and this section.
+
+### Tests
+
+| Command | Result |
+| --- | --- |
+| `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-events.integration.mjs` | 294 assertions pass (about 3.6 s) |
+| the same with `EUP_ENVIRONMENT_PARTS_DIR` naming eight mutated copies of the parts, one weakening each (a 0.1 km depth threshold, a SELECT grant to `anon`, the append-only guard off, `gdelt` in the provider list, the public gate removed, USGS `updated` making a revision, coverage at any revision, a hold ignoring the expected revision) | each of the eight fails it |
+| the same with the five parts absent (`EUP_ENVIRONMENT_PARTS_DIR` naming an empty folder: the tree before this slice) | fails (ENOENT, part 01) |
+| `ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=/usr/lib/postgresql/16/bin PG_MODULE=<node-postgres 8.23.1> node scripts/test/eup-environment-events.native.integration.mjs` | 29 checks pass on PostgreSQL 16.15 |
+| the same with a PostgreSQL 17.7 `PG_BIN` | 29 checks pass (production runs 17.6) |
+| the native proof over two mutated copies (the idempotency-key lock removed; the provider lock removed) | both fail (duplicate key on the decision log; duplicate key on the events) |
+| `node --test scripts/test/eup-environment-events-sql.test.mjs scripts/test/editorial-ci-partition.test.mjs` | 8/8 pass |
+| `node --test scripts/test/rpc-names-exist.test.mjs scripts/test/mission-import.test.mjs` | 29/29 pass |
+| `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-plane.integration.mjs` (S0's plane, after the merge) | 6/6 pass |
+
+The native proof shows what one PGlite session cannot: two ingest runs of one provider queue on the provider lock and the second
+changes nothing; one idempotency key on two sessions runs once; an owner hold waits for an ingest that holds the event and is then
+refused at the old revision; a coverage proposal and a withdrawal of one event queue on the event row in either order without a
+deadlock; and an owner command behind a held row gives up after the 5 s lock timeout (55P03), changing nothing. Every RPC there
+commits as `service_role`, which is how the commit-time revision check was found to need SECURITY DEFINER (it reads the history at
+COMMIT as whoever commits; it only reads).
+
+### Deviations from the plan, with reasons
+
+- **Five parts, not one file.** The store is about 110 KB of SQL; the repository records 32,000 bytes as what one
+  `apply_migration` call carries safely and requires the stored statement to equal the committed file (`PROMOTION-ORDER.md` 10.3).
+  Each part is one transaction that refuses until the part before it is in; one rollback undoes any number of them.
+- **The public reads are gated in SQL too**, not only by the Worker's gate, so the public shape stays unreachable while the module
+  is off even if a later route forgets the gate; the owner's preview is the only way round, and it is owner-only.
+- **A `candidate` state** beside the plan's five, for events stored but not qualifying (the owner's review queue lists them with
+  whether they would qualify under the current rule).
+- **The revision is the content's.** The plan asked for hold, restore and rollback "with the expected revision"; hold, release,
+  retract and restore are logged decisions that do not move the revision (a post's revision changes only when what it shows
+  changes), and a rollback makes revision N's content a new revision. An ingest that still sees the source differ revises it
+  again, so the documented recovery for a wrong source is to pause the provider first.
+- **Origin time counts from 1 s** (D6 named no threshold), and **health rows are kept 30 days** (the plan said "bounded" without a
+  number): both defaults adopted pending Matthew's confirmation.
+- **Two provider switches**: `pause_provider` stops the ingest; `hide_provider` takes the provider's events out of the public reads.
+- **Coverage intake in S1.** The plan puts the coverage table here and the matcher in S8; the intake and lifecycle live with the
+  table so there is one SQL approval, and S8 can still amend these pending parts before they are applied.
+- **No `live-callers.json` entry**: no shipped code calls these names yet. S2, S3 and S4 add the callers and their `pending_only`
+  entries.
+
+### Waiting for Matthew's separate go
+
+- Applying the five parts, each on his approval of its exact text, in order, independent of and after the mission publish (release
+  step 9); then their promotion records. Applying them changes nothing public until the ingest flag and the environment module are
+  turned on.
+- Decisions D5, D6 (with the 1 s origin-time threshold), D7, D10, D11 and D12, and the 30-day health retention, as adopted defaults.
+- Setting the USGS rule in production (an owner command, once S2's route ships), the ingest flag (S3), and Install then Enable of
+  the environment module (D3).
+- Nothing was applied, installed, enabled, flagged or published.

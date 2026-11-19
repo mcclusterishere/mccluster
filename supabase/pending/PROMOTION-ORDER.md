@@ -440,6 +440,50 @@ Apply only when the owner wants the OVH node to yield to a live GPU node (then s
 applied `20261020210718_compute_lease_authority_v2`. PostgREST reloads its schema cache on DDL; if
 a claim still answers PGRST202 afterwards, run `notify pgrst, 'reload schema';`. Never applied here.
 
+## 12. E=UP environmental event store (written 2026-11-19)
+
+The canonical, revisioned store behind the signed-out E=UP timeline (slice S1 of `docs/control-plane/EUP-EVENT-TIMELINE.md`):
+one record per public government observation, its revisions, aliases, provider rules, a source-health log, the owner's decision
+log and news coverage bound to an event's revision. Five parts, each one transaction of at most 32,000 bytes (what one
+`apply_migration` call carries safely, as section 10.3), and one rollback:
+
+| # | File | Migration name | Creates |
+|---|---|---|---|
+| 12.1 | `20261119100000_eup_environment_events_v1_01.sql` | `eup_environment_events_v1_01` | the seven tables (row level security on, no policy, no API-role privilege), their append-only and identity guards, the commit-time revision check, the pure helpers |
+| 12.2 | `20261119100000_eup_environment_events_v1_02.sql` | `eup_environment_events_v1_02` | the reads: the public page and event read (gated by the environment module policy: EUM01 / EUM03), the owner's preview |
+| 12.3 | `20261119100000_eup_environment_events_v1_03.sql` | `eup_environment_events_v1_03` | the ingest (USGS only), idempotent per run id, one health row per run |
+| 12.4 | `20261119100000_eup_environment_events_v1_04.sql` | `eup_environment_events_v1_04` | the house owner's read and commands (hold, release, retract, restore, rollback, provider pause and hide, the publication rule, coverage decisions), each logged |
+| 12.5 | `20261119100000_eup_environment_events_v1_05.sql` | `eup_environment_events_v1_05` | the coverage intake |
+| | `20261119100000_eup_environment_events_v1.rollback.sql` | `eup_environment_events_v1_rollback` | drops everything the parts create, however many ran; the store's rows are lost |
+
+**Not applied. Owner approval required.** The parts are applied only on Matthew's separate approval of the exact text of
+each part, independent of and after the mission publish (step 9 of `docs/control-plane/WORLD-RELEASE-20261118.md`), with the
+Supabase MCP `apply_migration` (it runs as postgres) under the names above, 01 to 05 in order, one call per part and a read of
+the ledger between parts. Part 01 refuses (55000) without the applied module policy (section 8); every later part refuses
+(55000), changing nothing, until the part before it is in. Then promote each as section 10.3's parts were (`git mv` to
+`supabase/migrations/<version>_eup_environment_events_v1_0N.sql`, the stored statement equal to the file byte for byte, the
+ledger, the drift contract and a production snapshot). Roll back with the one rollback file (owner approval, as postgres), and
+before the module policy's own rollback if that ever runs: the store's public reads read the policy's table.
+
+**Applying them changes nothing public until the ingest flag and the environment module are turned on.** The parts create no
+row. Nothing shipped calls these functions yet: the owner routes (S2), the ingest behind its Worker flag, default `"false"`
+(S3), and the public routes (S4) are later slices, each through a pull request. The ingest writes nothing until the owner
+sets a provider rule, and every public read refuses until the owner installs and then enables the environment module in
+Control (each its own go, decision D3). When those slices add callers, their names go into `live-callers.json` as
+`pending_only` of these parts until the parts are promoted.
+
+Decisions D5 (canonical id and aliases), D6 (what makes a revision), D7 (the publication rule) and D12 (tombstones and holds)
+are written into the parts as **defaults adopted pending Matthew's confirmation**, as is the owner's preview (D11), an
+authorization addition that ships only with his approval of the pull request that calls it.
+
+Proof before apply:
+`PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-events.integration.mjs` (294 assertions, CI
+matrix entry `environment-store` in `.github/workflows/human-uprise-editorial.yml`; eight mutated copies of the parts each fail
+it) and, under real concurrency on a disposable server,
+`ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=/usr/lib/postgresql/16/bin PG_MODULE=<node-postgres> node scripts/test/eup-environment-events.native.integration.mjs`
+(29 checks, passed on PostgreSQL 16.15 and 17.7 on 2026-11-19; production runs 17.6). The static checks are in the root suite:
+`node --test scripts/test/eup-environment-events-sql.test.mjs`.
+
 ## Names with no SQL anywhere
 
 `live-callers.json` → `missing_everywhere`: the `crm_*` tables

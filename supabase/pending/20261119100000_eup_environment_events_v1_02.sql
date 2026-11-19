@@ -108,7 +108,8 @@ begin
 end $$;
 
 -- One page of the timeline, newest observation first: published events and tombstones of events that were published,
--- from providers that are shown. Keyset cursor '<observed microseconds since 1970>|<id>'.
+-- from providers that are shown. Keyset cursor '<observed microseconds since 1970>|<id>'. With it, each shown provider's
+-- last run (ok, empty, unavailable or paused, and when) and its last successful read, so no data is told from an outage.
 create or replace function public.eup_environment_page(p_since timestamptz, p_until timestamptz, p_cursor text, p_limit integer)
 returns jsonb
 language plpgsql stable security invoker set search_path = '' as $$
@@ -143,7 +144,16 @@ begin
     out_rows := out_rows || jsonb_build_array(public.eup_environment_project(r.id));
     last_ts := r.observed_at; last_id := r.id;
   end loop;
-  return jsonb_build_object('schema', 'mccluster.environment-events/v1', 'events', out_rows, 'next_cursor', next_cursor);
+  return jsonb_build_object('schema', 'mccluster.environment-events/v1', 'events', out_rows, 'next_cursor', next_cursor,
+    'sources', coalesce((select jsonb_agg(jsonb_build_object('provider', p.provider, 'status', h.status,
+        'checked_at', public.eup_environment_iso_text(h.fetched_at),
+        'last_success_at', public.eup_environment_iso_text((select max(x.fetched_at) from public.eup_environment_source_health x
+                                                             where x.provider = p.provider and x.status in ('ok', 'empty'))))
+        order by p.provider)
+      from public.eup_environment_providers p
+      left join lateral (select y.status, y.fetched_at from public.eup_environment_source_health y where y.provider = p.provider
+                          order by y.seq desc limit 1) h on true
+      where p.publication = 'shown'), '[]'::jsonb));
 end $$;
 
 -- What the owner sees of one event (never a public answer).
