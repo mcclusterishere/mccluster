@@ -416,3 +416,55 @@ test('D3: the README keeps the logo nowhere and nothing implying endorsement, an
   assert.match(rule[1], /a default adopted pending Matthew's confirmation/);
   assert.doesNotMatch(rule[1], /tab|menu|search|share card|company page/i, 'no other place is named');
 });
+
+test('the styles: mobile first, no picture of any kind, a gradient only on the sheet\'s own frame, the field at 16 px or more', () => {
+  const css = read('css/world-source-profile.css');
+  assert.doesNotMatch(css, /@media[^{]*max-width/, 'min-width queries only');
+  for (const [, value] of css.matchAll(/grid-template(?:-columns|-rows)?\s*:\s*([^;}]*)/g)) {
+    assert.doesNotMatch(value.replace(/minmax\(0,\s*1fr\)/g, ''), /(?<![\w.-])1fr\b/, `a bare 1fr: ${value}`);
+  }
+  for (const banned of [/url\(/i, /\bmask/i, /clip-path/i, /border-image/i, /background-image/i, /image-set/i, /element\(/i]) assert.doesNotMatch(css, banned, `${banned} is not in the styles`);
+  for (const [, value] of css.matchAll(/(?<![\w-])content\s*:\s*([^;}]*)/g)) assert.match(value.trim(), /^(""|none)$/, `content: ${value}`);
+  /* a gradient only in the sheet's own frame rule */
+  const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ selector: m[1].trim(), body: m[2] }));
+  const gradients = rules.filter((r) => /gradient\(/i.test(r.body));
+  assert.ok(gradients.length >= 1);
+  for (const r of gradients) assert.match(r.selector, /^#mnSourceDialog\.mn__thread$/, `a gradient outside the sheet's frame: ${r.selector}`);
+  assert.match(css, /\.mn__source-input \{[^}]*font: 400 max\(16px, 1rem\)/, 'the search field never makes iOS zoom');
+  assert.match(css, /#mnSourceDialog\.mn__thread\.mn__source\[open\] \{ display: flex; flex-direction: column; overflow: hidden; \}/, 'open, one flex column (the privacy bar stays in view)');
+  assert.match(css, /#mnSourceDialog > #mccPrivacyNotice \{ flex: none; \}/);
+  assert.match(css, /html\[data-daylight="day"\] #mnSourceDialog, html\[data-daylight="day"\] \.mn__source-door \{[^}]*--mn-gold: #7a5810;/, 'the day sheet\'s focus ring reads 6.5:1');
+  assert.doesNotMatch(css, /equity[\s_-]+uprise|human[\s_-]+uprise/i);
+});
+
+test('the World wires it: the door after Join\'s status line, the sheet in <main class="mn">, the scripts after js/mnet.js, five small exports and three hook lines', () => {
+  const html = read('mnet.html'), js = read('js/mnet.js');
+  const dialogStart = html.indexOf('<dialog class="mn__thread" id="mnMissionDialog"'), dialogEnd = html.indexOf('</dialog>', dialogStart);
+  const status = html.indexOf('<p class="mn__status" id="mnMissionDialogStatus" role="status"></p>'), door = html.indexOf('<div class="mn__source-door" id="mnMissionSource" hidden></div>');
+  assert.ok(dialogStart > 0 && status > dialogStart && door > status && door < dialogEnd, 'the door is the last thing in the mission dialog, after Join and its status line');
+  const detail = html.indexOf('<div id="mnMissionDetail"></div>');
+  assert.ok(detail > dialogStart && detail < door, 'outside and after the mission\'s detail (and so its credit)');
+  const sheet = html.indexOf('<dialog class="mn__thread mn__source" id="mnSourceDialog" aria-labelledby="mnSourceName" aria-describedby="mnSourceTrust"><div class="mn__source-body" id="mnSourceBody"></div></dialog>');
+  const main = html.indexOf('<main class="mn">'), mainEnd = html.indexOf('</main>');
+  assert.ok(sheet > dialogEnd && sheet > main && sheet < mainEnd, 'the sheet directly after the mission dialog, inside <main class="mn">');
+  assert.equal(html.slice(dialogEnd, sheet).replace(/\s+/g, ''), '</dialog>');
+  const page = html.indexOf('<script src="js/mnet.js?v=__STAMP__"></script>'), words = html.indexOf('<script src="js/mission-source-words.js?v=__STAMP__"></script>'), mod = html.indexOf('<script src="js/world-source-profile.js?v=__STAMP__"></script>');
+  assert.ok(page > 0 && words > page && mod > words, 'the words, then the page, after js/mnet.js');
+  assert.ok(html.indexOf('<link rel="stylesheet" href="css/world-source-profile.css?v=__STAMP__">') > html.indexOf('<link rel="stylesheet" href="css/world-gate.css?v=__STAMP__">'));
+  assert.equal((html.match(/world-source-profile/g) || []).length, 2, 'one stylesheet, one script');
+  /* js/mnet.js: the five exports at the end of window.MCC_MNET */
+  const api = js.slice(js.indexOf('  window.MCC_MNET = {'), js.indexOf('  };', js.indexOf('  window.MCC_MNET = {')));
+  assert.match(api, /openMission: function \(id\) \{ id = String\(id \|\| ""\); if \(!\/\^\[0-9a-f-\]\{36\}\$\/i\.test\(id\)\) return Promise\.resolve\(\{ opened: false \}\); prepareWorldMission\(id\); return openMission\(id\); \},/);
+  assert.match(api, /closeMission: function \(fromHistory\) \{ closeMission\(fromHistory === true\); \},/);
+  assert.match(api, /notice: function \(text\) \{ state\.feedNotice = String\(text \|\| ""\); clearFeedStatus\(\); \},/);
+  assert.match(api, /icon: function \(name\) \{ return Object\.prototype\.hasOwnProperty\.call\(ICON, name\) \? ICON\[name\] : Object\.prototype\.hasOwnProperty\.call\(PATH_ART, name\) \? PATH_ART\[name\] : ""; \},/);
+  assert.match(api, /missionReturning: function \(\) \{ return !!missions\.returnHref; \}\s*$/);
+  /* the hook right after the mission's detail is drawn, always through window. and never able to break the dialog */
+  assert.match(js, /\$\("mnMissionDetail"\)\.innerHTML=missionDetailHtml\(m,state\.missionFeed\.details\[m\.id\]\|\|null\);\n      try\{if\(window\.MCC_SOURCE_PROFILE\)window\.MCC_SOURCE_PROFILE\.mission\(m,state\.missionFeed\.details\[m\.id\]\|\|null\);\}catch\(_\)\{\}\n/);
+  assert.match(js, /    openGuestMissionLink\(\);\n    try \{ if \(window\.MCC_SOURCE_PROFILE\) window\.MCC_SOURCE_PROFILE\.landing\(\); \} catch \(_\) \{\}\n  \}/, 'the guest\'s landing');
+  assert.match(js, /      openDeepLinkedMission\(\);\n      try \{ if \(window\.MCC_SOURCE_PROFILE\) window\.MCC_SOURCE_PROFILE\.landing\(\); \} catch \(_\) \{\}\n      openDeepLinkedGroup\(\);/, 'the member\'s landing');
+  assert.equal((js.match(/MCC_SOURCE_PROFILE\.(mission|landing)\(/g) || []).length, 3);
+  /* the module answers both hooks and draws only with the World's own icon and text */
+  assert.equal(typeof P.mission, 'function');
+  assert.equal(typeof P.landing, 'function');
+});
