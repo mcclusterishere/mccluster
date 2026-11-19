@@ -198,16 +198,18 @@ test('companies: no fetch until a search; an unlicensed quote is never shown', a
   assert.match(text, /headquarters\s+· no coordinates/); assert.equal(m.pane().querySelector('[data-eup-quote]'), null); assert.match(text, /No licensed quote/);
 });
 
-test('keyboard: arrow keys move between the five local tabs and keep the globe host', async () => {
+/* changed on purpose (E=UP event timeline slice S2, 2026-11-19): a sixth local tab, Environmental events, joins at the end,
+   so End now reaches it; its own cases are scripts/test/control-eup-environment.test.mjs */
+test('keyboard: arrow keys move between the six local tabs and keep the globe host', async () => {
   const m = mount({ request: fakeRequest({}) });
   await flush();
   const globe = m.root.querySelector('[data-eup-globe]');
   m.tab('overview').onkeydown({ key: 'ArrowRight', preventDefault() {} }); await flush();
   assert.equal(m.tab('league').attrs['aria-selected'], 'true');
   m.tab('league').onkeydown({ key: 'End', preventDefault() {} }); await flush();
-  assert.equal(m.tab('sources').attrs['aria-selected'], 'true');
+  assert.equal(m.tab('environment').attrs['aria-selected'], 'true');
   assert.equal(m.root.querySelector('[data-eup-globe]'), globe, 'tab switches redraw only the pane');
-  assert.deepEqual(H.SECTIONS.map((s) => s.id), ['overview', 'league', 'civic', 'companies', 'sources']);
+  assert.deepEqual(H.SECTIONS.map((s) => s.id), ['overview', 'league', 'civic', 'companies', 'sources', 'environment']);
 });
 
 /* ---------- module policy (Overview › Modules card) ---------- */

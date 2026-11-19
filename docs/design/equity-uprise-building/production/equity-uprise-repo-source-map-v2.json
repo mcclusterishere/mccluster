@@ -5371,6 +5371,20 @@
       "rationale": "Tests of the mccluster.org host router: the World served at the company root with a company-first head named for the public brand, Equity Uprise (owner, 2026-10-28; it asserts the World page's own noindex description does not leak and no Human Uprise name is served), /company, and every other path sent to Matthew's property. Not a building capability."
     },
     {
+      "path": "workers/mccluster/test/eup-environment-owner.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the owner controls of the E=UP environmental event timeline (source health, review, rollback, owner preview) with a fake service REST and fake providers; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "workers/mccluster/test/eup-environment-usgs.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the private USGS ingest of the E=UP environmental event timeline (the normaliser over recorded USGS answers, one run against a store double, the flag and the cron hook, the ShakeMap route's answer for a deleted event); names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
       "path": "workers/mccluster/test/eup-import-runner.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -5495,6 +5509,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Worker test of the public environmental globe layers (fires, perimeters, alerts, natural events, water levels, ShakeMap) behind the persisted environment module policy; names the policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "workers/mccluster/test/world-environment-rupture.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the documented-rupture route of the E=UP environmental event timeline (the modelled up-dip edge of a USGS finite-fault plane over recorded USGS answers; point sources, withdrawn and unreachable events) behind the persisted environment module policy; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
     },
     {
       "path": "workers/mccluster/test/world-environment.test.mjs",

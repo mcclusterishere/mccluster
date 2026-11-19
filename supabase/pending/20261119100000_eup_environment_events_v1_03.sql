@@ -1,5 +1,7 @@
 -- E=UP ENVIRONMENTAL EVENT STORE, version 1, part 03 of 05 (migration name eup_environment_events_v1_03): the ingest.
--- The USGS input check and the ingest: one call per run, idempotent per run id, one health row per run.
+-- The USGS input check and the ingest: one call per run, idempotent per run id, one health row per run; and the ingest's
+-- own read before a run (eup_environment_ingest_state, added by slice S3: the provider's switches and rule, and the
+-- published events it must look for when the feed stops listing them).
 -- The design, the decisions (D5, D6, D7, D12, defaults adopted pending the owner's confirmation) and the codes are in
 -- part 01's header (20261119100000_eup_environment_events_v1_01.sql) and docs/control-plane/EUP-EVENT-TIMELINE.md.
 -- PENDING. Not applied to production. Owner approval required. Applied only on the owner's separate approval of the exact
@@ -411,7 +413,37 @@ begin
   return receipt;
 end $$;
 
-revoke all on function public.eup_environment_usgs_input(jsonb), public.eup_environment_ingest(text, text, timestamptz, jsonb, jsonb)
+-- What the Worker's ingest reads before a run (slice S3): the provider's switches and rule, and the events it must look
+-- for when the summary feed no longer lists them: every event ever published that is neither withdrawn nor merged
+-- (held and retracted ones included: USGS can still delete them), observed since p_since, newest first, at most p_limit
+-- (1-500), each with its aliases and last magnitude. Not gated by the module: the ingest fills the store before anything
+-- is public. Never public: EXECUTE for service_role only; it reads no person, no decision and no coverage, and writes
+-- nothing. A provider with no row answers configured false (the owner has set no rule: the ingest asks nothing).
+create or replace function public.eup_environment_ingest_state(p_provider text, p_since timestamptz, p_limit integer default 200)
+returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare pol public.eup_environment_providers%rowtype;
+begin
+  if p_provider is null or p_provider not in ('usgs', 'nws', 'nhc', 'eonet', 'firms', 'wfigs', 'coops') then
+    raise exception 'provider_refused' using errcode = 'EUE07';
+  end if;
+  if p_since is null or p_limit is null or p_limit < 1 or p_limit > 500 then raise exception 'invalid_ingest' using errcode = '22023'; end if;
+  select * into pol from public.eup_environment_providers p where p.provider = p_provider;
+  return jsonb_build_object('schema', 'mccluster.environment-ingest-state/v1', 'provider', p_provider,
+    'configured', pol.provider is not null, 'ingest', pol.ingest, 'rule', pol.rule, 'rule_revision', pol.revision,
+    'watch', coalesce((select jsonb_agg(jsonb_build_object('id', w.id, 'provider_event_id', w.provider_event_id,
+        'observed_at', public.eup_environment_iso_text(w.observed_at), 'magnitude', w.snapshot -> 'magnitude',
+        'aliases', (select jsonb_agg(a.provider_event_id order by a.provider_event_id) from public.eup_environment_event_aliases a
+                     where a.event_id = w.id)) order by w.observed_at desc, w.id desc)
+      from (select e.id, e.provider_event_id, e.observed_at, e.snapshot from public.eup_environment_events e
+             where e.provider = p_provider and e.state in ('published', 'held', 'retracted') and e.first_published_at is not null
+               and e.withdrawn_at is null and e.merged_into is null and e.observed_at >= p_since
+             order by e.observed_at desc, e.id desc limit p_limit) w), '[]'::jsonb));
+end $$;
+
+revoke all on function public.eup_environment_usgs_input(jsonb), public.eup_environment_ingest(text, text, timestamptz, jsonb, jsonb),
+  public.eup_environment_ingest_state(text, timestamptz, integer)
   from public, anon, authenticated, service_role;
-grant execute on function public.eup_environment_ingest(text, text, timestamptz, jsonb, jsonb) to service_role;
+grant execute on function public.eup_environment_ingest(text, text, timestamptz, jsonb, jsonb),
+  public.eup_environment_ingest_state(text, timestamptz, integer) to service_role;
 commit;

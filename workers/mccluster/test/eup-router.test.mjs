@@ -38,7 +38,8 @@ test('the owner gets the section index and unknown sections 404', async () => {
 });
 
 test('modules is one of the sections: listed in the index, and its commands are owner-only before anything is read', async () => {
-  assert.deepEqual([...EUP_SECTIONS], ['overview', 'league', 'civic', 'companies', 'sources', 'modules']);
+  /* changed on purpose (E=UP event timeline slice S2, 2026-11-19): 'environment' joins, the timeline's owner controls */
+  assert.deepEqual([...EUP_SECTIONS], ['overview', 'league', 'civic', 'companies', 'sources', 'modules', 'environment']);
   let fetched = 0;
   const fetchImpl = async () => { fetched += 1; return Response.json({}); };
   const command = (path, body) => req(`${EUP_PREFIX}/modules/${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });

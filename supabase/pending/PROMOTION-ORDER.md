@@ -451,7 +451,7 @@ log and news coverage bound to an event's revision. Five parts, each one transac
 |---|---|---|---|
 | 12.1 | `20261119100000_eup_environment_events_v1_01.sql` | `eup_environment_events_v1_01` | the seven tables (row level security on, no policy, no API-role privilege), their append-only and identity guards, the commit-time revision check, the pure helpers |
 | 12.2 | `20261119100000_eup_environment_events_v1_02.sql` | `eup_environment_events_v1_02` | the reads: the public page and event read (gated by the environment module policy: EUM01 / EUM03), the owner's preview |
-| 12.3 | `20261119100000_eup_environment_events_v1_03.sql` | `eup_environment_events_v1_03` | the ingest (USGS only), idempotent per run id, one health row per run |
+| 12.3 | `20261119100000_eup_environment_events_v1_03.sql` | `eup_environment_events_v1_03` | the ingest (USGS only), idempotent per run id, one health row per run; and the ingest's read, `eup_environment_ingest_state` (added by slice S3: the rule, the switches and the published events to look for) |
 | 12.4 | `20261119100000_eup_environment_events_v1_04.sql` | `eup_environment_events_v1_04` | the house owner's read and commands (hold, release, retract, restore, rollback, provider pause and hide, the publication rule, coverage decisions), each logged |
 | 12.5 | `20261119100000_eup_environment_events_v1_05.sql` | `eup_environment_events_v1_05` | the coverage intake |
 | | `20261119100000_eup_environment_events_v1.rollback.sql` | `eup_environment_events_v1_rollback` | drops everything the parts create, however many ran; the store's rows are lost |
@@ -466,8 +466,9 @@ ledger, the drift contract and a production snapshot). Roll back with the one ro
 before the module policy's own rollback if that ever runs: the store's public reads read the policy's table.
 
 **Applying them changes nothing public until the ingest flag and the environment module are turned on.** The parts create no
-row. Nothing shipped calls these functions yet: the owner routes (S2), the ingest behind its Worker flag, default `"false"`
-(S3), and the public routes (S4) are later slices, each through a pull request. The ingest writes nothing until the owner
+row. On this branch only the owner routes (S2, behind the house-owner check) and the ingest behind its Worker flag
+`EUP_ENVIRONMENT_USGS_INGEST_ENABLED`, default `"false"` (S3), call them; the public routes (S4) are a later slice, and all of it
+reaches production only through a pull request. The ingest writes nothing until the owner
 sets a provider rule, and every public read refuses until the owner installs and then enables the environment module in
 Control (each its own go, decision D3). When those slices add callers, their names go into `live-callers.json` as
 `pending_only` of these parts until the parts are promoted.

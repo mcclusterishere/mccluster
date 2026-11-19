@@ -1,0 +1,50 @@
+{
+ "recorded": {
+  "request": "GET https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=attn6uqd&format=geojson&jsonerror=true",
+  "retrieved_at": "2026-11-19T04:50:42Z",
+  "http_status": 200,
+  "content_type": "application/json; charset=utf-8",
+  "cache_control": "public, max-age=60",
+  "trimmed": "properties.products removed (product types listed: associate, dyfi, ground-failure, impact-link, internal-moment-tensor, internal-origin, losspager, moment-tensor, origin, phase-data, shakemap); everything else unchanged",
+  "credit": "U.S. Geological Survey, Earthquake Hazards Program (public domain, U.S. Government work)"
+ },
+ "body": {
+  "type": "Feature",
+  "properties": {
+   "mag": 6.3,
+   "place": "202 km NW of Port-Olry, Vanuatu",
+   "time": 1792470038782,
+   "updated": 1794291258790,
+   "tz": null,
+   "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000u3jl",
+   "felt": 1,
+   "cdi": 3.4,
+   "mmi": 4.098,
+   "alert": "green",
+   "status": "reviewed",
+   "tsunami": 1,
+   "sig": 611,
+   "net": "us",
+   "code": "6000u3jl",
+   "ids": ",attn6uqd,us6000u3jl,usauto6000u3jl,attn6uqj,pt26293000,",
+   "sources": ",at,us,usauto,at,pt,",
+   "types": ",associate,dyfi,ground-failure,impact-link,internal-moment-tensor,internal-origin,losspager,moment-tensor,origin,phase-data,shakemap,",
+   "nst": 243,
+   "dmin": 6.693,
+   "rms": 0.51,
+   "gap": 19,
+   "magType": "mww",
+   "type": "earthquake",
+   "title": "M 6.3 - 202 km NW of Port-Olry, Vanuatu"
+  },
+  "geometry": {
+   "type": "Point",
+   "coordinates": [
+    165.5746,
+    -13.9347,
+    16
+   ]
+  },
+  "id": "us6000u3jl"
+ }
+}

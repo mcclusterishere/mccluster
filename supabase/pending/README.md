@@ -73,7 +73,8 @@ rows 365 to 376 apply and build what production's 2026-11-18 snapshot records). 
 Pending (2026-11-19): the E=UP environmental event store, `20261119100000_eup_environment_events_v1_01.sql` to `_05.sql`
 with `20261119100000_eup_environment_events_v1.rollback.sql` (`PROMOTION-ORDER.md` section 12). Five ordered parts of at most
 32,000 bytes each; applied only on the owner's separate approval of the exact text of each part, after the mission publish;
-applying them changes nothing public until the ingest flag and the environment module are turned on. No shipped caller yet.
+applying them changes nothing public until the ingest flag and the environment module are turned on. Called only by the
+owner routes (S2) and the USGS ingest behind `EUP_ENVIRONMENT_USGS_INGEST_ENABLED`, default `"false"` (S3), both on this branch.
 
 Still pending: the publish, `20261117100300_action_mission_drawdown_publish.sql` (10.4). The owner decided it runs in
 the deploy window, after the new feed ships: the live build reads open missions straight from the database (its swipe

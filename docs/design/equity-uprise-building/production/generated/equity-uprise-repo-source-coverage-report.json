@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 750,
+  "candidate_count": 753,
   "capability_source_count": 104,
-  "support_only_count": 646,
-  "checks_total": 2898,
-  "checks_passed": 2898,
+  "support_only_count": 649,
+  "checks_total": 2910,
+  "checks_passed": 2910,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -737,6 +737,8 @@
     "workers/mccluster/src/world-environment.js",
     "workers/mccluster/src/world-layers.js",
     "workers/mccluster/test/company-site.test.mjs",
+    "workers/mccluster/test/eup-environment-owner.test.mjs",
+    "workers/mccluster/test/eup-environment-usgs.test.mjs",
     "workers/mccluster/test/eup-import-runner.test.mjs",
     "workers/mccluster/test/eup-league-contract.test.mjs",
     "workers/mccluster/test/eup-league-media.test.mjs",
@@ -755,6 +757,7 @@
     "workers/mccluster/test/world-environment-action-media.test.mjs",
     "workers/mccluster/test/world-environment-guard.test.mjs",
     "workers/mccluster/test/world-environment-layers.test.mjs",
+    "workers/mccluster/test/world-environment-rupture.test.mjs",
     "workers/mccluster/test/world-environment.test.mjs",
     "workers/mccluster/test/world-layers.test.mjs",
     "workers/mccluster/test/world-release.test.mjs",
@@ -764,7 +767,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "750 entries"
+      "detail": "753 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -14812,6 +14815,46 @@
       "detail": ""
     },
     {
+      "name": "workers/mccluster/test/eup-environment-owner.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-owner.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-owner.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-owner.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-usgs.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-usgs.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-usgs.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/eup-environment-usgs.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/test/eup-import-runner.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -15168,6 +15211,26 @@
     },
     {
       "name": "workers/mccluster/test/world-environment-layers.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-rupture.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-rupture.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-rupture.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/world-environment-rupture.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

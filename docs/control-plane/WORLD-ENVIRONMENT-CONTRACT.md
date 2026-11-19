@@ -264,6 +264,7 @@ is two lower-case letters then 2 to 30 lower-case letters or digits (400
 `invalid_event`). Always `event_id`, `modelled: true`, `units: "MMI"`. When there
 is nothing to draw: `available: false` and `reason` `no_shakemap` (USGS lists
 none, or only a deleted one), `event_not_found` (USGS has no such event),
+`withdrawn` (USGS answers 409: it deleted the event; since E=UP slice S3),
 `no_contours` (the product has no `cont_mmi.json` on USGS's own host) or
 `source_unavailable`, with `contours: []`. Otherwise `available: true`,
 `usgs_preferred_id`, `version`, `process_time`, `review_status`, `map_status`,
