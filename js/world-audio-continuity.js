@@ -30,7 +30,12 @@
      standalone World owns its Audio element, so its button plays directly.
      Inside the Music shell the parent keeps the transport (a frame message
      cannot carry Safari's media activation); the child only displays state. */
-  var headlineBase = null, lyricCache = {}, lyricLine = "", lyricSlug = "", lyricAt = 0, remoteState = null;
+  var headlineBase = null, lyricCache = {}, lyricLine = "", lyricSlug = "", lyricAt = 0, remoteState = null, remoteDocked = false;
+  function docked() { return doc.documentElement.classList.contains("mcc-app-dock-active"); }
+  function receiveDocked(value) {
+    remoteDocked = value === true;
+    doc.documentElement.classList.toggle("mcc-app-dock-remote", remoteDocked);
+  }
 
   /* Before every play(): the World's song is music to the device as well. The
      one helper every player asks (js/now-playing.js, loaded just before this
@@ -187,7 +192,7 @@
       h.classList.toggle("is-lyric", !!st.line);
     }
   }
-  function sendState() { if (!attached && open && frame && frameReady) send(Object.assign({type:"state"}, clusterState())); }
+  function sendState() { if (!attached && open && frame && frameReady) send(Object.assign({type:"state", docked:docked()}, clusterState())); }
   function bindCluster() {
     var b = clusterButton(); if (!b || b.dataset.mccBound) return;
     b.dataset.mccBound = "1";
@@ -441,6 +446,7 @@
     else if (controls) { controls.style.top = top + "px"; controls.style.right = right + "px"; }
   }
   function alignWorldTransport() {
+    if (docked() || remoteDocked) { placeTransport(null, null); return; }
     if (!IS_WORLD || (!attached && root.parent !== root)) return;
     /* The compact offset belongs to the World screen only. Off that screen
        (Missions, Tour, profile) the bar keeps its bottom geometry; an inline
@@ -510,7 +516,7 @@
     };
     shell.append(frame, status); doc.body.appendChild(shell);
     frame.addEventListener("load", function () {
-      send({type:"attach", clearance:frameClearance || 152, visible:open});
+      send({type:"attach", clearance:frameClearance || 152, visible:open, docked:docked()});
     });
     new MutationObserver(function () { if (open) concealMusic(); }).observe(doc.body, {childList:true});
   }
@@ -566,7 +572,7 @@
       readyTimer = setTimeout(function () {
         if (!frameReady && open) status.querySelector("p").textContent = "World is taking longer to open. Your music is still available.";
       }, 12000);
-    } else { send({type:"attach", clearance:frameClearance, visible:open}); send({type:"visibility", visible:open}); }
+    } else { send({type:"attach", clearance:frameClearance, visible:open, docked:docked()}); send({type:"visibility", visible:open}); }
     frame.focus({preventScroll:true});
     return true;
   }
@@ -614,6 +620,7 @@
     var data = e.data;
     if (typeof data.id !== "string" || !data.id || data.id.length > 100) return;
     attached = true; parentOrigin = e.origin; channelId = data.id;
+    receiveDocked(data.docked);
     if (theme) theme.audio.pause();
     loadStyle(); doc.body.dataset.worldAudioChild = "ready";
     var dock = doc.querySelector(".appbar"); if (dock) { dock.hidden = true; dock.inert = true; }
@@ -670,6 +677,7 @@
   root.addEventListener("mcc:music-selected", function () { if (theme) theme.audio.pause(); watch(root.MCC_MUSIC?.audio); paint(); });
   root.addEventListener("mcc:music-state", paint);
   root.addEventListener("mcc:appbar-admin", paint);
+  root.addEventListener("mcc:installed-dock", paint);
   root.addEventListener('mcc:travel-autocomplete', function(e) {
     addressSuggestionsOpen = e.detail?.active === true;
     if (attached && channelId && parentOrigin) {
@@ -705,6 +713,7 @@
       if (d.type === "layout") frameLayout(d.clearance);
       if (d.type === "visibility") frameVisibility(d.visible);
       if (d.type === "state") {
+        receiveDocked(d.docked);
         remoteState = {present:d.present === true, playing:d.playing === true, loading:d.loading === true,
           title:typeof d.title === "string" ? d.title.slice(0, 120) : "", line:typeof d.line === "string" ? d.line.slice(0, 240) : ""};
         paintCluster(remoteState);
@@ -712,18 +721,26 @@
       return;
     }
     if (!frame || e.source !== frame.contentWindow || e.origin !== frameOrigin) return;
-    if (d.type === "hello") { frameAlive = true; send({type:"attach", clearance:frameClearance || 152, visible:open}); return; }
+    if (d.type === "hello") { frameAlive = true; send({type:"attach", clearance:frameClearance || 152, visible:open, docked:docked()}); return; }
     /* the World's own head says it is alive, then that it has painted (mnet.html; no data, only the word): the frame keeps
        quiet while it is alive, and shows the World the moment it is painted, before the bridge has even loaded there */
     if (d.type === "alive") { frameAlive = true; return; }
     if (d.type === "painted") { frameAlive = true; if (!frameReady) { status.hidden = true; clearTimeout(quietTimer); } return; }
     if (d.id !== channelId) return;
     if (d.type === "ready") { frameReady = true; status.hidden = true; clearTimeout(readyTimer); clearTimeout(quietTimer); status.classList.remove("is-quiet"); send({type:"visibility", visible:open}); sendState(); }
-    else if (d.type === "controls-position" && controls && open) {
+    else if (d.type === "controls-position" && controls && open && !docked()) {
       if (d.top === null) { controls.style.removeProperty("top"); controls.style.removeProperty("right"); }
       else if (Number.isFinite(d.top) && d.top >= 65 && d.top <= root.innerHeight - 65) {
-        controls.style.top = Math.round(d.top) + "px";
-        if (Number.isFinite(d.right) && d.right >= 0 && d.right <= root.innerWidth - 52) controls.style.right = Math.round(d.right) + "px";
+        // Translate frame-local coordinates once: the installed frame can
+        // begin below the status area and end before a landscape notch.
+        var frameRect = frame.getBoundingClientRect();
+        var top = Math.round(d.top + frameRect.top);
+        if (top > root.innerHeight - 65) return;
+        controls.style.top = top + "px";
+        if (Number.isFinite(d.right) && d.right >= 0 && d.right <= root.innerWidth - 52) {
+          var right = Math.round(d.right + root.innerWidth - frameRect.right);
+          if (right >= 0 && right <= root.innerWidth - 52) controls.style.right = right + "px";
+        }
       }
     }
     else if (d.type === "music") closeWorld(true);

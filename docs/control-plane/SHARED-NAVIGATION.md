@@ -28,6 +28,40 @@ control." Inside Control the top bar's title is a crumb, `Control › <section>`
 "Control" is a 44px link to Home → Today on every width. On Today it reads
 plain "Control".
 
+## Installed app: safe header and compact music bar
+
+Owner direction, 2026-11-20, from the installed iPhone screenshot: clear the
+status area, make the bottom bar about one-third smaller, and put playing music
+in the same bar with navigation in the middle and song information and controls
+at its sides.
+
+Installed presentation is detected from `navigator.standalone` or the standalone
+display-mode query, not the device's user agent. Only the top-level document
+consumes the World's physical top and side safe areas. A retained Music → World
+frame receives an already-safe viewport from its listening parent; its World,
+globe and account controls must not add those insets again. Both landscape
+orientations keep the header and navigation clear of the notch. Ordinary browser
+presentation stays unchanged.
+
+The installed capsule is 46 pixels high instead of approximately 68 pixels,
+with 44-pixel touch targets and the home-indicator clearance retained. The
+existing role-filtered navigation stays in its middle strip. When space is
+limited, that strip scrolls without removing destinations or shrinking buttons.
+The playing track's title and artist and its previous, play/pause and next
+controls occupy the sides. Opening the existing player keeps its deeper tools
+reachable.
+
+The dock reads and commands the existing Now Playing owner. It creates no audio
+element and no second playback lifecycle. A paused track remains resumable;
+clearing the owner removes the track controls. Legacy floating controls are
+suppressed only while the integrated dock can control that same player, so a
+failed or unsupported dock leaves the existing controls available. The separate
+React Native application is not the installed web shell shown in this request.
+
+`scripts/e2e/installed-app.e2e.mjs` checks actual rendered safe-area geometry,
+the compact bar, navigation reachability and retained playback with synthetic
+device insets and audio. It also checks the ordinary browser presentation.
+
 ## One Control navigation definition
 
 Owner, 2026-10-30 (the consolidation mockup: "get that control room under

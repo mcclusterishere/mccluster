@@ -185,18 +185,22 @@
   function ready() { if (document.body.dataset.siteNavigation === 'ready') window.dispatchEvent(new Event('mcc:navigation-ready')); }
   window.addEventListener('mcc:navigation-style-ready', () => { if (!bar.admin() || installed) ready(); });
   let dockHints, dockLeft, dockRight, dockObservers = false;
+  // The installed app keeps its player outside this scrolling navigation strip.
+  // Ordinary browser bars remain their own scroll container.
+  function dockItems() { return dock.querySelector('.appbar__tabs') || dock; }
   function revealDockItem(item) {
     if (!item || !bar.admin()) return;
-    const r = item.getBoundingClientRect(), d = dock.getBoundingClientRect();
-    if (r.left < d.left + 4) dock.scrollLeft -= d.left + 4 - r.left;
-    else if (r.right > d.right - 4) dock.scrollLeft += r.right - d.right + 4;
+    const strip = dockItems(), r = item.getBoundingClientRect(), d = strip.getBoundingClientRect();
+    if (r.left < d.left + 4) strip.scrollLeft -= d.left + 4 - r.left;
+    else if (r.right > d.right - 4) strip.scrollLeft += r.right - d.right + 4;
     updateDockHints();
   }
   function updateDockHints() {
     if (!dockHints) return;
-    const overflow = bar.admin() && dock.scrollWidth > dock.clientWidth + 2;
-    dockLeft.hidden = !overflow || dock.scrollLeft <= 2;
-    dockRight.hidden = !overflow || dock.scrollLeft >= dock.scrollWidth - dock.clientWidth - 2;
+    const strip = dockItems(), overflow = bar.admin() && strip.scrollWidth > strip.clientWidth + 2;
+    dockLeft.hidden = !overflow || strip.scrollLeft <= 2;
+    dockRight.hidden = !overflow || strip.scrollLeft >= strip.scrollWidth - strip.clientWidth - 2;
+    [dockLeft,dockRight].forEach(button=>button.setAttribute('aria-controls',strip.id || dock.id));
     dockHints.hidden = !overflow;
     const focus = document.activeElement;
     if ((focus === dockLeft || focus === dockRight) && focus.hidden) {
@@ -211,7 +215,7 @@
       let link = dock.querySelector('[data-dock-section="'+section.id+'"]');
       if (!link) {
         link = element('a', 'appbar__tab'); link.dataset.appnav = 'admin-'+section.id; link.dataset.dockSection = section.id;
-        link.innerHTML = N.icon(section.icon); link.append(element('span', '', section.label)); dock.append(link);
+        link.innerHTML = N.icon(section.icon); link.append(element('span', '', section.label)); dockItems().append(link);
       }
       link.href = controlHref(section.route);
     });
@@ -221,14 +225,14 @@
       dockLeft = element('button', '', '‹'); dockRight = element('button', '', '›');
       [dockLeft,dockRight].forEach((button,i) => {
         button.type = 'button'; button.setAttribute('aria-label',i?'Scroll navigation right':'Scroll navigation left'); button.setAttribute('aria-controls',dock.id);
-        button.onclick = () => dock.scrollBy({left:(i?1:-1)*dock.clientWidth*.7,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+        button.onclick = () => {const strip=dockItems();strip.scrollBy({left:(i?1:-1)*strip.clientWidth*.7,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});};
         dockHints.append(button);
       });
       document.body.append(dockHints);
     }
     if (!dockObservers) {
       dockObservers = true;
-      dock.addEventListener('scroll',updateDockHints,{passive:true});
+      dock.addEventListener('scroll',updateDockHints,{passive:true,capture:true});
       dock.addEventListener('focusin',event=>revealDockItem(event.target.closest('[data-appnav]')));
       dock.addEventListener('keydown',event=>{
         if (!bar.admin() || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
@@ -242,6 +246,7 @@
       new ResizeObserver(resized).observe(dock);
       new MutationObserver(updateDockHints).observe(dock,{childList:true,subtree:true});
       window.addEventListener('resize',resized);
+      window.addEventListener('mcc:installed-dock',resized);
     }
     requestAnimationFrame(()=>{revealDockItem(dock.querySelector(':focus') || dock.querySelector('[aria-current="page"]'));updateDockHints();});
   }

@@ -170,6 +170,14 @@
      preview and the other renders inside somebody else's page, and our
      navigation belongs in neither. */
   var dock = document.querySelector(".appbar");
+  /* Installed music controls surround a stable navigation container. All role,
+     perspective and wing rebuilds replace only the tabs, leaving the live
+     transport's DOM and focus intact. In a browser the original bar is used. */
+  function barMarkup(value) {
+    var items = dock.querySelector(".appbar__tabs") || dock;
+    if (arguments.length) items.innerHTML = value;
+    return items.innerHTML;
+  }
   if (document.body.hasAttribute("data-no-appbar")) {
     if (dock && dock.parentNode) dock.parentNode.removeChild(dock);
     return;
@@ -353,7 +361,7 @@
     e.preventDefault();
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (err) { window.scrollTo(0, 0); }
   });
-  var HOME_BAR = dock.innerHTML;
+  var HOME_BAR = barMarkup();
   var wingOn = null;
   var AUTH_STATE = { signed_in: false, verified: false, user: null };
 
@@ -475,7 +483,7 @@
     storePerspective(p);
     if (wingOn) revert();
     paintPerspective();
-    HOME_BAR = dock.innerHTML;
+    HOME_BAR = barMarkup();
     return true;
   }
   function clearPerspective() {
@@ -483,7 +491,7 @@
     storePerspective(null);
     if (wingOn) revert();
     paintPerspective();
-    HOME_BAR = dock.innerHTML;
+    HOME_BAR = barMarkup();
   }
   window.addEventListener("mcc:perspective",function(e) { if(AUTH_STATE.signed_in)setPerspective(e.detail); });
   window.addEventListener("mcc:perspective-house",function() {
@@ -504,7 +512,7 @@
         name:profile.display_name||id.mccluster_id,avatar:profile.avatar_url});
       if(!PERSPECTIVE&&SELF_PROFILE&&!wingOn) {
         paintPerspective();
-        HOME_BAR=dock.innerHTML;
+        HOME_BAR=barMarkup();
       }
       // An open wing will pick up SELF_PROFILE when revert() restores the
       // closed bar. Never overwrite the wing's anchor while it is open.
@@ -599,7 +607,7 @@
     chip.setAttribute("aria-label", signedIn ? "Profile and account: " + name : "Sign in or create an account");
     window.MCC_AUTH_STATE = AUTH_STATE;
     try { window.dispatchEvent(new CustomEvent("mcc:auth-state", { detail: AUTH_STATE })); } catch (e) {}
-    if (!wingOn) HOME_BAR = dock.innerHTML;
+    if (!wingOn) HOME_BAR = barMarkup();
   }
   /* ---------- THE OWNER'S SEVEN TABS (owner, 2026-10-15: "admin first; push features down to other users later") ----------
      For the house owner only, the bar widens to seven: Play (the player), Inbox, Home (the Control Room: the admin back end lives
@@ -662,8 +670,8 @@
     if (!on) revealNavigation();
     if (on === ADMIN_ON) { markAdminHere(); return; }
     if (wingOn) revert();
-    if (on) { BASE_BAR = dock.innerHTML; dock.innerHTML = adminBar(); }
-    else if (BASE_BAR !== null) { dock.innerHTML = BASE_BAR; BASE_BAR = null; }
+    if (on) { BASE_BAR = barMarkup(); barMarkup(adminBar()); }
+    else if (BASE_BAR !== null) { barMarkup(BASE_BAR); BASE_BAR = null; }
     ADMIN_ON = on;
     dock.classList.toggle("appbar--admin", on);
     if (on) document.body.setAttribute("data-appbar-admin", ""); else document.body.removeAttribute("data-appbar-admin");
@@ -671,7 +679,7 @@
     markAdminHere();
     var chipText = document.querySelector("#mccAuthChip .mcc-auth-chip__text");
     if (chipText && AUTH_STATE.signed_in) chipText.textContent = "Profile";
-    HOME_BAR = dock.innerHTML;
+    HOME_BAR = barMarkup();
     try { paintSound(); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent("mcc:appbar-admin", { detail: { admin: on } })); } catch (e) {}
   }
@@ -1339,7 +1347,7 @@
       else if (fixedTab) cells.push(fixedTab.outerHTML);
       else cells.push(slotHtml[si++] || "");
     }
-    dock.innerHTML = cells.join("");
+    barMarkup(cells.join(""));
     paintSound(); // the anchor is a fresh copy off HOME_BAR; it knows nothing yet
     emit("mcc:bar-morph", { wing: key });
   }
@@ -1349,10 +1357,10 @@
     unpeek();
     wingOn = null;
     dock.classList.remove("appbar--morph");
-    dock.innerHTML = HOME_BAR;
+    barMarkup(HOME_BAR);
     if (SELF_PROFILE && !PERSPECTIVE) {
       paintPerspective();
-      HOME_BAR = dock.innerHTML;
+      HOME_BAR = barMarkup();
     }
     paintSound(); // restore live audio after refreshing the current profile
   }
@@ -1465,6 +1473,22 @@
   navigationScript.src = ROOT + "js/site-navigation.js?v=__STAMP__";
   navigationScript.onerror = function () { navPresentationReady = true; revealNavigation(); };
   document.head.appendChild(navigationScript);
+  /* Installed web apps get compact chrome and the same player's transport.
+     Ordinary browser documents do not load or mount the installed dock. */
+  function loadInstalledDock() {
+    if (window.parent !== window || !document.documentElement.classList.contains("mcc-installed-app") ||
+        document.querySelector("script[data-mcc-installed-dock]")) return;
+    var appDock = document.createElement("script");
+    appDock.src = ROOT + "js/installed-app-dock.js?v=__STAMP__";
+    appDock.async = false; appDock.setAttribute("data-mcc-installed-dock", "");
+    document.head.appendChild(appDock);
+  }
+  loadInstalledDock();
+  if (window.matchMedia) {
+    var installedMode = window.matchMedia("(display-mode: standalone)");
+    if (installedMode.addEventListener) installedMode.addEventListener("change", loadInstalledDock);
+    else if (installedMode.addListener) installedMode.addListener(loadInstalledDock);
+  }
   if (window.MCC_TRACK) window.MCC_TRACK("bar_boot", { page: location.pathname.split("/").pop() });
 
 })();

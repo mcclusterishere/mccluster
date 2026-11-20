@@ -72,7 +72,8 @@ test('a creator\'s front page puts the creator in the middle of the bar, with th
   assert.match(bar, /if\(HOUSE_VISIT && currentSubject\(\)\)/, "founder perspective is explicit and owner-scoped");
   assert.match(bar, /perspective: function \(p\) \{ return arguments\.length \? setPerspective\(p\) : PERSPECTIVE; \},/);
   /* the painted bar is what a held wing comes back to */
-  assert.match(bar, /paintPerspective\(\);\n    HOME_BAR = dock\.innerHTML;/);
+  assert.match(bar, /function barMarkup\(value\) \{\s*var items = dock\.querySelector\("\.appbar__tabs"\) \|\| dock;\s*if \(arguments\.length\) items\.innerHTML = value;\s*return items\.innerHTML;\s*\}/, 'installed snapshots contain only navigation, with the original bar as the browser fallback');
+  assert.match(bar, /paintPerspective\(\);\n    HOME_BAR = barMarkup\(\);/);
   assert.match(bar, /paintPerspective\(\);\n    \/\* Exactly three columns/, 'sign-in state repaints the middle cell through the perspective');
 
   const page = await read('js/music-creator-profile.js');
@@ -185,8 +186,8 @@ test('one M Account, every host: the bar carries the sign-in across and the arri
 test('async member bootstrap refreshes wing snapshot and Whip approval is server-owned',async()=>{
   const bar=await read('js/tabbar.js');
   const front=await read('js/member-front.js');
-  assert.match(bar,/if\(!PERSPECTIVE&&SELF_PROFILE&&!wingOn\)\s*\{\s*paintPerspective\(\);\s*HOME_BAR=dock\.innerHTML;/);
-  assert.match(bar,/if \(SELF_PROFILE && !PERSPECTIVE\) \{\s*paintPerspective\(\);\s*HOME_BAR = dock\.innerHTML;/);
+  assert.match(bar,/if\(!PERSPECTIVE&&SELF_PROFILE&&!wingOn\)\s*\{\s*paintPerspective\(\);\s*HOME_BAR=barMarkup\(\);/);
+  assert.match(bar,/if \(SELF_PROFILE && !PERSPECTIVE\) \{\s*paintPerspective\(\);\s*HOME_BAR = barMarkup\(\);/);
   assert.match(front,/\/api\/drivers\/clearance/);
   assert.match(front,/clearance\?\.can_drive===true/);
   assert.doesNotMatch(front,/driver\.compliance_verified/);
