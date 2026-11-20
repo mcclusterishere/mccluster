@@ -136,7 +136,7 @@ async function viewAtLod(frame, lon, lat, height, lod) {
       const state = snapshot();
       if (Math.abs(state.height - height) < 1 && state.lod === lod) finish(true, state);
     };
-    const timer = setTimeout(() => finish(false), 20000);
+    const timer = setTimeout(() => finish(false), 5000);
     v.scene.postRender.addEventListener(onFrame);
     v.camera.cancelFlight();
     v.camera.setView({ destination: Cesium.Cartesian3.fromDegrees(lon, lat, height) });
@@ -353,7 +353,7 @@ for (const size of SIZES) {
   }
   const rang = await until(frame, () => { const s = window.__mccEnvironmentLayers(); return s.ripple === null && !!s.lastRipple && s.lastRipple.id === 'usgs:fx-m62' && !window.__mccGlobeGovernor().holds.includes('env-ripple'); }, null, 12000);
   const after = await env(frame), lr = after.lastRipple, landAt = after.camera && after.camera.last ? after.camera.last.at : null;
-  check(scope, 'S5: the rings began when the push landed and ended within 6.5 s of the choice, their hold let go', rang && !!lr && lr.ringsAt !== null && landAt !== null && lr.ringsAt >= landAt - 50 && lr.endedAt - lr.startedAt <= 6500, { lr, landAt, sinceTapMs: Date.now() - t61 });
+  check(scope, 'S5: the ring clock starts no earlier than landing (50 ms tolerance), cleanup finishes within 6.5 s of the choice, and its hold is released', rang && !!lr && lr.ringsAt !== null && landAt !== null && lr.ringsAt >= landAt - 50 && lr.endedAt - lr.startedAt <= 6500, { lr, landAt, sinceTapMs: Date.now() - t61 });
   check(scope, 'S5: every hold let go after the push and the rings: back on demand', await until(frame, () => { const g = window.__mccGlobeGovernor(); return g.enabled && g.holds.length === 0; }, null, 20000), await gov(frame));
   /* a documented rupture: the recorded M7.0 of 2026-10-22, 189 km ENE of Nagqu, China (USGS us6000u43g), joins the pins; its
      USGS finite-fault plane's modelled up-dip edge is drawn as one line and called a model in the selection and the legend */
