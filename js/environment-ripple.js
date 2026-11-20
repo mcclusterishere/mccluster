@@ -2,7 +2,8 @@
    confirmation): when a quake is chosen, two rings travel outward over the ground from its epicentre to a stated regional radius
    (50 km below M5, rising with the magnitude to 300 km from M7) in about 2.4 s, and are gone. It is illustrative, never a
    recording of shaking, and says so ("Ripple is illustrative: not a recording of shaking"). When the camera is pushing in to the
-   quake the rings wait for it to land (2.5 s at most), so the wave is seen from where the visitor arrives.
+   quake the rings wait for it to land (2.5 s at most), so the wave is seen from where the visitor arrives. Their clock starts
+   when that wait ends; a late primitive catches up to that clock instead of extending the animation.
 
    How it is drawn, and what it never does. One GroundPrimitive (an ellipse at the full radius, so it lies on the ground: the
    ellipsoid for a guest, the terrain where terrain is loaded) is built once per selection, asynchronously, with an original ring
@@ -83,6 +84,12 @@
     function material(still) {
       return new Cesium.Material({ fabric: { type: 'MccEnvironmentRipple', uniforms: { color: new Cesium.Color(0.93, 0.98, 1, 0.9), front1: -1, front2: -1, outline: still ? 1 : 0 }, source: SOURCE }, translucent: true });
     }
+    function finish(c) { if (current === c) { clear(); onEnd(); } }
+    function endAtDeadline(c) {
+      if (c.timer !== null) unschedule(c.timer);
+      const deadline = Math.min(c.scheduledAt + HOLD_MAX_MS, c.startedAt === null ? Infinity : c.startedAt + DURATION_MS);
+      c.timer = schedule(() => finish(c), Math.max(0, deadline - clock()));
+    }
     /* spec { id, lon, lat, mag, still, wait }: `still` draws the outline (reduced motion); `wait` holds the rings until go() */
     function start(spec) {
       clear();
@@ -100,7 +107,7 @@
       } catch (err) { return null; }
       add(prim);
       const t0 = clock();
-      const c = { id: s.id || null, prim, radiusM: r, phase: still ? 'outline' : s.wait === true ? 'waiting' : 'rings', scheduledAt: t0, startedAt: null, step: null, timer: null, waitTimer: null, still };
+      const c = { id: s.id || null, prim, radiusM: r, phase: still ? 'outline' : s.wait === true ? 'waiting' : 'rings', scheduledAt: t0, startedAt: still || s.wait === true ? null : t0, step: null, timer: null, waitTimer: null, still };
       current = c;
       if (still) {
         /* the outline is built once and then left alone: a bounded hold only while Cesium builds it */
@@ -113,15 +120,16 @@
       hold('env-ripple', HOLD_MAX_MS);
       if (c.phase === 'waiting') c.waitTimer = schedule(() => go(), WAIT_MAX_MS);
       c.step = () => {
+        const t = clock();
+        /* A rendering task can run before overdue timer tasks. Never draw past either deadline, even while still building. */
+        if (t - c.scheduledAt >= HOLD_MAX_MS || (c.startedAt !== null && done(t - c.startedAt))) { finish(c); return; }
         const u = prim.appearance && prim.appearance.material && prim.appearance.material.uniforms;
         if (!u || !prim.ready || c.phase === 'waiting') return;
-        if (c.startedAt === null) c.startedAt = clock();
-        const elapsed = clock() - c.startedAt, f = fronts(elapsed);
+        const f = fronts(t - c.startedAt);
         u.front1 = f[0]; u.front2 = f[1];
-        if (done(elapsed)) { if (current === c) { clear(); onEnd(); } }
       };
-      /* the frames write the fronts; the timer ends the ripple on time even when frames are sparse (software GL) */
-      c.timer = schedule(() => { if (current === c) { clear(); onEnd(); } }, HOLD_MAX_MS);
+      /* Frames and timers share the same deadlines; sparse frames cannot restart or prolong the ring clock. */
+      endAtDeadline(c);
       viewer.scene.preRender.addEventListener(c.step);
       requestRender('ripple');
       return { radiusM: r, phase: c.phase, label: LABEL };
@@ -130,8 +138,11 @@
     function go() {
       const c = current;
       if (!c || c.phase !== 'waiting') return;
+      if (clock() - c.scheduledAt >= HOLD_MAX_MS) { finish(c); return; }
       if (c.waitTimer !== null) { unschedule(c.waitTimer); c.waitTimer = null; }
       c.phase = 'rings';
+      c.startedAt = clock();
+      endAtDeadline(c);
       requestRender('ripple-go');
     }
     function clear() {

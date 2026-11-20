@@ -42,7 +42,7 @@ test('two rings travel outward, 0.8 s apart, each in 1.6 s, slowing as they spre
 /* a fake Cesium: a ground primitive that becomes ready when told, materials with uniforms, a scene with preRender */
 function world({ supported = true } = {}) {
   const event = () => { const fns = new Set(); return { addEventListener: (f) => fns.add(f), removeEventListener: (f) => fns.delete(f), fire: () => [...fns].forEach((f) => f()), size: () => fns.size }; };
-  const built = [], holds = [], released = [], renders = [];
+  const built = [], holds = [], released = [], renders = [], ended = [];
   class GroundPrimitive { constructor(o) { this.o = o; this.ready = false; this.appearance = o.appearance; built.push(this); } static isSupported() { return supported; } static supportsMaterials() { return supported; } }
   class Material { constructor(o) { this.fabric = o.fabric; this.uniforms = Object.assign({}, o.fabric.uniforms); this.translucent = o.translucent; } }
   class Plain { constructor(o) { Object.assign(this, o || {}); } }
@@ -53,11 +53,15 @@ function world({ supported = true } = {}) {
   const ripple = R.create({
     viewer: { scene }, Cesium, now: () => t,
     add: (p) => { scene.primitives.list.push(p); return p; }, remove: (p) => { scene.primitives.list = scene.primitives.list.filter((x) => x !== p); return null; },
-    hold: (o, ms) => holds.push([o, ms]), release: (o) => released.push(o), requestRender: (why) => renders.push(why),
+    hold: (o, ms) => holds.push([o, ms]), release: (o) => released.push(o), requestRender: (why) => renders.push(why), onEnd: () => ended.push(t),
     setTimeout: (fn, ms) => { const id = { fn, at: t + ms, done: false }; timers.push(id); return id; }, clearTimeout: (id) => { if (id) id.done = true; }
   });
-  const advance = (ms) => { t += ms; for (const id of timers) if (!id.done && id.at <= t) { id.done = true; id.fn(); } scene.preRender.fire(); };
-  return { ripple, built, holds, released, renders, scene, advance, now: () => t };
+  /* Timer tasks and rendering can run in either order after a busy frame. Keep them independently controllable. */
+  const elapse = (ms) => { t += ms; };
+  const flushTimers = () => { for (const id of timers) if (!id.done && id.at <= t) { id.done = true; id.fn(); } };
+  const frame = () => scene.preRender.fire();
+  const advance = (ms) => { elapse(ms); flushTimers(); frame(); };
+  return { ripple, built, holds, released, renders, ended, scene, advance, elapse, flushTimers, frame, now: () => t };
 }
 
 test('one ground primitive, built once and asynchronously at the regional radius, the rings written as uniforms only', () => {
@@ -120,6 +124,58 @@ test('the rings wait for the push to land (go), and at most 2.5 s; the 6 s timer
   let t = 0; while (w3.ripple.state() && t < 7000) { t += 500; w3.advance(500); w3.scene.preRender.size(); }
   assert.equal(w3.ripple.state(), null, 'ended by the timer');
   assert.ok(w3.ripple.last().endedAt - w3.ripple.last().startedAt <= 6000);
+});
+
+test('a delayed primitive catches up to the landing clock instead of starting another 2.4 s animation', () => {
+  const w = world();
+  w.ripple.start({ id: 'usgs:late-build', lon: 1, lat: 2, mag: 5.5, wait: true });
+  w.elapse(1800);
+  w.ripple.go();
+  const landedAt = w.now();
+  w.elapse(1200);
+  w.built[0].ready = true;
+  w.frame();
+  assert.equal(w.ripple.state().ringsAt, landedAt, 'the rings use the landing time, not primitive readiness');
+  assert.deepEqual(plain(w.ripple.state().fronts), plain(P.fronts(1200)), 'a late frame catches up');
+  const uniforms = w.built[0].appearance.material.uniforms;
+  assert.deepEqual([uniforms.front1, uniforms.front2], [0.9375, 0.4375], 'the rendered material catches up too');
+  w.elapse(1200);
+  w.frame();
+  assert.equal(w.ripple.state(), null, 'the first frame at the 2.4 s deadline cleans up before delayed timers');
+  assert.equal(w.ripple.last().endedAt, w.now(), 'the receipt records actual cleanup time');
+  assert.equal(w.ripple.last().endedAt - w.ripple.last().ringsAt, 2400);
+  assert.deepEqual(w.released, ['env-ripple']);
+  w.flushTimers();
+  assert.deepEqual(w.ended, [w.now()], 'late timer delivery cannot finish the ripple twice');
+});
+
+test('the 6 s deadline is enforced by a frame even when timers and primitive readiness are late', () => {
+  const w = world();
+  w.ripple.start({ id: 'usgs:late-timer', lon: 1, lat: 2, mag: 5.5, wait: true });
+  w.elapse(P.HOLD_MAX_MS + 125);
+  w.frame();
+  assert.equal(w.ripple.state(), null, 'an overdue ripple cannot wait for its timer task or start on a later frame');
+  assert.equal(w.ripple.last().endedAt, w.now(), 'never clamp the recorded cleanup to a missed deadline');
+  assert.equal(w.ripple.last().endedAt - w.ripple.last().startedAt, 6125);
+  assert.equal(w.ripple.last().ringsAt, null, 'no rings actually began');
+  assert.equal(w.scene.preRender.size(), 0);
+  assert.equal(w.scene.primitives.list.length, 0);
+  w.flushTimers();
+  assert.deepEqual(w.released, ['env-ripple']);
+  assert.deepEqual(w.ended, [w.now()]);
+});
+
+test('the landing timer ends the rings after 2.4 s even when their primitive never becomes ready', () => {
+  const w = world();
+  w.ripple.start({ id: 'usgs:no-frame', lon: 1, lat: 2, mag: 5.5, wait: true });
+  w.elapse(1800); w.ripple.go();
+  const landedAt = w.now();
+  w.elapse(2400); w.flushTimers();
+  assert.equal(w.ripple.state(), null);
+  assert.equal(w.ripple.last().ringsAt, landedAt);
+  assert.equal(w.ripple.last().endedAt, w.now());
+  assert.deepEqual(w.released, ['env-ripple']);
+  assert.equal(w.scene.preRender.size(), 0);
 });
 
 test('reduced motion: a still outline at the same radius, kept while selected, asking for no frame once built', () => {
