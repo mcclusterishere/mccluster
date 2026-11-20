@@ -1,5 +1,5 @@
-// Static checks on the pending consent guard for public.network_connections and its rollback
-// (supabase/pending/20261119062110_network_connections_consent_guard_v1.sql and .rollback.sql), in the root suite.
+// Static checks on the consent guard for public.network_connections and its retained rollback,
+// at the paths named by scripts/test/support/network-connections-database.mjs, in the root suite.
 // The database proofs are scripts/test/network-connections-consent.integration.mjs (PGlite) and
 // scripts/test/network-connections-consent.native.integration.mjs (PostgreSQL 16 and 17). Here: the file's shape (one
 // transaction, its lock bound, exactly the statements the fix needs), the rollback's policies equal to the repository's
@@ -8,15 +8,29 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { FIX_FILE, ROLLBACK_FILE, REPLAY_FILE, fixSql, rollbackSql, repoFile, splitStatements, normalizeStatement } from './support/network-connections-database.mjs';
+import { FIX_FILE, ROLLBACK_FILE, REPLAY_FILE, consentForwardLocation, fixSql, rollbackSql, repoFile, splitStatements, normalizeStatement } from './support/network-connections-database.mjs';
 
 const statements = (sql) => splitStatements(sql).map((s) => normalizeStatement(s.text));
 const NOT_APPLIED = "Not applied. Apply only with Matthew's approval.";
 const TRANSACTION_CONTROL = /^(begin|commit|rollback|end|abort|savepoint|release|start transaction)\b/i;
 
-test('the pair says it is not applied and needs Matthew\'s approval', async () => {
+test('the forward SQL and rollback retain their original review headers', async () => {
+  // A later promotion preserves the SQL, including its pre-approval header.
+  // Current status belongs to the production ledger and promotion records.
   assert.ok((await fixSql()).includes(NOT_APPLIED));
   assert.ok((await rollbackSql()).includes(NOT_APPLIED));
+});
+
+test('the forward SQL stays pending until the ledger records its actual migration version', () => {
+  assert.deepEqual(consentForwardLocation({ migrations: [] }), {
+    directory: 'pending', file: '20261119062110_network_connections_consent_guard_v1.sql'
+  });
+  const fixture = { version: '20990101000000', name: 'network_connections_consent_guard_v1' };
+  assert.deepEqual(consentForwardLocation({ migrations: [fixture] }), {
+    directory: 'migrations', file: '20990101000000_network_connections_consent_guard_v1.sql'
+  });
+  assert.throws(() => consentForwardLocation({ migrations: [fixture, fixture] }), /recorded more than once/);
+  assert.throws(() => consentForwardLocation({ migrations: [{ ...fixture, version: 'unrecorded' }] }), /actual migration version/);
 });
 
 test('the fix is one transaction with a 5 s lock bound, and does exactly three things before its check', async () => {
@@ -100,7 +114,7 @@ test('no shipped code writes public.network_connections with a member\'s token (
   assert.ok(mentions.some(([f]) => f === 'workers/mccluster/src/platform-api.js'), 'the Worker\'s read is still where the fix\'s header says');
 });
 
-test('the promotion order and the pending README carry it', async () => {
+test('the promotion records locate the forward file and retained rollback', async () => {
   const order = await repoFile('supabase/pending/PROMOTION-ORDER.md');
   const readme = await repoFile('supabase/pending/README.md');
   for (const file of [FIX_FILE, ROLLBACK_FILE]) assert.ok(order.includes(file), `PROMOTION-ORDER.md names ${file}`);

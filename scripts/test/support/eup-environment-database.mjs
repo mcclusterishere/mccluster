@@ -1,6 +1,6 @@
-// Isolated local PostgreSQL-compatible support for the pending E=UP environmental event store; never connects to
+// Isolated local PostgreSQL-compatible support for the reviewed E=UP environmental event store; never connects to
 // canonical Supabase. Applies the applied module policy (supabase/migrations/20261117144103_eup_module_policy_v1.sql)
-// and then the five pending parts, supabase/pending/20261119100000_eup_environment_events_v1_01.sql to _05.sql, in
+// and then the five parts, discovered in pending/ or migrations/ after their recorded promotion, in
 // order, and drives the store the way the Worker will: as service_role, through the eight entry points, never through
 // the tables. scripts/test/eup-environment-events.integration.mjs uses createEnvironmentStoreDatabase(); the owner
 // routes, the ingest and the public routes of the later slices can use ENVIRONMENT_STORE_RPC as their PostgREST
@@ -11,17 +11,30 @@
 //   await store.ingest([usgsEvent({ provider_id: 'us7000abcd' })]);
 //   await enableModule(store.db, 'environment');             // only then do the public reads answer
 //
-// EUP_ENVIRONMENT_PARTS_DIR replaces supabase/pending/ as the folder the five parts are read from (same file names),
+// EUP_ENVIRONMENT_PARTS_DIR replaces the discovered folders as the folder the five parts are read from (same file names),
 // for negative controls: a mutated copy must fail the integration test.
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { OWNER, PEER, SECOND_OWNER, ensureHouse, applyModulePolicy, asServiceRole } from './eup-module-policy-database.mjs';
 
 export { OWNER, PEER, SECOND_OWNER };
-export const STORE_PART_FILES = Object.freeze([1, 2, 3, 4, 5].map((i) => `20261119100000_eup_environment_events_v1_0${i}.sql`));
 export const STORE_PART_NAMES = Object.freeze([1, 2, 3, 4, 5].map((i) => `eup_environment_events_v1_0${i}`));
+const ROOT = new URL('../../../', import.meta.url);
+/** One reviewed forward copy per part, before or after promotion; never guess a production version. */
+export function discoverStorePartPaths(root = ROOT) {
+  const candidates = ['pending', 'migrations'].flatMap((dir) =>
+    readdirSync(new URL(`supabase/${dir}/`, root)).map((file) => `supabase/${dir}/${file}`));
+  return Object.freeze(STORE_PART_NAMES.map((name) => {
+    const pattern = new RegExp(`/\\d{14}_${name}\\.sql$`);
+    const matches = candidates.filter((path) => pattern.test(path));
+    if (matches.length !== 1) throw new Error(`${name}: expected exactly one pending or applied SQL file, found ${matches.length}`);
+    return matches[0];
+  }));
+}
+export const STORE_PART_PATHS = discoverStorePartPaths();
+export const STORE_PART_FILES = Object.freeze(STORE_PART_PATHS.map((path) => path.split('/').pop()));
 export const STORE_ROLLBACK_FILE = '20261119100000_eup_environment_events_v1.rollback.sql';
 /** What one `apply_migration` call carries safely (supabase/pending/README.md); every part stays at or under it. */
 export const STORE_PART_MAX_BYTES = 32000;
@@ -44,9 +57,10 @@ export const DEFAULT_USGS_RULE = Object.freeze({ min_magnitude: 4.5, include_aut
 
 const PENDING = new URL('../../../supabase/pending/', import.meta.url);
 const MIGRATIONS_ROLES_STUB = new URL('../../../supabase/tests/supabase_api_roles.stub.sql', import.meta.url);
-const partPath = (file) => process.env.EUP_ENVIRONMENT_PARTS_DIR ? join(process.env.EUP_ENVIRONMENT_PARTS_DIR, file) : new URL(file, PENDING);
+const partPath = (i) => process.env.EUP_ENVIRONMENT_PARTS_DIR
+  ? join(process.env.EUP_ENVIRONMENT_PARTS_DIR, STORE_PART_FILES[i - 1]) : new URL(STORE_PART_PATHS[i - 1], ROOT);
 /** Part i (1-based) as text. */
-export const storePartSql = (i) => readFile(partPath(STORE_PART_FILES[i - 1]), 'utf8');
+export const storePartSql = (i) => readFile(partPath(i), 'utf8');
 export const storeRollbackSql = () => readFile(new URL(STORE_ROLLBACK_FILE, PENDING), 'utf8');
 /** Apply parts `from` to `to` (1-based, inclusive), each one statement batch, as the table owner. */
 export async function applyStore(db, { from = 1, to = 5 } = {}) {

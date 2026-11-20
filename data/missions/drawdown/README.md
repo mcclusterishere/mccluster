@@ -1,34 +1,36 @@
-# Drawdown mission catalog (draft)
+# Drawdown mission catalog
 
-`missions.json` holds 125 draft missions, one for each solution in Project Drawdown's
+`missions.json` holds the frozen original definitions of 125 draft missions, one for each solution in Project Drawdown's
 Explorer except the 14 that Drawdown rates "Not Recommended". Deploy Clean Cooking also
 keeps a mission from its openly licensed assessment record, although its Explorer page
 was split into two newer solutions. `solutions-catalog.json` lists all 138 Explorer
 solutions as published on 2026-11-17: name, link, sector, Drawdown's classification,
 a short summary excerpt where the page has one, and the image credit.
 
-**Status: in production as drafts; the publish waits for the deploy window.** Four steps
-write them (`supabase/pending/PROMOTION-ORDER.md`, section 10), each with its rollback. The
-first three are applied in production, with the owner's approval: the join scope on
+**Status: all 125 missions are open in production, with zero website quotations.** The release
+steps are recorded in `supabase/pending/PROMOTION-ORDER.md`, section 10, with their recovery files.
+The initial preparation was applied in production with the owner's approval: the join scope on
 2026-11-17 (joining no longer depends on pins), as
 `supabase/migrations/20261117222809_action_globe_join_scope_v1.sql`; the table for proof
 hints, safety lines and credits on 2026-11-18, as
 `supabase/migrations/20261118021521_action_mission_details.sql`; and the import of these 125
 missions as drafts with their details, in seven parts applied in order on 2026-11-18, as
 `supabase/migrations/20261118034753_action_mission_drawdown_import_01.sql` to
-`supabase/migrations/20261118035654_action_mission_drawdown_import_07.sql`. Production holds
-them as 125 draft missions with 125 details rows (the operator's read at 03:58 UTC on
+`supabase/migrations/20261118035654_action_mission_drawdown_import_07.sql`. The initial import
+created 125 draft missions with 125 details rows (the operator's read at 03:58 UTC on
 2026-11-18, recorded in
-`docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md`); drafts
-change nothing a visitor sees. The fourth step,
-`supabase/pending/20261117100300_action_mission_drawdown_publish.sql` (draft to open, which
-shows all 125 on the live site at once), is not applied: the owner decided it runs in the
-deploy window, after the new feed ships. `tools/build-mission-import.mjs` generated the parts,
-their rollback and the publish from `missions.json`, and its `--check` fails when they drift
-from it. The parts are applied, so this file must not change: the parts in production must
-stay the committed files byte for byte, and a later change to a mission is a new migration,
-never a regenerated part. Choosing where any mission appears on the globe is a separate owner
-decision.
+`docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md`). On 2026-11-20,
+`supabase/migrations/20261120061538_action_mission_drawdown_credit_fallback.sql` removed the
+unverified website excerpts and permission claims. It was followed by
+`supabase/migrations/20261120061714_action_mission_drawdown_publish.sql`, which opened all 125
+missions after the new feed shipped. Verification found 125 open missions, zero website quotations
+or quotation credits, and all 43 assessment citations intact.
+
+`tools/build-mission-import.mjs` reproduces the import parts, their recovery files and the
+publication from `missions.json`; its `--check` fails on drift. A normal build only writes the
+recovery files and never rewrites or recreates an applied import or publication. The historical
+catalog and all applied SQL remain byte for byte unchanged; any later mission edit needs a new
+migration. Choosing where any mission appears on the globe is a separate owner decision.
 
 ## Where the content comes from
 
@@ -38,12 +40,14 @@ decision.
   published on Zenodo (community `pdexplorer`) under CC BY 4.0. Each such mission's
   `credit_line` names the creators, the record title, the DOI and the license link,
   and says the mission wording is adapted and original, as that license requires.
-- **Drawdown's website text, with permission.** 87 missions carry `about`: a short
-  excerpt (60 words or fewer, verbatim) of the solution summary on drawdown.org. The
-  owner states (2026-11-17) that Project Drawdown gave explicit permission to use its
-  material with credit; keep the written permission on file. If that permission is
-  ever withdrawn or does not cover a use, remove `about` and `about_credit` and change
-  those credit lines to "Solution listed in Project Drawdown's Explorer (URL)."
+- **Website excerpts are excluded from publication.** Permission evidence was not verified on 2026-11-20.
+  The frozen import contains all 87 website excerpts and historical permission claims; those claims are not
+  evidence of permission. The applied correction in `publication-policy.json` removes `about` and `about_credit`
+  and changes each affected credit prefix to "Solution listed in Project Drawdown's Explorer (URL)."
+  It preserves original mission wording and all 43 assessment citations, including creators, record titles,
+  DOI, licence links and adaptation notices. Forty of the quoted rows also cite CC BY research: that licence
+  covers the separate assessment spreadsheet, not the website quotation. `missions.json` and the seven applied
+  import migrations remain frozen historical input; the correction is a new forward data migration.
 - **No images.** Every Explorer solution photo is credited to a stock agency, a
   photographer or another organization, or carries no credit. Drawdown's permission
   cannot cover third-party photographs, so none is used. Missions use the feed's own
@@ -61,8 +65,9 @@ decision.
 ## How to display a mission
 
 1. Show the mission's own title and description.
-2. Show `about` only as a quotation, with `about_credit` directly beneath it. Thirteen
-   excerpts speak in Drawdown's voice ("we define..."), so they must read as a quote.
+2. The publication correction leaves `about` and `about_credit` null for all 125 missions. Do not republish
+   the archived excerpts or their historical permission claims. Any future authorised quotation must carry
+   its attribution directly beneath it and require a separately reviewed migration.
 3. Show `credit_line` in full in the mission's detail view, and on a feed card a compact
    source line that opens it. CC BY 4.0, section 3(a)(2), allows the attribution in any
    reasonable manner, such as a link to where it is given in full.
@@ -84,3 +89,19 @@ production check constraints on `public.action_missions`.
 Recheck the 37 missions written from the solution name alone (Explorer pages marked
 "coming soon" or "under revision") when Drawdown publishes those pages. Zenodo lists one
 creator of the Improve Annual Cropping record as "Toensme, Eric"; it is kept as listed.
+
+## Publication correction, 2026-11-20
+
+The correction was applied as `20261120061538_action_mission_drawdown_credit_fallback`, with stored statement
+MD5 `6081a2fc43f0dc2dfe6ff56a17f5fe38`. The following publication was applied as
+`20261120061714_action_mission_drawdown_publish`, with stored statement MD5 `9d5e9f4e9178bf52fac4255453787798`.
+The promoted files match those stored bytes, including their historical pre-application headers.
+Run `node tools/build-drawdown-credit-fallback.mjs --check` to reproduce the exact correction and its two
+recovery files from the frozen catalog; `publication-policy.json` names the applied forward file.
+The 125 original missions, their proof hints and safety notes stay unchanged. The 38 rows without website
+excerpts stay unchanged; only the other 87 details rows lose the quotation and permission claim. The source
+page stays draft until legitimate permission evidence supports its existing Show attestation.
+
+Recovery is separate from publication: first return every Drawdown mission to draft, then apply both bounded
+recovery files. They refuse while any of the 125 missions is public and refuse unexpected credit/source
+changes. Restoring historical data does not establish permission or authorise later republication.

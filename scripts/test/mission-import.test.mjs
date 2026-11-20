@@ -1,5 +1,5 @@
 // The Drawdown mission import (tools/build-mission-import.mjs), the SQL it writes and the applied import parts it
-// checks (promoted 2026-11-18 to supabase/migrations/ under production's versions), checked offline.
+// checks (imports promoted 2026-11-18, publication 2026-11-20, under production's versions), checked offline.
 // The database side (apply the parts in order, rerun, out of order, read as a guest, join, roll back, and the
 // parts' rows against the one-file import's) is scripts/test/mission-catalog.native.integration.mjs on a
 // disposable PostgreSQL.
@@ -14,7 +14,7 @@ import { spawnSync } from 'node:child_process';
 import {
   readCatalog, validateCatalog, buildFiles, buildImportParts, singleImportReference, driftedFiles, staleFiles,
   checkPredicate, missionRow, detailsRow, missionId, uuidV5, creatorName, NAMESPACE, ID_NAME_PREFIX, OUTPUT_FILES,
-  CATALOG_PATH, IMPORT_PART_MAX_BYTES, RETIRED_IMPORT_FILE, importPartFile, importPartName, importPartStageName,
+  CATALOG_PATH, IMPORT_PART_MAX_BYTES, RETIRED_IMPORT_FILE, PUBLISH_STAGE_FILE, importPartFile, importPartName, importPartStageName,
   APPLIED_IMPORT_PART_VERSIONS,
   PRODUCTION_MISSION_CHECKS, PRODUCTION_MISSION_COLUMNS, DETAIL_LIMITS, DETAIL_PAIRS, CC_BY,
 } from '../../tools/build-mission-import.mjs';
@@ -343,8 +343,9 @@ test('every SQL file a generated file names is there: in supabase/pending, or pr
     }
   }
   assert.ok(Object.keys(files).every((p) => existsSync(new URL(p, ROOT))), 'and every generated file is on disk');
-  assert.ok(Object.keys(files).filter((p) => p.startsWith('supabase/pending/')).length === Object.keys(OUTPUT_FILES).length,
-    'and only the publish and the two rollbacks are pending: the parts are applied migrations');
+  assert.equal(Object.keys(files).filter((p) => p.startsWith('supabase/pending/')).length, 2,
+    'only the two rollbacks are pending: the import parts and publication are applied migrations');
+  assert.equal(md5(read(OUTPUT_FILES.publish)), '9d5e9f4e9178bf52fac4255453787798', 'publication matches the production statement');
 });
 
 test('the publish touches exactly the imported ids, drafts only; its rollback undoes exactly that', () => {
@@ -388,7 +389,7 @@ test('the generated files are current (node tools/build-mission-import.mjs --che
   for (const f of [...partFiles, ...Object.values(OUTPUT_FILES)]) assert.ok(read(f).includes(`(sha256 ${sha}).`), `${f} names the catalog it came from`);
 });
 
-test('--check fails while the retired one-file import or a staged part is in supabase/pending; a build removes them', () => {
+test('--check rejects stale imports and a staged copy of the applied publication; a build removes them', () => {
   // Two appliable copies of the import must never sit side by side: the one-file import beside its parts, or a part
   // left in pending/ beside the applied migration. Proven on a copy of the tool, the catalog and the applied parts in
   // a scratch directory.
@@ -397,19 +398,20 @@ test('--check fails while the retired one-file import or a staged part is in sup
     for (const dir of ['tools', 'data/missions/drawdown', 'supabase/pending', 'supabase/migrations']) mkdirSync(join(root, dir), { recursive: true });
     copyFileSync(fileURLToPath(new URL('tools/build-mission-import.mjs', ROOT)), join(root, 'tools/build-mission-import.mjs'));
     writeFileSync(join(root, CATALOG_PATH), catalogText);
-    for (const f of partFiles) copyFileSync(fileURLToPath(new URL(f, ROOT)), join(root, f));
+    for (const f of [...partFiles, OUTPUT_FILES.publish]) copyFileSync(fileURLToPath(new URL(f, ROOT)), join(root, f));
     const tool = (...args) => spawnSync(process.execPath, [join(root, 'tools/build-mission-import.mjs'), ...args], { encoding: 'utf8' });
     assert.equal(tool().status, 0, 'a build writes the pending files');
-    assert.deepEqual(readdirSync(join(root, 'supabase/pending')).sort(), Object.values(OUTPUT_FILES).map((p) => p.slice('supabase/pending/'.length)).sort(),
-      'the publish and the two rollbacks, never a part');
+    assert.deepEqual(readdirSync(join(root, 'supabase/pending')).sort(), Object.values(OUTPUT_FILES).filter((p) => p.startsWith('supabase/pending/')).map((p) => p.slice('supabase/pending/'.length)).sort(),
+      'only the two rollbacks, never an import part or the publication');
     assert.equal(tool('--check').status, 0);
     const staged = `supabase/pending/${importPartStageName(1)}`;
     const stray = `supabase/pending/${importPartStageName(parts.length + 1)}`;
     writeFileSync(join(root, RETIRED_IMPORT_FILE), singleImportReference({ text: catalogText, catalog }));
     copyFileSync(fileURLToPath(new URL(partFiles[0], ROOT)), join(root, staged));
+    copyFileSync(fileURLToPath(new URL(OUTPUT_FILES.publish, ROOT)), join(root, PUBLISH_STAGE_FILE));
     writeFileSync(join(root, stray), '-- left over from an earlier cut\n');
     writeFileSync(join(root, 'supabase/pending/20261117100200_action_mission_drawdown_import_1.sql'), '-- a part named out of pattern\n');
-    const expected = [RETIRED_IMPORT_FILE, staged, 'supabase/pending/20261117100200_action_mission_drawdown_import_1.sql', stray].sort();
+    const expected = [RETIRED_IMPORT_FILE, PUBLISH_STAGE_FILE, staged, 'supabase/pending/20261117100200_action_mission_drawdown_import_1.sql', stray].sort();
     assert.deepEqual(staleFiles(root), expected, 'a staged copy of an applied part is stale too');
     assert.deepEqual(driftedFiles(root), expected, '--check reports exactly them');
     const check = tool('--check');
@@ -425,34 +427,40 @@ test('--check fails while the retired one-file import or a staged part is in sup
   }
 });
 
-test('an applied import part is never rewritten: a build that would change one stops, and a catalog needing more parts has none', () => {
-  const root = mkdtempSync(join(tmpdir(), 'mission-import-applied-'));
-  try {
-    for (const dir of ['tools', 'data/missions/drawdown', 'supabase/pending', 'supabase/migrations']) mkdirSync(join(root, dir), { recursive: true });
-    copyFileSync(fileURLToPath(new URL('tools/build-mission-import.mjs', ROOT)), join(root, 'tools/build-mission-import.mjs'));
-    writeFileSync(join(root, CATALOG_PATH), catalogText);
-    for (const f of partFiles) copyFileSync(fileURLToPath(new URL(f, ROOT)), join(root, f));
-    const tool = (...args) => spawnSync(process.execPath, [join(root, 'tools/build-mission-import.mjs'), ...args], { encoding: 'utf8' });
-    const edited = `${read(partFiles[2])}-- edited\n`;
-    writeFileSync(join(root, partFiles[2]), edited);
-    const build = tool();
-    assert.equal(build.status, 1, 'the build refuses');
-    assert.ok(build.stderr.includes(partFiles[2]), build.stderr);
-    assert.equal(readFileSync(join(root, partFiles[2]), 'utf8'), edited, 'and leaves the file as it found it');
-    assert.deepEqual(readdirSync(join(root, 'supabase/pending')), [], 'writing nothing');
-    assert.deepEqual(driftedFiles(root), [partFiles[2], ...Object.values(OUTPUT_FILES)], '--check reports it, and the pending files the refused build did not write');
-    assert.equal(tool('--check').status, 1);
-    rmSync(join(root, partFiles[5]));
-    const missing = tool();
-    assert.equal(missing.status, 1, 'a missing applied part stops the build too');
-    assert.ok(!existsSync(join(root, partFiles[5])), 'and is not written back');
-  } finally {
-    rmSync(root, { recursive: true, force: true });
+test('applied import parts and publication are never rewritten or recreated by a build', () => {
+  for (const target of [partFiles[2], OUTPUT_FILES.publish]) {
+    const root = mkdtempSync(join(tmpdir(), 'mission-import-applied-'));
+    try {
+      for (const dir of ['tools', 'data/missions/drawdown', 'supabase/pending', 'supabase/migrations']) mkdirSync(join(root, dir), { recursive: true });
+      copyFileSync(fileURLToPath(new URL('tools/build-mission-import.mjs', ROOT)), join(root, 'tools/build-mission-import.mjs'));
+      writeFileSync(join(root, CATALOG_PATH), catalogText);
+      for (const f of [...partFiles, OUTPUT_FILES.publish]) copyFileSync(fileURLToPath(new URL(f, ROOT)), join(root, f));
+      const tool = (...args) => spawnSync(process.execPath, [join(root, 'tools/build-mission-import.mjs'), ...args], { encoding: 'utf8' });
+      const edited = `${read(target)}-- edited\n`;
+      writeFileSync(join(root, target), edited);
+      const build = tool();
+      assert.equal(build.status, 1, `${target}: the build refuses`);
+      assert.ok(build.stderr.includes(target), build.stderr);
+      assert.equal(readFileSync(join(root, target), 'utf8'), edited, 'and leaves the file as it found it');
+      assert.deepEqual(readdirSync(join(root, 'supabase/pending')), [], 'writing nothing');
+      const expected = target === OUTPUT_FILES.publish
+        ? [OUTPUT_FILES.importRollback, target, OUTPUT_FILES.publishRollback]
+        : [target, OUTPUT_FILES.importRollback, OUTPUT_FILES.publishRollback];
+      assert.deepEqual(driftedFiles(root), expected, '--check reports it, and the recovery files the refused build did not write');
+      assert.equal(tool('--check').status, 1);
+      rmSync(join(root, target));
+      const missing = tool();
+      assert.equal(missing.status, 1, `${target}: a missing applied migration stops the build too`);
+      assert.ok(!existsSync(join(root, target)), 'and is not written back');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   }
   assert.equal(APPLIED_IMPORT_PART_VERSIONS.length, parts.length, 'one applied version per part');
   assert.throws(() => importPartFile(parts.length + 1), /no applied migration/, 'a part beyond the applied ones has no file');
   const ledger = JSON.parse(read('supabase/production-ledger.json')).migrations.map((m) => `${m.version}_${m.name}`);
   for (const p of parts) assert.ok(ledger.includes(p.file.slice('supabase/migrations/'.length, -'.sql'.length)), `${p.file} is in the production ledger`);
+  assert.ok(ledger.includes(OUTPUT_FILES.publish.slice('supabase/migrations/'.length, -'.sql'.length)), 'publication is in the production ledger');
 });
 
 test('every mission SQL file, pending or applied byte for byte, says owner approval is required, names its rollback and states its counts', () => {
@@ -504,15 +512,19 @@ test("the catalog's credit display rule is the README's and the details table's"
     "'Shown in full in the mission''s detail view; a feed card shows a compact source line that opens it.'"), 'the credit_line column comment says the same');
 });
 
-test("the catalog README's status is production's: the import applied as drafts, the publish still pending", () => {
+test("the catalog README records the applied correction and publication with their verified counts", () => {
   const readme = read('data/missions/drawdown/README.md').replace(/\s+/g, ' ');
   const status = /\*\*Status: ([^*]+)\*\*/.exec(readme);
   assert.ok(status, 'the README carries a status line');
   for (const f of ['supabase/migrations/20261117222809_action_globe_join_scope_v1.sql', 'supabase/migrations/20261118021521_action_mission_details.sql', partFiles[0], partFiles.at(-1)]) {
     assert.ok(readme.includes(`\`${f}\``), `it names the applied ${f}`);
   }
-  assert.ok(readme.includes(`\`${OUTPUT_FILES.publish}\``) && /is not applied/.test(readme), 'and the publish as the step that is not applied');
-  assert.doesNotMatch(readme, /No mission here is in production|`20261117100200_action_mission_drawdown_import_01\.sql`/, 'no stale pending wording');
+  assert.ok(readme.includes(`\`${OUTPUT_FILES.publish}\``), 'it names the applied publication');
+  assert.ok(readme.includes('`supabase/migrations/20261120061538_action_mission_drawdown_credit_fallback.sql`'), 'it names the applied credit correction');
+  assert.match(status[1], /125 missions are open in production/);
+  assert.match(readme, /zero website quotations/);
+  assert.match(readme, /all 43 assessment citations/);
+  assert.doesNotMatch(readme, /publish waits for the deploy window|is not applied: the owner decided|No mission here is in production|`20261117100200_action_mission_drawdown_import_01\.sql`/, 'no stale pending wording');
 });
 
 test('every mission SQL file says to run it as postgres, never as the service role', () => {
@@ -609,7 +621,7 @@ test("the scratch fixture's action_missions checks are the tool's, which are pro
   assert.doesNotMatch(fixture, /@mccluster\.org/, 'the house owner\'s address stays out of the public repository');
 });
 
-test('each mission rollback, and the module policy one, names its forward file where that file is now (review of the release polish, RP-4)', () => {
+test('each rollback names its forward file, retaining the reviewed publication name after promotion', () => {
   // The first line of a rollback says what it recovers from. A forward file applied and promoted is no longer on disk under the
   // name it was staged and reviewed under: the line names the applied migration, and may add the staged name after it.
   const rollbacks = [
@@ -624,7 +636,9 @@ test('each mission rollback, and the module policy one, names its forward file w
     const m = /^-- Recovery artifact for (?:the import parts )?(\S+?)[,:]?(?:\s|$)/.exec(first);
     assert.ok(m, `${f}: its first line says what it recovers from`);
     const named = m[1].includes('/') ? m[1] : `supabase/pending/${m[1]}`;
-    assert.ok(existsSync(new URL(named, ROOT)), `${f} names ${named}, which is not there`);
+    // Keep this reviewed recovery artifact byte-exact; its staged forward name resolves to the applied publication.
+    const actual = named === PUBLISH_STAGE_FILE ? OUTPUT_FILES.publish : named;
+    assert.ok(existsSync(new URL(actual, ROOT)), `${f} names ${named}, which must resolve to ${actual}`);
   }
   // the import rollback names the applied parts, the first by its path and the last by its file name, and still the names they
   // were staged and reviewed under
@@ -633,11 +647,12 @@ test('each mission rollback, and the module policy one, names its forward file w
   assert.ok(header.includes(`${importPartStageName(1)} to _${pad2(parts.length)}.sql`), 'and the staged names');
 });
 
-test('while the publish is pending, the feed brief does not say the missions are published (review of the release polish, RP-3)', () => {
-  // The owner decided to publish all 125 (2026-11-17); the publish runs in the deploy window. Until its file leaves
-  // supabase/pending/, the brief records the decision and the state apart: the 125 are drafts in production.
-  assert.ok(existsSync(new URL(OUTPUT_FILES.publish, ROOT)), 'the publish is still pending');
+test('the feed brief records the applied publication without reviving website quotations', () => {
+  assert.ok(existsSync(new URL(OUTPUT_FILES.publish, ROOT)), 'the applied publication exists');
+  assert.ok(!existsSync(new URL(PUBLISH_STAGE_FILE, ROOT)), 'its staged copy is gone');
   const brief = read('docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md');
-  assert.doesNotMatch(brief, /\bmissions are published\b/i, 'no line says the missions are published');
-  assert.match(brief.replace(/\n +/g, ' '), /\(`supabase\/pending\/20261117100300_action_mission_drawdown_publish\.sql`\), is pending for the deploy window; until it runs, none of the 125 is published\./);
+  assert.ok(brief.includes(`\`${OUTPUT_FILES.publish}\``));
+  assert.match(brief, /All 125 missions are published/);
+  assert.match(brief, /zero website quotations/);
+  assert.doesNotMatch(brief, /publish[^\n]*still pending|until it\s+runs, none of the 125 is published/);
 });

@@ -10,6 +10,7 @@
    from the store is escaped. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { STORE_PART_PATHS } from './support/eup-environment-database.mjs';
 
 class El extends EventTarget {
   constructor(tag, attrs, text) { super(); this.tag = tag || 'div'; this.attrs = attrs || {}; this.text = text || ''; this.kids = []; this.dataset = {}; this.isConnected = true; this.value = this.attrs.value || ''; this.checked = Object.hasOwn(this.attrs, 'checked'); this._html = ''; }
@@ -47,7 +48,7 @@ const E = window.CR.eup, H = E.helpers, V = window.CR.eupEnvironment.helpers;
 const P = '/v1/eup/environment';
 const NOW = '2026-11-19T12:00:00.000Z';
 const http = (status, reason, message) => Object.assign(new Error(message || reason || 'HTTP ' + status), { status, detail: reason ? { ok: false, reason } : null });
-const NOT_APPLIED = { status: 'not_applied', reason: 'store_not_applied', parts: [1, 2, 3, 4, 5].map((i) => `supabase/pending/20261119100000_eup_environment_events_v1_0${i}.sql`) };
+const NOT_APPLIED = { status: 'not_applied', reason: 'store_not_applied', parts: [...STORE_PART_PATHS] };
 const PROVIDERS = ['usgs', 'nws', 'nhc', 'eonet', 'firms', 'wfigs', 'coops'];
 const surface = (id, provider, state, items, reason = null) => ({ id, provider, kind: id.split(':')[0], label: id, items, state, reason, sources: [{ id: provider, label: provider.toUpperCase(), status: state === 'outage' ? 'unavailable' : state === 'off' ? 'unavailable' : 'available', reason: state === 'off' ? 'not_configured' : reason, fetched_at: NOW, last_success_at: NOW }] });
 const NOW_STATES = { usgs: ['reporting', 12], nws: ['no_data', 0], nhc: ['no_data', 0], eonet: ['outage', null, 'timeout'], firms: ['off', 0, 'not_configured'], wfigs: ['no_data', 0], coops: ['reporting', 18] };
@@ -102,7 +103,7 @@ test('the sixth local tab reads source health, the review queue and the preview;
   assert.equal(m.q('[data-eup-env-module]').attrs['data-eup-env-module'], 'off');
   assert.match(m.q('[data-eup-env-module]').text, /not installed\. The public routes answer 404 module_disabled: off\./);
   assert.equal(m.q('[data-eup-env-store]').attrs['data-eup-env-store'], 'not_applied');
-  assert.match(m.q('[data-eup-env-store]').text, /not applied\. Its five pending parts/);
+  assert.match(m.q('[data-eup-env-store]').text, /not applied\. Review, rollback and rules are unavailable until its database migrations are applied/);
   /* per source, in words: the public state and the provider state are two facts */
   assert.deepEqual(m.all('[data-eup-env-public]').map((x) => x.attrs['data-eup-env-public']), PROVIDERS.map((p) => p + ':off'));
   assert.deepEqual(m.all('[data-eup-env-now]').map((x) => x.attrs['data-eup-env-now']), PROVIDERS.map((p) => p + ':' + NOW_STATES[p][0]));
@@ -266,7 +267,7 @@ test('the preview says what it is and lists the public projection; store text is
     { id: 'usgs:us7000gone', revision: 2, state: 'withdrawn_by_source', magnitude: 4.9, place: 'Gone', observed_at: NOW, withdrawn_at: NOW }];
   const m = await open({ ['GET ' + P + '/health']: healthOf({ store: { status: 'applied' }, usgsStore: usgsStore() }), ['GET ' + P + '/review']: reviewOf({ held: [summary({ id: 'usgs:us7000own9', state: 'held', place: evil })] }), ['GET ' + P + '/preview']: previewOf(events) });
   await m.view('preview');
-  assert.match(m.pane().textContent, /Owner preview \(decision D11, adopted pending Matthew's confirmation/);
+  assert.match(m.pane().textContent, /Owner preview: the page the public timeline would show, available even while the module is off/);
   assert.match(m.q('[data-eup-env-preview-public]').text, /The public now: off \(404\)\./);
   assert.deepEqual(m.all('[data-eup-env-preview-item]').map((x) => x.attrs['data-eup-env-preview-item']), ['usgs:us7000own1:3:published', 'usgs:us7000gone:2:withdrawn_by_source']);
   assert.match(m.pane().textContent, /corrected: magnitude/); assert.match(m.pane().textContent, /withdrawn by USGS/);

@@ -218,6 +218,7 @@ jobs:
           node scripts/compute-lease-sql-check.mjs
           node scripts/test-intel-integrity-db.mjs
           node scripts/funding/validate-register-db.mjs
+          node scripts/test/drawdown-credit-fallback.integration.mjs
 
   equity-uprise-rls:
     name: Equity Uprise RLS wall and offline function contracts

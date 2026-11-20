@@ -17,6 +17,14 @@ list and on any entry that is stale, so the list only shrinks: promoting a file
 and committing the new production snapshot means removing its names. Regenerate
 the view with `RPC_NAMES_REPORT=1 node scripts/test/rpc-names-exist.test.mjs`.
 
+Promoted 2026-11-20: the guarded Drawdown credit correction and the exact mission publication,
+then Environment event-store parts 01 and 02. The ledger now has **380 rows**, latest
+`20261120061759 eup_environment_events_v1_02`. The 125 catalog missions are open; all 87 website
+excerpts and unsupported permission claims were removed first, with all 43 research citations
+preserved. Exact statements, hashes, verification and incomplete operations are recorded in
+`docs/control-plane/evidence/releases-2026-11-20/RELEASE-FINISH.md`. Environment parts 03–05 and
+the Connections guard remain pending; the ingest flag and public module remain off.
+
 Promoted 2026-11-18: the E=Up module policy (`PROMOTION-ORDER.md` section 8) and the World missions (section 10:
 10.1, 10.2 and the seven parts of 10.3), applied with the owner's approval, and the two Equity Uprise platform
 migrations applied outside Git on 2026-11-14. The live ledger went from 364 to 376 rows (digest `c3657b4b…`). Each
@@ -70,11 +78,12 @@ on a disposable PostgreSQL 16 shaped like the reset before ledger row 365, throu
 `scripts/test/eu-platform-replay.native.integration.mjs` (without the twin the reset stops at the registry; with it
 rows 365 to 376 apply and build what production's 2026-11-18 snapshot records). The CI reset has not run on it yet.
 
-Pending (2026-11-19): the E=UP environmental event store, `20261119100000_eup_environment_events_v1_01.sql` to `_05.sql`
-with `20261119100000_eup_environment_events_v1.rollback.sql` (`PROMOTION-ORDER.md` section 12). Five ordered parts of at most
-32,000 bytes each; applied only on the owner's separate approval of the exact text of each part, after the mission publish;
-applying them changes nothing public until the ingest flag and the environment module are turned on. Called only by the
-owner routes (S2) and the USGS ingest behind `EUP_ENVIRONMENT_USGS_INGEST_ENABLED`, default `"false"` (S3), both on this branch.
+In progress (2026-11-20): the E=UP environmental event store (`PROMOTION-ORDER.md` section 12). Parts 01 and 02 are applied:
+`supabase/migrations/20261120061725_eup_environment_events_v1_01.sql` and
+`supabase/migrations/20261120061759_eup_environment_events_v1_02.sql`. Parts 03 to 05 still have their original
+`20261119100000_` filenames here; `20261119100000_eup_environment_events_v1.rollback.sql` remains a recovery artifact.
+All statements preserve their reviewed bytes. The ingest flag is still false; no public activation is claimed.
+See `docs/control-plane/evidence/releases-2026-11-20/ENVIRONMENT-TIMELINE-APPLIED.md` for confirmed versions and next steps.
 
 Pending (2026-11-19): the network connections consent guard, `20261119062110_network_connections_consent_guard_v1.sql` with
 `20261119062110_network_connections_consent_guard_v1.rollback.sql` (`PROMOTION-ORDER.md` section 13). A security fix, independent of
@@ -89,11 +98,13 @@ Pending (2026-11-19): mission catalog sources, `20261119140000_mission_catalog_s
 Applied only on Matthew's approval of the exact text, after the mission publish and its record; it refuses before the publish.
 `live-callers.json` lists its names as pending only (the two functions; the table once the World's page reads it). Not applied.
 
-Still pending: the publish, `20261117100300_action_mission_drawdown_publish.sql` (10.4). The owner decided it runs in
-the deploy window, after the new feed ships: the live build reads open missions straight from the database (its swipe
-deck, guest door and Worker lists), so all 125 show on the live site the moment it commits. It refuses until all 125
-missions are there with their details rows. `compute_claim_task_yield_v3.sql` and everything else in this folder are
-not applied either.
+Promoted publication (10.4): `supabase/migrations/20261120061714_action_mission_drawdown_publish.sql`,
+after the new feed shipped and its cache window expired. Its exact stored statement is 23,619 bytes,
+MD5 `9d5e9f4e9178bf52fac4255453787798`. It followed the guarded correction
+`supabase/migrations/20261120061538_action_mission_drawdown_credit_fallback.sql` (16,256 bytes,
+MD5 `6081a2fc43f0dc2dfe6ff56a17f5fe38`). All 125 missions are now public, with original mission
+text and research citations, without the unverified website excerpts. Recovery files remain here.
+`compute_claim_task_yield_v3.sql` and the other forward files still in this folder remain unapplied.
 
 Promoted 2026-11-09 (owner-run releases; receipts under
 `docs/control-plane/evidence/releases-2026-11-09/`). The live ledger went from 359 to 363

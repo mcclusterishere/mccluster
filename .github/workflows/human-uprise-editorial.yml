@@ -92,6 +92,7 @@ on:
       - 'workers/mccluster/src/eup/modules.js'
       - 'supabase/migrations/20261117144103_eup_module_policy_v1.sql'
       - 'supabase/pending/20261119100000_eup_environment_events_v1*'
+      - 'supabase/migrations/*_eup_environment_events_v1_0*.sql'
       - 'scripts/test/eup-environment-events*.mjs'
       - 'scripts/test/support/eup-environment-database.mjs'
       - 'workers/mccluster/src/eup/environment/**'

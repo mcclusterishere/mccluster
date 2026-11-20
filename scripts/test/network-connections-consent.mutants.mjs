@@ -1,5 +1,5 @@
-// Mutants of the pending consent guard: each statement of
-// supabase/pending/20261119062110_network_connections_consent_guard_v1.sql removed in turn must fail a check. Writes each
+// Mutants of the consent guard: each statement of the forward SQL
+// named by the shared helper removed in turn must fail a check. Writes each
 // mutant to a temporary folder beside the unchanged rollback and runs the proofs on it through
 // NETWORK_CONNECTIONS_CONSENT_DIR: the static checks (network-connections-consent-sql.test.mjs), the PGlite proof and,
 // when a disposable server is allowed, the native proof. The file as it is must pass every one of them.

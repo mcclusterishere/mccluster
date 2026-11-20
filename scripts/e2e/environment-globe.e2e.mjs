@@ -121,6 +121,28 @@ async function waitMessage(page, pred, ms = 20000) {
   return all.filter((m) => f(m)).pop();
 }
 async function settle(frame) { await frame.waitForFunction(() => window.__huGlobeSettled && window.__huGlobeSettled(), null, { timeout: 60000 }).catch(() => {}); }
+/* setView changes the pose synchronously, but Cesium reports camera.changed and applies LOD on a later scene update.
+   Observe a rendered frame at the requested height, not a polling deadline followed by an unrelated debug read. */
+async function viewAtLod(frame, lon, lat, height, lod) {
+  return frame.evaluate(({ lon, lat, height, lod }) => new Promise((resolve) => {
+    const v = window.HuGlobe.viewer();
+    const snapshot = () => ({ height: v.camera.positionCartographic.height, lod: window.__mccEnvironmentLayers().lod });
+    const finish = (rendered, state = snapshot()) => {
+      clearTimeout(timer);
+      v.scene.postRender.removeEventListener(onFrame);
+      resolve({ rendered, ...state });
+    };
+    const onFrame = () => {
+      const state = snapshot();
+      if (Math.abs(state.height - height) < 1 && state.lod === lod) finish(true, state);
+    };
+    const timer = setTimeout(() => finish(false), 5000);
+    v.scene.postRender.addEventListener(onFrame);
+    v.camera.cancelFlight();
+    v.camera.setView({ destination: Cesium.Cartesian3.fromDegrees(lon, lat, height) });
+    v.scene.requestRender();
+  }), { lon, lat, height, lod });
+}
 const fact = (payload, label) => (payload && Array.isArray(payload.facts) ? payload.facts.find((f) => f.label === label) : null);
 
 await mkdir(OUT, { recursive: true });
@@ -230,8 +252,8 @@ for (const size of SIZES) {
     if (id === 'eonet:EONET_fx_storm_1') check(scope, 'a natural event answers with its stale source reason', !!m && m.reason === 'upstream_error' && fact(m, 'Track') && /track points: 5/.test(fact(m, 'Track').value), m && m.facts);
   }
   /* level of detail: footprints up close, summary cells from far */
-  await frame.evaluate(() => window.HuGlobe.viewer().camera.setView({ destination: Cesium.Cartesian3.fromDegrees(-118.9, 34.6, 120000) }));
-  check(scope, 'at 120 km the fire footprints are the near level of detail', await until(frame, () => window.__mccEnvironmentLayers().lod === 'near', null, 5000), (await env(frame)).lod);
+  const nearView = await viewAtLod(frame, -118.9, 34.6, 120000, 'near');
+  check(scope, 'at 120 km the fire footprints are the near level of detail', nearView.rendered && nearView.lod === 'near' && Math.abs(nearView.height - 120000) < 1, nearView);
   /* a real pick on the Fixture Ridge perimeter fill (east of its hole, inside its ring), and a miss over the ocean that falls through */
   await frame.evaluate(() => window.HuGlobe.viewer().camera.setView({ destination: Cesium.Cartesian3.fromDegrees(-118.75, 34.6, 120000), orientation: { heading: 0, pitch: -Math.PI / 2, roll: 0 } }));
   await settle(frame); await page.waitForTimeout(800);
@@ -240,8 +262,8 @@ for (const size of SIZES) {
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   const hit = await waitMessage(page, "m.type === 'hu:environment-selected' && m.via === 'pick'", 15000);
   check(scope, 'a tap on the perimeter fill picks it through the frame\'s own pick order', !!hit && hit.id === 'wfigs:2026-CAXXX-000001' && hit.kind === 'perimeter', hit && { id: hit.id, kind: hit.kind });
-  await frame.evaluate(() => window.HuGlobe.viewer().camera.setView({ destination: Cesium.Cartesian3.fromDegrees(-150, 8, 3000000) }));
-  check(scope, 'from 3,000 km the fires are summarised per cell (far level of detail)', await until(frame, () => window.__mccEnvironmentLayers().lod === 'far', null, 5000), (await env(frame)).lod);
+  const farView = await viewAtLod(frame, -150, 8, 3000000, 'far');
+  check(scope, 'from 3,000 km the fires are summarised per cell (far level of detail)', farView.rendered && farView.lod === 'far' && Math.abs(farView.height - 3000000) < 1, farView);
   await settle(frame); await page.waitForTimeout(600);
   await page.evaluate(() => { window.__fromGlobe.length = 0; });
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
@@ -331,7 +353,7 @@ for (const size of SIZES) {
   }
   const rang = await until(frame, () => { const s = window.__mccEnvironmentLayers(); return s.ripple === null && !!s.lastRipple && s.lastRipple.id === 'usgs:fx-m62' && !window.__mccGlobeGovernor().holds.includes('env-ripple'); }, null, 12000);
   const after = await env(frame), lr = after.lastRipple, landAt = after.camera && after.camera.last ? after.camera.last.at : null;
-  check(scope, 'S5: the rings began when the push landed and ended within 6.5 s of the choice, their hold let go', rang && !!lr && lr.ringsAt !== null && landAt !== null && lr.ringsAt >= landAt - 50 && lr.endedAt - lr.startedAt <= 6500, { lr, landAt, sinceTapMs: Date.now() - t61 });
+  check(scope, 'S5: the ring clock starts no earlier than landing (50 ms tolerance), cleanup finishes within 6.5 s of the choice, and its hold is released', rang && !!lr && lr.ringsAt !== null && landAt !== null && lr.ringsAt >= landAt - 50 && lr.endedAt - lr.startedAt <= 6500, { lr, landAt, sinceTapMs: Date.now() - t61 });
   check(scope, 'S5: every hold let go after the push and the rings: back on demand', await until(frame, () => { const g = window.__mccGlobeGovernor(); return g.enabled && g.holds.length === 0; }, null, 20000), await gov(frame));
   /* a documented rupture: the recorded M7.0 of 2026-10-22, 189 km ENE of Nagqu, China (USGS us6000u43g), joins the pins; its
      USGS finite-fault plane's modelled up-dip edge is drawn as one line and called a model in the selection and the legend */

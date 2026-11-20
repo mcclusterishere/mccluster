@@ -2,6 +2,15 @@
 
 > Update this file whenever completion, maturity, visual direction, or next work changes.
 
+## Production release evidence source coverage — 2026-11-20
+
+Classified the November 20 production schema snapshot as documentation support,
+following the existing November 18 snapshot boundary. The regenerated source
+coverage report passes **2,966/2,966 checks** across **767 sources: 104 capability
+sources and 663 support-only sources**. This records release evidence only;
+building geometry, floor programs, capability ownership and design maturity are
+unchanged.
+
 ## Device placement and maker-reference repair — 2026-11-12 — DIAGNOSTIC AND SCOPED RENDERED GATES PASSED, owner review open
 
 The source repair now covers all **36 existing workstation hosts and 62 monitors**
