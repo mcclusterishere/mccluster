@@ -238,7 +238,7 @@
     var tag = document.querySelector("script[data-mcc-now-playing]");
     if (!tag) {
       tag = document.createElement("script");
-      tag.src = abs("js/now-playing.js?v=__STAMP__");
+      tag.src = abs("js/now-playing.js?v=b51ede03a4fa");
       tag.setAttribute("data-mcc-now-playing", "");
       document.head.appendChild(tag);
     }

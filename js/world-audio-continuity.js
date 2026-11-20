@@ -201,7 +201,7 @@
   function loadStyle() {
     if (doc.getElementById("mccWorldAudioStyle")) return;
     var link = doc.createElement("link"); link.id = "mccWorldAudioStyle"; link.rel = "stylesheet";
-    link.href = ROOT + "css/world-audio-continuity.css?v=__STAMP__"; link.onload = layout; doc.head.appendChild(link);
+    link.href = ROOT + "css/world-audio-continuity.css?v=b51ede03a4fa"; link.onload = layout; doc.head.appendChild(link);
   }
   function watch(audio) {
     if (!audio || observedAudio.has(audio)) return;

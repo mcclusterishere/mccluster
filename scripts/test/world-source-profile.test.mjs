@@ -448,9 +448,9 @@ test('the World wires it: the door after Join\'s status line, the sheet in <main
   const main = html.indexOf('<main class="mn">'), mainEnd = html.indexOf('</main>');
   assert.ok(sheet > dialogEnd && sheet > main && sheet < mainEnd, 'the sheet directly after the mission dialog, inside <main class="mn">');
   assert.equal(html.slice(dialogEnd, sheet).replace(/\s+/g, ''), '</dialog>');
-  const page = html.indexOf('<script src="js/mnet.js?v=__STAMP__"></script>'), words = html.indexOf('<script src="js/mission-source-words.js?v=__STAMP__"></script>'), mod = html.indexOf('<script src="js/world-source-profile.js?v=__STAMP__"></script>');
+  const page = html.indexOf('<script src="js/mnet.js?v=b51ede03a4fa"></script>'), words = html.indexOf('<script src="js/mission-source-words.js?v=b51ede03a4fa"></script>'), mod = html.indexOf('<script src="js/world-source-profile.js?v=b51ede03a4fa"></script>');
   assert.ok(page > 0 && words > page && mod > words, 'the words, then the page, after js/mnet.js');
-  assert.ok(html.indexOf('<link rel="stylesheet" href="css/world-source-profile.css?v=__STAMP__">') > html.indexOf('<link rel="stylesheet" href="css/world-gate.css?v=__STAMP__">'));
+  assert.ok(html.indexOf('<link rel="stylesheet" href="css/world-source-profile.css?v=b51ede03a4fa">') > html.indexOf('<link rel="stylesheet" href="css/world-gate.css?v=b51ede03a4fa">'));
   assert.equal((html.match(/world-source-profile/g) || []).length, 2, 'one stylesheet, one script');
   /* js/mnet.js: the five exports at the end of window.MCC_MNET */
   const api = js.slice(js.indexOf('  window.MCC_MNET = {'), js.indexOf('  };', js.indexOf('  window.MCC_MNET = {')));

@@ -965,7 +965,7 @@ new MutationObserver(() => {
 window.addEventListener('beforeunload', e => { if (account() && savedId && dirty && draft.from && draft.to) { e.preventDefault(); e.returnValue = ''; } });
 const whipStyle = document.createElement('link');
 whipStyle.rel = 'stylesheet';
-whipStyle.href = new URL('../../css/whip-booking.css?v=__STAMP__', import.meta.url).href;
+whipStyle.href = new URL('../../css/whip-booking.css?v=b51ede03a4fa', import.meta.url).href;
 document.head.append(whipStyle);
 attachWhipBooking({
   panel: $('wtRidePanel'),

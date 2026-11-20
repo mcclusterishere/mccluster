@@ -11,7 +11,7 @@ const NEW_FILES = ['js/environment-layers.js', 'js/environment-layers-client.js'
 
 test('action-globe.html loads the four new scripts, in order, before environment-pins.js, and carries the collapsed legend', () => {
   const html = read('action-globe.html');
-  const order = ['js/globe-render-governor.js?v=__STAMP__', 'js/globe-scene-director.js?v=__STAMP__', 'js/environment-layers-client.js?v=__STAMP__', 'js/environment-quake-marks.js?v=__STAMP__', 'js/environment-ripple.js?v=__STAMP__', 'js/environment-camera.js?v=__STAMP__', 'js/environment-layers.js?v=__STAMP__', 'js/environment-pins.js?v=__STAMP__', 'js/world-countries.js', 'js/action-globe.js?v=__STAMP__'];
+  const order = ['js/globe-render-governor.js?v=b51ede03a4fa', 'js/globe-scene-director.js?v=b51ede03a4fa', 'js/environment-layers-client.js?v=b51ede03a4fa', 'js/environment-quake-marks.js?v=b51ede03a4fa', 'js/environment-ripple.js?v=b51ede03a4fa', 'js/environment-camera.js?v=b51ede03a4fa', 'js/environment-layers.js?v=b51ede03a4fa', 'js/environment-pins.js?v=b51ede03a4fa', 'js/world-countries.js', 'js/action-globe.js?v=b51ede03a4fa'];
   const at = order.map(src => html.indexOf(`<script src="${src}"></script>`));
   assert.ok(at.every(i => i > 0), 'every tag present with the stamp: ' + JSON.stringify(at));
   for (let i = 1; i < at.length; i++) assert.ok(at[i - 1] < at[i], `${order[i - 1]} before ${order[i]}`);
