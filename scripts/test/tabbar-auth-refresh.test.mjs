@@ -16,6 +16,7 @@ function cut(from, to) {
   return BAR.slice(start, end);
 }
 const BAR_ACCOUNT_STATE = '"use strict";\n' + [
+  cut('function barMarkup(', 'if (document.body.hasAttribute("data-no-appbar"))'),
   cut('function currentSubject()', 'function readPerspective()'),
   cut('function resolveOwnPerspective(', 'function authDisplay('),            // and readAuthSession, jwtPayload
   cut('function readAdminMemo(', 'window.addEventListener("hashchange", markAdminHere);'), // and checkAdmin
@@ -154,7 +155,7 @@ function profile({ clockAhead = 0, lifetime = HOUR, owners = [], refreshLimit = 
       adminEpoch: 0, authEpoch: 0, adminSession: null, adminFlight: null, ADMIN_ON: false,
       lpTimer: null, veilOff() {}, unpeek() {}, revert() {},
       ADMIN_KEY: 'mcc_appbar_admin', ADMIN_TTL: 60000, API_ORIGIN: API,
-      wingOn: null, HOME_BAR: '', dock: { innerHTML: '' },
+      wingOn: null, HOME_BAR: '', dock: { innerHTML: '', querySelector() { return null; } },
       paintAuthState(signedIn, user, verified) {
         context.AUTH_STATE = { signed_in: !!signedIn, verified: !!verified, user: user || null };
         paints.push({ signed_in: !!signedIn, verified: !!verified, user: user ? user.id : null });

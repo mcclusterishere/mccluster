@@ -129,6 +129,48 @@
   var NEVER = ["seekbackward", "seekforward"];   /* decision D-4: no 15-second skips, anywhere */
   var EVERY = 1000;                               /* the position, at most once a second while playing */
   var bindings = [], owner = null, handled = false, said = "";
+  var subscribers = [], published = "", publication = 0;
+
+  /* The installed app's dock reads this same owner. It never takes ownership,
+     exposes an audio URL, or makes a second media element. Paused music keeps
+     its controls; only the owning player can clear them. */
+  function snapshot() {
+    if (!owner) return null;
+    var d = describe(owner);
+    if (!d) return null;
+    var s = owner.spec;
+    return Object.freeze({ surface: s.surface || "player", title: d.title, artist: d.artist, album: d.album,
+      playing: !owner.media.paused && !owner.media.ended,
+      canPlay: typeof s.play === "function", canPause: typeof s.pause === "function",
+      canPrevious: typeof s.previous === "function", canNext: typeof s.next === "function" });
+  }
+  function publish() {
+    var value = snapshot(), signature = JSON.stringify(value);
+    if (signature === published) return;
+    published = signature;
+    var generation = ++publication, list = subscribers.slice();
+    for (var i = 0; i < list.length; i++) {
+      /* A listener may start another player. Its newer state wins, including
+         for listeners the older publication had not reached yet. */
+      if (generation !== publication) return;
+      if (subscribers.indexOf(list[i]) !== -1) { try { list[i](value); } catch (e) {} }
+    }
+  }
+  function subscribe(fn) {
+    if (typeof fn !== "function") return function () {};
+    subscribers.push(fn);
+    try { fn(snapshot()); } catch (e) {}
+    return function () { subscribers = subscribers.filter(function (item) { return item !== fn; }); };
+  }
+  function command(action) {
+    var key = ["play", "pause", "previous", "next"].indexOf(action) === -1 ? null : action;
+    var b = owner;
+    if (!key || !b || typeof b.spec[key] !== "function") return false;
+    /* Stay in the trusted click's call stack: iOS playback activation cannot
+       be transferred by an asynchronous UI message. The player owns policy. */
+    attempt(b.spec[key]);
+    return true;
+  }
 
   function mediaSession() {
     var nav = root.navigator;
@@ -178,8 +220,9 @@
     return { title: String(t.title), artist: String(t.artist || ""), album: String(t.album || ""), artwork: artwork(t.art) };
   }
   function metadata(b) {
+    if (owner !== b) return;
     var ms = mediaSession();
-    if (!ms || owner !== b) return;
+    if (!ms) return;
     var d = describe(b);
     if (!d) return;
     var sig = JSON.stringify(d);
@@ -192,8 +235,9 @@
     }
   }
   function state(b) {
+    if (owner !== b) return;
     var ms = mediaSession();
-    if (!ms || owner !== b) return;
+    if (!ms) return;
     try { ms.playbackState = b.media.paused || b.media.ended ? "paused" : "playing"; } catch (e) {}
   }
   function position(b, now) {
@@ -212,38 +256,44 @@
   function own(b) {
     if (owner !== b) { owner = b; said = ""; }
     if (!handled) handlers(true);
-    metadata(b); state(b); position(b, true);
+    metadata(b); state(b); position(b, true); publish();
   }
   /* the lock screen handed back: no title standing for a player that stopped */
   function clear(b) {
     if (b && owner !== b) return;
     owner = null; said = "";
     var ms = mediaSession();
-    if (!ms) return;
-    try { ms.metadata = null; } catch (e) {}
-    try { ms.playbackState = "none"; } catch (e) {}
-    try { if (typeof ms.setPositionState === "function") ms.setPositionState(); } catch (e) {}
-    handlers(false);
+    if (ms) {
+      try { ms.metadata = null; } catch (e) {}
+      try { ms.playbackState = "none"; } catch (e) {}
+      try { if (typeof ms.setPositionState === "function") ms.setPositionState(); } catch (e) {}
+      handlers(false);
+    }
+    publish();
   }
   function bind(media, spec) {
     if (!media || !spec || typeof media.addEventListener !== "function") return null;
     for (var i = 0; i < bindings.length; i++) {
-      if (bindings[i].media === media) { bindings[i].spec = spec; return bindings[i].handle; }
+      if (bindings[i].media === media) {
+        bindings[i].spec = spec;
+        if (owner === bindings[i]) { metadata(bindings[i]); state(bindings[i]); publish(); }
+        return bindings[i].handle;
+      }
     }
     var b = { media: media, spec: spec, at: 0 };
     var on = function (type, fn) { media.addEventListener(type, fn); };
     on("play", function () { own(b); });
-    on("playing", function () { if (owner === b) { state(b); position(b, true); } });
-    on("pause", function () { if (owner === b) { state(b); position(b, true); } });
-    on("ended", function () { if (owner === b) { state(b); position(b, true); } });
+    on("playing", function () { if (owner === b) { state(b); position(b, true); publish(); } });
+    on("pause", function () { if (owner === b) { state(b); position(b, true); publish(); } });
+    on("ended", function () { if (owner === b) { state(b); position(b, true); publish(); } });
     on("seeked", function () { position(b, true); });
     on("ratechange", function () { position(b, true); });
-    on("durationchange", function () { metadata(b); position(b, true); });
-    on("loadedmetadata", function () { metadata(b); position(b, true); });
+    on("durationchange", function () { metadata(b); position(b, true); if (owner === b) publish(); });
+    on("loadedmetadata", function () { metadata(b); position(b, true); if (owner === b) publish(); });
     on("timeupdate", function () { position(b, false); });
     b.handle = {
       /* a new song loaded, or the same one renamed: say so if this player has the lock screen */
-      update: function () { if (owner === b) { metadata(b); state(b); position(b, true); } },
+      update: function () { if (owner === b) { metadata(b); state(b); position(b, true); publish(); } },
       clear: function () { clear(b); },
       owns: function () { return owner === b; },
       media: media
@@ -365,6 +415,9 @@
     bind: bind,
     artwork: artwork,
     airplay: airplay,
+    snapshot: snapshot,
+    subscribe: subscribe,
+    command: command,
     owner: function () { return owner ? owner.spec.surface || "player" : null; }
   };
   if (doc && doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", mount);

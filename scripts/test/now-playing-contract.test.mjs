@@ -459,6 +459,75 @@ test('with no Media Session at all (an old browser) nothing throws and every pla
   assert.ok(true);
 });
 
+for (const withSession of [true, false]) {
+  test(`installed controls observe and command the existing owner (Media Session: ${withSession})`, () => {
+    const { win } = browser({ withSession });
+    const p = win.MCC_NOW_PLAYING, m = media(), seen = [], calls = [];
+    let title = 'Here';
+    const h = p.bind(m, {
+      surface: 'fixture', track: () => ({ title, artist: 'Fixture artist', album: 'Fixture album' }),
+      play: () => { calls.push('play'); return m.play(); },
+      pause: () => { calls.push('pause'); m.pause(); },
+      previous: () => calls.push('previous'), next: () => calls.push('next'),
+    });
+    const unsubscribe = p.subscribe(s => seen.push(s));
+    assert.equal(p.snapshot(), null);
+    assert.equal(p.command('play'), false, 'the dock cannot select or autoplay an unowned player');
+    m.play();
+    const state = p.snapshot();
+    assert.equal(state.title, 'Here'); assert.equal(state.artist, 'Fixture artist');
+    assert.equal(state.playing, true); assert.equal(Object.isFrozen(state), true);
+    assert.deepEqual(Object.keys(state).sort(), ['album','artist','canNext','canPause','canPlay','canPrevious','playing','surface','title'],
+      'no media element, source URL or player mutation is exposed');
+    assert.equal(p.command('pause'), true); assert.equal(p.snapshot().playing, false);
+    assert.equal(p.command('play'), true); assert.equal(p.snapshot().playing, true);
+    p.command('previous'); p.command('next');
+    assert.deepEqual(calls, ['pause', 'play', 'previous', 'next']);
+    assert.equal(p.command('constructor'), false); assert.equal(p.command('seekbackward'), false);
+    const count = seen.length; unsubscribe(); title = 'Next song'; h.update();
+    assert.equal(p.snapshot().title, title); assert.equal(seen.length, count, 'unsubscribe stops delivery');
+    h.clear(); assert.equal(p.snapshot(), null); assert.equal(p.command('pause'), false);
+  });
+}
+
+test('a subscriber can switch players without older metadata overwriting the new owner', () => {
+  const { win, session } = browser(); const p = win.MCC_NOW_PLAYING;
+  const a = media(), b = media();
+  p.bind(a, { surface:'a', track:()=>({title:'A'}), play:()=>a.play(), pause:()=>a.pause() });
+  p.bind(b, { surface:'b', track:()=>({title:'B'}), play:()=>b.play(), pause:()=>b.pause() });
+  p.subscribe(s => { if (s?.surface === 'a') b.play(); });
+  a.play();
+  assert.equal(p.owner(), 'b'); assert.equal(p.snapshot().title, 'B');
+  assert.equal(session.metadata.title, 'B'); assert.equal(session.playbackState, 'playing');
+});
+
+test('a subscriber can start the next owner during clear without its session being erased', () => {
+  const { win, session, log } = browser(); const p = win.MCC_NOW_PLAYING;
+  const a = media(), b = media(); let armed = false;
+  const ha = p.bind(a, { surface:'a', track:()=>({title:'A'}), play:()=>a.play(), pause:()=>a.pause() });
+  p.bind(b, { surface:'b', track:()=>({title:'B'}), play:()=>b.play(), pause:()=>b.pause() });
+  a.play();
+  p.subscribe(s => { if (armed && s === null) b.play(); });
+  armed = true; ha.clear();
+  assert.equal(p.owner(), 'b'); assert.equal(p.snapshot().title, 'B');
+  assert.equal(session.metadata.title, 'B'); assert.equal(session.playbackState, 'playing');
+  assert.equal(typeof log.handlers.pause, 'function', 'new owner retains its device controls');
+  log.handlers.pause(); assert.equal(b.paused, true);
+});
+
+test('nested owner changes never deliver the old state after the replacement to later subscribers', () => {
+  const { win } = browser(); const p = win.MCC_NOW_PLAYING, seen = [];
+  const a = media(), b = media();
+  const ha = p.bind(a, { surface:'a', track:()=>({title:'A'}), play:()=>a.play(), pause:()=>a.pause() });
+  p.bind(b, { surface:'b', track:()=>({title:'B'}), play:()=>b.play(), pause:()=>b.pause() });
+  p.subscribe(s => { if (s?.surface === 'a') b.play(); });
+  p.subscribe(s => seen.push(s && s.title));
+  a.play();
+  assert.deepEqual(seen, [null, 'B']);
+  a.pause(); a.fire('loadedmetadata'); ha.clear();
+  assert.deepEqual(seen, [null, 'B'], 'former-owner events cannot repaint or clear the dock');
+});
+
 test('every player asks for the playback audio session before each play(), the four of slice M1 and the rest', () => {
   const players = {
     'js/gateway.js': [/\ba\.play\(/g],

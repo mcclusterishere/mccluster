@@ -30,6 +30,8 @@ on:
       - 'js/pip.js'
       - 'js/world-audio-continuity.js'
       - 'js/tabbar.js'
+      - 'js/installed-app-dock.js'
+      - 'css/installed-app-dock.css'
       - 'js/game-hub/shared-music.mjs'
       - 'assets/audio/**'
       - 'data/peaks/**'
@@ -89,6 +91,8 @@ on:
       - 'js/pip.js'
       - 'js/world-audio-continuity.js'
       - 'js/tabbar.js'
+      - 'js/installed-app-dock.js'
+      - 'css/installed-app-dock.css'
       - 'js/game-hub/shared-music.mjs'
       - 'assets/audio/**'
       - 'data/peaks/**'
@@ -141,6 +145,7 @@ jobs:
       - name: Parse the album room's light, waveform and Now Playing helper
         run: |
           node --check js/now-playing.js
+          node --check js/installed-app-dock.js
           node --check js/peaks.js
           node --check js/chamber.js
           node --check js/filament.js
