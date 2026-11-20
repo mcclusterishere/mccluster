@@ -296,8 +296,14 @@ async function installedMusic(device, baseline) {
     await page.waitForFunction(() => MCC_MUSIC.current()?.title === 'Who Did The Shoot' && !MCC_MUSIC.audio.paused);
     await metadata(page,scope + ' previous track');
     check(scope + ': next and previous use the same real player', (await audio(page)).same && (await audio(page)).playing === 1);
-    await page.locator('.appbar [data-appnav="music"]').click();
+    // Closing the overlay starts history.back(); its restored scroll must
+    // finish before the header proof deliberately returns to the page top.
+    await Promise.all([
+      page.waitForURL(url => !url.searchParams.has('world')),
+      page.locator('.appbar [data-appnav="music"]').click()
+    ]);
     await page.waitForFunction(() => !MCC_WORLD_AUDIO.active());
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
     check(scope + ': returning to Music preserves the document and playback', (await audio(page)).same && (await audio(page)).unloads === 0 && !(await audio(page)).paused);
     await musicHeader(page,device,scope + ' after returning');
     await page.screenshot({path:join(OUT,`installed-${device.name}-music.png`)});
