@@ -23,8 +23,8 @@
                                               of 1-500 characters on one line, the revision that was read. The same key and the
                                               same command answer the stored receipt (idempotent); a moved revision is 409.
 
-   HONEST BEFORE ANYTHING IS APPLIED. The store is pending SQL (supabase/pending/20261119100000_eup_environment_events_v1_01.sql
-   to _05.sql) that nobody has applied. Until it is, its functions do not exist: a read answers 200 with store.status
+   HONEST WHEN THE STORE IS ABSENT. The five reviewed store parts are named in ENVIRONMENT_STORE_PARTS below.
+   If its functions do not exist, a read answers 200 with store.status
    'not_applied' and everything else it knows (the module, the providers now); a command answers 503 store_not_applied and
    records nothing. An unreachable store is store.status 'unavailable' on the health read and 503 storage_unavailable
    elsewhere. While the environment module is off (never installed, or disabled) every route here still answers, so the
@@ -48,7 +48,13 @@ import { environmentFeed } from '../../world-environment.js';
 import { handleEnvironmentLayers } from '../../world-environment-layers.js';
 import { OFF, refusalOf } from '../../world-environment-guard.js';
 
-export const ENVIRONMENT_STORE_PARTS = Object.freeze([1, 2, 3, 4, 5].map((i) => `supabase/pending/20261119100000_eup_environment_events_v1_0${i}.sql`));
+export const ENVIRONMENT_STORE_PARTS = Object.freeze([
+  'supabase/migrations/20261120061725_eup_environment_events_v1_01.sql',
+  'supabase/migrations/20261120061759_eup_environment_events_v1_02.sql',
+  'supabase/pending/20261119100000_eup_environment_events_v1_03.sql',
+  'supabase/pending/20261119100000_eup_environment_events_v1_04.sql',
+  'supabase/pending/20261119100000_eup_environment_events_v1_05.sql'
+]);
 export const GOVERNMENT_PROVIDERS = Object.freeze(['usgs', 'nws', 'nhc', 'eonet', 'firms', 'wfigs', 'coops']);
 export const EVENT_COMMANDS = Object.freeze(['hold', 'release', 'retract', 'restore', 'rollback']);
 export const PROVIDER_COMMANDS = Object.freeze(['set_rule', 'pause_provider', 'resume_provider', 'hide_provider', 'show_provider']);
@@ -87,7 +93,7 @@ const MESSAGES = Object.freeze({
   idempotency_conflict: 'This idempotency key was already used for a different command',
   provider_not_supported: 'Only USGS has an ingest so far; nothing was changed',
   provider_refused: 'Only the seven government providers can be configured; news is never a provider',
-  store_not_applied: 'The E=UP event store is not applied (supabase/pending/20261119100000_eup_environment_events_v1_01.sql to _05.sql); nothing was recorded',
+  store_not_applied: 'The E=UP event store is not applied; nothing was recorded',
   storage_unavailable: 'The E=UP event store did not answer readably; the outcome is unknown',
   read_busy: 'The E=UP event store is busy; nothing was read. Read again',
   read_unavailable: 'The E=UP event store did not answer readably; nothing is shown as if it had',

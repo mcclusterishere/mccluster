@@ -1,0 +1,94 @@
+# Live release completion, 2026-11-20
+
+## Verified outcome
+
+The owner authorized completion of the remaining release steps. PR #818 had already merged as
+`95db84602d8edef4e4a0143833f37ab3e67d91f7`; the website and canonical Worker were verified live before
+any mission was published. The website cache window had expired before the following database work.
+
+At 06:17 UTC, all 125 Drawdown catalog missions were open, alongside the existing open mission:
+126 open missions in total. All 125 details rows remain. None contains a website quotation,
+quotation credit or unsupported “used with permission” claim. All 43 CC BY assessment citations
+remain. The original mission wording, proof hints, safety notes and stable IDs are unchanged.
+
+The historical catalog and seven import statements remain immutable. A new, guarded forward
+correction implements the documented publication fallback. Written permission for the separate
+Project Drawdown source page was not verified; no permission attestation was submitted and that
+page was not shown. Private correspondence is not part of this receipt.
+
+## Exact production statements
+
+Each entry below is one stored statement. Its stored byte count and MD5 matched the committed
+file before promotion. Historical PENDING headers are preserved as part of those exact bytes.
+
+| Version | Migration | Bytes | MD5 |
+| --- | --- | ---: | --- |
+| `20261120061538` | `action_mission_drawdown_credit_fallback` | 16,256 | `6081a2fc43f0dc2dfe6ff56a17f5fe38` |
+| `20261120061714` | `action_mission_drawdown_publish` | 23,619 | `9d5e9f4e9178bf52fac4255453787798` |
+| `20261120061725` | `eup_environment_events_v1_01` | 30,895 | `37f0001127eac2b2bca5f5d0488aecc3` |
+| `20261120061759` | `eup_environment_events_v1_02` | 20,775 | `6ea640c7537303965620829613e233fe` |
+
+Ledger: **380 rows**, latest `20261120061759 eup_environment_events_v1_02`, SHA-256 of sorted
+`version:name` lines `898061432b00aec947b1757df7997c043a2020ba9d69c7e83be417645496b678`.
+The complete read-only catalog capture is
+`docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json`.
+
+Compared with the November 18 production snapshot, the only catalog changes are these four
+ledger entries and the expected Environment additions: seven relations, 22 functions and 15
+triggers. No existing relation, function, policy, trigger, schema, extension, bucket or cron row
+changed. Existing differences between the disposable reset and production remain historical
+reconciliation findings; this receipt does not relabel them as resolved.
+
+## Environment and consent: exact incomplete state
+
+Environment parts 01 and 02 are applied. Parts 03, 04 and 05 are not recorded, and their forward
+files remain under `supabase/pending/`. The existing five-minute cron is present, but
+`EUP_ENVIRONMENT_USGS_INGEST_ENABLED` remains `"false"`. No provider rule or module policy was
+installed or enabled. Public Environment routes remain gated. See `ENVIRONMENT-TIMELINE-APPLIED.md`
+for the two-part receipt and the exact remaining activation sequence.
+
+The Supabase migration connector returned success for all four statements in the table. Attempts
+to apply `network_connections_consent_guard_v1` and Environment part 03 did not return a result.
+Fresh production reads after those unknown outcomes found no ledger entry for either statement.
+The connection policies and grants remained unchanged. The project reported ACTIVE_HEALTHY,
+health advisories were empty, and no corresponding migration query was active in PostgreSQL.
+No denial reason or successful apply receipt was returned; no cause is inferred from the timeout.
+
+Do not retry an unknown mutation blindly. First re-read the ledger and the affected object state.
+Do not put an unapplied file under `migrations/`, advance the ledger to an assumed version, enable
+ingest before parts 03–05 exist, or enable the public module before a healthy ingest and owner
+preview have been verified.
+
+The Connections guard remains independently ready and tested. Its exact pending SQL and recovery
+file are unchanged. No connection row was changed. Its helper now follows the recorded production
+version after an eventual real promotion and otherwise reads the pending file.
+
+## Verification before publication
+
+- Credit correction: 35 focused Node contracts and 1,524 checks on an isolated PostgreSQL runtime.
+  The proof applies the real imports, rejects unexpected edits atomically, preserves citations,
+  publishes all 125 safe rows through guest policies, rejects quote recovery while public, and
+  exercises recovery and repeat execution.
+- Connections: eight static checks, 137 checks on PGlite/PostgreSQL 17.5, and all seven statement
+  removal mutants rejected. This is proof of the prepared fix, not a production application.
+- Environment: reviewed five-part SQL, 294 isolated store assertions, seven ingest integrations,
+  11 public timeline integrations, and focused Control/Worker contracts. The partial promotion
+  separately verifies its actual filenames, stored hashes and retained false ingest flag.
+- Music: the live shared playback engine matched release `95db846`; 16 playback race checks
+  passed. Four live MP3 range requests returned 206 with correct first/last ranges. This does not
+  establish physical iPhone lock-screen, AirPlay or uninterrupted device playback acceptance.
+
+## Recovery
+
+Mission publication recovery is the existing
+`supabase/pending/20261117100300_action_mission_drawdown_publish.rollback.sql`, which changes only
+the catalog's currently open missions back to draft. It does not delete missions or assignments.
+The two credit-recovery files refuse while any catalog mission is public. Restoring historical
+excerpts would not establish permission to republish them.
+
+The partially installed Environment store is empty and dormant. Completing it is preferable to
+destructive schema rollback. Ordinary post-activation recovery uses the existing provider and
+module commands, with current revisions and idempotency keys, rather than dropping the store.
+
+OVH, Travel visibility, the deferred consent-wall PR #760, music M3/M5 roadmap work and batch album
+intake are outside this bounded activation. No outbound message was sent during this completion.

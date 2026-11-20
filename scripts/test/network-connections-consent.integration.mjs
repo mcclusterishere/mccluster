@@ -1,5 +1,5 @@
-// The pending consent guard on public.network_connections against its actual SQL in isolated PGlite (one session):
-// supabase/pending/20261119062110_network_connections_consent_guard_v1.sql and its rollback, on the production layer
+// The consent guard on public.network_connections against its actual SQL in isolated PGlite (one session):
+// the forward SQL and retained rollback located by the shared helper, on the production layer
 // scripts/test/support/network-connections-database.mjs builds from the repository's SQL and checks against what
 // production held on 2026-11-19 (policies, grants, constraints, indexes, and the bodies of the eight functions that
 // name the table). Proves, as a member with their own JWT claims, the way PostgREST runs a request:

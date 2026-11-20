@@ -1,5 +1,19 @@
 # The World release of 2026-11-18: record and runbook
 
+## Live completion checkpoint, 2026-11-20
+
+PR #818 merged as `95db84602d8edef4e4a0143833f37ab3e67d91f7`; its website and Worker deployment
+were verified live. The 125 catalog missions were subsequently published at 06:17 UTC after a
+guarded correction removed unverified website excerpts and retained all research citations.
+Production now has 126 open missions and 380 migration records. Environment parts 01 and 02
+are applied; parts 03–05, the Connections guard and source-page SQL remain pending. Ingest and
+the public Environment module remain off. No source-page permission attestation was submitted.
+
+The current receipt is `docs/control-plane/evidence/releases-2026-11-20/RELEASE-FINISH.md`.
+The following recovery checkpoint and original runbook are historical; their unmerged, draft,
+old-ledger and pending-publication statements are superseded by that receipt.
+
+
 ## Recovery checkpoint, 2026-11-19
 
 This checkpoint updates the dated release snapshot below. The recovered release branch,

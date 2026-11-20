@@ -17,11 +17,9 @@
      Review     the store's review queue (candidates, held, withdrawn by the owner or by USGS, merged, corrected, coverage
                 waiting), one event in full with its revisions, and hold, release, withdraw, restore, and restore an older
                 revision as a new one (rollback); coverage attach, reject and retract
-     Preview    the public timeline exactly as the store projects it, readable while the module is off (decision D11,
-                default adopted pending Matthew's confirmation: an authorization addition that ships only with his approval
-                of the pull request)
+     Preview    the public timeline exactly as the store projects it, readable by the owner while the module is off
      Decisions  the store's append-only decision log
-   While the store is not applied (the five pending parts nobody has applied) every view says so and no command is
+   If the event store's database functions are absent every view says so and no command is
    offered; Sources still shows the module and the providers. Install and Enable stay in Overview › Modules: each is a
    production decision for Matthew, and nothing here changes the module.
 
@@ -40,7 +38,6 @@
   var isInt = function (v) { return typeof v === 'number' && isFinite(v) && Math.floor(v) === v; };
   var VIEWS = [{ id: 'sources', label: 'Sources' }, { id: 'review', label: 'Review' }, { id: 'preview', label: 'Preview' }, { id: 'decisions', label: 'Decisions' }];
   var PROVIDERS = ['usgs', 'nws', 'nhc', 'eonet', 'firms', 'wfigs', 'coops'];
-  var STORE_PARTS = 'supabase/pending/20261119100000_eup_environment_events_v1_01.sql to _05.sql';
 
   /* ---------------------------------------------------------------- words (pure; unit-tested through helpers) */
   function when(iso) {
@@ -85,7 +82,7 @@
     var last = st.last_run;
     if (st.state === 'not_configured') return 'Event store: no rule set yet, so the ingest records nothing for this provider.';
     if (st.state === 'paused') return 'Event store: ingest paused by the owner (rule rev ' + st.revision + ').';
-    if (st.state === 'never_run') return 'Event store: rule rev ' + st.revision + ' set; no ingest run recorded yet (the ingest is a later slice and its flag is off).';
+    if (st.state === 'never_run') return 'Event store: rule rev ' + st.revision + ' set; no ingest run recorded yet. Check the ingest setting and the next scheduled run.';
     var at = last ? when(last.fetched_at || last.recorded_at) : 'not recorded';
     if (st.state === 'ok') return 'Event store: last run ' + at + ', ok.';
     if (st.state === 'no_data') return 'Event store: last run ' + at + ', the provider reported nothing (no data, not an outage).';
@@ -101,7 +98,7 @@
   function storeStatusLine(s) {
     if (!s) return 'Event store: not read.';
     if (s.status === 'applied') return 'Event store: applied.';
-    if (s.status === 'not_applied') return 'Event store: not applied. Its five pending parts (' + STORE_PARTS + ') wait for Matthew\'s approval; review, rollback and the rule are unavailable until then and nothing is recorded.';
+    if (s.status === 'not_applied') return 'Event store: not applied. Review, rollback and rules are unavailable until its database migrations are applied. Nothing is recorded.';
     return 'Event store: unavailable (' + (s.reason || 'storage_unavailable') + '). The module and the providers are still shown.';
   }
   function reasonProblem(text) {
@@ -148,7 +145,7 @@
     provider_not_supported: 'only USGS has an ingest so far. Nothing changed.',
     provider_refused: 'only the seven government providers can be configured; news is never a provider. Nothing changed.',
     not_found: 'the event or coverage is not in the store. Nothing changed.',
-    store_not_applied: 'the event store is not applied (' + STORE_PARTS + '). Nothing was recorded.',
+    store_not_applied: 'the event store is not applied. Nothing was recorded.',
     reason_required: 'the Worker refused the reason (1 to 500 characters, one line). Nothing changed.',
     invalid: 'the store refused the command as not valid. Nothing changed.'
   };
@@ -357,7 +354,7 @@
         switches.push(st.publication === 'hidden' ? ['show_provider', 'Show on the timeline'] : ['hide_provider', 'Hide from the timeline']);
       }
       return '<div class="cr-eup-env__controls" data-eup-env-provider="usgs">' +
-        '<p class="cr-eup-env__line" data-eup-env-rule-now>' + esc(st.configured ? 'Rule rev ' + st.revision + ': ' + ruleLine(st.rule) + '. Ingest ' + st.ingest + ', timeline ' + st.publication + '.' : 'No rule yet. The default (D7, adopted pending Matthew\'s confirmation): ' + ruleLine(st.default_rule) + '.') + '</p>' +
+        '<p class="cr-eup-env__line" data-eup-env-rule-now>' + esc(st.configured ? 'Rule rev ' + st.revision + ': ' + ruleLine(st.rule) + '. Ingest ' + st.ingest + ', timeline ' + st.publication + '.' : 'No rule yet. Default publication rule: ' + ruleLine(st.default_rule) + '.') + '</p>' +
         '<fieldset class="cr-eup-env__rule"><legend>USGS publication rule</legend>' +
         field('min_magnitude', 'Minimum magnitude (0 to 10)', 'type="number" inputmode="decimal" min="0" max="10" step="0.1" value="' + esc(r.min_magnitude == null ? '' : r.min_magnitude) + '"') +
         check('include_automatic', 'Include automatic events (shown as not yet reviewed by USGS)') +
@@ -440,7 +437,7 @@
     /* Preview */
     function viewPreview() {
       var S = E.preview, d = S.data, n = slotNote(S, 'the preview');
-      var intro = '<p class="cr-eup-env__hint">Owner preview (decision D11, adopted pending Matthew\'s confirmation; it ships only with his approval of the pull request): the page the public timeline would show, read while the module is off. Visitors cannot read it.</p>';
+      var intro = '<p class="cr-eup-env__hint">Owner preview: the page the public timeline would show, available even while the module is off. Visitors cannot read it.</p>';
       if (n && !d) return intro + n;
       if (!d) return intro + note('loading', 'Not read yet.');
       if (d.store && d.store.status !== 'applied') return intro + note('not_configured', storeStatusLine(d.store));

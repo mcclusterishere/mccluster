@@ -3,10 +3,11 @@
 // on every answer, the acting owner is always the verified session user, every body rule before any store call, every SQLSTATE
 // of the three owner functions, honest answers while the store is not applied or unreachable and while the module is off,
 // and the per-source off / outage / no data / reporting rule. The SQL itself (idempotency, 409, rollback as a new revision,
-// the decision log, the preview's projection) is proven against the real pending parts in
+// the decision log, the preview's projection) is proven against the real reviewed parts in
 // scripts/test/eup-environment-owner.integration.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { handleEup, EUP_PREFIX, EUP_SECTIONS } from '../src/eup/router.js';
 import {
   COMMANDS, GOVERNMENT_PROVIDERS, ENVIRONMENT_STORE_ERRORS, ENVIRONMENT_STORE_PARTS, LIVE_SURFACES,
@@ -79,7 +80,13 @@ test('environment is a registered E=Up section behind the same owner check as ev
   assert.deepEqual([...GOVERNMENT_PROVIDERS], ['usgs', 'nws', 'nhc', 'eonet', 'firms', 'wfigs', 'coops']);
   assert.ok(!GOVERNMENT_PROVIDERS.includes('gdelt'), 'news is never a provider');
   assert.deepEqual([...COMMANDS], ['hold', 'release', 'retract', 'restore', 'rollback', 'set_rule', 'pause_provider', 'resume_provider', 'hide_provider', 'show_provider', 'attach_coverage', 'reject_coverage', 'retract_coverage']);
-  assert.deepEqual(ENVIRONMENT_STORE_PARTS.map((p) => p.split('/').pop()), [1, 2, 3, 4, 5].map((i) => `20261119100000_eup_environment_events_v1_0${i}.sql`));
+  assert.equal(ENVIRONMENT_STORE_PARTS.length, 5);
+  for (const [i, path] of ENVIRONMENT_STORE_PARTS.entries()) {
+    assert.match(path, /^supabase\/(pending|migrations)\/\d{14}_eup_environment_events_v1_0[1-5]\.sql$/);
+    const sql = readFileSync(new URL('../../../' + path, import.meta.url), 'utf8');
+    assert.ok(sql.startsWith(`-- E=UP ENVIRONMENTAL EVENT STORE, version 1, part 0${i + 1} of 05`),
+      'the diagnostic points to the existing reviewed part in application order');
+  }
 });
 
 test('every environment route answers 401 signed out and 403 for a non-owner, private and no-store, and reaches neither the store nor a provider', async () => {

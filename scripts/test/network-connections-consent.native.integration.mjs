@@ -1,4 +1,4 @@
-// The pending consent guard on public.network_connections on a real PostgreSQL server: the same proof the PGlite test
+// The consent guard on public.network_connections on a real PostgreSQL server: the same proof the PGlite test
 // runs (scripts/test/support/network-connections-database.mjs: production's layer, the hole before, the refusals,
 // the fix, the legitimate flows, the second lock, the rollback), here with what one PGlite session cannot show:
 //   - the file applied statement by statement on one session, as psql -v ON_ERROR_STOP=1 -f does, while every member
@@ -11,7 +11,7 @@
 //     node scripts/test/network-connections-consent.native.integration.mjs
 //
 // Disposable server only (scripts/test/support/native-postgres.mjs: 127.0.0.1, removed afterwards); never the
-// canonical project. NETWORK_CONNECTIONS_CONSENT_DIR replaces supabase/pending/ for the fix and its rollback (mutants).
+// canonical project. NETWORK_CONNECTIONS_CONSENT_DIR overrides the fix and rollback locations for mutants.
 import { refuseUnlessAllowed, startNativePostgres } from './support/native-postgres.mjs';
 import { M, nativeAdapter, buildProductionLayer, runConsentProof, fingerprintDiff } from './support/network-connections-database.mjs';
 

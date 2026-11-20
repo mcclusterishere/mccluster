@@ -1,5 +1,5 @@
-// Isolated local database support for the pending consent guard on public.network_connections
-// (supabase/pending/20261119062110_network_connections_consent_guard_v1.sql and its rollback); never connects to the
+// Isolated local database support for the consent guard on public.network_connections
+// (the pending forward SQL, or its recorded migration after promotion, and the retained rollback); never connects to the
 // canonical project. One proof, two engines: scripts/test/network-connections-consent.integration.mjs runs it on PGlite,
 // scripts/test/network-connections-consent.native.integration.mjs on a disposable PostgreSQL 16 or 17.
 //
@@ -23,19 +23,33 @@
 // The chain runs as a superuser; production's owner, postgres, is not one but owns the table and bypasses row level
 // security, so the SECURITY DEFINER writers behave the same (their privileges come from owning the table).
 //
-// NETWORK_CONNECTIONS_CONSENT_DIR replaces supabase/pending/ as the folder the fix and its rollback are read from
-// (same file names), for the mutants: scripts/test/network-connections-consent.mutants.mjs.
+// NETWORK_CONNECTIONS_CONSENT_DIR replaces the normal migration/pending locations with one folder containing
+// the fix and its rollback (same file names), for scripts/test/network-connections-consent.mutants.mjs.
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-export const FIX_FILE = '20261119062110_network_connections_consent_guard_v1.sql';
+const GUARD_NAME = 'network_connections_consent_guard_v1';
+const PENDING_FIX_FILE = '20261119062110_network_connections_consent_guard_v1.sql';
 export const ROLLBACK_FILE = '20261119062110_network_connections_consent_guard_v1.rollback.sql';
 const REPO = new URL('../../../', import.meta.url);
-const pendingPath = (file) => (process.env.NETWORK_CONNECTIONS_CONSENT_DIR
-  ? join(process.env.NETWORK_CONNECTIONS_CONSENT_DIR, file) : new URL(`supabase/pending/${file}`, REPO));
-export const fixSql = () => readFile(pendingPath(FIX_FILE), 'utf8');
-export const rollbackSql = () => readFile(pendingPath(ROLLBACK_FILE), 'utf8');
+
+// A reviewed file is still pending until the production ledger records its actual
+// version. Promotion can then move the same SQL without rewriting any proof runner.
+export function consentForwardLocation(ledger) {
+  assert.ok(Array.isArray(ledger?.migrations), 'the production ledger must contain migrations');
+  const recorded = ledger.migrations.filter((row) => row.name === GUARD_NAME);
+  assert.ok(recorded.length <= 1, 'the consent guard is recorded more than once');
+  if (!recorded.length) return { directory: 'pending', file: PENDING_FIX_FILE };
+  assert.match(recorded[0].version, /^\d{14}$/, 'the recorded consent guard needs its actual migration version');
+  return { directory: 'migrations', file: `${recorded[0].version}_${GUARD_NAME}.sql` };
+}
+const forward = consentForwardLocation(JSON.parse(await readFile(new URL('supabase/production-ledger.json', REPO), 'utf8')));
+export const FIX_FILE = forward.file;
+const consentPath = (file, directory) => (process.env.NETWORK_CONNECTIONS_CONSENT_DIR
+  ? join(process.env.NETWORK_CONNECTIONS_CONSENT_DIR, file) : new URL(`supabase/${directory}/${file}`, REPO));
+export const fixSql = () => readFile(consentPath(FIX_FILE, forward.directory), 'utf8');
+export const rollbackSql = () => readFile(consentPath(ROLLBACK_FILE, 'pending'), 'utf8');
 export const repoFile = (path) => readFile(new URL(path, REPO), 'utf8');
 
 export const REPLAY_FILE = 'supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql';
@@ -216,7 +230,7 @@ export const resetRows = (db) => db.script(`truncate public.network_messages, pu
 
 // ---------------------------------------------------------------- applying a file
 /**
- * Apply a pending file. 'psql' sends one statement at a time (what psql -v ON_ERROR_STOP=1 -f does) and, on an error,
+ * Apply a SQL file. 'psql' sends one statement at a time (what psql -v ON_ERROR_STOP=1 -f does) and, on an error,
  * ends the session's transaction as psql's exit would; 'string' sends the whole file in one call (what
  * apply_migration does). Either way, a file that leaves a transaction open is rolled back and refused: psql rolls it
  * back when it exits.
