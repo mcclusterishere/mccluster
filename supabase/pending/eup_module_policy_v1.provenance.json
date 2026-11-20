@@ -1,6 +1,14 @@
 {
   "schema": "mccluster.pending-sql-provenance/v1",
-  "file": "supabase/pending/eup_module_policy_v1.sql",
+  "file": "supabase/migrations/20261117144103_eup_module_policy_v1.sql",
+  "staged_as": "supabase/pending/eup_module_policy_v1.sql",
+  "applied": {
+    "version": "20261117144103",
+    "name": "eup_module_policy_v1",
+    "date": "2026-11-17",
+    "stored_statement": "the file byte for byte: 26,070 bytes, md5 1f1daee2582fd0a6f3a659350a07491e",
+    "evidence": "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md"
+  },
   "relationship": "Semantic port into the canonical McCluster data plane. No upstream bytes are copied; no production data and no seed row is included.",
   "upstream": {
     "repository": "mcclusterishere/Equity-Uprise (private, unpublished local follow-on)",
@@ -62,7 +70,7 @@
     "the trigger function returns the row when it is attached FOR EACH ROW by mistake, so a mis-attached backstop still guards instead of silently dropping the write"
   ],
   "rollback": "supabase/pending/eup_module_policy_v1.rollback.sql",
-  "status": "Pending, unapplied, reviewed local schema. Creates no policy row; applying it changes no behaviour until a domain file calls the guards.",
+  "status": "Applied in production on 2026-11-17, with the owner's approval, as ledger version 20261117144103 (see applied). Staged and reviewed as supabase/pending/eup_module_policy_v1.sql and applied with its header unchanged (\"Pending, unapplied, reviewed LOCAL schema.\"); the rollback stays here as a recovery-only artifact. The file creates no policy row.",
   "stable_codes": {
     "EUM00": "module_policy_unavailable: the house organisation row is absent or the module id is null",
     "EUM01": "module_not_installed: no policy row for the module (read, guard, reduce guard, trigger with or without the reduce marker, state command)",

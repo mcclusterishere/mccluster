@@ -2,7 +2,7 @@
    Music/World documents. No production API, account or audio request escapes
    the route fixtures. The globe renderer itself is covered by World suites. */
 import {createRequire} from 'node:module';
-import { withTravelAndMissions } from './world-switch.mjs';
+import { withTravel } from './world-switch.mjs';
 import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {resolve, join, extname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -27,12 +27,19 @@ function wav(seconds=24){
 const AUDIO=wav();
 const IMAGE=Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64');
 function token(origin){return 'x.'+Buffer.from(JSON.stringify({sub:USER,exp:Math.floor(Date.now()/1000)+3600,email:'audio-fixture@invalid.test',origin})).toString('base64url')+'.y';}
-async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html'}={}){
-  const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
+/* motion: 'reduce' keeps the album room's light off, as this suite always ran; 'no-preference'
+   is what most listeners have, with js/chamber.js drawing the room (music map PB-13) */
+async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html',motion='reduce'}={}){
+  const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:motion,serviceWorkers:'block'});
   const requests=[],messages=[],errors=[];
   await context.addInitScript(({HOUSE,member,token,privacy})=>{
     if(privacy)localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     if(member&&location.origin===HOUSE&&!localStorage.getItem('mccdb_session'))localStorage.setItem('mccdb_session',JSON.stringify({access_token:token,refresh_token:'fixture-house-refresh',expires_at:Math.floor(Date.now()/1000)+3600}));
+    try{sessionStorage.setItem('mcc_premiere','1');}catch{}
+    /* every AudioContext a page makes, so a check can suspend them all the way WebKit does when Safari leaves the screen */
+    window.__audioContexts=[];
+    const NativeContext=window.AudioContext;
+    if(NativeContext){const Recorded=function(...args){const c=new NativeContext(...args);window.__audioContexts.push(c);return c;};Recorded.prototype=NativeContext.prototype;window.AudioContext=Recorded;window.webkitAudioContext=Recorded;}
     const NativeAudio=window.Audio;
     window.__audioObjects=[];window.__audioEvents=[];window.__unloads=0;window.__bridgeMessages=[];
     window.Audio=function(...args){const a=new NativeAudio(...args);window.__audioObjects.push(a);for(const type of ['play','pause','emptied','seeking'])a.addEventListener(type,()=>window.__audioEvents.push({type,src:a.currentSrc||a.src,time:a.currentTime}));return a;};
@@ -65,7 +72,7 @@ async function setup(width=390,member=false,{parentScript,privacy=true,start='/l
       const path=resolve(ROOT,'.'+(p==='/'?'/mnet.html':decodeURIComponent(p)));
       if(path.startsWith(resolve(ROOT)+sep)){
         /* the World's first touch here is Travel's Where to, so this suite drives the World with Travel switched on */
-        try{let body=await readFile(path);if(path===resolve(ROOT,'mnet.html'))body=Buffer.from(withTravelAndMissions(body));return r.fulfill({body,contentType:MIME[extname(path)]||'application/octet-stream'});}catch{}
+        try{let body=await readFile(path);if(path===resolve(ROOT,'mnet.html'))body=Buffer.from(withTravel(body));return r.fulfill({body,contentType:MIME[extname(path)]||'application/octet-stream'});}catch{}
       }
       if(/\.(?:png|jpe?g|webp|gif)$/.test(p))return r.fulfill({contentType:'image/gif',body:IMAGE});
       return r.fulfill({status:404,body:'Fixture: file absent'});
@@ -262,6 +269,30 @@ try{
     check('album player also retains its exact live deck across Globe',after.same&&after.unloads===0&&after.src===before.src&&after.time>before.time+.4&&!after.paused,{before,after});
     await page.locator('.world-audio__play').click();
     check('World transport controls the original album deck',await page.evaluate(()=>document.getElementById('deck').paused));
+    await context.close();
+  }
+  /* WITHOUT REDUCED MOTION (music map PB-13): every check above ran with reduced motion, so the album room's light
+     (js/chamber.js) never ran and nothing here ever saw the deck routed through Web Audio. Here the light is on, as
+     for most listeners, and every AudioContext the page made is suspended once the World is open: that is what WebKit
+     does to Web Audio when Safari leaves the screen. The music must keep advancing all the same. */
+  for(const start of ['/listen.html','/album.html?album=here']){
+    const {context,page,errors}=await setup(390,false,{motion:'no-preference',start});
+    const album=start.startsWith('/album');
+    if(album){
+      await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&typeof window.MCC_NP_PLAY==='function');
+      await page.locator('#playAll').click();
+      await page.waitForFunction(()=>!document.getElementById('deck').paused&&document.getElementById('deck').currentTime>.15);
+    }else await play(page);
+    const element=()=>page.evaluate(album=>{const a=album?document.getElementById('deck'):MCC_MUSIC.audio;return {time:a.currentTime,paused:a.paused,src:a.currentSrc};},album);
+    check(`default motion ${album?'album':'listen'}: the room's light is on`,!album||await page.evaluate(()=>document.documentElement.classList.contains('sig-live')));
+    const before=await element();
+    await world(page);
+    await page.evaluate(()=>Promise.all(window.__audioContexts.map(c=>c.suspend().catch(()=>{}))));
+    const suspended=await element();await page.waitForTimeout(900);const after=await element();
+    check(`default motion ${album?'album':'listen'}: across Globe, with every AudioContext suspended, the same music keeps advancing`,
+      after.src===before.src&&!after.paused&&after.time>suspended.time+.6,{before,suspended,after,contexts:await page.evaluate(()=>window.__audioContexts.length)});
+    check(`default motion ${album?'album':'listen'}: parent fits the phone`,await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    check(`default motion ${album?'album':'listen'}: no script errors`,errors.length===0,errors);
     await context.close();
   }
   {

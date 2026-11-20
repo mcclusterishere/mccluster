@@ -150,10 +150,14 @@ test('the globe frame is dressed before it paints: its standalone deck never sho
     vm.runInNewContext(script[1], ctx);
     return { classes: [...classes].sort(), replaced };
   };
+  /* missions are public (owner, 2026-11-17): the World's frame asks for no missions=0 and draws them for everyone */
+  assert.deepEqual(run('?embedded=1&surface=network&v=1').classes, ['globe-editorial', 'globe-embedded', 'globe-surface-network']);
+  assert.deepEqual(run('?embedded=1&surface=network', true, ['hu-travel-off']).classes, ['globe-editorial', 'globe-embedded', 'globe-surface-network'],
+    'a visitor\'s World (Travel switched off) still gets the missions');
+  /* missions=0 is an embedding page asking for no mission layer (the City Arcade): honoured whoever holds the frame, as
+     js/action-globe.js decides */
   assert.deepEqual(run('?embedded=1&surface=network&missions=0&v=1').classes, ['globe-editorial', 'globe-embedded', 'globe-no-missions', 'globe-surface-network']);
-  assert.deepEqual(run('?embedded=1&surface=network&missions=0', true, ['hu-social-only']).classes, ['globe-editorial', 'globe-embedded', 'globe-no-missions', 'globe-surface-network']);
-  assert.deepEqual(run('?embedded=1&surface=network&missions=0', true, ['hu-editorial']).classes, ['globe-editorial', 'globe-embedded', 'globe-surface-network'],
-    'the house owner\'s World (no hu-social-only, js/world-owner-modes.js) keeps the missions, as js/action-globe.js decides');
+  assert.deepEqual(run('?embedded=1&surface=network&missions=0', true, ['hu-editorial']).classes, ['globe-editorial', 'globe-embedded', 'globe-no-missions', 'globe-surface-network']);
   assert.deepEqual(run('?embedded=1&surface=analytics').classes, ['globe-embedded', 'globe-surface-analytics']);
   assert.deepEqual(run('?explore=1&missions=0', false).classes, ['globe-editorial', 'globe-explore', 'globe-no-missions']);
   assert.equal(run('?song=x', false).replaced, 'mnet.html?view=feed&song=x', 'the bare route still hands over to the World');

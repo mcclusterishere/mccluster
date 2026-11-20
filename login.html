@@ -40,7 +40,10 @@
     try {
       var target = new URL(raw, location.origin);
       if (target.origin !== location.origin || !/^https?:$/.test(target.protocol)) return '';
-      return target.pathname + target.search + target.hash;
+      /* a collapsed dot segment ("/.//host") leaves the path "//host", another site once handed on: refused (review SEC-1) */
+      var out = target.pathname + target.search + target.hash;
+      if (/^[\/\\]{2}/.test(out) || new URL(out, location.origin).origin !== location.origin) return '';
+      return out;
     } catch (_) { return ''; }
   }
   var next = safeNext();

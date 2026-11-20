@@ -11,7 +11,7 @@
 // WHAT IS REAL (the code under test, unchanged and unwrapped):
 //   - workers/mccluster/src/eup/router.js handleEup and everything it imports: the owner routes (league.js), the
 //     member branch (league-member.js), the media module (league-media.js), modules.js, overview.js, the contract.
-//   - The pending SQL: supabase/pending/eup_module_policy_v1.sql then eup_league_v1.sql, in PGlite, with Supabase-style
+//   - The SQL: supabase/migrations/20261117144103_eup_module_policy_v1.sql (applied) then the pending eup_league_v1.sql, in PGlite, with Supabase-style
 //     API roles and default privileges (scripts/test/support/eup-league-database.mjs builds it). Every RPC runs as the
 //     role its key names (service_role for the Worker) in its own transaction, exactly once.
 // WHAT IS EMULATED (and nothing more):

@@ -78,6 +78,13 @@ Rollback files sit beside the ones that have them.
    `js/member-desk.js`, `js/control-room/action-network.js`.
    Proof: `scripts/test-policy-fellowship-db.sh`.
    Design: `docs/control-plane/POLICY-FELLOWSHIP-LADDER.md`.
+   **Mission-specific part superseded (checked read-only 2026-11-17):** its seed of
+   `action_ladder_mission_kinds` maps three missions. Two were deleted on 2026-10-31
+   (`053cbd0d…` write_song, `ba803367…` attend_rally) and are skipped, because the insert joins
+   `action_missions`. The third, "Give someone a free ride" (`302dcb4e…`), is still live, so that
+   one row (help_person) WOULD still be written: it is not a no-op. Decide it with the owner, or
+   drop that seed, before this file is proposed. The ladder, rules and memos are not mission
+   content and are unchanged.
 2. `mission_admin_approval_v1.sql` (+ rollback): needs 1. Every completion
    admin-approved. No direct caller yet; `live_missions_v1.sql` is tested with
    it. Proof: `scripts/test-mission-admin-approval-db.sh`.
@@ -106,6 +113,16 @@ Rollback files sit beside the ones that have them.
    `README.md`). Callers: `js/action-globe.js`, `js/mnet.js`.
    Proof: `scripts/test-mission-pins-db.sh`.
    Design: `docs/action-network/MISSION-PINS-ARCS-BLACK-BUSINESS.md`.
+   Its join fix alone is now `20261117100000_action_globe_join_scope_v1.sql`
+   (section 10), which goes first; this whole file may still follow it
+   (`scripts/test-mission-pins-db.sh` runs it on top of the extract). Once this
+   file is in, 10.1 must not run again and 10.1's rollback must wait until this
+   file is rolled back: both would put an older `join_action_mission` over this
+   file's and drop its arc check, so both refuse (55000), changing nothing.
+   **Section 8 (the owner's curation) is superseded:** every one of its statements
+   reads its mission from `action_missions`, and all six missions it names
+   (`d7fc0ca4…`, `ba66d4a3…`, `368fd75a…`, `df26314d…`, `9144bd42…`, `49d654e1…`) were
+   deleted on 2026-10-31, so it writes nothing today (checked read-only 2026-11-17).
 
 ## 3. Fixes and performance, no caller change
 
@@ -147,6 +164,16 @@ Contract tests that read them: `scripts/test/action-economy-*.test.mjs`,
   data changes to `action_missions`, `action_campaigns`, `action_cohorts`,
   `action_bounties`; verify row by row against production before running,
   since later curation (2026-10-15) already changed the same rows.
+  **Superseded; never apply it (checked read-only 2026-11-17).** Its UPDATEs name 31
+  missions, all deleted on 2026-10-31, and its title matches find no row, so they
+  change nothing; its campaign, cohort and bounty updates also find no row (production
+  has no campaign, no such cohort and no such bounty). It is NOT a no-op as a whole: it
+  INSERTs two missions that never existed in production ("One Safe Night" and "Write a
+  Song for Equity Uprise", `51000000-…-000000000006` and `…007`, the second as `open`)
+  under the campaigns `homelessness-action-001` and `equity-uprise-003`, which were
+  deleted on 2026-10-31, so as written the whole file fails on the campaign foreign
+  key; restoring those campaigns would publish content the owner removed. Missions now
+  arrive through section 10.
 - `20261015210000_intel_mission_canon_v1.rollback.sql`: the rollback of a
   promoted file (`20261017030617_intel_mission_canon_v1`), kept on purpose.
 
@@ -224,9 +251,15 @@ Three things to know before the Worker ships:
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
-| `eup_module_policy_v1.sql` (+ `eup_module_policy_v1.rollback.sql`, `eup_module_policy_v1.provenance.json`) | `eup_module_policies`, `eup_module_policy_commands` (append-only), and six service-role functions: `eup_module_policy_read`, `eup_module_control_read`, `eup_module_policy_install`, `eup_module_policy_command`, `eup_module_guard`, `eup_module_guard_reduce`, plus the trigger function `eup_module_guard_trigger` | `workers/mccluster/src/eup/modules.js`, `workers/mccluster/src/world-environment.js`, and the guard calls inside `eup_intake_v1.sql` | `scripts/test/eup-module-policy.integration.mjs` (257 assertions, PGlite); under real concurrency `scripts/test/eup-module-policy.native.integration.mjs` (96) and `scripts/test/eup-intake.native.integration.mjs` (33), on PostgreSQL 16 and 17 |
+| **Applied 2026-11-17:** `../migrations/20261117144103_eup_module_policy_v1.sql` (+ `eup_module_policy_v1.rollback.sql`, `eup_module_policy_v1.provenance.json`) | `eup_module_policies`, `eup_module_policy_commands` (append-only), and six service-role functions: `eup_module_policy_read`, `eup_module_control_read`, `eup_module_policy_install`, `eup_module_policy_command`, `eup_module_guard`, `eup_module_guard_reduce`, plus the trigger function `eup_module_guard_trigger` | `workers/mccluster/src/eup/modules.js`, `workers/mccluster/src/world-environment.js`, and the guard calls inside `eup_intake_v1.sql` | `scripts/test/eup-module-policy.integration.mjs` (257 assertions, PGlite); under real concurrency `scripts/test/eup-module-policy.native.integration.mjs` (96) and `scripts/test/eup-intake.native.integration.mjs` (33), on PostgreSQL 16 and 17 |
 
 | `eup_league_v1.sql` (+ `eup_league_v1.rollback.sql`) | the League tables (26, each with RLS on, no policy, no API-role privilege, the module guard trigger except the access record), `eup_outbox` (its sequence revoked from every API role) and three service-role functions: `eup_league_command`, `eup_league_member_command`, `eup_league_media_seal` | `workers/mccluster/src/eup/league-contract.js` (RPC names), `league.js`, `league-member.js`, `league-media.js`, `overview.js` | `scripts/test/eup-league.integration.mjs` (1427, PGlite); `scripts/test/eup-league-journey.integration.mjs` (1529, the real router over this SQL); `scripts/test/eup-league.native.integration.mjs` (1578 on PostgreSQL 16 and 17) |
+
+**Where it stands (2026-11-18).** `eup_module_policy_v1.sql` is applied, with the owner's approval, as ledger version
+`20261117144103`; the stored statement is the file byte for byte (26,070 bytes, md5 `1f1daee2582fd0a6f3a659350a07491e`),
+and it is promoted to `supabase/migrations/` (README, "Promoted 2026-11-18"). Its rollback and provenance record stay
+here. `eup_league_v1.sql` and `eup_intake_v1.sql` are not applied. Whether any module is installed or enabled was not
+read.
 
 **Order.** Apply `eup_module_policy_v1.sql` first, then `eup_league_v1.sql` and `eup_intake_v1.sql`
 (`eup_intake_v1.sql` raises 55000 when the guard functions are absent). Roll back in the reverse order: the
@@ -262,6 +295,195 @@ cron calls it, nothing writes a run's cursor, and every connector is still disab
 duplicate check in its header first. Read-only on production at 2026-11-10 02:29 UTC: 48 daily-report rows,
 none with a window id yet (the host's Core predates window ids), no duplicate windows, index absent. The Core
 code works with or without the index.
+
+## 10. World missions: join scope, mission details, the Drawdown catalog (written 2026-11-17; updated 2026-11-18)
+
+The production steps 1 to 3 of `docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md`. **Owner approval
+required for each file, each on its own**, in this order; roll back in the reverse order. Each is one
+transaction and safe to run twice. Apply each with the Supabase MCP `apply_migration`, which runs as postgres,
+the owner of everything they change. The service role cannot apply 10.1 or 10.2, or roll them back: it owns
+none of those objects and has no CREATE on schema public (read 2026-11-17).
+
+**Where it stands** (read-only, 2026-11-18 04:17 to 04:29 UTC; 376 ledger rows): 10.1, 10.2 and the seven parts of
+10.3 are applied, with the owner's approval, and for each the statement production stored is the committed file byte
+for byte. All nine are promoted (below). 10.4 is not applied: the owner decided it runs in the deploy window, after
+the new feed ships.
+
+| # | Applied as | Ledger version | Stored statement, equal to the file |
+|---|---|---|---|
+| 10.1 | `action_globe_join_scope_v1` | `20261117222809` | 9,521 bytes, md5 `acbb15a8fa25400006d39a586abd834f` |
+| 10.2 | `action_mission_details` | `20261118021521` | 6,809 bytes, md5 `26965b3fe8bf077d1f5e9fb5f4b22557` |
+| 10.3 | `action_mission_drawdown_import_01` to `_07` | `20261118034753` to `20261118035654` | the seven parts, in the 10.3 table below |
+
+After 10.2, production has `public.action_mission_details` with row level security on, the policies "public
+reads open mission details" (SELECT, anon and authenticated) and "admins manage mission details" (ALL,
+authenticated), SELECT as the only client grant, and 0 rows; `public.action_missions` holds 1 mission, open;
+there are 0 mission pins. After part 07 (the operator's read, 2026-11-18 03:58 UTC) `public.action_missions` holds 1
+open and 125 draft missions and `public.action_mission_details` 125 rows; as `anon`, 1 mission, 0 drafts, 0 details.
+
+Promoted 2026-11-18 (README, "To promote one" and "Promoted 2026-11-18"): each file moved unchanged to
+`supabase/migrations/<version>_<name>.sql`, with `supabase/production-ledger.json`, `core/drift-contract.json`, the
+production snapshot `docs/control-plane/evidence/production-schema-snapshot-2026-11-18.json`, the schema manifest and
+`live-callers.json`. The rollbacks stay here under their pending names, and the moved files' headers keep the words
+they were applied with ("PENDING. Not applied to production."), as an applied file's bytes must. A rollback is not
+applied, so its first line now names its forward file where that file is, under `supabase/migrations/`, and then the
+name it was staged and reviewed under (review of the release polish, 2026-11-18, RP-4; `scripts/test/mission-import.test.mjs`).
+
+| # | File (+ rollback) | What | Callers | Proof before apply |
+|---|---|---|---|---|
+| 10.1 | `../migrations/20261117222809_action_globe_join_scope_v1.sql`, staged as `20261117100000_action_globe_join_scope_v1.sql` (+ `20261117100000_action_globe_join_scope_v1.rollback.sql`) | **Applied 2026-11-17** as `action_globe_join_scope_v1` (version `20261117222809`). Decouples joining from pins: `action_globe_mission_regions.join_scope` (default `anywhere`); `join_action_mission()` and `action_globe_can_join_mission()` gate only on a PUBLISHED pin marked `region_members`. The minimal extract of 20261015230000's sections 3 and 5, nothing else from that file. The rollback restores production's bodies byte for byte (md5(prosrc) `e0684ebe350296c5e6c06de55624ed42` for `join_action_mission`) and drops the column. Both refuse (55000), changing nothing, unless the two functions are production's or 10.1's own, so neither runs over the whole pins file (section 2, item 7) once it is in: roll that file back first | `join_action_mission` and its `_attributed`, `_live` and `_origin` wrappers (`js/mnet.js`, `js/action.js`) | `scripts/test/mission-catalog.native.integration.mjs`; `scripts/test-mission-pins-db.sh` (the whole pins file still applies on top of it) |
+| 10.2 | `../migrations/20261118021521_action_mission_details.sql`, staged as `20261117100100_action_mission_details.sql` (+ `20261117100100_action_mission_details.rollback.sql`) | **Applied 2026-11-18** as `action_mission_details` (version `20261118021521`). Creates `action_mission_details`: one row per mission (proof hint, safety note, credit line, quotation and its credit, source URL, licence, DOI), readable by anon and authenticated exactly when its mission is (the test of "public reads open missions"), written by the service role only. Creates no row. The rollback refuses while the table holds a row | none in shipped code at the time of writing; the World's mission posts and dialog are to read it and must tolerate its absence | the native suite above |
+| 10.3 | the seven import parts below, staged as `20261117100200_action_mission_drawdown_import_01.sql` to `_07.sql`, now `../migrations/<version>_action_mission_drawdown_import_01.sql` to `_07.sql` (+ `20261117100200_action_mission_drawdown_import.rollback.sql`, one rollback for every part), generated by `tools/build-mission-import.mjs` from `data/missions/drawdown/missions.json` | **Applied 2026-11-18** as the seven parts, versions `20261118034753` to `20261118035654`. Inserts the 125 Drawdown missions as `draft` (ids: UUID v5 of `mccluster:mission:drawdown:<slug>`), each part its missions and then their details rows (43 with a CC BY 4.0 licence and DOI in all), in catalog order. Every part refuses before 10.2, and every part from 02 on until the part before it is in. The rollback deletes exactly those ids, however many parts ran, and refuses while any assignment, proof, pin or other row references one; it locks the missions, and the two tables that name a mission without a foreign key (`action_creator_payout_intents`, `action_creator_funding`), before it counts | none; drafts are invisible to the public | `node tools/build-mission-import.mjs --check`; `scripts/test/mission-import.test.mjs`; the native suite |
+| 10.4 | `20261117100300_action_mission_drawdown_publish.sql` (+ `20261117100300_action_mission_drawdown_publish.rollback.sql`), generated the same way | **Not applied.** Owner approval required, and the owner decides when (below): in the deploy window, after the new feed ships. Sets exactly those 125 ids from `draft` to `open`, leaving any the owner paused, closed or opened; refuses unless each has its details row, so it cannot run before part 07. The rollback sets them from `open` back to `draft` | the World reads open missions through "public reads open missions" (`js/mnet.js`) | the same three |
+
+### 10.3 in seven parts (2026-11-18)
+
+The import was one file, `20261117100200_action_mission_drawdown_import.sql` (188,022 bytes, md5
+`29271e66339a48f4133d1f7171d04cce`, never applied). That is more than one `apply_migration` call can safely
+carry, and the statement production stores must be the committed file byte for byte so the promotion can prove
+it. Seven parts replace it, each at most 32,000 bytes: `tools/build-mission-import.mjs` cuts the catalog, in
+order, into the fewest parts that fit (six cannot hold the rows and their headers), as even in size as seven
+allows (applied 2026-11-18 and promoted: the File column below is each part's migration under `supabase/migrations/`;
+the SQL names the parts by the staged names above, as applied). Each part is self-contained and one transaction:
+`lock_timeout` 5s and `standard_conforming_strings` on;
+the guard that the details table exists; from part 02 on, a guard that the part before it is in (its last mission
+is there with its details row: a part is one transaction, so that row stands for all of it); its missions,
+`ON CONFLICT (id) DO NOTHING`; then those missions' details rows, `ON CONFLICT (mission_id) DO NOTHING`. A short
+header names the part, the total, the catalog's sha256, the order, the rollback and the proof. The rows are the
+one file's, byte for byte and in the same order (`scripts/test/mission-import.test.mjs`).
+
+**The one file is removed, not kept beside the parts.** Two appliable copies of the same import under different
+migration names could put the same rows in the ledger twice, and the promotion proves one stored statement per
+committed file. So the parts are the only copy on disk: `node tools/build-mission-import.mjs --check`, and with it
+the unit test, fails while the one file, or a part this catalog does not build, is in this folder, and a build
+removes them. The tool still rebuilds the one file in memory, byte for byte (`singleImportReference()`, its bytes
+and md5 pinned by the unit test), only so the native proof can apply it beside the parts; applied over each other,
+in either order, the two change nothing. The publish and the import rollback now name the parts instead of the one
+file, and that is their only change (the unit test checks it against their reviewed md5s); the publish rollback is
+unchanged.
+
+| Part | File | Migration name | Catalog missions | Bytes | md5 |
+|---|---|---|---|---|---|
+| 01 | `20261118034753_action_mission_drawdown_import_01.sql` | `action_mission_drawdown_import_01` | 1 to 14 (14) | 29,656 | `310178698d117f2a6ffe2f672fddd73a` |
+| 02 | `20261118034926_action_mission_drawdown_import_02.sql` | `action_mission_drawdown_import_02` | 15 to 29 (15) | 31,009 | `4d29872c1f27f70bdea39151ed98f1eb` |
+| 03 | `20261118035056_action_mission_drawdown_import_03.sql` | `action_mission_drawdown_import_03` | 30 to 44 (15) | 30,085 | `3de9c9a8c30dff70adccb7b5d4537b3f` |
+| 04 | `20261118035221_action_mission_drawdown_import_04.sql` | `action_mission_drawdown_import_04` | 45 to 61 (17) | 30,241 | `2b5458737baa0e8899db5d8490b4dd92` |
+| 05 | `20261118035346_action_mission_drawdown_import_05.sql` | `action_mission_drawdown_import_05` | 62 to 79 (18) | 30,478 | `15e9667dbf5e3baae43efbdc930061c3` |
+| 06 | `20261118035521_action_mission_drawdown_import_06.sql` | `action_mission_drawdown_import_06` | 80 to 100 (21) | 30,418 | `5d9b005eba3c3f9df54f54ecfd9be40a` |
+| 07 | `20261118035654_action_mission_drawdown_import_07.sql` | `action_mission_drawdown_import_07` | 101 to 125 (25) | 31,243 | `866f1f4b52bd1f1005e5634e369bcaee` |
+
+**How they were applied** (2026-11-18, the owner having approved 10.3; kept as the procedure):
+
+1. Read production first (read-only): the ledger holds `action_globe_join_scope_v1` and `action_mission_details`
+   and no `action_mission_drawdown_import%` row; `public.action_mission_details` exists and is empty; none of the
+   125 ids is in `public.action_missions`.
+2. Apply part 01 with the Supabase MCP `apply_migration`, which runs as postgres (never as the service role),
+   under its migration name, `action_mission_drawdown_import_01`, sending the committed file exactly, in one call.
+3. Read production again before the next part: the ledger's newest row has that name and its stored statement
+   has the bytes and md5 in the table; `public.action_mission_details` holds as many `drawdown` rows as the part's
+   last catalog position (14, 29, 44, 61, 79, 100, 125), and every one of those missions is a draft.
+4. Then part 02, and so on to part 07: one call per part, one read between every two. A part applied before its
+   turn refuses (55000), changes nothing and names the part to apply first. If a call ends without an answer, read
+   the ledger before anything else: a part is one transaction, so it is either all in, with its ledger row, or not
+   in at all. Do not send a part the ledger already holds: its rerun inserts nothing, but it may add a second ledger
+   row under the same name.
+5. After part 07 production holds 125 drafts with 125 details rows, and a visitor sees nothing new. The parts were
+   promoted with 10.1 and 10.2 on 2026-11-18.
+
+Rollback, at any point: if 10.4 ran, `20261117100300_action_mission_drawdown_publish.rollback.sql` first; then
+`20261117100200_action_mission_drawdown_import.rollback.sql` (owner approval, as postgres). It deletes exactly the
+catalog ids that are there, however many parts ran, and refuses, deleting nothing, while anything references one.
+Once a part is applied, `missions.json` must not change: the parts in production must stay the committed files
+byte for byte, so a later change to the catalog is a new migration, never a regenerated part.
+
+**When to publish (10.4) is the owner's decision** (2026-11-18: in the deploy window, after the new feed ships).
+The live build (`fc1986ec`) reads open missions straight from
+the database, in its swipe deck, its guest door and the Worker's lists, so the moment 10.4 commits, all 125
+missions show on the live site. The parts write drafts only and change nothing a visitor sees, and 10.4 refuses,
+changing nothing, until all 125 missions are there with their details rows.
+
+**Pins.** With 10.1 applied, a pin no longer locks its mission: joining is gated only by a published pin marked
+`region_members`. Production has 0 pins (2026-11-18). Pins themselves are step 4 of the brief, a separate owner
+decision with its own SQL.
+
+The native proof starts a disposable PostgreSQL on 127.0.0.1 and refuses without consent:
+`ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=/usr/lib/postgresql/16/bin PG_MODULE=<node-postgres> node scripts/test/mission-catalog.native.integration.mjs`.
+It builds production's shape (`supabase/tests/action_mission_catalog.stub.sql` and the four applied globe
+migrations; seven function bodies checked against production's md5(prosrc)), applies 10.1, 10.2, the seven parts
+in order and 10.4, reruns them, reads as a guest, a member and an admin, joins with and without pins, then rolls
+each back and checks the state before it, `join_action_mission`'s md5 included. For the parts it sees every part
+refuse before 10.2; every part from 02 on refuse, changing nothing, when applied one or two ahead of its turn; one
+failing row abort a whole part; every rerun change nothing; the rows after the seven parts equal, byte for byte,
+the rows a second database gets from the one file (ordered dumps of both tables, every column but the two
+apply-time timestamps); the parts over the one file, and the one file over the parts, change nothing; the publish
+refuse while part 07 is missing, then open exactly the 125; and the one import rollback undo two parts as it undoes
+seven. It also sees 10.1 and its rollback refuse over a join function another migration replaced, the service role
+fail to apply 10.1 and 10.2, the import rollback wait for a funding row another session is still writing and then
+refuse, and the publish leave a draft outside the catalog alone. Run on 2026-11-18: 156 checks passed on
+PostgreSQL 16.15 and on 17.7 (production runs 17.6); two mutated copies, the parts without their order guard and
+one title changed in part 03, each fail it. Before the parts (2026-11-17), 100 checks passed on both, and
+`scripts/test-mission-pins-db.sh` passed on both.
+
+Rerun the production reads immediately before each apply. Superseded by this section: the mission-specific parts
+of `20261014170000_action_mission_curated_catalog_resources.sql` (section 5), of `policy_fellowship_ladder_v1.sql`
+(section 2, item 1) and section 8 of `20261015230000_action_mission_pins_arcs_black_business.sql` (section 2,
+item 7); each entry says what it would still do.
+
+## 11. Compute fabric preference (additive, deploy-gated; written 2026-11-17)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `compute_claim_task_yield_v3.sql` (+ `compute_claim_task_yield_v3.rollback.sql`) | nothing: it replaces one function's signature. `public.compute_claim_task` gets a fifth optional parameter, `p_yield_seconds integer default 0` (clamped 0..300): a claim that passes it skips tasks younger than that many seconds, so a CPU node can leave fresh work to a live GPU node; the returned `task` JSON also carries `priority`. The 4-argument call keeps working through the default; the 4-argument signature is dropped in the same transaction because a second overload would make the gateway's named call ambiguous | `core/src/compute/store.mjs` (`claimLease`, which sends `p_yield_seconds` only when a node asks to yield and, on PostgREST 404 PGRST202, retries without it and remembers for the life of the process), reached through `core/src/compute/gateway.mjs` (`POST /v1/compute/lease` clamps `body.yield_seconds`) from `core/src/compute/node-agent.mjs` (`MCCLUSTER_NODE_YIELD_TO_GPU_MS`, off by default). Nothing fails without it | `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/compute-lease-yield-sql-check.mjs` (base chain, apply, `supabase/tests/compute_claim_task_yield.behaviour.sql`, the v2 lease assertions on the v3 function, rollback, the 5-argument call gone, re-apply, assertions again); passed here on PGlite 0.5.10 on 2026-11-17 |
+
+Apply only when the owner wants the OVH node to yield to a live GPU node (then set
+`MCCLUSTER_NODE_YIELD_TO_GPU_MS` on that node); harmless otherwise. No prerequisite beyond the
+applied `20261020210718_compute_lease_authority_v2`. PostgREST reloads its schema cache on DDL; if
+a claim still answers PGRST202 afterwards, run `notify pgrst, 'reload schema';`. Never applied here.
+
+## 12. E=UP environmental event store (written 2026-11-19)
+
+The canonical, revisioned store behind the signed-out E=UP timeline (slice S1 of `docs/control-plane/EUP-EVENT-TIMELINE.md`):
+one record per public government observation, its revisions, aliases, provider rules, a source-health log, the owner's decision
+log and news coverage bound to an event's revision. Five parts, each one transaction of at most 32,000 bytes (what one
+`apply_migration` call carries safely, as section 10.3), and one rollback:
+
+| # | File | Migration name | Creates |
+|---|---|---|---|
+| 12.1 | `20261119100000_eup_environment_events_v1_01.sql` | `eup_environment_events_v1_01` | the seven tables (row level security on, no policy, no API-role privilege), their append-only and identity guards, the commit-time revision check, the pure helpers |
+| 12.2 | `20261119100000_eup_environment_events_v1_02.sql` | `eup_environment_events_v1_02` | the reads: the public page and event read (gated by the environment module policy: EUM01 / EUM03), the owner's preview |
+| 12.3 | `20261119100000_eup_environment_events_v1_03.sql` | `eup_environment_events_v1_03` | the ingest (USGS only), idempotent per run id, one health row per run; and the ingest's read, `eup_environment_ingest_state` (added by slice S3: the rule, the switches and the published events to look for) |
+| 12.4 | `20261119100000_eup_environment_events_v1_04.sql` | `eup_environment_events_v1_04` | the house owner's read and commands (hold, release, retract, restore, rollback, provider pause and hide, the publication rule, coverage decisions), each logged |
+| 12.5 | `20261119100000_eup_environment_events_v1_05.sql` | `eup_environment_events_v1_05` | the coverage intake |
+| | `20261119100000_eup_environment_events_v1.rollback.sql` | `eup_environment_events_v1_rollback` | drops everything the parts create, however many ran; the store's rows are lost |
+
+**Not applied. Owner approval required.** The parts are applied only on Matthew's separate approval of the exact text of
+each part, independent of and after the mission publish (step 9 of `docs/control-plane/WORLD-RELEASE-20261118.md`), with the
+Supabase MCP `apply_migration` (it runs as postgres) under the names above, 01 to 05 in order, one call per part and a read of
+the ledger between parts. Part 01 refuses (55000) without the applied module policy (section 8); every later part refuses
+(55000), changing nothing, until the part before it is in. Then promote each as section 10.3's parts were (`git mv` to
+`supabase/migrations/<version>_eup_environment_events_v1_0N.sql`, the stored statement equal to the file byte for byte, the
+ledger, the drift contract and a production snapshot). Roll back with the one rollback file (owner approval, as postgres), and
+before the module policy's own rollback if that ever runs: the store's public reads read the policy's table.
+
+**Applying them changes nothing public until the ingest flag and the environment module are turned on.** The parts create no
+row. On this branch only the owner routes (S2, behind the house-owner check) and the ingest behind its Worker flag
+`EUP_ENVIRONMENT_USGS_INGEST_ENABLED`, default `"false"` (S3), call them; the public routes (S4) are a later slice, and all of it
+reaches production only through a pull request. The ingest writes nothing until the owner
+sets a provider rule, and every public read refuses until the owner installs and then enables the environment module in
+Control (each its own go, decision D3). When those slices add callers, their names go into `live-callers.json` as
+`pending_only` of these parts until the parts are promoted.
+
+Decisions D5 (canonical id and aliases), D6 (what makes a revision), D7 (the publication rule) and D12 (tombstones and holds)
+are written into the parts as **defaults adopted pending Matthew's confirmation**, as is the owner's preview (D11), an
+authorization addition that ships only with his approval of the pull request that calls it.
+
+Proof before apply:
+`PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/eup-environment-events.integration.mjs` (294 assertions, CI
+matrix entry `environment-store` in `.github/workflows/human-uprise-editorial.yml`; eight mutated copies of the parts each fail
+it) and, under real concurrency on a disposable server,
+`ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=/usr/lib/postgresql/16/bin PG_MODULE=<node-postgres> node scripts/test/eup-environment-events.native.integration.mjs`
+(29 checks, passed on PostgreSQL 16.15 and 17.7 on 2026-11-19; production runs 17.6). The static checks are in the root suite:
+`node --test scripts/test/eup-environment-events-sql.test.mjs`.
 
 ## Names with no SQL anywhere
 
@@ -312,3 +534,106 @@ production snapshot. After any later `m_merge_people`: one service-role call of
 `public.network_media_assets_follow_merge(p_keep, p_merge, p_reason)`, or the merged person's uploads stay unsigned.
 The rollback does nothing where the guard is not applied and keeps the record of merges when it holds a row. At
 promotion, fix the one fixture `README.md` names (`supabase/tests/action_clipping_regression.sql`).
+
+## 13. Network connections: consent (security fix; written 2026-11-19)
+
+| File | Changes | Callers | Proof before apply |
+|---|---|---|---|
+| `20261119062110_network_connections_consent_guard_v1.sql` (+ `20261119062110_network_connections_consent_guard_v1.rollback.sql`) | drops the policies `network_connections_self_write` and `network_connections_self_update` and revokes INSERT, UPDATE and DELETE on `public.network_connections` from `authenticated`; keeps `network_connections_member_read`, SELECT and everything else | none new: the World already writes the table only through `request_connection`, `answer_connection` and `withdraw_connection` (SECURITY DEFINER, owned by the table's owner), and the Worker reads it with the service role | see below |
+
+The hole. Production carries two policies no migration here created (recorded in
+`supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql:938-946`) and grants INSERT, UPDATE and DELETE
+on the table to `authenticated`. Any member, with their own session, through the REST API, can therefore insert a connection
+naming anyone with status `accepted`, accept their own pending request, or move a row to another member. An accepted pair turns
+a message request into a conversation (`mnet_open_direct`, live: 119 of 120 profiles take messages from `network`) and is the
+only partner check of `publish_antisocial_collaboration` (a public post crediting both; latent today, the Anti-Social mission row
+is absent in production). Read-only production checks on 2026-11-19 found no other writer (no trigger, rule, view, cron job or
+other function writes the table; the writer RPCs equal this repository's text and none lets a member accept their own request),
+2 rows (1 accepted, 1 pending; no accepted row has `created_at` equal to `updated_at`, the trace an insert as accepted would
+usually leave, which is not proof that none was forged) and a ledger of 376 rows. The file's header records all of it.
+
+The fix checks before it commits that neither `anon` nor `authenticated` can still write the table, that no member write policy
+is left and that the three writer RPCs are still SECURITY DEFINER and owned by the table's owner; otherwise it stops with 55000
+and changes nothing. One transaction, safe to run twice, a 5 s lock bound. Independent of the World release and of every other
+section here; no prerequisite.
+
+**Not applied. Owner approval required.** Apply only on Matthew's approval of the exact text, with the Supabase MCP
+`apply_migration` (it runs as postgres, the table's owner) under the name `network_connections_consent_guard_v1`; rerun the
+header's read-only check query first (it must still answer the three policies and true for all four member privileges), then
+promote with the steps in `README.md` ("To promote one"). The CI reset holds the same hole today (`supabase/schema-manifest.json`:
+`authenticated=damrw` and the two policies, from the replay record). Once promoted, the reset applies the file after that record
+and closes it there too, so refresh the manifest from the reset's artifact in the same change, or its comparison fails.
+
+**Verify** with the same query afterwards: only `network_connections_member_read SELECT authenticated`; member SELECT true and
+INSERT, UPDATE, DELETE false; acl `{postgres=arwdDxtm/postgres,anon=rm/postgres,authenticated=rm/postgres,service_role=arwdDxtm/postgres}`;
+the ledger one row longer. In the World, Connect, Accept, Decline, Withdraw and End keep working; a member's direct POST or PATCH
+to `/rest/v1/network_connections` answers 403.
+
+**Roll back** with the rollback file (owner approval too; as postgres, name `network_connections_consent_guard_v1_rollback`). It
+puts back exactly the two policies, with production's expressions, and the three grants, touches nothing else, and reopens the
+hole; the query then answers what it answers today.
+
+Proof before apply (disposable databases only):
+`PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/network-connections-consent.integration.mjs` (137 checks; CI matrix
+entry `connections-consent` in `.github/workflows/human-uprise-editorial.yml`) and
+`ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=<PostgreSQL 16 or 17 bin> PG_MODULE=<node-postgres> node scripts/test/network-connections-consent.native.integration.mjs`
+(140 checks: the file applied statement by statement as psql does, members on another session, the 5 s lock bound; passed on
+PostgreSQL 16.15 and 17.7 on 2026-11-19, production runs 17.6). Both build production's layer from this repository's SQL and check
+it against the 2026-11-19 reads: the policies' expressions, every grant, the constraints and indexes, and the bodies of the eight
+functions that name the table, byte for byte. The static checks run in the root suite
+(`node --test scripts/test/network-connections-consent-sql.test.mjs`). `node scripts/test/network-connections-consent.mutants.mjs`
+removes each of the file's seven statements in turn: each mutant fails a check.
+
+For Matthew to decide, not changed here:
+- anon keeps SELECT (and PostgreSQL 17's MAINTAIN) on the table. No policy admits anon, so a visitor reads no row, and no shipped
+  code reads the table signed out (the connection RPCs refuse anon). Revoking it would only turn a visitor's empty answer into a
+  401.
+- MAINTAIN for `anon` and `authenticated` on this and other tables is a platform-wide question (the Data API cannot use it), left
+  as the media pointer guard left it.
+
+## 14. Mission catalog sources: Project Drawdown's source page (written 2026-11-19)
+
+| File | Changes | Callers | Proof before apply |
+|---|---|---|---|
+| `20261119140000_mission_catalog_sources_v1.sql` (+ `20261119140000_mission_catalog_sources_v1.rollback.sql`) | inserts the organization `project-drawdown` (nonprofit, unverified, no creator); creates `public.mission_catalog_sources` (catalog-keyed, draft/shown/hidden, the named words, facts and role line checks; SELECT for anon and authenticated, a shown row only; no write for any API role) and two SECURITY DEFINER functions for the house owner, `mission_catalog_source_owner_state` and `mission_catalog_source_command`, executable by `service_role` only; inserts one draft link for the catalog `drawdown` | the owner route `workers/mccluster/src/mission-sources.js` (the two functions) and the World's source page (the World's half of this work, B2, which lands separately; the table, read with `state=eq.shown`); both answer honestly while it is not applied | see below |
+
+What it is: the data and the owner controls of Project Drawdown's source page in the World, a page McCluster Corp makes and
+keeps, never Project Drawdown's account (`docs/control-plane/WORLD-MISSION-SOURCES.md`; decisions D1 to D14 there, each a
+default adopted pending Matthew's confirmation). **Inserting the organization row publishes it**: `network_organizations` is
+readable by anyone, so approving the file approves its name, type, description and website. The page itself stays a draft
+until the house owner shows it.
+
+**Prerequisite:** the mission publish (section 10.4, release step 9) applied and recorded (release step 11). The file refuses
+(55000, nothing changed) while no Drawdown mission is open, and when a `project-drawdown` organization exists that is not the row
+it writes. Independent of section 12 (E=UP) and section 13 (connections consent): any may come first, but the records that move
+them under `supabase/migrations/` are serial, one records change for every version applied since the last.
+
+**Not applied. Owner approval required.** Read production first (SELECT only): its ledger equals
+`supabase/production-ledger.json` (no unrecorded version), the publish row is present, the open Drawdown missions counted, no
+`project-drawdown` organization. Then apply on Matthew's approval of the exact text, with the Supabase MCP `apply_migration` (it
+runs as postgres) under the name `mission_catalog_sources_v1`, byte for byte. The ledger version is whatever the next row is then.
+
+**Verify** right after: one organization row and one draft link; anon REST answers `[]` for `mission_catalog_sources`; Control
+(Missions & fellows, Mission sources) shows Draft at revision 1; `?source=project-drawdown` says "That page is not available.".
+**Before Show:** Matthew confirms, outside this repository, that the written permission covers (a) a page headed by Project
+Drawdown's name on McCluster Corp's platform, which also sells sponsorships, (b) the 87 quotations there and (c) the citation;
+Show records only that date. Then Preview, then Show: that is the page's publication.
+
+**Roll back:** Hide in Control is instant for every new visit (pages already open keep the page until they reload). To withdraw
+the data, the rollback file with the owner's approval, as postgres, under `mission_catalog_sources_v1_rollback`: it refuses
+(55000), changing nothing, while the organization differs from the forward file's row or anything names it (an authenticity
+check, a group, a campaign, a member); otherwise it drops the two functions and the table and deletes the organization row,
+keeping the `control_audit` rows and touching no mission.
+
+**Records** after the apply, as release step 11 does: move the file to `supabase/migrations/` under its ledger version; the
+ledger, the drift contract, the schema manifest from the CI reset, the snapshot, `ledger-receipts.json`; remove its
+`live-callers.json` entries once the snapshot has the names; this section and `README.md`.
+
+Proof before apply (disposable databases only):
+`PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/mission-catalog-sources.integration.mjs` (76 checks over
+`supabase/tests/mission_catalog_sources.stub.sql`, production's default privileges, role check and organization checks, then nine
+mutated copies each failing a named check; CI matrix entry `mission-sources-store`) and
+`ALLOW_LOCAL_EUP_DB_TESTS=1 PG_BIN=<PostgreSQL 16 or 17 bin> PG_MODULE=<node-postgres> node scripts/test/mission-catalog-sources.native.integration.mjs`
+(87 checks: the same proof, one key from two sessions recorded once, a moved revision refused, the 5 s lock bound; passed on
+PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/test/mission-sources-owner.integration.mjs` (CI
+`mission-sources-owner`); the static checks: `node --test scripts/test/mission-catalog-sources-sql.test.mjs`.

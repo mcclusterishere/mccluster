@@ -1,7 +1,7 @@
 import { rest } from '../supabase.mjs';
 
-async function rpc(name, payload) {
-  const { body } = await rest(`rpc/${name}`, { method: 'POST', body: JSON.stringify(payload) });
+async function rpc(name, payload, restImpl = rest) {
+  const { body } = await restImpl(`rpc/${name}`, { method: 'POST', body: JSON.stringify(payload) });
   return body;
 }
 
@@ -76,13 +76,49 @@ export async function acceptNonce(nodeId, nonce, expiresAt) {
   }));
 }
 
-export async function claimLease(nodeId, { capabilities, implementations, leaseSeconds = 120 } = {}) {
-  return rpc('compute_claim_task', {
+// p_yield_seconds exists only once the pending compute_claim_task_yield_v3
+// SQL is promoted. Until then PostgREST answers 404 PGRST202 for the 5-argument
+// call; the parameter is then dropped for the life of the process (logged
+// once) and the claim is retried as the plain 4-argument call.
+let yieldUnsupported = false;
+
+function yieldParameterUnknown(error) {
+  if (Number(error?.status) !== 404) return false;
+  return error?.detail?.code === 'PGRST202' || /p_yield_seconds|Could not find the function/i.test(String(error?.message || ''));
+}
+
+export async function claimLease(nodeId, { capabilities, implementations, leaseSeconds = 120, yieldSeconds = 0 } = {}, { restImpl = rest } = {}) {
+  const payload = {
     p_node_id: nodeId,
     p_capabilities: capabilities || [],
     p_implementations: implementations || [],
     p_lease_seconds: leaseSeconds
+  };
+  const yieldValue = Math.floor(Number(yieldSeconds) || 0);
+  if (yieldValue <= 0 || yieldUnsupported) return rpc('compute_claim_task', payload, restImpl);
+  try {
+    return await rpc('compute_claim_task', { ...payload, p_yield_seconds: yieldValue }, restImpl);
+  } catch (error) {
+    if (!yieldParameterUnknown(error)) throw error;
+    yieldUnsupported = true;
+    console.log(JSON.stringify({ event: 'compute_claim_yield_unsupported', detail: 'compute_claim_task has no p_yield_seconds (compute_claim_task_yield_v3 is pending); claiming without it' }));
+    return rpc('compute_claim_task', payload, restImpl);
+  }
+}
+
+// Cancel a task that is still queued, atomically against the claim: the
+// scheduler selects status='queued' FOR UPDATE SKIP LOCKED, so this
+// conditional update and a claim cannot both win. Null means a node already
+// holds the task and the caller must not run it anywhere else.
+export async function cancelQueuedComputeTask({ orgId, taskId, reason = 'canceled' } = {}, { restImpl = rest } = {}) {
+  if (!orgId || !taskId) return null;
+  const params = new URLSearchParams({ id: eq(taskId), org_id: eq(orgId), status: 'eq.queued' });
+  const { body = [] } = await restImpl(`ops_compute_tasks?${params}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ status: 'canceled', last_error: String(reason).slice(0, 4000), updated_at: new Date().toISOString() })
   });
+  return Array.isArray(body) && body.length ? body[0] : null;
 }
 
 export async function startLease(nodeId, leaseId, leaseToken, extendSeconds = 120) {

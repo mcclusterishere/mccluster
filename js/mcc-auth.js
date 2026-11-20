@@ -23,6 +23,7 @@
   var KEY = 'sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
   var SESSION = 'mccdb_session';
   var KEEP = 'mcc_sess_keep';
+  var SIGNED_OUT = 'mcc_sess_out';
   var VERIFIER = 'mcc.pkce';
   var OAUTH_PROVIDER = 'mcc.oauth_provider';
   var DEVICE = 'mcc.device_id';
@@ -32,14 +33,48 @@
   function set(store, key, value) { try { root[store].setItem(key, value); } catch (e) { /* storage may be blocked */ } }
   function del(store, key) { try { root[store].removeItem(key); } catch (e) { /* storage may be blocked */ } }
 
+  /* A SIGN-OUT STAYS SIGNED OUT (music slice M4, 2026-11-19; accounts lane ACC-8).
+     The keep copy below brings a session back when the main copy is missing,
+     and a sign-out removes the two one at a time. Another open tab that read
+     the session between the two removals (the album repainting its gated row,
+     Creator Studio's analytics) found the keep alone and wrote it back: both
+     tabs ended signed in. So a sign-out first leaves a mark naming the session
+     it ended (a hash of its refresh token, never the token), then removes the
+     keep, then the main copy; a copy of that session is never restored, by
+     this file or by js/backend.js, which holds the same rule. A new sign-in
+     is a different session and clears the mark. */
+  function fingerprint(raw) {
+    var s = raw;
+    if (typeof raw === 'string') { try { s = JSON.parse(raw); } catch (e) { return ''; } }
+    var key = s && (s.refresh_token || s.access_token);
+    if (!key) return '';
+    var a = 0x811c9dc5, b = 5381;
+    for (var i = 0; i < key.length; i++) {
+      var c = key.charCodeAt(i);
+      a = Math.imul(a ^ c, 0x01000193) >>> 0;
+      b = (Math.imul(b, 33) + c) >>> 0;
+    }
+    return 'v1.' + a.toString(36) + '.' + b.toString(36) + '.' + key.length;
+  }
+  function signedOutCopy(raw) {
+    var mark = get('localStorage', SIGNED_OUT);
+    return !!mark && mark === fingerprint(raw);
+  }
+
   function readSession() {
     try {
       var raw = get('localStorage', SESSION);
+      if (raw && signedOutCopy(raw)) {
+        /* a copy of a session that was signed out, put back by a tab that read it mid-sign-out */
+        del('localStorage', KEEP); del('localStorage', SESSION);
+        return null;
+      }
       /* backend.js has always kept a second copy specifically so a transient
          write/clear cannot make an active member look anonymous. mcc-auth.js
          must honor the same contract because Mnet loads this module directly. */
       if (!raw) {
         raw = get('localStorage', KEEP);
+        if (raw && signedOutCopy(raw)) { del('localStorage', KEEP); return null; }
         if (raw) set('localStorage', SESSION, raw);
       }
       return JSON.parse(raw || 'null');
@@ -83,8 +118,17 @@
   function fresh(s) { return !!(s && s.expires_at > Date.now() / 1000 + 60); }
 
   function writeSession(s) {
-    if (!s) { del('localStorage', SESSION); del('localStorage', KEEP); return null; }
+    if (!s) {
+      /* the mark first, then the keep, then the main copy: a tab that reads in between finds the main copy, never
+         the keep alone (A SIGN-OUT STAYS SIGNED OUT, above) */
+      var mark = fingerprint(get('localStorage', SESSION) || get('localStorage', KEEP));
+      if (mark) set('localStorage', SIGNED_OUT, mark);
+      del('localStorage', KEEP);
+      del('localStorage', SESSION);
+      return null;
+    }
     var raw = JSON.stringify(stampExpiry(s));
+    del('localStorage', SIGNED_OUT);
     set('localStorage', SESSION, raw);
     set('localStorage', KEEP, raw);
     return s;
@@ -266,6 +310,118 @@
     });
   }
 
+  /* A JWT's payload is base64url and its names are UTF-8: read it that way, as js/tabbar.js does. */
+  function claimsOf(token) {
+    try {
+      var raw = String(token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (raw.length % 4) raw += '=';
+      return JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(raw), function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''))) || {};
+    } catch (e) { return {}; }
+  }
+  /* Who a stored session is: the account (the JWT's sub), or for a session that carries no readable token its user. */
+  function accountOf(s) {
+    if (!s || !s.access_token) return null;
+    return String(claimsOf(s.access_token).sub || (s.user && s.user.id) || 'session');
+  }
+  function accountOfToken(token) {
+    var sub = claimsOf(token).sub;
+    if (sub) return String(sub);
+    var s = readSession();
+    return s && s.access_token === token ? accountOf(s) : 'session';
+  }
+
+  /* ONE TOKEN PER CALL, AND ONE MORE TRY (music slice M4, 2026-11-19; accounts lane ACC-2, delivery lane DEL-3).
+     The music scripts sent the access token as it sat in storage. A member back after the token's hour was a guest
+     to every music call while the bar said signed in: the gated record said 0/3 missions to its owner, listens went
+     uncounted, the artist lost the tools on their own page, and Creator Studio answered "JWT expired". freshToken()
+     is the token for the call about to be made, renewed first when it has under a minute left, the way every other
+     call in this file renews; authFetch() makes that call and, when the server still refuses the token (401: revoked,
+     or a clock that disagrees), renews it once and asks once more, never a third time. One session store, the same
+     two keys: nothing here keeps a token of its own. A caller that acts for one account names it ({ account }), and
+     the call is refused here, never sent, when the session now stored is someone else's or nobody's. */
+  function freshToken() {
+    var before = readSession();
+    if (!before || !before.access_token) return Promise.resolve(null);
+    return MCC.refreshIfNeeded().then(function (s) {
+      if (s && s.access_token) return s.access_token;
+      /* null: a sign-out, a refresh another tab (or another copy of this file) won, or another account: what is stored now */
+      var now = readSession();
+      return now && now.access_token && fresh(now) ? now.access_token : null;
+    }, function () {
+      /* offline, a timeout, a 5xx: the stored token, as before. The server decides, and a 401 asks once more. */
+      var now = readSession();
+      return (now && now.access_token) || null;
+    });
+  }
+  function renewAfterRefusal(refused) {
+    var now = readSession();
+    if (!now || !now.access_token) return Promise.resolve(null);
+    if (now.access_token !== refused) return Promise.resolve(now.access_token);
+    return MCC.refresh().then(function (s) {
+      if (s && s.access_token) return s.access_token;
+      var again = readSession();
+      return again && again.access_token && again.access_token !== refused ? again.access_token : null;
+    }, function () { return null; });
+  }
+  function plainHeaders(h) {
+    var out = {};
+    if (!h) return out;
+    if (typeof h.forEach === 'function' && !Array.isArray(h)) h.forEach(function (v, k) { out[String(k).toLowerCase()] = v; });
+    else if (Array.isArray(h)) h.forEach(function (p) { out[String(p[0]).toLowerCase()] = p[1]; });
+    else Object.keys(h).forEach(function (k) { out[k.toLowerCase()] = h[k]; });
+    return out;
+  }
+  function authFetch(url, init, opts) {
+    init = Object.assign({}, init);
+    opts = opts || {};
+    var headers = plainHeaders(init.headers);
+    function send(token) {
+      if (opts.account != null && (!token || accountOfToken(token) !== String(opts.account))) {
+        return Promise.reject(Object.assign(new Error(token
+          ? 'You signed in as someone else in another tab. Reload this page to continue as them.'
+          : 'You signed out in another tab. Sign in again to continue.'), { status: 401, code: token ? 'account_changed' : 'signed_out' }));
+      }
+      var h = Object.assign({}, headers);
+      if (token) h.authorization = 'Bearer ' + token;
+      return fetch(url, Object.assign({}, init, { headers: h }));
+    }
+    return freshToken().then(function (token) {
+      return send(token).then(function (res) {
+        if (!res || res.status !== 401 || !token) return res;
+        return renewAfterRefusal(token).then(function (next) {
+          return next && next !== token ? send(next) : res;
+        });
+      });
+    });
+  }
+
+  /* WHO IS SIGNED IN HERE, AND WHEN THAT CHANGES (music slice M4; accounts lane ACC-1, ACC-5). Pages that paint for
+     an account (an offer, a gated row, an artist's own tools, Creator Studio) used to decide once, at load. This calls
+     back when the account stored for this site changes: a sign-in or sign-out in this tab (mcc:auth-changed), in
+     another tab (storage), or while this page was away (pageshow, focus, visibility). A renewed token for the same
+     account is not a change. */
+  var accountWatchers = [], lastAccount, watchingAccounts = false;
+  function checkAccount() {
+    var now = accountOf(readSession());
+    if (now === lastAccount) return;
+    var was = lastAccount;
+    lastAccount = now;
+    accountWatchers.slice().forEach(function (fn) { try { fn(now, was); } catch (e) { /* one page's repaint never stops another's */ } });
+  }
+  function watchAccounts() {
+    if (watchingAccounts || !root.addEventListener) return;
+    watchingAccounts = true;
+    root.addEventListener('storage', function (e) { if (!e || e.key === null || e.key === SESSION || e.key === KEEP) checkAccount(); });
+    root.addEventListener('mcc:auth-changed', checkAccount);
+    root.addEventListener('pageshow', checkAccount);
+    root.addEventListener('focus', checkAccount);
+    if (root.document && root.document.addEventListener) {
+      root.document.addEventListener('visibilitychange', function () { if (root.document.visibilityState !== 'hidden') checkAccount(); });
+    }
+  }
+
   var refreshFlight = null;
   var MCC = {
     user: function () {
@@ -312,6 +468,16 @@
       if (!s) return Promise.resolve(null);
       if (fresh(s)) return Promise.resolve(s);
       return MCC.refresh();
+    },
+
+    freshToken: freshToken,
+    authFetch: authFetch,
+    account: function () { return accountOf(readSession()); },
+    onAccountChange: function (fn) {
+      if (typeof fn !== 'function') return;
+      if (lastAccount === undefined) lastAccount = accountOf(readSession());
+      accountWatchers.push(fn);
+      watchAccounts();
     },
 
     mUid: function () {
@@ -543,7 +709,13 @@
        protocol-relative //host, a backslash or a control character is
        refused outright; anything else is resolved against this page and
        kept only when it lands on this origin over http(s). The answer is
-       the path, query and fragment, or "" for no usable destination. */
+       the path, query and fragment, or "" for no usable destination.
+       The answer is itself handed to location, so it is held to the same
+       rule: resolving collapses dot segments, and "/.//host" (or
+       "/%2e//host", "/x/..//host") comes out as the path "//host", which
+       location reads as another site (release review SEC-1, 2026-11-19).
+       A path that starts with two slashes is refused, and the answer must
+       resolve to this origin again. */
     safeNext: function (raw) {
       raw = String(raw == null ? '' : raw).trim();
       if (!raw || raw.length > 2000) return '';
@@ -551,7 +723,9 @@
       try {
         var target = new URL(raw, root.location.href);
         if (target.origin !== root.location.origin || !/^https?:$/.test(target.protocol)) return '';
-        return target.pathname + target.search + target.hash;
+        var out = target.pathname + target.search + target.hash;
+        if (/^[\/\\]{2}/.test(out) || new URL(out, root.location.href).origin !== root.location.origin) return '';
+        return out;
       } catch (_) { return ''; }
     },
 

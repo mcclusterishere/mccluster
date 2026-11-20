@@ -20,7 +20,7 @@ Columns follow the handoff's evidence vocabulary and are deliberately separate. 
 | Owner front page / inactive widget editors (#776) | yes | PR #776 | audit: PGlite 10+10, unit 10 | no | no | no |
 | Admin category nav + analytics layout (#784→#789) | yes | PR #789, not mounted by `control.html` | audit: 7 unit, 10 SQL | no | no | no |
 | Music direct sales: purchased-asset pinning (COM-1), download attempt settlement (COM-2) | yes | **applied form imported** (`20261109175747`, Edge v42 source) | local PostgreSQL 16 suite + native 17.7 release integration | no | **yes: migration + Edge v42 (receipt)** | no real purchase/download |
-| Customer checkout reservation recovery (COM-3) | yes | PR #782 only | audit reproduction only | no | no | no |
+| Customer checkout reservation recovery (COM-3) | yes | PR #782's branch, through #796 (merged into #782 on 2026-11-10) | as #796 records it: handler and billing 21/21, native PostgreSQL 16.15 and 17.11 (16 checks each), hosted browser 13/13; not re-run by this audit | no (#782 is a draft) | no | no |
 | Core job lease fencing + lost-lease abort (C3) | yes | this branch (`locked_by` lease, no schema change) | 4 tests | no | no | no |
 | Core reflection child idempotency (C2) | yes | this branch | 2 tests | no | no | no |
 | Core daily report persisted as success condition (C7) + house org lookup fix | yes | this branch | 3 tests | no | no | no |

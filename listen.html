@@ -62,6 +62,11 @@
       font-family: var(--ui); }
     .ls__note a { color: var(--ruby-text); text-decoration: none; }
     .ls__sec[hidden] { display: none; }
+    /* the offer for whoever is looking (js/creator-onboarding.js): a hidden answer is gone, a pending one keeps its
+       space; if no answer comes (no script, or a server that never replies) the neutral door shows after 6 s */
+    .music-launch .music-launch__offer [hidden] { display: none; }
+    .music-launch__offer[data-offer-pending] { visibility: hidden; animation: music-offer-reveal 0s linear 6s forwards; }
+    @keyframes music-offer-reveal { to { visibility: visible; } }
   </style>
   <link rel="stylesheet" href="css/music-room.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
@@ -109,15 +114,30 @@
 
     <!-- ONE TAP (owner, 2026-10-20): with a finished profile, Become a creator makes the artist page from it, asking
          nothing, and opens Creator Studio (js/creator-onboarding.js, the door). The tap accepts the Creator Terms, and
-         says so beside the button. -->
+         says so beside the button.
+         OFFERS BY STATE (owner, 2026-11-17: "not serving 'sign up' suggestions to people who are already signed up";
+         music slice M4): js/creator-onboarding.js shows the one offer for whoever is looking. A guest is asked to sign
+         in, a member who is not a creator gets the one tap, a creator opens Creator Studio, and the house owner also
+         gets his review desk. A signed-in visitor's offer keeps its space, unseen, until the server has answered. -->
     <section class="music-launch" aria-label="Creator Studio">
       <div>
         <span>For artists &amp; creators</span>
         <strong>Put your music in the same ecosystem people are listening in.</strong>
       </div>
-      <div class="music-launch__go">
-        <a href="creator.html" data-creator-door>Become a creator</a>
-        <small class="music-launch__terms">One tap with your profile. Tapping accepts the <a href="music-creator-terms.html">Creator Terms</a>. Already a creator? <a href="creator.html">Open Creator Studio</a></small>
+      <div class="music-launch__offer" data-creator-offer data-offer-pending>
+        <div class="music-launch__go" data-offer="signin" hidden>
+          <a href="account.html?next=creator.html">Sign in</a>
+          <small class="music-launch__terms">Your artist page is made from your profile. New here? <a href="mnet.html?join=1&amp;next=creator.html">Create an account</a></small>
+        </div>
+        <div class="music-launch__go" data-offer="become" hidden>
+          <a href="creator.html" data-creator-door>Become a creator</a>
+          <small class="music-launch__terms">One tap with your profile. Tapping accepts the <a href="music-creator-terms.html">Creator Terms</a>.</small>
+        </div>
+        <div class="music-launch__go" data-offer="studio">
+          <a href="creator.html">Open Creator Studio</a>
+          <small class="music-launch__terms">Your releases, albums and rates.</small>
+        </div>
+        <small class="music-launch__terms" data-offer="review" hidden>Your tools: <a href="control.html#sell:music:catalog">Music review &amp; catalog</a></small>
       </div>
     </section>
 
@@ -202,6 +222,7 @@
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/listen-ledger.js?v=__STAMP__"></script>
   <script src="js/gated-audio.js?v=__STAMP__"></script>
+  <script src="js/now-playing.js?v=__STAMP__"></script>
   <script src="js/music-engine.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/listen.js?v=__STAMP__"></script>

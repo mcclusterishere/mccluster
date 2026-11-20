@@ -79,7 +79,8 @@ jobs:
         run: bash scripts/test-music-direct-sales-db.sh
 
   browser:
-    runs-on: ubuntu-latest
+    # The pinned Playwright browser dependencies require this supported image.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262

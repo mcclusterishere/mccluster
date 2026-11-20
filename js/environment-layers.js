@@ -1,0 +1,1088 @@
+/* THE ENVIRONMENTAL GLOBE'S TYPED LAYERS (slice G1, 2026-11-17): earthquakes, satellite fire detections, fire
+   perimeters, weather alerts, natural events, coastal water levels and ShakeMap contours on the one Cesium viewer,
+   drawn as batched primitives (one collection per layer type, rebuilt only when the data changed, never per frame)
+   with per-layer pick ids. Provenance: until the event timeline's slice S5 (2026-11-19) the selected quake's ripple
+   adapted the alpha-only pattern of gods-eye-view src/render/cesium/draw.js (pulseAlpha and runPulses), MIT,
+   Copyright (c) 2026 Bilawal Sidhu, see THIRD-PARTY-NOTICES; since S5 the ripple is original code in
+   js/environment-ripple.js, the quakes are glyphs and labels from js/environment-quake-marks.js and a chosen event is
+   pushed to by js/environment-camera.js. Every visual encodes a quantity the source reported and the legend says
+   which. Nothing flashes: the selection fades softly through instance attributes, and the one illustrative animation
+   is that labelled ripple, bounded to 6 s under a render hold (Hitman's Halo recorded that 58 discs with callback axes
+   cost 32.4 ms a frame against 1.4 ms static). Geometry is never touched after construction.
+   This file fetches nothing itself (js/environment-layers-client.js does, without any credential), reads no clock in
+   its pure encodings, and every selection answers with source, recorded time, retrieval time, coverage and status;
+   a fetch time never stands in for an observation time. */
+(function (root) {
+  'use strict';
+  const ENV = 'mcc-environment/v1';
+  const LAYER_KEYS = Object.freeze(['fires', 'perimeters', 'alerts', 'eonet', 'tides']);
+  const GREY = '#9aa0a6';
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const isoOrNull = v => (typeof v === 'string' && v.length <= 40 && Number.isFinite(Date.parse(v)) ? new Date(v).toISOString() : null);
+  const finite = v => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+
+  /* ENCODINGS_BEGIN: pure, clock-free, unit-tested on their own (scripts/test/environment-layers-encodings.test.mjs) */
+  /* Radiated energy E grows as 10^(1.5 M) (Gutenberg-Richter); the disc's AREA is proportional to E, so its radius is
+     r(M) = 25 km * 10^(0.75 (M - 5)): M4 4.4 km, M5 25 km, M6 141 km, M7 790 km, capped at 1,000 km from about M7.14
+     and floored at 300 m. It shows magnitude, never the area affected. */
+  function quakeRadiusM(mag) {
+    if (typeof mag !== 'number' || !Number.isFinite(mag)) return null;
+    return clamp(25000 * 10 ** (0.75 * (mag - 5)), 300, 1000000);
+  }
+  /* the disc is an orbit-scale comparison (event timeline slice S5, 2026-11-19): it steps back once the camera is within five of its
+     radii, 600 km at the least, so a regional frame (the push lands 120-300 km away) shows the ground, the ripple, the ShakeMap
+     contours and the glyph rather than one flat ellipse over everything; out again, it returns */
+  function discNearM(radiusM) {
+    return Math.max(600000, typeof radiusM === 'number' && Number.isFinite(radiusM) ? 5 * radiusM : 0);
+  }
+  function depthColour(km) {
+    if (typeof km !== 'number' || !Number.isFinite(km)) return GREY;
+    return km < 33 ? '#ff5a3c' : km < 70 ? '#ffb347' : km < 300 ? '#ffe066' : '#8bb8ff';
+  }
+  /* the Worker formats the quake facts as `${n}` and `${n} km` (vendor evidence.mjs) */
+  function quakeFromFacts(facts) {
+    const list = Array.isArray(facts) ? facts : [];
+    const value = label => { const f = list.find(x => x && x.label === label && typeof x.value === 'string'); return f ? f.value.trim() : ''; };
+    const magText = value('Magnitude'), depthText = value('Depth');
+    const mag = magText ? Number(magText) : NaN, depth = depthText ? parseFloat(depthText) : NaN;
+    return { mag: Number.isFinite(mag) ? mag : null, depth_km: Number.isFinite(depth) ? depth : null };
+  }
+  function frpColour(mw) {
+    if (typeof mw !== 'number' || !Number.isFinite(mw)) return GREY;
+    return mw < 5 ? '#ffd166' : mw < 20 ? '#ffa62b' : mw < 60 ? '#ff5e2b' : mw < 200 ? '#ff2d55' : '#ffffff';
+  }
+  /* a summary cell's radius grows with the square root of its summed radiative power: area proportional to MW */
+  function cellRadiusPx(sumMw) {
+    const s = typeof sumMw === 'number' && Number.isFinite(sumMw) && sumMw > 0 ? sumMw : 0;
+    return clamp(4 + 2.2 * Math.sqrt(s / 10), 4, 40);
+  }
+  const cellColour = cell => (cell && typeof cell.frp_sum_mw === 'number' && cell.frp_sum_mw > 0 ? frpColour(cell.frp_max_mw) : GREY);
+  /* a summary cell as drawn (event timeline slice S5): 1.1 times its radius across, so the largest is 44 px, no longer 80, and at
+     half opacity, so the fire summaries stay a quantity in the background and never outshine an earthquake's glyph; the size still
+     grows with the summed radiative power, as the legend says */
+  const cellPx = sumMw => Math.round(1.1 * cellRadiusPx(sumMw));
+  const CELL_ALPHA = 0.5;
+  const SEVERITY = { Extreme: ['#b3001b', 0.3], Severe: ['#ff6a00', 0.26], Moderate: ['#ffcc00', 0.22], Minor: ['#3fa7ff', 0.18] };
+  function severityTint(severity) {
+    const row = Object.prototype.hasOwnProperty.call(SEVERITY, severity) ? SEVERITY[severity] : [GREY, 0.16];
+    return { hex: row[0], alpha: row[1] };
+  }
+  /* 5 km pedestal plus 30 km per metre above the station's MLLW datum: 1 m is a 35 km column */
+  const stationColumnM = valueM => 5000 + 30000 * Math.max(0, typeof valueM === 'number' && Number.isFinite(valueM) ? valueM : 0);
+  function stationColour(q, valueM) {
+    if (typeof valueM === 'number' && Number.isFinite(valueM) && valueM < 0) return '#6d8a84';
+    return q === 'v' ? '#35c4a8' : '#9ddfcf';
+  }
+  const MMI_PALETTE = ['#ffffff', '#ffffff', '#bfccff', '#a0e6ff', '#80ffff', '#7aff93', '#ffff00', '#ffc800', '#ff9100', '#ff0000', '#c80000'];
+  function mmiColour(contour) {
+    const own = contour && typeof contour.color === 'string' && /^#[0-9a-f]{6}$/i.test(contour.color) ? contour.color.toLowerCase() : null;
+    if (own) return own;
+    const m = Math.round(Number(contour && contour.mmi) || 0);
+    return MMI_PALETTE[clamp(m, 1, 10)];
+  }
+  const EONET_COLOURS = { fire: '#ff7a1a', cyclone: '#7cc7ff', tornado: '#9ad0ff', storm: '#7cc7ff', volcano: '#c04dff', ice: '#b8f3ff', flood: '#4aa3ff', heat: '#ff3d5e', dust: '#c8b89a', landslide: '#a0724a', snow: '#ffffff', quake: '#ff5a3c', wave: '#2bd9c7', other: '#cfd8dc' };
+  const eonetColour = kind => (Object.prototype.hasOwnProperty.call(EONET_COLOURS, kind) ? EONET_COLOURS[kind] : EONET_COLOURS.other);
+  const lod = heightM => (heightM <= 400000 ? 'near' : 'far');
+  function pickId(spec) {
+    const out = { env: ENV, layer: spec.layer, id: spec.id, kind: spec.kind };
+    if (spec.part !== undefined) out.part = spec.part;
+    if (spec.index !== undefined) out.index = spec.index;
+    return Object.freeze(out);
+  }
+  const isEnvPick = picked => !!(picked && picked.id && typeof picked.id === 'object' && picked.id.env === ENV);
+  const providerOf = id => String(id || '').split(':')[0];
+  const KINDS = { usgs: 'quake', nws: 'alert', eonet: 'natural', nhc: 'cyclone' };
+  const kindOf = item => KINDS[providerOf(item && item.id)] || 'event';
+  const notSupplied = 'not supplied';
+  const text = (v, fallback) => (typeof v === 'string' && v.trim() ? v : fallback);
+  const timeText = iso => isoOrNull(iso) || notSupplied;
+  const num = (v, unit) => (typeof v === 'number' && Number.isFinite(v) ? `${v}${unit ? ' ' + unit : ''}` : null);
+  const firstVertex = polygons => { const ring = Array.isArray(polygons) && Array.isArray(polygons[0]) && Array.isArray(polygons[0][0]) ? polygons[0][0] : null; const p = ring && Array.isArray(ring[0]) ? ring[0] : null; return p && typeof p[0] === 'number' && typeof p[1] === 'number' ? { lon: p[0], lat: p[1] } : { lon: null, lat: null }; };
+  function shakemapLabel(sm) {
+    const s = sm || {};
+    return `modelled shaking (MMI), USGS ShakeMap v${s.version === null || s.version === undefined ? '?' : s.version} (${text(s.review_status, 'review status not supplied')}), max MMI ${s.max_mmi === null || s.max_mmi === undefined ? 'not supplied' : s.max_mmi}, computed ${timeText(s.process_time)}`;
+  }
+  /* the facts of one selectable thing, with its own time under its own label; the fetch time is never here */
+  function factsFor(kind, item) {
+    const out = { title: '', facts: [], observed_at: null, observed_label: 'unknown', observed_date_only: false, lat: null, lon: null, modelled: false };
+    const it = item || {};
+    const push = (label, value) => { out.facts.push({ label, value: value === null || value === undefined ? notSupplied : String(value) }); };
+    const own = (label, iso) => { out.observed_at = isoOrNull(iso); out.observed_label = label; };
+    if (kind === 'fire_detection') {
+      const row = Array.isArray(it.row) ? it.row : [];
+      out.title = `Satellite fire detection (${text(row[5], 'satellite not supplied')})`;
+      push('Satellite', text(row[5], notSupplied));
+      push('Radiative power', num(row[2], 'MW') || 'not reported');
+      push('Confidence', text(row[3], 'not reported'));
+      push('Acquired', timeText(row[4]));
+      push('Overpass', row[6] === 'D' ? 'day' : row[6] === 'N' ? 'night' : 'not reported');
+      own('Acquired', row[4]); out.lon = finite(row[0]); out.lat = finite(row[1]);
+    } else if (kind === 'fire_cell') {
+      const c = Array.isArray(it.cell) ? it.cell : [];
+      const west = finite(c[0]), south = finite(c[1]);
+      out.title = `Fire detections · 1° area at ${south}°, ${west}° (south-west corner)`;
+      push('Detections', finite(c[2]));
+      push('Summed radiative power', typeof c[3] === 'number' && c[3] > 0 ? `${c[3]} MW` : 'FRP not reported');
+      push('Peak radiative power', num(c[4], 'MW') || 'not reported');
+      push('Latest overpass', timeText(c[5]));
+      push('Area', `1° cell, south-west corner ${south}°, ${west}°`);
+      own('Acquired', c[5]); out.lon = west === null ? null : west + 0.5; out.lat = south === null ? null : south + 0.5;
+    } else if (kind === 'perimeter') {
+      out.title = text(it.name, 'Fire perimeter');
+      push('Name', text(it.name, notSupplied));
+      push('GIS acres', typeof it.gis_acres === 'number' && Number.isFinite(it.gis_acres) ? it.gis_acres.toLocaleString('en-US') : notSupplied);
+      push('Captured', timeText(it.polygon_captured_at));
+      push('Last edited', timeText(it.last_edited_at));
+      push('Discovered', timeText(it.discovered_at));
+      if (typeof it.polygons_dropped === 'number' && it.polygons_dropped > 0) push('Geometry', `polygons dropped: ${it.polygons_dropped}`);
+      if (it.geometry_truncated === true) push('Geometry limit', 'geometry truncated');
+      if (typeof it.rings_skipped === 'number' && it.rings_skipped > 0) push('Rings skipped here', `${it.rings_skipped} ring(s) not closed by the provider were left out, never closed`);
+      own('Captured', it.polygon_captured_at); Object.assign(out, firstVertex(it.polygons));
+    } else if (kind === 'alert' && it && typeof it === 'object' && 'headline' in it) {
+      out.title = text(it.headline, text(it.event, 'Alert'));
+      push('Event', text(it.event, notSupplied)); push('Severity', text(it.severity, notSupplied)); push('Certainty', text(it.certainty, notSupplied)); push('Urgency', text(it.urgency, notSupplied));
+      push('Area', text(it.area, notSupplied)); push('Sent', timeText(it.sent)); push('Onset', timeText(it.onset)); push('Expires', timeText(it.expires)); push('Ends', timeText(it.ends));
+      own('Sent', it.sent); Object.assign(out, firstVertex(it.polygons));
+    } else if (kind === 'natural' && it && it.event) {
+      const e = it.event, p = it.point || {};
+      out.title = text(e.title, 'Natural event');
+      push('Categories', Array.isArray(e.categories) && e.categories.length ? e.categories.join(', ') : notSupplied);
+      const date = isoOrNull(p.date);
+      push('Reported', date ? (p.placeholder_time === true ? `${date.slice(0, 10)} · date only (time of day not reported)` : date) : notSupplied);
+      if (typeof p.magnitude === 'number' && Number.isFinite(p.magnitude)) push('Magnitude', `${p.magnitude}${p.unit ? ' ' + p.unit : ''}`);
+      if (Array.isArray(e.reported_by) && e.reported_by.length) push('Sources', e.reported_by.join(', '));
+      if ((typeof e.track_count === 'number' && e.track_count > 1) || e.track_truncated === true) push('Track', `track points: ${e.track_count}${e.track_truncated === true ? ' (truncated)' : ''}`);
+      own('Reported', p.date); out.observed_date_only = p.placeholder_time === true;
+      if (p.type === 'Point' && Array.isArray(p.coordinates)) { out.lon = finite(p.coordinates[0]); out.lat = finite(p.coordinates[1]); } else Object.assign(out, firstVertex(p.polygons));
+    } else if (kind === 'station') {
+      out.title = [text(it.name, ''), text(it.place, '')].filter(Boolean).join(' · ') || `Station ${it.station}`;
+      push('Station', `${text(it.name, 'unnamed')} (${text(it.station, '?')}) · ${text(it.place, notSupplied)}`);
+      push('Observed water level', typeof it.value_m === 'number' && Number.isFinite(it.value_m) ? `${it.value_m} m above MLLW` : notSupplied);
+      push('Quality', text(it.quality, notSupplied));
+      push('Observed', timeText(it.observed_at));
+      push('Status', `${text(it.status, 'unknown')}${it.reason ? ` (${it.reason})` : ''}`);
+      own('Observed', it.observed_at); out.lon = finite(it.lon); out.lat = finite(it.lat);
+    } else if (kind === 'shakemap') {
+      const q = it.quake || {}, sm = it.shakemap || {};
+      out.title = text(q.title, 'Earthquake');
+      for (const f of Array.isArray(q.facts) ? q.facts : []) if (f && typeof f.label === 'string') push(f.label, f.value);
+      push('ShakeMap', shakemapLabel(sm));
+      if (it.contour) push('Contour', `MMI ${it.contour.mmi}${it.contour.color ? ' · USGS colour ' + it.contour.color : ''}`);
+      own('Computed', sm.process_time); out.modelled = true; out.lon = finite(q.lon); out.lat = finite(q.lat);
+    } else {
+      /* a feed item (the pins message): earthquake, placed alert, natural event, cyclone */
+      out.title = text(it.title, 'Environmental observation');
+      for (const f of Array.isArray(it.facts) ? it.facts : []) if (f && typeof f.label === 'string') push(f.label, f.value);
+      if (kind === 'quake' && !out.facts.some(f => f.label === 'Magnitude')) push('Magnitude', 'Magnitude not supplied');
+      out.observed_at = isoOrNull(it.observed_at); out.observed_label = out.observed_at ? 'Observed' : 'unknown';
+      out.lon = finite(it.lon); out.lat = finite(it.lat);
+    }
+    return out;
+  }
+  const LEGEND = {
+    events: 'Dots mark the feed\'s reported event positions (USGS, NWS, NASA EONET, NOAA NHC); an alert\'s dot is a vertex of its own polygon, never a centroid.',
+    quakes: 'Each quake is a seismograph glyph sized by magnitude; the largest are labelled with it (M6.3) and a short place. Disc area shows magnitude (energy, 10^1.5M), not the area affected; capped at 1,000 km; colour shows depth: red shallow (<33 km) to blue deep (>=300 km).',
+    rupture: 'The bright line is the modelled up-dip edge of the fault plane USGS estimated (finite fault model): a model, not a mapped crack at the surface.',
+    fires: 'Each dot is a satellite detection (375 m pixel), colour shows radiative power (MW): pale yellow <5 to white-hot >=200; far away, circles summarise a 1-degree area and their size shows the summed radiative power. A detection is not a confirmed fire or a perimeter.',
+    perimeters: 'Fire perimeters as NIFC publishes them (generalised to about 200 m); operational mapping, not a legal boundary.',
+    alerts: 'Alert polygons as NWS publishes them, tinted by severity (Extreme, Severe, Moderate, Minor); alerts that name zones only are listed, never placed.',
+    eonet: 'Reported positions joined in order: not a forecast or an inferred path.',
+    tides: 'Column height shows the observed water level above the station datum (MLLW, metres); preliminary readings are not yet verified by NOAA. Observations, never predictions or currents.',
+    shakemap: 'Contours show modelled shaking intensity (MMI) from USGS ShakeMap: a versioned estimate, never a measurement at every place.'
+  };
+  const legendFor = layer => LEGEND[layer] || '';
+  const RIPPLE_LABEL = 'Ripple is illustrative: not a recording of shaking';
+  const RUPTURE_LABEL = 'modelled rupture plane (USGS finite fault)';
+  /* a rupture answer in words for the selection's facts: the drawn edge with its depth and model, or why nothing is drawn */
+  const RUPTURE_NONE = Object.freeze({ point_source: 'none drawn: USGS models this quake as a point (no finite-fault model)', not_finite_fault: 'none drawn: the rupture file names no finite-fault model', no_rupture: 'none drawn: USGS lists no rupture file for this quake', no_shakemap: 'none drawn: no ShakeMap, so no rupture file', no_edge: 'none drawn: the rupture plane has no up-dip edge to show', withdrawn: 'none drawn: USGS has withdrawn this event', event_not_found: 'none drawn: USGS does not know this event', source_unavailable: 'none drawn: USGS could not be read just now' });
+  function ruptureLine(body) {
+    const b = body || {};
+    if (b.available === true) return `${RUPTURE_LABEL}: up-dip edge drawn${typeof b.top_depth_km === 'number' ? `, top at ${b.top_depth_km} km depth` : ''}${typeof b.model_created === 'string' && b.model_created ? `, model of ${b.model_created.slice(0, 10)}` : ''}`;
+    return RUPTURE_NONE[b.reason] || 'none drawn';
+  }
+  /* OFF, OUTAGE, THE VISITOR'S NETWORK AND NO DATA, EACH IN ITS OWN WORDS (event timeline slice S0, 2026-11-19): the gate refusing as off (404
+     module_disabled: the owner has not turned the layers on), as an outage (503 module_policy_unavailable), every layer route out of
+     reach from this browser, and a layer whose provider answered with nothing, which is said rather than left out of the legend */
+  const POLICY_LINE = 'Environmental layers are not available right now';
+  const OFF_LINE = 'Environmental layers are turned off for now';
+  const NETWORK_LINE = 'Environmental layers could not be reached from this browser';
+  const LAYER_TITLES = Object.freeze({ fires: 'Fires', perimeters: 'Fire perimeters', alerts: 'Alerts', eonet: 'Natural events', tides: 'Water levels' });
+  const noneLine = layer => `${LAYER_TITLES[layer] || layer}: none reported right now`;
+  const encodings = Object.freeze({ quakeRadiusM, discNearM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellPx, CELL_ALPHA, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, RUPTURE_LABEL, ruptureLine, POLICY_LINE, OFF_LINE, NETWORK_LINE, noneLine });
+  /* ENCODINGS_END */
+
+  /* THE FEED PROVIDERS' TERMS ARRIVE WITH THE PINS (review G1R-10): the panel copies them from the feed's own source records (which
+     the Worker builds from its FEED_SOURCE_TERMS and the vendor's ENVIRONMENT_SOURCES) into hu:environment-pins `sources`, so this
+     file keeps no copy that could drift; a provider the pins did not describe is answered with empty terms, never invented ones. */
+  const httpsUrl = v => (typeof v === 'string' && v.length <= 2000 && /^https:\/\/[^\s/?#@]+(?:[/?#][^\s]*)?$/.test(v) ? v : '');
+  const clip = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+  function termsFrom(sources) {
+    const out = Object.create(null); /* keyed by provider id: no inherited key can pass for a provider */
+    for (const s of Array.isArray(sources) ? sources.slice(0, 8) : []) {
+      if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !/^[a-z][a-z0-9_]{0,39}$/.test(s.id) || out[s.id]) continue;
+      out[s.id] = Object.freeze({ id: s.id, label: clip(s.label, 120), url: httpsUrl(s.url), attribution: clip(s.attribution, 200), license: clip(s.license, 200), coverage: clip(s.coverage, 300) });
+    }
+    return out;
+  }
+
+  /* ---------- runtime ---------- */
+  const DOT_HEIGHT = 2000, BUILD_MAX_MS = 30000, FADE_MS = 400, FADE_MAX_MS = 1000, REPLAY_FADE_MS = 300, FOCUS_SAFETY_MS = 600, PENDING_FOCUS_MS = 30000;
+  let viewer = null, Cesium = null, tell = () => {}, governor = null, director = null, client = null, doc = null, mounted = false;
+  let on = false, eventsOn = false, lodState = 'far', replayMode = null, pendingFocus = null, pendingFocusTimer = null, viewTarget = '3d';
+  const layersOn = { fires: true, perimeters: true, alerts: true, eonet: true, tides: true };
+  const data = { events: [], fires: null, perimeters: null, alerts: null, eonet: null, tides: null };
+  const states = { events: null, fires: null, perimeters: null, alerts: null, eonet: null, tides: null, shakemap: null };
+  const results = { fires: null, perimeters: null, alerts: null, eonet: null, tides: null };
+  const prims = { events: {}, fires: {}, perimeters: {}, alerts: {}, eonet: {}, tides: {}, shakemap: {}, rupture: {} };
+  const counts = { events: 0, quakes: 0, quakeDiscs: 0, glyphs: 0, firesNear: 0, cells: 0, perimeters: 0, perimeterRings: 0, alerts: { drawn: 0, zone_only: 0, rejected: 0 }, eonetPoints: 0, eonetTracks: 0, eonetPolygons: 0, tides: 0, tideLabels: 0, shakemapLines: 0, ruptureLines: 0 };
+  const picks = new Map();
+  const building = new Set();
+  const deferred = [];
+  let selected = null, fade = null, shakemap = null, rupture = null, selectedLabel = null, eventsSignature = '', eventsTourSignature = '', legendLines = [], buildListener = null, feedTerms = Object.create(null);
+  /* event timeline slice S5: the quake glyphs and labels, the ripple and the push, each its own module (loaded before this one) */
+  let marks = null, rippler = null, cam = null, onFrame = null, onActive = () => {};
+  const rippleNow = () => (rippler ? rippler.state() : null);
+  const glyphsOn = () => !!(marks && marks.usable());
+  const pendingMessages = [];
+
+  const now = () => Date.now();
+  const motionAllowed = () => !(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const css = (hex, alpha) => Cesium.Color.fromCssColorString(hex).withAlpha(alpha === undefined ? 1 : alpha);
+  const degrees = (lon, lat, h) => Cesium.Cartesian3.fromDegrees(lon, lat, h || 0);
+  const requestRender = reason => { if (governor) governor.requestRender(reason); else if (viewer && viewer.scene.requestRender) viewer.scene.requestRender(); };
+  const hold = (owner, maxMs) => { if (governor) governor.hold(owner, maxMs); };
+  const release = owner => { if (governor) governor.release(owner); };
+  const groundOk = () => !!(Cesium.GroundPrimitive && typeof Cesium.GroundPrimitive.isSupported === 'function' && Cesium.GroundPrimitive.isSupported(viewer.scene));
+  const linesOk = () => !!(Cesium.GroundPolylinePrimitive && typeof Cesium.GroundPolylinePrimitive.isSupported === 'function' && Cesium.GroundPolylinePrimitive.isSupported(viewer.scene));
+  const visible = layer => (layer === 'events' || layer === 'shakemap' ? eventsOn : on && layersOn[layer] === true);
+
+  /* ---------- primitives: add, remove, and hold the loop continuous while Cesium builds asynchronously ---------- */
+  function addPrim(p) {
+    viewer.scene.primitives.add(p);
+    if (p && 'ready' in p && !p.ready) { building.add(p); watchBuild(); }
+    return p;
+  }
+  function removePrim(p) {
+    if (!p) return null;
+    building.delete(p);
+    try { viewer.scene.primitives.remove(p); } catch (e) {}
+    return null;
+  }
+  function watchBuild() {
+    hold('env-build', BUILD_MAX_MS);
+    if (buildListener) return;
+    buildListener = () => {
+      for (const p of [...building]) if (p.isDestroyed() || p.ready) building.delete(p);
+      if (deferred.length) for (const fn of deferred.splice(0)) { try { fn(); } catch (e) {} }
+      if (!building.size) { viewer.scene.postRender.removeEventListener(buildListener); buildListener = null; release('env-build'); requestRender('env-built'); }
+    };
+    viewer.scene.postRender.addEventListener(buildListener);
+  }
+  /* a ring exactly as the provider closed it: at least four positions, the last equal to the first; else skipped and counted */
+  function ringPositions(ring) {
+    if (!Array.isArray(ring) || ring.length < 4) return null;
+    const first = ring[0], last = ring[ring.length - 1];
+    if (!Array.isArray(first) || !Array.isArray(last) || first[0] !== last[0] || first[1] !== last[1]) return null;
+    const flat = [];
+    let prev = null;
+    for (const p of ring) {
+      if (!Array.isArray(p) || typeof p[0] !== 'number' || typeof p[1] !== 'number' || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) return null;
+      if (prev && prev[0] === p[0] && prev[1] === p[1]) continue;
+      flat.push(p[0], p[1]); prev = p;
+    }
+    if (flat.length < 8) return null;
+    return Cesium.Cartesian3.fromDegreesArray(flat);
+  }
+  function polygonInstance(polygon, colour, alpha, pick) {
+    const outer = ringPositions(polygon[0]);
+    if (!outer) return null;
+    const holes = [];
+    for (const h of polygon.slice(1)) { const pos = ringPositions(h); if (pos) holes.push(new Cesium.PolygonHierarchy(pos)); }
+    return new Cesium.GeometryInstance({ geometry: new Cesium.PolygonGeometry({ polygonHierarchy: new Cesium.PolygonHierarchy(outer, holes), vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT }), id: pick, attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(css(colour, alpha)) } });
+  }
+  function lineInstance(positions, width, colour, alpha, pick) {
+    return new Cesium.GeometryInstance({ geometry: new Cesium.GroundPolylineGeometry({ positions, width }), id: pick, attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(css(colour, alpha)) } });
+  }
+  const groundFill = instances => (instances.length && groundOk() ? addPrim(new Cesium.GroundPrimitive({ geometryInstances: instances, appearance: new Cesium.PerInstanceColorAppearance({ flat: true, translucent: true }), allowPicking: true })) : null);
+  const groundLines = instances => (instances.length && linesOk() ? addPrim(new Cesium.GroundPolylinePrimitive({ geometryInstances: instances, appearance: new Cesium.PolylineColorAppearance({ translucent: true }), allowPicking: true })) : null);
+  /* one id can live in two layers (a feed alert's dot in 'events' and its polygon in 'alerts'; an EONET event's dot and its
+     track), so entries are keyed by layer and id; a lookup by id alone prefers the events layer (the feed's ids) */
+  const key = (layer, id) => layer + '\n' + id;
+  const LOOKUP_ORDER = ['events', 'fires', 'cells', 'perimeters', 'alerts', 'eonet', 'tides'];
+  const getEntry = (layer, id) => picks.get(key(layer, id)) || null;
+  function findEntry(id, preferLayer) {
+    if (typeof id !== 'string' || !id) return null;
+    if (preferLayer) { const e = getEntry(preferLayer, id); if (e) return e; }
+    for (const layer of LOOKUP_ORDER) { const e = picks.get(key(layer, id)); if (e) return e; }
+    return null;
+  }
+  function entry(layer, id, kind, item, extra) { const e = Object.assign({ id, layer, kind, item, pick: pickId({ layer, id, kind }), fills: [], points: [], polylines: [], base: null }, extra || {}); picks.set(key(layer, id), e); return e; }
+  function dropLayerPicks(layer) { const prefix = layer + '\n'; for (const k of [...picks.keys()]) if (k.startsWith(prefix)) picks.delete(k); }
+
+  /* ---------- the events layer (the pins items): quake discs and dots, dots for the other feed events ---------- */
+  function rebuildEvents() {
+    const P = prims.events;
+    P.discs = removePrim(P.discs); P.dots = removePrim(P.dots);
+    dropLayerPicks('events');
+    const discs = [], dots = new Cesium.PointPrimitiveCollection(), glyphItems = [], glyphs = glyphsOn();
+    counts.events = data.events.length; counts.quakes = 0; counts.quakeDiscs = 0;
+    for (const item of data.events) {
+      const kind = kindOf(item);
+      const e = entry('events', item.id, kind, item);
+      let colour = kind === 'alert' ? '#ffb347' : kind === 'cyclone' ? '#7cc7ff' : kind === 'natural' ? eonetColour(item.category) : '#cfd8dc', size = 7;
+      if (kind === 'quake') {
+        counts.quakes += 1;
+        const q = quakeFromFacts(item.facts), r = quakeRadiusM(q.mag);
+        colour = q.mag === null ? GREY : depthColour(q.depth_km); size = 6; e.radius = r; e.mag = q.mag;
+        if (r !== null && groundOk()) {
+          /* 48 points round its rim (Cesium 1.131's EllipseGeometry steps round the rim by eight times its granularity at any radius, so
+             the PI / 32 used before drew every disc as an octagon, plain once the push brings the camera to a regional frame) */
+          const attributes = { color: Cesium.ColorGeometryInstanceAttribute.fromColor(css(colour, 0.35)), show: new Cesium.ShowGeometryInstanceAttribute(true) };
+          if (Cesium.DistanceDisplayConditionGeometryInstanceAttribute) attributes.distanceDisplayCondition = new Cesium.DistanceDisplayConditionGeometryInstanceAttribute(discNearM(r), Number.MAX_VALUE);
+          discs.push(new Cesium.GeometryInstance({ geometry: new Cesium.EllipseGeometry({ center: degrees(item.lon, item.lat), semiMajorAxis: r, semiMinorAxis: r, granularity: Math.PI / 192, vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT }), id: e.pick, attributes }));
+          e.fills.push({ primitive: () => prims.events.discs, colour: css(colour, 0.35) });
+          counts.quakeDiscs += 1;
+        }
+        /* the quake's glyph (js/environment-quake-marks.js) is its mark and its tap target: no dot under it */
+        if (glyphs) { glyphItems.push({ id: item.id, pick: e.pick, lon: item.lon, lat: item.lat, mag: q.mag, colour, title: item.title, observed_at: item.observed_at, stale: item.stale === true }); continue; }
+      }
+      const dot = dots.add({ position: degrees(item.lon, item.lat, DOT_HEIGHT), pixelSize: size, color: css(colour, item.stale ? 0.6 : 1), outlineColor: css('#10251e'), outlineWidth: 1, id: e.pick });
+      e.points.push({ point: dot, colour: css(colour, item.stale ? 0.6 : 1), size });
+    }
+    P.discs = groundFill(discs);
+    P.dots = addPrim(dots);
+    counts.glyphs = glyphs ? marks.build(glyphItems) : 0;
+    if (glyphs) marks.select(selected && selected.layer === 'events' && selected.kind === 'quake' ? selected.id : null);
+    if (selected && selected.layer === 'events') selected = getEntry('events', selected.id);
+    if (replayMode) applyReplay(director && director.scene() ? findEntry(director.scene().id, 'events') : null);
+  }
+  function eventsState() {
+    const items = data.events;
+    const by = { usgs: 0, nws: 0, eonet: 0, nhc: 0 };
+    for (const i of items) if (Object.prototype.hasOwnProperty.call(by, providerOf(i.id))) by[providerOf(i.id)] += 1;
+    const fetched = items.map(i => isoOrNull(i.fetched_at)).filter(Boolean).sort().pop() || null;
+    return { status: !items.length ? 'unavailable' : items.some(i => !i.stale) ? 'available' : 'stale', reason: null, http: null, schema: 'world-environment/v1', generated_at: null, fetched_at: fetched, last_success_at: fetched, coverage: '', attribution: '', license: '', url: '', source_id: null, label: '', count: items.length, total: items.length, truncated: false, sources: [], digest: { by_provider: by } };
+  }
+  function setEvents(items, options) {
+    const o = options || {};
+    eventsOn = o.on === true;
+    if (Array.isArray(o.sources)) feedTerms = termsFrom(o.sources);
+    const list = Array.isArray(items) ? items : [];
+    const signature = list.map(i => `${i.id}|${i.lat}|${i.lon}|${i.stale ? 1 : 0}|${i.category || ''}|${JSON.stringify(i.facts || [])}`).join('\n');
+    const changed = signature !== eventsSignature;
+    data.events = list; eventsSignature = signature;
+    /* what the tour is built from (the ids, their significance, their recorded times) can change with no geometry change: a
+       ShakeMap marks a quake significant and the panel re-sends the pins with the flag. The director is told; nothing is rebuilt. */
+    const tourSignature = list.map(i => `${i.id}|${i.significant === true ? 1 : 0}|${i.observed_at || ''}|${i.category || ''}`).join('\n');
+    const tourChanged = tourSignature !== eventsTourSignature;
+    eventsTourSignature = tourSignature;
+    if (mounted && changed) {
+      rebuildEvents();
+      states.events = eventsState();
+      tellLayerState('events');
+    }
+    if (mounted && director && (changed || tourChanged || (director.state().total === 0 && data.events.length))) director.setQueue(data.events, { queue: replayMode || 'significant' });
+    if (mounted && typeof o.selected === 'string' && o.selected && o.selected !== (selected && selected.id) && findEntry(o.selected, 'events')) select(o.selected, 'panel', { layer: 'events' });
+    if (mounted && selected && selected.layer === 'events' && !getEntry('events', selected.id)) clearSelection();
+    /* a focus kept pending is honoured by the pins that bring its id, as by a layer's data (picks are keyed by layer and id, so the
+       lookup is by id: review RV2-4) */
+    if (mounted && pendingFocus && findEntry(pendingFocus)) { const id = pendingFocus; pendingFocus = null; focus(id); }
+    if (mounted) { applyVisibility(); updateLegend(); requestRender('events'); }
+  }
+
+  /* ---------- fires: footprints near, summary cells far ---------- */
+  function rebuildFires() {
+    const P = prims.fires, body = data.fires;
+    P.near = removePrim(P.near); P.far = removePrim(P.far);
+    dropLayerPicks('fires'); dropLayerPicks('cells');
+    counts.firesNear = 0; counts.cells = 0;
+    if (!body) return;
+    const footprint = typeof body.footprint_m === 'number' && body.footprint_m > 0 ? body.footprint_m : 375;
+    const instances = [];
+    for (const row of Array.isArray(body.detections) ? body.detections.slice(0, 10000) : []) {
+      if (!Array.isArray(row) || typeof row[0] !== 'number' || typeof row[1] !== 'number' || !Number.isFinite(row[0]) || !Number.isFinite(row[1])) continue;
+      const id = `fire:${row[5]}:${row[4]}:${row[0]}:${row[1]}`;
+      if (getEntry('fires', id)) continue;
+      const e = entry('fires', id, 'fire_detection', { id, row });
+      const colour = css(frpColour(row[2]), 0.8);
+      if (groundOk()) {
+        instances.push(new Cesium.GeometryInstance({ geometry: new Cesium.EllipseGeometry({ center: degrees(row[0], row[1]), semiMajorAxis: footprint / 2, semiMinorAxis: footprint / 2, granularity: Math.PI / 8, vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT }), id: e.pick, attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(colour) } }));
+        e.fills.push({ primitive: () => prims.fires.near, colour });
+        counts.firesNear += 1;
+      }
+    }
+    P.near = groundFill(instances);
+    const far = new Cesium.PointPrimitiveCollection();
+    for (const c of body.summary && Array.isArray(body.summary.cells) ? body.summary.cells : []) {
+      if (!Array.isArray(c) || typeof c[0] !== 'number' || typeof c[1] !== 'number') continue;
+      const id = `cell:${c[0]}:${c[1]}`;
+      if (getEntry('cells', id)) continue;
+      const cell = { west: c[0], south: c[1], detections: c[2], frp_sum_mw: c[3], frp_max_mw: c[4], latest_acquired_at: c[5] };
+      const e = entry('cells', id, 'fire_cell', { id, cell: c });
+      const px = cellPx(cell.frp_sum_mw), colour = css(cellColour(cell), CELL_ALPHA);
+      const point = far.add({ position: degrees(c[0] + 0.5, c[1] + 0.5, DOT_HEIGHT), pixelSize: px, color: colour, outlineColor: css('#10251e', 0.45), outlineWidth: 1, id: e.pick });
+      e.points.push({ point, colour, size: px });
+      counts.cells += 1;
+    }
+    P.far = addPrim(far);
+  }
+  /* ---------- perimeters: fill with holes, outline per exterior ring ---------- */
+  function rebuildPerimeters() {
+    const P = prims.perimeters, body = data.perimeters;
+    P.fill = removePrim(P.fill); P.outline = removePrim(P.outline);
+    dropLayerPicks('perimeters'); counts.perimeters = 0; counts.perimeterRings = 0;
+    if (!body) return;
+    const fills = [], lines = [];
+    for (const row of Array.isArray(body.perimeters) ? body.perimeters : []) {
+      if (!row || typeof row !== 'object') continue;
+      const id = `wfigs:${String(row.id)}`;
+      if (getEntry('perimeters', id)) continue;
+      const e = entry('perimeters', id, 'perimeter', row);
+      let drawn = 0, skipped = 0;
+      /* every polygon of a row carries its own frozen pick id (part 'polygon', index): Cesium finds instance attributes by the id's
+         identity, so one id shared by several polygons would fade only the first of them (review G1R-8); a pick on any part still
+         resolves to the row, since picks are looked up by layer and id */
+      (Array.isArray(row.polygons) ? row.polygons : []).forEach((polygon, index) => {
+        if (!Array.isArray(polygon) || !polygon.length) return;
+        const pick = pickId({ layer: 'perimeters', id, kind: 'perimeter', part: 'polygon', index });
+        const inst = polygonInstance(polygon, '#ff7a1a', 0.28, pick);
+        if (!inst) { skipped += 1; return; }
+        fills.push(inst); drawn += 1;
+        e.fills.push({ primitive: () => prims.perimeters.fill, colour: css('#ff7a1a', 0.28), pick });
+        const ring = ringPositions(polygon[0]);
+        if (ring && linesOk()) { lines.push(lineInstance(ring, 2, '#ffb27a', 0.9, pick)); counts.perimeterRings += 1; }
+      });
+      e.item = Object.assign({}, row, { rings_skipped: skipped });
+      if (drawn) counts.perimeters += 1;
+    }
+    P.fill = groundFill(fills); P.outline = groundLines(lines);
+  }
+  /* ---------- alerts: the alert's own polygon tinted by severity; zone-only and rejected never drawn ---------- */
+  function rebuildAlerts() {
+    const P = prims.alerts, body = data.alerts;
+    P.fill = removePrim(P.fill); P.outline = removePrim(P.outline);
+    dropLayerPicks('alerts'); counts.alerts = { drawn: 0, zone_only: 0, rejected: 0 };
+    if (!body) return;
+    const fills = [], lines = [];
+    for (const a of Array.isArray(body.alerts) ? body.alerts : []) {
+      if (!a || typeof a !== 'object' || typeof a.id !== 'string') continue;
+      if (a.geometry === 'zone_only') { counts.alerts.zone_only += 1; continue; }
+      if (a.geometry === 'rejected') { counts.alerts.rejected += 1; continue; }
+      if (a.geometry !== 'polygon' || !Array.isArray(a.polygons) || getEntry('alerts', a.id)) continue;
+      const tint = severityTint(a.severity), e = entry('alerts', a.id, 'alert', a);
+      let drawn = 0;
+      /* one frozen pick id per polygon, as for the perimeters (review G1R-8) */
+      a.polygons.forEach((polygon, index) => {
+        if (!Array.isArray(polygon) || !polygon.length) return;
+        const pick = pickId({ layer: 'alerts', id: a.id, kind: 'alert', part: 'polygon', index });
+        const inst = polygonInstance(polygon, tint.hex, tint.alpha, pick);
+        if (!inst) return;
+        fills.push(inst); drawn += 1;
+        e.fills.push({ primitive: () => prims.alerts.fill, colour: css(tint.hex, tint.alpha), pick });
+        const ring = ringPositions(polygon[0]);
+        if (ring && linesOk()) lines.push(lineInstance(ring, 1.5, tint.hex, 0.9, pick));
+      });
+      if (drawn) counts.alerts.drawn += 1;
+    }
+    P.fill = groundFill(fills); P.outline = groundLines(lines);
+  }
+  /* ---------- natural events: every reported point, the reported positions joined in order, reported polygons ---------- */
+  function rebuildEonet() {
+    const P = prims.eonet, body = data.eonet;
+    P.points = removePrim(P.points); P.tracks = removePrim(P.tracks); P.polygons = removePrim(P.polygons);
+    dropLayerPicks('eonet'); counts.eonetPoints = 0; counts.eonetTracks = 0; counts.eonetPolygons = 0;
+    if (!body) return;
+    const points = new Cesium.PointPrimitiveCollection(), tracks = [], polygons = [];
+    for (const ev of Array.isArray(body.events) ? body.events : []) {
+      if (!ev || typeof ev.id !== 'string' || !Array.isArray(ev.track) || getEntry('eonet', ev.id)) continue;
+      const colour = eonetColour(ev.kind), e = entry('eonet', ev.id, 'natural', { event: ev, point: null });
+      const track = [];
+      let lastPoint = null;
+      ev.track.forEach((t, index) => {
+        if (!t || typeof t !== 'object') return;
+        if (t.type === 'Point' && Array.isArray(t.coordinates) && typeof t.coordinates[0] === 'number' && typeof t.coordinates[1] === 'number') {
+          const latest = index === ev.track.length - 1;
+          const c = css(colour, latest ? 0.9 : 0.55);
+          const point = points.add({ position: degrees(t.coordinates[0], t.coordinates[1], DOT_HEIGHT), pixelSize: latest ? 11 : 7, color: c, outlineColor: css('#10251e'), outlineWidth: 1, id: pickId({ layer: 'eonet', id: ev.id, kind: 'natural', part: 'point', index }) });
+          e.points.push({ point, colour: c, size: latest ? 11 : 7 });
+          counts.eonetPoints += 1;
+          const prev = track[track.length - 1];
+          if (!prev || prev[0] !== t.coordinates[0] || prev[1] !== t.coordinates[1]) track.push([t.coordinates[0], t.coordinates[1]]);
+          lastPoint = t;
+        } else if (t.type === 'Polygon' && Array.isArray(t.polygons)) {
+          /* each reported polygon its own frozen pick id (part 'polygon', the track index), each faded through its own attributes */
+          for (const polygon of t.polygons) {
+            const pick = pickId({ layer: 'eonet', id: ev.id, kind: 'natural', part: 'polygon', index });
+            const inst = Array.isArray(polygon) && polygon.length ? polygonInstance(polygon, colour, 0.22, pick) : null;
+            if (inst) { polygons.push(inst); counts.eonetPolygons += 1; e.fills.push({ primitive: () => prims.eonet.polygons, colour: css(colour, 0.22), pick }); }
+          }
+          lastPoint = lastPoint || t;
+        }
+      });
+      e.item.point = ev.track[ev.track.length - 1] || null;
+      if (track.length >= 2 && linesOk()) { tracks.push(lineInstance(Cesium.Cartesian3.fromDegreesArray(track.flat()), 1.5, colour, 0.75, pickId({ layer: 'eonet', id: ev.id, kind: 'natural', part: 'track', index: 0 }))); counts.eonetTracks += 1; }
+    }
+    P.points = addPrim(points); P.tracks = groundLines(tracks); P.polygons = groundFill(polygons);
+  }
+  /* ---------- coastal water levels: columns by observed level above MLLW, labelled ---------- */
+  function rebuildTides() {
+    const P = prims.tides, body = data.tides;
+    P.columns = removePrim(P.columns); P.labels = removePrim(P.labels);
+    dropLayerPicks('tides'); counts.tides = 0; counts.tideLabels = 0;
+    if (!body) return;
+    const columns = new Cesium.PolylineCollection(), labels = new Cesium.LabelCollection();
+    for (const r of body.latest && Array.isArray(body.latest.readings) ? body.latest.readings : []) {
+      if (!r || r.status !== 'available' || typeof r.value_m !== 'number' || !Number.isFinite(r.value_m) || typeof r.lon !== 'number' || typeof r.lat !== 'number') continue;
+      const id = `coops:${r.station}`;
+      if (getEntry('tides', id)) continue;
+      const e = entry('tides', id, 'station', r);
+      const h = stationColumnM(r.value_m), colour = css(stationColour(r.q, r.value_m), 1);
+      const polyline = columns.add({ positions: [degrees(r.lon, r.lat, 0), degrees(r.lon, r.lat, h)], width: 6, material: Cesium.Material.fromType('Color', { color: colour }), id: e.pick });
+      e.polylines.push({ polyline, colour });
+      labels.add({ position: degrees(r.lon, r.lat, h), text: `${r.value_m} m MLLW${r.q === 'p' ? ' · preliminary' : ''}${r.value_m < 0 ? ' · below datum' : ''}`, font: '600 12px system-ui,sans-serif', fillColor: Cesium.Color.WHITE, outlineColor: Cesium.Color.BLACK, outlineWidth: 2, style: Cesium.LabelStyle.FILL_AND_OUTLINE, pixelOffset: new Cesium.Cartesian2(0, -8), verticalOrigin: Cesium.VerticalOrigin.BOTTOM, distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 8e6), id: e.pick });
+      counts.tides += 1; counts.tideLabels += 1;
+    }
+    P.columns = addPrim(columns); P.labels = addPrim(labels);
+  }
+  /* ---------- ShakeMap contours for the selected earthquake, drawn exactly as received ---------- */
+  function drawShakemap(quakeEntry, body) {
+    clearShakemapLines();
+    counts.shakemapLines = 0;
+    const lines = [];
+    for (const c of Array.isArray(body.contours) ? body.contours : []) {
+      if (!c || !Array.isArray(c.lines)) continue;
+      for (const line of c.lines) {
+        const flat = [];
+        let prev = null;
+        for (const p of Array.isArray(line) ? line : []) { if (!Array.isArray(p) || typeof p[0] !== 'number' || typeof p[1] !== 'number') { flat.length = 0; break; } if (prev && prev[0] === p[0] && prev[1] === p[1]) continue; flat.push(p[0], p[1]); prev = p; }
+        if (flat.length < 4) continue;
+        lines.push(lineInstance(Cesium.Cartesian3.fromDegreesArray(flat), 2.5, mmiColour(c), 0.95, pickId({ layer: 'shakemap', id: `shakemap:${body.event_id}:${c.mmi}`, kind: 'shakemap' })));
+        counts.shakemapLines += 1;
+      }
+    }
+    prims.shakemap.lines = groundLines(lines);
+    shakemap = { quakeId: quakeEntry.id, body, contours: Array.isArray(body.contours) ? body.contours : [] };
+    if (counts.shakemapLines) dimDisc(quakeEntry, 0.18);
+  }
+  function clearShakemapLines() { prims.shakemap.lines = removePrim(prims.shakemap.lines); counts.shakemapLines = 0; }
+  function clearShakemap() { if (shakemap) { const q = findEntry(shakemap.quakeId, 'events'); if (q) dimDisc(q, null); } clearShakemapLines(); shakemap = null; }
+  function dimDisc(e, alpha) {
+    for (const f of e.fills) {
+      const target = alpha === null ? f.colour : Cesium.Color.fromAlpha(f.colour, alpha);
+      writeColour(Object.assign({}, f, { pick: f.pick || e.pick }), target);
+    }
+  }
+  function shakemapFor(e) {
+    if (!client || !on) return;
+    const id = e.id;
+    client.shakemap(id).then(result => {
+      if (!selected || selected.id !== id) return;
+      states.shakemap = Object.assign(layerStateOf('shakemap', result), { digest: result.ok ? { event_id: result.body.event_id, available: result.body.available === true, reason: result.body.reason || null, version: result.body.version === undefined ? null : result.body.version, max_mmi: result.body.max_mmi === undefined ? null : result.body.max_mmi } : { event_id: id.replace(/^usgs:/, ''), available: false, reason: result.reason, version: null, max_mmi: null } });
+      tellLayerState('shakemap');
+      if (result.ok && result.body.available === true) { drawShakemap(e, result.body); tellSelected(e, selected.via, { shakemap: result.body }); }
+      else { clearShakemap(); shakemap = { quakeId: id, body: result.ok ? result.body : null, unavailable: result.ok ? result.body.reason : result.reason, contours: [] }; tellSelected(e, selected.via, { shakemapUnavailable: result.ok ? result.body.reason : result.reason }); }
+      updateLegend(); requestRender('shakemap');
+    }).catch(() => {});
+  }
+  /* ---------- documented rupture (event timeline slice S5, decision D13): only for a quake of M6 or more (USGS models a finite
+     fault for about a dozen quakes a year, all M6.5 and up), only the up-dip edge of a fault plane USGS modelled, drawn as a
+     bright ground line and called a model; a point source draws nothing and says so ---------- */
+  const RUPTURE_MIN_MAG = 6;
+  function clearRupture() { prims.rupture.lines = removePrim(prims.rupture.lines); counts.ruptureLines = 0; rupture = null; }
+  function drawRupture(quakeEntry, body) {
+    prims.rupture.lines = removePrim(prims.rupture.lines);
+    const lines = [];
+    for (const edge of Array.isArray(body.edges) ? body.edges.slice(0, 8) : []) {
+      const flat = [];
+      for (const p of Array.isArray(edge) ? edge.slice(0, 64) : []) if (Array.isArray(p) && typeof p[0] === 'number' && typeof p[1] === 'number' && Number.isFinite(p[0]) && Number.isFinite(p[1])) flat.push(p[0], p[1]);
+      if (flat.length < 4) continue;
+      const positions = Cesium.Cartesian3.fromDegreesArray(flat), pick = pickId({ layer: 'events', id: quakeEntry.id, kind: 'quake' });
+      /* a dark underlay and a hot core: the edge reads on any ground, by night and by day */
+      lines.push(lineInstance(positions, 7, '#140a06', 0.6, pick), lineInstance(positions, 3, '#fff1d6', 1, pick));
+    }
+    counts.ruptureLines = lines.length / 2;
+    prims.rupture.lines = groundLines(lines);
+    rupture = { quakeId: quakeEntry.id, body, edges: counts.ruptureLines };
+  }
+  function ruptureFor(e) {
+    if (!client || !on || typeof client.rupture !== 'function' || !(typeof e.mag === 'number' && e.mag >= RUPTURE_MIN_MAG)) return;
+    const id = e.id;
+    client.rupture(id).then(result => {
+      if (!selected || selected.id !== id) return;
+      /* nothing to say when the gate refused (the legend says so) or the id is not a USGS event id (nothing was asked) */
+      if (!result || result.status === 'policy' || result.reason === 'invalid_event') return;
+      const body = result.ok && result.body ? result.body : { available: false, reason: 'source_unavailable' };
+      if (body.available === true && Array.isArray(body.edges) && body.edges.length) drawRupture(e, body);
+      else { prims.rupture.lines = removePrim(prims.rupture.lines); counts.ruptureLines = 0; rupture = { quakeId: id, body, edges: 0 }; }
+      tellSelected(e, selected.via);
+      updateLegend(); applyVisibility(); requestRender('rupture');
+    }).catch(() => {});
+  }
+
+  /* ---------- selection: a soft fade through instance attributes, never a rebuild, never blinking ---------- */
+  function writeColour(fill, colour) {
+    const prim = fill.primitive();
+    if (!prim || prim.isDestroyed()) return;
+    const apply = () => { try { const attrs = prim.getGeometryInstanceAttributes(fill.pick || fill.ownerPick); if (attrs) attrs.color = Cesium.ColorGeometryInstanceAttribute.toValue(colour, attrs.color); } catch (e) {} };
+    if (prim.ready) apply(); else { deferred.push(apply); watchBuild(); }
+  }
+  const mix = (a, b, t) => new Cesium.Color(a.red + (b.red - a.red) * t, a.green + (b.green - a.green) * t, a.blue + (b.blue - a.blue) * t, a.alpha + (b.alpha - a.alpha) * t);
+  const highlightOf = base => { const m = mix(base, Cesium.Color.WHITE, 0.5); m.alpha = Math.min(1, base.alpha + 0.25); return m; };
+  function targetsOf(e, toHighlight) {
+    const list = [];
+    for (const f of e.fills) list.push({ set: c => writeColour(Object.assign({}, f, { pick: f.pick || e.pick }), c), from: toHighlight ? f.colour : highlightOf(f.colour), to: toHighlight ? highlightOf(f.colour) : f.colour });
+    for (const p of e.points) list.push({ set: c => { p.point.color = c; p.point.pixelSize = toHighlight ? p.size + 3 : p.size; }, from: toHighlight ? p.colour : highlightOf(p.colour), to: toHighlight ? highlightOf(p.colour) : p.colour });
+    for (const l of e.polylines) list.push({ set: c => { l.polyline.material.uniforms.color = c; }, from: toHighlight ? l.colour : highlightOf(l.colour), to: toHighlight ? highlightOf(l.colour) : l.colour });
+    return list;
+  }
+  function startFade(previous, next, durationMs, owner, maxMs) {
+    const targets = [...(previous ? targetsOf(previous, false) : []), ...(next ? targetsOf(next, true) : [])];
+    stopFade();
+    if (!targets.length) return;
+    if (!motionAllowed() || !viewer.scene.preRender) { for (const t of targets) t.set(t.to); return; }
+    const t0 = now(), duration = durationMs || FADE_MS, own = owner || 'env-select';
+    hold(own, maxMs || FADE_MAX_MS);
+    const step = () => {
+      const k = Math.min(1, (now() - t0) / duration), eased = k * k * (3 - 2 * k);
+      for (const t of targets) t.set(k >= 1 ? t.to : mix(t.from, t.to, eased));
+      if (k >= 1) { viewer.scene.preRender.removeEventListener(step); if (fade && fade.step === step) fade = null; release(own); requestRender('fade-end'); }
+    };
+    fade = { step, owner: own, targets };
+    viewer.scene.preRender.addEventListener(step);
+    requestRender('fade');
+  }
+  function stopFade() { if (!fade) return; viewer.scene.preRender.removeEventListener(fade.step); for (const t of fade.targets) t.set(t.to); release(fade.owner); fade = null; }
+  /* the one illustrative animation (event timeline slice S5): js/environment-ripple.js, two rings that travel outward to a regional
+     radius and are gone, or a still outline under reduced motion; `wait` holds the rings until the push has landed */
+  function startRipple(e, wait) {
+    clearRipple();
+    const lonLat = rippler ? positionOf(e) : null;
+    if (!lonLat) return;
+    rippler.start({ id: e.id, lon: lonLat.lon, lat: lonLat.lat, mag: e.mag, still: !motionAllowed(), wait: wait === true && motionAllowed() });
+  }
+  function clearRipple() { if (rippler) rippler.clear(); }
+  function positionOf(e) {
+    const f = factsFor(e.kind, e.item);
+    return f.lat === null || f.lon === null ? null : { lon: f.lon, lat: f.lat };
+  }
+  function updateSelectedLabel() {
+    if (selectedLabel) { prims.events.label = removePrim(prims.events.label); selectedLabel = null; }
+    if (!selected) return;
+    /* a quake's label is its glyph's (js/environment-quake-marks.js), laid out with the others and kept inside the frame */
+    if (selected.layer === 'events' && selected.kind === 'quake' && glyphsOn() && marks.has(selected.id)) return;
+    const pos = positionOf(selected);
+    if (!pos) return;
+    /* never under the globe's limb (no depth test) and never off the frame's edge: it reads towards the centre */
+    const at = Cesium.SceneTransforms && (Cesium.SceneTransforms.worldToWindowCoordinates || Cesium.SceneTransforms.wgs84ToWindowCoordinates);
+    const w = at ? at(viewer.scene, degrees(pos.lon, pos.lat, DOT_HEIGHT)) : null, right = !!(w && Number.isFinite(w.x) && w.x > (viewer.scene.canvas.clientWidth || 0) / 2);
+    const labels = new Cesium.LabelCollection();
+    labels.add({ position: degrees(pos.lon, pos.lat, DOT_HEIGHT), text: factsFor(selected.kind, selected.item).title.slice(0, 80), font: '600 12px system-ui,sans-serif', fillColor: Cesium.Color.WHITE, outlineColor: Cesium.Color.BLACK, outlineWidth: 3, style: Cesium.LabelStyle.FILL_AND_OUTLINE, pixelOffset: new Cesium.Cartesian2(right ? -10 : 10, -14), verticalOrigin: Cesium.VerticalOrigin.BOTTOM, horizontalOrigin: right && Cesium.HorizontalOrigin ? Cesium.HorizontalOrigin.RIGHT : Cesium.HorizontalOrigin ? Cesium.HorizontalOrigin.LEFT : undefined, disableDepthTestDistance: Number.POSITIVE_INFINITY, id: selected.pick });
+    selectedLabel = labels; prims.events.label = addPrim(labels);
+  }
+  function clearSelection() {
+    const previous = selected; selected = null;
+    if (cam) cam.cancel('selection');
+    clearShakemap(); clearRupture(); clearRipple(); updateSelectedLabel();
+    if (glyphsOn()) marks.select(null);
+    if (previous) startFade(previous, null);
+    requestRender('deselect');
+  }
+  /* the push (js/environment-camera.js, decision D14): an explicit choice moves the camera to the event's regional frame; the
+     ripple begins once the camera has landed, or at once when nothing moves */
+  function pushTo(e, via) {
+    const pos = positionOf(e), Cam = root.MCC_ENVIRONMENT_CAMERA;
+    const go = () => { if (rippler) { const r = rippler.state(); if (r && r.id === e.id) rippler.go(); } };
+    if (!cam || !Cam || !pos) { go(); return 'none'; }
+    const pure = director ? director.pure : (root.MCC_GLOBE_DIRECTOR ? root.MCC_GLOBE_DIRECTOR.pure : null);
+    const measure = e.kind === 'quake' ? { mag: e.mag } : e.kind === 'natural' ? { category: e.item.event ? e.item.event.kind : e.item.category } : {};
+    const frame = Cam.pure.frameFor(e.kind, measure, pure ? pure.heightFor : null);
+    return cam.push({ id: e.id, lon: pos.lon, lat: pos.lat }, frame, via, go);
+  }
+  /* select by id (a feed id resolves to the events layer unless options.layer names another); pick() selects the exact entry */
+  function select(id, via, options) {
+    const e = typeof id === 'string' ? findEntry(id, options && options.layer) : null;
+    if (!e) { if (id === null || id === '') clearSelection(); return false; }
+    return selectEntry(e, via, options);
+  }
+  function selectEntry(e, via, options) {
+    const previous = selected && selected !== e ? selected : null;
+    if (selected === e) { if (via !== 'panel') tellSelected(e, via, options); return true; }
+    if (cam) cam.cancel('selection');
+    selected = e; e.via = via || 'pick';
+    clearShakemap(); clearRupture(); clearRipple();
+    startFade(previous, e);
+    if (glyphsOn()) marks.select(e.layer === 'events' && e.kind === 'quake' ? e.id : null);
+    updateSelectedLabel();
+    /* a chosen quake (a tap, a post, a row) is pushed to, so its rings wait for the landing; the tour's arrival has landed already */
+    if (e.kind === 'quake') { startRipple(e, via === 'pick' || via === 'focus' || via === 'panel'); shakemapFor(e); ruptureFor(e); }
+    if (replayMode && e.layer === 'events') applyReplay(e);
+    if (via !== 'panel') tellSelected(e, via, options);
+    updateLegend(); requestRender('select');
+    return true;
+  }
+  /* THE RECORD THAT SPEAKS FOR A LAYER (review G1R-3): the Worker sends every source's health in `sources`, and a layer's own
+     fetched_at, last_success_at, coverage, attribution, licence, url and label are copied from the record that produced what is
+     drawn: the readings (coops_latest), never the 24-hour station catalogue, for the water levels; the contours (usgs_shakemap),
+     never the event detail, for a ShakeMap; the fires from every satellite that served them (below); otherwise the record with the
+     newest retrieval (the first on a tie). A fire detection names its own satellite's record (sourceOf). Every record still travels
+     in `sources`, and nothing is invented. */
+  const PRIMARY_SOURCE = Object.freeze({ tides: 'coops_latest', shakemap: 'usgs_shakemap' });
+  /* THE FIRES SPEAK FOR EVERY SATELLITE THAT SERVED THEM (review RV2-3): the Worker sums both satellites' detections into one set
+     of 1-degree cells, so the layer and its areas name the records that served data (available or stale) together: one label (the
+     words the labels share, once, then each record's own), the coverage and terms of each, once, and the newest retrieval, which no
+     acquisition in the merged cells can follow (each record keeps its own in `sources`). One satellite serving speaks alone; none
+     serving, all of them are named. */
+  function servedTogether(list) {
+    const served = list.filter(s => s.status === 'available' || s.status === 'stale'), use = served.length ? served : list;
+    if (use.length <= 1) return use[0] || null;
+    const once = values => [...new Set(values.filter(v => typeof v === 'string' && v))];
+    const words = use.map(s => String(s.label || '').split(' ').filter(Boolean));
+    let common = 0;
+    while (words.every(w => common < w.length - 1 && w[common] === words[0][common])) common += 1;
+    const own = once(words.map(w => w.slice(common).join(' ')));
+    const label = (common ? words[0].slice(0, common).join(' ') + ' ' : '') + own.join(' and ');
+    const newest = key => use.map(s => isoOrNull(s[key])).filter(Boolean).sort().pop() || null;
+    return { id: use.map(s => String(s.id || '')).join('+'), label, url: once(use.map(s => s.url))[0] || '', coverage: once(use.map(s => s.coverage)).join(' · '), attribution: once(use.map(s => s.attribution)).join(' · '), license: once(use.map(s => s.license)).join(' · '), fetched_at: newest('fetched_at'), last_success_at: newest('last_success_at'), status: use.some(s => s.status === 'available') ? 'available' : use[0].status, reason: use.map(s => s.reason).find(Boolean) || null };
+  }
+  function primarySource(layer, sources) {
+    const list = Array.isArray(sources) ? sources.filter(s => s && typeof s === 'object') : [];
+    if (layer === 'fires') return servedTogether(list);
+    const named = PRIMARY_SOURCE[layer] ? list.find(s => s.id === PRIMARY_SOURCE[layer]) : null;
+    if (named) return named;
+    let best = null;
+    for (const s of list) if (!best || (isoOrNull(s.fetched_at) || '') > (isoOrNull(best.fetched_at) || '')) best = s;
+    return best;
+  }
+  function sourceOf(e) {
+    if (e.layer === 'events') {
+      const terms = feedTerms[providerOf(e.id)] || { id: providerOf(e.id), label: '', url: '', attribution: '', license: '', coverage: '' };
+      const own = e.item.source && typeof e.item.source === 'object' ? e.item.source : {};
+      return { source: { id: terms.id, label: own.label || terms.label, url: own.url || terms.url, attribution: terms.attribution, license: terms.license }, coverage: terms.coverage, status: e.item.stale ? 'stale' : 'available', reason: null, fetched_at: isoOrNull(e.item.fetched_at) };
+    }
+    const layer = e.layer === 'cells' ? 'fires' : e.layer;
+    const st = states[layer];
+    let src = st ? primarySource(layer, st.sources) : null;
+    if (layer === 'fires' && st && Array.isArray(st.sources) && e.item.row) src = st.sources.find(s => s && typeof s.label === 'string' && s.label.includes(String(e.item.row[5]))) || src;
+    const s = src || {};
+    return { source: { id: s.id || layer, label: s.label || '', url: s.url || '', attribution: s.attribution || '', license: s.license || '' }, coverage: s.coverage || (st ? st.coverage : '') || '', status: st ? st.status : 'unavailable', reason: st ? st.reason : null, fetched_at: s.fetched_at || (st ? st.fetched_at : null) || null };
+  }
+  function tellSelected(e, via, options) {
+    const o = options || {};
+    const sm = o.shakemap || (shakemap && shakemap.quakeId === e.id && shakemap.body && shakemap.body.available === true ? shakemap.body : null);
+    const facts = sm ? factsFor('shakemap', { quake: e.item, shakemap: sm, contour: o.contour || null }) : factsFor(e.kind, e.item);
+    if (sm) { const own = factsFor(e.kind, e.item); facts.observed_at = own.observed_at; facts.observed_label = own.observed_label; facts.observed_date_only = own.observed_date_only; }
+    if (sm && Array.isArray(sm.contours) && !sm.contours.length) facts.facts.push({ label: 'ShakeMap contours', value: 'ShakeMap exists but has no contour (deep event)' });
+    if (o.shakemapUnavailable) facts.facts.push({ label: 'ShakeMap', value: `no contours shown: ${o.shakemapUnavailable}` });
+    /* the rupture, once asked (M6 and up): the modelled edge drawn, or why nothing is (event timeline slice S5, D13) */
+    if (rupture && rupture.quakeId === e.id) facts.facts.push({ label: 'Rupture', value: ruptureLine(rupture.body) });
+    const src = sourceOf(e);
+    /* the contract's via is pick, focus or tour: a selection the panel's own list made is user-initiated, so it is told as focus
+       (review G1R-9), also when its ShakeMap answers later */
+    tell({ type: 'hu:environment-selected', id: e.id, layer: e.layer, kind: e.kind, title: facts.title, facts: facts.facts, source: src.source, observed_at: facts.observed_at, observed_label: facts.observed_label, observed_date_only: facts.observed_date_only, fetched_at: src.fetched_at, coverage: src.coverage, status: src.status, reason: src.reason, lat: facts.lat, lon: facts.lon, via: via === 'panel' ? 'focus' : (via || 'pick'), illustrative: rippleNow() ? RIPPLE_LABEL : null, modelled: !!sm });
+  }
+  /* a tap: `picked` is what Cesium found under the finger, `position` the tap in CSS px of the frame. A quake's glyph is its tap
+     target (event timeline slice S5): a tap within 22 px of a glyph's centre (a 44 px target) selects that quake when nothing
+     else claimed the tap (a mission pin, a satellite, an aircraft keep theirs), even over a fire cell or an alert's fill; a chosen
+     quake is pushed to */
+  function pick(picked, position) {
+    if (!mounted) return false;
+    const env = isEnvPick(picked), quake = env && picked.id.layer === 'events' && picked.id.kind === 'quake';
+    const unclaimed = !picked || env || picked.id === undefined || picked.id === null;
+    if (!quake && unclaimed && glyphsOn() && position && typeof position.x === 'number') {
+      const id = marks.hit(position.x, position.y), near = id ? getEntry('events', id) : null;
+      if (near) { selectEntry(near, 'pick'); pushTo(near, 'pick'); return true; }
+    }
+    if (!env) return false;
+    const p = picked.id;
+    const e = p.layer === 'shakemap' ? (shakemap ? findEntry(shakemap.quakeId, 'events') : null) : getEntry(p.layer, p.id);
+    if (!e) return false;
+    const contour = p.layer === 'shakemap' && shakemap ? shakemap.contours.find(c => `shakemap:${shakemap.body.event_id}:${c.mmi}` === p.id) || null : null;
+    if (p.layer === 'shakemap' && selected === e) { tellSelected(e, 'pick', { contour }); return true; }
+    const chosen = selectEntry(e, 'pick', contour ? { contour } : undefined);
+    if (chosen && quake) pushTo(e, 'pick');
+    return chosen;
+  }
+
+  /* ---------- the quake replay: discs, glyphs and labels later than the current scene hidden, the current disc fading in ---------- */
+  function applyReplay(current) {
+    /* the glyphs and their labels follow the same cut (slice S5: before it the later quakes' dots stayed on) */
+    if (glyphsOn()) { const cut = replayMode && current && current.item ? Date.parse(current.item.observed_at) : NaN; marks.setCutoff(Number.isFinite(cut) ? cut : null); }
+    const discs = prims.events.discs;
+    if (!discs) return;
+    const run = () => {
+      if (!prims.events.discs || prims.events.discs.isDestroyed()) return;
+      const t = replayMode && current && current.item ? Date.parse(current.item.observed_at) : NaN;
+      for (const e of picks.values()) {
+        if (e.layer !== 'events' || e.kind !== 'quake' || !e.fills.length) continue;
+        const attrs = prims.events.discs.getGeometryInstanceAttributes(e.pick);
+        if (!attrs) continue;
+        const show = !replayMode || !Number.isFinite(t) || (Date.parse(e.item.observed_at) || 0) <= t;
+        attrs.show = Cesium.ShowGeometryInstanceAttribute.toValue(show, attrs.show);
+      }
+      if (replayMode && current && current.fills.length && motionAllowed()) {
+        const target = current.fills[0];
+        startFade(null, Object.assign({}, current, { fills: [Object.assign({}, target, { colour: target.colour })], points: [], polylines: [] }), REPLAY_FADE_MS, 'env-replay', FADE_MAX_MS);
+      }
+      requestRender('replay');
+    };
+    if (discs.ready) run(); else { deferred.push(run); watchBuild(); }
+  }
+
+  /* ---------- visibility, level of detail, legend ---------- */
+  function applyVisibility() {
+    const P = prims;
+    const set = (p, show) => { if (p && !p.isDestroyed()) p.show = show; };
+    set(P.events.discs, visible('events')); set(P.events.dots, visible('events')); set(P.events.label, visible('events') && !!selected);
+    set(P.fires.near, visible('fires') && lodState === 'near'); set(P.fires.far, visible('fires') && lodState === 'far');
+    set(P.perimeters.fill, visible('perimeters')); set(P.perimeters.outline, visible('perimeters'));
+    set(P.alerts.fill, visible('alerts')); set(P.alerts.outline, visible('alerts'));
+    set(P.eonet.points, visible('eonet')); set(P.eonet.tracks, visible('eonet')); set(P.eonet.polygons, visible('eonet'));
+    set(P.tides.columns, visible('tides')); set(P.tides.labels, visible('tides'));
+    set(P.shakemap.lines, visible('shakemap')); set(P.rupture.lines, visible('shakemap'));
+    if (glyphsOn()) marks.setOn(visible('events'));
+  }
+  function onCameraChanged() {
+    if (!viewer) return;
+    const next = lod(viewer.camera.positionCartographic.height);
+    if (next !== lodState) { lodState = next; applyVisibility(); requestRender('lod'); }
+  }
+  function updateLegend() {
+    if (!doc) return;
+    const box = doc.getElementById('envLegend'), list = doc.getElementById('envLegendList');
+    legendLines = [];
+    if (!box || !list) return;
+    box.hidden = !on;
+    if (!on) { list.replaceChildren(); return; }
+    const terms = layer => { const st = states[layer]; const s = st && Array.isArray(st.sources) ? st.sources.filter(x => x && typeof x === 'object') : []; const attribution = [...new Set(s.map(x => x.attribution).filter(Boolean))].join('; '); const license = [...new Set(s.map(x => x.license).filter(Boolean))].join('; '); return [attribution, license].filter(Boolean).join(' · '); };
+    const policy = client && client.isPolicy() ? (typeof client.policy === 'function' && client.policy()) || {} : null;
+    if (policy) legendLines.push(policy.gate === 'off' ? OFF_LINE : POLICY_LINE);
+    else if (LAYER_KEYS.every(k => states[k] && states[k].status === 'unavailable' && (states[k].reason === 'network' || states[k].reason === 'timeout'))) legendLines.push(NETWORK_LINE);
+    if (visible('events') && counts.events) {
+      legendLines.push(`${LEGEND.events}`);
+      /* the earthquake terms as the feed's own USGS record gave them with the pins; none given, none shown (review G1R-10) */
+      const usgs = feedTerms.usgs;
+      if (counts.quakeDiscs) legendLines.push(`Earthquakes: ${LEGEND.quakes} ${usgs ? [usgs.attribution, usgs.license].filter(Boolean).join(' · ') : ''}`.trim());
+    }
+    for (const [layer, count] of [['fires', counts.firesNear + counts.cells], ['perimeters', counts.perimeters], ['alerts', counts.alerts.drawn], ['eonet', counts.eonetPoints + counts.eonetPolygons], ['tides', counts.tides]]) {
+      if (!visible(layer)) continue;
+      /* no data: the provider answered (available or kept) and reported nothing at all, said in words, never a silent gap */
+      const st = states[layer];
+      if (!count && st && (st.status === 'available' || st.status === 'stale') && st.count === 0) { legendLines.push(noneLine(layer)); continue; }
+      if (!count) continue;
+      legendLines.push(`${LEGEND[layer]} ${terms(layer)}`.trim());
+    }
+    if (counts.shakemapLines && visible('shakemap')) legendLines.push(`${LEGEND.shakemap} ${terms('shakemap')}`.trim());
+    if (counts.ruptureLines && visible('shakemap')) legendLines.push(LEGEND.rupture);
+    if (rippleNow()) legendLines.push(RIPPLE_LABEL);
+    if (!motionAllowed()) legendLines.push('(animations off)');
+    const items = legendLines.map(line => { const li = doc.createElement('li'); li.textContent = line; return li; });
+    list.replaceChildren(...items);
+  }
+
+  /* ---------- the layer client: states and data ---------- */
+  const DIGESTS = {
+    fires: body => ({ cells: (body.summary && Array.isArray(body.summary.cells) ? body.summary.cells : []).slice(0, 10), cell_degrees: 1, count: body.count, total: body.total, windows: Array.isArray(body.windows) ? body.windows : [] }),
+    perimeters: body => ({ top: (Array.isArray(body.perimeters) ? body.perimeters : []).slice(0, 10).map(p => Object.assign({ id: p.id, name: p.name, gis_acres: p.gis_acres, polygon_captured_at: p.polygon_captured_at, last_edited_at: p.last_edited_at, discovered_at: p.discovered_at }, firstVertex(p.polygons))) }),
+    alerts: body => ({ counts: body.counts && typeof body.counts === 'object' ? body.counts : { polygon: 0, zone_only: 0, rejected: 0 } }),
+    eonet: body => ({ count: body.count, kinds: (Array.isArray(body.events) ? body.events : []).reduce((m, e) => { m[e.kind] = (m[e.kind] || 0) + 1; return m; }, {}) }),
+    tides: body => ({ answered: body.latest ? body.latest.answered : 0, stations: body.latest ? body.latest.stations : 0 })
+  };
+  function layerStateOf(layer, result) {
+    const r = result || {};
+    const body = r.ok ? r.body : null;
+    const sources = body && Array.isArray(body.sources) ? body.sources.filter(s => s && typeof s === 'object') : [];
+    /* the record that speaks for the layer, named in source_id so the panel never guesses which one it was (review G1R-3) */
+    const first = primarySource(layer, sources) || {};
+    const route = root.MCC_ENVIRONMENT_LAYERS_CLIENT && root.MCC_ENVIRONMENT_LAYERS_CLIENT.ROUTES[layer];
+    let count = 0, total = 0, truncated = false;
+    if (body) {
+      if (layer === 'tides') { count = body.latest ? Number(body.latest.answered) || 0 : 0; total = body.latest ? Number(body.latest.stations) || 0 : 0; }
+      else if (layer === 'shakemap') { count = body.counts ? Number(body.counts.lines) || 0 : 0; total = count; truncated = body.truncated === true; }
+      else { count = Number(body.count) || 0; total = Number(body.total) || 0; truncated = body.truncated === true; }
+    }
+    return {
+      status: r.status || 'unavailable', reason: r.ok ? (r.status === 'available' ? null : (first.reason || null)) : (r.reason || null), http: r.http === undefined ? null : r.http,
+      schema: body ? body.schema : (route ? route.schema : null), generated_at: body ? isoOrNull(body.generated_at) : null,
+      fetched_at: first.fetched_at || null, last_success_at: first.last_success_at || null, coverage: first.coverage || '', attribution: first.attribution || '', license: first.license || '', url: first.url || '',
+      source_id: typeof first.id === 'string' ? first.id : null, label: typeof first.label === 'string' ? first.label : '', count, total, truncated, sources, digest: body && DIGESTS[layer] ? DIGESTS[layer](body) : null
+    };
+  }
+  function tellLayerState(layer) {
+    const st = states[layer];
+    if (!st) return;
+    tell(Object.assign({ type: 'hu:environment-layer-state', layer }, st));
+  }
+  const REBUILD = { fires: rebuildFires, perimeters: rebuildPerimeters, alerts: rebuildAlerts, eonet: rebuildEonet, tides: rebuildTides };
+  function onLayerState(layer, result) {
+    if (layer === 'shakemap') { states.shakemap = Object.assign(layerStateOf('shakemap', result), { digest: states.shakemap ? states.shakemap.digest : null }); tellLayerState('shakemap'); return; }
+    if (!LAYER_KEYS.includes(layer)) return;
+    results[layer] = result;
+    states[layer] = layerStateOf(layer, result);
+    tellLayerState(layer);
+    updateLegend();
+  }
+  function onLayerData(layer, body) {
+    if (!LAYER_KEYS.includes(layer) || !body) return;
+    data[layer] = body;
+    REBUILD[layer]();
+    if (pendingFocus && findEntry(pendingFocus)) { const id = pendingFocus; pendingFocus = null; focus(id); }
+    if (selected && selected.layer !== 'events' && !getEntry(selected.layer, selected.id)) clearSelection();
+    applyVisibility(); updateLegend(); requestRender('layer-' + layer);
+  }
+
+  /* ---------- activation ---------- */
+  function activate() {
+    on = true;
+    if (governor) governor.enable();
+    onActive(true);
+    for (const layer of LAYER_KEYS) { states[layer] = null; results[layer] = null; }
+    states.shakemap = null;
+    applyVisibility();
+    if (client) client.start({ onState: onLayerState, onData: onLayerData });
+    if (director) director.setQueue(data.events, { queue: replayMode || 'significant' });
+    updateLegend(); requestRender('activate');
+  }
+  function deactivate() {
+    if (director) director.stop();
+    if (cam) cam.cancel('off');
+    stopFade(); clearRipple(); clearShakemap(); clearRupture();
+    if (client) client.stop();
+    for (const owner of ['env-select', 'env-ripple', 'env-focus', 'env-director', 'env-replay', 'env-build']) release(owner);
+    on = false;
+    onActive(false);
+    applyVisibility();
+    if (governor) governor.disable();
+    updateLegend(); requestRender('deactivate');
+  }
+  function setLayers(d) {
+    const next = d.on === true;
+    if (d.layers && typeof d.layers === 'object') for (const k of LAYER_KEYS) if (typeof d.layers[k] === 'boolean' && layersOn[k] !== d.layers[k]) { layersOn[k] = d.layers[k]; if (states[k]) { if (!d.layers[k]) tell(Object.assign({ type: 'hu:environment-layer-state', layer: k }, states[k], { status: 'off' })); else tellLayerState(k); } }
+    const replay = d.replay === 'quakes-24h' ? 'quakes-24h' : null;
+    const replayChanged = replay !== replayMode;
+    replayMode = replay;
+    if (next && !on) activate();
+    else if (!next && on) deactivate();
+    else if (next) { if (replayChanged && director) director.setQueue(data.events, { queue: replayMode || 'significant' }); applyVisibility(); }
+    if (replayChanged) applyReplay(replayMode && director && director.scene() ? findEntry(director.scene().id, 'events') : null);
+    updateLegend(); requestRender('layers');
+  }
+  function focus(id) {
+    if (typeof id !== 'string' || !id || !mounted) return;
+    const e = findEntry(id, 'events');
+    if (!e) {
+      pendingFocus = id;
+      root.clearTimeout(pendingFocusTimer);
+      pendingFocusTimer = root.setTimeout(() => { if (pendingFocus === id) pendingFocus = null; }, PENDING_FOCUS_MS);
+      return;
+    }
+    pendingFocus = null;
+    if (director) director.interrupt('input');
+    select(id, 'focus');
+    /* the push (event timeline slice S5): a regional, cancellable frame; the older top-down flight below stays only for a frame
+       that was loaded without js/environment-camera.js */
+    if (cam) { pushTo(e, 'focus'); return; }
+    const pos = positionOf(e);
+    if (!pos) return;
+    const pure = director ? director.pure : (root.MCC_GLOBE_DIRECTOR ? root.MCC_GLOBE_DIRECTOR.pure : null);
+    const measure = e.kind === 'quake' ? { mag: e.mag } : e.kind === 'natural' ? { category: e.item.event ? e.item.event.kind : e.item.category } : {};
+    const height = pure ? pure.heightFor(e.kind, measure) : 900000;
+    const destination = degrees(pos.lon, pos.lat, height), orientation = { heading: 0, pitch: Cesium.Math.toRadians(height < 400000 ? -60 : -90), roll: 0 };
+    if (!motionAllowed() || !pure) { viewer.camera.setView({ destination, orientation }); requestRender('focus'); return; }
+    const c = viewer.camera.positionCartographic;
+    const duration = pure.flightDuration({ lon: Cesium.Math.toDegrees(c.longitude), lat: Cesium.Math.toDegrees(c.latitude), height: c.height }, { lon: pos.lon, lat: pos.lat, height });
+    const bound = Math.round(duration * 1000 + FOCUS_SAFETY_MS);
+    hold('env-focus', bound);
+    const done = () => release('env-focus');
+    viewer.camera.flyTo({ destination, orientation, duration, easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT, flyOverLongitude: pure.shortestArcMidLon(Cesium.Math.toDegrees(c.longitude), pos.lon), complete: done, cancel: done });
+  }
+  function sceneAction(action) {
+    if (!director) return;
+    if (action === 'play') director.play(); else if (action === 'pause') director.pause(); else if (action === 'next') director.next(); else if (action === 'prev') director.prev(); else if (action === 'stop') director.stop();
+  }
+  function view(mode) {
+    if (!viewer || !Cesium.SceneMode) return;
+    const target = mode === '2d' ? '2d' : '3d';
+    const scene = viewer.scene, is2d = scene.mode === Cesium.SceneMode.SCENE2D;
+    viewTarget = target;
+    if ((target === '2d') === is2d) { tell({ type: 'hu:environment-view-state', mode: target, morphing: false }); return; }
+    const duration = motionAllowed() ? 1.2 : 0;
+    if (target === '2d') scene.morphTo2D(duration); else scene.morphTo3D(duration);
+    requestRender('view');
+  }
+  function onMorphStart() { tell({ type: 'hu:environment-view-state', mode: viewTarget, morphing: true }); }
+  function onMorphComplete() { const mode = viewer && viewer.scene.mode === Cesium.SceneMode.SCENE2D ? '2d' : '3d'; viewTarget = mode; tell({ type: 'hu:environment-view-state', mode, morphing: false }); requestRender('morphed'); }
+
+  function onMessage(d) {
+    if (!d || typeof d.type !== 'string' || !/^hu:environment-/.test(d.type) || d.type === 'hu:environment-pins') return false;
+    if (!mounted) { pendingMessages.push(d); return true; }
+    if (d.type === 'hu:environment-layers') setLayers(d);
+    else if (d.type === 'hu:environment-focus') focus(d.id);
+    else if (d.type === 'hu:environment-scene') sceneAction(d.action);
+    else if (d.type === 'hu:environment-view') view(d.mode);
+    return true;
+  }
+  function mount(options) {
+    const o = options || {};
+    if (mounted || !o.viewer || !o.Cesium) return false;
+    viewer = o.viewer; Cesium = o.Cesium; tell = typeof o.tell === 'function' ? o.tell : () => {};
+    governor = o.governor || null; director = o.director || null; doc = o.document || root.document || null;
+    /* the frame is told when the layers go on and off (slice S5, D16: its halos stand still while they are on) */
+    onActive = typeof o.onActive === 'function' ? o.onActive : () => {};
+    client = o.client || (root.MCC_ENVIRONMENT_LAYERS_CLIENT ? root.MCC_ENVIRONMENT_LAYERS_CLIENT.create({ hidden: () => !!(doc && doc.hidden) }) : null);
+    lodState = lod(viewer.camera.positionCartographic.height);
+    viewer.camera.changed.addEventListener(onCameraChanged);
+    if (viewer.scene.morphStart) viewer.scene.morphStart.addEventListener(onMorphStart);
+    if (viewer.scene.morphComplete) viewer.scene.morphComplete.addEventListener(onMorphComplete);
+    if (director && typeof director.attachInput === 'function') director.attachInput({ canvas: viewer.scene.canvas, document: doc });
+    /* event timeline slice S5: the quake marks, the ripple and the push, when their modules are loaded (action-globe.html) */
+    const shared = { viewer, Cesium, document: doc, add: addPrim, remove: removePrim, hold, release, requestRender, motionAllowed, reducedMotion: () => !motionAllowed(), now };
+    if (root.MCC_ENVIRONMENT_QUAKE_MARKS) marks = root.MCC_ENVIRONMENT_QUAKE_MARKS.create(shared);
+    if (root.MCC_ENVIRONMENT_RIPPLE) rippler = root.MCC_ENVIRONMENT_RIPPLE.create(Object.assign({ onEnd: () => updateLegend() }, shared));
+    if (root.MCC_ENVIRONMENT_CAMERA) { cam = root.MCC_ENVIRONMENT_CAMERA.create(shared); cam.attachInput({ canvas: viewer.scene.canvas, document: doc }); }
+    /* the marks look at the view only on frames that are drawn anyway: a parked camera asks for nothing */
+    if (marks && viewer.scene.preRender) { onFrame = () => marks.frame(); viewer.scene.preRender.addEventListener(onFrame); }
+    mounted = true;
+    if (data.events.length) { eventsSignature = ''; setEvents(data.events, { on: eventsOn }); }
+    for (const d of pendingMessages.splice(0)) onMessage(d);
+    root.__mccEnvironmentLayers = debug;
+    root.__mccFrameSampler = ms => new Promise(resolve => {
+      const deltas = []; let last = root.performance.now();
+      const fn = () => { const t = root.performance.now(); deltas.push(t - last); last = t; };
+      viewer.scene.postRender.addEventListener(fn);
+      root.setTimeout(() => { viewer.scene.postRender.removeEventListener(fn); deltas.shift(); const sorted = deltas.slice().sort((a, b) => a - b); resolve({ frames: deltas.length, meanMs: deltas.length ? Math.round(deltas.reduce((a, b) => a + b, 0) / deltas.length * 10) / 10 : null, p95Ms: sorted.length ? Math.round(sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))] * 10) / 10 : null }); }, Math.max(100, Number(ms) || 3000));
+    });
+    return true;
+  }
+  function debug() {
+    const terminal = s => s && s.status !== 'loading';
+    return {
+      on, lod: lodState, ready: !on || (LAYER_KEYS.every(k => terminal(states[k])) && building.size === 0), built: building.size === 0,
+      counts: JSON.parse(JSON.stringify(counts)), states: Object.fromEntries(Object.entries(states).map(([k, s]) => [k, s ? { status: s.status, reason: s.reason, count: s.count, total: s.total, truncated: s.truncated, fetched_at: s.fetched_at, last_success_at: s.last_success_at, attribution: s.attribution, license: s.license, coverage: s.coverage } : null])),
+      selected: selected ? { id: selected.id, layer: selected.layer, kind: selected.kind } : null, ripple: rippleNow(), lastRipple: rippler ? rippler.last() : null, pendingFocus, legend: legendLines.slice(),
+      replay: replayMode, layersOn: Object.assign({}, layersOn), eventsOn, policy: !!(client && client.isPolicy()), picks: picks.size, shakemap: shakemap ? { quakeId: shakemap.quakeId, lines: counts.shakemapLines, unavailable: shakemap.unavailable || null } : null,
+      rupture: rupture ? { quakeId: rupture.quakeId, lines: counts.ruptureLines, available: !!(rupture.body && rupture.body.available === true), reason: rupture.body ? rupture.body.reason || null : null } : null,
+      marks: marks ? marks.state() : null, camera: cam ? cam.state() : null,
+      feedTerms: Object.keys(feedTerms).sort()
+    };
+  }
+  function destroy() {
+    if (!mounted) return;
+    if (onFrame) { viewer.scene.preRender.removeEventListener(onFrame); onFrame = null; }
+    if (cam) { cam.destroy(); cam = null; }
+    deactivate();
+    if (marks) { marks.destroy(); marks = null; }
+    rippler = null;
+    for (const group of Object.values(prims)) for (const k of Object.keys(group)) group[k] = removePrim(group[k]);
+    if (buildListener) { viewer.scene.postRender.removeEventListener(buildListener); buildListener = null; }
+    viewer.camera.changed.removeEventListener(onCameraChanged);
+    if (viewer.scene.morphStart) viewer.scene.morphStart.removeEventListener(onMorphStart);
+    if (viewer.scene.morphComplete) viewer.scene.morphComplete.removeEventListener(onMorphComplete);
+    picks.clear(); building.clear(); deferred.length = 0; selected = null; selectedLabel = null; shakemap = null;
+    root.clearTimeout(pendingFocusTimer); pendingFocus = null;
+    mounted = false;
+  }
+  root.MCC_ENVIRONMENT_LAYERS = Object.freeze({
+    encodings, isEnvPick, pickId, mount, onMessage, setEvents, redraw: () => { if (mounted) { applyVisibility(); updateLegend(); requestRender('redraw'); } }, focus, pick, select, destroy, debug, isOn: () => mounted && on,
+    clearSelection: () => { if (mounted) clearSelection(); }
+  });
+})(window);

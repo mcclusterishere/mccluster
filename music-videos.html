@@ -144,7 +144,7 @@
     fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (data) {
       (data.albums || []).forEach(function (a) {
         a.tracks.forEach(function (t) {
-          if (t.music_video || t.video || t.reel) TRACKS.push(Object.assign({}, t, { albSlug: a.slug, albName: a.name }));
+          if (t.music_video || t.video || t.reel) TRACKS.push(Object.assign({}, t, { albSlug: a.slug, albName: a.name, artist: a.artist || "Matthew McCluster", art: a.art || "" }));
         });
       });
       fs.innerHTML = FS_TITLE + TRACKS.map(function (t, i) {
@@ -172,9 +172,12 @@
             '<button class="hrt' + (inRot(t.albSlug, t.title) ? " on" : "") + '" type="button" data-hrt aria-label="Save"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
             '<a href="album.html?album=' + t.albSlug + '" aria-label="Open in the player"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M10 18V5l8-2v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="18" r="3" fill="currentColor"/><circle cx="15" cy="16" r="3" fill="currentColor"/></svg></a>' +
             '<button type="button" data-share aria-label="Share"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M7 17L17 7M9.5 7H17v7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+            /* AirPlay where WebKit offers it, shown while a device is in range (js/now-playing.js; decision D-8) */
+            '<button type="button" data-air aria-label="Play on another device" hidden><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18v12h-7"/><path d="M3 10a10 10 0 0 1 8 8"/><path d="M3 14a6 6 0 0 1 4.5 4.5"/><path d="M3 18h.5"/></svg></button>' +
           "</div></section>";
       }).join("");
       watch();
+      airplay();
       var startIndex = 0;
       if (TARGET_ALBUM || TARGET_TRACK) {
         for (var si=0; si<TRACKS.length; si++) {
@@ -190,12 +193,50 @@
       fs.innerHTML = FS_TITLE + "<section class='fc'><div class='fc__meta'><b>The music videos are warming up</b><small>refresh in a moment</small></div></section>";
     });
 
+    /* before any sound, the device is told this is music (the playback audio session; js/now-playing.js,
+       loaded by js/tabbar.js) */
+    function audioSession() { if (window.MCC_NOW_PLAYING) window.MCC_NOW_PLAYING.claim(); }
+    /* THE LOCK SCREEN: the one owner (js/now-playing.js) names the card's record, its artist, album and cover;
+       previous and next take the card before or after, as a swipe does, and play it at once (music slice M2) */
+    var np = null;
+    function nowPlaying() {
+      if (!np && window.MCC_NOW_PLAYING && window.MCC_NOW_PLAYING.bind) np = window.MCC_NOW_PLAYING.bind(deck, {
+        surface: "music-videos",
+        track: function () { var t = TRACKS[cur]; return t ? { title: t.title, artist: t.artist, album: t.albName, art: t.art } : null; },
+        play: function () { armed = true; fa.hidden = true; audioSession(); deck.play().catch(function () {}); if (cur > -1) playFilm(cur); },
+        pause: function () { deck.pause(); },
+        previous: function () { if (deck.currentTime > 4) { deck.currentTime = 0; return; } step(-1); },
+        next: function () { step(1); }
+      });
+      return np;
+    }
+    deck.addEventListener("play", nowPlaying);
+    function step(d) {
+      if (!TRACKS.length) return;
+      var to = (cur + d + TRACKS.length) % TRACKS.length;
+      armed = true; fa.hidden = true;
+      activate(to);
+      var c = card(to);
+      if (c) c.scrollIntoView({ block: "start" });
+    }
+    /* one AirPlay picker for the reel's one deck, on every card's rail */
+    function airplay() {
+      var bs = Array.prototype.slice.call(fs.querySelectorAll("[data-air]"));
+      if (!bs.length || !window.MCC_NOW_PLAYING || !window.MCC_NOW_PLAYING.airplay) return;
+      var lead = bs[0];
+      if (!window.MCC_NOW_PLAYING.airplay(lead, deck)) return;
+      deck.addEventListener("webkitplaybacktargetavailabilitychanged", function (e) {
+        bs.forEach(function (b) { b.hidden = !e || e.availability !== "available"; });
+      });
+      bs.slice(1).forEach(function (b) { b.addEventListener("click", function () { lead.click(); }); });
+    }
+
     /* one tap, the whole reel gets sound */
     var fa = document.getElementById("fa");
     fa.addEventListener("pointerdown", function () {
       armed = true;
       fa.hidden = true;
-      if (cur > -1) { deck.play().catch(function () {}); playFilm(cur); }
+      if (cur > -1) { nowPlaying(); audioSession(); deck.play().catch(function () {}); playFilm(cur); }
       if (window.MCC_TRACK) window.MCC_TRACK("music_videos_armed", {});
     });
 
@@ -254,7 +295,8 @@
       /* the record: from the top, every swipe */
       deck.src = t.src;
       deck.currentTime = 0;
-      if (armed) deck.play().catch(function () {});
+      if (np) np.update();
+      if (armed) { audioSession(); deck.play().catch(function () {}); }
       loadLyrics(t.lyrics || "", i);
       try {
         history.replaceState(null, "", "music-videos.html?album="+encodeURIComponent(t.albSlug)+"&t="+encodeURIComponent(t.title));
@@ -425,7 +467,7 @@
       /* the reel rolls on: glide to the next card */
       var next = card(cur + 1);
       if (next) next.scrollIntoView({ behavior: "smooth" });
-      else deck.play().catch(function () {});
+      else { audioSession(); deck.play().catch(function () {}); }
     });
 
     /* the rail */

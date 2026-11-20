@@ -102,8 +102,42 @@
       a.src = SONGS[key].src;
       players[key] = a;
       count(a);
+      nowPlaying(a);
     }
     return players[key];
+  }
+  /* BEFORE ANY SOUND, THE DEVICE IS TOLD THIS IS MUSIC (the playback audio session iOS keeps going with the
+     screen locked), through the one helper every player asks (js/now-playing.js, loaded by js/tabbar.js). */
+  function audioSession() { if (root.MCC_NOW_PLAYING) root.MCC_NOW_PLAYING.claim(); }
+  /* THE LOCK SCREEN. One owner speaks to the device's Now Playing (js/now-playing.js): the score says which
+     side of the record plays and what play, pause, previous and next mean here. The credit, album and cover are
+     the page's own (gwConfig); the cover goes at its true size and type, read from the file. Previous and next
+     turn the record over (decision D-4: no 15-second skips). The helper may arrive after this file, so each
+     song's element is bound when it is made and again when it plays. */
+  var NOW = {
+    surface: "gateway",
+    track: function () {
+      var key = current || chosen, m = CFG.media || {};
+      return key && SONGS[key] ? { title: SONGS[key].title, artist: m.artist || "", album: m.album || "", art: m.art || "" } : null;
+    },
+    play: function () { soundOn = true; playSong(current || chosen || scoreFor(actNow)); },
+    pause: function () { soundOn = false; silence(); },
+    previous: function () { turn(-1); },
+    next: function () { turn(1); }
+  };
+  function nowPlaying(a) {
+    if (!root.MCC_NOW_PLAYING || !root.MCC_NOW_PLAYING.bind) return;
+    root.MCC_NOW_PLAYING.bind(a, NOW);
+    if (!a.__np) { a.__np = true; a.addEventListener("play", function () { nowPlaying(a); }); }
+  }
+  /* the other side of the record, picked by hand: it keeps playing whichever act is on screen */
+  function turn(step) {
+    var keys = Object.keys(SONGS), at = keys.indexOf(current || chosen || CFG.listen);
+    var a = current && players[current];
+    if (step < 0 && a && a.currentTime > 4) { try { a.currentTime = 0; } catch (e) {} return; }
+    chosen = keys[(at + step + keys.length) % keys.length];
+    soundOn = true;
+    playSong(chosen);
   }
   /* A song heard here all the way through counts in the listen ledger,
      exactly as in the album player: a listen starts when a song plays from
@@ -154,19 +188,12 @@
     current = key;
     var a = player(key);
     try { a.volume = prev ? 0 : 1; } catch (e) {}
+    nowPlaying(a);
+    audioSession();
     var go = a.play();
     if (go && go.catch) go.catch(function () { soundOn = false; current = null; paintSound(); });
     if (prev && prev !== a) fade(prev, 0, 900, function () { prev.pause(); });
     if (prev) fade(a, 1, 900);
-    if ("mediaSession" in root.navigator) {
-      try {
-        var m = CFG.media || {};
-        root.navigator.mediaSession.metadata = new root.MediaMetadata({
-          title: SONGS[key].title, artist: m.artist || "", album: m.album || "",
-          artwork: m.art ? [{ src: m.art, sizes: m.sizes || "512x512", type: "image/jpeg" }] : []
-        });
-      } catch (e) {}
-    }
     track("gateway_score", { gateway: CFG.name, song: key, act: actNow });
     paintSound();
   }

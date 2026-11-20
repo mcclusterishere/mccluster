@@ -1,4 +1,5 @@
-// E=Up module policy against the actual pending SQL in isolated PGlite (serial; one session).
+// E=Up module policy against the actual SQL in isolated PGlite (serial; one session): the applied migration
+// supabase/migrations/20261117144103_eup_module_policy_v1.sql, through scripts/test/support/eup-module-policy-database.mjs.
 // Proves: apply -> rollback -> re-apply and a second apply that changes nothing; no policy row is created; with
 // Supabase-style default privileges switched on, anon / authenticated / service_role hold no table or sequence
 // privilege and service_role executes exactly the six entry points; a missing row fails closed for the read,

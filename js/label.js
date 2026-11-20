@@ -16,9 +16,13 @@
    THE BEAM     the record jumps to other screens (Cast/AirPlay)
                 when the platform offers a picker.
 
-   Plus the lock screen grows up: artwork with declared sizes,
-   live position state, ±10s — the car dashboard treats this
-   catalog like a streaming service because it is one.
+   The lock screen is no longer dressed here. It used to add
+   15-second skips beside previous and next (WebKit publishes them
+   as skip buttons, and iOS is reported to draw those instead of the
+   track buttons) and re-label one cover as a JPEG at 96, 192 and
+   512 px whatever the file was. js/now-playing.js owns the lock
+   screen for every player now: previous and next, the cover at its
+   true size and type, the position (music slice M2).
    ============================================================ */
 (function () {
   "use strict";
@@ -319,68 +323,21 @@
   }
 
   /* ================= THE BEAM ================= */
+  /* AirPlay where WebKit offers it, the same picker every music surface has, shown while
+     WebKit says a device is in range (js/now-playing.js; decision D-8). Elsewhere, the
+     browser's own cast picker where it has one (Remote Playback), as before. */
   var beamBtn = document.getElementById("nowBeam");
   if (beamBtn) {
-    if (deck.remote && deck.remote.prompt) {
+    var webkitBeam = !!(window.MCC_NOW_PLAYING && window.MCC_NOW_PLAYING.airplay && window.MCC_NOW_PLAYING.airplay(beamBtn, deck));
+    if (webkitBeam) {
+      beamBtn.addEventListener("click", function () { track("beam_open", { album: ALBUM }); });
+    } else if (deck.remote && deck.remote.prompt) {
       beamBtn.hidden = false;
       beamBtn.addEventListener("click", function () {
         track("beam_open", { album: ALBUM });
         deck.remote.prompt().catch(function () { toast("No other screens in range."); });
       });
-    } else if (window.WebKitPlaybackTargetAvailabilityEvent) {
-      beamBtn.hidden = false;
-      beamBtn.addEventListener("click", function () {
-        track("beam_open", { album: ALBUM });
-        try { deck.webkitShowPlaybackTargetPicker(); } catch (e) {}
-      });
     }
-  }
-
-  /* ============ THE LOCK SCREEN GROWS UP ============ */
-  if ("mediaSession" in navigator) {
-    try {
-      navigator.mediaSession.setActionHandler("seekbackward", function (d) {
-        deck.currentTime = Math.max(0, deck.currentTime - (d.seekOffset || 10));
-      });
-      navigator.mediaSession.setActionHandler("seekforward", function (d) {
-        deck.currentTime = Math.min(deck.duration || 1e9, deck.currentTime + (d.seekOffset || 10));
-      });
-    } catch (e) {}
-
-    /* artwork with declared sizes: dashboards and watches pick well */
-    deck.addEventListener("play", function () {
-      setTimeout(function () {
-        var md = navigator.mediaSession.metadata;
-        if (!md || !md.artwork || !md.artwork.length) return;
-        var src = md.artwork[0].src;
-        if (md.artwork[0].sizes) return; // already dressed
-        try {
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: md.title, artist: md.artist, album: md.album,
-            artwork: ["96x96", "192x192", "512x512"].map(function (s) {
-              return { src: src, sizes: s, type: "image/jpeg" };
-            }),
-          });
-        } catch (e) {}
-      }, 60);
-    });
-
-    /* live position: the scrubber on the lock screen tells the truth */
-    var lastPos = 0;
-    deck.addEventListener("timeupdate", function () {
-      if (!navigator.mediaSession.setPositionState) return;
-      var now = Date.now();
-      if (now - lastPos < 1000) return;
-      lastPos = now;
-      if (!isFinite(deck.duration) || !deck.duration) return;
-      try {
-        navigator.mediaSession.setPositionState({
-          duration: deck.duration,
-          playbackRate: deck.playbackRate || 1,
-          position: Math.min(deck.currentTime, deck.duration),
-        });
-      } catch (e) {}
-    });
   }
 
   /* ============ THE MARQUEE: the tab itself plays the record ============ */

@@ -32,6 +32,11 @@
      cannot carry Safari's media activation); the child only displays state. */
   var headlineBase = null, lyricCache = {}, lyricLine = "", lyricSlug = "", lyricAt = 0, remoteState = null;
 
+  /* Before every play(): the World's song is music to the device as well. The
+     one helper every player asks (js/now-playing.js, loaded just before this
+     file by js/tabbar.js) sets the playback audio session where the browser has
+     one, the kind iOS keeps going with the screen locked. */
+  function audioSession() { if (root.MCC_NOW_PLAYING) root.MCC_NOW_PLAYING.claim(); }
   function readPreference() {
     try { var p = JSON.parse(localStorage.getItem(PREF) || "null"); return p && typeof p === "object" ? p : {}; } catch (_) { return {}; }
   }
@@ -88,7 +93,7 @@
     var deck = doc.getElementById("deck");
     if (deck && (deck.currentSrc || deck.getAttribute("src"))) {
       return {audio:deck, title:lastAnnouncement.title || doc.getElementById("tpTitle")?.textContent || "Your music",
-        play:function () { return root.MCC_NP_PLAY ? root.MCC_NP_PLAY() : deck.play(); }, pause:function () { deck.pause(); }};
+        play:function () { audioSession(); return root.MCC_NP_PLAY ? root.MCC_NP_PLAY() : deck.play(); }, pause:function () { deck.pause(); }};
     }
     return null;
   }
@@ -216,7 +221,8 @@
      the privacy acknowledgement (js/analytics.js defines MCC_TRACK then): start, pause, resume, mute, unmute, a volume
      change, the end, the tab going to the background and leaving the page, each with the song and the seconds. A
      phone's own volume buttons are invisible to a web page, so a lowered volume is seen only when it is lowered here. */
-  var FALLBACK_SONG = {title:"Heal the 3rd World", src:"assets/audio/heal-the-3rd-world.m4a", slug:"heal-the-3rd-world", album:"heal-the-3"};
+  var FALLBACK_SONG = {title:"Heal the 3rd World", src:"assets/audio/heal-the-3rd-world.m4a", slug:"heal-the-3rd-world", album:"heal-the-3",
+    albumName:"Heal the 3", artist:"Matthew McCluster", art:"assets/img/heal-the-3-cover.jpg"};
   var rotation = null, rotationLoad = null, song = null, songOrd = 0, songStarted = 0, songBegun = false, pauseBy = "", soundWas = null;
   function loadRotation() {
     if (rotationLoad) return rotationLoad;
@@ -231,7 +237,10 @@
           if (t && fileSlug) words[fileSlug] = typeof t.lyrics === "string" && /^data\/lyrics\/[a-z0-9._-]+\.json$/i.test(t.lyrics) ? t.lyrics : "";
           // public catalog files only: never a gated master, a preview or anything off the house's audio folder
           if (!t || t.gated || /preview/i.test(src) || !/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(src)) return;
-          list.push({title:String(t.title || "").slice(0, 120), src:src, slug:src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase(), album:String(a.slug || "").slice(0, 60)});
+          // what the lock screen names: the song, its record's billed artist and album, and the record's cover (a same-origin file only)
+          list.push({title:String(t.title || "").slice(0, 120), src:src, slug:src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase(), album:String(a.slug || "").slice(0, 60),
+            albumName:String(a.name || "").slice(0, 120), artist:String(a.artist || "Matthew McCluster").slice(0, 120),
+            art:typeof a.art === "string" && /^assets\/img\/[a-z0-9._-]+$/i.test(a.art) ? a.art : ""});
         });
       });
       rotation = list.length ? list : [FALLBACK_SONG];
@@ -244,6 +253,8 @@
   function pickSong() {
     var list = rotation && rotation.length ? rotation : [FALLBACK_SONG], next = list[0];
     for (var i = 0; i < 8 && list.length > 1; i++) { next = list[Math.floor(Math.random() * list.length)]; if (!song || next.src !== song.src) break; }
+    // never the same song twice in a row: when the draw keeps landing on it, the next one along the shelf
+    if (song && next.src === song.src && list.length > 1) next = list[(list.indexOf(next) + 1) % list.length];
     return next;
   }
   // The theme is made when the page opens, before the catalog arrives, so its first song is the fallback. Once the
@@ -279,8 +290,9 @@
     });
     audio.addEventListener("ended", function () {
       songEvent("song_end");
+      remember();
       loadSong(pickSong());
-      try { var p = audio.play(); if (p && p.catch) p.catch(paint); } catch (_) {}
+      try { audioSession(); var p = audio.play(); if (p && p.catch) p.catch(paint); } catch (_) {}
       paint();
     });
     audio.addEventListener("volumechange", function () {
@@ -293,16 +305,54 @@
     });
     root.addEventListener("pagehide", function () { if (songBegun) songEvent("song_leave", {playing:!audio.paused && !audio.ended}); });
   }
+  /* THE WORLD'S SONG ON THE LOCK SCREEN (music slice M2). It wrote nothing there: no title, no artist, no cover,
+     and WebKit then offers play, pause and 15-second skips with no track buttons, so the lock screen and AirPods could
+     not change the song (music map 03, EXT-3). The one owner (js/now-playing.js) names the song, its record's artist and
+     album and the record's cover at its true size, and previous and next move within the rotation: next draws another
+     song, as the end of one does; previous goes back to the song before (or to the top of this one, a few seconds in).
+     A lock-screen pause is the listener's pause, remembered like the corner button's. */
+  var played = [];
+  function remember() { if (song && songBegun) { played.push(song); if (played.length > 30) played.shift(); } }
+  function startTheme() {
+    if (!theme) return;
+    var audio = theme.audio;
+    preference.paused = false; savePreference();
+    try { audioSession(); var p = audio.play(); if (p && p.catch) p.catch(paint); } catch (_) {}
+    paint();
+  }
+  function nextSong() {
+    if (!theme) return;
+    songEvent("song_skip", {to:"next"});
+    remember();
+    loadSong(pickSong());
+    startTheme();
+  }
+  function previousSong() {
+    if (!theme) return;
+    var audio = theme.audio;
+    if (audio.currentTime > 4 || !played.length) { try { audio.currentTime = 0; } catch (_) {} return; }
+    songEvent("song_skip", {to:"previous"});
+    loadSong(played.pop());
+    startTheme();
+  }
   function ensureTheme() {
     if (theme) return theme;
     var audio = new Audio(); audio.preload = "metadata"; audio.loop = false;
     audio.setAttribute("playsinline", "");
     audio.muted = preference.muted === true; soundWas = {muted:audio.muted, volume:audio.volume};
     theme = {audio:audio, title:"", access:"full",
-      play:function () { return audio.play(); }, pause:function () { audio.pause(); }};
+      play:function () { audioSession(); return audio.play(); }, pause:function () { audio.pause(); }};
     // the source is set synchronously; rollUnplayed redraws it from the whole catalog once that arrives
     loadSong(pickSong());
     watch(audio); reactions(audio);
+    if (root.MCC_NOW_PLAYING && root.MCC_NOW_PLAYING.bind) root.MCC_NOW_PLAYING.bind(audio, {
+      surface: "world",
+      track: function () { return song ? {title:song.title, artist:song.artist || "Matthew McCluster", album:song.albumName || "", art:song.art || ""} : null; },
+      play: function () { if (audio.paused || audio.ended) startTheme(); },
+      pause: function () { pauseBy = "lock_screen"; preference.paused = true; savePreference(); audio.pause(); paint(); },
+      previous: previousSong,
+      next: nextSong
+    });
     return theme;
   }
   function playTheme() {
@@ -311,7 +361,7 @@
     if (!p.audio.paused) return;
     // Synchronous with the owning document's click/touch. postMessage does not
     // transfer Safari's media activation and is never used to start this sound.
-    try { var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
+    try { audioSession(); var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
     ensureControls(); paint();
   }
   function touch() {
@@ -326,7 +376,7 @@
     var p = player() || ensureTheme();
     if (!p.audio.paused && !p.audio.ended) { pause(); return; }
     preference.paused = false; savePreference();
-    try { var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
+    try { audioSession(); var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
     paint();
   }
   function mute() {

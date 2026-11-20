@@ -1,6 +1,200 @@
 # Deep-audit response handoff, 9 November 2026
 
-> **Session 4 (2026-11-10 UTC) is recorded first, then session 3, session 2 and the original session, each unchanged below the newer one.**
+> **Session 5 (2026-11-16 UTC) is recorded first, then session 4, session 3, session 2 and the original session, each unchanged below the newer one.**
+
+## Session 5: verified state on 16 November 2026 (read only)
+
+Nothing was merged, deployed, applied or changed in production in this session. Every fact below was read on
+2026-11-16 between 02:20 and 04:30 UTC. Evidence levels: **live** (observed in production or on a public endpoint
+that day), **CI** (completed check runs on the exact head), **local** (tests run that day in this container),
+**source** (read in code only). The record commits `a48f798d` and `fdb9465e` changed records only: neither reran a
+production check or resolved a production issue, and nothing in this section closes an item.
+
+### Heads and running services
+
+- `main` is `fc1986ec` (the #814 merge, whose diff against its first parent is one file under `docs/control-plane`);
+  `deploy/ovh-production` is `eb942248`.
+- **live**: the API Worker's `/v1/health` reports `deployment_sha` `fc1986ec` with `deployment_ref` `HEAD`.
+- **live**: OVH Core's public `/health` answered 200 at 04:05:34Z: `ok: true`, service `mccluster-core-tool-broker`,
+  `deployment_sha` `eb942248`. The unauthenticated answer says nothing about units or the migration attestation.
+- `mcclusterishere/equity-uprise` `main` is `bdb7ce8`, the merge of PR #4 (head `0e53e17`, same tree), version
+  `0.1.0-review.11`; that `main` is not branch-protected.
+- `McCluster-OS` `main` is `5648b5c`; its default branch `claude/product-integration-4o3p2j` is `13feab9`.
+  `McCluster-OS-Prototype` is private and empty (created 2026-11-14 06:11Z).
+- Checkpoints `ede4ec8` and `9541ee2`, the product build folder and the unpublished PRIM3 story-map pass are on
+  no GitHub ref; by the owner's account they are on the owner's machine, which this session could not reach.
+
+### Pull requests (exact heads)
+
+| PR | Head | State | Mergeable | CI on that head |
+| --- | --- | --- | --- | --- |
+| #782 customer site, commerce, publishing | `ea1c8a47` | open draft | dirty: 32 files | 63 success, 2 skipped |
+| #796 COM-3 | `6906aae1` | merged into #782's branch (`8fc3a937`), not `main` | closed | 9 success, 1 skipped |
+| #801 Shared Fate | `33ac09d6` | open draft | dirty: the 2 source-map JSONs from #802 | 20 success, 2 skipped |
+| #802 building workstation repair | `23683756` | merged (`98404db7`), published by Pages | closed | 21 success, 2 skipped |
+| #803 Finance | `ee02cc9d` | open, not a draft; its body still cites `6f27decb` and "review-only draft" | behind | 49 success, 2 skipped; finance 91/91 local |
+| #804 multicamera | `cf18210f` | draft: an unwired 48-line validator | behind | 13 success, 2 skipped; Core 662/662 local |
+| #805 Control PWA | `b84c9de9` | draft: a web-manifest link | behind | 16 success, 2 skipped; 2/2 local |
+| #814 OVH repair | `389699ce` | merged (`fc1986ec`) | closed | 13 success, 2 skipped |
+| #815 MCP hardening | `ed48dca8` | draft: an outbound MCP client redirect fix | clean | 13 success, 2 skipped; Core 659/659 local |
+
+No head had a failed, cancelled, timed-out, action-required or pending run; the skips are `Publish generated
+building artifacts` and `Supabase Preview`. Prim3 #24 (`451f6314`) is an open draft that conflicts with Prim3
+`main` (`dfdc1bd`) in 5 canon files; #801 vendors 8 of its engine files pinned by SHA-256 (byte-identical), and
+#801's vendor test checks hashes only. #24's own check runs could not be read from this session.
+
+OVH: the merge of #814 is not a deployment receipt. `deploy/ovh-production` was moved on 11-07 and 11-13 by
+pushes that did not come from `promote-ovh-production.yml` (its last run is from 11-03), CI saw Core report `eb942248` at
+2026-11-13T05:43:59Z, no receipt is dated after 11-10, and #510 is open.
+
+### Production database (SELECT only)
+
+- **live**: 366 applied migrations. `main`'s ledger, drift contract and `supabase/migrations` hold 364, and all 364
+  match production by version, name and order.
+- **live**: `20261114015120 equity_uprise_platform_registry` (applied 01:51:20Z) and `20261114060150
+  equity_uprise_music_workspace` (06:01:50Z) exist only in production. Both were applied under the owner's Supabase
+  account, the creator of every migration since `20261029011534` except `20261030001000`; each is one statement
+  (17,044 and 13,691 characters). They are on no PR head, no `mccluster` branch with a commit since 2026-11-12, no
+  ref of `equity-uprise` or `McCluster-OS`, and no default branch in the organization (code search). They create the Equity Uprise platform registry: 1 platform,
+  5 tenants (the platform, McCluster's organization and three artist tenants), 12 module bindings (identity,
+  missions, music), 3 artist bindings, an empty per-member music-library table and two directory views, and they
+  insert rows into `public.orgs` and `public.org_members`.
+- Consequence: the live attestation is 366 / `20261114060150` / `306662c5…`, while the contract that OVH Core and
+  the #510 acceptance check is 364 / `6fcada89…`. The repository has to absorb these two migrations, from
+  production's applied text or from their original source (reconcile, never replay), before a 366 contract can be
+  cut.
+- Row-level security limits `anon` to the enabled registry row, the two publicly listed tenants and their bindings
+  (6 of 12 module bindings, all 4 app bindings): the binding policies reach the tenants table through its own
+  policy, so the three unlisted artist tenants stay hidden. This was evaluated from the policies as written, not
+  by switching role. No advisor flags these objects.
+- Still absent in production: #782's pending customer schemas; the E=Up module policy, league and intake SQL
+  (0 `eup_*` functions, so the public Environmental Justice mode answers 503 `module_policy_unavailable`); every
+  `finance_*` table and function.
+- **live**: 58 Edge Functions are deployed; 57 match a directory under `supabase/functions` on `main`, and
+  `music-publish-internal` (deployed outside Git) has none. 30 of them, `stripe-webhook`, `checkout`,
+  `music-checkout`, `music-direct-checkout` and `music-direct-access` among them, were redeployed at
+  2026-11-13T05:41:38Z, 83 seconds after the docs-only `fc1986ec` merge commit: a push to `main` redeploys them
+  without waiting for CI. Deployed source was not byte-compared with `main`.
+
+### The two acceptance proofs: not met
+
+1. **Hosted customer flow.** No supported hosted path exists to test. `equity-uprise` has no signup, payments,
+   entitlements or cancellation. `main`'s creator billing has 0 subscriptions and 0 events in production and is
+   tested only by text-matching contracts. The fuller flow is only on draft #782 (fixture and CI tests green on `ea1c8a47`), and its pending SQL is
+   absent in production. Stripe mode and prices were not read.
+2. **McCluster OS on OVH.** No OS service, OS deployment configuration or session-capable UI exists on any
+   reachable ref. McCluster-OS has no sign-in, sessions, sign-out, reconnect or HTTP task API; its only task store
+   is a filesystem queue its own documentation calls not production-ready (local: `main` 14/14, `fd7ff2e` 27/27;
+   no CI has run). `equity-uprise` `main` has owner sign-in, database sessions, sign-out and versioned site drafts,
+   but no task module, owner UI, TLS or OVH configuration, and no test that a session survives a host restart. An
+   isolated service next to Core must stay out of `/opt/mccluster/core`, Core's unit names and ports 4096, 4777,
+   4788 to 4790, 4799 and 11434: Core's reconcile timer runs every two minutes as root with `rsync --delete`.
+
+### `equity-uprise` tests on `bdb7ce8` (local, Node v22.23.4)
+
+`npm run check` 561/561; PGlite installation 77/77; control on PGlite passed. On PostgreSQL 16.15 (04:09 to
+04:14Z): native installation 21/21, host 11/11, recovery 18 passed and 2 skipped (both need a second PostgreSQL
+major version), isolation 7/7, site 13/13, and the exported pages in Chromium 4/4 at 390 and 1280 px. The opt-in
+capacity measurement (two clusters, about 1.5 GB) and PostgreSQL 17 were not run. `product-checks.yml` runs only `check`, `installation:pglite`, `control:pglite` and `control:postgres`, and only
+on pull requests or a manual dispatch, so no CI run exists on `bdb7ce8` itself and no native or browser suite has
+ever run in CI.
+
+### Audit items, rechecked
+
+- **a) Deployment enforcement and pinned tooling: open.** The Worker deploys through Workers Builds on every push
+  to `main` without waiting for CI (it serves the docs-only `fc1986ec`; the GitHub-gated deploy job was skipped).
+  Supabase migrations and functions deploy through the GitHub integration, also without a CI gate. The Pages
+  `workflow_dispatch` can publish any branch whose same-named checks are green, and #782's head qualifies. The OVH
+  ref moved outside the promotion workflow (above). Every third-party action is pinned by SHA, and the workflows
+  pin wrangler 4.156.0, Node 24.22.1 and the Supabase CLI 2.117.0, but the paths that actually deploy (Workers
+  Builds, the Supabase integration) were not read, and Pages installs pip packages unpinned.
+- **b) Music asset ownership and immutable versions.** `20261109175747` is applied and its trigger and function
+  bodies are byte-identical to `main`. The pin covers the file path and title, not the stored bytes, and the
+  purchase page shows the live offer's title and format.
+- **c) Server-controlled commission.** The creator-licence fee is set by the server and enforced in the database
+  for every role; `creator_net_cents` is not checked on insert, and whether a tenant can write
+  `tenants.platform_fee_percent` through RLS was not checked.
+- **d) Fulfilment binding.** On `main`, the direct-sale and creator-licence webhooks compare session, account,
+  amount and currency; creator subscriptions are matched only by subscription metadata and a price allowlist.
+  Source and database functions were read; deployed function code was not.
+- **e) Failed-start rollback (COM-3).** Only on draft #782's branch; its SQL is pending and absent in production.
+  CI on #782 runs the PGlite reservation harness; no workflow runs the native one.
+- **f) Privacy.** `privacy.html` says its five named processors are the only companies involved and that
+  Cloudflare serves the site; the code calls fal.ai, OpenAI, Google, OpenStreetMap, Mapbox, Meta, Square, Persona
+  and Twilio, GitHub Pages serves `matthew.mccluster.org` (**live**), and the 13-month retention has no scheduled
+  purge.
+- **Migration guards.** Every CI guard compares committed files with each other or a throwaway rebuild, and none
+  reads production; `verify-production-schema.mjs` on the committed 2026-11-10 snapshot reports 250 differences,
+  several reconfirmed live. The only automated live comparison is Core's runtime attestation, which needs an
+  authenticated read.
+
+### Owner decisions (observed only; nothing changed)
+
+1. **Branch protection:** `mccluster` `main` is protected (rule contents unread); `deploy/ovh-production` is
+   protected yet moved by direct pushes; `equity-uprise` `main` is unprotected.
+2. **Leaked-password protection:** still off (advisor WARN).
+3. **Always Use HTTPS:** `http://api.mccluster.org/health` answers 200 over plain HTTP with no redirect, while the
+   apex and `www` redirect; `data/seo/domain-architecture.json:228` ("covers the zone") does not hold for the API
+   host.
+4. **Console Access:** `/internal/seek-first` is behind Cloudflare Access (302 to the Access login), contrary to
+   `HALO-INTEL-IMPLEMENTATION-MAP.md:41`; the Halo host's root page answers publicly, contrary to
+   `IDENTITY-VERIFICATION-LEVELS.md:34,224`; Halo's data paths were not probed.
+5. **Extensions in `public`:** `vector` 0.8.2 and `pg_trgm` 1.6.
+
+Security advisors: no ERROR; WARN: authenticated-executable SECURITY DEFINER functions 131, anon-executable 29,
+`extension_in_public` 2, leaked-password protection 1.
+
+### Product direction, as it stands
+
+- **Modules on `main`.** News works at the API level (GDELT ingest live, `/v1/world/news` 200; no page was
+  rendered). Travel, Missions, Music, PRIM3 and Learning are partial, Environmental Justice answers 503, and
+  Finance is owner-development code with no flag in the committed Worker configuration. The Control room is one
+  6-section, 54-leaf navigation with no Travel, Finance or Learning pane; `css/control-room*.css` still holds 11
+  `max-width` queries; the 390/820/1280 UI suites run only on pull requests and have never run on `main`'s head.
+- **PRIM3.** All 25 World missions load the same Transit/Relay map; generated side operations share one synthetic
+  128 m template. Research-generated missions cannot become canon automatically (validators force draft side
+  operations and no code writes canon), but the HALO research gate and Prim3's label rules are documents, not CI.
+  #801's map is one distinct PROPOSED yard on its own page; #24 also carries a CANON-labelled seven-semester
+  chronology that Prim3 `main` (continuity 1.1.0) does not adopt.
+- **Finance (#803).** Alpaca is used read-only for market and reference data (GET only); "orders" are entries in a
+  simulated ledger; there is no order path, access is owner-only and flag-gated, and nothing is scheduled. A code search of every
+  `mcclusterishere` default branch finds no Alpaca order endpoint (`v2/orders`) or `submit_order` call.
+- **Website building.** `js/front-studio.js` previews a member page from structured settings and
+  `js/site-editor.js` applies owner-only text overrides; neither has AI, diff or export, and production stores 0
+  overrides. The Core catalog lists `site.edit` as active with no implementation. `equity-uprise`'s site module
+  is an owner-only API/CLI (draft revisions, preview export, approve, publish, rollback, unpublish, static export)
+  with no UI, raw HTML/CSS or diff. The clothing HTML template is on no reachable ref.
+- **One implementation.** The two repositories duplicate module policy, the environment panel (`mccluster` vendors
+  an unpublished review.2 snapshot with local patches) and website publishing, and production now holds a fourth
+  piece, the platform registry above. The product's runtime code carries no McCluster branding; its exported docs
+  still carry McCluster identifiers, source inventories and the colour palette.
+
+### Stale claims found (left as written, to be fixed deliberately)
+
+`docs/control-plane/OVH-510-CURRENT-364.md:5` (364 parity; production has 366);
+`OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md:21` (Core reports `eb942248`, not `9c5b7503`);
+`deep-audit-20261109/CAPABILITY-MATRIX.md:39` (the product is merged to its `main`, 561 tests);
+`AGENTS.md` (Environmental Justice listed as a public mode); `core/capabilities/catalog.json:1971` (`site.edit`
+"active"); `docs/control-plane/SHARED-NAVIGATION.md` against `js/tabbar.js:629-637` and `js/site-navigation.js:42-60`; the header of migration
+`20261030001000` ("NOT applied"; it is applied); `privacy.html` (processors, hosting); the bodies of #782
+(`1a5fc526`), #801 (docs pin `2fe190a7`, the files pin `451f6314`), #802 ("remains a draft"), #803 and #805
+("Remote CI pending"); and McCluster-OS's instruction files, which name a Worker `mccluster-core` and call the apex
+the same property as `matthew.mccluster.org`.
+
+### What needs the owner
+
+1. Share the product build folder with a cloud session, or push each local repository and checkpoint (`ede4ec8`,
+   `9541ee2`, the product and module folders, the story-map pass) to a GitHub branch. Nothing about them can be
+   verified until then.
+2. Say whether the two 2026-11-14 migrations stay. Either way they stay in the migration history; the repository
+   then absorbs them and a 366 contract is cut for Core and #510.
+3. Name the supported hosted path for proof 1 and authorize its test-mode payments and production SQL.
+4. Approve an isolated OS service on the OVH host (path, unit name, port, TLS route) once the prototype source is
+   on GitHub.
+5. The five owner decisions above.
+6. Reads that need owner credentials: Core's authenticated health (units, attestation), GitHub environments,
+   rulesets and protection rules, Cloudflare Workers Builds and zone settings, Stripe mode and prices, the Worker's
+   finance and billing flags, and API access to Prim3 for #24's checks.
 
 ## Session 4: the League member mission loop, buyer retry edge cases, native proofs, Core lease checkpoint, patch series
 `TRACEABILITY.md` traces the owner's strategy of 9 November 2026 (the two near-term proofs, P0 to P9 and the acceptance scenarios) to its state at `b4855d94`, with each row's evidence and what remains.

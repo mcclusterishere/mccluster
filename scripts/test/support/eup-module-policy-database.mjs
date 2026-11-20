@@ -1,5 +1,6 @@
 // Isolated local PostgreSQL-compatible support for the E=Up module policy; never connects to canonical Supabase.
-// Applies supabase/pending/eup_module_policy_v1.sql and drives its owner commands the way the Worker will: as
+// Applies supabase/migrations/20261117144103_eup_module_policy_v1.sql (applied in production 2026-11-17; staged as
+// supabase/pending/eup_module_policy_v1.sql, whose rollback stays there) and drives its owner commands the way the Worker will: as
 // service_role, through the functions, never through the tables. The League and intake harnesses import the
 // helpers; scripts/test/eup-module-policy.integration.mjs uses createModulePolicyDatabase().
 //
@@ -32,7 +33,7 @@ export const MODULE_POLICY_ENTRY_POINTS = Object.freeze([
   'eup_module_policy_read(text)'
 ]);
 
-const SQL = new URL('../../../supabase/pending/eup_module_policy_v1.sql', import.meta.url);
+const SQL = new URL('../../../supabase/migrations/20261117144103_eup_module_policy_v1.sql', import.meta.url);
 const ROLLBACK = new URL('../../../supabase/pending/eup_module_policy_v1.rollback.sql', import.meta.url);
 const ROLES_STUB = new URL('../../../supabase/tests/supabase_api_roles.stub.sql', import.meta.url);
 

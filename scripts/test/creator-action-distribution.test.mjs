@@ -83,3 +83,32 @@ test("the external CTA keeps content and source attribution through the mission 
   assert.match(mnet,/missions\.attributedMission===m\.id/);
   assert.match(mnet,/missions\.content="";missions\.source="";missions\.attributedMission=""/);
 });
+
+/* release review SEC-3 (2026-11-19): action_offer_cards is EXECUTE for authenticated only. On main the owner-only switch kept
+   everyone else from asking it; with missions public a guest's feed page asked it with the anonymous key and was refused. The
+   production function, cut from js/mnet.js, run for a guest and for a member. */
+test("a guest's feed never asks action_offer_cards; a member's still does, once per post", async () => {
+  const { runInNewContext } = await import("node:vm");
+  const js = await read("js/mnet.js");
+  const start = js.indexOf("  function loadActionOfferCards(items) {");
+  assert.ok(start >= 0, "loadActionOfferCards was found");
+  let depth = 0, i = js.indexOf("{", start);
+  for (; i < js.length; i++) { if (js[i] === "{") depth++; else if (js[i] === "}" && --depth === 0) break; }
+  const fn = js.slice(start, i + 1);
+  const run = async (guest) => {
+    const calls = [];
+    const ctx = { state: { guest, actionOffers: {} }, Promise, sbRpc: (name, body) => { calls.push({ name, body }); return Promise.resolve([{ post_id: "p1" }]); } };
+    runInNewContext(fn + "\nthis.load = loadActionOfferCards;", ctx);
+    const items = [{ post: { id: "p1", content_id: "c1" } }, { post: { id: "p2", content_id: null } }];
+    const shown = await ctx.load(items);
+    return { calls, shown };
+  };
+  const guest = await run(true);
+  assert.deepEqual(guest.calls, [], "a guest asks nothing");
+  assert.equal(guest.shown, false);
+  const member = await run(false);
+  assert.equal(member.calls.length, 1);
+  assert.equal(member.calls[0].name, "action_offer_cards");
+  assert.deepEqual(member.calls[0].body.p_post_ids, ["p1"], "only the post that carries content");
+  assert.equal(member.shown, true);
+});

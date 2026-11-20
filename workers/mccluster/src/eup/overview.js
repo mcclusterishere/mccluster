@@ -28,7 +28,7 @@
    answers null for a queue it does not compute yet. Blockers name what stops a member run: no League policy,
    an invalid one, media not enabled, no campaign open to invited testers, no open tester grant. */
 import { leagueCommand } from './league.js';
-import { moduleControl } from './modules.js';
+import { moduleControl, MODULE_POLICY_MIGRATION } from './modules.js';
 import { readRunCounts } from './intake.js';
 
 const MODULES = [
@@ -147,7 +147,7 @@ export async function handleOverview(_request, env, ctx) {
     const unit = POLICY_UNIT[m.id] ?? null;
     return { ...m, policy_module: unit, policy: unit ? (policies.units ? policies.units.get(unit) || POLICY_UNKNOWN : POLICY_UNKNOWN) : null, import_runs: unit === 'intake' ? runs.counts : null };
   });
-  if (policies.status === 'schema_not_applied') blockers.push({ id: 'module_policy_schema', text: 'Apply supabase/pending/eup_module_policy_v1.sql (owner-reviewed) before any module can be installed or enabled; until then no module policy exists and none is reported enabled.', gate: 'schema' });
+  if (policies.status === 'schema_not_applied') blockers.push({ id: 'module_policy_schema', text: `The database this Worker reads does not have the module policy (${MODULE_POLICY_MIGRATION}, applied in production on 2026-11-17); until it does, no module can be installed or enabled and none is reported enabled.`, gate: 'schema' });
   else if (policies.status !== 'available') blockers.push({ id: 'module_policy_unreadable', text: `Module policy unreadable: ${policies.reason}. No module is reported enabled.`, gate: 'storage' });
   if (!sources) blockers.push({ id: 'sources_not_implemented', text: 'Source registry and private intake are not implemented; connectors stay disabled.', gate: 'implementation' });
   blockers.push(

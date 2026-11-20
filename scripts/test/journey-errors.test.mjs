@@ -73,8 +73,11 @@ test('requests that could only fail are gone', async () => {
   assert.doesNotMatch(worker, /rpc\/ai_harness_status/);
   const router = await read('workers/mccluster/src/analytics/router.js');
   assert.doesNotMatch(router, /sbCountFiltered\(env, 'events', /, 'business counts read the lean copy');
+  /* the waveform no longer decodes the song at all (music slice M1), so it has no
+     decode promise to drop: it reads the measured peaks, and a missing file leaves the classic line */
   const filament = await read('js/filament.js');
-  assert.match(filament, /var p = actx\.decodeAudioData\(buf, res, rej\);\s*if \(p && typeof p\.catch === "function"\) p\.catch\(rej\);/);
+  assert.doesNotMatch(filament, /decodeAudioData\(|new \(?window\.(?:webkit)?AudioContext/);
+  assert.match(filament, /else \{ peaks = null; seek\.classList\.remove\("wave-on"\); \}/);
   const tools = await read('js/control-room/work-tools.js');
   assert.match(tools, /PGRST205/, 'outreach says it is staged when its desk tables are absent');
 });

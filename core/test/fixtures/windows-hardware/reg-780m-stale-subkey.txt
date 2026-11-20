@@ -1,0 +1,17 @@
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}
+    Class    REG_SZ    Display
+    ClassDesc    REG_SZ    @%SystemRoot%\System32\desk.cpl,-5
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000
+    DriverDesc    REG_SZ    AMD Radeon 780M Graphics
+    DriverVersion    REG_SZ    31.0.24027.1012
+    MatchingDeviceId    REG_SZ    PCI\VEN_1002&DEV_15BF&SUBSYS_8B4A103C
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0001
+    DriverDesc    REG_SZ    AMD Radeon 780M Graphics
+    DriverVersion    REG_SZ    32.0.13031.3015
+    MatchingDeviceId    REG_SZ    PCI\VEN_1002&DEV_15BF&SUBSYS_8B4A103C
+    HardwareInformation.qwMemorySize    REG_QWORD    0x20000000
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\Properties
+ERROR: Access is denied.

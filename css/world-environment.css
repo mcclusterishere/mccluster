@@ -1,52 +1,130 @@
-/* A mode of the existing consumer World, never another globe or admin surface. */
-.hu-social-only .wt-world-modes :is([data-world-mode="travel"],[data-world-mode="missions"]) { display:none; }
-/* The mode bar keeps its 240px × 44px footprint (scripts/e2e/world-screen.e2e.mjs
-   "compact modes and header overlay share the globe"): the E=UP button is icon-width
-   so three text modes plus the mark still fit; the social-only bar is two buttons. */
-.wt-world-modes { width:240px; }
-.hu-social-only .wt-world-modes { width:190px; }
-.wt-world-modes button { padding:0 4px; }
-.wt-world-modes [data-world-mode="environment"] { flex:0 0 40px;padding:0; }
-.wt-world-modes img { display:block;width:28px;height:28px;object-fit:contain;margin:auto; }
-[data-world-mode="environment"] :is(#wtPlanner,#wtSocial,#mnPlaceCard,#huWorldFilters,#mnWorldLayers,#mnWorldLive,.mn__world-tag,.wt-headline) { display:none!important; }
-.we-panel { color:#edf4f0;font:400 15px/1.5 var(--mn-ui,system-ui,sans-serif);min-width:0;overflow-wrap:anywhere; }
+/* Part of the existing consumer World, never another globe or admin surface: the panel sits behind the World feed's
+   Equity Uprise tab, above its missions (owner, 2026-11-17; mnet.html #wePanel). It was a mode in the centre of the
+   globe from 2026-11-07; that button is gone, and so are its mode rules. */
+/* THE PANEL'S PALETTE (slice G1, 2026-11-17): the night values are the literals this sheet always had, declared once as tokens
+   on .we-panel so the day sheet (css/daylight.css) turns the whole panel in one place; every rule below reads a token. */
+.we-panel { --we-ink:#edf4f0; --we-dim:#afbdc4; --we-bg:#0c161c; --we-raise:#182a25; --we-raise-2:#121e23; --we-rule:#ffffff35; --we-rule-2:#ffffff26; --we-accent:#89e5c0; --we-accent-ink:#b6ffe2; --we-ok:#89e5c0; --we-stale:#dec58a; --we-down:#ff8a8a; --we-focus:#b6ffe2; --we-detail-bg:#102a22; --we-pressed:#15382b; --we-label:#b5c9c2; --we-safety-bg:#24251d; --we-button-ink:#e4fff4; --we-input-ink:#ffffff;
+  color:var(--we-ink);font:400 15px/1.5 var(--mn-ui,system-ui,sans-serif);min-width:0;overflow-wrap:anywhere; }
 .we-panel[hidden] { display:none; }
 .we-panel h2 { margin:0;font-size:25px;line-height:1.2; }
 .we-panel h3 { font-size:19px;line-height:1.3;margin:8px 0; }
 .we-panel h4 { margin:8px 0;font-size:16px; }
 .we-panel p { margin:8px 0; }
-.we-eyebrow { color:#89e5c0;text-transform:uppercase;letter-spacing:.12em;font-size:11px; }
-.we-subtle,.we-panel small { color:#afbdc4;font-size:13px; }
+.we-eyebrow { color:var(--we-accent);text-transform:uppercase;letter-spacing:.12em;font-size:11px; }
+.we-subtle,.we-panel small { color:var(--we-dim);font-size:13px; }
 .we-toolbar,.we-actions { display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0; }
-.we-panel button,.we-button { min-height:44px;max-width:100%;padding:9px 13px;border:1px solid #ffffff35;border-radius:12px;background:#182a25;color:#e4fff4;font:inherit;cursor:pointer;text-decoration:none; }
-.we-panel button:focus-visible,.we-panel a:focus-visible,.we-panel input:focus-visible { outline:3px solid #b6ffe2;outline-offset:3px; }
+/* buttons are form controls: never under 16px (AGENTS.md hard rule 14; review G1R-6), whatever the panel's own 15px body says */
+.we-panel button,.we-button { min-height:44px;max-width:100%;padding:9px 13px;border:1px solid var(--we-rule);border-radius:12px;background:var(--we-raise);color:var(--we-button-ink);font:inherit;font-size:max(16px,1em);cursor:pointer;text-decoration:none; }
+.we-panel button:focus-visible,.we-panel a:focus-visible,.we-panel input:focus-visible { outline:3px solid var(--we-focus);outline-offset:3px; }
 .we-panel button:disabled { opacity:.55;cursor:wait; }
-.we-panel a { color:#b6ffe2; }
+.we-panel a { color:var(--we-accent-ink); }
 .we-panel input,.we-panel select,.we-panel textarea { font-size:max(16px,1em);max-width:100%; }
 .we-filter { display:flex;flex-direction:column;gap:5px; }
-.we-filter input { width:100%;box-sizing:border-box;padding:10px 12px;min-height:44px;background:#0c161c;border:1px solid #ffffff35;border-radius:10px;color:#fff; }
+.we-filter input { width:100%;box-sizing:border-box;padding:10px 12px;min-height:44px;background:var(--we-bg);border:1px solid var(--we-rule);border-radius:10px;color:var(--we-input-ink); }
 .we-list { display:grid;gap:8px;padding:0;list-style:none;margin:12px 0; }
-.we-list button { width:100%;text-align:left;background:#121e23; }
-.we-list button[aria-pressed="true"] { border-color:#89e5c0;background:#15382b; }
+.we-list button { width:100%;text-align:left;background:var(--we-raise-2); }
+.we-list button[aria-pressed="true"] { border-color:var(--we-accent);background:var(--we-pressed); }
 .we-list strong,.we-list small { display:block; }
-.we-detail,.we-team,.we-owner { border:1px solid #ffffff26;border-radius:16px;padding:15px;margin:14px 0; }
-.we-detail { background:#102a22; }
+/* THE LIST OPENS COMPACT (release polish, 2026-11-18; review V2-M2): "Show all N observations" sits right under the few rows, full
+   width like the rows it opens; a panel button, so 44 px tall and 16 px words (the rule above) */
+.we-more { width:100%;margin:0 0 12px; }
+.we-more[hidden] { display:none; }
+.we-detail,.we-team,.we-owner { border:1px solid var(--we-rule-2);border-radius:16px;padding:15px;margin:14px 0; }
+.we-detail { background:var(--we-detail-bg); }
 .we-detail dl { margin:12px 0;display:grid;grid-template-columns:minmax(0,1fr);gap:3px; }
-.we-detail dt { color:#b5c9c2;font-size:12px; }
+.we-detail dt { color:var(--we-label);font-size:12px; }
 .we-detail dd { margin:0 0 8px; }
-.we-safety { padding:10px;border-left:3px solid #dec58a;background:#24251d; }
+.we-safety { padding:10px;border-left:3px solid var(--we-stale);background:var(--we-safety-bg); }
 .we-source-list { padding-left:19px; }
 .we-message { min-height:1.5em; }
 .we-consent { display:flex;gap:10px;align-items:flex-start;margin:12px 0; }
 .we-consent input { flex:none;margin-top:5px; }
-.we-owner article+article,.we-team article+article { border-top:1px solid #ffffff26;padding-top:12px;margin-top:12px; }
+.we-owner article+article,.we-team article+article { border-top:1px solid var(--we-rule-2);padding-top:12px;margin-top:12px; }
 @media (min-width:600px) {
   .we-detail dl { grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:8px; }
 }
 
+/* THE TOUR AND THE VIEW (slice G1): 44 px controls that wrap at phone width, the status line on a row of its own; a pressed
+   toggle (Pause, the quake replay, the 2D map) says so in colour as in words */
+.we-scene,.we-view { display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0;min-width:0; }
+.we-scene-status { flex:1 1 100%;margin:0;min-height:1.5em; }
+.we-scene button[aria-pressed="true"],.we-view button[aria-pressed="true"] { border-color:var(--we-accent);background:var(--we-pressed); }
+/* event timeline slice S5 (2026-11-19): on a phone the title holds one line and the tour's controls (right under the
+   description since the panel patch S5-TOUR) and the sources toolbar sit a little closer, so at rest on a 390 x 844 phone none
+   of them lies under the World's floating app bar; wider screens keep the earlier sizes */
+.we-panel h2 { font-size:21px; }
+.we-panel .we-scene,.we-panel .we-toolbar { margin:8px 0; }
+@media (min-width:600px) { .we-panel h2 { font-size:25px; } .we-panel .we-scene,.we-panel .we-toolbar { margin:12px 0; } }
+
+/* SOURCE HEALTH (target 11): one card per feed source and per globe layer, its status word in a colour that reads 4.5:1 or
+   better on its ground by night and by day, the rest in the panel's dim ink; two columns only once there is room */
+.we-health { display:grid;grid-template-columns:minmax(0,1fr);gap:10px;padding:0;list-style:none;margin:8px 0; }
+.we-health li { border:1px solid var(--we-rule-2);border-radius:12px;padding:10px 12px;min-width:0; }
+.we-health li p { margin:4px 0; }
+.we-health strong { margin-right:8px; }
+/* a globe layer's card lists every source record it carries, each under a rule of its own (review G1R-3) */
+.we-records { display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding:0;margin:6px 0 0;list-style:none; }
+.we-health .we-records li { border:0;border-top:1px solid var(--we-rule-2);border-radius:0;padding:6px 0 0; }
+.we-status { font-weight:600;font-size:13px; }
+.we-status[data-status="available"] { color:var(--we-ok); }
+.we-status[data-status="stale"],.we-status[data-status="loading"] { color:var(--we-stale); }
+.we-status[data-status="unavailable"],.we-status[data-status="policy"],.we-status[data-status="off"],.we-status[data-status="unknown"] { color:var(--we-down); }
+@media (min-width:720px) {
+  .we-health { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
 .we-proof-form { display:grid;gap:12px; }
 .we-proof-form label { display:grid;gap:6px; }
-.we-proof-form textarea,.we-proof-form input[type="url"] { box-sizing:border-box;width:100%;padding:10px;background:#0c161c;color:#fff;border:1px solid #ffffff35;border-radius:10px; }
+.we-proof-form textarea,.we-proof-form input[type="url"] { box-sizing:border-box;width:100%;padding:10px;background:var(--we-bg);color:var(--we-input-ink);border:1px solid var(--we-rule);border-radius:10px; }
 .we-proof-form input[type="checkbox"] { width:20px;height:20px; }
 
 .we-draft { white-space:pre-wrap; }
+
+/* NEVER A BROKEN PANEL FOR THE PUBLIC (owner, 2026-11-17: the panel behind the tab "is a joke"; its own fixes are a later slice).
+   The panel shows once its source has answered with a feed it accepts (html[data-we-feed] "ready", set by
+   js/world-environment-mccluster.mjs); until then nothing, and when that read failed one honest line in its place, in the Equity
+   Uprise tab only (production answers 503 until the owner releases the module, docs/control-plane/WORLD-ENVIRONMENT.md). */
+html:not([data-we-feed="ready"]) #wePanel { display:none !important; }
+.mn__we-note { display:none;margin:2px 0 12px;color:var(--mn-dim,#a3a9af);font:400 14px/1.5 var(--mn-ui,system-ui,sans-serif); }
+/* one line by cause (event timeline slice S0, 2026-11-19): off, not available right now, nothing to report */
+html.mn-feed-equity[data-we-feed="unavailable"] #weUnavailable,html.mn-feed-equity[data-we-feed="off"] #weOff,html.mn-feed-equity[data-we-feed="empty"] #weEmpty { display:block; }
+
+/* THE PANEL'S SEARCH AND ITS SOURCES SUMMARY (release review, carried into event timeline slice S0: the placeholder "Place or event" measured 2.1 to
+   2.9:1 and the summary "Sources, coverage and limitations" was a 23 px target). The placeholder takes the panel's dim ink, which
+   reads 4.5:1 or better on the field by night (#afbdc4 on #0c161c) and by day (css/daylight.css turns --we-dim and --we-bg); the
+   summary is a 44 px row. The panel itself is vendored and unchanged: this sheet is McCluster's. */
+.we-panel input::placeholder { color:var(--we-dim);opacity:1; }
+.we-panel details > summary { min-height:44px;box-sizing:border-box;padding:10px 0;cursor:pointer; }
+
+/* ENVIRONMENTAL OBSERVATION POSTS IN THE FEED (target 13; js/mnet.js observationPostHtml): a post's card and the mission post's
+   sizes (css/human-uprise-editorial.css), a plain line icon in the feed's ink where a post keeps its avatar (never the brand's
+   mark), the words in the feed's own tokens so css/daylight.css carries them by day as it carries every post; the title clamps to
+   two lines like a mission's, the facts to three so coverage and status stay in view */
+.mn__observation-post-icon { flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--mn-rule-2);color:var(--mn-ink); }
+.mn__observation-post-icon svg { width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round; }
+.hu-editorial #mnFeed .mn__observation-post .mn__post-head { margin:0 0 6px; }
+.hu-editorial #mnFeed .mn__observation-post .mn__author-sub { white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35; }
+.mn__observation-post-title { margin:0;color:var(--mn-ink);font:600 15px/1.3 var(--mn-ui);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+.hu-editorial #mnFeed .mn__observation-post .mn__post-body { margin:2px 0 0;font-size:15px;line-height:1.4;white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
+/* Source names stay readable when the two actions need separate rows on a phone. */
+.hu-editorial #mnFeed .mn__observation-post .mn__post-actions { margin:6px 0 0;min-width:0;max-width:100%;flex-wrap:wrap; }
+.mn__observation-post .mn__action { min-width:44px;min-height:44px;max-width:100%;box-sizing:border-box; }
+.mn__observation-post .mn__action-label { min-width:0;white-space:normal;overflow-wrap:anywhere; }
+.mn__observation-post .mn__action svg { flex:none; }
+.mn__observation-post .mn__post-actions a.mn__action { text-decoration:none;color:inherit; }
+.mn__observation-post .mn__action:disabled { opacity:.6;cursor:default; }
+
+/* THE EQUITY UPRISE TAB'S TWO LISTS (event timeline slice S0, 2026-11-19; decision D8, default adopted pending Matthew's confirmation): the
+   missions first, then the environmental observations under their own heading, each list paged by its own button right under it
+   (js/mnet.js paintMissionFeed). The heading reads in the feed's dim ink, as the feed's own notes do, by night and by day. */
+.mn__obs-list { margin:20px 0 0;min-width:0; }
+.mn__obs-heading { margin:0 0 8px;color:var(--mn-dim,#a3a9af);font:700 13px/1.4 var(--mn-ui,system-ui,sans-serif);letter-spacing:.08em;text-transform:uppercase; }
+
+/* THE TIMELINE'S POSTS (event timeline slice S4, 2026-11-19; js/world-environment-timeline.js): under the facts, the times (the
+   revision, the provider's update, the retrieval) in the feed's dim ink, then an official correction (old → new) and a withdrawal
+   in its ink, each on a line of its own and never clamped. The event a deep link or a visitor's choice named is marked by an ink
+   rule on its leading edge, by night and by day (aria-current says it to a reader). Phone first: nothing here needs a breakpoint. */
+.mn__timeline-line { margin:4px 0 0;color:var(--mn-dim,#a3a9af);font:400 13px/1.45 var(--mn-ui,system-ui,sans-serif);overflow-wrap:anywhere; }
+.mn__timeline-correction, .mn__timeline-tombstone { color:var(--mn-ink); }
+.mn__timeline-tombstone { font-weight:600; }
+.hu-editorial #mnFeed .mn__observation-post.is-current { padding-left:12px;box-shadow:inset 3px 0 0 var(--mn-ink); }

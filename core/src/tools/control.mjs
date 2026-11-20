@@ -62,7 +62,9 @@ const BASE_TOOLS = [
         thread_id: { type: 'string' },
         message_id: { type: 'string' },
         content: { type: 'string', minLength: 1, maxLength: 12000 },
-        input_mode: { type: 'string', enum: ['text', 'voice'] }
+        input_mode: { type: 'string', enum: ['text', 'voice'] },
+        images: { type: 'array', maxItems: 2, description: 'base64 JPEG/PNG/WebP, each <=200000 decoded bytes, sniffed from bytes; the turn then runs on a vision implementation', items: { type: 'string', contentEncoding: 'base64', maxLength: 266668 } },
+        allow_browser: { type: 'boolean', description: 'Owner session only: lets this turn drive the owner\'s node browser on allowlisted sites (browser_act).' }
       },
       additionalProperties: false
     }
@@ -159,6 +161,9 @@ export async function callControlTool(name, args = {}, options = {}) {
       messageId: args.message_id,
       content: args.content,
       inputMode: args.input_mode,
+      images: args.images,
+      allowBrowser: args.allow_browser === true,
+      actor: options?.actor,
     });
   }
 

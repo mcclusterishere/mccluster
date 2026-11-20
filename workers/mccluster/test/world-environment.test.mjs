@@ -16,10 +16,15 @@ function upstream(url) {
  if (u.startsWith('https://www.nhc.noaa.gov')) return json({activeStorms:[{id:'al012026',name:'Test storm',latitudeNumeric:20,longitudeNumeric:-60}]});
  throw new Error(`Unexpected request ${u}`);
 }
-// The persisted module policy the route reads first on every request (supabase/pending/eup_module_policy_v1.sql).
+// The persisted module policy the route reads first on every request (supabase/migrations/20261117144103_eup_module_policy_v1.sql).
 const POLICY_RPC='/rest/v1/rpc/eup_module_policy_read';
 const policyOf=(state='enabled',revision=3)=>({schema:'equity-uprise.module-policy/v1',installationId:'mccluster',moduleId:'environment',state,revision});
-const isPolicyRead=c=>c.url.endsWith(POLICY_RPC), isDomainRpc=c=>c.url.includes('/rpc/')&&!isPolicyRead(c);
+// E=UP event timeline slice S4 (changed on purpose): the public feed's USGS rows come from the event store's public page
+// (workers/mccluster/src/world-environment-events.js), a service-key READ like the policy's, never a domain write; the fake answers
+// it with the quake the live USGS fake used to supply (its off-host link is dropped, so the product's USGS home stands in, as before).
+const STORE_PAGE_RPC='/rest/v1/rpc/eup_environment_public_events', isStoreRead=c=>c.url.endsWith(STORE_PAGE_RPC);
+const storePage=()=>({schema:'mccluster.environment-events/v1',next_cursor:null,events:[{id:'usgs:quake1',revision:1,provider:'usgs',kind:'quake',state:'published',title:'Test quake',place:'Test quake',magnitude:4.6,magnitude_type:'mb',depth_km:10,lon:-72,lat:41,observed_at:new Date(Date.now()-30000).toISOString(),review_status:'automatic',tsunami:false,alert:null,source:{id:'quake1',url:'https://evil.example/steal',updated_at:null,fetched_at:new Date(Date.now()-10000).toISOString()},first_published_at:new Date(Date.now()-10000).toISOString(),revised_at:null,correction:null,news_coverage:[]}],sources:[{provider:'usgs',status:'ok',checked_at:new Date(Date.now()-10000).toISOString(),last_success_at:new Date(Date.now()-10000).toISOString()}]});
+const isPolicyRead=c=>c.url.endsWith(POLICY_RPC), isDomainRpc=c=>c.url.includes('/rpc/')&&!isPolicyRead(c)&&!isStoreRead(c);
 // policy: a policy object, a Response factory, or a function of the read's index (0 = the route gate, 1 = the mutation gate).
 function fake({owner=false,rpcData={},rpcStatus=200,rpcMessage='',rpcCode,reads=[],policy=policyOf()}={}) {
  const calls=[];let policyReads=0;
@@ -29,6 +34,7 @@ function fake({owner=false,rpcData={},rpcStatus=200,rpcMessage='',rpcCode,reads=
   if (String(url).includes('/auth/v1/user')) return json({id:USER});
   if (String(url).includes('/rest/v1/orgs?')) return json([{id:MISSION}]);
   if (String(url).includes('/rest/v1/org_members?')) return json(owner ? [{role:'owner'}] : []);
+  if (String(url).endsWith(STORE_PAGE_RPC)) return json(storePage());
   if (String(url).includes('/rest/v1/rpc/')) return json(rpcStatus===200?rpcData:{message:rpcMessage,...(rpcCode?{code:rpcCode}:{})},rpcStatus);
   if (String(url).includes('/rest/v1/')) return json(reads);
   return upstream(url);
@@ -119,10 +125,27 @@ test('module policy is read from the store on every request with the service key
  const reads=f.calls.filter(isPolicyRead);assert.equal(reads.length,2);
  for(const read of reads){assert.equal(read.headers.authorization,'Bearer server-secret');assert.equal(read.headers.apikey,'server-secret');assert.deepEqual(JSON.parse(read.body),{p_module:'environment'});}
 });
+/* E=UP slice S0 (2026-11-19), changed on purpose: a module never installed (the store's EUM01, no policy row: production since
+   2026-11-17) is OFF, 404 module_disabled, exactly as an installed and disabled module answers; it was the outage's 503 before, so
+   "never installed" and a store incident read alike (docs/control-plane/EUP-EVENT-TIMELINE.md, S0) */
+test('a module never installed (EUM01) is off: 404 module_disabled for reads and writes, the disabled answer, with only the policy read',async()=>{
+ for(const [suffix,method,auth] of [['','GET',false],['/team','GET',true],['/team','POST',true],[`/missions/${MISSION}/join`,'POST',true],['/oversight','GET',true]]) {
+  const f=fake({owner:true,policy:()=>json({code:'EUM01',message:'module_not_installed'},400)});
+  const r=await handleWorldEnvironment(req(suffix,method,method==='POST'?{join:true}:undefined,auth),env,f);
+  assert.equal(r.status,404,`${method} ${suffix}`);assert.deepEqual(await r.json(),{ok:false,code:'module_disabled'});
+  assert.equal(r.headers.get('cache-control'),'private, no-store');assert.equal(r.headers.get('vary'),'origin, authorization');
+  assert.equal(f.calls.length,1,`${method} ${suffix}: only the policy read`);assert.ok(isPolicyRead(f.calls[0]));
+ }
+ /* the same bytes as a disabled module: a visitor cannot tell how far the owner got */
+ const off=await handleWorldEnvironment(req('', 'GET',undefined,false),env,fake({policy:()=>json({code:'EUM01',message:'module_not_installed'},400)}));
+ const disabled=await handleWorldEnvironment(req('', 'GET',undefined,false),env,fake({policy:policyOf('disabled',2)}));
+ assert.equal(await off.text(),await disabled.text());assert.equal(off.status,disabled.status);
+});
 test('a missing, unapplied, unreachable or malformed policy answers 503 module_policy_unavailable and nothing else is fetched',async()=>{
  const refusals=[
-  ['module not installed (EUM01)',json({code:'EUM01',message:'module_not_installed'},400)],
   ['policy schema not applied (PGRST202)',json({code:'PGRST202',message:'Could not find the function public.eup_module_policy_read(p_module) in the schema cache'},404)],
+  ['a policy function missing (42883): the schema, not the owner',json({code:'42883',message:'function public.eup_module_policy_json(text, text, bigint) does not exist'},404)],
+  ['no house organisation (EUM00)',json({code:'EUM00',message:'module_policy_unavailable'},400)],
   ['store answers 500',json({message:'boom'},500)],
   ['store redirects',new Response(null,{status:302,headers:{location:'https://elsewhere.example/'}})],
   ['store unreachable',new Error('offline')],

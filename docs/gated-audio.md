@@ -137,14 +137,19 @@ Each of these shipped broken during the build and none of them are visible in
 a screenshot of the happy path. `scripts/test/gated-audio.test.mjs` guards
 all three.
 
-1. **A tainted deck plays silence.** `js/chamber.js` runs the deck through
-   `createMediaElementSource`. A cross-origin source on an element without
-   `crossorigin="anonymous"` is tainted, and Chrome pushes silence through
-   that graph — the record looks like it is playing and makes no sound.
-2. **A stripped query is a stripped token.** `js/filament.js` drops the query
-   string to build its waveform cache key. Fetching that stripped URL asks
-   storage for the object with no authorization; the JSON error that comes
-   back then goes into `decodeAudioData`. Cache on the key, fetch the src.
+1. **A deck routed through Web Audio goes silent.** `js/chamber.js` used to run
+   the deck through `createMediaElementSource`: a cross-origin source without
+   `crossorigin="anonymous"` was tainted and pushed silence through that graph,
+   and iOS silences Web Audio altogether when the screen locks. Since music
+   slice M1 (2026-11-19) nothing routes or reads the deck: the room's light and
+   the waveform come from `data/peaks` (`scripts/music-peaks.mjs`, `js/peaks.js`),
+   and the deck carries no `crossorigin`, so a signed master never depends on a
+   CORS answer.
+2. **A second download spends the one play.** `js/filament.js` used to fetch the
+   playing source again (signed URL and all) and decode it for its waveform:
+   one of three requests against an earned play's one-play token. It never
+   fetches the song now, and a signed or streamed master is never asked for its
+   shape (`js/peaks.js` names public catalogue files only).
 3. **`.gate` was already taken.** `css/style.css` uses it for the booking
    modal (`position: fixed; inset: 0`). A row slot wearing that class is in
    the DOM, passes a presence assertion, and paints across the viewport. The

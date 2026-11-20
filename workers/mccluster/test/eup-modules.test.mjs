@@ -4,6 +4,7 @@
 // The SQL itself is proven in scripts/test/eup-module-policy.integration.mjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { handleEup, EUP_PREFIX, EUP_SECTIONS } from '../src/eup/router.js';
 import * as modules from '../src/eup/modules.js';
 import { MODULE_IDS, MODULE_STATES, MODULE_POLICY_ERRORS, modulePolicyRefusal, readModulePolicy, moduleControl } from '../src/eup/modules.js';
@@ -265,9 +266,17 @@ test('an unapplied policy schema says so on every route', async () => {
   for (const answer of [() => storeError('PGRST202', 'Could not find the function public.eup_module_control_read(p_actor, p_limit) in the schema cache', 404), () => storeError('42883', 'function public.eup_module_policy_json(text, text, bigint) does not exist', 404)]) {
     for (const [label, make] of ROUTES) {
       const r = await run(make(), fake(answer)); const b = await r.json();
-      assert.equal(r.status, 503, label); assert.equal(b.reason, 'schema_not_applied', label); assert.match(b.error, /eup_module_policy_v1\.sql/); assert.doesNotMatch(b.error, /schema cache|does not exist/);
+      assert.equal(r.status, 503, label); assert.equal(b.reason, 'schema_not_applied', label); assert.doesNotMatch(b.error, /schema cache|does not exist/);
+      // It names the applied migration (ledger version 20261117144103), never the pending file it was staged as.
+      assert.match(b.error, /supabase\/migrations\/20261117144103_eup_module_policy_v1\.sql/, label); assert.doesNotMatch(b.error, /pending/, label);
     }
   }
+});
+
+test('the module policy migration the Worker names is the one in supabase/migrations/', () => {
+  assert.equal(modules.MODULE_POLICY_MIGRATION, 'supabase/migrations/20261117144103_eup_module_policy_v1.sql');
+  assert.ok(existsSync(new URL(`../../../${modules.MODULE_POLICY_MIGRATION}`, import.meta.url)), 'the named file exists');
+  assert.ok(!existsSync(new URL('../../../supabase/pending/eup_module_policy_v1.sql', import.meta.url)), 'and the pending name it was staged under is gone');
 });
 
 test('an unconfigured store answers 503 without a request', async () => {
@@ -388,7 +397,7 @@ test('moduleControl is the owner read other sections use: same normalisation, sa
 });
 
 test('the module exports are the documented ones', () => {
-  assert.deepEqual(Object.keys(modules).sort(), ['MODULE_IDS', 'MODULE_INSTALLATION', 'MODULE_POLICY_ERRORS', 'MODULE_POLICY_SCHEMA', 'MODULE_STATES', 'handleModules', 'moduleControl', 'modulePolicyRefusal', 'readModulePolicy']);
+  assert.deepEqual(Object.keys(modules).sort(), ['MODULE_IDS', 'MODULE_INSTALLATION', 'MODULE_POLICY_ERRORS', 'MODULE_POLICY_MIGRATION', 'MODULE_POLICY_SCHEMA', 'MODULE_STATES', 'handleModules', 'moduleControl', 'modulePolicyRefusal', 'readModulePolicy']);
 });
 
 // --- Overview: release posture and persisted policy are two fields -------------------------------------
@@ -432,7 +441,7 @@ test('overview names the absent policy schema as a blocker and reports no module
   assert.equal(status, 200);
   assert.deepEqual(body.module_policy, { status: 'schema_not_applied', reason: 'schema_not_applied' });
   const blocker = body.blockers.find((b) => b.id === 'module_policy_schema');
-  assert.equal(blocker.gate, 'schema'); assert.match(blocker.text, /supabase\/pending\/eup_module_policy_v1\.sql/);
+  assert.equal(blocker.gate, 'schema'); assert.match(blocker.text, /supabase\/migrations\/20261117144103_eup_module_policy_v1\.sql/); assert.doesNotMatch(blocker.text, /pending/);
   for (const m of body.modules) assert.deepEqual(m.policy, UNIT[m.id] ? { installed: null, state: 'unknown', revision: null, updated_at: null } : null, m.id);
   assert.deepEqual(Object.fromEntries(body.modules.map((m) => [m.id, m.state])), POSTURE);
 });

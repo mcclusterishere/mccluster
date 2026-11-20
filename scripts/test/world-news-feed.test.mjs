@@ -147,7 +147,7 @@ test('Local reads the picked place\'s own news from the Worker: the stories the 
   const paint = fnSource(js, 'paintFeed'), load = fnSource(js, 'loadPlaceNews');
   assert.match(paint, /if \(pk && pn\.key !== pk\) loadPlaceNews\(true\);/, 'a newly picked place is read for itself');
   assert.match(paint, /news = pk && pn\.key === pk && !\(focus && focus\.filter\) \? pn\.items\.slice\(\) : \[\];/, 'Local shows only what was read for that place');
-  assert.ok(paint.indexOf('pn.items.slice()') < paint.indexOf('if (!items.length && !news.length)'), 'before the empty check, so the country feed\'s own empty message never hides the place\'s news');
+  assert.ok(paint.indexOf('pn.items.slice()') < paint.indexOf('if (!items.length && !news.length && !feedMissions.length)'), 'before the empty check, so the country feed\'s own empty message never hides the place\'s news (or its missions, owner 2026-11-17)');
   assert.doesNotMatch(paint, /news\.filter\(function \(n\) \{ return n\.country_code/, 'no filter over the world\'s first page');
   assert.match(load, /NEWS_API \+ "\?limit=50&country=" \+ encodeURIComponent\(c\.code\) \+ \(box \? "&bbox=" \+ box\.join\(","\) : ""\)/);
   assert.match(load, /\(!pick \|\| newsInState\(onHeatGrid\(n\), pick\)\)/, 'a state keeps the stories inside its own shape, placed as the heat map counts them');
@@ -227,4 +227,53 @@ test('a state picked or let go keeps the member\'s choice to place their post; a
   assert.match(js, /if \(\$\("mnPostPlaceOptIn"\) && !sameCountry\) \$\("mnPostPlaceOptIn"\)\.checked = false;/);
   const handler = js.slice(js.indexOf('var prevCountry = state.world.country'), js.indexOf('paintFeedScope();', js.indexOf('var prevCountry = state.world.country')));
   assert.doesNotMatch(handler, /if \(\$\("mnPostPlaceOptIn"\)\) \$\("mnPostPlaceOptIn"\)\.checked = false;/, 'no unconditional reset when the globe speaks');
+});
+
+/* THE POSTS NEVER WAIT ON THE MISSIONS (review of W2, R2). The first draw waits a moment for the news, as it did before the
+   missions were posts, and for the missions only while the news is still out: MISSION_GRACE after the news at most, never
+   NEWS_WAIT. A slow missions read joins the stream when it answers (loadOpenMissions draws again). The page's own loadFeed,
+   run on fakes with short waits. */
+test('a slow missions read holds back the first posts for MISSION_GRACE after the news at most, never for NEWS_WAIT', async () => {
+  const js = await read('js/mnet.js');
+  assert.match(js, /NEWS_WAIT = 4000, MISSION_GRACE = 600;/, 'the grace is a fraction of the news wait');
+  const load = fnSource(js, 'loadFeed');
+  assert.match(load, /var settled = Promise\.race\(\[Promise\.all\(\[news, missionsRead\]\), news\.then\(function \(\) \{ return wait\(MISSION_GRACE\); \}\), wait\(NEWS_WAIT\)\]\);/);
+  const drawn = [], t0 = Date.now();
+  const ctx = { NEWS_WAIT: 400, MISSION_GRACE: 40,
+    state: { loadingFeed: false, guest: true, stall: '', nextBefore: null, feed: [], feedAnswered: false, newsBefore: undefined, newsSeq: 0 },
+    $: () => ({ children: { length: 1 }, innerHTML: '' }), skeleton: () => '', needsStep: () => null, APP: 'fixture', parse: (r) => r, api: () => Promise.resolve({ items: [] }),
+    fetch: () => Promise.resolve({ items: [{ post_id: 'p1' }], next_before: null }), fetchNews: () => Promise.resolve({ ok: true, items: [] }), applyNews() {},
+    renderFeed() { drawn.push(Date.now() - t0); }, loadOpenMissions: () => new Promise(() => {}), openLinkedPost() {},
+    loadActionCards: () => Promise.resolve(false), loadActionOfferCards: () => Promise.resolve(false), loadCollaborationCards: () => Promise.resolve(false), loadMissionStats() {}, paintMore() {}, setStatus() {}, clearFeedStatus() {},
+    encodeURIComponent, Promise, setTimeout, console };
+  await new Function(...Object.keys(ctx), load + '\nreturn loadFeed(true);')(...Object.values(ctx));
+  assert.equal(drawn.length, 1, 'the posts were drawn once');
+  assert.ok(drawn[0] < 250, 'drawn ' + drawn[0] + ' ms after the news answered (MISSION_GRACE 40 here), not at NEWS_WAIT (400 here)');
+  assert.deepEqual(ctx.state.feed, [{ post_id: 'p1' }]);
+  assert.equal(ctx.state.feedAnswered, true);
+});
+
+/* A GONE MISSION'S LINE OUTLASTS THE FEED'S OWN READS (release review RS-8, 2026-11-19). A shared ?mission= link whose mission is
+   gone wrote "That mission is not available any more." in the feed's line, and loadFeed wiped it twice (on reset and after the
+   draw) before anyone could read it. The page's own loadFeed and clearFeedStatus, run on fakes: the line ends on the notice. */
+test('a gone mission\'s line survives the feed\'s reset and its draw; with no notice the line rests empty', async () => {
+  const js = await read('js/mnet.js');
+  const load = fnSource(js, 'loadFeed'), rest = fnSource(js, 'clearFeedStatus');
+  assert.doesNotMatch(load, /setStatus\(\$\("mnFeedStatus"\), ""\)/, 'the feed never empties its line by hand; it comes to rest');
+  assert.match(fnSource(js, 'setFeedScope'), /if \(state\.feedNotice && state\.feedScope !== was\) \{ state\.feedNotice = ""; clearFeedStatus\(\); \}/, 'another tab lets the notice go');
+  for (const notice of ['That mission is not available any more.', '']) {
+    const line = { textContent: '' }, said = [];
+    const ctx = { NEWS_WAIT: 400, MISSION_GRACE: 40,
+      state: { loadingFeed: false, guest: true, stall: '', nextBefore: null, feed: [], feedAnswered: false, newsBefore: undefined, newsSeq: 0, feedNotice: notice },
+      $: (id) => (id === 'mnFeedStatus' ? line : { children: { length: 1 }, innerHTML: '' }), skeleton: () => '', needsStep: () => null, APP: 'fixture', parse: (r) => r, api: () => Promise.resolve({ items: [] }),
+      fetch: () => Promise.resolve({ items: [{ post_id: 'p1' }], next_before: null }), fetchNews: () => Promise.resolve({ ok: true, items: [] }), applyNews() {},
+      renderFeed() {}, loadOpenMissions: () => Promise.resolve(false), openLinkedPost() {},
+      loadActionCards: () => Promise.resolve(false), loadActionOfferCards: () => Promise.resolve(false), loadCollaborationCards: () => Promise.resolve(false), loadMissionStats() {}, paintMore() {},
+      setStatus(node, text, kind) { if (node === line) { node.textContent = text; said.push([text, kind || '']); } },
+      encodeURIComponent, Promise, setTimeout, console };
+    await new Function(...Object.keys(ctx), rest + '\n' + load + '\nreturn loadFeed(true);')(...Object.values(ctx));
+    assert.ok(said.length >= 2, 'the line was reset and settled again: ' + JSON.stringify(said));
+    assert.equal(line.textContent, notice, notice ? 'the notice is still there once the feed is drawn' : 'no notice: the line rests empty');
+    assert.deepEqual(said[said.length - 1], [notice, notice ? 'error' : '']);
+  }
 });

@@ -102,10 +102,11 @@ test('Creator Studio decides from the server and calls the one-click function', 
   /* the two calls are shared with every "Become a creator" door on the site (owner, 2026-10-20) */
   assert.match(shared, /rpc\("music_creator_state"\)/);
   assert.match(shared, /rpc\("music_become_creator", \{[\s\S]*?p_accept_terms: true/);
-  assert.match(js, /return ONBOARD\.client\(\{ token: session\.access_token, mUid, userId: session\?\.user\?\.id \|\| "" \}\);/);
+  /* the token travels with each call, never the one read when the studio opened (music slice M4, ACC-3) */
+  assert.match(js, /return ONBOARD\.client\(\{ token: "", mUid, userId: session\?\.user\?\.id \|\| "", fetch: studioFetch \}\);/);
   assert.match(js, /ONBOARD\.view\(\{ signedIn: ok, state, editing: ONBOARD\.wantsEdit\(location\.search\) \}\)/);
   /* a profile that is not done goes through the three pages and comes back for the one tap */
-  assert.match(js, /const done = await ONBOARD\.profileDone\(\{ token: session\.access_token \}\);\n\s*if \(done === false\) \{ location\.replace\(ONBOARD\.FINISH_URL\); return; \}/);
+  assert.match(js, /const done = await ONBOARD\.profileDone\(\{ token: "", fetch: studioFetch \}\);\n\s*if \(run !== boots\) return;\n\s*if \(done === false\) \{ location\.replace\(ONBOARD\.FINISH_URL\); return; \}/);
   assert.equal(OB.FINISH_URL, 'mnet.html?finish=1&next=creator.html');
   assert.match(html, /<a class="creator-btn primary" id="creatorJoin" href="mnet\.html\?join=1&amp;next=creator\.html">Create account<\/a>/, 'the gate\'s sign-up is the one sign-up, and comes back');
   assert.match(html, /<a class="creator-btn quiet" id="creatorSignIn" href="account\.html\?next=creator\.html">Sign in<\/a>/, 'signing in comes back too');

@@ -149,34 +149,50 @@ inherits them. Keep local filters, chapter tabs and editor tools within their
 destination. Embedded frames retain host-owned navigation. See
 `docs/control-plane/SHARED-NAVIGATION.md` for the implementation and release scope.
 
-### Public World: social feed and Environmental Justice (Travel and Missions owner-only)
+### Public World: one feed with missions in it, the Equity Uprise tab, Travel owner-only
 
-Owner, 2026-11-07: add the E=UP logo mode **inside the existing consumer World globe** for environmental evidence and Environmental Justice Team work. The public modes are now News feed and Environmental Justice. Keep the same globe; do not expose owner Halo or publicize member assignments/locations. Travel and the general Missions mode remain owner-only. See `docs/control-plane/WORLD-ENVIRONMENT.md` for persistence and release gates.
+Owner, 2026-11-17 (the build brief and resume point is `docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md`; its
+"What this supersedes" table is the authority where an older entry below disagrees):
+"we need them on the globe for the signed out users so people can just go look at the missions, sign in, get that user
+flow." "I think the missions should low key just be placed in the newsfeed instead of having that Tinder swipe tab. …
+having the missions as like just another post in the newsfeed, not a big, large post, just the same size post as all
+the other [posts]." "it should be another tab called the equity uprise tab. That's on the feed, like not in the center
+on the globe section as a tab, but on the feed section under the globe." "Should start on everything, but you can
+individualize it to select mission feed." "the logo, the PNG logo that is there, put that on that tab, but don't make it
+ugly … Just keep it as is."
 
-Earlier scope, retained for Travel and general Missions only:
+- **Missions are public.** A signed-out visitor sees them in the World feed, on the globe (the frame and the expanded
+  globe carry no `missions=0`), in the mission dialog and through a shared `?mission=<id>` link. Joining asks a guest to
+  sign in or create an account and keeps `?mission=<id>` in the address; the server (`join_action_mission`) still decides
+  who may join. A member's Action Record stays the missions view.
+- **The feed's row** (`#mnFeedScope`, under the globe, drag-scrolling), in the owner's order (2026-11-18: "It should
+  just be local, equity up, global, live news people"): Local · the Equity Uprise tab (key `equity`) · Global (key
+  `global`, pressed on load; Local instead for the visitor's own country once `WORLD_PLACE_SCOPE_ENABLED` is on, owner
+  2026-11-17) · Live · News · People, and nothing above it for a signed-out visitor. The Equity Uprise tab shows the
+  owner-supplied PNG alone (`assets/img/equity-uprise-mark-white.png` on the dark ground,
+  `assets/img/equity-uprise-mark.png` by day), scaled proportionally, no plate and no visible words; its accessible
+  name is "Equity Uprise". It is the mission feed, with the Environmental Justice panel (`#wePanel`) above the
+  missions.
+- **No swipe deck and no Missions world mode** (the owner rejected the deck; missions are posts). The centre of the
+  globe carries no Missions and no E=UP button: the 2026-11-07 E=UP centre mode is superseded by the feed tab.
+- **Travel stays owner-only** (the owner did not mention it on 2026-11-17). `hu-travel-off` on `<html>` (`mnet.html`)
+  is the switch. The house owner's World lifts it (`js/world-owner-modes.js`, the server's owner check) and keeps the
+  centre mode bar with Travel and News feed; a visitor or member who is not the house owner sees no centre mode bar.
+  The same switch keeps the two other things the 2026-10-20 switch held, the feed's clip-campaign door and the Live
+  room's action blocks, with the house owner: the owner turned only the missions back on.
+- Still owner-only: the globe's Games controls (`css/globe-games.css`, owner 2026-11-03) and the bar's Missions room.
+- One globe. Do not expose owner Halo or publicize member assignments or locations. The Environmental Justice module's
+  persistence and release gates: `docs/control-plane/WORLD-ENVIRONMENT.md`.
 
-Owner, 2026-10-20: "Until I refine the other features the transport and the
-missions feature will be taken off and the social feature will be the only
-feature with no tab selecting between the other two." "Keep the social feed on
-and then develop those other projects in the back end. Probably keep all three
-on admin." The World (`mnet.html`) opens on the **feed only** for everyone:
-`hu-social-only` on `<html>` is the switch, and `missions=0` tells the globe.
-Travel and Missions are **preserved, not deleted**: their code and suites stay
-(`scripts/e2e/world-switch.mjs` drives them with the switch removed), and the
-**house owner** keeps all three tabs (`js/world-owner-modes.js`, the server's
-owner check). Turning them back on for everyone is removing the switch. This
-supersedes the travel-first entry below until the owner turns them back on.
-
-Owner correction, 2026-10-17 (superseded for now by 2026-10-20 above): the logged-out World homepage is **travel first**.
-Before changing its presentation or default content, read
-`docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md` and its preserved approved
-reference. The guest starts in **Travel**, beside **Missions** and **Posts**, with
-the cinematic globe, destination search and **Your whole journey** planner as
-the focus. The mission/community-first public entry is superseded. Keep shared
-bottom navigation, top-right account/profile and internal-only intelligence
-boundaries. Do not confuse this public travel surface with admin Analytics or
-Matthew's personal homepage. The standard records the target; check the actual
-implementation before claiming its journey or booking capabilities are live.
+History, kept as the reason Travel stays owner-only. Owner, 2026-10-20: "Until I refine the other features the transport
+and the missions feature will be taken off and the social feature will be the only feature with no tab selecting
+between the other two." "Keep the social feed on and then develop those other projects in the back end. Probably keep
+all three on admin." That switch was `hu-social-only` with `missions=0` for the globe, and "turning them back on for
+everyone is removing the switch": on 2026-11-17 the owner turned Missions back on, so the switch now covers Travel only.
+Travel is **preserved, not deleted**: its code and suites stay (`scripts/e2e/world-switch.mjs` drives them with the
+switch removed). Owner, 2026-11-07, superseded on 2026-11-17: the E=UP logo was a mode in the centre of the globe beside
+News feed. When Travel is turned back on for everyone, read `docs/travel/TRAVEL-FIRST-WORLD-STANDARD-20261017.md`
+(owner, 2026-10-17, travel first; superseded since 2026-10-20) before changing its presentation.
 
 On the control repo:
 

@@ -82,6 +82,29 @@ test('/mnet.html and /index.html are the root here, query and all', async () => 
   assert.equal((await ask('https://mccluster.org/index.html')).headers.get('location'), 'https://mccluster.org/');
 });
 
+/* PUBLIC MISSIONS (owner, 2026-11-17: "people can just go look at the missions, sign in, get that user flow"): a shared
+   mission link, and the address a guest keeps while signing in to join, land on that mission. The World's document name
+   moves to the root in one 301 that drops nothing: the mission, and the campaign, content, source and return a join
+   is attributed to. */
+test('a shared /mnet.html?mission= link moves to /?mission= with every parameter kept, in one 301', async () => {
+  const id = '302dcb4e-ca21-4289-b633-9c397985fb9d';
+  const bare = await ask(`https://mccluster.org/mnet.html?mission=${id}`);
+  assert.equal(bare.status, 301);
+  assert.equal(bare.headers.get('location'), `https://mccluster.org/?mission=${id}`);
+  const attributed = `?view=missions&mission=${id}&campaign=bridgeport-creates&content=55555555-5555-4555-8555-555555555555&src=network&return=%2Faction%2F`;
+  const r = await ask(`https://mccluster.org/mnet.html${attributed}`);
+  assert.equal(r.status, 301);
+  assert.equal(r.headers.get('location'), `https://mccluster.org/${attributed}`);
+  /* www moves to the apex with the query kept; the apex's own hop then lands on the root, as above */
+  const www = await ask(`https://www.mccluster.org/mnet.html?mission=${id}`);
+  assert.equal(www.status, 301);
+  assert.equal(www.headers.get('location'), `https://mccluster.org/mnet.html?mission=${id}`);
+  /* the root itself serves the World with the query passed through, so the page sees the mission */
+  const root = await ask(`https://mccluster.org/?mission=${id}`);
+  assert.equal(root.status, 200);
+  assert.equal(upstream.at(-1).url, `http://pages.test/mnet.html?mission=${id}`);
+});
+
 test('the World\'s rooms and files ride this host, noindex on the documents', async () => {
   const js = await ask('https://mccluster.org/js/mnet.js?v=abc');
   assert.equal(js.status, 200);

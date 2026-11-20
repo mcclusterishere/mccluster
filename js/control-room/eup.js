@@ -36,7 +36,12 @@
    per workspace and hands it this file's requester, epoch, conceal and
    redraw; resetModel() resets it (links and private text go with every
    private pane) and leaving the tab tells it to drop its signed media links.
-   Without that script the tab says it did not load and shows nothing. */
+   Without that script the tab says it did not load and shows nothing.
+
+   Environmental events tab (E=UP event timeline slice S2, 2026-11-19): js/control-room/eup-environment.js
+   (window.CR.eupEnvironment) draws and drives it the same way: source health (off, outage or no data), review, rollback
+   and the owner preview over /v1/eup/environment. Its slow live check of the providers gets a second requester with a
+   45 s deadline; resetModel() resets it with every private pane. */
 (function () {
   'use strict';
   window.CR = window.CR || {};
@@ -46,7 +51,8 @@
     { id: 'league', label: 'Environmental Justice League', blurb: 'Campaigns, missions, applications, assignments, private proof and separately consented publication.' },
     { id: 'civic', label: 'Civic League', blurb: 'Offices, terms, legislation and elections by geography. Public records with their sources; no scoring.' },
     { id: 'companies', label: 'Companies & Finance', blurb: 'Company identity, sourced locations, filings and federal awards. A quote appears only when a licensed quote succeeded.' },
-    { id: 'sources', label: 'Sources & Review', blurb: 'Connector configuration, rights, health, imports, unresolved records and bounded refresh or pause.' }
+    { id: 'sources', label: 'Sources & Review', blurb: 'Connector configuration, rights, health, imports, unresolved records and bounded refresh or pause.' },
+    { id: 'environment', label: 'Environmental events', blurb: 'Source health (off, outage or no data), the review queue, rollback and the owner preview of the event timeline.' }
   ];
   var DEADLINE_MS = 15000;
   var esc = function (v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -67,6 +73,8 @@
   }
   /* the League view of the bound workspace (js/control-room/eup-league.js), or null when that script is absent */
   var league = null;
+  /* the Environmental events view of the bound workspace (js/control-room/eup-environment.js), or null when that script is absent */
+  var envView = null;
 
   /* ---------- pure helpers (unit-tested through window.CR.eup.helpers) ---------- */
   function when(iso) {
@@ -215,7 +223,7 @@
      unit, and a counter so only the newest read is committed. Reset with everything private. */
   function freshPolicy() { return { control: null, error: null, loading: false, readAt: null, reasons: {}, seq: 0 }; }
   var model = { section: 'overview', geo: { country: null, state: null }, data: {}, errors: {}, loading: {}, query: '', civic: { jurisdiction: null, office: null, bill: null }, company: null, outcomes: {}, policy: freshPolicy() };
-  function resetModel() { model.data = {}; model.errors = {}; model.loading = {}; model.civic = { jurisdiction: null, office: null, bill: null }; model.company = null; model.outcomes = {}; model.policy = freshPolicy(); if (league) league.reset(); }
+  function resetModel() { model.data = {}; model.errors = {}; model.loading = {}; model.civic = { jurisdiction: null, office: null, bill: null }; model.company = null; model.outcomes = {}; model.policy = freshPolicy(); if (league) league.reset(); if (envView) envView.reset(); }
 
   /* ---------- rendering (strings only; bind() wires them) ---------- */
   function render() {
@@ -268,7 +276,7 @@
     return 'Last command: ' + what + same + ' · reason: ' + (last.reason || 'not returned') + ' · ' + when(last.created_at);
   }
   /* What a stopped state means for people, in words (never by colour alone). League and intake follow the guard
-     in supabase/pending/eup_module_policy_v1.sql: reads are never guarded and reduce-only actions stay open. The
+     in supabase/migrations/20261117144103_eup_module_policy_v1.sql: reads are never guarded and reduce-only actions stay open. The
      environment unit is enforced by the consumer route, which refuses every write while draining and answers
      nothing while disabled. The page is not told how much work is still in flight. */
   var STILL_OPEN = 'new work is refused. Reads still answer, and so do actions that only stop work or remove exposure (withdraw, revoke, pause).';
@@ -402,7 +410,11 @@
       '<article class="cr-eup__card"><h3>Review queue</h3>' + (rr ? note(rr.kind, rr.text) : review === null ? note('empty', 'Not loaded.') : review.length ? '<ul class="cr-eup__list">' + review.map(function (i) { return '<li>' + esc(i.kind || 'item') + ' · ' + esc(i.summary || i.id) + cardMeta(i.provenance) + '</li>'; }).join('') + '</ul>' : note('empty', 'The review queue returned 0 items.')) + '</article>' +
       '</div>';
   }
-  var PANES = { overview: paneOverview, league: paneLeague, civic: paneCivic, companies: paneCompanies, sources: paneSources };
+  function paneEnvironment() {
+    if (!envView) return note('error', 'The Environmental events tab did not load (js/control-room/eup-environment.js). Nothing is shown and no command is offered.');
+    return envView.render();
+  }
+  var PANES = { overview: paneOverview, league: paneLeague, civic: paneCivic, companies: paneCompanies, sources: paneSources, environment: paneEnvironment };
 
   /* ---------- bind ---------- */
   function bind(root, opts) {
@@ -422,6 +434,12 @@
       request: request, alive: alive, epoch: function () { return epoch; }, redraw: function () { if (model.section === 'league') drawPane(); },
       concealed: concealed, say: say, note: note, reasonFor: reasonFor, now: typeof opts.now === 'function' ? opts.now : null,
       moduleUnit: function () { return model.policy.control ? unitRow('league') : null; }
+    }) : null;
+    if (envView) envView.reset();
+    envView = window.CR.eupEnvironment && typeof window.CR.eupEnvironment.create === 'function' ? window.CR.eupEnvironment.create({
+      request: request, slowRequest: makeRequester({ request: opts.request, deadlineMs: opts.slowDeadlineMs > 0 ? opts.slowDeadlineMs : 45000 }),
+      alive: alive, epoch: function () { return epoch; }, redraw: function () { if (model.section === 'environment') drawPane(); },
+      concealed: concealed, say: say, note: note, reasonFor: reasonFor
     }) : null;
     function say(t) { if (status) status.textContent = t || ''; }
     function reduced() { try { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; } }
@@ -471,6 +489,7 @@
         return loadPolicy();
       }).then(done);
       if (section === 'league') { drawPane(); return (league ? league.load() : Promise.resolve()).then(done); }
+      if (section === 'environment') { drawPane(); return (envView ? envView.load() : Promise.resolve()).then(done); }
       if (section === 'civic') return loadCivic().then(done);
       if (section === 'companies') { drawPane(); done(); return Promise.resolve(); }
       if (section === 'sources') {
@@ -640,6 +659,7 @@
       pane.querySelectorAll('[data-eup-policy-resend]').forEach(function (b) { b.onclick = function () { policyCommand(b.getAttribute('data-eup-policy-resend'), null, true); }; });
       pane.querySelectorAll('[data-eup-policy-reload]').forEach(function (b) { b.onclick = function () { if (!model.policy.loading) loadPolicy(true); }; });
       if (league && model.section === 'league' && !denied) league.wire(pane);
+      if (envView && model.section === 'environment' && !denied) envView.wire(pane);
     }
     if (tabs) {
       tabs.querySelectorAll('[data-eup-tab]').forEach(function (b) {
@@ -681,5 +701,5 @@
   });
   window.addEventListener('pageshow', function (e) { if (e && e.persisted) invalidate('Page restored. Reopen E=Up to verify access again.'); });
 
-  window.CR.eup = { render: render, bind: bind, helpers: { when: when, freshnessLabel: freshnessLabel, provenanceLine: provenanceLine, reasonFor: reasonFor, makeRequester: makeRequester, policyStateOf: policyStateOf, policyActions: policyActions, reasonProblem: reasonProblem, policyFailure: policyFailure, POLICY_UNITS: POLICY_UNITS, SECTIONS: SECTIONS, DEADLINE_MS: DEADLINE_MS, model: function () { return model; }, epoch: function () { return epoch; }, resetModel: resetModel, league: function () { return league; } } };
+  window.CR.eup = { render: render, bind: bind, helpers: { when: when, freshnessLabel: freshnessLabel, provenanceLine: provenanceLine, reasonFor: reasonFor, makeRequester: makeRequester, policyStateOf: policyStateOf, policyActions: policyActions, reasonProblem: reasonProblem, policyFailure: policyFailure, POLICY_UNITS: POLICY_UNITS, SECTIONS: SECTIONS, DEADLINE_MS: DEADLINE_MS, model: function () { return model; }, epoch: function () { return epoch; }, resetModel: resetModel, league: function () { return league; }, environment: function () { return envView; } } };
 })();

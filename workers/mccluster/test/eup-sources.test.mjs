@@ -89,7 +89,7 @@ test('store conflicts and not-found map to 409 and 404 without leaking the store
 });
 
 // Module policy: refresh, resume and correct are guarded writes of module intake. The store refuses them in
-// its own transaction (supabase/pending/eup_module_policy_v1.sql); the Worker says which refusal it was.
+// its own transaction (supabase/migrations/20261117144103_eup_module_policy_v1.sql); the Worker says which refusal it was.
 const refusal = (code, message) => json({ code, message, details: null, hint: null }, 400);
 const READY = { states: [{ source_id: 'sec_edgar', configured: true, access: 'approved', paused: false }] };
 const withAgent = (path, f, init) => handleEup(new Request(`https://api.mccluster.org${EUP_PREFIX}/sources${path}`, init), { ...env, SEC_USER_AGENT: 'McCluster test agent' }, { requireHouseOwner: owner, fetchImpl: f.fetchImpl, now: () => Date.parse('2026-11-09T12:00:00Z') });

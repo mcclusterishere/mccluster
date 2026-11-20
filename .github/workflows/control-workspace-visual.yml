@@ -42,6 +42,10 @@ on:
       - 'css/control-room-v2.css'
       - 'scripts/test/control-nav.test.mjs'
       - 'scripts/e2e/control-room-nav.e2e.mjs'
+      - 'scripts/test/control-ai-browser.test.mjs'
+      - 'scripts/e2e/control-ai-browser.e2e.mjs'
+      - 'core/src/tools/control.mjs'
+      - 'core/capabilities/catalog.json'
       - 'js/control-registry.js'
       - 'css/control-admin.css'
       - 'inbox.html'
@@ -62,7 +66,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   browser:
-    runs-on: ubuntu-latest
+    # Keep the pinned Playwright browser dependencies on a supported image.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -87,7 +92,7 @@ jobs:
           CESIUM_DIR: /tmp/control-qa/node_modules/cesium/Build/Cesium
           CONTROL_QA_OUTPUT: /tmp/control-proof/screenshots
         run: |
-          node --test scripts/test/control-workspace.test.mjs scripts/test/control-analytics*.test.mjs scripts/test/analytics-globe*.test.mjs scripts/test/control-forensics.test.mjs scripts/test/browser-diagnostics.test.mjs scripts/test/control-surface.test.mjs scripts/test/control-desk-bot.test.mjs scripts/test/control-nav.test.mjs
+          node --test scripts/test/control-workspace.test.mjs scripts/test/control-analytics*.test.mjs scripts/test/analytics-globe*.test.mjs scripts/test/control-forensics.test.mjs scripts/test/browser-diagnostics.test.mjs scripts/test/control-surface.test.mjs scripts/test/control-desk-bot.test.mjs scripts/test/control-nav.test.mjs scripts/test/control-ai-browser.test.mjs
           node --test workers/mccluster/test/analytics-*.test.mjs
           node scripts/e2e/site-navigation.e2e.mjs /tmp/control-proof/navigation
           node scripts/e2e/control-workspace.e2e.mjs
@@ -103,6 +108,7 @@ jobs:
           node scripts/e2e/control-desk-bot.e2e.mjs /tmp/control-proof/desk-bot
           node scripts/e2e/control-front-page.e2e.mjs /tmp/control-proof/front-page
           node scripts/e2e/control-room-nav.e2e.mjs /tmp/control-proof/control-room-nav
+          node scripts/e2e/control-ai-browser.e2e.mjs /tmp/control-proof/control-ai-browser
           node scripts/e2e/analytics-globe.e2e.mjs /tmp/control-proof/analytics-globe
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()

@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 710,
+  "candidate_count": 751,
   "capability_source_count": 104,
-  "support_only_count": 606,
+  "support_only_count": 647,
   "entries": [
     {
       "path": ".cursorrules",
@@ -59,6 +59,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only PR browser validation captures the canonical building on a loopback fixture server. No deployment, credentials, production calls or program capability."
+    },
+    {
+      "path": ".github/workflows/human-uprise-editorial.yml",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only pull-request browser validation of the consumer World (the feed, travel, the sign-in door, the first visit, the Environmental Justice panel and globe) on loopback fixtures; it matches only through its path filter for the vendored panel (vendor/equity-uprise/**). No deployment, credentials, production calls or program capability."
     },
     {
       "path": ".github/workflows/reconciliation-ci.yml",
@@ -569,7 +576,7 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
     },
     {
       "path": "create.html",
@@ -577,6 +584,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "css/daylight.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Daylight palette of the consumer World; names the Equity Uprise feed tab only to swap between the two owner-supplied marks by ground (no recolouring). Presentation only; no building capability."
     },
     {
       "path": "css/equity-uprise-app.css",
@@ -593,11 +607,11 @@
       "rationale": "Institutional Desk styling; presentation only."
     },
     {
-      "path": "css/mission-swipe-deck.css",
+      "path": "css/human-uprise-editorial.css",
       "classification": "presentation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Existing mission-card presentation rules; not a separate building capability."
+      "rationale": "Editorial styles of the consumer World (feed strip, Equity Uprise feed tab, mission dialog actions); presentation only, no building capability."
     },
     {
       "path": "css/mnet.css",
@@ -654,6 +668,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Music and World transport styling; shared product UI rather than building capability."
+    },
+    {
+      "path": "css/world-environment.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Styles of the Environmental Justice panel behind the World feed's Equity Uprise tab; presentation only, no building capability."
+    },
+    {
+      "path": "css/world-gate.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Styles of the consumer World's sign-in door and the members' onboarding pages; names the supplied Equity Uprise artwork only in a comment about the crest. Presentation only; no building capability."
     },
     {
       "path": "data/README.md",
@@ -1129,6 +1157,13 @@
       "rationale": "Reviewed song/series release proposal and capability boundary documentation only."
     },
     {
+      "path": "docs/control-plane/EUP-EVENT-TIMELINE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Record of the E=UP environmental event timeline work in the consumer World (gate answers, visitor states, tests, what waits for the owner); names the Equity Uprise tab. No building capability, program or geometry."
+    },
+    {
       "path": "docs/control-plane/GMAIL-CONNECT.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1250,11 +1285,32 @@
       "rationale": "Environmental Justice mode of the existing consumer World: persistence and release gates; no building capability."
     },
     {
+      "path": "docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Build brief and resume point for the owner's 2026-11-17 World direction (missions as feed posts, the Equity Uprise feed tab, public missions); names Equity Uprise as the public brand and the World's tab. Defines no building geometry, program or capability."
+    },
+    {
       "path": "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md",
       "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
+      "path": "docs/control-plane/WORLD-MISSION-SOURCES.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Record of Project Drawdown's source page in the World (what it is and is not, decisions D1 to D14 each a default adopted pending the owner's confirmation, the data, the owner's controls, what stays gated, the tests, the facts and their sources); names the Equity Uprise tab, the existing equity-uprise organization row and the Control path. No building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/WORLD-RELEASE-20261118.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Release record and runbook of the 2026-11-18 World release (what ships and what a visitor sees, what does not ship, production's state, the ordered steps from a pull request to a verified public release, the checks run, the owner's open decisions); names Equity Uprise as the public brand and the World's feed tab. Defines no building geometry, program or capability."
     },
     {
       "path": "docs/control-plane/admin-evidence-20261020/README.md",
@@ -1481,6 +1537,20 @@
       "rationale": "Read-only production schema snapshot after media_operation_claims_v2 was applied on 2026-11-10 (catalog metadata and hashes), including eu_* objects. Evidence only; no building capability, program or geometry."
     },
     {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-11-18.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken on 2026-11-18 after twelve migrations recorded at ledger 376 (the Equity Uprise platform registry and music workspace, the E=Up module policy, the World mission join scope, details and Drawdown import), catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only verification of the twelve production-only migrations recorded at ledger 376, including the two Equity Uprise platform migrations applied outside Git (eu_platform_* objects): what production holds, what was read and what it does not establish. Evidence only; no building capability, program or geometry."
+    },
+    {
       "path": "docs/control-plane/registry.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1500,6 +1570,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/design/WORLD-SIGN-IN-DOOR.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Design record of the consumer World's sign-in door (acceptance criteria, review and verification fixes, open questions for the owner); names the supplied Equity Uprise mark as the door's crest and the feed tab beside it. Defines no building geometry, program or capability."
     },
     {
       "path": "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md",
@@ -2085,11 +2162,18 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
     },
     {
+      "path": "js/control-room/mission-sources.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Control, System, Equity Uprise ops, Missions & fellows, Mission sources: the house owner's card for a mission catalog's source page (Project Drawdown's: Draft, Show only with the recorded permission confirmation, Hide, Edit, history), over the owner-only route /v1/mission-sources. Names the brand only in the path of its location comment; adds no building capability, program or geometry."
+    },
+    {
       "path": "js/control-room/music-label.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Control \u00b7 Sell \u00b7 Music \u00b7 Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+      "rationale": "Control · Sell · Music · Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
     },
     {
       "path": "js/control-room/nav.js",
@@ -2350,6 +2434,13 @@
       "rationale": "Shared Action Network frontend/runtime module with Equity Uprise context; not an independent Equity Uprise capability."
     },
     {
+      "path": "js/mission-source-words.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The deny list a mission source's page, Control card and pending SQL share; names the brand only to refuse it. Not a building capability."
+    },
+    {
       "path": "js/mnet-clips.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
@@ -2383,6 +2474,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/now-playing.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The one Now Playing owner for every music player (music slice M2); its cover registry names each album cover in data/albums.json by path, the Docket 516R release's supplied emblem file among them. Shared frontend code; adds no distinct program capability."
     },
     {
       "path": "js/offers.js",
@@ -2538,6 +2636,13 @@
       "rationale": "Shared audio continuity across music and World; no separate building-specific capability."
     },
     {
+      "path": "js/world-countries.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The consumer World's countries on the shared Cesium viewer (borders, flags, the place card and the news shading); names the feed's Equity Uprise tab only in the comment for the shading stepping aside there. A World layer, not a building capability."
+    },
+    {
       "path": "js/world-environment-mccluster.mjs",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -2545,11 +2650,32 @@
       "rationale": "McCluster adapter mounting the vendored environmental panel into the existing World globe; a World mode, not a building capability."
     },
     {
+      "path": "js/world-environment-posts.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pure rules that turn the environmental feed into observation posts for the consumer World (significance, time stamps, one post per event, the Equity Uprise tab's one list by time); no page, network or storage access. A World feed module, not a building capability."
+    },
+    {
+      "path": "js/world-environment-timeline.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The consumer World's environmental timeline from the event store (E=UP slice S4): posts with the store's canonical id and revision, the provider's update and retrieval times, an official correction as old -> new and a withdrawal as a tombstone, one list with the live posts, and the deep link ?feed=equity&event=<id> with one history entry per chosen event. Names the Equity Uprise tab. A World feed module, not a building capability."
+    },
+    {
       "path": "js/world-environment.mjs",
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "World-side environmental mode controller (pins, panel host) on the shared Cesium viewer; no building geometry."
+    },
+    {
+      "path": "js/world-news-globe.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The consumer World's news bridge between the feed and the globe frame (the story view, one marker, the news shading message); names the feed's Equity Uprise tab only where it tells the globe to hide the shading there. Not a building capability."
     },
     {
       "path": "listen.html",
@@ -2819,7 +2945,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "screens/building.html",
@@ -2917,11 +3043,39 @@
       "rationale": "Browser proof of the Control E=Up workspace including the module-policy controls; names Equity Uprise in fixture copy. Test only; no building capability, program or geometry."
     },
     {
+      "path": "scripts/e2e/docket-cohort-showcase.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of the Docket 516R archive and its completed series in the World feed's Equity Uprise tab, against fixtures; names the tab only. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/environment-globe.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of the environmental globe inside its frame against fixtures (layer counts, legend, selection, policy gate, performance check); names Equity Uprise only to check the legend carries no brand name or logo. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/environment-timeline.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of the consumer World's environmental timeline at three widths with the real globe frame and the real Worker handler over the pending event store in PGlite: the deep link selects the post and the globe object, corrected and withdrawn events render, missions keep their own list, the news layer is off in the Equity Uprise tab and behind the sign-in door. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/environment-world.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of the consumer World page with the real globe frame and the Environmental Justice panel against fixtures at three widths; names the feed's Equity Uprise tab as the place the panel and the layers live. Not a building capability."
+    },
+    {
       "path": "scripts/e2e/eu-building-visual.e2e.mjs",
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Captures actual canonical B1\u2013L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
+      "rationale": "Captures actual canonical B1–L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
     },
     {
       "path": "scripts/e2e/eu-screens.e2e.mjs",
@@ -3020,6 +3174,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Browser checks for shared navigation and building destinations."
+    },
+    {
+      "path": "scripts/e2e/world-environment.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser harness for the Environmental Justice panel on the consumer World against fixtures; names the feed's Equity Uprise tab only, as the place the panel lives. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/world-first-visit.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of a first visit to the consumer World (the privacy notice as a banner, analytics off until the visitor agrees) against fixtures; names the feed's Equity Uprise tab only to check it answers a tap while the banner is up. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/world-gate.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test and screenshot set of the consumer World's sign-in door against fixtures; names the supplied white Equity Uprise mark's file as the crest and checks the door never writes the name out. Not a building capability."
+    },
+    {
+      "path": "scripts/e2e/world-missions-guest.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Browser test of public missions for a signed-out visitor on the consumer World (the Equity Uprise feed tab, shared mission links, the supplied marks), against fixtures. Not a building capability."
     },
     {
       "path": "scripts/e2e/world-screen.e2e.mjs",
@@ -3192,6 +3374,13 @@
       "rationale": "Unit test of the Control E=Up workspace including the module-policy controls; names Equity Uprise in fixture copy. Test only; no building capability, program or geometry."
     },
     {
+      "path": "scripts/test/control-mission-sources.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the Control Room's Mission sources card (states, words, refusals, the send and read-back machine, wiring, mobile-first CSS); names the brand only to assert the card's copy never writes it out. No building capability."
+    },
+    {
       "path": "scripts/test/creator-action-distribution.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3204,6 +3393,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests that keep the company and personal properties and entities separate; checks Equity Uprise's parent organization. Not a building capability."
+    },
+    {
+      "path": "scripts/test/environment-globe-wiring.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Source-level test of the environmental globe's wiring (script order, legend, delegation, notices); names Equity Uprise only to assert the legend and the layers carry no brand name or logo. Not a building capability."
+    },
+    {
+      "path": "scripts/test/environment-quake-marks.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the environmental globe's earthquake marks (glyph sizes, the World's quake pictogram, short places, the label layout and its kept-out corners, the 44 px tap target, the horizon); names Equity Uprise only to assert the marks carry no brand name or logo. Test only; no building capability, program or geometry."
     },
     {
       "path": "scripts/test/equity-product-consumer.test.mjs",
@@ -3232,6 +3435,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests building equipment selection without adding a program capability."
+    },
+    {
+      "path": "scripts/test/eu-platform-replay.native.integration.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native PostgreSQL proof of the replay twin of the Equity Uprise platform registry: runs the reset script against a scratch database shaped like the CI rebuild and compares what ledger rows 365 to 376 build with production's snapshot. Names eu_platform_* objects only to exercise them; not a building capability."
     },
     {
       "path": "scripts/test/eu-screen-hardware-binding.test.mjs",
@@ -3325,6 +3535,13 @@
       "rationale": "Unit checks that the Games overlay's Equity Uprise HQ and B1 entries resolve to existing routes and that B1 anchors match the mission spec; verification support only."
     },
     {
+      "path": "scripts/test/heat-scale.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the heat scale shared by the consumer World's news shading and the Control Room's Analytics globe; names the feed's Equity Uprise tab only in the check that the shading and its legend step aside there. Not a building capability."
+    },
+    {
       "path": "scripts/test/homelessness-action.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3346,11 +3563,39 @@
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
     },
     {
+      "path": "scripts/test/logo-css-backgrounds.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Root test of the logo law over every stylesheet: no supplied mark (the Equity Uprise emblem and its two variants among them) is painted as a CSS background that is filtered, transformed, blended, cropped or tiled, and the member's Action Record paints none behind its words (release review RS-1). Names the marks' files only to refuse such uses. Not a building capability."
+    },
+    {
       "path": "scripts/test/member-desk.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/mission-catalog-sources-sql.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Static test of the pending mission catalog sources SQL pair (Project Drawdown as the credited source of the drawdown mission catalog): its guards, grants, functions, rollback and its words check equal to the shared deny list; names the brand only as a refused phrase. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "scripts/test/mission-catalog.native.integration.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native PostgreSQL proof of the pending mission details, Drawdown import and publish SQL in a scratch database; names the existing admin helper (eu_is_admin, eu_profiles) only to exercise it. Not a building capability."
+    },
+    {
+      "path": "scripts/test/mission-import.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the Drawdown mission import and publish SQL generator (tools/build-mission-import.mjs); names the existing admin helper (eu_is_admin) only in the policy text it expects. Not a building capability."
     },
     {
       "path": "scripts/test/mission-pins-arcs-business.test.mjs",
@@ -3535,6 +3780,27 @@
       "rationale": "Panel plus real-transport account-lifecycle regressions for the environmental mode (audit EQ1/EQ2)."
     },
     {
+      "path": "scripts/test/world-environment-panel.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the Environmental Justice panel on a synthetic DOM with fixtures (message order, health rows, scene controls, the events it hands the page); imports the vendored panel from vendor/equity-uprise. Not a building capability."
+    },
+    {
+      "path": "scripts/test/world-environment-posts.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the environmental observation posts (js/world-environment-posts.js) on the feed fixture; names the Equity Uprise tab's merged list and asserts the posts never write the brand out or show a logo. Not a building capability."
+    },
+    {
+      "path": "scripts/test/world-environment-timeline.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the consumer World's environmental timeline module (js/world-environment-timeline.js): posts, corrections, tombstones, the merged list, the deep link address and history entries over a fake window; names the Equity Uprise tab and asserts the brand is never written out. Not a building capability."
+    },
+    {
       "path": "scripts/test/world-environment.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3547,6 +3813,27 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Unit test of the World screen's member paths (the World first, the data layers, the onboarding, the full pane, a World that did not load) and the white emblem variant's file path. Not a building capability."
+    },
+    {
+      "path": "scripts/test/world-gate.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Static and behaviour test of the consumer World's sign-in door (stylesheet law, the supplied mark as the only mark, the door's script on a fake DOM); names the white Equity Uprise mark's file and asserts the name is never written out. Not a building capability."
+    },
+    {
+      "path": "scripts/test/world-mission-posts.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test of the World feed's mission posts (js/world-mission-posts.js: interleave, a place's missions, credit parsing) and their wiring in js/mnet.js; names the Equity Uprise tab and the supplied marks only to check the feed shows them. Not a building capability."
+    },
+    {
+      "path": "scripts/test/world-news-tint.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unit test that the consumer World's news shading and its legend step aside while the feed's scope is the Equity Uprise tab and return unchanged afterwards, on fakes. Not a building capability."
     },
     {
       "path": "services.html",
@@ -4206,6 +4493,34 @@
       "rationale": "Learning-evidence backend on the existing McCluster plane (Worker mccluster + Supabase): records sandbox lab evidence, uploaded external certificates and HSEEP exercise records. No new building capability, no live control."
     },
     {
+      "path": "supabase/migrations/20261114015120_equity_uprise_platform_registry.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise platform registry (platform, tenants, app and module bindings, artist bindings) on the canonical plane, applied in production on 2026-11-14 outside Git and imported byte for byte from production's stored statement. Shared backend tenancy; no building capability, program or geometry."
+    },
+    {
+      "path": "supabase/migrations/20261114060150_equity_uprise_music_workspace.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise shared music workspace (artist music spaces and per-member music libraries) on the existing identity, creator and catalog plane, applied in production on 2026-11-14 outside Git and imported byte for byte from production's stored statement. Shared backend; no building capability, program or geometry."
+    },
+    {
+      "path": "supabase/migrations/20261117144103_eup_module_policy_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Persisted module policy (enable, drain, disable) of the Equity Uprise product modules McCluster runs, on the canonical plane; applied in production on 2026-11-17 as version 20261117144103 and moved here byte for byte from supabase/pending/. Shared backend; no building capability, program or geometry."
+    },
+    {
+      "path": "supabase/migrations/20261118021521_action_mission_details.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Action Network mission details table (about, credit, source) read with public missions, applied in production on 2026-11-18 as version 20261118021521 and moved here byte for byte from supabase/pending/; its policies reuse the existing admin helper eu_is_admin. Shared backend; no building program capability."
+    },
+    {
       "path": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -4287,14 +4602,7 @@
       "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Provenance record for the pending E=Up module policy SQL: which Equity Uprise control semantics were ported, from which patch and hashes, and every deliberate difference. Evidence only; no building capability, program or geometry."
-    },
-    {
-      "path": "supabase/pending/eup_module_policy_v1.sql",
-      "classification": "shared_backend_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Pending, unapplied SQL for persisted module policy (enable, drain, disable) of the Equity Uprise product modules McCluster runs, on the canonical plane. Shared backend; no building capability, program or geometry."
+      "rationale": "Provenance record for the E=Up module policy SQL, applied 2026-11-17 as supabase/migrations/20261117144103_eup_module_policy_v1.sql: which Equity Uprise control semantics were ported, from which patch and hashes, and every deliberate difference. Evidence only; no building capability, program or geometry."
     },
     {
       "path": "supabase/pending/live-callers.json",
@@ -4650,6 +4958,13 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
+      "path": "supabase/replay_migrations/20261114015120_equity_uprise_platform_registry.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Replay twin of the Equity Uprise platform registry, applied only by the CI reset: production's stored statement with the two preflight checks a rebuilt database cannot meet relaxed. Shared backend tenancy; no building capability, program or geometry."
+    },
+    {
       "path": "supabase/schema-manifest.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -4669,6 +4984,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "The former supabase/pending/action_globe_demo_pins_v1.sql, applied in production as service-role data on 2026-10-15 (three regions, the mission pins) and kept only as the scratch-database fixture scripts/test-mission-pins-db.sh applies before the pins migration. Names the globe's regions; not a building capability."
+    },
+    {
+      "path": "supabase/tests/action_mission_catalog.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database stub for the pending mission catalog SQL; stands in production's admin helpers (eu_is_admin, eu_role, eu_profiles). Never applied to a project; not a building capability."
     },
     {
       "path": "supabase/tests/action_mission_pins.stub.sql",
@@ -4704,6 +5026,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "supabase/tests/eu_platform_replay.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scratch-database stub of the tables the Equity Uprise platform registry and music workspace read, as the CI rebuild holds them. Never applied to a project; not a building capability."
     },
     {
       "path": "supabase/tests/eu_platform_test.sql",
@@ -4746,6 +5075,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "supabase/tests/mission_catalog_sources.stub.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Production-shaped test stub for the pending mission catalog sources SQL (default privileges, the house organization, control_audit, organizations, missions and details); its eu_is_admin() stand-in and the existing organization rows' seed text name the brand. Test only; never applied to a real project; no building capability."
     },
     {
       "path": "supabase/tests/music_label_artists.behaviour.sql",
@@ -5084,6 +5420,13 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; Worker strings only; not a building capability."
     },
     {
+      "path": "workers/mccluster/src/world-environment-guard.js",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The consumer World environmental routes' public answers (off, outage and no data apart; the policy read once per request) and the bounds on their public reads (shared provider reads, a per-client limit); names the pinned Equity Uprise server. No building program."
+    },
+    {
       "path": "workers/mccluster/src/world-environment.js",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -5103,6 +5446,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Tests of the mccluster.org host router: the World served at the company root with a company-first head named for the public brand, Equity Uprise (owner, 2026-10-28; it asserts the World page's own noindex description does not leak and no Human Uprise name is served), /company, and every other path sent to Matthew's property. Not a building capability."
+    },
+    {
+      "path": "workers/mccluster/test/eup-environment-owner.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the owner controls of the E=UP environmental event timeline (source health, review, rollback, owner preview) with a fake service REST and fake providers; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "workers/mccluster/test/eup-environment-usgs.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the private USGS ingest of the E=UP environmental event timeline (the normaliser over recorded USGS answers, one run against a store double, the flag and the cron hook, the ShakeMap route's answer for a deleted event); names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
     },
     {
       "path": "workers/mccluster/test/eup-import-runner.test.mjs",
@@ -5182,6 +5539,13 @@
       "rationale": "Worker test for the owner-only mission proof media route; not a building capability."
     },
     {
+      "path": "workers/mccluster/test/mission-sources.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the house owner's mission sources route (a mission catalog's source page in the World): owner-only answers, body rules, the store error table, no upstream text; names Equity Uprise only to assert the owner's sentences never carry the brand. Test only; no building capability, program or geometry."
+    },
+    {
       "path": "workers/mccluster/test/mnet-live.test.mjs",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -5215,6 +5579,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Worker test of the consumer World environmental mode with the persisted module policy; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "workers/mccluster/test/world-environment-events.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the public E=UP environmental event timeline routes (the gate first, whitelisted fields, tombstones, alias redirects, the minute-long edge cache, the feed's USGS rows from the event store, and the static check that no public handler imports intel/, the news pairing or a Halo route); names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "workers/mccluster/test/world-environment-guard.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the consumer World environmental routes' off, outage and no-data answers and of the bounds on their public reads; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "workers/mccluster/test/world-environment-layers.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the public environmental globe layers (fires, perimeters, alerts, natural events, water levels, ShakeMap) behind the persisted environment module policy; names the policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "workers/mccluster/test/world-environment-rupture.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker test of the documented-rupture route of the E=UP environmental event timeline (the modelled up-dip edge of a USGS finite-fault plane over recorded USGS answers; point sources, withdrawn and unreachable events) behind the persisted environment module policy; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
     },
     {
       "path": "workers/mccluster/test/world-environment.test.mjs",

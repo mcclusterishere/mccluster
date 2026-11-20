@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 364,
-  "latest_version": "20261110220135",
-  "latest_name": "media_operation_claims_v2",
-  "ledger_sha256": "6fcada89fc8d3d3621b4c49242ca84a1aff050758cb1ecd60753cfbbbba35054",
+  "migration_count": 376,
+  "latest_version": "20261118035654",
+  "latest_name": "action_mission_drawdown_import_07",
+  "ledger_sha256": "c3657b4bb1ffd0a926d2992ff2fc2930713dac4216a9ebff5c90f6e726d40762",
   "migrations": [
     {
       "version": "0001",
@@ -1462,6 +1462,54 @@
     {
       "version": "20261110220135",
       "name": "media_operation_claims_v2"
+    },
+    {
+      "version": "20261114015120",
+      "name": "equity_uprise_platform_registry"
+    },
+    {
+      "version": "20261114060150",
+      "name": "equity_uprise_music_workspace"
+    },
+    {
+      "version": "20261117144103",
+      "name": "eup_module_policy_v1"
+    },
+    {
+      "version": "20261117222809",
+      "name": "action_globe_join_scope_v1"
+    },
+    {
+      "version": "20261118021521",
+      "name": "action_mission_details"
+    },
+    {
+      "version": "20261118034753",
+      "name": "action_mission_drawdown_import_01"
+    },
+    {
+      "version": "20261118034926",
+      "name": "action_mission_drawdown_import_02"
+    },
+    {
+      "version": "20261118035056",
+      "name": "action_mission_drawdown_import_03"
+    },
+    {
+      "version": "20261118035221",
+      "name": "action_mission_drawdown_import_04"
+    },
+    {
+      "version": "20261118035346",
+      "name": "action_mission_drawdown_import_05"
+    },
+    {
+      "version": "20261118035521",
+      "name": "action_mission_drawdown_import_06"
+    },
+    {
+      "version": "20261118035654",
+      "name": "action_mission_drawdown_import_07"
     }
   ]
 }

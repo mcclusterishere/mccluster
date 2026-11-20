@@ -37,7 +37,7 @@ test('the album only plays the master for a play the API granted, and never twic
   assert.match(album,/function paintGateOpening\(row\)/);
   assert.match(album,/if \(signed\) paintGateOpening\(row\);\s*\n\s*else paintGate\(row, \{ state: "preview" \}\);/);
   /* pressing play on an earned row spends it through the API first */
-  assert.match(album,/data-gate"\) === "earned" && !row\.hasAttribute\("data-granted"\)[\s\S]*claimThenPlay\(target\)/);
+  assert.match(album,/data-gate"\) === "earned" && !row\.hasAttribute\("data-granted"\)[\s\S]*claimThenPlay\(target, playRequest\)/);
   assert.match(album,/window\.MCC_GATED\.claim\(gateSpec\(row\)\)/);
   /* the master URL is only ever set from a granted claim */
   const masterSets=album.match(/setAttribute\("data-src", out\.url\)/g)||[];
@@ -48,7 +48,7 @@ test('the album only plays the master for a play the API granted, and never twic
   assert.ok(ended.indexOf('spend(rows[cur]);')>-1&&ended.indexOf('spend(rows[cur]);')<ended.indexOf('next();'),'the play is spent before the record moves on');
   /* played straight through, the album asks for its closer only after the
      song before it has been counted */
-  assert.match(ended,/spend\(rows\[cur\]\);[\s\S]*finished\.then\(function \(\) \{ claimThenPlay\(upNext\); \}/);
+  assert.match(ended,/spend\(rows\[cur\]\);[\s\S]*if \(request === playRequest\) claimThenPlay\(upNext\);[\s\S]*finished\.then\(advance, advance\)/);
   assert.match(album,/deck\.addEventListener\("seeking"[\s\S]*granted\(\) && deck\.currentTime < grantMax/);
   /* no file to keep */
   assert.doesNotMatch(album,/data-dl|data-fmt|MCC_GATED\.download/);
@@ -178,8 +178,10 @@ test('unified transport expands from mini player into full Now Playing', async()
   assert.match(engine,/id = "musicNow"/);
   assert.match(engine,/function openNow\(\)/);
   assert.match(engine,/function playAdjacent\(delta\)/);
-  assert.match(engine,/setActionHandler\("previoustrack"/);
-  assert.match(engine,/setActionHandler\("nexttrack"/);
+  /* the lock screen's previous and next walk the same queue, through the one Now Playing owner (music slice M2) */
+  assert.match(engine,/MCC_NOW_PLAYING\.bind\(audio,/);
+  assert.match(engine,/previous: function \(\) \{ return playAdjacent\(-1\); \}/);
+  assert.match(engine,/next: function \(\) \{ return playAdjacent\(1\); \}/);
   assert.match(engine,/music_now_open/);
   assert.match(css,/\.music-now\.is-open/);
   assert.match(css,/\.music-mini__open/);
@@ -282,7 +284,7 @@ test('Creator Studio validates rights, metadata and file sizes before any storag
   const preflight=submit.indexOf('Validate metadata, rights and all file sizes before transferring any bytes.');
   const upload=submit.indexOf('await uploadGrant("creator-masters", master)');
   assert.ok(preflight>=0 && upload>preflight,'preflight must run before master upload');
-  for(const clause of ['BUCKET_MAX_BYTES[bucket]','!file.size','!$("ownsMaster").checked','!$("collaboratorsCleared").checked','durationMs(master)','!Number.isFinite(dur)']){
+  for(const clause of ['BUCKET_MAX_BYTES[bucket]','!file.size','!rights.owns_master','!rights.controls_composition','!rights.samples_cleared','!rights.collaborators_cleared','!$("releaseTerms").checked','durationMs(master)','!Number.isFinite(dur)']){
     const index=submit.indexOf(clause);
     assert.ok(index>preflight && index<upload,clause+' must be checked before storage transfer');
   }

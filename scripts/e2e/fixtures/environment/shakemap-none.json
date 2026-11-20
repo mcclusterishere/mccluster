@@ -1,0 +1,30 @@
+{
+ "ok": true,
+ "schema": "world-environment-shakemap/v1",
+ "event_id": "nc75467542",
+ "generated_at": "2026-11-17T20:01:00.000Z",
+ "sources": [
+  {
+   "id": "usgs_event",
+   "label": "USGS event detail",
+   "status": "available",
+   "reason": null,
+   "fetched_at": "2026-11-17T20:01:00.000Z",
+   "last_success_at": "2026-11-17T20:01:00.000Z",
+   "coverage": "The products USGS lists for one earthquake",
+   "attribution": "U.S. Geological Survey, Earthquake Hazards Program",
+   "license": "Public domain (U.S. Government work)",
+   "url": "https://earthquake.usgs.gov/"
+  }
+ ],
+ "modelled": true,
+ "units": "MMI",
+ "notes": {
+  "shakemap": "ShakeMap is the USGS's modelled estimate of shaking intensity (Modified Mercalli Intensity, MMI), combining recordings with ground-motion models. It is versioned and can change; it is not a measurement at every place.",
+  "contours": "Each contour is a line of equal estimated intensity (an isoseismal), coloured as USGS colours it."
+ },
+ "usgs_preferred_id": "nc75467542",
+ "available": false,
+ "reason": "no_shakemap",
+ "contours": []
+}

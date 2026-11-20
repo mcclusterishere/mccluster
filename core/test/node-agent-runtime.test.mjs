@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { amdInventoryFromSysfs, amdLoadFromSysfs, parseNvidiaInventoryCsv, parseNvidiaLoadCsv, parseAppleDisplayInventory } from '../src/compute/hardware.mjs';
-import { assertLoopbackUrl, capabilityReadiness, healthyCapabilities, probeExecutors, probeHttpExecutor } from '../src/compute/engine-probes.mjs';
+import { assertLoopbackUrl, capabilityReadiness, engineHealthSummary, healthyCapabilities, probeExecutors, probeHttpExecutor } from '../src/compute/engine-probes.mjs';
 
 test('parses NVIDIA inventory and runtime telemetry', () => {
   const inventory = parseNvidiaInventoryCsv('NVIDIA RTX 4090, GPU-abc, 24564, 590.1, 8.9\n');
@@ -90,4 +90,43 @@ test('healthy engines still fail closed when VRAM is below the capability requir
   assert.equal(readiness[0].ready, false);
   assert.match(readiness[0].reason, /insufficient VRAM/i);
   assert.deepEqual(healthyCapabilities(manifest, health, inventory), []);
+});
+
+const evidence = { source: 'ollama:/api/ps', model: 'qwen3:8b', size_vram_bytes: 5_600_000_000, size_bytes: 5_600_000_000, processor_gpu_percent: 100, running_models: 1, checked_at: '2026-11-17T20:00:00.000Z' };
+const executor = { type: 'http', url: 'http://127.0.0.1:4790/execute', health_url: 'http://127.0.0.1:4790/health' };
+
+test('HTTP engine probe carries the health body gpu_evidence as evidence, and null when the body has none', async () => {
+  const withEvidence = await probeHttpExecutor(executor, async () => new Response(JSON.stringify({ ok: true, gpu_evidence: evidence }), { status: 200 }));
+  assert.equal(withEvidence.healthy, true);
+  assert.deepEqual(withEvidence.evidence, evidence);
+
+  const without = await probeHttpExecutor(executor, async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
+  assert.equal(without.healthy, true);
+  assert.equal(without.evidence, null);
+
+  const notJson = await probeHttpExecutor(executor, async () => new Response('plain text', { status: 200 }));
+  assert.equal(notJson.healthy, true, 'liveness is the status code, not the body shape');
+  assert.equal(notJson.evidence, null);
+
+  const notObject = await probeHttpExecutor(executor, async () => new Response(JSON.stringify({ ok: true, gpu_evidence: 'yes' }), { status: 200 }));
+  assert.equal(notObject.evidence, null);
+
+  const unhealthy = await probeHttpExecutor(executor, async () => new Response(JSON.stringify({ ok: false, gpu_evidence: evidence }), { status: 503 }));
+  assert.equal(unhealthy.healthy, false);
+  assert.deepEqual(unhealthy.evidence, evidence, 'an unhealthy executor may still report what the engine has loaded');
+
+  const huge = await probeHttpExecutor(executor, async () => new Response('x'.repeat(70_000), { status: 200 }));
+  assert.equal(huge.healthy, true);
+  assert.equal(huge.evidence, null, 'bodies above 64 KiB are not parsed');
+});
+
+test('engine health summary carries evidence per implementation', () => {
+  const health = new Map([
+    ['qwen3.8b.local', { healthy: true, status: 200, reason: null, checked_at: '2026-11-17T20:00:00.000Z', evidence }],
+    ['other.local', { healthy: false, status: 503, reason: 'HTTP 503', checked_at: '2026-11-17T20:00:00.000Z' }]
+  ]);
+  const summary = engineHealthSummary(health, [{ capability: { capability: 'ai.chat', implementation: 'qwen3.8b.local' }, ready: true, reason: null }]);
+  assert.deepEqual(summary[0].evidence, evidence);
+  assert.deepEqual(summary[0].capabilities, [{ capability: 'ai.chat', ready: true, reason: null }]);
+  assert.equal(summary[1].evidence, null);
 });

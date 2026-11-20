@@ -9,6 +9,8 @@ on:
       - 'creator.html'
       - 'music-creator.html'
       - 'music-admin.html'
+      - 'control.html'
+      - 'js/control-room/music-ops.js'
       - 'music-creator-terms.html'
       - 'data/albums.json'
       - 'js/music-*.js'
@@ -17,6 +19,45 @@ on:
       - 'supabase/functions/stripe-webhook/**'
       - 'supabase/migrations/**'
       - 'scripts/test/music-platform.test.mjs'
+      - 'scripts/test/creator-release-submission.test.mjs'
+      - 'scripts/test/control-music-review.test.mjs'
+      - 'scripts/e2e/control-music-review.e2e.mjs'
+      - 'scripts/test/music-playback-races.test.mjs'
+      - 'js/chamber.js'
+      - 'js/filament.js'
+      - 'js/peaks.js'
+      - 'js/now-playing.js'
+      - 'js/pip.js'
+      - 'js/world-audio-continuity.js'
+      - 'js/tabbar.js'
+      - 'js/game-hub/shared-music.mjs'
+      - 'assets/audio/**'
+      - 'data/peaks/**'
+      - 'scripts/music-peaks.mjs'
+      - 'scripts/test/music-background.test.mjs'
+      - 'scripts/test/music-peaks.test.mjs'
+      - 'scripts/e2e/music-background.e2e.mjs'
+      - 'scripts/e2e/music-world-continuity.e2e.mjs'
+      - 'js/mcc-auth.js'
+      - 'js/backend.js'
+      - 'js/gated-audio.js'
+      - 'js/listen-ledger.js'
+      - 'js/creator-onboarding.js'
+      - 'js/comments.js'
+      - 'js/mccluster-creator-account.js'
+      - 'mccluster-creator-studio.html'
+      - 'scripts/test/music-accounts.test.mjs'
+      - 'scripts/e2e/music-accounts.e2e.mjs'
+      - 'scripts/e2e/support/music-accounts-plane.mjs'
+      - 'js/label.js'
+      - 'js/gateway.js'
+      - 'docket-516.html'
+      - 'embed.html'
+      - 'music-videos.html'
+      - 'heal-the-3rd-world.html'
+      - 'scripts/music-artwork.mjs'
+      - 'scripts/test/now-playing-contract.test.mjs'
+      - 'scripts/e2e/now-playing.e2e.mjs'
       - '.github/workflows/music-platform-ci.yml'
   push:
     branches: [main]
@@ -27,6 +68,8 @@ on:
       - 'creator.html'
       - 'music-creator.html'
       - 'music-admin.html'
+      - 'control.html'
+      - 'js/control-room/music-ops.js'
       - 'music-creator-terms.html'
       - 'data/albums.json'
       - 'js/music-*.js'
@@ -35,6 +78,45 @@ on:
       - 'supabase/functions/stripe-webhook/**'
       - 'supabase/migrations/**'
       - 'scripts/test/music-platform.test.mjs'
+      - 'scripts/test/creator-release-submission.test.mjs'
+      - 'scripts/test/control-music-review.test.mjs'
+      - 'scripts/e2e/control-music-review.e2e.mjs'
+      - 'scripts/test/music-playback-races.test.mjs'
+      - 'js/chamber.js'
+      - 'js/filament.js'
+      - 'js/peaks.js'
+      - 'js/now-playing.js'
+      - 'js/pip.js'
+      - 'js/world-audio-continuity.js'
+      - 'js/tabbar.js'
+      - 'js/game-hub/shared-music.mjs'
+      - 'assets/audio/**'
+      - 'data/peaks/**'
+      - 'scripts/music-peaks.mjs'
+      - 'scripts/test/music-background.test.mjs'
+      - 'scripts/test/music-peaks.test.mjs'
+      - 'scripts/e2e/music-background.e2e.mjs'
+      - 'scripts/e2e/music-world-continuity.e2e.mjs'
+      - 'js/mcc-auth.js'
+      - 'js/backend.js'
+      - 'js/gated-audio.js'
+      - 'js/listen-ledger.js'
+      - 'js/creator-onboarding.js'
+      - 'js/comments.js'
+      - 'js/mccluster-creator-account.js'
+      - 'mccluster-creator-studio.html'
+      - 'scripts/test/music-accounts.test.mjs'
+      - 'scripts/e2e/music-accounts.e2e.mjs'
+      - 'scripts/e2e/support/music-accounts-plane.mjs'
+      - 'js/label.js'
+      - 'js/gateway.js'
+      - 'docket-516.html'
+      - 'embed.html'
+      - 'music-videos.html'
+      - 'heal-the-3rd-world.html'
+      - 'scripts/music-artwork.mjs'
+      - 'scripts/test/now-playing-contract.test.mjs'
+      - 'scripts/e2e/now-playing.e2e.mjs'
 
 permissions:
   contents: read
@@ -53,10 +135,42 @@ jobs:
           node --check js/music-community.js
           node --check js/music-creator-profile.js
           node --check js/music-admin.js
+          node --check js/control-room/music-ops.js
       - name: Parse creator studio module
         run: node --check js/music-creator-studio.js
+      - name: Parse the album room's light, waveform and Now Playing helper
+        run: |
+          node --check js/now-playing.js
+          node --check js/peaks.js
+          node --check js/chamber.js
+          node --check js/filament.js
       - name: Run music platform contracts
         run: node --test scripts/test/music-platform.test.mjs
+      - name: Creator release submission survives slow metadata, edits and a failed refresh
+        run: node --test scripts/test/creator-release-submission.test.mjs
+      - name: Native Control publishes the verified release and handles stale, denied and uncertain outcomes
+        run: node --test scripts/test/control-music-review.test.mjs
+      - name: Late access and gate replies cannot interrupt a newer song or undo Pause
+        run: node --test scripts/test/music-playback-races.test.mjs
+      - name: Background playback contracts (no Web Audio on the deck, the audio session, the lifecycle guard)
+        run: node --test scripts/test/music-background.test.mjs
+      - name: Every public catalogue track has fresh peaks
+        run: |
+          node scripts/music-peaks.mjs --check
+          node --test scripts/test/music-peaks.test.mjs
+      - name: The module knows who is listening (a token per call, sign-out, offers by state)
+        run: node --test scripts/test/music-accounts.test.mjs
+      - name: Parse the players bound to the one Now Playing owner
+        run: |
+          node --check js/label.js
+          node --check js/pip.js
+          node --check js/gateway.js
+          node --check js/world-audio-continuity.js
+          node --check scripts/music-artwork.mjs
+      - name: One Now Playing everywhere (previous and next, no 15-second skips, every cover at its true size and type)
+        run: |
+          node scripts/music-artwork.mjs --check
+          node --test scripts/test/now-playing-contract.test.mjs
 
   music-edge:
     runs-on: ubuntu-latest
@@ -72,3 +186,45 @@ jobs:
           deno check --node-modules-dir=auto supabase/functions/stripe-webhook/index.ts
           deno check --node-modules-dir=auto supabase/functions/music-direct-checkout/index.ts
           deno check --node-modules-dir=auto supabase/functions/music-direct-access/index.ts
+
+  browser:
+    # The pinned Playwright browser dependencies require this supported image.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - name: Prepare the browser outside the repository
+        run: |
+          npm install --prefix /tmp/music-qa --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0
+          /tmp/music-qa/node_modules/.bin/playwright install --with-deps chromium
+      - name: The album keeps playing with every AudioContext suspended, one request per play, the audio session, the in-app note
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/music-background.e2e.mjs /tmp/music-proof/background
+      - name: Music continues into World, with and without reduced motion
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/music-world-continuity.e2e.mjs /tmp/music-proof/world
+      - name: Who is listening, in Chromium (personas, races, expiry, other tabs; 390px)
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/music-accounts.e2e.mjs /tmp/music-proof/accounts
+      - name: One Now Playing on every player (title, artist, cover, playbackState, position, previous and next, AirPlay, resume; 390px)
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/now-playing.e2e.mjs /tmp/music-proof/now-playing
+      - name: Native Control verifies the pinned audio before publication and reads back uncertain outcomes
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/control-music-review.e2e.mjs /tmp/music-proof/control-review
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: music-background-${{ github.run_id }}
+          path: /tmp/music-proof
+          retention-days: 7

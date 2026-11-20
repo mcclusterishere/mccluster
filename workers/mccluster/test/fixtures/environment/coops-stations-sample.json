@@ -1,0 +1,50 @@
+{
+ "count": 4,
+ "units": null,
+ "stations": [
+  {
+   "tidal": true,
+   "greatlakes": false,
+   "state": "HI",
+   "timezone": "HAST",
+   "id": "1611400",
+   "name": "Nawiliwili",
+   "lat": 21.9544,
+   "lng": -159.3561,
+   "affiliations": "NWLON"
+  },
+  {
+   "tidal": true,
+   "greatlakes": false,
+   "state": "CT",
+   "timezone": "EST",
+   "id": "8461490",
+   "name": "New London",
+   "lat": 41.371666,
+   "lng": -72.09556,
+   "affiliations": "NWLORTS"
+  },
+  {
+   "tidal": true,
+   "greatlakes": false,
+   "state": "NY",
+   "timezone": "EST",
+   "id": "8518750",
+   "name": "The Battery",
+   "lat": 40.700554,
+   "lng": -74.01417,
+   "affiliations": "NWLORTS"
+  },
+  {
+   "tidal": false,
+   "greatlakes": true,
+   "state": "MN",
+   "timezone": "CST",
+   "id": "9099064",
+   "name": "Duluth",
+   "lat": 46.77575,
+   "lng": -92.092026,
+   "affiliations": "NWLON"
+  }
+ ]
+}

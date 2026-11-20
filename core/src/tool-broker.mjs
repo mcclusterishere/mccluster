@@ -2,6 +2,7 @@ import http from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
 import { RUNNING_DEPLOYMENT_SHA } from './runtime-revision.mjs';
 import { createCapabilityRegistry } from './capabilities/registry.mjs';
+import { capabilityCallPolicy, mapCapabilityCallError, requireCapabilityInterface } from './capabilities/call-policy.mjs';
 import { createToolRegistry } from './tools/registry.mjs';
 import { createEdgeVerifier, DEFAULT_EDGE_CLOCK_SKEW_MS } from './broker-edge-auth.mjs';
 import { emitCoreEvent } from './observability.mjs';
@@ -190,9 +191,18 @@ async function handleMcp(req, res, rpc) {
       const options = actor && typeof actor === 'object'
         ? { actor: { user_id: actor.user_id, kind: actor.kind || 'owner', source: actor.source || 'signed-edge' } }
         : {};
-      const result = capabilities.has(name)
-        ? await capabilities.call(name, args, options)
-        : await registry.call(name, args, options);
+      let result;
+      if (capabilities.has(name)) {
+        // A stable capability must list the MCP interface to be callable here
+        // (browser.act is agent-only); ai.chat images become a vision
+        // requirement and a missing vision node answers with its own code.
+        requireCapabilityInterface(capabilities, name, 'mcp');
+        const policy = capabilityCallPolicy(capabilities, name, args, options);
+        try { result = await capabilities.call(name, args, policy.options); }
+        catch (error) { throw mapCapabilityCallError(error, policy); }
+      } else {
+        result = await registry.call(name, args, options);
+      }
       return json(res, 200, { jsonrpc: '2.0', id, result: mcpText(result) });
     } catch (error) {
       return json(res, 200, {
@@ -281,15 +291,14 @@ const server = http.createServer(async (req, res) => {
       const body = parseJson(bodyBytes);
       if (!body.capability) return json(res, 400, { error: 'capability is required' });
       const started = Date.now();
+      let policy = { options: { requirements: body.requirements || {} }, vision: false, images: 0 };
       try {
-        const result = await capabilities.call(
-          body.capability,
-          body.arguments || {},
-          { requirements: body.requirements || {} }
-        );
+        policy = capabilityCallPolicy(capabilities, body.capability, body.arguments || {}, policy.options);
+        const result = await capabilities.call(body.capability, body.arguments || {}, policy.options);
         observeCapability(req, body.capability, started, { result });
         return json(res, 200, result);
-      } catch (error) {
+      } catch (rawError) {
+        const error = mapCapabilityCallError(rawError, policy);
         observeCapability(req, body.capability, started, { error });
         throw error;
       }

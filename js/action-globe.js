@@ -19,10 +19,10 @@ const BARE=EXPLORE&&new URLSearchParams(location.search).get('chrome')==='0';if(
    so this frame shows only the Earth and talks to its same-origin parent. Messages carry public mission fields only. */
 const parentFrame=embedded&&window.parent!==window?window.parent:null;if(parentFrame&&new URLSearchParams(location.search).get('surface')==='network')document.documentElement.classList.add('globe-surface-network');
 const ANALYTICS=!!parentFrame&&new URLSearchParams(location.search).get('surface')==='analytics';if(ANALYTICS)document.documentElement.classList.add('globe-surface-analytics');
-/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): missions=0 (mnet.html, for the frame and the expanded globe) draws no
-   mission pins, regions or outlines and keeps the mission panels shut, until Missions comes back */
-/* the house owner's World keeps them (js/world-owner-modes.js lifts the switch on the page that holds this frame) */
-const NO_MISSIONS=new URLSearchParams(location.search).get('missions')==='0'&&!(()=>{try{return !!parentFrame&&!parentFrame.document.documentElement.classList.contains('hu-social-only')}catch(e){return false}})();if(NO_MISSIONS)document.documentElement.classList.add('globe-no-missions');
+/* MISSIONS ARE PUBLIC (owner, 2026-11-17: "we need them on the globe for the signed out users"): the World's frame and its
+   expanded globe draw the published mission pins for everyone. missions=0 is an embedding page asking for an Earth with no
+   mission pins, regions or outlines and the mission panels shut (the City Arcade's Bridgeport globe); nothing else sets it. */
+const NO_MISSIONS=new URLSearchParams(location.search).get('missions')==='0';if(NO_MISSIONS)document.documentElement.classList.add('globe-no-missions');
 // Public World reference approved 2026-10-16. Analytics retains its own rendering contract.
 const EDITORIAL=!ANALYTICS; if(EDITORIAL)document.documentElement.classList.add('globe-editorial');
 let travelMode=false,journeyPoints=[],journeyEntities=[],journeyConnect=true,journeyFlyPending=false;
@@ -308,7 +308,7 @@ window.__huJourney=()=>({travel:travelMode,points:journeyPoints.length,entities:
 /* Completed cohort events are public places supplied by the World Missions archive.
    Keep this layer separate from live missions, member locations and travel paths. */
 let completedEvents=[],completedPins=[],completedOn=false;
-let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false,focusedNews='';
+let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false,focusedNews='',newsTintQuiet=false;
 /* THE NEWS HEAT MAP (owner, 2026-10-21: "instead of pins on the map ... a heat map of how many articles or mentions it has"):
    with the World's news on, the countries are shaded by the stories that mention them (js/world-countries.js, the counts from
    GET /v1/world/news-heat, read again every five minutes); no pin per story. The one pin left is the story whose place a
@@ -337,9 +337,17 @@ function loadMembers(){
 }
 /* a selected country's stories as places, counted by state on the globe */
 function newsHeatCells(code){return fetch(API+'/v1/world/news-heat?country='+encodeURIComponent(code),{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>d&&d.ok&&Array.isArray(d.cells)?d.cells:null).catch(()=>null)}
-function setWorldNewsPins(items,on){
+/* THE TINT STEPS ASIDE IN THE EQUITY UPRISE TAB (release polish, 2026-11-18; review V2-M3): the page sends tint:false while the
+   feed's scope is that tab (js/world-news-globe.js); the countries hide the shading and its legend and keep the counts, and show
+   them again when the tab is left. Only an explicit false quiets it, so a page that never sends the flag keeps the tint. */
+function quietNewsTint(){if(countries&&countries.quietHeat)countries.quietHeat(newsTintQuiet)}
+/* THE NEWS LAYER OFF IN THE TAB AND BEHIND THE DOOR (event timeline slice S4, decision D9, default adopted pending Matthew's
+   confirmation): the page sends on:false with tint:false; the heat is not read (loadNewsHeat) and a country's card drops its news
+   count until the news is on again. Travel's own off (on:false, the tint flag kept) leaves the card as it was. */
+function newsCardOff(){if(countries&&countries.newsOff)countries.newsOff(!publicNewsOn&&newsTintQuiet)}
+function setWorldNewsPins(items,on,tint){
  if(!parentFrame||ANALYTICS)return;
- publicNewsOn=on===true;const seen=new Set();
+ publicNewsOn=on===true;newsTintQuiet=tint===false;quietNewsTint();newsCardOff();const seen=new Set();
  publicNewsItems=(Array.isArray(items)?items:[]).slice(0,120).flatMap(x=>{
   if(!x||typeof x.id!=='string'||x.id.length>110||seen.has(x.id)||!Number.isFinite(x.lat)||!Number.isFinite(x.lon)||Math.abs(x.lat)>90||Math.abs(x.lon)>180||(x.lat===0&&x.lon===0))return [];
   seen.add(x.id);return [{id:x.id,lat:x.lat,lon:x.lon}];
@@ -387,7 +395,7 @@ function drawWorldNewsPins(){
  })));
  markNewsPin();
 }
-window.__huWorldNewsPins=()=>({on:publicNewsOn,pins:publicNewsPins.length,items:publicNewsItems.length});
+window.__huWorldNewsPins=()=>({on:publicNewsOn,tint:!newsTintQuiet,pins:publicNewsPins.length,items:publicNewsItems.length});
 
 function sanitizeCompletedEvents(rows){
  const seen=new Set();return (Array.isArray(rows)?rows:[]).slice(0,50).flatMap(e=>{
@@ -412,14 +420,25 @@ function selectCompletedEvent(id){
  tell({type:'hu:completed-selected',eventId:id});return true;
 }
 window.__huCompletedMissions=()=>({on:completedVisible(),events:completedEvents.length,pins:completedPins.length});
-/* the network band is short, so its Earth starts closer and fills the frame */
+/* the network band is short, so its Earth starts closer and fills the frame. A hidden World leaves the canvas 0 x 0: there is no
+   aspect to fit, and the fit gave Infinity, which written into the camera stopped the renderer for good (release review RS-2,
+   2026-11-19: the Action Record and a guest's sign-in from a mission both hide the World). Only a finite height is answered. */
 function homeAltitude(){
- if(EDITORIAL&&viewer){const canvas=viewer.scene.canvas,fov=viewer.camera.frustum.fovy||Math.PI/3,aspect=canvas.clientWidth/Math.max(1,canvas.clientHeight);const angle=Math.atan(Math.tan(fov/2)*Math.min(1,aspect)*.9);return Cesium.Ellipsoid.WGS84.maximumRadius/Math.sin(angle)-Cesium.Ellipsoid.WGS84.maximumRadius}
+ if(EDITORIAL&&viewer){const canvas=viewer.scene.canvas;
+  if(canvas.clientWidth>0&&canvas.clientHeight>0){const fov=viewer.camera.frustum.fovy||Math.PI/3,aspect=canvas.clientWidth/canvas.clientHeight;const angle=Math.atan(Math.tan(fov/2)*Math.min(1,aspect)*.9);const h=Cesium.Ellipsoid.WGS84.maximumRadius/Math.sin(angle)-Cesium.Ellipsoid.WGS84.maximumRadius;if(Number.isFinite(h)&&h>0)return h}}
  return document.documentElement.classList.contains('globe-surface-network')||EXPLORE?12500000:19000000
 }
 function homePosition(){return Cesium.Cartesian3.fromDegrees(EDITORIAL?-35:0,EDITORIAL?25:15,homeAltitude())}
 
+/* THE ENVIRONMENTAL GLOBE (slice G1, 2026-11-17): the render governor and the scene director are created in boot() after
+   styleScene(); the typed layers (js/environment-layers.js) are mounted there too and answer every hu:environment-* message
+   but the pins, which keep going through the shim below (js/environment-pins.js). */
+let governor=null,director=null;const environmentLayers=window.MCC_ENVIRONMENT_LAYERS||null;
 const environmentPins=window.MCC_ENVIRONMENT_PINS?.create(()=>viewer,()=>window.Cesium,msg=>tell(msg));
+/* this page load's own id, carried by every hu:globe-ready, so the World tells a globe that has just booted from the same globe
+   saying ready again (its missions read answering, a hu:hello answered, a bfcache restore): only a new boot re-arms the tour's
+   autostart (review RV2-1). Random per load, never stored, posted to the parent page only. */
+const GLOBE_BOOT=(()=>{try{const a=new Uint32Array(2);crypto.getRandomValues(a);return a[0].toString(36)+a[1].toString(36)}catch(e){return Date.now().toString(36)+Math.random().toString(36).slice(2)}})();
 let readyMessage=null;function tell(msg){if(EXPLORE)exploreTell(msg);if(!parentFrame)return;try{parentFrame.postMessage(msg,location.origin)}catch(e){}}
 /* on the full pane there is no parent to tell, so the layer line and a guest's lock are painted here, in the World's own words
    (js/mnet.js paintLayerLine). The Vaunt lead is the owner's referral, the same one the World shows. */
@@ -458,12 +477,14 @@ function focusMission(id){
 }
 window.addEventListener('message',e=>{if(!parentFrame||e.source!==parentFrame||e.origin!==location.origin)return;const d=e.data||{};
 if(d.type==='hu:hello'){if(readyMessage)tell(readyMessage);return}
+/* layers, focus, scene and view go to the typed layers; the pins message falls through to the shim */
+if(/^hu:environment-/.test(d.type)&&!ANALYTICS&&window.MCC_ENVIRONMENT_LAYERS?.onMessage?.(d))return;
 if(d.type==='hu:environment-pins'&&!ANALYTICS){environmentPins?.set(d);return}
 if(d.type==='hu:environment-focus'&&!ANALYTICS){environmentPins?.focus(d.id);return}
 if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
 if(d.type==='hu:map-pick-mode'&&!ANALYTICS){travelPickKind(d.kind);return}
 if(d.type==='hu:completed-missions'&&!ANALYTICS){setCompletedEvents(d.events,d.on);return}
-if(d.type==='hu:world-news-pins'&&!ANALYTICS){setWorldNewsPins(d.items,d.on);return}
+if(d.type==='hu:world-news-pins'&&!ANALYTICS){setWorldNewsPins(d.items,d.on,d.tint);return}
 if(d.type==='hu:journey'&&!ANALYTICS&&Array.isArray(d.points)){
  journeyPoints=d.points.slice(0,2).filter(p=>p&&typeof p.label==='string'&&travelCoordinates(p.coordinates)).map(p=>({label:p.label.slice(0,80),coordinates:travelCoordinates(p.coordinates)}));
  journeyConnect=d.connect!==false;journeyFlyPending=journeyFlyPending||d.fly===true;drawJourney(journeyPoints,false);scheduleTravelCamera();return;
@@ -507,9 +528,9 @@ window.__huMissionPins=()=>missionPins.length;
 function draw(){clear(missionPins);clear(missionHalos);clear(cityPins);drawContinents();
 /* a mission can have many pins (countries, an origin, a context region): every pin opens the same mission */
 if(showMissions)missions.forEach((m,n)=>(m.pins||[m]).forEach((p,k)=>{const off=activeRegion&&p.region_key!==activeRegion,ctx=p.pin_role==='context',color=off?'#8b93a3':ctx?'#ffb15e':'#ff3d5e',size=EDITORIAL?(ctx?16:22):(ctx?22:30),position=Cesium.Cartesian3.fromDegrees(p.longitude,p.latitude,3000);
- if(!off){const phase=(n*7+k*3)%11,halo=size*2.6;missionHalos.push(viewer.entities.add({position,billboard:{image:glowHalo(color),width:halo,height:halo,scale:PULSE?new Cesium.CallbackProperty(()=>1+.24*Math.sin(Date.now()/280+phase),false):1.12,color:Cesium.Color.fromAlpha(Cesium.Color.WHITE,.85),eyeOffset:new Cesium.Cartesian3(0,0,120)},properties:{missionIndex:n,halo:true}}))}
+ if(!off){const phase=(n*7+k*3)%11,halo=size*2.6;missionHalos.push(viewer.entities.add({position,billboard:{image:glowHalo(color),width:halo,height:halo,scale:PULSE?new Cesium.CallbackProperty(()=>envStill()?1.12:1+.24*Math.sin(Date.now()/280+phase),false):1.12,color:Cesium.Color.fromAlpha(Cesium.Color.WHITE,.85),eyeOffset:new Cesium.Cartesian3(0,0,120)},properties:{missionIndex:n,halo:true}}))}
  missionPins.push(viewer.entities.add({position,billboard:{image:glowPin(color),width:size,height:size,scale:n===i&&selectionShown?1.5:1},label:off?{text:'🔒',font:'14px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20)}:undefined,properties:{missionIndex:n}}))}));drawBusinesses();
-if(showCities)cities.forEach(c=>cityPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(c.longitude,c.latitude),point:{pixelSize:Math.min(22,7+Math.sqrt(c.member_count)),color:Cesium.Color.fromCssColorString('#f4b2b6')},label:{text:c.region_label+' · '+c.member_count+' members · '+c.verified_actions+' actions',font:'12px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,2400000)}})))}
+if(showCities)cities.forEach(c=>cityPins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(c.longitude,c.latitude),point:{pixelSize:Math.min(22,7+Math.sqrt(c.member_count)),color:Cesium.Color.fromCssColorString('#f4b2b6')},label:{text:c.region_label+' · '+c.member_count+' members · '+c.verified_actions+' actions',font:'12px sans-serif',pixelOffset:new Cesium.Cartesian2(0,-20),distanceDisplayCondition:new Cesium.DistanceDisplayCondition(0,2400000)}})));syncLegacyHold()}
 function show(n){if(!missions.length)return;const next=(n+missions.length)%missions.length;const m=missions[next];i=next;selectionShown=true;missionPins.forEach(p=>{if(p.billboard)p.billboard.scale=p.properties?.missionIndex?.getValue()===i?1.5:1});$('title').textContent=m.title;$('description').textContent=m.description;$('path').textContent=(m.action_path||'mission').replace('_',' ').toUpperCase()+' · '+m.region_label;$('position').textContent=(i+1)+' / '+missions.length;$('missionLink').href='mnet.html?mission='+encodeURIComponent(m.mission_id);setSelection(true);viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(m.longitude,m.latitude,1150000),orientation:{heading:Cesium.Math.toRadians(0),pitch:Cesium.Math.toRadians(-75),roll:0},duration:2.2,easingFunction:Cesium.EasingFunction.QUADRATIC_IN_OUT})}
 function setMode(mode){if(mode==='feed'){$('worldFeed').scrollTo({top:0,behavior:'smooth'});$('feedMode').classList.add('is-active');$('globeMode').classList.remove('is-active');}else{$('globeMode').classList.add('is-active');$('feedMode').classList.remove('is-active');closeDetail();}viewer?.resize();}
 function setSelection(selected){$('worldFilters').hidden=selected;$('mission').hidden=!selected;$('clearSelection').hidden=!selected;$('filterBack').hidden=!selected;$('deckHeading').textContent=selected?'Selected mission':'Explore the world';}
@@ -546,6 +567,15 @@ let mapLayer=null,dayLayer=null,nightLayer=null,cloudLayer=null,layerMode='auto'
    decoration only: a tap falls through it to the pin, a marker or the country underneath, so a wide halo over a small country
    never swallows that country's tap. Reduced motion keeps the halo still. */
 const missionHalos=[],PULSE=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* STILL WHILE THE EQUITY UPRISE TAB IS THE SCOPE (event timeline slice S5, decision D16, default adopted pending Matthew's confirmation):
+   while the environmental layers are on, the halos and the live badges stand still at their resting size and take no legacy hold, so
+   the globe renders on demand there; the quakes' glyphs answer the owner's rule that dots were too easy to miss. Unchanged elsewhere. */
+const envStill=()=>!!(environmentLayers&&typeof environmentLayers.isOn==='function'&&environmentLayers.isOn());
+/* THE LEGACY HOLD (slice G1): the halos' and live badges' CallbackProperty pulses and the per-tick data layers are never
+   converted to on-demand rendering. They take one hold named 'legacy' on the render governor (js/globe-render-governor.js),
+   so whenever any of them is on the viewer stays continuous exactly as before; only when none is on, and the environmental
+   layers are, does the loop go on demand. Called at the end of every draw and toggle that changes them. */
+function syncLegacyHold(){if(!governor||!window.MCC_GLOBE_GOVERNOR)return;governor.sync('legacy',MCC_GLOBE_GOVERNOR.legacyAnimators({pulse:PULSE&&!envStill(),halos:missionHalos.length,livePins:livePins.length,dataLayersOn:Object.keys(DATA_LAYERS).some(k=>layerState[k].on),intelOn:intel.on,cctvOn:cctv.on,haloObjects:haloObjects!==null}))}
 /* WHERE PEOPLE ARE LIVE (owner, 2026-10-20: "go through the globe, just like you can go through Bigo … where people are live").
    The page sends counts per country from each live source (audio conversations, broadcasts a host placed in a country); a
    breathing red badge marks every country with something on air. A tap selects that country, which narrows the feed and
@@ -564,8 +594,8 @@ function drawLivePlaces(){
  total.forEach((n,code)=>{const pt=countries.point(code);if(!pt)return;const img=liveBadge(n);
   livePins.push(viewer.entities.add({position:Cesium.Cartesian3.fromDegrees(pt[0],pt[1],0),billboard:{image:img.url,width:img.w,height:img.h,
    verticalOrigin:Cesium.VerticalOrigin.BOTTOM,pixelOffset:new Cesium.Cartesian2(0,-16),eyeOffset:new Cesium.Cartesian3(0,0,-200),
-   scale:PULSE?new Cesium.CallbackProperty(()=>1+.07*Math.sin(Date.now()/320),false):1},properties:{liveCountry:code}}))});
- window.__huLivePlaces=()=>Object.fromEntries(total);
+   scale:PULSE?new Cesium.CallbackProperty(()=>envStill()?1:1+.07*Math.sin(Date.now()/320),false):1},properties:{liveCountry:code}}))});
+ window.__huLivePlaces=()=>Object.fromEntries(total);syncLegacyHold()
 }
 function liveBadge(n){const t='LIVE '+(n>99?'99+':n),key='live:'+t;if(pinCache[key])return pinCache[key];
  const c=document.createElement('canvas'),g=c.getContext('2d'),f='700 22px Inter, system-ui, sans-serif';g.font=f;
@@ -647,7 +677,7 @@ function searchPins(q){$('worldSearch').value=q;const t=q.trim().toLocaleLowerCa
 /* COUNTRIES (js/world-countries.js): borders, flags, the red-white-blue United States, the fade on zoom. A tapped country filters the pins
    to the missions pinned there (by the rows' own country codes; none means none) without moving the camera. */
 let countries=null;function inCountry(m){return !countries||countries.keep(m)}
-function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c});/* Halo's Markets card listens (js/halo/markets.js) */try{window.dispatchEvent(new CustomEvent('hu:country',{detail:c}))}catch(e){}}});loadNewsHeat();loadMembers()}
+function mountCountries(){if(!window.HuCountries||ANALYTICS||!viewer)return;countries=HuCountries.mount(viewer,{quiet:EDITORIAL,missions:()=>allMissions,regions:()=>regions,missionsOn:()=>!NO_MISSIONS,heatCells:newsHeatCells,onLegend:()=>scheduleTravelControls(),onStats:s=>tell({type:'hu:place-stats',place:s}),onSelect:c=>{searchPins($('worldSearch').value);tell({type:'hu:country',country:c});/* Halo's Markets card listens (js/halo/markets.js) */try{window.dispatchEvent(new CustomEvent('hu:country',{detail:c}))}catch(e){}}});newsCardOff();quietNewsTint();loadNewsHeat();loadMembers()}
 /* three looks, one button: the lit Earth (real sun), the night Earth (city lights everywhere, the owner's World mockups), the street map */
 function setLayer(mode){layerMode=mode;const night=mode==='night',g=viewer.scene.globe;if(mapLayer)mapLayer.show=mode==='map'||(mode==='auto'&&streetAuto(viewer.camera.positionCartographic.height));
  if(dayLayer)dayLayer.show=EDITORIAL||!night;if(cloudLayer)cloudLayer.show=EDITORIAL||!night;if(nightLayer){nightLayer.dayAlpha=night?1:0;nightLayer.brightness=night?2.1:6}
@@ -675,7 +705,7 @@ window.__huLayerOn=k=>!!(layerState[k]&&layerState[k].on);
 function sessionToken(){try{const s=JSON.parse(localStorage.getItem('mccdb_session')||'null');return s&&s.access_token||''}catch(e){return ''}}
 function paintDataLocks(){if(typeof paintAccess==='function')paintAccess()}
 async function layerFetch(k){const headers={accept:'application/json'};const t=sessionToken();if(t)headers.authorization='Bearer '+t;const r=await fetch(API+'/v1/world/layers/'+k,{headers});if(r.status===401)throw Error('members');if(!r.ok)throw Error('layer '+r.status);return r.json()}
-function clearLayer(k){if(layerState[k].contacts)layerState[k].contacts=[];if(spaceFocus&&spaceFocus.layer===k)clearSpaceFocus();const L=layerState[k];if(L.points){viewer.scene.primitives.remove(L.points);L.points=null}if(L.labels){L.labels.forEach(e=>viewer.entities.remove(e));L.labels=[]}if(L.entities){L.entities.forEach(e=>viewer.entities.remove(e));L.entities=[]}if(L.sats)L.sats=[];if(L.objectRows)L.objectRows=[];if(L.timer){clearInterval(L.timer);L.timer=0}L.count=0;if(haloObjects)haloObjects.refresh()}
+function clearLayer(k){if(layerState[k].contacts)layerState[k].contacts=[];if(spaceFocus&&spaceFocus.layer===k)clearSpaceFocus();const L=layerState[k];if(L.points){viewer.scene.primitives.remove(L.points);L.points=null}if(L.labels){L.labels.forEach(e=>viewer.entities.remove(e));L.labels=[]}if(L.entities){L.entities.forEach(e=>viewer.entities.remove(e));L.entities=[]}if(L.sats)L.sats=[];if(L.objectRows)L.objectRows=[];if(L.timer){clearInterval(L.timer);L.timer=0}L.count=0;if(haloObjects)haloObjects.refresh();syncLegacyHold()}
 /* Aircraft silhouettes identify observed contacts; they are not heading arrows.
    No synthetic movement or inferred itinerary is added to the provider snapshot. */
 let aircraftIcon;
@@ -739,7 +769,7 @@ function liftAboveCredit(){const h=creditHeight();document.documentElement.style
 function paintLayerCredits(){const c=$('layerCredits');if(!c)return;const parts=Object.keys(DATA_LAYERS).filter(k=>layerState[k].on).map(k=>layerState[k].credit||DATA_LAYERS[k].credit);c.textContent=parts.length?parts.join(' · ')+' · ':'';liftAboveCredit()}
 async function toggleLayer(k){const spec=DATA_LAYERS[k],b=$(spec.id),L=layerState[k];if(!viewer||!b)return;if(!L.on&&lockOf(k)&&explainLock(k))return;if(spec.members&&!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return}
  if(L.on){L.on=false;b.setAttribute('aria-pressed','false');clearLayer(k);paintLayerCredits();tell({type:'hu:layer',layer:k,on:false,creditHeight:creditHeight()});return}
- b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(lockOf(k))return;if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);if(lockOf(k)){clearLayer(k);return}L.credit=typeof data.credit==='string'?data.credit.slice(0,60):'';L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();
+ b.setAttribute('aria-busy','true');try{const data=await layerFetch(k);if(lockOf(k))return;if(k==='flights')drawFlights(data);else if(k==='satellites')await drawSatellites(data);else drawLaunches(data);if(lockOf(k)){clearLayer(k);return}L.credit=typeof data.credit==='string'?data.credit.slice(0,60):'';L.on=true;b.setAttribute('aria-pressed','true');paintLayerCredits();syncLegacyHold();
   tell({type:'hu:layer',layer:k,on:true,count:L.count,creditHeight:creditHeight(),unavailable:!!data.unavailable,stale:!!data.stale,attribution:String(data.attribution||''),next:k==='launches'?(data.launches||[]).slice(0,3).map(l=>({name:String(l.name||''),net:l.net||null,where:String(l.pad&&(l.pad.location||l.pad.name)||'')})):undefined})}
  catch(e){if(String(e&&e.message)==='members'){paintDataLocks();tell({type:'hu:ask-sign-in',reason:'layers'})}else{try{console.warn('[world layer] '+k+': '+(e&&e.message||e))}catch(_){}tell({type:'hu:layer',layer:k,on:false,failed:true})}}finally{b.removeAttribute('aria-busy')}}
 function wireDataLayers(){Object.keys(DATA_LAYERS).forEach(k=>{const b=$(DATA_LAYERS[k].id);if(b)b.onclick=()=>toggleLayer(k)});paintDataLocks();window.addEventListener('storage',paintDataLocks);const cb=$('ctlCctv');if(cb)cb.onclick=()=>toggleCctv();const mb=$('ctlMusic');if(mb)mb.onclick=showMusic;const ib=$('ctlIntel');if(ib)ib.onclick=()=>toggleIntel();const tb=$('ctlTransport');if(tb)tb.onclick=()=>openWhip();const gb=$('ctlGames');if(gb)gb.onclick=()=>toggleGames();window.addEventListener('storage',e=>{if(e.key==='mccdb_session')loadAccess()});const cx=$('cctvClose');if(cx)cx.onclick=()=>closeSheet();window.addEventListener('storage',e=>{if(e.key==='mccdb_session')cctvEligibility()});
@@ -766,6 +796,9 @@ async function loadAccess(){const seq=++accessSeq,t=sessionToken(),controller=ne
  try{const r=await fetch(API+'/v1/world/access',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store',signal:controller.signal});if(!r.ok)throw Error('access '+r.status);const d=await r.json();if(seq!==accessSeq||t!==sessionToken())return null;access=d&&d.release?.version==='globe-admin-preview/v1'&&Array.isArray(d.locked_layers)&&Array.isArray(d.unlocked_layers)?d:null}catch(e){if(seq!==accessSeq)return null;access=null}finally{clearTimeout(timeout)}paintAccess();if(!access)window.MCC_SHELL?.haloReady();return access}
 window.addEventListener('storage',e=>{if(!e.key||e.key==='mccdb_session'){access=null;accessSeq++;accessToken='';paintAccess();loadAccess()}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadAccess()});
+/* a hidden document pauses the environmental tour; leaving the page destroys the layers, the director and the governor */
+document.addEventListener('visibilitychange',()=>{if(document.hidden)director?.pause('hidden')});
+window.addEventListener('pagehide',()=>{environmentLayers?.destroy();director?.destroy();governor?.destroy()});
 setInterval(()=>{if(!document.hidden)loadAccess()},60000);
 /* ---------- GAMES (owner, 2026-11-03: "a new tab on the globe called Games", its own overlay like the data layers; experimental,
    admin/owner only for now) ----------
@@ -816,13 +849,13 @@ window.__huIntel=()=>({on:intel.on,cells:intel.entities.length});
 /* hooks for the coordinate test: where each drawn thing really is, read back from Cesium in degrees */
 function entityDegrees(e){const now=Cesium.JulianDate.now();if(e.rectangle){const r=e.rectangle.coordinates.getValue(now);return{rect:[r.west,r.south,r.east,r.north].map(x=>Math.round(Cesium.Math.toDegrees(x)*1000)/1000)}}const c=e.position&&e.position.getValue(now);if(!c)return null;const g=Cesium.Cartographic.fromCartesian(c);return{lon:Math.round(Cesium.Math.toDegrees(g.longitude)*1000)/1000,lat:Math.round(Cesium.Math.toDegrees(g.latitude)*1000)/1000}}
 window.__huPlaced=()=>({intel:intel.entities.map(entityDegrees),analytics:analytics.entities.map(e=>Object.assign({code:e.properties&&e.properties.analyticsCode&&e.properties.analyticsCode.getValue()},entityDegrees(e))),cctv:cctv.points?Array.from({length:cctv.points.length},(_,n)=>{const p=cctv.points.get(n),g=Cesium.Cartographic.fromCartesian(p.position);return{cam:p.id&&p.id.cam,lon:Math.round(Cesium.Math.toDegrees(g.longitude)*1000)/1000,lat:Math.round(Cesium.Math.toDegrees(g.latitude)*1000)/1000}}):[]});
-function intelOff(){intel.entities.forEach(e=>viewer.entities.remove(e));intel.entities=[];intel.on=false;const b=$('ctlIntel');if(b)b.setAttribute('aria-pressed','false');tell({type:'hu:layer',layer:'intel',on:false,creditHeight:creditHeight()})}
+function intelOff(){intel.entities.forEach(e=>viewer.entities.remove(e));intel.entities=[];intel.on=false;const b=$('ctlIntel');if(b)b.setAttribute('aria-pressed','false');tell({type:'hu:layer',layer:'intel',on:false,creditHeight:creditHeight()});syncLegacyHold()}
 async function toggleIntel(){const b=$('ctlIntel');if(!viewer||!b)return;if(intel.on){intelOff();return}if(lockOf('intel')&&explainLock('intel'))return;
  b.setAttribute('aria-busy','true');try{const t=sessionToken(),r=await fetch(API+'/v1/intel/geo?cell=10&bucket=day',{headers:t?{authorization:'Bearer '+t,accept:'application/json'}:{accept:'application/json'},cache:'no-store'});const d=await r.json().catch(()=>({}));
   if(!r.ok){tell({type:'hu:layer',layer:'intel',on:false,failed:true});sheet('Intel events','<p>'+(r.status===503?'Intel events are not switched on yet.':'Intel events could not load right now.')+' Nothing is drawn.</p>');return}
   if(lockOf('intel'))return;const cells={};(d.buckets||[]).forEach(x=>{const c=x&&x.cell_center||{},bd=cellBounds(x&&x.cell_bounds),ll=lonLat(c.lon,c.lat);if(!bd||!ll)return;const k=String(x.cell);(cells[k]||(cells[k]={bd,lat:ll[1],lon:ll[0],n:0})).n+=Number(x.count)||0});
   const list=Object.values(cells),max=Math.max(1,...list.map(c=>c.n));list.forEach(c=>{intel.entities.push(viewer.entities.add({rectangle:{coordinates:Cesium.Rectangle.fromDegrees(c.bd[0],c.bd[1],c.bd[2],c.bd[3]),material:Cesium.Color.fromCssColorString('#ffb347').withAlpha(.15+.45*Math.sqrt(c.n/max)),outline:true,outlineColor:Cesium.Color.WHITE.withAlpha(.5),height:0}}))});
-  intel.on=true;b.setAttribute('aria-pressed','true');const tt=d.totals||{};
+  intel.on=true;syncLegacyHold();b.setAttribute('aria-pressed','true');const tt=d.totals||{};
   tell({type:'hu:layer',layer:'intel',on:true,count:Number(tt.located)||0,unknown:Number(tt.unknown_location)||0,suppressed:Number(tt.suppressed_records)||0,attribution:((d.layer&&d.layer.attribution)||[]).join(' · '),creditHeight:creditHeight()})}
  catch(e){tell({type:'hu:layer',layer:'intel',on:false,failed:true})}finally{b.removeAttribute('aria-busy')}}
 /* ---------- CCTV, FOR MEMBERS WHO EARNED IT (owner, 2026-10-15: "ONLY after they are logged in, have given location consent, AND have completed a mission") ----------
@@ -857,12 +890,12 @@ async function recordPrivacyAck(version){const t=sessionToken();if(!t)throw Erro
  try{const v={version,accepted_at:new Date().toISOString()};localStorage.setItem('mcc_privacy_ack',JSON.stringify(v))}catch(e){}
  const r=await fetch(SB+'/auth/v1/user',{method:'PUT',headers:{apikey:KEY,authorization:'Bearer '+t,'content-type':'application/json'},body:JSON.stringify({data:{privacy_policy_version:version,privacy_acknowledged_at:new Date().toISOString()}})});
  if(!r.ok)throw Error('Could not save that right now; try again.');return true}
-function cctvOff(){cctv.on=false;if(cctv.points&&viewer){viewer.scene.primitives.remove(cctv.points)}cctv.points=null;cctv.sources=[];const b=$('ctlCctv');if(b)b.setAttribute('aria-pressed','false');closeSheet();tell({type:'hu:layer',layer:'cctv',on:false,creditHeight:creditHeight()})}
+function cctvOff(){cctv.on=false;if(cctv.points&&viewer){viewer.scene.primitives.remove(cctv.points)}cctv.points=null;cctv.sources=[];const b=$('ctlCctv');if(b)b.setAttribute('aria-pressed','false');closeSheet();tell({type:'hu:layer',layer:'cctv',on:false,creditHeight:creditHeight()});syncLegacyHold()}
 async function toggleCctv(){const b=$('ctlCctv');if(!viewer||!b)return;if(cctv.on){cctvOff();return}if(lockOf('cctv'))return;if(!sessionToken()){tell({type:'hu:ask-sign-in',reason:'layers'});return}
  const d=await cctvEligibility();if(!d||!d.eligible){cctvGate(d);return}
  b.setAttribute('aria-busy','true');try{const r=await cctvFetch('/v1/world/cctv/sources');if(r.status===401||r.status===403){await cctvEligibility();cctvGate();return}const data=await r.json();if(!r.ok)throw Error(data&&data.error||'cctv '+r.status);if(lockOf('cctv'))return;
   const col=window.HaloEvents?new Cesium.BillboardCollection():new Cesium.PointPrimitiveCollection(),c=Cesium.Color.fromCssColorString('#7cfc9a');cctv.sources=(data.sources||[]).filter(s=>lonLat(s.lon,s.lat)).map(s=>Object.assign({},s,{lon:deg(s.lon),lat:deg(s.lat)}));cctv.sources.forEach(s=>col.add({position:Cesium.Cartesian3.fromDegrees(s.lon,s.lat,30),...(window.HaloEvents?{imageId:'halo-camera',image:HaloEvents.symbol('camera'),width:24,height:24}:{pixelSize:7,color:c,outlineColor:Cesium.Color.BLACK.withAlpha(.8),outlineWidth:1.5}),id:{layer:'cctv',cam:String(s.id)}}));
-  viewer.scene.primitives.add(col);cctv.points=col;cctv.on=true;b.setAttribute('aria-pressed','true');tell({type:'hu:layer',layer:'cctv',on:true,count:cctv.sources.length,creditHeight:creditHeight()})}
+  viewer.scene.primitives.add(col);cctv.points=col;cctv.on=true;syncLegacyHold();b.setAttribute('aria-pressed','true');tell({type:'hu:layer',layer:'cctv',on:true,count:cctv.sources.length,creditHeight:creditHeight()})}
  catch(e){tell({type:'hu:layer',layer:'cctv',on:false,failed:true});sheet('CCTV','<p>'+escHtml(String(e&&e.message||'CCTV could not load right now.'))+'</p>')}finally{b.removeAttribute('aria-busy')}}
 function fmtTime(v){const d=v?new Date(v):null;return d&&!isNaN(d)?d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'}):null}
 async function browseCameras(){
@@ -1080,10 +1113,10 @@ window.HuGlobe=Object.freeze({
   on:k=>DATA_LAYERS[k]?!!layerState[k].on:k==='intel'?intel.on:k==='cctv'?cctv.on:false,
   count:k=>DATA_LAYERS[k]?layerState[k].count:k==='intel'?intel.entities.length:k==='cctv'?(cctv.points?cctv.points.length:0):0,
   locked:k=>!!lockOf(k)}),
- objects:Object.freeze({start(){if(!viewer||haloObjects||!isOwner()||!window.HaloObjects)return;haloObjects=HaloObjects.create({C:Cesium,viewer,rows:kind=>kind==='flights'?layerState.flights.contacts:layerState.satellites.objectRows});haloObjects.refresh()},stop(){if(haloObjects)haloObjects.destroy();haloObjects=null},setLimit:(k,n)=>haloObjects&&haloObjects.setLimit(k,n),setModels:on=>haloObjects&&haloObjects.setModels(on),stats:()=>haloObjects?haloObjects.stats():null}),
+ objects:Object.freeze({start(){if(!viewer||haloObjects||!isOwner()||!window.HaloObjects)return;haloObjects=HaloObjects.create({C:Cesium,viewer,rows:kind=>kind==='flights'?layerState.flights.contacts:layerState.satellites.objectRows});haloObjects.refresh();syncLegacyHold()},stop(){if(haloObjects)haloObjects.destroy();haloObjects=null;syncLegacyHold()},setLimit:(k,n)=>haloObjects&&haloObjects.setLimit(k,n),setModels:on=>haloObjects&&haloObjects.setModels(on),stats:()=>haloObjects?haloObjects.stats():null}),
  hideInspection:()=>closeSheet(true),
  openAircraft:contact=>openAircraft(contact),openSatellite:sat=>openSatellite(sat),satPosition:sat=>satPos(sat,new Date()),
- ion:()=>ion,
+ ion:()=>ion,governor:()=>governor,environment:()=>environmentLayers,
  ionState:()=>({configured:!!ion,terrain:!!ionGround,imagery:!!(ionImagery&&ionImagery.ready),buildings:!!ionBuildings}),
  /* the base map, the zoom and near-me buttons, and the World's own mission pins and member regions, for Halo's own controls */
  basemap:Object.freeze({get:()=>layerMode,set:m=>{if(viewer)setLayer(m==='map'?'map':'auto')}}),
@@ -1097,17 +1130,18 @@ window.HuGlobe=Object.freeze({
 async function boot(){paintMembersDoor();
  /* the layout, the data toggles and the mission data do not wait on the ion status; only the Earth itself does */
  wireDataLayers();const ionP=Promise.race([loadAccess().then(()=>lockOf('ion')?null:ionStatus()),new Promise(r=>setTimeout(()=>r(null),ION_WAIT))]),dataP=Promise.all([NO_MISSIONS?Promise.resolve([]):rpc('action_globe_public_region_missions').then(groupPins),rpc('action_globe_public_regions')]);dataP.catch(()=>{});
- ion=await ionP;viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});if(parentFrame&&new URLSearchParams(location.search).get('arcade')==='1'){import('./city-arcade/globe-observer.mjs').then(m=>{if(!viewer.isDestroyed()){const stop=m.observeArcadeView(viewer,Cesium,tell);window.addEventListener('pagehide',stop,{once:true})}}).catch(()=>tell({type:'arcade:view-unavailable'}));}/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();startIon();mountCountries();loadAccess().then(()=>cctvEligibility());if(ANALYTICS)drawAnalytics();
+ ion=await ionP;viewer=new Cesium.Viewer('globe',{creditContainer:ion?$('ionCredits'):undefined,baseLayerPicker:false,geocoder:false,homeButton:false,sceneModePicker:false,navigationHelpButton:false,animation:false,timeline:false,fullscreenButton:false,infoBox:false,selectionIndicator:false,baseLayer:(dayLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:DAY_TILES,maximumLevel:8,credit:'NASA Blue Marble (GIBS)'}),{saturation:1.15,contrast:1.05}))});if(parentFrame&&new URLSearchParams(location.search).get('arcade')==='1'){import('./city-arcade/globe-observer.mjs').then(m=>{if(!viewer.isDestroyed()){const stop=m.observeArcadeView(viewer,Cesium,tell);window.addEventListener('pagehide',stop,{once:true})}}).catch(()=>tell({type:'arcade:view-unavailable'}));}/* the night side is lit at Cesium's 30% floor, so the lights are lifted six-fold to read as navy sea and gold cities */nightLayer=new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({url:NIGHT_TILES,maximumLevel:8,credit:'NASA Black Marble (GIBS)'}),{dayAlpha:0,nightAlpha:1,brightness:6,contrast:1.1,saturation:1.15,gamma:0.85,hue:0.2});viewer.imageryLayers.add(nightLayer);cloudLayer=Cesium.ImageryLayer.fromProviderAsync(Cesium.SingleTileImageryProvider.fromUrl(CLOUDS,{rectangle:Cesium.Rectangle.fromDegrees(-180,-90,180,90),credit:'NASA Visible Earth'}),{dayAlpha:0.92,nightAlpha:0.1});viewer.imageryLayers.add(cloudLayer);mapLayer=new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({url:'https://tile.openstreetmap.org/'}));viewer.imageryLayers.add(mapLayer);mapLayer.show=false;styleScene();wireControls();/* the environmental globe: governor and director after the scene is styled, the typed layers mounted before the pins draw */governor=window.MCC_GLOBE_GOVERNOR?.create(viewer)||null;window.MCC_GLOBE_GOVERNOR?.guardCamera?.(viewer);director=window.MCC_GLOBE_DIRECTOR?.create({viewer,Cesium,governor,tell:m=>tell(m),reducedMotion:()=>matchMedia('(prefers-reduced-motion: reduce)').matches,hidden:()=>document.hidden,onArrive:s=>environmentLayers?.select(s.id,'tour')})||null;if(!ANALYTICS)window.MCC_ENVIRONMENT_LAYERS?.mount({viewer,Cesium,tell:m=>tell(m),governor,director,document,onActive:()=>syncLegacyHold()});startIon();mountCountries();loadAccess().then(()=>cctvEligibility());if(ANALYTICS)drawAnalytics();
  if(ion){const box=viewer.container.querySelector('.cesium-credit-lightbox');if(box)box.addEventListener('click',e=>{if(!(e.target.closest&&e.target.closest('a[href]')))viewer.creditDisplay.hideLightbox()})}
  viewer.camera.setView({destination:homePosition()});travelSceneReady=true;wireTravelGestures();restoreTravelScene();haloSync();
- if(EDITORIAL&&window.ResizeObserver){let sizeTimer;new ResizeObserver(()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(()=>{sizeEditorialResolution();if(!selectionShown&&viewer.camera.positionCartographic.height>7e6){const p=viewer.camera.positionCartographic;viewer.camera.setView({destination:Cesium.Cartesian3.fromRadians(p.longitude,p.latitude,homeAltitude())})}},100)}).observe(viewer.scene.canvas)}
+ /* a canvas hidden to 0 x 0 has nothing to fit: the camera stays as it was until the World shows again (review RS-2) */
+ if(EDITORIAL&&window.ResizeObserver){let sizeTimer;new ResizeObserver(()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(()=>{const canvas=viewer.scene.canvas;if(!(canvas.clientWidth>0&&canvas.clientHeight>0))return;sizeEditorialResolution();if(!selectionShown&&viewer.camera.positionCartographic.height>7e6){const p=viewer.camera.positionCartographic;viewer.camera.setView({destination:Cesium.Cartesian3.fromRadians(p.longitude,p.latitude,homeAltitude())})}},100)}).observe(viewer.scene.canvas)}
 viewer.screenSpaceEventHandler.setInputAction(p=>{
  if(travelMode&&mapPickKind&&parentFrame&&!ANALYTICS){
   const coordinates=travelMapPoint(p.position);
   if(coordinates){const kind=mapPickKind;travelPickKind(null);tell({type:'hu:travel-location-selected',kind,coordinates})}
   return;
  }
- const e=pickSolid(p.position);if(window.HaloConsole&&HaloConsole.pick(e))return;if(environmentPins?.pick(e))return;if(window.BridgeportSlice?.pick(e,p.position))return;if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
+ const e=pickSolid(p.position);if(window.HaloConsole&&HaloConsole.pick(e))return;if(environmentPins?.pick(e,p.position))return;if(window.BridgeportSlice?.pick(e,p.position))return;if(e&&e.id&&e.id.layer==='satellites'){openSatellite(e.id.sat);return}const selectedSat=e?.id?.properties?.satellite?.getValue?.();if(selectedSat){openSatellite(selectedSat);return}const launch=e?.id?.properties?.launch?.getValue?.();if(launch){openLaunch(launch);return}if(e&&e.id&&e.id.layer==='flights'){openAircraft(e.id);return}if(e&&e.id&&e.id.layer==='cctv'){openCamera(String(e.id.cam));return}const ac=e?.id?.properties?.analyticsCode?.getValue?.();if(ac){selectAnalytics(ac,false);tell({type:'hu:analytics-region',code:ac});return}const newsId=e?.id?.properties?.worldNewsId?.getValue?.();if(newsId&&publicNewsOn){tell({type:'hu:world-news-selected',id:newsId});return}const completedId=e?.id?.properties?.completedEventId?.getValue?.();if(completedId&&selectCompletedEvent(completedId))return;const liveCode=e?.id?.properties?.liveCountry?.getValue?.();if(liveCode&&countries){countries.select(liveCode);return}const n=e?.id?.properties?.missionIndex?.getValue();if(Number.isInteger(n)){show(n);announce();return;}if(travelMode&&(roadRoute||currentLocation))return;if(countries&&!(e&&e.id&&e.id.properties&&e.id.properties.region_key)&&countries.click(p.position))return;const regionKey=e?.id?.properties?.region_key?.getValue?.();if(regionKey){const match=regions.find(r=>r.region_key===regionKey);if(match)setRegion(match);}},Cesium.ScreenSpaceEventType.LEFT_CLICK);
 /* NEAR ME: the approximate place from this connection first (the Worker's request.cf, in the access map; never stored), then
    the precise one only if the browser asks the person and they allow it. Browsers enforce that prompt; nothing here gets around it. */
 $('nearMe').onclick=()=>{const ap=access&&access.approximate_location,apl=ap&&lonLat(ap.lon,ap.lat);if(apl&&viewer){viewer.camera.flyTo({destination:Cesium.Cartesian3.fromDegrees(apl[0],apl[1],1500000),duration:1.2});$('status').hidden=false;$('status').textContent='Near '+[ap.city,ap.region,ap.country].filter(Boolean).join(', ')+' (approximate, from your connection).'}
@@ -1119,8 +1153,8 @@ let touchY;const deck=$('deck');deck.addEventListener('touchstart',e=>{touchY=e.
 // Navigation can start as soon as the renderer is ready. Public mission RPCs
 // enrich this message later; they cannot hold a visitor's street map hostage.
 environmentPins?.draw();
-if(!ANALYTICS){readyMessage={type:'hu:globe-ready',missionIds:[],dataPending:true};tell(readyMessage)}
-try{[missions,cities]=await dataP;regions=cities.slice();const requestedSong=new URLSearchParams(location.search).get('song');if(requestedSong){missions=missions.filter(m=>String(m.song_title||'').toLocaleLowerCase()===requestedSong.toLocaleLowerCase());}allMissions=missions.slice();if(ANALYTICS||NO_MISSIONS){showMissions=false;showCities=false}draw();if(!ANALYTICS&&!NO_MISSIONS)drawBoundaries();$('status').textContent=missions.length||NO_MISSIONS?'':(requestedSong?'No approved regional missions are linked to this song yet.':'No approved globe missions published yet.');if(NO_MISSIONS)$('status').hidden=true;if(missions.length){$('status').hidden=true;setSelection(false)}renderFeed();if(countries&&countries.refresh)countries.refresh();readyMessage={type:'hu:globe-ready',missionIds:allMissions.map(m=>m.mission_id),missions:allMissions.slice(0,200).map(publicMission)};tell(readyMessage)}catch(e){if(leaving)return;$('status').textContent='Globe data is not available yet.';readyMessage={type:'hu:globe-ready',missionIds:[],dataUnavailable:true};tell(readyMessage);console.warn(e)}}
+if(!ANALYTICS){readyMessage={type:'hu:globe-ready',boot:GLOBE_BOOT,missionIds:[],dataPending:true};tell(readyMessage)}
+try{[missions,cities]=await dataP;regions=cities.slice();const requestedSong=new URLSearchParams(location.search).get('song');if(requestedSong){missions=missions.filter(m=>String(m.song_title||'').toLocaleLowerCase()===requestedSong.toLocaleLowerCase());}allMissions=missions.slice();if(ANALYTICS||NO_MISSIONS){showMissions=false;showCities=false}draw();if(!ANALYTICS&&!NO_MISSIONS)drawBoundaries();$('status').textContent=missions.length||NO_MISSIONS?'':(requestedSong?'No approved regional missions are linked to this song yet.':'No approved globe missions published yet.');if(NO_MISSIONS)$('status').hidden=true;if(missions.length){$('status').hidden=true;setSelection(false)}renderFeed();if(countries&&countries.refresh)countries.refresh();readyMessage={type:'hu:globe-ready',boot:GLOBE_BOOT,missionIds:allMissions.map(m=>m.mission_id),missions:allMissions.slice(0,200).map(publicMission)};tell(readyMessage)}catch(e){if(leaving)return;$('status').textContent='Globe data is not available yet.';readyMessage={type:'hu:globe-ready',boot:GLOBE_BOOT,missionIds:[],dataUnavailable:true};tell(readyMessage);console.warn(e)}}
 // Layout and the parent-owned location request work even if WebGL cannot load.
 wireEditorialTools();wireTravelControlLayout();
 if(EDITORIAL&&parentFrame){$('ctlLocate').onclick=()=>{if(travelMode)tell({type:'hu:request-location'})};for(const id of ['ctlZoomIn','ctlZoomOut'])$(id).disabled=true;}

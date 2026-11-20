@@ -21,9 +21,21 @@
   function send(data) {
     if (frame.contentWindow) frame.contentWindow.postMessage(data, location.origin);
   }
+  /* THE NEWS STEPS ASIDE IN THE EQUITY UPRISE TAB (release polish, 2026-11-18, review V2-M3, hid the tint; event timeline slice
+     S4, 2026-11-19, decision D9, default adopted pending Matthew's confirmation, turns the news layer off): there the environmental
+     layers are the subject (owner, 2026-11-17: "make the visuals proportionate to the geographical data we are collecting"; owner
+     direction 2026-11-19: no news on the tab's environmental globe), so while the feed's scope is that tab the news layer is off (on:false,
+     tint:false): no heat read, no shading or legend, no story pin, no news count on a country's card. Leaving the tab brings it
+     back as it was. */
+  const scope = () => window.MCC_FEED_SCOPE?.get?.() || 'global';
+  /* and behind the sign-in door (release review RS-9, 2026-11-19, hid the shading: its orange, gold and red competed with the
+     card's gold and read as a news map; carried release item 6: the door's backdrop goes as quiet as the tab): the door
+     (html.mn-door-open, js/mnet.js showGate) says when it opens and closes (mcc:door) */
+  const doorOpen = () => document.documentElement.classList.contains('mn-door-open');
   function sync() {
-    const on = mode() !== 'travel' && mode() !== 'environment';
-    send({type:'hu:world-news-pins',on,items:on ? items().filter(geo).map(x => ({id:x.id,lat:x.lat,lon:x.lon})) : []});
+    const quiet = scope() === 'equity' || doorOpen();
+    const on = mode() !== 'travel' && mode() !== 'environment' && !quiet;
+    send({type:'hu:world-news-pins',on,tint:scope() !== 'equity' && !doorOpen(),items:on ? items().filter(geo).map(x => ({id:x.id,lat:x.lat,lon:x.lon})) : []});
   }
 
   const reader = document.createElement('dialog');
@@ -91,6 +103,8 @@
   /* the feed rendered a different set of stories (a country picked, a search, a scope, a mission): the pins follow */
   window.addEventListener('mcc:world-news-shown', sync);
   window.addEventListener('mcc:world-mode', sync);
+  window.addEventListener('mcc:feed-scope', sync);
+  window.addEventListener('mcc:door', sync);
   window.addEventListener('message', e => {
     if (e.source !== frame.contentWindow || e.origin !== location.origin) return;
     const data = e.data || {};

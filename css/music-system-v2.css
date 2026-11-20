@@ -40,29 +40,35 @@ body.music-v2{
 body.music-v2 a{color:inherit}
 
 /* ---------- MOBILE MUSIC HEADER ---------- */
+/* The shared account chip stays at the top right (44px high, at most 104px
+   wide in js/tabbar.js). Reserve its width plus a 12px gap so Creator Studio
+   remains visible and tappable beside it, including at phone widths. */
 .music-contextbar{
   position:relative;
   z-index:34;
   width:var(--music-shell);
   margin:0 auto;
-  padding:calc(env(safe-area-inset-top,0px) + 10px) 0 7px;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) calc(104px + max(12px,env(safe-area-inset-right,0px))) 7px 0;
   display:flex;
   align-items:center;
   justify-content:space-between;
+  flex-wrap:wrap;
   gap:10px;
+  box-sizing:border-box;
   background:transparent;
 }
 .music-contextbar__brand{
-  display:flex;align-items:center;gap:8px;
+  display:flex;align-items:center;gap:8px;min-height:44px;
   color:var(--music-text);text-decoration:none;
 }
 .music-contextbar__brand img{width:30px;height:30px;border-radius:50%;object-fit:cover}
 .music-contextbar__brand span{font-size:14px;font-weight:760;letter-spacing:-.015em}
-.music-contextbar__nav{display:flex;align-items:center;gap:4px}
+.music-contextbar__nav{display:flex;align-items:center;flex-wrap:wrap;gap:4px;min-width:0}
 .music-contextbar__nav a{
   display:none;
   color:var(--music-muted);text-decoration:none;
   font-size:11px;font-weight:720;
+  min-height:44px;align-items:center;
   padding:7px 8px;border-radius:999px;
 }
 .music-contextbar__nav a[aria-current="page"]{color:var(--music-text)}
@@ -442,6 +448,14 @@ body.music-v2 .music-launch .music-launch__terms a{display:inline;padding:0;bord
   color:rgba(255,255,255,.44);font-size:9px
 }
 .music-now__context span+span::before{content:"·";margin-right:7px}
+/* AirPlay where WebKit offers it, shown while a device is in range (js/now-playing.js); a 44px target */
+.music-now__devices{display:flex;justify-content:center}
+.music-now__airplay{
+  width:44px;height:44px;margin-top:12px;border:0;border-radius:50%;padding:0;cursor:pointer;
+  display:grid;place-items:center;background:rgba(255,255,255,.08);color:#fff
+}
+.music-now__airplay[hidden]{display:none}
+.music-now__airplay svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 body.music-now-open{overflow:hidden}
 
 /* ---------- CREATOR / ARTIST SURFACES: MOBILE FIRST ---------- */

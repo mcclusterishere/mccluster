@@ -45,7 +45,7 @@ try {
   clients.push(admin);
   const intakeSql = process.env.EUP_INTAKE_SQL ? await readFile(process.env.EUP_INTAKE_SQL, 'utf8') : await repo('supabase/pending/eup_intake_v1.sql');
   eq(await code(admin.query(intakeSql)), '55000', 'the intake file refuses to run before the policy file');
-  await admin.query(await repo('supabase/pending/eup_module_policy_v1.sql'));
+  await admin.query(await repo('supabase/migrations/20261117144103_eup_module_policy_v1.sql'));
   await admin.query(intakeSql); await admin.query(intakeSql);
   await admin.query(await repo('supabase/pending/eup_intake_v1.rollback.sql'));
   await admin.query(intakeSql); await admin.query(intakeSql);

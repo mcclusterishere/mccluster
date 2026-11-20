@@ -26,21 +26,53 @@ function slugify(value) {
 function fileName(file) {
   return String(file?.name || "upload").replace(/[^a-zA-Z0-9._-]+/g, "-");
 }
+/* NEVER THE BOOT TOKEN (music slice M4, 2026-11-19; accounts lane ACC-3). This page used to take the session once,
+   when it opened, and send that token with every save and upload after it: an hour into an album upload every call
+   answered "JWT expired" while the bar still said signed in. Every call now takes the shared auth's token for that
+   call (renewed when it is near its end, asked again once after a 401: js/mcc-auth.js authFetch), and only for the
+   account this studio opened for: if the site is now signed in as someone else, or signed out, the call is refused
+   here and the studio closes and opens again for whoever is signed in now (boot, below). */
+let account = null;
+function studioFetch(url, init) {
+  /* "-" matches nobody: while the studio is closed between two accounts, every call is refused */
+  return window.MCC.authFetch(url, init, { account: account || "-" });
+}
+/* A save or an upload that is running when the account changes is let fail (its next call is refused) and the
+   studio opens again for the new account once it has: nothing it started is ever sent as someone else. */
+let running = 0;
+let reopenWhenDone = false;
+function guarded(handler) {
+  return async function (...args) {
+    running++;
+    try { return await handler.apply(this, args); }
+    finally {
+      running--;
+      if (!running && reopenWhenDone) { reopenWhenDone = false; closeStudio(); boot(); }
+    }
+  };
+}
 async function authed() {
-  session = await window.MCC.refreshIfNeeded();
+  session = await window.MCC.refreshIfNeeded().catch(() => null);
+  /* another tab (or the bar) may have won the refresh: what is stored now is the session */
+  if (!session?.access_token) session = window.MCC.session();
   if (!session?.access_token) return false;
+  account = window.MCC.account();
   mUid = await window.MCC.mUid();
   return Boolean(mUid);
 }
+/* An answer that comes back after the studio closed for its account (a sign-out or another sign-in, here or in
+   another tab) is never painted or acted on: the studio has opened again for whoever is signed in now. */
+const ACCOUNT_CHANGED = "You signed in as someone else, or signed out, in another tab. Creator Studio has reopened for the account signed in now.";
 async function rest(path, init = {}) {
+  const asked = account;
   const headers = {
     apikey: KEY,
-    authorization: "Bearer " + session.access_token,
     "content-type": "application/json",
     ...(init.headers || {})
   };
-  const res = await fetch(SB + "/rest/v1/" + path, { ...init, headers });
+  const res = await studioFetch(SB + "/rest/v1/" + path, { ...init, headers });
   const text = await res.text();
+  if (account !== asked) throw new Error(ACCOUNT_CHANGED);
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (_) { data = text; }
   if (!res.ok) {
@@ -50,16 +82,14 @@ async function rest(path, init = {}) {
   return data;
 }
 async function fn(action, body = {}) {
-  const res = await fetch(SB + "/functions/v1/music-access", {
+  const asked = account;
+  const res = await studioFetch(SB + "/functions/v1/music-access", {
     method: "POST",
-    headers: {
-      apikey: KEY,
-      authorization: "Bearer " + session.access_token,
-      "content-type": "application/json"
-    },
+    headers: { apikey: KEY, "content-type": "application/json" },
     body: JSON.stringify({ action, ...body })
   });
   const data = await res.json().catch(() => ({}));
+  if (account !== asked) throw new Error(ACCOUNT_CHANGED);
   if (!res.ok) throw new Error(data.error || ("Music service " + res.status));
   return data;
 }
@@ -86,8 +116,8 @@ function describeSize(bytes, up) {
    is no sheet. The sheet rides on its own column after the release row exists,
    and a refusal never sinks the release: until that column is live the machine
    simply writes the words from the audio. */
-async function attachLyricSheet(trackId) {
-  const sheet = ($("trackLyricSheet")?.value || "").trim();
+async function attachLyricSheet(trackId, words) {
+  const sheet = String(words || "").trim();
   if (!sheet) return;
   try {
     await rest("creator_tracks?id=eq." + encodeURIComponent(trackId), {
@@ -132,11 +162,12 @@ async function uploadGrant(bucket, file) {
    authenticated creator remove files under their own folder. The module
    client above is anonymous (uploads go through signed URLs and need no
    session), so a delete through it was refused and every rollback left its
-   files behind. Each removal uses a client carrying the creator's token. */
+   files behind. Each removal uses a client carrying the creator's token: the
+   shared auth's, for that call (accessToken), never one kept from boot. */
 function ownerStorage() {
   return createClient(SB, KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: "Bearer " + session.access_token } }
+    accessToken: () => window.MCC.freshToken(),
+    global: { fetch: studioFetch }
   });
 }
 async function removeUpload(bucket, path) {
@@ -190,12 +221,25 @@ function durationMs(file) {
   return new Promise((resolve) => {
     const a = document.createElement("audio");
     const u = URL.createObjectURL(file);
-    a.preload = "metadata";
-    a.onloadedmetadata = () => {
-      const ms = Number.isFinite(a.duration) ? Math.round(a.duration * 1000) : null;
-      URL.revokeObjectURL(u); resolve(ms);
+    let settled = false;
+    let timer;
+    const finish = (ms) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      a.onloadedmetadata = null;
+      a.onerror = null;
+      a.removeAttribute("src");
+      a.load();
+      URL.revokeObjectURL(u);
+      resolve(ms);
     };
-    a.onerror = () => { URL.revokeObjectURL(u); resolve(null); };
+    /* A malformed or unsupported file can emit neither metadata nor error.
+       Release its local file handle and let the creator choose another file. */
+    timer = setTimeout(() => finish(null), 15000);
+    a.preload = "metadata";
+    a.onloadedmetadata = () => finish(Number.isFinite(a.duration) ? Math.round(a.duration * 1000) : null);
+    a.onerror = () => finish(null);
     a.src = u;
   });
 }
@@ -371,7 +415,7 @@ $("albumForm").addEventListener("click", (e) => {
   if (remove) list.splice(Number(remove.getAttribute("data-album-remove")), 1);
   if (add || move || remove) renderAlbumTracks();
 });
-$("deleteAlbum").addEventListener("click", async () => {
+$("deleteAlbum").addEventListener("click", guarded(async () => {
   if (!editingAlbum || !confirm("Delete this album? Its tracks stay in your releases.")) return;
   const id = editingAlbum.id;
   try {
@@ -379,8 +423,8 @@ $("deleteAlbum").addEventListener("click", async () => {
     closeAlbum();
     if (window.MCC_TRACK) window.MCC_TRACK("creator_album_deleted", {});
   } catch (err) { status("albumStatus", err.message || "Could not delete the album.", "bad"); }
-});
-$("albumForm").addEventListener("submit", async (e) => {
+}));
+$("albumForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   if (!editingAlbum) return;
   const save = $("saveAlbum");
@@ -433,7 +477,7 @@ $("albumForm").addEventListener("submit", async (e) => {
   } finally {
     save.disabled = false;
   }
-});
+}));
 
 /* ---------- rate sheet (music_creator_profiles.settings.services) ---------- */
 
@@ -469,7 +513,7 @@ function closeService() { editingService = null; $("serviceForm").hidden = true;
 
 $("newService").addEventListener("click", () => openService(null));
 $("cancelService").addEventListener("click", () => { closeService(); status("serviceStatus", ""); });
-$("creatorServices").addEventListener("click", async (e) => {
+$("creatorServices").addEventListener("click", guarded(async (e) => {
   const edit = e.target.closest("[data-edit-service]");
   const move = e.target.closest("[data-service-move]");
   if (edit) {
@@ -489,8 +533,8 @@ $("creatorServices").addEventListener("click", async (e) => {
       s.services = list;
     });
   } catch (err) { status("serviceStatus", err.message || "Could not reorder your rates.", "bad"); }
-});
-$("deleteService").addEventListener("click", async () => {
+}));
+$("deleteService").addEventListener("click", guarded(async () => {
   if (!editingService || !confirm("Delete this rate from your page?")) return;
   const id = editingService.id;
   try {
@@ -498,8 +542,8 @@ $("deleteService").addEventListener("click", async () => {
     closeService();
     status("serviceStatus", "Rate deleted.", "good");
   } catch (err) { status("serviceStatus", err.message || "Could not delete the rate.", "bad"); }
-});
-$("serviceForm").addEventListener("submit", async (e) => {
+}));
+$("serviceForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   if (!editingService) return;
   const save = $("saveService");
@@ -533,7 +577,7 @@ $("serviceForm").addEventListener("submit", async (e) => {
   } finally {
     save.disabled = false;
   }
-});
+}));
 
 /* Profile photo and front-page photo: uploaded to creator-artwork once the
    profile exists (an upload grant needs an active creator profile). */
@@ -572,7 +616,7 @@ function experienceFromForm() {
   };
 }
 
-$("profileForm").addEventListener("submit", async (e) => {
+$("profileForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   try {
     status("profileStatus", "Saving…");
@@ -612,7 +656,7 @@ $("profileForm").addEventListener("submit", async (e) => {
   } catch (err) {
     status("profileStatus", err.message || "Could not save profile.", "bad");
   }
-});
+}));
 
 $("isDerivative").addEventListener("change", () => {
   $("derivativeField").hidden = !$("isDerivative").checked;
@@ -623,9 +667,19 @@ $("trackAccess").addEventListener("change", () => {
     : "Required for account-only and licensable tracks.";
 });
 
-$("trackForm").addEventListener("submit", async (e) => {
+$("trackForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   const submit = $("submitTrack");
+  /* Lock before the asynchronous duration probe, not after it: two quick
+     submits used to upload and create the same release twice. Keep these
+     fields stable while the upload runs, restoring their prior state later. */
+  if (submit.disabled) return;
+  submit.disabled = true;
+  const form = $("trackForm");
+  const fields = Array.from(form.elements).filter((el) => el !== submit);
+  const disabledBefore = fields.map((el) => el.disabled);
+  fields.forEach((el) => { el.disabled = true; });
+  form.setAttribute("aria-busy", "true");
   const uploaded = [];
   let createdTrackId = null;
   let committed = false;
@@ -648,6 +702,24 @@ $("trackForm").addEventListener("submit", async (e) => {
     const artist = $("trackArtist").value.trim() || profile.artist_name;
     if (!title) throw new Error("Add a song title.");
     if (!artist) throw new Error("Add an artist name.");
+    const description = $("trackDescription").value.trim();
+    const albumId = $("trackAlbum").value;
+    const lyricSheet = $("trackLyricSheet")?.value || "";
+    const genre = $("trackGenre").value.trim();
+    const musicVideo = $("trackMusicVideo").value.trim();
+    const lyricsUrl = $("trackLyricsUrl").value.trim();
+    const experience = experienceFromForm();
+    const price = Math.round(Number($("licensePrice").value || 0) * 100);
+    const licenseTerms = $("licenseTerms").value.trim();
+    const licenseTitle = $("licenseTitle").value.trim() || "Commercial license";
+    const rights = {
+      owns_master: $("ownsMaster").checked,
+      controls_composition: $("controlsComposition").checked,
+      samples_cleared: $("samplesCleared").checked,
+      collaborators_cleared: $("collaboratorsCleared").checked,
+      parody_or_derivative: derivative,
+      derivative_permissions: $("derivativePermissions").value.trim()
+    };
     for (const [bucket, file] of [["creator-masters", master], ["creator-previews", preview], ["creator-artwork", art]]) {
       if (!file) continue;
       const limit = BUCKET_MAX_BYTES[bucket];
@@ -656,12 +728,15 @@ $("trackForm").addEventListener("submit", async (e) => {
       }
       if (!file.size) throw new Error(`${file.name} is empty. Choose a valid file.`);
     }
-    if (!$("ownsMaster").checked) throw new Error("Confirm your rights to the master recording.");
-    if (!$("collaboratorsCleared").checked) throw new Error("Confirm collaborator permissions before submitting.");
+    if (!rights.owns_master) throw new Error("Confirm your rights to the master recording.");
+    if (!rights.controls_composition) throw new Error("Confirm your rights to distribute the composition.");
+    if (!rights.samples_cleared) throw new Error("Confirm that samples are cleared, or none are used.");
+    if (!rights.collaborators_cleared) throw new Error("Confirm collaborator permissions before submitting.");
+    if (!$("releaseTerms").checked) throw new Error("Accept the release terms before submitting.");
+    if (price > 0 && !licenseTerms) throw new Error("Add terms for the commercial license, or clear its price.");
     const dur = await durationMs(master);
     if (!Number.isFinite(dur) || dur <= 0) throw new Error("The master audio could not be read. Try a supported audio file.");
 
-    submit.disabled = true;
     status("trackStatus", "Uploading private master…");
     const masterPath = await uploadGrant("creator-masters", master);
     uploaded.push({ bucket: "creator-masters", path: masterPath });
@@ -680,14 +755,6 @@ $("trackForm").addEventListener("submit", async (e) => {
     }
 
     const slug = slugify(title) + "-" + Math.random().toString(36).slice(2, 7);
-    const rights = {
-      owns_master: $("ownsMaster").checked,
-      controls_composition: $("controlsComposition").checked,
-      samples_cleared: $("samplesCleared").checked,
-      collaborators_cleared: $("collaboratorsCleared").checked,
-      parody_or_derivative: derivative,
-      derivative_permissions: $("derivativePermissions").value.trim()
-    };
 
     status("trackStatus", "Writing release record…");
     const inserted = await rest("creator_tracks", {
@@ -697,7 +764,7 @@ $("trackForm").addEventListener("submit", async (e) => {
         title,
         artist,
         slug,
-        description: $("trackDescription").value.trim(),
+        description,
         audio_url: previewUrl,
         poster_url: posterUrl,
         public: access === "public",
@@ -708,10 +775,10 @@ $("trackForm").addEventListener("submit", async (e) => {
         master_bucket: "creator-masters",
         master_path: masterPath,
         duration_ms: dur,
-        genre: $("trackGenre").value.trim(),
-        music_video_url: $("trackMusicVideo").value.trim(),
-        lyrics_url: $("trackLyricsUrl").value.trim(),
-        experience: experienceFromForm(),
+        genre,
+        music_video_url: musicVideo,
+        lyrics_url: lyricsUrl,
+        experience,
         rights_status: "incomplete",
         rights_declaration: rights
       })
@@ -719,7 +786,7 @@ $("trackForm").addEventListener("submit", async (e) => {
     const track = inserted?.[0];
     if (!track?.id) throw new Error("Release record was not returned.");
     createdTrackId = track.id;
-    await attachLyricSheet(track.id);
+    await attachLyricSheet(track.id, lyricSheet);
 
     await rest("music_rights_attestations", {
       method: "POST",
@@ -732,7 +799,7 @@ $("trackForm").addEventListener("submit", async (e) => {
         collaborators_cleared: rights.collaborators_cleared,
         parody_or_derivative: rights.parody_or_derivative,
         derivative_permissions: rights.derivative_permissions,
-        notes: $("trackDescription").value.trim()
+        notes: description
       })
     });
 
@@ -742,8 +809,6 @@ $("trackForm").addEventListener("submit", async (e) => {
     });
 
     committed = true;
-    const price = Math.round(Number($("licensePrice").value || 0) * 100);
-    const licenseTerms = $("licenseTerms").value.trim();
     let licenseWarning = "";
     if (price > 0 && licenseTerms) {
       try { await rest("music_license_offers", {
@@ -751,7 +816,7 @@ $("trackForm").addEventListener("submit", async (e) => {
         body: JSON.stringify({
           track_id: track.id,
           slug: "commercial-" + Math.random().toString(36).slice(2, 7),
-          title: $("licenseTitle").value.trim() || "Commercial license",
+          title: licenseTitle,
           license_type: "commercial_basic",
           price_cents: price,
           currency: "usd",
@@ -766,16 +831,20 @@ $("trackForm").addEventListener("submit", async (e) => {
       }
     }
 
-    const albumId = $("trackAlbum").value;
     let albumWarning = "";
     if (albumId) {
       try {
         await saveSettings((s) => {
           const a = (s.albums || []).find((x) => x && x.id === albumId);
-          if (a && Array.isArray(a.tracks) && a.tracks.length < PAGE.MAX_TRACKS) a.tracks.push(String(track.id).toLowerCase());
+          if (!a) throw new Error("That album was removed while the release uploaded.");
+          if (!Array.isArray(a.tracks)) a.tracks = [];
+          const id = String(track.id).toLowerCase();
+          if (a.tracks.includes(id)) return;
+          if (a.tracks.length >= PAGE.MAX_TRACKS) throw new Error("That album has reached its track limit.");
+          a.tracks.push(id);
         });
       } catch (albumErr) {
-        albumWarning = " It was not added to the album: add it from Your albums.";
+        albumWarning = " It was not added to the album: " + (albumErr.message || "add it from Your albums.");
       }
     }
     licenseWarning += albumWarning;
@@ -793,7 +862,10 @@ $("trackForm").addEventListener("submit", async (e) => {
     status("trackStatus", (derivative
       ? "Uploaded. Held for manual derivative/parody rights review."
       : "Uploaded. Submitted for rights and publication review.") + licenseWarning, licenseWarning ? "bad" : "good");
-    await loadTracks();
+    try { await loadTracks(); }
+    catch (_) {
+      status("trackStatus", "Release submitted." + licenseWarning + " Your releases could not refresh. Reload to see it before uploading again.", "bad");
+    }
     if (window.MCC_TRACK) window.MCC_TRACK("creator_track_submitted", { track_id: track.id, access_mode: access, derivative });
   } catch (err) {
     if (!committed && (createdTrackId || uploaded.length)) {
@@ -808,9 +880,11 @@ $("trackForm").addEventListener("submit", async (e) => {
       status("trackStatus", err.message || "Upload failed.", "bad");
     }
   } finally {
+    fields.forEach((el, i) => { el.disabled = disabledBefore[i]; });
+    form.removeAttribute("aria-busy");
     submit.disabled = false;
   }
-});
+}));
 
 /* ---------- onboarding: one click, shown only until the server says creator ---------- */
 
@@ -822,7 +896,8 @@ let onboardState = null;
    applied the same answer built from the member's own rows, with the same two writes
    (the picture from the member's profile included). */
 function onboardClient() {
-  return ONBOARD.client({ token: session.access_token, mUid, userId: session?.user?.id || "" });
+  /* the token travels with each call (studioFetch), so the client is handed none of its own */
+  return ONBOARD.client({ token: "", mUid, userId: session?.user?.id || "", fetch: studioFetch });
 }
 async function creatorState() {
   return onboardClient().state();
@@ -891,7 +966,7 @@ async function showStudio(editing) {
   await loadTracks();
 }
 
-$("cobForm").addEventListener("submit", async (e) => {
+$("cobForm").addEventListener("submit", guarded(async (e) => {
   e.preventDefault();
   const go = $("cobGo");
   const say = (msg, tone) => { $("cobStatus").textContent = msg || ""; if (tone) $("cobStatus").dataset.tone = tone; else delete $("cobStatus").dataset.tone; };
@@ -930,7 +1005,7 @@ $("cobForm").addEventListener("submit", async (e) => {
   } finally {
     go.disabled = false;
   }
-});
+}));
 
 /* the card is a live preview: what they type is what their page will say */
 $("cobNameInput").addEventListener("input", () => {
@@ -947,16 +1022,41 @@ $("cobHandleInput").addEventListener("input", () => {
   $("cobHandleHelp").textContent = ONBOARD.handleHelp({});
 });
 
-(async function boot() {
+/* WHOEVER IS SIGNED IN NOW (music slice M4; accounts lane ACC-1). A sign-in or sign-out in another tab used to leave
+   this page as it was: "Sign in to publish." to a member who had just signed in, the open studio to someone who had
+   just signed out. The page now follows the account stored for this site: what the previous account loaded is taken
+   off the screen, and the studio opens again for whoever is signed in now, or closes to "Sign in to publish.". */
+const GATE_TEXT = $("creatorGate").querySelector("p").textContent;
+let boots = 0;
+function closeStudio() {
+  session = null; mUid = null; account = null; profile = null; tracksCache = []; onboardState = null;
+  editingAlbum = null; editingService = null;
+  $("creatorOnboard").hidden = true;
+  $("creatorApp").hidden = true;
+  $("creatorSummary").hidden = true;
+  $("creatorIdentity").hidden = true;
+  $("albumForm").hidden = true;
+  $("serviceForm").hidden = true;
+  ["profileForm", "trackForm", "albumForm", "serviceForm", "cobForm"].forEach((id) => { const f = $(id); if (f && f.reset) f.reset(); });
+  ["creatorTracks", "creatorAlbums", "creatorServices"].forEach((id) => { const n = $(id); if (n) n.replaceChildren(); });
+  ["profileStatus", "trackStatus", "albumStatus", "serviceStatus", "cobStatus"].forEach((id) => { const n = $(id); if (n) n.textContent = ""; });
+  $("publicProfile").hidden = true;
+  $("creatorGate").querySelector("p").textContent = GATE_TEXT;
+  $("creatorGate").hidden = false;
+}
+async function boot() {
+  const run = ++boots;
   try {
     const ok = await authed();
     const state = ok ? await creatorState() : null;
+    if (run !== boots) return;
     const v = ONBOARD.view({ signedIn: ok, state, editing: ONBOARD.wantsEdit(location.search) });
     if (v === "signin") return;
     if (v === "onboard") {
       /* ONE SIGN-UP (owner, 2026-10-20): a profile that is not done goes through the three pages on the World,
          which come back here for the one tap; nothing is asked twice on this page */
-      const done = await ONBOARD.profileDone({ token: session.access_token });
+      const done = await ONBOARD.profileDone({ token: "", fetch: studioFetch });
+      if (run !== boots) return;
       if (done === false) { location.replace(ONBOARD.FINISH_URL); return; }
     }
     $("creatorGate").hidden = true;
@@ -967,7 +1067,17 @@ $("cobHandleInput").addEventListener("input", () => {
     }
     await showStudio(v === "edit");
   } catch (err) {
+    if (run !== boots) return;
     $("creatorGate").hidden = false;
     $("creatorGate").querySelector("p").textContent = err.message || "Could not open Creator Studio.";
   }
-})();
+}
+boot();
+if (window.MCC.onAccountChange) {
+  window.MCC.onAccountChange(() => {
+    account = null;
+    if (running) { reopenWhenDone = true; return; }
+    closeStudio();
+    boot();
+  });
+}

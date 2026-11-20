@@ -23,9 +23,20 @@
   function loadWorldAudio() {
     if (window.MCC_WORLD_AUDIO) return Promise.resolve(true);
     if (worldAudioReady) return worldAudioReady;
+    /* The World soundtrack is a player too: the one helper every player asks
+       before it plays (the playback audio session, js/now-playing.js) goes in
+       first. Neither is async, so the two run in the order they were added. */
+    if (!window.MCC_NOW_PLAYING && !document.querySelector("script[data-mcc-now-playing]")) {
+      var helper = document.createElement("script");
+      helper.src = ROOT + "js/now-playing.js?v=__STAMP__";
+      helper.async = false;
+      helper.setAttribute("data-mcc-now-playing", "");
+      document.head.appendChild(helper);
+    }
     worldAudioReady = new Promise(function (resolve) {
       var script = document.createElement("script");
       script.src = ROOT + "js/world-audio-continuity.js?v=__STAMP__";
+      script.async = false;
       script.onload = function () {
         var ready = !!window.MCC_WORLD_AUDIO;
         if (!ready) worldAudioReady = null;

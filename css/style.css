@@ -2994,6 +2994,15 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
 .pocket__xic { width: 12px; height: 12px; fill: none; stroke: currentColor;
   stroke-width: 2.4; stroke-linecap: round; }
 
+/* AirPlay where WebKit offers it: a fifth column only while WebKit says a device is in range
+   (js/now-playing.js); a full 44px target, the same glyph as the album's "play on another screen" */
+.pocket:has(.pocket__air:not([hidden])) { grid-template-columns: auto minmax(0,1fr) auto auto auto; }
+.pocket__air { width: 44px; height: 44px; border: 0; border-radius: 50%; padding: 0; cursor: pointer; flex: none;
+  display: grid; place-items: center; background: rgba(244,239,230,.08); color: var(--cream); }
+.pocket__air[hidden] { display: none; }
+.pocket__airic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round; }
+
 .pocket__bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
   background: rgba(244,239,230,.14); }
 .pocket__bar b { display: block; height: 100%; width: 0; background: var(--ruby-hot); }

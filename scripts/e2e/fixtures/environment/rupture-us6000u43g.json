@@ -1,0 +1,62 @@
+{
+ "ok": true,
+ "schema": "world-environment-rupture/v1",
+ "event_id": "us6000u43g",
+ "generated_at": "2026-11-19T02:00:00.000Z",
+ "sources": [
+  {
+   "id": "usgs_event",
+   "label": "USGS event detail",
+   "status": "available",
+   "reason": null,
+   "fetched_at": "2026-11-19T02:00:00.000Z",
+   "last_success_at": "2026-11-19T02:00:00.000Z",
+   "coverage": "The products USGS lists for one earthquake",
+   "attribution": "U.S. Geological Survey, Earthquake Hazards Program",
+   "license": "Public domain (U.S. Government work)",
+   "url": "https://earthquake.usgs.gov/"
+  },
+  {
+   "id": "usgs_rupture",
+   "label": "USGS ShakeMap rupture",
+   "status": "available",
+   "reason": null,
+   "fetched_at": "2026-11-19T02:00:00.000Z",
+   "last_success_at": "2026-11-19T02:00:00.000Z",
+   "coverage": "A modelled finite-fault plane exists for about a dozen earthquakes a year, all M6.5 and larger; every other quake is modelled as a point",
+   "attribution": "U.S. Geological Survey, ShakeMap rupture and finite-fault products",
+   "license": "Public domain (U.S. Government work)",
+   "url": "https://earthquake.usgs.gov/data/finitefault/"
+  }
+ ],
+ "modelled": true,
+ "label": "modelled rupture plane (USGS finite fault)",
+ "edges": [
+  [
+   [
+    93.92,
+    32.27
+   ],
+   [
+    94,
+    32.56
+   ]
+  ]
+ ],
+ "notes": {
+  "rupture": "A USGS finite-fault model estimates the fault plane that slipped. The edge given is the plane's shallowest side, a model: not a crack mapped at the surface.",
+  "point": "Most earthquakes have no finite-fault model: USGS treats them as a point, and nothing is drawn."
+ },
+ "usgs_preferred_id": "us6000u43g",
+ "version": 6,
+ "product_code": "us6000u43g",
+ "product_source": "us",
+ "update_time": "2026-11-03T22:11:03.256Z",
+ "reference": "Source: USGS NEIC Rapid Finite Fault Eventid: us6000u43g Model created: 2026-11-03 14:59:26",
+ "reviewed": true,
+ "model_created": "2026-11-03 14:59:26",
+ "available": true,
+ "reason": null,
+ "top_depth_km": 0.1,
+ "bottom_depth_km": 22.7
+}

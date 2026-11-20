@@ -56,23 +56,27 @@ test('the master of a gated track is NOT committed to the site', async () => {
   }
 });
 
-test('the deck opts into CORS so a cross-origin master is not silenced', async () => {
+test('the deck is a plain element nothing routes or reads, so a cross-origin master needs no CORS opt-in', async () => {
   const html = await read('album.html');
   const deck = /<audio[^>]*id="deck"[^>]*>/.exec(html);
   assert.ok(deck, 'no deck element on album.html');
-  assert.match(deck[0], /crossorigin="anonymous"/,
-    'js/chamber.js runs the deck through createMediaElementSource; a ' +
-    'cross-origin element without crossorigin is tainted and that graph ' +
-    'outputs silence, so a gated record would play to nobody');
+  /* crossorigin was load-bearing while js/chamber.js ran the deck through
+     createMediaElementSource (a tainted element pushes silence through that
+     graph) and js/filament.js decoded the song. Neither touches the audio now
+     (music slice M1: iOS silences Web Audio with the screen locked), so a
+     CORS-mode load would only add a way for a signed master to fail. */
+  assert.doesNotMatch(deck[0], /crossorigin/i, 'nothing reads the deck\'s samples any more');
+  assert.doesNotMatch(await read('js/chamber.js'), /createMediaElementSource\(/);
 });
 
-test('the waveform fetches the signed URL, token and all', async () => {
+test('the waveform never fetches the song, signed or not: it reads the measured peaks', async () => {
   const src = await read('js/filament.js');
-  assert.match(src, /fetch\(src\)/,
-    'filament must fetch the full src: fetching the query-stripped cache ' +
-    'key drops the Supabase signing token, and the JSON error that comes ' +
-    'back goes straight into decodeAudioData');
-  assert.doesNotMatch(src, /fetch\(key\)/, 'fetching the stripped key is the bug');
+  assert.doesNotMatch(src, /fetch\(/,
+    'a second download of the song spent an earned play\'s one-play token and decoded ' +
+    'about 50 MB of samples per track (music map G-8); the shape is in data/peaks');
+  assert.match(src, /PEAKS\.load\(src\)/, 'the shape comes from js/peaks.js');
+  const peaks = await read('js/peaks.js');
+  assert.match(peaks, /if \(!key\) return Promise\.resolve\(null\);/, 'a signed master is never asked for its shape');
 });
 
 test('the row slot does not reuse a class the stylesheet already owns', async () => {
@@ -144,7 +148,8 @@ test('an album billed to another name says so everywhere it credits', async () =
     assert.match(html, new RegExp(`getElementById\\("${id}"\\)\\.textContent = ARTIST`),
       `#${id} must follow the billed artist`);
   }
-  assert.match(html, /artist: ARTIST,/, 'MediaSession must follow the billed artist');
+  /* the lock screen (js/now-playing.js, music slice M2) names the playing row's billed artist, the page's when it has none */
+  assert.match(html, /artist: r\.getAttribute\("data-artist"\) \|\| ARTIST,/, 'MediaSession must follow the billed artist');
   assert.doesNotMatch(html, /artist: "Matthew McCluster"/, 'no hardcoded artist left in the player');
   assert.match(html, /© 2026 Matthew McCluster/, 'the rights notice stays with the owner');
 });

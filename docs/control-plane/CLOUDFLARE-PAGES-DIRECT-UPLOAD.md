@@ -24,7 +24,7 @@ This **does not prove a secret was leaked**. It proves the packaging boundary is
 ## Stage a clean public-only release
 
 1. Produce a complete, built **static public export** on a trusted machine. The existing `gh-pages` output can be used temporarily as an input to test parity, but `main` is never an acceptable input and must be refused.
-2. Run `scripts/stage-cloudflare-pages.mjs`. It permits only known public routes/assets (including the album's `data/environments.json`), excludes Site 0 authoring geometry under `assets/3d/prim3-site0/`, refuses symlinks, scans **all** accepted text assets including large bundles for obvious key patterns, enforces Cloudflare file limits, and generates `mccluster-release.json` with the exact source SHA and a content-manifest hash.
+2. Run `scripts/stage-cloudflare-pages.mjs`. It permits only known public routes/assets (including the album's `data/environments.json`), excludes Site 0 authoring geometry under `assets/3d/prim3-site0/`, refuses `data/missions/drawdown/` (the frozen mission catalog, which no page reads), refuses symlinks, scans **all** accepted text assets including large bundles for obvious key patterns, enforces Cloudflare file limits, and generates `mccluster-release.json` with the exact source SHA and a content-manifest hash.
 3. Examine the operator-only exclusion report, automatically saved to `<output-directory>.excluded.json` **outside the public artifact**, compare critical public routes and ensure all required frontend assets are retained. The report is a sorted inventory of excluded paths and must never be uploaded. **The allowlist still needs human review** whenever new asset types or paths are added.
 4. Test the package before any domain or repository settings change.
 

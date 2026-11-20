@@ -86,7 +86,10 @@
     function paintWrite() {
       var u = me();
       if (!u) {
-        write.innerHTML = '<p class="note"><a href="account.html">Sign in</a> to speak. It takes one tap, no password.</p>';
+        /* passwordless sign-in was removed (js/mcc-auth.js signInWithEmail): the note promises only what the
+           account page does, and the sign-in comes back here (music slice M4, accounts lane ACC-12) */
+        var back = "account.html?next=" + encodeURIComponent(location.pathname + location.search);
+        write.innerHTML = '<p class="note"><a href="' + esc(back) + '">Sign in</a> to speak, with your M Account.</p>';
         return;
       }
       var kept = "";
