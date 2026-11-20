@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 766,
+  "candidate_count": 767,
   "capability_source_count": 104,
-  "support_only_count": 662,
-  "checks_total": 2962,
-  "checks_passed": 2962,
+  "support_only_count": 663,
+  "checks_total": 2966,
+  "checks_passed": 2966,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -213,6 +213,7 @@
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-09.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-10.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-18.json",
+    "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json",
     "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
@@ -780,7 +781,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "766 entries"
+      "detail": "767 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4684,6 +4685,26 @@
     },
     {
       "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-18.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json support rationale present",
       "passed": true,
       "detail": ""
     },

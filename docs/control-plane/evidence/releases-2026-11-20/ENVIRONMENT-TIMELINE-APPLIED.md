@@ -37,5 +37,7 @@ Public acceptance is HTTP 200 from `/v1/world/environment/events?limit=20`, with
 health, plus one real event agreeing across the post, globe and `?feed=equity&event=<encoded-id>` deep link.
 These outcomes have not yet been observed by this record.
 
-The release operator owns the global ledger, drift contract, schema manifest, production snapshot and removal of the
-now-applied `live-callers.json` exceptions. This change leaves those global records untouched for reconciliation together.
+The [completion record](RELEASE-FINISH.md) reconciles the global ledger, drift contract, production snapshot and the
+three now-applied `live-callers.json` exceptions. The reset schema manifest comes from the authoritative PR #819
+Reconciliation CI artifact named there. Those records describe only the two confirmed Environment parts; the remaining
+four RPC exceptions stay pending and the runtime flag remains false.
