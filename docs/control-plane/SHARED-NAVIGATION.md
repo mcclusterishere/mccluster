@@ -37,9 +37,11 @@ at its sides.
 
 Installed presentation is detected from `navigator.standalone` or the standalone
 display-mode query, not the device's user agent. Only the top-level document
-consumes the physical top safe area. A retained Music → World frame receives an
-already-safe viewport from its listening parent; its World and globe children
-must not add the inset again. Ordinary browser presentation stays unchanged.
+consumes the World's physical top and side safe areas. A retained Music → World
+frame receives an already-safe viewport from its listening parent; its World,
+globe and account controls must not add those insets again. Both landscape
+orientations keep the header and navigation clear of the notch. Ordinary browser
+presentation stays unchanged.
 
 The installed capsule is 46 pixels high instead of approximately 68 pixels,
 with 44-pixel touch targets and the home-indicator clearance retained. The

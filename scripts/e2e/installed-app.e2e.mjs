@@ -50,7 +50,7 @@ async function file(path) {
 async function setInsets(cdp, insets) {
   await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets:{...insets,topMax:insets.top,bottomMax:insets.bottom,leftMax:insets.left,rightMax:insets.right} });
 }
-async function setup(device, installed, owner = false, world = false) {
+async function setup(device, installed, owner = false, world = false, {dockModule = true} = {}) {
   const context = await browser.newContext({viewport:device.viewport,isMobile:true,hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   context.setDefaultTimeout(15000);
   const errors = [], requests = [], blocked = [];
@@ -100,6 +100,7 @@ async function setup(device, installed, owner = false, world = false) {
       }
     }
     if ([HOUSE,WORLD].includes(u.origin)) {
+      if (!dockModule && p === '/js/installed-app-dock.js') return r.abort();
       if (p.startsWith('/assets/audio/')) {
         const range = /bytes=(\d+)-(\d*)/.exec(req.headers().range || '');
         if (range) {
@@ -124,7 +125,7 @@ async function setup(device, installed, owner = false, world = false) {
   await page.waitForFunction(() => !!window.MCC_BAR && !!window.MCC_WORLD_AUDIO);
   await page.locator('.appbar').waitFor({state:'visible'});
   if (owner) await page.waitForFunction(() => MCC_BAR.admin() && document.querySelectorAll('.appbar [data-appnav]').length >= 10);
-  if (installed) await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-ready'));
+  if (installed && dockModule) await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-ready'));
   if (!world) await page.waitForFunction(() => !!window.MCC_MUSIC && !!document.querySelector('[data-music-play][data-album="here"]'));
   await page.evaluate(() => document.fonts.ready);
   return {context,page,cdp,errors,requests,blocked};
@@ -141,6 +142,42 @@ async function envProbe(page) {
 async function verifyEnv(page, device, scope) {
   const actual = await envProbe(page);
   check(scope + ': CSS env exposes the emulated device insets', Object.entries(device.insets).every(([key,value]) => near(actual[key],value,.1)), actual);
+}
+async function musicHeader(page, device, scope) {
+  await page.evaluate(() => window.scrollTo(0,0));
+  await page.waitForFunction(() => scrollY === 0);
+  await page.locator('#mccAuthChip').waitFor({state:'visible'});
+  const g = await page.evaluate(() => {
+    const r = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
+    return {scrollY,brand:r('.music-contextbar__brand'),title:r('h1.greet'),auth:r('#mccAuthChip')};
+  });
+  check(scope + ': initial Music heading and account clear every physical safe edge', g.scrollY === 0 && [g.brand,g.title,g.auth].every(r =>
+    r.top >= device.insets.top-.5 && r.left >= device.insets.left-.5 && r.right <= device.viewport.width-device.insets.right+.5), g);
+  return g;
+}
+async function worldGeometry(surface) {
+  return surface.evaluate(() => {
+    const r = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
+    return {main:r('.mn'),header:r('.mn__top'),brand:r('.mn__brand'),mark:r('.mn__brand-mark'),headline:r('.wt-headline'),globe:r('#mnWorld'),auth:r('#mccAuthChip'),
+      width:innerWidth,height:innerHeight,topOwner:document.documentElement.classList.contains('mcc-app-top'),scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth};
+  });
+}
+function worldSafeEdges(g, device, scope, offset = {x:0,y:0}) {
+  check(scope + ': World header, mark, headline and account clear every physical safe edge', [g.header,g.brand,g.mark,g.headline,g.auth].every(r =>
+    r.width > 0 && r.height > 0 && offset.y+r.top >= device.insets.top-.5 && offset.x+r.left >= device.insets.left-.5 && offset.x+r.right <= device.viewport.width-device.insets.right+.5), {offset,geometry:g});
+}
+async function retainedGeometry(page, frame, device, scope) {
+  await frame.waitForFunction(() => !!document.getElementById('mccWorldAudioStyle')?.sheet);
+  await frame.locator('#mccAuthChip').waitFor({state:'visible'});
+  const frameBox = await page.locator('#mccWorldAudioFrame').boundingBox(), child = await worldGeometry(frame);
+  check(scope + ': retained World consumes physical insets exactly once', near(frameBox.y,device.insets.top) && near(frameBox.x,device.insets.left) && near(frameBox.x+frameBox.width,device.viewport.width-device.insets.right) &&
+    near(frameBox.y+frameBox.height,device.viewport.height) && near(child.main.top,0) && near(child.main.left,0) && near(child.main.right,child.width) && near(child.main.bottom,child.height) && !child.topOwner && child.scrollWidth === child.clientWidth, {frameBox,child});
+  worldSafeEdges(child,device,scope,frameBox);
+  check(scope + ': retained account uses local spacing without a second device inset', near(child.auth.top,12,.1) && near(child.width-child.auth.right,12,.1), {auth:child.auth,frameBox,childEnv:await envProbe(frame)});
+}
+async function changeInsets(cdp, page, insets) {
+  await setInsets(cdp,insets);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 async function dockGeometry(page) {
   return page.evaluate(() => {
@@ -197,6 +234,7 @@ async function browserBaseline(device) {
   const run = await setup(device,false), {page,cdp,context} = run, scope = device.name + ' browser';
   try {
     await verifyEnv(page,device,scope);
+    await musicHeader(page,device,scope);
     const before = await dockGeometry(page);
     check(scope + ': browser keeps its unwrapped three-tab bar', !before.wrapped && before.keys.join(',') === 'music,home,world' && near(before.dock.height,68.4,1), before);
     check(scope + ': installed classes and dock are absent', await page.evaluate(() => !document.documentElement.classList.contains('mcc-installed-app') && !document.documentElement.classList.contains('mcc-app-top') && !document.getElementById('mccInstalledDock')));
@@ -206,7 +244,10 @@ async function browserBaseline(device) {
     check(scope + ': a safe-area value does not change browser bar height', near(before.dock.height,withoutInset.dock.height,.1), {before:before.dock.height,withoutInset:withoutInset.dock.height});
     await play(page); const frame = await retainedWorld(page);
     const frameBox = await page.locator('#mccWorldAudioFrame').boundingBox();
-    check(scope + ': retained browser World still begins at the viewport origin', near(frameBox.y,0,.1) && near(await frame.locator('.mn').evaluate(n => n.getBoundingClientRect().top),0,.1), frameBox);
+    check(scope + ': retained browser World still fills the original viewport', near(frameBox.x,0,.1) && near(frameBox.y,0,.1) && near(frameBox.width,device.viewport.width,.1) && near(await frame.locator('.mn').evaluate(n => n.getBoundingClientRect().top),0,.1), frameBox);
+    await frame.locator('#mccAuthChip').waitFor({state:'visible'});
+    const browserAccount = await frame.locator('#mccAuthChip').boundingBox();
+    check(scope + ': browser account retains its existing env-based position', near(browserAccount.y,Math.max(12,device.insets.top)) && near(device.viewport.width-browserAccount.x-browserAccount.width,Math.max(12,device.insets.right)), browserAccount);
     const after = await dockGeometry(page);
     check(scope + ': music and World preserve the browser bar geometry', !after.wrapped && near(after.dock.height,before.dock.height,.1) && after.scrollWidth === after.clientWidth, after);
     await noErrors(run,scope); return before.dock.height;
@@ -214,26 +255,34 @@ async function browserBaseline(device) {
   finally { await context.close(); }
 }
 async function installedMusic(device, baseline) {
-  const run = await setup(device,true), {page,context} = run, scope = device.name + ' installed Music';
+  const run = await setup(device,true), {page,cdp,context} = run, scope = device.name + ' installed Music';
   try {
-    await verifyEnv(page,device,scope); await play(page); await metadata(page,scope);
+    await verifyEnv(page,device,scope);
+    await musicHeader(page,device,scope);
+    await page.screenshot({path:join(OUT,`installed-${device.name}-music-initial.png`)});
+    await play(page); await metadata(page,scope);
     const dock = await checkDock(page,scope,baseline,device);
     check(scope + ': the three guest destinations remain in their original order', dock.keys.join(',') === 'music,home,world', dock.keys);
     check(scope + ': the old floating music strip is hidden', await page.locator('.music-mini').isHidden());
     await page.evaluate(() => { window.__originalAudio = MCC_MUSIC.audio; window.__retentionStart = __appMediaEvents.length; });
     const before = await audio(page), frame = await retainedWorld(page);
     await page.waitForFunction(t => MCC_MUSIC.audio.currentTime > t + .25, before.time);
-    const after = await audio(page), frameBox = await page.locator('#mccWorldAudioFrame').boundingBox();
-    const child = await frame.evaluate(() => ({top:document.querySelector('.mn').getBoundingClientRect().top,bottom:document.querySelector('.mn').getBoundingClientRect().bottom,height:innerHeight,
-      header:document.querySelector('.mn__top').getBoundingClientRect().top,topOwner:document.documentElement.classList.contains('mcc-app-top'),scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth}));
+    const after = await audio(page);
     check(scope + ': World retains the exact advancing Audio element', before.real && after.same && !after.paused && after.playing === 1 && after.unloads === 0 && after.src === before.src && after.time > before.time, {before,after});
     check(scope + ': World entry never pauses, seeks or resets the playing source', await page.evaluate(() => __appMediaEvents.slice(__retentionStart).every(e => e.media !== __originalAudio)));
-    check(scope + ': retained World consumes the top inset exactly once', near(frameBox.y,device.insets.top) && near(frameBox.y+frameBox.height,device.viewport.height) && near(child.top,0) && near(child.bottom,child.height) && !child.topOwner && child.scrollWidth === child.clientWidth, {frameBox,child});
-    check(scope + ': World header is below the physical status region', frameBox.y + child.header >= device.insets.top - .5, {frameBox,child});
+    await retainedGeometry(page,frame,device,scope);
     await frame.locator('html.mcc-app-dock-remote').waitFor();
     check(scope + ': only the parent navigation and integrated player remain visible', await frame.locator('.appbar').isHidden() && await frame.locator('#mnNowPlaying').isHidden() && await frame.locator('#mnWorldPlay').isHidden() && await page.locator('#mccWorldAudioControls').isHidden());
     await metadata(page,scope + ' in World'); await checkDock(page,scope + ' in World',baseline,device);
     await page.screenshot({path:join(OUT,`installed-${device.name}-world-with-music.png`)});
+    if (device.insets.left !== device.insets.right) {
+      const mirrored = {...device,insets:{...device.insets,left:device.insets.right,right:device.insets.left}};
+      await changeInsets(cdp,page,mirrored.insets);
+      await retainedGeometry(page,frame,mirrored,scope + ' right notch');
+      await checkDock(page,scope + ' right notch',baseline,mirrored);
+      await page.screenshot({path:join(OUT,`installed-${device.name}-world-right-notch.png`)});
+      await changeInsets(cdp,page,device.insets);
+    }
     await page.locator('[data-app-player="play"]').click();
     await page.waitForFunction(() => MCC_MUSIC.audio.paused);
     const paused = await audio(page); await page.waitForTimeout(250);
@@ -250,23 +299,21 @@ async function installedMusic(device, baseline) {
     await page.locator('.appbar [data-appnav="music"]').click();
     await page.waitForFunction(() => !MCC_WORLD_AUDIO.active());
     check(scope + ': returning to Music preserves the document and playback', (await audio(page)).same && (await audio(page)).unloads === 0 && !(await audio(page)).paused);
+    await musicHeader(page,device,scope + ' after returning');
     await page.screenshot({path:join(OUT,`installed-${device.name}-music.png`)});
     await noErrors(run,scope);
   } catch (error) { await failed(run,scope,error); }
   finally { await context.close(); }
 }
 async function directWorld(device, baseline) {
-  const run = await setup(device,true,false,true), {page,context} = run, scope = device.name + ' installed World';
+  const run = await setup(device,true,false,true), {page,cdp,context} = run, scope = device.name + ' installed World';
   try {
     await verifyEnv(page,device,scope);
     await page.locator('#mccAuthChip').waitFor({state:'visible'});
-    const read = () => page.evaluate(() => {
-      const r = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
-      return {main:r('.mn'),header:r('.mn__top'),brand:r('.mn__brand'),globe:r('#mnWorld'),auth:r('#mccAuthChip'),height:innerHeight,scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth};
-    });
+    const read = () => worldGeometry(page);
     const g = await read();
-    check(scope + ': header, mark and account clear the status area', g.header.top >= device.insets.top - .5 && g.brand.top >= device.insets.top - .5 && g.auth.top >= device.insets.top - .5, g);
-    check(scope + ': inset World ends at the viewport without overflow', near(g.main.top,device.insets.top) && near(g.main.bottom,g.height) && near(g.globe.top,device.insets.top) && g.scrollWidth === g.clientWidth, g);
+    worldSafeEdges(g,device,scope);
+    check(scope + ': inset World ends at the viewport without overflow', near(g.main.top,device.insets.top) && near(g.main.left,device.insets.left) && near(g.main.right,g.width-device.insets.right) && near(g.main.bottom,g.height) && near(g.globe.top,device.insets.top) && g.scrollWidth === g.clientWidth, g);
     await page.locator('#mnWorldPlay').click();
     await page.waitForFunction(() => MCC_NOW_PLAYING.snapshot()?.surface === 'world' && MCC_NOW_PLAYING.snapshot().playing);
     await metadata(page,scope,'world'); await checkDock(page,scope,baseline,device);
@@ -277,15 +324,23 @@ async function directWorld(device, baseline) {
     await page.locator('.mn__world-expand').click();
     await page.waitForFunction(() => document.documentElement.classList.contains('wt-expanded'));
     const expanded = await read();
-    check(scope + ': expanded globe honors the same physical top inset', near(expanded.globe.top,device.insets.top) && expanded.globe.bottom <= expanded.height + .5, expanded);
+    check(scope + ': expanded globe honors the same physical insets', near(expanded.globe.top,device.insets.top) && near(expanded.globe.left,device.insets.left) && near(expanded.globe.right,device.viewport.width-device.insets.right) && expanded.globe.bottom <= expanded.height + .5, expanded);
+    if (device.insets.left !== device.insets.right) {
+      const mirrored = {...device,insets:{...device.insets,left:device.insets.right,right:device.insets.left}};
+      await changeInsets(cdp,page,mirrored.insets);
+      const rotated = await read();
+      worldSafeEdges(rotated,mirrored,scope + ' right notch');
+      check(scope + ': expanded globe also clears a notch on the right', near(rotated.globe.left,mirrored.insets.left) && near(rotated.globe.right,device.viewport.width-mirrored.insets.right) && near(rotated.main.left,mirrored.insets.left) && near(rotated.main.right,device.viewport.width-mirrored.insets.right) && rotated.scrollWidth === rotated.clientWidth, rotated);
+      await changeInsets(cdp,page,device.insets);
+    }
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => !document.documentElement.classList.contains('wt-expanded'));
     const shrunk = await read();
     check(scope + ': shrinking restores the original World rectangle', near(shrunk.globe.top,g.globe.top) && near(shrunk.globe.height,g.globe.height) && near(shrunk.main.bottom,g.height), shrunk);
     // Isolate the ordinary destination's CSS scope without invoking sign-in.
     await page.evaluate(() => { document.getElementById('mnFeedView').hidden = true; document.documentElement.classList.remove('mn-world-on'); });
-    const sticky = await page.locator('.mn__top').evaluate(n => ({padding:parseFloat(getComputedStyle(n).paddingTop),position:getComputedStyle(n).position,brand:n.querySelector('.mn__brand').getBoundingClientRect().top}));
-    check(scope + ': the ordinary sticky header consumes one inset too', near(sticky.padding,12+device.insets.top,.1) && sticky.position === 'sticky' && sticky.brand >= device.insets.top - .5, sticky);
+    const sticky = await page.locator('.mn__top').evaluate(n => ({padding:parseFloat(getComputedStyle(n).paddingTop),position:getComputedStyle(n).position,brand:n.querySelector('.mn__brand').getBoundingClientRect().toJSON()}));
+    check(scope + ': the ordinary sticky header consumes one inset too', near(sticky.padding,12+device.insets.top,.1) && sticky.position === 'sticky' && sticky.brand.top >= device.insets.top - .5 && sticky.brand.left >= device.insets.left-.5 && sticky.brand.right <= device.viewport.width-device.insets.right+.5, sticky);
     await noErrors(run,scope);
   } catch (error) { await failed(run,scope,error); }
   finally { await context.close(); }
@@ -295,6 +350,7 @@ async function ownerRegistry(device) {
   for (const installed of [false,true]) {
     const run = await setup(device,installed,true), {page,context} = run, scope = device.name + (installed ? ' installed owner' : ' browser owner');
     try {
+      await musicHeader(page,device,scope);
       await play(page);
       if (installed) await metadata(page,scope);
       const keys = await page.locator('.appbar [data-appnav]').evaluateAll(nodes => nodes.map(n => ({key:n.dataset.appnav,href:n.getAttribute('href')})));
@@ -315,12 +371,36 @@ async function ownerRegistry(device) {
           check(scope + ': ' + key + ' can be reached without shrinking or deleting tabs', reachable.visible && reachable.hit, reachable);
         }
         check(scope + ': owner dock does not create page overflow', await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth));
+        await musicHeader(page,device,scope + ' with dock');
         await page.screenshot({path:join(OUT,`installed-${device.name}-owner-dock.png`)});
       }
       await noErrors(run,scope);
     } catch (error) { await failed(run,scope,error); }
     finally { await context.close(); }
   }
+}
+async function fallbackTransport(device) {
+  const mirrored = {...device,insets:{...device.insets,left:device.insets.right,right:device.insets.left}};
+  const run = await setup(mirrored,true,false,false,{dockModule:false}), {page,context} = run, scope = device.name + ' right-notch fallback';
+  try {
+    await verifyEnv(page,mirrored,scope);
+    await play(page);
+    const frame = await retainedWorld(page);
+    await retainedGeometry(page,frame,mirrored,scope);
+    await page.locator('#mccWorldAudioControls').waitFor({state:'visible'});
+    await page.waitForFunction(() => {
+      const controls = document.getElementById('mccWorldAudioControls');
+      return !!controls?.style.top && !!controls.style.right;
+    });
+    const frameBox = await page.locator('#mccWorldAudioFrame').boundingBox();
+    const expand = await frame.locator('.mn__world-expand').evaluate(n => n.getBoundingClientRect().toJSON());
+    const controls = await page.locator('#mccWorldAudioControls').boundingBox();
+    check(scope + ': unavailable dock keeps the existing transport usable', await page.locator('#mccInstalledDock').count() === 0 && !(await audio(page)).paused && controls.width >= 44 && controls.height >= 44, controls);
+    check(scope + ': fallback transport translates both frame coordinates once', near(controls.y,frameBox.y+Math.max(67,Math.round(expand.top-60))) && near(controls.x+controls.width,frameBox.x+expand.right) && controls.x+controls.width <= mirrored.viewport.width-mirrored.insets.right+.5, {controls,frameBox,expand});
+    await page.screenshot({path:join(OUT,`installed-${device.name}-right-notch-fallback.png`)});
+    await noErrors(run,scope);
+  } catch (error) { await failed(run,scope,error); }
+  finally { await context.close(); }
 }
 try {
   browser = await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE || process.env.CHROMIUM_PATH || undefined,args:['--no-sandbox','--autoplay-policy=document-user-activation-required','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
@@ -330,6 +410,7 @@ try {
     await directWorld(device,baseline);
     await ownerRegistry(device);
   }
+  await fallbackTransport(DEVICES.find(device => device.insets.left !== device.insets.right));
 } catch (error) {
   process.exitCode = 1;
   checks.push({name:'suite completed',pass:false,error:String(error.stack || error)});

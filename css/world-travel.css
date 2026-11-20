@@ -163,8 +163,12 @@
    the header, place card and embedded globe keep their existing coordinates.
    The Music host insets a retained World frame instead; that child has no
    mcc-app-top marker and must not consume the same safe area again. */
+html.mcc-installed-app.mcc-app-top.hu-travel-enabled .mn {
+  position:relative;left:var(--mcc-app-safe-left,env(safe-area-inset-left,0px));margin-inline:0;
+  width:calc(100% - var(--mcc-app-safe-left,env(safe-area-inset-left,0px)) - var(--mcc-app-safe-right,env(safe-area-inset-right,0px)));
+}
 html.mcc-installed-app.mcc-app-top.hu-travel-enabled.mn-world-on .mn {
-  position:relative;top:var(--mcc-app-safe-top,env(safe-area-inset-top,0px));
+  top:var(--mcc-app-safe-top,env(safe-area-inset-top,0px));
   height:calc(100dvh - var(--mcc-app-safe-top,env(safe-area-inset-top,0px)));min-height:0;
 }
 /* Other World destinations keep ordinary document scrolling. Only their
@@ -246,6 +250,8 @@ html.mcc-installed-app.mcc-app-top.hu-travel-enabled.mn-world-on .mn__top::befor
 .hu-travel-enabled.mn-world-on.wt-expanded .mn__world-home { position:fixed;inset:0 0 var(--mn-bar-clear,96px);z-index:30; }
 html.mcc-installed-app.mcc-app-top.hu-travel-enabled.mn-world-on.wt-expanded .mn__world-home {
   top:var(--mcc-app-safe-top,env(safe-area-inset-top,0px));
+  left:var(--mcc-app-safe-left,env(safe-area-inset-left,0px));
+  right:var(--mcc-app-safe-right,env(safe-area-inset-right,0px));
 }
 .hu-travel-enabled.mn-world-on.wt-expanded .mn__world-feed { visibility:hidden; }
 .hu-travel-enabled.mn-world-on.wt-expanded .mn__world-frame { inset:0;height:100%; }

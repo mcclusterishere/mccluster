@@ -731,11 +731,16 @@
     else if (d.type === "controls-position" && controls && open && !docked()) {
       if (d.top === null) { controls.style.removeProperty("top"); controls.style.removeProperty("right"); }
       else if (Number.isFinite(d.top) && d.top >= 65 && d.top <= root.innerHeight - 65) {
-        // In the installed app the retained frame begins below the status area.
-        var top = Math.round(d.top + frame.getBoundingClientRect().top);
+        // Translate frame-local coordinates once: the installed frame can
+        // begin below the status area and end before a landscape notch.
+        var frameRect = frame.getBoundingClientRect();
+        var top = Math.round(d.top + frameRect.top);
         if (top > root.innerHeight - 65) return;
         controls.style.top = top + "px";
-        if (Number.isFinite(d.right) && d.right >= 0 && d.right <= root.innerWidth - 52) controls.style.right = Math.round(d.right) + "px";
+        if (Number.isFinite(d.right) && d.right >= 0 && d.right <= root.innerWidth - 52) {
+          var right = Math.round(d.right + root.innerWidth - frameRect.right);
+          if (right >= 0 && right <= root.innerWidth - 52) controls.style.right = right + "px";
+        }
       }
     }
     else if (d.type === "music") closeWorld(true);
