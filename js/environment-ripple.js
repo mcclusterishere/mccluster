@@ -3,7 +3,8 @@
    (50 km below M5, rising with the magnitude to 300 km from M7) in about 2.4 s, and are gone. It is illustrative, never a
    recording of shaking, and says so ("Ripple is illustrative: not a recording of shaking"). When the camera is pushing in to the
    quake the rings wait for it to land (2.5 s at most), so the wave is seen from where the visitor arrives. Their clock starts
-   when that wait ends; a late primitive catches up to that clock instead of extending the animation.
+   when that wait ends; a late primitive catches up to that clock instead of extending the animation. The total lifetime stays
+   anchored to the selection (2.5 s wait plus 2.4 s rings); late landings receive only the lifetime still remaining.
 
    How it is drawn, and what it never does. One GroundPrimitive (an ellipse at the full radius, so it lies on the ground: the
    ellipsoid for a guest, the terrain where terrain is loaded) is built once per selection, asynchronously, with an original ring
@@ -85,10 +86,13 @@
       return new Cesium.Material({ fabric: { type: 'MccEnvironmentRipple', uniforms: { color: new Cesium.Color(0.93, 0.98, 1, 0.9), front1: -1, front2: -1, outline: still ? 1 : 0 }, source: SOURCE }, translucent: true });
     }
     function finish(c) { if (current === c) { clear(); onEnd(); } }
+    function deadline(c) {
+      return Math.min(c.scheduledAt + HOLD_MAX_MS, c.scheduledAt + WAIT_MAX_MS + DURATION_MS,
+        c.startedAt === null ? Infinity : c.startedAt + DURATION_MS);
+    }
     function endAtDeadline(c) {
       if (c.timer !== null) unschedule(c.timer);
-      const deadline = Math.min(c.scheduledAt + HOLD_MAX_MS, c.startedAt === null ? Infinity : c.startedAt + DURATION_MS);
-      c.timer = schedule(() => finish(c), Math.max(0, deadline - clock()));
+      c.timer = schedule(() => finish(c), Math.max(0, deadline(c) - clock()));
     }
     /* spec { id, lon, lat, mag, still, wait }: `still` draws the outline (reduced motion); `wait` holds the rings until go() */
     function start(spec) {
@@ -122,7 +126,7 @@
       c.step = () => {
         const t = clock();
         /* A rendering task can run before overdue timer tasks. Never draw past either deadline, even while still building. */
-        if (t - c.scheduledAt >= HOLD_MAX_MS || (c.startedAt !== null && done(t - c.startedAt))) { finish(c); return; }
+        if (t >= deadline(c)) { finish(c); return; }
         const u = prim.appearance && prim.appearance.material && prim.appearance.material.uniforms;
         if (!u || !prim.ready || c.phase === 'waiting') return;
         const f = fronts(t - c.startedAt);
@@ -138,7 +142,7 @@
     function go() {
       const c = current;
       if (!c || c.phase !== 'waiting') return;
-      if (clock() - c.scheduledAt >= HOLD_MAX_MS) { finish(c); return; }
+      if (clock() >= deadline(c)) { finish(c); return; }
       if (c.waitTimer !== null) { unschedule(c.waitTimer); c.waitTimer = null; }
       c.phase = 'rings';
       c.startedAt = clock();

@@ -178,6 +178,65 @@ test('the landing timer ends the rings after 2.4 s even when their primitive nev
   assert.equal(w.scene.preRender.size(), 0);
 });
 
+for (const delivery of ['timer', 'frame']) {
+  test(`a late landing keeps the selection deadline with ${delivery}-first cleanup`, () => {
+    const w = world();
+    const selectedAt = w.now();
+    w.ripple.start({ id: 'usgs:late-landing', lon: 1, lat: 2, mag: 5.5, wait: true });
+    /* The 2.5 s wait task itself arrives late, as it can behind a busy software-rendered frame. */
+    w.elapse(3016); w.flushTimers();
+    const landedAt = w.now();
+    assert.equal(w.ripple.state().ringsAt, landedAt, 'record the actual late landing');
+    w.built[0].ready = true; w.frame();
+    w.elapse(1883); w.frame();
+    assert.notEqual(w.ripple.state(), null, 'the remaining lifetime is still available before its deadline');
+    w.elapse(1);
+    if (delivery === 'timer') w.flushTimers(); else w.frame();
+    assert.equal(w.ripple.state(), null, 'a late landing cannot extend the 2.5 s wait plus 2.4 s animation lifetime');
+    assert.equal(w.ripple.last().startedAt, selectedAt);
+    assert.equal(w.ripple.last().ringsAt, landedAt, 'never backdate the late landing');
+    assert.equal(w.ripple.last().endedAt, w.now(), 'record actual cleanup');
+    assert.equal(w.ripple.last().endedAt - selectedAt, 4900);
+    assert.equal(w.ripple.last().endedAt - landedAt, 1884, 'only the remaining lifetime is available');
+    w.flushTimers(); w.frame();
+    assert.deepEqual(w.released, ['env-ripple']);
+    assert.deepEqual(w.ended, [w.now()], 'exactly one cleanup notification');
+    assert.equal(w.scene.preRender.size(), 0);
+    assert.equal(w.scene.primitives.list.length, 0);
+  });
+}
+
+test('a landing at the 2.5 s wait limit keeps the full 2.4 s ring sequence', () => {
+  const w = world();
+  w.ripple.start({ id: 'usgs:wait-limit', lon: 1, lat: 2, mag: 5.5, wait: true });
+  w.elapse(2500); w.ripple.go();
+  const landedAt = w.now();
+  w.built[0].ready = true; w.frame();
+  w.elapse(2399); w.flushTimers(); w.frame();
+  assert.notEqual(w.ripple.state(), null);
+  w.elapse(1); w.flushTimers();
+  assert.equal(w.ripple.state(), null);
+  assert.equal(w.ripple.last().endedAt - landedAt, 2400);
+  assert.deepEqual(w.released, ['env-ripple']);
+  assert.deepEqual(w.ended, [w.now()]);
+});
+
+test('a landing after the selection lifetime expires cannot start or resurrect the rings', () => {
+  const w = world();
+  w.ripple.start({ id: 'usgs:expired-landing', lon: 1, lat: 2, mag: 5.5, wait: true });
+  w.elapse(4901); w.ripple.go();
+  assert.equal(w.ripple.state(), null);
+  assert.equal(w.ripple.last().ringsAt, null, 'the expired animation never starts');
+  assert.equal(w.ripple.last().endedAt, w.now(), 'retain the actual late cleanup time');
+  assert.equal(w.ripple.last().endedAt - w.ripple.last().startedAt, 4901);
+  w.flushTimers(); w.frame(); w.ripple.go();
+  assert.equal(w.ripple.state(), null);
+  assert.deepEqual(w.released, ['env-ripple']);
+  assert.deepEqual(w.ended, [w.now()]);
+  assert.equal(w.scene.preRender.size(), 0);
+  assert.equal(w.scene.primitives.list.length, 0);
+});
+
 test('reduced motion: a still outline at the same radius, kept while selected, asking for no frame once built', () => {
   const w = world();
   const info = w.ripple.start({ id: 'usgs:a', lon: 1, lat: 2, mag: 7.2, still: true });
