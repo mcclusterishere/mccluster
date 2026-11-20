@@ -1,9 +1,0 @@
-# lane w4, head 027efd52bde35d4a90c26915140fed3ef98cd582, base 90ce7c4ce2
-# every trial account browser case, on the committed head (scratch reporting variant of scripts/e2e/game-hub-capsule.e2e.mjs: failures are printed per case instead of being fatal)
-# trial.mjs sha256: c940d76d1f1c8948e3d823bcd59772225d3e65895f71642ff7eb4638fe85f33e
-trial account case 1: PASS
-trial account case 2: PASS
-trial account case 3: PASS
-trial account case 4: PASS
-trial account case 5: PASS
-exit=0

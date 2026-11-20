@@ -1,5 +1,0 @@
-# Floors 1-6 detailed GLBs/reports are rebuilt by CI (consistency audit) and by
-# deploy-pages; they are not committed. B1, Level 7, facade, services and the
-# combined chassis remain committed + freshness-checked.
-equity-uprise-floor-0[1-6]-core-v2.glb
-equity-uprise-floor-0[1-6]-core-v2-report.json

@@ -1,6 +1,0 @@
-{
-  "_comment": [
-    "Migrations applied in production AFTER the latest production-schema-snapshot-<date>.json was captured, each with its dated receipt. scripts/test/production-schema-verifier.test.mjs lets supabase/production-ledger.json run ahead of the snapshot's ledger only for versions listed here, and fails for any listed version the latest snapshot already contains, so this list only shrinks: capturing a new snapshot retires its entries."
-  ],
-  "applied_after_snapshot": {}
-}

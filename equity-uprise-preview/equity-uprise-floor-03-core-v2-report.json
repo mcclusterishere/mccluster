@@ -1,0 +1,2068 @@
+{
+  "scene_id": "equity-uprise-floor-03",
+  "interior_layout": "floor-03-interior-layout-v3.json",
+  "furniture": {
+    "furniture_items": 49,
+    "furniture_types": 24,
+    "furniture_type_list": [
+      "armchair_lounge",
+      "banquette",
+      "bookcase_low",
+      "coffee_table",
+      "credenza",
+      "desk",
+      "desk_dual",
+      "desk_operator",
+      "flat_file",
+      "high_table",
+      "lateral_file",
+      "pinboard_mobile",
+      "planter_floor",
+      "planter_tall",
+      "planter_trough",
+      "rug",
+      "side_chair",
+      "stool_bar",
+      "stool_counter",
+      "table_rect",
+      "table_round",
+      "task_chair",
+      "tool_chest",
+      "workbench"
+    ],
+    "furniture_unique_meshes": 25,
+    "furniture_triangles_instanced": 9068,
+    "furniture_triangles_unique": 3736
+  },
+  "furniture_placements": [
+    {
+      "id": "F3-OPPORTUNITY-TABLE-01",
+      "type": "table_rect",
+      "category": "table",
+      "x": 36,
+      "y": 41,
+      "rot_deg": 0.0,
+      "w_ft": 16.0,
+      "d_ft": 4.0,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-OPPORTUNITY-TABLE-01",
+      "zone": "opportunity-exchange",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          28.0,
+          39.0
+        ],
+        [
+          44.0,
+          39.0
+        ],
+        [
+          44.0,
+          43.0
+        ],
+        [
+          28.0,
+          43.0
+        ]
+      ]
+    },
+    {
+      "id": "F3-OPPORTUNITY-CHAIR-01",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 29.5,
+      "y": 37.6,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-01",
+      "zone": "opportunity-exchange",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          28.4167,
+          36.5167
+        ],
+        [
+          30.5833,
+          36.5167
+        ],
+        [
+          30.5833,
+          38.6833
+        ],
+        [
+          28.4167,
+          38.6833
+        ]
+      ]
+    },
+    {
+      "id": "F3-OPPORTUNITY-CHAIR-02",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 36,
+      "y": 37.6,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-02",
+      "zone": "opportunity-exchange",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          34.9167,
+          36.5167
+        ],
+        [
+          37.0833,
+          36.5167
+        ],
+        [
+          37.0833,
+          38.6833
+        ],
+        [
+          34.9167,
+          38.6833
+        ]
+      ]
+    },
+    {
+      "id": "F3-OPPORTUNITY-CHAIR-03",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 42.5,
+      "y": 37.6,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-03",
+      "zone": "opportunity-exchange",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          41.4167,
+          36.5167
+        ],
+        [
+          43.5833,
+          36.5167
+        ],
+        [
+          43.5833,
+          38.6833
+        ],
+        [
+          41.4167,
+          38.6833
+        ]
+      ]
+    },
+    {
+      "id": "F3-OPPORTUNITY-CHAIR-04",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 29.5,
+      "y": 44.4,
+      "rot_deg": -180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-04",
+      "zone": "opportunity-exchange",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          30.5833,
+          45.4833
+        ],
+        [
+          28.4167,
+          45.4833
+        ],
+        [
+          28.4167,
+          43.3167
+        ],
+        [
+          30.5833,
+          43.3167
+        ]
+      ]
+    },
+    {
+      "id": "F3-OPPORTUNITY-CHAIR-05",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 36,
+      "y": 44.4,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-05",
+      "zone": "opportunity-exchange",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          37.0833,
+          45.4833
+        ],
+        [
+          34.9167,
+          45.4833
+        ],
+        [
+          34.9167,
+          43.3167
+        ],
+        [
+          37.0833,
+          43.3167
+        ]
+      ]
+    },
+    {
+      "id": "F3-OPPORTUNITY-CHAIR-06",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 42.5,
+      "y": 44.4,
+      "rot_deg": -180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-OPPORTUNITY-CHAIR-06",
+      "zone": "opportunity-exchange",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          43.5833,
+          45.4833
+        ],
+        [
+          41.4167,
+          45.4833
+        ],
+        [
+          41.4167,
+          43.3167
+        ],
+        [
+          43.5833,
+          43.3167
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-SOFA-01",
+      "type": "banquette",
+      "category": "seating",
+      "x": 6.6,
+      "y": 21.6,
+      "rot_deg": 0.0,
+      "w_ft": 7.0,
+      "d_ft": 2.1667,
+      "h_ft": 3.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-LOUNGE-SOFA-01",
+      "zone": "people-network-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24
+      },
+      "footprint": [
+        [
+          3.1,
+          20.5167
+        ],
+        [
+          10.1,
+          20.5167
+        ],
+        [
+          10.1,
+          22.6833
+        ],
+        [
+          3.1,
+          22.6833
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-BOOTH-02",
+      "type": "banquette",
+      "category": "seating",
+      "x": 6.6,
+      "y": 29.4,
+      "rot_deg": 180.0,
+      "w_ft": 7.0,
+      "d_ft": 2.1667,
+      "h_ft": 3.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "people-network-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24
+      },
+      "footprint": [
+        [
+          10.1,
+          30.4833
+        ],
+        [
+          3.1,
+          30.4833
+        ],
+        [
+          3.1,
+          28.3167
+        ],
+        [
+          10.1,
+          28.3167
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-TABLE-01",
+      "type": "table_rect",
+      "category": "table",
+      "x": 6.6,
+      "y": 25.5,
+      "rot_deg": 0.0,
+      "w_ft": 6.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-LOUNGE-TABLE-01",
+      "zone": "people-network-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          3.6,
+          24.25
+        ],
+        [
+          9.6,
+          24.25
+        ],
+        [
+          9.6,
+          26.75
+        ],
+        [
+          3.6,
+          26.75
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-HIGH-TABLE-01",
+      "type": "high_table",
+      "category": "table",
+      "x": 15.0,
+      "y": 25.5,
+      "rot_deg": 90.0,
+      "w_ft": 5.0,
+      "d_ft": 2.5,
+      "h_ft": 3.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "people-network-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          16.25,
+          23.0
+        ],
+        [
+          16.25,
+          28.0
+        ],
+        [
+          13.75,
+          28.0
+        ],
+        [
+          13.75,
+          23.0
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-CHAIR-01",
+      "type": "stool_bar",
+      "category": "seating",
+      "x": 13.0,
+      "y": 24.2,
+      "rot_deg": -90.0,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-LOUNGE-CHAIR-01",
+      "zone": "people-network-lounge",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          12.3333,
+          24.8667
+        ],
+        [
+          12.3333,
+          23.5333
+        ],
+        [
+          13.6667,
+          23.5333
+        ],
+        [
+          13.6667,
+          24.8667
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-CHAIR-02",
+      "type": "stool_bar",
+      "category": "seating",
+      "x": 13.0,
+      "y": 26.8,
+      "rot_deg": -90.0,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-LOUNGE-CHAIR-02",
+      "zone": "people-network-lounge",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          12.3333,
+          27.4667
+        ],
+        [
+          12.3333,
+          26.1333
+        ],
+        [
+          13.6667,
+          26.1333
+        ],
+        [
+          13.6667,
+          27.4667
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-STOOL-03",
+      "type": "stool_bar",
+      "category": "seating",
+      "x": 17.0,
+      "y": 24.2,
+      "rot_deg": 90.0,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "people-network-lounge",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          17.6667,
+          23.5333
+        ],
+        [
+          17.6667,
+          24.8667
+        ],
+        [
+          16.3333,
+          24.8667
+        ],
+        [
+          16.3333,
+          23.5333
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-STOOL-04",
+      "type": "stool_bar",
+      "category": "seating",
+      "x": 17.0,
+      "y": 26.8,
+      "rot_deg": 90.0,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "people-network-lounge",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          17.6667,
+          26.1333
+        ],
+        [
+          17.6667,
+          27.4667
+        ],
+        [
+          16.3333,
+          27.4667
+        ],
+        [
+          16.3333,
+          26.1333
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-RUG-01",
+      "type": "rug",
+      "category": "decor",
+      "x": 8.0,
+      "y": 25.5,
+      "rot_deg": 0.0,
+      "w_ft": 13.0,
+      "d_ft": 12.0,
+      "h_ft": 0.0417,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-LOUNGE-RUG-01",
+      "zone": "people-network-lounge",
+      "blocks": false,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          1.5,
+          19.5
+        ],
+        [
+          14.5,
+          19.5
+        ],
+        [
+          14.5,
+          31.5
+        ],
+        [
+          1.5,
+          31.5
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-PLANT-01",
+      "type": "planter_tall",
+      "category": "decor",
+      "x": 2.9,
+      "y": 33.0,
+      "rot_deg": 0.0,
+      "w_ft": 1.6667,
+      "d_ft": 1.6667,
+      "h_ft": 7.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-LOUNGE-PLANT-01",
+      "zone": "people-network-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          2.0667,
+          32.1667
+        ],
+        [
+          3.7333,
+          32.1667
+        ],
+        [
+          3.7333,
+          33.8333
+        ],
+        [
+          2.0667,
+          33.8333
+        ]
+      ]
+    },
+    {
+      "id": "F3-LOUNGE-PLANT-02",
+      "type": "planter_trough",
+      "category": "decor",
+      "x": 9.0,
+      "y": 18.9,
+      "rot_deg": 0.0,
+      "w_ft": 6.0,
+      "d_ft": 1.3333,
+      "h_ft": 2.8333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-LOUNGE-PLANT-02",
+      "zone": "people-network-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          6.0,
+          18.2333
+        ],
+        [
+          12.0,
+          18.2333
+        ],
+        [
+          12.0,
+          19.5667
+        ],
+        [
+          6.0,
+          19.5667
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-A-TABLE-01",
+      "type": "table_round",
+      "category": "table",
+      "x": 8.0,
+      "y": 9.6,
+      "rot_deg": 0.0,
+      "w_ft": 4.0,
+      "d_ft": 4.0,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-INTERVIEW-A-TABLE-01",
+      "zone": "interview-a",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          6.0,
+          7.6
+        ],
+        [
+          10.0,
+          7.6
+        ],
+        [
+          10.0,
+          11.6
+        ],
+        [
+          6.0,
+          11.6
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-A-CHAIR-01",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 5.0,
+      "y": 9.6,
+      "rot_deg": -90.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-INTERVIEW-A-CHAIR-01",
+      "zone": "interview-a",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          4.125,
+          10.3917
+        ],
+        [
+          4.125,
+          8.8083
+        ],
+        [
+          5.875,
+          8.8083
+        ],
+        [
+          5.875,
+          10.3917
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-A-CHAIR-02",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 11.0,
+      "y": 9.6,
+      "rot_deg": 90.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-INTERVIEW-A-CHAIR-02",
+      "zone": "interview-a",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          11.875,
+          8.8083
+        ],
+        [
+          11.875,
+          10.3917
+        ],
+        [
+          10.125,
+          10.3917
+        ],
+        [
+          10.125,
+          8.8083
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-A-CHAIR-03",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 8.0,
+      "y": 6.6,
+      "rot_deg": 0.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-INTERVIEW-A-CHAIR-03",
+      "zone": "interview-a",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          7.2083,
+          5.725
+        ],
+        [
+          8.7917,
+          5.725
+        ],
+        [
+          8.7917,
+          7.475
+        ],
+        [
+          7.2083,
+          7.475
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-A-CHAIR-04",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 8.0,
+      "y": 12.6,
+      "rot_deg": -180.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-INTERVIEW-A-CHAIR-04",
+      "zone": "interview-a",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          8.7917,
+          13.475
+        ],
+        [
+          7.2083,
+          13.475
+        ],
+        [
+          7.2083,
+          11.725
+        ],
+        [
+          8.7917,
+          11.725
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-A-CREDENZA-01",
+      "type": "credenza",
+      "category": "storage",
+      "x": 3.0,
+      "y": 10.0,
+      "rot_deg": -90.0,
+      "w_ft": 5.0,
+      "d_ft": 1.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "interview-a",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 30
+      },
+      "footprint": [
+        [
+          2.25,
+          12.5
+        ],
+        [
+          2.25,
+          7.5
+        ],
+        [
+          3.75,
+          7.5
+        ],
+        [
+          3.75,
+          12.5
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-B-TABLE-01",
+      "type": "coffee_table",
+      "category": "table",
+      "x": 21.0,
+      "y": 9.3,
+      "rot_deg": 0.0,
+      "w_ft": 4.0,
+      "d_ft": 2.0,
+      "h_ft": 1.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-INTERVIEW-B-TABLE-01",
+      "zone": "interview-b",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 18
+      },
+      "footprint": [
+        [
+          19.0,
+          8.3
+        ],
+        [
+          23.0,
+          8.3
+        ],
+        [
+          23.0,
+          10.3
+        ],
+        [
+          19.0,
+          10.3
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-B-CHAIR-01",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 19.5,
+      "y": 12.0,
+      "rot_deg": 180.0,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-INTERVIEW-B-CHAIR-01",
+      "zone": "interview-b",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          20.75,
+          13.2917
+        ],
+        [
+          18.25,
+          13.2917
+        ],
+        [
+          18.25,
+          10.7083
+        ],
+        [
+          20.75,
+          10.7083
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-B-CHAIR-02",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 22.5,
+      "y": 12.0,
+      "rot_deg": 180.0,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-INTERVIEW-B-CHAIR-02",
+      "zone": "interview-b",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          23.75,
+          13.2917
+        ],
+        [
+          21.25,
+          13.2917
+        ],
+        [
+          21.25,
+          10.7083
+        ],
+        [
+          23.75,
+          10.7083
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-B-CHAIR-03",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 19.5,
+      "y": 6.6,
+      "rot_deg": 0.0,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-INTERVIEW-B-CHAIR-03",
+      "zone": "interview-b",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          18.25,
+          5.3083
+        ],
+        [
+          20.75,
+          5.3083
+        ],
+        [
+          20.75,
+          7.8917
+        ],
+        [
+          18.25,
+          7.8917
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-B-CHAIR-04",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 22.5,
+      "y": 6.6,
+      "rot_deg": 0.0,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F3-INTERVIEW-B-CHAIR-04",
+      "zone": "interview-b",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          21.25,
+          5.3083
+        ],
+        [
+          23.75,
+          5.3083
+        ],
+        [
+          23.75,
+          7.8917
+        ],
+        [
+          21.25,
+          7.8917
+        ]
+      ]
+    },
+    {
+      "id": "F3-INTERVIEW-B-PLANT-01",
+      "type": "planter_floor",
+      "category": "decor",
+      "x": 26.6,
+      "y": 14.4,
+      "rot_deg": 0.0,
+      "w_ft": 2.0,
+      "d_ft": 2.0,
+      "h_ft": 5.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "interview-b",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          25.6,
+          13.4
+        ],
+        [
+          27.6,
+          13.4
+        ],
+        [
+          27.6,
+          15.4
+        ],
+        [
+          25.6,
+          15.4
+        ]
+      ]
+    },
+    {
+      "id": "F3-FIELD-PLAN-TABLE-01",
+      "type": "flat_file",
+      "category": "work",
+      "x": 50.5,
+      "y": 15.0,
+      "rot_deg": 0.0,
+      "w_ft": 6.0,
+      "d_ft": 3.5,
+      "h_ft": 3.1667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          47.5,
+          13.25
+        ],
+        [
+          53.5,
+          13.25
+        ],
+        [
+          53.5,
+          16.75
+        ],
+        [
+          47.5,
+          16.75
+        ]
+      ]
+    },
+    {
+      "id": "F3-FIELD-PLAN-STOOL-1",
+      "type": "stool_bar",
+      "category": "seating",
+      "x": 47.0,
+      "y": 15.0,
+      "rot_deg": -90.0,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          46.3333,
+          15.6667
+        ],
+        [
+          46.3333,
+          14.3333
+        ],
+        [
+          47.6667,
+          14.3333
+        ],
+        [
+          47.6667,
+          15.6667
+        ]
+      ]
+    },
+    {
+      "id": "F3-FIELD-PLAN-STOOL-2",
+      "type": "stool_bar",
+      "category": "seating",
+      "x": 54.0,
+      "y": 15.0,
+      "rot_deg": 90.0,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          54.6667,
+          14.3333
+        ],
+        [
+          54.6667,
+          15.6667
+        ],
+        [
+          53.3333,
+          15.6667
+        ],
+        [
+          53.3333,
+          14.3333
+        ]
+      ]
+    },
+    {
+      "id": "F3-FIELD-PLAN-STOOL-3",
+      "type": "stool_bar",
+      "category": "seating",
+      "x": 49.0,
+      "y": 18.4,
+      "rot_deg": -156.19,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          49.3408,
+          19.2791
+        ],
+        [
+          48.1209,
+          18.7408
+        ],
+        [
+          48.6592,
+          17.5209
+        ],
+        [
+          49.8791,
+          18.0592
+        ]
+      ]
+    },
+    {
+      "id": "F3-FIELD-PLAN-STOOL-4",
+      "type": "stool_bar",
+      "category": "seating",
+      "x": 52.0,
+      "y": 18.4,
+      "rot_deg": 156.19,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          52.8791,
+          18.7408
+        ],
+        [
+          51.6592,
+          19.2791
+        ],
+        [
+          51.1209,
+          18.0592
+        ],
+        [
+          52.3408,
+          17.5209
+        ]
+      ]
+    },
+    {
+      "id": "F3-FIELD-PLAN-BOARD-01",
+      "type": "pinboard_mobile",
+      "category": "presentation",
+      "x": 50.5,
+      "y": 22.6,
+      "rot_deg": -180.0,
+      "w_ft": 6.0,
+      "d_ft": 2.0,
+      "h_ft": 6.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 36
+      },
+      "footprint": [
+        [
+          53.5,
+          23.6
+        ],
+        [
+          47.5,
+          23.6
+        ],
+        [
+          47.5,
+          21.6
+        ],
+        [
+          53.5,
+          21.6
+        ]
+      ]
+    },
+    {
+      "id": "F3-DESK-NUSRAT-RAHMAN",
+      "type": "desk_dual",
+      "category": "work",
+      "x": 34.0,
+      "y": 2.25,
+      "rot_deg": 0.0,
+      "w_ft": 5.5,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          31.25,
+          1.0
+        ],
+        [
+          36.75,
+          1.0
+        ],
+        [
+          36.75,
+          3.5
+        ],
+        [
+          31.25,
+          3.5
+        ]
+      ]
+    },
+    {
+      "id": "F3-DESK-NUSRAT-RAHMAN-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 34.0,
+      "y": 4.9,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          35.0833,
+          5.9833
+        ],
+        [
+          32.9167,
+          5.9833
+        ],
+        [
+          32.9167,
+          3.8167
+        ],
+        [
+          35.0833,
+          3.8167
+        ]
+      ]
+    },
+    {
+      "id": "F3-DESK-ARJUN-MEHTA",
+      "type": "desk_dual",
+      "category": "work",
+      "x": 40.0,
+      "y": 2.25,
+      "rot_deg": 0.0,
+      "w_ft": 5.5,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          37.25,
+          1.0
+        ],
+        [
+          42.75,
+          1.0
+        ],
+        [
+          42.75,
+          3.5
+        ],
+        [
+          37.25,
+          3.5
+        ]
+      ]
+    },
+    {
+      "id": "F3-DESK-ARJUN-MEHTA-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 40.0,
+      "y": 4.9,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          41.0833,
+          5.9833
+        ],
+        [
+          38.9167,
+          5.9833
+        ],
+        [
+          38.9167,
+          3.8167
+        ],
+        [
+          41.0833,
+          3.8167
+        ]
+      ]
+    },
+    {
+      "id": "F3-DESK-RAFAEL-COSTA",
+      "type": "desk_operator",
+      "category": "work",
+      "x": 46.4,
+      "y": 2.25,
+      "rot_deg": 0.0,
+      "w_ft": 6.0,
+      "d_ft": 2.6667,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          43.4,
+          0.9167
+        ],
+        [
+          49.4,
+          0.9167
+        ],
+        [
+          49.4,
+          3.5833
+        ],
+        [
+          43.4,
+          3.5833
+        ]
+      ]
+    },
+    {
+      "id": "F3-DESK-RAFAEL-COSTA-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 46.4,
+      "y": 4.9,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          47.4833,
+          5.9833
+        ],
+        [
+          45.3167,
+          5.9833
+        ],
+        [
+          45.3167,
+          3.8167
+        ],
+        [
+          47.4833,
+          3.8167
+        ]
+      ]
+    },
+    {
+      "id": "F3-DESK-MCCLUSTER-FELLOWSHIP",
+      "type": "desk",
+      "category": "work",
+      "x": 57.6,
+      "y": 2.25,
+      "rot_deg": 0.0,
+      "w_ft": 5.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          55.1,
+          1.0
+        ],
+        [
+          60.1,
+          1.0
+        ],
+        [
+          60.1,
+          3.5
+        ],
+        [
+          55.1,
+          3.5
+        ]
+      ]
+    },
+    {
+      "id": "F3-DESK-MCCLUSTER-FELLOWSHIP-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 57.6,
+      "y": 4.9,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          58.6833,
+          5.9833
+        ],
+        [
+          56.5167,
+          5.9833
+        ],
+        [
+          56.5167,
+          3.8167
+        ],
+        [
+          58.6833,
+          3.8167
+        ]
+      ]
+    },
+    {
+      "id": "F3-BENCH-AYA-SHINODA",
+      "type": "workbench",
+      "category": "work",
+      "x": 68.95,
+      "y": 12.0,
+      "rot_deg": 90.0,
+      "w_ft": 8.0,
+      "d_ft": 2.5,
+      "h_ft": 3.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          70.2,
+          8.0
+        ],
+        [
+          70.2,
+          16.0
+        ],
+        [
+          67.7,
+          16.0
+        ],
+        [
+          67.7,
+          8.0
+        ]
+      ]
+    },
+    {
+      "id": "F3-BENCH-AYA-SHINODA-STOOL",
+      "type": "stool_counter",
+      "category": "seating",
+      "x": 66.3,
+      "y": 12.0,
+      "rot_deg": -90.0,
+      "w_ft": 1.3333,
+      "d_ft": 1.3333,
+      "h_ft": 2.1667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          65.6333,
+          12.6667
+        ],
+        [
+          65.6333,
+          11.3333
+        ],
+        [
+          66.9667,
+          11.3333
+        ],
+        [
+          66.9667,
+          12.6667
+        ]
+      ]
+    },
+    {
+      "id": "F3-FIELD-TOOL-CHEST-01",
+      "type": "tool_chest",
+      "category": "storage",
+      "x": 69.4,
+      "y": 19.6,
+      "rot_deg": 90.0,
+      "w_ft": 3.0,
+      "d_ft": 1.6667,
+      "h_ft": 3.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 36
+      },
+      "footprint": [
+        [
+          70.2333,
+          18.1
+        ],
+        [
+          70.2333,
+          21.1
+        ],
+        [
+          68.5667,
+          21.1
+        ],
+        [
+          68.5667,
+          18.1
+        ]
+      ]
+    },
+    {
+      "id": "F3-FIELD-FILE-01",
+      "type": "lateral_file",
+      "category": "storage",
+      "x": 69.6,
+      "y": 4.2,
+      "rot_deg": 90.0,
+      "w_ft": 3.0,
+      "d_ft": 1.6667,
+      "h_ft": 3.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 36
+      },
+      "footprint": [
+        [
+          70.4333,
+          2.7
+        ],
+        [
+          70.4333,
+          5.7
+        ],
+        [
+          68.7667,
+          5.7
+        ],
+        [
+          68.7667,
+          2.7
+        ]
+      ]
+    },
+    {
+      "id": "F3-FIELD-RACK-01",
+      "type": "bookcase_low",
+      "category": "storage",
+      "x": 63.0,
+      "y": 1.95,
+      "rot_deg": 0.0,
+      "w_ft": 5.0,
+      "d_ft": 1.3333,
+      "h_ft": 3.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "field-ops",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 30
+      },
+      "footprint": [
+        [
+          60.5,
+          1.2833
+        ],
+        [
+          65.5,
+          1.2833
+        ],
+        [
+          65.5,
+          2.6167
+        ],
+        [
+          60.5,
+          2.6167
+        ]
+      ]
+    }
+  ],
+  "brand_slots": [
+    "brand-slot::f3-feature-wall-identity"
+  ],
+  "triangles": 11548,
+  "version": "fellowship-network-hybrid-v1",
+  "mesh_count": 215,
+  "glb_bytes": 211916,
+  "sha256": "1fb6eb06b9e0f482af0370ab9c8741fc3fa5280ae0f14ceb5475aad961a6a492",
+  "extents_ft": [
+    72.0,
+    72.0,
+    13.999999999999998
+  ],
+  "inventory_records": 63,
+  "inventory_records_modeled": 63,
+  "inventory_records_missing": [],
+  "checks_total": 15,
+  "checks_passed": 15,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "72ft width",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "72ft depth",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "63 inventory records",
+      "passed": true,
+      "actual": 63,
+      "expected": 63
+    },
+    {
+      "name": "all inventory records modeled",
+      "passed": true,
+      "actual": 63,
+      "expected": 63
+    },
+    {
+      "name": "feature-wall identity is a brand slot",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "v3 layout realizes every inventory furniture record",
+      "passed": true,
+      "actual": [],
+      "expected": null
+    },
+    {
+      "name": "six opportunity chairs",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "two interview rooms",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "eight interview chairs",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "identity wall modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "people lounge modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "checkin modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "passenger interface",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "freight interface",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "both stair doors",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    }
+  ]
+}

@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0005_comments.
--- Executable reconstruction SQL: supabase/replay_migrations/0005_comments.sql
--- Intentionally no-op in production; this version is already registered live.

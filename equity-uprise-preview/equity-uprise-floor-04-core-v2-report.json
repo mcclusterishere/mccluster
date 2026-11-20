@@ -1,0 +1,2241 @@
+{
+  "scene_id": "equity-uprise-floor-04",
+  "interior_layout": "floor-04-interior-layout-v3.json",
+  "furniture": {
+    "furniture_items": 52,
+    "furniture_types": 21,
+    "furniture_type_list": [
+      "acoustic_screen",
+      "armchair_lounge",
+      "backdrop",
+      "bench_gallery",
+      "camera_tripod",
+      "coffee_table",
+      "credenza",
+      "desk",
+      "desk_dual",
+      "easel",
+      "light_stand",
+      "monitor_cart",
+      "pinboard_mobile",
+      "planter_tall",
+      "plinth_display",
+      "rug",
+      "sectional_l",
+      "side_chair",
+      "side_table",
+      "table_round",
+      "task_chair"
+    ],
+    "furniture_unique_meshes": 24,
+    "furniture_triangles_instanced": 7820,
+    "furniture_triangles_unique": 2664
+  },
+  "furniture_placements": [
+    {
+      "id": "F4-LISTENING-SECTIONAL-01",
+      "type": "sectional_l",
+      "category": "seating",
+      "x": 36.0,
+      "y": 37.0,
+      "rot_deg": 0.0,
+      "w_ft": 11.0,
+      "d_ft": 7.0,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-LISTENING-SECTIONAL-01",
+      "zone": "media-listening",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          30.5,
+          33.5
+        ],
+        [
+          41.5,
+          33.5
+        ],
+        [
+          41.5,
+          40.5
+        ],
+        [
+          30.5,
+          40.5
+        ]
+      ]
+    },
+    {
+      "id": "F4-LISTENING-CHAIR-01",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 28.6,
+      "y": 40.4,
+      "rot_deg": -32.54,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-LISTENING-CHAIR-01",
+      "zone": "media-listening",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          26.8515,
+          39.9835
+        ],
+        [
+          28.959,
+          38.6387
+        ],
+        [
+          30.3485,
+          40.8165
+        ],
+        [
+          28.241,
+          42.1613
+        ]
+      ]
+    },
+    {
+      "id": "F4-LISTENING-CHAIR-02",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 43.4,
+      "y": 40.4,
+      "rot_deg": 32.54,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-LISTENING-CHAIR-02",
+      "zone": "media-listening",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          43.041,
+          38.6387
+        ],
+        [
+          45.1485,
+          39.9835
+        ],
+        [
+          43.759,
+          42.1613
+        ],
+        [
+          41.6515,
+          40.8165
+        ]
+      ]
+    },
+    {
+      "id": "F4-LISTENING-TABLE-01",
+      "type": "coffee_table",
+      "category": "table",
+      "x": 36.5,
+      "y": 43.6,
+      "rot_deg": 0.0,
+      "w_ft": 5.0,
+      "d_ft": 2.1667,
+      "h_ft": 1.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-LISTENING-TABLE-01",
+      "zone": "media-listening",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 18
+      },
+      "footprint": [
+        [
+          34.0,
+          42.5167
+        ],
+        [
+          39.0,
+          42.5167
+        ],
+        [
+          39.0,
+          44.6833
+        ],
+        [
+          34.0,
+          44.6833
+        ]
+      ]
+    },
+    {
+      "id": "F4-LISTENING-RUG-01",
+      "type": "rug",
+      "category": "decor",
+      "x": 36.0,
+      "y": 39.5,
+      "rot_deg": 0.0,
+      "w_ft": 16.0,
+      "d_ft": 13.0,
+      "h_ft": 0.0417,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-LISTENING-RUG-01",
+      "zone": "media-listening",
+      "blocks": false,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          28.0,
+          33.0
+        ],
+        [
+          44.0,
+          33.0
+        ],
+        [
+          44.0,
+          46.0
+        ],
+        [
+          28.0,
+          46.0
+        ]
+      ]
+    },
+    {
+      "id": "F4-GALLERY-SOFA-01",
+      "type": "bench_gallery",
+      "category": "seating",
+      "x": 8.6,
+      "y": 27.6,
+      "rot_deg": 90.0,
+      "w_ft": 7.0,
+      "d_ft": 1.6667,
+      "h_ft": 1.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-GALLERY-SOFA-01",
+      "zone": "culture-gallery",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18,
+        "rear": 18
+      },
+      "footprint": [
+        [
+          9.4333,
+          24.1
+        ],
+        [
+          9.4333,
+          31.1
+        ],
+        [
+          7.7667,
+          31.1
+        ],
+        [
+          7.7667,
+          24.1
+        ]
+      ]
+    },
+    {
+      "id": "F4-GALLERY-CHAIR-01",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 14.6,
+      "y": 21.2,
+      "rot_deg": 63.07,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-GALLERY-CHAIR-01",
+      "zone": "culture-gallery",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          15.1855,
+          19.5006
+        ],
+        [
+          16.3177,
+          21.7295
+        ],
+        [
+          14.0145,
+          22.8994
+        ],
+        [
+          12.8823,
+          20.6705
+        ]
+      ]
+    },
+    {
+      "id": "F4-GALLERY-CHAIR-02",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 14.6,
+      "y": 34.0,
+      "rot_deg": 116.93,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-GALLERY-CHAIR-02",
+      "zone": "culture-gallery",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          16.3177,
+          33.4705
+        ],
+        [
+          15.1855,
+          35.6994
+        ],
+        [
+          12.8823,
+          34.5295
+        ],
+        [
+          14.0145,
+          32.3006
+        ]
+      ]
+    },
+    {
+      "id": "F4-GALLERY-TABLE-01",
+      "type": "side_table",
+      "category": "table",
+      "x": 14.6,
+      "y": 27.6,
+      "rot_deg": 0.0,
+      "w_ft": 1.5,
+      "d_ft": 1.5,
+      "h_ft": 1.6667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-GALLERY-TABLE-01",
+      "zone": "culture-gallery",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          13.85,
+          26.85
+        ],
+        [
+          15.35,
+          26.85
+        ],
+        [
+          15.35,
+          28.35
+        ],
+        [
+          13.85,
+          28.35
+        ]
+      ]
+    },
+    {
+      "id": "F4-GALLERY-PLINTH-01",
+      "type": "plinth_display",
+      "category": "display",
+      "x": 5.0,
+      "y": 19.8,
+      "rot_deg": 90.0,
+      "w_ft": 1.5,
+      "d_ft": 1.5,
+      "h_ft": 3.1667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "culture-gallery",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "all": 30
+      },
+      "footprint": [
+        [
+          5.75,
+          19.05
+        ],
+        [
+          5.75,
+          20.55
+        ],
+        [
+          4.25,
+          20.55
+        ],
+        [
+          4.25,
+          19.05
+        ]
+      ]
+    },
+    {
+      "id": "F4-GALLERY-PLINTH-02",
+      "type": "plinth_display",
+      "category": "display",
+      "x": 5.0,
+      "y": 35.4,
+      "rot_deg": 90.0,
+      "w_ft": 1.5,
+      "d_ft": 1.5,
+      "h_ft": 3.1667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "culture-gallery",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "all": 30
+      },
+      "footprint": [
+        [
+          5.75,
+          34.65
+        ],
+        [
+          5.75,
+          36.15
+        ],
+        [
+          4.25,
+          36.15
+        ],
+        [
+          4.25,
+          34.65
+        ]
+      ]
+    },
+    {
+      "id": "F4-GALLERY-PLINTH-03",
+      "type": "plinth_display",
+      "category": "display",
+      "x": 11.8,
+      "y": 19.8,
+      "rot_deg": 90.0,
+      "w_ft": 1.5,
+      "d_ft": 1.5,
+      "h_ft": 3.1667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "culture-gallery",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "all": 30
+      },
+      "footprint": [
+        [
+          12.55,
+          19.05
+        ],
+        [
+          12.55,
+          20.55
+        ],
+        [
+          11.05,
+          20.55
+        ],
+        [
+          11.05,
+          19.05
+        ]
+      ]
+    },
+    {
+      "id": "F4-GALLERY-PLINTH-04",
+      "type": "plinth_display",
+      "category": "display",
+      "x": 11.8,
+      "y": 35.4,
+      "rot_deg": 90.0,
+      "w_ft": 1.5,
+      "d_ft": 1.5,
+      "h_ft": 3.1667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "culture-gallery",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "all": 30
+      },
+      "footprint": [
+        [
+          12.55,
+          34.65
+        ],
+        [
+          12.55,
+          36.15
+        ],
+        [
+          11.05,
+          36.15
+        ],
+        [
+          11.05,
+          34.65
+        ]
+      ]
+    },
+    {
+      "id": "F4-GALLERY-RUG-01",
+      "type": "rug",
+      "category": "decor",
+      "x": 9.0,
+      "y": 27.6,
+      "rot_deg": 0.0,
+      "w_ft": 8.0,
+      "d_ft": 11.0,
+      "h_ft": 0.0417,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-GALLERY-RUG-01",
+      "zone": "culture-gallery",
+      "blocks": false,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          5.0,
+          22.1
+        ],
+        [
+          13.0,
+          22.1
+        ],
+        [
+          13.0,
+          33.1
+        ],
+        [
+          5.0,
+          33.1
+        ]
+      ]
+    },
+    {
+      "id": "F4-GALLERY-PLANT-01",
+      "type": "planter_tall",
+      "category": "decor",
+      "x": 16.6,
+      "y": 37.2,
+      "rot_deg": 0.0,
+      "w_ft": 1.6667,
+      "d_ft": 1.6667,
+      "h_ft": 7.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-GALLERY-PLANT-01",
+      "zone": "culture-gallery",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          15.7667,
+          36.3667
+        ],
+        [
+          17.4333,
+          36.3667
+        ],
+        [
+          17.4333,
+          38.0333
+        ],
+        [
+          15.7667,
+          38.0333
+        ]
+      ]
+    },
+    {
+      "id": "F4-RECORDING-WORKSURFACE-01",
+      "type": "desk",
+      "category": "work",
+      "x": 6.6,
+      "y": 7.0,
+      "rot_deg": 0.0,
+      "w_ft": 5.0,
+      "d_ft": 2.0,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-RECORDING-WORKSURFACE-01",
+      "zone": "creator-recording",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          4.1,
+          6.0
+        ],
+        [
+          9.1,
+          6.0
+        ],
+        [
+          9.1,
+          8.0
+        ],
+        [
+          4.1,
+          8.0
+        ]
+      ]
+    },
+    {
+      "id": "F4-RECORDING-CHAIR-01",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 6.6,
+      "y": 9.4,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-RECORDING-CHAIR-01",
+      "zone": "creator-recording",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          7.6833,
+          10.4833
+        ],
+        [
+          5.5167,
+          10.4833
+        ],
+        [
+          5.5167,
+          8.3167
+        ],
+        [
+          7.6833,
+          8.3167
+        ]
+      ]
+    },
+    {
+      "id": "F4-RECORDING-CHAIR-02",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 9.7,
+      "y": 10.2,
+      "rot_deg": 135.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-RECORDING-CHAIR-02",
+      "zone": "creator-recording",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          11.2321,
+          10.2
+        ],
+        [
+          9.7,
+          11.7321
+        ],
+        [
+          8.1679,
+          10.2
+        ],
+        [
+          9.7,
+          8.6679
+        ]
+      ]
+    },
+    {
+      "id": "F4-RECORDING-LIGHT-01",
+      "type": "light_stand",
+      "category": "media",
+      "x": 4.1,
+      "y": 13.3,
+      "rot_deg": -145.22,
+      "w_ft": 2.5,
+      "d_ft": 2.5,
+      "h_ft": 7.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "creator-recording",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          4.4137,
+          15.0397
+        ],
+        [
+          2.3603,
+          13.6137
+        ],
+        [
+          3.7863,
+          11.5603
+        ],
+        [
+          5.8397,
+          12.9863
+        ]
+      ]
+    },
+    {
+      "id": "F4-RECORDING-SCREEN-01",
+      "type": "acoustic_screen",
+      "category": "media",
+      "x": 10.4,
+      "y": 13.6,
+      "rot_deg": 135.74,
+      "w_ft": 4.0,
+      "d_ft": 1.6667,
+      "h_ft": 5.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "creator-recording",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          12.414,
+          12.801
+        ],
+        [
+          9.5492,
+          15.5926
+        ],
+        [
+          8.386,
+          14.399
+        ],
+        [
+          11.2508,
+          11.6074
+        ]
+      ]
+    },
+    {
+      "id": "F4-EDIT-DESK-01",
+      "type": "desk",
+      "category": "work",
+      "x": 23.0,
+      "y": 8.5,
+      "rot_deg": 0.0,
+      "w_ft": 8.0,
+      "d_ft": 3.0,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-EDIT-DESK-01",
+      "zone": "edit-suite",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          19.0,
+          7.0
+        ],
+        [
+          27.0,
+          7.0
+        ],
+        [
+          27.0,
+          10.0
+        ],
+        [
+          19.0,
+          10.0
+        ]
+      ]
+    },
+    {
+      "id": "F4-EDIT-CHAIR-01",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 23.0,
+      "y": 11.6,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-EDIT-CHAIR-01",
+      "zone": "edit-suite",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          24.0833,
+          12.6833
+        ],
+        [
+          21.9167,
+          12.6833
+        ],
+        [
+          21.9167,
+          10.5167
+        ],
+        [
+          24.0833,
+          10.5167
+        ]
+      ]
+    },
+    {
+      "id": "F4-EDIT-CHAIR-02",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 25.6,
+      "y": 11.6,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-EDIT-CHAIR-02",
+      "zone": "edit-suite",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          26.6833,
+          12.6833
+        ],
+        [
+          24.5167,
+          12.6833
+        ],
+        [
+          24.5167,
+          10.5167
+        ],
+        [
+          26.6833,
+          10.5167
+        ]
+      ]
+    },
+    {
+      "id": "F4-EDIT-VISITOR-CHAIR-01",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 19.3,
+      "y": 14.1,
+      "rot_deg": -146.55,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-EDIT-VISITOR-CHAIR-01",
+      "zone": "edit-suite",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          19.631,
+          15.8667
+        ],
+        [
+          17.5451,
+          14.4887
+        ],
+        [
+          18.969,
+          12.3333
+        ],
+        [
+          21.0549,
+          13.7113
+        ]
+      ]
+    },
+    {
+      "id": "F4-EDIT-VISITOR-CHAIR-02",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 29.4,
+      "y": 9.0,
+      "rot_deg": 94.47,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F4-EDIT-VISITOR-CHAIR-02",
+      "zone": "edit-suite",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          30.7852,
+          7.8545
+        ],
+        [
+          30.5903,
+          10.3469
+        ],
+        [
+          28.0148,
+          10.1455
+        ],
+        [
+          28.2097,
+          7.6531
+        ]
+      ]
+    },
+    {
+      "id": "F4-SET-BACKDROP-01",
+      "type": "backdrop",
+      "category": "media",
+      "x": 41.0,
+      "y": 4.2,
+      "rot_deg": 0.0,
+      "w_ft": 10.0,
+      "d_ft": 5.0,
+      "h_ft": 8.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "interview-set",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 72
+      },
+      "footprint": [
+        [
+          36.0,
+          1.7
+        ],
+        [
+          46.0,
+          1.7
+        ],
+        [
+          46.0,
+          6.7
+        ],
+        [
+          36.0,
+          6.7
+        ]
+      ]
+    },
+    {
+      "id": "F4-SET-CHAIR-01",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 39.1,
+      "y": 10.2,
+      "rot_deg": -61.61,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "interview-set",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          37.3693,
+          10.6855
+        ],
+        [
+          38.558,
+          8.4862
+        ],
+        [
+          40.8307,
+          9.7145
+        ],
+        [
+          39.642,
+          11.9138
+        ]
+      ]
+    },
+    {
+      "id": "F4-SET-CHAIR-02",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 42.9,
+      "y": 10.2,
+      "rot_deg": 61.61,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "interview-set",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          43.442,
+          8.4862
+        ],
+        [
+          44.6307,
+          10.6855
+        ],
+        [
+          42.358,
+          11.9138
+        ],
+        [
+          41.1693,
+          9.7145
+        ]
+      ]
+    },
+    {
+      "id": "F4-SET-SIDE-TABLE-01",
+      "type": "side_table",
+      "category": "table",
+      "x": 41.0,
+      "y": 7.9,
+      "rot_deg": 0.0,
+      "w_ft": 1.5,
+      "d_ft": 1.5,
+      "h_ft": 1.6667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "interview-set",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          40.25,
+          7.15
+        ],
+        [
+          41.75,
+          7.15
+        ],
+        [
+          41.75,
+          8.65
+        ],
+        [
+          40.25,
+          8.65
+        ]
+      ]
+    },
+    {
+      "id": "F4-SET-CAMERA-01",
+      "type": "camera_tripod",
+      "category": "media",
+      "x": 41.0,
+      "y": 17.6,
+      "rot_deg": -180.0,
+      "w_ft": 2.5,
+      "d_ft": 2.5,
+      "h_ft": 5.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "interview-set",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          42.25,
+          18.85
+        ],
+        [
+          39.75,
+          18.85
+        ],
+        [
+          39.75,
+          16.35
+        ],
+        [
+          42.25,
+          16.35
+        ]
+      ]
+    },
+    {
+      "id": "F4-SET-LIGHT-01",
+      "type": "light_stand",
+      "category": "media",
+      "x": 35.6,
+      "y": 13.0,
+      "rot_deg": -122.2,
+      "w_ft": 2.5,
+      "d_ft": 2.5,
+      "h_ft": 7.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "interview-set",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          35.2084,
+          14.7238
+        ],
+        [
+          33.8762,
+          12.6084
+        ],
+        [
+          35.9916,
+          11.2762
+        ],
+        [
+          37.3238,
+          13.3916
+        ]
+      ]
+    },
+    {
+      "id": "F4-SET-LIGHT-02",
+      "type": "light_stand",
+      "category": "media",
+      "x": 46.4,
+      "y": 13.0,
+      "rot_deg": 122.2,
+      "w_ft": 2.5,
+      "d_ft": 2.5,
+      "h_ft": 7.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "interview-set",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          48.1238,
+          12.6084
+        ],
+        [
+          46.7916,
+          14.7238
+        ],
+        [
+          44.6762,
+          13.3916
+        ],
+        [
+          46.0084,
+          11.2762
+        ]
+      ]
+    },
+    {
+      "id": "F4-SET-MONITOR-01",
+      "type": "monitor_cart",
+      "category": "presentation",
+      "x": 46.0,
+      "y": 20.4,
+      "rot_deg": 142.0,
+      "w_ft": 3.6667,
+      "d_ft": 2.5,
+      "h_ft": 6.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "interview-set",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 36
+      },
+      "footprint": [
+        [
+          48.2143,
+          20.2563
+        ],
+        [
+          45.3249,
+          22.5137
+        ],
+        [
+          43.7857,
+          20.5437
+        ],
+        [
+          46.6751,
+          18.2863
+        ]
+      ]
+    },
+    {
+      "id": "F4-DESK-PRIYA-SRISAWAT",
+      "type": "desk_dual",
+      "category": "work",
+      "x": 56.0,
+      "y": 2.25,
+      "rot_deg": 0.0,
+      "w_ft": 5.5,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          53.25,
+          1.0
+        ],
+        [
+          58.75,
+          1.0
+        ],
+        [
+          58.75,
+          3.5
+        ],
+        [
+          53.25,
+          3.5
+        ]
+      ]
+    },
+    {
+      "id": "F4-DESK-PRIYA-SRISAWAT-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 56.0,
+      "y": 4.9,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          57.0833,
+          5.9833
+        ],
+        [
+          54.9167,
+          5.9833
+        ],
+        [
+          54.9167,
+          3.8167
+        ],
+        [
+          57.0833,
+          3.8167
+        ]
+      ]
+    },
+    {
+      "id": "F4-DESK-MAREN-QUILL",
+      "type": "desk_dual",
+      "category": "work",
+      "x": 62.4,
+      "y": 2.25,
+      "rot_deg": 0.0,
+      "w_ft": 5.5,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          59.65,
+          1.0
+        ],
+        [
+          65.15,
+          1.0
+        ],
+        [
+          65.15,
+          3.5
+        ],
+        [
+          59.65,
+          3.5
+        ]
+      ]
+    },
+    {
+      "id": "F4-DESK-MAREN-QUILL-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 62.4,
+      "y": 4.9,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          63.4833,
+          5.9833
+        ],
+        [
+          61.3167,
+          5.9833
+        ],
+        [
+          61.3167,
+          3.8167
+        ],
+        [
+          63.4833,
+          3.8167
+        ]
+      ]
+    },
+    {
+      "id": "F4-BRAND-MOODBOARD-01",
+      "type": "pinboard_mobile",
+      "category": "presentation",
+      "x": 58.2,
+      "y": 15.7,
+      "rot_deg": -180.0,
+      "w_ft": 6.0,
+      "d_ft": 2.0,
+      "h_ft": 6.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 36
+      },
+      "footprint": [
+        [
+          61.2,
+          16.7
+        ],
+        [
+          55.2,
+          16.7
+        ],
+        [
+          55.2,
+          14.7
+        ],
+        [
+          61.2,
+          14.7
+        ]
+      ]
+    },
+    {
+      "id": "F4-BRAND-EASEL-01",
+      "type": "easel",
+      "category": "presentation",
+      "x": 53.4,
+      "y": 15.6,
+      "rot_deg": -168.23,
+      "w_ft": 2.3333,
+      "d_ft": 2.1667,
+      "h_ft": 5.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 30
+      },
+      "footprint": [
+        [
+          54.3212,
+          16.8985
+        ],
+        [
+          52.0369,
+          16.4226
+        ],
+        [
+          52.4788,
+          14.3015
+        ],
+        [
+          54.7631,
+          14.7774
+        ]
+      ]
+    },
+    {
+      "id": "F4-BRAND-REVIEW-TABLE-01",
+      "type": "table_round",
+      "category": "table",
+      "x": 65.8,
+      "y": 16.0,
+      "rot_deg": 0.0,
+      "w_ft": 3.5,
+      "d_ft": 3.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          64.05,
+          14.25
+        ],
+        [
+          67.55,
+          14.25
+        ],
+        [
+          67.55,
+          17.75
+        ],
+        [
+          64.05,
+          17.75
+        ]
+      ]
+    },
+    {
+      "id": "F4-BRAND-REVIEW-CHAIR-1",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 63.263,
+      "y": 15.077,
+      "rot_deg": -70.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          62.17,
+          15.5217
+        ],
+        [
+          62.7115,
+          14.0338
+        ],
+        [
+          64.356,
+          14.6323
+        ],
+        [
+          63.8145,
+          16.1202
+        ]
+      ]
+    },
+    {
+      "id": "F4-BRAND-REVIEW-CHAIR-2",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 68.337,
+      "y": 15.077,
+      "rot_deg": 70.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          68.8885,
+          14.0338
+        ],
+        [
+          69.43,
+          15.5217
+        ],
+        [
+          67.7855,
+          16.1202
+        ],
+        [
+          67.244,
+          14.6323
+        ]
+      ]
+    },
+    {
+      "id": "F4-BRAND-REVIEW-CHAIR-3",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 65.8,
+      "y": 18.7,
+      "rot_deg": -180.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          66.5917,
+          19.575
+        ],
+        [
+          65.0083,
+          19.575
+        ],
+        [
+          65.0083,
+          17.825
+        ],
+        [
+          66.5917,
+          17.825
+        ]
+      ]
+    },
+    {
+      "id": "F4-BRAND-STORAGE-01",
+      "type": "credenza",
+      "category": "storage",
+      "x": 70.3,
+      "y": 9.0,
+      "rot_deg": 90.0,
+      "w_ft": 6.0,
+      "d_ft": 1.6667,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 30
+      },
+      "footprint": [
+        [
+          71.1333,
+          6.0
+        ],
+        [
+          71.1333,
+          12.0
+        ],
+        [
+          69.4667,
+          12.0
+        ],
+        [
+          69.4667,
+          6.0
+        ]
+      ]
+    },
+    {
+      "id": "F4-PRODUCTION-DESK-01",
+      "type": "desk",
+      "category": "work",
+      "x": 55.5,
+      "y": 9.2,
+      "rot_deg": 0.0,
+      "w_ft": 6.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          52.5,
+          7.95
+        ],
+        [
+          58.5,
+          7.95
+        ],
+        [
+          58.5,
+          10.45
+        ],
+        [
+          52.5,
+          10.45
+        ]
+      ]
+    },
+    {
+      "id": "F4-PRODUCTION-DESK-01-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 55.5,
+      "y": 11.85,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          56.5833,
+          12.9333
+        ],
+        [
+          54.4167,
+          12.9333
+        ],
+        [
+          54.4167,
+          10.7667
+        ],
+        [
+          56.5833,
+          10.7667
+        ]
+      ]
+    },
+    {
+      "id": "F4-PRODUCTION-DESK-02",
+      "type": "desk",
+      "category": "work",
+      "x": 63.6,
+      "y": 9.2,
+      "rot_deg": 0.0,
+      "w_ft": 6.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          60.6,
+          7.95
+        ],
+        [
+          66.6,
+          7.95
+        ],
+        [
+          66.6,
+          10.45
+        ],
+        [
+          60.6,
+          10.45
+        ]
+      ]
+    },
+    {
+      "id": "F4-PRODUCTION-DESK-02-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 63.6,
+      "y": 11.85,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          64.6833,
+          12.9333
+        ],
+        [
+          62.5167,
+          12.9333
+        ],
+        [
+          62.5167,
+          10.7667
+        ],
+        [
+          64.6833,
+          10.7667
+        ]
+      ]
+    },
+    {
+      "id": "F4-PRODUCTION-DESK-03",
+      "type": "desk",
+      "category": "work",
+      "x": 55.5,
+      "y": 22.2,
+      "rot_deg": 0.0,
+      "w_ft": 6.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          52.5,
+          20.95
+        ],
+        [
+          58.5,
+          20.95
+        ],
+        [
+          58.5,
+          23.45
+        ],
+        [
+          52.5,
+          23.45
+        ]
+      ]
+    },
+    {
+      "id": "F4-PRODUCTION-DESK-03-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 55.5,
+      "y": 24.849999999999998,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          56.5833,
+          25.9333
+        ],
+        [
+          54.4167,
+          25.9333
+        ],
+        [
+          54.4167,
+          23.7667
+        ],
+        [
+          56.5833,
+          23.7667
+        ]
+      ]
+    },
+    {
+      "id": "F4-PRODUCTION-DESK-04",
+      "type": "desk",
+      "category": "work",
+      "x": 63.6,
+      "y": 22.2,
+      "rot_deg": 0.0,
+      "w_ft": 6.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          60.6,
+          20.95
+        ],
+        [
+          66.6,
+          20.95
+        ],
+        [
+          66.6,
+          23.45
+        ],
+        [
+          60.6,
+          23.45
+        ]
+      ]
+    },
+    {
+      "id": "F4-PRODUCTION-DESK-04-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 63.6,
+      "y": 24.849999999999998,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "brand-comms",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          64.6833,
+          25.9333
+        ],
+        [
+          62.5167,
+          25.9333
+        ],
+        [
+          62.5167,
+          23.7667
+        ],
+        [
+          64.6833,
+          23.7667
+        ]
+      ]
+    }
+  ],
+  "brand_slots": [
+    "brand-slot::f4-feature-wall-identity"
+  ],
+  "triangles": 11540,
+  "version": "media-culture-hybrid-v2",
+  "mesh_count": 287,
+  "glb_bytes": 247836,
+  "sha256": "ce5c00c886234ee6d428f948f8cf4d260eb73a1b14ef73b2d305e1f29506a48c",
+  "extents_ft": [
+    72.0,
+    72.0,
+    13.999999999999998
+  ],
+  "inventory_records": 68,
+  "inventory_records_modeled": 66,
+  "inventory_records_missing": [],
+  "inventory_records_replaced": {
+    "F4-RECORDING-MONITOR-01": [
+      "F4-USER-MON-03-01",
+      "F4-USER-MON-03-02"
+    ],
+    "F4-EDIT-DISPLAY-01": [
+      "F4-USER-MON-04-01",
+      "F4-USER-MON-04-02"
+    ]
+  },
+  "visual_completion_gate": "architectural-room-and-support-detail-v1",
+  "checks_total": 25,
+  "checks_passed": 25,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "72ft width",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "72ft depth",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "inventory summary matches records",
+      "passed": true,
+      "actual": 68,
+      "expected": 68
+    },
+    {
+      "name": "all inventory records modeled or explicitly replaced",
+      "passed": true,
+      "actual": 68,
+      "expected": 68
+    },
+    {
+      "name": "feature-wall identity is a brand slot",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "v3 layout realizes every inventory furniture record",
+      "passed": true,
+      "actual": [],
+      "expected": null
+    },
+    {
+      "name": "media wall modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "listening zone modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "six gallery frames",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "recording room modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "edit suite modeled with declared registered display",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "floor control modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "passenger interface",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "freight interface",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "both stair doors",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "media wall architectural surround",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "recording room detailed enclosure",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "edit suite detailed enclosure",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "superseded scenic displays absent",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "support rooms have doors",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "restrooms have mirrors and sinks",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "media storage visibly equipped",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "media IT rack visibly equipped",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "support and corridor ceilings modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "gallery and elevator-lobby ceilings modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    }
+  ]
+}

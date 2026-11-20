@@ -1,6 +1,0 @@
-Get-CimInstance : Access denied 
-At line:1 char:1
-+ Get-CimInstance Win32_VideoController | Select-Object Name,AdapterCom ...
-+ ~~~~~~~~~~~~~~~
-    + CategoryInfo          : PermissionDenied: (root\cimv2:Win32_VideoController:String) [Get-CimInstance], CimException
-    + FullyQualifiedErrorId : HRESULT 0x80041003,Microsoft.Management.Infrastructure.CimCmdlets.GetCimInstanceCommand
