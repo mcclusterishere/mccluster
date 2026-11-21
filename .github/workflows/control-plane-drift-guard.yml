@@ -5,6 +5,7 @@ on:
     paths:
       - "core/**"
       - "supabase/migrations/**"
+      - "supabase/pending/**"
       - "supabase/replay_migrations/**"
       - "scripts/supabase-local-reset-with-replay.sh"
       - "supabase/production-ledger.json"
@@ -18,6 +19,7 @@ on:
     paths:
       - "core/**"
       - "supabase/migrations/**"
+      - "supabase/pending/**"
       - "supabase/replay_migrations/**"
       - "scripts/supabase-local-reset-with-replay.sh"
       - "supabase/production-ledger.json"
