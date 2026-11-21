@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src https://zmnhbrjyhxzhkxmhkexs.supabase.co; base-uri 'none'; form-action 'none'">
+  <title>Email sign-in · McCluster</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#0b0b0c;color:#f4efe6;font:17px/1.6 system-ui,sans-serif;padding:24px}main{max-width:430px;margin:10vh auto}h1{line-height:1.2}input,button{display:block;width:100%;font:inherit;padding:14px;margin:12px 0;border-radius:10px;border:1px solid #777}button{background:#f4efe6;color:#0b0b0c;cursor:pointer}button:disabled{opacity:.6}a{color:#d9b96a}p{overflow-wrap:anywhere}[hidden]{display:none!important}
+  </style>
+</head>
+<body><main>
+  <h1>Email sign-in</h1>
+  <p>Use the email on your existing M Account. Open the email link in this same browser within 10 minutes. This does not change your password or access.</p>
+  <form id="request"><label for="email">Account email</label><input id="email" type="email" autocomplete="email" maxlength="254" required><button id="send" type="submit">Email me a sign-in link</button></form>
+  <button id="finish" type="button" hidden>Finish signing in</button>
+  <p id="status" role="status" aria-live="polite"></p>
+  <p><a id="password" href="/account.html?stay=1">Sign in with your password</a></p>
+  <noscript>JavaScript is needed to request and finish email sign-in.</noscript>
+</main><script type="module" src="/js/email-signin-page.mjs"></script></body>
+</html>
