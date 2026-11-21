@@ -8,6 +8,7 @@
    console error. Screenshots of each section at 390 and 1280 go to OUT.
    PLAYWRIGHT_DIR=<node_modules> [CHROMIUM_EXECUTABLE=…] node scripts/e2e/control-room-nav.e2e.mjs [outDir] */
 import {createRequire} from 'node:module';
+import {composeAdminLayout} from './support/admin-layout-hooks.mjs';
 import {readFile,mkdir} from 'node:fs/promises';
 import {join,extname,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -82,7 +83,7 @@ async function setup(viewport){
     if(u.origin===BASE){
       const rel=p==='/'?'index.html':decodeURIComponent(p.replace(/^\//,''));const file=resolve(ROOT,rel);
       if(!file.startsWith(resolve(ROOT)+sep))return route.abort();
-      try{return route.fulfill({body:await readFile(file),contentType:TYPES[extname(file)]||'application/octet-stream'});}catch{return route.fulfill({status:404,body:''});}
+      try{return route.fulfill({body:process.env.ADMIN_LAYOUT_HOOKS==='1'&&['.html','.js'].includes(extname(file))?composeAdminLayout(file,await readFile(file,'utf8')):await readFile(file),contentType:TYPES[extname(file)]||'application/octet-stream'});}catch{return route.fulfill({status:404,body:''});}
     }
     return route.abort();
   });
