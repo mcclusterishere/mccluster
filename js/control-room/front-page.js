@@ -19,10 +19,9 @@
      as shipped), and whether the public sees it at all: tucked away (visible:false), visitors get a holding screen and
      the page is noindex, while the house owner still sees it. A static site still serves its files: hidden, not secret.
    A change shows in the preview at once (a draft posted to the frame, which only a Control Room parent on this origin
-   can send) and reaches visitors only on Save. The page checks and bounds every value itself (frontConfig in
-   js/main.js), and what is saved is what the page applied, read back from the frame. Reset deletes the row: the page is
-   exactly as shipped again. Every save and reset is kept in site_content_history by the table's own trigger.
-   Words on the page keep their own editor: the pencil on the page (js/site-editor.js), in the preview or on the site. */
+   can send) and reaches visitors only on explicit Publish. The page checks and bounds every value itself (frontConfig in
+   js/main.js), and what is saved is what the page applied, read back from the frame. Reset stages the shipped page in the preview; Publish removes the override. Every save and reset is kept in site_content_history by the table's own trigger.
+   The pencil remains a separate immediate-publication workflow on the standalone page. It is disabled in this preview. */
 (function(){
   "use strict";
   window.CR=window.CR||{};
@@ -34,7 +33,7 @@
   var SONGS={antisocial:"Antisocial (as shipped)",whodidtheshoot:"Who Did The Shoot",vaunt:"Vaunt (acoustic)",runway:"Runway Walk",here:"Here","environmental-injustice":"Environmental Injustice"};
   var FEEL={smooth:{duration:1.2,touchLerp:0.1,label:"Smooth"},standard:{duration:0.85,touchLerp:0.14,label:"Standard (as shipped)"},quick:{duration:0.55,touchLerp:0.22,label:"Quick"}};
   var S={request:null,rerender:null,device:"phone",saved:null,savedAt:null,loaded:false,loading:false,loadError:null,
-    draft:null,applied:null,seq:0,acked:0,waiters:[],ready:false,dirty:false,saving:false,message:"",bad:false,frame:null,observer:null,viewAs:"owner"};
+    draft:null,applied:null,seq:0,acked:0,waiters:[],ready:false,dirty:false,saving:false,message:"",bad:false,frame:null,observer:null,viewAs:"owner",revision:null,history:[],publicationReady:false,publicationError:"",resetDraft:false,storedDraft:null,draftBase:null,epoch:0,sessionIdentity:undefined};
 
   /* the page's own rule for a tag (frontHref / frontConfig in js/main.js), so a refused tag is named here, in the form,
      instead of quietly vanishing from the preview; the page still checks everything itself */
@@ -53,22 +52,50 @@
   function clone(v){return v==null?v:JSON.parse(JSON.stringify(v));}
   function sb(){return window.MCC_SUPA||{};}
   function token(){return sb().token?sb().token():Promise.resolve(null);}
+  // Used only to discard local state on account changes, never to authorize.
+  // A refresh for the same subject must not erase the current editing session.
+  function sessionKey(t){
+    if(!t)return null;
+    try{var part=t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/");while(part.length%4)part+="=";
+      var sub=JSON.parse(atob(part)).sub;if(typeof sub==="string"&&sub)return sub;}catch(_){}
+    return t;
+  }
   function when(iso){if(!iso)return"";var d=new Date(iso);return isNaN(d)?"":d.toLocaleString();}
   function rpc(fn,body){
+    var epoch=S.epoch,used;
     return token().then(function(t){
       if(!t)throw new Error("Sign in to change the front page.");
+      used=sessionKey(t);if(S.sessionIdentity===undefined)S.sessionIdentity=used;
       return fetch(sb().url+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:sb().key,authorization:"Bearer "+t,"content-type":"application/json"},body:JSON.stringify(body)});
-    }).then(function(r){return r.text().then(function(t){if(!r.ok){var m="";try{m=(JSON.parse(t)||{}).message||"";}catch(_){}throw new Error(m||("HTTP "+r.status));}return t?JSON.parse(t):null;});});
+    }).then(function(r){return r.text().then(function(t){
+      if(!r.ok){var m="",code="";try{var b=JSON.parse(t)||{};m=b.message||"";code=b.code||"";}catch(_){}
+        var err=new Error(m||("HTTP "+r.status));err.code=code;throw err;}
+      return token().then(function(now){if(epoch!==S.epoch||sessionKey(now)!==used)throw new Error("Account changed. Reload this editor.");return t?JSON.parse(t):null;});
+    });});
   }
-  /* the saved row, read the way every visitor's page reads it (public read) */
+  function snapshot(data){
+    if(!data||data.schema!=="owner-front-publication/v1"||!/^\d+$/.test(data.revision)||!Array.isArray(data.history))throw new Error("Publication service returned an unsupported response.");
+    var value=data.value===null?null:JSON.parse(data.value);
+    if(value!==null&&(typeof value!=="object"||Array.isArray(value)))throw new Error("The live settings need repair before publication.");
+    S.saved=value;S.savedAt=data.updated_at;S.revision=data.revision;S.history=data.history;
+    S.storedDraft=data.draft||null;S.publicationReady=true;S.publicationError="";
+  }
   function load(){
     if(S.loading||!sb().url)return;
-    S.loading=true;S.loadError=null;
-    fetch(sb().url+"/rest/v1/site_content?select=value,updated_at&page=eq."+encodeURIComponent(PAGE)+"&slot=eq."+encodeURIComponent(SLOT)+"&limit=1",{headers:{apikey:sb().key},cache:"no-store"})
-      .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
-      .then(function(rows){var row=Array.isArray(rows)&&rows[0];S.saved=null;S.savedAt=null;if(row){try{S.saved=JSON.parse(row.value);}catch(_){S.saved=null;}S.savedAt=row.updated_at;}S.loaded=true;})
-      .catch(function(err){S.loadError=err;S.loaded=true;})
-      .then(function(){S.loading=false;seed();paintForm();});
+    var epoch=S.epoch;
+    S.loading=true;S.loadError=null;S.publicationReady=false;
+    rpc("owner_front_snapshot_v1",{}).then(function(data){if(epoch===S.epoch)snapshot(data);})
+      .catch(function(err){
+        if(epoch!==S.epoch)return;
+        S.publicationError=err.code==="PGRST202"||err.code==="42883"?
+          "Versioned publishing is not installed. Preview is available; publishing and history are unavailable.":
+          "Publishing and history could not be verified: "+err.message;
+        // Public read can seed a preview, but never authorizes a fallback write.
+        return fetch(sb().url+"/rest/v1/site_content?select=value,updated_at&page=eq."+encodeURIComponent(PAGE)+"&slot=eq."+encodeURIComponent(SLOT)+"&limit=1",{headers:{apikey:sb().key},cache:"no-store"})
+          .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
+          .then(function(rows){if(epoch!==S.epoch)return;var row=Array.isArray(rows)&&rows[0];S.saved=row?JSON.parse(row.value):null;S.savedAt=row?row.updated_at:null;});
+      }).catch(function(err){if(epoch===S.epoch)S.loadError=err;})
+      .then(function(){if(epoch!==S.epoch)return;S.loaded=true;S.loading=false;seed();paintForm();});
   }
 
   /* ---------- the frame ---------- */
@@ -79,11 +106,11 @@
   function preview(config,commit){
     var seq=++S.seq;
     post({type:"mcc:front-preview",seq:seq,commit:!!commit,config:config});
-    return new Promise(function(resolve){var t=setTimeout(function(){resolve(null);},4000);S.waiters.push({seq:seq,done:function(c){clearTimeout(t);resolve(c);}});});
+    return new Promise(function(resolve){var t=setTimeout(function(){S.waiters=S.waiters.filter(function(w){return w.seq!==seq;});resolve(null);},4000);S.waiters.push({seq:seq,done:function(c){clearTimeout(t);resolve(c);}});});
   }
   /* the draft starts as what visitors get now: the saved row (or none) as the page applies it */
   function seed(){
-    if(!S.ready||!S.loaded||S.draft)return;
+    if(!S.ready||!S.loaded||S.loadError||S.draft)return;
     preview(S.saved,true);
   }
   /* the frame keeps the device's real width (so the page lays out as it does there) and is scaled to the room it has.
@@ -149,17 +176,25 @@
         num("night.arrive","LOCK IN arrives at (% of the descent)",pct(f.night.arrive),50,86,1)+
       '</fieldset>';
   }
+  function historyHtml(){
+    if(!S.publicationReady)return "";
+    return '<details><summary>Published settings history (latest 25)</summary><p class="cro-meta">Choose a version to preview. It reaches visitors only after Publish. Use Save private draft to keep edits across reloads. Published history is unchanged until Publish.</p>'+
+      (S.history.length?S.history.map(function(h){return '<p><button type="button" class="cr-btn" data-cfp="history" data-revision="'+e(h.id)+'"'+(S.saving?' disabled':'')+'>Preview '+e(h.value===null?'shipped settings':'version '+h.id)+' · '+e(when(h.at))+'</button></p>';}).join(""):'<p>No published settings history yet.</p>')+'</details>';
+  }
   function statusHtml(){
-    var live=S.saved?"Live: your settings, saved "+when(S.savedAt):"Live: the page as shipped";
+    var live=!S.loaded?"Reading live settings…":S.loadError?"Live settings could not be read":S.saved?"Live: your settings, saved "+when(S.savedAt):"Live: the page as shipped";
     return'<p class="cro-meta" data-cfp-live>'+e(live)+(S.dirty?' · <b>unsaved changes, shown only in the preview</b>':"")+'</p>'+
+      (!S.publicationReady?'<p class="cro-note cro-note--bad" role="status">'+e(S.publicationError||'Checking publishing and history…')+'</p>':'<p class="cro-meta">Publishing ready · version '+e(S.revision)+'</p>')+
+      (S.storedDraft?'<p class="cro-meta">Private draft saved '+e(when(S.storedDraft.updated_at))+' · based on live version '+e(S.storedDraft.base_revision)+'. Resume it below.</p>':'')+
       (S.message?'<div class="cro-note'+(S.bad?" cro-note--bad":"")+'" role="status">'+e(S.message)+'</div>':"");
   }
   function paintForm(){
     var root=document.querySelector("[data-cfp-root]");if(!root)return;
-    var form=root.querySelector("[data-cfp-form]");if(form)form.innerHTML=formHtml();
+    var form=root.querySelector("[data-cfp-form]");if(form){form.innerHTML=formHtml();if(S.saving)form.querySelectorAll("input,select,button").forEach(function(x){x.disabled=true;});}
     var st=root.querySelector("[data-cfp-status]");if(st)st.innerHTML=statusHtml();
+    var hist=root.querySelector("[data-cfp-history]");if(hist)hist.innerHTML=historyHtml();
     var actions=root.querySelector("[data-cfp-actions]");
-    if(actions)actions.querySelectorAll("button").forEach(function(b){var a=b.getAttribute("data-cfp");b.disabled=S.saving||!S.draft||(a==="discard"&&!S.dirty)||(a==="save"&&(!S.dirty||badSpots(S.draft).length>0))||(a==="reset"&&!S.saved);});
+    if(actions)actions.querySelectorAll("button").forEach(function(b){var a=b.getAttribute("data-cfp");b.disabled=S.saving||(a!=="reload"&&!S.draft)||(a==="discard"&&!S.dirty)||((a==="save"||a==="save-draft")&&(!S.publicationReady||!S.dirty||badSpots(S.draft).length>0))||((a==="resume"||a==="clear-draft")&&(!S.publicationReady||!S.storedDraft))||(a==="rebase"&&(!S.publicationReady||!S.dirty||!S.draftBase||S.draftBase===S.revision))||(a==="reset"&&!S.saved);});
   }
   function render(){
     if(!S.loaded&&!S.loading)load();
@@ -172,23 +207,29 @@
           '<a class="cr-btn cr-btn--ghost" href="index.html" target="_blank" rel="noopener">Open the site ↗</a>'+
         '</div>'+
         '<div class="cfp-viewport"><div class="cfp-device" style="--cfp-w:'+d.w+'px;--cfp-h:'+d.h+'px"><iframe title="Your front page, as visitors get it" src="index.html" data-cfp-frame></iframe></div></div>'+
-        '<p class="cro-meta">This is index.html itself, the page every visitor gets. It opens in the cabin: look around, then scroll on. To change its words, use the pencil on the page.</p>'+
+        '<p class="cro-meta">This is index.html itself, the page every visitor gets. It opens in the cabin: look around, then scroll on. To edit page copy, open the site above. Its pencil publishes immediately and is disabled in this private settings preview.</p>'+
       '</section>'+
       '<section class="cro-card cfp-panel" aria-label="Front page settings">'+
         '<div data-cfp-status>'+statusHtml()+'</div>'+
         '<form class="cro-form cfp-form" data-cfp-form>'+formHtml()+'</form>'+
         '<div class="cro-actions cfp-actions" data-cfp-actions>'+
-          '<button type="button" class="cr-btn cr-btn--primary" data-cfp="save">Save to the live site</button>'+
+          '<button type="button" class="cr-btn" data-cfp="save-draft">Save private draft</button>'+
+          '<button type="button" class="cr-btn" data-cfp="resume">Resume saved draft</button>'+
+          '<button type="button" class="cr-btn" data-cfp="rebase">Use reviewed preview over loaded live version</button>'+
+          '<button type="button" class="cr-btn cr-btn--ghost" data-cfp="clear-draft">Delete saved draft</button>'+
+          '<button type="button" class="cr-btn cr-btn--primary" data-cfp="save">Publish preview to the live site</button>'+
           '<button type="button" class="cr-btn" data-cfp="discard">Discard changes</button>'+
-          '<button type="button" class="cr-btn cr-btn--ghost" data-cfp="reset">Reset to the page as shipped</button>'+
+          '<button type="button" class="cr-btn cr-btn--ghost" data-cfp="reset">Preview the page as shipped</button>'+
+          '<button type="button" class="cr-btn cr-btn--ghost" data-cfp="reload">Reload live settings (keep saved draft)</button>'+
         '</div>'+
+        '<div data-cfp-history>'+historyHtml()+'</div>'+
       '</section>'+
     '</div>';
   }
 
   /* one field changed: the draft takes it, the frame shows it */
   function setField(name,value,checked,commit){
-    var f=S.draft;if(!f)return;
+    var f=S.draft;if(!f||S.saving)return;S.resetDraft=false;
     var n=Number(value),parts=name.split(".");
     if(name==="feel"){if(FEEL[value]){f.scroll.duration=FEEL[value].duration;f.scroll.touchLerp=FEEL[value].touchLerp;}}
     else if(name==="visible"){f.visible=!!checked;if(f.visible&&S.viewAs!=="owner"){S.viewAs="owner";post({type:"mcc:front-view-as",as:"owner"});}}
@@ -208,6 +249,33 @@
     return v||null;
   }
   function act(a,btn){
+    if(S.saving)return;
+    if(a==="reload"){S.draftBase=null;S.draft=null;S.dirty=false;S.resetDraft=false;S.history=[];S.message="";S.loaded=false;load();paintForm();return;}
+    if(a==="rebase"){
+      if(!S.publicationReady||!S.draft||!S.dirty)return;
+      S.draftBase=S.revision;S.message="Preview will replace the loaded live settings only after Publish. Newer changes will still block publication.";S.bad=false;paintForm();return;
+    }
+    if(a==="clear-draft"){
+      if(!S.storedDraft||!S.publicationReady)return;
+      var clearEpoch=S.epoch;S.saving=true;paintForm();
+      rpc("owner_front_draft_discard_v1",{p_expected_revision:S.storedDraft.revision}).then(function(){
+        if(clearEpoch!==S.epoch)return;S.storedDraft=null;S.message="Saved draft deleted. The live page is unchanged.";
+      }).catch(function(err){if(clearEpoch===S.epoch){S.publicationReady=false;S.publicationError="Draft deletion was not confirmed. Reload to check its state.";S.message=err.message;}})
+        .then(function(){if(clearEpoch===S.epoch){S.saving=false;paintForm();}});return;
+    }
+    if(a==="history"||a==="reset"||a==="resume"){
+      if(!S.ready)return;
+      var old=null;S.draftBase=S.revision;
+      if(a==="resume"){if(!S.storedDraft)return;old=clone(S.storedDraft.config);S.draftBase=S.storedDraft.base_revision;}
+      if(a==="history"){
+        var h=S.history.find(function(x){return x.id===btn.getAttribute("data-revision");});if(!h)return;
+        try{old=h.value===null?null:JSON.parse(h.value);if(old!==null&&(typeof old!=="object"||Array.isArray(old)))throw new Error();}
+        catch(_){S.message="This historical value is not a settings document. Nothing was changed.";S.bad=true;paintForm();return;}
+      }
+      S.draft=null;S.resetDraft=old===null;S.dirty=true;
+      S.message=a==="resume"?"Saved draft resumed privately. Review it before publishing.":"Historical settings are only in the preview. Review them, then Publish to restore.";S.bad=false;
+      preview(old,true);paintForm();return;
+    }
     if(a==="viewas"){S.viewAs=S.viewAs==="visitor"?"owner":"visitor";post({type:"mcc:front-view-as",as:S.viewAs});paintForm();return;}
     if(a==="view"||a==="spot"){
       var v=lookingAt();
@@ -220,26 +288,36 @@
         var box=c?c.getBoundingClientRect():null,p=box&&v.pick?v.pick(box.left+box.width/2,box.top+box.height/2):null,s=S.draft.vr.spots[Number(btn.getAttribute("data-i"))];
         if(p&&s){s.yaw=p.yaw;s.pitch=p.pitch;}
       }
-      S.dirty=true;S.message="";preview(sendable(S.draft),true);return;
+      S.resetDraft=false;S.dirty=true;S.message="";preview(sendable(S.draft),true);return;
     }
-    if(a==="discard"){S.draft=null;S.dirty=false;S.message="";seed();paintForm();return;}
-    if(a==="save"&&badSpots(S.draft).length){S.message="Fix the tag marked below before saving: it would not reach the page.";S.bad=true;paintForm();return;}
-    if(a==="save"||a==="reset"){
-      S.saving=true;S.message=a==="save"?"Saving…":"Resetting…";S.bad=false;paintForm();
-      var value=null;
-      /* what is saved is what the page applied to this exact draft, never the raw form */
-      (a==="save"?preview(sendable(S.draft),true).then(function(c){if(!c)throw new Error("the preview did not answer; nothing was saved");value=c;
-          return rpc("site_content_set",{p_page:PAGE,p_slot:SLOT,p_value:JSON.stringify(value),p_kind:"text",p_original:"",p_fragile:false,p_via:"control-front-page"});})
-        :rpc("site_content_revert",{p_page:PAGE,p_slot:SLOT}))
-        .then(function(row){
-          S.saved=a==="save"?clone(value):null;S.savedAt=a==="save"?(row&&row.updated_at)||new Date().toISOString():null;S.dirty=false;
-          S.message=a==="save"?"Saved. Every visitor's front page now opens with these settings.":"Reset. The front page is exactly as shipped.";S.bad=false;
-          if(a==="reset"){S.draft=null;seed();}
-        })
-        .catch(function(err){S.message=(a==="save"?"Not saved: ":"Not reset: ")+(err.message||err);S.bad=true;})
-        .then(function(){S.saving=false;paintForm();});
+    if(a==="discard"){S.draftBase=null;S.resetDraft=false;S.draft=null;S.dirty=false;S.message="";seed();paintForm();return;}
+    if((a==="save"||a==="save-draft")&&badSpots(S.draft).length){S.message="Fix the tag marked below before saving: it would not reach the page.";S.bad=true;paintForm();return;}
+    if(a==="save"||a==="save-draft"){
+      if(!S.publicationReady||!S.dirty||!S.draft)return;
+      var epoch=S.epoch,expected=S.draftBase||S.revision,reset=S.resetDraft;
+      S.saving=true;S.message=a==="save-draft"?"Saving private draft…":"Publishing…";S.bad=false;paintForm();
+      preview(sendable(S.draft),true).then(function(c){
+        if(epoch!==S.epoch)throw new Error("Account changed. Reload this editor.");
+        if(!c)throw new Error("The preview did not answer; nothing was sent.");
+        if(a==="save-draft")return rpc("owner_front_draft_save_v1",{p_expected_revision:S.storedDraft?S.storedDraft.revision:null,p_base_revision:expected,p_value:reset?null:c});
+        return rpc("owner_front_publish_v1",{p_expected_revision:expected,p_value:reset?null:c});
+      }).then(function(data){
+        if(epoch!==S.epoch)return;
+        if(a==="save-draft"){S.storedDraft=data;S.message="Private draft saved. Visitors still see the published page.";S.bad=false;return;}
+        snapshot(data);S.draftBase=null;S.dirty=false;S.resetDraft=false;S.draft=null;seed();
+        S.message="Published. Visitors now receive these settings.";S.bad=false;
+      }).catch(function(err){
+        if(epoch!==S.epoch)return;
+        // Never blindly retry an uncertain response, or silently replace a newer
+        // live version. Preserve this tab's draft until the owner reloads.
+        S.publicationReady=false;
+        S.publicationError=err.code==="40001"?(a==="save-draft"?"The saved draft changed. Reload it before saving again.":"The live page changed. Reload it and review your changes again."):
+          (a==="save-draft"?"Draft saving was not confirmed. Reload to check the outcome before trying again.":"Publication was not confirmed. Reload live settings to check the outcome before trying again.");
+        S.message=err.message;S.bad=true;
+      }).then(function(){if(epoch===S.epoch){S.saving=false;paintForm();}});
     }
   }
+
   function onMessage(ev){
     if(ev.origin!==location.origin||!S.frame||ev.source!==frameWin()||!ev.data)return;
     if(ev.data.type==="mcc:front-ready"){
@@ -250,10 +328,11 @@
       paintForm();
     }else if(ev.data.type==="mcc:front-applied"){
       var c=ev.data.config&&typeof ev.data.config==="object"?ev.data.config:null;
-      if(!c)return;
-      S.applied=c;S.acked=Math.max(S.acked,Number(ev.data.seq)||0);
+      if(!c||S.loadError)return;
+      if(ev.data.seq===S.seq)S.applied=c;
+      S.acked=Math.max(S.acked,Number(ev.data.seq)||0);
       S.waiters=S.waiters.filter(function(w){if(w.seq===ev.data.seq){w.done(clone(c));return false;}return true;});
-      if(ev.data.commit&&ev.data.seq===S.seq){
+      if(ev.data.commit&&ev.data.seq===S.seq&&!S.loadError){
         var typed=S.draft?S.draft.vr.spots:null,next=clone(c);
         if(typed){var k=0;next.vr.spots=typed.map(function(s){if(spotProblem(s))return s;var p=c.vr.spots[k++]||s;return{yaw:p.yaw,pitch:p.pitch,label:s.label,href:s.href,blank:p.blank,urgent:!!s.urgent};});}
         S.draft=next;paintForm();
@@ -276,11 +355,24 @@
     form.addEventListener("submit",function(ev){ev.preventDefault();});
     form.addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("button[data-cfp]");if(b)act(b.getAttribute("data-cfp"),b);});
     host.querySelector("[data-cfp-actions]").addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("button[data-cfp]");if(b&&!b.disabled)act(b.getAttribute("data-cfp"),b);});
+    host.querySelector("[data-cfp-history]").addEventListener("click",function(ev){var b=ev.target.closest&&ev.target.closest("button[data-cfp]");if(b&&!b.disabled)act(b.getAttribute("data-cfp"),b);});
     paintForm();
+  }
+  function forget(){
+    S.epoch++;S.storedDraft=null;S.draftBase=null;S.saved=null;S.savedAt=null;S.draft=null;S.applied=null;S.history=[];S.revision=null;S.dirty=false;S.resetDraft=false;
+    S.publicationReady=false;S.publicationError="Account changed. Reload the editor to verify access.";
+    S.loaded=true;S.loading=false;S.saving=false;S.message="";S.loadError=new Error("Reload the editor after signing in.");
+    S.waiters.forEach(function(w){w.done(null);});S.waiters=[];post({type:"mcc:front-preview",seq:++S.seq,commit:false,config:null});paintForm();
+  }
+  function authChanged(){
+    token().then(function(t){var key=sessionKey(t);if(S.sessionIdentity!==undefined&&key!==S.sessionIdentity)forget();S.sessionIdentity=key;})
+      .catch(function(){forget();S.sessionIdentity=null;});
   }
   function init(opts){
     S.request=opts.request;S.rerender=opts.render;
     window.addEventListener("message",onMessage);
+    window.addEventListener("mcc:auth-changed",authChanged);
+    window.addEventListener("storage",function(ev){if(ev.key==="mccdb_session"||ev.key===null)authChanged();});
   }
   window.CR.frontPage={init:init,render:render,bind:bind,state:S,PAGE:PAGE,SLOT:SLOT};
 })();

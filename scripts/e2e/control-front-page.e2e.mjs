@@ -19,9 +19,9 @@ await mkdir(OUT,{recursive:true});
 const json=(route,body,status=200)=>route.fulfill({status,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(body)});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage','--autoplay-policy=no-user-gesture-required']});
 
-async function setup(viewport,{signedIn=true,owner=true,rows=[]}={}){
+async function setup(viewport,{signedIn=true,owner=true,rows=[],publication=true}={}){
   const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,ignoreHTTPSErrors:true,serviceWorkers:'block'});
-  const db={rows:rows.slice(),sets:[],reverts:[],collects:[]},errors=[];
+  const db={rows:rows.slice(),sets:[],reverts:[],collects:[],revision:0,history:[],publication,conflict:false},errors=[];
   await ctx.addInitScript(({signedIn,OWNER})=>{
     localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     if(!signedIn)return;
@@ -44,6 +44,20 @@ async function setup(viewport,{signedIn=true,owner=true,rows=[]}={}){
       if(p==='/rest/v1/site_content'){
         const page=(u.searchParams.get('page')||'').replace(/^eq\./,''),slot=(u.searchParams.get('slot')||'').replace(/^eq\./,'');
         return json(route,db.rows.filter(r=>r.page===page&&(!slot||r.slot===slot)).map(r=>({slot:r.slot,kind:r.kind,value:r.value,updated_at:r.updated_at})));
+      }
+      if(p==='/rest/v1/rpc/owner_front_snapshot_v1'||p==='/rest/v1/rpc/owner_front_publish_v1'){
+        if(!db.publication)return json(route,{code:'PGRST202',message:'function unavailable'},404);
+        if(!owner||!signedIn)return json(route,{code:'42501',message:'House administrator access required'},403);
+        if(p.endsWith('publish_v1')){
+          const b=req.postDataJSON();
+          if(db.conflict||b.p_expected_revision!==String(db.revision))return json(route,{code:'40001',message:'The live page changed. Reload it before publishing.'},409);
+          const row={page:'index.html',slot:'@front',kind:'text',value:JSON.stringify(b.p_value),updated_at:'2026-11-04T12:00:00Z'};
+          db.rows=db.rows.filter(r=>!(r.page==='index.html'&&r.slot==='@front'));
+          if(b.p_value===null)db.reverts.push(b);else {db.rows.push(row);db.sets.push({body:b,auth:req.headers().authorization||''});}
+          db.history.unshift({id:String(++db.revision),value:b.p_value===null?null:row.value,at:row.updated_at,via:'control-front-publication/v1'});
+        }
+        const row=db.rows.find(r=>r.page==='index.html'&&r.slot==='@front');
+        return json(route,{schema:'owner-front-publication/v1',revision:String(db.revision),value:row?.value??null,updated_at:row?.updated_at??null,history:db.history.slice(0,25)});
       }
       if(p==='/rest/v1/rpc/site_content_set'){
         const b=req.postDataJSON();db.sets.push({body:b,auth:req.headers().authorization||''});
@@ -80,6 +94,7 @@ const SAVED={scenes:{doors:false,night:false},scroll:{duration:1.2,touchLerp:0.1
   vr:{hold:false,spots:[{yaw:10,pitch:0,label:'<img src=x onerror="window.__pwned=1">Fly',href:'javascript:alert(1)'},{yaw:20,pitch:-5,label:'<b>Book</b> me',href:'hire.html'}]}};
 
 try{
+  if(!process.env.FRONT_OWNER_ONLY){
   /* 1. A VISITOR, NO ROW: the page is exactly as shipped */
   {
     const scope='visitor-shipped';const app=await setup({width:390,height:844},{signedIn:false});const {page,errors}=app;
@@ -157,6 +172,7 @@ try{
     check(scope,'no JavaScript errors',errors.length===0,errors);
     await app.ctx.close();
   }
+  }
   /* 3. THE OWNER: his M is the real front page, and Control → Create → Front page controls it */
   for(const vp of [{width:390,height:844},{width:1280,height:800}]){
     const scope='owner-'+vp.width;const app=await setup(vp,{});const {page,db,errors}=app;
@@ -168,7 +184,7 @@ try{
     await page.goto(BASE+'/control.html#create:front-page',{waitUntil:'domcontentloaded'});
     await page.waitForSelector('[data-cfp-root] iframe[data-cfp-frame]',{timeout:30000});
     const frame=()=>page.frames().find(f=>{try{return /\/index\.html$/.test(new URL(f.url()).pathname)}catch{return false}});   // a frame still loading has an empty URL
-    await page.waitForFunction(()=>document.querySelector('[data-cfp-form] [name="scenes.night"]'),null,{timeout:40000});
+    await page.waitForFunction(()=>document.querySelector('[data-cfp-form] [name="scenes.night"]'),null,{timeout:40000}).catch(async err=>{console.log('Editor state',await page.evaluate(()=>({loaded:CR.frontPage.state.loaded,ready:CR.frontPage.state.ready,error:CR.frontPage.state.loadError?.message,publicationError:CR.frontPage.state.publicationError,status:document.querySelector('[data-cfp-status]')?.textContent})));throw err;});
     let fr=frame();
     check(scope,'the preview is the real index.html, running its own scroll engine, opening in the cabin',!!fr&&await fr.evaluate(()=>!!(window.MCC_FRONT&&document.getElementById('cabin')&&document.querySelector('#work.command--plane')&&document.getElementById('pillars'))));
     check(scope,'it says the live page is as shipped',/Live: the page as shipped/.test(await page.textContent('[data-cfp-status]')));
@@ -280,21 +296,47 @@ try{
     await page.screenshot({path:join(OUT,`front-page-${vp.width}.png`),fullPage:vp.width<1000});
     /* save: what the page applied goes to site_content, with the owner's session */
     await page.click('[data-cfp="save"]');
-    await page.waitForFunction(()=>/Saved\./.test(document.querySelector('[data-cfp-status]').textContent),null,{timeout:10000}).catch(()=>{});
-    const set=db.sets[0],v=set?JSON.parse(set.body.p_value):null;
-    check(scope,'Save writes one row, index.html @front, with the owner\'s session',db.sets.length===1&&set.body.p_page==='index.html'&&set.body.p_slot==='@front'&&set.body.p_kind==='text'&&/^Bearer x\./.test(set.auth),set&&set.body);
+    await page.waitForFunction(()=>/Published\./.test(document.querySelector('[data-cfp-status]').textContent),null,{timeout:10000}).catch(()=>{});
+    const set=db.sets[0],v=set?set.body.p_value:null;
+    check(scope,'Save writes one row, index.html @front, with the owner\'s session',db.sets.length===1&&set.body.p_expected_revision==='0'&&/^Bearer x\./.test(set.auth),set&&set.body);
     check(scope,'what is saved is what the page applied: night off, Quick, tucked away, the cabin first with Antisocial, the taken view, the three tags with the fixed link',!!v&&v.scenes.night===false&&v.scroll.duration===0.55&&v.visible===false&&v.start==='cabin'&&v.song==='antisocial'&&v.vr.yaw===30&&v.vr.pitch===-10&&JSON.stringify(v.vr.spots.map(s=>s.href))==='["sites.html","hire.html","matthew-mccluster.html"]',v);
     check(scope,'the status says it is live',/Live: your settings, saved/.test(await page.textContent('[data-cfp-status]')));
     /* the analytics of the page in the frame stay off: the owner's look is not a visit */
     /* inside the frame the recorder is the do-nothing one (js/analytics.js mccControlPreview), and nothing was sent from it */
     const rec=await fr.evaluate(()=>({noop:typeof window.MCC_TRACK==='function'&&window.MCC_TRACK('page_view',{})===false,sense:!!window.MCC_SENSE}));
     check(scope,'the preview records no visit: the frame\'s recorder is off and sent nothing',rec.noop&&!rec.sense&&!db.collects.some(u=>/^framed:/.test(u)),{rec,collects:db.collects});
-    /* reset deletes the row */
+    /* reset stages only; explicit publish deletes the override */
     await page.click('[data-cfp="reset"]');
-    await page.waitForFunction(()=>/Reset\./.test(document.querySelector('[data-cfp-status]').textContent),null,{timeout:10000}).catch(()=>{});
-    check(scope,'Reset deletes the row and the page is as shipped again',db.reverts.length===1&&db.reverts[0].p_page==='index.html'&&db.reverts[0].p_slot==='@front'&&db.rows.length===0&&/Live: the page as shipped/.test(await page.textContent('[data-cfp-status]')));
+    await page.waitForFunction(()=>window.CR.frontPage.state.resetDraft&&window.CR.frontPage.state.draft,null,{timeout:10000});
+    check(scope,'Reset is preview only until explicit Publish',db.reverts.length===0&&db.rows.length===1);
+    await page.click('[data-cfp="save"]');
+    await page.waitForFunction(()=>/Published\./.test(document.querySelector('[data-cfp-status]').textContent)&&!window.CR.frontPage.state.saved,null,{timeout:10000});
+    check(scope,'Reset deletes the row and the page is as shipped again',db.reverts.length===1&&db.reverts[0].p_value===null&&db.reverts[0].p_expected_revision==='1'&&db.rows.length===0&&/Live: the page as shipped/.test(await page.textContent('[data-cfp-status]')));
     await fr.waitForFunction(()=>!document.getElementById('pillars').hasAttribute('data-front-off'),null,{timeout:8000}).catch(()=>{});
     check(scope,'and the preview shows every scene again, public',await fr.evaluate(()=>!document.querySelector('[data-front-off]')&&!document.documentElement.hasAttribute('data-front-tucked')&&!document.documentElement.hasAttribute('data-front-tucked-owner')));
+    await page.locator('[data-cfp-history] summary').click();
+    await page.locator('[data-cfp="history"][data-revision="1"]').click();
+    await page.waitForFunction(()=>window.CR.frontPage.state.draft?.visible===false,null,{timeout:8000});
+    check(scope,'history is private preview only',db.rows.length===0&&db.revision===2&&await page.locator('[data-cfp="save"]').isEnabled());
+    await page.click('[data-cfp="save"]');
+    await page.waitForFunction(()=>window.CR.frontPage.state.revision==='3',null,{timeout:8000});
+    check(scope,'restore publishes a new version without deleting history',db.history.length===3&&db.history[2].id==='1'&&JSON.parse(db.rows[0].value).visible===false);
+    await page.selectOption('[data-cfp-form] [name="song"]','here');
+    db.conflict=true;
+    await page.click('[data-cfp="save"]');
+    await page.waitForFunction(()=>!window.CR.frontPage.state.publicationReady,null,{timeout:8000});
+    check(scope,'conflict preserves draft and blocks blind retry',db.revision===3&&await page.inputValue('[name="song"]')==='here'&&await page.locator('[data-cfp="save"]').isDisabled()&&/live page changed/.test(await page.textContent('[data-cfp-status]')));
+    db.conflict=false;
+    await page.click('[data-cfp="reload"]');
+    await page.waitForFunction(()=>window.CR.frontPage.state.publicationReady&&window.CR.frontPage.state.draft&&!window.CR.frontPage.state.dirty,null,{timeout:8000});
+    check(scope,'reload reconciles the actual live version',await page.inputValue('[name="song"]')==='antisocial'&&db.revision===3);
+    db.publication=false;
+    await page.click('[data-cfp="reload"]');
+    await page.waitForFunction(()=>/not installed/.test(document.querySelector('[data-cfp-status]').textContent),null,{timeout:8000});
+    check(scope,'missing migration allows preview but no fallback write',await page.locator('[data-cfp="save"]').isDisabled()&&db.revision===3);
+    await page.evaluate(()=>{localStorage.removeItem('mccdb_session');window.dispatchEvent(new CustomEvent('mcc:auth-changed',{detail:{signed_in:false}}));});
+    await page.waitForFunction(()=>window.CR.frontPage.state.draft===null);
+    check(scope,'account change clears private history and draft',await page.evaluate(()=>window.CR.frontPage.state.history.length===0&&window.CR.frontPage.state.draft===null&&!window.CR.frontPage.state.publicationReady));
     check(scope,'no JavaScript errors',errors.length===0,errors);
     await app.ctx.close();
   }
