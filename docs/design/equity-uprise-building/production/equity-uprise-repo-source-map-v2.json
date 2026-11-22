@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 767,
+  "candidate_count": 768,
   "capability_source_count": 104,
-  "support_only_count": 663,
+  "support_only_count": 664,
   "entries": [
     {
       "path": ".cursorrules",
@@ -577,6 +577,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+    },
+    {
+      "path": "core/test/helpers/owner-workspace-db.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Disposable owner-workspace SQL test fixture references the shared eu_is_admin authorization helper while verifying owner membership, enrollment and lease rules. It defines no building program or spatial capability and is not a production backend."
     },
     {
       "path": "create.html",

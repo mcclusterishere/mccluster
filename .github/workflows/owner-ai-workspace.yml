@@ -22,6 +22,7 @@ on:
       - 'scripts/test/control-ai-browser.test.mjs'
       - 'scripts/test/support/control-room-page.mjs'
       - 'scripts/e2e/control-ai-browser.e2e.mjs'
+      - 'scripts/e2e/owner-ai-staging.e2e.mjs'
       - 'docs/control-plane/MACOS-NODE.md'
   workflow_dispatch: {}
 
@@ -42,10 +43,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      # This is a local JavaScript module, never a hosted database connection.
-      PGLITE_MODULE_PATH: ${{ runner.temp }}/owner-ai-test-deps/node_modules/@electric-sql/pglite/dist/index.js
       MCCLUSTER_DEVICE_SQL_TESTS_REQUIRED: '1'
     steps:
+      - name: Set isolated runtime paths on the allocated runner
+        run: |
+          # Runner paths exist at step execution, not during job-env evaluation.
+          printf 'PGLITE_MODULE_PATH=%s/owner-ai-test-deps/node_modules/@electric-sql/pglite/dist/index.js\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
@@ -116,11 +119,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      PLAYWRIGHT_DIR: ${{ runner.temp }}/owner-ai-browser-deps/node_modules
       # Existing vision/browser compatibility fixture. It does not claim a
       # deployed owner backend, real authentication or physical device proof.
       CORE_OWNER_AI_WORKSPACE_ENABLED: '0'
     steps:
+      - name: Set browser fixture paths on the allocated runner
+        run: |
+          printf 'PLAYWRIGHT_DIR=%s/owner-ai-browser-deps/node_modules\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
@@ -162,11 +167,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     env:
-      PGLITE_MODULE_PATH: ${{ runner.temp }}/owner-ai-stage-deps/node_modules/@electric-sql/pglite/dist/index.js
-      MCCLUSTER_STAGING_STATE_FILE: ${{ runner.temp }}/owner-ai-private-state.json
-      MCCLUSTER_STAGING_TUNNEL_BIN: ${{ runner.temp }}/cloudflared-2026.11.1
       MCCLUSTER_STAGING_LIFETIME_MS: '2100000'
     steps:
+      - name: Set private staging paths on the allocated runner
+        run: |
+          printf 'PGLITE_MODULE_PATH=%s/owner-ai-stage-deps/node_modules/@electric-sql/pglite/dist/index.js\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          printf 'PLAYWRIGHT_DIR=%s/owner-ai-stage-deps/node_modules\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          printf 'MCCLUSTER_STAGING_STATE_FILE=%s/owner-ai-private-state.json\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          printf 'MCCLUSTER_STAGING_TUNNEL_BIN=%s/cloudflared-2026.11.1\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
@@ -176,7 +184,7 @@ jobs:
       - name: Prepare pinned disposable runtime and verified tunnel binary
         run: |
           umask 077
-          npm install --prefix "$RUNNER_TEMP/owner-ai-stage-deps" --ignore-scripts --no-audit --no-fund --no-save @electric-sql/pglite@0.5.17
+          npm install --prefix "$RUNNER_TEMP/owner-ai-stage-deps" --ignore-scripts --no-audit --no-fund --no-save @electric-sql/pglite@0.5.17 playwright@1.57.0
           node - <<'NODE'
           const fs = require('node:fs');
           const path = require('node:path');
@@ -184,7 +192,11 @@ jobs:
           const version = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version;
           if (version !== '0.5.17') throw new Error('Unexpected disposable database runtime version.');
           for (const file of ['dist/index.js', 'dist/contrib/pgcrypto.js']) fs.accessSync(path.join(root, file));
+          const browserVersion = JSON.parse(fs.readFileSync(path.join(process.env.PLAYWRIGHT_DIR, 'playwright/package.json'), 'utf8')).version;
+          if (browserVersion !== '1.57.0') throw new Error('Unexpected staging browser runtime version.');
           NODE
+          # Install before the protected stage's lifetime starts.
+          node "$PLAYWRIGHT_DIR/playwright/cli.js" install --with-deps chromium
           curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 --connect-timeout 15 --max-time 180 \
             https://github.com/cloudflare/cloudflared/releases/download/2026.11.1/cloudflared-linux-amd64 \
             --output "$MCCLUSTER_STAGING_TUNNEL_BIN"
@@ -274,14 +286,31 @@ jobs:
           path: ${{ runner.temp }}/owner-ai-stage-access.enc
           if-no-files-found: error
           retention-days: 1
-      - name: Keep the isolated walkthrough available for thirty minutes
+      - name: Exercise the real protected staging UI and responsive layouts
+        timeout-minutes: 12
+        run: node scripts/e2e/owner-ai-staging.e2e.mjs "$RUNNER_TEMP/owner-ai-live-proof"
+      - name: Save only sanitized live UI report and screenshots
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: owner-ai-live-proof-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/owner-ai-live-proof/report.json
+            ${{ runner.temp }}/owner-ai-live-proof/*.png
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Keep the isolated walkthrough available within its review lifetime
+        if: ${{ !cancelled() && steps.stage.outcome == 'success' }}
         timeout-minutes: 31
         run: |
           stage_pid="$(cat "$RUNNER_TEMP/owner-ai-stage.pid")"
           cleanup_stage() { kill -TERM "$stage_pid" 2>/dev/null || true; }
           trap cleanup_stage EXIT
           trap 'exit 130' INT TERM
-          stage_deadline=$((SECONDS + 1800))
+          # A browser-test failure remains visible in the job while the verified
+          # stage stays available for inspection. Never outlive its expiry.
+          stage_seconds="$(node -e 'const fs=require("node:fs");const state=JSON.parse(fs.readFileSync(process.env.MCCLUSTER_STAGING_STATE_FILE,"utf8"));const remaining=Math.floor((Date.parse(state.expires_at)-Date.now()-5000)/1000);if(!Number.isFinite(remaining))process.exit(1);process.stdout.write(String(Math.max(0,Math.min(1800,remaining))));')"
+          stage_deadline=$((SECONDS + stage_seconds))
           while ((SECONDS < stage_deadline)); do
             if ! kill -0 "$stage_pid" 2>/dev/null; then
               printf '%s\n' 'The temporary staging runtime ended before the review window closed.' >&2

@@ -29,7 +29,7 @@ individual Mac's passing 8B benchmark never makes a pair ready.
   recovery instruction before installation writes anything. The installer downloads nothing itself.
 - A reviewed checkout or packaged runtime from this candidate. The setup command must target that source,
   not an older production checkout that does not contain the installer.
-- An authenticated house-owner session in Control → AI → Devices. Wi-Fi is sufficient for an individual
+- An authenticated house-owner session in Control Room → Home → Ask McCluster → Devices. Wi-Fi is sufficient for an individual
   worker's outbound HTTPS connection to Core.
 
 Every Mac uses the existing implementation ID `qwen3.8b.local`, the OVH input/output schemas, one active
@@ -39,7 +39,7 @@ and quantization, not inferred from its display name.
 
 ## Add this device
 
-1. Sign in as the owner, open **AI → Devices → Add this device**, choose macOS, and name the Mac.
+1. Sign in as the owner, open **Home → Ask McCluster → Devices → Add this device**, and name the Mac.
 2. Save the nonsecret setup JSON. It contains the organization, coordinator origin, enrollment ID, device
    name and fixed model configuration. It must contain no enrollment credential. The installer rejects
    unknown JSON fields, including a credential or token field.
@@ -83,8 +83,9 @@ and quantization, not inferred from its display name.
 5. The installer enrolls using the existing device agent, then runs its 4K model benchmark. It publishes
    no model capability until that benchmark passes. On success it starts the user-owned adapter and agent
    and reports that the test passed. Return to Devices to observe the signed heartbeat and model readiness.
-6. Send a short chat pinned to this Mac. Confirm the completed run's actual device ID, model digest and
-   status. This network job is separate evidence from a local benchmark.
+6. Send a short chat pinned to this Mac. Confirm the completed run's actual device, model name and
+   status. The local benchmark receipt records the model digest. This network job is separate evidence
+   from that local benchmark.
 
 If the connection fails after enrollment, use Devices to inspect the pending/connected entry before
 requesting a fresh credential. An expired or consumed credential cannot be reused. The installer preserves
