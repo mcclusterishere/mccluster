@@ -166,6 +166,15 @@ Target steady state:
 
 ## Repo rule for every coding AI
 
+The owner workspace extends the existing resident transcript and job queue;
+see [OWNER-AI-WORKSPACE.md](OWNER-AI-WORKSPACE.md). Device-pinned model rounds,
+streamed lease progress, Stop and saved-answer review are fenced by the durable
+resident job's current lease and attempt. The disposable staging harness uses
+actual repository SQL with synthetic identities/model text and enforced
+loopback egress. It is test infrastructure, not another production memory or
+auth backend. Production migrations and feature activation remain approval
+gated.
+
 Before building AI features, read this file plus `AGENTS.md`, `docs/control-plane/CAPABILITY-REGISTRY.md`, and the relevant model instruction file. Never create a shadow memory database, parallel CRM, second orchestration backend, provider-specific permanent workflow vocabulary, or raw-chat directory in public Git.
 
 When an adapter exists, use the canonical context and capability planes. When one does not exist, implement an adapter/binding that targets those canonical contracts rather than inventing another backend.

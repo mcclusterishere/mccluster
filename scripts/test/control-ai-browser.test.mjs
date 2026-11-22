@@ -128,8 +128,9 @@ test("(b) the durable turn carries images and allow_browser only when set and de
   assert.deepEqual(plain(h.aiChatRequest("what is this", [{ base64: JPEG_B64 }], now.chatImages)), { messages: [{ role: "user", content: "what is this", images: [JPEG_B64] }], temperature: 0.2 });
   assert.throws(() => h.aiChatRequest("what is this", [{ base64: JPEG_B64 }], old.chatImages), /text model/, "an image never goes to an ai.chat that does not declare it");
   /* the page's submit uses the helper with the Core's word, and the attachments are cleared after the submit is built */
-  assert.match(control, /callCoreTool\("core\.ai\.turn\.submit", aiTurnSubmission\(\{/);
-  assert.match(control, /\}, attachments, allowBrowser, support\)\)\.then\(/);
+  assert.match(control, /var submission = aiTurnSubmission\(\{/);
+  assert.match(control, /\}, attachments, allowBrowser, support\);/);
+  assert.match(control, /callCoreTool\("core\.ai\.turn\.submit", submission\)\.then\(/);
   assert.match(control, /state\.aiAttachments = \[\];/);
   assert.match(control, /callCoreTool\("ai\.chat", aiChatRequest\(aiText, \[\]\)\)/, "the Command Center keeps the prompt form (it has no attach control)");
 });
@@ -269,7 +270,7 @@ test("(e) the composer and the stylesheet: attach input, 44 px button, switch, m
   assert.match(block, /\.cr-ai-attach__btn\{[^}]*min-height:44px/);
   assert.match(block, /\.cr-ai-browser summary\{[^}]*min-height:44px/);
   assert.match(block, /\.cr-ai-browser figure img\{[^}]*max-width:100%/);
-  assert.equal((css.match(/@media[^{]*max-width/g) || []).length, 8, "the file's max-width allowance (mobile-rule.test.mjs) did not grow");
+  assert.ok((css.match(/@media[^{]*max-width/g) || []).length <= 8, "the file's max-width allowance (mobile-rule.test.mjs) did not grow");
 });
 
 test("(f) the controls follow what the running Core declares, read from the tool list the page already holds", () => {
@@ -320,7 +321,8 @@ test("(g) the composer reads the Core's word before it renders a control or send
   assert.match(render, /var support = aiCoreWord\(\);/);
   const attach = render.indexOf('data-action="ai-attach"'), guard = render.indexOf("support.turnImages");
   assert.ok(guard >= 0 && guard < attach, "the attach control is drawn only behind the Core's word");
-  assert.match(render, /aiCapabilityLine\("images", support\)/);
-  assert.match(render, /aiBrowserOwner\(state\)\) browserSwitch = aiCapabilityLine\("browser", support\)/);
+  assert.match(render, /aiCapabilityLine\(['"]images['"], support\)/);
+  assert.match(render, /if \(!aiBrowserOwner\(state\)\) return/, "the entire owner workspace is gated before its browser controls are rendered");
+  assert.match(render, /else browserSwitch = aiCapabilityLine\(['"]browser['"], support\)/);
   assert.match(css, /\.cr-ai-capability\{[^}]*overflow-wrap:anywhere/, "the line wraps at phone width");
 });

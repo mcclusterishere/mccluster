@@ -376,7 +376,7 @@ test('AI replies show what the resident turn checked on the web', async()=>{
   assert.doesNotMatch(grounded,/javascript:/);
   assert.match(render({metadata:{current_research:{attempted:true,ok:false,sources:[]}}}),/Web check failed · answer may be out of date/);
   assert.match(render({metadata:{current_research:{attempted:true,ok:true,sources:[]}}}),/no results · answer may be out of date/);
-  assert.match(js,/\(mine \? "" : aiResearchHtml\(message\)\)/,'assistant messages render their research line');
+  assert.match(js,/\(mine \? ['"]{2} : (?:aiErrorHtml\(message\) \+ )?aiResearchHtml\(message\)/,'assistant messages render their research line');
 });
 
 test('Work carries the post-sale graph as stored records, with honest payment verification', async()=>{

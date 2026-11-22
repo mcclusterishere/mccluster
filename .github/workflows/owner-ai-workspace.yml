@@ -1,0 +1,296 @@
+name: Owner AI workspace
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/owner-ai-workspace.yml'
+      - 'control.html'
+      - 'css/control-room-v2.css'
+      - 'js/control-room-v2.js'
+      - 'js/control-room/owner-ai.js'
+      - 'core/**'
+      - 'workers/mccluster-mcp/src/mcp.js'
+      - 'supabase/**/*compute*.sql'
+      - 'supabase/migrations/*resident_ai*.sql'
+      - 'supabase/migrations/*operator_local_ai*.sql'
+      - 'scripts/owner-*.mjs'
+      - 'scripts/staging/owner-ai/**'
+      - 'scripts/package-macos-worker.mjs'
+      - 'scripts/test/owner-ai-*.test.mjs'
+      - 'scripts/test/macos-*.test.mjs'
+      - 'scripts/test/control-ai-browser.test.mjs'
+      - 'scripts/test/support/control-room-page.mjs'
+      - 'scripts/e2e/control-ai-browser.e2e.mjs'
+      - 'docs/control-plane/MACOS-NODE.md'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: owner-ai-workspace-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  isolated-runtime:
+    name: Isolated SQL, signed workers and Mac package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      # This is a local JavaScript module, never a hosted database connection.
+      PGLITE_MODULE_PATH: ${{ runner.temp }}/owner-ai-test-deps/node_modules/@electric-sql/pglite/dist/index.js
+      MCCLUSTER_DEVICE_SQL_TESTS_REQUIRED: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - name: Install and verify pinned disposable PostgreSQL runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/owner-ai-test-deps" --ignore-scripts --no-audit --no-fund --no-save @electric-sql/pglite@0.5.17
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const root = path.join(process.env.RUNNER_TEMP, 'owner-ai-test-deps/node_modules/@electric-sql/pglite');
+          const version = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version;
+          if (version !== '0.5.17') throw new Error(`Expected PGlite 0.5.17, found ${version}`);
+          for (const file of ['dist/index.js', 'dist/contrib/pgcrypto.js']) fs.accessSync(path.join(root, file));
+          NODE
+      - name: Execute pending SQL only in disposable databases
+        run: |
+          node scripts/owner-device-sql-check.mjs
+          node scripts/owner-workspace-sql-check.mjs
+      - name: Prove signed gateway and owner workflow with real worker processes
+        run: |
+          node --test --test-concurrency=1 \
+            core/test/owner-device-gateway.test.mjs \
+            core/test/owner-workspace-e2e.test.mjs \
+            core/test/simulated-mac-worker.test.mjs
+      - name: Check owner auth, routing, recovery, streaming and pair boundaries
+        run: |
+          node --test \
+            core/test/owner-devices.test.mjs \
+            core/test/owner-routing.test.mjs \
+            core/test/owner-workspace-recovery.test.mjs \
+            core/test/owner-stream.test.mjs \
+            core/test/ollama-cancellation.test.mjs \
+            core/test/node-agent-stream-lifecycle.test.mjs \
+            core/test/compute-lease-runtime.test.mjs \
+            core/test/node-agent-config.test.mjs \
+            core/test/pair-adapter.test.mjs
+      - name: Check the shipped owner interface and installer
+        run: |
+          node --test \
+            scripts/test/owner-ai-presentation.test.mjs \
+            scripts/test/owner-ai-workspace.test.mjs \
+            scripts/test/owner-ai-staging-page.test.mjs \
+            scripts/test/control-ai-browser.test.mjs \
+            scripts/test/control-surface.test.mjs \
+            scripts/test/control-room-authority.test.mjs \
+            scripts/test/macos-node.test.mjs \
+            scripts/test/macos-package.test.mjs
+      - name: Build reviewable Mac worker artifact
+        run: |
+          node scripts/package-macos-worker.mjs
+          cd downloads
+          sha256sum --check mccluster-macos-worker.sha256
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: mccluster-macos-worker-${{ github.sha }}
+          path: |
+            downloads/mccluster-macos-worker.zip
+            downloads/mccluster-macos-worker.sha256
+            downloads/mccluster-macos-worker.manifest.json
+          if-no-files-found: error
+          retention-days: 14
+
+  interface-browser:
+    name: Control Room in Chromium, synthetic transport
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PLAYWRIGHT_DIR: ${{ runner.temp }}/owner-ai-browser-deps/node_modules
+      # Existing vision/browser compatibility fixture. It does not claim a
+      # deployed owner backend, real authentication or physical device proof.
+      CORE_OWNER_AI_WORKSPACE_ENABLED: '0'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - name: Install pinned browser fixture outside the repository
+        run: |
+          npm install --prefix "$RUNNER_TEMP/owner-ai-browser-deps" --ignore-scripts --no-audit --no-fund --no-save playwright@1.57.0
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const version = JSON.parse(fs.readFileSync(path.join(process.env.PLAYWRIGHT_DIR, 'playwright/package.json'), 'utf8')).version;
+          if (version !== '1.57.0') throw new Error(`Expected Playwright 1.57.0, found ${version}`);
+          NODE
+          node "$PLAYWRIGHT_DIR/playwright/cli.js" install --with-deps chromium
+      - name: Render the actual responsive Control Room against synthetic transport
+        run: node scripts/e2e/control-ai-browser.e2e.mjs "$RUNNER_TEMP/owner-ai-browser-proof"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: owner-ai-browser-fixture-${{ github.run_id }}
+          path: ${{ runner.temp }}/owner-ai-browser-proof
+          if-no-files-found: warn
+          retention-days: 7
+
+  # TEMPORARY owner-authorized review environment. Remove this job when the
+  # walkthrough closes. Other PRs never start a public listener. The artifact
+  # contains only this disposable stage's access code, never worker identities.
+  temporary-staging:
+    name: Temporary protected owner workspace
+    needs: isolated-runtime
+    if: >-
+      ${{ github.repository == 'mcclusterishere/mccluster' &&
+          github.event.repository.private == true &&
+          (github.event_name == 'workflow_dispatch' ||
+           (github.event_name == 'pull_request' &&
+            github.event.pull_request.head.repo.full_name == github.repository &&
+            startsWith(github.head_ref, 'codex/owner-ai-workspace-'))) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      PGLITE_MODULE_PATH: ${{ runner.temp }}/owner-ai-stage-deps/node_modules/@electric-sql/pglite/dist/index.js
+      MCCLUSTER_STAGING_STATE_FILE: ${{ runner.temp }}/owner-ai-private-state.json
+      MCCLUSTER_STAGING_TUNNEL_BIN: ${{ runner.temp }}/cloudflared-2026.11.1
+      MCCLUSTER_STAGING_LIFETIME_MS: '2100000'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - name: Prepare pinned disposable runtime and verified tunnel binary
+        run: |
+          umask 077
+          npm install --prefix "$RUNNER_TEMP/owner-ai-stage-deps" --ignore-scripts --no-audit --no-fund --no-save @electric-sql/pglite@0.5.17
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const root = path.join(process.env.RUNNER_TEMP, 'owner-ai-stage-deps/node_modules/@electric-sql/pglite');
+          const version = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version;
+          if (version !== '0.5.17') throw new Error('Unexpected disposable database runtime version.');
+          for (const file of ['dist/index.js', 'dist/contrib/pgcrypto.js']) fs.accessSync(path.join(root, file));
+          NODE
+          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 --connect-timeout 15 --max-time 180 \
+            https://github.com/cloudflare/cloudflared/releases/download/2026.11.1/cloudflared-linux-amd64 \
+            --output "$MCCLUSTER_STAGING_TUNNEL_BIN"
+          printf '%s  %s\n' '97bb3b02d23a5980fc9c15a1a270e692da1923f103f920d5b16d4931d5ab55e7' "$MCCLUSTER_STAGING_TUNNEL_BIN" | sha256sum --check --status
+          chmod 700 "$MCCLUSTER_STAGING_TUNNEL_BIN"
+          node scripts/package-macos-worker.mjs
+      - name: Start guarded isolated Core and verify its public gate
+        id: stage
+        run: |
+          umask 077
+          stage_ready=0
+          stage_pid=''
+          cleanup_failed_start() {
+            if [[ "$stage_ready" != 1 && -n "$stage_pid" ]]; then
+              kill -TERM "$stage_pid" 2>/dev/null || true
+            fi
+          }
+          trap cleanup_failed_start EXIT
+          trap 'exit 130' INT TERM
+          node --import "$GITHUB_WORKSPACE/core/test/helpers/loopback-only.mjs" scripts/owner-workspace-staging.mjs \
+            > "$RUNNER_TEMP/owner-ai-stage-private.log" 2>&1 &
+          stage_pid=$!
+          printf '%s\n' "$stage_pid" > "$RUNNER_TEMP/owner-ai-stage.pid"
+          STAGING_CHILD_PID="$stage_pid" node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { setTimeout as delay } from 'node:timers/promises';
+          const until = Date.now() + 180_000;
+          let ready = false;
+          while (Date.now() < until) {
+            try { process.kill(Number(process.env.STAGING_CHILD_PID), 0); }
+            catch { throw new Error('The isolated staging process exited before its public gate was ready.'); }
+            let state;
+            try { state = JSON.parse(fs.readFileSync(process.env.MCCLUSTER_STAGING_STATE_FILE, 'utf8')); } catch {}
+            if (state?.url && /^https:\/\/[a-z0-9]+(?:-[a-z0-9]+){2,}\.trycloudflare\.com$/.test(state.url) &&
+                /^[A-Za-z0-9_-]{32}$/.test(state.access_code || '') && Date.parse(state.expires_at) > Date.now()) {
+              // Whitelist this artifact's fields. No JWT, enrollment token,
+              // device identity, service key or log is copied into it.
+              fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'owner-ai-stage-access.json'), JSON.stringify({
+                url: state.url, access_code: state.access_code, expires_at: state.expires_at,
+                purpose: 'Temporary isolated review; synthetic accounts and model output.',
+              }, null, 2), { mode: 0o600 });
+              fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'owner-ai-stage.url'), state.url, { mode: 0o600 });
+              ready = true; break;
+            }
+            await delay(1000);
+          }
+          if (!ready) throw new Error('No verified temporary staging hostname appeared within three minutes.');
+          NODE
+          stage_url="$(cat "$RUNNER_TEMP/owner-ai-stage.url")"
+          curl --fail --silent --show-error --proto '=https' --connect-timeout 10 --max-time 15 \
+            --retry 10 --retry-delay 2 --retry-connrefused --retry-max-time 60 \
+            "$stage_url/control.html" --output "$RUNNER_TEMP/owner-ai-stage-gate.html"
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const html = fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'owner-ai-stage-gate.html'), 'utf8');
+          if (!html.includes('Temporary access') && !html.includes('temporary access code')) throw new Error('Public staging did not serve its access-code gate.');
+          if (html.includes('owner-ai-isolated-runtime')) throw new Error('The private workspace was served without the access-code gate.');
+          NODE
+          for stage_route in /v1/status /v1/core/mcp /rest/v1/ops_ai_messages /downloads/mccluster-macos-worker.zip; do
+            stage_status="$(curl --silent --show-error --proto '=https' --connect-timeout 10 --max-time 15 \
+              --output /dev/null --write-out '%{http_code}' "$stage_url$stage_route")"
+            if [[ "$stage_status" != 401 ]]; then
+              printf '%s\n' 'The public staging access gate refused its authorization check.' >&2
+              exit 1
+            fi
+          done
+          # Only the nonsecret URL enters the public job summary.
+          printf '%s\n' "$stage_url" >> "$GITHUB_STEP_SUMMARY"
+          stage_ready=1
+      - name: Save temporary access code in a private repository artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: owner-ai-staging-access-${{ github.run_id }}
+          path: ${{ runner.temp }}/owner-ai-stage-access.json
+          if-no-files-found: error
+          retention-days: 1
+      - name: Keep the isolated walkthrough available for thirty minutes
+        timeout-minutes: 31
+        run: |
+          stage_pid="$(cat "$RUNNER_TEMP/owner-ai-stage.pid")"
+          cleanup_stage() { kill -TERM "$stage_pid" 2>/dev/null || true; }
+          trap cleanup_stage EXIT
+          trap 'exit 130' INT TERM
+          stage_deadline=$((SECONDS + 1800))
+          while ((SECONDS < stage_deadline)); do
+            if ! kill -0 "$stage_pid" 2>/dev/null; then
+              printf '%s\n' 'The temporary staging runtime ended before the review window closed.' >&2
+              exit 1
+            fi
+            sleep 15
+          done
+      - name: Remove the disposable listener and local credentials
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/owner-ai-stage.pid" ]]; then
+            stage_pid="$(cat "$RUNNER_TEMP/owner-ai-stage.pid")"
+            kill -TERM "$stage_pid" 2>/dev/null || true
+            for attempt in {1..20}; do
+              if ! kill -0 "$stage_pid" 2>/dev/null; then break; fi
+              sleep 1
+            done
+            kill -KILL "$stage_pid" 2>/dev/null || true
+          fi
+          rm -f "$MCCLUSTER_STAGING_STATE_FILE" "$RUNNER_TEMP/owner-ai-stage-access.json" \
+            "$RUNNER_TEMP/owner-ai-stage-private.log" "$RUNNER_TEMP/owner-ai-stage.pid" \
+            "$RUNNER_TEMP/owner-ai-stage.url" "$RUNNER_TEMP/owner-ai-stage-gate.html"

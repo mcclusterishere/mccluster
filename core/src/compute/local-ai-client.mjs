@@ -1,6 +1,7 @@
 import { inferenceFetch, inferenceJson, inferenceError } from './inference-http.mjs';
 import { cancelQueuedComputeTask, computeTaskById, enqueueComputeTask, listNodes } from './store.mjs';
 import { validateChatImages } from './ai-chat-images.mjs';
+import { ownerRoutedChat } from './owner-routing.mjs';
 
 const ADAPTER = String(process.env.MCCLUSTER_OLLAMA_ADAPTER_URL || 'http://127.0.0.1:4790').replace(/\/$/, '');
 const MODEL = process.env.MCCLUSTER_OLLAMA_MODEL || 'qwen3:8b';
@@ -287,6 +288,11 @@ export async function localAiChat({
   implementation,
   requirements,
   signal: callerSignal,
+  ownerRoute,
+  ownerExecution,
+  orgId,
+  onProgress,
+  onTask,
 } = {}, { fetchImpl = inferenceFetch, fabric = defaultFabric, now = Date.now, sleep = defaultSleep, log = defaultLog } = {}) {
   const normalizedMessages = Array.isArray(messages) ? messages : undefined;
   const normalizedPrompt = normalizedMessages ? undefined : String(prompt || '');
@@ -296,6 +302,8 @@ export async function localAiChat({
   // Images are validated here, before any node or adapter sees them (400 codes).
   const imagesIn = normalizedMessages ? validateChatImages({ messages: normalizedMessages }).images : 0;
   const input = buildInput({ messages, prompt, temperature, numCtx, json, think, numPredict, tools, schema, model });
+
+  if (ownerRoute) return ownerRoutedChat({ route: ownerRoute, orgId, input, priority, metadata, timeoutMs, signal: callerSignal, onProgress, onTask, ownerExecution });
 
   // One budget for the whole call, fabric attempt included: the local floor of
   // 30 s is the only thing that can stretch it.

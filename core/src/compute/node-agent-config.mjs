@@ -145,6 +145,13 @@ function boundedText(value) {
 
 function sanitizeMeasurement(value) {
   return {
+    model_digest: boundedText(value.model_digest),
+    time_to_first_token_ms: nonNegativeNumber(value.time_to_first_token_ms),
+    peak_memory_bytes: nonNegativeInteger(value.peak_memory_bytes),
+    peak_memory_source: boundedText(value.peak_memory_source),
+    free_memory_min_bytes: nonNegativeInteger(value.free_memory_min_bytes),
+    headroom_passed: value.headroom_passed === true,
+    benchmark_passed: value.benchmark_passed === true,
     generation_tokens_per_second: nonNegativeNumber(value.generation_tokens_per_second),
     prompt_tokens_per_second: nonNegativeNumber(value.prompt_tokens_per_second),
     processor_gpu_percent: percent(value.processor_gpu_percent),

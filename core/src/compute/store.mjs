@@ -94,6 +94,7 @@ export async function claimLease(nodeId, { capabilities, implementations, leaseS
     p_implementations: implementations || [],
     p_lease_seconds: leaseSeconds
   };
+  if (process.env.CORE_OWNER_AI_WORKSPACE_ENABLED === '1') return rpc('compute_claim_task_v4', payload, restImpl);
   const yieldValue = Math.floor(Number(yieldSeconds) || 0);
   if (yieldValue <= 0 || yieldUnsupported) return rpc('compute_claim_task', payload, restImpl);
   try {
@@ -201,6 +202,7 @@ export async function listNodes(options = {}) {
     order: 'last_seen_at.desc',
     limit: String(Math.min(500, Math.max(1, Number(limit) || 100)))
   });
+  if (process.env.CORE_OWNER_AI_WORKSPACE_ENABLED === '1') params.set('select', params.get('select') + ',pair_cleanup_required,pair_cleanup_details');
   if (orgId) params.set('org_id', eq(orgId));
   if (liveOnly) {
     params.set('state', 'eq.online');

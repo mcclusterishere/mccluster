@@ -5,6 +5,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { inferenceFetch } from '../src/compute/inference-http.mjs';
+import { collectAdapterStream } from '../src/compute/ndjson.mjs';
 
 function adapterReady(child, diagnostic) {
   return new Promise((resolve, reject) => {
@@ -211,4 +212,60 @@ test('concurrent adapter fixtures report distinct OS-assigned ports and serve re
   assert.notEqual(adapters[0].url, adapters[1].url);
   const responses = await Promise.all(adapters.map(a => a.call()));
   assert.deepEqual(responses.map(r => [r.status, r.body.content]), [[200, '0'], [200, '1']]);
+});
+
+async function streamCall(url, signal = AbortSignal.timeout(5000)) {
+  return fetch(`${url}/execute`, {
+    method: 'POST', signal,
+    headers: { 'content-type': 'application/json', accept: 'application/x-ndjson' },
+    body: JSON.stringify({ capability: 'ai.chat', implementation: 'qwen3.8b.local', input: { prompt: 'synthetic stream' } }),
+  });
+}
+
+test('streaming TTFT includes Ollama model load and prefill before response headers', { timeout: 10000 }, async t => {
+  const { url } = await withAdapter(t, async (body, res) => {
+    assert.equal(body.stream, true);
+    await delay(160);
+    res.setHeader('content-type', 'application/x-ndjson');
+    res.write('{"message":{"content":"First token"},"done":false}\n');
+    await delay(15);
+    res.end('{"done":true,"eval_count":2,"eval_duration":1000000000}\n');
+  });
+  const started = performance.now(), updates = [];
+  const result = await collectAdapterStream(await streamCall(url), update => updates.push(update));
+  const elapsed = performance.now() - started;
+  assert.equal(result.content, 'First token');
+  assert.ok(result.time_to_first_token_ms >= 140, `TTFT must include the 160ms pre-header delay; got ${result.time_to_first_token_ms}`);
+  assert.ok(result.time_to_first_token_ms <= elapsed, 'TTFT cannot exceed the complete round trip');
+  assert.equal(updates[0].time_to_first_token_ms, result.time_to_first_token_ms);
+});
+
+test('streaming refuses Ollama redirects without forwarding a prompt to the target', { timeout: 10000 }, async t => {
+  let redirected = 0;
+  const target = http.createServer((_req, res) => { redirected++; res.end('{"done":true,"message":{"content":"unexpected"}}\n'); });
+  target.listen(0, '127.0.0.1'); await once(target, 'listening');
+  t.after(() => new Promise(resolve => { target.closeAllConnections(); target.close(resolve); }));
+  const { url, health } = await withAdapter(t, (_body, res) => {
+    res.writeHead(307, { location: `http://127.0.0.1:${target.address().port}/private-target` }); res.end();
+  });
+  await assert.rejects(collectAdapterStream(await streamCall(url)), /Local inference stream stopped/);
+  assert.equal(redirected, 0);
+  await eventually(health, value => !value.busy && value.queue_depth === 0);
+});
+
+test('streaming cancellation after headers closes Ollama and releases the model slot', { timeout: 10000 }, async t => {
+  let closed = false;
+  const { url, health } = await withAdapter(t, (_body, res) => {
+    res.setHeader('content-type', 'application/x-ndjson');
+    res.once('close', () => { closed = true; });
+    res.write('{"message":{"content":"Started"},"done":false}\n');
+  });
+  const controller = new AbortController();
+  let observedProgress = false;
+  const result = collectAdapterStream(await streamCall(url, controller.signal), () => { observedProgress = true; });
+  const rejected = assert.rejects(result, /abort/i);
+  await eventually(async () => observedProgress, Boolean);
+  controller.abort(); await rejected;
+  await eventually(async () => closed, Boolean);
+  await eventually(health, value => !value.busy && value.queue_depth === 0);
 });

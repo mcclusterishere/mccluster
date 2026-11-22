@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { runLease, systemClock } from './lease-runtime.mjs';
+import { collectAdapterStream } from './ndjson.mjs';
 import { requestJson, readBoundedText } from './request-json.mjs';
 import { COMPUTE_PROTOCOL, validateCapabilityManifest } from './protocol.mjs';
 import { generateNodeIdentity, nodeIdFromPublicKey, signRequest } from './signature.mjs';
@@ -24,7 +25,7 @@ const IDENTITY_PATH = path.join(STATE_DIR, 'identity.json');
 const GPU_EVIDENCE_PATH = path.join(STATE_DIR, 'gpu-evidence.json');
 // measured-inference.json beside the manifest: the doctor's benchmark writes it, the agent only reads it.
 const MEASURED_INFERENCE_PATH = path.join(path.dirname(MANIFEST_PATH), 'measured-inference.json');
-const AGENT_VERSION = '0.4.0';
+const AGENT_VERSION = '0.5.0';
 const REQUEST_TIMEOUT_MS = Number(process.env.MCCLUSTER_NODE_REQUEST_TIMEOUT_MS || 10_000);
 const POLL_MS = Math.max(1_000, Number(process.env.MCCLUSTER_NODE_POLL_MS || 5_000));
 const HEARTBEAT_MS = Math.max(10_000, Number(process.env.MCCLUSTER_NODE_HEARTBEAT_MS || 30_000));
@@ -245,7 +246,17 @@ async function signedRequest(identity, pathname, body = {}, signal) {
 }
 
 async function enroll(identity, manifest, capabilities, hardware, healthSummary) {
-  const token = process.env.MCCLUSTER_NODE_ENROLL_TOKEN;
+  // The macOS installer passes the one-time credential through a private pipe.
+  // It is never an argument, a saved environment value, or a log field.
+  let token;
+  if (process.env.MCCLUSTER_NODE_ENROLL_TOKEN_STDIN === '1') {
+    const bytes = fs.readFileSync(0);
+    if (bytes.length > 256) throw new Error('Enrollment credential is invalid');
+    token = bytes.toString('utf8').trim();
+    bytes.fill(0);
+    if (!/^mcen1_[A-Za-z0-9_-]{43}$/.test(token)) throw new Error('Enrollment credential is invalid');
+  } else token = process.env.MCCLUSTER_NODE_ENROLL_TOKEN;
+  delete process.env.MCCLUSTER_NODE_ENROLL_TOKEN;
   if (!token) return null;
   return rawRequest('/v1/compute/enroll', {
     headers: { authorization: `Bearer ${token}` },
@@ -282,7 +293,7 @@ function assertLoopbackExecutor(urlString) {
   return url;
 }
 
-async function executeHttp(executor, task, signal) {
+async function executeHttp(executor, task, signal, onProgress) {
   const url = assertLoopbackExecutor(executor.url);
   const controller = new AbortController();
   const abort = () => controller.abort(signal?.reason);
@@ -294,10 +305,13 @@ async function executeHttp(executor, task, signal) {
   try {
     const res = await fetch(url, {
       method: 'POST', redirect: 'error',
-      headers: { 'content-type': 'application/json', ...(executor.headers || {}) },
+      headers: { 'content-type': 'application/json', ...(task.capability === 'ai.chat' && onProgress ? { accept: 'application/x-ndjson' } : {}), ...(executor.headers || {}) },
       body: JSON.stringify({ capability: task.capability, implementation: task.implementation, input: task.input, metadata: task.metadata || {}, priority: Number(task.priority || 0) }),
       signal: controller.signal
     });
+    // Await the body inside this try: returning the promise would run finally
+    // at headers and detach both the lease-abort listener and body deadline.
+    if (res.ok && String(res.headers.get('content-type')).includes('application/x-ndjson')) return await collectAdapterStream(res, onProgress);
     // Leave room for the signed gateway completion envelope (2 MiB limit).
     const text = await readBoundedText(res, 1_500_000);
     let result;
@@ -312,9 +326,9 @@ async function executeHttp(executor, task, signal) {
   } finally { clearTimeout(timeout); signal?.removeEventListener('abort', abort); }
 }
 
-async function executeTask(executor, task, signal) {
+async function executeTask(executor, task, signal, onProgress) {
   if (!executor) throw permanentError(`No local executor configured for ${task.implementation || task.capability}`);
-  if (executor.type === 'http') return executeHttp(executor, task, signal);
+  if (executor.type === 'http') return executeHttp(executor, task, signal, onProgress);
   throw permanentError(`Unsupported local executor type: ${executor.type || 'unknown'}`);
 }
 
@@ -361,7 +375,7 @@ async function probe() {
 async function run() {
   log({ event: 'compute_node_paths', platform: process.platform, state_dir: STATE_DIR, manifest: MANIFEST_PATH, defaults_applied: NODE_PATHS.defaultsApplied });
   const identityExisted = fs.existsSync(IDENTITY_PATH);
-  if (ENROLL_ONLY && !process.env.MCCLUSTER_NODE_ENROLL_TOKEN && !identityExisted) {
+  if (ENROLL_ONLY && !process.env.MCCLUSTER_NODE_ENROLL_TOKEN && process.env.MCCLUSTER_NODE_ENROLL_TOKEN_STDIN !== '1' && !identityExisted) {
     warn({ event: 'compute_node_enroll_token_missing' });
     process.exit(2);
   }
@@ -373,10 +387,24 @@ async function run() {
   }
   let { manifest, hardware, advertised, healthSummary } = await probe();
 
-  const enrolled = await enroll(identity, manifest, advertised, hardware, healthSummary);
+  let reconnected = false;
+  // A successful enrollment response may have been lost. Prove possession of
+  // the existing key before spending another single-use credential. Offline,
+  // revoked, or authentication failures never count as a completed install.
+  if (identityExisted && ENROLL_ONLY) {
+    try {
+      const reply = await signedRequest(identity, '/v1/compute/heartbeat', { inventory: inventory(hardware, healthSummary, manifest), capabilities: advertised, labels: labelsFor(manifest), max_leases: manifest.maxLeases, load: { running_leases: 0 }, agent_version: AGENT_VERSION });
+      reconnected = reply?.ok === true;
+      if (!reconnected) throw new Error('Core did not acknowledge this device identity');
+    } catch (error) {
+      if (error.code !== 'UNKNOWN_NODE') throw error;
+    }
+  }
+  const enrolled = reconnected ? null : await enroll(identity, manifest, advertised, hardware, healthSummary);
   if (enrolled) log({ event: 'compute_node_enrolled', node_id: identity.nodeId, protocol: enrolled.protocol, advertised: advertised.length, hardware_mode: observed.hardwareMode });
   else log({ event: 'compute_node_existing_identity', node_id: identity.nodeId, hardware_mode: observed.hardwareMode });
   if (ENROLL_ONLY) {
+    if (!enrolled && !reconnected) throw new Error('The existing identity is not enrolled. Issue a fresh credential in Devices.');
     log({ event: 'compute_node_enroll_only_done', node_id: identity.nodeId, enrolled: Boolean(enrolled) });
     process.exit(0);
   }
@@ -436,8 +464,11 @@ async function run() {
 
           const promise = runLease({
             lease, nodeId: identity.nodeId, sentAt, signal: shutdown.signal,
+            // Owner Stop/revoke must reach a worker during model loading too,
+            // before visible progress starts its more frequent check-ins.
+            renewMs: ['owner-ai-workspace', 'owner-pair'].includes(task.metadata?.source) ? 2_000 : 30_000,
             request: (pathname, body, signal) => signedRequest(identity, pathname, body, signal),
-            execute: (leasedTask, signal) => executeTask(executor, leasedTask, signal),
+            execute: (leasedTask, signal, onProgress) => executeTask(executor, leasedTask, signal, onProgress),
             onEvent: (event, error) => warn({ event, lease_id: leaseId, task_id: task.id, error: error.message })
           }).catch((error) => {
             warn({ event: 'lease_execution_rejected', lease_id: leaseId, task_id: task.id, error: error.message });

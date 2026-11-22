@@ -48,6 +48,14 @@ const REMOTE_CAPABILITIES = new Set([
   'compute.task.get',
   'core.ai.turn.submit',
   'core.ai.turn.get',
+  'core.ai.turn.stop',
+  'core.compute.devices.list',
+  'core.compute.enrollment.create',
+  'core.compute.device.update',
+  'core.compute.device.test',
+  'core.compute.pairs.list',
+  'core.compute.pair.create',
+  'core.compute.pair.benchmark',
   'research.web',
   'media.models.search',
   'media.model.recommend',
@@ -338,7 +346,7 @@ export async function handleCoreMcp(request, env, user) {
     const forwardedParams = { ...(rpc?.params ?? {}) };
     if (method === 'tools/call') {
       const toolName = forwardedParams.name;
-      if (toolName === 'core.ai.turn.submit' || toolName === 'core.ai.turn.get') {
+      if (toolName.startsWith('core.ai.turn.') || toolName.startsWith('core.compute.')) {
         forwardedParams.arguments = {
           ...(forwardedParams.arguments || {}),
           org_id: houseOrg

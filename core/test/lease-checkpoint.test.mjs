@@ -26,7 +26,7 @@ test('the runner hands executors the signal and treats LEASE_LOST as abandoned, 
 
 test('each outward action that writes through the shared client is preceded by the lease check', async () => {
   const sites = {
-    'resident-ai-turn.mjs': ["stopIfLeaseLost(job, signal, 'posting the reply');", "const { body: inserted = [] } = await rest('ops_ai_messages?on_conflict=id&select=*', {"],
+    'resident-ai-turn.mjs': ["stopIfLeaseLost(job, signal, 'posting the reply');", "const { body: inserted = [] } = await persistMessage(assistantBody);"],
     'sms-assistant-turn.mjs': ["stopIfLeaseLost(job, signal, 'queueing the text message');", 'const outbound = await createReply({ job, thread, contact, inbound, body });'],
     'meeting-delegate-dispatch.mjs': ["stopIfLeaseLost(job, signal, 'joining the meeting');", 'const joined = await joinMeeting({'],
     'meeting-delegate-dispatch.mjs#chat': ["stopIfLeaseLost(job, signal, 'posting in the meeting chat');", 'chatDisclosure = await sendMeetingChat({'],

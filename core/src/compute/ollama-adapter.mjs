@@ -2,6 +2,7 @@ import http from 'node:http';
 import { inferenceFetch, inferenceJson, inferenceError } from './inference-http.mjs';
 import { inferenceSettings, inferenceUsage } from './inference-settings.mjs';
 import { validateChatImages } from './ai-chat-images.mjs';
+import { collectOllamaStream } from './ndjson.mjs';
 
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_PORT || 4790);
@@ -126,7 +127,7 @@ function callerAbortedError() {
   });
 }
 
-async function execute(body, queuedAt, callerSignal) {
+async function execute(body, queuedAt, callerSignal, onProgress) {
   const queueWaitMs = Math.max(0, Date.now() - queuedAt);
   if (body.capability !== 'ai.chat') {
     throw Object.assign(new Error(`unsupported capability: ${body.capability}`), { status: 400, code: 'UNSUPPORTED_CAPABILITY' });
@@ -155,12 +156,15 @@ async function execute(body, queuedAt, callerSignal) {
   const signal = callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout;
   const callOllama = async (model) => {
     try {
-      const response = await inferenceFetch(`${OLLAMA}/api/chat`, {
-        method: 'POST',
+      // Ollama can delay response headers while loading/prefilling. Start the
+      // monotonic TTFT clock before dispatch, not after fetch returns headers.
+      const requestStartedAt = performance.now();
+      const response = await (onProgress ? fetch : inferenceFetch)(`${OLLAMA}/api/chat`, {
+        method: 'POST', redirect: 'error',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           model,
-          stream: false,
+          stream: Boolean(onProgress),
           messages,
           // Only thinking models take the flag; instruct-only builds reject it.
           ...(THINK_MODELS.has(model) ? { think: settings.think } : {}),
@@ -178,7 +182,10 @@ async function execute(body, queuedAt, callerSignal) {
         }),
         signal,
       });
-      return { response, data: await inferenceJson(response) };
+      const data = response.ok && onProgress
+        ? await collectOllamaStream(response, progress => onProgress({ ...progress, model, implementation: body.implementation || null }), { startedAt: requestStartedAt })
+        : await inferenceJson(response);
+      return { response, data };
     } catch (error) {
       throw inferenceError(error, { signal, peer: 'ollama' });
     }
@@ -189,7 +196,7 @@ async function execute(body, queuedAt, callerSignal) {
   let { response, data } = await callOllama(usedModel);
   // A missing mapped model falls back to the default model, except when the
   // request carries images and the default cannot see them.
-  if (!response.ok && usedModel !== MODEL && (imagesIn === 0 || VISION_MODELS.has(MODEL)) && (response.status === 404 || /not found|pull/i.test(String(data?.error || '')))) {
+  if (input.strict_model !== true && !response.ok && usedModel !== MODEL && (imagesIn === 0 || VISION_MODELS.has(MODEL)) && (response.status === 404 || /not found|pull/i.test(String(data?.error || '')))) {
     fallbackFrom = usedModel; usedModel = MODEL;
     ({ response, data } = await callOllama(usedModel));
   }
@@ -209,7 +216,8 @@ async function execute(body, queuedAt, callerSignal) {
     tool_calls: Array.isArray(data?.message?.tool_calls) ? data.message.tool_calls : [],
     done_reason: data?.done_reason || null,
     settings,
-    thinking_chars: String(data?.message?.thinking || '').length,
+    thinking_chars: data?.thinking_chars ?? String(data?.message?.thinking || '').length,
+    time_to_first_token_ms: data?.time_to_first_token_ms ?? null,
     images_in: imagesIn,
     queue_wait_ms: queueWaitMs,
     usage: inferenceUsage(data),
@@ -231,7 +239,7 @@ function pump() {
     return;
   }
 
-  execute(item.body, item.queuedAt, item.signal)
+  execute(item.body, item.queuedAt, item.signal, item.onProgress)
     .then((result) => {
       lastError = null;
       lastCompletedAt = new Date().toISOString();
@@ -249,7 +257,7 @@ function pump() {
     });
 }
 
-function enqueueInference(body, signal) {
+function enqueueInference(body, signal, onProgress) {
   if (pending.length >= MAX_QUEUE) {
     throw Object.assign(new Error('Local AI queue is full'), { status: 503, code: 'AI_QUEUE_FULL' });
   }
@@ -262,6 +270,7 @@ function enqueueInference(body, signal) {
       sequence: ++sequence,
       queuedAt: Date.now(),
       signal,
+      onProgress,
       resolve,
       reject,
       cleanup: null,
@@ -570,8 +579,26 @@ const server = http.createServer(async (req, res) => {
       res.once('close', () => {
         if (!res.writableEnded) abortCaller();
       });
-      const result = await enqueueInference(body, caller.signal);
-      return send(res, 200, result);
+      const streaming = String(req.headers.accept || '').includes('application/x-ndjson');
+      if (!streaming) return send(res, 200, await enqueueInference(body, caller.signal));
+      res.writeHead(200, { 'content-type': 'application/x-ndjson', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' });
+      const publish = value => { if (!res.destroyed) res.write(JSON.stringify(value) + '\n'); };
+      let lastProgressAt = 0, sentContent = '';
+      try {
+        const result = await enqueueInference(body, caller.signal, progress => {
+          // Snapshots, not a growing log: at most four updates each second.
+          if (Date.now() - lastProgressAt < 250) return;
+          lastProgressAt = Date.now();
+          const delta = progress.content.slice(sentContent.length);
+          sentContent = progress.content;
+          const { content, ...receipt } = progress;
+          publish({ type: 'progress', progress: { ...receipt, delta } });
+        });
+        publish({ type: 'result', result });
+      } catch (error) {
+        publish({ type: 'error', code: error?.code || 'INFERENCE_STREAM_FAILED', retryable: error?.retryable === true });
+      }
+      return res.end();
     }
 
     return send(res, 404, { error: 'not found' });

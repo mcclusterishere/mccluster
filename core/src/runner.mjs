@@ -1,4 +1,6 @@
-import { claimNext, completeJob, failJob, heartbeat, workerId } from './supabase.mjs';
+import { claimNext, completeJob, failJob, heartbeat, workerId, rest, resolveHouseOrgId } from './supabase.mjs';
+import { runJobLanes, ownerWorkspaceLanes } from './runner-lanes.mjs';
+import { pairBenchmarkJob } from './compute/pairs.mjs';
 import { prepareClaimedDagJob } from './objective-dag-store.mjs';
 import { buildCompletionEvidence } from './completion-evidence.mjs';
 import { notifyJobFailure, notifyJobSuccess } from './notifier.mjs';
@@ -65,6 +67,8 @@ const executors = new Map([
   ['lyrics_align', lyricsAlign],
   ['stems_separate', stemsSeparate],
 ]);
+const workspaceEnabled = process.env.CORE_OWNER_AI_WORKSPACE_ENABLED === '1';
+if (workspaceEnabled) executors.set('compute_pair_benchmark', pairBenchmarkJob);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
 const heartbeatMs = Math.max(10_000, Number(process.env.MCCLUSTER_HEARTBEAT_MS || 30_000));
@@ -161,8 +165,14 @@ async function execute(job) {
   } finally { clearInterval(timer); }
 }
 
-async function cycle() {
-  const claimed = await claimNext([...executors.keys()]);
+let lastPairSweepAt = 0;
+async function cycle(types = [...executors.keys()]) {
+  if (workspaceEnabled && Date.now() - lastPairSweepAt >= 60_000) {
+    lastPairSweepAt = Date.now();
+    const orgId = await resolveHouseOrgId();
+    await rest('rpc/compute_reconcile_expired_pairs', { method: 'POST', body: JSON.stringify({ p_org_id: orgId }) });
+  }
+  const claimed = await claimNext(types, { allSupportedTypes: [...executors.keys()] });
   if (!claimed) return false;
 
   const prepared = await prepareClaimedDagJob(claimed);
@@ -191,6 +201,13 @@ async function main() {
   if (once) {
     const didWork = await cycle();
     log('core_runner_once_complete', { did_work: didWork });
+    return;
+  }
+  if (workspaceEnabled) {
+    const lanes = ownerWorkspaceLanes([...executors.keys()], process.env.CORE_OWNER_AI_CONCURRENCY || 4);
+    log('core_workspace_lanes', { lanes: lanes.map(({ name, concurrency }) => ({ name, concurrency })) });
+    await runJobLanes({ lanes, cycle, shouldStop: () => stopping, pause: sleep, pollMs, onError: (error, lane) => log('core_cycle_failed', { lane, message: error.message }) });
+    log('core_runner_stopped');
     return;
   }
   while (!stopping) {

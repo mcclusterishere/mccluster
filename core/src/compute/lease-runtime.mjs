@@ -85,6 +85,13 @@ export async function runLease({ lease, nodeId, sentAt, request, execute, signal
   let renewal = Promise.resolve();
   let watcher;
   let heartbeat;
+  let progressTimer;
+  let progress = { state: 'running' }, progressDirty = false;
+  const onProgress = update => {
+    if (leaseSignal.aborted || finishing) return;
+    progress = { state: 'running', content: String(update?.content || '').slice(0, 60_000), sequence: Number(update?.sequence) || 0, model: update?.model || null, implementation: update?.implementation || null, time_to_first_token_ms: update?.time_to_first_token_ms ?? null };
+    progressDirty = true;
+  };
   const current = () => { try { authority.assertCurrent(); } catch (error) { onEvent('lease_authority_lost', error); } };
   try {
     authority.assertCurrent();
@@ -95,14 +102,15 @@ export async function runLease({ lease, nodeId, sentAt, request, execute, signal
     const started = await request(`${base}/start`, { ...body, extend_seconds: 120 }, leaseSignal);
     if (started?.ok !== true) throw authority.lose('Lease start was not acknowledged');
     authority.confirm(started.result, startedAt);
-    heartbeat = setIntervalImpl(() => {
+    const renew = () => {
       if (renewing || finishing || leaseSignal.aborted) return;
       renewing = true;
+      progressDirty = false;
       const renewedAt = clock();
       renewal = (async () => {
         try {
           authority.assertCurrent();
-          const reply = await request(`${base}/heartbeat`, { ...body, extend_seconds: 120, progress: { state: 'running' } }, leaseSignal);
+          const reply = await request(`${base}/heartbeat`, { ...body, extend_seconds: 120, progress }, leaseSignal);
           if (reply?.ok !== true) throw authority.lose('Lease renewal was not acknowledged');
           authority.confirm(reply.result, renewedAt);
         } catch (error) {
@@ -110,9 +118,13 @@ export async function runLease({ lease, nodeId, sentAt, request, execute, signal
           onEvent('lease_heartbeat_failed', error);
         } finally { renewing = false; }
       })();
-    }, renewMs);
+    };
+    heartbeat = setIntervalImpl(renew, renewMs);
     heartbeat?.unref?.();
-    const result = await execute(lease.task, leaseSignal);
+    // Progress also renews the same fenced lease. Never send token text to logs.
+    progressTimer = setIntervalImpl(() => { if (progressDirty) renew(); }, 750);
+    progressTimer?.unref?.();
+    const result = await execute(lease.task, leaseSignal, onProgress);
     finishing = true;
     clearIntervalImpl(heartbeat);
     // No in-flight renewal may race completion or resurrect local authority.
@@ -136,6 +148,7 @@ export async function runLease({ lease, nodeId, sentAt, request, execute, signal
     onEvent('lease_execution_stopped', error);
     return { status: leaseSignal.aborted ? 'authority_lost' : 'unconfirmed', task_id: lease.task.id, lease_id: lease.lease_id, attempt: lease.attempt };
   } finally {
+    clearIntervalImpl(progressTimer);
     clearIntervalImpl(watcher);
     clearIntervalImpl(heartbeat);
     signal?.removeEventListener('abort', abort);

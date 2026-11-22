@@ -74,7 +74,7 @@ const bareTracks = (css) => [...css.matchAll(GRID_DECL)].filter((m) => hasBareFr
 /* ---- the allowlists: seeded 2026-10-27, and they may only shrink ---- */
 /* @media (…max-width…) queries per file: 41 in 8 files */
 const MAX_WIDTH_ALLOWED = {
-  "css/control-room-v2.css": 8,
+  "css/control-room-v2.css": 6,
   "css/control-room.css": 3,
   "css/equity-uprise-institutional.css": 2,
   "css/music-lounge.css": 2,
