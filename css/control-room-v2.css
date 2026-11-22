@@ -288,6 +288,10 @@
 .cr-ai-compose-tools{flex:1 1 100%;min-width:0}
 .cr-ai-compose-tools>summary{cursor:pointer;min-height:44px;padding:11px 6px;color:var(--cr-dim);font-size:12px}
 .cr-ai-compose-tools>div{padding:8px 0;min-width:0}
+/* Expanded tools must remain touch-scroll reachable. Grow the card with its
+   composer; only the conversation retains a bounded, independent scroll. */
+.cr-ai-chat__main:has(.cr-ai-compose-tools[open]){height:auto}
+.cr-ai-chat__main:has(.cr-ai-compose-tools[open]) .cr-ai-chat__messages{flex:none;max-height:48svh}
 .cr-ai-chat__hint{margin:8px 2px 0;color:var(--cr-faint);font-size:10px;line-height:1.5}
 .cr-ai-voice-status{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;color:var(--cr-dim);font-size:11px}
 .cr-btn--voice{min-width:64px}.cr-btn--voice.is-listening{border-color:var(--cr-bad);color:var(--cr-bad)}

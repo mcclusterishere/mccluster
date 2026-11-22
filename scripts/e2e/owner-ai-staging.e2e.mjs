@@ -25,7 +25,7 @@ if (require('playwright/package.json').version !== '1.57.0') throw new Error('Th
 const { chromium } = require('playwright');
 await mkdir(OUT, { recursive: true, mode: 0o700 });
 const results = [], contexts = [], observed = new Map(), responseTasks = new Set();
-let phase = 'browser startup', parallelObserved = false;
+let phase = 'browser startup', parallelObserved = false, activePage = null;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 function check(name, pass, detail) {
   results.push({ name, status: pass ? 'passed' : 'failed', ...(detail ? { detail } : {}) });
@@ -76,7 +76,7 @@ function observe(page) {
 }
 async function login(role, viewport) {
   const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: 'block' });
-  contexts.push(context); const page = await context.newPage(); page.setDefaultTimeout(20_000); observe(page);
+  contexts.push(context); const page = await context.newPage(); activePage = page; page.setDefaultTimeout(20_000); observe(page);
   await page.goto(origin.href, { waitUntil: 'domcontentloaded' });
   await page.getByLabel('Access code', { exact: true }).fill(stage.access_code);
   await page.getByRole('button', { name: 'Open staging workspace', exact: true }).click();
@@ -104,6 +104,8 @@ async function layout(page, width, screen) {
     check(`Composer and Send are reachable above navigation at ${width}px`, true);
     await screenshot(page, `chat-composer-${width}.png`, false);
     await page.locator('#crAiComposeTools > summary').click();
+    const card = await page.locator('.cr-ai-chat__main').evaluate(element => ({ client_height: element.clientHeight, scroll_height: element.scrollHeight, overflow_y: getComputedStyle(element).overflowY }));
+    check(`Expanded tools are not vertically clipped inside the chat card at ${width}px`, !['hidden', 'clip'].includes(card.overflow_y) || card.scroll_height <= card.client_height + 2, card);
     await action(page, 'ai-send').click({ trial: true });
     check(`Opening attachment tools leaves Send reachable at ${width}px`, true);
     await screenshot(page, `chat-tools-${width}.png`, false);
@@ -215,7 +217,20 @@ try {
   skip('Physical Mac installer, Ollama speed and shared-model fit', 'These are simulated signed Mac workers and synthetic output. No physical Mac, GPU benchmark or distributed 27B model was verified.');
   skip('Expired/reused enrollment and revoked lease protocol in this browser script', 'Covered by the real SQL/signed gateway acceptance suite and staging preflight; this UI script does not claim to have waited ten minutes or sent raw protocol probes.');
 } catch (error) {
-  results.push({ name: phase, status: 'failed', error: safeError(error) });
+  /* Visible text and known page states diagnose redirects without dumping
+     form values, HTML, URLs with queries, session storage or network bodies. */
+  let pageState;
+  if (activePage && !activePage.isClosed()) try {
+    const diagnostic = await activePage.evaluate(() => ({
+      title: document.title, pathname: location.pathname,
+      staging_gate: Boolean(document.querySelector('#code')),
+      login_button: Boolean(document.querySelector('#cpIn')),
+      owner_workspace: Boolean(document.querySelector('.cr-ai-workspace')),
+      body_excerpt: document.body?.innerText.slice(0, 2400) || ''
+    }));
+    pageState = Object.fromEntries(Object.entries(diagnostic).map(([key, value]) => [key, typeof value === 'string' ? safeError(value) : value]));
+  } catch { pageState = { diagnostic_unavailable: true }; }
+  results.push({ name: phase, status: 'failed', error: safeError(error), ...(pageState ? { page_state: pageState } : {}) });
   console.error(`FAIL ${phase}: ${safeError(error)}`); process.exitCode = 1;
 } finally {
   await Promise.allSettled([...responseTasks]);

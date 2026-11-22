@@ -70,7 +70,12 @@ const server = http.createServer(async (req, res) => {
       const session = randomBytes(32).toString('base64url'); sessions.set(session, expiresAt);
       return send(res, 303, '', 'text/plain', { location: '/control.html#home:ask', 'set-cookie': `${cookieName}=${session}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${Math.floor((expiresAt - Date.now()) / 1000)}` });
     }
-    if (!gated(req)) return req.method === 'GET' && (url.pathname === '/' || url.pathname === '/control.html') ? send(res, 200, gateHtml, 'text/html') : send(res, 401, { error: 'Temporary staging access code required.' });
+    if (!gated(req)) {
+      // A form navigation POST under no-referrer sends Origin:null. Preserve
+      // the same-origin value for this gate only; never relax checkOrigin.
+      if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/control.html')) return send(res, 200, gateHtml, 'text/html', { 'referrer-policy': 'same-origin' });
+      return send(res, 401, { error: 'Temporary staging access code required.' });
+    }
     if (req.method !== 'GET' && req.method !== 'HEAD') checkOrigin(req);
     if (url.pathname === '/auth/v1/token' && req.method === 'POST') {
       const input = JSON.parse((await body(req, 4096)).toString());
@@ -139,7 +144,9 @@ const checks = [];
 for (const route of ['/js/control-room-v2.js', '/v1/status', '/rest/v1/ops_ai_messages', '/downloads/mccluster-macos-worker.zip']) checks.push((await localRequest(route)).status === 401);
 checks.push((await localRequest('/v1/compute/enroll', { method: 'POST', headers: { 'content-type': 'application/json' }, value: '{}' })).status === 401);
 checks.push((await localRequest('/v1/compute/heartbeat', { method: 'POST', headers: { 'content-type': 'application/json' }, value: '{}' })).status === 401);
-const unlocked = await localRequest('/__staging/unlock', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, value: new URLSearchParams({ code: accessCode }).toString() });
+checks.push((await localRequest('/control.html')).headers['referrer-policy'] === 'same-origin');
+checks.push((await localRequest('/__staging/unlock', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: 'null' }, value: new URLSearchParams({ code: accessCode }).toString() })).status === 403);
+const unlocked = await localRequest('/__staging/unlock', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: `http://127.0.0.1:${server.address().port}` }, value: new URLSearchParams({ code: accessCode }).toString() });
 checks.push(unlocked.status === 303);
 const smokeCookie = unlocked.headers['set-cookie']?.[0]?.split(';')[0];
 checks.push((await localRequest('/control.html', { headers: { cookie: smokeCookie } })).text.includes('owner-ai-isolated-runtime'));
