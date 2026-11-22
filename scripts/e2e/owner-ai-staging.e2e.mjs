@@ -87,14 +87,28 @@ async function login(role, viewport) {
   await page.locator(role === 'owner' ? '.cr-ai-workspace' : '.cr-ai-owner-gate').waitFor();
   return page;
 }
-async function screenshot(page, filename) {
+async function screenshot(page, filename, fullPage = true) {
   check(`${filename}: enrollment fields are cleared before screenshot`, await page.locator('#crAiCredential').count() === 0 && await page.locator('#stagingWorkerCredential').inputValue() === '' && await page.locator('#code').count() === 0);
-  await page.screenshot({ path: join(OUT, filename), fullPage: true });
+  await page.screenshot({ path: join(OUT, filename), fullPage });
 }
 async function layout(page, width, screen) {
   const metrics = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth, workspace: document.querySelector('.cr-ai-workspace')?.getBoundingClientRect().toJSON() }));
   check(`${screen} fits ${width}px without horizontal page overflow`, metrics.viewport === width && metrics.document <= width + 1 && metrics.body <= width + 1, metrics);
   await screenshot(page, `${screen}-${width}.png`);
+  if (screen === 'chat') {
+    /* A full-page image alone cannot prove the floating mobile navigation
+       leaves the composer usable. Trial actions scroll normally and perform
+       real hit testing without submitting another job. */
+    await page.locator('#crAiComposer').click({ trial: true });
+    await action(page, 'ai-send').click({ trial: true });
+    check(`Composer and Send are reachable above navigation at ${width}px`, true);
+    await screenshot(page, `chat-composer-${width}.png`, false);
+    await page.locator('#crAiComposeTools > summary').click();
+    await action(page, 'ai-send').click({ trial: true });
+    check(`Opening attachment tools leaves Send reachable at ${width}px`, true);
+    await screenshot(page, `chat-tools-${width}.png`, false);
+    await page.locator('#crAiComposeTools > summary').click();
+  }
 }
 async function newChat(page) {
   await panel(page, 'chat');

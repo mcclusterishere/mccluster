@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 767,
+  "candidate_count": 768,
   "capability_source_count": 104,
-  "support_only_count": 663,
-  "checks_total": 2966,
-  "checks_passed": 2966,
+  "support_only_count": 664,
+  "checks_total": 2970,
+  "checks_passed": 2970,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -82,6 +82,7 @@
     "core/data/characters/cast.v1.json",
     "core/data/fictional-city/district.v1.json",
     "core/data/fictional-city/places.v1.json",
+    "core/test/helpers/owner-workspace-db.mjs",
     "create.html",
     "css/daylight.css",
     "css/equity-uprise-app.css",
@@ -781,7 +782,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "767 entries"
+      "detail": "768 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2165,6 +2166,26 @@
     },
     {
       "name": "core/data/fictional-city/places.v1.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/test/helpers/owner-workspace-db.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/test/helpers/owner-workspace-db.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "core/test/helpers/owner-workspace-db.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "core/test/helpers/owner-workspace-db.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

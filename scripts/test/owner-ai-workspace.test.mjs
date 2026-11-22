@@ -112,6 +112,17 @@ async function until(check, timeout = 3000) {
 }
 const calls = (f, name) => f.calls.filter(x => x.name === name);
 
+test('image preview retains its resized dimensions and byte count in the new composer', async t => {
+  const f = fixture(), page = await openOwner(f, t);
+  /* Encoding is exercised by the real Chromium image fixture. Here its
+     resulting attachment must survive the shipped workspace renderer. */
+  page.state().aiAttachments = [{ name: 'Project sketch', preview: 'data:image/jpeg;base64,QUJD', base64: 'QUJD', width: 1280, height: 768, bytes: 153600 }];
+  page.module.render();
+  assert.match(page.surface(), /class="cr-ai-thumb__meta">1280×768 · 150 KB<\/span>/);
+  await page.action('ai-remove-attachment', { 'data-index': '0' });
+  assert.doesNotMatch(page.surface(), /class="cr-ai-thumb__meta"/);
+});
+
 test('owner enrollment survives target-Mac handoff without persisting or putting credentials in commands, downloads, or requests', async t => {
   const f = fixture(), page = await openOwner(f, t);
   await page.action('ai-panel', { 'data-panel': 'devices' });

@@ -258,9 +258,71 @@ jobs:
           if (!ready) throw new Error('No verified temporary staging hostname appeared within three minutes.');
           NODE
           stage_url="$(cat "$RUNNER_TEMP/owner-ai-stage.url")"
-          curl --fail --silent --show-error --proto '=https' --connect-timeout 10 --max-time 15 \
-            --retry 10 --retry-delay 2 --retry-connrefused --retry-max-time 60 \
-            "$stage_url/control.html" --output "$RUNNER_TEMP/owner-ai-stage-gate.html"
+          STAGING_CHILD_PID="$stage_pid" node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { spawn } from 'node:child_process';
+          import { setTimeout as delay } from 'node:timers/promises';
+          const origin = fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'owner-ai-stage.url'), 'utf8');
+          if (!/^https:\/\/[a-z0-9]+(?:-[a-z0-9]+){2,}\.trycloudflare\.com$/.test(origin)) throw new Error('Invalid temporary staging origin.');
+          // Quick Tunnel DNS and its edge can become ready at different times.
+          // Retry every network error, with a hard two-minute deadline, while
+          // checking that the same local stage and generated origin remain live.
+          const request = spawn('curl', [
+            '--fail', '--silent', '--show-error', '--proto', '=https',
+            '--connect-timeout', '10', '--max-time', '15', '--retry', '60',
+            '--retry-delay', '2', '--retry-all-errors', '--retry-max-time', '110',
+            '--write-out', '%{http_code}', `${origin}/control.html`,
+            '--output', path.join(process.env.RUNNER_TEMP, 'owner-ai-stage-gate.html'),
+          ], { stdio: ['ignore', 'pipe', 'pipe'] });
+          let stderr = '', statuses = '', result = null;
+          request.stderr.on('data', chunk => { stderr = (stderr + chunk).slice(-32768); });
+          request.stdout.on('data', chunk => { statuses = (statuses + chunk).slice(-256); });
+          const finished = new Promise(resolve => {
+            request.once('error', () => { result = { code: -1 }; resolve(); });
+            request.once('close', code => { result = { code }; resolve(); });
+          });
+          const until = performance.now() + 120_000;
+          function assertLiveOrigin() {
+            try { process.kill(Number(process.env.STAGING_CHILD_PID), 0); }
+            catch { throw new Error('staging_process_exited'); }
+            let state;
+            try { state = JSON.parse(fs.readFileSync(process.env.MCCLUSTER_STAGING_STATE_FILE, 'utf8')); }
+            catch { throw new Error('staging_state_unavailable'); }
+            if (state.url !== origin) throw new Error('staging_origin_changed');
+          }
+          try {
+            while (!result) {
+              assertLiveOrigin();
+              const remaining = until - performance.now();
+              if (remaining <= 0) throw new Error('public_gate_readiness_timeout');
+              await Promise.race([finished, delay(Math.min(500, remaining))]);
+            }
+            assertLiveOrigin();
+            if (result.code !== 0) throw new Error('public_gate_request_failed');
+          } catch (error) {
+            request.kill('SIGKILL');
+            // Only fixed diagnostic types and numeric codes leave private logs.
+            // Never copy raw tunnel output, local state, URLs or credentials.
+            const networkErrors = [
+              [/Could not resolve host/i, 'dns_resolution'],
+              [/Failed to connect|Couldn.t connect|Connection refused/i, 'connection'],
+              [/timed out|timeout/i, 'timeout'],
+              [/SSL|certificate/i, 'tls'],
+            ].filter(([pattern]) => pattern.test(stderr)).map(([, type]) => type);
+            let tunnelExitCode = null, tunnelFailed = false;
+            const log = fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'owner-ai-stage-private.log'), 'utf8');
+            for (const line of log.split('\n')) {
+              let event; try { event = JSON.parse(line); } catch { continue; }
+              if (event.event === 'owner_staging_tunnel_failed') tunnelFailed = true;
+              if (event.event === 'owner_staging_tunnel_exited' && Number.isInteger(event.code)) tunnelExitCode = event.code;
+            }
+            console.error(JSON.stringify({ event: 'public_stage_readiness_failed', type: error.message,
+              curl_exit: result?.code ?? null, http_status: /^\d{3}$/.test(statuses.slice(-3)) ? Number(statuses.slice(-3)) : null,
+              network_errors: networkErrors, tunnel_failed: tunnelFailed, tunnel_exit_code: tunnelExitCode }));
+            process.exitCode = 1;
+          }
+          NODE
           node - <<'NODE'
           const fs = require('node:fs');
           const path = require('node:path');
