@@ -80,6 +80,13 @@ async function login(role, viewport) {
   await page.goto(origin.href, { waitUntil: 'domcontentloaded' });
   await page.getByLabel('Access code', { exact: true }).fill(stage.access_code);
   await page.getByRole('button', { name: 'Open staging workspace', exact: true }).click();
+  /* The actual shared shell can present its privacy notice before sign-in.
+     Use its normal opt-out control; never inject a consent/storage flag. */
+  await page.locator('#mccPrivacyLater, #cpIn:visible').first().waitFor({ state: 'visible' });
+  if (await page.locator('#mccPrivacyLater').isVisible()) {
+    await page.getByRole('button', { name: 'Not now', exact: true }).click();
+    check(`${role} session enters through the existing privacy opt-out`, true);
+  }
   await page.locator('#cpIn').waitFor({ state: 'visible' });
   await page.locator(`[data-staging-role="${role}"]`).click();
   await page.locator('#cpIn').click();
@@ -175,6 +182,23 @@ try {
   phase = 'enrollment and signed worker test';
   const suffix = Date.now().toString(36), firstName = `Browser iMac A ${suffix}`, secondName = `Browser iMac B ${suffix}`;
   const first = await install(page, firstName), second = await install(page, secondName);
+  phase = 'unverified pair boundary';
+  const pairName = `Browser Mac pair ${suffix}`;
+  await action(page, 'ai-pair-create').click();
+  await page.locator('#crAiPairName').fill(pairName);
+  await page.locator('#crAiPairFirst').selectOption(first);
+  await page.locator('#crAiPairSecond').selectOption(second);
+  await action(page, 'ai-pair-save').click();
+  const pairCard = page.locator('.cr-ai-device').filter({ has: page.getByRole('heading', { name: pairName, exact: true }) });
+  await until(async () => await pairCard.count() === 1 && await pairCard.locator('.cr-ai-state').innerText() === 'Unavailable', 'An unverified pair was not shown as unavailable.');
+  check('Creating a pair keeps the unverified shared-model route unavailable', true);
+  await panel(page, 'chat');
+  await page.locator('#crAiDevice').selectOption({ label: `Deep Reasoning · ${pairName} · unavailable` });
+  check('Selecting an unverified pair disables Send and explains why', !await action(page, 'ai-send').isEnabled() && (await page.locator('.cr-ai-route-error').innerText()).trim().length > 0);
+  await screenshot(page, 'unverified-pair-route.png');
+  await page.locator('#crAiDevice').selectOption('auto');
+  await panel(page, 'devices');
+  phase = 'responsive devices';
   for (const width of [390, 820, 1280]) { await page.setViewportSize({ width, height: width === 820 ? 1180 : 900 }); await layout(page, width, 'devices'); }
   phase = 'parallel pinned conversations';
   const firstThread = await newChat(page); await send(page, first, 'Show the staged execution path through this first Mac worker.');
