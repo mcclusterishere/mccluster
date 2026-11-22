@@ -62,8 +62,15 @@ A Pages preview can host the actual static UI without promoting `main`, but cann
 owner login, single-use credential redemption, signed node check-ins, queue leases or live streaming.
 For an online end-to-end walkthrough, the remaining prerequisite is an explicitly isolated target for
 the actual Core/Worker build, owner authentication and test storage, with a reachable HTTPS origin.
-Do not point a fixture UI at production, expose fixture authentication through a tunnel, repurpose
-unrelated private applications, or describe a static preview as a completed Core staging test.
+Do not point a fixture UI at production, expose fixture authentication without an independent
+access gate, repurpose unrelated private applications, or describe a static preview as a completed
+Core staging test.
+
+This inventory is the pre-implementation snapshot. The later owner-workspace CI harness supplies
+an isolated disposable Core/SQL target behind an independent random-code gate, with separate signed
+worker routes. Its public URL becomes reviewable only after the hosted job passes its gate checks.
+Those synthetic owner/member identities prove the implemented authorization boundaries; they do
+not establish production owner-login or deployment proof.
 
 ### Prepared temporary transport and static-preview fallback
 

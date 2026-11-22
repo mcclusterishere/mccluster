@@ -180,8 +180,13 @@ strictly enumerated worker transport retains the original single-use enrollment
 and Ed25519 authentication; it does not accept the browser fixture identity as
 a device credential. The GitHub-hosted walkthrough has a 35-minute maximum
 lifetime, with a 30-minute review window after startup. Its temporary access
-code is available only in the private workflow artifact. No production
-resource is deployed or modified.
+code is handed off only in an encrypted workflow artifact. The repository is
+public, so CI encrypts the bounded access JSON with the reviewer's RSA4096
+public key using OAEP-SHA256 and uploads only the ciphertext. The matching
+private key stays in protected local storage outside Git and GitHub Actions;
+the plaintext state and logs stay private to the disposable runner and are
+removed during cleanup. Only the nonsecret URL appears in the job summary.
+No production resource is deployed or modified.
 
 The staging-only simulated-Mac helper is installed only by an explicit test
 control. It exercises the real one-time credential, generated key, signed

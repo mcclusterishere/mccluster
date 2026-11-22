@@ -148,14 +148,13 @@ jobs:
           retention-days: 7
 
   # TEMPORARY owner-authorized review environment. Remove this job when the
-  # walkthrough closes. Other PRs never start a public listener. The artifact
-  # contains only this disposable stage's access code, never worker identities.
+  # walkthrough closes. Other PRs never start a public listener. This repository
+  # is public: its access artifact MUST contain only encrypted ciphertext.
   temporary-staging:
     name: Temporary protected owner workspace
     needs: isolated-runtime
     if: >-
       ${{ github.repository == 'mcclusterishere/mccluster' &&
-          github.event.repository.private == true &&
           (github.event_name == 'workflow_dispatch' ||
            (github.event_name == 'pull_request' &&
             github.event.pull_request.head.repo.full_name == github.repository &&
@@ -212,7 +211,12 @@ jobs:
           STAGING_CHILD_PID="$stage_pid" node --input-type=module - <<'NODE'
           import fs from 'node:fs';
           import path from 'node:path';
+          import { constants, createPublicKey, publicEncrypt } from 'node:crypto';
           import { setTimeout as delay } from 'node:timers/promises';
+          const recipientPem = fs.readFileSync('scripts/staging/owner-ai/review-recipient.pub.pem', 'utf8');
+          if (!recipientPem.startsWith('-----BEGIN PUBLIC KEY-----') || recipientPem.includes('PRIVATE KEY')) throw new Error('Only a public review recipient may be supplied to CI.');
+          const recipient = createPublicKey(recipientPem);
+          if (recipient.asymmetricKeyType !== 'rsa' || recipient.asymmetricKeyDetails?.modulusLength !== 4096) throw new Error('The staging review recipient must be RSA4096.');
           const until = Date.now() + 180_000;
           let ready = false;
           while (Date.now() < until) {
@@ -222,12 +226,18 @@ jobs:
             try { state = JSON.parse(fs.readFileSync(process.env.MCCLUSTER_STAGING_STATE_FILE, 'utf8')); } catch {}
             if (state?.url && /^https:\/\/[a-z0-9]+(?:-[a-z0-9]+){2,}\.trycloudflare\.com$/.test(state.url) &&
                 /^[A-Za-z0-9_-]{32}$/.test(state.access_code || '') && Date.parse(state.expires_at) > Date.now()) {
-              // Whitelist this artifact's fields. No JWT, enrollment token,
-              // device identity, service key or log is copied into it.
-              fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'owner-ai-stage-access.json'), JSON.stringify({
+              // Whitelist and encrypt the artifact payload before writing it.
+              // The private recipient key never enters Git or the CI runner.
+              const plaintext = Buffer.from(JSON.stringify({
                 url: state.url, access_code: state.access_code, expires_at: state.expires_at,
                 purpose: 'Temporary isolated review; synthetic accounts and model output.',
-              }, null, 2), { mode: 0o600 });
+              }));
+              // RSA4096 OAEP-SHA256 capacity: 512 - 2*32 - 2 = 446 bytes.
+              if (plaintext.length > 446) throw new Error('The sanitized staging access payload exceeds its encryption bound.');
+              const ciphertext = publicEncrypt({ key: recipient, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' }, plaintext);
+              plaintext.fill(0);
+              if (ciphertext.length !== 512) throw new Error('Unexpected staging ciphertext length.');
+              fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'owner-ai-stage-access.enc'), ciphertext, { mode: 0o600 });
               fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'owner-ai-stage.url'), state.url, { mode: 0o600 });
               ready = true; break;
             }
@@ -257,11 +267,11 @@ jobs:
           # Only the nonsecret URL enters the public job summary.
           printf '%s\n' "$stage_url" >> "$GITHUB_STEP_SUMMARY"
           stage_ready=1
-      - name: Save temporary access code in a private repository artifact
+      - name: Save only encrypted staging access in the workflow artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: owner-ai-staging-access-${{ github.run_id }}
-          path: ${{ runner.temp }}/owner-ai-stage-access.json
+          path: ${{ runner.temp }}/owner-ai-stage-access.enc
           if-no-files-found: error
           retention-days: 1
       - name: Keep the isolated walkthrough available for thirty minutes
@@ -291,6 +301,6 @@ jobs:
             done
             kill -KILL "$stage_pid" 2>/dev/null || true
           fi
-          rm -f "$MCCLUSTER_STAGING_STATE_FILE" "$RUNNER_TEMP/owner-ai-stage-access.json" \
+          rm -f "$MCCLUSTER_STAGING_STATE_FILE" "$RUNNER_TEMP/owner-ai-stage-access.enc" \
             "$RUNNER_TEMP/owner-ai-stage-private.log" "$RUNNER_TEMP/owner-ai-stage.pid" \
             "$RUNNER_TEMP/owner-ai-stage.url" "$RUNNER_TEMP/owner-ai-stage-gate.html"
