@@ -1,7 +1,7 @@
 {
  "generated_by": "tools/build-music-registry.mjs",
  "isrc_prefix": "QT6KV",
- "count": 60,
+ "count": 61,
  "tracks": [
   {
    "slug": "who-did-the-shoot",
@@ -606,50 +606,6 @@
    "no": 53
   },
   {
-   "slug": "hit-mode",
-   "title": "Hit Mode",
-   "credit": "Benji Chase",
-   "album": "In Hot Pursuit",
-   "albumSlug": "in-hot-pursuit",
-   "page": "album.html?album=in-hot-pursuit",
-   "length": "1:12",
-   "available": true,
-   "no": 54
-  },
-  {
-   "slug": "block-so-hot",
-   "title": "Block So Hot",
-   "credit": "Benji Chase",
-   "album": "In Hot Pursuit",
-   "albumSlug": "in-hot-pursuit",
-   "page": "album.html?album=in-hot-pursuit",
-   "length": "1:03",
-   "available": true,
-   "no": 55
-  },
-  {
-   "slug": "new-phone",
-   "title": "New Phone",
-   "credit": "Benji Chase",
-   "album": "In Hot Pursuit",
-   "albumSlug": "in-hot-pursuit",
-   "page": "album.html?album=in-hot-pursuit",
-   "length": "1:57",
-   "available": true,
-   "no": 56
-  },
-  {
-   "slug": "up-for-days",
-   "title": "Up For Days",
-   "credit": "Benji Chase",
-   "album": "In Hot Pursuit",
-   "albumSlug": "in-hot-pursuit",
-   "page": "album.html?album=in-hot-pursuit",
-   "length": "3:37",
-   "available": true,
-   "no": 57
-  },
-  {
    "slug": "hitshake",
    "title": "HitShake",
    "credit": "Benji Chase",
@@ -658,7 +614,29 @@
    "page": "album.html?album=in-hot-pursuit",
    "length": "0:42",
    "available": true,
-   "no": 58
+   "no": 54
+  },
+  {
+   "slug": "hitlist",
+   "title": "Hitlist",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "2:05",
+   "available": true,
+   "no": 55
+  },
+  {
+   "slug": "hit-mode",
+   "title": "Hit Mode",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "1:12",
+   "available": true,
+   "no": 56
   },
   {
    "slug": "see-me-up",
@@ -669,7 +647,7 @@
    "page": "album.html?album=in-hot-pursuit",
    "length": "2:13",
    "available": true,
-   "no": 59
+   "no": 57
   },
   {
    "slug": "other-side",
@@ -680,7 +658,40 @@
    "page": "album.html?album=in-hot-pursuit",
    "length": "2:53",
    "available": true,
+   "no": 58
+  },
+  {
+   "slug": "new-phone",
+   "title": "New Phone",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "1:57",
+   "available": true,
+   "no": 59
+  },
+  {
+   "slug": "block-so-hot",
+   "title": "Block So Hot",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "1:03",
+   "available": true,
    "no": 60
+  },
+  {
+   "slug": "up-for-days",
+   "title": "Up For Days",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "3:37",
+   "available": true,
+   "no": 61
   }
  ]
 }

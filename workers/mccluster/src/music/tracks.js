@@ -266,30 +266,20 @@ export const TRACKS = {
     "album": "tinderfessions",
     "seconds": 215.6
   },
-  "hit-mode": {
-    "title": "Hit Mode",
-    "album": "in-hot-pursuit",
-    "seconds": 72
-  },
-  "block-so-hot": {
-    "title": "Block So Hot",
-    "album": "in-hot-pursuit",
-    "seconds": 62.9
-  },
-  "new-phone": {
-    "title": "New Phone",
-    "album": "in-hot-pursuit",
-    "seconds": 117.1
-  },
-  "up-for-days": {
-    "title": "Up For Days",
-    "album": "in-hot-pursuit",
-    "seconds": 216.5
-  },
   "hitshake": {
     "title": "HitShake",
     "album": "in-hot-pursuit",
     "seconds": 42.2
+  },
+  "hitlist": {
+    "title": "Hitlist",
+    "album": "in-hot-pursuit",
+    "seconds": 125.1
+  },
+  "hit-mode": {
+    "title": "Hit Mode",
+    "album": "in-hot-pursuit",
+    "seconds": 72
   },
   "see-me-up": {
     "title": "See Me Up",
@@ -300,5 +290,20 @@ export const TRACKS = {
     "title": "Other Side",
     "album": "in-hot-pursuit",
     "seconds": 173.1
+  },
+  "new-phone": {
+    "title": "New Phone",
+    "album": "in-hot-pursuit",
+    "seconds": 117.1
+  },
+  "block-so-hot": {
+    "title": "Block So Hot",
+    "album": "in-hot-pursuit",
+    "seconds": 62.9
+  },
+  "up-for-days": {
+    "title": "Up For Days",
+    "album": "in-hot-pursuit",
+    "seconds": 216.5
   }
 };

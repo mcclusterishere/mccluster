@@ -705,34 +705,22 @@
    "by": "",
    "tracks": [
     {
-     "title": "Hit Mode",
-     "src": "assets/audio/hit-mode.m4a",
-     "poster": "assets/img/in-hot-pursuit-cover.jpg",
-     "seconds": 72
-    },
-    {
-     "title": "Block So Hot",
-     "src": "assets/audio/block-so-hot.mp3",
-     "poster": "assets/img/in-hot-pursuit-cover.jpg",
-     "seconds": 62.9
-    },
-    {
-     "title": "New Phone",
-     "src": "assets/audio/new-phone.mp3",
-     "poster": "assets/img/in-hot-pursuit-cover.jpg",
-     "seconds": 117.1
-    },
-    {
-     "title": "Up For Days",
-     "src": "assets/audio/up-for-days.mp3",
-     "poster": "assets/img/in-hot-pursuit-cover.jpg",
-     "seconds": 216.5
-    },
-    {
      "title": "HitShake",
      "src": "assets/audio/hitshake.m4a",
      "poster": "assets/img/in-hot-pursuit-cover.jpg",
      "seconds": 42.2
+    },
+    {
+     "title": "Hitlist",
+     "src": "assets/audio/hitlist.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 125.1
+    },
+    {
+     "title": "Hit Mode",
+     "src": "assets/audio/hit-mode.m4a",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 72
     },
     {
      "title": "See Me Up",
@@ -745,6 +733,24 @@
      "src": "assets/audio/other-side.mp3",
      "poster": "assets/img/in-hot-pursuit-cover.jpg",
      "seconds": 173.1
+    },
+    {
+     "title": "New Phone",
+     "src": "assets/audio/new-phone.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 117.1
+    },
+    {
+     "title": "Block So Hot",
+     "src": "assets/audio/block-so-hot.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 62.9
+    },
+    {
+     "title": "Up For Days",
+     "src": "assets/audio/up-for-days.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 216.5
     }
    ]
   }

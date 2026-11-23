@@ -665,4 +665,4 @@ PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
-| `20261123190000_in_hot_pursuit_catalog_objects.sql` (+ `.rollback.sql`) | seven `public.music_catalog_objects` rows for Benji Chase's In Hot Pursuit (keys `in-hot-pursuit:*`), upserted like section 15 | the shelf in `data/albums.json` (album `in-hot-pursuit`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+| `20261123190000_in_hot_pursuit_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's In Hot Pursuit (keys `in-hot-pursuit:*`), upserted like section 15 | the shelf in `data/albums.json` (album `in-hot-pursuit`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
