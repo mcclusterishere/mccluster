@@ -28,6 +28,8 @@ namespace McClusterDesktop
         private readonly RadioButton targetGroup = new RadioButton();
         private readonly ComboBox kindBox = new ComboBox();
         private readonly ComboBox modelBox = new ComboBox();
+        private readonly ComboBox deviceBox = new ComboBox();
+        private readonly TextBox contextBox = new TextBox();
         private readonly TextBox draftBox = new TextBox();
         private readonly TextBox sampleBox = new TextBox();
         private readonly Button runButton = new Button();
@@ -101,6 +103,21 @@ namespace McClusterDesktop
             modelBox.DropDownStyle = ComboBoxStyle.DropDownList;
             modelBox.Width = 380;
             layout.Controls.Add(modelBox);
+
+            deviceBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            deviceBox.Items.Add("Auto (adapter if ready, else Ollama directly; failover is recorded)");
+            deviceBox.Items.Add("Pick: this device via node adapter (no fallback)");
+            deviceBox.Items.Add("Pick: this device via Ollama directly (no fallback)");
+            deviceBox.SelectedIndex = 0;
+            deviceBox.Width = 380;
+            layout.Controls.Add(Caption("Device (Proof Mode: the receipt records requested, chosen and why)"));
+            layout.Controls.Add(deviceBox);
+
+            contextBox.Width = 380;
+            layout.Controls.Add(Caption("Context routes, first-party only, one per line (read-only evidence, hashed into the receipt)"));
+            contextBox.Multiline = true;
+            contextBox.Height = 40;
+            layout.Controls.Add(contextBox);
 
             sampleBox.Width = 380;
             sampleBox.Text = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -299,6 +316,8 @@ namespace McClusterDesktop
             if (!online && !targetLocal.Checked) targetLocal.Checked = true;
             bool chat = SelectedKind() == JobKind.Chat;
             modelBox.Visible = chat;
+            deviceBox.Visible = chat;
+            contextBox.Visible = chat;
             sampleBox.Enabled = !chat;
             if (targetLocal.Checked)
             {
@@ -332,7 +351,14 @@ namespace McClusterDesktop
             var input = new Dictionary<string, object>();
             string kind = SelectedKind();
             if (kind == JobKind.Inventory) input["path"] = sampleBox.Text;
-            else { input["prompt"] = draftBox.Text; input["model"] = modelBox.SelectedItem as string; }
+            else
+            {
+                input["prompt"] = draftBox.Text;
+                input["model"] = modelBox.SelectedItem as string;
+                input["device"] = deviceBox.SelectedIndex == 1 ? DeviceChoice.Adapter : (deviceBox.SelectedIndex == 2 ? DeviceChoice.Ollama : DeviceChoice.Auto);
+                var routes = contextBox.Lines.Select(l => l.Trim()).Where(l => l.Length > 0).Cast<object>().ToList();
+                if (routes.Count > 0) input["context_routes"] = routes;
+            }
             LocalJob job = store.Create(kind, JobTarget.LocalDevice, input);
             running = new CancellationTokenSource();
             runButton.Text = "Cancel";

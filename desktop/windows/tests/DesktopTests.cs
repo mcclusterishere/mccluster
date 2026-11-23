@@ -21,6 +21,8 @@ internal static class DesktopTests
             NavigationPolicyChecks();
             JobStoreChecks();
             AdapterChecks();
+            ProofChecks();
+            ExoProbeChecks();
             JsonChecks();
             Console.WriteLine(checks + " desktop checks passed.");
             return 0;
@@ -111,6 +113,81 @@ internal static class DesktopTests
         Assert(status.ImplementationFor("qwen3:8b") == null, "an uninstalled implementation is never selected");
         Assert(status.ImplementationFor("llama3") == null && status.ImplementationFor(null) == null, "unknown or empty model selects nothing");
         Assert(LocalRuntime.AdapterUrl().StartsWith("http://127.0.0.1:"), "adapter is loopback only");
+    }
+
+    private static void ProofChecks()
+    {
+        // The canonical JSON test vector from docs/control-plane/DEVICE-JOBS-CONTRACT.md (PR #823).
+        object vector = Json.Parse("{ \"z\": 1.0, \"a\": [true, null, \"é\\n\\\"\", { \"b\": 1e21, \"c\": -0, \"d\": 0.1 }], \"m\": { \"y\": \"x\", \"x\": \"y\" } }");
+        string canonical = Canonical.Json(vector);
+        Assert(canonical == "{\"a\":[true,null,\"é\\n\\\"\",{\"b\":1e+21,\"c\":0,\"d\":0.1}],\"m\":{\"x\":\"y\",\"y\":\"x\"},\"z\":1}", "canonical JSON matches the contract vector: " + canonical);
+        Assert(Canonical.Sha256Hex(canonical) == "d9a258d84feed22118930490e012edba6c031ee62716e40701d03480177206f8", "canonical hash matches the contract vector");
+
+        string root = Path.Combine(Path.GetTempPath(), "mccluster-proof-tests-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var receipt = new Dictionary<string, object> { { "schema", "mccluster-desktop-receipt/2" }, { "attempt", 1 }, { "output_sha256", "abc" }, { "inference", new Dictionary<string, object> { { "mode", "single-device" } } } };
+            using (DeviceKey key = DeviceKey.Load(root))
+            {
+                key.Sign(receipt);
+                Assert((bool)receipt["signed"] && Json.Str(receipt["signature"], "alg") == "ecdsa-p256-sha256", "receipt is signed with the device key");
+                Assert(Json.Str(receipt["signature"], "key_id") == key.KeyId, "signature names the device key id");
+            }
+            string reason;
+            Assert(DeviceKey.Verify(receipt, out reason), "signed receipt verifies offline: " + reason);
+            object roundTrip = Json.Parse(Json.Pretty(receipt));
+            Assert(DeviceKey.Verify(roundTrip, out reason), "receipt still verifies after a JSON round trip: " + reason);
+            var tampered = Json.Obj(Json.Parse(Json.Pretty(receipt)));
+            tampered["output_sha256"] = "def";
+            Assert(!DeviceKey.Verify(tampered, out reason) && reason == "signature does not verify", "a tampered receipt is rejected");
+            var unsigned = new Dictionary<string, object> { { "schema", "x" } };
+            Assert(!DeviceKey.Verify(unsigned, out reason) && reason == "unsigned", "an unsigned receipt is reported as unsigned");
+            using (DeviceKey again = DeviceKey.Load(root)) Assert(again.KeyId == Json.Str(receipt["signature"], "key_id"), "the device key persists across loads");
+        }
+        finally { try { Directory.Delete(root, true); } catch (Exception) { } }
+
+        // Context routes: first-party only.
+        bool refused = false;
+        try { ContextRefs.SiteRoute("https://example.com/", 100).Wait(); } catch (AggregateException ex) { refused = ex.InnerException is ArgumentException; }
+        Assert(refused, "a context route outside the first-party hosts is refused");
+        refused = false;
+        try { ContextRefs.SiteRoute("http://mccluster.org/", 100).Wait(); } catch (AggregateException ex) { refused = ex.InnerException is ArgumentException; }
+        Assert(refused, "a plain-http context route is refused");
+    }
+
+    private static void ExoProbeChecks()
+    {
+        Assert(!ExoProbe.IsLoopback("http://192.168.1.11:52415") && !ExoProbe.IsLoopback("https://exo.example/") && ExoProbe.IsLoopback("http://127.0.0.1:52415") && ExoProbe.IsLoopback("http://localhost:52415"), "the EXO probe accepts loopback runtimes only");
+        var refusedReceipt = ExoProbe.RankReceipt("http://192.168.1.11:52415", "node_x").Result;
+        Assert(refusedReceipt.ContainsKey("error") && (bool)refusedReceipt["inference_verified"] == false, "a non-loopback runtime yields an error receipt, never a claim");
+
+        // A loopback fixture that answers like the audited EXO release: /node_id as a bare JSON string, /state with a topology of two nodes.
+        var listener = new System.Net.HttpListener();
+        int port = 52900 + new Random().Next(0, 90);
+        listener.Prefixes.Add("http://127.0.0.1:" + port + "/");
+        listener.Start();
+        var serving = System.Threading.Tasks.Task.Run((Action)delegate
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                System.Net.HttpListenerContext ctx = listener.GetContext();
+                string body = ctx.Request.Url.AbsolutePath == "/node_id" ? "\"rank-a-fixture\"" : "{\"topology\":{\"nodes\":{\"rank-a-fixture\":{\"lastSeen\":\"2026-11-23T00:00:00Z\",\"memory\":{\"total\":17179869184}},\"rank-b-fixture\":{\"lastSeen\":\"2026-11-23T00:00:01Z\"}}},\"instances\":[]}";
+                byte[] bytes = System.Text.Encoding.UTF8.GetBytes(body);
+                ctx.Response.ContentType = "application/json";
+                ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+                ctx.Response.Close();
+            }
+        });
+        try
+        {
+            var receipt = ExoProbe.RankReceipt("http://127.0.0.1:" + port, "node_abc").Result;
+            Assert(!receipt.ContainsKey("error"), "fixture probe succeeds: " + (receipt.ContainsKey("error") ? Convert.ToString(receipt["error"]) : ""));
+            Assert(Convert.ToString(receipt["runtime_node_id"]) == "rank-a-fixture", "runtime node id read from /node_id");
+            Assert((int)receipt["member_count"] == 2 && (bool)receipt["two_rank_candidate"], "two members seen in /state");
+            Assert(Convert.ToString(receipt["inference_mode"]) == "two-rank-exo (untested)" && (bool)receipt["inference_verified"] == false, "two members is topology, never a shared-inference claim");
+            Assert(Convert.ToString(receipt["schema"]) == "exo-rank-receipt/1" && receipt["state_sha256"] != null, "rank receipt carries schema and state hash");
+        }
+        finally { listener.Stop(); serving.Wait(2000); }
     }
 
     private static void JsonChecks()

@@ -3,19 +3,19 @@ RequestExecutionLevel user
 ManifestDPIAware True
 Name "McCluster"
 Caption "McCluster for Windows"
-OutFile "..\dist\McCluster-Windows-x64-Setup-0.2.0.exe"
+OutFile "..\dist\McCluster-Windows-x64-Setup-0.3.0.exe"
 InstallDir "$LOCALAPPDATA\McClusterDesktop\App"
 SetCompress auto
 SetCompressor /SOLID lzma
 ShowInstDetails show
 ShowUninstDetails show
 
-VIProductVersion "0.2.0.0"
+VIProductVersion "0.3.0.0"
 VIAddVersionKey /LANG=1033 "ProductName" "McCluster for Windows"
 VIAddVersionKey /LANG=1033 "FileDescription" "McCluster for Windows setup"
-VIAddVersionKey /LANG=1033 "FileVersion" "0.2.0.0"
-VIAddVersionKey /LANG=1033 "ProductVersion" "0.2.0.0"
-VIAddVersionKey /LANG=1033 "OriginalFilename" "McCluster-Windows-x64-Setup-0.2.0.exe"
+VIAddVersionKey /LANG=1033 "FileVersion" "0.3.0.0"
+VIAddVersionKey /LANG=1033 "ProductVersion" "0.3.0.0"
+VIAddVersionKey /LANG=1033 "OriginalFilename" "McCluster-Windows-x64-Setup-0.3.0.exe"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2026 McCluster Corp"
 
 !include "MUI2.nsh"
@@ -54,7 +54,7 @@ Section "McCluster" SEC_APP
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateShortCut "$SMPROGRAMS\McCluster Desktop.lnk" "$INSTDIR\McCluster.exe"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayName" "McCluster"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayVersion" "0.2.0"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayVersion" "0.3.0"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayIcon" "$INSTDIR\McCluster.exe"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "UninstallString" '$\"$INSTDIR\Uninstall.exe$\"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "InstallLocation" "$INSTDIR"

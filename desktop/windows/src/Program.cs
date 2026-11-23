@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,6 +37,13 @@ namespace McClusterDesktop
             return null;
         }
 
+        private static List<string> Options(string[] args, string name)
+        {
+            var values = new List<string>();
+            for (int i = 0; i + 1 < args.Length; i++) if (args[i] == name) values.Add(args[i + 1]);
+            return values;
+        }
+
         internal static int Run(string[] args)
         {
             JobStore store = JobStore.Default();
@@ -46,6 +54,48 @@ namespace McClusterDesktop
                 {
                     case "--status-json":
                         return Write(outPath, Status(store).Result);
+                    case "--verify-receipt":
+                        {
+                            object file = Json.Parse(File.ReadAllText(Option(args, "--file") ?? args[1]));
+                            object receipt = Json.Get(file, "receipt") ?? file;
+                            string reason;
+                            bool ok = DeviceKey.Verify(receipt, out reason);
+                            var payload = new Dictionary<string, object> { { "verified", ok }, { "reason", reason }, { "schema", Json.Str(receipt, "schema") }, { "key_id", Json.Str(Json.Get(receipt, "signature"), "key_id") }, { "output_sha256", Json.Str(receipt, "output_sha256") }, { "inference_mode", Json.Str(Json.Get(receipt, "inference"), "mode") } };
+                            Write(outPath, payload);
+                            return ok ? 0 : 1;
+                        }
+                    case "--image-diff":
+                        {
+                            string a = Option(args, "--a") ?? args[1];
+                            string b = Option(args, "--b") ?? args[2];
+                            int tolerance = (int)double.Parse(Option(args, "--tolerance") ?? "24", System.Globalization.CultureInfo.InvariantCulture);
+                            return Write(outPath, ImageDiff.Compare(a, b, Option(args, "--diff"), tolerance));
+                        }
+                    case "--exo-rank-probe":
+                        {
+                            string url = Option(args, "--runtime-url") ?? "http://127.0.0.1:52415";
+                            Dictionary<string, object> receipt = ExoProbe.RankReceipt(url, Option(args, "--node-id")).Result;
+                            Write(outPath, receipt);
+                            return receipt.ContainsKey("error") ? 1 : 0;
+                        }
+                    case "--parity-audit":
+                        {
+                            var routes = Options(args, "--route");
+                            if (routes.Count == 0) routes.AddRange(new[] { "https://mccluster.org/", "https://mccluster.org/company", "https://mccluster.org/login.html", "https://mccluster.org/account.html", "https://mccluster.org/control.html", "https://mccluster.org/dashboard.html", "https://mccluster.org/help.html", "https://mccluster.org/does-not-exist-parity-check", "https://matthew.mccluster.org/", "https://humanuprise.com/", "https://example.com/" });
+                            int width = (int)double.Parse(Option(args, "--width") ?? "1280", System.Globalization.CultureInfo.InvariantCulture);
+                            int height = (int)double.Parse(Option(args, "--height") ?? "800", System.Globalization.CultureInfo.InvariantCulture);
+                            string dir = Option(args, "--dir") ?? Path.Combine(store.Root, "parity");
+                            Directory.CreateDirectory(dir);
+                            Application.EnableVisualStyles();
+                            var form = new ParityAuditForm(routes, dir, width, height);
+                            Application.Run(form);
+                            List<ParityResult> results = form.Completion.Result;
+                            var rows = new List<object>();
+                            foreach (ParityResult r in results)
+                                rows.Add(new Dictionary<string, object> { { "route", r.Route }, { "final_url", r.FinalUrl }, { "http_status", r.HttpStatus }, { "navigation_ok", r.NavigationOk }, { "web_error_status", r.WebErrorStatus }, { "title", r.Title }, { "scroll_width", r.ScrollWidth }, { "client_width", r.ClientWidth }, { "no_horizontal_overflow", r.ScrollWidth > 0 && r.ScrollWidth == r.ClientWidth }, { "document_height", r.DocumentHeight }, { "blocked_navigations", r.BlockedNavigations }, { "console_errors", r.ConsoleErrors }, { "screenshot", r.Screenshot }, { "elapsed_ms", r.ElapsedMs }, { "error", r.Error } });
+                            var payload = new Dictionary<string, object> { { "schema", "mccluster-parity-audit/1" }, { "checked_at", JobStore.Now() }, { "viewport", width + "x" + height }, { "shell", "mccluster-desktop/" + typeof(Headless).Assembly.GetName().Version.ToString(3) }, { "webview2_runtime", WebView2Version() }, { "routes", rows } };
+                            return Write(outPath, payload);
+                        }
                     case "--jobs-json":
                         {
                             List<LocalJob> recovered = store.RecoverInterrupted();
@@ -66,14 +116,18 @@ namespace McClusterDesktop
                     case "--run-local-chat":
                         {
                             store.RecoverInterrupted();
-                            var input = new Dictionary<string, object> { { "prompt", Option(args, "--prompt") ?? args[1] }, { "model", Option(args, "--model") } };
+                            var input = new Dictionary<string, object> { { "prompt", Option(args, "--prompt") ?? args[1] }, { "model", Option(args, "--model") }, { "device", Option(args, "--device") ?? DeviceChoice.Auto } };
+                            string attemptsText = Option(args, "--max-attempts");
+                            if (attemptsText != null) input["max_attempts"] = (int)double.Parse(attemptsText, System.Globalization.CultureInfo.InvariantCulture);
+                            List<string> contextRoutes = Options(args, "--context-route");
+                            if (contextRoutes.Count > 0) input["context_routes"] = contextRoutes.Cast<object>().ToList();
                             LocalJob job = store.Create(JobKind.Chat, JobTarget.LocalDevice, input);
                             job = new JobRunner(store).Run(job, null, CancellationToken.None).Result;
                             Write(outPath, job.ToDictionary());
                             return job.State == JobState.Done ? 0 : 1;
                         }
                     default:
-                        Write(outPath, new Dictionary<string, object> { { "error", "unknown option " + args[0] }, { "options", new[] { "--status-json --out <file>", "--jobs-json --out <file>", "--run-local-inventory <folder> --out <file>", "--run-local-chat <prompt> --model <name> --out <file>" } } });
+                        Write(outPath, new Dictionary<string, object> { { "error", "unknown option " + args[0] }, { "options", new[] { "--status-json --out <file>", "--jobs-json --out <file>", "--run-local-inventory <folder> --out <file>", "--run-local-chat <prompt> --model <name> [--device auto|adapter|ollama] [--max-attempts n] [--context-route <first-party url>]... --out <file>", "--verify-receipt --file <job.json> --out <file>", "--image-diff --a <png> --b <png> [--diff <png>] [--tolerance n] --out <file>", "--exo-rank-probe --runtime-url http://127.0.0.1:52415 [--node-id node_...] --out <file>", "--parity-audit [--route <url>]... [--width 1280 --height 800] [--dir <folder>] --out <file>" } } });
                         return 2;
                 }
             }
@@ -83,6 +137,12 @@ namespace McClusterDesktop
                 Write(outPath, new Dictionary<string, object> { { "error", ex.GetType().Name + ": " + ex.Message } });
                 return 1;
             }
+        }
+
+        internal static string WebView2Version()
+        {
+            try { return CoreWebView2Environment.GetAvailableBrowserVersionString(); }
+            catch (Exception ex) { return "unavailable: " + ex.GetType().Name; }
         }
 
         private static int Write(string path, object payload)
