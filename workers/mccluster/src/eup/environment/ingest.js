@@ -7,8 +7,8 @@
    USGS collector). With the flag off the scheduled hook (../../entry.js) returns before any network or store call, and so
    does runUsgsIngest.
 
-   ONE RUN (one cron tick), in order; every store call is service-role and names a pending entry point
-   (supabase/pending/20261119100000_eup_environment_events_v1_03.sql):
+   ONE RUN (one cron tick), in order; every store call is service-role and names an entry point of store part 03
+   (supabase/migrations/20261123173831_eup_environment_events_v1_03.sql, applied 2026-11-23):
      1. eup_environment_ingest_state: the provider's rule and switches, and the events ever published (neither withdrawn nor
         merged) observed in the last 26 hours, or 30 days on the sweep tick, with their aliases. Store not applied, provider
         not configured (no rule yet) or an unreadable store: the run stops here and asks USGS nothing. Paused: the run
