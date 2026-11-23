@@ -158,15 +158,17 @@ test('G1R-4: play on a tour already under way is idempotent: no second flight, n
   r.T.fire(t => t.ms === 5000);
   assert.equal(r.flights.length, 2, 'the tour still advances on its own');
 });
-test('pause cancels the flight (through its cancel callback) and keeps the index; interrupt pauses with reason input', () => {
+test('pause cancels the flight (through its cancel callback) and names the scene it arrived at; interrupt pauses with reason input', () => {
   const r = rig();
   r.director.play(); r.complete(); r.T.fire(t => t.ms === 5000);
   assert.equal(r.director.state().index, 1);
   r.director.pause();
   assert.equal(r.camera.pending, null, 'cancelFlight was called');
   assert.equal(r.releases.filter(x => x === 'env-director').length, 2);
-  assert.equal(r.director.state().playing, false); assert.equal(r.director.state().index, 1); assert.equal(r.director.state().reason, null);
-  r.director.play(); assert.equal(r.flights.length, 3); assert.equal(r.director.state().index, 1, 'resumes where it paused');
+  /* changed on purpose (event timeline slice S6, the scene line after a cancelled flight): this paused on the way to scene 2 and
+     used to keep index 1, so the line named a scene the camera never reached; it now names scene 1, where the camera last arrived */
+  assert.equal(r.director.state().playing, false); assert.equal(r.director.state().index, 0); assert.equal(r.director.state().id, 'usgs:a'); assert.equal(r.director.state().reason, null);
+  r.director.play(); assert.equal(r.flights.length, 3); assert.equal(r.director.state().index, 1, 'resumes on the way it was going');
   r.director.interrupt('input');
   assert.equal(r.director.state().playing, false); assert.equal(r.director.state().reason, 'input');
   r.director.play(); r.complete();
@@ -217,4 +219,86 @@ test('a flight that never answers resolves through the safety timeout; destroy s
   assert.equal(r.director.state().playing, false);
   assert.deepEqual(r.T.pending(), []);
   assert.match(source.slice(0, 800), /Adapted from gods-eye-view src\/director\/camera\.js \(shortest-arc interpolation\), src\/director\/playback\.js \(queue phases\) and src\/cameraVerbs\.js \(manual-input interrupt\), MIT, Copyright \(c\) 2026 Bilawal Sidhu, see THIRD-PARTY-NOTICES/);
+});
+
+/* ---------- event timeline slice S6: the scene line after a cancelled flight, and the replay as playback of the time cursor ---------- */
+test('S6: a flight stopped on its way names the scene the camera last arrived at, never the one it was flying to; Next and Play go on from there', () => {
+  const r = rig();
+  r.director.play(); r.complete();
+  assert.deepEqual(r.arrived, ['usgs:a']);
+  r.T.fire(t => t.ms === 5000);
+  assert.equal(r.director.state().id, 'usgs:b', 'on the way to scene 2, the state names it while it plays');
+  r.director.interrupt('time');
+  const s = r.director.state();
+  assert.deepEqual([s.playing, s.index, s.id, s.title, s.reason], [false, 0, 'usgs:a', 'usgs:a', 'time'], 'stopped half way: scene 1 is what the globe shows');
+  assert.equal(r.told.at(-1).id, 'usgs:a', 'and that is what the panel is told');
+  r.director.next();
+  assert.equal(r.director.state().index, 1, 'Next goes to the scene it never reached'); assert.equal(r.flights.at(-1).destination.lon, 100);
+  r.complete();
+  assert.deepEqual(r.arrived, ['usgs:a', 'usgs:b']);
+  /* stopped before any arrival: no scene is named; Play starts at the first, Previous from nowhere goes to the last */
+  const n = rig();
+  n.director.play();
+  n.director.pause();
+  assert.deepEqual([n.director.state().index, n.director.state().id], [-1, null], 'nothing reached: nothing named');
+  n.director.setQueue([item('usgs:a', { category: 'quake', lat: 10, lon: 20, observed_at: at(3) }), item('usgs:b', { category: 'quake', lat: -5, lon: 100, observed_at: at(2) })], { queue: 'significant' });
+  assert.equal(n.director.state().index, -1, 'a rebuilt queue keeps naming nothing');
+  n.director.play();
+  assert.equal(n.director.state().index, 0); assert.equal(n.flights.length, 2);
+  n.director.pause();
+  n.director.prev();
+  assert.equal(n.director.state().index, 1, 'Previous from nowhere: the last scene');
+  /* a pause while dwelling (the camera is there) keeps the scene and Play flies to it again, as before */
+  const d = rig();
+  d.director.play(); d.complete();
+  d.director.pause();
+  assert.deepEqual([d.director.state().index, d.director.state().id], [0, 'usgs:a']);
+  d.director.play();
+  assert.equal(d.director.state().index, 0); assert.equal(d.flights.length, 2);
+});
+
+const replayItems = () => [0, 1, 2, 3].map(k => item('usgs:r' + k, { category: 'quake', significant: false, lat: k, lon: 10 * k, observed_at: new Date(Date.UTC(2026, 10, 17, 2 * k)).toISOString(), facts: [{ label: 'Magnitude', value: '4.6' }] }));
+test('S6: seekIndex is the last quake at or before the cursor, -1 before the first, the last at live', () => {
+  const scenes = P.buildQueue(replayItems(), { queue: 'quakes-24h' });
+  assert.deepEqual(plain(scenes.map(s => s.id)), ['usgs:r0', 'usgs:r1', 'usgs:r2', 'usgs:r3']);
+  const h = (n) => Date.UTC(2026, 10, 17, n);
+  assert.equal(P.seekIndex(scenes, h(0) - 1), -1);
+  assert.equal(P.seekIndex(scenes, h(0)), 0);
+  assert.equal(P.seekIndex(scenes, h(3)), 1);
+  assert.equal(P.seekIndex(scenes, h(4)), 2);
+  assert.equal(P.seekIndex(scenes, h(9)), 3);
+  assert.equal(P.seekIndex(scenes, null), 3, 'live: every quake has happened');
+  assert.equal(P.seekIndex([], h(1)), -1);
+});
+test('S6: the replay seeks to the time cursor without moving the camera; Play goes on with the next quake after it', () => {
+  const r = rig();
+  r.director.setQueue(replayItems(), { queue: 'quakes-24h' });
+  r.director.play();
+  assert.equal(r.flights.length, 1); assert.equal(r.director.state().id, 'usgs:r0');
+  r.complete();
+  r.T.fire(t => t.ms === 2500);
+  assert.equal(r.flights.length, 2, 'flying to the second quake');
+  const before = r.flights.length, views = r.views.length;
+  /* the visitor scrubs to 05:00 while the replay flies: the flight stops, nothing else moves */
+  r.director.interrupt('time');
+  r.director.seek(Date.UTC(2026, 10, 17, 5));
+  assert.equal(r.camera.pending, null, 'the flight was cancelled');
+  assert.equal(r.flights.length, before, 'no new flight'); assert.equal(r.views.length, views, 'no jump');
+  const s = r.director.state();
+  assert.deepEqual([s.playing, s.index, s.id, s.reason, s.queue], [false, 2, 'usgs:r2', 'time', 'quakes-24h'], 'the replay stands at the last quake before 05:00');
+  r.director.play();
+  assert.equal(r.director.state().id, 'usgs:r3', 'Play goes on with the first quake after the cursor');
+  r.complete();
+  assert.deepEqual(r.arrived, ['usgs:r0', 'usgs:r3']);
+  /* before the first quake: Play starts with the first; at live: Play starts the replay again from its first quake */
+  r.director.seek(Date.UTC(2026, 10, 16, 23));
+  assert.equal(r.director.state().index, -1); assert.equal(r.director.state().id, null);
+  r.director.play(); assert.equal(r.director.state().id, 'usgs:r0');
+  r.director.seek(null);
+  assert.equal(r.director.state().id, 'usgs:r3');
+  r.director.play(); assert.equal(r.director.state().id, 'usgs:r0', 'from the end, the replay starts again');
+  /* the tour (significant queue) is not a time line: seek does nothing there */
+  const t = rig();
+  t.director.seek(Date.UTC(2026, 10, 17, 5));
+  assert.equal(t.director.state().queue, 'significant'); assert.equal(t.director.state().index, 0); assert.equal(t.director.state().reason, null);
 });
