@@ -296,9 +296,11 @@ function pillClass(track) {
 }
 async function loadTracks() {
   const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at&order=created_at.desc");
+    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at," +
+    "lyr_source:lyrics->>source,lyr_reviewed:lyrics->>reviewed,lyr_timed:lyrics->timed->line->0->>begin&order=created_at.desc");
   tracksCache = rows || [];
   renderAlbums();
+  paintLyricsCard();
   const list = $("creatorTracks");
   if (!rows?.length) {
     list.innerHTML = '<div class="creator-status">No releases yet.</div>';
@@ -308,10 +310,84 @@ async function loadTracks() {
     '<div class="creator-item"><div><b>' + escapeHtml(t.title) + '</b><small>' +
     escapeHtml([t.artist, t.genre, t.access_mode].filter(Boolean).join(" · ")) +
     (t.moderation_note ? '<br>' + escapeHtml(t.moderation_note) : '') +
-    '</small></div><span class="' + pillClass(t) + '">' +
+    '</small>' + lyricsChip(t) + '</div><span class="' + pillClass(t) + '">' +
     escapeHtml(t.status.replace(/_/g, " ")) + ' · ' + escapeHtml(t.rights_status) + '</span></div>'
   ).join("");
 }
+
+/* ---------- lyrics (2026-11-23, owner: "Creator Studio ... control the lyrics") ----------
+   The creator edits their release's lyrics with the same editor Control uses (js/control-room/lyrics-review.js):
+   words, line and word times, tap along, split/merge/add/delete, LRC/TTML export, and "These lyrics are right".
+   It reads and writes creator_tracks.lyrics under the creator's own row rights (music_creator_tracks_update), no
+   new backend; the audio is the owner's own stream (music-access "stream"). A release that is approved or live
+   goes back to review when its lyrics change: the database guard (music_track_guard (b)) does that for every
+   role, so the creator is asked first. Ticking "These lyrics are right" keeps the lyric machine from overwriting
+   them (core/src/executors/lyrics-align.mjs mayReplace). */
+const LIVE_STATES = ["approved", "published"];
+function lyricsStateOf(t) {
+  if (!t.lyr_source && !t.lyr_timed) return { label: "No lyrics", tone: "" };
+  if (t.lyr_reviewed === "true") return { label: "Lyrics approved", tone: "live" };
+  if (t.lyr_timed == null) return { label: "Lyrics: timing pending", tone: "review" };
+  return { label: "Lyrics timed: check them", tone: "review" };
+}
+function lyricsChip(t) {
+  const st = lyricsStateOf(t);
+  return '<span class="creator-lyr"><span class="creator-pill' + (st.tone ? " " + st.tone : "") + '">' + escapeHtml(st.label) + '</span>' +
+    (st.label === "No lyrics" ? "" : '<button class="creator-lyr__open" type="button" data-lyrics-open="' + escapeHtml(t.id) + '">Edit lyrics</button>') + '</span>';
+}
+const lyricsSource = {
+  editor: "creator",
+  list: async () => tracksCache.filter((t) => t.lyr_source || t.lyr_timed).map((t) => ({
+    key: "mine:" + t.id, kind: "mine", id: t.id, title: t.title || "Untitled", album: String(t.status || "").replace(/_/g, " ")
+  })),
+  get: async (t) => {
+    const [rows, stream] = await Promise.all([
+      rest("creator_tracks?id=eq." + encodeURIComponent(t.id) + "&m_uid=eq." + encodeURIComponent(mUid) + "&select=lyrics&limit=1"),
+      fn("stream", { track_id: t.id }).catch(() => null)
+    ]);
+    if (!rows?.length) throw new Error("Release not found");
+    return { doc: rows[0].lyrics || null, src: stream?.url || "" };
+  },
+  save: async (t, doc, reviewed) => {
+    doc.reviewed_by = reviewed ? "creator" : null;
+    if (!reviewed) doc.reviewed_at = null;
+    const before = (tracksCache.find((x) => x.id === t.id) || {}).status;
+    const rows = await rest("creator_tracks?id=eq." + encodeURIComponent(t.id) + "&m_uid=eq." + encodeURIComponent(mUid) + "&select=id,status", {
+      method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ lyrics: doc })
+    });
+    if (!rows?.length) throw new Error("Release not found");
+    const back = LIVE_STATES.includes(before) && rows[0].status === "pending_review";
+    return { status: rows[0].status, note: back ? "The release is back in review and returns once it is approved." : "" };
+  },
+  saved: () => { loadTracks().catch(() => {}); },
+  confirm: (t) => LIVE_STATES.includes((tracksCache.find((x) => x.id === t.id) || {}).status)
+    ? "This release is approved or live. Changing its lyrics sends it back to review, and it is off the shelf until it is approved again. Save anyway?"
+    : "",
+  note: () => "Tick “These lyrics are right” when they are: the lyric machine never overwrites lyrics you approved.",
+  untimed: "Your lyric sheet is on the release. McCluster times it to the music; check back once it has run.",
+  empty: "No lyrics on this release yet."
+};
+let lyricsBound = false;
+function paintLyricsCard() {
+  const card = $("creatorLyrics"), ed = window.CR && window.CR.lyricsReview;
+  if (!card || !ed) return;
+  const any = tracksCache.some((t) => t.lyr_source || t.lyr_timed);
+  card.hidden = !any;
+  if (!any) return;
+  if (!lyricsBound) { ed.configure(lyricsSource); ed.bind(card); lyricsBound = true; }
+  else ed.reload();
+}
+function openLyrics(id) {
+  const card = $("creatorLyrics"), ed = window.CR && window.CR.lyricsReview;
+  if (!card || !ed) return;
+  paintLyricsCard();
+  ed.open("mine:" + id);
+  card.scrollIntoView({ block: "start", behavior: "smooth" });
+}
+$("creatorTracks").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-lyrics-open]");
+  if (b) openLyrics(b.getAttribute("data-lyrics-open"));
+});
 function escapeHtml(value) {
   const d = document.createElement("i");
   d.textContent = value == null ? "" : String(value);
@@ -1050,6 +1126,9 @@ const GATE_TEXT = $("creatorGate").querySelector("p").textContent;
 let boots = 0;
 function closeStudio() {
   session = null; mUid = null; account = null; profile = null; tracksCache = []; onboardState = null;
+  /* the editor forgets the previous account's lyrics and audio */
+  if (lyricsBound && window.CR && window.CR.lyricsReview) { const a = window.CR.lyricsReview.state.audio; if (a) a.pause(); window.CR.lyricsReview.configure(lyricsSource); }
+  if ($("creatorLyrics")) $("creatorLyrics").hidden = true;
   editingAlbum = null; editingService = null;
   $("creatorOnboard").hidden = true;
   $("creatorApp").hidden = true;

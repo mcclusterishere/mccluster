@@ -21,6 +21,9 @@
      - a shelf track lives in the repo (data/lyrics/<slug>.json): the corrected
        file downloads, to commit or hand to McCluster's Build desk. No new write
        backend.
+   Creator Studio (creator.html) uses this same editor for a creator's own releases: it calls configure() with its
+   own source (js/music-creator-studio.js, lyricsSource), which reads and writes creator_tracks.lyrics under the
+   creator's row rights and plays the creator's own stream. Styles: css/lyrics-editor.css, shared by both pages.
 */
 (function(){
   "use strict";
@@ -39,7 +42,7 @@
     l.content=String(text).trim();
     if(Array.isArray(l.words)&&l.words.length===words.length){l.words.forEach(function(w,k){w.content=words[k];});}
     else{var b=l.begin,en=l.end!=null?l.end:b+2,step=(en-b)/Math.max(1,words.length);l.words=words.map(function(w,k){return{begin:r3(b+step*k),end:r3(b+step*(k+1)),content:w};});}
-    if(l.mismatch){l.mismatch=false;l.edited=true;}
+    l.mismatch=false;l.edited=true;
   }
   function shift(i,delta){
     var l=lines()[i];if(!l)return;
@@ -168,18 +171,34 @@
     if(reviewed){d.reviewed_at=new Date().toISOString();}
     d.plain=lines().map(function(l){return l.content;}).join("\n");
     d.timed.line.forEach(function(l){delete l.edited;delete l.added_by_owner;});
-    if(lines().some(function(l){return l.edited;})&&d.source!=="owner")d.edited_by_owner=true;
+    if(lines().some(function(l){return l.edited;})&&d.source!=="owner"){if(src().editor==="creator")d.edited_by_creator=true;else d.edited_by_owner=true;}
     return d;
   }
 
   /* ---- data ---- */
+  /* Where the tracks come from and where a save goes. Control uses the owner's source (below); Creator Studio
+     configures its own (js/music-creator-studio.js: the creator's own releases, read and written under their
+     row-level rights), so both edit with this one editor. */
+  var SRC=null;
+  function src(){return SRC||OWNER;}
+  var OWNER={
+    editor:"owner",
+    list:ownerList,
+    get:function(t){return musicCall("operator-lyrics-get",{track_id:t.id}).then(function(j){return{doc:j.lyrics,src:j.listen_url};});},
+    save:function(t,doc,reviewed){return musicCall("operator-lyrics-save",{track_id:t.id,lyrics:doc,reviewed:reviewed});},
+    queue:function(t){return musicCall("operator-lyrics-queue",{track_id:t.id});}
+  };
   function loadList(){
     if(L.loading)return;L.loading=true;L.error=null;
-    fetch("data/albums.json",{cache:"no-cache"}).then(function(r){return r.json();}).then(function(a){
+    Promise.resolve().then(function(){return src().list();}).then(function(list){L.list=list||[];L.loading=false;paint();var w=L.want;L.want="";if(w&&L.list.some(function(t){return t.key===w;}))open(w);})
+      .catch(function(err){L.loading=false;L.error=err.message||"Could not read the tracks";paint();});
+  }
+  function ownerList(){
+    return fetch("data/albums.json",{cache:"no-cache"}).then(function(r){return r.json();}).then(function(a){
       var shelf=[];(a.albums||[]).forEach(function(al){(al.tracks||[]).forEach(function(t){if(t.lyrics&&t.src&&!t.gated)shelf.push({key:"shelf:"+t.lyrics,kind:"shelf",title:t.title,album:al.name,lyrics:t.lyrics,src:t.src});});});
       var ups=((window.CR.musicOps&&window.CR.musicOps.state.review.tracks)||[]).map(function(t){return{key:"upload:"+t.id,kind:"upload",title:t.title||"Untitled",album:t.artist||"Upload",id:t.id};});
-      L.list=shelf.concat(ups);L.loading=false;paint();
-    }).catch(function(err){L.loading=false;L.error=err.message||"Could not read the shelf";paint();});
+      return shelf.concat(ups);
+    });
   }
   function musicCall(action,body){
     var tok=window.MCC_SUPA&&MCC_SUPA.token?MCC_SUPA.token():Promise.resolve(null);
@@ -194,10 +213,10 @@
     L.key=key;L.track=t;L.doc=null;L.msg="Loading…";L.live=-1;L.open=-1;L.tap=null;L.caret={};paint();
     var got=t.kind==="shelf"
       ?fetch(t.lyrics,{cache:"no-cache"}).then(function(r){if(!r.ok)throw new Error("No lyrics file");return r.json();}).then(function(j){return{doc:j,src:t.src};})
-      :musicCall("operator-lyrics-get",{track_id:t.id}).then(function(j){return{doc:j.lyrics,src:j.listen_url};});
+      :src().get(t);
     got.then(function(r){
       if(gen!==L.gen||L.key!==key)return;
-      if(!r.doc||!r.doc.timed||!Array.isArray(r.doc.timed.line)){L.doc=null;L.msg=r.doc?"These lyrics have no timing yet. Re-run the machine to time them.":"No lyrics yet. The machine writes them after upload.";L.src=r.src||"";paint();return;}
+      if(!r.doc||!r.doc.timed||!Array.isArray(r.doc.timed.line)){L.doc=null;L.msg=r.doc?(src().untimed||"These lyrics have no timing yet. Re-run the machine to time them."):(src().empty||"No lyrics yet. The machine writes them after upload.");L.src=r.src||"";paint();return;}
       L.doc=r.doc;L.orig=JSON.stringify(r.doc);L.src=r.src||"";L.msg="";paint();
     }).catch(function(err){if(gen!==L.gen||L.key!==key)return;L.msg=err.message||"Could not load";paint();});
   }
@@ -242,16 +261,18 @@
   }
   function editor(){
     if(!L.track)return'<p class="cro-meta">Pick a track to check its lyrics against the music.</p>';
-    if(!L.doc)return'<div class="cro-note">'+e(L.msg||"…")+'</div>'+(L.track.kind==="upload"?'<div class="cro-actions"><button class="cr-btn" type="button" data-crl-queue>Run the lyric machine</button></div>':"");
-    var up=L.track.kind==="upload";
+    var rerun=src().queue?'<button class="cr-btn" type="button" data-crl-queue>'+(L.doc?"Re-run machine":"Run the lyric machine")+'</button>':"";
+    if(!L.doc)return'<div class="cro-note">'+e(L.msg||"…")+'</div>'+(L.track.kind!=="shelf"&&rerun?'<div class="cro-actions">'+rerun+'</div>':"");
+    var up=L.track.kind!=="shelf";
     return statusLine()
       +'<audio class="crl-audio" controls preload="metadata" src="'+e(L.src)+'"></audio>'
       +'<div class="cro-chips"><button class="cro-chip'+(L.filter==="all"?" is-on":"")+'" type="button" data-crl-filter="all">All lines</button><button class="cro-chip'+(L.filter==="flag"?" is-on":"")+'" type="button" data-crl-filter="flag">Flagged</button></div>'
       +'<ol class="crl-lines">'+lines().map(rowHtml).join("")+'</ol>'
       +(lines().length?"":'<div class="cro-actions"><button class="cr-btn" type="button" data-crl-add="-1">Add the first line</button></div>')
       +'<div class="crl-foot"><label class="crl-check"><input type="checkbox" data-crl-reviewed'+(L.doc.reviewed?" checked":"")+'> These lyrics are right</label>'
-      +'<div class="cro-actions">'+(up?'<button class="cr-btn cr-btn--primary" type="button" data-crl-save>Save</button><button class="cr-btn" type="button" data-crl-queue>Re-run machine</button>':'<button class="cr-btn cr-btn--primary" type="button" data-crl-download>Download corrected file</button>')+'</div>'
+      +'<div class="cro-actions">'+(up?'<button class="cr-btn cr-btn--primary" type="button" data-crl-save>Save</button>'+rerun:'<button class="cr-btn cr-btn--primary" type="button" data-crl-download>Download corrected file</button>')+'</div>'
       +'<div class="cro-actions crl-export"><button class="cr-btn" type="button" data-crl-export="lrc">Export LRC</button><button class="cr-btn" type="button" data-crl-export="ttml">Export TTML</button></div>'
+      +(up&&src().note?'<small class="cro-meta">'+e(src().note(L.track))+'</small>':"")
       +(up?"":'<small class="cro-meta">Shelf lyrics live in the repository as '+e(L.track.lyrics)+'. Commit the downloaded file there, or hand it to Build.</small>')
       +'<div class="crl-msg" role="status" aria-live="polite">'+e(L.msg)+'</div></div>';
   }
@@ -342,12 +363,14 @@
     };
     var sv=root.querySelector("[data-crl-save]");if(sv)sv.onclick=function(){
       var bad=problems();if(bad.length){say(bad[0]);return;}
-      sv.disabled=true;musicCall("operator-lyrics-save",{track_id:L.track.id,lyrics:output(L.doc.reviewed),reviewed:!!L.doc.reviewed})
-        .then(function(){sv.disabled=false;L.orig=JSON.stringify(L.doc);say(L.doc.reviewed?"Saved and marked reviewed.":"Saved.");})
+      var ask=src().confirm?src().confirm(L.track):"";if(ask&&!window.confirm(ask))return;
+      var t=L.track,key=L.key;
+      sv.disabled=true;Promise.resolve().then(function(){return src().save(t,output(L.doc.reviewed),!!L.doc.reviewed);})
+        .then(function(r){sv.disabled=false;if(L.key!==key)return;L.orig=JSON.stringify(L.doc);say((L.doc.reviewed?"Saved and marked reviewed.":"Saved.")+(r&&r.note?" "+r.note:""));if(src().saved)src().saved(t,r);})
         .catch(function(err){sv.disabled=false;say(err.message||"Save failed");});
     };
     var q=root.querySelector("[data-crl-queue]");if(q)q.onclick=function(){
-      q.disabled=true;musicCall("operator-lyrics-queue",{track_id:L.track.id})
+      q.disabled=true;src().queue(L.track)
         .then(function(j){say(j.already?"Already queued on McCluster Core.":"Queued on McCluster Core. The new lyrics arrive unreviewed.");})
         .catch(function(err){q.disabled=false;say(err.message||"Could not queue");});
     };
@@ -355,6 +378,10 @@
   window.CR.lyricsReview={
     render:function(){return'<div data-crl-host></div>';},
     bind:function(root){var host=root&&root.querySelector("[data-crl-host]");if(!host)return;if(!L.node)paint();host.appendChild(L.node);},
+    /* Creator Studio: its own source of tracks, loads and saves (see OWNER for the shape) */
+    configure:function(source){SRC=source||null;L.list=null;L.key="";L.track=null;L.doc=null;L.msg="";if(L.node)paint();},
+    open:function(key){if(L.list&&L.list.some(function(t){return t.key===key;}))open(key);else{L.list=null;L.want=key;loadList();}},
+    reload:function(){L.list=null;loadList();},
     state:L,_test:{setText:setText,shift:shift,problems:problems,output:output,setEnd:setEnd,addLine:addLine,removeLine:removeLine,splitLine:splitLine,mergeLine:mergeLine,tapStart:tapStart,tapAt:tapAt,toLrc:toLrc,toTtml:toTtml}
   };
 })();
