@@ -320,7 +320,9 @@ namespace McClusterDesktop
                     record["duration_ms"] = sw.ElapsedMilliseconds;
                     record["executor_path"] = job.Receipt.ContainsKey("executor_path") ? job.Receipt["executor_path"] : null;
                     record["error"] = ex.GetType().Name + ": " + ex.Message;
-                    bool canceled = cancel.IsCancellationRequested || ex is OperationCanceledException;
+                    // Only the owner's token means "canceled"; any other OperationCanceledException is a
+                    // timeout somewhere and is recorded as the failure it is.
+                    bool canceled = cancel.IsCancellationRequested;
                     bool retryable = !canceled && ex is RetryableException;
                     retryNext = retryable && attempt < maxAttempts;
                     record["outcome"] = canceled ? "canceled" : (retryNext ? "retry" : "failed");

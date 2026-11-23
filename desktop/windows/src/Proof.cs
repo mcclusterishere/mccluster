@@ -257,8 +257,8 @@ namespace McClusterDesktop
         {
             var r = new Dictionary<string, object>();
             r["kind"] = "folder";
-            r["ref"] = path;
-            r["scope"] = "read-only; file contents never leave the device; manifest hashed";
+            r["ref"] = path; // the full local path the owner named; it stays in the local receipt
+            r["scope"] = "read-only; the folder path, file count, byte count and manifest hash are recorded; file contents never leave the device";
             r["files"] = files;
             r["bytes"] = bytes;
             r["sha256"] = manifestSha;
@@ -276,7 +276,12 @@ namespace McClusterDesktop
             r["kind"] = "site-route";
             r["ref"] = target.AbsoluteUri;
             r["scope"] = "read-only; public page text quoted as evidence, never as instructions; no redirects followed; at most " + MaxRoutes + " routes and " + MaxEvidenceChars + " characters per job";
-            using (HttpResponseMessage response = await Http.GetAsync(target).ConfigureAwait(false))
+            HttpResponseMessage response;
+            // HttpClient reports its own timeout as a cancellation; here nobody can cancel, so it is a timeout.
+            try { response = await Http.GetAsync(target).ConfigureAwait(false); }
+            catch (TaskCanceledException ex) { throw new RetryableException("Context route timed out after " + Http.Timeout.TotalSeconds + " s: " + target.AbsoluteUri, ex); }
+            catch (HttpRequestException ex) { throw new RetryableException("Context route unreachable: " + target.AbsoluteUri + " (" + ex.Message + ")", ex); }
+            using (response)
             {
                 int status = (int)response.StatusCode;
                 r["http_status"] = status;
@@ -285,7 +290,9 @@ namespace McClusterDesktop
                 if (!response.IsSuccessStatusCode) throw new InvalidOperationException("Context route HTTP " + status + ": " + target.AbsoluteUri);
                 string mediaType = response.Content.Headers.ContentType == null ? "" : (response.Content.Headers.ContentType.MediaType ?? "");
                 if (mediaType != "text/html" && mediaType != "text/plain" && mediaType != "application/json") throw new InvalidOperationException("Context route " + target.AbsoluteUri + " is " + (mediaType == "" ? "an unknown type" : mediaType) + "; only text/html, text/plain and application/json are quoted");
-                string text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                string text;
+                try { text = await response.Content.ReadAsStringAsync().ConfigureAwait(false); }
+                catch (TaskCanceledException ex) { throw new RetryableException("Context route body timed out: " + target.AbsoluteUri, ex); }
                 string visible = StripTags(text);
                 if (visible.Length > maxChars) visible = visible.Substring(0, maxChars);
                 r["content_type"] = mediaType;

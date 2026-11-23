@@ -80,12 +80,19 @@ migration, EXO probe against a loopback fixture, context-route refusals); the in
 `installer/tests/InstallerTests.cs` against the real setup candidate (install, hashes, receipt, shortcut,
 registry entry, idempotent reinstall, uninstall that removes exactly the receipt's files and itself, foreign
 file kept, refusals outside the user profile and outside the uninstall hive) and the setup written only after
-it; real Proof Mode chat jobs on the Radeon (Auto through the node adapter with a first-party context route,
-and Pick through Ollama) with receipts verified offline against this device's key id, hash-bound to their
-job files, a tampered copy rejected and a re-signed forgery refused as untrusted; the parity audit over
-eleven routes at 1280 and 390 wide (no horizontal overflow at either viewport, the owner gate, the 404 and the
-unreachable legacy host recorded as failure states, an external navigation blocked); the EXO probe reporting
-an absent runtime honestly.
+it; real Proof Mode chat jobs on the Radeon: Auto through the node adapter with a first-party context route
+on the shipped binary, and Pick through Ollama on an earlier compile of the same 0.3.0 sources (same device
+key), both receipts verified offline by the shipped binary against this device's key id and hash-bound to
+their job files, a tampered copy rejected (the re-signed-forgery refusal is a test-suite case, not a recorded
+run); the parity audit over eleven routes at 1280 and 390 wide (no horizontal overflow at either viewport, the
+owner gate, the 404 and the unreachable legacy host recorded as failure states, an external navigation
+blocked); the EXO probe reporting an absent runtime honestly.
+
+Reproducible here means: the same script, an explicit shipped file list in a fixed order, fixed timestamps in
+the zip, and a manifest naming every hash, size, the source commit and whether the tree was clean. It does not
+mean bit-identical binaries: the in-box compiler predates `/deterministic`, so `McCluster.exe`, and with it
+`payload.zip` and the setup, carry a new PE timestamp and module id on every compile. The WebView2 files, the
+licence text and the README hash identically across builds; the manifest is where a verifier compares.
 
 Known on this device: Smart App Control is enforcing and decides per binary hash. Some fresh compiles of the
 test executables or the setup candidate are blocked from running or loading (Code Integrity events 3033,
@@ -95,4 +102,5 @@ real answer.
 
 Not verified: the SDK build and the NSIS installer; sign-in in the window (the owner's credentials are not
 entered by the agent); any remote or pooled job; a retry on a real executor fault (the path is covered by
-code, not by a recorded run); Pick-adapter refusal when the adapter lacks the model.
+code, not by a recorded run); Auto's fall-through to Ollama and Pick-adapter refusal when the adapter lacks
+the model (every recorded Auto run found the adapter ready); a timeout on a context route.

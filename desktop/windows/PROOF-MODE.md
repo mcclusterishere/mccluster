@@ -12,14 +12,16 @@ facts.
 | Choice | What runs | Honest status shown |
 | --- | --- | --- |
 | Auto | the node adapter on this device if it reports the selected model installed, else Ollama directly, else unavailable | `routing.requested = auto`, `routing.chosen`, `routing.reason`, `routing.failover = true` when it fell through |
-| Pick: this device via node adapter | only `127.0.0.1:4790` `/execute` | fails with the reason if the adapter is down or lacks the model; no silent fallback |
-| Pick: this device via Ollama | only `127.0.0.1:11434/api/chat` | same |
+| Pick: this device via node adapter | only the loopback adapter's `/execute` (default `127.0.0.1:4790`, port from `MCCLUSTER_OLLAMA_ADAPTER_PORT`) | fails with the reason if the adapter is down or lacks the model; no silent fallback |
+| Pick: this device via Ollama | only loopback Ollama's `/api/chat` (default `127.0.0.1:11434`; `OLLAMA_HOST` is honoured only when it names a loopback host) | same |
 
 Not on this device: "one remote worker" and "verified group" are targets of the OVH Core. The desktop
 shows them with their availability and, when the Core is reachable, opens the owner's signed-in site
 surface with the draft on the clipboard; it submits nothing natively and holds no Core token. The group
 target is never selectable from the desktop: it needs two verified members and a pair benchmark on the
-owner surface.
+owner surface. Auto's fall-through from the adapter to Ollama (`routing.failover = true`) and the adapter
+refusal for a model it does not serve are covered by code, not by a recorded run on Prime: every recorded
+Auto run found the adapter ready.
 
 Capability-aware routing on the device: a chat job goes only to an executor whose implementation map
 names the selected model and reports it installed (the adapter's `/health` implementations), the same
@@ -31,9 +33,10 @@ vision) are not checked by the desktop.
 A local job has `max_attempts` (default 2, at most 5). An attempt retries only on a transport fault or a
 status that means "try again" (executor unreachable, timeout, 5xx, 408, 429). An executor's other
 status codes, a model answering with no text, an unsafe path, a refused implementation or a refused
-context route are final. Cancelling records the attempt as `canceled`. Every attempt is recorded: number,
-executor path, start, end, outcome, error. The receipt's `attempts` list and `attempt` number are the
-exact history, not a summary.
+context route are final. Cancelling by the owner records the attempt as `canceled`; a timeout anywhere
+(executor, Ollama, context route) is recorded as the retryable failure it is, never as a cancellation.
+Every attempt is recorded: number, executor path, start, end, outcome, error. The receipt's `attempts`
+list and `attempt` number are the exact history, not a summary.
 
 ## Receipt: `mccluster-desktop-receipt/2`
 
@@ -63,30 +66,39 @@ What `McCluster.exe --verify-receipt <job.json>` proves, and reports as separate
 - `output_matches`, `input_matches`, `job_id_matches`: the job file's result and input hash to what the
   receipt commits to, and the receipt names this job.
 
-`verified` is true only when all of them hold. The algorithm differs from the Core's Ed25519 on purpose:
+`verified` is true when the signature is consistent, the key is trusted, and no hash check that could be
+performed failed. A check that could not be performed is reported as `null`, not as a pass in disguise: a
+bare receipt without its job file has no result or input to hash, and a failed job's receipt carries no
+`output_sha256`. The algorithm differs from the Core's Ed25519 on purpose:
 .NET Framework 4.8 has no Ed25519, and a Core receipt is verified by the Core's own reference verifier,
 not re-implemented here.
 
 ## Permission-scoped context references
 
-- `folder`: a sample folder the owner named; read-only; only the manifest hash and counts enter the
-  receipt; no file content leaves the device.
-- `site-route`: an approved first-party HTTPS route (`mccluster.org`, `matthew.mccluster.org`,
+- `folder` (inventory jobs): the folder the owner named; read-only; the receipt records the full local
+  path, the file count, the byte count and the manifest hash; no file content leaves the device. Written
+  once per job.
+- `site-route` (chat jobs): an approved first-party HTTPS route (`mccluster.org`, `matthew.mccluster.org`,
   `humanuprise.com` only), fetched without following redirects (a 3xx is refused), text types only,
   body bounded to 4 MiB, visible text quoted to the model as evidence and never as instructions; at most
   8 routes and 24,000 evidence characters per job; hash, content type, status and `observed_at` recorded;
-  a non-success response is never quoted.
-- `public-data`: the `sources[]` above.
+  a non-success response is never quoted. These entries are rebuilt on every attempt and each names its
+  attempt.
 
-Nothing else is readable by a job. The list is rebuilt on every attempt and each entry names its attempt.
+Sourced public data is separate from context: `sources[]` (not `context[]`) holds the live revision,
+the Ollama version and the model digest with observation times. Nothing else is readable by a job.
 
-## `inference.mode`
+## Inference mode
 
-- `single-device`: every job this desktop can run today. One lease, one device.
-- `two-rank-exo (untested)`: the EXO rank-receipt probe (`--exo-rank-probe`) saw exactly two members in
-  a loopback EXO runtime's `/state`. This is topology, not inference.
+A job receipt's `inference.mode` is always `single-device` today: one lease, one device; the desktop has
+no other mode to run. The EXO probe writes a different document, `exo-rank-receipt/1`, whose
+`inference_mode` is:
+
+- `single-device`: the loopback runtime answered and lists one member.
+- `two-rank-exo (untested)`: the runtime's `/state` lists exactly two members. This is topology, not
+  inference.
 - `unknown`: the probe could not read the runtime; it says so rather than guessing.
-- `shared-inference`: reserved. The desktop never emits it. It would require two distinct rank receipts
+- `shared-inference`: reserved. Never emitted by the desktop. It would require two distinct rank receipts
   with fresh heartbeats and a generation receipt naming both ranks, produced on the Macs by Dot's
   physical preflight, and verified by the Core's attestation path.
 
@@ -95,8 +107,9 @@ Nothing else is readable by a job. The list is rebuilt on every attempt and each
 Prime's Radeon runs `qwen3-vl:4b` fully in GPU memory through Ollama's Vulkan backend (verified). The two
 Macs would run `qwen3:8b` on Metal (Dot's proof, pending). Splitting one model across Vulkan and Metal
 ranks is not supported by any runtime pinned in this repository; EXO's audited release targets Apple
-MLX. The desktop therefore shows a mixed group as "experimental, not tested" and never routes to it. No
-experimental RPC or runtime is installed by anything in this branch. What would change that: a runtime
+MLX. The desktop therefore offers no mixed group at all: its only group target is the Core's verified
+group, disabled with its reason, and nothing routes to a mixed set. No experimental RPC or runtime is
+installed by anything in this branch. What would change that: a runtime
 whose release notes name heterogeneous backends, a two-device generation with per-rank receipts on real
 hardware, and the Core's attestation path accepting them.
 
