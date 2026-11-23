@@ -357,6 +357,27 @@ try{
     check('a catalog draw of the song already loaded is still the catalog\'s pick',same.slug==='heal-the-3rd-world'&&same.pick==='random'&&same.pool>1,same);
     await context.close();
   }
+  /* WORD BY WORD (owner, 2026-11-23: lyrics light as they are sung everywhere): a lyrics file with word times lights the
+     World headline one word at a time, colour only */
+  {
+    const {context,page,errors}=await setup();
+    const songs=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.flatMap(a=>a.tracks||[]).filter(t=>!t.gated&&/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(t.src||'')&&!/preview/i.test(t.src));
+    const worded=songs.findIndex(t=>typeof t.lyrics==='string'&&t.lyrics);
+    await page.addInitScript(([i,n])=>{Math.random=()=>(i+0.5)/n;},[worded,songs.length]);
+    const W=(c,b)=>({begin:b,end:b+0.6,content:c});
+    await context.route('**/data/lyrics/*.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({plain:'one two three',timed:{line:[{begin:0.2,end:20,content:'one two three',words:[W('one',0.2),W('two',1.2),W('three',2.4)]}]}})}));
+    await page.goto(WORLD+'/?view=feed');
+    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool&&document.getElementById('mnWorldPlay'));
+    await page.locator('#wtTo').click();
+    await page.waitForFunction(()=>document.querySelectorAll('.wt-headline .lyr-w').length===3,null,{timeout:8000});
+    await page.waitForFunction(()=>document.querySelectorAll('.wt-headline .lyr-w.is-sung').length>=2,null,{timeout:8000});
+    const early=await page.evaluate(()=>({sung:document.querySelectorAll('.wt-headline .lyr-w.is-sung').length,text:document.querySelector('.wt-headline').textContent,cls:document.querySelector('.wt-headline').className}));
+    check('World headline lights the lyric word by word where the file has word times',early.text==='one two three'&&early.cls.includes('is-words')&&early.sung>=2&&early.sung<=3,early);
+    await page.waitForFunction(()=>document.querySelectorAll('.wt-headline .lyr-w.is-sung').length===3,null,{timeout:8000});
+    check('every word is lit once it is sung, and the line text never changes while it plays',await page.locator('.wt-headline').textContent()==='one two three');
+    check('no errors lighting the words',errors.length===0,errors);
+    await context.close();
+  }
   {
     const {context,page}=await setup();
     /* timed lyrics come from the lyrics file data/albums.json names for the song; a song it lists without one has no words.

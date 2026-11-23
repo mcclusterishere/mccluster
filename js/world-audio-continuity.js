@@ -39,7 +39,7 @@
      standalone World owns its Audio element, so its button plays directly.
      Inside the Music shell the parent keeps the transport (a frame message
      cannot carry Safari's media activation); the child only displays state. */
-  var headlineBase = null, lyricCache = {}, lyricLine = "", lyricSlug = "", lyricAt = 0, remoteState = null, remoteDocked = false;
+  var headlineBase = null, lyricCache = {}, lyricLine = "", lyricSung = -1, lyricSlug = "", lyricAt = 0, remoteState = null, remoteDocked = false;
   function docked() { return doc.documentElement.classList.contains("mcc-app-dock-active"); }
   function receiveDocked(value) {
     remoteDocked = value === true;
@@ -173,7 +173,10 @@
     raw.forEach(function (l) {
       if (!l || typeof l !== "object") return;
       var t = Number.isFinite(l.begin) ? l.begin : l.t, text = typeof l.content === "string" ? l.content : typeof l.text === "string" ? l.text : l.line;
-      if (Number.isFinite(t) && typeof text === "string") lines.push({t:t, text:text});
+      /* the word times ride along when they match the line's words one for one (owner, 2026-11-23: lyrics light word by word everywhere) */
+      var words = Array.isArray(l.words) && typeof text === "string" && l.words.length === text.trim().split(/\s+/).filter(Boolean).length &&
+        l.words.every(function (w) { return w && Number.isFinite(w.begin); }) ? l.words.map(function (w) { return w.begin; }) : null;
+      if (Number.isFinite(t) && typeof text === "string") { var line = {t:t, text:text}; if (words) line.words = words; lines.push(line); }
     });
     lines.sort(function (a, b) { return a.t - b.t; });
     return lines.length ? lines : null;
@@ -188,10 +191,17 @@
       .catch(function () { return null; });
     return lyricCache[slug];
   }
-  function lineAt(lines, t) {
+  function lineObjectAt(lines, t) {
     var lo = 0, hi = lines.length - 1, hit = -1;
     while (lo <= hi) { var mid = (lo + hi) >> 1; if (lines[mid].t <= t) { hit = mid; lo = mid + 1; } else hi = mid - 1; }
-    return hit < 0 ? "" : lines[hit].text;
+    return hit < 0 ? null : lines[hit];
+  }
+  function lineAt(lines, t) { var l = lineObjectAt(lines, t); return l ? l.text : ""; }
+  /* how many of the line's words have been sung by time t, or -1 when the line has no word times */
+  function sungAt(line, t) {
+    if (!line || !line.words) return -1;
+    var n = 0; while (n < line.words.length && line.words[n] <= t) n++;
+    return n;
   }
   function lyricTick(audio) {
     var p = player(); if (!p || p.audio !== audio) return;
@@ -199,16 +209,17 @@
     lyricSlug = slug;
     loadLyrics(slug).then(function (lines) {
       if (lyricSlug !== slug) return;
-      var next = lines && !audio.paused && !audio.ended ? lineAt(lines, audio.currentTime) : "";
-      if (next === lyricLine) return;
-      lyricLine = next; paintCluster(clusterState()); sendState();
+      var live = lines && !audio.paused && !audio.ended ? lineObjectAt(lines, audio.currentTime) : null;
+      var next = live ? live.text : "", sung = live ? sungAt(live, audio.currentTime) : -1;
+      if (next === lyricLine && sung === lyricSung) return;
+      lyricLine = next; lyricSung = sung; paintCluster(clusterState()); sendState();
     });
   }
   function clusterState() {
     var p = player();
-    if (!p) return {present:false, playing:false, loading:false, title:"", line:""};
+    if (!p) return {present:false, playing:false, loading:false, title:"", line:"", sung:-1};
     var playing = !p.audio.paused && !p.audio.ended;
-    return {present:true, playing:playing, loading:p.access === "loading", title:String(p.title || "Your music").slice(0, 120), line:playing ? String(lyricLine || "").slice(0, 240) : ""};
+    return {present:true, playing:playing, loading:p.access === "loading", title:String(p.title || "Your music").slice(0, 120), line:playing ? String(lyricLine || "").slice(0, 240) : "", sung:playing && lyricLine ? lyricSung : -1};
   }
   function paintCluster(st) {
     var b = clusterButton(), box = doc.getElementById("mnNowPlaying"), h = doc.querySelector(".wt-headline");
@@ -229,8 +240,21 @@
     if (h) {
       if (headlineBase === null) headlineBase = h.textContent;
       var want = st.line || headlineBase;
-      if (h.textContent !== want) h.textContent = want;
+      var words = st.line && st.sung >= 0 ? st.line.trim().split(/\s+/).filter(Boolean) : null;
+      if (words) {
+        // the line once, as one span per word; then only the sung marks change, so nothing reflows while it plays
+        if (h.dataset.lyricLine !== st.line) {
+          h.textContent = "";
+          words.forEach(function (w, i) { if (i) h.appendChild(doc.createTextNode(" ")); var sp = doc.createElement("span"); sp.className = "lyr-w"; sp.textContent = w; h.appendChild(sp); });
+          h.dataset.lyricLine = st.line;
+        }
+        Array.prototype.forEach.call(h.querySelectorAll(".lyr-w"), function (sp, i) { sp.classList.toggle("is-sung", i < st.sung); });
+      } else {
+        delete h.dataset.lyricLine;
+        if (h.textContent !== want || h.querySelector(".lyr-w")) h.textContent = want;
+      }
       h.classList.toggle("is-lyric", !!st.line);
+      h.classList.toggle("is-words", !!words);
     }
   }
   function sendState() { if (!attached && open && frame && frameReady) send(Object.assign({type:"state", docked:docked()}, clusterState())); }
@@ -903,7 +927,8 @@
       if (d.type === "state") {
         receiveDocked(d.docked);
         remoteState = {present:d.present === true, playing:d.playing === true, loading:d.loading === true,
-          title:typeof d.title === "string" ? d.title.slice(0, 120) : "", line:typeof d.line === "string" ? d.line.slice(0, 240) : ""};
+          title:typeof d.title === "string" ? d.title.slice(0, 120) : "", line:typeof d.line === "string" ? d.line.slice(0, 240) : "",
+          sung:Number.isInteger(d.sung) && d.sung >= -1 && d.sung <= 200 ? d.sung : -1};
         paintCluster(remoteState);
       }
       return;
