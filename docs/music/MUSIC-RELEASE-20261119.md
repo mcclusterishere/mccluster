@@ -974,7 +974,249 @@ Nothing was merged, deployed or applied.
   with Reduce Motion on (the two that do not pass are the album room's light, which Reduce Motion turns off by
   design; every M3 check passes); continuity 137 of 137; Now Playing 125 of 125; accounts 128 of 128; installed app
   246 of 246; native publication 49 of 49; direct checkout 40 of 40; the game hub's capsule passes.
-* **Renders for Matthew** at device scale 2, kept with the workflow's evidence (not in the repository):
+* **Renders for Matthew** at device scale 2, kept with the workflow's evidence (not in the repository), each page
+  checked to fit its width (37 of 37 checks): `album-390-past-locked-preview` (the closer's preview has ended, the
+  line says the full song opens later, and the album plays on), `album-390-gate-row-guest` and
+  `album-390-gate-row-member` (the closer's row says FULL SONG · opens later), `listen-390-reconnecting`,
+  `listen-1280-reconnecting`, `album-390-reconnecting` and `album-1280-reconnecting` (the connection drops 5 s into
+  the song and stays down: Reconnecting…, "The connection dropped at 0:05. Picking up there…", and Pause),
+  `listen-390-picked-up` (the network is back and the song plays on), `listen-390-world-mute-stored-music-plays`
+  (with the World's mute stored, the song plays with sound and no Unmute is needed), and
+  `listen-390-music-muted-unmute`, `album-390-deck-muted-unmute` and `album-390-sheet-muted-unmute` (a muted Music
+  song says Muted and shows its own Unmute).
+* **What this check changed:** words only: in this record (the B-side's type on the wire, "identical" only in
+  ffmpeg, the count of review findings, this section) and in `docs/music/MUSIC-WORLD-CONTINUITY.md` (the theme
+  reads nothing before the Globe tap). No code changed.
+
+**The ten findings that did not come to the review round**, in plain words. None stops the slice, and none was
+changed here except in words:
+* PB-R9 and RL-13 (nits): the remux's end padding; see item 7 above.
+* PB-R10 (nit): because a finished song is counted before the next one starts (item 5), the next song's start can
+  reach the server up to 5 s later. The shortest catalogue song lasts 65.7 s and counts after 62 s, so a finish
+  slower than about 3.7 s on the wire would leave that next listen uncounted. Not seen in any run.
+* PB-R11 (nit): after the closer's locked preview, CIA Mind Control goes on to its first song and keeps playing, as
+  every album already does after its last song. Whether an album should stop at its end is Matthew's call.
+* RL-7 (nit): details in this record: the B-side's type is corrected above. Of the 8 continuity checks that failed
+  at the base, one existed before M3 and was turned round ("theme never replaces a completed preview": nothing
+  played after the preview then, the queue's next song plays now) and one was rewritten (where the preview stops is
+  now read at the engine's own pause), so not all eight are new checks.
+* RL-8 (nit): `docs/music/MUSIC-WORLD-CONTINUITY.md`: corrected.
+* RL-9 (nit): the listen engine's `music_error` and both players' `music_interrupted` are sent once per failed
+  read, so one dropped connection can send up to six of each (the drop and five tries), with the error's code and
+  the try's number. Neither is in the reviewed measurement dictionary yet.
+* RL-10 (nit): a listener who kept Whip Equipped offline has the old `dealer-plates-b.mp3` in the vault; the album
+  now plays the `.m4a`, so the B-side needs the network until the album is kept again.
+* RL-11 (nit) and RL-12 (minor), both there before M3: "Enter Heal the 3rd World →" shows on every album, though
+  the page means it only for Heal the 3rd World (its `display` overrides `hidden`), and at 390 px the fixed account
+  chip covers its arrow while the link scrolls under the chip.
+
+**Seen in this check's renders, there before M3:**
+* The Music pages draw every cover in a square with `object-fit: cover` (the listen page's shelf, rows and mini
+  player, the album's own cover and its deck bar), so a cover that is not square loses its sides: I AM HERE
+  (1024 × 682), CIA Mind Control (544 × 246) and Whip Equipped (1280 × 890). M2 hands each cover to the lock screen
+  whole; what iOS draws there is Inferred. Hard rule 10 says a cover is never cropped: the square versions only
+  Matthew can supply (M2) would end it, or the pages can show each cover whole inside its square. His call.
+* On the album at 390 px the line that says what a preview was (the page's toast, unchanged since the base) sits
+  over the deck bar for its 3.4 s and hides the next song's title and time.
+* On the listen page the middle button of the bar at the bottom keeps its play triangle while a song plays: only
+  the album and the home page tell the bar what is playing. Tapping it there scrolls to the top; it does not stop
+  or start anything.
+
+**Device rows for Matthew**, in one place. None has been run; until they are, everything above about an iPhone or
+an iPad stays Inferred. For each, note the page, a Safari tab or the Home Screen icon, signed in or not, and the iOS
+version.
+1. Listen page, phone locked: play a song near its end and wait: the next song starts by itself. Then two whole
+   songs in a row with the phone locked: note the gap between them and the second song's title.
+2. Album (I AM HERE), phone locked, Reduce Motion off: two whole songs in a row, noting the gap and the next title.
+   Then the same with Reduce Motion on.
+3. On both, from the lock screen: Next, then Pause, then Play. Each does what it says, the title changes with Next,
+   and back on the page the same song shows.
+4. CIA Mind Control signed in as the owner, phone locked: let Pull Up play to its end. The closer starts by itself
+   once Pull Up is counted; note the gap. Its row says PLAY · owner. Signed out, or signed in as anyone else: the
+   row says FULL SONG · opens later, the closer plays its 4-second preview, one line says the full song opens later,
+   and the album goes on.
+5. A drop: mid-song, phone locked, airplane mode on for 5 s, then off: the song plays on, or picks up at the second
+   it stopped. Then 15 s: it says Connection lost, and Play picks it up there.
+6. During Reconnecting…, press Pause on the lock screen, then on the album's bar and in the World: the music stays
+   paused when the network comes back.
+7. From the Home Screen icon, a drop: the dock says Reconnecting… and offers Pause.
+8. On a Music page, tap the Globe and, while the World's own song plays there, press Mute on the bar. Back on
+   Music, play a song: it plays with sound. Mute a Music song (on its page, or with the bar's Mute while it plays
+   in the World): the Music page says Muted and shows its own Unmute.
+9. Dealer Plates (B-Side) on Whip Equipped plays.
+10. VoiceOver on the listen page during a drop: the line is read out.
+11. A long song on cellular with the phone locked, then a whole album: note where anything stops.
+The closer's full play inside its 300 s and 16-read allowance needs the master's real length and an authorized play
+(above). Nothing here is labelled gapless.
+
+## M3 follow-up (2026-11-23)
+
+The findings from the review and the verification of M3 that did not come to the review round (PB-R9, PB-R10, RL-9,
+RL-10, RL-11, RL-12, RL-13, V-2, V-3 and V-4) and the installed app's cut dock line, built on `5b549475`. Each was
+reproduced at that base first (Chromium, every request a route fixture; the ledger on a disposable PostgreSQL 16
+with the real migrations), its test was shown failing there, and then it was fixed. Nothing was merged, deployed,
+enabled or applied, and no SQL or `supabase/` file changed. The decisions listed at the end are Matthew's; nothing
+was built for them.
+
+### What reproduced at the base
+
+* **RL-12:** "Enter Heal the 3rd World →" showed on all seven other albums at 390 and 1280 px: the page marks it
+  `hidden`, and `.alb__gate { display: inline-flex }` overrode that (242 × 50 px, under Play).
+* **RL-11:** at 320 and 390 px the fixed Sign in / Profile chip covers the right end of that link while it scrolls
+  through the chip's band (56 × 44 px at 320, 21 × 44 at 390; a tap there reaches the chip). The cover and the first
+  row's heart pass under the same column.
+* **PB-R9 and RL-13:** the four files M3 remuxed carry an edit list and no iTunes note; Chromium decodes 705, 119,
+  679 and 713 more samples than from the files before M3 (the encoder's padding at the end).
+* **PB-R10:** with the next song's start waiting up to 5 s for the previous finish, a finish 5 s slow on the wire
+  left both songs uncounted on PostgreSQL 16: song A not completed (its finish came after B's start), and the
+  shortest song as B (Towyard Killer, 65.7 s, counted after 62 s) credited 60.69 s.
+* **RL-9:** one dropped connection on the listen page put three `music_error` and three `music_interrupted` on the
+  wire (the drop and each failed try), and the album three `music_interrupted`; neither name is in the reviewed
+  measurement dictionary.
+* **RL-10:** with Whip Equipped kept before M3 (the B-side under its old name, `dealer-plates-b.mp3`), the album
+  said "Finish the download (22/23)", and offline the B-side failed: the vault is keyed by address.
+* **V-2:** the preview line (the album's toast) sat over the deck bar at 320, 390, 820 and 1280 px (at 390: the line
+  674 to 748 px down the screen, the deck bar 691 to 765).
+* **V-3:** on the listen page the bar's middle button kept its play triangle while a song played, and a tap
+  scrolled to the top while the song played on; during Reconnecting… it showed Play and its tap did not stop the
+  tries.
+* **V-4:** taking out the engine's immediate end of an earned play whose time ran out left every test passing.
+* **The installed app's dock** cut its second line: "Reconnecting…" needed 74 px of 73 at 390 and of 41 at 320;
+  "Connection lost · tap play" 120.
+
+### What changed
+
+1. **The door shows only on its own record** (`album.html`): `.alb__gate[hidden] { display: none; }`; the page's
+   own rule (a record with a gateway: Heal the 3) is unchanged.
+2. **The account chip over the door (RL-11) is not changed**, and why: the chip is the site-wide account control,
+   fixed top right on every page, and it covers whatever scrolls through its column (the cover and the first row's
+   heart too). A fix in the album's markup alone would mean other words, or a link under 130 px wide at 320 (it is
+   242) and under 200 at 390; left-aligned it still ends at 266 px, past the chip's left edge at 229. It goes to
+   Matthew with the decisions below.
+3. **The four files are the files from before M3, with only their index moved in front of the audio**
+   (`assets/audio/dealer-plates-b.m4a`, `deep-end.m4a`, `heal-the-3rd-world.m4a`, `you-the-feds.m4a`; the B-side
+   from the bytes of `dealer-plates-b.mp3`, which stays for old links). Moved the way qt-faststart moves it: the
+   same boxes byte for byte, the index the same size, only its chunk offsets moved on by the index's size, the
+   iTunes gapless note kept and no edit list. ffmpeg decodes each to the same PCM and packets as before M3 and as
+   M3; Chromium decodes exactly the samples it decoded before M3 (4,293,885, 7,305,033, 6,437,145 and 10,268,983,
+   every one the same). The peaks changed only in their source hash; Deep End's length is 165.6 s again in
+   `data/albums.json` and `workers/mccluster/src/music/tracks.js` (counted after 157 s, as before).
+   `scripts/music-track-lengths.mjs` advises qt-faststart, not a remux, for a file whose index is at the end.
+4. **The wait for the previous finish leaves the shortest song its margin** (`js/listen-ledger.js`). It is half the
+   smallest margin in the catalogue, 1.85 s (Towyard Killer: 65.7 s, counted after 62 s, a margin of 3.7 s), and
+   `scripts/music-track-lengths.mjs` writes it from the songs' own lengths (`--check` fails when it is stale).
+   On PostgreSQL 16 with the real migrations and the real ledger: the DEL-4 order holds (start A, finish A, start B;
+   A counted); with A's finish 400 ms slow both songs count; 2.5 s or 5 s slow, B's start goes after 1.85 s, B
+   counts (63.86 s of 62) and A does not (its finish arrives after B's start). At 5 s the base lost both; at 2.5 s the
+   base kept both. That is the balance this wait strikes: a finish may take 1.85 s, and the next song keeps 1.85 s of
+   its margin for its own start's way to the server. The fixtures answer at once unless a test delays them; how long
+   a finish takes on a real network is Inferred.
+5. **No new event name leaves the browser until Matthew approves it, and an error is counted once.**
+   `music_interrupted` waits in one place, `js/analytics.js` (`AWAITING_APPROVAL`, "waiting for Matthew's
+   approval"); both players still name it, so approving it is deleting that one line (and reviewing it into the
+   dictionary). `music_error` (sent before M3) goes out once per failed song or dropped connection, with the first
+   failed read's code, however many reads fail after it and however often Play picks the song up; a later drop in
+   the same song is a new one. On the wire: one `music_error` and no `music_interrupted` for a drop on the listen
+   page; neither for a drop on the album, which never sent `music_error`.
+6. **A copy kept under either name of the B-side counts, offline too** (`sw.js`, `js/label.js`, one table
+   `SAME_AUDIO` in each): the worker answers `dealer-plates-b.m4a` from a copy kept as `.mp3` (and the other way
+   round), labelled as the MP4 it is, ranges sliced as before; the album counts that copy as kept and downloads
+   nothing again. A song not kept goes to the network as before.
+7. **The preview line rises clear of the foot of the screen** (`js/label.js`): 8 px above the higher of the deck bar
+   (where it rests, while it shows) and the tab bar (the installed app's dock), placed again when either moves or
+   changes size while the line shows; with neither there it keeps its place.
+8. **The bar's middle button on the listen page** (`js/music-engine.js`, `js/tabbar.js`). On `listen.html` only, the
+   engine says what plays in the album's words (`mcc:nowplaying`, `{ title, href: "#np", playing }`) when that
+   changes (play, pause, the end, another song; a song being picked up again is Pause, as on the mini player), and
+   gives the bar the mini player's Play and Pause (`MCC_NP_PLAY`, `MCC_NP_PAUSE`) once a song is chosen or held. The
+   bar's tab-on-its-own-page scroll now lets the Music tab through when the page gives it that transport, and with
+   the World open or opening over the player the tab stays the way back to the music, never its Pause. With nothing
+   chosen or held, and on the other pages that load the engine, nothing changes.
+9. **A test holds the immediate end of a lapsed earned play** (verification V-4): a read that fails inside the play's
+   last ten seconds ends it at once: Play ended, the right line, Play (never Pause), the lock screen not told music
+   is wanted, no read and no second claim.
+10. **The installed app's dock says why the music is quiet on a line of its own** (`js/installed-app-dock.js`,
+    `css/installed-app-dock.css`): while there is something to say (Reconnecting…, Connection lost · tap play,
+    Loading…, Could not load · tap play, Muted) the words run across the top of the dock, whole, and the controls
+    keep their row at the bottom; the second line keeps the artist; the open button's label still carries the words.
+11. **CI.** `music-platform-ci.yml` watches `sw.js`, `js/analytics.js`, the measurement dictionary and the two new
+    tests; `music-contract` runs them. No new workflow and no new trigger.
+
+### Tests: failing at the base, passing after
+
+Every new test was run on `5b549475` with only the tests added (its sources untouched) and failed there, then passed
+on the slice:
+
+| Test | At `5b549475` | After |
+| --- | --- | --- |
+| `scripts/test/music-playback-races.test.mjs` (5 new) | 3 fail: six `music_error` for one drop; the listen page tells the bar nothing and gives it no Play or Pause. The earned-play test (V-4) passes there, as it should, and fails once the engine's immediate end is taken out | 59 of 59 |
+| `scripts/test/listen-ledger.test.mjs` (1 new) | fails: the wait is 5,000 ms, not 1,850 | 6 of 6 |
+| `scripts/test/music-track-lengths.test.mjs` (2 new) | both fail: no iTunes note, and no wait written from the catalogue | 6 of 6 |
+| `scripts/test/music-measurement.test.mjs` (new) | both fail: `music_interrupted` goes out, and nothing holds it | 2 of 2 |
+| `scripts/test/music-offline-vault.test.mjs` (new) | all three fail: offline the `.m4a` with a kept `.mp3` is "Failed to fetch" | 3 of 3 |
+| `scripts/e2e/music-background.e2e.mjs`, the new and changed scenarios | 60 of 99 checks pass; the 39 that fail are this slice's (the wire's event names 3, the dock's line 12, the doors 14, the preview line 4, the middle button 5, the kept B-side 1) | 212 of 212 for the whole suite |
+
+**Revert and fail**, each on a scratch copy of the slice, one fix taken out at a time and the file put back by its
+hash: all 10 unit-level mutations fail their tests (the wait back to 5 s, the wait not derived, the hold taken out,
+`music_error` once per read again, the worker's and the album's same-audio tables emptied, the engine silent on the
+listen page and talking on every page, the earned play's immediate end taken out, the four M3 remuxes put back: the
+container test, `--check`, the peaks check and the vault's same-audio test all fail). In Chromium 9 changes: 8 fail
+their checks (the door's `[hidden]` rule, the preview line's placing, the engine silent, the dock's own line, the
+album's table, the hold, the bar's scroll taking the tap again, the World's tap reaching the Pause), and one fails
+nothing: taking out the bar's own check for a World that is open or opening, because the World's own handler takes a
+Music tap while it is open and the opening case is caught by the tap the bar marks; that check stays as a second
+guard.
+
+**Suites**, one at a time, on the final code: root suite 3,080 tests, 3,073 pass, 0 fail, 7 skipped; Worker suite
+2,032 tests, 2,023 pass, 0 fail, 9 skipped (its music lengths were regenerated); the music workflow's test job step by
+step, all pass; the peaks, artwork and track-length checks (with the ledger's wait) pass; the source map validator
+passes 2,966 of 2,966. In Chromium: background 212 of 212; continuity 137 of 137; Now Playing 125 of 125; accounts
+128 of 128; installed app 246 of 246; native publication 49 of 49; direct checkout 40 of 40; the game hub's capsule
+passes. Every changed page fits 320 and 390 px (`scrollWidth === clientWidth`): the albums with and without the door,
+the album with the preview line, the listen page, the installed app's dock with each of its lines. The ledger's order
+on PostgreSQL 16 is item 4.
+
+### What is Inferred
+
+* Everything on an iPhone or iPad: that Safari honours the iTunes note again in the four files as it did before M3
+  (gapless where it was); that WebKit's service worker answers the B-side from the old copy with its Range reads;
+  where the dock's line and the preview line sit with the real safe areas and fonts.
+* The finish wait on real networks: the fixtures delay one request at a time; how long a finish takes on a phone,
+  and whether its slow moments come one request at a time, is not measured here.
+
+### What waits for Matthew
+
+Decisions, his alone; nothing was built for them:
+* **PB-R11:** whether an album stops after its last song. Today every album goes on to its first song, CIA Mind
+  Control after the closer's preview too.
+* **V-1:** the three covers that are not square (I AM HERE 1024 × 682, CIA Mind Control 544 × 246, Whip Equipped
+  1280 × 890) are cropped to squares on the music pages, and hard rule 10 says a cover is never cropped. Square
+  artwork from him, or each cover whole inside its square: renders of today's crop beside the whole cover, nothing
+  behind it, at 390 px, are kept with the workflow's evidence, not in the repository.
+* **D-11:** whether the closer opens to signed-in members; it stays preview-only, and the gate's SQL is untouched.
+* **D-7:** whether the World's mute stays the World's own (the default built in M3) or silences all music.
+* **The earned play's allowance** (300 s, 16 reads): its length.
+* **Approving `music_interrupted`** (reason, second, try, path): one line in `js/analytics.js`, and its row in the
+  dictionary.
+* **RL-11:** the account chip over the end of "Enter Heal the 3rd World →" at 320 and 390 px (item 2): a top band on
+  the album the chip owns, the link set where the chip's column is clear, or as it is.
+* **The ledger's wait** (item 4): 1.85 s keeps the next song's margin and lets a finish take 1.85 s; a slower finish
+  costs the song just heard. The other balance is one generated number.
+* **M5 and later** (songs that end when a page is left, album intake): not in this slice.
+
+Rows for his devices; until they are run everything here about an iPhone or iPad stays Inferred. For each, note the
+page, a Safari tab or the Home Screen icon, signed in or not, and the iOS version.
+1. Heal the 3 (Deep End, Heal the 3rd World), Whip Equipped (Dealer Plates (B-Side)) and CIA Mind Control (You the
+   Feds), phone locked: each plays to its end and the next song follows; note any gap or click at the joins.
+2. A phone that kept Whip Equipped before M3, in airplane mode: Dealer Plates (B-Side) plays, and the album says In
+   your pocket.
+3. From the Home Screen icon, a drop: the dock's top line says Reconnecting…, then Connection lost · tap play, in
+   full; the dock's buttons stay where they were.
+4. The listen page in a Safari tab: while a song plays the bar's middle button shows Pause; a tap pauses the song
+   and another plays it; the page does not move.
+5. The album: when a locked preview ends, its line sits above the deck bar, not over the song's title.
+
+**Renders for Matthew** at device scale 2, kept with the workflow's evidence (not in the repository):
 `album-390-no-door-cia-mind-control`, `album-390-door-heal-the-3` and the same two at 1280 (the door only on its own
 record); `album-390-door-under-account-chip-unchanged` (RL-11, for the decision);
 `album-390-preview-line-above-the-deck` and `album-1280-preview-line-above-the-deck`;
