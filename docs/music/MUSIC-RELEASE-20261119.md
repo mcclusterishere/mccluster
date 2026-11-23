@@ -697,7 +697,8 @@ end was recorded as unfinished; and four files made a phone fetch the end of the
    server's rule sent them.
 5. **A finished song is counted before the next one starts (DEL-4).** `js/listen-ledger.js` sends the next song's
    start only after the finish in flight has answered (5 s at most; since the M3 follow-up below, half the
-   catalogue's smallest margin, 1.85 s, written from the songs' own lengths).
+   catalogue's smallest margin, 1.85 s, written from the songs' own lengths; since that follow-up's review round,
+   half the next song's own margin, 5 s at most).
 6. **The World's mute is the World's (D-7).** A mute stored by the World governs its own soundtrack only. A muted
    Music song says **Muted** and shows its own 44 px Unmute in the mini player, the Now Playing sheet, the album's
    deck bar and the album's sheet (there a chip under the transport); the installed app's dock says Muted. Unmute
@@ -1092,7 +1093,8 @@ was built for them.
    fixed top right on every page, and it covers whatever scrolls through its column (the cover and the first row's
    heart too). A fix in the album's markup alone would mean other words, or a link under 130 px wide at 320 (it is
    242) and under 200 at 390; left-aligned it still ends at 266 px, past the chip's left edge at 229. It goes to
-   Matthew with the decisions below.
+   Matthew with the decisions below. (Corrected in the review round, "Review and fixes" below: that reason held only
+   for a centred door or one held to one line; the door now keeps clear of the chip in the album's own CSS.)
 3. **The four files are the files from before M3, with only their index moved in front of the audio**
    (`assets/audio/dealer-plates-b.m4a`, `deep-end.m4a`, `heal-the-3rd-world.m4a`, `you-the-feds.m4a`; the B-side
    from the bytes of `dealer-plates-b.mp3`, which stays for old links). Moved the way qt-faststart moves it: the
@@ -1110,7 +1112,9 @@ was built for them.
    counts (63.86 s of 62) and A does not (its finish arrives after B's start). At 5 s the base lost both; at 2.5 s the
    base kept both. That is the balance this wait strikes: a finish may take 1.85 s, and the next song keeps 1.85 s of
    its margin for its own start's way to the server. The fixtures answer at once unless a test delays them; how long
-   a finish takes on a real network is Inferred.
+   a finish takes on a real network is Inferred. (Changed in the review round below: one wait for every song cost the
+   song just heard on every pair once its finish took more than 1.85 s; each song now waits half its own margin, 5 s
+   at most.)
 5. **No new event name leaves the browser until Matthew approves it, and an error is counted once.**
    `music_interrupted` waits in one place, `js/analytics.js` (`AWAITING_APPROVAL`, "waiting for Matthew's
    approval"); both players still name it, so approving it is deleting that one line (and reviewing it into the
@@ -1131,7 +1135,8 @@ was built for them.
    gives the bar the mini player's Play and Pause (`MCC_NP_PLAY`, `MCC_NP_PAUSE`) once a song is chosen or held. The
    bar's tab-on-its-own-page scroll now lets the Music tab through when the page gives it that transport, and with
    the World open or opening over the player the tab stays the way back to the music, never its Pause. With nothing
-   chosen or held, and on the other pages that load the engine, nothing changes.
+   chosen or held, and on the other pages that load the engine, nothing changes. (Since the review round below the
+   tab's name says so too: "Pause music" or "Play music" where it is the player's transport.)
 9. **A test holds the immediate end of a lapsed earned play** (verification V-4): a read that fails inside the play's
    last ten seconds ends it at once: Play ended, the right line, Play (never Pause), the lock screen not told music
    is wanted, no read and no second claim.
@@ -1199,9 +1204,11 @@ Decisions, his alone; nothing was built for them:
 * **Approving `music_interrupted`** (reason, second, try, path): one line in `js/analytics.js`, and its row in the
   dictionary.
 * **RL-11:** the account chip over the end of "Enter Heal the 3rd World →" at 320 and 390 px (item 2): a top band on
-  the album the chip owns, the link set where the chip's column is clear, or as it is.
+  the album the chip owns, the link set where the chip's column is clear, or as it is. (No longer open: the review
+  round below sets the door clear of the chip's column; how it looks is his to judge, renders below.)
 * **The ledger's wait** (item 4): 1.85 s keeps the next song's margin and lets a finish take 1.85 s; a slower finish
-  costs the song just heard. The other balance is one generated number.
+  costs the song just heard. The other balance is one generated number. (Changed in the review round below: each
+  song's own half margin, with the figures and what a lost listen costs.)
 * **M5 and later** (songs that end when a page is left, album intake): not in this slice.
 
 Rows for his devices; until they are run everything here about an iPhone or iPad stays Inferred. For each, note the
@@ -1218,7 +1225,8 @@ page, a Safari tab or the Home Screen icon, signed in or not, and the iOS versio
 
 **Renders for Matthew** at device scale 2, kept with the workflow's evidence (not in the repository):
 `album-390-no-door-cia-mind-control`, `album-390-door-heal-the-3` and the same two at 1280 (the door only on its own
-record); `album-390-door-under-account-chip-unchanged` (RL-11, for the decision);
+record); `album-390-door-under-account-chip-unchanged` (RL-11, for the decision; superseded by the review round's
+renders below);
 `album-390-preview-line-above-the-deck` and `album-1280-preview-line-above-the-deck`;
 `listen-390-bar-middle-button-pause` and `listen-390-bar-middle-button-after-tap`;
 `installed-listen-390-dock-reconnecting`, `installed-listen-320-dock-reconnecting`,
@@ -1226,3 +1234,76 @@ record); `album-390-door-under-account-chip-unchanged` (RL-11, for the decision)
 `album-390-whip-equipped-kept-in-your-pocket`; and for V-1, `covers-390-all-three` with one picture per cover. Seen in
 them, there before this slice and not changed: at 390 px the album's deck bar and the tab bar under it overlap by
 4 px (the deck bar ends 765 px down the screen, the bar starts at 761).
+
+### Review and fixes
+
+An independent review of the follow-up's head `2d162960` against `5b549475` found no blocker or major, three minor
+findings (RF-1 to RF-3) and two nits. This round took the three minors. Each was reproduced at `2d162960` first (the
+review's own PostgreSQL 16 driver and Chromium probe, run again here), given tests that fail at `5b549475` and at
+`2d162960`, and fixed; none was set aside. The two nits did not come to this round: RF-4, "the bar's middle button" in
+item 8 and in device row 4 is the bar's first button, Music, the red play and pause circle left of the M (the M in the
+middle goes home); RF-5, on the album that same button still opens the shelf (`listen.html`), as it did before this
+slice, while on the listen page it pauses.
+
+| Finding | At `2d162960` (reproduced) | Now |
+| --- | --- | --- |
+| RF-1 | One wait for every song, 1.85 s. On PostgreSQL 16 with the real migrations and the real ledger, the song just heard was closed as unfinished whenever its finish took 1.9 s or more, whatever came next: the database saw start A, start B, then a finish that matched nothing. `5b549475` (5 s) kept both songs to a 4.0 s finish with Pull Up next. A completed listen is what answers the song test (`song_test_heard`) and earns the gated closer's play (the any-album-track gate; the sequence rule reads completions too), so a lost one costs those, not only a count | Each song's start waits for the last finish at most half its own margin (its length less the floor(length × 0.95) seconds the Worker needs to count it), 5 s at most. `scripts/music-track-lengths.mjs` writes the table into `js/listen-ledger.js` from the songs' own lengths, and `--check` fails when it is stale. Towyard Killer keeps 1.85 s, IOT (Draft) 2.05 s, Who Did The Shoot 3.4 s, Pull Up 4.2 s; nine songs with margins of 10 s or more wait the full 5 s; a song the table does not hold (the server counts no listen of it) waits 5 s. On PostgreSQL 16, with the song just heard's finish slowed from 0 to 5.3 s: Pull Up next, both songs counted to a 4.0 s finish and the song just heard lost from 4.3 s; IOT next, both to 1.9 s, lost from 2.5 s; Data Breach next (5 s, the wait every song had at `5b549475`), both to 4.3 s, lost from 5 s; Towyard Killer next, as at `2d162960`, lost from 1.9 s. The next song was counted in every run (Towyard Killer 63.9 of the 62 s it needs, Pull Up 146.28 of 142) |
+| RF-2 | The fixed account chip covered the end of "Enter Heal the 3rd World →" while the door scrolled through the chip's band, at every width from 320 to about 590 px, not only the 320 and 390 the review measured (320: 56 by 44 px; 390: 21 by 44; 430, where the door sat beside Play: 79 by 44, the whole chip), and a tap there reached the chip. The reason item 2 gave held only for a centred door or one held to one line | On a phone the door has a line of its own at the hero's left edge, the edge the label rail under it keeps, and ends 104 px (the chip's widest) short of the hero's right edge. Below about 370 px its words take two balanced lines ("Enter Heal the" / "3rd World →"), so the arrow never sits alone. From 700 px it sits beside Play, as before. The same words and link, the album's own CSS only, the chip untouched. Scrolled through the chip's band 2 px at a time the two never meet: 25 px apart at 320 and 360, 45 at 390 |
+| RF-3 | On `listen.html` the bar's Music tab played and paused the song, and a keyboard or a screen reader was told link "Music" (to `listen.html`) whatever it did; the play triangle and the pause glyph are drawn in CSS, which assistive technology does not read | Where the tab is the player's transport (on the page it points at, that page giving the bar its Play and Pause, no World open or opening over it) its name says what a tap does: "Pause music" while a song plays, "Play music" while it does not, the words of the installed app's dock and the World's transport. Everywhere else it keeps its own name ("Music"; on the owner's bar "Play: the player"). The tap and the name ask one test (`musicTabTransport`, `js/tabbar.js`). The World tells the bar when it opens or closes (`mcc:world-audio-open`, `js/world-audio-continuity.js`), before the focus lands back on the tab, and a World still opening renames it too. Enter on the focused tab pauses and plays; the focus stays and the page does not move |
+
+**Tests, failing at `5b549475` and at `2d162960`, passing after.** The new and changed tests were run against both with
+their sources untouched:
+
+| Test | At `5b549475` | At `2d162960` | After |
+| --- | --- | --- | --- |
+| `scripts/test/listen-ledger.test.mjs` (3 new) | 1 fails: each song's own wait (Who Did The Shoot waited 5,000 ms, not 3,400). The 2.5 s case before Pull Up and the 5 s wait for a song the server does not count pass there, as the base waited 5 s for every song | all 3 fail (1,850 ms for every song) | 9 of 9 |
+| `scripts/test/music-track-lengths.test.mjs` (the follow-up's wait test now holds the table) | fails (no `finishWaits`) | fails (no `finishWaits`) | 6 of 6 |
+| `scripts/e2e/music-background.e2e.mjs`: the door and the chip (a new scenario, 11 widths and accounts, 6 checks each), the tab's name (6 checks added to the listen page's bar scenario; a new keyboard and World scenario, 7 checks; a new album scenario, 2 checks) | 54 of 82 checks pass. 28 fail: the door 17 (under the chip from 320 to 540 px; not on the rail's line under Play up to 640), the tab's name 5 of 6 and that scenario's 5 older checks (the base gave the bar no Play or Pause), and the keyboard scenario, which stops (the tab never becomes the song's Pause). The album's 2 pass, as they should | 62 of 88 pass. 26 fail: the door 17, the tab's name 5 in the bar scenario, and 4 of the keyboard scenario's 7 (Enter paused and played the song while the tab stayed link "Music"). The album's 2 pass | 88 of 88; the whole suite 293 of 293 |
+| `scripts/e2e/music-world-continuity.e2e.mjs` (3 checks in its World-opening block) | stops at "after Stay in Music the Music tab is the player's Pause again" (link "Music") | the same | 140 of 140 |
+
+Assertions changed because they held the reviewed behaviour: the follow-up's own wait test in
+`music-track-lengths.test.mjs` asked for `finishWait()` and `var FINISH_WAIT_MS = 1850;`, and now asks for the table.
+
+**Revert and fail.** Each fix was taken out on its own and its tests failed, the file put back by its hash after each:
+6 changes at the unit level (the ledger as it was at `2d162960`; the table ignored, 5 s for every song; 1,850 ms for a
+song the table does not hold; one hand-edited entry, which `--check` also refuses; the generator writing one wait for
+every song; the generator without the 5 s cap) and 9 in Chromium (the door's rule as it was: 17 checks; without the
+104 px reserve: 320 px signed in and out; without the 700 px rule: 700 and 1280; without the balanced lines: at 360 px
+the arrow sat alone; the tab never named: 9 checks; the transport test without its page: the album's tab said Pause
+music; closing the World telling the bar nothing; a World still opening, and one called off, not renaming the tab:
+the continuity suite stops at each).
+
+**Suites**, one at a time, on the final code: root suite 3,083 tests, 3,076 pass, 0 fail, 7 skipped; the music
+workflow's `music-contract` job command by command, every one passes (races 59, gate and ledger 26, track lengths
+`--check` and 6, the Worker's music gate 24 under its offline guard, peaks, accounts 15, Now Playing contract 19,
+measurement 2, vault 3); python 7; the source map validator 2,966 of 2,966 (no file added). No file under `workers/`
+changed, so the Worker suite was not run again. In Chromium: background 293 of 293 (the follow-up's 212 and this
+round's 81); continuity 140 of 140; Now Playing 125 of 125; accounts 128 of 128; installed app 246 of 246; native
+publication 49 of 49; direct checkout 40 of 40; site navigation 429 of 429; the game hub's capsule passes. Every changed
+page fits the screen (`scrollWidth === clientWidth`): Heal the 3 at 320, 360, 390, 430, 480, 540, 640, 700 and 1280 px,
+signed in and out at 320 and 390; the listen page with the tab named at 390, and at 320 in the installed app's checks.
+
+**What is Inferred (review round).**
+* What VoiceOver reads for the tab ("Pause music, link" is what Chromium's tree says) and whether it speaks the new
+  name after a double tap.
+* The door's two lines need `text-wrap: balance` (Safari 17.5 and later). Older Safari wraps them the plain way, as
+  Chromium does with the balance taken off: "Enter Heal the 3rd" and "World →" at 320 and 340 px, and at 360 px the
+  arrow alone on the second line. The door stays clear of the chip either way.
+* How long a finish takes on a phone, so how often a song just heard still loses to the next song's start.
+
+**What waits for Matthew (review round).**
+* **The ledger's wait per song.** Each song keeps half its own margin for its start's trip, and the song before it may
+  take that long to finish; a slower finish costs the song just heard its completed listen (its answer to the song
+  test, and toward the closer's earned play); a longer wait would put the next song's own count at risk instead. The
+  figures are in RF-1 above. The share (half) is his to move.
+* **The door's place on a phone**: at the hero's left edge under Play, two lines below about 370 px. Renders below.
+* Rows to add for his devices: 6. VoiceOver on the listen page with a song playing: the bar's Music button reads
+  "Pause music"; a double tap pauses the song and it reads "Play music". 7. Heal the 3 on the narrowest phone he has
+  (an iPhone SE is 320 px): scroll the door up under the Sign in chip; they never overlap, and the arrow stays with
+  "World".
+
+**Renders for Matthew** at device scale 2, kept with the workflow's evidence (not in the repository):
+`album-320-door-heal-the-3`, `album-390-door-heal-the-3` and `album-1280-door-heal-the-3` (the page at its top; at 1280
+beside Play, as before), and `album-320-door-clear-of-the-account-chip`, `album-360-door-clear-of-the-account-chip` and
+`album-390-door-clear-of-the-account-chip` (the door scrolled up to the chip's band: side by side, never over each
+other). Nothing else this round changed is visible: the ledger's waits and the tab's name are not drawn.
