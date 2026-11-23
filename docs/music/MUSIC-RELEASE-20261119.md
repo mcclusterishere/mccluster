@@ -587,6 +587,17 @@ that evidence.
 
 #### 2. M5: retain one player across music navigation
 
+**Status (M5, 2026-11-23; section "M5: one player across music pages" below; on the branch only, because D-5 is
+Matthew's decision and is unanswered).** Done in code and in Chromium for the first pair and for two more stages:
+Listen and the artist pages each stay the one document that plays while the other opens over it as a view (the same
+element, source and buffer, its clock advancing, one owner of sound and of Now Playing, pause and mute deliberate,
+Back and Forward, exact deep links, account changes, the preview and gate rules, the World as before); the album as
+the retained document, through its own deck, with Listen and the artist pages over it; and the account page as a
+sign-in view on the password path that comes back to the music. A refresh still ends the document, as documented.
+Not done: the album as a view (Listen -> the album, the most travelled link, is still a page load), the other music
+routes, and every device row. Until Matthew's devices run them, everything about an iPhone or iPad is Inferred, and
+D-5 itself waits for him.
+
 First scope the retained-document work to `listen.html` and `music-creator.html`, which already use
 `MCC_MUSIC`; then connect `album.html` through its existing deck controls. Reuse the ownership, history and
 handoff pattern documented in `MUSIC-WORLD-CONTINUITY.md` and implemented by `js/world-audio-continuity.js`
@@ -1370,3 +1381,301 @@ with this check's own probes; nothing above was taken on trust. Nothing was merg
   (review RF-5); whether it should pause the album's song there may belong with M5. In the installed app on the listen
   page the dock now holds two Pause buttons side by side, the bar's Music button and the dock's own (both named "Pause
   music", both pause the song); whether the Music button should stay the way to the shelf there is a design call.
+
+## M5: one player across music pages (2026-11-23)
+
+**D-5 (one long-lived player across music pages) is Matthew's decision, and he has not answered it.** This slice
+builds the music map's recommended default on its working branch only, behind one switch (`ROUTES` in
+`js/music-shell.js`); with every route off the site behaves as it did at `dc0185aa`, every music link a page load.
+Nothing was merged, deployed, enabled or applied; no Worker, SQL, `supabase/`, auth or session code changed, and no
+second backend, database, session store or player engine was added. Base `dc0185aa` (main `b51ede03` with M3 and the
+M3 follow-up). This is item 2 of "Bounded finish order after this recovery" above.
+
+### Why
+
+Matthew, 2026-11-19: "when I'm playing music and I leave the browser, it stops playing music" and "The music never
+plays fully through." Part of that was the site itself (the music maps' C1 cause 2, left to this slice by M1). At
+`dc0185aa` every music link loaded a new document, and a new document cannot keep the old one's `<audio>` element; on
+an iPhone it cannot start sound again without a tap either. Measured at the base (Chromium, every request a route
+fixture): Listen playing -> an artist card stopped the song (Back: Listen loaded again, "Pick up at 0:02", nothing
+playing); an artist page's release -> Listen stopped it and kept nothing; the album playing -> its comment box's Sign
+in -> password sign-in brought the album back **paused**; the album -> the chip's Sign in landed on the World with the
+song gone. Production aggregates (read-only, counts only, 35 days): album -> account 31 page views of which 29
+followed a song started on the album; Listen -> album 88; album -> Listen 26; Listen -> artist page 3.
+
+### Design and limits
+
+The first music page a tab opens (Listen, an artist page, the album) stays the one document that plays: the
+**retained document**. It owns every element that can sound, the one `js/now-playing.js` realm that speaks to the
+device, the bar, the account chip, the installed app's dock and the history. The other music pages open over it as
+**views**, each in a fresh same-origin `<iframe>`, one at a time: their own document, head, scripts and address, but
+no music element, no Now Playing and no bar of their own. A play button in a view calls the retained player in the
+same tap. The address bar shows the view's own address (`history.pushState`), so a share, a bookmark or a refresh
+lands on that exact page, and Back and Forward move between views without reloading the retained document. It is the
+Music-to-World pattern (`docs/music/MUSIC-WORLD-CONTINUITY.md`) taken from one cross-origin World frame to
+same-origin music views.
+
+| Stage | The retained document | Opens over it as a view | Everything else |
+| --- | --- | --- | --- |
+| 1 | Listen, an artist page (`music-creator.html?handle=` with a valid handle) | the other of the two; another artist | a page load |
+| 2 | also the album (any `album`, `playlist`, `track`, `t`), playing through its own deck | Listen and the artist pages | another album, or the album from Listen or an artist page: a page load |
+| 3 | (any of them) | `account.html`, signing in by password | Create account, Forgot password, a provider: a page load of the top |
+
+What it never does, each held by a test: start, pause or mute anything when a view opens, switches, is revealed or
+closes; render a page it did not expect inside its frame (`js/shell-boot.js` stops it before its body and the shell
+routes it); show one page's identity under another's address (the live head follows the page shown, and the retained
+page's own title, description, canonical, JSON-LD, `og:` and `twitter:` come back byte for byte on reveal; crawlers
+load every address directly and never see a view); make the front page a view (hard rule 3).
+
+Limits, as built:
+* **The album as a view waits** (its player is the page's own deck, 1,800 lines inline). So Listen -> the album, the
+  most travelled music link (88 page views in 35 days), is still a page load: from Listen or an artist page the
+  album opens as itself, and the song stops there as before. The album as the retained document (stage 2) is built.
+* **The other music pages are page loads**: catalogue, licence, music videos, PRIM3's artist page, Creator Studio, and
+  every page outside music. So is a link from the World to an artist page or the album (the World's own rule).
+* **What the web cannot keep** stays honest: a refresh, a link out of music, closing the tab or the system reclaiming
+  it ends the document and the song, as before; Listen afterwards offers "Pick up at m:ss" from the banked record, and
+  nothing claims the music carried on. The pocket (`js/pip.js`, `listener_state`) is still position recovery, not
+  continuity, and is unchanged.
+* **A provider sign-in** (none is switched on today) starts in the top window: it leaves the site and the song ends,
+  by the providers' design. Create account and Forgot password are page loads of the top, as today.
+* **A view scrolls inside its frame.** Whether Safari's toolbar shrinks and a tap on the status bar goes to the top as
+  on the page itself is Inferred (device row 13).
+* **While a view shows, a link the retained page builds from its own address** (the album's comment box `next=`,
+  repainted on an account change) is built from the view's address shown in the bar. The person lands on the page
+  they were looking at; the record says so because it is not the album's own address.
+* **The back-forward cache** is not measured: this Chromium never restored a page from it. A restored retained
+  document is handled as a Back (`pageshow` with `persisted`); that is Inferred.
+
+### What changed
+
+1. **`js/music-shell.js` (new): the retained document and its views.** The routes and their one switch (`ROUTES`);
+   where a link goes, seen from the page shown (`decide`: the page's own, a scroll to the top, a reveal of the
+   retained page, a view, the World, or a page load); the history it writes (only the retained document writes
+   entries: a view's own `pushState` and `replaceState` become the top's; `scrollRestoration` is manual while a view
+   shows); a fresh frame per view, its address set before it is inserted, the frame shown kept until the new one has
+   painted (the one opening carries its own id until then: one element per id), never more than one view frame when
+   a switch is done; the retained page under a view hidden and inert except an allow-list (the bar, the chip, menus,
+   the engine's mini player and Now sheet, the album's deck bar, sheet, status line and toast, the World's frame and
+   transport, the privacy notice), its scroll kept; the live head (title, description and canonical follow the view
+   and are gone when it has none; the retained page's JSON-LD, `og:` and `twitter:` are held aside; a title the
+   retained page writes while covered is kept for its reveal, one the World writes is not); focus on the view's heading
+   (without the ring and glow of a control: it is not one) and back on the link that opened it, and the page's name said
+   once in a polite live region; a view that does not
+   open in 8 s, or a document it did not expect (the service worker's offline `index.html`), shows a card with Open
+   the page and Back, and says "Your music is still playing." only when it is. The view agent routes the view's own
+   links through the same table, follows its in-page history, mirrors the bar's owner flag (`data-appbar-admin`, the
+   creator review offer reads it) and gives the view the retained bar (`MCC_BAR`). The view's API
+   (`MCC_MUSIC_VIEW`): the retained engine, `navigate`, its referrer, the page it is, and events from the top.
+2. **Stage 2, one owner of sound in the album document.** Over the album the engine is loaded beside the deck as a
+   guest (`MCC_MUSIC_GUEST`: no restore of its own banked song, and it banks only while it owns the sound). A song
+   chosen in a view pauses the deck through the album's own Pause (`MCC_NP_PAUSE`) before the engine plays; a row
+   played on the album pauses the engine. `html[data-music-owner]` shows only the owner's bar (the deck bar or the
+   mini player); the pocket holds the owner's song; the World's transport acts on the owner.
+3. **`js/shell-boot.js`**, the first script in every music page's head: in the shell's own frame only (its frame
+   element, checked by identity), a page with `<html data-music-view>` is adopted before any other script runs and its
+   own bar, chip, pocket and privacy bar are hidden before first paint; any other document there is stopped
+   (`window.stop()`) and handed back to the shell. The World's frame (another origin), Control's front-page preview and
+   every embed are left exactly as before.
+4. **`js/music-engine.js`**: in a view, a view mode: no `Audio`, no player, no Now Playing binding, no bank; a frozen
+   `MCC_MUSIC` that calls the retained engine, and a capture handler that calls it inside the tap (WebKit's gesture
+   rule; Chromium passes a tap to its parent frames anyway). A song carries the page it was chosen on (`mcc_chosen_on`)
+   into its music events; outside a view nothing changed.
+5. **`js/tabbar.js`**: a view builds no bar and loads no World module; the retained document loads the shell. The
+   bar's tabs stay the bar's (a hold opens a wing, a held slot shows its card, the Music tab goes to the shelf); when
+   the bar goes somewhere it asks the shell first (an artist view's Music tab reveals Listen, the album's opens Listen
+   over it); over a view the Music tab is never the player's Pause. On the album the bar's Music button used to open
+   the shelf and end the album's song (the M3 follow-up left that to M5, review RF-5); it now opens Listen over the
+   album and the song plays on.
+6. **`js/analytics.js`**: the page a document is, fixed when it loads, so the retained page's events (a song ending,
+   its dwell) are never filed under the view's address or creator_handle; a view's referrer is the page it was opened
+   from, after Back and Forward too; a song's events are filed on the page it was chosen on; the retained page's dwell
+   stops when a view covers it and starts again when it is revealed. Consent works as before: nothing is sent from
+   either document without it. Outside music the pages that rewrite their own address keep its path (the World's
+   mission addresses stay on `/mnet.html`, Control's routes are hashes, the World over a music page keeps that page's
+   path), so their events read as before. The one difference: a World document served at a host's root (the design
+   for `mccluster.org`) that later writes `/mnet.html` into the address now files its later events under the path it
+   loaded at, as its first events already were.
+7. **`js/pip.js`** mounts no pocket in a view, and **`js/world-audio-continuity.js`** does nothing in one; over a view
+   the World opens from the retained document at the view's address with `world=1`, and closes back onto the view
+   with the view's title.
+8. **Signing in over the music** (stage 3): `account.html` opens as a view on the password path, its own page and
+   calls (the same token, user and bootstrap calls and the same storage keys as on the page itself). A provider starts
+   from the top window (`account.html`: the same redirect, verifier and return; a provider page is never framed). The
+   shell gives a sign-in link without `next`, opened from a music page, that page as `next`, so the person comes back
+   to the music (a default for Matthew to confirm; today the chip's sign-in lands on the World).
+9. **`album.html`, `js/chamber.js`**: the album's room light and chamber stop drawing while a view covers them and
+   start again on reveal; the deck plays on.
+10. **`js/music-creator-profile.js`**: checkout (another origin) from a view is a page load of the top.
+11. **Markers**: `listen.html`, `music-creator.html`, `album.html`, `account.html` say which page they are on `<html>`
+    (`data-music-view`), one attribute each. Their heads are otherwise unchanged (metadata, `@id`s and canonical
+    untouched); the other changes in those pages are in body scripts: `account.html`'s provider line and `album.html`'s
+    room light.
+12. **`css/music-shell.css` (new)**, phone first, `min-width` only: the view layer inside the top's safe area under
+    the bar, the mini player, the deck bar and the chip; the failure card's buttons at least 44 px with
+    `max(16px, 1rem)` text.
+13. **CI.** `music-platform-ci.yml` watches `js/shell-boot.js`, `account.html` and the two new tests; `music-contract`
+    parses the shell and runs `scripts/test/music-shell.test.mjs`; `browser` runs `scripts/e2e/music-shell.e2e.mjs`.
+    No new workflow and no new trigger.
+
+Where the code departed from the spec (the code wins, as the slice asked):
+* The bar's Music tab and its tab-on-its-own-page logic read `location`, which after `pushState` is the view's
+  address; they follow the view without new code. Over a view the Music tab is the way back to Listen, never the
+  player's transport (the spec left it a transport).
+* The creator review offer reads the bar's owner flag on `<body>`; a view has no bar, so the agent mirrors the flag
+  into the view (the spec had no such step).
+* Signing out on the account page reloads that page; the shell accepts a reload of the view it shows at the same
+  address (the spec adopted only the frame it was opening).
+* The account page's onward step after a sign-in replaces its own address; the shell gives it replace semantics, so
+  Back after a sign-in does not return to the sign-in form.
+* The album's rows carry no `data-music-play`, and Listen's cards wrap their play buttons in links; the agent leaves
+  clicks inside `[data-music-play]` to the engine's view mode.
+* The spec named the frame `#mccMusicViewFrame`; the frame still opening carries `#mccMusicViewNext` until it has
+  painted, so two elements never share an id.
+* The failure card says "Your music is still playing." only when something plays.
+* Links on the retained page itself that point at the page shown, or at the retained page, act as today unless a view
+  shows (scroll, or reveal).
+
+### Tests: failing at the base, passing after
+
+Every new test was run on `dc0185aa` with only the tests added (its sources untouched), in a worktree made for it
+and removed after:
+
+| Test | At `dc0185aa` | After |
+| --- | --- | --- |
+| `scripts/test/music-shell.test.mjs` (new, 17) | 16 fail: no shell, no route table, no live-head handling, `js/shell-boot.js` adopts nothing, the engine makes its own `Audio` in a view and names no chosen-on page, the pocket mounts in a view, the World module greets a view, analytics files the retained page under the view's address, no markers. The one that passes is the control: the engine outside a view still makes its one `Audio` and binds Now Playing | 17 of 17 |
+| `scripts/test/music-background.test.mjs` (1 new: the lifecycle guard) | passes, by design: with no shell there is nothing to guard. It fails once a pause is put into the reveal (revert proof R18) | 10 of 10 |
+| `scripts/e2e/music-shell.e2e.mjs` (new: the 26 acceptance tests of the spec in 26 scenarios, Chromium) | 9 of 44 checks pass: the guards that hold today too (links that leave are page loads, a refresh is honest, the address after a tap, a held Music tab opens no view); 35 fail, 22 of them whole scenarios that wait for a view that never opens | 141 of 141 |
+
+One existing test changed, deliberately and as little as it could: `scripts/test/signup-authority.test.mjs` pins
+the text of `account.html`'s provider call, and now also accepts the same call made on the top window's client in a
+music view, with the same redirect (`/auth/?next=` back to the account page). The new pattern matches the call at
+`dc0185aa` and the slice's, and refuses a wrong redirect; 9 of 9 at the base and at the head.
+
+**Revert and fail.** 28 behaviours taken out one at a time on the slice, each file put back by its hash after (the
+tree's hash checked equal after every pass), each run against the tests that hold it: every one fails a test. They
+are: the shell never loaded; any frame adopted; no `window.stop()`; no engine view mode; a tap reaching the engine a
+turn late; a pocket in a view; the World module in a view; analytics reading the live address; a view's referrer its
+own; no chosen-on page from the engine; the held head not put back; JSON-LD not held aside; the head never mirrored; a
+new view reusing the old frame; the Listen song taking the sound without the album's own Pause; a provider starting in
+the frame; a sign-in without `next` not coming back; a reveal that pauses (the lifecycle guard); the deck bar
+concealed; the artist page's checkout navigating the frame; the album without its marker; the covered page not inert;
+Back and Forward not followed; the bar's Music tab a transport over a view; the bar's tabs not asking the shell; the
+shell taking the bar's own tabs; and the view heading drawn with a control's focus ring, and with its glow. The first
+pass caught 20 of 25: five behaviours were held only in the browser or only in Node, or not at all (the engine's
+chosen-on page, JSON-LD on Listen which has none, `inert` behind `visibility: hidden`, the Music tab over a Listen
+view, the bar's hook behind the shell's own click handling). Each got a test that holds it, and the last showed a
+defect, fixed in this slice: the shell's click handling took the bar's own tabs before `js/tabbar.js` (a held wing
+slot's click became a navigation, and the bar's rule that its Music tab goes to the shelf was bypassed). The bar's
+tabs are now the bar's, and the bar asks the shell when it goes somewhere. The last two came from the renders: the
+Listen heading over the album showed the house focus ring and its glow (`js/masthead.js`'s `:focus-visible` rule). The
+heading now takes the focus without either, and the check that holds it is in the album scenario, where
+`:focus-visible` applies; after a pointer tap on a card it does not, so the same check after an artist card passes
+either way.
+
+### Suites at the final code
+
+One at a time and at low priority, Chromium only, every browser run holding the one browser lock:
+* **The music job's commands** (`music-platform-ci.yml`, `music-contract`): every parse passes; music platform 21 of
+  21, release submission 7 of 7, Control music review 17 of 17, playback races 59 of 59, background contracts 10 of
+  10, gated audio and the listen ledger 26 of 26, track lengths (`--check`, and 6 of 6), the Worker's music gate 24 of
+  24, peaks (`--check`, and 6 of 6), accounts 15 of 15, artwork `--check`, the Now Playing contract 19 of 19,
+  measurement 2 of 2, the offline vault 3 of 3, the music shell 17 of 17. No file under `workers/` changed, so the
+  Worker's own suite was not run beyond that gate test.
+* `scripts/test/domain-architecture.test.mjs` 7 of 7; `scripts/test/signup-authority.test.mjs` 9 of 9.
+* **Root suite** (`node --test scripts/test/*.test.mjs`): 3,101 tests, 3,094 pass, 0 fail, 7 skipped.
+* **Source map validator** (the building source map's repository check): 2,966 of 2,966 checks pass (767
+  candidates); its generated coverage report is unchanged.
+* **Browser suites**: the music shell 141 of 141; background 293 of 293 in three of four full runs at the final code,
+  291 of 293 in the other (below); Music to World 140 of 140; Now Playing 125 of 125; accounts 128 of 128; installed
+  app 246 of 246; native publication (Control's music review) 49 of 49; direct checkout 40 of 40; site navigation 429
+  of 429; the game hub's capsule passes; and, because the World loads `js/tabbar.js`, `js/analytics.js` and its music
+  code too, the bar's sign-in refresh passes, the World's guest travel 151 of 151 and its first visit (analytics off
+  until the visitor agrees) 83 of 83.
+* **320 and 390 px**: every view (Listen over the album, the account page over the album, Listen over an artist page)
+  and every top page fits with no sideways scroll (`scrollWidth` equals `clientWidth` in the top and in the view), and
+  the failure card's buttons are at least 44 px (shell scenarios s12 and s24, with 820 and 1280 px too).
+
+**Two background checks that did not always hold.** In one full run at the final code the bar's Music tab on Listen
+was still named "Play music" while the song played, after Enter started it again and after the World closed over it
+(one run before the last change missed the second of these only). They are two checks of the M3 follow-up's RF-3
+scenario (`js/tabbar.js` names the tab from `mcc:nowplaying`). The scenario opens no view; on its path the lines this
+slice added only ask whether a view is open (`js/tabbar.js`) and which page a song was chosen on
+(`js/music-engine.js`), and change nothing there. It happens at `dc0185aa` too: run alone, alternately, it failed 1 of
+11 runs at the base and 1 of 10 at the head. In the full suite the head failed it in 2 of 5 runs and the base in none
+of 5 (four here, one in its own verification), so these counts do not settle whether the shell's extra script on
+Listen makes it likelier. It is left as found.
+
+### What is Inferred
+
+* Everything on an iPhone or iPad. That WebKit lets a play started inside a view's tap reach the retained document's
+  element (the design calls it in the same tap, WebKit's gesture rule); that the audio session, the lock screen and
+  Control Center keep one card across views; that Keychain AutoFill and the keyboard behave in the account view as on
+  the page; how VoiceOver reads a view opening and Back; how a page scrolling inside a frame feels in Safari; memory
+  with one view frame on an older phone; the back-forward cache.
+* Real networks: the fixtures answer at once unless a test delays them; the 8 s before the failure card is a
+  judgement, not a measurement.
+
+### What waits for Matthew
+
+Decisions, his alone; the defaults built are marked:
+* **D-5:** keep the retained music document (built on the branch, the map's recommendation) or stop it. One switch
+  turns it off.
+* **Sign-in from a music page:** come back to the music (built) or keep landing on the World as today.
+* **The album as a view** (Listen -> album, the most travelled link): move the album's player into the retained
+  document in a later slice.
+* **Listen songs over the album:** a song chosen on Listen while the album is the retained document plays in the same
+  page, the engine beside the deck, one playing at a time and one bar showing (built). Is that how they should share?
+* **Which routes next:** catalogue, licence, music videos, PRIM3's artist page, Creator Studio; the house's other pages
+  (never the front page).
+* **Provider sign-ins** (none on today): one switched on leaves the site and the song ends.
+* **The account chip over the Now sheet's Album link** on a phone (a tap there opens Sign in), seen while measuring.
+* **Links from the World** to an artist page or the album still leave the music.
+* **The bar's Music button on the album** (the M3 follow-up's RF-5, his call): it now opens Listen over the album with
+  the song playing on (built); whether it should be the album's own Pause there instead is still his to say.
+* **Creator cards with no artwork** (seen in the renders; there before this slice and untouched by it): Listen's "From
+  creators" card crops the house mark under the release's title. What such a card should show is his to say.
+* **The bar's Music tab name on Listen** (the M3 follow-up's RF-3) is now and then still "Play music" while a song
+  plays; intermittent, and seen at the base too (below). A fix belongs with that code, in a slice of its own.
+
+Rows for his devices; until they are run everything here about an iPhone or iPad stays Inferred. For each, note the
+page, a Safari tab or the Home Screen icon, signed in or not, and the iOS version.
+1. iPhone, Safari: Listen, play a song, open an artist page, go Back, go Forward. The song never stops; the lock screen
+   keeps its title.
+2. The same with the phone locked between steps (unlock, switch page, lock again): the song continues.
+3. In an artist page opened from Listen, tap another song: it starts on the first tap.
+4. Album (I AM HERE) playing: tap Music in the bar; browse Listen; Back to the album. The song never stops; the deck
+   bar stays at the bottom over Listen.
+5. Album playing: scroll a long Listen view and an artist view for a minute; nothing reloads by itself (memory).
+6. Album playing: Sign in from the comment box with your password (Keychain AutoFill if you use it): the song keeps
+   playing while you sign in and after.
+7. The same from the chip at the top right; then the keyboard and AutoFill behave as on the account page itself.
+8. Lock screen and Control Center during each of the above: one song, previous and next work, no second card.
+9. From the Home Screen icon: rows 1, 4 and 6; the dock keeps the song.
+10. iPad, Safari: rows 1, 4 and 6.
+11. VoiceOver: open an artist page from Listen: it reads the page's name and lands on its heading; Back returns to
+    where you were.
+12. Refresh on an artist page reached from Listen: the song stops (expected); Listen afterwards offers "Pick up at".
+13. On an artist page opened from Listen, scroll a long page: does Safari's bar shrink as on the page itself, and does
+    a tap on the status bar bring you back to the top? (The page scrolls inside its frame; say if it feels different.)
+
+### Screenshots for Matthew
+
+Rendered in Chromium at device scale 2 by the e2e's render mode (`MUSIC_SHELL_RENDER=<folder> node
+scripts/e2e/music-shell.e2e.mjs`), every request answered by a route fixture ("Probe Artist" and "Second Artist" are
+fixtures); kept with the slice's results, not in the repository. Each at 390 px and at 1280 px:
+* `listen-*-playing`: Listen, "Who Did The Shoot" playing.
+* `artist-view-over-listen-*-song-plays-on`: an artist page opened from Listen; the mini player still shows the song and
+  its clock moves.
+* `listen-*-back-song-plays-on`: Back on Listen, the same song still playing.
+* `album-*-playing`, `listen-view-over-album-*-deck-plays-on`, `listen-view-over-album-*-listen-song-owns-the-bar`,
+  `album-*-back`: the album playing "Runway Walk"; Listen over it with the deck bar on top and the song moving; a Listen
+  song taking the sound (the deck paused, one bar showing); Back on the album.
+* `account-view-over-album-*-deck-plays-on`: the sign-in page over the album, the deck playing.
+* `failure-card-390`: a view that did not open: "Open the page", "Back", and "Your music is still playing."
+
+Art direction: the Listen heading over the album first showed the house focus ring and glow (fixed, above). Seen and
+not changed, because it was there at `dc0185aa` and lies outside this slice: a creator release with no cover and no
+avatar takes the house mark (`assets/img/m-mark.png`) as its card art (`js/music-engine.js`), and Listen's "From
+creators" card crops the mark and sets the release's title over it, at 390 px and at 1280 px. The logo law says the
+mark is shown whole, scaled, or not at all; what such a card should show instead is Matthew's call.

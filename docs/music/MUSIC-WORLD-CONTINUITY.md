@@ -62,10 +62,34 @@ location work in a hidden frame.
 
 A full browser refresh, a deliberate navigation to another document, closing
 the tab or an operating-system eviction still ends the old document. The
-retention guarantee covers the Music ↔ World surface switch. It does not claim
-uninterrupted audio after the browser destroys the player. The older pocket
-widget remains timestamp recovery for other pages; it defers on discovery pages
-that already own `MCC_MUSIC` to prevent a second player.
+retention guarantee covers the Music ↔ World surface switch and, since music
+slice M5, the switches between the supported music pages (next section). It does
+not claim uninterrupted audio after the browser destroys the player. The older
+pocket widget remains timestamp recovery for other pages; it defers on discovery
+pages that already own `MCC_MUSIC`, and never mounts in a music view, to prevent
+a second player.
+
+## One player across music pages (music slice M5)
+
+Since music slice M5 (`docs/music/MUSIC-RELEASE-20261119.md`, "M5: one player
+across music pages"; on the branch only, because D-5 is Matthew's decision) the
+same pattern holds between music pages. `js/music-shell.js`, loaded by
+`js/tabbar.js` beside this module, keeps the first music page a tab opens
+(Listen, an artist page, the album) as the retained document and opens the other
+music pages over it as views, each in a fresh same-origin frame, one at a time.
+How the World relates to that:
+
+| Action | Result |
+| --- | --- |
+| Globe in a music view | The World opens from the retained document, over the view; the same element keeps playing. The address is the view's with `world=1`, the title the World's. |
+| Back from that World | The World closes onto the view, at the view's address and with the view's title (this module restores the title shown when the World opened, not the page's first title). |
+| Back again | The view closes onto the retained page, whose own title, description, canonical, JSON-LD and `og:` tags come back byte for byte. |
+| This module inside a view | Does nothing: no theme, no watchers, no greeting (a view is not the World frame). The World always opens from the retained document. |
+| A link to the World inside a view | Takes the same path as the bar's Globe. |
+| The album retained, a Listen song chosen in a view | One owner of sound at a time (the album's deck, or the engine loaded beside it); the World's transport acts on the owner. |
+
+Links from the World to an artist page or the album still navigate the top
+document, as in the table above: a page load, as before.
 
 ## Theme, gesture and preferences
 
