@@ -1,0 +1,266 @@
+{
+  "schema": "mccluster-device-jobs-staging-proof/1",
+  "started_at": "2026-11-23T02:25:05.829Z",
+  "finished_at": "2026-11-23T02:28:15.474Z",
+  "ok": true,
+  "full": true,
+  "environment": {
+    "node": "v22.23.5",
+    "platform": "linux",
+    "pglite": "PostgreSQL via PGlite (PGLITE_MODULE_PATH)",
+    "commit": "404673b8395be3b4b4ee05ed6edaa0a3e8ebdd9c"
+  },
+  "schema_files": [
+    "supabase/replay_migrations/20260912071000_compute_node_protocol.sql",
+    "supabase/migrations/20260919020830_compute_gateway_hardening_live_reconcile.sql",
+    "supabase/migrations/20260919021007_compute_capability_concurrency_live_reconcile.sql",
+    "supabase/migrations/20261020210718_compute_lease_authority_v2.sql",
+    "supabase/pending/compute_job_attestations_v1.sql"
+  ],
+  "processes": [
+    "core/src/compute/gateway.mjs",
+    "core/src/compute/node-agent.mjs",
+    "scripts/staging/device-jobs/fixture-executor.mjs",
+    "scripts/staging/device-jobs/pglite-postgrest.mjs",
+    "TLS loopback ingress"
+  ],
+  "synthetic": "All identities, tokens, keys and model output are synthetic fixtures. No real device, no canonical Supabase, no OVH Core, no model inference.",
+  "steps": [
+    {
+      "name": "preflight: gateway health and receipt key",
+      "ok": true,
+      "duration_ms": 7,
+      "detail": {
+        "protocol": "mccluster-compute/1",
+        "receipt_key_id": "733ef456ba29aaae5ec6065b61d4c7a6",
+        "schema_files": [
+          "supabase/replay_migrations/20260912071000_compute_node_protocol.sql",
+          "supabase/migrations/20260919020830_compute_gateway_hardening_live_reconcile.sql",
+          "supabase/migrations/20260919021007_compute_capability_concurrency_live_reconcile.sql",
+          "supabase/migrations/20261020210718_compute_lease_authority_v2.sql",
+          "supabase/pending/compute_job_attestations_v1.sql"
+        ]
+      }
+    },
+    {
+      "name": "authorization: admin routes refuse a missing or wrong token; enrolment refuses a wrong token; an unknown key is refused",
+      "ok": true,
+      "duration_ms": 36,
+      "detail": {
+        "admin_without_token": 401,
+        "admin_wrong_token": 401,
+        "enroll_wrong_token": 401,
+        "unknown_node": "UNKNOWN_NODE"
+      }
+    },
+    {
+      "name": "enrolment and capability reporting: the real node agent enrols over TLS and advertises ai.chat/fixture.echo.local",
+      "ok": true,
+      "duration_ms": 526,
+      "detail": {
+        "node_id": "node_d56e19d58861ea7c71fdf323cc708545",
+        "hardware_mode": "cpu-only",
+        "platform": "linux",
+        "agent_version": "0.4.0",
+        "capabilities": [
+          "ai.chat/fixture.echo.local"
+        ]
+      }
+    },
+    {
+      "name": "cross-organization submission is refused",
+      "ok": true,
+      "duration_ms": 3,
+      "detail": {
+        "status": 403,
+        "code": "CROSS_ORG_DENIED"
+      }
+    },
+    {
+      "name": "submit: idempotent per key, conflict on a different body under the same key, refusal when no live node serves the capability",
+      "ok": true,
+      "duration_ms": 55,
+      "detail": {
+        "job_id": "48211509-e98a-47a8-9d69-44dbba3c29ae",
+        "live_nodes": 1,
+        "replayed_status": 200,
+        "conflict_code": "IDEMPOTENCY_CONFLICT",
+        "offline_code": "COMPUTE_NO_LIVE_NODE"
+      }
+    },
+    {
+      "name": "status, result and signed receipt: the fixture node leases, runs and completes the job; the receipt verifies offline",
+      "ok": true,
+      "duration_ms": 819,
+      "detail": {
+        "attempts": 1,
+        "duration_ms": 20,
+        "output_sha256": "5cddd1b175e11fc45e645f76247332b27792c7eb547a4cc75e1c5d5b6858ce1e",
+        "receipt_key_id": "733ef456ba29aaae5ec6065b61d4c7a6",
+        "attestation_verified": true
+      }
+    },
+    {
+      "name": "duplicate results are rejected: same payload replays idempotently, a different payload is refused, a replayed nonce is refused, a late failure cannot undo a commit",
+      "ok": true,
+      "duration_ms": 251,
+      "detail": {
+        "job_id": "919aa948-2178-425a-b37c-83ca24ae7bc7",
+        "nonce_replay": "REPLAY_DETECTED",
+        "same_payload": 200,
+        "different_payload": "LEASE_REJECTED",
+        "late_fail": 409,
+        "wrong_token": 409
+      }
+    },
+    {
+      "name": "disconnect and retry: an injected executor failure fails the lease, the task requeues with backoff and the second attempt completes",
+      "ok": true,
+      "duration_ms": 31881,
+      "detail": {
+        "job_id": "0b2151fa-92bb-4759-a95c-a85372d5f00a",
+        "requeued_after_first_failure": "queued",
+        "first_error": "fixture executor failure (injected, attempt 1)",
+        "backoff_run_after": "2026-11-23T02:25:41.181Z",
+        "final_attempts": 2
+      }
+    },
+    {
+      "name": "hard disconnect (--full): the agent is killed mid-task, the lease expires server-side, a restarted agent reclaims and completes",
+      "ok": true,
+      "duration_ms": 152714,
+      "detail": {
+        "job_id": "31eba160-288f-4f8b-9699-18d6b5dba404",
+        "killed_while": "running",
+        "lease_expired_at": "2026-11-23T02:27:42.890Z",
+        "final_attempts": 2,
+        "duration_ms": 16
+      }
+    },
+    {
+      "name": "revocation: a revoked node is refused on its next signed request and the fabric no longer offers its capability",
+      "ok": true,
+      "duration_ms": 513,
+      "detail": {
+        "agent_exited": true,
+        "refusal_seen_by_agent": true,
+        "submit_after_revoke": "COMPUTE_NO_LIVE_NODE"
+      }
+    }
+  ],
+  "sample_receipt": {
+    "schema": "mccluster-job-receipt/1",
+    "issued_at": "2026-11-23T02:25:10.110Z",
+    "issuer": {
+      "kind": "mccluster-core",
+      "instance": "staging-gateway",
+      "deployment_sha": null
+    },
+    "job": {
+      "id": "48211509-e98a-47a8-9d69-44dbba3c29ae",
+      "org_id": "00000000-0000-4000-8000-00000000c0de",
+      "capability": "ai.chat",
+      "implementation": "fixture.echo.local",
+      "status": "done",
+      "attempts": 1,
+      "max_attempts": 3,
+      "created_at": "2026-11-23T02:25:09.251Z",
+      "completed_at": "2026-11-23T02:25:10.041Z",
+      "client": {
+        "name": "device-jobs-staging",
+        "version": "1",
+        "contract": "mccluster-job/1"
+      },
+      "source": "device-jobs/1"
+    },
+    "input_sha256": "dd971b014e1382f2791eac53453680da76957b4f0ce8b3e8f440184543e0fcba",
+    "output_sha256": "5cddd1b175e11fc45e645f76247332b27792c7eb547a4cc75e1c5d5b6858ce1e",
+    "failure": null,
+    "execution": {
+      "lease_id": "1d69b38b-86fa-4c34-b9b3-1c84f178b0ac",
+      "attempt": 1,
+      "status": "done",
+      "node_id": "node_d56e19d58861ea7c71fdf323cc708545",
+      "node_key_fingerprint": "d56e19d58861ea7c71fdf323cc708545dea19de320570022d48374fb40d3b070",
+      "node_display_name": "staging-fixture-node",
+      "hardware_mode": "cpu-only",
+      "platform": "linux",
+      "started_at": "2026-11-23T02:25:10.021Z",
+      "completed_at": "2026-11-23T02:25:10.041Z",
+      "duration_ms": 20,
+      "result_consistent": true
+    },
+    "node_public_key_pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAQkupeqRX4BjtEnNZ/GgA2ttZ6c2+asxwyDZWSmYv4eI=\n-----END PUBLIC KEY-----\n",
+    "inference": {
+      "mode": "single-device",
+      "devices": [
+        "node_d56e19d58861ea7c71fdf323cc708545"
+      ],
+      "group": null
+    },
+    "node_attestation": {
+      "schema": "mccluster-completion-attestation/1",
+      "lease_id": "1d69b38b-86fa-4c34-b9b3-1c84f178b0ac",
+      "node_id": "node_d56e19d58861ea7c71fdf323cc708545",
+      "attempt": 1,
+      "protocol": "mccluster-compute/1",
+      "method": "POST",
+      "path": "/v1/compute/leases/1d69b38b-86fa-4c34-b9b3-1c84f178b0ac/complete",
+      "signed_at": "2026-11-23T02:25:10.029Z",
+      "nonce": "353c7422-c6b8-4769-bebc-3561e336465d",
+      "body_digest": "jZCl4f_ZTfZn06lBOuhxvoNTVZpcyXKTMgHnriQknrg",
+      "signature": "Ib8i-Ilhh4kmHWMK8SGSjSHJDL-hwXflOH7HoZbVBsSuPmOlmuvsVYPpWzhp27yc_EdfOfKtrxFuKI56gE01BQ",
+      "result_sha256": "5cddd1b175e11fc45e645f76247332b27792c7eb547a4cc75e1c5d5b6858ce1e",
+      "matches_output": true,
+      "verified": true,
+      "verification_note": null
+    },
+    "signature": {
+      "alg": "ed25519",
+      "key_id": "733ef456ba29aaae5ec6065b61d4c7a6",
+      "value": "ydRuKDX5zFI7_m2fr4_r7SB4BQcyUCegisakweYRY5kJ6AZvMhH-f8w8vBFbmzXBaVMMN5fFjUnRz7FHHCRtCA",
+      "covers": "canonical JSON of this receipt with signature set to null and without the signed flag"
+    },
+    "signed": true
+  },
+  "shim_requests": 1420,
+  "gateway_log_tail": [
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"a9a442d0-fb8b-42e2-87ca-f6f69b0ea824\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":15}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"cf805b5f-83a5-4139-8396-f6c1807c31c5\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":11}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"25cb96d7-4a0b-4579-9533-739ab0108231\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":15}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"5d32a256-ffdd-46aa-9290-ffc35c065fff\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":15}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"e2753080-af6e-49ef-aaeb-ded343f64256\",\"method\":\"POST\",\"path\":\"/v1/compute/heartbeat\",\"status\":200,\"duration_ms\":19}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"e97158bf-774a-4b8c-9f26-559a7f48f907\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":11}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"9ff448a7-f87e-4587-bd5f-b60bcee2598d\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":16}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"1c42fad5-2461-40d9-b007-9536b9d0c13d\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":11}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"11ecee33-2ae3-4091-85ac-5dfc719c01a0\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":16}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"a9cb21f5-feb3-4a86-8b85-270b8f8c0d0f\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":14}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"2a6fdda9-f240-410a-b9ef-7bd4aa7a4663\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":16}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"620e3e49-4af1-4ef2-89e0-c07b11f8dfec\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":13}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"dc1d4e7d-4e76-4c2e-b240-ba76584338f7\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":12}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"78f4d78a-f98a-4976-935a-f67d19694bf6\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":22}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"1c07e188-3bcf-47de-a4dc-418dcda8c127\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":11}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"dc52f6d2-50dc-4c75-815b-d9bbb3bf50c5\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":16}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"6f0ed1a2-3c6b-4877-8861-f3cea8e1f2dc\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":16}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"c7192321-e330-4590-aad2-6d11ef78a15f\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":13}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"2f12742b-349e-4245-9b12-7602dddcb714\",\"method\":\"POST\",\"path\":\"/v1/compute/leases/bf573097-5863-4f36-879e-87b19eda5bd7/start\",\"status\":200,\"duration_ms\":11}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"7aed4345-8ef0-41fb-993e-767463cde19d\",\"method\":\"POST\",\"path\":\"/v1/compute/leases/bf573097-5863-4f36-879e-87b19eda5bd7/complete\",\"status\":200,\"duration_ms\":19}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"1dd402ef-522f-4e98-bc0a-3154d6ad1690\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":18}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"06f19377-5070-4a11-ab4f-642abb94ae36\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404/receipt\",\"status\":200,\"duration_ms\":22}",
+    "{\"event\":\"compute_gateway_error\",\"request_id\":\"3663db5e-8d1a-47d7-ab2c-26889ebe961a\",\"message\":\"Compute node is revoked\",\"code\":\"NODE_REVOKED\"}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"3663db5e-8d1a-47d7-ab2c-26889ebe961a\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":403,\"duration_ms\":6}",
+    "{\"event\":\"compute_gateway_error\",\"request_id\":\"928e8d95-d8c9-4359-b7c6-fd5db1a0856b\",\"message\":\"No live compute node serves ai.chat/fixture.echo.local; pass allow_offline:true to queue anyway\",\"code\":\"COMPUTE_NO_LIVE_NODE\"}"
+  ],
+  "node_agent_log_tail": [
+    "{\"event\":\"compute_node_paths\",\"platform\":\"linux\",\"state_dir\":\"[out]/node/state\",\"manifest\":\"[out]/node/capabilities.json\",\"defaults_applied\":[]}",
+    "{\"event\":\"compute_node_gpu_evidence\",\"hardware_mode\":\"cpu-only\",\"previous\":\"unknown\",\"gpus\":0,\"gpu_verified_at\":null,\"model\":null,\"size_vram_bytes\":null}",
+    "{\"event\":\"compute_node_enrolled\",\"node_id\":\"node_d56e19d58861ea7c71fdf323cc708545\",\"protocol\":\"mccluster-compute/1\",\"advertised\":1,\"hardware_mode\":\"cpu-only\"}",
+    "{\"event\":\"lease_execution_stopped\",\"lease_id\":\"095c03ec-d047-4689-bed1-852ec4cef328\",\"task_id\":\"0b2151fa-92bb-4759-a95c-a85372d5f00a\",\"error\":\"fixture executor failure (injected, attempt 1)\"}",
+    "{\"event\":\"compute_node_paths\",\"platform\":\"linux\",\"state_dir\":\"[out]/node/state\",\"manifest\":\"[out]/node/capabilities.json\",\"defaults_applied\":[]}",
+    "{\"event\":\"compute_node_gpu_evidence\",\"hardware_mode\":\"cpu-only\",\"previous\":\"unknown\",\"gpus\":0,\"gpu_verified_at\":null,\"model\":null,\"size_vram_bytes\":null}",
+    "{\"event\":\"compute_node_enrolled\",\"node_id\":\"node_d56e19d58861ea7c71fdf323cc708545\",\"protocol\":\"mccluster-compute/1\",\"advertised\":1,\"hardware_mode\":\"cpu-only\"}",
+    "{\"event\":\"compute_node_loop_error\",\"node_id\":\"node_d56e19d58861ea7c71fdf323cc708545\",\"error\":\"Compute node is revoked\",\"code\":\"NODE_REVOKED\",\"consecutive_errors\":1}",
+    "{\"event\":\"compute_node_draining\",\"signal\":\"loop-exit\",\"active_leases\":0}",
+    "{\"event\":\"compute_node_shutdown\",\"signal\":\"loop-exit\",\"remaining_leases\":0}"
+  ]
+}

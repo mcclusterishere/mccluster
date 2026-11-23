@@ -1,0 +1,38 @@
+{
+  "schema": "mccluster-runtime-licenses/1",
+  "verified_at": "2026-11-23",
+  "purpose": "Engines that may run beneath the McCluster runtime adapter on owned devices. Each entry is pinned to the exact revision whose LICENSE bytes were fetched and hashed; a different revision is unverified until re-recorded here. The adapter boundary is ours (core/src/compute/*); these engines are separate processes reached over loopback HTTP, never linked into Core.",
+  "engines": [
+    {
+      "engine": "exo",
+      "role": "candidate shared-inference runtime for a compatible device group (one model split across two or more owned Macs)",
+      "repository": "https://github.com/exo-explore/exo",
+      "default_branch": "main",
+      "pinned_commit": "a60b95698ca81737d367443674dd5563cbc9559b",
+      "license": { "spdx": "Apache-2.0", "file": "LICENSE", "bytes": 11351, "sha256": "12a6ed8c837f40b1add1b9fdd7a142bde27e399310da8f60c2a8ed45dcf31517", "copyleft": false, "notice_file_present": false },
+      "obligations": ["keep the LICENSE text with any redistribution", "mark modified files if the engine is modified", "no trademark rights (section 6)", "patent license terminates on patent litigation (section 3)"],
+      "status": "license verified; integration not built; no shared-inference claim is made until a real run reports evidence from every participating device"
+    },
+    {
+      "engine": "ollama",
+      "role": "single-device inference engine behind core/src/compute/ollama-adapter.mjs (OVH, Windows laptop, Mac)",
+      "repository": "https://github.com/ollama/ollama",
+      "default_branch": "main",
+      "pinned_commit": "318ee284aa3b5558de57efefff730ea33c4a9bef",
+      "license": { "spdx": "MIT", "file": "LICENSE", "bytes": 1058, "sha256": "5934ed2ce0d15154bcdb9c85203210abac0da4314af34081e36df4599f90b226", "copyleft": false, "notice_file_present": null },
+      "obligations": ["keep the copyright and permission notice with any redistribution"],
+      "status": "in use on the OVH node and the Windows pilot; the installed binary version is recorded per node in inventory.runtime.engine_health, not here"
+    },
+    {
+      "engine": "llama.cpp",
+      "role": "alternative single-device engine (the backend Ollama builds on); not integrated",
+      "repository": "https://github.com/ggml-org/llama.cpp",
+      "default_branch": "master",
+      "pinned_commit": "f4f6f2e7db76e98c95cc9b7fc608ea669c806044",
+      "license": { "spdx": "MIT", "file": "LICENSE", "bytes": 1078, "sha256": "94f29bbed6a22c35b992c5c6ebf0e7c92f13b836b90f36f461c9cf2f0f1d010d", "copyleft": false, "notice_file_present": null },
+      "obligations": ["keep the copyright and permission notice with any redistribution"],
+      "status": "license verified; not integrated"
+    }
+  ],
+  "method": "git ls-remote <repository> HEAD for the commit; curl of https://raw.githubusercontent.com/<owner>/<repo>/<commit>/LICENSE; sha256sum of the exact bytes; SPDX read from the text. Re-run the same three commands to re-verify; a changed hash means a changed license."
+}

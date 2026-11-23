@@ -61,7 +61,9 @@ test('submit refuses without a live node unless allow_offline, records provenanc
   assert.equal(first.job.metadata.source, 'device-jobs/1');
   assert.equal(first.job.metadata.client.name, 'prime-windows');
   assert.equal(first.job.metadata.submitted_by.kind, 'owner');
-  assert.deepEqual(first.job.metadata.advertised_nodes_at_submit, ['node_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']);
+  assert.deepEqual(first.live_node_ids, ['node_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']);
+  assert.equal(first.job.metadata.submitted_at, undefined, 'metadata is part of the idempotency hash and must not vary between retries');
+  assert.deepEqual(m.enqueued[0].metadata, m.enqueued[0].metadata && JSON.parse(JSON.stringify(m.enqueued[0].metadata)));
   const again = await submitJob({ capability: 'ai.chat', input: { prompt: 'hi' } }, { canonicalOrg: ORG, idempotencyKey: 'k-1' }, m.deps);
   assert.equal(again.replayed, true);
   await assert.rejects(() => submitJob({ capability: 'ai.chat', org_id: OTHER_ORG }, { canonicalOrg: ORG }, m.deps), (e) => e.code === 'CROSS_ORG_DENIED');

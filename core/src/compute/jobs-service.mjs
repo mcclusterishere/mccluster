@@ -46,16 +46,18 @@ export async function submitJob(body, { canonicalOrg = null, idempotencyKey = nu
   if (!advertised.length && !submission.allow_offline) {
     throw httpError(`No live compute node serves ${submission.capability}${submission.implementation ? `/${submission.implementation}` : ''}; pass allow_offline:true to queue anyway`, 503, 'COMPUTE_NO_LIVE_NODE', { retryable: true });
   }
+  // Metadata is part of the idempotency request hash (compute_enqueue_task), so
+  // it holds only what a legitimate retry of the same submission repeats:
+  // nothing time- or fleet-dependent. The task row's created_at is the time of
+  // acceptance; the live-node snapshot travels in the response, not the row.
   const metadata = {
     ...submission.metadata,
     source: JOB_SOURCE,
     via,
     client: submission.client,
-    submitted_at: deps.now(),
-    submitted_by: actor ? { kind: actor.kind || 'owner', user_id: actor.user_id || null, source: actor.source || null } : null,
-    advertised_nodes_at_submit: [...new Set(advertised.map((item) => item.node_id))],
-    advertised_implementations_at_submit: [...new Set(advertised.map((item) => item.implementation))]
+    submitted_by: actor ? { kind: actor.kind || 'owner', user_id: actor.user_id || null, source: actor.source || null } : null
   };
+  const liveNodes = [...new Set(advertised.map((item) => item.node_id))];
   const { task, replayed } = await deps.enqueue({
     orgId: submission.org_id,
     capability: submission.capability,
@@ -69,7 +71,7 @@ export async function submitJob(body, { canonicalOrg = null, idempotencyKey = nu
     idempotencyKey
   });
   if (!task) throw httpError('Failed to enqueue compute job', 503, 'COMPUTE_ENQUEUE_FAILED');
-  return { job: jobView({ task, leases: [], node: null }), replayed: Boolean(replayed), live_nodes: metadata.advertised_nodes_at_submit.length };
+  return { job: jobView({ task, leases: [], node: null }), replayed: Boolean(replayed), live_nodes: liveNodes.length, live_node_ids: liveNodes };
 }
 
 async function loadJob(orgId, jobId, deps) {
