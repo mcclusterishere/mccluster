@@ -56,6 +56,38 @@ namespace McClusterDesktop
         public List<string> AdvertisedImplementations = new List<string>();
     }
 
+    // The node's own Ollama adapter (core/src/compute/ollama-adapter.mjs) on loopback:
+    // the same executor the Core's node agent calls, so a local job through it runs the
+    // exact contract a remote lease would. Absent adapter = direct Ollama path.
+    internal sealed class AdapterImplementation
+    {
+        public string Implementation;
+        public string Model;
+        public bool Installed;
+        public string Digest;
+        public bool Vision;
+    }
+
+    internal sealed class AdapterStatus
+    {
+        public string Url;
+        public bool Reachable;
+        public bool Ready;
+        public string DefaultModel;
+        public string Detail;
+        public int? ProcessorGpuPercent;
+        public List<AdapterImplementation> Implementations = new List<AdapterImplementation>();
+
+        // The implementation id whose model is the one selected, or null.
+        public AdapterImplementation ImplementationFor(string model)
+        {
+            if (string.IsNullOrWhiteSpace(model)) return null;
+            foreach (AdapterImplementation item in Implementations)
+                if (item.Installed && string.Equals(item.Model, model, StringComparison.OrdinalIgnoreCase)) return item;
+            return null;
+        }
+    }
+
     internal sealed class CoreStatus
     {
         public ProbeResult Api;        // https://api.mccluster.org/v1/health (Cloudflare Worker `mccluster`)
@@ -176,6 +208,41 @@ namespace McClusterDesktop
                     parts.Add(Json.Str(item, "name") + " (" + percent + "% GPU)");
                 }
             status.LoadedSummary = parts.Count == 0 ? "nothing loaded" : string.Join(", ", parts);
+            return status;
+        }
+
+        internal static string AdapterUrl()
+        {
+            string port = Environment.GetEnvironmentVariable("MCCLUSTER_OLLAMA_ADAPTER_PORT");
+            if (string.IsNullOrWhiteSpace(port)) port = "4790";
+            return "http://127.0.0.1:" + port.Trim();
+        }
+
+        internal static async Task<AdapterStatus> ProbeAdapter()
+        {
+            var status = new AdapterStatus();
+            status.Url = AdapterUrl();
+            ProbeResult health = await GetJson(status.Url + "/health").ConfigureAwait(false);
+            status.Reachable = health.StatusCode > 0 && health.Body != null;
+            status.Detail = health.Detail;
+            if (!status.Reachable) return status;
+            status.Ready = Json.Get(health.Body, "ready") is bool && (bool)Json.Get(health.Body, "ready");
+            status.DefaultModel = Json.Str(health.Body, "model");
+            object evidence = Json.Get(health.Body, "gpu_evidence");
+            object percent = Json.Get(evidence, "processor_gpu_percent");
+            if (percent != null) status.ProcessorGpuPercent = (int)Json.Num(evidence, "processor_gpu_percent");
+            IList items = Json.List(health.Body, "implementations");
+            if (items != null)
+                foreach (object item in items)
+                {
+                    var impl = new AdapterImplementation();
+                    impl.Implementation = Json.Str(item, "implementation");
+                    impl.Model = Json.Str(item, "model");
+                    impl.Installed = Json.Get(item, "installed") is bool && (bool)Json.Get(item, "installed");
+                    impl.Digest = Json.Str(item, "digest");
+                    impl.Vision = Json.Get(item, "vision") is bool && (bool)Json.Get(item, "vision");
+                    status.Implementations.Add(impl);
+                }
             return status;
         }
 

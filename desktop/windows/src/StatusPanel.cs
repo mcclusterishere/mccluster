@@ -39,6 +39,7 @@ namespace McClusterDesktop
         private CoreStatus core;
         private OllamaStatus ollama;
         private NodeAgentStatus node;
+        private AdapterStatus adapter;
         private DeviceInventory device;
         private bool draftDirty;
         private CancellationTokenSource running;
@@ -223,10 +224,12 @@ namespace McClusterDesktop
                 Task<CoreStatus> coreTask = LocalRuntime.ProbeCore();
                 Task<OllamaStatus> ollamaTask = LocalRuntime.ProbeOllama();
                 Task<NodeAgentStatus> nodeTask = LocalRuntime.ProbeNodeAgent();
+                Task<AdapterStatus> adapterTask = LocalRuntime.ProbeAdapter();
                 device = await Task.Run(() => DeviceInventory.Read());
                 core = await coreTask;
                 ollama = await ollamaTask;
                 node = await nodeTask;
+                adapter = await adapterTask;
                 Render();
                 store.Log("status_probe", new Dictionary<string, object> {
                     { "api", core.Api.Detail }, { "deployment_sha", core.DeploymentSha }, { "compute_gateway", core.ComputeGateway.Detail },
@@ -265,6 +268,10 @@ namespace McClusterDesktop
                     lines.Add("  • " + m.Name + " · " + (m.ParameterSize ?? "?") + " " + (m.Quantization ?? "") + " · " + Gb(m.SizeBytes));
                     modelBox.Items.Add(m.Name);
                 }
+                if (adapter != null && adapter.Reachable && adapter.Ready)
+                    lines.Add("Execution path: node adapter " + adapter.Url + " (" + adapter.Implementations.Count + " implementation(s); the same executor a Core lease calls)");
+                else
+                    lines.Add("Execution path: direct Ollama (node adapter " + (adapter == null || !adapter.Reachable ? "not running" : "not ready") + ")");
                 lines.Add("Remote groups: not reported here. Enrolled devices and verified pairs are listed by the owner's site surface once the Core is reachable.");
                 modelsLabel.Text = string.Join("\n", lines);
                 if (modelBox.Items.Count > 0) modelBox.SelectedIndex = 0;

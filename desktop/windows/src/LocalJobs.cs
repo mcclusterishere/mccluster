@@ -376,49 +376,99 @@ namespace McClusterDesktop
             if (string.IsNullOrWhiteSpace(model)) throw new InvalidOperationException("No local model selected. Install a model in Ollama first (ollama pull <model>); local inference is not claimed until one is installed.");
             if (!ollama.Models.Any(m => string.Equals(m.Name, model, StringComparison.OrdinalIgnoreCase)))
                 throw new InvalidOperationException("Model '" + model + "' is not installed locally. Installed: " + (ollama.Models.Count == 0 ? "none" : string.Join(", ", ollama.Models.Select(m => m.Name))));
-            var body = new Dictionary<string, object>();
-            body["model"] = model;
-            body["stream"] = false;
-            body["think"] = false;
-            body["messages"] = new List<object> { new Dictionary<string, object> { { "role", "user" }, { "content", prompt } } };
             // Some local models (qwen3-vl on Ollama 0.40) keep reasoning in message.thinking even
             // with think:false, so the budget must leave room for an answer after the reasoning.
             double numPredict = Json.Num(job.Input, "num_predict");
             if (numPredict < 64) numPredict = 1536;
-            body["options"] = new Dictionary<string, object> { { "temperature", 0.2 }, { "num_predict", (int)numPredict } };
-            using (var content = new StringContent(Json.Compact(body), Encoding.UTF8, "application/json"))
-            using (HttpResponseMessage response = await Http.PostAsync(ollama.Url + "/api/chat", content, cancel).ConfigureAwait(false))
+
+            // Preferred path: the node's own Ollama adapter, the executor a Core lease would call.
+            // Fallback: Ollama directly. The receipt names which one ran.
+            AdapterStatus adapter = await LocalRuntime.ProbeAdapter().ConfigureAwait(false);
+            AdapterImplementation implementation = adapter.Reachable && adapter.Ready ? adapter.ImplementationFor(model) : null;
+            string answer;
+            string doneReason;
+            double thinkingChars;
+            double evalCount;
+            var result = new Dictionary<string, object>();
+            if (implementation != null)
             {
-                string text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                if (!response.IsSuccessStatusCode) throw new HttpRequestException("Ollama HTTP " + (int)response.StatusCode + ": " + text);
-                object parsed = Json.Parse(text);
-                var result = new Dictionary<string, object>();
+                var envelope = new Dictionary<string, object>();
+                envelope["capability"] = "ai.chat";
+                envelope["implementation"] = implementation.Implementation;
+                envelope["input"] = new Dictionary<string, object> {
+                    { "messages", new List<object> { new Dictionary<string, object> { { "role", "user" }, { "content", prompt } } } },
+                    { "think", false }, { "temperature", 0.2 }, { "num_predict", (int)numPredict } };
+                envelope["metadata"] = new Dictionary<string, object> { { "source", "mccluster-desktop" }, { "job_id", job.Id } };
+                envelope["priority"] = 0;
+                object parsed;
+                using (var content = new StringContent(Json.Compact(envelope), Encoding.UTF8, "application/json"))
+                using (HttpResponseMessage response = await Http.PostAsync(adapter.Url + "/execute", content, cancel).ConfigureAwait(false))
+                {
+                    string text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode) throw new HttpRequestException("Node adapter HTTP " + (int)response.StatusCode + ": " + text);
+                    parsed = Json.Parse(text);
+                }
+                answer = Json.Str(parsed, "content") ?? "";
+                doneReason = Json.Str(parsed, "done_reason");
+                thinkingChars = Json.Num(parsed, "thinking_chars");
+                object usage = Json.Get(parsed, "usage");
+                evalCount = Json.Num(usage, "completion_tokens");
+                if (evalCount == 0) evalCount = Json.Num(usage, "eval_count");
                 result["model"] = Json.Str(parsed, "model");
-                string answer = Json.Str(Json.Get(parsed, "message"), "content") ?? "";
-                string thinking = Json.Str(Json.Get(parsed, "message"), "thinking") ?? "";
-                string doneReason = Json.Str(parsed, "done_reason");
-                result["content"] = answer;
-                result["thinking_chars"] = thinking.Length;
-                result["done_reason"] = doneReason;
-                double evalCount = Json.Num(parsed, "eval_count");
+                result["implementation"] = Json.Str(parsed, "implementation");
+                result["model_source"] = Json.Str(parsed, "model_source");
+                result["usage"] = usage;
+                result["settings"] = Json.Get(parsed, "settings");
+                result["queue_wait_ms"] = Json.Num(parsed, "queue_wait_ms");
+                job.Receipt["executor_path"] = "node-adapter";
+                job.Receipt["adapter_url"] = adapter.Url;
+                job.Receipt["adapter_implementation"] = implementation.Implementation;
+                job.Receipt["adapter_model_digest"] = implementation.Digest;
+            }
+            else
+            {
+                var body = new Dictionary<string, object>();
+                body["model"] = model;
+                body["stream"] = false;
+                body["think"] = false;
+                body["messages"] = new List<object> { new Dictionary<string, object> { { "role", "user" }, { "content", prompt } } };
+                body["options"] = new Dictionary<string, object> { { "temperature", 0.2 }, { "num_predict", (int)numPredict } };
+                object parsed;
+                using (var content = new StringContent(Json.Compact(body), Encoding.UTF8, "application/json"))
+                using (HttpResponseMessage response = await Http.PostAsync(ollama.Url + "/api/chat", content, cancel).ConfigureAwait(false))
+                {
+                    string text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode) throw new HttpRequestException("Ollama HTTP " + (int)response.StatusCode + ": " + text);
+                    parsed = Json.Parse(text);
+                }
+                answer = Json.Str(Json.Get(parsed, "message"), "content") ?? "";
+                doneReason = Json.Str(parsed, "done_reason");
+                thinkingChars = (Json.Str(Json.Get(parsed, "message"), "thinking") ?? "").Length;
+                evalCount = Json.Num(parsed, "eval_count");
                 double evalNs = Json.Num(parsed, "eval_duration");
                 double promptCount = Json.Num(parsed, "prompt_eval_count");
                 double promptNs = Json.Num(parsed, "prompt_eval_duration");
+                result["model"] = Json.Str(parsed, "model");
                 result["generation_tokens"] = evalCount;
                 result["prompt_tokens"] = promptCount;
                 result["generation_tokens_per_second"] = evalNs > 0 ? Math.Round(evalCount * 1e9 / evalNs, 2) : 0;
                 result["prompt_tokens_per_second"] = promptNs > 0 ? Math.Round(promptCount * 1e9 / promptNs, 2) : 0;
-                job.Result = result;
-                OllamaStatus after = await LocalRuntime.ProbeOllama().ConfigureAwait(false);
-                job.Receipt["model"] = result["model"];
-                job.Receipt["gpu_evidence_after_run"] = after.GpuEvidence;
-                job.Receipt["loaded_after_run"] = after.LoadedSummary;
-                job.Receipt["hardware_mode"] = DeviceInventory.Read().HardwareMode(after.GpuEvidence);
-                job.Receipt["task"] = "One chat completion on the local Ollama model on loopback.";
-                // A run that spent its whole budget reasoning and produced no answer is not a result.
-                if (answer.Trim().Length == 0)
-                    throw new InvalidOperationException("The model produced no answer text (done_reason " + (doneReason ?? "unknown") + ", " + thinking.Length + " reasoning characters, " + evalCount + " tokens). Raise num_predict or pick a model that honours think:false.");
+                job.Receipt["executor_path"] = "ollama-direct";
+                job.Receipt["adapter_detail"] = adapter.Reachable ? (adapter.Ready ? "adapter has no installed implementation for " + model : "adapter not ready") : "adapter not running: " + adapter.Detail;
             }
+            result["content"] = answer;
+            result["thinking_chars"] = thinkingChars;
+            result["done_reason"] = doneReason;
+            job.Result = result;
+            OllamaStatus after = await LocalRuntime.ProbeOllama().ConfigureAwait(false);
+            job.Receipt["model"] = result["model"];
+            job.Receipt["gpu_evidence_after_run"] = after.GpuEvidence;
+            job.Receipt["loaded_after_run"] = after.LoadedSummary;
+            job.Receipt["hardware_mode"] = DeviceInventory.Read().HardwareMode(after.GpuEvidence);
+            job.Receipt["task"] = "One chat completion on the local model on loopback (" + job.Receipt["executor_path"] + ").";
+            // A run that spent its whole budget reasoning and produced no answer is not a result.
+            if (answer.Trim().Length == 0)
+                throw new InvalidOperationException("The model produced no answer text (done_reason " + (doneReason ?? "unknown") + ", " + thinkingChars + " reasoning characters, " + evalCount + " tokens). Raise num_predict or pick a model that honours think:false.");
         }
 
         internal static string Sha256Hex(byte[] data)

@@ -20,6 +20,7 @@ internal static class DesktopTests
         {
             NavigationPolicyChecks();
             JobStoreChecks();
+            AdapterChecks();
             JsonChecks();
             Console.WriteLine(checks + " desktop checks passed.");
             return 0;
@@ -98,6 +99,18 @@ internal static class DesktopTests
         {
             try { Directory.Delete(root, true); } catch (Exception) { }
         }
+    }
+
+    private static void AdapterChecks()
+    {
+        var status = new AdapterStatus();
+        status.Implementations.Add(new AdapterImplementation { Implementation = "qwen3-vl.4b.local", Model = "qwen3-vl:4b", Installed = true, Digest = "abc" });
+        status.Implementations.Add(new AdapterImplementation { Implementation = "qwen3.8b.local", Model = "qwen3:8b", Installed = false });
+        Assert(status.ImplementationFor("qwen3-vl:4b").Implementation == "qwen3-vl.4b.local", "installed implementation matched by model");
+        Assert(status.ImplementationFor("QWEN3-VL:4B").Implementation == "qwen3-vl.4b.local", "model match ignores case");
+        Assert(status.ImplementationFor("qwen3:8b") == null, "an uninstalled implementation is never selected");
+        Assert(status.ImplementationFor("llama3") == null && status.ImplementationFor(null) == null, "unknown or empty model selects nothing");
+        Assert(LocalRuntime.AdapterUrl().StartsWith("http://127.0.0.1:"), "adapter is loopback only");
     }
 
     private static void JsonChecks()
