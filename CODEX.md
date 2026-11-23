@@ -15,7 +15,7 @@ Satellites render product UI. They do not grow a second auth, database, social s
 | Control plane (GitHub control repo) | `mcclusterishere/mccluster` |
 | Cloudflare project + Worker: public edge and API `https://api.mccluster.org` (`mccluster-mcp` is its stateless MCP transport) | `mccluster`, source `workers/mccluster` |
 | Supabase (shared durable truth) | `zmnhbrjyhxzhkxmhkexs` |
-| Persistent execution | OVH McCluster Core from `core/`, promoted through `deploy/ovh-production`: not a Worker, not a second backend |
+| Persistent execution | McCluster Core from `core/`: the network of nodes (owner, 2026-11-23), one runtime on every node, owned hardware first; the OVH box is its paid, always-on member, promoted through `deploy/ovh-production`: not a Worker, not a second backend |
 | Matthew McCluster's property | `https://matthew.mccluster.org` (GitHub Pages, this repo) |
 | McCluster Corp's property | `https://mccluster.org` (Worker `mccluster` by host once routed); `https://humanuprise.com` is a McCluster Corp host too |
 

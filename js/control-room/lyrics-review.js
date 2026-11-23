@@ -206,7 +206,7 @@
   function statusLine(){
     var d=L.doc;if(!d)return"";
     var n=lines().length,flag=lines().filter(function(l){return l.mismatch;}).length;
-    var src={aligned:"your sheet, timed by McCluster",auto:"heard by McCluster (no sheet)",imported:"imported timing",owner:"written by you"}[d.source]||"existing file";
+    var src={aligned:"your sheet, timed by McCluster",auto:"heard by McCluster (no sheet)",imported:"imported timing",owner:"written by you",sheet:"the creator's sheet, not timed yet"}[d.source]||"existing file";
     var eng=d.machine&&d.machine.engine?Object.keys(d.machine.engine).map(function(k){return d.machine.engine[k];}).join(" · "):"";
     return'<div class="crl-status"><span class="cro-pill'+(d.reviewed?" crl-ok":"")+'">'+(d.reviewed?"Reviewed":"Needs your check")+'</span><span class="cro-meta">'+e(n)+" lines · "+e(flag)+" flagged · "+e(src)+(eng?" · "+e(eng):"")+'</span></div>';
   }

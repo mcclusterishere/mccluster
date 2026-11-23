@@ -16,7 +16,7 @@ If you skip it, you will invent a second backend, race a git push, or break a cl
 | McCluster Corp's property (company) | `https://mccluster.org`: a different site about a different entity, served by Worker `mccluster` by host once routed. See `docs/control-plane/DOMAINS-AND-ENTITIES.md` |
 | API | `https://api.mccluster.org` |
 | Supabase | project `zmnhbrjyhxzhkxmhkexs` (`https://zmnhbrjyhxzhkxmhkexs.supabase.co`) |
-| Persistent execution | OVH McCluster Core from `core/`, promoted through `deploy/ovh-production`: not a Worker and not a second backend. See `docs/control-plane/ECOSYSTEM.md` and `docs/control-plane/MCCLUSTER-CORE.md` |
+| Persistent execution | McCluster Core from `core/`: the network of nodes, not one machine (owner, 2026-11-23: "core shouldn't only be the OVH box ... Core, now that we have multiple nodes, should be the node network itself"). The same runtime on every node, owned hardware (the owner's laptop, the Macs) first; the OVH VPS is its paid, always-on member, promoted through `deploy/ovh-production`: not a Worker and not a second backend. See `docs/control-plane/ECOSYSTEM.md` and `docs/control-plane/MCCLUSTER-CORE.md` |
 | Durable Object class that MUST stay exported | `HereTenantAgent` |
 
 **There is no Worker named `mccluster-core`. Do not create one.**

@@ -40,7 +40,7 @@ Canonical ecosystem map for how the house is wired. Agents: if this disagrees wi
 | API / webhooks | Cloudflare Worker `mccluster` |
 | Worker source | `workers/mccluster` |
 | Stateless MCP transport | `workers/mccluster-mcp` → `mcp.mccluster.org` (activation requires deployment) |
-| Persistent execution / orchestration | OVH McCluster Core from `core/` |
+| Persistent execution / orchestration | McCluster Core from `core/`: the network of nodes, owned hardware first; the OVH VPS is its paid, always-on member |
 | Production Core promotion pointer | `deploy/ovh-production` |
 | Shared durable truth | Supabase `zmnhbrjyhxzhkxmhkexs` |
 | Specialized GPU / workstation execution | Compute-node protocol |

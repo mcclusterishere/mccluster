@@ -10,7 +10,7 @@ This document is the human-readable architecture authority. The machine-readable
 | --- | --- | --- |
 | Durable truth | Supabase project `zmnhbrjyhxzhkxmhkexs` | identity, orgs, objectives, jobs, media, compute, communications, learning, audit, provenance |
 | Public edge | Cloudflare Worker `mccluster` from `workers/mccluster` | ingress, auth, routing, API normalization |
-| Persistent execution | OVH McCluster Core from `core/` | runner, local models, tools, objectives, orchestration |
+| Persistent execution | McCluster Core from `core/`, on the network of nodes (owned hardware first; the OVH VPS is the paid, always-on member) | runner, local models, tools, objectives, orchestration |
 | Source and promotion | `mcclusterishere/mccluster` | source, CI, reviewed promotion, deployment refs |
 | Specialized compute | compute-node protocol | GPU/desktop/specialized execution only |
 

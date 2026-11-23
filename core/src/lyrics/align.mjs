@@ -423,7 +423,7 @@ export function validateLyrics(doc, { duration = null, slack = 0.75, requireWord
     } else if (requireWords) errs.push(`${at}: words missing`);
     if (l.confidence != null && !(l.confidence >= 0 && l.confidence <= 1)) errs.push(`${at}: confidence must be 0..1`);
   });
-  if (doc.source != null && !['auto', 'aligned', 'imported', 'owner'].includes(doc.source)) errs.push(`source ${doc.source} is not known`);
+  if (doc.source != null && !['auto', 'aligned', 'imported', 'owner', 'sheet'].includes(doc.source)) errs.push(`source ${doc.source} is not known`);
   if (doc.reviewed != null && typeof doc.reviewed !== 'boolean') errs.push('reviewed must be boolean');
   return errs;
 }
