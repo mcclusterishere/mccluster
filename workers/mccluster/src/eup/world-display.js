@@ -10,7 +10,7 @@ async function rpc(env, fetchImpl, name, args) {
   try {
     const key = env.SUPABASE_SERVICE_ROLE_KEY;
     res = await fetchImpl(env.SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/rpc/' + name, {
-      method: 'POST', redirect: 'error', signal: AbortSignal.timeout(4000),
+      method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(4000),
       headers: { apikey: key, authorization: 'Bearer ' + key, 'content-type': 'application/json' },
       body: JSON.stringify(args)
     });
