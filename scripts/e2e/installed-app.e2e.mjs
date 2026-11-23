@@ -52,8 +52,8 @@ async function setInsets(cdp, insets) {
 }
 /* path: the page to open on Matthew's property (Listen when absent). drop(read) stands in for the network on the audio
    reads (the Release 1 dock fix): read = { key, n } (n: that file's nth read); it answers null for the plain bytes,
-   { cut } for a short 206 of at most that many bytes (the browser asks for the rest with a Range read) or { status }
-   instead of the bytes. */
+   { cut } for a short 206 of at most that many bytes of the real file (the browser asks for the rest with a Range
+   read) or { status } instead of the bytes. */
 async function setup(device, installed, owner = false, world = false, {dockModule = true, path = '', drop = null} = {}) {
   const context = await browser.newContext({viewport:device.viewport,isMobile:true,hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   context.setDefaultTimeout(15000);
@@ -110,13 +110,15 @@ async function setup(device, installed, owner = false, world = false, {dockModul
         const key = p.split('/').pop(); reads[key] = (reads[key] || 0) + 1;
         const fault = drop ? drop({key,n:reads[key]}) : null;
         if (fault && fault.status) return r.fulfill({status:fault.status,body:''});
+        /* a dropped read is this checkout's own MP3: Chromium plays its first bytes, where the stand-in WAV waits for more */
+        const real = !!(fault && fault.cut), bytes = real ? await file(resolve(ROOT, '.' + decodeURIComponent(p))) : AUDIO, type = real ? 'audio/mpeg' : 'audio/wav';
         if (range) {
           const start = Number(range[1]);
-          let end = Math.min(Number(range[2] || AUDIO.length - 1), AUDIO.length - 1);
-          if (fault && fault.cut) end = Math.min(end, start + fault.cut - 1);
-          return r.fulfill({status:206,contentType:'audio/wav',headers:{'accept-ranges':'bytes','content-range':`bytes ${start}-${end}/${AUDIO.length}`},body:AUDIO.subarray(start,end+1)});
+          let end = Math.min(Number(range[2] || bytes.length - 1), bytes.length - 1);
+          if (real) end = Math.min(end, start + fault.cut - 1);
+          return r.fulfill({status:206,contentType:type,headers:{'accept-ranges':'bytes','content-range':`bytes ${start}-${end}/${bytes.length}`},body:bytes.subarray(start,end+1)});
         }
-        return r.fulfill({contentType:'audio/wav',headers:{'accept-ranges':'bytes'},body:AUDIO});
+        return r.fulfill({contentType:type,headers:{'accept-ranges':'bytes'},body:bytes});
       }
       const path = resolve(ROOT, '.' + (p === '/' ? '/mnet.html' : decodeURIComponent(p)));
       if (path.startsWith(resolve(ROOT) + sep)) {
@@ -584,11 +586,12 @@ async function listenMuted(phone) {
   finally { await context.close(); }
 }
 async function listenReconnecting(phone) {
+  /* the song's first read stops early and the rest is refused (scripts/e2e/music-background.e2e.mjs drops it the same way) */
   const song = 'who-did-the-shoot.mp3';
   const drop = q => q.key !== song ? null : q.n === 1 ? {cut:96000} : {status:503};
   const run = await setup(phone,true,false,false,{drop}), {page,context} = run, scope = phone.name + ' installed Listen, a drop';
   try {
-    await play(page);
+    await page.locator('[data-music-play][data-album="here"][data-track="Who Did The Shoot"]').first().click();
     await page.waitForFunction(() => MCC_MUSIC.delivery().state === 'reconnecting', null, {timeout:25000});
     await page.waitForFunction(() => /Reconnecting/.test(document.querySelector('.appbar [data-app-player="status"]')?.textContent || ''), null, {timeout:5000});
     await painted(page);

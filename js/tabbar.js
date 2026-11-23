@@ -1100,7 +1100,8 @@
   var SOUND_ON = false;
   function paintSound() {
     var mt = dock.querySelector('[data-appnav="music"]');
-    if (!mt) return;
+    /* a wing held open over the tab's column: no tab, so the installed app's dock keeps its own Play/Pause meanwhile */
+    if (!mt) { document.documentElement.classList.remove("mcc-music-tab-transport"); return; }
     /* one class, one meaning: is-sound swaps the tab's play triangle for the
        pause glyph. The stylesheet also carried an is-playing equaliser dance
        that nothing had ever applied to a tab; with the tab now drawn as a
@@ -1118,10 +1119,13 @@
      markup gave it, kept in data-link-name because HOME_BAR snapshots carry whatever was painted last. */
   function nameMusicTab(mt) {
     if (!mt.hasAttribute("data-link-name")) mt.setAttribute("data-link-name", mt.getAttribute("aria-label") || "");
-    var own = mt.getAttribute("data-link-name");
-    if (musicTabTransport()) mt.setAttribute("aria-label", SOUND_ON ? "Pause music" : "Play music");
+    var own = mt.getAttribute("data-link-name"), plays = musicTabTransport();
+    if (plays) mt.setAttribute("aria-label", SOUND_ON ? "Pause music" : "Play music");
     else if (own) mt.setAttribute("aria-label", own);
     else mt.removeAttribute("aria-label");
+    /* the installed app's dock asks the same: where the tab is the Play/Pause, the dock shows none of its own, one
+       control and not two (the Release 1 dock fix; css/installed-app-dock.css) */
+    document.documentElement.classList.toggle("mcc-music-tab-transport", plays);
   }
   window.addEventListener("mcc:nowplaying", function (e) {
     SOUND_ON = !!(e.detail && e.detail.playing);
