@@ -916,6 +916,61 @@ try {
     }
   });
 
+  /* review RF-2 (RL-11): the account chip (fixed top right on every page, at most 104 px wide, 12 px from the edge) covered
+     the end of "Enter Heal the 3rd World →" whenever the door scrolled through the chip's band, at every width from 320 to
+     about 590 px (320: 56 by 44 px, 430: 79 by 44, the whole chip), and a tap there reached the chip. The door now sits at
+     the hero's left edge on a phone, on the label rail's line, and stops short of the chip's column, taking two lines where
+     one would run under it; from 700 px it sits beside Play as before, well clear of the chip. */
+  await scenario('album: the door to Heal the 3rd World never runs under the account chip (320 to 1280, signed in and out, scrolled through the chip\'s band)', async () => {
+    for (const [width, member] of [[320, false], [320, true], [360, false], [390, false], [390, true], [430, false], [480, false], [540, false], [640, false], [700, false], [1280, false]]) {
+      const { context, page, errors } = await setup({ width, member });
+      await page.goto(HOUSE + '/album.html?album=heal-the-3', { waitUntil: 'load' });
+      await page.waitForSelector('#tracks li', { timeout: 20000 });
+      await page.waitForSelector('#mccAuthChip', { timeout: 10000 });
+      await sleep(400);
+      const r = await page.evaluate(() => {
+        const chip = document.getElementById('mccAuthChip'), door = document.getElementById('albGate');
+        const box = el => { const b = el.getBoundingClientRect(); return { l: Math.round(b.left), t: Math.round(b.top + scrollY), r: Math.round(b.right), b: Math.round(b.bottom + scrollY) }; };
+        const rail = document.querySelector('#labelRail > *');
+        /* the door's words line by line, as laid out (where they take two lines the arrow must not sit alone) */
+        const text = [...door.childNodes].find(n => n.nodeType === 3 && n.textContent.trim()), lines = new Map();
+        for (let i = 0; text && i < text.textContent.length; i++) {
+          const range = document.createRange(); range.setStart(text, i); range.setEnd(text, i + 1);
+          const r = range.getClientRects()[0]; if (!r) continue;
+          const top = Math.round(r.top); lines.set(top, (lines.get(top) || '') + text.textContent[i]);
+        }
+        const out = { chip: chip.textContent.trim(), words: door.textContent.trim(), href: door.getAttribute('href'), door: box(door), play: box(document.getElementById('playAll')),
+          rail: rail ? box(rail) : null, lines: [...lines.values()].map(s => s.trim()).filter(Boolean), steps: 0, worst: 0, chipOver: 0 };
+        /* the door's way through the chip's band, 2 px at a time: never a pixel in common, never the chip under a tap on it */
+        const top = door.getBoundingClientRect().top + scrollY, c = chip.getBoundingClientRect(), h = door.getBoundingClientRect().height;
+        for (let y = Math.max(0, top - c.bottom - 4); y <= top - c.top + h + 4; y += 2) {
+          window.scrollTo({ top: y, behavior: 'instant' }); out.steps++;
+          const d = door.getBoundingClientRect(), k = chip.getBoundingClientRect();
+          const w = Math.max(0, Math.min(d.right, k.right) - Math.max(d.left, k.left)), v = Math.max(0, Math.min(d.bottom, k.bottom) - Math.max(d.top, k.top));
+          if (w * v > out.worst) out.worst = Math.round(w * v);
+          if (w && v) {
+            const hit = document.elementFromPoint((Math.max(d.left, k.left) + Math.min(d.right, k.right)) / 2, (Math.max(d.top, k.top) + Math.min(d.bottom, k.bottom)) / 2);
+            if (hit && chip.contains(hit)) out.chipOver++;
+          }
+        }
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        return out;
+      });
+      const where = `${width}${member ? ', signed in' : ''}`;
+      check(`album heal-the-3 at ${where}: the door never runs under the account chip ("${r.chip}") while it scrolls through the chip's band`,
+        r.steps > 20 && r.worst === 0 && r.chipOver === 0, r);
+      check(`album heal-the-3 at ${where}: the door keeps its words and its way`, r.words === 'Enter Heal the 3rd World →' && r.href === 'heal-the-3rd-world.html', r);
+      check(`album heal-the-3 at ${where}: the door's words take one line, or two with the arrow never alone on one`,
+        r.lines.length === 1 || (r.lines.length === 2 && r.lines.every(l => /[a-z0-9]/i.test(l))), r.lines);
+      if (width < 700) check(`album heal-the-3 at ${where}: on a phone the door sits at the hero's left edge, on the label rail's line, under Play`,
+        !!r.rail && Math.abs(r.door.l - r.rail.l) <= 1 && r.door.t >= r.play.b, r);
+      else check(`album heal-the-3 at ${where}: from 700 px the door sits beside Play, as before`, Math.abs(r.door.t - r.play.t) <= 12 && r.door.l >= r.play.r, r);
+      check(`album heal-the-3 at ${where}: the page fits the screen`, await fits(page));
+      check(`album heal-the-3 at ${where}, the door and the chip: no script errors`, errors.length === 0, errors);
+      await context.close();
+    }
+  });
+
   /* verification V-2: the preview line (js/label.js's toast) sat at 96 px from the bottom for 3.4 s, over the deck bar's
      title and time */
   await scenario('album: the preview line never covers the deck bar or the tab bar (320, 390, 820, 1280; the installed app)', async () => {
@@ -954,11 +1009,16 @@ try {
     await page.waitForFunction(sel => window.MCC_MUSIC && document.querySelector(sel), WDTS, { timeout: 20000 });
     const tab = () => page.evaluate(() => { const t = document.querySelector('.appbar [data-appnav="music"]'); return { sound: !!t && t.classList.contains('is-sound'), y: Math.round(scrollY) }; });
     const engine = () => page.evaluate(() => ({ paused: MCC_MUSIC.audio.paused, button: document.getElementById('musicMiniPlay').getAttribute('aria-label'), state: MCC_MUSIC.delivery().state }));
+    /* review RF-3: what a keyboard or a screen reader is told about the tab (its role and name, as the browser computes
+       them); the play triangle and the pause glyph are drawn in CSS, which assistive technology does not read */
+    const told = async () => { const s = await page.locator('.appbar [data-appnav="music"]').ariaSnapshot(); const m = /^- (\w+) "([^"]*)"/.exec(s.trim()); return m ? `${m[1]} "${m[2]}"` : s; };
     check('listen, nothing chosen: the middle button shows its play triangle', !(await tab()).sound);
+    check('listen, nothing chosen: the bar\'s Music tab is told as link "Music" (a tap scrolls to the top)', await told() === 'link "Music"', await told());
     await page.locator(WDTS).first().click();
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3, null, { timeout: 15000 });
     await page.waitForFunction(() => document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 3000 }).catch(() => {});
     check('listen, a song playing: the middle button shows Pause, as on the album', (await tab()).sound, await tab());
+    check('listen, a song playing: the bar\'s Music tab is told as "Pause music", what a tap does (it was link "Music")', await told() === 'link "Pause music"', await told());
     await page.evaluate(() => window.scrollTo(0, 300));
     await sleep(300);
     const before = await tab();
@@ -968,14 +1028,17 @@ try {
     const paused = await engine(), after = await tab();
     check('listen: a tap on it pauses the song, as on the album (it scrolled to the top and the song played on)',
       paused.paused && paused.button === 'Play' && !after.sound && after.y === before.y, { paused, before, after });
+    check('listen, paused from the bar: the Music tab is told as "Play music"', await told() === 'link "Play music"', await told());
     await page.locator('.appbar [data-appnav="music"]').click();
     /* play() unpauses the element at once; the bar hears of it from the element's play event, a moment later */
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 5000 }).catch(() => {});
     const again = await engine(), againTab = await tab();
     check('listen: a second tap plays it again, and the button says so', !again.paused && againTab.sound, { again, tab: againTab });
+    check('listen, played again from the bar: the Music tab is told as "Pause music"', await told() === 'link "Pause music"', await told());
     await page.waitForFunction(() => MCC_MUSIC.delivery().state === 'reconnecting', null, { timeout: 20000 }).catch(() => {});
     const down = await engine();
     check('listen, the song being picked up again: the middle button is Pause, as the mini player\'s is', down.state === 'reconnecting' && down.button === 'Pause' && (await tab()).sound, { down, tab: await tab() });
+    check('listen, the song being picked up again: the Music tab is told as "Pause music", as the mini player\'s button is', await told() === 'link "Pause music"', await told());
     await page.locator('.appbar [data-appnav="music"]').click();
     await sleep(300);
     const n = reads.length;
@@ -983,7 +1046,59 @@ try {
     const stopped = await engine();
     check('listen: its tap stops the tries (nothing more is read) and it shows Play', stopped.paused && stopped.button === 'Play' && !(await tab()).sound && reads.length === n,
       { stopped, reads: reads.slice(n).map(q => q.key + '@' + q.start) });
+    check('listen, the tries stopped from the bar: the Music tab is told as "Play music"', await told() === 'link "Play music"', await told());
     check('listen, the bar\'s button: no script errors', errors.length === 0, errors);
+    await context.close();
+  });
+
+  /* review RF-3: on listen.html the bar's Music tab plays and pauses the song, and a keyboard or a screen reader was told
+     link "Music" (to listen.html) whatever it did. Its name now says what a tap does, in the words of the installed app's
+     dock and the World's transport; with the World open over the player the tab is the way back to the music (the
+     World's own handler closes it), never the player's Pause, so it keeps its own name there */
+  await scenario('listen page: the bar\'s Music tab tells a keyboard and a screen reader what a tap does (Enter, and the World over the player)', async () => {
+    const { context, page, errors } = await setup({ width: 390 });
+    const told = async () => { const s = await page.locator('.appbar [data-appnav="music"]').ariaSnapshot(); const m = /^- (\w+) "([^"]*)"/.exec(s.trim()); return m ? `${m[1]} "${m[2]}"` : s; };
+    const state = () => page.evaluate(() => ({ paused: MCC_MUSIC.audio.paused, mini: document.getElementById('musicMiniPlay').getAttribute('aria-label'),
+      focus: document.activeElement === document.querySelector('.appbar [data-appnav="music"]'), y: Math.round(scrollY) }));
+    await listenPlay(page);
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3 && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 15000 });
+    await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'instant' }));
+    await page.locator('.appbar [data-appnav="music"]').focus();
+    check('listen, keyboard on the Music tab while a song plays: it is told as "Pause music"', await told() === 'link "Pause music"', await told());
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => MCC_MUSIC.audio.paused && !document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 5000 }).catch(() => {});
+    const paused = await state();
+    check('listen, Enter on the Music tab: the song pauses, the page stays where it was and the focus on the tab, now told as "Play music"',
+      paused.paused && paused.mini === 'Play' && paused.focus && paused.y === 300 && await told() === 'link "Play music"', { paused, told: await told() });
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 5000 }).catch(() => {});
+    const playing = await state();
+    check('listen, Enter again: the song plays and the tab is told as "Pause music"', !playing.paused && playing.focus && await told() === 'link "Pause music"', { playing, told: await told() });
+    await page.waitForFunction(() => !!window.MCC_WORLD_AUDIO, null, { timeout: 15000 });
+    await page.locator('.appbar [data-appnav="world"]').click();
+    await page.waitForFunction(() => window.MCC_WORLD_AUDIO.active(), null, { timeout: 5000 }).catch(() => {});
+    await sleep(300);
+    check('listen with the World open over it: the Music tab is told as link "Music" (a tap goes back to the music, it pauses nothing)',
+      await page.evaluate(() => window.MCC_WORLD_AUDIO.active()) && await told() === 'link "Music"', await told());
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.waitForFunction(() => !window.MCC_WORLD_AUDIO.active(), null, { timeout: 5000 }).catch(() => {});
+    await sleep(300);
+    const back = { world: await page.evaluate(() => window.MCC_WORLD_AUDIO.active()), told: await told(), ...(await state()) };
+    check('listen, back from the World with the song still playing: the Music tab is the player\'s Pause again', !back.world && !back.paused && back.told === 'link "Pause music"', back);
+    check('listen, the Music tab\'s name: the page fits the screen', await fits(page));
+    check('listen, the Music tab\'s name: no script errors', errors.length === 0, errors);
+    await context.close();
+  });
+
+  /* review RF-3, the other side: where the tab still opens the shelf it keeps its own name, even while a song plays and
+     the tab shows the pause glyph (on the album a tap opens listen.html) */
+  await scenario('album: while a song plays, the bar\'s Music tab keeps its own name (a tap there opens the shelf)', async () => {
+    const { context, page, errors } = await setup({ width: 390 });
+    await albumPlay(page);
+    await page.waitForFunction(() => !document.getElementById('deck').paused && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 15000 });
+    const s = await page.locator('.appbar [data-appnav="music"]').ariaSnapshot();
+    check('album, a song playing: the bar\'s Music tab is told as link "Music", not as a Pause it is not', /^- link "Music"/.test(s.trim()), s);
+    check('album, the bar\'s Music tab: no script errors', errors.length === 0, errors);
     await context.close();
   });
 

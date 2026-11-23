@@ -1107,11 +1107,28 @@
        transport button there is no equaliser left to dance, so those rules
        went out of css/style.css rather than getting a first user here. */
     mt.classList.toggle("is-sound", SOUND_ON);
+    nameMusicTab(mt);
+  }
+  /* THE TAB'S NAME SAYS WHAT A TAP DOES (music slice M3 follow-up; review RF-3). Where the Music tab is the page's own
+     Play or Pause (musicTabTransport below, the same test the tap dispatch makes), a keyboard and a screen reader are
+     told so, in the words the installed app's dock and the World's transport use: "Pause music" while a song plays,
+     "Play music" while it does not. The play triangle and the pause glyph are drawn in CSS, which assistive technology
+     does not read, so on listen.html Enter on link "Music" paused the song and nothing said it would. Wherever the tab
+     still goes somewhere (another page, the World open over the player, a World still opening) it keeps the name its
+     markup gave it, kept in data-link-name because HOME_BAR snapshots carry whatever was painted last. */
+  function nameMusicTab(mt) {
+    if (!mt.hasAttribute("data-link-name")) mt.setAttribute("data-link-name", mt.getAttribute("aria-label") || "");
+    var own = mt.getAttribute("data-link-name");
+    if (musicTabTransport()) mt.setAttribute("aria-label", SOUND_ON ? "Pause music" : "Play music");
+    else if (own) mt.setAttribute("aria-label", own);
+    else mt.removeAttribute("aria-label");
   }
   window.addEventListener("mcc:nowplaying", function (e) {
     SOUND_ON = !!(e.detail && e.detail.playing);
     paintSound();
   });
+  /* the World opening or closing over the player changes what the tab does (js/world-audio-continuity.js) */
+  window.addEventListener("mcc:world-audio-open", function () { paintSound(); });
 
   /* Does the page give the bar its transport (MCC_NP_PLAY and MCC_NP_PAUSE)? The World open (or opening) over the
      player is the one exception: there the Music tab is the way back to the music, never its Pause. listen.html gives
@@ -1120,6 +1137,11 @@
     if (worldAudioPending || (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.active && window.MCC_WORLD_AUDIO.active())) return false;
     if (e && e === worldCancelTap) return false;   // the tap that called off a World still opening stays in the music, never pauses it
     return typeof window.MCC_NP_PLAY === "function" && typeof window.MCC_NP_PAUSE === "function";
+  }
+  /* a tap on the Music tab is the player's Play or Pause, not a way somewhere: on the page the tab points at, when that
+     page gives the bar its transport (the tap dispatch below and the tab's name both ask this, so they cannot disagree) */
+  function musicTabTransport(e) {
+    return onPage(WINGS.music.home) && musicTransportHere(e);
   }
 
   /* the same idiom both of the album's own transport buttons use: ask what
@@ -1219,15 +1241,18 @@
     } catch (_) { return false; }
   }
   function cancelWorldAudio() {
+    var was = worldAudioPending;
     worldAudioPending = null;
     if (worldAudioNotice) worldAudioNotice.remove();
     worldAudioNotice = null;
+    if (was) paintSound();   // the Music tab is the player's again
   }
   function waitForWorldAudio(dest) {
     if (window.MCC_WORLD_AUDIO || !musicWorldDestination(dest)) return false;
     cancelWorldAudio(); unpeek(); veilOff(); revert();
     if (window.MCC_MUSIC) window.MCC_MUSIC.closeNow();
     var pending = worldAudioPending = {href:dest};
+    paintSound();   // while the World is opening the Music tab calls it off, it pauses nothing
     var notice = worldAudioNotice = document.createElement("section");
     notice.id = "mccWorldAudioLoading"; notice.className = "dk-peek";
     notice.setAttribute("aria-label", "Open World");
@@ -1444,7 +1469,7 @@
        second slot, and that slot still lands on sites.html, which is the
        conversation with a page around it. */
 
-    if (key === "music" && onPage(dest) && musicTransportHere(e)) { transport(); return; }
+    if (key === "music" && musicTabTransport(e)) { transport(); return; }   // dest is WINGS.music.home here
     sail(dest, 0);
   });
 

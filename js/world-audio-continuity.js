@@ -572,6 +572,8 @@
     createShell(); ensureControls();
     var wasOpen = open; open = true; shell.hidden = false;
     doc.body.dataset.worldAudioOpen = "true"; doc.documentElement.classList.add("world-audio-open");
+    /* the bar's Music tab is the way back to the music now, not the player's Pause: js/tabbar.js names it again */
+    if (!wasOpen) event("mcc:world-audio-open", {open:true});
     concealMusic(); doc.title = "World · Equity Uprise";
     if (!wasOpen && !options.history) {
       var address = new URL(baseHref); address.searchParams.set("world", "1");
@@ -617,6 +619,7 @@
       var here = tab.dataset.appnav === "music";
       tab.classList.toggle("is-here", here); tab.removeAttribute("aria-current");
     });
+    event("mcc:world-audio-open", {open:false});   // before the focus lands on the Music tab, so it is named for what it does
     paint();
     doc.querySelector('.appbar [data-appnav="music"]')?.focus({preventScroll:true});
     if (back && history.state && history.state.mccWorldAudio) history.back();

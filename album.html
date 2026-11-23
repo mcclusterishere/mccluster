@@ -184,9 +184,17 @@
     /* Heal the 3 only: the door from the EP to Equity Uprise gateway */
     .alb-test { padding: 1.6rem 0 0.4rem; }
     .alb-test__sub { margin: 0.2rem 0 0.9rem; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.6; max-width: 60ch; }
-    .alb__gate { display: inline-flex; align-items: center; margin: 0.9rem 0 0 0.5rem; padding: 0.8rem 1.2rem;
-      border-radius: 100px; color: var(--cream); font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
-      text-decoration: none; box-shadow: inset 0 0 0 1px rgba(244,239,230,0.3); }
+    /* the door keeps clear of the account chip (music slice M3 follow-up, review RF-2). The chip is fixed top right on
+       every page, at most 104 px wide and 12 px from the edge (css/site-navigation.css), and covers whatever scrolls under
+       it; centred under Play the door ran under it at every width from 320 to about 590 px, and a tap there reached the
+       chip. On a phone the door has a line of its own at the hero's left edge, the edge the label rail under it keeps,
+       and ends 104 px short of the hero's right edge, before the chip's column begins: where its words do not fit in
+       that (below about 370 px) they take two lines, balanced so the arrow never sits alone. From 700 px it sits beside
+       Play, as before, far from the chip. */
+    .alb__gate { display: flex; width: max-content; max-width: calc(100% - 104px); align-items: center; margin: 0.9rem 0 0;
+      padding: 0.8rem 1.2rem; border-radius: 100px; color: var(--cream); font-family: var(--ui); font-weight: 800;
+      font-size: 0.98rem; text-wrap: balance; text-decoration: none; box-shadow: inset 0 0 0 1px rgba(244,239,230,0.3); }
+    @media (min-width: 700px) { .alb__gate { display: inline-flex; width: auto; max-width: none; margin-left: 0.5rem; } }
     /* the door shows only where the page opens it (a record with a gateway: Heal the 3); the display above
        overrode the hidden attribute, so it showed on every album (music slice M3 follow-up, review RL-12) */
     .alb__gate[hidden] { display: none; }
