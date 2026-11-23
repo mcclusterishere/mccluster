@@ -3,6 +3,9 @@ import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, clampYieldSeconds, claimableMa
 import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedRequest } from './signature.mjs';
 import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
 import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
+import { handleJobRoute } from './jobs-routes.mjs';
+import { recordCompletionAttestation } from './jobs-service.mjs';
+import { RUNNING_DEPLOYMENT_SHA } from '../runtime-revision.mjs';
 
 const HOST = process.env.CORE_COMPUTE_HOST || '127.0.0.1';
 const PORT = Number(process.env.CORE_COMPUTE_PORT || 4788);
@@ -164,6 +167,16 @@ async function route(req, res) {
     return json(res, replayed ? 200 : 202, { task, replayed }, idempotencyKey ? { 'idempotency-replayed': replayed ? 'true' : 'false' } : {});
   }
 
+  // Device job contract (docs/control-plane/DEVICE-JOBS-CONTRACT.md): admin
+  // submit/status/result/receipt over the same durable task and lease rows.
+  const jobRoute = await handleJobRoute({
+    req, url, body,
+    requireAdmin: () => requireSecret(req, 'CORE_COMPUTE_ADMIN_TOKEN', 'Compute admin'),
+    adminOrg,
+    issuer: { instance: process.env.MCCLUSTER_CORE_ID || null, deployment_sha: RUNNING_DEPLOYMENT_SHA || null }
+  });
+  if (jobRoute) return json(res, jobRoute.status, jobRoute.body, jobRoute.headers || {});
+
   const node = await authenticateNode(req, url, bodyBytes);
 
   if (url.pathname === '/v1/compute/heartbeat' && req.method === 'POST') {
@@ -217,6 +230,11 @@ async function route(req, res) {
     if (parsed.action === 'complete') result = await completeLease(node.id, parsed.leaseId, body.lease_token, body.result || {});
     if (parsed.action === 'fail') result = await failLease(node.id, parsed.leaseId, body.lease_token, body.error || 'compute node failure', body.retry !== false);
     if (!result) throw Object.assign(new Error('Lease transition rejected'), { status: 409, code: 'LEASE_REJECTED' });
+    // The node's own signature over this accepted completion becomes part of
+    // the job receipt. Best-effort and after the commit: it never undoes a result.
+    if (parsed.action === 'complete') {
+      await recordCompletionAttestation({ node, leaseId: parsed.leaseId, path: url.pathname, headers: req.headers, result: body.result || {} });
+    }
     return json(res, 200, { ok: true, result });
   }
 

@@ -10,6 +10,7 @@ import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
 import { activeMeetingTools, callMeetingTool } from './meeting.mjs';
 import { submitResidentAiTurn, getResidentAiTurn } from '../resident-ai.mjs';
 import { GAME_LORE_INPUT_SCHEMA, readGameLore } from '../game-lore.mjs';
+import { JOB_TOOLS, JOB_TOOL_NAMES, callJobTool } from './jobs.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PREVIEW_CONFIGURED = previewConfigured();
@@ -132,9 +133,10 @@ if (PREVIEW_CONFIGURED) {
   });
 }
 
-export const CONTROL_TOOLS = Object.freeze(BASE_TOOLS);
+export const CONTROL_TOOLS = Object.freeze([...BASE_TOOLS, ...JOB_TOOLS]);
 
 export async function callControlTool(name, args = {}, options = {}) {
+  if (JOB_TOOL_NAMES.has(name)) return callJobTool(name, args, options);
   if (name === 'core.game.lore.read') return readGameLore(args);
 
   if (name === 'core.resume') {

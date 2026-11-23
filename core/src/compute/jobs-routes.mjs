@@ -1,0 +1,54 @@
+// HTTP mapping of the device job contract for the Core compute gateway. The
+// gateway owns the socket, the admin secret and the response writer; this
+// module only recognises /v1/compute/jobs* and /v1/compute/receipt-key and
+// answers with { status, body, headers }. Every route is behind the compute
+// admin token (CORE_COMPUTE_ADMIN_TOKEN): nodes never reach these.
+import { parseIdempotencyKey } from './http-security.mjs';
+import { defaultDeps, getJob, getJobReceipt, getJobResult, listJobs, receiptKey, submitJob } from './jobs-service.mjs';
+
+const JOB_PATH = /^\/v1\/compute\/jobs\/([0-9a-f-]{36})(?:\/(result|receipt))?$/i;
+
+export function matchesJobRoute(pathname) {
+  return pathname === '/v1/compute/jobs' || pathname === '/v1/compute/receipt-key' || JOB_PATH.test(pathname);
+}
+
+// requireAdmin() throws the gateway's own 401/503; adminOrg(requested) applies
+// the canonical-org fence exactly as the existing admin routes do.
+export async function handleJobRoute({ req, url, body, requireAdmin, adminOrg, issuer = {} }, deps = defaultDeps()) {
+  const pathname = url.pathname;
+  if (!matchesJobRoute(pathname)) return null;
+  requireAdmin();
+
+  if (pathname === '/v1/compute/receipt-key' && req.method === 'GET') {
+    return { status: 200, body: receiptKey(deps) };
+  }
+
+  if (pathname === '/v1/compute/jobs' && req.method === 'POST') {
+    const idempotencyKey = parseIdempotencyKey(req.headers['idempotency-key']);
+    const canonicalOrg = adminOrg(body?.org_id || null);
+    const result = await submitJob({ ...body, org_id: canonicalOrg }, { canonicalOrg, idempotencyKey, via: 'gateway-admin' }, deps);
+    return {
+      status: result.replayed ? 200 : 202,
+      body: { schema: result.job.schema, job: result.job, replayed: result.replayed, live_nodes: result.live_nodes },
+      headers: idempotencyKey ? { 'idempotency-replayed': result.replayed ? 'true' : 'false' } : {}
+    };
+  }
+
+  if (pathname === '/v1/compute/jobs' && req.method === 'GET') {
+    const orgId = adminOrg(url.searchParams.get('org_id'));
+    if (!orgId) throw Object.assign(new Error('org_id is required'), { status: 400, code: 'ORG_REQUIRED' });
+    return { status: 200, body: await listJobs({ orgId, status: url.searchParams.get('status'), capability: url.searchParams.get('capability'), limit: url.searchParams.get('limit') || 50 }, deps) };
+  }
+
+  const match = pathname.match(JOB_PATH);
+  if (match && req.method === 'GET') {
+    const orgId = adminOrg(url.searchParams.get('org_id'));
+    if (!orgId) throw Object.assign(new Error('org_id is required'), { status: 400, code: 'ORG_REQUIRED' });
+    const [, jobId, view] = match;
+    if (!view) return { status: 200, body: await getJob({ orgId, jobId }, deps) };
+    if (view === 'result') return { status: 200, body: await getJobResult({ orgId, jobId }, deps) };
+    return { status: 200, body: await getJobReceipt({ orgId, jobId, issuer }, deps) };
+  }
+
+  return { status: 405, body: { error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' } };
+}
