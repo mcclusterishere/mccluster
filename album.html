@@ -174,6 +174,9 @@
     .alb h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.85; font-size: clamp(3.2rem, 16vw, 6rem); margin: 0.25rem 0 0.2rem; }
     .alb__by { color: var(--cream-dim); font-size: 0.9rem; }
     .alb__by b { color: var(--cream); }
+    .alb__elsewhere { margin: 0.9rem 0 0; color: var(--cream-dim); font-size: 0.78rem; line-height: 1.9; }
+    .alb__elsewhere a { color: inherit; text-decoration: underline; text-underline-offset: 0.18em; white-space: nowrap; }
+    .alb__elsewhere a:hover, .alb__elsewhere a:focus-visible { color: var(--cream); }
     .alb__play svg { width: 0.85em; height: 0.85em; fill: currentColor; margin-right: 0.45em; vertical-align: -8%; }
     .alb__play { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
       display: inline-flex; align-items: center; gap: 0.55rem; margin-top: 0.9rem; padding: 0.8rem 1.5rem; border-radius: 100px;
@@ -184,6 +187,8 @@
     /* Heal the 3 only: the door from the EP to Equity Uprise gateway */
     .alb-test { padding: 1.6rem 0 0.4rem; }
     .alb-test__sub { margin: 0.2rem 0 0.9rem; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.6; max-width: 60ch; }
+    /* only the album that opens onto a cause shows its door: display would otherwise override [hidden] */
+    .alb__gate[hidden] { display: none; }
     .alb__gate { display: inline-flex; align-items: center; margin: 0.9rem 0 0 0.5rem; padding: 0.8rem 1.2rem;
       border-radius: 100px; color: var(--cream); font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
       text-decoration: none; box-shadow: inset 0 0 0 1px rgba(244,239,230,0.3); }
@@ -681,6 +686,10 @@
         <a class="alb__gate" id="albGate" href="heal-the-3rd-world.html" hidden>Enter Heal the 3rd World &#8594;</a>
         <!-- THE LABEL RAIL: install it, download it, syndicate it -->
         <div class="lrail" id="labelRail" role="group" aria-label="The label"></div>
+        <!-- THE SAME RECORD ON THE STORES (owner, 2026-11-23: "the link back to Apple Music and Tidal ... very discreetly
+             on the play page so people can go play it on that app"). data/albums.json listen_elsewhere; the links are
+             the stores' universal links, so a phone with the app opens the app. A new tab keeps this page's song going. -->
+        <p class="alb__elsewhere" id="albElsewhere" hidden></p>
       </div>
     </header>
 
@@ -1023,6 +1032,23 @@
       }
       document.getElementById("nowBy").textContent = ARTIST;
       document.getElementById("albBySep").hidden = !head.by;
+      /* the same album on the stores: small words under the header, never buttons over the player */
+      var elsewhere = document.getElementById("albElsewhere");
+      var stores = (!PL && alb && Array.isArray(alb.listen_elsewhere) ? alb.listen_elsewhere : []).filter(function (l) {
+        return l && typeof l.service === "string" && /^https:\/\/(?:music\.apple\.com|open\.spotify\.com|tidal\.com|listen\.tidal\.com|music\.amazon\.com|music\.youtube\.com|www\.deezer\.com)\//.test(l.url || "");
+      });
+      elsewhere.textContent = "";
+      if (stores.length) {
+        elsewhere.appendChild(document.createTextNode("Also on "));
+        stores.forEach(function (l, i) {
+          if (i) elsewhere.appendChild(document.createTextNode(i === stores.length - 1 ? " and " : ", "));
+          var a = document.createElement("a");
+          a.href = l.url; a.target = "_blank"; a.rel = "noopener";
+          a.setAttribute("data-cta", "album-elsewhere"); a.textContent = l.service;
+          elsewhere.appendChild(a);
+        });
+      }
+      elsewhere.hidden = !stores.length;
       /* a record that opens onto a cause gets a door to its gateway */
       var GATEWAYS = {
         "heal-the-3": ["heal-the-3rd-world.html", "Enter Heal the 3rd World"]

@@ -205,5 +205,55 @@ export const TRACKS = {
     "title": "Niggy Nigg Niggr",
     "album": "cia-mind-control",
     "gated": true
+  },
+  "alquifina-new-chick": {
+    "title": "Alquifina (New Chick)",
+    "album": "tinderfessions",
+    "seconds": 113
+  },
+  "bussin-juggs": {
+    "title": "Bussin' Juggs",
+    "album": "tinderfessions",
+    "seconds": 118.6
+  },
+  "one-gon-ride": {
+    "title": "One Gon' Ride (feat. Jiddy)",
+    "album": "tinderfessions",
+    "seconds": 98.1
+  },
+  "recipe": {
+    "title": "Recipe",
+    "album": "tinderfessions",
+    "seconds": 96.1
+  },
+  "spell": {
+    "title": "Spell",
+    "album": "tinderfessions",
+    "seconds": 96
+  },
+  "fire": {
+    "title": "Fire",
+    "album": "tinderfessions",
+    "seconds": 134
+  },
+  "promises": {
+    "title": "Promises",
+    "album": "tinderfessions",
+    "seconds": 238.7
+  },
+  "drunk-driving": {
+    "title": "Drunk Driving",
+    "album": "tinderfessions",
+    "seconds": 127.1
+  },
+  "no-friend": {
+    "title": "No Friend",
+    "album": "tinderfessions",
+    "seconds": 167.6
+  },
+  "numb": {
+    "title": "Numb",
+    "album": "tinderfessions",
+    "seconds": 215.6
   }
 };

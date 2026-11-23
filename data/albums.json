@@ -599,6 +599,90 @@
      }
     }
    ]
+  },
+  {
+   "slug": "tinderfessions",
+   "name": "Tinderfessions",
+   "artist": "Benji Chase",
+   "tag": "The album · 2020",
+   "art": "assets/img/tinderfessions-cover.jpg",
+   "by": "",
+   "listen_elsewhere": [
+    {
+     "service": "Apple Music",
+     "url": "https://music.apple.com/us/album/tinderfessions/1540850727"
+    },
+    {
+     "service": "Spotify",
+     "url": "https://open.spotify.com/album/4WFLlYVdrCM7iYKdOOHSS7"
+    },
+    {
+     "service": "Amazon Music",
+     "url": "https://music.amazon.com/albums/B08NS11N38"
+    }
+   ],
+   "tracks": [
+    {
+     "title": "Alquifina (New Chick)",
+     "src": "assets/audio/alquifina-new-chick.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 113
+    },
+    {
+     "title": "Bussin' Juggs",
+     "src": "assets/audio/bussin-juggs.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 118.6
+    },
+    {
+     "title": "One Gon' Ride (feat. Jiddy)",
+     "src": "assets/audio/one-gon-ride.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 98.1
+    },
+    {
+     "title": "Recipe",
+     "src": "assets/audio/recipe.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 96.1
+    },
+    {
+     "title": "Spell",
+     "src": "assets/audio/spell.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 96
+    },
+    {
+     "title": "Fire",
+     "src": "assets/audio/fire.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 134
+    },
+    {
+     "title": "Promises",
+     "src": "assets/audio/promises.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 238.7
+    },
+    {
+     "title": "Drunk Driving",
+     "src": "assets/audio/drunk-driving.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 127.1
+    },
+    {
+     "title": "No Friend",
+     "src": "assets/audio/no-friend.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 167.6
+    },
+    {
+     "title": "Numb",
+     "src": "assets/audio/numb.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 215.6
+    }
+   ]
   }
  ]
 }
