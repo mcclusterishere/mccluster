@@ -122,6 +122,7 @@ test('the record carries Project Drawdown\'s source page as its own step: SQL by
   const unchanged = /`index\.html`,.*?are unchanged\./.exec(doc);
   assert.ok(unchanged, 'the unchanged-files sentence is in the record');
   assert.ok(!unchanged[0].includes('control.html'), 'control.html changes in this release: ' + unchanged[0]);
-  assert.match(doc, /\| Project Drawdown's source page \| yes for its SQL, owner route and Control card; the page and its door \(B2\) land separately \| no \| no; SQL not applied, page not shown \|/);
+  assert.match(doc, /\| Project Drawdown's source page \| yes \| no \| no; SQL not applied, page not shown \|/);
+  assert.match(doc, /\| Project Drawdown's source page \| Nothing yet\. The code ships inert: [^|]*until then `\?source=project-drawdown` says "That page is not available\." on the feed's status line\. \|/);
   assert.doesNotMatch(raw, /@@[A-Z0-9]+@@/, 'no placeholder is left');
 });

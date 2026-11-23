@@ -36,7 +36,7 @@ line (`js/world-audio-continuity.js`, `data/lyrics/`) are unchanged.
 | The first visit | The World opens with the globe and the missions at once and the privacy notice as a banner, not a full-screen wall. Nothing is recorded and no analytics request is made until the visitor agrees. Every other page of the house keeps its wall. |
 | The retired tagline | "Get Your Hu Up!" is gone from the World, `action/index.html`, `heal-the-3rd-world.html`, `mccluster-corp.html`, the member desk and the `/company` footer. Nothing replaces it. |
 | The environmental line | The Equity Uprise tab shows one plain line where the Environmental Justice panel will be, because the module is off (below). No observation posts, no layers on the globe. |
-| Project Drawdown's source page | Nothing yet. The code ships inert: no visitor sees a door or a page until its SQL is approved, applied after step 11, and the owner confirms the written permission's scope and shows it. Until then, once the World's half of this work (B2: the page, its door, the status line) is in, `?source=project-drawdown` says "That page is not available." on the feed's status line. |
+| Project Drawdown's source page | Nothing yet. The code ships inert: no visitor sees a door or a page until its SQL is approved, applied after step 11, and the owner confirms the written permission's scope and shows it; until then `?source=project-drawdown` says "That page is not available." on the feed's status line. |
 
 What else is in the merge, with nothing for a visitor to see:
 
@@ -635,4 +635,4 @@ result here.
 | The publish of the 125 missions | yes (pending SQL) | no | **not applied** | native proof on PostgreSQL 16.15 |
 | The CI entries and the source map | yes | no | not applicable | the jobs' own commands, here |
 | The release review's fixes (2026-11-19) | yes | no | no | unit tests and browser suites at `5d801add`, each test failing at `a8d2502d` without its fix but RM-7's ("Fixed after the release review") |
-| Project Drawdown's source page | yes for its SQL, owner route and Control card; the page and its door (B2) land separately | no | no; SQL not applied, page not shown | unit tests, PGlite and native proofs, Worker tests, browser fixtures (the Control card) |
+| Project Drawdown's source page | yes | no | no; SQL not applied, page not shown | unit tests, PGlite and native proofs, Worker tests, browser fixtures (the Control card, and the World's page at 390, 820, 1280 and 844x390 by night and day) |

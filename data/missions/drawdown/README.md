@@ -70,6 +70,14 @@ decision.
    have the right to use; no one else's face, name, address, account number or
    recording without their stated agreement; keep map attribution visible; never show
    your own home's location or when it is empty.
+5. Project Drawdown's source page in the World (`js/world-source-profile.js`;
+   `docs/control-plane/WORLD-MISSION-SOURCES.md`) groups the open missions of this catalog by
+   each mission's `sector` here, through the derived `data/missions/drawdown-areas.json` (slug
+   to area, no mission text; `node tools/build-mission-areas.mjs --check`), because this
+   folder stays out of the published site. A row there shows the mission's own title, field,
+   difficulty and points (from 700 px also a line of its own description); `about` appears
+   only inside the mission's dialog, as rule 2 says, and Drawdown's classification appears
+   nowhere.
 
 ## Review
 

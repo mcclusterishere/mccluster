@@ -15,8 +15,9 @@ records one.
 **A public source page that McCluster Corp makes and keeps, not an account.** No one signs in as Project Drawdown, it posts
 nothing, and nothing implies that it endorses, runs, pays for or sponsors this platform.
 
-- **The page** (the World's half of this work, B2, builds it and lands separately; described here as specified): a sheet over
-  the World at `?source=project-drawdown`, or a door at the foot of each Drawdown mission's dialog. The name in type; the role
+- **The page** (the World's half of this work, B2: `js/world-source-profile.js`, `css/world-source-profile.css` and four short
+  hunks each in `mnet.html` and `js/mnet.js`; below, "The World's page"): a sheet over the World at
+  `?source=project-drawdown`, or a door at the foot of each Drawdown mission's dialog. The name in type; the role
   line "Missions written by McCluster Corp from Project Drawdown’s climate solutions."; the trust note "Made by McCluster Corp,
   which runs this platform. Project Drawdown does not run or pay for this page and has not endorsed this platform." with About
   this page and Ask for a change; "501(c)(3) nonprofit"; the site's own nine areas of missions, every mission opening the
@@ -30,8 +31,7 @@ nothing, and nothing implies that it endorses, runs, pays for or sponsors this p
   in the same transaction. No browser role gains a write.
 - **Inert until** Matthew approves the pending SQL's exact text, it is applied after release steps 9 and 11, he confirms
   outside this repository that the written permission covers the page, and he presses Show. Until then there is no door
-  anywhere, and, with the World's half in, `?source=project-drawdown` says "That page is not available." on the feed's status
-  line.
+  anywhere, and `?source=project-drawdown` says "That page is not available." on the feed's status line.
 - **Not built:** an account, a claim flow, a feed tab, a World search group, a share card, JSON-LD, anything on `/company` or
   `index.html`, any message to Project Drawdown.
 
@@ -48,7 +48,7 @@ nothing, and nothing implies that it endorses, runs, pays for or sponsors this p
 | D7 | The door outside the mission's credit; a query key other than `org`; no tab, menu room, `/company` door or `index.html` | The door at the foot of the mission dialog; `?source=<slug>`. A tab card and a World search group are phase 2. |
 | D8 | A dialog inside `main.mn` | `#mnSourceDialog` after the mission dialog. |
 | D9 | The two existing organization rows (`authenticity-network`, `equity-uprise`) are never shown | Only an organization named by a shown link row is ever drawn. |
-| D10 | `data/missions/drawdown/` out of the published export (strip line, stage allowlist and parity test together); a small derived slug-to-area map | `scripts/stage-cloudflare-pages.mjs` refuses the folder, `deploy-pages.yml` strips it, `scripts/test/publish-strip-parity.test.mjs` holds the two together. The files stay public in the source repository. `data/missions/drawdown-areas.json` (slug to area, no mission text) is the World's half. |
+| D10 | `data/missions/drawdown/` out of the published export (strip line, stage allowlist and parity test together); a small derived slug-to-area map | `scripts/stage-cloudflare-pages.mjs` refuses the folder, `deploy-pages.yml` strips it, `scripts/test/publish-strip-parity.test.mjs` holds the two together. The files stay public in the source repository. `data/missions/drawdown-areas.json` (slug to area, no mission text; `tools/build-mission-areas.mjs --check`) is what the World's page reads instead. |
 | D11 | The `20261002173558` record drift is its own records change; any proof stub carries production's checks | The stub carries production's `network_organizations_name_check` and `network_organizations_slug_check`; the drift itself stays out of this work. |
 | D12 | Facts: the name, "501(c)(3) nonprofit", the mailing address with its label, sourced and dated 2026-11-19, `nonprofit`; no founding year or corporate form; the requested citation once | Under the trust note only "501(c)(3) nonprofit"; the mailing address in About with its label, source and date. |
 | D13 | Omit Drawdown's per-solution labels; label the nine groups as this site's | No label anywhere; "Grouped by this site". |
@@ -120,6 +120,38 @@ Choices beyond D1 to D14, each a default adopted pending Matthew's confirmation:
   the page (the rollback), removing Project Drawdown's quotations (the README's fallback "If that permission is ever
   withdrawn"), and a licensor's or creator's request to remove attribution items (CC BY 4.0, section 3(a)(3)).
 
+## The World's page
+
+- **Reads** (each through the World's own `sbRest`, so RLS is the wall, and each repeating its filter): the shown sources
+  (`mission_catalog_sources?state=eq.shown…`), then only the organizations those rows name (an organization row no shown source
+  names is never drawn, D9); when the page opens, the catalog's open missions with their details embedded
+  (`status=eq.open`, `status` selected and checked again: the house owner's session sees drafts through RLS and must see what a
+  guest sees) and `data/missions/drawdown-areas.json`. The sources are read once per page load; a 404 `PGRST205` or `42P01`
+  is remembered for the session (`mcc.missionSources.absent`) and nothing more is asked. With `&preview=1` and a session, the
+  owner's route `/v1/mission-sources` instead (drafts and hidden pages, with a banner; no Share). No analytics call.
+- **What is drawn.** Only a source whose organization is the one its link names, whose catalog has its own reviewed words in
+  the page (today `drawdown` alone, and only for the organization `project-drawdown` named Project Drawdown), and whose name,
+  role line and facts carry no word of `js/mission-source-words.js`; anything else is "That page is not available." The words
+  that say who made the page and who does not run it, About, the change note and the credit are the page's own; the name, the
+  role line and the facts are the owner's data. Type only: the World's own line icons (`MCC_MNET.icon`) are the only drawn
+  shapes.
+- **The door** sits after Join and its status line, outside the mission's detail and credit, and appears only while that
+  mission's dialog is still open; never when the mission was opened with `?return=` (closing it would leave the page).
+- **History and focus** follow the mission dialog's model (release review RS-6): the door replaces the mission's entry with
+  the page's (Back leaves to before the mission); a landing on `?source=` replaces its entry; a mission opened from a row
+  pushes its own entry over the page's (Back closes the mission, then the page); the door inside such a mission only closes
+  the mission; the × and Escape (a filled search first) step back over an entry taken from a mission or put the address back
+  without `source`, `area` and `preview`; any other close (the sign-in door closes every dialog) does the same without walking
+  history. Focus goes to the name on open and back to the opener (or the row) on close; "All areas" returns to the area row.
+- **Share** copies `https://mccluster.org/?source=project-drawdown` on every host (the bar's `WORLD_ORIGIN`). The page has no
+  share card, canonical, JSON-LD or title of its own.
+- Choices made while building it, each a default adopted pending Matthew's confirmation: a catalog without its own reviewed
+  words is never drawn, so the page's sentences can never sit under another organization's name; a screen shorter than
+  560 px keeps 12 px of room above and below the sheet instead of the header's and the bar's (a landscape phone would
+  otherwise get a sheet of about 226 px); from 1100 px the areas keep their two sample titles (nothing the phone shows is
+  hidden); when the area map cannot load the list's line drops its "in N areas"; a search with no match says so in the polite
+  status line, with "Clear the search" under it.
+
 ## What stays gated
 
 No agent does these: applying the SQL (Matthew's approval of the exact text, after steps 9 and 11); confirming the written
@@ -164,9 +196,9 @@ authenticity check without a returned row (PostgREST's `return=minimal`) still s
 | `scripts/e2e/control-mission-sources.e2e.mjs` | the real `control.html` over the plane at 390, 820 and 1440 | CI `mission-sources-control` |
 | `scripts/test/publish-strip-parity.test.mjs`, `scripts/test/cloudflare-pages-stage.test.mjs` | D10 | root suite; export CI |
 | `scripts/test/mission-sources-records.test.mjs` | the README's rules and this record's words | root suite |
-
-The World's half (B2) is specified with its own tests, which land with it: `scripts/test/world-source-profile.test.mjs`,
-`scripts/test/mission-areas.test.mjs` and `scripts/e2e/world-source-profile.e2e.mjs`.
+| `scripts/test/world-source-profile.test.mjs` | the page's pure parts (address, what is drawn, missions, areas, search, lines, dates, credit), every read verbatim with its filter, the four sentences that may match the deny list, no picture of any kind, the styles' mobile rules, the World's hooks, the README's two rules | root suite |
+| `scripts/test/mission-areas.test.mjs` | `data/missions/drawdown-areas.json` is the catalog's (`--check`), slugs and area names only, and the page's grouping of the real catalog with the credit's counts | root suite |
+| `scripts/e2e/world-source-profile.e2e.mjs` | the shipped `mnet.html` over a fake API and Supabase: inert states, the door, the landing, a list, history and focus, Share on two hosts, the owner's drafts and preview, hostile rows, failures, a first visit, and every size by night and day | CI `world-source-profile` |
 
 ## Facts used, with sources and dates
 

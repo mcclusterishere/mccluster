@@ -1992,11 +1992,14 @@
      drawn without source lines. Resolves true when something new arrived; never rejects. */
   function loadMissionDetails(ids) {
     var f = state.missionFeed, got = false, chunks = [];
+    /* a read of some of these still out (the feed's, as a shared mission opens) is waited for, so the dialog is drawn with them */
+    var out = (ids || []).map(function (id) { return f.reading && f.reading[id]; }).filter(Boolean);
+    if (out.length) return Promise.all(out).then(function () { return loadMissionDetails(ids); });
     var want = (ids || []).filter(function (id) { return MISSION_ID.test(String(id)) && !f.asked[id]; });
     if (!MISSION_POSTS || f.detailsAbsent || !want.length) return Promise.resolve(false);
     want.forEach(function (id) { f.asked[id] = true; });
     for (var i = 0; i < want.length; i += 40) chunks.push(want.slice(i, i + 40));
-    return chunks.reduce(function (step, chunk) {
+    var done = chunks.reduce(function (step, chunk) {
       return step.then(function () {
         if (f.detailsAbsent) return;
         return sbRest("action_mission_details?select=" + MISSION_DETAIL_FIELDS + "&mission_id=in.(" + chunk.join(",") + ")").then(function (rows) {
