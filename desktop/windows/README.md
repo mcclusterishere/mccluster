@@ -79,10 +79,23 @@ McCluster.exe --jobs-json --out jobs.json      # also runs the interrupted-job r
 ## Verified on the device (2026-11-22) and not verified
 
 Verified: preview 0.1.0 user-scope install and launch; 0.2.0 in-box build; 50 desktop checks; status
-probe; one real `local.inventory` job with receipt; `ai.chat` refused with the reason while no model is
+probe; one real `local.inventory` job with receipt; `ai.chat` refused with the reason while no model was
 installed; a job killed mid-run recovered as `interrupted` on the next start; the window loads the
-live site with the Compute panel beside it.
+live site with the Compute panel beside it; after the owner approved pulling `qwen3-vl:4b` and setting
+`OLLAMA_IGPU_ENABLE=1`, one real `ai.chat` job answered on the integrated Radeon through Vulkan with the
+model fully in GPU memory (`hardware_mode gpu-verified`, about 7 generation tokens per second), and the
+node doctor's `-Report` showed the same load at 100% GPU.
+
+Two things the local runs taught:
+
+- `qwen3-vl:4b` on Ollama 0.40 keeps reasoning in `message.thinking` even with `think: false`, and
+  neither `/no_think` nor a system prompt stops it. The job's default `num_predict` is therefore 1536,
+  the receipt records `thinking_chars` and `done_reason`, and a run that spends its whole budget
+  reasoning with no answer text is a failed job, not a result.
+- The doctor's headroom rule refuses this 16 GB shared-memory box as a resident-model worker while the
+  owner's desktop apps are open: with the model loaded it left under 1 GiB free against the 4 GB floor.
+  Independent local jobs still run; being a persistent worker needs the memory freed first.
 
 Not verified: the SDK build and installer for 0.2.0; sign-in in the window (the owner's credentials
 were not entered by the agent); any remote or pooled job (the OVH Core was in rescue mode, the compute
-gateway answered HTTP 530); local inference (no model installed on the build device).
+gateway answered HTTP 530).

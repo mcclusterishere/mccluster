@@ -381,7 +381,11 @@ namespace McClusterDesktop
             body["stream"] = false;
             body["think"] = false;
             body["messages"] = new List<object> { new Dictionary<string, object> { { "role", "user" }, { "content", prompt } } };
-            body["options"] = new Dictionary<string, object> { { "temperature", 0.2 }, { "num_predict", 512 } };
+            // Some local models (qwen3-vl on Ollama 0.40) keep reasoning in message.thinking even
+            // with think:false, so the budget must leave room for an answer after the reasoning.
+            double numPredict = Json.Num(job.Input, "num_predict");
+            if (numPredict < 64) numPredict = 1536;
+            body["options"] = new Dictionary<string, object> { { "temperature", 0.2 }, { "num_predict", (int)numPredict } };
             using (var content = new StringContent(Json.Compact(body), Encoding.UTF8, "application/json"))
             using (HttpResponseMessage response = await Http.PostAsync(ollama.Url + "/api/chat", content, cancel).ConfigureAwait(false))
             {
@@ -390,7 +394,12 @@ namespace McClusterDesktop
                 object parsed = Json.Parse(text);
                 var result = new Dictionary<string, object>();
                 result["model"] = Json.Str(parsed, "model");
-                result["content"] = Json.Str(Json.Get(parsed, "message"), "content");
+                string answer = Json.Str(Json.Get(parsed, "message"), "content") ?? "";
+                string thinking = Json.Str(Json.Get(parsed, "message"), "thinking") ?? "";
+                string doneReason = Json.Str(parsed, "done_reason");
+                result["content"] = answer;
+                result["thinking_chars"] = thinking.Length;
+                result["done_reason"] = doneReason;
                 double evalCount = Json.Num(parsed, "eval_count");
                 double evalNs = Json.Num(parsed, "eval_duration");
                 double promptCount = Json.Num(parsed, "prompt_eval_count");
@@ -406,6 +415,9 @@ namespace McClusterDesktop
                 job.Receipt["loaded_after_run"] = after.LoadedSummary;
                 job.Receipt["hardware_mode"] = DeviceInventory.Read().HardwareMode(after.GpuEvidence);
                 job.Receipt["task"] = "One chat completion on the local Ollama model on loopback.";
+                // A run that spent its whole budget reasoning and produced no answer is not a result.
+                if (answer.Trim().Length == 0)
+                    throw new InvalidOperationException("The model produced no answer text (done_reason " + (doneReason ?? "unknown") + ", " + thinking.Length + " reasoning characters, " + evalCount + " tokens). Raise num_predict or pick a model that honours think:false.");
             }
         }
 
