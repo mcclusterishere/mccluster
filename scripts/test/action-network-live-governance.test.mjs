@@ -74,7 +74,7 @@ test('Every current catalogue song is a first-class live discovery object', asyn
       assert.ok(sql.includes("'" + key.replaceAll("'", "''") + "'"), 'missing music catalog object ' + key);
     }
   }
-  assert.equal(count, 60); // 41, plus Tinderfessions' twelve and In Hot Pursuit's seven (2026-11-23)
+  assert.equal(count, 61); // 41, plus Tinderfessions' twelve and In Hot Pursuit's eight (2026-11-23)
   assert.match(sql, /music_object_id uuid references public\.music_catalog_objects/);
   assert.match(sql, /canonical_url text not null check\(canonical_url~'\^https:\/\/'\)/i);
 });
