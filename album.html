@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme-lock="dark">
+<html lang="en" data-theme-lock="dark" data-music-view="album">
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -2358,11 +2358,17 @@
       room.classList.add("is-on");
       if (!deck.paused) { var p = roomFilm.play(); if (p && p.catch) p.catch(function () {}); }
     }
+    /* a music view over the album (music slice M5) covers the room: its film rests, and wakes with the deck on reveal */
+    var roomCovered = false;
     function roomPlay(on) {
       if (!roomFilm || !roomSrc) return;
-      if (on) { var p = roomFilm.play(); if (p && p.catch) p.catch(function () {}); }
+      if (on && !roomCovered) { var p = roomFilm.play(); if (p && p.catch) p.catch(function () {}); }
       else { try { roomFilm.pause(); } catch (e) {} }
     }
+    window.addEventListener("mcc:music-view", function (e) {
+      roomCovered = !!(e && e.detail && e.detail.open);
+      roomPlay(!roomCovered && !deck.paused);
+    });
     /* the room rides the song clock: reels scene-cut the walls, and
        the live bar lands on the deck, sheet open or not */
     function roomTick() {

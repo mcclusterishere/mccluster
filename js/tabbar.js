@@ -17,6 +17,16 @@
     return s ? s.replace(/js\/tabbar\.js.*$/, "") : "";
   })();
 
+  /* A MUSIC VIEW HAS NO BAR OF ITS OWN (music slice M5, js/music-shell.js). The retained music document under it
+     keeps the one bar, the account chip, the installed app's dock, the sign-in handoff and the World; a view builds
+     none of them and loads no World module. Its scripts that ask the bar (MCC_BAR) are given the retained one, and
+     the markup bar some pages carry, hidden before first paint by js/shell-boot.js, is taken out. */
+  if (window.MCC_MUSIC_VIEW) {
+    try { if (!window.MCC_BAR && window.MCC_MUSIC_VIEW.bar) window.MCC_BAR = window.MCC_MUSIC_VIEW.bar(); } catch (e) {}
+    Array.prototype.forEach.call(document.querySelectorAll(".appbar"), function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+    return;
+  }
+
   // Loaded on the globe's embedded document too: its first trusted touch can
   // reach the same-origin World soundtrack without an asynchronous message.
   var worldAudioReady = null, worldAudioPending = null, worldAudioNotice = null, worldCancelTap = null;
@@ -48,6 +58,17 @@
     return worldAudioReady;
   }
   loadWorldAudio();
+  /* ONE PLAYER ACROSS MUSIC PAGES (music slice M5). A music page loaded as the top document (it says which on
+     <html data-music-view>) may stay the one document that plays while the other music pages open over it as
+     views (js/music-shell.js, which holds the routes and their one switch). */
+  if (window.parent === window && document.documentElement.hasAttribute("data-music-view") && !window.MCC_MUSIC_SHELL &&
+      !document.querySelector("script[data-mcc-music-shell]")) {
+    var musicShell = document.createElement("script");
+    musicShell.src = ROOT + "js/music-shell.js?v=__STAMP__";
+    musicShell.async = false;
+    musicShell.setAttribute("data-mcc-music-shell", "");
+    document.head.appendChild(musicShell);
+  }
 
   /* ---------- THREE HOSTS, ONE BAR ----------
      The World is served on a host of its own as well: the company's,
@@ -1129,12 +1150,15 @@
   });
   /* the World opening or closing over the player changes what the tab does (js/world-audio-continuity.js) */
   window.addEventListener("mcc:world-audio-open", function () { paintSound(); });
+  window.addEventListener("mcc:music-view", function () { paintSound(); });   /* a view opened or closed (music slice M5) */
 
   /* Does the page give the bar its transport (MCC_NP_PLAY and MCC_NP_PAUSE)? The World open (or opening) over the
      player is the one exception: there the Music tab is the way back to the music, never its Pause. listen.html gives
      the bar its transport too since the M3 follow-up (verification V-3), and the World opens over that page. */
   function musicTransportHere(e) {
     if (worldAudioPending || (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.active && window.MCC_WORLD_AUDIO.active())) return false;
+    /* a music view shown over the player (music slice M5): the tab is the way back to Listen there, never a transport */
+    if (window.MCC_MUSIC_SHELL && window.MCC_MUSIC_SHELL.view && window.MCC_MUSIC_SHELL.view()) return false;
     if (e && e === worldCancelTap) return false;   // the tap that called off a World still opening stays in the music, never pauses it
     return typeof window.MCC_NP_PLAY === "function" && typeof window.MCC_NP_PAUSE === "function";
   }
@@ -1283,6 +1307,8 @@
     unpeek();
     if (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.navigate(dest)) { veilOff(); revert(); return; }
     if (waitForWorldAudio(dest)) return;
+    /* a music page over the one player (a view), or the retained page revealed again (music slice M5) */
+    if (window.MCC_MUSIC_SHELL && window.MCC_MUSIC_SHELL.navigate(dest)) { veilOff(); revert(); return; }
     var url = null;
     try { url = new URL(dest, location.href); } catch (e) {}
     if (url && url.origin === location.origin && samePath(url.pathname) === samePath(location.pathname) && url.search === location.search) {

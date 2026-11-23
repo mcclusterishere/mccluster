@@ -72,6 +72,10 @@ on:
       - 'workers/mccluster/src/analytics/measurement-dictionary.js'
       - 'scripts/test/music-measurement.test.mjs'
       - 'scripts/test/music-offline-vault.test.mjs'
+      - 'js/shell-boot.js'
+      - 'account.html'
+      - 'scripts/test/music-shell.test.mjs'
+      - 'scripts/e2e/music-shell.e2e.mjs'
       - '.github/workflows/music-platform-ci.yml'
   push:
     branches: [main]
@@ -145,6 +149,10 @@ on:
       - 'workers/mccluster/src/analytics/measurement-dictionary.js'
       - 'scripts/test/music-measurement.test.mjs'
       - 'scripts/test/music-offline-vault.test.mjs'
+      - 'js/shell-boot.js'
+      - 'account.html'
+      - 'scripts/test/music-shell.test.mjs'
+      - 'scripts/e2e/music-shell.e2e.mjs'
 
 permissions:
   contents: read
@@ -216,6 +224,11 @@ jobs:
         run: |
           node --check sw.js
           node --test scripts/test/music-offline-vault.test.mjs
+      - name: One player across music pages (the route table and its one switch, history, the live head, which frame is adopted, the engine in a view)
+        run: |
+          node --check js/music-shell.js
+          node --check js/shell-boot.js
+          node --test scripts/test/music-shell.test.mjs
 
   music-edge:
     runs-on: ubuntu-latest
@@ -267,6 +280,10 @@ jobs:
         env:
           PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
         run: node scripts/e2e/control-music-review.e2e.mjs /tmp/music-proof/control-review
+      - name: One player across music pages (a song plays on across Listen, an artist page, the album and sign-in; Back, Forward, deep links, the live head, the World; 320 to 1280 px)
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/music-shell.e2e.mjs /tmp/music-proof/shell
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:

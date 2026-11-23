@@ -224,6 +224,9 @@
     key: KEY,
   };
   if (ownsPlayer) return;   // those pages have a better player than this one
+  /* a music view (music slice M5, js/music-shell.js) shows over the document that plays: a pocket here would be a
+     second player (the account page loads this file too) */
+  if (window.MCC_MUSIC_VIEW) return;
 
   /* BEFORE ANY SOUND, THE DEVICE IS TOLD THIS IS MUSIC. js/now-playing.js
      holds the one rule (the playback audio session iOS keeps going with the

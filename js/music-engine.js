@@ -11,6 +11,17 @@
   "use strict";
 
   var doc = root.document;
+  /* IN A VIEW (music slice M5, js/music-shell.js): this document is a music page shown over the one that plays.
+     It makes no Audio, no mini player, no Now sheet and no Now Playing, and banks and restores nothing: its
+     MCC_MUSIC is a facade over the retained document's engine, and a tap on its play buttons reaches that engine in
+     the same call (a gesture in this frame counts for the parent's element in Chromium; WebKit's is a gesture in
+     progress, so the call never waits). The resolver, the queue and every access rule are the retained engine's. */
+  var VIEW = root.MCC_MUSIC_VIEW;
+  if (VIEW && typeof VIEW.engine === "function") { viewMode(VIEW); return; }
+  /* A GUEST ON THE ALBUM (music slice M5, stage 2): loaded into album.html by the shell when a view first opens
+     over it, so a song chosen in a view has a player. It never offers the album's own banked record, and it banks
+     only while it owns the sound (the album's deck owns it otherwise). */
+  var GUEST = root.MCC_MUSIC_GUEST || null;
   var library = null;
   var loading = null;
   var current = null;
@@ -41,6 +52,9 @@
   var LAST_TRY_MS = 3000, LOADING_NOTE_MS = 1500, STALL_MS = 4000, FIRST_READ_MS = 12000;
   var PREFETCH_S = 20, REFRESH_EARLY_MS = 60000, LAPSE_MARGIN_MS = 10000, SHORT_END_S = 2;
   var wantPlay = false, grant = null, trouble = null, notice = null, noticeTimer = 0, prefetched = null;
+  /* the page a song was chosen on, when that was a view over this document (music slice M5): its events are filed
+     there, as on that page itself (js/analytics.js); a song chosen here, or the queue moving on from one, keeps it */
+  var chosenOn = null;
   var refreshTimer = 0, loadingTimer = 0, stallTimer = 0, progressAt = 0, playingFrom = -1, soundHeard = false, lastGate = null;
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -85,6 +99,7 @@
       album_slug: current.albumSlug,
       access_state: currentAccess
     } : {};
+    if (chosenOn) base.mcc_chosen_on = { path: chosenOn.path, handle: chosenOn.handle || "" };
     try { root.MCC_TRACK(name, Object.assign(base, extra || {})); } catch (e) {}
   }
 
@@ -307,8 +322,8 @@
     if (at < 0) at = 0;
     var next = queue[(at + delta + queue.length) % queue.length];
     if (!next) return Promise.resolve(null);
-    if (next.creatorTrackId) return openCreatorTrack(next.creatorTrackId, true);
-    return openTrack(next.albumSlug, next.title, true);
+    if (next.creatorTrackId) return openCreatorTrack(next.creatorTrackId, true, chosenOn);
+    return openTrack(next.albumSlug, next.title, true, chosenOn);
   }
 
   /* THE BAR'S MIDDLE BUTTON ON THE LISTEN PAGE (music slice M3 follow-up; verification V-3). js/tabbar.js draws the
@@ -610,7 +625,7 @@
     if (!queue.some(function (q) { return sameItem(q, item); })) queue.push(item);
   }
 
-  function openCreatorTrack(id, force) {
+  function openCreatorTrack(id, force, from) {
     var t = CREATOR_TRACKS[String(id)] || null;
     if (!t) return Promise.reject(new Error("Creator track not registered"));
     catalogueRequest++;
@@ -627,6 +642,7 @@
     resetDelivery();
     wantPlay = true;
     current = t;
+    chosenOn = from || null;
     currentAccess = "loading";
     announceSelection();
     previewLimit = t.preview_seconds == null ? 30 : Number(t.preview_seconds);
@@ -692,7 +708,7 @@
     if (h) h.update();
   }
 
-  function openTrack(albumSlug, title, force) {
+  function openTrack(albumSlug, title, force, from) {
     var request;
     var lookup = ++catalogueRequest;
     return loadLibrary().then(function (by) {
@@ -719,6 +735,7 @@
       resetDelivery();
       wantPlay = true;
       current = t;
+      chosenOn = from || null;
       currentAccess = "loading";
       announceSelection();
       previewLimit = 0;
@@ -1250,6 +1267,7 @@
      creator's release is not banked: its address is signed for one listener and expires. */
   var held = null, resumeAt = null, bankedAt = 0;
   function bank(force) {
+    if (GUEST && GUEST.owns && !GUEST.owns()) return;
     if (!current || current.creatorTrackId || !current.src || !root.MCC_POCKET || !root.MCC_POCKET.save) return;
     var now = Date.now();
     if (!force && now - bankedAt < 2000) return;
@@ -1315,7 +1333,8 @@
   audio.addEventListener("timeupdate", function () { if (!audio.paused) bank(false); });
   doc.addEventListener("visibilitychange", function () { if (doc.visibilityState === "hidden") bank(true); });
   root.addEventListener("pagehide", function () { bank(true); });
-  if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", restore);
+  if (GUEST && GUEST.restore === false) { /* a guest holds nothing of the album's */ }
+  else if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", restore);
   else root.setTimeout(restore, 0);
   bindNowPlaying();
 
@@ -1348,4 +1367,69 @@
     toggle: toggle,
     unmute: unmute
   };
+
+  function viewMode(V) {
+    var from = V.page || null;
+    function E() { try { return V.engine(); } catch (e) { return null; } }
+    function call(name, args) {
+      var e = E();
+      return e && typeof e[name] === "function" ? e[name].apply(e, args) : Promise.resolve(null);
+    }
+    function ask(name) { return function () { var e = E(); return e && typeof e[name] === "function" ? e[name]() : null; }; }
+    function register(t) {
+      var e = E();
+      if (e) { e.registerCreatorTrack(t); return; }
+      if (V.whenEngine) V.whenEngine(function () { var r = E(); if (r) r.registerCreatorTrack(t); });
+    }
+    /* this view's play buttons show what the retained engine plays */
+    function paintButtons() {
+      var e = E(), cur = e && e.current ? e.current() : null, wanted = !!(e && e.playing && e.playing());
+      doc.querySelectorAll("[data-music-play]").forEach(function (b) {
+        var creatorId = b.getAttribute("data-creator-track");
+        var same = !!cur && (creatorId ? String(cur.creatorTrackId || "") === String(creatorId)
+          : key(b.getAttribute("data-album"), b.getAttribute("data-track")) === key(cur.albumSlug, cur.title));
+        b.classList.toggle("is-playing", same && wanted);
+        b.setAttribute("aria-pressed", same && wanted ? "true" : "false");
+      });
+    }
+    root.MCC_MUSIC = Object.freeze({
+      view: true,
+      play: function (albumSlug, title, force) { return call("play", [albumSlug, title, force, from]); },
+      playCreator: function (id, force) { return call("playCreator", [id, force, from]); },
+      registerCreatorTrack: register,
+      pause: function () { return call("pause", []); },
+      resume: function () { return call("resume", []); },
+      next: function () { return call("next", []); },
+      previous: function () { return call("previous", []); },
+      openNow: function () { return call("openNow", []); },
+      closeNow: function () { return call("closeNow", []); },
+      toggle: function () { return call("toggle", []); },
+      unmute: function () { return call("unmute", []); },
+      refreshAccess: function () { return call("refreshAccess", []); },
+      current: ask("current"),
+      access: ask("access"),
+      delivery: ask("delivery"),
+      playing: function () { var e = E(); return !!(e && e.playing && e.playing()); }
+    });
+    doc.addEventListener("click", function (e) {
+      var b = e.target && e.target.closest ? e.target.closest("[data-music-play]") : null;
+      if (!b) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var creatorId = b.getAttribute("data-creator-track");
+      var p = creatorId ? root.MCC_MUSIC.playCreator(creatorId) : root.MCC_MUSIC.play(b.getAttribute("data-album"), b.getAttribute("data-track"));
+      if (p && p.catch) p.catch(function () {});
+      if (doc.querySelectorAll) paintButtons();
+    }, true);
+    doc.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      var b = e.target && e.target.closest ? e.target.closest('[data-music-play][role="button"]') : null;
+      if (!b) return;
+      e.preventDefault();
+      b.click();
+    });
+    if (V.on) { V.on("mcc:music-state", paintButtons); V.on("mcc:music-selected", paintButtons); }
+    if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", paintButtons);
+    else root.setTimeout(paintButtons, 0);
+  }
 })(window);

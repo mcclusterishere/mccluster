@@ -400,7 +400,10 @@
       .then(function (out) {
         if (!out.ok || !out.data.url) throw new Error(out.data.error || "Checkout unavailable");
         if (root.MCC_TRACK) root.MCC_TRACK("music_license_checkout_start", { offer_id: offerId, creator: handle });
-        location.href = out.data.url;
+        /* checkout is another origin: from a music view it is a page load of the top document, never of the frame
+           (music slice M5, js/music-shell.js) */
+        if (root.MCC_MUSIC_VIEW && root.MCC_MUSIC_VIEW.navigate) root.MCC_MUSIC_VIEW.navigate(out.data.url);
+        else location.href = out.data.url;
       }).catch(function (err) {
         b.disabled = false; b.textContent = "Checkout unavailable";
         b.title = err.message || "Checkout unavailable";
