@@ -92,19 +92,28 @@
     var engine = root.MCC_MUSIC;
     if (engine && engine.current && engine.current()) {
       var track = engine.current();
+      /* delivery: the trouble in a few words; playing: what the listener asked for (a song being picked up again is
+         quiet, and this control's Pause stops the tries: music slice M3, review) */
       return {audio:engine.audio, title:track.title, access:engine.access(),
-        delivery:function () { var d = engine.delivery ? engine.delivery() : null; return d && d.state !== "recovering" ? d.state : ""; },
+        delivery:function () { var d = engine.delivery ? engine.delivery() : null; return d && d.status || ""; },
+        playing:function () { var d = engine.delivery ? engine.delivery() : null; return d && typeof d.playing === "boolean" ? d.playing : !engine.audio.paused && !engine.audio.ended; },
         play:function () { return engine.resume(); }, pause:function () { engine.pause(); }};
     }
     var deck = doc.getElementById("deck");
     if (deck && (deck.currentSrc || deck.getAttribute("src"))) {
       return {audio:deck, title:lastAnnouncement.title || doc.getElementById("tpTitle")?.textContent || "Your music",
-        delivery:function () { return root.MCC_DECK_DELIVERY ? root.MCC_DECK_DELIVERY() : ""; },
-        play:function () { audioSession(); return root.MCC_NP_PLAY ? root.MCC_NP_PLAY() : deck.play(); }, pause:function () { deck.pause(); }};
+        delivery:function () { var d = root.MCC_DECK_DELIVERY ? root.MCC_DECK_DELIVERY() : null; return d && typeof d === "object" ? d.status || "" : ""; },
+        playing:function () { var d = root.MCC_DECK_DELIVERY ? root.MCC_DECK_DELIVERY() : null; return d && typeof d === "object" && typeof d.playing === "boolean" ? d.playing : !deck.paused && !deck.ended; },
+        play:function () { audioSession(); return root.MCC_NP_PLAY ? root.MCC_NP_PLAY() : deck.play(); },
+        /* the page's own Pause (this control, and the World's "pause" message when its own media starts): while a song
+           is being picked up again the deck is already quiet, so deck.pause() changed nothing, fired no event, and the
+           next try played the music again behind the listener (music slice M3, review PB-R2) */
+        pause:function () { if (root.MCC_NP_PAUSE) root.MCC_NP_PAUSE(); else deck.pause(); }};
     }
     return null;
   }
   function player() { return selected() || theme; }
+  function isPlaying(p) { return p.playing ? p.playing() : !p.audio.paused && !p.audio.ended; }
   function clusterButton() { return doc.getElementById("mnWorldPlay"); }
   function slugOf(audio) {
     var src = audio && (audio.currentSrc || audio.src) || "", m = /\/([^\/?#]+)\.[a-z0-9]+(?:[?#]|$)/i.exec(src);
@@ -168,7 +177,7 @@
   function clusterState() {
     var p = player();
     if (!p) return {present:false, playing:false, loading:false, title:"", line:""};
-    var playing = !p.audio.paused && !p.audio.ended;
+    var playing = isPlaying(p);
     return {present:true, playing:playing, loading:p.access === "loading", title:String(p.title || "Your music").slice(0, 120), line:playing ? String(lyricLine || "").slice(0, 240) : ""};
   }
   function paintCluster(st) {
@@ -389,7 +398,7 @@
   }
   function toggle() {
     var p = player() || ensureTheme();
-    if (!p.audio.paused && !p.audio.ended) { pause(); return; }
+    if (isPlaying(p)) { pause(); return; }
     preference.paused = false; savePreference();
     try { audioSession(); var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
     paint();
@@ -426,11 +435,11 @@
       controls.hidden = attached || !p || !(open || IS_WORLD || p === theme) || (IS_WORLD && !attached && !!clusterButton());
       if (p) {
         doc.getElementById("mccWorldAudioTitle").textContent = p.title || "Your music";
-        var error = !!p.audio.error, playing = !p.audio.paused && !p.audio.ended;
-        /* a song in trouble on the way says so here too, never "Playing" over silence (music slice M3) */
+        var error = !!p.audio.error, playing = isPlaying(p);
+        /* a song in trouble on the way says so here too, in the player's own words ("Reconnecting…", "Connection lost ·
+           tap play", "Loading…", "Could not load · tap play"), never "Playing" over silence (music slice M3) */
         var trouble = p.delivery ? p.delivery() : "";
-        doc.getElementById("mccWorldAudioState").textContent = p.access === "loading" ? "Opening music…" :
-          trouble === "reconnecting" ? "Reconnecting…" : trouble === "lost" ? "Connection lost · tap play" : trouble === "loading" ? "Loading…" :
+        doc.getElementById("mccWorldAudioState").textContent = p.access === "loading" ? "Opening music…" : trouble ? trouble :
           error || p.access === "unavailable" ? "Unable to play · try again" : p.audio.muted ? "Muted" : playing ? (p.access === "preview" ? "Preview playing" : "Playing") : "Paused";
         var b = controls.querySelector(".world-audio__play");
         b.disabled = p.access === "loading";

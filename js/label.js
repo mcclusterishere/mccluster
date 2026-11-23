@@ -390,7 +390,9 @@
       try { deck.volume = Math.max(0, left / 10000); } catch (e) {}
       if (left <= 0) {
         clearInterval(napTick);
-        deck.pause();
+        /* the page's own Pause: it also stops a song that is being picked up again after a dropped read, which a
+           plain deck.pause() on the already quiet deck did not (music slice M3, review PB-R2) */
+        if (window.MCC_NP_PAUSE) window.MCC_NP_PAUSE(); else deck.pause();
         try { deck.volume = 1; } catch (e) {}
         napAt = 0; napPaint(0);
         toast("The record tucked you in. Goodnight.");

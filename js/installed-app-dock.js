@@ -88,8 +88,11 @@
       html.setAttribute("data-app-player-surface", s.surface);
       dock.setAttribute("aria-label", "Sections and music controls");
       var title = dock.querySelector("[data-app-player='title']"), artist = dock.querySelector("[data-app-player='artist']");
-      title.textContent = s.title; artist.textContent = s.artist;
-      var info = dock.querySelector("[data-app-player='open']"), full = s.title + (s.artist ? " — " + s.artist : "");
+      /* the dock hides the player's own bar, so it says why the music is quiet in its place ("Reconnecting…",
+         "Connection lost · tap play", "Loading…", "Muted"; music slice M3, review RL-6) */
+      var line = s.status || s.artist;
+      title.textContent = s.title; artist.textContent = line;
+      var info = dock.querySelector("[data-app-player='open']"), full = s.title + (line ? " — " + line : "");
       info.title = full; info.setAttribute("aria-label", "Open player: " + full);
       var play = dock.querySelector("[data-app-player='play']");
       play.setAttribute("aria-label", s.playing ? "Pause music" : "Play music");

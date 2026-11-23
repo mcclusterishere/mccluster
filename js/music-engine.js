@@ -31,10 +31,17 @@
   var CREATOR_TRACKS = {};
   /* DELIVERY (music slice M3): what the listener wants, where the current source came from and when it
      lapses, and a song in trouble on the way (see "DELIVERY" below) */
-  var RETRY_MS = [500, 1500, 3500, 7500];      // all four inside the ten seconds iOS keeps a page awake after its sound stops (Inferred)
-  var LOADING_NOTE_MS = 1500, STALL_MS = 12000, PREFETCH_S = 20, REFRESH_EARLY_MS = 60000, LAPSE_MARGIN_MS = 10000, SHORT_END_S = 2;
+  /* The tries are timed from the moment the sound stopped, and every one starts inside ten seconds of it: WebKit's
+     source keeps an audible page awake for 10 s after its sound stops (WebPageProxy audibleActivityClearDelay) and lets
+     a hidden page start its sound again without a tap only within 10 s (MediaElementSession's grace period). What an
+     iPhone does is Inferred until Matthew's device row runs. A try still waiting when the next is due gives way to it;
+     the last has LAST_TRY_MS before "Connection lost". A song that has been heard and then goes silent for STALL_MS
+     with no progress is treated as a dropped read; before the first sound, a read is given FIRST_READ_MS. */
+  var RETRY_AT_MS = [500, 1500, 3000, 5500, 8500];
+  var LAST_TRY_MS = 3000, LOADING_NOTE_MS = 1500, STALL_MS = 4000, FIRST_READ_MS = 12000;
+  var PREFETCH_S = 20, REFRESH_EARLY_MS = 60000, LAPSE_MARGIN_MS = 10000, SHORT_END_S = 2;
   var wantPlay = false, grant = null, trouble = null, notice = null, noticeTimer = 0, prefetched = null;
-  var refreshTimer = 0, loadingTimer = 0, stallTimer = 0, progressAt = 0, lastGate = null;
+  var refreshTimer = 0, loadingTimer = 0, stallTimer = 0, progressAt = 0, playingFrom = -1, soundHeard = false, lastGate = null;
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
 
@@ -53,6 +60,7 @@
     if (opening) { playbackRequest++; currentAccess = "idle"; }
     audio.pause();
     paint();
+    troubleChanged();
   }
 
   function esc(x) {
@@ -98,7 +106,7 @@
             '<b id="musicMiniTitle">Nothing playing</b>' +
             '<span><span id="musicMiniAlbum"></span><em id="musicMiniAccess"></em></span>' +
             /* what happened to the music, in one short line (a dropped connection, a preview that ended) */
-            '<small class="music-mini__note" id="musicMiniNote" role="status" aria-live="polite" hidden></small>' +
+            '<small class="music-mini__note" id="musicMiniNote" hidden></small>' +
           '</span>' +
         '</button>' +
         '<span class="music-mini__time" id="musicMiniTime">0:00</span>' +
@@ -109,7 +117,11 @@
         '<button type="button" class="music-mini__play" id="musicMiniPlay" aria-label="Play">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>' +
         '</button>' +
-      '</div>';
+      '</div>' +
+      /* the same line, spoken: a live region inside a button is not read out (a button's children are presentational;
+         WebKit builds none for it), so the one the screen reader hears sits beside the row, out of sight */
+      '<p id="musicMiniLive" role="status" aria-live="polite" style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;' +
+        'overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0"></p>';
     doc.body.appendChild(p);
 
     var now = doc.createElement("section");
@@ -169,14 +181,12 @@
       if (!audio.duration || !isFinite(audio.duration)) return;
       var r = el.getBoundingClientRect();
       var at = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * audio.duration;
-      if (previewLimit) at = Math.min(at, previewLimit);
-      audio.currentTime = at;
+      at = seekTo(at);
       trackEvent("music_seek", { position_seconds: Math.round(at) });
     }
     doc.getElementById("musicMiniPlay").addEventListener("click", function () {
       if (!current) { if (held) resumeHeld(); return; }
-      if (audio.paused) resumeCurrent().catch(function () {});
-      else pauseCurrent();
+      toggle().catch(function () {});
     });
     doc.getElementById("musicMiniOpen").addEventListener("click", function () {
       if (!current && held) { resumeHeld().then(openNow); return; }
@@ -185,12 +195,11 @@
     doc.getElementById("musicMiniSeek").addEventListener("click", function (e) { seekFrom(this, e); });
     doc.getElementById("musicNowSeek").addEventListener("click", function (e) { seekFrom(this, e); });
     doc.getElementById("musicNowClose").addEventListener("click", closeNow);
-    doc.getElementById("musicMiniSound").addEventListener("click", unmute);
-    doc.getElementById("musicNowSound").addEventListener("click", unmute);
+    doc.getElementById("musicMiniSound").addEventListener("click", function () { unmuteFrom(this, "musicMiniPlay"); });
+    doc.getElementById("musicNowSound").addEventListener("click", function () { unmuteFrom(this, "musicNowPlay"); });
     doc.getElementById("musicNowPlay").addEventListener("click", function () {
       if (!current) return;
-      if (audio.paused) resumeCurrent().catch(function () {});
-      else pauseCurrent();
+      toggle().catch(function () {});
     });
     if (root.MCC_NOW_PLAYING && root.MCC_NOW_PLAYING.airplay) root.MCC_NOW_PLAYING.airplay(doc.getElementById("musicNowAirplay"), audio);
     doc.getElementById("musicNowPrev").addEventListener("click", function () { playAdjacent(-1); });
@@ -312,15 +321,16 @@
     var album = current.albumName || "";
     var accessLabel = currentAccess === "full" ? "Full track" :
       currentAccess === "preview" ? "Preview" : currentAccess === "loading" ? "Opening…" :
-      currentAccess === "unavailable" ? "Unavailable" : "";
+      currentAccess === "unavailable" ? "Unavailable" : currentAccess === "spent" ? "Play ended" : "";
     /* never "playing" over silence: what the delivery is doing comes first, then the music's own mute */
     var heard = currentAccess === "full" || currentAccess === "preview";
-    var troubleLabel = trouble && trouble.state === "reconnecting" ? "Reconnecting…" :
-      trouble && trouble.state === "lost" ? "Connection lost" : trouble && trouble.state === "loading" ? "Loading…" : "";
+    var troubleText = troubleLabel();
     var muted = heard && !!audio.muted;
-    if (heard && troubleLabel) accessLabel = troubleLabel;
+    if (heard && troubleText) accessLabel = troubleText;
     else if (muted) accessLabel = "Muted";
     var line = noticeLine();
+    /* the one button: Pause while the music plays or is being picked up again (Pause stops the tries), else Play */
+    var wanted = intendsPlay();
     var duration = audio.duration && isFinite(audio.duration) ? audio.duration : 0;
     var pct = duration ? Math.min(100, audio.currentTime / duration * 100) : 0;
 
@@ -342,18 +352,20 @@
 
     var access = doc.getElementById("musicMiniAccess");
     access.textContent = accessLabel;
-    access.className = "music-mini__access is-" + (heard && troubleLabel ? "trouble" : muted ? "muted" : (currentAccess || "idle"));
+    access.className = "music-mini__access is-" + (heard && troubleText ? "trouble" : muted ? "muted" : (currentAccess || "idle"));
     var miniNote = doc.getElementById("musicMiniNote");
     if (miniNote) { miniNote.textContent = line; miniNote.hidden = !line; }
+    var live = doc.getElementById("musicMiniLive");
+    if (live && live.textContent !== line) live.textContent = line;   // spoken once per change, not on every tick
     var miniSound = doc.getElementById("musicMiniSound");
     if (miniSound) miniSound.hidden = !muted;
     doc.getElementById("musicMiniTime").textContent =
       fmt(audio.currentTime) + " / " + (duration ? fmt(duration) : "--:--");
     doc.getElementById("musicMiniFill").style.width = pct + "%";
-    doc.getElementById("musicMiniPlay").innerHTML = audio.paused
+    doc.getElementById("musicMiniPlay").innerHTML = !wanted
       ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>'
       : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
-    doc.getElementById("musicMiniPlay").setAttribute("aria-label", audio.paused ? "Play" : "Pause");
+    doc.getElementById("musicMiniPlay").setAttribute("aria-label", wanted ? "Pause" : "Play");
 
     var now = doc.getElementById("musicNow");
     if (now) {
@@ -368,7 +380,7 @@
         currentAccess === "full" ? "Full playback" : accessLabel;
       var nAccess = doc.getElementById("musicNowAccess");
       nAccess.textContent = accessLabel;
-      nAccess.className = "music-now__access is-" + (heard && troubleLabel ? "trouble" : muted ? "muted" : (currentAccess || "idle"));
+      nAccess.className = "music-now__access is-" + (heard && troubleText ? "trouble" : muted ? "muted" : (currentAccess || "idle"));
       var nowNote = doc.getElementById("musicNowNote");
       if (nowNote) { nowNote.textContent = line; nowNote.hidden = !line; }
       var nowSound = doc.getElementById("musicNowSound");
@@ -376,10 +388,10 @@
       doc.getElementById("musicNowFill").style.width = pct + "%";
       doc.getElementById("musicNowT0").textContent = fmt(audio.currentTime);
       doc.getElementById("musicNowT1").textContent = duration ? "-" + fmt(Math.max(0, duration - audio.currentTime)) : "-:--";
-      doc.getElementById("musicNowPlay").innerHTML = audio.paused
+      doc.getElementById("musicNowPlay").innerHTML = !wanted
         ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>'
         : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
-      doc.getElementById("musicNowPlay").setAttribute("aria-label", audio.paused ? "Play" : "Pause");
+      doc.getElementById("musicNowPlay").setAttribute("aria-label", wanted ? "Pause" : "Play");
       var detail = doc.getElementById("musicNowDetail");
       if (current.creatorTrackId && current.handle) {
         detail.href = "music-creator.html?handle=" + encodeURIComponent(current.handle);
@@ -398,10 +410,10 @@
       var same = creatorId
         ? current && String(current.creatorTrackId || "") === String(creatorId)
         : current && key(b.getAttribute("data-album"), b.getAttribute("data-track")) === key(current.albumSlug, current.title);
-      b.classList.toggle("is-playing", same && !audio.paused);
-      b.setAttribute("aria-pressed", same && !audio.paused ? "true" : "false");
+      b.classList.toggle("is-playing", same && wanted);
+      b.setAttribute("aria-pressed", same && wanted ? "true" : "false");
     });
-    root.dispatchEvent(new CustomEvent("mcc:music-state", {detail:{title:current.title, access:currentAccess, playing:!audio.paused}}));
+    root.dispatchEvent(new CustomEvent("mcc:music-state", {detail:{title:current.title, access:currentAccess, playing:wanted}}));
   }
 
   function announceSelection() {
@@ -417,20 +429,17 @@
       return current.creatorTrackId ? openCreatorTrack(current.creatorTrackId, true) : openTrack(current.albumSlug, current.title, true);
     }
     wantPlay = true;
-    /* an earned play paused past its time is over: say so; the next tap claims a new play, never this one */
-    if (grant && grant.kind === "gated" && lapsed(grant)) { playEnded(); return Promise.resolve({ state: "spent" }); }
-    /* a song that stopped on the way picks up where it stopped, at once */
+    /* an earned play paused past its time is over: say so (nothing dropped); the next tap claims a new play, never this one */
+    if (grant && grant.kind === "gated" && lapsed(grant)) { playEnded("paused"); return Promise.resolve({ state: "spent" }); }
+    /* a song that stopped on the way picks up where it stopped, at once, and the tries start again from this tap */
     if (trouble && (trouble.state === "lost" || trouble.state === "reconnecting")) {
-      trouble.timer = cancel(trouble.timer);
-      trouble.attempt = 0;
-      trouble.explicit = true;
-      retry(current, playbackRequest);
+      tryAgainNow();
       return Promise.resolve({ state: currentAccess });
     }
     /* a creator's signed URL that lapsed while paused is signed again first, through its own resolver */
     if (grant && grant.kind === "creator" && lapsed(grant)) {
-      trouble = { state: "reconnecting", at: Math.max(0, audio.currentTime || 0), attempt: 1, timer: 0 };
-      retry(current, playbackRequest);
+      trouble = { state: "reconnecting", at: Math.max(0, audio.currentTime || 0), attempt: 0, timer: 0, since: now(), heard: true, seq: 0 };
+      tryAgainNow();
       return Promise.resolve({ state: currentAccess });
     }
     audioSession();
@@ -645,7 +654,14 @@
       pause: pauseCurrent,
       previous: function () { return playAdjacent(-1); },
       next: function () { return playAdjacent(1); },
-      seek: function (t) { audio.currentTime = previewLimit ? Math.min(t, previewLimit) : t; }
+      seek: function (t) { seekTo(t); },
+      /* a song being picked up again is quiet while the listener still wants it: the lock screen offers Pause, which
+         stops the tries; and the installed app's dock, which hides this mini player, says why it is quiet */
+      playing: intendsPlay,
+      status: function () {
+        var l = statusLine();
+        return l || ((currentAccess === "full" || currentAccess === "preview") && audio.muted ? "Muted" : "");
+      }
     });
     return nowPlaying;
   }
@@ -777,7 +793,7 @@
   });
   audio.addEventListener("pause", function () { paint(); syncNowFilm(false); });
   audio.addEventListener("loadedmetadata", function () { paint(); syncNowFilm(true); });
-  audio.addEventListener("volumechange", paint);
+  audio.addEventListener("volumechange", function () { paint(); troubleChanged(); });
   audio.addEventListener("timeupdate", function () {
     if (granted()) grantMax = Math.max(grantMax, audio.currentTime);
     if (previewLimit && audio.currentTime >= previewLimit) {
@@ -792,6 +808,7 @@
       return;
     }
     if (!audio.paused && audio.currentTime > progressAt + .25) { progressAt = audio.currentTime; moving(); }
+    if (!audio.paused && playingFrom >= 0 && audio.currentTime > playingFrom + .25) soundHeard = true;
     if (trouble && !trouble.state && audio.currentTime > trouble.at + 5) trouble = null;   // played on for a while: recovered
     maybePrefetch();
     paint();
@@ -823,23 +840,28 @@
   });
   audio.addEventListener("waiting", function () {
     if (audio.paused || !current || !wantPlay || !grant) return;
+    if (trouble && trouble.state === "reconnecting") return;   // a try in flight has its own deadline
     quietWatch();
-    var at = audio.currentTime || 0, item = current, request = playbackRequest;
+    var at = audio.currentTime || 0, item = current, request = playbackRequest, since = now(), heard = heardNow();
     loadingTimer = later(function () {
       loadingTimer = 0;
       if (request !== playbackRequest || current !== item || audio.paused || trouble) return;
       trouble = { state: "loading", at: at, attempt: 0, timer: 0 };
-      paint();
+      paint(); troubleChanged();
     }, LOADING_NOTE_MS);
     stallTimer = later(function () {
       stallTimer = 0;
       if (request !== playbackRequest || current !== item || audio.paused) return;
-      if ((audio.currentTime || 0) <= at + .25) deliveryFailed("stalled");
-    }, STALL_MS);
+      /* the silence began at the wait: the tries are timed from there (before the first sound, from now) */
+      if ((audio.currentTime || 0) <= at + .25) deliveryFailed("stalled", heard ? since : 0);
+    }, heard ? STALL_MS : FIRST_READ_MS);
   });
   audio.addEventListener("playing", function () {
     quietWatch();
-    if (trouble && trouble.state) { trouble.state = ""; trouble.timer = cancel(trouble.timer); say(""); }
+    playingFrom = audio.currentTime || 0;
+    /* a slow read that came is nothing to keep; a song picked up again is watched for a few seconds more */
+    if (trouble && trouble.state === "loading") { trouble = null; troubleChanged(); }
+    else if (trouble && trouble.state) { trouble.state = ""; trouble.timer = cancel(trouble.timer); say(""); troubleChanged(); }
     paint();
   });
 
@@ -858,7 +880,17 @@
          waits, then stops and says how to pick it up;
        - is never counted as finished, and a song that "ends" short of
          its own length is treated as cut off;
-       - loses to the listener: Pause or another song cancels a retry.
+       - loses to the listener: Pause or another song cancels a retry,
+         and while it is being picked up the one button is Pause (the
+         lock screen too), so the tries can always be stopped;
+       - follows a second the listener chooses on the way;
+       - tells the truth: a song that never started is not called a
+         dropped connection.
+     The tries are timed from the moment the sound stopped and all start
+     inside ten seconds of it (see RETRY_AT_MS above); a try whose read
+     never answers gives way to the next on time, and a try the browser
+     refuses to start (a hidden page may need a tap) stops the tries and
+     says how to pick the song up.
      An earned play whose time ran out, or whose claim never answered,
      is never claimed again by this file: the listener is told, and a
      new play only ever starts from their tap. A creator's signed URL is
@@ -875,8 +907,21 @@
   function quietWatch() { loadingTimer = cancel(loadingTimer); stallTimer = cancel(stallTimer); }
   function moving() {
     quietWatch();
-    if (trouble && trouble.state === "loading") { trouble = null; paint(); }
+    if (trouble && trouble.state === "loading") { trouble = null; paint(); troubleChanged(); }
   }
+  /* has this song been heard: it moved on after it started playing, or it has metadata and a position past the start */
+  function heardNow() { return soundHeard || (audio.readyState >= 1 && (audio.currentTime || 0) > 0); }
+  /* what the listener asked for: playing, or a song in trouble being picked up again (the element is quiet then) */
+  function intendsPlay() { return !audio.paused || !!(wantPlay && trouble && trouble.state === "reconnecting"); }
+  /* the transport's one button (the mini player, the Now sheet): Pause while the music plays or is being picked up
+     again, which stops the tries; else Play */
+  function toggle() {
+    if (!current) return Promise.resolve(null);
+    if (intendsPlay()) { pauseCurrent(); return Promise.resolve({ state: currentAccess }); }
+    return Promise.resolve(resumeCurrent());
+  }
+  /* the lock screen and the installed app's dock follow the trouble too (js/now-playing.js) */
+  function troubleChanged() { var h = bindNowPlaying(); if (h) h.update(); }
   /* one short line under the title: for the song it names ({ item }) or for a few seconds ({ ms }) */
   function say(text, opts) {
     noticeTimer = cancel(noticeTimer);
@@ -888,7 +933,39 @@
     if (!notice || (notice.item && notice.item !== current)) return "";
     return notice.text;
   }
-  function lostLine() { return "The connection dropped. Tap play to pick up at " + fmt(trouble ? trouble.at : audio.currentTime) + "."; }
+  /* what the trouble is called: a song that was heard was cut off on the way; one that never started could not load
+     (a missing or unreadable file, or no network at all: the page cannot tell which, so it names neither) */
+  function troubleLabel() {
+    var st = trouble && trouble.state;
+    if (!st) return "";
+    if (st === "loading") return "Loading…";
+    if (st === "reconnecting") return trouble.heard ? "Reconnecting…" : "Loading…";
+    return trouble.heard ? "Connection lost" : "Could not load";
+  }
+  /* the same, in a few words for a surface with no line of its own (the World's transport, the installed app's dock) */
+  function statusLine() { var l = troubleLabel(); return l && trouble.state === "lost" ? l + " · tap play" : l; }
+  function reconnectingLine() {
+    if (trouble && !trouble.heard) return "This song would not load. Trying again…";
+    var at = fmt(trouble ? trouble.at : audio.currentTime);
+    return trouble && trouble.moved ? "Picking up at " + at + "…" : "The connection dropped at " + at + ". Picking up there…";
+  }
+  function lostLine() {
+    if (trouble && !trouble.heard) return "This song could not load. Tap play to try again.";
+    return "The connection dropped. Tap play to pick up at " + fmt(trouble ? trouble.at : audio.currentTime) + ".";
+  }
+  /* a second the listener chooses (the seek bars, the lock screen's scrubber) is where the song picks up: during the
+     trouble the next try reads from there, or Play does once the tries gave up (the one earned pass never rewinds) */
+  function seekTo(t) {
+    t = Math.max(0, Number(t) || 0);
+    if (previewLimit) t = Math.min(t, previewLimit);
+    try { audio.currentTime = t; } catch (e) {}
+    if (trouble && (trouble.state === "reconnecting" || trouble.state === "lost")) {
+      if (granted() && t < grantMax - 0.75) t = grantMax;
+      trouble.at = t; trouble.moved = true;
+      say(trouble.state === "lost" ? lostLine() : reconnectingLine(), { item: current });
+    }
+    return t;
+  }
   function previewLine(item) {
     var title = item && item.title ? item.title : "this song";
     var why = "";
@@ -900,7 +977,7 @@
   function resetDelivery() {
     quietWatch();
     if (trouble) trouble.timer = cancel(trouble.timer);
-    trouble = null; grant = null; progressAt = 0;
+    trouble = null; grant = null; progressAt = 0; playingFrom = -1; soundHeard = false;
     refreshTimer = cancel(refreshTimer);
     if (notice && notice.item) say("");
   }
@@ -933,41 +1010,82 @@
       if (fresh.expiresAt) scheduleRefresh(g);
     }).catch(function () {});
   }
-  function deliveryFailed(why) {
+  function deliveryFailed(why, since) {
     if (!current || !grant || grant.request !== playbackRequest || grant.item !== current) return false;
     if (currentAccess !== "full" && currentAccess !== "preview") return false;
     quietWatch();
-    var at = Math.max(0, audio.currentTime || 0);
-    if (!trouble || trouble.state === "loading") trouble = { state: "", at: at, attempt: 0, timer: 0 };
-    else trouble.at = Math.max(trouble.at, at);
-    trouble.timer = cancel(trouble.timer);
-    if (!audio.paused) audio.pause();                          // never playing over silence
-    trackEvent("music_interrupted", { reason: why, at_s: Math.round(trouble.at), attempt: trouble.attempt, path: grant.kind });
-    if (grant.kind === "gated" && lapsed(grant)) { playEnded(); return true; }
-    if (!wantPlay) { trouble.state = "lost"; paint(); return true; }   // the listener paused: Play picks it up here
-    if (trouble.attempt >= RETRY_MS.length) {
-      trouble.state = "lost";
-      say(lostLine(), { item: current });
-      return true;
+    var at = Math.max(0, audio.currentTime || 0), t = now();
+    if (!trouble || trouble.state === "loading" || !trouble.since) trouble = { state: "", at: at, attempt: 0, timer: 0, since: since || t, heard: heardNow(), seq: 0 };
+    else {
+      trouble.at = Math.max(trouble.at, at);
+      if (!trouble.state) trouble.since = since || t;          // it played again, then stopped: the ten seconds start again
     }
-    trouble.state = "reconnecting";
-    var item = current, request = playbackRequest, wait = RETRY_MS[trouble.attempt];
-    trouble.attempt++;
-    trouble.timer = later(function () { if (trouble) trouble.timer = 0; retry(item, request); }, wait);
-    say("The connection dropped at " + fmt(trouble.at) + ". Picking up there…", { item: current });
+    trouble.timer = cancel(trouble.timer);
+    if (!audio.paused) audio.pause();                          // the element is quiet (the label says why)
+    trackEvent("music_interrupted", { reason: why, at_s: Math.round(trouble.at), attempt: trouble.attempt, path: grant.kind });
+    if (grant.kind === "gated" && lapsed(grant)) { playEnded("dropped"); return true; }
+    if (!wantPlay) { trouble.state = "lost"; paint(); troubleChanged(); return true; }   // the listener paused: Play picks it up here
+    scheduleTry();
     return true;
   }
-  function retry(item, request) {
+  /* the next try, at its time from the moment the sound stopped; a time already past is not made up for (one try at
+     once, never a burst); after the last, the song stops and says how to pick it up */
+  function scheduleTry() {
+    var elapsed = now() - trouble.since, k = trouble.attempt;
+    while (k + 1 < RETRY_AT_MS.length && RETRY_AT_MS[k + 1] <= elapsed) k++;
+    if (k >= RETRY_AT_MS.length) {
+      trouble.state = "lost";
+      say(lostLine(), { item: current });
+      troubleChanged();
+      return;
+    }
+    trouble.state = "reconnecting";
+    trouble.attempt = k + 1;
+    var item = current, request = playbackRequest;
+    trouble.timer = later(function () { if (trouble) trouble.timer = 0; retry(item, request, k); }, Math.max(0, RETRY_AT_MS[k] - elapsed));
+    say(reconnectingLine(), { item: current });
+    troubleChanged();
+  }
+  /* Play (or the World's transport, or the lock screen) on a song in trouble: a try at once, the tries timed from this tap */
+  function tryAgainNow() {
+    trouble.timer = cancel(trouble.timer);
+    trouble.state = "reconnecting";
+    trouble.attempt = 1;
+    trouble.since = now();
+    say(reconnectingLine(), { item: current });
+    troubleChanged();
+    retry(current, playbackRequest, 0);
+  }
+  function retry(item, request, k) {
     if (!trouble || request !== playbackRequest || current !== item || !wantPlay) return;
+    var seq = ++trouble.seq;
+    /* a try whose read never answers gives way to the next one on time; the last is given LAST_TRY_MS */
+    var due = k + 1 < RETRY_AT_MS.length ? RETRY_AT_MS[k + 1] : RETRY_AT_MS[RETRY_AT_MS.length - 1] + LAST_TRY_MS;
+    trouble.timer = cancel(trouble.timer);
+    trouble.timer = later(function () {
+      if (!trouble || trouble.seq !== seq || request !== playbackRequest || current !== item) return;
+      trouble.timer = 0;
+      if (trouble.state === "reconnecting") deliveryFailed("stalled");
+    }, Math.max(0, due - (now() - trouble.since)));
     Promise.resolve(sourceAgain(item)).then(function (got) {
-      if (!trouble || request !== playbackRequest || current !== item || !wantPlay) return;
+      if (!trouble || trouble.seq !== seq || request !== playbackRequest || current !== item || !wantPlay) return;
       if (got && got.failed) { deliveryFailed("resolve"); return; }
       if (!got || !got.url) return;                           // already said and settled (an ended play, a preview)
       audio.src = got.url;
       try { audio.currentTime = trouble.at; } catch (e) {}    // a ranged read from the second it stopped
       audioSession();
       var p = audio.play();
-      if (p && p.catch) p.catch(function () {});              // a failed load reports itself as an error event
+      if (p && p.catch) p.catch(function (err) {
+        /* a hidden page may need a tap to start its sound again (WebKit refuses a play() then): stop trying and say
+           how to pick it up. Any other refusal (a failed load) reports itself as an error event, and the deadline
+           above covers one that does not. */
+        if (!err || err.name !== "NotAllowedError") return;
+        if (!trouble || trouble.seq !== seq || current !== item || trouble.state !== "reconnecting") return;
+        trouble.timer = cancel(trouble.timer);
+        trouble.state = "lost";
+        say(lostLine(), { item: current });
+        paint(); troubleChanged();
+      });
       paint();
     });
   }
@@ -976,7 +1094,7 @@
     var g = grant;
     if (!g) return null;
     if (g.kind === "gated") {
-      if (lapsed(g)) { playEnded(); return null; }
+      if (lapsed(g)) { playEnded("dropped"); return null; }
       return { url: g.url };
     }
     if (g.kind !== "creator") return { url: g.url };
@@ -1008,16 +1126,21 @@
     audioSession();
     var p = audio.play();
     if (p && p.catch) p.catch(function () {});
+    troubleChanged();
   }
-  /* an earned play whose time ran out: over, said, never claimed again by itself */
-  function playEnded() {
+  /* an earned play whose time ran out: over, said, never claimed again by itself. Run out while it was paused, nothing
+     dropped, and the line does not say so */
+  function playEnded(why) {
     if (trouble) trouble.timer = cancel(trouble.timer);
     trouble = null;
     currentAccess = "spent";
     grant = null;
+    wantPlay = false;
     if (!audio.paused) audio.pause();
     if (root.MCC_GATED) root.MCC_GATED.forget();
-    say("The connection dropped and this play's time ran out. Playing it again starts a new play.", { item: current });
+    say(why === "paused" ? "This play's time ran out while it was paused. Playing it again starts a new play."
+      : "The connection dropped and this play's time ran out. Playing it again starts a new play.", { item: current });
+    troubleChanged();
   }
   function endedShort() {
     var d = audio.duration;
@@ -1056,13 +1179,25 @@
     var slot = prefetched;
     if (!slot || !(slot.item === t || sameItem(slot.item, t))) return null;
     prefetched = null;
-    if (!slot.promise || slot.account !== accountKey()) return null;
-    var out = slot.out, life = out && Number(out.expiresIn) || 0;
-    if (out && life && now() >= slot.at + life * 1000 - LAPSE_MARGIN_MS) return null;
-    return slot.promise;
+    var account = accountKey();
+    if (!slot.promise || slot.account !== account) return null;
+    /* only a full answer with its address is kept, and only while it has time left; anything else (a network blip that
+       came back as the preview, a refusal) is asked again now, through the same entitlement check */
+    return slot.promise.then(function (out) {
+      var life = out && Number(out.expiresIn) || 0;
+      if (!out || out.state !== "full" || !out.url || accountKey() !== account) return creatorSourceFor(t);
+      if (life && now() >= slot.at + life * 1000 - LAPSE_MARGIN_MS) return creatorSourceFor(t);
+      return out;
+    }, function () { return creatorSourceFor(t); });
   }
   if (root.MCC && root.MCC.onAccountChange) root.MCC.onAccountChange(function () { prefetched = null; });
-  function unmute() { audio.muted = false; paint(); }
+  function unmute() { audio.muted = false; paint(); troubleChanged(); }
+  /* the Unmute button goes as the sound comes back: the keyboard stays in the player, on its Play/Pause */
+  function unmuteFrom(button, next) {
+    var had = doc.activeElement === button;
+    unmute();
+    if (had) { var to = doc.getElementById(next); if (to && to.focus) to.focus(); }
+  }
 
   doc.addEventListener("click", function (e) {
     var b = e.target && e.target.closest ? e.target.closest("[data-music-play]") : null;
@@ -1179,7 +1314,12 @@
     current: function () { return current; },
     access: function () { return currentAccess; },
     refreshAccess: upgradeCurrent,
-    delivery: function () { return { state: trouble ? trouble.state || "recovering" : "", at: trouble ? trouble.at : null, path: grant ? grant.kind : null, note: noticeLine() }; },
+    delivery: function () {
+      return { state: trouble ? trouble.state || "recovering" : "", at: trouble ? trouble.at : null, path: grant ? grant.kind : null, note: noticeLine(),
+        label: troubleLabel(), status: statusLine(), heard: trouble ? !!trouble.heard : null, playing: intendsPlay() };
+    },
+    playing: intendsPlay,
+    toggle: toggle,
     unmute: unmute
   };
 })(window);
