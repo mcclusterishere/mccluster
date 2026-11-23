@@ -208,6 +208,17 @@ fails. Every new test file must be run by a CI workflow job.
 
 ## Status (updated at the end of the earlier session)
 
-- Release 1: not yet confirmed (see GitHub).
-- Release dock fix: not yet confirmed.
-- Music quick wins: not yet confirmed.
+Every piece of work is on GitHub as a branch with a pull request (2026-11-23, about 21:40 UTC):
+
+| Work | Branch | Pull request | State |
+| --- | --- | --- | --- |
+| Release 1 | `claude/release-20261123` (at `22bfd37d` when opened) | #825 to `main`, draft | Ready except the dock fix. Merge when the dock fix has joined and CI is green (section 3.A). |
+| Release 1 dock fix | `claude/wip-release-dock-fix` | #827 to `claude/release-20261123`, draft | In progress: tests being written, then the fix (section 3.A.2). |
+| Music quick wins | `claude/wip-music-quick-wins` | #826 to `claude/new-session-83ken5`, draft | Built and self-tested, not reviewed (section 3.B). |
+| Creator Studio publishing | `claude/wip-creator-studio-publish` | #828, draft | Unfinished (2026-11-19). |
+| Project Drawdown source page | `claude/wip-drawdown-source-page` | #829, draft | Unfinished (2026-11-19). |
+| Environmental timeline S6 | `claude/wip-eup-timeline-s6` | #830, draft | Unfinished (2026-11-19). |
+| Platform move P0 | none | none | Not started; nothing was pushed. |
+
+The earlier session pushes newer snapshots to these branches while its usage lasts. If a branch is behind what a
+pull request describes, the branch wins.
