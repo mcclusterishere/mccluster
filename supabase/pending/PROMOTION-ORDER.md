@@ -493,9 +493,11 @@ visitor's `GET https://api.mccluster.org/v1/world/environment/events?limit=20` s
 1. **The USGS rule**: Matthew, in his signed-in Control session, System > E=Up > Environmental events > Sources, "Set the
    default rule" (the owner command of part 04, with its reason, the revision read and an idempotency key). The default
    admits magnitude 4.5 and up, automatic readings included, or significance over 600, a PAGER alert or a tsunami flag.
-2. **The ingest switch**: the Worker variable `EUP_ENVIRONMENT_USGS_INGEST_ENABLED`, committed `"false"` in
-   `workers/mccluster/wrangler.toml`. Turning it on is a pull request, its merge and a Worker deploy; the existing
-   five-minute cron then runs the ingest.
+2. **The ingest switch ships on in Release 1 of 2026-11-23.** Matthew: "Switching the module on for sure, alright?" and,
+   for that release, "ship it all baby". The release commits the Worker variable `EUP_ENVIRONMENT_USGS_INGEST_ENABLED` as
+   `"true"` in `workers/mccluster/wrangler.toml` (it was `"false"` until then), so its merge and Worker deploy turn it on and
+   the existing five-minute cron runs the ingest. With no rule (item 1) the ingest asks nothing: each run reads the store's
+   view once and stops, with no USGS request and nothing stored. The rule can come before or after the deploy.
 3. Verify a durable source-health row (Sources) and the owner preview (Preview) before the module.
 4. **The module**: System > E=Up > Overview > Modules > Environment, Install (it starts disabled), then Enable, each with a
    reason. Only then does the public timeline answer.
