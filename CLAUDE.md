@@ -12,10 +12,10 @@ You are in the McCluster ecosystem. `AGENTS.md` is the law; this file is the sto
 8. Do not rewrite `index.html` or revive rejected visual systems.
 9. If you were about to create a new backend or a Worker named `mccluster-core`: stop. That Worker does not exist. The canonical API Worker is `mccluster`; the stateless `mccluster-mcp` transport shares its authority (see CANONICAL-ARCHITECTURE.md).
 
-Two public properties, two entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`):
-`https://matthew.mccluster.org` is **Matthew McCluster's** property (GitHub Pages, this repo);
-`https://mccluster.org` is **McCluster Corp's** property (Worker `mccluster`, host-routed once the owner routes the apex): its root is the Equity Uprise World, the company's platform (owner, 2026-10-15); **the public brand is Equity Uprise, not Human Uprise** (owner, 2026-10-28), and the company page is `/company`. They are not the same site and not the same entity.
-`https://humanuprise.com` is a legacy-named door to the World, a **McCluster Corp** host (the same entity as `mccluster.org`, never a third one), served by Worker `mccluster` by host (`workers/mccluster/src/human-uprise/router.js`) and inert until the owner routes it (until then the World's door is `mccluster.org`); everything that is not the World 301s to `matthew.mccluster.org`.
+One platform, tenant properties, separate entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`). Stage now: P0, prepared; nothing is served differently (`data/seo/domain-architecture.json` → `stage_now`); P1-P3 are planned, not shipped.
+`https://mccluster.org` is **McCluster Corp's** platform (Worker `mccluster` by host; set in one place, `data/seo/domain-architecture.json` → `platform.origin`, which `tools/build-site-hosts.mjs` writes everywhere): its root is the Equity Uprise World (owner, 2026-10-15); **the public brand is Equity Uprise, not Human Uprise** (owner, 2026-10-28), and the company page is `/company`. From P1 it serves the whole site: music, albums, artists, Creator Studio and the account (owner, 2026-11-23). `https://equityuprise.com` becomes the platform later by changing that one setting (owner, 2026-11-23).
+`https://matthew.mccluster.org` is **Matthew McCluster's** personal profile, a tenant of the platform (GitHub Pages, this repo; McCluster is his artist name, the same Person). Today it serves every page; from P3 its pages that moved answer 301 to the platform. Hosting is not identity: the two are not the same entity.
+`https://humanuprise.com` is a legacy-named door to the World, a **McCluster Corp** host (the same entity as `mccluster.org`, never a third one), served by Worker `mccluster` by host (`workers/mccluster/src/human-uprise/router.js`) and inert until the owner routes it (until then the World's door is `mccluster.org`); once routed it answers 301 to the platform (owner default, 2026-11-23; the router change lands with P1).
 API Worker: `mccluster` on `https://api.mccluster.org`.
 Source: `workers/mccluster`.
 
@@ -24,7 +24,7 @@ Source: `workers/mccluster`.
 
 12. **Mobile first, responsive up.** Anything built from a Mobbin reference, or any reference, is designed at phone width first and then given room on tablet and desktop. Breakpoints only ADD; they never hide what the phone was shown. `min-width` queries only, `minmax(0,1fr)` never a bare `1fr`, form controls at `max(16px,…)`, never `user-scalable=no`. Verify by rendering at 390px and checking `scrollWidth === clientWidth`. Full rule and the reasons: `AGENTS.md` → Hard rules → 14.
 
-13. **Never collapse McCluster Corp and Matthew McCluster.** Company-first metadata on `mccluster.org`, Matthew-first on `matthew.mccluster.org` (the I AM HERE album is a front door there, not the identity). Whip Equipped LLC is Matthew's separate company, not a McCluster Corp brand; PRIM3 is McCluster Corp's learning product. Keep stable `@id`s; the Organization's `url` is `https://mccluster.org/`. Read `docs/control-plane/DOMAINS-AND-ENTITIES.md` and `data/seo/domain-architecture.json` before touching either property's metadata, structured data or navigation.
+13. **Never collapse McCluster Corp and Matthew McCluster.** What the platform shows as its own carries McCluster Corp's metadata (today its root and `/company`; every platform page from P2; Organization `url` `https://mccluster.org/`); Matthew's profile pages are Matthew-first wherever they are shown, with their canonical on `matthew.mccluster.org` (the I AM HERE album is a front door there, not the identity). Whip Equipped LLC is Matthew's separate company, not a McCluster Corp brand; PRIM3 is McCluster Corp's learning product. Keep stable `@id`s; the Organization's `url` is `https://mccluster.org/`. Read `docs/control-plane/DOMAINS-AND-ENTITIES.md` and `data/seo/domain-architecture.json` before touching the platform's or a tenant's metadata, structured data or navigation.
 
 ## The plane
 
@@ -34,8 +34,8 @@ Source: `workers/mccluster`.
 | Cloudflare project + Worker: public edge and API `https://api.mccluster.org` (`mccluster-mcp` is its stateless MCP transport) | `mccluster`, source `workers/mccluster` |
 | Supabase (shared durable truth) | `zmnhbrjyhxzhkxmhkexs` |
 | Persistent execution | OVH McCluster Core from `core/`, promoted through `deploy/ovh-production`: not a Worker, not a second backend |
-| Matthew McCluster's property | `https://matthew.mccluster.org` (GitHub Pages, this repo) |
-| McCluster Corp's property | `https://mccluster.org` (Worker `mccluster` by host once routed); `https://humanuprise.com` is a McCluster Corp host too |
+| McCluster Corp's platform | `https://mccluster.org`, set in one place (`data/seo/domain-architecture.json` → `platform.origin`), Worker `mccluster` by host: the World and `/company` today (stage P0), the whole site from P1; `https://humanuprise.com` is a McCluster Corp door too |
+| Matthew McCluster's profile | `https://matthew.mccluster.org` (GitHub Pages, this repo): a tenant of the platform; from P3 the pages that moved answer 301 to the platform |
 
 There is no Worker named `mccluster-core`. Do not create one.
 
@@ -55,7 +55,7 @@ There is no Worker named `mccluster-core`. Do not create one.
 12. `mcclusterishere/Here` is dead.
 13. Canonical AI name: McCluster.
 14. Mobile first, responsive up.
-15. Two properties, two entities. Never collapse them.
+15. One platform, tenant properties, separate entities. Never collapse them.
 
 ## Local product gates (control repo only; satellites do not copy these)
 

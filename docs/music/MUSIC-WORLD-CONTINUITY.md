@@ -13,6 +13,14 @@ document from `https://mccluster.org/` in a frame. The World host keeps its own
 origin, canonical metadata and M Account session. It is not copied into the
 personal property's DOM, and no product identity or host routing changes.
 
+That frame is cross-origin today because Music runs on Matthew's host and the World
+on the platform (stage P0 of the one-platform plan,
+`docs/control-plane/DOMAINS-AND-ENTITIES.md`; the World's origin comes from
+`window.MCC_SITE`, the generated block at the top of `js/shell-boot.js`, once this
+file leaves `scripts/test/site-hosts-pending/engine.json`). From P1 the platform serves
+Music too, so on the platform the frame is same-origin; the bridge keeps its exact
+origin, window and nonce checks either way.
+
 The parent's address adds `world=1` to the existing Music URL and its history
 state records the clean World destination. Browser Back/Forward changes the
 visible surface without replacing the Music document. The source, buffered

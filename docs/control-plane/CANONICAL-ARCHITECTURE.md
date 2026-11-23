@@ -25,16 +25,16 @@ Activation is a reviewed deployment, separate from implementing this extraction.
 
 ## Public properties
 
-Two public web properties, two entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`,
-`data/seo/domain-architecture.json`):
+One platform, tenant properties, separate entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`,
+`data/seo/domain-architecture.json`). Stage now: P0, prepared; nothing is served differently.
 
-| Host | Entity | Served by |
-| --- | --- | --- |
-| `matthew.mccluster.org` | Matthew McCluster (Person) | GitHub Pages from this repository |
-| `mccluster.org` | McCluster Corp (Organization) | Worker `mccluster`, host-routed: the Equity Uprise World at `/` (the company's platform, passed through from Matthew's property via `workers/mccluster/src/world-host.js`; owner, 2026-10-15), the company page at `/company` generated from `data/seo/company-site.json`; every other path keeps a 301 to `matthew.mccluster.org` |
-| `humanuprise.com` | McCluster Corp (Organization) | Worker `mccluster`, host-routed: the Equity Uprise World experience from `workers/mccluster/src/human-uprise`; other paths redirect to `matthew.mccluster.org` |
+| Host | Role | Entity | Served by |
+| --- | --- | --- | --- |
+| `mccluster.org` | the platform, set in one place (`platform.origin`; `equityuprise.com` at stage F) | McCluster Corp (Organization) | Worker `mccluster`, host-routed: today the Equity Uprise World at `/` (passed through from the static files via `workers/mccluster/src/world-host.js`; owner, 2026-10-15), the company page at `/company` generated from `data/seo/company-site.json`, and a 301 to `matthew.mccluster.org` for every other path; from P1 every page, path for path |
+| `matthew.mccluster.org` | a tenant: Matthew's personal profile | Matthew McCluster (Person) | GitHub Pages from this repository; from P3 Worker `mccluster` by host, with the pages that moved answering 301 to the platform |
+| `humanuprise.com` | a door | McCluster Corp (Organization) | Worker `mccluster`, host-routed (`workers/mccluster/src/human-uprise`): built and inert until the owner routes it; once routed, 301 to the platform (owner default of 2026-11-23; with P1) |
 
-Serving the company and Equity Uprise hosts is public ingress and routing inside the one Worker; it adds no Worker, store or identity. The company host is inert until the owner routes `mccluster.org/*` to the Worker and narrows the zone redirect rule; until then the World's door in the bar bounces through Matthew's root. The Equity Uprise door remains inert until the owner routes `humanuprise.com/*` to the Worker. Equity Uprise shares the M Account identity spine and canonical Supabase project, not a second login system.
+Serving the platform, its tenants and its doors is public ingress and routing inside the one Worker; it adds no Worker, store or identity. The hosts are written from the record by `tools/build-site-hosts.mjs` into `workers/mccluster/src/platform/hosts.generated.js`, the block at the top of `js/shell-boot.js` that sets `window.MCC_SITE`, and `supabase/functions/_shared/site-hosts.ts`. Equity Uprise shares the M Account identity spine and canonical Supabase project, not a second login system.
 
 ## Canonical orchestration
 

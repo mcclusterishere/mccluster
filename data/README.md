@@ -5,8 +5,8 @@ source of a fact (the owner edits them); some are generated from another
 file and must not be edited by hand; some are display mirrors of a Supabase
 table that is the real authority. This file says which is which, so no one
 types the same fact twice or fixes a generated file where it will be
-overwritten. The control-plane law is `../AGENTS.md`; the two properties are
-`../docs/control-plane/DOMAINS-AND-ENTITIES.md`.
+overwritten. The control-plane law is `../AGENTS.md`; the platform, its tenants and the
+two entities are `../docs/control-plane/DOMAINS-AND-ENTITIES.md`.
 
 Rule of thumb: **if a file names a generator, run the generator.** Every
 generator has a `--check` mode, and the unit suite (`node --test
@@ -50,9 +50,9 @@ Adding a song: put the file under `assets/audio/`, add the track to
 | `offers.json`, `merch.json`, `prayer-closet.json`, `market-rates.json`, `sites.json` | **Source** for the pages that paint them; prices that are charged come from the database, never from these. | owner | `services.html`, `sites*.html`, `prayer-closet.html`, `js/prices.js`, `js/closet.js`, the knowledge base build |
 | `clients.json`, `environments.json`, `domains.json` | **Source.** Client products staged to Cloudflare Pages, the album environments and hosting domains. | owner | `scripts/stage-cloudflare-pages.mjs`, `js/env.js` |
 
-## Entity, SEO and the two properties
+## Entity, SEO, the platform and its tenants
 
-`seo/` is the machine-readable authority for who the properties are
+`seo/` is the machine-readable authority for the platform, its tenants and whose each page is
 (`docs/control-plane/DOMAINS-AND-ENTITIES.md`). Its files are **sources**;
 what they generate lives outside `data/`:
 
@@ -63,7 +63,7 @@ what they generate lives outside `data/`:
 | `seo/evidence-ledger.json` | `tools/build-newsroom.mjs` | `newsroom.html`, `press.html` claims |
 | `seo/recruiter-evidence.json` | `tools/build-recruiter-role-map.mjs` | `engineering/recruiter-role-map.html` |
 | `seo/sitemap-pages.json` | `tools/build-sitemap.mjs` (`deploy-pages.yml` re-dates it from git) | `sitemap*.xml` |
-| `seo/domain-architecture.json` | none: read directly by `index.html`, the company router and the tests | |
+| `seo/domain-architecture.json` (v2: the platform, its tenants and doors, every published page's set, the stages) | `tools/build-site-hosts.mjs` (`--check` and `--write`; checked in `scripts/test/site-hosts.test.mjs`) | `workers/mccluster/src/platform/hosts.generated.js`, the generated block at the very top of `js/shell-boot.js` (`window.MCC_SITE`), `supabase/functions/_shared/site-hosts.ts`. Also read directly by `index.html`, the company router and the tests |
 | `product-context.json`, `brands.json`, `roles.json`, `dossier.json`, `card.json`, `legacy-page-routes.json` | none: read directly (`mccluster-corp.html`, `ecosystem.html`, `card.html`, `tools/vcard.mjs`, the tests) | |
 
 ## The World, action and research
