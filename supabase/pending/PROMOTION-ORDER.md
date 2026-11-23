@@ -654,3 +654,9 @@ PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
 | `20261123180000_tinderfessions_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's Tinderfessions (keys `tinderfessions:*`), upserted like the Whip Equipped and PRIM3 seeds | the shelf in `data/albums.json` (album `tinderfessions`); the live discovery and direct-sale lookups by catalog key | `scripts/test/action-network-live-governance.test.mjs` and `scripts/test/music-direct-sales.test.mjs` read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+
+## 16. Lyric machine on uploaded releases (written 2026-10-31; entered here 2026-11-23)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261031180000_lyrics_machine_v1.sql` (+ `.rollback.sql`) | `creator_tracks.lyrics_sheet` and `lyrics_input_rev`, the revision function and the trigger that queues a `lyrics_align` job on `ops_agent_jobs` when a release's master or sheet changes | `js/music-creator-studio.js` (`attachLyricSheet`: the sheet column first; until this is applied the words are kept on the release as untimed `lyrics {source:"sheet"}` and the creator is told), Control's Lyrics review (`operator-lyrics-queue`), `core/src/executors/lyrics-align.mjs` | Apply only after the OVH Core is running with the `lyrics_align` executor (applied earlier, Core quarantines the jobs as an unknown type). Then upload a release with a sheet and watch the job finish with timed lyrics, unreviewed. Never applied here. |

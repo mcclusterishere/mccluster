@@ -116,6 +116,52 @@ async function openLyrics(page){
   check('390','no sideways scroll',(await overflow(page))===0,{});
   const fonts=await page.evaluate(()=>[...document.querySelectorAll('.crl-text,[data-crl-pick]')].map(e=>parseFloat(getComputedStyle(e).fontSize)).filter(f=>f<16).length);
   check('390','form controls are at least 16px (no iOS zoom)',fonts===0,{fonts});
+  /* THE LINE EDITOR (owner, 2026-11-23: "a more advanced lyric engine ... control the lyrics"): tap the words in time,
+     end the line at the playhead, split, merge, add, delete, and export LRC and TTML */
+  const ti=HUNDUN.timed.line.findIndex((l,i)=>i>fi+1&&!l.mismatch&&l.content.trim().split(/\s+/).length>=3&&HUNDUN.timed.line[i+1]);
+  const TL=HUNDUN.timed.line[ti],TN=HUNDUN.timed.line[ti+1],nWords=TL.content.trim().split(/\s+/).length;
+  await page.locator(`[data-crl-tools="${ti}"] > summary`).click();
+  await page.locator(`[data-crl-tapgo="${ti}"]`).click();
+  await page.evaluate(()=>document.querySelector('.crl-audio').pause());
+  const step=Math.min(0.4,(TN.begin-TL.begin-0.3)/(nWords+1)),taps=[];
+  for(let k=0;k<=nWords;k++){
+    const t=Math.round((TL.begin+0.05+step*k)*1000)/1000;taps.push(t);
+    await page.evaluate(t=>new Promise(r=>{const a=document.querySelector('.crl-audio');a.addEventListener('seeked',()=>r(),{once:true});a.currentTime=t;}),t);
+    await page.locator(`[data-crl-tap="${ti}"]`).click();
+  }
+  const tapped=await page.evaluate(i=>JSON.parse(JSON.stringify(CR.lyricsReview.state.doc.timed.line[i])),ti);
+  check('390','tapping along times every word in order and the last tap ends the line',
+    tapped.words.length===nWords&&tapped.words.every((w,k)=>Math.abs(w.begin-taps[k])<0.02&&w.end>=w.begin)&&Math.abs(tapped.begin-taps[0])<0.02&&Math.abs(tapped.end-taps[nWords])<0.02&&await page.locator(`[data-crl-tap="${ti}"]`).count()===0,{tapped,taps});
+  check('390','each word shows its own time',await page.locator(`[data-crl-tools="${ti}"] .crl-word`).count()===nWords);
+  const endAt=Math.round((taps[nWords]-step/2)*1000)/1000;
+  await page.evaluate(t=>new Promise(r=>{const a=document.querySelector('.crl-audio');a.addEventListener('seeked',()=>r(),{once:true});a.currentTime=t;}),endAt);
+  await page.locator(`[data-crl-endnow="${ti}"]`).click();
+  const ended=await page.evaluate(i=>CR.lyricsReview.state.doc.timed.line[i],ti);
+  check('390','End now ends the line at the playhead and keeps its words inside it',Math.abs(ended.end-endAt)<0.02&&ended.words.every(w=>w.end<=ended.end+0.001),ended);
+  const count=()=>page.locator('.crl-line').count(),before=await count();
+  await page.locator(`[data-crl-split="${ti}"]`).click();
+  const split=await page.evaluate(i=>[CR.lyricsReview.state.doc.timed.line[i],CR.lyricsReview.state.doc.timed.line[i+1]].map(l=>({c:l.content,b:l.begin,e:l.end,w:(l.words||[]).length})),ti);
+  check('390','Split makes two lines, the second starting at its first word',await count()===before+1&&split[0].w+split[1].w===nWords&&(split[0].c+' '+split[1].c)===TL.content.trim()&&Math.abs(split[0].e-split[1].b)<0.001,split);
+  const ensureOpen=async i=>{if(!await page.locator(`[data-crl-tools="${i}"]`).evaluate(d=>d.open))await page.locator(`[data-crl-tools="${i}"] > summary`).click();};
+  await ensureOpen(ti);
+  await page.locator(`[data-crl-merge="${ti}"]`).click();
+  const merged=await page.evaluate(i=>CR.lyricsReview.state.doc.timed.line[i],ti);
+  check('390','Merge joins them back, words and all',await count()===before&&merged.content===TL.content.trim()&&merged.words.length===nWords,merged);
+  await ensureOpen(ti);
+  await page.locator(`[data-crl-add="${ti}"]`).click();
+  check('390','Add line after puts an empty line below and asks for its words',await count()===before+1&&(await page.locator(`[data-crl-text="${ti+1}"]`).inputValue())===''&&/type its words/.test(await page.locator('.crl-msg').innerText()));
+  await page.locator('[data-crl-export="lrc"]').click();
+  check('390','an empty line stops the export and says which line',/Line \d+ has no words/.test(await page.locator('.crl-msg').innerText()));
+  await ensureOpen(ti+1);
+  await page.locator(`[data-crl-del="${ti+1}"]`).click();
+  check('390','Delete line removes it',await count()===before);
+  const [lrc]=await Promise.all([page.waitForEvent('download'),page.locator('[data-crl-export="lrc"]').click()]);
+  const lrcText=await readFile(await lrc.path(),'utf8'),lrcLines=lrcText.trim().split('\n').filter(x=>/^\[\d\d:\d\d\.\d\d\]/.test(x));
+  check('390','Export LRC: one timed line per lyric line',lrc.suggestedFilename()==='hundun-b-side.lrc'&&lrcLines.length===before&&lrcLines[fi].endsWith('First get yo monyon then stack a hundun'),{name:lrc.suggestedFilename(),n:lrcLines.length,before});
+  const [ttml]=await Promise.all([page.waitForEvent('download'),page.locator('[data-crl-export="ttml"]').click()]);
+  const ttmlText=await readFile(await ttml.path(),'utf8');
+  check('390','Export TTML: every line a <p>, with word <span> times',ttml.suggestedFilename()==='hundun-b-side.ttml'&&(ttmlText.match(/<p begin=/g)||[]).length===before&&ttmlText.includes('<span begin=')&&ttmlText.startsWith('<?xml'),{name:ttml.suggestedFilename()});
+  check('390','the line editor fits the phone',(await overflow(page))===0,{});
   await page.screenshot({path:join(OUT,'control-lyrics-390.png')});
   const [dl]=await Promise.all([page.waitForEvent('download'),page.locator('[data-crl-download]').click()]);
   const out=JSON.parse(await readFile(await dl.path(),'utf8'));

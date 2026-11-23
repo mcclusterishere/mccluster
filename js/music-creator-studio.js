@@ -114,20 +114,40 @@ function describeSize(bytes, up) {
 /* THE LYRIC SHEET. Optional words for the lyric machine: McCluster Core times
    them to the master (line and word), or writes them from the audio when there
    is no sheet. The sheet rides on its own column after the release row exists,
-   and a refusal never sinks the release: until that column is live the machine
-   simply writes the words from the audio. */
+   and a refusal never sinks the release.
+   NEVER LOST SILENTLY (owner, 2026-11-23). Until the lyrics_sheet column is live
+   (supabase/pending/20261031180000_lyrics_machine_v1.sql) the PATCH is refused,
+   and the sheet used to vanish into the console. Now the words are kept on the
+   release itself as untimed lyrics (creator_tracks.lyrics {source:"sheet",
+   plain}): listeners see the words, the machine replaces them with timed ones
+   (an untimed, unreviewed file is always replaceable, lyrics-align.mjs
+   mayReplace), and the creator is told which of the two happened.
+   Returns "sheet" | "words" | "lost" | "" (no sheet). */
 async function attachLyricSheet(trackId, words) {
   const sheet = String(words || "").trim();
-  if (!sheet) return;
+  if (!sheet) return "";
+  const where = "creator_tracks?id=eq." + encodeURIComponent(trackId);
   try {
-    await rest("creator_tracks?id=eq." + encodeURIComponent(trackId), {
-      method: "PATCH",
-      headers: { Prefer: "return=minimal" },
-      body: JSON.stringify({ lyrics_sheet: sheet.slice(0, 40000) })
-    });
+    await rest(where, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ lyrics_sheet: sheet.slice(0, 40000) }) });
+    return "sheet";
+  } catch (err) {
+    console.warn("lyric sheet column unavailable; keeping the words on the release", err);
+  }
+  try {
+    await rest(where, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({
+      lyrics: { source: "sheet", reviewed: false, plain: sheet.slice(0, 40000), sheet_saved_at: new Date().toISOString() }
+    }) });
+    return "words";
   } catch (err) {
     console.warn("lyric sheet not attached", err);
+    return "lost";
   }
+}
+function lyricSheetNote(outcome) {
+  if (outcome === "sheet") return " Your lyric sheet is saved; McCluster times it to the song.";
+  if (outcome === "words") return " Your lyrics are saved with the release; timing them to the song comes once the lyric machine is switched on.";
+  if (outcome === "lost") return " Your lyric sheet could not be saved: paste it again when you edit this release.";
+  return "";
 }
 function wireLyricSheet() {
   const file = $("trackLyricSheetFile"), box = $("trackLyricSheet"), help = $("trackLyricSheetHelp");
@@ -786,7 +806,7 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
     const track = inserted?.[0];
     if (!track?.id) throw new Error("Release record was not returned.");
     createdTrackId = track.id;
-    await attachLyricSheet(track.id, lyricSheet);
+    const lyricOutcome = await attachLyricSheet(track.id, lyricSheet);
 
     await rest("music_rights_attestations", {
       method: "POST",
@@ -861,7 +881,7 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
     $("derivativeField").hidden = true;
     status("trackStatus", (derivative
       ? "Uploaded. Held for manual derivative/parody rights review."
-      : "Uploaded. Submitted for rights and publication review.") + licenseWarning, licenseWarning ? "bad" : "good");
+      : "Uploaded. Submitted for rights and publication review.") + licenseWarning + lyricSheetNote(lyricOutcome), licenseWarning || lyricOutcome === "lost" ? "bad" : "good");
     try { await loadTracks(); }
     catch (_) {
       status("trackStatus", "Release submitted." + licenseWarning + " Your releases could not refresh. Reload to see it before uploading again.", "bad");
