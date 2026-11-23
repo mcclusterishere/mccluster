@@ -9,15 +9,20 @@
    workers/mccluster/src, resolves the host it is built on (a same-file
    const, or the string fallback of its env lookup) and, when that host is
    matthew.mccluster.org, requires the path to be a file in this repo.
-   URLs the request supplies (whip: input.successUrl) are not literals and
-   are left to their own validation. Retired functions on the dead Here
-   origin are not on this host and are pinned by their RETIRED switch.
+   A return that follows the request (returnOrigin, generated from
+   data/seo/domain-architecture.json; SPEC-PLATFORM 2.9) always lands on an
+   origin that serves this repo's pages, so its path is checked the same
+   way; scripts/test/supabase-function-returns.test.mjs drives the
+   functions themselves. URLs the request supplies (whip: input.successUrl)
+   are not literals and are left to their own validation. The retired
+   functions are pinned by their RETIRED switch.
    ============================================================ */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { RETURN_ORIGINS } from '../../supabase/functions/_shared/site-hosts.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const HOUSE = 'https://matthew.mccluster.org';
@@ -68,6 +73,9 @@ function resolveConst(src, name, depth = 0) {
   const m = new RegExp(`(?:const|let|var)\\s+${name}\\s*=\\s*([^;\\n]+)`).exec(src);
   if (!m) return null;
   const init = m[1].trim();
+  /* a return that follows the request lands on an origin that serves this
+     repo's pages (the house is one at every stage): check its path as the house's */
+  if (/\breturnOrigin\(/.test(init)) return HOUSE;
   const urls = [...init.matchAll(/['"`](https?:\/\/[^'"`]+)['"`]/g)].map((x) => x[1]);
   if (urls.length) return urls[urls.length - 1];
   const hop = /^([A-Za-z_$][\w$]*)$/.exec(init);
@@ -168,13 +176,16 @@ test('the pages the live functions return to are the ones that exist', () => {
   assert.deepEqual(by('workers/mccluster/src/connect.js'), ['/control.html', '/control.html']);
 });
 
-test('shake-order returns to matthew.mccluster.org when SITE_URL is unset', () => {
+test('shake-order returns where the request started, else to the operator SITE_URL, else to the generated fallback', () => {
   const src = readFileSync(join(ROOT, 'supabase/functions/shake-order/index.ts'), 'utf8');
-  assert.match(src, /const SITE = Deno\.env\.get\("SITE_URL"\) \?\? "https:\/\/matthew\.mccluster\.org";/);
+  assert.match(src, /const SITE_URL = Deno\.env\.get\("SITE_URL"\);/);
+  assert.match(src, /const SITE = origin && RETURN_ORIGINS\.includes\(origin\) \? origin : \(SITE_URL \?\? returnOrigin\(origin\)\);/);
+  /* the house is one of the origins that serve pages at every stage, so the paths below are checked as its */
+  assert.ok(RETURN_ORIGINS.includes(HOUSE));
   assert.deepEqual(literals().filter((l) => l.file === 'supabase/functions/shake-order/index.ts').map((l) => pathOf(l.url)), ['/shakes.html', '/shakes.html']);
 });
 
-test('connect-onboard, whose return URLs point at the dead Here origin, refuses every request before Stripe is touched', () => {
+test('connect-onboard, retired, refuses every request before Stripe is touched; its returns no longer name the dead Here origin', () => {
   const src = readFileSync(join(ROOT, 'supabase/functions/connect-onboard/index.ts'), 'utf8');
   assert.match(src, /const RETIRED = true;/);
   const serve = src.indexOf('Deno.serve(');
@@ -183,7 +194,10 @@ test('connect-onboard, whose return URLs point at the dead Here origin, refuses 
   assert.ok(refuse < src.indexOf('req.headers.get("Authorization")', serve), 'it runs before the request is read');
   assert.ok(refuse < src.indexOf('stripe.accounts.create', serve), 'and before any Stripe account');
   assert.ok(refuse < src.indexOf('stripe.accountLinks.create', serve), 'and before any account link');
-  for (const l of literals().filter((l) => l.file === 'supabase/functions/connect-onboard/index.ts')) assert.equal(onHouse(l.url), false, 'its return URLs are not on this host');
+  /* its returns follow the request like every other (SPEC-PLATFORM 2.9) and land on the live album page */
+  assert.doesNotMatch(src, /mcclusterishere\.github\.io/);
+  assert.deepEqual(literals().filter((l) => l.file === 'supabase/functions/connect-onboard/index.ts').map((l) => [l.key, onHouse(l.url) && pathOf(l.url)]),
+    [['refresh_url', '/album.html'], ['return_url', '/album.html']]);
   /* and the manifest still names it, so the config check stays complete while the directory exists */
   assert.match(readFileSync(join(ROOT, 'supabase/config.toml'), 'utf8'), /\[functions\.connect-onboard\]\nverify_jwt = true/);
 });

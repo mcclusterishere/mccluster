@@ -4,8 +4,11 @@ import { readFile } from 'node:fs/promises';
 import { webcrypto } from 'node:crypto';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
+import { SITE_HOSTS } from '../../supabase/functions/_shared/site-hosts.ts';
 
-const source = await readFile(new URL('../../supabase/functions/collect/index.ts',import.meta.url),'utf8');
+/* collect reads the site's own hosts from the generated module: its one import line becomes that module's value */
+const source = (await readFile(new URL('../../supabase/functions/collect/index.ts',import.meta.url),'utf8'))
+  .replace('import { SITE_HOSTS } from "../_shared/site-hosts.ts";','');
 const uuid = '123e4567-e89b-42d3-a456-426614174000';
 const event = { id:uuid, name:'page_view', path:'/test', props:{label:'a synthetic visit'} };
 
@@ -14,7 +17,7 @@ async function collector({tenant=false, errors=[], initialCommitOnFailure=false,
   let handler, authRequests=0;
   const ctx={
     Deno:{env:{get:k=>k==='SUPABASE_URL'?'https://local.test':'a-placeholder'},serve:fn=>{handler=fn;}},
-    Request,Response,Headers,URL,TextEncoder,console,crypto:webcrypto,setTimeout,
+    Request,Response,Headers,URL,TextEncoder,console,crypto:webcrypto,setTimeout,SITE_HOSTS,
     fetch:async (url,init={})=>{
       const u=String(url),method=init.method||'GET';
       if(u.includes('/auth/v1/user')){

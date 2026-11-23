@@ -18,18 +18,21 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "npm:stripe@14";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { MUSIC_DIRECT_KIND, OFFER_KEY_RE, audioFormatOf, corsHeaders, formatLabel, offerSaleRefusal } from "../_shared/music-direct.ts";
+import { returnOrigin } from "../_shared/site-hosts.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
-/* Matthew's property; equal to SITE in ../_shared/music-direct.ts (scripts/test/music-direct-sales.test.mjs) */
-const HOUSE = "https://matthew.mccluster.org";
 /* read with the service role; asset_path only to name the delivered format, never returned */
 const OFFER_COLUMNS = "offer_key,catalog_key,title,price_cents,currency,active,sale_starts_at,sale_ends_at,asset_path";
 
 Deno.serve(async (req) => {
   const cors = corsHeaders(req.headers.get("origin"));
+  /* The purchase page the buyer comes back to, and downloads on: the request's Origin when it is exactly
+     an origin that serves pages (../_shared/site-hosts.ts; the same list CORS answers), else the generated
+     fallback, which at stage P0 is the profile host every return named before. */
+  const SITE = returnOrigin(req.headers.get("origin"));
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
     status,
     headers: { ...cors, "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
@@ -83,7 +86,7 @@ Deno.serve(async (req) => {
           unit_amount: o.price_cents,
           product_data: {
             name: `${o.title} (${label} download)`,
-            description: `Full-quality ${label} file by Matthew McCluster, delivered as uploaded (not converted) on matthew.mccluster.org.`,
+            description: `Full-quality ${label} file by Matthew McCluster, delivered as uploaded (not converted) on ${new URL(SITE).host}.`,
             metadata: { music_direct_offer_key: o.offer_key, catalog_key: o.catalog_key, format },
           },
         },
@@ -92,8 +95,8 @@ Deno.serve(async (req) => {
       metadata,
       payment_intent_data: { metadata },
       allow_promotion_codes: false,
-      success_url: `${HOUSE}/purchase.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${HOUSE}/purchase.html?canceled=1&offer=${encodeURIComponent(o.offer_key)}`,
+      success_url: `${SITE}/purchase.html?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${SITE}/purchase.html?canceled=1&offer=${encodeURIComponent(o.offer_key)}`,
     });
   } catch (e) {
     console.error("music direct checkout", e);
