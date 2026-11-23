@@ -2,13 +2,16 @@
 
 ## Release 1, 2026-11-23
 
-Matthew, 2026-11-23: "ship it all baby". Release 1 is the branch `claude/release-20261123`: `main` at `b51ede03` (the merge
-of PR #820, which the Worker and the site serve today) and, on top of it, only work that passed its own independent
-verification: the music slices M3 and the M3 follow-up as verified at `dc0185aa`, the two production records of 2026-11-23,
-the ingest switch, and this record. Nothing in it is merged or deployed as this is written; the pull request carries the
-checks. The runbook below applies from step 1 to step 8 as written, with 384 where it says 376. Steps 9 to 11 belong to the
-mission publish, which ran and was recorded on 2026-11-20, and do not repeat. "Supabase migration reset" runs on the four
-moved migration files for the first time in this pull request: if its schema comparison differs, step 3 says what to commit.
+Matthew, 2026-11-23: "ship it all baby". Release 1 is the branch `claude/release-20261123`: `main` at `b51ede03` (the merge of
+PR #820, which the Worker and the site serve today) and, on top of it, only work that passed its own independent verification:
+the music slices M3 and the M3 follow-up as verified at `dc0185aa`, the two production records of 2026-11-23, the ingest
+switch, and this record. Nothing in it is merged or deployed as this is written; the pull request carries the checks. The
+runbook below applies from step 1 to step 8 as written, with 384 where it says 376, and three differences. In step 2, 21
+workflows start, 79 jobs in all (the branch cleanup starts only when the pull request closes). In step 7, `deployment_sha`
+alone tells the new Worker from the old, because `/company` has no tagline on either; and the environment reads that must not
+change answer `404 module_disabled` today, not the 503 the step names (the anchors below). Steps 9 to 11 belong to the mission
+publish, which ran and was recorded on 2026-11-20, and do not repeat. "Supabase migration reset" runs on the four moved
+migration files for the first time in this pull request: if its schema comparison differs, step 3 says what to commit.
 
 **What ships, in plain words.**
 
@@ -69,13 +72,17 @@ iOS version. Until they are run, everything the records say about an iPhone or a
 
 **Anchors before the merge**, read between 18:39 and 18:41 UTC on 2026-11-23 with plain `GET`s, `git ls-remote` and one
 `SELECT`: `https://api.mccluster.org/v1/health` answers `deployment_sha` `b51ede03a4faefe000749ec71630b1a584146fed`,
-`deployment_ref` `HEAD` and the six capability flags true; `https://matthew.mccluster.org/mnet.html` and `https://mccluster.org/`
-stamp their assets `?v=b51ede03a4fa`; `main` is `b51ede03`, `gh-pages` `436a672adbc783d9c045979769da3e4b1cf29bf4`,
-`deploy/ovh-production` `eb94224883685c0e3d2cf8a54eb14bbc1349d0bf`; production's ledger has 384 rows, latest
-`20261123174034 eup_environment_events_v1_05`, digest `8af712520bdf7daf353b36b801eb568849ed9bb1088e57b48ffd2e364c97ed9c`, the
-digest of `supabase/production-ledger.json`. Step 5 still asks for the live Worker version from Cloudflare, which this record
-cannot read. The open pull requests on 2026-11-23 include #760, #816, #817 and the newer #821, #822 and #823; the rule of step 5
-is the hold, not the list.
+`deployment_ref` `HEAD` and the six capability flags true; `https://matthew.mccluster.org/mnet.html` and
+`https://mccluster.org/` stamp their assets `?v=b51ede03a4fa`; `main` is `b51ede03`, `gh-pages`
+`436a672adbc783d9c045979769da3e4b1cf29bf4`, `deploy/ovh-production` `eb94224883685c0e3d2cf8a54eb14bbc1349d0bf`; production's
+ledger has 384 rows, latest `20261123174034 eup_environment_events_v1_05`, digest
+`8af712520bdf7daf353b36b801eb568849ed9bb1088e57b48ffd2e364c97ed9c`, the digest of `supabase/production-ledger.json`. Read again
+between 19:08 and 19:11 UTC, signed out: `https://api.mccluster.org/v1/world/environment`,
+`/v1/world/environment/events?limit=20` and `/v1/world/environment/layers/fires` answer `404 module_disabled` (with `Origin:
+https://mccluster.org`), and `https://mccluster.org/mnet.html?mission=<id>` answers one 301 to `/?mission=<id>`. After the
+merge the 301 stays, and the three environment reads answer the same until the Environment module is installed and enabled.
+Step 5 still asks for the live Worker version from Cloudflare, which this record cannot read. The open pull requests on
+2026-11-23 include #760, #816, #817 and the newer #821, #822 and #823; the rule of step 5 is the hold, not the list.
 
 The production checkpoint below is historical where it calls the ingest flag `"false"`.
 
