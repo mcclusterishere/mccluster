@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  SchedulerElection, assertActiveScheduler, createMemorySchedulerStore, createRpcStore, electionConfigFromEnv,
+  SchedulerElection, assertActiveScheduler, createMemorySchedulerStore, createRpcStore, electionConfigFromEnv, isUnknownOrgError,
 } from '../src/compute/scheduler-election.mjs';
 
 const ORG = '00000000-0000-0000-0000-000000000011';
@@ -243,4 +243,228 @@ test('electionConfigFromEnv: disabled when unset; validates role, holder id, ttl
   assert.deepEqual(electionConfigFromEnv({ MCCLUSTER_SCHEDULER_ROLE: 'standby', MCCLUSTER_ORG_ID: ORG, MCCLUSTER_CORE_ID: 'prime-standby', MCCLUSTER_SCHEDULER_TTL_SECONDS: '60', MCCLUSTER_SCHEDULER_RENEW_MS: '250' }),
     { role: 'standby', holderId: 'prime-standby', ttlSeconds: 60, renewMs: 1000, orgId: ORG });
   assert.throws(() => new SchedulerElection({ orgId: ORG, holderId: 'x', role: 'primary', store: {} }), TypeError);
+});
+
+// Regressions for the 2026-11-23 review of the scheduler-election slice.
+
+// A store whose next reply of one method is held back until the test lets it go.
+function gate(inner, method) {
+  let release = null; let pendingReply = null; let armed = false;
+  const store = { ...inner };
+  store[method] = async (args) => {
+    const reply = await inner[method](args); // the server processes the call at dispatch time
+    if (!armed) return reply;
+    armed = false;
+    pendingReply = reply;
+    return new Promise((resolve) => { release = () => resolve(pendingReply); });
+  };
+  return { store, arm() { armed = true; }, open() { const r = release; release = null; r?.(); } };
+}
+
+test('suspend while a renew is in flight is never confirmed: the holder steps down and only the standby is active after takeover', async () => {
+  const h = harness();
+  let serverSkew = 0; // the real server clock keeps running while the laptop sleeps
+  const server = createMemorySchedulerStore(() => h.now() + serverSkew);
+  const gated = gate(server, 'renew');
+  const primary = new SchedulerElection({ ...h.base, holderId: 'core-primary', role: 'primary', store: gated.store, onEvent: h.onEvent('primary') });
+  const standby = new SchedulerElection({ ...h.base, holderId: 'core-standby', role: 'standby', store: server, onEvent: h.onEvent('standby') });
+  assert.equal(await primary.start(), true);
+  assert.equal(await standby.start(), false);
+  h.advance(10_000);
+  gated.arm();
+  const inFlight = primary.tick(); // renew dispatched at mono 10 s; the server stamps expires_at = +40 s
+  await flush();
+  // Suspend: the monotonic clock moves 100 ms, the wall clock and the server move 5 minutes.
+  h.advance(100, 300_000); serverSkew += 300_000 - 100;
+  gated.open(); await inFlight;
+  assert.equal(primary.isActive(), false, 'a receipt consumed across a clock discontinuity grants nothing');
+  assert.equal(primary.snapshot().last_reason, 'clock_discontinuity');
+  assert.equal(primary.term, null);
+  assert.deepEqual(h.events.filter((e) => e.who === 'primary' && e.event === 'scheduler_unconfirmed').map((e) => e.detail.reason), ['clock_discontinuity']);
+  assert.equal((await server.status({ orgId: ORG })).live, false, 'the server lease really did expire during the sleep');
+  await standby.tick();
+  assert.equal(standby.isActive(), true);
+  assert.equal(standby.term, 2);
+  assert.equal([primary, standby].filter((e) => e.isActive()).length, 1, 'never two active instances');
+  await primary.tick(); // the woken primary asks again and is held
+  assert.equal(primary.isActive(), false);
+  assert.equal(primary.snapshot().last_reason, 'held');
+  assert.throws(() => assertActiveScheduler(primary), (error) => error.code === 'SCHEDULER_STANDBY' && error.active_holder === 'core-standby');
+  await primary.stop(); await standby.stop();
+});
+
+test('a reply that lands after the deadline it earns, or without a server-stated duration, is rejected', async () => {
+  const h = harness();
+  const gated = gate(h.store, 'renew');
+  const primary = new SchedulerElection({ ...h.base, holderId: 'core-primary', role: 'primary', store: gated.store, onEvent: h.onEvent('primary') });
+  await primary.start();
+  h.advance(10_000);
+  gated.arm();
+  const inFlight = primary.tick(); await flush();
+  h.advance(29_500); // the round trip ate the lease: deadline would be 10_000 + 30_000 - 1_000 = 39_000 < 39_500
+  gated.open(); await inFlight;
+  assert.equal(primary.isActive(), false);
+  assert.equal(primary.snapshot().last_reason, 'late_reply');
+  assert.equal(h.events.filter((e) => e.event === 'scheduler_active').length, 1, 'no second scheduler_active for a receipt that was never adopted');
+  await primary.tick(); // dispatched after the fault: the server still holds us, same term, and this one confirms
+  assert.equal(primary.isActive(), true);
+  assert.equal(primary.term, 1);
+  assert.equal(primary.snapshot().last_reason, 'renewed');
+  await primary.stop();
+
+  const timeless = { ...h.store, acquire: async () => ({ active: true, holder_id: 'core-standby', term: 1 }) };
+  const fooled = new SchedulerElection({ ...h.base, holderId: 'core-standby', role: 'standby', store: timeless, onEvent: h.onEvent('timeless') });
+  assert.equal(await fooled.start(), false, 'a receipt without server_time/expires_at grants no local TTL');
+  assert.equal(fooled.snapshot().last_reason, 'bad_receipt');
+  assert.equal(h.events.some((e) => e.who === 'timeless' && e.event === 'scheduler_active'), false);
+  const zero = { ...h.store, acquire: async () => ({ active: true, holder_id: 'core-standby', term: 1, server_time: '2026-11-23T07:00:00Z', expires_at: '2026-11-23T07:00:00Z' }) };
+  const fooledZero = new SchedulerElection({ ...h.base, holderId: 'core-standby', role: 'standby', store: zero });
+  assert.equal(await fooledZero.start(), false, 'a non-positive server duration grants nothing');
+  await fooled.stop(); await fooledZero.stop();
+});
+
+test('handover yields at once: holder and successor are never active together, whichever ticks first; a lapsed handover resumes the holder', async () => {
+  const h = harness();
+  const primary = new SchedulerElection({ ...h.base, holderId: 'core-primary', role: 'primary', store: h.store, onEvent: h.onEvent('primary') });
+  const standby = new SchedulerElection({ ...h.base, holderId: 'core-standby', role: 'standby', store: h.store, onEvent: h.onEvent('standby') });
+  await primary.start(); await standby.start();
+  const active = () => [primary, standby].filter((e) => e.isActive()).length;
+  const granted = await primary.requestHandover('core-standby', 120);
+  assert.equal(granted.ok, true);
+  assert.equal(primary.isActive(), false, 'the requester yields the moment its handover is accepted');
+  assert.equal(primary.yielding, true);
+  assert.equal(primary.snapshot().active, false);
+  assert.equal(primary.snapshot().yielding, true);
+  assert.throws(() => assertActiveScheduler(primary), (error) => error.code === 'SCHEDULER_STANDBY' && error.active_holder === 'core-standby');
+  assert.equal(active(), 0);
+  h.advance(10_000);
+  await primary.tick(); // the yielding holder renews FIRST (keeps the row alive for the successor)
+  assert.equal(active(), 0);
+  assert.equal(primary.yielding, true);
+  assert.equal((await h.store.status({ orgId: ORG })).live, true);
+  await standby.tick(); // then the successor takes over
+  assert.equal(standby.isActive(), true);
+  assert.equal(standby.term, 2);
+  assert.equal(active(), 1);
+  h.advance(10_000); await h.fire();
+  assert.equal(active(), 1);
+  assert.equal(primary.snapshot().last_reason, 'fenced');
+  assert.equal(primary.yielding, false);
+  // A yielding holder may re-request (new target or grace); after the lapse it resumes.
+  await standby.requestHandover('core-primary', 10);
+  assert.equal(standby.isActive(), false);
+  const again = await standby.requestHandover('core-primary', 10);
+  assert.equal(again.ok, true, 'a second request while yielding is allowed');
+  h.advance(10_001);
+  await standby.tick(); // grace lapsed with no successor: the renew shows no pending handover
+  assert.equal(standby.isActive(), true);
+  assert.equal(standby.yielding, false);
+  assert.equal(standby.term, 2);
+  assert.deepEqual(h.events.filter((e) => e.who === 'standby' && e.event === 'scheduler_handover_lapsed').map((e) => e.detail.handover_to), ['core-primary']);
+  await primary.tick();
+  assert.equal(primary.isActive(), false);
+  assert.equal(active(), 1);
+  await primary.stop(); await standby.stop();
+});
+
+test('one holder id, two roles: the second process is refused with role_conflict and a config fault; the default holder id is per role', async () => {
+  const h = harness();
+  const a = new SchedulerElection({ ...h.base, holderId: 'core-shared', role: 'primary', store: h.store, onEvent: h.onEvent('a') });
+  const b = new SchedulerElection({ ...h.base, holderId: 'core-shared', role: 'standby', store: h.store, onEvent: h.onEvent('b') });
+  assert.equal(await a.start(), true);
+  assert.equal(await b.start(), false, 'a second process sharing the holder id never becomes active');
+  assert.equal(b.snapshot().last_reason, 'role_conflict');
+  for (let i = 0; i < 3; i++) { h.advance(10_000); await h.fire(); assert.equal(a.isActive(), true); assert.equal(b.isActive(), false); }
+  const status = await h.store.status({ orgId: ORG });
+  assert.equal(status.holder_role, 'primary', 'the row keeps the role it was acquired with');
+  assert.equal(status.term, 1);
+  assert.deepEqual(status.history.map((e) => e.event), ['fresh']);
+  const faults = h.events.filter((e) => e.who === 'b' && e.event === 'scheduler_error');
+  assert.equal(faults.length, 1, 'the configuration fault is reported once per episode, not on every tick');
+  assert.equal(faults[0].detail.code, 'SCHEDULER_CONFIG');
+  assert.equal(faults[0].detail.variable, 'MCCLUSTER_SCHEDULER_HOLDER_ID');
+  await a.stop(); await b.stop();
+  assert.equal(electionConfigFromEnv({ MCCLUSTER_SCHEDULER_ROLE: 'standby', MCCLUSTER_ORG_ID: ORG }).holderId, 'core-standby');
+  assert.equal(electionConfigFromEnv({ MCCLUSTER_SCHEDULER_ROLE: 'primary', MCCLUSTER_ORG_ID: ORG }).holderId, 'core-primary');
+});
+
+test('a store call that never settles is abandoned: later ticks still renew, and stop() does not wedge', async () => {
+  const h = harness();
+  let hang = 0; let renews = 0;
+  const hanging = { ...h.store, renew: async (args) => { renews += 1; if (hang > 0) { hang -= 1; return new Promise(() => {}); } return h.store.renew(args); } };
+  const primary = new SchedulerElection({ ...h.base, holderId: 'core-primary', role: 'primary', store: hanging, callTimeoutMs: 5_000, onEvent: h.onEvent('primary') });
+  await primary.start();
+  hang = 1;
+  h.advance(10_000); await h.fire(); // this renew never settles
+  assert.equal(renews, 1);
+  h.advance(4_000); await h.fire(); // younger than callTimeoutMs: still waiting on it
+  assert.equal(renews, 1);
+  h.advance(6_000); await h.fire(); // 10 s old: abandoned, a fresh renew goes out and confirms
+  assert.equal(renews, 2);
+  assert.deepEqual(h.events.filter((e) => e.event === 'scheduler_call_abandoned').length, 1);
+  assert.equal(primary.isActive(), true);
+  h.advance(15_000); // mono 35 s: past the deadline the first renew would have left (29 s), inside the new one
+  assert.equal(primary.isActive(), true, 'the loop recovered without waiting for the hung call');
+  await primary.stop();
+  assert.equal(h.timers.size, 0);
+
+  const wedge = new SchedulerElection({ ...h.base, holderId: 'core-standby', role: 'standby', store: { ...h.store, renew: async () => new Promise(() => {}) }, callTimeoutMs: 100, onEvent: h.onEvent('wedge') });
+  await wedge.start();
+  h.advance(10_000); await h.fire(); // renew hangs
+  const started = Date.now();
+  await wedge.stop();
+  assert.ok(Date.now() - started < 2_000, 'stop() waits at most callTimeoutMs for a hung call');
+  assert.equal(h.events.some((e) => e.who === 'wedge' && e.event === 'scheduler_released'), true, 'the lease is still released on stop');
+  assert.equal((await h.store.status({ orgId: ORG })).live, false);
+});
+
+test('an unknown org is a configuration fault: the loop halts with SCHEDULER_CONFIG instead of retrying forever', async () => {
+  const h = harness();
+  const store = createMemorySchedulerStore(() => h.now(), { orgs: [ORG] });
+  const events = [];
+  const lost = new SchedulerElection({ ...h.base, orgId: '00000000-0000-0000-0000-0000000000ff', holderId: 'core-primary', role: 'primary', store, onEvent: (e, d) => events.push({ e, d }) });
+  assert.equal(await lost.start(), false);
+  assert.equal(lost.snapshot().halted, true);
+  assert.equal(lost.snapshot().config_error?.variable, 'MCCLUSTER_ORG_ID');
+  assert.equal(lost.snapshot().config_error?.code, 'SCHEDULER_CONFIG');
+  assert.equal(h.timers.size, 0, 'no retry timer is installed');
+  assert.deepEqual(events.map((x) => [x.e, x.d.code]), [['scheduler_error', 'SCHEDULER_CONFIG']]);
+  h.advance(10_000); await h.fire(); await lost.tick();
+  assert.equal(events.length, 1, 'no further attempts');
+  await lost.stop();
+  // The shape PostgREST relays for the SQL's raise (core/src/supabase.mjs puts the body on detail).
+  assert.equal(isUnknownOrgError(Object.assign(new Error('unknown org'), { status: 404, detail: { code: 'P0002', message: 'unknown org', hint: 'MCCLUSTER_ORG_ID must name a row of public.orgs' } })), true);
+  assert.equal(isUnknownOrgError(new Error('insert or update on table "ops_compute_scheduler_leases" violates foreign key constraint')), false);
+  const fine = new SchedulerElection({ ...h.base, holderId: 'core-primary', role: 'primary', store });
+  assert.equal(await fine.start(), true, 'a known org is unaffected');
+  await fine.stop();
+});
+
+test('memory store parity with the SQL: null grace is 120 s, null identity is rejected, a dead row has no pending handover, role conflicts write nothing', async () => {
+  let wall = baseTime;
+  const store = createMemorySchedulerStore(() => wall);
+  const p = { orgId: ORG, holderId: 'core-primary', role: 'primary', ttlSeconds: 30 };
+  await store.acquire(p);
+  const nullGrace = await store.handover({ orgId: ORG, holderId: 'core-primary', term: 1, toHolderId: 'core-standby', graceSeconds: null });
+  assert.equal(Date.parse(nullGrace.handover_expires_at) - wall, 120_000, 'coalesce(p_grace_seconds, 120)');
+  assert.equal(Date.parse((await store.handover({ orgId: ORG, holderId: 'core-primary', term: 1, toHolderId: 'core-standby', graceSeconds: 0 })).handover_expires_at) - wall, 10_000, 'zero clamps to the floor');
+  await assert.rejects(store.release({ orgId: ORG, holderId: null, term: 1 }), /invalid holder id/);
+  await assert.rejects(store.release({ orgId: ORG, holderId: 'core-primary', term: null }), /p_term is required/);
+  await assert.rejects(store.handover({ orgId: ORG, holderId: undefined, term: 1, toHolderId: 'core-standby', graceSeconds: 60 }), /invalid holder id/);
+  await assert.rejects(store.renew({ orgId: ORG, holderId: null, term: 1, ttlSeconds: 30 }), /invalid holder id/);
+  assert.equal((await store.status({ orgId: ORG })).live, true, 'rejected inputs wrote nothing');
+  const before = await store.status({ orgId: ORG });
+  const conflict = await store.acquire({ ...p, role: 'standby' });
+  assert.equal(conflict.active, false); assert.equal(conflict.reason, 'role_conflict'); assert.equal(conflict.holder_role, 'primary');
+  const after = await store.status({ orgId: ORG });
+  assert.equal(after.holder_role, 'primary');
+  assert.equal(after.history.length, before.history.length, 'a role conflict writes no history');
+  assert.equal(after.expires_at, before.expires_at, 'a role conflict renews nothing');
+  // Lease lapses while a handover is pending: not pending any more, open to anyone.
+  await store.handover({ orgId: ORG, holderId: 'core-primary', term: 1, toHolderId: 'core-standby', graceSeconds: 900 });
+  wall += 31_000;
+  const dead = await store.status({ orgId: ORG });
+  assert.equal(dead.live, false); assert.equal(dead.handover_pending, false); assert.equal(dead.handover_to, 'core-standby');
+  assert.equal((await store.acquire({ ...p, holderId: 'core-third', role: 'standby' })).reason, 'expired_takeover');
+  assert.equal((await store.acquire({ ...p, holderId: 'core-standby', role: 'standby' })).reason, 'held');
 });

@@ -2,6 +2,10 @@
 -- Behaviour of supabase/pending/compute_scheduler_lease_v1.sql: one active
 -- scheduler per org, fencing by term, takeover only after expiry or handover,
 -- failback only by handover.
+--
+-- The fixture that loads this (scripts/compute-scheduler-sql-check.mjs)
+-- installs Supabase's default privileges first, so the privilege assertions
+-- below exercise the canonical target, not an empty database.
 begin;
 insert into public.orgs(id) values ('00000000-0000-0000-0000-000000000011');
 
@@ -13,6 +17,8 @@ begin
  -- fresh acquire: term 1, active
  r:=public.compute_scheduler_acquire(org,p,'primary',30);
  if (r->>'active')<>'true' or (r->>'term')<>'1' or r->>'reason'<>'fresh' or r->>'holder_id'<>p or r->>'server_time' is null or r->>'expires_at' is null then raise exception 'fresh acquire: %',r;end if;
+ -- the fresh path serialised on the org's transaction advisory lock before it stamped the row
+ if not exists (select 1 from pg_locks where locktype='advisory' and pid=pg_backend_pid()) then raise exception 'fresh acquire took no advisory lock';end if;
  -- same holder re-acquire renews the same term
  r:=public.compute_scheduler_acquire(org,p,'primary',30);
  if (r->>'active')<>'true' or (r->>'term')<>'1' or r->>'reason'<>'renewed' then raise exception 're-acquire: %',r;end if;
@@ -124,10 +130,120 @@ begin
     or has_function_privilege('anon','public.compute_scheduler_release(uuid,text,bigint)','execute')
     or has_function_privilege('authenticated','public.compute_scheduler_handover(uuid,text,bigint,text,integer)','execute')
     or has_function_privilege('anon','public.compute_scheduler_status(uuid)','execute') then raise exception 'public RPC access';end if;
- if has_function_privilege('service_role','public.compute_scheduler_history_push(jsonb,timestamptz,text,text,text,bigint)','execute') then raise exception 'helper exposed';end if;
+ if has_function_privilege('service_role','public.compute_scheduler_history_push(jsonb,timestamptz,text,text,text,bigint)','execute')
+    or has_function_privilege('anon','public.compute_scheduler_history_push(jsonb,timestamptz,text,text,text,bigint)','execute')
+    or has_function_privilege('authenticated','public.compute_scheduler_history_push(jsonb,timestamptz,text,text,text,bigint)','execute') then raise exception 'helper exposed';end if;
  if not has_function_privilege('service_role','public.compute_scheduler_acquire(uuid,text,text,integer)','execute')
     or not has_function_privilege('service_role','public.compute_scheduler_status(uuid)','execute') then raise exception 'gateway access lost';end if;
+ -- table: anon and authenticated see nothing; service_role reads only (the
+ -- Supabase default grant of insert/update/delete/truncate to service_role is gone)
  if has_table_privilege('anon','public.ops_compute_scheduler_leases','select') or has_table_privilege('authenticated','public.ops_compute_scheduler_leases','select')
-    or has_table_privilege('service_role','public.ops_compute_scheduler_leases','insert') then raise exception 'table privilege leak';end if;
+    or has_table_privilege('anon','public.ops_compute_scheduler_leases','insert') or has_table_privilege('authenticated','public.ops_compute_scheduler_leases','update')
+    or has_table_privilege('service_role','public.ops_compute_scheduler_leases','insert')
+    or has_table_privilege('service_role','public.ops_compute_scheduler_leases','update')
+    or has_table_privilege('service_role','public.ops_compute_scheduler_leases','delete')
+    or has_table_privilege('service_role','public.ops_compute_scheduler_leases','truncate') then raise exception 'table privilege leak';end if;
+ if not has_table_privilege('service_role','public.ops_compute_scheduler_leases','select') then raise exception 'service_role diagnostics select lost';end if;
+ -- the history helper renders a timestamptz with the session TimeZone: stable, never immutable
+ if (select provolatile from pg_proc where oid='public.compute_scheduler_history_push(jsonb,timestamptz,text,text,text,bigint)'::regprocedure)<>'s' then raise exception 'history helper volatility is not stable';end if;
 end;$test$;
 rollback;
+
+-- Identity, input and status edge cases (regressions for the 2026-11-23 review).
+begin;
+insert into public.orgs(id) values ('00000000-0000-0000-0000-000000000033');
+
+do $test$
+declare
+ org uuid:='00000000-0000-0000-0000-000000000033';
+ h text:='core-shared'; r jsonb; st jsonb;
+begin
+ -- same holder id, different role: no renewal, no role flip, no history entry
+ r:=public.compute_scheduler_acquire(org,h,'primary',30);
+ if (r->>'active')<>'true' or r->>'reason'<>'fresh' or r->>'holder_role'<>'primary' then raise exception 'shared fresh: %',r;end if;
+ r:=public.compute_scheduler_acquire(org,h,'standby',30);
+ if (r->>'active')<>'false' or r->>'reason'<>'role_conflict' or r->>'holder_role'<>'primary' or (r->>'term')<>'1' or r->>'holder_id'<>h then raise exception 'role conflict accepted: %',r;end if;
+ st:=public.compute_scheduler_status(org);
+ if st->>'holder_role'<>'primary' or jsonb_array_length(st->'history')<>1 or (st->>'live')<>'true' then raise exception 'role conflict wrote: %',st;end if;
+ r:=public.compute_scheduler_renew(org,h,1,30);
+ if (r->>'ok')<>'true' then raise exception 'renew after role conflict: %',r;end if;
+ r:=public.compute_scheduler_acquire(org,h,'primary',30);
+ if (r->>'active')<>'true' or r->>'reason'<>'renewed' or r->>'holder_role'<>'primary' then raise exception 'same role re-acquire: %',r;end if;
+ -- null holder or term never slips through release/handover/renew (three-valued logic)
+ begin
+  perform public.compute_scheduler_release(org,null,1);
+  raise exception 'null holder release accepted';
+ exception when others then
+  if sqlerrm='null holder release accepted' then raise; end if;
+ end;
+ begin
+  perform public.compute_scheduler_release(org,h,null);
+  raise exception 'null term release accepted';
+ exception when others then
+  if sqlerrm='null term release accepted' then raise; end if;
+ end;
+ begin
+  perform public.compute_scheduler_handover(org,null,1,'core-next',60);
+  raise exception 'null holder handover accepted';
+ exception when others then
+  if sqlerrm='null holder handover accepted' then raise; end if;
+ end;
+ begin
+  perform public.compute_scheduler_handover(org,h,null,'core-next',60);
+  raise exception 'null term handover accepted';
+ exception when others then
+  if sqlerrm='null term handover accepted' then raise; end if;
+ end;
+ begin
+  perform public.compute_scheduler_renew(org,null,1,30);
+  raise exception 'null holder renew accepted';
+ exception when others then
+  if sqlerrm='null holder renew accepted' then raise; end if;
+ end;
+ st:=public.compute_scheduler_status(org);
+ if (st->>'live')<>'true' or st->>'released_at' is not null or st->>'handover_to' is not null or (st->>'term')<>'1' then raise exception 'null inputs wrote: %',st;end if;
+ -- unknown org: a clear error before any lock, not a foreign key violation
+ begin
+  perform public.compute_scheduler_acquire('00000000-0000-0000-0000-0000000000ff',h,'primary',30);
+  raise exception 'unknown org accepted';
+ exception when others then
+  if sqlerrm='unknown org accepted' then raise; end if;
+  if sqlstate<>'P0002' or sqlerrm<>'unknown org' then raise exception 'unknown org surfaced as % %',sqlstate,sqlerrm; end if;
+ end;
+ -- a handover on a row whose lease lapsed is not pending: the row is open to anyone
+ r:=public.compute_scheduler_handover(org,h,1,'core-next',100);
+ if (r->>'ok')<>'true' then raise exception 'handover request: %',r;end if;
+ update public.ops_compute_scheduler_leases set expires_at=clock_timestamp()-interval '1 second' where org_id=org;
+ st:=public.compute_scheduler_status(org);
+ if (st->>'live')<>'false' or (st->>'handover_pending')<>'false' or st->>'handover_to'<>'core-next' then raise exception 'dead row reports a pending handover: %',st;end if;
+ r:=public.compute_scheduler_acquire(org,'core-third','standby',30);
+ if (r->>'active')<>'true' or r->>'reason'<>'expired_takeover' or (r->>'term')<>'2' then raise exception 'expired row not open: %',r;end if;
+ r:=public.compute_scheduler_acquire(org,'core-next','standby',30);
+ if (r->>'active')<>'false' or r->>'reason'<>'held' or r->>'handover_to' is not null then raise exception 'lapsed handover honoured: %',r;end if;
+end;$test$;
+rollback;
+
+-- status is a plain read: in a transaction of its own it takes no row lock on
+-- the lease table (FOR UPDATE would show RowShareLock here), so a diagnostics
+-- read left open cannot stall the holder's renew. The committed row below is
+-- removed again at the end.
+begin;
+insert into public.orgs(id) values ('00000000-0000-0000-0000-000000000044') on conflict do nothing;
+select public.compute_scheduler_acquire('00000000-0000-0000-0000-000000000044','core-lock','primary',30);
+commit;
+begin;
+do $test$
+declare st jsonb;
+begin
+ st:=public.compute_scheduler_status('00000000-0000-0000-0000-000000000044');
+ if (st->>'live')<>'true' or st->>'holder_id'<>'core-lock' then raise exception 'status read: %',st;end if;
+ if exists (select 1 from pg_locks where pid=pg_backend_pid() and relation='public.ops_compute_scheduler_leases'::regclass
+            and mode in ('RowShareLock','RowExclusiveLock','ShareLock','ShareRowExclusiveLock','ExclusiveLock','AccessExclusiveLock'))
+  then raise exception 'status locked the lease row';end if;
+ if not exists (select 1 from pg_locks where pid=pg_backend_pid() and relation='public.ops_compute_scheduler_leases'::regclass and mode='AccessShareLock')
+  then raise exception 'lock inspection found no read lock at all (pg_locks not reporting)';end if;
+end;$test$;
+rollback;
+begin;
+delete from public.orgs where id='00000000-0000-0000-0000-000000000044';
+commit;
