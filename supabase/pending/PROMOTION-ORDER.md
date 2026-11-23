@@ -722,3 +722,9 @@ contract, the schema manifest from the CI reset, a new production snapshot; this
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
 | `20261123180000_tinderfessions_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's Tinderfessions (keys `tinderfessions:*`), upserted like the Whip Equipped and PRIM3 seeds | the shelf in `data/albums.json` (album `tinderfessions`); the live discovery and direct-sale lookups by catalog key | `scripts/test/action-network-live-governance.test.mjs` and `scripts/test/music-direct-sales.test.mjs` read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+
+## 17. In Hot Pursuit catalog objects (written 2026-11-23)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261123190000_in_hot_pursuit_catalog_objects.sql` (+ `.rollback.sql`) | seven `public.music_catalog_objects` rows for Benji Chase's In Hot Pursuit (keys `in-hot-pursuit:*`), upserted like section 16 | the shelf in `data/albums.json` (album `in-hot-pursuit`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |

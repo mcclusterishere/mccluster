@@ -132,7 +132,8 @@ test('every track in data/albums.json maps to a catalogue key of the shape the d
   const seed = await read('supabase/migrations/20261003233747_action_network_live_governance_v1.sql')
     + await read('supabase/pending/20261031180100_whip_equipped_catalog_objects.sql')
     + await read('supabase/pending/20261031190000_prim3_catalog_objects.sql')
-    + await read('supabase/pending/20261123180000_tinderfessions_catalog_objects.sql');
+    + await read('supabase/pending/20261123180000_tinderfessions_catalog_objects.sql')
+    + await read('supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.sql');
   for (const a of albums) for (const t of a.tracks) {
     const key = catalogKeyOf(a.slug, t.title);
     assert.match(key, /^[a-z0-9-]+:[a-z0-9-]+$/);

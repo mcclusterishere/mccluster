@@ -1,7 +1,7 @@
 {
  "generated_by": "tools/build-music-registry.mjs",
  "isrc_prefix": "QT6KV",
- "count": 53,
+ "count": 60,
  "tracks": [
   {
    "slug": "who-did-the-shoot",
@@ -604,6 +604,83 @@
    "length": "3:36",
    "available": true,
    "no": 53
+  },
+  {
+   "slug": "hit-mode",
+   "title": "Hit Mode",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "1:12",
+   "available": true,
+   "no": 54
+  },
+  {
+   "slug": "block-so-hot",
+   "title": "Block So Hot",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "1:03",
+   "available": true,
+   "no": 55
+  },
+  {
+   "slug": "new-phone",
+   "title": "New Phone",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "1:57",
+   "available": true,
+   "no": 56
+  },
+  {
+   "slug": "up-for-days",
+   "title": "Up For Days",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "3:37",
+   "available": true,
+   "no": 57
+  },
+  {
+   "slug": "hitshake",
+   "title": "HitShake",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "0:42",
+   "available": true,
+   "no": 58
+  },
+  {
+   "slug": "see-me-up",
+   "title": "See Me Up",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "2:13",
+   "available": true,
+   "no": 59
+  },
+  {
+   "slug": "other-side",
+   "title": "Other Side",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "2:53",
+   "available": true,
+   "no": 60
   }
  ]
 }

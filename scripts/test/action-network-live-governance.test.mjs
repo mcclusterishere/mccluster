@@ -56,14 +56,15 @@ test('A live Mission join preserves live first-touch through verified completion
 
 test('Every current catalogue song is a first-class live discovery object', async () => {
   /* the original seed, plus the pending seeds for the Whip Equipped and PRIM3 tracks added 2026-10-31 */
-  const [base, whip, prim3, tinder, raw] = await Promise.all([
+  const [base, whip, prim3, tinder, pursuit, raw] = await Promise.all([
     read('supabase/migrations/20261003233747_action_network_live_governance_v1.sql'),
     read('supabase/pending/20261031180100_whip_equipped_catalog_objects.sql'),
     read('supabase/pending/20261031190000_prim3_catalog_objects.sql'),
     read('supabase/pending/20261123180000_tinderfessions_catalog_objects.sql'),
+    read('supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.sql'),
     read('data/albums.json')
   ]);
-  const sql = base + '\n' + whip + '\n' + prim3 + '\n' + tinder;
+  const sql = base + '\n' + whip + '\n' + prim3 + '\n' + tinder + '\n' + pursuit;
   const albums = JSON.parse(raw).albums || [];
   let count = 0;
   for (const album of albums) {
@@ -73,7 +74,7 @@ test('Every current catalogue song is a first-class live discovery object', asyn
       assert.ok(sql.includes("'" + key.replaceAll("'", "''") + "'"), 'missing music catalog object ' + key);
     }
   }
-  assert.equal(count, 53); // 41, plus Tinderfessions' twelve (2026-11-23)
+  assert.equal(count, 60); // 41, plus Tinderfessions' twelve and In Hot Pursuit's seven (2026-11-23)
   assert.match(sql, /music_object_id uuid references public\.music_catalog_objects/);
   assert.match(sql, /canonical_url text not null check\(canonical_url~'\^https:\/\/'\)/i);
 });

@@ -707,6 +707,58 @@
      "seconds": 215.6
     }
    ]
+  },
+  {
+   "slug": "in-hot-pursuit",
+   "name": "In Hot Pursuit",
+   "artist": "Benji Chase",
+   "tag": "The album",
+   "art": "assets/img/in-hot-pursuit-cover.jpg",
+   "by": "",
+   "tracks": [
+    {
+     "title": "Hit Mode",
+     "src": "assets/audio/hit-mode.m4a",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 72
+    },
+    {
+     "title": "Block So Hot",
+     "src": "assets/audio/block-so-hot.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 62.9
+    },
+    {
+     "title": "New Phone",
+     "src": "assets/audio/new-phone.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 117.1
+    },
+    {
+     "title": "Up For Days",
+     "src": "assets/audio/up-for-days.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 216.5
+    },
+    {
+     "title": "HitShake",
+     "src": "assets/audio/hitshake.m4a",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 42.2
+    },
+    {
+     "title": "See Me Up",
+     "src": "assets/audio/see-me-up.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 132.5
+    },
+    {
+     "title": "Other Side",
+     "src": "assets/audio/other-side.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 173.1
+    }
+   ]
   }
  ]
 }
