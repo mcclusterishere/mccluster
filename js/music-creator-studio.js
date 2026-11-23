@@ -263,7 +263,7 @@ function pillClass(track) {
 }
 async function loadTracks() {
   const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at&order=created_at.desc");
+    "&select=id,title,artist,description,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,master_path,preview_path,created_at,updated_at,published_at&order=created_at.desc");
   tracksCache = rows || [];
   renderAlbums();
   const list = $("creatorTracks");
@@ -271,14 +271,155 @@ async function loadTracks() {
     list.innerHTML = '<div class="creator-status">No releases yet.</div>';
     return;
   }
-  list.innerHTML = rows.map((t) =>
-    '<div class="creator-item"><div><b>' + escapeHtml(t.title) + '</b><small>' +
-    escapeHtml([t.artist, t.genre, t.access_mode].filter(Boolean).join(" · ")) +
-    (t.moderation_note ? '<br>' + escapeHtml(t.moderation_note) : '') +
-    '</small></div><span class="' + pillClass(t) + '">' +
-    escapeHtml(t.status.replace(/_/g, " ")) + ' · ' + escapeHtml(t.rights_status) + '</span></div>'
-  ).join("");
+  list.innerHTML = rows.map((t) => {
+    const id = escapeHtml(t.id);
+    const actions = PAGE.releaseActions(t);
+    return '<div class="creator-item creator-release" data-release-row="' + id + '"><div><b>' + escapeHtml(t.title) + '</b><small>' +
+      escapeHtml([t.artist, t.genre, t.access_mode].filter(Boolean).join(" · ")) +
+      (t.moderation_note ? '<br>' + escapeHtml(t.moderation_note) : '') +
+      '</small></div><span class="' + pillClass(t) + '">' +
+      escapeHtml(t.status.replace(/_/g, " ")) + ' · ' + escapeHtml(t.rights_status) + '</span>' +
+      (actions.length ? '<div class="creator-rowactions creator-release__actions">' + actions.map((a) =>
+        '<button class="creator-btn quiet" type="button" data-release-action="' + a + '" data-release="' + id + '">' + RELEASE_ACTION_LABEL[a] + '</button>'
+      ).join("") + '</div>' : '') +
+      '<div class="creator-release__edit" data-release-edit="' + id + '" hidden></div></div>';
+  }).join("");
 }
+
+/* ---------- a creator's own releases, after submit (music slice M6, studio lane ST-10) ----------
+   The rule of what is offered is js/music-creator-page.js releaseActions, which is what the database already allows a
+   creator; each change below names the state and the version it was made on, so a release the reviewer published or
+   rejected meanwhile is never changed by an older screen: nothing matches, the list reloads and says so. */
+const RELEASE_ACTION_LABEL = { edit: "Edit", withdraw: "Withdraw", resubmit: "Submit again", delete: "Delete" };
+const RELEASE_CHANGED = "This release changed since your list loaded: it may have been reviewed. Your releases are up to date again.";
+function releaseById(id) { return tracksCache.find((t) => String(t.id) === String(id)) || null; }
+function releaseEditForm(t) {
+  const id = escapeHtml(t.id);
+  const field = (name, label, value, max, kind) =>
+    '<div class="creator-field"><label for="rel-' + name + '-' + id + '">' + label + '</label>' +
+    (kind === "area"
+      ? '<textarea id="rel-' + name + '-' + id + '" name="' + name + '" maxlength="' + max + '">' + escapeHtml(value || "") + '</textarea>'
+      : '<input id="rel-' + name + '-' + id + '" name="' + name + '" maxlength="' + max + '"' + (kind === "url" ? ' type="url"' : '') + (name === "title" ? ' required' : '') + ' value="' + escapeHtml(value || "") + '">') +
+    '</div>';
+  return '<form class="creator-form" data-release-form="' + id + '" novalidate>' +
+    field("title", "Title", t.title, 220) + field("artist", "Artist credit", t.artist, 220) + field("genre", "Genre", t.genre, 80) +
+    field("description", "Release notes", t.description, 2000, "area") +
+    field("music_video_url", "Music video URL", t.music_video_url, 2000, "url") + field("lyrics_url", "Lyrics JSON URL", t.lyrics_url, 2000, "url") +
+    '<small class="creator-help">The audio, artwork and listener access stay as submitted. The reviewer sees the version you save.</small>' +
+    '<div class="creator-actions"><button class="creator-btn primary" type="submit">Save changes</button>' +
+    '<button class="creator-btn quiet" type="button" data-release-cancel="' + id + '">Cancel</button></div></form>';
+}
+function closeReleaseEdits() {
+  document.querySelectorAll("[data-release-edit]").forEach((box) => { box.hidden = true; box.replaceChildren(); });
+}
+function artworkPath(url) {
+  const prefix = PAGE.ARTWORK;
+  if (!url || String(url).indexOf(prefix) !== 0) return "";
+  try { return decodeURIComponent(String(url).slice(prefix.length).split("?")[0]); } catch (_) { return ""; }
+}
+$("creatorTracks").addEventListener("click", guarded(async (e) => {
+  const cancel = e.target.closest("[data-release-cancel]");
+  if (cancel) { closeReleaseEdits(); return; }
+  const button = e.target.closest("[data-release-action]");
+  if (!button) return;
+  const action = button.getAttribute("data-release-action");
+  const t = releaseById(button.getAttribute("data-release"));
+  if (!t) return;
+  const enc = encodeURIComponent;
+  if (action === "edit") {
+    closeReleaseEdits();
+    const box = document.querySelector('[data-release-edit="' + CSS.escape(String(t.id)) + '"]');
+    if (!box) return;
+    box.innerHTML = releaseEditForm(t);
+    box.hidden = false;
+    box.querySelector("input")?.focus();
+    status("releaseStatus", "");
+    return;
+  }
+  if (action === "withdraw" && !confirm("Withdraw “" + t.title + "” from review? It goes back to your drafts: you can submit it again or delete it.")) return;
+  if (action === "delete" && !confirm("Delete “" + t.title + "”? Its record and its files are removed. This cannot be undone.")) return;
+  button.disabled = true;
+  try {
+    if (action === "withdraw") {
+      const rows = await rest("creator_tracks?id=eq." + enc(t.id) + "&status=eq.pending_review", {
+        method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ status: "draft" })
+      });
+      if (!Array.isArray(rows) || !rows.length) { status("releaseStatus", RELEASE_CHANGED, "bad"); await loadTracks(); return; }
+      status("releaseStatus", "Withdrawn. “" + t.title + "” is out of the review queue and in your drafts.", "good");
+      if (window.MCC_TRACK) window.MCC_TRACK("creator_release_withdrawn", { track_id: t.id });
+    } else if (action === "resubmit") {
+      const rows = await rest("creator_tracks?id=eq." + enc(t.id) + "&status=eq.draft&rights_status=in.(attested,review)", {
+        method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ status: "pending_review" })
+      });
+      if (!Array.isArray(rows) || !rows.length) { status("releaseStatus", RELEASE_CHANGED, "bad"); await loadTracks(); return; }
+      status("releaseStatus", "Submitted again. “" + t.title + "” is back in the review queue.", "good");
+      if (window.MCC_TRACK) window.MCC_TRACK("creator_release_resubmitted", { track_id: t.id });
+    } else if (action === "delete") {
+      let rows;
+      try {
+        rows = await rest("creator_tracks?id=eq." + enc(t.id) + "&status=eq.draft", {
+          method: "DELETE", headers: { Prefer: "return=representation" }
+        });
+      } catch (err) {
+        /* the reviewer verified its audio: the pinned version keeps the record (public.music_asset_versions) */
+        if (/foreign key|music_asset_versions/i.test(String(err && err.message))) {
+          status("releaseStatus", "“" + t.title + "” stays withdrawn: the reviewer has already verified its audio, so its record is kept. It will not be published.", "bad");
+          return;
+        }
+        throw err;
+      }
+      if (!Array.isArray(rows) || !rows.length) { status("releaseStatus", RELEASE_CHANGED, "bad"); await loadTracks(); return; }
+      const uploads = [];
+      if (t.master_path) uploads.push({ bucket: "creator-masters", path: t.master_path });
+      if (t.preview_path && t.preview_path !== t.master_path) uploads.push({ bucket: "creator-previews", path: t.preview_path });
+      const art = artworkPath(t.poster_url);
+      if (art) uploads.push({ bucket: "creator-artwork", path: art });
+      const left = await rollbackRelease(null, uploads);
+      let albumNote = "";
+      const id = String(t.id).toLowerCase();
+      if (albumsNow().some((a) => a.tracks.includes(id))) {
+        try {
+          await saveSettings((s) => { (s.albums || []).forEach((a) => { if (a && Array.isArray(a.tracks)) a.tracks = a.tracks.filter((x) => x !== id); }); });
+        } catch (_) { albumNote = " It is still listed on an album: remove it from Your albums."; }
+      }
+      status("releaseStatus", "Deleted “" + t.title + "”." + (left.length ? " Some of its files could not be removed yet." : "") + albumNote, left.length || albumNote ? "bad" : "good");
+      if (window.MCC_TRACK) window.MCC_TRACK("creator_release_deleted", { track_id: t.id });
+    }
+    await loadTracks();
+  } catch (err) {
+    status("releaseStatus", err.message || "That did not work. Try again.", "bad");
+  } finally {
+    button.disabled = false;
+  }
+}));
+$("creatorTracks").addEventListener("submit", guarded(async (e) => {
+  const form = e.target.closest("[data-release-form]");
+  if (!form) return;
+  e.preventDefault();
+  const t = releaseById(form.getAttribute("data-release-form"));
+  if (!t) return;
+  const values = {};
+  ["title", "artist", "genre", "description", "music_video_url", "lyrics_url"].forEach((k) => { values[k] = form.elements[k] ? form.elements[k].value : ""; });
+  const patch = PAGE.releaseEdit(values);
+  if (!patch) { status("releaseStatus", "Give the release a title.", "bad"); form.elements.title?.focus(); return; }
+  if (!patch.artist) patch.artist = profile?.artist_name || t.artist || "";
+  const save = form.querySelector('[type="submit"]');
+  save.disabled = true;
+  try {
+    /* only the pending version on screen: a release reviewed or changed meanwhile is not touched */
+    const rows = await rest("creator_tracks?id=eq." + encodeURIComponent(t.id) + "&status=eq.pending_review&updated_at=eq." + encodeURIComponent(t.updated_at), {
+      method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(patch)
+    });
+    if (!Array.isArray(rows) || !rows.length) { status("releaseStatus", RELEASE_CHANGED, "bad"); await loadTracks(); return; }
+    status("releaseStatus", "Saved. The reviewer sees this version of “" + patch.title + "”.", "good");
+    if (window.MCC_TRACK) window.MCC_TRACK("creator_release_edited", { track_id: t.id });
+    await loadTracks();
+  } catch (err) {
+    status("releaseStatus", err.message || "Could not save the release.", "bad");
+  } finally {
+    save.disabled = false;
+  }
+}));
 function escapeHtml(value) {
   const d = document.createElement("i");
   d.textContent = value == null ? "" : String(value);
@@ -996,7 +1137,7 @@ function closeStudio() {
   $("serviceForm").hidden = true;
   ["profileForm", "trackForm", "albumForm", "serviceForm", "cobForm"].forEach((id) => { const f = $(id); if (f && f.reset) f.reset(); });
   ["creatorTracks", "creatorAlbums", "creatorServices"].forEach((id) => { const n = $(id); if (n) n.replaceChildren(); });
-  ["profileStatus", "trackStatus", "albumStatus", "serviceStatus", "cobStatus"].forEach((id) => { const n = $(id); if (n) n.textContent = ""; });
+  ["profileStatus", "trackStatus", "albumStatus", "serviceStatus", "cobStatus", "releaseStatus"].forEach((id) => { const n = $(id); if (n) n.textContent = ""; });
   $("publicProfile").hidden = true;
   $("creatorGate").querySelector("p").textContent = GATE_TEXT;
   $("creatorGate").hidden = false;

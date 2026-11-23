@@ -310,6 +310,37 @@
       menu.querySelectorAll('[data-owner-profile-action]').forEach(el => {el.hidden = !bar.admin();});
     });
   }
+  /* A CREATOR STUDIO DOOR WHERE CREATORS LOOK FOR IT (music slice M6, 2026-11-19; law lane L-11): this menu, at the
+     top right where profile and account live (owner, 2026-10-16), on Matthew's property's music pages only. Never on
+     a World host (the house must be this origin) and never in the bar's tabs. Shown to the house owner (the bar's own
+     server check) and to a creator by the server's answer (js/creator-onboarding.js studioDoor, fetched only here). */
+  const STUDIO_PAGES = /\/(?:listen|album|catalogue|music-videos|license|creator|music-creator|music-creator-terms|prim3-artist)\.html$/;
+  let studioAsk = 0, studioKnown = null;
+  function studioHere() {
+    try { return new URL(house, location.href).origin === location.origin && STUDIO_PAGES.test(location.pathname); } catch (_) { return false; }
+  }
+  function musicModule() {
+    if (window.MCC_CREATOR_ONBOARD?.studioDoor) return Promise.resolve(window.MCC_CREATOR_ONBOARD);
+    return new Promise(resolve => {
+      const s = document.createElement('script'); s.src = root + 'js/creator-onboarding.js?v=__STAMP__';
+      s.onload = () => resolve(window.MCC_CREATOR_ONBOARD || null); s.onerror = () => resolve(null);
+      document.head.appendChild(s);
+    });
+  }
+  function syncStudio() {
+    if (!profile || !studioHere()) return;
+    let link = profile.querySelector('[data-creator-studio]');
+    if (!link) {
+      link = element('a', '', 'Creator Studio'); link.href = root + 'creator.html'; link.dataset.creatorStudio = '';
+      profile.querySelector('a')?.after(link);
+    }
+    const ask = ++studioAsk, who = bar.auth().user?.id || '';
+    link.hidden = !(studioKnown && studioKnown.who === who && studioKnown.show);
+    if (!bar.auth().signed_in) {link.hidden = true; return;}
+    const show = value => { if (ask !== studioAsk || !bar.auth().signed_in) return; studioKnown = {who, show: !!value}; link.hidden = !value; };
+    if (bar.admin()) {show(true); return;}
+    musicModule().then(m => m?.studioDoor ? m.studioDoor(window) : false).then(show, () => show(false));
+  }
   function syncProfile() {
     syncProfileOwner();
     const chip = get('mccAuthChip'); if (!chip) return;
@@ -343,7 +374,7 @@
       profile.append(view, account, home, search, close); document.body.appendChild(profile);
       profile.addEventListener('toggle', event => get('mccAuthChip')?.setAttribute('aria-expanded', String(event.newState === 'open')));
     }
-    syncProfileOwner();
+    syncProfileOwner(); syncStudio();
     if (profile.matches(':popover-open')) closeProfile(true);
     else {profile.showPopover(); profile.querySelector('a').focus();}
   }, true);

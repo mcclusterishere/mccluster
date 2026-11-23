@@ -310,6 +310,17 @@
       return M.mUid().then(function (mUid) { return mUid ? client({ token: "", mUid: mUid, fetch: authed }).state() : null; });
     });
   }
+  /* THE STUDIO DOOR (music slice M6, law lane L-11). The signed-in Profile menu (js/site-navigation.js) names Creator
+     Studio on Matthew's property's music pages to whoever has one: a creator, by the server's answer (above), and the
+     house owner, by the bar's own server check (data-appbar-admin, GET /v1/status). A guest asks nothing; a question
+     nobody could answer shows no door. */
+  function studioDoor(w) {
+    var M = w && w.MCC, s = M && M.session && M.session();
+    if (!s || !s.access_token || !M.authFetch) return Promise.resolve(false);
+    var body = w.document && w.document.body;
+    if (body && body.hasAttribute && body.hasAttribute("data-appbar-admin")) return Promise.resolve(true);
+    return creatorStateFor(w).then(function (st) { return !!(st && st.creator === true); }, function () { return false; });
+  }
   function bindOffers(w) {
     var doc = w.document;
     if (!doc || w.__mccCreatorOffers) return;
@@ -359,6 +370,6 @@
     view: view, wantsEdit: wantsEdit, askFor: askFor, ready: ready,
     fallbackState: fallbackState, rpcMissing: rpcMissing, handleHelp: handleHelp,
     profileUnfinished: profileUnfinished, profileDone: profileDone, client: client, openDoor: openDoor,
-    offerFor: offerFor
+    offerFor: offerFor, studioDoor: studioDoor
   };
 });

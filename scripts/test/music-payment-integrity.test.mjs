@@ -280,9 +280,10 @@ test('a review decision is about the version the operator saw, and a reviewed re
   assert.match(access, /the release changed since you loaded it/);
   const sqlReview = await read(MIGRATION);
   assert.match(sqlReview, /where c\.id = p_track and \(p_expected_updated_at is null or c\.updated_at = p_expected_updated_at\)/);
-  const admin = await read('js/music-admin.js');
-  assert.match(admin, /expected_updated_at:b\.getAttribute\("data-version"\)/);
-  assert.match(admin, /data-version="'\+esc\(t\.updated_at\|\|""\)/);
+  /* the live desk, Control · Create · Music · Review (music slice M6; js/music-admin.js, which nothing loaded, is retired) */
+  const desk = await read('js/control-room/music-ops.js');
+  assert.match(desk, /expected_updated_at:b\.getAttribute\("data-version"\)/);
+  assert.match(desk, /data-version="'\+e\(t\.updated_at\|\|""\)/);
   const sql = await read(MIGRATION);
   assert.match(sql, /if tg_op = 'UPDATE' and old\.status in \('approved','published'\)\s+and public\.music_track_content\(new\) is distinct from public\.music_track_content\(old\) then\s+new\.status := 'pending_review';/);
   assert.match(sql, /new\.reviewed_snapshot := public\.music_track_reviewed_snapshot\(new\);/);
@@ -450,11 +451,13 @@ test('the desk plays the pinned version and approves the hash it showed', async 
   assert.match(review, /expected_master_sha256 required/);
   assert.match(review, /admin\.rpc\("music_operator_review"/);
   assert.doesNotMatch(review, /from\("creator_tracks"\)\.update/, 'no decision bypasses the hash check');
-  const admin = await read('js/music-admin.js');
-  assert.match(admin, /call\("operator-review-prepare",\{track_id:id\}\)/);
-  assert.match(admin, /expected_master_sha256:b\.getAttribute\("data-sha"\)/);
-  assert.match(admin, /src="'\+esc\(p\.listen_url\)/, 'the player streams the prepared, pinned object');
-  assert.match(admin, /disabled title="Verify and listen to the audio first"/, 'publish waits for a verified listen');
+  /* the live desk (music slice M6): what the Control Room's button sends is held end to end by
+     scripts/test/music-studio-publishes.test.mjs, which clicks it against the real music-access handler */
+  const desk = await read('js/control-room/music-ops.js');
+  assert.match(desk, /musicCall\("operator-review-prepare",\{track_id:id\}\)/);
+  assert.match(desk, /expected_master_sha256=b\.getAttribute\("data-sha"\)/);
+  assert.match(desk, /src="'\+e\(p\.listen_url\)/, 'the player streams the prepared, pinned object');
+  assert.match(desk, /disabled title="Verify and listen to the audio first"/, 'publish waits for a verified listen');
   const sql = await read(MIGRATION);
   assert.match(sql, /raise exception 'release_master_unhashed'/);
   assert.match(sql, /if v_expected is distinct from v_ver\.content_sha256 then\s+raise exception 'release_master_hash_mismatch';/);

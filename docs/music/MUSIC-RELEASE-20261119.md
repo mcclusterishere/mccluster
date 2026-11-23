@@ -263,3 +263,113 @@ own tools and the album's comment box (kept with the workflow's evidence, not in
   should read PLAY · owner).
 * Seen, not changed here: at 390 px the bar's account chip covers the "Creator Studio" link in the music context bar
   on Listen and the artist page.
+
+## M6: Creator Studio publishes and is measured
+
+Base `fc001103`. C6 (studio lane ST-1, ST-10 and ST-12, gap G-5, law lane L-1 and L-11). Browser code, tests and a
+database proof of the SQL as it stands: no SQL change, no Edge function or Worker change. D-12 and D-17 are built as
+their recommended defaults, for Matthew to see before anything merges.
+
+### Why
+
+Nothing a creator submitted could go live from any live screen. The release integrity work
+(`supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql`, applied 2026-10-30) made a publish an
+approval of the exact audio the reviewer heard: `music-access` refuses it without the version the reviewer loaded and
+the SHA-256 of the master they played. Only `js/music-admin.js` sent both, and no page loaded it; the live desk,
+Control · Create · Music · Review (`js/control-room/music-ops.js`), sent neither, so the owner's Publish came back as
+an alert, "expected_updated_at required" (the studio lane's probe `p2-edge/control-room-click.mjs`), and the music
+service answered 400 before the database was asked (`p2-edge/run.ts`). Two tests asserted the orphan, so the suite
+stayed green. The same desk read seven `vault_*` tables that are not in the database (production catalog,
+2026-11-19: none) and said "Some music sources failed" on every tab, release review included. Creator Studio was not
+measured: `creator.html` did not load `js/analytics.js`, so its own events (`creator_track_submitted`,
+`creator_release_cleanup_failed` and the rest) were never recorded and no studio failure reached anyone. A creator who
+had submitted a release could not change a word of it or take it back: the database allowed both and the studio
+offered neither. And the one Creator Studio link on the music pages, in the music context bar, sits under the account
+chip at 390 px (seen in M4).
+
+### What changed
+
+1. **The live desk publishes the bytes the reviewer heard** (`js/control-room/music-ops.js`; ST-1, D-12). Each
+   release waiting for review has **Verify + listen** (`music-access` `operator-review-prepare`: the master under
+   review is pinned and hashed once); the desk plays that pinned object and shows its short hash, and **Publish +
+   clear** stays shut until then. Publish carries the version the desk loaded (`expected_updated_at`) and the hash it
+   played (`expected_master_sha256`) to `public.music_operator_review`, which refuses anything else. A release that
+   changed after it was verified is verified again. Needs review and Reject carry the version too. Creators' releases
+   are never published automatically.
+2. **The orphan desk is retired** (ST-12). `js/music-admin.js` is deleted (`music-admin.html` stays the redirect into
+   Control it already was), and the three tests that asserted it assert the live desk
+   (`scripts/test/music-payment-integrity.test.mjs`, `scripts/test/music-platform.test.mjs`).
+3. **The vault says it is not set up** (L-1). A missing `vault_*` table reads "The vault is not set up yet" on
+   Catalog and Distribution, without the controls that could save nothing; any other error says the vault could not
+   be read, on those two tabs only. Release review, direct sales, lyrics and stems never carry it. No SQL is written
+   for the vault.
+4. **Creator Studio is measured** (G-5, D-17). `creator.html` loads `js/analytics.js` before the shared auth and the
+   studio, as every music page does. The studio's events record only when the visitor agreed to the privacy notice;
+   after "Not now" `MCC_TRACK` records nothing, sends nothing and keeps nothing in the outbox.
+5. **A creator's own releases** (ST-10; `js/music-creator-studio.js`, `js/music-creator-page.js`,
+   `css/music-creator.css`). *Your releases* offers what the database already allows for a release's state, and
+   nothing else. Waiting for review: **Edit** (title, artist credit, genre, notes, video and lyrics links; never the
+   audio, artwork, access or rights) and **Withdraw** (back to drafts, out of the review queue). Withdrawn: **Submit
+   again** and **Delete** (its files too). Every change names the state on screen, and an edit the version too: a
+   release the reviewer acted on meanwhile is never changed by an older screen, and the studio says so and reloads. A
+   release whose audio the reviewer verified cannot be deleted (the pinned version keeps it): it stays withdrawn and
+   the studio says why. Nothing is offered on a rejected release (the database would let a creator delete it, but the
+   reviewer's note lives only on the release and its rights attestation goes with it) or on a live one (any change
+   takes it off the air, D-14). New events: `creator_release_edited`, `creator_release_withdrawn`,
+   `creator_release_resubmitted`, `creator_release_deleted`.
+6. **The database already decides it** (`supabase/tests/music_creator_releases.behaviour.sql`, run by
+   `scripts/test-music-release-integrity-db.sh`). The row policies of
+   `20260920041011_music_creator_platform_v1.sql` and the guard of `20261030001000_music_release_payment_integrity_v1.sql`,
+   with row security on as production has it (catalog read 2026-11-19: on, the same five policies, the same foreign
+   keys), let a creator edit a pending release, withdraw it, submit it again and delete a withdrawn one, and refuse:
+   deleting a pending release, deleting one whose audio was verified, another creator's edit, withdrawal or delete, a
+   creator's own publish, and a reviewer's decision made on the version before the creator's edit. A creator's edit
+   of a live release unpublishes it.
+7. **A Creator Studio door where creators look** (L-11; `js/site-navigation.js`, `js/creator-onboarding.js`
+   `studioDoor`). The signed-in Profile menu, top right, names Creator Studio on Matthew's music pages only (Listen,
+   the album, the catalogue, music videos, licensing, Creator Studio, the artist pages, the creator terms, the PRIM3
+   artist page): to a creator by the server's answer (`music_creator_state`) and to the house owner by the bar's own
+   server check. Never to a member who is not a creator, never on another page, never on a World host (the house must
+   be the page's own origin), and never in the bar's tabs or the World's tab row.
+8. `docs/music/ARTIST-PAGES.md` (step 6) and the release integrity entry in `supabase/pending/README.md` name the
+   live desk.
+9. **CI.** `music-platform-ci.yml`: the unit test in `music-contract`, the Chromium suite in `browser`, the new files,
+   the live desk, the navigation and analytics scripts in its paths, and `node --check` of the live desk instead of
+   the retired one. `music-release-integrity-db.yml`: the new behaviour file, the live desk and the studio in its
+   paths. No new workflow and no new trigger.
+
+### Tests: failing at the base, passing after
+
+| Test | At `fc001103` | After |
+| --- | --- | --- |
+| `scripts/test/music-studio-publishes.test.mjs` (15 tests: the live desk run in Node against stand-ins of `music-access` and the database, the Edge handler itself, `creator.html`'s scripts, `js/analytics.js` without consent, the release rules, the door) | 13 of 15 fail; the 2 that pass are guards (`music-access` still refuses a publish without version and hash; `js/analytics.js` without consent) | 15 of 15 |
+| `scripts/e2e/music-creator-release.e2e.mjs` (Chromium, 390 px: a creator submits and edits a release, an older screen's edit is refused, the owner verifies, listens and publishes it, the vault tabs, the release on its artist page playing for a guest, nothing offered on it once live; with "Not now": nothing sent, withdraw, submit again, delete, a verified release that stays withdrawn; the door for a creator, the owner, a member, the home page and a World host) | 19 of 38 checks fail (fewer checks run: a missing control ends its part): `creator.html` has no analytics, a pending release offers no Edit or Withdraw, there is no Verify + listen and Publish is open before anyone listened; pressed, it comes back as the owner's alert "expected_updated_at required: reload the queue and review again" and `music-access` answers 400 with the same words (the studio lane's two probes, verbatim), so the release never reaches its artist page; the vault tabs fail vaguely; a creator and the owner find no Creator Studio in the Profile menu | 63 of 63 |
+| The three tests re-pointed from the orphan to the live desk (`music-payment-integrity` 15 and 24, `music-platform` 33) | fail against the base desk | pass |
+| `supabase/tests/music_creator_releases.behaviour.sql` (native PostgreSQL 16.15 and 17.7) | passes: it pins the SQL as it stands, and no SQL changed; with row security off, as the shared stub leaves it, it fails | passes on both |
+| Root suite `node --test scripts/test/*.test.mjs` | | 2909 tests, 0 failures (7 skipped) |
+
+Every fix was also taken away on its own and its tests failed: `js/control-room/music-ops.js` 7 unit tests (and the
+desk, vault and publish checks in Chromium), `creator.html` 1, `js/music-creator-page.js` 2,
+`js/music-creator-studio.js` 1, `js/creator-onboarding.js` 1, `js/site-navigation.js` 1.
+
+@@SUITES@@
+
+### What is Inferred
+
+* Production's answers to these exact requests: the browser suite answers from stand-ins built from the code and
+  the applied SQL (`scripts/e2e/support/music-release-plane.mjs`), and the database proof runs the applied files on a
+  scratch database. No real release was submitted, reviewed or published.
+* That the deployed `music-access` is the repository's for the upload and review actions (D-19): not read.
+
+### What waits for Matthew
+
+* **D-12** (the hash-checked desk, no automatic publication) and **D-17** (the studio measured under the same
+  consent rule) as built here; **D-19**, one read-only look at the deployed `music-access` source.
+* **A real test release in production**: submit one from Creator Studio, verify, listen and publish it from Control
+  · Create · Music · Review, and see it on its artist page. His to run.
+* Whether a creator may delete a rejected release (the database allows it; the studio does not offer it).
+* The vault: its SQL is not written. Catalog and Distribution say it is not set up until it is.
+* The four new event names stay unclassified in the measurement dictionary
+  (`workers/mccluster/src/analytics/measurement-dictionary.js`) until he reviews them, as its own rule says.
+* Not in this slice: the music context bar's own Creator Studio link under the account chip at 390 px (the Profile
+  menu is the door now).

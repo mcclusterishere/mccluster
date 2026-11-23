@@ -230,7 +230,44 @@
     return lines.join("\n").slice(0, 8000);
   }
 
+  /* A CREATOR'S OWN RELEASES (music slice M6, 2026-11-19; studio lane ST-10). What a creator may do with a release
+     they submitted is what the applied SQL already lets them do, and nothing it would refuse or regret
+     (20260920041011_music_creator_platform_v1.sql, the row policies; 20261030001000_music_release_payment_integrity_v1.sql,
+     public.music_track_guard; proven in supabase/tests/music_creator_releases.behaviour.sql):
+       pending review           -> edit its words and links (the reviewer sees the new version: the review starts
+                                   again from what is saved), or withdraw it (back to draft, out of the queue)
+       withdrawn (attested, or
+       held for review)          -> submit it again (it returns to the queue in the rights state it left), or delete it
+       draft never attested      -> delete it (the row policy allows a creator to delete a draft)
+       rejected                  -> nothing here, although the row policy would allow deleting it: the reviewer's
+                                   note lives only on the release and its rights attestation goes with it, so whether
+                                   a creator may erase a rejection is the owner's call, not this page's
+       approved, published       -> nothing here: any change would take a live song off the air (the guard sends a
+                                   changed reviewed release back to review), which is the owner's decision D-14
+     Deleting is refused by the database once the reviewer has verified the audio (the pinned version keeps the row):
+     the release then stays withdrawn. */
+  function releaseActions(track) {
+    var status = track && track.status;
+    if (status === "pending_review") return ["edit", "withdraw"];
+    if (status === "draft") return track.rights_status === "attested" || track.rights_status === "review" ? ["resubmit", "delete"] : ["delete"];
+    return [];
+  }
+  /* The words and links of a pending release, and nothing else: never its state, rights, audio, artwork or access
+     (a listener-access change can expose a master as a public preview; it is a new release). */
+  var EDITABLE = { title: 220, artist: 220, genre: 80, description: 2000, music_video_url: 2000, lyrics_url: 2000 };
+  function releaseEdit(input) {
+    var out = {};
+    for (var k in EDITABLE) {
+      if (!Object.prototype.hasOwnProperty.call(EDITABLE, k) || !input || input[k] == null) continue;
+      out[k] = String(input[k]).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]+/g, "").trim().slice(0, EDITABLE[k]);
+    }
+    if (!out.title) return null;
+    return out;
+  }
+
   return {
+    releaseActions: releaseActions,
+    releaseEdit: releaseEdit,
     SB: SB,
     ARTWORK: ARTWORK,
     MAX_ALBUMS: MAX_ALBUMS,

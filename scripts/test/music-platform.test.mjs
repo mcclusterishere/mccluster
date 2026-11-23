@@ -145,12 +145,13 @@ test('public creator profiles play in-place and can enter first-party checkout',
 
 test('operator review desk is gated by existing ops authority', async()=>{
   /* music-admin.html is a compatibility stub into Control → Sell → Music; the
-     review client and its server gate are what this guards. */
+     live review client there (js/control-room/music-ops.js, music slice M6) and
+     its server gate are what this guards. */
   const page=await read('music-admin.html');
-  const js=await read('js/music-admin.js');
+  const js=await read('js/control-room/music-ops.js');
   const access=await read('supabase/functions/music-access/index.ts');
   assert.match(page,/control\.html#sell:music:catalog/);
-  assert.match(js,/operator-status/);
+  assert.match(js,/operator-review-prepare/);
   assert.match(js,/operator-review/);
   assert.match(js,/operator-license/);
   assert.match(access,/houseOps\(who\.user\.id\)/);

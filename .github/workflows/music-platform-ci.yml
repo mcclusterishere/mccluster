@@ -43,6 +43,12 @@ on:
       - 'scripts/test/music-accounts.test.mjs'
       - 'scripts/e2e/music-accounts.e2e.mjs'
       - 'scripts/e2e/support/music-accounts-plane.mjs'
+      - 'js/control-room/music-ops.js'
+      - 'js/site-navigation.js'
+      - 'js/analytics.js'
+      - 'scripts/test/music-studio-publishes.test.mjs'
+      - 'scripts/e2e/music-creator-release.e2e.mjs'
+      - 'scripts/e2e/support/music-release-plane.mjs'
       - '.github/workflows/music-platform-ci.yml'
   push:
     branches: [main]
@@ -87,6 +93,12 @@ on:
       - 'scripts/test/music-accounts.test.mjs'
       - 'scripts/e2e/music-accounts.e2e.mjs'
       - 'scripts/e2e/support/music-accounts-plane.mjs'
+      - 'js/control-room/music-ops.js'
+      - 'js/site-navigation.js'
+      - 'js/analytics.js'
+      - 'scripts/test/music-studio-publishes.test.mjs'
+      - 'scripts/e2e/music-creator-release.e2e.mjs'
+      - 'scripts/e2e/support/music-release-plane.mjs'
 
 permissions:
   contents: read
@@ -104,7 +116,7 @@ jobs:
           node --check js/music-engine.js
           node --check js/music-community.js
           node --check js/music-creator-profile.js
-          node --check js/music-admin.js
+          node --check js/control-room/music-ops.js
       - name: Parse creator studio module
         run: node --check js/music-creator-studio.js
       - name: Parse the album room's light, waveform and Now Playing helper
@@ -123,6 +135,8 @@ jobs:
           node --test scripts/test/music-peaks.test.mjs
       - name: The module knows who is listening (a token per call, sign-out, offers by state)
         run: node --test scripts/test/music-accounts.test.mjs
+      - name: Creator Studio publishes and is measured (the hash-checked review, the vault, a creator's releases, the door)
+        run: node --test scripts/test/music-studio-publishes.test.mjs
 
   music-edge:
     runs-on: ubuntu-latest
@@ -165,6 +179,10 @@ jobs:
         env:
           PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
         run: node scripts/e2e/music-accounts.e2e.mjs /tmp/music-proof/accounts
+      - name: A release goes submit, review, publish and plays on its artist page, in Chromium (390px)
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/music-creator-release.e2e.mjs /tmp/music-proof/release
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:

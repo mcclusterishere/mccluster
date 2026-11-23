@@ -152,8 +152,9 @@
 
       <section class="creator-card">
         <h2>Your releases</h2>
-        <p>Drafts and review status live here. Published releases appear automatically in discovery.</p>
+        <p>Drafts and review status live here. While a release waits for review you can edit its words and links, or withdraw it. Published releases appear automatically in discovery.</p>
         <div class="creator-list" id="creatorTracks"><div class="creator-status">No releases yet.</div></div>
+        <div class="creator-status" id="releaseStatus" role="status" aria-live="polite"></div>
       </section>
 
       <section class="creator-card wide">
@@ -208,6 +209,9 @@
     </div>
   </main>
 
+  <!-- MEASURED LIKE EVERY OTHER PAGE (music slice M6, decision D-17): the studio's own events (creator_*) record only
+       when the visitor has agreed to the privacy notice; js/analytics.js decides, as it does on every page. -->
+  <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/music-creator-page.js?v=__STAMP__"></script>

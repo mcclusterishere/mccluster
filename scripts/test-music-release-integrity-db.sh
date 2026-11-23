@@ -4,7 +4,9 @@
 # behaviour tests against a throwaway local Postgres (16+), as the real API
 # roles: the API role stub, the music creator stubs, the music creator
 # platform and commerce migrations, the migration file (twice: it must be safe
-# to re-run), then supabase/tests/music_release_payment_integrity.behaviour.sql.
+# to re-run), then supabase/tests/music_release_payment_integrity.behaviour.sql
+# and supabase/tests/music_creator_releases.behaviour.sql (what a creator may do
+# with a release they submitted; no SQL of its own).
 # Usage:
 #   PGHOST=/tmp/pg PGPORT=5499 PGUSER=postgres scripts/test-music-release-integrity-db.sh
 set -euo pipefail
@@ -23,6 +25,9 @@ echo "seeded the pre-migration catalogue"
 apply supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql
 apply supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql
 psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/music_release_payment_integrity.behaviour.sql >/dev/null
+# what a creator may do with a release they submitted, as these files already decide it (music slice M6, ST-10)
+psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/music_creator_releases.behaviour.sql >/dev/null
+echo "a creator's own releases: edit, withdraw, submit again, delete, as the SQL allows"
 # the rollback must apply cleanly on top
 apply supabase/pending/music_release_payment_integrity_v1.rollback.sql
 echo "music release and payment integrity: ok"

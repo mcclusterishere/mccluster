@@ -36,8 +36,11 @@ only in the McCluster Music header, never as an artist's photo or artwork.
    - Writing a song: $150 + 15% royalty.
 5. **The artist arranges albums** under *Your albums*: title, type, release
    date, cover, description, tracklist order, and which album to feature.
-6. **The owner reviews each track** in `music-admin.html` and publishes it.
-   Until then it stays off the public page. An album appears on the page once
+6. **The owner reviews each track** in Control · Create · Music · Review
+   (`music-admin.html` forwards there): Verify + listen plays the exact master
+   under review and shows its SHA-256, and only then can it be published.
+   Until then it stays off the public page. While it waits, the artist can
+   edit its words and links or withdraw it in *Your releases* (music slice M6). An album appears on the page once
    at least one of its tracks is published, and shows only its published tracks.
 
 ## Booking requests: a request first, never a charge
