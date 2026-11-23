@@ -1,7 +1,7 @@
 {
  "generated_by": "tools/build-music-registry.mjs",
  "isrc_prefix": "QT6KV",
- "count": 52,
+ "count": 53,
  "tracks": [
   {
    "slug": "who-did-the-shoot",
@@ -485,6 +485,17 @@
    "no": 42
   },
   {
+   "slug": "tinderella",
+   "title": "Tinderella",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "3:32",
+   "available": true,
+   "no": 43
+  },
+  {
    "slug": "alquifina-new-chick",
    "title": "Alquifina (New Chick)",
    "credit": "Benji Chase",
@@ -493,7 +504,7 @@
    "page": "album.html?album=tinderfessions",
    "length": "1:53",
    "available": true,
-   "no": 43
+   "no": 44
   },
   {
    "slug": "bussin-juggs",
@@ -504,7 +515,7 @@
    "page": "album.html?album=tinderfessions",
    "length": "1:59",
    "available": true,
-   "no": 44
+   "no": 45
   },
   {
    "slug": "one-gon-ride",
@@ -515,7 +526,7 @@
    "page": "album.html?album=tinderfessions",
    "length": "1:38",
    "available": true,
-   "no": 45
+   "no": 46
   },
   {
    "slug": "recipe",
@@ -526,7 +537,7 @@
    "page": "album.html?album=tinderfessions",
    "length": "1:36",
    "available": true,
-   "no": 46
+   "no": 47
   },
   {
    "slug": "spell",
@@ -537,7 +548,7 @@
    "page": "album.html?album=tinderfessions",
    "length": "1:36",
    "available": true,
-   "no": 47
+   "no": 48
   },
   {
    "slug": "fire",
@@ -548,7 +559,7 @@
    "page": "album.html?album=tinderfessions",
    "length": "2:14",
    "available": true,
-   "no": 48
+   "no": 49
   },
   {
    "slug": "promises",
@@ -559,7 +570,7 @@
    "page": "album.html?album=tinderfessions",
    "length": "3:59",
    "available": true,
-   "no": 49
+   "no": 50
   },
   {
    "slug": "drunk-driving",
@@ -570,7 +581,7 @@
    "page": "album.html?album=tinderfessions",
    "length": "2:07",
    "available": true,
-   "no": 50
+   "no": 51
   },
   {
    "slug": "no-friend",
@@ -581,7 +592,7 @@
    "page": "album.html?album=tinderfessions",
    "length": "2:48",
    "available": true,
-   "no": 51
+   "no": 52
   },
   {
    "slug": "numb",
@@ -592,7 +603,7 @@
    "page": "album.html?album=tinderfessions",
    "length": "3:36",
    "available": true,
-   "no": 52
+   "no": 53
   }
  ]
 }

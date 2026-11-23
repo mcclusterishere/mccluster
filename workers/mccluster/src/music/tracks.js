@@ -211,6 +211,11 @@ export const TRACKS = {
     "album": "tinderfessions",
     "seconds": 150.8
   },
+  "tinderella": {
+    "title": "Tinderella",
+    "album": "tinderfessions",
+    "seconds": 212.1
+  },
   "alquifina-new-chick": {
     "title": "Alquifina (New Chick)",
     "album": "tinderfessions",

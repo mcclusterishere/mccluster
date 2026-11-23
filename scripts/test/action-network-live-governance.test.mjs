@@ -73,7 +73,7 @@ test('Every current catalogue song is a first-class live discovery object', asyn
       assert.ok(sql.includes("'" + key.replaceAll("'", "''") + "'"), 'missing music catalog object ' + key);
     }
   }
-  assert.equal(count, 52); // 41, plus Tinderfessions' eleven (2026-11-23)
+  assert.equal(count, 53); // 41, plus Tinderfessions' twelve (2026-11-23)
   assert.match(sql, /music_object_id uuid references public\.music_catalog_objects/);
   assert.match(sql, /canonical_url text not null check\(canonical_url~'\^https:\/\/'\)/i);
 });

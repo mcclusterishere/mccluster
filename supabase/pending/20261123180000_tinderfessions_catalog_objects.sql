@@ -2,11 +2,12 @@
 -- artist on Apple Music ... I would like this upload to be Benji Chase's Tinderfessions"): its shelf songs become live
 -- discovery objects like every other shelf song (supabase/migrations/20261003233747_action_network_live_governance_v1.sql).
 -- Rolling With Me opens the shelf album as its bonus song (owner, 2026-11-23); Tinderella, track 1 on the stores,
--- is not on the shelf yet: its audio is coming later.
+-- follows it.
 -- PENDING: apply with the release of data/albums.json that adds them.
 -- Rollback: 20261123180000_tinderfessions_catalog_objects.rollback.sql
 insert into public.music_catalog_objects(catalog_key,album_slug,album_title,track_title,artist_name,credit_line,audio_path,artwork_path,canonical_url,source_kind,status)
 values ('tinderfessions:rolling-with-me','tinderfessions','Tinderfessions','Rolling With Me','Benji Chase','Hitman Records, 2020.','assets/audio/rolling-with-me.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Rolling%20With%20Me','site_catalog','active'),
+('tinderfessions:tinderella','tinderfessions','Tinderfessions','Tinderella','Benji Chase','Hitman Records, 2020.','assets/audio/tinderella.m4a','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Tinderella','site_catalog','active'),
 ('tinderfessions:alquifina-new-chick','tinderfessions','Tinderfessions','Alquifina (New Chick)','Benji Chase','Hitman Records, 2020.','assets/audio/alquifina-new-chick.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Alquifina%20(New%20Chick)','site_catalog','active'),
 ('tinderfessions:bussin-juggs','tinderfessions','Tinderfessions','Bussin'' Juggs','Benji Chase','Hitman Records, 2020.','assets/audio/bussin-juggs.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Bussin%27%20Juggs','site_catalog','active'),
 ('tinderfessions:one-gon-ride-feat-jiddy','tinderfessions','Tinderfessions','One Gon'' Ride (feat. Jiddy)','Benji Chase','Hitman Records, 2020.','assets/audio/one-gon-ride.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=One%20Gon%27%20Ride%20(feat.%20Jiddy)','site_catalog','active'),
