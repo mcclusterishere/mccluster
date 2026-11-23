@@ -576,20 +576,13 @@ window.MCC_TRACK = (function () {
     flush(false);
   };
 
-  /* NAMES WAITING FOR APPROVAL (music slice M3 follow-up; review RL-9). The names this house measures are
-     reviewed in its measurement dictionary (workers/mccluster/src/analytics/measurement-dictionary.js, kept equal
-     to the event taxonomy; the rule is docs/control-plane/ANALYTICS-EVENT-INVENTORY-20261021.md: a name nobody
-     reviewed stays unclassified). A new name a page already calls, before Matthew has approved measuring it, is
-     held here and is not sent: the call stays where it is, ready. Approving one is deleting its line here (and
-     reviewing it into the dictionary). */
-  var AWAITING_APPROVAL = {
-    /* a music read that failed or was cut off on the way (reason, second, try, path; no account, no place):
-       js/music-engine.js and album.html name it on every failed read (music slice M3). Waiting for Matthew's approval. */
-    music_interrupted: "music slice M3: waiting for Matthew's approval"
-  };
-
+  /* Every name a page sends is reviewed in the house's measurement dictionary
+     (workers/mccluster/src/analytics/measurement-dictionary.js; the rule is
+     docs/control-plane/ANALYTICS-EVENT-INVENTORY-20261021.md: a name nobody reviewed stays unclassified). The music
+     players' music_interrupted waited here for Matthew's approval (music slice M3 follow-up); he approved it and
+     music_error on 2026-11-23 ("For 6, I approved them"), and both are reviewed rows there now: one event per dropped
+     connection or failed song, never one per read (docs/music/MUSIC-RELEASE-20261119.md, "Quick wins"). */
   return function (name, params) {
-    if (Object.prototype.hasOwnProperty.call(AWAITING_APPROVAL, name)) return;
     params = params || {};
     if (ACQ && !params.acq) params.acq = ACQ.src + "/" + ACQ.med + (ACQ.cmp ? "/" + ACQ.cmp : "");
     queueEvent(name, params);

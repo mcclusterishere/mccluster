@@ -16,7 +16,8 @@
      are Matthew's site, the Globe is the World's own door;
    - a creator's front page puts that creator in the middle of the bar for
      the session, with their own picture or initial, never a drawn mark,
-     and McCluster in Music opens the house.
+     and McCluster in Music opens his one artist page (owner, 2026-11-23: "It needs to be one profile. McCluster is
+     the artist."; docs/music/MUSIC-RELEASE-20261119.md, "Quick wins"), where the middle cell stays the house.
    Browser evidence: scripts/e2e/human-uprise-door.e2e.mjs. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -90,19 +91,21 @@ test('a creator\'s front page puts the creator in the middle of the bar, with th
     'the light coat swaps the M for its dark file, never a creator\'s picture');
 });
 
-test('in Music, McCluster opens the house and every artist opens their own front page', async () => {
+test('in Music, McCluster opens his one artist page and every artist opens their own front page', async () => {
   const music = await read('js/music-community.js');
   assert.match(music, /function paintArtists\(profiles\)/);
-  assert.match(music, /paintArtists\(\[\]\);\n\n  Promise\.all\(/, 'the house is painted before the directory answers');
+  assert.match(music, /paintArtists\(\[\]\);\n\n  Promise\.all\(/, 'McCluster is painted before the directory answers');
   assert.match(music, /paintArtists\(all\[1\] \|\| \[\]\);/);
-  assert.match(music, /<a class="artist artist--house" href="index\.html" aria-label="McCluster: the house">/);
+  assert.match(music, /<a class="artist artist--house" href="music-creator\.html\?handle=' \+ HOUSE_ARTIST \+ '" aria-label="McCluster, artist">/);
+  assert.match(music, /var HOUSE_ARTIST = "mccluster";/);
+  assert.match(await read('js/music-creator-profile.js'), /mcc:perspective-house/, 'on his own page the middle cell stays the house');
   assert.match(music, /<img class="artist__pic artist__pic--house" src="assets\/img\/m-mark\.png" alt="" width="56" height="56">/, 'the M as supplied');
   assert.match(music, /href="music-creator\.html\?handle=' \+ encodeURIComponent\(p\.handle\) \+ '"/);
   assert.match(music, /var ARTWORK = SB \+ "\/storage\/v1\/object\/public\/creator-artwork\/";/, 'a creator\'s picture is the one Creator Studio stored, the creator page\'s own rule');
   assert.match(music, /var avatar = safeArtwork\(p\.avatar_url\);/);
   assert.match(music, /<span class="artist__pic artist__pic--initial" aria-hidden="true">' \+ esc\(initialOf\(name\)\) \+ '<\/span>/);
   const house = music.indexOf('artist--house'), creators = music.indexOf('(profiles || []).forEach');
-  assert.ok(house > 0 && creators > house, 'the house is first');
+  assert.ok(house > 0 && creators > house, 'McCluster is first');
   const css = await read('css/music-room.css');
   assert.match(css, /\.artists__row \{ display: flex; gap: 0\.9rem; overflow-x: auto;/);
   assert.match(css, /\.artist__pic--house \{ border-radius: 0; background: none; box-shadow: none; object-fit: contain; \}/, 'no plate under the M');

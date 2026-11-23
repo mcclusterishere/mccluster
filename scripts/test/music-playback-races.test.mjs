@@ -599,14 +599,19 @@ test('gated path: a claim whose answer was lost is never retried by itself; the 
 });
 
 test('near the end of a song the next creator stream is signed ahead, so the next song starts without waiting on the network', async () => {
+  /* one creator release of two songs: since the quick wins (owner, 2026-11-23: "end of the album, and just leave") a
+     record never runs on into another one, so the song signed ahead is the release's own next song */
   const c = clockOf(), pending = deferred();
-  const e = engine({ clock: c, member: true, access: () => pending.promise });
-  e.music.registerCreatorTrack({ id: 'c2', title: 'Creator next', access_mode: 'account', previewUrl: 'creator-next-preview.mp3' });
-  await e.play('Next full song');                  // the last catalogue song: the creator track is next
+  let n = 0;
+  const e = engine({ clock: c, member: true, access: () => (++n === 1 ? { url: 'creator-first.mp3', expires_in: 3600 } : pending.promise) });
+  e.music.registerCreatorTrack({ id: 'c1', title: 'Creator first', access_mode: 'account', previewUrl: 'creator-first-preview.mp3', artist_name: 'Fixture Artist', release_name: 'Fixture release' });
+  e.music.registerCreatorTrack({ id: 'c2', title: 'Creator next', access_mode: 'account', previewUrl: 'creator-next-preview.mp3', artist_name: 'Fixture Artist', release_name: 'Fixture release' });
+  await e.music.playCreator('c1'); await settle();
+  assert.equal(e.music.audio.src, 'creator-first.mp3');
   e.music.audio.duration = 180;
   e.music.audio.currentTime = 170;
   e.music.audio.fire('timeupdate');
-  assert.equal(e.accessCalls(), 1, 'asked ahead, near the end');
+  assert.equal(e.accessCalls(), 2, 'asked ahead, near the end');
   pending.resolve({ url: 'creator-next.mp3', expires_in: 3600 });
   await settle();
   e.music.audio.currentTime = 179.95;
@@ -615,7 +620,7 @@ test('near the end of a song the next creator stream is signed ahead, so the nex
   assert.equal(e.music.current().title, 'Creator next');
   assert.equal(e.music.audio.src, 'creator-next.mp3', 'it starts from what was fetched ahead');
   assert.equal(e.music.audio.paused, false);
-  assert.equal(e.accessCalls(), 1, 'no second request at the change');
+  assert.equal(e.accessCalls(), 2, 'no second request at the change');
 });
 
 /* ------------------------------------------------------------------------------------------------------
@@ -695,19 +700,21 @@ test('a try whose play() is refused (a hidden page may need a tap) stops trying 
 
 test('a signing-ahead that failed is not kept: the next creator release is asked for again when it starts', async () => {
   const c = clockOf();
-  const answers = [new Error('offline'), { url: 'creator-next.mp3', expires_in: 3600 }];
+  const answers = [{ url: 'creator-first.mp3', expires_in: 3600 }, new Error('offline'), { url: 'creator-next.mp3', expires_in: 3600 }];
   const e = engine({ clock: c, member: true, access: () => answers.shift() });
-  e.music.registerCreatorTrack({ id: 'c2', title: 'Creator next', access_mode: 'account', previewUrl: 'creator-next-preview.mp3' });
-  await e.play('Next full song');                  // the last catalogue song: the creator release is next
+  /* one release of two songs (a record never runs on into another one since the quick wins) */
+  e.music.registerCreatorTrack({ id: 'c1', title: 'Creator first', access_mode: 'account', previewUrl: 'creator-first-preview.mp3', artist_name: 'Fixture Artist', release_name: 'Fixture release' });
+  e.music.registerCreatorTrack({ id: 'c2', title: 'Creator next', access_mode: 'account', previewUrl: 'creator-next-preview.mp3', artist_name: 'Fixture Artist', release_name: 'Fixture release' });
+  await e.music.playCreator('c1'); await settle();
   e.music.audio.duration = 180;
   e.music.audio.currentTime = 170;
   e.music.audio.fire('timeupdate');                // signed ahead, near the end: the network blips
   await settle();
-  assert.equal(e.accessCalls(), 1);
+  assert.equal(e.accessCalls(), 2);
   e.music.audio.currentTime = 179.95;
   e.music.audio.fire('ended');
   await settle(); await settle();
-  assert.equal(e.accessCalls(), 2, 'asked again at the start (PB-R7: the failed answer was reused)');
+  assert.equal(e.accessCalls(), 3, 'asked again at the start (PB-R7: the failed answer was reused)');
   assert.equal(e.music.current().title, 'Creator next');
   assert.equal(e.music.access(), 'full', 'an entitled member hears the release, not its preview');
   assert.equal(e.music.audio.src, 'creator-next.mp3');
@@ -1376,8 +1383,8 @@ test('the album\'s "two records deep" tip counts records, not the tries that pic
 
 /* ONE DROP, ONE ERROR (review RL-9). music_error went out once per failed read: a drop and its five tries sent six,
    and a file that would not load sent six too. It is sent once per failed song or drop episode now, with the first
-   failed read's code; a song that plays on after picking up and then drops again is a new episode. (The new
-   music_interrupted waits for Matthew's approval in js/analytics.js: scripts/test/music-measurement.test.mjs.) */
+   failed read's code; a song that plays on after picking up and then drops again is a new episode. (Matthew approved
+   music_interrupted on 2026-11-23; it goes out once per drop too: scripts/test/music-quick-wins.test.mjs.) */
 test('a dropped connection is one music_error with its code, however many reads fail; a song that never started is one too', async () => {
   const c = clockOf();
   const e = engine({ clock: c });

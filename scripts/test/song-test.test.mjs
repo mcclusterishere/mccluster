@@ -57,7 +57,7 @@ test('the cards are in the album player, and gateway plays count', async () => {
   const [album, gw] = await Promise.all([read('album.html'), read('js/gateway.js')]);
   assert.match(album, /var TESTED = \{ "cia-mind-control": true \};/);
   /* the mount has to live where boot() can see it */
-  assert.ok(album.indexOf('function mountTest()') < album.indexOf('function boot(data, pls, ct)'), 'mountTest is defined beside boot');
+  assert.ok(album.indexOf('function mountTest()') < album.indexOf('function boot(data, ct)'), 'mountTest is defined beside boot');
   assert.match(album, /if \(d && d\.counted && songTest\) songTest\.refresh\(\)/);
   assert.match(album, /js\/song-test\.js/);
   assert.match(gw, /if \(!h && a\.currentTime < 3\) h = L\.start\(key, playing\);/);

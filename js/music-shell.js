@@ -44,11 +44,12 @@
   };
   /* What stays on screen and reachable over a view: the shell itself, the one bar and its chip, menus and peeks, the
      engine's mini player and Now sheet, the album's deck bar, sheet, status line and toast, the World's frame and
-     transport, the privacy notice. Everything else in the retained page is hidden and inert while a view shows
+     transport, the privacy notice, the held song's pop-up (js/gated-audio.js: the album reaching the held song tells
+     whoever is looking, over a view too). Everything else in the retained page is hidden and inert while a view shows
      (scripts/test/music-shell.test.mjs holds this list against every stage page). */
   var ALLOW = ["#mccMusicView", ".appbar", ".mcc-auth-nav", "#mccProfileMenu", "#mccDestinations", ".cmdk-owner-nav", ".cmdk", ".mhd",
     ".pt-veil", ".dk-peek", "#musicMini", "#musicNow", "#deckbar", "#now", "#seekStatus", ".ltoast", ".intu",
-    "#mccWorldAudioShell", "#mccWorldAudioControls", "#mccPrivacyNotice"];
+    "#mccWorldAudioShell", "#mccWorldAudioControls", "#mccPrivacyNotice", "#mccHold"];
   var HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
   var WORLD_HOSTS = ["mccluster.org", "www.mccluster.org", "humanuprise.com", "www.humanuprise.com"];
   var OPEN_MS = 8000;

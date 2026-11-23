@@ -126,7 +126,7 @@ async function setup(device, installed, owner = false, world = false, {dockModul
   await page.locator('.appbar').waitFor({state:'visible'});
   if (owner) await page.waitForFunction(() => MCC_BAR.admin() && document.querySelectorAll('.appbar [data-appnav]').length >= 10);
   if (installed && dockModule) await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-ready'));
-  if (!world) await page.waitForFunction(() => !!window.MCC_MUSIC && !!document.querySelector('[data-music-play][data-album="here"]'));
+  if (!world) await page.waitForFunction(() => !!window.MCC_MUSIC && !!document.getElementById('q'));
   await page.evaluate(() => document.fonts.ready);
   return {context,page,cdp,errors,requests,blocked};
 }
@@ -201,7 +201,10 @@ async function checkDock(page, scope, baseline, device, active = true) {
   return g;
 }
 async function play(page) {
-  await page.locator('[data-music-play][data-album="here"][data-track="Who Did The Shoot"]').first().click();
+  /* Listen lists albums and artists (Matthew, 2026-11-23, "Quick wins" Q2 in docs/music/MUSIC-RELEASE-20261119.md): a song's own play button is in its search results */
+  const sel = '[data-music-play][data-album="here"][data-track="Who Did The Shoot"]';
+  if (!(await page.$(sel))) { await page.fill('#q', 'Who Did The Shoot'); await page.waitForSelector(sel); }
+  await page.locator(sel).first().click();
   await page.waitForFunction(() => MCC_MUSIC.current()?.title === 'Who Did The Shoot' && !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .15);
 }
 async function audio(page) {

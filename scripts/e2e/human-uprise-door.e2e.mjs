@@ -9,8 +9,8 @@
    sees it. Matthew's site is a stub
    that records where a cross-site tap lands. On this checkout's own
    origin, a creator's front page is opened and the bar is watched taking
-   that creator's perspective, keeping it on Music, and letting it go at
-   the house.
+   that creator's perspective, keeping it on Music, and letting it go on
+   McCluster's own artist page (the house's artist: one McCluster, owner, 2026-11-23) and at the house.
 
    Backends are faked at the network edge (Supabase REST, the McCluster
    API); nothing here touches production. Cesium and the NASA tiles load
@@ -309,26 +309,27 @@ const settleWorld = async (page) => {
   check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   await page.screenshot({ path: join(OUT, 'perspective-creator-iphone.png') });
 
-  /* Music keeps her in the middle, and shows the artists: the house first */
+  /* Music keeps her in the middle, and shows the artists: McCluster first */
   await page.goto(`${BASE}/listen.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#artistsRow a.artist[href="music-creator.html?handle=fixture-ana"]', { timeout: 20000 });
   b = await bar(page);
   check(S, 'on Music the middle cell is still Ana, and it goes to her page', b.perspective === 'fixture-ana' && b.home === `${BASE}/music-creator.html?handle=fixture-ana`, { perspective: b.perspective, home: b.home });
   const artists = await page.evaluate(() => [...document.querySelectorAll('#artistsRow a.artist')].map((a) => ({ href: a.getAttribute('href'), name: a.querySelector('b').textContent, pic: a.querySelector('.artist__pic').tagName + (a.querySelector('.artist__pic').getAttribute('src') ? ':' + a.querySelector('.artist__pic').getAttribute('src') : ':' + a.querySelector('.artist__pic').textContent) })));
-  check(S, 'the Artists rail: McCluster first (the house, the M as supplied), then each creator with their own picture or initial',
-    artists[0] && artists[0].href === 'index.html' && artists[0].pic === 'IMG:assets/img/m-mark.png' &&
+  check(S, 'the Artists rail: McCluster first (the artist, the M as supplied, opening his one artist page), then each creator with their own picture or initial',
+    artists[0] && artists[0].href === 'music-creator.html?handle=mccluster' && artists[0].pic === 'IMG:assets/img/m-mark.png' &&
     artists.some((a) => a.href === 'music-creator.html?handle=fixture-ana' && a.pic === 'IMG:' + ANA.avatar_url) &&
     artists.some((a) => a.href === 'music-creator.html?handle=fixture-dev' && a.pic === 'SPAN:D'), artists);
   check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   await page.screenshot({ path: join(OUT, 'perspective-music-iphone.png') });
 
-  /* McCluster in Music opens the house page. Since e5606627 (2026-10-18) opening index.html keeps a signed-in member's chosen
-     perspective; the explicit house door (index.html?front=house, the wing's McCluster) is what puts the M back */
+  /* McCluster in Music opens his one artist page (owner, 2026-11-23: "It needs to be one profile. McCluster is the
+     artist."). He is the house's own artist, so there the middle cell is the house, the M as supplied, never a second
+     McCluster; the explicit house door (index.html?front=house, the wing's McCluster) keeps the M there too */
   await page.click('#artistsRow a.artist--house');
-  await page.waitForURL(/index\.html$|\/$/, { timeout: 90000 });
-  await page.waitForFunction(() => !!document.querySelector('.appbar [data-appnav="home"]'), null, { timeout: 15000 });
+  await page.waitForURL(/music-creator\.html\?handle=mccluster$/, { timeout: 90000 });
+  await page.waitForFunction(() => !!document.querySelector('.appbar [data-appnav="home"]') && !document.querySelector('.appbar [data-appnav="home"][data-perspective]'), null, { timeout: 15000 }).catch(() => {});
   b = await bar(page);
-  check(S, 'McCluster in Music opens the house page, and Ana stays in the middle', /index\.html$|\/$/.test(page.url()) && b.perspective === 'fixture-ana', { url: page.url(), perspective: b.perspective });
+  check(S, 'McCluster in Music opens his artist page, and the middle cell is the house, the M as supplied', /music-creator\.html\?handle=mccluster$/.test(page.url()) && !b.perspective && b.coin && b.coin.tag === 'IMG' && /m-mark\.png$/.test(b.coin.src), { url: page.url(), perspective: b.perspective, coin: b.coin });
   await page.goto(`${BASE}/index.html?front=house`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => !!document.querySelector('.appbar [data-appnav="home"]') && !document.querySelector('.appbar [data-appnav="home"][data-perspective]'), null, { timeout: 15000 }).catch(() => {});
   b = await bar(page);

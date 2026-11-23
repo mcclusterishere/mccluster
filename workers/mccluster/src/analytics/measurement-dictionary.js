@@ -8,7 +8,7 @@ export const DICTIONARY_SOURCE = {
   taxonomy_snapshot: 'docs/control-plane/admin-evidence-20261020/event-taxonomy-snapshot.json',
   reviewed_taxonomy_migration: 'supabase/migrations/20261022005028_analytics_event_inventory_v1.sql',
   review_manifest: 'docs/analytics/event-name-review-20261021.json',
-  interpretation: 'Baseline classifications plus 30 reviewed client-signal mappings; unknown names remain unclassified. Client telemetry is not verified account registration, payment or completed mission.'
+  interpretation: 'Baseline classifications plus 30 reviewed client-signal mappings, and the two music delivery signals the house owner approved on 2026-11-23 (music_error, music_interrupted); unknown names remain unclassified. Client telemetry is not verified account registration, payment or completed mission.'
 };
 const eventRows = [
   ["__probe_result__", "ops", "INSERT ALLOWED — storage RLS is fine", []],
@@ -157,7 +157,9 @@ const eventRows = [
   ["mnet_view", "view", "Client-reported community profile/content view; not unique people.", ["js/mnet.js"]],
   ["music_complete", "content", "Client-reported playback completion.", []],
   ["music_creator_rail_view", "content", "", ["js/music-community.js"]],
+  ["music_error", "ops", "A song would not load, or its connection dropped: the first failed read's code, sent once per failed song or drop, never once per read; a delivery signal, not a listen (approved by the house owner, 2026-11-23).", ["js/music-engine.js"]],
   ["music_full_play", "content", "Client-reported full-track playback; not a verified purchase.", []],
+  ["music_interrupted", "ops", "A song's connection dropped or was cut off on the way (reason, second, try, path; no account, no place): sent once per drop when it begins, not once per failed read; never a finished listen (approved by the house owner, 2026-11-23).", ["album.html", "js/music-engine.js"]],
   ["music_license_checkout_start", "checkout", "", ["js/music-creator-profile.js"]],
   ["music_now_open", "content", "Player interface opened; not proof playback started.", []],
   ["music_play", "content", "Client-reported music playback; not verified listen or payment.", []],
