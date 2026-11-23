@@ -477,8 +477,8 @@ for (const withSession of [true, false]) {
     const state = p.snapshot();
     assert.equal(state.title, 'Here'); assert.equal(state.artist, 'Fixture artist');
     assert.equal(state.playing, true); assert.equal(Object.isFrozen(state), true);
-    assert.deepEqual(Object.keys(state).sort(), ['album','artist','canNext','canPause','canPlay','canPrevious','playing','surface','title'],
-      'no media element, source URL or player mutation is exposed');
+    assert.deepEqual(Object.keys(state).sort(), ['album','artist','canNext','canPause','canPlay','canPrevious','playing','status','surface','title'],
+      'no media element, source URL or player mutation is exposed (status: why a player is quiet, music slice M3 review)');
     assert.equal(p.command('pause'), true); assert.equal(p.snapshot().playing, false);
     assert.equal(p.command('play'), true); assert.equal(p.snapshot().playing, true);
     p.command('previous'); p.command('next');
@@ -489,6 +489,38 @@ for (const withSession of [true, false]) {
     h.clear(); assert.equal(p.snapshot(), null); assert.equal(p.command('pause'), false);
   });
 }
+
+/* A PLAYER IN TROUBLE (music slice M3, review PB-R3 and RL-6). While a song is picked up again after a dropped read,
+   the player quiets its element and tries again. The lock screen said "paused" and offered only Play, which tried at
+   once, so nothing could stop the tries; and the installed app's dock, which hides the mini player, said nothing at
+   all. A player may now tell the owner what the listener asked for (playing) and why it is quiet (status). */
+test('a player in trouble: the lock screen and the installed app\'s dock follow what the listener asked for, and say why it is quiet', () => {
+  const { win, session } = browser();
+  const NP = win.MCC_NOW_PLAYING, m = media();
+  let wanted = true, status = '';
+  const h = NP.bind(m, { surface: 'fixture', track: () => ({ title: 'Here', artist: 'Fixture artist', album: 'Fixture album' }),
+    play: () => m.play(), pause: () => m.pause(), playing: () => wanted, status: () => status });
+  m.play();
+  assert.equal(session.playbackState, 'playing');
+  assert.equal(NP.snapshot().status, '');
+  status = 'Reconnecting…';
+  m.pause();                                       // the player quiets the element itself while it picks the song up again
+  assert.equal(session.playbackState, 'playing', 'the listener asked for music: the lock screen offers Pause, which stops the tries');
+  assert.equal(NP.snapshot().playing, true);
+  assert.equal(NP.snapshot().status, 'Reconnecting…', 'the dock can say why it is quiet');
+  wanted = false; status = 'Connection lost · tap play';
+  h.update();
+  assert.equal(session.playbackState, 'paused');
+  assert.equal(NP.snapshot().playing, false);
+  assert.equal(NP.snapshot().status, 'Connection lost · tap play');
+  /* a player without the hooks: the element decides, as before, and there is nothing to say */
+  const { win: w2, session: s2 } = browser();
+  const m2 = media();
+  w2.MCC_NOW_PLAYING.bind(m2, { surface: 'plain', track: () => ({ title: 'Plain' }), play: () => m2.play(), pause: () => m2.pause() });
+  m2.play(); m2.pause();
+  assert.equal(s2.playbackState, 'paused');
+  assert.equal(w2.MCC_NOW_PLAYING.snapshot().status, '');
+});
 
 test('a subscriber can switch players without older metadata overwriting the new owner', () => {
   const { win, session } = browser(); const p = win.MCC_NOW_PLAYING;

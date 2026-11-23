@@ -95,6 +95,8 @@ function engine(options = {}) {
   };
   let accessCalls = 0;
   const events = [];
+  /* js/now-playing.js, stood in: what the engine binds is what the lock screen and the installed app's dock read */
+  const np = { spec: null, updates: 0 };
   const tracks = [
     { title: 'First preview', src: 'first-preview.mp3', gated: { preview_seconds: 15 } },
     { title: 'Second preview', src: 'second-preview.mp3', gated: { preview_seconds: 20 } },
@@ -120,6 +122,7 @@ function engine(options = {}) {
     },
     MCC_GATED: gate, console,
     MCC_TRACK: (name, props) => events.push({ name, ...props }),
+    MCC_NOW_PLAYING: { claim() {}, airplay() {}, bind: (media, spec) => { np.spec = spec; return { update() { np.updates++; }, clear() {}, owns: () => true, media }; } },
     setTimeout: clock ? clock.setTimeout : setTimeout, clearTimeout: clock ? clock.clearTimeout : clearTimeout
   });
   if (clock) window.Date = clock.Date;
@@ -129,6 +132,7 @@ function engine(options = {}) {
   vm.runInContext(read('js/music-engine.js'), vm.createContext(window), { filename: 'js/music-engine.js' });
   return {
     music: window.MCC_MUSIC,
+    np: () => np,
     claims: () => claims,
     accessCalls: () => accessCalls,
     events,
@@ -137,7 +141,8 @@ function engine(options = {}) {
     play: (title) => window.MCC_MUSIC.play('fixture', title),
     text: (id) => node(id).textContent,
     shown: (id) => !node(id).hidden,
-    attr: (id, k) => node(id).getAttribute(k)
+    attr: (id, k) => node(id).getAttribute(k),
+    win: window
   };
 }
 
@@ -334,8 +339,10 @@ test('public path: a dropped connection pauses honestly, says so, and picks up a
   e.music.audio.currentTime = 60;
   const loads = e.music.audio.loads.length;
   e.music.audio.fail(2);
-  assert.equal(e.music.audio.paused, true, 'never playing over silence');
-  assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Play');
+  assert.equal(e.music.audio.paused, true, 'the element itself is quiet');
+  /* the listener asked for music and it is being picked up: the one button is Pause, which stops the tries
+     (review PB-R3; it offered only Play, and Play tried again at once) */
+  assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Pause');
   assert.equal(e.text('musicMiniAccess'), 'Reconnecting…');
   assert.match(e.text('musicMiniNote'), /connection dropped.*1:00/i);
   await c.tick(500);
@@ -348,31 +355,84 @@ test('public path: a dropped connection pauses honestly, says so, and picks up a
   assert.equal(e.shown('musicMiniNote'), false);
 });
 
-test('retries back off, stop after a bounded number, say so, and Play picks up where it stopped', async () => {
+/* THE TRIES FIT THE TEN SECONDS (review PB-R1). WebKit keeps a page awake for 10 s after its sound stops
+   (WebPageProxy audibleActivityClearDelay) and lets a hidden page start its sound again without a tap only within
+   10 s of it stopping (MediaElementSession's grace period); what an iPhone does is Inferred. The tries used to wait
+   0.5, 1.5, 3.5 and 7.5 s one after another, so the fourth started 13 s after the sound stopped. They are timed from
+   that moment now: 0.5, 1.5, 3, 5.5 and 8.5 s. */
+test('every try starts inside the ten seconds after the sound stopped, then it stops, says so, and Play picks up where it stopped', async () => {
   const c = clockOf();
   const e = engine({ clock: c });
   await e.play('Full song');
   e.music.audio.currentTime = 75;
-  e.music.audio.fail(2);
-  const waits = [];
-  for (let i = 0; i < 4; i++) {
+  const t0 = c.now();
+  e.music.audio.fail(2);                           // the sound stopped here
+  const starts = [];
+  for (let i = 0; i < 5; i++) {
     const before = e.music.audio.loads.length;
-    waits.push(await until(c, () => e.music.audio.loads.length > before, 50));
-    assert.equal(e.music.audio.currentTime, 75);
-    e.music.audio.fail(2);
+    await until(c, () => e.music.audio.loads.length > before, 50, 20000);
+    starts.push(c.now() - t0);
+    assert.equal(e.music.audio.currentTime, 75, 'each try reads from the second it stopped');
+    e.music.audio.fail(2);                         // the network is still down
   }
-  assert.deepEqual(waits, [500, 1500, 3500, 7500], 'backoff, all inside the ten seconds iOS keeps a page awake after its sound stops');
+  assert.deepEqual(starts, [500, 1500, 3000, 5500, 8500], 'timed from the moment the sound stopped');
+  assert.ok(starts.every((ms) => ms < 9000), 'all inside the ten seconds');
   const loads = e.music.audio.loads.length;
   await c.tick(120000);
-  assert.equal(e.music.audio.loads.length, loads, 'no fifth try by itself');
+  assert.equal(e.music.audio.loads.length, loads, 'no sixth try by itself');
   assert.equal(e.music.audio.paused, true);
   assert.equal(e.text('musicMiniAccess'), 'Connection lost');
   assert.match(e.text('musicMiniNote'), /Tap play to pick up at 1:15/);
+  assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Play', 'given up: the one button is Play again');
   await e.music.resume();
   await settle();
   assert.equal(e.music.audio.loads.length, loads + 1, 'Play tries again at once');
   assert.equal(e.music.audio.currentTime, 75);
   assert.equal(e.music.audio.paused, false);
+});
+
+test('a read that never answers is noticed within four seconds of the silence, and each try that hangs gives way to the next on time', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c });
+  await e.play('Full song');
+  e.music.audio.currentTime = 30; e.music.audio.fire('playing');
+  e.music.audio.currentTime = 31; e.music.audio.fire('timeupdate');   // it was heard
+  const t0 = c.now();
+  e.music.audio.fire('waiting');                   // the sound stops: the read under it hangs, and so does every try's
+  const starts = [], seen = {};
+  while (c.now() - t0 < 12000) {
+    const n = e.music.audio.loads.length;
+    await c.tick(50);
+    const dt = c.now() - t0;
+    if (e.music.audio.loads.length > n) starts.push(dt);
+    if (dt === 1700) seen.at1700 = e.text('musicMiniAccess');
+    if (dt === 4100) seen.at4100 = { label: e.text('musicMiniAccess'), note: e.text('musicMiniNote'), button: e.attr('musicMiniPlay', 'aria-label') };
+  }
+  assert.equal(seen.at1700, 'Loading…', 'a short wait just says Loading');
+  assert.deepEqual(seen.at4100, { label: 'Reconnecting…', note: 'The connection dropped at 0:31. Picking up there…', button: 'Pause' },
+    'four seconds of silence: picked up again, and said');
+  assert.deepEqual(starts, [4000, 5500, 8500], 'a try that hangs gives way to the next on time, all inside the ten seconds');
+  assert.equal(e.text('musicMiniAccess'), 'Connection lost', 'after the last try, said (by 11.5 s)');
+  assert.match(e.text('musicMiniNote'), /Tap play to pick up at 0:31/);
+  assert.equal(e.music.audio.currentTime, 31);
+});
+
+test('after a failed read, a try whose read never answers is followed by the next one on time', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c });
+  await e.play('Full song');
+  e.music.audio.currentTime = 50;
+  const t0 = c.now();
+  e.music.audio.fail(2);
+  const starts = [];
+  while (c.now() - t0 < 12000) {
+    const n = e.music.audio.loads.length;
+    await c.tick(50);
+    if (e.music.audio.loads.length > n) starts.push(c.now() - t0);   // no answer, no error: each read hangs
+  }
+  assert.deepEqual(starts, [500, 1500, 3000, 5500, 8500]);
+  assert.equal(e.text('musicMiniAccess'), 'Connection lost');
+  assert.match(e.text('musicMiniNote'), /Tap play to pick up at 0:50/);
 });
 
 test('Pause or a newer song during a pending retry wins', async () => {
@@ -440,11 +500,9 @@ test('slow reads: a stall says Loading after a moment, and a stall that never mo
   assert.equal(e.text('musicMiniAccess'), 'Full track', 'the music caught up');
   e.music.audio.fire('waiting');
   const loads = e.music.audio.loads.length;
-  await c.tick(12100);
-  assert.equal(e.music.audio.paused, true, 'a stall that never moves is not shown as playing');
-  assert.equal(e.text('musicMiniAccess'), 'Reconnecting…');
-  await c.tick(600);
-  assert.equal(e.music.audio.loads.length, loads + 1);
+  await c.tick(4100);                              // four seconds of silence once the song has been heard (review PB-R1; it was 12)
+  assert.equal(e.text('musicMiniAccess'), 'Reconnecting…', 'a stall that never moves is said, not shown as playing');
+  assert.equal(e.music.audio.loads.length, loads + 1, 'picked up again at once: the read under it is not coming');
   assert.equal(e.music.audio.currentTime, 31);
 });
 
@@ -556,6 +614,137 @@ test('near the end of a song the next creator stream is signed ahead, so the nex
   assert.equal(e.accessCalls(), 1, 'no second request at the change');
 });
 
+/* ------------------------------------------------------------------------------------------------------
+   THE REVIEW OF M3 (music slice M3, review round). Each case below failed at 0e687e51.
+   ------------------------------------------------------------------------------------------------------ */
+test('while it reconnects the one button is Pause, the lock screen and the dock are told the listener asked for music, and Pause stops the tries', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c });
+  await e.play('Full song');
+  e.music.audio.currentTime = 60;
+  e.music.audio.fail(2);
+  const spec = e.np().spec;
+  assert.equal(e.music.audio.paused, true, 'the element itself is quiet');
+  assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Pause', 'every transport offered only Play, and Play tried again at once (PB-R3)');
+  assert.equal(typeof spec.playing, 'function', 'the lock screen is told what the listener asked for, not only what the element does');
+  assert.equal(spec.playing(), true);
+  assert.equal(typeof spec.status, 'function', 'and why it is quiet (the installed app\'s dock shows it)');
+  assert.equal(spec.status(), 'Reconnecting…');
+  assert.equal(e.music.delivery().playing, true);
+  e.music.toggle();                                // the mini player's and the Now sheet's one button
+  const loads = e.music.audio.loads.length, plays = e.music.audio.playCalls;
+  await c.tick(30000);
+  assert.equal(e.music.audio.loads.length, loads, 'no try behind the listener');
+  assert.equal(e.music.audio.playCalls, plays);
+  assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Play');
+  assert.equal(spec.playing(), false);
+  assert.equal(spec.status(), 'Connection lost · tap play');
+  assert.match(e.text('musicMiniNote'), /^The connection dropped\. Tap play to pick up at 1:00\.$/);
+  /* the lock screen's own Pause does the same */
+  const d = clockOf();
+  const f = engine({ clock: d });
+  await f.play('Full song');
+  f.music.audio.currentTime = 20;
+  f.music.audio.fail(2);
+  f.np().spec.pause();
+  const fl = f.music.audio.loads.length;
+  await d.tick(30000);
+  assert.equal(f.music.audio.loads.length, fl, 'the lock screen\'s Pause stops the tries too');
+  assert.equal(f.np().spec.playing(), false);
+});
+
+test('a second the listener chooses during the trouble is where it picks up (the lock screen\'s seek, while it reconnects and after it gave up)', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c });
+  await e.play('Full song');
+  e.music.audio.currentTime = 60;
+  e.music.audio.fail(2);
+  e.np().spec.seek(90);                            // the lock screen's scrubber, while it reconnects
+  const before = e.music.audio.loads.length;
+  await until(c, () => e.music.audio.loads.length > before, 50, 20000);
+  assert.equal(e.music.audio.currentTime, 90, 'the next try reads from the chosen second, not the one it stopped at');
+  assert.match(e.text('musicMiniNote'), /1:30/);
+  /* given up, then a second chosen: Play picks it up there */
+  for (let i = 0; i < 6; i++) { e.music.audio.fail(2); await c.tick(3500); }
+  assert.equal(e.text('musicMiniAccess'), 'Connection lost');
+  e.np().spec.seek(30);
+  assert.match(e.text('musicMiniNote'), /Tap play to pick up at 0:30/);
+  await e.music.resume(); await settle();
+  assert.equal(e.music.audio.currentTime, 30);
+});
+
+test('a try whose play() is refused (a hidden page may need a tap) stops trying and says how to pick it up', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c });
+  await e.play('Full song');
+  e.music.audio.currentTime = 60;
+  e.music.audio.fail(2);
+  e.music.audio.play = function () { this.playCalls++; return Promise.reject(Object.assign(new Error('refused'), { name: 'NotAllowedError' })); };
+  await c.tick(600); await settle();
+  assert.equal(e.music.delivery().state, 'lost', 'it said Reconnecting… forever and never tried again (PB-R6)');
+  assert.equal(e.text('musicMiniAccess'), 'Connection lost');
+  assert.match(e.text('musicMiniNote'), /^The connection dropped\. Tap play to pick up at 1:00\.$/);
+  const loads = e.music.audio.loads.length;
+  await c.tick(30000);
+  assert.equal(e.music.audio.loads.length, loads, 'nothing more by itself: it needs the listener\'s tap');
+});
+
+test('a signing-ahead that failed is not kept: the next creator release is asked for again when it starts', async () => {
+  const c = clockOf();
+  const answers = [new Error('offline'), { url: 'creator-next.mp3', expires_in: 3600 }];
+  const e = engine({ clock: c, member: true, access: () => answers.shift() });
+  e.music.registerCreatorTrack({ id: 'c2', title: 'Creator next', access_mode: 'account', previewUrl: 'creator-next-preview.mp3' });
+  await e.play('Next full song');                  // the last catalogue song: the creator release is next
+  e.music.audio.duration = 180;
+  e.music.audio.currentTime = 170;
+  e.music.audio.fire('timeupdate');                // signed ahead, near the end: the network blips
+  await settle();
+  assert.equal(e.accessCalls(), 1);
+  e.music.audio.currentTime = 179.95;
+  e.music.audio.fire('ended');
+  await settle(); await settle();
+  assert.equal(e.accessCalls(), 2, 'asked again at the start (PB-R7: the failed answer was reused)');
+  assert.equal(e.music.current().title, 'Creator next');
+  assert.equal(e.music.access(), 'full', 'an entitled member hears the release, not its preview');
+  assert.equal(e.music.audio.src, 'creator-next.mp3');
+});
+
+test('a song that never started (a missing or unreadable file) is not called a dropped connection', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c });
+  await e.play('Full song');
+  e.music.audio.readyState = 0;                    // nothing came: no metadata, no second heard
+  e.music.audio.fail(4);
+  const said = [];
+  const look = () => said.push(e.text('musicMiniAccess') + ' | ' + e.text('musicMiniNote'));
+  look();
+  assert.equal(e.text('musicMiniAccess'), 'Loading…');
+  assert.equal(e.text('musicMiniNote'), 'This song would not load. Trying again…');
+  for (let i = 0; i < 6; i++) { await c.tick(3500); e.music.audio.readyState = 0; e.music.audio.fail(4); look(); }
+  assert.equal(e.text('musicMiniAccess'), 'Could not load');
+  assert.equal(e.text('musicMiniNote'), 'This song could not load. Tap play to try again.');
+  assert.ok(said.every((x) => !/connection|reconnect/i.test(x)), said.join(' / '));
+  assert.equal(e.np().spec.status(), 'Could not load · tap play');
+});
+
+test('an earned play whose time ran out while it was paused says so, without blaming the connection', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c, claim: () => ({ state: 'full', url: 'earned-master.mp3', expires_in: 12 }) });
+  e.reply(() => Promise.resolve({ state: 'earned' }));
+  await e.play('First preview');
+  assert.equal(e.claims(), 1);
+  await c.tick(500);
+  e.music.pause();
+  await c.tick(3500);                              // within the play's last ten seconds now
+  const loads = e.music.audio.loads.length;
+  await e.music.resume(); await settle();
+  assert.equal(e.text('musicMiniNote'), 'This play\'s time ran out while it was paused. Playing it again starts a new play.',
+    'nothing dropped: it said "The connection dropped and this play\'s time ran out" (RL-2)');
+  assert.equal(e.text('musicMiniAccess'), 'Play ended', 'the spent play has a label');
+  assert.equal(e.claims(), 1, 'never claimed again by itself');
+  assert.equal(e.music.audio.loads.length, loads, 'no read either');
+});
+
 /* The album is an inline player. Run its actual load/play/claim functions and
    ended handler, with presentation helpers and the API at explicit boundaries. */
 function album(options = {}) {
@@ -568,7 +757,10 @@ function album(options = {}) {
   const seekEnd = source.indexOf('    ["seek", "nowSeek"].forEach', seek);
   const deckPaint = source.indexOf('    function paintDeck() {');
   const deckPaintEnd = source.indexOf('    /* THE LOCK SCREEN.', deckPaint);
-  assert.ok(begin >= 0 && end > begin && ended > end && bank > ended && deckPaint >= 0 && deckPaintEnd > deckPaint);
+  /* the deck's own play and pause listeners: the bar's transport and the album's Play all follow them */
+  const own = source.indexOf('    deck.addEventListener("play", function () { if (priming) return;');
+  const ownEnd = source.indexOf('    var tick = 0;', own);
+  assert.ok(begin >= 0 && end > begin && ended > end && bank > ended && deckPaint >= 0 && deckPaintEnd > deckPaint && own > 0 && ownEnd > own);
   const attrs = (entries) => ({
     values: { ...entries },
     getAttribute(k) { return this.values[k] ?? null; },
@@ -587,7 +779,7 @@ function album(options = {}) {
   deck.src = 'first.mp3'; deck.paused = false;
   const claim = deferred(), finish = deferred();
   let claims = 0;
-  const toasts = [], spends = [], finishes = [], els = new Map();
+  const toasts = [], spends = [], finishes = [], announced = [], els = new Map();
   const elNode = (id) => {
     if (!els.has(id)) els.set(id, { id, textContent: '', innerHTML: '', hidden: true, style: {}, dataset: {},
       setAttribute() {}, getAttribute() { return null; }, addEventListener() {} });
@@ -607,7 +799,8 @@ function album(options = {}) {
       MCC_TOAST: (m) => toasts.push(m), MCC_TRACK() {}
     },
     audioSession() {}, spend: (row) => spends.push(row.getAttribute('data-key')), media() {}, paintRows() {},
-    loadReel() {}, setRoom() {}, loadLyrics() {},
+    announce: (on) => announced.push(!!on), paintSheet() {}, ICO_PLAY: '[play]', ICO_PAUSE: '[pause]',
+    loadReel() {}, setRoom() {}, loadLyrics() {}, priming: false, countStart() {}, save() {}, roomPlay() {},
     el: elNode, bar: elNode('deckbar'), granted: () => false,
     fmt: (x) => { x = Math.max(0, Math.round(x || 0)); return Math.floor(x / 60) + ':' + String(x % 60).padStart(2, '0'); },
     gateSpec: (row) => row.getAttribute('data-key'),
@@ -618,15 +811,17 @@ function album(options = {}) {
   if (options.later) rows[1]._gateOut = { state: 'locked', gate: { later: true } };
   const script = 'var cur = 0, listen = null, grantMax = 0, songTest = null;\n' +
     source.slice(deckPaint, deckPaintEnd) + '\n' +
-    source.slice(begin, end) + '\n' + source.slice(ended, bank) + '\n' +
+    source.slice(begin, end) + '\n' + source.slice(ended, bank) + '\n' + source.slice(own, ownEnd) + '\n' +
     source.match(/window\.MCC_NP_PAUSE = function \(\) \{[^\n]+/)[0] + '\n' +
     source.match(/function next\(\) \{[^\n]+/)[0] + '\n' +
     source.match(/function prev\(\) \{[^\n]+/)[0] + '\n' + source.slice(seek, seekEnd) + '\n' +
     'this.player = { play: play, pause: window.MCC_NP_PAUSE, previous: prev, seek: function (t) { seekDeck(null, t / deck.duration); }, current: function () { return cur; }, ' +
-    'count: function () { listen = { row: rows[cur], handle: "listen-fixture" }; } };';
+    'count: function () { listen = { row: rows[cur], handle: "listen-fixture" }; }, ' +
+    /* the deck bar's and the sheet's one button, and a second chosen on the lock screen or a lyric line (music slice M3, review) */
+    'toggle: typeof deckToggle === "function" ? deckToggle : null, seekTo: typeof userSeek === "function" ? userSeek : null };';
   vm.runInContext(script, vm.createContext(context), { filename: 'album.html playback' });
-  return { ...context.player, deck, claim, finish, claims: () => claims, toasts, spends, finishes, rows,
-    text: (id) => elNode(id).textContent };
+  return { ...context.player, deck, claim, finish, claims: () => claims, toasts, spends, finishes, rows, announced,
+    text: (id) => elNode(id).textContent, html: (id) => elNode(id).innerHTML, shown: (id) => !elNode(id).hidden };
 }
 
 test('a slow earned-play reply does not interrupt a newer album selection', async () => {
@@ -847,9 +1042,326 @@ test('album: slow reads say Loading after a moment; a stall that never moves pic
   assert.doesNotMatch(a.text('npTime'), /Loading/);
   a.deck.fire('waiting');
   const loads = a.deck.loads.length;
-  await c.tick(12100);
-  assert.equal(a.deck.paused, true);
-  await c.tick(600);
+  await c.tick(4100);                              // four seconds of silence once the song has been heard (review PB-R1; it was 12)
+  assert.match(a.text('npTime'), /^Reconnecting/);
   assert.equal(a.deck.loads.length, loads + 1);
   assert.equal(a.deck.currentTime, 31);
+});
+
+/* ------------------------------------------------------------------------------------------------------
+   THE ALBUM DECK, THE REVIEW OF M3 (music slice M3, review round). Each case below failed at 0e687e51.
+   ------------------------------------------------------------------------------------------------------ */
+test('album: every try starts inside the ten seconds after the sound stopped, then it stops and says so', async () => {
+  const c = clockOf();
+  const a = album({ clock: c });
+  a.deck.currentTime = 50;
+  const t0 = c.now();
+  a.deck.fail(2);
+  const starts = [];
+  for (let i = 0; i < 5; i++) {
+    const before = a.deck.loads.length;
+    await until(c, () => a.deck.loads.length > before, 50, 20000);
+    starts.push(c.now() - t0);
+    assert.equal(a.deck.currentTime, 50, 'each try reads from the second it stopped');
+    a.deck.fail(2);
+  }
+  assert.deepEqual(starts, [500, 1500, 3000, 5500, 8500], 'timed from the moment the sound stopped, all inside the ten seconds');
+  const loads = a.deck.loads.length;
+  await c.tick(60000);
+  assert.equal(a.deck.loads.length, loads, 'no sixth try by itself');
+  assert.match(a.text('npTime'), /^Connection lost/);
+  assert.equal(a.text('seekStatus'), 'The connection dropped. Tap play to pick up at 0:50.');
+});
+
+test('album: a read that never answers is noticed within four seconds, and each try that hangs gives way to the next on time', async () => {
+  const c = clockOf();
+  const a = album({ clock: c });
+  a.deck.currentTime = 30; a.deck.fire('playing');
+  a.deck.currentTime = 31; a.deck.fire('timeupdate');
+  const t0 = c.now();
+  a.deck.fire('waiting');
+  const starts = [], seen = {};
+  while (c.now() - t0 < 12000) {
+    const n = a.deck.loads.length;
+    await c.tick(50);
+    const dt = c.now() - t0;
+    if (a.deck.loads.length > n) starts.push(dt);
+    if (dt === 1700) seen.at1700 = a.text('npTime');
+    if (dt === 4100) seen.at4100 = a.text('seekStatus');
+  }
+  assert.match(seen.at1700, /^Loading…/);
+  assert.equal(seen.at4100, 'The connection dropped at 0:31. Picking up there…');
+  assert.deepEqual(starts, [4000, 5500, 8500]);
+  assert.match(a.text('npTime'), /^Connection lost/);
+});
+
+test('album: while it reconnects the deck bar offers Pause, the bar is told music is wanted, and Pause stops the tries', async () => {
+  const c = clockOf();
+  const a = album({ clock: c });
+  a.deck.currentTime = 42;
+  a.deck.fail(2);
+  assert.equal(a.deck.paused, true, 'the element itself is quiet');
+  assert.match(a.html('tpPlayIc'), /M7 5h3\.4v14H7z/, 'the pause glyph: the listener asked for music (it showed only Play, and Play tried again at once)');
+  assert.equal(a.announced[a.announced.length - 1], true, 'the bar\'s own transport is told music is wanted');
+  a.toggle();                                      // the deck bar's and the sheet's one button
+  const loads = a.deck.loads.length;
+  await c.tick(30000);
+  assert.equal(a.deck.loads.length, loads, 'no try behind the listener');
+  assert.equal(a.deck.paused, true);
+  assert.match(a.html('tpPlayIc'), /M8 5l11 7-11 7z/);
+  assert.equal(a.announced[a.announced.length - 1], false);
+  assert.match(a.text('npTime'), /^Connection lost/);
+  assert.equal(a.text('seekStatus'), 'The connection dropped. Tap play to pick up at 0:42.');
+});
+
+test('album: a pause from outside the page during a pending try is the listener\'s (the World\'s transport, its pause message, the sleep timer)', async () => {
+  const world = read('js/world-audio-continuity.js'), label = read('js/label.js');
+  const deckPlayer = world.slice(world.indexOf('var deck = doc.getElementById("deck");\n    if (deck && (deck.currentSrc'), world.indexOf('function player()'));
+  assert.ok(deckPlayer.length > 0);
+  /* the deck was paused there with deck.pause(): during a try's wait the deck is already quiet, so that pause changed
+     nothing, fired no event, and the try played the music again behind the listener (PB-R2) */
+  assert.match(deckPlayer, /pause\s*:\s*function\s*\(\)\s*\{\s*if\s*\(root\.MCC_NP_PAUSE\)\s*root\.MCC_NP_PAUSE\(\)/,
+    'the World\'s transport and its pause message pause the deck through the page\'s own Pause');
+  const nap = label.slice(label.indexOf('if (left <= 0) {'), label.indexOf('toast("The record tucked you in'));
+  assert.ok(nap.length > 0);
+  assert.match(nap, /if\s*\(window\.MCC_NP_PAUSE\)\s*window\.MCC_NP_PAUSE\(\)/, 'the sleep timer pauses through the page\'s own Pause');
+  /* and the page's own Pause wins over a try that is waiting */
+  const c = clockOf();
+  const a = album({ clock: c });
+  a.deck.currentTime = 64;
+  a.deck.fail(2);                                  // Reconnecting…, a try pending
+  a.pause();
+  const loads = a.deck.loads.length;
+  await c.tick(30000);
+  assert.equal(a.deck.loads.length, loads, 'nothing reloads or plays behind the listener');
+  assert.equal(a.deck.paused, true);
+  assert.equal(a.text('seekStatus'), 'The connection dropped. Tap play to pick up at 1:04.');
+});
+
+test('album: Previous or a second chosen during the trouble is where it picks up', async () => {
+  const c = clockOf();
+  const a = album({ clock: c });
+  a.deck.currentTime = 42;
+  a.deck.fail(2);                                  // Reconnecting…
+  a.previous();                                    // back to the top of the song
+  const before = a.deck.loads.length;
+  await until(c, () => a.deck.loads.length > before, 50, 20000);
+  assert.ok(a.deck.loads.length > before, 'it keeps picking the song up, now from where the listener chose');
+  assert.equal(a.deck.currentTime, 0, 'from 0:00, not from the drop at 0:42 (PB-R4)');
+  for (let i = 0; i < 6; i++) { a.deck.fail(2); await c.tick(3500); }
+  assert.match(a.text('npTime'), /^Connection lost/);
+  a.seekTo(30);                                    // the lock screen's scrubber, or a lyric line
+  assert.equal(a.text('seekStatus'), 'The connection dropped. Tap play to pick up at 0:30.');
+  a.play();
+  await settle();
+  assert.equal(a.deck.currentTime, 30, 'Play picks it up at the chosen second');
+  assert.equal(a.deck.paused, false);
+});
+
+test('album: Pause and Play just after it picked up again resume in place, with no reload', async () => {
+  const c = clockOf();
+  const a = album({ clock: c });
+  a.deck.currentTime = 42;
+  a.deck.fail(2);
+  await c.tick(500);                               // picked up at 0:42
+  a.deck.fire('playing');
+  a.deck.currentTime = 44; a.deck.fire('timeupdate');
+  a.pause();
+  const loads = a.deck.loads.length;
+  a.play();
+  await settle();
+  assert.equal(a.deck.loads.length, loads, 'no reload (it read the song again and went back to 0:42, PB-R5)');
+  assert.equal(a.deck.currentTime, 44);
+  assert.equal(a.deck.paused, false);
+  /* the same after a slow first read that said Loading… */
+  const d = clockOf();
+  const b = album({ clock: d });
+  b.deck.currentTime = 0; b.deck.fire('waiting');
+  await d.tick(1700);
+  assert.match(b.text('npTime'), /^Loading/);
+  b.deck.fire('playing'); b.deck.currentTime = 2; b.deck.fire('timeupdate');
+  b.pause();
+  const bl = b.deck.loads.length;
+  b.play();
+  await settle();
+  assert.equal(b.deck.loads.length, bl, 'no reload from 0:00 either');
+  assert.equal(b.deck.currentTime, 2);
+});
+
+test('album: a try whose play() is refused stops trying and says how to pick it up', async () => {
+  const c = clockOf();
+  const a = album({ clock: c });
+  a.deck.currentTime = 42;
+  a.deck.fail(2);
+  a.deck.play = function () { this.playCalls++; return Promise.reject(Object.assign(new Error('refused'), { name: 'NotAllowedError' })); };
+  await c.tick(600); await settle();
+  assert.match(a.text('npTime'), /^Connection lost/, 'it said Reconnecting… forever (PB-R6)');
+  assert.equal(a.text('seekStatus'), 'The connection dropped. Tap play to pick up at 0:42.');
+  const loads = a.deck.loads.length;
+  await c.tick(30000);
+  assert.equal(a.deck.loads.length, loads, 'nothing more by itself');
+});
+
+test('album: a song that never started is not called a dropped connection', async () => {
+  const c = clockOf();
+  const a = album({ clock: c });
+  a.deck.currentTime = 0; a.deck.readyState = 0;  // nothing came: no metadata, no second heard
+  a.deck.fail(4);
+  assert.match(a.text('npTime'), /^Loading…/);
+  assert.equal(a.text('seekStatus'), 'This song would not load. Trying again…');
+  for (let i = 0; i < 6; i++) { await c.tick(3500); a.deck.readyState = 0; a.deck.fail(4); }
+  assert.match(a.text('npTime'), /^Could not load/);
+  assert.equal(a.text('seekStatus'), 'This song could not load. Tap play to try again.');
+  assert.doesNotMatch(a.text('npTime') + a.text('seekStatus'), /connection|reconnect/i);
+});
+
+/* A slow first read that said Loading…, then the sound (the browser fires playing before any time passes), then a
+   drop mid-song: the drop is a dropped connection, said so, and picked up. (A first version of the review round kept
+   the slow read's note as if it were a trouble of its own, and the drop that followed was neither named nor tried
+   again: caught by the background browser suite, kept here.) */
+test('a slow first read that said Loading…, then a drop mid-song: called a dropped connection and picked up (listen and album)', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c });
+  await e.play('Full song');
+  e.music.audio.fire('waiting');                   // the first bytes are slow
+  await c.tick(1700);
+  assert.equal(e.text('musicMiniAccess'), 'Loading…');
+  e.music.audio.fire('playing');                   // they came: playing, before any time has passed
+  e.music.audio.currentTime = 5; e.music.audio.fire('timeupdate');
+  const loads = e.music.audio.loads.length;
+  e.music.audio.fail(2);                           // and then the read for the rest fails
+  assert.equal(e.text('musicMiniAccess'), 'Reconnecting…');
+  assert.equal(e.text('musicMiniNote'), 'The connection dropped at 0:05. Picking up there…');
+  await c.tick(500);
+  assert.equal(e.music.audio.loads.length, loads + 1, 'picked up again');
+  assert.equal(e.music.audio.currentTime, 5);
+
+  const d = clockOf();
+  const a = album({ clock: d });
+  a.deck.currentTime = 0; a.deck.fire('waiting');
+  await d.tick(1700);
+  assert.match(a.text('npTime'), /^Loading…/);
+  a.deck.fire('playing');
+  a.deck.currentTime = 5; a.deck.fire('timeupdate');
+  const al = a.deck.loads.length;
+  a.deck.fail(2);
+  assert.equal(a.text('seekStatus'), 'The connection dropped at 0:05. Picking up there…');
+  await d.tick(500);
+  assert.equal(a.deck.loads.length, al + 1, 'the album picks it up again too');
+  assert.equal(a.deck.currentTime, 5);
+});
+
+/* The game hub's music capsule is one more transport over the same engine (js/game-hub/shared-music.mjs). It read
+   the element alone, so while a song was being picked up again it offered Play, and Play tried again at once; and its
+   line kept the album's name. (Music slice M3, review PB-R3: every transport; found while fixing it.) */
+test('the game hub\'s music capsule: while a song is picked up again its button is Pause and its line says why; Pause stops the tries', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c });
+  const part = () => {
+    const attrs = {}, on = {};
+    return { dataset: {}, style: {}, textContent: '', title: '', disabled: false,
+      setAttribute(k, v) { attrs[k] = String(v); }, getAttribute(k) { return k in attrs ? attrs[k] : null; },
+      addEventListener(type, fn) { on[type] = fn; }, click() { if (on.click) on.click(); } };
+  };
+  const parts = {};
+  for (const s of ['[data-hub-music-play]', '[data-music-next]', '[data-music-title]', '[data-music-role]', '[data-music-progress]',
+    '[data-music-status]', '[data-course-soundtrack]']) parts[s] = part();
+  const capsule = { querySelector: (s) => parts[s] };
+  const root = { querySelector: (s) => parts[s], closest: () => capsule };
+  globalThis.window = e.win;                       // the module reads the engine and listens on the page's window
+  let hub;
+  try { hub = await (await import('../../js/game-hub/shared-music.mjs')).createSharedMusic({ root }); }
+  finally { delete globalThis.window; }
+  hub.setModule({ music: { label: 'Course soundtrack' } }, { slug: 'fixture', tracks: [{ title: 'Full song' }] });
+  const play = parts['[data-hub-music-play]'], line = parts['[data-music-status]'];
+  await e.play('Full song');
+  e.music.audio.currentTime = 60;
+  e.music.audio.fail(2);
+  assert.equal(e.music.audio.paused, true, 'the element itself is quiet');
+  assert.equal(play.dataset.state, 'playing', 'the capsule offered Play while the song was being picked up again');
+  assert.equal(play.getAttribute('aria-label'), 'Pause Full song');
+  assert.equal(line.textContent, 'Reconnecting…', 'and its line kept the album\'s name');
+  const loads = e.music.audio.loads.length, plays = e.music.audio.playCalls;
+  play.click();
+  await settle();
+  await c.tick(30000);
+  assert.equal(e.music.audio.loads.length, loads, 'Pause stops the tries: nothing reads behind the listener');
+  assert.equal(e.music.audio.playCalls, plays);
+  assert.equal(play.dataset.state, 'paused');
+  assert.equal(line.textContent, 'Connection lost · tap play');
+  play.click();                                    // Play picks it up at its second, at once
+  await settle();
+  assert.equal(e.music.audio.loads.length, loads + 1);
+  assert.equal(e.music.audio.currentTime, 60);
+});
+
+/* In the page the browser pauses the deck itself on a failed read, error first and then pause (lane 02 T6b; the
+   reviewers' Chromium probe H). The deck's own pause listener then told the bar's transport and the album's Play all
+   that nothing was wanted, after the trouble had said Pause: both offered Play during Reconnecting…, and the bar's
+   Play tried again at once. (Music slice M3, review PB-R3: every transport; found in the renders of this round.) */
+test('album: when the browser pauses the deck after a failed read, the bar\'s transport and Play all still offer Pause while it is picked up again', async () => {
+  const c = clockOf();
+  const a = album({ clock: c });
+  a.deck.currentTime = 42;
+  a.deck.failInPage(2);                            // the order Chromium uses for an element in the page
+  assert.match(a.text('npTime'), /^Reconnecting…/);
+  assert.equal(a.announced[a.announced.length - 1], true, 'the bar\'s own transport is told music is wanted (the browser\'s pause said Play)');
+  assert.match(a.html('playAll'), /Pause$/, 'Play all offers Pause too');
+  a.toggle();                                      // the listener's Pause: the tries stop
+  const loads = a.deck.loads.length;
+  await c.tick(30000);
+  assert.equal(a.deck.loads.length, loads, 'no try behind the listener');
+  assert.equal(a.announced[a.announced.length - 1], false);
+  assert.match(a.html('playAll'), /Play$/);
+  /* a pause that is the listener's, while the song plays normally, still says Play everywhere */
+  const b = album({ clock: clockOf() });
+  b.deck.pause();
+  assert.equal(b.announced[b.announced.length - 1], false);
+  assert.match(b.html('playAll'), /Play$/);
+  /* and one from outside the page while a try is playing (started again, not heard yet) ends the tries and says so */
+  const d = clockOf();
+  const e = album({ clock: d });
+  e.deck.currentTime = 20;
+  e.deck.failInPage(2);
+  await d.tick(500);                               // the first try starts the deck again
+  assert.equal(e.deck.paused, false);
+  e.deck.pause();
+  assert.equal(e.announced[e.announced.length - 1], false, 'every surface offers Play');
+  assert.match(e.text('npTime'), /^Connection lost/);
+  assert.equal(e.text('seekStatus'), 'The connection dropped. Tap play to pick up at 0:20.');
+  const l2 = e.deck.loads.length;
+  await d.tick(30000);
+  assert.equal(e.deck.loads.length, l2, 'nothing reads or plays behind the listener');
+  assert.equal(e.deck.paused, true);
+});
+
+/* js/intuition.js counts the deck's play events to tell a listener "two records deep" to keep the masters. Since
+   the deck picks a dropped song up again by playing it again (music slice M3), one record and one try were "two
+   records deep": the tip came up over the deck bar 2.5 s after the first try (seen in this round's renders). */
+test('the album\'s "two records deep" tip counts records, not the tries that pick one song up again', async () => {
+  const c = clockOf();
+  const appended = [];
+  const deck = new Media();
+  const node = () => ({ classList: { add() {}, remove() {} }, setAttribute() {}, remove() {}, addEventListener() {},
+    querySelector: () => ({ addEventListener() {} }), set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; } });
+  const store = {};
+  const context = {
+    location: { pathname: '/album.html', origin: 'https://fixture.invalid', href: 'https://fixture.invalid/album.html' },
+    document: { addEventListener() {}, getElementById: (id) => id === 'deck' ? deck : null, createElement: node, head: { appendChild() {} },
+      body: { appendChild: (el) => appended.push(el.html) }, hidden: false },
+    sessionStorage: { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); } },
+    localStorage: { getItem: () => null }, requestAnimationFrame: (fn) => fn(), window: {},
+    setTimeout: c.setTimeout, clearTimeout: c.clearTimeout
+  };
+  vm.runInContext(read('js/intuition.js'), vm.createContext(context), { filename: 'js/intuition.js' });
+  deck.src = 'first.mp3'; deck.play();
+  deck.error = { code: 2 }; deck.pause();          // the read failed; the deck is quiet
+  await c.tick(500);
+  deck.src = 'first.mp3'; deck.play();             // the first try: the same record, picked up again
+  await c.tick(3000);
+  assert.equal(appended.length, 0, 'one record and one try are not "two records deep"');
+  deck.src = 'second.mp3'; deck.play();            // a second record
+  await c.tick(3000);
+  assert.equal(appended.length, 1);
+  assert.match(appended[0], /Two records deep/);
 });

@@ -77,10 +77,12 @@ const EARNED = { mode: 'rule', allowed: true, missing: [], missions: { have: 3, 
    { status } instead of the bytes. read = { key, start, n } (n: that file's nth read). creator: a creator's
    release behind music-access, its signed URL's lifetime given by expiresIn(nth signing). */
 async function setup({ width = 390, member = false, earned = false, ua, pocket = null, session = true, day = null,
-  deliver = null, creator = null, expiresIn = 300, worldMute = false } = {}) {
+  deliver = null, creator = null, expiresIn = 300, worldMute = false, standalone = false } = {}) {
   const context = await browser.newContext({ viewport: { width, height: 844 }, hasTouch: true, isMobile: width < 700, userAgent: ua,
     reducedMotion: 'no-preference', serviceWorkers: 'block', timezoneId: 'America/New_York' });
   const requests = [], errors = [], stream = { token: '', hits: [], claims: 0 }, reads = [], signed = [];
+  /* the installed iPhone app (PR #820's dock): only navigator.standalone is stood in, as scripts/e2e/installed-app.e2e.mjs does */
+  if (standalone) await context.addInitScript(() => { Object.defineProperty(navigator, 'standalone', { configurable: true, value: true }); });
   await context.addInitScript(({ member, token, pocket, session, worldMute }) => {
     try {
       if (worldMute) localStorage.setItem('mcc_world_audio_preference', JSON.stringify({ muted: true }));
@@ -222,12 +224,17 @@ const engineUi = page => page.evaluate(() => {
   const d = window.MCC_MUSIC.delivery ? MCC_MUSIC.delivery() : {};
   return { state: d.state, at: d.at, paused: MCC_MUSIC.audio.paused, t: MCC_MUSIC.audio.currentTime, muted: MCC_MUSIC.audio.muted,
     label: document.getElementById('musicMiniAccess').textContent, note: (document.getElementById('musicMiniNote') || {}).textContent || '',
-    button: document.getElementById('musicMiniPlay').getAttribute('aria-label'), ms: navigator.mediaSession ? navigator.mediaSession.playbackState : null };
+    button: document.getElementById('musicMiniPlay').getAttribute('aria-label'), ms: navigator.mediaSession ? navigator.mediaSession.playbackState : null,
+    live: (document.getElementById('musicMiniLive') || {}).textContent || '' };
 });
 const deckUi = page => page.evaluate(() => {
   const d = document.getElementById('deck'), s = document.getElementById('seekStatus');
   return { paused: d.paused, t: d.currentTime, muted: d.muted, src: d.currentSrc, time: document.getElementById('npTime').textContent,
-    status: s && !s.hidden ? s.textContent : '', ms: navigator.mediaSession ? navigator.mediaSession.playbackState : null };
+    status: s && !s.hidden ? s.textContent : '', ms: navigator.mediaSession ? navigator.mediaSession.playbackState : null,
+    button: /M7 5h3\.4v14H7z/.test(document.getElementById('tpPlayIc').innerHTML) ? 'Pause' : 'Play',
+    /* the bar's own transport (its Music tab: is-sound shows the pause glyph) and the album's Play all */
+    bar: (() => { const t = document.querySelector('[data-appnav="music"]'); return t ? (t.classList.contains('is-sound') ? 'Pause' : 'Play') : null; })(),
+    playAll: (document.getElementById('playAll') || {}).textContent || '' };
 });
 const deckState = page => page.evaluate(() => { const d = document.getElementById('deck'); return { t: d.currentTime, paused: d.paused, src: d.currentSrc }; });
 const fits = page => page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth);
@@ -450,8 +457,14 @@ try {
     check('slow read: once the sound starts the label is the song\'s own again', (await engineUi(page)).label === 'Full track', await engineUi(page));
     await page.waitForFunction(() => window.MCC_MUSIC.delivery && MCC_MUSIC.delivery().state === 'reconnecting', null, { timeout: 15000 }).catch(() => {});
     const down = await engineUi(page);
-    check('mid-track drop: the player pauses and says Reconnecting…, never Pause over silence',
-      down.state === 'reconnecting' && down.paused && down.label === 'Reconnecting…' && down.button === 'Play' && down.ms !== 'playing', down);
+    /* the element is quiet and the player says why; its one button is Pause, which stops the tries, and the lock
+       screen offers the same (review PB-R3: every transport offered only Play, and Play tried again at once) */
+    check('mid-track drop: the element is quiet, the player says Reconnecting…, and its one button and the lock screen offer Pause',
+      down.state === 'reconnecting' && down.paused && down.label === 'Reconnecting…' && down.button === 'Pause' && down.ms === 'playing', down);
+    /* review RL-5: a live region inside the mini player's button is not read out; the spoken line sits beside it */
+    const spoken = await page.evaluate(() => ({ inButton: document.querySelectorAll('#musicMini button [role=status], #musicMini button [aria-live]').length,
+      live: document.getElementById('musicMiniLive') && !document.getElementById('musicMiniLive').closest('button') && document.getElementById('musicMiniLive').getAttribute('role') }));
+    check('mid-track drop: the line is spoken from a live region outside the button, with the same words', spoken.inButton === 0 && spoken.live === 'status' && down.live === down.note, { spoken, down });
     check('mid-track drop: one short line says where it stopped and that it is picking up there', /^The connection dropped at 0:0\d\. Picking up there…$/.test(down.note), down.note);
     check('mid-track drop at 390: the page fits the screen with the line', await fits(page));
     await page.screenshot({ path: join(OUT, 'listen-390-reconnecting.png') });
@@ -505,7 +518,7 @@ try {
     const down = await engineUi(page);
     check('creator: the signed URL (62 s left) is signed again about a minute before it lapses, while the song plays',
       signed.length === 2 && signed[1] - signed[0] >= 1500 && signed[1] - signed[0] < 9000, signed.map(t => t - signed[0]));
-    check('creator: the expired URL pauses the player honestly (Reconnecting…, never Pause over silence)', down.state === 'reconnecting' && down.paused && down.label === 'Reconnecting…' && down.button === 'Play', down);
+    check('creator: the expired URL quiets the player honestly (Reconnecting…, its one button Pause, which stops the tries)', down.state === 'reconnecting' && down.paused && down.label === 'Reconnecting…' && down.button === 'Pause', down);
     const at = down.at || 0;
     await page.waitForFunction(at => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > at + 1, at, { timeout: 20000 }).catch(() => {});
     const back = await engineUi(page), trace = await page.evaluate(() => window.__trace);
@@ -530,8 +543,10 @@ try {
     await page.waitForFunction(() => { const d = document.getElementById('deck'); return !d.paused && d.currentTime > .5; }, null, { timeout: 15000 });
     await page.waitForFunction(() => /^Reconnecting…/.test(document.getElementById('npTime').textContent), null, { timeout: 15000 }).catch(() => {});
     const down = await deckUi(page);
-    check('album drop: the deck pauses and says Reconnecting…, never playing over silence', down.paused && /^Reconnecting… · /.test(down.time) && down.ms !== 'playing', down);
+    check('album drop: the deck is quiet and says Reconnecting…; the deck bar and the lock screen offer Pause, which stops the tries', down.paused && /^Reconnecting… · /.test(down.time) && down.button === 'Pause' && down.ms === 'playing', down);
     check('album drop: one short line says where it stopped and that it is picking up there', /^The connection dropped at 0:0\d\. Picking up there…$/.test(down.status), down.status);
+    check('album drop: the bar\'s own transport and Play all offer Pause too (the browser\'s own pause after the error made them say Play)',
+      down.bar === 'Pause' && /Pause/.test(down.playAll), { bar: down.bar, playAll: down.playAll });
     check('album drop at 390: the page fits the screen with the line', await fits(page));
     await page.screenshot({ path: join(OUT, 'album-390-reconnecting.png') });
     const at = (await page.evaluate(() => window.__trace.filter(e => e.t === 'error').map(e => e.at)))[0] || 0;
@@ -630,6 +645,11 @@ try {
       const un = await engineUi(page);
       check('Unmute brings the sound back on the Music page', !un.muted && un.label === 'Full track' && !(await sound.isVisible()), un);
       check('the World keeps its own stored mute', await page.evaluate(() => JSON.parse(localStorage.getItem('mcc_world_audio_preference') || '{}').muted === true));
+      await page.evaluate(() => { MCC_MUSIC.audio.muted = true; });
+      await page.waitForFunction(() => !document.getElementById('musicMiniSound').hidden);
+      await page.focus('#musicMiniSound'); await page.keyboard.press('Enter');
+      const kb = await page.evaluate(() => ({ muted: MCC_MUSIC.audio.muted, active: document.activeElement && (document.activeElement.id || document.activeElement.tagName) }));
+      check('Unmute from the keyboard keeps the focus in the player, on its Play/Pause (review RL-4: it fell to the page)', !kb.muted && kb.active === 'musicMiniPlay', kb);
       check('stored World mute, listen: no script errors', errors.length === 0, errors);
       await context.close();
     }
@@ -649,9 +669,207 @@ try {
       await page.screenshot({ path: join(OUT, 'album-390-muted.png') });
       await sound.click();
       check('Unmute brings the deck\'s sound back', !(await deckUi(page)).muted && !(await sound.isVisible()));
+      await page.evaluate(() => { document.getElementById('deck').muted = true; });
+      await page.waitForFunction(() => !document.getElementById('deckSound').hidden);
+      await page.focus('#deckSound'); await page.keyboard.press('Enter');
+      const kb = await page.evaluate(() => ({ muted: document.getElementById('deck').muted, active: document.activeElement && (document.activeElement.id || document.activeElement.tagName) }));
+      check('album: Unmute from the keyboard keeps the focus in the player, on its Play/Pause (review RL-4)', !kb.muted && kb.active === 'tpPlay', kb);
       check('stored World mute, album: no script errors', errors.length === 0, errors);
       await context.close();
     }
+  });
+
+  /* ------------------------------------------------------------------------------------------------------
+     THE REVIEW OF M3 (music slice M3, review round): each check below failed at 0e687e51.
+     ------------------------------------------------------------------------------------------------------ */
+  const WDTS = '[data-music-play][data-album="here"][data-track="Who Did The Shoot"]';
+  async function listenPlay(page) {
+    await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
+    await page.waitForFunction(sel => window.MCC_MUSIC && document.querySelector(sel), WDTS, { timeout: 20000 });
+    await page.locator(WDTS).first().click();
+  }
+  async function albumPlay(page) {
+    await page.goto(HOUSE + '/album.html?album=here', { waitUntil: 'load' });
+    await page.waitForSelector('#tracks li', { timeout: 20000 });
+    await page.locator('#tracks li').first().click();
+  }
+  await scenario('listen engine: every try starts inside the ten seconds after the sound stopped, and a read that hangs is noticed in time', async () => {
+    const song = 'who-did-the-shoot.mp3';
+    {
+      let failedAt = 0;
+      const deliver = async (q) => {
+        if (q.key !== song) return null;
+        if (q.n === 1) return { cut: 96000 };
+        if (!failedAt) failedAt = Date.now();
+        return { status: 503 };                        // the network is down from here on
+      };
+      const { context, page, reads, errors } = await setup({ width: 390, deliver });
+      await listenPlay(page);
+      await page.waitForFunction(() => window.MCC_MUSIC.delivery && MCC_MUSIC.delivery().state === 'lost', null, { timeout: 30000 }).catch(() => {});
+      const ui = await engineUi(page);
+      const tries = reads.filter(q => q.key === song && q.n > 2).map(q => q.at - failedAt);
+      check('network down: five tries, each starting inside the ten seconds after the sound stopped (review PB-R1: 0.5, 2, 5.5 and 13 s)',
+        tries.length === 5 && tries.every(ms => ms < 9500), tries);
+      check('network down: then it says so, and how to pick it up', ui.state === 'lost' && ui.label === 'Connection lost' && ui.button === 'Play' &&
+        /^The connection dropped\. Tap play to pick up at 0:0\d\.$/.test(ui.note), ui);
+      check('network down: no script errors', errors.length === 0, errors);
+      await context.close();
+    }
+    {
+      const deliver = async (q) => {
+        if (q.key !== song) return null;
+        if (q.n === 1) return { cut: 160000 };         // about four seconds of the song, then every read hangs
+        return { delay: 14000, status: 503 };
+      };
+      const { context, page, reads, errors } = await setup({ width: 390, deliver });
+      await listenPlay(page);
+      await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .5, null, { timeout: 15000 });
+      const out = await page.evaluate(() => new Promise(res => {
+        const a = MCC_MUSIC.audio; let waitingAt = 0, at = 0;
+        a.addEventListener('waiting', () => { if (!waitingAt) { waitingAt = performance.now(); at = Date.now(); } });
+        const iv = setInterval(() => {
+          const st = MCC_MUSIC.delivery().state;
+          if (waitingAt && (st === 'reconnecting' || st === 'lost')) { clearInterval(iv); res({ ms: Math.round(performance.now() - waitingAt), st, at }); }
+        }, 50);
+        setTimeout(() => { clearInterval(iv); res({ ms: null }); }, 30000);
+      }));
+      check('a read that hangs: the silence is noticed within about four seconds (review PB-R1: twelve)', out.ms !== null && out.ms < 5500, out);
+      await page.waitForFunction(() => MCC_MUSIC.delivery().state === 'lost', null, { timeout: 20000 }).catch(() => {});
+      const tries = reads.filter(q => q.key === song && q.n > 2).map(q => q.at - out.at);
+      check('a read that hangs: each try that hangs gives way to the next, all inside the ten seconds, then Connection lost',
+        tries.length >= 2 && tries.every(ms => ms < 9500) && (await engineUi(page)).label === 'Connection lost', { tries, ui: await engineUi(page) });
+      check('a read that hangs: no script errors', errors.length === 0, errors);
+      await context.close();
+    }
+  });
+
+  await scenario('Pause while a song is being picked up again stops the tries (the mini player, the album deck bar)', async () => {
+    const song = 'who-did-the-shoot.mp3';
+    for (const where of ['listen', 'album']) {
+      let down = true;
+      const deliver = async (q) => { if (q.key !== song) return null; if (q.n === 1) return { cut: 96000 }; return down ? { status: 503 } : null; };
+      const { context, page, reads, errors } = await setup({ width: 390, deliver });
+      const ui = where === 'listen' ? () => engineUi(page) : () => deckUi(page);
+      if (where === 'listen') {
+        await listenPlay(page);
+        await page.waitForFunction(() => window.MCC_MUSIC.delivery && MCC_MUSIC.delivery().state === 'reconnecting', null, { timeout: 20000 }).catch(() => {});
+      } else {
+        await albumPlay(page);
+        await page.waitForFunction(() => /^Reconnecting…/.test(document.getElementById('npTime').textContent), null, { timeout: 20000 }).catch(() => {});
+      }
+      const before = await ui();
+      check(`${where}: while it is picked up again the one button is Pause (review PB-R3: only Play, which tried again at once)`, before.button === 'Pause', before);
+      const clickAt = Date.now();
+      await page.click(where === 'listen' ? '#musicMiniPlay' : '#tpPlay');
+      down = false;                                    // the network comes back
+      await sleep(10000);
+      const after = await ui();
+      const later = reads.filter(q => q.key === song && q.at > clickAt + 50);
+      check(`${where}: Pause stops the tries: nothing reads or plays behind the listener once the network is back`, after.paused && later.length === 0 && after.ms !== 'playing', { after, later });
+      check(`${where}: and it says how to pick it up`, where === 'listen'
+        ? after.label === 'Connection lost' && /Tap play to pick up at 0:0\d\./.test(after.note)
+        : /^Connection lost · /.test(after.time) && /Tap play to pick up at 0:0\d\./.test(after.status), after);
+      check(`${where} at 390 after Pause during the tries: the page fits the screen with the line`, await fits(page));
+      await page.screenshot({ path: join(OUT, `${where}-390-paused-during-the-tries.png`) });
+      check(`${where}, Pause during the tries: no script errors`, errors.length === 0, errors);
+      await context.close();
+    }
+  });
+
+  await scenario('a song whose file is not there: neither page calls it a dropped connection', async () => {
+    const song = 'who-did-the-shoot.mp3';
+    const deliver = async (q) => q.key === song ? { status: 404 } : null;
+    {
+      const { context, page, errors } = await setup({ width: 390, deliver });
+      await listenPlay(page);
+      await sleep(2000);
+      const early = await engineUi(page);
+      await page.waitForFunction(() => MCC_MUSIC.delivery && MCC_MUSIC.delivery().state === 'lost', null, { timeout: 20000 }).catch(() => {});
+      const last = await engineUi(page);
+      check('listen, missing file: while it tries, Loading… and "This song would not load. Trying again…" (review PB-R8/RL-1: "The connection dropped at 0:00")',
+        early.label === 'Loading…' && early.note === 'This song would not load. Trying again…', early);
+      check('listen, missing file: then "Could not load" and "This song could not load. Tap play to try again."', last.label === 'Could not load' &&
+        last.note === 'This song could not load. Tap play to try again.' && !/connection|reconnect/i.test(early.label + early.note + last.label + last.note), last);
+      check('listen, missing file at 390: the page fits the screen', await fits(page));
+      await page.screenshot({ path: join(OUT, 'listen-390-could-not-load.png') });
+      check('listen, missing file: no script errors', errors.length === 0, errors);
+      await context.close();
+    }
+    {
+      const { context, page, errors } = await setup({ width: 390, deliver });
+      await albumPlay(page);
+      await sleep(2000);
+      const early = await deckUi(page), toasts = await page.evaluate(() => window.__toasts);
+      await page.waitForFunction(() => /^Could not load/.test(document.getElementById('npTime').textContent), null, { timeout: 20000 }).catch(() => {});
+      const last = await deckUi(page);
+      check('album, missing file: the deck bar, the status line and the toast agree (review RL-1: the toast said it could not load, the bar "Connection lost")',
+        /^Loading… · 0:00$/.test(early.time) && early.status === 'This song would not load. Trying again…' && toasts.some(m => /could not load/i.test(m)), { early, toasts });
+      check('album, missing file: then "Could not load", and how to try again', /^Could not load · 0:00$/.test(last.time) &&
+        last.status === 'This song could not load. Tap play to try again.' && !/connection|reconnect/i.test(early.time + early.status + last.time + last.status), last);
+      check('album, missing file at 390: the page fits the screen', await fits(page));
+      await page.screenshot({ path: join(OUT, 'album-390-could-not-load.png') });
+      check('album, missing file: no script errors', errors.length === 0, errors);
+      await context.close();
+    }
+  });
+
+  for (const width of [320, 390]) {
+    await scenario(`album sheet at ${width}: every transport target stays 44 px and round, and Unmute has its own`, async () => {
+      const { context, page, errors } = await setup({ width });
+      await albumPlay(page);
+      await page.waitForFunction(() => { const d = document.getElementById('deck'); return !d.paused && d.currentTime > .3; }, null, { timeout: 15000 });
+      await page.locator('.deckbar__meta').click();
+      await sleep(700);
+      await page.evaluate(() => { document.getElementById('deck').muted = true; });
+      await page.waitForFunction(() => !document.getElementById('nowSound').hidden, null, { timeout: 5000 }).catch(() => {});
+      await sleep(300);
+      const m = await page.evaluate(() => {
+        const shown = b => b && !b.hidden && getComputedStyle(b).display !== 'none' && b.getBoundingClientRect().width > 0;
+        const row = [...document.querySelectorAll('.now__tp button')].filter(shown).map(b => { const r = b.getBoundingClientRect(); return { id: b.id, w: Math.round(r.width), h: Math.round(r.height) }; });
+        const u = document.getElementById('nowSound'), ur = shown(u) ? u.getBoundingClientRect() : null;
+        return { row, unmute: ur && { w: Math.round(ur.width), h: Math.round(ur.height), inRow: !!u.closest('.now__tp'), text: u.textContent.trim() },
+          fits: document.documentElement.scrollWidth === document.documentElement.clientWidth };
+      });
+      /* Chromium shows the sheet's beam (Remote Playback) as WebKit does with an AirPlay device in range: five in the row */
+      check(`album sheet ${width}: with the beam showing, every transport button is at least 44 px and round, the play 56 (review RL-3: 23 px at 320)`,
+        m.row.length >= 4 && m.row.every(b => b.w >= 44 && Math.abs(b.w - b.h) <= 1) && m.row.filter(b => b.id === 'nowPlay').every(b => b.w >= 56), m);
+      check(`album sheet ${width}: Unmute is its own 44 px chip under the transport, named in words`, !!m.unmute && m.unmute.h >= 44 && m.unmute.w >= 44 && !m.unmute.inRow && m.unmute.text === 'Unmute', m);
+      check(`album sheet ${width}: the page fits the screen`, m.fits);
+      if (width === 390) await page.screenshot({ path: join(OUT, 'album-390-sheet-muted.png') });
+      check(`album sheet ${width}: no script errors`, errors.length === 0, errors);
+      await context.close();
+    });
+  }
+
+  await scenario('installed app: during a drop the dock says why the music is quiet and offers Pause', async () => {
+    const song = 'who-did-the-shoot.mp3';
+    const deliver = async (q) => { if (q.key !== song) return null; if (q.n === 1) return { cut: 96000 }; return { status: 503 }; };
+    const { context, page, errors } = await setup({ width: 390, deliver, standalone: true });
+    await listenPlay(page);
+    await page.waitForFunction(() => window.MCC_MUSIC.delivery && MCC_MUSIC.delivery().state === 'reconnecting', null, { timeout: 20000 }).catch(() => {});
+    await page.waitForFunction(() => { const d = document.getElementById('mccInstalledDock'); return d && /Reconnecting/.test((d.querySelector('[data-app-player="artist"]') || {}).textContent || ''); }, null, { timeout: 5000 }).catch(() => {});
+    const dock = () => page.evaluate(() => {
+      const d = document.getElementById('mccInstalledDock'), q = s => d && d.querySelector(s);
+      return { active: document.documentElement.classList.contains('mcc-app-dock-active'), mini: getComputedStyle(document.getElementById('musicMini')).display,
+        line: q('[data-app-player="artist"]') ? q('[data-app-player="artist"]').textContent : null,
+        play: q('[data-app-player="play"]') ? q('[data-app-player="play"]').getAttribute('aria-label') : null,
+        label: q('[data-app-player="open"]') ? q('[data-app-player="open"]').getAttribute('aria-label') : null };
+    });
+    const down = await dock();
+    check('installed app: the dock stands in for the hidden mini player', down.active && down.mini === 'none', down);
+    check('installed app: the dock says Reconnecting… and offers Pause, which stops the tries (review RL-6: it showed the artist and Play)',
+      down.line === 'Reconnecting…' && down.play === 'Pause music' && /Reconnecting…/.test(down.label || ''), down);
+    check('installed app at 390: the page fits the screen', await fits(page));
+    /* the picture for Matthew: back at the top of the page, where the bar and its dock show */
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await sleep(600);
+    await page.screenshot({ path: join(OUT, 'installed-listen-390-reconnecting.png') });
+    await page.waitForFunction(() => MCC_MUSIC.delivery().state === 'lost', null, { timeout: 20000 }).catch(() => {});
+    await sleep(200);
+    const lost = await dock();
+    check('installed app: once the tries give up, the dock says so and offers Play', lost.line === 'Connection lost · tap play' && lost.play === 'Play music', lost);
+    check('installed app: no script errors', errors.length === 0, errors);
+    await context.close();
   });
 
   await scenario('a music page reads no song before a tap', async () => {

@@ -290,7 +290,9 @@ try{
     await page.evaluate(()=>{window.__originalAudio=MCC_MUSIC.audio;window.__playingAt=[];MCC_MUSIC.audio.addEventListener('playing',()=>__playingAt.push(MCC_MUSIC.audio.currentTime));});
     await page.waitForFunction(()=>MCC_MUSIC.delivery&&MCC_MUSIC.delivery().state==='reconnecting',null,{timeout:15000}).catch(()=>{});
     const down=await page.evaluate(()=>({paused:MCC_MUSIC.audio.paused,state:document.getElementById('mccWorldAudioState').textContent,play:document.querySelector('#mccWorldAudioControls .world-audio__play').getAttribute('aria-label'),at:MCC_MUSIC.delivery?MCC_MUSIC.delivery().at:null}));
-    check('a drop under the World says Reconnecting… and shows Play, never Pause over silence',down.paused&&down.state==='Reconnecting…'&&down.play==='Play music',down);
+    /* the element is quiet and the World's control says why; its button is Pause, which stops the tries (music slice M3,
+       review PB-R3: it showed Play, and Play tried again at once) */
+    check('a drop under the World says Reconnecting…, and the World\'s control offers Pause, which stops the tries',down.paused&&down.state==='Reconnecting…'&&down.play==='Pause music',down);
     const at=down.at||0;
     await page.waitForFunction(at=>!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>at+1,at,{timeout:20000}).catch(()=>{});
     const back=await page.evaluate(()=>({same:__originalAudio===MCC_MUSIC.audio,paused:MCC_MUSIC.audio.paused,time:MCC_MUSIC.audio.currentTime,resumed:__playingAt[__playingAt.length-1],state:document.getElementById('mccWorldAudioState').textContent,unloads:__unloads}));
@@ -298,6 +300,41 @@ try{
     check('the World control is back to Playing',back.state==='Playing',back);
     check('the way back is a Range read from the middle of the file',reads.some(q=>q.key===song&&failedAt&&q.at>=failedAt&&q.start>0&&q.status===206),reads.filter(q=>q.key===song));
     check('the World frame is untouched by the drop',await frame.evaluate(()=>document.body.dataset.worldAudioChild==='ready'));
+    await context.close();
+  }
+  {
+    /* THE WORLD'S PAUSE IS THE LISTENER'S (music slice M3, review PB-R2). The album's song is being picked up again under
+       the World: the deck is already quiet, so the World's control used to call deck.pause(), which changed nothing and
+       fired no event, and the next try started the music again behind the listener. It now goes through the album's own
+       Pause; so do the World's "pause" message and the sleep timer. */
+    /* until the drop every read is short and slow, so the deck keeps asking for the song as it plays (it reads the
+       start of it when the page opens); once the World is open the next read fails, and every one after it */
+    const song='who-did-the-shoot.mp3';let armed=false,failedAt=0,back=false;
+    const deliver=async q=>{
+      if(q.key!==song)return null;
+      if(!armed){await new Promise(r=>setTimeout(r,1500));return {cut:64000};}
+      if(!failedAt){failedAt=Date.now();return {status:503};}
+      return back?null:{status:503};
+    };
+    const {context,page,reads,errors}=await setup(390,false,{deliver,start:'/album.html?album=here'});
+    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&typeof window.MCC_NP_PLAY==='function');
+    await page.locator('#playAll').click();
+    await page.waitForFunction(()=>!document.getElementById('deck').paused&&document.getElementById('deck').currentTime>.15);
+    await world(page);
+    armed=true;
+    await page.waitForFunction(()=>/^Reconnecting…/.test(document.getElementById('npTime').textContent),null,{timeout:20000}).catch(()=>{});
+    const state=()=>page.evaluate(()=>({paused:document.getElementById('deck').paused,time:document.getElementById('npTime').textContent,
+      state:document.getElementById('mccWorldAudioState').textContent,play:document.querySelector('#mccWorldAudioControls .world-audio__play').getAttribute('aria-label')}));
+    const down=await state();
+    check('album under the World: a drop says Reconnecting… on the World\'s control, which offers Pause',down.paused&&down.state==='Reconnecting…'&&down.play==='Pause music',down);
+    const clickAt=Date.now();
+    await page.locator('.world-audio__play').click();   // the World's own Pause, while a try is waiting
+    back=true;                                          // the network comes back
+    await page.waitForTimeout(10000);
+    const after=await state(),later=reads.filter(q=>q.key===song&&q.at>clickAt+50);
+    check('album under the World: the World\'s Pause during a try is the listener\'s: nothing reads or plays behind it',after.paused&&later.length===0&&after.play==='Play music',{after,later});
+    check('album under the World: the World\'s control says how to pick it up',after.state==='Connection lost · tap play',after);
+    check('album under the World, the World\'s Pause: no script errors',errors.length===0,errors);
     await context.close();
   }
   {
