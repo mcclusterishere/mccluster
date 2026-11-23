@@ -208,7 +208,7 @@ jobs:
         run: |
           node scripts/music-artwork.mjs --check
           node --test scripts/test/now-playing-contract.test.mjs
-      - name: A new event name waits for approval and is not sent; a failed song or a drop is one music_error
+      - name: A new event name waits for approval and is not sent; the names sent before still go
         run: |
           node --check js/analytics.js
           node --test scripts/test/music-measurement.test.mjs
