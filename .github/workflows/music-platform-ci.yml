@@ -67,6 +67,11 @@ on:
       - 'scripts/music-artwork.mjs'
       - 'scripts/test/now-playing-contract.test.mjs'
       - 'scripts/e2e/now-playing.e2e.mjs'
+      - 'sw.js'
+      - 'js/analytics.js'
+      - 'workers/mccluster/src/analytics/measurement-dictionary.js'
+      - 'scripts/test/music-measurement.test.mjs'
+      - 'scripts/test/music-offline-vault.test.mjs'
       - '.github/workflows/music-platform-ci.yml'
   push:
     branches: [main]
@@ -135,6 +140,11 @@ on:
       - 'scripts/music-artwork.mjs'
       - 'scripts/test/now-playing-contract.test.mjs'
       - 'scripts/e2e/now-playing.e2e.mjs'
+      - 'sw.js'
+      - 'js/analytics.js'
+      - 'workers/mccluster/src/analytics/measurement-dictionary.js'
+      - 'scripts/test/music-measurement.test.mjs'
+      - 'scripts/test/music-offline-vault.test.mjs'
 
 permissions:
   contents: read
@@ -198,6 +208,14 @@ jobs:
         run: |
           node scripts/music-artwork.mjs --check
           node --test scripts/test/now-playing-contract.test.mjs
+      - name: A new event name waits for approval and is not sent; a failed song or a drop is one music_error
+        run: |
+          node --check js/analytics.js
+          node --test scripts/test/music-measurement.test.mjs
+      - name: Offline, a kept copy of the same audio under its other name still plays (the vault)
+        run: |
+          node --check sw.js
+          node --test scripts/test/music-offline-vault.test.mjs
 
   music-edge:
     runs-on: ubuntu-latest
