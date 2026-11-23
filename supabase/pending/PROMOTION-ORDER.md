@@ -660,3 +660,9 @@ PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
 | `20261031180000_lyrics_machine_v1.sql` (+ `.rollback.sql`) | `creator_tracks.lyrics_sheet` and `lyrics_input_rev`, the revision function and the trigger that queues a `lyrics_align` job on `ops_agent_jobs` when a release's master or sheet changes | `js/music-creator-studio.js` (`attachLyricSheet`: the sheet column first; until this is applied the words are kept on the release as untimed `lyrics {source:"sheet"}` and the creator is told), Control's Lyrics review (`operator-lyrics-queue`), `core/src/executors/lyrics-align.mjs` | Apply only after the OVH Core is running with the `lyrics_align` executor (applied earlier, Core quarantines the jobs as an unknown type). Then upload a release with a sheet and watch the job finish with timed lyrics, unreviewed. Never applied here. |
+
+## 17. In Hot Pursuit catalog objects (written 2026-11-23)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261123190000_in_hot_pursuit_catalog_objects.sql` (+ `.rollback.sql`) | seven `public.music_catalog_objects` rows for Benji Chase's In Hot Pursuit (keys `in-hot-pursuit:*`), upserted like section 15 | the shelf in `data/albums.json` (album `in-hot-pursuit`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
