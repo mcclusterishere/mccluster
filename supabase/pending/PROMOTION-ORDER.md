@@ -649,8 +649,8 @@ mutated copies each failing a named check; CI matrix entry `mission-sources-stor
 PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/test/mission-sources-owner.integration.mjs` (CI
 `mission-sources-owner`); the static checks: `node --test scripts/test/mission-catalog-sources-sql.test.mjs`.
 
-## 15. Tinderfessions catalog objects (written 2026-11-23)
+## 15. Tinderfessions catalog objects (written 2026-11-23; Rolling With Me added as the bonus opener the same day)
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
-| `20261123180000_tinderfessions_catalog_objects.sql` (+ `.rollback.sql`) | ten `public.music_catalog_objects` rows for Benji Chase's Tinderfessions (keys `tinderfessions:*`), upserted like the Whip Equipped and PRIM3 seeds | the shelf in `data/albums.json` (album `tinderfessions`); the live discovery and direct-sale lookups by catalog key | `scripts/test/action-network-live-governance.test.mjs` and `scripts/test/music-direct-sales.test.mjs` read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+| `20261123180000_tinderfessions_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's Tinderfessions (keys `tinderfessions:*`), upserted like the Whip Equipped and PRIM3 seeds | the shelf in `data/albums.json` (album `tinderfessions`); the live discovery and direct-sale lookups by catalog key | `scripts/test/action-network-live-governance.test.mjs` and `scripts/test/music-direct-sales.test.mjs` read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
