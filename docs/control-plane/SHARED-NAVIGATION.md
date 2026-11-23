@@ -48,7 +48,9 @@ with 44-pixel touch targets and the home-indicator clearance retained. The
 existing role-filtered navigation stays in its middle strip. When space is
 limited, that strip scrolls without removing destinations or shrinking buttons.
 The playing track's title and artist and its previous, play/pause and next
-controls occupy the sides. Opening the existing player keeps its deeper tools
+controls occupy the sides. Where the bar's own Music button is the page's
+Play/Pause (Listen), it is the one Play/Pause and the side holds Next alone, so
+the dock never shows two. Opening the existing player keeps its deeper tools
 reachable.
 
 The dock reads and commands the existing Now Playing owner. It creates no audio

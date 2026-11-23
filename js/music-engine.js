@@ -680,10 +680,10 @@
       /* a song being picked up again is quiet while the listener still wants it: the lock screen offers Pause, which
          stops the tries; and the installed app's dock, which hides this mini player, says why it is quiet */
       playing: intendsPlay,
-      status: function () {
-        var l = statusLine();
-        return l || ((currentAccess === "full" || currentAccess === "preview") && audio.muted ? "Muted" : "");
-      }
+      status: function () { return statusLine(); },
+      /* Muted lasts: the dock says it in the song line, in one row, never in the row the trouble words take for the
+         seconds they last (the Release 1 dock fix) */
+      note: function () { return (currentAccess === "full" || currentAccess === "preview") && audio.muted ? "Muted" : ""; }
     });
     return nowPlaying;
   }

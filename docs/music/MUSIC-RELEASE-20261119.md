@@ -878,7 +878,7 @@ answered under "Verification of M3" below.
 | RL-3 | The album sheet's Unmute sat in the transport row: with the AirPlay beam showing (Chromium shows its Remote Playback beam, as WebKit does with a device in range) every chip was 33 px wide at 320 before muting and 23 muted, 34 muted at 390 | Unmute is its own 44 px chip under the transport, in words; the transport's chips keep at least 44 px (the play 56) and stay round at 320 and 390, the space between them taken from the row |
 | RL-4 | Unmute hid itself and the keyboard focus fell to the page | Unmute from the keyboard leaves the focus on the same player's Play/Pause (listen and album) |
 | RL-5 | The listen page's only live region sat inside a button, whose children a screen reader is not given (WebKit builds none) | The same line is spoken from a visually hidden live region beside the mini player's row, once per change; the visible line stays where it was |
-| RL-6 | In the installed app the dock hid the mini player and said nothing of the delivery (its second line kept the artist, its button said Play music) | The dock's second line and label say why the music is quiet (Reconnecting…, Connection lost · tap play, Loading…, Could not load · tap play, Muted; `spec.status` in `js/now-playing.js`), and it offers Pause while a song is picked up (since the M3 follow-up the words take a line of their own across the top of the dock, and the second line keeps the artist) |
+| RL-6 | In the installed app the dock hid the mini player and said nothing of the delivery (its second line kept the artist, its button said Play music) | The dock's second line and label say why the music is quiet (Reconnecting…, Connection lost · tap play, Loading…, Could not load · tap play, Muted; `spec.status` in `js/now-playing.js`), and it offers Pause while a song is picked up (since the M3 follow-up the trouble words take a line of their own across the top of the dock, and the second line keeps the artist; since the Release 1 dock fix Muted, which lasts, is the second line itself, `spec.note`, and the dock stays one row) |
 
 Four more defects came up in this round's own runs and renders and were fixed before anything was committed, each
 with a test:
@@ -1185,9 +1185,10 @@ was built for them.
    last ten seconds ends it at once: Play ended, the right line, Play (never Pause), the lock screen not told music
    is wanted, no read and no second claim.
 10. **The installed app's dock says why the music is quiet on a line of its own** (`js/installed-app-dock.js`,
-    `css/installed-app-dock.css`): while there is something to say (Reconnecting…, Connection lost · tap play,
-    Loading…, Could not load · tap play, Muted) the words run across the top of the dock, whole, and the controls
-    keep their row at the bottom; the second line keeps the artist; the open button's label still carries the words.
+    `css/installed-app-dock.css`): while there is trouble to say (Reconnecting…, Connection lost · tap play,
+    Loading…, Could not load · tap play) the words run across the top of the dock, whole, and the controls keep their
+    row at the bottom; the second line keeps the artist; the open button's label still carries the words. Muted lasts,
+    so since the Release 1 dock fix it is the second line instead (`spec.note`), and the dock stays one row.
 11. **CI.** `music-platform-ci.yml` watches `sw.js`, `js/analytics.js`, the measurement dictionary and the two new
     tests; `music-contract` runs them. No new workflow and no new trigger.
 
@@ -1412,5 +1413,7 @@ with this check's own probes; nothing above was taken on trust. Nothing was merg
   meet, and the dock's title and artist cut short.
 * **Also his call:** on the album the same bar button opens the shelf and the album's song ends, as before this slice
   (review RF-5); whether it should pause the album's song there may belong with M5. In the installed app on the listen
-  page the dock now holds two Pause buttons side by side, the bar's Music button and the dock's own (both named "Pause
-  music", both pause the song); whether the Music button should stay the way to the shelf there is a design call.
+  page the dock held two Pause buttons side by side, the bar's Music button and the dock's own (both named "Pause
+  music", both pause the song); since the Release 1 dock fix it holds one, the Music button, and the dock shows its own
+  Play/Pause only where the Music button is the way to the music (the album, where it opens the shelf; the World open
+  over the music).
