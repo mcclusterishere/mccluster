@@ -166,3 +166,26 @@ test('the Worker edge allowlists exactly the job tools Core registers and pins t
   for (const tool of JOB_TOOLS) assert.ok(source.includes(`'${tool.name}'`), `${tool.name} is not allowlisted at the edge`);
   assert.match(source, /toolName\.startsWith\('core\.compute\.job\.'\)/);
 });
+
+test('a standby scheduler refuses submission and handover but still answers reads and status', async () => {
+  const m = memoryDeps();
+  const requireAdmin = () => {};
+  const adminOrg = () => ORG;
+  const standby = { orgId: ORG, holderId: 'prime-standby', isActive: () => false, holder: 'ovh-primary', snapshot: () => ({ role: 'standby', active: false, live_holder: 'ovh-primary' }), store: { status: async () => ({ holder_id: 'ovh-primary', term: 1 }) }, requestHandover: async () => { throw new Error('should not be reached'); } };
+  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', input: {} }, requireAdmin, adminOrg, election: standby }, m.deps), (e) => e.code === 'SCHEDULER_STANDBY' && e.status === 503 && e.active_holder === 'ovh-primary');
+  assert.equal(m.enqueued.length, 0);
+  const status = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler'), body: {}, requireAdmin, adminOrg, election: standby }, m.deps);
+  assert.equal(status.body.configured, true);
+  assert.equal(status.body.store.holder_id, 'ovh-primary');
+  const list = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: {}, requireAdmin, adminOrg, election: standby }, m.deps);
+  assert.equal(list.status, 200);
+  const none = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler'), body: {}, requireAdmin, adminOrg, election: null }, m.deps);
+  assert.equal(none.body.configured, false);
+  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler/handover'), body: { to_holder_id: 'x' }, requireAdmin, adminOrg, election: null }, m.deps), (e) => e.code === 'SCHEDULER_NOT_CONFIGURED');
+  const active = { ...standby, isActive: () => true, requestHandover: async (to, grace) => ({ ok: true, handover_to: to, grace }) };
+  const accepted = await handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', input: {} }, requireAdmin, adminOrg, election: active }, m.deps);
+  assert.equal(accepted.status, 202);
+  const handover = await handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler/handover'), body: { to_holder_id: 'ovh-primary', grace_seconds: 60 }, requireAdmin, adminOrg, election: active }, m.deps);
+  assert.equal(handover.status, 200);
+  assert.equal(handover.body.handover_to, 'ovh-primary');
+});

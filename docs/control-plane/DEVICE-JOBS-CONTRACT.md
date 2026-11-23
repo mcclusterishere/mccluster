@@ -150,7 +150,7 @@ Generate one with `generateReceiptKey()` from `core/src/compute/jobs.mjs` and ke
 | `COMPUTE_NO_LIVE_NODE` | 503, retryable | nothing live advertises the capability; `allow_offline` queues anyway |
 | `JOB_NOT_FOUND` | 404 | unknown id, or another organization's job |
 | `JOB_NOT_DONE`, `JOB_NOT_TERMINAL` | 409 | result or receipt asked too early; `job_status` says where it is |
-| `SCHEDULER_STANDBY` | 503, retryable | this Core instance is not the active scheduler (see `DEVICE-JOBS-SCHEDULER-STANDBY.md`; the gateway gate is not wired yet) |
+| `SCHEDULER_STANDBY` | 503, retryable | this Core instance is not the active scheduler; `active_holder` names the live one (`DEVICE-JOBS-SCHEDULER-STANDBY.md`) |
 
 ## Staging proof
 
@@ -200,9 +200,16 @@ independent devices, then compatible groups that can split one model.
 ## Scheduler: OVH normal, Prime standby
 
 The design, the pending SQL (`supabase/pending/compute_scheduler_lease_v1.sql`), the fenced election module
-(`core/src/compute/scheduler-election.mjs`) and its tests are described in `DEVICE-JOBS-SCHEDULER-STANDBY.md`.
-Production keeps today's single scheduler until that SQL is promoted and the gateway gate is wired and exercised in
-staging; both remain owner-gated steps.
+(`core/src/compute/scheduler-election.mjs`) and its tests are described in `DEVICE-JOBS-SCHEDULER-STANDBY.md`. The
+gateway is wired: with `MCCLUSTER_SCHEDULER_ROLE` unset nothing changes (today's single scheduler); with a role the
+instance starts the election before it listens, gates job submission and node lease claims with
+`503 SCHEDULER_STANDBY` (naming `active_holder`), keeps heartbeats, enrolment and reads open, reports the election in
+`/health`, and offers `GET /v1/compute/scheduler` and `POST /v1/compute/scheduler/handover` (admin token) for the
+owner's controlled failback. `scripts/staging/device-jobs/scheduler-failover.mjs` runs two real gateways over one
+disposable database through one active holder, a frozen primary and takeover to term 2, the fenced return, and a
+handover back to term 3; proof under `docs/control-plane/evidence/device-jobs-staging-20261123/scheduler-failover/`.
+Production keeps today's single scheduler until the SQL is promoted and a role is set; node traffic still follows
+the owner's manual tunnel or DNS switch.
 
 ## Current state, verified read-only on 2026-11-23
 

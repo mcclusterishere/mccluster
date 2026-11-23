@@ -1,0 +1,13 @@
+# Scheduler standby: staging proof
+
+Result: **PASS** (5/5). Commit a414b9a70f33b41386fce3f73df3644473ad007e. TTL 10 s, renew 2 s.
+
+Two real gateway processes over one disposable database. No canonical Supabase, no OVH Core, no device. Node traffic redirection (tunnel/DNS) is out of scope and stays a manual owner step.
+
+| Step | Result | ms | Detail |
+| --- | --- | --- | --- |
+| one active holder: the primary holds term 1 and the standby is held | pass | 4 | `{"a":{"role":"primary","holder_id":"ovh-primary","active":true,"term":1,"live_holder":"ovh-primary","live_term":1,"expires_at":"2026-11-23T02:37:12.439Z","last_server_time":"2026-11-23T02:37:02.439Z","last_reason":"fresh","last_error":null,"handover_to":null},"b":{"role":"standby","holder_id":"prime-standby","active":false,"term":null,"live_holder":"ovh-primary","live_term":1,"expires_at":"2026-11-23T02:37:12.439+00:00","last_server_time":"2026-11-23T02:37:03.378+00:00","last_reason":"held","las` |
+| the standby refuses admin submissions and node lease claims with SCHEDULER_STANDBY; the primary accepts | pass | 173 | `{"submit_via_standby":"SCHEDULER_STANDBY","submit_via_primary":202,"claim_via_standby":"SCHEDULER_STANDBY","claim_via_primary":200,"reads_on_standby":200}` |
+| partition: the primary is frozen, its lease expires server-side, the standby takes over with term 2 and accepts submissions | pass | 9587 | `{"frozen_at":"2026-11-23T02:37:03.900Z","standby_active_at":"2026-11-23T02:37:13.487Z","term":2,"reason":"expired_takeover"}` |
+| fenced return: the primary is resumed, its renew is fenced, it refuses and names the standby as the live holder | pass | 418 | `{"a":{"role":"primary","holder_id":"ovh-primary","active":false,"term":null,"live_holder":"prime-standby","live_term":2,"expires_at":"2026-11-23T02:37:23.4+00:00","last_server_time":"2026-11-23T02:37:13.5+00:00","last_reason":"fenced","last_error":null,"handover_to":null},"submit_via_primary":"SCHEDULER_STANDBY","fenced_event_logged":true}` |
+| controlled failback: the active standby hands over, the primary takes term 3, the standby is fenced | pass | 3653 | `{"handover":{"ok":true,"term":2,"reason":"handover_requested","holder_id":"prime-standby","handover_to":"ovh-primary","server_time":"2026-11-23T02:37:13.911+00:00","handover_expires_at":"2026-11-23T02:38:13.911+00:00","scheduler":{"role":"standby","holder_id":"prime-standby","active":true,"term":2,"live_holder":"prime-standby","live_term":2,"expires_at":"2026-11-23T02:37:23.400Z","last_server_time":"2026-11-23T02:37:13.400Z","last_reason":"expired_takeover","last_error":null,"handover_to":"ovh-p` |

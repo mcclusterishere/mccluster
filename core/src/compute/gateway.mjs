@@ -6,6 +6,7 @@ import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolve
 import { handleJobRoute } from './jobs-routes.mjs';
 import { recordCompletionAttestation } from './jobs-service.mjs';
 import { RUNNING_DEPLOYMENT_SHA } from '../runtime-revision.mjs';
+import { assertActiveScheduler, createSupabaseSchedulerStore, electionConfigFromEnv, SchedulerElection } from './scheduler-election.mjs';
 
 const HOST = process.env.CORE_COMPUTE_HOST || '127.0.0.1';
 const PORT = Number(process.env.CORE_COMPUTE_PORT || 4788);
@@ -15,6 +16,21 @@ const CLOCK_SKEW_MS = Number(process.env.CORE_COMPUTE_CLOCK_SKEW_MS || DEFAULT_C
 if (!['127.0.0.1', '::1', 'localhost'].includes(HOST)) {
   throw new Error('Compute gateway must bind to loopback; publish it through an authenticated reverse tunnel/proxy');
 }
+
+// Scheduler election (docs/control-plane/DEVICE-JOBS-SCHEDULER-STANDBY.md). With
+// MCCLUSTER_SCHEDULER_ROLE unset there is no election and every admission check
+// passes: today's single-scheduler behaviour. With a role, this instance hands
+// out device leases and accepts job submissions only while it holds the
+// per-org scheduler lease; a standby answers 503 SCHEDULER_STANDBY and names the
+// live holder. Heartbeats, enrolment and reads are liveness, never gated.
+const electionConfig = electionConfigFromEnv(process.env);
+const election = electionConfig
+  ? new SchedulerElection({
+    ...electionConfig,
+    store: await createSupabaseSchedulerStore(),
+    onEvent: (event, detail, scheduler) => console.log(JSON.stringify({ event, detail: detail instanceof Error ? { message: detail.message, code: detail.code || null } : (detail ?? null), scheduler }))
+  })
+  : null;
 
 function json(res, status, body, extraHeaders = {}) {
   const payload = JSON.stringify(body);
@@ -99,7 +115,7 @@ async function route(req, res) {
   const url = new URL(req.url || '/', `http://${HOST}:${PORT}`);
 
   if (url.pathname === '/health' && req.method === 'GET') {
-    return json(res, 200, { ok: true, service: 'mccluster-compute-gateway', protocol: COMPUTE_PROTOCOL });
+    return json(res, 200, { ok: true, service: 'mccluster-compute-gateway', protocol: COMPUTE_PROTOCOL, scheduler: election ? election.snapshot() : null });
   }
 
   if (req.method === 'POST') assertJsonContentType(req.headers['content-type']);
@@ -173,6 +189,7 @@ async function route(req, res) {
     req, url, body,
     requireAdmin: () => requireSecret(req, 'CORE_COMPUTE_ADMIN_TOKEN', 'Compute admin'),
     adminOrg,
+    election,
     issuer: { instance: process.env.MCCLUSTER_CORE_ID || null, deployment_sha: RUNNING_DEPLOYMENT_SHA || null }
   });
   if (jobRoute) return json(res, jobRoute.status, jobRoute.body, jobRoute.headers || {});
@@ -208,6 +225,8 @@ async function route(req, res) {
   if (url.pathname === '/v1/compute/lease' && req.method === 'POST') {
     // Owned-only capabilities are claimable only by a node whose enrolment
     // recorded trust 'owned', whatever its manifest advertises.
+    // Only the active scheduler hands out leases (a standby answers 503).
+    assertActiveScheduler(election);
     const manifest = claimableManifest(node.capabilities, node.labels);
     const capabilities = [...new Set(manifest.map((item) => item.capability).filter(Boolean))];
     const implementations = [...new Set(manifest.map((item) => item.implementation).filter(Boolean))];
@@ -247,7 +266,15 @@ const server = http.createServer((req, res) => {
   res.setHeader('x-request-id', requestId);
   route(req, res).catch((error) => {
     console.error(JSON.stringify({ event: 'compute_gateway_error', request_id: requestId, message: error.message, code: error.code || null }));
-    if (!res.headersSent) json(res, Number(error.status || 500), { error: error.message || 'Compute gateway failure', code: error.code || null, request_id: requestId });
+    if (!res.headersSent) {
+      json(res, Number(error.status || 500), {
+        error: error.message || 'Compute gateway failure', code: error.code || null, request_id: requestId,
+        // A standby names the live scheduler so a client can follow it; a retryable refusal says so.
+        ...(error.retryable === true ? { retryable: true } : {}),
+        ...(error.active_holder !== undefined ? { active_holder: error.active_holder } : {}),
+        ...(error.job_status ? { job_status: error.job_status } : {})
+      });
+    }
     else res.end();
   }).finally(() => {
     let pathname = '/';
@@ -256,13 +283,20 @@ const server = http.createServer((req, res) => {
   });
 });
 
+if (election) {
+  // Acquire (or learn who holds) the scheduler lease before taking traffic. A
+  // failed first call is an event, not a crash: the instance starts as standby.
+  await election.start();
+}
 server.listen(PORT, HOST, () => {
-  console.log(JSON.stringify({ event: 'compute_gateway_ready', host: HOST, port: PORT, protocol: COMPUTE_PROTOCOL, pid: process.pid }));
+  console.log(JSON.stringify({ event: 'compute_gateway_ready', host: HOST, port: PORT, protocol: COMPUTE_PROTOCOL, pid: process.pid, scheduler: election ? election.snapshot() : null }));
 });
 
 function shutdown(signal) {
   console.log(JSON.stringify({ event: 'compute_gateway_shutdown', signal }));
-  server.close(() => process.exit(0));
+  // A clean stop releases the scheduler lease so the other side takes over at once.
+  const released = election ? election.stop().catch(() => {}) : Promise.resolve();
+  released.then(() => server.close(() => process.exit(0)));
   setTimeout(() => process.exit(1), 5_000).unref();
 }
 process.on('SIGTERM', () => shutdown('SIGTERM'));
