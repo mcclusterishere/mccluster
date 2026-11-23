@@ -220,6 +220,27 @@ staging; both remain owner-gated steps.
 - **Supabase**: the MCP connector failed to connect in this session (proxy tunnel error), so the live schema and
   the two production nodes were not re-read today; the 2026-11-17 reading in `DEVICE-NODES-AND-OWNER-GPU.md` stands.
 
+## Reconciliation with draft PR #821 (`codex/owner-ai-workspace-20261122`, head `e996acf2`)
+
+Read against this branch on 2026-11-23. The two changes share three files and are mechanically mergeable:
+
+- `core/src/compute/gateway.mjs`: #821 adds a scoped-enrolment branch inside `/v1/compute/enroll`, a
+  `/v1/compute/pair-cleanup` route after `authenticateNode`, and heartbeat constraints; this slice adds one import
+  pair and one block immediately before `authenticateNode`, plus the attestation call inside the `complete`
+  branch. Adjacent, not overlapping. #821's `CORE_OWNER_AI_WORKSPACE_ENABLED=1` closes shared-token enrolment
+  unless `CORE_COMPUTE_ALLOW_LEGACY_ENROLL=1`; the staging harness here enrols with the shared token, so once #821
+  lands the harness must either set that variable or enrol through #821's scoped credential. Off by default today.
+- `core/src/tools/control.mjs`: both add imports and a dispatch line at the top of `callControlTool`; #821 also
+  gates its tools behind the workspace flag. The job tools here are not behind that flag because they add no new
+  schema requirement (the attestation table only improves the receipt).
+- `workers/mccluster-mcp/src/mcp.js`: both extend the allowlist; #821's `toolName.startsWith('core.compute.')`
+  pin is broader than this slice's and covers `core.compute.job.*` and `core.compute.receipt.key`; keep #821's
+  condition at merge.
+- SQL: #821's `compute_claim_task_v4` keeps the four-argument `compute_claim_task` wrapper the gateway calls, and
+  its owner enrolment writes the same `ops_compute_nodes` row shape; this contract reads task and lease rows and
+  changes neither, so a job submitted here is scheduled by #821's claim unchanged. Its pair reservation and the exo
+  diagnostic adapter are where a future group receipt would get its per-device attestations.
+
 ## Integration notes for Prime's Windows client
 
 The client needs four calls and one key: submit with an `Idempotency-Key` it generates and keeps until it has a
