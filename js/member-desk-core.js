@@ -47,10 +47,23 @@
     var signedIn = !!i.signedIn;
     return {
       signedIn: signedIn,
-      creator: signedIn && !!i.creator,
+      /* true or false only when the server said so (creatorFrom, below); null while it is not known, and an unknown
+         member is never offered "Become a creator" (owner, 2026-11-23: "The shit should know whether you have a
+         creator's account or not already") */
+      creator: signedIn ? (i.creator == null ? null : !!i.creator) : false,
       business: signedIn && (!!(i.entitlement && i.entitlement.paid) || (Number(i.sites) || 0) > 0),
       fellow: signedIn && (seats.length > 0 || !!(app && app.status === "accepted"))
     };
+  }
+
+  /* Creator or not, from the one-click onboarding's own server answer (music_creator_state(): { ok, creator }).
+     true and false are the server's word; anything else (no answer, an error, not_signed_in while a token is being
+     refreshed) is not known, and is null. */
+  function creatorFrom(answer) {
+    if (!answer || typeof answer !== "object") return null;
+    if (answer.creator === true) return true;
+    if (answer.ok === true && answer.creator === false) return false;
+    return null;
   }
 
   /* The desk's sections, in order. Breakpoints never change this list: the
@@ -189,7 +202,7 @@
       "Here is why: " + (String(reason || "").trim() || "[your reason]") + "."];
   }
 
-  return { SECTIONS: SECTIONS, FORM_FIELDS: FORM_FIELDS, capabilities: capabilities, sections: sections, policyMode: policyMode,
+  return { SECTIONS: SECTIONS, FORM_FIELDS: FORM_FIELDS, capabilities: capabilities, creatorFrom: creatorFrom, sections: sections, policyMode: policyMode,
     deskParam: deskParam, deskUrl: deskUrl, policyRedirect: policyRedirect, missionBuckets: missionBuckets,
     lockedFields: lockedFields, gateState: gateState, canStart: canStart, validateChanges: validateChanges, editScript: editScript };
 });

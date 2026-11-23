@@ -596,7 +596,8 @@
        "identity_verified": true,
        "identity_purpose": "referral_signup"
       }
-     }
+     },
+     "hold": "profile"
     }
    ]
   }

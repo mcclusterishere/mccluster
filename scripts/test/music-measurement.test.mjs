@@ -5,12 +5,11 @@
    reviewed taxonomy migration by workers/mccluster/test/analytics-event-inventory-dictionary.test.mjs; the rule is
    docs/control-plane/ANALYTICS-EVENT-INVENTORY-20261021.md: a name nobody reviewed stays unclassified and is never
    silently mapped). Music slice M3 added music_interrupted (a read that failed or was cut off on the way: reason,
-   second, try, path), sent by the listen engine and the album once per failed read, up to six per drop, and it made
-   music_error go out once per failed read too. Neither is in the dictionary.
-
-   Until Matthew approves it, music_interrupted waits in one place, js/analytics.js: the players still name it, and
-   nothing called music_interrupted leaves the browser. music_error (the engine sent it before M3) goes out once per
-   failed song or drop episode, with its code (scripts/test/music-playback-races.test.mjs counts it). */
+   second, try, path), and the M3 follow-up held it in js/analytics.js until Matthew approved it. He approved it and
+   music_error on 2026-11-23 ("For 6, I approved them"; docs/music/MUSIC-RELEASE-20261119.md, "Quick wins"): both are
+   reviewed rows in the dictionary now, nothing is held, and each goes out once per drop or failed song, never once
+   per read (scripts/test/music-quick-wins.test.mjs counts them; scripts/test/music-playback-races.test.mjs counts
+   music_error). */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -69,26 +68,20 @@ function sender() {
   };
 }
 
-test('music_interrupted waits for approval: a player names it and nothing sends it; the reviewed and existing names still go', async () => {
+test('approved (2026-11-23): music_interrupted and music_error leave the browser with the names already measured', async () => {
   const s = sender();
-  s.track('music_interrupted', { reason: 'error', at_s: 42, attempt: 1, path: 'public', track: 'Who Did The Shoot' });
+  s.track('music_interrupted', { reason: 'error', at_s: 42, attempt: 0, path: 'public', track: 'Who Did The Shoot' });
   s.track('music_error', { code: 2, track: 'Who Did The Shoot' });
   s.track('music_play', { source: 'discovery', track: 'Who Did The Shoot' });
   await s.flush();
   assert.ok(s.sent.length >= 1, 'the queue went out');
-  const names = s.names();
-  assert.ok(!names.includes('music_interrupted'), 'music_interrupted is not sent until Matthew approves it: ' + names.join(', '));
-  assert.deepEqual(names.filter((n) => /^music_/.test(n)).sort(), ['music_error', 'music_play']);
+  assert.deepEqual(s.names().filter((n) => /^music_/.test(n)).sort(), ['music_error', 'music_interrupted', 'music_play']);
 });
 
-test('the one place to approve it: held in js/analytics.js, not in the measurement dictionary, and ready in both players', async () => {
-  const src = read('js/analytics.js');
-  const held = slice(src, 'var AWAITING_APPROVAL = {', '};');
-  assert.deepEqual([...held.matchAll(/^\s*([a-z_]+):/gm)].map((m) => m[1]), ['music_interrupted'], 'one name waits, and only that one');
-  assert.match(held, /waiting for Matthew's approval/, 'it says what it waits for');
+test('nothing waits for approval: no hold in js/analytics.js, both names reviewed in the dictionary, one per drop in both players', async () => {
+  assert.doesNotMatch(read('js/analytics.js'), /AWAITING_APPROVAL/, 'the hold is gone with the approval');
   const { EVENT_DICTIONARY } = await import('../../workers/mccluster/src/analytics/measurement-dictionary.js');
-  assert.equal(EVENT_DICTIONARY.some((e) => e.event_name === 'music_interrupted'), false, 'not reviewed yet: approving it adds its row there and deletes its line here');
-  /* the players keep calling it, so approving it is that one line */
-  assert.match(read('js/music-engine.js'), /trackEvent\("music_interrupted", \{ reason: why/);
-  assert.match(read('album.html'), /window\.MCC_TRACK\("music_interrupted", \{ track:/);
+  for (const n of ['music_interrupted', 'music_error']) assert.ok(EVENT_DICTIONARY.some((e) => e.event_name === n), n + ' is a reviewed row');
+  assert.match(read('js/music-engine.js'), /if \(fresh\) trackEvent\("music_interrupted", \{ reason: why/);
+  assert.match(read('album.html'), /if \(fresh && window\.MCC_TRACK\) window\.MCC_TRACK\("music_interrupted", \{ track:/);
 });

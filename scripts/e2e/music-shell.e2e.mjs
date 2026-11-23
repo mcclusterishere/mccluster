@@ -167,9 +167,16 @@ async function deck(page){return page.evaluate(()=>{const d=document.getElementB
 async function markEngine(page){await page.evaluate(()=>{window.__orig=MCC_MUSIC.audio;window.__trans=[];for(const t of ['pause','emptied','seeking','play'])MCC_MUSIC.audio.addEventListener(t,()=>window.__trans.push(t));});}
 async function markDeck(page){await page.evaluate(()=>{const d=document.getElementById('deck');window.__orig=d;window.__trans=[];for(const t of ['pause','emptied','seeking','play'])d.addEventListener(t,()=>window.__trans.push(t));});}
 async function trans(page){return page.evaluate(()=>window.__trans||null).catch(()=>null);}
+/* Listen lists artists and albums; a song is found by its search (music quick wins Q2, 2026-11-23) */
+async function findListen(where,title,album){
+  const sel=`[data-music-play][data-album="${album}"][data-track="${title}"]`;
+  await where.waitForSelector('#q',{timeout:15000});
+  await where.fill('#q',title);
+  await where.waitForSelector(sel,{state:'visible',timeout:15000});
+  return where.locator(sel).first();
+}
 async function playListen(page,title='Who Did The Shoot',album='here',where=page){
-  await where.waitForSelector(`[data-music-play][data-album="${album}"][data-track="${title}"]`,{timeout:15000});
-  await where.locator(`[data-music-play][data-album="${album}"][data-track="${title}"]`).first().click();
+  await (await findListen(where,title,album)).click();
   await page.waitForFunction(t=>window.MCC_MUSIC&&MCC_MUSIC.current()&&MCC_MUSIC.current().title===t&&!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>.3,title,{timeout:15000});
 }
 async function playAlbumRow(page,n=1){
@@ -200,7 +207,7 @@ if(RENDER){
      await playAlbumRow(page,1);await shot(page,`album-${width}-playing`);
      await page.locator('.appbar [data-appnav="music"]').click();await waitView(page,/listen\.html/);
      await shot(page,`listen-view-over-album-${width}-deck-plays-on`);
-     const v=await view(page);await v.locator('[data-music-play][data-album="prim3"][data-track="OSINT"]').first().click();
+     const v=await view(page);await (await findListen(v,'OSINT','prim3')).click();
      await page.waitForFunction(()=>document.documentElement.getAttribute('data-music-owner')==='engine'&&window.MCC_MUSIC&&!MCC_MUSIC.audio.paused);
      await shot(page,`listen-view-over-album-${width}-listen-song-owns-the-bar`);
      await page.goBack();await settle(page,900);await shot(page,`album-${width}-back`);
@@ -274,8 +281,7 @@ await scenario('s2',async()=>{
   const v=await waitView(page,/listen\.html/,4000);
   check('3. one playing element across the documents',(await playing(page)).n===1,await playing(page));
   /* test 4: a catalogue song chosen inside the Listen view plays in the retained engine, through its resolver */
-  await v.waitForSelector('[data-music-play][data-album="prim3"][data-track="OSINT"]',{timeout:15000});
-  await v.locator('[data-music-play][data-album="prim3"][data-track="OSINT"]').first().click();
+  await (await findListen(v,'OSINT','prim3')).click();
   await page.waitForFunction(()=>MCC_MUSIC.current()&&MCC_MUSIC.current().title==='OSINT'&&!MCC_MUSIC.audio.paused,null,{timeout:10000});
   const inView=await v.evaluate(()=>({audios:(window.__audioObjects||[]).length,mini:!!document.getElementById('musicMini'),pressed:[...document.querySelectorAll('[data-music-play][data-track="OSINT"]')].some(b=>b.getAttribute('aria-pressed')==='true')}));
   check('4. a catalogue song tapped in a Listen view plays on the retained engine\'s element',(await engine(page)).same&&(await playing(page)).n===1,await playing(page));
@@ -296,8 +302,9 @@ await scenario('s2',async()=>{
   await context.close();
 });
 await scenario('s3',async()=>{
-  /* test 4: a creator release chosen inside an artist view; a guest's protected preview stops at 30 s and the record moves on;
-     the gated closer stays preview-only and no claim is ever sent */
+  /* test 4: a creator release chosen inside an artist view; a guest's protected preview stops at 30 s, and the record stops
+     after the artist's last song (music quick wins Q6); the held closing song stays held from a view, and no claim is ever
+     sent (Q5) */
   const {context,page,log}=await setup();
   await page.waitForSelector('a.artist[href*="handle=probe-artist"]',{timeout:15000});
   await page.locator('a.artist[href*="handle=probe-artist"]').first().click();
@@ -313,18 +320,27 @@ await scenario('s3',async()=>{
   check('4. Next moves along the engine\'s queue to the artist\'s next release',await page.evaluate(()=>MCC_MUSIC.access()==='preview'||MCC_MUSIC.access()==='loading'));
   await page.waitForFunction(()=>!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.duration>0,null,{timeout:10000});
   await page.evaluate(()=>{MCC_MUSIC.audio.currentTime=28.6;});
-  await page.waitForFunction(id=>!(MCC_MUSIC.current()&&MCC_MUSIC.current().creatorTrackId===id),T_ACCOUNT,{timeout:12000});
-  const stop=await page.evaluate(()=>({next:MCC_MUSIC.current()&&MCC_MUSIC.current().title,events:window.__trans}));
-  check('4. a guest\'s protected preview stops at 30 s and the record moves on',!!stop.next,stop);
+  /* the artist's last song: the record stops there, at the preview's end, never past it (music quick wins Q6) */
+  await page.waitForFunction(()=>MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>=29,null,{timeout:12000});
+  await sleep(800);
+  const stop=await page.evaluate(()=>({now:MCC_MUSIC.current()&&MCC_MUSIC.current().creatorTrackId,paused:MCC_MUSIC.audio.paused,at:MCC_MUSIC.audio.currentTime,events:window.__trans}));
+  check('4. a guest\'s protected preview stops at 30 s; the artist\'s last song, so the record stops there, never past the preview (music quick wins Q6)',stop.now===T_ACCOUNT&&stop.paused&&stop.at>=29&&stop.at<30,stop);
   check('4. still one element, never a second',(await engine(page)).same,await engine(page));
-  /* the gated closer from a Listen view over the artist top: preview only, no claim */
+  /* the closing song from a Listen view over the artist top: it stays held (music quick wins Q5, 2026-11-23). The
+     view's one pop-up says why; nothing is read for it, nothing plays, and no claim is ever sent. It is found as the
+     held song of its album, never named here */
+  const HELD=(JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.find(a=>a.slug==='cia-mind-control').tracks.find(t=>t.hold)||{}).title;
   await page.goto(HOUSE+'/music-creator.html?handle=probe-artist');await page.waitForLoadState('load');
   await page.waitForSelector('a.music-contextbar__brand');await page.locator('a.music-contextbar__brand').click();
   const lv=await waitView(page,/listen\.html/);
-  await lv.waitForSelector('[data-music-play][data-album="cia-mind-control"][data-track="Niggy Nigg Niggr"]',{timeout:15000});
-  await lv.locator('[data-music-play][data-album="cia-mind-control"][data-track="Niggy Nigg Niggr"]').first().click();
-  await page.waitForFunction(()=>MCC_MUSIC.current()&&MCC_MUSIC.current().title==='Niggy Nigg Niggr'&&MCC_MUSIC.access()!=='loading',null,{timeout:12000});
-  check('4. the gated closer stays preview-only from a view, and no claim is ever sent',await page.evaluate(()=>MCC_MUSIC.access())==='preview'&&!log.requests.some(q=>/\/v1\/music\/gates\/[^/]+\/play/.test(q.url)),{access:await page.evaluate(()=>MCC_MUSIC.access())});
+  const reads0=log.requests.filter(q=>/\/assets\/audio\/|\/storage\/v1\/object\//.test(q.url)).length;
+  await (await findListen(lv,HELD,'cia-mind-control')).click();
+  await lv.waitForFunction(()=>{const d=document.getElementById('mccHold');return !!d&&d.open;},null,{timeout:12000}).catch(()=>{});
+  await sleep(1200);
+  const held=await page.evaluate(t=>{const top=document.getElementById('mccHold');return {heldNow:!!(MCC_MUSIC.current()&&MCC_MUSIC.current().title===t),playing:!MCC_MUSIC.audio.paused,topPopup:!!top&&top.open};},HELD);
+  const said=await lv.evaluate(()=>{const d=document.getElementById('mccHold');return d&&d.open?{title:d.querySelector('h2').textContent,text:d.querySelector('p').textContent,action:d.querySelector('a').getAttribute('href')}:null;});
+  const reads=log.requests.filter(q=>/\/assets\/audio\/|\/storage\/v1\/object\//.test(q.url)).length-reads0;
+  check('4. the closing song stays held from a view: the view\'s one pop-up says why, nothing is read or played, no claim is ever sent (music quick wins Q5)',!!HELD&&!!said&&/sign in/i.test(said.text)&&/^account\.html/.test(said.action)&&!held.heldNow&&!held.playing&&!held.topPopup&&reads===0&&!log.requests.some(q=>/\/v1\/music\/gates\/[^/]+\/play/.test(q.url)),{said,held,reads});
   await context.close();
 });
 await scenario('s4',async()=>{
@@ -461,8 +477,8 @@ await scenario('s8',async()=>{
   const s=await setup({start:'/music-creator.html?handle=probe-artist'});
   await s.page.waitForSelector('a.music-contextbar__brand');await s.page.locator('a.music-contextbar__brand').click();
   const lv=await waitView(s.page,/listen\.html/);
-  await lv.waitForSelector('#all a.row',{timeout:15000});
-  await lv.locator('#q').fill('Runway');await sleep(300);await lv.locator('#q').press('Enter');
+  await lv.waitForSelector('#q',{timeout:15000});
+  await lv.locator('#q').fill('Runway');await lv.waitForSelector('#all a.row',{state:'visible',timeout:15000});await sleep(300);await lv.locator('#q').press('Enter');
   await s.page.waitForURL(/album\.html/,{timeout:10000});await s.page.waitForLoadState('load');
   const f2=await s.page.evaluate(()=>window.__framedReady||[]).catch(()=>[]);
   check('11. Listen\'s search Enter in a view is routed (an album from an engine page is a page load), never rendered in the frame',/album\.html/.test(s.page.url())&&!f2.some(p=>/album\.html/.test(p)),{url:s.page.url(),f2});
@@ -533,8 +549,10 @@ await scenario('s9',async()=>{
   const kv=await view(k.page)||k.page.mainFrame();
   await kv.waitForSelector('a.artist--house',{timeout:15000});
   await kv.locator('a.artist--house').click();
-  await k.page.waitForURL(/\/index\.html/,{timeout:10000});
-  check('12. the house card on Listen is a page load of the top document (from a view too)',new URL(k.page.url()).pathname==='/index.html');
+  /* one McCluster (Matthew, 2026-11-23, "Quick wins" Q1 in docs/music/MUSIC-RELEASE-20261119.md): his card on Listen
+     is his artist page, never the house's root */
+  await k.page.waitForURL(/music-creator\.html\?handle=mccluster$/,{timeout:10000}).catch(()=>{});
+  check('12. McCluster\'s card on Listen opens his artist page (from a view too), never the house root',new URL(k.page.url()).pathname==='/music-creator.html'&&new URL(k.page.url()).searchParams.get('handle')==='mccluster',k.page.url());
   await k.context.close();
 });
 await scenario('s10',async()=>{
@@ -698,8 +716,7 @@ await scenario('s16',async()=>{
   await page.evaluate(()=>{const orig=window.MCC_NP_PAUSE;window.__npPause=0;window.MCC_NP_PAUSE=function(){window.__npPause++;window.__deckWhenPaused=document.getElementById('deck').paused;return orig.apply(this,arguments);};});
   await page.locator('.appbar [data-appnav="music"]').click();
   const v=await waitView(page,/listen\.html/);
-  await v.waitForSelector('[data-music-play][data-album="prim3"][data-track="OSINT"]',{timeout:15000});
-  await v.locator('[data-music-play][data-album="prim3"][data-track="OSINT"]').first().click();
+  await (await findListen(v,'OSINT','prim3')).click();
   await page.waitForFunction(()=>window.MCC_MUSIC&&MCC_MUSIC.current()&&MCC_MUSIC.current().title==='OSINT'&&!MCC_MUSIC.audio.paused,null,{timeout:12000});
   const s1=await page.evaluate(()=>({np:window.__npPause,deckWas:window.__deckWhenPaused,deck:document.getElementById('deck').paused,owner:document.documentElement.getAttribute('data-music-owner'),
     deckbar:getComputedStyle(document.getElementById('deckbar')).display!=='none'&&getComputedStyle(document.getElementById('deckbar')).visibility!=='hidden',
@@ -733,7 +750,7 @@ await scenario('s17',async()=>{
   await page.locator('#nowDown').click().catch(()=>{});await sleep(400);
   /* a Listen song chosen in the view and paused, then the deck again: the World's transport acts on the owner, the deck */
   const v=await view(page);
-  await v.locator('[data-music-play][data-album="prim3"][data-track="OSINT"]').first().click();
+  await (await findListen(v,'OSINT','prim3')).click();
   await page.waitForFunction(()=>window.MCC_MUSIC&&!MCC_MUSIC.audio.paused,null,{timeout:10000});
   await page.goBack();await settle(page,800);
   await page.locator('#tracks li').nth(3).click();await page.waitForFunction(()=>!document.getElementById('deck').paused&&MCC_MUSIC.audio.paused,null,{timeout:10000});
@@ -770,14 +787,16 @@ await scenario('s18',async()=>{
   await playAlbumRow(page,1);await markDeck(page);const playingTitle=await page.evaluate(()=>document.getElementById('npTitle').textContent);
   await page.locator('a.music-contextbar__brand').click();
   const v=await waitView(page,/listen\.html/);
-  await v.waitForSelector('#all a.row[href*="album=here"][href*="t=Lightroom"]',{timeout:15000});
+  await v.waitForSelector('#q',{timeout:15000});await v.fill('#q','Lightroom');
+  await v.waitForSelector('#all a.row[href*="album=here"][href*="t=Lightroom"]',{state:'visible',timeout:15000});
   await v.locator('#all a.row[href*="album=here"][href*="t=Lightroom"]').first().click();await settle(page,1200);
   const r=await page.evaluate(()=>{const row=[...document.querySelectorAll('#tracks li')].find(li=>li.getAttribute('data-title')==='Lightroom');const b=row&&row.getBoundingClientRect();return {path:location.pathname+location.search,frames:document.querySelectorAll('#mccMusicViewFrame').length,asked:!!row&&row.classList.contains('mcc-music-asked'),inView:!!b&&b.top>=0&&b.bottom<=innerHeight,now:document.getElementById('npTitle').textContent};});
   check('21. a Listen row for the album shown reveals the album with that row in view and marked',r.frames===0&&r.asked&&r.inView&&/album\.html\?album=here/.test(r.path),r);
   check('21. what plays does not change',r.now===playingTitle&&(await deck(page)).same&&!(await deck(page)).paused,r);
   await page.locator('a.music-contextbar__brand').click();
   const v2=await waitView(page,/listen\.html/);
-  await v2.waitForSelector('#all a.row[href*="album=prim3"]',{timeout:15000});
+  await v2.waitForSelector('#q',{timeout:15000});await v2.fill('#q','OSINT');
+  await v2.waitForSelector('#all a.row[href*="album=prim3"]',{state:'visible',timeout:15000});
   await v2.locator('#all a.row[href*="album=prim3"]').first().click();
   await page.waitForURL(/album=prim3/,{timeout:10000});await page.waitForLoadState('load');
   check('21. a row of another album is a page load (the named gap)',await page.evaluate(()=>window.__docMark!=='retained'));
@@ -793,7 +812,7 @@ await scenario('s24',async()=>{
     const {context,page}=await setup({width,start:'/album.html?album=here'});
     await playAlbumRow(page,1);
     await page.locator('.appbar [data-appnav="music"]').click();
-    const lv=await waitView(page,/listen\.html/);await lv.waitForSelector('#all a.row',{timeout:15000});await sleep(400);
+    const lv=await waitView(page,/listen\.html/);await lv.waitForSelector('#shelf a',{timeout:15000});await sleep(400);
     const a=await fit(page);check(`15. ${width} px: Listen over the album fits, top and view`,ok(a),a);
     await page.goBack();await settle(page,800);
     await page.locator('#mccAuthChip').click();
@@ -802,7 +821,7 @@ await scenario('s24',async()=>{
     await context.close();
     const k=await setup({width,start:'/music-creator.html?handle=probe-artist'});
     await k.page.waitForSelector('a.music-contextbar__brand');await k.page.locator('a.music-contextbar__brand').click();
-    const kv=await waitView(k.page,/listen\.html/);await kv.waitForSelector('#all a.row',{timeout:15000});await sleep(400);
+    const kv=await waitView(k.page,/listen\.html/);await kv.waitForSelector('#shelf a',{timeout:15000});await sleep(400);
     const c=await fit(k.page);check(`15. ${width} px: Listen over an artist page fits, top and view`,ok(c),c);
     await k.context.close();
   }

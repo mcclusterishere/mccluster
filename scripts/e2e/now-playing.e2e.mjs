@@ -44,7 +44,9 @@ const MIME = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'tex
   '.mp4': 'video/mp4', '.ico': 'image/x-icon', '.gif': 'image/gif', '.webmanifest': 'application/manifest+json' };
 const SHELF = JSON.parse(readFileSync(join(ROOT, 'data/albums.json'), 'utf8')).albums;
 const ALBUM = slug => SHELF.find(a => a.slug === slug);
-const artistOf = a => a.artist || 'Matthew McCluster';
+/* the house's records are credited to McCluster, the artist (Matthew, 2026-11-23, "Quick wins" Q1 in
+   docs/music/MUSIC-RELEASE-20261119.md); a record that bills its own artist keeps it */
+const artistOf = a => a.artist || 'McCluster';
 /* the covers' true sizes and types, read off the files here (the unit test proves the reader) */
 function imageInfo(buf) {
   if (buf.readUInt32BE(0) === 0x89504e47) return { type: 'image/png', sizes: `${buf.readUInt32BE(16)}x${buf.readUInt32BE(20)}` };
@@ -204,13 +206,21 @@ async function nowPlayingChecks(page, label, want) {
   return s;
 }
 
+/* Listen lists albums and artists (Matthew, 2026-11-23, "Quick wins" Q2 in docs/music/MUSIC-RELEASE-20261119.md): a song's own play button is in its search results */
+async function findSong(page, album, title) {
+  const sel = `[data-music-play][data-album="${album}"][data-track="${title}"]`;
+  await page.waitForFunction(() => !!window.MCC_MUSIC && !!document.getElementById('q'), null, { timeout: 20000 });
+  await page.fill('#q', title);
+  await page.waitForFunction(s => !!document.querySelector(s), sel, { timeout: 20000 });
+  return page.locator(sel).first();
+}
+
 try {
   await scenario('listen engine', async () => {
     const { context, page, errors } = await setup({ webkit: true });
     await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
-    await page.waitForFunction(() => window.MCC_MUSIC && document.querySelector('[data-music-play][data-album="here"]'), null, { timeout: 20000 });
     const here = ALBUM('here');
-    await page.locator(`[data-music-play][data-album="here"][data-track="${here.tracks[0].title}"]`).first().click();
+    await (await findSong(page, 'here', here.tracks[0].title)).click();
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > 0.3, null, { timeout: 15000 });
     await nowPlayingChecks(page, 'listen', { title: here.tracks[0].title, artist: artistOf(here), album: here.name, art: cover(HOUSE, here.art) });
     /* the throttle: three seconds of playing add a handful of reports, not one per timeupdate */
@@ -255,8 +265,7 @@ try {
   await scenario('listen engine without a WebKit picker', async () => {
     const { context, page } = await setup();
     await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
-    await page.waitForFunction(() => window.MCC_MUSIC && document.querySelector('[data-music-play][data-album="here"]'), null, { timeout: 20000 });
-    await page.locator('[data-music-play][data-album="here"]').first().click();
+    await (await findSong(page, 'here', 'Who Did The Shoot')).click();
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused, null, { timeout: 15000 });
     await page.locator('#musicMiniOpen').click();
     await page.waitForTimeout(400);
@@ -296,7 +305,7 @@ try {
     await context.close();
   });
 
-  await scenario('album, a PNG cover and a playlist across records', async () => {
+  await scenario('album, a PNG cover, credited to its own artist', async () => {
     const { context, page, errors } = await setup();
     const prim3 = ALBUM('prim3');
     await page.goto(HOUSE + '/album.html?album=prim3', { waitUntil: 'load' });
@@ -304,15 +313,9 @@ try {
     await page.locator('#tracks li').first().click();
     await page.waitForFunction(() => !document.getElementById('deck').paused, null, { timeout: 15000 });
     await nowPlayingChecks(page, 'album (Cyber Security Specialist, a PNG cover)', { title: prim3.tracks[0].title, artist: artistOf(prim3), album: prim3.name, art: cover(HOUSE, prim3.art) });
-    /* a playlist crosses records: each row is credited to its own record's artist and album */
-    await page.goto(HOUSE + '/album.html?playlist=everything', { waitUntil: 'load' });
-    await page.waitForSelector('#tracks li', { timeout: 20000 });
-    const first = SHELF.flatMap(a => a.tracks.map(t => ({ a, t }))).findIndex(x => x.a.slug === 'prim3');
-    await page.locator('#tracks li').nth(first).click();
-    await page.waitForFunction(() => !document.getElementById('deck').paused, null, { timeout: 15000 });
-    await nowPlayingChecks(page, 'album playlist "Everything", a PRIM3 song', { title: prim3.tracks[0].title, artist: artistOf(prim3), album: prim3.name, art: cover(HOUSE, prim3.art) });
-    check('album playlist: the sheet credits the song\'s own artist', await page.locator('#nowBy').textContent() === artistOf(prim3), await page.locator('#nowBy').textContent());
-    check('album (PNG cover, playlist): no script errors', errors.length === 0, errors);
+    /* the playlists are gone (Matthew, 2026-11-23, "Quick wins" Q2): the album's own sheet credits its own artist */
+    check('album: the sheet credits the song\'s own artist', await page.locator('#nowBy').textContent() === artistOf(prim3), await page.locator('#nowBy').textContent());
+    check('album (PNG cover): no script errors', errors.length === 0, errors);
     await context.close();
   });
 
@@ -383,7 +386,7 @@ try {
   await scenario('pocket', async () => {
     const here = ALBUM('here');
     const at = here.tracks.findIndex(t => t.title === 'Here');
-    const { context, page, errors } = await setup({ webkit: true, pocket: { src: here.tracks[at].src, title: 'Here', album: 'here', artist: 'Matthew McCluster', poster: here.tracks[at].poster, t: 4, playing: true } });
+    const { context, page, errors } = await setup({ webkit: true, pocket: { src: here.tracks[at].src, title: 'Here', album: 'here', artist: 'McCluster', poster: here.tracks[at].poster, t: 4, playing: true } });
     await page.goto(HOUSE + '/catalogue.html', { waitUntil: 'load' });
     await page.waitForSelector('.pocket .pocket__play', { timeout: 15000 });
     await page.waitForTimeout(600);
@@ -503,7 +506,7 @@ try {
   await scenario('resume across devices', async () => {
     const here = ALBUM('here');
     const runway = here.tracks.find(t => t.title === 'Runway Walk');
-    const remote = { src: runway.src, title: runway.title, album: 'here', artist: 'Matthew McCluster', art: here.art, t: 42, playing: true, at: Date.now() };
+    const remote = { src: runway.src, title: runway.title, album: 'here', artist: 'McCluster', art: here.art, t: 42, playing: true, at: Date.now() };
     {
       const { context, page, errors, writes } = await setup({ member: true, remote });
       await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });

@@ -389,7 +389,7 @@
       surface: "pocket",
       track: function () {
         var a = albumInfo || {};
-        return { title: st.title || "The record", artist: st.artist || a.artist || "Matthew McCluster",
+        return { title: st.title || "The record", artist: st.artist || a.artist || "McCluster",
           album: a.name || albumName(st.album), art: st.art || a.art || "" };
       },
       play: function () { if (audio && audio.paused) toggle(); },
@@ -556,11 +556,14 @@
     var go = function (list) {
       var i = -1;
       for (var k = 0; k < list.length; k++) if (list[k].src === st.src) { i = k; break; }
-      var next = list.length ? list[(i + step + list.length) % list.length] : null;
-      /* no album, or an album of one: hold rather than loop a single track
-         forever, which is a different promise than "keep the record going";
-         the lock screen is handed back, the queue having ended */
-      if (!next || next.src === st.src) { stash(false); box.classList.add("is-held"); if (np) np.clear(); return; }
+      var j = i + step;
+      /* ONE RECORD, START TO END (owner, 2026-11-23: "end of the album, and just leave"): Previous on its first song
+         starts that song again, and after its last song the pocket holds there, the lock screen handed back; it never
+         runs back round to the first song. A gated or held song is never played here (the album page plays its owner's
+         own play, and says why to anyone else). */
+      if (j < 0) { try { audio.currentTime = 0; } catch (e) {} return; }
+      var next = j < list.length ? list[j] : null;
+      if (!next || next.gated || next.hold) { stash(false); box.classList.add("is-held"); if (np) np.clear(); return; }
 
       st.src = next.src;
       st.video = next.video || "";

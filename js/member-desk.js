@@ -139,23 +139,33 @@
     return waitForIdentity(3000).then(function (id) {
     if (seq !== S.seq || !signedIn()) return null;
     /* creator: the one-click onboarding's own server answer (music_creator_state(), #447) when it is
-       applied; until then the member's own music_creator_profiles row, which is what that answer reads */
+       applied; until then the member's own music_creator_profiles row, which is what that answer reads.
+       Only those two answers say creator or not; a call that fails, or answers not_signed_in while the token is
+       being refreshed, leaves it not known (null), and a creator is never offered "Become a creator" for it
+       (owner, 2026-11-23; docs/music/MUSIC-RELEASE-20261119.md, "Quick wins") */
     var creator = rpc("music_creator_state").then(function (st) {
-      if (st && st.creator === true) return [{ handle: st.handle || (st.profile && st.profile.handle) || "", artist_name: st.artist_name || (st.profile && st.profile.artist_name) || "" }];
-      return [];
+      var known = C.creatorFrom(st);
+      if (known === true) return { creator: true, row: { handle: st.handle || (st.profile && st.profile.handle) || "", artist_name: st.artist_name || (st.profile && st.profile.artist_name) || "" } };
+      if (known === false) return { creator: false, row: null };
+      throw new Error("creator state not known");
     }).catch(function () {
-      return id.m_uid ? rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(id.m_uid) + "&select=handle,artist_name&limit=1").catch(function () { return []; }) : [];
+      if (!id.m_uid) return { creator: null, row: null };
+      return rest("music_creator_profiles?m_uid=eq." + encodeURIComponent(id.m_uid) + "&select=handle,artist_name&limit=1").then(function (rows) {
+        if (!Array.isArray(rows)) return { creator: null, row: null };
+        return rows[0] ? { creator: true, row: rows[0] } : { creator: false, row: null };
+      }).catch(function () { return { creator: null, row: null }; });
     });
     var ent = api("/v1/creator-billing/entitlement").catch(function () { return null; });
     var sites = rest("analytics_sites?select=id,name,status&order=created_at.desc&limit=20").catch(function () { return []; });
     var ladder = rpc("policy_ladder_status").catch(function (e) { return missing(e) ? { closed: true } : null; });
     return Promise.all([creator, ent, sites, ladder]).then(function (o) {
       if (seq !== S.seq || !signedIn()) return null;
-      S.data.creatorRow = (o[0] || [])[0] || null;
+      var who = o[0] || { creator: null, row: null };
+      S.data.creatorRow = who.row || null;
       S.data.entitlement = o[1];
       S.data.sites = o[2] || [];
       S.data.ladder = o[3];
-      S.caps = C.capabilities({ signedIn: true, creator: !!S.data.creatorRow, entitlement: o[1], sites: S.data.sites.length, ladder: o[3] || {} });
+      S.caps = C.capabilities({ signedIn: true, creator: who.creator, entitlement: o[1], sites: S.data.sites.length, ladder: o[3] || {} });
       return S.caps;
     });
     });
@@ -195,8 +205,8 @@
         '<div class="hu-desk__row"><button type="button" class="hu-desk__btn" data-hu-desk-view="profile">View profile</button>' +
         '<button type="button" class="hu-desk__btn" data-hu-desk-edit>Edit profile</button>' +
         /* the one tap (owner, 2026-10-20): the artist page is made from this profile, nothing asked (js/creator-onboarding.js) */
-        (S.caps && !S.caps.creator ? '<a class="hu-desk__btn" href="creator.html" data-creator-door>Become a creator</a>' : "") + "</div>" +
-        (S.caps && !S.caps.creator ? '<p class="hu-desk__meta">Become a creator is one tap: your artist page is made from this profile, and the tap accepts the <a href="music-creator-terms.html">Creator Terms</a>.</p>' : "") + "</section>" +
+        (S.caps && S.caps.creator === false ? '<a class="hu-desk__btn" href="creator.html" data-creator-door>Become a creator</a>' : "") + "</div>" +
+        (S.caps && S.caps.creator === false ? '<p class="hu-desk__meta">Become a creator is one tap: your artist page is made from this profile, and the tap accepts the <a href="music-creator-terms.html">Creator Terms</a>.</p>' : "") + "</section>" +
         '<section class="hu-desk__card" id="huDeskEditGate" aria-live="polite"><h3>Locked details</h3>' + note("Loading…") + "</section>";
       if (window.HU_EDIT_GATE) window.HU_EDIT_GATE.mount($("huDeskEditGate"));
       else $("huDeskEditGate").innerHTML = "<h3>Locked details</h3>" + note("The profile edit module did not load.", true);

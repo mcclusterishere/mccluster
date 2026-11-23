@@ -592,7 +592,7 @@ test('the right names on the lock screen: an album\'s billed artist, never its t
   assert.match(album, /data-album-name="/, 'album.html: and which album it is from');
   /* the docket's release: titles, artist, album and cover as data/albums.json has them */
   const byFile = {};
-  for (const a of albums()) for (const t of a.tracks) byFile[t.src] = { title: t.title, artist: a.artist || 'Matthew McCluster', album: a.name, art: a.art };
+  for (const a of albums()) for (const t of a.tracks) byFile[t.src] = { title: t.title, artist: a.artist || 'McCluster', album: a.name, art: a.art };
   const docket = codeOf('docket-516.html');
   const tracks = [...docket.matchAll(/\{\s*id:\s*"([^"]+)",\s*src:\s*"([^"]+)"[^}]*\}/g)];
   assert.ok(tracks.length >= 2, 'the docket names its release');
@@ -606,7 +606,8 @@ test('the right names on the lock screen: an album\'s billed artist, never its t
   }
   /* the embed: the visible credit and the lock screen follow the album's billing */
   const embed = codeOf('embed.html');
-  assert.match(embed, /alb\.artist\s*\|\|\s*"Matthew McCluster"/, 'embed.html credits the album\'s billed artist');
+  /* the house's own records are McCluster's, the artist (owner, 2026-11-23: "McCluster is the artist") */
+  assert.match(embed, /alb\.artist\s*\|\|\s*"McCluster"/, 'embed.html credits the album\'s billed artist');
 });
 
 test('AirPlay: a picker where WebKit offers one, hidden everywhere else', () => {
