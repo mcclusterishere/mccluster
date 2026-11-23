@@ -123,30 +123,31 @@ test('gateway job routes sit behind the admin secret and the canonical-org fence
   const calls = [];
   const requireAdmin = () => { calls.push('admin'); };
   const adminOrg = (requested) => { if (requested && requested !== ORG) throw Object.assign(new Error('cross org'), { status: 403, code: 'CROSS_ORG_DENIED' }); return requested || ORG; };
+  const canonicalOrg = ORG;
   assert.equal(matchesJobRoute('/v1/compute/lease'), false);
-  assert.equal(await handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/lease'), body: {}, requireAdmin, adminOrg }, m.deps), null);
+  assert.equal(await handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/lease'), body: {}, requireAdmin, adminOrg, canonicalOrg }, m.deps), null);
   assert.equal(calls.length, 0);
 
   const denied = () => { throw Object.assign(new Error('Unauthorized'), { status: 401, code: 'UNAUTHORIZED' }); };
-  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat' }, requireAdmin: denied, adminOrg }, m.deps), (e) => e.status === 401);
+  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat' }, requireAdmin: denied, adminOrg, canonicalOrg }, m.deps), (e) => e.status === 401);
   assert.equal(m.enqueued.length, 0);
 
-  const submitted = await handleJobRoute({ req: { method: 'POST', headers: { 'idempotency-key': 'route-1' } }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', input: { prompt: 'x' } }, requireAdmin, adminOrg }, m.deps);
+  const submitted = await handleJobRoute({ req: { method: 'POST', headers: { 'idempotency-key': 'route-1' } }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', input: { prompt: 'x' } }, requireAdmin, adminOrg, canonicalOrg }, m.deps);
   assert.equal(submitted.status, 202);
   assert.equal(submitted.headers['idempotency-replayed'], 'false');
-  const replayed = await handleJobRoute({ req: { method: 'POST', headers: { 'idempotency-key': 'route-1' } }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', input: { prompt: 'x' } }, requireAdmin, adminOrg }, m.deps);
+  const replayed = await handleJobRoute({ req: { method: 'POST', headers: { 'idempotency-key': 'route-1' } }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', input: { prompt: 'x' } }, requireAdmin, adminOrg, canonicalOrg }, m.deps);
   assert.equal(replayed.status, 200);
   assert.equal(replayed.headers['idempotency-replayed'], 'true');
-  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', org_id: OTHER_ORG }, requireAdmin, adminOrg }, m.deps), (e) => e.code === 'CROSS_ORG_DENIED');
+  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', org_id: OTHER_ORG }, requireAdmin, adminOrg, canonicalOrg }, m.deps), (e) => e.code === 'CROSS_ORG_DENIED');
   const id = submitted.body.job.job_id;
-  const status = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL(`http://127.0.0.1/v1/compute/jobs/${id}`), body: {}, requireAdmin, adminOrg }, m.deps);
+  const status = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL(`http://127.0.0.1/v1/compute/jobs/${id}`), body: {}, requireAdmin, adminOrg, canonicalOrg }, m.deps);
   assert.equal(status.body.status, 'queued');
-  await assert.rejects(() => handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL(`http://127.0.0.1/v1/compute/jobs/${id}/result`), body: {}, requireAdmin, adminOrg }, m.deps), (e) => e.code === 'JOB_NOT_DONE');
-  const key = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/receipt-key'), body: {}, requireAdmin, adminOrg }, m.deps);
+  await assert.rejects(() => handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL(`http://127.0.0.1/v1/compute/jobs/${id}/result`), body: {}, requireAdmin, adminOrg, canonicalOrg }, m.deps), (e) => e.code === 'JOB_NOT_DONE');
+  const key = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/receipt-key'), body: {}, requireAdmin, adminOrg, canonicalOrg }, m.deps);
   assert.equal(key.body.configured, true);
-  const list = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs?status=queued'), body: {}, requireAdmin, adminOrg }, m.deps);
+  const list = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs?status=queued'), body: {}, requireAdmin, adminOrg, canonicalOrg }, m.deps);
   assert.equal(list.body.count, 1);
-  const wrongMethod = await handleJobRoute({ req: { method: 'DELETE', headers: {} }, url: new URL(`http://127.0.0.1/v1/compute/jobs/${id}`), body: {}, requireAdmin, adminOrg }, m.deps);
+  const wrongMethod = await handleJobRoute({ req: { method: 'DELETE', headers: {} }, url: new URL(`http://127.0.0.1/v1/compute/jobs/${id}`), body: {}, requireAdmin, adminOrg, canonicalOrg }, m.deps);
   assert.equal(wrongMethod.status, 405);
 });
 
@@ -172,20 +173,49 @@ test('a standby scheduler refuses submission and handover but still answers read
   const requireAdmin = () => {};
   const adminOrg = () => ORG;
   const standby = { orgId: ORG, holderId: 'prime-standby', isActive: () => false, holder: 'ovh-primary', snapshot: () => ({ role: 'standby', active: false, live_holder: 'ovh-primary' }), store: { status: async () => ({ holder_id: 'ovh-primary', term: 1 }) }, requestHandover: async () => { throw new Error('should not be reached'); } };
-  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', input: {} }, requireAdmin, adminOrg, election: standby }, m.deps), (e) => e.code === 'SCHEDULER_STANDBY' && e.status === 503 && e.active_holder === 'ovh-primary');
+  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', input: {} }, requireAdmin, adminOrg, canonicalOrg: ORG, election: standby }, m.deps), (e) => e.code === 'SCHEDULER_STANDBY' && e.status === 503 && e.active_holder === 'ovh-primary');
   assert.equal(m.enqueued.length, 0);
-  const status = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler'), body: {}, requireAdmin, adminOrg, election: standby }, m.deps);
+  const status = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler'), body: {}, requireAdmin, adminOrg, canonicalOrg: ORG, election: standby }, m.deps);
   assert.equal(status.body.configured, true);
   assert.equal(status.body.store.holder_id, 'ovh-primary');
-  const list = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: {}, requireAdmin, adminOrg, election: standby }, m.deps);
+  const list = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: {}, requireAdmin, adminOrg, canonicalOrg: ORG, election: standby }, m.deps);
   assert.equal(list.status, 200);
-  const none = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler'), body: {}, requireAdmin, adminOrg, election: null }, m.deps);
+  const none = await handleJobRoute({ req: { method: 'GET', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler'), body: {}, requireAdmin, adminOrg, canonicalOrg: ORG, election: null }, m.deps);
   assert.equal(none.body.configured, false);
-  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler/handover'), body: { to_holder_id: 'x' }, requireAdmin, adminOrg, election: null }, m.deps), (e) => e.code === 'SCHEDULER_NOT_CONFIGURED');
+  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler/handover'), body: { to_holder_id: 'x' }, requireAdmin, adminOrg, canonicalOrg: ORG, election: null }, m.deps), (e) => e.code === 'SCHEDULER_NOT_CONFIGURED');
   const active = { ...standby, isActive: () => true, requestHandover: async (to, grace) => ({ ok: true, handover_to: to, grace }) };
-  const accepted = await handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', input: {} }, requireAdmin, adminOrg, election: active }, m.deps);
+  const accepted = await handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/jobs'), body: { capability: 'ai.chat', input: {} }, requireAdmin, adminOrg, canonicalOrg: ORG, election: active }, m.deps);
   assert.equal(accepted.status, 202);
-  const handover = await handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler/handover'), body: { to_holder_id: 'ovh-primary', grace_seconds: 60 }, requireAdmin, adminOrg, election: active }, m.deps);
+  const handover = await handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL('http://127.0.0.1/v1/compute/scheduler/handover'), body: { to_holder_id: 'ovh-primary', grace_seconds: 60 }, requireAdmin, adminOrg, canonicalOrg: ORG, election: active }, m.deps);
   assert.equal(handover.status, 200);
   assert.equal(handover.body.handover_to, 'ovh-primary');
+});
+
+test('the preflight applies the claim\'s tests: feature requirements and owned-only admission', async () => {
+  const live = [
+    { node_id: 'node_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', capability: 'ai.chat', implementation: 'text.local', features: { chat: true }, labels: { enrolled_trust: 'owned' } },
+    { node_id: 'node_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', capability: 'browser.act', implementation: 'chromium.local', features: { browser: true }, labels: {} }
+  ];
+  const m = memoryDeps({ live });
+  await assert.rejects(() => submitJob({ capability: 'ai.chat', input: {}, requirements: { vision: true } }, { canonicalOrg: ORG }, m.deps), (e) => e.code === 'COMPUTE_NO_LIVE_NODE');
+  await assert.rejects(() => submitJob({ capability: 'browser.act', input: { actions: [] } }, { canonicalOrg: ORG }, m.deps), (e) => e.code === 'COMPUTE_NO_LIVE_NODE');
+  const ok = await submitJob({ capability: 'ai.chat', input: {}, requirements: { chat: true } }, { canonicalOrg: ORG }, m.deps);
+  assert.equal(ok.live_nodes, 1);
+});
+
+test('job routes fail closed when the gateway has no canonical org, and the job tools fence against MCCLUSTER_ORG_ID', async () => {
+  const m = memoryDeps();
+  const requireAdmin = () => {};
+  const adminOrg = (requested) => requested || null;
+  for (const [method, pathname] of [['POST', '/v1/compute/jobs'], ['GET', `/v1/compute/jobs?org_id=${ORG}`], ['GET', `/v1/compute/jobs/${TASK}?org_id=${ORG}`]]) {
+    await assert.rejects(() => handleJobRoute({ req: { method, headers: {} }, url: new URL(`http://127.0.0.1${pathname}`), body: { capability: 'ai.chat', org_id: ORG }, requireAdmin, adminOrg, canonicalOrg: null }, m.deps), (e) => e.code === 'ORG_NOT_CONFIGURED' && e.status === 503, `${method} ${pathname}`);
+  }
+  assert.equal(m.enqueued.length, 0);
+  const previous = process.env.MCCLUSTER_ORG_ID;
+  process.env.MCCLUSTER_ORG_ID = ORG;
+  try {
+    await assert.rejects(() => callControlTool('core.compute.job.get', { org_id: OTHER_ORG, job_id: TASK }), (e) => e.code === 'CROSS_ORG_DENIED' && e.status === 403);
+  } finally {
+    if (previous === undefined) delete process.env.MCCLUSTER_ORG_ID; else process.env.MCCLUSTER_ORG_ID = previous;
+  }
 });

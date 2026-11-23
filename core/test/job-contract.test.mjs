@@ -159,3 +159,32 @@ test('the receipt key comes from the environment as PEM, single-line PEM, or not
   assert.equal(info.public_key_pem, key.publicKeyPem);
   assert.ok(!JSON.stringify(info).includes('PRIVATE'));
 });
+
+test('canonical JSON keeps a "__proto__" key, matches the documented vector, and the verifier rejects altered signature metadata', () => {
+  assert.equal(canonicalJson(JSON.parse('{"__proto__":{"hidden":"payload"},"a":1}')), '{"__proto__":{"hidden":"payload"},"a":1}');
+  assert.notEqual(hashJson(JSON.parse('{"__proto__":{"content":"forged"}}')), hashJson({}));
+  // The vector a non-JavaScript verifier must reproduce (DEVICE-JOBS-CONTRACT.md, "Canonical JSON").
+  const vector = { z: 1.0, a: [true, null, 'é\n"', { b: 1e21, c: -0, d: 0.1 }], m: { y: 'x', x: 'y' } };
+  assert.equal(canonicalJson(vector), '{"a":[true,null,"é\\n\\"",{"b":1e+21,"c":0,"d":0.1}],"m":{"x":"y","y":"x"},"z":1}');
+  assert.equal(hashJson(vector), 'd9a258d84feed22118930490e012edba6c031ee62716e40701d03480177206f8');
+  const { task, lease, node } = fixture();
+  const key = generateReceiptKey();
+  const receipt = signReceipt(buildReceipt({ task, leases: [lease], node }), key);
+  assert.equal(verifyReceipt({ ...receipt, signed: false }, key.publicKeyPem).ok, false);
+  assert.equal(verifyReceipt({ ...receipt, signature: { ...receipt.signature, alg: 'rsa' } }, key.publicKeyPem).ok, false);
+  assert.equal(verifyReceipt({ ...receipt, signature: { ...receipt.signature, key_id: null } }, key.publicKeyPem).ok, false);
+  assert.equal(verifyReceipt(receipt, key.publicKeyPem).ok, true);
+});
+
+test('a canceled job is terminal and gets a receipt that says so', () => {
+  const { task } = fixture({ status: 'failed' });
+  const canceled = { ...task, status: 'canceled', last_error: 'canceled by the fabric-first client', output: null };
+  const view = jobView({ task: canceled, leases: [] });
+  assert.equal(view.terminal, true);
+  assert.equal(view.receipt_available, true);
+  const receipt = buildReceipt({ task: canceled, leases: [] });
+  assert.equal(receipt.job.status, 'canceled');
+  assert.equal(receipt.output_sha256, null);
+  assert.equal(receipt.execution, null);
+  assert.deepEqual(receipt.inference.devices, []);
+});

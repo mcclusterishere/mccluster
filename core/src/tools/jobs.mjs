@@ -4,6 +4,7 @@
 // gateway's admin HTTP routes, so both doors see one contract.
 import { getJob, getJobReceipt, getJobResult, listJobs, receiptKey, submitJob } from '../compute/jobs-service.mjs';
 import { RUNNING_DEPLOYMENT_SHA } from '../runtime-revision.mjs';
+import { resolveScopedOrg } from '../compute/http-security.mjs';
 
 const ORG = { type: 'string', description: 'Organization id (the owner gate pins this to the house org).' };
 const JOB_ID = { type: 'string', pattern: '^[0-9a-fA-F-]{36}$' };
@@ -63,7 +64,9 @@ export const JOB_TOOL_NAMES = new Set(JOB_TOOLS.map((tool) => tool.name));
 function requireOrg(value) {
   const orgId = String(value ?? '').trim();
   if (!/^[0-9a-f-]{36}$/i.test(orgId)) throw Object.assign(new Error('org_id must be a UUID'), { status: 400 });
-  return orgId.toLowerCase();
+  // The Worker pins org_id to the house org; the Core fences it again against
+  // its own MCCLUSTER_ORG_ID when it has one (403 CROSS_ORG_DENIED).
+  return resolveScopedOrg(orgId.toLowerCase(), String(process.env.MCCLUSTER_ORG_ID || '').trim().toLowerCase() || null);
 }
 
 export async function callJobTool(name, args = {}, options = {}, deps = undefined) {

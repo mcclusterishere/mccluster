@@ -5,12 +5,22 @@
 import { computeTaskById, enqueueComputeTask, liveCapabilityImplementations, nodeById } from './store.mjs';
 import { attestationForLease, leaseById, leasesForTask, listComputeTasks, nodesById, recordAttestation } from './jobs-store.mjs';
 import { buildReceipt, completingLease, completionAttestation, jobResult, jobView, latestLease, receiptKeyFromEnv, receiptKeyInfo, signReceipt, validateJobSubmission } from './jobs.mjs';
+import { ownedOnlyAdmitted } from './protocol.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const JOB_SOURCE = 'device-jobs/1';
 
 function httpError(message, status, code, extra = {}) {
   return Object.assign(new Error(message), { status, code, ...extra });
+}
+
+// The process receipt key is resolved once (a malformed key fails loudly at
+// gateway start, see gateway.mjs); a custom env gets its own cache.
+let processReceiptKey;
+export function resolveReceiptKey(env = process.env) {
+  if (env !== process.env) return receiptKeyFromEnv(env);
+  if (processReceiptKey === undefined) processReceiptKey = receiptKeyFromEnv(env);
+  return processReceiptKey;
 }
 
 export function defaultDeps(env = process.env) {
@@ -28,7 +38,7 @@ export function defaultDeps(env = process.env) {
     recordAttestation,
     attestationForLease,
     // Resolved lazily so a gateway without the key still starts; a malformed key fails here, loudly, on first use.
-    receiptKey: () => { if (key === undefined) key = receiptKeyFromEnv(env); return key; },
+    receiptKey: () => { if (key === undefined) key = resolveReceiptKey(env); return key; },
     now: () => new Date().toISOString(),
     log: (record) => console.log(JSON.stringify(record))
   };
@@ -41,8 +51,17 @@ function requireJobId(value) {
 
 export async function submitJob(body, { canonicalOrg = null, idempotencyKey = null, actor = null, via = 'gateway' } = {}, deps = defaultDeps()) {
   const submission = validateJobSubmission(body, { canonicalOrg });
+  // The preflight applies the same tests the claim applies (compute_claim_task
+  // and claimableManifest): capability, pinned implementation, the requested
+  // features as a subset of the advertised ones, and owned-only admission. A
+  // job nothing can claim is refused here instead of sitting queued forever.
+  const wanted = submission.requirements.features || {};
+  const satisfies = (item) => Object.entries(wanted).every(([key, value]) => JSON.stringify(item.features?.[key]) === JSON.stringify(value));
   const advertised = (await deps.live({ orgId: submission.org_id }))
-    .filter((item) => item.capability === submission.capability && (!submission.implementation || item.implementation === submission.implementation));
+    .filter((item) => item.capability === submission.capability
+      && (!submission.implementation || item.implementation === submission.implementation)
+      && satisfies(item)
+      && ownedOnlyAdmitted(item.capability, item.labels));
   if (!advertised.length && !submission.allow_offline) {
     throw httpError(`No live compute node serves ${submission.capability}${submission.implementation ? `/${submission.implementation}` : ''}; pass allow_offline:true to queue anyway`, 503, 'COMPUTE_NO_LIVE_NODE', { retryable: true });
   }

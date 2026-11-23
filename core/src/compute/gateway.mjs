@@ -4,7 +4,7 @@ import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedReq
 import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
 import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
 import { handleJobRoute } from './jobs-routes.mjs';
-import { recordCompletionAttestation } from './jobs-service.mjs';
+import { recordCompletionAttestation, resolveReceiptKey } from './jobs-service.mjs';
 import { RUNNING_DEPLOYMENT_SHA } from '../runtime-revision.mjs';
 import { assertActiveScheduler, createSupabaseSchedulerStore, electionConfigFromEnv, SchedulerElection } from './scheduler-election.mjs';
 
@@ -12,6 +12,10 @@ const HOST = process.env.CORE_COMPUTE_HOST || '127.0.0.1';
 const PORT = Number(process.env.CORE_COMPUTE_PORT || 4788);
 const BODY_LIMIT = Number(process.env.CORE_COMPUTE_BODY_LIMIT || 2_097_152);
 const CLOCK_SKEW_MS = Number(process.env.CORE_COMPUTE_CLOCK_SKEW_MS || DEFAULT_CLOCK_SKEW_MS);
+// How long a node's completion acknowledgement may wait for the attestation write.
+const ATTESTATION_WAIT_MS = Math.max(100, Math.min(10_000, Number(process.env.CORE_COMPUTE_ATTESTATION_WAIT_MS || 1_500)));
+// A malformed CORE_RECEIPT_SIGNING_KEY is a startup failure, not a 500 on the first receipt.
+resolveReceiptKey(process.env);
 
 if (!['127.0.0.1', '::1', 'localhost'].includes(HOST)) {
   throw new Error('Compute gateway must bind to loopback; publish it through an authenticated reverse tunnel/proxy');
@@ -189,6 +193,7 @@ async function route(req, res) {
     req, url, body,
     requireAdmin: () => requireSecret(req, 'CORE_COMPUTE_ADMIN_TOKEN', 'Compute admin'),
     adminOrg,
+    canonicalOrg: String(process.env.MCCLUSTER_ORG_ID || '').trim() || null,
     election,
     issuer: { instance: process.env.MCCLUSTER_CORE_ID || null, deployment_sha: RUNNING_DEPLOYMENT_SHA || null }
   });
@@ -252,7 +257,11 @@ async function route(req, res) {
     // The node's own signature over this accepted completion becomes part of
     // the job receipt. Best-effort and after the commit: it never undoes a result.
     if (parsed.action === 'complete') {
-      await recordCompletionAttestation({ node, leaseId: parsed.leaseId, path: url.pathname, headers: req.headers, result: body.result || {} });
+      // Bounded: the node's acknowledgement never waits on a slow attestation
+      // write; the write itself continues in the background and logs its outcome.
+      const attest = recordCompletionAttestation({ node, leaseId: parsed.leaseId, path: url.pathname, headers: req.headers, result: body.result || {} });
+      attest.then((outcome) => { if (outcome?.recorded === false && outcome.available === null) return; }).catch(() => {});
+      await Promise.race([attest, new Promise((resolve) => setTimeout(resolve, ATTESTATION_WAIT_MS).unref?.())]);
     }
     return json(res, 200, { ok: true, result });
   }

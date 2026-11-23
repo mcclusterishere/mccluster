@@ -53,7 +53,9 @@ export function canonicalJson(value) {
 function sortKeys(value) {
   if (Array.isArray(value)) return value.map((item) => (item === undefined ? null : sortKeys(item)));
   if (isObject(value)) {
-    const out = {};
+    // A null prototype keeps every own key a data property: a "__proto__" key
+    // would otherwise vanish and two different outputs would share one hash.
+    const out = Object.create(null);
     for (const key of Object.keys(value).sort()) {
       if (value[key] === undefined || typeof value[key] === 'function') continue;
       out[key] = sortKeys(value[key]);
@@ -227,7 +229,7 @@ export function jobView({ task, leases = [], node = null }) {
     execution: leaseSummary(lease),
     node: nodeSummary(node),
     result_available: status === 'done' && task.output != null,
-    receipt_available: status === 'done' || status === 'failed',
+    receipt_available: TERMINAL_STATES.has(status),
     metadata: isObject(task.metadata) ? task.metadata : {}
   };
 }
@@ -337,8 +339,8 @@ function durationMs(lease) {
 
 export function buildReceipt({ task, leases = [], node = null, attestation = null, nodePublicKeyPem = null, issuedAt = new Date().toISOString(), issuer = {} }) {
   if (!task) throw httpError('compute job not found', 404, 'JOB_NOT_FOUND');
-  if (task.status !== 'done' && task.status !== 'failed') {
-    throw httpError(`compute job is ${task.status}; a receipt exists once it is done or failed`, 409, 'JOB_NOT_TERMINAL', { job_status: task.status });
+  if (!TERMINAL_STATES.has(task.status)) {
+    throw httpError(`compute job is ${task.status}; a receipt exists once it is done, failed or canceled`, 409, 'JOB_NOT_TERMINAL', { job_status: task.status });
   }
   const lease = completingLease(task, leases);
   const done = task.status === 'done';
@@ -403,8 +405,11 @@ export function verifyReceipt(receipt, publicKeyPem) {
   if (!isObject(receipt) || receipt.schema !== RECEIPT_SCHEMA) return { ok: false, reason: 'not a mccluster-job-receipt/1' };
   if (!isObject(receipt.signature) || !receipt.signature.value) return { ok: false, reason: 'receipt is unsigned' };
   if (!publicKeyPem) return { ok: false, reason: 'Core receipt public key unavailable' };
+  if (receipt.signed !== true) return { ok: false, reason: 'receipt does not claim to be signed' };
+  if (receipt.signature.alg !== 'ed25519') return { ok: false, reason: `unsupported receipt signature alg ${String(receipt.signature.alg)}` };
+  if (!receipt.signature.key_id) return { ok: false, reason: 'receipt signature names no key' };
   try {
-    if (receipt.signature.key_id && receipt.signature.key_id !== receiptKeyId(publicKeyPem)) return { ok: false, reason: 'receipt was signed by a different Core key' };
+    if (receipt.signature.key_id !== receiptKeyId(publicKeyPem)) return { ok: false, reason: 'receipt was signed by a different Core key' };
     const { signature, signed, ...rest } = receipt;
     const payload = canonicalJson({ ...rest, signature: null });
     const ok = crypto.verify(null, Buffer.from(payload, 'utf8'), publicKeyPem, Buffer.from(String(signature.value), 'base64url'));

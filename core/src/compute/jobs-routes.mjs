@@ -17,10 +17,14 @@ export function matchesJobRoute(pathname) {
 
 // requireAdmin() throws the gateway's own 401/503; adminOrg(requested) applies
 // the canonical-org fence exactly as the existing admin routes do.
-export async function handleJobRoute({ req, url, body, requireAdmin, adminOrg, issuer = {}, election = null }, deps = defaultDeps()) {
+export async function handleJobRoute({ req, url, body, requireAdmin, adminOrg, canonicalOrg = null, issuer = {}, election = null }, deps = defaultDeps()) {
   const pathname = url.pathname;
   if (!matchesJobRoute(pathname)) return null;
   requireAdmin();
+  // The org fence (adminOrg) only bites when the gateway knows its canonical
+  // org; without MCCLUSTER_ORG_ID the job routes fail closed instead of
+  // scoping to whatever org the caller names.
+  if (!canonicalOrg) throw Object.assign(new Error('MCCLUSTER_ORG_ID is not configured on this gateway; the job routes fail closed'), { status: 503, code: 'ORG_NOT_CONFIGURED' });
 
   // Scheduler standby (DEVICE-JOBS-SCHEDULER-STANDBY.md): who holds the lease,
   // and the owner's controlled failback. Both are admin-only.

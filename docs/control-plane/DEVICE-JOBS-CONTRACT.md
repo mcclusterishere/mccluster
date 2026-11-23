@@ -58,13 +58,16 @@ owner issues it a token). Both return the same shapes.
 Header `Idempotency-Key` (tool argument `idempotency_key`): 1 to 128 printable ASCII characters. A retry with the
 same key and the same body returns the same job with `replayed: true` (HTTP 200 instead of 202); the same key with a
 different body is `409 IDEMPOTENCY_CONFLICT`. Metadata written to the row is deterministic for this reason: no
-timestamps, no fleet snapshot. `org_id` is optional and must equal the canonical org (`403 CROSS_ORG_DENIED`
-otherwise); the Worker overwrites it with the house org. `implementation` pins one advertised implementation; omit it
+timestamps, no fleet snapshot. `org_id` is optional and must equal the gateway's configured `MCCLUSTER_ORG_ID`
+(`403 CROSS_ORG_DENIED` otherwise); a gateway without that variable refuses every job route with
+`503 ORG_NOT_CONFIGURED` rather than scoping to whatever org the caller names; the Worker overwrites `org_id` with
+the house org, and the Core fences the tools against its own `MCCLUSTER_ORG_ID` again. `implementation` pins one advertised implementation; omit it
 to let any live implementation of the capability take the task. `requirements` become feature requirements the claim
 enforces as a subset of the node's advertised features; routing keys (`provider`, `hosting`, `billing`,
-`transport`) are dropped. Input is a JSON object of at most 1 MiB (`413 JOB_INPUT_TOO_LARGE`). When no live node
-advertises the capability (and implementation) the submit is refused with `503 COMPUTE_NO_LIVE_NODE` unless
-`allow_offline: true` queues it anyway. Response: `{ schema, job, replayed, live_nodes }`.
+`transport`) are dropped. Input is a JSON object of at most 1 MiB (`413 JOB_INPUT_TOO_LARGE`). The preflight applies
+the claim's own tests (capability, pinned implementation, requested features as a subset of the advertised ones,
+owned-only admission): when no live node passes them the submit is refused with `503 COMPUTE_NO_LIVE_NODE` unless
+`allow_offline: true` queues it anyway (there is no cancel route yet, so an offline-queued job waits for a node). Response: `{ schema, job, replayed, live_nodes }`.
 
 ### Status
 
@@ -98,8 +101,9 @@ recursively), the same value a client computes from the parsed object whatever k
 
 ### Receipt: `mccluster-job-receipt/1`
 
-`GET /v1/compute/jobs/:id/receipt?org_id=` or tool `core.compute.job.receipt`, once the job is `done` or `failed`
-(`409 JOB_NOT_TERMINAL` before). The receipt is the admin app's evidence and is designed to be verified offline:
+`GET /v1/compute/jobs/:id/receipt?org_id=` or tool `core.compute.job.receipt`, once the job is terminal (`done`,
+`failed` or `canceled`; `409 JOB_NOT_TERMINAL` before). A failed or canceled receipt carries `failure` and no output
+hash. The receipt is the admin app's evidence and is designed to be verified offline:
 
 ```json
 {
@@ -119,8 +123,9 @@ recursively), the same value a client computes from the parsed object whatever k
 Verification, in the client:
 
 1. `GET /v1/compute/receipt-key` (or tool `core.compute.receipt.key`) once; cache `public_key_pem` and `key_id`.
-2. Remove `signature` and `signed`, set `signature: null`, canonicalise (sorted keys), verify Ed25519 with the Core
-   key. `verifyReceipt()` in `core/src/compute/jobs.mjs` is the reference. A receipt from another key says so.
+2. Require `signed: true`, `signature.alg: "ed25519"` and a `signature.key_id` equal to the cached key id. Remove
+   `signature` and `signed`, set `signature: null`, canonicalise (profile below), verify Ed25519 with the Core key.
+   `verifyReceipt()` in `core/src/compute/jobs.mjs` is the reference. A receipt from another key says so.
 3. Compare `output_sha256` with the hash of the `output` the client read; compare `input_sha256` with the hash of
    what it submitted.
 4. The node attestation is the node's own Ed25519 signature over the canonical string of its completion request
@@ -138,12 +143,31 @@ The receipt key is `CORE_RECEIPT_SIGNING_KEY` on the Core (an Ed25519 PKCS#8 PEM
 Without it receipts are issued with `signed: false` and `signature: null`, and say so; a malformed key fails loudly.
 Generate one with `generateReceiptKey()` from `core/src/compute/jobs.mjs` and keep it out of Git.
 
+### Canonical JSON
+
+Every hash and the receipt signature are over this profile, which a client in any language must reproduce exactly
+(it is RFC 8785, JSON Canonicalization Scheme, for well-formed input):
+
+- object members sorted recursively by UTF-16 code unit order of the key; arrays keep their order;
+- no whitespace; separators are `,` and `:`;
+- strings as ECMAScript `JSON.stringify` emits them: only `"`, `\` and U+0000 to U+001F escaped (`\b \f \n \r \t`,
+  else lowercase `\u00XX`), non-ASCII emitted raw as UTF-8, lone surrogates as `\udXXX`;
+- numbers in ECMAScript `Number::toString` shortest round-trip form: `1.0` is `1`, `-0` is `0`, `1e21` is `1e+21`,
+  no trailing `.0`; integers above 2^53 lose precision the same way on every side because every party parses JSON;
+- `null` kept; `undefined` and functions dropped; a `__proto__` key is an ordinary key;
+- the signed or hashed bytes are the UTF-8 encoding of that string.
+
+Test vector: `{ "z": 1.0, "a": [true, null, "é\n\"", { "b": 1e21, "c": -0, "d": 0.1 }], "m": { "y": "x", "x": "y" } }`
+canonicalises to `{"a":[true,null,"é\n\"",{"b":1e+21,"c":0,"d":0.1}],"m":{"x":"y","y":"x"},"z":1}` and hashes to
+`d9a258d84feed22118930490e012edba6c031ee62716e40701d03480177206f8` (`core/test/job-contract.test.mjs` holds the same vector).
+
 ### Error codes a client must handle
 
 | Code | HTTP | Meaning |
 | --- | --- | --- |
 | `UNAUTHORIZED`, `AUTH_NOT_CONFIGURED` | 401, 503 | admin token wrong or not configured on the gateway |
-| `CROSS_ORG_DENIED` | 403 | `org_id` is not the canonical organization |
+| `CROSS_ORG_DENIED` | 403 | `org_id` is not the gateway's `MCCLUSTER_ORG_ID` |
+| `ORG_NOT_CONFIGURED` | 503 | the gateway has no `MCCLUSTER_ORG_ID`; the job routes fail closed |
 | `JOB_INVALID`, `ORG_REQUIRED`, `JOB_ID_INVALID`, `BAD_IDEMPOTENCY_KEY` | 400 | malformed submission or id |
 | `JOB_INPUT_TOO_LARGE` | 413 | input over 1 MiB |
 | `IDEMPOTENCY_CONFLICT` | 409 | same key, different body |
@@ -157,18 +181,21 @@ Generate one with `generateReceiptKey()` from `core/src/compute/jobs.mjs` and ke
 `scripts/staging/device-jobs/run.mjs` composes the real gateway and the real node agent around a PGlite database
 loaded with the repository's compute SQL (replay migration, the two 2026-09-19 hardening migrations, the 2026-10-20
 lease authority v2, and the pending attestation table), a PostgREST subset shim, a self-signed TLS ingress and a
-fixture executor. Run on 2026-11-23 at commit `404673b8` plus this slice: 9 of 9 steps pass in about 35 s; the
-`--full` variant adds the hard-disconnect case. The proof files for that run are under
-`docs/control-plane/evidence/device-jobs-staging-20261123/`. Commands: see `scripts/staging/device-jobs/README.md`.
+fixture executor. The committed proof under `docs/control-plane/evidence/device-jobs-staging-20261123/` is a `--full`
+run (11 steps, including the hard-disconnect case and the attestation rollback/re-apply) and names the commit it ran
+from, with a `-dirty` marker when the tree had uncommitted changes; the default run without `--full` is 10 steps in
+about 40 s. Commands: see `scripts/staging/device-jobs/README.md`.
 
 What the proof covers: admin authorization, enrolment refusal with a wrong token, unknown-key refusal, enrolment and
 capability reporting over TLS by the real agent (`hardware_mode` derived as `cpu-only` in the container),
 cross-organization refusal, idempotent submission with conflict detection, no-live-node refusal, lease, run,
-completion, result and signed receipt verified offline with a verified node attestation, duplicate-result
-rejection in all four shapes (replayed nonce `409 REPLAY_DETECTED`, same payload accepted idempotently, different
-payload `409 LEASE_REJECTED`, late `fail` refused, forged token refused), executor failure then retry on attempt 2
-with the receipt naming attempt 2, hard kill of the agent with server-side lease expiry and reclaim (`--full`), and
-revocation ending the agent and removing the capability from the fabric.
+completion, result and signed receipt verified offline with a verified node attestation (whose `signed_at` is
+stored verbatim and survives the PostgREST timestamp rendering the shim imitates), duplicate-result rejection in all
+four shapes (replayed nonce `409 REPLAY_DETECTED`, same payload accepted idempotently with the first completion's
+attestation kept, different payload `409 LEASE_REJECTED`, late `fail` refused, forged token refused), executor
+failure then retry on attempt 2 with the receipt naming attempt 2, hard kill of the agent with server-side lease
+expiry and reclaim (`--full`), revocation ending the agent with a `NODE_REVOKED` refusal and removing the capability
+from the fabric, and the attestation rollback dropping exactly its table before re-applying.
 
 What the proof does not cover: inference on real hardware (the executor echoes), the Worker edge end to end (unit
 tests cover the allowlist and the control tools), multi-session PostgreSQL lock timing (PGlite is one connection),
@@ -254,7 +281,8 @@ The client needs four calls and one key: submit with an `Idempotency-Key` it gen
 terminal status; poll status (750 ms to 2 s is fine; the agent polls the claim at 1 s); read the result when
 `result_available`; read the receipt and verify it with the cached receipt key. The device side is unchanged: the
 same `core/src/compute/node-agent.mjs`, the same manifest, the same Ollama adapter; the receipt then reports the
-real node's `hardware_mode`, platform and measured rate. When Prime's branch appears on the remote, compare its
+real node's `hardware_mode` and platform, and the status and result views carry the node's measured inference
+rate in their `node` summary. When Prime's branch appears on the remote, compare its
 contract with this file; the owner decides which door Prime's client uses (the Worker as the owner's own session, or
 the gateway with an admin token issued for the device).
 

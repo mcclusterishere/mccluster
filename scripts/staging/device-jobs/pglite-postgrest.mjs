@@ -145,8 +145,12 @@ export async function startPostgrestShim({ db, apiKey, host = '127.0.0.1', port 
   const server = http.createServer(async (req, res) => {
     const started = Date.now();
     const url = new URL(req.url, 'http://127.0.0.1');
+    // PostgREST renders timestamptz as 2026-11-23T02:25:10.123456+00:00, never
+    // with a Z: a signature rebuilt from a re-rendered timestamp must fail here
+    // the way it would in production.
+    const render = (value) => JSON.stringify(value, (key, v) => (v instanceof Date ? v.toISOString().replace('Z', '000+00:00') : v));
     const reply = (status, body) => {
-      const payload = body === undefined ? '' : JSON.stringify(body);
+      const payload = body === undefined ? '' : render(body);
       res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'content-length': Buffer.byteLength(payload) });
       res.end(payload);
       requests.push({ method: req.method, path: url.pathname, status, ms: Date.now() - started });

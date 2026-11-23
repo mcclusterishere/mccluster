@@ -293,6 +293,7 @@ async function main() {
     assert(started.status === 200 && started.body.result?.status === 'running', 'start');
     const payloadA = { model: 'manual', content: 'A', fixture: true };
     const complete = signed(harness, `/v1/compute/leases/${leaseId}/complete`, { lease_token: token, result: payloadA });
+    const firstNonce = complete.headers['x-mccluster-nonce'];
     const first = await complete.send();
     assert(first.status === 200 && first.body.ok === true, `first complete ${first.status}`);
     const replayedNonce = await complete.send();
@@ -308,8 +309,10 @@ async function main() {
     const result = await admin(`/v1/compute/jobs/${jobId}/result?org_id=${ORG}`);
     assert(result.body.output.content === 'A', 'committed result is the first payload');
     const receipt = (await admin(`/v1/compute/jobs/${jobId}/receipt?org_id=${ORG}`)).body;
-    assert(receipt.node_attestation?.verified === true && receipt.node_attestation.result_sha256 === hashJson(payloadA), 'attestation is the first accepted completion');
-    return { job_id: jobId, nonce_replay: replayedNonce.body.code, same_payload: samePayload.status, different_payload: differentPayload.body.code, late_fail: lateFail.status, wrong_token: wrongToken.status };
+    assert(receipt.node_attestation?.verified === true && receipt.node_attestation.result_sha256 === hashJson(payloadA), 'attestation verifies and names the committed result');
+    assert(receipt.node_attestation.nonce === firstNonce, `attestation is the FIRST accepted completion (nonce ${receipt.node_attestation.nonce} vs ${firstNonce})`);
+    assert(/^\d{4}-\d{2}-\d{2}T.*Z$/.test(receipt.node_attestation.signed_at), `signed_at survives the round trip verbatim: ${receipt.node_attestation.signed_at}`);
+    return { job_id: jobId, nonce_replay: replayedNonce.body.code, same_payload: samePayload.status, different_payload: differentPayload.body.code, late_fail: lateFail.status, wrong_token: wrongToken.status, first_nonce_kept: true };
   });
 
   await step('disconnect and retry: an injected executor failure fails the lease, the task requeues with backoff and the second attempt completes', async () => {
@@ -355,7 +358,22 @@ async function main() {
     const refused = await admin('/v1/compute/jobs', { method: 'POST', body: { capability: 'ai.chat', implementation: 'fixture.echo.local', input: { prompt: 'x' } } });
     assert(refused.status === 503 && refused.body.code === 'COMPUTE_NO_LIVE_NODE', `after revoke ${refused.status} ${refused.body?.code}`);
     const logLine = tail('node-agent', 200).find((line) => /NODE_REVOKED/.test(line)) || null;
-    return { agent_exited: Boolean(exited), refusal_seen_by_agent: Boolean(logLine), submit_after_revoke: refused.body.code };
+    assert(logLine, 'the agent must have been refused with NODE_REVOKED by the gateway');
+    const revokedClaim = await signed(generateNodeIdentity(), '/v1/compute/lease', {}).send();
+    assert(revokedClaim.status === 401, 'an unknown key is still refused');
+    return { agent_exited: Boolean(exited), refusal_seen_by_agent: true, submit_after_revoke: refused.body.code };
+  });
+
+  await step('pending SQL hygiene: the attestation rollback drops exactly its table and the file re-applies cleanly', async () => {
+    await db.exec(fs.readFileSync(path.join(ROOT, 'supabase/pending/compute_job_attestations_v1.rollback.sql'), 'utf8'));
+    const gone = (await db.query("select to_regclass('public.ops_compute_attestations') as t")).rows[0].t;
+    assert(gone === null, 'rollback left the table behind');
+    const leases = (await db.query('select count(*)::int as n from public.ops_compute_leases')).rows[0].n;
+    assert(leases > 0, 'rollback must not touch the lease rows');
+    await db.exec(fs.readFileSync(path.join(ROOT, 'supabase/pending/compute_job_attestations_v1.sql'), 'utf8'));
+    const back = (await db.query("select to_regclass('public.ops_compute_attestations') as t")).rows[0].t;
+    assert(back !== null, 're-apply failed');
+    return { rollback_reapplied: true, lease_rows_untouched: leases };
   });
 
   const ok = steps.every((s) => s.ok);
@@ -379,7 +397,11 @@ async function main() {
 }
 
 function gitSha() {
-  try { return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim(); } catch { return null; }
+  try {
+    const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
+    const dirty = execFileSync('git', ['status', '--porcelain'], { cwd: ROOT, encoding: 'utf8' }).trim() !== '';
+    return dirty ? `${sha}-dirty` : sha;
+  } catch { return null; }
 }
 
 function renderProof(proof) {

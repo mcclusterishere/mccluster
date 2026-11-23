@@ -19,7 +19,8 @@ What it proves, in order:
 7. duplicate results: a replayed nonce is refused, re-completing with the same payload is accepted idempotently, a different payload is refused, a late failure cannot undo the commit, a forged lease token is refused;
 8. an injected executor failure fails the lease, the task requeues with backoff and the second attempt completes (the receipt names attempt 2);
 9. with `--full`, a hard kill of the agent mid-task lets the lease expire server-side and a restarted agent reclaims and completes;
-10. a revoked node is refused on its next signed request and leaves the fabric.
+10. a revoked node is refused on its next signed request (`NODE_REVOKED`) and leaves the fabric;
+11. the pending attestation SQL rolls back to exactly nothing and re-applies cleanly.
 
 ## Run it
 
@@ -63,4 +64,4 @@ The manifest is one of `core/node-manifests/` with the Ollama adapter
 (`core/src/compute/ollama-adapter.mjs`) as the loopback executor. From the
 admin side the job then goes through the same `POST /v1/compute/jobs`
 (or the owner tool `core.compute.job.submit`), and the receipt reports the real
-node's `hardware_mode` and measured rate instead of the fixture's.
+node's `hardware_mode` and platform, and the status view carries its measured rate, instead of the fixture's.
