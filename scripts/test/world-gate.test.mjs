@@ -788,7 +788,9 @@ test('the door\'s art direction: a whole veil, no news shading behind the door, 
   const third = all.filter((r) => r.head === '#mnSignedOut .wg-pulse > .wg-card:nth-child(3 of :not([hidden]))' && r.at.length);
   assert.deepEqual(third.map((r) => r.at.join(' ')), ['@container (min-height: 267px)'], 'the third card waits for the room its second line needs');
   const globe = read('js/world-news-globe.js'), page = read('js/mnet.js');
-  assert.match(globe, /tint:scope\(\) !== 'equity' && !doorOpen\(\)/, 'the shading steps aside behind the door');
+  assert.match(globe, /let publicHeatEnabled = false;/, 'public shading starts off, including while reading the setting');
+  assert.match(globe, /const quiet = scope\(\) === 'equity' \|\| doorOpen\(\);/, 'keep the door and Equity tab unshaded even when enabled');
+  assert.match(globe, /tint:publicHeatEnabled && !quiet/, 'shading requires both the saved owner opt-in and a non-quiet view');
   assert.match(globe, /window\.addEventListener\('mcc:door', sync\);/, 'and comes back when the door closes');
   assert.match(page, /if \(doorWas !== \(which === "signedout"\)\) \{ try \{ window\.dispatchEvent\(new CustomEvent\("mcc:door"/, 'the page says when the door opens and closes');
 });
