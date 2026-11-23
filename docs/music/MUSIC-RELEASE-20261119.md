@@ -1078,9 +1078,9 @@ was built for them.
   said "Finish the download (22/23)", and offline the B-side failed: the vault is keyed by address.
 * **V-2:** the preview line (the album's toast) sat over the deck bar at 320, 390, 820 and 1280 px (at 390: the line
   674 to 748 px down the screen, the deck bar 691 to 765).
-* **V-3:** on the listen page the bar's middle button kept its play triangle while a song played, and a tap
-  scrolled to the top while the song played on; during Reconnecting… it showed Play and its tap did not stop the
-  tries.
+* **V-3:** on the listen page the bar's Music button (the red play and pause circle left of the M) kept its play
+  triangle while a song played, and a tap scrolled to the top while the song played on; during Reconnecting… it
+  showed Play and its tap did not stop the tries.
 * **V-4:** taking out the engine's immediate end of an earned play whose time ran out left every test passing.
 * **The installed app's dock** cut its second line: "Reconnecting…" needed 74 px of 73 at 390 and of 41 at 320;
   "Connection lost · tap play" 120.
@@ -1129,7 +1129,7 @@ was built for them.
 7. **The preview line rises clear of the foot of the screen** (`js/label.js`): 8 px above the higher of the deck bar
    (where it rests, while it shows) and the tab bar (the installed app's dock), placed again when either moves or
    changes size while the line shows; with neither there it keeps its place.
-8. **The bar's middle button on the listen page** (`js/music-engine.js`, `js/tabbar.js`). On `listen.html` only, the
+8. **The bar's Music button on the listen page** (`js/music-engine.js`, `js/tabbar.js`). On `listen.html` only, the
    engine says what plays in the album's words (`mcc:nowplaying`, `{ title, href: "#np", playing }`) when that
    changes (play, pause, the end, another song; a song being picked up again is Pause, as on the mini player), and
    gives the bar the mini player's Play and Pause (`MCC_NP_PLAY`, `MCC_NP_PAUSE`) once a song is chosen or held. The
@@ -1159,7 +1159,7 @@ on the slice:
 | `scripts/test/music-track-lengths.test.mjs` (2 new) | both fail: no iTunes note, and no wait written from the catalogue | 6 of 6 |
 | `scripts/test/music-measurement.test.mjs` (new) | both fail: `music_interrupted` goes out, and nothing holds it | 2 of 2 |
 | `scripts/test/music-offline-vault.test.mjs` (new) | all three fail: offline the `.m4a` with a kept `.mp3` is "Failed to fetch" | 3 of 3 |
-| `scripts/e2e/music-background.e2e.mjs`, the new and changed scenarios | 60 of 99 checks pass; the 39 that fail are this slice's (the wire's event names 3, the dock's line 12, the doors 14, the preview line 4, the middle button 5, the kept B-side 1) | 212 of 212 for the whole suite |
+| `scripts/e2e/music-background.e2e.mjs`, the new and changed scenarios | 60 of 99 checks pass; the 39 that fail are this slice's (the wire's event names 3, the dock's line 12, the doors 14, the preview line 4, the bar's Music button 5, the kept B-side 1) | 212 of 212 for the whole suite |
 
 **Revert and fail**, each on a scratch copy of the slice, one fix taken out at a time and the file put back by its
 hash: all 10 unit-level mutations fail their tests (the wait back to 5 s, the wait not derived, the hold taken out,
@@ -1219,8 +1219,9 @@ page, a Safari tab or the Home Screen icon, signed in or not, and the iOS versio
    your pocket.
 3. From the Home Screen icon, a drop: the dock's top line says Reconnecting…, then Connection lost · tap play, in
    full; the dock's buttons stay where they were.
-4. The listen page in a Safari tab: while a song plays the bar's middle button shows Pause; a tap pauses the song
-   and another plays it; the page does not move.
+4. The listen page in a Safari tab: while a song plays the bar's Music button (the red play and pause circle left of
+   the M; the M in the middle goes home) shows Pause; a tap pauses the song and another plays it; the page does not
+   move.
 5. The album: when a locked preview ends, its line sits above the deck bar, not over the song's title.
 
 **Renders for Matthew** at device scale 2, kept with the workflow's evidence (not in the repository):
@@ -1307,3 +1308,65 @@ signed in and out at 320 and 390; the listen page with the tab named at 390, and
 beside Play, as before), and `album-320-door-clear-of-the-account-chip`, `album-360-door-clear-of-the-account-chip` and
 `album-390-door-clear-of-the-account-chip` (the door scrolled up to the chip's band: side by side, never over each
 other). Nothing else this round changed is visible: the ledger's waits and the tab's name are not drawn.
+
+### Verification of the M3 follow-up (2026-11-23)
+
+An independent check of the head `a34936ec` against `5b549475` and the reviewed `2d162960`, each in its own worktree,
+with this check's own probes; nothing above was taken on trust. Nothing was merged, deployed or applied.
+
+* **Each item, at the base and now** (Chromium, every request a route fixture, unless said):
+  * The door: on all eight albums at 390 and 1280 px at the base; only on Heal the 3 now.
+  * The door and the account chip, scrolled 1 px at a time through the chip's band at 17 widths and accounts from 320
+    to 1280 px: under the chip from 320 to 540 px at the base (21 px of it at 390); never now (25 px apart at 320 to
+    360, 45 at 390), with the same words and link, on two lines below 375 px and the arrow never alone.
+  * The four files: `qt-faststart` run on the `b51ede03` files gives the head's four byte for byte; only the chunk
+    offsets moved, each by the index's size; the iTunes note is the encoder's own and there is no edit list. ffmpeg
+    decodes the same PCM and packets before M3, at M3 and now; Chromium decodes exactly the samples it did before M3
+    (M3 had 119 to 713 more). Deep End is 165.6 s again (counted after 157 s).
+  * The ledger on a disposable PostgreSQL 16 with the real migrations and each tree's own `js/listen-ledger.js` (the
+    review's driver): with Pull Up next the song just heard counts to a 4.0 s finish (at `2d162960` it was lost from
+    1.9 s); with Towyard Killer next it is lost from 1.9 s, the trade-off recorded above; the next song counted in
+    every run, where `5b549475` lost Towyard Killer from a 4.0 s finish.
+  * On the wire, one drop with every try failing: the base sent 6 `music_error` and 6 `music_interrupted` (11 and 11
+    after Play) and the album 6 `music_interrupted`; now 1 and 0 (still 1 after Play), a missing file 1 and 0, the
+    album 0 and 0.
+  * The kept B-side, with the real `sw.js` on a local server: the base said "Finish the download (22/23)" and offline
+    the B-side failed; now the album says In your pocket and the B-side plays offline from the kept `.mp3`, labelled
+    `audio/mp4`, with no request reaching the server.
+  * The preview line: over the deck bar at 320, 390, 820 and 1280 px at the base; now clear of the deck bar and the
+    tab bar at each, in the installed app, after turning a 390 px screen to landscape, and at the real end of the
+    closer's preview.
+  * The bar's Music button on the listen page: at the base it never showed Pause, kept the name Music, and a tap
+    scrolled to the top while the song played on; now it shows Pause and is named "Pause music" while a song plays, a
+    tap or Enter pauses and plays without moving the page, a record held from another visit plays at its second, and
+    with the World open it is named Music and goes back to the music. On the album it keeps its name and opens the
+    shelf, as before.
+  * The installed app's dock: at the base its second line cut "Reconnecting…" (74 px of 73 at 390, of 41 at 320) and
+    "Connection lost · tap play" (120 px); now the words have a line of their own, whole at 320 and 390, above the
+    controls, and the page's last words stay above the taller dock.
+* **Revert and fail.** Ten fixes taken out one at a time at the unit level and six in Chromium: every one fails its
+  tests, and the tree was clean after each.
+* **Suites**, one at a time: root suite 3,083 tests, 3,076 pass, 0 fail, 7 skipped; Worker suite 2,032, 2,023 pass, 0
+  fail, 9 skipped (this slice regenerated `workers/mccluster/src/music/tracks.js`); the `music-contract` job step by
+  step, all 19 pass; the peaks, artwork and track-length checks pass; the source map validator passes 2,966 of 2,966.
+  In Chromium, one at a time: background 293 of 293, and 291 of 293 with Reduce Motion on (the two that do not pass
+  are the album room's light, which Reduce Motion turns off by design); continuity 140 of 140; Now Playing 125 of 125;
+  accounts 128 of 128; installed app 246 of 246; native publication 49 of 49; direct checkout 40 of 40; site
+  navigation 429 of 429; the game hub's capsule passes. The head's new unit tests fail where this record says: at
+  `5b549475` twelve of them (races 3, ledger 2, track lengths 2, measurement 2, vault 3), at `2d162960` the review
+  round's four (ledger 3, track lengths 1). The World guard in `js/tabbar.js` that the follow-up called a second guard
+  no test held is held now: taken out, the tab's name is wrong with the World open or opening, and one background
+  check fails and the continuity suite stops.
+* **Words corrected here:** item 8, the base's V-3 line, the test table and device row 4 called the bar's Music button
+  "the middle button" (review RF-4). It is the red play and pause circle left of the M; the M in the middle goes home.
+* **Renders for Matthew** at device scale 2, kept with the workflow's evidence (not in the repository):
+  `album-390-no-door-cia-mind-control`, `album-390-door-heal-the-3`, `album-390-door-in-the-chip-band`,
+  `album-390-preview-line-above-the-deck` (the real end of the closer's preview), `listen-390-bar-music-tab-playing`,
+  and `installed-listen-390-dock-reconnecting`, `installed-listen-390-dock-connection-lost`,
+  `installed-listen-320-dock-reconnecting` and `installed-listen-320-dock-connection-lost`. Seen in them and there
+  before this slice: the covers that are not square drawn square (V-1), the 4 px where the deck bar and the tab bar
+  meet, and the dock's title and artist cut short.
+* **Also his call:** on the album the same bar button opens the shelf and the album's song ends, as before this slice
+  (review RF-5); whether it should pause the album's song there may belong with M5. In the installed app on the listen
+  page the dock now holds two Pause buttons side by side, the bar's Music button and the dock's own (both named "Pause
+  music", both pause the song); whether the Music button should stay the way to the shelf there is a design call.
