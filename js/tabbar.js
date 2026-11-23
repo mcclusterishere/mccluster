@@ -19,7 +19,7 @@
 
   // Loaded on the globe's embedded document too: its first trusted touch can
   // reach the same-origin World soundtrack without an asynchronous message.
-  var worldAudioReady = null, worldAudioPending = null, worldAudioNotice = null;
+  var worldAudioReady = null, worldAudioPending = null, worldAudioNotice = null, worldCancelTap = null;
   function loadWorldAudio() {
     if (window.MCC_WORLD_AUDIO) return Promise.resolve(true);
     if (worldAudioReady) return worldAudioReady;
@@ -352,6 +352,9 @@
   dock.addEventListener("click", function (e) {
     var a = e.target && e.target.closest ? e.target.closest("a.appbar__tab.is-here") : null;
     if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    /* the Music tab on the player that gives the bar its transport is that player's Play or Pause (the tap
+       dispatch below), not a scroll: on listen.html this scroll took every tap (music slice M3 follow-up, V-3) */
+    if (a.getAttribute("data-appnav") === "music" && musicTransportHere(e)) return;
     var to;
     try { to = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
     /* "/" and "/index.html" are the same page (the HERE tab links the
@@ -1110,6 +1113,15 @@
     paintSound();
   });
 
+  /* Does the page give the bar its transport (MCC_NP_PLAY and MCC_NP_PAUSE)? The World open (or opening) over the
+     player is the one exception: there the Music tab is the way back to the music, never its Pause. listen.html gives
+     the bar its transport too since the M3 follow-up (verification V-3), and the World opens over that page. */
+  function musicTransportHere(e) {
+    if (worldAudioPending || (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.active && window.MCC_WORLD_AUDIO.active())) return false;
+    if (e && e === worldCancelTap) return false;   // the tap that called off a World still opening stays in the music, never pauses it
+    return typeof window.MCC_NP_PLAY === "function" && typeof window.MCC_NP_PAUSE === "function";
+  }
+
   /* the same idiom both of the album's own transport buttons use: ask what
      the deck is doing, then do the other thing. SOUND_ON stands in for
      deck.paused, because the bar cannot see the deck from here. */
@@ -1269,7 +1281,7 @@
     var a = e.target.closest && e.target.closest("a[href]");
     if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
     if (waitForWorldAudio(a.href)) { e.preventDefault(); e.stopPropagation(); }
-    else if (worldAudioPending) cancelWorldAudio();
+    else if (worldAudioPending) { worldCancelTap = e; cancelWorldAudio(); }   // this tap called the World off: nothing more
   }, true);
 
   /* ---------- THE PEEK: one tap on a slot shows the room's widget ---------- */
@@ -1432,9 +1444,7 @@
        second slot, and that slot still lands on sites.html, which is the
        conversation with a page around it. */
 
-    if (key === "music" && onPage(dest) &&
-        typeof window.MCC_NP_PLAY === "function" &&
-        typeof window.MCC_NP_PAUSE === "function") { transport(); return; }
+    if (key === "music" && onPage(dest) && musicTransportHere(e)) { transport(); return; }
     sail(dest, 0);
   });
 

@@ -81,6 +81,10 @@ async function setup({ width = 390, member = false, earned = false, ua, pocket =
   const context = await browser.newContext({ viewport: { width, height: 844 }, hasTouch: true, isMobile: width < 700, userAgent: ua,
     reducedMotion: 'no-preference', serviceWorkers: 'block', timezoneId: 'America/New_York' });
   const requests = [], errors = [], stream = { token: '', hits: [], claims: 0 }, reads = [], signed = [];
+  /* what the page's analytics sends (js/analytics.js posts its batches to /v1/collect, then to the Supabase function):
+     every event, by its id, so a retried batch is counted once (music slice M3 follow-up: no new event name leaves) */
+  const collected = new Map();
+  const collect = req => { try { for (const e of JSON.parse(req.postData() || '{}').events || []) collected.set(e.id, e.name); } catch {} };
   /* the installed iPhone app (PR #820's dock): only navigator.standalone is stood in, as scripts/e2e/installed-app.e2e.mjs does */
   if (standalone) await context.addInitScript(() => { Object.defineProperty(navigator, 'standalone', { configurable: true, value: true }); });
   await context.addInitScript(({ member, token, pocket, session, worldMute }) => {
@@ -160,6 +164,7 @@ async function setup({ width = 390, member = false, earned = false, ua, pocket =
         return json(r, { ok: true, url: API + '/v1/music/stream/' + stream.token, expires_in: expiresIn, gate: EARNED });
       }
       if (g) return json(r, { error: 'Sign in' }, 401);
+      if (p === '/v1/collect') collect(req);
       return json(r, { error: 'fixture' }, 404);
     }
     if (u.hostname.endsWith('supabase.co')) {
@@ -172,6 +177,7 @@ async function setup({ width = 390, member = false, earned = false, ua, pocket =
         return json(r, { ok: true, url: u.origin + '/storage/v1/object/sign/creator-audio/fixture-release.mp3?token=' + n, expires_in: creator.expiresIn(n) });
       }
       if (p.startsWith('/storage/v1/object/sign/') && creator) return audio(r, join(ROOT, 'assets/audio/pull-up.mp3'), {}, 'creator:' + u.searchParams.get('token'));
+      if (p === '/functions/v1/collect') collect(req);
       if (p.startsWith('/functions/')) return json(r, { error: 'fixture' }, 401);
       return json(r, []);
     }
@@ -194,7 +200,7 @@ async function setup({ width = 390, member = false, earned = false, ua, pocket =
   const page = await context.newPage();
   page.on('pageerror', e => errors.push(String(e.message).slice(0, 300)));
   if (day !== null) await page.clock.setFixedTime(new Date(day ? '2026-11-19T13:00:00-05:00' : '2026-11-19T22:30:00-05:00'));
-  return { context, page, requests, errors, stream, reads, signed };
+  return { context, page, requests, errors, stream, reads, signed, sent: () => [...collected.values()] };
 }
 const sleep = ms => new Promise(res => setTimeout(res, ms));
 /* ONE SONG'S MID-TRACK DROP (music slice M3). Its first read stops early, so the browser asks for the rest
@@ -445,7 +451,7 @@ try {
   await scenario('listen engine, public song: slow first read, then a mid-track drop', async () => {
     const song = 'who-did-the-shoot.mp3';
     const fault = drop({ match: k => k === song, first: { delay: 4000, cut: 480000 } });
-    const { context, page, errors, reads } = await setup({ width: 390, deliver: fault.deliver });
+    const { context, page, errors, reads, sent } = await setup({ width: 390, deliver: fault.deliver });
     await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
     await page.waitForFunction(() => window.MCC_MUSIC && document.querySelector('[data-music-play][data-album="here"][data-track="Who Did The Shoot"]'), null, { timeout: 20000 });
     await traceOf(page, 'MCC_MUSIC.audio');
@@ -478,6 +484,13 @@ try {
     check('mid-track drop: back to its own label, the line gone', back.label === 'Full track' && back.note === '', back);
     const events = await page.evaluate(() => window.__events);
     check('mid-track drop: recorded as an interruption, never as a finished song', events.includes('music_interrupted') && !events.includes('music_complete'), events);
+    /* what leaves the page (music slice M3 follow-up, review RL-9): the new name waits for Matthew's approval in
+       js/analytics.js, and the drop is one music_error however many reads failed (it was one per failed read) */
+    await page.waitForFunction(() => true); await sleep(3200);   /* the analytics batch goes 2.5 s after its first event */
+    const wire = sent();
+    check('mid-track drop: nothing named music_interrupted leaves the page (it waits for approval)', !wire.includes('music_interrupted'), wire);
+    check('mid-track drop: one music_error for the drop, however many reads failed', wire.filter(n => n === 'music_error').length === 1 && events.filter(n => n === 'music_error').length === 1,
+      { wire, page: events.filter(n => /^music_(error|interrupted)$/.test(n)) });
     check('listen engine, delivery: no script errors', errors.length === 0, errors);
     await context.close();
   });
@@ -535,7 +548,7 @@ try {
   await scenario('album, public song: a mid-track drop', async () => {
     const song = 'who-did-the-shoot.mp3';
     const fault = drop({ match: k => k === song, first: { cut: 480000 } });
-    const { context, page, errors, reads } = await setup({ width: 390, deliver: fault.deliver });
+    const { context, page, errors, reads, sent } = await setup({ width: 390, deliver: fault.deliver });
     await page.goto(HOUSE + '/album.html?album=here', { waitUntil: 'load' });
     await page.waitForSelector('#tracks li', { timeout: 20000 });
     await traceOf(page, 'document.getElementById("deck")');
@@ -558,6 +571,9 @@ try {
     check('album drop: the line is gone once it plays again', back.status === '' && !/Reconnecting/.test(back.time), back);
     const events = await page.evaluate(() => window.__events);
     check('album drop: recorded as an interruption, never as a finished song', events.includes('music_interrupted') && !events.includes('music_complete'), events);
+    await sleep(3200);   /* the analytics batch goes 2.5 s after its first event */
+    const wire = sent();
+    check('album drop: nothing named music_interrupted leaves the page (it waits for approval), and no music_error per read', !wire.includes('music_interrupted') && !wire.includes('music_error'), wire);
     check('album, delivery: no script errors', errors.length === 0, errors);
     await context.close();
   });
@@ -847,11 +863,12 @@ try {
     const { context, page, errors } = await setup({ width: 390, deliver, standalone: true });
     await listenPlay(page);
     await page.waitForFunction(() => window.MCC_MUSIC.delivery && MCC_MUSIC.delivery().state === 'reconnecting', null, { timeout: 20000 }).catch(() => {});
-    await page.waitForFunction(() => { const d = document.getElementById('mccInstalledDock'); return d && /Reconnecting/.test((d.querySelector('[data-app-player="artist"]') || {}).textContent || ''); }, null, { timeout: 5000 }).catch(() => {});
+    await page.waitForFunction(() => { const d = document.getElementById('mccInstalledDock'); return d && /Reconnecting/.test((d.querySelector('[data-app-player="status"]') || {}).textContent || ''); }, null, { timeout: 5000 }).catch(() => {});
     const dock = () => page.evaluate(() => {
       const d = document.getElementById('mccInstalledDock'), q = s => d && d.querySelector(s);
+      /* the words ride on the dock's own status line since the M3 follow-up (they were cut under the title) */
       return { active: document.documentElement.classList.contains('mcc-app-dock-active'), mini: getComputedStyle(document.getElementById('musicMini')).display,
-        line: q('[data-app-player="artist"]') ? q('[data-app-player="artist"]').textContent : null,
+        line: q('[data-app-player="status"]') ? q('[data-app-player="status"]').textContent : null,
         play: q('[data-app-player="play"]') ? q('[data-app-player="play"]').getAttribute('aria-label') : null,
         label: q('[data-app-player="open"]') ? q('[data-app-player="open"]').getAttribute('aria-label') : null };
     });
@@ -869,6 +886,199 @@ try {
     const lost = await dock();
     check('installed app: once the tries give up, the dock says so and offers Play', lost.line === 'Connection lost · tap play' && lost.play === 'Play music', lost);
     check('installed app: no script errors', errors.length === 0, errors);
+    await context.close();
+  });
+
+  /* ------------------------------------------------------------------------------------------------------
+     THE M3 FOLLOW-UP (docs/music/MUSIC-RELEASE-20261119.md, "M3 follow-up (2026-11-23)"): each check below
+     failed at 5b549475.
+     ------------------------------------------------------------------------------------------------------ */
+  /* review RL-12: .alb__gate { display: inline-flex } overrode the hidden attribute album.html sets, so the door to
+     Heal the 3rd World's gateway showed on every album */
+  await scenario('album: the door to Heal the 3rd World shows only on its own record (every album, 390 and 1280)', async () => {
+    const slugs = JSON.parse(await readFile(join(ROOT, 'data/albums.json'), 'utf8')).albums.map(a => a.slug);
+    for (const width of [390, 1280]) {
+      const { context, page, errors } = await setup({ width });
+      for (const slug of slugs) {
+        await page.goto(HOUSE + '/album.html?album=' + encodeURIComponent(slug), { waitUntil: 'load' });
+        await page.waitForSelector('#tracks li', { timeout: 20000 });
+        const door = await page.evaluate(() => {
+          const g = document.getElementById('albGate'), r = g.getBoundingClientRect();
+          return { hidden: g.hidden, display: getComputedStyle(g).display, w: Math.round(r.width), h: Math.round(r.height), href: g.getAttribute('href') };
+        });
+        const own = slug === 'heal-the-3', shows = door.display !== 'none' && door.h > 0;
+        check(`album ${slug} at ${width}: the door to Heal the 3rd World ${own ? 'shows on its own record' : 'is not there (the page marks it hidden)'}`,
+          own ? shows && !door.hidden && door.href === 'heal-the-3rd-world.html' : !shows && door.hidden, door);
+        if (width === 390) check(`album ${slug} at 390: the page fits the screen`, await fits(page));
+      }
+      check(`album doors at ${width}: no script errors`, errors.length === 0, errors);
+      await context.close();
+    }
+  });
+
+  /* verification V-2: the preview line (js/label.js's toast) sat at 96 px from the bottom for 3.4 s, over the deck bar's
+     title and time */
+  await scenario('album: the preview line never covers the deck bar or the tab bar (320, 390, 820, 1280; the installed app)', async () => {
+    const LINE = 'That was the preview of Niggy Nigg Niggr. The full song opens later.';
+    for (const [width, standalone] of [[320, false], [390, false], [820, false], [1280, false], [390, true]]) {
+      const { context, page, errors } = await setup({ width, standalone });
+      await albumPlay(page);
+      await page.waitForFunction(() => document.getElementById('deckbar').dataset.off === '0' && !document.getElementById('deck').paused, null, { timeout: 15000 });
+      await sleep(400);
+      await page.evaluate(line => window.MCC_TOAST(line), LINE);
+      await sleep(450);                              /* its rise */
+      const r = await page.evaluate(() => {
+        const box = el => { if (!el) return null; const s = getComputedStyle(el); if (s.display === 'none' || s.visibility === 'hidden') return null;
+          const b = el.getBoundingClientRect(); return b.width && b.height ? { l: Math.round(b.left), t: Math.round(b.top), r: Math.round(b.right), b: Math.round(b.bottom) } : null; };
+        return { toast: box(document.querySelector('.ltoast.on')), deck: box(document.getElementById('deckbar')), bar: box(document.querySelector('.appbar')),
+          vw: innerWidth, vh: innerHeight };
+      });
+      const meets = (a, b) => !!(a && b && a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b);
+      const where = `${width}${standalone ? ', installed' : ''}`;
+      check(`album at ${where}: the preview line shows, clear of the deck bar and the tab bar`,
+        r.toast && !meets(r.toast, r.deck) && !meets(r.toast, r.bar) && r.toast.t >= 0 && r.toast.l >= 0 && r.toast.r <= r.vw, r);
+      check(`album at ${where} with the line: the page fits the screen`, await fits(page));
+      if (width === 390 && !standalone) await page.screenshot({ path: join(OUT, 'album-390-preview-line.png') });
+      check(`album preview line at ${where}: no script errors`, errors.length === 0, errors);
+      await context.close();
+    }
+  });
+
+  /* verification V-3: on listen.html the bar's middle button kept its play triangle while a song played (the engine never
+     sent mcc:nowplaying), and a tap scrolled to the top */
+  await scenario('listen page: the bar\'s middle button shows what plays and drives the engine, as on the album', async () => {
+    const song = 'who-did-the-shoot.mp3';
+    const fault = drop({ match: k => k === song, first: { cut: 480000 }, hold: 9000, down: 60000 });
+    const { context, page, errors, reads } = await setup({ width: 390, deliver: fault.deliver });
+    await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
+    await page.waitForFunction(sel => window.MCC_MUSIC && document.querySelector(sel), WDTS, { timeout: 20000 });
+    const tab = () => page.evaluate(() => { const t = document.querySelector('.appbar [data-appnav="music"]'); return { sound: !!t && t.classList.contains('is-sound'), y: Math.round(scrollY) }; });
+    const engine = () => page.evaluate(() => ({ paused: MCC_MUSIC.audio.paused, button: document.getElementById('musicMiniPlay').getAttribute('aria-label'), state: MCC_MUSIC.delivery().state }));
+    check('listen, nothing chosen: the middle button shows its play triangle', !(await tab()).sound);
+    await page.locator(WDTS).first().click();
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3, null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 3000 }).catch(() => {});
+    check('listen, a song playing: the middle button shows Pause, as on the album', (await tab()).sound, await tab());
+    await page.evaluate(() => window.scrollTo(0, 300));
+    await sleep(300);
+    const before = await tab();
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.waitForFunction(() => MCC_MUSIC.audio.paused, null, { timeout: 3000 }).catch(() => {});
+    await sleep(400);
+    const paused = await engine(), after = await tab();
+    check('listen: a tap on it pauses the song, as on the album (it scrolled to the top and the song played on)',
+      paused.paused && paused.button === 'Play' && !after.sound && after.y === before.y, { paused, before, after });
+    await page.locator('.appbar [data-appnav="music"]').click();
+    /* play() unpauses the element at once; the bar hears of it from the element's play event, a moment later */
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 5000 }).catch(() => {});
+    const again = await engine(), againTab = await tab();
+    check('listen: a second tap plays it again, and the button says so', !again.paused && againTab.sound, { again, tab: againTab });
+    await page.waitForFunction(() => MCC_MUSIC.delivery().state === 'reconnecting', null, { timeout: 20000 }).catch(() => {});
+    const down = await engine();
+    check('listen, the song being picked up again: the middle button is Pause, as the mini player\'s is', down.state === 'reconnecting' && down.button === 'Pause' && (await tab()).sound, { down, tab: await tab() });
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await sleep(300);
+    const n = reads.length;
+    await sleep(3500);
+    const stopped = await engine();
+    check('listen: its tap stops the tries (nothing more is read) and it shows Play', stopped.paused && stopped.button === 'Play' && !(await tab()).sound && reads.length === n,
+      { stopped, reads: reads.slice(n).map(q => q.key + '@' + q.start) });
+    check('listen, the bar\'s button: no script errors', errors.length === 0, errors);
+    await context.close();
+  });
+
+  /* the fix round's leftover: at 390 px the installed app's dock cut its second line to "Reconnectin…" */
+  await scenario('installed app: the dock says why the music is quiet in full words, at 320 and 390', async () => {
+    const said = async (page, label) => {
+      for (const w of [390, 320]) {
+        await page.setViewportSize({ width: w, height: 844 });
+        await sleep(300);
+        const m = await page.evaluate(() => {
+          const d = document.getElementById('mccInstalledDock'), s = d && d.querySelector('[data-app-player="status"]');
+          if (!s || getComputedStyle(s).display === 'none') return null;
+          const box = el => { const r = el.getBoundingClientRect(); return { l: Math.round(r.left), t: Math.round(r.top), r: Math.round(r.right), b: Math.round(r.bottom) }; };
+          const play = d.querySelector('[data-app-player="play"]'), prev = d.querySelector('[data-app-player="previous"]');
+          return { text: s.textContent, sw: s.scrollWidth, cw: s.clientWidth, line: box(s), dock: box(d), play: box(play), prev: box(prev),
+            artist: d.querySelector('[data-app-player="artist"]').textContent, vw: innerWidth };
+        });
+        /* whole words, inside the dock and the screen, above the controls (which keep the dock's bottom row) */
+        const placed = !!m && m.line.l >= m.dock.l && m.line.r <= m.dock.r && m.line.r <= m.vw && m.line.t >= m.dock.t &&
+          m.line.b <= m.play.t && m.line.b <= m.prev.t && m.dock.b - m.play.b <= 2 && m.dock.b - m.prev.b <= 2;
+        check(`installed app at ${w}: the dock says "${label}" in full, on its own line above its controls`,
+          !!m && m.text === label && m.cw > 0 && m.sw <= m.cw && placed, m);
+        check(`installed app at ${w} ("${label}"): the page fits the screen`, await fits(page));
+        if (w === 390 && label === 'Reconnecting…') await page.screenshot({ path: join(OUT, 'installed-listen-390-reconnecting-words.png') });
+      }
+    };
+    {
+      const song = 'who-did-the-shoot.mp3';
+      const deliver = async (q) => { if (q.key !== song) return null; if (q.n === 1) return { cut: 96000 }; return { status: 503 }; };
+      const { context, page, errors } = await setup({ width: 390, deliver, standalone: true });
+      await listenPlay(page);
+      await page.waitForFunction(() => window.MCC_MUSIC.delivery && MCC_MUSIC.delivery().state === 'reconnecting', null, { timeout: 20000 }).catch(() => {});
+      await page.waitForFunction(() => /Reconnecting/.test((document.querySelector('#mccInstalledDock [data-app-player="status"]') || {}).textContent || ''), null, { timeout: 5000 }).catch(() => {});
+      await said(page, 'Reconnecting…');
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForFunction(() => MCC_MUSIC.delivery().state === 'lost', null, { timeout: 20000 }).catch(() => {});
+      await sleep(200);
+      await said(page, 'Connection lost · tap play');
+      check('installed app, a drop: no script errors', errors.length === 0, errors);
+      await context.close();
+    }
+    {
+      const song = 'who-did-the-shoot.mp3';
+      const deliver = async (q) => (q.key === song ? { status: 404 } : null);
+      const { context, page } = await setup({ width: 390, deliver, standalone: true });
+      await listenPlay(page);
+      await page.waitForFunction(() => /Loading/.test((document.querySelector('#mccInstalledDock [data-app-player="status"]') || {}).textContent || ''), null, { timeout: 8000 }).catch(() => {});
+      await said(page, 'Loading…');
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForFunction(() => MCC_MUSIC.delivery().state === 'lost', null, { timeout: 20000 }).catch(() => {});
+      await sleep(200);
+      await said(page, 'Could not load · tap play');
+      await context.close();
+    }
+    {
+      const { context, page } = await setup({ width: 390, standalone: true });
+      await listenPlay(page);
+      await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3, null, { timeout: 15000 });
+      await page.evaluate(() => { MCC_MUSIC.audio.muted = true; });
+      await page.waitForFunction(() => /Muted/.test((document.querySelector('#mccInstalledDock [data-app-player="status"]') || {}).textContent || ''), null, { timeout: 5000 }).catch(() => {});
+      await said(page, 'Muted');
+      await context.close();
+    }
+  });
+
+  /* review RL-10: a listener who kept Whip Equipped offline holds the old dealer-plates-b.mp3; the album asks for the .m4a */
+  await scenario('album, Whip Equipped kept before its B-side moved: the kept copy counts', async () => {
+    const { context, page, errors } = await setup({ width: 390 });
+    await page.goto(HOUSE + '/album.html?album=whip-equipped', { waitUntil: 'load' });
+    await page.waitForSelector('#tracks li', { timeout: 20000 });
+    /* the vault as "Keep the masters" left it before music slice M3: every row's file, the B-side under its old name */
+    const seeded = await page.evaluate(async () => {
+      const abs = u => new URL(u, location.href).href.split('?')[0];
+      const files = new Set();
+      for (const li of document.querySelectorAll('#tracks li')) for (const a of ['data-src', 'data-art', 'data-lyrics', 'data-poster']) { const v = li.getAttribute(a); if (v) files.add(abs(v)); }
+      const art = document.getElementById('albArt');
+      if (art) files.add(abs(art.getAttribute('src')));
+      const c = await caches.open('mcc-vault-v1'), kept = [];
+      for (const u of files) {
+        const keep = /\/dealer-plates-b\.m4a$/.test(u) ? u.replace(/\.m4a$/, '.mp3') : u;
+        const res = await fetch(keep);
+        if (!res.ok) continue;
+        await c.put(keep, res);
+        kept.push(keep.split('/').pop());
+      }
+      return { files: files.size, kept };
+    });
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForSelector('#tracks li', { timeout: 20000 });
+    const masters = () => page.evaluate(() => { const b = [...document.querySelectorAll('#labelRail .lrail__b')].find(x => /pocket|download|masters/i.test(x.textContent)); return b ? b.textContent : null; });
+    await page.waitForFunction(() => [...document.querySelectorAll('#labelRail .lrail__b')].some(x => /pocket|Finish the download/.test(x.textContent)), null, { timeout: 10000 }).catch(() => {});
+    const label = await masters();
+    check('Whip Equipped kept before its B-side moved: the album says the masters are in your pocket (it said "Finish the download")',
+      seeded.kept.length === seeded.files && label === 'In your pocket', { label, seeded });
+    check('the kept album: no script errors', errors.length === 0, errors);
     await context.close();
   });
 

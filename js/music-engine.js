@@ -311,9 +311,30 @@
     return openTrack(next.albumSlug, next.title, true);
   }
 
+  /* THE BAR'S MIDDLE BUTTON ON THE LISTEN PAGE (music slice M3 follow-up; verification V-3). js/tabbar.js draws the
+     Music tab as a play triangle or a pause glyph from mcc:nowplaying, which album.html and js/main.js send, and where
+     the tab's page is the one you stand on and gives it MCC_NP_PLAY and MCC_NP_PAUSE, a tap is that page's Play or
+     Pause. listen.html is the tab's own page and the engine is its player, and it did neither: the tab kept its
+     triangle while a song played, and a tap scrolled to the top. There the engine now says what plays in the album's
+     words ({ title, href: "#np", playing }) when that changes (play, pause, the end, another song; a song being picked
+     up again is Pause, as on the mini player), and gives the bar the mini player's Play and Pause once a song is
+     chosen or held. The other pages that load it say nothing: there the tab opens the shelf, as before. */
+  var ON_SHELF = /(?:^|\/)listen\.html$/.test(String(root.location && root.location.pathname || ""));
+  var toldBar = null;
+  function tellBar(item, playing) {
+    if (!ON_SHELF || !item) return;
+    if (typeof root.MCC_NP_PLAY !== "function") {
+      root.MCC_NP_PLAY = function () { return current ? resumeCurrent() : held ? resumeHeld() : Promise.resolve(null); };
+      root.MCC_NP_PAUSE = function () { if (current) pauseCurrent(); };
+    }
+    if (toldBar && toldBar.title === item.title && toldBar.playing === playing) return;
+    toldBar = { title: item.title, playing: playing };
+    try { root.dispatchEvent(new CustomEvent("mcc:nowplaying", { detail: { title: item.title, href: "#np", playing: playing } })); } catch (e) {}
+  }
+
   function paint() {
     var p = ensureUI();
-    if (!current) { if (held) paintHeld(p); else p.hidden = true; return; }
+    if (!current) { if (held) { paintHeld(p); tellBar(held.item, false); } else p.hidden = true; return; }
     p.hidden = false;
 
     var art = current.art || "assets/img/m-mark.png";
@@ -414,6 +435,7 @@
       b.setAttribute("aria-pressed", same && wanted ? "true" : "false");
     });
     root.dispatchEvent(new CustomEvent("mcc:music-state", {detail:{title:current.title, access:currentAccess, playing:wanted}}));
+    tellBar(current, wanted);
   }
 
   function announceSelection() {
@@ -831,9 +853,13 @@
     if (queue.length > 1 && (!heardPreview || wantPlay)) playAdjacent(1);
   });
   audio.addEventListener("error", function () {
-    trackEvent("music_error", { code: audio.error ? audio.error.code : 0 });
+    /* one error for the whole drop, or for a song that would not load, with the first failed read's code, however
+       many reads fail after it and however often Play picks it up: one per failed read put six in the count for one
+       listener's one drop (music slice M3 follow-up; review RL-9). The drop is the one deliveryFailed keeps. */
+    var told = !!(trouble && trouble.since && trouble.state !== "loading" && trouble.errorTold);
+    if (!told) trackEvent("music_error", { code: audio.error ? audio.error.code : 0 });
     /* a song that stops on the way is picked up again where it stopped (DELIVERY, below) */
-    if (deliveryFailed("error")) return;
+    if (deliveryFailed("error")) { if (trouble) trouble.errorTold = true; return; }
     if (grant && grant.request !== playbackRequest) return;   // an old source failing under a newer choice
     currentAccess = "unavailable";
     paint();

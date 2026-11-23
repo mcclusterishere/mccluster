@@ -7,7 +7,7 @@
   var doc = root.document, html = doc.documentElement;
   var source = doc.currentScript && doc.currentScript.src;
   var ROOT = source ? source.replace(/js\/installed-app-dock\.js.*$/, "") : "";
-  var dock = doc.querySelector(".appbar"), tabs = null, left = null, right = null;
+  var dock = doc.querySelector(".appbar"), tabs = null, left = null, right = null, status = null;
   var styleReady = false, connected = false, active = false, lastSurface = "", expanded = false;
   var oldId = dock && dock.id, oldLabel = dock && dock.getAttribute("aria-label");
   if (!dock) return;
@@ -58,7 +58,10 @@
     left.appendChild(info);
     right.appendChild(button("play", "Play music", PLAY));
     right.appendChild(button("next", "Next track", icon("M17 5h2v14h-2zM5 5l11 7-11 7z")));
-    dock.append(left, tabs, right); dock.id = "mccInstalledDock";
+    /* why the music is quiet, on a line of its own (the open button's label says it too) */
+    status = doc.createElement("span"); status.className = "appbar__music-status"; status.dataset.appPlayer = "status";
+    status.setAttribute("aria-hidden", "true"); status.hidden = true;
+    dock.append(left, tabs, right, status); dock.id = "mccInstalledDock";
     html.classList.add("mcc-app-dock-ready");
     dock.addEventListener("click", onClick);
     paint();
@@ -89,9 +92,14 @@
       dock.setAttribute("aria-label", "Sections and music controls");
       var title = dock.querySelector("[data-app-player='title']"), artist = dock.querySelector("[data-app-player='artist']");
       /* the dock hides the player's own bar, so it says why the music is quiet in its place ("Reconnecting…",
-         "Connection lost · tap play", "Loading…", "Muted"; music slice M3, review RL-6) */
+         "Connection lost · tap play", "Loading…", "Could not load · tap play", "Muted"; music slice M3, review
+         RL-6). In the second line, under the title, the words were cut by its width ("Reconnectin…" at 390 px, a
+         few letters at 320): they now take a line of their own across the dock, above its controls, which keep
+         their place, and the second line keeps the artist (music slice M3 follow-up) */
       var line = s.status || s.artist;
-      title.textContent = s.title; artist.textContent = line;
+      title.textContent = s.title; artist.textContent = s.artist || "";
+      status.textContent = s.status || ""; status.hidden = !s.status;
+      dock.classList.toggle("has-status", !!s.status);
       var info = dock.querySelector("[data-app-player='open']"), full = s.title + (line ? " — " + line : "");
       info.title = full; info.setAttribute("aria-label", "Open player: " + full);
       var play = dock.querySelector("[data-app-player='play']");
@@ -102,6 +110,7 @@
     } else {
       html.removeAttribute("data-app-player-surface");
       dock.setAttribute("aria-label", oldLabel || "Sections");
+      status.hidden = true; dock.classList.remove("has-status");
     }
     setActive(usable);
   }
@@ -115,9 +124,9 @@
     setActive(false); closeDetails(); html.classList.remove("mcc-app-dock-ready");
     html.removeAttribute("data-app-player-surface");
     if (!tabs) return;
-    left.remove(); right.remove();
+    left.remove(); right.remove(); status.remove(); dock.classList.remove("has-status");
     while (tabs.firstChild) dock.insertBefore(tabs.firstChild, tabs);
-    tabs.remove(); tabs = left = right = null;
+    tabs.remove(); tabs = left = right = status = null;
     dock.id = oldId || "mccAppbar"; dock.setAttribute("aria-label", oldLabel || "Sections");
     dock.removeEventListener("click", onClick);
   }

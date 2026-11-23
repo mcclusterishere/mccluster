@@ -56,6 +56,18 @@ html.mcc-installed-app .appbar button.appbar__music-info {
 html.mcc-installed-app .appbar__music-info span { display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 html.mcc-installed-app .appbar__music-info [data-app-player="title"] { font:600 12px/15px system-ui,sans-serif; }
 html.mcc-installed-app .appbar__music-info [data-app-player="artist"] { font:400 10px/13px system-ui,sans-serif;opacity:.78; }
+/* Why the music is quiet, in its full words at every width: a line of its own across the top of the dock while it
+   applies; the controls stay where they were, on the row below. Under the title it was cut by the column's width,
+   "Reconnectin…" at 390 px and a few letters at 320 (music slice M3 follow-up). */
+html.mcc-installed-app .appbar__music-status { display:none; }
+html.mcc-installed-app.mcc-app-dock-active .appbar.has-status { height:auto;grid-template-rows:auto 44px; }
+html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__music-left,
+html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__tabs,
+html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__music-right { grid-row:2; }
+html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__music-status {
+  display:block;grid-column:1 / -1;grid-row:1;min-width:0;padding:5px 14px 0 45px;
+  font:600 11px/14px system-ui,sans-serif;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 /* Hide only the corresponding owner's duplicate floating chrome, after the
    integrated controls are ready. Its full player and its audio stay alive. */
 html.mcc-installed-app.mcc-app-dock-active[data-app-player-surface="listen"] .music-mini,

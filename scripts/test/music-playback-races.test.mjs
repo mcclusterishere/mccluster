@@ -128,6 +128,10 @@ function engine(options = {}) {
   if (clock) window.Date = clock.Date;
   if (options.member) window.MCC = { session: () => ({ access_token: 'fixture-token' }) };
   if (options.listens) window.MCC_LISTENS = options.listens;
+  /* the page the engine runs on (the bar's middle button is its transport on the listen page only), and the pocket's
+     record left on this device (js/pip.js), when a test needs them */
+  if (options.path) window.location = { pathname: options.path, origin: 'https://fixture.invalid', href: 'https://fixture.invalid' + options.path };
+  if (options.pocket) window.MCC_POCKET = options.pocket;
   window.window = window;
   vm.runInContext(read('js/music-engine.js'), vm.createContext(window), { filename: 'js/music-engine.js' });
   return {
@@ -1364,4 +1368,149 @@ test('the album\'s "two records deep" tip counts records, not the tries that pic
   await c.tick(3000);
   assert.equal(appended.length, 1);
   assert.match(appended[0], /Two records deep/);
+});
+
+/* ------------------------------------------------------------------------------------------------------
+   THE M3 FOLLOW-UP (docs/music/MUSIC-RELEASE-20261119.md, "M3 follow-up (2026-11-23)")
+   ------------------------------------------------------------------------------------------------------ */
+
+/* ONE DROP, ONE ERROR (review RL-9). music_error went out once per failed read: a drop and its five tries sent six,
+   and a file that would not load sent six too. It is sent once per failed song or drop episode now, with the first
+   failed read's code; a song that plays on after picking up and then drops again is a new episode. (The new
+   music_interrupted waits for Matthew's approval in js/analytics.js: scripts/test/music-measurement.test.mjs.) */
+test('a dropped connection is one music_error with its code, however many reads fail; a song that never started is one too', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c });
+  const errors = () => e.events.filter((x) => x.name === 'music_error');
+  await e.play('Full song');
+  e.music.audio.currentTime = 60;
+  e.music.audio.fail(2);
+  for (let i = 0; i < 5; i++) {                    // every try fails too
+    const n = e.music.audio.loads.length;
+    await until(c, () => e.music.audio.loads.length > n, 50, 20000);
+    e.music.audio.fail(2);
+  }
+  await c.tick(20000);
+  assert.equal(e.text('musicMiniAccess'), 'Connection lost');
+  assert.equal(errors().length, 1, 'one drop, one music_error (it was one per failed read: six)');
+  assert.equal(errors()[0].code, 2, 'with its code');
+  await e.music.resume();                          // Play picks it up: the same drop, the same episode
+  e.music.audio.fail(2);
+  await c.tick(20000);
+  assert.equal(errors().length, 1, 'the same drop picked up again by the listener is not a second error');
+  await e.music.resume();
+  e.music.audio.fire('playing');
+  e.music.audio.currentTime = 66; e.music.audio.fire('timeupdate');   // it plays on: the drop is over
+  e.music.audio.fail(2);                           // a new drop later in the song
+  assert.equal(errors().length, 2, 'a later drop is a new episode');
+  const f = engine({ clock: c });
+  await f.play('Full song');
+  for (let i = 0; i < 7; i++) { f.music.audio.readyState = 0; f.music.audio.fail(4); await c.tick(3500); }
+  assert.equal(f.text('musicMiniAccess'), 'Could not load');
+  assert.deepEqual(f.events.filter((x) => x.name === 'music_error').map((x) => x.code), [4], 'a song that would not load: one music_error, code 4');
+  await f.play('Next full song');                  // another song fails: its own error
+  f.music.audio.readyState = 0; f.music.audio.fail(4);
+  assert.equal(f.events.filter((x) => x.name === 'music_error').length, 2);
+});
+
+/* AN EARNED PLAY WHOSE TIME RAN OUT ENDS THE MOMENT A READ FAILS (verification V-4). Taking out the engine's immediate
+   end in deliveryFailed left the same end half a second later, at the first try (sourceAgain checks the time too), so no
+   test held it: for half a second the listener saw "Reconnecting…" and Pause for a play that was already over. */
+test('gated path: a read that fails after an earned play\'s time ran out ends it at once: no read, no claim, the right line', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c, claim: () => ({ state: 'full', url: 'earned-master.mp3', expires_in: 300 }) });
+  e.reply(() => Promise.resolve({ state: 'earned' }));
+  await e.play('First preview');
+  assert.equal(e.claims(), 1);
+  e.music.audio.currentTime = 150;
+  e.music.audio.fire('playing');
+  await c.tick(295 * 1000);                        // inside the play's last ten seconds
+  const loads = e.music.audio.loads.length;
+  e.music.audio.fail(2);                           // the clock does not move: what the listener sees at once
+  assert.equal(e.music.access(), 'spent', 'the play is over at once');
+  assert.equal(e.text('musicMiniAccess'), 'Play ended');
+  assert.equal(e.text('musicMiniNote'), 'The connection dropped and this play\'s time ran out. Playing it again starts a new play.');
+  assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Play', 'never Pause for a play that is over');
+  assert.equal(e.np().spec.playing(), false, 'the lock screen is not told music is wanted');
+  assert.equal(e.music.delivery().state, '', 'no try is waiting');
+  await c.tick(60 * 1000);
+  assert.equal(e.music.audio.loads.length, loads, 'no read');
+  assert.equal(e.claims(), 1, 'no second claim');
+});
+
+/* THE BAR'S MIDDLE BUTTON ON THE LISTEN PAGE (verification V-3). js/tabbar.js paints it from mcc:nowplaying, which
+   album.html and js/main.js send and the engine never did: on listen.html it kept its play triangle while a song
+   played, and a tap scrolled to the top. The engine sends the same event, with the album's detail, on play, pause, the
+   end and a new song, and gives the bar the album's two calls; elsewhere the button opens the shelf, as before. */
+test('on the listen page the engine tells the bar what plays (mcc:nowplaying, as the album does): play, pause, the end, a new song', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c, path: '/listen.html' });
+  const told = [];
+  e.win.addEventListener('mcc:nowplaying', (ev) => told.push(JSON.parse(JSON.stringify(ev.detail))));
+  await e.play('Full song');
+  assert.deepEqual(told.at(-1), { title: 'Full song', href: '#np', playing: true }, 'play');
+  e.music.pause();
+  assert.deepEqual(told.at(-1), { title: 'Full song', href: '#np', playing: false }, 'pause');
+  await e.music.resume();
+  assert.equal(told.at(-1).playing, true);
+  e.music.audio.currentTime = 180;
+  e.music.audio.fire('ended');                     // the end: the next song starts
+  await settle();
+  assert.deepEqual(told.at(-1), { title: 'Next full song', href: '#np', playing: true }, 'the end and the next song');
+  await e.play('Full song');                       // a song chosen
+  assert.deepEqual(told.at(-1), { title: 'Full song', href: '#np', playing: true }, 'a new song');
+  e.music.audio.currentTime = 30;
+  e.music.audio.fail(2);                           // picked up again: the listener still asked for music (Pause stops it)
+  assert.equal(told.at(-1).playing, true, 'while it is picked up again the button is Pause, as on the album');
+  e.music.pause();
+  assert.equal(told.at(-1).playing, false);
+  const n = told.length;
+  e.music.audio.fire('timeupdate'); e.music.audio.fire('timeupdate');
+  assert.equal(told.length, n, 'said when it changes, not on every tick');
+});
+
+test('on the listen page the bar\'s middle button drives the engine once a song is chosen or held, as it drives the album deck', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c, path: '/listen.html' });
+  assert.equal(typeof e.win.MCC_NP_PLAY, 'undefined', 'nothing chosen or held: the button opens the shelf, as before');
+  await e.play('Full song');
+  assert.equal(typeof e.win.MCC_NP_PLAY, 'function');
+  assert.equal(typeof e.win.MCC_NP_PAUSE, 'function');
+  e.win.MCC_NP_PAUSE();
+  assert.equal(e.music.audio.paused, true);
+  assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Play');
+  await e.win.MCC_NP_PLAY();
+  assert.equal(e.music.audio.paused, false);
+  e.music.audio.currentTime = 40;
+  e.music.audio.fail(2);                           // during the tries its Pause stops them
+  e.win.MCC_NP_PAUSE();
+  const loads = e.music.audio.loads.length;
+  await c.tick(30000);
+  assert.equal(e.music.audio.loads.length, loads, 'no try behind the listener');
+  assert.equal(e.text('musicMiniAccess'), 'Connection lost');
+  await e.win.MCC_NP_PLAY();                       // and its Play picks the song up where it stopped
+  await settle();
+  assert.equal(e.music.audio.currentTime, 40);
+  assert.equal(e.music.audio.paused, false);
+  /* a record held from another visit is what the button plays, as the mini player's Play does */
+  const h = engine({ path: '/listen.html', pocket: { read: () => ({ title: 'Full song', album: 'fixture', src: 'whole-song.mp3', t: 42 }) } });
+  h.win.document.dispatchEvent(new Event('DOMContentLoaded'));
+  await settle(); await settle(); await settle();
+  assert.equal(typeof h.win.MCC_NP_PLAY, 'function', 'a held record');
+  await h.win.MCC_NP_PLAY();
+  await settle();
+  assert.equal(h.music.current().title, 'Full song');
+  assert.equal(h.music.audio.currentTime, 42, 'at its second');
+  assert.equal(h.music.audio.paused, false);
+});
+
+test('away from the listen page the engine tells the bar nothing: there its middle button opens the shelf', async () => {
+  for (const path of ['/music-creator.html', '/game-hub.html']) {
+    const e = engine({ path });
+    const told = [];
+    e.win.addEventListener('mcc:nowplaying', (ev) => told.push(ev.detail));
+    await e.play('Full song');
+    assert.equal(told.length, 0, path);
+    assert.equal(typeof e.win.MCC_NP_PLAY, 'undefined', path);
+  }
 });
