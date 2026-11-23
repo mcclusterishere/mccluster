@@ -93,11 +93,13 @@
     if (engine && engine.current && engine.current()) {
       var track = engine.current();
       return {audio:engine.audio, title:track.title, access:engine.access(),
+        delivery:function () { var d = engine.delivery ? engine.delivery() : null; return d && d.state !== "recovering" ? d.state : ""; },
         play:function () { return engine.resume(); }, pause:function () { engine.pause(); }};
     }
     var deck = doc.getElementById("deck");
     if (deck && (deck.currentSrc || deck.getAttribute("src"))) {
       return {audio:deck, title:lastAnnouncement.title || doc.getElementById("tpTitle")?.textContent || "Your music",
+        delivery:function () { return root.MCC_DECK_DELIVERY ? root.MCC_DECK_DELIVERY() : ""; },
         play:function () { audioSession(); return root.MCC_NP_PLAY ? root.MCC_NP_PLAY() : deck.play(); }, pause:function () { deck.pause(); }};
     }
     return null;
@@ -209,12 +211,17 @@
     audio.addEventListener("timeupdate", function () {
       var now = Date.now(); if (now - lyricAt < 250) return; lyricAt = now; lyricTick(audio);
     });
-    ["play", "pause", "ended", "volumechange", "loadedmetadata", "error"].forEach(function (name) {
+    ["play", "playing", "pause", "ended", "volumechange", "loadedmetadata", "error"].forEach(function (name) {
       audio.addEventListener(name, function () {
         if (name === "play" || name === "pause" || name === "ended") lyricTick(audio);
         if (name === "play" && theme && audio !== theme.audio && !theme.audio.paused) { pauseBy = "other_music"; theme.audio.pause(); }
-        if (name === "play" && typeof preference.muted === "boolean" && audio.muted !== preference.muted) audio.muted = preference.muted;
-        if (name === "volumechange") { preference.muted = audio.muted; savePreference(); }
+        /* THE WORLD'S MUTE IS THE WORLD'S (decision D-7's default, music slice M3). A mute stored here once
+           silenced every later Music song, with "Pause" showing and no unmute on the page (lane 01 probe S6).
+           It now governs the World's own soundtrack only; the Music engine and the album deck keep their own
+           mute and say so on their own pages. */
+        var own = !!(theme && audio === theme.audio);
+        if (own && name === "play" && typeof preference.muted === "boolean" && audio.muted !== preference.muted) audio.muted = preference.muted;
+        if (own && name === "volumechange") { preference.muted = audio.muted; savePreference(); }
         paint();
       });
     });
@@ -342,7 +349,10 @@
   }
   function ensureTheme() {
     if (theme) return theme;
-    var audio = new Audio(); audio.preload = "metadata"; audio.loop = false;
+    /* Nothing is read before it is needed (music slice M3, PB-12): every music page made this element and
+       read the theme's file (twice, its index sat at the end) and then, once the catalog arrived, another
+       song's. On a music page it waits for the Globe tap; the World prepares its drawn song once the draw is in. */
+    var audio = new Audio(); audio.preload = "none"; audio.loop = false;
     audio.setAttribute("playsinline", "");
     audio.muted = preference.muted === true; soundWas = {muted:audio.muted, volume:audio.volume};
     theme = {audio:audio, title:"", access:"full",
@@ -386,7 +396,9 @@
   }
   function mute() {
     var p = player() || ensureTheme();
-    p.audio.muted = !p.audio.muted; preference.muted = p.audio.muted; savePreference(); paint();
+    p.audio.muted = !p.audio.muted;
+    if (p === theme) { preference.muted = p.audio.muted; savePreference(); }   // the World's mute is the World's (D-7)
+    paint();
   }
   function ensureControls() {
     if (controls) return;
@@ -415,7 +427,11 @@
       if (p) {
         doc.getElementById("mccWorldAudioTitle").textContent = p.title || "Your music";
         var error = !!p.audio.error, playing = !p.audio.paused && !p.audio.ended;
-        doc.getElementById("mccWorldAudioState").textContent = p.access === "loading" ? "Opening music…" : error || p.access === "unavailable" ? "Unable to play · try again" : p.audio.muted ? "Muted" : playing ? (p.access === "preview" ? "Preview playing" : "Playing") : "Paused";
+        /* a song in trouble on the way says so here too, never "Playing" over silence (music slice M3) */
+        var trouble = p.delivery ? p.delivery() : "";
+        doc.getElementById("mccWorldAudioState").textContent = p.access === "loading" ? "Opening music…" :
+          trouble === "reconnecting" ? "Reconnecting…" : trouble === "lost" ? "Connection lost · tap play" : trouble === "loading" ? "Loading…" :
+          error || p.access === "unavailable" ? "Unable to play · try again" : p.audio.muted ? "Muted" : playing ? (p.access === "preview" ? "Preview playing" : "Playing") : "Paused";
         var b = controls.querySelector(".world-audio__play");
         b.disabled = p.access === "loading";
         b.setAttribute("aria-label", playing ? "Pause music" : "Play music"); b.firstElementChild.textContent = playing ? "Ⅱ" : "▶";
@@ -672,7 +688,11 @@
     ensureTheme(); loadRotation().then(rollUnplayed); // metadata only; no automatic playback on Music.
     watch(root.MCC_MUSIC && root.MCC_MUSIC.audio); watch(doc.getElementById("deck"));
   }
-  if (IS_WORLD && root.parent === root) { ensureTheme(); loadRotation().then(rollUnplayed); ensureControls(); bindCluster(); paint(); }
+  if (IS_WORLD && root.parent === root) {
+    ensureTheme();
+    loadRotation().then(rollUnplayed).then(function () { if (theme && !attached) theme.audio.preload = "metadata"; });
+    ensureControls(); bindCluster(); paint();
+  }
   root.addEventListener("mcc:nowplaying", function (e) { lastAnnouncement = e.detail || {}; paint(); });
   root.addEventListener("mcc:music-selected", function () { if (theme) theme.audio.pause(); watch(root.MCC_MUSIC?.audio); paint(); });
   root.addEventListener("mcc:music-state", paint);

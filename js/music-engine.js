@@ -29,16 +29,30 @@
   var accessRefresh = 0;
   var catalogueRequest = 0;
   var CREATOR_TRACKS = {};
+  /* DELIVERY (music slice M3): what the listener wants, where the current source came from and when it
+     lapses, and a song in trouble on the way (see "DELIVERY" below) */
+  var RETRY_MS = [500, 1500, 3500, 7500];      // all four inside the ten seconds iOS keeps a page awake after its sound stops (Inferred)
+  var LOADING_NOTE_MS = 1500, STALL_MS = 12000, PREFETCH_S = 20, REFRESH_EARLY_MS = 60000, LAPSE_MARGIN_MS = 10000, SHORT_END_S = 2;
+  var wantPlay = false, grant = null, trouble = null, notice = null, noticeTimer = 0, prefetched = null;
+  var refreshTimer = 0, loadingTimer = 0, stallTimer = 0, progressAt = 0, lastGate = null;
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
 
   function pauseCurrent() {
     catalogueRequest++;
     accessRefresh++;
+    /* the listener's Pause wins over anything pending: a retry never plays behind it (music slice M3) */
+    wantPlay = false;
+    quietWatch();
+    if (trouble) {
+      trouble.timer = cancel(trouble.timer);
+      if (trouble.state === "reconnecting") { trouble.state = "lost"; say(lostLine(), { item: current }); }
+      else if (trouble.state === "loading") trouble = null;
+    }
     var opening = currentAccess === "loading";
     if (opening) { playbackRequest++; currentAccess = "idle"; }
     audio.pause();
-    if (opening) paint();
+    paint();
   }
 
   function esc(x) {
@@ -83,9 +97,15 @@
           '<span class="music-mini__meta">' +
             '<b id="musicMiniTitle">Nothing playing</b>' +
             '<span><span id="musicMiniAlbum"></span><em id="musicMiniAccess"></em></span>' +
+            /* what happened to the music, in one short line (a dropped connection, a preview that ended) */
+            '<small class="music-mini__note" id="musicMiniNote" role="status" aria-live="polite" hidden></small>' +
           '</span>' +
         '</button>' +
         '<span class="music-mini__time" id="musicMiniTime">0:00</span>' +
+        /* the music's own mute, shown only while it is muted (decision D-7: the World's mute is the World's) */
+        '<button type="button" class="music-mini__sound" id="musicMiniSound" aria-label="Unmute" hidden>' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>' +
+        '</button>' +
         '<button type="button" class="music-mini__play" id="musicMiniPlay" aria-label="Play">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>' +
         '</button>' +
@@ -129,8 +149,14 @@
             '<span id="musicNowAlbum"></span>' +
             '<span id="musicNowMode"></span>' +
           '</div>' +
-          /* AirPlay where WebKit offers it, shown only while a device is in range (js/now-playing.js; decision D-8) */
+          '<p class="music-now__note" id="musicNowNote" hidden></p>' +
+          /* AirPlay where WebKit offers it, shown only while a device is in range (js/now-playing.js; decision D-8);
+             the music's own unmute, shown only while it is muted (decision D-7) */
           '<div class="music-now__devices">' +
+            '<button type="button" class="music-now__sound" id="musicNowSound" hidden>' +
+              '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>' +
+              '<span>Unmute</span>' +
+            '</button>' +
             '<button type="button" class="music-now__airplay" id="musicNowAirplay" aria-label="Play on another device" hidden>' +
               '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12h-7"/><path d="M3 10a10 10 0 0 1 8 8"/><path d="M3 14a6 6 0 0 1 4.5 4.5"/><path d="M3 18h.5"/></svg>' +
             '</button>' +
@@ -159,6 +185,8 @@
     doc.getElementById("musicMiniSeek").addEventListener("click", function (e) { seekFrom(this, e); });
     doc.getElementById("musicNowSeek").addEventListener("click", function (e) { seekFrom(this, e); });
     doc.getElementById("musicNowClose").addEventListener("click", closeNow);
+    doc.getElementById("musicMiniSound").addEventListener("click", unmute);
+    doc.getElementById("musicNowSound").addEventListener("click", unmute);
     doc.getElementById("musicNowPlay").addEventListener("click", function () {
       if (!current) return;
       if (audio.paused) resumeCurrent().catch(function () {});
@@ -285,6 +313,14 @@
     var accessLabel = currentAccess === "full" ? "Full track" :
       currentAccess === "preview" ? "Preview" : currentAccess === "loading" ? "Opening…" :
       currentAccess === "unavailable" ? "Unavailable" : "";
+    /* never "playing" over silence: what the delivery is doing comes first, then the music's own mute */
+    var heard = currentAccess === "full" || currentAccess === "preview";
+    var troubleLabel = trouble && trouble.state === "reconnecting" ? "Reconnecting…" :
+      trouble && trouble.state === "lost" ? "Connection lost" : trouble && trouble.state === "loading" ? "Loading…" : "";
+    var muted = heard && !!audio.muted;
+    if (heard && troubleLabel) accessLabel = troubleLabel;
+    else if (muted) accessLabel = "Muted";
+    var line = noticeLine();
     var duration = audio.duration && isFinite(audio.duration) ? audio.duration : 0;
     var pct = duration ? Math.min(100, audio.currentTime / duration * 100) : 0;
 
@@ -306,7 +342,11 @@
 
     var access = doc.getElementById("musicMiniAccess");
     access.textContent = accessLabel;
-    access.className = "music-mini__access is-" + (currentAccess || "idle");
+    access.className = "music-mini__access is-" + (heard && troubleLabel ? "trouble" : muted ? "muted" : (currentAccess || "idle"));
+    var miniNote = doc.getElementById("musicMiniNote");
+    if (miniNote) { miniNote.textContent = line; miniNote.hidden = !line; }
+    var miniSound = doc.getElementById("musicMiniSound");
+    if (miniSound) miniSound.hidden = !muted;
     doc.getElementById("musicMiniTime").textContent =
       fmt(audio.currentTime) + " / " + (duration ? fmt(duration) : "--:--");
     doc.getElementById("musicMiniFill").style.width = pct + "%";
@@ -328,7 +368,11 @@
         currentAccess === "full" ? "Full playback" : accessLabel;
       var nAccess = doc.getElementById("musicNowAccess");
       nAccess.textContent = accessLabel;
-      nAccess.className = "music-now__access is-" + (currentAccess || "idle");
+      nAccess.className = "music-now__access is-" + (heard && troubleLabel ? "trouble" : muted ? "muted" : (currentAccess || "idle"));
+      var nowNote = doc.getElementById("musicNowNote");
+      if (nowNote) { nowNote.textContent = line; nowNote.hidden = !line; }
+      var nowSound = doc.getElementById("musicNowSound");
+      if (nowSound) nowSound.hidden = !muted;
       doc.getElementById("musicNowFill").style.width = pct + "%";
       doc.getElementById("musicNowT0").textContent = fmt(audio.currentTime);
       doc.getElementById("musicNowT1").textContent = duration ? "-" + fmt(Math.max(0, duration - audio.currentTime)) : "-:--";
@@ -371,6 +415,23 @@
     if (currentAccess === "loading") return Promise.resolve({state:"loading"});
     if (currentAccess !== "full" && currentAccess !== "preview") {
       return current.creatorTrackId ? openCreatorTrack(current.creatorTrackId, true) : openTrack(current.albumSlug, current.title, true);
+    }
+    wantPlay = true;
+    /* an earned play paused past its time is over: say so; the next tap claims a new play, never this one */
+    if (grant && grant.kind === "gated" && lapsed(grant)) { playEnded(); return Promise.resolve({ state: "spent" }); }
+    /* a song that stopped on the way picks up where it stopped, at once */
+    if (trouble && (trouble.state === "lost" || trouble.state === "reconnecting")) {
+      trouble.timer = cancel(trouble.timer);
+      trouble.attempt = 0;
+      trouble.explicit = true;
+      retry(current, playbackRequest);
+      return Promise.resolve({ state: currentAccess });
+    }
+    /* a creator's signed URL that lapsed while paused is signed again first, through its own resolver */
+    if (grant && grant.kind === "creator" && lapsed(grant)) {
+      trouble = { state: "reconnecting", at: Math.max(0, audio.currentTime || 0), attempt: 1, timer: 0 };
+      retry(current, playbackRequest);
+      return Promise.resolve({ state: currentAccess });
     }
     audioSession();
     return audio.play();
@@ -434,12 +495,15 @@
         if (stillCurrent && !stillCurrent()) return { state: "superseded" };
         if (out.state === "earned" && !peek) {
           return g.claim(t.gated).then(function (c) {
-            return c.state === "full"
-              ? { state: "full", url: c.url, granted: true }
-              : { state: "preview", url: t.src, reason: c.state };
+            if (c.state === "full") return { state: "full", url: c.url, granted: true, expiresIn: Number(c.expires_in) || 0 };
+            /* the answer was lost: the play may or may not have been spent. Say so; never claim again by
+               itself (music slice M3) */
+            if (c.uncertain) say("We could not confirm the play. If it went through, it may already be used. Tap the song to try again.", { item: t });
+            return { state: "preview", url: t.src, reason: c.state };
           });
         }
         if (out.state === "preview" || out.state === "locked" || out.state === "earned") {
+          lastGate = { item: t, out: out };
           return { state: "preview", url: t.src, reason: out.state };
         }
         return out;
@@ -483,8 +547,9 @@
       ? root.MCC.authFetch(SB_URL + "/functions/v1/music-access", init)
       : fetch(SB_URL + "/functions/v1/music-access", Object.assign(init, { headers: { apikey: SB_KEY, authorization: "Bearer " + token, "content-type": "application/json" } }));
     return call.then(function (r) {
+      /* the signed URL's lifetime comes with it (3600 s today), so it is signed again before it lapses */
       if (r.ok) return r.json().then(function (d) {
-        return d && d.url ? { state: "full", url: d.url } : { state: "unavailable", reason: "no-url" };
+        return d && d.url ? { state: "full", url: d.url, expiresIn: Number(d.expires_in) || 0 } : { state: "unavailable", reason: "no-url" };
       });
       if (r.status === 402) return preview
         ? { state: "preview", url: preview, reason: "purchase" }
@@ -521,19 +586,22 @@
     var same = current && current.creatorTrackId === t.creatorTrackId;
     if (same && !force && currentAccess === "loading") return Promise.resolve({state:"loading"});
     if (same && !force && (currentAccess === "full" || currentAccess === "preview")) {
-      if (audio.paused) { audioSession(); return audio.play().then(function () { return { state: currentAccess }; }); }
+      if (audio.paused) return Promise.resolve(resumeCurrent()).then(function () { return { state: currentAccess }; });
       pauseCurrent();
       return Promise.resolve({ state: currentAccess });
     }
     var request = ++playbackRequest;
     audio.pause();
     held = null; resumeAt = null;
+    resetDelivery();
+    wantPlay = true;
     current = t;
     currentAccess = "loading";
     announceSelection();
     previewLimit = t.preview_seconds == null ? 30 : Number(t.preview_seconds);
     paint();
-    return creatorSourceFor(t).then(function (out) {
+    /* signed ahead near the end of the last song (EXT-5): no wait on the network at the change */
+    return (takePrefetched(t) || creatorSourceFor(t)).then(function (out) {
       if (request !== playbackRequest) return {state:"superseded"};
       if (out.state !== "full" && out.state !== "preview") {
         currentAccess = "unavailable";
@@ -543,6 +611,7 @@
       currentAccess = out.state;
       previewLimit = out.state === "preview" ? (t.preview_seconds == null ? 30 : Number(t.preview_seconds)) : 0;
       dropListen();
+      takeGrant(t, out, request);
       audio.src = out.url;
       audio.currentTime = 0;
       startedAt = Date.now();
@@ -600,7 +669,7 @@
       /* a spent play is not resumed: opening it again asks for a new one */
       if (same && !force && currentAccess === "loading") return {state:"loading"};
       if (same && !force && (currentAccess === "full" || currentAccess === "preview")) {
-        if (audio.paused) { audioSession(); return audio.play().then(function () { return { state: currentAccess }; }); }
+        if (audio.paused) return Promise.resolve(resumeCurrent()).then(function () { return { state: currentAccess }; });
         pauseCurrent();
         return { state: currentAccess };
       }
@@ -609,6 +678,8 @@
       audio.pause();
       var startAt = resumeAt && sameItem(resumeAt.item, t) ? resumeAt.at : 0;
       resumeAt = null; held = null;
+      resetDelivery();
+      wantPlay = true;
       current = t;
       currentAccess = "loading";
       announceSelection();
@@ -626,6 +697,7 @@
         previewLimit = out.state === "preview" && t.gated ? Number(t.gated.preview_seconds || 0) : 0;
         dropListen();
         grantMax = 0;
+        takeGrant(t, out, request);
         audio.src = out.url;
         /* a record picked up from where it was left starts at that second (before metadata, this is
            the element's start position); anything else from the top */
@@ -674,6 +746,7 @@
         try { audio.currentTime = Math.min(at, Math.max(0, audio.duration - .25)); } catch (e) {}
         if (wasPlaying) { audioSession(); audio.play().catch(function () {}); }
       });
+      takeGrant(item, out, request);
       audio.src = out.url;
       trackEvent("music_access_changed", { access_state: out.state });
       paint();
@@ -704,17 +777,29 @@
   });
   audio.addEventListener("pause", function () { paint(); syncNowFilm(false); });
   audio.addEventListener("loadedmetadata", function () { paint(); syncNowFilm(true); });
+  audio.addEventListener("volumechange", paint);
   audio.addEventListener("timeupdate", function () {
     if (granted()) grantMax = Math.max(grantMax, audio.currentTime);
     if (previewLimit && audio.currentTime >= previewLimit) {
+      /* A LOCKED PREVIEW NEVER STOPS THE QUEUE (music slice M3; decision D-11's default). It ends at its
+         declared boundary, never past it, and the queue moves on with one short line saying so. */
+      var heardPreview = current;
       audio.pause();
       audio.currentTime = Math.max(0, previewLimit - .05);
       trackEvent("music_preview_complete", { preview_seconds: previewLimit });
+      if (queue.length > 1 && wantPlay) { say(previewLine(heardPreview), { ms: 9000 }); playAdjacent(1); }
+      else say(previewLine(heardPreview), { item: heardPreview });
+      return;
     }
+    if (!audio.paused && audio.currentTime > progressAt + .25) { progressAt = audio.currentTime; moving(); }
+    if (trouble && !trouble.state && audio.currentTime > trouble.at + 5) trouble = null;   // played on for a while: recovered
+    maybePrefetch();
     paint();
     syncNowFilm(false);
   });
   audio.addEventListener("ended", function () {
+    /* a song that "ends" well short of its own length was cut off on the way: not finished (music slice M3) */
+    if (endedShort() && deliveryFailed("ended-short")) return;
     if (listen && listen.item === current && root.MCC_LISTENS) root.MCC_LISTENS.finish(listen.handle);
     listen = null;
     if (granted()) {
@@ -723,14 +808,261 @@
     }
     trackEvent("music_complete", { listened_seconds: Math.round((Date.now() - startedAt) / 1000),
       creator_track_id: current && current.creatorTrackId ? current.creatorTrackId : undefined });
+    var heardPreview = previewLimit ? current : null;
     paint();
-    if (!previewLimit && queue.length > 1) playAdjacent(1);
+    if (heardPreview) say(previewLine(heardPreview), { ms: 9000 });
+    if (queue.length > 1 && (!heardPreview || wantPlay)) playAdjacent(1);
   });
   audio.addEventListener("error", function () {
+    trackEvent("music_error", { code: audio.error ? audio.error.code : 0 });
+    /* a song that stops on the way is picked up again where it stopped (DELIVERY, below) */
+    if (deliveryFailed("error")) return;
+    if (grant && grant.request !== playbackRequest) return;   // an old source failing under a newer choice
     currentAccess = "unavailable";
-    trackEvent("music_error", {});
     paint();
   });
+  audio.addEventListener("waiting", function () {
+    if (audio.paused || !current || !wantPlay || !grant) return;
+    quietWatch();
+    var at = audio.currentTime || 0, item = current, request = playbackRequest;
+    loadingTimer = later(function () {
+      loadingTimer = 0;
+      if (request !== playbackRequest || current !== item || audio.paused || trouble) return;
+      trouble = { state: "loading", at: at, attempt: 0, timer: 0 };
+      paint();
+    }, LOADING_NOTE_MS);
+    stallTimer = later(function () {
+      stallTimer = 0;
+      if (request !== playbackRequest || current !== item || audio.paused) return;
+      if ((audio.currentTime || 0) <= at + .25) deliveryFailed("stalled");
+    }, STALL_MS);
+  });
+  audio.addEventListener("playing", function () {
+    quietWatch();
+    if (trouble && trouble.state) { trouble.state = ""; trouble.timer = cancel(trouble.timer); say(""); }
+    paint();
+  });
+
+  /* ============================================================
+     DELIVERY (music slice M3). Matthew, 2026-11-19: "The music never
+     plays fully through." One failed read stopped a song with half a
+     minute still buffered, and the listen page kept saying "Pause"
+     while nothing played (music map 02, DEL-6 / T6b). Now a song that
+     stops on the way:
+       - says so, and is never shown playing over silence;
+       - is asked for again at the second it stopped, through the
+         resolver that opened it (a public file: the same file; a
+         creator's release: its signed URL, signed again through
+         music-access when it has lapsed; an earned play: the same
+         one-play URL while its time holds), a few times with growing
+         waits, then stops and says how to pick it up;
+       - is never counted as finished, and a song that "ends" short of
+         its own length is treated as cut off;
+       - loses to the listener: Pause or another song cancels a retry.
+     An earned play whose time ran out, or whose claim never answered,
+     is never claimed again by this file: the listener is told, and a
+     new play only ever starts from their tap. A creator's signed URL is
+     signed again about a minute before it lapses (the server's own 3600 s
+     and entitlement check decide), and near the end of a song the next
+     creator release is signed ahead so the next song does not wait on
+     the network; a gate's answer is asked ahead too, but a play is
+     claimed only when it starts.
+     ============================================================ */
+  function now() { return Date.now(); }
+  function later(fn, ms) { return root.setTimeout(fn, ms); }
+  function cancel(timer) { if (timer) root.clearTimeout(timer); return 0; }
+  function lapsed(g) { return !!(g && g.expiresAt && now() >= g.expiresAt - LAPSE_MARGIN_MS); }
+  function quietWatch() { loadingTimer = cancel(loadingTimer); stallTimer = cancel(stallTimer); }
+  function moving() {
+    quietWatch();
+    if (trouble && trouble.state === "loading") { trouble = null; paint(); }
+  }
+  /* one short line under the title: for the song it names ({ item }) or for a few seconds ({ ms }) */
+  function say(text, opts) {
+    noticeTimer = cancel(noticeTimer);
+    notice = text ? { text: String(text), item: opts && opts.item || null } : null;
+    if (notice && opts && opts.ms) noticeTimer = later(function () { noticeTimer = 0; notice = null; paint(); }, opts.ms);
+    if (current) paint();
+  }
+  function noticeLine() {
+    if (!notice || (notice.item && notice.item !== current)) return "";
+    return notice.text;
+  }
+  function lostLine() { return "The connection dropped. Tap play to pick up at " + fmt(trouble ? trouble.at : audio.currentTime) + "."; }
+  function previewLine(item) {
+    var title = item && item.title ? item.title : "this song";
+    var why = "";
+    if (lastGate && lastGate.item === item && root.MCC_GATED && root.MCC_GATED.explain) {
+      try { var e = root.MCC_GATED.explain(lastGate.out); why = e && e.text ? " " + e.text : ""; } catch (err) {}
+    }
+    return "That was the preview of " + title + "." + why;
+  }
+  function resetDelivery() {
+    quietWatch();
+    if (trouble) trouble.timer = cancel(trouble.timer);
+    trouble = null; grant = null; progressAt = 0;
+    refreshTimer = cancel(refreshTimer);
+    if (notice && notice.item) say("");
+  }
+  function takeGrant(item, out, request) {
+    var life = Number(out && out.expiresIn) || 0;
+    var kind = out.state === "full" && item.creatorTrackId ? "creator" : out.state === "full" && item.gated ? "gated" : "public";
+    grant = { url: out.url, kind: kind, expiresAt: life > 0 ? now() + life * 1000 : 0, next: null, request: request, item: item };
+    refreshTimer = cancel(refreshTimer);
+    if (kind === "creator" && grant.expiresAt) scheduleRefresh(grant);
+  }
+  function scheduleRefresh(g) {
+    var lapses = g.next && g.next.expiresAt ? g.next.expiresAt : g.expiresAt;
+    refreshTimer = cancel(refreshTimer);
+    refreshTimer = later(function () { refreshTimer = 0; refreshCreator(g); }, Math.max(0, lapses - REFRESH_EARLY_MS - now()));
+  }
+  function refreshCreator(g) {
+    if (grant !== g || current !== g.item) return;
+    var request = playbackRequest;
+    creatorSourceFor(g.item).then(function (out) {
+      if (grant !== g || request !== playbackRequest || current !== g.item) return;
+      if (!out || out.state !== "full" || !out.url) return;   // the entitlement check said no: the next read decides
+      var life = Number(out.expiresIn) || 0, fresh = { url: out.url, expiresAt: life > 0 ? now() + life * 1000 : 0 };
+      if (audio.paused && !(trouble && trouble.state)) {
+        /* a paused song takes the fresh URL now, silently, at the same second */
+        var at = audio.currentTime || 0;
+        g.url = fresh.url; g.expiresAt = fresh.expiresAt; g.next = null;
+        audio.src = fresh.url;
+        try { audio.currentTime = at; } catch (e) {}
+      } else g.next = fresh;   // a playing one keeps it for its next read
+      if (fresh.expiresAt) scheduleRefresh(g);
+    }).catch(function () {});
+  }
+  function deliveryFailed(why) {
+    if (!current || !grant || grant.request !== playbackRequest || grant.item !== current) return false;
+    if (currentAccess !== "full" && currentAccess !== "preview") return false;
+    quietWatch();
+    var at = Math.max(0, audio.currentTime || 0);
+    if (!trouble || trouble.state === "loading") trouble = { state: "", at: at, attempt: 0, timer: 0 };
+    else trouble.at = Math.max(trouble.at, at);
+    trouble.timer = cancel(trouble.timer);
+    if (!audio.paused) audio.pause();                          // never playing over silence
+    trackEvent("music_interrupted", { reason: why, at_s: Math.round(trouble.at), attempt: trouble.attempt, path: grant.kind });
+    if (grant.kind === "gated" && lapsed(grant)) { playEnded(); return true; }
+    if (!wantPlay) { trouble.state = "lost"; paint(); return true; }   // the listener paused: Play picks it up here
+    if (trouble.attempt >= RETRY_MS.length) {
+      trouble.state = "lost";
+      say(lostLine(), { item: current });
+      return true;
+    }
+    trouble.state = "reconnecting";
+    var item = current, request = playbackRequest, wait = RETRY_MS[trouble.attempt];
+    trouble.attempt++;
+    trouble.timer = later(function () { if (trouble) trouble.timer = 0; retry(item, request); }, wait);
+    say("The connection dropped at " + fmt(trouble.at) + ". Picking up there…", { item: current });
+    return true;
+  }
+  function retry(item, request) {
+    if (!trouble || request !== playbackRequest || current !== item || !wantPlay) return;
+    Promise.resolve(sourceAgain(item)).then(function (got) {
+      if (!trouble || request !== playbackRequest || current !== item || !wantPlay) return;
+      if (got && got.failed) { deliveryFailed("resolve"); return; }
+      if (!got || !got.url) return;                           // already said and settled (an ended play, a preview)
+      audio.src = got.url;
+      try { audio.currentTime = trouble.at; } catch (e) {}    // a ranged read from the second it stopped
+      audioSession();
+      var p = audio.play();
+      if (p && p.catch) p.catch(function () {});              // a failed load reports itself as an error event
+      paint();
+    });
+  }
+  /* the same resolver that opened the song, again */
+  function sourceAgain(item) {
+    var g = grant;
+    if (!g) return null;
+    if (g.kind === "gated") {
+      if (lapsed(g)) { playEnded(); return null; }
+      return { url: g.url };
+    }
+    if (g.kind !== "creator") return { url: g.url };
+    if (g.next && !lapsed(g.next)) { g.url = g.next.url; g.expiresAt = g.next.expiresAt; g.next = null; return { url: g.url }; }
+    var refused = audio.error && audio.error.code === 4;
+    if (!lapsed(g) && !refused) return { url: g.url };
+    var request = playbackRequest;
+    return creatorSourceFor(item).then(function (out) {
+      if (request !== playbackRequest || current !== item || grant !== g) return null;
+      if (out && out.state === "full" && out.url) {
+        var life = Number(out.expiresIn) || 0;
+        g.url = out.url; g.expiresAt = life > 0 ? now() + life * 1000 : 0; g.next = null;
+        if (g.expiresAt) scheduleRefresh(g);
+        return { url: g.url };
+      }
+      if (out && out.state === "preview" && out.url) { accessEnded(item, out); return null; }
+      return { failed: true };
+    }, function () { return { failed: true }; });
+  }
+  /* the entitlement check now says preview: the preview, labelled as one (never the master) */
+  function accessEnded(item, out) {
+    trouble = null;
+    currentAccess = "preview";
+    previewLimit = item.preview_seconds == null ? 30 : Number(item.preview_seconds);
+    takeGrant(item, out, playbackRequest);
+    audio.src = out.url;
+    try { audio.currentTime = 0; } catch (e) {}
+    say("The full song is not open to this account any more. Playing its preview.", { item: item });
+    audioSession();
+    var p = audio.play();
+    if (p && p.catch) p.catch(function () {});
+  }
+  /* an earned play whose time ran out: over, said, never claimed again by itself */
+  function playEnded() {
+    if (trouble) trouble.timer = cancel(trouble.timer);
+    trouble = null;
+    currentAccess = "spent";
+    grant = null;
+    if (!audio.paused) audio.pause();
+    if (root.MCC_GATED) root.MCC_GATED.forget();
+    say("The connection dropped and this play's time ran out. Playing it again starts a new play.", { item: current });
+  }
+  function endedShort() {
+    var d = audio.duration;
+    if (previewLimit || !isFinite(d) || d <= 0) return false;
+    return (audio.currentTime || 0) < d - SHORT_END_S;
+  }
+  /* the song after this one: a creator release is signed ahead near the end, a gate is asked ahead
+     (a play is still claimed only when it starts) */
+  function upNext() {
+    if (!current || queue.length < 2) return null;
+    var at = queue.findIndex(function (item) { return sameItem(item, current); });
+    var next = queue[((at < 0 ? 0 : at) + 1) % queue.length];
+    return next && !sameItem(next, current) ? next : null;
+  }
+  function accountKey() {
+    try { return root.MCC && root.MCC.account ? String(root.MCC.account() || "") : (sessionToken() ? "signed-in" : ""); }
+    catch (e) { return ""; }
+  }
+  function maybePrefetch() {
+    if (!current || audio.paused || !wantPlay) return;
+    var end = previewLimit || audio.duration;
+    if (!isFinite(end) || end <= 0 || end - (audio.currentTime || 0) > PREFETCH_S) return;
+    var next = upNext();
+    if (!next || (prefetched && prefetched.item === next)) return;
+    if (next.creatorTrackId && sessionToken()) {
+      var slot = { item: next, account: accountKey(), at: now(), out: null, promise: null };
+      slot.promise = creatorSourceFor(next).then(function (out) { slot.out = out; return out; });
+      slot.promise.catch(function () { if (prefetched === slot) prefetched = null; });
+      prefetched = slot;
+    } else if (next.gated && root.MCC_GATED && root.MCC_GATED.resolve) {
+      prefetched = { item: next, promise: null };
+      root.MCC_GATED.resolve(next.gated);
+    }
+  }
+  function takePrefetched(t) {
+    var slot = prefetched;
+    if (!slot || !(slot.item === t || sameItem(slot.item, t))) return null;
+    prefetched = null;
+    if (!slot.promise || slot.account !== accountKey()) return null;
+    var out = slot.out, life = out && Number(out.expiresIn) || 0;
+    if (out && life && now() >= slot.at + life * 1000 - LAPSE_MARGIN_MS) return null;
+    return slot.promise;
+  }
+  if (root.MCC && root.MCC.onAccountChange) root.MCC.onAccountChange(function () { prefetched = null; });
+  function unmute() { audio.muted = false; paint(); }
 
   doc.addEventListener("click", function (e) {
     var b = e.target && e.target.closest ? e.target.closest("[data-music-play]") : null;
@@ -846,6 +1178,8 @@
     audio: audio,
     current: function () { return current; },
     access: function () { return currentAccess; },
-    refreshAccess: upgradeCurrent
+    refreshAccess: upgradeCurrent,
+    delivery: function () { return { state: trouble ? trouble.state || "recovering" : "", at: trouble ? trouble.at : null, path: grant ? grant.kind : null, note: noticeLine() }; },
+    unmute: unmute
   };
 })(window);

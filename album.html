@@ -288,6 +288,13 @@
     .deckbar button.tp { -webkit-appearance: none; appearance: none; border: 0; background: none; cursor: pointer; touch-action: manipulation;
       color: var(--cream); width: 40px; height: 40px; display: grid; place-items: center; flex: none; }
     .deckbar button.tp svg { width: 20px; height: 20px; fill: currentColor; }
+    /* the deck's own unmute (music slice M3, decision D-7): a 44 px target, only while the deck is muted */
+    .deckbar__sound { -webkit-appearance: none; appearance: none; flex: none; width: 44px; height: 44px; margin: 0; padding: 0;
+      border: 0; border-radius: 50%; background: rgba(244,239,230,0.12); color: var(--cream, #f4efe6); cursor: pointer;
+      display: grid; place-items: center; touch-action: manipulation; }
+    .deckbar__sound[hidden] { display: none; }
+    .deckbar__sound svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .now__tp .now__sound { opacity: 1; }
     .deckbar button.tp--play { background: var(--metal); color: #fff; border-radius: 50%;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
 
@@ -748,6 +755,7 @@
         <button class="now__play" id="nowPlay" type="button" aria-label="Play or pause"><svg id="nowPlayIc" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button>
         <button id="nowNext" type="button" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M18 5h-2.5v14H18zM4 5v14l10-7z"/></svg></button>
         <button class="now__side" id="nowBeam" type="button" aria-label="Play on another screen" hidden><svg viewBox="0 0 24 24"><path d="M3 6h18v12h-7"/><path d="M3 10a10 10 0 0 1 8 8"/><path d="M3 14a6 6 0 0 1 4.5 4.5"/><path d="M3 18h.5"/></svg></button>
+        <button class="now__side now__sound" id="nowSound" type="button" aria-label="Unmute" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg></button>
       </div>
       <!-- the song is the hub: who made it, where it's registered, the doors around it -->
       <div class="now__eco">
@@ -768,6 +776,8 @@
     <div class="deckbar__row">
       <img class="deckbar__art" src="assets/img/here-cover.jpg" alt="">
       <div class="deckbar__meta"><b id="npTitle">·</b><small id="npTime">0:00 · I AM HERE</small><small class="deckbar__lyr" id="npLyr"></small></div>
+      <!-- the deck's own mute, shown only while it is muted (decision D-7: the World's mute is the World's) -->
+      <button class="deckbar__sound" id="deckSound" type="button" aria-label="Unmute" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg></button>
       <button class="tp" id="tpPrev" type="button" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5v14l-10-7z"/></svg></button>
       <button class="tp tp--play" id="tpPlay" type="button" aria-label="Play or pause"><svg id="tpPlayIc" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button>
       <button class="tp" id="tpNext" type="button" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M18 5h-2.5v14H18zM4 5v14l10-7z"/></svg></button>
@@ -1493,9 +1503,17 @@
       if (cur < 0) { bar.dataset.off = "1"; return; }
       bar.dataset.off = "0";
       el("npTitle").textContent = rows[cur].getAttribute("data-title");
-      el("npTime").textContent = fmt(deck.currentTime) + " · " + (deck.duration ? fmt(deck.duration) : "I AM HERE");
+      /* never "playing" over silence: what the delivery is doing comes first, then the deck's own mute
+         (music slice M3; decision D-7: the World's mute is the World's, the deck says its own) */
+      var state = deckTrouble && deckTrouble.state === "reconnecting" ? "Reconnecting…" :
+        deckTrouble && deckTrouble.state === "lost" && !deckTrouble.silent ? "Connection lost" :
+        deckTrouble && deckTrouble.state === "loading" ? "Loading…" : deck.muted ? "Muted" : "";
+      el("npTime").textContent = state ? state + " · " + fmt(deck.currentTime)   // one line on a phone: the state and the second
+        : fmt(deck.currentTime) + " · " + (deck.duration ? fmt(deck.duration) : "I AM HERE");
       el("seekFill").style.width = deck.duration ? (deck.currentTime / deck.duration * 100) + "%" : "0";
       el("tpPlayIc").innerHTML = deck.paused ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
+      var sound = el("deckSound");
+      if (sound) sound.hidden = !deck.muted;
     }
     /* THE LOCK SCREEN. One owner speaks to the device's Now Playing (js/now-playing.js): the deck says
        which row is playing and what play, pause, previous, next and seek mean here; the owner writes the
@@ -1524,6 +1542,7 @@
     function media() { var h = nowPlaying(); if (h) h.update(); }
     function load(i, at) {
       cancelPendingPlay();
+      clearDeckTrouble();
       var to = (i + rows.length) % rows.length;
       /* leaving a record mid-play spends it: the play was the grant */
       if (cur > -1 && cur !== to) spend(rows[cur]);
@@ -1576,8 +1595,14 @@
       if (pendingClaim && pendingClaim.row._gateOut) paintGate(pendingClaim.row, pendingClaim.row._gateOut);
       pendingClaim = null;
       if (finishPrime) finishPrime(false);
+      /* a pending retry belongs to the request that scheduled it: anything newer wins (music slice M3) */
+      if (deckTrouble && deckTrouble.timer) {
+        clearTimeout(deckTrouble.timer); deckTrouble.timer = 0;
+        if (deckTrouble.state === "reconnecting") { deckTrouble.state = "lost"; deckStatus("The connection dropped. Tap play to pick up at " + fmt(deckTrouble.at) + "."); }
+      }
     }
     function pauseDeck() {
+      wantSound = false;
       cancelPendingPlay();
       deck.pause();
     }
@@ -1600,6 +1625,7 @@
     }
     function startDeck(row) {
       if (finishPrime) finishPrime(false);
+      wantSound = true;
       audioSession();
       var p = deck.play();
       if (p && typeof p.catch === "function") p.catch(function (e) { playFailed(e, row); });
@@ -1635,6 +1661,12 @@
       var target = i !== undefined ? (i + rows.length) % rows.length : (cur < 0 ? 0 : cur);
       var row = rows[target];
       if (pendingClaim && pendingClaim.target === target && pendingClaim.request === playRequest) return;
+      /* Play on a song that stopped on the way picks it up at the second it stopped (music slice M3) */
+      if (deckTrouble && target === cur && deckTrouble.row === row && at === undefined) {
+        cancelPendingPlay();
+        resumeDeckTrouble();
+        return;
+      }
       cancelPendingPlay();
       /* An earned record is spent the moment it is played, not before:
          ask the API for this one play, then load what it signs. */
@@ -1701,14 +1733,22 @@
         pendingClaim = null;
         if (out.state !== "full") {
           /* not earned after all (another tab spent it, or signed out):
-             say where they stand and play the preview */
-          paintGate(row, out);
+             say where they stand and play the preview. A claim whose answer
+             was lost may have spent the play: say so, ask the gate again
+             (a read, never a claim), and never claim again by itself
+             (music slice M3) */
+          if (out.uncertain) {
+            if (window.MCC_TOAST) window.MCC_TOAST("We could not confirm the play. If it went through, it may already be used. Tap the song to try again.");
+            if (window.MCC_GATED.forget) window.MCC_GATED.forget();
+          } else paintGate(row, out);
           gatedPlayEvent(row, false);
           playNow(target);
           return;
         }
         row.setAttribute("data-granted", "");
         row.setAttribute("data-src", out.url);
+        /* the one play's lifetime (the Worker's expires_in), so a dropped read knows whether it may pick it up */
+        row._grant = { expiresAt: Number(out.expires_in) > 0 ? Date.now() + Number(out.expires_in) * 1000 : 0 };
         paintGate(row, out);
         grantMax = 0;
         if (cur === target) cur = -1;   /* force a fresh load of the master */
@@ -1828,6 +1868,8 @@
       if (granted() && deck.currentTime < grantMax - 0.75) deck.currentTime = grantMax;
     });
     deck.addEventListener("ended", function () {
+      /* a song that "ends" well short of its own length was cut off on the way: not finished (music slice M3) */
+      if (deckEndedShort() && deckFailed("ended-short")) return;
       var finished = Promise.resolve(null);
       if (listen && listen.row === rows[cur] && window.MCC_LISTENS) {
         var heardKey = rows[cur].getAttribute("data-key");
@@ -1841,7 +1883,9 @@
       /* read before spend(), which takes data-granted off a full play */
       var wasPreview = !!(rows[cur] && rows[cur].hasAttribute("data-gated-bucket") && !rows[cur].hasAttribute("data-granted"));
       spend(rows[cur]);
-      if (wasPreview) { previewNotice(rows[cur], true); return; }
+      /* A LOCKED PREVIEW NEVER STOPS THE ALBUM (music slice M3; decision D-11's default): it played to its
+         boundary, one short line says what it was, and the record moves on */
+      if (wasPreview) previewNotice(rows[cur], true);
       if (pendingClaim && pendingClaim.request === playRequest) return;
       /* Played straight through, the album arrives at its closer having just
          earned it. Wait for the song that just ended to be counted, then ask
@@ -1856,6 +1900,154 @@
       }
       next(); // the record keeps spinning, wraps at the end
     });
+
+    /* ============================================================
+       DELIVERY (music slice M3). Matthew, 2026-11-19: "The music
+       never plays fully through." One failed read stopped the deck
+       with half a minute buffered, and nothing said so (music map 02,
+       DEL-6). Now a song that stops on the way says so, is never shown
+       playing over silence, and is asked for again at the second it
+       stopped: the same file, or the same one-play URL while its time
+       holds, a few times with growing waits, then it stops and says
+       how to pick it up. Pause or another song wins over a pending
+       retry; a song cut off is never counted as heard; an earned play
+       whose time ran out is never claimed again by itself. A long
+       stall with no progress is treated the same way, and a short one
+       just says Loading.
+       ============================================================ */
+    var RETRY_MS = [500, 1500, 3500, 7500], LOADING_NOTE_MS = 1500, STALL_MS = 12000, LAPSE_MARGIN_MS = 10000, SHORT_END_S = 2;
+    var deckTrouble = null, wantSound = !deck.paused, loadingTimer = 0, stallTimer = 0, progressAt = 0, ownPauses = 0;
+    /* a pause this block makes for a song in trouble; any other pause (the World's transport, the lock
+       screen, this page) is the listener's, and no retry plays over it */
+    function troublePause() {
+      if (deck.paused) return;
+      ownPauses++;
+      try { deck.pause(); } catch (e) { ownPauses--; }
+    }
+    function deckStatus(text) {
+      var s = el("seekStatus");
+      if (s) { s.textContent = text || ""; s.hidden = !text; }
+      paintDeck();
+    }
+    function quietDeckWatch() {
+      if (loadingTimer) { clearTimeout(loadingTimer); loadingTimer = 0; }
+      if (stallTimer) { clearTimeout(stallTimer); stallTimer = 0; }
+    }
+    function clearDeckTrouble() {
+      quietDeckWatch();
+      if (!deckTrouble) return;
+      if (deckTrouble.timer) clearTimeout(deckTrouble.timer);
+      var said = deckTrouble.state && !deckTrouble.silent;
+      deckTrouble = null;
+      if (said) deckStatus("");
+    }
+    function grantLapsed(row) {
+      var g = row && row.hasAttribute("data-granted") ? row._grant : null;
+      return !!(g && g.expiresAt && Date.now() >= g.expiresAt - LAPSE_MARGIN_MS);
+    }
+    function deckEndedShort() {
+      var d = deck.duration;
+      if (cur < 0 || !rows[cur] || !isFinite(d) || d <= 0) return false;
+      if (rows[cur].hasAttribute("data-gated-bucket") && !rows[cur].hasAttribute("data-granted")) return false;   // a preview ends where it ends
+      return (deck.currentTime || 0) < d - SHORT_END_S;
+    }
+    function deckFailed(why) {
+      if (cur < 0 || !rows[cur]) return false;
+      var row = rows[cur];
+      quietDeckWatch();
+      var at = Math.max(0, deck.currentTime || 0);
+      if (!deckTrouble || deckTrouble.row !== row || deckTrouble.state === "loading") deckTrouble = { row: row, at: at, attempt: 0, timer: 0, state: "" };
+      else deckTrouble.at = Math.max(deckTrouble.at, at);
+      if (deckTrouble.timer) { clearTimeout(deckTrouble.timer); deckTrouble.timer = 0; }
+      troublePause();   // never playing over silence
+      if (window.MCC_TRACK) window.MCC_TRACK("music_interrupted", { track: row.getAttribute("data-title"), album: ALBUM, reason: why,
+        at_s: Math.round(deckTrouble.at), attempt: deckTrouble.attempt, path: row.hasAttribute("data-granted") ? "gated" : "public" });
+      if (grantLapsed(row)) { deckPlayEnded(row); return true; }
+      if (!wantSound) { deckTrouble.state = "lost"; deckTrouble.silent = true; paintDeck(); return true; }   // nobody asked for sound: Play picks it up
+      if (deckTrouble.attempt >= RETRY_MS.length) {
+        deckTrouble.state = "lost"; deckTrouble.silent = false;
+        deckStatus("The connection dropped. Tap play to pick up at " + fmt(deckTrouble.at) + ".");
+        return true;
+      }
+      deckTrouble.state = "reconnecting";
+      var request = playRequest, wait = RETRY_MS[deckTrouble.attempt];
+      deckTrouble.attempt++;
+      deckTrouble.timer = setTimeout(function () { if (deckTrouble) deckTrouble.timer = 0; deckRetry(row, request); }, wait);
+      deckStatus("The connection dropped at " + fmt(deckTrouble.at) + ". Picking up there…");
+      return true;
+    }
+    function deckRetry(row, request) {
+      if (!deckTrouble || deckTrouble.row !== row || request !== playRequest || rows[cur] !== row || !wantSound) return;
+      if (grantLapsed(row)) { deckPlayEnded(row); return; }
+      deck.src = row.getAttribute("data-src");
+      try { deck.currentTime = deckTrouble.at; } catch (e) {}   // a ranged read from the second it stopped
+      audioSession();
+      var p = deck.play();
+      if (p && typeof p.catch === "function") p.catch(function () {});   // a failed load reports itself as an error event
+      paintDeck();
+    }
+    function resumeDeckTrouble() {
+      var row = deckTrouble.row;
+      wantSound = true;
+      if (grantLapsed(row)) { deckPlayEnded(row); return; }
+      deckTrouble.attempt = 0;
+      deckTrouble.state = "reconnecting"; deckTrouble.silent = false;
+      deckStatus("Picking up at " + fmt(deckTrouble.at) + "…");
+      deckRetry(row, playRequest);
+    }
+    /* an earned play whose time ran out: over, said, never claimed again by itself */
+    function deckPlayEnded(row) {
+      clearDeckTrouble();
+      troublePause();
+      spend(row);
+      var msg = "The connection dropped and this play's time ran out. Playing it again starts a new play.";
+      if (window.MCC_TOAST) window.MCC_TOAST(msg);
+      deckStatus(msg);
+    }
+    deck.addEventListener("error", function () { deckFailed("error"); });
+    deck.addEventListener("pause", function () {
+      if (ownPauses > 0) { ownPauses--; return; }
+      /* the browser pauses the deck itself when a read fails (error first, then pause): that is the
+         trouble above, not the listener; nor is the end of a song, or a pause already undone */
+      if (deck.error || deck.ended || !deck.paused) return;
+      wantSound = false;
+    });
+    /* what the delivery is doing, for the World's transport when it plays this deck */
+    window.MCC_DECK_DELIVERY = function () { return deckTrouble && !deckTrouble.silent ? deckTrouble.state || "" : ""; };
+    deck.addEventListener("waiting", function () {
+      if (deck.paused || cur < 0 || !wantSound) return;
+      quietDeckWatch();
+      var at = deck.currentTime || 0, row = rows[cur], request = playRequest;
+      loadingTimer = setTimeout(function () {
+        loadingTimer = 0;
+        if (request !== playRequest || rows[cur] !== row || deck.paused || deckTrouble) return;
+        deckTrouble = { row: row, at: at, attempt: 0, timer: 0, state: "loading" };
+        paintDeck();
+      }, LOADING_NOTE_MS);
+      stallTimer = setTimeout(function () {
+        stallTimer = 0;
+        if (request !== playRequest || rows[cur] !== row || deck.paused) return;
+        if ((deck.currentTime || 0) <= at + 0.25) deckFailed("stalled");
+      }, STALL_MS);
+    });
+    deck.addEventListener("playing", function () {
+      quietDeckWatch();
+      if (deckTrouble && deckTrouble.state) {
+        var said = !deckTrouble.silent;
+        deckTrouble.state = "";
+        if (deckTrouble.timer) { clearTimeout(deckTrouble.timer); deckTrouble.timer = 0; }
+        if (said) deckStatus(""); else paintDeck();
+      }
+    });
+    deck.addEventListener("timeupdate", function () {
+      if (!deck.paused && (deck.currentTime || 0) > progressAt + 0.25) {
+        progressAt = deck.currentTime;
+        quietDeckWatch();
+        if (deckTrouble && deckTrouble.state === "loading") { deckTrouble = null; paintDeck(); }
+      }
+      if (deckTrouble && !deckTrouble.state && deck.currentTime > deckTrouble.at + 5) deckTrouble = null;   // played on: recovered
+    });
+    deck.addEventListener("volumechange", function () { paintDeck(); });
 
     /* ============================================================
        BANKING THE SECOND SOMEBODY ACTUALLY LEFT ON.
@@ -2257,6 +2449,8 @@
       lyrRaf = requestAnimationFrame(lyrFrame);
     }
     function paintSheet() {
+      var nowSound = el("nowSound");
+      if (nowSound) nowSound.hidden = !deck.muted;
       if (!sheetOn()) return;
       el("nowT0").textContent = fmt(deck.currentTime);
       /* the premium read: what's LEFT, counting down */
@@ -2282,6 +2476,12 @@
     el("nowPlay").addEventListener("click", function () { if (deck.paused) play(); else pauseDeck(); });
     el("nowNext").addEventListener("click", function () { next(); setTimeout(openSheet, 60); });
     el("nowPrev").addEventListener("click", function () { prev(); setTimeout(openSheet, 60); });
+    /* the deck's own unmute: it governs this deck only (decision D-7) */
+    ["deckSound", "nowSound"].forEach(function (id) {
+      var b = el(id);
+      if (b) b.addEventListener("click", function (e) { e.stopPropagation(); deck.muted = false; paintDeck(); paintSheet(); });
+    });
+    deck.addEventListener("volumechange", paintSheet);
 
     deck.addEventListener("timeupdate", paintSheet);
     deck.addEventListener("play", paintSheet);
