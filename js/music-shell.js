@@ -523,6 +523,8 @@
       try { d = e && e.detail ? JSON.parse(JSON.stringify(e.detail)) : null; } catch (x) {}
       emit("mcc:perspective", d);
     });
+    /* McCluster's own page says the house is the perspective (owner, 2026-11-23: "McCluster is the artist") */
+    win.addEventListener("mcc:perspective-house", function () { emit("mcc:perspective-house"); });
     /* an address change inside the view (an artist page's #album=) is the top's address */
     var follow = function () {
       if (v !== current && v !== pending) return;

@@ -214,6 +214,10 @@ test('Q1 McCluster\'s own artist page keeps the house in the bar and carries his
   const page = read('js/music-creator-profile.js');
   assert.match(page, /var HOUSE_ARTIST = "mccluster";/, 'the page knows which handle is the house\'s own artist');
   assert.match(page, /mcc:perspective-house/, 'on his own page the bar stays the house: no second McCluster in the middle cell');
+  /* his page opens as a view over Listen (music slice M5): the bar is the retained document's, so the view's word for the
+     house is passed up to it, as the word for any other artist is (found by the door suite) */
+  assert.match(read('js/music-shell.js'), /win\.addEventListener\("mcc:perspective-house",\s*function\s*\(\)\s*\{\s*emit\("mcc:perspective-house"\)/,
+    'a view of his page tells the bar it is the house');
   assert.match(page, /fetch\("data\/albums\.json"/, 'his albums come from the catalogue the album pages play');
   assert.match(page, /album\.html\?album=/, 'each opens on the album page');
 });

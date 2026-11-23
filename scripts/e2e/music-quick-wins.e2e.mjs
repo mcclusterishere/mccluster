@@ -133,10 +133,11 @@ async function fits(page, label) {
 async function shot(page, name, opts = {}) {
   if (!SHOTS) return;
   if (opts.full) {
-    await page.evaluate(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += Math.round(innerHeight * 0.6)) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 160)); } scrollTo(0, 0); });
+    /* the house scrolls smoothly (scroll-behavior on <html>): each step is instant, so the page is where the shot says */
+    await page.evaluate(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += Math.round(innerHeight * 0.6)) { scrollTo({ top: y, behavior: 'instant' }); await new Promise((r) => setTimeout(r, 160)); } scrollTo({ top: 0, behavior: 'instant' }); });
     await sleep(1200);
   } else if (opts.at) {
-    await page.evaluate((sel) => { const el = document.querySelector(sel); if (el) { el.scrollIntoView({ block: 'start' }); scrollBy(0, -72); } }, opts.at);
+    await page.evaluate((sel) => { const el = document.querySelector(sel); if (el) scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + scrollY - 72), behavior: 'instant' }); }, opts.at);
     await sleep(1200);
   }
   await page.screenshot({ path: join(SHOTS, name + '.png'), fullPage: !!opts.full });
