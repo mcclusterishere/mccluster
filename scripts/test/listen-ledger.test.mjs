@@ -66,3 +66,68 @@ test('the browser never tells the server how long a song is', async () => {
   const src = await readFile('js/listen-ledger.js', 'utf8');
   assert.doesNotMatch(src, /seconds\s*:|duration/);
 });
+
+/* A FULLY HEARD SONG IS COUNTED EVEN WHEN THE NEXT ONE STARTS AT ONCE (music slice M3; music map 02,
+   DEL-4). The album's and the engine's ended handlers finish song A and start song B in the same
+   moment. The two requests went out independently, and when B's start reached the database first,
+   music_listen_start closed A as not completed (scripts: listen_race.sh on PostgreSQL 16 with the
+   real migrations; production held 55 such rows). The start now waits for the finish to come back
+   (for at most a few seconds, so a finish that never answers cannot stop the next song counting). */
+async function ordered() {
+  const src = await readFile('js/listen-ledger.js', 'utf8');
+  const store = new Map([['mccdb_session', JSON.stringify({ access_token: 't' })]]);
+  const sent = [], finishes = [], timers = new Map();
+  let id = 0, timerId = 0;
+  const window = {
+    localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) },
+    setInterval: () => 0, clearInterval() {},
+    setTimeout: (fn, ms) => { const k = ++timerId; timers.set(k, { fn, ms }); return k; },
+    clearTimeout: (k) => timers.delete(k),
+    dispatchEvent() {}
+  };
+  const fetch = (url, init) => {
+    const body = JSON.parse(init.body || '{}');
+    if (url.endsWith('/v1/music/listens')) {
+      sent.push('start:' + body.track);
+      const listen = `0000000${++id}-1111-4111-8111-111111111111`;
+      return Promise.resolve({ ok: true, json: async () => ({ listen_id: listen }) });
+    }
+    if (url.endsWith('/finish')) {
+      sent.push('finish');
+      let answer; const p = new Promise((r) => { answer = r; });
+      finishes.push(() => answer({ ok: true, json: async () => ({ counted: true }) }));
+      return p;
+    }
+    return Promise.resolve({ ok: true, json: async () => ({}) });
+  };
+  vm.runInNewContext(src, { window, fetch, JSON, Date, Promise, CustomEvent: class {} });
+  return { L: window.MCC_LISTENS, sent, finishes, timers };
+}
+
+test('a finished song reaches the ledger before the next song\'s start does', async () => {
+  const { L, sent, finishes } = await ordered();
+  const a = L.start('dealer-plates', () => true);
+  await a.id;
+  const done = L.finish(a);
+  const b = L.start('pull-up', () => true);       // the next song starts in the same moment
+  await flush(); await flush();
+  assert.deepEqual(sent, ['start:dealer-plates', 'finish'], 'the next start waits for the finish');
+  finishes.shift()();
+  await done; await b.id;
+  assert.deepEqual(sent, ['start:dealer-plates', 'finish', 'start:pull-up']);
+});
+
+test('a finish that never answers does not stop the next song counting', async () => {
+  const { L, sent, timers } = await ordered();
+  const a = L.start('dealer-plates', () => true);
+  await a.id;
+  L.finish(a);
+  const b = L.start('pull-up', () => true);
+  await flush(); await flush();
+  assert.deepEqual(sent, ['start:dealer-plates', 'finish']);
+  const cap = [...timers.values()].find((t) => t.ms > 0 && t.ms <= 8000);
+  assert.ok(cap, 'a bounded wait, not an endless one');
+  cap.fn();
+  await b.id;
+  assert.deepEqual(sent, ['start:dealer-plates', 'finish', 'start:pull-up']);
+});

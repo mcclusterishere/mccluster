@@ -104,9 +104,29 @@
     return arm(h, isPlaying);
   }
 
+  /* A FINISHED SONG IS COUNTED BEFORE THE NEXT ONE STARTS (music slice M3; music map 02, DEL-4).
+     When a song ends the player finishes it and starts the next one in the same moment. The two
+     requests used to race, and when the next start reached the database first, music_listen_start
+     closed the song just heard as not completed: production held 55 such rows beside 59 completed
+     ones. A start now waits for the finish in flight to come back, for FINISH_WAIT_MS at most, so
+     a finish that never answers cannot stop the next song counting. The music never waits: only
+     this request does. */
+  var FINISH_WAIT_MS = 5000;
+  var finishing = null;
+  function afterFinish() {
+    var pending = finishing;
+    if (!pending) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var timer = root.setTimeout ? root.setTimeout(resolve, FINISH_WAIT_MS) : 0;
+      pending.then(function () { if (timer && root.clearTimeout) root.clearTimeout(timer); resolve(); });
+    });
+  }
+
   function start(key, isPlaying) {
     if (!key || !token()) return null;
-    return handle(key, post("/v1/music/listens", { track: key }).then(function (d) {
+    return handle(key, afterFinish().then(function () {
+      return post("/v1/music/listens", { track: key });
+    }).then(function (d) {
       return (d && d.listen_id) || null;
     }), isPlaying);
   }
@@ -131,7 +151,7 @@
     if (!handle || handle.done) return Promise.resolve(null);
     handle.done = true;
     stop(handle);
-    return handle.id.then(function (id) {
+    var done = handle.id.then(function (id) {
       if (!id) return null;
       forgetOpen(id);
       return post("/v1/music/listens/" + id + "/finish").then(function (d) {
@@ -139,6 +159,11 @@
         return d;
       });
     });
+    /* the next start waits for this one (post() never rejects; a lost finish settles as null) */
+    var settled = done.then(function () {}, function () {});
+    finishing = settled;
+    settled.then(function () { if (finishing === settled) finishing = null; });
+    return done;
   }
 
   /* This page is done with the song but the song may go on elsewhere:
