@@ -6,8 +6,52 @@ Studio, collaboration and album upload fall short ("better than Apple"). The wor
 M10 from the 2026-11-19 music maps (gaps, playback, delivery, external, accounts, studio, collaboration, law).
 
 Each slice appends its own section below: what changed and why, the tests (failing at the base, passing after),
-what is Inferred, and what waits for Matthew. Nothing here is merged, deployed or applied. Every iPhone, iPad,
-AirPods and lock-screen statement stays Inferred until Matthew's own devices run the checklist rows a section names.
+what is Inferred, and what waits for Matthew. Each section says what was merged, deployed or applied when it was
+written; "Shipped 2026-11-23" says what has gone out since. Every iPhone, iPad, AirPods and lock-screen statement stays
+Inferred until Matthew's own devices run the checklist rows a section names.
+
+## Shipped 2026-11-23
+
+Release 1 of 2026-11-23 (Matthew: "ship it all baby"; `docs/control-plane/WORLD-RELEASE-20261118.md`, "Release 1,
+2026-11-23") carries **M3** and **the M3 follow-up** below, as verified at `dc0185aa`. M1, M4, M2 and the recovery
+continuation reached `main` before it, with PR #818 (2026-11-19), and the installed app's dock with PR #820 (2026-11-20).
+
+**What ships, in plain words.** Songs play to the end. When the connection drops, the song says Reconnecting…, offers
+Pause and picks up at the second it stopped; if the network stays away it says Connection lost, and Play picks it up
+there. A song that never started says it could not load. A locked preview no longer stops the album: one line says what
+it was, and the album moves on. The World's mute stays the World's, and a muted Music song has its own Unmute. A finished
+song is counted before the next one starts. The B-side plays as the M4A it is, four songs start sooner with their audio
+unchanged, and the Worker answers a read past a song's end with 416. On the listen page the bar's Music button pauses and
+plays the song and says which; the installed app's dock says what is happening in full; Heal the 3's door sits clear of
+the account chip. `music_interrupted` waits for Matthew's approval and is not sent.
+
+**What does not ship.** **M5**, one player across the music pages: not reviewed yet, and it breaks a Worker test the
+deploy gate runs (`workers/mccluster/test/analytics-creator-attribution.test.mjs`). **The quick wins**: still being
+built. Both are the next release. The decisions under each "What waits for Matthew" below stay his.
+
+**On his phone, in five plain steps** (the device rows of M3 and its follow-up). For each, note the page, a Safari tab or
+the Home Screen icon, signed in or not, and the iOS version.
+
+1. **Two songs in a row, phone locked.** On the Listen page and on the I AM HERE album, start a song near its end, lock the
+   phone and wait: the next song starts by itself. Note the gap and the next song's title, once with Reduce Motion on.
+   Then Heal the 3, Whip Equipped and CIA Mind Control: each song plays to its end and the next follows, with no click at
+   the joins. On CIA Mind Control, signed in as the owner, the last song starts by itself once Pull Up is counted; signed
+   out, it plays its short preview, one line says the full song opens later, and the album goes on.
+2. **The lock screen.** Next, then Pause, then Play: each does what it says, the title changes with Next, and back on the
+   page the same song shows.
+3. **A dropped connection.** Mid-song, phone locked, airplane mode on for 5 seconds, then off: the song plays on or picks
+   up at the second it stopped. Then for 15 seconds: it says Connection lost, and Play picks it up there. Pause during
+   Reconnecting… keeps it paused when the network comes back. From the Home Screen icon the dock says Reconnecting…, then
+   Connection lost · tap play, in full. With VoiceOver on the Listen page, the line is read out.
+4. **Mute and the Music button.** Mute the World's own song, then play a Music song: it has sound. Mute a Music song: the
+   page says Muted and shows its own Unmute. On the Listen page in a Safari tab, the bar's Music button (the red play and
+   pause circle left of the M) shows Pause while a song plays, and a tap pauses it; VoiceOver reads it as "Pause music".
+5. **The small things.** Dealer Plates (B-Side) on Whip Equipped plays; on a phone that kept Whip Equipped before, in
+   airplane mode, it still plays and the album says In your pocket. On the narrowest phone (an iPhone SE), scroll Heal the
+   3's door up under the Sign in chip: they never overlap.
+
+Nothing here is labelled gapless, and the closer's full play inside its 300 s allowance still needs the master's real
+length and an authorized play.
 
 ## M1: the album keeps playing with the screen locked
 
