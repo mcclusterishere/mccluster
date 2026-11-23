@@ -263,6 +263,33 @@ test('the stream serves the master with ranges while the token holds, and refuse
   assert.equal((await call('/v1/music/stream/not-a-token', { token: null })).status, 404);
 });
 
+/* A range past the end of the master is the player's own question, and Storage answers it with 416
+   (Range Not Satisfiable). The Worker turned that into a 502 "Could not open the full track", which
+   a player cannot tell from a broken master (music map 02, DEL-5; music slice M3). It is passed
+   through as 416 with the object's length, the same as the static host answers. The allowance
+   itself (300 seconds, 16 requests) is unchanged: the request still counted. */
+test('a range past the end of the master is answered 416 with the length, not 502', async () => {
+  const token = 'c'.repeat(64);
+  const calls = fakeSupabase();
+  const storage = globalThis.fetch;
+  globalThis.fetch = async (input, init = {}) => {
+    if (String(input).startsWith(`${SB}/storage/v1/object/authenticated/`)) {
+      calls.push({ url: String(input), range: init.headers?.range || null });
+      return new Response('', { status: 416, headers: { 'content-range': 'bytes */5761193', 'x-secret': 'no' } });
+    }
+    return storage(input, init);
+  };
+  const res = await entry.fetch(new Request(`https://api.mccluster.org/v1/music/stream/${token}`, {
+    headers: { origin: ORIGIN, range: 'bytes=5761203-' } }), env, {});
+  assert.equal(res.status, 416);
+  assert.equal(res.headers.get('content-range'), 'bytes */5761193');
+  assert.equal(res.headers.get('access-control-allow-origin'), ORIGIN);
+  assert.equal(res.headers.get('cache-control'), 'no-store, private');
+  assert.equal(res.headers.get('x-secret'), null, 'only media headers pass through');
+  assert.equal(calls.find((c) => c.url.endsWith('/rpc/music_stream_open')).body.p_max_hits, 16, 'the allowance is unchanged');
+  assert.equal(calls.find((c) => c.range).range, 'bytes=5761203-', 'the player\'s own range was asked');
+});
+
 test('beats credit the listen they belong to', async () => {
   const calls = fakeSupabase();
   const res = await call('/v1/music/listens/11111111-1111-4111-8111-111111111111/beat', { method: 'POST' });
