@@ -1,0 +1,920 @@
+diff --git a/js/environment-layers.js b/js/environment-layers.js
+index 995a86bd..e7d0e328 100644
+--- a/js/environment-layers.js
++++ b/js/environment-layers.js
+@@ -208,7 +208,16 @@
+   const NETWORK_LINE = 'Environmental layers could not be reached from this browser';
+   const LAYER_TITLES = Object.freeze({ fires: 'Fires', perimeters: 'Fire perimeters', alerts: 'Alerts', eonet: 'Natural events', tides: 'Water levels' });
+   const noneLine = layer => `${LAYER_TITLES[layer] || layer}: none reported right now`;
+-  const encodings = Object.freeze({ quakeRadiusM, discNearM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellPx, CELL_ALPHA, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, RUPTURE_LABEL, ruptureLine, POLICY_LINE, OFF_LINE, NETWORK_LINE, noneLine });
++  /* ONE TIME CURSOR FOR THE GLOBE AND THE FEED (event timeline slice S6, 2026-11-19): the page's cursor (js/world-environment-cursor.js)
++     shows the events recorded at or before its time, or every event at live (null); an event with no time of its own is always
++     shown, on the globe as in the feed. The typed layers keep their latest readings, and the legend says so. */
++  function shownAt(observedAt, atMs) {
++    if (atMs === null || atMs === undefined) return true;
++    const t = typeof observedAt === 'string' ? Date.parse(observedAt) : NaN;
++    return !Number.isFinite(t) || t <= atMs;
++  }
++  const cursorLine = atMs => `Events up to ${new Date(atMs).toISOString().slice(0, 16).replace('T', ' ')} UTC (time cursor); fires, perimeters, alert areas, natural-event tracks and water levels show their latest readings.`;
++  const encodings = Object.freeze({ quakeRadiusM, discNearM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellPx, CELL_ALPHA, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, RUPTURE_LABEL, ruptureLine, POLICY_LINE, OFF_LINE, NETWORK_LINE, noneLine, shownAt, cursorLine });
+   /* ENCODINGS_END */
+ 
+   /* THE FEED PROVIDERS' TERMS ARRIVE WITH THE PINS (review G1R-10): the panel copies them from the feed's own source records (which
+@@ -243,6 +252,10 @@
+   let marks = null, rippler = null, cam = null, onFrame = null, onActive = () => {};
+   const rippleNow = () => (rippler ? rippler.state() : null);
+   const glyphsOn = () => !!(marks && marks.usable());
++  /* event timeline slice S6: the time cursor (ms, or null at live) and the last of the page's cursor messages this frame has applied */
++  let cursorAt = null, cursorSeq = 0;
++  const atCursor = item => shownAt(item && item.observed_at, cursorAt);
++  const selectedShown = () => !selected || selected.layer !== 'events' || atCursor(selected.item);
+   const pendingMessages = [];
+ 
+   const now = () => Date.now();
+@@ -354,7 +367,8 @@
+     counts.glyphs = glyphs ? marks.build(glyphItems) : 0;
+     if (glyphs) marks.select(selected && selected.layer === 'events' && selected.kind === 'quake' ? selected.id : null);
+     if (selected && selected.layer === 'events') selected = getEntry('events', selected.id);
+-    if (replayMode) applyReplay(director && director.scene() ? findEntry(director.scene().id, 'events') : null);
++    /* the new primitives follow the time cursor (event timeline slice S6; the replay is the cursor's playback) */
++    applyCursor();
+   }
+   function eventsState() {
+     const items = data.events;
+@@ -381,7 +395,7 @@
+       states.events = eventsState();
+       tellLayerState('events');
+     }
+-    if (mounted && director && (changed || tourChanged || (director.state().total === 0 && data.events.length))) director.setQueue(data.events, { queue: replayMode || 'significant' });
++    if (mounted && director && (changed || tourChanged || (director.state().total === 0 && data.events.length))) syncQueue();
+     if (mounted && typeof o.selected === 'string' && o.selected && o.selected !== (selected && selected.id) && findEntry(o.selected, 'events')) select(o.selected, 'panel', { layer: 'events' });
+     if (mounted && selected && selected.layer === 'events' && !getEntry('events', selected.id)) clearSelection();
+     /* a focus kept pending is honoured by the pins that bring its id, as by a layer's data (picks are keyed by layer and id, so the
+@@ -715,7 +729,8 @@
+     updateSelectedLabel();
+     /* a chosen quake (a tap, a post, a row) is pushed to, so its rings wait for the landing; the tour's arrival has landed already */
+     if (e.kind === 'quake') { startRipple(e, via === 'pick' || via === 'focus' || via === 'panel'); shakemapFor(e); ruptureFor(e); }
+-    if (replayMode && e.layer === 'events') applyReplay(e);
++    /* only the replay's own arrivals move the time cursor (event timeline slice S6, D15): a visitor's tap or choice never does */
++    if (replayMode && e.layer === 'events' && via === 'tour') applyReplay(e);
+     if (via !== 'panel') tellSelected(e, via, options);
+     updateLegend(); requestRender('select');
+     return true;
+@@ -778,7 +793,10 @@
+     const src = sourceOf(e);
+     /* the contract's via is pick, focus or tour: a selection the panel's own list made is user-initiated, so it is told as focus
+        (review G1R-9), also when its ShakeMap answers later */
+-    tell({ type: 'hu:environment-selected', id: e.id, layer: e.layer, kind: e.kind, title: facts.title, facts: facts.facts, source: src.source, observed_at: facts.observed_at, observed_label: facts.observed_label, observed_date_only: facts.observed_date_only, fetched_at: src.fetched_at, coverage: src.coverage, status: src.status, reason: src.reason, lat: facts.lat, lon: facts.lon, via: via === 'panel' ? 'focus' : (via || 'pick'), illustrative: rippleNow() ? RIPPLE_LABEL : null, modelled: !!sm });
++    /* the revision of the event the globe draws (event timeline slice S6: one canonical id and revision drive the post, the globe
++       object, the selection and the deep link; the feed's store-held rows carry it, others none) */
++    const revision = e.layer === 'events' && Number.isSafeInteger(e.item.revision) && e.item.revision > 0 ? e.item.revision : null;
++    tell({ type: 'hu:environment-selected', id: e.id, revision, layer: e.layer, kind: e.kind, title: facts.title, facts: facts.facts, source: src.source, observed_at: facts.observed_at, observed_label: facts.observed_label, observed_date_only: facts.observed_date_only, fetched_at: src.fetched_at, coverage: src.coverage, status: src.status, reason: src.reason, lat: facts.lat, lon: facts.lon, via: via === 'panel' ? 'focus' : (via || 'pick'), illustrative: rippleNow() ? RIPPLE_LABEL : null, modelled: !!sm });
+   }
+   /* a tap: `picked` is what Cesium found under the finger, `position` the tap in CSS px of the frame. A quake's glyph is its tap
+      target (event timeline slice S5): a tap within 22 px of a glyph's centre (a 44 px target) selects that quake when nothing
+@@ -803,42 +821,92 @@
+     return chosen;
+   }
+ 
+-  /* ---------- the quake replay: discs, glyphs and labels later than the current scene hidden, the current disc fading in ---------- */
+-  function applyReplay(current) {
+-    /* the glyphs and their labels follow the same cut (slice S5: before it the later quakes' dots stayed on) */
+-    if (glyphsOn()) { const cut = replayMode && current && current.item ? Date.parse(current.item.observed_at) : NaN; marks.setCutoff(Number.isFinite(cut) ? cut : null); }
++  /* ---------- ONE TIME CURSOR (event timeline slice S6, 2026-11-19): the events recorded after it wait, on every mark ----------
++     The page owns the cursor (js/world-environment-cursor.js, a range of the events' own times with a live end) and tells this frame
++     with hu:environment-time { at, seq, input }. Here it only ever sets `show`: each quake disc's instance attribute, each event dot,
++     the glyphs and their labels (js/environment-quake-marks.js setCutoff), and the selection's own label, contours, rupture line
++     and ripple while its event waits. Geometry is never rebuilt and the camera is never moved: the visitor's hand on the cursor stops
++     whatever flies (the tour, the replay, a push) where it is, and a scrub moves nothing (decision D15 as clarified, default adopted
++     pending Matthew's confirmation). The replay keeps its flights and is the cursor's playback: each quake it arrives at moves the
++     cursor to that quake's time, here and on the page. */
++  function applyCursor() {
++    if (!mounted) return;
++    if (glyphsOn()) marks.setCutoff(cursorAt);
++    for (const e of picks.values()) {
++      if (e.layer !== 'events') continue;
++      const show = atCursor(e.item);
++      for (const p of e.points) if (p.point.show !== show) p.point.show = show;
++    }
+     const discs = prims.events.discs;
+-    if (!discs) return;
++    if (discs) {
++      const run = () => {
++        if (!prims.events.discs || prims.events.discs.isDestroyed()) return;
++        for (const e of picks.values()) {
++          if (e.layer !== 'events' || e.kind !== 'quake' || !e.fills.length) continue;
++          const attrs = prims.events.discs.getGeometryInstanceAttributes(e.pick);
++          if (attrs) attrs.show = Cesium.ShowGeometryInstanceAttribute.toValue(atCursor(e.item), attrs.show);
++        }
++        requestRender('time');
++      };
++      if (discs.ready) run(); else { deferred.push(run); watchBuild(); }
++    }
++    /* a selected event the cursor hides waits with its marks: no rings for it until it is shown again */
++    if (!selectedShown()) clearRipple();
++    applyVisibility(); updateLegend(); requestRender('time');
++  }
++  const isoOf = ms => (ms === null ? null : new Date(ms).toISOString());
++  /* the tour visits what the cursor shows; the replay is the cursor's own playback, over every quake of its day */
++  function syncQueue() {
++    if (director) director.setQueue(replayMode ? data.events : data.events.filter(atCursor), { queue: replayMode || 'significant' });
++  }
++  /* the frame moves the cursor itself (the replay): applied here at once and proposed to the page, which takes it unless the
++     visitor has moved the cursor since the last message this frame applied (ack) */
++  function proposeTime(atMs, via) {
++    const next = typeof atMs === 'number' && Number.isFinite(atMs) ? atMs : null;
++    if (next !== cursorAt) { cursorAt = next; applyCursor(); if (!replayMode) syncQueue(); }
++    tell({ type: 'hu:environment-time-state', at: isoOf(cursorAt), via, ack: cursorSeq });
++  }
++  /* the page's cursor: input true is the visitor's own hand (a scrub, a step, Live), which stops whatever flies first */
++  function timeFromPage(d) {
++    const at = d.at === null || d.at === undefined ? null : isoOrNull(d.at) ? Date.parse(d.at) : undefined;
++    if (at === undefined) return;
++    if (Number.isSafeInteger(d.seq) && d.seq >= 0) cursorSeq = d.seq;
++    if (d.input === true) {
++      if (director) director.interrupt('time');
++      if (cam) cam.cancel('time');
++    }
++    const changed = at !== cursorAt;
++    cursorAt = at;
++    if (changed) applyCursor();
++    if (d.input === true && replayMode && director && typeof director.seek === 'function') director.seek(at);
++    if (changed && !replayMode) syncQueue();
++  }
++  /* the replay: the scene's recorded time is the cursor's (off: live), and the arriving quake's disc fades in */
++  function applyReplay(current) {
++    const t = replayMode && current && current.item ? Date.parse(current.item.observed_at) : NaN;
++    proposeTime(replayMode && Number.isFinite(t) ? t : null, 'replay');
++    if (!replayMode || !current || !current.fills.length || !motionAllowed() || !prims.events.discs) return;
+     const run = () => {
+       if (!prims.events.discs || prims.events.discs.isDestroyed()) return;
+-      const t = replayMode && current && current.item ? Date.parse(current.item.observed_at) : NaN;
+-      for (const e of picks.values()) {
+-        if (e.layer !== 'events' || e.kind !== 'quake' || !e.fills.length) continue;
+-        const attrs = prims.events.discs.getGeometryInstanceAttributes(e.pick);
+-        if (!attrs) continue;
+-        const show = !replayMode || !Number.isFinite(t) || (Date.parse(e.item.observed_at) || 0) <= t;
+-        attrs.show = Cesium.ShowGeometryInstanceAttribute.toValue(show, attrs.show);
+-      }
+-      if (replayMode && current && current.fills.length && motionAllowed()) {
+-        const target = current.fills[0];
+-        startFade(null, Object.assign({}, current, { fills: [Object.assign({}, target, { colour: target.colour })], points: [], polylines: [] }), REPLAY_FADE_MS, 'env-replay', FADE_MAX_MS);
+-      }
+-      requestRender('replay');
++      const target = current.fills[0];
++      startFade(null, Object.assign({}, current, { fills: [Object.assign({}, target, { colour: target.colour })], points: [], polylines: [] }), REPLAY_FADE_MS, 'env-replay', FADE_MAX_MS);
+     };
+-    if (discs.ready) run(); else { deferred.push(run); watchBuild(); }
++    if (prims.events.discs.ready) run(); else { deferred.push(run); watchBuild(); }
+   }
+ 
+   /* ---------- visibility, level of detail, legend ---------- */
+   function applyVisibility() {
+     const P = prims;
+     const set = (p, show) => { if (p && !p.isDestroyed()) p.show = show; };
+-    set(P.events.discs, visible('events')); set(P.events.dots, visible('events')); set(P.events.label, visible('events') && !!selected);
++    /* the selection's own label, contours and rupture line wait with its event while the time cursor hides it (slice S6) */
++    const chosenShown = selectedShown();
++    set(P.events.discs, visible('events')); set(P.events.dots, visible('events')); set(P.events.label, visible('events') && !!selected && chosenShown);
+     set(P.fires.near, visible('fires') && lodState === 'near'); set(P.fires.far, visible('fires') && lodState === 'far');
+     set(P.perimeters.fill, visible('perimeters')); set(P.perimeters.outline, visible('perimeters'));
+     set(P.alerts.fill, visible('alerts')); set(P.alerts.outline, visible('alerts'));
+     set(P.eonet.points, visible('eonet')); set(P.eonet.tracks, visible('eonet')); set(P.eonet.polygons, visible('eonet'));
+     set(P.tides.columns, visible('tides')); set(P.tides.labels, visible('tides'));
+-    set(P.shakemap.lines, visible('shakemap')); set(P.rupture.lines, visible('shakemap'));
++    set(P.shakemap.lines, visible('shakemap') && chosenShown); set(P.rupture.lines, visible('shakemap') && chosenShown);
+     if (glyphsOn()) marks.setOn(visible('events'));
+   }
+   function onCameraChanged() {
+@@ -874,6 +942,8 @@
+     if (counts.shakemapLines && visible('shakemap')) legendLines.push(`${LEGEND.shakemap} ${terms('shakemap')}`.trim());
+     if (counts.ruptureLines && visible('shakemap')) legendLines.push(LEGEND.rupture);
+     if (rippleNow()) legendLines.push(RIPPLE_LABEL);
++    /* the time cursor, said in words while it is not at live (slice S6): what waits, and what keeps its latest reading */
++    if (cursorAt !== null && visible('events')) legendLines.push(cursorLine(cursorAt));
+     if (!motionAllowed()) legendLines.push('(animations off)');
+     const items = legendLines.map(line => { const li = doc.createElement('li'); li.textContent = line; return li; });
+     list.replaceChildren(...items);
+@@ -939,7 +1009,7 @@
+     states.shakemap = null;
+     applyVisibility();
+     if (client) client.start({ onState: onLayerState, onData: onLayerData });
+-    if (director) director.setQueue(data.events, { queue: replayMode || 'significant' });
++    syncQueue();
+     updateLegend(); requestRender('activate');
+   }
+   function deactivate() {
+@@ -962,7 +1032,7 @@
+     replayMode = replay;
+     if (next && !on) activate();
+     else if (!next && on) deactivate();
+-    else if (next) { if (replayChanged && director) director.setQueue(data.events, { queue: replayMode || 'significant' }); applyVisibility(); }
++    else if (next) { if (replayChanged) syncQueue(); applyVisibility(); }
+     if (replayChanged) applyReplay(replayMode && director && director.scene() ? findEntry(director.scene().id, 'events') : null);
+     updateLegend(); requestRender('layers');
+   }
+@@ -1019,6 +1089,7 @@
+     else if (d.type === 'hu:environment-focus') focus(d.id);
+     else if (d.type === 'hu:environment-scene') sceneAction(d.action);
+     else if (d.type === 'hu:environment-view') view(d.mode);
++    else if (d.type === 'hu:environment-time') timeFromPage(d);
+     return true;
+   }
+   function mount(options) {
+@@ -1062,6 +1133,8 @@
+       replay: replayMode, layersOn: Object.assign({}, layersOn), eventsOn, policy: !!(client && client.isPolicy()), picks: picks.size, shakemap: shakemap ? { quakeId: shakemap.quakeId, lines: counts.shakemapLines, unavailable: shakemap.unavailable || null } : null,
+       rupture: rupture ? { quakeId: rupture.quakeId, lines: counts.ruptureLines, available: !!(rupture.body && rupture.body.available === true), reason: rupture.body ? rupture.body.reason || null : null } : null,
+       marks: marks ? marks.state() : null, camera: cam ? cam.state() : null,
++      /* event timeline slice S6: the time cursor and what it shows of the events layer */
++      cursor: { at: isoOf(cursorAt), seq: cursorSeq, shown: [...picks.values()].filter(e => e.layer === 'events' && atCursor(e.item)).map(e => e.id).sort(), hidden: [...picks.values()].filter(e => e.layer === 'events' && !atCursor(e.item)).map(e => e.id).sort() },
+       feedTerms: Object.keys(feedTerms).sort()
+     };
+   }
+diff --git a/js/environment-pins.js b/js/environment-pins.js
+index ead9aac8..d91f9f8e 100644
+--- a/js/environment-pins.js
++++ b/js/environment-pins.js
+@@ -34,6 +34,8 @@
+       if ('fetched_at' in row) out.fetched_at = iso(row.fetched_at);
+       if (Array.isArray(row.facts)) out.facts = row.facts.filter(f => f && typeof f.label === 'string' && typeof f.value === 'string').slice(0, 16).map(f => ({ label: f.label.slice(0, 80), value: f.value.slice(0, 320) }));
+       if (row.significant === true) out.significant = true;
++      /* the store's revision of the event (event timeline slice S6): the globe object and its selection carry it */
++      if (Number.isSafeInteger(row.revision) && row.revision > 0) out.revision = row.revision;
+       return [out];
+     });
+   }
+diff --git a/js/globe-scene-director.js b/js/globe-scene-director.js
+index 6468db13..f6b9d289 100644
+--- a/js/globe-scene-director.js
++++ b/js/globe-scene-director.js
+@@ -7,7 +7,10 @@
+    ('env-director', bounded to duration + 600 ms); the dwell at a scene draws no frames at all. Any pointer, touch,
+    wheel or key input pauses the tour; so does a hidden document. Under prefers-reduced-motion nothing moves by
+    itself: play is refused, and next/prev/focus jump with camera.setView. The pure helpers below carry no viewer and
+-   no clock, so the queue and the flight arithmetic are unit-tested on their own. */
++   no clock, so the queue and the flight arithmetic are unit-tested on their own.
++   Event timeline slice S6 (2026-11-19): a flight stopped on its way leaves the state naming the scene the camera last arrived at,
++   never the one it was flying to; the replay keeps its flights but is playback of the page's one time cursor (each arrival moves
++   the cursor, js/environment-layers.js), and a visitor's scrub of that cursor stops it and seeks it without moving the camera. */
+ (function (root) {
+   'use strict';
+   const HOLD_TOUR_MS = 5000, HOLD_REPLAY_MS = 2500, LIMIT_TOUR = 12, LIMIT_REPLAY = 50, DAY_MS = 86400000, SAFETY_MS = 600;
+@@ -77,7 +80,17 @@
+       .sort((a, b) => { const ta = time(a.observed_at), tb = time(b.observed_at); if (ta === null && tb === null) return byId(a, b); if (ta === null) return 1; if (tb === null) return -1; return tb - ta || byId(a, b); })
+       .slice(0, o.limit || LIMIT_TOUR).map(i => sceneOf(i, HOLD_TOUR_MS));
+   }
+-  const pure = Object.freeze({ buildQueue, flightDuration, shortestArcMidLon, greatCircleDeg, heightFor, normalizeLon, kindOf });
++  /* THE REPLAY IS PLAYBACK OF THE TIME CURSOR (event timeline slice S6, 2026-11-19; decision D15 as clarified, default adopted pending
++     Matthew's confirmation): the scene a replay stands at for a cursor time is the last quake recorded at or before it, -1 before
++     the first, the last one for a cursor at live (null) */
++  function seekIndex(scenes, atMs) {
++    const list = Array.isArray(scenes) ? scenes : [];
++    if (atMs === null || atMs === undefined) return list.length - 1;
++    let k = -1;
++    list.forEach((s, i) => { const t = time(s && s.observed_at); if (t !== null && t <= atMs) k = i; });
++    return k;
++  }
++  const pure = Object.freeze({ buildQueue, flightDuration, shortestArcMidLon, greatCircleDeg, heightFor, normalizeLon, kindOf, seekIndex });
+ 
+   /* ---------- runtime ---------- */
+   function create(options) {
+@@ -91,6 +104,10 @@
+     const onArrive = typeof o.onArrive === 'function' ? o.onArrive : () => {};
+     let queueName = 'significant', queue = [], index = 0, playing = false, reason = null, destroyed = false;
+     let flight = null, dwell = null;
++    /* event timeline slice S6: the scene the camera last arrived at (by id), and whether the index was put back on it (a flight
++       stopped on its way, a seek of the time cursor), so that Play and Next go on from there */
++    let arrivedId = null, resumeNext = false;
++    const arrivedIndex = () => (arrivedId === null ? -1 : queue.findIndex(s => s.id === arrivedId));
+     const detachers = [];
+ 
+     const state = () => { const scene = queue[index] || null; return { playing, index, total: queue.length, id: scene ? scene.id : null, title: scene ? scene.title : null, queue: queueName, reason }; };
+@@ -127,6 +144,7 @@
+     }
+     function arrive(scene, how) {
+       if (destroyed || how === 'cancel') return;
++      arrivedId = scene.id; resumeNext = false;
+       onArrive(scene);
+       if (playing) { clearDwell(); dwell = schedule(() => { dwell = null; advance(); }, scene.hold_ms); }
+     }
+@@ -146,34 +164,56 @@
+          say play twice when the globe says ready twice, a hello answered after boot; review G1R-4) */
+       if (playing && (flight || dwell !== null)) { tellState(); return; }
+       if (reason === 'end') index = 0;
++      /* put back on a scene (or before the first) by a stopped flight or a seek: go on with the next one, the first after the last */
++      else if (resumeNext || index < 0) index = index + 1 >= queue.length ? 0 : index + 1;
++      resumeNext = false;
+       clearDwell();
+       playing = true; reason = null; tellState(); go();
+     }
+     function pause(why) {
+       if (destroyed) return;
+       clearDwell();
++      const flying = !!flight;
+       if (viewer && viewer.camera && typeof viewer.camera.cancelFlight === 'function') viewer.camera.cancelFlight();
+       if (flight) flight.finish('cancel');
++      /* A FLIGHT STOPPED ON ITS WAY NEVER REACHED ITS SCENE (event timeline slice S6; the reconciliation's V8 finding): the state named
++         the scene it was flying to while the globe still showed the one before it ("Paused at scene 2 of 12: <the alert>" beside the
++         label of scene 1). It names the scene the camera last arrived at again (none when it has not arrived at any), and Play or
++         Next go on from there; Previous goes back from there. */
++      if (flying) { index = arrivedIndex(); resumeNext = true; }
+       playing = false; reason = why === undefined ? null : why; tellState();
+     }
+     function step(delta) {
+       if (destroyed || !queue.length) return;
+       clearDwell();
+       if (flight) flight.finish('cancel');
+-      index = (index + delta + queue.length) % queue.length;
++      index = index < 0 ? (delta > 0 ? 0 : queue.length - 1) : (index + delta + queue.length) % queue.length;
++      resumeNext = false;
+       reason = null; tellState(); go();
+     }
+-    function stop() { if (destroyed) return; pause('off'); index = 0; tellState(); }
++    function stop() { if (destroyed) return; pause('off'); index = 0; arrivedId = null; resumeNext = false; tellState(); }
++    /* the replay follows the visitor's time cursor (event timeline slice S6, D15): the caller has stopped any flight (a scrub never
++       moves the camera); the replay stands at the last quake at or before the cursor and Play or Next go on with the one after it */
++    function seek(atMs) {
++      if (destroyed || queueName !== 'quakes-24h') return;
++      if (playing || flight) pause('time');
++      clearDwell();
++      index = seekIndex(queue, typeof atMs === 'number' && Number.isFinite(atMs) ? atMs : null);
++      resumeNext = true; playing = false; reason = 'time'; tellState();
++    }
+     function interrupt(why) { if (destroyed) return; if (playing || flight) pause(why || 'input'); }
+     function setQueue(items, opts) {
+       if (destroyed) return;
+       const currentId = queue[index] ? queue[index].id : null;
+       queueName = opts && opts.queue === 'quakes-24h' ? 'quakes-24h' : 'significant';
+       queue = buildQueue(items, { queue: queueName });
++      if (arrivedId !== null && !queue.some(s => s.id === arrivedId)) arrivedId = null;
+       const keep = currentId === null ? -1 : queue.findIndex(s => s.id === currentId);
+       if (keep >= 0) index = keep;
++      /* a state that names no scene (a flight stopped before any arrival, a cursor before the first quake) keeps naming none */
++      else if (currentId === null && index < 0 && !playing) index = -1;
+       else {
+-        index = 0;
++        index = 0; resumeNext = false;
+         if (playing) { clearDwell(); if (flight) flight.finish('cancel'); if (queue.length) go(); else { playing = false; reason = 'empty'; } }
+       }
+       if (reason === 'end' && queue.length) reason = null;
+@@ -193,7 +233,7 @@
+       }
+     }
+     const director = Object.freeze({
+-      pure, setQueue, play, pause, next: () => step(1), prev: () => step(-1), stop, interrupt, attachInput, state,
++      pure, setQueue, play, pause, next: () => step(1), prev: () => step(-1), stop, interrupt, attachInput, state, seek,
+       queueIds: () => queue.map(s => s.id), scene: () => queue[index] || null,
+       destroy() { if (destroyed) return; pause('off'); detachers.splice(0).forEach(fn => fn()); destroyed = true; }
+     });
+diff --git a/js/mnet.js b/js/mnet.js
+index 6959b8ef..7358da3f 100644
+--- a/js/mnet.js
++++ b/js/mnet.js
+@@ -2217,6 +2217,8 @@
+     var query = state.world.query, list = environmentPosts();
+     /* the timeline from the event store in place of the feed's quakes, one list by time (js/world-environment-timeline.js, slice S4) */
+     if (TIMELINE) list = TIMELINE.merged(list);
++    /* one time cursor for the globe and this list: the events recorded after it wait (js/world-environment-cursor.js, slice S6) */
++    if (CURSOR) list = CURSOR.sync(list);
+     return query ? list.filter(function (p) { return feedMatches(p, query); }) : list;
+   }
+   /* THE TIMELINE FROM THE EVENT STORE (event timeline slice S4, 2026-11-19): its posts carry the store's canonical id and revision;
+@@ -2225,8 +2227,12 @@
+   var TIMELINE = window.MCC_ENVIRONMENT_TIMELINE || null;
+   if (TIMELINE) TIMELINE.attach({
+     render: function () { if (state.feedAnswered && !state.loadingFeed && (state.feedScope || "global") === "equity") renderFeed(false); },
+-    focus: function (id) { tellWorld({ type: "hu:environment-focus", id: id }); }
++    focus: function (id) { tellWorld({ type: "hu:environment-focus", id: id }); },
++    /* the globe's selection marks the post of any observation, by its own id or the globe's (slice S6) */
++    livePost: function (id) { var env = state.environment; if (env.posts[id]) return env.posts[id]; for (var k in env.posts) if (env.posts[k].globe_id === id) return env.posts[k]; return null; }
+   });
++  var CURSOR = window.MCC_ENVIRONMENT_CURSOR || null;
++  if (CURSOR) CURSOR.attach({ render: function () { if (state.feedAnswered && !state.loadingFeed && (state.feedScope || "global") === "equity") renderFeed(false); } });
+   /* the observation posts' words as one ordered line (id, content hash, significance, source label, update time): a detail that
+      changed none of them repaints nothing (review G1R-7; the tour re-selecting quakes, a refresh whose words did not change) */
+   function environmentSignature() {
+@@ -2263,7 +2269,7 @@
+     /* a timeline post (slice S4) says automatic or reviewed where a live post says its coverage and status; its times, an official
+        correction (old -> new), a deep link's earlier corrections and a withdrawal follow on lines of their own; the one a deep link
+        or a choice named is marked current */
+-    var tl = !!p.timeline, current = tl && typeof TIMELINE !== "undefined" && TIMELINE && TIMELINE.selected() === p.id;
++    var tl = !!p.timeline, current = typeof TIMELINE !== "undefined" && !!TIMELINE && TIMELINE.selected() === p.id;
+     var body = (p.facts || []).map(function (f) { return f.label + ": " + f.value; }).concat(tl ? (p.review ? [p.review] : []) : ["Coverage: " + p.coverage, "Status: " + p.status + (p.reason ? " (" + p.reason + ")" : "")]).join(" · ");
+     var lines = tl ? [[p.times, ""], [p.correction, " mn__timeline-correction"]].concat((p.earlier || []).map(function (t) { return [t, " mn__timeline-earlier"]; }), [[p.tombstone, " mn__timeline-tombstone"]])
+       .filter(function (l) { return l[0]; }).map(function (l) { return '<p class="mn__timeline-line' + l[1] + '">' + esc(l[0]) + '</p>'; }).join("") : "";
+diff --git a/js/world-environment-cursor.js b/js/world-environment-cursor.js
+new file mode 100644
+index 00000000..d2e73c2f
+--- /dev/null
++++ b/js/world-environment-cursor.js
+@@ -0,0 +1,250 @@
++/* ONE TIME CURSOR FOR THE MAP AND THE FEED (event timeline slice S6, 2026-11-19; owner direction 2026-11-19: "Share selection and
++   the time cursor across the map and feed; scrub without camera jumps"; the record is docs/control-plane/EUP-EVENT-TIMELINE.md).
++
++   In the Equity Uprise tab, under the feed's row, one range control steps through the environmental events' own recorded times,
++   oldest to newest; its newest end is Live (every event, and the new ones as they come). Wherever it stands, the tab's observation
++   posts and the globe's events (js/environment-layers.js: quake discs, dots, glyphs and labels) show the same events: those recorded
++   at or before the cursor. An event with no recorded time of its own is always shown, on both. Fire areas and fire perimeters are
++   the latest readings of their layers, not events in time: they stay, as their layers stay on the globe.
++     - Keys step from event to event (the range's own arrows), Home is the oldest event, End and the Live button are Live.
++     - A scrub never moves the camera: the globe is told { at, seq, input:true } and only ever sets `show`; the visitor's hand on the
++       cursor stops a tour, a replay or a push where it is (decision D15 as clarified, default adopted pending Matthew's
++       confirmation).
++     - The replay is the cursor's playback: each quake it reaches moves the cursor (hu:environment-time-state from the globe), taken
++       unless the visitor has moved the cursor since the globe last heard from the page (its `ack` must be this page's `seq`).
++     - A chosen event is never hidden: choosing one recorded after the cursor (a deep link, Show on globe, a row) moves the cursor up
++       to it.
++     - The address carries the time beside the event: ?feed=equity&event=<id>&t=<ISO time>, written in place (no history entry for a
++       scrub); Back and Forward read it again. Live has no t.
++   PURE PARTS (node --test scripts/test/world-environment-cursor.test.mjs): timeOf, marksOf, effectiveAt, visibleAt, filterAt,
++   positionOf, atOfPosition, stepAt, timeFromSearch, searchWithTime, describe. THE PAGE'S PART (createCursor, started in the browser).
++   Nothing here is stored, logged or sent anywhere but to the World's own globe frame. */
++(function (root, factory) {
++  const node = typeof module === 'object' && module.exports;
++  const api = factory();
++  if (node) module.exports = api;
++  else {
++    root.MCC_ENVIRONMENT_CURSOR = api;
++    if (root.document && typeof root.addEventListener === 'function') api.start(root);
++  }
++})(typeof self !== 'undefined' ? self : this, function () {
++  'use strict';
++  const PARAM = 't';
++  const ADDRESS_MS = 250;
++  /* the latest readings of a layer (a 1-degree fire area, a fire perimeter): not events in time, never hidden by the cursor */
++  const LATEST = Object.freeze(['fire_cell', 'perimeter']);
++
++  /* ---------- pure ---------- */
++  /* a post's own recorded time in ms, or null: a retrieval time standing in for a missing event time is not one */
++  function timeOf(post) {
++    if (!post || typeof post !== 'object' || LATEST.includes(post.kind)) return null;
++    const s = post.stamp;
++    if (!s || s.kind !== 'recorded' || typeof s.iso !== 'string' || s.iso.length > 40) return null;
++    const t = Date.parse(s.iso);
++    return Number.isFinite(t) ? t : null;
++  }
++  /* the marks: every distinct recorded time, oldest first */
++  function marksOf(posts) {
++    const set = new Set();
++    for (const p of Array.isArray(posts) ? posts : []) { const t = timeOf(p); if (t !== null) set.add(t); }
++    return [...set].sort((a, b) => a - b);
++  }
++  /* the cursor in effect for a wanted time: Live (null) at or past the newest event, the oldest event for a time before every one,
++     else the wanted time itself; with no marks yet a wanted time waits as it is */
++  function effectiveAt(marks, want) {
++    if (want === null || want === undefined || !Number.isFinite(want)) return null;
++    const m = Array.isArray(marks) ? marks : [];
++    if (!m.length) return want;
++    if (want >= m[m.length - 1]) return null;
++    if (want < m[0]) return m[0];
++    return want;
++  }
++  const visibleAt = (post, at) => at === null || at === undefined || timeOf(post) === null || timeOf(post) <= at;
++  const filterAt = (posts, at) => (Array.isArray(posts) ? posts : []).filter((p) => visibleAt(p, at));
++  /* the range's value for a cursor: the newest mark at Live, else the last mark at or before it */
++  function positionOf(marks, at) {
++    const m = Array.isArray(marks) ? marks : [];
++    if (!m.length) return 0;
++    if (at === null || at === undefined) return m.length - 1;
++    let k = 0;
++    for (let i = 0; i < m.length; i++) if (m[i] <= at) k = i;
++    return k;
++  }
++  /* the cursor a value of the range stands for: the newest mark is Live */
++  function atOfPosition(marks, value) {
++    const m = Array.isArray(marks) ? marks : [];
++    const v = Math.round(Number(value));
++    if (!m.length || !Number.isFinite(v) || v >= m.length - 1) return null;
++    return m[Math.max(0, v)];
++  }
++  /* one step from event to event (a key, or the e2e's ten scrub steps) */
++  const stepAt = (marks, at, delta) => atOfPosition(marks, Math.max(0, Math.min((Array.isArray(marks) ? marks.length : 1) - 1, positionOf(marks, at) + (delta | 0))));
++  /* the address */
++  function timeFromSearch(search) {
++    try {
++      const v = new URLSearchParams(search || '').get(PARAM) || '';
++      if (!v || v.length > 40 || !/^\d{4}-\d{2}-\d{2}T/.test(v)) return null;
++      const t = Date.parse(v);
++      return Number.isFinite(t) ? t : null;
++    } catch (e) { return null; }
++  }
++  /* the same address with this time (or none at Live): every other parameter kept in its order; a time names the tab */
++  function searchWithTime(search, at) {
++    let q;
++    try { q = new URLSearchParams(search || ''); } catch (e) { q = new URLSearchParams(); }
++    q.delete(PARAM);
++    if (at !== null && at !== undefined && Number.isFinite(at)) {
++      if (q.get('feed') !== 'equity') { q.delete('feed'); q.append('feed', 'equity'); }
++      q.append(PARAM, new Date(at).toISOString());
++    }
++    const s = q.toString().replace(/event=([a-z]+)%3A/, 'event=$1:').replace(new RegExp('(^|&)' + PARAM + '=([^&]*)'), (m, a, v) => a + PARAM + '=' + decodeURIComponent(v));
++    return s ? '?' + s : '';
++  }
++  const localTime = (t) => new Date(t).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
++  const shortTime = (t, now) => {
++    const d = new Date(t), n = new Date(now);
++    const same = d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
++    return same ? d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
++  };
++  /* the words: what the control shows and what it tells a screen reader */
++  function describe(posts, at, now) {
++    const dated = (Array.isArray(posts) ? posts : []).filter((p) => timeOf(p) !== null);
++    const shown = dated.filter((p) => visibleAt(p, at)).length, total = dated.length, events = total === 1 ? 'event' : 'events';
++    if (at === null || at === undefined) return { live: true, short: 'Live', text: 'Live: all ' + total + ' ' + events + ' shown', shown, total };
++    return { live: false, short: shortTime(at, now === undefined ? Date.now() : now), text: 'Up to ' + localTime(at) + ': ' + shown + ' of ' + total + ' ' + events + ' shown', shown, total };
++  }
++
++  /* ---------- the page's part ---------- */
++  function createCursor(w, opts) {
++    const o = opts || {}, clock = o.now || (() => Date.now());
++    const st = { want: timeFromSearch(w.location && w.location.search), at: null, marks: [], posts: [], seq: 0, frameAck: 0 };
++    st.at = effectiveAt(st.marks, st.want);
++    let hooks = {}, host = null, range = null, value = null, live = null, addressTimer = 0, sentAt;
++    const frameWindow = () => { try { const f = w.document.getElementById('mnWorldFrame'); return f ? f.contentWindow : null; } catch (e) { return null; } };
++    const iso = (t) => (t === null ? null : new Date(t).toISOString());
++    /* the globe hears the cursor in effect: on the visitor's input (which stops what flies there), on a change the page made (a
++       chosen event, new marks), and again whenever it says it is ready */
++    function tellFrame(input, force) {
++      if (!input && !force && sentAt === st.at) return;
++      sentAt = st.at;
++      const msg = { type: 'hu:environment-time', at: iso(st.at), seq: st.seq, input: input === true };
++      try { const fw = frameWindow(); if (fw) fw.postMessage(msg, w.location.origin); } catch (e) {}
++    }
++    function writeAddress() {
++      if (!w.history || !w.location) return;
++      w.clearTimeout(addressTimer);
++      addressTimer = w.setTimeout(() => {
++        const href = w.location.pathname + searchWithTime(w.location.search, st.at) + (w.location.hash || '');
++        try { w.history.replaceState(w.history.state || null, '', href); } catch (e) {}
++      }, ADDRESS_MS);
++    }
++    /* the control: built once into #mnTimeCursor, its attributes kept current (the feed below is drawn again; the control is not, so
++       a keyboard on it keeps its focus through every step) */
++    function build() {
++      if (host || !w.document) return;
++      host = w.document.getElementById('mnTimeCursor');
++      if (!host) return;
++      host.innerHTML = '<label class="mn__time-label" for="mnTimeRange">Time</label>' +
++        '<input class="mn__time-range" id="mnTimeRange" type="range" min="0" max="0" step="1" value="0">' +
++        '<output class="mn__time-value" id="mnTimeValue" for="mnTimeRange"></output>' +
++        '<button class="mn__time-live" id="mnTimeLive" type="button" aria-pressed="true">Live</button>';
++      range = host.querySelector('#mnTimeRange'); value = host.querySelector('#mnTimeValue'); live = host.querySelector('#mnTimeLive');
++      range.addEventListener('input', () => set(atOfPosition(st.marks, range.value), { input: true }));
++      live.addEventListener('click', () => set(null, { input: true }));
++    }
++    function paint() {
++      build();
++      if (!host) return;
++      const m = st.marks, d = describe(st.posts, st.at, clock());
++      host.hidden = m.length < 2;
++      host.setAttribute('data-at', st.at === null ? 'live' : iso(st.at));
++      range.max = String(Math.max(0, m.length - 1));
++      const pos = String(positionOf(m, st.at));
++      if (range.value !== pos) range.value = pos;
++      range.setAttribute('aria-valuetext', d.text);
++      value.textContent = d.short;
++      value.setAttribute('aria-hidden', 'true');
++      live.setAttribute('aria-pressed', String(d.live));
++    }
++    /* the cursor moves: by the visitor (input), by a chosen event, by the replay, or by the address */
++    function set(want, how) {
++      const h = how || {};
++      if (h.input === true) st.seq += 1;
++      st.want = want === null || want === undefined || !Number.isFinite(want) ? null : want;
++      const before = st.at;
++      st.at = effectiveAt(st.marks, st.want);
++      paint();
++      if (h.input === true) tellFrame(true);
++      else if (h.fromFrame !== true) tellFrame(false);
++      else sentAt = st.at;
++      if (h.address !== false) writeAddress();
++      if (before !== st.at || h.input === true) { try { if (hooks.render) hooks.render(); } catch (e) {} }
++      return st.at;
++    }
++    /* the tab's observations, every one (before the search narrows them): the marks follow them, and the list shown is the cursor's */
++    function sync(posts) {
++      st.posts = Array.isArray(posts) ? posts : [];
++      const marks = marksOf(st.posts);
++      if (marks.length !== st.marks.length || marks.some((t, i) => t !== st.marks[i])) {
++        st.marks = marks;
++        const before = st.at;
++        st.at = effectiveAt(st.marks, st.want);
++        if (before !== st.at) tellFrame(false);
++      }
++      paint();
++      return filterAt(st.posts, st.at);
++    }
++    /* a chosen event is never hidden: one recorded after the cursor moves the cursor up to it */
++    function reveal(post) {
++      const t = timeOf(post);
++      if (st.at === null || t === null || t <= st.at) return false;
++      set(t, { input: false });
++      return true;
++    }
++    function onFrame(ev) {
++      let frame = null;
++      try { frame = w.document.getElementById('mnWorldFrame'); } catch (e) { frame = null; }
++      if (!frame || !ev || ev.source !== frame.contentWindow || ev.origin !== (w.location && w.location.origin)) return;
++      const d = ev.data || {};
++      if (d.type === 'hu:globe-ready') { tellFrame(false, true); return; }
++      if (d.type !== 'hu:environment-time-state') return;
++      /* the globe moved the cursor (the replay): taken only when the globe had heard the page's latest input */
++      if (!Number.isSafeInteger(d.ack) || d.ack !== st.seq) return;
++      const at = d.at === null ? null : typeof d.at === 'string' && d.at.length <= 40 && Number.isFinite(Date.parse(d.at)) ? Date.parse(d.at) : undefined;
++      if (at === undefined || at === st.at) return;
++      set(at, { fromFrame: true });
++    }
++    function onPop() {
++      const want = timeFromSearch(w.location && w.location.search);
++      if (want === st.want) return;
++      set(want, { input: true, address: false });
++    }
++    return {
++      attach(h) { hooks = h && typeof h === 'object' ? h : {}; },
++      listen() {
++        w.addEventListener('message', onFrame);
++        w.addEventListener('popstate', onPop);
++      },
++      sync, set, reveal,
++      live: () => set(null, { input: true }),
++      step: (delta) => set(stepAt(st.marks, st.at, delta), { input: true }),
++      at: () => st.at,
++      state: () => ({ at: iso(st.at), want: iso(st.want), seq: st.seq, marks: st.marks.map(iso), position: positionOf(st.marks, st.at), shown: filterAt(st.posts, st.at).map((p) => p.id) })
++    };
++  }
++  let cursor = null;
++  function start(w) {
++    if (cursor) return cursor;
++    cursor = createCursor(w);
++    cursor.listen();
++    return cursor;
++  }
++  const live = (name) => (...args) => (cursor ? cursor[name](...args) : undefined);
++
++  return {
++    PARAM, LATEST,
++    timeOf, marksOf, effectiveAt, visibleAt, filterAt, positionOf, atOfPosition, stepAt, timeFromSearch, searchWithTime, describe, createCursor, start,
++    attach: live('attach'), sync: (posts) => (cursor ? cursor.sync(posts) : posts), set: live('set'), reveal: (post) => !!(cursor && cursor.reveal(post)),
++    step: live('step'), at: () => (cursor ? cursor.at() : null), state: live('state')
++  };
++});
+diff --git a/js/world-environment-mccluster.mjs b/js/world-environment-mccluster.mjs
+index cbccbe70..aeb000e2 100644
+--- a/js/world-environment-mccluster.mjs
++++ b/js/world-environment-mccluster.mjs
+@@ -51,12 +51,24 @@ export function mcclusterEnvironmentAdapter(w) {
+      css/world-environment.css). Once the panel has shown, a later failed refresh stays in the panel, which says so itself. */
+   let shownOnce = false;
+   const feedState = (value) => { if (!shownOnce) try { w.document?.documentElement.setAttribute('data-we-feed', value); } catch (_) {} };
++  /* THE STORE'S REVISION RIDES WITH THE PINS (event timeline slice S6, 2026-11-19: one canonical id and revision drive the post, the
++     globe object, the selection and the deep link). The feed's store-held rows carry their event's revision; the panel's pins keep
++     only the fields it knows, so the panel's messages to the globe pass through here (its sendGlobe hook) and each pin gets its row's
++     revision back. Nothing else in any message changes. */
++  const revisions = new Map();
++  const sendGlobe = (data) => {
++    let message = data;
++    if (data && data.type === 'hu:environment-pins' && Array.isArray(data.items) && revisions.size) message = { ...data, items: data.items.map((item) => (item && revisions.has(item.id) ? { ...item, revision: revisions.get(item.id) } : item)) };
++    try { w.document?.getElementById?.('mnWorldFrame')?.contentWindow?.postMessage(message, w.location.origin); } catch (_) {}
++  };
+   const request = (path, options) => {
+     if (path !== '') return transport.request(path, options);
+     feedState('checking');
+     return transport.request(path, options).then((body) => {
+       let feed;
+       try { feed = normalizeFeed(body); } catch (error) { feedState('unavailable'); return body; }
++      revisions.clear();
++      for (const event of feed.events) if (Number.isSafeInteger(event.revision) && event.revision > 0) revisions.set(event.id, event.revision);
+       /* NO DATA (event timeline slice S0): every source answered and none reported an event; with a source down the panel explains it */
+       if (!feed.events.length && feed.sources.length && feed.sources.every((s) => s.status === 'available')) { feedState('empty'); return body; }
+       feedState('ready'); shownOnce = true;
+@@ -79,7 +91,7 @@ export function mcclusterEnvironmentAdapter(w) {
+     token,
+     mode:()=>shown() ? 'environment' : 'feed',
+     modeEvent:'mcc:world-environment', authEvent:'mcc:auth-changed', sessionStorageKey:'mccdb_session',
+-    eventsEvent:'mcc:world-environment-events', significance,
++    eventsEvent:'mcc:world-environment-events', significance, sendGlobe,
+     revealPanel() {
+       w.document?.documentElement.classList.remove('wt-expanded');
+       w.document?.querySelector('.mn__world-expand')?.setAttribute('aria-label','Expand the map');
+diff --git a/js/world-environment-timeline.js b/js/world-environment-timeline.js
+index 8fa863ec..a7c0d200 100644
+--- a/js/world-environment-timeline.js
++++ b/js/world-environment-timeline.js
+@@ -179,11 +179,39 @@
+   /* ---------- the page's part ---------- */
+   function createController(w, opts) {
+     const o = opts || {}, api = o.api || API, clock = o.now || (() => Date.now());
+-    const st = { gate: 'unknown', status: 'idle', posts: [], next: null, loadedAt: 0, failedAt: 0, busy: false, extra: {}, selected: '', note: '', wanted: eventIdFromSearch(w.location && w.location.search) };
++    const st = { gate: 'unknown', status: 'idle', posts: [], next: null, loadedAt: 0, failedAt: 0, busy: false, extra: {}, selected: '', selectedRevision: null, note: '', wanted: eventIdFromSearch(w.location && w.location.search) };
+     let hooks = {};
+     const scope = () => { try { return w.MCC_FEED_SCOPE && w.MCC_FEED_SCOPE.get ? w.MCC_FEED_SCOPE.get() : ''; } catch (e) { return ''; } };
+     const changed = () => { try { if (hooks.render) hooks.render(); } catch (e) {} };
+     const find = (id) => st.posts.find((p) => p.id === id) || st.extra[id] || null;
++    /* event timeline slice S6: a live post of the page (any provider, by its own id or its globe id), for the globe's selection */
++    const livePost = (id) => { try { return hooks.livePost ? hooks.livePost(id) || null : null; } catch (e) { return null; } };
++    const owned = (id) => typeof id === 'string' && EVENT_ID.test(id) && OWNED.includes(providerOf(id));
++    const revisionOf = (v) => (Number.isSafeInteger(v) && v > 0 ? v : null);
++    /* a chosen event is never hidden by the time cursor (js/world-environment-cursor.js): one recorded after it moves it up to it */
++    const reveal = (p) => { const c = w.MCC_ENVIRONMENT_CURSOR; if (p && c && typeof c.reveal === 'function') { try { c.reveal(p); } catch (e) {} } };
++    /* the globe's pick: its post comes into view in the feed's own scrolling column (never the window, so the globe stays where it
++       is) and nothing takes the focus; after the panel's own answer to the same message, which scrolls its card */
++    function keepInView(id) {
++      if (!/^[A-Za-z0-9:_./-]{1,200}$/.test(id) || !w.document || typeof w.setTimeout !== 'function') return;
++      w.setTimeout(() => {
++        let el = null;
++        try { el = w.document.querySelector('#mnFeed [data-observation-post="' + id + '"]'); } catch (e) { el = null; }
++        if (!el || typeof el.getBoundingClientRect !== 'function') return;
++        let box = el.parentElement;
++        while (box && box !== w.document.body) {
++          const s = typeof w.getComputedStyle === 'function' ? w.getComputedStyle(box) : null;
++          if (s && /(auto|scroll)/.test(s.overflowY) && box.scrollHeight > box.clientHeight) break;
++          box = box.parentElement;
++        }
++        if (!box || box === w.document.body) return;
++        const r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
++        const dy = r.top < b.top + 8 ? r.top - b.top - 8 : r.bottom > b.bottom - 8 ? Math.min(r.top - b.top - 8, r.bottom - b.bottom + 8) : 0;
++        if (!dy) return;
++        const still = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
++        if (typeof box.scrollBy === 'function') box.scrollBy({ top: dy, behavior: still ? 'auto' : 'smooth' }); else box.scrollTop += dy;
++      }, 0);
++    }
+     async function getJson(url) {
+       const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+       const timer = ctl ? w.setTimeout(() => ctl.abort(), TIMEOUT_MS) : 0;
+@@ -220,9 +248,22 @@
+       try { frame = w.document.getElementById('mnWorldFrame'); } catch (e) { frame = null; }
+       if (!frame || !ev || ev.source !== frame.contentWindow || ev.origin !== (w.location && w.location.origin)) return;
+       const d = ev.data || {};
+-      if (d.type === 'hu:environment-selected' && (d.id === focusWanted || d.via === 'pick')) focusWanted = '';
++      if (d.type === 'hu:environment-selected') {
++        if (d.id === focusWanted || d.via === 'pick') focusWanted = '';
++        /* ONE SELECTION FOR THE GLOBE AND THE FEED (event timeline slice S6): what the visitor chose on the globe (a tap) or through it (a
++           row, Show on globe, a deep link) marks its post; the tour's and the replay's own arrivals never move the feed */
++        if (d.via === 'pick' || d.via === 'focus') fromGlobe(d);
++      }
+       else if (d.type === 'hu:globe-ready' && focusWanted && scope() === 'equity' && hooks.focus) try { hooks.focus(focusWanted); } catch (e) {}
+     }
++    function fromGlobe(d) {
++      if (typeof d.id !== 'string' || !d.id) return;
++      const p = find(d.id) || livePost(d.id);
++      if (!p && !owned(d.id)) return;
++      const id = p ? p.id : d.id, revision = revisionOf(d.revision) || (p ? revisionOf(p.revision) : null);
++      if (st.selected !== id || st.selectedRevision !== revision) select(id, { push: true, revision });
++      if (d.via === 'pick') keepInView(id);
++    }
+     async function load(force) {
+       if (st.gate !== 'open' || st.busy) return;
+       if (!force && st.status === 'ready' && clock() - st.loadedAt < FRESH_MS) { if (st.wanted) open(st.wanted, { fromAddress: true }); return; }
+@@ -253,7 +294,7 @@
+       if (st.gate !== 'open') { st.wanted = id; return; }
+       st.wanted = '';
+       const known = find(id);
+-      if (known) { st.selected = known.id; st.note = ''; changed(); focus(known); }
++      if (known) { st.selected = known.id; st.selectedRevision = revisionOf(known.revision); st.note = ''; reveal(known); changed(); focus(known); }
+       const r = await getJson(api + '/' + encodeURIComponent(id));
+       const p = r.status === 200 && r.body && r.body.event ? timelinePost(r.body.event, clock()) : null;
+       if (p) {
+@@ -264,10 +305,10 @@
+         else if (have) { const i = st.posts.indexOf(have); if (i >= 0) st.posts[i] = p; }
+         else st.extra[p.id] = p;
+         if (!known) {
+-          st.selected = p.id; st.note = '';
++          st.selected = p.id; st.selectedRevision = revisionOf(p.revision); st.note = '';
+           /* an alias or a merge answers the canonical id: the address says the canonical id, with no new entry */
+           if (fromAddress && p.id !== id) writeAddress(p.id, false);
+-          changed(); focus(p); return;
++          reveal(p); changed(); focus(p); return;
+         }
+         changed(); return;
+       }
+@@ -277,11 +318,15 @@
+     }
+     /* a visitor chose this event (Show on globe on a timeline post, or on a live post of a provider the store holds: the same
+        canonical id): one history entry, the address names it; one not loaded yet is marked when its page arrives */
++    /* event timeline slice S6: one selection, keyed by canonical id and revision, for the store's events and the live posts alike (a
++       live post is marked, never written in the address: its id is not the store's); a chosen event the cursor hides is revealed */
+     function select(id, opts2) {
+-      const p = find(id);
+-      if (!p && !(typeof id === 'string' && EVENT_ID.test(id) && OWNED.includes(providerOf(id)))) return false;
+-      st.selected = p ? p.id : id; st.note = '';
+-      if (opts2 && opts2.push && eventIdFromSearch(w.location && w.location.search) !== st.selected) writeAddress(st.selected, true);
++      const o2 = opts2 || {};
++      const p = find(id) || (owned(id) ? null : livePost(id));
++      if (!p && !owned(id)) return false;
++      st.selected = p ? p.id : id; st.selectedRevision = revisionOf(o2.revision) || (p ? revisionOf(p.revision) : null); st.note = '';
++      if (o2.push && owned(st.selected) && eventIdFromSearch(w.location && w.location.search) !== st.selected) writeAddress(st.selected, true);
++      reveal(p);
+       changed();
+       return true;
+     }
+diff --git a/scripts/test/globe-scene-director.test.mjs b/scripts/test/globe-scene-director.test.mjs
+index b48acb7b..cd78f51e 100644
+--- a/scripts/test/globe-scene-director.test.mjs
++++ b/scripts/test/globe-scene-director.test.mjs
+@@ -158,15 +158,17 @@ test('G1R-4: play on a tour already under way is idempotent: no second flight, n
+   r.T.fire(t => t.ms === 5000);
+   assert.equal(r.flights.length, 2, 'the tour still advances on its own');
+ });
+-test('pause cancels the flight (through its cancel callback) and keeps the index; interrupt pauses with reason input', () => {
++test('pause cancels the flight (through its cancel callback) and names the scene it arrived at; interrupt pauses with reason input', () => {
+   const r = rig();
+   r.director.play(); r.complete(); r.T.fire(t => t.ms === 5000);
+   assert.equal(r.director.state().index, 1);
+   r.director.pause();
+   assert.equal(r.camera.pending, null, 'cancelFlight was called');
+   assert.equal(r.releases.filter(x => x === 'env-director').length, 2);
+-  assert.equal(r.director.state().playing, false); assert.equal(r.director.state().index, 1); assert.equal(r.director.state().reason, null);
+-  r.director.play(); assert.equal(r.flights.length, 3); assert.equal(r.director.state().index, 1, 'resumes where it paused');
++  /* changed on purpose (event timeline slice S6, the scene line after a cancelled flight): this paused on the way to scene 2 and
++     used to keep index 1, so the line named a scene the camera never reached; it now names scene 1, where the camera last arrived */
++  assert.equal(r.director.state().playing, false); assert.equal(r.director.state().index, 0); assert.equal(r.director.state().id, 'usgs:a'); assert.equal(r.director.state().reason, null);
++  r.director.play(); assert.equal(r.flights.length, 3); assert.equal(r.director.state().index, 1, 'resumes on the way it was going');
+   r.director.interrupt('input');
+   assert.equal(r.director.state().playing, false); assert.equal(r.director.state().reason, 'input');
+   r.director.play(); r.complete();
+@@ -218,3 +220,85 @@ test('a flight that never answers resolves through the safety timeout; destroy s
+   assert.deepEqual(r.T.pending(), []);
+   assert.match(source.slice(0, 800), /Adapted from gods-eye-view src\/director\/camera\.js \(shortest-arc interpolation\), src\/director\/playback\.js \(queue phases\) and src\/cameraVerbs\.js \(manual-input interrupt\), MIT, Copyright \(c\) 2026 Bilawal Sidhu, see THIRD-PARTY-NOTICES/);
+ });
++
++/* ---------- event timeline slice S6: the scene line after a cancelled flight, and the replay as playback of the time cursor ---------- */
++test('S6: a flight stopped on its way names the scene the camera last arrived at, never the one it was flying to; Next and Play go on from there', () => {
++  const r = rig();
++  r.director.play(); r.complete();
++  assert.deepEqual(r.arrived, ['usgs:a']);
++  r.T.fire(t => t.ms === 5000);
++  assert.equal(r.director.state().id, 'usgs:b', 'on the way to scene 2, the state names it while it plays');
++  r.director.interrupt('time');
++  const s = r.director.state();
++  assert.deepEqual([s.playing, s.index, s.id, s.title, s.reason], [false, 0, 'usgs:a', 'usgs:a', 'time'], 'stopped half way: scene 1 is what the globe shows');
++  assert.equal(r.told.at(-1).id, 'usgs:a', 'and that is what the panel is told');
++  r.director.next();
++  assert.equal(r.director.state().index, 1, 'Next goes to the scene it never reached'); assert.equal(r.flights.at(-1).destination.lon, 100);
++  r.complete();
++  assert.deepEqual(r.arrived, ['usgs:a', 'usgs:b']);
++  /* stopped before any arrival: no scene is named; Play starts at the first, Previous from nowhere goes to the last */
++  const n = rig();
++  n.director.play();
++  n.director.pause();
++  assert.deepEqual([n.director.state().index, n.director.state().id], [-1, null], 'nothing reached: nothing named');
++  n.director.setQueue([item('usgs:a', { category: 'quake', lat: 10, lon: 20, observed_at: at(3) }), item('usgs:b', { category: 'quake', lat: -5, lon: 100, observed_at: at(2) })], { queue: 'significant' });
++  assert.equal(n.director.state().index, -1, 'a rebuilt queue keeps naming nothing');
++  n.director.play();
++  assert.equal(n.director.state().index, 0); assert.equal(n.flights.length, 2);
++  n.director.pause();
++  n.director.prev();
++  assert.equal(n.director.state().index, 1, 'Previous from nowhere: the last scene');
++  /* a pause while dwelling (the camera is there) keeps the scene and Play flies to it again, as before */
++  const d = rig();
++  d.director.play(); d.complete();
++  d.director.pause();
++  assert.deepEqual([d.director.state().index, d.director.state().id], [0, 'usgs:a']);
++  d.director.play();
++  assert.equal(d.director.state().index, 0); assert.equal(d.flights.length, 2);
++});
++
++const replayItems = () => [0, 1, 2, 3].map(k => item('usgs:r' + k, { category: 'quake', significant: false, lat: k, lon: 10 * k, observed_at: new Date(Date.UTC(2026, 10, 17, 2 * k)).toISOString(), facts: [{ label: 'Magnitude', value: '4.6' }] }));
++test('S6: seekIndex is the last quake at or before the cursor, -1 before the first, the last at live', () => {
++  const scenes = P.buildQueue(replayItems(), { queue: 'quakes-24h' });
++  assert.deepEqual(plain(scenes.map(s => s.id)), ['usgs:r0', 'usgs:r1', 'usgs:r2', 'usgs:r3']);
++  const h = (n) => Date.UTC(2026, 10, 17, n);
++  assert.equal(P.seekIndex(scenes, h(0) - 1), -1);
++  assert.equal(P.seekIndex(scenes, h(0)), 0);
++  assert.equal(P.seekIndex(scenes, h(3)), 1);
++  assert.equal(P.seekIndex(scenes, h(4)), 2);
++  assert.equal(P.seekIndex(scenes, h(9)), 3);
++  assert.equal(P.seekIndex(scenes, null), 3, 'live: every quake has happened');
++  assert.equal(P.seekIndex([], h(1)), -1);
++});
++test('S6: the replay seeks to the time cursor without moving the camera; Play goes on with the next quake after it', () => {
++  const r = rig();
++  r.director.setQueue(replayItems(), { queue: 'quakes-24h' });
++  r.director.play();
++  assert.equal(r.flights.length, 1); assert.equal(r.director.state().id, 'usgs:r0');
++  r.complete();
++  r.T.fire(t => t.ms === 2500);
++  assert.equal(r.flights.length, 2, 'flying to the second quake');
++  const before = r.flights.length, views = r.views.length;
++  /* the visitor scrubs to 05:00 while the replay flies: the flight stops, nothing else moves */
++  r.director.interrupt('time');
++  r.director.seek(Date.UTC(2026, 10, 17, 5));
++  assert.equal(r.camera.pending, null, 'the flight was cancelled');
++  assert.equal(r.flights.length, before, 'no new flight'); assert.equal(r.views.length, views, 'no jump');
++  const s = r.director.state();
++  assert.deepEqual([s.playing, s.index, s.id, s.reason, s.queue], [false, 2, 'usgs:r2', 'time', 'quakes-24h'], 'the replay stands at the last quake before 05:00');
++  r.director.play();
++  assert.equal(r.director.state().id, 'usgs:r3', 'Play goes on with the first quake after the cursor');
++  r.complete();
++  assert.deepEqual(r.arrived, ['usgs:r0', 'usgs:r3']);
++  /* before the first quake: Play starts with the first; at live: Play starts the replay again from its first quake */
++  r.director.seek(Date.UTC(2026, 10, 16, 23));
++  assert.equal(r.director.state().index, -1); assert.equal(r.director.state().id, null);
++  r.director.play(); assert.equal(r.director.state().id, 'usgs:r0');
++  r.director.seek(null);
++  assert.equal(r.director.state().id, 'usgs:r3');
++  r.director.play(); assert.equal(r.director.state().id, 'usgs:r0', 'from the end, the replay starts again');
++  /* the tour (significant queue) is not a time line: seek does nothing there */
++  const t = rig();
++  t.director.seek(Date.UTC(2026, 10, 17, 5));
++  assert.equal(t.director.state().queue, 'significant'); assert.equal(t.director.state().index, 0); assert.equal(t.director.state().reason, null);
++});

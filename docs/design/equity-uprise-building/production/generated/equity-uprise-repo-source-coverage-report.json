@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 768,
+  "candidate_count": 773,
   "capability_source_count": 104,
-  "support_only_count": 664,
-  "checks_total": 2970,
-  "checks_passed": 2970,
+  "support_only_count": 669,
+  "checks_total": 2990,
+  "checks_passed": 2990,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -216,6 +216,11 @@
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
     "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
+    "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md",
+    "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md",
+    "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md",
+    "docs/control-plane/handoff-20261123/specs/SPEC-M5.md",
+    "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
@@ -782,7 +787,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "768 entries"
+      "detail": "773 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4746,6 +4751,106 @@
     },
     {
       "name": "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-M5.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-M5.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-M5.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-M5.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md support rationale present",
       "passed": true,
       "detail": ""
     },
