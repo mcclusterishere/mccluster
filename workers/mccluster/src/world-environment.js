@@ -17,10 +17,11 @@ import { handleEnvironmentLayers } from './world-environment-layers.js';
 import { OFF, gateAnswer, limitPublicRead, policyLoader, policyRead, sharedLayer } from './world-environment-guard.js';
 /* the public timeline from the event store, and the public feed's USGS rows from the same store (E=UP slice S4) */
 import { handleEnvironmentEvents, storeUsgsReader } from './world-environment-events.js';
+import { PLATFORM_ORIGIN } from './platform/hosts.generated.js';
 export { ENVIRONMENT_PATH, ENVIRONMENT_TEAM, ENVIRONMENT_ACTIONS, environmentFacts } from '../../../vendor/equity-uprise/src/environment/evidence.mjs';
 const PROVIDERS = { nws:fetchWeather, eonet:fetchNatural, usgs:fetchQuakes, nhc:fetchCyclones };
 const installation = Object.freeze({
-  schema:'equity-uprise.installation/v1',id:'mccluster',appOrigin:'https://mccluster.org',apiOrigin:'https://api.mccluster.org',
+  schema:'equity-uprise.installation/v1',id:'mccluster',appOrigin:PLATFORM_ORIGIN,apiOrigin:'https://api.mccluster.org',
   brand:{name:'McCluster'},modules:{environment:true}
 });
 // Module policy is the persisted owner decision, read from the canonical store on every request
