@@ -308,7 +308,7 @@ window.__huJourney=()=>({travel:travelMode,points:journeyPoints.length,entities:
 /* Completed cohort events are public places supplied by the World Missions archive.
    Keep this layer separate from live missions, member locations and travel paths. */
 let completedEvents=[],completedPins=[],completedOn=false;
-let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false,focusedNews='',newsTintQuiet=false;
+let publicNewsPins=[],publicNewsItems=[],publicNewsOn=false,focusedNews='',newsTintQuiet=true,newsScopeQuiet=false;
 /* THE NEWS HEAT MAP (owner, 2026-10-21: "instead of pins on the map ... a heat map of how many articles or mentions it has"):
    with the World's news on, the countries are shaded by the stories that mention them (js/world-countries.js, the counts from
    GET /v1/world/news-heat, read again every five minutes); no pin per story. The one pin left is the story whose place a
@@ -339,15 +339,15 @@ function loadMembers(){
 function newsHeatCells(code){return fetch(API+'/v1/world/news-heat?country='+encodeURIComponent(code),{credentials:'omit'}).then(r=>r.ok?r.json():null).then(d=>d&&d.ok&&Array.isArray(d.cells)?d.cells:null).catch(()=>null)}
 /* THE TINT STEPS ASIDE IN THE EQUITY UPRISE TAB (release polish, 2026-11-18; review V2-M3): the page sends tint:false while the
    feed's scope is that tab (js/world-news-globe.js); the countries hide the shading and its legend and keep the counts, and show
-   them again when the tab is left. Only an explicit false quiets it, so a page that never sends the flag keeps the tint. */
+   them when authorized again. Only an explicit true enables public shading. */
 function quietNewsTint(){if(countries&&countries.quietHeat)countries.quietHeat(newsTintQuiet)}
 /* THE NEWS LAYER OFF IN THE TAB AND BEHIND THE DOOR (event timeline slice S4, decision D9, default adopted pending Matthew's
-   confirmation): the page sends on:false with tint:false; the heat is not read (loadNewsHeat) and a country's card drops its news
-   count until the news is on again. Travel's own off (on:false, the tint flag kept) leaves the card as it was. */
-function newsCardOff(){if(countries&&countries.newsOff)countries.newsOff(!publicNewsOn&&newsTintQuiet)}
-function setWorldNewsPins(items,on,tint){
+   confirmation): the page sends on:false with suppressCounts:true; the heat is not read (loadNewsHeat) and a country's card drops its news
+   count until the news is on again. Travel's own off does not suppress the card. */
+function newsCardOff(){if(countries&&countries.newsOff)countries.newsOff(!publicNewsOn&&newsScopeQuiet)}
+function setWorldNewsPins(items,on,tint,suppressCounts){
  if(!parentFrame||ANALYTICS)return;
- publicNewsOn=on===true;newsTintQuiet=tint===false;quietNewsTint();newsCardOff();const seen=new Set();
+ publicNewsOn=on===true;newsTintQuiet=tint!==true;newsScopeQuiet=suppressCounts===true||(suppressCounts==null&&tint===false);quietNewsTint();newsCardOff();const seen=new Set();
  publicNewsItems=(Array.isArray(items)?items:[]).slice(0,120).flatMap(x=>{
   if(!x||typeof x.id!=='string'||x.id.length>110||seen.has(x.id)||!Number.isFinite(x.lat)||!Number.isFinite(x.lon)||Math.abs(x.lat)>90||Math.abs(x.lon)>180||(x.lat===0&&x.lon===0))return [];
   seen.add(x.id);return [{id:x.id,lat:x.lat,lon:x.lon}];
@@ -484,7 +484,7 @@ if(d.type==='hu:environment-focus'&&!ANALYTICS){environmentPins?.focus(d.id);ret
 if(d.type==='hu:travel-mode'&&!ANALYTICS){setTravelMode(d.on===true);return}
 if(d.type==='hu:map-pick-mode'&&!ANALYTICS){travelPickKind(d.kind);return}
 if(d.type==='hu:completed-missions'&&!ANALYTICS){setCompletedEvents(d.events,d.on);return}
-if(d.type==='hu:world-news-pins'&&!ANALYTICS){setWorldNewsPins(d.items,d.on,d.tint);return}
+if(d.type==='hu:world-news-pins'&&!ANALYTICS){setWorldNewsPins(d.items,d.on,d.tint,d.suppressCounts);return}
 if(d.type==='hu:journey'&&!ANALYTICS&&Array.isArray(d.points)){
  journeyPoints=d.points.slice(0,2).filter(p=>p&&typeof p.label==='string'&&travelCoordinates(p.coordinates)).map(p=>({label:p.label.slice(0,80),coordinates:travelCoordinates(p.coordinates)}));
  journeyConnect=d.connect!==false;journeyFlyPending=journeyFlyPending||d.fly===true;drawJourney(journeyPoints,false);scheduleTravelCamera();return;

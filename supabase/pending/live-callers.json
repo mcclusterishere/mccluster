@@ -304,6 +304,20 @@
         "workers/mccluster/src/eup/intake.js"
       ]
     },
+    "eup_world_display_read": {
+      "kind": "function",
+      "pending": "20261123013000_eup_world_display_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/world-display.js"
+      ]
+    },
+    "eup_world_display_set": {
+      "kind": "function",
+      "pending": "20261123013000_eup_world_display_v1.sql",
+      "callers": [
+        "workers/mccluster/src/eup/world-display.js"
+      ]
+    },
     "front-media": {
       "kind": "bucket",
       "pending": "member_fronts_v1.sql",

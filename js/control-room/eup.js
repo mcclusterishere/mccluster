@@ -222,14 +222,15 @@
   /* policy: the last owner read of /v1/eup/modules (control), why it failed (error), the reason being typed per
      unit, and a counter so only the newest read is committed. Reset with everything private. */
   function freshPolicy() { return { control: null, error: null, loading: false, readAt: null, reasons: {}, seq: 0 }; }
-  var model = { section: 'overview', geo: { country: null, state: null }, data: {}, errors: {}, loading: {}, query: '', civic: { jurisdiction: null, office: null, bill: null }, company: null, outcomes: {}, policy: freshPolicy() };
-  function resetModel() { model.data = {}; model.errors = {}; model.loading = {}; model.civic = { jurisdiction: null, office: null, bill: null }; model.company = null; model.outcomes = {}; model.policy = freshPolicy(); if (league) league.reset(); if (envView) envView.reset(); }
+  function freshDisplay() { return { enabled: null, busy: false, error: '' }; }
+  var model = { display: freshDisplay(), section: 'overview', geo: { country: null, state: null }, data: {}, errors: {}, loading: {}, query: '', civic: { jurisdiction: null, office: null, bill: null }, company: null, outcomes: {}, policy: freshPolicy() };
+  function resetModel() { model.display = freshDisplay(); model.data = {}; model.errors = {}; model.loading = {}; model.civic = { jurisdiction: null, office: null, bill: null }; model.company = null; model.outcomes = {}; model.policy = freshPolicy(); if (league) league.reset(); if (envView) envView.reset(); }
 
   /* ---------- rendering (strings only; bind() wires them) ---------- */
   function render() {
     return '<section class="cr-eup" data-eup aria-labelledby="eupTitle">' +
       '<header class="cr-eup__head"><div><p class="cr-eup__kicker">Products · admin only</p><h2 id="eupTitle">E=Up</h2>' +
-      '<p class="cr-muted">The deeper E=Up experience, released first to the verified house owner only. Every pane reads the owner-gated Worker; a hidden tab is not authorization, and nothing here changes the consumer globe.</p></div></header>' +
+      '<p class="cr-muted">The deeper E=Up experience, released first to the verified house owner only. Every pane reads the owner-gated Worker; a hidden tab is not authorization, Public Globe display is managed separately from Analytics.</p></div></header>' +
       '<div class="cr-eup__status" role="status" aria-live="polite" data-eup-status>Opening E=Up…</div>' +
       '<div class="cr-eup__tabs" role="tablist" aria-label="E=Up sections" data-eup-tabs>' + SECTIONS.map(function (s, i) {
         return '<button type="button" role="tab" id="eupTab-' + s.id + '" aria-controls="eupPane" aria-selected="' + (s.id === model.section) + '" tabindex="' + (s.id === model.section ? '0' : '-1') + '" data-eup-tab="' + s.id + '">' + esc(s.label) + '</button>';
@@ -326,14 +327,25 @@
     if (!P.control) return P.error ? '<p class="cr-eup__unit-line" data-eup-policy-unread>' + esc(policyReadFailure(P.error).text + ' Select Overview again to read both again.') + '</p>' : '';
     return '<div class="cr-eup__grid"><article class="cr-eup__card cr-eup__card--wide" data-eup-modules><h3>Modules</h3><p class="cr-eup__unit-line">The overview was not read, so release posture is not shown.</p>' + policyBlock(null) + '</article></div>';
   }
+  function worldDisplayCard() {
+    var d = model.display;
+    var badge = d.enabled === null ? (d.busy ? 'Checking…' : 'Unknown') : (d.enabled ? 'On' : 'Off');
+    return '<article class="cr-eup__card" data-eup-world-display><h3>Public Globe heat map</h3>' +
+      '<p>News shading: <strong>' + badge + '</strong>. This does not change Analytics, missions, or news.</p>' +
+      (d.error ? '<p role="status">' + esc(d.error) + '</p>' : '') +
+      (d.enabled === null ? '' : '<button type="button" class="cr-btn" data-eup-display-toggle data-eup-focus="display-toggle"' +
+        (d.busy ? ' aria-disabled="true"' : '') + '>' + (d.enabled ? 'Hide on public Globe' : 'Show on public Globe') + '</button>') +
+      '<button type="button" class="cr-btn" data-eup-display-read data-eup-focus="display-read"' +
+      (d.busy ? ' aria-disabled="true"' : '') + '>Check setting</button></article>';
+  }
   function paneOverview() {
     if (model.loading.overview) return note('loading', 'Loading overview…');
     var r = reasonFor(model.errors.overview);
-    if (r) return note(r.kind, r.text) + policyOnly();
-    var d = model.data.overview; if (!d || d.ok !== true) return note('error', 'The overview answered without ok:true; nothing is shown.') + policyOnly();
+    if (r) return note(r.kind, r.text) + policyOnly() + worldDisplayCard();
+    var d = model.data.overview; if (!d || d.ok !== true) return note('error', 'The overview answered without ok:true; nothing is shown.') + policyOnly() + worldDisplayCard();
     var mods = Array.isArray(d.modules) ? d.modules : [];
     var geo = d.geography && d.geography.selected;
-    return '<div class="cr-eup__grid">' +
+    return '<div class="cr-eup__grid">' + worldDisplayCard() +
       '<article class="cr-eup__card cr-eup__card--wide" data-eup-modules><h3>Modules</h3>' + (mods.length ? '<ul class="cr-eup__list">' + mods.map(moduleRow).join('') + '</ul>' : note('empty', 'The Worker returned no module records (0) at ' + when(new Date().toISOString()) + '.')) + policyBlock(d) + '</article>' +
       '<article class="cr-eup__card"><h3>Geography</h3><p>' + esc(geo ? [geo.country, geo.state, geo.municipality].filter(Boolean).join(' › ') : 'None selected server-side.') + '</p><p class="cr-muted">Globe selection: ' + esc(model.geo.country ? model.geo.country + (model.geo.state ? ' › ' + model.geo.state : '') : 'none') + '</p></article>' +
       '<article class="cr-eup__card"><h3>Campaigns</h3><p>Drafts: ' + count(d.campaigns && d.campaigns.drafts) + ' · Released: ' + count(d.campaigns && d.campaigns.released) + '</p></article>' +
@@ -486,7 +498,7 @@
         /* module policy is read after the overview has settled, and also when the overview failed (but not after a 401 or a 403) */
         var e = model.errors.overview;
         if (!alive() || (e && reasonFor(e).kind === 'signed_out')) return;
-        return loadPolicy();
+        return Promise.all([loadPolicy(), worldDisplay(false)]);
       }).then(done);
       if (section === 'league') { drawPane(); return (league ? league.load() : Promise.resolve()).then(done); }
       if (section === 'environment') { drawPane(); return (envView ? envView.load() : Promise.resolve()).then(done); }
@@ -535,6 +547,30 @@
       if (err && err.status === 403) { denied = true; resetModel(); say(reasonFor(err).text); drawPane(); return true; }
       if (err && reasonFor(err).kind === 'signed_out') { conceal('Signed out. Sign in again to open E=Up.'); model.errors.overview = err; return true; }
       return false;
+    }
+    function worldDisplay(write) {
+      var d = model.display, began = epoch;
+      if (!alive() || d.busy || (write && d.enabled === null)) return Promise.resolve();
+      var wanted = !d.enabled, path = '/v1/eup/world-display';
+      d.busy = true; d.error = ''; drawPane();
+      var current = function () { return alive() && epoch === began && model.display === d; };
+      var update = write ? request(path, { method: 'PATCH', body: { publicNewsHeatMap: wanted } })
+        .catch(function (err) {
+          if (!current() || concealed(err)) return;
+          d.error = 'The save could not be confirmed. Checking the current setting.';
+        }) : Promise.resolve();
+      return update.then(function () {
+        if (!current()) return;
+        return request(path).then(function (response) {
+          if (!current()) return;
+          if (response?.ok !== true || typeof response.publicNewsHeatMap !== 'boolean') throw new Error('Setting unavailable');
+          d.enabled = response.publicNewsHeatMap;
+          d.error = write && d.enabled !== wanted ? 'The requested change was not saved.' : '';
+        });
+      }).catch(function (err) {
+        if (!current() || concealed(err)) return;
+        d.enabled = null; d.error = 'Unable to confirm the setting. Check again before changing it.';
+      }).finally(function () { if (current()) { d.busy = false; drawPane(); } });
     }
     function policyName(sent) {
       var unit = POLICY_UNITS.filter(function (u) { return u.id === sent.unit; })[0], acts = { install: 'Install', enabled: 'Enable', draining: 'Drain', disabled: 'Disable' };
@@ -644,6 +680,9 @@
     }
     function wirePane() {
       if (!pane) return;
+      var displayToggle = pane.querySelector('[data-eup-display-toggle]'), displayRead = pane.querySelector('[data-eup-display-read]');
+      if (displayToggle) displayToggle.onclick = function () { return worldDisplay(true); };
+      if (displayRead) displayRead.onclick = function () { return worldDisplay(false); };
       pane.querySelectorAll('[data-eup-jurisdiction]').forEach(function (b) { b.setAttribute('data-eup-focus', 'j-' + b.getAttribute('data-eup-jurisdiction')); b.onclick = function () { model.civic.jurisdiction = { id: b.getAttribute('data-eup-jurisdiction'), name: b.getAttribute('data-eup-jurisdiction-name'), kind: b.getAttribute('data-eup-jurisdiction-kind') }; model.civic.office = null; loadCivic(); }; });
       pane.querySelectorAll('[data-eup-office]').forEach(function (b) { b.setAttribute('data-eup-focus', 'o-' + b.getAttribute('data-eup-office')); b.onclick = function () { model.civic.office = b.getAttribute('data-eup-office'); loadCivic(); }; });
       pane.querySelectorAll('[data-eup-company]').forEach(function (b) { b.setAttribute('data-eup-focus', 'c-' + b.getAttribute('data-eup-company')); b.onclick = function () { var id = b.getAttribute('data-eup-company'); model.data.companies = model.data.companies || {}; settle('companies', 'detail', request('/v1/eup/companies/' + encodeURIComponent(id)), function (d) { model.company = d; }); }; });

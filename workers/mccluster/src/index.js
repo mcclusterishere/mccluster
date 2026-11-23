@@ -24,6 +24,7 @@ import { handleIntelRequest } from './intel/router.js';
 import { handlePublicComment } from './public-comment.js';
 import { handleWorldIon, WORLD_ION_PATH } from './world-ion.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
+import { handleWorldDisplay, WORLD_DISPLAY_PATH } from './eup/world-display.js';
 import { handleWorldNews, handleWorldNewsHeat, NEWS_PATH, NEWS_HEAT_PATH } from './world-news.js';
 import { handleWorldNewsPairs, NEWS_PAIRS_PATH } from './world-news-pairs.js';
 import { handleWorldWeather, WEATHER_PREFIX } from './world-weather.js';
@@ -193,6 +194,7 @@ export default {
         if (news) return news;
       }
       /* how many stories mention each country, or each place in one country: the World's news heat map */
+      if (path === WORLD_DISPLAY_PATH) return handleWorldDisplay(request, env);
       if (path === NEWS_HEAT_PATH) {
         const heat = await handleWorldNewsHeat(request, env);
         if (heat) return heat;

@@ -229,6 +229,8 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     }
     /* WORLD NEWS: free for everyone, never with a session; the cursor is opaque and must come back verbatim */
     /* the news heat map's counts: the fixture's stories by the country each mentions, and Kenya's as places */
+    // Fixtures testing the retained visual deliberately opt in like the owner would.
+    if (u.pathname === '/v1/world/display') return json(route, { ok: true, publicNewsHeatMap: true });
     if (u.pathname === '/v1/world/news-heat') {
       const c = u.searchParams.get('country');
       if (c === null) return json(route, { ok: true, window_hours: 24, countries: HEAT_COUNTRIES, total: Object.values(HEAT_COUNTRIES).reduce((a, b) => a + b, 0), capped: false, posts: { KE: 3, US: 12 }, attribution: GDELT });
