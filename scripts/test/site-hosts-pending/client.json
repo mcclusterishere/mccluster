@@ -1,0 +1,69 @@
+{
+  "lane": "client",
+  "scope": "js/",
+  "reads": "window.MCC_SITE (the generated block at the top of js/shell-boot.js)",
+  "rule": "Each entry is a file that still names a site host in code, outside the generated outputs of tools/build-site-hosts.mjs: its count of host literals (comments are not counted) and the stage that converts it. The list only shrinks (scripts/test/site-hosts.test.mjs): a file on no list may not name a host, a listed file may not name more hosts than its count, and a file that names none leaves its list.",
+  "how_to_leave": "Convert the file to read its hosts from window.MCC_SITE (the generated block at the top of js/shell-boot.js), run node tools/build-site-hosts.mjs --scan, and lower the count to what the scan prints; at zero delete the entry. Never raise a count. Edit only your own lane's list.",
+  "files": [
+    {
+      "file": "js/action-globe.js",
+      "count": 1,
+      "stage": "P0"
+    },
+    {
+      "file": "js/control-room/clipping.js",
+      "count": 1,
+      "stage": "P0"
+    },
+    {
+      "file": "js/control-room/music-direct-sales.js",
+      "count": 1,
+      "stage": "P0"
+    },
+    {
+      "file": "js/halo/halo.js",
+      "count": 1,
+      "stage": "P0"
+    },
+    {
+      "file": "js/live-content.js",
+      "count": 3,
+      "stage": "P0"
+    },
+    {
+      "file": "js/mcc-auth.js",
+      "count": 1,
+      "stage": "P0"
+    },
+    {
+      "file": "js/mnet.js",
+      "count": 3,
+      "stage": "P0"
+    },
+    {
+      "file": "js/news-brief.js",
+      "count": 1,
+      "stage": "P0"
+    },
+    {
+      "file": "js/travel/whip-booking.mjs",
+      "count": 1,
+      "stage": "P0"
+    },
+    {
+      "file": "js/travel/world-travel.mjs",
+      "count": 2,
+      "stage": "P0"
+    },
+    {
+      "file": "js/world-environment-mccluster.mjs",
+      "count": 1,
+      "stage": "P0"
+    },
+    {
+      "file": "js/world-source-profile.js",
+      "count": 5,
+      "stage": "P0"
+    }
+  ]
+}

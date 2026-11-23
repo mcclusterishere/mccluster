@@ -1,0 +1,41 @@
+{
+  "lane": "engine",
+  "scope": "js/",
+  "reads": "window.MCC_SITE (the generated block at the top of js/shell-boot.js)",
+  "rule": "Each entry is a file that still names a site host in code, outside the generated outputs of tools/build-site-hosts.mjs: its count of host literals (comments are not counted) and the stage that converts it. The list only shrinks (scripts/test/site-hosts.test.mjs): a file on no list may not name a host, a listed file may not name more hosts than its count, and a file that names none leaves its list.",
+  "how_to_leave": "Convert the file to read its hosts from window.MCC_SITE (the generated block at the top of js/shell-boot.js), run node tools/build-site-hosts.mjs --scan, and lower the count to what the scan prints; at zero delete the entry. Never raise a count. Edit only your own lane's list.",
+  "owned_files": [
+    "js/tabbar.js",
+    "js/music-shell.js",
+    "js/world-audio-continuity.js",
+    "js/music-engine.js",
+    "js/installed-app-dock.js",
+    "js/now-playing.js",
+    "js/music-sheet.js",
+    "js/pip.js",
+    "js/label.js",
+    "listen.html",
+    "album.html",
+    "music-creator.html",
+    "music-videos.html",
+    "index.html"
+  ],
+  "owned_note": "Owned by the music engine build (SPEC-ENGINE): the platform lanes never edit them, and their host literals stay until the engine converts them. Host logic in these files is rebuilt by SPEC-ENGINE stage 2 (the World on the engine), which lands after P1 so it is built once, for one origin (SPEC-PLATFORM 5).",
+  "files": [
+    {
+      "file": "js/music-shell.js",
+      "count": 4,
+      "stage": "engine stage 2"
+    },
+    {
+      "file": "js/tabbar.js",
+      "count": 10,
+      "stage": "engine stage 2"
+    },
+    {
+      "file": "js/world-audio-continuity.js",
+      "count": 7,
+      "stage": "engine stage 2"
+    }
+  ]
+}

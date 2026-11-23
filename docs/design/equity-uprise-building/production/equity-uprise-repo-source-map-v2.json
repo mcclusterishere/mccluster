@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 773,
+  "candidate_count": 777,
   "capability_source_count": 104,
-  "support_only_count": 669,
+  "support_only_count": 673,
   "entries": [
     {
       "path": ".cursorrules",
@@ -2657,6 +2657,13 @@
       "rationale": "Server Lab (SERVER-LAB-SPEC.md): owner-gated hands-on 3D rack/server lab that presents the B1 MDF sandbox clone and runs the canonical Lab Runtime (IT-LAB-041..051); presentation of existing lab-runtime authority, not an independent program capability."
     },
     {
+      "path": "js/shell-boot.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The pages' first script: reserves navigation before first paint and, in the block tools/build-site-hosts.mjs generates at its top, sets window.MCC_SITE, the site's host table, whose page lists name the Equity Uprise pages among every published page. Not a building capability."
+    },
+    {
       "path": "js/site-navigation.js",
       "classification": "navigation_support",
       "capability_ids": [],
@@ -3801,6 +3808,13 @@
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
     },
     {
+      "path": "scripts/test/site-hosts.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Holds the one-platform host table (data/seo/domain-architecture.json): the generated outputs current and in agreement, no site host in code outside them, and the equityuprise.com rewrite, where Equity Uprise is only the next platform's site name. Not a building capability."
+    },
+    {
       "path": "scripts/test/song-test.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3929,6 +3943,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared Policy OS server helper used by multiple mapped Edge Functions; no independent user-facing capability."
+    },
+    {
+      "path": "supabase/functions/_shared/site-hosts.ts",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated host table for the Supabase functions (tools/build-site-hosts.mjs): return origins and the page lists, which name the Equity Uprise pages among every published page. Not a building capability."
     },
     {
       "path": "supabase/functions/collect/index.ts",
@@ -5437,6 +5458,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Canonical platform API Worker routes; references the eu_is_admin owner check for the mission proof review route; not a building capability."
+    },
+    {
+      "path": "workers/mccluster/src/platform/hosts.generated.js",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated host table for Worker mccluster (tools/build-site-hosts.mjs): hosts, doors, CORS and frame-ancestors lists and the page lists, which name the Equity Uprise pages among every published page. Not a building capability."
     },
     {
       "path": "workers/mccluster/src/prim3/learning.js",

@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 773,
+  "candidate_count": 777,
   "capability_source_count": 104,
-  "support_only_count": 669,
-  "checks_total": 2990,
-  "checks_passed": 2990,
+  "support_only_count": 673,
+  "checks_total": 3006,
+  "checks_passed": 3006,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -365,6 +365,7 @@
     "js/prim3-tactics/preview.mjs",
     "js/prim3-tactics/transit.mjs",
     "js/server-lab/app.mjs",
+    "js/shell-boot.js",
     "js/site-navigation.js",
     "js/tabbar.js",
     "js/travel/world-travel.mjs",
@@ -525,6 +526,7 @@
     "scripts/test/seo-contract.test.mjs",
     "scripts/test/server-lab.test.mjs",
     "scripts/test/signup-authority.test.mjs",
+    "scripts/test/site-hosts.test.mjs",
     "scripts/test/song-test.test.mjs",
     "scripts/test/supabase-functions-deploy.test.mjs",
     "scripts/test/support/eup-module-policy-database.mjs",
@@ -543,6 +545,7 @@
     "sites.html",
     "supabase/config.toml",
     "supabase/functions/_shared/eu-policy-os.ts",
+    "supabase/functions/_shared/site-hosts.ts",
     "supabase/functions/collect/index.ts",
     "supabase/functions/eu-calendar/index.ts",
     "supabase/functions/eu-control/index.ts",
@@ -747,6 +750,7 @@
     "workers/mccluster/src/live/index.js",
     "workers/mccluster/src/music/tracks.js",
     "workers/mccluster/src/platform-api.js",
+    "workers/mccluster/src/platform/hosts.generated.js",
     "workers/mccluster/src/prim3/learning.js",
     "workers/mccluster/src/seek-first/catalogs.js",
     "workers/mccluster/src/seek-first/equity-uprise-halo.js",
@@ -787,7 +791,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "773 entries"
+      "detail": "777 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -7655,6 +7659,26 @@
       "detail": ""
     },
     {
+      "name": "js/shell-boot.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/shell-boot.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/shell-boot.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/shell-boot.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/site-navigation.js capability ids known",
       "passed": true,
       "detail": ""
@@ -10810,6 +10834,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/site-hosts.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/site-hosts.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/site-hosts.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/site-hosts.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/song-test.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -11156,6 +11200,26 @@
     },
     {
       "name": "supabase/functions/_shared/eu-policy-os.ts support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/functions/_shared/site-hosts.ts capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/functions/_shared/site-hosts.ts classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/functions/_shared/site-hosts.ts support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/functions/_shared/site-hosts.ts support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -15036,6 +15100,26 @@
     },
     {
       "name": "workers/mccluster/src/platform-api.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/platform/hosts.generated.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/platform/hosts.generated.js classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "workers/mccluster/src/platform/hosts.generated.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/platform/hosts.generated.js support rationale present",
       "passed": true,
       "detail": ""
     },
