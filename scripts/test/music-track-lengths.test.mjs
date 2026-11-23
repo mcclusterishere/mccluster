@@ -49,3 +49,60 @@ test('every file data/albums.json plays is what its name says and starts fast', 
   assert.equal(typeof catalogueContainerProblems, 'function');
   assert.deepEqual(catalogueContainerProblems(), [], 'remux with ffmpeg -c copy -movflags +faststart; publish an MP4 under .m4a');
 });
+
+/* THE FOUR FILES MOVED TO START FAST KEEP THEIR ENCODER'S GAPLESS NOTE (music slice M3 follow-up; reviews PB-R9 and
+   RL-13). M3 moved their index with a remux (ffmpeg -c copy -movflags +faststart), which rewrote each file: it dropped
+   the iTunes gapless note (iTunSMPB: the encoder's priming, its padding and the true number of samples) for an edit list
+   that trims only the priming, and Chromium decoded 119 to 713 more samples of silence at the end of each. They are
+   rebuilt from their b51ede03 bytes with only the index moved (qt-faststart: ftyp, then moov with its chunk offsets
+   moved, then every other box byte for byte). These notes are those files' own, as their encoder wrote them. */
+const GAPLESS = {
+  'assets/audio/dealer-plates-b.m4a': { priming: 0x840, padding: 0x2c3, samples: 0x4184fd },
+  'assets/audio/deep-end.m4a': { priming: 0x840, padding: 0x77, samples: 0x6f7749 },
+  'assets/audio/heal-the-3rd-world.m4a': { priming: 0x840, padding: 0x2a7, samples: 0x623919 },
+  'assets/audio/you-the-feds.m4a': { priming: 0x800, padding: 0x2c9, samples: 0x9cb137 },
+};
+function gaplessNote(buf) {
+  const at = buf.indexOf('iTunSMPB', 0, 'latin1');
+  if (at < 0) return null;
+  const data = buf.indexOf('data', at, 'latin1');
+  const size = buf.readUInt32BE(data - 4);
+  const fields = buf.toString('latin1', data + 12, data - 4 + size).trim().split(/\s+/).map((h) => parseInt(h, 16));
+  return { priming: fields[1], padding: fields[2], samples: fields[3] };
+}
+function topBoxes(buf) {
+  const out = [];
+  for (let p = 0; p + 8 <= buf.length;) {
+    let size = buf.readUInt32BE(p);
+    if (size === 1) size = Number(buf.readBigUInt64BE(p + 8));
+    else if (size === 0) size = buf.length - p;
+    out.push({ type: buf.toString('latin1', p + 4, p + 8), start: p, size });
+    p += size;
+  }
+  return out;
+}
+test('the four files moved to start fast keep their encoder\'s gapless note, and carry no edit list of their own', () => {
+  for (const [path, want] of Object.entries(GAPLESS)) {
+    const buf = readFileSync(new URL('../../' + path, import.meta.url));
+    const boxes = topBoxes(buf), moov = boxes.find((b) => b.type === 'moov'), mdat = boxes.find((b) => b.type === 'mdat');
+    assert.ok(moov && mdat && moov.start < mdat.start, `${path}: the index comes before the audio`);
+    assert.deepEqual(gaplessNote(buf), want, `${path}: the iTunes gapless note, as the encoder wrote it`);
+    const index = buf.subarray(moov.start, moov.start + moov.size);
+    assert.equal(index.indexOf('edts', 0, 'latin1'), -1, `${path}: no edit list (the remux added one that trimmed only the priming)`);
+  }
+});
+
+/* THE LISTEN LEDGER'S WAIT IS WRITTEN FROM THE CATALOGUE (music slice M3 follow-up; review PB-R10): half the smallest
+   margin between a song's length and the time the Worker needs to count it, so the shortest song always keeps its
+   count. A song added with a smaller margin makes the file stale here. */
+test('js/listen-ledger.js waits for the previous finish no longer than half the smallest margin in the catalogue', async () => {
+  const lengths = await import('../music-track-lengths.mjs');
+  assert.equal(typeof lengths.finishWait, 'function', 'scripts/music-track-lengths.mjs exports finishWait');
+  assert.equal(typeof lengths.ledgerWithWait, 'function', 'and writes it into js/listen-ledger.js');
+  const wait = lengths.finishWait();
+  assert.deepEqual({ key: wait.key, seconds: wait.seconds, need: wait.need, margin: wait.margin, ms: wait.ms },
+    { key: 'towyard-killer', seconds: 65.7, need: 62, margin: 3.7, ms: 1850 });
+  const ledger = readFileSync(new URL('../../js/listen-ledger.js', import.meta.url), 'utf8');
+  assert.equal(ledger, lengths.ledgerWithWait(ledger, wait), 'run: node scripts/music-track-lengths.mjs');
+  assert.match(ledger, /var FINISH_WAIT_MS = 1850;/);
+});

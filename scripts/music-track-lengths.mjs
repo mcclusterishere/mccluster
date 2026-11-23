@@ -13,8 +13,12 @@
    No ffmpeg: MP3 length is the sum of its frames, and M4A length is the
    movie header's duration over its timescale. Both are exact.
 
-     node scripts/music-track-lengths.mjs          write both files
-     node scripts/music-track-lengths.mjs --check  exit 1 if either is stale, or if a
+   The same lengths bound how long js/listen-ledger.js lets the next song's
+   start wait for the previous song's finish (finishWait below), so the
+   shortest song keeps its count; that line is written here too.
+
+     node scripts/music-track-lengths.mjs          write all three
+     node scripts/music-track-lengths.mjs --check  exit 1 if any is stale, or if a
                                                    catalogue file is not what its name
                                                    says or keeps its index at the end
 
@@ -24,10 +28,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { COUNT_SHARE } from '../workers/mccluster/src/music/router.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(root, 'workers/mccluster/src/music/tracks.js');
 const ALBUMS = resolve(root, 'data/albums.json');
+const LEDGER = resolve(root, 'js/listen-ledger.js');
 
 const BITRATES = {
   // [version-group][layer] in kbps; index 0 is "free", 15 is invalid
@@ -122,14 +128,18 @@ export function audioSeconds(buf, ext) {
    atom) after the audio (the mdat atom), so a player had to fetch the end of the file
    before it could make the first sound. A file the catalogue plays must be what its
    name says (an MP4 under .m4a, MPEG audio under .mp3), and an MP4 must carry its
-   index before its audio. The fix for both is the same lossless remux:
-     ffmpeg -i in -map 0 -c copy -movflags +faststart out.m4a
+   index before its audio. The fix moves the index and nothing else:
+     qt-faststart in out.m4a
+   (ffmpeg's own tool: ftyp, then moov with its chunk offsets moved, then every other box
+   byte for byte). Not a remux (ffmpeg -c copy -movflags +faststart): that rewrites the file
+   and drops the encoder's gapless note (iTunSMPB), so a player decodes the encoder's padding
+   as silence at the end (music slice M3 follow-up; reviews PB-R9, RL-13).
    Each problem is { kind: 'misnamed' | 'index-at-end' | 'no-index', detail }. */
 export function containerProblems(buf, ext) {
   const e = String(ext || '').toLowerCase();
   const iso = buf.length > 12 && buf.toString('latin1', 4, 8) === 'ftyp';
   const problems = [];
-  if (iso && e !== '.m4a') problems.push({ kind: 'misnamed', detail: `an MP4 (AAC) file named ${e || 'without an extension'}; publish it as .m4a` });
+  if (iso && e !== '.m4a') problems.push({ kind: 'misnamed', detail: `an MP4 (AAC) file named ${e || 'without an extension'}; publish it as .m4a (qt-faststart in out.m4a, which also puts its index first)` });
   if (!iso && e === '.m4a') problems.push({ kind: 'misnamed', detail: 'not an MP4 file, but named .m4a' });
   if (!iso) return problems;
   let p = 0, moov = -1, mdat = -1;
@@ -145,7 +155,7 @@ export function containerProblems(buf, ext) {
     p += size;
   }
   if (moov < 0) problems.push({ kind: 'no-index', detail: 'no moov atom' });
-  else if (mdat >= 0 && mdat < moov) problems.push({ kind: 'index-at-end', detail: `the index (moov at byte ${moov}) comes after the audio (mdat at byte ${mdat}); remux with -movflags +faststart` });
+  else if (mdat >= 0 && mdat < moov) problems.push({ kind: 'index-at-end', detail: `the index (moov at byte ${moov}) comes after the audio (mdat at byte ${mdat}); move it with qt-faststart, not a remux` });
   return problems;
 }
 
@@ -215,25 +225,62 @@ export function build() {
     'export const TRACKS = ' + JSON.stringify(tracks, null, 2) + ';\n';
 }
 
+/* HOW LONG THE NEXT SONG'S START MAY WAIT FOR THE LAST ONE'S FINISH (music slice M3 follow-up; review PB-R10).
+   js/listen-ledger.js holds the next song's start until the previous song's finish has answered, so the database
+   never closes a song heard to the end as unfinished (DEL-4). But a listen is credited from the moment its start
+   reaches the database, and the Worker counts it once floor(seconds x COUNT_SHARE) seconds are heard
+   (workers/mccluster/src/music/router.js): whatever the start waits comes out of the next song's margin. The wait is
+   half the smallest margin any song in the catalogue has, so even the shortest keeps the other half for what the page
+   cannot time (its start's own trip, a hidden page's late timers). A gated track is left out: its master is not here
+   and the gated record never counts toward itself. */
+export function finishWait() {
+  const albums = JSON.parse(readFileSync(ALBUMS, 'utf8')).albums;
+  let least = null;
+  for (const album of albums) {
+    for (const t of album.tracks || []) {
+      if (t.gated) continue;
+      const file = resolve(root, t.src);
+      const seconds = Math.round(audioSeconds(readFileSync(file), extname(file)) * 10) / 10;
+      const need = Math.max(1, Math.floor(seconds * COUNT_SHARE));
+      const margin = Math.round((seconds - need) * 10) / 10;
+      if (!least || margin < least.margin) least = { key: trackKey(t), title: t.title, seconds, need, margin };
+    }
+  }
+  return { ...least, ms: Math.floor(least.margin * 1000 / 2) };
+}
+const WAIT_BEGIN = /^(\s*)\/\* FINISH WAIT BEGIN[^\n]*\n/m, WAIT_END = /^\s*\/\* FINISH WAIT END \*\/\n/m;
+/* js/listen-ledger.js with the wait written between its FINISH WAIT BEGIN and FINISH WAIT END lines */
+export function ledgerWithWait(src, wait = finishWait()) {
+  const b = WAIT_BEGIN.exec(src), e = WAIT_END.exec(src);
+  if (!b || !e || e.index < b.index) throw new Error('js/listen-ledger.js: no FINISH WAIT BEGIN / FINISH WAIT END block');
+  const pad = b[1];
+  const body = `${pad}/* half of ${wait.margin} s, the smallest margin in the catalogue: ${wait.title}, ${wait.seconds} s, counted after ${wait.need} s */\n` +
+    `${pad}var FINISH_WAIT_MS = ${wait.ms};\n`;
+  return src.slice(0, b.index + b[0].length) + body + src.slice(e.index);
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const next = build();
   const albums = stampAlbums();
+  const ledgerNow = readFileSync(LEDGER, 'utf8');
+  const ledger = ledgerWithWait(ledgerNow);
   const containers = catalogueContainerProblems();
   for (const p of containers) console.error(`${p.src}: ${p.kind}: ${p.detail}`);
   if (process.argv.includes('--check')) {
     let current = '', currentAlbums = '';
     try { current = readFileSync(OUT, 'utf8'); } catch {}
     try { currentAlbums = readFileSync(ALBUMS, 'utf8'); } catch {}
-    if (current !== next || currentAlbums !== albums) {
-      console.error('workers/mccluster/src/music/tracks.js or data/albums.json is stale: run node scripts/music-track-lengths.mjs');
+    if (current !== next || currentAlbums !== albums || ledgerNow !== ledger) {
+      console.error('workers/mccluster/src/music/tracks.js, data/albums.json or js/listen-ledger.js is stale: run node scripts/music-track-lengths.mjs');
       process.exit(1);
     }
     if (containers.length) process.exit(1);
-    console.log('track lengths are current; every catalogue file is what its name says and starts fast');
+    console.log('track lengths are current; every catalogue file is what its name says and starts fast; the listen ledger\'s wait fits the shortest song');
   } else {
     writeFileSync(OUT, next);
     writeFileSync(ALBUMS, albums);
-    console.log('wrote', OUT, 'and', ALBUMS);
+    writeFileSync(LEDGER, ledger);
+    console.log('wrote', OUT, ALBUMS, 'and', LEDGER);
     if (containers.length) process.exit(1);
   }
 }

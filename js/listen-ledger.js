@@ -110,8 +110,16 @@
      closed the song just heard as not completed: production held 55 such rows beside 59 completed
      ones. A start now waits for the finish in flight to come back, for FINISH_WAIT_MS at most, so
      a finish that never answers cannot stop the next song counting. The music never waits: only
-     this request does. */
-  var FINISH_WAIT_MS = 5000;
+     this request does.
+     THE WAIT COMES OUT OF THE NEXT SONG'S MARGIN (music slice M3 follow-up; review PB-R10). The next
+     song is credited from the moment its start reaches the database, and the Worker counts it once
+     floor(length x 0.95) is heard, so a start that waited 5 s could leave the shortest song
+     (Towyard Killer, 65.7 s, counted after 62 s) uncounted. The wait is half the smallest margin
+     in the catalogue: scripts/music-track-lengths.mjs writes it from the songs' own lengths. */
+  /* FINISH WAIT BEGIN: written by scripts/music-track-lengths.mjs; --check fails when it is stale */
+  /* half of 3.7 s, the smallest margin in the catalogue: Towyard Killer, 65.7 s, counted after 62 s */
+  var FINISH_WAIT_MS = 1850;
+  /* FINISH WAIT END */
   var finishing = null;
   function afterFinish() {
     var pending = finishing;

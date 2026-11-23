@@ -119,7 +119,7 @@ export const TRACKS = {
   "deep-end": {
     "title": "Deep End",
     "album": "heal-the-3",
-    "seconds": 165.7
+    "seconds": 165.6
   },
   "heal-the-3rd-world": {
     "title": "Heal the 3rd World",
