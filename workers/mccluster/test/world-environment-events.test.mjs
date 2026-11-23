@@ -332,7 +332,8 @@ function importGraph(entry) {
 const PRIVATE = [/\/intel\//, /world-news-pairs/, /news-pairing/, /\/halo\//, /eup\/environment\/owner\.js$/, /world-halo-ops-routes/, /^core\//];
 test('static: the public timeline imports one response helper and nothing else; no public handler reaches intel/, the news pairing or a Halo route', () => {
   assert.ok(existsSync(resolve(ROOT, 'workers/mccluster/src/world-environment-events.js')), 'the public timeline module exists');
-  assert.deepEqual(importGraph('workers/mccluster/src/world-environment-events.js'), ['workers/mccluster/src/lib/http.js', 'workers/mccluster/src/world-environment-events.js']);
+  /* lib/http.js reads the site's CORS origins from the generated table (data only, it imports nothing) */
+  assert.deepEqual(importGraph('workers/mccluster/src/world-environment-events.js'), ['workers/mccluster/src/lib/http.js', 'workers/mccluster/src/platform/hosts.generated.js', 'workers/mccluster/src/world-environment-events.js']);
   for (const handler of ['workers/mccluster/src/world-environment.js', 'workers/mccluster/src/world-environment-layers.js', 'workers/mccluster/src/world-environment-guard.js', 'workers/mccluster/src/world-environment-events.js']) {
     const graph = importGraph(handler);
     for (const file of graph) for (const bad of PRIVATE) assert.doesNotMatch(file, bad, `${handler} reaches ${file}`);

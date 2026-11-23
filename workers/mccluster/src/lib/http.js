@@ -1,10 +1,12 @@
+import { CORS_ORIGINS } from '../platform/hosts.generated.js';
+
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 
+/* The site's own origins come first, from the generated table (CORS_ORIGINS: its tenants, the platform and the doors
+   the API answers; data/seo/domain-architecture.json), then the API itself, the satellite and local development. The
+   first is the answer to a request that names no allowed origin. */
 const DEFAULT_ORIGINS = [
-  'https://matthew.mccluster.org',
-  'https://mccluster.org',
-  'https://humanuprise.com',
-  'https://www.humanuprise.com',
+  ...CORS_ORIGINS,
   'https://api.mccluster.org',
   'https://esmer.mccluster.org',
   'https://mcclusterishere.github.io',

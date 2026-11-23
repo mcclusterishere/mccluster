@@ -68,6 +68,9 @@ function resolveConst(src, name, depth = 0) {
   const m = new RegExp(`(?:const|let|var)\\s+${name}\\s*=\\s*([^;\\n]+)`).exec(src);
   if (!m) return null;
   const init = m[1].trim();
+  /* a return that follows the request lands on an origin that serves this
+     repo's pages (the house is one at every stage): check its path as the house's */
+  if (/\breturnOrigin\(/.test(init)) return HOUSE;
   const urls = [...init.matchAll(/['"`](https?:\/\/[^'"`]+)['"`]/g)].map((x) => x[1]);
   if (urls.length) return urls[urls.length - 1];
   const hop = /^([A-Za-z_$][\w$]*)$/.exec(init);
