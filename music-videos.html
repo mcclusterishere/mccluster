@@ -144,7 +144,8 @@
     fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (data) {
       (data.albums || []).forEach(function (a) {
         a.tracks.forEach(function (t) {
-          if (t.music_video || t.video || t.reel) TRACKS.push(Object.assign({}, t, { albSlug: a.slug, albName: a.name, artist: a.artist || "Matthew McCluster", art: a.art || "" }));
+          /* the house's own records are McCluster's, the artist (owner, 2026-11-23: "McCluster is the artist") */
+          if (t.music_video || t.video || t.reel) TRACKS.push(Object.assign({}, t, { albSlug: a.slug, albName: a.name, artist: a.artist || "McCluster", art: a.art || "" }));
         });
       });
       fs.innerHTML = FS_TITLE + TRACKS.map(function (t, i) {

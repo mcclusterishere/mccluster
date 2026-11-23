@@ -202,7 +202,8 @@ test('Q1 credits name McCluster the artist, on every player that falls back to t
   assert.match(album, /var HOUSE_PAGE = "music-creator\.html\?handle=mccluster";/, 'and his name opens his artist page');
   assert.match(album, /var artistHref = ARTIST === HOUSE \? HOUSE_PAGE/, 'the byline links the artist, not the person page');
   for (const [file, src] of [['js/music-engine.js', read('js/music-engine.js')], ['js/world-audio-continuity.js', read('js/world-audio-continuity.js')],
-    ['js/pip.js', read('js/pip.js')], ['embed.html', read('embed.html')], ['album.html', album], ['js/label.js', read('js/label.js')]]) {
+    ['js/pip.js', read('js/pip.js')], ['embed.html', read('embed.html')], ['album.html', album], ['js/label.js', read('js/label.js')],
+    ['music-videos.html', read('music-videos.html')]]) {
     assert.doesNotMatch(src, /\|\|\s*"Matthew McCluster"/, `${file}: the default artist is McCluster, the artist`);
     assert.doesNotMatch(src, /artist\s*:\s*"Matthew McCluster"/, `${file}: no song is credited to the person by default`);
   }
