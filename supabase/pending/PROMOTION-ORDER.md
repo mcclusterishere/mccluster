@@ -666,3 +666,9 @@ PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
 | `20261123190000_in_hot_pursuit_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's In Hot Pursuit (keys `in-hot-pursuit:*`), upserted like section 15 | the shelf in `data/albums.json` (album `in-hot-pursuit`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+
+## 18. Creator distribution details (written 2026-11-23)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261123200000_music_creator_distribution_v1.sql` (+ `.rollback.sql`) | `creator_tracks.distribution` (jsonb object, at most 64 KB) for the creator's store details: release date, explicit, language, ℗/© lines, master owner, credits, master and publishing splits, an ISRC/UPC the creator already owns; `music_track_content` re-created with `distribution` left out of release content (everything else exactly as `20261030001000`) | `js/music-creator-studio.js` (Distribution card; until this is applied the card says so and saves nothing), `js/music-distribution.js` (shape and checklist) | `scripts/test/music-distribution.test.mjs` pins the content list to the applied one plus `distribution`. Apply on its own; nothing else depends on it. Never applied here. |

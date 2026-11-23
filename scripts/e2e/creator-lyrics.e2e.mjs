@@ -67,7 +67,7 @@ async function run(browser, width) {
       { id: SHEET, title: 'Fixture Sheet', artist: 'Fixture Artist', status: 'draft', rights_status: 'attested', lyrics: { source: 'sheet', reviewed: false, plain: 'only words' } },
       { id: NONE, title: 'Fixture Bare', artist: 'Fixture Artist', status: 'draft', rights_status: 'incomplete', lyrics: null }
     ],
-    patches: [], streams: []
+    patches: [], streams: [], noDist: false
   };
   const creator = { handle: 'fixture-artist', artist_name: 'Fixture Artist', bio: '', website_url: '', avatar_url: '', banner_url: '', status: 'active', verification_state: 'unverified', payout_state: 'not_started', settings: {}, updated_at: 't1' };
   const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: { width, height: width < 500 ? 844 : 900 }, deviceScaleFactor: 1 });
@@ -100,16 +100,21 @@ async function run(browser, width) {
     if (p === '/rest/v1/creator_tracks') {
       const id = (url.searchParams.get('id') || '').replace(/^eq\./, '');
       const select = url.searchParams.get('select') || '*';
+      const noColumn = () => json({ code: '42703', message: 'column creator_tracks.distribution does not exist' }, 400);
       if (req.method() === 'PATCH') {
         const t = db.tracks.find((x) => x.id === id);
         const body = req.postDataJSON();
+        if ('distribution' in body && db.noDist) return noColumn();
         db.patches.push({ id, body, mine: url.searchParams.get('m_uid') === 'eq.' + MUID });
         if (!t) return json([]);
+        /* the pending SQL leaves distribution out of release content: a live release stays live */
+        if ('distribution' in body) { t.distribution = body.distribution; return json([rowOf(t, select)]); }
         t.lyrics = body.lyrics;
         /* music_track_guard (b): a reviewed release whose content changes goes back to review */
         if (t.status === 'published' || t.status === 'approved') { t.status = 'pending_review'; t.rights_status = 'review'; }
         return json([rowOf(t, select)]);
       }
+      if (db.noDist && /distribution/.test(select)) return noColumn();
       const rows = id ? db.tracks.filter((x) => x.id === id) : db.tracks;
       return json(rows.map((t) => rowOf(t, select)));
     }
@@ -195,10 +200,54 @@ async function run(browser, width) {
   check(scope, 'sheet-only lyrics say McCluster is timing them', /McCluster times it/.test(await page.textContent('#creatorLyrics .crl-body')));
   await fit('the sheet-only state');
 
+  /* distribution: the store checklist and details for one release */
+  await page.click(`[data-dist-open="${DRAFT}"]`);
+  await page.waitForFunction(() => document.querySelectorAll('#distCheck li').length > 5 && !/Loading/.test(document.getElementById('distStatus').textContent), null, { timeout: 10000 });
+  const items = async () => page.$$eval('#distCheck li', (li) => Object.fromEntries(li.map((x) => [x.querySelector('b').textContent, x.className.replace(/.*is-/, '')])));
+  let it = await items();
+  check(scope, 'the checklist shows: review to do, codes left to McCluster, lossless master missing', it['Approved by McCluster'] === 'todo' && it['ISRC'] === 'mccluster' && it['UPC'] === 'mccluster' && it['Release date'] === 'todo', it);
+  check(scope, 'the primary artist is prefilled as a credit, and the master owner', (await page.inputValue('#distCredits [data-k="name"]')) === 'Fixture Artist' && (await page.inputValue('#distOwner')) === 'Fixture Artist');
+  await fit('the distribution card');
+  await page.fill('#distDate', '2027-02-05');
+  await page.selectOption('#distExplicit', 'false');
+  await page.click('#distAddCredit');
+  await page.locator('#distCredits .creator-dist__row').nth(1).locator('[data-k="name"]').fill('Fixture Writer');
+  await page.locator('#distCredits .creator-dist__row').nth(1).locator('[data-k="role"]').selectOption('Songwriter');
+  await page.click('#distAddSplit'); await page.click('#distAddSplit');
+  const split = (n) => page.locator('#distSplits .creator-dist__row').nth(n);
+  await split(0).locator('[data-k="name"]').fill('Fixture Artist'); await split(0).locator('[data-k="share_pct"]').fill('60');
+  await split(1).locator('[data-k="name"]').fill('Fixture Writer'); await split(1).locator('[data-k="share_pct"]').fill('30');
+  it = await items();
+  check(scope, 'the checklist follows the form: date and credits done, a 90% split flagged', it['Release date'] === 'ok' && it['Songwriter credits'] === 'ok' && it['Splits'] === 'todo', it);
+  const before = db.patches.length;
+  await page.click('#distSave');
+  await page.waitForTimeout(200);
+  check(scope, 'a split that does not add up is not saved, and says why', db.patches.length === before && /add up to 90%/.test(await page.textContent('#distStatus')));
+  await split(1).locator('[data-k="share_pct"]').fill('40');
+  await fit('the filled distribution card');
+  if (width === 390) await page.screenshot({ path: join(OUT, `creator-distribution-${width}.png`), fullPage: false });
+  await page.click('#distSave');
+  await page.waitForFunction(() => /^Saved/.test(document.getElementById('distStatus').textContent), null, { timeout: 10000 }).catch(() => {});
+  const dp = db.patches.find((x) => x.id === DRAFT && x.body.distribution);
+  const dd = dp && dp.body.distribution;
+  check(scope, 'the details save as one PATCH of distribution only, scoped to the creator', !!dp && dp.mine && Object.keys(dp.body).join() === 'distribution', dp);
+  check(scope, 'the saved details are the normalized shape', dd && dd.v === 1 && dd.release_date === '2027-02-05' && dd.explicit === false && dd.credits.length === 2 && dd.splits.map((x) => x.share_pct).join() === '60,40' && dd.isrc === '' , dd);
+  await page.click(`[data-dist-open="${LIVE}"]`);
+  await page.waitForFunction(() => /Fixture Live/.test(document.getElementById('distTitle').textContent) && !/Loading/.test(document.getElementById('distStatus').textContent), null, { timeout: 10000 });
+  await page.fill('#distDate', '2027-03-01'); await page.selectOption('#distExplicit', 'true');
+  await page.click('#distSave');
+  await page.waitForFunction(() => /^Saved/.test(document.getElementById('distStatus').textContent), null, { timeout: 10000 }).catch(() => {});
+  check(scope, 'saving details on a live release does not ask, and leaves it live', db.tracks.find((x) => x.id === LIVE).distribution?.explicit === true && db.tracks.find((x) => x.id === LIVE).status === 'pending_review' /* from the lyrics save above */);
+  db.noDist = true;
+  await page.click(`[data-dist-open="${SHEET}"]`);
+  await page.waitForFunction(() => /switches them on/.test(document.getElementById('distStatus').textContent), null, { timeout: 10000 }).catch(() => {});
+  check(scope, 'before the SQL is applied the card says so and cannot save', /switches them on/.test(await page.textContent('#distStatus')) && await page.isDisabled('#distSave'));
+  db.noDist = false;
+
   /* sign out: the lyrics leave the screen */
   await page.evaluate(() => { localStorage.removeItem('mccdb_session'); window.dispatchEvent(new StorageEvent('storage', { key: 'mccdb_session', newValue: null })); });
   await page.waitForFunction(() => document.getElementById('creatorLyrics').hidden, null, { timeout: 10000 }).catch(() => {});
-  check(scope, 'signing out hides the lyrics', await page.evaluate(() => document.getElementById('creatorLyrics').hidden));
+  check(scope, 'signing out hides the lyrics and the distribution details', await page.evaluate(() => document.getElementById('creatorLyrics').hidden && document.getElementById('creatorDist').hidden && !document.getElementById('distCredits').children.length));
   check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }

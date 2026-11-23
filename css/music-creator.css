@@ -110,3 +110,31 @@ html,body{background:var(--mc-bg);color:var(--mc-text)}
 .creator-lyrics .cro-chip.is-on{color:var(--cr-text);border-color:rgba(244,239,230,.4)}
 .creator-lyrics .cr-btn{appearance:none;min-height:44px;padding:9px 13px;border:1px solid rgba(244,239,230,.18);border-radius:10px;background:#17191e;color:var(--cr-text);font:700 13px/1.2 var(--ui,system-ui);cursor:pointer}
 .creator-lyrics .cr-btn--primary{border-color:transparent;background:var(--mc-red);color:#fff}
+/* Distribution (2026-11-23): the store checklist and details for one release. Phone first: one column, rows wrap. */
+.creator-dist__check{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:6px}
+.creator-dist__item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;align-items:baseline;padding:9px 0;border-top:1px solid var(--mc-line)}
+.creator-dist__item:first-child{border-top:0}
+.creator-dist__item b{font-size:14px;min-width:0}
+.creator-dist__item small{grid-column:2;color:var(--mc-dim);font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.creator-dist__state{border:1px solid var(--mc-line);border-radius:999px;padding:3px 8px;font:800 10px/1.2 var(--ui,system-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--mc-dim);white-space:nowrap}
+.creator-dist__item.is-ok .creator-dist__state{color:#9ce9b3;border-color:rgba(98,213,137,.35)}
+.creator-dist__item.is-todo .creator-dist__state{color:#ffb7bb;border-color:rgba(239,90,99,.4)}
+.creator-dist__item.is-warn .creator-dist__state{color:#ffd596;border-color:rgba(255,213,150,.3)}
+.creator-dist__item.is-mccluster .creator-dist__state{color:var(--mc-text)}
+.creator-dist__set{min-width:0;margin:0;padding:12px;border:1px solid var(--mc-line);border-radius:12px;display:grid;gap:8px}
+.creator-dist__set legend{padding:0 6px;font-size:10px;text-transform:uppercase;letter-spacing:.14em;font-weight:800;color:var(--mc-dim)}
+.creator-dist__row{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:6px;align-items:center}
+.creator-dist__row+.creator-dist__row{padding-top:10px;border-top:1px dashed var(--mc-line)}
+.creator-dist .creator-btn,.creator-dist .creator-dist__add{min-height:44px}
+.creator-dist__row>input,.creator-dist__row>select{grid-column:1;width:100%;min-width:0;min-height:44px;box-sizing:border-box;background:#0a0908;border:1px solid rgba(255,255,255,.14);border-radius:10px;color:var(--mc-text);padding:8px 10px;font:600 max(16px,1rem)/1.2 var(--ui,system-ui)}
+.creator-dist__del{grid-column:2;grid-row:1;width:44px;height:44px;border:1px solid var(--mc-line);border-radius:10px;background:transparent;color:var(--mc-text);font-size:20px;cursor:pointer}
+.creator-dist__add{min-height:44px;padding:0 14px;border:1px solid var(--mc-line);border-radius:999px;background:transparent;color:var(--mc-text);font:700 12px/1 var(--ui,system-ui);cursor:pointer;justify-self:start}
+.creator-dist__hint{color:var(--mc-dim);font-size:12px;line-height:1.45}
+.creator-dist .creator-field input,.creator-dist .creator-field select{min-height:44px;font-size:max(16px,1rem)}
+@media (min-width:700px){
+  .creator-dist .creator-form.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .creator-dist__row{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 44px}
+  .creator-dist__row:has(> :nth-child(4)){grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) 90px 44px}
+  .creator-dist__row>input,.creator-dist__row>select{grid-column:auto}
+  .creator-dist__del{grid-column:auto;grid-row:auto}
+}

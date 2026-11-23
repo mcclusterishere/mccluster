@@ -296,7 +296,7 @@ function pillClass(track) {
 }
 async function loadTracks() {
   const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at," +
+    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at,master_path," +
     "lyr_source:lyrics->>source,lyr_reviewed:lyrics->>reviewed,lyr_timed:lyrics->timed->line->0->>begin&order=created_at.desc");
   tracksCache = rows || [];
   renderAlbums();
@@ -333,7 +333,8 @@ function lyricsStateOf(t) {
 function lyricsChip(t) {
   const st = lyricsStateOf(t);
   return '<span class="creator-lyr"><span class="creator-pill' + (st.tone ? " " + st.tone : "") + '">' + escapeHtml(st.label) + '</span>' +
-    (st.label === "No lyrics" ? "" : '<button class="creator-lyr__open" type="button" data-lyrics-open="' + escapeHtml(t.id) + '">Edit lyrics</button>') + '</span>';
+    (st.label === "No lyrics" ? "" : '<button class="creator-lyr__open" type="button" data-lyrics-open="' + escapeHtml(t.id) + '">Edit lyrics</button>') +
+    '<button class="creator-lyr__open" type="button" data-dist-open="' + escapeHtml(t.id) + '">Distribution</button></span>';
 }
 const lyricsSource = {
   editor: "creator",
@@ -387,7 +388,115 @@ function openLyrics(id) {
 $("creatorTracks").addEventListener("click", (e) => {
   const b = e.target.closest("[data-lyrics-open]");
   if (b) openLyrics(b.getAttribute("data-lyrics-open"));
+  const d = e.target.closest("[data-dist-open]");
+  if (d) openDistribution(d.getAttribute("data-dist-open")).catch((err) => { $("distStatus").textContent = err.message || "Could not open the details"; });
 });
+
+/* ---------- distribution (2026-11-23, owner: "its own distribution hub for real") ----------
+   The store details for one release: a checklist (js/music-distribution.js readiness) and the form for what the
+   release does not already say (release date, explicit, ℗/©, master owner, credits, splits, a code the creator
+   already owns). Saved on creator_tracks.distribution under the creator's row rights
+   (supabase/pending/20261123200000_music_creator_distribution_v1.sql); it is not release content, so a live
+   release stays live. Until that SQL is applied the card says so and writes nothing. McCluster mints no code here
+   and nothing is delivered from here: Control stages the release for the stores. */
+const DIST = window.MCC_DISTRIBUTION;
+let distOpen = null; /* { id, gen } */
+let distGen = 0;
+const DIST_STATE = { ok: "Done", todo: "To do", mccluster: "McCluster", warn: "Check" };
+function distRow(kind, v) {
+  const row = document.createElement("div");
+  row.className = "creator-dist__row";
+  if (kind === "credit") {
+    row.innerHTML = '<input aria-label="Name" maxlength="120" data-k="name" autocomplete="off" placeholder="Name"><select aria-label="Role" data-k="role"><option value="">Role…</option>' +
+      DIST.ROLES.map((r) => '<option>' + escapeHtml(r) + '</option>').join("") + '</select>';
+  } else {
+    row.innerHTML = '<select aria-label="Kind" data-k="kind"><option value="master">Master</option><option value="publishing">Publishing</option></select>' +
+      '<input aria-label="Name" maxlength="120" data-k="name" autocomplete="off" placeholder="Name"><input aria-label="Share %" data-k="share_pct" inputmode="decimal" placeholder="%">';
+  }
+  row.insertAdjacentHTML("beforeend", '<button class="creator-dist__del" type="button" aria-label="Remove">×</button>');
+  row.querySelectorAll("[data-k]").forEach((el) => { const k = el.getAttribute("data-k"); if (v && v[k] != null) el.value = String(v[k]); });
+  row.querySelector(".creator-dist__del").onclick = () => { row.remove(); paintDistCheck(); };
+  return row;
+}
+function distFromForm() {
+  const rows = (id) => Array.from($(id).querySelectorAll(".creator-dist__row")).map((r) => {
+    const o = {}; r.querySelectorAll("[data-k]").forEach((el) => { o[el.getAttribute("data-k")] = el.value; }); return o;
+  });
+  const ex = $("distExplicit").value;
+  return DIST.normalize({
+    release_date: $("distDate").value, explicit: ex === "true" ? true : ex === "false" ? false : null, language: $("distLang").value.trim().toLowerCase(),
+    master_owner: $("distOwner").value, p_line: $("distP").value, c_line: $("distC").value, isrc: $("distIsrc").value, upc: $("distUpc").value,
+    credits: rows("distCredits"), splits: rows("distSplits").map((x) => ({ ...x, share_pct: x.share_pct === "" ? 0 : Number(String(x.share_pct).replace(",", ".")) }))
+  });
+}
+let distArt = null;
+function paintDistCheck() {
+  if (!distOpen) return;
+  const t = tracksCache.find((x) => x.id === distOpen.id) || {};
+  const r = DIST.readiness(t, distFromForm(), { today: new Date().toISOString().slice(0, 10), art: distArt });
+  $("distCheck").innerHTML = r.items.map((i) => '<li class="creator-dist__item is-' + i.state + '"><span class="creator-dist__state">' + DIST_STATE[i.state] + '</span><b>' +
+    escapeHtml(i.label) + '</b>' + (i.hint ? '<small>' + escapeHtml(i.hint) + '</small>' : '') + '</li>').join("");
+}
+async function openDistribution(id) {
+  const t = tracksCache.find((x) => x.id === id);
+  if (!t || !DIST) return;
+  const gen = ++distGen;
+  distOpen = { id, gen };
+  const card = $("creatorDist");
+  card.hidden = false;
+  $("distTitle").textContent = "Distribution: " + (t.title || "Untitled");
+  $("distForm").reset();
+  $("distCredits").replaceChildren(); $("distSplits").replaceChildren();
+  $("distStatus").textContent = "Loading…";
+  $("distSave").disabled = true;
+  distArt = null;
+  if (t.poster_url) {
+    const img = new Image();
+    img.onload = () => { if (distOpen && distOpen.gen === gen) { distArt = { w: img.naturalWidth, h: img.naturalHeight }; paintDistCheck(); } };
+    img.src = t.poster_url;
+  }
+  card.scrollIntoView({ block: "start", behavior: "smooth" });
+  let stored = null, missing = false;
+  try {
+    const rows = await rest("creator_tracks?id=eq." + encodeURIComponent(id) + "&m_uid=eq." + encodeURIComponent(mUid) + "&select=distribution&limit=1");
+    stored = rows?.[0]?.distribution || null;
+  } catch (err) {
+    if (!/distribution/.test(err.message || "")) throw err;
+    missing = true;
+  }
+  if (!distOpen || distOpen.gen !== gen) return;
+  const d = DIST.normalize(stored || { master_owner: t.artist || (profile && profile.artist_name) || "", p_line: new Date().getFullYear() + " " + (t.artist || "") , c_line: new Date().getFullYear() + " " + (t.artist || "") });
+  $("distDate").value = d.release_date; $("distExplicit").value = d.explicit === null ? "" : String(d.explicit); $("distLang").value = d.language;
+  $("distOwner").value = d.master_owner; $("distP").value = d.p_line; $("distC").value = d.c_line; $("distIsrc").value = d.isrc; $("distUpc").value = d.upc;
+  (d.credits.length ? d.credits : [{ name: t.artist || "", role: "Primary artist" }]).forEach((c) => $("distCredits").appendChild(distRow("credit", c)));
+  d.splits.forEach((x) => $("distSplits").appendChild(distRow("split", x)));
+  $("distSave").disabled = missing;
+  $("distStatus").textContent = missing ? "Distribution details open once McCluster switches them on. Nothing is saved yet." : "";
+  paintDistCheck();
+}
+if (DIST) {
+  $("distForm").addEventListener("input", paintDistCheck);
+  $("distForm").addEventListener("change", paintDistCheck);
+  $("distAddCredit").onclick = () => { $("distCredits").appendChild(distRow("credit")); paintDistCheck(); };
+  $("distAddSplit").onclick = () => { $("distSplits").appendChild(distRow("split")); paintDistCheck(); };
+  $("distClose").onclick = () => { distOpen = null; $("creatorDist").hidden = true; };
+  $("distForm").addEventListener("submit", guarded(async (e) => {
+    e.preventDefault();
+    if (!distOpen) return;
+    const { id, gen } = distOpen, d = distFromForm(), bad = DIST.problems(d);
+    if (bad.length) { $("distStatus").textContent = bad[0]; return; }
+    $("distSave").disabled = true;
+    try {
+      const rows = await rest("creator_tracks?id=eq." + encodeURIComponent(id) + "&m_uid=eq." + encodeURIComponent(mUid) + "&select=id", {
+        method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ distribution: d })
+      });
+      if (!rows?.length) throw new Error("Release not found");
+      if (distOpen && distOpen.gen === gen) $("distStatus").textContent = "Saved. McCluster uses these details when it prepares the release for the stores.";
+    } catch (err) {
+      if (distOpen && distOpen.gen === gen) $("distStatus").textContent = /distribution/.test(err.message || "") ? "Distribution details open once McCluster switches them on. Nothing was saved." : (err.message || "Save failed");
+    } finally { if (distOpen && distOpen.gen === gen) $("distSave").disabled = false; }
+  }));
+}
 function escapeHtml(value) {
   const d = document.createElement("i");
   d.textContent = value == null ? "" : String(value);
@@ -1129,6 +1238,7 @@ function closeStudio() {
   /* the editor forgets the previous account's lyrics and audio */
   if (lyricsBound && window.CR && window.CR.lyricsReview) { const a = window.CR.lyricsReview.state.audio; if (a) a.pause(); window.CR.lyricsReview.configure(lyricsSource); }
   if ($("creatorLyrics")) $("creatorLyrics").hidden = true;
+  distOpen = null; if ($("creatorDist")) { $("creatorDist").hidden = true; $("distForm").reset(); $("distStatus").textContent = ""; $("distCheck").replaceChildren(); $("distCredits").replaceChildren(); $("distSplits").replaceChildren(); }
   editingAlbum = null; editingService = null;
   $("creatorOnboard").hidden = true;
   $("creatorApp").hidden = true;
