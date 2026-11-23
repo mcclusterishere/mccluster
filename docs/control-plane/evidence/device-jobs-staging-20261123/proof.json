@@ -1,14 +1,14 @@
 {
   "schema": "mccluster-device-jobs-staging-proof/1",
-  "started_at": "2026-11-23T02:25:05.829Z",
-  "finished_at": "2026-11-23T02:28:15.474Z",
+  "started_at": "2026-11-23T03:09:57.441Z",
+  "finished_at": "2026-11-23T03:13:07.469Z",
   "ok": true,
   "full": true,
   "environment": {
     "node": "v22.23.5",
     "platform": "linux",
     "pglite": "PostgreSQL via PGlite (PGLITE_MODULE_PATH)",
-    "commit": "404673b8395be3b4b4ee05ed6edaa0a3e8ebdd9c"
+    "commit": "2b0b0baf112965b04cb6b91a16431c99d7dababc"
   },
   "schema_files": [
     "supabase/replay_migrations/20260912071000_compute_node_protocol.sql",
@@ -29,10 +29,10 @@
     {
       "name": "preflight: gateway health and receipt key",
       "ok": true,
-      "duration_ms": 7,
+      "duration_ms": 6,
       "detail": {
         "protocol": "mccluster-compute/1",
-        "receipt_key_id": "733ef456ba29aaae5ec6065b61d4c7a6",
+        "receipt_key_id": "f341d7c17bf79514aa36ec11961618c8",
         "schema_files": [
           "supabase/replay_migrations/20260912071000_compute_node_protocol.sql",
           "supabase/migrations/20260919020830_compute_gateway_hardening_live_reconcile.sql",
@@ -45,7 +45,7 @@
     {
       "name": "authorization: admin routes refuse a missing or wrong token; enrolment refuses a wrong token; an unknown key is refused",
       "ok": true,
-      "duration_ms": 36,
+      "duration_ms": 51,
       "detail": {
         "admin_without_token": 401,
         "admin_wrong_token": 401,
@@ -56,9 +56,9 @@
     {
       "name": "enrolment and capability reporting: the real node agent enrols over TLS and advertises ai.chat/fixture.echo.local",
       "ok": true,
-      "duration_ms": 526,
+      "duration_ms": 532,
       "detail": {
-        "node_id": "node_d56e19d58861ea7c71fdf323cc708545",
+        "node_id": "node_82f59e87072ff86aa4c93d0e96527b5c",
         "hardware_mode": "cpu-only",
         "platform": "linux",
         "agent_version": "0.4.0",
@@ -79,9 +79,9 @@
     {
       "name": "submit: idempotent per key, conflict on a different body under the same key, refusal when no live node serves the capability",
       "ok": true,
-      "duration_ms": 55,
+      "duration_ms": 49,
       "detail": {
-        "job_id": "48211509-e98a-47a8-9d69-44dbba3c29ae",
+        "job_id": "0d0d8c81-e083-4d59-b12e-7a1491b47191",
         "live_nodes": 1,
         "replayed_status": 200,
         "conflict_code": "IDEMPOTENCY_CONFLICT",
@@ -91,48 +91,49 @@
     {
       "name": "status, result and signed receipt: the fixture node leases, runs and completes the job; the receipt verifies offline",
       "ok": true,
-      "duration_ms": 819,
+      "duration_ms": 837,
       "detail": {
         "attempts": 1,
-        "duration_ms": 20,
-        "output_sha256": "5cddd1b175e11fc45e645f76247332b27792c7eb547a4cc75e1c5d5b6858ce1e",
-        "receipt_key_id": "733ef456ba29aaae5ec6065b61d4c7a6",
+        "duration_ms": 19,
+        "output_sha256": "1c6496f70964633b7a168ca044457d2ead58345f626f27f89d83dda8a3a0fcc4",
+        "receipt_key_id": "f341d7c17bf79514aa36ec11961618c8",
         "attestation_verified": true
       }
     },
     {
       "name": "duplicate results are rejected: same payload replays idempotently, a different payload is refused, a replayed nonce is refused, a late failure cannot undo a commit",
       "ok": true,
-      "duration_ms": 251,
+      "duration_ms": 211,
       "detail": {
-        "job_id": "919aa948-2178-425a-b37c-83ca24ae7bc7",
+        "job_id": "cff29216-9908-4659-9bfb-a70cffdc021b",
         "nonce_replay": "REPLAY_DETECTED",
         "same_payload": 200,
         "different_payload": "LEASE_REJECTED",
         "late_fail": 409,
-        "wrong_token": 409
+        "wrong_token": 409,
+        "first_nonce_kept": true
       }
     },
     {
       "name": "disconnect and retry: an injected executor failure fails the lease, the task requeues with backoff and the second attempt completes",
       "ok": true,
-      "duration_ms": 31881,
+      "duration_ms": 31876,
       "detail": {
-        "job_id": "0b2151fa-92bb-4759-a95c-a85372d5f00a",
+        "job_id": "a24f065d-2cfe-4d89-acab-673e0c8c1bdb",
         "requeued_after_first_failure": "queued",
         "first_error": "fixture executor failure (injected, attempt 1)",
-        "backoff_run_after": "2026-11-23T02:25:41.181Z",
+        "backoff_run_after": "2026-11-23T03:10:32.743Z",
         "final_attempts": 2
       }
     },
     {
       "name": "hard disconnect (--full): the agent is killed mid-task, the lease expires server-side, a restarted agent reclaims and completes",
       "ok": true,
-      "duration_ms": 152714,
+      "duration_ms": 152078,
       "detail": {
-        "job_id": "31eba160-288f-4f8b-9699-18d6b5dba404",
+        "job_id": "f3d69da5-c712-45b1-a413-cdc587ba5c9c",
         "killed_while": "running",
-        "lease_expired_at": "2026-11-23T02:27:42.890Z",
+        "lease_expired_at": "2026-11-23T03:12:34.211Z",
         "final_attempts": 2,
         "duration_ms": 16
       }
@@ -140,32 +141,41 @@
     {
       "name": "revocation: a revoked node is refused on its next signed request and the fabric no longer offers its capability",
       "ok": true,
-      "duration_ms": 513,
+      "duration_ms": 1525,
       "detail": {
         "agent_exited": true,
         "refusal_seen_by_agent": true,
         "submit_after_revoke": "COMPUTE_NO_LIVE_NODE"
       }
+    },
+    {
+      "name": "pending SQL hygiene: the attestation rollback drops exactly its table and the file re-applies cleanly",
+      "ok": true,
+      "duration_ms": 13,
+      "detail": {
+        "rollback_reapplied": true,
+        "lease_rows_untouched": 6
+      }
     }
   ],
   "sample_receipt": {
     "schema": "mccluster-job-receipt/1",
-    "issued_at": "2026-11-23T02:25:10.110Z",
+    "issued_at": "2026-11-23T03:10:01.761Z",
     "issuer": {
       "kind": "mccluster-core",
       "instance": "staging-gateway",
       "deployment_sha": null
     },
     "job": {
-      "id": "48211509-e98a-47a8-9d69-44dbba3c29ae",
+      "id": "0d0d8c81-e083-4d59-b12e-7a1491b47191",
       "org_id": "00000000-0000-4000-8000-00000000c0de",
       "capability": "ai.chat",
       "implementation": "fixture.echo.local",
       "status": "done",
       "attempts": 1,
       "max_attempts": 3,
-      "created_at": "2026-11-23T02:25:09.251Z",
-      "completed_at": "2026-11-23T02:25:10.041Z",
+      "created_at": "2026-11-23T03:10:00.888Z",
+      "completed_at": "2026-11-23T03:10:01.570Z",
       "client": {
         "name": "device-jobs-staging",
         "version": "1",
@@ -174,92 +184,92 @@
       "source": "device-jobs/1"
     },
     "input_sha256": "dd971b014e1382f2791eac53453680da76957b4f0ce8b3e8f440184543e0fcba",
-    "output_sha256": "5cddd1b175e11fc45e645f76247332b27792c7eb547a4cc75e1c5d5b6858ce1e",
+    "output_sha256": "1c6496f70964633b7a168ca044457d2ead58345f626f27f89d83dda8a3a0fcc4",
     "failure": null,
     "execution": {
-      "lease_id": "1d69b38b-86fa-4c34-b9b3-1c84f178b0ac",
+      "lease_id": "b9ac1a58-285c-4f39-94a4-52f77eddf9d5",
       "attempt": 1,
       "status": "done",
-      "node_id": "node_d56e19d58861ea7c71fdf323cc708545",
-      "node_key_fingerprint": "d56e19d58861ea7c71fdf323cc708545dea19de320570022d48374fb40d3b070",
+      "node_id": "node_82f59e87072ff86aa4c93d0e96527b5c",
+      "node_key_fingerprint": "82f59e87072ff86aa4c93d0e96527b5c519aa738aea9e9655b15fc2f185aa09d",
       "node_display_name": "staging-fixture-node",
       "hardware_mode": "cpu-only",
       "platform": "linux",
-      "started_at": "2026-11-23T02:25:10.021Z",
-      "completed_at": "2026-11-23T02:25:10.041Z",
-      "duration_ms": 20,
+      "started_at": "2026-11-23T03:10:01.551Z",
+      "completed_at": "2026-11-23T03:10:01.570Z",
+      "duration_ms": 19,
       "result_consistent": true
     },
-    "node_public_key_pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAQkupeqRX4BjtEnNZ/GgA2ttZ6c2+asxwyDZWSmYv4eI=\n-----END PUBLIC KEY-----\n",
+    "node_public_key_pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAz0+s5UEy4f84gWcF1alc2PGrq9IQhKSBZFyfHXI8Peg=\n-----END PUBLIC KEY-----\n",
     "inference": {
       "mode": "single-device",
       "devices": [
-        "node_d56e19d58861ea7c71fdf323cc708545"
+        "node_82f59e87072ff86aa4c93d0e96527b5c"
       ],
       "group": null
     },
     "node_attestation": {
       "schema": "mccluster-completion-attestation/1",
-      "lease_id": "1d69b38b-86fa-4c34-b9b3-1c84f178b0ac",
-      "node_id": "node_d56e19d58861ea7c71fdf323cc708545",
+      "lease_id": "b9ac1a58-285c-4f39-94a4-52f77eddf9d5",
+      "node_id": "node_82f59e87072ff86aa4c93d0e96527b5c",
       "attempt": 1,
       "protocol": "mccluster-compute/1",
       "method": "POST",
-      "path": "/v1/compute/leases/1d69b38b-86fa-4c34-b9b3-1c84f178b0ac/complete",
-      "signed_at": "2026-11-23T02:25:10.029Z",
-      "nonce": "353c7422-c6b8-4769-bebc-3561e336465d",
-      "body_digest": "jZCl4f_ZTfZn06lBOuhxvoNTVZpcyXKTMgHnriQknrg",
-      "signature": "Ib8i-Ilhh4kmHWMK8SGSjSHJDL-hwXflOH7HoZbVBsSuPmOlmuvsVYPpWzhp27yc_EdfOfKtrxFuKI56gE01BQ",
-      "result_sha256": "5cddd1b175e11fc45e645f76247332b27792c7eb547a4cc75e1c5d5b6858ce1e",
+      "path": "/v1/compute/leases/b9ac1a58-285c-4f39-94a4-52f77eddf9d5/complete",
+      "signed_at": "2026-11-23T03:10:01.557Z",
+      "nonce": "1433e73b-d86d-40a3-9466-b9d9958e9283",
+      "body_digest": "j0I2u_YPfuFB3wjj1bBGYhCzkviSxLS5cFtAgfzyxkI",
+      "signature": "qwJhzdvgsT4n6vZ1b_9n7z4XUVnBI2uQHy0_MCwtUr9a9lBCO37TnASfz5fs-SjN6PT_akgvTZhzrNVHkCNODA",
+      "result_sha256": "1c6496f70964633b7a168ca044457d2ead58345f626f27f89d83dda8a3a0fcc4",
       "matches_output": true,
       "verified": true,
       "verification_note": null
     },
     "signature": {
       "alg": "ed25519",
-      "key_id": "733ef456ba29aaae5ec6065b61d4c7a6",
-      "value": "ydRuKDX5zFI7_m2fr4_r7SB4BQcyUCegisakweYRY5kJ6AZvMhH-f8w8vBFbmzXBaVMMN5fFjUnRz7FHHCRtCA",
+      "key_id": "f341d7c17bf79514aa36ec11961618c8",
+      "value": "TYwsNWWPYErE0kHaMyLVAFcIVwr7gIEwvgEKgDIeYx4VkVymgseGlRtA9JIuqeUHUhnRaGXEChlCEqycE9w9Cw",
       "covers": "canonical JSON of this receipt with signature set to null and without the signed flag"
     },
     "signed": true
   },
-  "shim_requests": 1420,
+  "shim_requests": 1415,
   "gateway_log_tail": [
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"a9a442d0-fb8b-42e2-87ca-f6f69b0ea824\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":15}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"cf805b5f-83a5-4139-8396-f6c1807c31c5\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":11}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"25cb96d7-4a0b-4579-9533-739ab0108231\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":15}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"5d32a256-ffdd-46aa-9290-ffc35c065fff\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":15}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"e2753080-af6e-49ef-aaeb-ded343f64256\",\"method\":\"POST\",\"path\":\"/v1/compute/heartbeat\",\"status\":200,\"duration_ms\":19}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"e97158bf-774a-4b8c-9f26-559a7f48f907\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":11}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"9ff448a7-f87e-4587-bd5f-b60bcee2598d\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":16}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"1c42fad5-2461-40d9-b007-9536b9d0c13d\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":11}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"11ecee33-2ae3-4091-85ac-5dfc719c01a0\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":16}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"a9cb21f5-feb3-4a86-8b85-270b8f8c0d0f\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":14}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"2a6fdda9-f240-410a-b9ef-7bd4aa7a4663\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":16}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"620e3e49-4af1-4ef2-89e0-c07b11f8dfec\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":13}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"dc1d4e7d-4e76-4c2e-b240-ba76584338f7\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":12}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"78f4d78a-f98a-4976-935a-f67d19694bf6\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":22}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"1c07e188-3bcf-47de-a4dc-418dcda8c127\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":11}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"dc52f6d2-50dc-4c75-815b-d9bbb3bf50c5\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":16}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"6f0ed1a2-3c6b-4877-8861-f3cea8e1f2dc\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":16}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"c7192321-e330-4590-aad2-6d11ef78a15f\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":13}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"2f12742b-349e-4245-9b12-7602dddcb714\",\"method\":\"POST\",\"path\":\"/v1/compute/leases/bf573097-5863-4f36-879e-87b19eda5bd7/start\",\"status\":200,\"duration_ms\":11}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"7aed4345-8ef0-41fb-993e-767463cde19d\",\"method\":\"POST\",\"path\":\"/v1/compute/leases/bf573097-5863-4f36-879e-87b19eda5bd7/complete\",\"status\":200,\"duration_ms\":19}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"1dd402ef-522f-4e98-bc0a-3154d6ad1690\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404\",\"status\":200,\"duration_ms\":18}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"06f19377-5070-4a11-ab4f-642abb94ae36\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/31eba160-288f-4f8b-9699-18d6b5dba404/receipt\",\"status\":200,\"duration_ms\":22}",
-    "{\"event\":\"compute_gateway_error\",\"request_id\":\"3663db5e-8d1a-47d7-ab2c-26889ebe961a\",\"message\":\"Compute node is revoked\",\"code\":\"NODE_REVOKED\"}",
-    "{\"event\":\"compute_gateway_request\",\"request_id\":\"3663db5e-8d1a-47d7-ab2c-26889ebe961a\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":403,\"duration_ms\":6}",
-    "{\"event\":\"compute_gateway_error\",\"request_id\":\"928e8d95-d8c9-4359-b7c6-fd5db1a0856b\",\"message\":\"No live compute node serves ai.chat/fixture.echo.local; pass allow_offline:true to queue anyway\",\"code\":\"COMPUTE_NO_LIVE_NODE\"}"
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"f7a30db4-258e-43ee-82ca-0a374c6b5f65\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":20}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"97c9a083-9b58-4219-b93c-55d5f8270896\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":14}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"86d73c2e-8447-47f6-985a-b55f6b2f1202\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":13}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"804f6546-4c09-49ae-978f-2e9801bdabc7\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":21}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"8e082c8f-5ebe-44ef-bd47-3be0e2e8d534\",\"method\":\"POST\",\"path\":\"/v1/compute/heartbeat\",\"status\":200,\"duration_ms\":18}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"86395e3b-f3da-4f49-a487-1ff9a5c57cd4\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":9}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"fcb2e527-1b2a-461d-adf2-1c45e4cedcb1\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":20}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"782da859-f016-4eb6-a3a5-c59dd681c0c0\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":13}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"704b2628-189e-415a-9a5d-b2134f3a6fae\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":14}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"89ad16ef-f214-416c-ba45-6bbee8765ddf\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":18}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"4c98ead0-f75a-43ad-b443-174077ba963d\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":12}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"b9042c08-958a-4b2f-9d5f-fc259f121d8f\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":13}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"bef3f331-75f5-4756-a126-8c641fd9db2e\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":15}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"faab4136-ba58-4577-849d-3b41cf00ab16\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":10}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"e8c815f2-57f1-4469-b7c6-5eb9a40f5ded\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":17}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"0308438f-c764-4cdf-bcbd-e2e64651440e\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":13}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"b674ed1d-ed71-4f4d-880d-6828383de8ac\",\"method\":\"POST\",\"path\":\"/v1/compute/leases/89774fe0-b3b9-4929-be24-3848d1744a84/start\",\"status\":200,\"duration_ms\":11}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"0fe398ac-cfa8-415e-89f7-7bad95afc24a\",\"method\":\"POST\",\"path\":\"/v1/compute/leases/89774fe0-b3b9-4929-be24-3848d1744a84/complete\",\"status\":200,\"duration_ms\":18}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"78f1c6e6-2ec3-40ee-9907-f6dfef8abd6b\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":14}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"b0acfe64-8bb7-4bdc-91d5-af732e6a3fdd\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c/receipt\",\"status\":200,\"duration_ms\":16}",
+    "{\"event\":\"compute_gateway_error\",\"request_id\":\"01cb6815-73a7-4867-9088-ac61dd5dd27f\",\"message\":\"Compute node is revoked\",\"code\":\"NODE_REVOKED\"}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"01cb6815-73a7-4867-9088-ac61dd5dd27f\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":403,\"duration_ms\":6}",
+    "{\"event\":\"compute_gateway_error\",\"request_id\":\"aeb339c5-7c63-42c4-8ee8-e9e1781152dd\",\"message\":\"No live compute node serves ai.chat/fixture.echo.local; pass allow_offline:true to queue anyway\",\"code\":\"COMPUTE_NO_LIVE_NODE\"}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"aeb339c5-7c63-42c4-8ee8-e9e1781152dd\",\"method\":\"POST\",\"path\":\"/v1/compute/jobs\",\"status\":503,\"duration_ms\":8}",
+    "{\"event\":\"compute_gateway_error\",\"request_id\":\"2c84d4dd-a732-4731-ace6-432669abca6c\",\"message\":\"Unknown compute node\",\"code\":\"UNKNOWN_NODE\"}"
   ],
   "node_agent_log_tail": [
     "{\"event\":\"compute_node_paths\",\"platform\":\"linux\",\"state_dir\":\"[out]/node/state\",\"manifest\":\"[out]/node/capabilities.json\",\"defaults_applied\":[]}",
     "{\"event\":\"compute_node_gpu_evidence\",\"hardware_mode\":\"cpu-only\",\"previous\":\"unknown\",\"gpus\":0,\"gpu_verified_at\":null,\"model\":null,\"size_vram_bytes\":null}",
-    "{\"event\":\"compute_node_enrolled\",\"node_id\":\"node_d56e19d58861ea7c71fdf323cc708545\",\"protocol\":\"mccluster-compute/1\",\"advertised\":1,\"hardware_mode\":\"cpu-only\"}",
-    "{\"event\":\"lease_execution_stopped\",\"lease_id\":\"095c03ec-d047-4689-bed1-852ec4cef328\",\"task_id\":\"0b2151fa-92bb-4759-a95c-a85372d5f00a\",\"error\":\"fixture executor failure (injected, attempt 1)\"}",
+    "{\"event\":\"compute_node_enrolled\",\"node_id\":\"node_82f59e87072ff86aa4c93d0e96527b5c\",\"protocol\":\"mccluster-compute/1\",\"advertised\":1,\"hardware_mode\":\"cpu-only\"}",
+    "{\"event\":\"lease_execution_stopped\",\"lease_id\":\"afc678d1-3482-4675-a954-0338fd17088e\",\"task_id\":\"a24f065d-2cfe-4d89-acab-673e0c8c1bdb\",\"error\":\"fixture executor failure (injected, attempt 1)\"}",
     "{\"event\":\"compute_node_paths\",\"platform\":\"linux\",\"state_dir\":\"[out]/node/state\",\"manifest\":\"[out]/node/capabilities.json\",\"defaults_applied\":[]}",
     "{\"event\":\"compute_node_gpu_evidence\",\"hardware_mode\":\"cpu-only\",\"previous\":\"unknown\",\"gpus\":0,\"gpu_verified_at\":null,\"model\":null,\"size_vram_bytes\":null}",
-    "{\"event\":\"compute_node_enrolled\",\"node_id\":\"node_d56e19d58861ea7c71fdf323cc708545\",\"protocol\":\"mccluster-compute/1\",\"advertised\":1,\"hardware_mode\":\"cpu-only\"}",
-    "{\"event\":\"compute_node_loop_error\",\"node_id\":\"node_d56e19d58861ea7c71fdf323cc708545\",\"error\":\"Compute node is revoked\",\"code\":\"NODE_REVOKED\",\"consecutive_errors\":1}",
+    "{\"event\":\"compute_node_enrolled\",\"node_id\":\"node_82f59e87072ff86aa4c93d0e96527b5c\",\"protocol\":\"mccluster-compute/1\",\"advertised\":1,\"hardware_mode\":\"cpu-only\"}",
+    "{\"event\":\"compute_node_loop_error\",\"node_id\":\"node_82f59e87072ff86aa4c93d0e96527b5c\",\"error\":\"Compute node is revoked\",\"code\":\"NODE_REVOKED\",\"consecutive_errors\":1}",
     "{\"event\":\"compute_node_draining\",\"signal\":\"loop-exit\",\"active_leases\":0}",
     "{\"event\":\"compute_node_shutdown\",\"signal\":\"loop-exit\",\"remaining_leases\":0}"
   ]
