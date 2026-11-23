@@ -19,6 +19,7 @@ const BASE='https://matthew.mccluster.org';
 const TYPES={'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.html':'text/html','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const OWNER='11111111-1111-4111-8111-111111111111';
 const UPLOAD='22222222-2222-4222-8222-222222222222';
+const LIVE2='33333333-3333-4333-8333-333333333333';
 const results=[];
 function check(scope,name,ok,detail){results.push({scope,name,pass:!!ok});console.log((ok?'PASS ':'FAIL ')+'['+scope+'] '+name+(ok?'':' '+JSON.stringify(detail)));}
 await mkdir(OUT,{recursive:true});
@@ -29,7 +30,7 @@ const HUNDUN=JSON.parse(await readFile(join(ROOT,'data/lyrics/hundun-b-side.json
 const json=(route,body,status=200)=>route.fulfill({status,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(body)});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--autoplay-policy=no-user-gesture-required','--mute-audio']});
 
-async function setup(viewport,{owner=true}={}){
+async function setup(viewport,{owner=true,stores=false}={}){
   const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,serviceWorkers:'block',acceptDownloads:true});
   const db={calls:[]},errors=[];
   await ctx.addInitScript(({OWNER})=>{
@@ -51,7 +52,8 @@ async function setup(viewport,{owner=true}={}){
       if(p==='/functions/v1/music-access'){
         const b=req.postDataJSON()||{};db.calls.push(b);
         if(!owner)return json(route,{error:'operator permission required'},403);
-        if(b.action==='operator-dashboard')return json(route,{ok:true,tracks:[{id:UPLOAD,title:'Fixture Upload',artist:'A Creator',status:'pending_review',m_uid:'m1'}],creators:[],offers:[]});
+        if(b.action==='operator-dashboard')return json(route,{ok:true,tracks:[{id:UPLOAD,title:'Fixture Upload',artist:'A Creator',status:'pending_review',m_uid:'m1'}].concat(stores?[{id:LIVE2,title:'Fixture Live',artist:'A Creator',status:'published',m_uid:'m1'}]:[]),creators:[],offers:[]});
+        if(b.action==='operator-distribution-stage')return json(route,b.dry_run===false?{ok:true,dry_run:false,staged:true,release_id:'r1',recording_id:'c1',gaps:['ISRC','UPC']}:{ok:true,dry_run:true,staged:false,release_id:null,gaps:['ISRC','UPC']});
         if(b.action==='operator-lyrics-get'){
           /* the slow release: answers late, with a different three-line file */
           if(db.slow){db.slow=false;await new Promise(r=>setTimeout(r,1500));return json(route,{ok:true,track_id:UPLOAD,title:'Fixture Upload',lyrics:{...HUNDUN,source:'auto',timed:{line:HUNDUN.timed.line.slice(0,3)}},listen_url:'https://fixture-storage.invalid/master.wav'});}
@@ -217,6 +219,26 @@ async function openLyrics(page){
   check('non-owner','no upload lyrics are read or written for a non-operator',gotLyrics===0,{gotLyrics});
   const uploads=tab?await page.locator('[data-crl-pick] option',{hasText:'(upload)'}).count():0;
   check('non-owner','no creator uploads are offered (the music service refused the operator dashboard)',uploads===0,{uploads});
+  await ctx.close();
+}
+/* ---- the stores: an approved creator release, checked and staged (music-access operator-distribution-stage) ---- */
+{
+  const {ctx,page,db,errors}=await setup({width:390,height:844},{stores:true});
+  await page.goto(`${BASE}/control.html#create:music`,{waitUntil:'domcontentloaded'});
+  await page.locator('[data-crom-section="distribution"]').click({timeout:15000});
+  await page.locator(`[data-crom-stage="${LIVE2}"][data-dry="1"]`).waitFor({timeout:15000});
+  check('stores','only the approved release is offered for the stores',await page.locator(`[data-crom-stage="${UPLOAD}"]`).count()===0,{});
+  await page.locator(`[data-crom-stage="${LIVE2}"][data-dry="1"]`).click();
+  await page.waitForFunction(()=>/Missing: ISRC, UPC/.test(document.body.textContent),null,{timeout:10000}).catch(()=>{});
+  const dry=db.calls.filter(c=>c.action==='operator-distribution-stage');
+  check('stores','Check is a dry run and shows what is missing',dry.length===1&&dry[0].dry_run===true&&/Not staged yet\. Missing: ISRC, UPC/.test(await page.textContent('body')),dry);
+  page.once('dialog',d=>d.accept());
+  await page.locator(`[data-crom-stage="${LIVE2}"][data-dry="0"]`).click();
+  await page.waitForFunction(()=>/Staged at metadata review/.test(document.body.textContent),null,{timeout:10000}).catch(()=>{});
+  const all=db.calls.filter(c=>c.action==='operator-distribution-stage');
+  check('stores','Stage asks first, then writes with dry_run:false',all.length===2&&all[1].dry_run===false&&/Staged at metadata review/.test(await page.textContent('body')),all);
+  check('stores','no sideways scroll',(await overflow(page))===0,{});
+  check('stores','no page errors',errors.length===0,errors.slice(0,5));
   await ctx.close();
 }
 await browser.close();
