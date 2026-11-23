@@ -50,10 +50,14 @@ async function file(path) {
 async function setInsets(cdp, insets) {
   await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets:{...insets,topMax:insets.top,bottomMax:insets.bottom,leftMax:insets.left,rightMax:insets.right} });
 }
-async function setup(device, installed, owner = false, world = false, {dockModule = true} = {}) {
+/* path: the page to open on Matthew's property (Listen when absent). drop(read) stands in for the network on the audio
+   reads (the Release 1 dock fix): read = { key, n } (n: that file's nth read); it answers null for the plain bytes,
+   { cut } for a short 206 of at most that many bytes (the browser asks for the rest with a Range read) or { status }
+   instead of the bytes. */
+async function setup(device, installed, owner = false, world = false, {dockModule = true, path = '', drop = null} = {}) {
   const context = await browser.newContext({viewport:device.viewport,isMobile:true,hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   context.setDefaultTimeout(15000);
-  const errors = [], requests = [], blocked = [];
+  const errors = [], requests = [], blocked = [], reads = {};
   await context.addInitScript(({installed,owner,token,USER}) => {
     Object.defineProperty(navigator, 'standalone', {configurable:true,value:installed});
     try {
@@ -103,8 +107,13 @@ async function setup(device, installed, owner = false, world = false, {dockModul
       if (!dockModule && p === '/js/installed-app-dock.js') return r.abort();
       if (p.startsWith('/assets/audio/')) {
         const range = /bytes=(\d+)-(\d*)/.exec(req.headers().range || '');
+        const key = p.split('/').pop(); reads[key] = (reads[key] || 0) + 1;
+        const fault = drop ? drop({key,n:reads[key]}) : null;
+        if (fault && fault.status) return r.fulfill({status:fault.status,body:''});
         if (range) {
-          const start = Number(range[1]), end = Math.min(Number(range[2] || AUDIO.length - 1), AUDIO.length - 1);
+          const start = Number(range[1]);
+          let end = Math.min(Number(range[2] || AUDIO.length - 1), AUDIO.length - 1);
+          if (fault && fault.cut) end = Math.min(end, start + fault.cut - 1);
           return r.fulfill({status:206,contentType:'audio/wav',headers:{'accept-ranges':'bytes','content-range':`bytes ${start}-${end}/${AUDIO.length}`},body:AUDIO.subarray(start,end+1)});
         }
         return r.fulfill({contentType:'audio/wav',headers:{'accept-ranges':'bytes'},body:AUDIO});
@@ -121,12 +130,12 @@ async function setup(device, installed, owner = false, world = false, {dockModul
   const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
   const cdp = await context.newCDPSession(page);
   await setInsets(cdp, device.insets);
-  await page.goto(world ? WORLD + '/' : HOUSE + '/listen.html', {waitUntil:'load'});
+  await page.goto(world ? WORLD + '/' : HOUSE + (path || '/listen.html'), {waitUntil:'load'});
   await page.waitForFunction(() => !!window.MCC_BAR && !!window.MCC_WORLD_AUDIO);
   await page.locator('.appbar').waitFor({state:'visible'});
   if (owner) await page.waitForFunction(() => MCC_BAR.admin() && document.querySelectorAll('.appbar [data-appnav]').length >= 10);
   if (installed && dockModule) await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-ready'));
-  if (!world) await page.waitForFunction(() => !!window.MCC_MUSIC && !!document.querySelector('[data-music-play][data-album="here"]'));
+  if (!world && !path) await page.waitForFunction(() => !!window.MCC_MUSIC && !!document.querySelector('[data-music-play][data-album="here"]'));
   await page.evaluate(() => document.fonts.ready);
   return {context,page,cdp,errors,requests,blocked};
 }
@@ -408,15 +417,239 @@ async function fallbackTransport(device) {
   } catch (error) { await failed(run,scope,error); }
   finally { await context.close(); }
 }
+
+/* ---------- ONE PLAY/PAUSE, AND MUTED IN ONE ROW (the Release 1 dock fix, 2026-11-23) ----------
+   Matthew: "the bar's Music button pauses everywhere (one player); the installed dock shows one Pause, not two".
+   Release 1 carries 73349a06, which made the red Music tab Listen's Play/Pause beside the dock's own (two controls
+   named "Pause music") and grew the dock a status row for every word the player said, Muted included. Where the tab
+   is the page's Play/Pause (Listen) it is the one control; where it is the way to the music (the album, where it
+   opens the shelf as before; the World over the music) the dock's own is, and the tab wears no second pause glyph.
+   Muted lasts, so it is said in the song line's second line, one row; the trouble words keep the status row. Phone
+   first: 390 and 320 wide. */
+const PHONES = [
+  { name:'390', viewport:{width:390,height:844}, insets:{top:47,bottom:34,left:0,right:0} },
+  { name:'320', viewport:{width:320,height:568}, insets:{top:20,bottom:0,left:0,right:0} }
+];
+const PAUSE_PATH = 'M6 5h4v14H6zM14 5h4v14h-4z', PLAY_PATH = 'M8 5l11 7-11 7z';
+/* every control the bar shows (its tabs and the dock's buttons): its label and the glyph it draws, "pause" (two bars),
+   "play" (a triangle) or null. The Music tab draws in CSS (::before), the dock's buttons in SVG. */
+async function barControls(page) {
+  return page.evaluate(({PAUSE_PATH,PLAY_PATH}) => [...document.querySelectorAll('.appbar a[data-appnav],.appbar button[data-app-player]')]
+    .filter(n => n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden')
+    .map(n => {
+      let drawn = null;
+      if (n.matches('button')) { const d = n.querySelector('svg path')?.getAttribute('d'); drawn = d === PAUSE_PATH ? 'pause' : d === PLAY_PATH ? 'play' : null; }
+      else if (n.dataset.appnav === 'music') {
+        const b = getComputedStyle(n,'::before');
+        drawn = !b.content || b.content === 'none' ? null : /gradient/.test(b.backgroundImage) ? 'pause' : /polygon/.test(b.clipPath) ? 'play' : null;
+      }
+      return {key:n.dataset.appnav || n.dataset.appPlayer,label:n.getAttribute('aria-label'),drawn};
+    }), {PAUSE_PATH,PLAY_PATH});
+}
+/* how many controls in the bar a screen reader is told start with these words (the accessible name, as Playwright
+   computes it; a control that is not shown is not counted) */
+async function named(page, words) {
+  const bar = page.locator('.appbar');
+  return await bar.getByRole('button',{name:words}).count() + await bar.getByRole('link',{name:words}).count();
+}
+async function musicTab(page) {
+  const s = (await page.locator('.appbar [data-appnav="music"]').ariaSnapshot()).trim(), m = /^- (\w+) "([^"]*)"/.exec(s);
+  return m ? `${m[1]} "${m[2]}"` : s;
+}
+/* waits until the Music tab's name (its label, else its words) matches */
+const tabSays = (page, words) => page.waitForFunction(w => {
+  const t = document.querySelector('.appbar [data-appnav="music"]');
+  return !!t && new RegExp(w).test(t.getAttribute('aria-label') || t.textContent.trim());
+}, words);
+const painted = page => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+async function dockState(page) {
+  return page.evaluate(() => {
+    const d = document.querySelector('.appbar'), q = s => d.querySelector(s);
+    const box = el => { if (!el || !el.getClientRects().length) return null; const r = el.getBoundingClientRect(); return {l:r.left,t:r.top,r:r.right,b:r.bottom,w:r.width,h:r.height}; };
+    const status = q('[data-app-player="status"]'), shown = !!status && getComputedStyle(status).display !== 'none';
+    return {height:d.getBoundingClientRect().height,dock:box(d),title:q('[data-app-player="title"]')?.textContent ?? null,
+      artist:q('[data-app-player="artist"]')?.textContent ?? null,label:q('[data-app-player="open"]')?.getAttribute('aria-label') ?? null,
+      status:shown ? status.textContent : null,statusBox:shown ? box(status) : null,statusWhole:shown ? status.scrollWidth <= status.clientWidth : null,
+      previous:box(q('[data-app-player="previous"]')),next:box(q('[data-app-player="next"]')),
+      snapshot:window.MCC_NOW_PLAYING && MCC_NOW_PLAYING.snapshot(),
+      scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth};
+  });
+}
+async function listenOnePause(phone) {
+  const run = await setup(phone,true), {page,context} = run, scope = phone.name + ' installed Listen';
+  try {
+    await play(page);
+    await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-active'));
+    await tabSays(page,'^Pause');
+    let c = await barControls(page);
+    check(scope + ', a song playing: exactly one control in the bar is named Pause, the red Music tab (73349a06 left the dock\'s own beside it)',
+      await named(page,/^Pause/) === 1 && await musicTab(page) === 'link "Pause music"', c);
+    check(scope + ', a song playing: exactly one control in the bar is drawn as Pause', c.filter(x => x.drawn === 'pause').map(x => x.key).join() === 'music', c);
+    check(scope + ': the dock shows no Play/Pause of its own beside the Music tab', !c.some(x => x.key === 'play'), c);
+    let s = await dockState(page);
+    check(scope + ': the dock stays one row, 46 px, with Previous, the song line and Next', near(s.height,46,1) && !s.status && !!s.title && !!s.previous && !!s.next, s);
+    const g = await dockGeometry(page);
+    check(scope + ': every target shown is at least 44 px and inside the dock', g.targets.length >= 6 && g.targets.every(r => r.width >= 43.9 && r.height >= 43.9 && r.left >= g.dock.left-.5 && r.right <= g.dock.right+.5), g.targets);
+    check(scope + ': the page fits (scrollWidth === clientWidth)', g.scrollWidth === g.clientWidth, g);
+    await page.screenshot({path:join(OUT,`one-pause-${phone.name}-listen-playing.png`)});
+    /* the one control pauses and plays, with the truthful glyph and name */
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.waitForFunction(() => MCC_MUSIC.audio.paused);
+    await tabSays(page,'^Play');
+    c = await barControls(page);
+    check(scope + ', paused from the Music tab: it is the one control named Play and drawn as Play; nothing is named or drawn Pause',
+      await named(page,/^Pause/) === 0 && await named(page,/^Play music/) === 1 && await musicTab(page) === 'link "Play music"' &&
+      c.find(x => x.key === 'music')?.drawn === 'play' && !c.some(x => x.drawn === 'pause' || x.key === 'play'), c);
+    s = await dockState(page);
+    check(scope + ', paused: the dock keeps the song line, one row', near(s.height,46,1) && s.title === (await audio(page)).title, s);
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused);
+    await tabSays(page,'^Pause');
+    check(scope + ', played again from the Music tab: one control named Pause again', await named(page,/^Pause/) === 1 && await musicTab(page) === 'link "Pause music"');
+    /* the World over the music: there the Music tab is the way back, so the dock's own Play/Pause is the one control */
+    await retainedWorld(page);
+    await tabSays(page,'^Music$');
+    c = await barControls(page);
+    check(scope + ', the World open over the music: one control named Pause, the dock\'s own; the Music tab is the way back ("Music"), drawn at rest',
+      await named(page,/^Pause/) === 1 && await page.locator('.appbar').getByRole('button',{name:'Pause music'}).count() === 1 &&
+      await musicTab(page) === 'link "Music"' && c.filter(x => x.drawn === 'pause').map(x => x.key).join() === 'play' && c.find(x => x.key === 'music')?.drawn === 'play', c);
+    await Promise.all([page.waitForURL(url => !url.searchParams.has('world')), page.locator('.appbar [data-appnav="music"]').click()]);
+    await page.waitForFunction(() => !MCC_WORLD_AUDIO.active());
+    await tabSays(page,'^Pause');
+    c = await barControls(page);
+    check(scope + ', back from the World: the Music tab is the one Pause again', !(await audio(page)).paused && await named(page,/^Pause/) === 1 &&
+      await musicTab(page) === 'link "Pause music"' && !c.some(x => x.key === 'play'), c);
+    await noErrors(run,scope);
+  } catch (error) { await failed(run,scope,error); }
+  finally { await context.close(); }
+}
+async function albumOnePause(phone) {
+  const run = await setup(phone,true,false,false,{path:'/album.html?album=here'}), {page,context} = run, scope = phone.name + ' installed album';
+  try {
+    await page.waitForSelector('#tracks li');
+    await page.locator('#tracks li').first().click();
+    await page.waitForFunction(() => { const d = document.getElementById('deck'); return !!d && !d.paused && d.currentTime > .15; });
+    await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-active') && document.documentElement.getAttribute('data-app-player-surface') === 'album');
+    await page.waitForFunction(() => document.querySelector('.appbar [data-app-player="play"]')?.getAttribute('aria-label') === 'Pause music');
+    let c = await barControls(page);
+    check(scope + ', a song playing: exactly one control in the bar is named Pause, the dock\'s own; the Music tab stays the way to the shelf ("Music")',
+      await named(page,/^Pause/) === 1 && await page.locator('.appbar').getByRole('button',{name:'Pause music'}).count() === 1 && await musicTab(page) === 'link "Music"', c);
+    check(scope + ', a song playing: exactly one control in the bar is drawn as Pause (the Music tab wore a second pause glyph)',
+      c.filter(x => x.drawn === 'pause').map(x => x.key).join() === 'play', c);
+    let s = await dockState(page);
+    check(scope + ': the dock stays one row, 46 px', near(s.height,46,1) && !s.status && !!s.title, s);
+    check(scope + ': the page fits (scrollWidth === clientWidth)', s.scrollWidth === s.clientWidth, s);
+    await page.screenshot({path:join(OUT,`one-pause-${phone.name}-album-playing.png`)});
+    await page.locator('.appbar [data-app-player="play"]').click();
+    await page.waitForFunction(() => document.getElementById('deck').paused && document.querySelector('.appbar [data-app-player="play"]').getAttribute('aria-label') === 'Play music');
+    c = await barControls(page);
+    check(scope + ', paused from the dock: one control named Play, the dock\'s own; none named or drawn Pause; the Music tab still "Music"',
+      await named(page,/^Pause/) === 0 && await named(page,/^Play music/) === 1 && await musicTab(page) === 'link "Music"' && !c.some(x => x.drawn === 'pause'), c);
+    await page.locator('.appbar [data-app-player="play"]').click();
+    await page.waitForFunction(() => !document.getElementById('deck').paused);
+    /* Muted lasts: the album says it in the song line's second line, in one row */
+    await page.evaluate(() => { document.getElementById('deck').muted = true; });
+    await page.waitForFunction(() => /"Muted"/.test(JSON.stringify(MCC_NOW_PLAYING.snapshot())));
+    await painted(page);
+    s = await dockState(page);
+    check(scope + ', muted: the dock stays one row (46 px), its artist line says Muted and the open button says why it is quiet',
+      near(s.height,46,1) && !s.status && s.artist === 'Muted' && s.label === `Open player: ${s.title} — Muted`, s);
+    check(scope + ', muted: the page fits', s.scrollWidth === s.clientWidth, s);
+    await noErrors(run,scope);
+  } catch (error) { await failed(run,scope,error); }
+  finally { await context.close(); }
+}
+async function listenMuted(phone) {
+  const run = await setup(phone,true), {page,context} = run, scope = phone.name + ' installed Listen, muted';
+  try {
+    await play(page);
+    await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-active'));
+    const artist = await page.evaluate(() => MCC_NOW_PLAYING.snapshot().artist);
+    await page.evaluate(() => { MCC_MUSIC.audio.muted = true; });
+    await page.waitForFunction(() => /"Muted"/.test(JSON.stringify(MCC_NOW_PLAYING.snapshot())));
+    await painted(page);
+    const s = await dockState(page);
+    check(scope + ': the dock stays one row, 46 px (73349a06 grew it a status row for Muted)', near(s.height,46,1) && !s.status, s);
+    check(scope + ': its artist line says Muted, the engine\'s word', s.artist === 'Muted', s);
+    check(scope + ': the open button still says why it is quiet', s.label === `Open player: ${s.title} — Muted`, s);
+    check(scope + ': still one Play/Pause, the Music tab', await named(page,/^Pause/) === 1 && await musicTab(page) === 'link "Pause music"');
+    check(scope + ': the page fits (scrollWidth === clientWidth)', s.scrollWidth === s.clientWidth, s);
+    await page.screenshot({path:join(OUT,`one-pause-${phone.name}-listen-muted.png`)});
+    await page.evaluate(() => { MCC_MUSIC.audio.muted = false; });
+    await page.waitForFunction(a => document.querySelector('.appbar [data-app-player="artist"]')?.textContent === a, artist);
+    const back = await dockState(page);
+    check(scope + ', unmuted: the artist line is the artist again, one row', back.artist === artist && near(back.height,46,1) && !back.status, back);
+    await noErrors(run,scope);
+  } catch (error) { await failed(run,scope,error); }
+  finally { await context.close(); }
+}
+async function listenReconnecting(phone) {
+  const song = 'who-did-the-shoot.mp3';
+  const drop = q => q.key !== song ? null : q.n === 1 ? {cut:96000} : {status:503};
+  const run = await setup(phone,true,false,false,{drop}), {page,context} = run, scope = phone.name + ' installed Listen, a drop';
+  try {
+    await play(page);
+    await page.waitForFunction(() => MCC_MUSIC.delivery().state === 'reconnecting', null, {timeout:25000});
+    await page.waitForFunction(() => /Reconnecting/.test(document.querySelector('.appbar [data-app-player="status"]')?.textContent || ''), null, {timeout:5000});
+    await painted(page);
+    const s = await dockState(page);
+    check(scope + ': Reconnecting… keeps the status row (73349a06): its whole words across the top of the dock, the controls below it',
+      s.status === 'Reconnecting…' && s.statusWhole && s.height > 50 && s.statusBox.l >= s.dock.l - .5 && s.statusBox.r <= s.dock.r + .5 &&
+      s.statusBox.b <= s.previous.t + .5 && s.statusBox.b <= s.next.t + .5 && near(s.dock.b,s.next.b,2), s);
+    check(scope + ': the song line keeps the title and the artist', s.title === s.snapshot?.title && s.artist === s.snapshot?.artist, s);
+    check(scope + ': the one Pause, which stops the tries, is the Music tab', await named(page,/^Pause/) === 1 && await musicTab(page) === 'link "Pause music"');
+    check(scope + ': the page fits (scrollWidth === clientWidth)', s.scrollWidth === s.clientWidth, s);
+    await page.screenshot({path:join(OUT,`one-pause-${phone.name}-listen-reconnecting.png`)});
+    await noErrors(run,scope);
+  } catch (error) { await failed(run,scope,error); }
+  finally { await context.close(); }
+}
+async function browserListen(phone) {
+  const run = await setup(phone,false), {page,context} = run, scope = phone.name + ' browser Listen';
+  try {
+    await play(page);
+    await tabSays(page,'^Pause');
+    const g = await dockGeometry(page);
+    check(scope + ': the ordinary capsule bar, as before: unwrapped, 68.4 px, the three tabs, no dock and no installed classes',
+      !g.wrapped && near(g.dock.height,68.4,1) && g.keys.join(',') === 'music,home,world' &&
+      await page.evaluate(() => !document.getElementById('mccInstalledDock') && !document.documentElement.classList.contains('mcc-installed-app') && !document.querySelector('[data-app-player]')), g);
+    check(scope + ', a song playing: the Music tab is the Play/Pause (link "Pause music", 73349a06), the only control in the bar named Pause',
+      await musicTab(page) === 'link "Pause music"' && await named(page,/^Pause/) === 1);
+    check(scope + ': the mini player stays above the bar, as before', await page.locator('.music-mini').isVisible());
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.waitForFunction(() => MCC_MUSIC.audio.paused);
+    await tabSays(page,'^Play');
+    check(scope + ': a tap on the Music tab pauses the song, and it is then link "Play music"', await musicTab(page) === 'link "Play music"' && await named(page,/^Pause/) === 0);
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused);
+    await tabSays(page,'^Pause');
+    check(scope + ': another tap plays it again', await musicTab(page) === 'link "Pause music"');
+    check(scope + ': the page fits (scrollWidth === clientWidth)', g.scrollWidth === g.clientWidth, g);
+    await noErrors(run,scope);
+  } catch (error) { await failed(run,scope,error); }
+  finally { await context.close(); }
+}
+const DOCK_FIX = [['installed Listen one Play/Pause',listenOnePause],['installed album one Play/Pause',albumOnePause],
+  ['installed Listen muted',listenMuted],['installed Listen reconnecting',listenReconnecting],['browser Listen',browserListen]];
+/* INSTALLED_APP_ONLY=<words>[|<words>] runs only the dock-fix scenarios whose name ("390 installed Listen muted") holds
+   them, a local check of one fix; unset, the whole suite runs */
+const ONLY = (process.env.INSTALLED_APP_ONLY || '').split('|').filter(Boolean);
 try {
   browser = await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE || process.env.CHROMIUM_PATH || undefined,args:['--no-sandbox','--autoplay-policy=document-user-activation-required','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
-  for (const device of DEVICES) {
-    const baseline = await browserBaseline(device);
-    await installedMusic(device,baseline);
-    await directWorld(device,baseline);
-    await ownerRegistry(device);
+  if (!ONLY.length) {
+    for (const device of DEVICES) {
+      const baseline = await browserBaseline(device);
+      await installedMusic(device,baseline);
+      await directWorld(device,baseline);
+      await ownerRegistry(device);
+    }
+    await fallbackTransport(DEVICES.find(device => device.insets.left !== device.insets.right));
   }
-  await fallbackTransport(DEVICES.find(device => device.insets.left !== device.insets.right));
+  /* each dock-fix scenario runs to its first failing check; the next one still runs */
+  for (const phone of PHONES) for (const [name,fn] of DOCK_FIX) {
+    if (ONLY.length && !ONLY.some(words => `${phone.name} ${name}`.includes(words))) continue;
+    try { await fn(phone); } catch (error) { process.exitCode = 1; console.error(`${phone.name} ${name}: ${String(error.message || error).split('\n')[0]}`); }
+  }
 } catch (error) {
   process.exitCode = 1;
   checks.push({name:'suite completed',pass:false,error:String(error.stack || error)});
