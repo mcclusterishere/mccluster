@@ -1019,7 +1019,10 @@ try {
     await page.waitForFunction(() => document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 3000 }).catch(() => {});
     check('listen, a song playing: the middle button shows Pause, as on the album', (await tab()).sound, await tab());
     check('listen, a song playing: the bar\'s Music tab is told as "Pause music", what a tap does (it was link "Music")', await told() === 'link "Pause music"', await told());
-    await page.evaluate(() => window.scrollTo(0, 300));
+    /* instant, as the next scenario does: the page's html{scroll-behavior:smooth} turned scrollTo(0, 300) into a glide of
+       about a third of a second from where the row's click left it (769 here), and CI read the place mid-glide (311), then
+       300 after the tap, as if the tap had moved the page */
+    await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'instant' }));
     await sleep(300);
     const before = await tab();
     await page.locator('.appbar [data-appnav="music"]').click();
