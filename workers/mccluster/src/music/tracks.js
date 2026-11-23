@@ -206,6 +206,11 @@ export const TRACKS = {
     "album": "cia-mind-control",
     "gated": true
   },
+  "rolling-with-me": {
+    "title": "Rolling With Me",
+    "album": "tinderfessions",
+    "seconds": 150.8
+  },
   "alquifina-new-chick": {
     "title": "Alquifina (New Chick)",
     "album": "tinderfessions",

@@ -635,6 +635,12 @@
    ],
    "tracks": [
     {
+     "title": "Rolling With Me",
+     "src": "assets/audio/rolling-with-me.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 150.8
+    },
+    {
      "title": "Alquifina (New Chick)",
      "src": "assets/audio/alquifina-new-chick.mp3",
      "poster": "assets/img/tinderfessions-cover.jpg",
