@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 777,
+  "candidate_count": 778,
   "capability_source_count": 104,
-  "support_only_count": 673,
+  "support_only_count": 674,
   "entries": [
     {
       "path": ".cursorrules",
@@ -5635,6 +5635,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
+    },
+    {
+      "path": "workers/mccluster/test/platform-router.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests the host router of Worker mccluster (src/platform/router.js) over every host, path class and method: today's table against the 2026-11-23 probe record, and the P1, P3 and equityuprise.com tables, where Equity Uprise is only the next platform's site name. Not a building capability."
     },
     {
       "path": "workers/mccluster/test/prim3-learning.test.mjs",

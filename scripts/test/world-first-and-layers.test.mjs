@@ -48,15 +48,17 @@ test('a member with an unfinished profile or contact step gets the World, with t
 });
 
 test('on the World\'s host, a link to one of Matthew\'s rooms goes to his site outright, carrying the sign-in', async () => {
-  const bar = await read('js/tabbar.js'), host = await read('workers/mccluster/src/world-host.js');
+  const bar = await read('js/tabbar.js');
+  /* the Worker serves the World's rooms the generated table lists (workers/mccluster/src/world-host.js reads them there) */
+  const { WORLD_ROOMS, WORLD_PREFIXES } = await import('../../workers/mccluster/src/platform/hosts.generated.js');
   assert.match(bar, /function houseBound\(url\) \{\n    return ON_WORLD_HOST && url\.origin === location\.origin && !WORLD_HOST_PATHS\.test\(url\.pathname\);/);
   assert.match(bar, /if \(houseBound\(url\)\) url = new URL\(url\.pathname \+ url\.search \+ url\.hash, HOUSE_ORIGIN\);/);
   /* the bar's list and the Worker's agree on what the host serves */
   for (const room of ['action-globe.html', 'action-policy.html', 'world-news.html', 'create.html', 'give.html', 'privacy.html', 'account.html', 'login.html', 'forgot-password.html', 'reset-password.html', 'onboard.html', 'sw.js']) {
-    assert.ok(host.includes(`'/${room}'`), `Worker serves ${room}`); assert.ok(bar.includes(room.replace('.', '\\.') + '$'), `bar knows ${room}`);
+    assert.ok(WORLD_ROOMS.includes(`/${room}`), `Worker serves ${room}`); assert.ok(bar.includes(room.replace('.', '\\.') + '$'), `bar knows ${room}`);
   }
   for (const prefix of ['/action-network-', '/action/', '/auth/', '/js/', '/css/', '/assets/', '/data/', '/vendor/']) {
-    assert.ok(host.includes(`'${prefix}'`), `Worker serves ${prefix}`); assert.ok(bar.includes(prefix.slice(1).replace('/', '\\/')), `bar knows ${prefix}`);
+    assert.ok(WORLD_PREFIXES.includes(prefix), `Worker serves ${prefix}`); assert.ok(bar.includes(prefix.slice(1).replace('/', '\\/')), `bar knows ${prefix}`);
   }
 });
 

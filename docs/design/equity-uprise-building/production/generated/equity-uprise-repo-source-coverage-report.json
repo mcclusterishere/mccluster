@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 777,
+  "candidate_count": 778,
   "capability_source_count": 104,
-  "support_only_count": 673,
-  "checks_total": 3006,
-  "checks_passed": 3006,
+  "support_only_count": 674,
+  "checks_total": 3010,
+  "checks_passed": 3010,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -775,6 +775,7 @@
     "workers/mccluster/test/mission-sources.test.mjs",
     "workers/mccluster/test/mnet-live.test.mjs",
     "workers/mccluster/test/mnet-post-limits.test.mjs",
+    "workers/mccluster/test/platform-router.test.mjs",
     "workers/mccluster/test/prim3-learning.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs",
     "workers/mccluster/test/world-environment-action-media.test.mjs",
@@ -791,7 +792,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "777 entries"
+      "detail": "778 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -15595,6 +15596,26 @@
     },
     {
       "name": "workers/mccluster/test/mnet-post-limits.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/platform-router.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/platform-router.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/platform-router.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/platform-router.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
