@@ -108,6 +108,7 @@
     "assets/img/here-cover.jpg": { sizes: "1024x682", type: "image/jpeg" },
     "assets/img/m-mark.png": { sizes: "256x256", type: "image/png" },
     "assets/img/prim3-logo.png": { sizes: "256x256", type: "image/png" },
+    "assets/img/tinderfessions-cover.jpg": { sizes: "1400x1400", type: "image/jpeg" },
     "assets/img/vaunt-logo.webp": { sizes: "200x200", type: "image/webp" },
     "assets/img/wing-whip-poster.jpg": { sizes: "1280x890", type: "image/jpeg" }
   };
