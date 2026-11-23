@@ -9,8 +9,10 @@ against the framework's own assemblies and the Microsoft WebView2 managed assemb
 (Authenticode-checked; unsigned copies are refused). It downloads nothing.
 
 Order, tests first: the desktop tests (tests\DesktopTests.cs) must pass before the installer is built;
-the installer tests (installer\tests\InstallerTests.cs) must pass against the real Setup.exe, with its real
-embedded payload, before dist\McCluster-Windows-x64-Setup-<version>.exe is written.
+the installer is compiled as dist\tests\Setup-candidate.exe, the installer tests
+(installer\tests\InstallerTests.cs) must pass against that candidate with its real embedded payload, and only
+then is it moved to dist\McCluster-Windows-x64-Setup-<version>.exe and SHA256SUMS.txt written. A dirty
+desktop\windows tree is refused unless -AllowDirty is passed; the manifest records built_from_clean_tree.
 
 Outputs: dist\app\ (the app and the three WebView2 files), dist\payload.zip (deterministic: fixed entry
 timestamps, sorted entries, with manifest.json of SHA-256 hashes), dist\McCluster-Windows-x64-Setup-<version>.exe
@@ -23,13 +25,17 @@ param(
   [string]$OutDir,
   [switch]$Tests,
   [switch]$Installer,
-  [string]$SourceCommit
+  [string]$SourceCommit,
+  [switch]$AllowDirty
 )
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not $WebView2Dir) { $WebView2Dir = Join-Path $env:LOCALAPPDATA 'McClusterDesktop\App' }
 if (-not $OutDir) { $OutDir = Join-Path $here 'dist\app' }
 $dist = Split-Path -Parent $OutDir
+# Exactly what ships. Anything else in the output folder is a build error, not payload.
+$shipped = @('McCluster.exe','Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','WebView2Loader.dll','README.txt','MICROSOFT-WEBVIEW2-LICENSE.txt')
+if (Test-Path $OutDir) { Remove-Item (Join-Path $OutDir '*') -Force -ErrorAction SilentlyContinue }
 $fw = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319'
 $csc = Join-Path $fw 'csc.exe'
 if (-not (Test-Path $csc)) { throw "in-box compiler not found: $csc" }
@@ -68,11 +74,15 @@ Write-Host "csc $(Split-Path $csc -Leaf) $((Get-Item $csc).VersionInfo.FileVersi
 & $csc @cscArgs
 if ($LASTEXITCODE -ne 0) { throw "csc failed with exit $LASTEXITCODE" }
 Copy-Item $wvCore, $wvForms, $wvLoader $OutDir -Force
-Copy-Item (Join-Path $here 'package\README.txt') $OutDir -Force
+$version = (Get-Item $exe).VersionInfo.FileVersion -replace '\.0$',''
+# The shipped README carries the built version so it cannot drift from the binary.
+((Get-Content (Join-Path $here 'package\README.txt') -Raw) -replace '__VERSION__', $version) | Set-Content (Join-Path $OutDir 'README.txt') -Encoding ascii -NoNewline
 $licenseSrc = Join-Path $WebView2Dir 'MICROSOFT-WEBVIEW2-LICENSE.txt'
 if (-not (Test-Path $licenseSrc)) { $licenseSrc = Join-Path $WebView2Dir 'LICENSE.txt' }
-if (Test-Path $licenseSrc) { Copy-Item $licenseSrc (Join-Path $OutDir 'MICROSOFT-WEBVIEW2-LICENSE.txt') -Force } else { Write-Warning 'WebView2 licence text not found beside the DLLs; the payload must ship it (BSD-3-Clause notice)' }
-$version = (Get-Item $exe).VersionInfo.FileVersion -replace '\.0$',''
+if (-not (Test-Path $licenseSrc)) { $licenseSrc = Join-Path $here 'package\MICROSOFT-WEBVIEW2-LICENSE.txt' }
+if (Test-Path $licenseSrc) { Copy-Item $licenseSrc (Join-Path $OutDir 'MICROSOFT-WEBVIEW2-LICENSE.txt') -Force }
+elseif ($Installer) { throw 'WebView2 licence text (BSD-3-Clause notice) not found; the payload must ship it (LICENSES.md)' }
+else { Write-Warning 'WebView2 licence text not found beside the DLLs; -Installer will refuse until it is present' }
 Get-ChildItem $OutDir | Select-Object Name, Length, @{n='Version';e={$_.VersionInfo.FileVersion}}, @{n='SHA256';e={(Get-FileHash $_.FullName).Hash}} | Format-Table -AutoSize | Out-String | Write-Host
 
 if ($Tests -or $Installer) {
@@ -92,12 +102,27 @@ if ($Installer) {
   # 1. Deterministic payload: sorted entries, fixed timestamps, manifest of hashes.
   Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
   $payload = Join-Path $dist 'payload.zip'
-  if (Test-Path $payload) { Remove-Item $payload -Force }
-  $files = Get-ChildItem $OutDir -File | Where-Object { $_.Name -ne 'Uninstall.exe' -and $_.Name -ne 'install-receipt.json' } | Sort-Object Name
+  foreach ($stale in @($payload, (Join-Path $dist 'SHA256SUMS.txt')) + (Get-ChildItem $dist -Filter 'McCluster-Windows-x64-Setup-*.exe' -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })) { if ($stale -and (Test-Path $stale)) { Remove-Item $stale -Force } }
+  $present = Get-ChildItem $OutDir -File | ForEach-Object { $_.Name }
+  $extra = $present | Where-Object { $shipped -notcontains $_ }
+  if ($extra) { throw "unexpected files in ${OutDir}: $($extra -join ', ')" }
+  $missing = $shipped | Where-Object { $present -notcontains $_ }
+  if ($missing) { throw "shipped files missing from ${OutDir}: $($missing -join ', ')" }
+  $names = [string[]]$shipped; [Array]::Sort($names, [StringComparer]::Ordinal)
+  $files = $names | ForEach-Object { Get-Item (Join-Path $OutDir $_) }
   $manifestFiles = @()
   foreach ($f in $files) { $manifestFiles += [ordered]@{ name = $f.Name; sha256 = (Get-FileHash $f.FullName).Hash.ToLowerInvariant(); size = $f.Length } }
-  if (-not $SourceCommit) { try { $gitExe = Get-Command git -ErrorAction Stop; $SourceCommit = (& $gitExe.Source -C $here rev-parse HEAD 2>$null) } catch { $SourceCommit = $null } }
-  $manifest = [ordered]@{ schema = 'mccluster-install-manifest/1'; product = 'McCluster'; version = $version; source_commit = $SourceCommit; built_with = 'in-box csc ' + (Get-Item $csc).VersionInfo.FileVersion; files = $manifestFiles }
+  # Source commit and tree state come from git, never from a guess; a dirty tree needs -AllowDirty.
+  $gitExe = $null
+  foreach ($candidate in @((Get-Command git -ErrorAction SilentlyContinue | ForEach-Object Source), (Join-Path $env:LOCALAPPDATA 'github-copilot-git-2.56.0-1\cmd\git.exe'))) { if ($candidate -and (Test-Path $candidate)) { $gitExe = $candidate; break } }
+  $sourceDirty = $null
+  if ($gitExe) {
+    $head = (& $gitExe -C $here rev-parse HEAD 2>$null)
+    if ($head -match '^[0-9a-f]{40}$') { if ($SourceCommit -and $SourceCommit -ne $head -and -not $head.StartsWith($SourceCommit)) { throw "-SourceCommit $SourceCommit does not match HEAD $head" }; $SourceCommit = $head }
+    $sourceDirty = [bool]((& $gitExe -C $here status --porcelain -- . 2>$null) | Where-Object { $_ })
+    if ($sourceDirty -and -not $AllowDirty) { throw 'the desktop/windows tree has uncommitted changes; commit them or pass -AllowDirty (the manifest will say built_from_clean_tree=false)' }
+  } elseif ($SourceCommit -and $SourceCommit -notmatch '^[0-9a-f]{7,40}$') { throw '-SourceCommit must be a hex commit id' }
+  $manifest = [ordered]@{ schema = 'mccluster-install-manifest/1'; product = 'McCluster'; version = $version; source_commit = $SourceCommit; built_from_clean_tree = $(if ($null -eq $sourceDirty) { $null } else { -not $sourceDirty }); built_with = 'in-box csc ' + (Get-Item $csc).VersionInfo.FileVersion; files = $manifestFiles }
   $manifestJson = ($manifest | ConvertTo-Json -Depth 4)
   $fixed = [DateTimeOffset]::new(2026, 1, 1, 0, 0, 0, [TimeSpan]::Zero)
   $zipStream = [IO.File]::Open($payload, [IO.FileMode]::CreateNew)
@@ -112,23 +137,27 @@ if ($Installer) {
   } finally { $zip.Dispose(); $zipStream.Dispose() }
   Write-Host ("payload.zip {0} bytes sha256 {1}" -f (Get-Item $payload).Length, (Get-FileHash $payload).Hash)
 
-  # 2. Setup.exe = installer sources + the shared Json helper, with payload.zip embedded as a resource.
-  $setupExe = Join-Path $dist "McCluster-Windows-x64-Setup-$version.exe"
+  # 2. Setup candidate = installer sources + the shared Json helper, with payload.zip embedded as a resource.
+  #    It gets its final name only after the installer tests pass against it.
+  $candidate = Join-Path $dist 'tests\Setup-candidate.exe'
+  if (Test-Path $candidate) { Remove-Item $candidate -Force }
   $setupSources = @((Join-Path $here 'installer\Setup.cs'), (Join-Path $src 'Json.cs'))
   $setupArgs = @('/nologo','/noconfig','/nostdlib+','/warnaserror+','/optimize+','/target:winexe','/platform:x64','/langversion:5',
-    "/win32manifest:$(Join-Path $src 'app.manifest')", "/out:$setupExe", "/resource:$payload,payload.zip") + $refs + $setupSources
+    "/win32manifest:$(Join-Path $src 'app.manifest')", "/out:$candidate", "/resource:$payload,payload.zip") + $refs + $setupSources
   & $csc @setupArgs
   if ($LASTEXITCODE -ne 0) { throw "setup build failed with exit $LASTEXITCODE" }
 
-  # 3. Installer tests against the real Setup.exe into a throwaway root, Start Menu folder and HKCU key.
+  # 3. Installer tests against the candidate into a throwaway per-user root, Start Menu folder and HKCU key.
   $instTestExe = Join-Path $dist 'tests\InstallerTests.exe'
   $instTestSources = @((Join-Path $here 'installer\tests\InstallerTests.cs'), (Join-Path $here 'installer\Setup.cs'), (Join-Path $src 'Json.cs'))
   $instTestArgs = @('/nologo','/noconfig','/nostdlib+','/warnaserror+','/target:exe','/platform:x64','/langversion:5',"/out:$instTestExe", '/main:InstallerTests') + $refs + $instTestSources
   & $csc @instTestArgs
   if ($LASTEXITCODE -ne 0) { throw "installer test build failed with exit $LASTEXITCODE" }
-  & $instTestExe $setupExe
-  if ($LASTEXITCODE -ne 0) { throw "installer tests failed with exit $LASTEXITCODE" }
+  & $instTestExe $candidate
+  if ($LASTEXITCODE -ne 0) { throw "installer tests failed with exit $LASTEXITCODE; no setup was written" }
 
+  $setupExe = Join-Path $dist "McCluster-Windows-x64-Setup-$version.exe"
+  Move-Item $candidate $setupExe -Force
   $sums = Join-Path $dist 'SHA256SUMS.txt'
   "$((Get-FileHash $setupExe).Hash.ToLowerInvariant())  $(Split-Path $setupExe -Leaf)`n$((Get-FileHash $payload).Hash.ToLowerInvariant())  payload.zip" | Set-Content $sums -Encoding ascii
   Write-Host ("setup {0} bytes sha256 {1}" -f (Get-Item $setupExe).Length, (Get-FileHash $setupExe).Hash)

@@ -14,9 +14,10 @@ namespace McClusterDesktop
 {
     // Route-by-route parity audit: the shell's WebView2 renders each first-party route at a
     // fixed viewport and records what the site actually did inside the shell (final URL, HTTP
-    // status, title, overflow, console errors, blocked navigations) plus a screenshot. A
-    // reference capture of the same route at the same revision from a plain browser is diffed
-    // against it (ImageDiff). The audit never signs in and never submits anything.
+    // status, title, overflow at that viewport, console errors, blocked navigations) plus a
+    // screenshot. The payload records the live revision observed before and after the run; a
+    // reference capture from a plain browser is supplied by the operator and compared with
+    // ImageDiff. The audit never signs in and never submits anything.
     internal sealed class ParityResult
     {
         public string Route;
@@ -45,6 +46,8 @@ namespace McClusterDesktop
         private readonly List<ParityResult> results = new List<ParityResult>();
         private readonly TaskCompletionSource<List<ParityResult>> done = new TaskCompletionSource<List<ParityResult>>();
         private int blocked;
+        private ulong currentNavigationId;
+        private bool awaitingNavigationStart;
 
         internal ParityAuditForm(List<string> routes, string outDir, int width, int height)
         {
@@ -79,6 +82,10 @@ namespace McClusterDesktop
                 engine.Settings.AreDevToolsEnabled = false;
                 engine.NavigationStarting += delegate(object s, CoreWebView2NavigationStartingEventArgs evt)
                 {
+                    // The first top-level start after Navigate() is this route's navigation; its id is
+                    // what the completion handler must match, so a late completion of a previous route
+                    // can never be mistaken for this one.
+                    if (awaitingNavigationStart && !evt.IsRedirected) { currentNavigationId = evt.NavigationId; awaitingNavigationStart = false; }
                     Uri dest = NavigationPolicy.HttpsTarget(evt.Uri);
                     if (NavigationPolicy.IsFirstParty(dest)) return;
                     evt.Cancel = true;
@@ -97,14 +104,21 @@ namespace McClusterDesktop
                     try
                     {
                         blocked = 0;
+                        currentNavigationId = 0;
+                        awaitingNavigationStart = true;
                         var tcs = new TaskCompletionSource<CoreWebView2NavigationCompletedEventArgs>();
                         EventHandler<CoreWebView2NavigationCompletedEventArgs> handler = null;
-                        handler = delegate(object s, CoreWebView2NavigationCompletedEventArgs evt) { engine.NavigationCompleted -= handler; tcs.TrySetResult(evt); };
+                        handler = delegate(object s, CoreWebView2NavigationCompletedEventArgs evt)
+                        {
+                            if (currentNavigationId != 0 && evt.NavigationId != currentNavigationId) return; // another route's late completion
+                            engine.NavigationCompleted -= handler;
+                            tcs.TrySetResult(evt);
+                        };
                         engine.NavigationCompleted += handler;
                         engine.Navigate(route);
                         Task timeout = Task.Delay(45000);
                         Task finished = await Task.WhenAny(tcs.Task, timeout);
-                        if (finished == timeout) { engine.NavigationCompleted -= handler; r.Error = "navigation timeout"; }
+                        if (finished == timeout) { engine.NavigationCompleted -= handler; engine.Stop(); r.Error = "navigation timeout"; }
                         else
                         {
                             CoreWebView2NavigationCompletedEventArgs evt = tcs.Task.Result;

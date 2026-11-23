@@ -91,20 +91,29 @@ namespace McClusterDesktop
             sb.Append(formattable != null ? formattable.ToString(null, CultureInfo.InvariantCulture) : Quote(value.ToString()));
         }
 
+        // Escapes exactly as ECMAScript JSON.stringify does (the canonical profile): only ", \ and
+        // U+0000..U+001F are escaped, with the short forms for \b \f \n \r \t; non-ASCII is emitted
+        // raw; a lone surrogate becomes \udXXX in lowercase.
         internal static string Quote(string text)
         {
             var sb = new StringBuilder("\"");
-            foreach (char c in text ?? "")
+            string s = text ?? "";
+            for (int i = 0; i < s.Length; i++)
             {
+                char c = s[i];
                 switch (c)
                 {
                     case '"': sb.Append("\\\""); break;
                     case '\\': sb.Append("\\\\"); break;
+                    case '\b': sb.Append("\\b"); break;
+                    case '\f': sb.Append("\\f"); break;
                     case '\n': sb.Append("\\n"); break;
                     case '\r': sb.Append("\\r"); break;
                     case '\t': sb.Append("\\t"); break;
                     default:
                         if (c < 0x20) sb.Append("\\u").Append(((int)c).ToString("x4"));
+                        else if (char.IsHighSurrogate(c) && i + 1 < s.Length && char.IsLowSurrogate(s[i + 1])) { sb.Append(c).Append(s[i + 1]); i++; }
+                        else if (char.IsSurrogate(c)) sb.Append("\\u").Append(((int)c).ToString("x4"));
                         else sb.Append(c);
                         break;
                 }

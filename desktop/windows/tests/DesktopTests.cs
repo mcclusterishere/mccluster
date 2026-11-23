@@ -142,9 +142,48 @@ internal static class DesktopTests
             Assert(!DeviceKey.Verify(tampered, out reason) && reason == "signature does not verify", "a tampered receipt is rejected");
             var unsigned = new Dictionary<string, object> { { "schema", "x" } };
             Assert(!DeviceKey.Verify(unsigned, out reason) && reason == "unsigned", "an unsigned receipt is reported as unsigned");
-            using (DeviceKey again = DeviceKey.Load(root)) Assert(again.KeyId == Json.Str(receipt["signature"], "key_id"), "the device key persists across loads");
+            string trustedKeyId;
+            using (DeviceKey again = DeviceKey.Load(root)) { trustedKeyId = again.KeyId; Assert(again.KeyId == Json.Str(receipt["signature"], "key_id"), "the device key persists across loads"); }
+            // A key file protected without entropy (the pre-release build) is read once and re-protected; key_id is unchanged.
+            string keyPath = Path.Combine(root, "keys", "receipt-signing.p256.dpapi");
+            byte[] withEntropy = File.ReadAllBytes(keyPath);
+            byte[] rawKey = System.Security.Cryptography.ProtectedData.Unprotect(withEntropy, DeviceKey.Entropy, System.Security.Cryptography.DataProtectionScope.CurrentUser);
+            File.WriteAllBytes(keyPath, System.Security.Cryptography.ProtectedData.Protect(rawKey, null, System.Security.Cryptography.DataProtectionScope.CurrentUser));
+            using (DeviceKey migrated = DeviceKey.Load(root)) Assert(migrated.KeyId == trustedKeyId, "a legacy key file without entropy loads with the same key_id");
+            bool reprotected = false;
+            try { System.Security.Cryptography.ProtectedData.Unprotect(File.ReadAllBytes(keyPath), DeviceKey.Entropy, System.Security.Cryptography.DataProtectionScope.CurrentUser); reprotected = true; } catch (System.Security.Cryptography.CryptographicException) { }
+            Assert(reprotected, "the legacy key file is re-protected with entropy after one load");
+            File.WriteAllBytes(keyPath, new byte[] { 1, 2, 3 });
+            bool unreadableRefused = false;
+            try { DeviceKey.Load(root); } catch (System.Security.Cryptography.CryptographicException ex) { unreadableRefused = ex.Message.Contains("Move it aside"); }
+            Assert(unreadableRefused, "an unreadable key file is refused with instructions, never silently replaced");
+            // A forgery re-signed with a fresh key is self-consistent but not trusted.
+            string otherRoot = root + "-other";
+            try
+            {
+                var forged = Json.Obj(Json.Parse(Json.Pretty(receipt)));
+                forged["output_sha256"] = "forged";
+                using (DeviceKey attacker = DeviceKey.Load(otherRoot)) attacker.Sign(forged);
+                Assert(DeviceKey.Verify(forged, out reason), "a re-signed forgery is self-consistent (that alone proves nothing)");
+                Assert(!DeviceKey.VerifyTrusted(forged, trustedKeyId, out reason) && reason.StartsWith("key_id "), "a re-signed forgery fails against the trusted key id: " + reason);
+                Assert(DeviceKey.VerifyTrusted(roundTrip, trustedKeyId, out reason), "the genuine receipt passes against the trusted key id: " + reason);
+                Assert(!DeviceKey.VerifyTrusted(roundTrip, null, out reason), "no trusted key id means no origin verdict");
+            }
+            finally { try { Directory.Delete(otherRoot, true); } catch (Exception) { } }
         }
         finally { try { Directory.Delete(root, true); } catch (Exception) { } }
+
+        // Number canonicalisation follows ECMAScript Number::toString.
+        Assert(Canonical.EcmaNumber(10000000000000000000d) == "10000000000000000000", "1e19 prints in plain digits");
+        Assert(Canonical.EcmaNumber(9223372036854775808d) == "9223372036854776000", "2^63 prints as ECMAScript does");
+        Assert(Canonical.EcmaNumber(0.000001) == "0.000001" && Canonical.EcmaNumber(0.0000001) == "1e-7", "small numbers switch to exponent form below 1e-6");
+        Assert(Canonical.EcmaNumber(0.1 + 0.7) == "0.7999999999999999", "shortest round-trip digits");
+        Assert(Canonical.EcmaNumber(1000000000000000.5) == "1000000000000000.5" && Canonical.EcmaNumber(-1.5e300) == "-1.5e+300", "large and negative forms");
+        Assert(Canonical.Json(Json.Parse("{\"n\":10000000000000000000,\"m\":-0.0,\"k\":123.45}")) == "{\"k\":123.45,\"m\":0,\"n\":10000000000000000000}", "parsed numbers canonicalise through the same path");
+        bool threw = false;
+        try { Canonical.EcmaNumber(double.NaN); } catch (ArgumentException) { threw = true; }
+        Assert(threw, "NaN is refused");
+        Assert(!ContextRefs.FollowsRedirects, "context fetches never follow redirects");
 
         // Context routes: first-party only.
         bool refused = false;
@@ -159,7 +198,9 @@ internal static class DesktopTests
     {
         Assert(!ExoProbe.IsLoopback("http://192.168.1.11:52415") && !ExoProbe.IsLoopback("https://exo.example/") && ExoProbe.IsLoopback("http://127.0.0.1:52415") && ExoProbe.IsLoopback("http://localhost:52415"), "the EXO probe accepts loopback runtimes only");
         var refusedReceipt = ExoProbe.RankReceipt("http://192.168.1.11:52415", "node_x").Result;
-        Assert(refusedReceipt.ContainsKey("error") && (bool)refusedReceipt["inference_verified"] == false, "a non-loopback runtime yields an error receipt, never a claim");
+        Assert(refusedReceipt.ContainsKey("error") && (bool)refusedReceipt["inference_verified"] == false && Convert.ToString(refusedReceipt["inference_mode"]) == "unknown", "a non-loopback runtime yields an error receipt with mode unknown, never a claim");
+        var absent = ExoProbe.RankReceipt("http://127.0.0.1:1", "node_x").Result;
+        Assert(absent.ContainsKey("error") && Convert.ToString(absent["inference_mode"]) == "unknown", "an absent runtime yields an error, not single-device");
 
         // A loopback fixture that answers like the audited EXO release: /node_id as a bare JSON string, /state with a topology of two nodes.
         var listener = new System.Net.HttpListener();
@@ -199,5 +240,7 @@ internal static class DesktopTests
         string pretty = Json.Pretty(parsed);
         Assert(pretty.Contains("\"a\": 1") && pretty.EndsWith("}\n"), "pretty printer");
         Assert(Json.Quote("a\"b\n") == "\"a\\\"b\\n\"", "string escaping");
+        Assert(Json.Quote("\b\f\u0001") == "\"\\b\\f\\u0001\"", "backspace and form feed use the short escapes");
+        Assert(Json.Quote("x\ud83dy") == "\"x\\ud83dy\"" && Json.Quote("😀") == "\"😀\"", "a lone surrogate is escaped, a pair is raw");
     }
 }

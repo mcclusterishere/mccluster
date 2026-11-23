@@ -14,10 +14,11 @@ namespace McClusterDesktop
 {
     // Self-contained per-user installer and uninstaller for McCluster for Windows, built with the
     // in-box compiler so the installer is reproducible wherever the app is. It mirrors
-    // package/mccluster.nsi exactly: user scope, %LOCALAPPDATA%\McClusterDesktop\App, a Start Menu
+    // package/mccluster.nsi: user scope, %LOCALAPPDATA%\McClusterDesktop\App, a Start Menu
     // shortcut, an HKCU uninstall entry, no admin, no services, no startup task. The payload is an
-    // embedded zip with a manifest of SHA-256 hashes; every file is verified before it is written.
-    // The same executable, copied as Uninstall.exe, removes exactly what its receipt lists.
+    // embedded zip with a manifest of SHA-256 hashes and sizes; every file is verified before it is
+    // written. The same executable, copied as Uninstall.exe, removes exactly what its receipt lists,
+    // and only from a per-user location.
     internal sealed class InstallerFile
     {
         public string Name;
@@ -48,11 +49,12 @@ namespace McClusterDesktop
             return m;
         }
 
+        // Tests read a foreign Setup.exe's manifest; the installer itself reads its own resource.
         public static InstallerManifest ReadEmbedded(string exePath)
         {
             try
             {
-                using (ZipArchive zip = OpenPayload(exePath))
+                using (ZipArchive zip = new ZipArchive(Assembly.LoadFile(exePath).GetManifestResourceStream("payload.zip"), ZipArchiveMode.Read))
                 {
                     ZipArchiveEntry entry = zip.GetEntry("manifest.json");
                     if (entry == null) return null;
@@ -62,11 +64,9 @@ namespace McClusterDesktop
             catch (Exception) { return null; }
         }
 
-        // The payload zip is an embedded resource of the setup executable.
-        public static ZipArchive OpenPayload(string exePath)
+        public static ZipArchive OpenOwnPayload()
         {
-            Assembly assembly = Assembly.LoadFile(exePath);
-            Stream stream = assembly.GetManifestResourceStream("payload.zip");
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("payload.zip");
             if (stream == null) throw new FileNotFoundException("The setup carries no payload.zip resource.");
             return new ZipArchive(stream, ZipArchiveMode.Read);
         }
@@ -75,6 +75,9 @@ namespace McClusterDesktop
     internal static class SetupProgram
     {
         private const string DefaultRegistryKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop";
+        private const string AllowedRegistryPrefix = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\";
+        private const long MaxEntryBytes = 256L * 1024 * 1024;
+        private static readonly HashSet<string> ReservedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" };
 
         [STAThread]
         private static int Main(string[] args)
@@ -95,15 +98,25 @@ namespace McClusterDesktop
             string registryKey = options.ContainsKey("registry-key") ? options["registry-key"] : DefaultRegistryKey;
             try
             {
+                if (!InsideUserProfile(root))
+                {
+                    Report(silent, "McCluster installs per user only. Refusing to touch a folder outside your user profile: " + root, MessageBoxIcon.Warning);
+                    return 3;
+                }
                 if (uninstall) return Uninstall(root, startMenu, registryKey, silent);
                 return Install(exe, root, startMenu, registryKey, silent);
             }
             catch (Exception ex)
             {
-                if (!silent) MessageBox.Show(ex.Message, "McCluster setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                else Console.Error.WriteLine(ex.Message);
+                Report(silent, ex.Message, MessageBoxIcon.Error);
                 return 1;
             }
+        }
+
+        private static void Report(bool silent, string message, MessageBoxIcon icon)
+        {
+            if (!silent) MessageBox.Show(message, "McCluster setup", MessageBoxButtons.OK, icon);
+            else Console.Error.WriteLine(message);
         }
 
         private static bool InsideUserProfile(string path)
@@ -114,17 +127,31 @@ namespace McClusterDesktop
             return full.StartsWith(profile, StringComparison.OrdinalIgnoreCase) || full.StartsWith(local, StringComparison.OrdinalIgnoreCase);
         }
 
+        // Keys this installer may create or delete: the per-user uninstall hive, or the throwaway hive
+        // the installer tests use (never a Run key, never anything outside Software).
+        private static bool AllowedRegistryKey(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key) || key.Contains("..")) return false;
+            string trimmed = key.TrimEnd('\\');
+            if (trimmed.Length <= AllowedRegistryPrefix.Length && trimmed.StartsWith(AllowedRegistryPrefix.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) return false; // the hive itself, never
+            return trimmed.StartsWith(AllowedRegistryPrefix, StringComparison.OrdinalIgnoreCase) || trimmed.StartsWith(@"Software\McClusterDesktopInstallerTest\", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool SafeFileName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name) || name == "." || name == "..") return false;
+            if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) return false;
+            if (!string.Equals(Path.GetFileName(name), name, StringComparison.Ordinal)) return false;
+            string stem = Path.GetFileNameWithoutExtension(name);
+            return !ReservedNames.Contains(stem);
+        }
+
         private static int Install(string exe, string root, string startMenu, string registryKey, bool silent)
         {
-            // Per-user only: never outside the profile, never a protected system path.
-            if (!InsideUserProfile(root))
-            {
-                string msg = "McCluster installs per user only. Refusing to install outside your user profile: " + root;
-                if (!silent) MessageBox.Show(msg, "McCluster setup", MessageBoxButtons.OK, MessageBoxIcon.Warning); else Console.Error.WriteLine(msg);
-                return 3;
-            }
+            if (!AllowedRegistryKey(registryKey))
+                throw new ArgumentException("The uninstall registry key must live under HKCU\\" + AllowedRegistryPrefix);
             InstallerManifest manifest;
-            using (ZipArchive zip = InstallerManifest.OpenPayload(exe))
+            using (ZipArchive zip = InstallerManifest.OpenOwnPayload())
             {
                 ZipArchiveEntry manifestEntry = zip.GetEntry("manifest.json");
                 if (manifestEntry == null) throw new InvalidDataException("payload has no manifest.json");
@@ -139,15 +166,17 @@ namespace McClusterDesktop
                 var written = new List<string>();
                 foreach (InstallerFile file in manifest.Files)
                 {
-                    if (file.Name.IndexOfAny(new[] { '\\', '/', ':' }) >= 0 || file.Name == "..") throw new InvalidDataException("manifest names an unsafe path: " + file.Name);
+                    if (!SafeFileName(file.Name)) throw new InvalidDataException("manifest names an unsafe path: " + file.Name);
                     ZipArchiveEntry entry = zip.GetEntry(file.Name);
                     if (entry == null) throw new FileNotFoundException("payload lacks " + file.Name);
+                    if (entry.Length > MaxEntryBytes || entry.Length != file.Size) throw new InvalidDataException("payload size mismatch for " + file.Name);
                     byte[] bytes;
                     using (Stream s = entry.Open()) using (var ms = new MemoryStream()) { s.CopyTo(ms); bytes = ms.ToArray(); }
-                    string hash = Hex(SHA256.Create().ComputeHash(bytes));
+                    if (bytes.LongLength != file.Size) throw new InvalidDataException("payload size mismatch for " + file.Name);
+                    string hash;
+                    using (var sha = SHA256.Create()) hash = Hex(sha.ComputeHash(bytes));
                     if (!string.Equals(hash, file.Sha256, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("payload hash mismatch for " + file.Name + "; the setup is damaged or altered");
-                    string target = Path.Combine(root, file.Name);
-                    File.WriteAllBytes(target, bytes);
+                    File.WriteAllBytes(Path.Combine(root, file.Name), bytes);
                     written.Add(file.Name);
                 }
                 // The uninstaller is this very executable.
@@ -194,9 +223,20 @@ namespace McClusterDesktop
             {
                 if (MessageBox.Show("Remove McCluster from " + root + "? Your WebView2 profile, local jobs and receipts under McClusterDesktop are kept.", "Uninstall McCluster", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return 2;
             }
-            string shortcut = Json.Str(receipt, "start_menu_shortcut") ?? Path.Combine(startMenu, "McCluster Desktop.lnk");
+            // The receipt is data written by an earlier run; every path and key it names is checked
+            // against what this uninstaller is allowed to remove before it is used.
+            // The shortcut: only a .lnk inside this user's profile, else the default location.
+            string shortcut = Json.Str(receipt, "start_menu_shortcut");
+            if (shortcut == null || !shortcut.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) || !InsideUserProfile(shortcut))
+                shortcut = Path.Combine(startMenu, "McCluster Desktop.lnk");
+            // The registry key: only one this installer could have written (the uninstall hive or the test hive).
             string regFromReceipt = Json.Str(receipt, "registry_key");
-            if (regFromReceipt != null && regFromReceipt.StartsWith("HKCU\\")) registryKey = regFromReceipt.Substring(5);
+            if (regFromReceipt != null && regFromReceipt.StartsWith("HKCU\\", StringComparison.OrdinalIgnoreCase))
+            {
+                string candidate = regFromReceipt.Substring(5);
+                if (AllowedRegistryKey(candidate)) registryKey = candidate;
+            }
+            if (!AllowedRegistryKey(registryKey)) throw new ArgumentException("Refusing to remove registry key HKCU\\" + registryKey);
             System.Collections.IList files = Json.List(receipt, "files");
             string self = Process.GetCurrentProcess().MainModule.FileName;
             var deferred = new List<string>();
@@ -204,7 +244,7 @@ namespace McClusterDesktop
                 foreach (object f in files)
                 {
                     string name = Convert.ToString(f);
-                    if (name.IndexOfAny(new[] { '\\', '/', ':' }) >= 0) continue;
+                    if (!SafeFileName(name)) continue;
                     string path = Path.Combine(root, name);
                     if (string.Equals(Path.GetFullPath(path), Path.GetFullPath(self), StringComparison.OrdinalIgnoreCase)) { deferred.Add(path); continue; }
                     if (File.Exists(path)) File.Delete(path);
@@ -212,11 +252,13 @@ namespace McClusterDesktop
             if (File.Exists(shortcut)) File.Delete(shortcut);
             try { Registry.CurrentUser.DeleteSubKeyTree(registryKey, false); } catch (Exception) { }
             File.Delete(receiptPath);
-            // Remove ourselves after exit, then the folder only if it is empty.
+            // Remove ourselves after exit through a script file (paths never go on a command line),
+            // then the folder only if it is empty.
             foreach (string path in deferred)
             {
-                string script = "ping 127.0.0.1 -n 2 >nul & del /q \"" + path + "\" & rmdir \"" + root + "\" 2>nul";
-                Process.Start(new ProcessStartInfo("cmd.exe", "/c " + script) { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden });
+                string script = Path.Combine(Path.GetTempPath(), "mccluster-uninstall-" + Guid.NewGuid().ToString("N") + ".cmd");
+                File.WriteAllText(script, "@echo off\r\nping 127.0.0.1 -n 3 >nul\r\ndel /q \"" + path + "\"\r\nrmdir \"" + root + "\" 2>nul\r\ndel /q \"%~f0\"\r\n", Encoding.Default);
+                Process.Start(new ProcessStartInfo("cmd.exe", "/c \"" + script + "\"") { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden });
             }
             if (deferred.Count == 0) { try { if (Directory.GetFileSystemEntries(root).Length == 0) Directory.Delete(root); } catch (Exception) { } }
             if (!silent) MessageBox.Show("McCluster was removed.", "Uninstall McCluster", MessageBoxButtons.OK, MessageBoxIcon.Information);

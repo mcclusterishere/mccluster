@@ -310,9 +310,11 @@ namespace McClusterDesktop
         {
             bool online = core != null && core.Reachable;
             targetRemote.Enabled = online;
-            targetGroup.Enabled = online;
+            // Never selectable here: a verified group needs two verified members and a pair
+            // benchmark on the owner surface, which no desktop build can show today (matches --status-json).
+            targetGroup.Enabled = false;
             targetRemote.Text = "One remote worker (through the OVH Core)" + (online ? "" : " — unavailable: Core unreachable");
-            targetGroup.Text = "Verified shared-model group (through the OVH Core)" + (online ? " — needs two verified members (owner surface)" : " — unavailable: Core unreachable");
+            targetGroup.Text = "Verified shared-model group — unavailable: needs two verified members and a pair benchmark on the owner surface" + (online ? "" : "; Core unreachable");
             if (!online && !targetLocal.Checked) targetLocal.Checked = true;
             bool chat = SelectedKind() == JobKind.Chat;
             modelBox.Visible = chat;
@@ -365,6 +367,10 @@ namespace McClusterDesktop
             try
             {
                 await runner.Run(job, j => BeginInvoke((Action)ReloadJobs), running.Token);
+            }
+            catch (Exception ex)
+            {
+                store.Log("panel_run_error", "error", ex.GetType().Name + ": " + ex.Message);
             }
             finally
             {

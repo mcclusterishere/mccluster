@@ -37,6 +37,22 @@ namespace McClusterDesktop
             return null;
         }
 
+        // A positional value is only a value when it is not itself a flag.
+        private static string Positional(string[] args, int index)
+        {
+            return index < args.Length && !args[index].StartsWith("--", StringComparison.Ordinal) ? args[index] : null;
+        }
+
+        private static int Number(string[] args, string name, int fallback, int min, int max)
+        {
+            string text = Option(args, name);
+            if (text == null) return fallback;
+            double value;
+            if (!double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value) || value < min || value > max)
+                throw new ArgumentException(name + " must be a number between " + min + " and " + max);
+            return (int)value;
+        }
+
         private static List<string> Options(string[] args, string name)
         {
             var values = new List<string>();
@@ -54,21 +70,57 @@ namespace McClusterDesktop
                 {
                     case "--status-json":
                         return Write(outPath, Status(store).Result);
+                    case "--device-key":
+                        {
+                            // The key id a verifier on another machine pins; never the private key.
+                            using (DeviceKey key = DeviceKey.Load(store.Root))
+                                return Write(outPath, new Dictionary<string, object> { { "schema", "mccluster-device-key/1" }, { "key_id", key.KeyId }, { "public_key", key.PublicKeyBase64 }, { "alg", "ecdsa-p256-sha256" }, { "device", Environment.MachineName } });
+                        }
                     case "--verify-receipt":
                         {
-                            object file = Json.Parse(File.ReadAllText(Option(args, "--file") ?? args[1]));
+                            string filePath = Option(args, "--file") ?? Positional(args, 1);
+                            if (filePath == null) { Write(outPath, new Dictionary<string, object> { { "error", "missing --file" } }); return 2; }
+                            object file = Json.Parse(File.ReadAllText(filePath));
                             object receipt = Json.Get(file, "receipt") ?? file;
+                            bool isJobFile = Json.Get(file, "receipt") != null;
+                            // Trust anchor: this device's own key id unless the verifier names another trusted id.
+                            string trustedKeyId = Option(args, "--trusted-key-id");
+                            bool anyKey = args.Contains("--any-key");
+                            if (trustedKeyId == null && !anyKey) { using (DeviceKey key = DeviceKey.Load(store.Root)) trustedKeyId = key.KeyId; }
                             string reason;
-                            bool ok = DeviceKey.Verify(receipt, out reason);
-                            var payload = new Dictionary<string, object> { { "verified", ok }, { "reason", reason }, { "schema", Json.Str(receipt, "schema") }, { "key_id", Json.Str(Json.Get(receipt, "signature"), "key_id") }, { "output_sha256", Json.Str(receipt, "output_sha256") }, { "inference_mode", Json.Str(Json.Get(receipt, "inference"), "mode") } };
+                            bool consistent = DeviceKey.Verify(receipt, out reason);
+                            string consistencyReason = reason;
+                            bool trusted = anyKey ? consistent : DeviceKey.VerifyTrusted(receipt, trustedKeyId, out reason);
+                            // Binding to the job file: recompute the hashes the receipt commits to.
+                            bool? outputMatches = null, inputMatches = null, jobIdMatches = null;
+                            if (isJobFile)
+                            {
+                                object result = Json.Get(file, "result");
+                                string expectedOut = Json.Str(receipt, "output_sha256");
+                                if (expectedOut != null) outputMatches = result != null && Canonical.Sha256Hex(Canonical.Json(result)) == expectedOut;
+                                object input = Json.Get(file, "input");
+                                string expectedIn = Json.Str(receipt, "input_sha256");
+                                if (expectedIn != null) inputMatches = input != null && Canonical.Sha256Hex(Canonical.Json(input)) == expectedIn;
+                                string receiptJob = Json.Str(receipt, "job_id");
+                                if (receiptJob != null) jobIdMatches = receiptJob == Json.Str(file, "id");
+                            }
+                            bool bound = outputMatches != false && inputMatches != false && jobIdMatches != false;
+                            bool ok = trusted && bound;
+                            var payload = new Dictionary<string, object> {
+                                { "verified", ok },
+                                { "signature_consistent", consistent }, { "consistency_reason", consistencyReason },
+                                { "key_trusted", trusted }, { "trust_reason", anyKey ? "any key accepted (--any-key)" : reason }, { "trusted_key_id", anyKey ? null : trustedKeyId },
+                                { "output_matches", outputMatches }, { "input_matches", inputMatches }, { "job_id_matches", jobIdMatches },
+                                { "schema", Json.Str(receipt, "schema") }, { "key_id", Json.Str(Json.Get(receipt, "signature"), "key_id") }, { "output_sha256", Json.Str(receipt, "output_sha256") }, { "inference_mode", Json.Str(Json.Get(receipt, "inference"), "mode") } };
                             Write(outPath, payload);
                             return ok ? 0 : 1;
                         }
                     case "--image-diff":
                         {
-                            string a = Option(args, "--a") ?? args[1];
-                            string b = Option(args, "--b") ?? args[2];
-                            int tolerance = (int)double.Parse(Option(args, "--tolerance") ?? "24", System.Globalization.CultureInfo.InvariantCulture);
+                            string a = Option(args, "--a") ?? Positional(args, 1);
+                            string b = Option(args, "--b") ?? Positional(args, 2);
+                            if (a == null || b == null) { Write(outPath, new Dictionary<string, object> { { "error", "missing --a or --b" } }); return 2; }
+                            int tolerance = Number(args, "--tolerance", 24, 0, 255);
                             return Write(outPath, ImageDiff.Compare(a, b, Option(args, "--diff"), tolerance));
                         }
                     case "--exo-rank-probe":
@@ -82,18 +134,23 @@ namespace McClusterDesktop
                         {
                             var routes = Options(args, "--route");
                             if (routes.Count == 0) routes.AddRange(new[] { "https://mccluster.org/", "https://mccluster.org/company", "https://mccluster.org/login.html", "https://mccluster.org/account.html", "https://mccluster.org/control.html", "https://mccluster.org/dashboard.html", "https://mccluster.org/help.html", "https://mccluster.org/does-not-exist-parity-check", "https://matthew.mccluster.org/", "https://humanuprise.com/", "https://example.com/" });
-                            int width = (int)double.Parse(Option(args, "--width") ?? "1280", System.Globalization.CultureInfo.InvariantCulture);
-                            int height = (int)double.Parse(Option(args, "--height") ?? "800", System.Globalization.CultureInfo.InvariantCulture);
+                            int width = Number(args, "--width", 1280, 200, 4096);
+                            int height = Number(args, "--height", 800, 200, 4096);
                             string dir = Option(args, "--dir") ?? Path.Combine(store.Root, "parity");
                             Directory.CreateDirectory(dir);
+                            // The revision under audit, read before and after so a deploy mid-run is visible.
+                            ProbeResult before = LocalRuntime.GetJson(LocalRuntime.ApiHealth).Result;
                             Application.EnableVisualStyles();
                             var form = new ParityAuditForm(routes, dir, width, height);
                             Application.Run(form);
                             List<ParityResult> results = form.Completion.Result;
+                            ProbeResult afterRun = LocalRuntime.GetJson(LocalRuntime.ApiHealth).Result;
                             var rows = new List<object>();
                             foreach (ParityResult r in results)
-                                rows.Add(new Dictionary<string, object> { { "route", r.Route }, { "final_url", r.FinalUrl }, { "http_status", r.HttpStatus }, { "navigation_ok", r.NavigationOk }, { "web_error_status", r.WebErrorStatus }, { "title", r.Title }, { "scroll_width", r.ScrollWidth }, { "client_width", r.ClientWidth }, { "no_horizontal_overflow", r.ScrollWidth > 0 && r.ScrollWidth == r.ClientWidth }, { "document_height", r.DocumentHeight }, { "blocked_navigations", r.BlockedNavigations }, { "console_errors", r.ConsoleErrors }, { "screenshot", r.Screenshot }, { "elapsed_ms", r.ElapsedMs }, { "error", r.Error } });
-                            var payload = new Dictionary<string, object> { { "schema", "mccluster-parity-audit/1" }, { "checked_at", JobStore.Now() }, { "viewport", width + "x" + height }, { "shell", "mccluster-desktop/" + typeof(Headless).Assembly.GetName().Version.ToString(3) }, { "webview2_runtime", WebView2Version() }, { "routes", rows } };
+                                rows.Add(new Dictionary<string, object> { { "route", r.Route }, { "final_url", r.FinalUrl }, { "http_status", r.HttpStatus }, { "navigation_ok", r.NavigationOk }, { "web_error_status", r.WebErrorStatus }, { "title", r.Title }, { "scroll_width", r.ScrollWidth }, { "client_width", r.ClientWidth }, { "no_horizontal_overflow_at_viewport", r.ScrollWidth > 0 && r.ScrollWidth == r.ClientWidth }, { "document_height", r.DocumentHeight }, { "blocked_navigations", r.BlockedNavigations }, { "console_errors", r.ConsoleErrors }, { "screenshot", r.Screenshot }, { "elapsed_ms", r.ElapsedMs }, { "error", r.Error } });
+                            var payload = new Dictionary<string, object> { { "schema", "mccluster-parity-audit/1" }, { "checked_at", JobStore.Now() }, { "viewport", width + "x" + height }, { "shell", "mccluster-desktop/" + typeof(Headless).Assembly.GetName().Version.ToString(3) }, { "webview2_runtime", WebView2Version() },
+                                { "revision", new Dictionary<string, object> { { "source", LocalRuntime.ApiHealth }, { "deployment_sha_before", before.Body == null ? null : Json.Str(before.Body, "deployment_sha") }, { "deployment_sha_after", afterRun.Body == null ? null : Json.Str(afterRun.Body, "deployment_sha") }, { "observed_before", before.CheckedAt.ToString("o") }, { "observed_after", afterRun.CheckedAt.ToString("o") } } },
+                                { "reference_capture", "supplied by the operator from a plain browser at the same revision; compare with --image-diff" }, { "routes", rows } };
                             return Write(outPath, payload);
                         }
                     case "--jobs-json":
@@ -107,7 +164,9 @@ namespace McClusterDesktop
                     case "--run-local-inventory":
                         {
                             store.RecoverInterrupted();
-                            var input = new Dictionary<string, object> { { "path", Option(args, "--path") ?? args[1] } };
+                            string folder = Option(args, "--path") ?? Positional(args, 1);
+                            if (folder == null) { Write(outPath, new Dictionary<string, object> { { "error", "missing --path" } }); return 2; }
+                            var input = new Dictionary<string, object> { { "path", folder } };
                             LocalJob job = store.Create(JobKind.Inventory, JobTarget.LocalDevice, input);
                             job = new JobRunner(store).Run(job, null, CancellationToken.None).Result;
                             Write(outPath, job.ToDictionary());
@@ -116,9 +175,10 @@ namespace McClusterDesktop
                     case "--run-local-chat":
                         {
                             store.RecoverInterrupted();
-                            var input = new Dictionary<string, object> { { "prompt", Option(args, "--prompt") ?? args[1] }, { "model", Option(args, "--model") }, { "device", Option(args, "--device") ?? DeviceChoice.Auto } };
-                            string attemptsText = Option(args, "--max-attempts");
-                            if (attemptsText != null) input["max_attempts"] = (int)double.Parse(attemptsText, System.Globalization.CultureInfo.InvariantCulture);
+                            string prompt = Option(args, "--prompt") ?? Positional(args, 1);
+                            if (prompt == null) { Write(outPath, new Dictionary<string, object> { { "error", "missing --prompt" } }); return 2; }
+                            var input = new Dictionary<string, object> { { "prompt", prompt }, { "model", Option(args, "--model") }, { "device", Option(args, "--device") ?? DeviceChoice.Auto } };
+                            if (Option(args, "--max-attempts") != null) input["max_attempts"] = Number(args, "--max-attempts", JobRunner.DefaultMaxAttempts, 1, 5);
                             List<string> contextRoutes = Options(args, "--context-route");
                             if (contextRoutes.Count > 0) input["context_routes"] = contextRoutes.Cast<object>().ToList();
                             LocalJob job = store.Create(JobKind.Chat, JobTarget.LocalDevice, input);
@@ -127,7 +187,7 @@ namespace McClusterDesktop
                             return job.State == JobState.Done ? 0 : 1;
                         }
                     default:
-                        Write(outPath, new Dictionary<string, object> { { "error", "unknown option " + args[0] }, { "options", new[] { "--status-json --out <file>", "--jobs-json --out <file>", "--run-local-inventory <folder> --out <file>", "--run-local-chat <prompt> --model <name> [--device auto|adapter|ollama] [--max-attempts n] [--context-route <first-party url>]... --out <file>", "--verify-receipt --file <job.json> --out <file>", "--image-diff --a <png> --b <png> [--diff <png>] [--tolerance n] --out <file>", "--exo-rank-probe --runtime-url http://127.0.0.1:52415 [--node-id node_...] --out <file>", "--parity-audit [--route <url>]... [--width 1280 --height 800] [--dir <folder>] --out <file>" } } });
+                        Write(outPath, new Dictionary<string, object> { { "error", "unknown option " + args[0] }, { "options", new[] { "--status-json --out <file>", "--jobs-json --out <file>", "--run-local-inventory <folder> --out <file>", "--run-local-chat <prompt> --model <name> [--device auto|adapter|ollama] [--max-attempts n] [--context-route <first-party url>]... --out <file>", "--verify-receipt --file <job.json> [--trusted-key-id <id> | --any-key] --out <file>", "--device-key --out <file>", "--image-diff --a <png> --b <png> [--diff <png>] [--tolerance n] --out <file>", "--exo-rank-probe --runtime-url http://127.0.0.1:52415 [--node-id node_...] --out <file>", "--parity-audit [--route <url>]... [--width 1280 --height 800] [--dir <folder>] --out <file>" } } });
                         return 2;
                 }
             }
