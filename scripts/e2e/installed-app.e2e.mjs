@@ -421,7 +421,8 @@ async function fallbackTransport(device) {
 }
 
 /* ---------- ONE PLAY/PAUSE, AND MUTED IN ONE ROW (the Release 1 dock fix, 2026-11-23) ----------
-   Matthew: "the bar's Music button pauses everywhere (one player); the installed dock shows one Pause, not two".
+   Matthew's direction of 2026-11-23: the bar's Music button pauses everywhere (one player), and the installed dock
+   shows one Pause, not two.
    Release 1 carries 73349a06, which made the red Music tab Listen's Play/Pause beside the dock's own (two controls
    named "Pause music") and grew the dock a status row for every word the player said, Muted included. Where the tab
    is the page's Play/Pause (Listen) it is the one control; where it is the way to the music (the album, where it
@@ -439,13 +440,14 @@ async function barControls(page) {
   return page.evaluate(({PAUSE_PATH,PLAY_PATH}) => [...document.querySelectorAll('.appbar a[data-appnav],.appbar button[data-app-player]')]
     .filter(n => n.getClientRects().length && getComputedStyle(n).visibility !== 'hidden')
     .map(n => {
-      let drawn = null;
+      let drawn = null, ink = null;
       if (n.matches('button')) { const d = n.querySelector('svg path')?.getAttribute('d'); drawn = d === PAUSE_PATH ? 'pause' : d === PLAY_PATH ? 'play' : null; }
       else if (n.dataset.appnav === 'music') {
         const b = getComputedStyle(n,'::before');
         drawn = !b.content || b.content === 'none' ? null : /gradient/.test(b.backgroundImage) ? 'pause' : /polygon/.test(b.clipPath) ? 'play' : null;
+        ink = b.color; /* both glyphs are drawn in the pseudo-element's currentColor */
       }
-      return {key:n.dataset.appnav || n.dataset.appPlayer,label:n.getAttribute('aria-label'),drawn};
+      return {key:n.dataset.appnav || n.dataset.appPlayer,label:n.getAttribute('aria-label'),drawn,ink};
     }), {PAUSE_PATH,PLAY_PATH});
 }
 /* how many controls in the bar a screen reader is told start with these words (the accessible name, as Playwright
@@ -538,6 +540,10 @@ async function albumOnePause(phone) {
       await named(page,/^Pause/) === 1 && await page.locator('.appbar').getByRole('button',{name:'Pause music'}).count() === 1 && await musicTab(page) === 'link "Music"', c);
     check(scope + ', a song playing: exactly one control in the bar is drawn as Pause (the Music tab wore a second pause glyph)',
       c.filter(x => x.drawn === 'pause').map(x => x.key).join() === 'play', c);
+    /* the tab stands on the room it points at, so its coin is the house red: its glyph stays white there, as the pause
+       glyph was, never the room's grey that the red all but swallows (css/style.css, css/music-system-v2.css) */
+    check(scope + ', a song playing: the Music tab\'s glyph is white on its red coin, as before',
+      c.find(x => x.key === 'music')?.ink === 'rgb(255, 255, 255)' && await page.locator('.appbar [data-appnav="music"]').evaluate(n => n.classList.contains('is-here')), c);
     let s = await dockState(page);
     check(scope + ': the dock stays one row, 46 px', near(s.height,46,1) && !s.status && !!s.title, s);
     check(scope + ': the page fits (scrollWidth === clientWidth)', s.scrollWidth === s.clientWidth, s);

@@ -72,12 +72,15 @@ html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__music-s
    it: listen.html, the engine's song, no World open or opening), it is the one control and the dock shows none of its
    own, for that same player only: a World song held by this page keeps the dock's. Everywhere else the dock's own is
    the one control, and the tab, the way to the music there (the album: it opens the shelf; the World over the music),
-   wears its play triangle at rest (css/style.css), never a second pause glyph. */
+   wears its play triangle at rest (css/style.css), never a second pause glyph. On its red coin (the album, the room
+   it points at) the triangle stays white, as the pause glyph it replaces was, so it never vanishes into the coin. */
 html.mcc-installed-app.mcc-music-tab-transport[data-app-player-surface="listen"] .appbar button[data-app-player="play"] { display:none; }
 html.mcc-installed-app.mcc-app-dock-active:not(.mcc-music-tab-transport) .appbar .appbar__tab[data-appnav="music"].is-sound::before {
   top:calc(50% - 7px);left:calc(50% + 1px);width:13px;height:14px;color:inherit;background:currentColor;filter:none;
   clip-path:polygon(0 0,100% 50%,0 100%);
 }
+html.mcc-installed-app.mcc-app-dock-active:not(.mcc-music-tab-transport) .appbar .appbar__tab[data-appnav="music"].is-sound.is-here::before,
+html.mcc-installed-app.mcc-app-dock-active:not(.mcc-music-tab-transport) .appbar .appbar__tab[data-appnav="music"].is-sound.is-active::before { color:#fff; }
 /* Hide only the corresponding owner's duplicate floating chrome, after the
    integrated controls are ready. Its full player and its audio stay alive. */
 html.mcc-installed-app.mcc-app-dock-active[data-app-player-surface="listen"] .music-mini,
