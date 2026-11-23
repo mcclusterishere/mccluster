@@ -166,3 +166,60 @@ test('the wait for the previous finish leaves the shortest song its margin (Towy
   await b.id;
   assert.deepEqual(sent, ['start:lightroom', 'finish', 'start:towyard-killer']);
 });
+
+/* EACH SONG'S START WAITS ONLY AS LONG AS ITS OWN MARGIN ALLOWS (music slice M3 follow-up; review RF-1). One wait for the
+   whole catalogue, half the smallest margin (1.85 s), kept the shortest song's count but cost the song just heard whenever
+   its finish took longer than 1.85 s, before every song: on PostgreSQL 16 with the real migrations a 5 s wait kept both
+   songs to about 4 s, and 1.85 s lost the first from 1.9 s whatever came next. A completed listen is what answers the song
+   test and earns the gated closer's play (supabase/migrations/20261002015418_song_test.sql,
+   20261002163249_music_gate_any_album_track.sql). start(key) knows the next song, so each song waits half its own margin,
+   5 s at most: Towyard Killer 1.85 s as before, Pull Up 4.2 s, the long songs the full 5 s. */
+const waitBeforeStart = async (key) => {
+  const { L, timers } = await ordered();
+  const a = L.start('lightroom', () => true);
+  await a.id;
+  L.finish(a);                                     // its finish has not answered
+  L.start(key, () => true);
+  await flush(); await flush();
+  const wait = [...timers.values()].find((t) => t.ms > 0);
+  return wait ? wait.ms : null;
+};
+test('each song\'s start waits for the last finish at most half its own margin, and 5 s at most (review RF-1)', async () => {
+  const { TRACKS } = await import('../../workers/mccluster/src/music/tracks.js');
+  const { COUNT_SHARE } = await import('../../workers/mccluster/src/music/router.js');
+  const songs = Object.entries(TRACKS).filter(([, t]) => !t.gated);
+  assert.ok(songs.length >= 40, 'every song the catalogue counts');
+  const got = {};
+  for (const [key, t] of songs) {
+    const need = Math.max(1, Math.floor(t.seconds * COUNT_SHARE)), tenths = Math.round((t.seconds - need) * 10);
+    got[key] = await waitBeforeStart(key);
+    assert.equal(got[key], Math.min(5000, tenths * 50), `${key} (${t.seconds} s, counted after ${need} s): half its margin of ${tenths / 10} s, 5 s at most`);
+    assert.ok(t.seconds - got[key] / 1000 >= need + tenths / 20 - 0.001, `${key} keeps at least half its margin for its own start's trip`);
+  }
+  assert.deepEqual({ towyard: got['towyard-killer'], pullUp: got['pull-up'], dataBreach: got['data-breach'] },
+    { towyard: 1850, pullUp: 4200, dataBreach: 5000 }, 'the shortest margin, a middle one and a long song');
+});
+
+test('a finish 2.5 s slow still reaches the ledger before Pull Up starts, so the song just heard counts (review RF-1)', async () => {
+  const { L, sent, finishes, timers } = await ordered();
+  const a = L.start('dealer-plates', () => true);
+  await a.id;
+  const done = L.finish(a);
+  const b = L.start('pull-up', () => true);
+  await flush(); await flush();
+  /* 2.5 s go by with the finish still on its way: every wait due by then runs out */
+  for (const [k, t] of [...timers]) if (t.ms > 0 && t.ms <= 2500) { timers.delete(k); t.fn(); }
+  await flush(); await flush();
+  assert.deepEqual(sent, ['start:dealer-plates', 'finish'],
+    'at 2.5 s Pull Up\'s start still waits (one 1.85 s wait sent it, and the database closed the song just heard as unfinished)');
+  finishes.shift()();
+  await done; await b.id;
+  assert.deepEqual(sent, ['start:dealer-plates', 'finish', 'start:pull-up']);
+});
+
+test('a song the catalogue does not count waits the full 5 s for the last finish (nothing of its own to lose)', async () => {
+  /* the Worker answers a start for a track it does not know with 404 and a gated one with no listen
+     (workers/mccluster/src/music/router.js startListen), so only the song just heard is at stake */
+  assert.equal(await waitBeforeStart('niggy-nigg'), 5000, 'the gated closer');
+  assert.equal(await waitBeforeStart('not-in-the-catalogue'), 5000);
+});

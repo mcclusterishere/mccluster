@@ -13,9 +13,9 @@
    No ffmpeg: MP3 length is the sum of its frames, and M4A length is the
    movie header's duration over its timescale. Both are exact.
 
-   The same lengths bound how long js/listen-ledger.js lets the next song's
-   start wait for the previous song's finish (finishWait below), so the
-   shortest song keeps its count; that line is written here too.
+   The same lengths bound how long js/listen-ledger.js lets each song's
+   start wait for the previous song's finish (finishWaits below), so every
+   song keeps half its margin; that table is written here too.
 
      node scripts/music-track-lengths.mjs          write all three
      node scripts/music-track-lengths.mjs --check  exit 1 if any is stale, or if a
@@ -225,37 +225,55 @@ export function build() {
     'export const TRACKS = ' + JSON.stringify(tracks, null, 2) + ';\n';
 }
 
-/* HOW LONG THE NEXT SONG'S START MAY WAIT FOR THE LAST ONE'S FINISH (music slice M3 follow-up; review PB-R10).
+/* HOW LONG EACH SONG'S START MAY WAIT FOR THE LAST ONE'S FINISH (music slice M3 follow-up; reviews PB-R10 and RF-1).
    js/listen-ledger.js holds the next song's start until the previous song's finish has answered, so the database
    never closes a song heard to the end as unfinished (DEL-4). But a listen is credited from the moment its start
    reaches the database, and the Worker counts it once floor(seconds x COUNT_SHARE) seconds are heard
-   (workers/mccluster/src/music/router.js): whatever the start waits comes out of the next song's margin. The wait is
-   half the smallest margin any song in the catalogue has, so even the shortest keeps the other half for what the page
-   cannot time (its start's own trip, a hidden page's late timers). A gated track is left out: its master is not here
-   and the gated record never counts toward itself. */
-export function finishWait() {
+   (workers/mccluster/src/music/router.js): whatever the start waits comes out of that song's own margin. So each song
+   waits half its own margin, and the other half is left for what the page cannot time (its start's own trip, a hidden
+   page's late timers); never more than FINISH_WAIT_CAP_MS, so a finish that never answers cannot hold a start for
+   long. One wait for every song, half the smallest margin (1.85 s), kept the shortest song's count but cost the song
+   just heard whenever its finish took longer than that, before every song: a completed listen answers the song test
+   and earns the gated closer's play. A gated track is left out: its master is not here, the gated record never
+   counts toward itself, and a song the table does not hold waits the cap (the server counts no listen of it).
+   Margins are whole tenths of a second, so each wait is a whole 50 ms. */
+export const FINISH_WAIT_CAP_MS = 5000;
+export function finishWaits() {
   const albums = JSON.parse(readFileSync(ALBUMS, 'utf8')).albums;
-  let least = null;
+  const songs = [];
   for (const album of albums) {
     for (const t of album.tracks || []) {
       if (t.gated) continue;
       const file = resolve(root, t.src);
       const seconds = Math.round(audioSeconds(readFileSync(file), extname(file)) * 10) / 10;
       const need = Math.max(1, Math.floor(seconds * COUNT_SHARE));
-      const margin = Math.round((seconds - need) * 10) / 10;
-      if (!least || margin < least.margin) least = { key: trackKey(t), title: t.title, seconds, need, margin };
+      const tenths = Math.round((seconds - need) * 10);
+      songs.push({ key: trackKey(t), title: t.title, seconds, need, margin: tenths / 10, ms: Math.min(FINISH_WAIT_CAP_MS, tenths * 50) });
     }
   }
-  return { ...least, ms: Math.floor(least.margin * 1000 / 2) };
+  const least = songs.reduce((a, s) => (!a || s.margin < a.margin ? s : a), null);
+  const ms = {};
+  for (const s of [...songs].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))) ms[s.key] = s.ms;
+  return { cap: FINISH_WAIT_CAP_MS, least, ms };
 }
 const WAIT_BEGIN = /^(\s*)\/\* FINISH WAIT BEGIN[^\n]*\n/m, WAIT_END = /^\s*\/\* FINISH WAIT END \*\/\n/m;
-/* js/listen-ledger.js with the wait written between its FINISH WAIT BEGIN and FINISH WAIT END lines */
-export function ledgerWithWait(src, wait = finishWait()) {
+/* js/listen-ledger.js with the waits written between its FINISH WAIT BEGIN and FINISH WAIT END lines */
+export function ledgerWithWait(src, waits = finishWaits()) {
   const b = WAIT_BEGIN.exec(src), e = WAIT_END.exec(src);
   if (!b || !e || e.index < b.index) throw new Error('js/listen-ledger.js: no FINISH WAIT BEGIN / FINISH WAIT END block');
-  const pad = b[1];
-  const body = `${pad}/* half of ${wait.margin} s, the smallest margin in the catalogue: ${wait.title}, ${wait.seconds} s, counted after ${wait.need} s */\n` +
-    `${pad}var FINISH_WAIT_MS = ${wait.ms};\n`;
+  const pad = b[1], least = waits.least;
+  const lines = [];
+  let line = '';
+  for (const [key, ms] of Object.entries(waits.ms)) {
+    const item = `${JSON.stringify(key)}: ${ms}`;
+    if (line && (pad + '  ' + line + ', ' + item + ',').length > 118) { lines.push(line + ','); line = item; }
+    else line = line ? line + ', ' + item : item;
+  }
+  if (line) lines.push(line);
+  const body = `${pad}/* each song's wait in ms: half its own margin, ${waits.cap / 1000} s at most; the smallest is ${least.title}'s,\n` +
+    `${pad}   half of ${least.margin} s (${least.seconds} s, counted after ${least.need} s) */\n` +
+    `${pad}var FINISH_WAIT_CAP_MS = ${waits.cap};\n` +
+    `${pad}var FINISH_WAIT_MS = {\n` + lines.map((l) => `${pad}  ${l}\n`).join('') + `${pad}};\n`;
   return src.slice(0, b.index + b[0].length) + body + src.slice(e.index);
 }
 
@@ -275,7 +293,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       process.exit(1);
     }
     if (containers.length) process.exit(1);
-    console.log('track lengths are current; every catalogue file is what its name says and starts fast; the listen ledger\'s wait fits the shortest song');
+    console.log('track lengths are current; every catalogue file is what its name says and starts fast; the listen ledger\'s waits fit each song');
   } else {
     writeFileSync(OUT, next);
     writeFileSync(ALBUMS, albums);

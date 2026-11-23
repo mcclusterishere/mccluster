@@ -92,17 +92,32 @@ test('the four files moved to start fast keep their encoder\'s gapless note, and
   }
 });
 
-/* THE LISTEN LEDGER'S WAIT IS WRITTEN FROM THE CATALOGUE (music slice M3 follow-up; review PB-R10): half the smallest
-   margin between a song's length and the time the Worker needs to count it, so the shortest song always keeps its
-   count. A song added with a smaller margin makes the file stale here. */
-test('js/listen-ledger.js waits for the previous finish no longer than half the smallest margin in the catalogue', async () => {
+/* THE LISTEN LEDGER'S WAITS ARE WRITTEN FROM THE CATALOGUE (music slice M3 follow-up; reviews PB-R10 and RF-1): for each
+   song, half the margin between its length and the time the Worker needs to count it, 5 s at most. The next song keeps
+   half its margin for its own start's way to the server, and the song just heard keeps as long a wait for its finish as
+   the next song can give (one wait for every song, half the smallest margin, cost the song just heard whenever its finish
+   took more than 1.85 s, before every song). A song added or re-cut makes the table stale here. */
+test('js/listen-ledger.js holds each song\'s wait for the previous finish: half its own margin, 5 s at most', async () => {
   const lengths = await import('../music-track-lengths.mjs');
-  assert.equal(typeof lengths.finishWait, 'function', 'scripts/music-track-lengths.mjs exports finishWait');
-  assert.equal(typeof lengths.ledgerWithWait, 'function', 'and writes it into js/listen-ledger.js');
-  const wait = lengths.finishWait();
-  assert.deepEqual({ key: wait.key, seconds: wait.seconds, need: wait.need, margin: wait.margin, ms: wait.ms },
-    { key: 'towyard-killer', seconds: 65.7, need: 62, margin: 3.7, ms: 1850 });
+  const { COUNT_SHARE } = await import('../../workers/mccluster/src/music/router.js');
+  assert.equal(typeof lengths.finishWaits, 'function', 'scripts/music-track-lengths.mjs exports finishWaits');
+  assert.equal(typeof lengths.ledgerWithWait, 'function', 'and writes them into js/listen-ledger.js');
+  const waits = lengths.finishWaits();
+  assert.equal(waits.cap, 5000, 'never more than 5 s');
+  const { key, seconds, need, margin, ms } = waits.least;
+  assert.deepEqual({ key, seconds, need, margin, ms }, { key: 'towyard-killer', seconds: 65.7, need: 62, margin: 3.7, ms: 1850 },
+    'the smallest margin in the catalogue keeps its 1.85 s');
+  const albums = JSON.parse(readFileSync(new URL('../../data/albums.json', import.meta.url), 'utf8')).albums;
+  const counted = albums.flatMap((a) => (a.tracks || []).filter((t) => !t.gated));
+  assert.equal(Object.keys(waits.ms).length, counted.length, 'a wait for every song the server counts');
+  for (const t of counted) {
+    const k = t.src.split('/').pop().replace(/\.[a-z0-9]+$/i, ''), n = Math.max(1, Math.floor(t.seconds * COUNT_SHARE));
+    assert.equal(waits.ms[k], Math.min(5000, Math.round((t.seconds - n) * 10) * 50), `${k}: half of ${t.seconds} s less ${n} s`);
+  }
+  assert.deepEqual([waits.ms['pull-up'], waits.ms['data-breach']], [4200, 5000]);
   const ledger = readFileSync(new URL('../../js/listen-ledger.js', import.meta.url), 'utf8');
-  assert.equal(ledger, lengths.ledgerWithWait(ledger, wait), 'run: node scripts/music-track-lengths.mjs');
-  assert.match(ledger, /var FINISH_WAIT_MS = 1850;/);
+  assert.equal(ledger, lengths.ledgerWithWait(ledger, waits), 'run: node scripts/music-track-lengths.mjs');
+  assert.match(ledger, /var FINISH_WAIT_CAP_MS = 5000;/);
+  assert.match(ledger, /"towyard-killer": 1850\b/);
+  assert.match(ledger, /"pull-up": 4200\b/);
 });
