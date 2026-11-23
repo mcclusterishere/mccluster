@@ -187,6 +187,9 @@
     .alb__gate { display: inline-flex; align-items: center; margin: 0.9rem 0 0 0.5rem; padding: 0.8rem 1.2rem;
       border-radius: 100px; color: var(--cream); font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
       text-decoration: none; box-shadow: inset 0 0 0 1px rgba(244,239,230,0.3); }
+    /* the door shows only where the page opens it (a record with a gateway: Heal the 3); the display above
+       overrode the hidden attribute, so it showed on every album (music slice M3 follow-up, review RL-12) */
+    .alb__gate[hidden] { display: none; }
 
     /* the record: soft app rows with the art up front; the playing row
        becomes a glowing card in the career's color, the way the streaming
