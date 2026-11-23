@@ -112,6 +112,7 @@ on:
       - 'packages/release-policy/globe.mjs'
       - 'workers/mccluster/test/support/usgs-ingest-fixtures.mjs'
       - 'supabase/pending/20261119062110_network_connections_consent_guard_v1*'
+      - 'supabase/migrations/*_network_connections_consent_guard_v1.sql'
       - 'scripts/test/network-connections-consent*.mjs'
       - 'scripts/test/support/network-connections-database.mjs'
       - 'supabase/pending/20261119140000_mission_catalog_sources_v1*'

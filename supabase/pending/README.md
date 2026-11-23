@@ -17,13 +17,33 @@ list and on any entry that is stale, so the list only shrinks: promoting a file
 and committing the new production snapshot means removing its names. Regenerate
 the view with `RPC_NAMES_REPORT=1 node scripts/test/rpc-names-exist.test.mjs`.
 
+Promoted 2026-11-23, with Matthew's approval: the network connections consent guard (`PROMOTION-ORDER.md` section 13) and
+Environment event-store parts 03, 04 and 05 (section 12). The ledger now has **384 rows**, latest
+`20261123174034 eup_environment_events_v1_05` (digest `8af712520bdf7daf353b36b801eb568849ed9bb1088e57b48ffd2e364c97ed9c`).
+Each ledger row holds one stored statement: the committed file without its final line feed. The files moved unchanged, so
+each is its stored statement plus one trailing line feed; the md5 below is the stored statement's, and the file gives it with
+its last byte removed (the 2026-11-20 rows kept that byte and match their files whole). Evidence:
+`docs/control-plane/evidence/releases-2026-11-23/LEDGER-384-APPLIED.md` and
+`docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json`. The rollbacks stay here under their pending names.
+
+| Pending file (moved) | Applied as | Stored statement |
+|---|---|---|
+| `20261119062110_network_connections_consent_guard_v1.sql` | `supabase/migrations/20261123173626_network_connections_consent_guard_v1.sql` | 11,395 bytes, md5 `a08e29b94ffe898174c199f5eac0cecf` |
+| `20261119100000_eup_environment_events_v1_03.sql` | `supabase/migrations/20261123173831_eup_environment_events_v1_03.sql` | 31,084 bytes, md5 `f4a2c6df817f2e963f9c6e1b0a486bc8` |
+| `20261119100000_eup_environment_events_v1_04.sql` | `supabase/migrations/20261123173951_eup_environment_events_v1_04.sql` | 26,707 bytes, md5 `d379700f7f371b9a8803f6aa6e6e05b9` |
+| `20261119100000_eup_environment_events_v1_05.sql` | `supabase/migrations/20261123174034_eup_environment_events_v1_05.sql` | 12,177 bytes, md5 `2583ace662ac0494c07065e7e93ce633` |
+
+Nothing public changed: the USGS rule and the Environment module's install and enable are Matthew's commands in Control, and
+the ingest switch is a committed Worker variable that needs a pull request, a merge and a deploy (`PROMOTION-ORDER.md`
+section 12).
+
 Promoted 2026-11-20: the guarded Drawdown credit correction and the exact mission publication,
 then Environment event-store parts 01 and 02. The ledger now has **380 rows**, latest
 `20261120061759 eup_environment_events_v1_02`. The 125 catalog missions are open; all 87 website
 excerpts and unsupported permission claims were removed first, with all 43 research citations
 preserved. Exact statements, hashes, verification and incomplete operations are recorded in
 `docs/control-plane/evidence/releases-2026-11-20/RELEASE-FINISH.md`. Environment parts 03–05 and
-the Connections guard remain pending; the ingest flag and public module remain off.
+the Connections guard remained pending until 2026-11-23 (above); the ingest flag and public module remain off.
 
 Promoted 2026-11-18: the E=Up module policy (`PROMOTION-ORDER.md` section 8) and the World missions (section 10:
 10.1, 10.2 and the seven parts of 10.3), applied with the owner's approval, and the two Equity Uprise platform
@@ -78,19 +98,24 @@ on a disposable PostgreSQL 16 shaped like the reset before ledger row 365, throu
 `scripts/test/eu-platform-replay.native.integration.mjs` (without the twin the reset stops at the registry; with it
 rows 365 to 376 apply and build what production's 2026-11-18 snapshot records). The CI reset has not run on it yet.
 
-In progress (2026-11-20): the E=UP environmental event store (`PROMOTION-ORDER.md` section 12). Parts 01 and 02 are applied:
-`supabase/migrations/20261120061725_eup_environment_events_v1_01.sql` and
-`supabase/migrations/20261120061759_eup_environment_events_v1_02.sql`. Parts 03 to 05 still have their original
-`20261119100000_` filenames here; `20261119100000_eup_environment_events_v1.rollback.sql` remains a recovery artifact.
-All statements preserve their reviewed bytes. The ingest flag is still false; no public activation is claimed.
-See `docs/control-plane/evidence/releases-2026-11-20/ENVIRONMENT-TIMELINE-APPLIED.md` for confirmed versions and next steps.
+Applied in full (2026-11-20 and 2026-11-23): the E=UP environmental event store (`PROMOTION-ORDER.md` section 12). Parts 01
+and 02 are `supabase/migrations/20261120061725_eup_environment_events_v1_01.sql` and
+`supabase/migrations/20261120061759_eup_environment_events_v1_02.sql`; parts 03 to 05 are
+`supabase/migrations/20261123173831_eup_environment_events_v1_03.sql`,
+`supabase/migrations/20261123173951_eup_environment_events_v1_04.sql` and
+`supabase/migrations/20261123174034_eup_environment_events_v1_05.sql`.
+`20261119100000_eup_environment_events_v1.rollback.sql` remains here, a recovery artifact. All files preserve their reviewed
+bytes. The ingest flag is still false and the module is not installed; no public activation is claimed.
+See `docs/control-plane/evidence/releases-2026-11-23/LEDGER-384-APPLIED.md` for the versions and what remains.
 
-Pending (2026-11-19): the network connections consent guard, `20261119062110_network_connections_consent_guard_v1.sql` with
-`20261119062110_network_connections_consent_guard_v1.rollback.sql` (`PROMOTION-ORDER.md` section 13). A security fix, independent of
-the World release: production lets any member insert an accepted connection, accept their own request or move a row to another
-member through the REST API (two production-only policies and the member grants); the file drops those two policies and revokes
-INSERT, UPDATE and DELETE from `authenticated`, keeping the member read policy, SELECT and the RPCs the World uses. It defines no
-name, so `live-callers.json` does not change. Not applied; Matthew's approval required.
+Promoted 2026-11-23: the network connections consent guard, staged as `20261119062110_network_connections_consent_guard_v1.sql`,
+is `supabase/migrations/20261123173626_network_connections_consent_guard_v1.sql`; its rollback,
+`20261119062110_network_connections_consent_guard_v1.rollback.sql`, stays here (`PROMOTION-ORDER.md` section 13). A security fix,
+independent of the World release: production let any member insert an accepted connection, accept their own request or move a
+row to another member through the REST API (two production-only policies and the member grants); the file drops those two
+policies and revokes INSERT, UPDATE and DELETE from `authenticated`, keeping the member read policy, SELECT and the RPCs the
+World uses. It defines no name, so `live-callers.json` did not change for it. Applied with Matthew's approval; production's
+check afterwards answered the member read policy alone and no member write.
 
 Pending (2026-11-19): mission catalog sources, `20261119140000_mission_catalog_sources_v1.sql` with
 `20261119140000_mission_catalog_sources_v1.rollback.sql` (`PROMOTION-ORDER.md` section 14): Project Drawdown's organization row

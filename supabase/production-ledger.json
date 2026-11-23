@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 380,
-  "latest_version": "20261120061759",
-  "latest_name": "eup_environment_events_v1_02",
-  "ledger_sha256": "898061432b00aec947b1757df7997c043a2020ba9d69c7e83be417645496b678",
+  "migration_count": 384,
+  "latest_version": "20261123174034",
+  "latest_name": "eup_environment_events_v1_05",
+  "ledger_sha256": "8af712520bdf7daf353b36b801eb568849ed9bb1088e57b48ffd2e364c97ed9c",
   "migrations": [
     {
       "version": "0001",
@@ -1526,6 +1526,22 @@
     {
       "version": "20261120061759",
       "name": "eup_environment_events_v1_02"
+    },
+    {
+      "version": "20261123173626",
+      "name": "network_connections_consent_guard_v1"
+    },
+    {
+      "version": "20261123173831",
+      "name": "eup_environment_events_v1_03"
+    },
+    {
+      "version": "20261123173951",
+      "name": "eup_environment_events_v1_04"
+    },
+    {
+      "version": "20261123174034",
+      "name": "eup_environment_events_v1_05"
     }
   ]
 }
