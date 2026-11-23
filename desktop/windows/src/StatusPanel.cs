@@ -37,6 +37,9 @@ namespace McClusterDesktop
         private readonly Button refreshButton = new Button();
         private readonly ListView jobsList = new ListView();
         private readonly TextBox receiptBox = new TextBox();
+        private readonly Label receiptVerdict = new Label();
+        private string deviceKeyId;
+        private string deviceKeyError;
         private readonly System.Windows.Forms.Timer draftTimer = new System.Windows.Forms.Timer();
         private CoreStatus core;
         private OllamaStatus ollama;
@@ -169,7 +172,15 @@ namespace McClusterDesktop
             receiptBox.Height = 220;
             receiptBox.Font = new Font(FontFamily.GenericMonospace, 8f);
             layout.Controls.Add(Caption("Receipt"));
+            // The verdict is computed here, by the same verifier the CLI uses, against this device's key.
+            receiptVerdict.AutoSize = true;
+            receiptVerdict.MaximumSize = new Size(380, 0);
+            receiptVerdict.Font = new Font(Font, FontStyle.Bold);
+            receiptVerdict.Margin = new Padding(0, 2, 0, 2);
+            layout.Controls.Add(receiptVerdict);
             layout.Controls.Add(receiptBox);
+            try { using (DeviceKey key = DeviceKey.Load(store.Root)) deviceKeyId = key.KeyId; }
+            catch (Exception ex) { deviceKeyError = ex.Message; }
 
             draftTimer.Interval = 1500;
             draftTimer.Tick += delegate { FlushDraft(); };
@@ -405,9 +416,20 @@ namespace McClusterDesktop
 
         private void ShowSelectedReceipt()
         {
-            if (jobsList.SelectedItems.Count == 0) { receiptBox.Text = ""; return; }
+            if (jobsList.SelectedItems.Count == 0) { receiptBox.Text = ""; receiptVerdict.Text = ""; return; }
             LocalJob job = store.Get(jobsList.SelectedItems[0].Tag as string);
-            receiptBox.Text = job == null ? "" : Json.Pretty(job.ToDictionary()).Replace("\n", "\r\n");
+            if (job == null) { receiptBox.Text = ""; receiptVerdict.Text = ""; return; }
+            Dictionary<string, object> file = job.ToDictionary();
+            receiptBox.Text = Json.Pretty(file).Replace("\n", "\r\n");
+            if (job.State == JobState.Running || job.State == JobState.Queued) { receiptVerdict.Text = "Receipt not final: job is " + job.State + "."; receiptVerdict.ForeColor = SystemColors.GrayText; return; }
+            if (deviceKeyId == null) { receiptVerdict.Text = "Cannot verify: this device's key is unavailable (" + deviceKeyError + ")."; receiptVerdict.ForeColor = Color.Firebrick; return; }
+            try
+            {
+                Dictionary<string, object> verdict = ReceiptVerifier.Verify(file, deviceKeyId, false);
+                receiptVerdict.Text = ReceiptVerifier.Sentence(verdict);
+                receiptVerdict.ForeColor = (bool)verdict["verified"] ? Color.DarkGreen : Color.Firebrick;
+            }
+            catch (Exception ex) { receiptVerdict.Text = "Cannot verify: " + ex.Message; receiptVerdict.ForeColor = Color.Firebrick; }
         }
 
         private static string Gb(long bytes)

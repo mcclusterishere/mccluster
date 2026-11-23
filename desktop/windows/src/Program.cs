@@ -81,37 +81,13 @@ namespace McClusterDesktop
                             string filePath = Option(args, "--file") ?? Positional(args, 1);
                             if (filePath == null) { Write(outPath, new Dictionary<string, object> { { "error", "missing --file" } }); return 2; }
                             object file = Json.Parse(File.ReadAllText(filePath));
-                            object receipt = Json.Get(file, "receipt") ?? file;
-                            bool isJobFile = Json.Get(file, "receipt") != null;
                             // Trust anchor: this device's own key id unless the verifier names another trusted id.
                             string trustedKeyId = Option(args, "--trusted-key-id");
                             bool anyKey = args.Contains("--any-key");
                             if (trustedKeyId == null && !anyKey) { using (DeviceKey key = DeviceKey.Load(store.Root)) trustedKeyId = key.KeyId; }
-                            string reason;
-                            bool consistent = DeviceKey.Verify(receipt, out reason);
-                            string consistencyReason = reason;
-                            bool trusted = anyKey ? consistent : DeviceKey.VerifyTrusted(receipt, trustedKeyId, out reason);
-                            // Binding to the job file: recompute the hashes the receipt commits to.
-                            bool? outputMatches = null, inputMatches = null, jobIdMatches = null;
-                            if (isJobFile)
-                            {
-                                object result = Json.Get(file, "result");
-                                string expectedOut = Json.Str(receipt, "output_sha256");
-                                if (expectedOut != null) outputMatches = result != null && Canonical.Sha256Hex(Canonical.Json(result)) == expectedOut;
-                                object input = Json.Get(file, "input");
-                                string expectedIn = Json.Str(receipt, "input_sha256");
-                                if (expectedIn != null) inputMatches = input != null && Canonical.Sha256Hex(Canonical.Json(input)) == expectedIn;
-                                string receiptJob = Json.Str(receipt, "job_id");
-                                if (receiptJob != null) jobIdMatches = receiptJob == Json.Str(file, "id");
-                            }
-                            bool bound = outputMatches != false && inputMatches != false && jobIdMatches != false;
-                            bool ok = trusted && bound;
-                            var payload = new Dictionary<string, object> {
-                                { "verified", ok },
-                                { "signature_consistent", consistent }, { "consistency_reason", consistencyReason },
-                                { "key_trusted", trusted }, { "trust_reason", anyKey ? "any key accepted (--any-key)" : reason }, { "trusted_key_id", anyKey ? null : trustedKeyId },
-                                { "output_matches", outputMatches }, { "input_matches", inputMatches }, { "job_id_matches", jobIdMatches },
-                                { "schema", Json.Str(receipt, "schema") }, { "key_id", Json.Str(Json.Get(receipt, "signature"), "key_id") }, { "output_sha256", Json.Str(receipt, "output_sha256") }, { "inference_mode", Json.Str(Json.Get(receipt, "inference"), "mode") } };
+                            Dictionary<string, object> payload = ReceiptVerifier.Verify(file, trustedKeyId, anyKey);
+                            payload["sentence"] = ReceiptVerifier.Sentence(payload);
+                            bool ok = (bool)payload["verified"];
                             Write(outPath, payload);
                             return ok ? 0 : 1;
                         }

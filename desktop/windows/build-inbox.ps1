@@ -13,6 +13,9 @@ the installer is compiled as dist\tests\Setup-candidate.exe, the installer tests
 (installer\tests\InstallerTests.cs) must pass against that candidate with its real embedded payload, and only
 then is it moved to dist\McCluster-Windows-x64-Setup-<version>.exe and SHA256SUMS.txt written. A dirty
 desktop\windows tree is refused unless -AllowDirty is passed; the manifest records built_from_clean_tree.
+Last, release-gate.ps1 checks Authenticode on every binary and the sums, writing dist\release-status.json;
+with -Release an unsigned or untrusted first-party binary fails the build (sign first with
+release-gate.ps1 -Sign -Thumbprint <publicly trusted code-signing certificate>).
 
 Outputs: dist\app\ (the app and the three WebView2 files), dist\payload.zip (deterministic: fixed entry
 timestamps, sorted entries, with manifest.json of SHA-256 hashes), dist\McCluster-Windows-x64-Setup-<version>.exe
@@ -26,7 +29,8 @@ param(
   [switch]$Tests,
   [switch]$Installer,
   [string]$SourceCommit,
-  [switch]$AllowDirty
+  [switch]$AllowDirty,
+  [switch]$Release
 )
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -161,4 +165,12 @@ if ($Installer) {
   $sums = Join-Path $dist 'SHA256SUMS.txt'
   "$((Get-FileHash $setupExe).Hash.ToLowerInvariant())  $(Split-Path $setupExe -Leaf)`n$((Get-FileHash $payload).Hash.ToLowerInvariant())  payload.zip" | Set-Content $sums -Encoding ascii
   Write-Host ("setup {0} bytes sha256 {1}" -f (Get-Item $setupExe).Length, (Get-FileHash $setupExe).Hash)
+
+  # 4. Release gate: signatures and sums. Always recorded in dist\release-status.json; fatal only with -Release,
+  #    so a developer build still produces an (unsigned) setup for the installer tests while a release cannot
+  #    ship unsigned first-party binaries.
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $here 'release-gate.ps1') -Dist $dist
+  $gate = $LASTEXITCODE
+  if ($gate -ne 0 -and $Release) { throw "release gate failed (exit $gate); see dist\release-status.json. No release without a publicly trusted signature." }
+  if ($gate -ne 0) { Write-Warning 'release gate FAILED: this build is a developer build, not a release (dist\release-status.json)' }
 }

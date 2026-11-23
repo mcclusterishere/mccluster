@@ -242,6 +242,75 @@ namespace McClusterDesktop
         public void Dispose() { key.Dispose(); }
     }
 
+    // One verdict for a job file (the dictionary a LocalJob serialises to, or a bare receipt),
+    // used by --verify-receipt and by the panel so the UI and the CLI never disagree.
+    internal static class ReceiptVerifier
+    {
+        public static Dictionary<string, object> Verify(object file, string trustedKeyId, bool anyKey)
+        {
+            object receipt = McClusterDesktop.Json.Get(file, "receipt") ?? file;
+            bool isJobFile = McClusterDesktop.Json.Get(file, "receipt") != null;
+            string reason;
+            bool consistent = DeviceKey.Verify(receipt, out reason);
+            string consistencyReason = reason;
+            bool trusted = anyKey ? consistent : DeviceKey.VerifyTrusted(receipt, trustedKeyId, out reason);
+            bool? outputMatches = null, inputMatches = null, jobIdMatches = null;
+            if (isJobFile)
+            {
+                object result = McClusterDesktop.Json.Get(file, "result");
+                string expectedOut = McClusterDesktop.Json.Str(receipt, "output_sha256");
+                if (expectedOut != null) outputMatches = result != null && Canonical.Sha256Hex(Canonical.Json(result)) == expectedOut;
+                object input = McClusterDesktop.Json.Get(file, "input");
+                string expectedIn = McClusterDesktop.Json.Str(receipt, "input_sha256");
+                if (expectedIn != null) inputMatches = input != null && Canonical.Sha256Hex(Canonical.Json(input)) == expectedIn;
+                string receiptJob = McClusterDesktop.Json.Str(receipt, "job_id");
+                if (receiptJob != null) jobIdMatches = receiptJob == McClusterDesktop.Json.Str(file, "id");
+            }
+            bool bound = outputMatches != false && inputMatches != false && jobIdMatches != false;
+            var payload = new Dictionary<string, object>();
+            payload["verified"] = trusted && bound;
+            payload["signature_consistent"] = consistent;
+            payload["consistency_reason"] = consistencyReason;
+            payload["key_trusted"] = trusted;
+            payload["trust_reason"] = anyKey ? "any key accepted (--any-key)" : reason;
+            payload["trusted_key_id"] = anyKey ? null : trustedKeyId;
+            payload["output_matches"] = outputMatches;
+            payload["input_matches"] = inputMatches;
+            payload["job_id_matches"] = jobIdMatches;
+            payload["schema"] = McClusterDesktop.Json.Str(receipt, "schema");
+            payload["key_id"] = McClusterDesktop.Json.Str(McClusterDesktop.Json.Get(receipt, "signature"), "key_id");
+            payload["output_sha256"] = McClusterDesktop.Json.Str(receipt, "output_sha256");
+            payload["inference_mode"] = McClusterDesktop.Json.Str(McClusterDesktop.Json.Get(receipt, "inference"), "mode");
+            return payload;
+        }
+
+        // One line a person can read: what the verdict proves and what it does not.
+        public static string Sentence(Dictionary<string, object> v)
+        {
+            var sb = new StringBuilder();
+            bool consistent = v["signature_consistent"] is bool && (bool)v["signature_consistent"];
+            bool trusted = v["key_trusted"] is bool && (bool)v["key_trusted"];
+            string keyId = v["key_id"] as string;
+            if (!consistent) return "NOT VERIFIED: " + (v["consistency_reason"] as string ?? "signature problem") + ". This receipt proves nothing.";
+            sb.Append(trusted ? "Signed by this device's key " : "Signed by a key this device does not trust ");
+            if (keyId != null) sb.Append(keyId.Substring(0, Math.Min(12, keyId.Length))).Append("… ");
+            sb.Append("(ECDSA P-256 over canonical JSON). ");
+            string[] names = { "output_matches", "input_matches", "job_id_matches" };
+            string[] labels = { "output hash", "input hash", "job id" };
+            var ok = new List<string>(); var bad = new List<string>(); var na = new List<string>();
+            for (int i = 0; i < names.Length; i++)
+            {
+                object b = v[names[i]];
+                if (b == null) na.Add(labels[i]); else if ((bool)b) ok.Add(labels[i]); else bad.Add(labels[i]);
+            }
+            if (ok.Count > 0) sb.Append("Bound: ").Append(string.Join(", ", ok)).Append(". ");
+            if (bad.Count > 0) sb.Append("MISMATCH: ").Append(string.Join(", ", bad)).Append(". ");
+            if (na.Count > 0) sb.Append("Not checkable here: ").Append(string.Join(", ", na)).Append(". ");
+            sb.Append(v["verified"] is bool && (bool)v["verified"] ? "VERIFIED." : "NOT VERIFIED.");
+            return sb.ToString();
+        }
+    }
+
     // A context reference the job was allowed to read: what it was, how it was scoped, and a
     // hash plus timestamp so the receipt can say exactly which inputs were in play.
     internal static class ContextRefs
