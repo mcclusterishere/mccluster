@@ -28,31 +28,36 @@ import { dirname, join } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
 
-test('the bar knows the World\'s own host and keeps today\'s behaviour until the owner flips it', async () => {
+test('the bar reads the World\'s hosts and where each page is served from the one table (SPEC-PLATFORM 4, P1)', async () => {
+  /* Until P1 this pinned the host literals of the bar (WORLD_HOSTS, HOUSE_ORIGIN, WORLD_ORIGIN, ECOSYSTEM). P1 turned
+     each decision into a small named function reading window.MCC_SITE (scripts/test/site-hosts-engine.test.mjs runs
+     them with P1's table, P0's, the equityuprise rewrite and none); this pins their shape and that no host is named. */
   const bar = await read('js/tabbar.js');
-  assert.match(bar, /var WORLD_HOSTS = \["mccluster\.org", "www\.mccluster\.org", "humanuprise\.com", "www\.humanuprise\.com"\];/, 'the World\'s hosts: the company\'s today, Human Uprise\'s own door later');
-  assert.match(bar, /var ON_WORLD_HOST = WORLD_HOSTS\.indexOf\(String\(location\.hostname\)\.toLowerCase\(\)\) !== -1;/);
-  assert.match(bar, /var HOUSE_ORIGIN = "https:\/\/matthew\.mccluster\.org\/";/);
-  assert.match(bar, /var WORLD_ORIGIN = "https:\/\/mccluster\.org\/";/, 'from Matthew\'s site the Globe goes to the company\'s root (owner, 2026-10-15)');
-  assert.match(bar, /var HOUSE = ON_WORLD_HOST \? HOUSE_ORIGIN : ROOT;/, 'standing on the World\'s host, Matthew\'s rooms are his site');
-  assert.match(bar, /var WORLD = ON_WORLD_HOST \? ROOT : \(WORLD_ORIGIN \|\| ROOT\);/);
-  /* until the owner routes mccluster.org/* to the Worker, the zone rule lands the Globe's link on the house root: it goes on to the World here */
-  assert.match(bar, /if \(!ON_WORLD_HOST && \/\(\?:\^\\\?\|&\)view=\/\.test\(location\.search\)\) \{/);
+  const { hostLiterals } = await import('../../tools/build-site-hosts.mjs');
+  assert.deepEqual(hostLiterals(bar, 'js/tabbar.js'), [], 'the bar names no site host');
+  assert.match(bar, /function onWorldHost\(\) \{\n    var S = window\.MCC_SITE;\n    return !!S && S\.isWorldHost\(location\.hostname\);\n  \}/, 'the World\'s hosts are the table\'s');
+  assert.match(bar, /function pageHref\(path\) \{ return pageBase\(path\) \+ path; \}/, 'a page is linked where the table serves it');
+  assert.match(bar, /return S\.servingOrigin\(p\) \+ "\/";/);
+  assert.match(bar, /if \(location\.origin === S\.profile\.origin && S\.cleanPath\(p\) === S\.profile\.root_path\) return S\.profile\.origin \+ "\/";/, 'on Matthew\'s host the M is his own root');
+  assert.match(bar, /function worldAt\(query\) \{ return worldBase\(\) \+ \(query \|\| ""\); \}/);
+  assert.match(bar, /return onWorldHost\(\) \? location\.origin \+ S\.world\.root : S\.platform\.world_url;/, 'the World is the root of a World host, else the platform\'s World');
+  /* the house root with the World's query goes on to the World on this origin, query and fragment intact */
+  assert.match(bar, /if \(!onWorldHost\(\) && \/\(\?:\^\\\?\|&\)view=\/\.test\(location\.search\)\) \{/);
   assert.match(bar, /if \(atRoot\) \{ location\.replace\(ROOT \+ "mnet\.html" \+ location\.search \+ location\.hash\); return; \}/, 'query and a carried sign-in intact');
-  assert.match(bar, /function worldAt\(query\) \{ return \(ON_WORLD_HOST \|\| WORLD_ORIGIN \? WORLD : WORLD \+ "mnet\.html"\) \+ \(query \|\| ""\); \}/,
-    'the World is the root of its own host, mnet.html elsewhere');
-  /* the three cells: Music and the M against the house, the Globe against the World */
-  assert.match(bar, /href="' \+ HOUSE \+ 'listen\.html" data-appnav="music"/);
-  assert.match(bar, /href="' \+ HOUSE \+ 'index\.html" data-appnav="home"/);
-  assert.match(bar, /href="' \+ WORLD \+ 'mnet\.html\?view=feed" data-appnav="world"/);
+  /* the three cells: Music and the M where the table serves them, the Globe at the World's address */
+  assert.match(bar, /href="' \+ pageHref\("listen\.html"\) \+ '" data-appnav="music"/);
+  assert.match(bar, /href="' \+ pageHref\("index\.html"\) \+ '" data-appnav="home"/);
+  assert.match(bar, /href="' \+ worldAt\("\?view=feed"\) \+ '" data-appnav="world"/);
   assert.match(bar, /src="' \+ ROOT \+ 'assets\/img\/m-mark\.png"/, 'static files come from the page\'s own host');
   assert.match(bar, /worldTab\.href = worldAt\("\?view=feed"\);/);
-  /* the wings resolve the same way; the account stays on the page's own host */
-  assert.match(bar, /function resolveRoom\(wing, path\) \{\n    if \(path === MAP\) return MAP;\n    if \(path\.indexOf\("mnet\.html"\) === 0\) return worldAt\(path\.slice\("mnet\.html"\.length\)\);\n    return \(wing === "world" \? ROOT : HOUSE\) \+ path;\n  \}/);
-  assert.equal((bar.match(/ROOT \+ "mnet\.html/g) || []).length, 1, 'the one World door that bypasses worldAt is the forward from the house root, which must stay on this origin (worldAt would send it back out)');
-  /* on the World's host, the root lights the Globe, not the M */
-  assert.match(bar, /if \(ON_WORLD_HOST && \(PAGE_KEY === "" \|\| PAGE_KEY === "index\.html"\)\) PAGE_KEY = "mnet\.html";/);
-  assert.match(bar, /var ECOSYSTEM = \[HOUSE_ORIGIN\.replace\(\/\\\/\$\/, ""\), "https:\/\/mccluster\.org", "https:\/\/www\.mccluster\.org", "https:\/\/humanuprise\.com", "https:\/\/www\.humanuprise\.com"\];/, 'the sign-in crosses to the company host too');
+  /* the wings resolve the same way; the account reads this host's session (its own host before P1, the platform's after) */
+  assert.match(bar, /function resolveRoom\(wing, path\) \{\n    if \(path === MAP\) return MAP;\n    if \(path\.indexOf\("mnet\.html"\) === 0\) return worldAt\(path\.slice\("mnet\.html"\.length\)\);\n    return wing === "world" \? sessionRoom\(path\) : pageHref\(path\);\n  \}/);
+  assert.match(bar, /return S && S\.switches\.carry === true \? pageHref\(path\) : ROOT \+ path;/);
+  assert.equal((bar.match(/ROOT \+ "mnet\.html/g) || []).length, 2, 'the World doors that bypass worldAt: the forward from the house root, which stays on this origin, and worldBase\'s own answer with no table');
+  /* the World's own address lights the Globe, never the HERE front door */
+  assert.match(bar, /if \(isWorldPath\(location\.pathname\)\) PAGE_KEY = "mnet\.html";/);
+  /* the sign-in crosses to any of the site's own origins, the table's */
+  assert.match(bar, /return !!\(S && url && \/\^https\?:\$\/\.test\(url\.protocol\) && url\.origin !== location\.origin && S\.isSiteOrigin\(url\.origin\)\);/);
 });
 
 test('a creator\'s front page puts the creator in the middle of the bar, with their own picture or initial', async () => {
@@ -67,7 +72,7 @@ test('a creator\'s front page puts the creator in the middle of the bar, with th
   assert.match(bar, /homeTab\.setAttribute\("data-perspective", p\.handle\);/);
   /* the house is one hold away: the M as supplied, beside Everything */
   assert.match(bar, /mmark: \["assets\/img\/m-mark\.png", "appbar__m"\],/);
-  assert.match(bar, /WINGS\.home\.slots\[0\] = \[HOUSE \+ "index\.html\?front=house", "mmark", "McCluster",/);
+  assert.match(bar, /WINGS\.home\.slots\[0\] = \[pageHref\("index\.html\?front=house"\), "mmark", "McCluster",/);
   /* Matthew's front door lets the perspective go */
   assert.match(bar, /var PERSPECTIVE=readPerspective\(\);/);
   assert.match(bar, /if\(HOUSE_VISIT && currentSubject\(\)\)/, "founder perspective is explicit and owner-scoped");
@@ -164,8 +169,12 @@ test('the authorities name the host: three hosts, still two entities, one Worker
 test('one M Account, every host: the bar carries the sign-in across and the arriving page earns its own session', async () => {
   const bar = await read('js/tabbar.js');
   assert.match(bar, /var HANDOFF = "mcc_handoff";/);
-  assert.match(bar, /return url && \/\^https\?:\$\/\.test\(url\.protocol\) && url\.origin !== location\.origin && ECOSYSTEM\.indexOf\(url\.origin\) !== -1;/);
-  /* leaving: the token rides in the fragment, never a query */
+  assert.match(bar, /return !!\(S && url && \/\^https\?:\$\/\.test\(url\.protocol\) && url\.origin !== location\.origin && S\.isSiteOrigin\(url\.origin\)\);/);
+  /* from P1 the writer is off: the carry (js/carry.js, scripts/test/carry.test.mjs) brings the sign-in instead, and no
+     link carries a token; the reader below stays until P4 */
+  assert.match(bar, /if \(!handoffWriterOn\(\) \|\| !crossesHouse\(url\) \|\| !stored \|\| !stored\.access_token\) return Promise\.resolve\(url\.href\);/);
+  assert.match(bar, /function handoffWriterOn\(\) \{\n    var S = window\.MCC_SITE;\n    return !!\(S && S\.switches && S\.switches\.carry !== true\);\n  \}/);
+  /* leaving, while the writer is on (P0's table): the token rides in the fragment, never a query */
   assert.match(bar, /url\.hash = \(url\.hash && url\.hash !== "#" \? url\.hash \+ "&" : "#"\) \+ HANDOFF \+ "=" \+ encodeURIComponent\(token\);/);
   assert.doesNotMatch(bar, /searchParams\.set\("mcc_handoff"/);
   assert.match(bar, /handoffHref\(dest\)\.then\(function \(h\) \{ navigateDocument\(h\); \}, function \(\) \{ navigateDocument\(dest\); \}\);/, 'the bar\'s own tabs carry the handed-off destination through document navigation');

@@ -117,8 +117,8 @@ test('the owner globe opens the consumer World and Halo retains its separate doo
   assert.match(read('js/site-navigation.js'), /label:'Hitman’s Halo', group:'Products'/);
   /* lit while Halo is on screen */
   assert.match(bar, /action-globe\\\.html\$\/\.test\(location\.pathname\) && new URLSearchParams\(location\.search\)\.has\("halo"\)\) return "halo";/);
-  /* everyone else's globe is still the World */
-  assert.match(bar, /href="' \+ WORLD \+ 'mnet\.html\?view=feed" data-appnav="world"/);
+  /* everyone else's globe is still the World: its address is the table's (worldAt, SPEC-PLATFORM 4), no host literal */
+  assert.match(bar, /href="' \+ worldAt\("\?view=feed"\) \+ '" data-appnav="world"/);
   const halo = read('js/halo/halo.js');
   assert.match(halo, /<a class="hx-feed" href="' \+ esc\(feedHref\(\)\) \+ '" aria-label="Open the World feed"><span class="hx-feed__short">Feed<\/span><span class="hx-feed__long">World feed<\/span><\/a>/);
   assert.match(halo, /window\.MCC_BAR\.navigation\.world/);

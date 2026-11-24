@@ -7,8 +7,9 @@
    each in its own sandbox with its own origin, joined by a message bus that behaves as a browser's postMessage does: a
    message reaches a window only when the target origin is that window's own origin exactly (or "*"), and the receiver
    sees the sender's real origin and window. This holds:
-   - inert in P0: the record's stage keeps the carry off; js/carry.js frames nothing and carry.html answers nothing,
-     whoever asks; no page loads js/carry.js yet;
+   - inert with P0's table: the carry is off; js/carry.js frames nothing and carry.html answers nothing, whoever asks;
+     from P1 (the table that ships) js/tabbar.js loads js/carry.js, on a platform page with no usable session, and no
+     other page or script does;
    - exact origins both ways: carry.html answers only its parent, only when the message comes from the platform's exact
      origin; js/carry.js accepts only its own frame, only from the tenant's exact origin and only for its request id;
    - one answer per request id: the first valid request is the only one ever answered;
@@ -16,7 +17,10 @@
      Supabase gives it for its own origin (POST /v1/auth/handoff, then verify), never the tenant's;
    - nothing is posted to another origin, and no postMessage names "*";
    - the device id only with the privacy agreement on both sides; the pocket, mute and theme only where unset; kept songs
-     by path, re-kept on a tap; the clear line for 30 days when nothing could be carried. */
+     by path, re-kept on a tap; the clear line for 30 days when nothing could be carried, said on the sign-in page and on
+     the account chip;
+   - a frame whose parent is the platform's own origin asks nothing (its parent does); the World framed over Music on
+     Matthew's host, whose parent is another origin, asks for itself. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -27,8 +31,9 @@ import { hostLiterals, codeOf } from '../../tools/build-site-hosts.mjs';
 import { publishedFilter } from '../e2e/platform-hosts.e2e.mjs';
 
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
-const P0 = shippedSite();
+const P0 = stageSite('P0');
 const P1 = stageSite('P1');
+const SHIPPED = shippedSite();
 const PLATFORM = P1.platform.origin;
 const PROFILE = P1.profile.origin;
 const plain = (v) => JSON.parse(JSON.stringify(v));
@@ -191,7 +196,9 @@ test('carry.html carries the device id only with the privacy agreement, and kept
 
 /* ---------- the platform's side (js/carry.js), alone and with the frame ---------- */
 
-function platformPage({ site = P1, origin = PLATFORM, local = {}, framed = false, accepted = true, answerWith = null, fetchImpl = null, cachesImpl = null } = {}) {
+/* framed: false (a top page), true (a frame whose parent is this same origin) or 'other' (a frame whose parent is another
+   origin, whose location throws as a browser's does); nodes: elements the page holds, by id */
+function platformPage({ site = P1, origin = PLATFORM, local = {}, framed = false, accepted = true, answerWith = null, fetchImpl = null, cachesImpl = null, nodes = {} } = {}) {
   const ev = events();
   const t = timers();
   const frames = [], posts = [], fetches = [], dispatched = [];
@@ -203,9 +210,14 @@ function platformPage({ site = P1, origin = PLATFORM, local = {}, framed = false
     caches: cachesImpl
   });
   window.top = framed ? {} : window;
+  window.parent = framed === 'other' ? { get location() { throw new Error('SecurityError: cross-origin'); } } : framed ? { location: { origin } } : window;
   window.dispatchEvent = (e) => { dispatched.push({ type: e.type, detail: e.detail }); return true; };
   const document = {
     readyState: 'complete', documentElement: { appendChild: (n) => n },
+    getElementById: (id) => {
+      const find = (n) => (n && n.id === id ? n : ((n && n.children) || []).map(find).find(Boolean));
+      return nodes[id] || Object.values(nodes).map(find).find(Boolean) || null;
+    },
     body: {
       appendChild(node) {
         frames.push(node);
@@ -242,7 +254,9 @@ const answerFrom = (node, posts, ev, { origin = PROFILE, source = node.contentWi
   ev.dispatch('message', { origin, source, data: { type: 'mcc:carry-answer', v: 1, id: id || req.msg.id, access_token, carry: { device: null, pocket: null, mute: null, theme: null, kept: [], ...carry } } });
 };
 
-test('js/carry.js is inert in P0 and loaded by no page', async () => {
+test('js/carry.js is inert with P0\'s table, and from P1 the bar alone loads it', async () => {
+  assert.equal(SHIPPED.stage, 'P1');
+  assert.equal(SHIPPED.switches.carry, true, 'the table that ships has the carry on');
   const p = platformPage({ site: P0 });
   assert.deepEqual(plain(await p.carry.started), { result: 'off' });
   assert.deepEqual(p.frames, [], 'no frame');
@@ -258,14 +272,19 @@ test('js/carry.js is inert in P0 and loaded by no page', async () => {
       else if (/\.(html|m?js)$/.test(e.name) && rel !== 'js/carry.js' && /js\/carry\.js/.test(codeOf(read(rel), rel))) loaders.push(rel);
     }
   })('');
-  assert.deepEqual(loaders, [], 'no published page or script loads js/carry.js in P0');
+  assert.deepEqual(loaders, ['js/tabbar.js'], 'one script loads js/carry.js: the bar');
+  const bar = read('js/tabbar.js');
+  assert.match(bar, /function startCarry\(\) \{\n    if \(!carryWanted\(\)\) return;/, 'and only where carryWanted() says (scripts/test/site-hosts-engine.test.mjs)');
   assert.deepEqual(hostLiterals(read('js/carry.js'), 'js/carry.js'), [], 'js/carry.js names no site host');
   assert.deepEqual(hostLiterals(read('carry.html'), 'carry.html'), [], 'carry.html names no site host');
 });
 
 test('js/carry.js stays out of the way: not the platform, framed, signed in, or asked before', async () => {
   assert.equal((await platformPage({ origin: PROFILE }).carry.started).result, 'not_platform');
-  assert.equal((await platformPage({ framed: true }).carry.started).result, 'framed');
+  assert.equal((await platformPage({ framed: true }).carry.started).result, 'framed', 'the globe inside the World: the World asks');
+  const overMusic = platformPage({ framed: 'other' });
+  assert.equal(overMusic.frames.length, 1, 'the World framed over Music on Matthew\'s host asks for itself');
+  assert.equal(overMusic.frames[0].attrs.src, `${PROFILE}/carry.html`);
   const signedIn = { mccdb_session: JSON.stringify({ access_token: 'here', refresh_token: 'r', expires_at: 4102444800 }) };
   assert.equal((await platformPage({ local: signedIn }).carry.started).result, 'signed_in');
   const marked = { mcc_carry_v1: JSON.stringify({ v: 1, result: 'none', at: new Date().toISOString() }) };
@@ -337,6 +356,43 @@ test('js/carry.js: nothing to carry, a silent frame, or a refused token leave a 
   assert.equal(carried.carry.line(), '', 'nothing to say once carried');
   const f = equityupriseSite('P1');
   assert.equal(f.switches.carry, true);
+});
+
+/* an element of the page, as much of one as the line needs */
+function fakeNode(id) {
+  return { id, children: [], attrs: {}, parentNode: null,
+    get firstChild() { return this.children[0] || null; },
+    insertBefore(n, ref) { n.parentNode = this; const i = ref ? this.children.indexOf(ref) : -1; if (i === -1) this.children.push(n); else this.children.splice(i, 0, n); return n; },
+    appendChild(n) { n.parentNode = this; this.children.push(n); return n; },
+    setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }, removeAttribute(k) { delete this.attrs[k]; } };
+}
+
+test('js/carry.js says the clear line on the sign-in page and on the account chip, and says it no more once signed in', async () => {
+  const pane = fakeNode('acSignInPane');
+  pane.appendChild(fakeNode('acInEmail'));
+  const nav = fakeNode('mccAuthNav');
+  const chip = nav.appendChild(fakeNode('mccAuthChip'));
+  const page = platformPage({ nodes: { acSignInPane: pane, mccAuthNav: nav } });
+  page.frames[0].fireLoad();
+  answerFrom(page.frames[0], page.posts, page.ev, { access_token: null });
+  assert.equal((await page.carry.started).result, 'none');
+  await flush();
+  const text = page.carry.line();
+  assert.ok(text.startsWith(`McCluster now lives at ${P1.platform.host}.`));
+  const shown = pane.children[0];
+  assert.equal(shown.id, 'mccCarryLine', 'first in the sign-in pane');
+  assert.equal(shown.textContent, text);
+  assert.equal(shown.className, 'ac__sub', 'in the page\'s own text style: nothing restyled');
+  assert.equal(chip.getAttribute('title'), text, 'the chip says it');
+  const note = nav.children.find((n) => n.id === chip.getAttribute('aria-describedby'));
+  assert.ok(note && note.hidden === true && note.textContent === text, 'and describes itself with it to a screen reader');
+  page.carry.paint();
+  assert.equal(pane.children.filter((n) => n.id === 'mccCarryLine').length, 1, 'said once, however often the bar repaints');
+  page.window.localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'here', refresh_token: 'r', expires_at: 4102444800 }));
+  page.carry.paint();
+  assert.equal(chip.getAttribute('title'), null, 'signed in: the chip says nothing more');
+  assert.equal(chip.getAttribute('aria-describedby'), null);
+  assert.ok(shown.removed && note.removed, 'and the sign-in page neither');
 });
 
 test('js/carry.js adopts the device id only with the platform\'s own agreement, and pocket, mute and theme only where unset', async () => {

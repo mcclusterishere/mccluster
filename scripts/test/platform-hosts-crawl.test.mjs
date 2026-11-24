@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ROOT, localFetcher, githubPages, workerEnv, crawlPlan, COMPARED_HEADERS } from '../e2e/platform-hosts.e2e.mjs';
+import { ROOT, localFetcher, githubPages, workerEnv, crawlPlan, crawlUrls, diffCrawls, judgeServesEverything, stageJudged, COMPARED_HEADERS } from '../e2e/platform-hosts.e2e.mjs';
 import { siteTable, readRecord } from '../../tools/build-site-hosts.mjs';
 
 const imp = (rel) => import(pathToFileURL(join(ROOT, rel)).href);
@@ -99,4 +99,77 @@ test('the composition the crawl runs is the one entry-platform.js runs before th
   const crawl = readFileSync(join(ROOT, 'scripts/e2e/platform-hosts.e2e.mjs'), 'utf8');
   assert.match(crawl, /createSiteRouter\(\{ site: site \|\| await loadSite\(root\), company: COMPANY_PARTS, worldDoor: WORLD_DOOR_PARTS \}\)/);
   assert.doesNotMatch(crawl, /companySiteResponse|humanUpriseResponse/, 'not the per-host wrappers, which are bound to the shipped table');
+});
+
+/* V-2 of the P0 verification: SPEC-PLATFORM risk 19 is "mccluster.org/index.html changes meaning" (a 301 to the World
+   until P1, the HERE front door from P1), so the crawl asks every host for a bare /index.html as well as /index.html with a
+   World query. */
+test('the crawl asks every host for a bare /index.html and for /index.html?view=feed', () => {
+  for (const stage of ['P0', 'P1', 'P3']) {
+    const plan = crawlPlan(tableOf(stage));
+    const urls = new Set(crawlUrls(plan));
+    for (const host of plan.hosts) {
+      for (const path of ['/index.html', '/index.html?view=feed']) assert.ok(urls.has(`https://${host}${path}`), `${stage}: https://${host}${path} is crawled`);
+    }
+  }
+});
+
+/* V-3 of the P0 verification: the live comparison against a baseline compares what a host answered (status, Location,
+   the head and the headers), never the words a failed lookup came back with: an inert door that does not resolve in either
+   crawl ("ENOTFOUND" once, "Request was cancelled." the next time) is no difference. */
+test('a live comparison counts what hosts answered, never how an unresolvable host failed', () => {
+  const row = (url, extra = {}) => ({ url, status: null, location: null, error: null, headers: {}, canonical: null, og_url: null, og_site_name: null, robots: null, ...extra });
+  const before = { rows: [
+    row('https://humanuprise.com/', { error: 'ENOTFOUND' }), row('https://humanuprise.com/x', { error: 'ENOTFOUND' }),
+    row('https://mccluster.org/', { status: 200, canonical: 'https://mccluster.org/' }), row('https://mccluster.org/a', { status: 301, location: 'https://matthew.mccluster.org/a' }),
+    row('https://door.example/', { error: 'ENOTFOUND' }), row('https://up.example/', { status: 200 })
+  ] };
+  const after = { rows: [
+    row('https://humanuprise.com/', { error: 'Request was cancelled.' }), row('https://humanuprise.com/x', { error: 'getaddrinfo ENOTFOUND humanuprise.com' }),
+    row('https://mccluster.org/', { status: 200, canonical: 'https://mccluster.org/' }), row('https://mccluster.org/a', { status: 200 }),
+    row('https://door.example/', { status: 200 }), row('https://up.example/', { error: 'ECONNRESET' })
+  ] };
+  const diffs = diffCrawls(before, after);
+  assert.deepEqual(diffs.map((d) => d.url), ['https://door.example/', 'https://mccluster.org/a', 'https://up.example/'],
+    'unresolvable in both crawls is no difference; an answer that appeared, went or changed is one');
+  const moved = diffs.find((d) => d.url === 'https://mccluster.org/a');
+  assert.deepEqual(Object.keys(moved.fields).sort(), ['location', 'status']);
+  assert.ok(!diffs.some((d) => d.fields && 'error' in d.fields && d.fields.error.before && d.fields.error.after), 'two failures never differ by their words');
+});
+
+/* P1's acceptance in the local crawl (SPEC-PLATFORM 4): the platform and its routed doors are judged by the stage's own
+   rules, every other host by production's answers before P0. Each rule catches the answer it exists for. */
+test('from P1 the crawl judges the platform by the stage: 200 or the class Matthew\'s host answers, profile_only to his host, nothing else to it', () => {
+  const P1 = tableOf('P1'), P0 = tableOf('P0');
+  const PLAT = P1.platform.origin, PROF = P1.profile.origin;
+  assert.equal(stageJudged(P1, P1.platform.host), true);
+  assert.equal(stageJudged(P1, 'www.mccluster.org'), true, 'the www door is routed and sends everything to the platform');
+  assert.equal(stageJudged(P1, 'humanuprise.com'), false, 'an inert door is held to production\'s answers');
+  assert.equal(stageJudged(P1, P1.profile.host), false, 'Matthew\'s host is held to production\'s answers until P3');
+  assert.equal(stageJudged(P0, P0.platform.host), false, 'P0 is held to production\'s answers everywhere');
+  const row = (url, extra = {}) => ({ url, status: 200, location: null, error: null, headers: {}, ...extra });
+  const good = [
+    row(`${PLAT}/listen.html`), row(`${PROF}/listen.html`),
+    row(`${PLAT}/engineering`, { status: 301, location: `${PLAT}/engineering/` }), row(`${PROF}/engineering`, { status: 301, location: `${PROF}/engineering/` }),
+    row(`${PLAT}/nope.html`, { status: 404 }), row(`${PROF}/nope.html`, { status: 404 }),
+    row(`${PLAT}/whip.html`, { status: 301, location: `${PROF}/whip.html` }), row(`${PROF}/whip.html`),
+    row(`${PLAT}/index.html?view=feed`, { status: 301, location: `${PLAT}/?view=feed` }),
+    row(`${PLAT}/mnet.html`, { status: 301, location: `${PLAT}/` }),
+    row(`${PLAT}/`), row('http://mccluster.org/', { status: 301, location: `${PLAT}/` }),
+    row('https://www.mccluster.org/listen.html?a=1', { status: 301, location: `${PLAT}/listen.html?a=1` })
+  ];
+  assert.deepEqual(judgeServesEverything({ rows: good }, P1), [], 'the answers P1 means');
+  const bad = (rows, problem) => {
+    const found = judgeServesEverything({ rows: [...good.filter((g) => !rows.some((r) => r.url === g.url)), ...rows] }, P1);
+    assert.ok(found.some((f) => problem.test(f.problem)), `${problem}: ${JSON.stringify(found)}`);
+  };
+  bad([row(`${PLAT}/listen.html`, { status: 301, location: `${PROF}/listen.html` })], /sends the visitor to a document on Matthew's host/);
+  bad([row(`${PLAT}/whip.html`)], /profile_only answers 200/);
+  bad([row(`${PLAT}/nope.html`)], /not the same class of answer/);
+  bad([row(`${PLAT}/listen.html`, { status: 404 })], /not the same class of answer/);
+  bad([row(`${PLAT}/engineering`, { status: 301, location: `${PLAT}/walls/` })], /redirects to \/walls\//);
+  bad([row(`${PLAT}/index.html?view=feed`)], /the World's other address answers 200/);
+  bad([row(`${PLAT}/listen.html`, { headers: { 'x-robots-tag': 'noindex' } })], /x-robots-tag noindex/);
+  bad([row('https://www.mccluster.org/listen.html?a=1', { status: 301, location: `${PROF}/listen.html?a=1` })], /a door of the platform answers 301/);
+  bad([row(`${PLAT}/listen.html`, { status: 302, location: 'https://evil.example/x' })], /sends the visitor off the site/);
 });

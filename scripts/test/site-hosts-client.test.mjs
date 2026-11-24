@@ -24,7 +24,10 @@ import { hostLiterals } from '../../tools/build-site-hosts.mjs';
 import { publishedFilter } from '../e2e/platform-hosts.e2e.mjs';
 
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
-const TODAY = shippedSite();
+/* TODAY: P0's table, the values these files named before they read the table (their fallbacks still answer them); the
+   table that ships is P1's (SHIPPED: the record's edge.now) */
+const TODAY = stageSite('P0');
+const SHIPPED = shippedSite();
 const P1 = stageSite('P1');
 const F = equityupriseSite('P1');
 const ELSEWHERE = elsewhereSite('P0');
@@ -340,8 +343,10 @@ test('js/control-room/music-direct-sales.js: direct sales names the host the alb
   assert.equal(directSalesHead(undefined), 'this site');
 });
 
-test('the tables used here are the generated ones: today P0, the rewrite on the next platform', () => {
+test('the tables used here are the generated ones: P0\'s (the values before P1), P1\'s (the table that ships), the rewrite on the next platform', () => {
   assert.equal(TODAY.stage, 'P0');
+  assert.equal(SHIPPED.stage, 'P1', 'the table every page reads is P1\'s');
+  assert.deepEqual(JSON.parse(JSON.stringify(SHIPPED)), JSON.parse(JSON.stringify(P1)), 'and it is today\'s record at P1');
   assert.equal(TODAY.platform.origin, COMPANY);
   assert.equal(TODAY.profile.origin, PROFILE);
   assert.equal(P1.switches.platform_serves, 'everything');

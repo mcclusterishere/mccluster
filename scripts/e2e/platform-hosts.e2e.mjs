@@ -21,7 +21,11 @@
          (Cloudflare's managed robots.txt and its plain-http redirects) or as built at deploy (/site0/); when the platform
          passes a page through with a head other than the file's own; or when a classified page does not answer 200 where
          the table says it is served. A file this tree adds that production does not have yet (404 there, 200 here) is
-         listed, not failed.
+         listed, not failed. From P1 the platform and its routed doors change on purpose, so they are judged by the
+         stage's own rules instead of production's answers before P0 (judgeServesEverything): every public path on the
+         platform answers 200 or the same class of answer as on Matthew's host, the World's addresses and the platform's
+         own paths as the router says, profile_only 301 to his host and nothing else sends a visitor to a document there,
+         the doors send every path to the platform; every other host is still held to production's answers.
 
      PLATFORM_HOSTS_LIVE=1 node scripts/e2e/platform-hosts.e2e.mjs --out <file.json> [--baseline <file.json>]
          LIVE (opt-in; never in pull-request CI): the production hosts, GET only, nobody signed in, four requests at a
@@ -32,6 +36,10 @@
 
      node scripts/e2e/platform-hosts.e2e.mjs --write-fixture <live.json>
          Rewrites the fixture from a live crawl (the comparable fields only). Only from a live crawl, never by hand.
+
+     PLATFORM_HOSTS_LIVE=1 node scripts/e2e/platform-hosts.e2e.mjs --amend-fixture
+         Reads live (GET only) just the addresses the plan holds and the fixture does not yet, and adds their answers to it,
+         dated; refuses once production no longer answers as before P0.
 
    Nothing here changes anything anywhere: no POST, no sign-in, no DNS, no settings. */
 import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
@@ -59,8 +67,9 @@ export async function loadSite(root = ROOT) {
 
 /* paths that are not pages but that a stage must keep answering the same way */
 export const EXTRA_PATHS = Object.freeze([
-  /* the World and its queries (SPEC-PLATFORM 6, risk 19: /index.html with and without ?view=feed) */
-  '/?view=feed', '/index.html?view=feed', '/mnet.html', '/mnet.html?view=feed',
+  /* the World and its queries, and the old root document name with and without one (SPEC-PLATFORM 6, risk 19: from P1 a
+     bare /index.html on the platform is the HERE front door, and with ?view=feed still the World) */
+  '/?view=feed', '/index.html', '/index.html?view=feed', '/mnet.html', '/mnet.html?view=feed',
   /* a query is kept on every redirect */
   '/album.html?album=here', '/listen.html?from=crawl',
   /* the platform's own paths with and without their slash */
@@ -170,7 +179,9 @@ export function comparable(row, fields = COMPARED_FIELDS, headers = COMPARED_HEA
   return out;
 }
 
-/* every url whose comparable answer differs, appeared or went away */
+/* every url whose comparable answer differs, appeared or went away. What is compared is what a host answered (status,
+   Location, the head, the headers): a host that answered nothing in both crawls (an inert door that does not resolve) is
+   no difference, whatever words each failed lookup came back with ("ENOTFOUND" once, "Request was cancelled." the next) */
 export function diffCrawls(before, after, { only = null, fields = COMPARED_FIELDS, headers = COMPARED_HEADERS } = {}) {
   const a = new Map(before.rows.map((r) => [r.url, r]));
   const b = new Map(after.rows.map((r) => [r.url, r]));
@@ -180,6 +191,7 @@ export function diffCrawls(before, after, { only = null, fields = COMPARED_FIELD
     const x = a.get(url), y = b.get(url);
     if (!x || !y) { out.push({ url, change: x ? 'gone' : 'new' }); continue; }
     const cx = comparable(x, fields, headers), cy = comparable(y, fields, headers);
+    if (cx.error && cy.error && 'error' in cx) { cx.error = 'unanswered'; cy.error = 'unanswered'; }
     const changed = Object.keys(cx).filter((k) => cx[k] !== cy[k]);
     if (changed.length) out.push({ url, change: 'differs', fields: Object.fromEntries(changed.map((k) => [k, { before: cx[k], after: cy[k] }])) });
   }
@@ -200,9 +212,9 @@ export function summarize(result) {
 
 /* ---------- live: the production hosts, GET only ---------- */
 
-export async function liveCrawl(site, { concurrency = 4, pauseMs = 150, log = null } = {}) {
+export async function liveCrawl(site, { concurrency = 4, pauseMs = 150, log = null, only = null } = {}) {
   const plan = crawlPlan(site);
-  const urls = crawlUrls(plan);
+  const urls = crawlUrls(plan).filter((u) => !only || only(u));
   const fetchOne = (url) => fetch(url, {
     method: 'GET', redirect: 'manual', headers: { 'user-agent': UA, accept: 'text/html,application/xhtml+xml,*/*;q=0.8' },
     signal: AbortSignal.timeout(30000)
@@ -232,6 +244,31 @@ export function edgeOnly(site, url) {
 export function deployOnly(site, url) {
   const p = new URL(url).pathname;
   return site.promoted.some((d) => p.indexOf(d.prefix) === 0) ? `${p}: promoted into the published tree at deploy, not in this checkout` : null;
+}
+
+/* the fixture amended with the answers of a live crawl of the addresses it does not hold yet (the crawl's plan grew: V-2
+   of the P0 verification added a bare /index.html on every host). Only from a live crawl, never by hand; the rows it held
+   keep their answers and their date, and the amendment says when the new ones were read. */
+export function amendFixture(fixture, live, site) {
+  if (!live || live.schema !== SCHEMA || live.mode !== 'live') throw new Error('the fixture is amended only from a live crawl');
+  const have = new Set(fixture.rows.map((r) => r.url));
+  const rows = [], edge = {};
+  for (const r of live.rows) {
+    if (have.has(r.url)) continue;
+    const c = comparable(r);
+    const out = { url: r.url };
+    for (const [k, v] of Object.entries(c)) if (v !== null) out[k] = v;
+    rows.push(out);
+    const why = edgeOnly(site, r.url) || deployOnly(site, r.url);
+    if (why) edge[r.url] = why;
+  }
+  return {
+    ...fixture,
+    edge_only: { ...fixture.edge_only, ...edge },
+    amended: [...(fixture.amended || []), { captured_at: live.captured_at, urls: rows.map((r) => r.url),
+      _note: 'Addresses the crawl\'s plan gained after the fixture was read, read live (GET only, nobody signed in) by --amend-fixture while production still answered as before P0.' }],
+    rows: [...fixture.rows, ...rows]
+  };
 }
 
 export function fixtureFrom(live, site) {
@@ -395,6 +432,76 @@ export async function localCrawl(site, { root = ROOT } = {}) {
   return { schema: SCHEMA, mode: 'local', captured_at: new Date().toISOString(), stage: site.stage, record: site.record, hosts: plan.hosts, paths: plan.paths.length, rows };
 }
 
+/* the hosts whose answers a stage changes on purpose, judged by the stage's rules instead of production's answers before
+   P0: from P1 the platform (it serves every page) and the routed doors that send everything to it (www) */
+export function stageJudged(site, host) {
+  if (site.switches.platform_serves !== 'everything') return false;
+  if (host === site.platform.host) return true;
+  const door = site.doors.find((d) => d.host === host);
+  return !!(door && door.to === 'platform' && door.served_by === 'worker:mccluster' && /^routed/.test(String(door.state)));
+}
+const isRedirect = (status) => Number.isInteger(status) && status >= 300 && status < 400;
+const classOf = (row) => (row.error ? 'unanswered' : isRedirect(row.status) ? 'redirect' : String(row.status));
+
+/* P1 (SPEC-PLATFORM 4, the acceptance of "the platform serves everything"): every public path on the platform answers
+   200 or the same class of answer as the same path on Matthew's host (a redirect where his host redirects, a 404 where
+   his is a 404); the World's own addresses and the platform's own paths answer as the router says; Whip Equipped and the
+   owner's own pages (profile_only) answer 301 to his host; nothing else sends a visitor to a document on his host; plain
+   http goes to https on the platform; the routed doors send every path to the platform; no page the platform serves is
+   noindex there. */
+export function judgeServesEverything(local, site, fixture = null) {
+  const failures = [];
+  const loc = new Map(local.rows.map((r) => [r.url, r]));
+  const fx = new Map(((fixture && fixture.rows) || []).map((r) => [r.url, r]));
+  const P = site.platform.origin, M = site.profile.origin;
+  const worldQuery = (u) => site.world.query_keys.some((k) => u.searchParams.has(k));
+  for (const row of local.rows) {
+    const u = new URL(row.url);
+    if (!stageJudged(site, u.hostname)) continue;
+    const fail = (problem) => failures.push({ url: row.url, problem });
+    const path = u.pathname, q = u.search;
+    const where = row.location ? new URL(row.location, row.url) : null;
+    if (u.hostname !== site.platform.host) {
+      /* a routed door: every path to the same path and query on the platform */
+      if (row.status !== 301 || !where || where.href !== `${P}${path}${q}`) fail(`a door of the platform answers ${row.status || row.error} ${row.location || ''}, not 301 to ${P}${path}${q}`);
+      continue;
+    }
+    if (u.protocol === 'http:') {
+      if (row.status !== 301 || !where || where.href !== `${P}${path}${q}`) fail(`plain http answers ${row.status || row.error} ${row.location || ''}, not 301 to ${P}${path}${q}`);
+      continue;
+    }
+    if (where && where.origin === M && site.pageSet(path) !== 'profile_only') fail(`sends the visitor to a document on Matthew's host (${row.location})`);
+    if (where && where.origin !== P && where.origin !== M) fail(`sends the visitor off the site (${row.location})`);
+    if (path === site.world.root && !worldQuery(u) && row.status !== 200) fail(`the World answers ${row.status || row.error}, not 200`);
+    if (path === site.world.document || (path === site.platform.front_door_path && worldQuery(u))) {
+      if (row.status !== 301 || !where || where.href !== `${P}${site.world.root}${q}`) fail(`the World's other address answers ${row.status || row.error} ${row.location || ''}, not 301 to ${P}${site.world.root}${q}`);
+      continue;
+    }
+    if (path === site.world.root) continue;
+    /* the platform's own paths (and one asked for with a slash, folded to it) answer as before P1: production's answers */
+    if (site.ownPathOrigin(path) || (path.length > 1 && path.slice(-1) === '/' && site.ownPathOrigin(path.slice(0, -1)))) {
+      const want = fx.get(row.url);
+      if (want && ((want.status || null) !== (row.status || null) || (want.location || null) !== (row.location || null))) {
+        fail(`the platform's own path answers ${row.status} ${row.location || ''}, production ${want.status} ${want.location || ''}`);
+      }
+      continue;
+    }
+    if (site.pageSet(path) === 'profile_only') {
+      if (row.status !== 301 || !where || where.href !== `${M}${path}${q}`) fail(`profile_only answers ${row.status || row.error} ${row.location || ''}, not 301 to ${M}${path}${q}`);
+      continue;
+    }
+    /* every other path: the same class of answer as on Matthew's host, and 200 where his is 200 */
+    const mirror = loc.get(`https://${site.profile.host}${path}${q}`);
+    if (!mirror) { fail('no answer from Matthew\'s host to compare'); continue; }
+    if (classOf(row) !== classOf(mirror)) fail(`answers ${row.status || row.error}, Matthew's host ${mirror.status || mirror.error}: not the same class of answer`);
+    if (isRedirect(row.status) && isRedirect(mirror.status) && where && new URL(mirror.location, mirror.url).pathname !== where.pathname) {
+      fail(`redirects to ${where.pathname}, Matthew's host to ${new URL(mirror.location, mirror.url).pathname}`);
+    }
+    if (row.status === 200 && row.headers && row.headers['x-robots-tag']) fail(`served with x-robots-tag ${row.headers['x-robots-tag']}`);
+  }
+  return failures;
+}
+
 /* What a local crawl must show against the fixture. Returns { failures, added, skipped, compared }. */
 export function judgeLocal(local, fixture, site) {
   const failures = [], added = [], skipped = [];
@@ -405,6 +512,8 @@ export function judgeLocal(local, fixture, site) {
   for (const row of local.rows) {
     const why = fixture.edge_only[row.url] || edgeOnly(site, row.url) || deployOnly(site, row.url);
     if (why) { skipped.push({ url: row.url, why }); continue; }
+    /* a host the stage changes on purpose is judged by the stage's own rules, below */
+    if (stageJudged(site, new URL(row.url).hostname)) { compared += 1; continue; }
     const want = fx.get(row.url);
     if (!want) { failures.push({ url: row.url, problem: 'not in the fixture: rewrite it from a live crawl' }); continue; }
     compared += 1;
@@ -414,6 +523,8 @@ export function judgeLocal(local, fixture, site) {
     if (want.status === 404 && have.status === 200 && host === profile) { added.push(row.url); continue; }
     for (const f of [...ROUTING_FIELDS, ...COMPARED_HEADERS]) {
       const w = want[f] === undefined ? null : want[f];
+      /* unanswered both times (an inert door that does not resolve): the same answer, whatever words each lookup failed with */
+      if (f === 'error' && w && have.error) continue;
       if (have[f] !== w) failures.push({ url: row.url, problem: `${f}: production answered ${JSON.stringify(w)}, this tree ${JSON.stringify(have[f])}` });
     }
   }
@@ -426,10 +537,12 @@ export function judgeLocal(local, fixture, site) {
     if (!mirror || mirror.status !== 200) continue;
     for (const f of HEAD_FIELDS) if (row[f] !== mirror[f]) failures.push({ url: row.url, problem: `${f}: the platform's copy says ${JSON.stringify(row[f])}, the file says ${JSON.stringify(mirror[f])}` });
   }
-  /* every classified page answers 200 on the host that serves it at this stage */
+  failures.push(...judgeServesEverything(local, site, fixture));
+  /* every classified page answers 200 on the host that serves it at this stage (the World's document, where the platform
+     serves it, at the platform's root: its own address there) */
   for (const set of ['platform', 'profile', 'profile_only']) {
     for (const p of site.pages[set]) {
-      const url = site.siteUrl(p);
+      const url = p === site.world.document && site.servingOrigin(p) === site.platform.origin ? site.platform.origin + site.world.root : site.siteUrl(p);
       const row = loc.get(url);
       if (!row) { failures.push({ url, problem: `${p} (${set}) was not crawled` }); continue; }
       if (row.status !== 200) failures.push({ url, problem: `${p} (${set}): the table says ${site.servingOrigin(p)} serves it, and it answered ${row.status || row.error}` });
@@ -484,6 +597,21 @@ async function main(argv) {
     if (process.env.GITHUB_EVENT_NAME === 'pull_request' || process.env.GITHUB_EVENT_NAME === 'pull_request_target') {
       console.error('live mode is never run for a pull request; the local crawl is the check there');
       return 2;
+    }
+    if (argv.includes('--amend-fixture')) {
+      /* only the addresses the fixture does not hold yet, GET only; the fixture is production before P0, so this refuses
+         once production answers as P0 or a later stage does (carry.html on Matthew's host: 404 before P0, 200 from it) */
+      const fixture = readFixture();
+      const have = new Set(fixture.rows.map((r) => r.url));
+      const probe = await fetch(`${site.profile.origin}${site.profile.carry_path}`, { method: 'GET', redirect: 'manual', headers: { 'user-agent': UA }, signal: AbortSignal.timeout(30000) });
+      if (probe.status !== 404) { console.error(`production answers ${site.profile.carry_path} with ${probe.status}: it no longer answers as before P0, so the fixture is not amended`); return 2; }
+      const result = await liveCrawl(site, { only: (u) => !have.has(u) });
+      if (!result.rows.length) { console.log('the fixture already holds every address of the plan'); return 0; }
+      const amended = amendFixture(fixture, result, site);
+      writeFileSync(join(ROOT, FIXTURE), JSON.stringify(amended, null, 1) + '\n');
+      for (const r of result.rows) console.log(`  ${r.url}: ${r.status || r.error}${r.location ? ' ' + r.location : ''}`);
+      console.log(`amended ${FIXTURE} with ${result.rows.length} answers read live`);
+      return 0;
     }
     const out = arg(argv, '--out');
     if (!out) { console.error('live mode needs --out <file.json> (the crawl is written there)'); return 2; }

@@ -68,10 +68,10 @@ test('the address: ?source=<slug> with &area and &preview, a ?mission= wins, the
   assert.equal(P.restHref('matthew.mccluster.org', '?source=project-drawdown'), '/mnet.html');
   assert.deepEqual(P.withoutSource({ mccSource: 'project-drawdown', mccMission: id(1) }), { mccMission: id(1) });
   assert.equal(P.withoutSource({ mccSource: 'project-drawdown' }), null);
-  /* Share: the company's World on every host, the same origin the bar's Globe goes to */
-  const origin = /var WORLD_ORIGIN = "([^"]+)";/.exec(read('js/tabbar.js'));
-  assert.ok(origin, 'js/tabbar.js still names WORLD_ORIGIN');
-  assert.equal(P.SHARE_ORIGIN, origin[1]);
+  /* Share: the company's World on every host, the same address the bar's Globe goes to: the platform's World in the one
+     table (worldAt in js/tabbar.js reads it there since P1; before, the bar named it in WORLD_ORIGIN) */
+  assert.match(read('js/tabbar.js'), /return onWorldHost\(\) \? location\.origin \+ S\.world\.root : S\.platform\.world_url;/);
+  assert.equal(P.SHARE_ORIGIN, shippedSite().platform.world_url);
   assert.equal(P.shareLink('project-drawdown'), 'https://mccluster.org/?source=project-drawdown');
   assert.equal(P.shareLink('<x>'), '');
 });

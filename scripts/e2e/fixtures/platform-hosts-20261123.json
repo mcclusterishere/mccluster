@@ -6239,6 +6239,50 @@
    "url": "https://here.mccluster.org/nope.html",
    "status": 301,
    "location": "https://matthew.mccluster.org/nope.html"
+  },
+  {
+   "url": "https://mccluster.org/index.html",
+   "status": 301,
+   "location": "https://mccluster.org/"
+  },
+  {
+   "url": "https://matthew.mccluster.org/index.html",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/",
+   "og_url": "https://matthew.mccluster.org/",
+   "og_site_name": "Matthew McCluster"
+  },
+  {
+   "url": "https://www.mccluster.org/index.html",
+   "status": 301,
+   "location": "https://mccluster.org/"
+  },
+  {
+   "url": "https://humanuprise.com/index.html",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/index.html",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://here.mccluster.org/index.html",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/index.html"
+  }
+ ],
+ "amended": [
+  {
+   "captured_at": "2026-11-24T03:46:41.303Z",
+   "urls": [
+    "https://mccluster.org/index.html",
+    "https://matthew.mccluster.org/index.html",
+    "https://www.mccluster.org/index.html",
+    "https://humanuprise.com/index.html",
+    "https://www.humanuprise.com/index.html",
+    "https://here.mccluster.org/index.html"
+   ],
+   "_note": "Addresses the crawl's plan gained after the fixture was read, read live (GET only, nobody signed in) by --amend-fixture while production still answered as before P0."
   }
  ]
 }

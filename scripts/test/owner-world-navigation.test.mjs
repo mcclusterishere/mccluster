@@ -7,7 +7,9 @@ const source=read('js/tabbar.js');
 const fn=source.slice(source.indexOf('function adminBar()'),source.indexOf('function markAdminHere()'));
 for(const world of ['https://mccluster.org/?view=feed','https://humanuprise.com/?view=feed','https://matthew.mccluster.org/mnet.html?view=feed']){
   test('owner keeps seven destinations and the canonical World door: '+world,()=>{
-    const ctx={HOUSE:'https://matthew.mccluster.org/',ROOT:'https://matthew.mccluster.org/',HOUSE_LABEL:'Matthew',textOf:x=>x,worldAt:q=>{assert.equal(q,'?view=feed');return world;},PLAY_SVG:'',HOME_SVG:'',CHART_SVG:'',WORLD_SVG:''};
+    /* the owner's pages are linked where the table serves them (pageHref, js/tabbar.js; scripts/test/site-hosts-engine.test.mjs
+       runs it with each table): here a stand-in that answers Matthew's host, as before P1 */
+    const ctx={pageHref:p=>'https://matthew.mccluster.org/'+p,ROOT:'https://matthew.mccluster.org/',HOUSE_LABEL:'Matthew',textOf:x=>x,worldAt:q=>{assert.equal(q,'?view=feed');return world;},PLAY_SVG:'',HOME_SVG:'',CHART_SVG:'',WORLD_SVG:''};
     vm.runInNewContext(fn+'; result=adminBar();',ctx);
     const links=[...ctx.result.matchAll(/<a\b([^>]+)>/g)].map(m=>({key:/data-appnav="([^"]+)"/.exec(m[1])[1],href:/href="([^"]+)"/.exec(m[1])[1]}));
     assert.deepEqual(links.map(x=>x.key),['music','admin-inbox','admin-home','home','analytics','world','games']);

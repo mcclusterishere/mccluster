@@ -47,18 +47,22 @@ test('a member with an unfinished profile or contact step gets the World, with t
   assert.match(css, /\.mn__finish-card:not\(\[hidden\]\) \{ display: block; \}/);
 });
 
-test('on the World\'s host, a link to one of Matthew\'s rooms goes to his site outright, carrying the sign-in', async () => {
+test('on the World\'s host, a link to a page served elsewhere goes there outright: Matthew\'s rooms before P1, Whip and the owner\'s own pages from P1', async () => {
   const bar = await read('js/tabbar.js');
-  /* the Worker serves the World's rooms the generated table lists (workers/mccluster/src/world-host.js reads them there) */
+  /* before P1 the bar kept its own list of what the World's host serves, beside the Worker's; since P1 both read the one
+     generated table (window.MCC_SITE on the pages, hosts.generated.js in the Worker), so they agree by construction */
   const { WORLD_ROOMS, WORLD_PREFIXES } = await import('../../workers/mccluster/src/platform/hosts.generated.js');
-  assert.match(bar, /function houseBound\(url\) \{\n    return ON_WORLD_HOST && url\.origin === location\.origin && !WORLD_HOST_PATHS\.test\(url\.pathname\);/);
-  assert.match(bar, /if \(houseBound\(url\)\) url = new URL\(url\.pathname \+ url\.search \+ url\.hash, HOUSE_ORIGIN\);/);
-  /* the bar's list and the Worker's agree on what the host serves */
+  const { shippedSite } = await import('./support/mcc-site.mjs');
+  const client = shippedSite();
+  assert.match(bar, /function houseBound\(url\) \{\n    var S = window\.MCC_SITE;\n    return !!S && onWorldHost\(\) && url\.origin === location\.origin && !isWorldPath\(url\.pathname\) &&\n      S\.servingOrigin\(url\.pathname\) !== location\.origin;\n  \}/);
+  assert.match(bar, /if \(houseBound\(url\)\) url = new URL\(url\.pathname \+ url\.search \+ url\.hash, window\.MCC_SITE\.servingOrigin\(url\.pathname\)\);/);
+  assert.deepEqual([...client.world.rooms], [...WORLD_ROOMS], 'the bar and the Worker read the same rooms');
+  assert.deepEqual([...client.world.room_prefixes], [...WORLD_PREFIXES], 'and the same prefixes');
   for (const room of ['action-globe.html', 'action-policy.html', 'world-news.html', 'create.html', 'give.html', 'privacy.html', 'account.html', 'login.html', 'forgot-password.html', 'reset-password.html', 'onboard.html', 'sw.js']) {
-    assert.ok(WORLD_ROOMS.includes(`/${room}`), `Worker serves ${room}`); assert.ok(bar.includes(room.replace('.', '\\.') + '$'), `bar knows ${room}`);
+    assert.ok(WORLD_ROOMS.includes(`/${room}`), `Worker serves ${room}`);
   }
   for (const prefix of ['/action-network-', '/action/', '/auth/', '/js/', '/css/', '/assets/', '/data/', '/vendor/']) {
-    assert.ok(WORLD_PREFIXES.includes(prefix), `Worker serves ${prefix}`); assert.ok(bar.includes(prefix.slice(1).replace('/', '\\/')), `bar knows ${prefix}`);
+    assert.ok(WORLD_PREFIXES.includes(prefix), `Worker serves ${prefix}`);
   }
 });
 

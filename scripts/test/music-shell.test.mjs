@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import vm from 'node:vm';
+import { shippedSite } from './support/mcc-site.mjs';
 
 /* ONE PLAYER ACROSS MUSIC PAGES (music slice M5; docs/music/MUSIC-RELEASE-20261119.md, "M5").
 
@@ -21,6 +22,9 @@ import vm from 'node:vm';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 const HOUSE = 'https://matthew.mccluster.org';
+/* every music page loads js/shell-boot.js first, which sets window.MCC_SITE (the one table of hosts); since P1
+   js/music-shell.js reads the World's hosts from it (SPEC-PLATFORM 4), so the stand-in browser carries the table that ships */
+const SITE = shippedSite();
 
 /* ---------- a small stand-in browser ---------- */
 function area() {
@@ -67,7 +71,7 @@ function browserWindow({ path = '/listen.html', search = '', marker = null, top 
     addEventListener: (t, f, o) => { (docListeners[t] = docListeners[t] || []).push(f); }, removeEventListener() {},
     createElement: () => anything('created'), createComment: () => anything('comment'), getElementById: () => null, querySelector: () => null, querySelectorAll: () => [] };
   const win = {
-    document, localStorage: area(), sessionStorage: area(), URL, URLSearchParams, Intl, Uint8Array, JSON, Math, Date, Promise, Object, Array, String, Number, Boolean, RegExp, Error, Map, Set, WeakMap, WeakSet, Symbol, console,
+    MCC_SITE: SITE, document, localStorage: area(), sessionStorage: area(), URL, URLSearchParams, Intl, Uint8Array, JSON, Math, Date, Promise, Object, Array, String, Number, Boolean, RegExp, Error, Map, Set, WeakMap, WeakSet, Symbol, console,
     navigator: { onLine: true, language: 'en-US', platform: 'test', userAgent: 'test', vendor: '', maxTouchPoints: 0 },
     screen: { width: 390, height: 844 }, innerWidth: 390, innerHeight: 844, devicePixelRatio: 1, scrollY: 0,
     matchMedia: () => ({ matches: false, addEventListener() {}, addListener() {} }),
@@ -506,7 +510,8 @@ test('the concealment allow-list keeps every fixed transport, chrome and status 
   /* page content (concealed with the page): the room's canvas and its premiere, the label's sheet, the masthead's page
      action, the licence desk, the CRM form, the pocket (never on a music page), and a sign-in link's error banner on arrival */
   const CONTENT = { 'js/chamber.js': 2, 'js/label.js': 1, 'js/masthead.js': 1, 'js/licensedesk.js': 1, 'js/crm.js': 1, 'js/pip.js': 1, 'js/backend.js': 1 };
-  const KEPT = { 'js/tabbar.js': 5, 'js/music-engine.js': 2, 'js/world-audio-continuity.js': 2, 'js/site-navigation.js': 2, 'js/label.js': 1, 'js/masthead.js': 1, 'js/intuition.js': 1, 'js/control-palette.js': 2, 'js/gated-audio.js': 1 };
+  /* js/tabbar.js's sixth: the installed app's move card (P1, Matthew's host in standalone mode), the bar's own .dk-peek */
+  const KEPT = { 'js/tabbar.js': 6, 'js/music-engine.js': 2, 'js/world-audio-continuity.js': 2, 'js/site-navigation.js': 2, 'js/label.js': 1, 'js/masthead.js': 1, 'js/intuition.js': 1, 'js/control-palette.js': 2, 'js/gated-audio.js': 1 };
   const pages = ['listen.html', 'music-creator.html', 'album.html'];
   const scripts = new Set(['js/tabbar.js', 'js/music-engine.js', 'js/world-audio-continuity.js', 'js/site-navigation.js', 'js/live-content.js']);
   for (const p of pages) for (const m of read(p).matchAll(/<script\b[^>]*\bsrc="(js\/[^"?]+)/g)) scripts.add(m[1]);

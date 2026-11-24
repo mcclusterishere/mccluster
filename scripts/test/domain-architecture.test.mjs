@@ -177,9 +177,20 @@ test("the law never claims a stage that has not shipped", () => {
     assert.match(read(f), /edge\.now\.p0_changes/, `${f}: points at the record's list of what P0 itself changes`);
   }
   assert.match(canon.public_properties.stage, /edge\.now\.p0_changes/, "and so does the machine contract");
+  /* from P1 the same places point at the record's list of what P1 itself changes, and say what P2 and P3 will do */
+  if (order.indexOf(now) >= order.indexOf("P1")) {
+    for (const f of ["AGENTS.md", "CLAUDE.md", "CODEX.md", "GEMINI.md", ".github/copilot-instructions.md", "docs/control-plane/DOMAINS-AND-ENTITIES.md",
+      "docs/control-plane/CANONICAL-ARCHITECTURE.md"]) {
+      const body = read(f);
+      assert.match(body, /edge\.now\.p1_changes/, `${f}: points at the record's list of what P1 changes`);
+      assert.match(body, /P2[^.]*canonical/, `${f}: says plainly what P2 will do`);
+      assert.match(body, /P3[^.]*301/, `${f}: says plainly what P3 will do`);
+    }
+    assert.match(canon.public_properties.stage, /edge\.now\.p1_changes/, "and so does the machine contract");
+  }
 });
 
-test("the record lists what P0 itself changes once deployed, and each entry is what the code does", async () => {
+test("the record lists what P0 itself changed, and each entry is what the code does at the live stage", async () => {
   const imp = (f) => import(pathToFileURL(join(ROOT, f)).href);
   const changes = arch.edge.now.p0_changes;
   assert.ok(Array.isArray(changes), "edge.now.p0_changes is a list");
@@ -198,11 +209,14 @@ test("the record lists what P0 itself changes once deployed, and each entry is w
   assert.match(read("workers/mccluster/src/world-host.js"), /redirect: 'manual'/, "never follows an upstream redirect");
   assert.equal(host.relocate(`${M}/js/halo/`, `${M}/js/halo`, `${P}/js/halo`), `${P}/js/halo/`);
   assert.equal(host.relocate("https://elsewhere.example/x", `${M}/js/halo`, `${P}/js/halo`), null);
-  /* returns follow the request, and fall back to Matthew's host at P0 */
+  /* returns follow the request, and fall back where the stage says: Matthew's host at P0, the platform from P1
+     (edge.now.p1_changes returns_fallback_platform) */
+  const fallback = SITE.switches.returns_fallback === "platform" ? P : M;
+  assert.equal(fallback, arch.edge.now.stage === "P0" ? M : P, "the fallback is the live stage's");
   const sh = await imp("supabase/functions/_shared/site-hosts.ts");
   assert.equal(sh.returnOrigin(P), P);
   assert.equal(sh.returnOrigin(M), M);
-  assert.equal(sh.returnOrigin("https://elsewhere.example"), M);
+  assert.equal(sh.returnOrigin("https://elsewhere.example"), fallback);
   assert.match(read("supabase/functions/shake-order/index.ts"), /const SITE = SITE_URL \?\? returnOrigin\(origin\);/, "an operator's SITE_URL still wins");
   /* the dead Here address is named by no return */
   for (const fn of ["backend-sub", "pay-now", "connect-onboard"]) {
@@ -212,15 +226,72 @@ test("the record lists what P0 itself changes once deployed, and each entry is w
   const md = await imp("supabase/functions/_shared/music-direct.ts");
   assert.equal(md.ALLOWED_ORIGINS.includes(P), keys.includes("music_direct_cors"), "the record lists the direct-sale CORS widening exactly when the code makes it");
   assert.equal(md.corsHeaders(P)["Access-Control-Allow-Origin"], P);
-  assert.equal(md.corsHeaders("https://elsewhere.example")["Access-Control-Allow-Origin"], M);
-  /* the carry page exists and is inert; Matthew's host is not routed */
+  assert.equal(md.corsHeaders(M)["Access-Control-Allow-Origin"], M);
+  assert.equal(md.corsHeaders("https://elsewhere.example")["Access-Control-Allow-Origin"], fallback);
+  /* the carry page exists (inert at P0; P1 turns the carry on); Matthew's host is not routed until P3 */
   assert.ok(existsSync(join(ROOT, "carry.html")));
-  assert.equal(SITE.switches.carry, false);
+  assert.equal(SITE.switches.carry, arch.edge.now.stage !== "P0");
   assert.equal(SITE.switches.profile_host_routed, false);
 });
 
-test("the law's sentence about today says what the P0 router answers on the platform", async () => {
-  assert.equal(arch.edge.now.stage, "P0", "this reads the P0 sentence; the stage after it rewrites both");
+test("the record lists what P1 itself changes once deployed, and each entry is what the code does", async () => {
+  if (arch.edge.now.stage === "P0") return;
+  const imp = (f) => import(pathToFileURL(join(ROOT, f)).href);
+  const changes = arch.edge.now.p1_changes;
+  assert.ok(Array.isArray(changes), "edge.now.p1_changes is a list");
+  assert.deepEqual(changes.map((c) => c.key), ["platform_serves_everything", "profile_only_to_profile_host", "www_to_apex", "humanuprise_to_platform",
+    "platform_app_start", "bar_local", "carry_on", "handoff_writer_off", "move_card", "returns_fallback_platform"]);
+  for (const c of changes) {
+    assert.ok(typeof c.what === "string" && c.what.length > 60, `${c.key}: says what changes`);
+    /* "file (name, name), file": each file exists and holds each name given after it */
+    for (const [, file, names = ""] of c.where.matchAll(/([^\s,()]+)(?:\s*\(([^)]*)\))?/g)) {
+      assert.ok(existsSync(join(ROOT, file)), `${c.key}: names where (${file})`);
+      for (const fn of names.split(/,\s*/).filter((n) => /^[A-Za-z_]\w*$/.test(n))) {
+        assert.match(read(file), new RegExp(`\\b${fn}\\b`), `${c.key}: ${file} has ${fn}`);
+      }
+    }
+  }
+  const { SITE } = await imp("workers/mccluster/src/platform/hosts.generated.js");
+  const { routeFor } = await imp("workers/mccluster/src/platform/router.js");
+  const P = SITE.platform.origin, M = SITE.profile.origin;
+  const at = (url) => routeFor(SITE, new URL(url));
+  assert.equal(SITE.switches.platform_serves, "everything");
+  /* platform_serves_everything: platform and profile pages pass through at their path, none noindex */
+  for (const path of ["/index.html", "/listen.html?x=1", "/album.html", "/creator.html", "/account.html", "/purchase.html", "/control.html", "/matthew-mccluster.html"]) {
+    const r = at(P + path);
+    assert.equal(r.kind, "pass", `${path}: ${JSON.stringify(r)}`);
+    assert.equal(r.noindex, false, `${path} is not noindex on the platform`);
+  }
+  assert.deepEqual(at(P + "/index.html?view=feed"), { kind: "moved", location: `${P}/?view=feed` });
+  assert.deepEqual(at(P + "/mnet.html?mission=m1"), { kind: "moved", location: `${P}/?mission=m1` });
+  /* profile_only_to_profile_host */
+  for (const path of arch.url_ownership.profile_only) assert.deepEqual(at(P + path + "?q=1"), { kind: "moved", location: `${M}${path}?q=1` }, path);
+  /* www_to_apex: every path */
+  const www = SITE.doors.find((d) => d.host === "www." + SITE.platform.host);
+  for (const path of ["/", "/whip.html", "/company", "/js/tabbar.js?v=1"]) assert.deepEqual(at(`https://${www.host}${path}`), { kind: "moved", location: `${P}${path}` }, path);
+  /* humanuprise_to_platform: the World door and its www, every path */
+  for (const host of ["humanuprise.com", "www.humanuprise.com"]) {
+    for (const path of ["/", "/album.html?a=1", "/robots.txt"]) assert.deepEqual(at(`https://${host}${path}`), { kind: "moved", location: `${P}${path}` }, host + path);
+  }
+  /* platform_app_start: the platform's manifest starts where the table says; Matthew's host is not routed */
+  assert.equal(SITE.platform.app_start_path, arch.platform.app_start_path);
+  assert.equal(at(P + "/manifest.json").appStart, SITE.platform.app_start_path);
+  assert.deepEqual(at(M + "/manifest.json"), { kind: "origin", classes: false });
+  const host = await imp("workers/mccluster/src/world-host.js");
+  assert.equal(typeof host.appManifest, "function", "world-host.js rewrites the platform's manifest");
+  /* bar_local, handoff_writer_off, move_card, carry_on: the named functions read the table (scripts/test/site-hosts-engine.test.mjs runs them) */
+  const bar = read("js/tabbar.js");
+  assert.match(bar, /function handoffWriterOn\(\) \{\s*var S = window\.MCC_SITE;\s*return !!\(S && S\.switches && S\.switches\.carry !== true\);/);
+  assert.match(bar, /function moveCardWanted\(\)/);
+  assert.match(bar, /function startCarry\(\)/);
+  assert.equal(SITE.switches.carry, true, "the carry is on");
+  /* returns_fallback_platform */
+  assert.equal(SITE.returnOrigin("https://elsewhere.example"), P);
+  assert.equal(SITE.returnOrigin(M), M, "a return started on his host still comes back there");
+});
+
+test("the law's sentence about today says what the P1 router answers on the platform", async () => {
+  assert.equal(arch.edge.now.stage, "P1", "this reads the P1 sentence; the stage after it rewrites both");
   const { SITE } = await import(pathToFileURL(join(ROOT, "workers/mccluster/src/platform/hosts.generated.js")).href);
   const { routeFor } = await import(pathToFileURL(join(ROOT, "workers/mccluster/src/platform/router.js")).href);
   const found = read("AGENTS.md").match(/Today the platform serves [^]*?Matthew's host serves every page\./);
@@ -228,25 +299,39 @@ test("the law's sentence about today says what the P0 router answers on the plat
   const sentence = found[0];
   const P = SITE.platform.origin, M = SITE.profile.origin;
   const at = (path) => routeFor(SITE, new URL(P + path));
+  const pass = (r) => r.kind === "pass" && r.noindex === false;
   const claims = [
     ["the Equity Uprise World at its root", "/", (r) => r.kind === "world"],
-    ["the World's rooms", "/account.html", (r) => r.kind === "pass"],
-    ["the World's rooms", "/action-network-hire.html", (r) => r.kind === "pass"],
-    ["the static files they load", "/js/tabbar.js", (r) => r.kind === "pass"],
-    ["the static files they load", "/sw.js", (r) => r.kind === "pass"],
+    ["the HERE front door at `/index.html`", "/index.html", pass],
+    ["every other page at its path (music", "/listen.html?from=law", pass],
+    ["albums", "/album.html", pass],
+    ["Creator Studio", "/mccluster-creator-studio.html", pass],
+    ["the account", "/account.html", pass],
+    ["checkout", "/purchase.html", pass],
+    ["the company's products", "/mccluster-corp.html", pass],
+    ["member pages", "/member-front.html", pass],
+    ["Control)", "/control.html", pass],
+    ["every other page at its path", "/matthew-mccluster.html", pass],
+    ["with the static files they load", "/js/tabbar.js", (r) => r.kind === "pass"],
+    ["with the static files they load", "/sw.js", (r) => r.kind === "pass"],
     ["the company page `/company`", "/company", (r) => r.kind === "own"],
     ["the company's news `/news/`", "/news/", (r) => r.kind === "own"],
     ["`robots.txt`, `sitemap.xml` and `llms.txt`", "/robots.txt", (r) => r.kind === "own"],
     ["`robots.txt`, `sitemap.xml` and `llms.txt`", "/sitemap.xml", (r) => r.kind === "own"],
     ["`robots.txt`, `sitemap.xml` and `llms.txt`", "/llms.txt", (r) => r.kind === "own"],
-    ["`/index.html` and `/mnet.html` on it answer 301 to its root", "/index.html", (r) => r.kind === "moved" && r.location === `${P}/`],
-    ["`/index.html` and `/mnet.html` on it answer 301 to its root", "/mnet.html", (r) => r.kind === "moved" && r.location === `${P}/`],
-    ["every other path on it answers 301 to the same path on Matthew's host", "/listen.html?from=law", (r) => r.kind === "moved" && r.location === `${M}/listen.html?from=law`],
-    ["every other path on it answers 301 to the same path on Matthew's host", "/whip.html", (r) => r.kind === "moved" && r.location === `${M}/whip.html`]
+    ["`/mnet.html` and a World query on `/index.html` (`?view=`, `?mission=`) answer 301 to its root", "/mnet.html", (r) => r.kind === "moved" && r.location === `${P}/`],
+    ["`/mnet.html` and a World query on `/index.html` (`?view=`, `?mission=`) answer 301 to its root", "/index.html?view=feed", (r) => r.kind === "moved" && r.location === `${P}/?view=feed`],
+    ["`/mnet.html` and a World query on `/index.html` (`?view=`, `?mission=`) answer 301 to its root", "/index.html?mission=m1", (r) => r.kind === "moved" && r.location === `${P}/?mission=m1`],
+    ["Whip Equipped and the owner's own pages (`profile_only`) answer 301 to the same path on Matthew's host", "/whip.html", (r) => r.kind === "moved" && r.location === `${M}/whip.html`],
+    ["Whip Equipped and the owner's own pages (`profile_only`) answer 301 to the same path on Matthew's host", "/prayer-closet.html?x=1", (r) => r.kind === "moved" && r.location === `${M}/prayer-closet.html?x=1`]
   ];
   for (const [words, path, agrees] of claims) {
     assert.ok(sentence.includes(words), `AGENTS.md hard rule 15 says: ${words}`);
-    assert.ok(agrees(at(path)), `and the P0 router agrees for ${path}: ${JSON.stringify(at(path))}`);
+    assert.ok(agrees(at(path)), `and the P1 router agrees for ${path}: ${JSON.stringify(at(path))}`);
+  }
+  /* "and Matthew's host serves every page": the router leaves his host to GitHub Pages until P3 */
+  for (const path of ["/", "/listen.html", "/whip.html", "/carry.html"]) {
+    assert.deepEqual(routeFor(SITE, new URL(M + path)), { kind: "origin", classes: false }, `Matthew's host answers ${path} itself`);
   }
 });
 
@@ -505,4 +590,14 @@ test("the adapters are thin pointers at AGENTS.md: every hard-rule heading, no c
   const kit = "`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/mccluster.mdc`, `.github/copilot-instructions.md`, `.github/instructions/mccluster.instructions.md`";
   for (const f of ["AGENTS.md", "docs/control-plane/ECOSYSTEM.md", "docs/control-plane/SATELLITE.md"]) assert.ok(read(f).includes(kit), `${f}: names the same seven-file satellite kit`);
   for (const f of ["docs/control-plane/ECOSYSTEM.md", "docs/control-plane/SATELLITE.md"]) assert.match(read(f), /never copy|never copied/i, `${f}: satellites never copy the building block`);
+});
+
+/* V-4 of the P0 verification: the human page names each set's size, and it is the record's */
+test("DOMAINS-AND-ENTITIES.md names each set's page count as the record has it", () => {
+  const doc = read("docs/control-plane/DOMAINS-AND-ENTITIES.md");
+  for (const set of ["platform", "profile", "profile_only"]) {
+    const m = new RegExp("\\*\\*`" + set + "`\\*\\* \\((\\d+) pages\\)").exec(doc);
+    assert.ok(m, `DOMAINS-AND-ENTITIES.md names the ${set} set's size`);
+    assert.equal(Number(m[1]), arch.url_ownership[set].length, `the ${set} set: the page says ${m[1]}, the record holds ${arch.url_ownership[set].length}`);
+  }
 });

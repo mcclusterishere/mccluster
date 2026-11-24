@@ -1,12 +1,13 @@
 /* THE HOST ROUTER (SPEC-PLATFORM 2.4): one table, every host, every path class, every stage.
 
    workers/mccluster/src/platform/router.js reads the generated table (src/platform/hosts.generated.js, from
-   data/seo/domain-architecture.json) and decides, per host and path, what Worker mccluster answers. With today's
-   table (stage P0) it must answer exactly what was measured on 2026-11-23 (test/fixtures/platform-hosts-probe-20261123.json,
-   from the SPEC-PLATFORM probe record: GET and HEAD only). The later stages' tables exist only here, built by
-   tools/build-site-hosts.mjs from the same record: P1 (the platform serves every page), P3 (Matthew's host routed to the
-   Worker answers 301s for the pages that moved) and stage F (the equityuprise rewrite: platform.origin
-   https://equityuprise.com, mccluster.org McCluster Corp's tenant). Nothing here reaches the network. */
+   data/seo/domain-architecture.json) and decides, per host and path, what Worker mccluster answers. With P0's table it
+   must answer exactly what was measured on 2026-11-23 (test/fixtures/platform-hosts-probe-20261123.json, from the
+   SPEC-PLATFORM probe record: GET and HEAD only), so a rollback to P0 restores exactly that. The table that ships is P1's
+   (the generated SITE; test/platform-p1.test.mjs holds it to every published page). The other stages' tables are built
+   here by tools/build-site-hosts.mjs from the same record: P0, P1, P3 (Matthew's host routed to the Worker answers 301s
+   for the pages that moved) and stage F (the equityuprise rewrite: platform.origin https://equityuprise.com,
+   mccluster.org McCluster Corp's tenant). Nothing here reaches the network. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -26,7 +27,9 @@ const EQ = 'https://equityuprise.com';
 
 const record = readRecord();
 const tableOf = (stage, rec = record) => makeSite(siteTable(rec, { stage }));
-const P0 = SITE;
+/* P0's table, rebuilt from the record: what shipped before P1 and what a rollback to P0 (edge.now back to P0) restores.
+   The generated SITE is the stage that ships (P1, test/platform-p1.test.mjs). */
+const P0 = tableOf('P0');
 const P1 = tableOf('P1');
 const P3 = tableOf('P3');
 
@@ -63,7 +66,7 @@ function check(site, url, want, init = {}) {
   assert.deepEqual(seen, want, `${site.stage} ${init.method || 'GET'} ${url}`);
 }
 
-/* ---------- P0: today, exactly ---------- */
+/* ---------- P0: as measured on 2026-11-23, exactly ---------- */
 
 test('P0 platform host: the World at /, its rooms and files passed through, the company\'s own pages, every other path 301 to the same path on Matthew\'s host', () => {
   const world = { kind: 'world', origin: PLAT, head: 'platform' };
@@ -307,7 +310,7 @@ const P0_ROUTER = routerFor(P0);
    what GitHub sent. */
 const EDGE_TTL = /\.(?:js|png)$/;
 
-test('with today\'s table every probed path on mccluster.org and www.mccluster.org answers as measured on 2026-11-23: status, location and the headers that matter', async () => {
+test('with P0\'s table every probed path on mccluster.org and www.mccluster.org answers as measured on 2026-11-23: status, location and the headers that matter', async () => {
   const hops = PROBE.head_hops.filter((h) => /^https?:\/\/(?:www\.)?mccluster\.org\//.test(h.url));
   assert.ok(hops.length >= 90, 'the fixture holds both hosts');
   let compared = 0;

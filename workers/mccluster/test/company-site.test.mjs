@@ -1,7 +1,10 @@
 /* McCluster Corp's property on mccluster.org: served by host, inert elsewhere.
    Its root is the World (owner, 2026-10-15: "we need mccluster.org to
-   actually show the World"), the company page is /company, and every path
-   that is neither keeps today's 301 to matthew.mccluster.org.
+   actually show the World"), the company page is /company, and since P1 every
+   other page answers at its path, passed through from the static origin, with
+   Whip Equipped and the owner's own pages (profile_only) sent to
+   matthew.mccluster.org. Before P1 every path that was neither answered 301 to
+   matthew.mccluster.org (test/platform-router.test.mjs keeps P0's table).
    docs/control-plane/DOMAINS-AND-ENTITIES.md */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,6 +26,8 @@ const fetchImpl = async (r) => {
   if (u.pathname === '/account.html') return new Response('<!doctype html><title>Account</title>', { status: 200, headers: { 'content-type': 'text/html' } });
   if (u.pathname === '/action-globe.html') return new Response('<!doctype html><title>Earth</title>', { status: 200, headers: { 'content-type': 'text/html' } });
   if (u.pathname === '/action/') return new Response('<!doctype html><title>Campaign</title>', { status: 200, headers: { 'content-type': 'text/html' } });
+  /* the pages the platform serves from P1, as the static origin answers them */
+  if (/^\/(?:index|album|listen|docket-516|music-creator)\.html$|^\/engineering\//.test(u.pathname)) return new Response('<!doctype html><title>Page</title>', { status: 200, headers: { 'content-type': 'text/html' } });
   return new Response('nope', { status: 404, headers: { 'content-type': 'text/plain' } });
 };
 const ask = (url, method, headers) => companySiteResponse(req(url, method, headers), { PUBLIC_ORIGIN: 'http://pages.test' }, fetchImpl);
@@ -77,9 +82,16 @@ test('the apex root is the World, company-first: this host\'s canonical, McClust
   assert.equal((await ask('https://mccluster.org/', 'POST')).status, 405);
 });
 
-test('/mnet.html and /index.html are the root here, query and all', async () => {
+/* P1: /index.html is the HERE front door at its path; only a World query on it (view=, mission=) is the root's */
+test('/mnet.html and a World query on /index.html are the root here, query and all; /index.html itself is the HERE front door', async () => {
   assert.equal((await ask('https://mccluster.org/mnet.html?view=missions&mission=58eeb75d-a5b6-4280-9cd7-3b0cabf02264')).headers.get('location'), 'https://mccluster.org/?view=missions&mission=58eeb75d-a5b6-4280-9cd7-3b0cabf02264');
-  assert.equal((await ask('https://mccluster.org/index.html')).headers.get('location'), 'https://mccluster.org/');
+  assert.equal((await ask('https://mccluster.org/index.html?view=feed')).headers.get('location'), 'https://mccluster.org/?view=feed');
+  assert.equal((await ask('https://mccluster.org/index.html?mission=m1')).headers.get('location'), 'https://mccluster.org/?mission=m1');
+  const door = await ask('https://mccluster.org/index.html?album=here');
+  assert.equal(door.status, 200, 'the HERE front door answers at its path');
+  assert.equal(door.headers.get('location'), null);
+  assert.equal(door.headers.get('x-robots-tag'), null, 'not noindex: its canonical says where it lives (P2 moves canonicals)');
+  assert.equal(upstream.at(-1).url, 'http://pages.test/index.html?album=here');
 });
 
 /* PUBLIC MISSIONS (owner, 2026-11-17: "people can just go look at the missions, sign in, get that user flow"): a shared
@@ -105,7 +117,8 @@ test('a shared /mnet.html?mission= link moves to /?mission= with every parameter
   assert.equal(upstream.at(-1).url, `http://pages.test/mnet.html?mission=${id}`);
 });
 
-test('the World\'s rooms and files ride this host, noindex on the documents', async () => {
+/* P1: every page and file rides this host; no page is noindex here any more (at P0 the World's rooms were) */
+test('the World\'s rooms and files ride this host, and no page the platform serves is noindex', async () => {
   const js = await ask('https://mccluster.org/js/mnet.js?v=abc');
   assert.equal(js.status, 200);
   assert.equal(js.headers.get('etag'), '"j1"', 'a static file keeps its validator');
@@ -113,7 +126,7 @@ test('the World\'s rooms and files ride this host, noindex on the documents', as
   assert.equal(upstream.at(-1).url, 'http://pages.test/js/mnet.js?v=abc');
   const room = await ask('https://mccluster.org/account.html');
   assert.equal(room.status, 200);
-  assert.equal(room.headers.get('x-robots-tag'), 'noindex');
+  assert.equal(room.headers.get('x-robots-tag'), null);
   assert.equal((await ask('https://mccluster.org/action-globe.html?embedded=1')).status, 200, 'the Earth frames on the same host, for the bridge');
   assert.equal((await ask('https://mccluster.org/auth/seek-first-handoff.html')).status, 404, 'passed through as upstream answers');
 });
@@ -146,31 +159,41 @@ test('the company page is /company: McCluster Corp, not the album or the founder
   assert.equal((await ask('https://mccluster.org/company', 'POST')).status, 405);
 });
 
-test('every other apex path keeps today\'s 301 to the same path on matthew.mccluster.org', async () => {
+/* P1: the 301 every other apex path answered until P1 is gone; the platform serves the page, query intact, and only
+   Whip Equipped and the owner's own pages (url_ownership.profile_only) answer 301 to Matthew's host */
+test('every other apex page answers at its path here; Whip and the owner\'s own pages answer 301 to matthew.mccluster.org', async () => {
+  for (const path of ['/docket-516.html', '/album.html', '/listen.html?track=1', '/music-creator.html?handle=fixture-ana', '/engineering/mccluster-platform.html']) {
+    const r = await ask('https://mccluster.org' + path);
+    assert.equal(r.status, 200, path);
+    assert.equal(r.headers.get('location'), null, path);
+    assert.equal(r.headers.get('x-robots-tag'), null, path);
+    assert.equal(upstream.at(-1).url, 'http://pages.test' + path, `${path}: passed through, query intact`);
+  }
   for (const [from, to] of [
-    ['https://mccluster.org/docket-516.html', 'https://matthew.mccluster.org/docket-516.html'],
-    ['https://mccluster.org/album.html', 'https://matthew.mccluster.org/album.html'],
-    ['https://mccluster.org/listen.html?track=1', 'https://matthew.mccluster.org/listen.html?track=1'],
-    ['https://mccluster.org/music-creator.html?handle=fixture-ana', 'https://matthew.mccluster.org/music-creator.html?handle=fixture-ana'],
-    ['https://mccluster.org/engineering/mccluster-platform.html', 'https://matthew.mccluster.org/engineering/mccluster-platform.html']
+    ['https://mccluster.org/whip.html', 'https://matthew.mccluster.org/whip.html'],
+    ['https://mccluster.org/whip/rider/?ref=x', 'https://matthew.mccluster.org/whip/rider/?ref=x'],
+    ['https://mccluster.org/we-manufacture.html', 'https://matthew.mccluster.org/we-manufacture.html'],
+    ['https://mccluster.org/prayer-closet.html', 'https://matthew.mccluster.org/prayer-closet.html']
   ]) {
     const r = await ask(from);
     assert.equal(r.status, 301, from);
     assert.equal(r.headers.get('location'), to, from);
   }
   const funnel = await ask('https://mccluster.org/action/?c=end-racism');
-  assert.equal(funnel.status, 200, 'the campaign funnel is one of the World\'s rooms and rides this host');
-  assert.equal(funnel.headers.get('x-robots-tag'), 'noindex');
+  assert.equal(funnel.status, 200, 'the campaign funnel rides this host');
+  assert.equal(funnel.headers.get('x-robots-tag'), null);
   assert.equal(upstream.at(-1).url, 'http://pages.test/action/?c=end-racism');
 });
 
-test('www sends what this host serves to the apex and everything else straight to the personal property', async () => {
+/* P1: www sends every path to the apex (until P1 the apex's own paths went there and the rest to Matthew's host) */
+test('www sends every path to the apex, same path and query', async () => {
   assert.equal((await ask('https://www.mccluster.org/')).headers.get('location'), 'https://mccluster.org/');
   assert.equal((await ask('https://www.mccluster.org/?view=feed')).headers.get('location'), 'https://mccluster.org/?view=feed');
   assert.equal((await ask('https://www.mccluster.org/company')).headers.get('location'), 'https://mccluster.org/company');
   assert.equal((await ask('https://www.mccluster.org/sitemap.xml')).headers.get('location'), 'https://mccluster.org/sitemap.xml');
   assert.equal((await ask('https://www.mccluster.org/js/mnet.js')).headers.get('location'), 'https://mccluster.org/js/mnet.js');
-  assert.equal((await ask('https://www.mccluster.org/hire.html')).headers.get('location'), 'https://matthew.mccluster.org/hire.html');
+  assert.equal((await ask('https://www.mccluster.org/hire.html')).headers.get('location'), 'https://mccluster.org/hire.html');
+  assert.equal((await ask('https://www.mccluster.org/whip.html?x=1')).headers.get('location'), 'https://mccluster.org/whip.html?x=1', 'the apex then sends Whip to Matthew\'s host');
 });
 
 test('robots, sitemap and llms belong to the company property and map the World and the company page', async () => {
@@ -201,7 +224,8 @@ test('plain http on the apex is one 301 to https; /company/ is the company page,
     ['http://mccluster.org/docket-516.html', 'https://mccluster.org/docket-516.html'],
     ['https://mccluster.org/company/', 'https://mccluster.org/company'],
     ['https://mccluster.org/company/?ref=x', 'https://mccluster.org/company?ref=x'],
-    ['https://www.mccluster.org/company/', 'https://mccluster.org/company'],
+    /* P1: www keeps the path as asked; the apex folds the slash in its own hop (above) */
+    ['https://www.mccluster.org/company/', 'https://mccluster.org/company/'],
     ['http://www.mccluster.org/', 'https://mccluster.org/']
   ]) {
     const r = await ask(from);
