@@ -121,7 +121,7 @@ on the remote allowlist) returns in one call:
 - workstreams — where each line of work stands (branch, head, pull request, decisions, blockers, next step), read from
   the checkpoints in the private context plane, with a generated resume packet. Written by `workstream.checkpoint`;
   contract in `WORKSTREAM-CHECKPOINTS.md`. `sources.workstreams` is `missing` while
-  `supabase/pending/ai_context_workstreams_v1.sql` is not applied, and the rest of the payload is unchanged
+  `supabase/migrations/20261124164529_ai_context_workstreams_v1.sql` is not applied, and the rest of the payload is unchanged
 - a `next_step_hint` leading with approvals, then stale leases, then failures
 
 Three deliberate choices.

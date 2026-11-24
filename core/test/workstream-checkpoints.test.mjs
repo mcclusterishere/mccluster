@@ -445,7 +445,7 @@ test('with the SQL not applied, both tools say so instead of pretending', async 
   await withPlane({ ops_ai_workstream_checkpoint: NOT_APPLIED, ops_ai_workstream_resume: NOT_APPLIED }, async () => {
     await assert.rejects(checkpoint({ workstream: WS, event: EV }), (error) =>
       error.status === 503 && error.code === 'WORKSTREAMS_NOT_APPLIED'
-      && /not applied on this database \(supabase\/pending\/ai_context_workstreams_v1\.sql\); nothing was written/.test(error.message));
+      && /not applied on this database \(supabase\/migrations\/20261124164529_ai_context_workstreams_v1\.sql\); nothing was written/.test(error.message));
     await assert.rejects(list(), (error) => error.status === 503 && error.code === 'WORKSTREAMS_NOT_APPLIED');
   });
 });
@@ -456,7 +456,7 @@ test('with the SQL not applied, core.resume keeps working exactly as before and 
 
   assert.equal(missing.sources.workstreams, 'missing');
   assert.deepEqual(missing.degraded_sources, ['workstreams'], 'degraded_sources must name the source');
-  assert.match(missing.source_errors.workstreams, /not applied on this database \(supabase\/pending\/ai_context_workstreams_v1\.sql\)/);
+  assert.match(missing.source_errors.workstreams, /not applied on this database \(supabase\/migrations\/20261124164529_ai_context_workstreams_v1\.sql\)/);
   assert.equal(missing.workstreams, null, 'unknown is null, never an empty list');
 
   assert.equal(missing.schema, 'mccluster-resume/v2');

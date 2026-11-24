@@ -2,7 +2,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-// Proof for the PENDING supabase/pending/ai_context_workstreams_v1.sql on a disposable WASM (PGlite) or local
+// Proof for the canonical supabase/migrations/20261124164529_ai_context_workstreams_v1.sql on a disposable WASM (PGlite) or local
 // native PostgreSQL. It never connects to canonical Supabase and never applies anything there.
 //   PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/ai-context-workstreams-sql-check.mjs
 //   NATIVE_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
@@ -15,7 +15,7 @@ import fs from 'node:fs';
 // re-apply and a second behaviour pass.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (file) => fs.readFileSync(`${root}/${file}`, 'utf8');
-const PENDING = 'supabase/pending/ai_context_workstreams_v1.sql';
+const PENDING = 'supabase/migrations/20261124164529_ai_context_workstreams_v1.sql';
 const ROLLBACK = 'supabase/pending/ai_context_workstreams_v1.rollback.sql';
 
 let db;
