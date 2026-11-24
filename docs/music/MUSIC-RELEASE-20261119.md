@@ -28,6 +28,16 @@ plays the song and says which; the installed app's dock says what is happening i
 and stays one row when muted; Heal the 3's door sits clear of
 the account chip. `music_interrupted` waits for Matthew's approval and is not sent.
 
+**Fixed on the pull request, 2026-11-24 (`3f12e039`, the last commit before it merged, so Release 1 carries it).** Four
+faults the pull request's own checks and an automated review found: a song skipped while its count was still waiting to
+start can no longer open later and close the song actually playing (a start still waiting for the last finish is sent
+only for the song still chosen); a creator's full song whose link cannot be renewed for want of a network keeps the full
+song, its second and its retries (the preview offered as a network fallback no longer ends it); the bar's Music button
+follows the player after a Pause and a Play in quick succession (an older check could set it back to "Play music" over a
+playing song); and the sign-in suite reads the Resend countdown as it starts, so a slow test machine no longer fails a
+valid one (a test change only). Two narrower cases the review also named, and a browser test of the Music button's two
+taps, came after it: "Engine stage 0 (2026-11-24)" below.
+
 **What does not ship.** **M5**, one player across the music pages: not reviewed yet, and it breaks a Worker test the
 deploy gate runs (`workers/mccluster/test/analytics-creator-attribution.test.mjs`). **The quick wins**: built and in
 review on `claude/new-session-83ken5`. Both are the next release. The decisions under each "What waits for Matthew" below stay his.
@@ -1446,6 +1456,22 @@ Nothing was merged, deployed, enabled or applied; no Worker, SQL, `supabase/`, a
 second backend, database, session store or player engine was added. Base `dc0185aa` (main `b51ede03` with M3 and the
 M3 follow-up). This is item 2 of "Bounded finish order after this recovery" above.
 
+**Release 2 ships M5 with the album not retained** (engine stage 0, 2026-11-24;
+`docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md` 4.10). `ROUTES.album` is `{ top: false, view: false }`: the
+album is never the retained document and never a view, so nothing opens over its deck and two players never share the
+bar. Why: stage 2 below kept the album's own player, its deck, and a song chosen in a view over the album put the engine
+beside it, two players behind one bar, which Matthew has ruled out (one engine, one player at all times; SPEC-ENGINE
+section 2). So the album is the page Release 1 shipped, with the quick wins: a link to it from Listen or an artist page
+is a page load, and so is every link on it (the bar's Music tab and the album's Music link to Listen, the chip's and the
+comment box's Sign in to the account page), and its song ends there, as at Release 1. Listen, the artist pages and the
+account view over them keep everything this section describes. Stage 1 of the one engine turns the album back on, as
+the retained document and as a view (`{ top: true, view: true }`), once the album plays through the engine with its
+deck removed, and takes out what stage 2 added for the deck and leaves unused meanwhile (`guestEngine`, `setOwner`,
+`ownerWatch`, `MCC_MUSIC_GUEST`, `html[data-music-owner]` and the album's entries in the shell's allow-list). Where
+the text below has the album retained (the stage table's row 2; "What changed" 2, 5 and 9; some limits and decisions),
+it describes stage 2 as built, not Release 2. The tests and device rows that changed with it are in "Engine stage 0
+(2026-11-24)" at the end.
+
 ### Why
 
 Matthew, 2026-11-19: "when I'm playing music and I leave the browser, it stops playing music" and "The music never
@@ -2212,3 +2238,138 @@ Control's wide cover whole in the hero, in the deck bar and in Listen's mini pla
 focused), and
 `verify-listen-390-creator-account-menu` and `verify-listen-390-creator-studio-box` (a creator: the account menu offers
 no way to join, and Listen's box is Creator Studio).
+
+## Engine stage 0 (2026-11-24)
+
+Stage 0 of the one engine (`docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md`, section 10, "Stage 0: repairs"):
+the repairs Release 2 can carry before stage 1. Built on the stage 0 branch from `d1375242` (`main` after Release 1, with
+the verified quick wins merged in). Nothing was merged to `main`, deployed, enabled or applied; no Worker source, SQL,
+`supabase/`, auth or session code changed.
+
+### What changed
+
+1. **A play button inside a link plays its song** (SPEC-ENGINE rows A0.3 and A0.4). Listen's cards wrap their play
+   button in the card's link: a creator's card in the artist page's link (`js/music-community.js`, "From creators"), a
+   song card in its album's (`js/listen.js`, while the song rails are on). The shell's top click handler and its view
+   agent asked whether the link sat inside a play button, which it never does, so a tap on the button was taken for a
+   tap on the link. In a view the agent hears the tap first, so nothing played: at the base, in Listen shown over an
+   artist page, another artist's card opened that artist's page, and a song card in an artist page shown over Listen
+   loaded the album (Measured; the test puts Listen's song card on the artist page, which draws none today). At the top
+   the engine hears the tap before the shell, so in Chromium the top pages already played. Both handlers now ask from
+   the tap's own target (`js/music-shell.js`); the rest of the card is still its link. On the live site a person meets
+   it only once "From creators" shows, which needs a creator's published song (the quick wins' verification found none),
+   or if the song rails come back.
+2. **The album is contained** (SPEC-ENGINE 4.10): `ROUTES.album = { top: false, view: false }`, for the reason the M5
+   section gives above. On the album the shell loads and retains nothing: it takes no link and no tap of the bar, and
+   writes no history. What M5's stage 2 added for the deck stays in place, unused, for stage 1 to remove.
+   `docs/music/MUSIC-WORLD-CONTINUITY.md` and the step names in `music-platform-ci.yml` say so (no new job, step or
+   trigger).
+3. **Analytics, the view case** (SPEC-ENGINE section 9). The Worker's attribution test now files an event from a music
+   view too: under the view's own path, with the page it was opened from as the referrer (also when Back or Forward
+   rebuilt the view, whose frame then names its own address), and with a creator handle only on `music-creator.html`
+   with a valid one. `js/analytics.js` did not change: since `1580bde5` the test finds the page identity block by its own
+   text, so no markers were needed.
+4. **Release 1 follow-ups**, what `3f12e039` ("Shipped 2026-11-23" above) did not cover, with the review's tests:
+   * **Pause wins over a late refusal** (the review's CX-2). A creator's full song renewing its link: when the
+     entitlement check said no after the listener pressed Pause, the engine still started the preview. The refusal now
+     goes back to the try that asked for it, which applies it only while the listener still asks for music; Play asks
+     again, and that answer decides. Only the check's own no (402, or 401 and 403) ends the full song; any other answer
+     is a failed try (`js/music-engine.js`).
+   * **A finished song sends no start** (CX-1). A start still waiting for the last finish was sent even when the page
+     had finished that song meanwhile (the pocket player rolling on at the end of its queue), so a listen was opened
+     and closed for a song that was left at once. It is no longer sent, and a song that sent no start sends no finish
+     (`js/listen-ledger.js`).
+   * **The two taps, in the browser.** `scripts/e2e/music-background.e2e.mjs` plays the order CI met on PR #825: two
+     taps on Listen's Music button in one moment, the first tap's queued update run before either look, then a third
+     tap pauses. `3f12e039` fixed the button; this holds it in Chromium.
+
+### Tests: failing at the base, passing after
+
+Every new or changed test was run at `d1375242` with only the tests changed (its sources untouched), in a worktree of
+its own:
+
+| Test | At `d1375242` | After |
+| --- | --- | --- |
+| `scripts/test/music-shell.test.mjs` (2 new A0.4 tests, 1 new containment test, 2 changed) | 15 of 20 pass: both A0.4 tests fail (the top handler and the agent take the button's tap for the link's) and the three containment tests fail (the album retained) | 20 of 20 |
+| `scripts/e2e/music-shell.e2e.mjs` (5 new scenarios, 12 changed) | 152 of 173 checks pass: A0.3 fails in both views, every containment check fails, and three scenarios stop early (the base opens or closes a view where they wait for a page); A0.3 at the top passes (the engine hears the tap first) | 181 of 181 |
+| `workers/mccluster/test/analytics-creator-attribution.test.mjs` (1 new) | 3 of 3: the view case holds what `1580bde5` fixed | 3 of 3 |
+| `scripts/test/music-playback-races.test.mjs` (1 new) | 63 of 64: Pause wins fails | 64 of 64 |
+| `scripts/test/listen-ledger.test.mjs` (1 new) | 11 of 12: the finished song's start is sent | 12 of 12 |
+| `scripts/e2e/music-background.e2e.mjs` (1 new scenario) | 4 of 4: the base has `3f12e039`'s fix | 4 of 4 |
+
+**The M5 tests changed on purpose** (each says so where it changed), because the album is no longer retained:
+* `music-shell.test.mjs`: the route table (the album is a page load from every music page; the sign-in rows are over
+  Listen and an artist page) and one switch (`retains('album')` is false).
+* `music-shell.e2e.mjs`, by test number: 7 (the album's Music tab is a page load of Listen with Listen's own head, and
+  Back brings the album's head back whole), 18 and 9 (the album's Music tab is a page load of Listen, nothing plays
+  after it, Back is the browser's; the checks of the bar over a view and of the heading's focus now run over an artist
+  page), 19 and 20 (the album holds one player, its deck, and its controls work with no view), 21 (the album's Music
+  link and a Listen row of the album are page loads; the row is seated, paused), 15 (the album fits as a page of its
+  own; Listen, an artist page and the account view over Listen fit), 22 (the comment box's Sign in is a page load of the
+  account page, which goes on to the album after sign-in), and 23 to 26 (the account view's sign-in, its calls, its
+  provider and its sign-out, over Listen and an artist page instead of the album). The render mode shows the account
+  view over Listen and a card's play in Listen over an artist page instead of the album's views.
+
+**Revert and fail.** In a separate worktree, each change taken out alone with the tests kept, its file put back by its
+hash after:
+* card play (both handlers asking the link again): 2 of 20 unit tests fail (both A0.4); in Chromium 9 of the 15 checks
+  of the four A0.3 journeys pass: the two at the top, while both views fail;
+* containment (the album retained again): 3 of 20 unit tests fail; in Chromium 36 of the 51 checks of the album's
+  scenarios pass;
+* analytics: ignoring a view's referrer, dropping the handle's two page guards, or dropping its validation each fails
+  the view case, and the last two the old test too; dropping only the identity's page guard fails nothing, because the
+  tracker checks the page again where it files the handle;
+* the finished song's leg: its ledger test fails; the engine at the base: Pause wins fails;
+* `3f12e039`'s change to `js/tabbar.js` undone alone: 1 of the two-tap scenario's 4 checks passes (the tab says "Play
+  music" over the playing song).
+
+### Suites at the final code
+
+At the final code, each once unless said; the browser suites one at a time, in Chromium (CI's Playwright 1.57.0,
+Chromium 1200), under the shared browser lock:
+
+| Suite | Result |
+| --- | --- |
+| Root, `npm test` | 3224 tests: 3217 pass, 7 skipped, none fail; the Python checks 7 of 7 |
+| Worker, `workers/mccluster` (network off) | 2061 tests: 2052 pass, 9 skipped, none fail |
+| The music job's contract steps (`music-platform-ci.yml`, 18 steps) | every step passes; 289 of 289 tests |
+| Source map validator | 3018 checks, none failed |
+| M5 shell (and its render mode), background playback, Now Playing | 181 of 181; 297 of 297; 120 of 120 |
+| Accounts, installed app, quick wins | 128 of 128; 360 of 360; 232 of 232 |
+| Site navigation, the bar's sign-in refresh, the game hub capsule (with axe) | 429 of 429; passes; passes |
+| Direct checkout, Music to World, the house door | 40 of 40; 140 of 140; 122 of 122 |
+| Lyrics sync, sign-in network recovery, creator onboarding | 328 of 328; passes; 85 of 85 |
+| Analytics globe, cohort claim, PRIM3's artist page and album | 116 of 116; 28 of 28; 49 of 49 |
+| Member front | 66 of 67 the first time, then 67 of 67 twice; 67 of 67 twice at `d1375242` |
+
+The one miss in the member front was a script error on the Studio page at 390 ("Transition was skipped. Navigation
+aborted": a cross-document view transition cut short by a navigation). That page loads none of the files this stage
+changed (the shell loads only on a top document marked `data-music-view`), and the next two runs passed. No test file
+was added, so no CI wiring changed: the changed tests already run in `music-platform-ci.yml`, and the Worker test in
+the Worker's `npm test`.
+
+**No sideways scroll at 320 and 390 px** (`scrollWidth === clientWidth`, `music-shell.e2e.mjs` test 15): Listen and an
+artist page at the top, an artist page as a view over Listen, Listen as a view over an artist page, the account view
+over Listen, and the album as a page of its own; also at 820 and 1280 with the artist view open.
+
+### Device rows that change
+
+The M5 rows above that start with the album playing now describe page loads. For each, note the page, a Safari tab or
+the Home Screen icon, signed in or not, and the iOS version:
+* **Row 4 becomes:** the album (I AM HERE) playing, tap Music in the bar: Listen loads as a page of its own and the song
+  stops there, as at Release 1; Back brings the album page back.
+* **Row 5 becomes:** a song playing on Listen, scroll a long artist page opened from it for a minute: nothing reloads by
+  itself.
+* **Row 6 becomes:** on the album, Sign in from the comment box: the account page loads and the song stops; after a
+  password sign-in the album is back.
+* **Row 7 becomes:** a song playing on Listen, the chip's Sign in with your password (Keychain AutoFill if you use it):
+  the song keeps playing while you sign in and after, and the keyboard and AutoFill behave as on the account page
+  itself.
+* **Rows 9 and 10** (the Home Screen icon, and an iPad): rows 1, 4 and 7 as they now read.
+
+New rows:
+14. When Listen shows "From creators" (only once a creator has published a song; the quick wins' verification found
+    none): open an artist page, then Music in the bar, so Listen opens over it. Tap the round play button on another
+    artist's card: that song plays and Listen stays. Tap the card's name: that artist's page opens.
+15. On Listen in a Safari tab, a song playing: tap the bar's Music button twice quickly. The song ends up playing, the
+    button shows Pause and VoiceOver reads "Pause music"; one more tap pauses it.
