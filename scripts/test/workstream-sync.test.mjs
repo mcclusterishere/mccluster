@@ -266,7 +266,7 @@ test('every credential shape the Git secret scan refuses is refused by the contr
   const block = workflow.slice(workflow.indexOf('patterns=('), workflow.indexOf('\n          )', workflow.indexOf('patterns=(')));
   const scanned = [...block.matchAll(/^\s*'(.+)'\s*$/gm)].map((match) => match[1]);
   assert.ok(scanned.length >= 11, `expected the workflow's pattern list, found ${scanned.length}`);
-  const sql = readFileSync(path.join(root, 'supabase/pending/ai_context_workstreams_v1.sql'), 'utf8');
+  const sql = readFileSync(path.join(root, 'supabase/migrations/20261124164529_ai_context_workstreams_v1.sql'), 'utf8');
   for (const pattern of scanned) {
     assert.ok(SECRET_PATTERNS.includes(pattern), `core/src/workstream-contract.mjs does not refuse ${pattern}`);
     assert.ok(sql.includes(`'${pattern}'`) || sql.includes(`'|${pattern}'`), `ai_context.workstream_looks_secret does not refuse ${pattern}`);

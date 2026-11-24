@@ -19,7 +19,7 @@
      core.workstream.list         read: the workstreams, active first,
                                   with the resume packet.
 
-   Storage is ai_context (supabase/pending/ai_context_workstreams_v1.sql),
+   Storage is ai_context (supabase/migrations/20261124164529_ai_context_workstreams_v1.sql),
    reached only through the service-role RPCs public.ops_ai_workstream_*.
    There is no second store: nothing is written to this host's disk.
    Until that SQL is applied both tools say so plainly (503,
@@ -36,7 +36,7 @@ import {
   requireOperationKey, deriveOperationKey, buildResumePacket
 } from '../workstream-contract.mjs';
 
-export const WORKSTREAMS_PENDING_SQL = 'supabase/pending/ai_context_workstreams_v1.sql';
+export const WORKSTREAMS_PENDING_SQL = 'supabase/migrations/20261124164529_ai_context_workstreams_v1.sql';
 export const WORKSTREAMS_NOT_APPLIED = 'WORKSTREAMS_NOT_APPLIED';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

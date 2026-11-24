@@ -49,7 +49,12 @@
          Reads live (GET only) just the addresses the plan holds and the fixture does not yet, and adds their answers to it,
          dated; refuses once production no longer answers as before P0.
 
-   Nothing here changes anything anywhere: no POST, no sign-in, no DNS, no settings. */
+     PLATFORM_HOSTS_LIVE=1 node scripts/e2e/platform-hosts.e2e.mjs --capture-added-page /artist.html --out <new-file.json>
+         After P0, capture one newly classified page separately. The stage already judges its own routes. For other
+         hosts, record an HTTP GET or, for an inert door, absence of both A and AAAA at two public DNS resolvers.
+         Keep each dated observation with the commit introducing the page. Local CI reads it offline.
+
+   Reads only: no POST, sign-in or configuration changes. */
 import { readFileSync, writeFileSync, existsSync, statSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, extname, normalize, sep } from 'node:path';
@@ -59,6 +64,11 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const SCHEMA = 'mccluster-platform-hosts-crawl/v1';
 export const FIXTURE_SCHEMA = 'mccluster-platform-hosts-fixture/v1';
 export const FIXTURE = 'scripts/e2e/fixtures/platform-hosts-20261123.json';
+const ADDED_PAGE_FIXTURE = 'scripts/e2e/fixtures/platform-hosts-artist-20261124.json';
+const DNS_RESOLVERS = {
+  google: 'https://dns.google/resolve',
+  cloudflare: 'https://cloudflare-dns.com/dns-query'
+};
 /* the headers SPEC-PLATFORM 2.4 names, compared; cache-control and content-type are recorded for the reader only */
 export const COMPARED_HEADERS = Object.freeze(['content-security-policy', 'content-security-policy-report-only', 'x-frame-options',
   'strict-transport-security', 'permissions-policy', 'x-robots-tag']);
@@ -239,6 +249,76 @@ export async function liveCrawl(site, { concurrency = 4, pauseMs = 150, log = nu
     onRow: () => { done += 1; if (log && done % 100 === 0) log(`${done}/${urls.length}`); }
   });
   return { schema: SCHEMA, mode: 'live', captured_at: new Date().toISOString(), stage: site.stage, record: site.record, hosts: plan.hosts, paths: plan.paths.length, rows };
+}
+
+/* A host without an address cannot send an HTTP response. Keep a resolver's negative answer distinct from the
+   transport gateway's own error page. A timeout, truncated reply, CNAME, or resolver failure proves no such thing. */
+export function absentAddress(reply, host, type) {
+  const question = reply.Question || [];
+  if (reply.TC || question.length !== 1 || question[0].name?.replace(/\.$/, '') !== host ||
+      question[0].type !== ({ A: 1, AAAA: 28 })[type] || reply.Answer?.length ||
+      !reply.Authority?.some((r) => r.type === 6) || ![0, 3].includes(reply.Status)) {
+    throw new Error(`No conclusive negative DNS answer for ${host} ${type}`);
+  }
+  return reply.Status === 3 ? 'NXDOMAIN' : 'NODATA';
+}
+
+async function captureInertDoor(url) {
+  const host = new URL(url).hostname;
+  const dns = {};
+  for (const [name, endpoint] of Object.entries(DNS_RESOLVERS)) {
+    dns[name] = {};
+    for (const type of ['A', 'AAAA']) {
+      const res = await fetch(`${endpoint}?name=${host}&type=${type}`, {
+        headers: { accept: 'application/dns-json' }, redirect: 'error', signal: AbortSignal.timeout(15000)
+      });
+      if (!res.ok) throw new Error(`${name} returned HTTP ${res.status} for ${host} ${type}`);
+      dns[name][type] = absentAddress(await res.json(), host, type);
+    }
+  }
+  return { url, dns };
+}
+
+async function captureAddedPage(site, path, frozen) {
+  if (site.stage === 'P0' || !Object.values(site.pages).some((paths) => paths.includes(path))) {
+    throw new Error('Supply a classified page added after P0');
+  }
+  const addresses = crawlUrls(crawlPlan(site)).filter((url) => new URL(url).pathname === path &&
+    !stageJudged(site, new URL(url).hostname));
+  if (!addresses.length || frozen.rows.some((row) => addresses.includes(row.url))) {
+    throw new Error('Capture only a newly classified page absent from the original fixture');
+  }
+  const inert = addresses.filter((url) => site.doors.some((d) => d.host === new URL(url).hostname && /^inert\b/.test(d.state)));
+  const live = await liveCrawl(site, { only: (url) => addresses.includes(url) && !inert.includes(url) });
+  const rows = fixtureFrom(live, site).rows;
+  for (const row of rows) {
+    if (row.error || row.status < 200 || row.status >= 500) throw new Error(`No origin observation for ${row.url}: ${row.status || row.error}`);
+  }
+  rows.push(...await Promise.all(inert.map(captureInertDoor)));
+  const observation = { stage: site.stage, captured_at: new Date().toISOString(), path, rows };
+  withAddedPage(frozen, observation, site);
+  return observation;
+}
+
+/* The original snapshot and its date stay intact. Only append evidence for a distinct page the current plan covers. */
+export function withAddedPage(frozen, observation, site) {
+  if (!observation || !Object.values(site.pages).some((paths) => paths.includes(observation.path)) ||
+      !observation.captured_at || observation.stage === 'P0') throw new Error('Invalid post-P0 page observation');
+  const known = new Set(frozen.rows.map((row) => row.url));
+  const planned = new Set(crawlUrls(crawlPlan(site)).filter((url) => new URL(url).pathname === observation.path));
+  for (const row of observation.rows) {
+    if (!planned.has(row.url) || known.has(row.url)) throw new Error(`Unexpected or duplicate observation: ${row.url}`);
+    known.add(row.url);
+    if (row.dns) {
+      const host = new URL(row.url).hostname;
+      const results = Object.keys(DNS_RESOLVERS).flatMap((name) => ['A', 'AAAA'].map((type) => row.dns[name]?.[type]));
+      if (!site.doors.some((d) => d.host === host && /^inert\b/.test(d.state)) ||
+          new Set(results).size !== 1 || !['NODATA', 'NXDOMAIN'].includes(results[0])) {
+        throw new Error(`Missing corroborated address absence for ${host}`);
+      }
+    }
+  }
+  return { ...frozen, rows: [...frozen.rows, ...observation.rows] };
 }
 
 /* ---------- the fixture: production's answers before P0, the comparable fields only ---------- */
@@ -560,6 +640,12 @@ export function judgeLocal(local, fixture, site, addressOf = null) {
     compared += 1;
     const have = comparable(row);
     const host = new URL(row.url).hostname;
+    if (want.dns) {
+      if (have.error !== 'ENOTFOUND' || have.status !== null || have.location !== null) {
+        failures.push({ url: row.url, problem: `inert door has no address: expected ENOTFOUND, got ${have.status || have.error}` });
+      }
+      continue;
+    }
     /* a file this tree adds that production has not published yet */
     if (want.status === 404 && have.status === 200 && host === profile) { added.push(row.url); continue; }
     for (const f of [...ROUTING_FIELDS, ...COMPARED_HEADERS]) {
@@ -808,6 +894,14 @@ async function main(argv) {
       console.error('live mode is never run for a pull request; the local crawl is the check there');
       return 2;
     }
+    if (argv.includes('--capture-added-page')) {
+      const out = arg(argv, '--out');
+      if (!out) throw new Error('Capturing one page requires --out <new-file.json>');
+      const observation = await captureAddedPage(site, arg(argv, '--capture-added-page'), readFixture());
+      writeFileSync(out, JSON.stringify(observation, null, 2) + '\n', { flag: 'wx' });
+      console.log(`captured ${observation.rows.length} host observations for ${observation.path} at ${observation.captured_at}`);
+      return 0;
+    }
     if (argv.includes('--amend-fixture')) {
       /* only the addresses the fixture does not hold yet, GET only; the fixture is production before P0, so this refuses
          once production answers as P0 or a later stage does (carry.html on Matthew's host: 404 before P0, 200 from it) */
@@ -839,11 +933,14 @@ async function main(argv) {
   const local = await localCrawl(site);
   const out = arg(argv, '--out');
   if (out) writeFileSync(out, JSON.stringify(local, null, 1) + '\n');
-  const verdict = judgeLocal(local, readFixture(), site, await addressReader());
+  const frozen = readFixture();
+  const observation = JSON.parse(readFileSync(join(ROOT, ADDED_PAGE_FIXTURE), 'utf8'));
+  const fixture = site.stage === 'P0' ? frozen : withAddedPage(frozen, observation, site);
+  const verdict = judgeLocal(local, fixture, site, await addressReader());
   for (const [host, s] of Object.entries(summarize(local))) console.log(`  ${host}: ${JSON.stringify(s.status)}`);
   for (const a of verdict.added) console.log(`added   ${a} (this tree publishes it; production does not yet)`);
   for (const f of verdict.failures) console.log(`FAIL    ${f.url}: ${f.problem}`);
-  console.log(`local crawl at stage ${site.stage}: ${local.rows.length} answers, ${verdict.compared} compared with production's of ${readFixture().captured_at}, ` +
+  console.log(`local crawl at stage ${site.stage}: ${local.rows.length} answers, ${verdict.compared} compared against stage rules and dated production observations, ` +
     `${verdict.skipped.length} the live edge's or built at deploy, ${verdict.added.length} added, ${verdict.failures.length} failure(s)`);
   return verdict.failures.length ? 1 : 0;
 }

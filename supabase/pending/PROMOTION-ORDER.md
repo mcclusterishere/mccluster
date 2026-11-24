@@ -1,5 +1,20 @@
 # Promotion order for `supabase/pending/`
 
+## Production update — 2026-11-24
+
+The audit applied `ai_context_workstreams_v1` (`20261124164529`),
+`commerce_stripe_reconciler_v3` (`20261124164724`),
+`equity_uprise_clipping_sources` (`20261124164851`), and
+`action_bounty_claim_existing_row_guard_v1` (`20261124164904`). Their exact files
+are now under `supabase/migrations/`. A concurrent session also applied
+`member_fronts_shared_revision_directory` (`20261124164026`); its actual stored SQL
+is recorded there. **Do not apply the older `member_fronts_v1.sql` over it.**
+The ledger is 389 at this checkpoint. The actual receipt and remaining release
+steps are `docs/control-plane/evidence/migration-audit-applied-2026-11-24.md`;
+the complete candidate audit is `docs/control-plane/evidence/migration-audit-2026-11-24.md`.
+This dated update supersedes the historical pending labels for those five changes below.
+
+
 Written 2026-10-27 from each file's header, the dependency it states, the
 objects it creates, and `live-callers.json` (which names shipped code calls
 today). Every file is applied with the steps in `README.md` ("To promote one")
@@ -683,7 +698,7 @@ PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/
 
 ## 15. AI context workstream checkpoints (written 2026-11-23)
 
-**Pending. Never applied. Owner approval required.** Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`.
+**Applied 2026-11-24 as `20261124164529`.** Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`. The procedure below documents the original pre-apply requirements; production must not replay it.
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|

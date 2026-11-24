@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ROOT, localFetcher, githubPages, workerEnv, crawlPlan, crawlUrls, diffCrawls, judgeServesEverything, stageJudged, COMPARED_HEADERS, cloudflareNormalized, addressReader,
-  browserPages, hisCopy, errorText, judgePage } from '../e2e/platform-hosts.e2e.mjs';
+  browserPages, hisCopy, errorText, judgePage, absentAddress, readFixture, withAddedPage, localCrawl, judgeLocal } from '../e2e/platform-hosts.e2e.mjs';
 import { siteTable, readRecord } from '../../tools/build-site-hosts.mjs';
 
 const imp = (rel) => import(pathToFileURL(join(ROOT, rel)).href);
@@ -253,4 +253,46 @@ test('the crawl\'s browser half opens every page the platform serves and judges 
   assert.deepEqual(judgePage(P1, { platform: [visit([], { documents: [`${PLAT}/listen.html`, `${PROF}${P1.profile.carry_path}`, `${PROF}${P1.profile.carry_path}?r=2`] })] }), [], 'his carry page, framed on purpose, is not a document the visitor is sent to');
   assert.match(judgePage(P1, { platform: [visit([], { nav: 'Timeout 30000ms exceeded.' })], his: [visit()] })[0], /does not open on the platform/);
   assert.deepEqual(judgePage(P1, { platform: [visit([], { nav: 'Timeout' })], his: [visit([], { nav: 'Timeout' })] }), [], 'a page neither host opens is not the platform\'s doing');
+});
+
+
+test('post-P0 artist observations preserve the original baseline and enforce each host’s routing', async () => {
+  const path = '/artist.html';
+  const observation = JSON.parse(readFileSync(join(ROOT, 'scripts/e2e/fixtures/platform-hosts-artist-20261124.json'), 'utf8'));
+  const frozen = readFixture();
+  const fixture = withAddedPage(frozen, observation, SITE);
+  const local = await localCrawl(SITE);
+  const addressOf = await addressReader(ROOT);
+  const check = (input) => judgeLocal(input, fixture, SITE, addressOf);
+  assert.equal(frozen.rows.some((r) => new URL(r.url).pathname === path), false);
+  assert.throws(() => withAddedPage(fixture, observation, SITE), /duplicate/);
+  const actual = check(local);
+  assert.deepEqual(actual.failures, []);
+  assert.ok(actual.added.includes(SITE.profile.origin + path));
+  const change = (host, patch) => {
+    const url = `https://${host}${path}`;
+    const rows = local.rows.map((r) => r.url === url ? { ...r, ...patch } : r);
+    return check({ rows }).failures.filter((r) => r.url === url);
+  };
+  assert.ok(change(SITE.profile.host, { status: 503 }).length);
+  assert.ok(change('here.mccluster.org', { location: 'https://mccluster.org/artist.html' }).length);
+  for (const host of ['humanuprise.com', 'www.humanuprise.com']) {
+    assert.ok(change(host, { status: 503, error: null }).length, 'an HTTP gateway is not an inert door');
+    assert.ok(change(host, { error: 'ETIMEDOUT' }).length, 'a timeout does not prove absence');
+  }
+  const incomplete = structuredClone(observation);
+  delete incomplete.rows.find((r) => r.dns).dns.cloudflare.AAAA;
+  assert.throws(() => withAddedPage(frozen, incomplete, SITE), /Missing corroborated/);
+});
+
+test('an inert door needs negative DNS evidence for the exact requested host and address family', () => {
+  const host = 'example.test';
+  const reply = { Status: 0, Question: [{ name: host + '.', type: 1 }], Authority: [{ type: 6 }] };
+  assert.equal(absentAddress(reply, host, 'A'), 'NODATA');
+  assert.equal(absentAddress({ ...reply, Status: 3 }, host, 'A'), 'NXDOMAIN');
+  for (const bad of [{ Status: 2 }, { TC: true }, { Answer: [{ type: 5 }] }, { Authority: [] }]) {
+    assert.throws(() => absentAddress({ ...reply, ...bad }, host, 'A'));
+  }
+  assert.throws(() => absentAddress(reply, host, 'AAAA'));
+  assert.throws(() => absentAddress(reply, 'www.' + host, 'A'));
 });

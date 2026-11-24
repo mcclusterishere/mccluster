@@ -1,5 +1,20 @@
 # Pending migrations
 
+## Production update — 2026-11-24
+
+The audit applied `ai_context_workstreams_v1` (`20261124164529`),
+`commerce_stripe_reconciler_v3` (`20261124164724`),
+`equity_uprise_clipping_sources` (`20261124164851`), and
+`action_bounty_claim_existing_row_guard_v1` (`20261124164904`). Their exact files
+are now under `supabase/migrations/`. A concurrent session also applied
+`member_fronts_shared_revision_directory` (`20261124164026`); its actual stored SQL
+is recorded there. **Do not apply the older `member_fronts_v1.sql` over it.**
+The ledger is 389 at this checkpoint. The actual receipt and remaining release
+steps are `docs/control-plane/evidence/migration-audit-applied-2026-11-24.md`;
+the complete candidate audit is `docs/control-plane/evidence/migration-audit-2026-11-24.md`.
+This dated update supersedes the historical pending labels for those five changes below.
+
+
 Read `PROMOTION-ORDER.md` (in this folder) for the order in which the files here
 are meant to be applied, what each needs first, and how each is tested.
 
