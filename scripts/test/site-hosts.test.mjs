@@ -11,7 +11,8 @@
    - with P0's switches the table describes today exactly (the values the code names today);
    - js/, workers/mccluster/src/ and supabase/functions/ name no site host in code outside the outputs, except the
      files listed in scripts/test/site-hosts-pending/ (worker, functions, client, engine), each with its count and
-     the stage that converts it, and those lists only shrink;
+     the stage that converts it, and those lists only shrink: no list names a file or allows a count beyond the P0
+     ceiling pinned below (7 files, 112 literals), and every list allows exactly what the scan finds;
    - the equityuprise rewrite (SPEC-PLATFORM 2.3): with platform.origin https://equityuprise.com and mccluster.org a
      tenant, every classified path still resolves and nothing answers a host it should not.
    The router of SPEC-PLATFORM 2.4 and the client's host logic extend the rewrite check when they exist. */
@@ -25,8 +26,22 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import vm from 'node:vm';
 import {
   OUTPUTS, BLOCK_BEGIN, BLOCK_END, EXPORTS, siteTable, readRecord, renderWorker, renderClientBlock, renderFunctions,
-  findClientBlock, drift, hostLiterals, scanHostLiterals, readPending, pendingProblems, LANES
+  findClientBlock, drift, hostLiterals, scanHostLiterals, readPending, pendingProblems, LANES, PENDING_CEILING
 } from '../../tools/build-site-hosts.mjs';
+
+/* THE P0 CEILING, pinned here as well as in the generator (PENDING_CEILING): the four pending lists as they stood when
+   P0 was built (2026-11-23). No list may name a file outside it or allow more than its count, so a list cannot grow by
+   an edit to the list alone; and every list must allow exactly what the scan finds, so a literal removed is a count
+   lowered at once and freed room is never refilled. A number here is only ever lowered or deleted. */
+const P0_PENDING_CEILING = Object.freeze({
+  'js/live-content.js': 1,
+  'js/mcc-auth.js': 1,
+  'js/music-shell.js': 4,
+  'js/tabbar.js': 10,
+  'js/world-audio-continuity.js': 7,
+  'workers/mccluster/src/company-site/pages.generated.js': 86,
+  'workers/mccluster/src/seek-first/console.html': 3
+});
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
@@ -212,17 +227,30 @@ test('the scanner counts a site host in code and nothing else', () => {
   assert.equal(n('{"u": "https://mccluster.org"}', 'x.json'), 1);
 });
 
-test('every file that names a site host in code is on exactly one pending list, and the lists only shrink', (t) => {
+test('every file that names a site host in code is on exactly one pending list, and the lists only shrink', () => {
   const rows = scanHostLiterals(ROOT);
   const lanes = readPending(ROOT);
   assert.deepEqual(pendingProblems(rows, lanes), []);
+  assert.deepEqual({ ...PENDING_CEILING }, { ...P0_PENDING_CEILING }, 'the generator holds the same P0 ceiling as this test');
+  const ceilingFiles = Object.keys(P0_PENDING_CEILING);
+  assert.equal(ceilingFiles.length, 7, 'the P0 ceiling: 7 files');
+  assert.equal(Object.values(P0_PENDING_CEILING).reduce((s, n) => s + n, 0), 112, 'the P0 ceiling: 112 literals');
+  /* the rule itself, here as well as in pendingProblems: whatever the lists say, they never exceed the ceiling, and
+     each allows exactly what the scan finds (mobile-rule.test.mjs's ratchet) */
+  const scanned = new Map(rows.map((r) => [r.file, r.count]));
+  let total = 0;
   for (const [lane, data] of Object.entries(lanes)) {
     assert.equal(data.lane, lane, `${LANES[lane].list} names its lane`);
+    assert.match(data.rule, /only shrinks/, `${LANES[lane].list} states the rule`);
     for (const e of data.files) {
-      const now = rows.find((r) => r.file === e.file);
-      if (now && now.count < e.count) t.diagnostic(`${e.file}: ${now.count} left, its list still allows ${e.count}: lower it`);
+      assert.ok(ceilingFiles.includes(e.file), `${LANES[lane].list}: ${e.file} was on no list when P0 was built: a list never gains a file`);
+      assert.ok(e.count <= P0_PENDING_CEILING[e.file], `${LANES[lane].list}: ${e.file} allows ${e.count}, the P0 ceiling is ${P0_PENDING_CEILING[e.file]}: a list never raises a count`);
+      assert.equal(scanned.get(e.file) || 0, e.count, `${LANES[lane].list}: ${e.file} allows ${e.count} and the scan finds ${scanned.get(e.file) || 0}: the list allows exactly what is left`);
+      total += e.count;
     }
   }
+  assert.equal(total, rows.reduce((s, r) => s + r.count, 0), 'every literal the scan finds is allowed by exactly one entry');
+  assert.ok(total <= 112);
   const engine = lanes.engine.owned_files;
   for (const f of ['js/tabbar.js', 'js/music-shell.js', 'js/world-audio-continuity.js', 'js/music-engine.js', 'js/installed-app-dock.js', 'js/now-playing.js',
     'js/music-sheet.js', 'js/pip.js', 'js/label.js', 'listen.html', 'album.html', 'music-creator.html', 'music-videos.html', 'index.html']) {
@@ -231,7 +259,7 @@ test('every file that names a site host in code is on exactly one pending list, 
   for (const e of lanes.engine.files) assert.equal(e.stage, 'engine stage 2', `${e.file}: the engine converts it with the World on the engine`);
 });
 
-test('a planted literal fails, a grown count fails, and a file that names no host must leave its list', () => {
+test('a planted literal fails, a grown count fails, a list never grows, freed room goes back at once, and a file that names no host leaves its list', () => {
   const lanes = readPending(ROOT);
   /* the rule alone, whatever the tree holds right now: a scan exactly as the lists allow is clean */
   const rows = Object.values(lanes).flatMap((d) => d.files.map((e) => ({ file: e.file, count: e.count })));
@@ -244,6 +272,23 @@ test('a planted literal fails, a grown count fails, and a file that names no hos
   assert.deepEqual(grown, [`${listed.file} names a site host ${listed.count + 1} time(s), more than the ${listed.count} its list allows: the list only shrinks`]);
   const gone = pendingProblems(rows.filter((r) => r.file !== listed.file), lanes);
   assert.deepEqual(gone, [`${listed.file} no longer names a site host: remove it from ${LANES.worker.list}`]);
+  /* a literal removed and its count left as it was: the room it freed must go now, or a later literal could fill it */
+  const slack = pendingProblems(rows.map((r) => (r.file === listed.file ? { ...r, count: listed.count - 1 } : r)), lanes);
+  assert.deepEqual(slack, [`${listed.file} names a site host ${listed.count - 1} time(s) and ${LANES.worker.list} still allows ${listed.count}: lower it to ${listed.count - 1} in the same change (the list only shrinks; freed room is never refilled)`]);
+  /* a list grown by an edit to the list itself (review mutation M4): a new file and its entry */
+  const grownList = JSON.parse(JSON.stringify(lanes));
+  grownList.client.files.push({ file: 'js/new-thing.js', count: 2, stage: 'P1' });
+  const newEntry = pendingProblems([...rows, { file: 'js/new-thing.js', count: 2 }], grownList);
+  assert.deepEqual(newEntry, [`${LANES.client.list}: js/new-thing.js was not on any list when P0 was built (PENDING_CEILING): the lists only shrink, so a new file reads its hosts from the generated outputs instead`]);
+  /* a count raised together with the literals it covers (review mutation M5) */
+  const raised = JSON.parse(JSON.stringify(lanes));
+  const live = raised.client.files.find((e) => e.file === 'js/live-content.js');
+  live.count += 2;
+  const raisedProblems = pendingProblems(rows.map((r) => (r.file === live.file ? { ...r, count: live.count } : r)), raised);
+  assert.deepEqual(raisedProblems, [`${LANES.client.list}: js/live-content.js allows ${live.count}, more than the ${P0_PENDING_CEILING['js/live-content.js']} it allowed when P0 was built (PENDING_CEILING): the lists only shrink`]);
+  /* and a lower ceiling (a file converted further) binds the lists at once */
+  const lowered = { ...P0_PENDING_CEILING, [listed.file]: listed.count - 1 };
+  assert.ok(pendingProblems(rows, lanes, lowered).some((p) => p.includes(`allows ${listed.count}, more than the ${listed.count - 1}`)));
   const misfiled = JSON.parse(JSON.stringify(lanes));
   misfiled.client.files.push(misfiled.engine.files.pop());
   assert.ok(pendingProblems(rows, misfiled).some((p) => /is engine-owned: it belongs in/.test(p)), 'an engine-owned file cannot move to the client list');
