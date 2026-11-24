@@ -371,3 +371,84 @@ test('tools/call overwrites client actor metadata with authenticated owner ident
     assert.equal(forwarded.params._meta['mccluster/actor'].source, 'cloudflare-owner-session');
   });
 });
+
+/* workstream.checkpoint is a write into the private context plane. It is on
+   the remote surface so an outside session can record where the work stands,
+   and these pin what makes that safe: the same owner gate as everything else,
+   an org the caller cannot choose, and an actor the caller cannot name. */
+const CHECKPOINT = {
+  jsonrpc: '2.0',
+  id: 21,
+  method: 'tools/call',
+  params: {
+    name: 'workstream.checkpoint',
+    arguments: {
+      org_id: 'bbbbbbbb-0000-4000-8000-00000000000b',
+      workstream: { id: 'durable-context', next: 'open the pull request' },
+      event: { at: '2026-11-22T10:00:00.000Z', kind: 'verified', text: 'contracts pass' }
+    },
+    _meta: { 'mccluster/actor': { user_id: 'bbbbbbbb-0000-4000-8000-000000000002', kind: 'service', source: 'client-claimed' } }
+  }
+};
+
+test('workstream.checkpoint is refused without authentication and never reaches Core', async () => {
+  await withPlane({}, async (seen) => {
+    const { status, body } = await handleCoreMcp(rpcRequest(CHECKPOINT), env, null);
+    assert.equal(status, 401);
+    assert.match(body.error.message, /Authentication required/i);
+    assert.equal(seen.length, 0);
+  });
+});
+
+test('workstream.checkpoint and workstream.list are refused for a signed-in non-owner', async () => {
+  for (const name of ['workstream.checkpoint', 'workstream.list']) {
+    await withPlane({ role: null }, async (seen) => {
+      const { status, body } = await handleCoreMcp(
+        rpcRequest({ ...CHECKPOINT, params: { ...CHECKPOINT.params, name } }), env, OWNER);
+      assert.equal(status, 403, name);
+      assert.match(body.error.message, /house owner/i);
+      assert.ok(!seen.some((call) => call.href.includes('core.example.org')), `${name} reached Core for a non-owner`);
+    });
+  }
+});
+
+test('workstream.checkpoint reaches Core for the owner with the house org and the authenticated actor, whatever the client sent', async () => {
+  const called = { jsonrpc: '2.0', id: 21, result: { content: [{ type: 'text', text: '{"ok":true}' }] } };
+  await withPlane({ broker: called }, async (seen) => {
+    const { status } = await handleCoreMcp(rpcRequest(CHECKPOINT), env, OWNER);
+    assert.equal(status, 200);
+    const dispatch = seen.find((call) => call.href === 'https://core.example.org/mcp');
+    assert.ok(dispatch?.body, 'checkpoint was not dispatched to Core');
+    assert.ok(dispatch.headers['x-mccluster-signature'], 'checkpoint dispatch was not signed');
+    const forwarded = JSON.parse(new TextDecoder().decode(dispatch.body));
+    assert.equal(forwarded.params.name, 'workstream.checkpoint');
+    assert.equal(forwarded.params.arguments.org_id, ORG_ID, 'the edge must overwrite org_id with the house organization');
+    assert.deepEqual(forwarded.params.arguments.workstream, CHECKPOINT.params.arguments.workstream);
+    assert.deepEqual(forwarded.params.arguments.event, CHECKPOINT.params.arguments.event);
+    assert.deepEqual(forwarded.params._meta['mccluster/actor'],
+      { user_id: OWNER.id, kind: 'owner', source: 'cloudflare-owner-session' });
+  });
+});
+
+test('workstream.list is forwarded with the house org', async () => {
+  const called = { jsonrpc: '2.0', id: 22, result: { content: [{ type: 'text', text: '{"workstreams":[]}' }] } };
+  await withPlane({ broker: called }, async (seen) => {
+    const { status } = await handleCoreMcp(
+      rpcRequest({ jsonrpc: '2.0', id: 22, method: 'tools/call', params: { name: 'workstream.list', arguments: { org_id: 'not-the-house' } } }),
+      env, OWNER);
+    assert.equal(status, 200);
+    const forwarded = JSON.parse(new TextDecoder().decode(seen.find((call) => call.href === 'https://core.example.org/mcp').body));
+    assert.equal(forwarded.params.arguments.org_id, ORG_ID);
+  });
+});
+
+test('the raw Core tool names for workstreams are not on the remote surface', async () => {
+  for (const name of ['core.workstream.checkpoint', 'core.workstream.list']) {
+    await withPlane({}, async (seen) => {
+      const { body } = await handleCoreMcp(
+        rpcRequest({ jsonrpc: '2.0', id: 23, method: 'tools/call', params: { name, arguments: {} } }), env, OWNER);
+      assert.equal(body.result.isError, true, name);
+      assert.ok(!seen.some((call) => call.href.includes('core.example.org')), `${name} reached Core`);
+    });
+  }
+});

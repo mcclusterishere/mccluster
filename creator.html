@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/creator-onboarding.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/lyrics-editor.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
@@ -156,6 +157,35 @@
         <div class="creator-list" id="creatorTracks"><div class="creator-status">No releases yet.</div></div>
       </section>
 
+      <section class="creator-card creator-lyrics" id="creatorLyrics" hidden>
+        <h2>Lyrics</h2>
+        <p>Play the song and fix any line: its words, when it starts and ends, and each word's timing (tap along). Then tick “These lyrics are right”. Lyrics on an approved or live release go back to review when they change.</p>
+        <div data-crl-host></div>
+      </section>
+
+      <section class="creator-card creator-dist" id="creatorDist" hidden>
+        <h2 id="distTitle">Distribution</h2>
+        <p>What the stores need before this release goes out. McCluster prepares the delivery; nothing is sent from here.</p>
+        <div class="creator-dist__progress" id="distProgress" role="status"></div>
+        <ul class="creator-dist__check" id="distCheck" aria-label="Store checklist"></ul>
+        <form class="creator-form" id="distForm" novalidate>
+          <div class="creator-form two">
+            <div class="creator-field"><label for="distDate">Release date</label><input id="distDate" type="date"></div>
+            <div class="creator-field"><label for="distExplicit">Explicit</label><select id="distExplicit"><option value="">Choose…</option><option value="false">Clean</option><option value="true">Explicit</option></select></div>
+            <div class="creator-field"><label for="distOwner">Master owner</label><input id="distOwner" maxlength="200" autocomplete="off"></div>
+            <div class="creator-field"><label for="distP">℗ line</label><input id="distP" maxlength="200" placeholder="2026 Your Name" autocomplete="off"></div>
+            <div class="creator-field"><label for="distC">© line</label><input id="distC" maxlength="200" placeholder="2026 Your Name" autocomplete="off"></div>
+            <div class="creator-field"><label for="distLang">Language</label><input id="distLang" maxlength="3" value="en" autocomplete="off"></div>
+            <div class="creator-field"><label for="distIsrc">Your ISRC (if you have one)</label><input id="distIsrc" maxlength="20" autocomplete="off" placeholder="Left empty, McCluster assigns one"></div>
+            <div class="creator-field"><label for="distUpc">Your UPC (if you have one)</label><input id="distUpc" maxlength="20" inputmode="numeric" autocomplete="off" placeholder="Left empty, McCluster assigns one"></div>
+          </div>
+          <fieldset class="creator-dist__set"><legend>Credits</legend><div id="distCredits"></div><button class="creator-dist__add" type="button" id="distAddCredit">Add a credit</button></fieldset>
+          <fieldset class="creator-dist__set"><legend>Splits</legend><div id="distSplits"></div><button class="creator-dist__add" type="button" id="distAddSplit">Add a split</button><small class="creator-dist__hint">None set means 100% to the master owner. Each kind (master, publishing) adds up to 100%.</small></fieldset>
+          <div class="creator-actions"><button class="creator-btn" type="submit" id="distSave">Save details</button><button class="creator-dist__add" type="button" id="distClose">Close</button></div>
+          <div class="creator-status" id="distStatus" role="status" aria-live="polite"></div>
+        </form>
+      </section>
+
       <section class="creator-card wide">
         <h2>Submit a release</h2>
         <p>Private masters never become public URLs. Account-only and licensable tracks use a public preview plus a private master; public tracks may publish the same audio openly.</p>
@@ -213,6 +243,9 @@
   <script src="js/music-creator-page.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/lyric-sheet.js?v=__STAMP__"></script>
+  <script src="js/lyrics-sync.js?v=__STAMP__"></script>
+  <script src="js/music-distribution.js?v=__STAMP__"></script>
+  <script src="js/control-room/lyrics-review.js?v=__STAMP__"></script>
   <script type="module" src="js/music-creator-studio.js?v=__STAMP__"></script>
   <script src="js/music-self-analytics.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

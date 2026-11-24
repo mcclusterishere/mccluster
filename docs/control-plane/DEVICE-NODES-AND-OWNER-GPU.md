@@ -7,6 +7,10 @@ the node's own browser as a second loopback executor driven only from the Core's
 Room surface (`AGENT-NODE-BROWSER.md`). The Control pane (step 3), the OVH promotion, the pending claim SQL and
 the Tier 2 switches are the open items. Resume point for any session; the owner's runbook is `WINDOWS-NODE.md`.
 
+2026-11-24: the owner's Apple Silicon Mac, **Shiloh Mac** (M1), joins the same way: `core/node-manifests/owner-mac-m1.json`,
+`core/macos/mccluster-mac-node.sh` (LaunchAgents for the agent, the Ollama adapter and the lyric machine) and the
+runbook `MAC-NODE.md`.
+
 ## The owner's request (2026-11-17)
 
 "We need my computer to be able to supply gpu and processing power to the overall network. … a feature that
@@ -185,6 +189,43 @@ Two lanes on this branch, source and tests only; the design, the contracts and w
   honest readiness line, user images, screenshots and the action log inline in a collapsed block, live steps
   while the turn runs, the node badge (which node answered, its hardware mode and measured rate) and the
   refusal codes in words; proven in Chromium at 390 and 1280 against fixtures.
+
+## Owned hardware first, and Core is the node network (owner, 2026-11-23)
+
+> "The lyric machine shouldn't wait on OVH box. We have a whole bunch of other nodes ... I want my laptop to ... be
+> the same as the OVH box. They are equals ... Prioritize owned hardware ... Our baseline objectives should be able to
+> be hit by everything." "Core, now that we have multiple nodes, should be the node network itself."
+
+The decision is recorded in `AGENTS.md` and `MCCLUSTER-CORE.md`. In the code (source and tests; nothing deployed):
+
+- **The lyric machine runs on any node.** `lyrics.align` is a node capability: `core/src/compute/lyrics-executor.mjs`
+  (loopback `127.0.0.1:4792`) runs the same pipeline the Core runs (`core/src/lyrics/pipeline.mjs`: Demucs,
+  faster-whisper, the sheet, wav2vec2). The Core's `lyrics_align` job (`core/src/executors/lyrics-align.mjs`) first
+  offers the work to a live owned node through the compute queue (`core/src/compute/lyrics-node.mjs`), with a one-hour
+  signed URL for the master in the task: **the node never receives a database or storage key**, and takes a master
+  only from an allowed storage host. The node's document is validated before it is written, the write keeps every
+  existing guard (input revision, never over reviewed lyrics), and the result records where it ran
+  (`machine.ran_on`). With no live owned node, or when the node fails, or when the task is taken back while still
+  queued, the Core runs it itself; a node still holding the task past the wait makes the job retry later, never a second
+  run. `MCCLUSTER_LYRICS_FABRIC=off` turns the offer off; the OVH node's name is excluded by default
+  (`MCCLUSTER_LYRICS_FABRIC_EXCLUDE_NODES`, default `ovh-primary`), since it runs its own copy locally. Stems from a
+  node run are not stored yet (they need the storage key); a Core run still stores them.
+- **Owned first for AI chat by default.** `MCCLUSTER_LOCAL_AI_FABRIC` now defaults to `prefer`: the Core's own
+  inference goes to a live GPU-verified owned node first, and with none live it runs on the box at once (no wait).
+- **The laptop template advertises it.** `core/node-manifests/owner-windows-gpu.json` carries
+  `lyrics.align/lyrics.machine.local`. A node advertises it only while the executor answers `/ready`, which checks that
+  Python imports `demucs`, `faster_whisper` and `torchaudio`.
+- **To bring a node up for lyrics** (Prime's Windows install and packaging stay with Prime's own session): install the
+  same Python packages the OVH runbook names (`core/README.md`, "Lyric machine runtime": `torch` and `torchaudio`
+  2.7.1, `faster-whisper` 1.2.1, `demucs` 4.1.0, `soundfile`; the CUDA or ROCm wheel where the GPU has one), set
+  `LYRICS_PYTHON` to that interpreter, and run `npm run compute:lyrics` from `core/` beside the node agent. The Windows
+  doctor (`core/windows/mccluster-node.ps1`, Prime's session) prunes the template to the tier's implementations plus
+  its listed extras, so until it lists `lyrics.machine.local` among those extras the entry has to be kept in the
+  written `capabilities.json` by hand. The Macs take the same entry once their node manifest from draft PR #821 lands.
+- **Core runs on more than one node.** Several Core runners may work the same queue (each claim is one conditional write
+  with its own lease), and the compute gateway has a fenced primary and standby (`DEVICE-JOBS-SCHEDULER-STANDBY.md`).
+  Running the Core runner and a standby gateway on Prime is the next step for "the laptop is the OVH box's equal"; it
+  needs Prime's install, the pending scheduler SQL, and the owner's decision that Prime holds the Core's server key.
 
 ## Queue
 

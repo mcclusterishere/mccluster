@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 767,
+  "candidate_count": 792,
   "capability_source_count": 104,
-  "support_only_count": 663,
+  "support_only_count": 688,
   "entries": [
     {
       "path": ".cursorrules",
@@ -45,6 +45,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": ".github/workflows/compute-device-db.yml",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Local-only proof of shared music/compute roles, release integrity, signed receipts and safe recovery; no production activation or program inventory change."
     },
     {
       "path": ".github/workflows/equity-uprise-core-v2-ci.yml",
@@ -576,7 +583,7 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
     },
     {
       "path": "create.html",
@@ -1481,6 +1488,20 @@
       "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
     },
     {
+      "path": "docs/control-plane/evidence/music-compute-migration-review-2026-11-24.md",
+      "classification": "evidence_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Documents shared music/compute release dependencies, exact proof limits and review conditions; no independent program capability."
+    },
+    {
+      "path": "docs/control-plane/evidence/pr823-compute-device-native-2026-11-24.json",
+      "classification": "evidence_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Documents shared music/compute release dependencies, exact proof limits and review conditions; no independent program capability."
+    },
+    {
       "path": "docs/control-plane/evidence/production-advisors-2026-10-28.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1551,6 +1572,13 @@
       "rationale": "Read-only production schema snapshot taken on 2026-11-20 after the Drawdown credit correction and publication and Environment parts 01 and 02 were recorded at ledger 380; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
     },
     {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken on 2026-11-23 after the network connections consent guard and Environment parts 03 to 05 were recorded at ledger 384; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
+    },
+    {
       "path": "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1563,6 +1591,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/ddex.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Documents shared music/compute release dependencies, exact proof limits and review conditions; no independent program capability."
     },
     {
       "path": "docs/design/HERE-BRAND-LIBRARY.md",
@@ -2180,7 +2215,14 @@
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Control · Sell · Music · Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+      "rationale": "Control \u00b7 Sell \u00b7 Music \u00b7 Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "js/control-room/music-ops.js",
+      "classification": "integration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Connects the existing creator music distribution workflow to the reviewed release pipeline; shared platform support with no new building capability."
     },
     {
       "path": "js/control-room/nav.js",
@@ -2952,7 +2994,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "screens/building.html",
@@ -3043,6 +3085,13 @@
       "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
     },
     {
+      "path": "scripts/compute-device-native-check.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Local-only proof of shared music/compute roles, release integrity, signed receipts and safe recovery; no production activation or program inventory change."
+    },
+    {
       "path": "scripts/e2e/control-eup.e2e.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3082,7 +3131,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Captures actual canonical B1–L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
+      "rationale": "Captures actual canonical B1\u2013L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
     },
     {
       "path": "scripts/e2e/eu-screens.e2e.mjs",
@@ -3241,6 +3290,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "scripts/music-release-native-check.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Local-only proof of shared music/compute roles, release integrity, signed receipts and safe recovery; no production activation or program inventory change."
+    },
+    {
       "path": "scripts/prim3/blind-the-floor-sim.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3288,6 +3344,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Public-only static asset exporter references the Equity Uprise preview directory as a frontend asset; it does not define any Equity Uprise program capability."
+    },
+    {
+      "path": "scripts/staging/device-jobs/pglite-postgrest.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Local-only proof of shared music/compute roles, release integrity, signed receipts and safe recovery; no production activation or program inventory change."
+    },
+    {
+      "path": "scripts/staging/device-jobs/run.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Local-only proof of shared music/compute roles, release integrity, signed receipts and safe recovery; no production activation or program inventory change."
     },
     {
       "path": "scripts/test-environment-proofs-pglite.mjs",
@@ -3393,6 +3463,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
+    },
+    {
+      "path": "scripts/test/creator-distribution-stage.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Local-only proof of shared music/compute roles, release integrity, signed receipts and safe recovery; no production activation or program inventory change."
     },
     {
       "path": "scripts/test/domain-architecture.test.mjs",
@@ -3882,6 +3959,13 @@
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     },
     {
+      "path": "supabase/functions/_shared/creator-distribution.ts",
+      "classification": "integration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Connects the existing creator music distribution workflow to the reviewed release pipeline; shared platform support with no new building capability."
+    },
+    {
       "path": "supabase/functions/_shared/eu-policy-os.ts",
       "classification": "runtime_support",
       "capability_ids": [],
@@ -4041,6 +4125,13 @@
         "source-graph"
       ],
       "support_only": false
+    },
+    {
+      "path": "supabase/functions/music-access/index.ts",
+      "classification": "integration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Connects the existing creator music distribution workflow to the reviewed release pipeline; shared platform support with no new building capability."
     },
     {
       "path": "supabase/functions/pay-now/index.ts",
@@ -4577,6 +4668,62 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
+      "path": "supabase/pending/20261031180000_lyrics_machine_v1.rollback.sql",
+      "classification": "migration_recovery_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed recovery for shared music or compute persistence; preserves recorded state and adds no Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/pending/20261031180000_lyrics_machine_v1.sql",
+      "classification": "migration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared music or compute persistence used by existing platform callers; pending named-file approval, with no new Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/pending/20261123180000_tinderfessions_catalog_objects.rollback.sql",
+      "classification": "migration_recovery_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed recovery for shared music or compute persistence; preserves recorded state and adds no Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/pending/20261123180000_tinderfessions_catalog_objects.sql",
+      "classification": "migration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared music or compute persistence used by existing platform callers; pending named-file approval, with no new Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.rollback.sql",
+      "classification": "migration_recovery_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed recovery for shared music or compute persistence; preserves recorded state and adds no Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.sql",
+      "classification": "migration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared music or compute persistence used by existing platform callers; pending named-file approval, with no new Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/pending/20261123200000_music_creator_distribution_v1.rollback.sql",
+      "classification": "migration_recovery_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed recovery for shared music or compute persistence; preserves recorded state and adds no Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/pending/20261123200000_music_creator_distribution_v1.sql",
+      "classification": "migration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared music or compute persistence used by existing platform callers; pending named-file approval, with no new Equity Uprise building capability."
+    },
+    {
       "path": "supabase/pending/PROMOTION-ORDER.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -4596,6 +4743,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
+    },
+    {
+      "path": "supabase/pending/compute_job_attestations_v1.rollback.sql",
+      "classification": "migration_recovery_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed recovery for shared music or compute persistence; preserves recorded state and adds no Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/pending/compute_job_attestations_v1.sql",
+      "classification": "migration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared music or compute persistence used by existing platform callers; pending named-file approval, with no new Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/pending/compute_scheduler_lease_v1.rollback.sql",
+      "classification": "migration_recovery_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed recovery for shared music or compute persistence; preserves recorded state and adds no Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/pending/compute_scheduler_lease_v1.sql",
+      "classification": "migration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared music or compute persistence used by existing platform callers; pending named-file approval, with no new Equity Uprise building capability."
     },
     {
       "path": "supabase/pending/equity_uprise_clipping_sources.sql",

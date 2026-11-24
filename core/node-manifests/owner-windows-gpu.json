@@ -353,6 +353,59 @@
       }
     },
     {
+      "capability": "lyrics.align",
+      "implementation": "lyrics.machine.local",
+      "backend": "demucs+faster-whisper+wav2vec2",
+      "model": null,
+      "version": "1",
+      "features": {
+        "lyrics": true,
+        "word_timing": true,
+        "self_hosted": true,
+        "gpu": true
+      },
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "audio_url"
+        ],
+        "properties": {
+          "audio_url": {
+            "type": "string"
+          },
+          "audio_ext": {
+            "type": "string"
+          },
+          "sheet_text": {
+            "type": "string",
+            "maxLength": 40000
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "doc": {
+            "type": "object"
+          }
+        }
+      },
+      "max_concurrency": 1,
+      "min_vram_bytes": 0,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4792/execute",
+        "health_url": "http://127.0.0.1:4792/ready",
+        "health_method": "GET",
+        "health_timeout_ms": 3000,
+        "timeout_ms": 1800000
+      }
+    },
+    {
       "capability": "browser.act",
       "implementation": "chromium.local",
       "backend": "playwright",

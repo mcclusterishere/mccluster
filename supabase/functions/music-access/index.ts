@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { DependencyMissing, purchasedDownload, recordUpload, streamTarget, type MusicDb } from "./delivery.ts";
 import { prepareReviewAudio, reviewDecisionRefusal, shortHash, type ObjectReader } from "./review-audio.ts";
+import { RESTAGEABLE, stageCreatorRelease } from "../_shared/creator-distribution.ts";
 
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -242,6 +243,54 @@ Deno.serve(async (req) => {
       }).select("id").single();
       if (error) throw error;
       return json({ ok: true, queued: true, job_id: job.id });
+    }
+
+    /* THE STORES, owner side (Control → Create → Music → Distribution). An approved creator release and the
+       details its creator entered (creator_tracks.distribution, pending SQL section 18) are staged into the store
+       pipeline the house already has: eu_recordings / eu_releases / eu_release_tracks / eu_rights_splits in the
+       McCluster org, at metadata-review. eu-music preflight and the music.deliver approval then decide delivery;
+       nothing is delivered and no code is minted here (../_shared/creator-distribution.ts). dry_run (the default)
+       only says what would be staged and what is missing. */
+    if (action === "operator-distribution-stage") {
+      if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
+      const trackId = clean(body.track_id, 80);
+      if (!trackId) return json({ error: "track_id required" }, 400);
+      const { data: t, error } = await admin.from("creator_tracks")
+        .select("id,m_uid,title,artist,status,rights_status,duration_ms,poster_url,master_bucket,master_path,distribution")
+        .eq("id", trackId).maybeSingle();
+      if (error) {
+        if (/distribution/.test(error.message || "")) return json({ error: "distribution details are not switched on yet (supabase/pending section 18)" }, 409);
+        throw error;
+      }
+      if (!t) return json({ error: "track not found" }, 404);
+      const { data: org } = await admin.from("orgs").select("id").eq("slug", "mccluster").limit(1).maybeSingle();
+      if (!org?.id) return json({ error: "house org missing" }, 500);
+      const staged = stageCreatorRelease(t, org.id);
+      if (staged.refusal) return json({ error: staged.refusal }, 409);
+      const { data: prior } = await admin.from("eu_releases").select("id,status")
+        .eq("org_id", org.id).eq("metadata->>creator_track_id", trackId).limit(1).maybeSingle();
+      if (prior && !RESTAGEABLE.has(prior.status)) return json({ error: `already ${prior.status} with the stores; change it with an update, not a restage`, release_id: prior.id }, 409);
+      if (body.dry_run !== false) return json({ ok: true, dry_run: true, staged: !!prior, release_id: prior?.id || null, gaps: staged.gaps, release: staged.release, recording: staged.recording, splits: staged.splits });
+      const { data: recPrior } = await admin.from("eu_recordings").select("id")
+        .eq("org_id", org.id).eq("metadata->>creator_track_id", trackId).limit(1).maybeSingle();
+      const rec = recPrior
+        ? (await admin.from("eu_recordings").update(staged.recording!).eq("id", recPrior.id).select("id").single())
+        : (await admin.from("eu_recordings").insert(staged.recording!).select("id").single());
+      if (rec.error) throw rec.error;
+      const rel = prior
+        ? (await admin.from("eu_releases").update(staged.release!).eq("id", prior.id).select("id").single())
+        : (await admin.from("eu_releases").insert(staged.release!).select("id").single());
+      if (rel.error) throw rel.error;
+      const link = await admin.from("eu_release_tracks").upsert({ release_id: rel.data.id, recording_id: rec.data.id, disc_no: 1, track_no: 1 }, { onConflict: "release_id,disc_no,track_no" });
+      if (link.error) throw link.error;
+      /* the splits are the creator's, replaced whole on every stage */
+      const del = await admin.from("eu_rights_splits").delete().eq("org_id", org.id).eq("resource_type", "recording").eq("resource_id", rec.data.id).eq("metadata->>source", "creator_tracks");
+      if (del.error) throw del.error;
+      if (staged.splits!.length) {
+        const ins = await admin.from("eu_rights_splits").insert(staged.splits!.map((s) => ({ ...s, org_id: org.id, resource_type: "recording", resource_id: rec.data.id, metadata: { source: "creator_tracks", creator_track_id: trackId } })));
+        if (ins.error) throw ins.error;
+      }
+      return json({ ok: true, dry_run: false, staged: true, release_id: rel.data.id, recording_id: rec.data.id, gaps: staged.gaps });
     }
 
     /* STEMS, owner only (Control → Create → Music → Stems). The stems are the

@@ -93,9 +93,13 @@
   /* two records deep and nothing in the pocket: the masters are the move */
   if (page === "album.html") {
     var deck = document.getElementById("deck");
-    var plays = 0;
+    var plays = 0, lastSrc = "";
     if (deck) {
       deck.addEventListener("play", function () {
+        /* records, not play events: a song picked up again after a dropped read plays the same file again */
+        var src = deck.currentSrc || deck.src || "";
+        if (src && src === lastSrc) return;
+        lastSrc = src;
         plays++;
         if (plays === 2 && !spoken()) {
           setTimeout(function () {

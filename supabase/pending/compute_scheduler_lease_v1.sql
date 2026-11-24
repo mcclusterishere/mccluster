@@ -1,3 +1,5 @@
+-- Equity Uprise shared-platform support-only: fenced Core compute scheduling.
+-- This internal authority record does not define building capabilities or policy.
 -- PENDING ONLY. Owner review, isolated SQL proof and explicit migration approval
 -- are required before applying this to canonical Supabase. No ledger entry here.
 --

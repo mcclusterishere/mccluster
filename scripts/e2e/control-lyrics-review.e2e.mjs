@@ -19,6 +19,7 @@ const BASE='https://matthew.mccluster.org';
 const TYPES={'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.html':'text/html','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const OWNER='11111111-1111-4111-8111-111111111111';
 const UPLOAD='22222222-2222-4222-8222-222222222222';
+const LIVE2='33333333-3333-4333-8333-333333333333';
 const results=[];
 function check(scope,name,ok,detail){results.push({scope,name,pass:!!ok});console.log((ok?'PASS ':'FAIL ')+'['+scope+'] '+name+(ok?'':' '+JSON.stringify(detail)));}
 await mkdir(OUT,{recursive:true});
@@ -29,7 +30,7 @@ const HUNDUN=JSON.parse(await readFile(join(ROOT,'data/lyrics/hundun-b-side.json
 const json=(route,body,status=200)=>route.fulfill({status,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(body)});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--autoplay-policy=no-user-gesture-required','--mute-audio']});
 
-async function setup(viewport,{owner=true}={}){
+async function setup(viewport,{owner=true,stores=false}={}){
   const ctx=await browser.newContext({viewport,deviceScaleFactor:1,hasTouch:viewport.width<1000,serviceWorkers:'block',acceptDownloads:true});
   const db={calls:[]},errors=[];
   await ctx.addInitScript(({OWNER})=>{
@@ -51,7 +52,8 @@ async function setup(viewport,{owner=true}={}){
       if(p==='/functions/v1/music-access'){
         const b=req.postDataJSON()||{};db.calls.push(b);
         if(!owner)return json(route,{error:'operator permission required'},403);
-        if(b.action==='operator-dashboard')return json(route,{ok:true,tracks:[{id:UPLOAD,title:'Fixture Upload',artist:'A Creator',status:'pending_review',m_uid:'m1'}],creators:[],offers:[]});
+        if(b.action==='operator-dashboard')return json(route,{ok:true,tracks:[{id:UPLOAD,title:'Fixture Upload',artist:'A Creator',status:'pending_review',m_uid:'m1'}].concat(stores?[{id:LIVE2,title:'Fixture Live',artist:'A Creator',status:'published',m_uid:'m1'}]:[]),creators:[],offers:[]});
+        if(b.action==='operator-distribution-stage')return json(route,b.dry_run===false?{ok:true,dry_run:false,staged:true,release_id:'r1',recording_id:'c1',gaps:['ISRC','UPC']}:{ok:true,dry_run:true,staged:false,release_id:null,gaps:['ISRC','UPC']});
         if(b.action==='operator-lyrics-get'){
           /* the slow release: answers late, with a different three-line file */
           if(db.slow){db.slow=false;await new Promise(r=>setTimeout(r,1500));return json(route,{ok:true,track_id:UPLOAD,title:'Fixture Upload',lyrics:{...HUNDUN,source:'auto',timed:{line:HUNDUN.timed.line.slice(0,3)}},listen_url:'https://fixture-storage.invalid/master.wav'});}
@@ -116,6 +118,52 @@ async function openLyrics(page){
   check('390','no sideways scroll',(await overflow(page))===0,{});
   const fonts=await page.evaluate(()=>[...document.querySelectorAll('.crl-text,[data-crl-pick]')].map(e=>parseFloat(getComputedStyle(e).fontSize)).filter(f=>f<16).length);
   check('390','form controls are at least 16px (no iOS zoom)',fonts===0,{fonts});
+  /* THE LINE EDITOR (owner, 2026-11-23: "a more advanced lyric engine ... control the lyrics"): tap the words in time,
+     end the line at the playhead, split, merge, add, delete, and export LRC and TTML */
+  const ti=HUNDUN.timed.line.findIndex((l,i)=>i>fi+1&&!l.mismatch&&l.content.trim().split(/\s+/).length>=3&&HUNDUN.timed.line[i+1]);
+  const TL=HUNDUN.timed.line[ti],TN=HUNDUN.timed.line[ti+1],nWords=TL.content.trim().split(/\s+/).length;
+  await page.locator(`[data-crl-tools="${ti}"] > summary`).click();
+  await page.locator(`[data-crl-tapgo="${ti}"]`).click();
+  await page.evaluate(()=>document.querySelector('.crl-audio').pause());
+  const step=Math.min(0.4,(TN.begin-TL.begin-0.3)/(nWords+1)),taps=[];
+  for(let k=0;k<=nWords;k++){
+    const t=Math.round((TL.begin+0.05+step*k)*1000)/1000;taps.push(t);
+    await page.evaluate(t=>new Promise(r=>{const a=document.querySelector('.crl-audio');a.addEventListener('seeked',()=>r(),{once:true});a.currentTime=t;}),t);
+    await page.locator(`[data-crl-tap="${ti}"]`).click();
+  }
+  const tapped=await page.evaluate(i=>JSON.parse(JSON.stringify(CR.lyricsReview.state.doc.timed.line[i])),ti);
+  check('390','tapping along times every word in order and the last tap ends the line',
+    tapped.words.length===nWords&&tapped.words.every((w,k)=>Math.abs(w.begin-taps[k])<0.02&&w.end>=w.begin)&&Math.abs(tapped.begin-taps[0])<0.02&&Math.abs(tapped.end-taps[nWords])<0.02&&await page.locator(`[data-crl-tap="${ti}"]`).count()===0,{tapped,taps});
+  check('390','each word shows its own time',await page.locator(`[data-crl-tools="${ti}"] .crl-word`).count()===nWords);
+  const endAt=Math.round((taps[nWords]-step/2)*1000)/1000;
+  await page.evaluate(t=>new Promise(r=>{const a=document.querySelector('.crl-audio');a.addEventListener('seeked',()=>r(),{once:true});a.currentTime=t;}),endAt);
+  await page.locator(`[data-crl-endnow="${ti}"]`).click();
+  const ended=await page.evaluate(i=>CR.lyricsReview.state.doc.timed.line[i],ti);
+  check('390','End now ends the line at the playhead and keeps its words inside it',Math.abs(ended.end-endAt)<0.02&&ended.words.every(w=>w.end<=ended.end+0.001),ended);
+  const count=()=>page.locator('.crl-line').count(),before=await count();
+  await page.locator(`[data-crl-split="${ti}"]`).click();
+  const split=await page.evaluate(i=>[CR.lyricsReview.state.doc.timed.line[i],CR.lyricsReview.state.doc.timed.line[i+1]].map(l=>({c:l.content,b:l.begin,e:l.end,w:(l.words||[]).length})),ti);
+  check('390','Split makes two lines, the second starting at its first word',await count()===before+1&&split[0].w+split[1].w===nWords&&(split[0].c+' '+split[1].c)===TL.content.trim()&&Math.abs(split[0].e-split[1].b)<0.001,split);
+  const ensureOpen=async i=>{if(!await page.locator(`[data-crl-tools="${i}"]`).evaluate(d=>d.open))await page.locator(`[data-crl-tools="${i}"] > summary`).click();};
+  await ensureOpen(ti);
+  await page.locator(`[data-crl-merge="${ti}"]`).click();
+  const merged=await page.evaluate(i=>CR.lyricsReview.state.doc.timed.line[i],ti);
+  check('390','Merge joins them back, words and all',await count()===before&&merged.content===TL.content.trim()&&merged.words.length===nWords,merged);
+  await ensureOpen(ti);
+  await page.locator(`[data-crl-add="${ti}"]`).click();
+  check('390','Add line after puts an empty line below and asks for its words',await count()===before+1&&(await page.locator(`[data-crl-text="${ti+1}"]`).inputValue())===''&&/type its words/.test(await page.locator('.crl-msg').innerText()));
+  await page.locator('[data-crl-export="lrc"]').click();
+  check('390','an empty line stops the export and says which line',/Line \d+ has no words/.test(await page.locator('.crl-msg').innerText()));
+  await ensureOpen(ti+1);
+  await page.locator(`[data-crl-del="${ti+1}"]`).click();
+  check('390','Delete line removes it',await count()===before);
+  const [lrc]=await Promise.all([page.waitForEvent('download'),page.locator('[data-crl-export="lrc"]').click()]);
+  const lrcText=await readFile(await lrc.path(),'utf8'),lrcLines=lrcText.trim().split('\n').filter(x=>/^\[\d\d:\d\d\.\d\d\]/.test(x));
+  check('390','Export LRC: one timed line per lyric line',lrc.suggestedFilename()==='hundun-b-side.lrc'&&lrcLines.length===before&&lrcLines[fi].endsWith('First get yo monyon then stack a hundun'),{name:lrc.suggestedFilename(),n:lrcLines.length,before});
+  const [ttml]=await Promise.all([page.waitForEvent('download'),page.locator('[data-crl-export="ttml"]').click()]);
+  const ttmlText=await readFile(await ttml.path(),'utf8');
+  check('390','Export TTML: every line a <p>, with word <span> times',ttml.suggestedFilename()==='hundun-b-side.ttml'&&(ttmlText.match(/<p begin=/g)||[]).length===before&&ttmlText.includes('<span begin=')&&ttmlText.startsWith('<?xml'),{name:ttml.suggestedFilename()});
+  check('390','the line editor fits the phone',(await overflow(page))===0,{});
   await page.screenshot({path:join(OUT,'control-lyrics-390.png')});
   const [dl]=await Promise.all([page.waitForEvent('download'),page.locator('[data-crl-download]').click()]);
   const out=JSON.parse(await readFile(await dl.path(),'utf8'));
@@ -171,6 +219,26 @@ async function openLyrics(page){
   check('non-owner','no upload lyrics are read or written for a non-operator',gotLyrics===0,{gotLyrics});
   const uploads=tab?await page.locator('[data-crl-pick] option',{hasText:'(upload)'}).count():0;
   check('non-owner','no creator uploads are offered (the music service refused the operator dashboard)',uploads===0,{uploads});
+  await ctx.close();
+}
+/* ---- the stores: an approved creator release, checked and staged (music-access operator-distribution-stage) ---- */
+{
+  const {ctx,page,db,errors}=await setup({width:390,height:844},{stores:true});
+  await page.goto(`${BASE}/control.html#create:music`,{waitUntil:'domcontentloaded'});
+  await page.locator('[data-crom-section="distribution"]').click({timeout:15000});
+  await page.locator(`[data-crom-stage="${LIVE2}"][data-dry="1"]`).waitFor({timeout:15000});
+  check('stores','only the approved release is offered for the stores',await page.locator(`[data-crom-stage="${UPLOAD}"]`).count()===0,{});
+  await page.locator(`[data-crom-stage="${LIVE2}"][data-dry="1"]`).click();
+  await page.waitForFunction(()=>/Missing: ISRC, UPC/.test(document.body.textContent),null,{timeout:10000}).catch(()=>{});
+  const dry=db.calls.filter(c=>c.action==='operator-distribution-stage');
+  check('stores','Check is a dry run and shows what is missing',dry.length===1&&dry[0].dry_run===true&&/Not staged yet\. Missing: ISRC, UPC/.test(await page.textContent('body')),dry);
+  page.once('dialog',d=>d.accept());
+  await page.locator(`[data-crom-stage="${LIVE2}"][data-dry="0"]`).click();
+  await page.waitForFunction(()=>/Staged at metadata review/.test(document.body.textContent),null,{timeout:10000}).catch(()=>{});
+  const all=db.calls.filter(c=>c.action==='operator-distribution-stage');
+  check('stores','Stage asks first, then writes with dry_run:false',all.length===2&&all[1].dry_run===false&&/Staged at metadata review/.test(await page.textContent('body')),all);
+  check('stores','no sideways scroll',(await overflow(page))===0,{});
+  check('stores','no page errors',errors.length===0,errors.slice(0,5));
   await ctx.close();
 }
 await browser.close();

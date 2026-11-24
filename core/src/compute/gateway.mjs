@@ -1,7 +1,9 @@
 import http from 'node:http';
+import { buildSupabaseHeaders } from '../supabase.mjs';
 import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, clampYieldSeconds, claimableManifest, countLiveGpuNodes, enrollmentLabels, heartbeatLabels, validateCapabilityManifest, validateEnrollment, validateInventory, validateLoad, validateNodeId } from './protocol.mjs';
 import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedRequest } from './signature.mjs';
-import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
+import { authorizeOwnerSession, enrollCredential, issueGrant, verifyGrant } from './device-grant.mjs';
+import { acceptNonce, nodeByEnrollGrant, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
 import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
 import { handleJobRoute } from './jobs-routes.mjs';
 import { recordCompletionAttestation, releaseAfterFailure, resolveReceiptKey, settleCompletion, startContributionSweep, validateCompletion } from './jobs-service.mjs';
@@ -115,8 +117,27 @@ function leasePath(url) {
   return match ? { leaseId: match[1], action: match[2] } : null;
 }
 
+// The website opts devices in (device-grant.mjs) and a browser tab can be a node (js/device-node.js), so the
+// signed-in pages may call the gateway across origins. Only these origins, never a wildcard; credentials are the
+// owner's bearer session or the node's own signature, never cookies.
+const usedGrants = new Map(); // grant nonce -> node id (this process; nodeByEnrollGrant covers restarts)
+const BROWSER_ORIGINS = new Set(String(process.env.CORE_COMPUTE_BROWSER_ORIGINS || 'https://matthew.mccluster.org,https://mccluster.org').split(',').map((s) => s.trim()).filter(Boolean));
+const CORS_HEADERS = ['authorization', 'content-type', 'x-mccluster-enroll-grant', 'idempotency-key', ...Object.values(SIGNATURE_HEADERS)].join(', ');
+function cors(req, res) {
+  const origin = String(req.headers.origin || '');
+  if (!BROWSER_ORIGINS.has(origin)) return false;
+  res.setHeader('access-control-allow-origin', origin);
+  res.setHeader('vary', 'Origin');
+  res.setHeader('access-control-allow-headers', CORS_HEADERS);
+  res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+  res.setHeader('access-control-max-age', '600');
+  return true;
+}
+
 async function route(req, res) {
   const url = new URL(req.url || '/', `http://${HOST}:${PORT}`);
+  const allowedOrigin = cors(req, res);
+  if (req.method === 'OPTIONS') { res.writeHead(allowedOrigin ? 204 : 403); return res.end(); }
 
   if (url.pathname === '/health' && req.method === 'GET') {
     return json(res, 200, { ok: true, service: 'mccluster-compute-gateway', protocol: COMPUTE_PROTOCOL, scheduler: election ? election.snapshot() : null });
@@ -126,12 +147,34 @@ async function route(req, res) {
   const bodyBytes = await readBody(req);
   const body = parseJson(bodyBytes);
 
+  // The owner, signed in on the website, asks for a one-time grant to opt this device in (device-grant.mjs).
+  if (url.pathname === '/v1/compute/device-grants' && req.method === 'POST') {
+    const orgId = process.env.MCCLUSTER_ORG_ID;
+    const { userId } = await authorizeOwnerSession(bearer(req), {
+      supabaseUrl: process.env.SUPABASE_URL, apiKey: buildSupabaseHeaders().apikey, orgId
+    });
+    const issued = issueGrant({ key: process.env.CORE_COMPUTE_ENROLL_TOKEN, orgId, userId, kind: body.kind === 'browser' ? 'browser' : 'installer' });
+    console.log(JSON.stringify({ event: 'compute_device_grant_issued', kind: issued.kind, by: userId }));
+    return json(res, 201, { ...issued, org_id: orgId, compute_url: process.env.MCCLUSTER_COMPUTE_PUBLIC_URL || 'https://compute.mccluster.org' });
+  }
+
   if (url.pathname === '/v1/compute/enroll' && req.method === 'POST') {
-    requireSecret(req, 'CORE_COMPUTE_ENROLL_TOKEN', 'Compute enrollment');
+    const credential = enrollCredential(req.headers);
+    let claims = null;
+    if (credential.grant) claims = verifyGrant(credential.grant, { key: process.env.CORE_COMPUTE_ENROLL_TOKEN });
+    else requireSecret(req, 'CORE_COMPUTE_ENROLL_TOKEN', 'Compute enrollment');
     const enrollment = validateEnrollment(body);
-    const scopedOrg = adminOrg(enrollment.org_id);
+    const scopedOrg = adminOrg(claims ? claims.org : enrollment.org_id);
     if (!scopedOrg) throw Object.assign(new Error('Enrollment organization is required'), { status: 400, code: 'ORG_REQUIRED' });
     const nodeId = nodeIdFromPublicKey(enrollment.public_key);
+    if (claims) {
+      // one grant, one device: the same device may retry, a second key may not
+      if (usedGrants.has(claims.nonce) && usedGrants.get(claims.nonce) !== nodeId) throw Object.assign(new Error('This opt-in was already used; opt in again'), { status: 409, code: 'GRANT_USED' });
+      const prior = await nodeByEnrollGrant(claims.nonce);
+      if (prior && prior.id !== nodeId) throw Object.assign(new Error('This opt-in was already used; opt in again'), { status: 409, code: 'GRANT_USED' });
+      usedGrants.set(claims.nonce, nodeId);
+      if (usedGrants.size > 5000) usedGrants.delete(usedGrants.keys().next().value);
+    }
     const record = await enrollNode({
       id: nodeId,
       org_id: scopedOrg,
@@ -144,7 +187,9 @@ async function route(req, res) {
       capabilities: enrollment.capabilities,
       // The owner's enrolment token authorised this call: the trust it carries
       // is recorded (labels.enrolled_trust) where no heartbeat can reach it.
-      labels: enrollmentLabels(enrollment.labels),
+      labels: claims
+        ? { ...enrollmentLabels({ ...enrollment.labels, trust: 'owned' }), opted_in_by: claims.sub, enrolled_via: claims.kind === 'browser' ? 'browser' : 'website', enrolled_grant: claims.nonce }
+        : enrollmentLabels(enrollment.labels),
       max_leases: enrollment.max_leases
     });
     return json(res, 201, {

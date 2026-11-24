@@ -42,7 +42,8 @@ export function visionImplementations(env = process.env) {
 }
 
 export function fabricConfigFromEnv(env = process.env) {
-  const rawMode = String(env.MCCLUSTER_LOCAL_AI_FABRIC || 'off').trim().toLowerCase();
+  // OWNED HARDWARE FIRST (owner, 2026-11-23): on by default; with no live owned node the call runs here at once.
+  const rawMode = String(env.MCCLUSTER_LOCAL_AI_FABRIC || 'prefer').trim().toLowerCase();
   const excludeNodes = new Set(String(env.MCCLUSTER_LOCAL_AI_FABRIC_EXCLUDE_NODES ?? 'ovh-primary').split(',').map((s) => s.trim()).filter(Boolean));
   if (env.MCCLUSTER_NODE_NAME) excludeNodes.add(String(env.MCCLUSTER_NODE_NAME).trim());
   return {

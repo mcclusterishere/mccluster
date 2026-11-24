@@ -107,7 +107,8 @@ export function estimateMaxUnitsMicro({ input = {}, modelClass = null } = {}) {
   const out = Number(modelClass.out_unit_micro);
   const inp = Number(modelClass.in_unit_micro);
   if (![out, inp].every((n) => Number.isSafeInteger(n) && n >= 0)) return null;
-  return caps.max_eval_count * out + caps.max_prompt_eval_count * inp;
+  const maxUnits = caps.max_eval_count * out + caps.max_prompt_eval_count * inp;
+  return Number.isSafeInteger(maxUnits) ? maxUnits : null;
 }
 
 export async function listModelClasses({ restImpl = rest } = {}) {

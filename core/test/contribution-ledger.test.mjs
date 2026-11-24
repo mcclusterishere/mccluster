@@ -103,6 +103,11 @@ test('pure helpers: the flag, operation keys, token hash, class resolution, the 
   assert.equal(estimateMaxUnitsMicro({ input: {}, modelClass: null }), null);
   assert.equal(estimateMaxUnitsMicro({ input: {}, modelClass: { ...CLASS, out_unit_micro: 1.5 } }), null, 'integer weights only');
   // The caps the settle enforces are the caps the reservation is priced from.
+  const single = { ...CLASS, max_eval_count: 1, max_prompt_eval_count: 1, out_unit_micro: Number.MAX_SAFE_INTEGER, in_unit_micro: 0 };
+  assert.equal(estimateMaxUnitsMicro({ modelClass: single }), Number.MAX_SAFE_INTEGER);
+  assert.equal(estimateMaxUnitsMicro({ modelClass: { ...single, in_unit_micro: 1 } }), null);
+  assert.equal(estimateMaxUnitsMicro({ modelClass: { ...single, max_eval_count: 2 } }), null);
+
   assert.deepEqual(taskCounterCaps({ input: {}, modelClass: CLASS }), { max_eval_count: 4096, max_prompt_eval_count: 32768 });
   assert.deepEqual(taskCounterCaps({ input: { num_predict: 64, num_ctx: 4096 }, modelClass: CLASS }), { max_eval_count: 64, max_prompt_eval_count: 4096 });
   assert.deepEqual(taskCounterCaps({ input: { num_predict: 8, num_ctx: 512 }, modelClass: CLASS }), { max_eval_count: 16, max_prompt_eval_count: 2048 }, 'the adapter never runs below 16 tokens or a 2048 context');

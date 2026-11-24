@@ -13,6 +13,13 @@ export async function nodeById(nodeId) {
   return body[0] || null;
 }
 
+/** The node a device grant already enrolled (labels.enrolled_grant), if any: a grant enrols one device. */
+export async function nodeByEnrollGrant(nonce) {
+  const params = new URLSearchParams({ 'labels->>enrolled_grant': eq(nonce), select: 'id', limit: '1' });
+  const { body = [] } = await rest(`ops_compute_nodes?${params}`);
+  return body[0] || null;
+}
+
 export async function enrollNode(node) {
   const existing = await nodeById(node.id);
   if (existing && existing.key_fingerprint !== node.key_fingerprint) {

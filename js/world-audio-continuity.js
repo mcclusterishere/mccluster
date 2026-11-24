@@ -22,6 +22,15 @@
   var worldHref = "", frameReady = false, readyTimer = null, quietTimer = null, loadGeneration = 0, openedAt = 0, frameAlive = false;
   var baseTitle = doc.title, baseHref = location.href, frameClearance = 0;
   var hiddenNodes = new Map(), observedAudio = new WeakSet();
+  /* ONE PLAYER FOR THE WHOLE SITE (owner, 2026-11-23: "whenever the music starts, it continues. It's not restarted by
+     some other music"). The document that is playing music never unloads for a move inside the site: Music, an album,
+     an artist page or the World stays put, and the page asked for opens in its frame. Music started on a page inside
+     that frame becomes the one song (the frame says so; the host's own song pauses), and that frame is kept, hidden,
+     while the listener moves on, so its song keeps playing too. Sign-in, account and checkout pages still open at the
+     top level: their sessions and payment returns belong to the address bar. */
+  var TOP_ONLY = /^\/(?:login|account|forgot-password|reset-password|verify|identity-verify|pay|purchase|receipt|oauth|auth)(?:[.\/]|$)/i;
+  var surfaceKind = "world", frameOwner = null, keeper = null, remoteOwner = null;
+  var ownsMusic = false, ownedMedia = null, lastGesture = 0;
   var lastAnnouncement = {}, preference = readPreference();
   /* THE CORNER STACK (owner, 2026-10-19): on the World screen the play/pause
      sits with the fullscreen control (#mnWorldPlay), the song title scrolls in
@@ -30,7 +39,7 @@
      standalone World owns its Audio element, so its button plays directly.
      Inside the Music shell the parent keeps the transport (a frame message
      cannot carry Safari's media activation); the child only displays state. */
-  var headlineBase = null, lyricCache = {}, lyricLine = "", lyricSlug = "", lyricAt = 0, remoteState = null, remoteDocked = false;
+  var headlineBase = null, lyricCache = {}, lyricLine = "", lyricSung = -1, lyricSlug = "", lyricAt = 0, remoteState = null, remoteDocked = false;
   function docked() { return doc.documentElement.classList.contains("mcc-app-dock-active"); }
   function receiveDocked(value) {
     remoteDocked = value === true;
@@ -80,6 +89,24 @@
     }
     return null;
   }
+  function samePath(path) { return String(path || "/").replace(/\/index\.html$/, "/"); }
+  /* a page of the site that may open inside the listening document */
+  function surfaceURL(href) {
+    var u = urlOf(href);
+    if (!u || u.protocol !== "https:" || TRUSTED.indexOf(u.origin) === -1) return null;
+    if (TOP_ONLY.test(u.pathname) || !/(?:\/|\.html)$/.test(u.pathname)) return null;
+    return u;
+  }
+  /* the listening document's own page: going there closes the frame instead */
+  function isHome(href) {
+    var u = urlOf(href); if (!u) return false;
+    if (IS_WORLD && root.parent === root) return !!worldURL(u.href);
+    var base = urlOf(baseHref);
+    return !!base && u.origin === base.origin && samePath(u.pathname) === samePath(base.pathname) && (!u.search || u.search === base.search);
+  }
+  function playing(p) { return !!(p && p.audio && !p.audio.paused && !p.audio.ended); }
+  /* is this document the one playing music right now (its own song, or a song a kept frame is playing for it)? */
+  function listening() { return !!(remoteOwner && remoteOwner.playing) || playing(selected() || theme); }
   function musicURL(href) {
     var u = urlOf(href);
     return u && u.origin === HOUSE && u.pathname === "/listen.html" && !u.search && !u.hash;
@@ -92,17 +119,42 @@
     var engine = root.MCC_MUSIC;
     if (engine && engine.current && engine.current()) {
       var track = engine.current();
+      /* delivery: the trouble in a few words; playing: what the listener asked for (a song being picked up again is
+         quiet, and this control's Pause stops the tries: music slice M3, review) */
       return {audio:engine.audio, title:track.title, access:engine.access(),
+        delivery:function () { var d = engine.delivery ? engine.delivery() : null; return d && d.status || ""; },
+        playing:function () { var d = engine.delivery ? engine.delivery() : null; return d && typeof d.playing === "boolean" ? d.playing : !engine.audio.paused && !engine.audio.ended; },
         play:function () { return engine.resume(); }, pause:function () { engine.pause(); }};
     }
     var deck = doc.getElementById("deck");
     if (deck && (deck.currentSrc || deck.getAttribute("src"))) {
       return {audio:deck, title:lastAnnouncement.title || doc.getElementById("tpTitle")?.textContent || "Your music",
-        play:function () { audioSession(); return root.MCC_NP_PLAY ? root.MCC_NP_PLAY() : deck.play(); }, pause:function () { deck.pause(); }};
+        delivery:function () { var d = root.MCC_DECK_DELIVERY ? root.MCC_DECK_DELIVERY() : null; return d && typeof d === "object" ? d.status || "" : ""; },
+        playing:function () { var d = root.MCC_DECK_DELIVERY ? root.MCC_DECK_DELIVERY() : null; return d && typeof d === "object" && typeof d.playing === "boolean" ? d.playing : !deck.paused && !deck.ended; },
+        play:function () { audioSession(); return root.MCC_NP_PLAY ? root.MCC_NP_PLAY() : deck.play(); },
+        /* the page's own Pause (this control, and the World's "pause" message when its own media starts): while a song
+           is being picked up again the deck is already quiet, so deck.pause() changed nothing, fired no event, and the
+           next try played the music again behind the listener (music slice M3, review PB-R2) */
+        pause:function () { if (root.MCC_NP_PAUSE) root.MCC_NP_PAUSE(); else deck.pause(); }};
     }
     return null;
   }
-  function player() { return selected() || theme; }
+  function remotePlayer() {
+    var r = remoteOwner; if (!r) return null;
+    return {remote:true, audio:{paused:!r.playing, ended:false, muted:!!r.muted, error:null}, title:r.title || "Your music", access:"full",
+      pause:function () { tellOwner(r, "pause"); }};
+  }
+  function player() { return remotePlayer() || selected() || theme; }
+  function tellOwner(r, action) {
+    if (!r || !r.el || !r.el.contentWindow || !r.origin) return;
+    r.el.contentWindow.postMessage({channel:CHANNEL, id:r.id, type:"control", action:action}, r.origin);
+  }
+  /* any song the host itself starts silences the frame's song: there is only ever one */
+  function hostTookOver() {
+    if (!remoteOwner) return;
+    tellOwner(remoteOwner, "pause"); remoteOwner.playing = false; remoteOwner = null;
+  }
+  function isPlaying(p) { return p.playing ? p.playing() : !p.audio.paused && !p.audio.ended; }
   function clusterButton() { return doc.getElementById("mnWorldPlay"); }
   function slugOf(audio) {
     var src = audio && (audio.currentSrc || audio.src) || "", m = /\/([^\/?#]+)\.[a-z0-9]+(?:[?#]|$)/i.exec(src);
@@ -132,7 +184,10 @@
     raw.forEach(function (l) {
       if (!l || typeof l !== "object") return;
       var t = Number.isFinite(l.begin) ? l.begin : l.t, text = typeof l.content === "string" ? l.content : typeof l.text === "string" ? l.text : l.line;
-      if (Number.isFinite(t) && typeof text === "string") lines.push({t:t, text:text});
+      /* the word times ride along when they match the line's words one for one (owner, 2026-11-23: lyrics light word by word everywhere) */
+      var words = Array.isArray(l.words) && typeof text === "string" && l.words.length === text.trim().split(/\s+/).filter(Boolean).length &&
+        l.words.every(function (w) { return w && Number.isFinite(w.begin); }) ? l.words.map(function (w) { return w.begin; }) : null;
+      if (Number.isFinite(t) && typeof text === "string") { var line = {t:t, text:text}; if (words) line.words = words; lines.push(line); }
     });
     lines.sort(function (a, b) { return a.t - b.t; });
     return lines.length ? lines : null;
@@ -147,10 +202,17 @@
       .catch(function () { return null; });
     return lyricCache[slug];
   }
-  function lineAt(lines, t) {
+  function lineObjectAt(lines, t) {
     var lo = 0, hi = lines.length - 1, hit = -1;
     while (lo <= hi) { var mid = (lo + hi) >> 1; if (lines[mid].t <= t) { hit = mid; lo = mid + 1; } else hi = mid - 1; }
-    return hit < 0 ? "" : lines[hit].text;
+    return hit < 0 ? null : lines[hit];
+  }
+  function lineAt(lines, t) { var l = lineObjectAt(lines, t); return l ? l.text : ""; }
+  /* how many of the line's words have been sung by time t, or -1 when the line has no word times */
+  function sungAt(line, t) {
+    if (!line || !line.words) return -1;
+    var n = 0; while (n < line.words.length && line.words[n] <= t) n++;
+    return n;
   }
   function lyricTick(audio) {
     var p = player(); if (!p || p.audio !== audio) return;
@@ -158,16 +220,17 @@
     lyricSlug = slug;
     loadLyrics(slug).then(function (lines) {
       if (lyricSlug !== slug) return;
-      var next = lines && !audio.paused && !audio.ended ? lineAt(lines, audio.currentTime) : "";
-      if (next === lyricLine) return;
-      lyricLine = next; paintCluster(clusterState()); sendState();
+      var live = lines && !audio.paused && !audio.ended ? lineObjectAt(lines, audio.currentTime) : null;
+      var next = live ? live.text : "", sung = live ? sungAt(live, audio.currentTime) : -1;
+      if (next === lyricLine && sung === lyricSung) return;
+      lyricLine = next; lyricSung = sung; paintCluster(clusterState()); sendState();
     });
   }
   function clusterState() {
     var p = player();
-    if (!p) return {present:false, playing:false, loading:false, title:"", line:""};
-    var playing = !p.audio.paused && !p.audio.ended;
-    return {present:true, playing:playing, loading:p.access === "loading", title:String(p.title || "Your music").slice(0, 120), line:playing ? String(lyricLine || "").slice(0, 240) : ""};
+    if (!p) return {present:false, playing:false, loading:false, title:"", line:"", sung:-1};
+    var playing = isPlaying(p);
+    return {present:true, playing:playing, loading:p.access === "loading", title:String(p.title || "Your music").slice(0, 120), line:playing ? String(lyricLine || "").slice(0, 240) : "", sung:playing && lyricLine ? lyricSung : -1};
   }
   function paintCluster(st) {
     var b = clusterButton(), box = doc.getElementById("mnNowPlaying"), h = doc.querySelector(".wt-headline");
@@ -188,8 +251,21 @@
     if (h) {
       if (headlineBase === null) headlineBase = h.textContent;
       var want = st.line || headlineBase;
-      if (h.textContent !== want) h.textContent = want;
+      var words = st.line && st.sung >= 0 ? st.line.trim().split(/\s+/).filter(Boolean) : null;
+      if (words) {
+        // the line once, as one span per word; then only the sung marks change, so nothing reflows while it plays
+        if (h.dataset.lyricLine !== st.line) {
+          h.textContent = "";
+          words.forEach(function (w, i) { if (i) h.appendChild(doc.createTextNode(" ")); var sp = doc.createElement("span"); sp.className = "lyr-w"; sp.textContent = w; h.appendChild(sp); });
+          h.dataset.lyricLine = st.line;
+        }
+        Array.prototype.forEach.call(h.querySelectorAll(".lyr-w"), function (sp, i) { sp.classList.toggle("is-sung", i < st.sung); });
+      } else {
+        delete h.dataset.lyricLine;
+        if (h.textContent !== want || h.querySelector(".lyr-w")) h.textContent = want;
+      }
       h.classList.toggle("is-lyric", !!st.line);
+      h.classList.toggle("is-words", !!words);
     }
   }
   function sendState() { if (!attached && open && frame && frameReady) send(Object.assign({type:"state", docked:docked()}, clusterState())); }
@@ -209,12 +285,18 @@
     audio.addEventListener("timeupdate", function () {
       var now = Date.now(); if (now - lyricAt < 250) return; lyricAt = now; lyricTick(audio);
     });
-    ["play", "pause", "ended", "volumechange", "loadedmetadata", "error"].forEach(function (name) {
+    ["play", "playing", "pause", "ended", "volumechange", "loadedmetadata", "error"].forEach(function (name) {
       audio.addEventListener(name, function () {
         if (name === "play" || name === "pause" || name === "ended") lyricTick(audio);
         if (name === "play" && theme && audio !== theme.audio && !theme.audio.paused) { pauseBy = "other_music"; theme.audio.pause(); }
-        if (name === "play" && typeof preference.muted === "boolean" && audio.muted !== preference.muted) audio.muted = preference.muted;
-        if (name === "volumechange") { preference.muted = audio.muted; savePreference(); }
+        if (name === "play" && !attached) hostTookOver();
+        /* THE WORLD'S MUTE IS THE WORLD'S (decision D-7's default, music slice M3). A mute stored here once
+           silenced every later Music song, with "Pause" showing and no unmute on the page (lane 01 probe S6).
+           It now governs the World's own soundtrack only; the Music engine and the album deck keep their own
+           mute and say so on their own pages. */
+        var own = !!(theme && audio === theme.audio);
+        if (own && name === "play" && typeof preference.muted === "boolean" && audio.muted !== preference.muted) audio.muted = preference.muted;
+        if (own && name === "volumechange") { preference.muted = audio.muted; savePreference(); }
         paint();
       });
     });
@@ -342,7 +424,10 @@
   }
   function ensureTheme() {
     if (theme) return theme;
-    var audio = new Audio(); audio.preload = "metadata"; audio.loop = false;
+    /* Nothing is read before it is needed (music slice M3, PB-12): every music page made this element and
+       read the theme's file (twice, its index sat at the end) and then, once the catalog arrived, another
+       song's. On a music page it waits for the Globe tap; the World prepares its drawn song once the draw is in. */
+    var audio = new Audio(); audio.preload = "none"; audio.loop = false;
     audio.setAttribute("playsinline", "");
     audio.muted = preference.muted === true; soundWas = {muted:audio.muted, volume:audio.volume};
     theme = {audio:audio, title:"", access:"full",
@@ -361,7 +446,7 @@
     return theme;
   }
   function playTheme() {
-    if (selected() || preference.paused || preference.muted || attached) return;
+    if (selected() || preference.paused || preference.muted || attached || remoteOwner && remoteOwner.playing) return;
     var p = ensureTheme();
     if (!p.audio.paused) return;
     // Synchronous with the owning document's click/touch. postMessage does not
@@ -374,19 +459,25 @@
   }
   function pause() {
     var p = player(); if (!p) return;
+    if (p.remote) { p.pause(); paint(); return; }
     if (p === theme) { preference.paused = true; savePreference(); pauseBy = "button"; }
     p.pause(); paint();
   }
   function toggle() {
     var p = player() || ensureTheme();
-    if (!p.audio.paused && !p.audio.ended) { pause(); return; }
+    // a kept frame's song: the frame plays it, the host only asks (its own audio session is claimed there)
+    if (p.remote) { tellOwner(remoteOwner, isPlaying(p) ? "pause" : "play"); return; }
+    if (isPlaying(p)) { pause(); return; }
     preference.paused = false; savePreference();
     try { audioSession(); var promise = p.play(); if (promise && promise.catch) promise.catch(paint); } catch (_) {}
     paint();
   }
   function mute() {
     var p = player() || ensureTheme();
-    p.audio.muted = !p.audio.muted; preference.muted = p.audio.muted; savePreference(); paint();
+    if (p.remote) { tellOwner(remoteOwner, p.audio.muted ? "unmute" : "mute"); return; }
+    p.audio.muted = !p.audio.muted;
+    if (p === theme) { preference.muted = p.audio.muted; savePreference(); }   // the World's mute is the World's (D-7)
+    paint();
   }
   function ensureControls() {
     if (controls) return;
@@ -411,11 +502,15 @@
   function paint() {
     var p = player();
     if (controls) {
-      controls.hidden = attached || !p || !(open || IS_WORLD || p === theme) || (IS_WORLD && !attached && !!clusterButton());
+      controls.hidden = attached || !p || !(open || IS_WORLD || p === theme || p.remote) || (IS_WORLD && !attached && !open && !!clusterButton());
       if (p) {
         doc.getElementById("mccWorldAudioTitle").textContent = p.title || "Your music";
-        var error = !!p.audio.error, playing = !p.audio.paused && !p.audio.ended;
-        doc.getElementById("mccWorldAudioState").textContent = p.access === "loading" ? "Opening music…" : error || p.access === "unavailable" ? "Unable to play · try again" : p.audio.muted ? "Muted" : playing ? (p.access === "preview" ? "Preview playing" : "Playing") : "Paused";
+        var error = !!p.audio.error, playing = isPlaying(p);
+        /* a song in trouble on the way says so here too, in the player's own words ("Reconnecting…", "Connection lost ·
+           tap play", "Loading…", "Could not load · tap play"), never "Playing" over silence (music slice M3) */
+        var trouble = p.delivery ? p.delivery() : "";
+        doc.getElementById("mccWorldAudioState").textContent = p.access === "loading" ? "Opening music…" : trouble ? trouble :
+          error || p.access === "unavailable" ? "Unable to play · try again" : p.audio.muted ? "Muted" : playing ? (p.access === "preview" ? "Preview playing" : "Playing") : "Paused";
         var b = controls.querySelector(".world-audio__play");
         b.disabled = p.access === "loading";
         b.setAttribute("aria-label", playing ? "Pause music" : "Play music"); b.firstElementChild.textContent = playing ? "Ⅱ" : "▶";
@@ -425,16 +520,21 @@
       }
     }
     if (attached) { if (remoteState) paintCluster(remoteState); } else { paintCluster(clusterState()); sendState(); }
-    if (open) markWorld();
+    if (open) markSurface();
     layout();
   }
-  function markWorld() {
+  /* the bar marks the page that is open in the frame */
+  function markSurface() {
+    var target = urlOf(worldHref), world = surfaceKind === "world";
     doc.querySelectorAll(".appbar [data-appnav]").forEach(function (tab) {
-      var isWorld = tab.dataset.appnav === "world";
-      tab.classList.toggle("is-here", isWorld);
-      if (isWorld) tab.setAttribute("aria-current", "page"); else tab.removeAttribute("aria-current");
+      var href = urlOf(tab.getAttribute("href") || "");
+      var here = world ? tab.dataset.appnav === "world" :
+        !!(target && href && href.origin === target.origin && samePath(href.pathname) === samePath(target.pathname));
+      tab.classList.toggle("is-here", here);
+      if (here) tab.setAttribute("aria-current", "page"); else tab.removeAttribute("aria-current");
     });
   }
+  function homeLabel() { return IS_WORLD && root.parent === root ? "World" : "Music"; }
   function send(data) {
     if (!frame || !frame.contentWindow || !frameOrigin) return;
     frame.contentWindow.postMessage(Object.assign({channel:CHANNEL, id:channelId}, data), frameOrigin);
@@ -489,7 +589,8 @@
     if (typeof visible !== "boolean") return;
     // Persist the validated state for modules that initialize after attachment.
     doc.body.dataset.worldAudioVisible = String(visible);
-    if (!visible) doc.querySelectorAll("audio,video").forEach(function (media) { media.pause(); });
+    // hidden, the page stops its videos and any other sound, but the song it is playing for the listener keeps playing
+    if (!visible) doc.querySelectorAll("audio,video").forEach(function (media) { if (!(ownsMusic && media === ownedMedia && !media.paused)) media.pause(); });
     event("mcc:world-audio-visibility", {visible:visible});
   }
   function concealMusic() {
@@ -499,15 +600,76 @@
       node.inert = true;
     });
   }
+  function makeFrame() {
+    var f = doc.createElement("iframe"); f.id = "mccWorldAudioFrame"; f.title = "Equity Uprise World";
+    f.allow = "geolocation; autoplay; fullscreen; camera; microphone";
+    f.allowFullscreen = true; f.referrerPolicy = "strict-origin-when-cross-origin";
+    f.addEventListener("load", function () {
+      if (f !== frame) return;
+      // a new document in the frame: whatever song its old document played is gone with it
+      if (remoteOwner && remoteOwner === frameOwner) remoteOwner = null;
+      frameOwner = null;
+      send({type:"attach", clearance:frameClearance || 152, visible:open, docked:docked()});
+      // a page of the house names itself; a cross-origin page keeps the generic name
+      if (surfaceKind !== "world") { try { var t = f.contentDocument && f.contentDocument.title; if (t && open) doc.title = t; } catch (_) {} }
+    });
+    return f;
+  }
+  /* The frame on screen is playing the song and the listener moves on: keep it, hidden, so its song keeps playing, and
+     give the next page a fresh frame. Only one frame is ever kept; a newer song in another frame replaces it. */
+  function keepCurrentFrame() {
+    if (!frame || !frameOwner || !frameOwner.playing) return false;
+    if (keeper && keeper.el !== frame) dropKeeper();
+    keeper = {el:frame, origin:frameOrigin, id:channelId, href:worldHref, kind:surfaceKind,
+      title:frameOwner.title, playing:frameOwner.playing, muted:frameOwner.muted};
+    remoteOwner = keeper;
+    frame.id = "mccWorldAudioKeeper"; frame.hidden = true; frame.removeAttribute("tabindex");
+    frame.contentWindow && frame.contentWindow.postMessage({channel:CHANNEL, id:channelId, type:"visibility", visible:false}, frameOrigin);
+    frame = makeFrame(); shell.insertBefore(frame, status);
+    frameOwner = null; frameReady = false; frameAlive = false; worldHref = ""; frameOrigin = ""; channelId = "";
+    return true;
+  }
+  function frameRecord() {
+    frameOwner = frameOwner || {};
+    frameOwner.el = frame; frameOwner.origin = frameOrigin; frameOwner.id = channelId;
+    return frameOwner;
+  }
+  /* a page in a frame says it is playing (or stopped) the song: it becomes the one song, and every other one pauses */
+  function ownerState(rec, d) {
+    rec.title = typeof d.title === "string" ? d.title.slice(0, 120) : rec.title || "";
+    rec.muted = d.muted === true; rec.playing = d.playing === true;
+    if (rec.playing) {
+      if (remoteOwner && remoteOwner !== rec) { tellOwner(remoteOwner, "pause"); if (keeper === remoteOwner) dropKeeper(); }
+      remoteOwner = rec;
+      var own = selected();
+      if (playing(own)) own.pause();
+      if (theme && !theme.audio.paused) { pauseBy = "other_music"; theme.audio.pause(); }
+    }
+    paint();
+  }
+  function dropKeeper() {
+    if (!keeper) return;
+    if (remoteOwner === keeper) remoteOwner = null;
+    try { keeper.el.remove(); } catch (_) {}
+    keeper = null;
+  }
+  /* back to the kept page: its frame comes forward again, song and all */
+  function restoreKeeper() {
+    var kept = keeper; keeper = null;
+    if (frame && frame !== kept.el) frame.remove();
+    frame = kept.el; frame.id = "mccWorldAudioFrame"; frame.hidden = false;
+    worldHref = kept.href; frameOrigin = kept.origin; channelId = kept.id; surfaceKind = kept.kind;
+    frameOwner = kept;
+    frameReady = true; frameAlive = true; status.hidden = true;
+    send({type:"attach", clearance:frameClearance || 152, visible:true, docked:docked()});
+  }
   function createShell() {
     if (shell) return;
     loadStyle(); shell = doc.createElement("section"); shell.id = "mccWorldAudioShell";
     shell.setAttribute("aria-label", "World"); shell.hidden = true;
-    frame = doc.createElement("iframe"); frame.id = "mccWorldAudioFrame"; frame.title = "Equity Uprise World";
-    frame.allow = "geolocation; autoplay; fullscreen; camera; microphone";
-    frame.allowFullscreen = true; frame.referrerPolicy = "strict-origin-when-cross-origin";
+    frame = makeFrame();
     status = doc.createElement("div"); status.className = "world-audio-status";
-    status.innerHTML = '<p role="status">Opening World…</p><button type="button">Back to Music</button><a>Open World directly</a>';
+    status.innerHTML = '<p role="status">Opening World…</p><button type="button">Back to ' + homeLabel() + '</button><a>Open World directly</a>';
     status.querySelector("button").onclick = function () { closeWorld(true); };
     status.querySelector("a").onclick = function (e) {
       e.preventDefault();
@@ -515,9 +677,6 @@
       (h ? h(worldHref) : Promise.resolve(worldHref)).catch(function () { return worldHref; }).then(function (url) { location.assign(url); });
     };
     shell.append(frame, status); doc.body.appendChild(shell);
-    frame.addEventListener("load", function () {
-      send({type:"attach", clearance:frameClearance || 152, visible:open, docked:docked()});
-    });
     new MutationObserver(function () { if (open) concealMusic(); }).observe(doc.body, {childList:true});
   }
   /* THE WORLD OPENS IN ITS OWN COLOUR (owner, 2026-10-20: "other screens flash up instead of just a smooth transition").
@@ -540,23 +699,36 @@
   }
   function openWorld(href, options) {
     options = options || {};
-    var url = worldURL(href); if (!url) return false;
-    var clean = cleanHref(url.href);
-    if (options.gesture !== false) playTheme();
+    var worldTarget = worldURL(href), url = worldTarget || (options.surface ? surfaceURL(href) : null);
+    if (!url) return false;
+    var clean = cleanHref(url.href), kind = worldTarget ? "world" : "page";
+    if (options.gesture !== false && kind === "world") playTheme();
     if (root.MCC_MUSIC) root.MCC_MUSIC.closeNow();
     createShell(); ensureControls();
+    // a page that is playing the song stands aside, still playing, for the next one; going back to it brings it forward
+    if (keeper && keeper.href === clean) restoreKeeper();
+    else if (frame && worldHref && worldHref !== clean) keepCurrentFrame();
+    surfaceKind = kind;
+    frame.title = kind === "world" ? "Equity Uprise World" : "McCluster";
+    status.querySelector("a").textContent = kind === "world" ? "Open World directly" : "Open this page directly";
     var wasOpen = open; open = true; shell.hidden = false;
     doc.body.dataset.worldAudioOpen = "true"; doc.documentElement.classList.add("world-audio-open");
-    concealMusic(); doc.title = "World · Equity Uprise";
-    if (!wasOpen && !options.history) {
-      var address = new URL(baseHref); address.searchParams.set("world", "1");
-      history.pushState(Object.assign({}, history.state, {mccWorldAudio:{href:clean}}), "", address.href);
+    if (!wasOpen) event("mcc:world-audio-open", {open:true});
+    concealMusic(); doc.title = kind === "world" ? "World · Equity Uprise" : "McCluster";
+    if (!options.history) {
+      var address = new URL(baseHref); address.searchParams.set(kind === "world" ? "world" : "surface", "1");
+      address.searchParams.delete(kind === "world" ? "surface" : "world");
+      var entry = Object.assign({}, history.state, {mccWorldAudio:{href:clean}});
+      // one entry above the listening page, however many pages are opened in turn: Back always returns to it
+      if (wasOpen) history.replaceState(entry, "", address.href); else history.pushState(entry, "", address.href);
     }
     paint();
+    // the bar restores its own mark once a tap is handled (js/tabbar.js revert()): mark the open page after it
+    root.setTimeout(function () { if (open) markSurface(); }, 0);
     if (worldHref !== clean || !frame.getAttribute("src")) {
       worldHref = clean; frameOrigin = url.origin; frameReady = false;
       channelId = root.crypto && root.crypto.randomUUID ? root.crypto.randomUUID() : String(Date.now()) + Math.random();
-      status.hidden = false; status.querySelector("p").textContent = "Opening World…";
+      status.hidden = false; status.querySelector("p").textContent = kind === "world" ? "Opening World…" : "Opening…";
       status.querySelector("a").href = clean;
       shell.classList.toggle("is-day", worldPhase() === "day");
       status.classList.add("is-quiet"); openedAt = Date.now(); frameAlive = false;
@@ -570,9 +742,9 @@
       });
       clearTimeout(readyTimer);
       readyTimer = setTimeout(function () {
-        if (!frameReady && open) status.querySelector("p").textContent = "World is taking longer to open. Your music is still available.";
+        if (!frameReady && open) status.querySelector("p").textContent = (surfaceKind === "world" ? "World is" : "This page is") + " taking longer to open. Your music is still available.";
       }, 12000);
-    } else { send({type:"attach", clearance:frameClearance, visible:open, docked:docked()}); send({type:"visibility", visible:open}); }
+    } else { send({type:"attach", clearance:frameClearance || 152, visible:open, docked:docked()}); send({type:"visibility", visible:open}); }
     frame.focus({preventScroll:true});
     return true;
   }
@@ -588,12 +760,14 @@
     // Clear the compact World offset before restoring Music. Leaving this
     // inline top together with the Music bottom makes a full-height overlay.
     if (controls) { controls.style.removeProperty("top"); controls.style.removeProperty("right"); }
+    var homeTab = IS_WORLD && root.parent === root ? "world" : "music";
     doc.querySelectorAll(".appbar [data-appnav]").forEach(function (tab) {
-      var here = tab.dataset.appnav === "music";
+      var here = tab.dataset.appnav === homeTab;
       tab.classList.toggle("is-here", here); tab.removeAttribute("aria-current");
     });
+    event("mcc:world-audio-open", {open:false});   // before the focus lands on the Music tab, so it is named for what it does
     paint();
-    doc.querySelector('.appbar [data-appnav="music"]')?.focus({preventScroll:true});
+    doc.querySelector('.appbar [data-appnav="' + homeTab + '"]')?.focus({preventScroll:true});
     if (back && history.state && history.state.mccWorldAudio) history.back();
   }
   /* "ready" means the World is on screen: one of its screens is up (mnet.html ships the World visible) and has been
@@ -615,6 +789,52 @@
     })();
     setTimeout(finish, 2500);
   }
+  /* THE PAGE IN THE FRAME (child side). A song the listener starts here becomes the one song: the host is told, and its
+     own song pauses. A page that starts sound by itself, with no tap, while the host is playing, is stopped instead,
+     so arriving somewhere never switches the song. Video still pauses the host's music, as before. */
+  function gestured() {
+    try { if (root.navigator.userActivation) return root.navigator.userActivation.isActive; } catch (_) {}
+    return Date.now() - lastGesture < 5000;
+  }
+  function childTitle() {
+    var engine = root.MCC_MUSIC, track = engine && engine.current && engine.current();
+    return String(track && track.title || lastAnnouncement.title || doc.getElementById("tpTitle")?.textContent || doc.title || "Your music").slice(0, 120);
+  }
+  function announceOwner() {
+    if (!attached || !ownedMedia) return;
+    root.parent.postMessage({channel:CHANNEL, type:"owner", id:channelId, playing:!ownedMedia.paused && !ownedMedia.ended,
+      muted:!!ownedMedia.muted, title:childTitle()}, parentOrigin);
+  }
+  var childWatched = new WeakSet();
+  function childWatch() {
+    [root.MCC_MUSIC && root.MCC_MUSIC.audio, doc.getElementById("deck")].forEach(function (media) {
+      if (!media || childWatched.has(media)) return;
+      childWatched.add(media);
+      media.addEventListener("play", function () { if (attached) childPlay(media); });
+      ["pause", "ended", "volumechange"].forEach(function (name) { media.addEventListener(name, function () { if (media === ownedMedia) announceOwner(); }); });
+    });
+  }
+  function childPlay(media) {
+    if (!media || media.muted || media.volume === 0) return;
+    if (!gestured() && remoteState && remoteState.playing) { try { media.pause(); } catch (_) {} return; }
+    if (media.tagName === "AUDIO") {
+      if (ownedMedia === media && ownsMusic) { announceOwner(); return; }
+      ownsMusic = true; ownedMedia = media;
+      if (!childWatched.has(media)) {
+        childWatched.add(media);
+        ["pause", "ended", "volumechange"].forEach(function (name) { media.addEventListener(name, function () { if (media === ownedMedia) announceOwner(); }); });
+      }
+      announceOwner(); return;
+    }
+    root.parent.postMessage({channel:CHANNEL, type:"pause", id:channelId}, parentOrigin);
+  }
+  function childControl(action) {
+    var media = ownedMedia; if (!media) return;
+    var engine = root.MCC_MUSIC && root.MCC_MUSIC.audio === media ? root.MCC_MUSIC : null;
+    if (action === "pause") { if (engine) engine.pause(); else media.pause(); }
+    else if (action === "play") { audioSession(); try { var p = engine ? engine.resume() : media.play(); if (p && p.catch) p.catch(function () {}); } catch (_) {} }
+    else if (action === "mute" || action === "unmute") media.muted = action === "mute";
+  }
   function attachToParent(e) {
     if (root.parent === root || e.source !== root.parent || TRUSTED.indexOf(e.origin) === -1 || TRUSTED.indexOf(location.origin) === -1) return;
     var data = e.data;
@@ -632,27 +852,45 @@
     });
     if (addressSuggestionsOpen) root.parent.postMessage(
       {channel:CHANNEL,type:"address-suggestions",id:channelId,active:true},parentOrigin);
-    paint(); bindCluster();
+    paint(); bindCluster(); childWatch();
     alignWorldTransport();
   }
-  function navigate(href) {
+  /* narrow: the early capture-phase link check, which keeps its original reach (World and Music) so a page's own link
+     handlers still run first for every other link; the bar and ordinary links that no page handler took are broad */
+  function navigate(href, narrow) {
     if (attached) {
-      if (!musicURL(href)) return false;
-      root.parent.postMessage({channel:CHANNEL, type:"music", id:channelId}, parentOrigin); return true;
+      if (narrow) {
+        if (!musicURL(href)) return false;
+        root.parent.postMessage({channel:CHANNEL, type:"music", id:channelId}, parentOrigin); return true;
+      }
+      // inside the listening document every move to another page of the site is the host's to make, so no song unloads
+      var target = surfaceURL(href);
+      if (!target || target.origin === location.origin && samePath(target.pathname) === samePath(location.pathname)) return false;
+      root.parent.postMessage({channel:CHANNEL, type:"open", id:channelId, href:cleanHref(target.href)}, parentOrigin); return true;
     }
-    if (open && musicURL(href)) { closeWorld(true); return true; }
+    if (root.parent !== root) return false;
+    if (open && (musicURL(href) || !narrow && isHome(href))) { closeWorld(true); return true; }
     var world = worldURL(href);
-    if (world && musicSurface() && root.parent === root) return openWorld(world.href);
+    if (world && musicSurface()) return openWorld(world.href);
+    if (narrow) return false;
+    var page = surfaceURL(href);
+    if (page && !isHome(href) && (open || listening())) return openWorld(page.href, {surface:true});
     return false;
   }
+  /* js/tabbar.js asks here before it sends the document anywhere (its own links that carry the sign-in across hosts
+     included). The page in the frame hands every page of the site to the host, which opens it and keeps the song; only
+     a page that must be the top document (sign-in, account, checkout) leaves, with its exact destination. A listening
+     top document keeps playing the same way. */
   function leaveFrame(href) {
-    var u = urlOf(href);
-    if (!attached || !u || u.origin === location.origin || TRUSTED.indexOf(u.origin) === -1) return false;
-    // Other album/creator/Control links retain their exact destination and the
-    // child's existing sign-in handoff. They leave the listening document; they
-    // must not create a second music page inside the retained World frame.
-    root.top.location.href = u.href;
-    return true;
+    var u = urlOf(href); if (!u) return false;
+    if (attached) {
+      if (TRUSTED.indexOf(u.origin) === -1) return false;
+      if (surfaceURL(u.href) && navigate(u.href)) return true;
+      if (u.origin === location.origin) return false;
+      root.top.location.href = u.href;
+      return true;
+    }
+    return root.parent === root && navigate(u.href);
   }
 
   // The Cesium document is same-origin with its World host. Call synchronously
@@ -672,7 +910,11 @@
     ensureTheme(); loadRotation().then(rollUnplayed); // metadata only; no automatic playback on Music.
     watch(root.MCC_MUSIC && root.MCC_MUSIC.audio); watch(doc.getElementById("deck"));
   }
-  if (IS_WORLD && root.parent === root) { ensureTheme(); loadRotation().then(rollUnplayed); ensureControls(); bindCluster(); paint(); }
+  if (IS_WORLD && root.parent === root) {
+    ensureTheme();
+    loadRotation().then(rollUnplayed).then(function () { if (theme && !attached) theme.audio.preload = "metadata"; });
+    ensureControls(); bindCluster(); paint();
+  }
   root.addEventListener("mcc:nowplaying", function (e) { lastAnnouncement = e.detail || {}; paint(); });
   root.addEventListener("mcc:music-selected", function () { if (theme) theme.audio.pause(); watch(root.MCC_MUSIC?.audio); paint(); });
   root.addEventListener("mcc:music-state", paint);
@@ -701,7 +943,7 @@
   }
   root.addEventListener("popstate", function () {
     var state = history.state && history.state.mccWorldAudio;
-    if (state && musicSurface()) openWorld(state.href, {history:true, gesture:false});
+    if (state && (musicSurface() || IS_WORLD && root.parent === root)) openWorld(state.href, {history:true, gesture:false, surface:true});
     else closeWorld(false);
   });
   root.addEventListener("message", function (e) {
@@ -712,12 +954,18 @@
       if (e.source !== root.parent || e.origin !== parentOrigin || d.id !== channelId) return;
       if (d.type === "layout") frameLayout(d.clearance);
       if (d.type === "visibility") frameVisibility(d.visible);
+      if (d.type === "control") childControl(d.action);
       if (d.type === "state") {
         receiveDocked(d.docked);
         remoteState = {present:d.present === true, playing:d.playing === true, loading:d.loading === true,
-          title:typeof d.title === "string" ? d.title.slice(0, 120) : "", line:typeof d.line === "string" ? d.line.slice(0, 240) : ""};
+          title:typeof d.title === "string" ? d.title.slice(0, 120) : "", line:typeof d.line === "string" ? d.line.slice(0, 240) : "",
+          sung:Number.isInteger(d.sung) && d.sung >= -1 && d.sung <= 200 ? d.sung : -1};
         paintCluster(remoteState);
       }
+      return;
+    }
+    if (keeper && keeper.el.contentWindow && e.source === keeper.el.contentWindow) {
+      if (e.origin === keeper.origin && d.id === keeper.id && d.type === "owner") ownerState(keeper, d);
       return;
     }
     if (!frame || e.source !== frame.contentWindow || e.origin !== frameOrigin) return;
@@ -744,6 +992,12 @@
       }
     }
     else if (d.type === "music") closeWorld(true);
+    else if (d.type === "owner") ownerState(frameRecord(), d);
+    else if (d.type === "open" && typeof d.href === "string" && d.href.length <= 2048) {
+      // the page in the frame asked to go somewhere: the host goes there and keeps the song; a page that must be the top
+      // document (sign-in, account, checkout) never comes through here, the frame opens those at the top itself
+      if (!navigate(d.href) && surfaceURL(d.href)) openWorld(d.href, {surface:true, gesture:false});
+    }
     else if (d.type === "pause") pause();
     else if (d.type === 'address-suggestions' && typeof d.active === 'boolean') {
       addressSuggestionsOpen = d.active;
@@ -754,8 +1008,15 @@
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target.closest && e.target.closest("a[href]");
     if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".world-audio-status,#mccAuthChip,#mccProfileMenu,#mccDestinations")) return;
-    if (navigate(a.href)) { e.preventDefault(); e.stopPropagation(); }
+    if (navigate(a.href, true)) { e.preventDefault(); e.stopPropagation(); }
   }, true);
+  // after the page's own handlers: a link none of them took, while music plays here (or this is the page in the frame)
+  doc.addEventListener("click", function (e) {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".world-audio-status,#mccAuthChip,#mccProfileMenu,#mccDestinations")) return;
+    if (navigate(a.href)) e.preventDefault();
+  });
   /* A TAP THAT LEAVES THE WORLD DOES NOT START ITS SONG (owner, 2026-10-20: no flashes). A bar tab (Music, the M) or the
      account chip goes to another page; starting the World's song on that tap played half a second of it on the way out. */
   var LEAVING = ".appbar,.mcc-auth-chip";
@@ -764,19 +1025,22 @@
     touch();
   }, {capture:true, passive:true});
   doc.addEventListener("keydown", function (e) { if (e.isTrusted && (e.key === "Enter" || e.key === " ") && !e.target.closest?.("#mccWorldAudioControls,#mnWorldPlay," + LEAVING)) touch(); }, true);
-  doc.addEventListener("play", function (e) {
-    if (!attached || e.target.muted || e.target.volume === 0) return;
-    root.parent.postMessage({channel:CHANNEL, type:"pause", id:channelId}, parentOrigin);
-  }, true);
+  doc.addEventListener("play", function (e) { if (attached) childPlay(e.target); }, true);
+  doc.addEventListener("pointerdown", function (e) { if (e.isTrusted) lastGesture = Date.now(); }, {capture:true, passive:true});
+  doc.addEventListener("keydown", function (e) { if (e.isTrusted) lastGesture = Date.now(); }, true);
+  root.addEventListener("mcc:music-selected", function () { if (attached) childWatch(); });
   if (root.parent !== root && TRUSTED.indexOf(location.origin) !== -1) {
     var referrer = urlOf(doc.referrer);
     if (referrer && TRUSTED.indexOf(referrer.origin) !== -1) root.parent.postMessage({channel:CHANNEL, type:"hello"}, referrer.origin);
   }
   // Refreshing the World view keeps the destination. Browser refresh naturally
   // ends the old document/audio; the new document waits for its next gesture.
-  if (musicSurface() && new URLSearchParams(location.search).get("world") === "1") {
-    var initial = new URL(location.href); initial.searchParams.delete("world"); baseHref = initial.href;
+  var reopened = new URLSearchParams(location.search);
+  if ((musicSurface() || IS_WORLD && root.parent === root) && (reopened.get("world") === "1" || reopened.get("surface") === "1")) {
+    var initial = new URL(location.href); initial.searchParams.delete("world"); initial.searchParams.delete("surface"); baseHref = initial.href;
     var saved = history.state && history.state.mccWorldAudio;
-    openWorld(saved && saved.href || "https://mccluster.org/?view=feed", {history:true, gesture:false});
+    if (saved && saved.href) openWorld(saved.href, {history:true, gesture:false, surface:true});
+    else if (reopened.get("world") === "1" && musicSurface()) openWorld("https://mccluster.org/?view=feed", {history:true, gesture:false});
+    else history.replaceState(history.state, "", baseHref);
   }
 })(window);

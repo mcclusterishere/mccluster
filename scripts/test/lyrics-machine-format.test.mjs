@@ -139,7 +139,7 @@ test('the shared reader accepts every shape the shelf has and finds the sung lin
 test('the upload trigger keys lyrics to their inputs and never lets a running job suppress a newer one', () => {
   const sql = read('supabase/pending/20261031180000_lyrics_machine_v1.sql');
   assert.match(sql, /new\.lyrics_input_rev := md5\(coalesce\(new\.master_path, ''\) \|\| chr\(10\) \|\| coalesce\(new\.lyrics_sheet, ''\)\)/);
-  assert.match(sql, /before insert or update of master_path, lyrics_sheet on public\.creator_tracks/);
+  assert.match(sql, /create trigger trg_creator_tracks_lyrics_input_rev\s+before insert or update on public\.creator_tracks/, 'every write recomputes the derived revision, including a direct attempted revision change');
   assert.match(sql, /and j\.status = 'queued'/);
   assert.doesNotMatch(sql, /status in \('queued', 'running'\)/, 'a running job heard the old inputs');
   assert.match(sql, /'input_rev', new\.lyrics_input_rev/);

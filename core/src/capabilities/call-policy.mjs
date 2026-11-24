@@ -28,10 +28,16 @@ export function mapCapabilityCallError(error, { vision = false } = {}) {
   });
 }
 
+// `iface` may be one interface or a list: the loopback call route serves both
+// plain HTTP callers and the agent capability client, so it accepts either;
+// a capability that lists neither (workstream.checkpoint is ['mcp'], because
+// only the MCP path carries the actor it needs) is refused there by name
+// instead of failing later for a reason the catalog did not state.
 export function requireCapabilityInterface(registry, name, iface) {
   const capability = registry?.get?.(name);
   if (!capability) return true;
   const interfaces = Array.isArray(capability.interfaces) ? capability.interfaces : [];
-  if (interfaces.includes(iface)) return true;
-  throw Object.assign(new Error(`Capability ${name} is not exposed over ${iface}`), { status: 403, code: 'CAPABILITY_INTERFACE_REFUSED', retryable: false });
+  const wanted = Array.isArray(iface) ? iface : [iface];
+  if (wanted.some((entry) => interfaces.includes(entry))) return true;
+  throw Object.assign(new Error(`Capability ${name} is not exposed over ${wanted.join(' or ')}`), { status: 403, code: 'CAPABILITY_INTERFACE_REFUSED', retryable: false });
 }

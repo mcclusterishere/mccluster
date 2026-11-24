@@ -245,10 +245,12 @@ async function signedRequest(identity, pathname, body = {}, signal) {
 }
 
 async function enroll(identity, manifest, capabilities, hardware, healthSummary) {
+  // A grant from the owner's one-click opt-in on the website (core/src/compute/device-grant.mjs), or the raw token.
+  const grant = process.env.MCCLUSTER_NODE_ENROLL_GRANT;
   const token = process.env.MCCLUSTER_NODE_ENROLL_TOKEN;
-  if (!token) return null;
+  if (!grant && !token) return null;
   return rawRequest('/v1/compute/enroll', {
-    headers: { authorization: `Bearer ${token}` },
+    headers: grant ? { 'x-mccluster-enroll-grant': grant } : { authorization: `Bearer ${token}` },
     body: {
       protocol: COMPUTE_PROTOCOL,
       org_id: ORG_ID,
@@ -361,7 +363,7 @@ async function probe() {
 async function run() {
   log({ event: 'compute_node_paths', platform: process.platform, state_dir: STATE_DIR, manifest: MANIFEST_PATH, defaults_applied: NODE_PATHS.defaultsApplied });
   const identityExisted = fs.existsSync(IDENTITY_PATH);
-  if (ENROLL_ONLY && !process.env.MCCLUSTER_NODE_ENROLL_TOKEN && !identityExisted) {
+  if (ENROLL_ONLY && !process.env.MCCLUSTER_NODE_ENROLL_TOKEN && !process.env.MCCLUSTER_NODE_ENROLL_GRANT && !identityExisted) {
     warn({ event: 'compute_node_enroll_token_missing' });
     process.exit(2);
   }

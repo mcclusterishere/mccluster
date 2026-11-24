@@ -5,6 +5,44 @@ shared Globe button, and keeps hearing that same track while using World. An
 explicit pause or mute remains in force. With no selected track, the World
 gesture starts the existing **Heal the 3rd World** theme.
 
+## One player for the whole site (owner, 2026-11-23)
+
+> "If I start a song in world and then I click the music tab, the song stops playing ... it should be a universal
+> engine of whenever the music starts, it continues. It's not restarted by some other music."
+
+The rule below generalizes the Music → World retention to every page of the site, with the same module
+(`js/world-audio-continuity.js`), the same bridge and the same checks. There is still one implementation.
+
+- **The playing document stays.** Whichever top document is playing music (Music, an album, an artist page, the
+  standalone World) does not unload when the listener moves inside the site. The page asked for opens in the
+  retained frame instead: the bar's tabs, ordinary links, and `js/tabbar.js`'s own cross-host links (it asks
+  `MCC_WORLD_AUDIO.leaveFrame()` before it sends the document anywhere). Music → World keeps its original behaviour,
+  paused selection included.
+- **World → Music works the same way.** World playing its song, the Music tab opens Music inside the World document;
+  the World song keeps playing; the bar marks Music. Going back to the World closes the frame.
+- **A song started inside the frame becomes the one song.** The frame announces it (`owner`: playing, muted, title,
+  nothing else); the host pauses its own song. The host's transport then shows and controls that song
+  (`control`: play, pause, mute). A song the host starts again silences the frame's.
+- **The page playing the song is kept.** Moving on from the frame that plays the song keeps that frame, hidden, and
+  its song keeps playing; the next page gets a fresh frame. Returning to the kept page brings the same document
+  forward. One frame is kept at most; a newer song elsewhere replaces it.
+- **Arriving never switches the song.** A page inside the frame that starts sound with no tap while the host is
+  playing is stopped (`navigator.userActivation`, or a trusted tap in the last five seconds where that is missing).
+  A hidden frame stops videos and any other sound, never the song it is playing for the listener.
+- **Some pages still leave.** Sign-in, account, password, verification, checkout and receipt pages
+  (`TOP_ONLY` in the module) open at the top level: their sessions and payment returns belong to the address bar.
+  A page that is not an HTML page of the house or a World host is never framed.
+- **History.** One history entry stands above the listening page (`?world=1` for the World, `?surface=1` for any
+  other page, the destination in `history.state`); moving between pages replaces it, so Back always returns to the
+  listening page. A reload of that address reopens the destination without sound, as before.
+- **Nothing playing, nothing changes.** With no song playing, a tab is an ordinary page move.
+
+The browser suite `scripts/e2e/music-world-continuity.e2e.mjs` carries the owner's journeys: World song through
+Music and back, a song chosen in Music inside the World taking over and continuing back in the World, the album
+opening beside the kept Music page with its song still going, the host transport pausing it, Music → home → Back,
+and the ordinary move when nothing plays. A full refresh, a sign-in page, closing the tab or the browser evicting
+the page still end the document, as below.
+
 ## The live document stays alive
 
 `js/world-audio-continuity.js`, loaded by the existing `js/tabbar.js`, retains the
@@ -40,7 +78,7 @@ controls.
 | Globe with no selection | Play the prepared public theme from the owning document's gesture. |
 | Global Music home while World is retained | Reveal the original listening surface and preserve its audio. |
 | Browser Back/Forward | Reveal Music or the retained World frame without reconstructing the player. |
-| Explicit album, artist or Control link in World | Preserve the exact destination and existing sign-in handoff; navigate the top document rather than starting a second player inside the frame. |
+| Explicit album, artist or Control link in World | Open the exact destination inside the listening document (since 2026-11-23, see above); the song keeps playing. The frame's own sign-in handoff is applied by the host when it loads the page. |
 | Music selected while the theme is playing | Pause the theme before the selected source starts. |
 | Audible video/audio started in World | Pause the retained parent music. Returning to Music does not silently restart it. |
 | World hidden on return to Music | Pause child media and dispatch `mcc:world-audio-visibility` with `visible:false`. Travel stops foreground GPS/request work and keeps its route/draft; Go is required to resume navigation. |
@@ -70,8 +108,10 @@ that already own `MCC_MUSIC` to prevent a second player.
 ## Theme, gesture and preferences
 
 The theme uses the existing public catalog source
-`assets/audio/heal-the-3rd-world.m4a` from `data/albums.json`. Its URL and metadata
-are prepared before the gesture, and it is not an entitled or signed master.
+`assets/audio/heal-the-3rd-world.m4a` from `data/albums.json`. Its URL is prepared
+before the gesture, and it is not an entitled or signed master. Since music slice M3
+nothing of it is read before it is needed: on a Music page the theme fetches no audio
+until the Globe tap, and the standalone World reads only the song it drew.
 The theme loops until the listener pauses it or chooses another track.
 
 The parent's Globe click calls `play()` directly in that document. Standalone

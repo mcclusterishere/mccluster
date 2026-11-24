@@ -9,7 +9,7 @@
 --
 -- Design:
 --   * Append-only ledger: public.ops_compute_contribution_ledger. A trigger
---     refuses UPDATE and DELETE for every role, the owner included. Balances
+--     refuses UPDATE, DELETE and TRUNCATE for every role, the owner included. Balances
 --     are sums over the ledger and the open reservations, never stored columns.
 --   * One writer at a time: settle and release are fenced by the scheduler
 --     lease (ops_compute_scheduler_leases, PR #823) through (holder_id, term),
@@ -247,6 +247,11 @@ create trigger ops_compute_contribution_ledger_append_only
   before update or delete on public.ops_compute_contribution_ledger
   for each row execute function public.compute_ledger_append_only();
 
+drop trigger if exists ops_compute_contribution_ledger_no_truncate on public.ops_compute_contribution_ledger;
+create trigger ops_compute_contribution_ledger_no_truncate
+  before truncate on public.ops_compute_contribution_ledger
+  for each statement execute function public.compute_ledger_append_only();
+
 -- ---------------------------------------------------------------------------
 -- Privileges: RLS on everywhere, nothing for the API roles, service_role as stated
 -- ---------------------------------------------------------------------------
@@ -362,7 +367,7 @@ language plpgsql stable
 set search_path = public, extensions, pg_temp
 as $$
 declare
-  v_pending bigint; v_earned bigint; v_spent bigint; v_points bigint; v_carry bigint;
+  v_pending numeric; v_earned numeric; v_spent numeric; v_points bigint; v_carry bigint;
 begin
   select coalesce(sum(max_units_micro), 0) into v_pending
     from public.ops_compute_spend_reservations where account_id = p_account_id and status = 'open';
@@ -478,8 +483,8 @@ begin
   end if;
 
   v_balances := public.compute_ledger_balances_internal(p_account_id);
-  if (v_balances->>'available')::bigint < p_max_units_micro then
-    return jsonb_build_object('ok', false, 'code', 'OVER_BUDGET', 'replayed', false, 'available', (v_balances->>'available')::bigint, 'requested', p_max_units_micro);
+  if (v_balances->>'available')::numeric < p_max_units_micro then
+    return jsonb_build_object('ok', false, 'code', 'OVER_BUDGET', 'replayed', false, 'available', (v_balances->>'available')::numeric, 'requested', p_max_units_micro);
   end if;
 
   insert into public.ops_compute_spend_reservations(operation_key, account_id, task_id, max_units_micro, model_class, unit_version, status, expires_at)
@@ -532,16 +537,21 @@ declare
   v_digest text;
   v_prompt bigint; v_cached bigint; v_eval bigint; v_eval_ns bigint; v_total_ns bigint; v_load_ns bigint; v_prompt_ns bigint;
   v_units bigint := 0;
+  v_claimed_units numeric;
+  v_max_entry constant numeric := 9223372036854775807;
   v_spend bigint := 0;
   v_minted bigint := 0;
   v_carry bigint := 0;
-  v_total bigint;
+  v_total numeric;
+  v_candidate numeric;
   v_points_delta bigint := 0;
   v_points_total bigint;
+  v_points_enabled boolean;
+  v_point_units numeric;
   v_remainder bigint;
   v_computed_hash text;
   v_expected text;
-  v_daily bigint;
+  v_daily numeric;
   v_cap bigint;
   v_settle_id bigint; v_mint_id bigint; v_release_id bigint;
   v_outcome jsonb;
@@ -612,7 +622,6 @@ begin
     return jsonb_build_object('ok', false, 'code', 'RESERVATION_CLOSED', 'replayed', false, 'reason', 'the reservation is ' || v_res.status);
   end if;
   v_submitter := v_res.account_id;
-  v_now := clock_timestamp();
 
   -- Node (locked above) and worker account.
   if not v_node_found or v_node.state not in ('online','draining') or v_node.revoked_at is not null then
@@ -683,13 +692,18 @@ begin
       end if;
       if v_eval > v_cap_eval or v_prompt > v_cap_prompt then
         v_reason := coalesce(v_reason, 'COUNTERS_OUT_OF_WINDOW'); v_fault := true;
-      elsif v_eval_ns > 0 and (v_eval * 1000000000 < v_class.min_tokens_per_s * v_eval_ns or v_eval * 1000000000 > v_class.max_tokens_per_s * v_eval_ns) then
+      elsif v_eval_ns > 0 and (v_eval::numeric * 1000000000 < v_class.min_tokens_per_s::numeric * v_eval_ns or v_eval::numeric * 1000000000 > v_class.max_tokens_per_s::numeric * v_eval_ns) then
         v_reason := coalesce(v_reason, 'COUNTERS_OUT_OF_WINDOW'); v_fault := true;
       end if;
-      -- The units the counters claim, at the class weights. Recorded on the
-      -- settle entry whatever the verdict; charged only as decided below.
-      v_units := v_eval * v_class.out_unit_micro + greatest(0, v_prompt - v_cached) * v_class.in_unit_micro;
-      if v_units > v_res.max_units_micro then
+      -- Keep exact intermediate products even for declined work. If the claim
+      -- exceeds a ledger entry, retain it as decimal text in the operation
+      -- outcome and record zero account movement on the rejected settlement.
+      v_claimed_units := v_eval::numeric * v_class.out_unit_micro
+        + greatest(0, v_prompt - v_cached)::numeric * v_class.in_unit_micro;
+      if v_claimed_units <= v_max_entry then
+        v_units := v_claimed_units;
+      end if;
+      if v_claimed_units > v_res.max_units_micro then
         v_reason := coalesce(v_reason, 'UNITS_EXCEED_RESERVATION'); v_fault := true;
       end if;
     end if;
@@ -729,16 +743,40 @@ begin
     v_review := true;
   end if;
 
-  -- Daily mint cap.
-  if v_reason is null and v_worker is not null then
+  -- Different nodes can mint for the same worker. Serialize the carry, rolling
+  -- total and eventual mint on that worker even before their first carry row.
+  -- NO KEY UPDATE stays compatible with account foreign-key checks.
+  if v_reason is null then
+    select display_points_opt_in into v_points_enabled from public.ops_compute_accounts
+     where account_id = v_worker for no key update;
+    select coalesce((select carry_micro from public.ops_compute_account_carry where account_id = v_worker), 0)
+      into v_carry;
+    v_total := v_carry::numeric + v_units;
+    v_candidate := div(v_total, v_class.redemption_ratio);
+    -- Carry from another ratio may make the mint wider than one ledger entry.
+    if v_candidate > v_max_entry then
+      v_reason := 'ACCOUNTING_OUT_OF_RANGE'; v_fault := true;
+    end if;
+    v_now := clock_timestamp();
     select daily_mint_cap_micro into v_cap from public.ops_compute_account_quotas where account_id = v_worker;
-    if v_cap is not null then
+    if v_reason is null and v_cap is not null then
       select coalesce(sum(units_micro), 0) into v_daily from public.ops_compute_contribution_ledger
        where account_id = v_worker and kind = 'mint' and created_at > v_now - interval '24 hours';
-      -- The spendable share of this attempt at the class ratio, before carry.
-      if v_daily + (v_units / greatest(1, v_class.redemption_ratio)) > v_cap then
-        v_reason := coalesce(v_reason, 'QUOTA_DAILY_MINT');
+      if v_daily + v_candidate > v_cap then
+        v_reason := 'QUOTA_DAILY_MINT';
       end if;
+    end if;
+  end if;
+
+  if v_reason is null and v_points_enabled then
+    select points, accepted_units_remainder into v_points_total, v_remainder
+      from public.ops_compute_display_points where account_id = v_worker;
+    v_point_units := coalesce(v_remainder, 0)::numeric + v_units;
+    v_points_delta := div(v_point_units, 100000000000);
+    v_remainder := mod(v_point_units, 100000000000);
+    if coalesce(v_points_total, 0)::numeric + v_points_delta > v_max_entry then
+      v_reason := 'ACCOUNTING_OUT_OF_RANGE'; v_fault := true;
+      v_points_delta := 0;
     end if;
   end if;
 
@@ -758,29 +796,22 @@ begin
 
   -- 2) mint: only an accepted attempt, with the carry.
   if v_reason is null then
-    insert into public.ops_compute_account_carry(account_id, carry_micro) values (v_worker, 0)
-      on conflict (account_id) do nothing;
-    select carry_micro into v_carry from public.ops_compute_account_carry where account_id = v_worker for update;
-    v_total := v_carry + v_units;
-    v_minted := v_total / v_class.redemption_ratio;
-    v_carry := v_total % v_class.redemption_ratio;
-    update public.ops_compute_account_carry set carry_micro = v_carry where account_id = v_worker;
+    v_minted := v_candidate;
+    v_carry := mod(v_total, v_class.redemption_ratio);
+    insert into public.ops_compute_account_carry(account_id, carry_micro) values (v_worker, v_carry)
+      on conflict (account_id) do update set carry_micro = excluded.carry_micro;
     insert into public.ops_compute_contribution_ledger(operation_key, kind, account_id, task_id, lease_id, attempt, node_id,
-        scheduler_holder_id, scheduler_term, units_micro, spend_micro, metering, model_class, unit_version, reason)
+        scheduler_holder_id, scheduler_term, units_micro, spend_micro, metering, model_class, unit_version, reason, created_at)
       values (p_op_key || ':mint', 'mint', v_worker, p_task_id, v_lease.id, p_attempt, v_lease.node_id,
         p_scheduler_holder_id, p_scheduler_term, v_minted, 0,
         jsonb_build_object('accepted_units_micro', v_units, 'redemption_ratio', v_class.redemption_ratio, 'carry_micro', v_carry),
-        v_class.model_class, v_class.unit_version, 'mint')
+        v_class.model_class, v_class.unit_version, 'mint', v_now)
       returning entry_id into v_mint_id;
-    -- Display points: 100,000 accepted whole units per point, remainder carried in micro-units.
-    if exists (select 1 from public.ops_compute_accounts where account_id = v_worker and display_points_opt_in) then
-      insert into public.ops_compute_display_points(account_id, points, accepted_units_remainder) values (v_worker, 0, 0)
-        on conflict (account_id) do nothing;
-      select points, accepted_units_remainder into v_points_total, v_remainder from public.ops_compute_display_points where account_id = v_worker for update;
-      v_remainder := v_remainder + v_units;
-      v_points_delta := v_remainder / 100000000000;
-      v_remainder := v_remainder % 100000000000;
-      update public.ops_compute_display_points set points = v_points_total + v_points_delta, accepted_units_remainder = v_remainder where account_id = v_worker;
+    if v_points_enabled then
+      insert into public.ops_compute_display_points(account_id, points, accepted_units_remainder)
+        values (v_worker, coalesce(v_points_total, 0) + v_points_delta, v_remainder)
+        on conflict (account_id) do update
+        set points = excluded.points, accepted_units_remainder = excluded.accepted_units_remainder;
     end if;
   end if;
 
@@ -810,6 +841,9 @@ begin
     'reservation_status', case when v_charged then 'settled' else 'released' end, 'display_points_delta', v_points_delta,
     'review_opened', v_review,
     'entries', jsonb_build_object('settle', v_settle_id, 'mint', v_mint_id, 'release', v_release_id));
+  if v_claimed_units > v_max_entry then
+    v_outcome := v_outcome || jsonb_build_object('claimed_units_micro_decimal', v_claimed_units::text);
+  end if;
   insert into public.ops_compute_ledger_operations(operation_key, kind, payload_hash, outcome)
     values (p_op_key, 'settle', v_hash, v_outcome)
     on conflict (operation_key) do nothing;

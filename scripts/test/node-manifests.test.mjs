@@ -52,16 +52,17 @@ const VISION = ["qwen3-vl.8b.local", "qwen3-vl.4b.local"];
 const TEXT_ONLY = ["qwen3.8b.local", "qwen3.14b.local"];
 const BROWSER_ACTIONS = ["open", "read", "find", "click", "type", "select", "scroll", "wait", "screenshot", "back", "done"];
 
-test("the template validates through the protocol with the four laptop ai.chat entries and the browser entry", () => {
+test("the template validates through the protocol with the four laptop ai.chat entries, the lyric machine and the browser entry", () => {
   assert.ok(Array.isArray(manifest.capabilities), "capabilities[] must be an array");
   const normalized = validateCapabilityManifest(manifest.capabilities);
-  assert.equal(normalized.length, 5);
+  assert.equal(normalized.length, 6);
   assert.deepEqual(
     normalized.map((e) => `${e.capability}/${e.implementation}`).sort(),
-    ["ai.chat/qwen3-vl.4b.local", "ai.chat/qwen3-vl.8b.local", "ai.chat/qwen3.14b.local", "ai.chat/qwen3.8b.local", "browser.act/chromium.local"],
+    ["ai.chat/qwen3-vl.4b.local", "ai.chat/qwen3-vl.8b.local", "ai.chat/qwen3.14b.local", "ai.chat/qwen3.8b.local", "browser.act/chromium.local", "lyrics.align/lyrics.machine.local"],
   );
   assert.equal(manifest.capabilities[0].implementation, "qwen3-vl.8b.local", "the resident vision model is the first entry (measurement ties go to it)");
-  assert.equal(manifest.capabilities[4].capability, "browser.act", "the browser entry is last: -Install prunes it unless -Browser installed the executor");
+  assert.equal(manifest.capabilities.at(-1).capability, "browser.act", "the browser entry is last: -Install prunes it unless -Browser installed the executor");
+  assert.equal(manifest.capabilities.at(-2).capability, "lyrics.align", "the lyric machine (2026-11-23, owned hardware first) sits just before the browser");
   for (const item of normalized) {
     assert.equal(item.hosting, "self-hosted");
     assert.equal(item.billing, "compute");
@@ -195,12 +196,13 @@ test("the raw text carries no user path, UNC host, e-mail or non-loopback addres
   }
 });
 
-test("the control-plane drift contract check, which reads the template too, passes on this tree and reports five implementations", () => {
+test("the control-plane drift contract check, which reads the template too, passes on this tree and reports six implementations", () => {
   const out = execFileSync(process.execPath, ["scripts/control-plane-drift-contract-check.mjs"], { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
   const report = JSON.parse(out.slice(out.indexOf("{")));
   assert.equal(report.ok, true);
   const implementations = report.node_manifests?.["owner-windows-gpu"]?.implementations || [];
-  assert.equal(implementations.length, 5, "the check reports the laptop template");
+  assert.equal(implementations.length, 6, "the check reports the laptop template");
+  assert.ok(implementations.includes("lyrics.align/lyrics.machine.local"));
   assert.ok(implementations.includes("browser.act/chromium.local"));
   assert.equal(implementations.filter((id) => id.startsWith("ai.chat/")).length, 4);
 });

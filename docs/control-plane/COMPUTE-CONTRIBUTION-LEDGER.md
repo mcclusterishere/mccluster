@@ -128,8 +128,8 @@ Tables (all `service_role` only, RLS on, no anon or authenticated policy):
 - `ops_compute_contribution_ledger` append-only: `entry_id bigserial pk, operation_key text unique not null,
   kind reserve|settle|mint|release|correction, account_id, task_id, lease_id, attempt, node_id,
   scheduler_holder_id, scheduler_term, units_micro bigint, spend_micro bigint, metering jsonb,
-  model_class, unit_version, correction_of bigint references entry_id, reason text, created_at`. A trigger
-  rejects UPDATE and DELETE. Balances are sums, never stored columns: `pending` = open reservations,
+  model_class, unit_version, correction_of bigint references entry_id, reason text, created_at`. Triggers
+  reject UPDATE, DELETE and TRUNCATE. Balances are sums, never stored columns: `pending` = open reservations,
   `earned` = sum of `mint`, `spent` = sum of `settle` + corrections against the account.
 - `ops_compute_spend_reservations(reservation_id, operation_key unique, account_id, task_id unique,
   max_units_micro, model_class, unit_version, status open|settled|released, created_at, expires_at)`; the class and
@@ -200,7 +200,7 @@ attempt (`LEASE_REJECTED`); cancellation (release, no settle); over-budget reser
 scheduler term (`STALE_TERM`); known-answer mismatch (no mint, review row); self-routed (no mint, settle
 yes); late completion (no mint); counters out of window (no mint, reason); integer accounting (ten
 one-unit mints at 3:1 yield exactly three spendable units and a carry of one; display points only cross a
-100,000-unit boundary once); quotas; append-only trigger refuses UPDATE/DELETE; balances arithmetic. Added by the
+100,000-unit boundary once); quotas; append-only triggers refuse UPDATE/DELETE/TRUNCATE; balances arithmetic. Added by the
 review of 2026-11-23: the settle's lock order (node, lease, task); reserve refuses a task that is not queued
 (`TASK_NOT_QUEUED`); `unit_version` pinned at reserve and enforced at settle (`UNIT_VERSION_STALE`,
 `MODEL_CLASS_MISMATCH`); a null term refused whenever a scheduler row exists (live, expired, released) and accepted
@@ -235,12 +235,19 @@ Nothing is applied or deployed; the SQL is pending and the Core wiring is off un
   `core/src/compute/jobs.mjs`, taken over the stored output and passed in; the SQL has no canonical JSON of its own
   (an earlier draft's `compute_ledger_canonical_json` printed `1e21` and `1e-7` differently from `JSON.stringify` and is
   dropped). `accepted_units_remainder` is kept in micro-units.
-- `scripts/compute-ledger-sql-check.mjs`: PGlite, the applied compute chain plus the attestation and scheduler pending
-  files, seeding through `compute_enqueue_task`, `compute_claim_task`, `compute_start_lease`, `compute_complete_lease` and
-  `compute_scheduler_acquire`; 29 cases covering the list above with their codes, privileges, the append-only trigger,
-  balances as sums, rollback and re-apply. Passed on PGlite 0.5.17 on 2026-11-23. PGlite is one connection, so the lock
-  order is proved from the function's own source (the order of its `FOR UPDATE` statements against
-  `compute_transition_lease_v2`'s), not by provoking a deadlock between two sessions.
+- `scripts/compute-ledger-sql-check.mjs` exercises the compute and ledger RPCs against the applied compute
+  chain and the pending attestation and scheduler files. The cap uses the worker's carry and rolling 24-hour
+  mint sum under one account lock. A refusal preserves carry and an identical request replays the original
+  result. The native fixture runs two service-role sessions settling tasks from different nodes for the same
+  worker. It also exercises recovery while an independent configuration write is uncommitted.
+- The SQL computes price and rate products as exact integers before converting a representable amount to
+  a ledger entry. When a claim exceeds bigint, the rejected outcome retains its exact value as
+  `claimed_units_micro_decimal`. The ledger records zero spend and releases the reservation. If an
+  otherwise valid mint or display-point total exceeds bigint, `ACCOUNTING_OUT_OF_RANGE` closes the
+  reservation with zero spend and preserves existing carry and points. The Core accepts reservation
+  estimates only in JavaScript's safe integer range.
+- The pending rollback requires an empty installation, READ COMMITTED and bounded table locks. It refuses
+  any stored configuration or history and fails if row-level security filters the visibility check. After first use, preserve records and prepare a reviewed forward repair.
 - `core/src/compute/contribution-ledger.mjs`: `reserve`, `settle`, `release`, `balances`, `receipt`, `correct` over the
   PostgREST RPC client; `schedulerIdentity(election)` gives the `(holder_id, term)` (the Core id and a null term without
   an election); `operationKey` names the scheduler so a new holder settles under a fresh key; `taskCounterCaps`,

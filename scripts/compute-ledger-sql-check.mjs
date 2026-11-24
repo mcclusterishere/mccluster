@@ -3,7 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { nativeTestDb, migrationPath } from './native-admin-test-db.mjs';
+import { nativeTestDb, migrationPath, waitForBlocked } from './native-admin-test-db.mjs';
 import { hashJson } from '../core/src/compute/jobs.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Disposable WASM or local native PostgreSQL; never connects to canonical Supabase.
@@ -22,7 +22,7 @@ else {
 }
 const read=(file)=>fs.readFileSync(`${root}/${file}`,'utf8');
 const sha256=(text)=>crypto.createHash('sha256').update(text,'utf8').digest('hex');
-const q=async(sql,params=[])=>(await db.query(sql,params)).rows;
+const q=async(sql,params=[])=>Array.from((await db.query(sql,params)).rows);
 const one=async(sql,params=[])=>(await q(sql,params))[0];
 let passed=0;
 const ok=(label)=>{passed+=1;console.log(`${label}: PASS`);};
@@ -43,14 +43,15 @@ function metering(result, {nodeId, attempt, over={}}) {
  return { prompt_eval_count:u.prompt_eval_count, prompt_eval_cached_count:u.prompt_eval_cached_count, eval_count:u.eval_count, total_duration_ns:u.total_duration_ns, load_duration_ns:u.load_duration_ns, prompt_eval_duration_ns:u.prompt_eval_duration_ns, eval_duration_ns:u.eval_duration_ns, model:result.model, model_digest:u.model_digest, runtime_version:u.ollama_version, node_id:nodeId, attempt, ...over };
 }
 async function enqueue({implementation='qwen3.8b.local', input={prompt:'hi'}, maxAttempts=3, idempotencyKey=null}={}) {
- const r=(await one("select public.compute_enqueue_task($1::uuid,'ai.chat',$2::text,$3::jsonb,'{}'::jsonb,0,null::timestamptz,$4::integer,'{}'::jsonb,$5::text) as r",[ORG,implementation,JSON.stringify(input),maxAttempts,idempotencyKey])).r;
+ const r=(await one("select public.compute_enqueue_task($1::uuid,'ai.chat',$2::text,$3::text::jsonb,'{}'::jsonb,0,null::timestamptz,$4::integer,'{}'::jsonb,$5::text) as r",[ORG,implementation,JSON.stringify(input),maxAttempts,idempotencyKey])).r;
  assert.equal(r.conflict,false); return r.task.id;
 }
 async function reserve(opKey, accountId, taskId, max, deadline=null, modelClass=null, unitVersion=null) {
  return (await one('select public.compute_ledger_reserve($1,$2,$3::uuid,$4::bigint,$5::integer,$6::text,$7::integer) as r',[opKey,accountId,taskId,String(max),deadline,modelClass,unitVersion])).r;
 }
-async function settle(opKey, taskId, tokenHash, attempt, met, outputSha, holder=HOLDER, term=1) {
- return (await one('select public.compute_ledger_settle($1,$2::uuid,$3,$4::integer,$5::jsonb,$6,$7::text,$8::bigint) as r',[opKey,taskId,tokenHash,attempt,JSON.stringify(met),outputSha,holder,term])).r;
+async function settle(opKey, taskId, tokenHash, attempt, met, outputSha, holder=HOLDER, term=1, connection=db) {
+ const {rows}=await connection.query('select public.compute_ledger_settle($1,$2::uuid,$3,$4::integer,$5::text::jsonb,$6,$7::text,$8::bigint) as r',[opKey,taskId,tokenHash,attempt,JSON.stringify(met),outputSha,holder,term]);
+ return rows[0].r;
 }
 async function release(opKey, taskId, reason, holder=HOLDER, term=1) {
  return (await one('select public.compute_ledger_release($1,$2::uuid,$3,$4::text,$5::bigint) as r',[opKey,taskId,reason,holder,term])).r;
@@ -68,8 +69,19 @@ async function claim(nodeId, taskId) {
 async function runTask(nodeId, taskId, result) {
  const lease=await claim(nodeId,taskId);
  assert.ok((await one('select public.compute_start_lease($1,$2::uuid,$3) as r',[nodeId,lease.leaseId,lease.token])).r,'start');
- assert.equal((await one('select public.compute_complete_lease($1,$2::uuid,$3,$4::jsonb) as r',[nodeId,lease.leaseId,lease.token,JSON.stringify(result)])).r,true,'complete');
+ assert.equal((await one('select public.compute_complete_lease($1,$2::uuid,$3,$4::text::jsonb) as r',[nodeId,lease.leaseId,lease.token,JSON.stringify(result)])).r,true,'complete');
  return lease;
+}
+async function microAttempt(nodeId, units, {accountId='owner-1', max=4096, usageOverrides={}}={}) {
+ const task=await enqueue({implementation:'micro.local'});
+ assert.equal((await reserve(key('reserve'),accountId,task,max)).ok,true);
+ const result={model:'micro:1b',content:task,usage:usage({eval_count:units,prompt_eval_count:0,prompt_eval_cached_count:0,eval_duration_ns:100_000_000,model_digest:'sha256:micro',...usageOverrides})};
+ const lease=await runTask(nodeId,task,result);
+ const operation=key('settle');
+ return {
+  task,
+  settle: (connection=db)=>settle(operation,task,lease.tokenHash,lease.attempt,metering(result,{nodeId,attempt:lease.attempt}),hashJson(result),HOLDER,1,connection)
+ };
 }
 async function cancelTask(taskId) { await q("update public.ops_compute_tasks set status='canceled' where id=$1::uuid and status='queued'",[taskId]); }
 async function ledgerRows(taskId) { return q('select kind, account_id, units_micro::text as units_micro, spend_micro::text as spend_micro, reason, attempt from public.ops_compute_contribution_ledger where task_id=$1::uuid order by entry_id',[taskId]); }
@@ -85,7 +97,7 @@ async function seed() {
   ('frozen-acct',$1,'owner','frozen',false),('related-acct',$1,'community','active',false) on conflict do nothing`,[ORG]);
  await q(`insert into public.ops_compute_node_accounts(node_id,account_id) values ($1,'worker-a'),($2,'owner-1'),($3,'worker-c'),($4,'worker-points') on conflict do nothing`,[NODE_A,NODE_B,NODE_C,NODE_D]);
  await q(`insert into public.ops_compute_model_classes(model_class,unit_version,approved_models,implementations,out_unit_micro,in_unit_micro,redemption_ratio,min_tokens_per_s,max_tokens_per_s,max_eval_count,max_prompt_eval_count) values
-  ('pilot.qwen3-8b',1,$1::jsonb,'["qwen3.8b.local"]'::jsonb,1000,100,3,1,200,4096,32768),
+  ('pilot.qwen3-8b',1,$1::text::jsonb,'["qwen3.8b.local"]'::jsonb,1000,100,3,1,200,4096,32768),
   ('pilot.micro',1,'[{"model":"micro:1b","digest":"sha256:micro"}]'::jsonb,'["micro.local"]'::jsonb,1,0,3,1,100000,4096,32768),
   ('pilot.points',1,'[{"model":"points:1b","digest":"sha256:points"}]'::jsonb,'["points.local"]'::jsonb,1000000000,0,3,1,100000,4096,32768) on conflict do nothing`,[JSON.stringify([{model:'qwen3:8b',digest:DIGEST}])]);
  // Opening grants: a correction with negative spend raises the submitter's available balance.
@@ -116,6 +128,68 @@ alter default privileges in schema public revoke truncate, references, trigger o
  for(const f of files){await db.exec(read(f));console.log(`loaded ${f}`);}
  await applyLedger();console.log('loaded supabase/pending/compute_contribution_ledger_v1.sql');
  await applyLedger();ok('the forward file applies twice');
+ const rollback=()=>db.exec(read('supabase/pending/compute_contribution_ledger_v1.rollback.sql'));
+ const tables=['ops_compute_accounts','ops_compute_node_accounts','ops_compute_model_classes','ops_compute_account_quotas','ops_compute_account_relations','ops_compute_private_grants','ops_compute_known_answer_tasks','ops_compute_fraud_reviews','ops_compute_spend_reservations','ops_compute_contribution_ledger','ops_compute_account_carry','ops_compute_display_points','ops_compute_ledger_operations'];
+ await rollback();
+ await rollback();
+ for(const t of tables) assert.equal((await one('select to_regclass($1) as t',[`public.${t}`])).t,null);
+ assert.equal((await one("select count(*)::int as n from pg_proc where pronamespace='public'::regnamespace and starts_with(proname::text,'compute_ledger_')")).n,0);
+ for(const t of ['ops_compute_tasks','ops_compute_leases','ops_compute_nodes','ops_compute_attestations','ops_compute_scheduler_leases'])
+  assert.notEqual((await one('select to_regclass($1) as t',[`public.${t}`])).t,null);
+ await applyLedger();
+ ok('empty rollback removes its objects, preserves compute tables, tolerates a second rollback and permits re-apply');
+ await db.exec('begin isolation level repeatable read');
+ try {
+  await assert.rejects(rollback,/requires READ COMMITTED/);
+ } finally {
+  await db.exec('rollback');
+ }
+ await db.exec('create view public.fixture_carry as select account_id from public.ops_compute_account_carry');
+ await assert.rejects(rollback,e=>e.code==='2BP01');
+ assert.notEqual((await one("select to_regprocedure('public.compute_ledger_balances(text)') as rpc")).rpc,null);
+ await db.exec('drop view public.fixture_carry');
+ await db.exec('alter table public.ops_compute_account_carry rename to fixture_carry');
+ await assert.rejects(rollback,/incomplete installation/);
+ await db.exec('alter table public.fixture_carry rename to ops_compute_account_carry');
+ ok('rollback refuses stale snapshots, external dependents and incomplete installations atomically');
+ // A table owner can be subject to FORCE RLS. Give the fixture role this
+ // exact installation only for the transaction and hide its stored class row.
+ await db.exec('begin');
+ try {
+  await db.exec('create role ledger_recovery_fixture nologin nobypassrls');
+  await db.exec('grant create, usage on schema public to ledger_recovery_fixture');
+  await db.exec("insert into public.ops_compute_model_classes(model_class,unit_version,out_unit_micro,in_unit_micro,min_tokens_per_s,max_tokens_per_s,max_eval_count,max_prompt_eval_count) values ('visibility.fixture',1,1,0,0,1,1,1)");
+  for(const t of tables) await db.exec(`alter table public.${t} owner to ledger_recovery_fixture`);
+  await db.exec('alter table public.ops_compute_model_classes force row level security');
+  await db.exec('set local role ledger_recovery_fixture');
+  assert.equal((await one('select count(*)::int as n from public.ops_compute_model_classes')).n,0);
+  await assert.rejects(rollback,e=>e.code==='42501' && /row.level security/.test(e.message));
+ } finally {
+  await db.exec('rollback');
+ }
+ ok('recovery refuses when forced row-level security hides a populated table from its owner');
+ if(db.native) {
+  const writer=db.fork(), recovery=db.fork();
+  let refused;
+  try {
+   await writer.exec('begin');
+   await writer.exec("insert into public.ops_compute_model_classes(model_class,unit_version,out_unit_micro,in_unit_micro,min_tokens_per_s,max_tokens_per_s,max_eval_count,max_prompt_eval_count) values ('recovery.fixture',1,1,0,0,1,1,1)");
+   refused=assert.rejects(()=>recovery.exec(read('supabase/pending/compute_contribution_ledger_v1.rollback.sql')),/ops_compute_model_classes contains data/);
+   refused.catch(()=>{});
+   await waitForBlocked(db);
+   await writer.exec('commit');
+   await refused;
+   assert.equal((await one("select unit_version from public.ops_compute_model_classes where model_class='recovery.fixture'")).unit_version,1);
+   await q("delete from public.ops_compute_model_classes where model_class='recovery.fixture'");
+  } finally {
+   await writer.exec('rollback');
+   await Promise.allSettled([refused]);
+   await Promise.all([writer.close(),recovery.close()]);
+  }
+  ok('native recovery waits for a configuration writer and preserves the committed row');
+ }
+
+
 
  // Privileges.
  const priv=async(role,table,p)=>(await one(`select has_table_privilege($1,$2,$3) as v`,[role,`public.${table}`,p])).v;
@@ -158,7 +232,7 @@ alter default privileges in schema public revoke truncate, references, trigger o
  }
 
  await q('insert into public.orgs(id) values($1) on conflict do nothing',[ORG]);
- for(const id of [NODE_A,NODE_B,NODE_C,NODE_D]) await q(`insert into public.ops_compute_nodes(id,org_id,display_name,public_key_pem,key_fingerprint,protocol_version,agent_version,capabilities) values($1,$2,$1,'fixture',$1,'mccluster-compute/1','test',$3::jsonb) on conflict do nothing`,[id,ORG,CAPS]);
+ for(const id of [NODE_A,NODE_B,NODE_C,NODE_D]) await q(`insert into public.ops_compute_nodes(id,org_id,display_name,public_key_pem,key_fingerprint,protocol_version,agent_version,capabilities) values($1,$2,$1,'fixture',$1,'mccluster-compute/1','test',$3::text::jsonb) on conflict do nothing`,[id,ORG,CAPS]);
  await seed();
  const MAX=4096*1000+32768*100; // the class bound: max_eval_count*out + max_prompt_eval_count*in
  const UNITS=50*1000+(100-20)*100; // 58,000 micro-units for usage()
@@ -558,12 +632,124 @@ alter default privileges in schema public revoke truncate, references, trigger o
   ok('quotas: QUOTA_RESERVATIONS, QUOTA_QUEUE, QUOTA_DAILY_MINT');
  }
 
+ // worker-c earned three units and carries one from the integer-accounting case.
+ {
+  await q("insert into public.ops_compute_account_quotas(account_id,daily_mint_cap_micro) values ('worker-c',3)");
+  const before=await balances('worker-c');
+  const attempt=await microAttempt(NODE_C,2);
+  const refused=await attempt.settle();
+  assert.equal(refused.reason,'QUOTA_DAILY_MINT');
+  assert.equal(refused.minted_micro,0);
+  assert.equal(refused.carry_micro,1);
+  assert.equal(refused.charged,true);
+  assert.deepEqual(await balances('worker-c'),before);
+  assert.deepEqual((await ledgerRows(attempt.task)).map(row=>row.kind),['reserve','settle','release']);
+  await q("update public.ops_compute_account_quotas set daily_mint_cap_micro=4 where account_id='worker-c'");
+  assert.deepEqual(await attempt.settle(),{...refused,replayed:true});
+  const next=await microAttempt(NODE_C,2);
+  const accepted=await next.settle();
+  assert.equal(accepted.accepted,true);
+  assert.equal(accepted.minted_micro,1);
+  assert.equal(accepted.carry_micro,0);
+  assert.equal((await balances('worker-c')).earned,4);
+  ok('rolling cap includes carry, accepts its exact boundary, preserves refused carry and replays the original decision');
+ }
+
+ {
+  const maxEntry=9223372036854775807n;
+  await q("insert into public.ops_compute_accounts(account_id,org_id,kind,display_points_opt_in) values ('range-owner',$1,'owner',false),('range-worker',$1,'community',true)",[ORG]);
+  await q("update public.ops_compute_node_accounts set account_id='range-worker' where node_id=$1",[NODE_C]);
+  for(let i=0;i<2;i++) assert.equal((await correct(key('grant'),null,'range-owner',-maxEntry,0,'range fixture grant')).ok,true);
+  assert.equal((await one("select public.compute_ledger_balances('range-owner')->>'available' as amount")).amount,String(2n*maxEntry));
+
+  const seedCarry=await microAttempt(NODE_C,2);
+  assert.equal((await seedCarry.settle()).carry_micro,2);
+  await q("update public.ops_compute_model_classes set out_unit_micro=$1::bigint, redemption_ratio=1 where model_class='pilot.micro'",[String(maxEntry)]);
+  const wideClaim=await microAttempt(NODE_C,2);
+  const over=await wideClaim.settle();
+  assert.equal(over.reason,'UNITS_EXCEED_RESERVATION');
+  assert.equal(over.claimed_units_micro_decimal,String(2n*maxEntry));
+  assert.equal(over.charged,false);
+  assert.equal(over.released_micro,4096);
+  assert.deepEqual(await wideClaim.settle(),{...over,replayed:true});
+  const wideMint=await microAttempt(NODE_C,1,{accountId:'range-owner',max:maxEntry});
+  const rejected=await wideMint.settle();
+  assert.equal(rejected.reason,'ACCOUNTING_OUT_OF_RANGE');
+  assert.equal(rejected.charged,false);
+  assert.equal(rejected.carry_micro,2);
+  assert.deepEqual((await ledgerRows(wideMint.task)).map(r=>r.kind),['reserve','settle','release']);
+
+  await q("update public.ops_compute_model_classes set redemption_ratio=3 where model_class='pilot.micro'");
+  const exact=await microAttempt(NODE_C,1,{accountId:'range-owner',max:maxEntry});
+  assert.equal((await exact.settle()).accepted,true);
+  const rows=await ledgerRows(exact.task);
+  assert.equal(rows.find(r=>r.kind==='settle').spend_micro,String(maxEntry));
+  assert.equal(rows.find(r=>r.kind==='mint').units_micro,String((maxEntry+2n)/3n));
+  const points=await one("select points::text as n, accepted_units_remainder::text as rem from public.ops_compute_display_points where account_id='range-worker'");
+  assert.equal(points.n,String((maxEntry+2n)/100000000000n));
+  assert.equal(points.rem,String((maxEntry+2n)%100000000000n));
+  ok('wide weights and carry: exact BIGINT charge, wide point remainder, larger claim and unrepresentable mint both close safely');
+
+  await q("update public.ops_compute_display_points set points=$1::bigint where account_id='range-worker'",[String(maxEntry)]);
+  await q("update public.ops_compute_model_classes set out_unit_micro=100000000000 where model_class='pilot.micro'");
+  const widePoints=await microAttempt(NODE_C,1,{max:100000000000});
+  const pointRefusal=await widePoints.settle();
+  assert.equal(pointRefusal.reason,'ACCOUNTING_OUT_OF_RANGE');
+  assert.equal(pointRefusal.display_points_delta,0);
+  assert.equal(pointRefusal.charged,false);
+  assert.equal((await one("select points::text as n from public.ops_compute_display_points where account_id='range-worker'")).n,String(maxEntry));
+
+  await q("update public.ops_compute_model_classes set out_unit_micro=1,min_tokens_per_s=0,max_tokens_per_s=2147483647 where model_class='pilot.micro'");
+  const timing=await microAttempt(NODE_C,1,{usageOverrides:{eval_duration_ns:100_000_000_000_000,total_duration_ns:100_000_000_000_000}});
+  assert.equal((await timing.settle()).accepted,true);
+  const counters=await microAttempt(NODE_C,Number.MAX_SAFE_INTEGER);
+  const refused=await counters.settle();
+  assert.equal(refused.reason,'COUNTERS_OUT_OF_WINDOW');
+  assert.equal(refused.charged,false);
+  assert.equal(refused.released_micro,4096);
+  await q("update public.ops_compute_model_classes set min_tokens_per_s=1,max_tokens_per_s=100000 where model_class='pilot.micro'");
+  await q("update public.ops_compute_node_accounts set account_id='worker-c' where node_id=$1",[NODE_C]);
+  ok('large duration products stay exact, oversized counters close without charging and display points never wrap');
+ }
+ if(db.native) {
+  // The owner assigns two different nodes to one worker. Hold the first
+  // successful RPC uncommitted until PostgreSQL observes the second one waiting.
+  await q("update public.ops_compute_node_accounts set account_id='worker-b' where node_id in ($1,$2)",[NODE_C,NODE_D]);
+  await q("insert into public.ops_compute_account_quotas(account_id,daily_mint_cap_micro) values ('worker-b',1)");
+  const first=await microAttempt(NODE_C,3), second=await microAttempt(NODE_D,3);
+  const writer=db.fork(), contender=db.fork();
+  let pending;
+  try {
+   await writer.exec('begin');
+   await writer.exec('set local role service_role');
+   await contender.exec('set role service_role');
+   const accepted=await first.settle(writer);
+   assert.equal(accepted.minted_micro,1);
+   pending=second.settle(contender);
+   pending.catch(()=>{});
+   await waitForBlocked(db);
+   await writer.exec('commit');
+   const refused=await pending;
+   assert.equal(refused.reason,'QUOTA_DAILY_MINT');
+   assert.equal(refused.minted_micro,0);
+   assert.deepEqual(await first.settle(),{...accepted,replayed:true});
+   assert.deepEqual(await second.settle(),{...refused,replayed:true});
+   assert.equal((await balances('worker-b')).earned,1);
+   const entries=await q("select units_micro::text as units from public.ops_compute_contribution_ledger where account_id='worker-b' and kind='mint'");
+   assert.deepEqual(entries.map(row=>row.units),['1']);
+  } finally {
+   await writer.exec('rollback');
+   await Promise.allSettled([pending]);
+   await Promise.all([writer.close(),contender.close()]);
+  }
+  ok('native concurrent settlements for two devices on one worker wait and mint exactly once at the cap');
+ }
  // 15. Append-only trigger.
  {
-  for(const stmt of ["update public.ops_compute_contribution_ledger set units_micro=0 where entry_id=(select min(entry_id) from public.ops_compute_contribution_ledger)","delete from public.ops_compute_contribution_ledger where entry_id=(select min(entry_id) from public.ops_compute_contribution_ledger)"]) {
+  for(const stmt of ["update public.ops_compute_contribution_ledger set units_micro=0 where entry_id=(select min(entry_id) from public.ops_compute_contribution_ledger)","delete from public.ops_compute_contribution_ledger where entry_id=(select min(entry_id) from public.ops_compute_contribution_ledger)","truncate public.ops_compute_contribution_ledger"]) {
    await assert.rejects(()=>db.exec(stmt),(e)=>/append-only/.test(String(e.message)));
   }
-  ok('append-only trigger refuses UPDATE and DELETE');
+  ok('append-only triggers refuse UPDATE, DELETE and TRUNCATE');
  }
 
  // 16. Correction: appended, replayed, never edits; balances arithmetic over the sums.
@@ -589,23 +775,18 @@ alter default privileges in schema public revoke truncate, references, trigger o
   ok('corrections append and replay; balances are the sums (pending, earned, spent, available)');
  }
 
- // 17. Rollback drops exactly what the forward file created; re-apply works.
+ // After first use the recovery must preserve accounting, configuration and receipts.
  {
-  await db.exec(read('supabase/pending/compute_contribution_ledger_v1.rollback.sql'));
-  const left=(await one("select count(*)::int as n from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname like 'compute_ledger_%'")).n;
-  assert.equal(left,0,'rollback left compute_ledger_* functions');
-  for(const t of ['ops_compute_accounts','ops_compute_node_accounts','ops_compute_model_classes','ops_compute_account_quotas','ops_compute_account_relations','ops_compute_private_grants','ops_compute_known_answer_tasks','ops_compute_fraud_reviews','ops_compute_spend_reservations','ops_compute_contribution_ledger','ops_compute_account_carry','ops_compute_display_points','ops_compute_ledger_operations']) {
-   assert.equal((await one('select to_regclass($1) as t',[`public.${t}`])).t,null,`${t} left behind`);
-  }
-  for(const t of ['ops_compute_tasks','ops_compute_leases','ops_compute_nodes','ops_compute_attestations','ops_compute_scheduler_leases']) assert.notEqual((await one('select to_regclass($1) as t',[`public.${t}`])).t,null,`${t} must survive the rollback`);
-  assert.ok((await one('select count(*)::int as n from public.ops_compute_tasks')).n>0,'task rows survive the rollback');
-  await applyLedger(); await seed();
-  const task=await enqueue(); assert.equal((await reserve(key('reserve'),'owner-1',task,MAX)).ok,true);
-  const result={model:'qwen3:8b',content:'again',usage:usage()};
-  const lease=await runTask(NODE_A,task,result);
-  const s=await settle(key('settle'),task,lease.tokenHash,lease.attempt,metering(result,{nodeId:NODE_A,attempt:lease.attempt}),hashJson(result));
-  assert.equal(s.accepted,true,JSON.stringify(s));
-  ok('rollback drops exactly the ledger objects, compute rows survive, re-apply settles again');
+  const counts=()=>Promise.all(tables.map(async t=>(await one(`select count(*)::int as n from public.${t}`)).n));
+  const before=await counts();
+  const balance=await balances('worker-c');
+  const {task_id:task}=await one("select task_id from public.ops_compute_contribution_ledger where kind='mint' order by entry_id limit 1");
+  const original=await receipt(task);
+  await assert.rejects(rollback,/ledger rollback refused.*contains data/);
+  assert.deepEqual(await counts(),before);
+  assert.deepEqual(await balances('worker-c'),balance);
+  assert.deepEqual(await receipt(task),original);
+  ok('populated rollback preserves all thirteen tables, balances and a settled receipt');
  }
  console.log(`compute contribution ledger SQL check: ${passed} cases PASS`);
 } finally {await db.close();}

@@ -231,3 +231,77 @@ body.cr[data-cr-surface="create"] #mccEditBar{display:none!important}
 .cad-deck:has(.cad-local-views){grid-template-rows:auto auto auto minmax(0,1fr) auto}
 .cad-local-views{display:flex;gap:6px;padding:0 14px 8px;min-width:0;overflow-x:auto}
 .cad-local-views button{min-height:44px;flex:1 0 auto}
+
+/* ======================================================================================================
+   REDESIGN 2026-11-24 (owner: "use mobbin to make all these new screens pretty ... especially analytics"
+   and "do not fuck up the globe as a selection medium"). References: Squarespace Traffic Overview (KPI row
+   over one chart), Substack Post stats (rounded cards, a quiet label over a big number), Shopify Attribution
+   (one range control, plain tabs). Layout and paint only: js/control-room/analytics-globe.js and every
+   selection path (tap a country, the country chips, the filter sheet) are untouched, and the globe gets MORE
+   room, never less. Phone first; the min-width blocks below only give room back.
+   ====================================================================================================== */
+/* the header: one title line and one control line (the "McCluster" eyebrow returns from 40rem) */
+.cad-app .cra-top__eyebrow{display:none}
+.cad-app .cra-top,.cr[data-control-workspace] .cad-app .cra-top{padding:10px 16px 4px}
+.cad-app .cra-top__title{font-size:26px}
+.cad-app .cra-top__controls{margin-top:8px}
+/* the globe owns the full width on a phone: it is the selector, so it is never a thumbnail */
+.cad-app .cu-geography{grid-template-columns:minmax(0,1fr);margin:2px 12px 6px;border:1px solid #2a2329;border-radius:20px;background:radial-gradient(120% 90% at 50% 28%,#1c1519 0%,#0c0b0e 62%)}
+.cad-app .cra-stage,.cr[data-control-workspace] .cad-app .cra-stage,body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cra-stage{height:200px;background:transparent}
+.cad-app .cra-globe__host,.cr[data-control-workspace] .cad-app .cra-globe__host{inset:0 0 56px}
+.cad-app .cra-pill,.cr[data-control-workspace] .cad-app .cra-pill{bottom:24px;width:calc(100% - 24px);border-radius:999px;background:#151216e6;border:1px solid #382c33;overflow:hidden}
+.cad-app .cra-summary,.cr[data-control-workspace] .cad-app .cra-summary{bottom:5px;text-align:center;color:#a69ca8}
+/* the leading countries become one row of chips under the globe: still one tap to select, as on the globe */
+.cad-app .cu-geo-summary,body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cu-geo-summary{max-height:none;overflow:visible;padding:0 10px 8px;align-self:auto}
+.cad-app .cu-geo-summary h2,.cad-app .cu-geo-summary .cu-note,.cad-app .cu-geo-summary .cu-heat-legend,.cad-app .cu-geo-summary>small{display:none}
+.cad-app .cu-georows{display:flex;gap:8px;margin:0;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;scroll-snap-type:x proximity;padding:1px}
+.cad-app .cu-georows::-webkit-scrollbar{display:none}
+.cad-app .cu-georows button{flex:none;display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;border:1px solid #33292f;border-radius:999px;background:#151216;color:#ece6ee;font:500 13px/1 var(--ui,system-ui);overflow:hidden;scroll-snap-align:start}
+.cad-app .cu-georows button span{max-width:12rem}
+.cad-app .cu-georows button b{font-weight:700;font-variant-numeric:tabular-nums;color:#fff}
+.cad-app .cu-georows button i{left:0;bottom:0;height:3px;border-radius:0}
+.cad-app .cu-georows button[aria-pressed=true]{background:#3b1a21;border-color:#e5383b;color:#fff}
+/* sections: plain tabs with a red underline; the chapter line is one row (its description returns from 40rem) */
+.cad-tabs{padding:2px 8px 0;border-bottom-color:#241f25}
+.cad-tabs button{font-size:14px;font-weight:500;padding:8px 12px;color:#9d95a1}
+.cad-tabs button[aria-selected="true"]{background:none;color:#fff;border-bottom-color:#e5383b}
+.cad-chapter{padding:8px 16px}
+.cad-chapter p{display:none}
+.cad-chapter h2{font:600 20px/1.2 var(--ui,system-ui);letter-spacing:-.02em}
+.cad-arrows button{border-radius:999px;background:transparent;border-color:#352d33}
+/* cards: rounded, one surface, a quiet label over a big number */
+.cad-body .cu-card,.cad-body .cra-card{background:#141217;border-color:#26212a;border-radius:18px;padding:16px}
+.cad-body .cu-card h2,.cad-body .cra-card h2{font:600 17px/1.25 var(--ui,system-ui);letter-spacing:-.015em}
+.cad-body .cu-metrics>.cu-fact,.cad-body .cra-kpi{background:#1a171d;border:1px solid #2c2630;border-radius:14px;padding:12px 14px}
+.cad-body .cu-fact>span,.cad-body .cra-kpi small{text-transform:none;letter-spacing:0;font:500 12px/1.35 var(--ui,system-ui);color:#b3abb7}
+.cad-body .cu-fact>strong,.cad-body .cra-kpi strong{font:600 30px/1.1 var(--ui,system-ui);letter-spacing:-.03em;color:#fff}
+.cad-body .cu-metric-link i{color:#e5869a}
+/* the status line never clips a button (the bar's scroll arrows live inside the bar: css/site-navigation.css) */
+.cad-footer{padding:6px 12px;gap:6px;background:#0f0e11;border-top-color:#241f25}
+.cad-footer>span:first-child{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cad-footer button{flex:none;border-radius:999px;padding:0 12px;background:#18151b;border-color:#332b31}
+@media(min-width:40rem){
+  .cad-app .cra-top__eyebrow{display:block}
+  .cad-app .cra-top,.cr[data-control-workspace] .cad-app .cra-top{padding:14px 20px 8px}
+  .cad-app .cra-top__title{font-size:32px}
+  .cad-app .cu-geography{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);margin:4px 18px 12px}
+  .cad-app .cra-stage,.cr[data-control-workspace] .cad-app .cra-stage,body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cra-stage{height:clamp(250px,28dvh,320px)}
+  .cad-app .cu-geo-summary,body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cu-geo-summary{padding:18px;align-self:center;max-height:320px;overflow:auto}
+  .cad-app .cu-geo-summary h2,.cad-app .cu-geo-summary .cu-note,.cad-app .cu-geo-summary>small{display:block}
+  .cad-app .cu-geo-summary .cu-heat-legend{display:flex}
+  .cad-app .cu-geo-summary h2{font:600 17px/1.2 var(--ui,system-ui)}
+  .cad-app .cu-georows{flex-wrap:wrap;overflow:visible;margin:10px 0}
+  .cad-chapter{padding:12px 18px}
+  .cad-chapter p{display:block}
+  .cad-chapter h2{font-size:22px}
+  .cad-footer{padding:6px 18px;gap:8px}
+}
+@media(min-width:64rem){
+  .cad-footer{padding:6px 18px}
+  .cad-app .cu-geography{display:flex;flex-direction:column;flex:1;margin:4px 16px 14px}
+  .cad-app .cra-stage,.cr[data-control-workspace] .cad-app .cra-stage,body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cra-stage{height:auto;min-height:190px;flex:1}
+  .cad-app .cra-globe__host,.cr[data-control-workspace] .cad-app .cra-globe__host{inset:0 0 82px}
+  .cad-app .cra-pill,.cr[data-control-workspace] .cad-app .cra-pill{bottom:37px;max-width:360px;width:calc(100% - 32px)}
+  .cad-app .cu-geo-summary,body.cr[data-cr-surface="analytics"][data-control-workspace] .cad-app .cu-geo-summary{border-top:1px solid #26222a;padding:16px 20px;max-height:220px;flex:none;align-self:stretch}
+  .cad-body .cu-fact>strong,.cad-body .cra-kpi strong{font-size:32px}
+}
