@@ -231,11 +231,11 @@
    "artist_page": "prim3-artist.html",
    "tag": "The study tapes",
    "art": "assets/img/prim3-logo.png",
-   "by": "Music to build to.",
+   "by": "Music to build to. Scored and produced by McCluster.",
    "tracks": [
     {
      "title": "Got WiFi?",
-     "credit": "The PRIM3 blue-team anthem",
+     "credit": "The PRIM3 blue-team anthem · Scored and produced by McCluster",
      "src": "assets/audio/got-wifi.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/got-wifi.json",
@@ -245,6 +245,7 @@
     },
     {
      "title": "High Alert",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/high-alert.m4a",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/high-alert.json",
@@ -252,6 +253,7 @@
     },
     {
      "title": "OSINT",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/osint.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/osint.json",
@@ -259,6 +261,7 @@
     },
     {
      "title": "Anti-Social Engineering (Draft)",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/anti-social-engineering.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/anti-social-engineering.json",
@@ -266,6 +269,7 @@
     },
     {
      "title": "Red, Blue, Purple, White Team",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/red-blue-purple-white-team.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/red-blue-purple-white-team.json",
@@ -273,6 +277,7 @@
     },
     {
      "title": "Data Breach",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/data-breach.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/data-breach.json",
@@ -280,6 +285,7 @@
     },
     {
      "title": "App Attacks",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/app-attacks.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/app-attacks.json",
@@ -287,6 +293,7 @@
     },
     {
      "title": "Dive In",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/dive-in.mp3",
      "lyrics_generation": "awaiting-vocal-take",
      "poster": "assets/frames/prim3_0001.jpg",
@@ -294,6 +301,7 @@
     },
     {
      "title": "IOT (Draft)",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/iot.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/iot.json",
@@ -301,6 +309,7 @@
     },
     {
      "title": "Per Diem (Draft)",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/per-diem.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/per-diem.json",
@@ -308,6 +317,7 @@
     },
     {
      "title": "RAID (Hot Site)",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/raid-hot-site.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/raid-hot-site.json",
@@ -315,6 +325,7 @@
     },
     {
      "title": "Evil Twin (Middle Man)",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/evil-twin-middle-man.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/evil-twin-middle-man.json",
@@ -322,6 +333,7 @@
     },
     {
      "title": "Ghost in the Wires",
+     "credit": "PRIM3 · Scored and produced by McCluster",
      "src": "assets/audio/ghost-in-the-wires.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/ghost-in-the-wires.json",

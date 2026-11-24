@@ -328,6 +328,14 @@ test("the music graph credits only what the site states, and never prints a gate
   assert.equal(free.producer["@id"], "https://matthew.mccluster.org/#matthew-mccluster", "the beat is his: a producer credit, not an artist credit");
   const env = recs.find((r) => r.name === "Environmental Injustice");
   assert.deepEqual(names(env), ["https://matthew.mccluster.org/#matthew-mccluster", "Angel Kastro", "Ocho"]);
+  /* Cyber Security Specialist: PRIM3 is the artist, McCluster scored and produced all of it (owner, 2026-11-24) */
+  const p3 = nodes(ld).find((n) => n["@id"] === "https://matthew.mccluster.org/catalogue.html#album-prim3");
+  assert.equal(p3.byArtist["@id"], "https://matthew.mccluster.org/prim3-artist.html#prim3-artist");
+  assert.equal(p3.producer["@id"], "https://matthew.mccluster.org/#matthew-mccluster", "the album's producer is the person, not the act");
+  const wifi = recs.find((r) => r.name === "Got WiFi?");
+  assert.equal(wifi.byArtist["@id"], p3.byArtist["@id"]);
+  assert.equal(wifi.producer["@id"], p3.producer["@id"]);
+  assert.equal(wifi.description, "The PRIM3 blue-team anthem · Scored and produced by McCluster", "its own line is kept beside the credit");
   assert.doesNotMatch(html + read("data/albums.json") + read("docket-516.html") + read("data/lyrics/environmental-injustice.json") + read("data/lyrics/environmental-injustice-brave.json"), /Evangelist Angel|Angel Castro|Old Jay ft\. Ocho|prod\. Pax\b/, "superseded credits are gone");
   const cat = JSON.parse(read("data/catalogue.json"));
   for (const t of cat.tracks.filter((t) => t.gated)) {

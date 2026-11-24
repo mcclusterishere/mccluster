@@ -31,8 +31,14 @@
      artist. Separate entity from Matthew McCluster"). PRIM3 the act is its
      own node (prim3-artist.html#prim3-artist), the music act of PRIM3,
      McCluster Corp's learning product; never the PRIM3 Project
-     (prim3.html#prim3), McCluster Corp or Matthew. No credits beyond the
-     artist are known, so none are claimed: no producer, no contributor.
+     (prim3.html#prim3), McCluster Corp or Matthew. Its producer is the
+     person, per the owner (2026-11-24: "the cyber security album was
+     produced fully by McCluster. Scored and produced, whatever language
+     you want to use."): every recording and the album carry producer =
+     Matthew's @id ("McCluster" is an alternateName of that Person in
+     data/seo/entity-graph.json), and the credit line reads "Scored and
+     produced by McCluster". A producer credit, never an artist credit:
+     byArtist stays the act. No contributor is known, so none is claimed.
    - "Dealer Plates" is "Prod. Zakir & McCluster": a producer credit, not an
      artist credit.
    - "Upset" names three other artists and no role for him: no artist claim.
@@ -80,7 +86,7 @@ const NO_GRAPH_ALBUMS = new Set(["cia-mind-control"]);
 
 function creditFor(t) {
   if (CREDIT[t.slug]) return CREDIT[t.slug];
-  if (t.albumSlug === "prim3") return { byArtist: PRIM3_ACT };
+  if (t.albumSlug === "prim3") return { byArtist: PRIM3_ACT, producer: PERSON };
   return { byArtist: PERSON };
 }
 
@@ -133,6 +139,7 @@ export function buildGraph(cat, albums) {
     }
     if (a.slug === "prim3") {
       node.byArtist = PRIM3_ACT;
+      node.producer = PERSON;
       node.subjectOf = { "@type": "WebPage", url: `${SITE}/prim3-artist.html` };
     }
     if (a.slug === "equity-uprise") {
