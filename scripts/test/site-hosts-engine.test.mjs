@@ -7,10 +7,13 @@
    js/shell-boot.js): which origin a link points at, whether the World is local, the fragment hand-off writer, the carry
    and the installed app's move card. Each function is run here as written, with a window of our own:
    - with the table that ships (P1): on the platform (mccluster.org) the bar is local, Music listen.html, the M
-     index.html, the Globe /; on Matthew's host Music and the Globe point at the platform and the M at his own root; the
+     index.html, the Globe /; on Matthew's host the Globe points at the platform's World and the M at his own root, and
+     until P3 the bar's doors to the music pages the one player keeps a song across (Music, an artist's page, the
+     account) stay on his host, as at P0 (the P1 amendment of 2026-11-24, SPEC-PLATFORM 4: a door to another origin is a
+     page load, which would end the song playing on his album or artist page); every other page is the platform's; the
      World is / and /mnet.html only, never /index.html; on a page itself the bar's door to that page is this page, on
      either host (Listen keeps the player's own Play and Pause); the writer is off; the carry runs on the platform
-     alone; the move card only on his host, in the installed app;
+     alone, and loads there for a waiting offer of kept songs too; the move card only on his host, in the installed app;
    - with P0's table the same functions answer what the literals they replaced answered;
    - with the equityuprise rewrite and with a table whose hosts are elsewhere the answers move with the table;
    - with no table a link stays on its own host and nothing crosses.
@@ -106,37 +109,80 @@ test('P1 on the platform: the bar is local (Music listen.html, the M index.html,
   assert.equal(b.houseBound(new URL(`${PROFILE}/whip.html`)), false, 'another origin is never this host\'s link');
 });
 
-test('P1 on Matthew\'s host: Music and the Globe point at the platform, the M at his own root, his own pages stay his', () => {
-  for (const at of ['/index.html', '/', '/listen.html', '/matthew-mccluster.html']) {
+test('P1 on Matthew\'s host: the Globe points at the platform\'s World, the M at his own root; Music, an artist\'s page and the account stay his until P3, every other page is the platform\'s', () => {
+  /* CHANGED ON PURPOSE (the P1 amendment of 2026-11-24, SPEC-PLATFORM 4; review VP1-3). Until this round this test said
+     Music, the account and an artist's page pointed at the platform from his host. A door to another origin is a page
+     load (js/music-shell.js decide()), so a song playing on his album or artist page stopped on the bar's Music tab and
+     on the account chip, which P0 kept playing by opening them as views. Matthew: "We must prepare without breaking
+     anything to do that" and "I want a singular fucking music engine with 1 fucking player at all times". So until his
+     host answers 301s (P3), the bar's doors to the pages the one player keeps a song across stay on his host, exactly as
+     at P0. Pages that were page loads at P0 (the album from Listen, Music Videos, Control, Games, Hire, a member's front
+     page) are the platform's from P1, as before this round. */
+  for (const at of ['/index.html', '/', '/listen.html', '/album.html?album=here', '/music-creator.html?handle=probe-artist', '/matthew-mccluster.html']) {
     const b = bar({ site: SHIPPED, href: PROFILE + at });
     assert.equal(b.onWorldHost(), false, at);
-    assert.equal(b.pageHref('listen.html'), `${PLAT}/listen.html`, `${at}: Music is the platform's`);
-    assert.equal(b.pageHref('album.html'), `${PLAT}/album.html`);
+    assert.equal(b.pageHref('listen.html'), `${PROFILE}/listen.html`, `${at}: Music stays on his host until P3`);
+    assert.equal(b.pageHref('account.html'), `${PROFILE}/account.html`, `${at}: the account (the chip) stays on his host until P3`);
+    assert.equal(b.pageHref('account.html?stay=1'), `${PROFILE}/account.html?stay=1`, `${at}: the World wing's Account room too`);
+    assert.equal(b.pageHref('music-creator.html?handle=probe-artist'), `${PROFILE}/music-creator.html?handle=probe-artist`, `${at}: an artist's page (the M of an artist's perspective) too`);
+    assert.equal(b.pageBase('listen.html'), `${PROFILE}/`, `${at}: the bar's navigation.house, which the installed dock's player opens`);
+    assert.equal(b.pageHref('album.html'), `${PLAT}/album.html`, `${at}: the album is the platform's (from Listen it was a page load at P0 too; on the album itself pageOrHere keeps it)`);
+    assert.equal(b.pageHref('music-videos.html'), `${PLAT}/music-videos.html`);
     assert.equal(b.pageHref('control.html#home'), `${PLAT}/control.html#home`, 'Control is a platform page');
-    assert.equal(b.pageHref('music-creator.html'), `${PLAT}/music-creator.html`);
+    assert.equal(b.pageHref('game-hub.html'), `${PLAT}/game-hub.html`);
+    assert.equal(b.pageHref('hire.html'), `${PLAT}/hire.html`);
+    assert.equal(b.pageHref('member-front.html?handle=probe-member'), `${PLAT}/member-front.html?handle=probe-member`, 'a member\'s front page was a page load at P0 too');
     assert.equal(b.pageHref('index.html'), `${PROFILE}/index.html`, `${at}: the M is his own root`);
     assert.equal(b.pageHref('index.html?front=house'), `${PROFILE}/index.html?front=house`);
-    assert.equal(b.worldAt('?view=feed'), `${PLAT}/?view=feed`, `${at}: the Globe is the platform's World`);
+    assert.equal(b.worldAt('?view=feed'), `${PLAT}/?view=feed`, `${at}: the Globe is the platform's World, cross-origin as at P0`);
     assert.equal(b.isWorldPath('/'), false, 'his root is his HERE page');
     assert.equal(b.isWorldPath('/mnet.html'), true);
     assert.equal(b.houseBound(new URL(`${PROFILE}/listen.html`)), false, 'his host serves every page until P3');
   }
+  /* the account reads this host's own session: the chip and the profile tab go there through sessionRoom */
+  const acct = page('js/tabbar.js', [...BAR, 'sessionRoom'], { site: SHIPPED, href: `${PROFILE}/album.html?album=here` });
+  assert.equal(acct.sessionRoom('account.html'), `${PROFILE}/account.html`, 'the signed-out chip on his album is his account page, a view over the album');
+  assert.equal(acct.sessionRoom('account.html?stay=1'), `${PROFILE}/account.html?stay=1`);
+  /* the platform is unchanged: everything stays on it */
+  const plat = page('js/tabbar.js', [...BAR, 'sessionRoom'], { site: SHIPPED, href: `${PLAT}/album.html?album=here` });
+  for (const p of ['listen.html', 'account.html', 'account.html?stay=1', 'music-creator.html?handle=probe-artist', 'album.html', 'index.html']) {
+    assert.equal(plat.pageHref(p), `${PLAT}/${p}`, `the platform: ${p} stays on it`);
+  }
+  assert.equal(plat.sessionRoom('account.html'), `${PLAT}/account.html`, 'the platform\'s chip is the platform\'s account page');
+  assert.equal(plat.pageBase('listen.html'), `${PLAT}/`);
+});
+
+test('P3 ends the exception: once Matthew\'s host answers 301s, his bar points Music and the account at the platform', () => {
+  const P3 = stageSite('P3');
+  assert.equal(P3.switches.profile_host_routed, true, 'P3 routes his host');
+  const b = page('js/tabbar.js', [...BAR, 'sessionRoom'], { site: P3, href: `${PROFILE}/album.html?album=here` });
+  assert.equal(b.pageHref('listen.html'), `${PLAT}/listen.html`, 'P3: Music is the platform\'s (his host would answer its own copy with a 301)');
+  assert.equal(b.pageHref('account.html'), `${PLAT}/account.html`);
+  assert.equal(b.pageHref('music-creator.html?handle=probe-artist'), `${PLAT}/music-creator.html?handle=probe-artist`);
+  assert.equal(b.sessionRoom('account.html'), `${PLAT}/account.html`);
+  assert.equal(b.pageHref('index.html'), `${PROFILE}/index.html`, 'the M stays his own root');
+  /* P0's table: the same answers the literals gave (his host for all of them) */
+  const p0 = page('js/tabbar.js', [...BAR, 'sessionRoom'], { site: P0, href: `${PROFILE}/album.html?album=here` });
+  for (const p of ['listen.html', 'account.html', 'music-creator.html?handle=probe-artist', 'album.html']) assert.equal(p0.pageHref(p), `${PROFILE}/${p}`, `P0: ${p}`);
+  assert.equal(p0.sessionRoom('account.html'), `${PROFILE}/account.html`);
 });
 
 test('P1, the page you are on: the bar\'s door to a page is that page itself when you stand on it, on either host, so Listen on Matthew\'s host keeps the player\'s Play and Pause', () => {
-  /* the wing doors (the Music tab among them) resolve through pageOrHere: from P1 Matthew's host points Music at the
-     platform's Listen, but on his Listen itself a load of the platform's copy would stop the song the tab pauses */
+  /* the wing doors (the Music tab among them) resolve through pageOrHere: on his Listen itself the Music tab is this
+     page (the player's own Play and Pause). CHANGED ON PURPOSE (the P1 amendment of 2026-11-24, review VP1-3): from his
+     album, an artist page or any other of his pages, Music stays on his host until P3 too, so a song playing on his
+     album keeps playing when Listen opens over it as a view (it pointed at the platform's Listen, a page load). */
   const listen = bar({ site: SHIPPED, href: `${PROFILE}/listen.html` });
   assert.equal(listen.pageOrHere('listen.html'), `${PROFILE}/listen.html`, 'on his Listen the Music tab is this page');
-  assert.equal(listen.pageHref('listen.html'), `${PLAT}/listen.html`, 'the table still serves Listen from the platform');
-  assert.equal(listen.pageOrHere('album.html'), `${PLAT}/album.html`, 'another page: where the table serves it');
+  assert.equal(listen.pageHref('listen.html'), `${PROFILE}/listen.html`, 'linked from his host, Listen is his host\'s until P3');
+  assert.equal(listen.pageOrHere('album.html'), `${PLAT}/album.html`, 'another page (a page load at P0 too): where the table serves it');
   const album = bar({ site: SHIPPED, href: `${PROFILE}/album.html?t=2` });
-  assert.equal(album.pageOrHere('listen.html'), `${PLAT}/listen.html`, 'from his album, Music is the platform\'s Listen');
+  assert.equal(album.pageOrHere('listen.html'), `${PROFILE}/listen.html`, 'from his album, Music is his Listen, a view over the album');
   assert.equal(album.pageOrHere('album.html'), `${PROFILE}/album.html`, 'the album\'s own door, standing on it');
   assert.equal(bar({ site: SHIPPED, href: `${PROFILE}/` }).pageOrHere('index.html'), `${PROFILE}/index.html`, 'his root is his HERE page');
-  assert.equal(bar({ site: SHIPPED, href: `${PROFILE}/hire.html` }).pageOrHere('listen.html'), `${PLAT}/listen.html`);
+  assert.equal(bar({ site: SHIPPED, href: `${PROFILE}/hire.html` }).pageOrHere('listen.html'), `${PROFILE}/listen.html`);
   const wall = bar({ site: SHIPPED, href: `${PROFILE}/walls/cover-art.html`, root: '../' });
-  assert.equal(wall.pageOrHere('listen.html'), `${PLAT}/listen.html`, 'a page in a folder: Music is the platform\'s');
+  assert.equal(wall.pageOrHere('listen.html'), `${PROFILE}/listen.html`, 'a page in a folder on his host: Music is his');
   assert.equal(bar({ site: SHIPPED, href: `${PLAT}/listen.html` }).pageOrHere('listen.html'), `${PLAT}/listen.html`, 'the platform: local');
   assert.equal(bar({ site: SHIPPED, href: `${PLAT}/album.html` }).pageOrHere('listen.html'), `${PLAT}/listen.html`);
   assert.equal(bar({ site: P0, href: `${PROFILE}/listen.html` }).pageOrHere('listen.html'), `${PROFILE}/listen.html`, 'P0: as the literals had it');
@@ -175,6 +221,26 @@ test('P1: the fragment hand-off writer is off on every host; the carry runs on t
   assert.equal(none.handoffWriterOn(), false);
   assert.equal(none.crossesHouse(new URL(`${PROFILE}/x`)), false);
   assert.equal(none.carryWanted(), false);
+});
+
+test('P1: songs kept at the old address wait for their offer on a top-level platform page, signed in or not (SPEC-PLATFORM 2.7, review VP1-1)', () => {
+  /* the carry brings the paths of the songs kept on his host (mcc_carry_kept_v1); js/carry.js says the one line and
+     keeps them here on a tap. A member the carry signed in has a usable session on the next page, where carryWanted() is
+     false, so the bar loads js/carry.js for a waiting offer too, and only there */
+  const KEPT = { mcc_carry_kept_v1: JSON.stringify(['/assets/audio/iot.mp3']) };
+  const usable = { mccdb_session: JSON.stringify({ access_token: 'a', refresh_token: 'r', expires_at: 4102444800 }) };
+  const names = ['readAuthSession', 'storedSessionUsable', 'carryWanted', 'keptWaiting'];
+  const at = (href, local, extra = {}) => page('js/tabbar.js', names, { site: SHIPPED, href, local, ...extra });
+  const member = at(`${PLAT}/listen.html`, { ...usable, ...KEPT });
+  assert.equal(member.carryWanted(), false, 'signed in here: nothing to carry');
+  assert.equal(member.keptWaiting(), true, 'but the offer of kept songs is still to be said');
+  assert.equal(at(`${PLAT}/listen.html`, usable).keptWaiting(), false, 'no kept songs: nothing waits');
+  assert.equal(at(`${PROFILE}/listen.html`, KEPT).keptWaiting(), false, 'never on his host, which kept them');
+  assert.equal(at('https://www.mccluster.org/', KEPT).keptWaiting(), false, 'never on a door');
+  assert.equal(at(`${PLAT}/?mcc_audio=1`, KEPT, { parent: { get location() { throw new Error('SecurityError: cross-origin'); } } }).keptWaiting(), false, 'never in a frame (the World framed over Music on his host): the top page says it');
+  assert.equal(page('js/tabbar.js', names, { site: P0, href: `${PLAT}/listen.html`, local: KEPT }).keptWaiting(), false, 'P0: the carry is off');
+  assert.equal(page('js/tabbar.js', names, { site: undefined, href: `${PLAT}/listen.html`, local: KEPT }).keptWaiting(), false, 'no table: nothing');
+  assert.match(fnSource(read('js/tabbar.js'), 'startCarry'), /if \(!carryWanted\(\) && !keptWaiting\(\)\) return;/, 'the bar loads js/carry.js for either');
 });
 
 test('P1: the installed app\'s move card is for Matthew\'s host in standalone mode alone, once', () => {
@@ -219,12 +285,16 @@ test('the equityuprise rewrite and a table elsewhere: every answer moves with th
   assert.equal(next.pageHref('listen.html'), `${NEXT}/listen.html`);
   assert.equal(next.worldAt('?view=feed'), `${NEXT}/?view=feed`);
   assert.equal(next.houseBound(new URL(`${NEXT}/whip.html`)), true, 'Whip stays on Matthew\'s host');
+  /* from his host the platform's pages move with the table; Music stays on his host until P3 (the P1 amendment of
+     2026-11-24: changed on purpose from the platform's Listen, review VP1-3), whatever the table names his host */
   const his = bar({ site: F, href: `${PROFILE}/index.html` });
-  assert.equal(his.pageHref('listen.html'), `${NEXT}/listen.html`);
+  assert.equal(his.pageHref('listen.html'), `${PROFILE}/listen.html`);
+  assert.equal(his.pageHref('album.html'), `${NEXT}/album.html`);
   assert.equal(his.pageHref('index.html'), `${PROFILE}/index.html`);
   assert.equal(his.worldAt('?view=feed'), `${NEXT}/?view=feed`);
   const e = bar({ site: ELSEWHERE, href: 'https://me.profile.example/index.html' });
-  assert.equal(e.pageHref('listen.html'), 'https://platform.example/listen.html');
+  assert.equal(e.pageHref('listen.html'), 'https://me.profile.example/listen.html');
+  assert.equal(e.pageHref('album.html'), 'https://platform.example/album.html');
   assert.equal(e.worldAt(''), 'https://platform.example/');
   const none = bar({ site: undefined, href: `${PROFILE}/walls/x.html`, root: `${PROFILE}/` });
   assert.equal(none.pageHref('listen.html'), `${PROFILE}/listen.html`);
@@ -259,6 +329,12 @@ test('the World over Music on the platform is same-origin with Music; on Matthew
   assert.equal(plat.musicURL(`${PLAT}/listen.html?track=1`), false);
   assert.equal(plat.musicHome(), `${PLAT}/listen.html`);
   assert.equal(plat.worldHome(), `${PLAT}/`);
+  /* the World's transport, its title tapped with the World closed, goes to Music: on his host his own Listen until P3, a
+     view over his album or artist page (the P1 amendment of 2026-11-24, review VP1-3), never the platform's copy, a page
+     load that would end the song; the bar's own rule (js/tabbar.js pageBase) */
+  assert.equal(prof.musicHome(), `${PROFILE}/listen.html`, 'from his host: his own Listen');
+  assert.equal(wac({ site: SHIPPED, href: `${PROFILE}/album.html?album=here` }).musicHome(), bar({ site: SHIPPED, href: `${PROFILE}/album.html?album=here` }).pageHref('listen.html'), 'the same answer as the bar\'s Music tab');
+  assert.equal(wac({ site: stageSite('P3'), href: `${PROFILE}/album.html?album=here` }).musicHome(), `${PLAT}/listen.html`, 'P3: the platform\'s Listen');
 });
 
 test('the World over Music with P0\'s table, the equityuprise rewrite and no table', () => {
@@ -271,7 +347,12 @@ test('the World over Music with P0\'s table, the equityuprise rewrite and no tab
   assert.equal(f.worldHome(), `${NEXT}/`);
   assert.equal(f.worldURL(`${PROFILE}/mnet.html?view=feed`).href, `${NEXT}/?view=feed`);
   assert.ok(f.trustedOrigins().includes(NEXT));
-  assert.equal(f.musicHome(), `${NEXT}/listen.html`);
+  /* changed on purpose (the P1 amendment of 2026-11-24, review VP1-3): standing on Matthew's host before P3, Music stays
+     on his host under any platform name, as the bar's Music tab does; the new platform's Listen would be a page load
+     that ends the song playing here. Matthew: "I want a singular fucking music engine with 1 fucking player at all
+     times". Was `${NEXT}/listen.html`. */
+  assert.equal(f.musicHome(), `${PROFILE}/listen.html`);
+  assert.equal(wac({ site: F, href: `${NEXT}/listen.html` }).musicHome(), `${NEXT}/listen.html`, 'on the new platform its own Listen');
   const none = wac({ site: undefined, href: `${PROFILE}/listen.html` });
   assert.deepEqual([...none.trustedOrigins()], [], 'an array of the page\'s own realm, spread into this one');
   assert.equal(none.worldURL(`${PLAT}/?view=feed`), null);

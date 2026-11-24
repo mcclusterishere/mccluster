@@ -75,8 +75,10 @@
      the top of js/shell-boot.js, from data/seo/domain-architecture.json), never a host written here. Each decision is
      one small function below. From P1 the platform (mccluster.org) serves every page at its path, so standing on it the
      bar is local: Music listen.html, the M the HERE front door (index.html), the Globe the World at its root. Standing on
-     Matthew's host (it serves every page until P3, and opens on his HERE page), Music and the Globe point at the
-     platform and the M at his own root. With P0's table these functions answer what the literals they replaced did:
+     Matthew's host (it serves every page until P3, and opens on his HERE page), the Globe points at the platform's World
+     and the M at his own root; Music, the account and an artist's page stay on his host until P3, so a song playing
+     there keeps playing (pageBase, the P1 amendment of 2026-11-24); every other page is the platform's. With P0's table
+     these functions answer what the literals they replaced did:
      the World's hosts served the World and its rooms, and the bar linked Matthew's rooms on his host outright. With no
      table (a preview, a local server) every link stays beside this page. A session is per origin (localStorage); the
      carry (js/carry.js, P1) brings a member's sign-in to the platform, never in a URL.
@@ -104,6 +106,14 @@
     if (!S || !S.hostRole(location.hostname)) return ROOT;
     var p = "/" + String(path == null ? "" : path);
     if (location.origin === S.profile.origin && S.cleanPath(p) === S.profile.root_path) return S.profile.origin + "/";
+    /* THE SONG KEEPS PLAYING ON HIS HOST UNTIL P3 (the P1 amendment of 2026-11-24, SPEC-PLATFORM 4). Matthew: "We must
+       prepare without breaking anything to do that" and "I want a singular fucking music engine with 1 fucking player at
+       all times". A door to another origin is a page load (js/music-shell.js decide()), which ends a song playing on his
+       album or artist page; so while his host serves every page (until P3 answers its 301s), the bar's doors to the
+       pages the one player opens over itself as views (Listen, an artist's page, the account: the music shell's view
+       routes) stay on his host, as at P0. Every other page is where the table serves it; the platform is unchanged. */
+    if (location.origin === S.profile.origin && S.switches.profile_host_routed !== true &&
+        /^\/(?:listen|music-creator|account)\.html$/.test(S.cleanPath(p))) return S.profile.origin + "/";
     return S.servingOrigin(p) + "/";
   }
   function pageHref(path) { return pageBase(path) + path; }
@@ -1121,8 +1131,16 @@
     if (!carryWanted()) return false;
     try { return localStorage.getItem("mcc_carry_v1") === null; } catch (e) { return false; }
   }
+  /* songs kept at the old address wait for their offer (SPEC-PLATFORM 2.7): js/carry.js says it on a top-level platform
+     page, signed in or not (the carry may have signed this browser in on an earlier page), until it is answered */
+  function keptWaiting() {
+    var S = window.MCC_SITE;
+    var role = S && S.switches && S.switches.carry === true ? S.hostRole(location.hostname) : null;
+    if (!role || role.role !== "platform" || window.parent !== window) return false;
+    try { return localStorage.getItem("mcc_carry_kept_v1") !== null; } catch (e) { return false; }
+  }
   function startCarry() {
-    if (!carryWanted()) return;
+    if (!carryWanted() && !keptWaiting()) return;
     window.MCC_CARRY_PENDING = carryPending();
     if (window.MCC_CARRY || document.querySelector("script[data-mcc-carry]")) return;
     var carry = document.createElement("script");

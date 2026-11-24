@@ -33,7 +33,15 @@
     if (serving !== houseOrigin() && !S.switches.profile_host_routed) out.push(houseOrigin());
     return out;
   }
-  function musicHome() { var S = site(); return S ? S.siteUrl("/listen.html") : ROOT + "listen.html"; }
+  /* Music's address from here: where the table serves listen.html, except on Matthew's host until P3, where it stays on
+     his host as the bar's Music tab does (js/tabbar.js pageBase, the P1 amendment of 2026-11-24): another origin is a
+     page load, which would end the song playing here */
+  function musicHome() {
+    var S = site();
+    if (!S) return ROOT + "listen.html";
+    if (location.origin === S.profile.origin && S.switches.profile_host_routed !== true) return S.profile.origin + "/listen.html";
+    return S.siteUrl("/listen.html");
+  }
   /* is this address (an origin and a path) the World itself: its document (mnet.html) anywhere, or the root of a World
      host; before P1 the old root document name there too. From P1 /index.html on the platform is the HERE front door. */
   function isWorldDocument(u) {

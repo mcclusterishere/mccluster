@@ -11,9 +11,10 @@
    1. Signed in on Matthew's host, a member opens the platform: one carry (a hidden same-site frame of his host's
       carry.html, the existing POST /v1/auth/handoff as a bearer header, Supabase's one-time token) signs the platform in.
       No request URL and no history entry holds a token; his host stays signed in; the carry asks once. On his host the
-      bar points Music and the Globe at the platform, except that on his own Listen the Music tab is that page itself.
+      bar points the Globe at the platform's World and the M at his own root, and until P3 Music and the account chip
+      stay on his host (the P1 amendment of 2026-11-24: a song playing on his album keeps playing, as at P0).
    2. Nothing to carry: the platform says one clear line on the sign-in page and on the account chip, for 30 days, and
-      does not ask again.
+      does not ask again; on a phone the chip shows it under itself, visibly, at 390 and 320, until it is closed.
    3. embed.html on the platform renders inside a page of a foreign origin; a page that is not the embed does not.
    4. The World opened over Music on the platform is a frame of the platform's own origin.
    5. The installed app's move card shows once, on Matthew's host in standalone mode only.
@@ -23,6 +24,9 @@
       another account's access token (#mcc_handoff=) sends it nowhere and is signed in as nobody; a member signed in on
       Matthew's host who opens the same link is signed in as themselves, by the carry. And the carry page framed by
       another site sees an empty partition, not his host's storage (review SEC-P1-3).
+   8. Songs kept at the old address: his host's vault holds songs; on the platform one line offers them, in the bar's own
+      card, at 390 and 320 with nothing scrolling sideways; a tap keeps the same files at the same paths in the
+      platform's vault, and his host keeps its copies (SPEC-PLATFORM 2.7, review VP1-1).
 
      node scripts/e2e/carry.e2e.mjs [outDir]
    ============================================================ */
@@ -53,6 +57,9 @@ const OTHER_TOKEN = `other.${Buffer.from(JSON.stringify({ sub: OTHER_USER, exp: 
 const OTHER_SESSION = `other-platform.${Buffer.from(JSON.stringify({ sub: OTHER_USER, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.sig`;
 const LINE = `McCluster now lives at ${SITE.platform.host}. If you were signed in before, you still are; if not, sign in once here.`;
 const results = [];
+/* a tap on a control that may be missing: null when tapped, else what stopped it (a missing control is a failed check,
+   not a crash, so every later scenario still reports) */
+const tap = (page, selector) => page.click(selector, { timeout: 5000 }).then(() => null, (e) => String((e && e.message) || e).split('\n')[0]);
 function check(scope, name, ok, detail) {
   results.push({ scope, name, ok: !!ok, detail });
   console.log(`${ok ? 'PASS' : 'FAIL'} [${scope}] ${name}${ok || detail === undefined ? '' : ' :: ' + JSON.stringify(detail).slice(0, 600)}`);
@@ -179,11 +186,16 @@ try {
        never a load of the platform's copy of the page, which would stop the song */
     const onListen = await barOf();
     check(S, 'on his own Listen the Music tab is this page, the Globe points at the platform and the M at his own root', onListen.music === `${PROF}/listen.html` && onListen.world === `${PLAT}/?view=feed` && onListen.home === `${PROF}/index.html`, onListen);
-    /* from his other pages, the HERE front door his host opens on among them, Music points at the platform's Listen */
+    /* CHANGED ON PURPOSE (the P1 amendment of 2026-11-24, SPEC-PLATFORM 4; review VP1-3): this said Music pointed at the
+       platform's Listen from his other pages. A tap to another origin is a page load, which ends a song playing on his
+       album or artist page (P0 opened Listen over it as a view and the song kept going). Matthew: "We must prepare
+       without breaking anything to do that" and "I want a singular fucking music engine with 1 fucking player at all
+       times". So until P3 Music stays on his host, from every page there, the HERE front door his host opens on among
+       them; the Globe was already the platform's World at P0 and stays so */
     await page.goto(`${PROF}/index.html`, { waitUntil: 'load' });
     await page.waitForSelector('.appbar [data-appnav="music"]', { timeout: 10000 }).catch(() => {});
     const bar = await barOf();
-    check(S, 'on his host the bar points Music and the Globe at the platform and the M at his own root', bar.music === `${PLAT}/listen.html` && bar.world === `${PLAT}/?view=feed` && bar.home === `${PROF}/index.html`, bar);
+    check(S, 'on his host the bar keeps Music on his host until P3, points the Globe at the platform\'s World and the M at his own root', bar.music === `${PROF}/listen.html` && bar.world === `${PLAT}/?view=feed` && bar.home === `${PROF}/index.html`, bar);
     await page.goto(`${PLAT}/listen.html`, { waitUntil: 'load' });
     await page.waitForFunction(() => !!localStorage.getItem('mcc_carry_v1'), null, { timeout: 20000 }).catch(() => {});
     await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 20000 }).catch(() => {});
@@ -215,6 +227,27 @@ try {
     await ctx.close();
   }
 
+  /* ---------- 1b. a guest on his album: the bar's Music and the account chip stay on his host until P3 ---------- */
+  {
+    /* the P1 amendment of 2026-11-24 (review VP1-3): a door to another origin is a page load, which would end the song
+       his album plays; his host's own Listen and account page open over the album as views (scripts/e2e/music-shell.e2e.mjs
+       plays the song through them). On the platform nothing changes: everything stays there (scenario 2 below). */
+    const S = 'his-host-bar';
+    const { ctx, page, errors } = await open();
+    await page.goto(`${PROF}/album.html?album=here`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.getElementById('mccAuthChip'), null, { timeout: 15000 }).catch(() => {});
+    const links = await page.evaluate(() => ({ music: document.querySelector('.appbar [data-appnav="music"]')?.href, home: document.querySelector('.appbar [data-appnav="home"]')?.href,
+      world: document.querySelector('.appbar [data-appnav="world"]')?.href, chip: (document.getElementById('mccAuthChip') || {}).href,
+      house: window.MCC_BAR && window.MCC_BAR.navigation && window.MCC_BAR.navigation.house }));
+    check(S, 'on his album the Music tab is his own Listen and the signed-out chip his own account page', links.music === `${PROF}/listen.html` && links.chip === `${PROF}/account.html`, links);
+    check(S, 'the Globe is the platform\'s World and the M his own root, as at P0', links.world === `${PLAT}/?view=feed` && links.home === `${PROF}/index.html`, links);
+    check(S, 'the bar\'s house (the installed dock opens the player there) is his own host', links.house === `${PROF}/`, links.house);
+    check(S, 'no carry on his host: he is the one asked, never the asker', await page.evaluate(() => !document.querySelector('script[data-mcc-carry]') && !window.MCC_CARRY));
+    check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
+    check(S, 'no page errors', errors.length === 0, errors);
+    await ctx.close();
+  }
+
   /* ---------- 2. nothing to carry: one clear line, for 30 days, asked once ---------- */
   {
     const S = 'carry-nothing';
@@ -228,6 +261,8 @@ try {
     await page.waitForFunction(() => !!document.getElementById('mccAuthChip'), null, { timeout: 10000 }).catch(() => {});
     const chip = await page.evaluate(() => { const c = document.getElementById('mccAuthChip'); const d = c && c.getAttribute('aria-describedby'); return c && { title: c.getAttribute('title'), described: d && (document.getElementById(d) || {}).textContent }; });
     check(S, 'the account chip carries the same line', chip && chip.title === LINE && chip.described === LINE, chip);
+    /* on the sign-in page the pane says it: the note under the chip waits hidden, so the screen says it once */
+    check(S, 'on the sign-in page the line is said once, in the pane', await page.evaluate(() => { const n = document.getElementById('mccCarryNote'); return !n || n.hidden || getComputedStyle(n).display === 'none'; }));
     check(S, 'nobody was signed in and no token was asked for', !(await signedIn(page)) && api.handoff.length === 1 && api.verify.length === 1);
     check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
     await page.screenshot({ path: join(OUT, 'nothing-carried-account-390.png') });
@@ -236,6 +271,37 @@ try {
     await page.waitForFunction(() => { const c = document.getElementById('mccAuthChip'); return !!(c && c.getAttribute('title')); }, null, { timeout: 15000 }).catch(() => {});
     check(S, 'the next page asks nothing and still says the line on the chip', carryFrames(requests).length === asked && asked === 1 &&
       await page.evaluate((line) => (document.getElementById('mccAuthChip') || {}).title === line, LINE));
+    /* SPEC-PLATFORM 2.6.5 on a phone (review VP1-2): a title is never seen on a touch screen, so the chip shows the line
+       under itself, visibly, at 390 and at 320, with nothing scrolling sideways; its close is a 44 px target at 16 px or
+       more; closed, it stays closed, and the chip keeps the line as its title and description for the rest of the 30 days */
+    const noteAt = () => page.evaluate(() => {
+      const n = document.getElementById('mccCarryNote'), chipEl = document.getElementById('mccAuthChip');
+      if (!n || !chipEl) return null;
+      const r = n.getBoundingClientRect(), cs = getComputedStyle(n), c = chipEl.getBoundingClientRect();
+      const x = n.querySelector('button'), xr = x && x.getBoundingClientRect();
+      return { text: (document.getElementById('mccCarryNoteText') || {}).textContent, hidden: n.hidden, display: cs.display, visibility: cs.visibility, opacity: Number(cs.opacity),
+        box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)], vw: innerWidth, vh: innerHeight, chipBottom: Math.round(c.bottom),
+        close: xr && { w: Math.round(xr.width), h: Math.round(xr.height), font: parseFloat(getComputedStyle(x).fontSize), name: x.getAttribute('aria-label') } };
+    });
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.waitForFunction(() => { const n = document.getElementById('mccCarryNote'); return !!n && !n.hidden; }, null, { timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      const seen = await noteAt();
+      const shown = !!seen && seen.text === LINE && !seen.hidden && seen.display !== 'none' && seen.visibility === 'visible' && seen.opacity > 0.5 &&
+        seen.box[2] - seen.box[0] > 0 && seen.box[3] - seen.box[1] > 0 && seen.box[0] >= 0 && seen.box[2] <= seen.vw && seen.box[3] <= seen.vh && seen.box[1] >= seen.chipBottom;
+      check(S, `${width} px: the chip shows the one line under itself, inside the screen`, shown, seen);
+      check(S, `${width} px: its close is a 44 px target, 16 px or more, named for what it does`, !!seen && !!seen.close && seen.close.w >= 44 && seen.close.h >= 44 && seen.close.font >= 16 && /close/i.test(seen.close.name || ''), seen && seen.close);
+      check(S, `${width} px: nothing scrolls sideways`, (await fits(page)).sw === (await fits(page)).cw, await fits(page));
+      await page.screenshot({ path: join(OUT, `chip-line-${width}.png`) });
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    const closeTap = await tap(page, '#mccCarryNote button');
+    check(S, 'the note under the chip has its close', closeTap === null, closeTap);
+    check(S, 'closed, the line under the chip goes', await page.evaluate(() => { const n = document.getElementById('mccCarryNote'); return !n || n.hidden || getComputedStyle(n).display === 'none'; }));
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForFunction(() => { const c = document.getElementById('mccAuthChip'); return !!(c && c.getAttribute('title')); }, null, { timeout: 15000 }).catch(() => {});
+    check(S, 'and stays closed on the next page, while the chip keeps the line as its title', await page.evaluate((line) => { const n = document.getElementById('mccCarryNote'); return (!n || n.hidden) && (document.getElementById('mccAuthChip') || {}).title === line; }, LINE));
     /* after 30 days the line is gone */
     await page.evaluate(() => localStorage.setItem('mcc_carry_v1', JSON.stringify({ v: 1, result: 'none', at: new Date(Date.now() - 31 * 864e5).toISOString() })));
     await page.goto(`${PLAT}/account.html`, { waitUntil: 'load' });
@@ -377,6 +443,59 @@ try {
       check(S, 'while his host itself still holds it', (await session(page))?.access_token === HOUSE_TOKEN);
       await ctx.close();
     }
+  }
+
+  /* ---------- 8. songs kept at the old address are offered once on the platform, and kept there on a tap ---------- */
+  {
+    /* SPEC-PLATFORM 2.7 (review VP1-1): the move card promises "your sign-in and kept songs come with you". His host's
+       vault (the cache the album's "Keep the masters" fills, js/label.js) holds two songs and a song's lyrics; the
+       platform says one line in the bar's own card and keeps the same files at the same paths on a tap */
+    const S = 'kept-songs';
+    const KEPT_FILES = ['/assets/audio/got-wifi.mp3', '/assets/audio/iot.mp3', '/data/lyrics/iot.json'];
+    const { ctx, page, errors } = await open();
+    await page.goto(`${PROF}/carry.html`, { waitUntil: 'load' });
+    await page.evaluate(async (files) => { const c = await caches.open('mcc-vault-v1'); await c.addAll(files); }, KEPT_FILES);
+    const vaultOf = () => page.evaluate(async () => (await (await caches.open('mcc-vault-v1')).keys()).map((r) => new URL(r.url).pathname).sort());
+    check(S, 'his host keeps two songs and a song\'s lyrics', JSON.stringify(await vaultOf()) === JSON.stringify([...KEPT_FILES].sort()), await vaultOf());
+    await page.goto(`${PLAT}/listen.html`, { waitUntil: 'load' });
+    await page.waitForSelector('#mccKeptOffer', { timeout: 20000 }).catch(() => {});
+    const LINE_KEPT = 'You kept 2 songs at the old address. Keep them here too?';
+    const offerAt = () => page.evaluate(() => {
+      const c = document.getElementById('mccKeptOffer');
+      if (!c) return null;
+      const r = c.getBoundingClientRect(), line = c.querySelector('[role="status"]');
+      const btns = [...c.querySelectorAll('button')].filter((b) => !b.hidden).map((b) => { const q = b.getBoundingClientRect(); return { text: b.textContent, w: Math.round(q.width), h: Math.round(q.height), font: parseFloat(getComputedStyle(b).fontSize) }; });
+      return { cls: c.className, line: line && line.textContent, box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)], vw: innerWidth, vh: innerHeight, btns };
+    });
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.waitForTimeout(300);
+      const o = await offerAt();
+      check(S, `${width} px: the platform says the one line, in the bar's own card, inside the screen`, !!o && o.line === LINE_KEPT && o.cls === 'dk-peek' &&
+        o.box[0] >= 0 && o.box[2] <= o.vw && o.box[1] >= 0 && o.box[3] <= o.vh, o);
+      check(S, `${width} px: Keep them here and Not now are 44 px targets at 16 px or more`, !!o && o.btns.length === 2 && o.btns.every((b) => b.w >= 44 && b.h >= 44 && b.font >= 16) &&
+        o.btns[0].text === 'Keep them here' && o.btns[1].text === 'Not now', o && o.btns);
+      check(S, `${width} px: nothing scrolls sideways`, (await fits(page)).sw === (await fits(page)).cw, await fits(page));
+      await page.screenshot({ path: join(OUT, `kept-songs-${width}.png`) });
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    const keepTap = await tap(page, '#mccKeptOffer .dk-peek__go');
+    check(S, 'Keep them here can be tapped', keepTap === null, keepTap);
+    await page.waitForFunction(() => /here too\.$|did not download\.$/.test(((document.querySelector('#mccKeptOffer [role="status"]') || {}).textContent) || ''), null, { timeout: 30000 }).catch(() => {});
+    const done = await offerAt();
+    check(S, 'a tap keeps them and says so', !!done && done.line === 'Kept 2 songs here too.', done);
+    check(S, 'the platform\'s vault holds the same files at the same paths', JSON.stringify(await vaultOf()) === JSON.stringify([...KEPT_FILES].sort()), await vaultOf());
+    check(S, 'asked once: the offer is gone from storage', await page.evaluate(() => localStorage.getItem('mcc_carry_kept_v1') === null));
+    const doneTap = await tap(page, '#mccKeptOffer .dk-peek__alt');
+    check(S, 'Done can be tapped', doneTap === null, doneTap);
+    check(S, 'Done closes the card', await page.evaluate(() => !document.getElementById('mccKeptOffer')));
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForTimeout(1500);
+    check(S, 'the next page offers nothing', await page.evaluate(() => !document.getElementById('mccKeptOffer')));
+    await page.goto(`${PROF}/carry.html`, { waitUntil: 'load' });
+    check(S, 'his host keeps its copies', JSON.stringify(await vaultOf()) === JSON.stringify([...KEPT_FILES].sort()), await vaultOf());
+    check(S, 'no page errors', errors.length === 0, errors);
+    await ctx.close();
   }
 } finally {
   await browser.close();
