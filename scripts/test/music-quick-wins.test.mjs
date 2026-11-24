@@ -438,20 +438,21 @@ function album(options = {}) {
     window: {
       MCC_GATED: { signedIn: () => !!options.signedIn, claim: () => { claims.push(1); return Promise.resolve({ state: 'full', url: 'held-master.mp3', expires_in: 600 }); }, forget() {},
         holdDecision: () => Promise.resolve({ play: !!options.owner, signedIn: !!options.signedIn }), holdNotice: (o) => notices.push(o) },
-      MCC_LISTENS: { finish: () => Promise.resolve({ counted: true }), release() {} }, MCC_TOAST() {}, MCC_TRACK() {}
+      MCC_LISTENS: { finish: () => Promise.resolve({ counted: true }), release() {} }, MCC_TOAST() {},
+      MCC_TRACK: (name, props) => { if (options.events) options.events.push({ name, ...props }); }
     },
     audioSession() {}, spend() {}, media() {}, paintRows() {}, paintDeck() {}, announce() {}, paintSheet() {},
     loadReel() {}, setRoom() {}, loadLyrics() {}, priming: false, countStart() {}, save() {}, roomPlay() {},
     el: elNode, bar: elNode('deckbar'), granted: () => false, gateSpec: (row) => ({ bucket: row.getAttribute('data-gated-bucket'), object: row.getAttribute('data-gated-object') }),
     paintGate() {}, setTimeout, clearTimeout, Date,
-    fmt: (x) => String(x)
+    fmt: (x) => String(x), ICO_PLAY: '', ICO_PAUSE: ''
   };
   const script = 'var cur = 0, listen = null, grantMax = 0, songTest = null, wantSound = true;\n' +
     'function deckIntends() { return wantSound; }\n' +
     source.slice(begin, end) + '\n' + source.slice(ended, bank) + '\n' +
     source.match(/function next\(\) \{[^\n]+/)[0] + '\n' + source.match(/function prev\(\) \{[^\n]+/)[0] + '\n' +
     'function deckAt() { return deck.currentTime || 0; } function userSeek(t) { deck.currentTime = t; return true; }\n' +
-    'this.player = { play: play, next: next, prev: prev, current: function () { return cur; }, wants: function () { return wantSound; } };';
+    'this.player = { play: play, next: next, prev: prev, load: load, current: function () { return cur; }, wants: function () { return wantSound; } };';
   vm.runInContext(script, vm.createContext(context), { filename: 'album.html playback' });
   return { ...context.player, deck, rows, notices, claims, loads };
 }
@@ -674,4 +675,278 @@ test('Q7 one dropped connection is one music_interrupted on the album too', asyn
   assert.match(fn, /if \(fresh && window\.MCC_TRACK\) window\.MCC_TRACK\("music_interrupted"/, 'sent when a drop begins, not on every failed try');
   const eng = read('js/music-engine.js');
   assert.match(eng, /if \(fresh\) trackEvent\("music_interrupted"/);
+});
+
+/* ================================================================== the review's findings (QW-R1 .. QW-R8)
+
+   An independent review of the slice found four blockers and four minors (docs/music/MUSIC-RELEASE-20261119.md,
+   "Quick wins", "Review and fixes"). Each test below failed at the branch head the review read (the quick wins as
+   merged, 1580bde5) and passes after its fix. The browser half is in scripts/e2e/music-quick-wins.e2e.mjs. */
+
+/* QW-R1: the album page's shelf of albums set every whole cover, and the M, PRIM3 and VAUNT marks, on a grey plate:
+   css/music-director.css gives that shelf the rule colour as its ground (a gallery of 1 px rules), and the v2 cards
+   over it are transparent, so the ground filled the empty part of every square. */
+test('QW-R1 the album page\'s shelf puts nothing behind its covers: no gallery ground, no frame, the same rail as Listen', () => {
+  const block = slice(read('css/music-system-v2.css'), '/* WHOLE COVERS', '/* WHOLE COVERS END */');
+  const rule = block.match(/\.music-v2\.music-room--album \.feat\{([^}]*)\}/);
+  assert.ok(rule, 'the album page\'s shelf has its line in the one cover rule (three classes: it outranks the gallery rule)');
+  assert.match(rule[1], /background:none!important/, 'no ground behind the cards, so none in the empty part of a square');
+  assert.match(rule[1], /border:0!important/, 'no frame drawn round the covers');
+  assert.match(rule[1], /gap:12px/, 'the cards keep the rail\'s spacing, as on Listen');
+});
+
+/* js/pip.js in Node: on a page that owns a player (MCC_MUSIC) it defines MCC_POCKET and stops, so its pure helpers
+   can be asked without a page */
+function pocketApi() {
+  const store = new Map();
+  const area = { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) };
+  const window = { console, Promise, JSON, localStorage: area, sessionStorage: area, MCC_MUSIC: {}, location: { pathname: '/listen.html' },
+    document: { currentScript: { src: 'https://matthew.mccluster.org/js/pip.js?v=1' } } };
+  window.window = window;
+  vm.runInContext(read('js/pip.js'), vm.createContext(window), { filename: 'js/pip.js' });
+  return window.MCC_POCKET;
+}
+
+/* QW-R2: the pocket (the mini player on every page that is not a music page) cropped a cover into a 74 x 56 tile
+   (64 x 50 on a phone), cut its corners, set it on black and laid a dark gradient over it */
+test('QW-R2 the pocket shows a song\'s album cover whole, in a square, with nothing behind or over it; a film keeps its tile', () => {
+  const P = pocketApi();
+  assert.equal(typeof P.picture, 'function', 'the pocket says what its picture is');
+  const whip = json('data/albums.json').albums.find((a) => a.slug === 'whip-equipped');
+  const coverSong = whip.tracks.find((t) => t.poster === whip.art && !t.music_video);
+  assert.equal(P.picture({ poster: coverSong.poster, art: whip.art, music_video: '' }), 'cover', 'a song whose picture is its album\'s cover');
+  assert.equal(P.picture({ poster: coverSong.poster, art: '', music_video: '' }, whip.art), 'cover', 'the cover known from the catalogue');
+  assert.equal(P.picture({ poster: '', art: whip.art, music_video: '' }), 'cover', 'no picture of its own: its album\'s cover, whole');
+  const filmSong = whip.tracks.find((t) => t.poster === whip.art && t.music_video);
+  assert.equal(P.picture({ poster: filmSong.poster, art: whip.art, music_video: filmSong.music_video }), 'film', 'a film keeps its tile');
+  const here = json('data/albums.json').albums.find((a) => a.slug === 'here');
+  assert.equal(P.picture({ poster: here.tracks[0].poster, art: here.art, music_video: here.tracks[0].music_video }), 'film');
+  assert.equal(P.picture({ poster: here.tracks[0].poster, art: here.art, music_video: '' }), 'film', 'a film still is not a cover');
+  const pip = read('js/pip.js');
+  assert.match(pip, /classList\.toggle\("pocket__tile--cover"/, 'the tile is told when it shows a cover');
+  const css = slice(read('css/style.css'), '/* WHOLE COVERS IN THE POCKET', '/* WHOLE COVERS IN THE POCKET END */');
+  const tile = css.match(/\.pocket \.pocket__tile--cover \{([^}]*)\}/);
+  assert.ok(tile, 'the cover tile has its rule');
+  for (const d of [/width:\s*50px/, /height:\s*50px/, /border-radius:\s*0/, /background:\s*transparent/, /box-shadow:\s*none/]) assert.match(tile[1], d);
+  assert.match(css, /\.pocket \.pocket__tile--cover \.pocket__film \{[^}]*object-fit:\s*contain[^}]*\}/, 'the whole cover, scaled inside the square');
+  assert.match(css, /\.pocket \.pocket__tile--cover \.pocket__scrim,\s*\.pocket \.pocket__tile--cover \.pocket__lyr \{\s*display:\s*none;\s*\}/, 'nothing laid over it');
+  assert.match(css, /@media \(min-width: 561px\) \{\s*\.pocket \.pocket__tile--cover \{ width: 56px; height: 56px; \}\s*\}/, 'wider screens only give it room');
+  assert.doesNotMatch(css, /max-width/, 'phone first');
+});
+
+/* QW-R3: a pocket record of the closing song (its public preview, banked before the hold, on this device or in a
+   member's shared row) mounted on every other page, named the song, and its Play read the preview to its end */
+test('QW-R3 the pocket never carries a held or gated song, found by album and title or by its file; unread, a preview file is never its to play', () => {
+  const P = pocketApi();
+  assert.equal(typeof P.carries, 'function', 'the pocket asks whether it may carry a record');
+  const albums = json('data/albums.json').albums;
+  const cia = albums.find((a) => a.slug === 'cia-mind-control');
+  const held = cia.tracks[cia.tracks.length - 1];
+  assert.equal(P.carries({ src: held.src, title: held.title, album: cia.slug }, albums), false, 'the record the album banked before the hold');
+  assert.equal(P.carries({ src: held.src, title: '', album: '' }, albums), false, 'found by its file');
+  assert.equal(P.carries({ src: 'assets/audio/elsewhere.m4a', title: held.title, album: cia.slug }, albums), false, 'found by its album and title');
+  assert.equal(P.carries({ src: cia.tracks[0].src, title: cia.tracks[0].title, album: cia.slug }, albums), true, 'the album\'s other songs ride as before');
+  const here = albums.find((a) => a.slug === 'here');
+  assert.equal(P.carries({ src: here.tracks[0].src, title: here.tracks[0].title, album: 'here' }, albums), true);
+  assert.equal(P.carries({ src: here.tracks[0].src, title: here.tracks[0].title, album: 'here' }, null), true, 'the catalogue unread: an ordinary song rides');
+  assert.equal(P.carries({ src: held.src, title: held.title, album: cia.slug }, null), false, 'the catalogue unread: a preview file is never the pocket\'s to play');
+  assert.equal(P.carries(null, albums), false);
+  assert.equal(P.carries({ src: '' }, albums), false);
+});
+
+/* the song test's cards in Node: js/song-test.js over a small stand-in for the page, the answer of song_test_state given */
+async function songCards(rows, opts = {}) {
+  class El {
+    constructor(tag) { this.tagName = tag; this.kids = []; this.className = ''; this.text = ''; this.attrs = {}; this.style = {};
+      this.classList = { add: (c) => { this.className = (this.className + ' ' + c).trim(); }, remove() {}, contains: (c) => this.className.split(/\s+/).includes(c) }; }
+    appendChild(n) { this.kids.push(n); return n; }
+    set textContent(v) { this.kids = []; this.text = String(v); }
+    get textContent() { return this.text + this.kids.map((k) => k.textContent).join(''); }
+    setAttribute(k, v) { this.attrs[k] = String(v); } getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
+    addEventListener() {} querySelector() { return null; } scrollIntoView() {}
+    all(cls) { const out = []; const walk = (n) => { if (n.className && n.className.split(/\s+/).includes(cls)) out.push(n); (n.kids || []).forEach(walk); }; walk(this); return out; }
+  }
+  const document = { createElement: (t) => new El(t), createTextNode: (t) => { const n = new El('#text'); n.text = String(t); return n; } };
+  const window = { console, Promise, JSON, setTimeout, addEventListener() {},
+    localStorage: { getItem: () => JSON.stringify({ access_token: 'fixture' }) }, MCC: { session: () => ({ access_token: 'fixture' }) },
+    fetch: async () => ({ ok: true, status: 200, text: async () => JSON.stringify(rows) }), MCC_GATED: opts.gated };
+  window.window = window; window.document = document;
+  vm.runInContext(read('js/song-test.js'), vm.createContext(window), { filename: 'js/song-test.js' });
+  const box = new El('div');
+  const api = window.MCC_SONGTEST.mount(box, 'cia-mind-control', { signin: 'account.html', held: opts.held });
+  for (let i = 0; i < 5; i++) await settle();
+  const lock = () => Object.fromEntries(box.all('stq-card').map((c) => [c.getAttribute('data-stq'), (c.all('stq-lock')[0] || { textContent: '' }).textContent]));
+  return { api, box, lock };
+}
+
+/* QW-R4: the closing song's card in the song test still promised "Unlocks after you spend your earned play on it in
+   the album player", beside the pop-up that says it plays only for members with a full profile and a short
+   questionnaire; since the hold no member can spend a play on it */
+test('QW-R4 the closing song\'s test card says what its pop-up says, never that an earned play opens it; the house owner\'s card keeps his play', async () => {
+  const { G } = gatedModule();
+  const member = G.holdCopy(true).text;
+  const rows = [
+    { track: 'first-song', label: 'Song 1', question: 'Was this song racist? Why?', heard: false, gated: false, answer: null, split: null },
+    { track: 'held-song', label: 'The earned track', question: 'Was this song racist? Why?', heard: false, gated: true, answer: null, split: null }
+  ];
+  const m = await songCards(rows, { gated: G, held: (key) => key === 'held-song' });
+  assert.equal(m.lock()['held-song'], member, 'the card says what the pop-up says');
+  assert.doesNotMatch(m.lock()['held-song'], /earned play/);
+  assert.match(m.lock()['first-song'], /hear the whole song/i, 'the other cards as before');
+  assert.equal(typeof m.api.paint, 'function', 'the album repaints the cards when the gate answers');
+  const owner = await songCards(rows, { gated: G, held: () => false });
+  assert.match(owner.lock()['held-song'], /spend your earned play/, 'the house owner still opens it with his own play');
+  const noGate = await songCards(rows, { held: (key) => key === 'held-song' });
+  assert.equal(noGate.lock()['held-song'], member, 'the same words before the gate\'s script has loaded');
+  const album = read('album.html');
+  assert.match(album, /MCC_SONGTEST\.mount\([^;]*held: function \(key\)/, 'the album tells the card which song is held for this listener');
+});
+
+/* the album's gate paint over the held row on its own, counting how often the song test's cards are drawn again */
+function heldGate() {
+  const source = read('album.html');
+  const begin = source.indexOf('    /* the held song is held for everyone but the house owner');
+  const end = source.indexOf('    function hasStoredSession() {', begin);
+  assert.ok(begin > 0 && end > begin, 'the album decides in one place whom the held song is held for');
+  let paints = 0;
+  const row = { values: { 'data-hold': 'profile', 'data-src': '', 'data-key': 'held' }, getAttribute(k) { return this.values[k] ?? null; },
+    hasAttribute(k) { return k in this.values; }, setAttribute(k, v) { this.values[k] = v; }, classList: { add() {}, remove() {} }, querySelector: () => ({ innerHTML: '' }) };
+  const context = { window: {}, location: { pathname: '/album.html', search: '' }, esc: String, escAttr: String, chip: () => '', swapCurrent() {}, probeDuration() {},
+    songTest: { paint: () => { paints++; } } };
+  vm.runInContext(source.slice(begin, end) + '\nthis.paintGate = paintGate;', vm.createContext(context), { filename: 'album.html gate' });
+  return { paint: (out) => context.paintGate(row, out), paints: () => paints };
+}
+
+test('QW-R4 the album draws the cards again when whom the held song is held for changes, and only then', () => {
+  const g = heldGate();
+  g.paint({ state: 'preview' });
+  assert.equal(g.paints(), 1, 'the gate\'s first answer: the cards are drawn for this listener');
+  g.paint({ state: 'preview' }); g.paint({ state: 'locked' });
+  assert.equal(g.paints(), 1, 'the gate asked again with the same outcome (another tab\'s session, a counted song): a card being written is not drawn again');
+  g.paint({ state: 'earned', operator: true });
+  assert.equal(g.paints(), 2, 'the house owner: his card opens with his own play');
+  g.paint({ state: 'earned', operator: true });
+  assert.equal(g.paints(), 2);
+  g.paint({ state: 'preview' });
+  assert.equal(g.paints(), 3, 'signed out: held again');
+});
+
+/* the pop-up on its own, over a small stand-in for the page */
+function holdDialog() {
+  const make = (tag) => {
+    const n = { tagName: tag, id: '', className: '', open: false, attrs: {}, kids: {}, listeners: {},
+      setAttribute(k, v) { this.attrs[k] = v; if (k === 'open') this.open = true; },
+      removeAttribute(k) { delete this.attrs[k]; if (k === 'open') this.open = false; },
+      getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; },
+      addEventListener(t, fn) { (this.listeners[t] = this.listeners[t] || []).push(fn); },
+      fire(t, e) { (this.listeners[t] || []).forEach((fn) => fn(e)); },
+      querySelector(sel) { return this.kids[sel] || (this.kids[sel] = make(sel)); },
+      showModal() { this.open = true; }, close() { this.open = false; }, focus() {},
+      /* where the pop-up sits on a 390 px screen (measured in Chromium): 358 x 244 */
+      getBoundingClientRect: () => ({ left: 16, top: 300, right: 374, bottom: 544, width: 358, height: 244 }) };
+    n.innerHTML = '';
+    return n;
+  };
+  let dialog = null;
+  const document = { readyState: 'complete', addEventListener() {}, createElement: make,
+    body: { appendChild(n) { dialog = n; return n; } }, getElementById: (id) => (dialog && dialog.id === id ? dialog : null) };
+  const window = { console, Promise, document, location: { pathname: '/album.html', search: '?album=cia-mind-control' }, MCC: { session: () => null },
+    addEventListener() {}, dispatchEvent() {}, CustomEvent: class { constructor(t) { this.type = t; } } };
+  window.window = window;
+  vm.runInContext(read('js/gated-audio.js'), vm.createContext(window), { filename: 'js/gated-audio.js' });
+  return { G: window.MCC_GATED, dialog: () => dialog };
+}
+
+/* QW-R5: a click on the dialog's own padding has the dialog itself as its target, as a click on the backdrop does, so
+   a tap beside the buttons or between the line and the buttons closed it */
+test('QW-R5 a tap inside the pop-up, on its own padding, leaves it open; a tap on the backdrop outside it closes it', () => {
+  const h = holdDialog();
+  h.G.holdNotice({ signedIn: false });
+  const d = h.dialog();
+  assert.ok(d && d.open, 'the pop-up is open');
+  for (const [x, y, where] of [[22, 306, 'top-left corner'], [368, 538, 'bottom-right corner'], [366, 422, 'beside the line']]) {
+    d.fire('click', { target: d, clientX: x, clientY: y });
+    assert.equal(d.open, true, `a tap 6 px inside its ${where} leaves it open`);
+  }
+  d.fire('click', { target: d, clientX: 8, clientY: 200 });
+  assert.equal(d.open, false, 'a tap on the backdrop closes it');
+});
+
+/* QW-R6: a link to the closing song (album.html?album=...&t=, from the catalogue's registry and Listen's search), a
+   stale album seat or a stale pocket record seated it in the deck with no source; Chromium reports an empty source
+   as error 4, and the deck counted that as a dropped connection: music_interrupted on the wire for a song nobody
+   asked to play */
+test('QW-R6 an empty held source is not a drop: seating the held row sends no music_interrupted', async () => {
+  const events = [];
+  const a = album({ signedIn: false, events });
+  a.load(2, 0);                  // the held row, seated as a link or a stale seat did
+  a.deck.fail(4);                // what Chromium does with an empty source
+  await settle(); await settle();
+  assert.deepEqual(events.filter((e) => e.name === 'music_interrupted' || e.name === 'music_error').map((e) => e.name), []);
+});
+
+/* the album's seat-restoring block (a link, the pocket, this device's seat, the shared row) on its own */
+async function restoredSeat(opts = {}) {
+  const source = read('album.html');
+  const code = slice(source, '    /* the memory: pick up exactly where you left off', '    /* THE DISSOLVE');
+  const attrs = (entries) => ({ values: { ...entries }, getAttribute(k) { return this.values[k] ?? null; }, hasAttribute(k) { return k in this.values; } });
+  const rows = [
+    attrs({ 'data-title': 'Song A', 'data-src': 'a.mp3', 'data-albslug': 'fixture' }),
+    attrs({ 'data-title': 'Song B', 'data-src': 'b.mp3', 'data-albslug': 'fixture' }),
+    attrs({ 'data-title': 'Held closer', 'data-src': '', 'data-hold': 'profile', 'data-gated-object': 'held/held.mp3', 'data-albslug': 'fixture' })
+  ];
+  const loads = [], events = [];
+  const context = { rows, KEY: 'mcc_here_radio', WANT: opts.want || '', ALBUM: 'fixture', cur: -1, deck: { paused: true }, JSON, Number, Math, Date, Promise,
+    localStorage: { getItem: (k) => (k === 'mcc_here_radio' && opts.seat ? JSON.stringify(opts.seat) : null) },
+    window: { MCC_POCKET: { read: () => opts.pocket || null, pull: () => Promise.resolve(opts.far || null) }, MCC_TRACK: (n, p) => events.push({ name: n, ...p }) } };
+  context.load = (i) => { loads.push(i); context.cur = i; };
+  vm.runInContext(code + '\nrestoreSeat();', vm.createContext(context), { filename: 'album.html restoreSeat' });
+  for (let i = 0; i < 4; i++) await settle();
+  return { loads, events };
+}
+test('QW-R6 a link, the pocket, this device\'s seat or the shared row never seats the held song; other songs as before', async () => {
+  assert.deepEqual((await restoredSeat({ want: 'held closer' })).loads, [], 'a link to it opens the album with nothing chosen');
+  assert.deepEqual((await restoredSeat({ want: 'held closer' })).events.filter((e) => e.name === 'listen_open'), [], 'and nothing is said to have opened');
+  assert.deepEqual((await restoredSeat({ want: 'held closer', seat: { album: 'fixture', i: 1, t: 3 } })).loads, [], 'the link still wins over an older seat');
+  assert.deepEqual((await restoredSeat({ pocket: { title: 'Held closer', t: 1 } })).loads, [], 'a stale pocket record of it');
+  assert.deepEqual((await restoredSeat({ seat: { album: 'fixture', i: 2, t: 1 } })).loads, [], 'this device\'s stale seat on it');
+  assert.deepEqual((await restoredSeat({ far: { title: 'Held closer', album: 'fixture', t: 1 } })).loads, [], 'the shared row naming it');
+  assert.deepEqual((await restoredSeat({ want: 'song b' })).loads, [1], 'a link to another song seats it');
+  assert.deepEqual((await restoredSeat({ seat: { album: 'fixture', i: 1, t: 2 } })).loads, [1], 'a seat on another song is kept');
+});
+
+/* QW-R7: the house owner's own play of the closing song banked its signed one-play URL (the master) in the pocket,
+   and the pocket's save sends that to his shared row on every device: the held row has no public preview to bank */
+test('QW-R7 the album banks nothing for the held song: no signed one-play URL in the pocket or the shared row', () => {
+  const source = read('album.html');
+  const code = slice(source, '    function pocket(force) {', '    function paintRows() {');
+  const attrs = (entries) => ({ values: { ...entries }, getAttribute(k) { return this.values[k] ?? null; }, hasAttribute(k) { return k in this.values; } });
+  const rows = [
+    attrs({ 'data-title': 'Song A', 'data-src': 'a.mp3', 'data-albslug': 'fixture' }),
+    attrs({ 'data-title': 'Held closer', 'data-src': 'https://example.invalid/signed/master?token=one-play', 'data-granted': '', 'data-hold': 'profile', 'data-gated-object': 'held/held.mp3', 'data-albslug': 'fixture' })
+  ];
+  const saved = [], cleared = [];
+  const context = { rows, cur: 1, ALBUM: 'fixture', ARTIST: 'McCluster', deck: { currentTime: 12, paused: false }, Date,
+    window: { MCC_POCKET: { save: (s) => saved.push(s), clear: () => cleared.push(1) } } };
+  vm.runInContext(code + '\nthis.bank = pocket;', vm.createContext(context), { filename: 'album.html pocket' });
+  context.bank(true);
+  assert.deepEqual(saved, [], 'nothing of the held song is banked');
+  assert.equal(cleared.length, 1, 'the pocket holds nothing it could not play');
+  context.cur = 0;
+  context.bank(true);
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].src, 'a.mp3', 'every other song is banked as before');
+});
+
+/* QW-R8: the heart on every album row said "Save to My Rotation", but since the quick wins no music page shows the
+   rotation (the song rails are off): a label naming a list that is gone */
+test('QW-R8 the album\'s heart says what it does in the words Listen uses, and names no list the pages do not show', () => {
+  const album = read('album.html');
+  assert.doesNotMatch(album, /Save to My Rotation/);
+  assert.match(album, /'<button class="hrt" type="button" data-hrt aria-pressed="false" aria-label="Save ' \+ escAttr\(t\.title\) \+ '">/);
+  /* and, as Listen's heart does, it says whether the song is saved: painted from the saves, and on every tap */
+  assert.match(album, /function heartOn\(b, on\) \{\s*b\.classList\.toggle\("on", !!on\);\s*b\.setAttribute\("aria-pressed", on \? "true" : "false"\);/);
+  assert.match(album, /if \(b\) heartOn\(b, inRotation\(/, 'painted from the saves');
+  assert.match(album, /heartOn\(b, toggleRotation\(/, 'and on every tap');
+  assert.match(read('js/listen.js'), /'" aria-label="Save ' \+ escAttr\(t\.title\) \+ '">' \+ HEART/, 'Listen\'s heart, the same words');
 });

@@ -208,6 +208,45 @@
     remote("POST", s, force);
   }
 
+  /* ---------- what the pocket may carry, and how it shows it ---------- */
+
+  /* a file's path on this site, however it was written (relative, rooted, or with this origin in front) */
+  function fileOf(u) {
+    return String(u || "").split(/[?#]/)[0].replace(/^[a-z]+:\/\/[^/]+/i, "").replace(/^\/+/, "").replace(/^\.\//, "");
+  }
+  /* WHOLE COVERS IN THE POCKET (owner, 2026-11-23: "The full covers aren't shown, and I agree. We should fix that.";
+     review QW-R2). A song whose picture is its album's cover (no film; its poster is the cover itself, or it has no
+     picture of its own and its album has a cover) is shown as that cover, whole: "cover". Anything else is a film and
+     its still: "film" (css/style.css, "WHOLE COVERS IN THE POCKET"). */
+  function pictureOf(s, albumArt) {
+    if (!s || s.music_video || s.video) return "film";
+    var art = s.art || albumArt || "";
+    if (!art) return "film";
+    if (!s.poster) return "cover";
+    return fileOf(s.poster) === fileOf(art) ? "cover" : "film";
+  }
+  /* A HELD OR GATED SONG IS NEVER THE POCKET'S (owner, 2026-11-23, the closing song of CIA Mind Control: "We keep the
+     song up, but it won't play"; review QW-R3). A record banked before the hold, on this device or in a member's
+     shared row, can still name it with its old public preview. The record's song is found in the catalogue by its
+     album and title, or by its file; held or gated, the pocket does not carry it: nothing mounts and nothing is read.
+     With no catalogue to ask (it could not be read), a preview file is never the pocket's to play. */
+  function songOf(s, albums) {
+    var src = fileOf(s.src), title = String(s.title || "").toLowerCase(), hit = null;
+    (albums || []).forEach(function (a) {
+      (a.tracks || []).forEach(function (t) {
+        if (hit) return;
+        if ((src && fileOf(t.src) === src) || (title && a.slug === s.album && String(t.title || "").toLowerCase() === title)) hit = t;
+      });
+    });
+    return hit;
+  }
+  function carries(s, albums) {
+    if (!s || !s.src) return false;
+    if (!albums) return !/-preview\.[a-z0-9]+$/i.test(fileOf(s.src));
+    var t = songOf(s, albums);
+    return !(t && (t.gated || t.hold));
+  }
+
   /* ---------- the album side: keep the position current ---------- */
   window.MCC_POCKET = {
     /* called by the album as it plays; force on the way out of the page */
@@ -222,6 +261,9 @@
     clearEverywhere: function () { clear(); if (signedIn()) remote("POST", {}); },
     pull: pullRemote,
     key: KEY,
+    /* what the pocket shows and what it may carry (pure; music pages and tests read them) */
+    picture: pictureOf,
+    carries: carries,
   };
   if (ownsPlayer) return;   // those pages have a better player than this one
   /* a music view (music slice M5, js/music-shell.js) shows over the document that plays: a pocket here would be a
@@ -250,6 +292,24 @@
     setTimeout(once, 2500);
   }
 
+  /* the catalogue, read once a page: it says whether a record may ride here (carries) and what it rolls into */
+  var albumsAsked = null;
+  function catalogue() {
+    if (!albumsAsked) {
+      albumsAsked = fetch(abs("data/albums.json"), { cache: "force-cache" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { return d && Array.isArray(d.albums) ? d.albums : null; })
+        .catch(function () { return null; });
+    }
+    return albumsAsked;
+  }
+  /* may this record ride here? The catalogue is asked for two and a half seconds at most (a hung request never
+     strands the pocket); unanswered, the file's own name decides (carries) */
+  function vetted(rec) {
+    var late = new Promise(function (done) { setTimeout(function () { done(null); }, 2500); });
+    return Promise.race([catalogue(), late]).then(function (albums) { return carries(rec, albums); });
+  }
+
   var st = read();
 
   /* A signed-in listener's other devices may have played since this one did:
@@ -262,16 +322,23 @@
     ? Promise.race([pullRemote(), new Promise(function (done) { setTimeout(function () { done(null); }, 1500); })])
     : Promise.resolve(null);
   asked.then(function (far) {
-    if (far) {
-      /* Arriving from another device is not a reason to start making noise:
-         autoplay would be refused here anyway, and a record the listener
-         started on their phone should not ambush their laptop. Hold it. */
-      far.playing = false;
-      write(far);
-      withNowPlaying(function () { begin(far); });
-      return;
-    }
-    if (st) withNowPlaying(function () { begin(st); });
+    var rec = far || st;
+    if (!rec) return;
+    /* the catalogue's answer (2.5 s at most, above) and the lock screen's helper are waited for together, not one
+       after the other */
+    Promise.all([vetted(rec), new Promise(function (done) { withNowPlaying(done); })]).then(function (r) {
+      /* a held or gated song is not the pocket's (carries, above): this device's own record of it is put away so it
+         does not come back; a shared row naming it is left where it is, and nothing of it is copied here */
+      if (!r[0]) { if (!far) clear(); return; }
+      if (far) {
+        /* Arriving from another device is not a reason to start making noise:
+           autoplay would be refused here anyway, and a record the listener
+           started on their phone should not ambush their laptop. Hold it. */
+        far.playing = false;
+        write(far);
+      }
+      begin(rec);
+    });
   });
 
   function begin(state) {
@@ -342,14 +409,30 @@
     box.querySelector(".pocket__title").textContent = st.title || "The record";
     box.querySelector(".pocket__sub").textContent = albumName(st.album);
 
-    if (st.poster) film.poster = abs(st.poster);
-    var musicVideo = st.music_video || st.video || "";
-    if (musicVideo) { film.src = abs(musicVideo); film.load(); }
+    paintPicture();
 
     /* the masthead pill lives in this exact corner at this exact height, so
        the page is told the pocket is here and the pill steps up above it */
     document.documentElement.classList.add("pocket-on");
     requestAnimationFrame(function () { box.classList.add("is-in"); });
+  }
+
+  /* THE TILE: a film and its still, or the album's cover, whole (pictureOf, above; review QW-R2). The film follows
+     the song the pocket holds, and a song with none drops the last one's. */
+  function paintPicture() {
+    var tile = box.querySelector(".pocket__tile");
+    var albumArt = albumInfo && albumInfo.art;
+    var cover = pictureOf(st, albumArt) === "cover";
+    tile.classList.toggle("pocket__tile--cover", cover);
+    var still = cover ? (st.poster || st.art || albumArt || "") : (st.poster || "");
+    if (still) film.poster = abs(still); else film.removeAttribute("poster");
+    var musicVideo = st.music_video || st.video || "";
+    if (musicVideo) {
+      if (film.getAttribute("src") !== abs(musicVideo)) { film.src = abs(musicVideo); film.load(); }
+    } else if (film.getAttribute("src")) {
+      film.removeAttribute("src");
+      try { film.load(); } catch (e) {}
+    }
   }
 
   /* the row carries the album SLUG, which is a URL word, not a record title */
@@ -502,10 +585,9 @@
   var queue = null;      /* the album's tracks, once fetched */
 
   function loadAlbum() {
-    return fetch(abs("data/albums.json"), { cache: "force-cache" })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        var list = (d && d.albums) || [];
+    return catalogue()
+      .then(function (albums) {
+        var list = albums || [];
         /* match on the slug the album banked; fall back to the record that
            actually contains this file, so a renamed slug still rolls */
         var alb = list.filter(function (a) { return a.slug === st.album; })[0] ||
@@ -514,6 +596,7 @@
           })[0];
         queue = alb ? (alb.tracks || []) : [];
         albumInfo = alb ? { name: alb.name || "", art: alb.art || "", artist: alb.artist || "" } : null;
+        if (box) paintPicture();   /* the album's cover is known now */
         if (np) np.update();
         return queue;
       })
@@ -566,7 +649,8 @@
       if (!next || next.gated || next.hold) { stash(false); box.classList.add("is-held"); if (np) np.clear(); return; }
 
       st.src = next.src;
-      st.video = next.video || "";
+      st.music_video = next.music_video || next.video || "";
+      st.video = st.music_video;   /* the legacy reader's name for the same film */
       st.poster = next.poster || "";
       st.lyrics = next.lyrics || "";
       st.title = next.title || "";
@@ -576,8 +660,7 @@
 
       box.querySelector(".pocket__title").textContent = st.title || "The record";
       sub(albumName(st.album));
-      if (st.poster) film.poster = abs(st.poster);
-      if (st.video) { film.src = abs(st.video); film.load(); }
+      paintPicture();
       loadLyrics();
       if (np) np.update();   /* the lock screen is showing the last song otherwise */
 

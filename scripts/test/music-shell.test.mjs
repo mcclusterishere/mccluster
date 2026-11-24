@@ -370,7 +370,8 @@ test('js/pip.js never mounts a pocket in a view (a second player), and still doe
     win.document.querySelector = () => anything('q');
     win.MCC_NOW_PLAYING = { claim() {}, bind: () => ({ update() {}, clear() {} }), airplay() {} };
     win.Audio = function () { return anything('audio'); };
-    win.fetch = () => new Promise(() => {});
+    /* the pocket asks the catalogue whether the record may ride before it mounts (music quick wins, review QW-R3) */
+    win.fetch = () => Promise.resolve({ ok: true, json: async () => ({ albums: [] }) });
     try { run('js/pip.js', win); } catch (e) { /* the stand-in DOM is thin: a mount that got going is what counts */ }
     return win;
   };

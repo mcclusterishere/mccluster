@@ -219,7 +219,8 @@ test('an asked-for track beats both resumes', async () => {
   /* The album resumes from the pocket and from a saved position. Either one
      would have overwritten the track somebody just tapped. */
   const album = await read('album.html');
-  assert.match(album, /var pk = want > -1 \? null : \(window\.MCC_POCKET && window\.MCC_POCKET\.read\(\)\);/,
+  /* "asked" is the link's track found, before a held song is set aside (music quick wins, review QW-R6) */
+  assert.match(album, /var asked = want > -1;[\s\S]{0,900}var pk = asked \? null : \(window\.MCC_POCKET && window\.MCC_POCKET\.read\(\)\);/,
     'the pocket resume must stand down for an explicit tap');
   assert.match(album, /load\(want, 0\);[\s\S]{0,220}r0 = null;/,
     'the saved position must stand down too');

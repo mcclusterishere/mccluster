@@ -761,6 +761,11 @@ body.music-v2 .appbar__tab.is-active{color:#fff}
 .music-v2 .music-now__artwrap{background:transparent!important;border-radius:0!important}
 .music-v2 .now__art--cover{background:transparent!important;box-shadow:none!important;border-radius:0!important}
 .music-v2 .now__art--cover::after,.music-v2 .now__art--cover .now__scrim,.music-v2 .now__art--cover .now__flip{display:none!important}
+/* the album page's shelf (review QW-R1): its gallery rule in css/music-director.css paints the rule colour behind the
+   cards and frames them, and the v2 cards are clear, so that grey filled the empty part of every whole cover's square
+   and the clear pixels of every mark: a plate. Here the shelf gives no ground and no frame, and keeps the rail's own
+   spacing, as Listen's shelf does. */
+.music-v2.music-room--album .feat{background:none!important;border:0!important;gap:12px}
 /* WHOLE COVERS END */
 
 /* THE HELD SONG'S POP-UP (js/gated-audio.js holdNotice): why the closing song will not play, in one honest line,

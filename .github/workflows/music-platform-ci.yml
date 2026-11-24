@@ -79,6 +79,7 @@ on:
       - 'js/listen.js'
       - 'js/member-desk.js'
       - 'js/member-desk-core.js'
+      - 'js/song-test.js'
       - 'scripts/test/music-quick-wins.test.mjs'
       - 'scripts/e2e/music-quick-wins.e2e.mjs'
       - '.github/workflows/music-platform-ci.yml'
@@ -161,6 +162,7 @@ on:
       - 'js/listen.js'
       - 'js/member-desk.js'
       - 'js/member-desk-core.js'
+      - 'js/song-test.js'
       - 'scripts/test/music-quick-wins.test.mjs'
       - 'scripts/e2e/music-quick-wins.e2e.mjs'
 
