@@ -42,6 +42,15 @@ test("a query template has no static canonical and is not in the sitemap", () =>
     assert.ok(!listed.has(path), `${path} is not a page to rank`);
   }
 });
+/* Indexable pages that were in no ownership group before the record's v2 (2026-11-23), which classifies every
+   published page, and that the sitemap has never listed. P0 changes nothing a crawler sees; P2 builds each host's
+   sitemap from the record and takes these in, then this list empties. A page here that is listed or noindex fails. */
+const SITEMAP_GAPS_UNTIL_P2 = {
+  "/cohort-profile.html": "platform",
+  "/data/front-projects/vaunt-original.html": "platform",
+  "/portfolio/onyx-elite.html": "profile",
+  "/whip/rider/operator.html": "profile_only"
+};
 
 test("every indexable owned page is in the sitemap", () => {
   const own = json("data/seo/domain-architecture.json").url_ownership;
@@ -55,10 +64,16 @@ test("every indexable owned page is in the sitemap", () => {
       const file = fileFor(path);
       assert.ok(existsSync(join(ROOT, file)), `${path} (${group}) names a page that does not exist`);
       if (NOINDEX.test(read(file))) continue;
+      if (Object.prototype.hasOwnProperty.call(SITEMAP_GAPS_UNTIL_P2, path)) {
+        assert.equal(SITEMAP_GAPS_UNTIL_P2[path], group, `${path}: its known sitemap gap names its set`);
+        assert.ok(!listed.has(path), `${path} is in the sitemap now: drop it from SITEMAP_GAPS_UNTIL_P2`);
+        continue;
+      }
       if (!listed.has(path)) missing.push(`${path} (${group})`);
     }
   }
   assert.deepEqual(missing, [], "indexable owned pages missing from data/seo/sitemap-pages.json");
+  for (const path of Object.keys(SITEMAP_GAPS_UNTIL_P2)) assert.ok(!NOINDEX.test(read(fileFor(path))), `${path} is noindex now: drop it from SITEMAP_GAPS_UNTIL_P2`);
   /* owner, 2026-10-28: the HITMAN facility is in private development, unpublished: recorded, and never in the map */
   assert.ok((own.company_private_development_unpublished || []).some((p) => /HITMAN Facility/.test(p.product) && /unpublished/.test(p.status)), "the HITMAN facility is recorded as in private development, unpublished");
   assert.ok(!listed.has("/hitman-facility.html"), "hitman-facility.html is not in the sitemap");
@@ -67,11 +82,11 @@ test("every indexable owned page is in the sitemap", () => {
 
 test("Whip Equipped's apps are owned as Matthew's separate company, not McCluster Corp's", () => {
   const own = json("data/seo/domain-architecture.json").url_ownership;
-  for (const p of ["/whip.html", "/whip/", "/whip/driver/", "/whip/rentals/", "/whip/rider/"]) {
-    assert.ok(own.separate_company_hosted_on_personal.includes(p), p);
-    assert.ok(!own.company_hosted_on_personal_for_compatibility.includes(p), p);
+  for (const p of ["/whip.html", "/whip/", "/whip/driver/", "/whip/rentals/", "/whip/rider/", "/whip/rider/operator.html", "/we-manufacture.html"]) {
+    assert.ok(own.profile_only.includes(p), `${p}: Whip Equipped lives only on Matthew's host`);
+    assert.ok(!own.platform.includes(p) && !own.profile.includes(p), p);
   }
-  assert.ok(own.company_hosted_on_personal_for_compatibility.includes("/site0/"), "PRIM3 Site 0 is the company's");
+  assert.ok(own.promoted_at_deploy.some((d) => d.path === "/site0/" && d.set === "platform"), "PRIM3 Site 0 is the company's");
 });
 
 test("prim3.html carries the PRIM3 Project node, parented by the Organization", () => {

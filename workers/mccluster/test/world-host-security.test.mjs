@@ -9,7 +9,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { SECURITY, FRAME_ANCESTORS, WORLD_CSP_REPORT_ONLY, own } from '../src/world-host.js';
 import { companySiteResponse } from '../src/company-site/router.js';
-import { humanUpriseResponse } from '../src/human-uprise/router.js';
+import { humanUpriseResponse, WORLD_DOOR_PARTS } from '../src/human-uprise/router.js';
+import { SITE, makeSite } from '../src/platform/hosts.generated.js';
+import { createSiteRouter } from '../src/platform/router.js';
+import { siteTable, readRecord } from '../../../tools/build-site-hosts.mjs';
+import { shippedSite } from '../../../scripts/test/support/mcc-site.mjs';
 
 const site = (p) => readFile(new URL('../../../' + p, import.meta.url), 'utf8');
 const fetchImpl = async (r) => {
@@ -25,16 +29,26 @@ const directives = (policy) => Object.fromEntries(policy.split(';').map((d) => d
   const [name, ...sources] = d.split(/\s+/);
   return [name, sources];
 }));
+/* The World's two hosts. The platform answers with the table that ships (P1). The door serves the World only on P0's
+   table (from P1 it answers every path with a 301 to the platform), so its World is read on P0's table, rebuilt from the
+   record: a rollback to P0 restores exactly that. */
+const doorAtP0 = createSiteRouter({ site: makeSite(siteTable(readRecord(), { stage: 'P0' })), worldDoor: WORLD_DOOR_PARTS });
 const HOSTS = {
   'mccluster.org': (u, m) => companySiteResponse(req(u, m), env, fetchImpl),
-  'humanuprise.com': (u, m) => humanUpriseResponse(req(u, m), env, fetchImpl)
+  'humanuprise.com': (u, m) => doorAtP0(req(u, m), env, fetchImpl)
 };
+/* the rooms' noindex: P0 put it on the World's rooms; from P1 no page the platform serves carries it */
+const ROOM_ROBOTS = { 'mccluster.org': null, 'humanuprise.com': 'noindex' };
 
 test('the ancestors are exactly the origins the Music -> World bridge trusts; the legacy answer is SAMEORIGIN; capture and location are the World\'s own', async () => {
+  /* the bridge trusts the table's site origins (window.MCC_SITE, generated from the same record as the Worker's table;
+     its HOUSE and WORLD_ORIGINS literals left with P1) */
   const bridge = await site('js/world-audio-continuity.js');
-  const house = bridge.match(/var HOUSE = "([^"]+)";/)[1];
-  const worlds = bridge.match(/var WORLD_ORIGINS = \[([^\]]+)\];/)[1].match(/"[^"]+"/g).map((s) => JSON.parse(s));
-  assert.deepEqual(FRAME_ANCESTORS, ["'self'", house, ...worlds], 'the frame-ancestors list and the bridge\'s trusted origins move together');
+  assert.match(bridge, /function trustedOrigins\(\) \{ var S = site\(\); return S \? S\.site_origins : \[\]; \}/);
+  assert.doesNotMatch(bridge, /var (?:HOUSE|WORLD_ORIGINS|TRUSTED) = /, 'no list of its own');
+  const trusted = [...shippedSite().site_origins];
+  assert.deepEqual(trusted, [...SITE.site_origins], 'the pages and the Worker read the same list');
+  assert.deepEqual(FRAME_ANCESTORS, ["'self'", ...trusted], 'the frame-ancestors list and the bridge\'s trusted origins move together');
   assert.equal(SECURITY['content-security-policy'], `frame-ancestors ${FRAME_ANCESTORS.join(' ')}`);
   assert.equal(SECURITY['x-frame-options'], 'SAMEORIGIN');
   assert.equal(SECURITY['permissions-policy'], 'camera=(self), microphone=(self), geolocation=(self)');
@@ -82,7 +96,7 @@ test('the World\'s documents carry the headers and the report-only policy on bot
     assert.equal(head.headers.get('x-frame-options'), 'SAMEORIGIN', `${host} HEAD`);
     const room = await ask(`https://${host}/account.html`);
     assert.equal(room.status, 200, host);
-    assert.equal(room.headers.get('x-robots-tag'), 'noindex', `${host} room`);
+    assert.equal(room.headers.get('x-robots-tag'), ROOM_ROBOTS[host], `${host} room`);
     assert.equal(room.headers.get('content-security-policy-report-only'), WORLD_CSP_REPORT_ONLY, `${host} room`);
     assert.equal(room.headers.get('permissions-policy'), SECURITY['permissions-policy'], `${host} room`);
     const file = await ask(`https://${host}/js/mnet.js`);
@@ -100,6 +114,12 @@ test('the host\'s own answers carry the headers; the company page keeps its own,
   assert.equal(robots.headers.get('content-security-policy-report-only'), null);
   const hu = await HOSTS['humanuprise.com']('https://humanuprise.com/robots.txt');
   assert.equal(hu.headers.get('x-frame-options'), 'SAMEORIGIN');
+  /* from P1 the door's robots.txt is the platform's: one 301 there, and the platform's own answer carries the headers */
+  const moved = await humanUpriseResponse(req('https://humanuprise.com/robots.txt'), env, () => { throw new Error('must not fetch'); });
+  assert.equal(moved.status, 301);
+  assert.equal(moved.headers.get('location'), `${SITE.platform.origin}/robots.txt`);
+  const platformRobots = await HOSTS['mccluster.org']('https://mccluster.org/robots.txt');
+  assert.equal(platformRobots.headers.get('x-frame-options'), 'SAMEORIGIN');
   const company = await HOSTS['mccluster.org']('https://mccluster.org/company');
   assert.equal(company.status, 200);
   assert.match(company.headers.get('content-security-policy'), /default-src 'none'/, '/company keeps its full policy');

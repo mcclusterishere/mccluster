@@ -257,3 +257,32 @@ test('a newer selection cancels a deferred start even if its old handle was not 
   assert.equal(await abandoned.id, null);
   assert.deepEqual(sent, ['start:lightroom', 'finish', 'start:towyard-killer']);
 });
+
+/* A FINISHED SONG'S WAITING START IS NEVER SENT (Release 1 review CX-1, its last leg; a follow-up to 3f12e039, which
+   holds back a start that was released or that a newer start came after). The pocket player rolls on from a song by
+   finishing it (js/pip.js roll() at the end of its queue), and when that song's start is still waiting for the last
+   finish there may be no newer start to supersede it: the start then left anyway, and its finish after it, a listen
+   opened and closed for a song that was left at once. A start that is still waiting is not sent for a song this page
+   has finished, and a song that left no start has no finish to send. */
+/* time goes by with the last finish still out: every wait still pending runs out, the shortest first */
+async function waitsRunOut(timers) {
+  for (;;) {
+    await flush(); await flush();
+    const next = [...timers].filter(([, t]) => t.ms > 0).sort((x, y) => x[1].ms - y[1].ms)[0];
+    if (!next) break;
+    timers.delete(next[0]);
+    next[1].fn();
+  }
+  await flush(); await flush();
+}
+test('the pocket player moving on from a song whose start still waits sends neither that start nor its finish (review CX-1)', async () => {
+  const { L, sent, timers } = await ordered();
+  const a = L.start('dealer-plates', () => true);
+  await a.id;
+  L.finish(a);
+  const b = L.start('pull-up', () => true);                 // the pocket player plays the next song
+  const rolled = L.finish(b);                               // and rolls on from it at once (js/pip.js roll() finishes it)
+  await waitsRunOut(timers);
+  assert.deepEqual(sent, ['start:dealer-plates', 'finish'], 'no start and no finish for the song left');
+  assert.equal(await rolled, null, 'nothing to count');
+});

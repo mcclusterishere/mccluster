@@ -73,9 +73,16 @@
       '<button class="cr-btn' + (live ? "" : " cr-btn--primary") + '" type="button" data-crds-save="' + (live ? "off" : "on") + '"' + (busy ? " disabled" : "") + ">" + (live ? "Take off sale" : "Put on sale") + "</button></div></div>";
   }
 
+  /* the host a buyer meets the buy button on: the album and the catalogue, where they are served now (window.MCC_SITE,
+     js/shell-boot.js) */
+  function salesHost() {
+    var S = window.MCC_SITE;
+    try { return S && typeof S.servingOrigin === "function" ? new URL(S.servingOrigin("/album.html")).host : ""; } catch (x) { return ""; }
+  }
+
   function render() {
     if (!D.loaded && !D.loading) load();
-    var head = '<section class="cro-card"><h2>Direct sales</h2><p class="cro-meta">Sell your own recordings straight from matthew.mccluster.org. Set a price, upload the full-quality file (it stays private; a buyer gets a five-minute link), choose how many downloads each purchase gets and for how many days, then put it on sale. Taking a track off sale never takes a download away from someone who bought it; a refund in Stripe closes that buyer\'s downloads.</p>';
+    var head = '<section class="cro-card"><h2>Direct sales</h2><p class="cro-meta">Sell your own recordings straight from ' + e(salesHost() || "this site") + '. Set a price, upload the full-quality file (it stays private; a buyer gets a five-minute link), choose how many downloads each purchase gets and for how many days, then put it on sale. Taking a track off sale never takes a download away from someone who bought it; a refund in Stripe closes that buyer\'s downloads.</p>';
     if (D.loading && !D.loaded) return head + note("Loading the catalogue…") + "</section>";
     if (D.error) return head + note("Direct sales are unavailable: " + (D.error.message || D.error), true) + "</section>";
     var groups = {}, order = [];

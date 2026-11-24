@@ -124,7 +124,7 @@ test("PRIM3 the act is its own entity: defined once in the graph, on its page, n
   assert.equal(e.id, ACT);
   assert.equal(e.managed_by, "matthew_mccluster");
   assert.match(e.management, /no content moves|No content moves|no auth link/i);
-  assert.ok(arch.url_ownership.company_hosted_on_personal_for_compatibility.includes("/prim3-artist.html"));
+  assert.ok(arch.url_ownership.platform.includes("/prim3-artist.html"), "the act's page is the platform's: PRIM3 is McCluster Corp's, never Matthew's profile");
   assert.match(read("docs/control-plane/DOMAINS-AND-ENTITIES.md"), /PRIM3 the artist is its own entity/);
   execFileSync("node", ["tools/build-prim3-artist.mjs", "--check"], { cwd: ROOT, stdio: "pipe" });
 });

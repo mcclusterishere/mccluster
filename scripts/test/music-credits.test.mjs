@@ -226,9 +226,9 @@ test("owner: Upset is billed to its own artists on every player, never to the ho
     if (!x.credits.primary.includes("mccluster")) assert.ok(x.artist || al.artist, `${al.slug} / ${x.title}: billed by name`);
   }
   /* the one player, the album room and its shelf read the track's artist before the album's and the house */
-  assert.match(read("js/music-engine.js"), /artist: t\.artist \|\| a\.artist \|\| "Matthew McCluster",/);
+  assert.match(read("js/music-engine.js"), /artist: t\.artist \|\| a\.artist \|\| "McCluster",/);
   const page = read("album.html");
-  assert.equal(page.split('artist: t.artist || a.artist || "" }').length - 1, 2, "a playlist's rows carry the song's own artist");
+  assert.match(page, /if \(PL\) \{ location\.replace\(playlistDoor\(PL\)\); return; \}/, "legacy playlists go to the supported listening room");
   assert.match(page, /var billed = window\.MCC_CREDITS\.albumBilling\(data, alb\);\n\s+if \(billed\) \{ head\.artist = billed\.name; head\.billed = billed\.slugs; \}/, "the album heading is the billing its tracks give it");
   assert.match(page, /var firstBy = first\.artist \|\| a\.artist \|\| "";/, "the shelf's taste of a record is billed the same way");
   assert.match(page, /' data-artist="' \+ escAttr\(t\.artist \|\| ""\) \+ '"'/, "the row carries it to the lock screen");
@@ -591,9 +591,8 @@ test("CI runs the credit generators' own checks and these rules", () => {
   }
 });
 
-test("the artist view is classified: a page of Matthew's music room, beside the album room and the catalogue", () => {
+test("the catalogue artist and the existing music rooms share the platform owner", () => {
   const own = json("data/seo/domain-architecture.json").url_ownership;
-  assert.ok(own.personal.includes("/artist.html"));
-  assert.equal(own.personal.indexOf("/artist.html"), own.personal.indexOf("/catalogue.html") + 1);
-  for (const list of Object.values(own)) if (Array.isArray(list) && list !== own.personal) assert.ok(!list.includes("/artist.html"), "classified once");
+  for (const path of ["/album.html", "/artist.html", "/catalogue.html", "/listen.html"]) assert.ok(own.platform.includes(path), path);
+  for (const list of Object.values(own)) if (Array.isArray(list) && list !== own.platform) assert.ok(!list.includes("/artist.html"), "classified once");
 });

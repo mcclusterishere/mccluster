@@ -23,7 +23,7 @@
    At 390 px every page is measured: scrollWidth must equal clientWidth.
 
      node scripts/e2e/music-accounts.e2e.mjs [outDir]
-   outDir (default: the system's temporary folder) receives result.json, every check and its outcome.
+   outDir (default: the system's temporary folder) receives result.json and the 390px catalogue screenshots.
    M4_ONLY=<regex> runs the scenarios whose name matches. M4_SHOTS=<dir>
    writes the owner's screenshots there at device scale 2.
    ============================================================ */
@@ -150,30 +150,37 @@ const SCENARIOS = {
       check(await producer('zakir-elhajoui').locator('.artist__credit-badge').count() === 1, 'Zakir has a release credit badge on the producer card');
       check(await producer('tazzy-jay').locator('.artist__credit-badge').count() === 0, 'Trackout production alone earns no Equity Uprise badge');
       await fits(page, 'Artist and producer selection');
+      await page.screenshot({ path: join(OUT, 'catalogue-selectors-390.png') });
+      await page.waitForFunction(() => window.MCC_MUSIC_SHELL?.active());
       await artist('equity-uprise').click();
-      const members = page.getByRole('region', { name: 'Members', exact: true });
+      const view = page.frameLocator('#mccMusicViewFrame');
+      const members = view.getByRole('region', { name: 'Members', exact: true });
       await members.waitFor();
       check(await members.getByRole('link').count() === 6, 'the group links its six individual artists');
-      check(await page.locator('#artistCreditBadge').isVisible(), 'the group profile displays its release badge');
-      await fits(page, 'Group profile');
+      check(await view.locator('#artistCreditBadge').isVisible(), 'the group profile displays its release badge');
+      await fits(view.locator('html'), 'Group profile');
+      await page.screenshot({ path: join(OUT, 'catalogue-group-390.png') });
       await members.getByRole('link', { name: 'Pax Tha Collector' }).click();
-      const group = page.getByRole('region', { name: 'Groups', exact: true }).getByRole('link', { name: 'Equity Uprise' });
+      const group = view.getByRole('region', { name: 'Groups', exact: true }).getByRole('link', { name: 'Equity Uprise' });
       await group.waitFor();
       const profileUrl = new URL(page.url());
       check(profileUrl.pathname.endsWith('/artist.html') && profileUrl.searchParams.get('artist') === 'pax' &&
-        await page.locator('#artistName').textContent() === 'Pax Tha Collector', 'a group member opens their artist profile');
-      await fits(page, 'Member profile');
+        await view.locator('#artistName').textContent() === 'Pax Tha Collector', 'a group member opens their artist profile');
+      await fits(view.locator('html'), 'Member profile');
+      await page.screenshot({ path: join(OUT, 'catalogue-member-390.png') });
       await group.click();
       await members.waitFor();
       await page.goto(HOUSE + '/listen.html');
+      await page.waitForFunction(() => window.MCC_MUSIC_SHELL?.active());
       await producer('zakir-elhajoui').click();
-      const produced = page.locator('#produced');
+      const produced = view.locator('#produced');
       await produced.waitFor();
       check(new URL(page.url()).hash === '#produced' && await produced.locator('button[data-music-play]').count() === 21,
         'the producer bubble opens all 21 of Zakir’s playable productions');
-      check(await page.locator('#artistCreditBadge').isVisible() && await page.getByRole('region', { name: 'Groups', exact: true }).count() === 0,
+      check(await view.locator('#artistCreditBadge').isVisible() && await view.getByRole('region', { name: 'Groups', exact: true }).count() === 0,
         'Zakir has the release badge on his profile and no group membership');
-      await fits(page, 'Producer profile');
+      await fits(view.locator('html'), 'Producer profile');
+      await page.screenshot({ path: join(OUT, 'catalogue-producer-390.png') });
     } finally {
       await ctx.close();
     }

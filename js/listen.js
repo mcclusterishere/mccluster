@@ -75,7 +75,12 @@
   var NEIGHBOURS = {};
   var AFFINITY_ROWS = 0;
   var q = "";
-  var chip = "all";
+  /* JUST ALBUMS AND ARTISTS, RIGHT NOW (owner, 2026-11-23: "We don't have enough music to necessarily even have
+     playlists right now. So just list albums and artists right now."). The page is the Artists rail
+     (js/music-community.js) and the Albums shelf; the filter row is gone, and the song rails (Because you played it,
+     Continue listening, Trending now, Most saved, Hidden gems, Your library) rest behind this one switch until there
+     is more music, their methods unchanged. A search still finds every song. */
+  var SONG_RAILS = false;
   /* Whether anything actually ranked. The rail is headed on what the data
      can support: calling the shelf order "Most played" when no play has been
      counted yet is a claim the page cannot back, and it would read as one the
@@ -190,11 +195,12 @@
 
   function albumCard(a) {
     var n = (a.tracks || []).length;
+    /* what it is, plainly: the album and its artist (owner, 2026-11-23) */
     return '<a class="feat__card is-album" href="album.html?album=' + escAttr(a.slug) + '" data-cta="listen-album">' +
       '<img class="feat__bg" src="' + escAttr(a.art) + '" alt="" loading="lazy">' +
       '<span class="feat__smoke"></span>' +
       "<b>" + esc(a.name) + "</b>" +
-      "<small>" + esc(a.by || "") + "</small>" +
+      "<small>" + esc(a.artist || "McCluster") + "</small>" +
       '<span class="feat__acts">' +
         '<span class="feat__play">' + PLAY + "</span>" +
         '<span class="feat__n">' + n + (n === 1 ? " track" : " tracks") + "</span>" +
@@ -332,13 +338,14 @@
        of the way the moment somebody says what they came for. */
     /* A search is its own view: the rails are a browse aid and they get out
        of the way the moment somebody says what they came for. */
-    var showRails = !searching && chip !== "tracks";
+    var showRails = !searching;
     ["ffWrap", "finWrap", "riseWrap", "keptWrap", "deepWrap"].forEach(function (id) {
-      if (searching || chip !== "all") el(id).hidden = true;
+      if (searching || !SONG_RAILS) el(id).hidden = true;
     });
-    el("shelfWrap").hidden = searching || (chip !== "all" && chip !== "albums");
-    el("rotWrap").hidden = searching || !mine.length || (chip !== "all" && chip !== "saved");
-    el("allWrap").hidden = chip === "albums" && !searching;
+    el("shelfWrap").hidden = searching;
+    el("rotWrap").hidden = searching || !SONG_RAILS || !mine.length;
+    /* the song list is a search result, not a shelf */
+    el("allWrap").hidden = !searching;
 
     var count = el("count");
     count.hidden = !searching;
@@ -348,19 +355,12 @@
         : hits.length + (hits.length === 1 ? " track" : " tracks");
     }
 
-    var list = hits;
-    if (!searching && chip === "saved") list = mine;
+    el("allK").textContent = "Results";
+    el("allWhy").textContent = "Matched on title, album, credit and registered code.";
+    if (searching) el("all").innerHTML = hits.map(row).join("") ||
+      '<li><span class="t">No track by that name. Try an album, a credit, or clear the field.</span></li>';
 
-    el("allK").textContent = searching ? "Results" : (chip === "saved" ? "Saved" : "Everything");
-    el("allWhy").textContent = searching
-      ? "Matched on title, album, credit and registered code."
-      : (chip === "saved" ? "Every track you have saved on this device." : "All of it, in one list.");
-    el("all").innerHTML = list.map(row).join("") ||
-      '<li><span class="t">' + (searching
-        ? "No track by that name. Try an album, a credit, or clear the field."
-        : "Nothing saved yet. Tap a heart and it lands here.") + "</span></li>";
-
-    if (showRails) {
+    if (showRails && SONG_RAILS) {
       /* Each rail is one method, and it is on the page only when that method
          produced something. A recommender with nothing to say says nothing;
          it does not fall back to the top of the catalogue wearing a
@@ -380,8 +380,8 @@
       rail("rot",  "rotWrap",  mine.slice(0, 8).map(function (t) {
         return { t: t, why: "Saved on this device" };
       }));
-      el("shelf").innerHTML = ALBUMS.map(albumCard).join("");
     }
+    if (showRails) el("shelf").innerHTML = ALBUMS.map(albumCard).join("");
   }
 
   /* ---------------------------------------------------------------
@@ -460,18 +460,6 @@
 
   el("qClear").addEventListener("click", function () { clear(); box.focus(); });
 
-  el("chips").addEventListener("click", function (e) {
-    var b = e.target.closest("button[data-chip]");
-    if (!b) return;
-    chip = b.getAttribute("data-chip");
-    [].forEach.call(el("chips").querySelectorAll("button"), function (x) {
-      x.classList.toggle("on", x === b);
-      x.setAttribute("aria-pressed", String(x === b));
-    });
-    paint();
-    if (root.MCC_TRACK) root.MCC_TRACK("listen_chip", { chip: chip });
-  });
-
   /* The heart is live here, not decoration. A save made in the discovery
      room is the same act as one made in the album room and feeds the same
      ranking, so the room that recommends also collects. */
@@ -482,6 +470,6 @@
     var on = toggleSave(b.getAttribute("data-alb"), b.getAttribute("data-title"));
     b.classList.toggle("on", on);
     b.setAttribute("aria-pressed", on ? "true" : "false");
-    if (chip === "saved" || !el("rotWrap").hidden) paint();
+    if (!el("rotWrap").hidden) paint();
   });
 })(window);

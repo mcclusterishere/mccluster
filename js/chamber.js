@@ -197,8 +197,10 @@
     }
     raf = requestAnimationFrame(frame);
   }
+  /* a music view over the album (music slice M5) covers the room: it draws nothing, the same as a hidden page */
+  var covered = false;
   function up() {
-    if (CALM || !cv || document.hidden) return;
+    if (CALM || !cv || document.hidden || covered) return;
     follow();
     pulseColor();
     root.classList.add("sig-live");
@@ -219,6 +221,11 @@
     deck.addEventListener("loadedmetadata", function () { pulseColor(); sweep = 1; follow(); });
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) { running = false; cancelAnimationFrame(raf); }
+      else if (deck && !deck.paused) up();
+    });
+    addEventListener("mcc:music-view", function (e) {
+      covered = !!(e && e.detail && e.detail.open);
+      if (covered) { running = false; cancelAnimationFrame(raf); }
       else if (deck && !deck.paused) up();
     });
   }

@@ -1,14 +1,23 @@
-/* Human Uprise's own door on humanuprise.com: the World by host, inert
-   elsewhere, the World's rooms and files passed through from the personal
-   origin, and every other path sent to the property it belongs to.
+/* Human Uprise's own door on humanuprise.com, inert elsewhere and until the owner routes it.
+   From P1 (the owner's default of 2026-11-23, owner_decisions.humanuprise_com) the door, once routed, answers every
+   path with one 301 to the same path and query on the platform: that is the table that ships (humanUpriseResponse).
+   Before P1 it served the World by host, the World's rooms and files passed through from the personal origin, and
+   sent every other path to the property it belongs to: those answers are kept here on P0's table, rebuilt from the
+   record, because a rollback to P0 restores them and the door's head and files are still this file's code.
    workers/mccluster/src/human-uprise/router.js,
    docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { humanUpriseResponse, worldHead, HUMAN_UPRISE_ORIGIN } from '../src/human-uprise/router.js';
+import { humanUpriseResponse, worldHead, HUMAN_UPRISE_ORIGIN, WORLD_DOOR_PARTS } from '../src/human-uprise/router.js';
 import { PERSONAL_ORIGIN } from '../src/company-site/pages.generated.js';
 import { allowedOrigins } from '../src/lib/http.js';
+import { SITE, makeSite } from '../src/platform/hosts.generated.js';
+import { createSiteRouter } from '../src/platform/router.js';
+import { siteTable, readRecord } from '../../../tools/build-site-hosts.mjs';
+
+/* the door as it answered before P1, on P0's table (a rollback to P0 restores exactly this) */
+const atP0 = createSiteRouter({ site: makeSite(siteTable(readRecord(), { stage: 'P0' })), worldDoor: WORLD_DOOR_PARTS });
 
 const req = (url, method = 'GET', headers = {}) => new Request(url, { method, headers });
 
@@ -44,9 +53,29 @@ test('the router is inert for every host but humanuprise.com and www', async () 
   }
 });
 
-test('the root is the World: mnet.html from the personal origin, with this host\'s canonical in its head', async () => {
+test('from P1, once routed, every path on humanuprise.com and its www answers one 301 to the same path and query on the platform, or straight to where the platform sends it', async () => {
+  assert.equal(SITE.stage, 'P1');
+  const PLAT = SITE.platform.origin, PROF = SITE.profile.origin;
+  /* one hop (P1 review, P1A-3): where the platform answers an address with a 301 of its own (the World's other
+     addresses, Whip Equipped, another spelling of a page), the door sends the visitor straight there */
+  const straight = { '/mnet.html?view=feed': `${PLAT}/?view=feed`, '/index.html?view=missions': `${PLAT}/?view=missions`, '/whip.html': `${PROF}/whip.html`,
+    '/whip': `${PROF}/whip.html`, '/listen': `${PLAT}/listen.html`, '/company/': `${PLAT}/company` };
+  for (const host of ['humanuprise.com', 'www.humanuprise.com']) {
+    for (const scheme of ['https', 'http']) {
+      for (const path of ['/', '/?view=missions', '/?mission=58eeb75d-a5b6-4280-9cd7-3b0cabf02264', '/index.html', '/account.html', '/listen.html?track=1', '/robots.txt', '/sitemap.xml', '/js/mnet.js?v=1', ...Object.keys(straight)]) {
+        for (const method of ['GET', 'HEAD', 'POST']) {
+          const r = await humanUpriseResponse(req(`${scheme}://${host}${path}`, method), {}, () => { throw new Error('must not fetch'); });
+          assert.equal(r.status, 301, `${method} ${scheme}://${host}${path}`);
+          assert.equal(r.headers.get('location'), straight[path] || PLAT + path, `${method} ${scheme}://${host}${path}`);
+        }
+      }
+    }
+  }
+});
+
+test('P0, before P1: the root is the World: mnet.html from the personal origin, with this host\'s canonical in its head', async () => {
   const { asked, fetchImpl } = upstream(PAGES);
-  const r = await humanUpriseResponse(req('https://humanuprise.com/'), {}, fetchImpl);
+  const r = await atP0(req('https://humanuprise.com/'), {}, fetchImpl);
   assert.equal(r.status, 200);
   assert.equal(asked.length, 1);
   assert.equal(asked[0].url, `${PERSONAL_ORIGIN}/mnet.html`);
@@ -65,12 +94,12 @@ test('the root is the World: mnet.html from the personal origin, with this host\
   assert.match(html, /<title>Equity Uprise · McCluster<\/title>/, 'the page is otherwise untouched');
 });
 
-test('the root keeps its deep links: the query rides to the World unchanged', async () => {
+test('P0, before P1: the root keeps its deep links: the query rides to the World unchanged', async () => {
   const { asked, fetchImpl } = upstream(PAGES);
-  const r = await humanUpriseResponse(req('https://humanuprise.com/?mission=58eeb75d-a5b6-4280-9cd7-3b0cabf02264'), {}, fetchImpl);
+  const r = await atP0(req('https://humanuprise.com/?mission=58eeb75d-a5b6-4280-9cd7-3b0cabf02264'), {}, fetchImpl);
   assert.equal(r.status, 200);
   assert.equal(asked[0].url, `${PERSONAL_ORIGIN}/mnet.html?mission=58eeb75d-a5b6-4280-9cd7-3b0cabf02264`);
-  const head = await humanUpriseResponse(req('https://humanuprise.com/', 'HEAD'), {}, fetchImpl);
+  const head = await atP0(req('https://humanuprise.com/', 'HEAD'), {}, fetchImpl);
   assert.equal(head.status, 200);
   assert.equal(await head.text(), '');
 });
@@ -80,13 +109,13 @@ test('worldHead falls back to the title when a page carries no robots meta', () 
   assert.match(out, /<\/title>\n  <link rel="canonical" href="https:\/\/humanuprise\.com\/">/);
 });
 
-test('the World\'s document name is the root here, query and all', async () => {
-  const r = await humanUpriseResponse(req('https://humanuprise.com/mnet.html?view=missions'), {}, () => { throw new Error('must not fetch'); });
+test('P0, before P1: the World\'s document name is the root here, query and all', async () => {
+  const r = await atP0(req('https://humanuprise.com/mnet.html?view=missions'), {}, () => { throw new Error('must not fetch'); });
   assert.equal(r.status, 301);
   assert.equal(r.headers.get('location'), 'https://humanuprise.com/?view=missions');
 });
 
-test('the World\'s rooms, the sign-in pages and the static files pass through from the personal origin', async () => {
+test('P0, before P1: the World\'s rooms, the sign-in pages and the static files pass through from the personal origin', async () => {
   const { asked, fetchImpl } = upstream(PAGES);
   const cases = [
     ['/action-globe.html?embedded=1&surface=network', 'text/html', 'noindex'],
@@ -100,7 +129,7 @@ test('the World\'s rooms, the sign-in pages and the static files pass through fr
     ['/sw.js', 'text/javascript', null]
   ];
   for (const [path, type, robots] of cases) {
-    const r = await humanUpriseResponse(req('https://humanuprise.com' + path, 'GET', { accept: 'text/html', 'accept-encoding': 'br, gzip', range: 'bytes=0-1' }), {}, fetchImpl);
+    const r = await atP0(req('https://humanuprise.com' + path, 'GET', { accept: 'text/html', 'accept-encoding': 'br, gzip', range: 'bytes=0-1' }), {}, fetchImpl);
     assert.equal(r.status, 200, path);
     assert.match(r.headers.get('content-type'), new RegExp('^' + type.replace('/', '\\/')), path);
     assert.equal(r.headers.get('x-robots-tag'), robots, path);
@@ -113,11 +142,11 @@ test('the World\'s rooms, the sign-in pages and the static files pass through fr
   assert.deepEqual(asked.map((a) => a.url), cases.map(([p]) => PERSONAL_ORIGIN + p));
   assert.ok(asked.every((a) => a.accept === 'text/html'), 'the client\'s accept header goes upstream');
   assert.ok(asked.every((a) => a.encoding === ''), 'the client\'s accept-encoding never goes upstream');
-  const missing = await humanUpriseResponse(req('https://humanuprise.com/js/not-there.js'), {}, fetchImpl);
+  const missing = await atP0(req('https://humanuprise.com/js/not-there.js'), {}, fetchImpl);
   assert.equal(missing.status, 404, 'upstream status passes through');
 });
 
-test('every other path belongs to Matthew\'s site and gets a 301 there: Music, the M, creators, records', async () => {
+test('P0, before P1: every other path belongs to Matthew\'s site and gets a 301 there: Music, the M, creators, records', async () => {
   for (const [from, to] of [
     ['https://humanuprise.com/listen.html', `${PERSONAL_ORIGIN}/listen.html`],
     ['https://humanuprise.com/index.html', `${PERSONAL_ORIGIN}/index.html`],
@@ -128,44 +157,45 @@ test('every other path belongs to Matthew\'s site and gets a 301 there: Music, t
     ['https://humanuprise.com/whip.html', `${PERSONAL_ORIGIN}/whip.html`],
     ['https://humanuprise.com/receipt.html?session=cs_1', `${PERSONAL_ORIGIN}/receipt.html?session=cs_1`]
   ]) {
-    const r = await humanUpriseResponse(req(from), {}, () => { throw new Error('must not fetch'); });
+    const r = await atP0(req(from), {}, () => { throw new Error('must not fetch'); });
     assert.equal(r.status, 301, from);
     assert.equal(r.headers.get('location'), to, from);
   }
 });
 
-test('www sends everything to the apex, same path and query', async () => {
-  const r = await humanUpriseResponse(req('https://www.humanuprise.com/?view=missions'), {}, () => { throw new Error('must not fetch'); });
+test('P0, before P1: www sends everything to the apex, same path and query', async () => {
+  const r = await atP0(req('https://www.humanuprise.com/?view=missions'), {}, () => { throw new Error('must not fetch'); });
   assert.equal(r.status, 301);
   assert.equal(r.headers.get('location'), 'https://humanuprise.com/?view=missions');
-  assert.equal((await humanUpriseResponse(req('https://www.humanuprise.com/album.html'))).headers.get('location'), 'https://humanuprise.com/album.html');
+  assert.equal((await atP0(req('https://www.humanuprise.com/album.html'))).headers.get('location'), 'https://humanuprise.com/album.html');
 });
 
-test('robots and sitemap are this host\'s own; only GET and HEAD reach the World', async () => {
-  const robots = await humanUpriseResponse(req('https://humanuprise.com/robots.txt'));
+test('P0, before P1: robots and sitemap are this host\'s own; only GET and HEAD reach the World', async () => {
+  const robots = await atP0(req('https://humanuprise.com/robots.txt'));
   assert.match(await robots.text(), /Sitemap: https:\/\/humanuprise\.com\/sitemap\.xml/);
-  const sitemap = await (await humanUpriseResponse(req('https://humanuprise.com/sitemap.xml'))).text();
+  const sitemap = await (await atP0(req('https://humanuprise.com/sitemap.xml'))).text();
   assert.match(sitemap, /<loc>https:\/\/humanuprise\.com\/<\/loc>/);
   assert.doesNotMatch(sitemap, /account|mnet\.html/, 'the sitemap names the front door only');
-  const post = await humanUpriseResponse(req('https://humanuprise.com/', 'POST'), {}, () => { throw new Error('must not fetch'); });
+  const post = await atP0(req('https://humanuprise.com/', 'POST'), {}, () => { throw new Error('must not fetch'); });
   assert.equal(post.status, 405);
   assert.equal(post.headers.get('allow'), 'GET, HEAD');
 });
 
-test('the upstream is PUBLIC_ORIGIN when the Worker names one', async () => {
+test('P0, before P1: the upstream is PUBLIC_ORIGIN when the Worker names one', async () => {
   const { asked, fetchImpl } = upstream({ '/mnet.html': PAGES['/mnet.html'] });
-  await humanUpriseResponse(req('https://humanuprise.com/'), { PUBLIC_ORIGIN: 'http://127.0.0.1:4173/' }, fetchImpl);
+  await atP0(req('https://humanuprise.com/'), { PUBLIC_ORIGIN: 'http://127.0.0.1:4173/' }, fetchImpl);
   assert.equal(asked[0].url, 'http://127.0.0.1:4173/mnet.html');
-  const r = await humanUpriseResponse(req('https://humanuprise.com/album.html'), { PUBLIC_ORIGIN: 'http://127.0.0.1:4173' });
+  const r = await atP0(req('https://humanuprise.com/album.html'), { PUBLIC_ORIGIN: 'http://127.0.0.1:4173' });
   assert.equal(r.headers.get('location'), `${PERSONAL_ORIGIN}/album.html`, 'the 301 names Matthew\'s public property whatever the upstream is');
 });
 
-test('the platform entry consults the Human Uprise router after the company router and before the API', async () => {
+test('the platform entry consults the host router, with the World door\'s files, before the API', async () => {
   const src = await readFile(new URL('../src/entry-platform.js', import.meta.url), 'utf8');
-  const i = src.indexOf('await companySiteResponse(request, env)');
-  const j = src.indexOf('await humanUpriseResponse(request, env)');
+  assert.match(src, /import \{ WORLD_DOOR_PARTS \} from '\.\/human-uprise\/router\.js';/);
+  assert.match(src, /createSiteRouter\(\{ company: COMPANY_PARTS, worldDoor: WORLD_DOOR_PARTS \}\)/, 'one router for every host (src/platform/router.js)');
+  const i = src.indexOf('await siteResponse(request, env)');
   const k = src.indexOf('enforceApiRateLimit(request, env)');
-  assert.ok(i > 0 && j > i && k > j, 'host routing runs first and only for its own hosts');
+  assert.ok(i > 0 && k > i, 'host routing runs first and only for the site\'s hosts');
 });
 
 test('the API answers the Human Uprise host: its origins are on the CORS allowlist', () => {
@@ -175,13 +205,13 @@ test('the API answers the Human Uprise host: its origins are on the CORS allowli
   assert.ok(list.includes('https://matthew.mccluster.org'), 'and the personal property keeps its place');
 });
 
-test('plain http on the apex is one 301 to https, same path and query', async () => {
+test('P0, before P1: plain http on the apex is one 301 to https, same path and query', async () => {
   for (const [from, to] of [
     ['http://humanuprise.com/', 'https://humanuprise.com/'],
     ['http://humanuprise.com/?view=missions', 'https://humanuprise.com/?view=missions'],
     ['http://www.humanuprise.com/account.html', 'https://humanuprise.com/account.html']
   ]) {
-    const r = await humanUpriseResponse(req(from), {}, () => { throw new Error('must not fetch'); });
+    const r = await atP0(req(from), {}, () => { throw new Error('must not fetch'); });
     assert.equal(r.status, 301, from);
     assert.equal(r.headers.get('location'), to, from);
   }

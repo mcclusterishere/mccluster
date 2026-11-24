@@ -102,7 +102,8 @@ test('the Control Room and the site menu no longer point at Seek First; every Ha
   assert.doesNotMatch(nav, /seek-first-handoff|context:'Seek First'/);
   /* one Halo (owner, 2026-10-22: "it takes you to multiple different places"): the menu's Hitman's Halo is the four screens,
      never the separate app, and there is no second Halo entry */
-  assert.match(nav, /label:'Hitman’s Halo', group:'Products', href:new URL\('action-globe\.html\?explore=1&halo=1', house\)\.href/);
+  /* the doors ask the bar where the page is (page(): the table's serving host), never the dock's house, which keeps Matthew's host until P3 (review V2-1, 2026-11-24); the door's target is unchanged */
+  assert.match(nav, /label:'Hitman’s Halo', group:'Products', href:page\('action-globe\.html\?explore=1&halo=1'\)/);
   assert.doesNotMatch(nav, /prime\.mccluster\.org|Halo on the globe/);
   for (const f of ['js/control-room-v2.js', 'js/control-room/workspace.js', 'js/control-room/workspace-core.js', 'js/action-globe.js', 'js/halo/halo.js'])
     assert.doesNotMatch(read(f), /prime\.mccluster\.org/, f + ' links no other Halo');
@@ -117,8 +118,8 @@ test('the owner globe opens the consumer World and Halo retains its separate doo
   assert.match(read('js/site-navigation.js'), /label:'Hitman’s Halo', group:'Products'/);
   /* lit while Halo is on screen */
   assert.match(bar, /action-globe\\\.html\$\/\.test\(location\.pathname\) && new URLSearchParams\(location\.search\)\.has\("halo"\)\) return "halo";/);
-  /* everyone else's globe is still the World */
-  assert.match(bar, /href="' \+ WORLD \+ 'mnet\.html\?view=feed" data-appnav="world"/);
+  /* everyone else's globe is still the World: its address is the table's (worldAt, SPEC-PLATFORM 4), no host literal */
+  assert.match(bar, /href="' \+ worldAt\("\?view=feed"\) \+ '" data-appnav="world"/);
   const halo = read('js/halo/halo.js');
   assert.match(halo, /<a class="hx-feed" href="' \+ esc\(feedHref\(\)\) \+ '" aria-label="Open the World feed"><span class="hx-feed__short">Feed<\/span><span class="hx-feed__long">World feed<\/span><\/a>/);
   assert.match(halo, /window\.MCC_BAR\.navigation\.world/);

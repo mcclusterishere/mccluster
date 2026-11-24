@@ -81,7 +81,8 @@ test('before any script asks the network, the head of mnet.html already knows a 
 
 test('a member\'s World opens on the World (or the room asked for), and rooms switch without a blank frame', () => {
   const js = read('js/mnet.js'), css = read('css/mnet.css');
-  assert.match(js, /if \(\(stored && stored\.access_token\) \|\| handoff\.pending\) \{ showGate\("app"\); if \(DEEP_VIEW\) peekView\(DEEP_VIEW\); \}/);
+  /* a sign-in carried in, by the old fragment or (from P1) by the carry, puts the member's shell up at once too */
+  assert.match(js, /if \(\(stored && stored\.access_token\) \|\| handoff\.pending \|\| carrying\) \{ showGate\("app"\); if \(DEEP_VIEW\) peekView\(DEEP_VIEW\); \}/);
   assert.match(js, /if \(!DEEP_VIEW \|\| state\.currentView !== DEEP_VIEW\) setView\("feed"\);/, 'a room asked for by address is not covered by the World first');
   assert.match(css, /\.mn__view:not\(\[hidden\]\) \{ animation: none; \}/, 'a room is never faded up from nothing');
   assert.doesNotMatch(css, /\.mn__empty \{[^}]*animation/, 'an empty room never fades up through grey');
@@ -107,6 +108,14 @@ test('a sign-in carried in is taken in place: the World waits for it and the bar
     'read before tabbar.js scrubs the fragment, on the same test tabbar.js uses');
   assert.match(js, /if \(handoff\.ok && handoff\.pending && e\.cancelable\) e\.preventDefault\(\);/);
   assert.ok(js.indexOf('window.addEventListener("mcc:handoff"') < js.indexOf('function boot()'), 'listening from the moment mnet.js runs, before tabbar.js');
+  /* from P1 the carry (js/carry.js) brings the sign-in instead: the bar says, before the World boots, whether the first
+     answer is still to come; the World waits for it as for the hand-off, and takes a late one in place */
+  assert.match(bar, /window\.MCC_CARRY_PENDING = carryPending\(\);/);
+  assert.match(bar, /\n  startCarry\(\);\n/, 'asked as the bar starts, never after the page has loaded');
+  assert.ok(js.indexOf('window.addEventListener("mcc:carry"') < js.indexOf('function boot()'), 'the World listens for the carry from the moment mnet.js runs');
+  assert.match(js, /var carrying = !\(stored && stored\.access_token\) && window\.MCC_CARRY_PENDING === true && !carry\.done;/);
+  assert.match(js, /if \(now && now\.access_token\) document\.documentElement\.classList\.remove\("mn-guest"\);\n        enterSession\(\);/, 'carried: the guest look goes with the guest');
+  assert.match(js, /if \(e\.detail && e\.detail\.result === "carried" && state\.guest\) enterAfterAuth\(\)/, 'a carry that answers after the World opened as a guest is taken in place, no reload');
   assert.doesNotMatch(palette, /location\.reload\(/, 'palette role restoration never reloads the page');
   assert.match(palette, /MCC_BAR\?\.admin\(\)/, 'palette uses the server-verified shared role');
 });

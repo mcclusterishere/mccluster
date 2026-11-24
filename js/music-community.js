@@ -25,20 +25,8 @@
     });
   }
 
-  /* THE ARTISTS, FIRST. Owner, 2026-10-14: in Music, McCluster opens the
-     house (index.html, the M in the middle of the bar); any other artist
-     opens their own front page, and the bar takes their perspective from
-     there (js/tabbar.js). Owner, 2026-11-24, which is newer and governs
-     McCluster's card: opening an artist shows everything they appear on.
-     The house does not list the records McCluster features on or produced
-     for others, so his card opens the artist view (artist.html), whose
-     first link is the house; the M in the bar still goes there from every
-     page. A creator still opens their own front page, which now lists
-     everything the catalogue credits them on (js/music-artist.js).
-     The house is always first and is painted at once;
-     every active creator follows when the directory answers. A creator's
-     picture is their own avatar or their initial, never a mark drawn for
-     them. The M is shown as supplied, scaled, on no plate. */
+  /* List McCluster once. His catalogue card opens his credits and links on to the house.
+     Registered creators open their own profile; the catalogue never borrows an unlinked account. */
   /* A creator's picture is the one Creator Studio stored for them, and
      nothing else: the same rule the creator's own page applies
      (js/music-creator-page.js, safeArtwork). */
@@ -88,7 +76,7 @@
       section.setAttribute("aria-label", "Artists");
       section.innerHTML =
         '<p class="lib__k">Artists</p>' +
-        '<p class="lib__why">Open an artist to see the site from their side.</p>' +
+        '<p class="lib__why">Open an artist for their page and their music.</p>' +
         '<div class="artists__row" id="artistsRow"></div>';
       var first = ls.querySelector(".ls__sec");
       if (first) ls.insertBefore(section, first); else ls.appendChild(section);

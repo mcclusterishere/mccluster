@@ -4,6 +4,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { normalizeFeed, safeURL, captureURL, timeLabel } from '../../js/world-environment.mjs';
+import { shippedSite } from './support/mcc-site.mjs';
+/* the table js/shell-boot.js gives every page before its modules (window.MCC_SITE): a harness window without a location
+   takes the installation's app origin from it, as js/world-environment-mccluster.mjs does */
+const MCC_SITE=shippedSite();
 const read = path => readFileSync(new URL('../../'+path,import.meta.url),'utf8');
 const id='11111111-1111-4111-8111-111111111111';
 const row={id:'usgs:one',title:'Observation',lat:41,lon:-73,source:{label:'USGS',url:'https://earthquake.usgs.gov/earthquakes/eventpage/one'},actions:[]};
@@ -78,7 +82,7 @@ test('pins accept public observation geometry only, switch off and do not duplic
 test('first-party adapter confines authenticated requests and anonymous feed never carries a token',async()=>{
  const {mcclusterEnvironmentAdapter}=await import('../../js/world-environment-mccluster.mjs');
  const calls=[];let token='test-token';
- const adapter=mcclusterEnvironmentAdapter({MCC_SUPA:{token:async()=>token},fetch:async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>({ok:true})};}});
+ const adapter=mcclusterEnvironmentAdapter({MCC_SITE,MCC_SUPA:{token:async()=>token},fetch:async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>({ok:true})};}});
  await adapter.request('');assert.equal(calls[0].url,'https://api.mccluster.org/v1/world/environment');assert.equal(calls[0].options.headers.authorization,undefined);
  await adapter.request('/team',{auth:true});assert.equal(calls[1].options.headers.authorization,'Bearer test-token');assert.equal(calls[1].options.credentials,'omit');
  for(const path of ['https://evil.example','//evil.example','/team?redirect=evil','/../../halo','/missions/../team'])await assert.rejects(()=>adapter.request(path,{auth:true}));
@@ -128,7 +132,7 @@ test('by day every rule for the Environmental Justice panel reads 4.5:1 or bette
 test('the adapter passes the policy gate\'s code through the feed read: 503 module_policy_unavailable, 404 module_disabled, a bare failure has none',async()=>{
  const {mcclusterEnvironmentAdapter}=await import('../../js/world-environment-mccluster.mjs');
  let answer={status:503,body:{ok:false,code:'module_policy_unavailable'}};
- const w={MCC_SUPA:{token:async()=>null},fetch:async()=>({ok:answer.status<400,status:answer.status,json:async()=>answer.body}),document:{documentElement:{setAttribute(){}}}};
+ const w={MCC_SITE,MCC_SUPA:{token:async()=>null},fetch:async()=>({ok:answer.status<400,status:answer.status,json:async()=>answer.body}),document:{documentElement:{setAttribute(){}}}};
  const adapter=mcclusterEnvironmentAdapter(w);
  await assert.rejects(()=>adapter.request(''),error=>error.status===503&&error.code==='module_policy_unavailable');
  answer={status:404,body:{ok:false,code:'module_disabled'}};
@@ -158,7 +162,7 @@ test('S0: the adapter sets html[data-we-feed] off, unavailable, empty or ready b
  ];
  for(const [label,answer,want] of cases){
   const attrs={};
-  const w={MCC_SUPA:{token:async()=>null},fetch:async()=>{if(answer.throws)throw new TypeError('Failed to fetch');return {ok:answer.status<400,status:answer.status,json:async()=>answer.body};},document:{documentElement:{setAttribute:(k,v)=>{attrs[k]=v;}}}};
+  const w={MCC_SITE,MCC_SUPA:{token:async()=>null},fetch:async()=>{if(answer.throws)throw new TypeError('Failed to fetch');return {ok:answer.status<400,status:answer.status,json:async()=>answer.body};},document:{documentElement:{setAttribute:(k,v)=>{attrs[k]=v;}}}};
   const adapter=mcclusterEnvironmentAdapter(w);
   await adapter.request('').catch(()=>{});
   assert.equal(attrs['data-we-feed'],want,label);

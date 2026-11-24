@@ -182,6 +182,7 @@
     var files = [], seen = {};
     function add(u) { if (u && !seen[u]) { seen[u] = 1; files.push(abs(u)); } }
     [].forEach.call(document.querySelectorAll("#tracks li"), function (li) {
+      if (li.hasAttribute("data-hold")) return;   // the held song is nobody's to keep offline (owner, 2026-11-23)
       add(li.getAttribute("data-src"));
       add(li.getAttribute("data-art"));
       add(li.getAttribute("data-lyrics"));
@@ -354,7 +355,9 @@
       var pg = on && on.querySelector("a[data-tpg]");
       var url = pg ? pg.href : (location.origin + location.pathname +
         (ALBUM !== "here" ? "?album=" + ALBUM : ""));
-      var payload = { title: title + " — Matthew McCluster", text: "Hear it on McCluster Sound.", url: url };
+      /* credited to the album's billed artist: McCluster for his own records (owner, 2026-11-23) */
+      var by = ((document.getElementById("albArtist") || {}).textContent || "").trim() || "McCluster";
+      var payload = { title: title + " — " + by, text: "Hear it on McCluster Sound.", url: url };
       track("track_share", { track: title });
       /* Some in-app browsers expose navigator.share and then refuse it; that
          rejection was swallowed and the button did nothing. A cancel

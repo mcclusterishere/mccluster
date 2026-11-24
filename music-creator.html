@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-music-view="artist">
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -35,6 +35,13 @@
         <p class="ap-hero__bio" id="creatorBio">Opening the artist's page…</p>
         <p class="ap-hero__doors" id="apDoors"></p>
       </div>
+    </section>
+
+    <!-- McCLUSTER'S RECORDS (owner, 2026-11-23: "McCluster is the artist"): on his own artist page, the albums the
+         catalogue bills to the house, each opening its album (filled by the artist page's own script) -->
+    <section class="ap-shelf" id="apHouseWrap" aria-labelledby="apHouseTitle" hidden>
+      <h2 class="ap-label" id="apHouseTitle">Albums</h2>
+      <div class="ap-shelf__grid" id="apHouseShelf"></div>
     </section>
 
     <!-- THE RATE SHEET: what the artist sells. A request, never a charge:
@@ -107,8 +114,8 @@
   <script src="js/music-engine.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/music-creator-page.js?v=__STAMP__"></script>
-  <script src="js/music-creator-profile.js?v=__STAMP__"></script>
   <script src="js/music-credits.js?v=__STAMP__"></script>
+  <script src="js/music-creator-profile.js?v=__STAMP__"></script>
   <script src="js/music-artist.js?v=__STAMP__"></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>

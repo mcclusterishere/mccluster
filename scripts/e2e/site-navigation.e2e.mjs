@@ -10,6 +10,8 @@ const OUT=process.argv[2]||'/tmp/site-navigation-proof';
 const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'))('playwright');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const BASE='https://matthew.mccluster.org', USER='11111111-1111-4111-8111-111111111111';
+/* from P1 the platform serves the member pages: on Matthew's host the bar's door to a member's front page is the platform's */
+const PLATFORM='https://mccluster.org';
 const MIME={'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.html':'text/html','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const results=[];
 function check(name,ok,detail){results.push({name,pass:!!ok});console.log((ok?'PASS ':'FAIL ')+name+(ok?'':' '+JSON.stringify(detail)));assert.ok(ok,name);}
@@ -149,15 +151,15 @@ try{
     const {ctx,page,errors}=await setup(390,'member');
     await page.goto(BASE+'/license.html');
     await page.waitForFunction(()=>MCC_BAR.ownPerspective()?.handle==='qa-member');
-    check('signed-in center defaults to this member front page',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=qa-member');
+    check('signed-in center defaults to this member front page, on the platform',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===PLATFORM+'/member-front.html?handle=qa-member');
     await page.evaluate(()=>dispatchEvent(new CustomEvent('mcc:perspective',{detail:{kind:'member',handle:'other-member',name:'Other member'}})));
     check('opening another member changes the center destination',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=other-member');
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===PLATFORM+'/member-front.html?handle=other-member');
     await page.reload();
     await page.waitForFunction(()=>MCC_BAR.auth().verified);
     check('chosen center perspective survives reloading within account',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=other-member');
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===PLATFORM+'/member-front.html?handle=other-member');
     await page.goto(BASE+'/index.html?front=house');
     await page.waitForFunction(()=>MCC_BAR.auth().verified);
     check('visiting founder switches center back to original house',
@@ -236,7 +238,7 @@ try{
     await page.waitForSelector('#mnMe:not([hidden])');
     check('World keeps one top-right native profile',await topRight(page,'#mnMe')&&await page.locator('#mccAuthChip').isHidden());
     await open(page);const url=await page.locator('[data-control-route="#create:projects:library"]').getAttribute('href');
-    check('World routes Control to Matthew’s host',url===BASE+'/control.html#create:projects:library');
+    check('World routes Control to the platform’s own Control (from P1 the platform serves Control)',url===PLATFORM+'/control.html#create:projects:library');
     await page.keyboard.press('Escape');await page.click('#mnMe');
     check('World account menu still opens',await page.locator('#mnMenu').isVisible());
     check('World has no horizontal overflow',await fits(page));
@@ -272,6 +274,35 @@ try{
       return {out:h.classList.contains('pt-out'),day:h.classList.contains('pt-to-day'),night:h.classList.contains('pt-to-night'),want:MCC_DAYLIGHT_CORE.estimate(new Date()),house:!h.dataset.daylight};});
     check('the veil into the World is the World\'s colour for this hour, and the house page itself is untouched',veil.out&&veil.house&&(veil.want==='day'?veil.day&&!veil.night:veil.night&&!veil.day),veil);
     check('veil checks have no page errors',errors.length===0,errors);
+    await ctx.close();
+  }
+  /* THE OWNER'S CONTROL AND PRODUCT DOORS GO WHERE THE TABLE SERVES THEM, FROM EITHER HOST (review V2-1, 2026-11-24).
+     The P1 amendment keeps only the bar's Music, account and artist doors on Matthew's host until P3 (a song playing
+     there must keep playing); navigation.house answers that rule for the installed dock's house. Control, the dock's
+     Control sections and the product doors were page loads at P0 too, so they go where the table serves each page
+     (from P1 the platform for Control and the games; Whip Equipped's pages are his host's alone), and the Home panel's
+     Game Hub door agrees with the dock's own Games tab. */
+  for(const start of ['/license.html','/album.html?album=here']){
+    const {ctx,page,errors}=await setup(390);
+    await page.goto(BASE+start);await page.waitForSelector('body[data-admin-navigation][data-site-navigation]');
+    await open(page);
+    const doors=await page.evaluate(()=>{
+      const S=window.MCC_SITE,want=href=>{const u=new URL(href);return S.servingOrigin(u.pathname);};
+      const rows=[...document.querySelectorAll('#mccDestinations a[href], .appbar a[data-appnav][href]')]
+        .map(a=>({href:a.href,key:a.dataset.appnav||a.textContent.trim().replace(/\s+/g,' ').slice(0,40)}))
+        .filter(r=>/\/(?:control|game-hub|prim3|prim3-world|action-globe|whip|we-manufacture)\.html/.test(new URL(r.href).pathname));
+      return {p1:S.switches.platform_serves==='everything',control:S.servingOrigin('/control.html'),
+        wrong:rows.filter(r=>new URL(r.href).origin!==want(r.href)),count:rows.length,
+        games:document.querySelector('.appbar a[data-appnav="games"]')?.href,
+        hub:[...document.querySelectorAll('#mccDestinations a[href]')].find(a=>/\/game-hub\.html$/.test(new URL(a.href).pathname))?.href,
+        music:document.querySelector('.appbar a[data-appnav="music"]')?.href,house:window.MCC_BAR.navigation.house};
+    });
+    check(start+' owner on his host: the table is at P1 and serves Control from the platform',doors.p1&&doors.control===PLATFORM,doors);
+    check(start+' owner on his host: every Control and product door goes where the table serves it',doors.count>=20&&doors.wrong.length===0,doors.wrong.slice(0,6));
+    check(start+' owner on his host: the Home panel\'s Game Hub door and the dock\'s Games tab agree',!!doors.hub&&doors.hub===doors.games,{hub:doors.hub,games:doors.games});
+    /* the amendment's own doors stay on his host until P3 (unchanged here; music-shell.e2e and carry.e2e pin the rest) */
+    check(start+' owner on his host: Music and the dock\'s house stay on his host until P3',doors.music===BASE+'/listen.html'&&doors.house===BASE+'/',{music:doors.music,house:doors.house});
+    check(start+' owner doors have no page errors',errors.length===0,errors);
     await ctx.close();
   }
   for(const width of [390,1280]){

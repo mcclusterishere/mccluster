@@ -9,6 +9,7 @@
    - Payloads are encrypted for that one browser (RFC 8291, aes128gcm) and signed for this server (RFC 8292, VAPID).
    - At most one push per person per 15 minutes; anything else waits in the bell. A push service that says the
      subscription is gone (404/410) has it deleted. Nothing older than 30 minutes is ever pushed. */
+import { CONTACT_URL } from './platform/contact.js';
 
 const PUSH_HOSTS = [/^fcm\.googleapis\.com$/, /^updates\.push\.services\.mozilla\.com$/, /^web\.push\.apple\.com$/, /(^|\.)push\.apple\.com$/, /\.notify\.windows\.com$/];
 const enc = new TextEncoder();
@@ -65,7 +66,7 @@ export async function vapidAuthorization(env, endpoint, now = Date.now()) {
   const key = await crypto.subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', x: b64url(pub.slice(1, 33)), y: b64url(pub.slice(33, 65)), d: env.WEB_PUSH_VAPID_PRIVATE_KEY, ext: true },
     { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
   const part = (o) => b64url(enc.encode(JSON.stringify(o)));
-  const unsigned = part({ typ: 'JWT', alg: 'ES256' }) + '.' + part({ aud: new URL(endpoint).origin, exp: Math.floor(now / 1000) + 12 * 3600, sub: env.WEB_PUSH_CONTACT || 'https://mccluster.org/' });
+  const unsigned = part({ typ: 'JWT', alg: 'ES256' }) + '.' + part({ aud: new URL(endpoint).origin, exp: Math.floor(now / 1000) + 12 * 3600, sub: env.WEB_PUSH_CONTACT || CONTACT_URL });
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, enc.encode(unsigned));
   return `vapid t=${unsigned}.${b64url(sig)}, k=${env.WEB_PUSH_VAPID_PUBLIC_KEY}`;
 }

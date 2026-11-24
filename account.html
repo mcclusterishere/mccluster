@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme-lock="dark">
+<html lang="en" data-theme-lock="dark" data-music-view="account">
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -609,7 +609,10 @@
             /* /auth/ finishes the PKCE exchange and then forwards here, with
                where the person started still on the address (?next) */
             var back = "/account.html" + (NEXT ? "?next=" + encodeURIComponent(NEXT) : "");
-            MCC.signInWithProvider(key, location.origin + "/auth/?next=" + encodeURIComponent(back))
+            /* in a music view (music slice M5) the provider starts from the top window, as it does from this page today:
+               the same redirect, verifier and return; a provider page is never framed */
+            var top = window.MCC_MUSIC_VIEW && MCC_MUSIC_VIEW.top && MCC_MUSIC_VIEW.top();
+            (top && top.MCC && top.MCC.signInWithProvider ? top.MCC : MCC).signInWithProvider(key, location.origin + "/auth/?next=" + encodeURIComponent(back))
               .catch(function (e) {
                 b.disabled = false;
                 el("acMsg").textContent = e.message || ("Could not start " + key + " sign-in.");

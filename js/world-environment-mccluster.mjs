@@ -30,7 +30,7 @@ export function mcclusterEnvironmentAdapter(w) {
   const transport = createEnvironmentTransport({
     installation: {
       schema:'equity-uprise.installation/v1', id:'mccluster',
-      appOrigin:w.location?.origin || 'https://mccluster.org', apiOrigin:'https://api.mccluster.org',
+      appOrigin:w.location?.origin || w.MCC_SITE?.platform?.origin, apiOrigin:'https://api.mccluster.org',
       brand:{name:'McCluster'}, modules:{environment:true}
     },
     fetchImpl:(...args)=>w.fetch(...args), token, messages,
