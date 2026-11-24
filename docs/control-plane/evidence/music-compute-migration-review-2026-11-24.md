@@ -208,6 +208,11 @@ all 20 completion-evidence tests still pass. An inherited prose-only change
 to persistent execution authority was restored to the canonical main wording:
 owned devices remain specialized compute under Core, with no unpaired change
 to the architecture contract. No architecture rule or scanner was weakened.
+The gateway now obtains its backend Auth API header from Core's existing
+`supabase.mjs` client, which already owns preferred/legacy key selection; it no
+longer duplicates backend credential lookup in the compute entrypoint. The
+credential remains on Core and is never sent to a device. Existing backend-auth,
+device-grant and signed-gateway trust checks pass (12 tests).
 
 ## Named-file review receipt
 
@@ -241,3 +246,4 @@ preparation receipt.
 | `core/src/executors/lyrics-align.mjs` | 9,593 | `991698c7df10d8006f004fc0e098e8d28252962ddae8eb170d5c866f2e338749` |
 | `core/src/executors/stems-separate.mjs` | 4,475 | `4781e32ca4b2543eb9de1ffe0bad264676494e404082f1de84f0f2caf9499ef6` |
 | `core/test/completion-evidence.test.mjs` | 18,283 | `7e730365fdad1519e0411a31bb1873006771531919c27f465a657f5b42387153` |
+| `core/src/compute/gateway.mjs` | 20,129 | `c0dd4c50361351309307c5d2687ee16adb8655a72168615a898e2b368121361b` |
