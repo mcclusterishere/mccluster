@@ -97,6 +97,90 @@ export function featureRequirements(requirements = {}) {
   return Object.keys(features).length ? { features } : {};
 }
 
+// ---- Metering (docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md) -----------
+// The raw Ollama counters an ai.* adapter returns in output.usage, recorded
+// separately and never summed into one number. Durations are nanoseconds.
+export const USAGE_COUNTERS = Object.freeze(['prompt_eval_count', 'prompt_eval_cached_count', 'eval_count', 'total_duration_ns', 'load_duration_ns', 'prompt_eval_duration_ns', 'eval_duration_ns']);
+// Conservative defaults when no model class bounds the attempt: the adapter
+// caps num_predict at 4096 and num_ctx at 32768, so anything far beyond is a
+// broken counter, not a longer answer. A day in nanoseconds bounds durations.
+export const DEFAULT_USAGE_BOUNDS = Object.freeze({ max_eval_count: 32768, max_prompt_eval_count: 131072, max_duration_ns: 86_400_000_000_000 });
+const DIGEST_TEXT = /^[A-Za-z0-9][A-Za-z0-9:._-]{7,199}$/;
+const ACCOUNT_ID = /^[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}$/;
+
+function usageCounters(usage) {
+  if (!isObject(usage)) return [];
+  return USAGE_COUNTERS.filter((key) => usage[key] !== undefined && usage[key] !== null);
+}
+
+// The seven counters as numbers: one the runtime did not report (absent or
+// null) is 0. Ollama's /api/chat never reports prompt_eval_cached_count and
+// omits a counter that is zero, so "not reported" is "zero", never an error.
+export function normalizedUsageCounters(usage) {
+  const out = {};
+  for (const key of USAGE_COUNTERS) out[key] = isObject(usage) && usage[key] !== undefined && usage[key] !== null ? usage[key] : 0;
+  return out;
+}
+
+// Returns { ok, metered, code, reason }. The gateway calls this only for a
+// task the contribution ledger holds a reservation for (validateCompletion in
+// jobs-service.mjs); with the ledger off, or for an unreserved task, a result's
+// usage is not inspected at all. No usage, or every counter null or absent, is
+// "not metered" and ok here (the caller decides whether that is acceptable).
+// Once any counter is present: each PRESENT counter must be a non-negative
+// safe integer, an absent or null one counts as 0, cached <= prompt,
+// eval_duration_ns > 0 when tokens were generated, and the counts inside the
+// bounds (the task's caps and the model class, or the defaults above).
+export function validateResultUsage(usage, bounds = {}) {
+  if (usage === undefined || usage === null) return { ok: true, metered: false, code: null, reason: null };
+  if (!isObject(usage)) return { ok: false, metered: false, code: 'RESULT_USAGE_INVALID', reason: 'usage must be a JSON object' };
+  if (!usageCounters(usage).length) return { ok: true, metered: false, code: null, reason: null };
+  const limit = (key) => (Number.isSafeInteger(Number(bounds?.[key])) && Number(bounds[key]) > 0 ? Number(bounds[key]) : DEFAULT_USAGE_BOUNDS[key]);
+  const fail = (code, reason) => ({ ok: false, metered: true, code, reason });
+  const counters = normalizedUsageCounters(usage);
+  for (const key of USAGE_COUNTERS) {
+    const value = counters[key];
+    if (!Number.isSafeInteger(value) || value < 0) return fail('RESULT_USAGE_INVALID', `usage.${key} must be a non-negative integer`);
+  }
+  if (counters.prompt_eval_cached_count > counters.prompt_eval_count) return fail('RESULT_USAGE_INVALID', 'usage.prompt_eval_cached_count exceeds prompt_eval_count');
+  if (counters.eval_count > 0 && counters.eval_duration_ns <= 0) return fail('RESULT_USAGE_INVALID', 'usage.eval_duration_ns must be positive when tokens were generated');
+  if (counters.eval_count > limit('max_eval_count')) return fail('RESULT_USAGE_OUT_OF_BOUNDS', `usage.eval_count exceeds ${limit('max_eval_count')}`);
+  if (counters.prompt_eval_count > limit('max_prompt_eval_count')) return fail('RESULT_USAGE_OUT_OF_BOUNDS', `usage.prompt_eval_count exceeds ${limit('max_prompt_eval_count')}`);
+  for (const key of ['total_duration_ns', 'load_duration_ns', 'prompt_eval_duration_ns', 'eval_duration_ns']) {
+    if (counters[key] > limit('max_duration_ns')) return fail('RESULT_USAGE_OUT_OF_BOUNDS', `usage.${key} exceeds ${limit('max_duration_ns')} ns`);
+  }
+  if (usage.model_digest !== undefined && usage.model_digest !== null && !DIGEST_TEXT.test(String(usage.model_digest))) return fail('RESULT_USAGE_INVALID', 'usage.model_digest is malformed');
+  if (usage.ollama_version !== undefined && usage.ollama_version !== null && (typeof usage.ollama_version !== 'string' || usage.ollama_version.length > 64)) return fail('RESULT_USAGE_INVALID', 'usage.ollama_version is malformed');
+  return { ok: true, metered: true, code: null, reason: null };
+}
+
+// The receipt's metering block: the counters as the node committed them, the
+// model and digest the adapter bound to that execution, and who ran it. Null
+// when the output carries no counters (the receipt then simply has no block).
+export function meteringBlock({ task, lease = null, node = null } = {}) {
+  const output = isObject(task?.output) ? task.output : null;
+  const usage = output && isObject(output.usage) ? output.usage : null;
+  if (!usage || !usageCounters(usage).length) return null;
+  const counter = (key) => (Number.isSafeInteger(usage[key]) ? usage[key] : null);
+  return {
+    prompt_eval_count: counter('prompt_eval_count'),
+    prompt_eval_cached_count: counter('prompt_eval_cached_count'),
+    eval_count: counter('eval_count'),
+    total_duration_ns: counter('total_duration_ns'),
+    load_duration_ns: counter('load_duration_ns'),
+    prompt_eval_duration_ns: counter('prompt_eval_duration_ns'),
+    eval_duration_ns: counter('eval_duration_ns'),
+    model: output.model == null ? null : String(output.model),
+    model_digest: usage.model_digest == null ? null : String(usage.model_digest),
+    runtime_version: usage.ollama_version == null ? (usage.runtime_version == null ? null : String(usage.runtime_version)) : String(usage.ollama_version),
+    node_id: lease?.node_id ?? node?.id ?? null,
+    node_key_fingerprint: node?.key_fingerprint ?? null,
+    hardware_mode: node?.inventory?.runtime?.hardware_mode ?? null,
+    attempt: lease?.attempt ?? null,
+    duration_ms: durationMs(lease)
+  };
+}
+
 export function validateJobSubmission(body, { canonicalOrg = null } = {}) {
   if (!isObject(body)) throw httpError('Job submission must be a JSON object', 400, 'JOB_INVALID');
   const requested = body.org_id == null ? null : String(body.org_id);
@@ -127,8 +211,13 @@ export function validateJobSubmission(body, { canonicalOrg = null } = {}) {
   const client = isObject(body.client)
     ? { name: text(body.client.name, 80) || 'unknown', version: text(body.client.version, 40) || null, contract: JOB_CONTRACT }
     : { name: 'unknown', version: null, contract: JOB_CONTRACT };
+  // The contribution account that pays for the job (COMPUTE-CONTRIBUTION-LEDGER.md).
+  // Optional; it only matters when CORE_CONTRIBUTION_LEDGER_ENABLED=1.
+  const accountId = body.account_id == null || body.account_id === '' ? null : String(body.account_id);
+  if (accountId && !ACCOUNT_ID.test(accountId)) throw httpError('account_id is invalid', 400, 'JOB_INVALID');
   return {
     org_id: orgId,
+    account_id: accountId,
     capability: body.capability,
     implementation,
     input,
@@ -388,6 +477,9 @@ export function buildReceipt({ task, leases = [], node = null, attestation = nul
     // with attestations from at least two distinct enrolled nodes; none exists
     // here, so the honest report is single-device.
     inference: { mode: 'single-device', devices: lease ? [lease.node_id] : [], group: null },
+    // Optional (mccluster-job-receipt/1 is open to additive members): the raw
+    // counters of the completing attempt, or null when the output has none.
+    metering: done ? meteringBlock({ task, lease, node }) : null,
     node_attestation: attestationView,
     signature: null
   };

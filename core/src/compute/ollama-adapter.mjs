@@ -199,6 +199,11 @@ async function execute(body, queuedAt, callerSignal) {
       code: 'OLLAMA_UPSTREAM_ERROR'
     });
   }
+  // Metering (COMPUTE-CONTRIBUTION-LEDGER.md): the digest of the model that
+  // served this execution and the daemon's version, read from the same runtime
+  // right after the generation and returned with the result, not from a
+  // separate probe. Null when the daemon cannot say; never a failure.
+  const runtime = await runtimeEvidence(usedModel);
 
   return {
     model: usedModel,
@@ -212,8 +217,23 @@ async function execute(body, queuedAt, callerSignal) {
     thinking_chars: String(data?.message?.thinking || '').length,
     images_in: imagesIn,
     queue_wait_ms: queueWaitMs,
-    usage: inferenceUsage(data),
+    usage: { ...inferenceUsage(data), model_digest: runtime.model_digest, ollama_version: runtime.ollama_version },
   };
+}
+
+async function readVersion() {
+  try {
+    const response = await fetch(`${OLLAMA}/api/version`, { signal: AbortSignal.timeout(3000) });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data?.version ? String(data.version).slice(0, 64) : null;
+  } catch { return null; }
+}
+
+async function runtimeEvidence(model) {
+  const [{ tags }, version] = await Promise.all([readTags(), readVersion()]);
+  const installed = tags?.models?.find(item => modelMatches(item, model));
+  return { model_digest: installed?.digest ? String(installed.digest) : null, ollama_version: version };
 }
 
 function pump() {

@@ -114,6 +114,7 @@ hash. The receipt is the admin app's evidence and is designed to be verified off
   "execution": { "lease_id": "…", "attempt": 1, "status": "done", "node_id": "node_…", "node_key_fingerprint": "…", "node_display_name": "…", "hardware_mode": "gpu-verified", "platform": "win32", "started_at": "…", "completed_at": "…", "duration_ms": 1234, "result_consistent": true },
   "node_public_key_pem": "-----BEGIN PUBLIC KEY-----…",
   "inference": { "mode": "single-device", "devices": ["node_…"], "group": null },
+  "metering": { "prompt_eval_count": 100, "prompt_eval_cached_count": 20, "eval_count": 50, "total_duration_ns": 3000000000, "load_duration_ns": 1000000000, "prompt_eval_duration_ns": 500000000, "eval_duration_ns": 1000000000, "model": "qwen3:8b", "model_digest": "sha256:…", "runtime_version": "0.6.0", "node_id": "node_…", "node_key_fingerprint": "…", "hardware_mode": "gpu-verified", "attempt": 1, "duration_ms": 3000 },
   "node_attestation": { "schema": "mccluster-completion-attestation/1", "lease_id": "…", "node_id": "node_…", "attempt": 1, "protocol": "mccluster-compute/1", "method": "POST", "path": "/v1/compute/leases/…/complete", "signed_at": "…", "nonce": "…", "body_digest": "…", "signature": "…", "result_sha256": "…", "matches_output": true, "verified": true, "verification_note": null },
   "signed": true,
   "signature": { "alg": "ed25519", "key_id": "…", "value": "…", "covers": "canonical JSON of this receipt with signature set to null and without the signed flag" }
@@ -138,6 +139,55 @@ Verification, in the client:
 5. `inference.mode` is `single-device` for every receipt this slice can issue. One lease is one device. The value
    `shared-inference` is reserved for a future group receipt that carries completion attestations from at least two
    distinct enrolled nodes; the code never reports it from a single lease, whatever a manifest advertises.
+
+### Metering block (optional member of `mccluster-job-receipt/1`)
+
+The receipt schema is open to additive members, so `metering` is added to `/1` and the verifier is unchanged: it is
+covered by the Core signature like every other member, and a client that does not know it ignores it. It is `null` for a
+failed or canceled receipt and for a done job whose output carries no counters (the fixture executor, a non-Ollama
+adapter). Otherwise it is the raw Ollama counters of the completing attempt exactly as the node committed them in
+`output.usage`, never summed into one number, plus the model and digest bound to that execution and who ran it:
+`prompt_eval_count`, `prompt_eval_cached_count`, `eval_count`, `total_duration_ns`, `load_duration_ns`,
+`prompt_eval_duration_ns`, `eval_duration_ns` (nanoseconds), `model` (as served), `model_digest`, `runtime_version`
+(`usage.ollama_version`), `node_id`, `node_key_fingerprint`, `hardware_mode`, lease `attempt`, and the lease's wall-clock
+`duration_ms`. `meteringBlock()` in `core/src/compute/jobs.mjs` is the reference. The Ollama adapter
+(`core/src/compute/ollama-adapter.mjs`) returns `model_digest` and `ollama_version` inside `usage` on every `/execute`
+response, read from the same daemon right after the generation, not from a separate probe; both are `null` when the daemon
+cannot say. `docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md` is the contract this block serves.
+
+**Validation at completion (only with the ledger on, only for a reserved task).** With
+`CORE_CONTRIBUTION_LEDGER_ENABLED` unset the `complete` route is exactly as it was before the ledger: `result.usage` is
+not read and nothing is refused, so a real Ollama result (its `prompt_eval_cached_count` is always `null`, and a zero
+counter is omitted) is committed as always. With `CORE_CONTRIBUTION_LEDGER_ENABLED=1`, before `compute_complete_lease`
+commits an `ai.*` result for a task that holds an OPEN contribution reservation, the gateway validates `result.usage`
+(`validateCompletion()` in `jobs-service.mjs`, `validateResultUsage()` in `jobs.mjs`): counters must be present
+(`422 RESULT_USAGE_MISSING`); each present counter must be a non-negative safe integer and one the runtime did not report
+(absent or `null`) counts as 0; `prompt_eval_cached_count <= prompt_eval_count`; `eval_duration_ns > 0` when tokens were
+generated; and the counts must be inside the task's own caps and the model class the reservation pinned
+(`eval_count <= min(max_eval_count, max(16, input.num_predict))`, `prompt_eval_count <= min(max_prompt_eval_count,
+max(2048, input.num_ctx))`; the conservative defaults `eval_count <= 32768`, `prompt_eval_count <= 131072`, durations
+under a day when no class is readable). A refusal answers `422 RESULT_USAGE_INVALID` (malformed) or
+`422 RESULT_USAGE_OUT_OF_BOUNDS`, commits nothing, and leaves the lease as it was. Tasks with no open reservation and
+non-`ai.*` capabilities are not checked, and a ledger read that fails never blocks a completion: the settle enforces the
+same bounds.
+
+**Contribution ledger at submission (off by default).** With `CORE_CONTRIBUTION_LEDGER_ENABLED=1`, `POST /v1/compute/jobs`
+takes an optional `account_id` (the paying contribution account; else the owner actor, else
+`CORE_CONTRIBUTION_DEFAULT_ACCOUNT`) and records it as `metadata.contribution.account_id`. The task is enqueued HELD:
+its `run_after` is the constant `9999-12-31T00:00:00.000Z`, which no claim reaches, and the submitter's own `run_after`
+travels in `metadata.contribution.run_after`. The Core then reserves the task's max units through
+`compute_ledger_reserve` (pinning the model class and its `unit_version`) and only after that lifts the hold, so the
+job view's `run_after` is the submitter's (or the time of acceptance) once the submission has answered. A refusal
+(`409` with the ledger's code: `OVER_BUDGET`, `QUOTA_RESERVATIONS`, `QUOTA_QUEUE`, `ACCOUNT_FROZEN`, `ACCOUNT_UNKNOWN`,
+`UNIT_VERSION_STALE`, `MODEL_CLASS_UNKNOWN`, `LEDGER_CLASS_UNKNOWN`; `400 LEDGER_ACCOUNT_REQUIRED` when nobody pays)
+cancels the held task. A ledger call that fails outright answers `503 LEDGER_RESERVE_FAILED` or
+`503 LEDGER_ACTIVATE_FAILED` (both retryable): the task stays held and does not run; retrying with the same
+`Idempotency-Key` reserves it and lifts the hold, and without a retry the scheduler's sweep cancels it. A replay of a
+submission whose reservation was refused answers `409 LEDGER_RESERVATION_REFUSED` with `job_status`, never an ok
+response carrying a canceled job. The scheduler settles on an accepted completion and releases on a terminal failure,
+a cancel or an expired reservation, durably (a periodic sweep on the active scheduler); nodes never call the ledger.
+With the variable unset none of this runs, the task is enqueued with the submitter's `run_after` as before, and the
+metadata is unchanged.
 
 The receipt key is `CORE_RECEIPT_SIGNING_KEY` on the Core (an Ed25519 PKCS#8 PEM, single-line with `\n` accepted).
 Without it receipts are issued with `signed: false` and `signature: null`, and say so; a malformed key fails loudly.
@@ -175,6 +225,10 @@ canonicalises to `{"a":[true,null,"é\n\"",{"b":1e+21,"c":0,"d":0.1}],"m":{"x":"
 | `JOB_NOT_FOUND` | 404 | unknown id, or another organization's job |
 | `JOB_NOT_DONE`, `JOB_NOT_TERMINAL` | 409 | result or receipt asked too early; `job_status` says where it is |
 | `SCHEDULER_STANDBY` | 503, retryable | this Core instance is not the active scheduler; `active_holder` names the live one (`DEVICE-JOBS-SCHEDULER-STANDBY.md`) |
+| `RESULT_USAGE_INVALID`, `RESULT_USAGE_OUT_OF_BOUNDS`, `RESULT_USAGE_MISSING` | 422 (node side, on `complete`) | only with `CORE_CONTRIBUTION_LEDGER_ENABLED=1` and only for a task holding an open reservation: an `ai.*` result's `usage` counters are malformed, outside the task's caps or the class bounds, or absent; nothing was committed |
+| `LEDGER_ACCOUNT_REQUIRED`, `OVER_BUDGET`, `QUOTA_RESERVATIONS`, `QUOTA_QUEUE`, `ACCOUNT_FROZEN`, `ACCOUNT_UNKNOWN`, `UNIT_VERSION_STALE`, `MODEL_CLASS_UNKNOWN`, `LEDGER_CLASS_UNKNOWN` | 400 / 409 | only with `CORE_CONTRIBUTION_LEDGER_ENABLED=1`: the contribution ledger refused the submission's reservation; the held task was canceled (`COMPUTE-CONTRIBUTION-LEDGER.md`) |
+| `LEDGER_RESERVATION_REFUSED` | 409 | only with the ledger on: a replay of a submission whose reservation was refused (its task is canceled, `job_status` says so); submit again under a new `Idempotency-Key` |
+| `LEDGER_RESERVE_FAILED`, `LEDGER_ACTIVATE_FAILED` | 503, retryable | only with the ledger on: the ledger could not be reached; the task is held and does not run. Retry with the same `Idempotency-Key` |
 
 ## Staging proof
 
