@@ -672,3 +672,253 @@ test('each stage page carries its view marker on <html> only, with js/shell-boot
   }
   assert.doesNotMatch(read('index.html'), /data-music-view/, 'the front page is never a view (hard rule 3)');
 });
+
+/* ---------- ENGINE STAGE 0, THE REVIEW'S FINDINGS (2026-11-24) ---------- */
+/* What the stage 0 review found in M5's history, views and sign-in, held here in Node; the browser half is in
+   scripts/e2e/music-shell.e2e.mjs (the scenarios named after the same findings). Three small stand-ins: a session
+   history (entries with their address and state, Back and Forward that move the address and fire popstate, every
+   page load asked for recorded and never made), a clock moved by hand, and a view's window. */
+function session(win, entries, at) {
+  const h = { entries: entries.map((e) => ({ url: new URL(e.url, HOUSE).href, state: e.state ?? null })), at, loads: [], reloads: 0 };
+  const loc = { protocol: 'https:', hostname: 'matthew.mccluster.org', origin: HOUSE, now: '' };
+  Object.defineProperties(loc, {
+    href: { get() { return loc.now; }, set(v) { h.loads.push(['push', new URL(v, loc.now).href]); }, enumerable: true },
+    pathname: { get() { return new URL(loc.now).pathname; }, enumerable: true },
+    search: { get() { return new URL(loc.now).search; }, enumerable: true },
+    hash: { get() { return new URL(loc.now).hash; }, enumerable: true }
+  });
+  loc.replace = (v) => { h.loads.push(['replace', new URL(v, loc.now).href]); };
+  loc.assign = (v) => { h.loads.push(['push', new URL(v, loc.now).href]); };
+  loc.reload = () => { h.reloads++; };
+  win.location = loc;
+  const copy = (s) => (s == null ? null : JSON.parse(JSON.stringify(s)));
+  const sync = () => { loc.now = h.entries[h.at].url; win.history.state = copy(h.entries[h.at].state); };
+  const to = (u) => new URL(u == null || u === '' ? loc.now : u, loc.now).href;
+  win.history.pushState = (s, t, u) => { h.entries.splice(h.at + 1); h.entries.push({ url: to(u), state: copy(s) }); h.at++; sync(); };
+  win.history.replaceState = (s, t, u) => { h.entries[h.at] = { url: to(u), state: copy(s) }; sync(); };
+  Object.defineProperty(win.history, 'length', { get: () => h.entries.length, configurable: true });
+  h.go = (d) => { h.at += d; sync(); (win.__listeners.popstate || []).forEach((f) => f({ state: win.history.state })); };
+  h.back = () => h.go(-1);
+  h.forward = () => h.go(1);
+  h.here = () => loc.now.replace(HOUSE, '');
+  /* a navigation inside the view's frame that adds an entry of its own (the joint session history: the top keeps its
+     address and state, the entry is the frame's) */
+  h.frameEntry = () => { h.entries.splice(h.at + 1); h.entries.push({ ...h.entries[h.at], state: copy(h.entries[h.at].state) }); h.at++; };
+  sync();
+  return h;
+}
+function clock(win) {
+  let now = 0, seq = 0;
+  const due = [];
+  win.setTimeout = (fn, ms) => { const id = ++seq; due.push({ id, fn, at: now + (Number(ms) || 0) }); return id; };
+  win.clearTimeout = (id) => { const i = due.findIndex((t) => t.id === id); if (i >= 0) due.splice(i, 1); };
+  return {
+    advance(ms) {
+      const end = now + ms;
+      for (;;) {
+        due.sort((a, b) => a.at - b.at || a.id - b.id);
+        if (!due.length || due[0].at > end) break;
+        const t = due.shift(); now = t.at; t.fn();
+      }
+      now = end;
+    }
+  };
+}
+/* a retained page with its session history and clock; frames() lists every view frame the shell has made */
+function retained({ path, search = '', marker, entries, at, extra = {} }) {
+  const win = browserWindow({ path, search, marker, extra: { ...OBSERVER, scrollTo: (x, y) => { win.__scrolled = y; }, ...extra } });
+  const t = clock(win);
+  const h = session(win, entries || [{ url: path + search, state: null }], at == null ? (entries ? entries.length - 1 : 0) : at);
+  run('js/music-shell.js', win);
+  const frames = () => (win.__appended[0] ? win.__appended[0].children.filter((c) => typeof c.src === 'string') : []);
+  return { win, S: win.MCC_MUSIC_SHELL, t, h, frames };
+}
+/* the view document in a frame the shell made, adopted and painted (its own window: scroll, history, listeners) */
+function adoptIn(top, frame, path, search, marker) {
+  const view = browserWindow({ path, search, marker, top: false, parent: top, frameElement: frame,
+    extra: { requestAnimationFrame: (fn) => { fn(); return 1; }, scrollTo: (x, y) => { view.__scrolledTo = y; view.scrollY = y; } } });
+  const api = top.MCC_MUSIC_SHELL.adopt(view);
+  return { view, api };
+}
+const ART = HOUSE + '/music-creator.html?handle=probe-artist', LISTEN = HOUSE + '/listen.html';
+
+/* JRN-1 (blocker): the entries one retained document pushed share its document state. A reload at a view's address, or
+   a return to it from a page out of music, makes a new retained document that inherits them, so Back to the first
+   document's own entry is a pop inside the new one. That entry names no view, nothing is shown, and the shell stayed:
+   the artist page on screen at Listen's address, its head and its bar. Release 1 showed Listen there. */
+test('JRN-1: Back onto an entry another document wrote shows the page at that address (a view), never the retained page under it', () => {
+  /* Listen, then an artist card (a view), then a reload there: the artist page is the retained document */
+  const r = retained({ path: '/music-creator.html', search: '?handle=probe-artist', marker: 'artist', entries: [
+    { url: '/listen.html', state: { mccMusicShell: { top: true, scroll: 268 } } },
+    { url: '/music-creator.html?handle=probe-artist', state: { mccMusicView: { href: ART, from: LISTEN, scroll: 0 } } }] });
+  assert.ok(r.S.active(), 'the artist page is the retained document');
+  assert.ok(r.h.entries[1].state.mccMusicShell && !r.h.entries[1].state.mccMusicView, 'its own entry names no view any more (as before)');
+  r.h.back();
+  assert.equal(r.h.here(), '/listen.html');
+  assert.deepEqual(r.frames().map((f) => f.src), [LISTEN], 'Back to Listen\'s address shows Listen: a view of it over the artist page');
+  assert.equal(r.h.entries.length, 2, 'Back writes no entry of its own');
+  assert.deepEqual(r.h.entries[0].state, { mccMusicView: { href: LISTEN, from: ART, scroll: 268 } },
+    'the entry now names the view it shows, from the page shown before, at Listen\'s own scroll');
+  assert.equal(r.h.reloads + r.h.loads.length, 0, 'and no page load');
+  const listen = adoptIn(r.win, r.frames()[0], '/listen.html', '', 'listen');
+  assert.ok(listen.api, 'the view at that address is adopted');
+  assert.equal(r.S.view(), LISTEN, 'Listen is shown');
+  assert.equal(listen.api.referrer, ART, 'its referrer is the page shown before the Back');
+  /* Forward: the artist page's own entry reveals it */
+  r.h.forward();
+  assert.equal(r.S.view(), null, 'Forward to the artist page\'s own entry reveals it');
+  /* and Back again: the entry now names Listen's view, which is built again */
+  r.h.back();
+  assert.equal(r.frames().filter((f) => f.src === LISTEN).length, 2, 'Back again builds Listen\'s view from its entry');
+});
+test('JRN-1: an entry another document wrote at an address this document cannot show is a page load of that address', () => {
+  /* a stand-in for an entry no music view can show (a page out of music): the browser would have loaded it */
+  const r = retained({ path: '/listen.html', marker: 'listen', entries: [
+    { url: '/creator.html', state: { mccMusicShell: { top: true, scroll: 0 } } },
+    { url: '/listen.html', state: null }] });
+  r.h.back();
+  assert.equal(r.h.reloads, 1, 'the page at that address is loaded (location.reload())');
+  assert.equal(r.frames().length, 0, 'never a view of it');
+});
+test('JRN-1: an entry naming a view of the retained page itself reveals the retained page (never the page in a frame over itself)', () => {
+  /* written by an artist page that showed Listen as a view; Listen, reloaded later, is the retained document now */
+  const r = retained({ path: '/listen.html', marker: 'listen', entries: [
+    { url: '/listen.html', state: { mccMusicView: { href: LISTEN, from: ART, scroll: 0 } } },
+    { url: '/music-creator.html?handle=probe-artist', state: { mccMusicShell: { top: true, scroll: 0 } } },
+    { url: '/listen.html', state: null }] });
+  r.h.back();
+  assert.deepEqual(r.frames().map((f) => f.src), [ART], 'Back to the artist page\'s address shows it as a view over Listen');
+  adoptIn(r.win, r.frames()[0], '/music-creator.html', '?handle=probe-artist', 'artist');
+  assert.equal(r.S.view(), ART);
+  r.h.back();
+  assert.equal(r.frames().filter((f) => f.src === LISTEN).length, 0, 'no Listen view over the retained Listen');
+  assert.equal(r.S.view(), null, 'the retained Listen is revealed');
+});
+
+/* JRN-2 (blocker): music-creator.html loads neither js/listen-ledger.js nor js/pip.js, and the engine counts and banks
+   through the retained window's MCC_LISTENS and MCC_POCKET, so a catalogue song chosen in Listen over an artist page was
+   never counted and never banked. SPEC-M5 3.3: the shell loads both into an artist-page retained document. */
+test('JRN-2: the first Listen view over an artist page loads the listen ledger and the pocket into it, once, after its own load', () => {
+  const r = retained({ path: '/music-creator.html', search: '?handle=probe-artist', marker: 'artist' });
+  const scripts = () => r.win.document.head.appended.filter((n) => /(^|\/)js\//.test(String(n.src || ''))).map((n) => String(n.src).replace(/^.*?(?=js\/)/, ''));
+  assert.equal(r.S.navigate('listen.html'), true, 'the artist page opens Listen as a view');
+  r.t.advance(0);
+  assert.deepEqual(scripts(), ['js/listen-ledger.js?v=__STAMP__', 'js/pip.js?v=__STAMP__'], 'the ledger, then the pocket, the same files Listen loads');
+  r.S.navigate('music-creator.html?handle=probe-artist');   /* back to the artist page (a reveal) */
+  r.S.navigate('listen.html'); r.t.advance(0);
+  assert.equal(scripts().length, 2, 'once per document');
+  /* only a Listen view needs them: an artist view over an artist page plays the artists\' own releases */
+  const a = retained({ path: '/music-creator.html', search: '?handle=probe-artist', marker: 'artist' });
+  a.S.navigate('music-creator.html?handle=second-artist'); a.t.advance(0);
+  assert.equal(a.win.document.head.appended.filter((n) => /listen-ledger|pip\.js/.test(String(n.src || ''))).length, 0, 'not for an artist view');
+  /* Listen carries both itself */
+  const l = retained({ path: '/listen.html', marker: 'listen' });
+  l.S.navigate('music-creator.html?handle=probe-artist'); l.t.advance(0);
+  assert.equal(l.win.document.head.appended.filter((n) => /listen-ledger|pip\.js/.test(String(n.src || ''))).length, 0, 'never on Listen');
+  /* still loading: they wait for the page's own DOMContentLoaded work (the engine's restore() runs there, so the
+     pocket arriving holds nothing the artist page did not hold before) */
+  const early = retained({ path: '/music-creator.html', search: '?handle=probe-artist', marker: 'artist' });
+  early.win.document.readyState = 'loading';
+  early.S.navigate('listen.html'); early.t.advance(10);
+  assert.equal(early.win.document.head.appended.filter((n) => /listen-ledger|pip\.js/.test(String(n.src || ''))).length, 0, 'not before the page has loaded');
+  early.win.document.readyState = 'interactive';
+  (early.win.__docListeners.DOMContentLoaded || []).forEach((f) => f());
+  early.t.advance(0);
+  assert.equal(early.win.document.head.appended.filter((n) => /listen-ledger|pip\.js/.test(String(n.src || ''))).length, 2, 'then both');
+});
+
+/* JRN-4 (major): the chip stays on screen over the account view; a second tap made an account view whose next was the
+   account page itself, which account.html refuses, so the password sign-in went on to the World as a page load */
+test('JRN-4: the Sign in chip tapped again over the sign-in view keeps that view; its way back stays the page under it', () => {
+  const { core } = shell();
+  const top = { kind: 'listen', url: '/listen.html' };
+  const over = core.decide('account.html', 'top', top, core.ROUTES, HOUSE + '/account.html?next=%2Flisten.html');
+  assert.equal(over.action, 'scroll', 'the sign-in view is the page shown: it goes to its top, no second account view');
+  assert.equal(new URL(over.url).searchParams.get('next'), '/listen.html', 'and never names the account page as the way back');
+  const settings = core.decide('account.html', 'top', top, core.ROUTES, HOUSE + '/account.html?stay=1');
+  assert.equal(settings.action, 'view');
+  assert.equal(new URL(settings.url).searchParams.get('next'), '/listen.html', 'over the settings view, the way back is the retained page');
+  /* the chip itself, on the retained Listen with the sign-in view shown */
+  const r = retained({ path: '/listen.html', marker: 'listen' });
+  r.S.navigate('account.html');
+  assert.equal(r.h.here(), '/account.html?next=%2Flisten.html');
+  adoptIn(r.win, r.frames()[0], '/account.html', '?next=%2Flisten.html', 'account');
+  const chip = { href: HOUSE + '/account.html', target: '', hasAttribute: () => false, closest(sel) { return sel === 'a[href]' ? this : null; } };
+  const e = tap(chip);
+  (r.win.__docListeners.click || [])[0](e);
+  assert.equal(e.prevented, 1, 'the shell takes the tap');
+  assert.equal(r.h.entries.length, 2, 'no entry written');
+  assert.equal(r.frames().length, 1, 'no second account view');
+  assert.equal(r.h.here(), '/account.html?next=%2Flisten.html', 'the address keeps the way back to Listen');
+});
+
+/* MSL-1 (major): a second open before the first view painted (a double tap; another link while one is opening) pushed a
+   second entry and made a second frame (a second page_view) */
+test('MSL-1: a view asked for again while it opens is the same view: one frame, one entry, one Back to Listen', () => {
+  const r = retained({ path: '/listen.html', marker: 'listen' });
+  r.S.navigate('music-creator.html?handle=probe-artist');
+  r.S.navigate('music-creator.html?handle=probe-artist');   /* a double tap, 60 ms later */
+  assert.equal(r.frames().length, 1, 'one frame (one document, one page_view)');
+  assert.deepEqual(r.h.entries.map((e) => e.url.replace(HOUSE, '')), ['/listen.html', '/music-creator.html?handle=probe-artist'], 'one entry for it');
+  assert.deepEqual(r.h.entries[0].state, { mccMusicShell: { top: true, scroll: 0 } }, 'Listen\'s entry keeps its own scroll');
+  r.h.back();
+  assert.equal(r.h.here(), '/listen.html', 'one Back is Listen');
+});
+test('MSL-1: another view asked for while one still opens takes its entry: Back is the page the person saw, never the one they skipped', () => {
+  const r = retained({ path: '/listen.html', marker: 'listen' });
+  r.S.navigate('music-creator.html?handle=probe-artist');
+  r.S.navigate('music-creator.html?handle=second-artist');
+  assert.deepEqual(r.h.entries.map((e) => e.url.replace(HOUSE, '')), ['/listen.html', '/music-creator.html?handle=second-artist'],
+    'the second artist\'s entry replaced the first\'s, which never showed');
+  assert.equal(r.h.entries[1].state.mccMusicView.from, LISTEN, 'its referrer is the page shown, Listen');
+  assert.deepEqual(r.h.entries[0].state, { mccMusicShell: { top: true, scroll: 0 } }, 'Listen\'s entry untouched by the second open');
+  adoptIn(r.win, r.frames()[1], '/music-creator.html', '?handle=second-artist', 'artist');
+  r.h.back();
+  assert.equal(r.h.here(), '/listen.html');
+  assert.equal(r.S.view(), null, 'one Back reveals Listen');
+});
+
+/* JRN-5 (minor): a view's scroll reached its entry only when another entry was written, so a view left by Back came back
+   at the top on Forward */
+test('JRN-5: a view\'s scroll is kept on its own entry as it changes, so Forward after Back finds it; and the retained page\'s too', () => {
+  const r = retained({ path: '/listen.html', marker: 'listen' });
+  r.S.navigate('music-creator.html?handle=probe-artist');
+  const a = adoptIn(r.win, r.frames()[0], '/music-creator.html', '?handle=probe-artist', 'artist');
+  a.view.scrollY = 305;
+  (a.view.__listeners.scroll || []).forEach((f) => f({}));
+  r.t.advance(1000);
+  assert.equal(r.h.entries[1].state.mccMusicView.scroll, 305, 'the view\'s entry holds where it was scrolled to');
+  r.h.back();
+  assert.equal(r.S.view(), null, 'Back reveals Listen');
+  r.win.scrollY = 480;
+  (r.win.__listeners.scroll || []).forEach((f) => f({}));
+  r.t.advance(1000);
+  assert.equal(r.h.entries[0].state.mccMusicShell.scroll, 480, 'Listen\'s entry holds its scroll too, once a view has been shown over it');
+  r.h.forward();
+  const again = adoptIn(r.win, r.frames()[1], '/music-creator.html', '?handle=probe-artist', 'artist');
+  assert.equal(again.view.__scrolledTo, 305, 'Forward builds the view again at its scroll');
+  r.h.back();
+  assert.equal(r.win.__scrolled, 480, 'and Back reveals Listen at its own');
+});
+
+/* JRN-6 (minor): a script navigation inside a view (Listen's search Enter: location.href in the frame) adds the frame's
+   own entry before the shell stops it; routed as a page load of the top it pushed one more, so one Back did nothing */
+test('JRN-6: a script navigation in a view that added the frame\'s own entry, routed to a page load of the top, replaces that entry', () => {
+  const r = retained({ path: '/music-creator.html', search: '?handle=probe-artist', marker: 'artist' });
+  r.S.navigate('listen.html'); r.t.advance(0);
+  const l = adoptIn(r.win, r.frames()[0], '/listen.html', '', 'listen');
+  assert.ok(l.api);
+  r.h.frameEntry();   /* the frame's location.href = album.html?... */
+  const stray = browserWindow({ path: '/album.html', search: '?album=here&t=Lightroom', top: false, parent: r.win, frameElement: r.frames()[0] });
+  r.S.unexpected(stray);
+  r.t.advance(0);
+  assert.deepEqual(r.h.loads, [['replace', HOUSE + '/album.html?album=here&t=Lightroom']], 'the album loads in the frame entry\'s place: one navigation, one entry');
+  /* a frame that replaced its own entry (account.html's way on, location.replace) adds none: the top's load is pushed, as before */
+  const p = retained({ path: '/listen.html', marker: 'listen' });
+  p.S.navigate('music-creator.html?handle=probe-artist');
+  adoptIn(p.win, p.frames()[0], '/music-creator.html', '?handle=probe-artist', 'artist');
+  const out = browserWindow({ path: '/index.html', top: false, parent: p.win, frameElement: p.frames()[0] });
+  p.S.unexpected(out);
+  p.t.advance(0);
+  assert.deepEqual(p.h.loads, [['push', HOUSE + '/index.html']], 'a navigation that added no entry is pushed (Back is the page the person was on)');
+});

@@ -93,7 +93,8 @@ async function setup({width=390,height=844,member=false,privacy=true,start='/lis
       if(p==='/v1/mnet/bootstrap')return json(r,{ok:true,profile:{display_name:'Shell member',onboarding_complete:true},identity:{mccluster_id:'shell-member'},needs_onboarding:false,next_step:null,stats:{}});
       if(/^\/v1\/music\/gates\/[^/]+\/play$/.test(p))return json(r,{error:'not in this suite'},403);
       if(/^\/v1\/music\/gates\//.test(p))return json(r,{ok:true,gate:signedIn(req)?{mode:'rule',allowed:true}:{mode:'rule',allowed:false,reason:'gate_not_ready'}});
-      if(/^\/v1\/music\/listens/.test(p))return json(r,{ok:true,id:'shell-listen'});
+      /* the ledger's start answers its listen id, so a finish can be counted (review JRN-2) */
+      if(/^\/v1\/music\/listens/.test(p))return json(r,{ok:true,id:'shell-listen',listen_id:'shell-listen'});
       if(p==='/v1/auth/handoff')return json(r,{token_hash:'shell-hash'});
       return json(r,{ok:true,threads:[],posts:[],events:[],missions:[],layers:[],features:[],sources:[],locations:[],rights:{}});
     }
@@ -1131,6 +1132,200 @@ await scenario('s23',async()=>{
   check('26. Listen repaints its offer as a guest\'s (Sign in)',await page.evaluate(()=>{const s=document.querySelector('[data-creator-offer] .music-launch__go[data-offer="signin"]');return !!s&&!s.hidden;}));
   const e=await engine(page);
   check('26. the song keeps playing on the same element',e.same&&!e.paused&&e.mark==='retained',e);
+  await context.close();
+});
+
+/* ---------- ENGINE STAGE 0, THE REVIEW'S FINDINGS (2026-11-24) ---------- */
+/* what is on screen: the address, the retained document's kind, the view shown (its own address) and the title */
+async function onScreen(page){return page.evaluate(()=>{const f=document.getElementById('mccMusicViewFrame');let view=null;try{if(f&&f.getAttribute('data-mcc-ready')==='1')view=f.contentWindow.location.pathname+f.contentWindow.location.search;}catch(e){view='unreadable';}return {path:location.pathname+location.search,top:document.documentElement.getAttribute('data-music-view'),view,title:document.title};}).catch(e=>({error:String(e).slice(0,120)}));}
+/* the page shown is Listen (the retained Listen with no view, or a Listen view), or this artist page */
+const showsListen=s=>!s.error&&s.path==='/listen.html'&&(s.view?s.view==='/listen.html':s.top==='listen')&&/^Listen/.test(s.title);
+const showsArtist=s=>!s.error&&s.path==='/music-creator.html?handle=probe-artist'&&(s.view?/handle=probe-artist$/.test(s.view):s.top==='artist')&&/Probe Artist/.test(s.title);
+await scenario('jrn1-back',async()=>{
+  /* JRN-1: Listen -> an artist card -> a reload there -> Back. The reload makes the artist page the retained document,
+     and Listen's entry is now its own: Back is a pop inside it. Release 1 showed Listen there (a page load). */
+  const {context,page,log}=await setup();
+  await playListen(page);await page.fill('#q','');
+  await page.waitForSelector('a.artist[href*="handle=probe-artist"]',{state:'visible',timeout:15000});
+  await page.locator('a.artist[href*="handle=probe-artist"]').first().click();
+  await waitView(page,/probe-artist/);
+  await page.reload({waitUntil:'load'});await page.waitForFunction(()=>/Probe Artist/.test(document.title),null,{timeout:10000}).catch(()=>{});
+  const r0=await onScreen(page);
+  check('JRN-1 a reload at the artist view\'s address: the artist page is the document there',showsArtist(r0)&&!r0.view,r0);
+  await page.goBack();await waitView(page,/\/listen\.html$/,6000).catch(()=>{});await sleep(600);
+  const r1=await onScreen(page);
+  check('JRN-1 then Back: Listen at /listen.html, never the artist page under Listen\'s address',showsListen(r1),r1);
+  await page.goForward();await settle(page,1000);
+  const r2=await onScreen(page);
+  check('JRN-1 and Forward: the artist page at its own address',showsArtist(r2)&&!r2.view,r2);
+  check('JRN-1 no page error',log.errors.length===0,log.errors);
+  await context.close();
+  /* Listen -> an artist card -> Creator Studio, a page out of music (a page load) -> Back -> Back */
+  const s=await setup();
+  await playListen(s.page);await s.page.fill('#q','');
+  await s.page.waitForSelector('a.artist[href*="handle=probe-artist"]',{state:'visible',timeout:15000});
+  await s.page.locator('a.artist[href*="handle=probe-artist"]').first().click();
+  const av=await waitView(s.page,/probe-artist/);
+  await av.locator('nav.music-contextbar__nav a[href="creator.html"]').first().click();
+  await s.page.waitForURL(/\/creator\.html$/,{timeout:10000});await s.page.waitForLoadState('load');await sleep(600);
+  await s.page.goBack();await s.page.waitForLoadState('load');await s.page.waitForFunction(()=>/Probe Artist/.test(document.title),null,{timeout:10000}).catch(()=>{});
+  const c1=await onScreen(s.page);
+  check('JRN-1 out of music (Creator Studio), then Back: the artist page',showsArtist(c1),c1);
+  await s.page.goBack();await waitView(s.page,/\/listen\.html$/,6000).catch(()=>{});await sleep(600);
+  const c2=await onScreen(s.page);
+  check('JRN-1 and Back again: Listen at /listen.html, never the artist page there',showsListen(c2),c2);
+  check('JRN-1 no page error on the way out and back',s.log.errors.length===0,s.log.errors);
+  await s.context.close();
+});
+await scenario('jrn2-ledger',async()=>{
+  /* JRN-2: a member, an artist page as the retained document, Listen over it from the context bar; a catalogue song
+     chosen there is counted (the listen ledger) and banked (the pocket), as on Listen itself */
+  const {context,page,log}=await setup({member:true,start:'/music-creator.html?handle=probe-artist'});
+  /* a record banked on this device: the artist page loaded on its own holds nothing, as before */
+  await page.evaluate(()=>localStorage.setItem('mcc-pocket',JSON.stringify({src:'assets/audio/lightroom.mp3',title:'Lightroom',album:'here',t:42,playing:false,at:Date.now()})));
+  await page.reload({waitUntil:'load'});await page.evaluate(()=>{window.__docMark='retained';});await sleep(1000);
+  const own=await page.evaluate(()=>({ledger:!!window.MCC_LISTENS,pocket:!!window.MCC_POCKET,current:!!(MCC_MUSIC.current&&MCC_MUSIC.current()),mini:(document.getElementById('musicMiniAlbum')||{}).textContent||''}));
+  check('JRN-2 an artist page on its own: no ledger, no pocket, nothing held (unchanged)',!own.ledger&&!own.pocket&&!own.current&&!/Pick up at/.test(own.mini),own);
+  await page.locator('a.music-contextbar__brand').click();
+  const v=await waitView(page,/listen\.html/);
+  const r0=log.requests.length;
+  await playListen(page,'Who Did The Shoot','here',v);
+  await sleep(1500);
+  await page.evaluate(()=>{MCC_MUSIC.audio.currentTime=Math.max(0,MCC_MUSIC.audio.duration-1);});
+  await page.waitForFunction(()=>MCC_MUSIC.current()&&MCC_MUSIC.current().title!=='Who Did The Shoot'&&!MCC_MUSIC.audio.paused,null,{timeout:15000}).catch(()=>{});
+  await sleep(3000);
+  const listens=log.requests.slice(r0).filter(q=>q.method==='POST'&&/\/v1\/music\/listens/.test(q.url)).map(q=>q.url.replace(/^https?:\/\/[^/]+/,''));
+  const top=await page.evaluate(()=>({ledger:!!window.MCC_LISTENS,pocket:!!window.MCC_POCKET,now:MCC_MUSIC.current()&&MCC_MUSIC.current().title,
+    saved:(()=>{try{return JSON.parse(localStorage.getItem('mcc-pocket')||'null');}catch(e){return null;}})(),mini:(document.getElementById('musicMiniAlbum')||{}).textContent||''}));
+  check('JRN-2 Listen over an artist page: the retained artist page has the listen ledger and the pocket',top.ledger&&top.pocket,top);
+  check('JRN-2 a catalogue song chosen there is counted: its start, its finish at its end, then the next song\'s start',
+    listens.filter(u=>u==='/v1/music/listens').length>=2&&listens.includes('/v1/music/listens/shell-listen/finish'),listens);
+  check('JRN-2 and banked: the pocket holds the song playing',!!top.saved&&!!top.now&&top.saved.title===top.now,{saved:top.saved&&top.saved.title,now:top.now});
+  check('JRN-2 the pocket, arriving under a song, held nothing by surprise',!/Pick up at/.test(top.mini),top.mini);
+  check('JRN-2 no page error',log.errors.length===0,log.errors);
+  await context.close();
+});
+await scenario('jrn3-hold',async()=>{
+  /* JRN-3: the held closing song's pop-up on Listen at the top: its way forward closes it, whoever takes the link (the
+     shell's account view for a guest, the World for a member). Found by the catalogue's hold flag, never named here. */
+  const held=async(where)=>{
+    await where.waitForSelector('#q',{timeout:15000});
+    await where.fill('#q','CIA Mind Control');
+    await where.waitForSelector('[data-music-play][data-album="cia-mind-control"]',{state:'visible',timeout:15000});
+    return where.evaluate(async()=>{const d=await (await fetch('data/albums.json')).json();const titles=d.albums.find(a=>a.slug==='cia-mind-control').tracks.filter(t=>t.hold).map(t=>t.title);
+      const b=[...document.querySelectorAll('[data-music-play][data-album="cia-mind-control"]')].find(x=>titles.includes(x.getAttribute('data-track')));if(b)b.id='heldPlay';return !!b;});
+  };
+  const g=await setup();
+  check('JRN-3 the held song is listed in Listen\'s search',await held(g.page));
+  await g.page.locator('#heldPlay').click();
+  await g.page.waitForFunction(()=>{const d=document.getElementById('mccHold');return !!d&&d.open;},null,{timeout:12000});
+  await g.page.locator('#mccHold .mcc-hold__go').click();
+  const av=await waitView(g.page,/account\.html/).catch(()=>null);await sleep(600);
+  const after=await g.page.evaluate(()=>{const d=document.getElementById('mccHold'),f=document.getElementById('mccMusicViewFrame');let hit=null;
+    if(f&&f.contentDocument){const e=f.contentDocument.getElementById('acInEmail');if(e){const r=f.getBoundingClientRect(),er=e.getBoundingClientRect();const el=document.elementFromPoint(r.left+er.left+er.width/2,r.top+er.top+er.height/2);hit=el?(el.id||el.tagName):null;}}
+    return {open:!!d&&d.open,path:location.pathname+location.search,hit};});
+  check('JRN-3 a guest\'s Sign in in the pop-up: the account view opens, the pop-up closed, the form within reach',!!av&&!after.open&&after.hit==='mccMusicViewFrame'&&/^\/account\.html\?next=/.test(after.path),after);
+  check('JRN-3 no page error',g.log.errors.length===0,g.log.errors);
+  await g.context.close();
+  const m=await setup({member:true});
+  await m.page.waitForFunction(()=>(document.querySelector('#mccAuthChip .mcc-auth-chip__text')||{}).textContent==='Profile',null,{timeout:12000}).catch(()=>{});
+  check('JRN-3 (a member) the held song is listed',await held(m.page));
+  await m.page.locator('#heldPlay').click();
+  await m.page.waitForFunction(()=>{const d=document.getElementById('mccHold');return !!d&&d.open;},null,{timeout:12000});
+  const go=await m.page.evaluate(()=>document.querySelector('#mccHold .mcc-hold__go').getAttribute('href'));
+  await m.page.locator('#mccHold .mcc-hold__go').click();
+  await m.page.waitForFunction(()=>window.MCC_WORLD_AUDIO&&MCC_WORLD_AUDIO.active(),null,{timeout:10000}).catch(()=>{});await sleep(800);
+  const w=await m.page.evaluate(()=>({open:!!(document.getElementById('mccHold')||{}).open,world:!!(window.MCC_WORLD_AUDIO&&MCC_WORLD_AUDIO.active())}));
+  check('JRN-3 a member\'s Complete your profile: the World opens, the pop-up closed under it',/view=profile/.test(go)&&w.world&&!w.open,{go,...w});
+  await m.context.close();
+});
+await scenario('jrn4-chip',async()=>{
+  /* JRN-4: the Sign in chip stays on screen over the sign-in view; tapped again it keeps that view and its way back */
+  const {context,page,log}=await setup();
+  await playListen(page);await markEngine(page);
+  await page.locator('#mccAuthChip').click();
+  await waitView(page,/account\.html/);await sleep(600);
+  const a=await page.evaluate(()=>({path:location.pathname+location.search,len:history.length}));
+  await page.locator('#mccAuthChip').click();await sleep(1500);
+  const b=await page.evaluate(()=>({path:location.pathname+location.search,len:history.length,frames:document.querySelectorAll('#mccMusicView .mcc-music-frame').length}));
+  check('JRN-4 the chip tapped again over the sign-in view: the same view, no new entry, never the account page as its own way back',
+    a.path==='/account.html?next=%2Flisten.html'&&b.path===a.path&&b.len===a.len&&b.frames===1,{a,b});
+  const v=await view(page);
+  await v.waitForSelector('#acInEmail',{timeout:10000});
+  await v.fill('#acInEmail','shell-fixture@invalid.test');await v.fill('#acInPass','fixture-password');await v.locator('#acGo').click();
+  await page.waitForFunction(()=>location.pathname==='/listen.html'&&!document.querySelector('#mccMusicViewFrame'),null,{timeout:15000}).catch(()=>{});await sleep(1200);
+  const e=await engine(page);
+  check('JRN-4 then the password sign-in: back on Listen, the same song playing (never the World as a page load)',e.mark==='retained'&&e.same&&!e.paused&&await path(page)==='/listen.html',{e,path:await path(page)});
+  check('JRN-4 no page error',log.errors.length===0,log.errors);
+  await context.close();
+});
+await scenario('msl1-double',async()=>{
+  /* MSL-1: a double tap on one artist link, 60 ms apart, before its view painted */
+  const {context,page,log}=await setup();
+  await playListen(page);await page.fill('#q','');
+  await page.waitForSelector('a.artist[href*="handle=probe-artist"]',{state:'visible',timeout:15000});
+  await sleep(3000);log.collect.length=0;
+  const len0=await page.evaluate(()=>history.length);
+  const link=page.locator('a.artist[href*="handle=probe-artist"]').first();
+  await link.click();await sleep(60);await link.click({force:true}).catch(()=>{});
+  await waitView(page,/probe-artist/);await sleep(3500);
+  const views=log.collect.filter(e=>e.name==='page_view'&&e.path==='music-creator.html');
+  const d=await page.evaluate(()=>({len:history.length,frames:document.querySelectorAll('#mccMusicView .mcc-music-frame').length}));
+  check('MSL-1 a double tap on an artist link: one view, one page_view, one history entry',views.length===1&&d.len===len0+1&&d.frames===1,{views:views.length,...d,len0});
+  await page.goBack();await settle(page,900);
+  check('MSL-1 and one Back is Listen',await path(page)==='/listen.html'&&await frames(page)===0,{path:await path(page),frames:await frames(page)});
+  await context.close();
+  /* artist A, then artist B while A still opens (its document held 1.5 s): Back is Listen, never A */
+  DELAY['/music-creator.html']=1500;
+  const s=await setup();
+  try{
+    await playListen(s.page);await s.page.fill('#q','');
+    await s.page.waitForSelector('a.artist[href*="handle=second-artist"]',{state:'visible',timeout:15000});
+    const l0=await s.page.evaluate(()=>history.length);
+    await s.page.locator('a.artist[href*="handle=probe-artist"]').first().click();await sleep(200);
+    await s.page.locator('a.artist[href*="handle=second-artist"]').first().click({force:true});
+    await waitView(s.page,/second-artist/,12000);await sleep(400);
+    delete DELAY['/music-creator.html'];
+    const b=await s.page.evaluate(()=>({len:history.length,path:location.pathname+location.search}));
+    check('MSL-1 another artist tapped while the first still opens: that view, and one history entry',b.len===l0+1&&b.path==='/music-creator.html?handle=second-artist',{...b,l0});
+    await s.page.goBack();await settle(s.page,1500);
+    check('MSL-1 and one Back is Listen, never the artist page that never showed',await path(s.page)==='/listen.html'&&await frames(s.page)===0,{path:await path(s.page),frames:await frames(s.page)});
+  }finally{delete DELAY['/music-creator.html'];await s.context.close();}
+});
+await scenario('jrn5-scroll',async()=>{
+  /* JRN-5: a view left by Back comes back on Forward where it was scrolled to */
+  const {context,page}=await setup();
+  await playListen(page);await page.fill('#q','');
+  await page.waitForSelector('a.artist[href*="handle=probe-artist"]',{state:'visible',timeout:15000});
+  await page.locator('a.artist[href*="handle=probe-artist"]').first().click();
+  const v=await waitView(page,/probe-artist/);await v.waitForSelector('#creatorArtist .ap-hero__line',{timeout:10000});await sleep(400);
+  const want=await v.evaluate(()=>{window.scrollTo(0,Math.min(305,document.documentElement.scrollHeight-innerHeight));return Math.round(scrollY);});
+  await sleep(1200);
+  await page.goBack();await settle(page,900);
+  await page.goForward();const v2=await waitView(page,/probe-artist/);await sleep(900);
+  const got=await v2.evaluate(()=>Math.round(scrollY));
+  check('JRN-5 a view left by Back comes back on Forward where it was scrolled to',want>=100&&Math.abs(got-want)<=2,{want,got});
+  await context.close();
+});
+await scenario('jrn6-search',async()=>{
+  /* JRN-6: Listen's search Enter in a Listen view over an artist page navigates the frame (location.href); the shell stops
+     it and loads the album in the top: one navigation, one entry */
+  const {context,page}=await setup({start:'/music-creator.html?handle=probe-artist'});
+  await page.waitForSelector('a.music-contextbar__brand');await page.locator('a.music-contextbar__brand').click();
+  const lv=await waitView(page,/listen\.html/);
+  await lv.waitForSelector('#q',{timeout:15000});
+  const len0=await page.evaluate(()=>history.length);
+  await lv.locator('#q').fill('Lightroom');await lv.waitForSelector('#all a.row',{state:'visible',timeout:15000});await sleep(300);
+  await lv.locator('#q').press('Enter');
+  await page.waitForURL(/album\.html/,{timeout:10000});await page.waitForLoadState('load');await sleep(600);
+  const len1=await page.evaluate(()=>history.length);
+  check('JRN-6 Listen\'s search Enter in a view: a page load of the album, one history entry for it',len1===len0+1,{len0,len1});
+  await page.goBack();await page.waitForLoadState('load');await sleep(1000);
+  const b1=await onScreen(page);
+  check('JRN-6 one Back: Listen at its address',showsListen(b1),b1);
+  await page.goBack();await waitView(page,/probe-artist/,6000).catch(()=>{});await sleep(800);
+  const b2=await onScreen(page);
+  check('JRN-6 the next Back: the artist page, never Listen a second time',showsArtist(b2),b2);
   await context.close();
 });
 }finally{

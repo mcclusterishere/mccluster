@@ -59,6 +59,7 @@
   var HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
   var WORLD_HOSTS = ["mccluster.org", "www.mccluster.org", "humanuprise.com", "www.humanuprise.com"];
   var OPEN_MS = 8000;
+  var KEEP_MS = 500;   /* a scroll is kept on its entry this long after the last scroll event (Safari allows 100 history writes in 30 s) */
 
   /* ---------- the core: plain decisions, no document needed (scripts/test/music-shell.test.mjs) ---------- */
   function url(href, base) { try { return new URL(href, base || root.location.href); } catch (e) { return null; } }
@@ -104,17 +105,35 @@
       return { action: "reveal", url: topU.href, t: kind === "album" ? String(u.searchParams.get("t") || "") : "" };
     if (kind && routes[kind] && routes[kind].view) {
       /* a sign-in link without next, opened from a music page, comes back to that page (a default for Matthew to
-         confirm; today the chip's sign-in lands on the World). Settings (stay=1) go nowhere after. */
-      if (kind === "account" && !u.searchParams.has("next") && !u.searchParams.has("stay")) u.searchParams.set("next", here.pathname + here.search);
+         confirm; today the chip's sign-in lands on the World). Settings (stay=1) go nowhere after. Over the account view
+         itself (the chip stays on screen over it) the way back is that view's own, or the retained page, never the
+         account page: account.html refuses it as next, so the sign-in went on to the World as a page load (review
+         JRN-4). When that is the address shown, it is the page shown. */
+      if (kind === "account" && !u.searchParams.has("next") && !u.searchParams.has("stay")) {
+        var back = kindOf(here) !== "account" ? here.pathname + here.search : here.searchParams.get("next") || (top && top.url) || "";
+        if (back) u.searchParams.set("next", back);
+        if (u.pathname === here.pathname && u.search === here.search) return { action: "scroll", url: u.href };
+      }
       return { action: "view", url: u.href, kind: kind };
     }
     return { action: "load", url: u.href };
   }
   function viewState(href, from, scroll) { return { mccMusicView: { href: String(href), from: String(from || ""), scroll: Number(scroll) || 0 } }; }
-  /* Back or Forward: build the view an entry names, keep the one shown, or reveal the retained page */
-  function popAction(state, shown) {
+  /* the same page, by what its address names (an artist by handle, Listen whatever its query) */
+  function samePage(a, b) {
+    var x = url(a), y = url(b), k = x && kindOf(x);
+    return !!(k && y && x.origin === y.origin && k === kindOf(y) && identity(x, k) === identity(y, k));
+  }
+  /* Back or Forward: build the view an entry names, keep the one shown, or reveal the retained page. One retained
+     document can inherit another's entries (the entries a document pushes share its document state, so a reload at a
+     view's address, or a return from a page out of music, makes a new retained document over the same entries): an
+     entry that names no view is this page's own only at this page's address. At any other it is the page at that
+     address ("route"), and an entry naming a view of this page itself is this page (review JRN-1). Called with the
+     state and the view shown only, it decides as before. */
+  function popAction(state, shown, here, top) {
     var v = state && state.mccMusicView;
-    if (v && v.href) return shown && sameAddress(v.href, shown) ? "stay" : "show";
+    if (v && v.href && !(top && samePage(v.href, top))) return shown && sameAddress(v.href, shown) ? "stay" : "show";
+    if (here && top && !samePage(here, top)) return "route";
     return shown ? "reveal" : "stay";
   }
   /* only the frame this shell made, at the address it asked for; or the view it shows, loading itself again */
@@ -173,7 +192,7 @@
     };
   }
   var core = Object.freeze({ ROUTES: ROUTES, ALLOW: ALLOW, kindOf: kindOf, decide: decide, retains: retains, viewState: viewState,
-    popAction: popAction, acceptable: acceptable, sameAddress: sameAddress, holdHead: holdHead });
+    popAction: popAction, acceptable: acceptable, sameAddress: sameAddress, samePage: samePage, holdHead: holdHead });
 
   /* ---------- the retained document ---------- */
   var here = url(root.location.href);
@@ -248,12 +267,13 @@
     if (d.action === "reveal") { reveal({ t: d.t, replace: opts.replace }); return true; }
     if (d.action === "scroll") { scrollShown(); return true; }
     if (d.action === "world" && root.MCC_WORLD_AUDIO && root.MCC_WORLD_AUDIO.navigate(d.url)) return true;
-    if (d.action === "world" || d.action === "load") { pageLoad(d.url); return true; }
+    if (d.action === "world" || d.action === "load") { pageLoad(d.url, opts.replaceTop); return true; }
     return false;
   }
-  /* a page load of the top document, carrying a member's sign-in to another of the houses as the bar does */
-  function pageLoad(href) {
-    var nav = root.MCC_BAR && root.MCC_BAR.navigation, leave = function (h) { root.location.href = h; };
+  /* a page load of the top document, carrying a member's sign-in to another of the houses as the bar does; in place of
+     the entry shown when that entry is a frame's own navigation the shell stopped (stray, below) */
+  function pageLoad(href, replace) {
+    var nav = root.MCC_BAR && root.MCC_BAR.navigation, leave = function (h) { if (replace) root.location.replace(h); else root.location.href = h; };
     if (nav && nav.handoff) nav.handoff(href).then(leave, function () { leave(href); });
     else leave(href);
   }
@@ -279,21 +299,29 @@
   function openView(href, opts) {
     opts = opts || {};
     var abs = url(href).href, from = opts.from || shownHref();
+    /* asked for again while it still opens (a double tap, the bar and a link at once): the same view, so no second
+       frame, entry or page_view (review MSL-1) */
+    if (pending && sameAddress(abs, pending.href)) return;
     ensureLayer();
     if (TOP.kind === "album") guestEngine();
-    if (pending) drop(pending);
-    if (opts.history !== "none") remember();
+    /* another view asked for while one still opens takes that one's entry, which was never shown (a browser leaves no
+       entry for a navigation it cancelled), and leaves the page shown its own entry and scroll (kept when the first
+       opened; the entry shown now is the opening view's) */
+    var write = opts.history !== "none", takeOver = false;
+    if (pending) { takeOver = write && pending.wrote; drop(pending); }
+    else if (write) remember();
+    if (kindOf(url(abs)) === "listen") listenExtras();
     var f = doc.createElement("iframe");
     f.id = "mccMusicViewNext";   /* the id of the view shown is its own once it has painted (one element per id) */
     f.className = "mcc-music-frame";
     f.title = "Music page";
     f.setAttribute("data-mcc-ready", "0");
     f.src = abs;
-    var v = pending = { frame: f, href: abs, kind: kindOf(url(abs)), from: from, scroll: Number(opts.scroll) || 0, opener: opts.opener || null, cleanup: [], timer: 0 };
+    var v = pending = { frame: f, href: abs, kind: kindOf(url(abs)), from: from, scroll: Number(opts.scroll) || 0, opener: opts.opener || null, cleanup: [], timer: 0, wrote: write };
     if (!current && opts.opener) topOpener = opts.opener;
     f.addEventListener("load", function () { loaded(v); });
     layer.appendChild(f);
-    if (opts.history !== "none") setState(viewState(abs, from, 0), abs, !opts.replace);
+    if (write) setState(viewState(abs, from, 0), abs, !(opts.replace || takeOver));
     if (!current) layer.setAttribute("data-view-state", "opening");
     v.timer = root.setTimeout(function () { if (pending === v) fail(v); }, OPEN_MS);
     if (root.MCC_MUSIC && root.MCC_MUSIC.closeNow) root.MCC_MUSIC.closeNow();
@@ -472,9 +500,27 @@
   function onPop() {
     if (!TOP) return;
     var st = root.history.state, shown = current ? current.href : pending ? pending.href : null;
-    var act = popAction(st, shown);
+    var act = popAction(st, shown, root.location.href, TOP.abs);
     if (act === "show") openView(st.mccMusicView.href, { history: "none", from: st.mccMusicView.from, scroll: st.mccMusicView.scroll });
     else if (act === "reveal") reveal({ history: "none", scroll: st && st.mccMusicShell ? st.mccMusicShell.scroll : topScroll });
+    else if (act === "route") routePop(st);
+  }
+  /* an entry another retained document wrote, at an address that is not this page's: the page at that address, as the
+     browser would show it. A music page this document can show opens as a view, and the entry then names it, so the
+     next Back or Forward finds it (with the page it was at the top of: its scroll; and the page shown before as its
+     referrer). Any other page is loaded (review JRN-1). */
+  function routePop(st) {
+    var page = url(root.location.href);
+    page.searchParams.delete("world"); page.hash = "";
+    var kind = kindOf(page);
+    if (!kind || !ROUTES[kind] || !ROUTES[kind].view) { try { root.location.reload(); } catch (e) {} return; }
+    var scroll = st && st.mccMusicShell ? Number(st.mccMusicShell.scroll) || 0 : 0, from = shownHref();
+    var keep = Object.assign({}, st || {});
+    delete keep.mccMusicShell;
+    keep.mccMusicView = viewState(page.href, from, scroll).mccMusicView;
+    setState(keep, root.location.href, false);
+    if (current && !pending && sameAddress(current.href, page.href)) return;
+    openView(page.href, { history: "none", from: from, scroll: scroll });
   }
 
   /* ---------- the view agent: this realm, working on the view's window ---------- */
@@ -487,6 +533,7 @@
     var v = who === "pending" ? pending : current;
     v.cleanup.splice(0).forEach(function (off) { try { off(); } catch (e) {} });
     v.win = win; v.doc = win.document; v.adopted = true; v.stopped = "";
+    v.len = root.history.length;   /* a navigation of the frame's own that adds an entry shows here (stray, below) */
     agent(v);
     var api = viewApi(v);
     whenPainted(win, function () {
@@ -553,6 +600,21 @@
       h.replaceState = function () { var r = rep.apply(h, arguments); follow(); return r; };
     } catch (e) {}
     win.addEventListener("hashchange", follow);
+    /* the view's scroll, kept on its own entry once the person stops scrolling, while the entry shown is this view's,
+       so Back and Forward find it (it used to reach the entry only when another entry was written; review JRN-5) */
+    var kept = 0;
+    win.addEventListener("scroll", function () {
+      root.clearTimeout(kept);
+      kept = root.setTimeout(function () {
+        if (v !== current || pending) return;
+        var st = root.history.state, y = 0;
+        if (!st || !st.mccMusicView || !sameAddress(st.mccMusicView.href, v.href)) return;
+        try { y = Math.round(win.scrollY || 0); } catch (e) { return; }
+        if (st.mccMusicView.scroll === y) return;
+        setState(merged({ mccMusicView: Object.assign({}, st.mccMusicView, { scroll: y }) }), root.location.href, false);
+      }, KEEP_MS);
+    }, { passive: true });
+    v.cleanup.push(function () { root.clearTimeout(kept); });
     /* the view's head, mirrored as it changes (an artist page sets its title once its profile arrives) */
     var queued = false, mo = new MutationObserver(function () {
       if (queued) return;
@@ -600,16 +662,20 @@
   function stray(v, href) {
     if (v !== pending && v !== current) return;
     if (sameAddress(href, v.href)) { fail(v); return; }
+    /* a navigation of the frame's own that left an entry (location.href = in the view, Listen's search Enter; a
+       location.replace(), account.html's way on, leaves none): what takes its place replaces that entry, so one
+       navigation leaves one entry (review JRN-6) */
+    var grew = v.len != null && root.history.length > v.len;
     var d = decide(href, v.kind, TOP, ROUTES, v.href);
     if (d.action === "native" || d.action === "scroll") d = { action: "load", url: href };
     if (d.action === "view" && v === current) {
       /* the shown view navigated itself on: the new view takes its place in history the way the frame's own
          navigation would have */
-      openView(d.url, { from: v.href, replace: v.kind === "account" });
+      openView(d.url, { from: v.href, replace: v.kind === "account" || grew });
       return;
     }
     if (v === pending && d.action !== "load") drop(v);
-    go(d, { replace: v.kind === "account" });
+    go(d, { replace: v.kind === "account", replaceTop: grew });
   }
   /* a document without js/shell-boot.js that loaded in the frame anyway, or one this realm cannot read */
   function loaded(v) {
@@ -619,6 +685,29 @@
     if (!d || href === "about:blank" || v.stopped) return;
     if (v.adopted && d === v.doc) return;
     unexpected(v.frame.contentWindow);
+  }
+
+  /* AN ARTIST PAGE RETAINED, LISTEN OVER IT (SPEC-M5 3.3; review JRN-2). Listen carries the listen ledger and the
+     pocket, an artist page neither, and the engine counts a catalogue song and banks it through the retained window's
+     (MCC_LISTENS, MCC_POCKET). The first Listen view over an artist page loads both into it, after the page's own
+     DOMContentLoaded work: js/music-engine.js restore() runs there, so the pocket arriving later holds nothing the page
+     did not hold before, and js/pip.js mounts no player where the engine plays. A song already playing when the ledger
+     arrives is counted from then (js/music-engine.js hears mcc:listens-ready). */
+  var extras = false;
+  function listenExtras() {
+    if (extras || !TOP || TOP.kind !== "artist") return;
+    extras = true;
+    var load = function () {
+      [["MCC_LISTENS", "js/listen-ledger.js"], ["MCC_POCKET", "js/pip.js"]].forEach(function (p) {
+        if (root[p[0]]) return;
+        var s = doc.createElement("script");
+        s.src = ROOT + p[1] + "?v=__STAMP__";
+        s.async = false;
+        doc.head.appendChild(s);
+      });
+    };
+    if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", function () { root.setTimeout(load, 0); });
+    else root.setTimeout(load, 0);
   }
 
   /* ---------- stage 2: the album as the retained document, through its own deck ---------- */
@@ -704,6 +793,18 @@
   } catch (e) {}
   doc.addEventListener("click", onTopClick, true);
   root.addEventListener("popstate", onPop);
+  /* the retained page's own scroll, kept on its entry the same way once a view has been shown over it (its entry
+     names it), so a Back after Forward reveals it where it was left */
+  var topKept = 0;
+  root.addEventListener("scroll", function () {
+    root.clearTimeout(topKept);
+    topKept = root.setTimeout(function () {
+      if (current || pending) return;
+      var st = root.history.state, y = Math.round(root.scrollY || 0);
+      if (!st || !st.mccMusicShell || !samePage(root.location.href, TOP.abs) || st.mccMusicShell.scroll === y) return;
+      setState(merged({ mccMusicShell: Object.assign({}, st.mccMusicShell, { scroll: y }) }), root.location.href, false);
+    }, KEEP_MS);
+  }, { passive: true });
   /* a page the browser kept in its back-forward cache: the view follows the entry; nothing starts sound (Inferred) */
   root.addEventListener("pageshow", function (e) { if (e && e.persisted) onPop(); });
   root.addEventListener("resize", clearance);
