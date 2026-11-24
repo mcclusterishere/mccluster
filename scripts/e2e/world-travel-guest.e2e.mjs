@@ -64,6 +64,13 @@ async function open(viewport, { automatic = false, webgl = true, audioParent = f
   await ctx.route('**/*', async r => {
     const req = r.request(), url = new URL(req.url());
     if (url.origin === AUDIO_PARENT && url.pathname === '/__travel-audio-parent') return r.fulfill({ status:200, contentType:'text/html', body:`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%}iframe{position:fixed;inset:0;border:0;width:100%;height:100%}#audioFixtureDock{position:fixed;inset:auto 0 0;height:176px;background:#111820;z-index:5;color:white;display:grid;place-items:center;font:16px system-ui}</style></head><body><iframe id="retainedWorld" src="${BASE}/?view=feed&mcc_audio=1" allow="geolocation; autoplay; fullscreen"></iframe><div id="audioFixtureDock">Playback and navigation controls</div><script>const child=document.getElementById('retainedWorld');window.audioReady=false;window.audioSend=data=>child.contentWindow.postMessage({channel:'mcc-world-audio-v1',id:'travel-proof',...data},'${BASE}');addEventListener('message',e=>{if(e.origin!=='${BASE}'||e.source!==child.contentWindow||e.data?.channel!=='mcc-world-audio-v1')return;if(e.data.type==='hello')audioSend({type:'attach',clearance:176});if(e.data.type==='ready'&&e.data.id==='travel-proof')audioReady=true;});</script></body></html>` });
+    /* P1: a platform page with no session frames Matthew's host's carry page, hidden, and asks it once (js/carry.js).
+       That host answers it as GitHub Pages does, from this checkout; unanswered, the frame became Chromium's error
+       page, where this suite's own init script could not read localStorage and threw into the World's page errors */
+    if (url.origin === AUDIO_PARENT) {
+      try { return r.fulfill({ status:200, contentType:TYPES[extname(url.pathname)] || 'application/octet-stream', body:await readFile(join(ROOT, url.pathname)) }); }
+      catch { return r.fulfill({ status:404, body:'Fixture file unavailable' }); }
+    }
     if (url.origin === BASE) {
       try {
         const path = url.pathname === '/' ? '/mnet.html' : url.pathname;

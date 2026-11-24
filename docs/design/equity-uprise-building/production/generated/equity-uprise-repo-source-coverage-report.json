@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 776,
+  "candidate_count": 788,
   "capability_source_count": 104,
-  "support_only_count": 672,
-  "checks_total": 3002,
-  "checks_passed": 3002,
+  "support_only_count": 684,
+  "checks_total": 3050,
+  "checks_passed": 3050,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -218,6 +218,11 @@
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
     "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
+    "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md",
+    "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md",
+    "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md",
+    "docs/control-plane/handoff-20261123/specs/SPEC-M5.md",
+    "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
@@ -362,6 +367,7 @@
     "js/prim3-tactics/preview.mjs",
     "js/prim3-tactics/transit.mjs",
     "js/server-lab/app.mjs",
+    "js/shell-boot.js",
     "js/site-navigation.js",
     "js/tabbar.js",
     "js/travel/world-travel.mjs",
@@ -434,6 +440,7 @@
     "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
     "scripts/e2e/fixtures/eu-building-visual.mjs",
+    "scripts/e2e/fixtures/platform-hosts-20261123.json",
     "scripts/e2e/globe-games.e2e.mjs",
     "scripts/e2e/halo-private-preview.mjs",
     "scripts/e2e/prim3-artist.e2e.mjs",
@@ -526,9 +533,11 @@
     "scripts/test/seo-contract.test.mjs",
     "scripts/test/server-lab.test.mjs",
     "scripts/test/signup-authority.test.mjs",
+    "scripts/test/site-hosts.test.mjs",
     "scripts/test/song-test.test.mjs",
     "scripts/test/supabase-functions-deploy.test.mjs",
     "scripts/test/support/eup-module-policy-database.mjs",
+    "scripts/test/support/mcc-site.mjs",
     "scripts/test/world-environment-lifecycle.test.mjs",
     "scripts/test/world-environment-panel.test.mjs",
     "scripts/test/world-environment-posts.test.mjs",
@@ -544,6 +553,7 @@
     "sites.html",
     "supabase/config.toml",
     "supabase/functions/_shared/eu-policy-os.ts",
+    "supabase/functions/_shared/site-hosts.ts",
     "supabase/functions/collect/index.ts",
     "supabase/functions/eu-calendar/index.ts",
     "supabase/functions/eu-control/index.ts",
@@ -750,6 +760,7 @@
     "workers/mccluster/src/live/index.js",
     "workers/mccluster/src/music/tracks.js",
     "workers/mccluster/src/platform-api.js",
+    "workers/mccluster/src/platform/hosts.generated.js",
     "workers/mccluster/src/prim3/learning.js",
     "workers/mccluster/src/seek-first/catalogs.js",
     "workers/mccluster/src/seek-first/equity-uprise-halo.js",
@@ -774,6 +785,7 @@
     "workers/mccluster/test/mission-sources.test.mjs",
     "workers/mccluster/test/mnet-live.test.mjs",
     "workers/mccluster/test/mnet-post-limits.test.mjs",
+    "workers/mccluster/test/platform-router.test.mjs",
     "workers/mccluster/test/prim3-learning.test.mjs",
     "workers/mccluster/test/seek-first-catalogs.test.mjs",
     "workers/mccluster/test/world-environment-action-media.test.mjs",
@@ -790,7 +802,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "776 entries"
+      "detail": "788 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4798,6 +4810,106 @@
       "detail": ""
     },
     {
+      "name": "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-M5.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-M5.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-M5.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-M5.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/control-plane/registry.json capability ids known",
       "passed": true,
       "detail": ""
@@ -7598,6 +7710,26 @@
       "detail": ""
     },
     {
+      "name": "js/shell-boot.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/shell-boot.js classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "js/shell-boot.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/shell-boot.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/site-navigation.js capability ids known",
       "passed": true,
       "detail": ""
@@ -8994,6 +9126,26 @@
     },
     {
       "name": "scripts/e2e/fixtures/eu-building-visual.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/platform-hosts-20261123.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/platform-hosts-20261123.json classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/fixtures/platform-hosts-20261123.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/fixtures/platform-hosts-20261123.json support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -10833,6 +10985,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test/site-hosts.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/site-hosts.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/site-hosts.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/site-hosts.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test/song-test.test.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -10889,6 +11061,26 @@
     },
     {
       "name": "scripts/test/support/eup-module-policy-database.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/support/mcc-site.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/support/mcc-site.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/support/mcc-site.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/support/mcc-site.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -11179,6 +11371,26 @@
     },
     {
       "name": "supabase/functions/_shared/eu-policy-os.ts support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/functions/_shared/site-hosts.ts capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/functions/_shared/site-hosts.ts classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/functions/_shared/site-hosts.ts support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/functions/_shared/site-hosts.ts support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -15103,6 +15315,26 @@
       "detail": ""
     },
     {
+      "name": "workers/mccluster/src/platform/hosts.generated.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/src/platform/hosts.generated.js classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "workers/mccluster/src/platform/hosts.generated.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/src/platform/hosts.generated.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "workers/mccluster/src/prim3/learning.js capability ids known",
       "passed": true,
       "detail": ""
@@ -15574,6 +15806,26 @@
     },
     {
       "name": "workers/mccluster/test/mnet-post-limits.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/platform-router.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workers/mccluster/test/platform-router.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "workers/mccluster/test/platform-router.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "workers/mccluster/test/platform-router.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

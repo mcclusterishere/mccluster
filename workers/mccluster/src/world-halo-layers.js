@@ -97,6 +97,7 @@ import { fetchWeather, fetchNatural } from './world-events.js';
 import { fail, reply } from './lib/http.js';
 import { UpstreamError } from './lib/safe-fetch.js';
 import { cachedLayer, normalizeAdsbAircraft, upstream } from './world-layers.js';
+import { CONTACT_ORIGIN } from './platform/contact.js';
 
 export const HALO_LAYERS = Object.freeze({
   weather: Object.freeze({ ttl: 120, max: 1500, rows: 'events', base: Object.freeze({ credit: 'Weather alerts: NOAA NWS', attribution_url: 'https://www.weather.gov', license: 'Public domain (U.S. Government work)' }) }),
@@ -553,7 +554,7 @@ export async function handleHaloLayers(request, env, { fetchImpl = fetch, cacheI
 const GEOCODE_TTL = 86400;
 const GEOCODE_LIMIT = 6;
 const GEOCODE_TIMEOUT_MS = 6000;
-const GEOCODE_USER_AGENT = 'McCluster-World/1.0 (+https://mccluster.org; owner place search, results cached 24 h)';
+const GEOCODE_USER_AGENT = `McCluster-World/1.0 (+${CONTACT_ORIGIN}; owner place search, results cached 24 h)`;
 const GEOCODE_SOURCES = Object.freeze({
   photon: Object.freeze({ attribution: 'Photon by komoot; data © OpenStreetMap contributors', attribution_url: 'https://photon.komoot.io', license: 'ODbL-1.0' }),
   nominatim: Object.freeze({ attribution: 'Nominatim; data © OpenStreetMap contributors', attribution_url: 'https://nominatim.openstreetmap.org', license: 'ODbL-1.0' })

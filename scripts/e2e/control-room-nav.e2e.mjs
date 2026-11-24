@@ -15,6 +15,7 @@ const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const OUT=process.argv[2]||'/tmp/control-room-nav-proof';
 const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'))('playwright');
 const BASE='https://matthew.mccluster.org';
+const PLATFORM='https://mccluster.org';
 const TYPES={'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.html':'text/html','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const OWNER='11111111-1111-4111-8111-111111111111';
 const results=[];
@@ -79,7 +80,11 @@ async function setup(viewport){
       if(p==='/rest/v1/music_orders'){music.calls++;return music.calls===1?json(route,{message:'fixture outage'},503):json(route,music.rows);}
       return json(route,[]);
     }
-    if(u.origin===BASE){
+    /* CHANGED ON PURPOSE (P1, SPEC-PLATFORM 4, review V2-1 of 2026-11-24): from a page of Matthew's host that is not
+       Control, the bar's Control sections go where the table serves Control, the platform, which serves every page
+       from P1. This fixture answered his host only, so that door was a failed load and the wait for control.html
+       never ended. The platform answers from this checkout too; what each check asserts is unchanged. */
+    if(u.origin===BASE||u.origin===PLATFORM){
       const rel=p==='/'?'index.html':decodeURIComponent(p.replace(/^\//,''));const file=resolve(ROOT,rel);
       if(!file.startsWith(resolve(ROOT)+sep))return route.abort();
       try{return route.fulfill({body:await readFile(file),contentType:TYPES[extname(file)]||'application/octet-stream'});}catch{return route.fulfill({status:404,body:''});}

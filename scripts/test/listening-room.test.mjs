@@ -93,9 +93,9 @@ test('the bar built for pages that lack one agrees with the bar they ship', asyn
      had its own hardcoded destination, so fixing the markup alone would
      have left every generated bar pointing at the album. */
   const js = await read('js/tabbar.js');
-  /* the cell resolves against the house, which is ROOT on Matthew's site and
-     his origin on the World's own host (js/tabbar.js) */
-  assert.match(js, /HOUSE \+ 'listen\.html" data-appnav="music"/,
+  /* the cell is linked where the table serves the page (pageHref, js/tabbar.js; SPEC-PLATFORM 4: from P1 the platform's
+     own listen.html, before it Matthew's) */
+  assert.match(js, /pageHref\("listen\.html"\) \+ '" data-appnav="music"/,
     'the generated bar must open the listening room too');
 });
 
@@ -219,7 +219,8 @@ test('an asked-for track beats both resumes', async () => {
   /* The album resumes from the pocket and from a saved position. Either one
      would have overwritten the track somebody just tapped. */
   const album = await read('album.html');
-  assert.match(album, /var pk = want > -1 \? null : \(window\.MCC_POCKET && window\.MCC_POCKET\.read\(\)\);/,
+  /* "asked" is the link's track found, before a held song is set aside (music quick wins, review QW-R6) */
+  assert.match(album, /var asked = want > -1;[\s\S]{0,900}var pk = asked \? null : \(window\.MCC_POCKET && window\.MCC_POCKET\.read\(\)\);/,
     'the pocket resume must stand down for an explicit tap');
   assert.match(album, /load\(want, 0\);[\s\S]{0,220}r0 = null;/,
     'the saved position must stand down too');
@@ -289,7 +290,8 @@ test('the listening room is built from the album room\'s vocabulary', async () =
     'the shared vocabulary must be loaded, not re-invented');
   assert.match(html, /class="music-room music-room--listen"|music-room music-room--listen/,
     'the room must declare itself a music room so the per-room overrides apply');
-  for (const cls of ['greet', 'chips', 'feat', 'lib__k', 'tr']) {
+  /* the filter row (chips) is gone since the quick wins (owner, 2026-11-23: "just list albums and artists right now") */
+  for (const cls of ['greet', 'feat', 'lib__k', 'tr']) {
     assert.match(html, new RegExp(`class="[^"]*\\b${cls}\\b`),
       `${cls} is the house's class for this element and must be the one used`);
   }

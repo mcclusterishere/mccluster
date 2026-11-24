@@ -68,7 +68,7 @@ function rig({ reduced = false } = {}) {
   const timers = [];
   const cam = C.create({ viewer: { camera }, Cesium, hold: (o, ms) => holds.push([o, ms]), release: (o) => released.push(o), reducedMotion: () => reduced, setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clearTimeout: () => {} });
   cam.attachInput({ canvas: target(listeners.canvas), document: target(listeners.doc) });
-  return { cam, calls, holds, released, listeners, complete: () => { if (pending) { const o = pending; pending = null; o.complete(); } }, timers };
+  return { cam, camera, calls, holds, released, listeners, complete: () => { if (pending) { const o = pending; pending = null; o.complete(); } }, timers };
 }
 
 test('a push: one flight to the regional frame with cubic in-out, the heading kept, the env-focus hold bounded by its duration', () => {
@@ -134,15 +134,38 @@ test('reduced motion: a tap moves nothing; a chosen post jumps with no flight; t
   assert.equal(t.calls.length, 0);
 });
 
-test('a flight whose callbacks never come still settles through its safety timer', () => {
-  const r = rig();
-  const settled = [];
-  r.cam.push({ id: 'usgs:a', lon: 10, lat: 20 }, P.quakeFrame(6), 'pick', (how) => settled.push(how));
-  const safety = r.timers[r.timers.length - 1];
+test('a stalled flight lands at the requested pose before notifying once and releasing its bounded hold', () => {
+  const r = rig(), settled = [];
+  r.cam.push({ id: 'usgs:a', lon: 10, lat: 20 }, P.quakeFrame(6), 'pick', (how) => settled.push([how, r.calls.at(-1)[0]]));
+  const safety = r.timers.at(-1);
   assert.ok(safety.ms > 1600 && safety.ms <= 2600);
   safety.fn();
-  assert.deepEqual(settled, ['timeout']);
+  assert.deepEqual(r.calls.map(c => c[0]), ['fly', 'cancelFlight', 'view', 'lookAtTransform']);
+  assert.equal(r.calls[2][1], r.calls[0][1]);
+  assert.equal(r.calls[2][2], r.calls[0][2].offset);
+  assert.deepEqual(settled, [['complete', 'lookAtTransform']]);
+  assert.deepEqual(r.released, ['env-focus']);
   assert.equal(r.cam.state().flying, false);
+  const bad = rig(), missed = [];
+  bad.camera.viewBoundingSphere = () => { throw Error('viewer unavailable'); };
+  bad.cam.push({ id: 'usgs:b', lon: 10, lat: 20 }, P.quakeFrame(6), 'pick', how => missed.push(how));
+  bad.timers.at(-1).fn();
+  assert.deepEqual(missed, ['timeout']);
+  assert.equal(bad.cam.state().flying, false);
+});
+
+test('a stale deadline cannot finish a later flight or reposition the camera after visitor input', () => {
+  const r = rig(), settled = [];
+  r.cam.push({ id: 'usgs:a', lon: 10, lat: 20 }, P.quakeFrame(6), 'pick', how => settled.push(how));
+  const first = r.timers.at(-1);
+  r.cam.push({ id: 'usgs:b', lon: 12, lat: 21 }, P.quakeFrame(5), 'pick', how => settled.push(how));
+  first.fn();
+  assert.equal(r.cam.state().id, 'usgs:b');
+  r.listeners.canvas.get('wheel')();
+  r.timers.at(-1).fn();
+  assert.deepEqual(settled, ['cancel', 'cancel']);
+  assert.deepEqual(r.calls.map(c => c[0]), ['fly', 'cancelFlight', 'fly', 'cancelFlight']);
+  assert.deepEqual(r.released, ['env-focus', 'env-focus']);
 });
 
 test('the source: original code, no per-frame callback, no storage, the reference name nowhere', () => {

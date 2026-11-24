@@ -150,7 +150,9 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.waitForFunction(()=>{const l=HaloConsole.state().layers;return l.quakes.state==='on'&&l.fires.state==='unavailable'&&l.tides.state==='on'},null,{timeout:10000}).catch(()=>{});
  st=await state();
  check(scope,'Earth & weather turns on Earthquakes (3), NOAA water levels (2); Thermal says it needs a key',st.layers.quakes.text==='3'&&st.layers.tides.text==='2'&&st.layers.fires.text==='Needs a key'&&!st.layers.networks,{q:st.layers.quakes,t:st.layers.tides,f:st.layers.fires});
- check(scope,'Source health says each source\'s state in words',/Earthquakes[\s\S]*Updated/.test(await page.textContent('.hx-health'))&&/Needs a key/.test(await page.textContent('.hx-health')));
+ const healthRow=(name)=>page.locator('.hx-health li').filter({has:page.getByText(name,{exact:true})}).locator('small');
+ const quakeHealth=await healthRow('Earthquakes').innerText(), fireHealth=await healthRow('Thermal hotspots (NASA FIRMS)').innerText();
+ check(scope,'Earthquakes distinguishes the age of its newest USGS record from retrieval; thermal hotspots identifies its missing key',/^Newest record \d+m ago · retrieved (just now|\d+m ago)(?: · |$)/.test(quakeHealth)&&fireHealth==='Needs a key',{quakeHealth,fireHealth});
  check(scope,'the World panel counts actual sources without planned placeholders',/\d+ available · 4 context$/.test(await page.textContent('.hx-panel__head p')));
  await shot('world');
  await page.waitForFunction(()=>HaloConsole.state().events?.types.includes('tornado'));

@@ -153,8 +153,11 @@
     function isCurrent() { return chosen === selection; }
     var h = handle(key, afterFinish(key).then(function () {
       /* A skipped song must never open later and close the actual playing listen. Different
-         tracks have different waits, so request order alone cannot protect the newer selection. */
-      if (h.released || !isCurrent()) return null;
+         tracks have different waits, so request order alone cannot protect the newer selection.
+         Nor is a start sent for a song this page has already finished while it waited (the pocket
+         player rolling on at the end of its queue, js/pip.js roll(), with no newer start after it):
+         a song that leaves no start leaves no finish either (a Release 1 follow-up, review CX-1). */
+      if (h.released || h.done || !isCurrent()) return null;
       return post("/v1/music/listens", { track: key });
     }).then(function (d) {
       return (d && d.listen_id) || null;

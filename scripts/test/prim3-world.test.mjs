@@ -192,7 +192,8 @@ test('the transit page escapes mission presentation and retains its legacy save 
 
 test('World is an owner-only door: the Control panel lists it, the tactics menu offers it only to the owner, the shared owner bar provides Games', () => {
   const nav = read('js/site-navigation.js');
-  assert.match(nav, /\{label:'PRIM3 World', group:'Products', href:new URL\('prim3-world\.html', house\)\.href, context:'Missions · World builder'\}/);
+  /* the doors ask the bar where the page is (page(): the table's serving host), never the dock's house, which keeps Matthew's host until P3 (review V2-1, 2026-11-24); the door's target is unchanged */
+  assert.match(nav, /\{label:'PRIM3 World', group:'Products', href:page\('prim3-world\.html'\), context:'Missions · World builder'\}/);
   const pv = read('js/prim3-tactics/preview.mjs');
   assert.match(pv, /ownerWorld && \{ key: 'world', label: 'World'/);
   assert.match(pv, /if \(menuSel === 'world' && ownerWorld\) \{ location\.href = 'prim3-world\.html'; return; \}/);

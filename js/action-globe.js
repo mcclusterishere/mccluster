@@ -832,7 +832,8 @@ function explainLock(id){const l=lockOf(id);if(!l)return false;
    Any signed-in member opens it; a guest is asked to sign in. Whip Equipped LLC is Matthew McCluster's separate company: its
    own name only, no McCluster branding, and nothing about the member is sent anywhere by opening it. Rides are not live, so
    there is no ride request here at all; the sign-up is Whip's own Driver app, where Whip's own checks decide who drives. */
-const WHIP_DRIVER_SIGNUP='https://matthew.mccluster.org/whip/driver/';
+/* Whip's own Driver app where it is served (window.MCC_SITE, js/shell-boot.js: Whip Equipped lives only on Matthew's host) */
+const WHIP_DRIVER_SIGNUP=window.MCC_SITE?window.MCC_SITE.siteUrl('/whip/driver/'):'/whip/driver/';
 window.__huWhip=()=>({open:!($('cctvSheet')||{}).hidden&&!!(($('cctvBody')||{}).querySelector&&$('cctvBody').querySelector('[data-whip-signup]'))});
 function openWhip(){if(lockOf('transport')&&explainLock('transport'))return;const t=access&&access.layers&&access.layers.transport||{};const signup=String(t.driver_signup_url||WHIP_DRIVER_SIGNUP);const target=window.top!==window?' target="_top"':'';
  sheet('Transport','<p class="cctv-meta">By Whip Equipped LLC, a separate company.</p><p><b>Whip Equipped rides aren’t live yet.</b> You can’t request a ride today.</p><p>Are you a driver, or know one? Have them sign up today.</p><p><a class="cctv-act" href="'+escHtml(signup)+'"'+target+' data-whip-signup>Driver sign-up →</a></p><p class="cctv-note">Signing up is an application, not approval: Whip Equipped’s own checks (licence, insurance, background check and local rideshare rules) decide who drives.</p>');if(window.HuTransport)HuTransport.mount($('cctvBody'),{region:selectionShown&&!$('mission').hidden&&missions[i]?missions[i].region_label:''})}

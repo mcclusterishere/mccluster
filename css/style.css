@@ -3018,6 +3018,16 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
   .pocket { left: .6rem; right: .6rem; width: auto; }
   .pocket__tile { width: 64px; height: 50px; }
 }
+/* WHOLE COVERS IN THE POCKET (owner, 2026-11-23: "The full covers aren't shown, and I agree. We should fix that.";
+   review QW-R2; on the music pages the same rule is "WHOLE COVERS" in css/music-system-v2.css). A song whose picture
+   is its album's cover (js/pip.js pictureOf) shows the whole cover, scaled into a square: nothing behind it, nothing
+   over it (no scrim, no lyric line), no corner cut. A film keeps its tile. Phone first: wider screens only give it
+   room. */
+.pocket .pocket__tile--cover { width: 50px; height: 50px; border-radius: 0; background: transparent; box-shadow: none; }
+.pocket .pocket__tile--cover .pocket__film { object-fit: contain; object-position: center; background: transparent; }
+.pocket .pocket__tile--cover .pocket__scrim, .pocket .pocket__tile--cover .pocket__lyr { display: none; }
+@media (min-width: 561px) { .pocket .pocket__tile--cover { width: 56px; height: 56px; } }
+/* WHOLE COVERS IN THE POCKET END */
 @media (prefers-reduced-motion: reduce) {
   .pocket { transition: opacity .2s ease; transform: none; }
   .pocket.is-in { transform: none; }

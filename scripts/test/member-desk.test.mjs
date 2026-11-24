@@ -79,7 +79,11 @@ test("nav: Policy is no longer a separate destination; every door opens the desk
   assert.doesNotMatch(page, /<section id="ladder"|js\/policy-fellowship-desk\.js/, "the policy desk is not rendered here any more");
   // the bar itself is not rewritten: three columns from tabbar.js, the Desk tab is added by the desk on the World only
   assert.doesNotMatch(tabbar, /data-hu-desk/);
-  assert.match(tabbar, /action-policy\\\.html\$/, "the old address still rides on the World's hosts");
+  /* the old address still rides on the World's hosts: it is one of the World's rooms in the one table, which the bar
+     reads (js/tabbar.js houseBound; before P1 it named the room in a list of its own) */
+  const arch = JSON.parse(await read("data/seo/domain-architecture.json"));
+  assert.ok(arch.world.rooms.includes("/action-policy.html"), "the old address still rides on the World's hosts");
+  assert.match(tabbar, /S\.servingOrigin\(url\.pathname\) !== location\.origin/, "the bar sends only what this host does not serve elsewhere");
 });
 
 test("the desk is a layer over the globe that never covers the app bar", async () => {

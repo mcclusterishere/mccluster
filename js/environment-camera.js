@@ -90,7 +90,7 @@
         return mode;
       }
       const duration = pushSeconds(cameraLonLat(), target), bound = Math.round(duration * 1000 + PUSH.safetyMs);
-      let done = false, safety = null;
+      let done = false, landing = false, safety = null;
       const record = { id: target.id, startedAt: Date.now(), duration, finish };
       function finish(how) {
         if (done) return;
@@ -103,8 +103,20 @@
       }
       flight = record;
       hold('env-focus', bound);
-      safety = schedule(() => finish('timeout'), bound);
-      viewer.camera.flyToBoundingSphere(p.sphere, { offset: p.offset, duration, easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT, complete: () => finish('complete'), cancel: () => finish('cancel') });
+      safety = schedule(() => {
+        if (flight !== record || done) return;
+        // A slow render loop can leave Cesium's tween between frames at the deadline.
+        // Land this selection at its requested pose before signalling the ripple.
+        landing = true;
+        try {
+          viewer.camera.cancelFlight();
+          viewer.camera.viewBoundingSphere(p.sphere, p.offset);
+          viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+          requestRender('push-land');
+        } catch (e) { finish('timeout'); return; }
+        finish('complete');
+      }, bound);
+      viewer.camera.flyToBoundingSphere(p.sphere, { offset: p.offset, duration, easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT, complete: () => finish('complete'), cancel: () => { if (!landing) finish('cancel'); } });
       requestRender('push');
       return mode;
     }

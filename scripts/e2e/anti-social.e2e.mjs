@@ -56,6 +56,7 @@ const world = {
 };
 const posts = [{ item_type: 'post', post_id: POST, occurred_at: new Date().toISOString(), actor: ANA, post: { id: POST, body: 'North Bank — made together by Fixture Ana and Fixture You.', visibility: 'public', created_at: new Date().toISOString(), author_m_uid: ANA.m_uid, media: [], metadata: { collaboration: { mission_id: MISSION, title: 'North Bank', kind: 'song', credits: [{ m_uid: ANA.m_uid, name: 'Fixture Ana', handle: 'fixture.ana' }, { m_uid: ME.m_uid, name: 'Fixture You', handle: 'fixture.you' }] } } } }];
 
+let recordGate = null;
 async function routeBackends(ctx) {
   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': BASE, 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   await ctx.route('https://zmnhbrjyhxzhkxmhkexs.supabase.co/**', async (route) => {
@@ -67,6 +68,7 @@ async function routeBackends(ctx) {
     /* the mission system */
     if (u.pathname.endsWith('/rest/v1/action_missions')) return json(route, [world.mission]);
     if (rpc === 'action_mission_stats') return json(route, [{ mission_id: MISSION, joined: 4, in_progress: 2, submitted: 1, verified: 1, rejected: 0 }]);
+    if (rpc === 'action_record' && recordGate) await recordGate;
     if (rpc === 'action_record') return json(route, { verified_actions: 0, points: 0, in_progress: world.assignment ? 1 : 0, missions: world.assignment ? [{ assignment_id: ASSIGNMENT, mission_id: MISSION, title: world.mission.title, domain: 'community', skills: [], status: world.assignment.status, joined_at: new Date().toISOString(), levels: Object.values(world.levels), level_count: 3 }] : [], skills: [], cohorts: [] });
     if (u.pathname.endsWith('/rest/v1/action_mission_assignments')) return json(route, world.assignment ? [world.assignment] : []);
     if (rpc === 'join_action_mission') { world.assignment = { id: ASSIGNMENT, status: 'in_progress' }; return json(route, { assignment_id: ASSIGNMENT, status: 'in_progress', mission_id: MISSION }); }
@@ -226,7 +228,14 @@ await page.screenshot({ path: join(OUT, 'level-3-published.png') });
 
 /* 6. the record reads 2 / 3 · Awaiting review; the feed card reads Made together with both names */
 await page.click('#mnMissionClose');
+let releaseRecord;
+recordGate = new Promise(resolve => { releaseRecord = resolve; });
 await page.goto(`${BASE}/mnet.html?view=missions`, { waitUntil: 'domcontentloaded' });
+const missionProgress = page.locator('#mnMissionList [data-mission-level-progress]');
+await missionProgress.waitFor();
+check(S, 'the public card renders while its private action record is still loading', (await missionProgress.innerText()) === 'One mission, three levels');
+releaseRecord();
+recordGate = null;
 await page.waitForFunction(() => /2 \/ 3/.test((document.getElementById('mnRecord') || {}).textContent || ''), null, { timeout: 60000 });
 check(S, 'the Action Record reads 2 / 3 · Awaiting review', /2 \/ 3 · Awaiting review/.test(await page.textContent('#mnRecord')));
 check(S, 'the Missions card says one mission, three levels · you: 2 / 3', /One mission, three levels · you: 2 \/ 3/.test(await page.textContent('#mnMissionList')));

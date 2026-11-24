@@ -6,7 +6,7 @@ This repository is part of the McCluster control plane. Read `AGENTS.md` before 
 
 The plane: GitHub `mcclusterishere/mccluster` (control repo) + Cloudflare Worker `mccluster` (source `workers/mccluster`; public edge and API `https://api.mccluster.org`; `mccluster-mcp` is its stateless MCP transport) + Supabase `zmnhbrjyhxzhkxmhkexs` (shared durable truth) + OVH McCluster Core (`core/`, persistent execution; not a Worker, not a second backend). There is no Worker named `mccluster-core`. Do not create one. Do not scaffold a parallel API, auth provider, or database.
 
-Two properties, two entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`): `matthew.mccluster.org` is Matthew McCluster's personal property (GitHub Pages, this repo); `mccluster.org` is McCluster Corp's company property served by Worker `mccluster` by host once routed; `humanuprise.com` is a McCluster Corp host, never a third entity. Never collapse them.
+One platform, tenant properties, separate entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`): `mccluster.org` is McCluster Corp's platform, set in one place (`data/seo/domain-architecture.json` → `platform.origin`) and served by Worker `mccluster` by host (stage P1: the whole site today, every page at its path; P2 moves canonicals and sitemaps, P3 makes Matthew's host answer 301s; `equityuprise.com` later); `matthew.mccluster.org` is Matthew McCluster's personal profile, a tenant of the platform (GitHub Pages, this repo; from P3 the pages that moved answer 301 to the platform); `humanuprise.com` is a McCluster Corp door, never a third entity. Hosting is not identity: never collapse the two entities.
 
 Hard rules — headings only; the law is `AGENTS.md` → Hard rules:
 1. Do not create a competing backend.
@@ -23,6 +23,6 @@ Hard rules — headings only; the law is `AGENTS.md` → Hard rules:
 12. `mcclusterishere/Here` is dead.
 13. Canonical AI name: McCluster.
 14. Mobile first, responsive up.
-15. Two properties, two entities. Never collapse them.
+15. One platform, tenant properties, separate entities. Never collapse them.
 
 Local product gates (control repo only; satellites do not copy these): Equity Uprise building, floor, B1, roof, 3D, 360, plan, render or spatial-lore work reads `docs/design/equity-uprise-building/AGENTS.md` (run its context audit) and then `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md` and the files it orders, and generated images are never geometry authority; Uprise World / Living Sketch reads `AGENTS.md` → "Uprise World" and `docs/uprise-world/`; PRIM3 Site 0 reads `assets/3d/prim3-site0/AGENTS.md`; game worlds and portals read `docs/universe/UNIVERSE-SCHEMA.md`.

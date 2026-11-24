@@ -114,6 +114,16 @@
     if (handoff.ok && handoff.pending && e.cancelable) e.preventDefault();
     handoff.waiters.splice(0).forEach(function (go) { go(); });
   });
+  /* A SIGN-IN CARRIED TO THE PLATFORM (SPEC-PLATFORM 2.6, from P1). On the platform with no session of its own, the bar
+     (js/tabbar.js, which runs before this World boots) asks Matthew's host once for the sign-in this browser holds there
+     (js/carry.js) and says whether that first answer is still to come (window.MCC_CARRY_PENDING). The World waits for it
+     as it waits for the hand-off, and a sign-in carried after the World opened as a guest is taken in place, no reload. */
+  var carry = { waiting: null, done: false };
+  window.addEventListener("mcc:carry", function (e) {
+    carry.done = true;
+    if (carry.waiting) { var go = carry.waiting; carry.waiting = null; go(); return; }
+    if (e.detail && e.detail.result === "carried" && state.guest) enterAfterAuth().catch(function (error) { showSignedInLoadError(error); });
+  });
   /* A ROOM ASKED FOR BY ADDRESS (?view=profile, the house's Profile chip) opens on that room for a member, never on the
      World first and then the room once the member's World has loaded */
   var DEEP_VIEW = "";
@@ -539,6 +549,8 @@
      opens sign-in instead, and the server refuses it anyway. */
   function enterGuestWorld() {
     state.guest = true;
+    actionRecordVersion++;
+    if(missions){missions.record=null;missions.recordOwner=null;paintActionRecord();}
     paintNewsroom();
     document.documentElement.classList.add("mn-guest");
     $("mnGuestBar").hidden = false;
@@ -2659,7 +2671,7 @@
         var st = $("mnPostStatus");
         st.textContent = "Posted, and in the newsroom: ";
         var link = document.createElement("a");
-        link.href = "https://mccluster.org/news/" + id; link.target = "_blank"; link.rel = "noopener"; link.textContent = "read the article";
+        link.href = siteHref("/news/" + id); link.target = "_blank"; link.rel = "noopener"; link.textContent = "read the article";
         st.appendChild(link); st.classList.remove("is-error"); st.classList.add("is-ok");
       } else setStatus($("mnPostStatus"), "Posted.", "ok");
       track("mnet_post_created", { has_media:state.mediaAssets.length > 0, has_track:!!selectedTrack, visibility:$("mnVisibility").value });
@@ -3287,7 +3299,7 @@
       } })); } catch (_) {}
       var avatar=safeHttpUrl(p.avatar_url),banner=safeHttpUrl(p.banner_url),avatarHtml=avatar?'style="background-image:url(\''+esc(avatar.replace(/'/g,'%27'))+'\')"':"";
       var front=safeHttpUrl(presentation.front_page_url||p.website_url), frontHtml=front?'<div class="mn__frontpage mn__frontpage--person"><div class="mn__frontpage-head"><div><span>Front page</span><strong>'+esc(name)+' · public home</strong></div><a href="'+esc(front)+'" target="_blank" rel="noopener">Open site ↗</a></div><div class="mn__frontpage-stage"><iframe title="'+esc(name)+' front page" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="'+esc(front)+'"></iframe></div></div>':'';
-      var perspectiveLink='<p class="mn__perspective-link"><a href="'+esc('https://matthew.mccluster.org/member-front.html?handle='+encodeURIComponent(String(id.mccluster_id||handle).toLowerCase()))+'">Open '+esc(name)+'\u2019s full front page in the center →</a></p>';
+      var perspectiveLink='<p class="mn__perspective-link"><a href="'+esc(siteHref('/member-front.html?handle='+encodeURIComponent(String(id.mccluster_id||handle).toLowerCase())))+'">Open '+esc(name)+'\u2019s full front page in the center →</a></p>';
       $("mnPersonBody").innerHTML='<div class="mn__person-sheet">'+perspectiveLink+frontHtml+'<div class="mn__person-hero"'+(banner?' style="background-image:url(\''+esc(banner.replace(/'/g,'%27'))+'\')"':'')+'></div>' +
         '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+characterBadge(id)+'</p>' +
         (p.headline?'<p class="mn__profile-headline">'+esc(p.headline)+'</p>':'')+(p.bio?'<p class="mn__profile-bio">'+esc(p.bio)+'</p>':'')+
@@ -3351,12 +3363,27 @@
      an https address becomes a link, and McCluster's own walkthrough
      address (the one in Matthew's welcome) becomes a button that starts
      the tour in place. */
-  var TOUR_URL=/^https:\/\/(?:matthew\.)?mccluster\.org\/mnet\.html\?tour=1$/;
+  /* WHERE THE SITE IS: every absolute address this page writes comes from window.MCC_SITE (js/shell-boot.js, the first
+     script on mnet.html; data/seo/domain-architecture.json), where the path is served at this stage. Without the table an
+     address stays on this host. */
+  function siteHref(path) {
+    var S = window.MCC_SITE;
+    return S && typeof S.siteUrl === "function" ? S.siteUrl(path) : path;
+  }
+  /* McCluster's own walkthrough address, as Matthew's welcome names it: the World's document with ?tour=1 on a host that
+     serves pages, the platform's or a tenant's (the table's origins; today mccluster.org and matthew.mccluster.org) */
+  function tourAddress(raw) {
+    var S = window.MCC_SITE;
+    if (!S || !S.platform || !S.tenants) return false;
+    var origins = [S.platform.origin].concat(S.tenants.map(function (t) { return t.origin; }));
+    for (var i = 0; i < origins.length; i++) if (raw === origins[i] + "/mnet.html?tour=1") return true;
+    return false;
+  }
   function messageHtml(body) {
     return esc(body||"").replace(/https:\/\/[^\s<>"']+/g,function(url){
       var clean=url.replace(/[.,;:!?)]+$/,""), tail=url.slice(clean.length);
       var raw=clean.replace(/&amp;/g,"&");
-      if (TOUR_URL.test(raw)) return '<a class="mn__tour-cta" href="mnet.html?tour=1" data-tour-start>Start the walkthrough</a>'+tail;
+      if (tourAddress(raw)) return '<a class="mn__tour-cta" href="mnet.html?tour=1" data-tour-start>Start the walkthrough</a>'+tail;
       return '<a class="mn__message-link" href="'+clean+'" target="_blank" rel="noopener noreferrer">'+clean+'</a>'+tail;
     });
   }
@@ -3816,13 +3843,27 @@
        open on its own room (mnet.html), so that shell is the World, never the Live room; a room asked for by address is
        put up instead, empty, and filled once the member's World has loaded. */
     var stored = MCC.session && MCC.session();
-    if ((stored && stored.access_token) || handoff.pending) { showGate("app"); if (DEEP_VIEW) peekView(DEEP_VIEW); }
+    var carrying = !(stored && stored.access_token) && window.MCC_CARRY_PENDING === true && !carry.done;
+    if ((stored && stored.access_token) || handoff.pending || carrying) { showGate("app"); if (DEEP_VIEW) peekView(DEEP_VIEW); }
     /* a sign-in being carried in: the World waits for it (above) rather than opening as a guest first; if the trade
        never answers, the visitor's World opens as it would have, and a late answer reloads the page as before */
     if (handoff.pending && !handoff.done) {
       var once = false, go = function () { if (once) return; once = true; handoff.pending = handoff.pending && handoff.done; enterSession(); };
       handoff.waiters.push(go);
       setTimeout(go, 8000);
+      return;
+    }
+    if (carrying) {
+      var settled = false, after = function () {
+        if (settled) return;
+        settled = true; carry.waiting = null;
+        /* carried: the guest look the page booted with goes with the guest */
+        var now = MCC.session && MCC.session();
+        if (now && now.access_token) document.documentElement.classList.remove("mn-guest");
+        enterSession();
+      };
+      carry.waiting = after;
+      setTimeout(after, 8000);
       return;
     }
     enterSession();
@@ -4305,11 +4346,14 @@
   /* the mission's field in words, as the feed's posts say it (js/world-mission-posts.js, domainLabel): "Mutual aid", never the
      raw key "mutual_aid" (release review RS-7, 2026-11-19) */
   function missionDomainLabel(m){var d=(m&&m.domain)||"community";return (MISSION_POSTS&&MISSION_POSTS.domainLabel?MISSION_POSTS.domainLabel(d):String(d).replace(/[_-]+/g," "))||"Mission";}
+  function missionLevelLabel(id){
+    var mine=!state.guest&&state.user&&missions.recordOwner===state.user.id&&missions.levelsByMission&&missions.levelsByMission[id];
+    return "One mission, three levels"+(mine?" · you: "+mine.done+" / "+mine.total:"");
+  }
   function missionCard(m){
     var st=missions.stats[m.id]||{}, joined=Number(st.joined)||0, submitted=Number(st.submitted)||0, verified=Number(st.verified)||0;
     var activity=joined+" joined · "+verified+" completed"+(submitted?" · "+submitted+" awaiting review":"");
-    var mine=missions.levelsByMission&&missions.levelsByMission[m.id];
-    if(m.id===ANTISOCIAL_ID)activity="One mission, three levels"+(mine?" · you: "+mine.done+" / "+mine.total:"")+" · "+activity;
+    var progress=m.id===ANTISOCIAL_ID?'<span data-mission-level-progress>'+esc(missionLevelLabel(m.id))+'</span> · ':"";
     /* where it started, what comes next, how far it reaches, its own call to action:
        action_mission_card_extras() (pending SQL); absent until applied, so nothing shows */
     var x=missions.extras&&missions.extras[m.id]||{};
@@ -4318,7 +4362,7 @@
       (x.next_mission_title?'<p class="mn__hint">Next in this arc: '+esc(x.next_mission_title)+'</p>':"")+
       (x.previous_mission_title?'<p class="mn__hint">Opens once your \u201c'+esc(x.previous_mission_title)+'\u201d is verified</p>':"");
     var cta=x.cta_key==="business_listing"?' <button class="mn__quiet" type="button" data-open-mission="'+esc(m.id)+'" data-focus="business">'+esc(x.cta_label||"Put your Black business on the map")+'</button>':"";
-    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(missionDomainLabel(m))+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
+    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(missionDomainLabel(m))+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+progress+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
   }
   /* Public display name; stable mission IDs and the published historical source remain unchanged. */
   function publicMission(m) {
@@ -4354,13 +4398,16 @@
   /* THE ACTION RECORD: verified work, skills, cohorts, and what it unlocks.
      Points are feedback; access is the reward. */
   var STATUS_LABEL={in_progress:"In progress",joined:"In progress",submitted:"Waiting for review",verified:"Verified",rejected:"Not verified"};
+  var actionRecordVersion=0;
   function loadActionRecord(){
+    var version=++actionRecordVersion,owner=state.user&&state.user.id;
     return Promise.all([
       sbRpc("action_record").catch(function(){return null;}),
       sbRpc("action_fellowship_status").catch(function(){return null;}),
       sbRpc("my_action_shares").catch(function(){return [];})
     ]).then(function(x){
-      missions.record=x[0]||null;missions.fellowship=x[1]||null;
+      if(!owner||state.guest||!state.user||state.user.id!==owner||version!==actionRecordVersion)return;
+      missions.recordOwner=owner;missions.record=x[0]||null;missions.fellowship=x[1]||null;
       missions.shared={};(x[2]||[]).forEach(function(s){missions.shared[s.assignment_id]=s.post_id;});
       paintActionRecord();
     });
@@ -4420,15 +4467,22 @@
     return open.slice().sort(function(a,b){return near(b)-near(a)||joined(b)-joined(a);})[0];
   }
   function paintActionRecord(){
-    var r=missions.record; if(!r)return;
+    var r=!state.guest&&state.user&&missions.recordOwner===state.user.id&&missions.record;
+    var cardProgress=document.querySelector("#mnMissionList [data-mission-level-progress]");
+    missions.levelsByMission={};
+    var host=$("mnRecord");
+    if(!r){
+      if(cardProgress)cardProgress.textContent=missionLevelLabel(ANTISOCIAL_ID);
+      if(host){host.hidden=true;host.textContent="";}
+      return;
+    }
     var verified=Number(r.verified_actions)||0, points=Number(r.points)||0, cohorts=r.cohorts||[];
     if($("mnActionScore"))$("mnActionScore").textContent=points.toLocaleString()+" pts";
     if($("mnVerifiedActions"))$("mnVerifiedActions").textContent=verified.toLocaleString();
     if($("mnCohortProgress"))$("mnCohortProgress").textContent=cohorts.length?(cohorts[0].goal_points?Math.min(100,Math.round(cohorts[0].points/cohorts[0].goal_points*100))+"%":cohorts[0].name):"-";
-    var host=$("mnRecord"); if(!host)return;
+    if(!host)return;
     var fellowship=fellowshipBlock(verified);
     var skills=(r.skills||[]).map(function(k){var top=(r.skills[0]&&r.skills[0].xp)||1;return '<li><span>'+esc(k.skill)+'</span><i style="--pct:'+Math.max(4,Math.round(k.xp/top*100))+'%"></i><b>'+esc(k.verified_actions)+'</b></li>';}).join("");
-    missions.levelsByMission={};
     var list=(r.missions||[]).map(function(m){
       /* a mission with levels reads its progress: n / 3 (owner, 2026-10-14: 1 / 3 → 2 / 3 → 3 / 3) */
       var done=(m.levels||[]).filter(function(x){return x.status==="verified";}).length, total=Number(m.level_count)||0;
@@ -4439,6 +4493,7 @@
           (missions.shared&&missions.shared[m.assignment_id]?'<span class="mn__record-shared">On the feed</span>':'<button class="mn__record-share" type="button" data-share-action="'+esc(m.assignment_id)+'">Share to feed</button>'):"")+
         (m.status==="rejected"&&m.review_note?'<small>'+esc(m.review_note)+'</small>':"")+'</li>';
     }).join("");
+    if(cardProgress)cardProgress.textContent=missionLevelLabel(ANTISOCIAL_ID);
     host.hidden=false;
     var next=nextMission(r);
     host.innerHTML='<div class="mn__record-head"><div><p class="mn__eyebrow">Your Action Record</p><h2>'+verified+' verified '+(verified===1?"action":"actions")+'</h2></div><strong>'+points.toLocaleString()+' pts</strong></div>'+

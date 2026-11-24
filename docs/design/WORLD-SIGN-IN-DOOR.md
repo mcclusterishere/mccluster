@@ -236,6 +236,10 @@ since the release preparation of 2026-11-18 (`docs/control-plane/WORLD-RELEASE-2
 11. Only email sign-in is switched on in Supabase; the door shows Google or Apple by itself once they are on.
 12. Please confirm the Supabase Site URL, and that `https://mccluster.org/**` is in Redirect URLs, so a confirmation email
     sent from `mccluster.org` lands back there.
+    Answered in the one-platform plan (2026-11-23): `https://mccluster.org/**` is in Redirect URLs (owner, 2026-11-18;
+    `data/seo/domain-architecture.json` → `url_ownership.how_a_page_moves`), and setting the Site URL to
+    `https://mccluster.org` is Matthew's step after P2 (`docs/control-plane/DOMAINS-AND-ENTITIES.md` → "The owner's
+    steps"). Until then an email that uses the Site URL lands on the Site URL as it is set today.
 
 ## Verification fixes (2026-11-18)
 

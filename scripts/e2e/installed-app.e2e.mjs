@@ -137,7 +137,7 @@ async function setup(device, installed, owner = false, world = false, {dockModul
   await page.locator('.appbar').waitFor({state:'visible'});
   if (owner) await page.waitForFunction(() => MCC_BAR.admin() && document.querySelectorAll('.appbar [data-appnav]').length >= 10);
   if (installed && dockModule) await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-ready'));
-  if (!world && !path) await page.waitForFunction(() => !!window.MCC_MUSIC && !!document.querySelector('[data-music-play][data-album="here"]'));
+  if (!world && !path) await page.waitForFunction(() => !!window.MCC_MUSIC && !!document.getElementById('q'));
   await page.evaluate(() => document.fonts.ready);
   return {context,page,cdp,errors,requests,blocked};
 }
@@ -211,8 +211,14 @@ async function checkDock(page, scope, baseline, device, active = true) {
   if (active) check(scope + ': metadata and transport sit beside the middle navigation', g.left.width > 0 && g.right.width > 0 && g.left.right <= g.tabs.left + .5 && g.tabs.right <= g.right.left + .5, g);
   return g;
 }
+/* Listen lists albums and artists (Matthew, 2026-11-23, "Quick wins" Q2 in docs/music/MUSIC-RELEASE-20261119.md): a song's own play button is in its search results */
+async function songButton(page) {
+  const sel = '[data-music-play][data-album="here"][data-track="Who Did The Shoot"]';
+  if (!(await page.$(sel))) { await page.fill('#q', 'Who Did The Shoot'); await page.waitForSelector(sel); }
+  return page.locator(sel).first();
+}
 async function play(page) {
-  await page.locator('[data-music-play][data-album="here"][data-track="Who Did The Shoot"]').first().click();
+  await (await songButton(page)).click();
   await page.waitForFunction(() => MCC_MUSIC.current()?.title === 'Who Did The Shoot' && !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .15);
 }
 async function audio(page) {
@@ -617,7 +623,8 @@ async function listenReconnecting(phone) {
   const drop = q => q.key !== song ? null : q.n === 1 ? {cut:96000} : {status:503};
   const run = await setup(phone,true,false,false,{drop}), {page,context} = run, scope = phone.name + ' installed Listen, a drop';
   try {
-    await page.locator('[data-music-play][data-album="here"][data-track="Who Did The Shoot"]').first().click();
+    /* started from its search results, as play() starts it (Listen lists albums and artists since Quick wins Q2) */
+    await (await songButton(page)).click();
     await page.waitForFunction(() => MCC_MUSIC.delivery().state === 'reconnecting', null, {timeout:25000});
     await page.waitForFunction(() => /Reconnecting/.test(document.querySelector('.appbar [data-app-player="status"]')?.textContent || ''), null, {timeout:5000});
     await painted(page);
