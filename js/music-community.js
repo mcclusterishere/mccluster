@@ -28,7 +28,14 @@
   /* THE ARTISTS, FIRST. Owner, 2026-10-14: in Music, McCluster opens the
      house (index.html, the M in the middle of the bar); any other artist
      opens their own front page, and the bar takes their perspective from
-     there (js/tabbar.js). The house is always first and is painted at once;
+     there (js/tabbar.js). Owner, 2026-11-24, which is newer and governs
+     McCluster's card: opening an artist shows everything they appear on.
+     The house does not list the records McCluster features on or produced
+     for others, so his card opens the artist view (artist.html), whose
+     first link is the house; the M in the bar still goes there from every
+     page. A creator still opens their own front page, which now lists
+     everything the catalogue credits them on (js/music-artist.js).
+     The house is always first and is painted at once;
      every active creator follows when the directory answers. A creator's
      picture is their own avatar or their initial, never a mark drawn for
      them. The M is shown as supplied, scaled, on no plate. */
@@ -82,15 +89,15 @@
        one artist here: this first card is his, it carries his handle like
        every other card, and his own profile row is not drawn a second time. */
     var HOUSE_HANDLE = "mccluster";
-    var cards = ['<a class="artist artist--house" href="index.html" aria-label="McCluster">' +
+    var cards = ['<a class="artist artist--house" href="artist.html?artist=' + HOUSE_HANDLE + '" data-name="McCluster" aria-label="McCluster">' +
       '<img class="artist__pic artist__pic--house" src="assets/img/m-mark.png" alt="" width="56" height="56">' +
       '<b>McCluster</b><small>@' + HOUSE_HANDLE + '</small></a>'];
     var shown = {};
-    function profileCard(p) {
+    function profileCard(p, catalogueName) {
       shown[String(p.handle).toLowerCase()] = true;
       var name = p.artist_name || "@" + p.handle;
       var avatar = safeArtwork(p.avatar_url);
-      return '<a class="artist" href="music-creator.html?handle=' + encodeURIComponent(p.handle) + '">' +
+      return '<a class="artist" href="music-creator.html?handle=' + encodeURIComponent(p.handle) + '" data-name="' + attr(name + " " + p.handle + (catalogueName ? " " + catalogueName : "")) + '">' +
         (avatar
           ? '<img class="artist__pic" src="' + attr(avatar) + '" alt="" loading="lazy" width="56" height="56">'
           : '<span class="artist__pic artist__pic--initial" aria-hidden="true">' + esc(initialOf(name)) + '</span>') +
@@ -103,8 +110,8 @@
       var p = profileOf(a, (profiles || []).filter(function (x) {
         return x && x.handle && String(x.handle).toLowerCase() !== HOUSE_HANDLE && !shown[String(x.handle).toLowerCase()];
       }));
-      if (p) { cards.push(profileCard(p)); return; }
-      cards.push('<a class="artist" href="' + attr(a.href) + '">' +
+      if (p) { cards.push(profileCard(p, a.name)); return; }
+      cards.push('<a class="artist" href="' + attr(a.href) + '" data-name="' + attr(a.name) + '">' +
         '<span class="artist__pic artist__pic--initial" aria-hidden="true">' + esc(initialOf(a.name)) + '</span>' +
         '<b>' + esc(a.name) + '</b><small>' + a.tracks + (a.tracks === 1 ? " track" : " tracks") + '</small></a>');
     });
@@ -116,7 +123,36 @@
       cards.push(profileCard(p));
     });
     doc.getElementById("artistsRow").innerHTML = cards.join("");
+    narrowArtists();
   }
+  /* A SEARCH NAMES AN ARTIST TOO. Typing "Los Fidel" in the room's search finds his track and leaves his card, the
+     only one, at the front of the row; a search that names no artist takes the row out of the way like the other
+     rails (js/listen.js paint). Accents and case do not matter: "VVS Made" is VVS Madè. */
+  function fold(s) {
+    s = String(s || "");
+    if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
+  function narrowArtists() {
+    var row = doc.getElementById("artistsRow"), wrap = doc.getElementById("artistsWrap"), box = doc.getElementById("q");
+    if (!row || !wrap || !row.querySelectorAll) return;
+    var words = fold(box && box.value).split(" ").filter(Boolean), shown = 0;
+    Array.prototype.forEach.call(row.querySelectorAll("a.artist"), function (card) {
+      var name = fold(card.getAttribute("data-name"));
+      var hit = words.every(function (w) { return name.indexOf(w) > -1; });
+      card.hidden = !hit;
+      if (hit) shown += 1;
+    });
+    wrap.hidden = words.length > 0 && shown === 0;
+    if (words.length) row.scrollLeft = 0;
+  }
+  var searchBox = doc.getElementById("q");
+  if (searchBox && searchBox.addEventListener) {
+    searchBox.addEventListener("input", narrowArtists);
+    var searchClear = doc.getElementById("qClear");
+    if (searchClear && searchClear.addEventListener) searchClear.addEventListener("click", function () { setTimeout(narrowArtists, 0); });
+  }
+  root.MCC_ARTISTS_ROW = { fold: fold, narrow: narrowArtists };
   /* the catalogue's artists, as soon as the shelf answers; the row is repainted with whatever profiles it has */
   if (root.MCC_CREDITS) {
     fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (albums) {

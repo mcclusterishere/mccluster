@@ -41,7 +41,13 @@
      names a track, catalogue.json slugs it, and the telemetry recorded
      whatever string the player had on screen. Lowercased and stripped, all
      three land on the same key. */
-  function key(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
+  /* An accent is not a different letter to somebody typing: "VVS Made" finds VVS Madè. The marks are taken off
+     before anything else is stripped, on both sides of every comparison. */
+  function key(s) {
+    s = String(s || "");
+    if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
 
   /* THE ROTATION is this device's own saves, the same localStorage list
      album.html writes, in the same shape, so a heart tapped in either room

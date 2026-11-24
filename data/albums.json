@@ -528,7 +528,7 @@
    "tracks": [
     {
      "title": "Environmental Injustice",
-     "sub": "McCluster ft. Angel Kastro & Ocho · the Equity Uprise anthem",
+     "sub": "McCluster ft. Angel Kastro & Ocho · the Equity Uprise anthem · Produced by McCluster",
      "credit": "McCluster ft. Angel Kastro & Ocho · the Equity Uprise anthem · Produced by McCluster",
      "credits": {
       "primary": [
@@ -555,7 +555,7 @@
     },
     {
      "title": "Environmental Injustice (Brave mix)",
-     "sub": "McCluster ft. Angel Kastro & Ocho · the GA edition",
+     "sub": "McCluster ft. Angel Kastro & Ocho · the GA edition · Produced by Zakir Elhajoui & McCluster",
      "credit": "McCluster ft. Angel Kastro & Ocho · the GA edition · Produced by Zakir Elhajoui & McCluster",
      "credits": {
       "primary": [
@@ -608,7 +608,7 @@
     },
     {
      "title": "Money or the Power",
-     "sub": "Equity Uprise ft. Ocho, McCluster & Old Jay",
+     "sub": "Equity Uprise ft. Ocho, McCluster & Old Jay · prod. PAX",
      "credit": "Equity Uprise ft. Ocho, McCluster & Old Jay · prod. PAX",
      "credits": {
       "primary": [
@@ -642,7 +642,7 @@
    "tracks": [
     {
      "title": "Deep End",
-     "sub": "McCluster × VVS Madè · the dark side",
+     "sub": "McCluster × VVS Madè · the dark side · Produced by McCluster & Zakir Elhajoui",
      "credit": "McCluster × VVS Madè · the dark side · Produced by McCluster & Zakir Elhajoui",
      "credits": {
       "primary": [
@@ -664,7 +664,7 @@
     },
     {
      "title": "Heal the 3rd World",
-     "sub": "McCluster × VVS Madè · the light side",
+     "sub": "McCluster × VVS Madè · the light side · Produced by McCluster & Zakir Elhajoui",
      "credit": "McCluster × VVS Madè · the light side · Produced by McCluster & Zakir Elhajoui",
      "credits": {
       "primary": [
@@ -939,6 +939,7 @@
      "title": "Upset",
      "sub": "Hitman Benji × Raheem × Rahndrx",
      "credit": "Hitman Benji × Raheem × Rahndrx",
+     "artist": "Hitman Benji × Raheem × Rahndrx",
      "credits": {
       "primary": [
        "hitman-benji",

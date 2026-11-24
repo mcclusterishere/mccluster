@@ -426,6 +426,11 @@
     .now__art::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 30%; z-index: 6; pointer-events: none;
       background: linear-gradient(180deg, rgba(255,255,255,0.09), transparent); }
     .now__film { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+    /* a song with no film shows its cover here, and a cover is supplied artwork: the whole of it, scaled, never
+       cropped to fill the frame (AGENTS.md; the Audio Engineer cover's lettering runs edge to edge) */
+    .now__film.is-cover { object-fit: contain; }
+    /* and the "no words yet" notice is not written across it; real lyrics still scroll over the frame as before */
+    .now__film.is-cover ~ .now__lyr .now__none { display: none; }
     /* THE DISSOLVE: the outgoing scene freezes, drifts, and burns off
        while the new one breathes in underneath */
     canvas.scene-veil { position: absolute; inset: 0; width: 100%; height: 100%;
@@ -910,7 +915,7 @@
         if (a.slug !== ref.album) return;
         a.tracks.forEach(function (t) {
           if (t.title === ref.title) {
-            out = Object.assign({}, t, { albSlug: a.slug, albName: a.name, art: a.art, artist: a.artist || "" });
+            out = Object.assign({}, t, { albSlug: a.slug, albName: a.name, art: a.art, artist: t.artist || a.artist || "" });
           }
         });
       });
@@ -919,7 +924,7 @@
     function allTracks(data) {
       var q = [];
       (data.albums || []).forEach(function (a) {
-        a.tracks.forEach(function (t) { q.push(Object.assign({}, t, { albSlug: a.slug, albName: a.name, art: a.art, artist: a.artist || "" })); });
+        a.tracks.forEach(function (t) { q.push(Object.assign({}, t, { albSlug: a.slug, albName: a.name, art: a.art, artist: t.artist || a.artist || "" })); });
       });
       return q;
     }
@@ -984,7 +989,10 @@
         '<span class="n">' + (i + 1) + "</span>" +
         '<span class="th"' + (t.poster ? ' style="background-image:url(' + t.poster + ')"' : "") + "></span>" +
         '<span class="t">' + esc(t.title) +
-        '<small>' + esc(t.sub || t.albName || "") + '<span data-plays></span></small></span>' +
+        /* under the title: on the record's own page, who is on it and who produced it (js/music-credits.js
+           rowLine: the subtitle and the credit line, each said once); in a playlist, which crosses records, the
+           subtitle or the album the song is from, as before */
+        '<small>' + esc(t.albName ? (t.sub || t.albName) : (window.MCC_CREDITS ? window.MCC_CREDITS.rowLine(t) : (t.sub || ""))) + '<span data-plays></span></small></span>' +
         '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
         (g ? '<span class="reclock" data-reclock></span>' : "") +
         '<button class="hrt" type="button" data-hrt aria-label="Save to My Rotation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
@@ -1032,6 +1040,13 @@
         if (!alb) alb = data.albums[0];
         ALBUM = alb.slug;
         head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "", artistPage: alb.artist_page || "" };
+        /* a record with no artist of its own (the Singles shelf) is billed to the artists its tracks name, never to
+           the house by default: Upset is Hitman Benji × Raheem × Rahndrx's (owner, 2026-11-24). null when the
+           house is a primary artist on every track (js/music-credits.js albumBilling). */
+        if (!head.artist && window.MCC_CREDITS) {
+          var billed = window.MCC_CREDITS.albumBilling(data, alb);
+          if (billed) { head.artist = billed.name; head.billed = billed.slugs; }
+        }
         queue = alb.tracks.map(function (t) {
           return Object.assign({}, t, {
             albSlug: alb.slug, albName: "", art: alb.art,
@@ -1057,12 +1072,28 @@
          (data/albums.json artists, js/music-credits.js) */
       if (!artistHref && window.MCC_CREDITS) {
         ((data && data.artists) || []).forEach(function (a) {
-          if (a && a.name === ARTIST && /^[a-z0-9-]+$/.test(a.slug || "")) artistHref = window.MCC_CREDITS.href(a);
+          if (a && a.name === ARTIST && /^[a-z0-9-]+$/.test(a.slug || "")) artistHref = window.MCC_CREDITS.href(a, data);
         });
       }
       /* "written & performed by Matthew McCluster" stands only under a record that is all his own */
       var written = document.getElementById("albWritten");
       if (written) written.hidden = !(window.MCC_CREDITS && window.MCC_CREDITS.houseOnly(queue));
+      /* a record billed to several artists by its tracks: each name opens that artist */
+      if (!artistHref && head.billed && head.billed.length && window.MCC_CREDITS) {
+        var billedEl = document.getElementById("albArtist"), registry = window.MCC_CREDITS.index(data);
+        billedEl.textContent = "";
+        head.billed.forEach(function (slug, i) {
+          if (i) billedEl.appendChild(document.createTextNode(" × "));
+          var one = registry[slug];
+          if (!one || !/^[a-z0-9-]+$/.test(slug)) { billedEl.appendChild(document.createTextNode(slug)); return; }
+          var link = document.createElement("a");
+          link.href = window.MCC_CREDITS.href(one, data);
+          link.className = "alb__artist";
+          link.setAttribute("data-cta", "album-artist");
+          link.textContent = one.name;
+          billedEl.appendChild(link);
+        });
+      }
       if (artistHref) {
         var artistEl = document.getElementById("albArtist");
         var artistLink = document.createElement("a");
@@ -1447,12 +1478,14 @@
       var feat = document.getElementById("featRail");
       if (feat) feat.innerHTML = (data.albums || []).map(function (a) {
         var first = a.tracks[0] || {};
+        /* whose taste it is on the lock screen: the first song's own artist, then the album's, then the house */
+        var firstBy = first.artist || a.artist || "";
         return '<div class="feat__card" data-open="album.html?album=' + a.slug + '">' +
           '<img class="feat__bg" src="' + a.art + '" alt="" loading="lazy"><span class="feat__smoke"></span>' +
           "<b>" + esc(a.name) + "</b><small>" + esc(a.by || a.tag || "") + "</small>" +
           '<div class="feat__acts">' +
           '<button class="feat__play" type="button" data-pv="alb:' + a.slug + '" data-src="' + first.src + '"' +
-          ' data-title="' + escAttr(first.title || "") + '" data-artist="' + escAttr(a.artist || "") + '"' +
+          ' data-title="' + escAttr(first.title || "") + '" data-artist="' + escAttr(firstBy) + '"' +
           ' data-album-name="' + escAttr(a.name || "") + '" data-art="' + escAttr(a.art || "") + '"' +
           ' aria-label="Preview ' + esc(a.name) + '">' + PLAY_IC + "</button>" +
           '<span class="feat__n">' + a.tracks.length + (a.tracks.length === 1 ? " track" : " tracks") + "</span>" +
@@ -2465,6 +2498,8 @@
     function loadReel(src) {
       reelScenes = null; sceneIdx = -1; sceneBegin = 0; sceneSrc = "";
       nowFilm.loop = true; // single-video tracks keep their ambience loop
+      /* no reel: the frame holds the song's cover, shown whole (.now__film.is-cover) */
+      nowFilm.classList.toggle("is-cover", !src);
       if (src === "@inline") {
         reelScenes = (INLINE.reel && INLINE.reel.scenes) || null;
         if (reelScenes) nowFilm.loop = false;

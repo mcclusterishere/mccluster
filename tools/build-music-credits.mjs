@@ -9,6 +9,9 @@
    writes them from the structure with js/music-credits.js, the same function the pages call. Edit track.credits;
    run this; then tools/build-music-registry.mjs and tools/build-catalogue.mjs, which read the line.
 
+   It also writes track.artist, the names a player bills the song to, on a track whose primary artists are neither
+   the house nor the album's own artist (Upset on the Singles shelf).
+
    A track with no structure is left exactly as written. A subtitle that is not a credit ("the title track") stays
    the owner's: sub is written only where somebody besides the record's own artist is on it. */
 import { readFileSync, writeFileSync } from "node:fs";
@@ -18,7 +21,7 @@ import "../js/music-credits.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = join(ROOT, "data/albums.json");
-const { line, sub, credited, index } = globalThis.MCC_CREDITS;
+const { line, sub, credited, index, billedTo } = globalThis.MCC_CREDITS;
 
 /* the same document with every generated line rewritten; throws on a slug the registry does not know */
 export function withLines(doc) {
@@ -32,11 +35,15 @@ export function withLines(doc) {
         for (const x of credited(t)) {
           if (!known[x.slug]) throw new Error(`${album.slug} / ${t.title}: "${x.slug}" is not in the artists registry`);
         }
-        const { title, sub: oldSub, credit: _old, credits, ...rest } = t;
+        const { title, sub: oldSub, credit: _old, artist: _was, credits, ...rest } = t;
         const short = sub(doc, t);
         const next = { title };
         if (short !== null) next.sub = short; else if (oldSub !== undefined) next.sub = oldSub;
         next.credit = line(doc, t);
+        /* whose record it is, where the album does not say: every player reads track.artist before the album's
+           artist and before the house, so a song on a shelf with no artist (Singles) is never the house's by default */
+        const by = billedTo(doc, t);
+        if (by && by !== (album.artist || "")) next.artist = by;
         next.credits = credits;
         return { ...next, ...rest };
       })

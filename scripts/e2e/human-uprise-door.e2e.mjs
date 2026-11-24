@@ -315,8 +315,10 @@ const settleWorld = async (page) => {
   b = await bar(page);
   check(S, 'on Music the middle cell is still Ana, and it goes to her page', b.perspective === 'fixture-ana' && b.home === `${BASE}/music-creator.html?handle=fixture-ana`, { perspective: b.perspective, home: b.home });
   const artists = await page.evaluate(() => [...document.querySelectorAll('#artistsRow a.artist')].map((a) => ({ href: a.getAttribute('href'), name: a.querySelector('b').textContent, pic: a.querySelector('.artist__pic').tagName + (a.querySelector('.artist__pic').getAttribute('src') ? ':' + a.querySelector('.artist__pic').getAttribute('src') : ':' + a.querySelector('.artist__pic').textContent) })));
-  check(S, 'the Artists rail: McCluster first (the house, the M as supplied), then each creator with their own picture or initial',
-    artists[0] && artists[0].href === 'index.html' && artists[0].pic === 'IMG:assets/img/m-mark.png' &&
+  /* owner, 2026-11-24: opening an artist shows everything they appear on, so McCluster's card opens the artist view
+     (the house does not list his features); the view's own link is the house */
+  check(S, 'the Artists rail: McCluster first (the M as supplied, opening everything he appears on), then each creator with their own picture or initial',
+    artists[0] && artists[0].href === 'artist.html?artist=mccluster' && artists[0].pic === 'IMG:assets/img/m-mark.png' &&
     artists.some((a) => a.href === 'music-creator.html?handle=fixture-ana' && a.pic === 'IMG:' + ANA.avatar_url) &&
     artists.some((a) => a.href === 'music-creator.html?handle=fixture-dev' && a.pic === 'SPAN:D'), artists);
   check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
@@ -325,10 +327,14 @@ const settleWorld = async (page) => {
   /* McCluster in Music opens the house page. Since e5606627 (2026-10-18) opening index.html keeps a signed-in member's chosen
      perspective; the explicit house door (index.html?front=house, the wing's McCluster) is what puts the M back */
   await page.click('#artistsRow a.artist--house');
+  await page.waitForURL(/artist\.html\?artist=mccluster$/, { timeout: 90000 });
+  await page.waitForSelector('#artistOwn:not([hidden])', { timeout: 20000 });
+  check(S, 'McCluster in Music opens everything he appears on, with the house one link on', (await page.getAttribute('#artistOwn', 'href')) === 'index.html' && (await page.locator('#artistSections section').count()) >= 3, { own: await page.getAttribute('#artistOwn', 'href') });
+  await page.click('#artistOwn');
   await page.waitForURL(/index\.html$|\/$/, { timeout: 90000 });
   await page.waitForFunction(() => !!document.querySelector('.appbar [data-appnav="home"]'), null, { timeout: 15000 });
   b = await bar(page);
-  check(S, 'McCluster in Music opens the house page, and Ana stays in the middle', /index\.html$|\/$/.test(page.url()) && b.perspective === 'fixture-ana', { url: page.url(), perspective: b.perspective });
+  check(S, 'from there his own page is the house, and Ana stays in the middle', /index\.html$|\/$/.test(page.url()) && b.perspective === 'fixture-ana', { url: page.url(), perspective: b.perspective });
   await page.goto(`${BASE}/index.html?front=house`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => !!document.querySelector('.appbar [data-appnav="home"]') && !document.querySelector('.appbar [data-appnav="home"][data-perspective]'), null, { timeout: 15000 }).catch(() => {});
   b = await bar(page);

@@ -481,8 +481,10 @@
             var item = Object.assign({}, t, {
               albumSlug: a.slug,
               albumName: a.name,
-              /* the album's billed artist; `by` is its tagline ("Have no fear."), never a name */
-              artist: a.artist || "Matthew McCluster",
+              /* the song's own billed artist where the album does not say (data/albums.json track.artist, written
+                 by tools/build-music-credits.mjs: Upset on the Singles shelf), then the album's, then the house;
+                 `by` is a tagline ("Have no fear."), never a name */
+              artist: t.artist || a.artist || "Matthew McCluster",
               art: a.art
             });
             by[key(a.slug, t.title)] = item;

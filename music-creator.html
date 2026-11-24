@@ -67,6 +67,11 @@
       <div class="ap-tracks" id="creatorPublicTracks" role="list"><div class="creator-status">Loading releases…</div></div>
     </section>
 
+    <!-- a creator who is also credited in the house catalogue (data/albums.json): everything they appear on there,
+         listed here and playable (js/music-artist.js; owner, 2026-11-24: opening an artist shows everything they
+         appear on). Hidden unless the catalogue names them. -->
+    <section class="ap-singles ap-cat" id="apCatalogue" aria-labelledby="apCatalogueTitle" hidden></section>
+
     <dialog class="ap-book" id="apBook" aria-labelledby="apBookTitle">
       <form class="ap-book__form" id="apBookForm" method="dialog" novalidate>
         <p class="ap-label" id="apBookKicker">Booking request</p>
@@ -87,9 +92,6 @@
       </form>
     </dialog>
 
-    <!-- a creator who is also credited in the house catalogue (data/albums.json): one line to everything they appear
-         on there (js/music-artist.js, the artist view). Hidden unless the catalogue names them. -->
-    <p class="ap-foot" id="apCatalogue" hidden></p>
 
     <!-- the offer for whoever is looking (js/creator-onboarding.js, music slice M4): a guest is asked to sign in, a member who is not a creator gets the one tap, a creator opens Creator Studio -->
     <p class="ap-foot">On McCluster Music · <a href="music-creator-terms.html">Creator terms</a> · <span data-creator-offer><span data-offer="become" hidden><a href="creator.html" data-creator-door>Make your own artist page</a> <span class="ap-foot__terms">(one tap with your profile; accepts the Creator terms)</span></span><span data-offer="studio"><a href="creator.html">Open Creator Studio</a></span><span data-offer="signin" hidden><a href="account.html?next=creator.html">Sign in to make your own artist page</a></span></span></p>

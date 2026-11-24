@@ -85,12 +85,43 @@
 
   root.MCC_ARTIST_VIEW.artistFor = artistFor;
 
+  /* THE SAME LIST ON A CREATOR'S OWN FRONT PAGE, in that page's own rows (css/music-artist.css .ap-track): every
+     track the catalogue credits them on, in the view's order, each one playable and linked to its album, with what
+     they did there said when the record is not their own. The cover is shown whole (contain), never cropped. */
+  var ROLE = { featured: "featured", lead: "lead", producer: "producer" };
+  function creatorRows(doc, slug) {
+    var C = root.MCC_CREDITS, seen = C.appearances(doc, slug), done = {}, rows = [];
+    GROUPS.forEach(function (g) {
+      seen[g.key].forEach(function (x) {
+        var id = x.album.slug + "|" + x.track.title;
+        if (done[id]) return;
+        done[id] = true;
+        rows.push(x);
+      });
+    });
+    return rows.map(function (x, i) {
+      var a = x.album, t = x.track, credit = C.line(doc, t);
+      var href = "album.html?album=" + encodeURIComponent(a.slug) + "&t=" + encodeURIComponent(t.title);
+      return '<li class="ap-track">' +
+        '<span class="ap-track__n">' + (i + 1) + "</span>" +
+        '<img class="ap-track__cover" src="' + esc(a.art) + '" alt="" loading="lazy" width="48" height="48">' +
+        '<span class="ap-track__t"><b><a href="' + esc(href) + '" data-cta="creator-catalogue-track">' + esc(t.title) + "</a></b>" +
+          "<small>" + esc(a.name) + (credit ? " &middot; " + esc(credit) : "") + "</small></span>" +
+        '<span class="ap-track__d">' + esc(clock(t.seconds)) + "</span>" +
+        '<button class="creator-play" type="button" data-music-play data-album="' + esc(a.slug) + '" data-track="' + esc(t.title) +
+          '" aria-label="Play ' + esc(t.title) + '" aria-pressed="false">' + PLAY + "</button>" +
+        "</li>";
+    }).join("");
+  }
+  root.MCC_ARTIST_VIEW.creatorRows = creatorRows;
+
   var doc = root.document;
   if (!doc || !doc.getElementById) return;
   function el(id) { return doc.getElementById(id); }
 
-  /* A CREATOR'S OWN PAGE (music-creator.html) keeps its page and gains one line: when the creator is also credited
-     in the house catalogue, a link to everything they appear on there. */
+  /* A CREATOR'S OWN PAGE (music-creator.html) keeps its page and gains one section: when the creator is also
+     credited in the house catalogue, everything they appear on there, listed on the page itself (owner, 2026-11-24:
+     opening an artist shows everything they appear on), with a link to the same list grouped by role. */
   var line = el("apCatalogue");
   if (line) {
     var handle = "";
@@ -101,8 +132,10 @@
         var a = artistFor(albums, handle, name);
         var n = a ? root.MCC_CREDITS.count(albums, a.slug) : 0;
         if (!n) return false;
-        line.innerHTML = 'Also in the McCluster catalogue: <a href="artist.html?artist=' + esc(encodeURIComponent(a.slug)) + '" data-cta="creator-catalogue">' +
-          n + (n === 1 ? " track" : " tracks") + " credited to " + esc(a.name) + "</a>";
+        line.innerHTML = '<h2 class="ap-label" id="apCatalogueTitle">In the McCluster catalogue</h2>' +
+          '<ol class="ap-tracks">' + creatorRows(albums, a.slug) + "</ol>" +
+          '<p class="ap-cat__more"><a href="artist.html?artist=' + esc(encodeURIComponent(a.slug)) + '" data-cta="creator-catalogue">' +
+          n + (n === 1 ? " track" : " tracks") + " credited to " + esc(a.name) + ", grouped by role</a></p>";
         line.hidden = false;
         return true;
       }
@@ -148,6 +181,8 @@
         '<p class="lib__why">' + esc(s.why) + "</p>" +
         '<ul class="tr">' + s.html + "</ul></section>";
     }).join("");
+    /* music_artist_view is a new event name: js/analytics.js holds it (AWAITING_APPROVAL) and sends nothing until
+       Matthew approves measuring it and it is added to the measurement dictionary */
     if (root.MCC_TRACK) root.MCC_TRACK("music_artist_view", { artist: v.slug, tracks: v.total });
   }).catch(function () {
     el("artistSummary").textContent = "The shelf is warming up. Refresh in a moment.";

@@ -164,6 +164,38 @@ test("owner: the Equity Uprise album is Equity Uprise's own, with every credit i
   assert.deepEqual(money.credits.featured, ["ocho", "mccluster", "old-jay"]);
   assert.deepEqual(money.credits.producers, ["pax"]);
   assert.match(money.credit, /ft\. Ocho, McCluster & Old Jay · prod\. PAX$/);
+  /* "prod. PAX" was in the line under the title in the album's track list, and it still is: the owner keeps every
+     credit the row showed. The two producer facts he set are in that line too. */
+  assert.match(money.sub, /ft\. Ocho, McCluster & Old Jay · prod\. PAX$/, "the track row keeps prod. PAX");
+  assert.match(main.sub, / · Produced by McCluster$/);
+  assert.match(brave.sub, / · the GA edition · Produced by Zakir Elhajoui & McCluster$/);
+  assert.equal(free.sub, "Los Fidel · beat by McCluster");
+});
+
+test("an album's track row says who is on the song and who produced it, each once", () => {
+  const row = (slug, title) => C.rowLine(track(slug, title));
+  assert.equal(row("equity-uprise", "Money or the Power"), "Equity Uprise ft. Ocho, McCluster & Old Jay · prod. PAX");
+  assert.equal(row("equity-uprise", "Environmental Injustice (Brave mix)"), "McCluster ft. Angel Kastro & Ocho · the GA edition · Produced by Zakir Elhajoui & McCluster");
+  assert.equal(row("audio-engineer", "Outta Tune"), "Produced by McCluster");
+  assert.equal(row("audio-engineer", "Trackout"), "Co-produced by Tazzy Jay & McCluster");
+  assert.equal(row("whip-equipped", "Dealer Plates (A-Side)"), "Produced by McCluster & Zakir Elhajoui");
+  assert.equal(row("here", "Here"), "the title track · Produced by McCluster & Zakir Elhajoui", "a hand-written subtitle stays, with the producer after it");
+  assert.equal(row("prim3", "High Alert"), "PRIM3 · Scored and produced by McCluster");
+  assert.equal(row("cia-mind-control", "Pull Up"), "KKK", "no producer is named where none is known");
+  assert.equal(row("tinderfessions", "Recipe"), "Benji Chase");
+  /* every track with a producer shows that producer in its row */
+  for (const al of DOC.albums) for (const t of al.tracks) {
+    const producers = (t.credits.producers || []).map((s) => DOC.artists.find((a) => a.slug === s).name);
+    for (const name of producers) assert.ok(C.rowLine(t).includes(name), `${al.slug} / ${t.title}: the row names ${name}`);
+    if (!producers.length) assert.doesNotMatch(C.rowLine(t), /produced|prod\./i, `${al.slug} / ${t.title}: no producer in the row`);
+  }
+  assert.equal(C.rowLine({ title: "x", sub: "a creator's cut" }), "a creator's cut", "a track with no credit line keeps its subtitle");
+  assert.equal(C.rowLine({ title: "x" }), "");
+  const page = read("album.html");
+  assert.match(page, /esc\(t\.albName \? \(t\.sub \|\| t\.albName\) : \(window\.MCC_CREDITS \? window\.MCC_CREDITS\.rowLine\(t\) : \(t\.sub \|\| ""\)\)\)/, "the album's own rows print the row line; a playlist row keeps its subtitle or album");
+  /* the line wraps in the album room: nothing there cuts it with an ellipsis */
+  const rule = /\n    \.tr \.t small \{[^}]*\}/.exec(page)[0];
+  assert.doesNotMatch(rule, /nowrap|ellipsis/);
 });
 
 test("owner: Upset is a Hitman Benji song", () => {
@@ -173,6 +205,33 @@ test("owner: Upset is a Hitman Benji song", () => {
   assert.equal(DOC.artists.find((a) => a.slug === "hitman-benji").name, "Hitman Benji");
   for (const f of ["data/albums.json", "data/catalogue.json", "catalogue.html", "llms.txt"]) assert.doesNotMatch(read(f), /Hitman Halo/, `${f}: the old name is gone`);
   assert.doesNotMatch(read("data/prayer-closet.json"), /Hitman Halo × Raheem/, "the credit is not quoted with the old name anywhere");
+});
+
+test("owner: Upset is billed to its own artists on every player, never to the house by default", () => {
+  const singles = album("singles"), t = track("singles", "Upset");
+  assert.equal(singles.artist, undefined, "the Singles shelf has no artist of its own");
+  assert.equal(C.billedTo(DOC, t), "Hitman Benji × Raheem × Rahndrx");
+  assert.equal(t.artist, "Hitman Benji × Raheem × Rahndrx", "stored on the track by tools/build-music-credits.mjs");
+  assert.deepEqual(JSON.parse(JSON.stringify(C.albumBilling(DOC, singles))), { name: "Hitman Benji × Raheem × Rahndrx", slugs: ["hitman-benji", "raheem", "rahndrx"] });
+  /* a record the house is a primary artist of keeps the house's billing; an album that names its artist needs none */
+  for (const slug of ["here", "whip-equipped", "vaunt-ep", "audio-engineer", "heal-the-3"]) assert.equal(C.albumBilling(DOC, album(slug)), null, slug);
+  assert.equal(C.billedTo(DOC, track("heal-the-3", "Deep End")), "", "McCluster is a primary artist of Heal the 3");
+  assert.equal(C.billedTo(DOC, { title: "a creator's cut" }), "");
+  assert.deepEqual(JSON.parse(JSON.stringify(C.albumBilling(DOC, { tracks: [t, track("cia-mind-control", "Pull Up")] }))), { name: "Various artists", slugs: [] }, "a shelf of different artists' songs is nobody's alone");
+  /* track.artist is written only where the album does not already say whose record it is */
+  for (const al of DOC.albums) for (const x of al.tracks) {
+    const by = C.billedTo(DOC, x);
+    assert.equal(x.artist, by && by !== (al.artist || "") ? by : undefined, `${al.slug} / ${x.title}`);
+    /* and no record the house is not a primary artist of can fall through to the house */
+    if (!x.credits.primary.includes("mccluster")) assert.ok(x.artist || al.artist, `${al.slug} / ${x.title}: billed by name`);
+  }
+  /* the one player, the album room and its shelf read the track's artist before the album's and the house */
+  assert.match(read("js/music-engine.js"), /artist: t\.artist \|\| a\.artist \|\| "Matthew McCluster",/);
+  const page = read("album.html");
+  assert.equal(page.split('artist: t.artist || a.artist || "" }').length - 1, 2, "a playlist's rows carry the song's own artist");
+  assert.match(page, /var billed = window\.MCC_CREDITS\.albumBilling\(data, alb\);\n\s+if \(billed\) \{ head\.artist = billed\.name; head\.billed = billed\.slugs; \}/, "the album heading is the billing its tracks give it");
+  assert.match(page, /var firstBy = first\.artist \|\| a\.artist \|\| "";/, "the shelf's taste of a record is billed the same way");
+  assert.match(page, /' data-artist="' \+ escAttr\(t\.artist \|\| ""\) \+ '"'/, "the row carries it to the lock screen");
 });
 
 test("owner: no producer is named on the KKK album or on Benji Chase's albums", () => {
@@ -216,9 +275,20 @@ test("owner: every credited artist has an entry, and opening one shows everythin
   const fidel = C.appearances(DOC, "los-fidel");
   assert.deepEqual([...fidel.own, ...fidel.featured, ...fidel.produced, ...fidel.other].map((x) => [x.album.slug, x.track.title]), [["equity-uprise", "Please Set Me Free"]]);
   assert.equal(roster.find((a) => a.slug === "los-fidel").href, "artist.html?artist=los-fidel");
-  /* an artist with a page of their own keeps it */
+  /* opening an artist shows everything they appear on. An artist's own page is opened directly only when it lists
+     everything: PRIM3's does (all thirteen PRIM3 songs, on the one record that names that page); the house does not
+     list the Equity Uprise records McCluster features on, so McCluster opens the artist view like everybody else */
+  const prim3 = DOC.artists.find((a) => a.slug === "prim3"), house = DOC.artists.find((a) => a.slug === "mccluster");
+  assert.equal(C.pageListsAll(DOC, prim3), true);
   assert.equal(roster.find((a) => a.slug === "prim3").href, "prim3-artist.html");
-  assert.equal(roster.find((a) => a.slug === "mccluster").href, "index.html");
+  const prim3Page = read("prim3-artist.html");
+  for (const x of C.appearances(DOC, "prim3").own) assert.ok(prim3Page.includes(x.track.title.replace(/&/g, "&amp;")), `prim3-artist.html lists ${x.track.title}`);
+  assert.equal(C.count(DOC, "prim3"), C.appearances(DOC, "prim3").own.length, "PRIM3 is on nothing but its own record");
+  assert.equal(C.pageListsAll(DOC, house), false, "index.html does not list what McCluster features on or produced for others");
+  assert.equal(roster.find((a) => a.slug === "mccluster").href, "artist.html?artist=mccluster");
+  assert.equal(C.href(house), "artist.html?artist=mccluster", "with no catalogue to check, the artist view");
+  for (const a of roster) if (a.slug !== "prim3") assert.equal(a.href, `artist.html?artist=${a.slug}`, a.slug);
+  assert.equal(C.pageListsAll({ artists: [], albums: [{ slug: "x", artist_page: "p.html", tracks: [{ title: "a", credits: { primary: ["z"] } }] }, { slug: "y", tracks: [{ title: "b", credits: { primary: ["q"], featured: ["z"] } }] }] }, { slug: "z", page: "p.html" }), false, "one feature elsewhere and the page no longer lists everything");
   /* Ocho is on three records, and all three are found */
   assert.deepEqual(C.appearances(DOC, "ocho").featured.map((x) => x.track.title), ["Environmental Injustice", "Environmental Injustice (Brave mix)", "Money or the Power"]);
   /* Zakir Elhajoui: 6 + 11 + 2 + 1 produced with McCluster, the Brave mix, and the guitar on Vaunt */
@@ -249,9 +319,11 @@ async function artistsRow(profiles) {
     throw new Error("unexpected request " + u);
   };
   const window = { document, fetch, MCC_CREDITS: C };
-  vm.runInNewContext(read("js/music-community.js"), { window, fetch, document, Promise, encodeURIComponent, String, Object, Error });
+  vm.runInNewContext(read("js/music-community.js"), { window, fetch, document, Promise, encodeURIComponent, String, Object, Error, Array, setTimeout });
   for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r));
   const html = els.artistsRow.innerHTML;
+  artistsRow.fold = window.MCC_ARTISTS_ROW.fold;
+  artistsRow.html = html;
   return [...html.matchAll(/<a class="artist[^"]*" href="([^"]+)"[^>]*>(.*?)<\/a>/g)].map((m) => ({
     href: m[1].replace(/&amp;/g, "&"), name: /<b>(.*?)<\/b>/.exec(m[2])[1], small: /<small>(.*?)<\/small>/.exec(m[2])[1],
     img: /<img/.test(m[2]), initial: (/artist__pic--initial[^>]*>(.*?)<\/span>/.exec(m[2]) || [])[1] || ""
@@ -268,7 +340,7 @@ test("the Artists row: McCluster first, everybody credited, a profile merged by 
   ]);
   const names = cards.map((c) => c.name);
   assert.equal(new Set(names.map((n) => n.toLowerCase())).size, names.length, `no name twice: ${names.join(", ")}`);
-  assert.deepEqual(cards[0], { href: "index.html", name: "McCluster", small: "@mccluster", img: true, initial: "" }, "McCluster first, once, the M as supplied");
+  assert.deepEqual(cards[0], { href: "artist.html?artist=mccluster", name: "McCluster", small: "@mccluster", img: true, initial: "" }, "McCluster first, once, the M as supplied, opening everything he appears on");
   const roster = C.roster(DOC).filter((a) => a.slug !== "mccluster");
   /* every catalogue artist is in the row, in the registry's order, before the creators the catalogue does not know */
   assert.deepEqual(cards.slice(1, 1 + roster.length).map((c) => c.name), roster.map((a) => (a.slug === "ocho" ? "@ocho" : a.name)));
@@ -288,8 +360,21 @@ test("the Artists row: McCluster first, everybody credited, a profile merged by 
   /* with no directory at all the catalogue's artists are still listed */
   const alone = await artistsRow([]);
   assert.deepEqual(alone.map((c) => c.name), ["McCluster", ...roster.map((a) => a.name)]);
-  /* the row is the same horizontal rail, phone first */
-  assert.match(read("css/music-room.css"), /\.artists__row \{ display: flex; gap: 0\.9rem; overflow-x: auto;/);
+  /* the row is the same horizontal rail, phone first; with room it wraps, so no artist is off the edge for a mouse */
+  const css = read("css/music-room.css");
+  assert.match(css, /\.artists__row \{ display: flex; gap: 0\.9rem; overflow-x: auto;/);
+  assert.match(css, /@media \(min-width: 600px\) \{ \.artists__row \{ gap: 1\.1rem; flex-wrap: wrap; overflow-x: visible; row-gap: 1rem; \}/);
+  assert.doesNotMatch(css.slice(css.indexOf(".artists__row")), /@media \(max-width/);
+  /* a search narrows the row by name: every card carries the name it is found by, and a hidden card is gone */
+  assert.match(css, /\.artist\[hidden\] \{ display: none; \}/);
+  assert.match(artistsRow.html, /<a class="artist" href="artist\.html\?artist=los-fidel" data-name="Los Fidel">/);
+  assert.match(artistsRow.html, /<a class="artist artist--house" href="artist\.html\?artist=mccluster" data-name="McCluster" aria-label="McCluster">/);
+  const fold = artistsRow.fold;
+  assert.equal(fold("VVS Madè"), fold("vvs made"), "an accent is not a different letter");
+  assert.equal(fold("  Los   FIDEL "), "los fidel");
+  const community = read("js/music-community.js");
+  assert.match(community, /searchBox\.addEventListener\("input", narrowArtists\);/);
+  assert.match(community, /wrap\.hidden = words\.length > 0 && shown === 0;/, "a search that names no artist takes the row out of the way");
   assert.match(read("listen.html"), /js\/music-credits\.js\?v=__STAMP__"><\/script>\n  <script src="js\/listen\.js/, "the credits reader loads before the room");
 });
 
@@ -323,7 +408,7 @@ test("the artist view renders an artist's appearances, grouped by role, playable
   assert.doesNotMatch(V.view(hostile, "x").sections[0].html, /<img|<b>|<i>/);
   /* the page itself */
   const page = read("artist.html");
-  assert.match(page, /<link rel="canonical" href="https:\/\/matthew\.mccluster\.org\/artist\.html">/);
+  assert.doesNotMatch(page, /<link rel="canonical"/, "one template for every artist: no address that would fold them all into one");
   assert.equal((page.match(/<h1\b/g) || []).length, 1);
   for (const id of ["artistPic", "artistName", "artistSummary", "artistOwn", "artistSections"]) assert.ok(page.includes(`id="${id}"`), id);
   const order = ["js/now-playing.js", "js/music-engine.js", "js/music-credits.js", "js/music-artist.js"].map((f) => page.indexOf(`<script src="${f}?v=__STAMP__">`));
@@ -342,7 +427,22 @@ test("the artist view renders an artist's appearances, grouped by role, playable
   assert.equal(who("royce.r01", "Royce"), null, "a creator the catalogue does not credit gets no line");
   assert.equal(who("", ""), null);
   const creator = read("music-creator.html");
-  assert.match(creator, /<p class="ap-foot" id="apCatalogue" hidden><\/p>/);
+  /* a creator's own front page lists everything the catalogue credits them on, on the page itself */
+  assert.match(creator, /<section class="ap-singles ap-cat" id="apCatalogue" aria-labelledby="apCatalogueTitle" hidden><\/section>/);
+  const rows = window.MCC_ARTIST_VIEW.creatorRows(DOC, "hitman-benji");
+  assert.equal((rows.match(/<li class="ap-track">/g) || []).length, 1);
+  assert.match(rows, /<a href="album\.html\?album=singles&amp;t=Upset" data-cta="creator-catalogue-track">Upset<\/a>/);
+  assert.match(rows, /<small>Singles &middot; Hitman Benji × Raheem × Rahndrx<\/small>/);
+  assert.match(rows, /<button class="creator-play" type="button" data-music-play data-album="singles" data-track="Upset" aria-label="Play Upset" aria-pressed="false">/);
+  const ocho = window.MCC_ARTIST_VIEW.creatorRows(DOC, "ocho");
+  assert.equal((ocho.match(/<li class="ap-track">/g) || []).length, C.count(DOC, "ocho"), "every track, once");
+  const zakir = window.MCC_ARTIST_VIEW.creatorRows(DOC, "zakir-elhajoui");
+  assert.equal((zakir.match(/<li class="ap-track">/g) || []).length, 21, "Vaunt is listed once though he is on it twice");
+  assert.doesNotMatch(window.MCC_ARTIST_VIEW.creatorRows(hostile, "x"), /<img src=x|<b>A|<i>/, "names are text there too");
+  assert.match(read("js/music-artist.js"), /'<ol class="ap-tracks">' \+ creatorRows\(albums, a\.slug\) \+ "<\/ol>"/);
+  assert.match(read("css/music-artist.css"), /\.ap-track img\.ap-track__cover\{object-fit:contain;background:none\}/, "a record's cover is shown whole there");
+  /* in the artist view the credit wraps: it is the reason the artist is on the page */
+  assert.match(page, /main\.ls \.tr \.t small \{ white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere;/);
   const at = (f) => creator.indexOf(`<script src="${f}?v=__STAMP__">`);
   assert.ok(at("js/music-engine.js") > 0 && at("js/music-engine.js") < at("js/music-credits.js") && at("js/music-credits.js") < at("js/music-artist.js"), "the player, the credits reader, then the line");
   /* the same bar as the listening room, no new global navigation */
@@ -353,6 +453,12 @@ test("the artist view renders an artist's appearances, grouped by role, playable
 test("search finds a track by any credited artist's name", () => {
   const js = read("js/listen.js");
   assert.match(js, /people: root\.MCC_CREDITS \? root\.MCC_CREDITS\.names\(albums, t\)\.join\(" "\) : ""/);
+  /* the search's own key, run as written: accents and case do not matter */
+  const key = vm.runInNewContext("(" + /function key\(s\) \{[\s\S]*?\n  \}/.exec(js)[0] + ")", { String });
+  assert.equal(key("VVS Madè"), "vvs made");
+  assert.equal(key("VVS Made"), key("vvs madè"));
+  assert.ok(key(C.names(DOC, track("heal-the-3", "Deep End")).join(" ")).includes(key("VVS Made")), "VVS Made finds Deep End");
+  assert.equal(key("Mr. Lock Changer (Remix)"), "mr lock changer remix");
   assert.match(js, /key\(t\.title \+ " " \+ t\.album \+ " " \+ t\.credit \+ " " \+ t\.sub\) \+ " " \+ key\(t\.people\)/);
   const names = (slug, title) => C.names(DOC, track(slug, title));
   assert.deepEqual(names("vaunt-ep", "Vaunt (Acoustic)"), ["McCluster", "Zakir Elhajoui", "Zakir"], "the full name, though the line says guitar by Zakir");
@@ -372,6 +478,9 @@ test("\"written & performed by Matthew McCluster\" stands only under records tha
   assert.match(page, /<span id="albWritten" hidden>Every track written &amp; performed by Matthew McCluster · <\/span>QT6KV catalogue\./, "hidden until the record is known to be his");
   assert.match(page, /written\.hidden = !\(window\.MCC_CREDITS && window\.MCC_CREDITS\.houseOnly\(queue\)\);/);
   assert.match(page, /\(ARTIST === HOUSE \? "Written & performed by " \+ ARTIST \+ " · QT6KV" : ARTIST\)/, "no such claim for another act's track");
+  /* a song with no film shows its cover in the now sheet whole: supplied artwork is scaled, never cropped */
+  assert.match(page, /\.now__film\.is-cover \{ object-fit: contain; \}/);
+  assert.match(page, /nowFilm\.classList\.toggle\("is-cover", !src\);/);
   assert.ok(page.indexOf('js/music-credits.js?v=__STAMP__') > 0);
   for (const f of ["listen.html", "catalogue.html", "llms.txt"]) assert.doesNotMatch(read(f), /unless credited otherwise/, `${f}: the blanket line is gone`);
   for (const f of ["listen.html", "catalogue.html"]) assert.match(read(f), /McCluster&rsquo;s own records are written &amp; performed by Matthew McCluster; every other record names its artist\./);

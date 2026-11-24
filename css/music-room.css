@@ -152,4 +152,6 @@ html[data-theme="light"] .tr .hrt {
 .artist:focus-visible { outline: none; }
 .artist:focus-visible .artist__pic { box-shadow: 0 0 0 2px var(--ruby-hot, #e5383b); }
 html[data-theme="light"] .artist__pic--house { content: url("../assets/img/m-mark-dark.png"); }
-@media (min-width: 600px) { .artists__row { gap: 1.1rem; } .artist { width: 5.2rem; } .artist__pic { width: 4rem; height: 4rem; } }
+.artist[hidden] { display: none; }
+/* with room, and a mouse that cannot fling a rail, every artist is on the page: the row wraps instead of scrolling */
+@media (min-width: 600px) { .artists__row { gap: 1.1rem; flex-wrap: wrap; overflow-x: visible; row-gap: 1rem; } .artist { width: 5.2rem; } .artist__pic { width: 4rem; height: 4rem; } }

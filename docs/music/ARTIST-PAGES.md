@@ -116,24 +116,47 @@ they appear on.
   by slug. McCluster is one slug, `mccluster`, in every role.
 - **The words** are never typed. `js/music-credits.js` writes the credit line
   from the structure. `node tools/build-music-credits.mjs` stores it as
-  `track.credit` (and the short form as `track.sub`); then run
+  `track.credit`, as `track.sub` (the same line without its trailing remark,
+  where somebody besides the record's own artist is on it), and as
+  `track.artist` (the names a player bills the song to) on a track whose
+  primary artists are neither McCluster nor the album's own artist: "Upset"
+  on the Singles shelf is Hitman Benji × Raheem × Rahndrx on every player and
+  on its album page, never McCluster's by default. Then run
   `tools/build-music-registry.mjs` and `tools/build-catalogue.mjs`, which
   carry the structure into `data/catalogue.json` and the catalogue's JSON-LD.
+- **An album's track rows** (`album.html`) print who is on each song and who
+  produced it (`rowLine`: a hand-written subtitle first, then the credit
+  line, each once). "prod. PAX" stays in the Money or the Power row.
 - **The Artists row** on `listen.html` (`js/music-community.js`) lists
   McCluster, then every registered artist who is on at least one track, then
   the creators the catalogue does not know. A creator profile with the same
   handle or name is the same artist and is drawn once, with their page and
-  picture. Anyone else shows their initial.
+  picture. Anyone else shows their initial. On a phone it is a rail; from
+  600px it wraps so no card is off the edge. The room's search narrows it to
+  the artists it names (accents and case do not matter).
+- **Opening an artist shows everything they appear on.** Every card opens
+  the artist view, with two exceptions that already list everything: PRIM3
+  opens `prim3-artist.html` (all its songs are on the one record that names
+  that page; `pageListsAll` in `js/music-credits.js` checks this), and a
+  creator opens their own front page, which lists every track the catalogue
+  credits them on in a section of its own (`#apCatalogue`). McCluster's card
+  opens the artist view, not the house: the house does not list the records
+  he features on or produced for others. The view's first link is the house.
+  (Owner, 2026-10-14: McCluster's card opened the house. The rule of
+  2026-11-24 is newer and governs; the owner can reverse it in one line of
+  `js/music-community.js`.)
 - **The artist view** is `artist.html?artist=<slug>` (`js/music-artist.js`):
   the artist's tracks, the ones they are featured on, the ones they produced
-  and any other credit, each row playable and linked to its album. An artist
-  with a page of their own (the house, `prim3-artist.html`, a creator page)
-  keeps it; a creator page links to the view when the catalogue credits them.
+  and any other credit, each row playable and linked to its album, the
+  credit line wrapped and never cut. An artist with a page of their own is
+  linked to it. Its event name, `music_artist_view`, is held in
+  `js/analytics.js` and not sent until the owner approves measuring it.
 - To add an artist, add them to `artists`, name their slug in a track's
   `credits`, and run the three generators. Name a producer only when the
   owner has; an absent producer means unknown.
 - `node --test scripts/test/music-credits.test.mjs` holds the owner's rules,
-  the line against the function, the row and the view.
+  the line against the function, the row and the view. Music Platform CI
+  runs it with the three generators' `--check`.
 
 ## Checking it
 
