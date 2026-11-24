@@ -39,7 +39,7 @@ for pass in 1 2; do
     if apply supabase/pending/20261022015000_market_layer1_preserve_source_policy.rollback.sql >"$recovery_log" 2>&1; then
       echo 'Connector recovery unexpectedly ignored canonical policy records.' >&2; exit 1
     fi
-    if ! rg -q 'PENDING_ROLLBACK_DATA_PRESENT: retain connector policy protection' "$recovery_log"; then
+    if [[ "$(<"$recovery_log")" != *'PENDING_ROLLBACK_DATA_PRESENT: retain connector policy protection'* ]]; then
       cat "$recovery_log" >&2; exit 1
     fi
     test "$(query "select encode(sha256(convert_to(prosrc,'UTF8')),'hex') from pg_proc where oid='private.ops_ingest_ensure_connector(uuid,text,text,text,text,jsonb,jsonb)'::regprocedure")" = "$helper_before"
