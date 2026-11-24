@@ -13,7 +13,9 @@ Inferred until Matthew's own devices run the checklist rows a section names.
 ## Shipped 2026-11-23
 
 Release 1 of 2026-11-23 (Matthew: "ship it all baby"; `docs/control-plane/WORLD-RELEASE-20261118.md`, "Release 1,
-2026-11-23") carries **M3** and **the M3 follow-up** below, as verified at `dc0185aa`. M1, M4, M2 and the recovery
+2026-11-23") carries **M3** and **the M3 follow-up** below, as verified at `dc0185aa`, and **the installed app's dock fix**
+(one Play/Pause in the Home Screen app's bar, Muted in one row; `4e2d4352` and `eca8c401`, verified at `eca8c401`, merged at
+`4b6d58cc`; RL-6, item 10 and "Also his call" below). M1, M4, M2 and the recovery
 continuation reached `main` before it, with PR #818 (2026-11-19), and the installed app's dock with PR #820 (2026-11-20).
 
 **What ships, in plain words.** Songs play to the end. When the connection drops, the song says Reconnecting…, offers
@@ -22,12 +24,13 @@ there. A song that never started says it could not load. A locked preview no lon
 it was, and the album moves on. The World's mute stays the World's, and a muted Music song has its own Unmute. A finished
 song is counted before the next one starts. The B-side plays as the M4A it is, four songs start sooner with their audio
 unchanged, and the Worker answers a read past a song's end with 416. On the listen page the bar's Music button pauses and
-plays the song and says which; the installed app's dock says what is happening in full; Heal the 3's door sits clear of
+plays the song and says which; the installed app's dock says what is happening in full, shows one Play/Pause on every page
+and stays one row when muted; Heal the 3's door sits clear of
 the account chip. `music_interrupted` waits for Matthew's approval and is not sent.
 
 **What does not ship.** **M5**, one player across the music pages: not reviewed yet, and it breaks a Worker test the
-deploy gate runs (`workers/mccluster/test/analytics-creator-attribution.test.mjs`). **The quick wins**: still being
-built. Both are the next release. The decisions under each "What waits for Matthew" below stay his.
+deploy gate runs (`workers/mccluster/test/analytics-creator-attribution.test.mjs`). **The quick wins**: built and in
+review on `claude/new-session-83ken5`. Both are the next release. The decisions under each "What waits for Matthew" below stay his.
 
 **On his phone, in five plain steps** (the device rows of M3 and its follow-up). For each, note the page, a Safari tab or
 the Home Screen icon, signed in or not, and the iOS version.
@@ -45,7 +48,8 @@ the Home Screen icon, signed in or not, and the iOS version.
    Connection lost · tap play, in full. With VoiceOver on the Listen page, the line is read out.
 4. **Mute and the Music button.** Mute the World's own song, then play a Music song: it has sound. Mute a Music song: the
    page says Muted and shows its own Unmute. On the Listen page in a Safari tab, the bar's Music button (the red play and
-   pause circle left of the M) shows Pause while a song plays, and a tap pauses it; VoiceOver reads it as "Pause music".
+   pause circle left of the M) shows Pause while a song plays, and a tap pauses it; VoiceOver reads it as "Pause music". From
+   the Home Screen icon, the bar shows one Pause while a song plays, and a muted song keeps the dock one row that says Muted.
 5. **The small things.** Dealer Plates (B-Side) on Whip Equipped plays; on a phone that kept Whip Equipped before, in
    airplane mode, it still plays and the album says In your pocket. On the narrowest phone (an iPhone SE), scroll Heal the
    3's door up under the Sign in chip: they never overlap.

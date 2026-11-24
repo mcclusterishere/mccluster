@@ -4,8 +4,9 @@
 
 Matthew, 2026-11-23: "ship it all baby". Release 1 is the branch `claude/release-20261123`: `main` at `b51ede03` (the merge of
 PR #820, which the Worker and the site serve today) and, on top of it, only work that passed its own independent verification:
-the music slices M3 and the M3 follow-up as verified at `dc0185aa`, the two production records of 2026-11-23, the ingest
-switch, and this record. Nothing in it is merged or deployed as this is written; the pull request carries the checks. The
+the music slices M3 and the M3 follow-up as verified at `dc0185aa`, the installed app's dock fix (`4e2d4352` and `eca8c401`,
+verified at `eca8c401`, merged at `4b6d58cc`), the two production records of 2026-11-23, the ingest switch, a steadier music
+browser check (`63dd9117`, test only), and this record. Nothing in it is merged or deployed as this is written; the pull request carries the checks. The
 runbook below applies from step 1 to step 8 as written, with 384 where it says 376, and three differences. In step 2, 21
 workflows start, 79 jobs in all (the branch cleanup starts only when the pull request closes). In step 7, `deployment_sha`
 alone tells the new Worker from the old, because `/company` has no tagline on either; and the environment reads that must not
@@ -21,7 +22,9 @@ migration files for the first time in this pull request: if its schema compariso
   the World no longer silences Music, and a muted Music song has its own Unmute. A finished song is counted before the next
   one starts. The B-side plays as the M4A it is, and four songs start sooner (their index moved in front of the audio, the
   audio itself unchanged). On the listen page the bar's Music button pauses and plays the song and is named for what it does;
-  the installed app's dock says Reconnecting… and Connection lost in full; Heal the 3's door shows only on its own album and
+  the installed app's dock says Reconnecting… and Connection lost in full, shows one Play/Pause on every page (on Listen the
+  bar's red Music button, elsewhere the dock's own) and stays one row when muted, with Muted in place of the artist; Heal the
+  3's door shows only on its own album and
   sits clear of the account chip. A new measurement, `music_interrupted`, waits in `js/analytics.js` for Matthew's approval and
   is not sent. The music record is `docs/music/MUSIC-RELEASE-20261119.md`, "Shipped 2026-11-23".
 - **The Worker** answers a read past a song's end with 416 instead of 502, and turns the USGS ingest on (below).
@@ -37,7 +40,7 @@ migration files for the first time in this pull request: if its schema compariso
 
 - **M5, one player across the music pages** (`2000c609` and `5d8c533e` on `claude/new-session-83ken5`): not reviewed yet, and
   it breaks `workers/mccluster/test/analytics-creator-attribution.test.mjs`, which the deploy-gate checks run. The next release.
-- **The quick wins slice:** still being built on `claude/new-session-83ken5`. The next release.
+- **The quick wins slice:** built and in review on `claude/new-session-83ken5`. The next release.
 - Each still its own step, as before: the USGS rule and the Environment module's install and enable (Matthew, in Control), the
   source page's SQL and showing, restoring the 87 quotations, opening on the visitor's country, the OVH Core promotion.
 
@@ -65,7 +68,8 @@ iOS version. Until they are run, everything the records say about an iPhone or a
    Connection lost · tap play, in full. With VoiceOver on the Listen page, the line is read out.
 4. **Mute and the Music button.** Mute the World's own song, then play a Music song: it has sound. Mute a Music song: the
    page says Muted and shows its own Unmute. On the Listen page in a Safari tab, the bar's Music button (the red play and pause
-   circle left of the M) shows Pause while a song plays, and a tap pauses it; VoiceOver reads it as "Pause music".
+   circle left of the M) shows Pause while a song plays, and a tap pauses it; VoiceOver reads it as "Pause music". From the
+   Home Screen icon, the bar shows one Pause while a song plays, and a muted song keeps the dock one row that says Muted.
 5. **The small things.** Dealer Plates (B-Side) on Whip Equipped plays; on a phone that kept Whip Equipped before, in
    airplane mode, it still plays and the album says In your pocket. On the narrowest phone (an iPhone SE), scroll Heal the 3's
    door up under the Sign in chip: they never overlap.
