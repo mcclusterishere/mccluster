@@ -202,6 +202,18 @@ export async function openWorld(browser, base, device, path, opts = {}) {
     catch { return route.abort(); }
   });
   else await ctx.route('https://cesium.com/**', (route) => route.abort());
+  // The door fixture tests Cesium's canvas, its controls and the authentication overlay.
+  // With the pinned renderer, serve a representative Earth raster without relying on live WMTS.
+  if (process.env.CESIUM_DIR && o.globe !== false) {
+    const sample = await readFile(join(process.env.CESIUM_DIR, 'Assets/Textures/NaturalEarthII/0/0/0.jpg'));
+    const nasaLayer = /^https:\/\/gibs\.earthdata\.nasa\.gov\/wmts\/epsg3857\/best\/(?:BlueMarble_NextGeneration\/default|VIIRS_CityLights_2012\/default\/2012-01-01)\/GoogleMapsCompatible_Level8\/([0-8])\/(\d+)\/(\d+)\.jpeg$/;
+    await ctx.route(nasaLayer, (route) => {
+      const [, level, row, column] = nasaLayer.exec(route.request().url());
+      const tileCount = 2 ** Number(level);
+      if (route.request().method() !== 'GET' || Number(row) >= tileCount || Number(column) >= tileCount) return route.fallback();
+      return route.fulfill({ contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*' }, body: sample });
+    });
+  }
   await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, (r) => r.abort());
   const page = await ctx.newPage();
   page.on('pageerror', (e) => world.errors.push(e.message));
