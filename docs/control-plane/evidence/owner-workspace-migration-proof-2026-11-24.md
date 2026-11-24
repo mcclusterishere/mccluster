@@ -116,11 +116,25 @@ copied into the proof database.
 
 The local successful proof uses selected canonical compute/queue SQL with explicitly bounded
 peripheral Auth stand-ins. **It is not proof of the complete repository reset.**
-Reconciliation CI now runs the same runner with `--full-reset`, after verifying that the
-reset has every exact repository migration version. That mode uses the real baseline
-roles, grants, tables and triggers, and never executes the stand-in setup. The full-reset
-run on the final reviewed PR head is still pending. Existing pinned PGlite device, workspace
-and yield checks also remain CI gates; no fresh local PGlite result is claimed here.
+Reconciliation CI runs the same runner with `--full-reset`. Its initial attempt in
+[run 45449866610, job 138643647250](https://github.com/mcclusterishere/mccluster/actions/runs/45449866610/job/138643647250)
+failed before the native behavioral proof: the guard incorrectly expected only the 384
+production versions, while the repository reset correctly staged 468 versions, including
+84 replay-only foundations. This was a test precondition defect, not a migration failure.
+
+The corrected guard follows `scripts/supabase-local-reset-with-replay.sh`: canonical
+filenames must exactly match `production-ledger.json`; replay files replace equal filenames
+or add replay-only foundations; duplicate versions are rejected. The reset database must
+match every planned **version and name**, with no missing or unexpected rows. Replay-only
+versions are never inserted into the production ledger. The plan at this reviewed baseline
+contains 384 canonical files plus 84 replay-only files. A later ledger update is derived
+from its actual files rather than a hard-coded count.
+
+Full-reset mode uses the real baseline roles, grants, tables and triggers and never executes
+the stand-in setup. Its successful run on the corrected PR head is still pending. The
+180-check native result above remains a local bounded-baseline result. Existing pinned
+PGlite device, workspace and yield checks also remain CI gates; no fresh local PGlite
+result is claimed here.
 
 Commands and operational recovery order are in `supabase/pending/PROMOTION-ORDER.md`, section 16.
 The new test is executable CI infrastructure, not an unrun standalone test added to the repo.
@@ -143,5 +157,6 @@ the proof implementation as well as the SQL it exercised.
 | `supabase/pending/compute_owner_workspace_v1.rollback.sql` | 21,798 | `5718c5f1498a608186c7140f54cefe157c7cdd1ccd1357c0c0121f02b6407563` |
 | `supabase/pending/compute_claim_task_yield_v3.sql` | 13,656 | `8bd5e9e9d3b0c6c14fd8b07f09b657373c5441ef4769fa1934cbd428019c31e9` |
 | `supabase/pending/compute_claim_task_yield_v3.rollback.sql` | 12,048 | `db474edc66c82dfa3f90089141f939ac24aff14e3d29dea5cb7913fc7be63d52` |
-| `scripts/owner-workspace-native-check.mjs` | 34,254 | `c7630bf17d387ef242c1240155154e526d19a665f15d17719d350e4a8e5f2106` |
+| `scripts/owner-workspace-native-check.mjs` | 34,326 | `1cb62cabe1c4dca9197cfad1173d2ed14421c554fe71b8d8e8da384b8bc7abf1` |
+| `scripts/native-admin-test-db.mjs` | 3,842 | `43ab5d522112d8a4569a69556669d389f2a644cf1fcc747155fde2e5664908cb` |
 | `.github/workflows/reconciliation-ci.yml` | 18,804 | `eacde125e3135763ec99733e0012be8b328460736d731f907398e3b0d810589f` |

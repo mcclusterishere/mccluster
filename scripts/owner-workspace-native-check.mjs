@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
-import { nativeTestDb, waitForBlocked } from './native-admin-test-db.mjs';
+import { nativeTestDb, resetMigrationPlan, waitForBlocked } from './native-admin-test-db.mjs';
 import { generateNodeIdentity } from '../core/src/compute/signature.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -43,10 +43,10 @@ async function openResetDatabase() {
   const database = wrap(postgres(url.href, options));
   database.fork = () => wrap(postgres(url.href, options));
   try {
-    const ledger = JSON.parse(read('supabase/production-ledger.json'));
-    const actual = (await database.query('select version from supabase_migrations.schema_migrations order by version')).rows.map(row => row.version);
-    equal(actual, ledger.migrations.map(row => row.version).sort(), 'full reset has every exact repository ledger version');
-    console.log(JSON.stringify({ baseline: 'canonical Supabase reset', migrations: actual.length, latest: actual.at(-1) }));
+    const plan = await resetMigrationPlan(root);
+    const actual = Array.from((await database.query('select version,name from supabase_migrations.schema_migrations order by version')).rows);
+    equal(actual, plan.rows, 'full reset exactly matches canonical ledger files plus replay foundations');
+    console.log(JSON.stringify({ baseline: 'canonical Supabase reset', migrations: actual.length, production_migrations: plan.productionCount, replay_only_migrations: plan.replayOnlyCount, latest: actual.at(-1)?.version }));
     return database;
   } catch (error) { await database.close(); throw error; }
 }
