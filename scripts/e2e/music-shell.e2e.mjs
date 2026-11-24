@@ -529,7 +529,14 @@ await scenario('s8',async()=>{
 await scenario('s8-offline',async()=>{
   /* test 11: the real sw.js answers an offline view request with index.html: the failure card shows, the music plays on */
   const root=ROOT;
+  /* OFFLINE FOR THE SERVICE WORKER TOO. context.setOffline() is an emulation of the page; in CI's Chromium (Playwright
+     1.57.0, build 1200) the service worker's own fetch of the view's page still reached this server, the artist page
+     loaded as a real view and no card was due (the scenario failed there at both parents of the release merge; a
+     newer Chromium, where the emulation reaches the worker, passed). So the network is really gone: once `down`, this
+     server drops every connection, whichever target asks. What the scenario asserts is unchanged. */
+  let down=false;
   const srv=createServer(async(req,res)=>{
+    if(down){req.socket.destroy();return;}
     const u=new URL(req.url,'http://x'),p=u.pathname;
     if(p.startsWith('/assets/audio/')){res.writeHead(200,{'content-type':'audio/wav','accept-ranges':'bytes','content-length':AUDIO.length});return res.end(AUDIO);}
     const f=resolve(root,'.'+(p==='/'?'/index.html':decodeURIComponent(p)));
@@ -548,7 +555,7 @@ await scenario('s8-offline',async()=>{
     await page.evaluate(()=>fetch('/index.html').then(r=>r.text()));
     await playListen(page);await markEngine(page);
     await page.evaluate(()=>{const a=document.createElement('a');a.href='music-creator.html?handle=offline-artist';a.id='offlineLink';a.textContent='offline';document.querySelector('main').appendChild(a);});
-    await context.setOffline(true);
+    down=true;await context.setOffline(true);
     await page.locator('#offlineLink').click();
     await page.waitForSelector('.mcc-music-fail',{timeout:15000});
     const framed=await page.evaluate(()=>window.__framedReady||[]);
