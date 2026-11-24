@@ -2,7 +2,26 @@
 // Never accepts a remote host or the canonical database itself.
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
-import { readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
+// Mirror scripts/supabase-local-reset-with-replay.sh: canonical ledger files
+// are staged first; replay files replace equal filenames or add foundations.
+// Replay-only versions belong to the disposable reset, never production history.
+export async function resetMigrationPlan(root) {
+  const ledger = JSON.parse(await readFile(`${root}/supabase/production-ledger.json`, 'utf8'));
+  const canonical = (await readdir(`${root}/supabase/migrations`)).filter(name => name.endsWith('.sql')).sort();
+  const replay = (await readdir(`${root}/supabase/replay_migrations`)).filter(name => name.endsWith('.sql')).sort();
+  assert.equal(ledger.migration_count, ledger.migrations.length, 'production ledger count is consistent');
+  assert.deepEqual(canonical, ledger.migrations.map(row => `${row.version}_${row.name}.sql`).sort(), 'canonical migration files exactly match the production ledger');
+  assert.ok(replay.length, 'reset requires the repository replay foundations');
+  const staged = [...new Set([...canonical, ...replay])];
+  const rows = staged.map(name => {
+    const match = /^(\d+)_(.+)\.sql$/.exec(name);
+    assert.ok(match, `invalid reset migration filename: ${name}`);
+    return { version: match[1], name: match[2] };
+  }).sort((a, b) => a.version < b.version ? -1 : a.version > b.version ? 1 : 0);
+  assert.equal(new Set(rows.map(row => row.version)).size, rows.length, 'reset plan has no duplicate migration versions');
+  return { rows, productionCount: canonical.length, replayOnlyCount: staged.length - canonical.length };
+}
 export async function migrationPath(suffix) {
   const found = [];
   for (const dir of ['supabase/pending','supabase/migrations']) {

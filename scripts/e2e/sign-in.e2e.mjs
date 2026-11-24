@@ -200,6 +200,17 @@ try {
         const unticked = await page.evaluate(() => ({ status: document.getElementById('mnAuthStatus').textContent, invalid: document.getElementById('mnCreateAgreeBox').getAttribute('aria-invalid') }));
         check(scope, 'without the tick nothing is sent and the box is marked', /Tick the box/.test(unticked.status) && unticked.invalid === 'true' && (await calls(page)).length === 0, unticked);
         await page.screenshot({ path: join(OUT, `privacy-error-${scope}.png`), timeout: 90000 });
+        /* Capture the real hold as it starts. Software-rendered globe frames can delay this test's
+           next read by several seconds; a valid countdown must not require a two-second CI budget. */
+        await page.evaluate(() => {
+          const hold = MCC.holdButton;
+          window.__resendHolds = [];
+          MCC.holdButton = function (button, seconds, label) {
+            const result = hold.apply(this, arguments);
+            if (button.id === 'mnResend') window.__resendHolds.push({ seconds, held: button.disabled, label: button.textContent });
+            return result;
+          };
+        });
         await page.click('#mnCreateAgreeBox');
         await page.click('#mnAuthGo');
         await page.waitForFunction(() => /Check your email/.test(document.getElementById('mnAuthStatus').textContent), null, { timeout: 10000 }).catch(() => {});
@@ -208,8 +219,8 @@ try {
         check(scope, 'Create account calls signUpWithPassword(email, password, the privacy acknowledgement) once', made.length === 1 && made[0].name === 'signUpWithPassword' && made[0].args[0] === 'new.member@example.invalid' && made[0].args[1] === 'fixture-password-1' && ack && ack.privacy_policy_version && ack.privacy_acknowledged_at, made);
         check(scope, 'and one POST to signup with email, password and the acknowledgement, and no redirect', signup.length === 1 && signup[0].body && signup[0].body.email === 'new.member@example.invalid' && signup[0].body.password === 'fixture-password-1' && signup[0].body.data && signup[0].body.data.privacy_policy_version === ack.privacy_policy_version && !/redirect/.test(signup[0].q) && !('redirect_to' in signup[0].body), signup);
         const note = await page.evaluate(() => { const s = document.getElementById('mnAuthStatus'), r = document.getElementById('mnResend'), p = document.getElementById('mnAuthPanel'); const kids = [...p.children].filter((k) => !k.hidden && k.getClientRects().length).sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top).map((k) => k.id || k.className.split(' ')[0]);
-          return { ok: s.classList.contains('is-ok'), text: s.textContent, resend: !r.hidden, held: r.disabled, label: r.textContent, mode: document.getElementById('mnSignedOut').getAttribute('data-auth-mode'), order: kids.slice(0, 3) }; });
-        check(scope, 'the sealed note: Check your email, Resend held for 60 s, both leading the panel, back on Sign in', note.ok && /^Check your email/.test(note.text) && note.resend && note.held && /^Try again in (60|59|58)s$/.test(note.label) && note.mode === 'signin' && note.order[0] === 'mnAuthStatus' && note.order[1] === 'mnResend', note);
+          return { start: window.__resendHolds[0], ok: s.classList.contains('is-ok'), text: s.textContent, resend: !r.hidden, held: r.disabled, label: r.textContent, mode: document.getElementById('mnSignedOut').getAttribute('data-auth-mode'), order: kids.slice(0, 3) }; });
+        check(scope, 'the sealed note: Check your email, Resend held for 60 s, both leading the panel, back on Sign in', note.ok && /^Check your email/.test(note.text) && note.resend && note.held && note.start?.seconds === 60 && note.start.held && note.start.label === 'Try again in 60s' && /^Try again in ([1-9]|[1-5][0-9]|60)s$/.test(note.label) && note.mode === 'signin' && note.order[0] === 'mnAuthStatus' && note.order[1] === 'mnResend', note);
         let size = await fits(page);
         check(scope, 'nothing scrolls sideways in the emailed state', size.sw === size.cw, size);
         await keyContrast(page, scope + ' emailed');

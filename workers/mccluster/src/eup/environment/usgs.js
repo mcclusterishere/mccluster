@@ -9,7 +9,7 @@
    (https://earthquake.usgs.gov/fdsnws/event/1/). Public domain (U.S. Government work); credit "U.S. Geological Survey".
 
    WHAT A USGS EVENT BECOMES (the shape the store's eup_environment_usgs_input checks, field by field;
-   supabase/pending/20261119100000_eup_environment_events_v1_03.sql):
+   supabase/migrations/20261123173831_eup_environment_events_v1_03.sql):
      provider_id        the preferred id (feature.id, which equals net + code); it may change over time
      aliases            every id USGS associates with the event (the `ids` list), the preferred id first, at most 50
      status             automatic | reviewed | deleted (a deletion carries only its id, aliases and USGS update time)

@@ -19,7 +19,7 @@
 
   // Loaded on the globe's embedded document too: its first trusted touch can
   // reach the same-origin World soundtrack without an asynchronous message.
-  var worldAudioReady = null, worldAudioPending = null, worldAudioNotice = null;
+  var worldAudioReady = null, worldAudioPending = null, worldAudioNotice = null, worldCancelTap = null;
   function loadWorldAudio() {
     if (window.MCC_WORLD_AUDIO) return Promise.resolve(true);
     if (worldAudioReady) return worldAudioReady;
@@ -352,6 +352,9 @@
   dock.addEventListener("click", function (e) {
     var a = e.target && e.target.closest ? e.target.closest("a.appbar__tab.is-here") : null;
     if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    /* the Music tab on the player that gives the bar its transport is that player's Play or Pause (the tap
+       dispatch below), not a scroll: on listen.html this scroll took every tap (music slice M3 follow-up, V-3) */
+    if (a.getAttribute("data-appnav") === "music" && musicTransportHere(e)) return;
     var to;
     try { to = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
     /* "/" and "/index.html" are the same page (the HERE tab links the
@@ -1094,27 +1097,85 @@
      bar's HTML, and both morph() and revert() rebuild the bar out of it, so
      a class on a tab does not survive a wing opening and closing mid-song.
      Every rebuild calls paintSound() for exactly that reason. */
-  var SOUND_ON = false;
+  var SOUND_ON = false, soundRevision = 0;
   function paintSound() {
     var mt = dock.querySelector('[data-appnav="music"]');
-    if (!mt) return;
+    /* a wing held open over the tab's column: no tab, so the installed app's dock keeps its own Play/Pause meanwhile */
+    if (!mt) { document.documentElement.classList.remove("mcc-music-tab-transport"); return; }
     /* one class, one meaning: is-sound swaps the tab's play triangle for the
        pause glyph. The stylesheet also carried an is-playing equaliser dance
        that nothing had ever applied to a tab; with the tab now drawn as a
        transport button there is no equaliser left to dance, so those rules
        went out of css/style.css rather than getting a first user here. */
     mt.classList.toggle("is-sound", SOUND_ON);
+    nameMusicTab(mt);
+  }
+  /* THE TAB'S NAME SAYS WHAT A TAP DOES (music slice M3 follow-up; review RF-3). Where the Music tab is the page's own
+     Play or Pause (musicTabTransport below, the same test the tap dispatch makes), a keyboard and a screen reader are
+     told so, in the words the installed app's dock and the World's transport use: "Pause music" while a song plays,
+     "Play music" while it does not. The play triangle and the pause glyph are drawn in CSS, which assistive technology
+     does not read, so on listen.html Enter on link "Music" paused the song and nothing said it would. Wherever the tab
+     still goes somewhere (another page, the World open over the player, a World still opening) it keeps the name its
+     markup gave it, kept in data-link-name because HOME_BAR snapshots carry whatever was painted last. */
+  function nameMusicTab(mt) {
+    if (!mt.hasAttribute("data-link-name")) mt.setAttribute("data-link-name", mt.getAttribute("aria-label") || "");
+    var own = mt.getAttribute("data-link-name"), plays = musicTabTransport();
+    if (plays) mt.setAttribute("aria-label", SOUND_ON ? "Pause music" : "Play music");
+    else if (own) mt.setAttribute("aria-label", own);
+    else mt.removeAttribute("aria-label");
+    /* the installed app's dock asks the same: where the tab is the Play/Pause, the dock shows none of its own, one
+       control and not two (the Release 1 dock fix; css/installed-app-dock.css) */
+    document.documentElement.classList.toggle("mcc-music-tab-transport", plays);
   }
   window.addEventListener("mcc:nowplaying", function (e) {
+    soundRevision++;
     SOUND_ON = !!(e.detail && e.detail.playing);
     paintSound();
   });
+  /* the World opening or closing over the player changes what the tab does (js/world-audio-continuity.js) */
+  window.addEventListener("mcc:world-audio-open", function () { paintSound(); });
+  /* and on Listen, so does the player the installed app's dock shows (dockPlaysAnother, below): the tab asks again
+     whenever the Now Playing owner changes and when the dock comes or goes (the Release 1 dock fix) */
+  if (onPage(WINGS.music.home)) {
+    window.addEventListener("mcc:installed-dock", function () { paintSound(); });
+    (function followNowPlaying() {
+      var np = window.MCC_NOW_PLAYING;
+      if (np && typeof np.subscribe === "function") { np.subscribe(function () { paintSound(); }); return; }
+      var helper = document.querySelector("script[data-mcc-now-playing]");
+      if (helper) helper.addEventListener("load", followNowPlaying, { once: true });
+    })();
+  }
+
+  /* Does the page give the bar its transport (MCC_NP_PLAY and MCC_NP_PAUSE)? The World open (or opening) over the
+     player is the one exception: there the Music tab is the way back to the music, never its Pause. listen.html gives
+     the bar its transport too since the M3 follow-up (verification V-3), and the World opens over that page. */
+  function musicTransportHere(e) {
+    if (worldAudioPending || (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.active && window.MCC_WORLD_AUDIO.active())) return false;
+    if (e && e === worldCancelTap) return false;   // the tap that called off a World still opening stays in the music, never pauses it
+    return typeof window.MCC_NP_PLAY === "function" && typeof window.MCC_NP_PAUSE === "function";
+  }
+  /* THE INSTALLED APP'S DOCK SHOWS THE NOW PLAYING OWNER (js/installed-app-dock.js). On Listen that is this page's
+     engine, and the tab is its Play/Pause. A World song carried back from the Globe while Listen holds a record of its
+     own is another player: the dock's own Play/Pause is that song's, so the tab, which would take up the held record,
+     goes back to being the way to the music, or the dock would hold two (the Release 1 dock fix, verification
+     DFV-2). The browser has no dock, and its bar keeps the tab as it was. */
+  function dockPlaysAnother() {
+    if (!document.documentElement.classList.contains("mcc-app-dock-ready")) return false;
+    var s = null;
+    try { s = window.MCC_NOW_PLAYING && window.MCC_NOW_PLAYING.snapshot ? window.MCC_NOW_PLAYING.snapshot() : null; } catch (e) {}
+    return !!(s && s.title && s.canPlay && s.canPause && s.surface !== "listen");
+  }
+  /* a tap on the Music tab is the player's Play or Pause, not a way somewhere: on the page the tab points at, when that
+     page gives the bar its transport (the tap dispatch below and the tab's name both ask this, so they cannot disagree) */
+  function musicTabTransport(e) {
+    return onPage(WINGS.music.home) && musicTransportHere(e) && !dockPlaysAnother();
+  }
 
   /* the same idiom both of the album's own transport buttons use: ask what
      the deck is doing, then do the other thing. SOUND_ON stands in for
      deck.paused, because the bar cannot see the deck from here. */
   function transport() {
-    var was = SOUND_ON;
+    var was = SOUND_ON, revision = soundRevision;
     if (!was) window.MCC_NP_PLAY();
     else window.MCC_NP_PAUSE();
     if (window.MCC_TRACK) window.MCC_TRACK("bar_transport", { play: !was, page: location.pathname.split("/").pop() });
@@ -1126,7 +1187,9 @@
        js/main.js both listen here and would otherwise sit holding a state
        the bar has already left. */
     setTimeout(function () {
-      if (SOUND_ON !== was) return; // the page answered; nothing to add
+      /* A Pause reply followed by a newer Play can return to the same boolean before this task runs.
+         Any announcement since this tap is an answer; an older fallback cannot overwrite it. */
+      if (soundRevision !== revision || SOUND_ON !== was) return;
       if (!was) return;             // we asked for sound and got none: already silent, already painted
       SOUND_ON = false;
       paintSound();
@@ -1207,15 +1270,18 @@
     } catch (_) { return false; }
   }
   function cancelWorldAudio() {
+    var was = worldAudioPending;
     worldAudioPending = null;
     if (worldAudioNotice) worldAudioNotice.remove();
     worldAudioNotice = null;
+    if (was) paintSound();   // the Music tab is the player's again
   }
   function waitForWorldAudio(dest) {
     if (window.MCC_WORLD_AUDIO || !musicWorldDestination(dest)) return false;
     cancelWorldAudio(); unpeek(); veilOff(); revert();
     if (window.MCC_MUSIC) window.MCC_MUSIC.closeNow();
     var pending = worldAudioPending = {href:dest};
+    paintSound();   // while the World is opening the Music tab calls it off, it pauses nothing
     var notice = worldAudioNotice = document.createElement("section");
     notice.id = "mccWorldAudioLoading"; notice.className = "dk-peek";
     notice.setAttribute("aria-label", "Open World");
@@ -1269,7 +1335,7 @@
     var a = e.target.closest && e.target.closest("a[href]");
     if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
     if (waitForWorldAudio(a.href)) { e.preventDefault(); e.stopPropagation(); }
-    else if (worldAudioPending) cancelWorldAudio();
+    else if (worldAudioPending) { worldCancelTap = e; cancelWorldAudio(); }   // this tap called the World off: nothing more
   }, true);
 
   /* ---------- THE PEEK: one tap on a slot shows the room's widget ---------- */
@@ -1432,9 +1498,7 @@
        second slot, and that slot still lands on sites.html, which is the
        conversation with a page around it. */
 
-    if (key === "music" && onPage(dest) &&
-        typeof window.MCC_NP_PLAY === "function" &&
-        typeof window.MCC_NP_PAUSE === "function") { transport(); return; }
+    if (key === "music" && musicTabTransport(e)) { transport(); return; }   // dest is WINGS.music.home here
     sail(dest, 0);
   });
 

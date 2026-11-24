@@ -105,3 +105,21 @@ page stays draft until legitimate permission evidence supports its existing Show
 Recovery is separate from publication: first return every Drawdown mission to draft, then apply both bounded
 recovery files. They refuse while any of the 125 missions is public and refuse unexpected credit/source
 changes. Restoring historical data does not establish permission or authorise later republication.
+
+## Permission attestation, 2026-11-23
+
+Matthew wrote on 2026-11-23, in the working session: "I confirm drawdown's permission for the quotes on their page. That
+was a conversation that was had in person." It is recorded here as his attestation, in his words. The permission he
+describes was given in conversation, in person; no letter or other document is kept in this repository.
+
+It changes nothing yet. The 125 missions stay as published on 2026-11-20, with no website quotation; `missions.json`,
+`publication-policy.json` (the 2026-11-20 review, `permission_evidence` `not_verified`) and every applied migration are
+unchanged. Two separate next steps follow, each its own reviewed change with its own approval:
+
+1. **Restoring the 87 quotations** that the credit correction removed (PR #819,
+   `20261120061538_action_mission_drawdown_credit_fallback`): a new, separately reviewed forward migration, each quotation
+   with its attribution directly beneath it ("How to display a mission", item 2). Not a rerun of the historical import, and
+   not the recovery files, which refuse while the missions are public.
+2. **Finishing Project Drawdown's source page**: the pending `supabase/pending/20261119140000_mission_catalog_sources_v1.sql`
+   on Matthew's approval of its exact text, then Preview and Show in Control, whose confirmation keeps only the date he gives
+   (`docs/control-plane/WORLD-MISSION-SOURCES.md`).

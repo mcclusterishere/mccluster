@@ -19,6 +19,30 @@ a pull request Matthew approves, and a merge is also the Worker's deploy (about 
 `WORLD-RELEASE-20261118.md`). No SQL was applied, no module installed or enabled, no flag set and no mission published by this
 work.
 
+## Release 1, 2026-11-23: the USGS ingest ships on
+
+Matthew, 2026-11-23: "Switching the module on for sure, alright?" (the Environment module, once its prerequisites are in; the
+ingest switch is one of them), and for the release of that day, "ship it all baby". Release 1 of 2026-11-23
+(`WORLD-RELEASE-20261118.md`, "Release 1, 2026-11-23") commits `EUP_ENVIRONMENT_USGS_INGEST_ENABLED = "true"` in
+`workers/mccluster/wrangler.toml`. It takes effect with the Worker deploy that the release's merge sets off; from then the
+existing five-minute cron runs the ingest (`workers/mccluster/src/entry.js`). The store it writes into is complete in
+production: parts 01 and 02 since 2026-11-20, parts 03 to 05 since 2026-11-23 (ledger 384,
+`docs/control-plane/evidence/releases-2026-11-23/LEDGER-384-APPLIED.md`).
+
+- **With no USGS rule the ingest asks nothing.** Each run reads the store's view once (`eup_environment_ingest_state`, a
+  read-only function) and stops at `provider_not_configured`: no USGS request, no health row, nothing stored. Production has no
+  provider row, so that is every run until the rule exists.
+- **The USGS rule is still Matthew's command**, in his signed-in Control session: System > E=Up > Environmental events >
+  Sources, "Set the default rule", with a reason. From the next run on, the ingest reads the USGS summary feed and records one
+  health row a run.
+- **The module's install and enable are still his commands** in Control: System > E=Up > Overview > Modules > Environment,
+  Install, then Enable, each with a reason, after a healthy run under Sources and the timeline in Preview. Until then nothing
+  the ingest stores is public: a signed-out visitor gets `404 module_disabled`.
+- **To stop the ingest:** "Pause the ingest" under Sources (a paused provider records its health row and asks USGS nothing),
+  or a pull request that sets the switch back to `"false"`, its merge and the Worker deploy.
+
+Where S3 and S4 below say the configuration sets or keeps `"false"`, that held until this release.
+
 ## The production diagnosis (read only, 2026-11-19)
 
 Signed-out GETs, no credential, `Origin: https://mccluster.org`:
@@ -536,7 +560,8 @@ At `4f9a304b` (the head this slice started from):
   the module (the ingest fills the store before anything is public). Part 01's header lists it, the rollback drops it, and
   `supabase/pending/live-callers.json` names it and `eup_environment_ingest` as `pending_only` callers of part 03.
 - **The flag and the hook**: `workers/mccluster/src/entry.js` runs the ingest on the existing five-minute cron only when
-  `EUP_ENVIRONMENT_USGS_INGEST_ENABLED` is `"true"`; `workers/mccluster/wrangler.toml` sets `"false"`. Off, the hook makes no
+  `EUP_ENVIRONMENT_USGS_INGEST_ENABLED` is `"true"`; `workers/mccluster/wrangler.toml` set `"false"` (it ships `"true"` in
+  Release 1 of 2026-11-23, Matthew's go: "Release 1, 2026-11-23" above). Off, the hook makes no
   network call and no store call (decision D20, **default adopted pending Matthew's confirmation**: the Worker cron, like the
   private collector). The report it logs carries counts and codes, never a store or provider message or a credential.
 - **ShakeMap for a deleted event** (`workers/mccluster/src/world-environment-layers.js`, two lines): USGS's 409 is `reason`
@@ -620,7 +645,8 @@ General-news and Drawdown-mission tests are unchanged.
   the mission publish (`supabase/pending/PROMOTION-ORDER.md` section 12). Until then a run stops at its first read.
 - Setting the USGS rule in Control (his own command, once the parts are applied).
 - Turning the ingest on: `EUP_ENVIRONMENT_USGS_INGEST_ENABLED = "true"` is a committed configuration change, so a pull request he
-  approves and its merge (also the Worker's deploy). It stays `"false"` here.
+  approves and its merge (also the Worker's deploy). It stayed `"false"` here; it ships `"true"` in Release 1 of 2026-11-23,
+  Matthew's go ("Release 1, 2026-11-23" above).
 - Nothing the ingest stores is public until the public routes (S4) ship and the environment module is installed and then enabled
   (D3), each its own go.
 - Decisions D5, D6, D7 and D20, and the bounds above, as adopted defaults. Nothing was applied, installed, enabled, flagged or
@@ -807,7 +833,8 @@ Chromium only (decision D18: never a claim about Safari or a device), one browse
   text. Until then the routes answer 503 `events_unavailable` (`store_not_applied`) once the module is on, and the feed's USGS
   source says the same.
 - Setting the USGS rule in Control (his command), turning the ingest on (`EUP_ENVIRONMENT_USGS_INGEST_ENABLED`, a committed
-  configuration change: stays `"false"`), and installing then enabling the environment module (D3). Until the module is enabled
+  configuration change: it stayed `"false"` until Release 1 of 2026-11-23 ships it `"true"`, "Release 1, 2026-11-23" above), and
+  installing then enabling the environment module (D3). Until the module is enabled
   every route here answers 404 `module_disabled` and the tab shows S0's honest line.
 - Decisions D7, D8, D9 and D12 as used here, D1's local stand-in for staging, and the carried door item's reading (news off behind
   the door; the environmental layers there unchanged): defaults adopted pending his confirmation.
