@@ -7,6 +7,10 @@ the node's own browser as a second loopback executor driven only from the Core's
 Room surface (`AGENT-NODE-BROWSER.md`). The Control pane (step 3), the OVH promotion, the pending claim SQL and
 the Tier 2 switches are the open items. Resume point for any session; the owner's runbook is `WINDOWS-NODE.md`.
 
+2026-11-24: the owner's Apple Silicon Mac, **Shiloh Mac** (M1), joins the same way: `core/node-manifests/owner-mac-m1.json`,
+`core/macos/mccluster-mac-node.sh` (LaunchAgents for the agent, the Ollama adapter and the lyric machine) and the
+runbook `MAC-NODE.md`.
+
 ## The owner's request (2026-11-17)
 
 "We need my computer to be able to supply gpu and processing power to the overall network. … a feature that
