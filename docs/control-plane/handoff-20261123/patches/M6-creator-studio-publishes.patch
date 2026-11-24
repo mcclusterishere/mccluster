@@ -1,0 +1,2273 @@
+diff --git a/.github/workflows/music-platform-ci.yml b/.github/workflows/music-platform-ci.yml
+index 95f3bb34..59040acc 100644
+--- a/.github/workflows/music-platform-ci.yml
++++ b/.github/workflows/music-platform-ci.yml
+@@ -43,6 +43,12 @@ on:
+       - 'scripts/test/music-accounts.test.mjs'
+       - 'scripts/e2e/music-accounts.e2e.mjs'
+       - 'scripts/e2e/support/music-accounts-plane.mjs'
++      - 'js/control-room/music-ops.js'
++      - 'js/site-navigation.js'
++      - 'js/analytics.js'
++      - 'scripts/test/music-studio-publishes.test.mjs'
++      - 'scripts/e2e/music-creator-release.e2e.mjs'
++      - 'scripts/e2e/support/music-release-plane.mjs'
+       - '.github/workflows/music-platform-ci.yml'
+   push:
+     branches: [main]
+@@ -87,6 +93,12 @@ on:
+       - 'scripts/test/music-accounts.test.mjs'
+       - 'scripts/e2e/music-accounts.e2e.mjs'
+       - 'scripts/e2e/support/music-accounts-plane.mjs'
++      - 'js/control-room/music-ops.js'
++      - 'js/site-navigation.js'
++      - 'js/analytics.js'
++      - 'scripts/test/music-studio-publishes.test.mjs'
++      - 'scripts/e2e/music-creator-release.e2e.mjs'
++      - 'scripts/e2e/support/music-release-plane.mjs'
+ 
+ permissions:
+   contents: read
+@@ -104,7 +116,7 @@ jobs:
+           node --check js/music-engine.js
+           node --check js/music-community.js
+           node --check js/music-creator-profile.js
+-          node --check js/music-admin.js
++          node --check js/control-room/music-ops.js
+       - name: Parse creator studio module
+         run: node --check js/music-creator-studio.js
+       - name: Parse the album room's light, waveform and Now Playing helper
+@@ -123,6 +135,8 @@ jobs:
+           node --test scripts/test/music-peaks.test.mjs
+       - name: The module knows who is listening (a token per call, sign-out, offers by state)
+         run: node --test scripts/test/music-accounts.test.mjs
++      - name: Creator Studio publishes and is measured (the hash-checked review, the vault, a creator's releases, the door)
++        run: node --test scripts/test/music-studio-publishes.test.mjs
+ 
+   music-edge:
+     runs-on: ubuntu-latest
+@@ -165,6 +179,10 @@ jobs:
+         env:
+           PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+         run: node scripts/e2e/music-accounts.e2e.mjs /tmp/music-proof/accounts
++      - name: A release goes submit, review, publish and plays on its artist page, in Chromium (390px)
++        env:
++          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
++        run: node scripts/e2e/music-creator-release.e2e.mjs /tmp/music-proof/release
+       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+         if: always()
+         with:
+diff --git a/.github/workflows/music-release-integrity-db.yml b/.github/workflows/music-release-integrity-db.yml
+index 0bff6da2..087cf75f 100644
+--- a/.github/workflows/music-release-integrity-db.yml
++++ b/.github/workflows/music-release-integrity-db.yml
+@@ -19,7 +19,9 @@ on:
+       - 'supabase/functions/stripe-webhook/**'
+       - 'supabase/functions/shake-order/**'
+       - 'supabase/functions/l3-download/**'
+-      - 'js/music-admin.js'
++      - 'js/control-room/music-ops.js'
++      - 'js/music-creator-studio.js'
++      - 'supabase/tests/music_creator_releases.behaviour.sql'
+       - 'scripts/test-music-release-integrity-db.sh'
+       - 'scripts/test/music-payment-integrity.test.mjs'
+       - '.github/workflows/music-release-integrity-db.yml'
+diff --git a/creator.html b/creator.html
+index 45a7b480..8d8767fa 100644
+--- a/creator.html
++++ b/creator.html
+@@ -152,8 +152,9 @@
+ 
+       <section class="creator-card">
+         <h2>Your releases</h2>
+-        <p>Drafts and review status live here. Published releases appear automatically in discovery.</p>
++        <p>Drafts and review status live here. While a release waits for review you can edit its words and links, or withdraw it. Published releases appear automatically in discovery.</p>
+         <div class="creator-list" id="creatorTracks"><div class="creator-status">No releases yet.</div></div>
++        <div class="creator-status" id="releaseStatus" role="status" aria-live="polite"></div>
+       </section>
+ 
+       <section class="creator-card wide">
+@@ -208,6 +209,9 @@
+     </div>
+   </main>
+ 
++  <!-- MEASURED LIKE EVERY OTHER PAGE (music slice M6, decision D-17): the studio's own events (creator_*) record only
++       when the visitor has agreed to the privacy notice; js/analytics.js decides, as it does on every page. -->
++  <script src="js/analytics.js?v=__STAMP__"></script>
+   <script src="js/mcc-auth.js?v=__STAMP__"></script>
+   <script src="js/tabbar.js?v=__STAMP__"></script>
+   <script src="js/music-creator-page.js?v=__STAMP__"></script>
+diff --git a/css/music-creator.css b/css/music-creator.css
+index 3daddbc6..a4e79195 100644
+--- a/css/music-creator.css
++++ b/css/music-creator.css
+@@ -93,3 +93,8 @@ html,body{background:var(--mc-bg);color:var(--mc-text)}
+ .creator-mini{appearance:none;min-width:40px;min-height:40px;border:1px solid var(--mc-line);border-radius:999px;background:rgba(255,255,255,.06);color:var(--mc-text);font:800 13px/1 var(--ui,system-ui);cursor:pointer;padding:0 10px}
+ .creator-mini:disabled{opacity:.35;cursor:default}
+ .creator-rowactions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
++
++/* A creator's own release: its actions and its edit form take the whole row under the title (music slice M6) */
++.creator-release__actions,.creator-release__edit{grid-column:1/-1;min-width:0}
++.creator-release__actions{justify-content:flex-start}
++.creator-release__edit .creator-form{margin-top:4px}
+diff --git a/docs/music/ARTIST-PAGES.md b/docs/music/ARTIST-PAGES.md
+index dd3a58e0..6394664a 100644
+--- a/docs/music/ARTIST-PAGES.md
++++ b/docs/music/ARTIST-PAGES.md
+@@ -36,8 +36,11 @@ only in the McCluster Music header, never as an artist's photo or artwork.
+    - Writing a song: $150 + 15% royalty.
+ 5. **The artist arranges albums** under *Your albums*: title, type, release
+    date, cover, description, tracklist order, and which album to feature.
+-6. **The owner reviews each track** in `music-admin.html` and publishes it.
+-   Until then it stays off the public page. An album appears on the page once
++6. **The owner reviews each track** in Control · Create · Music · Review
++   (`music-admin.html` forwards there): Verify + listen plays the exact master
++   under review and shows its SHA-256, and only then can it be published.
++   Until then it stays off the public page. While it waits, the artist can
++   edit its words and links or withdraw it in *Your releases* (music slice M6). An album appears on the page once
+    at least one of its tracks is published, and shows only its published tracks.
+ 
+ ## Booking requests: a request first, never a charge
+diff --git a/docs/music/MUSIC-RELEASE-20261119.md b/docs/music/MUSIC-RELEASE-20261119.md
+index 57562412..4015ff74 100644
+--- a/docs/music/MUSIC-RELEASE-20261119.md
++++ b/docs/music/MUSIC-RELEASE-20261119.md
+@@ -263,3 +263,113 @@ own tools and the album's comment box (kept with the workflow's evidence, not in
+   should read PLAY · owner).
+ * Seen, not changed here: at 390 px the bar's account chip covers the "Creator Studio" link in the music context bar
+   on Listen and the artist page.
++
++## M6: Creator Studio publishes and is measured
++
++Base `fc001103`. C6 (studio lane ST-1, ST-10 and ST-12, gap G-5, law lane L-1 and L-11). Browser code, tests and a
++database proof of the SQL as it stands: no SQL change, no Edge function or Worker change. D-12 and D-17 are built as
++their recommended defaults, for Matthew to see before anything merges.
++
++### Why
++
++Nothing a creator submitted could go live from any live screen. The release integrity work
++(`supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql`, applied 2026-10-30) made a publish an
++approval of the exact audio the reviewer heard: `music-access` refuses it without the version the reviewer loaded and
++the SHA-256 of the master they played. Only `js/music-admin.js` sent both, and no page loaded it; the live desk,
++Control · Create · Music · Review (`js/control-room/music-ops.js`), sent neither, so the owner's Publish came back as
++an alert, "expected_updated_at required" (the studio lane's probe `p2-edge/control-room-click.mjs`), and the music
++service answered 400 before the database was asked (`p2-edge/run.ts`). Two tests asserted the orphan, so the suite
++stayed green. The same desk read seven `vault_*` tables that are not in the database (production catalog,
++2026-11-19: none) and said "Some music sources failed" on every tab, release review included. Creator Studio was not
++measured: `creator.html` did not load `js/analytics.js`, so its own events (`creator_track_submitted`,
++`creator_release_cleanup_failed` and the rest) were never recorded and no studio failure reached anyone. A creator who
++had submitted a release could not change a word of it or take it back: the database allowed both and the studio
++offered neither. And the one Creator Studio link on the music pages, in the music context bar, sits under the account
++chip at 390 px (seen in M4).
++
++### What changed
++
++1. **The live desk publishes the bytes the reviewer heard** (`js/control-room/music-ops.js`; ST-1, D-12). Each
++   release waiting for review has **Verify + listen** (`music-access` `operator-review-prepare`: the master under
++   review is pinned and hashed once); the desk plays that pinned object and shows its short hash, and **Publish +
++   clear** stays shut until then. Publish carries the version the desk loaded (`expected_updated_at`) and the hash it
++   played (`expected_master_sha256`) to `public.music_operator_review`, which refuses anything else. A release that
++   changed after it was verified is verified again. Needs review and Reject carry the version too. Creators' releases
++   are never published automatically.
++2. **The orphan desk is retired** (ST-12). `js/music-admin.js` is deleted (`music-admin.html` stays the redirect into
++   Control it already was), and the three tests that asserted it assert the live desk
++   (`scripts/test/music-payment-integrity.test.mjs`, `scripts/test/music-platform.test.mjs`).
++3. **The vault says it is not set up** (L-1). A missing `vault_*` table reads "The vault is not set up yet" on
++   Catalog and Distribution, without the controls that could save nothing; any other error says the vault could not
++   be read, on those two tabs only. Release review, direct sales, lyrics and stems never carry it. No SQL is written
++   for the vault.
++4. **Creator Studio is measured** (G-5, D-17). `creator.html` loads `js/analytics.js` before the shared auth and the
++   studio, as every music page does. The studio's events record only when the visitor agreed to the privacy notice;
++   after "Not now" `MCC_TRACK` records nothing, sends nothing and keeps nothing in the outbox.
++5. **A creator's own releases** (ST-10; `js/music-creator-studio.js`, `js/music-creator-page.js`,
++   `css/music-creator.css`). *Your releases* offers what the database already allows for a release's state, and
++   nothing else. Waiting for review: **Edit** (title, artist credit, genre, notes, video and lyrics links; never the
++   audio, artwork, access or rights) and **Withdraw** (back to drafts, out of the review queue). Withdrawn: **Submit
++   again** and **Delete** (its files too). Every change names the state on screen, and an edit the version too: a
++   release the reviewer acted on meanwhile is never changed by an older screen, and the studio says so and reloads. A
++   release whose audio the reviewer verified cannot be deleted (the pinned version keeps it): it stays withdrawn and
++   the studio says why. Nothing is offered on a rejected release (the database would let a creator delete it, but the
++   reviewer's note lives only on the release and its rights attestation goes with it) or on a live one (any change
++   takes it off the air, D-14). New events: `creator_release_edited`, `creator_release_withdrawn`,
++   `creator_release_resubmitted`, `creator_release_deleted`.
++6. **The database already decides it** (`supabase/tests/music_creator_releases.behaviour.sql`, run by
++   `scripts/test-music-release-integrity-db.sh`). The row policies of
++   `20260920041011_music_creator_platform_v1.sql` and the guard of `20261030001000_music_release_payment_integrity_v1.sql`,
++   with row security on as production has it (catalog read 2026-11-19: on, the same five policies, the same foreign
++   keys), let a creator edit a pending release, withdraw it, submit it again and delete a withdrawn one, and refuse:
++   deleting a pending release, deleting one whose audio was verified, another creator's edit, withdrawal or delete, a
++   creator's own publish, and a reviewer's decision made on the version before the creator's edit. A creator's edit
++   of a live release unpublishes it.
++7. **A Creator Studio door where creators look** (L-11; `js/site-navigation.js`, `js/creator-onboarding.js`
++   `studioDoor`). The signed-in Profile menu, top right, names Creator Studio on Matthew's music pages only (Listen,
++   the album, the catalogue, music videos, licensing, Creator Studio, the artist pages, the creator terms, the PRIM3
++   artist page): to a creator by the server's answer (`music_creator_state`) and to the house owner by the bar's own
++   server check. Never to a member who is not a creator, never on another page, never on a World host (the house must
++   be the page's own origin), and never in the bar's tabs or the World's tab row.
++8. `docs/music/ARTIST-PAGES.md` (step 6) and the release integrity entry in `supabase/pending/README.md` name the
++   live desk.
++9. **CI.** `music-platform-ci.yml`: the unit test in `music-contract`, the Chromium suite in `browser`, the new files,
++   the live desk, the navigation and analytics scripts in its paths, and `node --check` of the live desk instead of
++   the retired one. `music-release-integrity-db.yml`: the new behaviour file, the live desk and the studio in its
++   paths. No new workflow and no new trigger.
++
++### Tests: failing at the base, passing after
++
++| Test | At `fc001103` | After |
++| --- | --- | --- |
++| `scripts/test/music-studio-publishes.test.mjs` (15 tests: the live desk run in Node against stand-ins of `music-access` and the database, the Edge handler itself, `creator.html`'s scripts, `js/analytics.js` without consent, the release rules, the door) | 13 of 15 fail; the 2 that pass are guards (`music-access` still refuses a publish without version and hash; `js/analytics.js` without consent) | 15 of 15 |
++| `scripts/e2e/music-creator-release.e2e.mjs` (Chromium, 390 px: a creator submits and edits a release, an older screen's edit is refused, the owner verifies, listens and publishes it, the vault tabs, the release on its artist page playing for a guest, nothing offered on it once live; with "Not now": nothing sent, withdraw, submit again, delete, a verified release that stays withdrawn; the door for a creator, the owner, a member, the home page and a World host) | 19 of 38 checks fail (fewer checks run: a missing control ends its part): `creator.html` has no analytics, a pending release offers no Edit or Withdraw, there is no Verify + listen and Publish is open before anyone listened; pressed, it comes back as the owner's alert "expected_updated_at required: reload the queue and review again" and `music-access` answers 400 with the same words (the studio lane's two probes, verbatim), so the release never reaches its artist page; the vault tabs fail vaguely; a creator and the owner find no Creator Studio in the Profile menu | 63 of 63 |
++| The three tests re-pointed from the orphan to the live desk (`music-payment-integrity` 15 and 24, `music-platform` 33) | fail against the base desk | pass |
++| `supabase/tests/music_creator_releases.behaviour.sql` (native PostgreSQL 16.15 and 17.7) | passes: it pins the SQL as it stands, and no SQL changed; with row security off, as the shared stub leaves it, it fails | passes on both |
++| Root suite `node --test scripts/test/*.test.mjs` | | 2909 tests, 0 failures (7 skipped) |
++
++Every fix was also taken away on its own and its tests failed: `js/control-room/music-ops.js` 7 unit tests (and the
++desk, vault and publish checks in Chromium), `creator.html` 1, `js/music-creator-page.js` 2,
++`js/music-creator-studio.js` 1, `js/creator-onboarding.js` 1, `js/site-navigation.js` 1.
++
++@@SUITES@@
++
++### What is Inferred
++
++* Production's answers to these exact requests: the browser suite answers from stand-ins built from the code and
++  the applied SQL (`scripts/e2e/support/music-release-plane.mjs`), and the database proof runs the applied files on a
++  scratch database. No real release was submitted, reviewed or published.
++* That the deployed `music-access` is the repository's for the upload and review actions (D-19): not read.
++
++### What waits for Matthew
++
++* **D-12** (the hash-checked desk, no automatic publication) and **D-17** (the studio measured under the same
++  consent rule) as built here; **D-19**, one read-only look at the deployed `music-access` source.
++* **A real test release in production**: submit one from Creator Studio, verify, listen and publish it from Control
++  · Create · Music · Review, and see it on its artist page. His to run.
++* Whether a creator may delete a rejected release (the database allows it; the studio does not offer it).
++* The vault: its SQL is not written. Catalog and Distribution say it is not set up until it is.
++* The four new event names stay unclassified in the measurement dictionary
++  (`workers/mccluster/src/analytics/measurement-dictionary.js`) until he reviews them, as its own rule says.
++* Not in this slice: the music context bar's own Creator Studio link under the account chip at 390 px (the Profile
++  menu is the door now).
+diff --git a/js/control-room/music-ops.js b/js/control-room/music-ops.js
+index 57eb0f32..cbe2bb33 100644
+--- a/js/control-room/music-ops.js
++++ b/js/control-room/music-ops.js
+@@ -1,17 +1,33 @@
+ /* Native Control · Create · Music.
+-   Collapses Review Desk, Lyrics (js/control-room/lyrics-review.js), Stems (js/control-room/stems-panel.js), Vault and Lanes into one view. */
++   Collapses Review Desk, Lyrics (js/control-room/lyrics-review.js), Stems (js/control-room/stems-panel.js), Vault and Lanes into one view.
++
++   THE REVIEW IS OF THE BYTES THE REVIEWER HEARD (music slice M6, 2026-11-19; studio lane ST-1). This desk used to send
++   "Publish + clear" with no version and no audio hash, and music-access refused it (400 "expected_updated_at required"),
++   so nothing a creator submitted could go live from any live screen. It now runs the flow the release integrity work
++   built (supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql, music-access operator-review-prepare):
++   Verify + listen pins the master under review and hashes its bytes once, the reviewer plays THAT pinned object and
++   sees its hash, and Publish carries the version the desk showed (expected_updated_at) and the hash it played
++   (expected_master_sha256) to public.music_operator_review, which refuses anything else. Publish stays shut until then;
++   a release that changed after it was verified is verified again. Needs review and Reject carry the version too.
++
++   THE VAULT THAT IS NOT THERE SAYS SO (M6, law lane L-1). Catalog and Distribution read seven vault_* tables that are
++   not in the database (supabase/pending/live-callers.json lists them as missing everywhere); they failed as a vague
++   "Some music sources failed" on every tab, release review included. A missing table now reads as what it is: the
++   vault is not set up yet, and its controls, which could save nothing, are not shown. Nothing here creates it. */
+ (function(){
+   "use strict";
+   window.CR=window.CR||{};
+   var M={supa:null,rerender:null,section:"review",loading:false,error:null,loaded:false,
+-    review:{tracks:[],creators:[],offers:[]},
+-    vault:{assets:[],people:[]},
++    review:{tracks:[],creators:[],offers:[],prepared:{},error:null},
++    vault:{assets:[],people:[],state:"ok",error:null},
+     lanes:{rows:[],gates:[],creds:{},house:{},open:{},filter:"all"}};
+   function e(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+   function token(){return window.MCC_SUPA&&MCC_SUPA.token?MCC_SUPA.token():Promise.resolve(null);}
+   function money(c,curr){try{return new Intl.NumberFormat(undefined,{style:"currency",currency:(curr||"usd").toUpperCase()}).format(Number(c||0)/100);}catch(_){return"$"+(Number(c||0)/100).toFixed(2);}}
+   function musicCall(action,body){return token().then(function(t){if(!t)throw new Error("Signed out");return fetch(window.MCC_SUPA.url+"/functions/v1/music-access",{method:"POST",headers:{apikey:window.MCC_SUPA.key,authorization:"Bearer "+t,"content-type":"application/json"},body:JSON.stringify(Object.assign({action:action},body||{}))});}).then(function(r){return r.text().then(function(raw){var j={};try{j=raw?JSON.parse(raw):{};}catch(_){}if(!r.ok)throw new Error(j.error||("Music service "+r.status));return j;});});}
+   function note(t,bad){return'<div class="cro-note'+(bad?" cro-note--bad":"")+'">'+e(t)+'</div>';}
++  /* A table PostgREST does not have (the Control Room's supa() carries the status and PostgREST's answer) */
++  function missingTable(err){var d=err&&err.detail||{},c=String(d.code||"");return c==="PGRST205"||c==="42P01"||(err&&err.status===404&&/schema cache|does not exist/i.test(String(d.message||err.message||"")));}
+   function load(){
+     if(M.loading)return Promise.resolve();M.loading=true;M.error=null;if(M.rerender)M.rerender();
+     return Promise.allSettled([
+@@ -23,28 +39,57 @@
+       M.supa("vault_credentials?select=*"),
+       M.supa("vault_house?select=*&id=eq.1")
+     ]).then(function(out){
+-      if(out[0].status==="fulfilled"){var d=out[0].value||{};M.review.tracks=d.tracks||[];M.review.creators=d.creators||[];M.review.offers=d.offers||[];}
++      if(out[0].status==="fulfilled"){
++        var d=out[0].value||{};M.review.tracks=d.tracks||[];M.review.creators=d.creators||[];M.review.offers=d.offers||[];M.review.error=null;
++        /* a verified listen is of the release as it was then: a changed release is verified again */
++        var keep={};M.review.tracks.forEach(function(t){var p=M.review.prepared[t.id];if(p&&p.track_updated_at===t.updated_at)keep[t.id]=p;});
++        M.review.prepared=keep;
++      }else M.review.error=out[0].reason||new Error("Music service unavailable");
+       if(out[1].status==="fulfilled")M.vault.assets=out[1].value||[];
+       if(out[2].status==="fulfilled")M.vault.people=out[2].value||[];
+       if(out[3].status==="fulfilled")M.lanes.rows=out[3].value||[];
+       if(out[4].status==="fulfilled")M.lanes.gates=out[4].value||[];
+       if(out[5].status==="fulfilled"){M.lanes.creds={};(out[5].value||[]).forEach(function(c){M.lanes.creds[c.target_id]=c;});}
+       if(out[6].status==="fulfilled")M.lanes.house=(out[6].value||[])[0]||{};
+-      var failed=out.find(function(x){return x.status==="rejected";});M.error=failed&&failed.reason||null;M.loading=false;M.loaded=true;if(M.rerender)M.rerender();
++      var vaultFailed=out.slice(1).filter(function(x){return x.status==="rejected";}).map(function(x){return x.reason;});
++      var broken=vaultFailed.filter(function(r){return!missingTable(r);});
++      M.vault.state=!vaultFailed.length?"ok":broken.length?"error":"missing";
++      M.vault.error=broken.length?broken[0]:null;
++      M.error=M.review.error||M.vault.error||null;M.loading=false;M.loaded=true;if(M.rerender)M.rerender();
+     });
+   }
++  function vaultNote(){
++    if(M.vault.state==="missing")return note("The vault is not set up yet: its tables are not in the database, so there is nothing to show here and nothing here can be saved. Release review, direct sales, lyrics and stems do not depend on it.");
++    if(M.vault.state==="error")return note("The vault could not be read: "+((M.vault.error&&M.vault.error.message)||M.vault.error)+". Nothing here was changed.",true);
++    return"";
++  }
++  /* (f) what the reviewer hears is the pinned master being approved, with its SHA-256 */
++  function listened(t){
++    var p=M.review.prepared[t.id];
++    if(!p)return"";
++    return'<div class="cro-meta"><audio controls preload="none" src="'+e(p.listen_url)+'" style="display:block;width:100%;max-width:100%;margin:6px 0"></audio>Audio SHA-256 <code title="'+e(p.sha256)+'">'+e(p.sha256_short)+'</code>'+(p.size_bytes!=null?' · '+e((Number(p.size_bytes)/1048576).toFixed(1))+' MB':'')+' · publishing approves exactly these bytes</div>';
++  }
+   function review(){
+     var cm={};M.review.creators.forEach(function(c){cm[c.m_uid]=c;});
+-    var tracks=M.review.tracks.length?'<div class="cro-list">'+M.review.tracks.map(function(t){var c=cm[t.m_uid]||{},x=t.experience&&typeof t.experience==="object"?t.experience:{},commerce=x.commerce&&x.commerce.href?" · service CTA":"",media=(t.music_video_url?" · music video":"")+(t.lyrics_url?" · lyrics":"");return'<div class="cro-item"><div class="cro-item__head"><div><strong>'+e(t.title||"Untitled")+'</strong><div class="cro-meta">'+e(c.artist_name||t.artist||"Unknown creator")+' · '+e(t.access_mode||"")+' · '+e(t.status||"")+' · rights '+e(t.rights_status||"")+e(media+commerce)+'</div></div><span class="cro-pill">'+e(t.status||"queue")+'</span></div>'+(t.moderation_note?'<div class="cro-meta">'+e(t.moderation_note)+'</div>':"")+'<div class="cro-actions"><button class="cr-btn cr-btn--primary" type="button" data-crom-review="publish" data-id="'+e(t.id)+'">Publish + clear</button><button class="cr-btn" type="button" data-crom-review="review" data-id="'+e(t.id)+'">Needs review</button><button class="cr-btn" type="button" data-crom-review="reject" data-id="'+e(t.id)+'">Reject</button></div></div>';}).join("")+'</div>':note("No creator releases in the queue.");
++    var tracks=M.review.tracks.length?'<div class="cro-list">'+M.review.tracks.map(function(t){
++      var c=cm[t.m_uid]||{},x=t.experience&&typeof t.experience==="object"?t.experience:{},commerce=x.commerce&&x.commerce.href?" · service CTA":"",media=(t.music_video_url?" · music video":"")+(t.lyrics_url?" · lyrics":""),p=M.review.prepared[t.id];
++      return'<div class="cro-item"><div class="cro-item__head"><div><strong>'+e(t.title||"Untitled")+'</strong><div class="cro-meta">'+e(c.artist_name||t.artist||"Unknown creator")+' · '+e(t.access_mode||"")+' · '+e(t.status||"")+' · rights '+e(t.rights_status||"")+e(media+commerce)+'</div></div><span class="cro-pill">'+e(t.status||"queue")+'</span></div>'+(t.moderation_note?'<div class="cro-meta">'+e(t.moderation_note)+'</div>':"")+listened(t)+
++        '<div class="cro-actions"><button class="cr-btn" type="button" data-crom-prepare="'+e(t.id)+'">'+(p?"Listen again":"Verify + listen")+'</button>'+
++        '<button class="cr-btn cr-btn--primary" type="button" data-crom-review="publish" data-id="'+e(t.id)+'"'+(p?' data-version="'+e(p.expected_updated_at)+'" data-sha="'+e(p.sha256)+'"':' disabled title="Verify and listen to the audio first"')+'>Publish + clear</button>'+
++        '<button class="cr-btn" type="button" data-crom-review="review" data-id="'+e(t.id)+'" data-version="'+e(t.updated_at||"")+'">Needs review</button>'+
++        '<button class="cr-btn" type="button" data-crom-review="reject" data-id="'+e(t.id)+'" data-version="'+e(t.updated_at||"")+'">Reject</button></div></div>';
++    }).join("")+'</div>':note("No creator releases in the queue.");
+     var byTrack={};M.review.tracks.forEach(function(t){byTrack[t.id]=t;});
+     var offers=M.review.offers.length?'<div class="cro-list">'+M.review.offers.map(function(o){var t=byTrack[o.track_id]||{},live=o.active&&o.checkout_enabled;return'<div class="cro-item"><div class="cro-item__head"><div><strong>'+e(o.title||"License offer")+'</strong><div class="cro-meta">'+e(t.title||o.track_id)+' · '+e(o.license_type||"")+(o.price_cents!=null?" · "+e(money(o.price_cents,o.currency)):"")+' · platform fee '+(Number(o.platform_fee_bps||0)/100).toFixed(1)+'%</div></div><span class="cro-pill">'+(live?"checkout on":"checkout off")+'</span></div><div class="cro-actions"><button class="cr-btn'+(live?"":" cr-btn--primary")+'" type="button" data-crom-license="'+e(o.id)+'" data-enabled="'+(live?"0":"1")+'">'+(live?"Disable checkout":"Enable checkout")+'</button></div></div>';}).join("")+'</div>':note("No license offers yet.");
+-    return'<div class="cro-grid cro-grid--2"><section class="cro-card"><h2>Release queue</h2>'+tracks+'</section><section class="cro-card"><h2>License offers</h2>'+offers+'</section></div>';
++    var failed=M.review.error?note("The release queue could not be read: "+(M.review.error.message||M.review.error),true):"";
++    return failed+'<div class="cro-grid cro-grid--2"><section class="cro-card"><h2>Release queue</h2>'+tracks+'</section><section class="cro-card"><h2>License offers</h2>'+offers+'</section></div>';
+   }
+   function assetCard(a){
+     var ai=a.ai&&typeof a.ai==="object"?a.ai:{},faces=a.vault_faces||[],confirmed=Array.isArray(faces)?faces:[],people=(ai.people||[]);
+     return'<details class="cro-details" data-crom-asset="'+e(a.id)+'"><summary><span class="cro-media">'+(a.preview_url?'<img src="'+e(a.preview_url)+'" alt="">':'<span class="cro-media__ph">asset</span>')+'<span><b>'+e(a.catalog_id||a.master_name||a.id)+'</b><small class="cro-meta">'+e(a.status||"new")+' · '+e(a.license||"")+' · '+(a.release_clear?"release clear":"release not clear")+'</small></span></span></summary><div class="cro-details__body"><div class="cro-grid cro-grid--2"><div class="cro-card"><h3>Capture</h3><div class="cro-meta">Shot '+e(a.shot_at||"—")+'<br>'+e([a.camera,a.lens].filter(Boolean).join(" · ")||"—")+'<br>'+e([a.iso?"ISO "+a.iso:"",a.aperture,a.shutter].filter(Boolean).join(" · ")||"—")+'<br>'+e(a.event_id||"loose")+'</div></div><div class="cro-card"><h3>Machine read</h3><div class="cro-meta">'+e(ai.caption||"No machine caption")+(ai.scene?"<br>"+e(ai.scene):"")+'</div></div></div>'+(people.length?'<div class="cro-card" style="margin-top:8px"><h3>People · confirm guesses</h3><div class="cro-list">'+people.map(function(p){return'<div class="cro-row"><div>'+e(p.description||"person")+(p.guess?" · guess <b>"+e(p.guess)+"</b>":"")+'</div>'+(p.guess?'<button class="cr-btn" type="button" data-crom-face="'+e(p.guess)+'" data-asset="'+e(a.id)+'">Confirm</button>':"")+'</div>';}).join("")+(confirmed.length?'<div class="cro-meta">'+e(confirmed.length)+' confirmed face link'+(confirmed.length===1?"":"s")+'</div>':"")+'</div></div>':"")+'<div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-crom-asset-status="reviewed" data-id="'+e(a.id)+'">Mark reviewed</button><button class="cr-btn" type="button" data-crom-clear="'+e(a.id)+'" data-next="'+(a.release_clear?"0":"1")+'">'+(a.release_clear?"Un-clear release":"Clear release")+'</button><button class="cr-btn" type="button" data-crom-asset-status="archived" data-id="'+e(a.id)+'">Archive</button></div></div></details>';
+   }
+   function catalog(){
++    if(M.vault.state!=="ok")return vaultNote();
+     var assets=M.vault.assets||[],reviewed=assets.filter(function(a){return a.status==="reviewed";}).length,clear=assets.filter(function(a){return a.release_clear;}).length;
+     return'<div class="cro-statgrid"><div class="cro-stat"><b>'+e(assets.length)+'</b><span>assets</span></div><div class="cro-stat"><b>'+e(reviewed)+'</b><span>reviewed</span></div><div class="cro-stat"><b>'+e(clear)+'</b><span>release clear</span></div><div class="cro-stat"><b>'+e(M.vault.people.length)+'</b><span>people</span></div></div><div class="cro-list" style="margin-top:10px">'+(assets.length?assets.map(assetCard).join(""):note("No vault assets returned."))+'</div>';
+   }
+@@ -53,19 +98,23 @@
+     return'<details class="cro-details" data-crom-lane="'+e(l.id)+'"'+(open?" open":"")+'><summary><div class="cro-item__head"><div><strong>'+e(l.label||l.id)+'</strong><div class="cro-meta">'+e(l.lane||"")+" · "+e(l.rail||"")+" · "+e(l.your_cut||"")+(l.has_credentials?" · wired":"")+'</div></div><span class="cro-pill">'+e(l.onboarded?"onboarded":l.unlocked?"unlocked":"locked")+' · '+e(l.pct||0)+'%</span></div><div class="cro-progress" style="margin-top:8px"><i style="--pct:'+Math.max(0,Math.min(100,Number(l.pct)||0))+'%"></i></div></summary><div class="cro-details__body">'+(l.wants?'<p><b>Wants:</b> '+e(l.wants)+'</p>':"")+(l.avoid?'<p><b>Watch:</b> '+e(l.avoid)+'</p>':"")+(gs.length?'<div class="cro-list">'+gs.map(function(g){return'<div class="cro-row"><span>'+e(g.label)+(g.detail?" · "+e(g.detail):"")+'</span><b>'+e(g.met?"met":(g.pct||0)+"%")+'</b></div>';}).join("")+'</div>':"")+'<div class="cro-form cro-form--3" style="margin-top:8px"><label>Protocol<select data-crom-cred="protocol" data-target="'+e(l.id)+'">'+["","sftp","ftp","ftps","https","none"].map(function(p){return'<option value="'+p+'"'+(c.protocol===p?" selected":"")+'>'+(p||"·")+'</option>';}).join("")+'</select></label><label>Host<input data-crom-cred="host" data-target="'+e(l.id)+'" value="'+e(c.host||"")+'"></label><label>Username<input data-crom-cred="username" data-target="'+e(l.id)+'" value="'+e(c.username||"")+'"></label><label>Secret name<input data-crom-cred="secret_ref" data-target="'+e(l.id)+'" value="'+e(c.secret_ref||"")+'"></label><label>Account email<input data-crom-cred="account_email" data-target="'+e(l.id)+'" value="'+e(c.account_email||"")+'"></label><label>Remote dir<input data-crom-cred="remote_dir" data-target="'+e(l.id)+'" value="'+e(c.remote_dir||"/")+'"></label></div><div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-crom-savecred="'+e(l.id)+'">Save credentials</button><button class="cr-btn" type="button" data-crom-toggle="'+e(l.id)+'">'+(l.onboarded?"Mark not onboarded":"Mark onboarded")+'</button></div></div></details>';
+   }
+   function distribution(){
++    if(M.vault.state!=="ok")return vaultNote();
+     var rows=M.lanes.rows.filter(function(l){var f=M.lanes.filter;if(f==="all")return true;if(f==="locked")return!l.unlocked;if(f==="ready")return l.unlocked&&!l.onboarded;return l.lane===f;}).sort(function(a,b){return(a.priority||99)-(b.priority||99);}),h=M.lanes.house||{};
+     return'<section class="cro-card"><h2>House facts</h2><div class="cro-form cro-form--2"><label>Published bylines<input id="cromBylines" type="number" min="0" value="'+e(h.bylines||0)+'"></label><label>Portfolio URL<input id="cromPortfolio" value="'+e(h.portfolio_url||"")+'"></label><label>PLUS ID<input id="cromPlus" value="'+e(h.plus_id||"")+'"></label><label>Copyright filed<select id="cromCopyright"><option value="false"'+(h.copyright_filed?"":" selected")+'>Not yet</option><option value="true"'+(h.copyright_filed?" selected":"")+'>Filed</option></select></label></div><div class="cro-actions" style="margin-top:8px"><button class="cr-btn cr-btn--primary" type="button" data-crom-savehouse>Save house facts</button></div></section><div class="cro-chips">'+["all","ready","locked","editorial","microstock","premium","aggregator"].map(function(f){return'<button class="cro-chip'+(M.lanes.filter===f?" is-on":"")+'" type="button" data-crom-filter="'+f+'">'+e(f)+'</button>';}).join("")+'</div><div class="cro-list">'+(rows.length?rows.map(laneCard).join(""):note("No lanes match this filter."))+'</div>';
+   }
+   function render(){
+     if(!M.loaded&&!M.loading)load();
+-    return'<div class="cro"><div class="cro-tabs">'+[["review","Review"],["direct","Direct sales"],["lyrics","Lyrics"],["stems","Stems"],["catalog","Catalog"],["distribution","Distribution"]].map(function(t){return'<button class="cro-tab'+(M.section===t[0]?" is-on":"")+'" type="button" data-crom-section="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>'+(M.loading&&!M.loaded?note("Loading music operations…"):M.error?note("Some music sources failed: "+(M.error.message||M.error),true):"")+(M.section==="stems"?(window.CR.stemsPanel?window.CR.stemsPanel.render():note("Stems did not load.",true)):M.section==="lyrics"?(window.CR.lyricsReview?window.CR.lyricsReview.render():note("Lyrics review did not load.",true)):M.section==="direct"?(window.CR.musicDirect?window.CR.musicDirect.render():note("Direct sales did not load.",true)):M.section==="catalog"?catalog():M.section==="distribution"?distribution():review())+'</div>';
++    return'<div class="cro"><div class="cro-tabs">'+[["review","Review"],["direct","Direct sales"],["lyrics","Lyrics"],["stems","Stems"],["catalog","Catalog"],["distribution","Distribution"]].map(function(t){return'<button class="cro-tab'+(M.section===t[0]?" is-on":"")+'" type="button" data-crom-section="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>'+(M.loading&&!M.loaded?note("Loading music operations…"):"")+(M.section==="stems"?(window.CR.stemsPanel?window.CR.stemsPanel.render():note("Stems did not load.",true)):M.section==="lyrics"?(window.CR.lyricsReview?window.CR.lyricsReview.render():note("Lyrics review did not load.",true)):M.section==="direct"?(window.CR.musicDirect?window.CR.musicDirect.render():note("Direct sales did not load.",true)):M.section==="catalog"?catalog():M.section==="distribution"?distribution():review())+'</div>';
+   }
+   function reloadSection(){return load();}
+   function bind(root){
+     if(M.section==="lyrics"&&window.CR.lyricsReview)window.CR.lyricsReview.bind(root);
+     if(M.section==="stems"&&window.CR.stemsPanel)window.CR.stemsPanel.bind(root);
+     (root?root.querySelectorAll("[data-crom-section]"):[]).forEach(function(b){b.onclick=function(){M.section=b.getAttribute("data-crom-section");if(M.rerender)M.rerender();};});
+-    (root?root.querySelectorAll("[data-crom-review]"):[]).forEach(function(b){b.onclick=function(){var d=b.getAttribute("data-crom-review"),noteText="";if(d!=="publish")noteText=prompt(d==="reject"?"Why is this release rejected?":"What documentation/review is needed?","")||"";b.disabled=true;musicCall("operator-review",{track_id:b.getAttribute("data-id"),decision:d,note:noteText}).then(reloadSection).catch(function(err){b.disabled=false;alert(err.message||"Review failed");});};});
++    /* Verify + listen: pin the master under review, hash its bytes once, hand back a player for that pinned object */
++    (root?root.querySelectorAll("[data-crom-prepare]"):[]).forEach(function(b){b.onclick=function(){var id=b.getAttribute("data-crom-prepare");b.disabled=true;b.textContent="Verifying audio…";musicCall("operator-review-prepare",{track_id:id}).then(function(p){var t=M.review.tracks.filter(function(x){return x.id===id;})[0]||{};p.track_updated_at=t.updated_at;M.review.prepared[id]=p;if(M.rerender)M.rerender();}).catch(function(err){b.disabled=false;b.textContent="Verify + listen";alert(err.message||"Audio verification failed");});};});
++    /* the version this desk shows, and for publish the audio bytes it played: the server refuses anything else */
++    (root?root.querySelectorAll("[data-crom-review]"):[]).forEach(function(b){b.onclick=function(){var d=b.getAttribute("data-crom-review"),noteText="";if(d!=="publish")noteText=prompt(d==="reject"?"Why is this release rejected?":"What documentation/review is needed?","")||"";b.disabled=true;var body={track_id:b.getAttribute("data-id"),decision:d,note:noteText,expected_updated_at:b.getAttribute("data-version")||""};if(d==="publish")body.expected_master_sha256=b.getAttribute("data-sha")||"";musicCall("operator-review",body).then(reloadSection).catch(function(err){b.disabled=false;alert(err.message||"Review failed");});};});
+     (root?root.querySelectorAll("[data-crom-license]"):[]).forEach(function(b){b.onclick=function(){b.disabled=true;musicCall("operator-license",{offer_id:b.getAttribute("data-crom-license"),enabled:b.getAttribute("data-enabled")==="1"}).then(reloadSection).catch(function(err){b.disabled=false;alert(err.message||"License update failed");});};});
+     (root?root.querySelectorAll("[data-crom-asset-status]"):[]).forEach(function(b){b.onclick=function(){b.disabled=true;M.supa("vault_assets?id=eq."+encodeURIComponent(b.getAttribute("data-id")),{method:"PATCH",body:{status:b.getAttribute("data-crom-asset-status")}}).then(reloadSection).catch(function(err){b.disabled=false;alert(err.message||"Asset update failed");});};});
+     (root?root.querySelectorAll("[data-crom-clear]"):[]).forEach(function(b){b.onclick=function(){b.disabled=true;M.supa("vault_assets?id=eq."+encodeURIComponent(b.getAttribute("data-crom-clear")),{method:"PATCH",body:{release_clear:b.getAttribute("data-next")==="1"}}).then(reloadSection).catch(function(err){b.disabled=false;alert(err.message||"Release update failed");});};});
+diff --git a/js/creator-onboarding.js b/js/creator-onboarding.js
+index 44c6b44b..01571eb5 100644
+--- a/js/creator-onboarding.js
++++ b/js/creator-onboarding.js
+@@ -310,6 +310,17 @@
+       return M.mUid().then(function (mUid) { return mUid ? client({ token: "", mUid: mUid, fetch: authed }).state() : null; });
+     });
+   }
++  /* THE STUDIO DOOR (music slice M6, law lane L-11). The signed-in Profile menu (js/site-navigation.js) names Creator
++     Studio on Matthew's property's music pages to whoever has one: a creator, by the server's answer (above), and the
++     house owner, by the bar's own server check (data-appbar-admin, GET /v1/status). A guest asks nothing; a question
++     nobody could answer shows no door. */
++  function studioDoor(w) {
++    var M = w && w.MCC, s = M && M.session && M.session();
++    if (!s || !s.access_token || !M.authFetch) return Promise.resolve(false);
++    var body = w.document && w.document.body;
++    if (body && body.hasAttribute && body.hasAttribute("data-appbar-admin")) return Promise.resolve(true);
++    return creatorStateFor(w).then(function (st) { return !!(st && st.creator === true); }, function () { return false; });
++  }
+   function bindOffers(w) {
+     var doc = w.document;
+     if (!doc || w.__mccCreatorOffers) return;
+@@ -359,6 +370,6 @@
+     view: view, wantsEdit: wantsEdit, askFor: askFor, ready: ready,
+     fallbackState: fallbackState, rpcMissing: rpcMissing, handleHelp: handleHelp,
+     profileUnfinished: profileUnfinished, profileDone: profileDone, client: client, openDoor: openDoor,
+-    offerFor: offerFor
++    offerFor: offerFor, studioDoor: studioDoor
+   };
+ });
+diff --git a/js/music-admin.js b/js/music-admin.js
+deleted file mode 100644
+index 4993de54..00000000
+--- a/js/music-admin.js
++++ /dev/null
+@@ -1,99 +0,0 @@
+-(function(root){
+-  "use strict";
+-  var SB="https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+-  var KEY="sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+-  var session=null,state={tracks:[],creators:[],offers:[],prepared:{}};
+-  var $=function(id){return document.getElementById(id);};
+-  function esc(x){var d=document.createElement("i");d.textContent=x==null?"":String(x);return d.innerHTML;}
+-  function money(c,curr){try{return new Intl.NumberFormat(undefined,{style:"currency",currency:(curr||"usd").toUpperCase()}).format(Number(c||0)/100);}catch(_){return "$"+(Number(c||0)/100).toFixed(2);}}
+-  async function call(action,body){
+-    var res=await fetch(SB+"/functions/v1/music-access",{method:"POST",headers:{apikey:KEY,authorization:"Bearer "+session.access_token,"content-type":"application/json"},body:JSON.stringify(Object.assign({action:action},body||{}))});
+-    var data=await res.json().catch(function(){return{};});
+-    if(!res.ok)throw new Error(data.error||("Music service "+res.status));
+-    return data;
+-  }
+-  function creatorMap(){var m={};state.creators.forEach(function(c){m[c.m_uid]=c;});return m;}
+-  function render(){
+-    var cm=creatorMap();
+-    $("adminTracks").innerHTML=state.tracks.length?state.tracks.map(function(t){
+-      var c=cm[t.m_uid]||{};
+-      /* (f) what the reviewer listens to is the pinned master being approved
+-         (operator-review-prepare), and Publish carries its SHA-256 */
+-      var p=state.prepared[t.id];
+-      var audio=p?'<div class="creator-review-audio"><audio controls preload="none" src="'+esc(p.listen_url)+'" style="display:block;width:100%;max-width:100%;margin-top:8px"></audio>'+
+-        '<small>Audio SHA-256 <code title="'+esc(p.sha256)+'">'+esc(p.sha256_short)+'</code>'+
+-        (p.size_bytes!=null?' · '+esc((Number(p.size_bytes)/1048576).toFixed(1))+' MB':'')+
+-        ' · publishing approves exactly these bytes</small></div>':'';
+-      return '<div class="creator-admin-row"><div><b>'+esc(t.title)+'</b><small>'+esc(c.artist_name||t.artist||"Unknown creator")+
+-        ' · '+esc(t.access_mode)+' · '+esc(t.status)+' · rights '+esc(t.rights_status)+
+-        (t.moderation_note?'<br>'+esc(t.moderation_note):'')+'</small>'+audio+'</div>'+
+-        '<div class="creator-actions">'+
+-          '<button class="creator-btn quiet" data-prepare="'+esc(t.id)+'">'+(p?'Listen again':'Verify + listen')+'</button>'+
+-          '<button class="creator-btn good" data-review="publish" data-track="'+esc(t.id)+'" data-version="'+esc(p?p.expected_updated_at:(t.updated_at||""))+'"'+
+-            (p?' data-sha="'+esc(p.sha256)+'"':' disabled title="Verify and listen to the audio first"')+'>Publish + clear</button>'+
+-          '<button class="creator-btn quiet" data-review="review" data-track="'+esc(t.id)+'" data-version="'+esc(t.updated_at||"")+'">Needs review</button>'+
+-          '<button class="creator-btn quiet" data-review="reject" data-track="'+esc(t.id)+'" data-version="'+esc(t.updated_at||"")+'">Reject</button>'+
+-        '</div></div>';
+-    }).join(""):'<div class="creator-status">No creator releases in the queue.</div>';
+-
+-    var byTrack={};state.tracks.forEach(function(t){byTrack[t.id]=t;});
+-    $("adminOffers").innerHTML=state.offers.length?state.offers.map(function(o){
+-      var t=byTrack[o.track_id]||{};
+-      var live=o.active&&o.checkout_enabled;
+-      return '<div class="creator-admin-row"><div><b>'+esc(o.title)+'</b><small>'+esc(t.title||o.track_id)+' · '+esc(o.license_type)+
+-        (o.price_cents!=null?' · '+esc(money(o.price_cents,o.currency)):'')+
+-        ' · platform fee '+(Number(o.platform_fee_bps||0)/100).toFixed(1)+'%</small></div>'+
+-        '<div class="creator-actions"><button class="creator-btn '+(live?'quiet':'good')+'" data-license="'+esc(o.id)+'" data-enabled="'+(live?'0':'1')+'">'+
+-        (live?'Disable checkout':'Enable checkout')+'</button></div></div>';
+-    }).join(""):'<div class="creator-status">No license offers yet.</div>';
+-  }
+-  async function load(){
+-    var d=await call("operator-dashboard",{});
+-    state.tracks=d.tracks||[];state.creators=d.creators||[];state.offers=d.offers||[];
+-    /* a verified listen is for the release as it was then: a changed release is verified again */
+-    var keep={};state.tracks.forEach(function(t){var p=state.prepared[t.id];if(p&&p.track_updated_at===t.updated_at)keep[t.id]=p;});
+-    state.prepared=keep;
+-    render();
+-  }
+-  document.addEventListener("click",async function(e){
+-    var v=e.target.closest&&e.target.closest("[data-prepare]");
+-    if(v){
+-      var id=v.getAttribute("data-prepare");
+-      v.disabled=true;v.textContent="Verifying audio…";
+-      try{
+-        var p=await call("operator-review-prepare",{track_id:id});
+-        var t=state.tracks.filter(function(x){return x.id===id;})[0]||{};
+-        p.track_updated_at=t.updated_at;state.prepared[id]=p;render();
+-      }catch(err){alert(err.message||"Audio verification failed");v.disabled=false;v.textContent="Verify + listen";}
+-      return;
+-    }
+-    var b=e.target.closest&&e.target.closest("[data-review]");
+-    if(b){
+-      var decision=b.getAttribute("data-review"),note="";
+-      if(decision!=="publish")note=prompt(decision==="reject"?"Why is this release rejected?":"What documentation/review is needed?","")||"";
+-      b.disabled=true;
+-      try{/* the version this desk shows: the server refuses a decision on a release that changed since */
+-      /* ...and the audio bytes this desk played: the server refuses approval unless this is the pinned master's hash */
+-      await call("operator-review",{track_id:b.getAttribute("data-track"),expected_updated_at:b.getAttribute("data-version")||"",expected_master_sha256:b.getAttribute("data-sha")||"",decision:decision,note:note});await load();}
+-      catch(err){alert(err.message||"Review failed");}
+-      finally{b.disabled=false;}
+-      return;
+-    }
+-    var l=e.target.closest&&e.target.closest("[data-license]");
+-    if(l){
+-      l.disabled=true;
+-      try{await call("operator-license",{offer_id:l.getAttribute("data-license"),enabled:l.getAttribute("data-enabled")==="1"});await load();}
+-      catch(err){alert(err.message||"License update failed");}
+-      finally{l.disabled=false;}
+-    }
+-  });
+-  (async function(){
+-    session=await root.MCC.refreshIfNeeded();
+-    if(!session||!session.access_token)return;
+-    try{
+-      var st=await call("operator-status",{});
+-      if(!st.operator)return;
+-      $("adminGate").hidden=true;$("adminApp").hidden=false;await load();
+-    }catch(_){}
+-  })();
+-})(window);
+\ No newline at end of file
+diff --git a/js/music-creator-page.js b/js/music-creator-page.js
+index 4f73af93..1e1ce6bd 100644
+--- a/js/music-creator-page.js
++++ b/js/music-creator-page.js
+@@ -230,7 +230,44 @@
+     return lines.join("\n").slice(0, 8000);
+   }
+ 
++  /* A CREATOR'S OWN RELEASES (music slice M6, 2026-11-19; studio lane ST-10). What a creator may do with a release
++     they submitted is what the applied SQL already lets them do, and nothing it would refuse or regret
++     (20260920041011_music_creator_platform_v1.sql, the row policies; 20261030001000_music_release_payment_integrity_v1.sql,
++     public.music_track_guard; proven in supabase/tests/music_creator_releases.behaviour.sql):
++       pending review           -> edit its words and links (the reviewer sees the new version: the review starts
++                                   again from what is saved), or withdraw it (back to draft, out of the queue)
++       withdrawn (attested, or
++       held for review)          -> submit it again (it returns to the queue in the rights state it left), or delete it
++       draft never attested      -> delete it (the row policy allows a creator to delete a draft)
++       rejected                  -> nothing here, although the row policy would allow deleting it: the reviewer's
++                                   note lives only on the release and its rights attestation goes with it, so whether
++                                   a creator may erase a rejection is the owner's call, not this page's
++       approved, published       -> nothing here: any change would take a live song off the air (the guard sends a
++                                   changed reviewed release back to review), which is the owner's decision D-14
++     Deleting is refused by the database once the reviewer has verified the audio (the pinned version keeps the row):
++     the release then stays withdrawn. */
++  function releaseActions(track) {
++    var status = track && track.status;
++    if (status === "pending_review") return ["edit", "withdraw"];
++    if (status === "draft") return track.rights_status === "attested" || track.rights_status === "review" ? ["resubmit", "delete"] : ["delete"];
++    return [];
++  }
++  /* The words and links of a pending release, and nothing else: never its state, rights, audio, artwork or access
++     (a listener-access change can expose a master as a public preview; it is a new release). */
++  var EDITABLE = { title: 220, artist: 220, genre: 80, description: 2000, music_video_url: 2000, lyrics_url: 2000 };
++  function releaseEdit(input) {
++    var out = {};
++    for (var k in EDITABLE) {
++      if (!Object.prototype.hasOwnProperty.call(EDITABLE, k) || !input || input[k] == null) continue;
++      out[k] = String(input[k]).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]+/g, "").trim().slice(0, EDITABLE[k]);
++    }
++    if (!out.title) return null;
++    return out;
++  }
++
+   return {
++    releaseActions: releaseActions,
++    releaseEdit: releaseEdit,
+     SB: SB,
+     ARTWORK: ARTWORK,
+     MAX_ALBUMS: MAX_ALBUMS,
+diff --git a/js/music-creator-studio.js b/js/music-creator-studio.js
+index 04a8dec5..6ea90ecd 100644
+--- a/js/music-creator-studio.js
++++ b/js/music-creator-studio.js
+@@ -263,7 +263,7 @@ function pillClass(track) {
+ }
+ async function loadTracks() {
+   const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
+-    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at&order=created_at.desc");
++    "&select=id,title,artist,description,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,master_path,preview_path,created_at,updated_at,published_at&order=created_at.desc");
+   tracksCache = rows || [];
+   renderAlbums();
+   const list = $("creatorTracks");
+@@ -271,14 +271,155 @@ async function loadTracks() {
+     list.innerHTML = '<div class="creator-status">No releases yet.</div>';
+     return;
+   }
+-  list.innerHTML = rows.map((t) =>
+-    '<div class="creator-item"><div><b>' + escapeHtml(t.title) + '</b><small>' +
+-    escapeHtml([t.artist, t.genre, t.access_mode].filter(Boolean).join(" · ")) +
+-    (t.moderation_note ? '<br>' + escapeHtml(t.moderation_note) : '') +
+-    '</small></div><span class="' + pillClass(t) + '">' +
+-    escapeHtml(t.status.replace(/_/g, " ")) + ' · ' + escapeHtml(t.rights_status) + '</span></div>'
+-  ).join("");
++  list.innerHTML = rows.map((t) => {
++    const id = escapeHtml(t.id);
++    const actions = PAGE.releaseActions(t);
++    return '<div class="creator-item creator-release" data-release-row="' + id + '"><div><b>' + escapeHtml(t.title) + '</b><small>' +
++      escapeHtml([t.artist, t.genre, t.access_mode].filter(Boolean).join(" · ")) +
++      (t.moderation_note ? '<br>' + escapeHtml(t.moderation_note) : '') +
++      '</small></div><span class="' + pillClass(t) + '">' +
++      escapeHtml(t.status.replace(/_/g, " ")) + ' · ' + escapeHtml(t.rights_status) + '</span>' +
++      (actions.length ? '<div class="creator-rowactions creator-release__actions">' + actions.map((a) =>
++        '<button class="creator-btn quiet" type="button" data-release-action="' + a + '" data-release="' + id + '">' + RELEASE_ACTION_LABEL[a] + '</button>'
++      ).join("") + '</div>' : '') +
++      '<div class="creator-release__edit" data-release-edit="' + id + '" hidden></div></div>';
++  }).join("");
++}
++
++/* ---------- a creator's own releases, after submit (music slice M6, studio lane ST-10) ----------
++   The rule of what is offered is js/music-creator-page.js releaseActions, which is what the database already allows a
++   creator; each change below names the state and the version it was made on, so a release the reviewer published or
++   rejected meanwhile is never changed by an older screen: nothing matches, the list reloads and says so. */
++const RELEASE_ACTION_LABEL = { edit: "Edit", withdraw: "Withdraw", resubmit: "Submit again", delete: "Delete" };
++const RELEASE_CHANGED = "This release changed since your list loaded: it may have been reviewed. Your releases are up to date again.";
++function releaseById(id) { return tracksCache.find((t) => String(t.id) === String(id)) || null; }
++function releaseEditForm(t) {
++  const id = escapeHtml(t.id);
++  const field = (name, label, value, max, kind) =>
++    '<div class="creator-field"><label for="rel-' + name + '-' + id + '">' + label + '</label>' +
++    (kind === "area"
++      ? '<textarea id="rel-' + name + '-' + id + '" name="' + name + '" maxlength="' + max + '">' + escapeHtml(value || "") + '</textarea>'
++      : '<input id="rel-' + name + '-' + id + '" name="' + name + '" maxlength="' + max + '"' + (kind === "url" ? ' type="url"' : '') + (name === "title" ? ' required' : '') + ' value="' + escapeHtml(value || "") + '">') +
++    '</div>';
++  return '<form class="creator-form" data-release-form="' + id + '" novalidate>' +
++    field("title", "Title", t.title, 220) + field("artist", "Artist credit", t.artist, 220) + field("genre", "Genre", t.genre, 80) +
++    field("description", "Release notes", t.description, 2000, "area") +
++    field("music_video_url", "Music video URL", t.music_video_url, 2000, "url") + field("lyrics_url", "Lyrics JSON URL", t.lyrics_url, 2000, "url") +
++    '<small class="creator-help">The audio, artwork and listener access stay as submitted. The reviewer sees the version you save.</small>' +
++    '<div class="creator-actions"><button class="creator-btn primary" type="submit">Save changes</button>' +
++    '<button class="creator-btn quiet" type="button" data-release-cancel="' + id + '">Cancel</button></div></form>';
++}
++function closeReleaseEdits() {
++  document.querySelectorAll("[data-release-edit]").forEach((box) => { box.hidden = true; box.replaceChildren(); });
+ }
++function artworkPath(url) {
++  const prefix = PAGE.ARTWORK;
++  if (!url || String(url).indexOf(prefix) !== 0) return "";
++  try { return decodeURIComponent(String(url).slice(prefix.length).split("?")[0]); } catch (_) { return ""; }
++}
++$("creatorTracks").addEventListener("click", guarded(async (e) => {
++  const cancel = e.target.closest("[data-release-cancel]");
++  if (cancel) { closeReleaseEdits(); return; }
++  const button = e.target.closest("[data-release-action]");
++  if (!button) return;
++  const action = button.getAttribute("data-release-action");
++  const t = releaseById(button.getAttribute("data-release"));
++  if (!t) return;
++  const enc = encodeURIComponent;
++  if (action === "edit") {
++    closeReleaseEdits();
++    const box = document.querySelector('[data-release-edit="' + CSS.escape(String(t.id)) + '"]');
++    if (!box) return;
++    box.innerHTML = releaseEditForm(t);
++    box.hidden = false;
++    box.querySelector("input")?.focus();
++    status("releaseStatus", "");
++    return;
++  }
++  if (action === "withdraw" && !confirm("Withdraw “" + t.title + "” from review? It goes back to your drafts: you can submit it again or delete it.")) return;
++  if (action === "delete" && !confirm("Delete “" + t.title + "”? Its record and its files are removed. This cannot be undone.")) return;
++  button.disabled = true;
++  try {
++    if (action === "withdraw") {
++      const rows = await rest("creator_tracks?id=eq." + enc(t.id) + "&status=eq.pending_review", {
++        method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ status: "draft" })
++      });
++      if (!Array.isArray(rows) || !rows.length) { status("releaseStatus", RELEASE_CHANGED, "bad"); await loadTracks(); return; }
++      status("releaseStatus", "Withdrawn. “" + t.title + "” is out of the review queue and in your drafts.", "good");
++      if (window.MCC_TRACK) window.MCC_TRACK("creator_release_withdrawn", { track_id: t.id });
++    } else if (action === "resubmit") {
++      const rows = await rest("creator_tracks?id=eq." + enc(t.id) + "&status=eq.draft&rights_status=in.(attested,review)", {
++        method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ status: "pending_review" })
++      });
++      if (!Array.isArray(rows) || !rows.length) { status("releaseStatus", RELEASE_CHANGED, "bad"); await loadTracks(); return; }
++      status("releaseStatus", "Submitted again. “" + t.title + "” is back in the review queue.", "good");
++      if (window.MCC_TRACK) window.MCC_TRACK("creator_release_resubmitted", { track_id: t.id });
++    } else if (action === "delete") {
++      let rows;
++      try {
++        rows = await rest("creator_tracks?id=eq." + enc(t.id) + "&status=eq.draft", {
++          method: "DELETE", headers: { Prefer: "return=representation" }
++        });
++      } catch (err) {
++        /* the reviewer verified its audio: the pinned version keeps the record (public.music_asset_versions) */
++        if (/foreign key|music_asset_versions/i.test(String(err && err.message))) {
++          status("releaseStatus", "“" + t.title + "” stays withdrawn: the reviewer has already verified its audio, so its record is kept. It will not be published.", "bad");
++          return;
++        }
++        throw err;
++      }
++      if (!Array.isArray(rows) || !rows.length) { status("releaseStatus", RELEASE_CHANGED, "bad"); await loadTracks(); return; }
++      const uploads = [];
++      if (t.master_path) uploads.push({ bucket: "creator-masters", path: t.master_path });
++      if (t.preview_path && t.preview_path !== t.master_path) uploads.push({ bucket: "creator-previews", path: t.preview_path });
++      const art = artworkPath(t.poster_url);
++      if (art) uploads.push({ bucket: "creator-artwork", path: art });
++      const left = await rollbackRelease(null, uploads);
++      let albumNote = "";
++      const id = String(t.id).toLowerCase();
++      if (albumsNow().some((a) => a.tracks.includes(id))) {
++        try {
++          await saveSettings((s) => { (s.albums || []).forEach((a) => { if (a && Array.isArray(a.tracks)) a.tracks = a.tracks.filter((x) => x !== id); }); });
++        } catch (_) { albumNote = " It is still listed on an album: remove it from Your albums."; }
++      }
++      status("releaseStatus", "Deleted “" + t.title + "”." + (left.length ? " Some of its files could not be removed yet." : "") + albumNote, left.length || albumNote ? "bad" : "good");
++      if (window.MCC_TRACK) window.MCC_TRACK("creator_release_deleted", { track_id: t.id });
++    }
++    await loadTracks();
++  } catch (err) {
++    status("releaseStatus", err.message || "That did not work. Try again.", "bad");
++  } finally {
++    button.disabled = false;
++  }
++}));
++$("creatorTracks").addEventListener("submit", guarded(async (e) => {
++  const form = e.target.closest("[data-release-form]");
++  if (!form) return;
++  e.preventDefault();
++  const t = releaseById(form.getAttribute("data-release-form"));
++  if (!t) return;
++  const values = {};
++  ["title", "artist", "genre", "description", "music_video_url", "lyrics_url"].forEach((k) => { values[k] = form.elements[k] ? form.elements[k].value : ""; });
++  const patch = PAGE.releaseEdit(values);
++  if (!patch) { status("releaseStatus", "Give the release a title.", "bad"); form.elements.title?.focus(); return; }
++  if (!patch.artist) patch.artist = profile?.artist_name || t.artist || "";
++  const save = form.querySelector('[type="submit"]');
++  save.disabled = true;
++  try {
++    /* only the pending version on screen: a release reviewed or changed meanwhile is not touched */
++    const rows = await rest("creator_tracks?id=eq." + encodeURIComponent(t.id) + "&status=eq.pending_review&updated_at=eq." + encodeURIComponent(t.updated_at), {
++      method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(patch)
++    });
++    if (!Array.isArray(rows) || !rows.length) { status("releaseStatus", RELEASE_CHANGED, "bad"); await loadTracks(); return; }
++    status("releaseStatus", "Saved. The reviewer sees this version of “" + patch.title + "”.", "good");
++    if (window.MCC_TRACK) window.MCC_TRACK("creator_release_edited", { track_id: t.id });
++    await loadTracks();
++  } catch (err) {
++    status("releaseStatus", err.message || "Could not save the release.", "bad");
++  } finally {
++    save.disabled = false;
++  }
++}));
+ function escapeHtml(value) {
+   const d = document.createElement("i");
+   d.textContent = value == null ? "" : String(value);
+@@ -996,7 +1137,7 @@ function closeStudio() {
+   $("serviceForm").hidden = true;
+   ["profileForm", "trackForm", "albumForm", "serviceForm", "cobForm"].forEach((id) => { const f = $(id); if (f && f.reset) f.reset(); });
+   ["creatorTracks", "creatorAlbums", "creatorServices"].forEach((id) => { const n = $(id); if (n) n.replaceChildren(); });
+-  ["profileStatus", "trackStatus", "albumStatus", "serviceStatus", "cobStatus"].forEach((id) => { const n = $(id); if (n) n.textContent = ""; });
++  ["profileStatus", "trackStatus", "albumStatus", "serviceStatus", "cobStatus", "releaseStatus"].forEach((id) => { const n = $(id); if (n) n.textContent = ""; });
+   $("publicProfile").hidden = true;
+   $("creatorGate").querySelector("p").textContent = GATE_TEXT;
+   $("creatorGate").hidden = false;
+diff --git a/js/site-navigation.js b/js/site-navigation.js
+index cc886e98..204df86a 100644
+--- a/js/site-navigation.js
++++ b/js/site-navigation.js
+@@ -310,6 +310,37 @@
+       menu.querySelectorAll('[data-owner-profile-action]').forEach(el => {el.hidden = !bar.admin();});
+     });
+   }
++  /* A CREATOR STUDIO DOOR WHERE CREATORS LOOK FOR IT (music slice M6, 2026-11-19; law lane L-11): this menu, at the
++     top right where profile and account live (owner, 2026-10-16), on Matthew's property's music pages only. Never on
++     a World host (the house must be this origin) and never in the bar's tabs. Shown to the house owner (the bar's own
++     server check) and to a creator by the server's answer (js/creator-onboarding.js studioDoor, fetched only here). */
++  const STUDIO_PAGES = /\/(?:listen|album|catalogue|music-videos|license|creator|music-creator|music-creator-terms|prim3-artist)\.html$/;
++  let studioAsk = 0, studioKnown = null;
++  function studioHere() {
++    try { return new URL(house, location.href).origin === location.origin && STUDIO_PAGES.test(location.pathname); } catch (_) { return false; }
++  }
++  function musicModule() {
++    if (window.MCC_CREATOR_ONBOARD?.studioDoor) return Promise.resolve(window.MCC_CREATOR_ONBOARD);
++    return new Promise(resolve => {
++      const s = document.createElement('script'); s.src = root + 'js/creator-onboarding.js?v=__STAMP__';
++      s.onload = () => resolve(window.MCC_CREATOR_ONBOARD || null); s.onerror = () => resolve(null);
++      document.head.appendChild(s);
++    });
++  }
++  function syncStudio() {
++    if (!profile || !studioHere()) return;
++    let link = profile.querySelector('[data-creator-studio]');
++    if (!link) {
++      link = element('a', '', 'Creator Studio'); link.href = root + 'creator.html'; link.dataset.creatorStudio = '';
++      profile.querySelector('a')?.after(link);
++    }
++    const ask = ++studioAsk, who = bar.auth().user?.id || '';
++    link.hidden = !(studioKnown && studioKnown.who === who && studioKnown.show);
++    if (!bar.auth().signed_in) {link.hidden = true; return;}
++    const show = value => { if (ask !== studioAsk || !bar.auth().signed_in) return; studioKnown = {who, show: !!value}; link.hidden = !value; };
++    if (bar.admin()) {show(true); return;}
++    musicModule().then(m => m?.studioDoor ? m.studioDoor(window) : false).then(show, () => show(false));
++  }
+   function syncProfile() {
+     syncProfileOwner();
+     const chip = get('mccAuthChip'); if (!chip) return;
+@@ -343,7 +374,7 @@
+       profile.append(view, account, home, search, close); document.body.appendChild(profile);
+       profile.addEventListener('toggle', event => get('mccAuthChip')?.setAttribute('aria-expanded', String(event.newState === 'open')));
+     }
+-    syncProfileOwner();
++    syncProfileOwner(); syncStudio();
+     if (profile.matches(':popover-open')) closeProfile(true);
+     else {profile.showPopover(); profile.querySelector('a').focus();}
+   }, true);
+diff --git a/scripts/e2e/music-creator-release.e2e.mjs b/scripts/e2e/music-creator-release.e2e.mjs
+new file mode 100644
+index 00000000..b9deb3ff
+--- /dev/null
++++ b/scripts/e2e/music-creator-release.e2e.mjs
+@@ -0,0 +1,363 @@
++/* A RELEASE GOES FROM SUBMIT TO ITS ARTIST PAGE, IN A REAL BROWSER (music slice M6, 2026-11-19).
++   ============================================================
++   Creator Studio publishes and is measured. Every page is the real one, served from this checkout under Matthew
++   McCluster's real origin; the auth server, PostgREST, Storage, the music Edge function, the collector and the API
++   Worker are the stand-ins in scripts/e2e/support/music-accounts-plane.mjs and music-release-plane.mjs; every other
++   request is aborted. Nothing reaches a live host. All at 390 px, where every page is measured
++   (scrollWidth === clientWidth).
++
++     submit    a creator, who agreed to the privacy notice, uploads a release in Creator Studio: it waits for review,
++               it can be edited (only the version on screen) or withdrawn, and creator_* events reach the collector
++     review    the house owner in Control · Create · Music · Review: Publish stays shut until Verify + listen has
++               played the pinned master and shown its hash; Publish then carries the version and that hash and the
++               release goes live (never "expected_updated_at required"); the vault, which is not in the database,
++               says so instead of failing
++     artist    the release on its artist page, playing for a guest; nothing is offered on a live release
++     consent   a creator who answered "Not now": the studio's events are skipped (analytics.js is on the page and
++               sends nothing); withdraw, submit again and delete, and a verified release that stays withdrawn
++     door      Creator Studio in the signed-in Profile menu, on Matthew's music pages only: a creator and the owner
++               see it; a member, the home page and a World host do not
++
++     node scripts/e2e/music-creator-release.e2e.mjs [outDir]
++   outDir (default: the system's temporary folder) receives result.json, every check and its outcome.
++   M6_SHOTS=<dir> runs every page at device scale 2 and writes the owner's screenshots there.
++   ============================================================ */
++import { createRequire } from 'node:module';
++import { createHash } from 'node:crypto';
++import { mkdir, writeFile } from 'node:fs/promises';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { makePlane, HOUSE, PEOPLE } from './support/music-accounts-plane.mjs';
++import { makeReleasePlane, WORLD } from './support/music-release-plane.mjs';
++
++const ROOT = fileURLToPath(new URL('../../', import.meta.url)).replace(/\/$/, '');
++const OUT = process.argv[2] || join(tmpdir(), 'music-creator-release-e2e');
++const SHOTS = process.env.M6_SHOTS || '';
++const require = createRequire(import.meta.url);
++let chromium;
++try { ({ chromium } = require('playwright')); }
++catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
++
++const failures = [];
++const checks = [];
++const check = (ok, what) => { checks.push({ ok: !!ok, what }); if (!ok) failures.push(what); console.log((ok ? 'ok   ' : 'FAIL ') + what); };
++const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
++const until = (page, fn, arg, timeout = 10000) => page.waitForFunction(fn, arg, { timeout, polling: 100 }).then(() => true, () => false);
++const wait = async (fn, timeout = 10000) => { const end = Date.now() + timeout; while (Date.now() < end) { if (fn()) return true; await sleep(100); } return !!fn(); };
++const fits = async (page, label) => {
++  const m = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, c: document.documentElement.clientWidth }));
++  check(m.s === m.c, `${label}: at 390 px scrollWidth ${m.s} === clientWidth ${m.c}`);
++};
++const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: join(SHOTS, name + '.png'), fullPage: false }).catch(() => {}); };
++
++/* a short WAV of a fixed tone pattern; two seeds, two different masters */
++function wav(seconds, seed) {
++  const rate = 8000, n = Math.ceil(seconds * rate), b = Buffer.alloc(44 + n);
++  b.write('RIFF', 0); b.writeUInt32LE(36 + n, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22);
++  b.writeUInt32LE(rate, 24); b.writeUInt32LE(rate, 28); b.writeUInt16LE(1, 32); b.writeUInt16LE(8, 34); b.write('data', 36); b.writeUInt32LE(n, 40);
++  for (let i = 0; i < n; i++) b[44 + i] = 128 + Math.round(20 * Math.sin((i * (seed + 2) * Math.PI) / 40));
++  return b;
++}
++const MASTER_1 = wav(3, 1), MASTER_2 = wav(2, 5), MASTER_3 = wav(2, 9);
++const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
++
++const plane = makePlane();
++const rel = makeReleasePlane(plane);
++const errors = [];
++async function context(browser, width = 390) {
++  const mobile = width < 600;
++  const ctx = await browser.newContext({ viewport: { width, height: mobile ? 844 : 900 }, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: SHOTS ? 2 : 1, serviceWorkers: 'block' });
++  await plane.install(ctx, ROOT);
++  await rel.install(ctx, ROOT);
++  ctx.setDefaultTimeout(8000);
++  ctx.on('page', (p) => p.on('pageerror', (e) => errors.push({ page: p.url(), message: String(e && e.message), stack: String(e && e.stack || '') })));
++  open.push(ctx);
++  return ctx;
++}
++/* one scenario: a failure in it is a failed check, its browsers are closed, and the next scenario still runs */
++const open = [];
++async function scenario(name, fn) {
++  try { await fn(); }
++  catch (e) { check(false, name + ': finished without an exception: ' + String(e && e.message || e).split('\n')[0]); }
++  finally { while (open.length) await open.pop().close().catch(() => {}); }
++}
++/* a fresh profile on an origin: the privacy notice agreed to (consent) or answered "Not now", then a session */
++async function seed(page, who, { consent, origin = HOUSE } = {}) {
++  const items = {};
++  if (who) { const v = JSON.stringify(plane.storedSession(who)); items.mccdb_session = v; items.mcc_sess_keep = v; }
++  await page.goto(origin + '/__blank');
++  await page.evaluate(({ it, consent }) => {
++    localStorage.clear(); sessionStorage.clear();
++    if (consent) localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
++    localStorage.setItem('mcc_privacy_seen', JSON.stringify({ version: '2026-10-19', seen_at: new Date().toISOString() }));
++    for (const k of Object.keys(it)) localStorage.setItem(k, it[k]);
++  }, { it: items, consent: !!consent });
++}
++async function openStudio(page) {
++  await page.goto(HOUSE + '/creator.html', { waitUntil: 'domcontentloaded' });
++  return until(page, () => { const a = document.getElementById('creatorApp'); return a && !a.hidden && !!document.querySelector('#creatorTracks'); }, null, 15000);
++}
++const row = (page, title) => page.locator('[data-release-row]', { hasText: title });
++async function rowState(page, title) {
++  return page.evaluate((title) => {
++    const r = [...document.querySelectorAll('[data-release-row]')].find((x) => x.querySelector('b') && x.querySelector('b').textContent === title);
++    if (!r) return null;
++    const vis = (e) => !!e && !e.closest('[hidden]') && e.getBoundingClientRect().width > 0;
++    return { pill: (r.querySelector('.creator-pill') || {}).textContent || '', actions: [...r.querySelectorAll('[data-release-action]')].filter(vis).map((b) => b.textContent.trim()) };
++  }, title);
++}
++async function submitRelease(page, { title, file, bytes, genre }) {
++  rel.expectFile(file, bytes);
++  await page.fill('#trackTitle', title);
++  if (genre) await page.fill('#trackGenre', genre);
++  await page.selectOption('#trackAccess', 'public');
++  await page.setInputFiles('#trackMaster', { name: file, mimeType: 'audio/wav', buffer: bytes });
++  for (const box of ['#ownsMaster', '#controlsComposition', '#samplesCleared', '#collaboratorsCleared', '#releaseTerms']) await page.check(box);
++  /* the line under the form still says how the last submission went: this one is read from a clean line */
++  await page.evaluate(() => { document.getElementById('trackStatus').textContent = ''; });
++  await page.click('#submitTrack');
++  const ok = await until(page, () => /Submitted for rights and publication review/.test(document.getElementById('trackStatus').textContent), null, 20000);
++  if (!ok) console.log('  (studio said: ' + JSON.stringify(await page.evaluate(() => document.getElementById('trackStatus').textContent)) + ')');
++  return ok && await until(page, (title) => [...document.querySelectorAll('#creatorTracks .creator-item b')].some((b) => b.textContent === title), title, 8000);
++}
++const eventNames = (from) => rel.events.slice(from).map((e) => e.name);
++
++const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE || process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox', '--disable-dev-shm-usage', '--autoplay-policy=no-user-gesture-required', '--mute-audio'] });
++await mkdir(OUT, { recursive: true });
++if (SHOTS) await mkdir(SHOTS, { recursive: true });
++const TITLE = 'Fixture Release', EDITED = 'Fixture Release (edited)';
++let releaseId = null;
++
++try {
++  /* ---------- submit: a creator who agreed to the privacy notice ---------- */
++  await scenario('submit', async () => {
++    const ctx = await context(browser);
++    const page = await ctx.newPage();
++    await seed(page, 'creator', { consent: true });
++    check(await openStudio(page), 'submit: Creator Studio opens for the creator');
++    const measured = await page.evaluate(() => ({ script: document.querySelectorAll('script[src*="js/analytics.js"]').length, track: typeof window.MCC_TRACK }));
++    check(measured.script === 1 && measured.track === 'function', `submit: creator.html loads js/analytics.js once and MCC_TRACK is there (${measured.script}, ${measured.track})`);
++    const from = rel.events.length;
++    check(await submitRelease(page, { title: TITLE, file: 'fixture-master.wav', bytes: MASTER_1, genre: 'Soul' }), 'submit: the release is uploaded and submitted for review');
++    const t = rel.byTitle(TITLE);
++    releaseId = t && t.id;
++    check(!!t && t.status === 'pending_review' && t.rights_status === 'attested', `submit: the database holds it pending review, attested (${t && t.status}, ${t && t.rights_status})`);
++    check(!!t && rel.objects.has('creator-masters/' + t.master_path) && rel.sha(rel.objects.get('creator-masters/' + t.master_path)) === sha256(MASTER_1), 'submit: the master in Storage is the file the creator chose, byte for byte');
++    await until(page, (title) => [...document.querySelectorAll('[data-release-row] b')].some((b) => b.textContent === title), TITLE, 8000);
++    const st = await rowState(page, TITLE);
++    check(!!st && /pending review/.test(st.pill) && st.actions.join('|') === 'Edit|Withdraw', `submit: Your releases offers Edit and Withdraw on the pending release (${st && st.actions.join('|')})`);
++    check(await wait(() => eventNames(from).includes('creator_track_submitted'), 9000), 'submit: creator_track_submitted reached the collector (consent given)');
++    await fits(page, 'submit: Creator Studio with a pending release');
++
++    /* edit the words of the pending release: only the version on screen */
++    const ev = rel.events.length;
++    if (!(await row(page, TITLE).locator('[data-release-action="edit"]').count())) { check(false, 'edit: the pending release has an Edit control'); return; }
++    await row(page, TITLE).locator('[data-release-action="edit"]').click();
++    const form = row(page, TITLE).locator('[data-release-form]');
++    check(await form.isVisible(), 'edit: the edit form opens under the release');
++    const span = await page.evaluate((title) => {
++      const r = [...document.querySelectorAll('[data-release-row]')].find((x) => x.querySelector('b') && x.querySelector('b').textContent === title);
++      const box = r && r.querySelector('[data-release-edit]'), acts = r && r.querySelector('.creator-release__actions');
++      if (!box || !acts) return { form: 0, formLeft: -1, left: -1 };
++      const R = r.getBoundingClientRect(), F = box.getBoundingClientRect();
++      return { form: F.width / R.width, formLeft: Math.round(F.left - R.left), left: Math.round(acts.getBoundingClientRect().left - R.left) };
++    }, TITLE);
++    check(span.form > 0.95 && span.formLeft === 0 && span.left === 0, `edit: the controls sit under the title and the form takes the release's whole row (${Math.round(span.form * 100)}% from ${span.formLeft} px; controls at ${span.left} px)`);
++    await fits(page, 'edit: Creator Studio with the edit form open');
++    const sizes = await page.evaluate(() => [...document.querySelectorAll('[data-release-form] input, [data-release-form] textarea')].map((e) => parseFloat(getComputedStyle(e).fontSize)).filter((f) => f < 16).length);
++    check(sizes === 0, 'edit: its fields are at least 16 px (no zoom on a phone)');
++    await shot(page, 'm6-creator-studio-edit-390');
++    await form.locator('input[name="title"]').fill(EDITED);
++    await form.locator('[type="submit"]').click();
++    check(await until(page, () => /Saved\. The reviewer sees this version/.test(document.getElementById('releaseStatus').textContent), null, 10000), 'edit: saved, and the studio says the reviewer sees this version');
++    const after = rel.tracks.get(releaseId);
++    check(after && after.title === EDITED && after.status === 'pending_review' && after.rights_status === 'attested', 'edit: the release has its new title and is still pending review, attested');
++    const editWrite = rel.writes.filter((w) => w.method === 'PATCH' && w.query.includes('updated_at=eq.')).pop();
++    check(!!editWrite && editWrite.rows === 1 && /status=eq\.pending_review/.test(editWrite.query) && Object.keys(editWrite.body).every((k) => ['title', 'artist', 'genre', 'description', 'music_video_url', 'lyrics_url'].includes(k)), 'edit: the change names the version and state on screen and carries only words and links');
++    check(await wait(() => eventNames(ev).includes('creator_release_edited'), 9000), 'edit: creator_release_edited reached the collector');
++
++    /* an edit made on an older screen changes nothing (the reviewer acted meanwhile) */
++    await row(page, EDITED).locator('[data-release-action="edit"]').click();
++    const stale = rel.tracks.get(releaseId);
++    rel.tracks.set(releaseId, { ...stale, updated_at: stale.updated_at.replace(/\.\d+/, '.999999') });
++    await row(page, EDITED).locator('[data-release-form] input[name="title"]').fill('Fixture Release (stale screen)');
++    await row(page, EDITED).locator('[data-release-form] [type="submit"]').click();
++    check(await until(page, () => /changed since your list loaded/.test(document.getElementById('releaseStatus').textContent), null, 10000), 'edit: an edit on an older version is refused and the studio says so');
++    check(rel.tracks.get(releaseId).title === EDITED, 'edit: the older screen changed nothing');
++  });
++
++  /* ---------- review: the house owner in Control · Create · Music · Review ---------- */
++  await scenario('review', async () => {
++    const ctx = await context(browser);
++    const page = await ctx.newPage();
++    await seed(page, 'owner', { consent: true });
++    await page.goto(HOUSE + '/control.html#create:music', { waitUntil: 'domcontentloaded' });
++    const listed = await until(page, (id) => !!document.querySelector('[data-crom-review="publish"][data-id="' + id + '"]'), releaseId, 30000);
++    check(listed, 'review: the release waits in Control · Create · Music · Review');
++    const pub = page.locator(`[data-crom-review="publish"][data-id="${releaseId}"]`);
++    check(listed && await pub.isDisabled(), 'review: Publish is shut until the audio is verified and heard');
++    await fits(page, 'review: the review desk');
++    const t = rel.tracks.get(releaseId);
++    const canVerify = listed && await page.locator(`[data-crom-prepare="${releaseId}"]`).count() === 1;
++    check(canVerify, 'review: each release waiting for review has Verify + listen');
++    if (canVerify) {
++    await page.locator(`[data-crom-prepare="${releaseId}"]`).click();
++    const heard = await until(page, (id) => { const b = document.querySelector('[data-crom-review="publish"][data-id="' + id + '"]'); return b && !b.disabled && !!b.getAttribute('data-sha'); }, releaseId, 15000);
++    check(heard, 'review: Verify + listen opens Publish');
++    const shown = await page.evaluate((id) => {
++      const b = document.querySelector('[data-crom-review="publish"][data-id="' + id + '"]');
++      const item = b && (b.closest('.cro-item') || b.closest('[class*="cro"]').parentElement);
++      const audio = document.querySelector('audio[src*="creator-masters"]');
++      const code = document.querySelector('code[title]');
++      return { version: b && b.getAttribute('data-version'), sha: b && b.getAttribute('data-sha'), audio: audio ? audio.getAttribute('src') : '', code: code ? code.textContent : '', item: !!item };
++    }, releaseId);
++    check(shown.sha === sha256(MASTER_1), 'review: the hash Publish will carry is the SHA-256 of the master the creator uploaded');
++    check(shown.version === t.updated_at, 'review: Publish carries the version the desk loaded');
++    check(/\/storage\/v1\/object\/sign\/creator-masters\//.test(shown.audio) && shown.code === sha256(MASTER_1).slice(0, 12) + '…' + sha256(MASTER_1).slice(-4), 'review: the owner plays the pinned master and sees its short hash');
++    await fits(page, 'review: the desk after Verify + listen');
++    await shot(page, 'm6-control-review-verified-390');
++    }
++    /* the owner's Publish, as the probe pressed it */
++    if (listed && await pub.isEnabled()) await pub.click();
++    const done = await wait(() => rel.calls.some((c) => c.action === 'operator-review'), 10000);
++    await sleep(600);
++    const call = rel.calls.filter((c) => c.action === 'operator-review').pop();
++    check(done && call.status === 200 && call.body.decision === 'publish' && call.body.expected_updated_at === t.updated_at && call.body.expected_master_sha256 === sha256(MASTER_1), `review: Publish reaches music_operator_review with the version and the hash (probe p2-edge/run.ts)${call && call.status !== 200 ? ': the music service answered ' + call.status + ', ' + (call.answer && call.answer.error) : ''}`);
++    check(rel.tracks.get(releaseId).status === 'published' && rel.tracks.get(releaseId).rights_status === 'cleared', `review: the release is published and cleared (${rel.tracks.get(releaseId).status})`);
++    const refusals = rel.dialogs.filter((d) => /expected_updated_at required|expected_master_sha256 required|Review failed/.test(d.message));
++    check(refusals.length === 0, `review: no "expected_updated_at required" alert (probe p2-edge/control-room-click.mjs)${refusals.length ? ': the owner saw "' + refusals[0].message + '"' : ''}`);
++    check(!rel.calls.some((c) => c.action === 'operator-review' && c.status === 400), 'review: the music service refused nothing');
++    /* the vault is not set up: it says so, and offers nothing that could not be saved */
++    await page.locator('[data-crom-section="catalog"]').click();
++    check(await until(page, () => /The vault is not set up yet/.test(document.body.innerText), null, 8000), 'vault: Catalog says the vault is not set up yet');
++    check(await page.locator('[data-crom-savehouse],[data-crom-asset-status],[data-crom-savecred],[data-crom-toggle]').count() === 0, 'vault: no vault controls that could save nothing');
++    check(!/Some music sources failed/.test(await page.evaluate(() => document.body.innerText)), 'vault: no vague failure line');
++    await fits(page, 'vault: Catalog');
++    await page.locator('[data-crom-section="distribution"]').click();
++    check(await until(page, () => /The vault is not set up yet/.test(document.body.innerText), null, 8000), 'vault: Distribution says the same');
++    await page.locator('[data-crom-section="review"]').click();
++    check(await until(page, () => !/vault is not set up/.test((document.querySelector('.cro') || document.body).innerText), null, 8000), 'vault: release review does not carry the vault note');
++  });
++
++  /* ---------- artist: the release on its artist page, for a guest ---------- */
++  await scenario('artist', async () => {
++    const ctx = await context(browser);
++    const page = await ctx.newPage();
++    await seed(page, null, { consent: false });
++    await page.goto(HOUSE + '/music-creator.html?handle=' + PEOPLE.creator.handle, { waitUntil: 'domcontentloaded' });
++    const shown = await until(page, (title) => [...document.querySelectorAll('.ap-track b')].some((b) => b.textContent === title), EDITED, 15000);
++    check(shown, 'artist: the published release is on its artist page');
++    await fits(page, 'artist: the artist page');
++    await shot(page, 'm6-artist-page-390');
++    if (shown) {
++      await page.locator('.ap-track', { hasText: EDITED }).locator('[data-music-play]').click();
++      const t = rel.tracks.get(releaseId);
++      const src = rel.publicUrl('creator-previews', t.preview_path);
++      check(await until(page, (src) => !!(window.MCC_MUSIC && window.MCC_MUSIC.audio && window.MCC_MUSIC.audio.currentSrc === src), src, 10000), 'artist: it plays for a guest, from its public listener audio');
++    }
++  });
++
++  /* ---------- the creator again: nothing is offered on a live release ---------- */
++  await scenario('live', async () => {
++    const ctx = await context(browser);
++    const page = await ctx.newPage();
++    await seed(page, 'creator', { consent: true });
++    await openStudio(page);
++    await until(page, (title) => [...document.querySelectorAll('[data-release-row] b')].some((b) => b.textContent === title), EDITED, 8000);
++    const st = await rowState(page, EDITED);
++    check(!!st && /published/.test(st.pill) && st.actions.length === 0, `live: the published release shows as published, with nothing offered (${st && st.pill}; ${st && st.actions.join('|')})`);
++  });
++
++  /* ---------- consent: "Not now" means nothing is sent; withdraw, submit again, delete ---------- */
++  await scenario('consent', async () => {
++    await sleep(1500);
++    const sent = rel.collects.length, evs = rel.events.length;
++    const ctx = await context(browser);
++    const page = await ctx.newPage();
++    await seed(page, 'creator', { consent: false });
++    check(await openStudio(page), 'consent: Creator Studio opens for the creator who said "Not now"');
++    const off = await page.evaluate(() => ({ script: document.querySelectorAll('script[src*="js/analytics.js"]').length, ret: typeof window.MCC_TRACK === 'function' ? window.MCC_TRACK('creator_probe', {}) : 'missing' }));
++    check(off.script === 1 && off.ret === false, `consent: analytics.js is on the page and MCC_TRACK records nothing (${off.script}, ${off.ret})`);
++    check(await submitRelease(page, { title: 'Second Fixture', file: 'second-master.wav', bytes: MASTER_2 }), 'consent: a second release is submitted');
++    const second = rel.byTitle('Second Fixture');
++    await until(page, () => [...document.querySelectorAll('[data-release-row] b')].some((b) => b.textContent === 'Second Fixture'), null, 8000);
++    const canWithdraw = await row(page, 'Second Fixture').locator('[data-release-action="withdraw"]').count() === 1;
++    check(canWithdraw, 'withdraw: a pending release can be withdrawn from Your releases');
++    if (canWithdraw) {
++    await row(page, 'Second Fixture').locator('[data-release-action="withdraw"]').click();
++    check(await until(page, () => /Withdrawn\./.test(document.getElementById('releaseStatus').textContent), null, 10000), 'withdraw: the studio says it is withdrawn');
++    let st = await rowState(page, 'Second Fixture');
++    check(rel.tracks.get(second.id).status === 'draft' && !!st && st.actions.join('|') === 'Submit again|Delete', `withdraw: back in drafts, out of review, with Submit again and Delete (${st && st.actions.join('|')})`);
++    await row(page, 'Second Fixture').locator('[data-release-action="resubmit"]').click();
++    check(await until(page, () => /Submitted again\./.test(document.getElementById('releaseStatus').textContent), null, 10000) && rel.tracks.get(second.id).status === 'pending_review', 'resubmit: a withdrawn release goes back to the review queue');
++    await row(page, 'Second Fixture').locator('[data-release-action="withdraw"]').click();
++    await until(page, () => /Withdrawn\./.test(document.getElementById('releaseStatus').textContent), null, 10000);
++    const master = 'creator-masters/' + second.master_path;
++    await row(page, 'Second Fixture').locator('[data-release-action="delete"]').click();
++    check(await until(page, () => /^Deleted /.test(document.getElementById('releaseStatus').textContent), null, 10000), 'delete: the studio says it is deleted');
++    check(!rel.tracks.has(second.id) && !rel.objects.has(master), 'delete: the record and its files are gone');
++    check(await page.locator('[data-release-row]', { hasText: 'Second Fixture' }).count() === 0, 'delete: it is no longer in Your releases');
++
++    /* the reviewer verified this one: withdrawn, never deleted */
++    check(await submitRelease(page, { title: 'Third Fixture', file: 'third-master.wav', bytes: MASTER_3 }), 'verified: a third release is submitted');
++    const third = rel.byTitle('Third Fixture');
++    rel.pinned.set(third.id, { version_id: 'fixture-version', sha256: sha256(MASTER_3), size_bytes: MASTER_3.length });
++    await until(page, () => [...document.querySelectorAll('[data-release-row] b')].some((b) => b.textContent === 'Third Fixture'), null, 8000);
++    await row(page, 'Third Fixture').locator('[data-release-action="withdraw"]').click();
++    await until(page, () => /Withdrawn\./.test(document.getElementById('releaseStatus').textContent), null, 10000);
++    await row(page, 'Third Fixture').locator('[data-release-action="delete"]').click();
++    check(await until(page, () => /stays withdrawn: the reviewer has already verified its audio/.test(document.getElementById('releaseStatus').textContent), null, 10000), 'verified: delete is refused by the database and the studio says why');
++    check(rel.tracks.has(third.id) && rel.objects.has('creator-masters/' + third.master_path), 'verified: its record and its master stay');
++    await fits(page, 'consent: Creator Studio after withdraw and delete');
++    }
++
++    await sleep(4000); // past the collector's linger (2.5 s)
++    const outbox = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.indexOf('mcc_event_outbox_v1:') === 0).length);
++    await ctx.close();
++    await sleep(500);
++    const leaked = rel.events.slice(evs).map((e) => e.name);
++    check(rel.collects.length === sent && leaked.length === 0, `consent: nothing reached the collector without consent (${leaked.join(',') || 'none'})`);
++    check(outbox === 0, 'consent: nothing waits in the outbox either');
++  });
++
++  /* ---------- door: Creator Studio in the Profile menu, where creators look ---------- */
++  await scenario('door', async () => {
++    const door = async (who, origin, path) => {
++      const ctx = await context(browser);
++      const page = await ctx.newPage();
++      await seed(page, who, { consent: true, origin });
++      await page.goto(origin + path, { waitUntil: 'domcontentloaded' });
++      const chip = await until(page, () => { const c = document.getElementById('mccAuthChip'); return !!c && !c.hidden && c.getBoundingClientRect().width > 0; }, null, 15000);
++      if (!chip) { await ctx.close(); return { chip: false, link: false }; }
++      if (who === 'owner') await until(page, () => document.body.hasAttribute('data-appbar-admin'), null, 10000);
++      await page.click('#mccAuthChip');
++      await until(page, () => !!document.querySelector('#mccProfileMenu:popover-open'), null, 5000);
++      const shows = await until(page, () => { const a = document.querySelector('#mccProfileMenu [data-creator-studio]'); return !!a && !a.hidden && a.getBoundingClientRect().width > 0; }, null, 6000);
++      const href = await page.evaluate(() => { const a = document.querySelector('#mccProfileMenu [data-creator-studio]'); return a ? a.href : ''; });
++      if (shows && who === 'creator' && path === '/listen.html') { await fits(page, 'door: Listen with the Profile menu open'); await shot(page, 'm6-profile-menu-creator-studio-390'); }
++      await ctx.close();
++      return { chip: true, link: shows, href };
++    };
++    const c = await door('creator', HOUSE, '/listen.html');
++    check(c.chip && c.link && c.href === HOUSE + '/creator.html', `door: a creator finds Creator Studio in the Profile menu on Listen (${c.href || 'none'})`);
++    const o = await door('owner', HOUSE, '/listen.html');
++    check(o.chip && o.link, 'door: the house owner finds it too');
++    const m = await door('member', HOUSE, '/listen.html');
++    check(m.chip && !m.link, 'door: a member who is not a creator does not');
++    const h = await door('creator', HOUSE, '/index.html');
++    check(h.chip && !h.link, 'door: not on a page that is not a music page (the home page)');
++    const w = await door('creator', WORLD, '/listen.html');
++    check(!w.link, `door: never on a World host, even on a copy of a music page there (profile chip there: ${w.chip ? 'yes' : 'no'})`);
++  });
++} catch (e) {
++  check(false, 'the run finished without an exception: ' + (e && e.stack || e));
++} finally {
++  await browser.close();
++}
++
++const mine = errors.filter((e) => /music-ops|music-creator-studio|music-creator-page|site-navigation|creator-onboarding/.test(e.stack));
++check(mine.length === 0, `no page error from this slice's files (${mine.map((e) => e.message).join(' | ') || 'none'})`);
++await writeFile(join(OUT, 'result.json'), JSON.stringify({ ok: failures.length === 0, failures, checks, errors, calls: rel.calls.map((c) => ({ action: c.action, who: c.who, status: c.status })), writes: rel.writes.map((w) => ({ method: w.method, who: w.who, query: w.query, status: w.status, rows: w.rows })), dialogs: rel.dialogs, collects: rel.collects, events: rel.events.map((e) => ({ name: e.name, page: e.page })), blocked: plane.blocked }, null, 2));
++console.log(`\n${checks.length - failures.length}/${checks.length} checks passed`);
++if (failures.length) { console.log('FAILED:\n  ' + failures.join('\n  ')); process.exit(1); }
+diff --git a/scripts/e2e/support/music-release-plane.mjs b/scripts/e2e/support/music-release-plane.mjs
+new file mode 100644
+index 00000000..4df4e6ef
+--- /dev/null
++++ b/scripts/e2e/support/music-release-plane.mjs
+@@ -0,0 +1,346 @@
++/* THE RELEASE PLANE: what a release meets between a creator's Submit and its artist page, for
++   scripts/e2e/music-creator-release.e2e.mjs (music slice M6, 2026-11-19).
++
++   It sits on the accounts plane (scripts/e2e/support/music-accounts-plane.mjs): the same people, tokens, auth server
++   and pages. This file answers only what a release needs and hands everything else back to it (route.fallback):
++
++     PostgREST     creator_tracks, read, inserted, changed and deleted under the rules the applied SQL sets
++                   (supabase/migrations/20260920041011_music_creator_platform_v1.sql row policies and
++                   20261030001000_music_release_payment_integrity_v1.sql public.music_track_guard, proven against
++                   PostgreSQL in supabase/tests/music_creator_releases.behaviour.sql): a creator sees and changes only
++                   their own rows, sets status only to draft or pending_review, deletes only draft, rejected and
++                   archived rows, and cannot delete a release whose audio the reviewer verified (the pinned version's
++                   foreign key); a change to a reviewed release sends it back to review. The vault_* tables are not
++                   there (404 PGRST205), as in production on 2026-11-19.
++     Storage       signed uploads, public and signed reads (with ranges), removal.
++     music-access  creator-upload-url, operator-dashboard, operator-review-prepare (the master's real SHA-256),
++                   operator-review (the Edge function's own refusals, then public.music_operator_review's), stream.
++     the collector POST /v1/collect and the Supabase fallback, every event kept with the page that sent it.
++     Control Room  /v1/workspaces/me for the owner, and an empty answer for the rest of its desk.
++
++   Every row, file and person is invented. Nothing reaches a live host. */
++import { createHash, randomUUID } from 'node:crypto';
++import { readFile } from 'node:fs/promises';
++import { extname, join, normalize, sep } from 'node:path';
++import { SB, API, PEOPLE } from './music-accounts-plane.mjs';
++
++export const WORLD = 'https://mccluster.org';
++const REVIEW_STATES = ['pending_review', 'approved', 'published', 'rejected'];
++const PUBLIC_BUCKETS = ['creator-previews', 'creator-artwork'];
++/* the API paths the accounts plane answers itself */
++const BASE_API = [/^\/v1\/status$/, /^\/v1\/music\//, /^\/v1\/mnet\/bootstrap$/, /^\/v1\/analytics\/my-/, /^\/v1\/creator-billing\//];
++const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.webmanifest': 'application/manifest+json' };
++
++export function makeReleasePlane(base) {
++  const tracks = new Map();     // id -> creator_tracks row
++  const objects = new Map();    // "bucket/path" -> Buffer
++  const grants = new Map();     // upload token -> { bucket, path, uid }
++  const expected = new Map();   // file name -> the bytes the test hands the page
++  const pinned = new Map();     // track id -> { version_id, sha256, size_bytes }
++  const calls = [];             // every music-access call: { action, who, body, status }
++  const events = [];            // every analytics event received: { name, page, origin, props }
++  const collects = [];          // every collector request: { origin, page, count }
++  const writes = [];            // every creator_tracks write: { method, who, query, body, status, rows }
++  const dialogs = [];
++  let tick = Date.parse('2026-11-19T12:00:00.000Z'), n = 0;
++  /* updated_at as PostgreSQL sends it, a little later every write (microseconds and the +00:00 a URL must encode) */
++  const stamp = () => { tick += 1000 + (++n); return new Date(tick).toISOString().replace('Z', String(n % 1000).padStart(3, '0') + '+00:00'); };
++
++  const json = (route, status, body, headers) => route.fulfill({ status, contentType: 'application/json', headers: Object.assign({ 'access-control-allow-origin': '*' }, headers || {}), body: body === undefined ? '' : JSON.stringify(body) });
++  const bearer = (req) => { const m = /^bearer\s+(.+)$/i.exec(req.headers().authorization || ''); return m ? m[1] : ''; };
++  const whoOf = (req) => { const c = base.classify(bearer(req)); return c.startsWith('fresh:') ? c.slice(6) : null; };
++  const body = (req) => { try { return JSON.parse(req.postData() || '{}'); } catch (_) { return {}; } };
++  const sha = (buf) => createHash('sha256').update(buf).digest('hex');
++  const publicUrl = (bucket, path) => SB + '/storage/v1/object/public/' + bucket + '/' + path.split('/').map(encodeURIComponent).join('/');
++
++  /* ---------- PostgREST filters, as the pages write them ---------- */
++  function splitTop(s) {
++    const out = []; let depth = 0, quote = false, cur = '';
++    for (const ch of s) {
++      if (ch === '"') quote = !quote;
++      if (!quote && ch === '(') depth++;
++      if (!quote && ch === ')') depth--;
++      if (!quote && depth === 0 && ch === ',') { out.push(cur); cur = ''; continue; }
++      cur += ch;
++    }
++    if (cur) out.push(cur);
++    return out;
++  }
++  const unquote = (v) => v.replace(/^"(.*)"$/, '$1');
++  function test(row, col, op, value) {
++    const have = row[col] == null ? null : String(row[col]);
++    if (op === 'eq') return have === value;
++    if (op === 'neq') return have !== value;
++    if (op === 'is') return value === 'null' ? have === null : have === value;
++    if (op === 'in') return splitTop(value.replace(/^\((.*)\)$/, '$1')).map(unquote).includes(have);
++    throw new Error('release plane: no filter ' + op);
++  }
++  function matches(row, params) {
++    for (const [k, v] of params) {
++      if (['select', 'order', 'limit', 'offset', 'on_conflict', 'columns'].includes(k)) continue;
++      if (k === 'or') {
++        const any = splitTop(v.replace(/^\((.*)\)$/, '$1')).some((c) => { const m = /^([a-z_]+)\.([a-z]+)\.(.*)$/.exec(c); return m && test(row, m[1], m[2], m[3]); });
++        if (!any) return false;
++        continue;
++      }
++      const m = /^([a-z]+)\.(.*)$/.exec(v);
++      if (!m || !test(row, k, m[1], m[2])) return false;
++    }
++    return true;
++  }
++  function order(rows, params) {
++    const o = params.get('order');
++    if (o) {
++      const [col, dir] = o.split(',')[0].split('.');
++      rows.sort((a, b) => String(a[col] || '').localeCompare(String(b[col] || '')) * (dir === 'desc' ? -1 : 1));
++    }
++    const limit = Number(params.get('limit') || 0);
++    return limit ? rows.slice(0, limit) : rows;
++  }
++  /* row security: the public sees published releases; a member also their own; the service role everything */
++  const canSee = (row, who) => row.status === 'published' || (who && PEOPLE[who].muid === row.m_uid);
++  const own = (row, who) => !!who && PEOPLE[who].muid === row.m_uid;
++  const CONTENT = ['title', 'artist', 'description', 'genre', 'audio_url', 'poster_url', 'preview_path', 'master_path', 'access_mode', 'music_video_url', 'lyrics_url', 'experience'];
++
++  /* public.music_track_guard, for a creator's own write */
++  function guard(next, old, who) {
++    const p = PEOPLE[who];
++    next.uid = p.uid; next.m_uid = p.muid;
++    if (!['draft', 'pending_review'].includes(next.status)) next.status = old ? old.status : 'draft';
++    if (!['incomplete', 'attested'].includes(next.rights_status)) next.rights_status = old ? old.rights_status : 'incomplete';
++    for (const k of ['moderation_note', 'published_at']) next[k] = old ? old[k] : (k === 'moderation_note' ? '' : null);
++    for (const k of ['master_path', 'preview_path']) {
++      const bucket = k === 'master_path' ? 'creator-masters' : 'creator-previews';
++      if (next[k] && (!old || next[k] !== old[k]) && !(String(next[k]).startsWith(p.uid + '/') && objects.has(bucket + '/' + next[k]))) {
++        const e = new Error('creator_asset_not_owned'); e.code = 'P0001'; throw e;
++      }
++    }
++    if (old && ['approved', 'published'].includes(old.status) && CONTENT.some((k) => JSON.stringify(next[k]) !== JSON.stringify(old[k]))) {
++      next.status = 'pending_review';
++      if (old.rights_status === 'cleared') next.rights_status = 'review';
++      next.published_at = null;
++    }
++    next.updated_at = stamp();
++    return next;
++  }
++
++  async function onTracks(route, req, url) {
++    const method = req.method(), who = whoOf(req), params = url.searchParams;
++    const prefer = req.headers().prefer || '';
++    const rep = /return=representation/.test(prefer);
++    const log = { method, who, query: url.search, body: method === 'GET' ? null : body(req) };
++    const answer = (status, rows) => { log.status = status; log.rows = rows ? rows.length : 0; if (method !== 'GET') writes.push(log); return rep || method === 'GET' ? json(route, status, rows || []) : route.fulfill({ status: status === 200 ? 204 : status, headers: { 'access-control-allow-origin': '*' }, body: '' }); };
++    if (method === 'GET' || method === 'HEAD') {
++      return answer(200, order([...tracks.values()].filter((r) => canSee(r, who) && matches(r, params)).map((r) => ({ ...r })), params));
++    }
++    if (!who) return json(route, 401, { code: '42501', message: 'permission denied for table creator_tracks' });
++    try {
++      if (method === 'POST') {
++        const input = log.body;
++        const row = guard({ id: randomUUID(), created_at: stamp(), status: 'draft', rights_status: 'incomplete', ...input }, null, who);
++        tracks.set(row.id, row);
++        return answer(201, [{ ...row }]);
++      }
++      const hit = [...tracks.values()].filter((r) => own(r, who) && matches(r, params));
++      if (method === 'PATCH') {
++        const out = hit.map((old) => { const next = guard({ ...old, ...log.body }, old, who); tracks.set(old.id, next); return { ...next }; });
++        return answer(200, out);
++      }
++      if (method === 'DELETE') {
++        const gone = hit.filter((r) => ['draft', 'rejected', 'archived'].includes(r.status));
++        const held = gone.find((r) => pinned.has(r.id));
++        if (held) {
++          log.status = 409; writes.push(log);
++          return json(route, 409, { code: '23503', details: 'Key is still referenced from table "music_asset_versions".', hint: null, message: 'update or delete on table "creator_tracks" violates foreign key constraint "music_asset_versions_track_id_fkey" on table "music_asset_versions"' });
++        }
++        gone.forEach((r) => tracks.delete(r.id));
++        return answer(200, gone.map((r) => ({ ...r })));
++      }
++    } catch (e) {
++      log.status = 400; writes.push(log);
++      return json(route, 400, { code: e.code || 'P0001', details: null, hint: null, message: e.message });
++    }
++    return json(route, 405, { message: 'release plane: no such method' });
++  }
++
++  /* ---------- music-access ---------- */
++  function reviewRow(t) {
++    const pick = ['id', 'm_uid', 'title', 'artist', 'status', 'rights_status', 'access_mode', 'genre', 'music_video_url', 'lyrics_url', 'experience', 'created_at', 'updated_at', 'published_at', 'moderation_note'];
++    return Object.fromEntries(pick.map((k) => [k, t[k] == null ? null : t[k]]));
++  }
++  async function onMusicAccess(route, req) {
++    const who = whoOf(req), b = body(req), action = b.action;
++    const say = (status, out) => { calls.push({ action, who, body: b, status, answer: out }); return json(route, status, out); };
++    if (!['creator-upload-url', 'operator-dashboard', 'operator-review-prepare', 'operator-review', 'stream'].includes(action)) return route.fallback();
++    if (!who) return say(401, { code: 401, message: 'Invalid JWT' });
++    const p = PEOPLE[who];
++    if (action === 'creator-upload-url') {
++      if (!p.creator) return say(403, { error: 'active creator profile required' });
++      if (!['creator-previews', 'creator-masters', 'creator-artwork'].includes(b.bucket)) return say(400, { error: 'unsupported bucket' });
++      const file = String(b.file_name || '').replace(/[^a-zA-Z0-9._-]+/g, '-');
++      const path = p.uid + '/' + randomUUID() + '-' + file;
++      const token = 'fixture-upload-' + (++n);
++      grants.set(token, { bucket: b.bucket, path, uid: p.uid, file });
++      return say(200, { ok: true, bucket: b.bucket, path, token, signed_url: null });
++    }
++    if (action === 'stream') {
++      const t = tracks.get(String(b.track_id || ''));
++      if (!t || (!own(t, who) && t.status !== 'published')) return say(404, { error: 'track unavailable' });
++      return say(200, { ok: true, url: SB + '/storage/v1/object/sign/creator-masters/' + t.master_path + '?token=fixture-stream', expires_in: 3600 });
++    }
++    if (!p.owner) return say(403, { error: 'operator permission required' });
++    if (action === 'operator-dashboard') {
++      const rows = [...tracks.values()].filter((t) => REVIEW_STATES.includes(t.status)).sort((a, c) => String(c.created_at).localeCompare(String(a.created_at))).map(reviewRow);
++      const creators = Object.values(PEOPLE).filter((x) => x.creator).map((x) => ({ m_uid: x.muid, handle: x.handle, artist_name: x.name, verification_state: 'unverified', payout_state: 'not_started', status: 'active', settings: {} }));
++      return say(200, { ok: true, tracks: rows, creators, offers: [] });
++    }
++    const t = tracks.get(String(b.track_id || ''));
++    if (action === 'operator-review-prepare') {
++      if (!t || !REVIEW_STATES.includes(t.status)) return say(409, { error: 'this release is not waiting for review' });
++      const bytes = objects.get('creator-masters/' + t.master_path);
++      if (!bytes) return say(409, { error: "this release's master file is missing" });
++      const was = pinned.get(t.id);
++      const v = was || { version_id: randomUUID(), sha256: sha(bytes), size_bytes: bytes.length };
++      pinned.set(t.id, v);
++      return say(200, { ok: true, track_id: t.id, version_id: v.version_id, sha256: v.sha256, sha256_short: v.sha256.slice(0, 12) + '…' + v.sha256.slice(-4), size_bytes: v.size_bytes, hashed_now: !was, expected_updated_at: t.updated_at, listen_url: SB + '/storage/v1/object/sign/creator-masters/' + t.master_path + '?token=fixture-listen', expires_in: 900 });
++    }
++    if (action === 'operator-review') {
++      const decision = String(b.decision || ''), expectedAt = String(b.expected_updated_at || ''), expectedSha = String(b.expected_master_sha256 || '').toLowerCase();
++      /* the Edge function's own refusals, word for word (supabase/functions/music-access/index.ts) */
++      if (!b.track_id || !['publish', 'approve', 'reject', 'review'].includes(decision)) return say(400, { error: 'invalid review request' });
++      if ((decision === 'publish' || decision === 'approve') && !expectedAt) return say(400, { error: 'expected_updated_at required: reload the queue and review again' });
++      if ((decision === 'publish' || decision === 'approve') && !/^[0-9a-f]{64}$/.test(expectedSha)) return say(400, { error: 'expected_master_sha256 required: verify the audio and review again' });
++      /* public.music_operator_review */
++      if (!t || (expectedAt && t.updated_at !== expectedAt)) return say(409, { error: 'the release changed since you loaded it: reload and review it again' });
++      if (decision === 'publish' || decision === 'approve') {
++        const v = pinned.get(t.id);
++        if (!v) return say(409, { error: 'verify the audio before approving it' });
++        if (v.sha256 !== expectedSha) return say(409, { error: 'the audio is not the version you listened to: verify it again' });
++      }
++      const next = { ...t, moderation_note: String(b.note || ''), updated_at: stamp() };
++      next.status = { publish: 'published', approve: 'approved', reject: 'rejected', review: 'pending_review' }[decision];
++      next.rights_status = { publish: 'cleared', approve: 'cleared', reject: 'disputed', review: 'review' }[decision];
++      if (decision === 'publish') next.published_at = t.published_at || stamp();
++      tracks.set(t.id, next);
++      return say(200, { ok: true, track: { ...reviewRow(next), master_sha256: pinned.get(t.id) ? pinned.get(t.id).sha256 : null } });
++    }
++    return route.fallback();
++  }
++
++  /* ---------- Storage ---------- */
++  function filePart(buf, contentType) {
++    const m = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentType || '');
++    if (!buf || !m) return buf && buf.length ? buf : null;
++    const boundary = Buffer.from('--' + (m[1] || m[2]).trim());
++    let at = buf.indexOf(boundary);
++    while (at !== -1) {
++      const next = buf.indexOf(boundary, at + boundary.length);
++      if (next === -1) break;
++      const part = buf.subarray(at + boundary.length + 2, next - 2);
++      const split = part.indexOf('\r\n\r\n');
++      if (split !== -1 && /filename=|name=""/i.test(part.subarray(0, split).toString('latin1')) && !/name="cacheControl"/i.test(part.subarray(0, split).toString('latin1'))) return part.subarray(split + 4);
++      at = next;
++    }
++    return null;
++  }
++  function serveBytes(route, req, bytes, type) {
++    const head = { 'accept-ranges': 'bytes', 'access-control-allow-origin': '*' };
++    const m = /bytes=(\d+)-(\d*)/.exec(req.headers().range || '');
++    if (!m) return route.fulfill({ status: 200, contentType: type, headers: head, body: bytes });
++    const a = +m[1], z = m[2] ? Math.min(+m[2], bytes.length - 1) : bytes.length - 1;
++    return route.fulfill({ status: 206, contentType: type, headers: { ...head, 'content-range': `bytes ${a}-${z}/${bytes.length}` }, body: bytes.subarray(a, z + 1) });
++  }
++  async function onStorage(route, req, url) {
++    const method = req.method(), p = decodeURIComponent(url.pathname);
++    let m = /^\/storage\/v1\/object\/upload\/sign\/([^/]+)\/(.+)$/.exec(p);
++    if (m && (method === 'PUT' || method === 'POST')) {
++      const g = grants.get(url.searchParams.get('token') || '');
++      if (!g || g.bucket !== m[1] || g.path !== m[2]) return json(route, 400, { statusCode: '400', error: 'InvalidSignature', message: 'invalid signature' });
++      let bytes = null;
++      try { bytes = filePart(req.postDataBuffer(), req.headers()['content-type']); } catch (_) {}
++      /* a browser may not hand a test the bytes of a file part: then they are the ones the test gave the page */
++      if (!bytes || !bytes.length) bytes = expected.get(g.file) || null;
++      if (!bytes) return json(route, 400, { statusCode: '400', error: 'release plane', message: 'no bytes for ' + g.file });
++      objects.set(g.bucket + '/' + g.path, Buffer.from(bytes));
++      grants.delete(url.searchParams.get('token'));
++      return json(route, 200, { Key: g.bucket + '/' + g.path, Id: randomUUID() });
++    }
++    m = /^\/storage\/v1\/object\/(public|sign)\/([^/]+)\/(.+)$/.exec(p);
++    if (m && (method === 'GET' || method === 'HEAD')) {
++      if (m[1] === 'public' && !PUBLIC_BUCKETS.includes(m[2])) return json(route, 400, { error: 'not public' });
++      const bytes = objects.get(m[2] + '/' + m[3]);
++      if (!bytes) return json(route, 404, { statusCode: '404', error: 'not_found', message: 'Object not found' });
++      return serveBytes(route, req, bytes, /\.wav$/i.test(m[3]) ? 'audio/wav' : 'application/octet-stream');
++    }
++    m = /^\/storage\/v1\/object\/([^/]+)$/.exec(p);
++    if (m && method === 'DELETE') {
++      const who = whoOf(req), prefixes = body(req).prefixes || [];
++      const removed = prefixes.filter((x) => who && String(x).startsWith(PEOPLE[who].uid + '/') && objects.delete(m[1] + '/' + x));
++      return json(route, 200, removed.map((name) => ({ name, bucket_id: m[1] })));
++    }
++    return json(route, 404, { error: 'release plane: no such storage path' });
++  }
++
++  /* ---------- the collector ---------- */
++  function onCollect(route, req, url) {
++    const b = body(req), list = Array.isArray(b.events) ? b.events : [];
++    let page = '', origin = '';
++    try { const f = new URL(req.frame().url()); page = f.pathname; origin = f.origin; } catch (_) {}
++    collects.push({ origin, page, count: list.length, via: url.origin === API ? 'api' : 'fallback' });
++    for (const ev of list) events.push({ name: ev && ev.name, path: ev && ev.path, props: ev && ev.props, page, origin });
++    return json(route, 200, { ok: true, accepted: list.length });
++  }
++
++  async function serveFile(route, root, url) {
++    let rel = decodeURIComponent(url.pathname);
++    if (rel === '/' || rel === '') rel = '/index.html';
++    if (rel === '/__blank') return route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>blank</title>' });
++    const file = normalize(join(root, rel));
++    if (!file.startsWith(normalize(root + sep))) return route.fulfill({ status: 403, body: '' });
++    try { return route.fulfill({ status: 200, contentType: TYPES[extname(file).toLowerCase()] || 'application/octet-stream', body: await readFile(file) }); }
++    catch (_) { return route.fulfill({ status: 404, contentType: 'text/html', body: 'not found' }); }
++  }
++
++  async function install(context, root) {
++    /* registered after the accounts plane, so it is asked first; what it does not answer goes back to that plane */
++    await context.route('**/*', async (route) => {
++      const req = route.request();
++      let url;
++      try { url = new URL(req.url()); } catch (_) { return route.fallback(); }
++      const p = url.pathname, method = req.method();
++      try {
++        if (method === 'OPTIONS' && (url.origin === SB || url.origin === API)) return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
++        /* a copy of these pages on a World host, to prove what the shared bar does there */
++        if (url.origin === WORLD) return await serveFile(route, root, url);
++        if (url.origin === SB) {
++          if (p === '/rest/v1/creator_tracks') return await onTracks(route, req, url);
++          if (/^\/rest\/v1\/vault_[a-z_]+$/.test(p)) return json(route, 404, { code: 'PGRST205', details: null, hint: null, message: "Could not find the table 'public." + p.slice(9) + "' in the schema cache" });
++          if (p === '/rest/v1/music_rights_attestations' && method === 'POST') return whoOf(req) ? route.fulfill({ status: 201, headers: { 'access-control-allow-origin': '*' }, body: '' }) : json(route, 401, { message: 'JWT expired' });
++          if (p === '/functions/v1/music-access') return await onMusicAccess(route, req);
++          if (p === '/functions/v1/collect') return onCollect(route, req, url);
++          if (p.startsWith('/storage/')) return await onStorage(route, req, url);
++          return route.fallback();
++        }
++        if (url.origin === API) {
++          if (p === '/v1/collect') return onCollect(route, req, url);
++          if (BASE_API.some((r) => r.test(p))) return route.fallback();
++          const who = whoOf(req);
++          if (p === '/v1/workspaces/me') return who && PEOPLE[who].owner ? json(route, 200, { ok: true, profile: { id: PEOPLE[who].uid }, default_org_id: 'o1', workspaces: [{ org_id: 'o1', slug: 'mccluster', kind: 'studio', role: 'owner', enabled: true, name: 'McCluster' }] }) : json(route, 401, { error: 'sign in' });
++          /* the rest of the owner's desk, quiet: nothing in it is about a release */
++          return json(route, 200, { ok: true, threads: [], apps: [], events: [], jobs: [], tools: [], decisions: [], leads: [], items: [], rows: [], total: 0 });
++        }
++        return route.fallback();
++      } catch (e) {
++        try { return await json(route, 500, { error: 'release plane: ' + e.message }); } catch (_) {}
++      }
++    });
++    context.on('page', (page) => page.on('dialog', (d) => { dialogs.push({ type: d.type(), message: d.message(), page: page.url() }); d.type() === 'confirm' ? d.accept() : d.dismiss(); }));
++  }
++
++  return {
++    install, tracks, objects, pinned, calls, events, collects, writes, dialogs, sha, publicUrl,
++    /* the bytes of a file the test is about to hand the page, by its name */
++    expectFile(name, bytes) { expected.set(String(name).replace(/[^a-zA-Z0-9._-]+/g, '-'), Buffer.from(bytes)); },
++    byTitle(title) { return [...tracks.values()].find((t) => t.title === title) || null; }
++  };
++}
+diff --git a/scripts/test-music-release-integrity-db.sh b/scripts/test-music-release-integrity-db.sh
+index 3d93f636..dcd502e9 100755
+--- a/scripts/test-music-release-integrity-db.sh
++++ b/scripts/test-music-release-integrity-db.sh
+@@ -4,7 +4,9 @@
+ # behaviour tests against a throwaway local Postgres (16+), as the real API
+ # roles: the API role stub, the music creator stubs, the music creator
+ # platform and commerce migrations, the migration file (twice: it must be safe
+-# to re-run), then supabase/tests/music_release_payment_integrity.behaviour.sql.
++# to re-run), then supabase/tests/music_release_payment_integrity.behaviour.sql
++# and supabase/tests/music_creator_releases.behaviour.sql (what a creator may do
++# with a release they submitted; no SQL of its own).
+ # Usage:
+ #   PGHOST=/tmp/pg PGPORT=5499 PGUSER=postgres scripts/test-music-release-integrity-db.sh
+ set -euo pipefail
+@@ -23,6 +25,9 @@ echo "seeded the pre-migration catalogue"
+ apply supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql
+ apply supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql
+ psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/music_release_payment_integrity.behaviour.sql >/dev/null
++# what a creator may do with a release they submitted, as these files already decide it (music slice M6, ST-10)
++psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/tests/music_creator_releases.behaviour.sql >/dev/null
++echo "a creator's own releases: edit, withdraw, submit again, delete, as the SQL allows"
+ # the rollback must apply cleanly on top
+ apply supabase/pending/music_release_payment_integrity_v1.rollback.sql
+ echo "music release and payment integrity: ok"
+diff --git a/scripts/test/music-payment-integrity.test.mjs b/scripts/test/music-payment-integrity.test.mjs
+index b9f4105a..41930ef5 100644
+--- a/scripts/test/music-payment-integrity.test.mjs
++++ b/scripts/test/music-payment-integrity.test.mjs
+@@ -280,9 +280,10 @@ test('a review decision is about the version the operator saw, and a reviewed re
+   assert.match(access, /the release changed since you loaded it/);
+   const sqlReview = await read(MIGRATION);
+   assert.match(sqlReview, /where c\.id = p_track and \(p_expected_updated_at is null or c\.updated_at = p_expected_updated_at\)/);
+-  const admin = await read('js/music-admin.js');
+-  assert.match(admin, /expected_updated_at:b\.getAttribute\("data-version"\)/);
+-  assert.match(admin, /data-version="'\+esc\(t\.updated_at\|\|""\)/);
++  /* the live desk, Control · Create · Music · Review (music slice M6; js/music-admin.js, which nothing loaded, is retired) */
++  const desk = await read('js/control-room/music-ops.js');
++  assert.match(desk, /expected_updated_at:b\.getAttribute\("data-version"\)/);
++  assert.match(desk, /data-version="'\+e\(t\.updated_at\|\|""\)/);
+   const sql = await read(MIGRATION);
+   assert.match(sql, /if tg_op = 'UPDATE' and old\.status in \('approved','published'\)\s+and public\.music_track_content\(new\) is distinct from public\.music_track_content\(old\) then\s+new\.status := 'pending_review';/);
+   assert.match(sql, /new\.reviewed_snapshot := public\.music_track_reviewed_snapshot\(new\);/);
+@@ -450,11 +451,13 @@ test('the desk plays the pinned version and approves the hash it showed', async
+   assert.match(review, /expected_master_sha256 required/);
+   assert.match(review, /admin\.rpc\("music_operator_review"/);
+   assert.doesNotMatch(review, /from\("creator_tracks"\)\.update/, 'no decision bypasses the hash check');
+-  const admin = await read('js/music-admin.js');
+-  assert.match(admin, /call\("operator-review-prepare",\{track_id:id\}\)/);
+-  assert.match(admin, /expected_master_sha256:b\.getAttribute\("data-sha"\)/);
+-  assert.match(admin, /src="'\+esc\(p\.listen_url\)/, 'the player streams the prepared, pinned object');
+-  assert.match(admin, /disabled title="Verify and listen to the audio first"/, 'publish waits for a verified listen');
++  /* the live desk (music slice M6): what the Control Room's button sends is held end to end by
++     scripts/test/music-studio-publishes.test.mjs, which clicks it against the real music-access handler */
++  const desk = await read('js/control-room/music-ops.js');
++  assert.match(desk, /musicCall\("operator-review-prepare",\{track_id:id\}\)/);
++  assert.match(desk, /expected_master_sha256=b\.getAttribute\("data-sha"\)/);
++  assert.match(desk, /src="'\+e\(p\.listen_url\)/, 'the player streams the prepared, pinned object');
++  assert.match(desk, /disabled title="Verify and listen to the audio first"/, 'publish waits for a verified listen');
+   const sql = await read(MIGRATION);
+   assert.match(sql, /raise exception 'release_master_unhashed'/);
+   assert.match(sql, /if v_expected is distinct from v_ver\.content_sha256 then\s+raise exception 'release_master_hash_mismatch';/);
+diff --git a/scripts/test/music-platform.test.mjs b/scripts/test/music-platform.test.mjs
+index 2c5bb65e..166506a8 100644
+--- a/scripts/test/music-platform.test.mjs
++++ b/scripts/test/music-platform.test.mjs
+@@ -145,12 +145,13 @@ test('public creator profiles play in-place and can enter first-party checkout',
+ 
+ test('operator review desk is gated by existing ops authority', async()=>{
+   /* music-admin.html is a compatibility stub into Control → Sell → Music; the
+-     review client and its server gate are what this guards. */
++     live review client there (js/control-room/music-ops.js, music slice M6) and
++     its server gate are what this guards. */
+   const page=await read('music-admin.html');
+-  const js=await read('js/music-admin.js');
++  const js=await read('js/control-room/music-ops.js');
+   const access=await read('supabase/functions/music-access/index.ts');
+   assert.match(page,/control\.html#sell:music:catalog/);
+-  assert.match(js,/operator-status/);
++  assert.match(js,/operator-review-prepare/);
+   assert.match(js,/operator-review/);
+   assert.match(js,/operator-license/);
+   assert.match(access,/houseOps\(who\.user\.id\)/);
+diff --git a/scripts/test/music-studio-publishes.test.mjs b/scripts/test/music-studio-publishes.test.mjs
+new file mode 100644
+index 00000000..9ebcc929
+--- /dev/null
++++ b/scripts/test/music-studio-publishes.test.mjs
+@@ -0,0 +1,460 @@
++/* CREATOR STUDIO PUBLISHES AND IS MEASURED (music slice M6, 2026-11-19).
++   ============================================================
++   Owner, 2026-11-19: "The Creator Studio isn't really wired up and finished."
++   The studio lane (C6) found why: the only live review screen sent a publish
++   with no version and no audio hash, so music-access answered 400 and nothing
++   a creator submitted could ever go live (ST-1); a creator could not touch a
++   release once it was submitted (ST-10); creator.html loaded no analytics, so
++   the studio's own events never recorded (G-5); the Control Room's music vault
++   read tables that exist nowhere and failed without saying so (L-1); and no
++   shared door led a creator to the studio (L-11).
++
++   The review desk runs here as it runs in the Control Room: the real
++   js/control-room/music-ops.js in a Node vm, its rendered buttons clicked, its
++   requests answered by the REAL music-access handler (supabase/functions/
++   music-access/index.ts, the repository's Edge test pattern: the handler is
++   lifted out of the file, its TypeScript stripped, and run in a vm with a stub
++   database client). So a publish either reaches music_operator_review with the
++   version and the hash the reviewer saw, or it does not. The lane probes these
++   come from: probes/studio/p2-edge/control-room-click.mjs (the alert
++   "expected_updated_at required") and probes/studio/p2-edge/run.ts (400; the
++   desk's body must reach music_operator_review).
++
++   The browser half (submit, review, publish, the artist page at 390 px, the
++   studio's events with and without consent, the door) is
++   scripts/e2e/music-creator-release.e2e.mjs. The database half (what a creator
++   may change on a release they submitted) is
++   supabase/tests/music_creator_releases.behaviour.sql.
++   ============================================================ */
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { readFileSync } from 'node:fs';
++import { fileURLToPath } from 'node:url';
++import { dirname, join } from 'node:path';
++import vm from 'node:vm';
++import { createRequire, stripTypeScriptTypes } from 'node:module';
++import * as delivery from '../../supabase/functions/music-access/delivery.ts';
++import * as reviewAudio from '../../supabase/functions/music-access/review-audio.ts';
++
++const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
++const read = (p) => readFileSync(join(ROOT, p), 'utf8');
++const require = createRequire(import.meta.url);
++
++/* Invented fixtures, no real member data. */
++const OWNER = 'u-owner';
++const CREATOR = 'u-creator';
++const TRACK = '11111111-1111-4111-8111-111111111111';
++const SHA = 'a'.repeat(52) + '0123456789ab';
++const SB = 'https://project.invalid';
++
++/* ---------- the database music-access talks to (the rules of the applied SQL, kept small) ---------- */
++function plane() {
++  const calls = [];
++  const tracks = [{
++    id: TRACK, m_uid: 'm-creator', uid: CREATOR, title: 'Pending song', artist: 'Fixture Artist', status: 'pending_review',
++    rights_status: 'attested', access_mode: 'account', genre: '', music_video_url: '', lyrics_url: '', experience: {},
++    master_path: CREATOR + '/m-master.wav', created_at: '2026-11-19T00:00:00.000000+00:00', updated_at: '2026-11-19T00:00:01.000001+00:00',
++    published_at: null, moderation_note: ''
++  }];
++  let tick = 2;
++  const later = () => '2026-11-19T00:00:' + String(tick++).padStart(2, '0') + '.000001+00:00';
++  function result(q) {
++    calls.push({ table: q.table, op: q.op, filters: q.filters });
++    if (q.table === 'm_auth_user_links') return { data: [{ m_uid: q.filters.auth_user_id === OWNER ? 'm-owner' : 'm-creator' }], error: null };
++    if (q.table === 'orgs') return { data: { id: 'org-house' }, error: null };
++    if (q.table === 'creator_tracks') return { data: tracks.filter((t) => !q.inStatus || q.inStatus.includes(t.status)).map((t) => ({ ...t })), error: null };
++    if (q.table === 'music_creator_profiles') return { data: [{ m_uid: 'm-creator', handle: 'fixture-artist', artist_name: 'Fixture Artist', status: 'active', settings: {} }], error: null };
++    if (q.table === 'music_license_offers') return { data: [], error: null };
++    return { data: [], error: null };
++  }
++  function chain(table) {
++    const q = { table, op: 'select', filters: {}, inStatus: null };
++    const api = {
++      select() { return api; }, insert() { q.op = 'insert'; return api; }, update() { q.op = 'update'; return api; },
++      eq(k, v) { q.filters[k] = v; return api; }, in(k, v) { if (k === 'status') q.inStatus = v; return api; },
++      is() { return api; }, order() { return api; }, limit() { return api; },
++      maybeSingle() { return Promise.resolve(result(q)); }, single() { return Promise.resolve(result(q)); },
++      then(ok, bad) { return Promise.resolve(result(q)).then(ok, bad); }
++    };
++    return api;
++  }
++  async function rpc(fn, args) {
++    calls.push({ rpc: fn, args });
++    if (fn === 'control_authorize_service') return { data: [{ allowed: args.p_actor === OWNER }], error: null };
++    const t = tracks.find((x) => x.id === args.p_track);
++    if (fn === 'music_prepare_review') {
++      if (!t) return { data: null, error: { message: 'track_not_found' } };
++      if (!['pending_review', 'rejected', 'approved', 'published'].includes(t.status)) return { data: null, error: { message: 'release_not_in_review' } };
++      return { data: [{ track_id: t.id, track_status: t.status, track_updated_at: t.updated_at, version_id: 'v-1', bucket_id: 'creator-masters',
++        object_name: t.master_path, size_bytes: 4321, etag: 'e1', content_sha256: SHA, invalidated: false, invalid_reason: null, identity_intact: true }], error: null };
++    }
++    if (fn === 'music_operator_review') {
++      /* public.music_operator_review (20261030001000, applied): publish and approve need the version and the hash */
++      if (['publish', 'approve'].includes(args.p_decision)) {
++        if (!args.p_expected_updated_at) return { data: null, error: { message: 'review_expected_updated_at_required' } };
++        if (!/^[0-9a-f]{64}$/.test(String(args.p_expected_master_sha256 || ''))) return { data: null, error: { message: 'release_master_hash_required' } };
++      }
++      if (!t || (args.p_expected_updated_at && args.p_expected_updated_at !== t.updated_at)) return { data: null, error: null };
++      if (['publish', 'approve'].includes(args.p_decision) && args.p_expected_master_sha256 !== SHA) return { data: null, error: { message: 'release_master_hash_mismatch' } };
++      t.status = { publish: 'published', approve: 'approved', reject: 'rejected', review: 'pending_review' }[args.p_decision];
++      t.moderation_note = args.p_note || '';
++      t.updated_at = later();
++      return { data: { id: t.id, title: t.title, status: t.status, updated_at: t.updated_at, master_sha256: SHA }, error: null };
++    }
++    return { data: null, error: { message: 'stub: rpc ' + fn + ' not answered' } };
++  }
++  const db = {
++    auth: { async getUser(token) {
++      if (token === 'owner-token') return { data: { user: { id: OWNER, email: '' } }, error: null };
++      if (token === 'creator-token') return { data: { user: { id: CREATOR, email: '' } }, error: null };
++      return { data: { user: null }, error: { message: 'bad token' } };
++    } },
++    from: chain,
++    rpc,
++    storage: { from: (bucket) => ({
++      async createSignedUrl(path, expires) { calls.push({ sign: bucket + '/' + path, expires }); return { data: { signedUrl: SB + '/storage/v1/object/sign/' + bucket + '/' + path + '?token=fixture' }, error: null }; },
++      async createSignedUploadUrl(path) { return { data: { path, token: 'tok', signedUrl: SB + '/upload' }, error: null }; }
++    }) }
++  };
++  return { db, calls, tracks, later };
++}
++
++/* ---------- music-access, as deployed from this repository: the handler, lifted out and run ---------- */
++function musicAccess(db) {
++  const src = read('supabase/functions/music-access/index.ts').replace(/^import\s[^\n]*\n/gm, '');
++  const code = stripTypeScriptTypes(src, { mode: 'strip' });
++  let handler = null;
++  const context = {
++    Deno: { env: { get: (k) => ({ SUPABASE_URL: SB, SUPABASE_SERVICE_ROLE_KEY: 'service-fixture' })[k] }, serve: (h) => { handler = h; } },
++    createClient: () => db, ...delivery, ...reviewAudio,
++    Response, Request, Headers, URL, crypto: globalThis.crypto, Error, Promise, JSON, Number, String, Array, Object, RegExp, Date, Math,
++    fetch: () => Promise.reject(new Error('no network in this test')),
++    console: { error() {}, log() {}, warn() {} }
++  };
++  vm.createContext(context);
++  vm.runInContext(code, context, { filename: 'music-access/index.ts' });
++  assert.equal(typeof handler, 'function', 'music-access registers its handler');
++  return handler;
++}
++
++/* ---------- the Control Room's music desk, rendered and clicked ---------- */
++const decode = (s) => String(s).replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
++function parseSelector(sel) {
++  const out = [];
++  const re = /\[([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:="([^"]*)")?\]/g;
++  let m;
++  while ((m = re.exec(sel))) out.push([m[1], m[2] === undefined ? null : m[2]]);
++  return out;
++}
++function dom(html) {
++  const els = [];
++  const tag = /<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/g;
++  let m;
++  while ((m = tag.exec(html))) {
++    const attrs = {};
++    const ar = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*"([^"]*)")?/g;
++    let a;
++    while ((a = ar.exec(m[2]))) attrs[a[1]] = a[2] === undefined ? '' : decode(a[2]);
++    const after = html.slice(tag.lastIndex);
++    const el = {
++      tagName: m[1].toUpperCase(), attrs, textContent: decode(after.slice(0, after.indexOf('<'))), onclick: null,
++      disabled: Object.prototype.hasOwnProperty.call(attrs, 'disabled'),
++      getAttribute(n) { return Object.prototype.hasOwnProperty.call(attrs, n) ? attrs[n] : null; },
++      setAttribute(n, v) { attrs[n] = String(v); },
++      hasAttribute(n) { return Object.prototype.hasOwnProperty.call(attrs, n); }
++    };
++    els.push(el);
++  }
++  const match = (el, sel) => parseSelector(sel).every(([n, v]) => el.hasAttribute(n) && (v === null || el.getAttribute(n) === v));
++  return {
++    all: els,
++    querySelectorAll(sel) { return els.filter((el) => match(el, sel)); },
++    querySelector(sel) { return els.find((el) => match(el, sel)) || null; }
++  };
++}
++async function desk({ vault } = {}) {
++  const p = plane();
++  const handler = musicAccess(p.db);
++  const sent = [];
++  const alerts = [];
++  let inFlight = 0;
++  const window = {
++    CR: {},
++    MCC_SUPA: { url: SB, key: 'publishable-fixture', token: () => Promise.resolve('owner-token') },
++    fetch(url, init) {
++      inFlight++;
++      let body = null;
++      try { body = JSON.parse(init && init.body || 'null'); } catch (_) {}
++      sent.push({ url: String(url), body });
++      return Promise.resolve(handler(new Request(url, init))).finally(() => { inFlight--; });
++    },
++    prompt: () => 'Needs a clearer rights note',
++    confirm: () => true,
++    alert: (m) => alerts.push(String(m)),
++    console: { log() {}, warn() {}, error() {} },
++    setTimeout, clearTimeout, CSS: { escape: (s) => s }
++  };
++  window.window = window;
++  vm.createContext(window);
++  vm.runInContext(read('js/control-room/music-ops.js'), window, { filename: 'music-ops.js' });
++  const ops = window.CR.musicOps;
++  /* the Control Room's own PostgREST helper (js/control-room-v2.js supa): the status travels with the error */
++  const supa = (path) => {
++    if (/^vault_/.test(path) && vault) return Promise.reject(Object.assign(new Error(vault.message), { status: vault.status, detail: vault.detail }));
++    return Promise.resolve([]);
++  };
++  ops.init({ supa, render: () => {} });
++  let view = null;
++  const paint = () => { const html = ops.render(); view = dom(html); view.html = html; ops.bind(view); return view; };
++  const settle = async () => { for (let i = 0; i < 50; i++) { await new Promise((r) => setTimeout(r, 0)); if (!inFlight && i > 5) break; } };
++  await ops.load();
++  await settle();
++  paint();
++  return {
++    ops, sent, alerts, plane: p, paint, settle,
++    get view() { return view; },
++    section(name) { const b = view.querySelector('[data-crom-section="' + name + '"]'); assert.ok(b, 'section tab ' + name); b.onclick(); return paint(); },
++    async click(el) { assert.ok(el, 'a control to click'); assert.equal(el.disabled, false, 'the control is enabled'); el.onclick({ preventDefault() {} }); await settle(); paint(); }
++  };
++}
++const reviewButton = (v, decision) => v.querySelector('[data-crom-review="' + decision + '"][data-id="' + TRACK + '"]');
++const operatorReviews = (calls) => calls.filter((c) => c.rpc === 'music_operator_review');
++
++/* ---------------- ST-1: the live review button publishes through the hash-checked review ---------------- */
++
++test('the live desk never publishes a release nobody listened to: Publish waits for Verify + listen (ST-1, D-12)', async () => {
++  const d = await desk();
++  const publish = reviewButton(d.view, 'publish');
++  assert.ok(publish, 'the queued release has a Publish button');
++  assert.equal(publish.disabled, true, 'Publish is disabled until the reviewer verified and heard the audio');
++  assert.match(publish.getAttribute('title') || '', /verify/i, 'and says why');
++  assert.ok(d.view.querySelector('[data-crom-prepare="' + TRACK + '"]'), 'a Verify + listen button for the queued release');
++});
++
++test('Verify + listen plays the pinned master, and Publish reaches music_operator_review with the version and the hash (ST-1; probes p2-edge)', async () => {
++  const d = await desk();
++  await d.click(d.view.querySelector('[data-crom-prepare="' + TRACK + '"]'));
++  const prepare = d.sent.find((s) => s.body && s.body.action === 'operator-review-prepare');
++  assert.ok(prepare, 'the desk asked music-access to pin and hash the master under review');
++  assert.equal(prepare.body.track_id, TRACK);
++  const audio = d.view.all.find((el) => el.tagName === 'AUDIO');
++  assert.ok(audio, 'the reviewer gets a player');
++  assert.match(audio.getAttribute('src'), /\/storage\/v1\/object\/sign\/creator-masters\/u-creator\/m-master\.wav/, 'for the pinned master, signed by music-access');
++  assert.ok(d.view.html.includes(SHA.slice(0, 12)), 'the desk shows the hash of the bytes it plays');
++  const publish = reviewButton(d.view, 'publish');
++  assert.equal(publish.disabled, false, 'Publish is open once the audio was verified');
++  await d.click(publish);
++  assert.deepEqual(d.alerts, [], 'no refusal: ' + d.alerts.join(' | '));
++  const review = d.sent.find((s) => s.body && s.body.action === 'operator-review');
++  assert.equal(review.body.decision, 'publish');
++  assert.equal(review.body.expected_updated_at, '2026-11-19T00:00:01.000001+00:00', 'the version the reviewer saw');
++  assert.equal(review.body.expected_master_sha256, SHA, 'the hash of the bytes the reviewer heard');
++  const rpc = operatorReviews(d.plane.calls);
++  assert.equal(rpc.length, 1, 'the request reached music_operator_review');
++  assert.equal(rpc[0].args.p_expected_updated_at, '2026-11-19T00:00:01.000001+00:00');
++  assert.equal(rpc[0].args.p_expected_master_sha256, SHA);
++  assert.equal(d.plane.tracks[0].status, 'published', 'the release is published');
++});
++
++test('the owner\'s Publish never comes back as "expected_updated_at required" (probe p2-edge/control-room-click)', async () => {
++  const d = await desk();
++  /* the probe clicked Publish on the live desk and the owner got that alert, every time, reload or not */
++  const verify = d.view.querySelector('[data-crom-prepare="' + TRACK + '"]');
++  if (verify) await d.click(verify);
++  const publish = reviewButton(d.view, 'publish');
++  publish.onclick({ preventDefault() {} });
++  await d.settle();
++  d.paint();
++  assert.deepEqual(d.alerts.filter((a) => /expected_updated_at required|expected_master_sha256 required/.test(a)), [], 'the desk sent what music-access requires');
++  assert.equal(operatorReviews(d.plane.calls).length, 1, 'and the decision reached music_operator_review');
++});
++
++test('Needs review and Reject carry the version the desk showed (ST-1)', async () => {
++  for (const decision of ['review', 'reject']) {
++    const d = await desk();
++    await d.click(reviewButton(d.view, decision));
++    const review = d.sent.find((s) => s.body && s.body.action === 'operator-review');
++    assert.equal(review.body.decision, decision);
++    assert.equal(review.body.expected_updated_at, '2026-11-19T00:00:01.000001+00:00', decision + ' is about the version on screen');
++    assert.equal(review.body.note, 'Needs a clearer rights note');
++    assert.equal(operatorReviews(d.plane.calls)[0].args.p_expected_updated_at, '2026-11-19T00:00:01.000001+00:00');
++    assert.deepEqual(d.alerts, []);
++  }
++});
++
++test('a release that changed after it was verified is verified again before it can be published (ST-1)', async () => {
++  const d = await desk();
++  await d.click(d.view.querySelector('[data-crom-prepare="' + TRACK + '"]'));
++  assert.equal(reviewButton(d.view, 'publish').disabled, false);
++  /* the creator edits the release while it sits in the queue: updated_at moves on */
++  d.plane.tracks[0].title = 'Pending song (edited)';
++  d.plane.tracks[0].updated_at = d.plane.later();
++  await d.ops.load();
++  await d.settle();
++  d.paint();
++  assert.equal(reviewButton(d.view, 'publish').disabled, true, 'the earlier listen was of another version');
++  assert.equal(d.view.all.filter((el) => el.tagName === 'AUDIO').length, 0, 'and its player is gone');
++});
++
++test('music-access still refuses a publish without the version and the hash, and never calls the database for it (guard)', async () => {
++  const p = plane();
++  const handler = musicAccess(p.db);
++  const res = await handler(new Request(SB + '/functions/v1/music-access', { method: 'POST', headers: { authorization: 'Bearer owner-token', 'content-type': 'application/json' },
++    body: JSON.stringify({ action: 'operator-review', track_id: TRACK, decision: 'publish', note: '' }) }));
++  assert.equal(res.status, 400);
++  assert.match((await res.json()).error, /expected_updated_at required/);
++  assert.equal(operatorReviews(p.calls).length, 0);
++  const creator = await handler(new Request(SB + '/functions/v1/music-access', { method: 'POST', headers: { authorization: 'Bearer creator-token', 'content-type': 'application/json' },
++    body: JSON.stringify({ action: 'operator-review', track_id: TRACK, decision: 'publish', note: '', expected_updated_at: 'x', expected_master_sha256: SHA }) }));
++  assert.equal(creator.status, 403, 'a creator cannot review, their own release included');
++});
++
++/* ---------------- L-1: the vault that is not there says so ---------------- */
++
++const MISSING = { status: 404, message: "Could not find the table 'public.vault_assets' in the schema cache", detail: { code: 'PGRST205', message: "Could not find the table 'public.vault_assets' in the schema cache" } };
++
++test('the music vault says plainly that it is not set up yet, and offers no controls that cannot save (L-1)', async () => {
++  const d = await desk({ vault: MISSING });
++  for (const section of ['catalog', 'distribution']) {
++    const v = d.section(section);
++    assert.match(v.html, /not set up yet/i, section + ': the screen says the vault is not set up');
++    for (const control of ['data-crom-asset-status', 'data-crom-clear', 'data-crom-savehouse', 'data-crom-savecred', 'data-crom-toggle', 'data-crom-face']) {
++      assert.equal(v.querySelectorAll('[' + control + ']').length, 0, section + ': no ' + control + ' control');
++    }
++    assert.doesNotMatch(v.html, /Some music sources failed/, section + ': not a vague failure');
++  }
++  const review = d.section('review');
++  assert.doesNotMatch(review.html, /Some music sources failed|not set up yet/, 'release review does not depend on the vault');
++  assert.ok(reviewButton(review, 'publish'), 'and still lists the queue');
++});
++
++test('a vault that answers with another error says it could not be read, on its own tabs only (L-1)', async () => {
++  const d = await desk({ vault: { status: 503, message: 'upstream timeout', detail: { message: 'upstream timeout' } } });
++  const catalog = d.section('catalog');
++  assert.match(catalog.html, /could not be read/i);
++  assert.match(catalog.html, /upstream timeout/);
++  assert.doesNotMatch(d.section('review').html, /upstream timeout|could not be read/);
++});
++
++/* ---------------- G-5, D-17: the studio is measured, under the same consent rule ---------------- */
++
++test('creator.html loads js/analytics.js once, before the shared auth and the studio, as every music page does (G-5, D-17)', () => {
++  const html = read('creator.html');
++  const tags = html.match(/<script[^>]+src="js\/analytics\.js[^"]*"[^>]*><\/script>/g) || [];
++  assert.equal(tags.length, 1, 'one analytics script');
++  assert.ok(html.indexOf('js/analytics.js') < html.indexOf('js/mcc-auth.js'), 'before the shared auth, as listen.html loads it');
++  assert.ok(html.indexOf('js/analytics.js') < html.indexOf('js/music-creator-studio.js'), 'before the studio module');
++  const listen = read('listen.html');
++  assert.ok(listen.indexOf('js/analytics.js') < listen.indexOf('js/mcc-auth.js'), 'the same order as listen.html');
++  /* the studio's events are the ones the owner reads in Analytics */
++  const studio = read('js/music-creator-studio.js');
++  for (const name of ['creator_track_submitted', 'creator_profile_saved', 'creator_onboarded']) assert.match(studio, new RegExp('MCC_TRACK\\("' + name + '"'));
++});
++
++function storage(seed) {
++  const map = new Map(Object.entries(seed || {}));
++  return {
++    map, getItem: (k) => (map.has(k) ? map.get(k) : null), setItem: (k, v) => { map.set(k, String(v)); },
++    removeItem: (k) => { map.delete(k); }, key: (i) => [...map.keys()][i] ?? null, get length() { return map.size; }
++  };
++}
++test('without agreement to the privacy notice the studio\'s events are skipped: nothing sent, nothing kept (D-17)', () => {
++  const sent = [];
++  const local = storage({ mcc_privacy_seen: JSON.stringify({ version: '2026-10-19', at: 1 }), 'mcc_event_outbox_v1:00000000-0000-4000-8000-000000000001': '{}' });
++  const window = {
++    localStorage: local, sessionStorage: storage(), document: { cookie: '' },
++    navigator: { sendBeacon: () => { sent.push('beacon'); return true; } },
++    fetch: () => { sent.push('fetch'); return Promise.resolve({}); },
++    location: new URL('https://matthew.mccluster.org/creator.html'), Date, JSON, console
++  };
++  window.window = window;
++  window.parent = window;
++  vm.createContext(window);
++  vm.runInContext(read('js/analytics.js'), window, { filename: 'analytics.js' });
++  assert.equal(window.MCC_TRACK('creator_track_submitted', { track_id: TRACK, access_mode: 'account' }), false, 'the call is a no-op');
++  assert.equal(window.MCC_TRACK('creator_profile_saved', {}), false);
++  assert.deepEqual(sent, [], 'no request leaves the page');
++  assert.equal([...local.map.keys()].filter((k) => k.startsWith('mcc_event_outbox_v1:')).length, 0, 'and an outbox left from before is cleared');
++});
++
++/* ---------------- ST-10: creators manage their own pending releases ---------------- */
++
++const PAGE = require('../../js/music-creator-page.js');
++
++test('a creator\'s own release offers what the database allows for its state, and nothing else (ST-10)', () => {
++  assert.equal(typeof PAGE.releaseActions, 'function', 'MCC_CREATOR_PAGE.releaseActions');
++  assert.deepEqual(PAGE.releaseActions({ status: 'pending_review', rights_status: 'attested' }), ['edit', 'withdraw']);
++  assert.deepEqual(PAGE.releaseActions({ status: 'draft', rights_status: 'attested' }), ['resubmit', 'delete'], 'a withdrawn release goes back to review or away');
++  assert.deepEqual(PAGE.releaseActions({ status: 'draft', rights_status: 'incomplete' }), ['delete'], 'an unattested draft is never sent to review from here');
++  assert.deepEqual(PAGE.releaseActions({ status: 'draft', rights_status: 'review' }), ['resubmit', 'delete'], 'a release withdrawn while held for review can go back');
++  assert.deepEqual(PAGE.releaseActions({ status: 'rejected', rights_status: 'disputed' }), [], 'a rejection is not erased from here (the owner decides)');
++  for (const status of ['approved', 'published', 'archived', '', null]) {
++    assert.deepEqual(PAGE.releaseActions({ status, rights_status: 'cleared' }), [], 'nothing on a ' + status + ' release (a change would take it off the air)');
++  }
++});
++
++test('an edit to a pending release changes its words and links only, bounded (ST-10)', () => {
++  assert.equal(typeof PAGE.releaseEdit, 'function', 'MCC_CREATOR_PAGE.releaseEdit');
++  const long = 'x'.repeat(5000);
++  const edit = PAGE.releaseEdit({
++    title: '  New title  ', artist: ' Fixture Artist ', genre: long, description: long, music_video_url: ' https://video.example/v ', lyrics_url: '',
++    status: 'published', rights_status: 'cleared', access_mode: 'public', master_path: 'other/x.wav', audio_url: 'https://evil.example/a.mp3', m_uid: 'x'
++  });
++  assert.deepEqual(Object.keys(edit).sort(), ['artist', 'description', 'genre', 'lyrics_url', 'music_video_url', 'title']);
++  assert.equal(edit.title, 'New title');
++  assert.equal(edit.artist, 'Fixture Artist');
++  assert.equal(edit.genre.length, 80);
++  assert.equal(edit.description.length, 2000);
++  assert.equal(edit.music_video_url, 'https://video.example/v');
++  assert.equal(PAGE.releaseEdit({ title: '   ' }), null, 'a release keeps a title');
++});
++
++test('Creator Studio asks the database for exactly those changes, on the version and state on screen (ST-10)', () => {
++  const js = read('js/music-creator-studio.js');
++  assert.match(js, /creator_tracks\?m_uid=eq\.[\s\S]{0,120}&select=[^"]*\bupdated_at\b/, 'the list knows each release\'s version');
++  assert.match(js, /PAGE\.releaseActions\(/, 'the controls come from the shared rule');
++  assert.match(js, /status=eq\.pending_review&updated_at=eq\./, 'an edit applies only to the pending version on screen');
++  assert.match(js, /JSON\.stringify\(\{ status: "draft" \}\)/, 'withdraw takes the release out of review (status draft)');
++  assert.match(js, /status=eq\.draft&rights_status=in\.\(attested,review\)/, 'submit again only for a withdrawn release that was in review');
++  assert.match(js, /"creator_tracks\?id=eq\." \+ enc\(t\.id\) \+ "&status=eq\.draft", \{\s*method: "DELETE"/, 'delete only a draft, and only while it is one');
++  const html = read('creator.html');
++  assert.match(html, /id="creatorTracks"/);
++});
++
++/* ---------------- L-11: a Creator Studio door where creators look for it ---------------- */
++
++const ONBOARD = require('../../js/creator-onboarding.js');
++function viewer({ signedIn = true, owner = false, answer = { ok: true, creator: true } } = {}) {
++  const asked = [];
++  return {
++    asked,
++    document: { body: { hasAttribute: (n) => n === 'data-appbar-admin' && owner }, readyState: 'complete', querySelectorAll: () => [], addEventListener() {} },
++    addEventListener() {},
++    MCC: {
++      session: () => (signedIn ? { access_token: 'creator-token' } : null),
++      authFetch: (url) => { asked.push(String(url)); return answer instanceof Error ? Promise.reject(answer) : Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(answer), text: () => Promise.resolve(JSON.stringify(answer)) }); },
++      mUid: () => Promise.resolve('m-creator')
++    }
++  };
++}
++test('the studio door is shown to signed-in creators and to the house owner only (L-11)', async () => {
++  assert.equal(typeof ONBOARD.studioDoor, 'function', 'MCC_CREATOR_ONBOARD.studioDoor');
++  assert.equal(await ONBOARD.studioDoor(viewer()), true, 'a creator, by the server\'s answer');
++  const member = viewer({ answer: { ok: true, creator: false } });
++  assert.equal(await ONBOARD.studioDoor(member), false, 'a member who is not a creator');
++  assert.ok(member.asked.some((u) => /\/rest\/v1\/rpc\/music_creator_state$/.test(u)), 'asked music_creator_state');
++  const guest = viewer({ signedIn: false });
++  assert.equal(await ONBOARD.studioDoor(guest), false, 'a guest');
++  assert.deepEqual(guest.asked, [], 'and a guest costs no request');
++  assert.equal(await ONBOARD.studioDoor(viewer({ owner: true, answer: { ok: true, creator: false } })), true, 'the house owner, by the bar\'s own server check');
++  assert.equal(await ONBOARD.studioDoor(viewer({ answer: new Error('offline') })), false, 'an unanswered question shows nothing');
++});
++
++test('the door lives in the signed-in Profile menu, on Matthew\'s property\'s music pages only, never on the World (L-11)', () => {
++  const nav = read('js/site-navigation.js');
++  assert.match(nav, /Creator Studio/, 'the Profile menu names Creator Studio');
++  assert.match(nav, /new URL\(house, location\.href\)\.origin === location\.origin/, 'only where the house is this origin: never on the World hosts');
++  assert.match(nav, /music-creator-terms/, 'only on the music pages');
++  assert.match(nav, /studioDoor\(window\)/, 'decided by the music module (creators) or the bar (the owner)');
++  assert.doesNotMatch(read('js/tabbar.js'), /Creator Studio/, 'nothing added to the bar\'s tabs or wings');
++});
+diff --git a/supabase/pending/README.md b/supabase/pending/README.md
+index 0dbd273c..3d84cab1 100644
+--- a/supabase/pending/README.md
++++ b/supabase/pending/README.md
+@@ -275,7 +275,7 @@ for the first real release, and is the first thing to do when that release reach
+ Production evidence after the apply:
+ `docs/control-plane/evidence/production-schema-snapshot-2026-10-30.json`.
+ 
+-Was pending (2026-10-28): `music_release_payment_integrity_v1.sql` closes four owner security findings on creator music: (a) a release's master, preview, audio URL and artwork must be objects its creator uploaded, by the server's record (`public.music_creator_assets`, written by `music-access` when it issues an upload grant, or the owner Storage stamps), never by path; the storage update/delete/own-read policies follow the same record; (b) any change to an approved or published release sends it back to `pending_review` and takes its offers off sale, and what is published equals the frozen `reviewed_snapshot`; (c) the licence commission is `public.music_platform_fee_bps()` (1500, the same constant `music-checkout` uses), not the creator-writable offer column; (d) a music order becomes paid only from pending/failed under its stored checkout session, its terms are immutable, and entitlements need a paid order; (e) approval pins the master's exact Storage identity (object id, version, eTag, size) in `public.music_asset_versions` and its sha256 review digest, a trigger on `storage.objects` refuses overwriting, moving or deleting a pinned object or one an approved/published release references (every role), each order and entitlement records the pinned version bought, and `music-access` signs exactly that version for purchasers (revoked refuses; a takedown or replacement does not take the bought version away); (f) approval is bound to the audio BYTES the reviewer heard (owner, 2026-10-29: "still needs approval tied to the exact reviewed audio before it goes live"): `music-access` `operator-review-prepare` pins the release's master (`public.music_prepare_review`, which locks the object from then on), streams that pinned object once through an incremental SHA-256 (native `node:crypto` `createHash`, chunk by chunk, never buffered; capped at 524288000 bytes, the `creator-masters` bucket limit, and failing closed above it, on a missing object or a short/failed read) and records it write-once on the version (`public.music_record_asset_sha256`; a recompute that disagrees invalidates the version, sends its releases back to review and off sale). The music desk (`js/music-admin.js`) plays THAT pinned object and shows the short hash; Publish stays disabled until then and carries the full hash (`expected_master_sha256`) to `public.music_operator_review`, and the track guard refuses entering approved/published unless the pinned master has a recorded hash equal to it (`release_master_unhashed`, `release_master_hash_required`, `release_master_hash_mismatch`, `release_master_invalid`). The hash is in the reviewed snapshot and digest (`approved_master_sha256`); orders and entitlements record it (`asset_sha256`, set by the guards, immutable). A replacement master is a new path: back to review, a new version with no hash, verified and approved again. What is hashed: the master only. It is what is sold and delivered; the preview and artwork are public, are not sold, and are locked by path against overwrite once the release is approved; between the reviewer's listen and the approval, a same-path overwrite of the PREVIEW or ARTWORK is still possible (the master is locked from preparation on): residual, follow-up if the owner wants previews hash-bound too. Bytes are hashed once, not per download or per checkout (a full read of a master each time, against the Edge CPU budget): the pinned object cannot change (storage trigger, every role), `music_asset_version_intact()` re-checks object id, version, eTag and size on every signed URL and every new order, and the recorded hash is what was approved; `recheck: true` on `operator-review-prepare` re-hashes on demand. `music-access` now FAILS CLOSED (503) without this file. Test: `scripts/test-music-release-integrity-db.sh`. Rollback: `music_release_payment_integrity_v1.rollback.sql` (reopens the findings and loses the pinned-version record). Promote it using the steps below.
++Was pending (2026-10-28): `music_release_payment_integrity_v1.sql` closes four owner security findings on creator music: (a) a release's master, preview, audio URL and artwork must be objects its creator uploaded, by the server's record (`public.music_creator_assets`, written by `music-access` when it issues an upload grant, or the owner Storage stamps), never by path; the storage update/delete/own-read policies follow the same record; (b) any change to an approved or published release sends it back to `pending_review` and takes its offers off sale, and what is published equals the frozen `reviewed_snapshot`; (c) the licence commission is `public.music_platform_fee_bps()` (1500, the same constant `music-checkout` uses), not the creator-writable offer column; (d) a music order becomes paid only from pending/failed under its stored checkout session, its terms are immutable, and entitlements need a paid order; (e) approval pins the master's exact Storage identity (object id, version, eTag, size) in `public.music_asset_versions` and its sha256 review digest, a trigger on `storage.objects` refuses overwriting, moving or deleting a pinned object or one an approved/published release references (every role), each order and entitlement records the pinned version bought, and `music-access` signs exactly that version for purchasers (revoked refuses; a takedown or replacement does not take the bought version away); (f) approval is bound to the audio BYTES the reviewer heard (owner, 2026-10-29: "still needs approval tied to the exact reviewed audio before it goes live"): `music-access` `operator-review-prepare` pins the release's master (`public.music_prepare_review`, which locks the object from then on), streams that pinned object once through an incremental SHA-256 (native `node:crypto` `createHash`, chunk by chunk, never buffered; capped at 524288000 bytes, the `creator-masters` bucket limit, and failing closed above it, on a missing object or a short/failed read) and records it write-once on the version (`public.music_record_asset_sha256`; a recompute that disagrees invalidates the version, sends its releases back to review and off sale). The music desk (Control · Create · Music · Review, `js/control-room/music-ops.js` since music slice M6, 2026-11-19; before that `js/music-admin.js`, which no page loaded, so the live desk sent neither and every publish was refused) plays THAT pinned object and shows the short hash; Publish stays disabled until then and carries the full hash (`expected_master_sha256`) to `public.music_operator_review`, and the track guard refuses entering approved/published unless the pinned master has a recorded hash equal to it (`release_master_unhashed`, `release_master_hash_required`, `release_master_hash_mismatch`, `release_master_invalid`). The hash is in the reviewed snapshot and digest (`approved_master_sha256`); orders and entitlements record it (`asset_sha256`, set by the guards, immutable). A replacement master is a new path: back to review, a new version with no hash, verified and approved again. What is hashed: the master only. It is what is sold and delivered; the preview and artwork are public, are not sold, and are locked by path against overwrite once the release is approved; between the reviewer's listen and the approval, a same-path overwrite of the PREVIEW or ARTWORK is still possible (the master is locked from preparation on): residual, follow-up if the owner wants previews hash-bound too. Bytes are hashed once, not per download or per checkout (a full read of a master each time, against the Edge CPU budget): the pinned object cannot change (storage trigger, every role), `music_asset_version_intact()` re-checks object id, version, eTag and size on every signed URL and every new order, and the recorded hash is what was approved; `recheck: true` on `operator-review-prepare` re-hashes on demand. `music-access` now FAILS CLOSED (503) without this file. Test: `scripts/test-music-release-integrity-db.sh`. Rollback: `music_release_payment_integrity_v1.rollback.sql` (reopens the findings and loses the pinned-version record). Promote it using the steps below.
+ 
+ Rollout for `music_release_payment_integrity_v1.sql` (dependency-safe order; the database first, because the new functions refuse without it and the old functions work on top of it):
+ 
+diff --git a/supabase/tests/music_creator_releases.behaviour.sql b/supabase/tests/music_creator_releases.behaviour.sql
+new file mode 100644
+index 00000000..8aa2e824
+--- /dev/null
++++ b/supabase/tests/music_creator_releases.behaviour.sql
+@@ -0,0 +1,186 @@
++-- What a creator may do with a release they submitted (music slice M6, 2026-11-19; studio lane ST-10), as the
++-- APPLIED SQL already decides it: the row policies of supabase/migrations/20260920041011_music_creator_platform_v1.sql
++-- and public.music_track_guard of supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql. This file
++-- changes nothing: it proves the rules Creator Studio's "Your releases" builds on (js/music-creator-studio.js,
++-- js/music-creator-page.js releaseActions) and the reason it offers nothing on a live release.
++--
++-- Runs in scripts/test-music-release-integrity-db.sh after music_release_payment_integrity.behaviour.sql, on a
++-- scratch database, as the real API roles with the JWT claims Supabase would set. Every check raises on failure.
++\set ON_ERROR_STOP 1
++set client_min_messages = warning;
++
++-- Row security is on for creator_tracks in production (it has been since supabase/replay_migrations/0003_creator_cuts.sql;
++-- the platform migration replaced that file's policies with its own). The shared stub that stands in for the table here
++-- (supabase/tests/music_creator_onboarding.stub.sql) leaves it off, so this file turns it on for its own run: without it
++-- the policies below would prove nothing.
++reset role;
++alter table public.creator_tracks enable row level security;
++
++create or replace function pg_temp.as_user(p_id uuid) returns void language plpgsql as $$
++begin
++  execute 'reset role';
++  perform set_config('request.jwt.claims', json_build_object('sub', p_id, 'role', 'authenticated')::text, false);
++  execute 'set role authenticated';
++end $$;
++create or replace function pg_temp.as_service() returns void language plpgsql as $$
++begin
++  execute 'reset role';
++  perform set_config('request.jwt.claims', '{"role":"service_role"}', false);
++  execute 'set role service_role';
++end $$;
++create or replace function pg_temp.check(p_ok boolean, p_what text) returns void language plpgsql as $$
++begin if p_ok is not true then raise exception 'FAILED: %', p_what; end if; end $$;
++-- a statement that must be refused, with its deferred checks run inside the block (a foreign key the database
++-- checks at commit would otherwise escape it)
++create or replace function pg_temp.must_fail_now(p_sql text, p_like text) returns void language plpgsql as $$
++begin
++  begin
++    set constraints all immediate;
++    execute p_sql;
++  exception when others then
++    if sqlerrm not ilike p_like then raise exception 'expected error like % from [%], got: %', p_like, p_sql, sqlerrm; end if;
++    return;
++  end;
++  raise exception 'expected failure (%), but it succeeded: %', p_like, p_sql;
++end $$;
++-- the review desk, as music-access runs it (operator-review-prepare, then the decision with the hash it showed)
++create or replace function pg_temp.fake_sha(p_ident text) returns text language sql as $$
++  select encode(sha256(convert_to(p_ident, 'UTF8')), 'hex') $$;
++create or replace function pg_temp.verify_audio(p_track uuid) returns text language plpgsql as $$
++declare r record;
++begin
++  select * into r from public.music_prepare_review(p_track);
++  if r.content_sha256 is null then
++    perform public.music_record_asset_sha256(r.version_id, pg_temp.fake_sha(r.object_name || '|' || coalesce(r.etag, '')), r.size_bytes);
++  end if;
++  return (select v.content_sha256 from public.music_asset_versions v where v.id = r.version_id);
++end $$;
++create or replace function pg_temp.track(p_id uuid) returns public.creator_tracks language sql as $$
++  select * from public.creator_tracks where id = p_id $$;
++
++-- ids
++--   Ana auth 00..a1 / M 10..a1 (the creator)      Bo auth 00..b1 / M 10..b1 (another creator)
++--   c1 "One": edited while pending                 c2 "Two": withdrawn after the reviewer verified it
++--   c3 "Three": withdrawn, sent again, deleted     c4 "Four": published, the reason nothing is offered on it
++\set A '''00000000-0000-4000-8000-0000000000a1'''
++\set B '''00000000-0000-4000-8000-0000000000b1'''
++\set C1 '''20000000-0000-4000-8000-0000000000c1'''
++\set C2 '''20000000-0000-4000-8000-0000000000c2'''
++\set C3 '''20000000-0000-4000-8000-0000000000c3'''
++\set C4 '''20000000-0000-4000-8000-0000000000c4'''
++
++-- Ana's uploads, granted by music-access (the server's record of who uploaded what) and held by Storage
++select pg_temp.as_service();
++insert into public.music_creator_assets(bucket_id, object_name, owner_user_id, owner_m_uid) values
++  ('creator-masters', '00000000-0000-4000-8000-0000000000a1/m6-one.wav',   :A, '10000000-0000-4000-8000-0000000000a1'),
++  ('creator-masters', '00000000-0000-4000-8000-0000000000a1/m6-two.wav',   :A, '10000000-0000-4000-8000-0000000000a1'),
++  ('creator-masters', '00000000-0000-4000-8000-0000000000a1/m6-three.wav', :A, '10000000-0000-4000-8000-0000000000a1'),
++  ('creator-masters', '00000000-0000-4000-8000-0000000000a1/m6-four.wav',  :A, '10000000-0000-4000-8000-0000000000a1');
++insert into storage.objects(bucket_id, name, owner, owner_id) values
++  ('creator-masters', '00000000-0000-4000-8000-0000000000a1/m6-one.wav', null, null),
++  ('creator-masters', '00000000-0000-4000-8000-0000000000a1/m6-two.wav', null, null),
++  ('creator-masters', '00000000-0000-4000-8000-0000000000a1/m6-three.wav', null, null),
++  ('creator-masters', '00000000-0000-4000-8000-0000000000a1/m6-four.wav', null, null);
++
++-- Ana submits four releases, as Creator Studio does (attested, waiting for review)
++select pg_temp.as_user(:A);
++insert into public.creator_tracks(id, title, artist, master_path, status, rights_status) values
++  (:C1, 'One',   'Ana', '00000000-0000-4000-8000-0000000000a1/m6-one.wav',   'pending_review', 'attested'),
++  (:C2, 'Two',   'Ana', '00000000-0000-4000-8000-0000000000a1/m6-two.wav',   'pending_review', 'attested'),
++  (:C3, 'Three', 'Ana', '00000000-0000-4000-8000-0000000000a1/m6-three.wav', 'pending_review', 'attested'),
++  (:C4, 'Four',  'Ana', '00000000-0000-4000-8000-0000000000a1/m6-four.wav',  'pending_review', 'attested');
++select pg_temp.check((select count(*) from public.creator_tracks where id in (:C1, :C2, :C3, :C4) and status = 'pending_review') = 4,
++                     'four releases wait for review');
++
++------------------------------------------------------------------------------
++-- Edit: the words and links of a pending release, on the version on screen
++------------------------------------------------------------------------------
++select set_config('m6.c1_seen', (pg_temp.track(:C1)).updated_at::text, false);
++update public.creator_tracks set title = 'One (new words)', description = 'New notes', genre = 'Soul',
++       music_video_url = 'https://video.example/one', lyrics_url = ''
++ where id = :C1 and status = 'pending_review' and updated_at = current_setting('m6.c1_seen')::timestamptz;
++select pg_temp.check((select t.title = 'One (new words)' and t.description = 'New notes' and t.status = 'pending_review'
++                         and t.rights_status = 'attested' and t.updated_at > current_setting('m6.c1_seen')::timestamptz
++                        from public.creator_tracks t where t.id = :C1),
++                     'a creator edits a pending release: it stays in review, attested, and its version moves on');
++-- a screen loaded before that edit changes nothing (Creator Studio then reloads and says so)
++update public.creator_tracks set title = 'stale screen'
++ where id = :C1 and status = 'pending_review' and updated_at = current_setting('m6.c1_seen')::timestamptz;
++select pg_temp.check((pg_temp.track(:C1)).title = 'One (new words)', 'an edit made on an older version of the release changes nothing');
++-- and the creator still cannot review their own release, whatever the request says
++update public.creator_tracks set status = 'published', rights_status = 'cleared', published_at = now() where id = :C1;
++select pg_temp.check((select status = 'pending_review' and rights_status = 'attested' and published_at is null
++                        from public.creator_tracks where id = :C1), 'a creator cannot publish or clear their own release');
++-- the reviewer's decision is about the version the reviewer loaded: an older look decides nothing
++select pg_temp.as_service();
++select pg_temp.check(public.music_operator_review(:C1, 'review', 'older look', current_setting('m6.c1_seen')::timestamptz, null) is null,
++                     'a review made on the version before the creator''s edit is refused (the desk reloads)');
++-- held for review on the version the reviewer loaded; the creator withdraws it and sends it back as it was
++select pg_temp.check((public.music_operator_review(:C1, 'review', 'Check the credits', (pg_temp.track(:C1)).updated_at, null))->>'rights_status' = 'review',
++                     'the reviewer holds release One for review');
++select pg_temp.as_user(:A);
++update public.creator_tracks set status = 'draft' where id = :C1 and status = 'pending_review';
++select pg_temp.check((select status = 'draft' and rights_status = 'review' and moderation_note = 'Check the credits'
++                        from public.creator_tracks where id = :C1), 'a release held for review can be withdrawn; the reviewer''s note stays');
++update public.creator_tracks set status = 'pending_review' where id = :C1 and status = 'draft' and rights_status in ('attested', 'review');
++select pg_temp.check((select status = 'pending_review' and rights_status = 'review' from public.creator_tracks where id = :C1),
++                     'and submitted again, back in the rights state it left');
++
++------------------------------------------------------------------------------
++-- Withdraw, submit again, delete
++------------------------------------------------------------------------------
++select pg_temp.as_user(:A);
++-- a pending release cannot be deleted outright (row policy: a creator deletes only draft, rejected and archived rows)
++delete from public.creator_tracks where id = :C3;
++select pg_temp.check(exists (select 1 from public.creator_tracks where id = :C3), 'a pending release is not deleted: withdraw it first');
++update public.creator_tracks set status = 'draft' where id = :C3 and status = 'pending_review';
++select pg_temp.check((select status = 'draft' and rights_status = 'attested' from public.creator_tracks where id = :C3),
++                     'a creator withdraws a pending release: back to draft, still attested');
++select pg_temp.as_service();
++select pg_temp.check(not exists (select 1 from public.creator_tracks where id = :C3 and status in ('pending_review','approved','published','rejected')),
++                     'a withdrawn release is out of the review desk''s queue (operator-dashboard''s statuses)');
++select pg_temp.as_user(:A);
++update public.creator_tracks set status = 'pending_review' where id = :C3 and status = 'draft' and rights_status = 'attested';
++select pg_temp.check((pg_temp.track(:C3)).status = 'pending_review', 'a withdrawn, attested release can be submitted again');
++update public.creator_tracks set status = 'draft' where id = :C3 and status = 'pending_review';
++delete from public.creator_tracks where id = :C3 and status in ('draft', 'rejected');
++select pg_temp.check(not exists (select 1 from public.creator_tracks where id = :C3), 'a withdrawn release can be deleted by its creator');
++
++------------------------------------------------------------------------------
++-- Once the reviewer has verified the audio, the record stays: withdrawn, never deleted
++------------------------------------------------------------------------------
++select pg_temp.as_service();
++select pg_temp.check(pg_temp.verify_audio(:C2) ~ '^[0-9a-f]{64}$', 'the reviewer verifies release Two (its master is pinned and hashed)');
++select pg_temp.as_user(:A);
++update public.creator_tracks set status = 'draft' where id = :C2 and status = 'pending_review';
++select pg_temp.check((pg_temp.track(:C2)).status = 'draft', 'a verified release can still be withdrawn');
++select pg_temp.must_fail_now($$delete from public.creator_tracks where id = '20000000-0000-4000-8000-0000000000c2' and status in ('draft','rejected')$$,
++                             '%foreign key%');
++select pg_temp.check(exists (select 1 from public.creator_tracks where id = :C2),
++                     'but not deleted: the pinned version keeps its record (Creator Studio says so)');
++
++------------------------------------------------------------------------------
++-- Another creator can do none of it
++------------------------------------------------------------------------------
++select pg_temp.as_user(:B);
++update public.creator_tracks set title = 'Bo was here' where id = :C1;
++update public.creator_tracks set status = 'draft' where id = :C1;
++delete from public.creator_tracks where id = :C2;
++select pg_temp.as_service();
++select pg_temp.check((select title = 'One (new words)' and status = 'pending_review' from public.creator_tracks where id = :C1),
++                     'another creator cannot edit or withdraw Ana''s release');
++select pg_temp.check(exists (select 1 from public.creator_tracks where id = :C2), 'nor delete it');
++
++------------------------------------------------------------------------------
++-- Why nothing is offered on a live release: any change takes it off the air (the guard, ST-6, decision D-14)
++------------------------------------------------------------------------------
++select pg_temp.as_service();
++select pg_temp.check((public.music_operator_review(:C4, 'publish', '', (pg_temp.track(:C4)).updated_at, pg_temp.verify_audio(:C4)))->>'status' = 'published',
++                     'release Four is published through the hash-checked review');
++select pg_temp.as_user(:A);
++update public.creator_tracks set title = 'Four (a typo fixed)' where id = :C4;
++select pg_temp.check((select status = 'pending_review' and published_at is null from public.creator_tracks where id = :C4),
++                     'a creator''s edit of a published release unpublishes it: Creator Studio offers no edit there');
++
++select pg_temp.as_service();
++reset role;

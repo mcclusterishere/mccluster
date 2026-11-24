@@ -1,5 +1,18 @@
 # The World release of 2026-11-18: record and runbook
 
+## Production checkpoint, 2026-11-23
+
+With Matthew's approval, the Connections consent guard and Environment parts 03, 04 and 05 were applied:
+production has 384 migration records, latest `20261123174034 eup_environment_events_v1_05`, and all five
+Environment parts are in. The store is empty and nothing public changed: the USGS rule and the module's
+install and enable are Matthew's commands in Control, the ingest flag `EUP_ENVIRONMENT_USGS_INGEST_ENABLED`
+is still `"false"` (turning it on is a pull request, a merge and a deploy), and a signed-out visitor still
+gets `404 module_disabled`. The source-page SQL remains pending. Matthew's attestation of 2026-11-23 about
+Project Drawdown's permission for the quotations is in `data/missions/drawdown/README.md`; restoring the 87
+quotations and finishing the source page are separate steps. The receipt is
+`docs/control-plane/evidence/releases-2026-11-23/LEDGER-384-APPLIED.md`; the 2026-11-20 checkpoint below is
+historical where it calls parts 03–05 and the Connections guard pending.
+
 ## Live completion checkpoint, 2026-11-20
 
 PR #818 merged as `95db84602d8edef4e4a0143833f37ab3e67d91f7`; its website and Worker deployment

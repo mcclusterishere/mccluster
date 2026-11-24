@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 767,
+  "candidate_count": 773,
   "capability_source_count": 104,
-  "support_only_count": 663,
+  "support_only_count": 669,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1551,11 +1551,53 @@
       "rationale": "Read-only production schema snapshot taken on 2026-11-20 after the Drawdown credit correction and publication and Environment parts 01 and 02 were recorded at ledger 380; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
     },
     {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken on 2026-11-23 after the network connections consent guard and Environment parts 03 to 05 were recorded at ledger 384; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
+    },
+    {
       "path": "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
       "classification": "documentation_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only verification of the twelve production-only migrations recorded at ledger 376, including the two Equity Uprise platform migrations applied outside Git (eu_platform_* objects): what production holds, what was read and what it does not establish. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Session handoff of 2026-11-23: state, order of work, rules and owner steps for the next agent; references Equity Uprise by name only."
+    },
+    {
+      "path": "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Music bar design record (handoff copy of 2026-11-23); mentions the Equity Uprise World only as a page the bar appears on."
+    },
+    {
+      "path": "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "One music engine design spec (handoff copy of 2026-11-23); names the Equity Uprise World as a host page only."
+    },
+    {
+      "path": "docs/control-plane/handoff-20261123/specs/SPEC-M5.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Music one-player design spec (handoff copy of 2026-11-23); names the Equity Uprise World as a host page only."
+    },
+    {
+      "path": "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Platform domain and tenancy design spec (handoff copy of 2026-11-23); names Equity Uprise as the brand and future domain, no building capability."
     },
     {
       "path": "docs/control-plane/registry.json",
