@@ -105,8 +105,8 @@ test('js/listen-ledger.js holds each song\'s wait for the previous finish: half 
   const waits = lengths.finishWaits();
   assert.equal(waits.cap, 5000, 'never more than 5 s');
   const { key, seconds, need, margin, ms } = waits.least;
-  assert.deepEqual({ key, seconds, need, margin, ms }, { key: 'towyard-killer', seconds: 65.7, need: 62, margin: 3.7, ms: 1850 },
-    'the smallest margin in the catalogue keeps its 1.85 s');
+  assert.deepEqual({ key, seconds, need, margin, ms }, { key: 'hitshake', seconds: 42.2, need: 40, margin: 2.2, ms: 1100 },
+    'the smallest margin in the catalogue (HitShake since 2026-11-23; Towyard Killer before it) keeps its 1.1 s');
   const albums = JSON.parse(readFileSync(new URL('../../data/albums.json', import.meta.url), 'utf8')).albums;
   const counted = albums.flatMap((a) => (a.tracks || []).filter((t) => !t.gated));
   assert.equal(Object.keys(waits.ms).length, counted.length, 'a wait for every song the server counts');
@@ -118,6 +118,7 @@ test('js/listen-ledger.js holds each song\'s wait for the previous finish: half 
   const ledger = readFileSync(new URL('../../js/listen-ledger.js', import.meta.url), 'utf8');
   assert.equal(ledger, lengths.ledgerWithWait(ledger, waits), 'run: node scripts/music-track-lengths.mjs');
   assert.match(ledger, /var FINISH_WAIT_CAP_MS = 5000;/);
+  assert.match(ledger, /"hitshake": 1100\b/);
   assert.match(ledger, /"towyard-killer": 1850\b/);
   assert.match(ledger, /"pull-up": 4200\b/);
 });

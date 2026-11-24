@@ -135,11 +135,12 @@ test('a finish that never answers does not stop the next song counting', async (
 /* THE WAIT FITS THE SHORTEST SONG (music slice M3 follow-up; review PB-R10). A song's listen is credited from the moment
    its start reaches the database (music_listen_start sets last_beat_at to now(); each beat and the finish add the time
    since), and the Worker counts it once floor(seconds x 0.95) seconds are heard (workers/mccluster/src/music/router.js).
-   So the time the next start waits for the previous finish comes out of the next song's margin. The shortest catalogue
-   song, Towyard Killer, lasts 65.7 s and counts after 62 s: 3.7 s. A wait of up to 5 s could leave it uncounted. The
-   wait is half the smallest margin in the catalogue now (scripts/music-track-lengths.mjs writes it), so the start's own
-   trip and a hidden page's late timers keep the other half. */
-test('the wait for the previous finish leaves the shortest song its margin (Towyard Killer: 65.7 s, counted after 62 s)', async () => {
+   So the time the next start waits for the previous finish comes out of the next song's margin. The song with the
+   smallest margin was Towyard Killer (65.7 s, counted after 62 s: 3.7 s) until In Hot Pursuit came to the shelf on
+   2026-11-23; it is HitShake now, which lasts 42.2 s and counts after 40 s: 2.2 s. A wait of up to 5 s would leave it
+   uncounted. The wait is half the smallest margin in the catalogue now (scripts/music-track-lengths.mjs writes it), so
+   the start's own trip and a hidden page's late timers keep the other half. */
+test('the wait for the previous finish leaves the shortest song its margin (HitShake: 42.2 s, counted after 40 s)', async () => {
   const { TRACKS } = await import('../../workers/mccluster/src/music/tracks.js');
   const { COUNT_SHARE } = await import('../../workers/mccluster/src/music/router.js');
   const songs = Object.entries(TRACKS).filter(([, t]) => !t.gated).map(([key, t]) => {
@@ -147,7 +148,7 @@ test('the wait for the previous finish leaves the shortest song its margin (Towy
     return { key, seconds: t.seconds, need, margin: Math.round((t.seconds - need) * 10) / 10 };
   }).sort((a, b) => a.margin - b.margin);
   const shortest = songs[0];
-  assert.deepEqual(shortest, { key: 'towyard-killer', seconds: 65.7, need: 62, margin: 3.7 }, 'the smallest margin in the catalogue');
+  assert.deepEqual(shortest, { key: 'hitshake', seconds: 42.2, need: 40, margin: 2.2 }, 'the smallest margin in the catalogue');
   /* song A has ended and its finish has not answered; song B, the shortest, starts at once */
   const { L, sent, timers } = await ordered();
   const a = L.start('lightroom', () => true);
@@ -158,13 +159,13 @@ test('the wait for the previous finish leaves the shortest song its margin (Towy
   assert.deepEqual(sent, ['start:lightroom', 'finish'], 'the start still waits for the finish (DEL-4)');
   const wait = [...timers.values()].find((t) => t.ms > 0 && t.ms <= 8000);
   assert.ok(wait, 'a bounded wait');
-  assert.equal(wait.ms, Math.floor(shortest.margin * 1000 / 2), 'half the smallest margin, from the catalogue: 1850 ms');
+  assert.equal(wait.ms, Math.floor(shortest.margin * 1000 / 2), 'half the smallest margin, from the catalogue: 1100 ms');
   /* the database credits B from its start's arrival to its finish's: the song's length less the wait */
   const credited = Math.round((shortest.seconds - wait.ms / 1000) * 100) / 100;
-  assert.ok(credited >= shortest.need, `Towyard Killer is credited ${credited} s of the ${shortest.need} s it needs (a 5 s wait left 60.7 s)`);
+  assert.ok(credited >= shortest.need, `HitShake is credited ${credited} s of the ${shortest.need} s it needs (a 5 s wait left 37.2 s)`);
   wait.fn();
   await b.id;
-  assert.deepEqual(sent, ['start:lightroom', 'finish', 'start:towyard-killer']);
+  assert.deepEqual(sent, ['start:lightroom', 'finish', 'start:hitshake']);
 });
 
 /* EACH SONG'S START WAITS ONLY AS LONG AS ITS OWN MARGIN ALLOWS (music slice M3 follow-up; review RF-1). One wait for the
