@@ -4,8 +4,10 @@
    that joins the compute fabric (docs/control-plane/WINDOWS-NODE.md). Static checks, always:
 
    (a) the switches the runbook names exist (Report, Install, RepoPath, NodeName, Enroll, Models,
-       Benchmark, Model, KeepAwake, ModelsPath, Vulkan, StateRoot, Tier, and since slice N2 Browser
-       and BrowserHeaded) with SupportsShouldProcess, and the library guard that lets the pwsh tests
+       Benchmark, Model, KeepAwake, ModelsPath, Vulkan, StateRoot, Tier, since slice N2 Browser
+       and BrowserHeaded, and since the contribution contract Pause, Resume, Limits with IdleOnly,
+       OnACOnly, MaxConcurrency, CpuBusyPercent, BatteryFloorPercent, ThermalLimitC, Revoke and
+       Uninstall) with SupportsShouldProcess, and the library guard that lets the pwsh tests
        dot-source it without running anything;
    (b) nothing is downloaded or evaluated outside -Browser: no Invoke-Expression, iex,
        DownloadString, DownloadFile or Start-BitsTransfer, every URL literal is loopback or the Core
@@ -46,10 +48,10 @@ const BROWSER_DOC = "docs/control-plane/AGENT-NODE-BROWSER.md";
 const read = (f) => readFileSync(join(ROOT, f), "utf8");
 const SKIP_LINE = "windows-node-script: pwsh not available, PowerShell tests skipped (unverified here)";
 
-const SWITCHES = ["Report", "Install", "Enroll", "Models", "Benchmark", "KeepAwake", "Browser", "BrowserHeaded"];
+const SWITCHES = ["Report", "Install", "Enroll", "Models", "Benchmark", "KeepAwake", "Browser", "BrowserHeaded", "Pause", "Resume", "Limits", "Revoke", "Uninstall", "IdleOnly", "OnACOnly"];
 /* the one version -Browser installs; pinned in the doctor exactly once */
 const PLAYWRIGHT_PIN = "1.63.0";
-const VALUES = ["RepoPath", "NodeName", "Model", "ModelsPath", "Vulkan", "StateRoot", "Tier", "ComputeUrl", "OrgId"];
+const VALUES = ["RepoPath", "NodeName", "Model", "ModelsPath", "Vulkan", "StateRoot", "Tier", "ComputeUrl", "OrgId", "MaxConcurrency", "CpuBusyPercent", "BatteryFloorPercent", "ThermalLimitC"];
 /* a Windows user-profile path (raw or JSON-escaped), a UNC host (two backslashes at a path start,
    so a JSON-escaped PNP id or a regex like \\SYSTEM is not one), an e-mail, or a non-loopback IPv4 */
 const PRIVATE_STRINGS = /[A-Za-z]:\\{1,2}Users\\{1,2}|(?<![\\\w])\\\\[A-Za-z0-9]|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|\b(?!127\.0\.0\.1\b)\d{1,3}(?:\.\d{1,3}){3}\b/;

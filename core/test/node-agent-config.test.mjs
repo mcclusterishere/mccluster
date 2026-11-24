@@ -186,8 +186,16 @@ test('an invalid or foreign sidecar is ignored with a reason', () => {
   assert.equal(readMeasuredInferenceSidecar(JSON.stringify({ schema: MEASURED_INFERENCE_SCHEMA, measurements: {} })).error, null);
 });
 
-test('node-agent.mjs is wired to the 0.4.0 contract', () => {
-  assert.match(agentSource, /const AGENT_VERSION = '0\.4\.0'/);
+test('node-agent.mjs is wired to the 0.5.0 contract', () => {
+  assert.match(agentSource, /const AGENT_VERSION = '0\.5\.0'/);
+  // The contribution guard (pause marker, limits.json, device probe) runs before every claim and
+  // feeds the heartbeat labels and the heartbeat file; the claim itself is behind the gate.
+  assert.match(agentSource, /createClaimGuard\(\{/);
+  assert.match(agentSource, /observed\.contribution = claimGuard\.evaluate\(\);/);
+  assert.match(agentSource, /observed\.contribution\.gate\.allowed && active\.size < maxLeases/);
+  assert.match(agentSource, /Object\.assign\(labels, observed\.contribution\?\.labels \|\| \{\}\);/);
+  assert.match(agentSource, /persistHeartbeat\(identity\.nodeId, labels, advertised\.length\)/);
+  assert.match(agentSource, /deviceProbeCommand\(process\.platform\)/);
   assert.match(agentSource, /measured-inference\.json/);
   assert.match(agentSource, /MCCLUSTER_NODE_ENROLL_ONLY/);
   assert.match(agentSource, /compute_node_enroll_only_done/);

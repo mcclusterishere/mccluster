@@ -73,6 +73,89 @@ bare receipt without its job file has no result or input to hash, and a failed j
 .NET Framework 4.8 has no Ed25519, and a Core receipt is verified by the Core's own reference verifier,
 not re-implemented here.
 
+## Metering: `receipt.metering`
+
+Every chat receipt carries one `metering` block in the shape the compute contribution contract gives the
+Core receipt, so a local receipt and a Core receipt meter the same way. That contract is
+`docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md` on branch `prime/contribution-ledger`. **It is not in
+this tree**: until that branch is merged, the path does not exist in a checkout of this branch, and the key
+list below (which the desktop tests pin) can only be compared with the contract by reading that branch.
+
+```
+prompt_eval_count, prompt_eval_cached_count, eval_count, total_duration_ns, load_duration_ns,
+prompt_eval_duration_ns, eval_duration_ns, model, model_digest, runtime_version, node_id,
+node_key_fingerprint, hardware_mode, attempt, duration_ms
+```
+
+- The seven counters are Ollama's raw counters, recorded separately and never summed into one number; a
+  counter the runtime did not report is `null` (Ollama's `/api/chat` does not return
+  `prompt_eval_cached_count` today, so the ollama-direct path records it as `null`, not 0); durations are
+  nanoseconds. Derived rates (`tokens_per_second`) never enter the block.
+- `model` is the name as served (the response's `model`).
+- `model_digest` is never part of the completion itself: Ollama's `/api/chat` answer carries no digest, so on
+  both paths it is a second call to the same daemon made after the generation, **not atomic with the
+  completion**. An `ollama pull` of the same tag that lands between the generation and that read would put
+  the new digest in the receipt; nothing detects that. Exactly which call supplied it:
+  - adapter path: the adapter's `/execute` response, `usage.model_digest`. The adapter reads `GET /api/tags`
+    on its own daemon right after the generation, while the execution still holds the adapter's single slot,
+    and matches the model that served the run by name. The desktop prefers this value. An older adapter
+    that returns no `usage.model_digest` leaves the digest the desktop read from the adapter's `GET /health`
+    (`implementations[].digest`) **before** the run; that one is not bound to the execution at all.
+    `adapter_model_digest` is always that earlier `/health` value, kept beside it for comparison.
+  - ollama-direct path: the desktop's own `GET /api/tags` on the Ollama daemon, called after `/api/chat`
+    returned and matched by model name (`null` when the model is no longer listed).
+- `runtime_version`: on the adapter path `usage.ollama_version` from the same `/execute` response (the
+  adapter's `GET /api/version` after the generation) when present; otherwise, and always on the
+  ollama-direct path, the desktop's `GET /api/version` probe from before the run.
+- `receipt.metering_evidence` (beside the block, not inside it, so the block keeps the contract's fifteen
+  keys) records `model_digest_source` and `runtime_version_source`: one sentence each naming the call that
+  supplied the value, or `null` when there is no value.
+- `node_id` is the node id the agent last reported in `<state root>\last-heartbeat.json` (`null` on a device
+  that is not a node; `identity.json` is never read). `node_key_fingerprint` is the key id of this device's
+  receipt-signing key, the same id as `signature.key_id`; it is the desktop's P-256 key, not the node's
+  Ed25519 key. `hardware_mode` is the value after the run. `attempt` is the attempt number the block was
+  written on; `duration_ms` is that attempt's wall clock, set when the attempt ends, whether it succeeded or
+  failed (a chat whose model returned no answer text is a failed attempt with a metering block and a
+  `duration_ms`); `null` only while the attempt runs.
+
+Both execution paths write the identical shape. The desktop tests pin the key list to a copy of the
+contract's field list written into the test (the contract file itself is on `prime/contribution-ledger`,
+not here, so the test cannot read it).
+The desktop computes no work units: `units_micro` and the credit arithmetic are the Core's, server-side.
+
+## Contribute: this device as a compute node
+
+The Compute panel has a **Contribute** section after the enrolled-worker status. It shows, in the
+contract's words, what runs on the device, which workload class it accepts (`public` for a community
+device), the limits, that no account credential and no tool permission beyond the executor contract is ever
+sent, and that Pause and Revoke are one click away. The device state it shows is read from the node's state
+root and nothing else: installed (`node.config.json`), enrolled (`identity.json` present, never read),
+paused (the `paused` marker), `limits.json` (or that it is absent or unreadable), the last heartbeat file
+(`last-heartbeat.json`: time, node id, `claim_gate`, `thermal_supported`), `revoked.json`, and accepted
+work as the count of this device's local `done` receipts plus the node's `accepted-work.json` when one
+exists (nothing writes it today; the Core settles acceptance, so the panel says so instead of inventing a
+number).
+
+Every action is a run of the doctor, shown verbatim (stdout and stderr) in a read-only box:
+`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File <doctor> <explicit switches>
+-StateRoot <state root>`. The doctor is found through `MCCLUSTER_DOCTOR_PATH`, the checkout
+`node.config.json` names, the checkout above the executable, or a copy beside it; without one the
+buttons stay disabled and the panel says so. The desktop never calls the Core and never writes the state
+root. **Enable contribution** opens a modal (masked credential box, the organization id when the device is
+not installed yet, the limits that will apply, an explicit consent box); on OK it runs `-Install` (only when
+not installed, from a checkout), then `-Limits` with the chosen limits, then `-Enroll`, passing the
+credential only in the child process environment variable `MCCLUSTER_NODE_ENROLL_TOKEN` (the doctor then
+writes no `enroll.env`); the box is cleared afterwards and the credential is never written to a file, a log,
+a receipt or the clipboard (the tests grep a throwaway root for a sentinel after a fake run). **Pause** /
+**Resume**, **Revoke** (a confirmation that names the node id, then the doctor prints the id to revoke on
+the Core), **Apply limits** and **Open limits** (reveals `limits.json` in Explorer) are the other buttons.
+
+Limits: idle only, AC power only, max concurrency 1 to 4 (1 in the pilot), CPU busy ceiling 10 to 100 %,
+battery floor 0 to 100 %, thermal limit in degrees C. The thermal limit is best effort: when the node's
+heartbeat says `thermal_supported: false` the panel says "unsupported on this device", never "off". The
+panel is WinForms, so hard rule 14 applies the WinForms way: every label wraps at 380 px and no control is
+wider, so nothing overflows the 420 px panel.
+
 ## Permission-scoped context references
 
 - `folder` (inventory jobs): the folder the owner named; read-only; the receipt records the full local

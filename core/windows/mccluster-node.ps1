@@ -47,12 +47,37 @@ unless the owner invokes a switch; with no switch it is -Report, which only read
   -BrowserHeaded  Stops that task, runs the executor headed on this console (a visible Chromium on the
                node's own persistent profile) so you can sign the profile into the allowed sites by hand,
                and starts the task again at Ctrl+C. Nothing from your own browsers is read.
+  -Pause       Writes the marker <StateRoot>\paused: the agent stops claiming within one poll and its
+               heartbeat says paused=true. Running work finishes.  -Resume removes the marker.
+  -Limits      Writes <StateRoot>\limits.json (schema mccluster-node-limits/1) from -IdleOnly, -OnACOnly,
+               -MaxConcurrency 1..4 (default 1), -CpuBusyPercent 10..100, -BatteryFloorPercent 0..100 and
+               -ThermalLimitC (0 = not set), re-registers the two scheduled tasks to match and sets
+               max_leases / max_concurrency in capabilities.json. Idle-only: the tasks start only once
+               Windows reports the device idle (RunOnlyIfIdle after 10 min idle, waiting up to 30 days for
+               it), carry RestartOnIdle and are NOT stopped when the idle state ends (running work
+               finishes); a third task, "McCluster Node Idle", is the one Windows stops at idle end and
+               restarts on idle, and the agent reads whether it runs before each claim. AC-only changes
+               no task setting: the tasks stay startable on battery and the agent's own gate refuses
+               claims on battery (or when the power state is unknown) while it keeps heartbeating.
+               -Install re-applies the plan of an existing limits.json. The agent enforces every limit
+               before each claim and reports it in heartbeat labels; a thermal limit on a device whose
+               thermal zone cannot be read is reported as unsupported, never silently dropped. Contract:
+               docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md on branch prime/contribution-ledger
+               (not in this tree until that branch is merged).
+  -Revoke      Stops and unregisters the McCluster Node tasks, ends the processes their launchers
+               started, deletes identity.json (the node's key), verifies it is gone (retrying; if it is
+               still there the run says so and exits 2 without claiming a deletion), then writes
+               <StateRoot>\revoked.json (node id, time) and prints the node id the owner revokes on the
+               Core. Never a token or a key.
+  -Uninstall   -Revoke, then removes the state root and the user-scope variables -Install wrote.
 
 Apart from -Browser, this script downloads nothing and evaluates no remote text. Models come through
 the owner's own Ollama (-Models); the agent, the adapter and the browser executor are the Node sources
 in the checkout given by -RepoPath. The compute node never holds a control-plane secret: the enrolment
 token lives in <StateRoot>\enroll.env with an owner-only ACL for the one-shot enrolment and is removed
-after it.
+after it; when the desktop drives -Enroll it hands the token over in the environment variable
+MCCLUSTER_NODE_ENROLL_TOKEN instead, and then no file is written at all. Nothing this script prints names
+a token, a key, the user or the host.
 
 .NOTES
 Tests: core\windows\tests\mccluster-node.tests.ps1 (dot-sources this file with
@@ -75,6 +100,21 @@ param(
   [switch]$BrowserHeaded,
   [string]$ModelsPath,
   [int]$Vulkan = -1,
+  [switch]$Pause,
+  [switch]$Resume,
+  [switch]$Revoke,
+  [switch]$Uninstall,
+  [switch]$Limits,
+  [switch]$IdleOnly,
+  [switch]$OnACOnly,
+  [ValidateRange(1, 4)]
+  [int]$MaxConcurrency = 1,
+  [ValidateRange(10, 100)]
+  [int]$CpuBusyPercent = 0,
+  [ValidateRange(0, 100)]
+  [int]$BatteryFloorPercent = -1,
+  [ValidateRange(0, 150)]
+  [int]$ThermalLimitC = 0,
   [string]$StateRoot,
   [string]$ComputeUrl = 'https://compute.mccluster.org',
   [string]$OrgId
@@ -122,6 +162,22 @@ $script:McCandidatePartitionMax = [int64]59055800320
 $script:McGiB = [int64]1073741824
 $script:McTaskNames = @('McCluster Node Adapter', 'McCluster Node Agent')
 $script:McMeasuredSchema = 'mccluster-measured-inference/1'
+# The owner's contribution controls: the pause marker, the limits file the agent enforces before every claim,
+# the revocation record, and the heartbeat file the agent writes. The contract is
+# docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md on branch prime/contribution-ledger; that file is not in
+# this tree until that branch is merged.
+# Idle-only: the third task Windows stops at idle end and restarts on idle (the agent's live idle signal when
+# its own session cannot measure the console's input), the idle time before a start, and how long a trigger
+# waits for idle (Task Scheduler's default of 1 h silently drops the start).
+$script:McIdleTaskName = 'McCluster Node Idle'
+$script:McIdleDurationMinutes = 10
+$script:McIdleWaitDays = 30
+# -Revoke: how often and how far apart the delete of identity.json is retried before it is reported as failed.
+$script:McDeleteAttempts = 5
+$script:McDeleteRetryMs = 500
+$script:McLimitsSchema = 'mccluster-node-limits/1'
+$script:McRevokedSchema = 'mccluster-node-revoked/1'
+$script:McMaxConcurrencyLimit = 4
 # About 100 public words, the OVH-style request: an operations brief into bullet points.
 $script:McBenchmarkPrompt = 'Summarize the following operations brief into five short bullet points for a weekly status note. The brief: the compute fabric ran twenty-nine chat tasks this week, and every one was claimed within two seconds of being queued. One node went offline for a night and its queued work was picked up by the other node without a retry. Model downloads finished for both models, and the larger one is measured before it is advertised. The team wants the note to name what shipped, what is measured, what is pending owner approval, and what the next review should look at first. Keep each bullet under twenty words.'
 # Windows PowerShell 5.1 has no $IsWindows; its edition is Desktop and it only runs on Windows.
@@ -935,6 +991,257 @@ function Get-McEnrollFilePath {
   return [System.IO.Path]::Combine($StateRoot, 'enroll.env')
 }
 
+# ---- contribution controls: paths, limits.json, the task settings they imply, the manifest's leases ----
+function Get-McPausedPath {
+  param([string]$StateRoot)
+  return [System.IO.Path]::Combine($StateRoot, 'paused')
+}
+
+function Get-McLimitsPath {
+  param([string]$StateRoot)
+  return [System.IO.Path]::Combine($StateRoot, 'limits.json')
+}
+
+function Get-McRevokedPath {
+  param([string]$StateRoot)
+  return [System.IO.Path]::Combine($StateRoot, 'revoked.json')
+}
+
+function Get-McIdentityPath {
+  param([string]$StateRoot)
+  return [System.IO.Path]::Combine($StateRoot, 'identity.json')
+}
+
+function Get-McHeartbeatPath {
+  param([string]$StateRoot)
+  return [System.IO.Path]::Combine($StateRoot, 'last-heartbeat.json')
+}
+
+function New-McLimits {
+  # The limits object -Limits writes: every limit explicit, unset ones null. -MaxConcurrency is 1..4;
+  # -CpuBusyPercent 10..100 or 0 (unset); -BatteryFloorPercent 0..100 or -1 (unset); -ThermalLimitC > 0 or 0 (unset).
+  param([bool]$IdleOnly = $false, [bool]$OnACOnly = $false, [int]$MaxConcurrency = 1, [int]$CpuBusyPercent = 0, [int]$BatteryFloorPercent = -1, [int]$ThermalLimitC = 0, [string]$WrittenAt)
+  if ($MaxConcurrency -lt 1 -or $MaxConcurrency -gt $script:McMaxConcurrencyLimit) { throw ('-MaxConcurrency must be 1 to {0} (got {1})' -f $script:McMaxConcurrencyLimit, $MaxConcurrency) }
+  if ($CpuBusyPercent -ne 0 -and ($CpuBusyPercent -lt 10 -or $CpuBusyPercent -gt 100)) { throw ('-CpuBusyPercent must be 10 to 100 (got {0})' -f $CpuBusyPercent) }
+  if ($BatteryFloorPercent -ne -1 -and ($BatteryFloorPercent -lt 0 -or $BatteryFloorPercent -gt 100)) { throw ('-BatteryFloorPercent must be 0 to 100 (got {0})' -f $BatteryFloorPercent) }
+  if ($ThermalLimitC -lt 0 -or $ThermalLimitC -gt 150) { throw ('-ThermalLimitC must be 0 (not set) or 1 to 150 (got {0})' -f $ThermalLimitC) }
+  $cpu = $null
+  if ($CpuBusyPercent -ne 0) { $cpu = $CpuBusyPercent }
+  $battery = $null
+  if ($BatteryFloorPercent -ne -1) { $battery = $BatteryFloorPercent }
+  $thermal = $null
+  if ($ThermalLimitC -ne 0) { $thermal = $ThermalLimitC }
+  if (-not $WrittenAt) { $WrittenAt = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') }
+  return [ordered]@{
+    schema = $script:McLimitsSchema
+    idle_only = $IdleOnly
+    on_ac_only = $OnACOnly
+    max_concurrency = $MaxConcurrency
+    cpu_busy_percent = $cpu
+    battery_floor_percent = $battery
+    thermal_limit_c = $thermal
+    written_at = $WrittenAt
+  }
+}
+
+function ConvertTo-McLimitsJson {
+  param($Limits)
+  return (($Limits | ConvertTo-Json -Depth 4) + "`r`n")
+}
+
+function ConvertFrom-McLimits {
+  # limits.json as the agent reads it: absent means the defaults; a broken or foreign file means the defaults
+  # with an Error, never a wider limit.
+  param([string]$Text)
+  $defaults = [pscustomobject]@{ Present = $false; Error = $null; IdleOnly = $false; OnACOnly = $false; MaxConcurrency = 1; CpuBusyPercent = $null; BatteryFloorPercent = $null; ThermalLimitC = $null; WrittenAt = $null }
+  if ($null -eq $Text -or ([string]$Text).Trim() -eq '') { return $defaults }
+  $parsed = $null
+  try { $parsed = $Text | ConvertFrom-Json } catch { $defaults.Present = $true; $defaults.Error = 'invalid_json'; return $defaults }
+  if ($null -eq $parsed -or [string]$parsed.schema -ne $script:McLimitsSchema) { $defaults.Present = $true; $defaults.Error = 'schema_mismatch'; return $defaults }
+  $max = ConvertTo-McInt64 $parsed.max_concurrency
+  if ($null -eq $max -or $max -lt 1 -or $max -gt $script:McMaxConcurrencyLimit) { $max = 1 }
+  $cpu = ConvertTo-McInt64 $parsed.cpu_busy_percent
+  if ($null -ne $cpu -and ($cpu -lt 10 -or $cpu -gt 100)) { $cpu = $null }
+  $battery = ConvertTo-McInt64 $parsed.battery_floor_percent
+  if ($null -ne $battery -and ($battery -lt 0 -or $battery -gt 100)) { $battery = $null }
+  $thermal = ConvertTo-McInt64 $parsed.thermal_limit_c
+  if ($null -ne $thermal -and $thermal -le 0) { $thermal = $null }
+  return [pscustomobject]@{
+    Present = $true
+    Error = $null
+    IdleOnly = ($parsed.idle_only -eq $true)
+    OnACOnly = ($parsed.on_ac_only -eq $true)
+    MaxConcurrency = [int]$max
+    CpuBusyPercent = $cpu
+    BatteryFloorPercent = $battery
+    ThermalLimitC = $thermal
+    WrittenAt = [string]$parsed.written_at
+  }
+}
+
+function Format-McLimitsSummary {
+  # One line for -Report and the desktop: every limit named, unset ones said so, the thermal limit marked
+  # "unsupported on this device" when no zone reading exists (never "off": the owner set it).
+  param($Limits, $ThermalSupported = $null)
+  if ($null -ne $Limits.Error) { return ('limits.json unreadable ({0}): the agent applies the defaults (no limit, max_concurrency 1)' -f $Limits.Error) }
+  $parts = New-Object System.Collections.Generic.List[string]
+  $parts.Add(('idle_only {0}' -f $Limits.IdleOnly.ToString().ToLowerInvariant()))
+  $parts.Add(('on_ac_only {0}' -f $Limits.OnACOnly.ToString().ToLowerInvariant()))
+  $parts.Add(('max_concurrency {0}' -f $Limits.MaxConcurrency))
+  if ($null -ne $Limits.CpuBusyPercent) { $parts.Add(('cpu_busy_percent {0}' -f $Limits.CpuBusyPercent)) } else { $parts.Add('cpu_busy_percent not set') }
+  if ($null -ne $Limits.BatteryFloorPercent) { $parts.Add(('battery_floor_percent {0}' -f $Limits.BatteryFloorPercent)) } else { $parts.Add('battery_floor_percent not set') }
+  if ($null -ne $Limits.ThermalLimitC) {
+    $note = ''
+    if ($ThermalSupported -eq $false) { $note = ' (unsupported on this device: no thermal zone reading; the agent reports the limit as unsupported)' }
+    $parts.Add(('thermal_limit_c {0}{1}' -f $Limits.ThermalLimitC, $note))
+  } else { $parts.Add('thermal_limit_c not set') }
+  $prefix = ''
+  if (-not $Limits.Present) { $prefix = 'defaults (no limits.json): ' }
+  return ($prefix + ($parts -join ', '))
+}
+
+function Get-McTaskSettingsPlan {
+  # What the scheduled tasks' settings must say for the limits.
+  # Idle-only: the adapter and the agent start only once Windows reports the device idle (RunOnlyIfIdle, after
+  # IdleDurationMinutes of idle, waiting up to IdleWaitDays for it instead of Task Scheduler's 1 h default that
+  # drops the start), are NOT stopped when the idle state ends (StopOnIdleEnd false: running work finishes, the
+  # lease is kept) and carry RestartOnIdle. Because the two tasks outlive the idle state, their RunOnlyIfIdle
+  # flag is not a live idle signal; a third task, "McCluster Node Idle" (IdleSentinel), is: Windows stops it
+  # when the idle state ends and restarts it when idle resumes, and the agent's probe reads whether it runs.
+  # AC-only: nothing at the task level. Task Scheduler evaluates "no start on battery" only when a trigger
+  # fires (startup, logon), so a node that booted on battery would never start after being plugged in; the
+  # tasks stay startable and running on battery and the agent's own gate refuses claims (on_battery /
+  # power_unknown) while it keeps heartbeating.
+  param($Limits)
+  $idle = $false
+  if ($null -ne $Limits) { $idle = ($Limits.IdleOnly -eq $true) }
+  return [pscustomobject]@{
+    RunOnlyIfIdle = $idle
+    RestartOnIdle = $idle
+    StopOnIdleEnd = $false
+    IdleDurationMinutes = $script:McIdleDurationMinutes
+    IdleWaitDays = $script:McIdleWaitDays
+    IdleSentinel = $idle
+    AllowStartIfOnBatteries = $true
+    StopIfGoingOnBatteries = $false
+  }
+}
+
+function Get-McTaskSettingsArguments {
+  # The exact New-ScheduledTaskSettingsSet arguments for a plan (pure: the tests read this, and build a
+  # settings object from it without registering anything). -Sentinel is the idle sentinel task: the one task
+  # Windows must stop at idle end and restart when idle resumes (StopOnIdleEnd stays at its default, true).
+  param($TaskSettings, [switch]$Sentinel, [switch]$NoRestartOnIdle)
+  $arguments = @{ ExecutionTimeLimit = ([TimeSpan]::Zero); StartWhenAvailable = $true; MultipleInstances = 'IgnoreNew' }
+  if ($Sentinel) {
+    $arguments['AllowStartIfOnBatteries'] = $true
+    $arguments['DontStopIfGoingOnBatteries'] = $true
+    $arguments['RunOnlyIfIdle'] = $true
+    $arguments['RestartOnIdle'] = $true
+    $arguments['IdleDuration'] = (New-TimeSpan -Minutes ([int]$TaskSettings.IdleDurationMinutes))
+    $arguments['IdleWaitTimeout'] = (New-TimeSpan -Days ([int]$TaskSettings.IdleWaitDays))
+    return $arguments
+  }
+  $arguments['RestartCount'] = 3
+  $arguments['RestartInterval'] = (New-TimeSpan -Minutes 1)
+  if ($TaskSettings.AllowStartIfOnBatteries) { $arguments['AllowStartIfOnBatteries'] = $true }
+  if (-not $TaskSettings.StopIfGoingOnBatteries) { $arguments['DontStopIfGoingOnBatteries'] = $true }
+  if ($TaskSettings.RunOnlyIfIdle) {
+    $arguments['RunOnlyIfIdle'] = $true
+    if (-not $TaskSettings.StopOnIdleEnd) { $arguments['DontStopOnIdleEnd'] = $true }
+    if ($TaskSettings.RestartOnIdle -and -not $NoRestartOnIdle) { $arguments['RestartOnIdle'] = $true }
+    $arguments['IdleDuration'] = (New-TimeSpan -Minutes ([int]$TaskSettings.IdleDurationMinutes))
+    $arguments['IdleWaitTimeout'] = (New-TimeSpan -Days ([int]$TaskSettings.IdleWaitDays))
+  }
+  return $arguments
+}
+
+function Format-McTaskSettingsPlan {
+  # One line naming what the plan does to the tasks (-Install, -Limits and -WhatIf print it).
+  param($TaskSettings)
+  if (-not $TaskSettings.RunOnlyIfIdle) { return 'no idle condition, start and keep running on battery (on_ac_only is enforced by the agent''s claim gate, not by the tasks)' }
+  return ('RunOnlyIfIdle after {0} min idle (wait up to {1} d), RestartOnIdle, not stopped at idle end, idle sentinel task "{2}", start and keep running on battery' -f $TaskSettings.IdleDurationMinutes, $TaskSettings.IdleWaitDays, $script:McIdleTaskName)
+}
+
+function Read-McLimitsTaskPlan {
+  # The task plan for the limits.json already under the state root (absent or unreadable: the defaults).
+  param([string]$StateRoot)
+  $limits = ConvertFrom-McLimits -Text (Read-McTextFile (Get-McLimitsPath $StateRoot))
+  return [pscustomobject]@{ Limits = $limits; Plan = (Get-McTaskSettingsPlan -Limits $limits) }
+}
+
+function Set-McManifestConcurrency {
+  # max_leases and every entry's max_concurrency follow -MaxConcurrency; nothing else in capabilities.json moves.
+  param([string]$ManifestJson, [int]$MaxConcurrency)
+  if ($MaxConcurrency -lt 1 -or $MaxConcurrency -gt $script:McMaxConcurrencyLimit) { throw ('max_concurrency must be 1 to {0}' -f $script:McMaxConcurrencyLimit) }
+  $manifest = $ManifestJson | ConvertFrom-Json
+  $manifest | Add-Member -NotePropertyName 'max_leases' -NotePropertyValue $MaxConcurrency -Force
+  foreach ($entry in @($manifest.capabilities)) {
+    if ($null -eq $entry) { continue }
+    if ($null -ne $entry.PSObject.Properties['max_concurrency']) { $entry.max_concurrency = $MaxConcurrency }
+  }
+  return ($manifest | ConvertTo-Json -Depth 32)
+}
+
+function Read-McIdentityNodeId {
+  # The node id alone from identity.json; the key material is never read into a variable that is printed.
+  param([string]$StateRoot)
+  $text = Read-McTextFile (Get-McIdentityPath $StateRoot)
+  if ($null -eq $text) { return $null }
+  try {
+    $identity = $text | ConvertFrom-Json
+    $nodeId = [string]$identity.nodeId
+    if ($nodeId -eq '') { return $null }
+    return $nodeId
+  } catch { return $null }
+}
+
+function ConvertTo-McRevokedJson {
+  param([string]$NodeId, [string]$RevokedAt)
+  $record = [ordered]@{ schema = $script:McRevokedSchema; node_id = $NodeId; revoked_at = $RevokedAt; next = 'revoke this node id on the Core (the owner tool in #821; direct SQL until then)' }
+  return (($record | ConvertTo-Json -Depth 4) + "`r`n")
+}
+
+function Format-McContributionReportLines {
+  # The CONTRIBUTION block of -Report: paused, the limits as the agent reads them, thermal_supported, the
+  # revocation record and the last heartbeat the agent wrote. Pure over its arguments; never a key or token.
+  param([string]$StateRoot, $ThermalReading = $null)
+  $lines = New-Object System.Collections.Generic.List[string]
+  $paused = 'no'
+  if (Test-Path -LiteralPath (Get-McPausedPath $StateRoot)) { $paused = 'yes (marker present: the agent claims nothing)' }
+  $lines.Add(('  paused: {0}' -f $paused))
+  $thermalSupported = ($null -ne $ThermalReading)
+  $limits = ConvertFrom-McLimits -Text (Read-McTextFile (Get-McLimitsPath $StateRoot))
+  $lines.Add(('  limits: {0}' -f (Format-McLimitsSummary -Limits $limits -ThermalSupported $thermalSupported)))
+  if ($thermalSupported) { $lines.Add(('  thermal_supported: yes (hottest zone {0} C)' -f $ThermalReading)) }
+  else { $lines.Add('  thermal_supported: no (MSAcpi_ThermalZoneTemperature not readable here; a thermal limit is reported as unsupported)') }
+  $revokedText = Read-McTextFile (Get-McRevokedPath $StateRoot)
+  if ($null -ne $revokedText) {
+    $revokedLine = 'revoked.json: present (unreadable)'
+    try { $revoked = $revokedText | ConvertFrom-Json; $revokedLine = ('revoked.json: node {0} revoked locally at {1}; revoke it on the Core too' -f $revoked.node_id, $revoked.revoked_at) } catch { }
+    $lines.Add('  ' + $revokedLine)
+  } else { $lines.Add('  revoked.json: absent') }
+  $heartbeatText = Read-McTextFile (Get-McHeartbeatPath $StateRoot)
+  if ($null -ne $heartbeatText) {
+    $heartbeatLine = 'last-heartbeat.json: present (unreadable)'
+    try {
+      $heartbeat = $heartbeatText | ConvertFrom-Json
+      $gate = ''
+      if ($null -ne $heartbeat.labels -and $null -ne $heartbeat.labels.claim_gate) { $gate = ('; claim_gate {0}' -f $heartbeat.labels.claim_gate) }
+      $heartbeatLine = ('last-heartbeat.json: node {0} at {1}, agent {2}, {3} advertised{4}' -f $heartbeat.node_id, $heartbeat.at, $heartbeat.agent_version, $heartbeat.advertised, $gate)
+    } catch { }
+    $lines.Add('  ' + $heartbeatLine)
+  } else { $lines.Add('  last-heartbeat.json: absent (no heartbeat accepted yet from this state root)') }
+  return @($lines.ToArray())
+}
+
+function Get-McInstalledVariableNames {
+  # The user-scope names -Install writes and -Uninstall clears (never any other name on the machine).
+  $settings = Get-McTierSettings 'D'
+  $values = Get-McNodeEnvironment -Settings $settings -StateRoot 'STATE' -NodeName 'x' -OrgId 'x' -ComputeUrl 'https://compute.mccluster.org'
+  return @($values.Keys)
+}
+
 function Read-McNodeConfig {
   param([string]$StateRoot)
   $text = Read-McTextFile (Get-McNodeConfigPath $StateRoot)
@@ -1053,19 +1360,29 @@ function Get-McScheduledTaskInfo {
 
 function Register-McScheduledTasks {
   # Two tasks (adapter, then the agent 20 s later): AtStartup + AtLogOn, current user, S4U, Limited,
-  # restart 3 x 1 min, no time limit, start when available, battery allowed, IgnoreNew. With -Browser,
-  # only the third task (the browser executor, 10 s after start) is registered; the two others are untouched.
-  param([string]$StateRoot, [string]$UserId, [switch]$Browser)
+  # restart 3 x 1 min, no time limit, start when available, IgnoreNew; the idle conditions come from the
+  # -TaskSettings plan (Get-McTaskSettingsPlan / Get-McTaskSettingsArguments: the install defaults set none).
+  # An idle-only plan also registers the idle sentinel task ("McCluster Node Idle": a sleeping powershell.exe
+  # that Windows stops at idle end and restarts on idle); any other plan removes it.
+  # With -Browser, only the browser executor task (10 s after start) is registered; the others are untouched.
+  param([string]$StateRoot, [string]$UserId, [switch]$Browser, $TaskSettings = $null)
   if (-not (Test-McWindowsOnly)) { return $false }
+  if ($null -eq $TaskSettings) { $TaskSettings = Get-McTaskSettingsPlan -Limits $null }
   $definitions = @(
     @{ Name = 'McCluster Node Adapter'; Launcher = [System.IO.Path]::Combine($StateRoot, 'adapter.cmd'); Delay = $null },
     @{ Name = 'McCluster Node Agent'; Launcher = [System.IO.Path]::Combine($StateRoot, 'agent.cmd'); Delay = 'PT20S' }
   )
   if ($Browser) { $definitions = @(@{ Name = $script:McBrowserTaskName; Launcher = [System.IO.Path]::Combine($StateRoot, 'browser.cmd'); Delay = 'PT10S' }) }
+  elseif ($TaskSettings.IdleSentinel) { $definitions += @{ Name = $script:McIdleTaskName; Sentinel = $true; Delay = $null } }
+  else {
+    $stale = Get-ScheduledTask -TaskName $script:McIdleTaskName -ErrorAction SilentlyContinue
+    if ($stale) { [void](Unregister-McScheduledTasks -Names @($script:McIdleTaskName)) }
+  }
   foreach ($definition in $definitions) {
     $existing = Get-ScheduledTask -TaskName $definition.Name -ErrorAction SilentlyContinue
     if ($existing) { Unregister-ScheduledTask -TaskName $definition.Name -Confirm:$false }
-    $action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument ('/c "{0}"' -f $definition.Launcher)
+    if ($definition.Sentinel) { $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -NonInteractive -WindowStyle Hidden -Command "while ($true) { Start-Sleep -Seconds 3600 }"' }
+    else { $action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument ('/c "{0}"' -f $definition.Launcher) }
     $startup = New-ScheduledTaskTrigger -AtStartup
     $logon = New-ScheduledTaskTrigger -AtLogOn -User $UserId
     if ($definition.Delay) {
@@ -1073,10 +1390,57 @@ function Register-McScheduledTasks {
       $logon.Delay = $definition.Delay
     }
     $principal = New-ScheduledTaskPrincipal -UserId $UserId -LogonType S4U -RunLevel Limited
-    $settings = New-ScheduledTaskSettingsSet -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew
-    Register-ScheduledTask -TaskName $definition.Name -Action $action -Trigger @($startup, $logon) -Principal $principal -Settings $settings -Force | Out-Null
+    # The browser executor claims nothing by itself: it keeps the install defaults whatever the limits say.
+    $plan = $TaskSettings
+    if ($Browser) { $plan = Get-McTaskSettingsPlan -Limits $null }
+    $settingsArguments = Get-McTaskSettingsArguments -TaskSettings $plan -Sentinel:([bool]$definition.Sentinel)
+    $settings = New-ScheduledTaskSettingsSet @settingsArguments
+    try {
+      Register-ScheduledTask -TaskName $definition.Name -Action $action -Trigger @($startup, $logon) -Principal $principal -Settings $settings -Force -ErrorAction Stop | Out-Null
+    } catch {
+      # A Task Scheduler build that refuses RestartOnIdle on a task it does not stop at idle end: the flag has
+      # no effect there (nothing was stopped, so nothing is restarted); register without it and say so.
+      if ($definition.Sentinel -or -not $settingsArguments.ContainsKey('RestartOnIdle') -or -not $settingsArguments.ContainsKey('DontStopOnIdleEnd')) { throw }
+      Write-Warning ('scheduled task {0}: RestartOnIdle refused together with "do not stop at idle end" ({1}); registered without RestartOnIdle' -f $definition.Name, $_.Exception.Message)
+      $settingsArguments = Get-McTaskSettingsArguments -TaskSettings $plan -NoRestartOnIdle
+      $settings = New-ScheduledTaskSettingsSet @settingsArguments
+      Register-ScheduledTask -TaskName $definition.Name -Action $action -Trigger @($startup, $logon) -Principal $principal -Settings $settings -Force -ErrorAction Stop | Out-Null
+    }
   }
   return $true
+}
+
+function Unregister-McScheduledTasks {
+  # Stops and removes every McCluster Node task that exists (adapter, agent, browser); returns the names removed.
+  param([string[]]$Names)
+  $removed = New-Object System.Collections.Generic.List[string]
+  if (-not (Test-McWindowsOnly)) { return @($removed.ToArray()) }
+  foreach ($name in @($Names)) {
+    $task = Get-ScheduledTask -TaskName $name -ErrorAction SilentlyContinue
+    if ($null -eq $task) { continue }
+    try { if ([string]$task.State -eq 'Running') { Stop-ScheduledTask -TaskName $name -ErrorAction SilentlyContinue } } catch { }
+    try { Unregister-ScheduledTask -TaskName $name -Confirm:$false -ErrorAction Stop; $removed.Add($name) } catch { Write-Warning ('scheduled task {0}: {1}' -f $name, $_.Exception.Message) }
+  }
+  return @($removed.ToArray())
+}
+
+function Get-McThermalReading {
+  # The hottest ACPI thermal zone in degrees C, or $null when the host exposes none or refuses the read (the
+  # usual case without administrator rights): then thermal_supported is false and a thermal limit is reported
+  # as unsupported, never silently dropped.
+  if (-not (Test-McWindowsOnly)) { return $null }
+  try {
+    $zones = @(Get-CimInstance -Namespace root/wmi -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction Stop)
+    $max = $null
+    foreach ($zone in $zones) {
+      if ($null -eq $zone) { continue }
+      $tenths = ConvertTo-McInt64 $zone.CurrentTemperature
+      if ($null -eq $tenths -or $tenths -le 0) { continue }
+      $celsius = [math]::Round($tenths / 10.0 - 273.15, 1)
+      if ($null -eq $max -or $celsius -gt $max) { $max = $celsius }
+    }
+    return $max
+  } catch { return $null }
 }
 
 function Start-McScheduledTask {
@@ -1361,8 +1725,11 @@ function Invoke-McReport {
   if ($browserTask.Count -gt 0) { $browserTaskState = [string]$browserTask[0].State }
   foreach ($line in (Format-McBrowserReportLines -StateRoot $StateRoot -TaskState $browserTaskState -Health (Invoke-McBrowserJson -Path '/health') -Ready (Invoke-McBrowserJson -Path '/ready'))) { $lines.Add($line) }
 
+  $lines.Add('CONTRIBUTION')
+  foreach ($line in (Format-McContributionReportLines -StateRoot $StateRoot -ThermalReading (Get-McThermalReading))) { $lines.Add($line) }
+
   $lines.Add('NODE FILES')
-  foreach ($name in @('capabilities.json', 'node.config.json', 'identity.json', 'measured-inference.json', 'gpu-evidence.json', 'enroll.env', 'browser-policy.json', 'browser.cmd')) {
+  foreach ($name in @('capabilities.json', 'node.config.json', 'identity.json', 'measured-inference.json', 'gpu-evidence.json', 'enroll.env', 'browser-policy.json', 'browser.cmd', 'paused', 'limits.json', 'revoked.json', 'last-heartbeat.json')) {
     $present = 'absent'
     if (Test-Path -LiteralPath ([System.IO.Path]::Combine($StateRoot, $name))) { $present = 'present' }
     $lines.Add(('  {0}: {1}' -f $name, $present))
@@ -1431,6 +1798,9 @@ function Invoke-McInstall {
     $extra = @()
     if ($browserOn) { $extra = @($script:McBrowserImplementation) }
     $manifestJson = ConvertTo-McManifestJson -TemplateJson $templateJson -Settings $settings -ExtraImplementations $extra
+    # A re-run keeps the owner's max_concurrency from limits.json (the template alone would reset the leases).
+    $keptLimits = (Read-McLimitsTaskPlan -StateRoot $StateRoot).Limits
+    if ($keptLimits.Present -and $null -eq $keptLimits.Error) { $manifestJson = Set-McManifestConcurrency -ManifestJson $manifestJson -MaxConcurrency $keptLimits.MaxConcurrency }
     if (Write-McFileIfChanged -Path $manifestPath -Content $manifestJson) { $written.Add($manifestPath) }
   }
 
@@ -1475,14 +1845,22 @@ function Invoke-McInstall {
     }
   }
 
-  if ($PSCmdlet.ShouldProcess(($script:McTaskNames -join ', '), 'register scheduled tasks (AtStartup, AtLogOn, current user, restart on failure, no time limit)')) {
-    $tasksRegistered = Register-McScheduledTasks -StateRoot $StateRoot -UserId (Get-McCurrentUserId)
+  # A re-run of -Install keeps the owner's limits: the tasks are registered with the plan of the limits.json
+  # already under the state root (absent: the install defaults), never silently back at the defaults.
+  $existingLimits = Read-McLimitsTaskPlan -StateRoot $StateRoot
+  $taskPlan = $existingLimits.Plan
+  if ($existingLimits.Limits.Present) {
+    if ($null -ne $existingLimits.Limits.Error) { Write-Host ('  limits.json is unreadable ({0}): scheduled tasks get the install defaults; run -Limits to rewrite it' -f $existingLimits.Limits.Error) }
+    else { Write-Host ('  limits.json kept; scheduled tasks follow it: ' + (Format-McTaskSettingsPlan $taskPlan)) }
+  }
+  if ($PSCmdlet.ShouldProcess(($script:McTaskNames -join ', '), ('register scheduled tasks (AtStartup, AtLogOn, current user, restart on failure, no time limit; ' + (Format-McTaskSettingsPlan $taskPlan) + ')'))) {
+    $tasksRegistered = Register-McScheduledTasks -StateRoot $StateRoot -UserId (Get-McCurrentUserId) -TaskSettings $taskPlan
     if (-not $tasksRegistered) { Write-Host '  scheduled tasks: not registered (not Windows)' }
   }
 
   Write-Host ('Install done: {0} file(s) written, {1} user variable(s) changed, scheduled tasks {2}.' -f $written.Count, $changedEnvironment.Count, $(if ($tasksRegistered) { 'registered' } else { 'not registered' }))
   Write-Host 'Next: run -Models (pull the tier models), then -Enroll with the one-time token from the owner''s Core.'
-  return [pscustomobject]@{ Tier = $decision.Tier; Settings = $settings; Written = @($written.ToArray()); EnvironmentChanged = @($changedEnvironment.ToArray()); TasksRegistered = $tasksRegistered; ManifestPath = $manifestPath }
+  return [pscustomobject]@{ Tier = $decision.Tier; Settings = $settings; Written = @($written.ToArray()); EnvironmentChanged = @($changedEnvironment.ToArray()); TasksRegistered = $tasksRegistered; TaskPlan = $taskPlan; ManifestPath = $manifestPath }
 }
 
 function Invoke-McEnroll {
@@ -1497,21 +1875,33 @@ function Invoke-McEnroll {
   $settings = Get-McTierSettings ([string]$config.tier)
   $values = Get-McNodeEnvironment -Settings $settings -StateRoot $StateRoot -NodeName ([string]$config.node_name) -OrgId ([string]$config.org_id) -ComputeUrl ([string]$config.compute_url)
   $enrollFile = Get-McEnrollFilePath $StateRoot
-
-  $enrolSecret = Read-McSecret 'Enrolment token (shown once by the owner''s Core)'
-  if ([string]$enrolSecret -eq '') { Write-Host 'No token entered; nothing was written.'; return 2 }
-  if (-not $PSCmdlet.ShouldProcess($enrollFile, 'write the one-shot enrolment token file (owner-only ACL), enrol once, delete it')) { return 0 }
-  Write-McAtomicFile -Path $enrollFile -Content ('MCCLUSTER_NODE_ENROLL_TOKEN=' + $enrolSecret + "`r`n")
-  [void](Invoke-McIcacls -Target $enrollFile -Rights 'F')
-  $enrolSecret = $null
-  [void](Start-McScheduledTask -Name 'McCluster Node Adapter')
-
   $environment = @{}
   foreach ($key in $values.Keys) { $environment[[string]$key] = [string]$values[$key] }
-  $fileText = Read-McTextFile $enrollFile
-  foreach ($line in ([string]$fileText -split "`r?`n")) {
-    if ($line -match '^MCCLUSTER_NODE_ENROLL_TOKEN=(.+)$') { $environment['MCCLUSTER_NODE_ENROLL_TOKEN'] = $matches[1] }
+
+  # The desktop (and any non-interactive caller) hands the one-time token over in this process's environment:
+  # it goes straight into the agent's environment and no enroll.env is written. On a console it is read as a
+  # secure string and kept in the owner-only file for the length of the run, as before.
+  $fromEnvironment = ([string]$env:MCCLUSTER_NODE_ENROLL_TOKEN -ne '')
+  if ($fromEnvironment) {
+    if (-not $PSCmdlet.ShouldProcess('MCCLUSTER_NODE_ENROLL_TOKEN (environment)', 'enrol once with the token from the environment; no file is written')) { return 0 }
+    $environment['MCCLUSTER_NODE_ENROLL_TOKEN'] = [string]$env:MCCLUSTER_NODE_ENROLL_TOKEN
+    $env:MCCLUSTER_NODE_ENROLL_TOKEN = ''
+    Write-Host 'Enrolment token taken from the environment (not written to any file).'
+  } else {
+    $enrolSecret = Read-McSecret 'Enrolment token (shown once by the owner''s Core)'
+    if ([string]$enrolSecret -eq '') { Write-Host 'No token entered; nothing was written.'; return 2 }
+    if (-not $PSCmdlet.ShouldProcess($enrollFile, 'write the one-shot enrolment token file (owner-only ACL), enrol once, delete it')) { return 0 }
+    Write-McAtomicFile -Path $enrollFile -Content ('MCCLUSTER_NODE_ENROLL_TOKEN=' + $enrolSecret + "`r`n")
+    [void](Invoke-McIcacls -Target $enrollFile -Rights 'F')
+    $enrolSecret = $null
+    $fileText = Read-McTextFile $enrollFile
+    foreach ($line in ([string]$fileText -split "`r?`n")) {
+      if ($line -match '^MCCLUSTER_NODE_ENROLL_TOKEN=(.+)$') { $environment['MCCLUSTER_NODE_ENROLL_TOKEN'] = $matches[1] }
+    }
+    $fileText = $null
   }
+  [void](Start-McScheduledTask -Name 'McCluster Node Adapter')
+
   $environment['MCCLUSTER_NODE_ENROLL_ONLY'] = '1'
   Write-Host 'Enrolling once (up to 120 s)...'
   $result = Invoke-McNodeProcess -Script $agent -Environment $environment -WorkingDirectory ([System.IO.Path]::Combine($RepoPath, 'core')) -TimeoutSeconds 120
@@ -1528,13 +1918,15 @@ function Invoke-McEnroll {
     Remove-Item -LiteralPath $enrollFile -Force -ErrorAction SilentlyContinue
     [void](Start-McScheduledTask -Name 'McCluster Node Agent')
     Write-Host ('Enrolled. node_id {0}; enrolled {1}' -f $nodeId, $enrolled)
-    Write-Host 'token removed from this machine; rotate CORE_COMPUTE_ENROLL_TOKEN on the Core (deploy-gated)'
+    if ($fromEnvironment) { Write-Host 'token was never written to disk; it is single-use (or rotate CORE_COMPUTE_ENROLL_TOKEN on the Core if it was the bootstrap token)' }
+    else { Write-Host 'token removed from this machine; rotate CORE_COMPUTE_ENROLL_TOKEN on the Core (deploy-gated)' }
     return 0
   }
   $why = 'exit code ' + $result.ExitCode
   if ($result.TimedOut) { $why = 'timed out after 120 s' }
   Write-Host ('Enrolment did not finish ({0}).' -f $why)
   foreach ($line in @(([string]$result.StdErr -split "`r?`n") | Where-Object { $_ -ne '' } | Select-Object -Last 5)) { Write-Host ('  ' + (Get-McMaskedText $line)) }
+  if ($fromEnvironment) { Write-Host 'nothing to remove: the token was never written to disk; run -Enroll again with a fresh token'; return 1 }
   $answer = Read-McAnswer 'Keep enroll.env on this machine for a retry? [y/N]'
   if ($answer -notmatch '^[Yy]') { Remove-Item -LiteralPath $enrollFile -Force -ErrorAction SilentlyContinue; Write-Host 'token file removed' }
   else { Write-Host 'token file kept; run -Enroll again or remove it by hand' }
@@ -1857,6 +2249,209 @@ function Invoke-McBrowserHeaded {
   return 0
 }
 
+# ---- contribution actions: pause, resume, limits, revoke, uninstall ----------------------------
+function Invoke-McPause {
+  # The marker the agent honours within one poll: no new claim, running work finishes, heartbeat paused=true.
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param([string]$StateRoot)
+  if ($null -eq (Read-McNodeConfig $StateRoot)) { throw 'run -Install first: node.config.json is missing' }
+  $marker = Get-McPausedPath $StateRoot
+  if (Test-Path -LiteralPath $marker) { Write-Host 'Already paused (marker present).'; return 0 }
+  if ($PSCmdlet.ShouldProcess($marker, 'write the pause marker')) {
+    Write-McAtomicFile -Path $marker -Content ((Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`r`n")
+    Write-Host 'Paused: the agent stops claiming within one poll (running work finishes) and its heartbeat says paused=true. -Resume lifts it.'
+  }
+  return 0
+}
+
+function Invoke-McResume {
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param([string]$StateRoot)
+  $marker = Get-McPausedPath $StateRoot
+  if (-not (Test-Path -LiteralPath $marker)) { Write-Host 'Not paused (no marker).'; return 0 }
+  if ($PSCmdlet.ShouldProcess($marker, 'remove the pause marker')) {
+    Remove-Item -LiteralPath $marker -Force
+    Write-Host 'Resumed: the agent claims again within one poll.'
+  }
+  return 0
+}
+
+function Invoke-McLimits {
+  # Writes limits.json, re-registers the two tasks to match (idle-only, AC-only) and sets the manifest's leases.
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param([string]$StateRoot, [bool]$IdleOnly, [bool]$OnACOnly, [int]$MaxConcurrency, [int]$CpuBusyPercent, [int]$BatteryFloorPercent, [int]$ThermalLimitC)
+  $config = Read-McNodeConfig $StateRoot
+  if ($null -eq $config) { throw 'run -Install first: node.config.json is missing' }
+  $limits = New-McLimits -IdleOnly $IdleOnly -OnACOnly $OnACOnly -MaxConcurrency $MaxConcurrency -CpuBusyPercent $CpuBusyPercent -BatteryFloorPercent $BatteryFloorPercent -ThermalLimitC $ThermalLimitC
+  $thermalReading = Get-McThermalReading
+  $thermalSupported = ($null -ne $thermalReading)
+  $summary = Format-McLimitsSummary -Limits (ConvertFrom-McLimits -Text (ConvertTo-McLimitsJson $limits)) -ThermalSupported $thermalSupported
+  Write-Host ('Limits: ' + $summary)
+  if ($null -ne $limits.thermal_limit_c -and -not $thermalSupported) { Write-Host '  thermal: unsupported on this device (no readable thermal zone); the limit is kept, reported as unsupported by the agent, and never silently dropped' }
+  $written = New-Object System.Collections.Generic.List[string]
+  $limitsPath = Get-McLimitsPath $StateRoot
+  if ($PSCmdlet.ShouldProcess($limitsPath, 'write limits.json')) {
+    if (Write-McFileIfChanged -Path $limitsPath -Content (ConvertTo-McLimitsJson $limits)) { $written.Add($limitsPath) }
+  }
+  $manifestPath = Get-McManifestPath $StateRoot
+  if ($PSCmdlet.ShouldProcess($manifestPath, ('set max_leases and max_concurrency to ' + $MaxConcurrency))) {
+    $current = Read-McTextFile $manifestPath
+    if ($null -eq $current) { Write-Host '  capabilities.json is missing; run -Install first' }
+    elseif (Write-McFileIfChanged -Path $manifestPath -Content (Set-McManifestConcurrency -ManifestJson $current -MaxConcurrency $MaxConcurrency)) { $written.Add($manifestPath); Write-Host ('  capabilities.json: max_leases {0}; the agent re-reads it within 15 s' -f $MaxConcurrency) }
+  }
+  $plan = Get-McTaskSettingsPlan -Limits (ConvertFrom-McLimits -Text (ConvertTo-McLimitsJson $limits))
+  $tasksRegistered = $false
+  Write-Host ('  scheduled tasks: ' + (Format-McTaskSettingsPlan $plan))
+  if ($PSCmdlet.ShouldProcess(($script:McTaskNames -join ', '), ('re-register: ' + (Format-McTaskSettingsPlan $plan)))) {
+    $tasksRegistered = Register-McScheduledTasks -StateRoot $StateRoot -UserId (Get-McCurrentUserId) -TaskSettings $plan
+    if (-not $tasksRegistered) { Write-Host '  scheduled tasks: not re-registered (not Windows)' }
+    elseif ($plan.IdleSentinel) { Write-Host ('  idle-only: "{0}" is not started now (you are at the keyboard); it starts at the next startup or logon once the device has been idle {1} min. Until it runs, an agent that cannot measure the console''s input refuses claims with idle_unknown.' -f $script:McIdleTaskName, $plan.IdleDurationMinutes) }
+  }
+  Write-Host ('Limits done: {0} file(s) written, scheduled tasks {1}. The agent enforces them before every claim and reports them in heartbeat labels.' -f $written.Count, $(if ($tasksRegistered) { 're-registered' } else { 'unchanged' }))
+  return [pscustomobject]@{ Limits = $limits; Plan = $plan; Written = @($written.ToArray()); TasksRegistered = $tasksRegistered; ThermalSupported = $thermalSupported; ExitCode = 0 }
+}
+
+function Get-McProcessList {
+  # ProcessId, ParentProcessId and CommandLine of every process this user may see (empty off Windows or on error).
+  if (-not (Test-McWindowsOnly)) { return @() }
+  try { return @(Get-CimInstance -ClassName Win32_Process -ErrorAction Stop | Select-Object ProcessId, ParentProcessId, CommandLine) } catch { return @() }
+}
+
+function Select-McNodeProcessIds {
+  # The processes that belong to THIS state root: every cmd.exe whose command line runs
+  # <StateRoot>\adapter.cmd, agent.cmd or browser.cmd, and everything below it (the node.exe the launcher
+  # started). Children come first so a parent is not killed before its tree is known. Pure.
+  param($Processes, [string]$StateRoot)
+  $ids = New-Object System.Collections.Generic.List[int]
+  if (-not $StateRoot) { return @() }
+  $needles = @('adapter.cmd', 'agent.cmd', 'browser.cmd') | ForEach-Object { [System.IO.Path]::Combine($StateRoot, $_).ToLowerInvariant() }
+  $roots = New-Object System.Collections.Generic.List[int]
+  foreach ($process in @($Processes)) {
+    if ($null -eq $process -or -not $process.CommandLine) { continue }
+    $line = ([string]$process.CommandLine).ToLowerInvariant()
+    foreach ($needle in $needles) { if ($line.Contains($needle)) { $roots.Add([int]$process.ProcessId); break } }
+  }
+  $queue = New-Object System.Collections.Generic.Queue[int]
+  foreach ($root in $roots) { $queue.Enqueue($root) }
+  while ($queue.Count -gt 0) {
+    $current = $queue.Dequeue()
+    if ($ids.Contains($current)) { continue }
+    $ids.Add($current)
+    foreach ($process in @($Processes)) {
+      if ($null -ne $process -and [int]$process.ParentProcessId -eq $current -and [int]$process.ProcessId -ne $current) { $queue.Enqueue([int]$process.ProcessId) }
+    }
+  }
+  $ordered = @($ids.ToArray())
+  [array]::Reverse($ordered)
+  return $ordered
+}
+
+function Stop-McProcessById {
+  param([int]$Id)
+  try { Stop-Process -Id $Id -Force -ErrorAction Stop; return $true } catch { return $false }
+}
+
+function Stop-McNodeProcesses {
+  # Unregistering a task does not end what it started: the launcher's node.exe can still hold files under the
+  # state root. Ends this state root's launcher trees; returns the process ids it ended.
+  param([string]$StateRoot)
+  $stopped = New-Object System.Collections.Generic.List[int]
+  foreach ($id in @(Select-McNodeProcessIds -Processes (Get-McProcessList) -StateRoot $StateRoot)) {
+    if ($id -eq $PID) { continue }
+    if (Stop-McProcessById -Id $id) { $stopped.Add($id) }
+  }
+  return @($stopped.ToArray())
+}
+
+function Remove-McFileVerified {
+  # Deletes a file and returns $true only when Test-Path says it is gone. A failed delete is retried
+  # ($script:McDeleteAttempts times, $script:McDeleteRetryMs apart), ending this state root's node processes
+  # again before each retry.
+  param([string]$Path, [string]$StateRoot)
+  for ($attempt = 1; $attempt -le $script:McDeleteAttempts; $attempt++) {
+    if (-not (Test-Path -LiteralPath $Path)) { return $true }
+    try { Remove-Item -LiteralPath $Path -Force -ErrorAction Stop } catch { }
+    if (-not (Test-Path -LiteralPath $Path)) { return $true }
+    if ($attempt -lt $script:McDeleteAttempts) {
+      if ($StateRoot) { [void](Stop-McNodeProcesses -StateRoot $StateRoot) }
+      Start-Sleep -Milliseconds $script:McDeleteRetryMs
+    }
+  }
+  return (-not (Test-Path -LiteralPath $Path))
+}
+
+function Invoke-McRevoke {
+  # Stops and removes the tasks, records the revocation, deletes the node's key, prints the node id (only).
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param([string]$StateRoot)
+  $nodeId = Read-McIdentityNodeId $StateRoot
+  $identityPath = Get-McIdentityPath $StateRoot
+  if ($null -eq $nodeId -and -not (Test-Path -LiteralPath $identityPath)) { Write-Host 'No identity.json under the state root: nothing to revoke locally.' }
+  $removed = @()
+  $allTasks = $script:McTaskNames + @($script:McBrowserTaskName, $script:McIdleTaskName)
+  if ($PSCmdlet.ShouldProcess($allTasks -join ', ', 'stop and unregister the scheduled tasks')) {
+    $removed = @(Unregister-McScheduledTasks -Names $allTasks)
+    Write-Host ('  scheduled tasks removed: {0}' -f $(if ($removed.Count -gt 0) { $removed -join ', ' } else { 'none registered (or not Windows)' }))
+  }
+  $revokedAt = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+  $identityDeleted = $true
+  if ($null -ne $nodeId -or (Test-Path -LiteralPath $identityPath)) {
+    if ($PSCmdlet.ShouldProcess($identityPath, 'stop the node processes, delete identity.json, verify it is gone, then write revoked.json (node id, time)')) {
+      $stopped = @(Stop-McNodeProcesses -StateRoot $StateRoot)
+      if ($stopped.Count -gt 0) { Write-Host ('  node processes stopped: {0}' -f $stopped.Count) }
+      $identityDeleted = Remove-McFileVerified -Path $identityPath -StateRoot $StateRoot
+      Remove-Item -LiteralPath (Get-McEnrollFilePath $StateRoot) -Force -ErrorAction SilentlyContinue
+      Remove-Item -LiteralPath (Get-McHeartbeatPath $StateRoot) -Force -ErrorAction SilentlyContinue
+      if (-not $identityDeleted) {
+        # The key is still on this machine: say so, write no revocation record that claims otherwise, exit non-zero.
+        Write-Host ('REVOKE FAILED: identity.json is STILL PRESENT at {0} after {1} attempts (a process holds it open, or the ACL refuses the delete).' -f $identityPath, $script:McDeleteAttempts)
+        Write-Host '  The node''s private key is still on this machine. Close anything using the state root, then run -Revoke again or delete that file by hand.'
+        if ($null -ne $nodeId) { Write-Host ('  Revoke the node on the Core regardless: node_id {0}' -f $nodeId) }
+        return [pscustomobject]@{ NodeId = $nodeId; TasksRemoved = @($removed); RevokedAt = $null; IdentityDeleted = $false; ExitCode = 2 }
+      }
+      Write-McAtomicFile -Path (Get-McRevokedPath $StateRoot) -Content (ConvertTo-McRevokedJson -NodeId $nodeId -RevokedAt $revokedAt)
+      Write-Host '  identity.json deleted (verified absent: the node''s key is gone from this machine)'
+    }
+  }
+  if ($null -ne $nodeId) {
+    Write-Host ('Revoked locally. Now revoke this node on the Core: node_id {0}' -f $nodeId)
+    Write-Host '  (the owner tool of #821; direct SQL on ops_compute_nodes until it is promoted)'
+  } else { Write-Host 'Revoked locally; no node id was recorded here (identity.json absent or unreadable).' }
+  return [pscustomobject]@{ NodeId = $nodeId; TasksRemoved = @($removed); RevokedAt = $revokedAt; IdentityDeleted = (-not (Test-Path -LiteralPath $identityPath)); ExitCode = 0 }
+}
+
+function Invoke-McUninstall {
+  # -Revoke semantics, then the state root and the user-scope variables -Install wrote are removed.
+  [CmdletBinding(SupportsShouldProcess = $true)]
+  param([string]$StateRoot)
+  $revoke = Invoke-McRevoke -StateRoot $StateRoot
+  $cleared = New-Object System.Collections.Generic.List[string]
+  if ($PSCmdlet.ShouldProcess('user-scope environment', 'clear the MCCLUSTER_* / OLLAMA_KEEP_ALIVE variables -Install wrote')) {
+    foreach ($name in (Get-McInstalledVariableNames)) {
+      if (Set-McUserEnvironment -Name $name -Value '') { $cleared.Add($name) }
+    }
+  }
+  $rootRemoved = $false
+  $exitCode = 0
+  if (Test-Path -LiteralPath $StateRoot) {
+    if ($PSCmdlet.ShouldProcess($StateRoot, 'remove the state root (manifest, config, launchers, logs, browser profile)')) {
+      try { Remove-Item -LiteralPath $StateRoot -Recurse -Force -ErrorAction Stop } catch { Write-Host ('  state root not fully removed: {0}' -f $_.Exception.Message) }
+      $rootRemoved = (-not (Test-Path -LiteralPath $StateRoot))
+      if (-not $rootRemoved) { $exitCode = 2 }
+    }
+  }
+  # Never "uninstalled" over a key that is still there: the revoke failure stands unless the root removal took it.
+  # (A -WhatIf run deleted nothing on purpose and is not a failure.)
+  $identityLeft = (Test-Path -LiteralPath (Get-McIdentityPath $StateRoot))
+  if ($identityLeft -and -not $WhatIfPreference) {
+    $exitCode = 2
+    Write-Host ('UNINSTALL INCOMPLETE: identity.json (the node''s private key) is STILL PRESENT at {0}. Close anything using the state root and run -Uninstall again, or delete it by hand.' -f (Get-McIdentityPath $StateRoot))
+  }
+  Write-Host ('Uninstalled: state root {0}, {1} user variable(s) cleared.' -f $(if ($rootRemoved) { 'removed' } elseif ($exitCode -ne 0) { 'NOT removed' } else { 'not present or kept' }), $cleared.Count)
+  if ($null -ne $revoke.NodeId) { Write-Host ('Remember to revoke node_id {0} on the Core.' -f $revoke.NodeId) }
+  return [pscustomobject]@{ NodeId = $revoke.NodeId; TasksRemoved = $revoke.TasksRemoved; RootRemoved = $rootRemoved; EnvironmentCleared = @($cleared.ToArray()); IdentityDeleted = (-not $identityLeft); ExitCode = $exitCode }
+}
+
 # ---- dispatcher (not reached when the tests load this file as a library) -----------------------
 if ($env:MCCLUSTER_NODE_PS_LIBRARY -eq '1') { return }
 
@@ -1871,6 +2466,11 @@ if ($Browser) { $actions.Add('browser') }
 if ($BrowserHeaded) { $actions.Add('browserheaded') }
 if ($ModelsPath) { $actions.Add('modelspath') }
 if ($PSBoundParameters.ContainsKey('Vulkan')) { $actions.Add('vulkan') }
+if ($Pause) { $actions.Add('pause') }
+if ($Resume) { $actions.Add('resume') }
+if ($Limits) { $actions.Add('limits') }
+if ($Revoke) { $actions.Add('revoke') }
+if ($Uninstall) { $actions.Add('uninstall') }
 if ($Report) { $actions.Add('report') }
 if ($actions.Count -gt 1) { throw ('one action per run; got: ' + ($actions -join ', ')) }
 $action = 'report'
@@ -1887,6 +2487,11 @@ switch ($action) {
   'browserheaded' { $exitCode = [int](Invoke-McBrowserHeaded -StateRoot $resolvedStateRoot -RepoPath $RepoPath) }
   'modelspath' { $exitCode = [int](Invoke-McModelsPath -Path $ModelsPath) }
   'vulkan' { $exitCode = [int](Invoke-McVulkan -DeviceIndex $Vulkan) }
+  'pause' { $exitCode = [int](Invoke-McPause -StateRoot $resolvedStateRoot) }
+  'resume' { $exitCode = [int](Invoke-McResume -StateRoot $resolvedStateRoot) }
+  'limits' { $exitCode = [int](Invoke-McLimits -StateRoot $resolvedStateRoot -IdleOnly ([bool]$IdleOnly) -OnACOnly ([bool]$OnACOnly) -MaxConcurrency $MaxConcurrency -CpuBusyPercent $CpuBusyPercent -BatteryFloorPercent $BatteryFloorPercent -ThermalLimitC $ThermalLimitC).ExitCode }
+  'revoke' { $exitCode = [int](Invoke-McRevoke -StateRoot $resolvedStateRoot).ExitCode }
+  'uninstall' { $exitCode = [int](Invoke-McUninstall -StateRoot $resolvedStateRoot).ExitCode }
   default { Invoke-McReport -StateRoot $resolvedStateRoot }
 }
 exit $exitCode

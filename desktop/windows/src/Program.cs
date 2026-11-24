@@ -212,6 +212,14 @@ namespace McClusterDesktop
             payload["hardware_mode"] = device.HardwareMode(ollama.GpuEvidence);
             payload["local_runtime"] = new Dictionary<string, object> { { "ollama_url", ollama.Url }, { "reachable", ollama.Reachable }, { "version", ollama.Version }, { "detail", ollama.Detail }, { "loaded", ollama.LoadedSummary }, { "gpu_evidence", ollama.GpuEvidence }, { "models", models }, { "local_inference_available", ollama.Reachable && models.Count > 0 } };
             payload["node_agent"] = new Dictionary<string, object> { { "state_dir", node.StateDir }, { "state_dir_exists", node.StateDirExists }, { "manifest_present", node.ManifestPresent }, { "config_present", node.ConfigPresent }, { "identity_present", node.IdentityPresent }, { "node_name", node.NodeName }, { "compute_url", node.ComputeUrl }, { "advertised", node.AdvertisedImplementations }, { "adapter_health", node.Adapter.Detail } };
+            // The contribution state the Contribute panel shows (COMPUTE-CONTRIBUTION-LEDGER.md on branch prime/contribution-ledger, not in this tree), read from the state root only.
+            Contribution.State contribution = Contribution.ReadState(node.StateDir, store);
+            payload["contribution"] = new Dictionary<string, object> {
+                { "doctor_found", contribution.DoctorPath != null }, { "installed", contribution.Installed }, { "enrolled", contribution.Enrolled }, { "paused", contribution.Paused },
+                { "limits", contribution.Limits == null ? null : contribution.Limits.Summary(contribution.ThermalSupported) }, { "limits_error", contribution.LimitsError },
+                { "thermal_supported", contribution.ThermalSupported }, { "claim_gate", contribution.ClaimGate },
+                { "last_heartbeat_at", contribution.LastHeartbeatAt.HasValue ? contribution.LastHeartbeatAt.Value.ToString("o") : null }, { "node_id", contribution.NodeIdForDisplay },
+                { "local_done_receipts", contribution.LocalDoneReceipts }, { "accepted_work_file", contribution.AcceptedWork }, { "revoked_at", contribution.RevokedAt } };
             payload["targets"] = new Dictionary<string, object> {
                 { JobTarget.LocalDevice, new Dictionary<string, object> { { "available", true }, { "kinds", new[] { JobKind.Inventory, ollama.Reachable && models.Count > 0 ? JobKind.Chat : JobKind.Chat + " (unavailable: no local model)" } } } },
                 { JobTarget.RemoteWorker, new Dictionary<string, object> { { "available", core.Reachable }, { "reason", core.Reachable ? "submit from the signed-in site surface" : "OVH Core unreachable" } } },

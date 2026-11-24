@@ -1,4 +1,4 @@
-# McCluster for Windows 0.3.0: the live site in a desktop window, a local compute panel, Proof Mode
+# McCluster for Windows 0.4.0: the live site in a desktop window, a local compute panel, Proof Mode, Contribute
 
 Status: built and run on one owner Windows device (the in-box compiler, `build-inbox.ps1`). The SDK
 project (`src/McClusterDesktop.csproj`) is kept in step but is **not built on this branch** (no .NET SDK on
@@ -7,8 +7,12 @@ the build device). A signed release is not claimed. What is and is not verified 
 ## What it is
 
 The 0.1.0 preview (WinForms + Microsoft WebView2 Evergreen) opens the live site. 0.2.0 added one native
-**Compute** panel beside the web view; 0.3.0 adds Proof Mode, a route-by-route parity audit and a
-reproducible per-user installer. UI parity is kept by reusing the site's own routes: sign-in, the owner's
+**Compute** panel beside the web view; 0.3.0 added Proof Mode, a route-by-route parity audit and a
+reproducible per-user installer; 0.4.0 adds the **Contribute** section (the device side of the compute
+contribution contract: consent text, limits, Enable / Pause / Resume / Revoke through the doctor, never
+through the Core) and the `receipt.metering` block in the contract's shape on both execution paths
+(`PROOF-MODE.md`). The contract is `docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md` on branch
+`prime/contribution-ledger`; that file is not in this tree until that branch is merged. UI parity is kept by reusing the site's own routes: sign-in, the owner's
 Ask McCluster surface (`control.html#home:ask`) and every role check are the site's; the shell never bridges
 the WebView2 session into native code (`AreHostObjectsAllowed` and `IsWebMessageEnabled` stay off), never
 stores credentials and never calls a hosted inference API.
@@ -21,8 +25,14 @@ Three things stay distinct, and the panel labels each one:
 | Local model runtime | Ollama on loopback: `/api/version`, `/api/tags`, `/api/ps`; a loaded model with `size_vram > 0` is the GPU evidence, the same rule as the node agent | this device |
 | Node agent (worker) | `%ProgramData%\mccluster-node` (or `MCCLUSTER_NODE_STATE_DIR`) and the loopback adapter's `/health`; the identity file is never read | this device, installed only by the owner with `core\windows\mccluster-node.ps1` |
 
-The desktop client is a **client**. Making the device a **worker** is the doctor's job; the panel reports
-that state and never installs or enrols.
+The desktop client is a **client**. Making the device a **worker** is the doctor's job: the Contribute
+section drives the doctor (`powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File
+<doctor> -Install|-Limits|-Enroll|-Pause|-Resume|-Revoke -StateRoot <root>`, output shown read-only) and
+reads the state root; it never writes the state root itself and never calls the Core. The one-time
+enrolment credential typed into the modal reaches the doctor only through the child process environment
+(`MCCLUSTER_NODE_ENROLL_TOKEN`), never a file, a log, a receipt or the clipboard; the desktop tests grep a
+throwaway root for a sentinel after a fake run to hold that. `--status-json` carries a `contribution` object
+with the same state the panel shows.
 
 ## Proof Mode
 
@@ -74,7 +84,17 @@ McCluster.exe --exo-rank-probe --runtime-url http://127.0.0.1:52415 [--node-id n
 
 ## Verified on the device (2026-11-23) and not verified
 
-Verified: 0.3.0 in-box build; desktop checks (navigation policy, job store recovery, canonical JSON vector
+Verified for 0.4.0 (the same day, later): the in-box build with `-Tests -AllowDirty`; the desktop checks
+below plus the new ones (the metering block's keys pinned to the contract on both paths, counters kept
+apart and `null` when unreported, the consent text's required statements, the doctor switches per action,
+the device state read from a throwaway state root, a fake doctor run through `powershell.exe -NoProfile
+-ExecutionPolicy Bypass -File` with a sentinel credential that reached the child environment and appeared in
+no file under the throwaway job-store root). Not verified for 0.4.0: the installer (`-Installer` was not
+run; `dist\McCluster-Windows-x64-Setup-0.3.0.exe` is the previous build), any real enrolment from the panel
+(this device was not enrolled: a real run needs the owner's credential), the Contribute buttons against a
+real state root, and the panel's layout by screenshot.
+
+Verified for 0.3.0: in-box build; desktop checks (navigation policy, job store recovery, canonical JSON vector
 and number forms, device-signed receipt round trip, tamper and re-sign forgery rejection, legacy key-file
 migration, EXO probe against a loopback fixture, context-route refusals); the installer round trip through
 `installer/tests/InstallerTests.cs` against the real setup candidate (install, hashes, receipt, shortcut,

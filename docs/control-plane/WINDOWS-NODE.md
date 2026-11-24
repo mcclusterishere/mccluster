@@ -22,7 +22,7 @@ pilot-only capability nothing submits, while every `ai.chat` task went to the OV
 | Piece | What | Where |
 | --- | --- | --- |
 | The doctor | `core/windows/mccluster-node.ps1`: report, install, enrol, models, benchmark, power, model store, Vulkan device | the repository checkout |
-| The node agent | `core/src/compute/node-agent.mjs` 0.4.0, scheduled task "McCluster Node Agent" | state under `%ProgramData%\mccluster-node` |
+| The node agent | `core/src/compute/node-agent.mjs` 0.5.0 (0.4.0 plus the contribution controls of section 11), scheduled task "McCluster Node Agent" | state under `%ProgramData%\mccluster-node` |
 | The Ollama adapter | `core/src/compute/ollama-adapter.mjs` on `127.0.0.1:4790`, scheduled task "McCluster Node Adapter" | loopback only |
 | Ollama | the Windows tray app on `127.0.0.1:11434`, Vulkan backend on by default for a Radeon APU or RX 7000S | owner-installed |
 | The manifest | `core/node-manifests/owner-windows-gpu.json`, written to `%ProgramData%\mccluster-node\capabilities.json` pruned to the model tier (plus the browser entry after `-Browser`) | the template is Git-managed |
@@ -146,7 +146,9 @@ idempotently (re-running changes nothing that already matches):
 6. registers the scheduled tasks "McCluster Node Adapter" and "McCluster Node Agent" (the agent 20 s after the
    adapter): triggers at startup and at your logon, principal the current user with logon type S4U and run level
    Limited, restart on failure 3 times a minute apart, no execution time limit, start when available, allowed on
-   battery and not stopped on battery, a second start is ignored while one runs.
+   battery and not stopped on battery, a second start is ignored while one runs. When a `limits.json` already
+   exists under the state root (a re-run after `-Limits`), the tasks are registered with that file's plan
+   instead (section 11) and `max_leases` keeps its `max_concurrency`; the run says so.
 
 Then it says: run `-Enroll` next.
 
@@ -324,6 +326,100 @@ is checked against the policy file and private, loopback and link-local addresse
 every request; page text goes to the model as quoted evidence, never as instructions. The whole design, the
 action vocabulary and the refusal codes: `AGENT-NODE-BROWSER.md`.
 
+## 11. Contribution controls: `-Pause`, `-Resume`, `-Limits`, `-Revoke`, `-Uninstall`
+
+The device side of the compute contribution contract. That contract is
+`docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md` on branch `prime/contribution-ledger`; the file is **not in
+this tree** until that branch is merged, so read it there. The doctor is the only thing that touches the state root;
+the desktop's Contribute panel drives these switches through `powershell.exe -NoProfile -ExecutionPolicy Bypass
+-File <doctor>` and never calls the Core.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File core\windows\mccluster-node.ps1 -Pause
+powershell -ExecutionPolicy Bypass -File core\windows\mccluster-node.ps1 -Resume
+powershell -ExecutionPolicy Bypass -File core\windows\mccluster-node.ps1 -Limits -IdleOnly -OnACOnly -MaxConcurrency 1 -CpuBusyPercent 70 -BatteryFloorPercent 25 -ThermalLimitC 85
+powershell -ExecutionPolicy Bypass -File core\windows\mccluster-node.ps1 -Revoke
+powershell -ExecutionPolicy Bypass -File core\windows\mccluster-node.ps1 -Uninstall
+```
+
+- `-Pause` writes the marker `<StateRoot>\paused`. The agent (0.5.0) reads it before every claim, so within one
+  poll (1 s on the laptop) it claims nothing more; running work finishes; its heartbeat labels say
+  `paused: true` and `claim_gate: paused`. `-Resume` removes the marker and the next poll claims again.
+- `-Limits` writes `<StateRoot>\limits.json` (schema `mccluster-node-limits/1`, every limit explicit, unset ones
+  `null`): `-IdleOnly`, `-OnACOnly`, `-MaxConcurrency 1..4` (default 1), `-CpuBusyPercent 10..100` (0 = not
+  set), `-BatteryFloorPercent 0..100` (absent = not set), `-ThermalLimitC` (0 = not set). It then sets
+  `max_leases` and every entry's `max_concurrency` in `capabilities.json` to `-MaxConcurrency`, and re-registers
+  the two scheduled tasks to match. Each run replaces the whole file, so a switch left out is a limit turned
+  off. A later `-Install` re-applies the plan of the `limits.json` it finds (tasks and `max_leases`); it never
+  puts the tasks back at the install defaults while the file still says otherwise.
+  - Idle-only task settings: `RunOnlyIfIdle` (the adapter and the agent start only once Windows reports the
+    device idle for 10 minutes, and a trigger waits up to 30 days for that instead of Task Scheduler's 1 hour
+    default, after which the start is silently dropped), `RestartOnIdle`, and **not** stopped when the idle
+    state ends (`StopOnIdleEnd` false): the owner touching the mouse does not kill the agent, the adapter, the
+    lease or a running generation. Running work finishes; only new claims are refused. Because the two tasks
+    outlive the idle state, their `RunOnlyIfIdle` flag is not a live idle signal. A third task, `McCluster Node
+    Idle` (a sleeping `powershell.exe`, registered only while idle-only is set), is: Windows stops it when the
+    idle state ends and restarts it when idle resumes. It is not started by `-Limits` itself (the owner is at
+    the keyboard); it starts at the next startup or logon. If a Task Scheduler build refuses `RestartOnIdle`
+    on a task it does not stop at idle end, the doctor registers the two tasks without it and prints a
+    warning (the flag has no effect on a task that is never stopped). None of this was exercised against a
+    real Task Scheduler by the tests: they check the exact settings arguments and the settings objects built
+    from them, and mock the registration.
+  - AC-only task settings: none. Task Scheduler evaluates "do not start on battery" only when a trigger fires
+    (startup, logon), so a laptop that booted on battery would never start the node after being plugged in.
+    The tasks stay startable and running on battery; the agent's own gate refuses claims on battery and the
+    node keeps heartbeating with the reason.
+
+  The agent enforces the limits before every claim and reports every one of
+  them in its heartbeat labels (`idle_only`, `on_ac_only`, `max_concurrency`, `cpu_busy_percent`,
+  `battery_floor_percent`, `thermal_limit_c`, `thermal_supported`, `thermal_limit`, `idle_source`,
+  `claim_gate`), so Control sees what the device will and will not take:
+  - `idle_only`: no claim while a user is active (input within the last 120 s). From a console run the agent
+    reads the session's own last input; RDP sessions carry an idle time of their own. From the scheduled task
+    (session 0) Windows keeps no input time for the console session, so the agent reads whether the
+    `McCluster Node Idle` task is running: running is `idle_source: task-scheduler` and claims are allowed;
+    registered but not running is `idle_source: task-scheduler-not-idle` and `claim_gate: user_active`; no
+    such task is `idle_source: console-unmeasurable` and `claim_gate: idle_unknown`.
+  - `on_ac_only`: fails closed. The probe reports raw readings only; the agent decides. No battery at all
+    (the battery query answered with none) is on AC. With a battery, `root\wmi BatteryStatus.PowerOnline`
+    decides when readable; otherwise `Win32_Battery.BatteryStatus` 1, 4, 5 is on battery and 2, 3, 6 to 9 is
+    on AC. Anything else (status 10 Undefined, 11, absent or unparsable, or a battery query that failed)
+    is unknown: the claim is refused and the heartbeat says `claim_gate: power_unknown`.
+  - `battery_floor_percent`: `Win32_Battery.EstimatedChargeRemaining` through the same probe; a device
+    without a battery has nothing to protect.
+  - `cpu_busy_percent`: the non-idle share of `os.cpus()` time deltas over the poll interval; the first poll
+    has no delta and refuses with `cpu_unknown`.
+  - `thermal_limit_c`: `MSAcpi_ThermalZoneTemperature` when readable (it usually needs administrator rights).
+    When no zone can be read the agent's heartbeat says `thermal_supported: false` and `thermal_limit:
+    unsupported`, `-Report` says `unsupported on this device`, and the panel says the same: never "off",
+    never silently dropped, and never a permanent refusal (the contract calls it best effort).
+  - The probe is one bounded `powershell.exe` run, cached 30 s while a limit needs it (10 minutes otherwise,
+    for `thermal_supported`); a probe that fails makes every limit that needs it fail closed with its reason
+    (`idle_unknown`, `power_unknown`, `battery_unknown`).
+- `-Revoke` stops and unregisters the McCluster Node tasks (adapter, agent, browser, idle sentinel), ends the
+  processes this state root's launchers started (unregistering a task does not end them), deletes
+  `identity.json` (the node's key; the heartbeat file and any `enroll.env` go with it) and then checks that the
+  file is really gone, retrying 5 times half a second apart and ending those processes again before each
+  retry. Only when `Test-Path` says it is gone does it print "identity.json deleted", write
+  `<StateRoot>\revoked.json` (`node_id`, `revoked_at`) and exit 0. If the file is still there it prints
+  `REVOKE FAILED: identity.json is STILL PRESENT at <path>`, writes no `revoked.json`, still names the node id
+  to revoke on the Core, and exits 2, so the desktop's Revoke shows a failure instead of a deletion that did
+  not happen. The node id is printed for the owner to revoke on the Core (the owner tool of #821; direct SQL
+  on `ops_compute_nodes` until it is promoted). Nothing else is printed: no key, no token.
+  `capabilities.json` and `node.config.json` stay, so `-Enroll` with a fresh token creates a new node.
+- `-Uninstall` is `-Revoke`, then the state root is removed and the user-scope variables `-Install` wrote are
+  cleared (never any other variable, never a token name). It exits 2 and says `UNINSTALL INCOMPLETE` when
+  `identity.json` or the state root is still there afterwards.
+- `-Enroll` from the desktop: the Contribute panel passes the one-time credential in the child process
+  environment variable `MCCLUSTER_NODE_ENROLL_TOKEN`; the doctor hands it straight to the agent's environment,
+  writes no `enroll.env`, clears the variable in its own process and prints that no file was touched. The
+  console path (secure-string prompt, owner-only file for the length of the run) is unchanged.
+- `-Report` has a `CONTRIBUTION` block: `paused`, the limits as the agent reads them (defaults when the file is
+  absent, `unreadable` with the reason when broken), `thermal_supported` with the hottest zone, the revocation
+  record and the last heartbeat the agent wrote (`last-heartbeat.json`: node id, time, agent version, how many
+  entries were advertised, the claim gate). `NODE FILES` lists `paused`, `limits.json`, `revoked.json` and
+  `last-heartbeat.json`.
+
 ## How work reaches the laptop
 
 - The laptop advertises `ai.chat/qwen3-vl.8b.local` (the resident vision model, laptop only) and
@@ -395,7 +491,10 @@ report is the only thing meant to leave the laptop by hand, and it is masked.
 Under `%ProgramData%\mccluster-node` (or `-StateRoot`): `capabilities.json` (the pruned template),
 `node.config.json` (no secrets), `identity.json` (the node's key, owner-only), `gpu-evidence.json` (the last
 positive engine observation, 24 h TTL), `measured-inference.json` (from `-Benchmark`), `adapter.cmd`,
-`agent.cmd`, `logs\adapter.log`, `logs\agent.log`, and `enroll.env` only during `-Enroll`. After `-Browser`:
+`agent.cmd`, `logs\adapter.log`, `logs\agent.log`, and `enroll.env` only during a console `-Enroll`. The
+contribution controls add `paused` (while paused), `limits.json` (from `-Limits`), `last-heartbeat.json`
+(written by the agent after each accepted heartbeat: node id, time, labels; the desktop reads it) and
+`revoked.json` (after `-Revoke`). After `-Browser`:
 `browser\` (the pinned Playwright package under `node_modules\playwright` and Chromium under `ms-playwright`),
 `browser-profile\` (the node's own browser profile, owner-only), `browser-policy.json` (your allowlist),
 `browser.cmd` and `logs\browser.log`.
@@ -432,7 +531,26 @@ positive engine observation, 24 h TTL), `measured-inference.json` (from `-Benchm
   (pinned version, dry run before the download, policy written once and never overwritten, launcher, task
   registered and started, `chromium.local` appended once, `browser: true` recorded), `-Install` keeping the
   entry afterwards, the report block, and `-BrowserHeaded` stopping the task, running the executor headed
-  on the console and starting the task again. On the laptop:
+  on the console and starting the task again; and, since the contribution contract, the controls of section
+  11: the limits object and its validation, `limits.json` parsing (absent, broken, foreign, out of range),
+  the summary that says `unsupported on this device` for a thermal limit without a zone reading, the task
+  settings plan per limit and the exact `New-ScheduledTaskSettingsSet` arguments and settings objects it
+  becomes (idle-only: `RunOnlyIfIdle`, `RestartOnIdle`, `StopOnIdleEnd` false, `PT10M`, `P30D`; the idle
+  sentinel; AC-only: startable and running on battery), the manifest leases, `-Pause` and `-Resume` (marker,
+  idempotent, `-WhatIf`), `-Limits` (`-WhatIf` writes nothing; a real run writes the file, the manifest and
+  hands the plan to the task registration; back to defaults), `-Install` again with a `limits.json` present
+  (the limits' plan and `max_leases` are re-applied; a broken file is named), `-Enroll` with the token in the
+  environment (reaches the agent's environment only, no `enroll.env`, never printed, no file under the state
+  root carries it), `-Revoke` (tasks unregistered, `revoked.json`, `identity.json` gone, the node id printed
+  and no key; and with `identity.json` held open: exit 2, `REVOKE FAILED`, never "deleted", no
+  `revoked.json`; the process selection for one state root; the verified delete that succeeds once the
+  holder is stopped) and `-Uninstall` (state root and installed variables gone). The registration itself is
+  mocked: no test registers a task with the real Task Scheduler. The agent's side
+  (`core/test/node-agent-runtime.test.mjs`, with the probes faked): each limit refusing a claim with its
+  reason, AC detection failing closed (`power_unknown`), the idle sentinel verdicts, pause within one poll,
+  the thermal limit reported unsupported without a reading, the probe cache, the labels;
+  `core/test/ollama-metering-evidence.test.mjs`: `/execute` returning `usage.model_digest` and
+  `usage.ollama_version` read after the generation. On the laptop:
 
   ```powershell
   powershell -ExecutionPolicy Bypass -File core\windows\tests\mccluster-node.tests.ps1

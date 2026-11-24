@@ -9,7 +9,8 @@ import { generateNodeIdentity, nodeIdFromPublicKey, signRequest } from './signat
 import { deriveHardwareMode, discoverHardware, loadSnapshot } from './hardware.mjs';
 import { capabilityReadiness, engineHealthSummary, healthyCapabilities, probeExecutors } from './engine-probes.mjs';
 import {
-  aclCommand, gpuEvidenceTtlMs, hardwareRefreshMs, isPositiveGpuEvidence, readMeasuredInferenceSidecar, resolveNodePaths,
+  HEARTBEAT_FILE_SCHEMA, aclCommand, contributionPaths, createClaimGuard, deviceProbeCommand, deviceProbeMs, gpuEvidenceTtlMs,
+  hardwareRefreshMs, isPositiveGpuEvidence, parseDeviceProbe, readMeasuredInferenceSidecar, resolveNodePaths,
   selectGpuEvidence, selectMeasuredInference, shutdownSignals, yieldClaimBody, yieldToGpuMs
 } from './node-agent-config.mjs';
 
@@ -24,7 +25,12 @@ const IDENTITY_PATH = path.join(STATE_DIR, 'identity.json');
 const GPU_EVIDENCE_PATH = path.join(STATE_DIR, 'gpu-evidence.json');
 // measured-inference.json beside the manifest: the doctor's benchmark writes it, the agent only reads it.
 const MEASURED_INFERENCE_PATH = path.join(path.dirname(MANIFEST_PATH), 'measured-inference.json');
-const AGENT_VERSION = '0.4.0';
+// The owner's contribution controls: the doctor writes the pause marker and limits.json, the agent
+// honours them before every claim and writes last-heartbeat.json. (Contract:
+// docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md on branch prime/contribution-ledger, not in this tree.)
+const CONTRIBUTION_PATHS = contributionPaths({ platform: process.platform, env: process.env, nodePaths: NODE_PATHS });
+const DEVICE_PROBE_MS = deviceProbeMs(process.env);
+const AGENT_VERSION = '0.5.0';
 const REQUEST_TIMEOUT_MS = Number(process.env.MCCLUSTER_NODE_REQUEST_TIMEOUT_MS || 10_000);
 const POLL_MS = Math.max(1_000, Number(process.env.MCCLUSTER_NODE_POLL_MS || 5_000));
 const HEARTBEAT_MS = Math.max(10_000, Number(process.env.MCCLUSTER_NODE_HEARTBEAT_MS || 30_000));
@@ -52,7 +58,9 @@ const observed = {
   gpuVerifiedAt: null,
   hardwareMode: 'unknown',
   liveGpuNodes: 0,
-  measurements: {}
+  measurements: {},
+  // The last claim-guard evaluation: paused, limits, device probe, gate, labels.
+  contribution: null
 };
 
 function normalizeMaxLeases(value) {
@@ -197,6 +205,8 @@ function updateHardwareMode(hardware) {
 
 // labels.hardware_mode always equals the derived value: a hand-written label
 // cannot assert anything, and the Control pane and the code see one value.
+// The contribution labels (paused, every limit, thermal_supported, claim_gate)
+// come from the last claim-guard evaluation and override any hand-written copy.
 function labelsFor(manifest) {
   const labels = { ...(manifest.labels || {}) };
   const asserted = labels.hardware_mode;
@@ -205,7 +215,47 @@ function labelsFor(manifest) {
     labelOverrideLogged = true;
   }
   labels.hardware_mode = observed.hardwareMode;
+  Object.assign(labels, observed.contribution?.labels || {});
   return labels;
+}
+
+// The device probe: one PowerShell on Windows (idle seconds across sessions, battery, thermal zone),
+// bounded, output parsed into the sanitized shape; off Windows there is no probe and every limit
+// that needs one fails closed with its reason.
+function probeDevice() {
+  const command = deviceProbeCommand(process.platform);
+  if (!command) return parseDeviceProbe(null, `no device probe on ${process.platform}`);
+  try {
+    const text = execFileSync(command.command, command.args, { timeout: 20_000, windowsHide: true, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 65_536 });
+    return parseDeviceProbe(text);
+  } catch (error) {
+    return parseDeviceProbe(null, error?.code || error?.message || error);
+  }
+}
+
+const claimGuard = createClaimGuard({
+  pausedPath: CONTRIBUTION_PATHS.pausedPath,
+  limitsPath: CONTRIBUTION_PATHS.limitsPath,
+  exists: (target) => fs.existsSync(target),
+  readText: (target) => fs.readFileSync(target, 'utf8'),
+  probe: probeDevice,
+  cpus: () => os.cpus(),
+  probeMs: DEVICE_PROBE_MS,
+  probeIdleMs: HARDWARE_REFRESH_MS,
+  onEvent: (record) => (record.event === 'compute_node_limits_invalid' ? warn(record) : log(record))
+});
+
+// The desktop reads this file (never the identity): when the last heartbeat was accepted and what it said.
+function persistHeartbeat(nodeId, labels, advertisedCount) {
+  const record = { schema: HEARTBEAT_FILE_SCHEMA, node_id: nodeId, at: new Date().toISOString(), agent_version: AGENT_VERSION, advertised: advertisedCount, live_gpu_nodes: observed.liveGpuNodes, labels };
+  const tmp = `${CONTRIBUTION_PATHS.heartbeatPath}.${process.pid}.tmp`;
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(record, null, 2), { mode: 0o600 });
+    fs.renameSync(tmp, CONTRIBUTION_PATHS.heartbeatPath);
+  } catch (error) {
+    warn({ event: 'compute_node_heartbeat_persist_failed', error: String(error?.code || error?.message || error).slice(0, 200) });
+    try { fs.rmSync(tmp, { force: true }); } catch { /* best effort */ }
+  }
 }
 
 function inventory(hardware, engineHealth = [], manifest = { publicCapabilities: [] }) {
@@ -258,7 +308,7 @@ async function enroll(identity, manifest, capabilities, hardware, healthSummary)
       inventory: inventory(hardware, healthSummary, manifest),
       capabilities,
       labels: labelsFor(manifest),
-      max_leases: manifest.maxLeases
+      max_leases: Math.max(1, Math.min(manifest.maxLeases, observed.contribution?.limits?.max_concurrency ?? manifest.maxLeases))
     }
   });
 }
@@ -372,6 +422,7 @@ async function run() {
     observed.gpuVerifiedAt = saved.checked_at;
   }
   let { manifest, hardware, advertised, healthSummary } = await probe();
+  observed.contribution = claimGuard.evaluate();
 
   const enrolled = await enroll(identity, manifest, advertised, hardware, healthSummary);
   if (enrolled) log({ event: 'compute_node_enrolled', node_id: identity.nodeId, protocol: enrolled.protocol, advertised: advertised.length, hardware_mode: observed.hardwareMode });
@@ -401,21 +452,27 @@ async function run() {
         lastProbe = Date.now();
       }
 
+      // The owner's pause marker and limits are read before every claim (within one poll of a change).
+      observed.contribution = claimGuard.evaluate();
+      const maxLeases = Math.max(1, Math.min(manifest.maxLeases, observed.contribution.limits.max_concurrency));
+
       if (Date.now() - lastHeartbeat >= HEARTBEAT_MS) {
+        const labels = labelsFor(manifest);
         const reply = await signedRequest(identity, '/v1/compute/heartbeat', {
           agent_version: AGENT_VERSION,
           inventory: inventory(hardware, healthSummary, manifest),
           capabilities: advertised,
-          labels: labelsFor(manifest),
-          max_leases: manifest.maxLeases,
+          labels,
+          max_leases: maxLeases,
           load: loadSnapshot(active.size, { diskPath: STATE_DIR })
         });
         // Other live gpu-verified nodes, as the gateway counts them (null before the gateway is promoted).
         observed.liveGpuNodes = Number(reply?.live_gpu_nodes) || 0;
         lastHeartbeat = Date.now();
+        persistHeartbeat(identity.nodeId, labels, advertised.length);
       }
 
-      if (!stopping && advertised.length && active.size < manifest.maxLeases) {
+      if (!stopping && advertised.length && observed.contribution.gate.allowed && active.size < maxLeases) {
         const sentAt = systemClock();
         const claimBody = yieldClaimBody({ yieldMs: YIELD_MS, liveGpuNodes: observed.liveGpuNodes, hardwareMode: observed.hardwareMode });
         const { lease } = await signedRequest(identity, '/v1/compute/lease', claimBody, shutdown.signal);

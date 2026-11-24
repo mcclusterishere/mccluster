@@ -83,11 +83,41 @@ function Invoke-McIcacls {
   $script:MockIcaclsCalls.Add($Target + ' ' + $Rights)
   return $true
 }
+$script:MockTaskSettings = New-Object System.Collections.Generic.List[object]
+$script:MockUnregistered = New-Object System.Collections.Generic.List[string]
+$script:MockRegisteredNames = New-Object System.Collections.Generic.List[string]
+$script:MockThermal = $null
 function Register-McScheduledTasks {
-  param([string]$StateRoot, [string]$UserId, [switch]$Browser)
-  if ($Browser) { $script:MockBrowserTaskRegistrations++ } else { $script:MockTaskRegistrations++ }
+  param([string]$StateRoot, [string]$UserId, [switch]$Browser, $TaskSettings = $null)
+  if ($Browser) { $script:MockBrowserTaskRegistrations++; $script:MockRegisteredNames.Add($script:McBrowserTaskName) }
+  else { $script:MockTaskRegistrations++; foreach ($n in $script:McTaskNames) { $script:MockRegisteredNames.Add($n) } }
+  if ($null -eq $TaskSettings) { $TaskSettings = Get-McTaskSettingsPlan -Limits $null }
+  # Like the real registration: an idle-only plan adds the idle sentinel task, any other plan removes it.
+  if (-not $Browser) {
+    [void]$script:MockRegisteredNames.Remove($script:McIdleTaskName)
+    if ($TaskSettings.IdleSentinel) { $script:MockRegisteredNames.Add($script:McIdleTaskName) }
+  }
+  $script:MockTaskSettings.Add($TaskSettings)
   return $true
 }
+# -Revoke ends the node processes of the state root: the tests never look at, or end, a real process.
+$script:MockProcesses = @()
+$script:MockStoppedProcessIds = New-Object System.Collections.Generic.List[int]
+$script:MockOnProcessStop = $null
+function Get-McProcessList { return @($script:MockProcesses) }
+function Stop-McProcessById {
+  param([int]$Id)
+  $script:MockStoppedProcessIds.Add($Id)
+  if ($null -ne $script:MockOnProcessStop) { & $script:MockOnProcessStop $Id }
+  return $true
+}
+function Unregister-McScheduledTasks {
+  param([string[]]$Names)
+  $removed = New-Object System.Collections.Generic.List[string]
+  foreach ($n in @($Names)) { if ($script:MockRegisteredNames.Contains($n)) { $removed.Add($n); [void]$script:MockRegisteredNames.Remove($n); $script:MockUnregistered.Add($n) } }
+  return @($removed.ToArray())
+}
+function Get-McThermalReading { return $script:MockThermal }
 function Start-McScheduledTask { param([string]$Name) $script:MockStartedTasks.Add($Name); return $true }
 function Stop-McScheduledTask { param([string]$Name) $script:MockStoppedTasks.Add($Name); return $true }
 function Get-McNpmCliPath { return 'npm-cli.js' }
@@ -784,7 +814,326 @@ try {
   $threw = $false
   try { Invoke-McInstall -RepoPath $repoRoot -StateRoot (Join-Path $tempRoot 'other') -NodeName 'x' -OrgId '00000000-0000-4000-8000-000000000001' -ComputeUrl 'http://compute.mccluster.org' -TierOverride '' | Out-Null } catch { $threw = $true }
   Assert-True $threw 'install with a plain http compute URL refuses'
+
+  # ---- contribution controls (COMPUTE-CONTRIBUTION-LEDGER.md on branch prime/contribution-ledger, not in this tree): pause, resume, limits, enrol from the environment, revoke, uninstall ----
+  # pure helpers first
+  $defaultLimits = New-McLimits -WrittenAt '2026-11-23T00:00:00Z'
+  Assert-Equal 'mccluster-node-limits/1' $defaultLimits.schema 'limits: schema'
+  Assert-Equal $false $defaultLimits.idle_only 'limits: idle_only defaults to false'
+  Assert-Equal 1 $defaultLimits.max_concurrency 'limits: max_concurrency defaults to 1'
+  Assert-Null $defaultLimits.cpu_busy_percent 'limits: cpu_busy_percent unset is null'
+  Assert-Null $defaultLimits.battery_floor_percent 'limits: battery_floor_percent unset is null'
+  Assert-Null $defaultLimits.thermal_limit_c 'limits: thermal_limit_c unset is null'
+  $fullLimits = New-McLimits -IdleOnly $true -OnACOnly $true -MaxConcurrency 3 -CpuBusyPercent 60 -BatteryFloorPercent 0 -ThermalLimitC 85 -WrittenAt '2026-11-23T00:00:00Z'
+  Assert-Equal 0 $fullLimits.battery_floor_percent 'limits: a battery floor of 0 is a set value, not unset'
+  Assert-Equal 85 $fullLimits.thermal_limit_c 'limits: thermal limit kept'
+  foreach ($bad in @(@{ MaxConcurrency = 5 }, @{ MaxConcurrency = 0 }, @{ CpuBusyPercent = 5 }, @{ CpuBusyPercent = 101 }, @{ BatteryFloorPercent = 101 }, @{ ThermalLimitC = -3 })) {
+    $threw = $false
+    try { New-McLimits @bad | Out-Null } catch { $threw = $true }
+    Assert-True $threw ('limits: out-of-range value refused: ' + ($bad.Keys -join ','))
+  }
+  $parsedLimits = ConvertFrom-McLimits -Text (ConvertTo-McLimitsJson $fullLimits)
+  Assert-True $parsedLimits.Present 'limits parse: present'
+  Assert-Null $parsedLimits.Error 'limits parse: no error'
+  Assert-True $parsedLimits.IdleOnly 'limits parse: idle_only'
+  Assert-True $parsedLimits.OnACOnly 'limits parse: on_ac_only'
+  Assert-Equal 3 $parsedLimits.MaxConcurrency 'limits parse: max_concurrency'
+  Assert-Equal 60 $parsedLimits.CpuBusyPercent 'limits parse: cpu_busy_percent'
+  Assert-Equal 0 $parsedLimits.BatteryFloorPercent 'limits parse: battery floor 0 survives'
+  Assert-Equal 85 $parsedLimits.ThermalLimitC 'limits parse: thermal'
+  $absentLimits = ConvertFrom-McLimits -Text $null
+  Assert-Equal $false $absentLimits.Present 'limits parse: absent file is the defaults'
+  Assert-Equal 1 $absentLimits.MaxConcurrency 'limits parse: absent file means max_concurrency 1'
+  Assert-Equal 'invalid_json' (ConvertFrom-McLimits -Text '{nope').Error 'limits parse: broken JSON is named'
+  Assert-Equal 'schema_mismatch' (ConvertFrom-McLimits -Text '{"schema":"other/1","max_concurrency":4}').Error 'limits parse: a foreign schema is named'
+  Assert-Equal 1 (ConvertFrom-McLimits -Text '{"schema":"other/1","max_concurrency":4}').MaxConcurrency 'limits parse: a foreign file never widens a limit'
+  Assert-Equal 1 (ConvertFrom-McLimits -Text '{"schema":"mccluster-node-limits/1","max_concurrency":9}').MaxConcurrency 'limits parse: an out-of-range concurrency falls back to 1'
+  Assert-Null (ConvertFrom-McLimits -Text '{"schema":"mccluster-node-limits/1","cpu_busy_percent":5}').CpuBusyPercent 'limits parse: cpu under 10 is not a limit'
+  $summaryText = Format-McLimitsSummary -Limits $parsedLimits -ThermalSupported $false
+  Assert-True ($summaryText.Contains('idle_only true, on_ac_only true, max_concurrency 3, cpu_busy_percent 60, battery_floor_percent 0')) 'limits summary: every limit named'
+  Assert-True ($summaryText.Contains('thermal_limit_c 85 (unsupported on this device')) 'limits summary: a thermal limit without a zone reading says unsupported on this device'
+  Assert-Equal $false ($summaryText.Contains(' off')) 'limits summary: never says off'
+  Assert-True ((Format-McLimitsSummary -Limits $parsedLimits -ThermalSupported $true).Contains('thermal_limit_c 85,') -or (Format-McLimitsSummary -Limits $parsedLimits -ThermalSupported $true).EndsWith('thermal_limit_c 85')) 'limits summary: with a zone reading the thermal limit is plain'
+  Assert-True ((Format-McLimitsSummary -Limits $absentLimits).StartsWith('defaults (no limits.json): ')) 'limits summary: absent file is said'
+  Assert-True ((Format-McLimitsSummary -Limits (ConvertFrom-McLimits -Text '{nope')).Contains('unreadable (invalid_json)')) 'limits summary: unreadable file is said'
+  $planDefault = Get-McTaskSettingsPlan -Limits $null
+  Assert-Equal $false $planDefault.RunOnlyIfIdle 'task plan: no idle condition by default'
+  Assert-True $planDefault.AllowStartIfOnBatteries 'task plan: battery start allowed by default'
+  Assert-Equal $false $planDefault.StopIfGoingOnBatteries 'task plan: keeps running on battery by default'
+  $planIdle = Get-McTaskSettingsPlan -Limits (ConvertFrom-McLimits -Text (ConvertTo-McLimitsJson (New-McLimits -IdleOnly $true)))
+  Assert-True $planIdle.RunOnlyIfIdle 'task plan: idle-only sets RunOnlyIfIdle'
+  Assert-True $planIdle.AllowStartIfOnBatteries 'task plan: idle-only alone leaves battery alone'
+  Assert-True $planIdle.RestartOnIdle 'task plan: idle-only sets RestartOnIdle'
+  Assert-Equal $false $planIdle.StopOnIdleEnd 'task plan: idle-only does not stop running work when the idle state ends'
+  Assert-True $planIdle.IdleSentinel 'task plan: idle-only registers the idle sentinel task (the live idle signal)'
+  Assert-Equal 10 $planIdle.IdleDurationMinutes 'task plan: idle-only starts after 10 minutes of idle'
+  Assert-True ($planIdle.IdleWaitDays -ge 7) 'task plan: the trigger waits days for idle, not Task Scheduler''s 1 h default'
+  Assert-Equal $false $planDefault.IdleSentinel 'task plan: no idle sentinel by default'
+  $planAc = Get-McTaskSettingsPlan -Limits (ConvertFrom-McLimits -Text (ConvertTo-McLimitsJson (New-McLimits -OnACOnly $true)))
+  Assert-True $planAc.AllowStartIfOnBatteries 'task plan: AC-only keeps the tasks startable on battery (the agent''s gate refuses claims, the node keeps heartbeating)'
+  Assert-Equal $false $planAc.StopIfGoingOnBatteries 'task plan: AC-only does not stop the tasks when the power goes (running work finishes)'
+  Assert-Equal $false $planAc.RunOnlyIfIdle 'task plan: AC-only alone sets no idle condition'
+  # the exact New-ScheduledTaskSettingsSet arguments each plan turns into
+  $argsDefault = Get-McTaskSettingsArguments -TaskSettings $planDefault
+  Assert-Equal $false $argsDefault.ContainsKey('RunOnlyIfIdle') 'task arguments (default): no idle condition'
+  Assert-True ($argsDefault['AllowStartIfOnBatteries'] -eq $true -and $argsDefault['DontStopIfGoingOnBatteries'] -eq $true) 'task arguments (default): start and keep running on battery'
+  Assert-Equal 3 $argsDefault['RestartCount'] 'task arguments (default): restart on failure kept'
+  $argsAc = Get-McTaskSettingsArguments -TaskSettings $planAc
+  Assert-True ($argsAc['AllowStartIfOnBatteries'] -eq $true -and $argsAc['DontStopIfGoingOnBatteries'] -eq $true) 'task arguments (AC-only): AllowStartIfOnBatteries and DontStopIfGoingOnBatteries are both set'
+  Assert-Equal $false $argsAc.ContainsKey('RunOnlyIfIdle') 'task arguments (AC-only): no idle condition'
+  $argsIdle = Get-McTaskSettingsArguments -TaskSettings $planIdle
+  Assert-True ($argsIdle['RunOnlyIfIdle'] -eq $true) 'task arguments (idle-only): RunOnlyIfIdle'
+  Assert-True ($argsIdle['RestartOnIdle'] -eq $true) 'task arguments (idle-only): RestartOnIdle'
+  Assert-True ($argsIdle['DontStopOnIdleEnd'] -eq $true) 'task arguments (idle-only): DontStopOnIdleEnd (running work is not killed at idle end)'
+  Assert-Equal 10 ([int]$argsIdle['IdleDuration'].TotalMinutes) 'task arguments (idle-only): IdleDuration 10 min'
+  Assert-True ($argsIdle['IdleWaitTimeout'].TotalHours -gt 24) 'task arguments (idle-only): IdleWaitTimeout far above the 1 h default'
+  Assert-True ($argsIdle['AllowStartIfOnBatteries'] -eq $true) 'task arguments (idle-only): battery untouched'
+  $argsIdleNoRestart = Get-McTaskSettingsArguments -TaskSettings $planIdle -NoRestartOnIdle
+  Assert-True ($argsIdleNoRestart['DontStopOnIdleEnd'] -eq $true -and -not $argsIdleNoRestart.ContainsKey('RestartOnIdle')) 'task arguments (idle-only, fallback): without RestartOnIdle the task is still not stopped at idle end'
+  $argsSentinel = Get-McTaskSettingsArguments -TaskSettings $planIdle -Sentinel
+  Assert-True ($argsSentinel['RunOnlyIfIdle'] -eq $true -and $argsSentinel['RestartOnIdle'] -eq $true) 'task arguments (sentinel): RunOnlyIfIdle and RestartOnIdle'
+  Assert-Equal $false $argsSentinel.ContainsKey('DontStopOnIdleEnd') 'task arguments (sentinel): Windows stops it at idle end (that is the signal)'
+  Assert-True ($argsSentinel['IdleWaitTimeout'].TotalHours -gt 24) 'task arguments (sentinel): the same long idle wait'
+  Assert-Equal 'McCluster Node Idle' $script:McIdleTaskName 'the idle sentinel task name is the one the agent''s probe reads'
+  Assert-True ((Format-McTaskSettingsPlan $planIdle).Contains('not stopped at idle end')) 'task plan summary: idle-only is said in words'
+  Assert-True ((Format-McTaskSettingsPlan $planAc).Contains('on_ac_only is enforced by the agent''s claim gate')) 'task plan summary: AC-only names who enforces it'
+  if (Get-Command New-ScheduledTaskSettingsSet -ErrorAction SilentlyContinue) {
+    # Client-side settings objects only: nothing is registered with Task Scheduler.
+    $builtIdle = New-ScheduledTaskSettingsSet @argsIdle
+    Assert-True ($builtIdle.RunOnlyIfIdle -eq $true) 'settings object (idle-only): RunOnlyIfIdle true'
+    Assert-True ($builtIdle.IdleSettings.RestartOnIdle -eq $true) 'settings object (idle-only): RestartOnIdle true'
+    Assert-True ($builtIdle.IdleSettings.StopOnIdleEnd -eq $false) 'settings object (idle-only): StopOnIdleEnd false'
+    Assert-Equal 'PT10M' ([string]$builtIdle.IdleSettings.IdleDuration) 'settings object (idle-only): IdleDuration PT10M'
+    Assert-Equal 'P30D' ([string]$builtIdle.IdleSettings.WaitTimeout) 'settings object (idle-only): WaitTimeout P30D, not the PT1H default'
+    Assert-True ($builtIdle.DisallowStartIfOnBatteries -eq $false -and $builtIdle.StopIfGoingOnBatteries -eq $false) 'settings object (idle-only): battery does not stop or block it'
+    $builtSentinel = New-ScheduledTaskSettingsSet @argsSentinel
+    Assert-True ($builtSentinel.RunOnlyIfIdle -eq $true -and $builtSentinel.IdleSettings.StopOnIdleEnd -eq $true -and $builtSentinel.IdleSettings.RestartOnIdle -eq $true) 'settings object (sentinel): stopped at idle end, restarted on idle'
+    $builtAc = New-ScheduledTaskSettingsSet @argsAc
+    Assert-True ($builtAc.DisallowStartIfOnBatteries -eq $false -and $builtAc.StopIfGoingOnBatteries -eq $false -and $builtAc.RunOnlyIfIdle -eq $false) 'settings object (AC-only): startable and running on battery, no idle condition'
+  }
+  # the process selection -Revoke uses: this state root's launcher trees only, children first
+  $procRoot = 'C:\ProgramData\mccluster-node'
+  $procList = @(
+    [pscustomobject]@{ ProcessId = 100; ParentProcessId = 4; CommandLine = 'cmd.exe /c "C:\ProgramData\mccluster-node\agent.cmd"' },
+    [pscustomobject]@{ ProcessId = 101; ParentProcessId = 100; CommandLine = 'node src\compute\node-agent.mjs' },
+    [pscustomobject]@{ ProcessId = 102; ParentProcessId = 101; CommandLine = 'powershell.exe -EncodedCommand AAAA' },
+    [pscustomobject]@{ ProcessId = 200; ParentProcessId = 4; CommandLine = 'cmd.exe /c "c:\programdata\MCCLUSTER-NODE\adapter.cmd"' },
+    [pscustomobject]@{ ProcessId = 201; ParentProcessId = 200; CommandLine = 'node src\compute\ollama-adapter.mjs' },
+    [pscustomobject]@{ ProcessId = 300; ParentProcessId = 4; CommandLine = 'cmd.exe /c "D:\other-root\agent.cmd"' },
+    [pscustomobject]@{ ProcessId = 301; ParentProcessId = 300; CommandLine = 'node src\compute\node-agent.mjs' },
+    [pscustomobject]@{ ProcessId = 400; ParentProcessId = 4; CommandLine = $null }
+  )
+  $selected = @(Select-McNodeProcessIds -Processes $procList -StateRoot $procRoot)
+  Assert-Equal '100,101,102,200,201' ((@($selected | Sort-Object)) -join ',') 'process selection: the launchers of this state root and everything below them, nothing of another root'
+  Assert-True ([array]::IndexOf($selected, 101) -lt [array]::IndexOf($selected, 100) -and [array]::IndexOf($selected, 102) -lt [array]::IndexOf($selected, 101)) 'process selection: children before parents'
+  Assert-Equal 0 (@(Select-McNodeProcessIds -Processes $procList -StateRoot 'E:\nowhere')).Count 'process selection: an unrelated state root selects nothing'
+  Assert-Equal 0 (@(Select-McNodeProcessIds -Processes $procList -StateRoot '')).Count 'process selection: no state root selects nothing'
+  $concurrent = (Set-McManifestConcurrency -ManifestJson (ConvertTo-McManifestJson -TemplateJson $templateJson -Settings (Get-McTierSettings 'C')) -MaxConcurrency 2) | ConvertFrom-Json
+  Assert-Equal 2 $concurrent.max_leases 'manifest concurrency: max_leases follows'
+  Assert-Equal '2,2' (@($concurrent.capabilities | ForEach-Object { $_.max_concurrency }) -join ',') 'manifest concurrency: every entry follows'
+  Assert-Equal 'gpu-laptop' $concurrent.labels.role 'manifest concurrency: nothing else moves'
+  $threw = $false
+  try { Set-McManifestConcurrency -ManifestJson $templateJson -MaxConcurrency 5 | Out-Null } catch { $threw = $true }
+  Assert-True $threw 'manifest concurrency: 5 is refused'
+  $revokedRecord = (ConvertTo-McRevokedJson -NodeId 'node_abc' -RevokedAt '2026-11-23T00:00:00Z') | ConvertFrom-Json
+  Assert-Equal 'mccluster-node-revoked/1' $revokedRecord.schema 'revoked record: schema'
+  Assert-Equal 'node_abc' $revokedRecord.node_id 'revoked record: node id'
+  Assert-True ((Get-McInstalledVariableNames) -contains 'MCCLUSTER_NODE_STATE_DIR') 'uninstall clears the installed variable names'
+  Assert-Equal $false ((Get-McInstalledVariableNames) -contains 'MCCLUSTER_NODE_ENROLL_TOKEN') 'the installed variable names never include the token'
+
+  # the temporary root is installed (tier C, browser on): pause and resume
+  $script:MockTaskSettings.Clear(); $script:MockUnregistered.Clear()
+  Invoke-McPause -StateRoot $tempRoot -WhatIf | Out-Null
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'paused')) 'pause -WhatIf writes no marker'
+  Assert-Equal 0 (Invoke-McPause -StateRoot $tempRoot) 'pause exits 0'
+  Assert-True (Test-Path -LiteralPath (Join-Path $tempRoot 'paused')) 'pause writes the marker'
+  Assert-Equal 0 (Invoke-McPause -StateRoot $tempRoot) 'pause twice is idempotent'
+  $reportPaused = Format-McContributionReportLines -StateRoot $tempRoot -ThermalReading $null
+  Assert-True (($reportPaused -join "`n").Contains('paused: yes')) 'report: paused says yes'
+  Assert-True (($reportPaused -join "`n").Contains('thermal_supported: no')) 'report: no thermal reading says thermal_supported no'
+  Assert-True (($reportPaused -join "`n").Contains('limits: defaults (no limits.json)')) 'report: no limits file says defaults'
+  Assert-Equal 0 (Invoke-McResume -StateRoot $tempRoot) 'resume exits 0'
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'paused')) 'resume removes the marker'
+  Assert-Equal 0 (Invoke-McResume -StateRoot $tempRoot) 'resume twice is idempotent'
+  $threw = $false
+  try { Invoke-McPause -StateRoot (Join-Path $tempRoot 'nowhere') | Out-Null } catch { $threw = $true }
+  Assert-True $threw 'pause without -Install refuses'
+
+  # limits: -WhatIf writes nothing; a real run writes limits.json, the manifest leases and re-registers the tasks to match
+  $script:MockThermal = $null
+  $manifestBeforeLimits = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json'))
+  Invoke-McLimits -StateRoot $tempRoot -IdleOnly $true -OnACOnly $false -MaxConcurrency 2 -CpuBusyPercent 0 -BatteryFloorPercent -1 -ThermalLimitC 0 -WhatIf | Out-Null
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'limits.json')) 'limits -WhatIf writes no limits.json'
+  Assert-Equal $manifestBeforeLimits ([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json'))) 'limits -WhatIf changes no manifest'
+  Assert-Equal 0 $script:MockTaskSettings.Count 'limits -WhatIf registers no task'
+  $tasksBeforeLimits = $script:MockTaskRegistrations
+  $limitsRun = Invoke-McLimits -StateRoot $tempRoot -IdleOnly $true -OnACOnly $true -MaxConcurrency 2 -CpuBusyPercent 70 -BatteryFloorPercent 25 -ThermalLimitC 80
+  Assert-Equal 0 $limitsRun.ExitCode 'limits: exits 0'
+  Assert-Equal $false $limitsRun.ThermalSupported 'limits: thermal_supported false without a zone reading'
+  $writtenLimits = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'limits.json')) | ConvertFrom-Json
+  Assert-Equal 'mccluster-node-limits/1' $writtenLimits.schema 'limits: limits.json schema'
+  Assert-Equal $true $writtenLimits.idle_only 'limits: idle_only written'
+  Assert-Equal $true $writtenLimits.on_ac_only 'limits: on_ac_only written'
+  Assert-Equal 2 $writtenLimits.max_concurrency 'limits: max_concurrency written'
+  Assert-Equal 70 $writtenLimits.cpu_busy_percent 'limits: cpu_busy_percent written'
+  Assert-Equal 25 $writtenLimits.battery_floor_percent 'limits: battery_floor_percent written'
+  Assert-Equal 80 $writtenLimits.thermal_limit_c 'limits: thermal_limit_c written even when unsupported here (reported, never dropped)'
+  $manifestAfterLimits = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json
+  Assert-Equal 2 $manifestAfterLimits.max_leases 'limits: capabilities.json max_leases follows'
+  Assert-Equal 0 (@($manifestAfterLimits.capabilities | Where-Object { $_.max_concurrency -ne 2 })).Count 'limits: every entry max_concurrency follows'
+  Assert-Equal 3 (@($manifestAfterLimits.capabilities).Count) 'limits: the entries themselves are untouched'
+  Assert-Equal ($tasksBeforeLimits + 1) $script:MockTaskRegistrations 'limits: the two node tasks re-registered once'
+  Assert-Equal 1 $script:MockTaskSettings.Count 'limits: one settings plan handed to the registration'
+  Assert-True $script:MockTaskSettings[0].RunOnlyIfIdle 'limits: idle-only reached the task settings'
+  Assert-True ($script:MockTaskSettings[0].RestartOnIdle -and -not $script:MockTaskSettings[0].StopOnIdleEnd -and $script:MockTaskSettings[0].IdleSentinel) 'limits: idle-only tasks restart on idle, are not stopped at idle end, and the idle sentinel is registered'
+  Assert-True $script:MockTaskSettings[0].AllowStartIfOnBatteries 'limits: AC-only leaves the tasks startable on battery (the agent refuses claims instead)'
+  Assert-Equal $false $script:MockTaskSettings[0].StopIfGoingOnBatteries 'limits: AC-only does not stop the tasks on battery'
+  Assert-True ($script:MockRegisteredNames.Contains('McCluster Node Idle')) 'limits: the idle sentinel task is registered with idle-only'
+
+  # -Install again with limits.json present: the tasks are re-registered with the limits' plan, not the install defaults
+  $script:MockTaskSettings.Clear()
+  $installOutput = (Invoke-McInstall -RepoPath $repoRoot -StateRoot $tempRoot -NodeName 'owner-windows-gpu' -OrgId '00000000-0000-4000-8000-000000000001' -ComputeUrl 'https://compute.mccluster.org' -TierOverride '' 6>&1 | Out-String)
+  Assert-Equal 1 $script:MockTaskSettings.Count 're-install with limits.json: the tasks are registered once'
+  Assert-True $script:MockTaskSettings[0].RunOnlyIfIdle 're-install with limits.json: idle-only is re-applied to the tasks'
+  Assert-True ($script:MockTaskSettings[0].RestartOnIdle -and -not $script:MockTaskSettings[0].StopOnIdleEnd -and $script:MockTaskSettings[0].IdleSentinel) 're-install with limits.json: the whole idle plan is re-applied'
+  Assert-True $installOutput.Contains('limits.json kept; scheduled tasks follow it') 're-install with limits.json: says the limits were kept'
+  Assert-True ($script:MockRegisteredNames.Contains('McCluster Node Idle')) 're-install with limits.json: the idle sentinel task stays registered'
+  Assert-Equal $true (([System.IO.File]::ReadAllText((Join-Path $tempRoot 'limits.json')) | ConvertFrom-Json).idle_only) 're-install with limits.json: limits.json itself is untouched'
+  Assert-Equal 2 (([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).max_leases) 're-install with limits.json: max_leases keeps the owner''s max_concurrency'
+  $limitsBackup = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'limits.json'))
+  [System.IO.File]::WriteAllText((Join-Path $tempRoot 'limits.json'), '{nope')
+  $script:MockTaskSettings.Clear()
+  $brokenOutput = (Invoke-McInstall -RepoPath $repoRoot -StateRoot $tempRoot -NodeName 'owner-windows-gpu' -OrgId '00000000-0000-4000-8000-000000000001' -ComputeUrl 'https://compute.mccluster.org' -TierOverride '' 6>&1 | Out-String)
+  Assert-Equal $false $script:MockTaskSettings[0].RunOnlyIfIdle 're-install with a broken limits.json: the install defaults'
+  Assert-True $brokenOutput.Contains('limits.json is unreadable (invalid_json)') 're-install with a broken limits.json: says so instead of staying silent'
+  [System.IO.File]::WriteAllText((Join-Path $tempRoot 'limits.json'), $limitsBackup)
+  $reportLimits = (Format-McContributionReportLines -StateRoot $tempRoot -ThermalReading $null) -join "`n"
+  Assert-True ($reportLimits.Contains('idle_only true, on_ac_only true, max_concurrency 2, cpu_busy_percent 70, battery_floor_percent 25, thermal_limit_c 80 (unsupported on this device')) 'report: the limits block reads limits.json'
+  $reportThermal = (Format-McContributionReportLines -StateRoot $tempRoot -ThermalReading 61.5) -join "`n"
+  Assert-True ($reportThermal.Contains('thermal_supported: yes (hottest zone 61.5 C)')) 'report: a zone reading says thermal_supported yes'
+  $script:MockTaskSettings.Clear()
+  $relaxed = Invoke-McLimits -StateRoot $tempRoot -IdleOnly $false -OnACOnly $false -MaxConcurrency 1 -CpuBusyPercent 0 -BatteryFloorPercent -1 -ThermalLimitC 0
+  Assert-Equal 1 (([System.IO.File]::ReadAllText((Join-Path $tempRoot 'capabilities.json')) | ConvertFrom-Json).max_leases) 'limits back to defaults: max_leases 1 again'
+  Assert-Equal $false $script:MockTaskSettings[0].RunOnlyIfIdle 'limits back to defaults: no idle condition'
+  Assert-True $script:MockTaskSettings[0].AllowStartIfOnBatteries 'limits back to defaults: battery allowed again'
+  Assert-Equal $false ($script:MockRegisteredNames.Contains('McCluster Node Idle')) 'limits back to defaults: the idle sentinel task is removed'
+  Assert-Null (([System.IO.File]::ReadAllText((Join-Path $tempRoot 'limits.json')) | ConvertFrom-Json).cpu_busy_percent) 'limits back to defaults: cpu limit null'
+  $threw = $false
+  try { Invoke-McLimits -StateRoot $tempRoot -IdleOnly $false -OnACOnly $false -MaxConcurrency 7 -CpuBusyPercent 0 -BatteryFloorPercent -1 -ThermalLimitC 0 | Out-Null } catch { $threw = $true }
+  Assert-True $threw 'limits: max_concurrency 7 is refused before anything is written'
+
+  # enrol with the token in the environment: it reaches the agent's environment only, no enroll.env, never printed
+  $script:MockNodeRuns.Clear(); $script:MockStartedTasks.Clear()
+  $sentinel = 'sentinel-enrol-' + [guid]::NewGuid().ToString('N')
+  $env:MCCLUSTER_NODE_ENROLL_TOKEN = $sentinel
+  $enrolOutput = (Invoke-McEnroll -StateRoot $tempRoot -RepoPath $repoRoot 6>&1 | Out-String)
+  Assert-Equal '' ([string]$env:MCCLUSTER_NODE_ENROLL_TOKEN) 'enrol (environment): the doctor clears the variable in its own process'
+  Assert-Equal 1 $script:MockNodeRuns.Count 'enrol (environment): the agent ran once'
+  Assert-Equal $sentinel $script:MockNodeRuns[0].Environment['MCCLUSTER_NODE_ENROLL_TOKEN'] 'enrol (environment): the token reached the agent process environment'
+  Assert-Equal '1' $script:MockNodeRuns[0].Environment['MCCLUSTER_NODE_ENROLL_ONLY'] 'enrol (environment): enrol-only run'
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'enroll.env')) 'enrol (environment): no enroll.env was written'
+  Assert-Equal $false $enrolOutput.Contains($sentinel) 'enrol (environment): the token is never printed'
+  Assert-True $enrolOutput.Contains('not written to any file') 'enrol (environment): says the token touched no file'
+  Assert-True ($script:MockStartedTasks -contains 'McCluster Node Agent') 'enrol (environment): the agent task is started afterwards'
+  $leaked = @(Get-ChildItem -LiteralPath $tempRoot -Recurse -File | Where-Object { ([System.IO.File]::ReadAllText($_.FullName)).Contains($sentinel) })
+  Assert-Equal 0 $leaked.Count 'enrol (environment): no file under the state root carries the token'
+
+  # revoke: tasks stopped and unregistered, revoked.json written with the node id, identity.json gone, the id printed and nothing else
+  $fakeNodeId = 'node_' + ('f' * 24)
+  [System.IO.File]::WriteAllText((Join-Path $tempRoot 'identity.json'), ('{"nodeId":"' + $fakeNodeId + '","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nPUBLIC-FIXTURE\n-----END PUBLIC KEY-----","privateKeyPem":"-----BEGIN PRIVATE KEY-----\nPRIVATE-FIXTURE-NEVER-PRINTED\n-----END PRIVATE KEY-----"}'))
+  [System.IO.File]::WriteAllText((Join-Path $tempRoot 'last-heartbeat.json'), ('{"schema":"mccluster-node-heartbeat/1","node_id":"' + $fakeNodeId + '","at":"2026-11-23T00:00:00Z","agent_version":"0.5.0","advertised":2,"labels":{"claim_gate":"open"}}'))
+  $reportHeartbeat = (Format-McContributionReportLines -StateRoot $tempRoot -ThermalReading $null) -join "`n"
+  Assert-True ($reportHeartbeat.Contains('last-heartbeat.json: node ' + $fakeNodeId + ' at 2026-11-23T00:00:00Z, agent 0.5.0, 2 advertised; claim_gate open')) 'report: the last heartbeat is read'
+  Assert-Equal $fakeNodeId (Read-McIdentityNodeId $tempRoot) 'revoke: the node id is read from identity.json'
+  $script:MockUnregistered.Clear()
+  Invoke-McRevoke -StateRoot $tempRoot -WhatIf | Out-Null
+  Assert-True (Test-Path -LiteralPath (Join-Path $tempRoot 'identity.json')) 'revoke -WhatIf keeps identity.json'
+  Assert-Equal 0 $script:MockUnregistered.Count 'revoke -WhatIf unregisters nothing'
+
+  # revoke while identity.json cannot be deleted (held open, as a still-running agent would): never "deleted", exit 2, no revoked.json
+  $identityFile = Join-Path $tempRoot 'identity.json'
+  $registeredBeforeFailedRevoke = @($script:MockRegisteredNames.ToArray())
+  $script:McDeleteRetryMs = 10
+  $script:MockProcesses = @([pscustomobject]@{ ProcessId = 999001; ParentProcessId = 4; CommandLine = ('cmd.exe /c "{0}"' -f (Join-Path $tempRoot 'agent.cmd')) })
+  $script:MockStoppedProcessIds.Clear()
+  $heldOpen = [System.IO.File]::Open($identityFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+  try {
+    $failedRevoke = $null
+    $failedOutput = (& { $script:failedRevokeResult = Invoke-McRevoke -StateRoot $tempRoot } 6>&1 | Out-String)
+    $failedRevoke = $script:failedRevokeResult
+  } finally { $heldOpen.Dispose() }
+  Assert-True (Test-Path -LiteralPath $identityFile) 'revoke (delete refused): identity.json is in fact still there'
+  Assert-Equal 2 $failedRevoke.ExitCode 'revoke (delete refused): exits non-zero'
+  Assert-Equal $false $failedRevoke.IdentityDeleted 'revoke (delete refused): the result says the key was not deleted'
+  Assert-Equal $false $failedOutput.Contains('identity.json deleted') 'revoke (delete refused): never prints "deleted"'
+  Assert-True ($failedOutput.Contains('REVOKE FAILED') -and $failedOutput.Contains('STILL PRESENT') -and $failedOutput.Contains($identityFile)) 'revoke (delete refused): says clearly that the key is still on the machine, and where'
+  Assert-True $failedOutput.Contains('node_id ' + $fakeNodeId) 'revoke (delete refused): still names the node id to revoke on the Core'
+  Assert-Equal $false $failedOutput.Contains('PRIVATE-FIXTURE') 'revoke (delete refused): never prints the key'
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'revoked.json')) 'revoke (delete refused): no revoked.json claims a revocation that did not happen'
+  Assert-True ($script:MockStoppedProcessIds.Count -ge $script:McDeleteAttempts -and @($script:MockStoppedProcessIds | Where-Object { $_ -ne 999001 }).Count -eq 0) 'revoke (delete refused): the state root''s node processes were ended first and again before each retry, and only those'
+  # a process that holds the file until it is stopped: stopping it lets the retry succeed
+  $script:MockStoppedProcessIds.Clear()
+  $script:holder = [System.IO.File]::Open($identityFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+  $script:MockOnProcessStop = { param($id) if ($null -ne $script:holder) { $script:holder.Dispose(); $script:holder = $null } }
+  $script:MockProcesses = @()
+  $retryDeleted = $false
+  try {
+    # no process is found on the first pass (the handle stays open, the first delete fails); it appears for the retry
+    $script:MockProcesses = @()
+    $firstTry = $true
+    try { Remove-Item -LiteralPath $identityFile -Force -ErrorAction Stop; $firstTry = $false } catch { }
+    Assert-True ($firstTry -and (Test-Path -LiteralPath $identityFile)) 'verified delete: the held file really refuses a plain delete'
+    $script:MockProcesses = @([pscustomobject]@{ ProcessId = 999002; ParentProcessId = 4; CommandLine = ('cmd.exe /c "{0}"' -f (Join-Path $tempRoot 'agent.cmd')) })
+    $retryDeleted = Remove-McFileVerified -Path $identityFile -StateRoot $tempRoot
+  } finally { if ($null -ne $script:holder) { $script:holder.Dispose(); $script:holder = $null }; $script:MockOnProcessStop = $null; $script:MockProcesses = @() }
+  Assert-True $retryDeleted 'verified delete: stopping the holder and retrying deletes the file'
+  Assert-Equal $false (Test-Path -LiteralPath $identityFile) 'verified delete: true only once Test-Path is false'
+  Assert-True ($script:MockStoppedProcessIds -contains 999002) 'verified delete: the holder was stopped before the retry'
+  Assert-True (Remove-McFileVerified -Path $identityFile -StateRoot $tempRoot) 'verified delete: an absent file is already gone'
+  # put the fixture and the registrations back for the successful revoke below
+  [System.IO.File]::WriteAllText($identityFile, ('{"nodeId":"' + $fakeNodeId + '","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nPUBLIC-FIXTURE\n-----END PUBLIC KEY-----","privateKeyPem":"-----BEGIN PRIVATE KEY-----\nPRIVATE-FIXTURE-NEVER-PRINTED\n-----END PRIVATE KEY-----"}'))
+  [System.IO.File]::WriteAllText((Join-Path $tempRoot 'last-heartbeat.json'), '{"schema":"mccluster-node-heartbeat/1"}')
+  $script:MockRegisteredNames.Clear(); foreach ($n in $registeredBeforeFailedRevoke) { $script:MockRegisteredNames.Add($n) }
+  $script:MockUnregistered.Clear(); $script:MockStoppedProcessIds.Clear()
+  $revokeOutput = (Invoke-McRevoke -StateRoot $tempRoot 6>&1 | Out-String)
+  Assert-True $revokeOutput.Contains('identity.json deleted (verified absent') 'revoke: "deleted" is printed only after the file is verified absent'
+  Assert-True ($revokeOutput.Contains('node_id ' + $fakeNodeId)) 'revoke: prints the node id the owner revokes on the Core'
+  Assert-Equal $false $revokeOutput.Contains('PRIVATE-FIXTURE') 'revoke: never prints the key'
+  Assert-Equal $false $revokeOutput.Contains('PUBLIC-FIXTURE') 'revoke: never prints the public key either'
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'identity.json')) 'revoke: identity.json deleted'
+  Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'last-heartbeat.json')) 'revoke: the heartbeat file goes with the identity'
+  $revokedFile = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'revoked.json')) | ConvertFrom-Json
+  Assert-Equal $fakeNodeId $revokedFile.node_id 'revoke: revoked.json carries the node id'
+  Assert-True ([string]$revokedFile.revoked_at -match '^\d{4}-\d{2}-\d{2}T') 'revoke: revoked.json carries the time'
+  Assert-Equal 'McCluster Node Adapter,McCluster Node Agent,McCluster Node Browser' ($script:MockUnregistered -join ',') 'revoke: the three tasks were stopped and unregistered'
+  Assert-True (Test-Path -LiteralPath (Join-Path $tempRoot 'capabilities.json')) 'revoke: the manifest and config stay (uninstall removes them)'
+  Assert-True (((Format-McContributionReportLines -StateRoot $tempRoot -ThermalReading $null) -join "`n").Contains('revoked.json: node ' + $fakeNodeId + ' revoked locally at')) 'report: the revocation record is read'
+  $again = Invoke-McRevoke -StateRoot $tempRoot
+  Assert-Null $again.NodeId 'revoke twice: no identity left, no node id'
+
+  # uninstall: revoke semantics, then the state root and the installed user variables go
+  [System.IO.File]::WriteAllText((Join-Path $tempRoot 'identity.json'), ('{"nodeId":"' + $fakeNodeId + '","publicKeyPem":"x","privateKeyPem":"y"}'))
+  $script:MockRegisteredNames.Clear(); foreach ($n in $script:McTaskNames) { $script:MockRegisteredNames.Add($n) }
+  $script:MockUnregistered.Clear()
+  $script:MockUserEnvironment['MCCLUSTER_NODE_STATE_DIR'] = $tempRoot
+  $whatIfUninstall = $null
+  $whatIfUninstallOutput = (& { $script:whatIfUninstallResult = Invoke-McUninstall -StateRoot $tempRoot -WhatIf } 6>&1 | Out-String)
+  $whatIfUninstall = $script:whatIfUninstallResult
+  Assert-Equal 0 $whatIfUninstall.ExitCode 'uninstall -WhatIf exits 0'
+  Assert-Equal $false $whatIfUninstallOutput.Contains('INCOMPLETE') 'uninstall -WhatIf reports no failure for the key it left on purpose'
+  Assert-True (Test-Path -LiteralPath $tempRoot) 'uninstall -WhatIf keeps the state root'
+  Assert-Equal $tempRoot $script:MockUserEnvironment['MCCLUSTER_NODE_STATE_DIR'] 'uninstall -WhatIf clears no variable'
+  $uninstalled = Invoke-McUninstall -StateRoot $tempRoot
+  Assert-Equal $fakeNodeId $uninstalled.NodeId 'uninstall: the node id is still named'
+  Assert-True $uninstalled.RootRemoved 'uninstall: state root removed'
+  Assert-True ($uninstalled.ExitCode -eq 0 -and $uninstalled.IdentityDeleted) 'uninstall: exits 0 only with the key verified gone'
+  Assert-Equal $false (Test-Path -LiteralPath $tempRoot) 'uninstall: the state root is gone'
+  Assert-Equal 'McCluster Node Adapter,McCluster Node Agent' ($script:MockUnregistered -join ',') 'uninstall: the registered tasks were removed'
+  Assert-Equal '' ([string]$script:MockUserEnvironment['MCCLUSTER_NODE_STATE_DIR']) 'uninstall: the installed user variable is cleared'
+  Assert-True ($uninstalled.EnvironmentCleared -contains 'MCCLUSTER_NODE_STATE_DIR') 'uninstall: names what it cleared'
+  Assert-Equal $false ($uninstalled.EnvironmentCleared -contains 'MCCLUSTER_NODE_ENROLL_TOKEN') 'uninstall: never touches a token variable'
 } finally {
+  $env:MCCLUSTER_NODE_ENROLL_TOKEN = ''
   if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue }
 }
 

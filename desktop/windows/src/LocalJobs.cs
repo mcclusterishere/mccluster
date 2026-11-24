@@ -253,6 +253,119 @@ namespace McClusterDesktop
         }
     }
 
+    // The metering block of the compute contribution contract (docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md
+    // on branch prime/contribution-ledger; that file is NOT in this tree until that branch is merged), one
+    // shape for both execution paths: every raw Ollama counter recorded separately and never summed (null
+    // when the runtime did not report one), the model as served, its digest (read from the same daemon after
+    // the generation; a second call, not atomic with the completion; receipt.metering_evidence names the
+    // exact call), the runtime version, the node id the agent last reported (never read from identity.json),
+    // the fingerprint of the key that signs this receipt, hardware_mode, the lease attempt and the attempt's
+    // wall clock (set when the attempt ends, on success and on failure alike).
+    internal static class Metering
+    {
+        internal static readonly string[] Keys = {
+            "prompt_eval_count", "prompt_eval_cached_count", "eval_count", "total_duration_ns", "load_duration_ns", "prompt_eval_duration_ns", "eval_duration_ns",
+            "model", "model_digest", "runtime_version", "node_id", "node_key_fingerprint", "hardware_mode", "attempt", "duration_ms" };
+
+        // Ollama's own /api/chat body: counters named as Ollama names them (durations without the _ns suffix).
+        internal static Dictionary<string, object> FromOllamaChat(object parsed, string model, string modelDigest, string runtimeVersion, string nodeId, string nodeKeyFingerprint, string hardwareMode, int attempt)
+        {
+            return Block(
+                Counter(parsed, "prompt_eval_count"), Counter(parsed, "prompt_eval_cached_count"), Counter(parsed, "eval_count"),
+                Counter(parsed, "total_duration"), Counter(parsed, "load_duration"), Counter(parsed, "prompt_eval_duration"), Counter(parsed, "eval_duration"),
+                model, modelDigest, runtimeVersion, nodeId, nodeKeyFingerprint, hardwareMode, attempt);
+        }
+
+        // The node adapter's /execute "usage": the same counters already carrying the _ns suffix (inferenceUsage in core).
+        internal static Dictionary<string, object> FromAdapterUsage(object usage, string model, string modelDigest, string runtimeVersion, string nodeId, string nodeKeyFingerprint, string hardwareMode, int attempt)
+        {
+            return Block(
+                Counter(usage, "prompt_eval_count"), Counter(usage, "prompt_eval_cached_count"), Counter(usage, "eval_count"),
+                Counter(usage, "total_duration_ns"), Counter(usage, "load_duration_ns"), Counter(usage, "prompt_eval_duration_ns"), Counter(usage, "eval_duration_ns"),
+                model, modelDigest, runtimeVersion, nodeId, nodeKeyFingerprint, hardwareMode, attempt);
+        }
+
+        private static Dictionary<string, object> Block(object promptEval, object promptEvalCached, object evalCount, object totalNs, object loadNs, object promptEvalNs, object evalNs,
+            string model, string modelDigest, string runtimeVersion, string nodeId, string nodeKeyFingerprint, string hardwareMode, int attempt)
+        {
+            var block = new Dictionary<string, object>();
+            block["prompt_eval_count"] = promptEval;
+            block["prompt_eval_cached_count"] = promptEvalCached;
+            block["eval_count"] = evalCount;
+            block["total_duration_ns"] = totalNs;
+            block["load_duration_ns"] = loadNs;
+            block["prompt_eval_duration_ns"] = promptEvalNs;
+            block["eval_duration_ns"] = evalNs;
+            block["model"] = model;
+            block["model_digest"] = modelDigest;
+            block["runtime_version"] = runtimeVersion;
+            block["node_id"] = nodeId;
+            block["node_key_fingerprint"] = nodeKeyFingerprint;
+            block["hardware_mode"] = hardwareMode;
+            block["attempt"] = attempt;
+            block["duration_ms"] = null; // the attempt's wall clock, set when the attempt ends
+            return block;
+        }
+
+        // A raw counter as the runtime reported it: a non-negative integer, or null when absent or not a number.
+        internal static object Counter(object container, string key)
+        {
+            object value = Json.Get(container, key);
+            if (value == null) return null;
+            try
+            {
+                decimal n = Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+                if (n < 0) return null;
+                return (long)Math.Floor(n);
+            }
+            catch (Exception) { return null; }
+        }
+
+        // The attempt has ended (done, failed or canceled): its metering block gets the attempt's wall clock.
+        // Only the block of this very attempt is touched: a block a previous attempt left behind keeps its
+        // own duration. Returns whether a block was closed.
+        internal static bool EndAttempt(Dictionary<string, object> receipt, int attempt, long durationMs)
+        {
+            if (receipt == null || !receipt.ContainsKey("metering")) return false;
+            var block = receipt["metering"] as Dictionary<string, object>;
+            if (block == null || !block.ContainsKey("attempt") || !(block["attempt"] is int) || (int)block["attempt"] != attempt) return false;
+            block["duration_ms"] = durationMs;
+            return true;
+        }
+
+        internal const string DigestFromExecute = "adapter /execute usage.model_digest: the adapter's GET /api/tags on its own daemon, read after the generation inside the adapter's single execution slot (a second call, not atomic with the completion)";
+        internal const string DigestFromHealth = "adapter GET /health implementations[].digest, probed by the desktop BEFORE the run (this adapter's /execute returned no usage.model_digest; not bound to the execution)";
+        internal const string DigestFromTags = "desktop GET /api/tags on the Ollama daemon, read AFTER /api/chat returned and matched by model name (a second call, not atomic with the completion)";
+        internal const string VersionFromExecute = "adapter /execute usage.ollama_version: the adapter's GET /api/version on its own daemon, read after the generation";
+        internal const string VersionFromProbe = "desktop GET /api/version on the Ollama daemon, probed BEFORE the run";
+
+        // Node-adapter path: which digest and runtime version go into the metering block, and where each came
+        // from. The adapter's own post-generation reading (usage.model_digest / usage.ollama_version in the
+        // /execute response) wins; an older adapter that returns neither leaves the desktop's own earlier
+        // probes, and the source says so. Returns { digest, digest source, version, version source }.
+        internal static string[] AdapterEvidence(object usage, string healthDigest, string probedVersion)
+        {
+            string digest = Json.Str(usage, "model_digest");
+            string version = Json.Str(usage, "ollama_version");
+            bool digestFromExecute = !string.IsNullOrWhiteSpace(digest);
+            bool versionFromExecute = !string.IsNullOrWhiteSpace(version);
+            return new[] {
+                digestFromExecute ? digest : healthDigest,
+                digestFromExecute ? DigestFromExecute : (string.IsNullOrWhiteSpace(healthDigest) ? null : DigestFromHealth),
+                versionFromExecute ? version : probedVersion,
+                versionFromExecute ? VersionFromExecute : (string.IsNullOrWhiteSpace(probedVersion) ? null : VersionFromProbe) };
+        }
+
+        // The digest of the model as the given /api/tags reading lists it, matched by name; null when not listed.
+        internal static string DigestFor(OllamaStatus status, string model)
+        {
+            if (status == null || string.IsNullOrWhiteSpace(model)) return null;
+            foreach (OllamaModel m in status.Models)
+                if (string.Equals(m.Name, model, StringComparison.OrdinalIgnoreCase)) return m.Digest;
+            return null;
+        }
+    }
+
     // A fault the runner may retry: the executor was unreachable, timed out or failed
     // server-side. A refused implementation, an empty answer or a bad path is final.
     internal sealed class RetryableException : Exception
@@ -310,6 +423,7 @@ namespace McClusterDesktop
                     record["duration_ms"] = sw.ElapsedMilliseconds;
                     record["executor_path"] = job.Receipt.ContainsKey("executor_path") ? job.Receipt["executor_path"] : null;
                     record["outcome"] = "done";
+                    Metering.EndAttempt(job.Receipt, attempt, sw.ElapsedMilliseconds);
                     job.State = JobState.Done;
                     job.Error = null;
                 }
@@ -320,6 +434,9 @@ namespace McClusterDesktop
                     record["duration_ms"] = sw.ElapsedMilliseconds;
                     record["executor_path"] = job.Receipt.ContainsKey("executor_path") ? job.Receipt["executor_path"] : null;
                     record["error"] = ex.GetType().Name + ": " + ex.Message;
+                    // A failed attempt has ended too: its metering block (written before, e.g., the empty-answer
+                    // check threw) gets the attempt's wall clock, so null only ever means "still running".
+                    Metering.EndAttempt(job.Receipt, attempt, sw.ElapsedMilliseconds);
                     // Only the owner's token means "canceled"; any other OperationCanceledException is a
                     // timeout somewhere and is recorded as the failure it is.
                     bool canceled = cancel.IsCancellationRequested;
@@ -535,6 +652,12 @@ namespace McClusterDesktop
             double thinkingChars;
             double evalCount;
             var result = new Dictionary<string, object>();
+            // The metering block's identity fields: the node id the agent last reported (never identity.json)
+            // and the fingerprint of the key that signs this receipt.
+            string reportedNodeId = Contribution.ReportedNodeId(LocalRuntime.NodeStateDir());
+            string keyFingerprint = null;
+            try { using (DeviceKey key = DeviceKey.Load(store.Root)) keyFingerprint = key.KeyId; } catch (Exception) { }
+            int attemptNumber = (int)Json.Num(job.Receipt, "attempt");
             if (chosen == "node-adapter")
             {
                 var envelope = new Dictionary<string, object>();
@@ -578,6 +701,13 @@ namespace McClusterDesktop
                 job.Receipt["adapter_url"] = adapter.Url;
                 job.Receipt["adapter_implementation"] = implementation.Implementation;
                 job.Receipt["adapter_model_digest"] = implementation.Digest;
+                // The adapter's usage carries the raw counters and, from this adapter version on, the digest and
+                // the daemon version it read from its own daemon right after the generation (preferred). An
+                // older adapter returns neither: then the /health digest probed before the run is used and
+                // metering_evidence says exactly that.
+                string[] adapterEvidence = Metering.AdapterEvidence(usage, implementation.Digest, ollama.Version);
+                job.Receipt["metering"] = Metering.FromAdapterUsage(usage, Json.Str(parsed, "model") ?? model, adapterEvidence[0], adapterEvidence[2], reportedNodeId, keyFingerprint, job.Receipt["hardware_mode"] as string, attemptNumber);
+                job.Receipt["metering_evidence"] = new Dictionary<string, object> { { "model_digest_source", adapterEvidence[1] }, { "runtime_version_source", adapterEvidence[3] } };
             }
             else
             {
@@ -615,12 +745,32 @@ namespace McClusterDesktop
                 result["prompt_tokens"] = promptCount;
                 result["generation_tokens_per_second"] = evalNs > 0 ? Math.Round(evalCount * 1e9 / evalNs, 2) : 0;
                 result["prompt_tokens_per_second"] = promptNs > 0 ? Math.Round(promptCount * 1e9 / promptNs, 2) : 0;
+                // Every raw counter comes from this very /api/chat response. The digest does not: Ollama's
+                // /api/chat answer carries none, so it is filled below from the desktop's own GET /api/tags
+                // (LocalRuntime.ProbeOllama), called after /api/chat returned and matched by model name. That
+                // is a second call, not atomic with the completion: a pull of the same tag between the two
+                // would name the new digest. The runtime version is the desktop's GET /api/version from before
+                // the run. metering_evidence records both sources in the receipt.
+                job.Receipt["metering"] = Metering.FromOllamaChat(parsed, Json.Str(parsed, "model") ?? model, null, ollama.Version, reportedNodeId, keyFingerprint, job.Receipt["hardware_mode"] as string, attemptNumber);
+                job.Receipt["metering_evidence"] = new Dictionary<string, object> { { "model_digest_source", null }, { "runtime_version_source", string.IsNullOrWhiteSpace(ollama.Version) ? null : Metering.VersionFromProbe } };
             }
             OllamaStatus after = await LocalRuntime.ProbeOllama().ConfigureAwait(false);
             job.Receipt["model"] = result["model"];
             job.Receipt["gpu_evidence_after_run"] = after.GpuEvidence;
             job.Receipt["loaded_after_run"] = after.LoadedSummary;
             job.Receipt["hardware_mode"] = DeviceInventory.Read().HardwareMode(after.GpuEvidence);
+            var meteringBlock = job.Receipt["metering"] as Dictionary<string, object>;
+            if (meteringBlock != null)
+            {
+                meteringBlock["hardware_mode"] = job.Receipt["hardware_mode"];
+                if (meteringBlock["model_digest"] == null)
+                {
+                    // ollama-direct (or an adapter that named no digest at all): the post-run /api/tags reading.
+                    meteringBlock["model_digest"] = Metering.DigestFor(after, Json.Str(meteringBlock, "model") ?? model);
+                    var evidenceBlock = job.Receipt.ContainsKey("metering_evidence") ? job.Receipt["metering_evidence"] as Dictionary<string, object> : null;
+                    if (evidenceBlock != null && meteringBlock["model_digest"] != null) evidenceBlock["model_digest_source"] = Metering.DigestFromTags;
+                }
+            }
             job.Receipt["task"] = "One chat completion on the local model on loopback (" + chosen + ").";
             // A run that spent its whole budget reasoning and produced no answer is not a result:
             // no Result is stored, the diagnostics go into the failure message.

@@ -24,6 +24,9 @@ internal static class DesktopTests
             ProofChecks();
             ExoProbeChecks();
             JsonChecks();
+            MeteringChecks();
+            QuoteArgChecks();
+            ContributionChecks();
             Console.WriteLine(checks + " desktop checks passed.");
             return 0;
         }
@@ -229,6 +232,210 @@ internal static class DesktopTests
             Assert(Convert.ToString(receipt["schema"]) == "exo-rank-receipt/1" && receipt["state_sha256"] != null, "rank receipt carries schema and state hash");
         }
         finally { listener.Stop(); serving.Wait(2000); }
+    }
+
+    // The metering block: one shape on both execution paths, raw counters kept apart. The key list below is a
+    // copy of the contract's (docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md on branch
+    // prime/contribution-ledger; that file is not in this tree, so it cannot be read from here).
+    private static void MeteringChecks()
+    {
+        string[] contract = { "prompt_eval_count", "prompt_eval_cached_count", "eval_count", "total_duration_ns", "load_duration_ns", "prompt_eval_duration_ns", "eval_duration_ns", "model", "model_digest", "runtime_version", "node_id", "node_key_fingerprint", "hardware_mode", "attempt", "duration_ms" };
+        Assert(string.Join(",", Metering.Keys) == string.Join(",", contract), "the metering keys are exactly the contract's, in its order");
+        object chat = Json.Parse("{\"model\":\"qwen3-vl:4b\",\"done\":true,\"total_duration\":5123456789,\"load_duration\":123456789,\"prompt_eval_count\":120,\"prompt_eval_duration\":400000000,\"eval_count\":256,\"eval_duration\":12800000000,\"message\":{\"role\":\"assistant\",\"content\":\"x\"}}");
+        var direct = Metering.FromOllamaChat(chat, "qwen3-vl:4b", "sha256:abc", "0.40.16", null, "key_1", "gpu-verified", 1);
+        Assert(string.Join(",", direct.Keys) == string.Join(",", contract), "ollama-direct metering has every contract key and nothing else");
+        Assert((long)direct["prompt_eval_count"] == 120 && (long)direct["eval_count"] == 256 && (long)direct["total_duration_ns"] == 5123456789L && (long)direct["load_duration_ns"] == 123456789L && (long)direct["prompt_eval_duration_ns"] == 400000000L && (long)direct["eval_duration_ns"] == 12800000000L, "every raw counter is recorded separately as an integer");
+        Assert(direct["prompt_eval_cached_count"] == null, "a counter the runtime did not report is null, never 0 and never summed into another");
+        Assert((string)direct["model_digest"] == "sha256:abc" && (string)direct["runtime_version"] == "0.40.16" && direct["node_id"] == null && (string)direct["node_key_fingerprint"] == "key_1" && (string)direct["hardware_mode"] == "gpu-verified" && (int)direct["attempt"] == 1 && direct["duration_ms"] == null, "identity fields and the unset wall clock");
+        object usage = Json.Parse("{\"prompt_eval_count\":120,\"prompt_eval_cached_count\":100,\"eval_count\":256,\"total_duration_ns\":5123456789,\"load_duration_ns\":0,\"prompt_eval_duration_ns\":400000000,\"eval_duration_ns\":12800000000,\"prompt_tokens_per_second\":300,\"generation_tokens_per_second\":20}");
+        var viaAdapter = Metering.FromAdapterUsage(usage, "qwen3-vl:4b", "sha256:abc", "0.40.16", "node_x", "key_1", "gpu-verified", 2);
+        Assert(string.Join(",", viaAdapter.Keys) == string.Join(",", direct.Keys), "the adapter path writes the identical shape");
+        Assert((long)viaAdapter["prompt_eval_cached_count"] == 100 && (long)viaAdapter["load_duration_ns"] == 0 && (string)viaAdapter["node_id"] == "node_x" && (int)viaAdapter["attempt"] == 2, "adapter counters are copied as reported (0 stays 0, cached count kept)");
+        Assert(!viaAdapter.ContainsKey("prompt_tokens_per_second"), "derived rates never enter the metering block");
+        Assert(Metering.Counter(Json.Parse("{\"n\":-5}"), "n") == null && Metering.Counter(Json.Parse("{\"n\":\"x\"}"), "n") == null && (long)Metering.Counter(Json.Parse("{\"n\":7.9}"), "n") == 7, "counters are non-negative integers or null");
+        var status = new OllamaStatus();
+        status.Models.Add(new OllamaModel { Name = "qwen3-vl:4b", Digest = "sha256:def" });
+        Assert(Metering.DigestFor(status, "QWEN3-VL:4B") == "sha256:def" && Metering.DigestFor(status, "other") == null && Metering.DigestFor(null, "x") == null, "the digest is matched by name from the run-time tag list");
+
+        // duration_ms is set when the attempt ends, on a failed attempt as on a successful one.
+        var failedReceipt = new Dictionary<string, object>();
+        failedReceipt["metering"] = Metering.FromOllamaChat(chat, "qwen3-vl:4b", null, "0.40.16", null, "key_1", "cpu-only", 2);
+        Assert(((Dictionary<string, object>)failedReceipt["metering"])["duration_ms"] == null, "duration_ms is null while the attempt runs");
+        Assert(!Metering.EndAttempt(failedReceipt, 1, 111) && ((Dictionary<string, object>)failedReceipt["metering"])["duration_ms"] == null, "another attempt's end never closes this attempt's block");
+        Assert(Metering.EndAttempt(failedReceipt, 2, 4321) && (long)((Dictionary<string, object>)failedReceipt["metering"])["duration_ms"] == 4321, "ending the attempt (the failure path calls this too) sets duration_ms");
+        Assert(!Metering.EndAttempt(new Dictionary<string, object>(), 1, 5) && !Metering.EndAttempt(null, 1, 5), "a receipt without a metering block (inventory, or a failure before the model answered) is left alone");
+        string runner = File.ReadAllText(FindSource("LocalJobs.cs"));
+        int catchAt = runner.IndexOf("catch (Exception ex)", runner.IndexOf("public async Task<LocalJob> Run("), StringComparison.Ordinal);
+        int catchEnd = runner.IndexOf("if (job.State == JobState.Done) break;", catchAt, StringComparison.Ordinal);
+        Assert(catchAt > 0 && catchEnd > catchAt && runner.Substring(catchAt, catchEnd - catchAt).Contains("Metering.EndAttempt(job.Receipt, attempt, sw.ElapsedMilliseconds);"), "the runner's failure path closes the metering block with the attempt's wall clock");
+
+        // Node-adapter path: the adapter's own post-generation digest and daemon version win over the desktop's earlier probes.
+        object usageWithEvidence = Json.Parse("{\"eval_count\":3,\"model_digest\":\"sha256:served\",\"ollama_version\":\"0.12.9\"}");
+        string[] preferred = Metering.AdapterEvidence(usageWithEvidence, "sha256:health-before", "0.40.16");
+        Assert(preferred[0] == "sha256:served" && preferred[1] == Metering.DigestFromExecute && preferred[2] == "0.12.9" && preferred[3] == Metering.VersionFromExecute, "usage.model_digest and usage.ollama_version from /execute are preferred");
+        string[] older = Metering.AdapterEvidence(usage, "sha256:health-before", "0.40.16");
+        Assert(older[0] == "sha256:health-before" && older[1] == Metering.DigestFromHealth && older[2] == "0.40.16" && older[3] == Metering.VersionFromProbe, "an adapter that returns neither falls back to the earlier probes and the source says so");
+        string[] nulls = Metering.AdapterEvidence(Json.Parse("{\"model_digest\":null,\"ollama_version\":null}"), null, null);
+        Assert(nulls[0] == null && nulls[1] == null && nulls[2] == null && nulls[3] == null, "no reading anywhere is null with no source claimed");
+        Assert(Metering.DigestFromExecute.Contains("not atomic") && Metering.DigestFromTags.Contains("AFTER /api/chat") && Metering.DigestFromTags.Contains("not atomic") && Metering.DigestFromHealth.Contains("BEFORE the run"), "each digest source names the exact call and says it is not atomic with the completion");
+        Assert(runner.Contains("Metering.AdapterEvidence(usage, implementation.Digest, ollama.Version)") && runner.Contains("evidenceBlock[\"model_digest_source\"] = Metering.DigestFromTags"), "the runner records where the digest came from on both paths");
+    }
+
+    // desktop\windows\src\<name>, found from the test executable's folder upward (the build runs the tests from its output folder).
+    private static string FindSource(string name)
+    {
+        string dir = Path.GetDirectoryName(typeof(DesktopTests).Assembly.Location);
+        for (int up = 0; up <= 6 && dir != null; up++)
+        {
+            foreach (string candidate in new[] { Path.Combine(dir, "src", name), Path.Combine(dir, "desktop", "windows", "src", name) })
+                if (File.Exists(candidate)) return candidate;
+            dir = Path.GetDirectoryName(dir);
+        }
+        throw new Exception("FAILED: source file not found from the test folder: " + name);
+    }
+
+    [System.Runtime.InteropServices.DllImport("shell32.dll", SetLastError = true)]
+    private static extern IntPtr CommandLineToArgvW([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string commandLine, out int argc);
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+    private static extern IntPtr LocalFree(IntPtr memory);
+
+    // Windows' own parse of a command line (the rules QuoteArg must satisfy); argv[0] is the program name.
+    private static string[] SplitCommandLine(string commandLine)
+    {
+        int argc;
+        IntPtr argv = CommandLineToArgvW(commandLine, out argc);
+        if (argv == IntPtr.Zero) throw new Exception("FAILED: CommandLineToArgvW refused: " + commandLine);
+        try
+        {
+            var args = new string[argc];
+            for (int i = 0; i < argc; i++) args[i] = System.Runtime.InteropServices.Marshal.PtrToStringUni(System.Runtime.InteropServices.Marshal.ReadIntPtr(argv, i * IntPtr.Size));
+            return args;
+        }
+        finally { LocalFree(argv); }
+    }
+
+    // QuoteArg against the Windows command-line rules: trailing backslashes, backslashes before a quote, embedded quotes, empty.
+    private static void QuoteArgChecks()
+    {
+        Assert(Contribution.QuoteArg("C:\\McCluster Node\\") == "\"C:\\McCluster Node\\\\\"", "a trailing backslash before the closing quote is doubled: " + Contribution.QuoteArg("C:\\McCluster Node\\"));
+        Assert(Contribution.QuoteArg("D:\\Node Root\\\\") == "\"D:\\Node Root\\\\\\\\\"", "two trailing backslashes become four");
+        Assert(Contribution.QuoteArg("C:\\plain\\") == "C:\\plain\\" && Contribution.QuoteArg("C:\\a\\b") == "C:\\a\\b", "a value without a space, tab or quote is passed as it is (backslashes are literal there)");
+        Assert(Contribution.QuoteArg("C:\\a dir\\file") == "\"C:\\a dir\\file\"", "backslashes inside a quoted value that precede no quote stay single");
+        Assert(Contribution.QuoteArg("say \"hi\"") == "\"say \\\"hi\\\"\"" && Contribution.QuoteArg("a\\\"b") == "\"a\\\\\\\"b\"", "an embedded quote is escaped and the backslashes before it doubled");
+        Assert(Contribution.QuoteArg("") == "\"\"" && Contribution.QuoteArg(null) == "\"\"", "an empty value is an explicit empty argument");
+        string[] values = { "C:\\McCluster Node\\", "D:\\Node Root\\\\", "C:\\plain\\", "plain", "", "a b", "say \"hi\"", "a\\\"b", "ends with quote\"", "\\\\server\\share name\\", "tab\there\\", "org id with \"quotes\" and \\ slashes \\", "-Extra", "tail" };
+        var line = new System.Text.StringBuilder("program.exe");
+        foreach (string value in values) line.Append(' ').Append(Contribution.QuoteArg(value));
+        string[] parsedBack = SplitCommandLine(line.ToString());
+        Assert(parsedBack.Length == values.Length + 1, "Windows splits the quoted line into exactly the arguments given (" + (parsedBack.Length - 1) + " of " + values.Length + ")");
+        for (int i = 0; i < values.Length; i++) Assert(parsedBack[i + 1] == values[i], "argument " + i + " round-trips through the Windows command-line parser: [" + values[i] + "] came back as [" + parsedBack[i + 1] + "]");
+        // The reviewed failure, end to end: a state root with a space and a trailing backslash keeps the next switch separate.
+        var doctorLine = Contribution.CommandLine("C:\\a dir\\doctor.ps1", new List<string> { "-StateRoot", "D:\\Node Root\\", "-Extra", "tail" });
+        string[] doctorArgs = SplitCommandLine("powershell.exe " + doctorLine);
+        Assert(doctorArgs.Length == 11 && doctorArgs[6] == "C:\\a dir\\doctor.ps1" && doctorArgs[8] == "D:\\Node Root\\" && doctorArgs[9] == "-Extra" && doctorArgs[10] == "tail", "-StateRoot \"D:\\Node Root\\\" no longer swallows the arguments after it");
+    }
+
+    // The Contribute panel's logic: consent text, limits, the doctor's switches, the device state, and that the
+    // enrolment credential never lands in the job store, the logs or a receipt.
+    private static void ContributionChecks()
+    {
+        foreach (string phrase in new[] { "approved model class", "workload class public", "limits", "no account credential", "no tool permission beyond the executor contract", "Pause and Revoke are one click away", "never silently off" })
+            Assert(Contribution.ConsentText.Contains(phrase), "consent text says: " + phrase);
+        Assert(!Contribution.ConsentText.Contains("Cluster AI") || Contribution.ConsentText.Contains("McCluster"), "the AI is named McCluster, never Cluster");
+
+        var limits = new Contribution.Limits { IdleOnly = true, OnACOnly = false, MaxConcurrency = 2, CpuBusyPercent = 70, BatteryFloorPercent = 25, ThermalLimitC = 85 };
+        limits.Validate();
+        List<string> limitArgs = Contribution.DoctorArgs("limits", "C:\\state root", limits, null, null);
+        Assert(string.Join(" ", limitArgs) == "-Limits -IdleOnly -MaxConcurrency 2 -CpuBusyPercent 70 -BatteryFloorPercent 25 -ThermalLimitC 85 -StateRoot C:\\state root", "the -Limits switches are explicit: " + string.Join(" ", limitArgs));
+        Assert(string.Join(" ", Contribution.DoctorArgs("limits", "S", new Contribution.Limits(), null, null)) == "-Limits -MaxConcurrency 1 -StateRoot S", "default limits pass only -MaxConcurrency 1");
+        Assert(string.Join(" ", Contribution.DoctorArgs("pause", "S", null, null, null)) == "-Pause -StateRoot S" && string.Join(" ", Contribution.DoctorArgs("resume", "S", null, null, null)) == "-Resume -StateRoot S" && string.Join(" ", Contribution.DoctorArgs("revoke", "S", null, null, null)) == "-Revoke -StateRoot S", "pause, resume and revoke are one switch each plus the state root");
+        Assert(string.Join(" ", Contribution.DoctorArgs("enroll", "S", null, "R", null)) == "-Enroll -RepoPath R -StateRoot S", "enrol names the checkout and the state root, never a token");
+        Assert(string.Join(" ", Contribution.DoctorArgs("install", "S", null, "R", "org")) == "-Install -RepoPath R -OrgId org -StateRoot S", "install names the checkout and the org id");
+        foreach (var bad in new[] { new Contribution.Limits { MaxConcurrency = 5 }, new Contribution.Limits { CpuBusyPercent = 5 }, new Contribution.Limits { BatteryFloorPercent = 101 }, new Contribution.Limits { ThermalLimitC = -1 } })
+        {
+            bool refused = false;
+            try { bad.Validate(); } catch (ArgumentException) { refused = true; }
+            Assert(refused, "an out-of-range limit is refused before the doctor runs");
+        }
+        bool noRepo = false;
+        try { Contribution.DoctorArgs("install", "S", null, null, "org"); } catch (ArgumentException) { noRepo = true; }
+        Assert(noRepo, "install without a checkout is refused");
+        Assert(limits.Summary(false).Contains("thermal limit 85 C (unsupported on this device") && !limits.Summary(false).Contains(" off)") && limits.Summary(true).EndsWith("thermal limit 85 C") && limits.Summary(null).Contains("support unknown"), "the thermal limit is said as unsupported, never off: " + limits.Summary(false));
+        Assert(Contribution.CommandLine("C:\\a dir\\doctor.ps1", limitArgs).StartsWith("-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"C:\\a dir\\doctor.ps1\" -Limits") && Contribution.CommandLine("C:\\a dir\\doctor.ps1", limitArgs).EndsWith("-StateRoot \"C:\\state root\""), "the command line is the Bypass -File form with quoted paths");
+        Assert(Contribution.RepoRootFromDoctor("C:\\src\\repo\\core\\windows\\mccluster-node.ps1") == "C:\\src\\repo" && Contribution.RepoRootFromDoctor("C:\\apps\\mccluster-node.ps1") == null, "the checkout is derived from the doctor path only when it sits in core\\windows");
+
+        string root = Path.Combine(Path.GetTempPath(), "mccluster-contrib-tests-" + Guid.NewGuid().ToString("N"));
+        string stateDir = root + "-state";
+        string doctorDir = root + "-doctor";
+        try
+        {
+            // The device state from a throwaway state root (the identity file is only tested for presence).
+            Directory.CreateDirectory(stateDir);
+            File.WriteAllText(Path.Combine(stateDir, "node.config.json"), "{\"schema\":\"mccluster-node-config/1\",\"node_name\":\"x\",\"tier\":\"C\"}");
+            File.WriteAllText(Path.Combine(stateDir, "identity.json"), "{\"nodeId\":\"node_fixture\",\"publicKeyPem\":\"p\",\"privateKeyPem\":\"NEVER-READ\"}");
+            File.WriteAllText(Path.Combine(stateDir, "paused"), "2026-11-23T00:00:00Z");
+            File.WriteAllText(Path.Combine(stateDir, "limits.json"), "{\"schema\":\"mccluster-node-limits/1\",\"idle_only\":true,\"on_ac_only\":false,\"max_concurrency\":2,\"cpu_busy_percent\":70,\"battery_floor_percent\":0,\"thermal_limit_c\":85}");
+            File.WriteAllText(Path.Combine(stateDir, "last-heartbeat.json"), "{\"schema\":\"mccluster-node-heartbeat/1\",\"node_id\":\"node_fixture\",\"at\":\"2026-11-23T01:02:03Z\",\"labels\":{\"thermal_supported\":false,\"claim_gate\":\"paused\"}}");
+            var store = new JobStore(root);
+            LocalJob done = store.Create(JobKind.Inventory, JobTarget.LocalDevice, new Dictionary<string, object>());
+            done.State = JobState.Done; store.Save(done);
+            store.Create(JobKind.Inventory, JobTarget.LocalDevice, new Dictionary<string, object>());
+            Contribution.State state = Contribution.ReadState(stateDir, store);
+            Assert(state.Installed && state.Enrolled && state.Paused, "installed, enrolled and paused are read from the state root");
+            Assert(state.Limits != null && state.Limits.IdleOnly && state.Limits.MaxConcurrency == 2 && state.Limits.CpuBusyPercent == 70 && state.Limits.BatteryFloorPercent == 0 && state.Limits.ThermalLimitC == 85 && state.LimitsError == null, "limits.json is read (a battery floor of 0 is a set value)");
+            Assert(state.HeartbeatNodeId == "node_fixture" && state.LastHeartbeatAt.HasValue && state.LastHeartbeatAt.Value.Hour == 1 && state.LastHeartbeatAt.Value.Minute == 2 && state.ThermalSupported == false && state.ClaimGate == "paused", "the heartbeat file gives node id, time, thermal support and the claim gate");
+            Assert(state.LocalDoneReceipts == 1 && !state.AcceptedWork.HasValue, "accepted work counts local done receipts and says the node file is absent");
+            Assert(Contribution.ReportedNodeId(stateDir) == "node_fixture", "the node id for receipts comes from the heartbeat file");
+            File.WriteAllText(Path.Combine(stateDir, "limits.json"), "{broken");
+            Assert(Contribution.ReadState(stateDir, null).LimitsError == "invalid_json", "a broken limits.json is named, not guessed");
+            File.WriteAllText(Path.Combine(stateDir, "limits.json"), "{\"schema\":\"other/1\",\"max_concurrency\":4}");
+            Assert(Contribution.ReadState(stateDir, null).LimitsError == "schema_mismatch" && Contribution.ReadState(stateDir, null).Limits == null, "a foreign limits file is named and never widens a limit");
+            Directory.CreateDirectory(doctorDir);
+
+            // A fake doctor: proves the credential reaches the child's environment (by length only) and nothing else.
+            string fakeDoctor = Path.Combine(doctorDir, "fake-doctor.ps1");
+            File.WriteAllText(fakeDoctor,
+                "param([switch]$Enroll, [switch]$Pause, [string]$RepoPath, [string]$StateRoot)\n" +
+                "$length = 0; if ($env:MCCLUSTER_NODE_ENROLL_TOKEN) { $length = $env:MCCLUSTER_NODE_ENROLL_TOKEN.Length }\n" +
+                "[System.IO.File]::WriteAllText((Join-Path $PSScriptRoot 'token-length.txt'), [string]$length)\n" +
+                "Write-Output ('fake doctor ran: Enroll=' + $Enroll + ' Pause=' + $Pause + ' StateRoot=' + $StateRoot)\n" +
+                "Write-Error 'fake stderr line'\n" +
+                "exit 0\n");
+            string sentinel = "SENTINEL-mcen1-" + Guid.NewGuid().ToString("N") + "-NEVER-STORED";
+            Contribution.DoctorResult enrol = Contribution.RunDoctor(fakeDoctor, Contribution.DoctorArgs("enroll", stateDir, null, null, null), sentinel, 60000, store).Result;
+            Assert(enrol.ExitCode == 0 && !enrol.TimedOut, "the fake doctor ran through powershell.exe -NoProfile -ExecutionPolicy Bypass -File: exit " + enrol.ExitCode + " " + enrol.StdErr);
+            Assert(enrol.StdOut.Contains("Enroll=True") && enrol.StdOut.Contains("StateRoot=" + stateDir), "stdout is captured with the explicit switches: " + enrol.StdOut);
+            Assert(enrol.StdErr.Contains("fake stderr line"), "stderr is captured too");
+            Assert(File.ReadAllText(Path.Combine(doctorDir, "token-length.txt")) == sentinel.Length.ToString(), "the credential reached the child process environment (length only is recorded by the fixture)");
+            Assert(!enrol.CommandLine.Contains(sentinel) && !enrol.StdOut.Contains(sentinel), "the credential is on no command line and in no output");
+            Contribution.DoctorResult pause = Contribution.RunDoctor(fakeDoctor, Contribution.DoctorArgs("pause", stateDir, null, null, null), null, 60000, store).Result;
+            Assert(pause.ExitCode == 0 && pause.StdOut.Contains("Pause=True") && File.ReadAllText(Path.Combine(doctorDir, "token-length.txt")) == "0", "a run without a credential hands the child no token variable at all");
+            // A real powershell.exe -File run with a state root that has a space and a trailing backslash:
+            // the doctor receives exactly that root, and the switch after it is still its own argument.
+            string trailing = "D:\\Node Root\\";
+            var trailingArgs = new List<string> { "-StateRoot", trailing, "-Pause" };
+            Contribution.DoctorResult trailingRun = Contribution.RunDoctor(fakeDoctor, trailingArgs, null, 60000, store).Result;
+            Assert(trailingRun.ExitCode == 0 && trailingRun.StdOut.Contains("Pause=True") && trailingRun.StdOut.Contains("StateRoot=" + trailing) && !trailingRun.StdOut.Contains("StateRoot=" + trailing + "\""), "powershell.exe -File receives a trailing-backslash state root intact and the next switch separately: " + trailingRun.StdOut);
+
+            // A fake local job with a metering block beside the doctor runs: then grep everything the desktop wrote.
+            LocalJob job = store.Create(JobKind.Chat, JobTarget.LocalDevice, new Dictionary<string, object> { { "prompt", "hello" }, { "model", "qwen3-vl:4b" } });
+            job.Receipt = new Dictionary<string, object>();
+            job.Receipt["metering"] = Metering.FromOllamaChat(Json.Parse("{\"eval_count\":3}"), "qwen3-vl:4b", null, "0.40.16", Contribution.ReportedNodeId(stateDir), "key", "cpu-only", 1);
+            job.State = JobState.Done;
+            store.Save(job);
+            store.Log("contribution_enable_started", new Dictionary<string, object> { { "install_needed", false }, { "limits", limits.Summary(null) } });
+            int filesScanned = 0;
+            foreach (string file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
+            {
+                filesScanned++;
+                Assert(!File.ReadAllText(file).Contains(sentinel), "the enrolment credential never appears in the job store, the logs or a receipt: " + file);
+            }
+            Assert(filesScanned >= 3 && File.ReadAllText(store.LogPath).Contains("\"event\":\"doctor_run\"") && File.ReadAllText(store.LogPath).Contains("\"action\":\"-Enroll\""), "the log records the doctor run by action and exit code (" + filesScanned + " files scanned)");
+        }
+        finally
+        {
+            foreach (string dir in new[] { root, stateDir, doctorDir }) { try { Directory.Delete(dir, true); } catch (Exception) { } }
+        }
     }
 
     private static void JsonChecks()

@@ -38,6 +38,26 @@ namespace McClusterDesktop
         private readonly ListView jobsList = new ListView();
         private readonly TextBox receiptBox = new TextBox();
         private readonly Label receiptVerdict = new Label();
+        // Contribute: consent, device state from the state root, the limits, the doctor's output.
+        private readonly Label consentLabel = new Label();
+        private readonly Label contributeLabel = new Label();
+        private readonly CheckBox idleOnlyBox = new CheckBox();
+        private readonly CheckBox onAcBox = new CheckBox();
+        private readonly NumericUpDown maxConcurrencyBox = new NumericUpDown();
+        private readonly NumericUpDown cpuBusyBox = new NumericUpDown();
+        private readonly CheckBox batteryFloorBox = new CheckBox();
+        private readonly NumericUpDown batteryFloorValue = new NumericUpDown();
+        private readonly NumericUpDown thermalBox = new NumericUpDown();
+        private readonly Label limitsSummary = new Label();
+        private readonly Button enableButton = new Button();
+        private readonly Button pauseButton = new Button();
+        private readonly Button revokeButton = new Button();
+        private readonly Button applyLimitsButton = new Button();
+        private readonly Button openLimitsButton = new Button();
+        private readonly TextBox doctorOutput = new TextBox();
+        private Contribution.State contribution;
+        private bool limitsLoadedFromFile;
+        private bool doctorBusy;
         private string deviceKeyId;
         private string deviceKeyError;
         private readonly System.Windows.Forms.Timer draftTimer = new System.Windows.Forms.Timer();
@@ -76,6 +96,7 @@ namespace McClusterDesktop
             layout.Controls.Add(Prepare(modelsLabel));
             layout.Controls.Add(Heading("Enrolled worker on this device"));
             layout.Controls.Add(Prepare(nodeLabel));
+            BuildContributeSection(layout);
             layout.Controls.Add(Heading("Fallback policy"));
             layout.Controls.Add(Prepare(policyLabel));
             policyLabel.Text = "When the OVH Core is unreachable only jobs for this device run. Drafts and receipts stay in %LOCALAPPDATA%\\McClusterDesktop. " +
@@ -188,6 +209,264 @@ namespace McClusterDesktop
             LoadDraft();
         }
 
+        // The Contribute section (device side of COMPUTE-CONTRIBUTION-LEDGER.md, which is on branch prime/contribution-ledger, not in this tree). Everything here is at most 380 px
+        // wide and wraps, so nothing overflows the 420 px panel (hard rule 14, the WinForms way: no breakpoints,
+        // no horizontal overflow at the panel width). The desktop never calls the Core; every action is a run of
+        // the doctor with explicit switches, and the credential travels only in that child's environment.
+        private void BuildContributeSection(TableLayoutPanel layout)
+        {
+            layout.Controls.Add(Heading("Contribute (this device as a compute node)"));
+            consentLabel.AutoSize = true;
+            consentLabel.MaximumSize = new Size(380, 0);
+            consentLabel.Text = Contribution.ConsentText;
+            layout.Controls.Add(consentLabel);
+            layout.Controls.Add(Caption("Device state (read from the node's state root; the doctor is the only thing that writes it)"));
+            layout.Controls.Add(Prepare(contributeLabel));
+
+            layout.Controls.Add(Caption("Limits (the node agent enforces them before every claim and reports them in each heartbeat)"));
+            var grid = new TableLayoutPanel();
+            grid.AutoSize = true;
+            grid.ColumnCount = 2;
+            grid.MaximumSize = new Size(380, 0);
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 290));
+            idleOnlyBox.Text = "Idle only: no claim while someone is using this device";
+            onAcBox.Text = "AC power only: no claim and no start on battery";
+            foreach (CheckBox box in new[] { idleOnlyBox, onAcBox, batteryFloorBox })
+            {
+                box.AutoSize = true;
+                box.MaximumSize = new Size(290, 0);
+                box.ForeColor = ForeColor;
+            }
+            batteryFloorBox.Text = "Battery floor (%): no claim under this charge";
+            batteryFloorBox.CheckedChanged += delegate { batteryFloorValue.Enabled = batteryFloorBox.Checked; UpdateLimitsSummary(); };
+            foreach (NumericUpDown box in new[] { maxConcurrencyBox, cpuBusyBox, batteryFloorValue, thermalBox })
+            {
+                box.Width = 70;
+                box.ValueChanged += delegate { UpdateLimitsSummary(); };
+            }
+            maxConcurrencyBox.Minimum = 1; maxConcurrencyBox.Maximum = 4; maxConcurrencyBox.Value = 1;
+            cpuBusyBox.Minimum = 0; cpuBusyBox.Maximum = 100; cpuBusyBox.Value = 0;
+            batteryFloorValue.Minimum = 0; batteryFloorValue.Maximum = 100; batteryFloorValue.Value = 20; batteryFloorValue.Enabled = false;
+            thermalBox.Minimum = 0; thermalBox.Maximum = 150; thermalBox.Value = 0;
+            idleOnlyBox.CheckedChanged += delegate { UpdateLimitsSummary(); };
+            onAcBox.CheckedChanged += delegate { UpdateLimitsSummary(); };
+            grid.Controls.Add(new Label { AutoSize = true, Text = "" }, 0, 0); grid.Controls.Add(idleOnlyBox, 1, 0);
+            grid.Controls.Add(new Label { AutoSize = true, Text = "" }, 0, 1); grid.Controls.Add(onAcBox, 1, 1);
+            grid.Controls.Add(maxConcurrencyBox, 0, 2); grid.Controls.Add(GridCaption("Max concurrency (1 to 4; 1 in the pilot): leases at once"), 1, 2);
+            grid.Controls.Add(cpuBusyBox, 0, 3); grid.Controls.Add(GridCaption("CPU busy ceiling (%): no claim while busier; 0 = not set, else 10 to 100"), 1, 3);
+            grid.Controls.Add(batteryFloorValue, 0, 4); grid.Controls.Add(batteryFloorBox, 1, 4);
+            grid.Controls.Add(thermalBox, 0, 5); grid.Controls.Add(GridCaption("Thermal limit (C): 0 = not set. Best effort: unsupported on this device when no thermal zone can be read, never silently off"), 1, 5);
+            layout.Controls.Add(grid);
+            layout.Controls.Add(Prepare(limitsSummary));
+            limitsSummary.Text = "";
+
+            var buttons = new FlowLayoutPanel();
+            buttons.AutoSize = true;
+            buttons.MaximumSize = new Size(380, 0);
+            buttons.WrapContents = true;
+            enableButton.Text = "Enable contribution"; enableButton.AutoSize = true; enableButton.Click += async delegate { await EnableContribution(); };
+            pauseButton.Text = "Pause"; pauseButton.AutoSize = true; pauseButton.Click += async delegate { await RunDoctorStep(contribution != null && contribution.Paused ? "resume" : "pause", null, null, null, null); await Probe(); };
+            revokeButton.Text = "Revoke"; revokeButton.AutoSize = true; revokeButton.Click += async delegate { await RevokeContribution(); };
+            applyLimitsButton.Text = "Apply limits"; applyLimitsButton.AutoSize = true; applyLimitsButton.Click += async delegate { await ApplyLimits(); };
+            openLimitsButton.Text = "Open limits"; openLimitsButton.AutoSize = true; openLimitsButton.Click += delegate { OpenLimits(); };
+            buttons.Controls.Add(enableButton);
+            buttons.Controls.Add(pauseButton);
+            buttons.Controls.Add(revokeButton);
+            buttons.Controls.Add(applyLimitsButton);
+            buttons.Controls.Add(openLimitsButton);
+            layout.Controls.Add(buttons);
+
+            layout.Controls.Add(Caption("Doctor output (powershell.exe -NoProfile -ExecutionPolicy Bypass -File <doctor> <switches>; stdout and stderr, read-only)"));
+            doctorOutput.Multiline = true;
+            doctorOutput.ReadOnly = true;
+            doctorOutput.ScrollBars = ScrollBars.Both;
+            doctorOutput.WordWrap = false;
+            doctorOutput.Width = 380;
+            doctorOutput.Height = 120;
+            doctorOutput.Font = new Font(FontFamily.GenericMonospace, 8f);
+            layout.Controls.Add(doctorOutput);
+            SetContributeButtons();
+        }
+
+        private Label GridCaption(string text)
+        {
+            Label label = Caption(text);
+            label.MaximumSize = new Size(290, 0);
+            label.Margin = new Padding(3, 6, 3, 3);
+            return label;
+        }
+
+        private Contribution.Limits LimitsFromControls()
+        {
+            var limits = new Contribution.Limits();
+            limits.IdleOnly = idleOnlyBox.Checked;
+            limits.OnACOnly = onAcBox.Checked;
+            limits.MaxConcurrency = (int)maxConcurrencyBox.Value;
+            int cpu = (int)cpuBusyBox.Value;
+            limits.CpuBusyPercent = cpu >= 10 ? cpu : 0;
+            limits.BatteryFloorPercent = batteryFloorBox.Checked ? (int)batteryFloorValue.Value : -1;
+            limits.ThermalLimitC = (int)thermalBox.Value;
+            return limits;
+        }
+
+        private void LimitsToControls(Contribution.Limits limits)
+        {
+            idleOnlyBox.Checked = limits.IdleOnly;
+            onAcBox.Checked = limits.OnACOnly;
+            maxConcurrencyBox.Value = Math.Max(1, Math.Min(4, limits.MaxConcurrency));
+            cpuBusyBox.Value = limits.CpuBusyPercent;
+            batteryFloorBox.Checked = limits.BatteryFloorPercent != -1;
+            batteryFloorValue.Value = limits.BatteryFloorPercent == -1 ? 20 : limits.BatteryFloorPercent;
+            thermalBox.Value = Math.Max(0, Math.Min(150, limits.ThermalLimitC));
+        }
+
+        private void UpdateLimitsSummary()
+        {
+            bool? thermal = contribution == null ? null : contribution.ThermalSupported;
+            limitsSummary.Text = "Will apply: " + LimitsFromControls().Summary(thermal) + ((int)cpuBusyBox.Value > 0 && (int)cpuBusyBox.Value < 10 ? " (a CPU ceiling under 10 counts as not set)" : "");
+        }
+
+        private void RenderContribution()
+        {
+            if (contribution == null) return;
+            var c = contribution;
+            var lines = new List<string>();
+            lines.Add("Doctor: " + (c.DoctorPath ?? "not found (run from a checkout, or set MCCLUSTER_DOCTOR_PATH); the buttons stay disabled"));
+            lines.Add("State root: " + c.StateDir + (c.StateDirExists ? "" : " (absent)"));
+            lines.Add("Installed: " + (c.Installed ? "yes" : "no") + " · Enrolled: " + (c.Enrolled ? "yes (identity present, never read here)" : "no") + " · Paused: " + (c.Paused ? "YES (no new claims)" : "no"));
+            string limitsText;
+            if (c.LimitsError != null) limitsText = "limits.json unreadable (" + c.LimitsError + "): the agent applies the defaults (max concurrency 1, no other limit)";
+            else if (c.Limits == null) limitsText = "defaults (no limits.json): max concurrency 1, no other limit";
+            else limitsText = c.Limits.Summary(c.ThermalSupported);
+            lines.Add("Limits on file: " + limitsText);
+            lines.Add("Thermal zone: " + (c.ThermalSupported == null ? "unknown until the agent's first heartbeat" : (c.ThermalSupported == true ? "readable (a thermal limit is enforced)" : "unsupported on this device (a thermal limit is reported as unsupported, never silently off)")));
+            lines.Add("Last heartbeat file: " + (c.LastHeartbeatAt.HasValue ? c.LastHeartbeatAt.Value.ToString("u") : "none recorded") + (c.ClaimGate != null ? " · claim gate " + c.ClaimGate : ""));
+            lines.Add("Node id: " + (c.NodeIdForDisplay ?? "not reported yet (appears after the agent's first accepted heartbeat)"));
+            lines.Add("Accepted work: " + c.LocalDoneReceipts + " local done receipt(s) on this device" + (c.AcceptedWork.HasValue ? " · node accepted-work file: " + c.AcceptedWork.Value : " · node accepted-work file: absent (the Core settles acceptance; the node writes none yet)"));
+            if (c.RevokedNodeId != null) lines.Add("Revoked locally at " + c.RevokedAt + " (node " + c.RevokedNodeId + "): revoke it on the Core too.");
+            contributeLabel.Text = string.Join("\n", lines);
+            if (!limitsLoadedFromFile && c.Limits != null) { LimitsToControls(c.Limits); limitsLoadedFromFile = true; }
+            UpdateLimitsSummary();
+            SetContributeButtons();
+        }
+
+        private void SetContributeButtons()
+        {
+            bool doctor = contribution != null && contribution.DoctorPath != null && !doctorBusy;
+            bool installed = contribution != null && contribution.Installed;
+            enableButton.Enabled = doctor;
+            pauseButton.Enabled = doctor && installed;
+            pauseButton.Text = contribution != null && contribution.Paused ? "Resume" : "Pause";
+            revokeButton.Enabled = doctor && installed;
+            applyLimitsButton.Enabled = doctor && installed;
+            openLimitsButton.Enabled = contribution != null && contribution.StateDirExists;
+        }
+
+        private void AppendDoctorOutput(string text)
+        {
+            doctorOutput.AppendText(text.Replace("\r\n", "\n").Replace("\n", "\r\n") + "\r\n");
+        }
+
+        // One doctor run: explicit switches, stdout and stderr into the read-only box, never the credential.
+        private async Task<Contribution.DoctorResult> RunDoctorStep(string action, Contribution.Limits limits, string repoPath, string orgId, string enrollToken)
+        {
+            if (contribution == null || contribution.DoctorPath == null) { AppendDoctorOutput("no doctor found; nothing ran"); return null; }
+            List<string> args;
+            try { args = Contribution.DoctorArgs(action, contribution.StateDir, limits, repoPath, orgId); }
+            catch (ArgumentException ex) { AppendDoctorOutput("refused before running: " + ex.Message); return null; }
+            doctorBusy = true;
+            SetContributeButtons();
+            try
+            {
+                AppendDoctorOutput("> powershell.exe " + Contribution.CommandLine(contribution.DoctorPath, args));
+                Contribution.DoctorResult result = await Contribution.RunDoctor(contribution.DoctorPath, args, enrollToken, action == "enroll" || action == "install" ? 240000 : 90000, store);
+                if (result.StdOut.Trim().Length > 0) AppendDoctorOutput(result.StdOut.TrimEnd());
+                if (result.StdErr.Trim().Length > 0) AppendDoctorOutput("[stderr] " + result.StdErr.TrimEnd());
+                AppendDoctorOutput(result.TimedOut ? "timed out and was stopped" : "exit " + result.ExitCode);
+                return result;
+            }
+            finally
+            {
+                doctorBusy = false;
+                SetContributeButtons();
+            }
+        }
+
+        private async Task EnableContribution()
+        {
+            if (contribution == null || contribution.DoctorPath == null) return;
+            string repo = Contribution.RepoRootFromDoctor(contribution.DoctorPath);
+            Contribution.Limits limits = LimitsFromControls();
+            try { limits.Validate(); } catch (ArgumentException ex) { AppendDoctorOutput("limits refused: " + ex.Message); return; }
+            string token = null;
+            string orgId = null;
+            using (var dialog = new EnableContributionDialog(limits.Summary(contribution.ThermalSupported), !contribution.Installed, repo != null))
+            {
+                DialogResult answer = dialog.ShowDialog(this);
+                if (answer == DialogResult.OK) { token = dialog.Credential; orgId = dialog.OrgId; }
+                dialog.ClearCredential();
+                if (answer != DialogResult.OK || string.IsNullOrEmpty(token)) { AppendDoctorOutput("enable cancelled; nothing ran"); return; }
+            }
+            // C# 5 cannot await inside finally: the chain runs, the token reference is dropped, then the panel re-probes.
+            try
+            {
+                store.Log("contribution_enable_started", new Dictionary<string, object> { { "install_needed", !contribution.Installed }, { "limits", limits.Summary(null) } });
+                bool proceed = true;
+                if (!contribution.Installed)
+                {
+                    Contribution.DoctorResult installed = await RunDoctorStep("install", null, repo, orgId, null);
+                    if (installed == null || installed.ExitCode != 0) { AppendDoctorOutput("install did not finish; enrolment not attempted"); proceed = false; }
+                    else limitsLoadedFromFile = true;
+                }
+                if (proceed)
+                {
+                    Contribution.DoctorResult limited = await RunDoctorStep("limits", limits, null, null, null);
+                    if (limited == null || limited.ExitCode != 0) { AppendDoctorOutput("limits were not written; enrolment not attempted"); proceed = false; }
+                }
+                if (proceed) await RunDoctorStep("enroll", null, repo, null, token);
+            }
+            finally
+            {
+                token = null;
+            }
+            await Probe();
+        }
+
+        private async Task ApplyLimits()
+        {
+            Contribution.Limits limits = LimitsFromControls();
+            try { limits.Validate(); } catch (ArgumentException ex) { AppendDoctorOutput("limits refused: " + ex.Message); return; }
+            await RunDoctorStep("limits", limits, null, null, null);
+            limitsLoadedFromFile = true;
+            await Probe();
+        }
+
+        private async Task RevokeContribution()
+        {
+            if (contribution == null) return;
+            string nodeId = contribution.NodeIdForDisplay;
+            string question = "Revoke this device's node" + (nodeId != null ? " " + nodeId : " (node id not reported yet; the doctor prints it)") + "?\n\n" +
+                              "The doctor stops and removes the McCluster Node tasks, writes revoked.json and deletes the node's key (identity.json). " +
+                              "Afterwards revoke the same node id on the Core. Running work is not waited for.";
+            if (MessageBox.Show(this, question, "Revoke contribution", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+            await RunDoctorStep("revoke", null, null, null, null);
+            await Probe();
+        }
+
+        private void OpenLimits()
+        {
+            if (contribution == null) return;
+            string limitsPath = System.IO.Path.Combine(contribution.StateDir, "limits.json");
+            try
+            {
+                if (System.IO.File.Exists(limitsPath)) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", "/select," + Contribution.QuoteArg(limitsPath)) { UseShellExecute = false });
+                else if (contribution.StateDirExists) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", Contribution.QuoteArg(contribution.StateDir)) { UseShellExecute = false });
+                else AppendDoctorOutput("no state root to open");
+            }
+            catch (Exception ex) { AppendDoctorOutput("could not open Explorer: " + ex.Message); }
+        }
+
         private Label Heading(string text)
         {
             var label = new Label();
@@ -254,11 +533,13 @@ namespace McClusterDesktop
                 Task<NodeAgentStatus> nodeTask = LocalRuntime.ProbeNodeAgent();
                 Task<AdapterStatus> adapterTask = LocalRuntime.ProbeAdapter();
                 device = await Task.Run(() => DeviceInventory.Read());
+                contribution = await Task.Run(() => Contribution.ReadState(LocalRuntime.NodeStateDir(), store));
                 core = await coreTask;
                 ollama = await ollamaTask;
                 node = await nodeTask;
                 adapter = await adapterTask;
                 Render();
+                RenderContribution();
                 store.Log("status_probe", new Dictionary<string, object> {
                     { "api", core.Api.Detail }, { "deployment_sha", core.DeploymentSha }, { "compute_gateway", core.ComputeGateway.Detail },
                     { "ollama", ollama.Reachable ? ollama.Version : ollama.Detail }, { "models", ollama.Models.Count },
@@ -436,5 +717,95 @@ namespace McClusterDesktop
         {
             return (bytes / 1073741824.0).ToString("0.0") + " GiB";
         }
+    }
+
+    // The small modal behind "Enable contribution": the masked one-time credential, the organization id when
+    // this device is not installed yet, the limits that will apply, and an explicit consent box. The credential
+    // is read once by the caller and the box is cleared; it goes to the doctor through the child process
+    // environment only, never to a file, a log, a receipt or the clipboard.
+    internal sealed class EnableContributionDialog : Form
+    {
+        private readonly TextBox credentialBox = new TextBox();
+        private readonly TextBox orgIdBox = new TextBox();
+        private readonly CheckBox consentBox = new CheckBox();
+        private readonly Button okButton = new Button();
+
+        internal EnableContributionDialog(string limitsSummary, bool needsInstall, bool repoAvailable)
+        {
+            Text = "Enable contribution";
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            StartPosition = FormStartPosition.CenterParent;
+            AutoSize = true;
+            AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            Padding = new Padding(12);
+            var layout = new TableLayoutPanel();
+            layout.AutoSize = true;
+            layout.ColumnCount = 1;
+            layout.Dock = DockStyle.Fill;
+            Controls.Add(layout);
+
+            layout.Controls.Add(Wrapped(Contribution.ConsentText, false));
+            layout.Controls.Add(Wrapped("Limits that will apply: " + limitsSummary, true));
+            if (needsInstall)
+            {
+                layout.Controls.Add(Wrapped(repoAvailable
+                    ? "This device is not installed as a node yet: the doctor runs -Install first (it needs the organization id from the owner's Core), then -Limits, then -Enroll."
+                    : "This device is not installed as a node yet and the doctor found is not inside a checkout, so -Install cannot run from here. Run core\\windows\\mccluster-node.ps1 -Install from a checkout first.", true));
+                layout.Controls.Add(Wrapped("Organization id (uuid):", true));
+                orgIdBox.Width = 380;
+                orgIdBox.TextChanged += delegate { UpdateOk(); };
+                layout.Controls.Add(orgIdBox);
+            }
+            layout.Controls.Add(Wrapped("One-time enrolment credential (shown once by the owner's Core; typed once, never stored by this app):", true));
+            credentialBox.Width = 380;
+            credentialBox.UseSystemPasswordChar = true;
+            credentialBox.TextChanged += delegate { UpdateOk(); };
+            layout.Controls.Add(credentialBox);
+            consentBox.AutoSize = true;
+            consentBox.MaximumSize = new Size(380, 0);
+            consentBox.Text = "I have read what runs on this device, which work it accepts (public workload class), my limits, that no credential or tool permission beyond the executor contract is sent here, and that Pause and Revoke are one click away. Enable contribution.";
+            consentBox.CheckedChanged += delegate { UpdateOk(); };
+            layout.Controls.Add(consentBox);
+            var buttons = new FlowLayoutPanel();
+            buttons.AutoSize = true;
+            okButton.Text = "OK: run the doctor";
+            okButton.AutoSize = true;
+            okButton.Enabled = false;
+            okButton.DialogResult = DialogResult.OK;
+            var cancel = new Button();
+            cancel.Text = "Cancel";
+            cancel.AutoSize = true;
+            cancel.DialogResult = DialogResult.Cancel;
+            buttons.Controls.Add(okButton);
+            buttons.Controls.Add(cancel);
+            layout.Controls.Add(buttons);
+            AcceptButton = okButton;
+            CancelButton = cancel;
+            NeedsInstall = needsInstall;
+        }
+
+        private readonly bool NeedsInstall;
+
+        private Label Wrapped(string text, bool dim)
+        {
+            var label = new Label();
+            label.AutoSize = true;
+            label.MaximumSize = new Size(380, 0);
+            label.Text = text;
+            label.Margin = new Padding(0, 4, 0, 4);
+            if (dim) label.ForeColor = SystemColors.GrayText;
+            return label;
+        }
+
+        private void UpdateOk()
+        {
+            okButton.Enabled = consentBox.Checked && credentialBox.Text.Trim().Length > 0 && (!NeedsInstall || orgIdBox.Text.Trim().Length > 0);
+        }
+
+        internal string Credential { get { return credentialBox.Text.Trim(); } }
+        internal string OrgId { get { return orgIdBox.Text.Trim(); } }
+        internal void ClearCredential() { credentialBox.Clear(); }
     }
 }
