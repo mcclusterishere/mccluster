@@ -84,7 +84,147 @@
 -- Tables
 -- ---------------------------------------------------------------------------
 
-create table if not exists public.ops_compute_accounts (
+-- Fingerprints cover the named tables and their columns, constraints, indexes,
+-- sequences, trigger modes, functions, RLS policies and per-role grants. The
+-- installer owner is normalized so a different role cannot silently adopt
+-- objects. The same three receipts were measured on PostgreSQL 17 and 18.
+do $ledger_install$
+declare
+  ledger_tables constant text[] := array[
+    'ops_compute_ledger_operations',
+    'ops_compute_display_points',
+    'ops_compute_account_carry',
+    'ops_compute_contribution_ledger',
+    'ops_compute_spend_reservations',
+    'ops_compute_fraud_reviews',
+    'ops_compute_known_answer_tasks',
+    'ops_compute_private_grants',
+    'ops_compute_account_relations',
+    'ops_compute_account_quotas',
+    'ops_compute_model_classes',
+    'ops_compute_node_accounts',
+    'ops_compute_accounts'
+  ];
+  known constant text[] := array[
+    '9e281337aa5228ec76aac29b819e34afced2f875609465893db1922a07895285', -- b9c2ed1d
+    'bece3d7b1e7de95095441554eba81453e4596f4b7ddf321b48baaa9063e317c4', -- a0a30ef9
+    '9271cfd65228ea38fde20b6693bf2558ade571e686186f40578bd42c199d8ad4' -- fb12d1c5
+  ];
+  signature text;
+  target text;
+  relation_kind "char";
+  original_timeout text := current_setting('lock_timeout');
+  original_path text := current_setting('search_path');
+  current_install constant text := '9271cfd65228ea38fde20b6693bf2558ade571e686186f40578bd42c199d8ad4';
+  pass integer;
+begin
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception 'ledger install requires READ COMMITTED' using errcode = '55000';
+  end if;
+  perform set_config('search_path', 'pg_catalog,public', true);
+  perform set_config('lock_timeout', '5s', true);
+  perform pg_advisory_xact_lock(hashtextextended('public.compute_contribution_ledger_v1.install',0));
+  foreach target in array ledger_tables loop
+    select relkind into relation_kind from pg_catalog.pg_class where oid=to_regclass(format('public.%I',target));
+    if found then
+      if relation_kind <> 'r' then
+        raise exception 'ledger install refused: unexpected relation kind for %', target using errcode='55000';
+      end if;
+      execute format('lock table public.%I in access exclusive mode',target);
+    end if;
+  end loop;
+  for pass in 1..2 loop
+  with named as (
+    select c.* from pg_catalog.pg_class c
+     where c.relnamespace = 'public'::regnamespace and exists (
+       select from unnest(ledger_tables) n where c.relname = n or starts_with(c.relname::text, n || '_')
+     )
+  ), relations as (
+    select c.* from pg_catalog.pg_class c where c.oid in (
+      select oid from named
+      union select indexrelid from pg_catalog.pg_index where indrelid in (select oid from named)
+      union select objid from pg_catalog.pg_depend where objid in (select oid from pg_catalog.pg_class where relkind='S')
+        and classid='pg_class'::regclass
+        and refclassid='pg_class'::regclass and refobjid in (select oid from named) and deptype in ('a','i')
+    )
+  ), routines as (
+    select p.* from pg_catalog.pg_proc p where p.pronamespace='public'::regnamespace and starts_with(p.proname::text,'compute_ledger_')
+  ), privileges as (
+    select 'relation:'||c.relname as subject, c.relowner as owner,
+           coalesce(c.relacl, acldefault(case when c.relkind='S' then 's'::"char" else 'r'::"char" end,c.relowner)) as acl
+      from relations c where c.relkind not in ('i','I')
+    union all
+    select 'column:'||c.relname||'.'||a.attname, c.relowner, a.attacl
+      from relations c join pg_catalog.pg_attribute a on a.attrelid=c.oid where a.attnum>0 and a.attacl is not null
+    union all
+    select 'function:'||p.oid::regprocedure::text,p.proowner,coalesce(p.proacl,acldefault('f',p.proowner)) from routines p
+  ), facts(item) as (
+    select jsonb_build_array('relation', c.relname,c.relkind,c.relpersistence,c.relrowsecurity,c.relforcerowsecurity,
+      c.relreplident,c.relispartition,c.reloptions,am.amname,
+      case when pg_get_userbyid(c.relowner)=current_user then '<installer>' else pg_get_userbyid(c.relowner) end)
+      from relations c left join pg_catalog.pg_am am on am.oid=c.relam
+    union all
+    select jsonb_build_array('column',c.relname,a.attnum,a.attname,format_type(a.atttypid,a.atttypmod),a.attnotnull,
+      a.attidentity,a.attgenerated,a.attcollation::regcollation::text,pg_get_expr(d.adbin,d.adrelid))
+      from relations c join pg_catalog.pg_attribute a on a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+      left join pg_catalog.pg_attrdef d on d.adrelid=c.oid and d.adnum=a.attnum where c.relkind in ('r','p')
+    union all
+    select jsonb_build_array('constraint',c.relname,k.conname,k.convalidated,pg_get_constraintdef(k.oid))
+      from relations c join pg_catalog.pg_constraint k on k.conrelid=c.oid where k.contype<>'n'
+    union all
+    select jsonb_build_array('invalid-constraint',c.relname,k.conname)
+      from relations c join pg_catalog.pg_constraint k on k.conrelid=c.oid where not k.convalidated
+    union all
+    select jsonb_build_array('index',c.relname,ix.indisvalid,ix.indisready,ix.indislive,pg_get_indexdef(c.oid))
+      from relations c join pg_catalog.pg_index ix on ix.indexrelid=c.oid
+    union all
+    select jsonb_build_array('trigger',c.relname,t.tgname,t.tgenabled,pg_get_triggerdef(t.oid))
+      from relations c join pg_catalog.pg_trigger t on t.tgrelid=c.oid where not t.tgisinternal
+    union all
+    select jsonb_build_array('constraint-trigger',t.tgrelid::regclass::text,k.conname,f.proname,t.tgtype,t.tgenabled)
+      from pg_catalog.pg_trigger t join pg_catalog.pg_constraint k on k.oid=t.tgconstraint
+      join pg_catalog.pg_proc f on f.oid=t.tgfoid where t.tgisinternal and k.conrelid in (select oid from relations)
+    union all
+    select jsonb_build_array('policy',c.relname,k.polname) from relations c join pg_catalog.pg_policy k on k.polrelid=c.oid
+    union all
+    select jsonb_build_array('rule',c.relname,r.rulename,r.ev_enabled,pg_get_ruledef(r.oid))
+      from relations c join pg_catalog.pg_rewrite r on r.ev_class=c.oid
+    union all
+    select jsonb_build_array('inheritance',h.inhrelid::regclass::text,h.inhparent::regclass::text)
+      from pg_catalog.pg_inherits h where h.inhrelid in (select oid from relations) or h.inhparent in (select oid from relations)
+    union all
+    select jsonb_build_array('sequence',c.relname,s.seqtypid::regtype::text,s.seqstart,s.seqincrement,s.seqmax,s.seqmin,s.seqcache,s.seqcycle)
+      from relations c join pg_catalog.pg_sequence s on s.seqrelid=c.oid
+    union all
+    select jsonb_build_array('sequence-owner',c.relname,d.refobjid::regclass::text,d.refobjsubid,d.deptype)
+      from relations c join pg_catalog.pg_depend d on d.classid='pg_class'::regclass and d.objid=c.oid
+     where c.relkind='S' and d.refclassid='pg_class'::regclass and d.deptype in ('a','i')
+    union all
+    select jsonb_build_array('routine',p.oid::regprocedure::text,p.prokind,p.prosupport::text,
+      case when pg_get_userbyid(p.proowner)=current_user then '<installer>' else pg_get_userbyid(p.proowner) end,
+      case when p.prokind<>'a' then pg_get_functiondef(p.oid) end) from routines p
+    union all
+    select jsonb_build_array('grant',a.subject,
+      case when x.grantee=a.owner then '<owner>' when x.grantee=0 then 'PUBLIC' else pg_get_userbyid(x.grantee) end,
+      case when x.grantor=a.owner then '<owner>' else pg_get_userbyid(x.grantor) end,
+      x.privilege_type,x.is_grantable)
+      from privileges a cross join lateral aclexplode(a.acl) x
+  )
+  select coalesce(encode(sha256(convert_to(string_agg(item::text,E'\n' order by item::text collate "C"),'UTF8')),'hex'),'absent')
+    into signature from facts;
+    if signature = current_install then
+      perform set_config('lock_timeout', original_timeout, true);
+      perform set_config('search_path', original_path, true);
+      return;
+    end if;
+    if pass=2 or (signature <> 'absent' and not (signature = any(known))) then
+      raise exception 'ledger install refused: unrecognized catalog fingerprint %', signature
+        using errcode='55000', hint='Compare the installed catalog with the reviewed ledger SQL before proceeding.';
+    end if;
+    -- Previous published installations have the same table layout. Only a
+    -- completely absent installation may create tables, indexes and sequences.
+    if signature='absent' then
+create table public.ops_compute_accounts (
   account_id text primary key check (account_id ~ '^[A-Za-z0-9][A-Za-z0-9._:@-]{0,127}$'),
   org_id uuid not null references public.orgs(id) on delete cascade,
   kind text not null check (kind in ('owner','community')),
@@ -94,13 +234,13 @@ create table if not exists public.ops_compute_accounts (
 );
 
 -- Which account a node works for (mint target; self-routing rule). One account per node.
-create table if not exists public.ops_compute_node_accounts (
+create table public.ops_compute_node_accounts (
   node_id text primary key references public.ops_compute_nodes(id) on delete cascade,
   account_id text not null references public.ops_compute_accounts(account_id) on delete cascade,
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.ops_compute_model_classes (
+create table public.ops_compute_model_classes (
   model_class text primary key check (model_class ~ '^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$'),
   unit_version integer not null check (unit_version >= 1),
   -- [{"model": "qwen3:8b", "digest": "sha256:..."}, ...]
@@ -117,14 +257,14 @@ create table if not exists public.ops_compute_model_classes (
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.ops_compute_account_quotas (
+create table public.ops_compute_account_quotas (
   account_id text primary key references public.ops_compute_accounts(account_id) on delete cascade,
   max_open_reservations integer check (max_open_reservations is null or max_open_reservations >= 0),
   max_queued_tasks integer check (max_queued_tasks is null or max_queued_tasks >= 0),
   daily_mint_cap_micro bigint check (daily_mint_cap_micro is null or daily_mint_cap_micro >= 0)
 );
 
-create table if not exists public.ops_compute_account_relations (
+create table public.ops_compute_account_relations (
   account_id text not null references public.ops_compute_accounts(account_id) on delete cascade,
   related_account_id text not null references public.ops_compute_accounts(account_id) on delete cascade,
   reason text,
@@ -133,20 +273,20 @@ create table if not exists public.ops_compute_account_relations (
   check (account_id <> related_account_id)
 );
 
-create table if not exists public.ops_compute_private_grants (
+create table public.ops_compute_private_grants (
   account_id text not null references public.ops_compute_accounts(account_id) on delete cascade,
   node_id text not null references public.ops_compute_nodes(id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (account_id, node_id)
 );
 
-create table if not exists public.ops_compute_known_answer_tasks (
+create table public.ops_compute_known_answer_tasks (
   task_id uuid primary key references public.ops_compute_tasks(id) on delete cascade,
   expected_sha256 text not null check (expected_sha256 ~ '^[a-f0-9]{64}$'),
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.ops_compute_fraud_reviews (
+create table public.ops_compute_fraud_reviews (
   review_id bigserial primary key,
   task_id uuid references public.ops_compute_tasks(id) on delete set null,
   lease_id uuid references public.ops_compute_leases(id) on delete set null,
@@ -157,10 +297,10 @@ create table if not exists public.ops_compute_fraud_reviews (
   status text not null default 'open' check (status in ('open','cleared','confirmed')),
   created_at timestamptz not null default now()
 );
-create index if not exists ops_compute_fraud_reviews_open_idx
+create index ops_compute_fraud_reviews_open_idx
   on public.ops_compute_fraud_reviews(status, created_at desc);
 
-create table if not exists public.ops_compute_spend_reservations (
+create table public.ops_compute_spend_reservations (
   reservation_id bigserial primary key,
   operation_key text not null unique,
   account_id text not null references public.ops_compute_accounts(account_id) on delete restrict,
@@ -173,10 +313,10 @@ create table if not exists public.ops_compute_spend_reservations (
   created_at timestamptz not null default now(),
   expires_at timestamptz not null
 );
-create index if not exists ops_compute_spend_reservations_account_open_idx
+create index ops_compute_spend_reservations_account_open_idx
   on public.ops_compute_spend_reservations(account_id) where status = 'open';
 
-create table if not exists public.ops_compute_contribution_ledger (
+create table public.ops_compute_contribution_ledger (
   entry_id bigserial primary key,
   operation_key text not null unique,
   kind text not null check (kind in ('reserve','settle','mint','release','correction')),
@@ -196,20 +336,20 @@ create table if not exists public.ops_compute_contribution_ledger (
   reason text,
   created_at timestamptz not null default now()
 );
-create index if not exists ops_compute_contribution_ledger_account_idx
+create index ops_compute_contribution_ledger_account_idx
   on public.ops_compute_contribution_ledger(account_id, kind, created_at desc);
-create index if not exists ops_compute_contribution_ledger_task_idx
+create index ops_compute_contribution_ledger_task_idx
   on public.ops_compute_contribution_ledger(task_id, entry_id);
 -- At most one settle per (task, attempt).
-create unique index if not exists ops_compute_contribution_ledger_one_settle_uidx
+create unique index ops_compute_contribution_ledger_one_settle_uidx
   on public.ops_compute_contribution_ledger(task_id, attempt) where kind = 'settle';
 
-create table if not exists public.ops_compute_account_carry (
+create table public.ops_compute_account_carry (
   account_id text primary key references public.ops_compute_accounts(account_id) on delete cascade,
   carry_micro bigint not null default 0 check (carry_micro >= 0)
 );
 
-create table if not exists public.ops_compute_display_points (
+create table public.ops_compute_display_points (
   account_id text primary key references public.ops_compute_accounts(account_id) on delete cascade,
   points bigint not null default 0 check (points >= 0),
   -- accepted micro-units carried below the next 100,000-unit boundary
@@ -218,7 +358,7 @@ create table if not exists public.ops_compute_display_points (
 
 -- The idempotency arbiter: one row per operation_key, the payload hash it was
 -- made with and the outcome it returned, replayed verbatim.
-create table if not exists public.ops_compute_ledger_operations (
+create table public.ops_compute_ledger_operations (
   operation_key text primary key check (operation_key ~ '^[!-~]{1,200}$'),
   kind text not null check (kind in ('reserve','settle','release','correction')),
   payload_hash text not null check (payload_hash ~ '^[a-f0-9]{64}$'),
@@ -226,6 +366,7 @@ create table if not exists public.ops_compute_ledger_operations (
   created_at timestamptz not null default now()
 );
 
+    end if;
 -- ---------------------------------------------------------------------------
 -- Append-only trigger
 -- ---------------------------------------------------------------------------
@@ -1136,3 +1277,6 @@ grant execute on function public.compute_ledger_balances(text) to service_role;
 grant execute on function public.compute_ledger_receipt(uuid) to service_role;
 revoke all on function public.compute_ledger_resolve_submission(uuid,uuid,text) from public, anon, authenticated;
 grant execute on function public.compute_ledger_resolve_submission(uuid,uuid,text) to service_role;
+  end loop;
+end
+$ledger_install$;

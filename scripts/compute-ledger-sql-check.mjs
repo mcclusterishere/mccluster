@@ -132,10 +132,42 @@ alter default privileges in schema public revoke truncate, references, trigger o
   await migrationPath('scheduler_lease_v1')
  ];
  for(const f of files){await db.exec(read(f));console.log(`loaded ${f}`);}
+ await db.exec('create table public.ops_compute_accounts(prior_value text)');
+ await db.exec("insert into public.ops_compute_accounts values ('preserve')");
+ await assert.rejects(applyLedger,/unrecognized catalog fingerprint/);
+ assert.equal((await one('select prior_value from public.ops_compute_accounts')).prior_value,'preserve');
+ assert.equal((await one("select to_regclass('public.ops_compute_contribution_ledger') as t")).t,null);
+ await db.exec('drop table public.ops_compute_accounts');
+ ok('a partial preexisting table and its data are preserved before the forward file creates anything');
  await applyLedger();console.log('loaded supabase/pending/compute_contribution_ledger_v1.sql');
  await applyLedger();ok('the forward file applies twice');
  const rollback=()=>db.exec(read('supabase/pending/compute_contribution_ledger_v1.rollback.sql'));
  const tables=['ops_compute_accounts','ops_compute_node_accounts','ops_compute_model_classes','ops_compute_account_quotas','ops_compute_account_relations','ops_compute_private_grants','ops_compute_known_answer_tasks','ops_compute_fraud_reviews','ops_compute_spend_reservations','ops_compute_contribution_ledger','ops_compute_account_carry','ops_compute_display_points','ops_compute_ledger_operations'];
+ // Each drift is present when the forward and empty-recovery files start.
+ // Savepoints preserve that exact changed baseline across both refusal checks.
+ for(const change of [
+  'alter table public.ops_compute_account_carry add column future_setting text',
+  'grant insert on public.ops_compute_contribution_ledger to authenticated',
+  'grant select(carry_micro) on public.ops_compute_account_carry to anon',
+  'grant execute on function public.compute_ledger_correct(text,bigint,text,bigint,bigint,text) to anon',
+  'alter table public.ops_compute_contribution_ledger disable trigger ops_compute_contribution_ledger_append_only',
+  'create policy unexpected_visibility on public.ops_compute_accounts using (true)',
+  "create or replace function public.compute_ledger_sha256(p_text text) returns text language sql as $$select 'unexpected'::text$$",
+  'create index fixture_carry_idx on public.ops_compute_account_carry(carry_micro)',
+  'alter sequence public.ops_compute_contribution_ledger_entry_id_seq increment by 2'
+ ]) {
+  await db.exec('begin');
+  try {
+   await db.exec(change);
+   for(const action of [applyLedger,rollback]) {
+    await db.exec('savepoint changed_install');
+    await assert.rejects(action,e=>e.code==='55000' && /unrecognized catalog fingerprint/.test(e.message));
+    await db.exec('rollback to changed_install');
+   }
+   assert.notEqual((await one("select to_regclass('public.ops_compute_contribution_ledger') as t")).t,null);
+  } finally {await db.exec('rollback');}
+ }
+ ok('forward and empty recovery refuse altered columns, table/column/function grants, trigger, policy, routine, index or sequence');
  await rollback();
  await rollback();
  for(const t of tables) assert.equal((await one('select to_regclass($1) as t',[`public.${t}`])).t,null);
@@ -175,6 +207,21 @@ alter default privileges in schema public revoke truncate, references, trigger o
  }
  ok('recovery refuses when forced row-level security hides a populated table from its owner');
  if(db.native) {
+  const changing=db.fork(), installing=db.fork();
+  let guarded;
+  try {
+   await changing.exec('begin');
+   await changing.exec('alter table public.ops_compute_accounts add column concurrent_change text');
+   guarded=assert.rejects(()=>installing.exec(read('supabase/pending/compute_contribution_ledger_v1.sql')),/unrecognized catalog fingerprint/);
+   guarded.catch(()=>{});
+   await waitForBlocked(db);await changing.exec('commit');await guarded;
+   assert.equal((await one("select count(*)::int as n from pg_attribute where attrelid='public.ops_compute_accounts'::regclass and attname='concurrent_change' and not attisdropped")).n,1);
+   await q('alter table public.ops_compute_accounts drop column concurrent_change');
+  } finally {
+   await changing.exec('rollback');await Promise.allSettled([guarded]);
+   await Promise.all([changing.close(),installing.close()]);
+  }
+  ok('native install waits for the previous schema writer and preserves the newly committed catalog change');
   const writer=db.fork(), recovery=db.fork();
   let refused;
   try {

@@ -259,6 +259,14 @@ Nothing is applied or deployed; the SQL is pending and the Core wiring is off un
 - Settlement and release lock the scheduler authority after their economic row waits. The first election
   shares its organization lock with single-scheduler writes. A deferred check rejects an expired term
   at transaction commit so another holder can retry the still-open reservation.
+- Installation and empty recovery validate the ledger's catalog under the original installation role.
+  Both checks recognize the published SQL from `b9c2ed1d`, `a0a30ef9` and `fb12d1c5`.
+  The fingerprints cover the owned relations, routines, columns, constraints, sequences, indexes,
+  triggers, policies and grants. A shared installation lock and bounded table locks serialize compatible
+  changes. Altered or partial installations require inspection. A recognized older installation upgrades
+  without replacing its data. The native historical fixture preserved an existing opening grant,
+  reservation ID, balance and idempotent replay for each published version. PostgreSQL 17.12 and
+  PGlite's PostgreSQL 18.7 produced the same three catalog fingerprints.
 - The pending rollback requires an empty installation, READ COMMITTED and bounded table locks. It refuses
   any stored configuration or history and fails if row-level security filters the visibility check. After first use, preserve records and prepare a reviewed forward repair.
 - `core/src/compute/contribution-ledger.mjs`: `reserve`, `settle`, `release`, `balances`, `receipt`, `correct` over the
