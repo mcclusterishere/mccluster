@@ -8,10 +8,39 @@ configuration flags, by `GET /v1/eup/halo` (Control → System → Hitman's Halo
 
 | Kind of number | Status |
 |---|---|
-| Counts through the Worker with the owner's session (what Halo actually returns and shows in production) | **Not verified.** No owner session was available: the browser pane was signed out on `matthew.mccluster.org`, and no owner token was used. Signed out, the production Halo link shows the plain public globe and loads no Halo script (observed 2026-11-24) |
+| Counts through the Worker with the owner's session (what Halo actually returns and shows in production) | **Partly verified**, 2026-11-24 05:20 UTC, off the screen of the owner's signed-in desktop app: the two feeds that were on (Earthquakes 246, Tropical cyclones 0). The other feeds were off and were not switched on. No owner token was used by any script. Signed out, the production Halo link shows the plain public globe and loads no Halo script |
 | Which secrets are set on the production Worker (`FIRMS_MAP_KEY`, `AISSTREAM_API_KEY`) | **Not verified.** `GET /v1/eup/halo` reports this as booleans once this change is deployed |
 | Public provider answers read directly, unauthenticated | Read for USGS, NOAA NHC and NASA EONET (below). These are the provider's numbers, **not** Halo's |
 | Fixture counts | The nine files in `scripts/e2e/fixtures/halo-feeds/` are synthetic. **Fixture counts are not live counts** |
+
+## Live reading through the owner's session (2026-11-24 05:20 UTC)
+
+Read off the screen of the owner's signed-in McCluster Desktop app (production, the code deployed that day, **before**
+this change), with the 3D map working. Read-only: no layer was switched, nothing was refreshed or saved. One group was
+expanded to read its counts and collapsed again.
+
+| What | Reading |
+|---|---|
+| Halo header | 126 active missions, 1 awaiting review; members online shown as a dash |
+| Intelligence | 5 enabled sources, 100 need review, 0 partial or stale, 0 unavailable; Feed 102 signals, Briefs 9, Sources 18 |
+| Earthquakes | **On, 246 shown**, "Updated 2m ago" |
+| Tropical cyclones | **On, 0 shown**, "Updated 2m ago" in green |
+| Missions; Intelligence connector; Missions and evidence | Updated just now; updated 5m ago; updated just now |
+| Member regions | "Live" |
+| Aircraft, Military aircraft, Ships, Weather alerts, Natural events, Thermal hotspots, Water levels, Wildfire perimeters, Satellites, Launches, Cameras, Intel events, Exchanges | **Off** on this device |
+
+What this settles:
+
+- **With the map working, twelve of the seventeen declared feeds showed nothing because they were switched off** in this
+  device's saved Halo setup, not because they failed. Only Earthquakes and Tropical cyclones were on (the Intelligence
+  tab turns those two on by itself). Whether the others return data is still unread: reading them means switching them
+  on, which changes the saved setup, so it was left for the owner.
+- The cyclone feed read **0 with a green "Updated 2m ago"** while NHC listed no active storms: an empty answer shown as
+  an ordinary fresh count, as described below. After this change it reads "No records".
+- "Updated 2m ago" is the Worker's fetch time. The earthquake count (246) is what the page could use; what the Worker
+  returned is not shown by the deployed code, so returned versus shown is still unknown for production.
+- Not read: the no-map path in production (the map worked), the counts of the feeds that were off, and which secrets
+  are set.
 
 ## The trace, per feed
 
@@ -97,5 +126,7 @@ reads "No records: the provider answered with nothing", which is different from 
   and `ids`, so Halo cannot show that an event was revised. Needed before quakes become keyed evidence (source, revision,
   content hash).
 - **NHC and NIFC supply no usable time in the envelope.** The Worker could pass the advisory time through.
-- **No live reading through an owner session exists yet.** The first one should be taken from Control → System →
-  Hitman's Halo and the source detail panels after deploy, and recorded here with its time.
+- **The live reading covers two feeds.** The rest need the owner to switch them on (or to say that may be done), and
+  returned-versus-shown needs the source detail panels this change adds, after deploy.
+- **A feed that is off looks the same as a feed with nothing in it** until the owner opens the list. Worth deciding
+  whether the Intelligence tab should say how many declared feeds are off.
