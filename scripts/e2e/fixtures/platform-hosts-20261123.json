@@ -6269,6 +6269,467 @@
    "url": "https://here.mccluster.org/index.html",
    "status": 301,
    "location": "https://matthew.mccluster.org/index.html"
+  },
+  {
+   "url": "https://mccluster.org//whip.html",
+   "status": 301,
+   "location": "https://matthew.mccluster.org//whip.html"
+  },
+  {
+   "url": "https://mccluster.org/whip%2Ehtml",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip%2Ehtml"
+  },
+  {
+   "url": "https://mccluster.org/%77hip.html",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/%77hip.html"
+  },
+  {
+   "url": "https://mccluster.org/whip/rider/operator",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip/rider/operator"
+  },
+  {
+   "url": "https://mccluster.org/whip/rider",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip/rider"
+  },
+  {
+   "url": "https://mccluster.org/prayer-closet",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/prayer-closet"
+  },
+  {
+   "url": "https://mccluster.org/fbi",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/fbi"
+  },
+  {
+   "url": "https://mccluster.org/closet/sent",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/closet/sent"
+  },
+  {
+   "url": "https://mccluster.org/mnet",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/mnet"
+  },
+  {
+   "url": "https://mccluster.org/mnet?view=feed",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/mnet?view=feed"
+  },
+  {
+   "url": "https://mccluster.org//mnet.html",
+   "status": 301,
+   "location": "https://matthew.mccluster.org//mnet.html"
+  },
+  {
+   "url": "https://mccluster.org/index",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/index"
+  },
+  {
+   "url": "https://mccluster.org/index?view=feed",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/index?view=feed"
+  },
+  {
+   "url": "https://mccluster.org//index.html?view=feed",
+   "status": 301,
+   "location": "https://matthew.mccluster.org//index.html?view=feed"
+  },
+  {
+   "url": "https://mccluster.org/listen",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/listen"
+  },
+  {
+   "url": "https://mccluster.org//album.html?album=here",
+   "status": 301,
+   "location": "https://matthew.mccluster.org//album.html?album=here"
+  },
+  {
+   "url": "https://matthew.mccluster.org//whip.html",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/whip.html",
+   "og_url": "https://matthew.mccluster.org/whip.html"
+  },
+  {
+   "url": "https://matthew.mccluster.org/whip%2Ehtml",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/whip.html",
+   "og_url": "https://matthew.mccluster.org/whip.html"
+  },
+  {
+   "url": "https://matthew.mccluster.org/%77hip.html",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/whip.html",
+   "og_url": "https://matthew.mccluster.org/whip.html"
+  },
+  {
+   "url": "https://matthew.mccluster.org/whip/rider/operator",
+   "status": 200
+  },
+  {
+   "url": "https://matthew.mccluster.org/whip/rider",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip/rider/"
+  },
+  {
+   "url": "https://matthew.mccluster.org/prayer-closet",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/prayer-closet.html",
+   "og_url": "https://matthew.mccluster.org/prayer-closet.html"
+  },
+  {
+   "url": "https://matthew.mccluster.org/fbi",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/fbi.html"
+  },
+  {
+   "url": "https://matthew.mccluster.org/closet/sent",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/closet/sent.html",
+   "og_url": "https://matthew.mccluster.org/closet/sent.html"
+  },
+  {
+   "url": "https://matthew.mccluster.org/mnet",
+   "status": 200,
+   "robots": "noindex"
+  },
+  {
+   "url": "https://matthew.mccluster.org/mnet?view=feed",
+   "status": 200,
+   "robots": "noindex"
+  },
+  {
+   "url": "https://matthew.mccluster.org//mnet.html",
+   "status": 200,
+   "robots": "noindex"
+  },
+  {
+   "url": "https://matthew.mccluster.org/index",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/",
+   "og_url": "https://matthew.mccluster.org/",
+   "og_site_name": "Matthew McCluster"
+  },
+  {
+   "url": "https://matthew.mccluster.org/index?view=feed",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/",
+   "og_url": "https://matthew.mccluster.org/",
+   "og_site_name": "Matthew McCluster"
+  },
+  {
+   "url": "https://matthew.mccluster.org//index.html?view=feed",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/",
+   "og_url": "https://matthew.mccluster.org/",
+   "og_site_name": "Matthew McCluster"
+  },
+  {
+   "url": "https://matthew.mccluster.org/listen",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/listen.html",
+   "og_url": "https://matthew.mccluster.org/listen.html"
+  },
+  {
+   "url": "https://matthew.mccluster.org//album.html?album=here",
+   "status": 200,
+   "canonical": "https://matthew.mccluster.org/album.html",
+   "og_url": "https://matthew.mccluster.org/album.html",
+   "robots": "index, follow, max-image-preview:large"
+  },
+  {
+   "url": "https://www.mccluster.org//whip.html",
+   "status": 301,
+   "location": "https://matthew.mccluster.org//whip.html"
+  },
+  {
+   "url": "https://www.mccluster.org/whip%2Ehtml",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip%2Ehtml"
+  },
+  {
+   "url": "https://www.mccluster.org/%77hip.html",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/%77hip.html"
+  },
+  {
+   "url": "https://www.mccluster.org/whip/rider/operator",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip/rider/operator"
+  },
+  {
+   "url": "https://www.mccluster.org/whip/rider",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip/rider"
+  },
+  {
+   "url": "https://www.mccluster.org/prayer-closet",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/prayer-closet"
+  },
+  {
+   "url": "https://www.mccluster.org/fbi",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/fbi"
+  },
+  {
+   "url": "https://www.mccluster.org/closet/sent",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/closet/sent"
+  },
+  {
+   "url": "https://www.mccluster.org/mnet",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/mnet"
+  },
+  {
+   "url": "https://www.mccluster.org/mnet?view=feed",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/mnet?view=feed"
+  },
+  {
+   "url": "https://www.mccluster.org//mnet.html",
+   "status": 301,
+   "location": "https://matthew.mccluster.org//mnet.html"
+  },
+  {
+   "url": "https://www.mccluster.org/index",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/index"
+  },
+  {
+   "url": "https://www.mccluster.org/index?view=feed",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/index?view=feed"
+  },
+  {
+   "url": "https://www.mccluster.org//index.html?view=feed",
+   "status": 301,
+   "location": "https://matthew.mccluster.org//index.html?view=feed"
+  },
+  {
+   "url": "https://www.mccluster.org/listen",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/listen"
+  },
+  {
+   "url": "https://www.mccluster.org//album.html?album=here",
+   "status": 301,
+   "location": "https://matthew.mccluster.org//album.html?album=here"
+  },
+  {
+   "url": "https://humanuprise.com//whip.html",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/whip%2Ehtml",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/%77hip.html",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/whip/rider/operator",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/whip/rider",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/prayer-closet",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/fbi",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/closet/sent",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/mnet",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/mnet?view=feed",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com//mnet.html",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/index",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/index?view=feed",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com//index.html?view=feed",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com/listen",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://humanuprise.com//album.html?album=here",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com//whip.html",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/whip%2Ehtml",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/%77hip.html",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/whip/rider/operator",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/whip/rider",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/prayer-closet",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/fbi",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/closet/sent",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/mnet",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/mnet?view=feed",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com//mnet.html",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/index",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/index?view=feed",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com//index.html?view=feed",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com/listen",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://www.humanuprise.com//album.html?album=here",
+   "error": "Request was cancelled."
+  },
+  {
+   "url": "https://here.mccluster.org//whip.html",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip.html"
+  },
+  {
+   "url": "https://here.mccluster.org/whip%2Ehtml",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip.html"
+  },
+  {
+   "url": "https://here.mccluster.org/%77hip.html",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip.html"
+  },
+  {
+   "url": "https://here.mccluster.org/whip/rider/operator",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip/rider/operator"
+  },
+  {
+   "url": "https://here.mccluster.org/whip/rider",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/whip/rider"
+  },
+  {
+   "url": "https://here.mccluster.org/prayer-closet",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/prayer-closet"
+  },
+  {
+   "url": "https://here.mccluster.org/fbi",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/fbi"
+  },
+  {
+   "url": "https://here.mccluster.org/closet/sent",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/closet/sent"
+  },
+  {
+   "url": "https://here.mccluster.org/mnet",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/mnet"
+  },
+  {
+   "url": "https://here.mccluster.org/mnet?view=feed",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/mnet?view=feed"
+  },
+  {
+   "url": "https://here.mccluster.org//mnet.html",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/mnet.html"
+  },
+  {
+   "url": "https://here.mccluster.org/index",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/index"
+  },
+  {
+   "url": "https://here.mccluster.org/index?view=feed",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/index?view=feed"
+  },
+  {
+   "url": "https://here.mccluster.org//index.html?view=feed",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/index.html?view=feed"
+  },
+  {
+   "url": "https://here.mccluster.org/listen",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/listen"
+  },
+  {
+   "url": "https://here.mccluster.org//album.html?album=here",
+   "status": 301,
+   "location": "https://matthew.mccluster.org/album.html?album=here"
   }
  ],
  "amended": [
@@ -6281,6 +6742,108 @@
     "https://humanuprise.com/index.html",
     "https://www.humanuprise.com/index.html",
     "https://here.mccluster.org/index.html"
+   ],
+   "_note": "Addresses the crawl's plan gained after the fixture was read, read live (GET only, nobody signed in) by --amend-fixture while production still answered as before P0."
+  },
+  {
+   "captured_at": "2026-11-24T07:00:31.380Z",
+   "urls": [
+    "https://mccluster.org//whip.html",
+    "https://mccluster.org/whip%2Ehtml",
+    "https://mccluster.org/%77hip.html",
+    "https://mccluster.org/whip/rider/operator",
+    "https://mccluster.org/whip/rider",
+    "https://mccluster.org/prayer-closet",
+    "https://mccluster.org/fbi",
+    "https://mccluster.org/closet/sent",
+    "https://mccluster.org/mnet",
+    "https://mccluster.org/mnet?view=feed",
+    "https://mccluster.org//mnet.html",
+    "https://mccluster.org/index",
+    "https://mccluster.org/index?view=feed",
+    "https://mccluster.org//index.html?view=feed",
+    "https://mccluster.org/listen",
+    "https://mccluster.org//album.html?album=here",
+    "https://matthew.mccluster.org//whip.html",
+    "https://matthew.mccluster.org/whip%2Ehtml",
+    "https://matthew.mccluster.org/%77hip.html",
+    "https://matthew.mccluster.org/whip/rider/operator",
+    "https://matthew.mccluster.org/whip/rider",
+    "https://matthew.mccluster.org/prayer-closet",
+    "https://matthew.mccluster.org/fbi",
+    "https://matthew.mccluster.org/closet/sent",
+    "https://matthew.mccluster.org/mnet",
+    "https://matthew.mccluster.org/mnet?view=feed",
+    "https://matthew.mccluster.org//mnet.html",
+    "https://matthew.mccluster.org/index",
+    "https://matthew.mccluster.org/index?view=feed",
+    "https://matthew.mccluster.org//index.html?view=feed",
+    "https://matthew.mccluster.org/listen",
+    "https://matthew.mccluster.org//album.html?album=here",
+    "https://www.mccluster.org//whip.html",
+    "https://www.mccluster.org/whip%2Ehtml",
+    "https://www.mccluster.org/%77hip.html",
+    "https://www.mccluster.org/whip/rider/operator",
+    "https://www.mccluster.org/whip/rider",
+    "https://www.mccluster.org/prayer-closet",
+    "https://www.mccluster.org/fbi",
+    "https://www.mccluster.org/closet/sent",
+    "https://www.mccluster.org/mnet",
+    "https://www.mccluster.org/mnet?view=feed",
+    "https://www.mccluster.org//mnet.html",
+    "https://www.mccluster.org/index",
+    "https://www.mccluster.org/index?view=feed",
+    "https://www.mccluster.org//index.html?view=feed",
+    "https://www.mccluster.org/listen",
+    "https://www.mccluster.org//album.html?album=here",
+    "https://humanuprise.com//whip.html",
+    "https://humanuprise.com/whip%2Ehtml",
+    "https://humanuprise.com/%77hip.html",
+    "https://humanuprise.com/whip/rider/operator",
+    "https://humanuprise.com/whip/rider",
+    "https://humanuprise.com/prayer-closet",
+    "https://humanuprise.com/fbi",
+    "https://humanuprise.com/closet/sent",
+    "https://humanuprise.com/mnet",
+    "https://humanuprise.com/mnet?view=feed",
+    "https://humanuprise.com//mnet.html",
+    "https://humanuprise.com/index",
+    "https://humanuprise.com/index?view=feed",
+    "https://humanuprise.com//index.html?view=feed",
+    "https://humanuprise.com/listen",
+    "https://humanuprise.com//album.html?album=here",
+    "https://www.humanuprise.com//whip.html",
+    "https://www.humanuprise.com/whip%2Ehtml",
+    "https://www.humanuprise.com/%77hip.html",
+    "https://www.humanuprise.com/whip/rider/operator",
+    "https://www.humanuprise.com/whip/rider",
+    "https://www.humanuprise.com/prayer-closet",
+    "https://www.humanuprise.com/fbi",
+    "https://www.humanuprise.com/closet/sent",
+    "https://www.humanuprise.com/mnet",
+    "https://www.humanuprise.com/mnet?view=feed",
+    "https://www.humanuprise.com//mnet.html",
+    "https://www.humanuprise.com/index",
+    "https://www.humanuprise.com/index?view=feed",
+    "https://www.humanuprise.com//index.html?view=feed",
+    "https://www.humanuprise.com/listen",
+    "https://www.humanuprise.com//album.html?album=here",
+    "https://here.mccluster.org//whip.html",
+    "https://here.mccluster.org/whip%2Ehtml",
+    "https://here.mccluster.org/%77hip.html",
+    "https://here.mccluster.org/whip/rider/operator",
+    "https://here.mccluster.org/whip/rider",
+    "https://here.mccluster.org/prayer-closet",
+    "https://here.mccluster.org/fbi",
+    "https://here.mccluster.org/closet/sent",
+    "https://here.mccluster.org/mnet",
+    "https://here.mccluster.org/mnet?view=feed",
+    "https://here.mccluster.org//mnet.html",
+    "https://here.mccluster.org/index",
+    "https://here.mccluster.org/index?view=feed",
+    "https://here.mccluster.org//index.html?view=feed",
+    "https://here.mccluster.org/listen",
+    "https://here.mccluster.org//album.html?album=here"
    ],
    "_note": "Addresses the crawl's plan gained after the fixture was read, read live (GET only, nobody signed in) by --amend-fixture while production still answered as before P0."
   }

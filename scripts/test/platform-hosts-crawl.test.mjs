@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ROOT, localFetcher, githubPages, workerEnv, crawlPlan, crawlUrls, diffCrawls, judgeServesEverything, stageJudged, COMPARED_HEADERS } from '../e2e/platform-hosts.e2e.mjs';
+import { ROOT, localFetcher, githubPages, workerEnv, crawlPlan, crawlUrls, diffCrawls, judgeServesEverything, stageJudged, COMPARED_HEADERS, cloudflareNormalized, addressReader } from '../e2e/platform-hosts.e2e.mjs';
 import { siteTable, readRecord } from '../../tools/build-site-hosts.mjs';
 
 const imp = (rel) => import(pathToFileURL(join(ROOT, rel)).href);
@@ -172,4 +172,55 @@ test('from P1 the crawl judges the platform by the stage: 200 or the class Matth
   bad([row(`${PLAT}/listen.html`, { headers: { 'x-robots-tag': 'noindex' } })], /x-robots-tag noindex/);
   bad([row('https://www.mccluster.org/listen.html?a=1', { status: 301, location: `${PROF}/listen.html?a=1` })], /a door of the platform answers 301/);
   bad([row(`${PLAT}/listen.html`, { status: 302, location: 'https://evil.example/x' })], /sends the visitor off the site/);
+});
+
+/* The P1 review (P1A-1, SEC-P1-2, P1A-2, P1A-3): GitHub Pages answers a page at other spellings of its address (Measured
+   live 2026-11-24), so the crawl asks for them on every host and judges each on the platform by the page it names (Whip
+   Equipped's and the owner's own on Matthew's host, the World's at its root, any other on the platform), and holds a door
+   to one hop: straight to where the platform's own answer for the address sends it. */
+test('the crawl asks for other spellings of an address, judges each by the page it names, and holds a door to one hop', async () => {
+  const P1 = tableOf('P1');
+  const PLAT = P1.platform.origin, PROF = P1.profile.origin;
+  const plan = crawlPlan(P1);
+  for (const path of ['/whip', '//whip.html', '/whip%2Ehtml', '/%77hip.html', '/whip/rider/operator', '/whip/rider', '/prayer-closet', '/fbi', '/closet/sent',
+    '/mnet', '/mnet?view=feed', '//mnet.html', '/index', '/index?view=feed', '//index.html?view=feed', '/listen', '//album.html?album=here']) {
+    assert.ok(plan.paths.includes(path), `${path} is crawled on every host`);
+  }
+  const addressOf = await addressReader(ROOT);
+  const row = (url, extra = {}) => ({ url, status: 200, location: null, error: null, headers: {}, ...extra });
+  const good = [
+    row(`${PLAT}/whip`, { status: 301, location: `${PROF}/whip.html` }), row(`${PROF}/whip`),
+    row(`${PLAT}//whip.html`, { status: 301, location: `${PROF}/whip.html` }), row(`${PROF}//whip.html`),
+    row(`${PLAT}/whip/rider`, { status: 301, location: `${PROF}/whip/rider/` }), row(`${PROF}/whip/rider`, { status: 301, location: `${PROF}/whip/rider/` }),
+    row(`${PLAT}/mnet?view=feed`, { status: 301, location: `${PLAT}/?view=feed` }), row(`${PROF}/mnet?view=feed`),
+    row(`${PLAT}/index?view=feed`, { status: 301, location: `${PLAT}/?view=feed` }), row(`${PROF}/index?view=feed`),
+    row(`${PLAT}/index`, { status: 301, location: `${PLAT}/index.html` }), row(`${PROF}/index`),
+    row(`${PLAT}/listen`, { status: 301, location: `${PLAT}/listen.html` }), row(`${PROF}/listen`),
+    row(`${PLAT}/whip.html`, { status: 301, location: `${PROF}/whip.html` }), row(`${PROF}/whip.html`),
+    row(`${PLAT}/listen.html`), row(`${PROF}/listen.html`),
+    row('https://www.mccluster.org/whip.html', { status: 301, location: `${PROF}/whip.html` }),
+    row('https://www.mccluster.org/whip', { status: 301, location: `${PROF}/whip.html` }),
+    row('https://www.mccluster.org/listen.html', { status: 301, location: `${PLAT}/listen.html` })
+  ];
+  assert.deepEqual(judgeServesEverything({ rows: good }, P1, null, addressOf), [], 'the answers P1 means');
+  const bad = (rows, problem) => {
+    const found = judgeServesEverything({ rows: [...good.filter((g) => !rows.some((r) => r.url === g.url)), ...rows] }, P1, null, addressOf);
+    assert.ok(found.some((f) => problem.test(f.problem)), `${problem}: ${JSON.stringify(found)}`);
+  };
+  bad([row(`${PLAT}/whip`)], /another spelling of \/whip\.html answers 200/);
+  bad([row(`${PLAT}//whip.html`, { status: 301, location: `${PROF}//whip.html` })], /another spelling of \/whip\.html answers 301 https:\/\/matthew\.mccluster\.org\/\/whip\.html/);
+  bad([row(`${PLAT}/mnet?view=feed`)], /another spelling of \/mnet\.html answers 200/);
+  bad([row(`${PLAT}/listen`)], /another spelling of \/listen\.html answers 200/);
+  bad([row(`${PLAT}/listen`, { status: 301, location: `${PROF}/listen.html` })], /another spelling of \/listen\.html answers 301/);
+  bad([row('https://www.mccluster.org/whip.html', { status: 301, location: `${PLAT}/whip.html` })], /a door of the platform answers 301 https:\/\/mccluster\.org\/whip\.html/);
+  bad([row('https://www.mccluster.org/whip', { status: 301, location: `${PLAT}/whip` })], /a door of the platform answers 301/);
+  /* the zone's own redirect rule (here.mccluster.org) reads an address through Cloudflare's normalization; the Worker
+     reads it as sent (both Measured 2026-11-24) */
+  assert.equal(cloudflareNormalized('//whip.html'), '/whip.html');
+  assert.equal(cloudflareNormalized('/whip%2Ehtml'), '/whip.html');
+  assert.equal(cloudflareNormalized('/%77hip.html'), '/whip.html');
+  assert.equal(cloudflareNormalized('/a%2fb%20c'), '/a%2Fb%20c', 'a reserved or other escape stays escaped, in upper case');
+  const fetchOne = await localFetcher(P1, { root: ROOT });
+  assert.equal((await fetchOne('https://here.mccluster.org//whip%2Ehtml?x=1')).headers.get('location'), `${PROF}/whip.html?x=1`);
+  assert.equal((await fetchOne(`${PLAT}//whip.html?x=1`)).headers.get('location'), `${PROF}/whip.html?x=1`, 'the platform, one hop to his page');
 });

@@ -25,7 +25,8 @@
          stage's own rules instead of production's answers before P0 (judgeServesEverything): every public path on the
          platform answers 200 or the same class of answer as on Matthew's host, the World's addresses and the platform's
          own paths as the router says, profile_only 301 to his host and nothing else sends a visitor to a document there,
-         the doors send every path to the platform; every other host is still held to production's answers.
+         the doors send every path to the platform (in one hop: straight to where the platform sends it), another spelling of
+         an address answers one 301 to the page it names; every other host is still held to production's answers.
 
      PLATFORM_HOSTS_LIVE=1 node scripts/e2e/platform-hosts.e2e.mjs --out <file.json> [--baseline <file.json>]
          LIVE (opt-in; never in pull-request CI): the production hosts, GET only, nobody signed in, four requests at a
@@ -80,7 +81,12 @@ export const EXTRA_PATHS = Object.freeze([
   '/embed.html?album=here', '/js/tabbar.js', '/js/shell-boot.js', '/css/style.css', '/assets/img/icon-192.png',
   '/data/albums.json', '/vendor/gsap.min.js', '/.well-known/security.txt',
   /* a page that does not exist stays a 404 where it is one today */
-  '/nope.html'
+  '/nope.html',
+  /* another spelling of an address, which GitHub Pages answers with the page it names (Measured live 2026-11-24 for the
+     P1 review): from P1 the platform reads an address the same way, so each is one 301 to that page where it lives
+     (Whip Equipped's and the owner's own to Matthew's host, the World's to its root) */
+  '//whip.html', '/whip%2Ehtml', '/%77hip.html', '/whip/rider/operator', '/whip/rider', '/prayer-closet', '/fbi', '/closet/sent',
+  '/mnet', '/mnet?view=feed', '//mnet.html', '/index', '/index?view=feed', '//index.html?view=feed', '/listen', '//album.html?album=here'
 ]);
 
 export function crawlPlan(site) {
@@ -360,6 +366,17 @@ export function githubPages(root = ROOT) {
   };
 }
 
+/* Cloudflare's URL normalization, through which the zone's own rules read an address (the redirect rule of
+   here.mccluster.org: Measured 2026-11-24, it answered //whip.html, /whip%2Ehtml and /%77hip.html each with a 301 to
+   https://matthew.mccluster.org/whip.html): backslashes as slashes, repeated slashes as one, escaped unreserved characters
+   decoded and other escapes in upper case (developers.cloudflare.com/rules/normalization/how-it-works). The Worker reads
+   the address as it was sent (Measured the same day: mccluster.org answered //whip.html with a Location of
+   https://matthew.mccluster.org//whip.html), so this is the zone rule's alone. */
+export function cloudflareNormalized(path) {
+  return String(path).replace(/\\/g, '/').replace(/\/{2,}/g, '/')
+    .replace(/%([0-9a-fA-F]{2})/g, (m, hex) => { const c = String.fromCharCode(parseInt(hex, 16)); return /[A-Za-z0-9\-._~]/.test(c) ? c : '%' + hex.toUpperCase(); });
+}
+
 /* the Worker's [vars] as deployed (wrangler.toml), plus fake secrets for what the host routers read */
 export function workerEnv(root = ROOT) {
   const toml = readFileSync(join(root, 'workers/mccluster/wrangler.toml'), 'utf8');
@@ -417,7 +434,7 @@ export async function localFetcher(site, { root = ROOT } = {}) {
       const door = site.doors.find((d) => d.host === u.hostname);
       if (!/^routed/.test(String(door.state))) throw new NotFound(u.hostname);
       if (door.served_by === 'cloudflare-zone-redirect-rule') {
-        return new Response(null, { status: 301, headers: { location: `${door.to_origin}${u.pathname}${u.search}`, 'content-type': 'text/html; charset=UTF-8' } });
+        return new Response(null, { status: 301, headers: { location: `${door.to_origin}${cloudflareNormalized(u.pathname)}${u.search}`, 'content-type': 'text/html; charset=UTF-8' } });
       }
     }
     const res = await worker(new Request(url), env, upstream);
@@ -447,9 +464,13 @@ const classOf = (row) => (row.error ? 'unanswered' : isRedirect(row.status) ? 'r
    200 or the same class of answer as the same path on Matthew's host (a redirect where his host redirects, a 404 where
    his is a 404); the World's own addresses and the platform's own paths answer as the router says; Whip Equipped and the
    owner's own pages (profile_only) answer 301 to his host; nothing else sends a visitor to a document on his host; plain
-   http goes to https on the platform; the routed doors send every path to the platform; no page the platform serves is
-   noindex there. */
-export function judgeServesEverything(local, site, fixture = null) {
+   http goes to https on the platform; the routed doors send every path to the platform, in one hop (straight to the
+   platform's own 301 where it answers one); another spelling of an address answers one 301 to the page it names, where
+   that page lives (the P1 review); no page the platform serves is noindex there. */
+export async function addressReader(root = ROOT) {
+  return (await import(pathToFileURL(join(root, 'workers/mccluster/src/platform/router.js')).href)).addressOf;
+}
+export function judgeServesEverything(local, site, fixture = null, addressOf = null) {
   const failures = [];
   const loc = new Map(local.rows.map((r) => [r.url, r]));
   const fx = new Map(((fixture && fixture.rows) || []).map((r) => [r.url, r]));
@@ -462,12 +483,24 @@ export function judgeServesEverything(local, site, fixture = null) {
     const path = u.pathname, q = u.search;
     const where = row.location ? new URL(row.location, row.url) : null;
     if (u.hostname !== site.platform.host) {
-      /* a routed door: every path to the same path and query on the platform */
-      if (row.status !== 301 || !where || where.href !== `${P}${path}${q}`) fail(`a door of the platform answers ${row.status || row.error} ${row.location || ''}, not 301 to ${P}${path}${q}`);
+      /* a routed door: every path to the same path and query on the platform, or in the same hop to where the platform's
+         router sends that address (a page the platform renders itself, its news, decides its own answer: same path) */
+      const own = loc.get(`${P}${path}${q}`);
+      const want = !site.ownPathOrigin(path) && own && isRedirect(own.status) && own.location ? new URL(own.location, own.url).href : `${P}${path}${q}`;
+      if (row.status !== 301 || !where || where.href !== want) fail(`a door of the platform answers ${row.status || row.error} ${row.location || ''}, not 301 to ${want}`);
       continue;
     }
     if (u.protocol === 'http:') {
       if (row.status !== 301 || !where || where.href !== `${P}${path}${q}`) fail(`plain http answers ${row.status || row.error} ${row.location || ''}, not 301 to ${P}${path}${q}`);
+      continue;
+    }
+    /* another spelling of an address: one 301 to the page it names, where that page lives */
+    const address = addressOf ? addressOf(site, path) : path;
+    if (address !== null && address !== path) {
+      const his = site.pageSet(address) === 'profile_only' || site.pages.profile_only.some((d) => d.slice(-1) === '/' && address.indexOf(d) === 0);
+      const world = address === site.world.root || address === site.world.document || (address === site.platform.front_door_path && worldQuery(u));
+      const want = his ? `${M}${address}${q}` : world ? `${P}${site.world.root}${q}` : `${P}${address}${q}`;
+      if (row.status !== 301 || !where || where.href !== want) fail(`another spelling of ${address} answers ${row.status || row.error} ${row.location || ''}, not 301 to ${want}`);
       continue;
     }
     if (where && where.origin === M && site.pageSet(path) !== 'profile_only') fail(`sends the visitor to a document on Matthew's host (${row.location})`);
@@ -503,7 +536,7 @@ export function judgeServesEverything(local, site, fixture = null) {
 }
 
 /* What a local crawl must show against the fixture. Returns { failures, added, skipped, compared }. */
-export function judgeLocal(local, fixture, site) {
+export function judgeLocal(local, fixture, site, addressOf = null) {
   const failures = [], added = [], skipped = [];
   const fx = new Map(fixture.rows.map((r) => [r.url, r]));
   const loc = new Map(local.rows.map((r) => [r.url, r]));
@@ -537,7 +570,7 @@ export function judgeLocal(local, fixture, site) {
     if (!mirror || mirror.status !== 200) continue;
     for (const f of HEAD_FIELDS) if (row[f] !== mirror[f]) failures.push({ url: row.url, problem: `${f}: the platform's copy says ${JSON.stringify(row[f])}, the file says ${JSON.stringify(mirror[f])}` });
   }
-  failures.push(...judgeServesEverything(local, site, fixture));
+  failures.push(...judgeServesEverything(local, site, fixture, addressOf));
   /* every classified page answers 200 on the host that serves it at this stage (the World's document, where the platform
      serves it, at the platform's root: its own address there) */
   for (const set of ['platform', 'profile', 'profile_only']) {
@@ -629,7 +662,7 @@ async function main(argv) {
   const local = await localCrawl(site);
   const out = arg(argv, '--out');
   if (out) writeFileSync(out, JSON.stringify(local, null, 1) + '\n');
-  const verdict = judgeLocal(local, readFixture(), site);
+  const verdict = judgeLocal(local, readFixture(), site, await addressReader());
   for (const [host, s] of Object.entries(summarize(local))) console.log(`  ${host}: ${JSON.stringify(s.status)}`);
   for (const a of verdict.added) console.log(`added   ${a} (this tree publishes it; production does not yet)`);
   for (const f of verdict.failures) console.log(`FAIL    ${f.url}: ${f.problem}`);
