@@ -312,18 +312,36 @@ jobs:
           node scripts/compute-lease-sql-check.mjs
           node scripts/test-intel-integrity-db.mjs
           node scripts/ai-context-workstreams-sql-check.mjs
-      - name: Verify workstreams against the full reset schema and roll back
+      - name: Verify workstreams against the full reset schema
         # The behavioral proof above uses minimal base fixtures. This pass uses the
         # real reset tables and their existing ontology/decision triggers.
         env:
           RESET_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
         run: |
           for pass in 1 2; do
-            psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/pending/ai_context_workstreams_v1.sql
-            psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/pending/ai_context_workstreams_v1.sql
             psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/ai_context_workstreams_v1.integration.sql
-            psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/pending/ai_context_workstreams_v1.rollback.sql
           done
+      - name: Prove nine prepared repairs on native isolated databases
+        env:
+          POSTGRES_MODULE_PATH: ${{ runner.temp }}/native-admin-tools/node_modules/postgres/src/index.js
+          NATIVE_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          bash scripts/test-world-member-regions-db.sh
+          bash scripts/test-member-fronts-publication-guard-db.sh
+          node scripts/creator-cohort-news-sql-check.mjs
+          node scripts/test-small-pending-native.mjs
+      - name: Prove prepared repairs against the complete reset
+        # Snapshot comparison above happens before pending SQL. This proof uses
+        # the actual canonical roles, triggers and migration/replay overlay.
+        env:
+          POSTGRES_MODULE_PATH: ${{ runner.temp }}/native-admin-tools/node_modules/postgres/src/index.js
+          NATIVE_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+          RESET_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          bash scripts/test-world-member-regions-db.sh --full-reset
+          bash scripts/test-member-fronts-publication-guard-db.sh --full-reset
+          node scripts/creator-cohort-news-sql-check.mjs --full-reset
+          bash scripts/test-small-pending-reset.sh
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true

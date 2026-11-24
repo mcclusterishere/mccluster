@@ -1,0 +1,413 @@
+{
+  "schema": "pending-repairs-proof/v1",
+  "date": "2026-11-24",
+  "scope": "Eight selected current-main pending repairs plus the new guard for the concurrently recorded member-front schema; not every open PR branch.",
+  "baseline_commit": "1cfb1a3613f24a877b7255f457844a0daa3fb6d1",
+  "original_inventory_commit": "7f2644b417994d1b994d763485b6448906bdfdb0",
+  "production_changes": false,
+  "publication_or_runtime_activation": false,
+  "approval_required_per_file": true,
+  "native_engine": "PostgreSQL 17.6",
+  "native_results": {
+    "world": {
+      "lane": "world",
+      "passed": true,
+      "groups": 3,
+      "full_reset": false,
+      "production_changes": false
+    },
+    "front": {
+      "lane": "front",
+      "passed": true,
+      "groups": 4,
+      "full_reset": false,
+      "production_changes": false
+    },
+    "creator_cohort_news": {
+      "suite": "creator-cohort-news-native",
+      "full_reset": false,
+      "fixture_results": [
+        {
+          "name": "creator_cohort_entitlement",
+          "pass": 1,
+          "checks": 39
+        },
+        {
+          "name": "news_region_leads",
+          "pass": 1,
+          "checks": 17
+        },
+        {
+          "name": "creator_cohort_entitlement",
+          "pass": 2,
+          "checks": 39
+        },
+        {
+          "name": "news_region_leads",
+          "pass": 2,
+          "checks": 17
+        }
+      ],
+      "guard_checks": 18,
+      "passed": true,
+      "synthetic_rows_rolled_back": true,
+      "pending_objects_removed": true,
+      "legacy_client_grant_hardening_retained": true,
+      "production_changes": false,
+      "sha256": {
+        "supabase/pending/20261010009000_creator_site_cohort_grants.sql": "ee5742c565c7a731d7a1a014dff9df75207f39798fd2aecf046f92b2af6e2a39",
+        "supabase/pending/20261010009100_creator_publish_cohort_entitlement.sql": "3dc01a840ed1e24c96a11336b12ebeb80f5d4d964642833fa59a4cb6008c5e0f",
+        "supabase/pending/20261020170000_news_region_leads.sql": "d134a4564894000b3edd37da4d0bdadf2e5b60666b05b6f95a6f679519d0bc18",
+        "supabase/pending/20261010009000_creator_site_cohort_grants.rollback.sql": "4e29b0b1558c99cd058e5f4d12cf80b4253c16d7d4bf33c01352225efcdf9a6b",
+        "supabase/pending/20261010009100_creator_publish_cohort_entitlement.rollback.sql": "c67269d7a13d9c1f6d3df4ac3c655531f5b6ec336553e69edcd931e804460a46",
+        "supabase/pending/20261020170000_news_region_leads.rollback.sql": "fe283c81ed7f5dacdc1b8cd9a98bbaef934167ce583c1e62825a8b96b45e41d8"
+      }
+    },
+    "small_repairs": {
+      "passed": true,
+      "scenario_groups": 15,
+      "concurrent_sessions": true,
+      "full_reset": false
+    },
+    "worker_unit": {
+      "passed": 16,
+      "failed": 0
+    }
+  },
+  "full_reset": {
+    "status": "success",
+    "workflow": ".github/workflows/reconciliation-ci.yml",
+    "head": "1e5c5c2aa92281cadb1ec065120376246ed466e2",
+    "run_id": 45460932797,
+    "job_id": 138682976782,
+    "url": "https://github.com/mcclusterishere/mccluster/actions/runs/45460932797/job/138682976782",
+    "completed_at": "2026-11-24T18:38:29Z",
+    "engine": "PostgreSQL 17.6",
+    "reconciliation_jobs_passed": 6,
+    "boundary": "Actual complete canonical migration/replay reset and baseline schema comparison in isolated GitHub CI; no replacement baseline roles/tables/functions/triggers or blanket fixture grants. No production execution.",
+    "world": {
+      "wrapper_groups": 3,
+      "behavior_groups_per_pass": 12,
+      "passes": 2,
+      "passed": true
+    },
+    "member_fronts": {
+      "groups": 4,
+      "passed": true
+    },
+    "creator_news": {
+      "creator_assertions_per_pass": 39,
+      "news_assertions_per_pass": 17,
+      "passes": 2,
+      "guard_checks": 18,
+      "passed": true
+    },
+    "small_repairs": {
+      "behavior_passes": 3,
+      "repeatable_recovery_or_guarded_refusal": true,
+      "canonical_connector_policy_bytes_preserved": true,
+      "reapply_passed": true
+    },
+    "all_18_candidate_sql_hashes_unchanged": true,
+    "earlier_failed_attempts": [
+      {
+        "head": "4b4f47be519e666803818a9d5c4737aa78dd0326",
+        "run_id": 45458429736,
+        "job_id": 138674060231,
+        "reason": "Bounded creator/news fixture tried to ALTER the reserved Supabase service_role; removed redundant ALTER and kept explicit BYPASSRLS verification."
+      },
+      {
+        "head": "2d159551cba83b471089f8f93d59cce1167412f5",
+        "run_id": 45459891750,
+        "job_id": 138679273286,
+        "reason": "Small-reset shell could not recognize the expected nonempty connector recovery refusal because rg was unavailable; replaced only the exact-token match with Bash built-ins."
+      }
+    ]
+  },
+  "preflight": {
+    "observed_at": [
+      "2026-11-24T16:48:26.720818+00:00",
+      "2026-11-24T16:49:08.388207+00:00"
+    ],
+    "server_version": "17.6",
+    "jobs": 47099,
+    "job_heap_bytes": 53321728,
+    "signals": 64,
+    "signal_total_bytes": 155648,
+    "duplicate_digest_windows": 0,
+    "publisher_rows": 10039,
+    "connector_rows": 17,
+    "target_indexes_present": false,
+    "optional_geo_columns_present": false,
+    "connector_helper_acl": [
+      "postgres=X/postgres"
+    ],
+    "note": "Dated SELECT-only observations; fresh checks and explicit approval are required before any application."
+  },
+  "candidates": [
+    {
+      "name": "world_member_regions_v1",
+      "purpose": "Adds the missing service-only World member aggregation RPC; deterministic event-ID tie-break for equal timestamps.",
+      "recovery": "Remove only the exact reviewed function; telemetry and identities are retained.",
+      "production_applied_by_this_preparation": false,
+      "production_approval": "not_granted",
+      "full_reset_gate": "passed_at_reviewed_sql_bytes",
+      "files": [
+        {
+          "kind": "forward",
+          "path": "supabase/pending/world_member_regions_v1.sql",
+          "bytes": 7692,
+          "sha256": "81fdd55a6b7d762c022a5e065ab8b23e9ce5d6ed5d304e6e34c630589b7b1d89"
+        },
+        {
+          "kind": "recovery",
+          "path": "supabase/pending/world_member_regions_v1.rollback.sql",
+          "bytes": 2957,
+          "sha256": "fe9020353c79c2ff48e4608157769c10b8fc5308423a2d63095e3ccbe43eca8b"
+        }
+      ],
+      "full_reset_head": "1e5c5c2aa92281cadb1ec065120376246ed466e2"
+    },
+    {
+      "name": "member_fronts_publication_visibility_guard_v1",
+      "purpose": "Requires a public profile before RPC publication and pairs with the narrow legacy Worker privacy guard.",
+      "recovery": "Retain the visibility correction and all rows, pause both RPC save entry points, and mark the exact recovery state; reapply restores only its known grants.",
+      "production_applied_by_this_preparation": false,
+      "production_approval": "not_granted",
+      "full_reset_gate": "passed_at_reviewed_sql_bytes",
+      "files": [
+        {
+          "kind": "forward",
+          "path": "supabase/pending/member_fronts_publication_visibility_guard_v1.sql",
+          "bytes": 9844,
+          "sha256": "cbe8a73441349d48adcec37abd99edd142d53752aebfb21dfd8281f794afd65c"
+        },
+        {
+          "kind": "recovery",
+          "path": "supabase/pending/member_fronts_publication_visibility_guard_v1.rollback.sql",
+          "bytes": 5984,
+          "sha256": "2e5a54bc5dd22a21c20c9a16801035745316789a118ee129e36dd77e30ef8d21"
+        }
+      ],
+      "full_reset_head": "1e5c5c2aa92281cadb1ec065120376246ed466e2"
+    },
+    {
+      "name": "20261010009000_creator_site_cohort_grants",
+      "purpose": "Adds empty service-only cohort entitlement storage; does not create a grant.",
+      "recovery": "Require publisher recovery first; refuse any grant/history row, unknown schema or stale-snapshot isolation.",
+      "production_applied_by_this_preparation": false,
+      "production_approval": "not_granted",
+      "full_reset_gate": "passed_at_reviewed_sql_bytes",
+      "files": [
+        {
+          "kind": "forward",
+          "path": "supabase/pending/20261010009000_creator_site_cohort_grants.sql",
+          "bytes": 7390,
+          "sha256": "ee5742c565c7a731d7a1a014dff9df75207f39798fd2aecf046f92b2af6e2a39"
+        },
+        {
+          "kind": "recovery",
+          "path": "supabase/pending/20261010009000_creator_site_cohort_grants.rollback.sql",
+          "bytes": 4242,
+          "sha256": "4e29b0b1558c99cd058e5f4d12cf80b4253c16d7d4bf33c01352225efcdf9a6b"
+        }
+      ],
+      "full_reset_head": "1e5c5c2aa92281cadb1ec065120376246ed466e2"
+    },
+    {
+      "name": "20261010009100_creator_publish_cohort_entitlement",
+      "purpose": "Adds the identity-bound publisher overload; keeps the paid legacy publisher and removes inherited browser execution.",
+      "recovery": "Remove only the reviewed five-argument overload; retain sites, grants, paid publishing and browser execute hardening.",
+      "production_applied_by_this_preparation": false,
+      "production_approval": "not_granted",
+      "full_reset_gate": "passed_at_reviewed_sql_bytes",
+      "files": [
+        {
+          "kind": "forward",
+          "path": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.sql",
+          "bytes": 6122,
+          "sha256": "3dc01a840ed1e24c96a11336b12ebeb80f5d4d964642833fa59a4cb6008c5e0f"
+        },
+        {
+          "kind": "recovery",
+          "path": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.rollback.sql",
+          "bytes": 3757,
+          "sha256": "c67269d7a13d9c1f6d3df4ac3c655531f5b6ec336553e69edcd931e804460a46"
+        }
+      ],
+      "full_reset_head": "1e5c5c2aa92281cadb1ec065120376246ed466e2"
+    },
+    {
+      "name": "20261020170000_news_region_leads",
+      "purpose": "Adds empty service-only country-lead storage with explicit service CRUD privileges.",
+      "recovery": "Refuse any leader grant/history row, unknown schema or stale-snapshot isolation.",
+      "production_applied_by_this_preparation": false,
+      "production_approval": "not_granted",
+      "full_reset_gate": "passed_at_reviewed_sql_bytes",
+      "files": [
+        {
+          "kind": "forward",
+          "path": "supabase/pending/20261020170000_news_region_leads.sql",
+          "bytes": 6886,
+          "sha256": "d134a4564894000b3edd37da4d0bdadf2e5b60666b05b6f95a6f679519d0bc18"
+        },
+        {
+          "kind": "recovery",
+          "path": "supabase/pending/20261020170000_news_region_leads.rollback.sql",
+          "bytes": 3564,
+          "sha256": "fe283c81ed7f5dacdc1b8cd9a98bbaef934167ce583c1e62825a8b96b45e41d8"
+        }
+      ],
+      "full_reset_head": "1e5c5c2aa92281cadb1ec065120376246ed466e2"
+    },
+    {
+      "name": "core_reflection_read_indexes_v1",
+      "purpose": "Adds two optional bounded-read indexes without changing job contents.",
+      "recovery": "Drop only exact reviewed optional indexes and preserve every job.",
+      "production_applied_by_this_preparation": false,
+      "production_approval": "not_granted",
+      "full_reset_gate": "passed_at_reviewed_sql_bytes",
+      "files": [
+        {
+          "kind": "forward",
+          "path": "supabase/pending/core_reflection_read_indexes_v1.sql",
+          "bytes": 2301,
+          "sha256": "598120c83e4148c4aa1158dcee09c1fbd326ebbe766875668d144512dbc4b873"
+        },
+        {
+          "kind": "recovery",
+          "path": "supabase/pending/core_reflection_read_indexes_v1.rollback.sql",
+          "bytes": 1927,
+          "sha256": "0e0d69d34ac346eb7dbf5a27c074c1d3e1b6cc558e09a534e7ac90735b8e75bb"
+        }
+      ],
+      "full_reset_head": "1e5c5c2aa92281cadb1ec065120376246ed466e2"
+    },
+    {
+      "name": "ops_signals_digest_window_unique_v1",
+      "purpose": "Enforces one digest signal per organization/window through a normal transactional partial unique index.",
+      "recovery": "Drop only the exact reviewed index in a normal transaction and preserve every signal.",
+      "production_applied_by_this_preparation": false,
+      "production_approval": "not_granted",
+      "full_reset_gate": "passed_at_reviewed_sql_bytes",
+      "files": [
+        {
+          "kind": "forward",
+          "path": "supabase/pending/ops_signals_digest_window_unique_v1.sql",
+          "bytes": 3174,
+          "sha256": "4a134d961224b28447e37ba2741e6822c06b4be40342977a8e345d4181e68d11"
+        },
+        {
+          "kind": "recovery",
+          "path": "supabase/pending/ops_signals_digest_window_unique_v1.rollback.sql",
+          "bytes": 1676,
+          "sha256": "aa72e20b1a0607ff014bebeaab0eba21005b2df5438cc4be82388b6e4ebf93e2"
+        }
+      ],
+      "full_reset_head": "1e5c5c2aa92281cadb1ec065120376246ed466e2"
+    },
+    {
+      "name": "world_publisher_verified_geo_v1",
+      "purpose": "Adds seven nullable verified-publisher fields and checks; does not invent or populate geography.",
+      "recovery": "Refuse any nonnull optional metadata or altered/partial shape; otherwise remove only reviewed empty fields and retain all source rows.",
+      "production_applied_by_this_preparation": false,
+      "production_approval": "not_granted",
+      "full_reset_gate": "passed_at_reviewed_sql_bytes",
+      "files": [
+        {
+          "kind": "forward",
+          "path": "supabase/pending/world_publisher_verified_geo_v1.sql",
+          "bytes": 6642,
+          "sha256": "44290416d9351b030bb615625afce94f2337cd02bec2d5e7804279d5820e3fa2"
+        },
+        {
+          "kind": "recovery",
+          "path": "supabase/pending/world_publisher_verified_geo_v1.rollback.sql",
+          "bytes": 5943,
+          "sha256": "df022f761b39ed0a1ecdc1441665b1a8c9853d8a3c59fa407bf655e05d8722b4"
+        }
+      ],
+      "full_reset_head": "1e5c5c2aa92281cadb1ec065120376246ed466e2"
+    },
+    {
+      "name": "20261022015000_market_layer1_preserve_source_policy",
+      "purpose": "Preserves reviewed connector policies on omitted/empty ensure updates and adds a service-only readiness probe.",
+      "recovery": "Refuse any connector record; only an empty store can restore the exact original helper and remove the readiness probe.",
+      "production_applied_by_this_preparation": false,
+      "production_approval": "not_granted",
+      "full_reset_gate": "passed_at_reviewed_sql_bytes",
+      "files": [
+        {
+          "kind": "forward",
+          "path": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.sql",
+          "bytes": 5434,
+          "sha256": "b58ff5d5bdd13555355adb6dbca68acf7ada418f5d07282fcddf12eb9ab82127"
+        },
+        {
+          "kind": "recovery",
+          "path": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.rollback.sql",
+          "bytes": 5250,
+          "sha256": "4918bd6189ac237df81438fa27974fadb94ffe58545d784ebd7187147e7d882a"
+        }
+      ],
+      "full_reset_head": "1e5c5c2aa92281cadb1ec065120376246ed466e2"
+    }
+  ],
+  "related_evidence": [
+    "docs/control-plane/evidence/migration-audit-2026-11-24.md",
+    "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.md",
+    "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.md",
+    "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/README.md"
+  ],
+  "independent_review": {
+    "status": "no_blocker_found",
+    "catalog_observed_at": "2026-11-24T18:10:44Z",
+    "targets_observed_at": "2026-11-24T18:13:37Z",
+    "job_heap_observed_at": "2026-11-24T18:14:55Z",
+    "all_18_reviewed_file_hashes_match": true,
+    "pinned_function_catalog_acl_comment_and_raw_body_hashes_match": true,
+    "live_migration_count": 389,
+    "introduced_objects_indexes_and_geo_columns_absent": true,
+    "signals": 64,
+    "duplicate_digest_windows": 0,
+    "publisher_rows": 10039,
+    "connector_rows": 17,
+    "jobs": 47217,
+    "jobs_heap_bytes": 53518336,
+    "production_writes": false
+  },
+  "source_coverage": {
+    "candidate_count": 800,
+    "capability_source_count": 104,
+    "support_only_count": 696,
+    "checks_passed": 3098,
+    "checks_failed": 0,
+    "all_18_candidate_sql_files_support_only": true,
+    "note": "Documentation follow-up includes the immutable open-PR inventory and bounded contribution-ledger blocker packet as support-only; original prepared checkout had796sources/3082checks."
+  },
+  "profile_preview": {
+    "status": "success",
+    "head": "1e5c5c2aa92281cadb1ec065120376246ed466e2",
+    "run_id": 45460931949,
+    "job_id": 138682972662,
+    "url": "https://github.com/mcclusterishere/mccluster/actions/runs/45460931949/job/138682972662",
+    "completed_at": "2026-11-24T18:38:49Z",
+    "runner": "ubuntu-24.04",
+    "playwright": "1.58.2",
+    "public_profile_project_proof_passed": true,
+    "member_front_checks_passed": 67,
+    "member_front_checks_failed": 0,
+    "artifact_id": 14951589999,
+    "note": "Pinned supported runner image after ubuntu-latest dependency installation failed before assertions; no browser assertions skipped."
+  },
+  "inventory_snapshot": {
+    "captured_at": "2026-11-24T18:30:47Z",
+    "path": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.json",
+    "sha256": "5b9a571a04a8d42a45e5a34f52e51eb50b82ae7d4f26a265a15bbcb36618c575",
+    "open_pr_count": 120,
+    "changed_filenames": 3183,
+    "sql_occurrences": 253,
+    "branch_only_forward_paths": 62,
+    "note": "Frozen snapshot retains #839 at2d159551. Subsequent #839 changes through1e5c5c2 were proof/CI-only; this documentation follow-up does not revise the pinned inventory or claim all staged SQL is ready."
+  }
+}

@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 767,
+  "candidate_count": 800,
   "capability_source_count": 104,
-  "support_only_count": 663,
+  "support_only_count": 696,
   "entries": [
     {
       "path": ".cursorrules",
@@ -576,7 +576,7 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
     },
     {
       "path": "create.html",
@@ -1481,6 +1481,55 @@
       "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
     },
     {
+      "path": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/README.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared-platform migration inventory or bounded defect-reproduction evidence. Records review limits and blocked proposals; grants no production activation or building capability."
+    },
+    {
+      "path": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/native-audit.mjs",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared-platform migration inventory or bounded defect-reproduction evidence. Records review limits and blocked proposals; grants no production activation or building capability."
+    },
+    {
+      "path": "docs/control-plane/evidence/migration-audit-2026-11-24.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Database migration inventory, live catalog evidence and prerequisites; documents existing platform capabilities without changing building program or geometry."
+    },
+    {
+      "path": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Actual production migration versions, SQL hashes and verification boundaries for the 389-row ledger; release evidence only."
+    },
+    {
+      "path": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.json",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared-platform migration inventory or bounded defect-reproduction evidence. Records review limits and blocked proposals; grants no production activation or building capability."
+    },
+    {
+      "path": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared-platform migration inventory or bounded defect-reproduction evidence. Records review limits and blocked proposals; grants no production activation or building capability."
+    },
+    {
+      "path": "docs/control-plane/evidence/pending-repairs-proof-2026-11-24.md",
+      "classification": "verification_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared-platform migration verification and recovery evidence. Exercises or records disposable native database proofs, not production activation or a building capability."
+    },
+    {
       "path": "docs/control-plane/evidence/production-advisors-2026-10-28.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1556,6 +1605,27 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only production schema snapshot taken on 2026-11-23 after the network connections consent guard and Environment parts 03 to 05 were recorded at ledger 384; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-11-24.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production catalog snapshot for ledger 389, including existing platform objects; evidence only, with no building program or geometry change."
+    },
+    {
+      "path": "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.json",
+      "classification": "verification_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Dated read-only dependency or migration proof evidence for shared-platform integration. This is not release approval or a building capability definition."
+    },
+    {
+      "path": "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.md",
+      "classification": "verification_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Dated read-only dependency or migration proof evidence for shared-platform integration. This is not release approval or a building capability definition."
     },
     {
       "path": "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
@@ -2187,7 +2257,7 @@
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Control · Sell · Music · Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+      "rationale": "Control \u00b7 Sell \u00b7 Music \u00b7 Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
     },
     {
       "path": "js/control-room/nav.js",
@@ -2959,7 +3029,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "screens/building.html",
@@ -3050,6 +3120,13 @@
       "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
     },
     {
+      "path": "scripts/creator-cohort-news-sql-check.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared-platform migration verification and recovery evidence. Exercises or records disposable native database proofs, not production activation or a building capability."
+    },
+    {
       "path": "scripts/e2e/control-eup.e2e.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3089,7 +3166,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Captures actual canonical B1–L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
+      "rationale": "Captures actual canonical B1\u2013L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
     },
     {
       "path": "scripts/e2e/eu-screens.e2e.mjs",
@@ -3304,6 +3381,13 @@
       "rationale": "PGlite rehearsal of the held environmental proof SQL; test harness."
     },
     {
+      "path": "scripts/test-member-fronts-publication-guard-db.sh",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Disposable database verification for shared-platform pending migrations and data-preserving recovery. Uses explicit localhost-only entry points and defines no building capability."
+    },
+    {
       "path": "scripts/test-music-label-db.sh",
       "classification": "test_support",
       "capability_ids": [],
@@ -3316,6 +3400,27 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Scratch-database test or stub for the 2026-10-29 schema reconciliation and pending hygiene files; it names eu_* objects only to exercise them, not a building capability."
+    },
+    {
+      "path": "scripts/test-small-pending-reset.sh",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Disposable database verification for shared-platform pending migrations and data-preserving recovery. Uses explicit localhost-only entry points and defines no building capability."
+    },
+    {
+      "path": "scripts/test-world-member-fronts-native.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Disposable database verification for shared-platform pending migrations and data-preserving recovery. Uses explicit localhost-only entry points and defines no building capability."
+    },
+    {
+      "path": "scripts/test-world-member-regions-db.sh",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Disposable database verification for shared-platform pending migrations and data-preserving recovery. Uses explicit localhost-only entry points and defines no building capability."
     },
     {
       "path": "scripts/test/action-gamification.test.mjs",
@@ -4535,6 +4640,48 @@
       "rationale": "Action Network mission details table (about, credit, source) read with public missions, applied in production on 2026-11-18 as version 20261118021521 and moved here byte for byte from supabase/pending/; its policies reuse the existing admin helper eu_is_admin. Shared backend; no building program capability."
     },
     {
+      "path": "supabase/migrations/20261124164851_equity_uprise_clipping_sources.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "supabase/migrations/20261124164904_action_bounty_claim_existing_row_guard_v1.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Applied Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
+    },
+    {
+      "path": "supabase/pending/20261010009000_creator_site_cohort_grants.rollback.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed shared-platform migration recovery support; preserves saved records or withdraws only reviewed admission/index/schema state. No building capability is defined."
+    },
+    {
+      "path": "supabase/pending/20261010009000_creator_site_cohort_grants.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared-platform data/authorization support for existing World, creator or Core callers. This preparation creates no building capability and is not an applied migration receipt."
+    },
+    {
+      "path": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.rollback.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed shared-platform migration recovery support; preserves saved records or withdraws only reviewed admission/index/schema state. No building capability is defined."
+    },
+    {
+      "path": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared-platform data/authorization support for existing World, creator or Core callers. This preparation creates no building capability and is not an applied migration receipt."
+    },
+    {
       "path": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -4561,6 +4708,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pending (unapplied) shared Action Network / governance migration; references Equity Uprise cohorts or rules as data only and adds no building program capability."
+    },
+    {
+      "path": "supabase/pending/20261020170000_news_region_leads.rollback.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed shared-platform migration recovery support; preserves saved records or withdraws only reviewed admission/index/schema state. No building capability is defined."
+    },
+    {
+      "path": "supabase/pending/20261020170000_news_region_leads.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared-platform data/authorization support for existing World, creator or Core callers. This preparation creates no building capability and is not an applied migration receipt."
+    },
+    {
+      "path": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.rollback.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed shared-platform migration recovery support; preserves saved records or withdraws only reviewed admission/index/schema state. No building capability is defined."
+    },
+    {
+      "path": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared-platform data/authorization support for existing World, creator or Core callers. This preparation creates no building capability and is not an applied migration receipt."
     },
     {
       "path": "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql",
@@ -4598,18 +4773,18 @@
       "rationale": "Index of staged, unapplied SQL and its promotion record; no spatial or program capability is added."
     },
     {
-      "path": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
-      "classification": "runtime_security_support",
+      "path": "supabase/pending/core_reflection_read_indexes_v1.rollback.sql",
+      "classification": "database_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
+      "rationale": "Reviewed shared-platform migration recovery support; preserves saved records or withdraws only reviewed admission/index/schema state. No building capability is defined."
     },
     {
-      "path": "supabase/pending/equity_uprise_clipping_sources.sql",
-      "classification": "shared_backend_support",
+      "path": "supabase/pending/core_reflection_read_indexes_v1.sql",
+      "classification": "database_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+      "rationale": "Pending shared-platform data/authorization support for existing World, creator or Core callers. This preparation creates no building capability and is not an applied migration receipt."
     },
     {
       "path": "supabase/pending/eup_module_policy_v1.provenance.json",
@@ -4619,18 +4794,25 @@
       "rationale": "Provenance record for the E=Up module policy SQL, applied 2026-11-17 as supabase/migrations/20261117144103_eup_module_policy_v1.sql: which Equity Uprise control semantics were ported, from which patch and hashes, and every deliberate difference. Evidence only; no building capability, program or geometry."
     },
     {
-      "path": "supabase/pending/live-callers.json",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Allowlist read by scripts/test/rpc-names-exist.test.mjs: RPC, table and bucket names shipped code calls that the applied migration history does not define. Names the pending Equity Uprise rule objects as data; not a building capability."
-    },
-    {
       "path": "supabase/pending/live_missions_v1.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pending (unapplied) shared Action Network / governance migration; references Equity Uprise cohorts or rules as data only and adds no building program capability."
+    },
+    {
+      "path": "supabase/pending/member_fronts_publication_visibility_guard_v1.rollback.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed shared-platform migration recovery support; preserves saved records or withdraws only reviewed admission/index/schema state. No building capability is defined."
+    },
+    {
+      "path": "supabase/pending/member_fronts_publication_visibility_guard_v1.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared-platform data/authorization support for existing World, creator or Core callers. This preparation creates no building capability and is not an applied migration receipt."
     },
     {
       "path": "supabase/pending/mission_admin_approval_v1.sql",
@@ -4647,11 +4829,53 @@
       "rationale": "Pending SQL (not applied): music_creator_managers, music_can_act_for() and the creator guards and policies widened to managed artists; seeds PRIM3 and Equity Uprise's music act as login-less artists. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
     },
     {
+      "path": "supabase/pending/ops_signals_digest_window_unique_v1.rollback.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed shared-platform migration recovery support; preserves saved records or withdraws only reviewed admission/index/schema state. No building capability is defined."
+    },
+    {
+      "path": "supabase/pending/ops_signals_digest_window_unique_v1.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared-platform data/authorization support for existing World, creator or Core callers. This preparation creates no building capability and is not an applied migration receipt."
+    },
+    {
       "path": "supabase/pending/policy_fellowship_ladder_v1.sql",
       "classification": "shared_backend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pending (unapplied) shared Action Network / governance migration; references Equity Uprise cohorts or rules as data only and adds no building program capability."
+    },
+    {
+      "path": "supabase/pending/world_member_regions_v1.rollback.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed shared-platform migration recovery support; preserves saved records or withdraws only reviewed admission/index/schema state. No building capability is defined."
+    },
+    {
+      "path": "supabase/pending/world_member_regions_v1.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared-platform data/authorization support for existing World, creator or Core callers. This preparation creates no building capability and is not an applied migration receipt."
+    },
+    {
+      "path": "supabase/pending/world_publisher_verified_geo_v1.rollback.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Reviewed shared-platform migration recovery support; preserves saved records or withdraws only reviewed admission/index/schema state. No building capability is defined."
+    },
+    {
+      "path": "supabase/pending/world_publisher_verified_geo_v1.sql",
+      "classification": "database_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared-platform data/authorization support for existing World, creator or Core callers. This preparation creates no building capability and is not an applied migration receipt."
     },
     {
       "path": "supabase/production-ledger.json",

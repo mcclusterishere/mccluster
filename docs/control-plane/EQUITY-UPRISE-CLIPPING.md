@@ -1,5 +1,7 @@
 # Equity Uprise clipping product contract
 
+> Production update, 2026-11-24: commerce v3 (`20261124164724`) and clipping sources (`20261124164851`) are applied. The dated receipt in `evidence/migration-audit-applied-2026-11-24.md` supersedes older pending status below.
+
 This document is the product layer on top of `CLIPPING-MARKETPLACE.md`.
 The v1 settlement engine remains canonical.
 
@@ -18,7 +20,7 @@ The v1 settlement engine remains canonical.
 
 Music is a first-class source, not the boundary of clipping. A campaign source
 may be music, an approved Action Network post/action, or campaign media.
-`supabase/pending/equity_uprise_clipping_sources.sql` (not yet applied in production) adds `source_kind`,
+`supabase/migrations/20261124164851_equity_uprise_clipping_sources.sql` (not yet applied in production) adds `source_kind`,
 `source_content_id`, `destination_url`, operator branding and attribution /
 collaboration fields without replacing the proven claims, metrics, earnings or
 payout ledgers.

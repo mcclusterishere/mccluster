@@ -1,5 +1,20 @@
 # Promotion order for `supabase/pending/`
 
+## Production update — 2026-11-24
+
+The audit applied `ai_context_workstreams_v1` (`20261124164529`),
+`commerce_stripe_reconciler_v3` (`20261124164724`),
+`equity_uprise_clipping_sources` (`20261124164851`), and
+`action_bounty_claim_existing_row_guard_v1` (`20261124164904`). Their exact files
+are now under `supabase/migrations/`. A concurrent session also applied
+`member_fronts_shared_revision_directory` (`20261124164026`); its actual stored SQL
+is recorded there. **Do not apply the older `member_fronts_v1.sql` over it.**
+The ledger is 389 at this checkpoint. The actual receipt and remaining release
+steps are `docs/control-plane/evidence/migration-audit-applied-2026-11-24.md`;
+the complete candidate audit is `docs/control-plane/evidence/migration-audit-2026-11-24.md`.
+This dated update supersedes the historical pending labels for those five changes below.
+
+
 Written 2026-10-27 from each file's header, the dependency it states, the
 objects it creates, and `live-callers.json` (which names shipped code calls
 today). Every file is applied with the steps in `README.md` ("To promote one")
@@ -289,12 +304,14 @@ cron calls it, nothing writes a run's cursor, and every connector is still disab
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
-| `ops_signals_digest_window_unique_v1.sql` (+ `ops_signals_digest_window_unique_v1.rollback.sql`) | the unique partial index `ops_signals_core_digest_window_key` on `ops_signals (org_id, payload->>'window_id')` for `core_morning_digest` rows that carry a window id | `core/src/digest.mjs` (a 23505 on insert reads the other run's report; a report recorded under 10 minutes ago is left to the run that recorded it, so two runs together send one text) | `core/test/digest-persistence.test.mjs` (6); the file on PostgreSQL 16: applies twice, refuses a second report for a window with 23505, refuses inside a transaction block, and with a duplicate present the build fails and leaves an invalid index |
+| `ops_signals_digest_window_unique_v1.sql` (+ `ops_signals_digest_window_unique_v1.rollback.sql`) | the unique partial index `ops_signals_core_digest_window_key` on `ops_signals (org_id, payload->>'window_id')` for `core_morning_digest` rows that carry a window id | `core/src/digest.mjs` (a 23505 on insert reads the other run's report; a report recorded under 10 minutes ago is left to the run that recorded it, so two runs together send one text) | 2026-11-24 native PostgreSQL 17.6 proof: ordinary transaction, repeated apply, a real two-session duplicate race, duplicate-preserving build failure with no partial index, five-second lock wait bound, exact-definition recovery/refusal and reapply. See `scripts/test-small-pending-native.mjs`. |
 
-**Apply on its own, outside a transaction** (`create index concurrently`); it blocks no writes. Run the
-duplicate check in its header first. Read-only on production at 2026-11-10 02:29 UTC: 48 daily-report rows,
-none with a window id yet (the host's Core predates window ids), no duplicate windows, index absent. The Core
-code works with or without the index.
+**Updated 2026-11-24: normal transactional migration, pending approval.** The fresh read-only
+preflight found 64 rows, 155,648 total bytes, zero duplicate windows and no equivalent index.
+Both forward and recovery now use the ordinary migration transaction and a five-second lock
+timeout; neither uses `CONCURRENTLY` or an out-of-band SQL path. A build briefly blocks writes.
+Reread current size, duplicates and index definitions before an approved application. The
+earlier outside-transaction instruction is superseded. Core works with or without the index.
 
 ## 10. World missions: join scope, mission details, the Drawdown catalog (updated 2026-11-20)
 
@@ -683,7 +700,7 @@ PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/
 
 ## 15. AI context workstream checkpoints (written 2026-11-23)
 
-**Pending. Never applied. Owner approval required.** Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`.
+**Applied 2026-11-24 as `20261124164529`.** Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`. The procedure below documents the original pre-apply requirements; production must not replay it.
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
@@ -716,3 +733,94 @@ It leaves `ai_context.decisions` untouched. Core needs no rollback: without the 
 
 **Records** after the apply: move the file to `supabase/migrations/` under its ledger version; the ledger, the drift
 contract, the schema manifest from the CI reset, a new production snapshot; this section and `README.md`.
+
+## Prepared repair candidates (2026-11-24)
+
+**Prepare and prove only. All nine forward files remain pending.** This preparation is based
+on the separately reviewed 389-record reconciliation. Land that record first, refresh any
+source/live preflight affected by subsequent merges, and require green CI on the exact draft
+head. Production application needs explicit approval for each complete file, followed by the
+existing `apply_migration` / actual version / exact stored-byte receipt process. No migration
+version is invented here. This section supersedes older rollback/proof notes for these files.
+
+| Forward file | Required order and purpose | Matching guarded recovery |
+|---|---|---|
+| `world_member_regions_v1.sql` | Canonical telemetry and Auth tables; one latest non-bot signed-in location per account, with UUID tie-break for equal timestamps. The Worker exposes exact places only to the owner and public country totals only at its threshold. | `world_member_regions_v1.rollback.sql`: drop only the exact reviewed RPC; preserve all telemetry/identities. |
+| `member_fronts_publication_visibility_guard_v1.sql` | After the already-recorded `20261124164026_member_fronts_shared_revision_directory`; requires known private save/public wrapper bodies and canonical execute grants. Ship the companion Worker guard through its normal review/deployment path. Never replay `member_fronts_v1.sql`. | `member_fronts_publication_visibility_guard_v1.rollback.sql`: keep the visibility fix and every page; pause save/publication through both RPC entry points. See the recovery boundary below. |
+| `20261010009000_creator_site_cohort_grants.sql` | Before the next file; service-only owner-curated entitlement records. It does not insert a grant or publish a site. | `20261010009000_creator_site_cohort_grants.rollback.sql`: requires the five-argument publisher removed first and an empty exact table; any grant row, including revoked history, refuses. |
+| `20261010009100_creator_publish_cohort_entitlement.sql` | After grants, applied billing/site/cohort/identity tables and the exact legacy four-argument publisher. Adds the Worker-required identity-bound overload; revokes inherited browser access to both overloads. | `20261010009100_creator_publish_cohort_entitlement.rollback.sql`: drop only the reviewed five-argument overload, retaining all sites/grants and the legacy paid publisher; browser execute hardening remains. Stop routing to the new overload before recovery. |
+| `20261020170000_news_region_leads.sql` | Canonical `m_people`; service-only lead records with explicit CRUD grants. It neither appoints a leader nor publishes a brief. | `20261020170000_news_region_leads.rollback.sql`: remove only an empty exact table; any leader grant refuses. |
+| `core_reflection_read_indexes_v1.sql` | Canonical `ops_agent_jobs`; optional bounded-read indexes. Reread workload and existing definitions before approval. | `core_reflection_read_indexes_v1.rollback.sql`: remove only exact reviewed optional indexes; preserve every job. |
+| `ops_signals_digest_window_unique_v1.sql` | Canonical `ops_signals`, no duplicate qualifying windows. Normal transactional build; brief write lock, five-second wait bound. See section 9. | `ops_signals_digest_window_unique_v1.rollback.sql`: remove only the exact reviewed index in a transaction; preserve every signal. Concurrent uniqueness protection then ceases. |
+| `world_publisher_verified_geo_v1.sql` | Canonical `media_news_sources`; add seven nullable fields and verified-geography checks. It does not invent or populate headquarters. | `world_publisher_verified_geo_v1.rollback.sql`: remove only the complete reviewed optional shape and only while all seven fields are null; retain every publisher and keep browser-write revocations. |
+| `20261022015000_market_layer1_preserve_source_policy.sql` | Exact canonical private connector helper; preserve existing policy values when ensure callers omit changes. The private helper's owner/ACL remains unchanged. | `20261022015000_market_layer1_preserve_source_policy.rollback.sql`: restore only the exact canonical helper and remove its readiness probe, and only with no connector records. Any connector means retain the fix and prepare a reviewed forward repair. |
+
+### Transaction and preflight rules
+
+Each file runs as postgres in a single transaction owned by the migration runner. The files
+share an advisory transaction lock and set `lock_timeout` to five seconds. Use `psql -1` only
+on the disposable proof database; production application remains through the repository flow.
+READ COMMITTED is required before any lock or catalog read. An older repeatable-read snapshot
+could otherwise miss a writer that commits while recovery waits for its lock. The isolation
+guard refuses that case; table and geography shape checks take their table lock before reading.
+The wait bound is not a promise that an index build completes in five seconds. Recheck size,
+load, duplicates, existing indexes, function bodies/metadata and active operations before
+requesting approval. A changed/partial baseline refuses with SQLSTATE `55000`; do not remove
+its guard or delete data to get past it.
+
+The dated read-only 2026-11-24 preflight found 47,099 jobs (53,321,728 heap bytes), 64 signals
+(155,648 total bytes), 10,039 publisher rows and 17 connector records. The target indexes and
+publisher fields were absent; digest duplicate count was zero; the private connector helper
+matched the applied canonical body and owner-only ACL. These facts explain the reviewed
+approach, not future authorization. In particular, the current connector records mean its
+legacy rollback is expected to refuse in production. Retain-and-repair is the recovery path
+for that populated store.
+
+All new shared-platform support sources are explicitly classified in the repository source
+map; none declares a new Equity Uprise building capability. Applied ledger/schema evidence
+remains the authority for what is live. Passing a test does not promote a pending source.
+
+### Member-front recovery boundary
+
+Restoring the pre-fix private save function would restore the known visibility defect, so
+recovery never does that. It revokes `EXECUTE` from `authenticated` and `service_role` on
+`public.member_front_save(jsonb,integer,boolean,boolean)` and its private delegate only.
+The public wrapper is invoker-security, so neither path bypasses the pause. A precise comment
+marks this recovery on the public wrapper. Reapply requires the exact guarded body plus
+exact paused ACL/marker pair before restoring the canonical grants and removing the marker.
+Unrelated owner ACL changes, comments, new grant recipients and changed bodies refuse.
+
+Draft saves pause too. Existing reads, get-self, unpublish and takedown keep their grants;
+no page, revision, publication, asset, consent or profile row is deleted or rewritten.
+Stop new incoming save requests before recovery; already-admitted calls may finish.
+The legacy Worker uses its separate route and is protected by the companion API change,
+not disabled by these RPC grants. No automatic runtime rollout is part of this preparation.
+
+### Proof gates
+
+Reconciliation CI executes the bounded native proofs, then the complete-reset proofs after
+the normal reset snapshot comparison. The latter uses the actual replay overlay and canonical
+roles/tables/triggers without replacing them. This avoids treating the production-ledger count
+alone as the reset plan. Every new proof is wired into that workflow; Worker tests cover the
+companion API change. The complete-reset exact-head results remain required before approval.
+
+```sh
+# Disposable localhost:54322 only; set POSTGRES_MODULE_PATH and NATIVE_TEST_DATABASE_URL.
+bash scripts/test-world-member-regions-db.sh
+bash scripts/test-member-fronts-publication-guard-db.sh
+node scripts/creator-cohort-news-sql-check.mjs
+node scripts/test-small-pending-native.mjs
+
+# After the complete disposable repository reset, with no production credentials:
+bash scripts/test-world-member-regions-db.sh --full-reset
+bash scripts/test-member-fronts-publication-guard-db.sh --full-reset
+node scripts/creator-cohort-news-sql-check.mjs --full-reset
+bash scripts/test-small-pending-reset.sh
+```
+
+The small-repair full-reset script tests original ontology/rescore trigger behavior, repeats
+apply/recovery/reapply and preserves canonical connector rows. If those rows exist, it
+requires the connector rollback's exact refusal and verifies unchanged policy bytes instead
+of clearing the baseline to manufacture an empty-store success. The bounded native proof
+separately exercises the empty-store recovery. Evidence and exact hashes:
+`docs/control-plane/evidence/pending-repairs-proof-2026-11-24.md`.

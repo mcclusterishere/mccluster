@@ -1,0 +1,13 @@
+loaded supabase/replay_migrations/20260912071000_compute_node_protocol.sql
+loaded supabase/migrations/20260919020830_compute_gateway_hardening_live_reconcile.sql
+loaded supabase/migrations/20260919021007_compute_capability_concurrency_live_reconcile.sql
+loaded supabase/migrations/20261020210718_compute_lease_authority_v2.sql
+loaded supabase/pending/compute_job_attestations_v1.sql
+loaded supabase/pending/compute_scheduler_lease_v1.sql
+loaded supabase/pending/compute_contribution_ledger_v1.sql
+the forward file applies twice: REPRODUCED
+daily cap0 exceeded by1: carried2 + accepted1 at ratio3 mints1, cap check priced floor(1/3)=0: REPRODUCED
+two native sessions exceeded daily cap1 with2 total minted after both passed quota before carry lock: REPRODUCED
+append-only guard does not refuse owner TRUNCATE; audit transaction rolled back: REPRODUCED
+unguarded recovery drops nonempty accounting history while retaining base compute tasks: REPRODUCED
+{"suite":"contribution-ledger-blocker-audit","native":true,"postgres":"PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit","defects_reproduced":4,"full_reset":false,"base":"canonical compute SQL with explicit peripheral org/role fixtures","production_changes":false,"head":"b9c2ed1d86de175b5a5d1f8ce1a442ec6d45312d"}

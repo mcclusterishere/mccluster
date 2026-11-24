@@ -1,5 +1,20 @@
 # Pending migrations
 
+## Production update — 2026-11-24
+
+The audit applied `ai_context_workstreams_v1` (`20261124164529`),
+`commerce_stripe_reconciler_v3` (`20261124164724`),
+`equity_uprise_clipping_sources` (`20261124164851`), and
+`action_bounty_claim_existing_row_guard_v1` (`20261124164904`). Their exact files
+are now under `supabase/migrations/`. A concurrent session also applied
+`member_fronts_shared_revision_directory` (`20261124164026`); its actual stored SQL
+is recorded there. **Do not apply the older `member_fronts_v1.sql` over it.**
+The ledger is 389 at this checkpoint. The actual receipt and remaining release
+steps are `docs/control-plane/evidence/migration-audit-applied-2026-11-24.md`;
+the complete candidate audit is `docs/control-plane/evidence/migration-audit-2026-11-24.md`.
+This dated update supersedes the historical pending labels for those five changes below.
+
+
 Read `PROMOTION-ORDER.md` (in this folder) for the order in which the files here
 are meant to be applied, what each needs first, and how each is tested.
 
@@ -364,7 +379,7 @@ The exact production SQL and ledger are recorded. Regression gate:
 `bash scripts/test-action-archive-db.sh`; public source and release notes:
 `docs/control-plane/MISSION-RESET-DOCKET-516R.md`.
 
-Pending: `world_member_regions_v1.sql` adds `public.world_member_regions()`, the World place card's members: accounts by the IP country, region code and rounded place of their latest signed-in visit, read from `public.events` (nothing new collected; service role only). Until it is applied, `GET /v1/world/members` answers `unavailable` and the card shows a dash. Test: `node --test workers/mccluster/test/world-members.test.mjs`. Rollback: `drop function if exists public.world_member_regions(integer);`. Promote it using the steps below.
+Pending: `world_member_regions_v1.sql` adds `public.world_member_regions()`, the World place card's members: accounts by the IP country, region code and rounded place of their latest signed-in visit, read from `public.events` (nothing new collected; service role only). Until it is applied, `GET /v1/world/members` answers `unavailable` and the card shows a dash. The 2026-11-24 preparation adds a stable event-ID tie-break for equal timestamps, real native role/behavior proof, and `world_member_regions_v1.rollback.sql`, which refuses an unreviewed function body before removing the RPC. See "Prepared repair candidates" in `PROMOTION-ORDER.md`; do not use an unguarded ad-hoc DROP.
 
 A migration is committed under `supabase/migrations/` only with the exact
 version production recorded for it (see `supabase/production-ledger.json` and
@@ -615,3 +630,38 @@ otherwise unchanged. Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`. O
 rollback: `PROMOTION-ORDER.md`, section 15. Test:
 `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/ai-context-workstreams-sql-check.mjs`
 (disposable database; apply twice, privileges, behaviour, rollback, re-apply). Never applied here.
+
+## Prepared repairs — 2026-11-24
+
+The nine candidates below have a separate preparation review. **They remain pending; nothing
+in this section authorizes production application. Each exact forward file requires its own
+explicit approval after the 389-record reconciliation and green exact-head CI.** No applied
+migration, migration ledger row, production schema manifest or live-caller entry is changed
+by this preparation. The staged SQL stays here until the existing actual-version/byte-receipt
+flow is followed after approval and application.
+
+- World member region aggregation, with an event-ID tie-break for equal timestamps.
+- Member-front publication visibility, coupled to the narrow Worker read/publish guard.
+- Creator cohort grant storage, followed by the identity-bound five-argument publisher.
+- News region-lead storage, with explicit service privileges.
+- Reflection read indexes and the transactional daily-digest uniqueness index.
+- Verified publisher geography and connector policy preservation.
+
+Every candidate has a matching guarded recovery file and source-map classification as shared
+platform support. Recovery files never delete saved rows to make themselves pass. Saved grants,
+region leads, publisher metadata or connector policies require retention and a reviewed forward
+repair. Function replacements require reviewed body/metadata; same-name indexes and existing
+new tables must match the exact reviewed shape.
+
+Member-front recovery deliberately keeps the visibility correction and all pages. It pauses
+both RPC save entry points, including private drafts, while read/get-self/unpublish/takedown
+remain available. Reapply restores only this recovery's exact grants/comment state. The legacy
+Worker route is independent and retains its companion API guard; the recovery does not claim
+to disable that route or cancel already-admitted saves.
+
+Order, preflight, proof commands and per-file recovery semantics are in `PROMOTION-ORDER.md`
+under "Prepared repair candidates". Exact reviewed bytes and local/native versus full-reset
+proof boundaries: `docs/control-plane/evidence/pending-repairs-proof-2026-11-24.md`.
+The separate Release 2 dependency audit is
+`docs/control-plane/evidence/release2-database-dependencies-2026-11-24.md`; it does not approve
+those release branches or remove the inherited missing dependencies it lists.

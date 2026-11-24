@@ -24,7 +24,7 @@
        [--runs 5] [--seed 1234] [--only print-refunded,race] [--keep]
 
    The database must have the repo's migrations (supabase start / supabase db
-   reset). Reconciler v3 (supabase/pending/commerce_stripe_reconciler_v3.sql)
+   reset). Reconciler v3 (supabase/migrations/20261124164724_commerce_stripe_reconciler_v3.sql)
    is detected; the scenarios that need it are skipped and named when it is
    absent. Hosted Supabase databases are refused: use Stripe test mode
    (scripts/stripe-test/stripe-test-mode.mjs) against production. */
