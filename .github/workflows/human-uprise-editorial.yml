@@ -77,6 +77,7 @@ on:
       - 'js/world-environment-mccluster.mjs'
       - 'js/world-environment.mjs'
       - 'js/world-environment-posts.js'
+      - 'js/world-environment-cursor.js'
       - 'js/world-environment-timeline.js'
       - 'js/world-news-globe.js'
       - 'js/environment-*.js'

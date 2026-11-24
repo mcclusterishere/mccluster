@@ -1595,6 +1595,8 @@
      modes it replaced (?mode=missions, ?mode=environment) */
   function feedScopeFromAddress() {
     var q = null; try { q = new URLSearchParams(location.search); } catch (_) { return ""; }
+    var cursor = window.MCC_ENVIRONMENT_CURSOR;
+    if (cursor && cursor.timeFromSearch(location.search) !== null) return "equity";
     if (q.get("feed") === "equity" || q.has("completed") || q.has("event") || q.get("mode") === "missions" || q.get("mode") === "environment") return "equity";
     return "";
   }
@@ -2235,6 +2237,8 @@
     var query = state.world.query, list = environmentPosts();
     /* the timeline from the event store in place of the feed's quakes, one list by time (js/world-environment-timeline.js, slice S4) */
     if (TIMELINE) list = TIMELINE.merged(list);
+    /* one time cursor for the globe and this list: the events recorded after it wait (js/world-environment-cursor.js, slice S6) */
+    if (CURSOR) list = CURSOR.sync(list);
     return query ? list.filter(function (p) { return feedMatches(p, query); }) : list;
   }
   /* THE TIMELINE FROM THE EVENT STORE (event timeline slice S4, 2026-11-19): its posts carry the store's canonical id and revision;
@@ -2243,8 +2247,12 @@
   var TIMELINE = window.MCC_ENVIRONMENT_TIMELINE || null;
   if (TIMELINE) TIMELINE.attach({
     render: function () { if (state.feedAnswered && !state.loadingFeed && (state.feedScope || "global") === "equity") renderFeed(false); },
-    focus: function (id) { tellWorld({ type: "hu:environment-focus", id: id }); }
+    focus: function (id) { tellWorld({ type: "hu:environment-focus", id: id }); },
+    /* the globe's selection marks the post of any observation, by its own id or the globe's (slice S6) */
+    livePost: function (id) { var env = state.environment; if (env.posts[id]) return env.posts[id]; for (var k in env.posts) if (env.posts[k].globe_id === id) return env.posts[k]; return null; }
   });
+  var CURSOR = window.MCC_ENVIRONMENT_CURSOR || null;
+  if (CURSOR) CURSOR.attach({ render: function () { if (state.feedAnswered && !state.loadingFeed && (state.feedScope || "global") === "equity") renderFeed(false); } });
   /* the observation posts' words as one ordered line (id, content hash, significance, source label, update time): a detail that
      changed none of them repaints nothing (review G1R-7; the tour re-selecting quakes, a refresh whose words did not change) */
   function environmentSignature() {
@@ -2281,7 +2289,7 @@
     /* a timeline post (slice S4) says automatic or reviewed where a live post says its coverage and status; its times, an official
        correction (old -> new), a deep link's earlier corrections and a withdrawal follow on lines of their own; the one a deep link
        or a choice named is marked current */
-    var tl = !!p.timeline, current = tl && typeof TIMELINE !== "undefined" && TIMELINE && TIMELINE.selected() === p.id;
+    var tl = !!p.timeline, current = typeof TIMELINE !== "undefined" && !!TIMELINE && TIMELINE.selected() === p.id;
     var body = (p.facts || []).map(function (f) { return f.label + ": " + f.value; }).concat(tl ? (p.review ? [p.review] : []) : ["Coverage: " + p.coverage, "Status: " + p.status + (p.reason ? " (" + p.reason + ")" : "")]).join(" · ");
     var lines = tl ? [[p.times, ""], [p.correction, " mn__timeline-correction"]].concat((p.earlier || []).map(function (t) { return [t, " mn__timeline-earlier"]; }), [[p.tombstone, " mn__timeline-tombstone"]])
       .filter(function (l) { return l[0]; }).map(function (l) { return '<p class="mn__timeline-line' + l[1] + '">' + esc(l[0]) + '</p>'; }).join("") : "";

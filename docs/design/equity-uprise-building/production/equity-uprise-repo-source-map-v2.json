@@ -2699,6 +2699,13 @@
       "rationale": "The consumer World's countries on the shared Cesium viewer (borders, flags, the place card and the news shading); names the feed's Equity Uprise tab only in the comment for the shading stepping aside there. A World layer, not a building capability."
     },
     {
+      "path": "js/world-environment-cursor.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Synchronizes the consumer World's environmental feed and globe at a chosen event time in the Equity Uprise tab."
+    },
+    {
       "path": "js/world-environment-mccluster.mjs",
       "classification": "shared_site_support",
       "capability_ids": [],

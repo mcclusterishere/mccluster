@@ -179,6 +179,31 @@ test('G1R-8: every polygon of a multi-polygon perimeter or alert has its own pic
   assert.equal(Math.round(eonetFill.getGeometryInstanceAttributes(eonetFill.geometryInstances[0].id).color.alpha * 100), 47, '0.22 + 0.25');
 });
 
+test('replay returns the cursor to a quake on each arrival after an earlier scrub', () => {
+  const { L, told } = realm();
+  const older = quake('usgs:older', { observed_at: '2026-11-19T01:00:00.000Z' });
+  const later = quake('usgs:later', { observed_at: '2026-11-19T02:00:00.000Z' });
+  L.onMessage({ type: 'hu:environment-layers', on: true, replay: 'quakes-24h', layers: {} });
+  L.setEvents([older, later], { on: true });
+
+  for (const seq of [1, 2]) {
+    L.onMessage({ type: 'hu:environment-time', at: older.observed_at, seq, input: true });
+    assert.ok(L.debug().cursor.hidden.includes(later.id));
+    const before = told.length;
+    // The real director calls select(id, 'tour') on arrival, including at an already selected scene.
+    L.select(later.id, 'tour');
+    assert.equal(L.debug().cursor.at, later.observed_at, `replay arrival after scrub ${seq}`);
+    assert.ok(L.debug().cursor.shown.includes(later.id));
+    const times = told.slice(before).filter(m => m.type === 'hu:environment-time-state');
+    assert.equal(times.length, 1);
+    assert.equal(times[0].at, later.observed_at);
+    assert.equal(times[0].ack, seq);
+  }
+  L.onMessage({ type: 'hu:environment-time', at: older.observed_at, seq: 3, input: true });
+  L.select(later.id, 'pick');
+  assert.equal(L.debug().cursor.at, older.observed_at, 'a visitor selection does not impersonate a replay arrival');
+});
+
 test('G1R-9: a selection the panel\'s list made is told as via focus (the contract\'s vocabulary), never as panel', async () => {
   const { L, told, on } = realm({ shakemap: () => ({ ok: true, status: 'available', http: 200, body: SHAKEMAP_NONE, fetched_at: '2026-11-17T20:01:00.000Z', generated_at: null }) });
   on();

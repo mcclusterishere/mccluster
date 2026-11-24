@@ -208,7 +208,16 @@
   const NETWORK_LINE = 'Environmental layers could not be reached from this browser';
   const LAYER_TITLES = Object.freeze({ fires: 'Fires', perimeters: 'Fire perimeters', alerts: 'Alerts', eonet: 'Natural events', tides: 'Water levels' });
   const noneLine = layer => `${LAYER_TITLES[layer] || layer}: none reported right now`;
-  const encodings = Object.freeze({ quakeRadiusM, discNearM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellPx, CELL_ALPHA, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, RUPTURE_LABEL, ruptureLine, POLICY_LINE, OFF_LINE, NETWORK_LINE, noneLine });
+  /* ONE TIME CURSOR FOR THE GLOBE AND THE FEED (event timeline slice S6, 2026-11-19): the page's cursor (js/world-environment-cursor.js)
+     shows the events recorded at or before its time, or every event at live (null); an event with no time of its own is always
+     shown, on the globe as in the feed. The typed layers keep their latest readings, and the legend says so. */
+  function shownAt(observedAt, atMs) {
+    if (atMs === null || atMs === undefined) return true;
+    const t = typeof observedAt === 'string' ? Date.parse(observedAt) : NaN;
+    return !Number.isFinite(t) || t <= atMs;
+  }
+  const cursorLine = atMs => `Events up to ${new Date(atMs).toISOString().slice(0, 16).replace('T', ' ')} UTC (time cursor); fires, perimeters, alert areas, natural-event tracks and water levels show their latest readings.`;
+  const encodings = Object.freeze({ quakeRadiusM, discNearM, depthColour, quakeFromFacts, frpColour, cellRadiusPx, cellPx, CELL_ALPHA, cellColour, severityTint, stationColumnM, stationColour, mmiColour, eonetColour, lod, pickId, isEnvPick, providerOf, kindOf, factsFor, shakemapLabel, legendFor, RIPPLE_LABEL, RUPTURE_LABEL, ruptureLine, POLICY_LINE, OFF_LINE, NETWORK_LINE, noneLine, shownAt, cursorLine });
   /* ENCODINGS_END */
 
   /* THE FEED PROVIDERS' TERMS ARRIVE WITH THE PINS (review G1R-10): the panel copies them from the feed's own source records (which
@@ -243,6 +252,10 @@
   let marks = null, rippler = null, cam = null, onFrame = null, onActive = () => {};
   const rippleNow = () => (rippler ? rippler.state() : null);
   const glyphsOn = () => !!(marks && marks.usable());
+  /* event timeline slice S6: the time cursor (ms, or null at live) and the last of the page's cursor messages this frame has applied */
+  let cursorAt = null, cursorSeq = 0;
+  const atCursor = item => shownAt(item && item.observed_at, cursorAt);
+  const selectedShown = () => !selected || selected.layer !== 'events' || atCursor(selected.item);
   const pendingMessages = [];
 
   const now = () => Date.now();
@@ -354,7 +367,8 @@
     counts.glyphs = glyphs ? marks.build(glyphItems) : 0;
     if (glyphs) marks.select(selected && selected.layer === 'events' && selected.kind === 'quake' ? selected.id : null);
     if (selected && selected.layer === 'events') selected = getEntry('events', selected.id);
-    if (replayMode) applyReplay(director && director.scene() ? findEntry(director.scene().id, 'events') : null);
+    /* the new primitives follow the time cursor (event timeline slice S6; the replay is the cursor's playback) */
+    applyCursor();
   }
   function eventsState() {
     const items = data.events;
@@ -381,7 +395,7 @@
       states.events = eventsState();
       tellLayerState('events');
     }
-    if (mounted && director && (changed || tourChanged || (director.state().total === 0 && data.events.length))) director.setQueue(data.events, { queue: replayMode || 'significant' });
+    if (mounted && director && (changed || tourChanged || (director.state().total === 0 && data.events.length))) syncQueue();
     if (mounted && typeof o.selected === 'string' && o.selected && o.selected !== (selected && selected.id) && findEntry(o.selected, 'events')) select(o.selected, 'panel', { layer: 'events' });
     if (mounted && selected && selected.layer === 'events' && !getEntry('events', selected.id)) clearSelection();
     /* a focus kept pending is honoured by the pins that bring its id, as by a layer's data (picks are keyed by layer and id, so the
@@ -702,7 +716,10 @@
   function select(id, via, options) {
     const e = typeof id === 'string' ? findEntry(id, options && options.layer) : null;
     if (!e) { if (id === null || id === '') clearSelection(); return false; }
-    return selectEntry(e, via, options);
+    const result = selectEntry(e, via, options);
+    /* A replay arrival advances time even if a scrub left this same quake selected. */
+    if (via === 'tour' && replayMode && e.layer === 'events') applyReplay(e);
+    return result;
   }
   function selectEntry(e, via, options) {
     const previous = selected && selected !== e ? selected : null;
@@ -715,7 +732,6 @@
     updateSelectedLabel();
     /* a chosen quake (a tap, a post, a row) is pushed to, so its rings wait for the landing; the tour's arrival has landed already */
     if (e.kind === 'quake') { startRipple(e, via === 'pick' || via === 'focus' || via === 'panel'); shakemapFor(e); ruptureFor(e); }
-    if (replayMode && e.layer === 'events') applyReplay(e);
     if (via !== 'panel') tellSelected(e, via, options);
     updateLegend(); requestRender('select');
     return true;
@@ -778,7 +794,10 @@
     const src = sourceOf(e);
     /* the contract's via is pick, focus or tour: a selection the panel's own list made is user-initiated, so it is told as focus
        (review G1R-9), also when its ShakeMap answers later */
-    tell({ type: 'hu:environment-selected', id: e.id, layer: e.layer, kind: e.kind, title: facts.title, facts: facts.facts, source: src.source, observed_at: facts.observed_at, observed_label: facts.observed_label, observed_date_only: facts.observed_date_only, fetched_at: src.fetched_at, coverage: src.coverage, status: src.status, reason: src.reason, lat: facts.lat, lon: facts.lon, via: via === 'panel' ? 'focus' : (via || 'pick'), illustrative: rippleNow() ? RIPPLE_LABEL : null, modelled: !!sm });
+    /* the revision of the event the globe draws (event timeline slice S6: one canonical id and revision drive the post, the globe
+       object, the selection and the deep link; the feed's store-held rows carry it, others none) */
+    const revision = e.layer === 'events' && Number.isSafeInteger(e.item.revision) && e.item.revision > 0 ? e.item.revision : null;
+    tell({ type: 'hu:environment-selected', id: e.id, revision, layer: e.layer, kind: e.kind, title: facts.title, facts: facts.facts, source: src.source, observed_at: facts.observed_at, observed_label: facts.observed_label, observed_date_only: facts.observed_date_only, fetched_at: src.fetched_at, coverage: src.coverage, status: src.status, reason: src.reason, lat: facts.lat, lon: facts.lon, via: via === 'panel' ? 'focus' : (via || 'pick'), illustrative: rippleNow() ? RIPPLE_LABEL : null, modelled: !!sm });
   }
   /* a tap: `picked` is what Cesium found under the finger, `position` the tap in CSS px of the frame. A quake's glyph is its tap
      target (event timeline slice S5): a tap within 22 px of a glyph's centre (a 44 px target) selects that quake when nothing
@@ -803,42 +822,92 @@
     return chosen;
   }
 
-  /* ---------- the quake replay: discs, glyphs and labels later than the current scene hidden, the current disc fading in ---------- */
-  function applyReplay(current) {
-    /* the glyphs and their labels follow the same cut (slice S5: before it the later quakes' dots stayed on) */
-    if (glyphsOn()) { const cut = replayMode && current && current.item ? Date.parse(current.item.observed_at) : NaN; marks.setCutoff(Number.isFinite(cut) ? cut : null); }
+  /* ---------- ONE TIME CURSOR (event timeline slice S6, 2026-11-19): the events recorded after it wait, on every mark ----------
+     The page owns the cursor (js/world-environment-cursor.js, a range of the events' own times with a live end) and tells this frame
+     with hu:environment-time { at, seq, input }. Here it only ever sets `show`: each quake disc's instance attribute, each event dot,
+     the glyphs and their labels (js/environment-quake-marks.js setCutoff), and the selection's own label, contours, rupture line
+     and ripple while its event waits. Geometry is never rebuilt and the camera is never moved: the visitor's hand on the cursor stops
+     whatever flies (the tour, the replay, a push) where it is, and a scrub moves nothing (decision D15 as clarified, default adopted
+     pending Matthew's confirmation). The replay keeps its flights and is the cursor's playback: each quake it arrives at moves the
+     cursor to that quake's time, here and on the page. */
+  function applyCursor() {
+    if (!mounted) return;
+    if (glyphsOn()) marks.setCutoff(cursorAt);
+    for (const e of picks.values()) {
+      if (e.layer !== 'events') continue;
+      const show = atCursor(e.item);
+      for (const p of e.points) if (p.point.show !== show) p.point.show = show;
+    }
     const discs = prims.events.discs;
-    if (!discs) return;
+    if (discs) {
+      const run = () => {
+        if (!prims.events.discs || prims.events.discs.isDestroyed()) return;
+        for (const e of picks.values()) {
+          if (e.layer !== 'events' || e.kind !== 'quake' || !e.fills.length) continue;
+          const attrs = prims.events.discs.getGeometryInstanceAttributes(e.pick);
+          if (attrs) attrs.show = Cesium.ShowGeometryInstanceAttribute.toValue(atCursor(e.item), attrs.show);
+        }
+        requestRender('time');
+      };
+      if (discs.ready) run(); else { deferred.push(run); watchBuild(); }
+    }
+    /* a selected event the cursor hides waits with its marks: no rings for it until it is shown again */
+    if (!selectedShown()) clearRipple();
+    applyVisibility(); updateLegend(); requestRender('time');
+  }
+  const isoOf = ms => (ms === null ? null : new Date(ms).toISOString());
+  /* the tour visits what the cursor shows; the replay is the cursor's own playback, over every quake of its day */
+  function syncQueue() {
+    if (director) director.setQueue(replayMode ? data.events : data.events.filter(atCursor), { queue: replayMode || 'significant' });
+  }
+  /* the frame moves the cursor itself (the replay): applied here at once and proposed to the page, which takes it unless the
+     visitor has moved the cursor since the last message this frame applied (ack) */
+  function proposeTime(atMs, via) {
+    const next = typeof atMs === 'number' && Number.isFinite(atMs) ? atMs : null;
+    if (next !== cursorAt) { cursorAt = next; applyCursor(); if (!replayMode) syncQueue(); }
+    tell({ type: 'hu:environment-time-state', at: isoOf(cursorAt), via, ack: cursorSeq });
+  }
+  /* the page's cursor: input true is the visitor's own hand (a scrub, a step, Live), which stops whatever flies first */
+  function timeFromPage(d) {
+    const at = d.at === null || d.at === undefined ? null : isoOrNull(d.at) ? Date.parse(d.at) : undefined;
+    if (at === undefined) return;
+    if (Number.isSafeInteger(d.seq) && d.seq >= 0) cursorSeq = d.seq;
+    if (d.input === true) {
+      if (director) director.interrupt('time');
+      if (cam) cam.cancel('time');
+    }
+    const changed = at !== cursorAt;
+    cursorAt = at;
+    if (changed) applyCursor();
+    if (d.input === true && replayMode && director && typeof director.seek === 'function') director.seek(at);
+    if (changed && !replayMode) syncQueue();
+  }
+  /* the replay: the scene's recorded time is the cursor's (off: live), and the arriving quake's disc fades in */
+  function applyReplay(current) {
+    const t = replayMode && current && current.item ? Date.parse(current.item.observed_at) : NaN;
+    proposeTime(replayMode && Number.isFinite(t) ? t : null, 'replay');
+    if (!replayMode || !current || !current.fills.length || !motionAllowed() || !prims.events.discs) return;
     const run = () => {
       if (!prims.events.discs || prims.events.discs.isDestroyed()) return;
-      const t = replayMode && current && current.item ? Date.parse(current.item.observed_at) : NaN;
-      for (const e of picks.values()) {
-        if (e.layer !== 'events' || e.kind !== 'quake' || !e.fills.length) continue;
-        const attrs = prims.events.discs.getGeometryInstanceAttributes(e.pick);
-        if (!attrs) continue;
-        const show = !replayMode || !Number.isFinite(t) || (Date.parse(e.item.observed_at) || 0) <= t;
-        attrs.show = Cesium.ShowGeometryInstanceAttribute.toValue(show, attrs.show);
-      }
-      if (replayMode && current && current.fills.length && motionAllowed()) {
-        const target = current.fills[0];
-        startFade(null, Object.assign({}, current, { fills: [Object.assign({}, target, { colour: target.colour })], points: [], polylines: [] }), REPLAY_FADE_MS, 'env-replay', FADE_MAX_MS);
-      }
-      requestRender('replay');
+      const target = current.fills[0];
+      startFade(null, Object.assign({}, current, { fills: [Object.assign({}, target, { colour: target.colour })], points: [], polylines: [] }), REPLAY_FADE_MS, 'env-replay', FADE_MAX_MS);
     };
-    if (discs.ready) run(); else { deferred.push(run); watchBuild(); }
+    if (prims.events.discs.ready) run(); else { deferred.push(run); watchBuild(); }
   }
 
   /* ---------- visibility, level of detail, legend ---------- */
   function applyVisibility() {
     const P = prims;
     const set = (p, show) => { if (p && !p.isDestroyed()) p.show = show; };
-    set(P.events.discs, visible('events')); set(P.events.dots, visible('events')); set(P.events.label, visible('events') && !!selected);
+    /* the selection's own label, contours and rupture line wait with its event while the time cursor hides it (slice S6) */
+    const chosenShown = selectedShown();
+    set(P.events.discs, visible('events')); set(P.events.dots, visible('events')); set(P.events.label, visible('events') && !!selected && chosenShown);
     set(P.fires.near, visible('fires') && lodState === 'near'); set(P.fires.far, visible('fires') && lodState === 'far');
     set(P.perimeters.fill, visible('perimeters')); set(P.perimeters.outline, visible('perimeters'));
     set(P.alerts.fill, visible('alerts')); set(P.alerts.outline, visible('alerts'));
     set(P.eonet.points, visible('eonet')); set(P.eonet.tracks, visible('eonet')); set(P.eonet.polygons, visible('eonet'));
     set(P.tides.columns, visible('tides')); set(P.tides.labels, visible('tides'));
-    set(P.shakemap.lines, visible('shakemap')); set(P.rupture.lines, visible('shakemap'));
+    set(P.shakemap.lines, visible('shakemap') && chosenShown); set(P.rupture.lines, visible('shakemap') && chosenShown);
     if (glyphsOn()) marks.setOn(visible('events'));
   }
   function onCameraChanged() {
@@ -874,6 +943,8 @@
     if (counts.shakemapLines && visible('shakemap')) legendLines.push(`${LEGEND.shakemap} ${terms('shakemap')}`.trim());
     if (counts.ruptureLines && visible('shakemap')) legendLines.push(LEGEND.rupture);
     if (rippleNow()) legendLines.push(RIPPLE_LABEL);
+    /* the time cursor, said in words while it is not at live (slice S6): what waits, and what keeps its latest reading */
+    if (cursorAt !== null && visible('events')) legendLines.push(cursorLine(cursorAt));
     if (!motionAllowed()) legendLines.push('(animations off)');
     const items = legendLines.map(line => { const li = doc.createElement('li'); li.textContent = line; return li; });
     list.replaceChildren(...items);
@@ -939,7 +1010,7 @@
     states.shakemap = null;
     applyVisibility();
     if (client) client.start({ onState: onLayerState, onData: onLayerData });
-    if (director) director.setQueue(data.events, { queue: replayMode || 'significant' });
+    syncQueue();
     updateLegend(); requestRender('activate');
   }
   function deactivate() {
@@ -962,7 +1033,7 @@
     replayMode = replay;
     if (next && !on) activate();
     else if (!next && on) deactivate();
-    else if (next) { if (replayChanged && director) director.setQueue(data.events, { queue: replayMode || 'significant' }); applyVisibility(); }
+    else if (next) { if (replayChanged) syncQueue(); applyVisibility(); }
     if (replayChanged) applyReplay(replayMode && director && director.scene() ? findEntry(director.scene().id, 'events') : null);
     updateLegend(); requestRender('layers');
   }
@@ -1019,6 +1090,7 @@
     else if (d.type === 'hu:environment-focus') focus(d.id);
     else if (d.type === 'hu:environment-scene') sceneAction(d.action);
     else if (d.type === 'hu:environment-view') view(d.mode);
+    else if (d.type === 'hu:environment-time') timeFromPage(d);
     return true;
   }
   function mount(options) {
@@ -1062,6 +1134,8 @@
       replay: replayMode, layersOn: Object.assign({}, layersOn), eventsOn, policy: !!(client && client.isPolicy()), picks: picks.size, shakemap: shakemap ? { quakeId: shakemap.quakeId, lines: counts.shakemapLines, unavailable: shakemap.unavailable || null } : null,
       rupture: rupture ? { quakeId: rupture.quakeId, lines: counts.ruptureLines, available: !!(rupture.body && rupture.body.available === true), reason: rupture.body ? rupture.body.reason || null : null } : null,
       marks: marks ? marks.state() : null, camera: cam ? cam.state() : null,
+      /* event timeline slice S6: the time cursor and what it shows of the events layer */
+      cursor: { at: isoOf(cursorAt), seq: cursorSeq, shown: [...picks.values()].filter(e => e.layer === 'events' && atCursor(e.item)).map(e => e.id).sort(), hidden: [...picks.values()].filter(e => e.layer === 'events' && !atCursor(e.item)).map(e => e.id).sort() },
       feedTerms: Object.keys(feedTerms).sort()
     };
   }

@@ -34,6 +34,8 @@
       if ('fetched_at' in row) out.fetched_at = iso(row.fetched_at);
       if (Array.isArray(row.facts)) out.facts = row.facts.filter(f => f && typeof f.label === 'string' && typeof f.value === 'string').slice(0, 16).map(f => ({ label: f.label.slice(0, 80), value: f.value.slice(0, 320) }));
       if (row.significant === true) out.significant = true;
+      /* the store's revision of the event (event timeline slice S6): the globe object and its selection carry it */
+      if (Number.isSafeInteger(row.revision) && row.revision > 0) out.revision = row.revision;
       return [out];
     });
   }
