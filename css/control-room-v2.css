@@ -537,3 +537,32 @@ body.cr.has-appbar .cr-more__box{padding-bottom:calc(var(--appbar-h,64px) + 2.2r
   .cr-ai-browser figure img{max-width:640px}
   .cr-ai-attach__hint{flex-basis:auto}
 }
+
+/* ======================================================================================================
+   SECTION SCREENS, REDESIGNED 2026-11-24 (owner: "the menu screens and between main module screens").
+   One language with Analytics and the menu (css/control-analytics-deck.css, css/site-navigation.css):
+   the pages of a section are plain tabs with a red underline (Shopify / Substack on Mobbin), the views of a
+   page are a quiet segmented control, and numbers are a sentence-case label over a big figure. Markup and
+   behaviour unchanged (js/control-room-v2.js sectionHead, kpi2). Phone first.
+   ====================================================================================================== */
+.cr-head{align-items:center;margin-bottom:10px}
+.cr-eyebrow{letter-spacing:.1em;color:#a6909a}
+.cr-h1{letter-spacing:-.03em}
+.cr-tabs{gap:2px;margin:0 -16px 12px;padding:0 12px;border-bottom:1px solid #26222a}
+.cr-tab{min-height:44px;border:0;border-bottom:2px solid transparent;border-radius:0;padding:0 10px;color:#9d95a1;font-size:14px;font-weight:600;background:none}
+.cr-tab:hover{color:#e7e1ea}
+.cr-tab.is-on{color:#fff;border-color:#e5383b;background:none}
+.cr-tab b{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:6px;padding:0 6px;box-sizing:border-box;border-radius:999px;background:#2a2229;color:#e7dce3;font-size:11px}
+.cr-tab.is-on b{background:#e5383b;color:#fff}
+.cr-seg--views{border-radius:999px;padding:3px;background:#16141a;border-color:#2a252e}
+.cr-seg--views a{border-radius:999px;min-height:38px;display:inline-flex;align-items:center;padding:0 14px;color:#b4abb8}
+.cr-seg--views a.is-on{background:#f3eef5;color:#121014}
+.cr-kpis2{border-radius:18px;background:#26222a;border-color:#26222a}
+.cr-kpi2{background:#141217;padding:14px 16px}
+.cr-kpi2__label{text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;color:#b3abb7}
+.cr-kpi2__value{font-size:28px;font-weight:700;letter-spacing:-.03em;color:#fff}
+.cr-kpi2__sub{color:#8f8595}
+@media(min-width:600px){
+  .cr-tab{padding:0 14px}
+  .cr-kpi2__value{font-size:30px}
+}

@@ -153,3 +153,49 @@ html.globe-editorial .mcc-dock-hints{display:none!important}
 .mcc-dock-hints button:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @keyframes mcc-dock-cue{from{opacity:.6}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.mcc-dock-hints button{animation:none}}
+
+/* ======================================================================================================
+   THE MENU, REDESIGNED 2026-11-24 (owner: "the menu screens and between main module screens to be
+   redesigned"). References on Mobbin: Shopify's dark admin menu (one column, section, then its pages) and
+   X / Instagram tool lists (grouped rows, a chevron, no boxes). Same markup and behaviour as before
+   (js/site-navigation.js): only paint and layout. Phone first; wider screens get more columns.
+   ====================================================================================================== */
+.mcc-destinations{background:#111013;border-color:#2e2832;border-radius:24px}
+.mcc-destinations header small{font-size:10px;letter-spacing:.12em;color:#c08a9b}
+.mcc-destinations h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
+.mcc-destinations header button{width:44px;padding:0;border-radius:999px;font-size:20px;background:transparent}
+.mcc-destinations__search{font-size:0;gap:0}
+.mcc-destinations input{border-radius:999px;padding-left:16px;background:#19171c;border-color:#2e2832}
+/* the five sections in one row of icons, not two rows of boxes */
+.mcc-sections{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:1px}
+.mcc-sections::-webkit-scrollbar{display:none}
+.mcc-section{flex:1 1 0;min-width:58px;min-height:64px;border-radius:16px;background:#19171c;border-color:#2a252e}
+.mcc-section strong{font-size:11px;font-weight:600;color:#d9d2dd}
+.mcc-section[aria-current="true"]{background:#3a1b23;border-color:#c0424f}
+.mcc-section[aria-current="true"] strong{color:#fff}
+.mcc-destinations__groups button{border-radius:999px;padding:0 14px;background:transparent;border-color:#2e2832;color:#bfb6c4}
+.mcc-destinations__groups [aria-pressed="true"]{background:#f3eef5;border-color:#f3eef5;color:#121014}
+/* the destinations: a grouped list, one row per page with a chevron; the dividers are the gap */
+.mcc-destinations__group h3{font-size:12px;letter-spacing:.08em;color:#a59aab;margin:0 4px 8px;font-weight:600}
+.mcc-destinations__grid{grid-template-columns:minmax(0,1fr);gap:1px;background:#272229;border:1px solid #272229;border-radius:16px;overflow:hidden}
+.mcc-destination{flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;min-height:50px;padding:0 14px;border:0;border-radius:0;background:#18161b}
+.mcc-destination strong{flex:1 1 auto;min-width:0;font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mcc-destination small{display:none}
+.mcc-destination[aria-current="page"] small{display:block;flex:none;font-size:11px;color:#f0a6be}
+.mcc-destination::after{content:"›";flex:none;font:400 22px/1 system-ui;color:#76697c;margin-top:-2px}
+.mcc-destination[aria-current="page"]{background:#2a1820}
+.mcc-destination:hover{background:#221f26}
+#mccDestinationCount{margin:0;font-size:12px;color:#8f8595;text-align:center}
+@media(min-width:600px){
+  .mcc-section{min-width:84px;min-height:70px}
+  .mcc-destinations__grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mcc-destination{min-height:54px;padding:0 16px}
+  .mcc-destination strong{font-size:15px}
+}
+@media(min-width:64rem){
+  .mcc-destinations__grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+/* People's three categories read as the same underline tabs as every section (2026-11-24) */
+.cr-inbox-categories{gap:0;border-bottom:1px solid #26222a}
+.cr-inbox-category .cr-tab{justify-content:center;text-align:center;font-size:13px;font-weight:600}
+@media(min-width:600px){.cr-inbox-categories{display:flex;gap:4px}.cr-inbox-category .cr-tab{padding:0 16px;font-size:14px}}
