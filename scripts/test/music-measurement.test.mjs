@@ -78,16 +78,29 @@ test('music_interrupted waits for approval: a player names it and nothing sends 
   assert.ok(s.sent.length >= 1, 'the queue went out');
   const names = s.names();
   assert.ok(!names.includes('music_interrupted'), 'music_interrupted is not sent until Matthew approves it: ' + names.join(', '));
+  /* the artist view's name (2026-11-24) waits the same way */
+  const s2 = sender();
+  s2.track('music_artist_view', { artist: 'los-fidel', tracks: 1 });
+  s2.track('music_play', { source: 'discovery', track: 'Please Set Me Free' });
+  await s2.flush();
+  assert.deepEqual(s2.names().filter((n) => /^music_/.test(n)), ['music_play'], 'music_artist_view is not sent until Matthew approves it');
   assert.deepEqual(names.filter((n) => /^music_/.test(n)).sort(), ['music_error', 'music_play']);
 });
 
 test('the one place to approve it: held in js/analytics.js, not in the measurement dictionary, and ready in both players', async () => {
   const src = read('js/analytics.js');
   const held = slice(src, 'var AWAITING_APPROVAL = {', '};');
-  assert.deepEqual([...held.matchAll(/^\s*([a-z_]+):/gm)].map((m) => m[1]), ['music_interrupted'], 'one name waits, and only that one');
+  assert.deepEqual([...held.matchAll(/^\s*([a-z_]+):/gm)].map((m) => m[1]), ['music_interrupted', 'music_artist_view'], 'two names wait, and only those');
   assert.match(held, /waiting for Matthew's approval/, 'it says what it waits for');
   const { EVENT_DICTIONARY } = await import('../../workers/mccluster/src/analytics/measurement-dictionary.js');
   assert.equal(EVENT_DICTIONARY.some((e) => e.event_name === 'music_interrupted'), false, 'not reviewed yet: approving it adds its row there and deletes its line here');
+  assert.equal(EVENT_DICTIONARY.some((e) => e.event_name === 'music_artist_view'), false, 'nor is the artist view');
+  assert.match(read('js/music-artist.js'), /root\.MCC_TRACK\("music_artist_view", \{ artist: v\.slug, tracks: v\.total \}\)/);
+  /* every music_ name a page calls is either reviewed into the dictionary or waiting here: none goes out unreviewed */
+  const known = new Set([...EVENT_DICTIONARY.map((e) => e.event_name), ...[...held.matchAll(/^\s*([a-z_]+):/gm)].map((m) => m[1])]);
+  for (const f of ['js/music-artist.js', 'js/music-community.js', 'js/music-credits.js', 'js/listen.js']) {
+    for (const m of read(f).matchAll(/MCC_TRACK\("([a-z_]+)"/g)) assert.ok(known.has(m[1]), `${f}: ${m[1]} is reviewed or held`);
+  }
   /* the players keep calling it, so approving it is that one line */
   assert.match(read('js/music-engine.js'), /trackEvent\("music_interrupted", \{ reason: why/);
   assert.match(read('album.html'), /window\.MCC_TRACK\("music_interrupted", \{ track:/);

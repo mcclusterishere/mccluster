@@ -559,7 +559,10 @@ window.MCC_TRACK = (function () {
   var AWAITING_APPROVAL = {
     /* a music read that failed or was cut off on the way (reason, second, try, path; no account, no place):
        js/music-engine.js and album.html name it on every failed read (music slice M3). Waiting for Matthew's approval. */
-    music_interrupted: "music slice M3: waiting for Matthew's approval"
+    music_interrupted: "music slice M3: waiting for Matthew's approval",
+    /* an artist view was opened (the artist's slug, how many tracks they are on; no account, no place):
+       js/music-artist.js names it on artist.html (2026-11-24). Waiting for Matthew's approval. */
+    music_artist_view: "artist view, 2026-11-24: waiting for Matthew's approval"
   };
 
   return function (name, params) {
