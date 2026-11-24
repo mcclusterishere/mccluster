@@ -680,3 +680,39 @@ mutated copies each failing a named check; CI matrix entry `mission-sources-stor
 (87 checks: the same proof, one key from two sessions recorded once, a moved revision refused, the 5 s lock bound; passed on
 PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/test/mission-sources-owner.integration.mjs` (CI
 `mission-sources-owner`); the static checks: `node --test scripts/test/mission-catalog-sources-sql.test.mjs`.
+
+## 15. AI context workstream checkpoints (written 2026-11-23)
+
+**Pending. Never applied. Owner approval required.** Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`.
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `ai_context_workstreams_v1.sql` (+ `ai_context_workstreams_v1.rollback.sql`) | `ai_context.workstreams` (where each line of work stands) and `ai_context.workstream_events` (append-only log; `UPDATE`, `DELETE`, `TRUNCATE` refused by trigger), RLS on with no policy and no privilege for any role but the owner; fourteen private `ai_context.workstream_*` helpers; four `SECURITY DEFINER`, `search_path = ''`, `service_role`-only functions: `public.ops_ai_workstream_upsert`, `_event_append`, `_checkpoint`, `_resume`. They verify an `owner` actor against `public.org_members`, hold a non-owner writer to the `internal` sensitivity ceiling, order events by the plane's own `seq` and bound volume per organization (500 workstreams, 5000 events and 200 proposed decisions per 24 hours). Changes no existing object. A decision event may insert one `proposed` row into the existing `ai_context.decisions`; it never approves one | Core only: `core/src/tools/workstream.mjs` (`core.workstream.checkpoint`, `core.workstream.list`) and `core/src/tools/resume.mjs` (the `workstreams` source of `core.resume`). Both tolerate its absence: on PostgREST PGRST202 the tools answer 503 `WORKSTREAMS_NOT_APPLIED` and `core.resume` reports `sources.workstreams: missing` with every other section unchanged. No Worker, page or Edge Function calls these names, so `live-callers.json` has no entry | `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/ai-context-workstreams-sql-check.mjs` (310 checks on PGlite, 313 on native PostgreSQL: the guard on a database without the context plane, apply twice, privileges and RLS, behaviour, the append-only trigger, idempotency on the operation key (a replay never rewinds the workstream; every field the caller said is content), every bound, credential and transcript refusal in every text column, proposed decisions, owner membership, the write-path sensitivity ceiling, append-order blockers, volume caps, resume order and caps, rollback refused with data then forced, re-apply, second behaviour pass); `node --test core/test/workstream-checkpoints.test.mjs` (37); `node --test scripts/test/workstream-sync.test.mjs` (12) |
+
+**Prerequisites, all already in production:** schema `ai_context` with `ai_context.decisions`, `public.orgs`, `public.org_members` (read to verify an owner actor),
+`public.ops_objectives`, `public.ops_agent_jobs`. The file's guard refuses (55000), changing nothing, without them.
+It adds a foreign key from `ai_context.workstreams.objective_id` to `public.ops_objectives(id)` (`on delete set null`),
+which takes a brief lock on `ops_objectives`; `lock_timeout` is 5 s, so a busy table fails the apply instead of
+waiting. Independent of every other file in this folder.
+
+**Apply** only on the owner's approval of this exact text, in one transaction, as postgres, under the name
+`ai_context_workstreams_v1`. The standalone proof passes 310 checks on PGlite and 313 on native PostgreSQL 17.6;
+the native pass includes three concurrent final-slot quota checks. Both standalone modes use minimal base fixtures.
+Before applying, require the exact PR head's Reconciliation CI database job to pass: it runs the native proof and
+`supabase/tests/ai_context_workstreams_v1.integration.sql` against the complete repository reset, twice applying the
+pending SQL and testing rollback/re-apply with the real ontology and decision triggers. PostgREST
+reloads its schema cache on DDL; if `core.resume` still reports `workstreams: missing` afterwards, run
+`notify pgrst, 'reload schema';`.
+
+**Verify** right after: `core.resume` reports `sources.workstreams: ok` with `workstreams.items: []`; anon and
+authenticated REST calls to the four functions are refused (neither role has execute); `ai_context` is still not an
+exposed schema; one `workstream.checkpoint` through the owner's MCP session returns `created: true`, and the same
+call again returns `replayed: true` for its event and `applied: false` for its workstream.
+
+**Roll back:** `ai_context_workstreams_v1.rollback.sql`, owner approval, as postgres. It refuses (55000), changing
+nothing, while either table holds a row: the log is a record, and dropping it is a data deletion. To delete it on
+purpose, export it, then run the rollback with `set local mccluster.workstreams_drop_data = 'on';` after `begin`.
+It leaves `ai_context.decisions` untouched. Core needs no rollback: without the functions it reports `missing`.
+
+**Records** after the apply: move the file to `supabase/migrations/` under its ledger version; the ledger, the drift
+contract, the schema manifest from the CI reset, a new production snapshot; this section and `README.md`.

@@ -604,3 +604,14 @@ Test: `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/compute-lea
 (`supabase/tests/compute_claim_task_yield.behaviour.sql`, then the rollback and a re-apply, on a
 disposable database). Never applied here. Promote it using the steps above, then
 `notify pgrst, 'reload schema';` if a claim still answers PGRST202.
+
+Pending: `ai_context_workstreams_v1.sql` (rollback `ai_context_workstreams_v1.rollback.sql`) adds durable
+workstream checkpoints to the private context plane: `ai_context.workstreams`, the append-only
+`ai_context.workstream_events`, and four `service_role`-only `SECURITY DEFINER` functions
+(`public.ops_ai_workstream_upsert`, `_event_append`, `_checkpoint`, `_resume`). It changes no existing
+object. Only Core calls it (`core.workstream.checkpoint`, `core.workstream.list`, the `workstreams` source
+of `core.resume`), and Core tolerates its absence: `core.resume` reports the source as `missing` and is
+otherwise unchanged. Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`. Order, verification and
+rollback: `PROMOTION-ORDER.md`, section 15. Test:
+`PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/ai-context-workstreams-sql-check.mjs`
+(disposable database; apply twice, privileges, behaviour, rollback, re-apply). Never applied here.
