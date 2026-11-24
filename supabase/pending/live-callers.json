@@ -170,20 +170,6 @@
         "workers/mccluster/src/at-night.js"
       ]
     },
-    "clip_campaign_create_from_action": {
-      "kind": "function",
-      "pending": "equity_uprise_clipping_sources.sql",
-      "callers": [
-        "js/control-room/clipping.js"
-      ]
-    },
-    "clip_campaign_set_distribution": {
-      "kind": "function",
-      "pending": "equity_uprise_clipping_sources.sql",
-      "callers": [
-        "js/control-room/clipping.js"
-      ]
-    },
     "create_policy_memo": {
       "kind": "function",
       "pending": "policy_fellowship_ladder_v1.sql",
@@ -274,13 +260,6 @@
       "pending": "eup_intake_v1.sql",
       "callers": [
         "workers/mccluster/src/eup/intake.js"
-      ]
-    },
-    "front-media": {
-      "kind": "bucket",
-      "pending": "member_fronts_v1.sql",
-      "callers": [
-        "js/front-media.js"
       ]
     },
     "identity_apply_persona_event": {
@@ -380,13 +359,6 @@
       "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/store.js"
-      ]
-    },
-    "member_fronts": {
-      "kind": "table",
-      "pending": "member_fronts_v1.sql",
-      "callers": [
-        "workers/mccluster/src/member-fronts.js"
       ]
     },
     "mission_catalog_source_command": {
@@ -730,7 +702,73 @@
       ]
     }
   },
-  "applied_awaiting_evidence": {},
+  "applied_awaiting_evidence": {
+    "identity": {
+      "kind": "function",
+      "migration": "20261124164026_member_fronts_shared_revision_directory.sql",
+      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
+      "callers": [
+        "analytics.html",
+        "js/control-room/action-network.js",
+        "js/control-room/analytics-deck.js",
+        "js/control-room/analytics-unified.js",
+        "js/control-room/analytics.js",
+        "js/control-room/nav.js",
+        "js/gated-audio.js",
+        "supabase/functions/eu-orcid-oauth/index.ts",
+        "supabase/functions/music-access/review-audio.ts",
+        "workers/mccluster/src/platform-api.js"
+      ]
+    },
+    "clip_campaign_create_from_action": {
+      "kind": "function",
+      "migration": "20261124164851_equity_uprise_clipping_sources.sql",
+      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
+      "callers": [
+        "js/control-room/clipping.js"
+      ]
+    },
+    "clip_campaign_set_distribution": {
+      "kind": "function",
+      "migration": "20261124164851_equity_uprise_clipping_sources.sql",
+      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
+      "callers": [
+        "js/control-room/clipping.js"
+      ]
+    },
+    "directory": {
+      "kind": "function",
+      "migration": "20261124164026_member_fronts_shared_revision_directory.sql",
+      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
+      "callers": [
+        "js/eu-screens/apps/kiosk.mjs"
+      ]
+    },
+    "front-media": {
+      "kind": "bucket",
+      "migration": "20261124164026_member_fronts_shared_revision_directory.sql",
+      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
+      "callers": [
+        "js/front-media.js"
+      ]
+    },
+    "unpublish": {
+      "kind": "function",
+      "migration": "20261124164026_member_fronts_shared_revision_directory.sql",
+      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
+      "callers": [
+        "js/front-studio.js"
+      ]
+    },
+    "member_fronts": {
+      "kind": "table",
+      "migration": "20261124164026_member_fronts_shared_revision_directory.sql",
+      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
+      "callers": [
+        "workers/mccluster/src/member-fronts.js"
+      ]
+    }
+  },
   "missing_everywhere": {
     "crm_contacts": {
       "kind": "table",
