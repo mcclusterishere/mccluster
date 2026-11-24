@@ -539,7 +539,7 @@
         },
         {
           "key": "humanuprise_to_platform",
-          "what": "humanuprise.com and its www, once the owner routes them, answer 301 to the same path and query on the platform, in one hop as www does (owner_decisions.humanuprise_com); until then they stay inert.",
+          "what": "humanuprise.com and its www, once the owner routes them, answer 301 to the same path and query on the platform, in one hop as www does (owner_decisions.humanuprise_com); until then they stay inert. Open (review P1A-3, left as it is): /news takes two hops, to the platform's /news and on to /news/, which the newsroom answers itself (NEWSROOM_ENABLED, which the router cannot know); www.mccluster.org/news does the same at P0 and P1 alike.",
           "where": "workers/mccluster/src/platform/router.js (worldDoorRoute, toPlatform)"
         },
         {

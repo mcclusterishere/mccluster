@@ -255,6 +255,10 @@ host, his carry page aside, or an error the page's copy there does not log):**
 - **humanuprise.com goes to the platform**: once the owner routes it, it and
   its www answer 301 to the same path and query on the platform, in one hop
   as www does (`owner_decisions.humanuprise_com`); until then they stay inert.
+  Open (review P1A-3, the code left as it is): `/news` takes two hops, to the
+  platform's `/news` and on to `/news/`, which the newsroom answers itself
+  (`NEWSROOM_ENABLED`, which the router cannot know);
+  `www.mccluster.org/news` does the same at P0 and P1 alike.
 - **The platform's app starts on the World**: the platform's `manifest.json`
   carries `start_url` `/` (`platform.app_start_path`,
   `owner_decisions.platform_app_start`); every other member is the published
