@@ -29,6 +29,35 @@ expanded to read its counts and collapsed again.
 | Member regions | "Live" |
 | Aircraft, Military aircraft, Ships, Weather alerts, Natural events, Thermal hotspots, Water levels, Wildfire perimeters, Satellites, Launches, Cameras, Intel events, Exchanges | **Off** on this device |
 
+### Second reading, 05:22 to 05:26 UTC, with the owner's go-ahead
+
+Each feed that was off was switched on, read, and switched off again; the groups were collapsed afterwards. The device's
+saved setup ends as it began (Earthquakes, Tropical cyclones, Missions and Member regions on).
+
+| Feed | Shown in production | Note |
+|---|---|---|
+| Aircraft | 1,020 shown / 1,020 loaded | |
+| Military aircraft | 71 (67 four minutes later) | |
+| Ships (AIS) | **"Needs a key"** | `AISSTREAM_API_KEY` or its binding is not set on the production Worker |
+| Weather alerts | 9 mapped / 405 reports | 396 alerts carry no coordinates: listed, not mapped |
+| Natural events | 46 mapped / 46 reports | |
+| Earthquakes | 246, then 244 | already on |
+| Thermal hotspots | **"Needs a key"** | `FIRMS_MAP_KEY` is not set on the production Worker |
+| Water levels | 303 stations | reference data |
+| Tropical cyclones | 0 | already on; NHC listed no active storm |
+| Wildfire perimeters | 50 | |
+| Satellites | 166 shown / 166 loaded | |
+| Launches | 0 | not checked against Launch Library |
+| Cameras | 6,512 | catalogue entries, not live streams |
+| Missions | 0 on the map | 126 active missions, none with a place |
+| Member regions | Shown | |
+| Intel events | 69 | |
+| Exchanges | 13 open / 49 | |
+
+Every declared feed answered. **Two return nothing because a key is missing in production**, which the page says only
+once the feed is switched on. The narrow list column also breaks the "Aircraft" and "Satellites" labels across lines
+when a count is shown.
+
 What this settles:
 
 - **With the map working, twelve of the seventeen declared feeds showed nothing because they were switched off** in this
@@ -39,8 +68,8 @@ What this settles:
   an ordinary fresh count, as described below. After this change it reads "No records".
 - "Updated 2m ago" is the Worker's fetch time. The earthquake count (246) is what the page could use; what the Worker
   returned is not shown by the deployed code, so returned versus shown is still unknown for production.
-- Not read: the no-map path in production (the map worked), the counts of the feeds that were off, and which secrets
-  are set.
+- Not read: the no-map path in production (the map worked), and what the Worker returned before the page's own
+  filtering.
 
 ## The trace, per feed
 
