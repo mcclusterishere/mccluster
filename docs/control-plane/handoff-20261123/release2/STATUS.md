@@ -27,3 +27,12 @@ Pushed head: 1dfaf9a6. Commits of this round, oldest first: 5f967c9d, e0d02a96, 
 ## Decision on review finding 3, device-ID carry (2026-11-24, about 19:00 UTC)
 
 Matthew said "Do what's smart" when asked which option to take. Decision taken on that word: finding 3 is **not fixed in Release 2** and is a **must-fix before the apex `mccluster.org` is routed to the platform**. Reason: the correct fix holds the first analytics send until the carry answers or times out, which changes analytics start-up on every page and needs its own tests; the effect is limited to analytics identity for a consenting visitor's first arrival on the platform host. The three review threads on pull request #837 were answered and resolved (two fixed in 5f967c9d and e0d02a96, this one deferred with the reason).
+
+## MERGED (2026-11-24, 19:32 UTC)
+
+Release 2 (pull request #837) merged with a merge commit pinned to head `1dfaf9a6`: merge commit `467b5db5175dbfb7e1d7449e01355903263192fc`. Everything above this section is history.
+
+- Before the merge: the two failed checks (database port clash; one failed resource load in `browser (platform-pages)`) each passed on their single re-run; `browser (sign-in)` and `browser (world-gate)` passed at this head; no check suite failed; the three review threads were resolved; the pull request was `clean`.
+- Deployed and verified at 19:33 UTC: `GET https://api.mccluster.org/v1/health` answers `deployment_sha` `467b5db5...`; `mccluster.org/`, `mccluster.org/listen.html`, `mccluster.org/company`, `matthew.mccluster.org/` and `matthew.mccluster.org/listen.html` answer 200.
+- Still to confirm when this was written: the GitHub Pages deploy for `467b5db5` (the `?v=` stamp on the published pages) and a live play on `mccluster.org/listen.html`.
+- Open after the merge: the device-ID carry (must-fix before more traffic is pointed at the platform host; see the decision above); the World on the one music engine; the parked globe camera's render hold; the database steps in the Codex prompt.
