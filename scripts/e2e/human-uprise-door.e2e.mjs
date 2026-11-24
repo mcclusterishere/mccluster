@@ -2,15 +2,18 @@
    ============================================================
    Three hosts, one bar. The Worker's host routers
    (workers/mccluster/src/company-site/router.js for https://mccluster.org,
-   the World's door today; workers/mccluster/src/human-uprise/router.js for
-   https://humanuprise.com, its own door when routed) answer in front of
-   this checkout, so the World is opened at its own addresses by a real
-   Chromium, and every link the bar writes is read back as the browser
-   sees it. Matthew's site is a stub
-   that records where a cross-site tap lands. On this checkout's own
-   origin, a creator's front page is opened and the bar is watched taking
-   that creator's perspective, keeping it on Music, and letting it go on
-   McCluster's own artist page (the house's artist: one McCluster, owner, 2026-11-23) and at the house.
+   the platform: the World at its root and, from P1, every page at its
+   path; workers/mccluster/src/human-uprise/router.js for
+   https://humanuprise.com, a legacy door that, once routed, is one 301 to
+   the same path on the platform) answer in front of this checkout, so the
+   World is opened at its own addresses by a real Chromium, and every link
+   the bar writes is read back as the browser sees it. Matthew's site is a
+   stub that records where a cross-site tap lands; its carry page (P1) is
+   this checkout's own, so a member's sign-in is carried for real. On this
+   checkout's own origin, a creator's front page is opened and the bar is
+   watched taking that creator's perspective, keeping it on Music, and
+   letting it go on McCluster's own artist page (the house's artist: one
+   McCluster, owner, 2026-11-23) and at the house.
 
    Backends are faked at the network edge (Supabase REST, the McCluster
    API); nothing here touches production. Cesium and the NASA tiles load
@@ -65,6 +68,7 @@ const now = Date.now();
 const POSTS = [0, 1, 2].map((k) => ({ item_type: 'post', post_id: `dddddddd-dddd-4ddd-8ddd-00000000000${k + 1}`, occurred_at: new Date(now - (k + 1) * 3600e3).toISOString(), actor: { mccluster_id: 'fixture.ana', display_name: 'Fixture Ana' }, post: { id: `dddddddd-dddd-4ddd-8ddd-00000000000${k + 1}`, body: `Field note ${k + 1}: the north bank, and who can help.`, visibility: 'public', created_at: new Date(now - (k + 1) * 3600e3).toISOString(), media_locked: 0 } }));
 
 const landed = [];   // every cross-site arrival at Matthew's site
+const asked = [];    // every request the platform's carry made of Matthew's site (P1): its carry page and the scripts it loads
 const served = [];   // every request the Human Uprise host answered
 
 /* one M Account, every host: the session a member holds on Matthew's site,
@@ -163,14 +167,21 @@ async function routeBackends(ctx) {
     if (u.pathname === '/v1/mnet/live/directory') return json(route, { sessions: [] });
     return json(route, {});
   });
-  /* Matthew's site: a stub that remembers where the tap landed */
-  await ctx.route(`${HOUSE}/**`, (route) => {
+  /* Matthew's site: a stub that remembers where a tap landed. From P1 the platform asks it for a member's sign-in
+     through its carry page (a hidden same-site frame, js/carry.js); that page and the two scripts it loads are this
+     checkout's own, as GitHub Pages serves them, so the carry is the real one */
+  await ctx.route(`${HOUSE}/**`, async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (['/carry.html', '/js/shell-boot.js', '/js/mcc-auth.js'].includes(path)) {
+      asked.push(route.request().url());
+      return route.fulfill({ status: 200, contentType: TYPES[extname(path)], body: await readFile(join(ROOT, path.slice(1))) });
+    }
     landed.push(route.request().url());
     return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: `<!doctype html><title>Matthew's site (stub)</title><p id="house">${route.request().url()}</p>` });
   });
-  /* the World's hosts: the real Worker routers, in front of this checkout.
-     The company host (mccluster.org) serves the World at its root today;
-     Human Uprise's own door (humanuprise.com) does the same when routed. */
+  /* the site's hosts: the real Worker routers, in front of this checkout.
+     The platform (mccluster.org) serves the World at its root and, from P1,
+     every page at its path; humanuprise.com, once routed, is one 301 there. */
   for (const [host, respond] of [[HU, humanUpriseResponse], ['https://www.humanuprise.com', humanUpriseResponse], [CO, companySiteResponse], ['https://www.mccluster.org', companySiteResponse]]) {
     await ctx.route(`${host}/**`, async (route) => {
       const r = route.request();
@@ -216,8 +227,8 @@ async function open(device, { memberOn = '' } = {}) {
     }
     localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
     localStorage.setItem('mnet_tour_seen', '1');
-    /* signed in on one house only: the other must earn its own session */
-    if (memberOn && location.origin === memberOn && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); localStorage.setItem('mccdb_session', JSON.stringify({ access_token: token, refresh_token: 'refresh-house', expires_at: Math.floor(Date.now() / 1000) + 3600 })); }
+    /* signed in on the named houses only (one origin, or a list): any other must earn its own session */
+    if ([].concat(memberOn).includes(location.origin) && !sessionStorage.getItem('__seeded')) { sessionStorage.setItem('__seeded', '1'); localStorage.setItem('mccdb_session', JSON.stringify({ access_token: token, refresh_token: 'refresh-house', expires_at: Math.floor(Date.now() / 1000) + 3600 })); }
   }, { memberOn, token: SESSION.token });
   await routeBackends(ctx);
   const page = await ctx.newPage();
@@ -248,47 +259,27 @@ const settleWorld = async (page) => {
   return globe;
 };
 
-/* ---------- 1. the World at its own address, as a guest on an iPhone ---------- */
+/* ---------- 1. the legacy door: from P1 humanuprise.com, once routed, is one 301 to the same path and query on the platform (owner_decisions.humanuprise_com) ---------- */
 {
   const S = 'human-uprise-host';
   const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true });
-  await page.goto(`${HU}/`, { waitUntil: 'domcontentloaded' });
-  const globe = await settleWorld(page);
-  check(S, 'https://humanuprise.com/ is the World', page.url() === `${HU}/` && !!(await page.$('#mnWorld')), page.url());
-  const head = await page.evaluate(() => ({ canonical: (document.querySelector('link[rel="canonical"]') || {}).href || null, robots: (document.querySelector('meta[name="robots"]') || {}).content || null, og: (document.querySelector('meta[property="og:url"]') || {}).content || null, title: document.title }));
-  check(S, 'the page carries this host\'s canonical and no noindex', head.canonical === `${HU}/` && head.robots === null && head.og === `${HU}/`, head);
-  check(S, 'the Earth is in a frame on the same host, so the bridge is same-origin', !!globe && globe.url().startsWith(`${HU}/action-globe.html`), globe && globe.url());
-  const b = await bar(page);
-  check(S, 'the bar is Music | M | Globe', b.columns.join('|') === 'music|home|world', b.columns);
-  check(S, 'Music and the M go to Matthew\'s site outright', b.music === `${HOUSE}/listen.html` && b.home === `${HOUSE}/index.html`, { music: b.music, home: b.home });
-  check(S, 'the Globe stays home, at the root of this host', b.world === `${HU}/?view=feed`, b.world);
-  check(S, 'the Globe coin is lit at the root, not the M', b.lit.join(',') === 'world', b.lit);
-  const files = served.filter((s) => s.status === 200).map((s) => new URL(s.url).pathname);
-  check(S, 'the World\'s files came through this host', files.includes('/js/mnet.js') && files.includes('/css/mnet.css') && files.some((p) => p.startsWith('/assets/')), files.length);
-  check(S, 'rooms carry noindex; the front door does not', served.some((s) => s.url === `${HU}/` && s.robots === null) && served.some((s) => s.url.startsWith(`${HU}/action-globe.html`) && s.robots === 'noindex'));
-  check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
-  await page.screenshot({ path: join(OUT, 'hu-guest-iphone.png') });
-  check(S, 'no page errors', errors.length === 0, errors);
-
-  /* the World's document name is the root here, query and all */
   const moved = (url) => served.find((x) => x.url === url && x.status === 301);
-  await page.goto(`${HU}/mnet.html?view=missions`, { waitUntil: 'domcontentloaded' });
-  await page.waitForURL(`${HU}/?view=missions`, { timeout: 90000 }).catch(() => {});
-  check(S, '/mnet.html?view=missions is a 301 to /?view=missions', page.url() === `${HU}/?view=missions` && !!moved(`${HU}/mnet.html?view=missions`) && moved(`${HU}/mnet.html?view=missions`).location === `${HU}/?view=missions`, { url: page.url(), served: moved(`${HU}/mnet.html?view=missions`) });
-  await page.goto('https://www.humanuprise.com/?view=feed', { waitUntil: 'domcontentloaded' });
-  await page.waitForURL(`${HU}/?view=feed`, { timeout: 90000 }).catch(() => {});
-  check(S, 'www is a 301 to the apex', page.url() === `${HU}/?view=feed` && !!moved('https://www.humanuprise.com/?view=feed'), { url: page.url(), served: moved('https://www.humanuprise.com/?view=feed') });
-
-  /* a tap on Music lands on Matthew's site */
+  await page.goto(`${HU}/`, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL(`${CO}/`, { timeout: 90000 }).catch(() => {});
   await settleWorld(page);
-  landed.length = 0;
-  await page.click('.appbar [data-appnav="music"]');
-  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 90000 });
-  check(S, 'tapping Music lands on matthew.mccluster.org/listen.html, and a guest carries nothing', page.url() === `${HOUSE}/listen.html` && landed[0] === `${HOUSE}/listen.html` && !/mcc_handoff/.test(page.url()), page.url());
-  /* a record's address on this host is Matthew's */
+  check(S, 'https://humanuprise.com/ is one 301 to the platform\'s root, where the World is', page.url() === `${CO}/` && !!moved(`${HU}/`) && moved(`${HU}/`).location === `${CO}/` && !!(await page.$('#mnWorld')), { url: page.url(), served: moved(`${HU}/`) });
+  await page.goto(`${HU}/mnet.html?view=missions`, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL(`${CO}/?view=missions`, { timeout: 90000 }).catch(() => {});
+  check(S, '/mnet.html?view=missions keeps its path and query to the platform, which answers the World at its root', page.url() === `${CO}/?view=missions` && !!moved(`${HU}/mnet.html?view=missions`) && moved(`${HU}/mnet.html?view=missions`).location === `${CO}/mnet.html?view=missions` && !!moved(`${CO}/mnet.html?view=missions`) && moved(`${CO}/mnet.html?view=missions`).location === `${CO}/?view=missions`, { url: page.url(), door: moved(`${HU}/mnet.html?view=missions`), platform: moved(`${CO}/mnet.html?view=missions`) });
+  await page.goto('https://www.humanuprise.com/?view=feed', { waitUntil: 'domcontentloaded' });
+  await page.waitForURL(`${CO}/?view=feed`, { timeout: 90000 }).catch(() => {});
+  check(S, 'www goes to the platform in one 301, query intact', page.url() === `${CO}/?view=feed` && !!moved('https://www.humanuprise.com/?view=feed') && moved('https://www.humanuprise.com/?view=feed').location === `${CO}/?view=feed`, { url: page.url(), served: moved('https://www.humanuprise.com/?view=feed') });
   await page.goto(`${HU}/album.html`, { waitUntil: 'domcontentloaded' });
-  await page.waitForURL(`${HOUSE}/album.html`, { timeout: 90000 }).catch(() => {});
-  check(S, '/album.html on this host is a 301 to Matthew\'s site', page.url() === `${HOUSE}/album.html` && !!moved(`${HU}/album.html`) && moved(`${HU}/album.html`).location === `${HOUSE}/album.html`, { url: page.url(), served: moved(`${HU}/album.html`) });
+  await page.waitForURL(`${CO}/album.html`, { timeout: 90000 }).catch(() => {});
+  check(S, '/album.html goes to the same path on the platform, which serves it', page.url() === `${CO}/album.html` && !!moved(`${HU}/album.html`) && moved(`${HU}/album.html`).location === `${CO}/album.html` && served.some((x) => x.url === `${CO}/album.html` && x.status === 200), { url: page.url(), served: moved(`${HU}/album.html`) });
+  const door = served.filter((x) => new URL(x.url).hostname.endsWith('humanuprise.com'));
+  check(S, 'the door serves nothing itself: every answer it gave was a 301 to the platform', door.length >= 4 && door.every((x) => x.status === 301 && String(x.location).startsWith(`${CO}/`)), door);
+  check(S, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }
 
@@ -367,7 +358,7 @@ const settleWorld = async (page) => {
   await ctx.close();
 }
 
-/* ---------- 3b. the company's door: mccluster.org is the World today (owner, 2026-10-15) ---------- */
+/* ---------- 3b. the platform: mccluster.org is the World at its root (owner, 2026-10-15) and, from P1, every page at its path ---------- */
 {
   const S = 'company-host';
   const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true });
@@ -380,12 +371,12 @@ const settleWorld = async (page) => {
   check(S, 'the Earth is in a frame on the same host, so the bridge is same-origin', !!globe && globe.url().startsWith(`${CO}/action-globe.html`), globe && globe.url());
   const b = await bar(page);
   check(S, 'the bar is Music | M | Globe', b.columns.join('|') === 'music|home|world', b.columns);
-  check(S, 'Music and the M go to Matthew\'s site outright', b.music === `${HOUSE}/listen.html` && b.home === `${HOUSE}/index.html`, { music: b.music, home: b.home });
+  check(S, 'from P1 the bar is local here: Music is this host\'s listen.html, the M its HERE front door', b.music === `${CO}/listen.html` && b.home === `${CO}/index.html`, { music: b.music, home: b.home });
   check(S, 'the Globe stays home, at the root of this host', b.world === `${CO}/?view=feed`, b.world);
   check(S, 'the Globe coin is lit at the root, not the M', b.lit.join(',') === 'world', b.lit);
   const files = served.filter((x) => x.url.startsWith(CO)).map((x) => new URL(x.url).pathname);
   check(S, 'the World\'s files came through this host', files.includes('/js/mnet.js') && files.includes('/css/mnet.css') && files.some((p) => p.startsWith('/assets/')), files.length);
-  check(S, 'rooms carry noindex; the front door does not', served.some((x) => x.url === `${CO}/` && x.robots === null) && served.some((x) => x.url.startsWith(`${CO}/action-globe.html`) && x.robots === 'noindex'));
+  check(S, 'from P1 the pages the platform serves carry no noindex header: the front door and the World\'s frame alike', served.some((x) => x.url === `${CO}/` && x.status === 200 && x.robots === null) && served.some((x) => x.url.startsWith(`${CO}/action-globe.html`) && x.status === 200 && x.robots === null), served.filter((x) => x.url === `${CO}/` || x.url.startsWith(`${CO}/action-globe.html`)));
   check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   await page.screenshot({ path: join(OUT, 'company-host-guest-iphone.png') });
   check(S, 'no page errors', errors.length === 0, errors);
@@ -402,10 +393,25 @@ const settleWorld = async (page) => {
   check(S, '/company is McCluster Corp\'s page, with its own canonical, no executable scripts, and a door to the World at the root', /^McCluster Corp/.test(company.title) && company.canonical === `${CO}/company` && company.world === `${CO}/` && company.scripts === 0, company);
   check(S, 'nothing scrolls sideways at 390 on the company page', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
   await page.screenshot({ path: join(OUT, 'company-page-iphone.png') });
-  /* everything else is Matthew's */
+  /* from P1 every page answers here at its path: the HERE front door at /index.html (a World query on it goes to the
+     root), the albums and the rest passed through; only Whip Equipped and the owner's own pages are Matthew's alone */
+  await page.goto(`${CO}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.appbar [data-appnav="home"]', { timeout: 30000 }).catch(() => {});
+  const front = await page.evaluate(() => ({ url: location.href, world: !!document.getElementById('mnWorld'), lit: [...document.querySelectorAll('.appbar .is-here')].map((a) => a.getAttribute('data-appnav')) }));
+  check(S, '/index.html is the HERE front door on this host, not the World, and it lights the M', front.url === `${CO}/index.html` && !front.world && front.lit.join(',') === 'home' && served.some((x) => x.url === `${CO}/index.html` && x.status === 200), front);
+  check(S, 'nothing scrolls sideways at 390 on the front door', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
+  await page.screenshot({ path: join(OUT, 'company-host-front-door-iphone.png') });
+  await page.goto(`${CO}/index.html?view=missions`, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL((u) => u.pathname === '/' && u.searchParams.get('view') === 'missions', { timeout: 90000 }).catch(() => {});
+  check(S, 'a World query on /index.html is a 301 to the root', page.url() === `${CO}/?view=missions` && !!moved(`${CO}/index.html?view=missions`) && moved(`${CO}/index.html?view=missions`).location === `${CO}/?view=missions`, { url: page.url(), served: moved(`${CO}/index.html?view=missions`) });
   await page.goto(`${CO}/album.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.appbar', { timeout: 30000 }).catch(() => {});
+  check(S, '/album.html answers on this host at its path, never a 301 to Matthew\'s site', page.url() === `${CO}/album.html` && served.some((x) => x.url === `${CO}/album.html` && x.status === 200) && !moved(`${CO}/album.html`), { url: page.url(), served: served.filter((x) => x.url === `${CO}/album.html`) });
+  check(S, 'nothing scrolls sideways at 390 on a page the platform passes through', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
+  await page.goto(`${CO}/whip.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 90000 });
-  check(S, '/album.html on this host is a 301 to Matthew\'s site', page.url() === `${HOUSE}/album.html` && !!moved(`${CO}/album.html`) && moved(`${CO}/album.html`).location === `${HOUSE}/album.html`, { url: page.url(), served: moved(`${CO}/album.html`) });
+  check(S, 'Whip Equipped (Matthew\'s own, profile_only) is a 301 to the same path on his site', page.url() === `${HOUSE}/whip.html` && !!moved(`${CO}/whip.html`) && moved(`${CO}/whip.html`).location === `${HOUSE}/whip.html`, { url: page.url(), served: moved(`${CO}/whip.html`) });
+  check(S, 'no page errors on the pages the platform passes through', errors.length === 0, errors);
   await ctx.close();
 }
 
@@ -645,10 +651,20 @@ const settleWorld = async (page) => {
   await guest.ctx.close();
 }
 
-/* ---------- 4. one M Account, every host: a member taps the Globe, crosses to the World's door and comes back ---------- */
+/* ---------- 4. one M Account, every host: a member taps the Globe and arrives signed in, carried (P1) ---------- */
+/* Before P1 the bar wrote the member's sign-in into the crossing link's fragment (#mcc_handoff) and the World's host
+   traded it. From P1 that writer is off (its reader stays until P4) and the platform carries the sign-in itself: a page
+   there with no session asks Matthew's host once, through a hidden same-site frame of his carry page, and trades the
+   answer at the same POST /v1/auth/handoff. No token rides in any address. The platform serves every page from P1, so
+   Music and the site's pages stay on it; only Whip Equipped and the owner's own pages are his host's alone. */
 {
-  const S = 'sign-in-handoff';
-  const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true }, { memberOn: BASE });
+  const S = 'sign-in-carry';
+  /* signed in on Matthew's site: this checkout stands in for his pages, and his host's own origin holds the same
+     session, which is what the carry reads */
+  const { ctx, page, errors } = await open({ viewport: { width: 390, height: 844 }, mobile: true }, { memberOn: [BASE, HOUSE] });
+  const urls = [];
+  ctx.on('request', (r) => urls.push(r.url()));
+  page.on('framenavigated', (f) => urls.push(f.url()));
   await page.goto(`${BASE}/listen.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 20000 }).catch(() => {});
   const signedIn = await page.evaluate(() => document.body.classList.contains('mcc-auth-in'));
@@ -664,33 +680,45 @@ const settleWorld = async (page) => {
   check(S, 'from Music the Globe opens the World in a layer over the page (world=1), its frame the company\'s root', /\/listen\.html\?world=1$/.test(layered.url) && !!layered.frame && layered.frame.startsWith(`${CO}/`), layered);
   await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in') && !!document.querySelector('.appbar [data-appnav="world"]'), null, { timeout: 30000 }).catch(() => {});
+  /* what the layer's World asked for was its own: count the crossing's alone */
+  carried.handoff.length = 0; carried.verify.length = 0; carried.bootstrap.length = 0; asked.length = 0;
   await page.click('.appbar [data-appnav="world"]');
-  await page.waitForURL((u) => u.origin === CO && !u.hash, { timeout: 90000 }).catch(() => {});   // the next check says where it landed
+  await page.waitForURL((u) => u.origin === CO, { timeout: 90000 }).catch(() => {});   // the next check says where it landed
   await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in') && !!document.querySelector('#mnFeed [data-post-id]'), null, { timeout: 60000 }).catch(() => {});
   const arrived = await page.evaluate(() => ({ url: location.href, hash: location.hash, signedIn: document.body.classList.contains('mcc-auth-in'), session: JSON.parse(localStorage.getItem('mccdb_session') || 'null'), composer: !!document.querySelector('.mn__create'), guestCard: !!document.querySelector('[data-guest-ask]') }));
-  check(S, 'the World\'s host received the sign-in: the fragment is gone from the address', arrived.url === `${CO}/?view=feed` && arrived.hash === '', { url: arrived.url, hash: arrived.hash });
-  /* (an earlier scenario forwarded a bogus fragment on the house, which a guest page tries to exchange and is refused; this is the member's) */
-  check(S, 'the arriving page exchanged the carried token from its own origin', carried.handoff.some((h) => h.origin === CO && h.authorization === 'Bearer ' + SESSION.token), carried.handoff);
+  check(S, 'the Globe lands on the World at the platform\'s root, nothing in the fragment', arrived.url === `${CO}/?view=feed` && arrived.hash === '', { url: arrived.url, hash: arrived.hash });
+  const leaked = urls.filter((u) => u.includes(SESSION.token) || u.includes(SESSION.fresh) || /mcc_handoff/.test(u));
+  check(S, 'from P1 no address carried the sign-in: no request and no page address held a token or #mcc_handoff', leaked.length === 0, leaked.map((u) => u.replace(SESSION.token, '<house token>').replace(SESSION.fresh, '<fresh token>')));
+  check(S, 'the platform asked Matthew\'s host for the sign-in through his carry page', asked.some((u) => u.startsWith(`${HOUSE}/carry.html`)), asked);
+  check(S, 'the platform traded the carried token from its own origin, at the same POST /v1/auth/handoff, as a bearer header', carried.handoff.length >= 1 && carried.handoff.every((h) => h.origin === CO && h.authorization === 'Bearer ' + SESSION.token), carried.handoff.map((h) => ({ origin: h.origin, house: h.authorization === 'Bearer ' + SESSION.token })));
   check(S, 'Supabase turned the one-time token into a session of this origin\'s own', carried.verify.length >= 1 && carried.verify[0].body && carried.verify[0].body.type === 'magiclink' && carried.verify[0].body.token_hash === 'th-fixture', carried.verify);
-  check(S, 'the session stored on the World\'s host is the fresh one, not the house\'s', arrived.session && arrived.session.access_token === SESSION.fresh && arrived.session.refresh_token === 'refresh-world', arrived.session);
-  check(S, 'the World booted as a member: the composer, the member feed, the bar signed in', arrived.signedIn && arrived.composer && carried.bootstrap.some((b) => b.authorization === 'Bearer ' + SESSION.fresh && b.origin === CO), { signedIn: arrived.signedIn, composer: arrived.composer, bootstrap: carried.bootstrap });
+  check(S, 'the session stored on the platform is the fresh one, not the house\'s', arrived.session && arrived.session.access_token === SESSION.fresh && arrived.session.refresh_token === 'refresh-world', arrived.session && { fresh: arrived.session.access_token === SESSION.fresh, refresh: arrived.session.refresh_token });
+  check(S, 'the World booted as a member: the composer, the member feed, the bar signed in', arrived.signedIn && arrived.composer && carried.bootstrap.some((b) => b.authorization === 'Bearer ' + SESSION.fresh && b.origin === CO), { signedIn: arrived.signedIn, composer: arrived.composer, bootstrap: carried.bootstrap.length });
   check(S, 'nothing scrolls sideways at 390', (await fits(page)).sw === (await fits(page)).cw, await fits(page));
-  await page.screenshot({ path: join(OUT, 'handoff-member-iphone.png') });
-  /* and back: the Music tab carries the World host's own fresh token to Matthew's site */
+  await page.screenshot({ path: join(OUT, 'carry-member-iphone.png') });
+  /* and on: from P1 Music is the platform's own page, so the member stays on this origin, signed in */
+  landed.length = 0;
   await page.click('.appbar [data-appnav="music"]');
-  await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 90000 });
-  const back = page.url();
-  check(S, 'tapping Music from the World\'s host carries the sign-in back in the fragment', back.startsWith(`${HOUSE}/listen.html#mcc_handoff=`) && decodeURIComponent(back.split('mcc_handoff=')[1]) === SESSION.fresh && landed.includes(`${HOUSE}/listen.html`), back.replace(SESSION.fresh, '<fresh token>'));
-  /* a page link to one of Matthew's rooms (a relative album.html, a /receipt.html) looks same-origin on the
-     World's host; the bar sends it to his site outright, carrying the sign-in, instead of letting the Worker
-     301 it there signed out (Codex, PR #434) */
-  await page.goto(`${CO}/?view=feed`, { waitUntil: 'domcontentloaded' });
+  await page.waitForURL((u) => u.pathname === '/listen.html', { timeout: 90000 }).catch(() => {});
   await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 30000 }).catch(() => {});
-  await page.evaluate(() => { const a = document.createElement('a'); a.id = 'roomLink'; a.href = '/receipt.html?a=11111111-1111-4111-8111-111111111111'; a.textContent = 'Receipt'; a.style.cssText = 'position:fixed;top:8px;left:8px;z-index:9999;color:#fff'; document.body.appendChild(a); });
-  await page.click('#roomLink');
+  const music = await page.evaluate(() => ({ url: location.href, signedIn: document.body.classList.contains('mcc-auth-in') }));
+  check(S, 'tapping Music opens the platform\'s own listen.html: same origin, still signed in, nothing in the address', music.url === `${CO}/listen.html` && music.signedIn && landed.length === 0, { music, landed });
+  /* a page link on the World's own page: the site's pages are served here from P1, so a relative album.html stays on
+     this origin (the Worker answers it; no 301). A link to Whip Equipped, Matthew's own (profile_only), still goes to his
+     host outright rather than through the Worker's 301 (Codex, PR #434), and from P1 with no sign-in in its address. */
+  const linkOnWorld = async (id, href) => {
+    await page.goto(`${CO}/?view=feed`, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 30000 }).catch(() => {});
+    await page.evaluate(([id, href]) => { const a = document.createElement('a'); a.id = id; a.href = href; a.textContent = id; a.style.cssText = 'position:fixed;top:8px;left:8px;z-index:9999;color:#fff'; document.body.appendChild(a); }, [id, href]);
+    await page.click('#' + id);
+  };
+  await linkOnWorld('roomLink', 'album.html');
+  await page.waitForURL((u) => u.pathname === '/album.html', { timeout: 90000 }).catch(() => {});
+  check(S, 'a page link to one of the site\'s pages stays on the platform, which serves it', page.url() === `${CO}/album.html` && served.some((x) => x.url === `${CO}/album.html` && x.status === 200), page.url());
+  await linkOnWorld('whipLink', '/whip.html');
   await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 90000 });
   const room = page.url();
-  check(S, 'a page link to one of Matthew\'s rooms goes to his site outright, carrying the sign-in', room.startsWith(`${HOUSE}/receipt.html?a=11111111-1111-4111-8111-111111111111#mcc_handoff=`) && decodeURIComponent(room.split('mcc_handoff=')[1]) === SESSION.fresh && !served.some((x) => x.url.startsWith(`${CO}/receipt.html`)), room.replace(SESSION.fresh, '<fresh token>'));
+  check(S, 'a link to Whip Equipped (Matthew\'s own, profile_only) goes to his host outright, with no sign-in in the address', room === `${HOUSE}/whip.html` && !served.some((x) => x.url.startsWith(`${CO}/whip.html`)), room);
   check(S, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }

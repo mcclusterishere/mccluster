@@ -10,6 +10,8 @@ const OUT=process.argv[2]||'/tmp/site-navigation-proof';
 const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'))('playwright');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const BASE='https://matthew.mccluster.org', USER='11111111-1111-4111-8111-111111111111';
+/* from P1 the platform serves the member pages: on Matthew's host the bar's door to a member's front page is the platform's */
+const PLATFORM='https://mccluster.org';
 const MIME={'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.html':'text/html','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const results=[];
 function check(name,ok,detail){results.push({name,pass:!!ok});console.log((ok?'PASS ':'FAIL ')+name+(ok?'':' '+JSON.stringify(detail)));assert.ok(ok,name);}
@@ -149,15 +151,15 @@ try{
     const {ctx,page,errors}=await setup(390,'member');
     await page.goto(BASE+'/license.html');
     await page.waitForFunction(()=>MCC_BAR.ownPerspective()?.handle==='qa-member');
-    check('signed-in center defaults to this member front page',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=qa-member');
+    check('signed-in center defaults to this member front page, on the platform',
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===PLATFORM+'/member-front.html?handle=qa-member');
     await page.evaluate(()=>dispatchEvent(new CustomEvent('mcc:perspective',{detail:{kind:'member',handle:'other-member',name:'Other member'}})));
     check('opening another member changes the center destination',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=other-member');
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===PLATFORM+'/member-front.html?handle=other-member');
     await page.reload();
     await page.waitForFunction(()=>MCC_BAR.auth().verified);
     check('chosen center perspective survives reloading within account',
-      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===BASE+'/member-front.html?handle=other-member');
+      (await page.locator('.appbar [data-appnav="home"]').getAttribute('href'))===PLATFORM+'/member-front.html?handle=other-member');
     await page.goto(BASE+'/index.html?front=house');
     await page.waitForFunction(()=>MCC_BAR.auth().verified);
     check('visiting founder switches center back to original house',
