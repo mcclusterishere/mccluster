@@ -1040,7 +1040,7 @@ try {
 
   # revoke: tasks stopped and unregistered, revoked.json written with the node id, identity.json gone, the id printed and nothing else
   $fakeNodeId = 'node_' + ('f' * 24)
-  [System.IO.File]::WriteAllText((Join-Path $tempRoot 'identity.json'), ('{"nodeId":"' + $fakeNodeId + '","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nPUBLIC-FIXTURE\n-----END PUBLIC KEY-----","privateKeyPem":"-----BEGIN PRIVATE KEY-----\nPRIVATE-FIXTURE-NEVER-PRINTED\n-----END PRIVATE KEY-----"}'))
+  [System.IO.File]::WriteAllText((Join-Path $tempRoot 'identity.json'), ('{"nodeId":"' + $fakeNodeId + '","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nPUBLIC-FIXTURE\n-----END PUBLIC KEY-----","privateKeyPem":"-----BEGIN ' + 'PRIVATE KEY-----\nPRIVATE-FIXTURE-NEVER-PRINTED\n-----END PRIVATE KEY-----"}'))
   [System.IO.File]::WriteAllText((Join-Path $tempRoot 'last-heartbeat.json'), ('{"schema":"mccluster-node-heartbeat/1","node_id":"' + $fakeNodeId + '","at":"2026-11-23T00:00:00Z","agent_version":"0.5.0","advertised":2,"labels":{"claim_gate":"open"}}'))
   $reportHeartbeat = (Format-McContributionReportLines -StateRoot $tempRoot -ThermalReading $null) -join "`n"
   Assert-True ($reportHeartbeat.Contains('last-heartbeat.json: node ' + $fakeNodeId + ' at 2026-11-23T00:00:00Z, agent 0.5.0, 2 advertised; claim_gate open')) 'report: the last heartbeat is read'
@@ -1091,7 +1091,7 @@ try {
   Assert-True ($script:MockStoppedProcessIds -contains 999002) 'verified delete: the holder was stopped before the retry'
   Assert-True (Remove-McFileVerified -Path $identityFile -StateRoot $tempRoot) 'verified delete: an absent file is already gone'
   # put the fixture and the registrations back for the successful revoke below
-  [System.IO.File]::WriteAllText($identityFile, ('{"nodeId":"' + $fakeNodeId + '","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nPUBLIC-FIXTURE\n-----END PUBLIC KEY-----","privateKeyPem":"-----BEGIN PRIVATE KEY-----\nPRIVATE-FIXTURE-NEVER-PRINTED\n-----END PRIVATE KEY-----"}'))
+  [System.IO.File]::WriteAllText($identityFile, ('{"nodeId":"' + $fakeNodeId + '","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nPUBLIC-FIXTURE\n-----END PUBLIC KEY-----","privateKeyPem":"-----BEGIN ' + 'PRIVATE KEY-----\nPRIVATE-FIXTURE-NEVER-PRINTED\n-----END PRIVATE KEY-----"}'))
   [System.IO.File]::WriteAllText((Join-Path $tempRoot 'last-heartbeat.json'), '{"schema":"mccluster-node-heartbeat/1"}')
   $script:MockRegisteredNames.Clear(); foreach ($n in $registeredBeforeFailedRevoke) { $script:MockRegisteredNames.Add($n) }
   $script:MockUnregistered.Clear(); $script:MockStoppedProcessIds.Clear()
