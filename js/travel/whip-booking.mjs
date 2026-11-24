@@ -1,6 +1,12 @@
 /* Whip Equipped booking sheet for the World travel planner.
  * Trips are quoted/created ONLY through the Whip server. This module never
  * synthesizes a price, a driver, a journey line, or a booking confirmation. */
+/* Whip's own Driver app where it is served (window.MCC_SITE, js/shell-boot.js, the first script on the World's page:
+   Whip Equipped lives only on Matthew's host); without the table it stays on this host */
+export function whipDriverHref() {
+  const site = typeof window !== 'undefined' ? window.MCC_SITE : null;
+  return site && typeof site.siteUrl === 'function' ? site.siteUrl('/whip/driver/') : '/whip/driver/';
+}
 export function attachWhipBooking({ panel, currentTrip, accountApi }) {
   if (!panel || typeof currentTrip !== 'function' || typeof accountApi !== 'function') return null;
   const button = document.createElement('button');
@@ -27,7 +33,7 @@ export function attachWhipBooking({ panel, currentTrip, accountApi }) {
     </div>
     <button id="weBookCancelRide" type="button" hidden>Cancel ride request</button>
     <p class="we-book-terms">Pickup and destination coordinates are sent to Whip Equipped only when you request a quote. A fare quote is not a reservation, payment authorization is not driver acceptance, and no pickup is promised until a cleared driver accepts.</p>
-    <a href="https://matthew.mccluster.org/whip/driver/" id="weBookDriver">Are you a driver? Apply to Whip ↗</a>
+    <a href="${whipDriverHref()}" id="weBookDriver">Are you a driver? Apply to Whip ↗</a>
   `;
   document.body.append(dialog);
   const $ = id => dialog.querySelector('#' + id);

@@ -105,7 +105,10 @@ While already in Control, navigation changes the hash on the same document. The
 organization query, optional workspace presentation, editors and retained
 Analytics globe keep their existing lifecycle. Browser Back/Forward work normally.
 From a World host, Control points to Matthew's host using the bar's existing
-cross-origin sign-in handoff. Local chapter tabs, filters and editor tools remain
+cross-origin sign-in handoff. That is today's split (stage P0 of the one-platform
+plan, `docs/control-plane/DOMAINS-AND-ENTITIES.md`): from P1 the platform serves
+Control at its own path (`control.html` is in `url_ownership.platform`), so the link
+stays on the platform's origin and a session moves through the carry page instead. Local chapter tabs, filters and editor tools remain
 local; they do not replace the global destination menu.
 
 If the shared module fails, the original Home link and the Control sections

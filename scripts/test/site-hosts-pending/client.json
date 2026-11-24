@@ -1,0 +1,21 @@
+{
+  "lane": "client",
+  "scope": "js/",
+  "reads": "window.MCC_SITE (the generated block at the top of js/shell-boot.js)",
+  "rule": "Each entry is a file that still names a site host in code, outside the generated outputs of tools/build-site-hosts.mjs: its count of host literals (comments are not counted) and the stage that converts it. The list only shrinks (scripts/test/site-hosts.test.mjs, and tools/build-site-hosts.mjs PENDING_CEILING for --scan): a file on no list may not name a host; no list names a file or allows a count beyond what the lists allowed when P0 was built (7 files, 112 literals); each entry allows exactly what the scan finds, so a literal removed is a count lowered in the same change and the room it freed is never refilled; a file that names none leaves its list.",
+  "how_to_leave": "Convert the file to read its hosts from window.MCC_SITE (the generated block at the top of js/shell-boot.js), run node tools/build-site-hosts.mjs --scan, and lower the count to what the scan prints; at zero delete the entry. Never raise a count. Edit only your own lane's list.",
+  "files": [
+    {
+      "file": "js/live-content.js",
+      "count": 1,
+      "stage": "P4",
+      "note": "The privacy cookie's domain is read from window.MCC_SITE.cookie_domain; the literal left is its fallback for the eight published pages that load this file without js/shell-boot.js first (action/league.html, archive.html, cut.html, door.html, embed.html, merch.html, prints.html, walls.html; scripts/test/site-hosts-client.test.mjs keeps the list honest). It leaves when those pages read the table."
+    },
+    {
+      "file": "js/mcc-auth.js",
+      "count": 1,
+      "stage": "F",
+      "note": "inferAppContext labels sign-ins from McCluster's web (/mccluster\\.org$/): twelve published pages load this file without js/shell-boot.js (auth/index.html, auth/seek-first-handoff.html, auth/seek-first-start.html, screens/*.html) and satellites copy it (its CANONICAL SOURCE line), so window.MCC_SITE cannot carry it yet; which app key the platform's own host reports once it is equityuprise.com is stage F's decision. Unchanged in P0."
+    }
+  ]
+}

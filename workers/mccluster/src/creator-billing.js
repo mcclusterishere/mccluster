@@ -1,5 +1,6 @@
 import {stripeRequest} from './whip/stripe.js';
 import {reply,fail} from './lib/http.js';
+import {returnOrigin} from './platform/hosts.generated.js';
 
 const PRICE_ENV={
  starter:{monthly:'CREATOR_STARTER_MONTHLY_PRICE_ID',annual:'CREATOR_STARTER_ANNUAL_PRICE_ID'},
@@ -7,7 +8,6 @@ const PRICE_ENV={
  pro:{monthly:'CREATOR_PRO_MONTHLY_PRICE_ID',annual:'CREATOR_PRO_ANNUAL_PRICE_ID'},
  business:{monthly:'CREATOR_BUSINESS_MONTHLY_PRICE_ID',annual:'CREATOR_BUSINESS_ANNUAL_PRICE_ID'}
 };
-const ORIGIN='https://matthew.mccluster.org';
 export async function handleCreatorCheckout(request,env){
  const path=new URL(request.url).pathname;
  if(path!=='/v1/creator-billing/checkout')return null;
@@ -30,7 +30,9 @@ export async function handleCreatorCheckout(request,env){
  if(!price||!/^price_[A-Za-z0-9]+$/.test(price))return fail(request,env,'Selected subscription is not available',503);
  if(env.CREATOR_BILLING_ALLOW_LIVE!=='true'&&!env.STRIPE_SECRET_KEY.startsWith('sk_test_'))
   return fail(request,env,'Creator checkout is restricted to Stripe test mode',503);
- const origin=ORIGIN;
+ /* the buyer comes back where they started when that origin serves pages (the generated return origins, exact
+    match on the request's Origin), else where the page is served today (SPEC-PLATFORM 2.9) */
+ const origin=returnOrigin(request.headers.get('origin'));
  const session=await stripeRequest(env,'checkout/sessions',{
   mode:'subscription',
   line_items:[{price,quantity:1}],

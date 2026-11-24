@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 767,
+  "candidate_count": 780,
   "capability_source_count": 104,
-  "support_only_count": 663,
+  "support_only_count": 676,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1565,6 +1565,41 @@
       "rationale": "Read-only verification of the twelve production-only migrations recorded at ledger 376, including the two Equity Uprise platform migrations applied outside Git (eu_platform_* objects): what production holds, what was read and what it does not establish. Evidence only; no building capability, program or geometry."
     },
     {
+      "path": "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Session handoff of 2026-11-23: state, order of work, rules and owner steps for the next agent; references Equity Uprise by name only."
+    },
+    {
+      "path": "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Music bar design record (handoff copy of 2026-11-23); mentions the Equity Uprise World only as a page the bar appears on."
+    },
+    {
+      "path": "docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "One music engine design spec (handoff copy of 2026-11-23); names the Equity Uprise World as a host page only."
+    },
+    {
+      "path": "docs/control-plane/handoff-20261123/specs/SPEC-M5.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Music one-player design spec (handoff copy of 2026-11-23); names the Equity Uprise World as a host page only."
+    },
+    {
+      "path": "docs/control-plane/handoff-20261123/specs/SPEC-PLATFORM.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Platform domain and tenancy design spec (handoff copy of 2026-11-23); names Equity Uprise as the brand and future domain, no building capability."
+    },
+    {
       "path": "docs/control-plane/registry.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -2622,6 +2657,13 @@
       "rationale": "Server Lab (SERVER-LAB-SPEC.md): owner-gated hands-on 3D rack/server lab that presents the B1 MDF sandbox clone and runs the canonical Lab Runtime (IT-LAB-041..051); presentation of existing lab-runtime authority, not an independent program capability."
     },
     {
+      "path": "js/shell-boot.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "The pages' first script: reserves navigation before first paint and, in the block tools/build-site-hosts.mjs generates at its top, sets window.MCC_SITE, the site's host table, whose page lists name the Equity Uprise pages among every published page. Not a building capability."
+    },
+    {
       "path": "js/site-navigation.js",
       "classification": "navigation_support",
       "capability_ids": [],
@@ -3139,6 +3181,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test-only read-only loopback server and observation fixture for canonical building visual evidence. It is not a published viewer or geometry authority."
+    },
+    {
+      "path": "scripts/e2e/fixtures/platform-hosts-20261123.json",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Recorded answers of the live hosts on 2026-11-23 (status, Location, canonical and security headers of every classified path, GET and HEAD only), the offline baseline of scripts/e2e/platform-hosts.e2e.mjs; it names the Equity Uprise pages by path only. No building capability, program or geometry."
     },
     {
       "path": "scripts/e2e/globe-games.e2e.mjs",
@@ -3766,6 +3815,13 @@
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
     },
     {
+      "path": "scripts/test/site-hosts.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Holds the one-platform host table (data/seo/domain-architecture.json): the generated outputs current and in agreement, no site host in code outside them, and the equityuprise.com rewrite, where Equity Uprise is only the next platform's site name. Not a building capability."
+    },
+    {
       "path": "scripts/test/song-test.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3785,6 +3841,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test harness that applies the pending E=Up module policy SQL; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "scripts/test/support/mcc-site.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test helper that reads the generated host table (window.MCC_SITE) from js/shell-boot.js and builds the equityuprise.com rewrite of scripts/test/site-hosts.test.mjs, where Equity Uprise is only the next platform's site name. Not a building capability."
     },
     {
       "path": "scripts/test/world-environment-lifecycle.test.mjs",
@@ -3894,6 +3957,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared Policy OS server helper used by multiple mapped Edge Functions; no independent user-facing capability."
+    },
+    {
+      "path": "supabase/functions/_shared/site-hosts.ts",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated host table for the Supabase functions (tools/build-site-hosts.mjs): return origins and the page lists, which name the Equity Uprise pages among every published page. Not a building capability."
     },
     {
       "path": "supabase/functions/collect/index.ts",
@@ -5404,6 +5474,13 @@
       "rationale": "Canonical platform API Worker routes; references the eu_is_admin owner check for the mission proof review route; not a building capability."
     },
     {
+      "path": "workers/mccluster/src/platform/hosts.generated.js",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generated host table for Worker mccluster (tools/build-site-hosts.mjs): hosts, doors, CORS and frame-ancestors lists and the page lists, which name the Equity Uprise pages among every published page. Not a building capability."
+    },
+    {
       "path": "workers/mccluster/src/prim3/learning.js",
       "classification": "shared_backend_support",
       "capability_ids": [],
@@ -5572,6 +5649,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pins the public brand, Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise), in the strings it tests; defines no building capability."
+    },
+    {
+      "path": "workers/mccluster/test/platform-router.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests the host router of Worker mccluster (src/platform/router.js) over every host, path class and method: today's table against the 2026-11-23 probe record, and the P1, P3 and equityuprise.com tables, where Equity Uprise is only the next platform's site name. Not a building capability."
     },
     {
       "path": "workers/mccluster/test/prim3-learning.test.mjs",

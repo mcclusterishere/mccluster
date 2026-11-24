@@ -16,7 +16,8 @@
      are Matthew's site, the Globe is the World's own door;
    - a creator's front page puts that creator in the middle of the bar for
      the session, with their own picture or initial, never a drawn mark,
-     and McCluster in Music opens the house.
+     and McCluster in Music opens his one artist page (owner, 2026-11-23: "It needs to be one profile. McCluster is
+     the artist."; docs/music/MUSIC-RELEASE-20261119.md, "Quick wins"), where the middle cell stays the house.
    Browser evidence: scripts/e2e/human-uprise-door.e2e.mjs. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -90,19 +91,21 @@ test('a creator\'s front page puts the creator in the middle of the bar, with th
     'the light coat swaps the M for its dark file, never a creator\'s picture');
 });
 
-test('in Music, McCluster opens the house and every artist opens their own front page', async () => {
+test('in Music, McCluster opens his one artist page and every artist opens their own front page', async () => {
   const music = await read('js/music-community.js');
   assert.match(music, /function paintArtists\(profiles\)/);
-  assert.match(music, /paintArtists\(\[\]\);\n\n  Promise\.all\(/, 'the house is painted before the directory answers');
+  assert.match(music, /paintArtists\(\[\]\);\n\n  Promise\.all\(/, 'McCluster is painted before the directory answers');
   assert.match(music, /paintArtists\(all\[1\] \|\| \[\]\);/);
-  assert.match(music, /<a class="artist artist--house" href="index\.html" aria-label="McCluster: the house">/);
+  assert.match(music, /<a class="artist artist--house" href="music-creator\.html\?handle=' \+ HOUSE_ARTIST \+ '" aria-label="McCluster, artist">/);
+  assert.match(music, /var HOUSE_ARTIST = "mccluster";/);
+  assert.match(await read('js/music-creator-profile.js'), /mcc:perspective-house/, 'on his own page the middle cell stays the house');
   assert.match(music, /<img class="artist__pic artist__pic--house" src="assets\/img\/m-mark\.png" alt="" width="56" height="56">/, 'the M as supplied');
   assert.match(music, /href="music-creator\.html\?handle=' \+ encodeURIComponent\(p\.handle\) \+ '"/);
   assert.match(music, /var ARTWORK = SB \+ "\/storage\/v1\/object\/public\/creator-artwork\/";/, 'a creator\'s picture is the one Creator Studio stored, the creator page\'s own rule');
   assert.match(music, /var avatar = safeArtwork\(p\.avatar_url\);/);
   assert.match(music, /<span class="artist__pic artist__pic--initial" aria-hidden="true">' \+ esc\(initialOf\(name\)\) \+ '<\/span>/);
   const house = music.indexOf('artist--house'), creators = music.indexOf('(profiles || []).forEach');
-  assert.ok(house > 0 && creators > house, 'the house is first');
+  assert.ok(house > 0 && creators > house, 'McCluster is first');
   const css = await read('css/music-room.css');
   assert.match(css, /\.artists__row \{ display: flex; gap: 0\.9rem; overflow-x: auto;/);
   assert.match(css, /\.artist__pic--house \{ border-radius: 0; background: none; box-shadow: none; object-fit: contain; \}/, 'no plate under the M');
@@ -111,14 +114,23 @@ test('in Music, McCluster opens the house and every artist opens their own front
 
 test('the Worker answers the World\'s host: the router is wired by host and its origins may call the API', async () => {
   const entry = await read('workers/mccluster/src/entry-platform.js');
-  assert.match(entry, /import \{ humanUpriseResponse \} from '\.\/human-uprise\/router\.js';/);
-  const http = await read('workers/mccluster/src/lib/http.js');
-  assert.match(http, /'https:\/\/humanuprise\.com',\n  'https:\/\/www\.humanuprise\.com',/);
+  assert.match(entry, /import \{ WORLD_DOOR_PARTS \} from '\.\/human-uprise\/router\.js';/);
+  assert.match(entry, /createSiteRouter\(\{ company: COMPANY_PARTS, worldDoor: WORLD_DOOR_PARTS \}\)/, 'one host router, the door\'s own files in it');
+  /* the door's origin and the API's CORS list come from the generated table, never a literal (SPEC-PLATFORM 2.3) */
+  const table = await import('../../workers/mccluster/src/platform/hosts.generated.js');
+  const http = await import('../../workers/mccluster/src/lib/http.js');
+  for (const origin of ['https://humanuprise.com', 'https://www.humanuprise.com']) {
+    assert.ok(table.CORS_ORIGINS.includes(origin), `the table lets ${origin} call the API`);
+    assert.ok(http.allowedOrigins({}).includes(origin), `and the API answers ${origin}`);
+  }
   const wrangler = await read('workers/mccluster/wrangler.toml');
   assert.match(wrangler, /ALLOWED_ORIGINS = "https:\/\/matthew\.mccluster\.org,https:\/\/mccluster\.org,https:\/\/humanuprise\.com,https:\/\/www\.humanuprise\.com,/);
+  const door = await import('../../workers/mccluster/src/human-uprise/router.js');
+  assert.equal(door.HUMAN_UPRISE_ORIGIN, 'https://humanuprise.com');
+  for (const u of ['https://api.mccluster.org/v1/health', 'https://mccluster.org/', 'https://matthew.mccluster.org/', 'https://humanuprise.com.evil.example/', 'https://evil-humanuprise.com/']) {
+    assert.equal(await door.humanUpriseResponse(new Request(u), {}, () => { throw new Error('must not fetch'); }), null, `inert for ${u}`);
+  }
   const router = await read('workers/mccluster/src/human-uprise/router.js');
-  assert.match(router, /export const HUMAN_UPRISE_ORIGIN = 'https:\/\/humanuprise\.com';/);
-  assert.match(router, /if \(host !== APEX && host !== WWW\) return null;/, 'inert for every other host');
   assert.doesNotMatch(router, /mccluster-core/, 'no second Worker');
 });
 

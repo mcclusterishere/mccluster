@@ -33,6 +33,26 @@ function mccControlPreview() {
   try { return window.parent !== window && window.parent.location.origin === location.origin && /(?:control|front-studio)\.html$/.test(window.parent.location.pathname); }
   catch (_) { return false; }
 }
+/* THE PAGE THIS DOCUMENT IS, fixed when it loads (music slice M5). The music shell (js/music-shell.js) keeps one music
+   page playing while the other music pages open over it as views, and writes the view's address into the address bar.
+   Read at event time, location would file the retained page's own events (a song ending, its dwell) under the view's
+   path, and on an artist view with that artist's creator_handle, the key the Worker's creator page report selects on.
+   A view's own events come from its own copy of this file, under its own identity; a view names the page it was
+   opened from as its referrer, also when Back or Forward rebuilt it at its own address. */
+var MCC_PAGE_IDENTITY = (function () {
+  var path = "index.html", handle = "", referrer = null;
+  try {
+    path = location.pathname.split("/").pop() || "index.html";
+    if (path === "music-creator.html") {
+      var h = new URLSearchParams(location.search).get("handle") || "";
+      if (/^[a-z0-9][a-z0-9._-]{2,39}$/.test(h)) handle = h;
+    }
+    referrer = document.referrer || null;
+    var view = window.MCC_MUSIC_VIEW;
+    if (view && typeof view.referrer === "string" && view.referrer) referrer = view.referrer;
+  } catch (_) {}
+  return { path: path, handle: handle, referrer: referrer };
+})();
 
 /* EVENT_OUTBOX_FACTORY_BEGIN */
 /* Consent-gated, minimal durable retry envelopes. One per-event key avoids
@@ -521,18 +541,24 @@ window.MCC_TRACK = (function () {
 
   function queueEvent(name, params) {
     var props = Object.assign({}, params || {});
-    // Retain the public creator identity without copying arbitrary URL queries.
-    if ((location.pathname.split("/").pop() || "") === "music-creator.html") {
-      var creatorHandle = new URLSearchParams(location.search).get("handle") || "";
-      if (/^[a-z0-9][a-z0-9._-]{2,39}$/.test(creatorHandle)) props.creator_handle = creatorHandle;
+    var page = MCC_PAGE_IDENTITY.path, handle = MCC_PAGE_IDENTITY.handle;
+    /* a song chosen in a music view and played by this document is filed on the page it was chosen on, as it was on
+       that page itself (music slice M5); the context rides in no event */
+    var chosen = props.mcc_chosen_on;
+    delete props.mcc_chosen_on;
+    if (chosen && typeof chosen.path === "string" && /^[a-zA-Z0-9._-]{1,120}$/.test(chosen.path)) {
+      page = chosen.path;
+      handle = page === "music-creator.html" && /^[a-z0-9][a-z0-9._-]{2,39}$/.test(String(chosen.handle || "")) ? String(chosen.handle) : "";
     }
+    // Retain the public creator identity without copying arbitrary URL queries.
+    if (page === "music-creator.html" && handle) props.creator_handle = handle;
     if (!consentNow()) return;
     var event = {
       id: uuid(), // per-event, never reused for a different action
       name: String(name || "").slice(0, 120),
-      path: location.pathname.split("/").pop() || "index.html",
+      path: page,
       props: props,
-      referrer: document.referrer || null,
+      referrer: MCC_PAGE_IDENTITY.referrer,
     };
     // Storage is deliberately minimal: raw client-supplied properties and
     // referrers never land in the retry shelf. First attempt keeps the full
@@ -550,20 +576,13 @@ window.MCC_TRACK = (function () {
     flush(false);
   };
 
-  /* NAMES WAITING FOR APPROVAL (music slice M3 follow-up; review RL-9). The names this house measures are
-     reviewed in its measurement dictionary (workers/mccluster/src/analytics/measurement-dictionary.js, kept equal
-     to the event taxonomy; the rule is docs/control-plane/ANALYTICS-EVENT-INVENTORY-20261021.md: a name nobody
-     reviewed stays unclassified). A new name a page already calls, before Matthew has approved measuring it, is
-     held here and is not sent: the call stays where it is, ready. Approving one is deleting its line here (and
-     reviewing it into the dictionary). */
-  var AWAITING_APPROVAL = {
-    /* a music read that failed or was cut off on the way (reason, second, try, path; no account, no place):
-       js/music-engine.js and album.html name it on every failed read (music slice M3). Waiting for Matthew's approval. */
-    music_interrupted: "music slice M3: waiting for Matthew's approval"
-  };
-
+  /* Every name a page sends is reviewed in the house's measurement dictionary
+     (workers/mccluster/src/analytics/measurement-dictionary.js; the rule is
+     docs/control-plane/ANALYTICS-EVENT-INVENTORY-20261021.md: a name nobody reviewed stays unclassified). The music
+     players' music_interrupted waited here for Matthew's approval (music slice M3 follow-up); he approved it and
+     music_error on 2026-11-23 ("For 6, I approved them"), and both are reviewed rows there now: one event per dropped
+     connection or failed song, never one per read (docs/music/MUSIC-RELEASE-20261119.md, "Quick wins"). */
   return function (name, params) {
-    if (Object.prototype.hasOwnProperty.call(AWAITING_APPROVAL, name)) return;
     params = params || {};
     if (ACQ && !params.acq) params.acq = ACQ.src + "/" + ACQ.med + (ACQ.cmp ? "/" + ACQ.cmp : "");
     queueEvent(name, params);
@@ -777,9 +796,15 @@ window.MCC_MODEL = (function () {
       var secs = Math.round((Date.now() - t0) / 1000);
       if (secs < 5) return; // a bounce teaches nothing
       sent = true;
-      window.MCC_TRACK("dwell", { page: location.pathname.split("/").pop() || "index.html", s: secs, depth: depth });
+      window.MCC_TRACK("dwell", { page: MCC_PAGE_IDENTITY.path, s: secs, depth: depth });
     }
     window.addEventListener("pagehide", flush);
+    /* the retained music page's time ends where a view covers it and starts again when it is revealed (music slice
+       M5); each view reports its own from its own document */
+    window.addEventListener("mcc:music-view", function (e) {
+      if (e && e.detail && e.detail.open) flush();
+      else { t0 = Date.now(); depth = 0; sent = false; }
+    });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") flush();
     });
@@ -860,7 +885,7 @@ window.MCC_MODEL = (function () {
         var t = String(params.track);
         var list = read().filter(function (r) { return r && r.t !== t; });
         list.unshift({ t: t, a: String(params.album || ""),
-          p: location.pathname.split("/").pop() || "index.html", at: Date.now() });
+          p: MCC_PAGE_IDENTITY.path, at: Date.now() });
         localStorage.setItem(KEY, JSON.stringify(list.slice(0, CAP)));
       });
     }

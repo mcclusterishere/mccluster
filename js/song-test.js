@@ -14,6 +14,7 @@
      var t = MCC_SONGTEST.mount(el, "cia-mind-control", { signin: "/account.html" })
      t.refresh()          re-ask the server (a song just ended)
      t.focus("pull-up")   bring one song's card into view
+     t.paint()            draw the cards again (the album: a held song's gate answered)
 
    The album player mounts it. Nothing here
    throws or blocks playback; signed out, it says how to take part.
@@ -64,12 +65,27 @@
   function track(name, props) { try { if (root.MCC_TRACK) root.MCC_TRACK(name, props || {}); } catch (e) {} }
   function label(v) { var hit = VERDICTS.filter(function (x) { return x[0] === v; })[0]; return hit ? hit[1] : v; }
 
+  /* THE CLOSING SONG IS HELD (owner, 2026-11-23: "We keep the song up, but it won't play"; review QW-R4). It plays
+     only for members who complete their full profile and answer a short questionnaire, and nobody can spend a play on
+     it, so its card says what its pop-up says (js/gated-audio.js holdCopy), never that an earned play opens it. The
+     album says which song is held for whoever is listening (opts.held); the house owner, whose own play opens it,
+     keeps the earned-play line. The same words stand in until the gate's script has loaded. */
+  var HELD_LINE = "This song plays only for members who complete their full profile and answer a short questionnaire. Complete your full profile now; the questionnaire opens soon.";
+  function heldLine() {
+    try {
+      var c = root.MCC_GATED && root.MCC_GATED.holdCopy && root.MCC_GATED.holdCopy(true);
+      if (c && c.text) return c.text;
+    } catch (e) {}
+    return HELD_LINE;
+  }
+
   function mount(box, album, opts) {
     opts = opts || {};
     var rows = [];
     var editing = {};      /* track → true while changing an answer */
     var drafts = {};       /* track → { verdict, why } not yet sent */
     var note = {};         /* track → message under the card */
+    function held(r) { try { return !!(opts.held && opts.held(r.track)); } catch (e) { return false; } }
 
     function paint() {
       box.textContent = "";
@@ -97,7 +113,7 @@
 
       if (!r.heard) {
         c.classList.add("is-locked");
-        c.appendChild(el("p", "stq-lock", r.gated
+        c.appendChild(el("p", "stq-lock", held(r) ? heldLine() : r.gated
           ? "Unlocks after you spend your earned play on it in the album player."
           : "Unlocks after you hear the whole song. Skipping ahead doesn’t count."));
       } else if (r.answer && !editing[r.track]) {
@@ -219,7 +235,7 @@
     /* a song the ledger just counted unlocks its card */
     if (root.MCC_LISTENS && root.MCC_LISTENS.onFinish) root.MCC_LISTENS.onFinish(function () { refresh(); });
     root.addEventListener("mcc:auth-changed", function () { refresh(); });
-    return { refresh: refresh, focus: focus, rows: function () { return rows; } };
+    return { refresh: refresh, focus: focus, paint: paint, rows: function () { return rows; } };
   }
 
   root.MCC_SONGTEST = { mount: mount };

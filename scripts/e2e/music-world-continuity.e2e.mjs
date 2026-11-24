@@ -90,11 +90,14 @@ async function setup(width=390,member=false,{parentScript,privacy=true,start='/l
   });
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   await page.goto(HOUSE+start,{waitUntil:parentScript?'domcontentloaded':'load'});
-  if(start==='/listen.html')await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'),!parentScript);
+  if(start==='/listen.html')await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&!!document.getElementById('q'),!parentScript);
   return {context,page,requests,messages,errors,reads};
 }
 async function play(page,album='here',title='Who Did The Shoot'){
   const selector=`[data-music-play][data-album=${JSON.stringify(album)}][data-track=${JSON.stringify(title)}]`;
+  /* Listen lists albums and artists (Matthew, 2026-11-23, "Quick wins" Q2 in docs/music/MUSIC-RELEASE-20261119.md): a
+     song's own play button is in Listen's search results */
+  if(!(await page.$(selector))){await page.fill('#q',title);await page.waitForSelector(selector);}
   await page.locator(selector).first().click();
   await page.waitForFunction(()=>MCC_MUSIC.current()&&!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>.15);
 }
@@ -270,6 +273,12 @@ try{
     /* A LOCKED PREVIEW NEVER STOPS THE QUEUE (music slice M3; decision D-11's default): the preview ends at its
        four seconds, one short line says what it was, and the next song plays in the same player, never the theme */
     const {context,page}=await setup();
+    /* the catalogue's one gated song is held for everyone but the house owner (Quick wins Q5), and an album stops after
+       its last song (Q6): the preview is proved on that song with its hold taken off and first on its record, in this
+       fixture only, so what follows the preview is the next song of the same record */
+    const unheld=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8'));
+    for(const a of unheld.albums){for(const t of a.tracks||[])delete t.hold;a.tracks=(a.tracks||[]).filter(t=>t.gated).concat((a.tracks||[]).filter(t=>!t.gated));}
+    await context.route('**/data/albums.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify(unheld)}));
     /* where the preview was stopped, read at the engine's own pause (the next song's source is set before the pause event is heard) */
     await page.evaluate(()=>{window.__previewStops=[];const a=MCC_MUSIC.audio,pause=a.pause;a.pause=function(){if(/niggy-nigg-preview/.test(a.currentSrc)&&!a.paused)__previewStops.push(a.currentTime);return pause.apply(this,arguments);};});
     await play(page,'cia-mind-control','Niggy Nigg Niggr');await world(page);
@@ -385,7 +394,8 @@ try{
     const {context,page}=await setup();
     const catalog=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8'));
     const album=catalog.albums.find(a=>a.slug==='cia-mind-control');
-    album.tracks=album.tracks.filter(t=>t.gated);
+    /* a gated song that is not held (the catalogue's one gated song is held since Quick wins Q5) */
+    album.tracks=album.tracks.filter(t=>t.gated).map(t=>{delete t.hold;return t;});
     await context.route('**/data/albums.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({albums:[album]})}));
     await context.route('**/assets/audio/fixture-grant.wav',r=>r.fulfill({contentType:'audio/wav',body:wav(2)}));
     await page.evaluate(()=>{
@@ -514,7 +524,7 @@ try{
   const notice=f=>f.evaluate(()=>({wall:!!document.getElementById('mccPrivacyGate'),pending:document.documentElement.getAttribute('data-privacy-gate'),banner:!!document.getElementById('mccPrivacyNotice')}));
   const none=n=>!n.wall&&!n.pending&&!n.banner;
   const privacyErrors=errors=>errors.filter(e=>/privacy|cookie/i.test(e));
-  const musicReady=page=>page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'));
+  const musicReady=page=>page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&!!document.getElementById('q'));
   {
     const {context,page,errors}=await setup(390,false,{privacy:false});
     const first=await notice(page);

@@ -1,0 +1,8 @@
+{
+  "lane": "functions",
+  "scope": "supabase/functions/",
+  "reads": "supabase/functions/_shared/site-hosts.ts",
+  "rule": "Each entry is a file that still names a site host in code, outside the generated outputs of tools/build-site-hosts.mjs: its count of host literals (comments are not counted) and the stage that converts it. The list only shrinks (scripts/test/site-hosts.test.mjs, and tools/build-site-hosts.mjs PENDING_CEILING for --scan): a file on no list may not name a host; no list names a file or allows a count beyond what the lists allowed when P0 was built (7 files, 112 literals); each entry allows exactly what the scan finds, so a literal removed is a count lowered in the same change and the room it freed is never refilled; a file that names none leaves its list.",
+  "how_to_leave": "Convert the file to read its hosts from supabase/functions/_shared/site-hosts.ts, run node tools/build-site-hosts.mjs --scan, and lower the count to what the scan prints; at zero delete the entry. Never raise a count. Edit only your own lane's list.",
+  "files": []
+}

@@ -14,14 +14,14 @@ Private cross-model context lives in Supabase schema `ai_context`. Do not commit
 | Cloudflare project + Worker: public edge and API `https://api.mccluster.org` (`mccluster-mcp` is its stateless MCP transport) | `mccluster`, source `workers/mccluster` |
 | Supabase (shared durable truth) | `zmnhbrjyhxzhkxmhkexs` |
 | Persistent execution | OVH McCluster Core from `core/`, promoted through `deploy/ovh-production`: not a Worker, not a second backend |
-| Matthew McCluster's property | `https://matthew.mccluster.org` (GitHub Pages, this repo) |
-| McCluster Corp's property | `https://mccluster.org` (Worker `mccluster` by host once routed); `https://humanuprise.com` is a McCluster Corp host too |
+| McCluster Corp's platform | `https://mccluster.org`, set in one place (`data/seo/domain-architecture.json` → `platform.origin`), Worker `mccluster` by host: the World and `/company` today (stage P0), the whole site from P1; `https://humanuprise.com` is a McCluster Corp door too |
+| Matthew McCluster's profile | `https://matthew.mccluster.org` (GitHub Pages, this repo): a tenant of the platform; from P3 the pages that moved answer 301 to the platform |
 
 There is no Worker named `mccluster-core`. Do not create one.
 
-## Two properties, two entities
+## One platform, tenant properties, separate entities
 
-`docs/control-plane/DOMAINS-AND-ENTITIES.md` is the authority. `https://matthew.mccluster.org` is **Matthew McCluster's** personal property (GitHub Pages, this repo). `https://mccluster.org` is **McCluster Corp's** company property, served by Worker `mccluster` by host once routed; its root is the Equity Uprise World (Equity Uprise is the public brand, owner 2026-10-28) and the company page is `/company`. `https://humanuprise.com` is a legacy-named door to the World, a McCluster Corp host, never a third entity. Do not collapse the two entities or properties.
+`docs/control-plane/DOMAINS-AND-ENTITIES.md` is the authority. `https://mccluster.org` is **McCluster Corp's** platform, set in one place (`data/seo/domain-architecture.json` → `platform.origin`, written everywhere by `tools/build-site-hosts.mjs`) and served by Worker `mccluster` by host; its root is the Equity Uprise World (Equity Uprise is the public brand, owner 2026-10-28) and the company page is `/company`. Stage now: P0, prepared: every measured host and path answers as before, apart from the changes P0 itself makes (`edge.now.p0_changes` in the record). From P1 the platform serves the whole site; `https://equityuprise.com` becomes the platform later by changing that one setting. `https://matthew.mccluster.org` is **Matthew McCluster's** personal profile, a tenant of the platform (GitHub Pages, this repo); from P3 its pages that moved answer 301 to the platform. `https://humanuprise.com` is a legacy-named door to the World, a McCluster Corp host, never a third entity. Hosting is not identity: do not collapse the two entities.
 
 ## Hard rules — headings only; the law is `AGENTS.md` → Hard rules
 
@@ -39,7 +39,7 @@ There is no Worker named `mccluster-core`. Do not create one.
 12. `mcclusterishere/Here` is dead.
 13. Canonical AI name: McCluster.
 14. Mobile first, responsive up.
-15. Two properties, two entities. Never collapse them.
+15. One platform, tenant properties, separate entities. Never collapse them.
 
 ## Local product gates (control repo only; satellites do not copy these)
 

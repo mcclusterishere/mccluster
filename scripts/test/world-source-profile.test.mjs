@@ -16,11 +16,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { shippedSite } from './support/mcc-site.mjs';
 
 /* west of Greenwich: a date read as UTC midnight shows the day before here */
 process.env.TZ = 'America/Los_Angeles';
 
 const require = createRequire(import.meta.url);
+/* the module reads the site's hosts from window.MCC_SITE when it loads (js/shell-boot.js runs first on mnet.html):
+   today's table, so the World's hosts, the shared link and the company page are today's */
+globalThis.MCC_SITE = shippedSite();
 const P = require('../../js/world-source-profile.js');
 const W = require('../../js/mission-source-words.js');
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');

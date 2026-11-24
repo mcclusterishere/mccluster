@@ -30,6 +30,7 @@ const read = (p) => readFile(join(ROOT, p), 'utf8');
    is not a place you navigate around from. */
 const EXEMPT = {
   'embed.html': 'an embeddable widget that runs inside somebody else\'s page',
+  'carry.html': 'a hidden frame the platform\'s page opens to carry a sign-in across hosts (SPEC-PLATFORM 2.6); nobody navigates to it',
   'archive.html': 'redirect stub', 'brand.html': 'redirect stub',
   'cut.html': 'redirect stub', 'door.html': 'redirect stub',
   'feed.html': 'redirect stub', 'merch.html': 'redirect stub',

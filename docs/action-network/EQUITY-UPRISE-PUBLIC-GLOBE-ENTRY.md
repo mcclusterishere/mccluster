@@ -18,11 +18,20 @@
 "we don't need humanuprise.com live right now … we need mccluster.org to
 actually show the World"). The company host's router serves the World at its
 root by the same mechanics (`workers/mccluster/src/company-site/router.js`,
-`workers/mccluster/src/world-host.js`); activation is the company host's
-(`docs/control-plane/DOMAINS-AND-ENTITIES.md` → Activation: the Workers
-Route, the narrowed redirect rule, the Supabase redirect allowlist). Nothing
-below changes for `humanuprise.com`; routing it later is the same two
-Cloudflare steps plus flipping `WORLD_ORIGIN` in `js/tabbar.js`.
+`workers/mccluster/src/world-host.js`); its activation is done
+(`docs/control-plane/DOMAINS-AND-ENTITIES.md` → "The edge, today and target":
+the Workers Route, the narrowed redirect rule, the Supabase redirect allowlist).
+
+**The owner's current decision for this host** (the default of 2026-11-23, the
+owner's to change; `data/seo/domain-architecture.json` →
+`owner_decisions.humanuprise_com`): once routed, `humanuprise.com` and
+`www.humanuprise.com` answer 301 to the platform (`platform.origin`, today
+`https://mccluster.org`), same path and query, instead of serving the World
+themselves. That router change lands with P1 of the one-platform plan
+(`docs/control-plane/DOMAINS-AND-ENTITIES.md`); until then the router below is
+what is built, and the host stays inert. Steps 1-3 below stay the routing
+steps; the answers in step 4 change with P1, and step 5 is superseded by the
+decision (the Globe on Matthew's site keeps pointing at the platform).
 - Owner, 2026-10-14: the World is Human Uprise's own solo experience at its own address, interconnected with the rest. The bar's Music and M go to Matthew's site; the Globe stays home.
 - Served by the one Worker `mccluster`, by host (`workers/mccluster/src/human-uprise/router.js`), the way the company property is. `/` is the World: `mnet.html` from `matthew.mccluster.org`, passed through with this host's own canonical and `og:url`; the `noindex` that belongs to Matthew's site does not follow it. The World's rooms (`action-globe.html`, `action-network-*.html`, `/action/`, `give.html`, `create.html`, `action-policy.html`, `world-news.html`, `privacy.html`), the sign-in pages (`account.html`, `login.html`, `forgot-password.html`, `reset-password.html`, `onboard.html`, `/auth/`), `sw.js` and the static files (`/js/`, `/css/`, `/assets/`, `/data/`) ride the same way, with `x-robots-tag: noindex` on documents. Every other path is a 301 to the same path on `matthew.mccluster.org` (Music, the M, creators, records, checkout). `www` is a 301 to the apex; `/mnet.html` is a 301 to `/` with its query. `robots.txt` and a one-URL `sitemap.xml` are the host's own. Nothing is rewritten beyond the World's head: no base tag, no link rewriting.
 - The API allows the origin (`workers/mccluster/src/lib/http.js` `DEFAULT_ORIGINS`; `workers/mccluster/wrangler.toml` `ALLOWED_ORIGINS`).
@@ -34,7 +43,7 @@ Cloudflare steps plus flipping `WORLD_ORIGIN` in `js/tabbar.js`.
   2. Cloudflare → the `humanuprise.com` zone → Workers Routes: `humanuprise.com/*` and `www.humanuprise.com/*` → Worker `mccluster`, with proxied DNS records for the apex and `www` and no redirect rule in front of them.
   3. Supabase Auth → URL configuration: add `https://humanuprise.com/auth/` and `https://humanuprise.com/reset-password.html` to the redirect allowlist, or social sign-in and password reset from that host return to a disallowed URL.
   4. Verify: `curl -I https://humanuprise.com/` is 200 and the HTML carries `<link rel="canonical" href="https://humanuprise.com/">`; `curl -I https://humanuprise.com/album.html` is a 301 to `https://matthew.mccluster.org/album.html`; `curl -I https://www.humanuprise.com/` is a 301 to `https://humanuprise.com/`; `curl -I https://humanuprise.com/mnet.html?view=missions` is a 301 to `https://humanuprise.com/?view=missions`.
-  5. Then set `WORLD_ORIGIN = "https://humanuprise.com/"` in `js/tabbar.js` so the Globe on Matthew's site opens the World's own door. Until then it stays on `matthew.mccluster.org`, which is what the live site does today.
+  5. (Superseded by the owner's decision above; kept for the record.) Then set `WORLD_ORIGIN = "https://humanuprise.com/"` in `js/tabbar.js` so the Globe on Matthew's site opens the World's own door. Until then it stays on `matthew.mccluster.org`, which is what the live site does today.
 - Tests: `workers/mccluster/test/human-uprise-site.test.mjs`, `scripts/test/human-uprise-door.test.mjs`; browser: `scripts/e2e/human-uprise-door.e2e.mjs` runs the real router in front of a checkout at `https://humanuprise.com`.
 - Keep `mccluster.org`, `matthew.mccluster.org`, and existing routes functional. No DNS, TLS, or production routing change is made by the repository.
 

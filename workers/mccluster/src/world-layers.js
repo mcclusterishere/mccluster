@@ -47,6 +47,7 @@
    LL2_API_TOKEN raises their limit (15 calls an hour anonymous). */
 import { fail, reply } from './lib/http.js';
 import { fetchNoCrossHostRedirect, UpstreamError } from './lib/safe-fetch.js';
+import { CONTACT_ORIGIN } from './platform/contact.js';
 
 export const LAYERS = Object.freeze({
   flights: { public: true, ttl: 600, attribution: 'adsb.lol (ODbL 1.0) or OpenSky Network', max: 5000 },
@@ -70,7 +71,7 @@ export async function upstream(url, init = {}, fetchImpl = fetch, as = 'json', t
   let res;
   try {
     try {
-      res = await fetchNoCrossHostRedirect(url, { ...init, signal: controller.signal, headers: { accept: as === 'text' ? 'text/plain' : 'application/json', 'user-agent': 'McCluster-World/1.0 (https://mccluster.org)', ...(init.headers || {}) } }, { fetchImpl });
+      res = await fetchNoCrossHostRedirect(url, { ...init, signal: controller.signal, headers: { accept: as === 'text' ? 'text/plain' : 'application/json', 'user-agent': `McCluster-World/1.0 (${CONTACT_ORIGIN})`, ...(init.headers || {}) } }, { fetchImpl });
     } catch (error) {
       if (error instanceof UpstreamError) throw error;
       if (controller.signal.aborted || error?.name === 'AbortError') throw new UpstreamError('upstream_timeout', `provider timed out after ${timeoutMs} ms`);

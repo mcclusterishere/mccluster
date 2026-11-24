@@ -6,9 +6,9 @@ Status: **staged cutover only**. The existing site stays on GitHub Pages until a
 
 | Surface | Current | Target |
 | --- | --- | --- |
-| `matthew.mccluster.org` personal website | GitHub Pages `gh-pages` | Cloudflare Pages `mccluster-web` |
+| `matthew.mccluster.org` Matthew's profile, a tenant of the platform (`docs/control-plane/DOMAINS-AND-ENTITIES.md`) | GitHub Pages `gh-pages` | Cloudflare Pages `mccluster-web` |
 | `api.mccluster.org` | Worker `mccluster` | **Unchanged** |
-| `mccluster.org` company / World host | Existing Cloudflare rules / Worker `mccluster` | **Unchanged** |
+| `mccluster.org` the platform (`platform.origin`; stage P0: the World and `/company`) | Worker `mccluster` by host, fetching the static files from `platform.static_origin` (`https://matthew.mccluster.org`) | **Unchanged host.** If this cutover changes where the static files are fetched, `platform.static_origin` in `data/seo/domain-architecture.json` follows it (then `node tools/build-site-hosts.mjs --write`); the static origin must answer files without redirecting |
 | Supabase data plane | `zmnhbrjyhxzhkxmhkexs` | **Unchanged** |
 | Source of truth | Public `mcclusterishere/mccluster` | Private repository, then optional OVH primary Git remote |
 | Static release builder | `.github/workflows/deploy-pages.yml` | Independently operated, pinned OVH build/release runner |

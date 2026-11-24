@@ -6,6 +6,10 @@
 (function (root) {
   "use strict";
   if (root.MCC_WORLD_AUDIO) return;
+  /* A MUSIC VIEW (music slice M5, js/music-shell.js) is a same-origin frame over the music document that plays: no
+     theme, no watchers, no way out of a frame, and no greeting, which would take the view for the World frame and
+     attach it to the retained document. The World opens from the retained document, over the view. */
+  if (root.MCC_MUSIC_VIEW) return;
   var doc = root.document;
   var script = doc.currentScript && doc.currentScript.src;
   var ROOT = script ? script.replace(/js\/world-audio-continuity\.js.*$/, "") : new URL("./", location.href).href;
@@ -20,7 +24,7 @@
   var open = false, attached = false, parentOrigin = "", frameOrigin = "", channelId = "";
   var addressSuggestionsOpen = false;
   var worldHref = "", frameReady = false, readyTimer = null, quietTimer = null, loadGeneration = 0, openedAt = 0, frameAlive = false;
-  var baseTitle = doc.title, baseHref = location.href, frameClearance = 0;
+  var baseTitle = doc.title, baseHref = location.href, frameClearance = 0, titleBefore = "";
   var hiddenNodes = new Map(), observedAudio = new WeakSet();
   var lastAnnouncement = {}, preference = readPreference();
   /* THE CORNER STACK (owner, 2026-10-19): on the World screen the play/pause
@@ -90,7 +94,10 @@
   }
   function selected() {
     var engine = root.MCC_MUSIC;
-    if (engine && engine.current && engine.current()) {
+    /* on the album with a view over it the engine can hold a paused song while the deck owns the sound (music slice
+       M5, stage 2): the transport acts on the owner */
+    var shell = root.MCC_MUSIC_SHELL, owns = shell && shell.owner ? shell.owner() : "";
+    if (engine && engine.current && engine.current() && owns !== "deck") {
       var track = engine.current();
       /* delivery: the trouble in a few words; playing: what the listener asked for (a song being picked up again is
          quiet, and this control's Pause stops the tries: music slice M3, review) */
@@ -243,7 +250,7 @@
      change, the end, the tab going to the background and leaving the page, each with the song and the seconds. A
      phone's own volume buttons are invisible to a web page, so a lowered volume is seen only when it is lowered here. */
   var FALLBACK_SONG = {title:"Heal the 3rd World", src:"assets/audio/heal-the-3rd-world.m4a", slug:"heal-the-3rd-world", album:"heal-the-3",
-    albumName:"Heal the 3", artist:"Matthew McCluster", art:"assets/img/heal-the-3-cover.jpg"};
+    albumName:"Heal the 3", artist:"McCluster", art:"assets/img/heal-the-3-cover.jpg"};
   var rotation = null, rotationLoad = null, song = null, songOrd = 0, songStarted = 0, songBegun = false, pauseBy = "", soundWas = null;
   function loadRotation() {
     if (rotationLoad) return rotationLoad;
@@ -260,7 +267,7 @@
           if (!t || t.gated || /preview/i.test(src) || !/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(src)) return;
           // what the lock screen names: the song, its record's billed artist and album, and the record's cover (a same-origin file only)
           list.push({title:String(t.title || "").slice(0, 120), src:src, slug:src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase(), album:String(a.slug || "").slice(0, 60),
-            albumName:String(a.name || "").slice(0, 120), artist:String(a.artist || "Matthew McCluster").slice(0, 120),
+            albumName:String(a.name || "").slice(0, 120), artist:String(a.artist || "McCluster").slice(0, 120),
             art:typeof a.art === "string" && /^assets\/img\/[a-z0-9._-]+$/i.test(a.art) ? a.art : ""});
         });
       });
@@ -371,7 +378,7 @@
     watch(audio); reactions(audio);
     if (root.MCC_NOW_PLAYING && root.MCC_NOW_PLAYING.bind) root.MCC_NOW_PLAYING.bind(audio, {
       surface: "world",
-      track: function () { return song ? {title:song.title, artist:song.artist || "Matthew McCluster", album:song.albumName || "", art:song.art || ""} : null; },
+      track: function () { return song ? {title:song.title, artist:song.artist || "McCluster", album:song.albumName || "", art:song.art || ""} : null; },
       play: function () { if (audio.paused || audio.ended) startTheme(); },
       pause: function () { pauseBy = "lock_screen"; preference.paused = true; savePreference(); audio.pause(); paint(); },
       previous: previousSong,
@@ -574,9 +581,12 @@
     doc.body.dataset.worldAudioOpen = "true"; doc.documentElement.classList.add("world-audio-open");
     /* the bar's Music tab is the way back to the music now, not the player's Pause: js/tabbar.js names it again */
     if (!wasOpen) event("mcc:world-audio-open", {open:true});
+    /* the address and the title the World opens over are the ones shown now: a music view's, when one is shown
+       (music slice M5), and they come back when it closes */
+    if (!wasOpen) titleBefore = doc.title;
     concealMusic(); doc.title = "World · Equity Uprise";
     if (!wasOpen && !options.history) {
-      var address = new URL(baseHref); address.searchParams.set("world", "1");
+      var address = new URL(location.href); address.searchParams.set("world", "1");
       history.pushState(Object.assign({}, history.state, {mccWorldAudio:{href:clean}}), "", address.href);
     }
     paint();
@@ -611,7 +621,7 @@
     suspendTransportForSuggestions(false);
     delete doc.body.dataset.worldAudioOpen; doc.documentElement.classList.remove("world-audio-open");
     hiddenNodes.forEach(function (wasInert, node) { node.inert = wasInert; }); hiddenNodes.clear();
-    doc.title = baseTitle;
+    doc.title = titleBefore || baseTitle;
     // Clear the compact World offset before restoring Music. Leaving this
     // inline top together with the Music bottom makes a full-height overlay.
     if (controls) { controls.style.removeProperty("top"); controls.style.removeProperty("right"); }

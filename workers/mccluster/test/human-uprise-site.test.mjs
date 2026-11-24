@@ -160,12 +160,13 @@ test('the upstream is PUBLIC_ORIGIN when the Worker names one', async () => {
   assert.equal(r.headers.get('location'), `${PERSONAL_ORIGIN}/album.html`, 'the 301 names Matthew\'s public property whatever the upstream is');
 });
 
-test('the platform entry consults the Human Uprise router after the company router and before the API', async () => {
+test('the platform entry consults the host router, with the World door\'s files, before the API', async () => {
   const src = await readFile(new URL('../src/entry-platform.js', import.meta.url), 'utf8');
-  const i = src.indexOf('await companySiteResponse(request, env)');
-  const j = src.indexOf('await humanUpriseResponse(request, env)');
+  assert.match(src, /import \{ WORLD_DOOR_PARTS \} from '\.\/human-uprise\/router\.js';/);
+  assert.match(src, /createSiteRouter\(\{ company: COMPANY_PARTS, worldDoor: WORLD_DOOR_PARTS \}\)/, 'one router for every host (src/platform/router.js)');
+  const i = src.indexOf('await siteResponse(request, env)');
   const k = src.indexOf('enforceApiRateLimit(request, env)');
-  assert.ok(i > 0 && j > i && k > j, 'host routing runs first and only for its own hosts');
+  assert.ok(i > 0 && k > i, 'host routing runs first and only for the site\'s hosts');
 });
 
 test('the API answers the Human Uprise host: its origins are on the CORS allowlist', () => {

@@ -10,6 +10,12 @@
   function name(iso) { try { return new Intl.DisplayNames([navigator.language || "en"], { type: "region" }).of(iso) || iso; } catch (_) { return iso; } }
   function status(text, kind) { var s = $("nbStatus"); s.textContent = text || ""; s.dataset.kind = kind || ""; }
   function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  /* an address of the site, where it is served (window.MCC_SITE, js/shell-boot.js, the first script on brief.html); without
+     the table it stays on this host */
+  function siteHref(path) {
+    var S = window.MCC_SITE;
+    return S && typeof S.siteUrl === "function" ? S.siteUrl(path) : path;
+  }
   function safeUrl(v) { try { var u = new URL(String(v)); return /^https?:$/.test(u.protocol) && !u.username && !u.password ? u.href : ""; } catch (_) { return ""; } }
   function nyYesterday() {
     var p = {}; new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" })
@@ -160,7 +166,7 @@
       var id = out && out.post && out.post.id;
       if (news && id && /^[0-9a-f-]{36}$/i.test(id)) {
         status("Published on the World feed under your name, and in the newsroom: ", "ok");
-        var a = document.createElement("a"); a.href = "https://mccluster.org/news/" + id; a.target = "_blank"; a.rel = "noopener"; a.textContent = "read the article";
+        var a = document.createElement("a"); a.href = siteHref("/news/" + id); a.target = "_blank"; a.rel = "noopener"; a.textContent = "read the article";
         $("nbStatus").appendChild(a);
       } else status("Published on the World feed under your name.", "ok");
     }).catch(function (e) { $("nbPublishStatus").textContent = e.message; }).finally(function () { $("nbPublishGo").disabled = false; });
