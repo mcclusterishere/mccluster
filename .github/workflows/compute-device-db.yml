@@ -1,0 +1,82 @@
+# Equity Uprise shared-platform support-only proof of Core compute persistence;
+# this workflow exercises local fixtures and activates no building capability.
+name: Compute device database proof
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/pending/compute_job_attestations_v1*'
+      - 'supabase/pending/compute_job_attestations_device_facts_v1*'
+      - 'supabase/pending/compute_scheduler_lease_v1*'
+      - 'supabase/tests/compute_scheduler_lease.behaviour.sql'
+      - 'supabase/migrations/**'
+      - 'supabase/replay_migrations/**'
+      - 'scripts/compute-device-native-check.mjs'
+      - 'scripts/compute-scheduler-sql-check.mjs'
+      - 'scripts/native-admin-test-db.mjs'
+      - 'scripts/staging/device-jobs/**'
+      - 'core/src/compute/**'
+      - '.github/workflows/compute-device-db.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compute-device-db-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: Native roles, fencing, signatures and rollback
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v1
+        with:
+          version: 2.117.0
+      - name: Verify repository name and source-map contracts
+        run: |
+          node --test scripts/test/rpc-names-exist.test.mjs
+          python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
+          git diff --exit-code -- docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
+      - name: Start isolated Supabase stack
+        run: bash scripts/supabase-local-reset-with-replay.sh start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+      - name: Rebuild the complete canonical schema
+        run: bash scripts/supabase-local-reset-with-replay.sh
+      - name: Install pinned native driver
+        run: npm install --prefix "$RUNNER_TEMP/compute-device-tools" --ignore-scripts --no-audit --no-fund --package-lock=false postgres@3.4.5
+      - name: Prove attestations, scheduler and device facts against the actual reset schema
+        env:
+          POSTGRES_MODULE_PATH: ${{ runner.temp }}/compute-device-tools/node_modules/postgres/src/index.js
+          NATIVE_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          mkdir -p "$RUNNER_TEMP/compute-device-proof"
+          node scripts/compute-device-native-check.mjs --from-reset --report "$RUNNER_TEMP/compute-device-proof/full-reset.json"
+      - name: Prove scheduler behavior and separate-connection status reads
+        env:
+          POSTGRES_MODULE_PATH: ${{ runner.temp }}/compute-device-tools/node_modules/postgres/src/index.js
+          NATIVE_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: node scripts/compute-scheduler-sql-check.mjs
+      - name: Prove real gateway and node-agent signed completion on native PostgreSQL
+        env:
+          POSTGRES_MODULE_PATH: ${{ runner.temp }}/compute-device-tools/node_modules/postgres/src/index.js
+          NATIVE_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: node scripts/staging/device-jobs/run.mjs --out "$RUNNER_TEMP/compute-device-proof/gateway"
+      - name: Preserve proof receipts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: compute-device-native-proof
+          path: |
+            ${{ runner.temp }}/compute-device-proof/full-reset.json
+            ${{ runner.temp }}/compute-device-proof/gateway/proof.json
+            ${{ runner.temp }}/compute-device-proof/gateway/PROOF.md
+          if-no-files-found: warn
+      - name: Stop isolated Supabase stack
+        if: always()
+        run: supabase stop --no-backup || true

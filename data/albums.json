@@ -477,7 +477,7 @@
     {
      "title": "Dealer Plates (B-Side)",
      "credit": "Prod. Zakir & McCluster",
-     "src": "assets/audio/dealer-plates-b.mp3",
+     "src": "assets/audio/dealer-plates-b.m4a",
      "poster": "assets/img/wing-whip-poster.jpg",
      "music_video": "assets/video/dealer-plates-b-video.mp4",
      "seconds": 97.4,
@@ -624,7 +624,7 @@
    "tracks": [
     {
      "title": "Rolling With Me",
-     "src": "assets/audio/rolling-with-me.mp3",
+     "src": "assets/audio/rolling-with-me.m4a",
      "poster": "assets/img/tinderfessions-cover.jpg",
      "seconds": 150.8
     },

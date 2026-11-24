@@ -78,6 +78,10 @@ A later statement may supersede an earlier memory. Do not silently overwrite his
 
 `ai_context.context_snapshots` stores compact Markdown summaries for model context windows. Snapshots are generated views of the private corpus, not the source of truth.
 
+## Workstream checkpoints
+
+Where a line of work stands (branch, pull request, decisions, verified results, blockers, the next step) is durable state, not something a context window is trusted to hold. Every harness resumes from `core.resume` at the start of a session and writes a checkpoint with `workstream.checkpoint` on each decision, commit, verified result and blocker, before compaction or handoff, and before ending. Checkpoints live in `ai_context` (`workstreams` and the append-only `workstream_events`), carry provenance, sensitivity and an operation key, link to `ops_objectives` and `ops_agent_jobs` by id instead of copying them, and never hold a credential or a raw transcript. The contract, the per-harness enforcement and its limits are in `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`. The SQL is pending (`supabase/pending/ai_context_workstreams_v1.sql`) until the owner applies it.
+
 ## Retrieval
 
 The private corpus supports:

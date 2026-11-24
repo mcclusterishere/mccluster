@@ -2,7 +2,7 @@
 
 Status: built and proven in cloud staging on 2026-11-23 (branch `claude/adoring-goldberg-atdih1`, base `main` at
 `b51ede03`). Source and tests only. Nothing is deployed; production Supabase, the OVH Core and the Worker are
-unchanged. Two SQL files wait in `supabase/pending/` for owner approval. This document is the resume point for the
+unchanged. Three compute SQL files wait in `supabase/pending/` for owner approval. This document is the resume point for the
 mission the owner named Equity Fighter: the admin app sends AI jobs to our own devices and shows verifiable results.
 
 ## What exists and what this adds
@@ -27,7 +27,7 @@ second backend.
 | Gateway routes | `core/src/compute/jobs-routes.mjs`, hook in `gateway.mjs` | `/v1/compute/jobs*`, `/v1/compute/receipt-key` behind `CORE_COMPUTE_ADMIN_TOKEN` |
 | Owner tools | `core/src/tools/jobs.mjs`, registered in `control.mjs` | `core.compute.job.submit/get/result/receipt/list`, `core.compute.receipt.key` |
 | Edge | `workers/mccluster-mcp/src/mcp.js` | allowlists the tools; pins `org_id` to the house org; owner session required |
-| Pending SQL | `supabase/pending/compute_job_attestations_v1.sql` (+ rollback) | `ops_compute_attestations`: the node's completion signature per lease, with the node-reported device facts bound at that completion (`device_facts`) |
+| Pending SQL | `supabase/pending/compute_job_attestations_v1.sql` and the separate `compute_job_attestations_device_facts_v1.sql` (each with recovery) | Base completion signature per lease, then the separately reviewed node-reported facts column. Never replay an applied base migration with changed bytes. |
 | Staging | `scripts/staging/device-jobs/` | real gateway + real agent + repository SQL on PGlite + fixture executor; writes a proof |
 | Real-device staging | `scripts/staging/device-jobs/serve.mjs`, `enroll-device.mjs`, `submit-job.mjs`, `real-device-lib.mjs` | the same composition kept running; a real device enrols with the real Ollama adapter; one job verified offline per device |
 | Licenses | `core/compute-runtime-licenses.json`, `core/test/runtime-licenses.test.mjs` | exo, Ollama, llama.cpp pinned by commit with hashed LICENSE bytes |
@@ -390,3 +390,21 @@ The OVH Core is in rescue mode, so there is no running production scheduler for 
 claim from; until the owner restores it and promotes this slice (steps 1 to 3 above), the only place a real Mac or
 the Windows client can exercise the contract is this staging harness. Behind that: Prime's client commit is not on
 the remote, so its contract cannot be compared yet, and the Mac installer path is in draft PR #821, unmerged.
+
+## Database review update — 2026-11-24
+
+The attestation base remains the exact reviewed #823 file, with service-role
+SELECT/INSERT only. Bound facts require the separate pending
+`compute_job_attestations_device_facts_v1.sql`, applied only after the base
+and its own named-file approval. Its object bound is 32,768 UTF-8 bytes of JSON
+text. The absence fallback names this extension; it never asks an operator to
+replay the base migration.
+
+The extension's recovery refuses saved facts, unknown column metadata and
+owner-added dependent indexes, including expressions and partial predicates.
+An empty facts column can be removed while retaining every base signature.
+The native CI proof runs against the full canonical reset; staging explicitly
+loads base then extension and proves that populated recovery preserves both.
+The older destructive-recovery staging description above is historical.
+The release remains gated on reviewed SQL, deployment and real-device proof.
+Node-reported facts do not independently attest the physical hardware.

@@ -163,7 +163,7 @@ async function run(browser, width) {
   check(scope, 'no re-run button (that is Control\'s)', (await page.locator('#creatorLyrics [data-crl-queue]').count()) === 0);
   check(scope, 'the creator note is shown', /never overwrites lyrics you approved/.test(await page.textContent('#creatorLyrics .crl-foot')));
   await fit('the editor');
-  if (width === 390) await page.screenshot({ path: join(OUT, `creator-lyrics-${width}-editor.png`) });
+  if (width === 390) { await page.screenshot({ path: join(OUT, `creator-lyrics-${width}-editor.png`) }); await page.locator('#creatorLyrics').screenshot({ path: join(OUT, `creator-lyrics-${width}-card.png`) }); }
   const input = page.locator('#creatorLyrics [data-crl-text="1"]');
   await input.fill('second line here'); await input.press('Tab');
   await page.check('#creatorLyrics [data-crl-reviewed]');
@@ -225,7 +225,7 @@ async function run(browser, width) {
   check(scope, 'a split that does not add up is not saved, and says why', db.patches.length === before && /add up to 90%/.test(await page.textContent('#distStatus')));
   await split(1).locator('[data-k="share_pct"]').fill('40');
   await fit('the filled distribution card');
-  if (width === 390) await page.screenshot({ path: join(OUT, `creator-distribution-${width}.png`), fullPage: false });
+  if (width === 390) { await page.screenshot({ path: join(OUT, `creator-distribution-${width}.png`), fullPage: false }); await page.locator('#creatorDist').screenshot({ path: join(OUT, `creator-distribution-${width}-card.png`) }); }
   await page.click('#distSave');
   await page.waitForFunction(() => /^Saved/.test(document.getElementById('distStatus').textContent), null, { timeout: 10000 }).catch(() => {});
   const dp = db.patches.find((x) => x.id === DRAFT && x.body.distribution);

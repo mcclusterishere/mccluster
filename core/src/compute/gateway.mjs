@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { buildSupabaseHeaders } from '../supabase.mjs';
 import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, clampYieldSeconds, claimableManifest, countLiveGpuNodes, enrollmentLabels, heartbeatLabels, validateCapabilityManifest, validateEnrollment, validateInventory, validateLoad, validateNodeId } from './protocol.mjs';
 import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedRequest } from './signature.mjs';
 import { authorizeOwnerSession, enrollCredential, issueGrant, verifyGrant } from './device-grant.mjs';
@@ -150,7 +151,7 @@ async function route(req, res) {
   if (url.pathname === '/v1/compute/device-grants' && req.method === 'POST') {
     const orgId = process.env.MCCLUSTER_ORG_ID;
     const { userId } = await authorizeOwnerSession(bearer(req), {
-      supabaseUrl: process.env.SUPABASE_URL, apiKey: process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY, orgId
+      supabaseUrl: process.env.SUPABASE_URL, apiKey: buildSupabaseHeaders().apikey, orgId
     });
     const issued = issueGrant({ key: process.env.CORE_COMPUTE_ENROLL_TOKEN, orgId, userId, kind: body.kind === 'browser' ? 'browser' : 'installer' });
     console.log(JSON.stringify({ event: 'compute_device_grant_issued', kind: issued.kind, by: userId }));

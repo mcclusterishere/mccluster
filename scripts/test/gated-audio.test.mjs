@@ -238,3 +238,83 @@ test('no bar clearance is parked mid-document', async () => {
   assert.match(html, /\[data-comments\] \{ margin-bottom: 6rem; \}/,
     'the last content must clear the deck, whose top sits 189px off the bottom');
 });
+
+/* WHAT THE ROW SAYS WHEN THE GATE IS NOT READY (music slice M3; music map 02, DEL-2).
+   The Worker answers gate_not_ready while the rule's SQL is not in production, and the row
+   painted "0/3 MISSIONS + identity verification" from the page's own defaults (have = 0,
+   need = 3), numbers no server sent: members were told to do missions that cannot open it.
+   The real js/gated-audio.js runs here against the answers the Worker gives, the live one of
+   2026-11-19 and the rule's own shape (control: once the rule answers, a member's real numbers). */
+import vm from 'node:vm';
+async function gateRun({ session = null, gate, play = null }) {
+  const src = await read('js/gated-audio.js');
+  const window = {
+    MCC: { session: () => session },
+    location: { pathname: '/album.html', search: '?album=cia-mind-control' },
+    addEventListener() {}, removeEventListener() {}, dispatchEvent() {}
+  };
+  window.fetch = async (url, init = {}) => {
+    if (/\/play$/.test(String(url))) {
+      if (play === 'network') throw new TypeError('Failed to fetch');
+      return { status: play.status, json: async () => play.body };
+    }
+    return { status: 200, json: async () => ({ ok: true, gate }) };
+  };
+  vm.runInNewContext(src, { window, fetch: window.fetch, CustomEvent: class { constructor(t) { this.type = t; } }, Date, Promise, JSON, String, Number, encodeURIComponent });
+  const G = window.MCC_GATED;
+  const out = await G.resolve({ object: 'niggy-nigg/niggy-nigg.mp3' });
+  return { G, out, progress: G.progress(out), explain: G.explain(out) };
+}
+const NOT_READY = { mode: 'rule', rule: 'gated_track_niggy_nigg', track: 'niggy-nigg', allowed: false, claimed: false,
+  preview_only: true, reason: 'gate_not_ready', missing: ['gate_not_ready'] };
+const MEMBER = { access_token: 'x', expires_at: Math.floor(Date.now() / 1000) + 3000 };
+function ruleGate(user, { have = 0, identity = false } = {}) {
+  const missing = []; if (!user) missing.push('sign_in'); if (have < 3) missing.push('missions'); if (!identity) missing.push('identity_verification');
+  return { mode: 'rule', rule: 'gated_track_niggy_nigg', track: 'niggy-nigg', allowed: !!user && have >= 3 && identity, signed_in: !!user,
+    missions: { have, need: 3 }, identity_verified: identity, missing, links: { missions: 'mnet.html?view=missions', identity: 'identity-verify.html' } };
+}
+
+test('a gate that is not ready says the full song opens later, for a member and a guest, never a count nobody sent', async () => {
+  for (const session of [MEMBER, null]) {
+    const r = await gateRun({ session, gate: NOT_READY });
+    const said = JSON.stringify([r.progress, r.explain]);
+    assert.doesNotMatch(said, /0\/3|you have 0|MISSIONS|identity|sign in/i, `${session ? 'member' : 'guest'}: ${said}`);
+    assert.deepEqual({ b: r.progress && r.progress.b, s: r.progress && r.progress.s }, { b: 'FULL SONG', s: 'opens later' });
+    assert.equal(r.explain && r.explain.text, 'The full song opens later.');
+    assert.equal(r.explain.links.length, 0, 'no link to a step that cannot open it');
+    assert.equal(r.out.state, 'locked', 'the preview plays; nothing to sign in for');
+    assert.equal(r.G.later(r.out), true);
+  }
+});
+
+test('once the rule answers, the row shows the member\'s own numbers and links (control)', async () => {
+  const one = await gateRun({ session: MEMBER, gate: ruleGate('u', { have: 1 }) });
+  assert.deepEqual({ b: one.progress.b, s: one.progress.s }, { b: '1/3 MISSIONS', s: '+ identity verification' });
+  assert.match(one.explain.text, /3 verified missions \(you have 1\) and a verified identity/);
+  assert.ok(one.explain.links.some((l) => l.key === 'missions'));
+  assert.equal(one.G.later(one.out), false);
+  const all = await gateRun({ session: MEMBER, gate: ruleGate('u', { have: 3, identity: true }) });
+  assert.equal(all.out.state, 'earned');
+  assert.deepEqual({ b: all.progress.b, s: all.progress.s }, { b: 'PLAY', s: 'full track' });
+  const guest = await gateRun({ gate: ruleGate(null) });
+  assert.match(guest.explain.text, /Sign in first/);
+  /* a rule answer without numbers never gets the page's own 0/3 */
+  const bare = await gateRun({ session: MEMBER, gate: { mode: 'rule', allowed: false, missing: ['missions'] } });
+  assert.doesNotMatch(JSON.stringify([bare.progress, bare.explain]), /0\/3|you have 0/);
+});
+
+test('a claim keeps the expiry the Worker returns, and a claim whose answer was lost is reported as uncertain', async () => {
+  const granted = await gateRun({ session: MEMBER, gate: ruleGate('u', { have: 3, identity: true }),
+    play: { status: 200, body: { ok: true, url: 'https://api.mccluster.org/v1/music/stream/' + 'a'.repeat(64), expires_in: 300, gate: { allowed: true } } } });
+  const c = await granted.G.claim({ object: 'niggy-nigg/niggy-nigg.mp3' });
+  assert.equal(c.state, 'full');
+  assert.equal(c.expires_in, 300, 'the one play\'s lifetime travels with its URL');
+  const lost = await gateRun({ session: MEMBER, gate: ruleGate('u', { have: 3, identity: true }), play: 'network' });
+  const u = await lost.G.claim({ object: 'niggy-nigg/niggy-nigg.mp3' });
+  assert.equal(u.state, 'unavailable');
+  assert.equal(u.uncertain, true, 'the play may have been spent: the page must say so, never claim again by itself');
+  const refused = await gateRun({ session: MEMBER, gate: ruleGate('u', { have: 3, identity: true }), play: { status: 403, body: { error: 'Locked', gate: NOT_READY } } });
+  const r = await refused.G.claim({ object: 'niggy-nigg/niggy-nigg.mp3' });
+  assert.equal(r.state, 'locked');
+  assert.ok(!r.uncertain, 'a refusal is certain: nothing was spent');
+});

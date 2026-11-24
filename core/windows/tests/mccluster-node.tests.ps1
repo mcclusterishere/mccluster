@@ -478,10 +478,11 @@ Assert-Null (Get-McBackendNote -LogLines @()) 'no log lines, no note'
 # ---- manifest rendering from the real template -------------------------------------------------
 $templateJson = [System.IO.File]::ReadAllText($templatePath)
 $template = $templateJson | ConvertFrom-Json
-Assert-Equal 5 (@($template.capabilities).Count) 'the template carries the four ai.chat entries the tiers choose from and the browser entry'
+Assert-Equal 6 (@($template.capabilities).Count) 'the template carries four chat choices and the optional lyrics and browser entries'
 Assert-Equal 'qwen3-vl.8b.local' (@($template.capabilities)[0].implementation) 'the resident vision model is the first template entry'
-Assert-Equal 'browser.act' (@($template.capabilities)[4].capability) 'the browser entry is the last template entry'
-Assert-Equal 'chromium.local' (@($template.capabilities)[4].implementation) 'the browser implementation is chromium.local'
+Assert-Equal 'lyrics.align' (@($template.capabilities)[4].capability) 'the optional lyrics entry follows the four chat choices'
+Assert-Equal 'browser.act' (@($template.capabilities)[5].capability) 'the browser entry is the last template entry'
+Assert-Equal 'chromium.local' (@($template.capabilities)[5].implementation) 'the browser implementation is chromium.local'
 Assert-Equal $true (@($template.capabilities)[0].features.vision) 'the resident vision model advertises vision'
 Assert-Equal $true (@($template.capabilities)[3].features.vision) 'the small vision model advertises vision'
 Assert-Null (@($template.capabilities)[1].features.vision) 'the OVH twin claims no vision'

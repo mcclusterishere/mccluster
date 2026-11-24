@@ -1,3 +1,5 @@
+// Equity Uprise shared-platform support-only fixture for existing Core device
+// jobs. This local adapter does not own or activate building capabilities.
 // A PostgREST subset over a disposable PGlite database, for the device-jobs
 // staging harness only. It serves exactly the surface core/src/compute/store.mjs,
 // jobs-store.mjs and supabase.mjs use: filtered GET/PATCH/POST on tables with
@@ -23,7 +25,7 @@ export async function openPglite({ modulePath = process.env.PGLITE_MODULE_PATH }
 
 // The compute schema exactly as the repository holds it, plus the pending
 // files this slice depends on (named explicitly so the proof says which).
-export async function loadComputeSchema(db, root, { pending = ['compute_job_attestations_v1'] } = {}) {
+export async function loadComputeSchema(db, root, { pending = ['compute_job_attestations_v1', 'compute_job_attestations_device_facts_v1'] } = {}) {
   await db.exec(`do $$ begin create role anon; create role authenticated; create role service_role; exception when duplicate_object then null; end $$;
     create schema if not exists extensions; create extension if not exists pgcrypto;
     create table if not exists public.orgs(id uuid primary key, slug text unique, enabled boolean not null default true);`);
@@ -59,8 +61,12 @@ function castFor(udt) {
   return '::text';
 }
 
-function paramValue(udt, value) {
+function paramValue(udt, value, native = false) {
   if (value === null || value === undefined) return null;
+  // postgres.js applies PostgreSQL's inferred parameter serializer itself.
+  // JSON-stringifying here would store a JSON string instead of the object or
+  // array, and stringifying booleans would change the driver's true/false value.
+  if (native) return value;
   if (udt === 'jsonb' || udt === 'json') return JSON.stringify(value);
   return typeof value === 'object' ? JSON.stringify(value) : String(value);
 }
@@ -157,7 +163,10 @@ export async function startPostgrestShim({ db, apiKey, host = '127.0.0.1', port 
     // PostgREST renders timestamptz as 2026-11-23T02:25:10.123456+00:00, never
     // with a Z: a signature rebuilt from a re-rendered timestamp must fail here
     // the way it would in production.
-    const render = (value) => JSON.stringify(value, (key, v) => (v instanceof Date ? v.toISOString().replace('Z', '000+00:00') : v));
+    const render = (value) => JSON.stringify(value, function (key, v) {
+      const original = this[key]; // Date.toJSON runs before the replacer.
+      return original instanceof Date ? original.toISOString().replace('Z', '000+00:00') : v;
+    });
     const reply = (status, body) => {
       const payload = body === undefined ? '' : render(body);
       res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'content-length': Buffer.byteLength(payload) });
@@ -193,7 +202,7 @@ export async function startPostgrestShim({ db, apiKey, host = '127.0.0.1', port 
           const idx = candidate.names.indexOf(k);
           const type = candidate.types[idx];
           const value = args[k];
-          values.push(value === null || value === undefined ? null : (typeof value === 'object' && !Array.isArray(value)) || type === 'jsonb' ? JSON.stringify(value) : Array.isArray(value) ? `{${value.map((v) => `"${String(v).replace(/"/g, '\\"')}"`).join(',')}}` : String(value));
+          values.push(value === null || value === undefined ? null : db.native ? value : (typeof value === 'object' && !Array.isArray(value)) || type === 'jsonb' ? JSON.stringify(value) : Array.isArray(value) ? `{${value.map((v) => `"${String(v).replace(/"/g, '\\"')}"`).join(',')}}` : String(value));
           return `${k} => $${values.length}::${type}`;
         });
         const { rows } = await db.query(`select public.${name}(${named.join(', ')}) as result`, values);
@@ -218,7 +227,7 @@ export async function startPostgrestShim({ db, apiKey, host = '127.0.0.1', port 
         const values = [];
         const sets = Object.entries(body).map(([col, value]) => {
           if (!IDENT.test(col) || !types.has(col)) throw Object.assign(new Error(`unknown column ${col}`), { code: '42703' });
-          values.push(paramValue(types.get(col), value));
+          values.push(paramValue(types.get(col), value, db.native));
           return `"${col}" = $${values.length}${castFor(types.get(col))}`;
         });
         const where = buildWhere(url.searchParams, types, values);
@@ -232,7 +241,7 @@ export async function startPostgrestShim({ db, apiKey, host = '127.0.0.1', port 
         const cols = [...new Set(records.flatMap((r) => Object.keys(r)))];
         for (const col of cols) if (!IDENT.test(col) || !types.has(col)) return reply(400, { code: '42703', message: `unknown column ${col}` });
         const values = [];
-        const tuples = records.map((record) => `(${cols.map((col) => { values.push(paramValue(types.get(col), record[col] ?? null)); return `$${values.length}${castFor(types.get(col))}`; }).join(', ')})`);
+        const tuples = records.map((record) => `(${cols.map((col) => { values.push(paramValue(types.get(col), record[col] ?? null, db.native)); return `$${values.length}${castFor(types.get(col))}`; }).join(', ')})`);
         let conflict = '';
         const onConflict = url.searchParams.get('on_conflict');
         if (onConflict) {

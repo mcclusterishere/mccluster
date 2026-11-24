@@ -92,7 +92,7 @@ export async function recordAttestation(attestation, { restImpl = rest, log = co
       // The signature is still worth keeping; the receipt will say the device facts are unbound.
       if (!deviceFactsUnavailableLogged) {
         deviceFactsUnavailableLogged = true;
-        log(JSON.stringify({ event: 'compute_attestation_device_facts_unavailable', detail: 'ops_compute_attestations has no device_facts column (re-apply supabase/pending/compute_job_attestations_v1.sql); attestations are recorded without the device facts and receipts report them unbound' }));
+        log(JSON.stringify({ event: 'compute_attestation_device_facts_unavailable', detail: 'ops_compute_attestations has no device_facts column (apply the separately reviewed supabase/pending/compute_job_attestations_device_facts_v1.sql); attestations are recorded without the device facts and receipts report them unbound' }));
       }
       return await insert(row);
     }

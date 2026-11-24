@@ -108,8 +108,10 @@ that already own `MCC_MUSIC` to prevent a second player.
 ## Theme, gesture and preferences
 
 The theme uses the existing public catalog source
-`assets/audio/heal-the-3rd-world.m4a` from `data/albums.json`. Its URL and metadata
-are prepared before the gesture, and it is not an entitled or signed master.
+`assets/audio/heal-the-3rd-world.m4a` from `data/albums.json`. Its URL is prepared
+before the gesture, and it is not an entitled or signed master. Since music slice M3
+nothing of it is read before it is needed: on a Music page the theme fetches no audio
+until the Globe tap, and the standalone World reads only the song it drew.
 The theme loops until the listener pauses it or chooses another track.
 
 The parent's Globe click calls `play()` directly in that document. Standalone

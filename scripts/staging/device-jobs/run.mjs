@@ -1,9 +1,11 @@
 #!/usr/bin/env node
+// Equity Uprise shared-platform support-only: exercise the existing Core device
+// job fabric with synthetic fixtures, without activating building capabilities.
 // Cloud staging for the device job contract (docs/control-plane/DEVICE-JOBS-CONTRACT.md).
 //
 // Composes the REAL Core compute gateway (core/src/compute/gateway.mjs) and the
 // REAL node agent (core/src/compute/node-agent.mjs) around a disposable PGlite
-// database that runs the repository's own compute SQL, with a loopback
+// or local native PostgreSQL database running the repository's compute SQL, with a loopback
 // PostgREST shim in place of Supabase and a fixture executor in place of a
 // device's Ollama adapter. TLS ingress is a self-signed loopback proxy, because
 // a node agent only ever talks https. Nothing here reaches the canonical
@@ -13,6 +15,8 @@
 //
 //   PGLITE_MODULE_PATH=<dir>/node_modules/@electric-sql/pglite/dist/index.js \
 //     node scripts/staging/device-jobs/run.mjs --out /tmp/device-jobs-proof [--full]
+// Or set NATIVE_TEST_DATABASE_URL (localhost:54322 only) and absolute
+// POSTGRES_MODULE_PATH to postgres/src/index.js for a disposable native database.
 //
 // --full adds the slow hard-disconnect case (lease expiry after SIGKILL, about
 // two and a half minutes). The default run finishes in about a minute.
@@ -27,6 +31,7 @@ import { fileURLToPath } from 'node:url';
 import { loadComputeSchema, openPglite, startPostgrestShim } from './pglite-postgrest.mjs';
 import { generateNodeIdentity, signRequest } from '../../../core/src/compute/signature.mjs';
 import { generateReceiptKey, hashJson, verifyAttestation, verifyReceipt } from '../../../core/src/compute/jobs.mjs';
+import { nativeTestDb } from '../../native-admin-test-db.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const args = new Map(process.argv.slice(2).map((a, i, all) => (a.startsWith('--') ? [a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : true] : null)).filter(Boolean));
@@ -171,7 +176,7 @@ function redact(value) {
 
 async function main() {
   log({ event: 'staging_start', out: OUT, full: FULL, node: process.version });
-  db = await openPglite();
+  db = process.env.NATIVE_TEST_DATABASE_URL ? await nativeTestDb('device_staging') : await openPglite();
   const loaded = await loadComputeSchema(db, ROOT);
   await db.query('insert into public.orgs(id, slug, enabled) values ($1, $2, true), ($3, $4, true)', [ORG, 'mccluster', OTHER_ORG, 'other']);
   shim = await startPostgrestShim({ db, apiKey: secrets.apiKey, log });
@@ -411,23 +416,40 @@ async function main() {
     return { agent_exited: Boolean(exited), refusal_seen_by_agent: true, submit_after_revoke: refused.body.code };
   });
 
-  await step('pending SQL hygiene: the attestation rollback drops exactly its table and the file re-applies cleanly', async () => {
-    await db.exec(fs.readFileSync(path.join(ROOT, 'supabase/pending/compute_job_attestations_v1.rollback.sql'), 'utf8'));
+  await step('pending SQL hygiene: saved facts and signatures block recovery; an empty fixture recovers and re-applies both files', async () => {
+    const baseRollback = fs.readFileSync(path.join(ROOT, 'supabase/pending/compute_job_attestations_v1.rollback.sql'), 'utf8');
+    const factsRollback = fs.readFileSync(path.join(ROOT, 'supabase/pending/compute_job_attestations_device_facts_v1.rollback.sql'), 'utf8');
+    const before = (await db.query('select * from public.ops_compute_attestations order by lease_id')).rows;
+    assert(before.some(row => row.device_facts !== null), 'staging must have recorded bound completion facts');
+    for (const sql of [factsRollback, baseRollback]) {
+      let refused = null;
+      try { await db.exec(sql); } catch (error) { refused = error; }
+      assert(refused?.code === '55000', `populated rollback was not refused: ${refused?.code || 'success'}`);
+      const preserved = (await db.query('select * from public.ops_compute_attestations order by lease_id')).rows;
+      assert(JSON.stringify(preserved) === JSON.stringify(before), 'refused rollback changed signed completion evidence or facts');
+    }
+    // Only this disposable synthetic fixture is cleaned. The shipped recovery
+    // files never delete signed evidence or populated device facts.
+    await db.exec('delete from public.ops_compute_attestations');
+    await db.exec(factsRollback);
+    await db.exec(baseRollback);
     const gone = (await db.query("select to_regclass('public.ops_compute_attestations') as t")).rows[0].t;
-    assert(gone === null, 'rollback left the table behind');
+    assert(gone === null, 'empty base recovery left the table behind');
     const leases = (await db.query('select count(*)::int as n from public.ops_compute_leases')).rows[0].n;
-    assert(leases > 0, 'rollback must not touch the lease rows');
-    await db.exec(fs.readFileSync(path.join(ROOT, 'supabase/pending/compute_job_attestations_v1.sql'), 'utf8'));
-    const back = (await db.query("select to_regclass('public.ops_compute_attestations') as t")).rows[0].t;
-    assert(back !== null, 're-apply failed');
-    return { rollback_reapplied: true, lease_rows_untouched: leases };
+    assert(leases > 0, 'recovery must not touch the lease rows');
+    for (const name of ['compute_job_attestations_v1', 'compute_job_attestations_device_facts_v1']) {
+      await db.exec(fs.readFileSync(path.join(ROOT, 'supabase/pending', `${name}.sql`), 'utf8'));
+    }
+    const back = (await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='ops_compute_attestations' and column_name='device_facts'")).rows[0].n;
+    assert(back === 1, 'base and extension re-apply failed');
+    return { populated_recoveries_refused: true, signed_evidence_preserved: before.length, empty_fixture_reapplied: true, lease_rows_untouched: leases };
   });
 
   const ok = steps.every((s) => s.ok);
   const proof = {
     schema: 'mccluster-device-jobs-staging-proof/1',
     started_at: startedAt, finished_at: new Date().toISOString(), ok, full: FULL,
-    environment: { node: process.version, platform: process.platform, pglite: 'PostgreSQL via PGlite (PGLITE_MODULE_PATH)', commit: gitSha() },
+    environment: { node: process.version, platform: process.platform, database: db.native ? 'Disposable local native PostgreSQL' : 'PostgreSQL via PGlite (PGLITE_MODULE_PATH)', commit: gitSha() },
     schema_files: loaded,
     processes: ['core/src/compute/gateway.mjs', 'core/src/compute/node-agent.mjs', 'scripts/staging/device-jobs/fixture-executor.mjs', 'scripts/staging/device-jobs/pglite-postgrest.mjs', 'TLS loopback ingress'],
     synthetic: 'All identities, tokens, keys and model output are synthetic fixtures. No real device, no canonical Supabase, no OVH Core, no model inference.',

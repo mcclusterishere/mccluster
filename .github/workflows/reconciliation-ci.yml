@@ -311,6 +311,29 @@ jobs:
           # were promoted; the reset above applies them from supabase/migrations/.
           node scripts/compute-lease-sql-check.mjs
           node scripts/test-intel-integrity-db.mjs
+          node scripts/ai-context-workstreams-sql-check.mjs
+      - name: Verify workstreams against the full reset schema and roll back
+        # The behavioral proof above uses minimal base fixtures. This pass uses the
+        # real reset tables and their existing ontology/decision triggers.
+        env:
+          RESET_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          for pass in 1 2; do
+            psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/pending/ai_context_workstreams_v1.sql
+            psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/pending/ai_context_workstreams_v1.sql
+            psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/ai_context_workstreams_v1.integration.sql
+            psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/pending/ai_context_workstreams_v1.rollback.sql
+          done
+      - name: Prove catalog, distribution and lyrics against the full reset
+        # Uses canonical Auth/Storage roles, music review guards and queue
+        # triggers without replacing them. Native checks preserve a published
+        # synthetic release through apply, guarded rollback and reapply.
+        # Run last: its pending schema and synthetic records live only until
+        # this isolated stack is stopped; later checks must see canonical state.
+        env:
+          POSTGRES_MODULE_PATH: ${{ runner.temp }}/native-admin-tools/node_modules/postgres/src/index.js
+          NATIVE_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: node scripts/music-release-native-check.mjs --full-reset
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true

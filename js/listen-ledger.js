@@ -98,17 +98,73 @@
     return h;
   }
 
-  function handle(key, idPromise, isPlaying) {
-    var h = { key: key, done: false, resolved: null, timer: null };
-    h.id = idPromise.then(function (id) { h.resolved = id; if (id) remember(h); return id; });
+  function handle(key, idPromise, isPlaying, isCurrent) {
+    var h = { key: key, done: false, released: false, resolved: null, timer: null };
+    h.id = idPromise.then(function (id) { h.resolved = id; if (id && (!isCurrent || isCurrent())) remember(h); return id; });
     return arm(h, isPlaying);
+  }
+
+  /* A FINISHED SONG IS COUNTED BEFORE THE NEXT ONE STARTS (music slice M3; music map 02, DEL-4).
+     When a song ends the player finishes it and starts the next one in the same moment. The two
+     requests used to race, and when the next start reached the database first, music_listen_start
+     closed the song just heard as not completed: production held 55 such rows beside 59 completed
+     ones. A start now waits for the finish in flight to come back, for its song's FINISH_WAIT_MS at
+     most, so a finish that never answers cannot stop the next song counting. The music never
+     waits: only this request does.
+     THE WAIT COMES OUT OF THE NEXT SONG'S OWN MARGIN (music slice M3 follow-up; reviews PB-R10 and RF-1).
+     The next song is credited from the moment its start reaches the database, and the Worker counts
+     it once floor(length x 0.95) is heard, so a start that waited 5 s could leave the shortest song
+     (Towyard Killer, 65.7 s, counted after 62 s) uncounted; and one wait for every song, half that
+     smallest margin, cost the song just heard whenever its finish took longer than 1.85 s, before
+     every song. start() knows which song comes next, so each song waits half its own margin, 5 s at
+     most: scripts/music-track-lengths.mjs writes the table from the songs' own lengths. A song the
+     table does not hold waits the cap: the server counts no listen of it, so only the song just
+     heard is at stake. */
+  /* FINISH WAIT BEGIN: written by scripts/music-track-lengths.mjs; --check fails when it is stale */
+  /* each song's wait in ms: half its own margin, 5 s at most; the smallest is HitShake's,
+     half of 2.2 s (42.2 s, counted after 40 s) */
+  var FINISH_WAIT_CAP_MS = 5000;
+  var FINISH_WAIT_MS = {
+    "all-in-the-details": 4000, "alquifina-new-chick": 3000, "anti-social-engineering": 2850, "antisocial": 4450,
+    "app-attacks": 2550, "block-so-hot": 1950, "bussin-juggs": 3300, "data-breach": 5000, "dealer-plates": 2700,
+    "dealer-plates-b": 2700, "deep-end": 4300, "dive-in": 4450, "drunk-driving": 3550,
+    "environmental-injustice": 4450, "environmental-injustice-brave": 5000, "evil-twin-middle-man": 5000,
+    "fire": 3500, "ghost-in-the-wires": 5000, "got-wifi": 2700, "heal-the-3rd-world": 4000, "here": 2550,
+    "high-alert": 4300, "hit-mode": 2000, "hitlist": 3550, "hitshake": 1100, "hundun-b-side": 4000, "iot": 2050,
+    "lana-b-side": 2150, "lightroom": 3650, "money-or-the-power": 5000, "mr-lock-changer-remix": 3050,
+    "new-phone": 3050, "no-friend": 4300, "numb": 5000, "one-gon-ride": 2550, "osint": 2500, "other-side": 4550,
+    "per-diem": 2600, "please-set-me-free": 5000, "promises": 5000, "pull-up": 4200, "raid-hot-site": 5000,
+    "recipe": 2550, "red-blue-purple-white-team": 2350, "repo-guy-b-side": 3100, "rolling-with-me": 3900,
+    "runway-walk": 3200, "salvage-title-b-side": 2550, "see-me-up": 3750, "spell": 2500,
+    "stand-on-business-b-side": 3350, "test-drive": 2600, "tinderella": 5000, "towyard-killer": 1850,
+    "up-for-days": 5000, "upset": 5000, "vaunt": 2700, "who-did-the-shoot": 3400, "write-a-song": 3700,
+    "you-the-feds": 5000
+  };
+  /* FINISH WAIT END */
+  var finishing = null, selection = 0;
+  function afterFinish(key) {
+    var pending = finishing;
+    if (!pending) return Promise.resolve();
+    var wait = Object.prototype.hasOwnProperty.call(FINISH_WAIT_MS, key) ? FINISH_WAIT_MS[key] : FINISH_WAIT_CAP_MS;
+    return new Promise(function (resolve) {
+      var timer = root.setTimeout ? root.setTimeout(resolve, wait) : 0;
+      pending.then(function () { if (timer && root.clearTimeout) root.clearTimeout(timer); resolve(); });
+    });
   }
 
   function start(key, isPlaying) {
     if (!key || !token()) return null;
-    return handle(key, post("/v1/music/listens", { track: key }).then(function (d) {
+    var chosen = ++selection;
+    function isCurrent() { return chosen === selection; }
+    var h = handle(key, afterFinish(key).then(function () {
+      /* A skipped song must never open later and close the actual playing listen. Different
+         tracks have different waits, so request order alone cannot protect the newer selection. */
+      if (h.released || !isCurrent()) return null;
+      return post("/v1/music/listens", { track: key });
+    }).then(function (d) {
       return (d && d.listen_id) || null;
-    }), isPlaying);
+    }), isPlaying, isCurrent);
+    return h;
   }
 
   /* Pick up the listen another page started (the album hands the song to
@@ -119,7 +175,8 @@
     try {
       var o = JSON.parse(root.localStorage.getItem(OPEN) || "null");
       if (!o || o.key !== key || !o.id || Date.now() - o.at > 10 * 60 * 1000) return null;
-      return handle(key, Promise.resolve(o.id), isPlaying);
+      var chosen = ++selection;
+      return handle(key, Promise.resolve(o.id), isPlaying, function () { return chosen === selection; });
     } catch (e) { return null; }
   }
 
@@ -131,7 +188,7 @@
     if (!handle || handle.done) return Promise.resolve(null);
     handle.done = true;
     stop(handle);
-    return handle.id.then(function (id) {
+    var done = handle.id.then(function (id) {
       if (!id) return null;
       forgetOpen(id);
       return post("/v1/music/listens/" + id + "/finish").then(function (d) {
@@ -139,11 +196,16 @@
         return d;
       });
     });
+    /* the next start waits for this one (post() never rejects; a lost finish settles as null) */
+    var settled = done.then(function () {}, function () {});
+    finishing = settled;
+    settled.then(function () { if (finishing === settled) finishing = null; });
+    return done;
   }
 
   /* This page is done with the song but the song may go on elsewhere:
      stop beating here and leave it open for adopt(). */
-  function release(h) { stop(h); }
+  function release(h) { if (h) h.released = true; stop(h); }
 
   root.MCC_LISTENS = {
     keyOf: keyOf,

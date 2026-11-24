@@ -151,6 +151,18 @@ Found on the way, not changed here: production's policy "members read organizati
 `authenticity_checks` (whose read policy reads it), fails with 42P17 (infinite recursion). A member's insert of an
 authenticity check without a returned row (PostgREST's `return=minimal`) still succeeds. The proof below inserts that way.
 
+## Permission attestation, 2026-11-23
+
+Matthew wrote on 2026-11-23, in the working session: "I confirm drawdown's permission for the quotes on their page. That
+was a conversation that was had in person." It is recorded as his attestation, in his words, beside item 2 of the list
+above: it speaks to the quotations, (b), and describes a permission given in conversation in person, not a document kept
+anywhere in this repository. Items (a) and (c), the D1 to D14 defaults and the six choices stay as they are listed above.
+
+Nothing is live because of it: the source-page SQL is still pending, the page is not shown, and the 125 missions carry no
+website quotation. Restoring the 87 quotations removed in PR #819 is a separate, separately reviewed forward migration
+(`data/missions/drawdown/README.md`, "Permission attestation, 2026-11-23"), and finishing this page is another: the pending
+SQL on approval of its exact text, then Preview and Show in Control, whose confirmation keeps only the date he gives.
+
 ## Tests, and where they run
 
 | Test | What it holds | Where |

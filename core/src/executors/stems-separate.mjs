@@ -73,7 +73,7 @@ export async function stemsSeparate(job, deps = {}) {
     return {
       executor: 'stems_separate:v1',
       summary: `Stems for "${title}": ${stored.stems} files (${manifest.model}), ${(stored.bytes / 1e6).toFixed(1)} MB, private`,
-      track_key: trackKey, model: manifest.model, stems: stored.stems, bytes: stored.bytes,
+      track_key: trackKey, run_id: stored.runId, model: manifest.model, stems: stored.stems, bytes: stored.bytes,
       timing: manifest.timing || null,
     };
   } finally {
