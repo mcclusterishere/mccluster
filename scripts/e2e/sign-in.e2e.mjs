@@ -92,6 +92,23 @@ async function keyContrast(page, scope) {
   await settle(page);
   return c;
 }
+/* THE RESEND HOLD, AS IT BEGINS. Read after the awaits of a busy runner, the label says only how far the countdown has got
+   (a slow runner read "Try again in 53s"). So the page records the label the Resend button shows the moment it is held, and
+   when; the check reads the hold from that first label, and asks the label read later to be still held and to count down no
+   faster than the clock. Added to the page before it loads (openWorld's beforeNavigate); the globe's frame is left alone. */
+function recordResendHold() {
+  if (window !== window.top) return;
+  const watch = () => {
+    const b = document.getElementById('mnResend');
+    if (!b || window.__resendHold) return;
+    const hold = window.__resendHold = { first: null, firstAt: null };
+    const look = () => { if (hold.first === null && !b.hidden && b.disabled) { hold.first = b.textContent; hold.firstAt = performance.now(); } };
+    new MutationObserver(look).observe(b, { attributes: true, attributeFilter: ['hidden', 'disabled'], childList: true, characterData: true, subtree: true });
+    look();
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch, { once: true });
+  else watch();
+}
 
 try {
   for (const w of [390, 820, 1280]) for (const phase of ['night', 'day']) {
@@ -184,7 +201,7 @@ try {
     }
     /* ---------- 3. create an account with the privacy agreement, the sealed note, Resend ---------- */
     {
-      const { ctx, page, world } = await openWorld(browser, server.base, device, '/mnet.html?view=feed', { phase, recordAuth: true, banner: true, signup: 'confirm' });
+      const { ctx, page, world } = await openWorld(browser, server.base, device, '/mnet.html?view=feed', { phase, recordAuth: true, banner: true, signup: 'confirm', beforeNavigate: (fresh) => fresh.page.addInitScript(recordResendHold) });
       try {
         await worldReady(page);
         await page.click('[data-guest-open="create"]');
@@ -208,8 +225,13 @@ try {
         check(scope, 'Create account calls signUpWithPassword(email, password, the privacy acknowledgement) once', made.length === 1 && made[0].name === 'signUpWithPassword' && made[0].args[0] === 'new.member@example.invalid' && made[0].args[1] === 'fixture-password-1' && ack && ack.privacy_policy_version && ack.privacy_acknowledged_at, made);
         check(scope, 'and one POST to signup with email, password and the acknowledgement, and no redirect', signup.length === 1 && signup[0].body && signup[0].body.email === 'new.member@example.invalid' && signup[0].body.password === 'fixture-password-1' && signup[0].body.data && signup[0].body.data.privacy_policy_version === ack.privacy_policy_version && !/redirect/.test(signup[0].q) && !('redirect_to' in signup[0].body), signup);
         const note = await page.evaluate(() => { const s = document.getElementById('mnAuthStatus'), r = document.getElementById('mnResend'), p = document.getElementById('mnAuthPanel'); const kids = [...p.children].filter((k) => !k.hidden && k.getClientRects().length).sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top).map((k) => k.id || k.className.split(' ')[0]);
-          return { ok: s.classList.contains('is-ok'), text: s.textContent, resend: !r.hidden, held: r.disabled, label: r.textContent, mode: document.getElementById('mnSignedOut').getAttribute('data-auth-mode'), order: kids.slice(0, 3) }; });
-        check(scope, 'the sealed note: Check your email, Resend held for 60 s, both leading the panel, back on Sign in', note.ok && /^Check your email/.test(note.text) && note.resend && note.held && /^Try again in (60|59|58)s$/.test(note.label) && note.mode === 'signin' && note.order[0] === 'mnAuthStatus' && note.order[1] === 'mnResend', note);
+          const hold = window.__resendHold || {};
+          return { ok: s.classList.contains('is-ok'), text: s.textContent, resend: !r.hidden, held: r.disabled, label: r.textContent, first: hold.first === undefined ? null : hold.first, sinceFirst: hold.firstAt == null ? null : Math.round(performance.now() - hold.firstAt), mode: document.getElementById('mnSignedOut').getAttribute('data-auth-mode'), order: kids.slice(0, 3) }; });
+        /* held for 60 s: the first label the held button showed was "Try again in 60s"; read now, it is still held and counts
+           down from there no faster than the clock (one tick of slack), however long this runner took to read it */
+        const left = /^Try again in (\d+)s$/.exec(note.label), shown = left ? Number(left[1]) : NaN;
+        const held60 = note.first === 'Try again in 60s' && note.held && shown >= 1 && shown <= 60 && note.sinceFirst !== null && shown >= 60 - Math.floor(note.sinceFirst / 1000) - 1;
+        check(scope, 'the sealed note: Check your email, Resend held for 60 s, both leading the panel, back on Sign in', note.ok && /^Check your email/.test(note.text) && note.resend && held60 && note.mode === 'signin' && note.order[0] === 'mnAuthStatus' && note.order[1] === 'mnResend', note);
         let size = await fits(page);
         check(scope, 'nothing scrolls sideways in the emailed state', size.sw === size.cw, size);
         await keyContrast(page, scope + ' emailed');
