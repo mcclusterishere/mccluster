@@ -839,6 +839,43 @@ const SCENARIOS = {
     await ctx.close();
   },
 
+  /* VERIFICATION (2026-11-24): the house owner's own play of the closing song is his one play until it is spent: a
+     pause and Play (the deck bar, its row, the lock screen) picks it up where it paused, with no second claim, and his
+     song test card keeps his own line while it plays */
+  async owner_keeps_his_play(browser) {
+    const HELD = '#tracks li[data-gated-object]';
+    const keyOf = (t) => (t.gated && t.gated.object ? String(t.gated.object).split('/')[0] : String(t.src || '').split('/').pop().replace(/\.[a-z0-9]+$/i, '').toLowerCase());
+    const plane = makePlane();
+    const { ctx } = await context(browser, plane, 390, { seconds: 30 });
+    let claims = 0;
+    await ctx.route('https://api.mccluster.org/v1/music/gates/**', (route) => { if (route.request().method() === 'POST' && /\/play$/.test(new URL(route.request().url()).pathname)) claims++; return route.fallback(); });
+    await ctx.route(SB + '/rest/v1/rpc/song_test_state', (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify(CIA.tracks.map((t, i) => ({ track: keyOf(t), label: 'Song ' + (i + 1), question: 'Was this song racist? Why?', heard: false, gated: !!t.gated, answer: null, split: null }))) }));
+    const page = await ctx.newPage();
+    await seed(page, slots(plane.storedSession('owner', 3600)));
+    await page.goto(HOUSE + '/album.html?album=cia-mind-control', { waitUntil: 'load' });
+    await until(page, (sel) => { const r = document.querySelector(sel); return r && r.getAttribute('data-gate') === 'earned'; }, HELD, 15000);
+    await until(page, () => document.querySelectorAll('.stq-card').length === CIA.tracks.length, null, 15000);
+    const card = () => page.evaluate((k) => { const c = document.querySelector('.stq-card[data-stq="' + k + '"] .stq-lock'); return c ? c.textContent : null; }, keyOf(CLOSER));
+    const before = await card();
+    await page.click(HELD);
+    const playing = await until(page, () => { const d = document.getElementById('deck'); return /__master\.wav$/.test(d.currentSrc) && !d.paused && d.currentTime > 1.5; }, null, 15000);
+    check(playing && claims === 1, 'owner: his own play of the closing song, one claim, the master', { playing, claims });
+    check((await card()) === before && /earned play/.test(before || ''), 'owner: his song test card keeps his own line while his play is on', { same: (await card()) === before });
+    for (const how of ['the deck bar\'s Play', 'its row', 'the lock screen\'s play']) {
+      await page.click('#tpPlay');
+      await until(page, () => document.getElementById('deck').paused, null, 5000);
+      const at = await page.evaluate(() => document.getElementById('deck').currentTime);
+      if (how === 'its row') await page.click(HELD);
+      else if (how === 'the lock screen\'s play') await page.evaluate(() => window.MCC_NOW_PLAYING.command('play'));
+      else await page.click('#tpPlay');
+      await sleep(1200);
+      const s = await page.evaluate(() => { const d = document.getElementById('deck'); return { paused: d.paused, t: d.currentTime, master: /__master\.wav$/.test(d.currentSrc), popup: !!(document.getElementById('mccHold') || {}).open }; });
+      check(!s.paused && s.master && s.t >= at - 0.05 && claims === 1 && !s.popup, `owner: paused and played again by ${how}, it picks up where it paused with the same play (no second claim, never from 0:00)`, { at, s, claims });
+    }
+    await ctx.close();
+  },
+
   /* ---------------------------------------------------------------- 320 px */
   async narrow(browser) {
     const plane = makePlane();
