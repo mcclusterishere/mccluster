@@ -2493,3 +2493,21 @@ fails before and passes after; nothing was merged, deployed, enabled or applied.
    gated or held one, marked the pocket held and cleared Now Playing without pausing, and the next save wrote
    `playing:true` back. The pocket now pauses its sound and film and saves the stop at once (`js/pip.js`);
    `scripts/e2e/now-playing.e2e.mjs`, "pocket at the end of the record" (4 of 8 checks before, 8 of 8 after).
+3. **The analytics device id does not carry (open, no code changed).** The finding is real: `js/analytics.js` runs
+   before `js/tabbar.js` loads the carry and mints the platform's own `mcc_device` as it starts, so the carry's "only
+   where this origin has none" is never true on a page that counts, and one listener becomes two devices across the
+   move (SPEC-PLATFORM 2.7, risk 15). Measured in Chromium with both hosts agreed: his host's id never arrives. A small
+   fix (analytics takes the carried id up on the page load that minted its own, before that id was given to anything)
+   was built and measured, and does not work: the experience plane's first decision request
+   (`js/mcc-model-adapter.js`, `POST /v1/experience/decide`) sends the fresh id about 170 ms into the page, before the
+   carry frame can answer. A correct fix is a decision for Matthew: hold the first decision and the first batch until
+   the carry answers on a first platform visit, take the old id up anyway and leave one orphan decision, or record the
+   pair of ids once and join them in the reports.
+
+Also in this round, three browser suites that answer one host only were given the other (`world-travel-guest`,
+`control-room-nav`, `owner-halo-globe`: from P1 the platform frames his host's carry page, and Control and the product
+doors on his host go to the platform), and the shell suite's offline scenario takes its server down instead of relying
+on Chromium's page-level offline emulation, which CI's Chromium 1200 does not apply to the service worker's fetch. While
+there, measured in both Chromiums: after Listen and `index.html` were fetched through `sw.js`, its cache held fonts and
+images only, so the offline fallback to `index.html` had nothing to answer with. Inferred cause: its page branch
+clones the response after handing it to the page. `sw.js` is as on `main` and was not changed here.
