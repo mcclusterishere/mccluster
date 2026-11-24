@@ -101,7 +101,7 @@ async function ordered() {
     return Promise.resolve({ ok: true, json: async () => ({}) });
   };
   vm.runInNewContext(src, { window, fetch, JSON, Date, Promise, CustomEvent: class {} });
-  return { L: window.MCC_LISTENS, sent, finishes, timers };
+  return { L: window.MCC_LISTENS, sent, finishes, timers, store };
 }
 
 test('a finished song reaches the ledger before the next song\'s start does', async () => {
@@ -222,4 +222,104 @@ test('a song the catalogue does not count waits the full 5 s for the last finish
      (workers/mccluster/src/music/router.js startListen), so only the song just heard is at stake */
   assert.equal(await waitBeforeStart('niggy-nigg'), 5000, 'the gated closer');
   assert.equal(await waitBeforeStart('not-in-the-catalogue'), 5000);
+});
+
+/* A SONG LEFT WHILE ITS START WAITS NEVER REACHES THE LEDGER (Release 1 review CX-1). Each start waits for the last finish,
+   for its own song's time (above), so the start of a song skipped at once could leave after the start of the song chosen
+   in its place: Data Breach waits 5 s, Towyard Killer 1.85 s. music_listen_start closes every open listen of the listener
+   (supabase/migrations/20260930222516_music_listen_gate_hardening.sql), so the skipped song's late start closed the listen
+   of the song playing as unfinished, and that song, heard to its end, did not count; the listen handed to the next page
+   named the skipped song. A start that is still waiting is sent only for the song still wanted: never once the page has
+   released it (a skip: album.html load(), js/music-engine.js dropListen()) or finished it (js/pip.js roll()), and never
+   once a newer start has come after it on the page (js/gateway.js crossfades without a release). */
+const startsSent = (sent) => sent.filter((s) => s.startsWith('start:'));
+const openKey = (store) => { try { const o = JSON.parse(store.get('mcc_listen_open') || 'null'); return o ? o.key : null; } catch { return null; } };
+/* time goes by with the last finish still out: every wait still pending runs out, the shortest first */
+async function waitsRunOut(timers) {
+  for (;;) {
+    await flush(); await flush();
+    const next = [...timers].filter(([, t]) => t.ms > 0).sort((x, y) => x[1].ms - y[1].ms)[0];
+    if (!next) break;
+    timers.delete(next[0]);
+    next[1].fn();
+  }
+  await flush(); await flush();
+}
+
+test('a song skipped while its start waits never reaches the ledger, and the song chosen is the last start sent (review CX-1)', async () => {
+  const { L, sent, finishes, timers, store } = await ordered();
+  const a = L.start('red-blue-purple-white-team', () => true);
+  await a.id;
+  L.finish(a);                                              // song A ended; its finish has not answered
+  const skipped = L.start('data-breach', () => true);       // the next song plays at once: its start waits up to 5 s
+  L.release(skipped);                                       // the listener skips it at once
+  const chosen = L.start('towyard-killer', () => true);     // and the song chosen plays: its start waits 1.85 s
+  await waitsRunOut(timers);
+  assert.deepEqual(sent, ['start:red-blue-purple-white-team', 'finish', 'start:towyard-killer'],
+    'the skipped song\'s start never leaves; the song chosen is the last start sent, after the finish (DEL-4)');
+  assert.equal(await skipped.id, null, 'the skipped song has no listen');
+  assert.ok(await chosen.id, 'the song chosen has its listen');
+  assert.equal(openKey(store), 'towyard-killer', 'the listen handed to the next page is the song playing');
+  finishes.shift()();                                       // the last finish answers late: nothing more leaves
+  await flush(); await flush();
+  assert.deepEqual(startsSent(sent), ['start:red-blue-purple-white-team', 'start:towyard-killer']);
+});
+
+test('a song skipped while its start waits never reaches the ledger when the last finish answers before the waits run out (review CX-1)', async () => {
+  const { L, sent, finishes, timers, store } = await ordered();
+  const a = L.start('red-blue-purple-white-team', () => true);
+  await a.id;
+  const done = L.finish(a);
+  const skipped = L.start('data-breach', () => true);
+  L.release(skipped);
+  const chosen = L.start('towyard-killer', () => true);
+  await flush(); await flush();
+  assert.deepEqual(sent, ['start:red-blue-purple-white-team', 'finish'], 'both starts wait for the finish (DEL-4)');
+  finishes.shift()();                                       // the finish answers before either wait runs out
+  await done; await chosen.id;
+  await waitsRunOut(timers);
+  assert.deepEqual(sent, ['start:red-blue-purple-white-team', 'finish', 'start:towyard-killer'],
+    'the answer frees both waits in one moment, and only the song chosen is sent: two starts no longer race to the database');
+  assert.equal(await skipped.id, null, 'the skipped song has no listen');
+  assert.equal(openKey(store), 'towyard-killer', 'the listen handed to the next page is the song playing');
+});
+
+test('a song released while its start waits, with no start after it, never reaches the ledger (review CX-1)', async () => {
+  /* the listener moved on to a song the ledger does not count (the gated record, a creator's upload) */
+  const { L, sent, timers, store } = await ordered();
+  const a = L.start('dealer-plates', () => true);
+  await a.id;
+  L.finish(a);
+  const left = L.start('pull-up', () => true);
+  L.release(left);
+  await waitsRunOut(timers);
+  assert.deepEqual(sent, ['start:dealer-plates', 'finish'], 'no start for the song left');
+  assert.equal(await left.id, null, 'the song left has no listen');
+  assert.equal(openKey(store), null, 'no listen is handed to the next page');
+});
+
+test('the pocket player moving on from a song whose start still waits sends neither that start nor its finish (review CX-1)', async () => {
+  const { L, sent, timers } = await ordered();
+  const a = L.start('dealer-plates', () => true);
+  await a.id;
+  L.finish(a);
+  const b = L.start('pull-up', () => true);                 // the pocket player plays the next song
+  const rolled = L.finish(b);                               // and rolls on from it at once (js/pip.js roll() finishes it)
+  await waitsRunOut(timers);
+  assert.deepEqual(sent, ['start:dealer-plates', 'finish'], 'no start and no finish for the song left');
+  assert.equal(await rolled, null, 'nothing to count');
+});
+
+test('a newer start on the page supersedes an older one still waiting, released or not, so starts reach the ledger in the order chosen (review CX-1)', async () => {
+  const { L, sent, timers, store } = await ordered();
+  const a = L.start('red-blue-purple-white-team', () => true);
+  await a.id;
+  L.finish(a);
+  const older = L.start('data-breach', () => true);         // a player that does not release the song it leaves
+  const newer = L.start('towyard-killer', () => true);
+  await waitsRunOut(timers);
+  assert.deepEqual(sent, ['start:red-blue-purple-white-team', 'finish', 'start:towyard-killer'], 'only the newer start leaves');
+  assert.equal(await older.id, null, 'the older song has no listen');
+  assert.ok(await newer.id, 'the newer song has its listen');
+  assert.equal(openKey(store), 'towyard-killer', 'the listen handed to the next page is the newer song');
 });

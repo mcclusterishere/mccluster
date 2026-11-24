@@ -15,6 +15,7 @@
      var h = MCC_LISTENS.adopt(key, isPlaying)  pick up a song another page
                                                 started (same song only)
      MCC_LISTENS.finish(h)                      the song reached its end
+     MCC_LISTENS.release(h)                     this page left the song
      MCC_LISTENS.onFinish(fn)                   repaint a gate after a count
    isPlaying() says whether audio is actually playing; beats are sent only
    while it is, and the server counts only the time they cover.
@@ -99,7 +100,7 @@
   }
 
   function handle(key, idPromise, isPlaying) {
-    var h = { key: key, done: false, resolved: null, timer: null };
+    var h = { key: key, done: false, released: false, resolved: null, timer: null };
     h.id = idPromise.then(function (id) { h.resolved = id; if (id) remember(h); return id; });
     return arm(h, isPlaying);
   }
@@ -147,13 +148,24 @@
     });
   }
 
+  /* A START THAT WAITED IS SENT ONLY FOR THE SONG STILL WANTED (Release 1 review CX-1). Each song waits its own time,
+     so a song skipped at once (Data Breach, 5 s) could send its start after the start of the song chosen in its place
+     (Towyard Killer, 1.85 s), and music_listen_start, which closes every open listen of the listener, then closed the
+     song playing as not completed: heard to its end, it did not count, and the listen handed to the next page named the
+     skipped song. So when the wait is over nothing is sent for a song this page has released (a skip) or finished (the
+     pocket player rolling on), nor for one a newer start on this page has come after: starts reach the server in the
+     order the listener chose them. A song that leaves no start leaves nothing to close or to count. */
+  var starts = 0;
   function start(key, isPlaying) {
     if (!key || !token()) return null;
-    return handle(key, afterFinish(key).then(function () {
+    var turn = ++starts;
+    var h = handle(key, afterFinish(key).then(function () {
+      if (h.released || h.done || turn !== starts) return null;
       return post("/v1/music/listens", { track: key });
     }).then(function (d) {
       return (d && d.listen_id) || null;
     }), isPlaying);
+    return h;
   }
 
   /* Pick up the listen another page started (the album hands the song to
@@ -192,8 +204,9 @@
   }
 
   /* This page is done with the song but the song may go on elsewhere:
-     stop beating here and leave it open for adopt(). */
-  function release(h) { stop(h); }
+     stop beating here and leave it open for adopt(). A start still
+     waiting for the last finish is not sent for it (start() above). */
+  function release(h) { if (h) h.released = true; stop(h); }
 
   root.MCC_LISTENS = {
     keyOf: keyOf,
