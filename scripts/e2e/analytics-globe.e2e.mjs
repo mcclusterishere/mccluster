@@ -87,6 +87,13 @@ async function context(viewport, { owner = true, reduced = false, pendingRpc = t
     localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'x.' + btoa(JSON.stringify({ exp, sub: '11111111-1111-4111-8111-111111111111', email: 'owner@test' })).replace(/=+$/, '') + '.y', refresh_token: 'r', expires_at: exp, user: { id: '11111111-1111-4111-8111-111111111111', email: 'owner@test' } }));
   });
   const calls = [];
+  /* CESIUM_DIR=<the app-pinned 1.131 Build/Cesium>: serve it locally where the CDN is not reachable (as analytics-unified does) */
+  if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/downloads/cesiumjs/releases/**', async (route) => {
+    const p = new URL(route.request().url()).pathname.split('/Build/Cesium/')[1];
+    if (!p) return route.abort();
+    try { return route.fulfill({ body: await readFile(join(process.env.CESIUM_DIR, p)), contentType: ({ '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.wasm': 'application/wasm' })[extname(p)] || 'application/octet-stream' }); }
+    catch { return route.abort(); }
+  });
   await ctx.route('https://api.mccluster.org/**', (route) => {
     const req = route.request(), p = new URL(req.url()).pathname;
     calls.push(p);
