@@ -307,7 +307,13 @@
   function resolveRoom(wing, path) {
     if (path === MAP) return MAP;
     if (path.indexOf("mnet.html") === 0) return worldAt(path.slice("mnet.html".length));
-    return wing === "world" ? sessionRoom(path) : pageHref(path);
+    return wing === "world" ? sessionRoom(path) : pageOrHere(path);
+  }
+  /* a page of the site, seen from that very page: the tab is this page (a tap goes back to the top, and on Listen it is
+     the player's own Play and Pause), never a load of the same page from another host, which would stop the song.
+     Anywhere else it is where the table serves the page (pageHref): from P1, on Matthew's host, the platform. */
+  function pageOrHere(path) {
+    return onPage(ROOT + path) ? ROOT + path : pageHref(path);
   }
   /* a room whose page reads this host's own session (the account): before P1 the page's own host, since a session is
      per origin and nothing carried it there; from P1 where the table serves it (the platform, where the carry brings

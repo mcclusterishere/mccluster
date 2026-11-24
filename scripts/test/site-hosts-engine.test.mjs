@@ -8,8 +8,9 @@
    and the installed app's move card. Each function is run here as written, with a window of our own:
    - with the table that ships (P1): on the platform (mccluster.org) the bar is local, Music listen.html, the M
      index.html, the Globe /; on Matthew's host Music and the Globe point at the platform and the M at his own root; the
-     World is / and /mnet.html only, never /index.html; the writer is off; the carry runs on the platform alone; the
-     move card only on his host, in the installed app;
+     World is / and /mnet.html only, never /index.html; on a page itself the bar's door to that page is this page, on
+     either host (Listen keeps the player's own Play and Pause); the writer is off; the carry runs on the platform
+     alone; the move card only on his host, in the installed app;
    - with P0's table the same functions answer what the literals they replaced answered;
    - with the equityuprise rewrite and with a table whose hosts are elsewhere the answers move with the table;
    - with no table a link stays on its own host and nothing crosses.
@@ -62,8 +63,8 @@ function page(file, names, { site, href, root = null, local = {}, standalone = f
   vm.runInContext(names.map((n) => fnSource(src, n)).join('\n'), ctx);
   return Object.fromEntries(names.map((n) => [n, ctx[n]]));
 }
-const BAR = ['onWorldHost', 'isWorldPath', 'pageBase', 'pageHref', 'worldBase', 'worldAt', 'worldScreen', 'crossesHouse', 'handoffWriterOn',
-  'houseBound', 'readAuthSession', 'storedSessionUsable', 'carryWanted', 'carryPending', 'moveCardWanted'];
+const BAR = ['onWorldHost', 'isWorldPath', 'pageBase', 'pageHref', 'samePath', 'onPage', 'pageOrHere', 'worldBase', 'worldAt', 'worldScreen',
+  'crossesHouse', 'handoffWriterOn', 'houseBound', 'readAuthSession', 'storedSessionUsable', 'carryWanted', 'carryPending', 'moveCardWanted'];
 const bar = (opts) => page('js/tabbar.js', BAR, opts);
 
 test('the table that ships is P1\'s, and these files name no host of their own any more', () => {
@@ -120,6 +121,28 @@ test('P1 on Matthew\'s host: Music and the Globe point at the platform, the M at
     assert.equal(b.isWorldPath('/mnet.html'), true);
     assert.equal(b.houseBound(new URL(`${PROFILE}/listen.html`)), false, 'his host serves every page until P3');
   }
+});
+
+test('P1, the page you are on: the bar\'s door to a page is that page itself when you stand on it, on either host, so Listen on Matthew\'s host keeps the player\'s Play and Pause', () => {
+  /* the wing doors (the Music tab among them) resolve through pageOrHere: from P1 Matthew's host points Music at the
+     platform's Listen, but on his Listen itself a load of the platform's copy would stop the song the tab pauses */
+  const listen = bar({ site: SHIPPED, href: `${PROFILE}/listen.html` });
+  assert.equal(listen.pageOrHere('listen.html'), `${PROFILE}/listen.html`, 'on his Listen the Music tab is this page');
+  assert.equal(listen.pageHref('listen.html'), `${PLAT}/listen.html`, 'the table still serves Listen from the platform');
+  assert.equal(listen.pageOrHere('album.html'), `${PLAT}/album.html`, 'another page: where the table serves it');
+  const album = bar({ site: SHIPPED, href: `${PROFILE}/album.html?t=2` });
+  assert.equal(album.pageOrHere('listen.html'), `${PLAT}/listen.html`, 'from his album, Music is the platform\'s Listen');
+  assert.equal(album.pageOrHere('album.html'), `${PROFILE}/album.html`, 'the album\'s own door, standing on it');
+  assert.equal(bar({ site: SHIPPED, href: `${PROFILE}/` }).pageOrHere('index.html'), `${PROFILE}/index.html`, 'his root is his HERE page');
+  assert.equal(bar({ site: SHIPPED, href: `${PROFILE}/hire.html` }).pageOrHere('listen.html'), `${PLAT}/listen.html`);
+  const wall = bar({ site: SHIPPED, href: `${PROFILE}/walls/cover-art.html`, root: '../' });
+  assert.equal(wall.pageOrHere('listen.html'), `${PLAT}/listen.html`, 'a page in a folder: Music is the platform\'s');
+  assert.equal(bar({ site: SHIPPED, href: `${PLAT}/listen.html` }).pageOrHere('listen.html'), `${PLAT}/listen.html`, 'the platform: local');
+  assert.equal(bar({ site: SHIPPED, href: `${PLAT}/album.html` }).pageOrHere('listen.html'), `${PLAT}/listen.html`);
+  assert.equal(bar({ site: P0, href: `${PROFILE}/listen.html` }).pageOrHere('listen.html'), `${PROFILE}/listen.html`, 'P0: as the literals had it');
+  assert.equal(bar({ site: undefined, href: 'http://127.0.0.1:4173/listen.html', root: 'http://127.0.0.1:4173/' }).pageOrHere('album.html'), 'http://127.0.0.1:4173/album.html', 'no table: beside this page');
+  const tabbar = read('js/tabbar.js');
+  assert.match(fnSource(tabbar, 'resolveRoom'), /wing === "world" \? sessionRoom\(path\) : pageOrHere\(path\)/, 'every wing door outside the World resolves through pageOrHere');
 });
 
 test('P1: the fragment hand-off writer is off on every host; the carry runs on the platform alone, once, and never in a frame of its own host', () => {
