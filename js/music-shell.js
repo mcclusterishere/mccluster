@@ -215,10 +215,14 @@
      own tabs are left to the bar (js/tabbar.js): a hold opens a wing, a slot may show its card first, the Music tab
      goes to the shelf (its `home`, not always its href) or is the player's transport on its own page; when the bar
      does go somewhere it asks this shell first (sail() -> navigate below). */
+  /* A PLAY BUTTON INSIDE A LINK IS THE PLAYER'S (engine stage 0, SPEC-ENGINE 10 rows A0.3 and A0.4): Listen's cards wrap
+     their play button in the card's link (a song card in its album's, a creator's card in the artist page's), so the tap
+     is tested from its own target up; asked from the link up, the button inside it was never found and the tap was
+     routed as the link's. Here and in the view agent below it is left to js/music-engine.js. */
   function onTopClick(e) {
     if (!TOP || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
-    if (!a || (a.target && a.target !== "_self") || a.hasAttribute("download") || a.hasAttribute("data-mcc-shell-skip") || a.closest("[data-music-play]") || a.closest(".appbar")) return;
+    if (!a || (a.target && a.target !== "_self") || a.hasAttribute("download") || a.hasAttribute("data-mcc-shell-skip") || e.target.closest("[data-music-play]") || a.closest(".appbar")) return;
     var d = route(a.href, "top");
     if (d.action !== "view" && !((d.action === "reveal" || d.action === "scroll") && (current || pending))) return;
     e.preventDefault(); e.stopPropagation();
@@ -508,7 +512,8 @@
     var click = function (e) {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
-      if (!a || (a.target && a.target !== "_self") || a.hasAttribute("download") || a.closest("[data-music-play]")) return;
+      /* a play button inside a link is the view's player's (js/music-engine.js view mode), from the tap's own target up */
+      if (!a || (a.target && a.target !== "_self") || a.hasAttribute("download") || e.target.closest("[data-music-play]")) return;
       var d = decide(a.href, v.kind, TOP, ROUTES, v.href);
       if (d.action === "native") return;
       e.preventDefault();

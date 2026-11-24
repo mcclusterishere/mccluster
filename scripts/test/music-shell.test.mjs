@@ -156,6 +156,108 @@ test('one switch: with every route off nothing opens as a view and nothing is re
   assert.equal(core.ROUTES.album.view, false, 'the album as a view is a later route');
 });
 
+/* ---------- a card's play button inside its link (SPEC-ENGINE 10, row A0.4) ---------- */
+/* Listen's cards wrap their play button in the card's link: a song card in its album's link (js/listen.js card(), shown
+   while the song rails are on), a creator's card in the artist page's link (js/music-community.js). The top handler and
+   the view agent asked a.closest("[data-music-play]"), which walks UP from the link and never finds the button inside
+   it, so a tap on the button was routed as a tap on the link: in a view the agent took it first (window, capture) and
+   the song never played; the view moved on, closed or the top loaded the album. Both now ask the click's own target.
+   A small element tree: closest() walks up from the element itself, as the DOM's does. */
+function cardTree(href, playAttrs) {
+  const el = (tag, attrs = {}, parent = null) => ({ tagName: tag.toUpperCase(), attrs: new Map(Object.entries(attrs)), parentNode: parent, target: '',
+    getAttribute(a) { return this.attrs.has(a) ? this.attrs.get(a) : null; }, hasAttribute(a) { return this.attrs.has(a); },
+    matches(sel) {
+      if (sel === 'a[href]') return this.tagName === 'A' && this.attrs.has('href');
+      const at = /^\[([a-z-]+)\]$/.exec(sel);
+      if (at) return this.attrs.has(at[1]);
+      const cls = /^\.([a-z-]+)$/.exec(sel);
+      if (cls) return String(this.attrs.get('class') || '').split(/\s+/).includes(cls[1]);
+      return false;
+    },
+    closest(sel) { for (let n = this; n; n = n.parentNode) if (n.matches(sel)) return n; return null; } });
+  const main = el('main');
+  const a = el('a', { href, class: 'feat__card' }, main);
+  a.href = new URL(href, HOUSE + '/').href;   /* the browser's own resolution of a link's address */
+  const play = el('span', { class: 'feat__play', role: 'button', 'data-music-play': '', ...playAttrs }, a);
+  const icon = el('svg', {}, play);
+  const title = el('b', {}, a);
+  return { a, play, icon, title };
+}
+function tap(target) {
+  return { target, button: 0, defaultPrevented: false, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false, prevented: 0, stopped: 0,
+    preventDefault() { this.defaultPrevented = true; this.prevented++; }, stopPropagation() { this.stopped++; } };
+}
+const OBSERVER = { MutationObserver: class { observe() {} disconnect() {} } };
+test('A0.4: the top handler leaves a tap on a card\'s play button inside its link to the player: no view opens, no history is written', () => {
+  const writes = [];
+  const top = browserWindow({ path: '/listen.html', marker: 'listen', extra: OBSERVER });
+  top.history.pushState = (s, t, u) => writes.push(['push', u]);
+  top.history.replaceState = (s, t, u) => writes.push(['replace', u]);
+  run('js/music-shell.js', top);
+  const onTop = (top.__docListeners.click || [])[0];
+  assert.ok(onTop, 'the retained Listen listens for its links');
+  /* Listen's creator card: a link to the artist's page (a view route) with its play button inside */
+  const card = cardTree('music-creator.html?handle=probe-artist', { 'data-creator-track': 'c1' });
+  for (const [what, target] of [['the play button', card.play], ['the icon inside it', card.icon]]) {
+    const e = tap(target);
+    onTop(e);
+    assert.equal(e.prevented + e.stopped, 0, `a tap on ${what} is the player's (js/music-engine.js plays it), never the link's`);
+  }
+  /* and a song card in its album's link (a page-load route): the same */
+  const song = cardTree('album.html?album=here&t=Runway%20Walk', { 'data-album': 'here', 'data-track': 'Runway Walk' });
+  const s = tap(song.play);
+  onTop(s);
+  assert.equal(s.prevented + s.stopped, 0, 'a song card\'s play button is the player\'s too');
+  assert.deepEqual(writes, [], 'no history entry written');
+  assert.equal(top.__appended.length, 0, 'no view opened');
+  assert.equal(top.location.href, HOUSE + '/listen.html', 'and no page load');
+  /* the guard is real: the card itself, away from its play button, still opens the artist's page as a view */
+  const e = tap(card.title);
+  onTop(e);
+  assert.equal(e.prevented, 1, 'a tap on the card\'s title is the link\'s');
+  assert.ok(writes.some(([k, u]) => k === 'push' && /\/music-creator\.html\?handle=probe-artist$/.test(u)), 'and opens the artist page as a view');
+  assert.equal(top.__appended.length, 1, 'one view layer');
+});
+test('A0.4: the view agent leaves a tap on a card\'s play button inside its link to the player: the view stays, nothing is revealed, opened or loaded', () => {
+  /* an artist page retained; Listen opened over it as a view and painted */
+  const writes = [];
+  const top = browserWindow({ path: '/music-creator.html', search: '?handle=probe-artist', marker: 'artist', extra: OBSERVER });
+  top.history.pushState = (s, t, u) => writes.push(['push', u]);
+  top.history.replaceState = (s, t, u) => writes.push(['replace', u]);
+  run('js/music-shell.js', top);
+  const S = top.MCC_MUSIC_SHELL;
+  assert.equal(S.navigate('listen.html'), true, 'the artist page opens Listen as a view');
+  const layer = top.__appended[0];
+  const frame = layer.children.find((c) => typeof c.src === 'string' && /\/listen\.html$/.test(c.src));
+  assert.ok(frame, 'the view\'s frame');
+  const view = browserWindow({ path: '/listen.html', marker: 'listen', top: false, parent: top, frameElement: frame,
+    extra: { requestAnimationFrame: (fn) => { fn(); return 1; } } });
+  const api = S.adopt(view);
+  assert.ok(api && api.kind === 'listen', 'the shell adopts its own frame at the address it asked for');
+  assert.equal(S.view(), HOUSE + '/listen.html', 'and the view has painted: it is shown');
+  const agent = (view.__listeners.click || [])[0];
+  assert.ok(agent, 'the view agent listens for the view\'s links');
+  const before = { writes: writes.length, href: top.location.href, state: layer.getAttribute('data-view-state'), frames: layer.children.length };
+  const cards = [
+    ['the retained artist\'s creator card (a reveal of the artist page)', cardTree('music-creator.html?handle=probe-artist', { 'data-creator-track': 'c1' })],
+    ['another artist\'s creator card (a view of that page)', cardTree('music-creator.html?handle=second-artist', { 'data-creator-track': 'c2' })],
+    ['a song card in its album\'s link (a page load of the top)', cardTree('album.html?album=here&t=Runway%20Walk', { 'data-album': 'here', 'data-track': 'Runway Walk' })]
+  ];
+  for (const [what, card] of cards) for (const target of [card.play, card.icon]) {
+    const e = tap(target);
+    agent(e);
+    assert.equal(e.prevented + e.stopped, 0, `${what}: the tap goes on to the view's player (js/music-engine.js view mode), not to the link`);
+    assert.equal(S.view(), HOUSE + '/listen.html', `${what}: the Listen view stays`);
+    assert.deepEqual({ writes: writes.length, href: top.location.href, state: layer.getAttribute('data-view-state'), frames: layer.children.length }, before,
+      `${what}: no history written, no page load, no view opened or closed`);
+  }
+  /* the guard is real: the song card itself, away from its play button, is still routed (the album: a page load of the top) */
+  const e = tap(cards[2][1].title);
+  agent(e);
+  assert.equal(e.prevented, 1, 'a tap on the card\'s title is the link\'s');
+  assert.equal(top.location.href, HOUSE + '/album.html?album=here&t=Runway%20Walk', 'and the album is a page load of the top');
+});
+
 /* ---------- history ---------- */
 test('history: only the retained document writes entries, and Back and Forward show or reveal without reloading it', () => {
   const { core } = shell();

@@ -192,6 +192,38 @@ async function scenario(name,fn){
   try{await fn();}catch(e){check(`${name}: aborted (${String(e&&e.message||e).split('\n')[0].slice(0,160)})`,false);}
 }
 
+/* ENGINE STAGE 0, A0.3: a card's play button inside its link. Listen's cards wrap the button in the card's link: a
+   creator's card in the artist page's (js/music-community.js), and a song card in its album's (js/listen.js card(), shown
+   while the song rails are on). Where a page renders no such card today (an artist page; Listen with the song rails
+   off) the same card is put on it here, Listen's own markup: the handlers that misread it are the page's, not the
+   card's. */
+async function songCard(where,album,title){
+  await where.evaluate(([album,title])=>{
+    document.getElementById('a03Card')?.remove();
+    const a=document.createElement('a');
+    a.className='feat__card';a.id='a03Card';a.setAttribute('data-cta','listen-card');
+    a.href='album.html?album='+encodeURIComponent(album)+'&t='+encodeURIComponent(title);
+    a.style.cssText='display:block;position:relative;margin:12px 16px;min-height:72px';
+    const b=document.createElement('b');b.textContent=title;
+    const acts=document.createElement('span');acts.className='feat__acts';
+    const play=document.createElement('span');
+    play.className='feat__play';play.id='a03Play';play.setAttribute('role','button');play.tabIndex=0;
+    play.setAttribute('aria-label','Play '+title);play.setAttribute('aria-pressed','false');
+    play.setAttribute('data-music-play','');play.setAttribute('data-album',album);play.setAttribute('data-track',title);
+    play.style.cssText='display:inline-flex;width:44px;height:44px;align-items:center;justify-content:center';
+    play.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+    acts.appendChild(play);a.appendChild(b);a.appendChild(acts);
+    (document.querySelector('main')||document.body).prepend(a);
+  },[album,title]);
+  return where.locator('#a03Play');
+}
+/* what the top document is, its address and history, and the view frame shown (marked by the caller) */
+async function where(page){return page.evaluate(()=>{const f=document.getElementById('mccMusicViewFrame');return {path:location.pathname+location.search,len:history.length,mark:window.__docMark||null,unloads:window.__unloads,frames:document.querySelectorAll('#mccMusicView .mcc-music-frame').length,frame:f?f.__mark||null:null};}).catch(e=>({error:String(e).slice(0,120)}));}
+/* the retained engine plays this song (a catalogue title, or a creator track id), its clock moving */
+async function nowPlays(page,test){
+  return page.waitForFunction(t=>{const m=window.MCC_MUSIC,c=m&&m.current&&m.current();return !!c&&(c.title===t||c.creatorTrackId===t)&&!!m.audio&&!m.audio.paused&&m.audio.currentTime>.3;},test,{timeout:15000}).then(()=>true,()=>false);
+}
+
 /* ---------- MATTHEW'S RENDERS (device scale 2), run on their own ---------- */
 if(RENDER){
   await mkdir(RENDER,{recursive:true});
@@ -215,6 +247,13 @@ if(RENDER){
     {const {context,page}=await setup({width,scale:2,start:'/album.html?album=here'});
      await playAlbumRow(page,1);await page.locator('[data-comments] a[href^="account.html?next="]').first().click();await waitView(page,/account\.html/);
      await shot(page,`account-view-over-album-${width}-deck-plays-on`);await context.close();}
+    /* engine stage 0: a creator card's play button tapped in Listen shown over an artist page plays it; the view stays */
+    {const {context,page}=await setup({width,scale:2,start:'/music-creator.html?handle=probe-artist'});
+     await page.waitForSelector('a.music-contextbar__brand');await page.locator('a.music-contextbar__brand').click();
+     const v=await waitView(page,/listen\.html/);
+     await v.locator(`#creatorRail [data-music-play][data-creator-track="${T_SECOND}"]`).click();
+     await nowPlays(page,T_SECOND);
+     await shot(page,`listen-view-over-artist-${width}-card-play-plays`);await context.close();}
   }
   {DELAY['/music-creator.html']=10000;const {context,page}=await setup({width:390,scale:2});await playListen(page);
    await page.locator('a.artist[href*="handle=probe-artist"]').first().click();await page.waitForSelector('.mcc-music-fail',{timeout:12000});
@@ -657,6 +696,73 @@ await scenario('s14',async()=>{
   await page.waitForFunction(()=>(document.querySelector('#mccAuthChip .mcc-auth-chip__text')||{}).textContent==='Sign in',null,{timeout:12000}).catch(()=>{});
   check('17. a sign-out in another tab: the chip says Sign in again, the song still plays',await page.evaluate(()=>(document.querySelector('#mccAuthChip .mcc-auth-chip__text')||{}).textContent)==='Sign in'&&!(await engine(page)).paused);
   void gatesBefore;
+  await context.close();
+});
+
+/* ---------- ENGINE STAGE 0 (docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md, section 10) ---------- */
+/* A0.3: a tap on a card's play button inside its link plays that song; the address, the view and the history stay.
+   Every journey the shell has with the album contained: Listen at the top, an artist page as a view over Listen, an
+   artist page at the top, Listen as a view over an artist page. Each check of a play starts from the same place and
+   says where the tap must not go. */
+async function cardPlays(page,label,tapIt,test){
+  const before=await where(page);
+  await tapIt();
+  const played=await nowPlays(page,test);
+  await sleep(400);
+  const after=await where(page);
+  check(`A0.3 ${label}: the song plays on the retained engine`,played,await engine(page));
+  check(`A0.3 ${label}: the address, the view shown and the history stay (no page load, no view opened or closed)`,
+    !after.error&&after.path===before.path&&after.len===before.len&&after.mark===before.mark&&after.unloads===before.unloads&&after.frames===before.frames&&after.frame===before.frame,{before,after});
+}
+await scenario('a03-listen',async()=>{
+  /* Listen at the top: a creator's card (its link: the artist page, a view) and a song card (its link: the album) */
+  const {context,page,log}=await setup();
+  const creator=page.locator(`#creatorRail [data-music-play][data-creator-track="${T_PUBLIC}"]`);
+  await creator.waitFor({state:'visible',timeout:15000});
+  await cardPlays(page,'Listen at the top, a creator card',()=>creator.click(),T_PUBLIC);
+  const song=await songCard(page,'here','Runway Walk');
+  await cardPlays(page,'Listen at the top, a song card in its album\'s link',()=>song.click(),'Runway Walk');
+  check('A0.3 Listen at the top: no page error',log.errors.length===0,log.errors);
+  await context.close();
+});
+await scenario('a03-artist-view',async()=>{
+  /* an artist page as a view over Listen: a song card in its album's link, on the artist page */
+  const {context,page,log}=await setup();
+  await page.waitForSelector('a.artist[href*="handle=probe-artist"]',{timeout:15000});
+  await page.locator('a.artist[href*="handle=probe-artist"]').first().click();
+  const v=await waitView(page,/probe-artist/);await v.waitForSelector('#creatorArtist .ap-hero__line',{timeout:10000});
+  await page.evaluate(()=>{document.getElementById('mccMusicViewFrame').__mark='artist-view';});
+  const song=await songCard(v,'here','Runway Walk');
+  await cardPlays(page,'an artist page as a view over Listen, a song card in its album\'s link',()=>song.click(),'Runway Walk');
+  check('A0.3 an artist view over Listen: the view made no Audio of its own',await v.evaluate(()=>(window.__audioObjects||[]).length===0).catch(()=>false));
+  check('A0.3 an artist view over Listen: no page error',log.errors.length===0,log.errors);
+  await context.close();
+});
+await scenario('a03-artist',async()=>{
+  /* an artist page at the top: a song card in its album's link */
+  const {context,page,log}=await setup({start:'/music-creator.html?handle=probe-artist'});
+  await page.waitForSelector('#creatorArtist .ap-hero__line',{timeout:15000});
+  const song=await songCard(page,'here','Runway Walk');
+  await cardPlays(page,'an artist page at the top, a song card in its album\'s link',()=>song.click(),'Runway Walk');
+  check('A0.3 an artist page at the top: no page error',log.errors.length===0,log.errors);
+  await context.close();
+});
+await scenario('a03-listen-view',async()=>{
+  /* Listen as a view over an artist page: the retained artist's own card (its link reveals the artist page), another
+     artist's card (its link opens that page as a view) and a song card (its link loads the album) */
+  const {context,page,log}=await setup({start:'/music-creator.html?handle=probe-artist'});
+  await page.waitForSelector('a.music-contextbar__brand');await page.locator('a.music-contextbar__brand').click();
+  const v=await waitView(page,/listen\.html/);
+  await page.evaluate(()=>{document.getElementById('mccMusicViewFrame').__mark='listen-view';});
+  const other=v.locator(`#creatorRail [data-music-play][data-creator-track="${T_SECOND}"]`);
+  await other.waitFor({state:'visible',timeout:15000});
+  await cardPlays(page,'Listen as a view over an artist page, another artist\'s card',()=>other.click(),T_SECOND);
+  const own=v.locator(`#creatorRail [data-music-play][data-creator-track="${T_PUBLIC}"]`);
+  await cardPlays(page,'Listen as a view over an artist page, the retained artist\'s own card',()=>own.click(),T_PUBLIC);
+  const song=await songCard(v,'here','Runway Walk');
+  await cardPlays(page,'Listen as a view over an artist page, a song card in its album\'s link',()=>song.click(),'Runway Walk');
+  check('A0.3 Listen over an artist page: one playing element across the documents',(await playing(page)).n===1,await playing(page));
+  check('A0.3 Listen over an artist page: no page error',log.errors.length===0,log.errors);
   await context.close();
 });
 
