@@ -900,6 +900,10 @@
     if (listen && root.MCC_LISTENS) root.MCC_LISTENS.release(listen.handle);
     listen = null;
   }
+  /* a ledger that arrives after the song started (the music shell loads it into an artist page the first time Listen
+     opens over it, SPEC-M5 3.3; review JRN-2): the song playing then is counted from then. Listen loads the ledger
+     before the engine, so there this never runs. */
+  if (root.addEventListener) root.addEventListener("mcc:listens-ready", function () { if (!audio.paused) countStart(); });
   function granted() { return current && current.gated && currentAccess === "full"; }
   audio.addEventListener("play", function () { countStart(); paint(); syncNowFilm(false); });
   audio.addEventListener("seeking", function () {
@@ -1239,8 +1243,10 @@
          entitlement: keep the full song, its position and the bounded recovery attempts. */
       if (out && out.reason === "network") return { failed: true };
       /* ONLY THE ENTITLEMENT CHECK'S OWN NO ENDS THE FULL SONG: music-access answering 402 ("purchase") or 401/403
-         ("account"). It is handed to the try (retry() above), which applies it only while the listener still asks for
-         music, so a refusal that arrives after Pause starts no preview. Anything else is a failed try. */
+         ("account"), or no session at all (signed out in another tab, the session cleared: creatorSourceFor() answers
+         "account" without asking; review MSL-2). It is handed to the try (retry() above), which applies it only while
+         the listener still asks for music, so a refusal that arrives after Pause starts no preview. Anything else is a
+         failed try. */
       if (out && out.state === "preview" && out.url && (out.reason === "purchase" || out.reason === "account")) return { refused: out };
       return { failed: true };
     }, function () { return { failed: true }; });

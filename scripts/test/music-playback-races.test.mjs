@@ -164,6 +164,30 @@ function ledgerOf() {
   return L;
 }
 
+/* JRN-2 (the engine stage 0 review): the listen ledger can arrive after a song started. The music shell loads it into an
+   artist page when Listen first opens over it (SPEC-M5 3.3); the song playing when it says it is ready is counted from
+   then, as on Listen, where it is there before the engine */
+test('JRN-2 a ledger that arrives while a catalogue song plays starts that song\'s listen, once; one that arrives while it is paused starts none', async () => {
+  const e = engine();
+  await e.play('Full song');
+  assert.equal(e.music.audio.paused, false, 'the song plays, with no ledger on the page yet');
+  const L = ledgerOf();
+  e.win.MCC_LISTENS = L;
+  e.win.dispatchEvent(new Event('mcc:listens-ready'));
+  assert.deepEqual(L.starts, ['whole-song.mp3'], 'the song playing is counted from the ledger\'s arrival');
+  e.win.dispatchEvent(new Event('mcc:listens-ready'));
+  assert.equal(L.starts.length, 1, 'once');
+  const p = engine();
+  await p.play('Full song');
+  p.music.pause(); await settle();
+  const quiet = ledgerOf();
+  p.win.MCC_LISTENS = quiet;
+  p.win.dispatchEvent(new Event('mcc:listens-ready'));
+  assert.deepEqual(quiet.starts, [], 'paused: nothing starts; the next play counts as it always did');
+  await p.music.resume(); await settle();
+  assert.deepEqual(quiet.starts, ['whole-song.mp3'], 'and Play starts it');
+});
+
 test('a late access refresh cannot replace a newer song', async () => {
   const e = engine();
   await e.play('First preview');
