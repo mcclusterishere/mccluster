@@ -21,11 +21,14 @@ There is **one platform**, there are **tenant properties** on it, and the
 tenant of the platform. **Hosting is not identity**: the host that serves a
 page never decides which entity the page is about.
 
-**Stage now: P0, prepared; nothing is served differently.** The record, its
-generator and this page say where the platform goes; every host and path
-answers as measured on 2026-11-23 (`edge.now`, below). Each later stage
-updates the record's `stage_now` and `edge.now` in its own change. Until it
-does, this page names P1, P2 and P3 as planned, never as live.
+**Stage now: P0, prepared: every measured host and path answers as before,
+apart from the changes P0 itself makes.** The record, its generator and this
+page say where the platform goes; every host and path measured on 2026-11-23
+answers as measured (`edge.now`, below), apart from the changes P0 itself
+makes once deployed, which the record lists (`edge.now.p0_changes`, below).
+Each later stage updates the record's `stage_now` and `edge.now` in its own
+change. Until it does, this page names P1, P2 and P3 as planned, never as
+live.
 
 | | The platform `https://mccluster.org/` | Matthew's profile `https://matthew.mccluster.org/` |
 | --- | --- | --- |
@@ -205,6 +208,34 @@ working.
 | `humanuprise.com` | Inert: no address records; Worker mccluster's door answers nothing until the owner routes it. |
 | `equityuprise.com` | Not on Cloudflare: WordPress.com nameservers and a placeholder page. The platform's planned address (stage F). |
 | `api.mccluster.org` | Worker mccluster, the API; no stage changes it. |
+
+**What P0 itself changes once deployed** (`edge.now.p0_changes`;
+`scripts/test/domain-architecture.test.mjs` holds each to the code):
+
+- **The pass-through's redirects** (`workers/mccluster/src/world-host.js`): a
+  redirect of the static origin is never followed. A directory under the
+  World's prefixes asked for without its slash (such as `/js/halo` or
+  `/assets/img` on `mccluster.org`) answers GitHub's 301 on the requesting
+  host, to the same directory with its slash, where production followed it
+  and answered what the slashed address answers (for `/js/halo`, measured:
+  404). A redirect to any other origin is refused with a 502.
+- **Returns follow the request** (SPEC-PLATFORM 2.9): a checkout, Connect or
+  account return started on `https://mccluster.org` (a World room such as
+  `/account.html`) comes back there; from anywhere else it comes back to
+  `https://matthew.mccluster.org`, as before. shake-order keeps an operator's
+  `SITE_URL` ahead of the request, as before.
+- **The dead Here returns**: the three returns that named
+  `mcclusterishere.github.io/Here` (backend-sub, and pay-now and
+  connect-onboard, which still answer 410) land on today's live page.
+- **The direct-sale CORS** (`supabase/functions/_shared/music-direct.ts`):
+  Origin `https://mccluster.org` is answered with itself, so a buyer on the
+  platform can read the answer; no page the platform serves at P0 loads the
+  direct-sale scripts.
+- **The carry page**: `carry.html` is new on Matthew's host, inert (the carry
+  switch is off, and no page loads `js/carry.js`).
+- **Inert until P3**: Matthew's host is not routed to the Worker; a request for
+  it that reached the Worker would go to GitHub Pages untouched (before P0 the
+  API answered it).
 
 The October activation of the company host is done: `mccluster.org/*` and
 `www.mccluster.org/*` route to Worker `mccluster`, the zone's redirect rule

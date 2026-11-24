@@ -369,7 +369,7 @@ test('the World\'s head on the platform is the measured one: canonical, og:url, 
 
 /* ---------- the pass-through ---------- */
 
-test('the pass-through never follows an upstream redirect: a Location on the static origin is rewritten to the requesting host, any other is handed on', async () => {
+test('the pass-through never follows an upstream redirect: a Location on the static origin is rewritten to the requesting host, any other is refused', async () => {
   const asked = [];
   const gh = github({ asked });
   /* P0: a World room the static origin answers with its directory's slash */
@@ -391,20 +391,46 @@ test('the pass-through never follows an upstream redirect: a Location on the sta
   r = await p1(new Request(`${PLAT}/whip`), {}, gh);
   assert.equal(r.headers.get('location'), `${PLAT}/whip/`);
   assert.equal(route(P1, `${PLAT}/whip/`).location, `${PROF}/whip/`);
-  /* a relative Location is resolved on the static origin first; a foreign one is handed on as it is */
+  /* a relative Location is resolved on the static origin first; one on the static origin with userinfo keeps only its
+     path; a path that starts with // stays a path on this host */
   const extra = {
     '/rel': () => new Response(null, { status: 302, headers: { location: '/somewhere/?q=1' } }),
-    '/away': () => new Response(null, { status: 307, headers: { location: 'https://elsewhere.example/x' } }),
     '/self': () => new Response(null, { status: 301, headers: { location: `${PLAT}/self` } }),
-    '/protocol': () => new Response(null, { status: 301, headers: { location: `${PROF}//evil.example/x` } })
+    '/protocol': () => new Response(null, { status: 301, headers: { location: `${PROF}//evil.example/x` } }),
+    '/userinfo-own': () => new Response(null, { status: 301, headers: { location: 'https://someone@matthew.mccluster.org/assets/y/' } })
   };
   const odd = github({ extra });
   r = await p1(new Request(`${PLAT}/rel`), {}, odd);
   assert.deepEqual([r.status, r.headers.get('location')], [302, `${PLAT}/somewhere/?q=1`]);
-  r = await p1(new Request(`${PLAT}/away`), {}, odd);
-  assert.deepEqual([r.status, r.headers.get('location')], [307, 'https://elsewhere.example/x']);
   r = await p1(new Request(`${PLAT}/protocol`), {}, odd);
   assert.equal(new URL(r.headers.get('location')).host, 'mccluster.org', 'a path that starts with // never becomes another host');
+  r = await p1(new Request(`${PLAT}/userinfo-own`), {}, odd);
+  assert.deepEqual([r.status, r.headers.get('location')], [301, `${PLAT}/assets/y/`], 'userinfo on the static origin is dropped, the path kept');
+  /* a Location off the static origin is never this host's redirect: absolute to another host, the static host behind
+     userinfo, the static host over plain http, protocol-relative to another host. Refused with a 502 and no Location,
+     on the platform today (a World room) and from P1 (any page), whatever the status */
+  const FOREIGN = [
+    [307, 'https://elsewhere.example/x'],
+    [302, 'https://evil.example/landing'],
+    [301, 'https://matthew.mccluster.org@evil.example/'],
+    [302, 'http://matthew.mccluster.org/assets/x'],
+    [308, '//evil.example/x'],
+    [303, 'https://matthew.mccluster.org.evil.example/assets/x'],
+    [301, 'https://matthew.mccluster.org:8443/assets/x']
+  ];
+  for (const [status, location] of FOREIGN) {
+    const foreign = async () => new Response(null, { status, headers: { location, 'cache-control': 'max-age=600' } });
+    for (const [router, url] of [[P0_ROUTER, `${PLAT}/assets/x`], [P0_ROUTER, `${PLAT}/action-network-hire.html`], [p1, `${PLAT}/listen.html`], [p1, `${PLAT}/away`]]) {
+      for (const method of ['GET', 'HEAD']) {
+        r = await router(new Request(url, { method }), {}, foreign);
+        assert.equal(r.status, 502, `${method} ${url} with an upstream ${status} Location ${location}: refused`);
+        assert.equal(r.headers.get('location'), null, `${method} ${url}: no Location reaches the visitor (${location})`);
+      }
+    }
+  }
+  /* the World's own door (humanuprise.com, once routed) refuses the same */
+  r = await routerFor(P0)(new Request(`${HU}/assets/x`), {}, async () => new Response(null, { status: 302, headers: { location: 'https://evil.example/landing' } }));
+  assert.deepEqual([r.status, r.headers.get('location')], [502, null]);
   /* an upstream that redirects to the very address asked for is a loop: refused, never handed to the browser */
   r = await p1(new Request(`${PLAT}/self`), {}, odd);
   assert.equal(r.status, 502);

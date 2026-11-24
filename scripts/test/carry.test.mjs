@@ -168,6 +168,25 @@ test('carry.html carries the device id only with the privacy agreement, and kept
   agreed.ask(request());
   await flush();
   assert.equal(agreed.posted[0].msg.carry.device, 'device-123');
+  /* agreed means agreed to the current notice, by the site's own rule (js/live-content.js cookieHas): any other value
+     of the shared cookie (an old notice, another app's, empty, a near miss) carries no device id */
+  for (const cookie of ['mcc_privacy_ack=1999-01-01', 'mcc_privacy_ack=declined-by-other-app', 'mcc_privacy_ack=', 'mcc_privacy_ack=2026-10-19x',
+    'mcc_privacy_ack=x2026-10-19', 'xmcc_privacy_ack=2026-10-19', 'mcc_privacy_seen=2026-10-19', 'a=1; mcc_privacy_ack=2026-10-18']) {
+    const stale = frame({ local, vault, cookie });
+    stale.ask(request());
+    await flush();
+    assert.equal(stale.posted[0].msg.carry.device, null, `cookie ${JSON.stringify(cookie)} is not the current agreement: the device id stays here`);
+    assert.equal(stale.posted[0].msg.carry.pocket, '{"t":83}', 'the rest of the carry is unaffected');
+  }
+  for (const cookie of ['mcc_privacy_ack=2026-10-19', 'a=1;mcc_privacy_ack=2026-10-19; b=2', ' mcc_privacy_ack=2026-10-19 ']) {
+    const current = frame({ local, vault, cookie });
+    current.ask(request());
+    await flush();
+    assert.equal(current.posted[0].msg.carry.device, 'device-123', `cookie ${JSON.stringify(cookie)} is the current agreement`);
+  }
+  /* the notice's version is the one the notice itself carries */
+  const notice = read('js/live-content.js').match(/var VERSION = "([^"]+)";/)[1];
+  assert.equal(carryPageScript().match(/var PRIVACY_VERSION = "([^"]+)";/)[1], notice, 'carry.html checks the notice version js/live-content.js owns');
 });
 
 /* ---------- the platform's side (js/carry.js), alone and with the frame ---------- */

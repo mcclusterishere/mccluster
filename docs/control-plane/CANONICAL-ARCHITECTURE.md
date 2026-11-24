@@ -26,11 +26,11 @@ Activation is a reviewed deployment, separate from implementing this extraction.
 ## Public properties
 
 One platform, tenant properties, separate entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`,
-`data/seo/domain-architecture.json`). Stage now: P0, prepared; nothing is served differently.
+`data/seo/domain-architecture.json`). Stage now: P0, prepared: every measured host and path answers as before, apart from the changes P0 itself makes (`edge.now.p0_changes`).
 
 | Host | Role | Entity | Served by |
 | --- | --- | --- | --- |
-| `mccluster.org` | the platform, set in one place (`platform.origin`; `equityuprise.com` at stage F) | McCluster Corp (Organization) | Worker `mccluster`, host-routed: today the Equity Uprise World at `/` (passed through from the static files via `workers/mccluster/src/world-host.js`; owner, 2026-10-15), the company page at `/company` generated from `data/seo/company-site.json`, and a 301 to `matthew.mccluster.org` for every other path; from P1 every page, path for path |
+| `mccluster.org` | the platform, set in one place (`platform.origin`; `equityuprise.com` at stage F) | McCluster Corp (Organization) | Worker `mccluster`, host-routed: today the Equity Uprise World at `/` with its rooms and the static files they load (passed through from the static origin via `workers/mccluster/src/world-host.js`; owner, 2026-10-15), the company page at `/company` generated from `data/seo/company-site.json`, the company's news at `/news/` and its own crawler files; `/index.html` and `/mnet.html` 301 to `/`, and a 301 to `matthew.mccluster.org` for every other path; from P1 every page, path for path |
 | `matthew.mccluster.org` | a tenant: Matthew's personal profile | Matthew McCluster (Person) | GitHub Pages from this repository; from P3 Worker `mccluster` by host, with the pages that moved answering 301 to the platform |
 | `humanuprise.com` | a door | McCluster Corp (Organization) | Worker `mccluster`, host-routed (`workers/mccluster/src/human-uprise`): built and inert until the owner routes it; once routed, 301 to the platform (owner default of 2026-11-23; with P1) |
 

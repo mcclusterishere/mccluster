@@ -36,7 +36,7 @@
 import Stripe from "npm:stripe@14";
 import { priceCart as computeCart, type Line, type Product } from "./price.ts";
 import { checkoutBindingFailure } from "../_shared/checkout-binding.ts";
-import { RETURN_ORIGINS, returnOrigin } from "../_shared/site-hosts.ts";
+import { returnOrigin } from "../_shared/site-hosts.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SB = Deno.env.get("SUPABASE_URL")!;
@@ -214,11 +214,12 @@ Deno.serve(async (req) => {
     });
     const order = created[0];
 
-    /* Back where the customer started when that origin serves pages (exactly; ../_shared/site-hosts.ts);
-       otherwise the operator's SITE_URL when one is set, else the generated fallback (the profile host at
-       stage P0): the address this return named before. */
+    /* The operator's SITE_URL, when one is set, for every request, as before P0. Without it the return follows
+       the request: back where the customer started when that origin serves pages (exactly;
+       ../_shared/site-hosts.ts returnOrigin), else the generated fallback (the profile host at stage P0, the
+       address this return named before). */
     const origin = req.headers.get("origin");
-    const SITE = origin && RETURN_ORIGINS.includes(origin) ? origin : (SITE_URL ?? returnOrigin(origin));
+    const SITE = SITE_URL ?? returnOrigin(origin);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       // one line per item, so the customer's receipt reads like the order

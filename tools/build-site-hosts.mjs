@@ -641,6 +641,20 @@ export const LANES = Object.freeze({
 });
 export const STAGE_NAMES = /^(?:P[0-4]|F|engine stage [0-4])$/;
 
+/* THE CEILING: the four lists as they stood when P0 was built (2026-11-23; 7 files, 112 host literals in code). A list
+   names no file outside this table and allows no file more than its count here, and every list allows exactly what the
+   scan finds, so a literal removed is a count lowered in the same change and freed room is never refilled. Nothing
+   raises a number here; scripts/test/site-hosts.test.mjs pins the same table, so it cannot be raised in one place. */
+export const PENDING_CEILING = Object.freeze({
+  'js/live-content.js': 1,
+  'js/mcc-auth.js': 1,
+  'js/music-shell.js': 4,
+  'js/tabbar.js': 10,
+  'js/world-audio-continuity.js': 7,
+  'workers/mccluster/src/company-site/pages.generated.js': 86,
+  'workers/mccluster/src/seek-first/console.html': 3
+});
+
 export function readPending(root = ROOT) {
   const lanes = {};
   for (const [lane, { list }] of Object.entries(LANES)) lanes[lane] = JSON.parse(readFileSync(join(root, list), 'utf8'));
@@ -648,12 +662,14 @@ export function readPending(root = ROOT) {
 }
 
 /* Every way the code and the lists disagree, as plain sentences (empty when they agree). The lists only
-   shrink: an unlisted file may not name a host, a listed file's count may not grow, and a file that no
-   longer names one leaves its list. */
-export function pendingProblems(rows = scanHostLiterals(), lanes = readPending()) {
+   shrink: an unlisted file may not name a host; a list never names a file the ceiling does not, nor allows more than
+   the ceiling; a listed file names exactly as many hosts as its list allows (no more: a regression; no fewer: lower
+   the count now); and a file that no longer names one leaves its list. */
+export function pendingProblems(rows = scanHostLiterals(), lanes = readPending(), ceiling = PENDING_CEILING) {
   const problems = [];
   const listed = new Map();
   const engineOwned = new Set(((lanes.engine && lanes.engine.owned_files) || []).map(String));
+  const cap = (file) => (Object.prototype.hasOwnProperty.call(ceiling, file) ? ceiling[file] : null);
   for (const [lane, data] of Object.entries(lanes)) {
     for (const entry of (data && data.files) || []) {
       const where = `${LANES[lane].list}: ${entry.file}`;
@@ -664,6 +680,8 @@ export function pendingProblems(rows = scanHostLiterals(), lanes = readPending()
       if (lane === 'client' && engineOwned.has(entry.file)) problems.push(`${where} is engine-owned: it belongs in ${LANES.engine.list}`);
       if (!Number.isInteger(entry.count) || entry.count < 1) problems.push(`${where} needs a whole count of 1 or more`);
       if (!STAGE_NAMES.test(String(entry.stage || ''))) problems.push(`${where} needs the stage that converts it (P0..P4, F or "engine stage N"), got "${entry.stage}"`);
+      if (cap(entry.file) === null) problems.push(`${where} was not on any list when P0 was built (PENDING_CEILING): the lists only shrink, so a new file reads its hosts from the generated outputs instead`);
+      else if (Number.isInteger(entry.count) && entry.count > cap(entry.file)) problems.push(`${where} allows ${entry.count}, more than the ${cap(entry.file)} it allowed when P0 was built (PENDING_CEILING): the lists only shrink`);
     }
   }
   const found = new Map(rows.map((r) => [r.file, r.count]));
@@ -671,6 +689,7 @@ export function pendingProblems(rows = scanHostLiterals(), lanes = readPending()
     if (!listed.has(file)) { problems.push(`${file} names a site host ${count} time(s) and is on no pending list: read it from the generated outputs instead (tools/build-site-hosts.mjs)`); continue; }
     const entry = lanes[listed.get(file)].files.find((e) => e.file === file);
     if (count > entry.count) problems.push(`${file} names a site host ${count} time(s), more than the ${entry.count} its list allows: the list only shrinks`);
+    else if (count < entry.count) problems.push(`${file} names a site host ${count} time(s) and ${LANES[listed.get(file)].list} still allows ${entry.count}: lower it to ${count} in the same change (the list only shrinks; freed room is never refilled)`);
   }
   for (const [file, lane] of listed) {
     if (!found.has(file)) problems.push(`${file} no longer names a site host: remove it from ${LANES[lane].list}`);

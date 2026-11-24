@@ -17,17 +17,27 @@
    - it is a well-formed request, and the first one: one request is ever answered.
    The answer goes back to the parent at the platform's exact origin, never "*": the access token alone (renewed first
    when it is due, through js/mcc-auth.js; never the refresh token), and the conveniences of 2.7: the analytics device id
-   only where the privacy notice was agreed (the shared cookie), the song pocket, mute and theme, and the paths of the
-   songs kept on this origin. Nothing here signs anyone out or changes anything stored here. */
+   only where the current privacy notice was agreed (the shared cookie, read by the site's own rule), the song pocket,
+   mute and theme, and the paths of the songs kept on this origin. Nothing here signs anyone out or changes anything
+   stored here. */
 (function (w, d) {
   "use strict";
   var REQUEST = "mcc:carry-request", ANSWER = "mcc:carry-answer";
   var ID = /^[A-Za-z0-9_-]{16,64}$/;
+  /* the privacy notice's current version: js/live-content.js's VERSION, which owns the notice (this page does not load
+     it, so it carries the value; scripts/test/carry.test.mjs keeps the two equal) */
+  var PRIVACY_VERSION = "2026-10-19";
   var site = w.MCC_SITE;
   var asked = false;
   function framed() { try { return !!w.parent && w.parent !== w; } catch (e) { return false; } }
   function local(key) { try { return w.localStorage.getItem(key); } catch (e) { return null; } }
-  function agreed() { try { return /(?:^|;\s*)mcc_privacy_ack=/.test(String(d.cookie || "")); } catch (e) { return false; } }
+  /* agreed exactly as the site decides it (js/live-content.js cookieHas, js/analytics.js): the shared cookie names the
+     current notice version; an old version, another value or an empty one is not an agreement */
+  function agreed() {
+    try {
+      return String(d.cookie || "").split(";").some(function (part) { return part.trim() === "mcc_privacy_ack=" + PRIVACY_VERSION; });
+    } catch (e) { return false; }
+  }
   /* the shared sign-in client, loaded only once a request has been accepted */
   function auth() {
     if (w.MCC && typeof w.MCC.refreshIfNeeded === "function") return Promise.resolve(w.MCC);
