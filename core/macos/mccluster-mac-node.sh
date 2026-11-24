@@ -5,7 +5,8 @@
 # lyric machine the laptop and the OVH box run, as the signed-in user's LaunchAgents. No Worker, no second backend,
 # no Supabase key on the Mac: it enrols with a one-time token and signs every request with its own key.
 #
-#   bash core/macos/mccluster-mac-node.sh install [--lyrics]   set up (and, with --lyrics, the lyric machine's Python)
+#   bash core/macos/mccluster-mac-node.sh install [--lyrics] [--grant G --org ORG]   set up (--lyrics: the lyric
+#        machine's Python; --grant/--org: the one-click opt-in from device.html, no token to paste)
 #   bash core/macos/mccluster-mac-node.sh status               what is running and what answers
 #   bash core/macos/mccluster-mac-node.sh uninstall            stop and remove the LaunchAgents (keeps the identity)
 #   bash core/macos/mccluster-mac-node.sh run agent|adapter|lyrics   what the LaunchAgents start (not for hand use)
@@ -57,6 +58,18 @@ EOF
 }
 
 install() {
+  local lyrics="" grant="" org=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --lyrics) lyrics=1 ;;
+      --grant) grant="${2:-}"; shift ;;
+      --org) org="${2:-}"; shift ;;
+      *) die "unknown option $1" ;;
+    esac
+    shift
+  done
+  [ -z "$grant" ] || [[ "$grant" =~ ^mccg1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$ ]] || die "that grant does not look right; opt in again on the website"
+  [ -z "$org" ] || [[ "$org" =~ ^[0-9a-fA-F-]{36}$ ]] || die "that organization id does not look right"
   [ "$(uname -s)" = Darwin ] || die "this is the macOS installer"
   [ "$(uname -m)" = arm64 ] || die "Apple Silicon (M1 or later) only"
   local node; node="$(node_bin)"
@@ -104,10 +117,20 @@ MCCLUSTER_LYRICS_EXECUTOR_PORT=4792
 LYRICS_PYTHON=$STATE/lyrics-venv/bin/python
 EOF
     chmod 600 "$STATE/node.env"
-    say "Wrote $STATE/node.env: fill MCCLUSTER_ORG_ID and MCCLUSTER_NODE_ENROLL_TOKEN, then run install again."
+    [ -n "$grant" ] || say "Wrote $STATE/node.env: fill MCCLUSTER_ORG_ID and MCCLUSTER_NODE_ENROLL_TOKEN, then run install again (or use the one-click opt-in on device.html)."
   fi
 
-  if [ "${1:-}" = --lyrics ]; then
+  # the one-click opt-in: the org and a 15-minute, one-use grant go into node.env; the agent enrols with it once
+  if [ -n "$grant" ]; then
+    "$node" -e '
+      const fs = require("fs"), [f, grant, org] = process.argv.slice(1);
+      let t = fs.readFileSync(f, "utf8").replace(/^MCCLUSTER_NODE_ENROLL_GRANT=.*\n?/m, "");
+      if (org) t = t.replace(/^MCCLUSTER_ORG_ID=.*$/m, "MCCLUSTER_ORG_ID=" + org);
+      fs.writeFileSync(f, t.replace(/\n*$/, "\n") + "MCCLUSTER_NODE_ENROLL_GRANT=" + grant + "\n", { mode: 0o600 });
+    ' "$STATE/node.env" "$grant" "$org"
+  fi
+
+  if [ -n "$lyrics" ]; then
     command -v python3 >/dev/null || die "Python 3.10+ is needed for the lyric machine (brew install python@3.11)"
     command -v ffmpeg >/dev/null || die "ffmpeg is needed for the lyric machine (brew install ffmpeg)"
     [ -x "$STATE/lyrics-venv/bin/python" ] || python3 -m venv "$STATE/lyrics-venv"

@@ -79,6 +79,15 @@ function buildWhere(params, types, values) {
   const clauses = [];
   for (const [key, raw] of params) {
     if (['select', 'order', 'limit', 'offset', 'on_conflict'].includes(key)) continue;
+    /* a json text path, col->>key (PostgREST's), compared as text with eq only */
+    const jsonPath = /^([a-z_][a-z0-9_]*)->>([a-z_][a-z0-9_]*)$/.exec(key);
+    if (jsonPath) {
+      if (!types.has(jsonPath[1]) || !/^json/.test(types.get(jsonPath[1]))) throw Object.assign(new Error(`unknown column ${key}`), { code: '42703' });
+      if (!raw.startsWith('eq.')) throw Object.assign(new Error(`unsupported json filter ${raw}`), { code: 'PGRST100' });
+      values.push(raw.slice(3));
+      clauses.push(`"${jsonPath[1]}"->>'${jsonPath[2]}' = $${values.length}`);
+      continue;
+    }
     if (!IDENT.test(key) || !types.has(key)) throw Object.assign(new Error(`unknown column ${key}`), { code: '42703' });
     const cast = castFor(types.get(key));
     let negate = false;

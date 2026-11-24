@@ -37,3 +37,11 @@ The entries are the laptop's, byte for byte, so a task is claimable on whichever
 
 The Mac sleeps: while it sleeps it is simply not live, and the network routes around it. Keep it plugged in and set
 "Prevent automatic sleeping when the display is off" if it should take work overnight.
+
+## One click instead (2026-11-24)
+
+Owner: "I should be able to opt the Mac in by logging into the Mac on the website and just clicking the opt-in
+button." On the Mac, sign in as the owner at `device.html` and tap **Get the install command**: it is the two lines
+above with the org and a one-time pass already in them (`--org … --grant …`), so there is nothing to paste into
+`node.env`. The pass is good for 15 minutes and enrols one device. Any device, phones included, can also tap
+**Opt this device in** to join from the page itself. How it works: `DEVICE-OPT-IN.md`.

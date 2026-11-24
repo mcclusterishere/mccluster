@@ -143,7 +143,8 @@ export const OWNED_ONLY_CAPABILITIES = new Set(['browser.act']);
 export const ENROLLED_TRUST_LABEL = 'enrolled_trust';
 // Labels the enrolment fixes: a heartbeat keeps the stored value (or leaves the
 // label out when the enrolment did not set it); enrolling again changes them.
-export const ENROLLMENT_PINNED_LABELS = Object.freeze(['trust', 'role']);
+// opted_in_by / enrolled_via / enrolled_grant: who opted a device in from the website (device-grant.mjs), kept as enrolled.
+export const ENROLLMENT_PINNED_LABELS = Object.freeze(['trust', 'role', 'opted_in_by', 'enrolled_via', 'enrolled_grant']);
 
 function labelObject(labels) {
   return labels && typeof labels === 'object' && !Array.isArray(labels) ? labels : {};

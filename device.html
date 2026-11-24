@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head><script src="js/shell-boot.js?v=__STAMP__"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Add this device · McCluster</title>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="The owner opts this device into the McCluster node network.">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/device-node.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+</head>
+<body class="dn-page">
+  <main class="dn">
+    <h1>Add this device</h1>
+    <p class="dn-lead">Give this device's power to the McCluster network. Every device with a chip can join: computers, tablets and phones.</p>
+
+    <section class="dn-card" id="dnGate" hidden>
+      <p>Sign in as the owner to add this device.</p>
+      <a class="dn-btn" id="dnSignIn" href="login.html?next=device.html">Sign in</a>
+    </section>
+
+    <section class="dn-card" id="dnDevice" aria-live="polite">
+      <h2>This device</h2>
+      <dl class="dn-facts" id="dnFacts"><div><dt>Checking…</dt><dd></dd></div></dl>
+    </section>
+
+    <section class="dn-card" id="dnBrowser" hidden>
+      <h2>Join from this page</h2>
+      <p>Works on any device, phones included. It runs while this page is open; keep it open and plugged in to keep giving power.</p>
+      <div class="dn-state" id="dnState" role="status" aria-live="polite"></div>
+      <div class="dn-actions">
+        <button class="dn-btn" type="button" id="dnOptIn">Opt this device in</button>
+        <button class="dn-btn dn-btn--quiet" type="button" id="dnLeave" hidden>Leave the network</button>
+      </div>
+    </section>
+
+    <section class="dn-card" id="dnFull" hidden>
+      <h2>Run the full node</h2>
+      <p>On a computer, the full node keeps working with this page closed and can run the bigger jobs (AI, the lyric machine). One tap gives you a command with a one-time pass in it, good for 15 minutes.</p>
+      <div class="dn-actions"><button class="dn-btn" type="button" id="dnInstall">Get the install command</button></div>
+      <div id="dnCmdBox" hidden>
+        <pre class="dn-cmd" id="dnCmd"></pre>
+        <div class="dn-actions"><button class="dn-btn dn-btn--quiet" type="button" id="dnCopy">Copy</button></div>
+        <p class="dn-note" id="dnCmdNote"></p>
+      </div>
+    </section>
+    <p class="dn-msg" id="dnMsg" role="status" aria-live="polite"></p>
+  </main>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/device-node.js?v=__STAMP__"></script>
+  <script src="js/device-page.js?v=__STAMP__"></script>
+</body>
+</html>
