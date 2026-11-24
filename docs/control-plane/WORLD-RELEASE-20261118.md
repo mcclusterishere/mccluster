@@ -36,6 +36,14 @@ migration files for the first time in this pull request: if its schema compariso
   nothing the ingest stores is public until the Environment module is installed and enabled
   (`docs/control-plane/EUP-EVENT-TIMELINE.md`, "Release 1, 2026-11-23").
 
+**Fixed on the pull request, 2026-11-24.** Four faults its own checks and an automated review found: the Music tab follows the
+player after a pause and play (a Play straight after its Pause could leave it saying Play music over a playing song); a skipped
+song's start can no longer spoil the song playing (a start still waiting for the last finish is sent only for the song still
+wanted); a dropped connection during a full song's renewal keeps the full song and its second, and the next try asks again (only
+a real refusal gives the preview, and one that comes after Pause starts nothing); and the sign-in countdown check no longer
+depends on runner speed. Commits `aec715b7`, `9b94a449`, `16d039cb` and `1f9dadb0`; each of the three player fixes has tests
+that fail without it. They follow the verifications named above: their evidence is their tests and the pull request's checks.
+
 **What does not ship, and why.**
 
 - **M5, one player across the music pages** (`2000c609` and `5d8c533e` on `claude/new-session-83ken5`): not reviewed yet, and

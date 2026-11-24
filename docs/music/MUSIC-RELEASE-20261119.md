@@ -28,6 +28,15 @@ plays the song and says which; the installed app's dock says what is happening i
 and stays one row when muted; Heal the 3's door sits clear of
 the account chip. `music_interrupted` waits for Matthew's approval and is not sent.
 
+**Fixed on the pull request, 2026-11-24.** Four faults its own checks and an automated review found: the Music tab
+follows the player after a pause and play (a Play straight after its Pause could leave it saying Play music over a
+playing song); a skipped song's start can no longer spoil the song playing (a start still waiting for the last finish is
+sent only for the song still wanted); a dropped connection during a full song's renewal keeps the full song and its
+second, and the next try asks again (only a real refusal gives the preview, and one that comes after Pause starts
+nothing); and the sign-in countdown check no longer depends on runner speed. Commits `aec715b7`, `9b94a449`, `16d039cb`
+and `1f9dadb0`; each of the three player fixes has tests that fail without it. They follow the verifications named
+above: their evidence is their tests and the pull request's checks.
+
 **What does not ship.** **M5**, one player across the music pages: not reviewed yet, and it breaks a Worker test the
 deploy gate runs (`workers/mccluster/test/analytics-creator-attribution.test.mjs`). **The quick wins**: built and in
 review on `claude/new-session-83ken5`. Both are the next release. The decisions under each "What waits for Matthew" below stay his.
