@@ -133,12 +133,12 @@
     "high-alert": 4300, "hit-mode": 2000, "hitlist": 3550, "hitshake": 1100, "hundun-b-side": 4000, "iot": 2050,
     "lana-b-side": 2150, "lightroom": 3650, "money-or-the-power": 5000, "mr-lock-changer-remix": 3050,
     "new-phone": 3050, "no-friend": 4300, "numb": 5000, "one-gon-ride": 2550, "osint": 2500, "other-side": 4550,
-    "per-diem": 2600, "please-set-me-free": 5000, "promises": 5000, "pull-up": 4200, "raid-hot-site": 5000,
-    "recipe": 2550, "red-blue-purple-white-team": 2350, "repo-guy-b-side": 3100, "rolling-with-me": 3900,
-    "runway-walk": 3200, "salvage-title-b-side": 2550, "see-me-up": 3750, "spell": 2500,
-    "stand-on-business-b-side": 3350, "test-drive": 2600, "tinderella": 5000, "towyard-killer": 1850,
-    "up-for-days": 5000, "upset": 5000, "vaunt": 2700, "who-did-the-shoot": 3400, "write-a-song": 3700,
-    "you-the-feds": 5000
+    "outta-tune": 1350, "per-diem": 2600, "please-set-me-free": 5000, "promises": 5000, "pull-up": 4200,
+    "raid-hot-site": 5000, "recipe": 2550, "red-blue-purple-white-team": 2350, "repo-guy-b-side": 3100,
+    "rolling-with-me": 3900, "runway-walk": 3200, "salvage-title-b-side": 2550, "see-me-up": 3750,
+    "sound-trust-anthem": 5000, "spell": 2500, "stand-on-business-b-side": 3350, "studio-trapped": 1850,
+    "test-drive": 2600, "tinderella": 5000, "towyard-killer": 1850, "trackout": 1600, "up-for-days": 5000,
+    "upset": 5000, "vaunt": 2700, "who-did-the-shoot": 3400, "write-a-song": 3700, "you-the-feds": 5000
   };
   /* FINISH WAIT END */
   var finishing = null, selection = 0;

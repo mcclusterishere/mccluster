@@ -765,6 +765,43 @@
      "seconds": 216.5
     }
    ]
+  },
+  {
+   "slug": "audio-engineer",
+   "name": "Audio Engineer",
+   "tag": "The EP · 4 tracks",
+   "art": "assets/img/audio-engineer-cover.png",
+   "by": "",
+   "tracks": [
+    {
+     "title": "Outta Tune",
+     "credit": "Produced by McCluster",
+     "src": "assets/audio/outta-tune.mp3",
+     "poster": "assets/img/audio-engineer-cover.png",
+     "seconds": 36.7
+    },
+    {
+     "title": "Studio Trapped",
+     "credit": "Produced by McCluster",
+     "src": "assets/audio/studio-trapped.mp3",
+     "poster": "assets/img/audio-engineer-cover.png",
+     "seconds": 54.7
+    },
+    {
+     "title": "Sound Trust Anthem",
+     "credit": "Produced by McCluster",
+     "src": "assets/audio/sound-trust-anthem.mp3",
+     "poster": "assets/img/audio-engineer-cover.png",
+     "seconds": 194.5
+    },
+    {
+     "title": "Trackout",
+     "credit": "Co-produced by Tazzy Jay and McCluster",
+     "src": "assets/audio/trackout.mp3",
+     "poster": "assets/img/audio-engineer-cover.png",
+     "seconds": 51.2
+    }
+   ]
   }
  ]
 }

@@ -1,7 +1,7 @@
 {
  "generated_by": "tools/build-music-registry.mjs",
  "isrc_prefix": "QT6KV",
- "count": 61,
+ "count": 65,
  "tracks": [
   {
    "slug": "who-did-the-shoot",
@@ -692,6 +692,50 @@
    "length": "3:37",
    "available": true,
    "no": 61
+  },
+  {
+   "slug": "outta-tune",
+   "title": "Outta Tune",
+   "credit": "Produced by McCluster",
+   "album": "Audio Engineer",
+   "albumSlug": "audio-engineer",
+   "page": "album.html?album=audio-engineer",
+   "length": "0:37",
+   "available": true,
+   "no": 62
+  },
+  {
+   "slug": "studio-trapped",
+   "title": "Studio Trapped",
+   "credit": "Produced by McCluster",
+   "album": "Audio Engineer",
+   "albumSlug": "audio-engineer",
+   "page": "album.html?album=audio-engineer",
+   "length": "0:55",
+   "available": true,
+   "no": 63
+  },
+  {
+   "slug": "sound-trust-anthem",
+   "title": "Sound Trust Anthem",
+   "credit": "Produced by McCluster",
+   "album": "Audio Engineer",
+   "albumSlug": "audio-engineer",
+   "page": "album.html?album=audio-engineer",
+   "length": "3:15",
+   "available": true,
+   "no": 64
+  },
+  {
+   "slug": "trackout",
+   "title": "Trackout",
+   "credit": "Co-produced by Tazzy Jay and McCluster",
+   "album": "Audio Engineer",
+   "albumSlug": "audio-engineer",
+   "page": "album.html?album=audio-engineer",
+   "length": "0:51",
+   "available": true,
+   "no": 65
   }
  ]
 }

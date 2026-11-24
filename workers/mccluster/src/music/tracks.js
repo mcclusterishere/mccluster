@@ -305,5 +305,25 @@ export const TRACKS = {
     "title": "Up For Days",
     "album": "in-hot-pursuit",
     "seconds": 216.5
+  },
+  "outta-tune": {
+    "title": "Outta Tune",
+    "album": "audio-engineer",
+    "seconds": 36.7
+  },
+  "studio-trapped": {
+    "title": "Studio Trapped",
+    "album": "audio-engineer",
+    "seconds": 54.7
+  },
+  "sound-trust-anthem": {
+    "title": "Sound Trust Anthem",
+    "album": "audio-engineer",
+    "seconds": 194.5
+  },
+  "trackout": {
+    "title": "Trackout",
+    "album": "audio-engineer",
+    "seconds": 51.2
   }
 };
