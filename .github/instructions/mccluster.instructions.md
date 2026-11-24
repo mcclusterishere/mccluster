@@ -4,7 +4,7 @@ applyTo: "**"
 
 This repository is part of the McCluster control plane. Read `AGENTS.md` before editing: it is the law, and this file only points at it. Read `docs/control-plane/AI-HARNESS.md` before AI, agent, memory, RAG, conversation-history, provider-routing, or autonomous-company work.
 
-The plane: GitHub `mcclusterishere/mccluster` (control repo) + Cloudflare Worker `mccluster` (source `workers/mccluster`; public edge and API `https://api.mccluster.org`; `mccluster-mcp` is its stateless MCP transport) + Supabase `zmnhbrjyhxzhkxmhkexs` (shared durable truth) + OVH McCluster Core (`core/`, persistent execution; not a Worker, not a second backend). There is no Worker named `mccluster-core`. Do not create one. Do not scaffold a parallel API, auth provider, or database.
+The plane: GitHub `mcclusterishere/mccluster` (control repo) + Cloudflare Worker `mccluster` (source `workers/mccluster`; public edge and API `https://api.mccluster.org`; `mccluster-mcp` is its stateless MCP transport) + Supabase `zmnhbrjyhxzhkxmhkexs` (shared durable truth) + McCluster Core (`core/`, persistent execution on the network of nodes, owned hardware first, the OVH VPS its paid member; not a Worker, not a second backend). There is no Worker named `mccluster-core`. Do not create one. Do not scaffold a parallel API, auth provider, or database.
 
 Two properties, two entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`): `matthew.mccluster.org` is Matthew McCluster's personal property (GitHub Pages, this repo); `mccluster.org` is McCluster Corp's company property served by Worker `mccluster` by host once routed; `humanuprise.com` is a McCluster Corp host, never a third entity. Never collapse them.
 

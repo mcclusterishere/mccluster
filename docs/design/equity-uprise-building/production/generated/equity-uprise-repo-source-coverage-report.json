@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 768,
+  "candidate_count": 792,
   "capability_source_count": 104,
-  "support_only_count": 664,
-  "checks_total": 2970,
-  "checks_passed": 2970,
+  "support_only_count": 688,
+  "checks_total": 3066,
+  "checks_passed": 3066,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -13,6 +13,7 @@
     ".github/copilot-instructions.md",
     ".github/instructions/mccluster.instructions.md",
     ".github/workflows/api-economic-core-ci.yml",
+    ".github/workflows/compute-device-db.yml",
     ".github/workflows/equity-uprise-core-v2-ci.yml",
     ".github/workflows/equity-uprise-visual.yml",
     ".github/workflows/human-uprise-editorial.yml",
@@ -204,6 +205,8 @@
     "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/prim3-topology-learning.serve-root.e2e.mjs",
     "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/union_source_map.py",
     "docs/control-plane/deploy-gate.json",
+    "docs/control-plane/evidence/music-compute-migration-review-2026-11-24.md",
+    "docs/control-plane/evidence/pr823-compute-device-native-2026-11-24.json",
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json",
@@ -217,6 +220,7 @@
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
     "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
     "docs/control-plane/registry.json",
+    "docs/ddex.md",
     "docs/design/HERE-BRAND-LIBRARY.md",
     "docs/design/HERE-CURRENT-STATE-AUDIT.md",
     "docs/design/WORLD-SIGN-IN-DOOR.md",
@@ -302,6 +306,7 @@
     "js/control-room/instagram.js",
     "js/control-room/mission-sources.js",
     "js/control-room/music-label.js",
+    "js/control-room/music-ops.js",
     "js/control-room/nav.js",
     "js/control-room/profile-edit-review.js",
     "js/control-room/social-compose.js",
@@ -418,6 +423,7 @@
     "screens/terminal.html",
     "screens/vms.html",
     "screens/wall.html",
+    "scripts/compute-device-native-check.mjs",
     "scripts/e2e/control-eup.e2e.mjs",
     "scripts/e2e/docket-cohort-showcase.e2e.mjs",
     "scripts/e2e/environment-globe.e2e.mjs",
@@ -446,6 +452,7 @@
     "scripts/export-equity-environment.mjs",
     "scripts/funding/validate-register-db.mjs",
     "scripts/kb-build.mjs",
+    "scripts/music-release-native-check.mjs",
     "scripts/prim3/blind-the-floor-sim.mjs",
     "scripts/prim3/build-equity-uprise-package.mjs",
     "scripts/prim3/check-tactics-layout.mjs",
@@ -453,6 +460,8 @@
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
     "scripts/stage-cloudflare-pages.mjs",
+    "scripts/staging/device-jobs/pglite-postgrest.mjs",
+    "scripts/staging/device-jobs/run.mjs",
     "scripts/test-environment-proofs-pglite.mjs",
     "scripts/test-music-label-db.sh",
     "scripts/test-schema-hygiene-db.sh",
@@ -468,6 +477,7 @@
     "scripts/test/control-eup.test.mjs",
     "scripts/test/control-mission-sources.test.mjs",
     "scripts/test/creator-action-distribution.test.mjs",
+    "scripts/test/creator-distribution-stage.test.mjs",
     "scripts/test/domain-architecture.test.mjs",
     "scripts/test/environment-globe-wiring.test.mjs",
     "scripts/test/environment-quake-marks.test.mjs",
@@ -537,6 +547,7 @@
     "sites-details.html",
     "sites.html",
     "supabase/config.toml",
+    "supabase/functions/_shared/creator-distribution.ts",
     "supabase/functions/_shared/eu-policy-os.ts",
     "supabase/functions/collect/index.ts",
     "supabase/functions/eu-calendar/index.ts",
@@ -556,6 +567,7 @@
     "supabase/functions/eu-status/index.ts",
     "supabase/functions/eu-worker/index.ts",
     "supabase/functions/eu-workspace/index.ts",
+    "supabase/functions/music-access/index.ts",
     "supabase/functions/pay-now/index.ts",
     "supabase/functions/shake-order/index.ts",
     "supabase/migrations/0017_equity_uprise_platform.sql",
@@ -632,9 +644,21 @@
     "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql",
     "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql",
     "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql",
+    "supabase/pending/20261031180000_lyrics_machine_v1.rollback.sql",
+    "supabase/pending/20261031180000_lyrics_machine_v1.sql",
+    "supabase/pending/20261123180000_tinderfessions_catalog_objects.rollback.sql",
+    "supabase/pending/20261123180000_tinderfessions_catalog_objects.sql",
+    "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.rollback.sql",
+    "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.sql",
+    "supabase/pending/20261123200000_music_creator_distribution_v1.rollback.sql",
+    "supabase/pending/20261123200000_music_creator_distribution_v1.sql",
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
+    "supabase/pending/compute_job_attestations_v1.rollback.sql",
+    "supabase/pending/compute_job_attestations_v1.sql",
+    "supabase/pending/compute_scheduler_lease_v1.rollback.sql",
+    "supabase/pending/compute_scheduler_lease_v1.sql",
     "supabase/pending/equity_uprise_clipping_sources.sql",
     "supabase/pending/eup_module_policy_v1.provenance.json",
     "supabase/pending/live-callers.json",
@@ -782,7 +806,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "768 entries"
+      "detail": "792 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -866,6 +890,26 @@
     },
     {
       "name": ".github/workflows/api-economic-core-ci.yml support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": ".github/workflows/compute-device-db.yml capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": ".github/workflows/compute-device-db.yml classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": ".github/workflows/compute-device-db.yml support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": ".github/workflows/compute-device-db.yml support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -4510,6 +4554,46 @@
       "detail": ""
     },
     {
+      "name": "docs/control-plane/evidence/music-compute-migration-review-2026-11-24.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/music-compute-migration-review-2026-11-24.md classified",
+      "passed": true,
+      "detail": "classification='evidence_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/music-compute-migration-review-2026-11-24.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/music-compute-migration-review-2026-11-24.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/pr823-compute-device-native-2026-11-24.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/pr823-compute-device-native-2026-11-24.json classified",
+      "passed": true,
+      "detail": "classification='evidence_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/pr823-compute-device-native-2026-11-24.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/pr823-compute-device-native-2026-11-24.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json capability ids known",
       "passed": true,
       "detail": ""
@@ -4766,6 +4850,26 @@
     },
     {
       "name": "docs/control-plane/registry.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/ddex.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/ddex.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/ddex.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/ddex.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -6426,6 +6530,26 @@
     },
     {
       "name": "js/control-room/music-label.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/music-ops.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-room/music-ops.js classified",
+      "passed": true,
+      "detail": "classification='integration_support'"
+    },
+    {
+      "name": "js/control-room/music-ops.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-room/music-ops.js support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -8670,6 +8794,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/compute-device-native-check.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/compute-device-native-check.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/compute-device-native-check.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/compute-device-native-check.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/e2e/control-eup.e2e.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -9225,6 +9369,26 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
+      "name": "scripts/music-release-native-check.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/music-release-native-check.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/music-release-native-check.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/music-release-native-check.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/prim3/blind-the-floor-sim.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -9361,6 +9525,46 @@
     },
     {
       "name": "scripts/stage-cloudflare-pages.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/staging/device-jobs/pglite-postgrest.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/staging/device-jobs/pglite-postgrest.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/staging/device-jobs/pglite-postgrest.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/staging/device-jobs/pglite-postgrest.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/staging/device-jobs/run.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/staging/device-jobs/run.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/staging/device-jobs/run.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/staging/device-jobs/run.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -9661,6 +9865,26 @@
     },
     {
       "name": "scripts/test/creator-action-distribution.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/creator-distribution-stage.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/creator-distribution-stage.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/creator-distribution-stage.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/creator-distribution-stage.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -11035,6 +11259,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/functions/_shared/creator-distribution.ts capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/functions/_shared/creator-distribution.ts classified",
+      "passed": true,
+      "detail": "classification='integration_support'"
+    },
+    {
+      "name": "supabase/functions/_shared/creator-distribution.ts support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/functions/_shared/creator-distribution.ts support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/functions/_shared/eu-policy-os.ts capability ids known",
       "passed": true,
       "detail": ""
@@ -11328,6 +11572,26 @@
       "name": "supabase/functions/eu-workspace/index.ts support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/functions/music-access/index.ts capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/functions/music-access/index.ts classified",
+      "passed": true,
+      "detail": "classification='integration_support'"
+    },
+    {
+      "name": "supabase/functions/music-access/index.ts support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/functions/music-access/index.ts support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "supabase/functions/pay-now/index.ts capability ids known",
@@ -12845,6 +13109,166 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/20261031180000_lyrics_machine_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261031180000_lyrics_machine_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_recovery_support'"
+    },
+    {
+      "name": "supabase/pending/20261031180000_lyrics_machine_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261031180000_lyrics_machine_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261031180000_lyrics_machine_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261031180000_lyrics_machine_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_support'"
+    },
+    {
+      "name": "supabase/pending/20261031180000_lyrics_machine_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261031180000_lyrics_machine_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123180000_tinderfessions_catalog_objects.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123180000_tinderfessions_catalog_objects.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_recovery_support'"
+    },
+    {
+      "name": "supabase/pending/20261123180000_tinderfessions_catalog_objects.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261123180000_tinderfessions_catalog_objects.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123180000_tinderfessions_catalog_objects.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123180000_tinderfessions_catalog_objects.sql classified",
+      "passed": true,
+      "detail": "classification='migration_support'"
+    },
+    {
+      "name": "supabase/pending/20261123180000_tinderfessions_catalog_objects.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261123180000_tinderfessions_catalog_objects.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_recovery_support'"
+    },
+    {
+      "name": "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.sql classified",
+      "passed": true,
+      "detail": "classification='migration_support'"
+    },
+    {
+      "name": "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123200000_music_creator_distribution_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123200000_music_creator_distribution_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_recovery_support'"
+    },
+    {
+      "name": "supabase/pending/20261123200000_music_creator_distribution_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261123200000_music_creator_distribution_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123200000_music_creator_distribution_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261123200000_music_creator_distribution_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_support'"
+    },
+    {
+      "name": "supabase/pending/20261123200000_music_creator_distribution_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261123200000_music_creator_distribution_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/PROMOTION-ORDER.md capability ids known",
       "passed": true,
       "detail": ""
@@ -12901,6 +13325,86 @@
     },
     {
       "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_job_attestations_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_job_attestations_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_recovery_support'"
+    },
+    {
+      "name": "supabase/pending/compute_job_attestations_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/compute_job_attestations_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_job_attestations_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_job_attestations_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_support'"
+    },
+    {
+      "name": "supabase/pending/compute_job_attestations_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/compute_job_attestations_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_scheduler_lease_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_scheduler_lease_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_recovery_support'"
+    },
+    {
+      "name": "supabase/pending/compute_scheduler_lease_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/compute_scheduler_lease_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_scheduler_lease_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_scheduler_lease_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_support'"
+    },
+    {
+      "name": "supabase/pending/compute_scheduler_lease_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/compute_scheduler_lease_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },

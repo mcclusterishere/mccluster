@@ -29,9 +29,7 @@ const IMAGE=Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA
 function token(origin){return 'x.'+Buffer.from(JSON.stringify({sub:USER,exp:Math.floor(Date.now()/1000)+3600,email:'audio-fixture@invalid.test',origin})).toString('base64url')+'.y';}
 /* motion: 'reduce' keeps the album room's light off, as this suite always ran; 'no-preference'
    is what most listeners have, with js/chamber.js drawing the room (music map PB-13) */
-/* deliver({key,start,n}) answers each audio read as the network would (music slice M3): null for the plain answer,
-   {cut} bytes at most (a short 206: the browser asks for the rest with a Range read) or {status} instead */
-async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html',motion='reduce',deliver=null}={}){
+async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html',motion='reduce',origin=HOUSE,deliver=null}={}){
   const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:motion,serviceWorkers:'block'});
   const requests=[],messages=[],errors=[],reads=[];
   await context.addInitScript(({HOUSE,member,token,privacy})=>{
@@ -89,8 +87,8 @@ async function setup(width=390,member=false,{parentScript,privacy=true,start='/l
     return r.abort();
   });
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(HOUSE+start,{waitUntil:parentScript?'domcontentloaded':'load'});
-  if(start==='/listen.html')await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'),!parentScript);
+  await page.goto(origin+start,{waitUntil:parentScript?'domcontentloaded':'load'});
+  if(origin===HOUSE&&start==='/listen.html')await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'),!parentScript);
   return {context,page,requests,messages,errors,reads};
 }
 async function play(page,album='here',title='Who Did The Shoot'){
@@ -443,6 +441,27 @@ try{
     check('a catalog draw of the song already loaded is still the catalog\'s pick',same.slug==='heal-the-3rd-world'&&same.pick==='random'&&same.pool>1,same);
     await context.close();
   }
+  /* WORD BY WORD (owner, 2026-11-23: lyrics light as they are sung everywhere): a lyrics file with word times lights the
+     World headline one word at a time, colour only */
+  {
+    const {context,page,errors}=await setup();
+    const songs=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.flatMap(a=>a.tracks||[]).filter(t=>!t.gated&&/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(t.src||'')&&!/preview/i.test(t.src));
+    const worded=songs.findIndex(t=>typeof t.lyrics==='string'&&t.lyrics);
+    await page.addInitScript(([i,n])=>{Math.random=()=>(i+0.5)/n;},[worded,songs.length]);
+    const W=(c,b)=>({begin:b,end:b+0.6,content:c});
+    await context.route('**/data/lyrics/*.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({plain:'one two three',timed:{line:[{begin:0.2,end:20,content:'one two three',words:[W('one',0.2),W('two',1.2),W('three',2.4)]}]}})}));
+    await page.goto(WORLD+'/?view=feed');
+    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool&&document.getElementById('mnWorldPlay'));
+    await page.locator('#wtTo').click();
+    await page.waitForFunction(()=>document.querySelectorAll('.wt-headline .lyr-w').length===3,null,{timeout:8000});
+    await page.waitForFunction(()=>document.querySelectorAll('.wt-headline .lyr-w.is-sung').length>=2,null,{timeout:8000});
+    const early=await page.evaluate(()=>({sung:document.querySelectorAll('.wt-headline .lyr-w.is-sung').length,text:document.querySelector('.wt-headline').textContent,cls:document.querySelector('.wt-headline').className}));
+    check('World headline lights the lyric word by word where the file has word times',early.text==='one two three'&&early.cls.includes('is-words')&&early.sung>=2&&early.sung<=3,early);
+    await page.waitForFunction(()=>document.querySelectorAll('.wt-headline .lyr-w.is-sung').length===3,null,{timeout:8000});
+    check('every word is lit once it is sung, and the line text never changes while it plays',await page.locator('.wt-headline').textContent()==='one two three');
+    check('no errors lighting the words',errors.length===0,errors);
+    await context.close();
+  }
   {
     const {context,page,requests}=await setup();
     /* timed lyrics come from the lyrics file data/albums.json names for the song; a song it lists without one has no words.
@@ -492,9 +511,89 @@ try{
   {
     const {context,page}=await setup();await play(page);const frame=await world(page);
     await frame.evaluate(()=>{const a=document.createElement('a');a.id='fixtureCreator';a.href='https://matthew.mccluster.org/music-creator.html?handle=fixture-artist';a.textContent='Artist profile';a.style.cssText='position:fixed;top:85px;left:15px;z-index:99999';document.body.appendChild(a);});
+    const before=await audioState(page);
     await frame.locator('#fixtureCreator').click();
-    await page.waitForURL(HOUSE+'/music-creator.html?handle=fixture-artist');
-    check('World artist links preserve the exact destination at top level',page.url()===HOUSE+'/music-creator.html?handle=fixture-artist');
+    /* ONE PLAYER (owner, 2026-11-23): the artist page opens in the listening document, so the song keeps playing */
+    await page.waitForFunction(()=>document.getElementById('mccWorldAudioFrame')?.getAttribute('src')?.startsWith('https://matthew.mccluster.org/music-creator.html?handle=fixture-artist'));
+    const after=await audioState(page);
+    check('World artist links open their exact destination inside the listening document and the song keeps playing',
+      after.unloads===0&&after.src===before.src&&!after.paused&&after.time>=before.time&&await page.evaluate(()=>MCC_WORLD_AUDIO.active()&&history.state?.mccWorldAudio?.href==='https://matthew.mccluster.org/music-creator.html?handle=fixture-artist'),{before,after});
+    await context.close();
+  }
+  /* ONE PLAYER FOR THE WHOLE SITE (owner, 2026-11-23): "If I start a song in world and then I click the music tab, the
+     song stops playing ... it should be a universal engine of whenever the music starts, it continues." */
+  const sounding=async page=>{let n=0;for(const f of page.frames()){try{n+=await f.evaluate(()=>(window.__audioObjects||[]).filter(a=>!a.paused&&!a.ended).length+[...document.querySelectorAll('audio,video')].filter(m=>!m.paused&&!m.ended&&!(window.__audioObjects||[]).includes(m)).length);}catch{}}return n;};
+  const frameAt=(page,prefix)=>page.frames().find(f=>f.url().startsWith(prefix));
+  {
+    const {context,page,errors}=await setup(390,false,{origin:WORLD,start:'/'});
+    await page.waitForSelector('#mnWorldPlay');await page.locator('#wtTo').click();
+    await page.waitForFunction(()=>__audioObjects.some(a=>!a.paused&&a.currentTime>.2));
+    await page.evaluate(()=>{window.__worldSong=__audioObjects.find(a=>!a.paused);window.__worldSrc=__worldSong.currentSrc;});
+    const t0=await page.evaluate(()=>__worldSong.currentTime);
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.waitForFunction(()=>MCC_WORLD_AUDIO.active()&&document.getElementById('mccWorldAudioFrame')?.getAttribute('src')?.startsWith('https://matthew.mccluster.org/listen.html'));
+    await page.waitForFunction(()=>document.querySelector('.world-audio-status')?.hidden,null,{timeout:15000});
+    await page.waitForTimeout(600);
+    const inMusic=await page.evaluate(()=>({unloads:__unloads,same:__audioObjects.find(a=>!a.paused)===__worldSong,src:__worldSong.currentSrc===__worldSrc,time:__worldSong.currentTime,url:location.origin+location.pathname}));
+    check('World song keeps playing when the Music tab opens: the World document stays, Music opens in it',inMusic.unloads===0&&inMusic.same&&inMusic.src&&inMusic.time>t0+.4&&inMusic.url===WORLD+'/',{inMusic,t0});
+    const tabs=await page.evaluate(()=>[...document.querySelectorAll('.appbar [data-appnav]')].map(t=>({nav:t.dataset.appnav,href:t.getAttribute('href'),cur:t.getAttribute('aria-current'),here:t.classList.contains('is-here')})));
+    check('the bar marks Music while Music is open over the World',tabs.some(t=>t.nav==='music'&&t.cur==='page'&&t.here),tabs);
+    check('exactly one song is sounding with Music open over the World',await sounding(page)===1);
+    check('the host transport shows the playing World song over Music',await page.locator('#mccWorldAudioControls').isVisible()&&(await page.locator('#mccWorldAudioState').textContent())==='Playing');
+    const music=frameAt(page,HOUSE+'/listen.html');
+    await music.waitForFunction(()=>document.body.dataset.worldAudioChild==='ready'&&!!window.MCC_MUSIC&&!!document.querySelector('[data-music-play][data-album="here"]'));
+    check('Music inside the World hides its own bar: one bar on screen',await music.evaluate(()=>{const b=document.querySelector('.appbar');return !b||b.hidden;}));
+    check('Music over the World fits the phone',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    /* choosing a song in Music makes it the one song: the World's pauses */
+    await music.locator('[data-music-play][data-album="here"][data-track="Who Did The Shoot"]').first().click();
+    await music.waitForFunction(()=>!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>.3);
+    await page.waitForFunction(()=>__worldSong.paused);
+    check('a song chosen in Music becomes the one song and the World song pauses',await sounding(page)===1&&await page.evaluate(()=>__worldSong.paused));
+    await page.waitForFunction(()=>document.getElementById('mccWorldAudioTitle')?.textContent==='Who Did The Shoot');
+    check('the host transport now names the chosen song',(await page.locator('#mccWorldAudioTitle').textContent())==='Who Did The Shoot');
+    await music.evaluate(()=>{window.__chosen=MCC_MUSIC.audio;window.__chosenSrc=MCC_MUSIC.audio.currentSrc;});
+    /* back to the World: Music's song keeps playing */
+    const m0=await music.evaluate(()=>MCC_MUSIC.audio.currentTime);
+    await page.locator('.appbar [data-appnav="world"]').click();
+    await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());await page.waitForTimeout(700);
+    const world1=await music.evaluate(()=>({same:MCC_MUSIC.audio===__chosen,src:MCC_MUSIC.audio.currentSrc===__chosenSrc,paused:MCC_MUSIC.audio.paused,time:MCC_MUSIC.audio.currentTime}));
+    check('back in the World, the song chosen in Music keeps playing',world1.same&&world1.src&&!world1.paused&&world1.time>m0+.4,{world1,m0});
+    check('back in the World, the World song did not restart over it',await sounding(page)===1&&await page.evaluate(()=>__worldSong.paused&&__unloads===0));
+    /* on to another page: the page that plays the song is kept, and the next page opens beside it */
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.waitForFunction(()=>MCC_WORLD_AUDIO.active());
+    check('Music returns as the same document, song still playing',await music.evaluate(()=>MCC_MUSIC.audio===__chosen&&!MCC_MUSIC.audio.paused));
+    const m1=await music.evaluate(()=>MCC_MUSIC.audio.currentTime);
+    await page.evaluate(()=>MCC_BAR.navigation.go('https://matthew.mccluster.org/album.html?album=here'));
+    await page.waitForFunction(()=>document.getElementById('mccWorldAudioFrame')?.getAttribute('src')?.startsWith('https://matthew.mccluster.org/album.html'));
+    await page.waitForTimeout(900);
+    const kept=await music.evaluate(()=>({same:MCC_MUSIC.audio===__chosen,paused:MCC_MUSIC.audio.paused,time:MCC_MUSIC.audio.currentTime}));
+    check('opening another page keeps the page playing the song, hidden, and its song keeps going',kept.same&&!kept.paused&&kept.time>m1+.5&&await page.locator('#mccWorldAudioKeeper').count()===1,{kept,m1});
+    check('arriving on the album page did not switch the song',await sounding(page)===1);
+    await page.locator('#mccWorldAudioControls .world-audio__play').click();
+    /* the kept frame is hidden, and a hidden frame draws no animation frames: poll it on a timer */
+    await music.waitForFunction(()=>MCC_MUSIC.audio.paused,null,{polling:100});
+    check('the host transport pauses the kept page\'s song',await sounding(page)===0);
+    check('no script errors across the World, Music and the album',errors.length===0,errors);
+    await context.close();
+  }
+  {
+    const {context,page,errors}=await setup();await play(page);
+    await page.evaluate(()=>window.__originalAudio=MCC_MUSIC.audio);
+    const before=await audioState(page);
+    await page.locator('.appbar [data-appnav="home"]').click();
+    await page.waitForFunction(()=>MCC_WORLD_AUDIO.active()&&document.getElementById('mccWorldAudioFrame')?.getAttribute('src')?.startsWith('https://matthew.mccluster.org/index.html'));
+    await page.waitForTimeout(1200);
+    const after=await audioState(page);
+    check('Music playing and the home tab tapped: home opens in the listening document and the song keeps going',after.unloads===0&&after.src===before.src&&!after.paused&&after.time>before.time+.8&&await page.evaluate(()=>__originalAudio===MCC_MUSIC.audio),{before,after});
+    check('arriving on the home page never starts another song',await sounding(page)===1);
+    await page.goBack();await page.waitForFunction(()=>!MCC_WORLD_AUDIO.active());
+    check('Back returns to Music with the same song playing',await page.evaluate(()=>__originalAudio===MCC_MUSIC.audio&&!MCC_MUSIC.audio.paused&&__unloads===0));
+    await page.evaluate(()=>MCC_MUSIC.pause());
+    await page.locator('.appbar [data-appnav="home"]').click();
+    await page.waitForURL(HOUSE+'/index.html');
+    check('with nothing playing, the home tab is an ordinary page move',await page.evaluate(()=>!window.MCC_WORLD_AUDIO?.active()));
+    check('no script errors from Music to home and back',errors.length===0,errors);
     await context.close();
   }
   {

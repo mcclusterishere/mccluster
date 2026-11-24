@@ -1,0 +1,236 @@
+{
+  "max_leases": 1,
+  "labels": {
+    "site": "owner-mac-m1",
+    "trust": "owned",
+    "role": "apple-silicon-laptop",
+    "machine": "shiloh-mac"
+  },
+  "capabilities": [
+    {
+      "capability": "ai.chat",
+      "implementation": "qwen3-vl.4b.local",
+      "backend": "ollama",
+      "model": "qwen3-vl:4b",
+      "version": "1",
+      "features": {
+        "chat": true,
+        "json": true,
+        "self_hosted": true,
+        "tools": true,
+        "thinking_control": true,
+        "vision": true,
+        "measured_inference": true,
+        "gpu": true,
+        "model_tier": "4b"
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "num_ctx": {
+            "type": "integer"
+          },
+          "json": {
+            "type": "boolean"
+          },
+          "think": {
+            "type": "boolean"
+          },
+          "num_predict": {
+            "type": "integer",
+            "minimum": 16,
+            "maximum": 4096
+          },
+          "tools": {
+            "type": "array"
+          },
+          "schema": {
+            "type": "object"
+          },
+          "num_thread": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "usage": {
+            "type": "object"
+          },
+          "tool_calls": {
+            "type": "array"
+          },
+          "settings": {
+            "type": "object"
+          }
+        }
+      },
+      "max_concurrency": 1,
+      "min_vram_bytes": 0,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4790/execute",
+        "health_url": "http://127.0.0.1:4790/ready?implementation=qwen3-vl.4b.local",
+        "health_method": "GET",
+        "health_timeout_ms": 3000,
+        "timeout_ms": 600000
+      }
+    },
+    {
+      "capability": "ai.chat",
+      "implementation": "qwen3.8b.local",
+      "backend": "ollama",
+      "model": "qwen3:8b",
+      "version": "2",
+      "features": {
+        "chat": true,
+        "json": true,
+        "self_hosted": true,
+        "tools": true,
+        "thinking_control": true,
+        "measured_inference": true,
+        "gpu": true,
+        "model_tier": "8b"
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "num_ctx": {
+            "type": "integer"
+          },
+          "json": {
+            "type": "boolean"
+          },
+          "think": {
+            "type": "boolean"
+          },
+          "num_predict": {
+            "type": "integer",
+            "minimum": 16,
+            "maximum": 4096
+          },
+          "tools": {
+            "type": "array"
+          },
+          "schema": {
+            "type": "object"
+          },
+          "num_thread": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "usage": {
+            "type": "object"
+          },
+          "tool_calls": {
+            "type": "array"
+          },
+          "settings": {
+            "type": "object"
+          }
+        }
+      },
+      "max_concurrency": 1,
+      "min_vram_bytes": 0,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4790/execute",
+        "health_url": "http://127.0.0.1:4790/ready?implementation=qwen3.8b.local",
+        "health_method": "GET",
+        "health_timeout_ms": 3000,
+        "timeout_ms": 600000
+      }
+    },
+    {
+      "capability": "lyrics.align",
+      "implementation": "lyrics.machine.local",
+      "backend": "demucs+faster-whisper+wav2vec2",
+      "model": null,
+      "version": "1",
+      "features": {
+        "lyrics": true,
+        "word_timing": true,
+        "self_hosted": true
+      },
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "audio_url"
+        ],
+        "properties": {
+          "audio_url": {
+            "type": "string"
+          },
+          "audio_ext": {
+            "type": "string"
+          },
+          "sheet_text": {
+            "type": "string",
+            "maxLength": 40000
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "doc": {
+            "type": "object"
+          }
+        }
+      },
+      "max_concurrency": 1,
+      "min_vram_bytes": 0,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4792/execute",
+        "health_url": "http://127.0.0.1:4792/ready",
+        "health_method": "GET",
+        "health_timeout_ms": 3000,
+        "timeout_ms": 1800000
+      }
+    }
+  ]
+}

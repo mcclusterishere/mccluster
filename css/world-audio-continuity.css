@@ -78,3 +78,9 @@ html.world-audio-open .world-audio .world-audio__play {
 }
 html.hu-travel-enabled.mn-world-on .world-audio .world-audio__play:focus-visible,
 html.world-audio-open .world-audio .world-audio__play:focus-visible { outline:2px solid #fff;outline-offset:3px; }
+/* the World headline lights the lyric word by word where the file has word times (owner, 2026-11-23); colour only,
+   so the line never reflows while it plays */
+.wt-headline.is-words .lyr-w { opacity:.55; transition:opacity .12s linear; }
+.wt-headline.is-words .lyr-w.is-sung { opacity:1; }
+@media (prefers-reduced-motion: reduce) { .wt-headline.is-words .lyr-w { transition:none; } }
+

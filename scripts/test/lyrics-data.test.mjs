@@ -64,3 +64,12 @@ test('every lyrics file the shelf names exists and yields lines or is honestly p
     assert.ok(lines ? sorted(lines) : typeof d.plain === 'string', `${t.title}: ${t.lyrics} has timed lines or plain words`);
   }
 });
+
+test('word times ride along with a line when they match its words one for one (World word lighting, 2026-11-23)', () => {
+  const lyricLines = reader();
+  const got = lyricLines({ timed: { line: [
+    { begin: 1, content: 'one two', words: [{ begin: 1, end: 1.5, content: 'one' }, { begin: 1.5, end: 2, content: 'two' }] },
+    { begin: 3, content: 'three four', words: [{ begin: 3, end: 4, content: 'three' }] }
+  ] } });
+  assert.deepEqual(got, [{ t: 1, text: 'one two', words: [1, 1.5] }, { t: 3, text: 'three four' }]);
+});

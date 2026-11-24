@@ -294,7 +294,7 @@ test('a caller abort during the wait cancels a queued task and never runs locall
 
 test('the fabric configuration comes from the environment with bounded values', () => {
   const defaults = fabricConfigFromEnv({});
-  assert.equal(defaults.mode, 'off');
+  assert.equal(defaults.mode, 'prefer', 'owned hardware first by default (owner, 2026-11-23)');
   assert.equal(defaults.waitMs, 120_000);
   assert.equal(defaults.pollMs, 1_500);
   assert.equal(defaults.runningWaitMs, 600_000);

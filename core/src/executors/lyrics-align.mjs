@@ -21,6 +21,28 @@ import { rest, buildSupabaseHeaders } from '../supabase.mjs';
 import { transcribe } from '../lyrics/pipeline.mjs';
 import { parseTimedLyrics } from '../lyrics/import.mjs';
 import { storeStems } from '../lyrics/stems.mjs';
+import { offloadLyrics, signMaster } from '../compute/lyrics-node.mjs';
+import { enqueueComputeTask, liveCapabilityImplementations } from '../compute/store.mjs';
+import { awaitComputeTask } from '../compute/task-wait.mjs';
+
+/* OWNED HARDWARE FIRST (owner, 2026-11-23: "the lyric machine shouldn't wait on OVH box ... Prioritize owned
+   hardware"). A live owned node advertising lyrics.align does the listening; this box runs it only when none can. */
+function defaultOffload(args) {
+  // the key is read only when a master is actually signed for a live owned node
+  const coreHeaders = () => {
+    const headers = buildSupabaseHeaders({ secretKey: process.env.SUPABASE_SECRET_KEY, legacyServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY });
+    if (!headers.authorization) headers.authorization = `Bearer ${headers.apikey}`;
+    return headers;
+  };
+  return offloadLyrics(args, {
+    env: process.env,
+    live: liveCapabilityImplementations,
+    enqueue: enqueueComputeTask,
+    wait: awaitComputeTask,
+    sign: (o) => signMaster(o, { env: process.env, headers: coreHeaders() }),
+    log: (record) => console.log(JSON.stringify(record))
+  });
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_MASTER_BYTES = Number(process.env.LYRICS_MAX_MASTER_BYTES || 250 * 1024 * 1024);
@@ -91,15 +113,24 @@ export async function lyricsAlign(job, deps = {}) {
   if (!track) throw new Error(`creator track ${trackId} not found`);
   if (!track.master_bucket || !track.master_path) throw new Error('release has no master to listen to');
   if (!mayReplace(track.lyrics)) {
-    return { executor: 'lyrics_align:v1', summary: `Lyrics for "${track.title}" are owner-reviewed; left as they are`, track_id: trackId, written: false };
+    return { executor: 'lyrics_align:v1', summary: `Existing lyrics for "${track.title}" are protected; left as they are`, track_id: trackId, written: false, reason: 'protected_lyrics' };
   }
 
   const dir = await mkdtemp(join(tmpdir(), 'mcc-lyrics-job-'));
   try {
-    const audio = join(dir, 'master' + (extname(track.master_path).toLowerCase().replace(/[^.a-z0-9]/g, '') || '.audio'));
-    await _download(track.master_bucket, track.master_path, audio);
-    const { sheetText, imported } = sheetInput(track.lyrics_sheet);
-    const { doc, stems, stemsDir } = await _transcribe({ audio, sheetText, imported, title: track.title || '', workDir: join(dir, 'work') });
+    let doc, stems = null, stemsDir = null, ran = { route: 'local', node_id: null, task_id: null };
+    const remote = await (deps.offload || defaultOffload)({ job, track, sheetText: track.lyrics_sheet || '' });
+    if (remote) {
+      doc = remote.doc;
+      ran = { route: 'fabric', node_id: remote.node_id || null, task_id: remote.task_id || null };
+      doc.machine = { ...(doc.machine || {}), ran_on: ran };
+    } else {
+      const audio = join(dir, 'master' + (extname(track.master_path).toLowerCase().replace(/[^.a-z0-9]/g, '') || '.audio'));
+      await _download(track.master_bucket, track.master_path, audio);
+      const { sheetText, imported } = sheetInput(track.lyrics_sheet);
+      ({ doc, stems, stemsDir } = await _transcribe({ audio, sheetText, imported, title: track.title || '', workDir: join(dir, 'work') }));
+      doc.machine = { ...(doc.machine || {}), ran_on: ran };
+    }
     /* the separation already made every stem: keep them, privately (never fails the lyrics) */
     let stemsResult = null;
     if (stems && stemsDir && job?.input?.stems !== false) {
@@ -122,19 +153,21 @@ export async function lyricsAlign(job, deps = {}) {
     });
     const m = doc.machine || {};
     if (!updated.length) {
-      return { executor: 'lyrics_align:v1', summary: `Lyrics for "${track.title}" not written: the master, sheet or review changed while McCluster listened (a newer job takes it)`, track_id: trackId, written: false, input_rev: rev.value };
+      return { executor: 'lyrics_align:v1', summary: `Lyrics for "${track.title}" not written: the master, sheet or review changed while McCluster listened (a newer job takes it)`, track_id: trackId, written: false, reason: 'inputs_or_review_changed', input_rev: rev.value };
     }
     return {
       executor: 'lyrics_align:v1',
       summary: `Lyrics ${doc.source} for "${track.title}": ${doc.timed.line.length} lines, ${m.mismatched_lines || 0} flagged for review`,
       track_id: trackId,
       written: updated.length > 0,
+      input_rev: rev.value,
       source: doc.source,
       lines: doc.timed.line.length,
       mismatched_lines: m.mismatched_lines || 0,
       engine: m.engine || null,
       timing: m.timing || null,
       stems: stemsResult,
+      ran_on: ran,
     };
   } finally {
     await rm(dir, { recursive: true, force: true });

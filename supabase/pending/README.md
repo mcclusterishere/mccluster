@@ -3,6 +3,38 @@
 Read `PROMOTION-ORDER.md` (in this folder) for the order in which the files here
 are meant to be applied, what each needs first, and how each is tested.
 
+## Current review status — 2026-11-24
+
+Production reads found **389 applied migrations**. Draft
+[#836](https://github.com/mcclusterishere/mccluster/pull/836) records the five
+Nov 24 applications without replaying them: member-front shared revisions,
+AI context workstreams, Stripe reconciliation, clipping sources, and the bounty
+existing-row guard. This branch still inherits the 384-file ledger from `main`;
+merge the reviewed ledger record through the release process and integrate that
+new `main` before promotion. The older counts below are dated history, not the
+current production count. Never apply an already-recorded pending copy again.
+
+The six files from draft #823 remain **unapplied and subject to named-file
+approval**. Their read-only preflight, corrected recovery behavior and native
+PostgreSQL proof are recorded in
+`docs/control-plane/evidence/music-compute-migration-review-2026-11-24.md`.
+
+| File | Required condition and recovery |
+|---|---|
+| `20261123180000_tinderfessions_catalog_objects.sql` | Ship the matching 12-song album on `main` with the seed. Recovery archives its rows and preserves their IDs and references. |
+| `20261123190000_in_hot_pursuit_catalog_objects.sql` | Ship the matching eight-song album on `main` with the seed. Recovery archives its rows and preserves their IDs and references. |
+| `20261123200000_music_creator_distribution_v1.sql` | Confirm the exact canonical `music_track_content` definition, then apply before the lyrics file. Coordinate the `music-access` redeploy, preserving `verify_jwt = true`. Recovery refuses stored distribution data or a later lyrics content helper; it removes only an empty column. |
+| `compute_job_attestations_v1.sql` | Deploy the gateway that records signatures first. `signed_at` stays text. The service role receives only SELECT/INSERT; recovery refuses any stored signature. |
+| `compute_scheduler_lease_v1.sql` | Owner decision to run a standby scheduler and set its role. Recovery refuses any stored fencing/history row. |
+| `20261031180000_lyrics_machine_v1.sql` | Distribution must precede it, and the deployed Core must be ready to execute `lyrics_align`. Recovery refuses active jobs, then stops new automatic queueing while retaining sheets, derived revisions, reviewed content protection and job history. |
+
+Native proofs are `scripts/music-release-native-check.mjs` and
+`scripts/compute-device-native-check.mjs`. Reconciliation CI also runs the music
+proof against the complete reset; the dedicated compute workflow checks the
+canonical compute chain and actual API-role privileges. A local fixture pass
+does not replace an exact-head green CI result. The two ISRC issuance files
+remain staged and must not be applied.
+
 `live-callers.json` lists every RPC, table and bucket that shipped code (`js/`,
 root pages, `workers/mccluster/src`, `workers/mccluster-mcp/src`,
 `supabase/functions/`) calls but that is not deployed. Since 2026-10-29 a name

@@ -1,3 +1,4 @@
+-- Shared music-platform support used by Equity Uprise; no building capability is added.
 -- Lyric machine v1: an uploaded release gets timed lyrics automatically.
 --
 -- PENDING: not applied. The owner applies it after McCluster Core is deployed
@@ -23,9 +24,61 @@
 --   lyrics are empty or machine-made and unreviewed: lyrics the owner reviewed
 --   are never overwritten.
 
+-- Apply after 20261123200000_music_creator_distribution_v1.sql, in one
+-- transaction. The sheet and its derived revision are processing inputs;
+-- the existing `lyrics` field remains reviewed release content. Excluding
+-- only these inputs preserves prior published snapshots during the backfill.
+set local lock_timeout = '5s';
+select pg_advisory_xact_lock(823, 20261123);
+lock table public.creator_tracks in access exclusive mode;
+do $lyrics_preflight$
+declare actual record; expected record;
+begin
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception using errcode='55000', message='MUSIC_READ_COMMITTED_REQUIRED: a stale snapshot cannot prove current content or recovery state';
+  end if;
+  if not exists(select 1 from pg_attribute where attrelid='public.creator_tracks'::regclass
+      and attname='distribution' and atttypid='jsonb'::regtype and not attisdropped) then
+    raise exception using errcode='55000', message='MUSIC_DISTRIBUTION_REQUIRED: apply the distribution migration before lyrics inputs';
+  end if;
+  select p.*, l.lanname into actual from pg_proc p join pg_language l on l.oid=p.prolang
+   where p.oid=to_regprocedure('public.music_track_content(public.creator_tracks)');
+  if not found or actual.lanname <> 'sql' or actual.prosecdef or actual.provolatile <> 'i'
+     or actual.proconfig is distinct from array['search_path=pg_catalog, public']
+     or actual.prorettype <> 'jsonb'::regtype
+     or md5(replace(actual.prosrc, E'\r\n', E'\n')) not in
+        ('e4c86461a97fa7eb69a291fe184188de', 'a6e0e769dd46117627e815fc2f613fec') then
+    raise exception using errcode='55000', message='MUSIC_CONTENT_BASELINE_CHANGED: review the live content helper before lyrics inputs';
+  end if;
+  if to_regclass('public.orgs') is null or to_regclass('public.ops_agent_jobs') is null then
+    raise exception using errcode='55000', message='MUSIC_LYRICS_QUEUE_REQUIRED: canonical organization and job tables are required';
+  end if;
+  for expected in select * from (values
+      ('public.music_lyrics_input_rev()', 'd4a097c879044a4c745b3fae1497af14', false),
+      ('public.music_queue_lyrics_align()', 'cf90bda0e81d56b9822e87cb8d61537a', true)
+    ) as reviewed(signature, body_md5, is_definer) loop
+    select p.*, l.lanname into actual from pg_proc p join pg_language l on l.oid=p.prolang
+     where p.oid=to_regprocedure(expected.signature);
+    if found and (actual.lanname <> 'plpgsql' or actual.prosecdef is distinct from expected.is_definer
+       or actual.proconfig is distinct from array['search_path=public, pg_temp']
+       or actual.prorettype <> 'trigger'::regtype
+       or md5(replace(actual.prosrc, E'\r\n', E'\n')) <> expected.body_md5) then
+      raise exception using errcode='55000', message='MUSIC_LYRICS_BASELINE_CHANGED: review the existing lyrics trigger function';
+    end if;
+  end loop;
+end $lyrics_preflight$;
+
 alter table public.creator_tracks
   add column if not exists lyrics_sheet text,
   add column if not exists lyrics_input_rev text;
+
+create or replace function public.music_track_content(p_row public.creator_tracks)
+returns jsonb language sql immutable set search_path = pg_catalog, public as $$
+  select to_jsonb(p_row) - array['id','uid','m_uid','created_at','updated_at','status','rights_status',
+                                 'moderation_note','published_at','reviewed_snapshot','reviewed_digest','reviewed_at',
+                                 'approved_master_version_id','distribution','lyrics_sheet','lyrics_input_rev']
+$$;
+revoke all on function public.music_track_content(public.creator_tracks) from public, anon, authenticated;
 
 create or replace function public.music_lyrics_input_rev()
 returns trigger
@@ -42,12 +95,24 @@ revoke all on function public.music_lyrics_input_rev() from public, anon, authen
 
 drop trigger if exists trg_creator_tracks_lyrics_input_rev on public.creator_tracks;
 create trigger trg_creator_tracks_lyrics_input_rev
-before insert or update of master_path, lyrics_sheet on public.creator_tracks
+before insert or update on public.creator_tracks
 for each row execute function public.music_lyrics_input_rev();
 
-update public.creator_tracks
-   set lyrics_input_rev = md5(coalesce(master_path, '') || chr(10) || coalesce(lyrics_sheet, ''))
- where lyrics_input_rev is null;
+-- The canonical track guard distinguishes the service claim from a creator.
+-- This administrative backfill must use that claim and restore the caller's
+-- prior setting afterwards. It neither approves content nor queues old rows.
+do $lyrics_backfill$
+declare prior_claims text := current_setting('request.jwt.claims', true);
+        prior_role text := current_setting('request.jwt.claim.role', true);
+begin
+  perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  perform set_config('request.jwt.claim.role', 'service_role', true);
+  update public.creator_tracks
+     set lyrics_input_rev = md5(coalesce(master_path, '') || chr(10) || coalesce(lyrics_sheet, ''))
+   where lyrics_input_rev is distinct from md5(coalesce(master_path, '') || chr(10) || coalesce(lyrics_sheet, ''));
+  perform set_config('request.jwt.claims', coalesce(prior_claims, ''), true);
+  perform set_config('request.jwt.claim.role', coalesce(prior_role, ''), true);
+end $lyrics_backfill$;
 
 do $$ begin
   alter table public.creator_tracks add constraint creator_tracks_lyrics_sheet_len

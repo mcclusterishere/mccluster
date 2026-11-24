@@ -1,0 +1,308 @@
+{
+  "schema": "mccluster-pr823-compute-device-native-evidence/1",
+  "recorded_at": "2026-11-24T17:47:35.496466+00:00",
+  "production_changed": false,
+  "approval_status": "Prepared for review only; each production SQL file requires explicit approval.",
+  "scope": {
+    "database": "Disposable PostgreSQL 17.6; exact canonical compute migration chain; minimal orgs fixture and Supabase API roles/default ACLs.",
+    "service_role": "Actual BYPASSRLS role, with SET LOCAL ROLE exercised against SQL grants.",
+    "full_reset": "Not run locally. Dedicated CI rebuilds all canonical migrations plus the exact replay overlay and runs --from-reset without base-object stubs. Guard compares exact (version,name) rows from resetMigrationPlan; local plan validation reports 468 = 384 production + 84 replay-only foundations. Approval readiness still requires CI.",
+    "staging": "Real Core gateway and node-agent processes; local PostgREST fixture and synthetic executor/identity. No production connection, device inference or provider calls.",
+    "not_run": "Optional --full hard-disconnect case; full Core suite; hosted Supabase full reset.",
+    "evidence_boundary": "Direct service-role mutations of attestation rows are denied. Existing parent foreign-key cascade behavior and privileged database administration are unchanged; this is not a tamper-proof ledger. Cryptographic verification remains the Core gateway/receipt responsibility."
+  },
+  "before_fix": {
+    "schema": "mccluster-compute-device-native-proof/1",
+    "mode": "canonical-compute-minimal-orgs",
+    "postgres": "PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+    "finished_at": "2026-11-24T17:36:22.002Z",
+    "files": {
+      "supabase/pending/compute_job_attestations_v1.sql": "daf7e14baea3ff59bb945f4d9bf7a22414796677623fabd47879f1a633218275",
+      "supabase/pending/compute_job_attestations_v1.rollback.sql": "499319bd19ed86e00cc8602ecbd2fde49e7f159d368ed9abd93b7e161d87812f",
+      "supabase/pending/compute_scheduler_lease_v1.sql": "8e5f55a3708b44c98e2be1df44321fc8b8a0f88bc78cf8f130273e873ea63f02",
+      "supabase/pending/compute_scheduler_lease_v1.rollback.sql": "0c799959d3b1621d3bd93d4cd822763ede61aab65e9eeeb73e1d4672157b1b10"
+    },
+    "checks": [
+      {
+        "name": "D: real service_role inserts and reads a verifiable signed receipt; first accepted receipt wins",
+        "ok": true
+      },
+      {
+        "name": "D: real service_role cannot UPDATE signed evidence under Supabase default grants",
+        "ok": false,
+        "code": "ERR_ASSERTION",
+        "message": "expected SQLSTATE 42501, got success\n+ actual - expected\n\n+ undefined\n- '42501'\n"
+      },
+      {
+        "name": "D: real service_role cannot DELETE signed evidence under Supabase default grants",
+        "ok": false,
+        "code": "ERR_ASSERTION",
+        "message": "expected SQLSTATE 42501, got success\n+ actual - expected\n\n+ undefined\n- '42501'\n"
+      },
+      {
+        "name": "D: real service_role cannot TRUNCATE signed evidence under Supabase default grants",
+        "ok": false,
+        "code": "ERR_ASSERTION",
+        "message": "expected SQLSTATE 42501, got success\n+ actual - expected\n\n+ undefined\n- '42501'\n"
+      },
+      {
+        "name": "D/E: actual anon role cannot read private rows or execute scheduler RPCs",
+        "ok": true
+      },
+      {
+        "name": "D/E: actual authenticated role cannot read private rows or execute scheduler RPCs",
+        "ok": true
+      },
+      {
+        "name": "D: malformed evidence is rejected with real service_role INSERT",
+        "ok": true
+      },
+      {
+        "name": "E: real service_role RPCs fence prior holders and preserve term/history across release",
+        "ok": true
+      },
+      {
+        "name": "E: real service_role cannot directly INSERT fencing state",
+        "ok": true
+      },
+      {
+        "name": "E: real service_role cannot directly UPDATE fencing state",
+        "ok": true
+      },
+      {
+        "name": "E: real service_role cannot directly DELETE fencing state",
+        "ok": true
+      },
+      {
+        "name": "E: real service_role cannot directly TRUNCATE fencing state",
+        "ok": true
+      },
+      {
+        "name": "D: rollback refuses populated evidence and preserves the signed receipt and parent lease",
+        "ok": false,
+        "code": "ERR_ASSERTION",
+        "message": "expected SQLSTATE 55000, got success\n+ actual - expected\n\n+ undefined\n- '55000'\n"
+      },
+      {
+        "name": "E: rollback refuses even released scheduler history and preserves RPCs and fencing term",
+        "ok": false,
+        "code": "ERR_ASSERTION",
+        "message": "expected SQLSTATE 55000, got success\n+ actual - expected\n\n+ undefined\n- '55000'\n"
+      },
+      {
+        "name": "D: rollback rejects an old-snapshot transaction",
+        "ok": false,
+        "code": "ERR_ASSERTION",
+        "message": "expected SQLSTATE 55000, got success\n+ actual - expected\n\n+ undefined\n- '55000'\n"
+      },
+      {
+        "name": "E: rollback rejects an old-snapshot transaction",
+        "ok": false,
+        "code": "ERR_ASSERTION",
+        "message": "expected SQLSTATE 55000, got success\n+ actual - expected\n\n+ undefined\n- '55000'\n"
+      },
+      {
+        "name": "D: rollback waits for an in-flight writer then refuses its committed evidence",
+        "ok": false,
+        "code": "ERR_ASSERTION",
+        "message": "committed evidence must prevent the destructive rollback\n\nnull !== '55000'\n"
+      },
+      {
+        "name": "E: rollback waits for an in-flight writer then refuses its committed evidence",
+        "ok": false,
+        "code": "ERR_ASSERTION",
+        "message": "committed evidence must prevent the destructive rollback\n\nnull !== '55000'\n"
+      },
+      {
+        "name": "D/E: empty rollback is repeatable, preserves canonical compute rows, and reapply restores narrow grants",
+        "ok": false,
+        "code": "ERR_ASSERTION",
+        "message": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n  {\n    diagnostics: true,\n    evidence: true,\n+   mutate: true,\n-   mutate: false,\n    raw_write: false\n  }\n"
+      }
+    ],
+    "passed": 9,
+    "failed": 10
+  },
+  "after_fix": {
+    "schema": "mccluster-compute-device-native-proof/1",
+    "mode": "canonical-compute-minimal-orgs",
+    "postgres": "PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+    "finished_at": "2026-11-24T17:47:05.432Z",
+    "files": {
+      "supabase/pending/compute_job_attestations_v1.sql": "05b6d03a2e2243eb3a20bf9859cc01f4fee529d65d6ba7c9894de05d71e1ad4a",
+      "supabase/pending/compute_job_attestations_v1.rollback.sql": "34f77defa18de93e917e3dd07a1b3e1e93b9e3b7976b6bb083b6acb0391c5d78",
+      "supabase/pending/compute_scheduler_lease_v1.sql": "85433c47f58164573552c0022b494726666bfaec0d1abec96b5bf6e5b396745a",
+      "supabase/pending/compute_scheduler_lease_v1.rollback.sql": "29247c1c83fb40d20b8f9628a0d3d9a4b25614739817ed1f3674030a29c78959"
+    },
+    "checks": [
+      {
+        "name": "D: real service_role inserts and reads a verifiable signed receipt; first accepted receipt wins",
+        "ok": true
+      },
+      {
+        "name": "D: real service_role cannot UPDATE signed evidence under Supabase default grants",
+        "ok": true
+      },
+      {
+        "name": "D: real service_role cannot DELETE signed evidence under Supabase default grants",
+        "ok": true
+      },
+      {
+        "name": "D: real service_role cannot TRUNCATE signed evidence under Supabase default grants",
+        "ok": true
+      },
+      {
+        "name": "D/E: actual anon role cannot read private rows or execute scheduler RPCs",
+        "ok": true
+      },
+      {
+        "name": "D/E: actual authenticated role cannot read private rows or execute scheduler RPCs",
+        "ok": true
+      },
+      {
+        "name": "D: malformed evidence is rejected with real service_role INSERT",
+        "ok": true
+      },
+      {
+        "name": "E: real service_role RPCs fence prior holders and preserve term/history across release",
+        "ok": true
+      },
+      {
+        "name": "E: real service_role cannot directly INSERT fencing state",
+        "ok": true
+      },
+      {
+        "name": "E: real service_role cannot directly UPDATE fencing state",
+        "ok": true
+      },
+      {
+        "name": "E: real service_role cannot directly DELETE fencing state",
+        "ok": true
+      },
+      {
+        "name": "E: real service_role cannot directly TRUNCATE fencing state",
+        "ok": true
+      },
+      {
+        "name": "D: rollback refuses populated evidence and preserves the signed receipt and parent lease",
+        "ok": true
+      },
+      {
+        "name": "E: rollback refuses even released scheduler history and preserves RPCs and fencing term",
+        "ok": true
+      },
+      {
+        "name": "D: rollback rejects an old-snapshot transaction",
+        "ok": true
+      },
+      {
+        "name": "E: rollback rejects an old-snapshot transaction",
+        "ok": true
+      },
+      {
+        "name": "D: rollback waits for an in-flight writer then refuses its committed evidence",
+        "ok": true
+      },
+      {
+        "name": "E: rollback waits for an in-flight writer then refuses its committed evidence",
+        "ok": true
+      },
+      {
+        "name": "D/E: empty rollback is repeatable, preserves canonical compute rows, and reapply restores narrow grants",
+        "ok": true
+      }
+    ],
+    "passed": 19,
+    "failed": 0
+  },
+  "existing_scheduler_proof": {
+    "ok": true,
+    "engine": "PostgreSQL 17.6",
+    "checks": [
+      "Supabase default table privileges",
+      "Existing scheduler behavior fixture",
+      "Independent connection renew while status transaction remains open",
+      "Empty guarded rollback and reapply; full behavior rerun"
+    ]
+  },
+  "gateway_proof": {
+    "started_at": "2026-11-24T17:41:44.907Z",
+    "finished_at": "2026-11-24T17:42:20.049Z",
+    "ok": true,
+    "full": false,
+    "environment": {
+      "node": "v24.22.3",
+      "platform": "linux",
+      "database": "Disposable local native PostgreSQL",
+      "commit": "3d1905f51a3043e7da7efb2ac1395ee172fcff9f-dirty"
+    },
+    "steps": [
+      {
+        "name": "preflight: gateway health and receipt key",
+        "ok": true,
+        "duration_ms": 6
+      },
+      {
+        "name": "authorization: admin routes refuse a missing or wrong token; enrolment refuses a wrong token; an unknown key is refused",
+        "ok": true,
+        "duration_ms": 54
+      },
+      {
+        "name": "enrolment and capability reporting: the real node agent enrols over TLS and advertises ai.chat/fixture.echo.local",
+        "ok": true,
+        "duration_ms": 523
+      },
+      {
+        "name": "cross-organization submission is refused",
+        "ok": true,
+        "duration_ms": 1
+      },
+      {
+        "name": "submit: idempotent per key, conflict on a different body under the same key, refusal when no live node serves the capability",
+        "ok": true,
+        "duration_ms": 40
+      },
+      {
+        "name": "status, result and signed receipt: the fixture node leases, runs and completes the job; the receipt verifies offline",
+        "ok": true,
+        "duration_ms": 803
+      },
+      {
+        "name": "duplicate results are rejected: same payload replays idempotently, a different payload is refused, a replayed nonce is refused, a late failure cannot undo a commit",
+        "ok": true,
+        "duration_ms": 138
+      },
+      {
+        "name": "disconnect and retry: an injected executor failure fails the lease, the task requeues with backoff and the second attempt completes",
+        "ok": true,
+        "duration_ms": 30884
+      },
+      {
+        "name": "revocation: a revoked node is refused on its next signed request and the fabric no longer offers its capability",
+        "ok": true,
+        "duration_ms": 1519
+      },
+      {
+        "name": "pending SQL hygiene: populated evidence blocks rollback; an empty fixture rolls back and re-applies",
+        "ok": true,
+        "duration_ms": 8
+      }
+    ],
+    "after_proof_edits": "Only support-only source-map context comments were added after the successful 10/10 native gateway run."
+  },
+  "current_sha256": {
+    "supabase/pending/compute_job_attestations_v1.sql": "05b6d03a2e2243eb3a20bf9859cc01f4fee529d65d6ba7c9894de05d71e1ad4a",
+    "supabase/pending/compute_job_attestations_v1.rollback.sql": "34f77defa18de93e917e3dd07a1b3e1e93b9e3b7976b6bb083b6acb0391c5d78",
+    "supabase/pending/compute_scheduler_lease_v1.sql": "85433c47f58164573552c0022b494726666bfaec0d1abec96b5bf6e5b396745a",
+    "supabase/pending/compute_scheduler_lease_v1.rollback.sql": "29247c1c83fb40d20b8f9628a0d3d9a4b25614739817ed1f3674030a29c78959",
+    "scripts/compute-device-native-check.mjs": "1a4d61d8808ca7108a5b9c603a174f6c04e69d9467b8da421cab00f4370a6b93",
+    "scripts/compute-scheduler-sql-check.mjs": "a4adfd5aeae3253e9257d1c742c51cb27151fd364d2223be87992be2c9740f57",
+    "scripts/staging/device-jobs/run.mjs": "d331fa57a08187f496f7d714bc5f0647fb1239a5f83115728d2c8667206d0693",
+    "scripts/staging/device-jobs/pglite-postgrest.mjs": "e8fbdffbf4416299af43165c007b1615c8e41051d5f76fbf1d381ebc90a1faf2",
+    ".github/workflows/compute-device-db.yml": "fc0b0e932d302856504d5a59b7ac7f04f9b728586b5e38c4cf783a31994712af",
+    "scripts/native-admin-test-db.mjs": "43ab5d522112d8a4569a69556669d389f2a644cf1fcc747155fde2e5664908cb"
+  },
+  "readiness": "D has its service-role default ACL leak fixed. E forward SQL behavior is unchanged apart from its source-map context comments. D/E rollback files refuse any populated state and require READ COMMITTED, holding an ACCESS EXCLUSIVE lock across the empty check and drops with a five-second lock timeout. Each production application remains subject to exact-file approval and full-reset CI.",
+  "rollback": "Only an unused empty installation may be removed. Keep signed attestations and all scheduler rows, including expired/released history, after application rollback. Refusal is SQLSTATE 55000. No destructive override or production data deletion is provided.",
+  "source_map_context": "Equity Uprise shared-platform support-only evidence for existing Core compute persistence; no building capability ownership or activation."
+}

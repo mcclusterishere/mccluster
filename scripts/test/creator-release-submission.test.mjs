@@ -72,7 +72,8 @@ function studio(options = {}) {
     status: (id, message, tone) => statuses.push({ id, message, tone }),
     slugify: (s) => s.toLowerCase().replace(/ /g, '-'),
     experienceFromForm: () => ({ theme: { accent: $('trackAccent').value } }),
-    attachLyricSheet: async (id, words) => { lyricSheets.push({ id, words }); },
+    attachLyricSheet: async (id, words) => { lyricSheets.push({ id, words }); return words ? 'sheet' : ''; },
+    lyricSheetNote: (outcome) => (outcome === 'sheet' ? ' Your lyric sheet is saved; McCluster times it to the song.' : ''),
     saveSettings: async (change) => change(settings), PAGE: { MAX_TRACKS: 60 },
     loadTracks: async () => { if (options.refreshError) throw new Error('Refresh disconnected'); },
     rollbackRelease: async (...args) => { cleanups.push(args); return []; },
@@ -199,4 +200,41 @@ test('a stalled local metadata probe settles and releases its file once', async 
   assert.deepEqual({ cleared, revoked, loads, removed }, { cleared: 1, revoked: 1, loads: 1, removed: 1 });
   assert.equal(media.onloadedmetadata, null);
   assert.equal(media.onerror, null);
+});
+
+/* NEVER LOST SILENTLY (owner, 2026-11-23): until the lyrics_sheet column is live the sheet used to vanish into the
+   console. The actual attachLyricSheet from the studio: column first, then the words on the release, then "lost". */
+test('a lyric sheet is never dropped silently: the column, else the words on the release, else the creator is told', async () => {
+  const begin = source.indexOf('async function attachLyricSheet(');
+  const end = source.indexOf('function wireLyricSheet(', begin);
+  assert.ok(begin >= 0 && end > begin, 'the actual sheet helpers are present');
+  const make = (refuse) => {
+    const writes = [];
+    const rest = async (path, init) => {
+      const body = JSON.parse(init.body);
+      writes.push({ path, body });
+      if (refuse(body)) throw new Error('refused');
+      return null;
+    };
+    const fns = new Function('rest', 'console', source.slice(begin, end) + '\nreturn { attachLyricSheet, lyricSheetNote };')(rest, { warn() {} });
+    return { ...fns, writes };
+  };
+  const live = make(() => false);
+  assert.equal(await live.attachLyricSheet('t1', '  line one\nline two '), 'sheet');
+  assert.deepEqual(live.writes.map((w) => Object.keys(w.body)), [['lyrics_sheet']]);
+  assert.equal(await live.attachLyricSheet('t1', '   '), '');
+  assert.equal(live.writes.length, 1, 'an empty sheet writes nothing');
+
+  const pending = make((body) => 'lyrics_sheet' in body);
+  assert.equal(await pending.attachLyricSheet('t2', 'line one\nline two'), 'words');
+  const kept = pending.writes[1].body.lyrics;
+  assert.equal(kept.source, 'sheet');
+  assert.equal(kept.reviewed, false);
+  assert.equal(kept.plain, 'line one\nline two');
+  assert.equal(kept.timed, undefined, 'untimed, so the machine may replace it with timed lyrics');
+  assert.match(pending.lyricSheetNote('words'), /saved with the release/);
+
+  const down = make(() => true);
+  assert.equal(await down.attachLyricSheet('t3', 'words'), 'lost');
+  assert.match(down.lyricSheetNote('lost'), /could not be saved/);
 });

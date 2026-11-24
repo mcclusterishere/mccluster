@@ -1,5 +1,15 @@
 # Promotion order for `supabase/pending/`
 
+**Current status, 2026-11-24:** production has 389 applied migrations. Draft
+[#836](https://github.com/mcclusterishere/mccluster/pull/836) records the five
+Nov 24 applications: `member_fronts_shared_revision_directory`,
+`ai_context_workstreams_v1`, `commerce_stripe_reconciler_v3`,
+`equity_uprise_clipping_sources`, and `action_bounty_claim_existing_row_guard_v1`.
+Do not replay their pending copies. This dated status supersedes the historical
+absence claims below. Integrate the reviewed ledger repair before promotion.
+The six #823 files in sections 11 and 15–18 are still pending. Production is
+read-only during preparation; each exact file needs the owner's approval.
+
 Written 2026-10-27 from each file's header, the dependency it states, the
 objects it creates, and `live-callers.json` (which names shipped code calls
 today). Every file is applied with the steps in `README.md` ("To promote one")
@@ -438,8 +448,25 @@ item 7); each entry says what it would still do.
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
 | `compute_claim_task_yield_v3.sql` (+ `compute_claim_task_yield_v3.rollback.sql`) | nothing: it replaces one function's signature. `public.compute_claim_task` gets a fifth optional parameter, `p_yield_seconds integer default 0` (clamped 0..300): a claim that passes it skips tasks younger than that many seconds, so a CPU node can leave fresh work to a live GPU node; the returned `task` JSON also carries `priority`. The 4-argument call keeps working through the default; the 4-argument signature is dropped in the same transaction because a second overload would make the gateway's named call ambiguous | `core/src/compute/store.mjs` (`claimLease`, which sends `p_yield_seconds` only when a node asks to yield and, on PostgREST 404 PGRST202, retries without it and remembers for the life of the process), reached through `core/src/compute/gateway.mjs` (`POST /v1/compute/lease` clamps `body.yield_seconds`) from `core/src/compute/node-agent.mjs` (`MCCLUSTER_NODE_YIELD_TO_GPU_MS`, off by default). Nothing fails without it | `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/compute-lease-yield-sql-check.mjs` (base chain, apply, `supabase/tests/compute_claim_task_yield.behaviour.sql`, the v2 lease assertions on the v3 function, rollback, the 5-argument call gone, re-apply, assertions again); passed here on PGlite 0.5.10 on 2026-11-17 |
+| `compute_job_attestations_v1.sql` (+ `compute_job_attestations_v1.rollback.sql`) | table `public.ops_compute_attestations` (one row per lease: the node's Ed25519 completion signature fields with `signed_at` kept verbatim as text, the body digest and the canonical result SHA-256; the first accepted completion wins) plus two indexes; RLS on, service role select/insert; no RPC | `core/src/compute/jobs-store.mjs` (the gateway records an attestation after `compute_complete_lease` accepts; without the table it logs `compute_attestation_store_unavailable` once and receipts say `node_attestation: null`), read by `GET /v1/compute/jobs/:id/receipt` and `core.compute.job.receipt` | `scripts/staging/device-jobs/run.mjs` on PGlite applies it, proves a verified attestation on a real completion, rolls it back (table gone, lease rows untouched) and re-applies; proof `docs/control-plane/evidence/device-jobs-staging-20261123/`. Never applied here. |
+| `compute_scheduler_lease_v1.sql` (+ `compute_scheduler_lease_v1.rollback.sql`) | table `public.ops_compute_scheduler_leases` (one row per org: holder, role, fencing term, expiry, handover, bounded history) and the service-role RPCs `compute_scheduler_acquire`, `compute_scheduler_renew`, `compute_scheduler_release`, `compute_scheduler_handover`, `compute_scheduler_status` (plus an internal history helper nobody may execute) | `core/src/compute/scheduler-election.mjs`, started by `core/src/compute/gateway.mjs` only when `MCCLUSTER_SCHEDULER_ROLE` is set; with the variable unset nothing calls it | `scripts/compute-scheduler-sql-check.mjs` (behaviour SQL, rollback, re-apply) and `scripts/staging/device-jobs/scheduler-failover.mjs` (two real gateways: takeover after expiry, fenced return, controlled handover); proof `docs/control-plane/evidence/device-jobs-staging-20261123/scheduler-failover/`. Never applied here. Design: `docs/control-plane/DEVICE-JOBS-SCHEDULER-STANDBY.md`. |
 
-Apply only when the owner wants the OVH node to yield to a live GPU node (then set
+**Nov 24 attestation/scheduler review:** apply `compute_job_attestations_v1.sql`
+only after the gateway containing `jobs-store.mjs` is deployed. The observed
+production Core revision did not contain that writer. Apply
+`compute_scheduler_lease_v1.sql` only after the owner decides to run a standby;
+that decision is not recorded by this audit. `signed_at` remains text. The
+attestation file now explicitly revokes inherited service-role privileges
+before granting SELECT/INSERT, so UPDATE, DELETE and TRUNCATE cannot rewrite
+the first receipt. Both rollback files take bounded locks and refuse nonempty
+evidence/history tables, including a writer that commits while recovery waits.
+They never erase signatures or reset a previously issued fencing term. The
+native PostgreSQL proof is `scripts/compute-device-native-check.mjs`; its
+dedicated CI job also runs the existing scheduler behavior proof and the
+gateway/node-agent staging path. The historical staging rollback description
+above describes the old proof; populated rollback is now a required refusal.
+
+Apply the yield file only when the owner wants the OVH node to yield to a live GPU node (then set
 `MCCLUSTER_NODE_YIELD_TO_GPU_MS` on that node); harmless otherwise. No prerequisite beyond the
 applied `20261020210718_compute_lease_authority_v2`. PostgREST reloads its schema cache on DDL; if
 a claim still answers PGRST202 afterwards, run `notify pgrst, 'reload schema';`. Never applied here.
@@ -681,9 +708,89 @@ mutated copies each failing a named check; CI matrix entry `mission-sources-stor
 PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/test/mission-sources-owner.integration.mjs` (CI
 `mission-sources-owner`); the static checks: `node --test scripts/test/mission-catalog-sources-sql.test.mjs`.
 
-## 15. AI context workstream checkpoints (written 2026-11-23)
+## 15. Tinderfessions catalog objects (written 2026-11-23; Rolling With Me added as the bonus opener the same day)
 
-**Pending. Never applied. Owner approval required.** Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`.
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261123180000_tinderfessions_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's Tinderfessions (keys `tinderfessions:*`), upserted like the Whip Equipped and PRIM3 seeds | the shelf in `data/albums.json` (album `tinderfessions`); the live discovery and direct-sale lookups by catalog key | `scripts/test/action-network-live-governance.test.mjs` and `scripts/test/music-direct-sales.test.mjs` read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+
+Nov 24 preflight: zero matching production rows; the album is absent from
+`main`. Hold this seed for the matching album release. The native proof derives
+all 12 keys independently from the branch album data, verifies public-role
+visibility, and preserves row IDs and references through archive and reapply.
+These are active catalog entries after application, so visibility must be
+coordinated with the release.
+
+## 16. Lyric machine on uploaded releases (written 2026-10-31; entered here 2026-11-23)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261031180000_lyrics_machine_v1.sql` (+ `.rollback.sql`) | `creator_tracks.lyrics_sheet` and `lyrics_input_rev`, the revision function and the trigger that queues a `lyrics_align` job on `ops_agent_jobs` when a release's master or sheet changes | `js/music-creator-studio.js` (`attachLyricSheet`: the sheet column first; until this is applied the words are kept on the release as untimed `lyrics {source:"sheet"}` and the creator is told), Control's Lyrics review (`operator-lyrics-queue`), `core/src/executors/lyrics-align.mjs` | Apply only after the OVH Core is running with the `lyrics_align` executor (applied earlier, Core quarantines the jobs as an unknown type). Then upload a release with a sheet and watch the job finish with timed lyrics, unreviewed. Never applied here. |
+
+**Updated prerequisite and recovery, Nov 24:** apply the distribution file in
+section 18 **before this lyrics file**, despite the historical section numbers.
+Both take the same advisory lock and refuse an unknown content-helper body.
+The lyrics file excludes only the sheet and its derived revision from reviewed
+release content; the actual `lyrics` field remains protected. Its backfill
+temporarily sets and then restores both JWT role settings, preserves published
+snapshots and offers, and does not queue existing tracks. The revision is
+derived on every write, including attempts to forge only the revision column.
+The original backfill failed the canonical identity guard and, with a service
+claim, incorrectly sent published tracks back to review; the native regression
+now exercises an actually reviewed and published synthetic track.
+
+The rollback is operational: stop input writes and drain queued/running lyrics
+jobs first. It refuses active jobs, removes only automatic enqueueing, and
+keeps sheets, revisions, the revision trigger, reviewed-content exclusions and
+completed history. Reapplying the forward file restores enqueueing. Removing
+stored inputs is a separate reviewed migration. Do not run the older
+distribution forward or rollback over this later content helper.
+
+The observed deployed Core revision registers `lyrics_align`, but its completion
+validator rejects this job type after execution. This draft corrects that runtime
+blocker with explicit write/no-op receipts and strict evidence policies (55
+focused tests and 919 full-Core tests pass; 20 full-suite skips). Deploy that
+correction and verify audio tooling readiness before approval, then verify a
+controlled job after applying. Registration alone is insufficient.
+`scripts/music-release-native-check.mjs --full-reset` is the CI database gate.
+
+## 17. In Hot Pursuit catalog objects (written 2026-11-23)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261123190000_in_hot_pursuit_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's In Hot Pursuit (keys `in-hot-pursuit:*`), upserted like section 15 | the shelf in `data/albums.json` (album `in-hot-pursuit`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+
+Nov 24 preflight: zero matching production rows; the album is absent from
+`main`. Hold for its album release. The same native proof checks all eight
+keys, actual public-role visibility, archive and stable IDs on reapply.
+
+## 18. Creator distribution details (written 2026-11-23)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261123200000_music_creator_distribution_v1.sql` (+ `.rollback.sql`) | `creator_tracks.distribution` (jsonb object, at most 64 KB) for the creator's store details: release date, explicit, language, ℗/© lines, master owner, credits, master and publishing splits, an ISRC/UPC the creator already owns; `music_track_content` re-created with `distribution` left out of release content (everything else exactly as `20261030001000`) | `js/music-creator-studio.js` (Distribution card; until this is applied the card says so and saves nothing), `js/music-distribution.js` (shape and checklist), and `music-access` distribution staging | `scripts/test/music-distribution.test.mjs` pins the content list to the applied one plus `distribution`. Apply before the lyrics file in section 16. Never applied here. |
+
+Nov 24 production preflight matches the canonical content helper exactly after
+line-ending normalization (body MD5 `b2f96e6d2fa145d00adcc6267bbe0944`); the
+distribution column is absent. The forward and rollback files now refuse
+unknown or later helper definitions. Recovery refuses stored distribution
+data; if the column is empty, it restores the canonical helper and removes the
+column together, so a later owner update does not invalidate a published
+snapshot. The native proof checks real authenticated-owner updates, another
+owner's denial, shape/size limits, preserved review digests and active offers.
+
+Coordinate an approved redeploy of `supabase/functions/music-access` from this
+branch, including `_shared/creator-distribution.ts`. Production version 639
+has `verify_jwt = true` and lacks `operator-distribution-stage`; preserve that
+JWT setting. Run the creator-distribution-stage and function-deploy contracts.
+No function was deployed by this preparation audit.
+
+## 19. AI context workstream checkpoints (written 2026-11-23)
+
+**Applied 2026-11-24 as `20261124164529 ai_context_workstreams_v1`. Do not replay.**
+Draft #836 moves the exact stored statement into the ledger; integrate that
+record before release. The pending copy on this branch is historical until
+the ledger repair is merged. Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`.
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
@@ -695,16 +802,17 @@ It adds a foreign key from `ai_context.workstreams.objective_id` to `public.ops_
 which takes a brief lock on `ops_objectives`; `lock_timeout` is 5 s, so a busy table fails the apply instead of
 waiting. Independent of every other file in this folder.
 
-**Apply** only on the owner's approval of this exact text, in one transaction, as postgres, under the name
-`ai_context_workstreams_v1`. The standalone proof passes 310 checks on PGlite and 313 on native PostgreSQL 17.6;
+**Completed database proof:** the stored statement's SHA-256 is
+`5baa5f09f1b2d7a823f63bbe78ae74065da57022ac854593e8d5790a6c9c03f0`.
+The standalone proof passes 310 checks on PGlite and 313 on native PostgreSQL 17.6;
 the native pass includes three concurrent final-slot quota checks. Both standalone modes use minimal base fixtures.
-Before applying, require the exact PR head's Reconciliation CI database job to pass: it runs the native proof and
+The exact application review's Reconciliation CI database job passed: it runs the native proof and
 `supabase/tests/ai_context_workstreams_v1.integration.sql` against the complete repository reset, twice applying the
 pending SQL and testing rollback/re-apply with the real ontology and decision triggers. PostgREST
 reloads its schema cache on DDL; if `core.resume` still reports `workstreams: missing` afterwards, run
 `notify pgrst, 'reload schema';`.
 
-**Verify** right after: `core.resume` reports `sources.workstreams: ok` with `workstreams.items: []`; anon and
+**Remaining runtime verification after Core promotion:** `core.resume` reports `sources.workstreams: ok`; anon and
 authenticated REST calls to the four functions are refused (neither role has execute); `ai_context` is still not an
 exposed schema; one `workstream.checkpoint` through the owner's MCP session returns `created: true`, and the same
 call again returns `replayed: true` for its event and `applied: false` for its workstream.
@@ -714,5 +822,7 @@ nothing, while either table holds a row: the log is a record, and dropping it is
 purpose, export it, then run the rollback with `set local mccluster.workstreams_drop_data = 'on';` after `begin`.
 It leaves `ai_context.decisions` untouched. Core needs no rollback: without the functions it reports `missing`.
 
-**Records** after the apply: move the file to `supabase/migrations/` under its ledger version; the ledger, the drift
-contract, the schema manifest from the CI reset, a new production snapshot; this section and `README.md`.
+**Records:** draft #836 contains the unchanged migration, ledger, drift contract,
+manifest built by the reset and Nov 24 production snapshot. Main remains behind
+production until that reviewed record is merged. Core promotion and Prime
+checkpoint ingestion remain separate release work; neither is claimed here.

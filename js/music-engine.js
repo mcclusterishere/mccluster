@@ -11,6 +11,8 @@
   "use strict";
 
   var doc = root.document;
+  /* where this script lives, so the shared lyrics renderer loads beside it on any page */
+  var SCRIPT_BASE = (doc.currentScript && doc.currentScript.src || "").replace(/js\/music-engine\.js.*$/, "");
   var library = null;
   var loading = null;
   var current = null;
@@ -164,6 +166,10 @@
           '<p class="music-now__note" id="musicNowNote" hidden></p>' +
           /* AirPlay where WebKit offers it, shown only while a device is in range (js/now-playing.js; decision D-8);
              the music's own unmute, shown only while it is muted (decision D-7) */
+          /* AirPlay where WebKit offers it, shown only while a device is in range (js/now-playing.js; decision D-8) */
+          /* the words, in the one shared renderer (js/lyrics-sync.js): lines light and scroll with the song, words light as
+             they are sung where the file has word times, a tap on a line seeks there (owner, 2026-11-23: lyrics everywhere) */
+          '<div class="music-now__lyrics" id="musicNowLyrics" aria-label="Lyrics" hidden></div>' +
           '<div class="music-now__devices">' +
             '<button type="button" class="music-now__sound" id="musicNowSound" hidden>' +
               '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>' +
@@ -214,6 +220,62 @@
     return p;
   }
 
+  /* ---- the words in Now Playing ---- */
+  var nowLyr = { key: "", ctl: null, raf: 0, gen: 0, script: null };
+  function lyricsKeyOf(t) {
+    if (!t) return "";
+    var v = t.lyrics || t.lyrics_url || "";
+    if (v && typeof v === "object") return "inline:" + (t.creatorTrackId || t.title || "");
+    return typeof v === "string" ? v : "";
+  }
+  function lyricsRenderer() {
+    if (root.MCC_LYRICS) return Promise.resolve(root.MCC_LYRICS);
+    if (!nowLyr.script) nowLyr.script = new Promise(function (resolve) {
+      var s = doc.createElement("script"); s.src = SCRIPT_BASE + "js/lyrics-sync.js";
+      s.onload = function () { resolve(root.MCC_LYRICS || null); };
+      s.onerror = function () { nowLyr.script = null; resolve(null); };
+      doc.head.appendChild(s);
+    });
+    return nowLyr.script;
+  }
+  function nowOpen() { var n = doc.getElementById("musicNow"); return !!(n && n.classList.contains("is-open")); }
+  function loadNowLyrics() {
+    var box = doc.getElementById("musicNowLyrics"); if (!box) return;
+    var key = lyricsKeyOf(current);
+    if (key === nowLyr.key) return;
+    nowLyr.key = key; nowLyr.ctl = null; box.textContent = ""; box.hidden = true;
+    if (!key) return;
+    var gen = ++nowLyr.gen, t = current;
+    var src = t.lyrics && typeof t.lyrics === "object" ? Promise.resolve(t.lyrics)
+      : fetch(key, { cache: "no-cache", credentials: "omit" }).then(function (r) { return r.ok ? r.json() : null; });
+    Promise.all([src, lyricsRenderer()]).then(function (got) {
+      var json = got[0], L = got[1];
+      if (gen !== nowLyr.gen || !json || !L) return;
+      var ctl = L.mount(box, json, { seek: function (at) {
+        if (!current || !isFinite(at)) return;
+        var to = Math.max(0, previewLimit ? Math.min(at, previewLimit - 0.1) : at);
+        try { audio.currentTime = to; } catch (e) {}
+        if (audio.paused) resumeCurrent().catch(function () {});
+      } });
+      if (!ctl || ctl.empty) { box.textContent = ""; return; }
+      nowLyr.ctl = ctl; box.hidden = false;
+      ctl.update(audio.currentTime || 0, audio.duration);
+    }).catch(function () {});
+  }
+  function updateNowLyrics() {
+    if (!nowOpen()) return;
+    loadNowLyrics();
+    if (!nowLyr.ctl) return;
+    nowLyr.ctl.update(audio.currentTime || 0, audio.duration);
+    /* timeupdate ticks a few times a second; sung words need a frame clock while the sheet is open */
+    if (!audio.paused && !nowLyr.raf) nowLyr.raf = root.requestAnimationFrame(function tick() {
+      nowLyr.raf = 0;
+      if (!nowLyr.ctl || audio.paused || !nowOpen()) return;
+      nowLyr.ctl.update(audio.currentTime || 0, audio.duration);
+      nowLyr.raf = root.requestAnimationFrame(tick);
+    });
+  }
+
   function openNow() {
     if (!current) return;
     var now = doc.getElementById("musicNow");
@@ -224,6 +286,7 @@
     trackEvent("music_now_open", {});
     paint();
     syncNowFilm(true);
+    updateNowLyrics();
   }
 
   function closeNow() {
@@ -333,6 +396,7 @@
   }
 
   function paint() {
+    updateNowLyrics();
     var p = ensureUI();
     if (!current) { if (held) { paintHeld(p); tellBar(held.item, false); } else p.hidden = true; return; }
     p.hidden = false;

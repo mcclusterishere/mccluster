@@ -1,17 +1,42 @@
 import http from 'node:http';
+import { buildSupabaseHeaders } from '../supabase.mjs';
 import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, clampYieldSeconds, claimableManifest, countLiveGpuNodes, enrollmentLabels, heartbeatLabels, validateCapabilityManifest, validateEnrollment, validateInventory, validateLoad, validateNodeId } from './protocol.mjs';
 import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedRequest } from './signature.mjs';
-import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
+import { authorizeOwnerSession, enrollCredential, issueGrant, verifyGrant } from './device-grant.mjs';
+import { acceptNonce, nodeByEnrollGrant, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
 import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
+import { handleJobRoute } from './jobs-routes.mjs';
+import { recordCompletionAttestation, resolveReceiptKey } from './jobs-service.mjs';
+import { RUNNING_DEPLOYMENT_SHA } from '../runtime-revision.mjs';
+import { assertActiveScheduler, createSupabaseSchedulerStore, electionConfigFromEnv, SchedulerElection } from './scheduler-election.mjs';
 
 const HOST = process.env.CORE_COMPUTE_HOST || '127.0.0.1';
 const PORT = Number(process.env.CORE_COMPUTE_PORT || 4788);
 const BODY_LIMIT = Number(process.env.CORE_COMPUTE_BODY_LIMIT || 2_097_152);
 const CLOCK_SKEW_MS = Number(process.env.CORE_COMPUTE_CLOCK_SKEW_MS || DEFAULT_CLOCK_SKEW_MS);
+// How long a node's completion acknowledgement may wait for the attestation write.
+const ATTESTATION_WAIT_MS = Math.max(100, Math.min(10_000, Number(process.env.CORE_COMPUTE_ATTESTATION_WAIT_MS || 1_500)));
+// A malformed CORE_RECEIPT_SIGNING_KEY is a startup failure, not a 500 on the first receipt.
+resolveReceiptKey(process.env);
 
 if (!['127.0.0.1', '::1', 'localhost'].includes(HOST)) {
   throw new Error('Compute gateway must bind to loopback; publish it through an authenticated reverse tunnel/proxy');
 }
+
+// Scheduler election (docs/control-plane/DEVICE-JOBS-SCHEDULER-STANDBY.md). With
+// MCCLUSTER_SCHEDULER_ROLE unset there is no election and every admission check
+// passes: today's single-scheduler behaviour. With a role, this instance hands
+// out device leases and accepts job submissions only while it holds the
+// per-org scheduler lease; a standby answers 503 SCHEDULER_STANDBY and names the
+// live holder. Heartbeats, enrolment and reads are liveness, never gated.
+const electionConfig = electionConfigFromEnv(process.env);
+const election = electionConfig
+  ? new SchedulerElection({
+    ...electionConfig,
+    store: await createSupabaseSchedulerStore(),
+    onEvent: (event, detail, scheduler) => console.log(JSON.stringify({ event, detail: detail instanceof Error ? { message: detail.message, code: detail.code || null } : (detail ?? null), scheduler }))
+  })
+  : null;
 
 function json(res, status, body, extraHeaders = {}) {
   const payload = JSON.stringify(body);
@@ -92,23 +117,64 @@ function leasePath(url) {
   return match ? { leaseId: match[1], action: match[2] } : null;
 }
 
+// The website opts devices in (device-grant.mjs) and a browser tab can be a node (js/device-node.js), so the
+// signed-in pages may call the gateway across origins. Only these origins, never a wildcard; credentials are the
+// owner's bearer session or the node's own signature, never cookies.
+const usedGrants = new Map(); // grant nonce -> node id (this process; nodeByEnrollGrant covers restarts)
+const BROWSER_ORIGINS = new Set(String(process.env.CORE_COMPUTE_BROWSER_ORIGINS || 'https://matthew.mccluster.org,https://mccluster.org').split(',').map((s) => s.trim()).filter(Boolean));
+const CORS_HEADERS = ['authorization', 'content-type', 'x-mccluster-enroll-grant', 'idempotency-key', ...Object.values(SIGNATURE_HEADERS)].join(', ');
+function cors(req, res) {
+  const origin = String(req.headers.origin || '');
+  if (!BROWSER_ORIGINS.has(origin)) return false;
+  res.setHeader('access-control-allow-origin', origin);
+  res.setHeader('vary', 'Origin');
+  res.setHeader('access-control-allow-headers', CORS_HEADERS);
+  res.setHeader('access-control-allow-methods', 'GET, POST, OPTIONS');
+  res.setHeader('access-control-max-age', '600');
+  return true;
+}
+
 async function route(req, res) {
   const url = new URL(req.url || '/', `http://${HOST}:${PORT}`);
+  const allowedOrigin = cors(req, res);
+  if (req.method === 'OPTIONS') { res.writeHead(allowedOrigin ? 204 : 403); return res.end(); }
 
   if (url.pathname === '/health' && req.method === 'GET') {
-    return json(res, 200, { ok: true, service: 'mccluster-compute-gateway', protocol: COMPUTE_PROTOCOL });
+    return json(res, 200, { ok: true, service: 'mccluster-compute-gateway', protocol: COMPUTE_PROTOCOL, scheduler: election ? election.snapshot() : null });
   }
 
   if (req.method === 'POST') assertJsonContentType(req.headers['content-type']);
   const bodyBytes = await readBody(req);
   const body = parseJson(bodyBytes);
 
+  // The owner, signed in on the website, asks for a one-time grant to opt this device in (device-grant.mjs).
+  if (url.pathname === '/v1/compute/device-grants' && req.method === 'POST') {
+    const orgId = process.env.MCCLUSTER_ORG_ID;
+    const { userId } = await authorizeOwnerSession(bearer(req), {
+      supabaseUrl: process.env.SUPABASE_URL, apiKey: buildSupabaseHeaders().apikey, orgId
+    });
+    const issued = issueGrant({ key: process.env.CORE_COMPUTE_ENROLL_TOKEN, orgId, userId, kind: body.kind === 'browser' ? 'browser' : 'installer' });
+    console.log(JSON.stringify({ event: 'compute_device_grant_issued', kind: issued.kind, by: userId }));
+    return json(res, 201, { ...issued, org_id: orgId, compute_url: process.env.MCCLUSTER_COMPUTE_PUBLIC_URL || 'https://compute.mccluster.org' });
+  }
+
   if (url.pathname === '/v1/compute/enroll' && req.method === 'POST') {
-    requireSecret(req, 'CORE_COMPUTE_ENROLL_TOKEN', 'Compute enrollment');
+    const credential = enrollCredential(req.headers);
+    let claims = null;
+    if (credential.grant) claims = verifyGrant(credential.grant, { key: process.env.CORE_COMPUTE_ENROLL_TOKEN });
+    else requireSecret(req, 'CORE_COMPUTE_ENROLL_TOKEN', 'Compute enrollment');
     const enrollment = validateEnrollment(body);
-    const scopedOrg = adminOrg(enrollment.org_id);
+    const scopedOrg = adminOrg(claims ? claims.org : enrollment.org_id);
     if (!scopedOrg) throw Object.assign(new Error('Enrollment organization is required'), { status: 400, code: 'ORG_REQUIRED' });
     const nodeId = nodeIdFromPublicKey(enrollment.public_key);
+    if (claims) {
+      // one grant, one device: the same device may retry, a second key may not
+      if (usedGrants.has(claims.nonce) && usedGrants.get(claims.nonce) !== nodeId) throw Object.assign(new Error('This opt-in was already used; opt in again'), { status: 409, code: 'GRANT_USED' });
+      const prior = await nodeByEnrollGrant(claims.nonce);
+      if (prior && prior.id !== nodeId) throw Object.assign(new Error('This opt-in was already used; opt in again'), { status: 409, code: 'GRANT_USED' });
+      usedGrants.set(claims.nonce, nodeId);
+      if (usedGrants.size > 5000) usedGrants.delete(usedGrants.keys().next().value);
+    }
     const record = await enrollNode({
       id: nodeId,
       org_id: scopedOrg,
@@ -121,7 +187,9 @@ async function route(req, res) {
       capabilities: enrollment.capabilities,
       // The owner's enrolment token authorised this call: the trust it carries
       // is recorded (labels.enrolled_trust) where no heartbeat can reach it.
-      labels: enrollmentLabels(enrollment.labels),
+      labels: claims
+        ? { ...enrollmentLabels({ ...enrollment.labels, trust: 'owned' }), opted_in_by: claims.sub, enrolled_via: claims.kind === 'browser' ? 'browser' : 'website', enrolled_grant: claims.nonce }
+        : enrollmentLabels(enrollment.labels),
       max_leases: enrollment.max_leases
     });
     return json(res, 201, {
@@ -164,6 +232,18 @@ async function route(req, res) {
     return json(res, replayed ? 200 : 202, { task, replayed }, idempotencyKey ? { 'idempotency-replayed': replayed ? 'true' : 'false' } : {});
   }
 
+  // Device job contract (docs/control-plane/DEVICE-JOBS-CONTRACT.md): admin
+  // submit/status/result/receipt over the same durable task and lease rows.
+  const jobRoute = await handleJobRoute({
+    req, url, body,
+    requireAdmin: () => requireSecret(req, 'CORE_COMPUTE_ADMIN_TOKEN', 'Compute admin'),
+    adminOrg,
+    canonicalOrg: String(process.env.MCCLUSTER_ORG_ID || '').trim() || null,
+    election,
+    issuer: { instance: process.env.MCCLUSTER_CORE_ID || null, deployment_sha: RUNNING_DEPLOYMENT_SHA || null }
+  });
+  if (jobRoute) return json(res, jobRoute.status, jobRoute.body, jobRoute.headers || {});
+
   const node = await authenticateNode(req, url, bodyBytes);
 
   if (url.pathname === '/v1/compute/heartbeat' && req.method === 'POST') {
@@ -195,6 +275,8 @@ async function route(req, res) {
   if (url.pathname === '/v1/compute/lease' && req.method === 'POST') {
     // Owned-only capabilities are claimable only by a node whose enrolment
     // recorded trust 'owned', whatever its manifest advertises.
+    // Only the active scheduler hands out leases (a standby answers 503).
+    assertActiveScheduler(election);
     const manifest = claimableManifest(node.capabilities, node.labels);
     const capabilities = [...new Set(manifest.map((item) => item.capability).filter(Boolean))];
     const implementations = [...new Set(manifest.map((item) => item.implementation).filter(Boolean))];
@@ -217,6 +299,15 @@ async function route(req, res) {
     if (parsed.action === 'complete') result = await completeLease(node.id, parsed.leaseId, body.lease_token, body.result || {});
     if (parsed.action === 'fail') result = await failLease(node.id, parsed.leaseId, body.lease_token, body.error || 'compute node failure', body.retry !== false);
     if (!result) throw Object.assign(new Error('Lease transition rejected'), { status: 409, code: 'LEASE_REJECTED' });
+    // The node's own signature over this accepted completion becomes part of
+    // the job receipt. Best-effort and after the commit: it never undoes a result.
+    if (parsed.action === 'complete') {
+      // Bounded: the node's acknowledgement never waits on a slow attestation
+      // write; the write itself continues in the background and logs its outcome.
+      const attest = recordCompletionAttestation({ node, leaseId: parsed.leaseId, path: url.pathname, headers: req.headers, result: body.result || {} });
+      attest.then((outcome) => { if (outcome?.recorded === false && outcome.available === null) return; }).catch(() => {});
+      await Promise.race([attest, new Promise((resolve) => setTimeout(resolve, ATTESTATION_WAIT_MS).unref?.())]);
+    }
     return json(res, 200, { ok: true, result });
   }
 
@@ -229,7 +320,15 @@ const server = http.createServer((req, res) => {
   res.setHeader('x-request-id', requestId);
   route(req, res).catch((error) => {
     console.error(JSON.stringify({ event: 'compute_gateway_error', request_id: requestId, message: error.message, code: error.code || null }));
-    if (!res.headersSent) json(res, Number(error.status || 500), { error: error.message || 'Compute gateway failure', code: error.code || null, request_id: requestId });
+    if (!res.headersSent) {
+      json(res, Number(error.status || 500), {
+        error: error.message || 'Compute gateway failure', code: error.code || null, request_id: requestId,
+        // A standby names the live scheduler so a client can follow it; a retryable refusal says so.
+        ...(error.retryable === true ? { retryable: true } : {}),
+        ...(error.active_holder !== undefined ? { active_holder: error.active_holder } : {}),
+        ...(error.job_status ? { job_status: error.job_status } : {})
+      });
+    }
     else res.end();
   }).finally(() => {
     let pathname = '/';
@@ -238,13 +337,20 @@ const server = http.createServer((req, res) => {
   });
 });
 
+if (election) {
+  // Acquire (or learn who holds) the scheduler lease before taking traffic. A
+  // failed first call is an event, not a crash: the instance starts as standby.
+  await election.start();
+}
 server.listen(PORT, HOST, () => {
-  console.log(JSON.stringify({ event: 'compute_gateway_ready', host: HOST, port: PORT, protocol: COMPUTE_PROTOCOL, pid: process.pid }));
+  console.log(JSON.stringify({ event: 'compute_gateway_ready', host: HOST, port: PORT, protocol: COMPUTE_PROTOCOL, pid: process.pid, scheduler: election ? election.snapshot() : null }));
 });
 
 function shutdown(signal) {
   console.log(JSON.stringify({ event: 'compute_gateway_shutdown', signal }));
-  server.close(() => process.exit(0));
+  // A clean stop releases the scheduler lease so the other side takes over at once.
+  const released = election ? election.stop().catch(() => {}) : Promise.resolve();
+  released.then(() => server.close(() => process.exit(0)));
   setTimeout(() => process.exit(1), 5_000).unref();
 }
 process.on('SIGTERM', () => shutdown('SIGTERM'));

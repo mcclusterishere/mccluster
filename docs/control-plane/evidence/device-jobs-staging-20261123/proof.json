@@ -1,0 +1,276 @@
+{
+  "schema": "mccluster-device-jobs-staging-proof/1",
+  "started_at": "2026-11-23T03:09:57.441Z",
+  "finished_at": "2026-11-23T03:13:07.469Z",
+  "ok": true,
+  "full": true,
+  "environment": {
+    "node": "v22.23.5",
+    "platform": "linux",
+    "pglite": "PostgreSQL via PGlite (PGLITE_MODULE_PATH)",
+    "commit": "2b0b0baf112965b04cb6b91a16431c99d7dababc"
+  },
+  "schema_files": [
+    "supabase/replay_migrations/20260912071000_compute_node_protocol.sql",
+    "supabase/migrations/20260919020830_compute_gateway_hardening_live_reconcile.sql",
+    "supabase/migrations/20260919021007_compute_capability_concurrency_live_reconcile.sql",
+    "supabase/migrations/20261020210718_compute_lease_authority_v2.sql",
+    "supabase/pending/compute_job_attestations_v1.sql"
+  ],
+  "processes": [
+    "core/src/compute/gateway.mjs",
+    "core/src/compute/node-agent.mjs",
+    "scripts/staging/device-jobs/fixture-executor.mjs",
+    "scripts/staging/device-jobs/pglite-postgrest.mjs",
+    "TLS loopback ingress"
+  ],
+  "synthetic": "All identities, tokens, keys and model output are synthetic fixtures. No real device, no canonical Supabase, no OVH Core, no model inference.",
+  "steps": [
+    {
+      "name": "preflight: gateway health and receipt key",
+      "ok": true,
+      "duration_ms": 6,
+      "detail": {
+        "protocol": "mccluster-compute/1",
+        "receipt_key_id": "f341d7c17bf79514aa36ec11961618c8",
+        "schema_files": [
+          "supabase/replay_migrations/20260912071000_compute_node_protocol.sql",
+          "supabase/migrations/20260919020830_compute_gateway_hardening_live_reconcile.sql",
+          "supabase/migrations/20260919021007_compute_capability_concurrency_live_reconcile.sql",
+          "supabase/migrations/20261020210718_compute_lease_authority_v2.sql",
+          "supabase/pending/compute_job_attestations_v1.sql"
+        ]
+      }
+    },
+    {
+      "name": "authorization: admin routes refuse a missing or wrong token; enrolment refuses a wrong token; an unknown key is refused",
+      "ok": true,
+      "duration_ms": 51,
+      "detail": {
+        "admin_without_token": 401,
+        "admin_wrong_token": 401,
+        "enroll_wrong_token": 401,
+        "unknown_node": "UNKNOWN_NODE"
+      }
+    },
+    {
+      "name": "enrolment and capability reporting: the real node agent enrols over TLS and advertises ai.chat/fixture.echo.local",
+      "ok": true,
+      "duration_ms": 532,
+      "detail": {
+        "node_id": "node_82f59e87072ff86aa4c93d0e96527b5c",
+        "hardware_mode": "cpu-only",
+        "platform": "linux",
+        "agent_version": "0.4.0",
+        "capabilities": [
+          "ai.chat/fixture.echo.local"
+        ]
+      }
+    },
+    {
+      "name": "cross-organization submission is refused",
+      "ok": true,
+      "duration_ms": 3,
+      "detail": {
+        "status": 403,
+        "code": "CROSS_ORG_DENIED"
+      }
+    },
+    {
+      "name": "submit: idempotent per key, conflict on a different body under the same key, refusal when no live node serves the capability",
+      "ok": true,
+      "duration_ms": 49,
+      "detail": {
+        "job_id": "0d0d8c81-e083-4d59-b12e-7a1491b47191",
+        "live_nodes": 1,
+        "replayed_status": 200,
+        "conflict_code": "IDEMPOTENCY_CONFLICT",
+        "offline_code": "COMPUTE_NO_LIVE_NODE"
+      }
+    },
+    {
+      "name": "status, result and signed receipt: the fixture node leases, runs and completes the job; the receipt verifies offline",
+      "ok": true,
+      "duration_ms": 837,
+      "detail": {
+        "attempts": 1,
+        "duration_ms": 19,
+        "output_sha256": "1c6496f70964633b7a168ca044457d2ead58345f626f27f89d83dda8a3a0fcc4",
+        "receipt_key_id": "f341d7c17bf79514aa36ec11961618c8",
+        "attestation_verified": true
+      }
+    },
+    {
+      "name": "duplicate results are rejected: same payload replays idempotently, a different payload is refused, a replayed nonce is refused, a late failure cannot undo a commit",
+      "ok": true,
+      "duration_ms": 211,
+      "detail": {
+        "job_id": "cff29216-9908-4659-9bfb-a70cffdc021b",
+        "nonce_replay": "REPLAY_DETECTED",
+        "same_payload": 200,
+        "different_payload": "LEASE_REJECTED",
+        "late_fail": 409,
+        "wrong_token": 409,
+        "first_nonce_kept": true
+      }
+    },
+    {
+      "name": "disconnect and retry: an injected executor failure fails the lease, the task requeues with backoff and the second attempt completes",
+      "ok": true,
+      "duration_ms": 31876,
+      "detail": {
+        "job_id": "a24f065d-2cfe-4d89-acab-673e0c8c1bdb",
+        "requeued_after_first_failure": "queued",
+        "first_error": "fixture executor failure (injected, attempt 1)",
+        "backoff_run_after": "2026-11-23T03:10:32.743Z",
+        "final_attempts": 2
+      }
+    },
+    {
+      "name": "hard disconnect (--full): the agent is killed mid-task, the lease expires server-side, a restarted agent reclaims and completes",
+      "ok": true,
+      "duration_ms": 152078,
+      "detail": {
+        "job_id": "f3d69da5-c712-45b1-a413-cdc587ba5c9c",
+        "killed_while": "running",
+        "lease_expired_at": "2026-11-23T03:12:34.211Z",
+        "final_attempts": 2,
+        "duration_ms": 16
+      }
+    },
+    {
+      "name": "revocation: a revoked node is refused on its next signed request and the fabric no longer offers its capability",
+      "ok": true,
+      "duration_ms": 1525,
+      "detail": {
+        "agent_exited": true,
+        "refusal_seen_by_agent": true,
+        "submit_after_revoke": "COMPUTE_NO_LIVE_NODE"
+      }
+    },
+    {
+      "name": "pending SQL hygiene: the attestation rollback drops exactly its table and the file re-applies cleanly",
+      "ok": true,
+      "duration_ms": 13,
+      "detail": {
+        "rollback_reapplied": true,
+        "lease_rows_untouched": 6
+      }
+    }
+  ],
+  "sample_receipt": {
+    "schema": "mccluster-job-receipt/1",
+    "issued_at": "2026-11-23T03:10:01.761Z",
+    "issuer": {
+      "kind": "mccluster-core",
+      "instance": "staging-gateway",
+      "deployment_sha": null
+    },
+    "job": {
+      "id": "0d0d8c81-e083-4d59-b12e-7a1491b47191",
+      "org_id": "00000000-0000-4000-8000-00000000c0de",
+      "capability": "ai.chat",
+      "implementation": "fixture.echo.local",
+      "status": "done",
+      "attempts": 1,
+      "max_attempts": 3,
+      "created_at": "2026-11-23T03:10:00.888Z",
+      "completed_at": "2026-11-23T03:10:01.570Z",
+      "client": {
+        "name": "device-jobs-staging",
+        "version": "1",
+        "contract": "mccluster-job/1"
+      },
+      "source": "device-jobs/1"
+    },
+    "input_sha256": "dd971b014e1382f2791eac53453680da76957b4f0ce8b3e8f440184543e0fcba",
+    "output_sha256": "1c6496f70964633b7a168ca044457d2ead58345f626f27f89d83dda8a3a0fcc4",
+    "failure": null,
+    "execution": {
+      "lease_id": "b9ac1a58-285c-4f39-94a4-52f77eddf9d5",
+      "attempt": 1,
+      "status": "done",
+      "node_id": "node_82f59e87072ff86aa4c93d0e96527b5c",
+      "node_key_fingerprint": "82f59e87072ff86aa4c93d0e96527b5c519aa738aea9e9655b15fc2f185aa09d",
+      "node_display_name": "staging-fixture-node",
+      "hardware_mode": "cpu-only",
+      "platform": "linux",
+      "started_at": "2026-11-23T03:10:01.551Z",
+      "completed_at": "2026-11-23T03:10:01.570Z",
+      "duration_ms": 19,
+      "result_consistent": true
+    },
+    "node_public_key_pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAz0+s5UEy4f84gWcF1alc2PGrq9IQhKSBZFyfHXI8Peg=\n-----END PUBLIC KEY-----\n",
+    "inference": {
+      "mode": "single-device",
+      "devices": [
+        "node_82f59e87072ff86aa4c93d0e96527b5c"
+      ],
+      "group": null
+    },
+    "node_attestation": {
+      "schema": "mccluster-completion-attestation/1",
+      "lease_id": "b9ac1a58-285c-4f39-94a4-52f77eddf9d5",
+      "node_id": "node_82f59e87072ff86aa4c93d0e96527b5c",
+      "attempt": 1,
+      "protocol": "mccluster-compute/1",
+      "method": "POST",
+      "path": "/v1/compute/leases/b9ac1a58-285c-4f39-94a4-52f77eddf9d5/complete",
+      "signed_at": "2026-11-23T03:10:01.557Z",
+      "nonce": "1433e73b-d86d-40a3-9466-b9d9958e9283",
+      "body_digest": "j0I2u_YPfuFB3wjj1bBGYhCzkviSxLS5cFtAgfzyxkI",
+      "signature": "qwJhzdvgsT4n6vZ1b_9n7z4XUVnBI2uQHy0_MCwtUr9a9lBCO37TnASfz5fs-SjN6PT_akgvTZhzrNVHkCNODA",
+      "result_sha256": "1c6496f70964633b7a168ca044457d2ead58345f626f27f89d83dda8a3a0fcc4",
+      "matches_output": true,
+      "verified": true,
+      "verification_note": null
+    },
+    "signature": {
+      "alg": "ed25519",
+      "key_id": "f341d7c17bf79514aa36ec11961618c8",
+      "value": "TYwsNWWPYErE0kHaMyLVAFcIVwr7gIEwvgEKgDIeYx4VkVymgseGlRtA9JIuqeUHUhnRaGXEChlCEqycE9w9Cw",
+      "covers": "canonical JSON of this receipt with signature set to null and without the signed flag"
+    },
+    "signed": true
+  },
+  "shim_requests": 1415,
+  "gateway_log_tail": [
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"f7a30db4-258e-43ee-82ca-0a374c6b5f65\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":20}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"97c9a083-9b58-4219-b93c-55d5f8270896\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":14}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"86d73c2e-8447-47f6-985a-b55f6b2f1202\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":13}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"804f6546-4c09-49ae-978f-2e9801bdabc7\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":21}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"8e082c8f-5ebe-44ef-bd47-3be0e2e8d534\",\"method\":\"POST\",\"path\":\"/v1/compute/heartbeat\",\"status\":200,\"duration_ms\":18}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"86395e3b-f3da-4f49-a487-1ff9a5c57cd4\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":9}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"fcb2e527-1b2a-461d-adf2-1c45e4cedcb1\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":20}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"782da859-f016-4eb6-a3a5-c59dd681c0c0\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":13}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"704b2628-189e-415a-9a5d-b2134f3a6fae\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":14}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"89ad16ef-f214-416c-ba45-6bbee8765ddf\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":18}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"4c98ead0-f75a-43ad-b443-174077ba963d\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":12}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"b9042c08-958a-4b2f-9d5f-fc259f121d8f\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":13}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"bef3f331-75f5-4756-a126-8c641fd9db2e\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":15}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"faab4136-ba58-4577-849d-3b41cf00ab16\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":10}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"e8c815f2-57f1-4469-b7c6-5eb9a40f5ded\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":17}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"0308438f-c764-4cdf-bcbd-e2e64651440e\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":200,\"duration_ms\":13}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"b674ed1d-ed71-4f4d-880d-6828383de8ac\",\"method\":\"POST\",\"path\":\"/v1/compute/leases/89774fe0-b3b9-4929-be24-3848d1744a84/start\",\"status\":200,\"duration_ms\":11}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"0fe398ac-cfa8-415e-89f7-7bad95afc24a\",\"method\":\"POST\",\"path\":\"/v1/compute/leases/89774fe0-b3b9-4929-be24-3848d1744a84/complete\",\"status\":200,\"duration_ms\":18}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"78f1c6e6-2ec3-40ee-9907-f6dfef8abd6b\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c\",\"status\":200,\"duration_ms\":14}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"b0acfe64-8bb7-4bdc-91d5-af732e6a3fdd\",\"method\":\"GET\",\"path\":\"/v1/compute/jobs/f3d69da5-c712-45b1-a413-cdc587ba5c9c/receipt\",\"status\":200,\"duration_ms\":16}",
+    "{\"event\":\"compute_gateway_error\",\"request_id\":\"01cb6815-73a7-4867-9088-ac61dd5dd27f\",\"message\":\"Compute node is revoked\",\"code\":\"NODE_REVOKED\"}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"01cb6815-73a7-4867-9088-ac61dd5dd27f\",\"method\":\"POST\",\"path\":\"/v1/compute/lease\",\"status\":403,\"duration_ms\":6}",
+    "{\"event\":\"compute_gateway_error\",\"request_id\":\"aeb339c5-7c63-42c4-8ee8-e9e1781152dd\",\"message\":\"No live compute node serves ai.chat/fixture.echo.local; pass allow_offline:true to queue anyway\",\"code\":\"COMPUTE_NO_LIVE_NODE\"}",
+    "{\"event\":\"compute_gateway_request\",\"request_id\":\"aeb339c5-7c63-42c4-8ee8-e9e1781152dd\",\"method\":\"POST\",\"path\":\"/v1/compute/jobs\",\"status\":503,\"duration_ms\":8}",
+    "{\"event\":\"compute_gateway_error\",\"request_id\":\"2c84d4dd-a732-4731-ace6-432669abca6c\",\"message\":\"Unknown compute node\",\"code\":\"UNKNOWN_NODE\"}"
+  ],
+  "node_agent_log_tail": [
+    "{\"event\":\"compute_node_paths\",\"platform\":\"linux\",\"state_dir\":\"[out]/node/state\",\"manifest\":\"[out]/node/capabilities.json\",\"defaults_applied\":[]}",
+    "{\"event\":\"compute_node_gpu_evidence\",\"hardware_mode\":\"cpu-only\",\"previous\":\"unknown\",\"gpus\":0,\"gpu_verified_at\":null,\"model\":null,\"size_vram_bytes\":null}",
+    "{\"event\":\"compute_node_enrolled\",\"node_id\":\"node_82f59e87072ff86aa4c93d0e96527b5c\",\"protocol\":\"mccluster-compute/1\",\"advertised\":1,\"hardware_mode\":\"cpu-only\"}",
+    "{\"event\":\"lease_execution_stopped\",\"lease_id\":\"afc678d1-3482-4675-a954-0338fd17088e\",\"task_id\":\"a24f065d-2cfe-4d89-acab-673e0c8c1bdb\",\"error\":\"fixture executor failure (injected, attempt 1)\"}",
+    "{\"event\":\"compute_node_paths\",\"platform\":\"linux\",\"state_dir\":\"[out]/node/state\",\"manifest\":\"[out]/node/capabilities.json\",\"defaults_applied\":[]}",
+    "{\"event\":\"compute_node_gpu_evidence\",\"hardware_mode\":\"cpu-only\",\"previous\":\"unknown\",\"gpus\":0,\"gpu_verified_at\":null,\"model\":null,\"size_vram_bytes\":null}",
+    "{\"event\":\"compute_node_enrolled\",\"node_id\":\"node_82f59e87072ff86aa4c93d0e96527b5c\",\"protocol\":\"mccluster-compute/1\",\"advertised\":1,\"hardware_mode\":\"cpu-only\"}",
+    "{\"event\":\"compute_node_loop_error\",\"node_id\":\"node_82f59e87072ff86aa4c93d0e96527b5c\",\"error\":\"Compute node is revoked\",\"code\":\"NODE_REVOKED\",\"consecutive_errors\":1}",
+    "{\"event\":\"compute_node_draining\",\"signal\":\"loop-exit\",\"active_leases\":0}",
+    "{\"event\":\"compute_node_shutdown\",\"signal\":\"loop-exit\",\"remaining_leases\":0}"
+  ]
+}

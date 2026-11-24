@@ -51,3 +51,31 @@ Pull `data/catalogue.json`, `data/albums.json`, and this ledger from `main`
 (or the review branch `ddex/qt6kv-pipe`). Adopt any ISRC already on a slug.
 Allocate only empty slugs. Export a replacement `identifiers.json` and keep
 it here.
+
+## Creator releases (2026-11-23)
+
+A creator's own release reaches the stores through the same pipe, without
+minting anything on the way:
+
+1. **Creator Studio → Distribution** (`creator.html`, `js/music-distribution.js`):
+   the creator sees the store checklist and enters what the release does not
+   already say: release date, explicit, ℗/© lines, master owner, credits,
+   master and publishing splits, and an ISRC/UPC they already own. Stored on
+   `creator_tracks.distribution` (`supabase/pending/20261123200000_music_creator_distribution_v1.sql`,
+   PROMOTION-ORDER section 18), outside release content, so a live release stays live.
+2. **Control → Create → Music → Distribution → Creator releases for the stores**:
+   once McCluster has approved the release, "Check" (dry run) lists the gaps and
+   "Stage for the stores" writes `eu_recordings`, `eu_releases` (at
+   `metadata-review`), `eu_release_tracks` and the creator's `eu_rights_splits`
+   in the McCluster org (`music-access` `operator-distribution-stage`,
+   `supabase/functions/_shared/creator-distribution.ts`). The label is the
+   creator's master owner, never McCluster Corp by default. A release already
+   delivering, delivered or live is never restaged in place.
+3. **Delivery** is unchanged: `eu-music` preflight, the `music.deliver`
+   approval, then `eu-ddex-worker` (manual delivery until a distributor
+   endpoint, DPIDs and a GS1 prefix exist).
+
+Open for the owner: whether McCluster's `QT6KV` registrant code issues ISRCs to
+creators' recordings (the staged ledger `20261013180000_qt6kv_creator_isrc_ledger.sql`
+is "do not apply as-is" and defaults `rights_owner` to McCluster Corp). Until
+that is decided, a creator release without its own ISRC stays a preflight gap.

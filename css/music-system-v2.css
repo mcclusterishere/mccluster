@@ -473,6 +473,12 @@ body.music-v2 .music-launch .music-launch__terms a{display:inline;padding:0;bord
 }
 .music-now__sound[hidden]{display:none}
 .music-now__sound svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* the words under the controls (js/music-engine.js + js/lyrics-sync.js): a bounded scroll box, colour-only lighting */
+.music-now__lyrics{max-height:32vh;max-height:32svh;overflow-y:auto;overscroll-behavior:contain;margin-top:14px;padding:4px 2px;
+  text-align:center;color:rgba(255,255,255,.5);font-size:max(16px,1rem);line-height:1.5;min-width:0;overflow-wrap:anywhere}
+.music-now__lyrics[hidden]{display:none}
+.music-now__lyrics .lyr-line{margin:0 0 .55em}
+.music-now__lyrics .lyr-line.is-live{color:#fff}
 .music-now__airplay{
   width:44px;height:44px;margin-top:12px;border:0;border-radius:50%;padding:0;cursor:pointer;
   display:grid;place-items:center;background:rgba(255,255,255,.08);color:#fff

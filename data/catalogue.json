@@ -1,7 +1,7 @@
 {
  "generated_by": "tools/build-music-registry.mjs",
  "isrc_prefix": "QT6KV",
- "count": 41,
+ "count": 61,
  "tracks": [
   {
    "slug": "who-did-the-shoot",
@@ -472,6 +472,226 @@
    "no": 18,
    "gated": true,
    "isrc": "QT6KV2600018"
+  },
+  {
+   "slug": "rolling-with-me",
+   "title": "Rolling With Me",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "2:31",
+   "available": true,
+   "no": 42
+  },
+  {
+   "slug": "tinderella",
+   "title": "Tinderella",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "3:32",
+   "available": true,
+   "no": 43
+  },
+  {
+   "slug": "alquifina-new-chick",
+   "title": "Alquifina (New Chick)",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "1:53",
+   "available": true,
+   "no": 44
+  },
+  {
+   "slug": "bussin-juggs",
+   "title": "Bussin' Juggs",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "1:59",
+   "available": true,
+   "no": 45
+  },
+  {
+   "slug": "one-gon-ride",
+   "title": "One Gon' Ride (feat. Jiddy)",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "1:38",
+   "available": true,
+   "no": 46
+  },
+  {
+   "slug": "recipe",
+   "title": "Recipe",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "1:36",
+   "available": true,
+   "no": 47
+  },
+  {
+   "slug": "spell",
+   "title": "Spell",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "1:36",
+   "available": true,
+   "no": 48
+  },
+  {
+   "slug": "fire",
+   "title": "Fire",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "2:14",
+   "available": true,
+   "no": 49
+  },
+  {
+   "slug": "promises",
+   "title": "Promises",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "3:59",
+   "available": true,
+   "no": 50
+  },
+  {
+   "slug": "drunk-driving",
+   "title": "Drunk Driving",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "2:07",
+   "available": true,
+   "no": 51
+  },
+  {
+   "slug": "no-friend",
+   "title": "No Friend",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "2:48",
+   "available": true,
+   "no": 52
+  },
+  {
+   "slug": "numb",
+   "title": "Numb",
+   "credit": "Benji Chase",
+   "album": "Tinderfessions",
+   "albumSlug": "tinderfessions",
+   "page": "album.html?album=tinderfessions",
+   "length": "3:36",
+   "available": true,
+   "no": 53
+  },
+  {
+   "slug": "hitshake",
+   "title": "HitShake",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "0:42",
+   "available": true,
+   "no": 54
+  },
+  {
+   "slug": "hitlist",
+   "title": "Hitlist",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "2:05",
+   "available": true,
+   "no": 55
+  },
+  {
+   "slug": "hit-mode",
+   "title": "Hit Mode",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "1:12",
+   "available": true,
+   "no": 56
+  },
+  {
+   "slug": "see-me-up",
+   "title": "See Me Up",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "2:13",
+   "available": true,
+   "no": 57
+  },
+  {
+   "slug": "other-side",
+   "title": "Other Side",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "2:53",
+   "available": true,
+   "no": 58
+  },
+  {
+   "slug": "new-phone",
+   "title": "New Phone",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "1:57",
+   "available": true,
+   "no": 59
+  },
+  {
+   "slug": "block-so-hot",
+   "title": "Block So Hot",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "1:03",
+   "available": true,
+   "no": 60
+  },
+  {
+   "slug": "up-for-days",
+   "title": "Up For Days",
+   "credit": "Benji Chase",
+   "album": "In Hot Pursuit",
+   "albumSlug": "in-hot-pursuit",
+   "page": "album.html?album=in-hot-pursuit",
+   "length": "3:37",
+   "available": true,
+   "no": 61
   }
  ]
 }

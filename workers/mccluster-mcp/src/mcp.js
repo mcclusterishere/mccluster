@@ -48,6 +48,14 @@ const REMOTE_CAPABILITIES = new Set([
   'compute.task.get',
   'core.ai.turn.submit',
   'core.ai.turn.get',
+  // Device job contract (docs/control-plane/DEVICE-JOBS-CONTRACT.md): the
+  // owner sends AI jobs to our own devices and reads the signed receipt back.
+  'core.compute.job.submit',
+  'core.compute.job.get',
+  'core.compute.job.result',
+  'core.compute.job.receipt',
+  'core.compute.job.list',
+  'core.compute.receipt.key',
   'research.web',
   'media.models.search',
   'media.model.recommend',
@@ -364,7 +372,7 @@ export async function handleCoreMcp(request, env, user) {
     const forwardedParams = { ...(rpc?.params ?? {}) };
     if (method === 'tools/call') {
       const toolName = forwardedParams.name;
-      if (HOUSE_ORG_ONLY.has(toolName)) {
+      if (HOUSE_ORG_ONLY.has(toolName) || toolName.startsWith('core.compute.job.') || toolName === 'core.compute.receipt.key') {
         forwardedParams.arguments = {
           ...(forwardedParams.arguments || {}),
           org_id: houseOrg

@@ -1,0 +1,218 @@
+{
+  "schema": "mccluster-scheduler-failover-proof/1",
+  "ok": true,
+  "finished_at": "2026-11-23T03:11:14.677Z",
+  "ttl_seconds": 10,
+  "renew_ms": 2000,
+  "commit": "88094d13c9fc0b0a2f3158250f116d5081dd2193",
+  "schema_files": [
+    "supabase/replay_migrations/20260912071000_compute_node_protocol.sql",
+    "supabase/migrations/20260919020830_compute_gateway_hardening_live_reconcile.sql",
+    "supabase/migrations/20260919021007_compute_capability_concurrency_live_reconcile.sql",
+    "supabase/migrations/20261020210718_compute_lease_authority_v2.sql",
+    "supabase/pending/compute_job_attestations_v1.sql",
+    "supabase/pending/compute_scheduler_lease_v1.sql"
+  ],
+  "steps": [
+    {
+      "name": "one active holder: the primary holds term 1 and the standby is held",
+      "ok": true,
+      "duration_ms": 5,
+      "detail": {
+        "a": {
+          "role": "primary",
+          "holder_id": "ovh-primary",
+          "active": true,
+          "yielding": false,
+          "term": 1,
+          "live_holder": "ovh-primary",
+          "live_term": 1,
+          "expires_at": "2026-11-23T03:11:11.642Z",
+          "last_server_time": "2026-11-23T03:11:01.642Z",
+          "last_reason": "fresh",
+          "last_error": null,
+          "handover_to": null,
+          "halted": false,
+          "config_error": null
+        },
+        "b": {
+          "role": "standby",
+          "holder_id": "prime-standby",
+          "active": false,
+          "yielding": false,
+          "term": null,
+          "live_holder": "ovh-primary",
+          "live_term": 1,
+          "expires_at": "2026-11-23T03:11:11.642+00:00",
+          "last_server_time": "2026-11-23T03:11:02.575+00:00",
+          "last_reason": "held",
+          "last_error": null,
+          "handover_to": null,
+          "halted": false,
+          "config_error": null
+        }
+      }
+    },
+    {
+      "name": "the standby refuses admin submissions and node lease claims with SCHEDULER_STANDBY; the primary accepts",
+      "ok": true,
+      "duration_ms": 150,
+      "detail": {
+        "submit_via_standby": "SCHEDULER_STANDBY",
+        "submit_via_primary": 202,
+        "claim_via_standby": "SCHEDULER_STANDBY",
+        "claim_via_primary": 200,
+        "reads_on_standby": 200
+      }
+    },
+    {
+      "name": "partition: the primary is frozen, its lease expires server-side, the standby takes over with term 2 and accepts submissions",
+      "ok": true,
+      "duration_ms": 9553,
+      "detail": {
+        "frozen_at": "2026-11-23T03:11:03.069Z",
+        "standby_active_at": "2026-11-23T03:11:12.621Z",
+        "term": 2,
+        "reason": "expired_takeover"
+      }
+    },
+    {
+      "name": "fenced return: the primary is resumed, its renew is fenced, it refuses and names the standby as the live holder",
+      "ok": true,
+      "duration_ms": 414,
+      "detail": {
+        "a": {
+          "role": "primary",
+          "holder_id": "ovh-primary",
+          "active": false,
+          "yielding": false,
+          "term": null,
+          "live_holder": "prime-standby",
+          "live_term": 2,
+          "expires_at": "2026-11-23T03:11:22.588+00:00",
+          "last_server_time": "2026-11-23T03:11:12.632+00:00",
+          "last_reason": "fenced",
+          "last_error": null,
+          "handover_to": null,
+          "halted": false,
+          "config_error": null
+        },
+        "submit_via_primary": "SCHEDULER_STANDBY",
+        "fenced_event_logged": true
+      }
+    },
+    {
+      "name": "controlled failback: the active standby hands over, the primary takes term 3, the standby is fenced",
+      "ok": true,
+      "duration_ms": 1642,
+      "detail": {
+        "handover": {
+          "ok": true,
+          "term": 2,
+          "reason": "handover_requested",
+          "holder_id": "prime-standby",
+          "handover_to": "ovh-primary",
+          "server_time": "2026-11-23T03:11:13.04+00:00",
+          "handover_expires_at": "2026-11-23T03:12:13.04+00:00",
+          "scheduler": {
+            "role": "standby",
+            "holder_id": "prime-standby",
+            "active": false,
+            "yielding": true,
+            "term": 2,
+            "live_holder": "prime-standby",
+            "live_term": 2,
+            "expires_at": "2026-11-23T03:11:22.588Z",
+            "last_server_time": "2026-11-23T03:11:12.588Z",
+            "last_reason": "expired_takeover",
+            "last_error": null,
+            "handover_to": "ovh-primary",
+            "halted": false,
+            "config_error": null
+          }
+        },
+        "a": {
+          "role": "primary",
+          "holder_id": "ovh-primary",
+          "active": true,
+          "yielding": false,
+          "term": 3,
+          "live_holder": "ovh-primary",
+          "live_term": 3,
+          "expires_at": "2026-11-23T03:11:24.626Z",
+          "last_server_time": "2026-11-23T03:11:14.626Z",
+          "last_reason": "handover",
+          "last_error": null,
+          "handover_to": null,
+          "halted": false,
+          "config_error": null
+        },
+        "b": {
+          "role": "standby",
+          "holder_id": "prime-standby",
+          "active": false,
+          "yielding": true,
+          "term": 2,
+          "live_holder": "prime-standby",
+          "live_term": 2,
+          "expires_at": "2026-11-23T03:11:24.589Z",
+          "last_server_time": "2026-11-23T03:11:14.589Z",
+          "last_reason": "renewed",
+          "last_error": null,
+          "handover_to": "ovh-primary",
+          "halted": false,
+          "config_error": null
+        },
+        "store": {
+          "live": true,
+          "term": 3,
+          "org_id": "00000000-0000-4000-8000-00000000c0de",
+          "history": [
+            {
+              "at": "2026-11-23T03:11:01.642+00:00",
+              "term": 1,
+              "event": "fresh",
+              "to_holder": "ovh-primary",
+              "from_holder": null
+            },
+            {
+              "at": "2026-11-23T03:11:12.588+00:00",
+              "term": 2,
+              "event": "expired_takeover",
+              "to_holder": "prime-standby",
+              "from_holder": "ovh-primary"
+            },
+            {
+              "at": "2026-11-23T03:11:13.04+00:00",
+              "term": 2,
+              "event": "handover_requested",
+              "to_holder": "ovh-primary",
+              "from_holder": "prime-standby"
+            },
+            {
+              "at": "2026-11-23T03:11:14.626+00:00",
+              "term": 3,
+              "event": "handover",
+              "to_holder": "ovh-primary",
+              "from_holder": "prime-standby"
+            }
+          ],
+          "holder_id": "ovh-primary",
+          "expires_at": "2026-11-23T03:11:24.626+00:00",
+          "renewed_at": "2026-11-23T03:11:14.626+00:00",
+          "updated_at": "2026-11-23T03:11:14.626+00:00",
+          "acquired_at": "2026-11-23T03:11:14.626+00:00",
+          "handover_to": null,
+          "holder_role": "primary",
+          "released_at": null,
+          "server_time": "2026-11-23T03:11:14.675+00:00",
+          "handover_pending": false,
+          "handover_expires_at": null,
+          "handover_requested_at": null
+        },
+        "history_length": 4
+      }
+    }
+  ],
+  "synthetic": "Two real gateway processes over one disposable database. No canonical Supabase, no OVH Core, no device. Node traffic redirection (tunnel/DNS) is out of scope and stays a manual owner step."
+}

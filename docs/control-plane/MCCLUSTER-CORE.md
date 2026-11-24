@@ -2,6 +2,27 @@
 
 Status: canonical architecture decision, adopted 2026-09-12.
 
+## Owner decision, 2026-11-23: Core is the node network
+
+> "Core shouldn't only be the OVH box. Core, now that we have multiple nodes, should be the node network itself."
+> "Prioritize owned hardware. The paid shit is cool for a quarterback right now ... we should continue to keep it in
+> power, but we [should not] make everything dependent on it. Our baseline objectives should be able to be hit by
+> everything."
+
+What this changes, and what it does not:
+
+- **Core is the network.** The same `core/` runtime runs on every enrolled node: the OVH VPS, the owner's HP laptop
+  (Prime) and the Macs. No node is Core by itself; the work is placed where it can run.
+- **Owned hardware first.** Work a node can do (inference, the lyric machine, other GPU and CPU jobs) goes to an owned
+  node when one is live; the OVH VPS is the paid, always-on member and the fallback, never the only path. The fabric
+  routes by capability through the existing compute queue (`COMPUTE-NODE-PROTOCOL.md`), not by machine name.
+- **One authority, many hands.** Supabase stays the single durable truth, and the Cloudflare Worker `mccluster` stays
+  the edge. Several Core runners may work the same queue safely (each claim is one conditional write with its own
+  lease), and one scheduler leads the compute gateway at a time with a fenced standby
+  (`DEVICE-JOBS-SCHEDULER-STANDBY.md`). Nothing here creates a second backend, database or Worker.
+- **Unchanged today:** production promotion still goes to the OVH VPS through `deploy/ovh-production`, compute nodes
+  still never hold the service-role key, and the OVH VPS stays powered and paid.
+
 ## Purpose
 
 **McCluster Core** is the owner-controlled, always-on execution plane for the McCluster ecosystem. It is not a second Cloudflare Worker, a second control plane, or a second database.

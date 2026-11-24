@@ -48,6 +48,7 @@ on:
       - 'core/capabilities/catalog.json'
       - 'js/control-registry.js'
       - 'css/control-admin.css'
+      - 'css/lyrics-editor.css'
       - 'inbox.html'
       - 'supabase/functions/inbox/index.ts'
       - 'scripts/test/control-desk-bot.test.mjs'

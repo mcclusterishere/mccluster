@@ -114,20 +114,40 @@ function describeSize(bytes, up) {
 /* THE LYRIC SHEET. Optional words for the lyric machine: McCluster Core times
    them to the master (line and word), or writes them from the audio when there
    is no sheet. The sheet rides on its own column after the release row exists,
-   and a refusal never sinks the release: until that column is live the machine
-   simply writes the words from the audio. */
+   and a refusal never sinks the release.
+   NEVER LOST SILENTLY (owner, 2026-11-23). Until the lyrics_sheet column is live
+   (supabase/pending/20261031180000_lyrics_machine_v1.sql) the PATCH is refused,
+   and the sheet used to vanish into the console. Now the words are kept on the
+   release itself as untimed lyrics (creator_tracks.lyrics {source:"sheet",
+   plain}): listeners see the words, the machine replaces them with timed ones
+   (an untimed, unreviewed file is always replaceable, lyrics-align.mjs
+   mayReplace), and the creator is told which of the two happened.
+   Returns "sheet" | "words" | "lost" | "" (no sheet). */
 async function attachLyricSheet(trackId, words) {
   const sheet = String(words || "").trim();
-  if (!sheet) return;
+  if (!sheet) return "";
+  const where = "creator_tracks?id=eq." + encodeURIComponent(trackId);
   try {
-    await rest("creator_tracks?id=eq." + encodeURIComponent(trackId), {
-      method: "PATCH",
-      headers: { Prefer: "return=minimal" },
-      body: JSON.stringify({ lyrics_sheet: sheet.slice(0, 40000) })
-    });
+    await rest(where, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ lyrics_sheet: sheet.slice(0, 40000) }) });
+    return "sheet";
+  } catch (err) {
+    console.warn("lyric sheet column unavailable; keeping the words on the release", err);
+  }
+  try {
+    await rest(where, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({
+      lyrics: { source: "sheet", reviewed: false, plain: sheet.slice(0, 40000), sheet_saved_at: new Date().toISOString() }
+    }) });
+    return "words";
   } catch (err) {
     console.warn("lyric sheet not attached", err);
+    return "lost";
   }
+}
+function lyricSheetNote(outcome) {
+  if (outcome === "sheet") return " Your lyric sheet is saved; McCluster times it to the song.";
+  if (outcome === "words") return " Your lyrics are saved with the release; timing them to the song comes once the lyric machine is switched on.";
+  if (outcome === "lost") return " Your lyric sheet could not be saved: paste it again when you edit this release.";
+  return "";
 }
 function wireLyricSheet() {
   const file = $("trackLyricSheetFile"), box = $("trackLyricSheet"), help = $("trackLyricSheetHelp");
@@ -276,9 +296,11 @@ function pillClass(track) {
 }
 async function loadTracks() {
   const rows = await rest("creator_tracks?m_uid=eq." + encodeURIComponent(mUid) +
-    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at&order=created_at.desc");
+    "&select=id,title,artist,status,rights_status,access_mode,genre,poster_url,duration_ms,music_video_url,lyrics_url,experience,moderation_note,created_at,published_at,master_path," +
+    "lyr_source:lyrics->>source,lyr_reviewed:lyrics->>reviewed,lyr_timed:lyrics->timed->line->0->>begin&order=created_at.desc");
   tracksCache = rows || [];
   renderAlbums();
+  paintLyricsCard();
   const list = $("creatorTracks");
   if (!rows?.length) {
     list.innerHTML = '<div class="creator-status">No releases yet.</div>';
@@ -288,9 +310,197 @@ async function loadTracks() {
     '<div class="creator-item"><div><b>' + escapeHtml(t.title) + '</b><small>' +
     escapeHtml([t.artist, t.genre, t.access_mode].filter(Boolean).join(" · ")) +
     (t.moderation_note ? '<br>' + escapeHtml(t.moderation_note) : '') +
-    '</small></div><span class="' + pillClass(t) + '">' +
+    '</small>' + lyricsChip(t) + '</div><span class="' + pillClass(t) + '">' +
     escapeHtml(t.status.replace(/_/g, " ")) + ' · ' + escapeHtml(t.rights_status) + '</span></div>'
   ).join("");
+}
+
+/* ---------- lyrics (2026-11-23, owner: "Creator Studio ... control the lyrics") ----------
+   The creator edits their release's lyrics with the same editor Control uses (js/control-room/lyrics-review.js):
+   words, line and word times, tap along, split/merge/add/delete, LRC/TTML export, and "These lyrics are right".
+   It reads and writes creator_tracks.lyrics under the creator's own row rights (music_creator_tracks_update), no
+   new backend; the audio is the owner's own stream (music-access "stream"). A release that is approved or live
+   goes back to review when its lyrics change: the database guard (music_track_guard (b)) does that for every
+   role, so the creator is asked first. Ticking "These lyrics are right" keeps the lyric machine from overwriting
+   them (core/src/executors/lyrics-align.mjs mayReplace). */
+const LIVE_STATES = ["approved", "published"];
+function lyricsStateOf(t) {
+  if (!t.lyr_source && !t.lyr_timed) return { label: "No lyrics", tone: "" };
+  if (t.lyr_reviewed === "true") return { label: "Lyrics approved", tone: "live" };
+  if (t.lyr_timed == null) return { label: "Lyrics: timing pending", tone: "review" };
+  return { label: "Lyrics timed: check them", tone: "review" };
+}
+function lyricsChip(t) {
+  const st = lyricsStateOf(t);
+  return '<span class="creator-lyr"><span class="creator-pill' + (st.tone ? " " + st.tone : "") + '">' + escapeHtml(st.label) + '</span>' +
+    (st.label === "No lyrics" ? "" : '<button class="creator-lyr__open" type="button" data-lyrics-open="' + escapeHtml(t.id) + '">Edit lyrics</button>') +
+    '<button class="creator-lyr__open" type="button" data-dist-open="' + escapeHtml(t.id) + '">Distribution</button></span>';
+}
+const lyricsSource = {
+  editor: "creator",
+  list: async () => tracksCache.filter((t) => t.lyr_source || t.lyr_timed).map((t) => ({
+    key: "mine:" + t.id, kind: "mine", id: t.id, title: t.title || "Untitled", album: String(t.status || "").replace(/_/g, " ")
+  })),
+  get: async (t) => {
+    const [rows, stream] = await Promise.all([
+      rest("creator_tracks?id=eq." + encodeURIComponent(t.id) + "&m_uid=eq." + encodeURIComponent(mUid) + "&select=lyrics&limit=1"),
+      fn("stream", { track_id: t.id }).catch(() => null)
+    ]);
+    if (!rows?.length) throw new Error("Release not found");
+    return { doc: rows[0].lyrics || null, src: stream?.url || "" };
+  },
+  save: async (t, doc, reviewed) => {
+    doc.reviewed_by = reviewed ? "creator" : null;
+    if (!reviewed) doc.reviewed_at = null;
+    const before = (tracksCache.find((x) => x.id === t.id) || {}).status;
+    const rows = await rest("creator_tracks?id=eq." + encodeURIComponent(t.id) + "&m_uid=eq." + encodeURIComponent(mUid) + "&select=id,status", {
+      method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ lyrics: doc })
+    });
+    if (!rows?.length) throw new Error("Release not found");
+    const back = LIVE_STATES.includes(before) && rows[0].status === "pending_review";
+    return { status: rows[0].status, note: back ? "The release is back in review and returns once it is approved." : "" };
+  },
+  saved: () => { loadTracks().catch(() => {}); },
+  confirm: (t) => LIVE_STATES.includes((tracksCache.find((x) => x.id === t.id) || {}).status)
+    ? "This release is approved or live. Changing its lyrics sends it back to review, and it is off the shelf until it is approved again. Save anyway?"
+    : "",
+  note: () => "Tick “These lyrics are right” when they are: the lyric machine never overwrites lyrics you approved.",
+  untimed: "Your lyric sheet is on the release. McCluster times it to the music; check back once it has run.",
+  empty: "No lyrics on this release yet."
+};
+let lyricsBound = false;
+function paintLyricsCard() {
+  const card = $("creatorLyrics"), ed = window.CR && window.CR.lyricsReview;
+  if (!card || !ed) return;
+  const any = tracksCache.some((t) => t.lyr_source || t.lyr_timed);
+  card.hidden = !any;
+  if (!any) return;
+  if (!lyricsBound) { ed.configure(lyricsSource); ed.bind(card); lyricsBound = true; }
+  else ed.reload();
+}
+function openLyrics(id) {
+  const card = $("creatorLyrics"), ed = window.CR && window.CR.lyricsReview;
+  if (!card || !ed) return;
+  paintLyricsCard();
+  ed.open("mine:" + id);
+  card.scrollIntoView({ block: "start", behavior: "smooth" });
+}
+$("creatorTracks").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-lyrics-open]");
+  if (b) openLyrics(b.getAttribute("data-lyrics-open"));
+  const d = e.target.closest("[data-dist-open]");
+  if (d) openDistribution(d.getAttribute("data-dist-open")).catch((err) => { $("distStatus").textContent = err.message || "Could not open the details"; });
+});
+
+/* ---------- distribution (2026-11-23, owner: "its own distribution hub for real") ----------
+   The store details for one release: a checklist (js/music-distribution.js readiness) and the form for what the
+   release does not already say (release date, explicit, ℗/©, master owner, credits, splits, a code the creator
+   already owns). Saved on creator_tracks.distribution under the creator's row rights
+   (supabase/pending/20261123200000_music_creator_distribution_v1.sql); it is not release content, so a live
+   release stays live. Until that SQL is applied the card says so and writes nothing. McCluster mints no code here
+   and nothing is delivered from here: Control stages the release for the stores. */
+const DIST = window.MCC_DISTRIBUTION;
+let distOpen = null; /* { id, gen } */
+let distGen = 0;
+const DIST_STATE = { ok: "Done", todo: "To do", mccluster: "McCluster", warn: "Check" };
+function distRow(kind, v) {
+  const row = document.createElement("div");
+  row.className = "creator-dist__row";
+  if (kind === "credit") {
+    row.innerHTML = '<input aria-label="Name" maxlength="120" data-k="name" autocomplete="off" placeholder="Name"><select aria-label="Role" data-k="role"><option value="">Role…</option>' +
+      DIST.ROLES.map((r) => '<option>' + escapeHtml(r) + '</option>').join("") + '</select>';
+  } else {
+    row.innerHTML = '<select aria-label="Kind" data-k="kind"><option value="master">Master</option><option value="publishing">Publishing</option></select>' +
+      '<input aria-label="Name" maxlength="120" data-k="name" autocomplete="off" placeholder="Name"><input aria-label="Share %" data-k="share_pct" inputmode="decimal" placeholder="%">';
+  }
+  row.insertAdjacentHTML("beforeend", '<button class="creator-dist__del" type="button" aria-label="Remove">×</button>');
+  row.querySelectorAll("[data-k]").forEach((el) => { const k = el.getAttribute("data-k"); if (v && v[k] != null) el.value = String(v[k]); });
+  row.querySelector(".creator-dist__del").onclick = () => { row.remove(); paintDistCheck(); };
+  return row;
+}
+function distFromForm() {
+  const rows = (id) => Array.from($(id).querySelectorAll(".creator-dist__row")).map((r) => {
+    const o = {}; r.querySelectorAll("[data-k]").forEach((el) => { o[el.getAttribute("data-k")] = el.value; }); return o;
+  });
+  const ex = $("distExplicit").value;
+  return DIST.normalize({
+    release_date: $("distDate").value, explicit: ex === "true" ? true : ex === "false" ? false : null, language: $("distLang").value.trim().toLowerCase(),
+    master_owner: $("distOwner").value, p_line: $("distP").value, c_line: $("distC").value, isrc: $("distIsrc").value, upc: $("distUpc").value,
+    credits: rows("distCredits"), splits: rows("distSplits").map((x) => ({ ...x, share_pct: x.share_pct === "" ? 0 : Number(String(x.share_pct).replace(",", ".")) }))
+  });
+}
+let distArt = null;
+function paintDistCheck() {
+  if (!distOpen) return;
+  const t = tracksCache.find((x) => x.id === distOpen.id) || {};
+  const r = DIST.readiness(t, distFromForm(), { today: new Date().toISOString().slice(0, 10), art: distArt });
+  /* what is left comes first; a summary line and bar say how far along the release is */
+  const order = { todo: 0, warn: 1, mccluster: 2, ok: 3 };
+  const items = r.items.slice().sort((x, y) => order[x.state] - order[y.state]);
+  const done = r.items.filter((i) => i.state === "ok" || i.state === "mccluster").length;
+  $("distProgress").innerHTML = '<b>' + (r.blocking ? r.blocking + " to do" : "Ready for McCluster") + '</b><span>' + done + " of " + r.items.length + ' covered</span><i><u style="width:' + Math.round(done / r.items.length * 100) + '%"></u></i>';
+  $("distCheck").innerHTML = items.map((i) => '<li class="creator-dist__item is-' + i.state + '"><span class="creator-dist__state">' + DIST_STATE[i.state] + '</span><b>' +
+    escapeHtml(i.label) + '</b>' + (i.hint ? '<small>' + escapeHtml(i.hint) + '</small>' : '') + '</li>').join("");
+}
+async function openDistribution(id) {
+  const t = tracksCache.find((x) => x.id === id);
+  if (!t || !DIST) return;
+  const gen = ++distGen;
+  distOpen = { id, gen };
+  const card = $("creatorDist");
+  card.hidden = false;
+  $("distTitle").textContent = "Distribution: " + (t.title || "Untitled");
+  $("distForm").reset();
+  $("distCredits").replaceChildren(); $("distSplits").replaceChildren();
+  $("distStatus").textContent = "Loading…";
+  $("distSave").disabled = true;
+  distArt = null;
+  if (t.poster_url) {
+    const img = new Image();
+    img.onload = () => { if (distOpen && distOpen.gen === gen) { distArt = { w: img.naturalWidth, h: img.naturalHeight }; paintDistCheck(); } };
+    img.src = t.poster_url;
+  }
+  card.scrollIntoView({ block: "start", behavior: "smooth" });
+  let stored = null, missing = false;
+  try {
+    const rows = await rest("creator_tracks?id=eq." + encodeURIComponent(id) + "&m_uid=eq." + encodeURIComponent(mUid) + "&select=distribution&limit=1");
+    stored = rows?.[0]?.distribution || null;
+  } catch (err) {
+    if (!/distribution/.test(err.message || "")) throw err;
+    missing = true;
+  }
+  if (!distOpen || distOpen.gen !== gen) return;
+  const d = DIST.normalize(stored || { master_owner: t.artist || (profile && profile.artist_name) || "", p_line: new Date().getFullYear() + " " + (t.artist || "") , c_line: new Date().getFullYear() + " " + (t.artist || "") });
+  $("distDate").value = d.release_date; $("distExplicit").value = d.explicit === null ? "" : String(d.explicit); $("distLang").value = d.language;
+  $("distOwner").value = d.master_owner; $("distP").value = d.p_line; $("distC").value = d.c_line; $("distIsrc").value = d.isrc; $("distUpc").value = d.upc;
+  (d.credits.length ? d.credits : [{ name: t.artist || "", role: "Primary artist" }]).forEach((c) => $("distCredits").appendChild(distRow("credit", c)));
+  d.splits.forEach((x) => $("distSplits").appendChild(distRow("split", x)));
+  $("distSave").disabled = missing;
+  $("distStatus").textContent = missing ? "Distribution details open once McCluster switches them on. Nothing is saved yet." : "";
+  paintDistCheck();
+}
+if (DIST) {
+  $("distForm").addEventListener("input", paintDistCheck);
+  $("distForm").addEventListener("change", paintDistCheck);
+  $("distAddCredit").onclick = () => { $("distCredits").appendChild(distRow("credit")); paintDistCheck(); };
+  $("distAddSplit").onclick = () => { $("distSplits").appendChild(distRow("split")); paintDistCheck(); };
+  $("distClose").onclick = () => { distOpen = null; $("creatorDist").hidden = true; };
+  $("distForm").addEventListener("submit", guarded(async (e) => {
+    e.preventDefault();
+    if (!distOpen) return;
+    const { id, gen } = distOpen, d = distFromForm(), bad = DIST.problems(d);
+    if (bad.length) { $("distStatus").textContent = bad[0]; return; }
+    $("distSave").disabled = true;
+    try {
+      const rows = await rest("creator_tracks?id=eq." + encodeURIComponent(id) + "&m_uid=eq." + encodeURIComponent(mUid) + "&select=id", {
+        method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify({ distribution: d })
+      });
+      if (!rows?.length) throw new Error("Release not found");
+      if (distOpen && distOpen.gen === gen) $("distStatus").textContent = "Saved. McCluster uses these details when it prepares the release for the stores.";
+    } catch (err) {
+      if (distOpen && distOpen.gen === gen) $("distStatus").textContent = /distribution/.test(err.message || "") ? "Distribution details open once McCluster switches them on. Nothing was saved." : (err.message || "Save failed");
+    } finally { if (distOpen && distOpen.gen === gen) $("distSave").disabled = false; }
+  }));
 }
 function escapeHtml(value) {
   const d = document.createElement("i");
@@ -786,7 +996,7 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
     const track = inserted?.[0];
     if (!track?.id) throw new Error("Release record was not returned.");
     createdTrackId = track.id;
-    await attachLyricSheet(track.id, lyricSheet);
+    const lyricOutcome = await attachLyricSheet(track.id, lyricSheet);
 
     await rest("music_rights_attestations", {
       method: "POST",
@@ -861,7 +1071,7 @@ $("trackForm").addEventListener("submit", guarded(async (e) => {
     $("derivativeField").hidden = true;
     status("trackStatus", (derivative
       ? "Uploaded. Held for manual derivative/parody rights review."
-      : "Uploaded. Submitted for rights and publication review.") + licenseWarning, licenseWarning ? "bad" : "good");
+      : "Uploaded. Submitted for rights and publication review.") + licenseWarning + lyricSheetNote(lyricOutcome), licenseWarning || lyricOutcome === "lost" ? "bad" : "good");
     try { await loadTracks(); }
     catch (_) {
       status("trackStatus", "Release submitted." + licenseWarning + " Your releases could not refresh. Reload to see it before uploading again.", "bad");
@@ -1030,6 +1240,10 @@ const GATE_TEXT = $("creatorGate").querySelector("p").textContent;
 let boots = 0;
 function closeStudio() {
   session = null; mUid = null; account = null; profile = null; tracksCache = []; onboardState = null;
+  /* the editor forgets the previous account's lyrics and audio */
+  if (lyricsBound && window.CR && window.CR.lyricsReview) { const a = window.CR.lyricsReview.state.audio; if (a) a.pause(); window.CR.lyricsReview.configure(lyricsSource); }
+  if ($("creatorLyrics")) $("creatorLyrics").hidden = true;
+  distOpen = null; if ($("creatorDist")) { $("creatorDist").hidden = true; $("distForm").reset(); $("distStatus").textContent = ""; $("distCheck").replaceChildren(); $("distCredits").replaceChildren(); $("distSplits").replaceChildren(); }
   editingAlbum = null; editingService = null;
   $("creatorOnboard").hidden = true;
   $("creatorApp").hidden = true;

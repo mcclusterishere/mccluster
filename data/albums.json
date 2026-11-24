@@ -599,6 +599,160 @@
      }
     }
    ]
+  },
+  {
+   "slug": "tinderfessions",
+   "name": "Tinderfessions",
+   "artist": "Benji Chase",
+   "tag": "The album · 2020",
+   "art": "assets/img/tinderfessions-cover.jpg",
+   "by": "",
+   "listen_elsewhere": [
+    {
+     "service": "Apple Music",
+     "url": "https://music.apple.com/us/album/tinderfessions/1540850727"
+    },
+    {
+     "service": "Spotify",
+     "url": "https://open.spotify.com/album/4WFLlYVdrCM7iYKdOOHSS7"
+    },
+    {
+     "service": "Amazon Music",
+     "url": "https://music.amazon.com/albums/B08NS11N38"
+    }
+   ],
+   "tracks": [
+    {
+     "title": "Rolling With Me",
+     "src": "assets/audio/rolling-with-me.m4a",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 150.8
+    },
+    {
+     "title": "Tinderella",
+     "src": "assets/audio/tinderella.m4a",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 212.1
+    },
+    {
+     "title": "Alquifina (New Chick)",
+     "src": "assets/audio/alquifina-new-chick.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 113
+    },
+    {
+     "title": "Bussin' Juggs",
+     "src": "assets/audio/bussin-juggs.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 118.6
+    },
+    {
+     "title": "One Gon' Ride (feat. Jiddy)",
+     "src": "assets/audio/one-gon-ride.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 98.1
+    },
+    {
+     "title": "Recipe",
+     "src": "assets/audio/recipe.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 96.1
+    },
+    {
+     "title": "Spell",
+     "src": "assets/audio/spell.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 96
+    },
+    {
+     "title": "Fire",
+     "src": "assets/audio/fire.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 134
+    },
+    {
+     "title": "Promises",
+     "src": "assets/audio/promises.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 238.7
+    },
+    {
+     "title": "Drunk Driving",
+     "src": "assets/audio/drunk-driving.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 127.1
+    },
+    {
+     "title": "No Friend",
+     "src": "assets/audio/no-friend.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 167.6
+    },
+    {
+     "title": "Numb",
+     "src": "assets/audio/numb.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 215.6
+    }
+   ]
+  },
+  {
+   "slug": "in-hot-pursuit",
+   "name": "In Hot Pursuit",
+   "artist": "Benji Chase",
+   "tag": "The album",
+   "art": "assets/img/in-hot-pursuit-cover.jpg",
+   "by": "",
+   "tracks": [
+    {
+     "title": "HitShake",
+     "src": "assets/audio/hitshake.m4a",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 42.2
+    },
+    {
+     "title": "Hitlist",
+     "src": "assets/audio/hitlist.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 125.1
+    },
+    {
+     "title": "Hit Mode",
+     "src": "assets/audio/hit-mode.m4a",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 72
+    },
+    {
+     "title": "See Me Up",
+     "src": "assets/audio/see-me-up.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 132.5
+    },
+    {
+     "title": "Other Side",
+     "src": "assets/audio/other-side.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 173.1
+    },
+    {
+     "title": "New Phone",
+     "src": "assets/audio/new-phone.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 117.1
+    },
+    {
+     "title": "Block So Hot",
+     "src": "assets/audio/block-so-hot.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 62.9
+    },
+    {
+     "title": "Up For Days",
+     "src": "assets/audio/up-for-days.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 216.5
+    }
+   ]
   }
  ]
 }
