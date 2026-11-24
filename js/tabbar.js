@@ -1133,6 +1133,17 @@
   });
   /* the World opening or closing over the player changes what the tab does (js/world-audio-continuity.js) */
   window.addEventListener("mcc:world-audio-open", function () { paintSound(); });
+  /* and on Listen, so does the player the installed app's dock shows (dockPlaysAnother, below): the tab asks again
+     whenever the Now Playing owner changes and when the dock comes or goes (the Release 1 dock fix) */
+  if (onPage(WINGS.music.home)) {
+    window.addEventListener("mcc:installed-dock", function () { paintSound(); });
+    (function followNowPlaying() {
+      var np = window.MCC_NOW_PLAYING;
+      if (np && typeof np.subscribe === "function") { np.subscribe(function () { paintSound(); }); return; }
+      var helper = document.querySelector("script[data-mcc-now-playing]");
+      if (helper) helper.addEventListener("load", followNowPlaying, { once: true });
+    })();
+  }
 
   /* Does the page give the bar its transport (MCC_NP_PLAY and MCC_NP_PAUSE)? The World open (or opening) over the
      player is the one exception: there the Music tab is the way back to the music, never its Pause. listen.html gives
@@ -1142,10 +1153,21 @@
     if (e && e === worldCancelTap) return false;   // the tap that called off a World still opening stays in the music, never pauses it
     return typeof window.MCC_NP_PLAY === "function" && typeof window.MCC_NP_PAUSE === "function";
   }
+  /* THE INSTALLED APP'S DOCK SHOWS THE NOW PLAYING OWNER (js/installed-app-dock.js). On Listen that is this page's
+     engine, and the tab is its Play/Pause. A World song carried back from the Globe while Listen holds a record of its
+     own is another player: the dock's own Play/Pause is that song's, so the tab, which would take up the held record,
+     goes back to being the way to the music, or the dock would hold two (the Release 1 dock fix, verification
+     DFV-2). The browser has no dock, and its bar keeps the tab as it was. */
+  function dockPlaysAnother() {
+    if (!document.documentElement.classList.contains("mcc-app-dock-ready")) return false;
+    var s = null;
+    try { s = window.MCC_NOW_PLAYING && window.MCC_NOW_PLAYING.snapshot ? window.MCC_NOW_PLAYING.snapshot() : null; } catch (e) {}
+    return !!(s && s.title && s.canPlay && s.canPause && s.surface !== "listen");
+  }
   /* a tap on the Music tab is the player's Play or Pause, not a way somewhere: on the page the tab points at, when that
      page gives the bar its transport (the tap dispatch below and the tab's name both ask this, so they cannot disagree) */
   function musicTabTransport(e) {
-    return onPage(WINGS.music.home) && musicTransportHere(e);
+    return onPage(WINGS.music.home) && musicTransportHere(e) && !dockPlaysAnother();
   }
 
   /* the same idiom both of the album's own transport buttons use: ask what

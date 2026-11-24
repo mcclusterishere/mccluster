@@ -1416,4 +1416,8 @@ with this check's own probes; nothing above was taken on trust. Nothing was merg
   page the dock held two Pause buttons side by side, the bar's Music button and the dock's own (both named "Pause
   music", both pause the song); since the Release 1 dock fix it holds one, the Music button, and the dock shows its own
   Play/Pause only where the Music button is the way to the music (the album, where it opens the shelf; the World open
-  over the music).
+  over the music; the listen page while a World song carried back from the Globe plays there and the page holds a
+  record of its own, which the Music button would take up instead). In the house owner's strip, which scrolls, the
+  Music button is pinned at the strip's start while it is the Play/Pause. On the album, in the installed app, the
+  Music button wears its play triangle while the album plays (the dock's own is the Pause) and a tap still opens the
+  shelf and ends the album's song: whether it should be the album's Pause there is the same call.

@@ -428,7 +428,12 @@ async function fallbackTransport(device) {
    is the page's Play/Pause (Listen) it is the one control; where it is the way to the music (the album, where it
    opens the shelf as before; the World over the music) the dock's own is, and the tab wears no second pause glyph.
    Muted lasts, so it is said in the song line's second line, one row; the trouble words keep the status row. Phone
-   first: 390 and 320 wide. */
+   first: 390 and 320 wide.
+   The verification of 4e2d4352 found three ways the one control still failed, each checked below: in the house
+   owner's strip (ten tabs scrolling in 132 px) the Music tab scrolled out of reach and left the dock with none
+   (DFV-1); on Listen a World song carried back from the Globe while Listen held a record left two, the tab for the
+   record and the dock's own for the song (DFV-2); and the tab's play triangle at rest, the only Play once the dock's
+   own was gone, was the room's grey on its red coin, about 1.2:1 (DFV-3). */
 const PHONES = [
   { name:'390', viewport:{width:390,height:844}, insets:{top:47,bottom:34,left:0,right:0} },
   { name:'320', viewport:{width:320,height:568}, insets:{top:20,bottom:0,left:0,right:0} }
@@ -459,6 +464,17 @@ async function named(page, words) {
 async function musicTab(page) {
   const s = (await page.locator('.appbar [data-appnav="music"]').ariaSnapshot()).trim(), m = /^- (\w+) "([^"]*)"/.exec(s);
   return m ? `${m[1]} "${m[2]}"` : s;
+}
+/* the bar's Play/Pause controls a listener can see and reach: shown, inside the strip's window when they sit in it (a
+   tab scrolled out of the owner's strip is not on screen), and the element a tap at their centre lands on */
+async function reachablePlayPause(page) {
+  return page.evaluate(() => [...document.querySelectorAll('.appbar a[data-appnav],.appbar button[data-app-player]')].filter(n => {
+    if (!/^(Play|Pause) music/.test(n.getAttribute('aria-label') || '') || !n.getClientRects().length || getComputedStyle(n).visibility === 'hidden') return false;
+    const r = n.getBoundingClientRect(), strip = n.closest('.appbar__tabs'), c = strip && strip.getBoundingClientRect();
+    if (c && (r.left < c.left - .5 || r.right > c.right + .5)) return false;
+    const hit = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2);
+    return !!hit && (hit === n || n.contains(hit));
+  }).map(n => `${n.dataset.appnav || n.dataset.appPlayer}:${n.getAttribute('aria-label')}`));
 }
 /* waits until the Music tab's name (its label, else its words) matches */
 const tabSays = (page, words) => page.waitForFunction(w => {
@@ -504,6 +520,10 @@ async function listenOnePause(phone) {
     check(scope + ', paused from the Music tab: it is the one control named Play and drawn as Play; nothing is named or drawn Pause',
       await named(page,/^Pause/) === 0 && await named(page,/^Play music/) === 1 && await musicTab(page) === 'link "Play music"' &&
       c.find(x => x.key === 'music')?.drawn === 'play' && !c.some(x => x.drawn === 'pause' || x.key === 'play'), c);
+    /* the one Play there is the tab's triangle on its red coin: white, as its pause glyph is, never the room's grey
+       (css/music-system-v2.css), which the red all but swallows (DFV-3: rgb(119, 120, 126) at 4e2d4352, about 1.2:1) */
+    check(scope + ', paused from the Music tab: its play triangle is white on its red coin, as its pause glyph is',
+      c.find(x => x.key === 'music')?.ink === 'rgb(255, 255, 255)' && await page.locator('.appbar [data-appnav="music"]').evaluate(n => n.classList.contains('is-here')), c);
     s = await dockState(page);
     check(scope + ', paused: the dock keeps the song line, one row', near(s.height,46,1) && s.title === (await audio(page)).title, s);
     await page.locator('.appbar [data-appnav="music"]').click();
@@ -613,6 +633,108 @@ async function listenReconnecting(phone) {
   } catch (error) { await failed(run,scope,error); }
   finally { await context.close(); }
 }
+/* DFV-1: the house owner's strip scrolls (ten tabs in 132 px, 126 at 320) and its first tab is the Music tab, the one
+   Play/Pause on Listen; scrolled to its end, 4e2d4352 left no Play/Pause on screen at all. Pinned at the strip's start
+   while it is the Play/Pause (BAR-RESTORE 4.2), it stays in reach, the tabs pass under it, and a tab the keyboard
+   moves to comes to rest clear of it. */
+async function ownerListenPinned(phone) {
+  const run = await setup(phone,true,true), {page,context} = run, scope = phone.name + ' installed owner Listen';
+  try {
+    await play(page);
+    await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-active'));
+    await tabSays(page,'^Pause');
+    const strip = page.locator('.appbar__tabs');
+    const size = await strip.evaluate(n => ({scrollWidth:n.scrollWidth,clientWidth:n.clientWidth,tabs:n.querySelectorAll('[data-appnav]').length,first:n.querySelector('[data-appnav]').dataset.appnav}));
+    check(scope + ': the owner\'s strip scrolls, the Music tab first', size.tabs >= 10 && size.scrollWidth > size.clientWidth + 44 && size.first === 'music', size);
+    check(scope + ', a song playing: the one Play/Pause in reach is the Music tab', JSON.stringify(await reachablePlayPause(page)) === '["music:Pause music"]', await reachablePlayPause(page));
+    await strip.evaluate(n => { n.scrollLeft = n.scrollWidth; });
+    await painted(page); await page.waitForTimeout(300);
+    const scrolled = await strip.evaluate(n => n.scrollLeft);
+    let reach = await reachablePlayPause(page);
+    check(scope + ', the strip scrolled to its end: the one Play/Pause stays in reach, the Music tab pinned at the strip\'s start (4e2d4352 left none on screen)',
+      scrolled > 44 && JSON.stringify(reach) === '["music:Pause music"]', {scrolled,reach});
+    /* it stands on the bar's own ground: the tab scrolled beneath it does not show through */
+    const ground = await page.locator('.appbar [data-appnav="music"]').evaluate(n => getComputedStyle(n).backgroundColor);
+    check(scope + ', scrolled: the pinned tab is opaque, the tabs pass under it', /^rgb\(/.test(ground), ground);
+    /* a finger on the pinned tab, as on the phone: it pauses, and the strip stays where the owner left it */
+    const pin = await page.locator('.appbar [data-appnav="music"]').boundingBox();
+    await page.touchscreen.tap(pin.x + pin.width / 2, pin.y + pin.height / 2);
+    await page.waitForFunction(() => MCC_MUSIC.audio.paused);
+    await tabSays(page,'^Play');
+    reach = await reachablePlayPause(page);
+    const still = await strip.evaluate(n => n.scrollLeft);
+    check(scope + ', paused from the pinned tab: it is the one Play in reach, and the strip has not moved', JSON.stringify(reach) === '["music:Play music"]' && still === scrolled, {reach,scrolled,still});
+    await page.touchscreen.tap(pin.x + pin.width / 2, pin.y + pin.height / 2);
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused);
+    await tabSays(page,'^Pause');
+    check(scope + ', played again: the one Pause in reach', JSON.stringify(await reachablePlayPause(page)) === '["music:Pause music"]');
+    /* the keyboard: from the last tab back to the second, every tab focused comes to rest clear of the pinned one */
+    await page.locator('.appbar__tabs [data-appnav]').last().focus();
+    const steps = [];
+    for (let i = 0; i < size.tabs - 2; i++) {
+      await page.keyboard.press('ArrowLeft');
+      await painted(page); await page.waitForTimeout(120);
+      steps.push(await page.evaluate(() => {
+        const f = document.activeElement, pin = document.querySelector('.appbar [data-appnav="music"]');
+        const r = f.getBoundingClientRect(), p = pin.getBoundingClientRect(), c = f.closest('.appbar__tabs').getBoundingClientRect();
+        const hit = document.elementFromPoint((r.left + r.right) / 2, (r.top + r.bottom) / 2);
+        return {key:f.dataset.appnav, clear:f !== pin && r.left >= p.right - .5, inside:r.left >= c.left - .5 && r.right <= c.right + .5, hit:!!hit && (hit === f || f.contains(hit))};
+      }));
+    }
+    check(scope + ': a tab the keyboard moves to is never hidden under the pinned Music tab', steps.length >= 8 && steps.every(s => s.clear && s.inside && s.hit), steps);
+    check(scope + ': the page fits (scrollWidth === clientWidth)', await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth));
+    await page.screenshot({path:join(OUT,`one-pause-${phone.name}-owner-listen-scrolled.png`)});
+    await noErrors(run,scope);
+  } catch (error) { await failed(run,scope,error); }
+  finally { await context.close(); }
+}
+/* DFV-2: a returning listener's record held on Listen, the Globe (the World's song starts, as designed) and the Music
+   tab back: the World's song plays on Listen. The dock shows that song, so its own Play/Pause is the one control, and
+   the tab, which would take up the held record, is the way to the music; 4e2d4352 left both (link "Play music" for
+   the record, button "Pause music" for the song). Taking the record up again from its own player gives the tab back
+   its Play/Pause. In the browser, which has no dock, the bar keeps the tab as it was. */
+async function listenWorldSong(phone, installed = true) {
+  const run = await setup(phone,installed), {page,context} = run, scope = phone.name + (installed ? ' installed' : ' browser') + ' Listen, a World song over a held record';
+  try {
+    await play(page);
+    await page.waitForTimeout(400);
+    await page.goto(HOUSE + '/listen.html', {waitUntil:'load'});
+    await page.waitForFunction(() => !!window.MCC_BAR && !!window.MCC_WORLD_AUDIO && !!window.MCC_MUSIC);
+    if (installed) await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-ready'));
+    await page.waitForFunction(() => typeof window.MCC_NP_PLAY === 'function' && !MCC_MUSIC.current() && /Pick up at/.test(document.getElementById('musicMiniAlbum')?.textContent || ''));
+    await tabSays(page,'^Play music$');
+    await retainedWorld(page);
+    await page.waitForFunction(() => MCC_NOW_PLAYING.snapshot()?.surface === 'world' && MCC_NOW_PLAYING.snapshot().playing);
+    await Promise.all([page.waitForURL(url => !url.searchParams.has('world')), page.locator('.appbar [data-appnav="music"]').click()]);
+    await page.waitForFunction(() => !MCC_WORLD_AUDIO.active());
+    await page.waitForFunction(() => MCC_NOW_PLAYING.snapshot()?.surface === 'world' && MCC_NOW_PLAYING.snapshot().playing && !MCC_MUSIC.current());
+    await painted(page);
+    if (!installed) {
+      check(scope + ': the browser keeps its bar as it was: the Music tab is still the held record\'s Play (link "Play music")', await musicTab(page) === 'link "Play music"' && !(await page.$('[data-app-player]')));
+      await noErrors(run,scope); return;
+    }
+    await page.waitForFunction(() => document.documentElement.getAttribute('data-app-player-surface') === 'world');
+    let c = await barControls(page);
+    check(scope + ': the World\'s song plays on Listen, and the dock holds one Play/Pause, its own; the Music tab is the way to the music (4e2d4352 also made it "Play music" for the held record)',
+      await named(page,/^(Play|Pause) music/) === 1 && await page.locator('.appbar').getByRole('button',{name:'Pause music'}).count() === 1 &&
+      await musicTab(page) === 'link "Music"' && c.filter(x => x.drawn === 'pause').map(x => x.key).join() === 'play', c);
+    await page.screenshot({path:join(OUT,`one-pause-${phone.name}-listen-world-song.png`)});
+    await page.locator('.appbar [data-app-player="play"]').click();
+    await page.waitForFunction(() => MCC_NOW_PLAYING.snapshot()?.surface === 'world' && !MCC_NOW_PLAYING.snapshot().playing);
+    await page.waitForFunction(() => document.querySelector('.appbar [data-app-player="play"]')?.getAttribute('aria-label') === 'Play music');
+    check(scope + ', the song paused from the dock: one control named Play, the dock\'s own; the Music tab still "Music"',
+      await named(page,/^(Play|Pause) music/) === 1 && await page.locator('.appbar').getByRole('button',{name:'Play music'}).count() === 1 && await musicTab(page) === 'link "Music"');
+    await page.locator('#musicMiniPlay').click();
+    await page.waitForFunction(() => !!MCC_MUSIC.current() && !MCC_MUSIC.audio.paused && MCC_NOW_PLAYING.snapshot()?.surface === 'listen');
+    await tabSays(page,'^Pause');
+    c = await barControls(page);
+    check(scope + ', the held record taken up from its own player: the Music tab is the one Play/Pause again, the dock shows none of its own',
+      await named(page,/^(Play|Pause) music/) === 1 && await musicTab(page) === 'link "Pause music"' && !c.some(x => x.key === 'play'), c);
+    check(scope + ': the page fits (scrollWidth === clientWidth)', await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth));
+    await noErrors(run,scope);
+  } catch (error) { await failed(run,scope,error); }
+  finally { await context.close(); }
+}
 async function browserListen(phone) {
   const run = await setup(phone,false), {page,context} = run, scope = phone.name + ' browser Listen';
   try {
@@ -639,7 +761,9 @@ async function browserListen(phone) {
   finally { await context.close(); }
 }
 const DOCK_FIX = [['installed Listen one Play/Pause',listenOnePause],['installed album one Play/Pause',albumOnePause],
-  ['installed Listen muted',listenMuted],['installed Listen reconnecting',listenReconnecting],['browser Listen',browserListen]];
+  ['installed Listen muted',listenMuted],['installed Listen reconnecting',listenReconnecting],['browser Listen',browserListen],
+  ['installed owner Listen pinned',ownerListenPinned],['installed Listen World song',phone => listenWorldSong(phone,true)],
+  ['browser Listen World song',phone => listenWorldSong(phone,false)]];
 /* INSTALLED_APP_ONLY=<words>[|<words>] runs only the dock-fix scenarios whose name ("390 installed Listen muted") holds
    them, a local check of one fix; unset, the whole suite runs */
 const ONLY = (process.env.INSTALLED_APP_ONLY || '').split('|').filter(Boolean);
