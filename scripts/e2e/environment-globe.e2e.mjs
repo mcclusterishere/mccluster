@@ -1,7 +1,8 @@
 /* The environmental globe inside its frame (slice G1, 2026-11-17), in a real browser at 390 and 1280 with every layer
    route answered from the fixtures: counts per layer, the legend sentences, the selection payload per layer (source,
    recorded time under its own label, retrieval time, coverage, status), ShakeMap contours on the selected quake with
-   the modelled label, the ripple's bounded hold, reduced motion, the 2D toggle, the policy gate (503 and 404), one
+   the modelled label, the ripple's bounded hold (its end at the module's own deadline, late only by the stall the test's
+   clock inside the frame measured: RIPPLE_BOUND below), reduced motion, the 2D toggle, the policy gate (503 and 404), one
    layer unavailable and one stale reported truthfully, a real pick and a miss that falls through, the feed route never
    requested by the frame, scrollWidth === clientWidth, no page errors, and the perf script in --check mode.
    Event timeline slice S5 (2026-11-19): every quake a labelled glyph, the labels inside the frame's free area, a real tap 15 px
@@ -14,7 +15,10 @@
    call). Run:  node scripts/e2e/environment-globe.e2e.mjs [outDir]
    Needs Playwright (PLAYWRIGHT_DIR if not resolvable) and the Cesium CDN, or CESIUM_DIR pointing at a local
    Build/Cesium of the same release (served under the CDN URL, so the page's SRI still applies). E2E_GL_ARGS=1 adds the
-   SwiftShader flags the editorial CI uses. Exits non-zero on any failed check. */
+   SwiftShader flags the editorial CI uses. E2E_CPU_THROTTLE=<n> (off unless set, never set by CI) slows every page's main
+   thread n times through the DevTools protocol (Emulation.setCPUThrottlingRate), to replay a slow runner's scripts on a
+   fast machine; the software GL draws run in the GPU process and are not slowed by it (pinning the whole run to one CPU,
+   taskset -c 0, starves those too). Exits non-zero on any failed check. */
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
@@ -24,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const OUT = process.argv[2] || join(ROOT, 'e2e-out', 'environment-globe');
+const CPU_THROTTLE = Number(process.env.E2E_CPU_THROTTLE) || 0;
 const require = createRequire(import.meta.url);
 let chromium;
 try { ({ chromium } = require('playwright')); }
@@ -91,6 +96,7 @@ async function context(viewport, { reducedMotion = 'no-preference', policy = nul
     catch { return route.abort(); }
   });
   const page = await ctx.newPage();
+  if (CPU_THROTTLE > 1) await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE });
   page.setDefaultTimeout(90000);
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
@@ -144,10 +150,60 @@ async function viewAtLod(frame, lon, lat, height, lod) {
   }), { lon, lat, height, lod });
 }
 const fact = (payload, label) => (payload && Array.isArray(payload.facts) ? payload.facts.find((f) => f.label === label) : null);
+/* like until, but the predicate returns what it saw (or false): what the test waits for and what it checks are one read */
+async function untilRead(target, fn, arg, ms = 20000) { const h = await target.waitForFunction(fn, arg, { timeout: ms, polling: 100 }).catch(() => null); return h ? h.jsonValue() : null; }
+/* THE RIPPLE'S BOUND, ON THE FRAME'S OWN CLOCK (2026-11-24, after PR #825's 1280 run on a slow runner: 6579 ms against what
+   was a fixed 6.5 s). js/environment-ripple.js ends the ripple at its deadline, min(chosen + HOLD_MAX_MS, chosen + WAIT_MAX_MS +
+   DURATION_MS, rings + DURATION_MS), by a timer and by a frame. The deadline is the design and is held as it stands, from the
+   module's own pure constants: at most 4.9 s after the choice (a 2.5 s wait for the landing at most, then 2.4 s of rings,
+   D17), never above the 6 s hold, and the ripple never over in under a second. What a slow runner adds is a frame whose main
+   thread cannot run anything: on software GL one draw held it for 1.7 s across the deadline, so neither the timer nor a frame
+   could end the ripple until it returned. So the test keeps its own clock inside the frame, a timer every 20 ms on Date.now()
+   (the ripple's clock): a beat set at a that runs at b proves the frame could run no due timer from a + 20 ms to b. The ripple
+   may end late by the stall that clock measured after its deadline (stalledMs) plus 100 ms, by no more, and never early. A
+   frame interval is not the allowance: on software GL frames come seconds apart while the timers run on time, and a ripple
+   that only a sparse frame ends must fail. */
+const RIPPLE_BOUND = Object.freeze({ lifetimeMs: 4900, holdMaxMs: 6000, minMs: 1000, toleranceMs: 100, earlyMs: 50, beatMs: 20 });
+/* started once per page before the first choice, kept for the last 60 s; it notes the camera's moveStart and moveEnd too */
+const startClock = (frame) => frame.evaluate((beatMs) => {
+  if (window.__mccTestClock) return true;
+  const k = { beatMs, beats: [], frames: [], moves: [] };
+  const keep = (list, t) => { while (list.length && list[0] < t - 60000) list.shift(); };
+  const beat = () => { const t = Date.now(); k.beats.push(t); keep(k.beats, t); setTimeout(beat, beatMs); };
+  const tick = () => { const t = Date.now(); k.frames.push(t); keep(k.frames, t); requestAnimationFrame(tick); };
+  const move = (ev) => () => { k.moves.push([ev, Date.now()]); if (k.moves.length > 100) k.moves.shift(); };
+  window.HuGlobe.viewer().camera.moveStart.addEventListener(move('start'));
+  window.HuGlobe.viewer().camera.moveEnd.addEventListener(move('end'));
+  window.__mccTestClock = k;
+  setTimeout(beat, beatMs); requestAnimationFrame(tick);
+  return true;
+}, RIPPLE_BOUND.beatMs);
+/* one read, once the clock has beaten past the ripple's end: its deadline from the module's constants, how late it ended, the
+   stall the clock saw after the deadline, and for the record the longest beat gap and the frame interval at the deadline */
+async function rippleTiming(frame, id) {
+  return untilRead(frame, (id) => {
+    const s = window.__mccEnvironmentLayers(), r = s.lastRipple, k = window.__mccTestClock, P = window.MCC_ENVIRONMENT_RIPPLE && window.MCC_ENVIRONMENT_RIPPLE.pure;
+    if (s.ripple !== null || !r || r.id !== id || !k || !P || !(k.beats[k.beats.length - 1] > r.endedAt)) return false;
+    const deadline = Math.min(r.startedAt + P.HOLD_MAX_MS, r.startedAt + P.WAIT_MAX_MS + P.DURATION_MS, r.ringsAt === null ? Infinity : r.ringsAt + P.DURATION_MS);
+    let stalledMs = 0, beatGapMs = 0, frameMs = null;
+    for (let i = 1; i < k.beats.length; i += 1) {
+      const a = k.beats[i - 1], b = k.beats[i], from = Math.max(a + k.beatMs, deadline), to = Math.min(b, r.endedAt);
+      if (to > from) stalledMs += to - from;
+      if (b >= deadline && a <= r.endedAt) beatGapMs = Math.max(beatGapMs, b - a);
+    }
+    for (let i = 1; i < k.frames.length; i += 1) if (k.frames[i - 1] <= deadline && k.frames[i] >= deadline) frameMs = k.frames[i] - k.frames[i - 1];
+    return { lateMs: r.endedAt - deadline, stalledMs, designMs: deadline - r.startedAt, rippleMs: r.endedAt - r.startedAt, beatGapMs, frameMs, clocked: k.beats[0] <= deadline, constants: { WAIT_MAX_MS: P.WAIT_MAX_MS, DURATION_MS: P.DURATION_MS, HOLD_MAX_MS: P.HOLD_MAX_MS }, ripple: { startedAt: r.startedAt, ringsAt: r.ringsAt, endedAt: r.endedAt } };
+  }, id, 15000);
+}
+/* the design bound, then the end at that deadline: never before it, and late only by the stall the frame's clock measured */
+const rippleWithinBound = (t) => !!t && t.clocked && t.constants.WAIT_MAX_MS + t.constants.DURATION_MS <= RIPPLE_BOUND.lifetimeMs && t.constants.HOLD_MAX_MS <= RIPPLE_BOUND.holdMaxMs
+  && t.designMs <= RIPPLE_BOUND.lifetimeMs && t.designMs <= t.constants.HOLD_MAX_MS && t.rippleMs >= RIPPLE_BOUND.minMs
+  && t.lateMs >= -RIPPLE_BOUND.earlyMs && t.lateMs <= t.stalledMs + RIPPLE_BOUND.toleranceMs;
 
 await mkdir(OUT, { recursive: true });
 const launchOptions = process.env.E2E_GL_ARGS === '1' || process.env.CI ? { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] } : {};
 const browser = await chromium.launch(launchOptions);
+if (CPU_THROTTLE > 1) console.log(`INFO CPU throttled ${CPU_THROTTLE}x in every page (E2E_CPU_THROTTLE)`);
 const SIZES = [{ name: '390', viewport: { width: 390, height: 844 } }, { name: '1280', viewport: { width: 1280, height: 800 } }];
 const firstDetection = FIX['layers-fires'].detections[0];
 const detectionId = `fire:${firstDetection[5]}:${firstDetection[4]}:${firstDetection[0]}:${firstDetection[1]}`;
@@ -198,19 +254,23 @@ for (const size of SIZES) {
   const idle = await until(frame, () => { const g = window.__mccGlobeGovernor(); return g.enabled && g.holds.length === 0; }, null, 20000);
   const g0 = await gov(frame);
   check(scope, 'the governor is enabled, on demand with no holds, maximumRenderTimeChange 60', idle && g0.mode === 'on-demand' && g0.maximumRenderTimeChange === 60 && (await frame.evaluate(() => window.HuGlobe.viewer().scene.requestRenderMode)) === true, g0);
-  /* focus a quake with a ShakeMap: the selection payload, the ripple's bounded hold, the contours and the modelled label */
+  /* focus a quake with a ShakeMap: the selection payload, the ripple's bounded hold, the contours and the modelled label; the
+     frame's own clock (RIPPLE_BOUND above) runs from here to the end of the S5 slice */
+  await startClock(frame);
   await page.evaluate(() => { window.__fromGlobe.length = 0; });
   const t0 = Date.now();
   await send(page, { type: 'hu:environment-focus', id: 'usgs:us7000tyhr' });
   const sel = await waitMessage(page, "m.type === 'hu:environment-selected' && m.id === 'usgs:us7000tyhr' && m.via === 'focus'", 20000);
   check(scope, 'focus answers hu:environment-selected with source, recorded time under its label, retrieval time, coverage and status', !!sel && sel.layer === 'events' && sel.kind === 'quake' && sel.source.label === 'USGS' && sel.source.url === 'https://earthquake.usgs.gov/earthquakes/eventpage/us7000tyhr' && /Earthquake Hazards Program/.test(sel.source.attribution) && sel.observed_label === 'Observed' && sel.observed_at === '2026-11-16T04:24:11.718Z' && sel.fetched_at === '2026-11-17T20:54:00.000Z' && sel.coverage === 'Global earthquakes reported in the past day' && sel.status === 'available' && sel.reason === null && sel.lat === 37.3664 && sel.lon === 136.7444 && sel.illustrative === 'Ripple is illustrative: not a recording of shaking', sel);
   /* the ripple, the governor's holds and the legend read in ONE evaluate (review RV2-9: two reads once straddled the 4.5 s ripple's
-     end on a loaded runner); a ripple already over by the time it is read is judged by the record it left: bounded, its hold gone */
+     end on a loaded runner); a ripple already over by the time it is read is judged by the record it left: within its bound on
+     the frame's own clock (rippleWithinBound), its hold gone */
   const rippleNow = await frame.evaluate(() => { const s = window.__mccEnvironmentLayers(), g = window.__mccGlobeGovernor(); return { ripple: s.ripple, lastRipple: s.lastRipple, holds: g.holds.slice(), legend: s.legend.slice() }; });
   const rippleLabel = 'Ripple is illustrative: not a recording of shaking';
+  const overAtFirstRead = rippleNow.ripple ? null : await rippleTiming(frame, 'usgs:us7000tyhr');
   const rippleOk = rippleNow.ripple ? rippleNow.ripple.active === true && rippleNow.holds.includes('env-ripple') && rippleNow.legend.includes(rippleLabel)
-    : !!rippleNow.lastRipple && !rippleNow.holds.includes('env-ripple') && rippleNow.lastRipple.endedAt - rippleNow.lastRipple.startedAt <= 6500;
-  check(scope, 'the ripple runs under the bounded env-ripple hold and is labelled (in the legend while it runs, and in the selection it answered)', rippleOk && !!sel && sel.illustrative === rippleLabel, { running: !!rippleNow.ripple, holds: rippleNow.holds, ripple: rippleNow.ripple, lastRipple: rippleNow.lastRipple });
+    : !!rippleNow.lastRipple && !rippleNow.holds.includes('env-ripple') && rippleWithinBound(overAtFirstRead);
+  check(scope, 'the ripple runs under the bounded env-ripple hold and is labelled (in the legend while it runs, and in the selection it answered)', rippleOk && !!sel && sel.illustrative === rippleLabel, rippleNow.ripple ? { running: true, holds: rippleNow.holds, ripple: rippleNow.ripple } : { running: false, holds: rippleNow.holds, timing: overAtFirstRead, lastRipple: rippleNow.lastRipple });
   const modelled = await waitMessage(page, "m.type === 'hu:environment-selected' && m.id === 'usgs:us7000tyhr' && m.modelled === true", 20000);
   const smLine = fact(modelled, 'ShakeMap');
   check(scope, 'the ShakeMap arrives with the modelled label (v5, automatic, max MMI 2.9, computed time)', !!modelled && !!smLine && smLine.value === 'modelled shaking (MMI), USGS ShakeMap v5 (automatic), max MMI 2.9, computed 2026-11-17T04:28:22.000Z' && modelled.observed_label === 'Observed', smLine);
@@ -218,12 +278,19 @@ for (const size of SIZES) {
   check(scope, 'the shakemap layer state carries the digest and the two USGS sources, and speaks for the contours source (G1R-3)', !!smState && smState.digest.version === 5 && smState.digest.max_mmi === 2.9 && smState.digest.event_id === 'us7000tyhr' && smState.sources.length === 2 && smState.sources[1].label === 'USGS ShakeMap' && /Geological Survey ShakeMap/.test(smState.sources[1].attribution) && smState.fetched_at === '2026-11-17T20:01:00.000Z' && smState.source_id === 'usgs_shakemap' && smState.attribution === 'U.S. Geological Survey ShakeMap' && smState.url === 'https://earthquake.usgs.gov/data/shakemap/' && /^ShakeMap exists/.test(smState.coverage), smState && { digest: smState.digest, sources: smState.sources.map((s) => s.label), fetched_at: smState.fetched_at, attribution: smState.attribution });
   const built = await until(frame, () => window.__mccEnvironmentLayers().counts.shakemapLines === 10 && window.__mccEnvironmentLayers().built, null, 30000);
   check(scope, 'ten contour lines are drawn exactly as received', built, (await env(frame)).counts);
-  /* the ripple's hold is bounded: the frame records when its ripple started and ended on its own clock */
+  /* the ripple's hold is bounded: the frame records when its ripple started and ended on its own clock, and the test's clock in
+     the frame says how long after the deadline the frame could run no timer (RIPPLE_BOUND above) */
   const ended = await until(frame, () => { const s = window.__mccEnvironmentLayers(); return s.ripple === null && !!s.lastRipple && !window.__mccGlobeGovernor().holds.includes('env-ripple'); }, null, 12000);
-  const lastRipple = (await env(frame)).lastRipple;
-  check(scope, 'the ripple and its env-ripple hold end within 6.5 s of the ripple\'s start', ended && !!lastRipple && lastRipple.endedAt - lastRipple.startedAt >= 1000 && lastRipple.endedAt - lastRipple.startedAt <= 6500, { lastRipple, rippleMs: lastRipple && lastRipple.endedAt - lastRipple.startedAt, sinceFocusMs: Date.now() - t0 });
-  const released = await until(frame, () => window.__mccGlobeGovernor().holds.length === 0, null, 20000);
-  check(scope, 'every hold is released (ripple, focus flight, selection fade, build): back on demand', released && (await env(frame)).ripple === null && (await gov(frame)).mode === 'on-demand', { governor: await gov(frame), sinceFocusMs: Date.now() - t0 });
+  const timing = ended ? await rippleTiming(frame, 'usgs:us7000tyhr') : null;
+  check(scope, 'the ripple and its env-ripple hold end at the ripple\'s deadline (4.9 s at most after its start, within the 6 s hold, by the module\'s own constants), never before it and late only by the stall the frame\'s own clock measured after it, plus 100 ms', ended && rippleWithinBound(timing), timing ? { ...timing, sinceFocusMs: Date.now() - t0 } : { ended, lastRipple: (await env(frame)).lastRipple, sinceFocusMs: Date.now() - t0 });
+  /* every hold released, the ripple gone and the governor on demand, seen in ONE read (PR #825's runner saw no hold, then a
+     separate read 200 ms later found 'camera': the reads straddled a new camera hold). That hold was not the push. With the
+     camera parked, Cesium's heading and roll getters, read every frame because the page listens to camera.changed, rewrite the
+     camera through the east-north-up frame; the up vector's rounding drift (1.1e-15) passes Cesium's own EPSILON15 test, so
+     moveStart fires with nothing moving and the governor holds 'camera' until moveEnd. That is a product defect, reported, not
+     excused: this check waits for a moment with no hold at all, and the camera's moves after the ripple travel in its record. */
+  const releasedNow = await untilRead(frame, () => { const s = window.__mccEnvironmentLayers(), g = window.__mccGlobeGovernor(), k = window.__mccTestClock, end = s.lastRipple ? s.lastRipple.endedAt : 0; return s.ripple === null && g.enabled && g.holds.length === 0 && g.mode === 'on-demand' && { mode: g.mode, holds: g.holds, ripple: s.ripple, cameraMovesSinceRipple: k ? k.moves.filter((m) => m[1] >= end) : null }; }, null, 20000);
+  check(scope, 'every hold is released (ripple, focus flight, selection fade, build): back on demand, in one read', !!releasedNow, { seen: releasedNow || { governor: await gov(frame), ripple: (await env(frame)).ripple }, sinceFocusMs: Date.now() - t0 });
   /* a ShakeMap with no contour, and an event with no ShakeMap at all */
   await send(page, { type: 'hu:environment-focus', id: 'usgs:us7000tyca' });
   const deep = await waitMessage(page, "m.type === 'hu:environment-selected' && m.id === 'usgs:us7000tyca' && m.modelled === true", 20000);
@@ -353,7 +420,8 @@ for (const size of SIZES) {
   }
   const rang = await until(frame, () => { const s = window.__mccEnvironmentLayers(); return s.ripple === null && !!s.lastRipple && s.lastRipple.id === 'usgs:fx-m62' && !window.__mccGlobeGovernor().holds.includes('env-ripple'); }, null, 12000);
   const after = await env(frame), lr = after.lastRipple, landAt = after.camera && after.camera.last ? after.camera.last.at : null;
-  check(scope, 'S5: the ring clock starts no earlier than landing (50 ms tolerance), cleanup finishes within 6.5 s of the choice, and its hold is released', rang && !!lr && lr.ringsAt !== null && landAt !== null && lr.ringsAt >= landAt - 50 && lr.endedAt - lr.startedAt <= 6500, { lr, landAt, sinceTapMs: Date.now() - t61 });
+  const s5Timing = rang ? await rippleTiming(frame, 'usgs:fx-m62') : null;
+  check(scope, 'S5: the ring clock starts no earlier than landing (50 ms tolerance), cleanup ends at the ripple\'s deadline (4.9 s at most after the choice) late only by the frame\'s own measured stall plus 100 ms, and its hold is released', rang && !!lr && lr.ringsAt !== null && landAt !== null && lr.ringsAt >= landAt - 50 && rippleWithinBound(s5Timing), { timing: s5Timing, landAt, sinceTapMs: Date.now() - t61 });
   check(scope, 'S5: every hold let go after the push and the rings: back on demand', await until(frame, () => { const g = window.__mccGlobeGovernor(); return g.enabled && g.holds.length === 0; }, null, 20000), await gov(frame));
   /* a documented rupture: the recorded M7.0 of 2026-10-22, 189 km ENE of Nagqu, China (USGS us6000u43g), joins the pins; its
      USGS finite-fault plane's modelled up-dip edge is drawn as one line and called a model in the selection and the legend */
