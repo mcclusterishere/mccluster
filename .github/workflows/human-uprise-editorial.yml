@@ -149,6 +149,12 @@ on:
       - 'scripts/e2e/anti-social.e2e.mjs'
       - 'scripts/e2e/human-uprise-door.e2e.mjs'
       - 'scripts/e2e/owner-halo-globe.e2e.mjs'
+      - 'carry.html'
+      - 'js/carry.js'
+      - 'scripts/e2e/carry.e2e.mjs'
+      - 'scripts/e2e/platform-hosts.e2e.mjs'
+      - 'data/seo/domain-architecture.json'
+      - 'workers/mccluster/src/platform/**'
       - '.github/workflows/human-uprise-editorial.yml'
   workflow_dispatch:
 permissions:
@@ -165,7 +171,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, installed-app, creator-onboarding, mission-pins, world-missions-guest, world-first-visit, world-gate, sign-in, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode, world-environment, environment-globe, environment-world, environment-unit, environment-plane, environment-store, environment-owner, environment-control, environment-ingest, connections-consent, mission-sources-store, mission-sources-owner, environment-timeline, environment-timeline-world, mission-sources-control, world-source-profile]
+        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, installed-app, creator-onboarding, mission-pins, world-missions-guest, world-first-visit, world-gate, sign-in, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode, world-environment, environment-globe, environment-world, environment-unit, environment-plane, environment-store, environment-owner, environment-control, environment-ingest, connections-consent, mission-sources-store, mission-sources-owner, environment-timeline, environment-timeline-world, mission-sources-control, world-source-profile, carry, platform-pages]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -239,6 +245,8 @@ jobs:
               node --test scripts/test/world-source-profile.test.mjs scripts/test/mission-areas.test.mjs
               node scripts/e2e/world-source-profile.e2e.mjs /tmp/hu-proof/world-source-profile
               ;;
+            carry) node scripts/e2e/carry.e2e.mjs /tmp/hu-proof/carry ;;
+            platform-pages) node scripts/e2e/platform-hosts.e2e.mjs --browser /tmp/hu-proof/platform-pages ;;
             *) echo 'Unknown suite' >&2; exit 2 ;;
           esac
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9

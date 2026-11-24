@@ -7,9 +7,10 @@
 // get retired, and has been serving traffic ever since.
 //
 // It belongs to the marketplace era of `mcclusterishere/Here`, which
-// CLAUDE.md rule 11 says publishes nothing. Its SITE constant still
-// points at that dead GitHub Pages origin, so its success and cancel
-// redirects land nowhere.
+// CLAUDE.md rule 11 says publishes nothing. Its onboarding return and
+// refresh addresses named that dead GitHub Pages address (it answers 404);
+// since SPEC-PLATFORM stage P0 they follow the request like every return
+// (../_shared/site-hosts.ts) and land on the live album page.
 //
 // It reads `public.providers`, which holds ZERO rows, and
 // `public.payments` also holds zero — no payment has ever completed
@@ -26,16 +27,16 @@
 // job against `org_stripe_accounts` and the org model rather than the
 // dead `providers` table.
 import Stripe from "npm:stripe@14";
+import { returnOrigin } from "../_shared/site-hosts.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SITE = "https://mcclusterishere.github.io/Here";
 
 // RETIRED 2026-10-27. Nothing calls this function: the Worker's
 // /v1/action-connect (workers/mccluster/src/action-connect.js) and
 // /v1/connect (workers/mccluster/src/connect.js) do this job against the org
-// model, and the return URLs above point at the dead Here origin, so a Stripe
+// model, and its return URLs then pointed at the dead Here origin, so a Stripe
 // onboarding started here could never come back. Every request is refused
 // before Stripe is touched. Deleting the deployment stays an owner decision;
 // until then this constant is the switch, and the code below is kept so
@@ -54,6 +55,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (RETIRED) return json({ error: "gone", use: "connect" }, 410);
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
+  /* the request's Origin when it is exactly an origin that serves pages (../_shared/site-hosts.ts), else the
+     generated fallback: at stage P0 the profile host, whose album.html is the live page for this flow */
+  const SITE = returnOrigin(req.headers.get("origin"));
 
   const auth = req.headers.get("Authorization") || "";
   const who = await fetch(`${SB}/auth/v1/user`, {

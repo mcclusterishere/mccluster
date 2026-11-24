@@ -89,7 +89,11 @@ test('"asks you to acknowledge … when you first enter; you can answer Not now"
 
 test('"shared by McCluster\'s own sites under mccluster.org", "with the time, in this browser\'s own storage"', () => {
   assert.match(entryItem, /first-party cookie that McCluster's own sites under mccluster.org share, and, with the time, in this browser's own storage/);
-  assert.match(live, /cookieDomain = host === "mccluster\.org" \|\| \/\\\.mccluster\\\.org\$\/\.test\(host\) \? "mccluster\.org" : ""/);
+  /* the domain is the table's (window.MCC_SITE.cookie_domain), today's as the fallback, and the rule is the same: that
+     domain and every host under it (SPEC-PLATFORM 2.3; scripts/test/site-hosts-client.test.mjs runs it per host) */
+  assert.match(live, /var domain = String\(\(site && site\.cookie_domain\) \|\| "mccluster\.org"\)\.toLowerCase\(\);/);
+  assert.match(live, /return host === domain \|\| host\.slice\(-\(domain\.length \+ 1\)\) === "\." \+ domain \? domain : "";/);
+  assert.match(read('js/shell-boot.js'), /"cookie_domain": "mccluster\.org"/, 'the policy\'s "under mccluster.org" is the table\'s cookie domain');
   assert.match(live, /\{ version: VERSION, accepted_at: new Date\(\)\.toISOString\(\) \}/);
   assert.match(live, /\{ version: VERSION, seen_at: new Date\(\)\.toISOString\(\) \}/);
 });

@@ -5,12 +5,14 @@ import { globeRelease, GLOBE_RELEASE_VERSION } from '../../../packages/release-p
 import { reply } from './lib/http.js';
 import { bearerUser } from './world-layers.js';
 import { service, uuid, privacyAcknowledged, missionCompleted, approximateLocation, isHouseOwner } from './world-cctv.js';
+import { siteUrl } from './platform/hosts.generated.js';
 export { isHouseOwner } from './world-cctv.js';
 
 export const LEVELS = Object.freeze(['public', 'fan', 'creator_business', 'eup', 'fellow', 'owner']);
 
 /* Whip Equipped LLC's own driver sign-up (the Driver app on Matthew's property, whip/driver/) */
-export const WHIP_DRIVER_SIGNUP_URL = 'https://matthew.mccluster.org/whip/driver/';
+/* Whip Equipped's driver sign-up: a profile_only page, served only on Matthew's host (the generated table) */
+export const WHIP_DRIVER_SIGNUP_URL = siteUrl('/whip/driver/');
 
 /* Legacy feature prerequisites remain separate from the release policy below. */
 export const LAYER_RULES = Object.freeze({

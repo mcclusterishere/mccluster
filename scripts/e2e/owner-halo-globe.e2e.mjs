@@ -34,8 +34,12 @@ async function setup(viewport,who){
     }
     if(u.hostname.endsWith('supabase.co')){if(p==='/auth/v1/user')return json(r,{id:who,email:who+'@fixture.invalid'});return json(r,[]);}
     /* the World host serves the same World page (mccluster.org is host-routed to it in production) */
-    if(u.origin==='https://mccluster.org'&&(p==='/'||p==='/mnet.html'))return r.fulfill({contentType:'text/html',body:'<!doctype html><title>World</title><p id="worldFixture">The World feed</p>'});
-    if(u.origin===BASE){const rel=p==='/'?'index.html':decodeURIComponent(p.replace(/^\//,''));const f=resolve(ROOT,rel);if(!f.startsWith(resolve(ROOT)+sep))return r.abort();
+    if(u.origin==='https://mccluster.org'&&(p==='/'||p==='/mnet.html'))return r.fulfill({contentType:'text/html',body:'<!doctype html><title>World</title><style>@view-transition{navigation:auto}</style><p id="worldFixture">The World feed</p>'}); /* the stand-in World opts in to the cross-document transition as the real one does (css/style.css): Halo and the World are one origin from P1, and Chromium rejects the transition into a page that does not */
+    /* CHANGED ON PURPOSE (P1, SPEC-PLATFORM 4, review V2-1 of 2026-11-24): on Matthew's host the owner's product doors
+       (Hitman's Halo among them) go where the table serves the page, the platform, which serves every page from P1.
+       This fixture answered the platform's World only, so the Halo door was a failed load. The platform's other pages
+       answer from this checkout too; what each check asserts is unchanged. */
+    if(u.origin===BASE||u.origin==='https://mccluster.org'){const rel=p==='/'?'index.html':decodeURIComponent(p.replace(/^\//,''));const f=resolve(ROOT,rel);if(!f.startsWith(resolve(ROOT)+sep))return r.abort();
       try{return r.fulfill({body:await readFile(f),contentType:TYPES[extname(f)]||'application/octet-stream'});}catch{return r.fulfill({status:404,body:''});}}
     return r.abort();
   });

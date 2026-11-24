@@ -195,6 +195,82 @@
   function onChange(fn) { if (typeof fn === "function") watchers.push(fn); }
   function forget() { cache = {}; watchers.forEach(function (fn) { try { fn(); } catch (e) {} }); }
 
+  /* THE CLOSING SONG IS HELD (owner, 2026-11-23: "We keep the song up, but it won't play... it'll tell you why it
+     won't play when you try to click play"; docs/music/MUSIC-RELEASE-20261119.md, "Quick wins"). A song marked
+     "hold" in data/albums.json stays listed and plays for the house owner alone: his gate answers operator, and his
+     play is the one he already had. For anyone else the answer is no; a guest is told so without a request, a member
+     after the gate's own read (never a claim). The gate's rule SQL is untouched: the full gate it waits for (a
+     finished profile and a short questionnaire) is not built yet, and nothing here collects anything. */
+  function holdDecision(gated) {
+    if (!sessionToken()) return Promise.resolve({ play: false, signedIn: false });
+    return resolve(gated).then(function (out) {
+      return { play: !!(out && out.state === "earned" && out.operator), signedIn: !!sessionToken() };
+    }, function () { return { play: false, signedIn: !!sessionToken() }; });
+  }
+  /* what the pop-up says, by account state, in plain words */
+  function holdCopy(signedIn, back) {
+    var title = "Why this song won't play";
+    if (!signedIn) return {
+      title: title,
+      text: "This song plays only for members who sign in, complete their full profile and answer a short questionnaire. The questionnaire opens soon.",
+      action: { label: "Sign in", href: "account.html?next=" + encodeURIComponent(back || "/listen.html") }
+    };
+    return {
+      title: title,
+      text: "This song plays only for members who complete their full profile and answer a short questionnaire. Complete your full profile now; the questionnaire opens soon.",
+      action: { label: "Complete your profile", href: "mnet.html?view=profile" }
+    };
+  }
+  /* the one pop-up: a real dialog (Escape and Close dismiss it), its way forward focused first */
+  function holdNotice(o) {
+    var doc = root.document;
+    if (!doc || !doc.body || !doc.createElement) return null;
+    var back = "/listen.html";
+    try { back = root.location.pathname + root.location.search; } catch (e) {}
+    var copy = holdCopy(!!(o && o.signedIn), back);
+    var d = doc.getElementById("mccHold");
+    if (!d) {
+      d = doc.createElement("dialog");
+      d.id = "mccHold";
+      d.className = "mcc-hold";
+      d.setAttribute("aria-labelledby", "mccHoldTitle");
+      d.setAttribute("aria-describedby", "mccHoldText");
+      d.innerHTML = '<h2 id="mccHoldTitle"></h2><p id="mccHoldText"></p>' +
+        '<div class="mcc-hold__acts"><a class="mcc-hold__go" href="account.html"></a>' +
+        '<button type="button" class="mcc-hold__close">Close</button></div>';
+      d.querySelector(".mcc-hold__close").addEventListener("click", function () { closeHold(d); });
+      /* a tap on the backdrop closes it. A tap on the dialog's own padding has the dialog as its target too, so the
+         point decides: only outside the dialog's box (review QW-R5) */
+      d.addEventListener("click", function (e) {
+        if (e.target !== d) return;
+        var r = d.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeHold(d);
+      });
+      /* its way forward closes it (review JRN-3, engine stage 0). The music shell (an account view over Listen) and the
+         World (its profile page) take that link in the document's capture phase and stop it there, so the modal pop-up
+         stayed open over the account form, or under the World. The window hears a click before any document listener:
+         the pop-up closes there and the link goes where it goes. Opened elsewhere with a modifier, it stays. */
+      if (root.addEventListener) root.addEventListener("click", function (e) {
+        if (!d.open || !e || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var go = d.querySelector(".mcc-hold__go"), t = e.target;
+        if (go && t && (t === go || (go.contains && go.contains(t)))) closeHold(d);
+      }, true);
+      doc.body.appendChild(d);
+    }
+    d.querySelector("h2").textContent = copy.title;
+    d.querySelector("p").textContent = copy.text;
+    var go = d.querySelector(".mcc-hold__go");
+    go.textContent = copy.action.label;
+    go.setAttribute("href", copy.action.href);
+    try { if (!d.open) { if (typeof d.showModal === "function") d.showModal(); else d.setAttribute("open", ""); } }
+    catch (e) { d.setAttribute("open", ""); }
+    try { go.focus(); } catch (e) {}
+    return d;
+  }
+  function closeHold(d) {
+    try { if (typeof d.close === "function") d.close(); else d.removeAttribute("open"); } catch (e) { d.removeAttribute("open"); }
+  }
+
   root.MCC_GATED = {
     resolve: resolve,
     claim: claim,
@@ -204,6 +280,9 @@
     keyOf: keyOf,
     forget: forget,
     onChange: onChange,
+    holdDecision: holdDecision,
+    holdCopy: holdCopy,
+    holdNotice: holdNotice,
     signedIn: function () { return !!sessionToken(); }
   };
 

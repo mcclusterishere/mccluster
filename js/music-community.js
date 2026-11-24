@@ -25,13 +25,14 @@
     });
   }
 
-  /* THE ARTISTS, FIRST. Owner, 2026-10-14: in Music, McCluster opens the
-     house (index.html, the M in the middle of the bar); any other artist
-     opens their own front page, and the bar takes their perspective from
-     there (js/tabbar.js). The house is always first and is painted at once;
-     every active creator follows when the directory answers. A creator's
-     picture is their own avatar or their initial, never a mark drawn for
-     them. The M is shown as supplied, scaled, on no plate. */
+  /* THE ARTISTS, FIRST. One McCluster (owner, 2026-11-23: "McCluster has two profiles. One says the house, one says
+     the artist. It needs to be one profile. McCluster is the artist."): McCluster is first, painted at once, and opens
+     his artist page (music-creator.html?handle=mccluster), where his records are; his directory row is that same card,
+     not a second one. The house itself (index.html, the M in the middle of the bar) is not an artist and is not on
+     this rail. Every other active creator follows when the directory answers, and opening one gives the bar their
+     perspective (js/tabbar.js). A creator's picture is their own avatar or their initial, never a mark drawn for them;
+     McCluster's is the M as supplied, scaled, on no plate. */
+  var HOUSE_ARTIST = "mccluster";
   /* A creator's picture is the one Creator Studio stored for them, and
      nothing else: the same rule the creator's own page applies
      (js/music-creator-page.js, safeArtwork). */
@@ -53,16 +54,16 @@
       section.setAttribute("aria-label", "Artists");
       section.innerHTML =
         '<p class="lib__k">Artists</p>' +
-        '<p class="lib__why">McCluster is the house. Open an artist to see the site from their side.</p>' +
+        '<p class="lib__why">Open an artist for their page and their music.</p>' +
         '<div class="artists__row" id="artistsRow"></div>';
       var first = ls.querySelector(".ls__sec");
       if (first) ls.insertBefore(section, first); else ls.appendChild(section);
     }
-    var cards = ['<a class="artist artist--house" href="index.html" aria-label="McCluster: the house">' +
+    var cards = ['<a class="artist artist--house" href="music-creator.html?handle=' + HOUSE_ARTIST + '" aria-label="McCluster, artist">' +
       '<img class="artist__pic artist__pic--house" src="assets/img/m-mark.png" alt="" width="56" height="56">' +
-      '<b>McCluster</b><small>The house</small></a>'];
+      '<b>McCluster</b><small>Artist</small></a>'];
     (profiles || []).forEach(function (p) {
-      if (!p || !p.handle) return;
+      if (!p || !p.handle || String(p.handle).toLowerCase() === HOUSE_ARTIST) return;   // his one card is first
       var name = p.artist_name || "@" + p.handle;
       var avatar = safeArtwork(p.avatar_url);
       cards.push('<a class="artist" href="music-creator.html?handle=' + encodeURIComponent(p.handle) + '">' +

@@ -1,9 +1,9 @@
 import { allowedOrigins, reply } from './lib/http.js';
+import { returnOrigin } from './platform/hosts.generated.js';
 
 const PREFIX = '/v1/action-archive';
 const SLUG = /^[a-z0-9][a-z0-9-]{1,80}$/;
 const TOKEN = /^[a-f0-9]{64}$/;
-const PUBLIC_ORIGIN = 'https://matthew.mccluster.org';
 
 function response(request, env, data, status = 200, isPublic = false) {
   const result = reply(request, env, data, status);
@@ -96,11 +96,13 @@ export async function hashArchiveToken(token) {
   return Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, '0')).join('');
 }
 
-function pageLinks(project, person, mUid) {
+/* the cohort's pages, on the origin the request came from when that origin serves pages (the generated return origins,
+   exact match on the request's Origin), else where they are served today (SPEC-PLATFORM 2.9) */
+function pageLinks(home, project, person, mUid) {
   return {
-    profile_url: `${PUBLIC_ORIGIN}/cohort-profile.html?project=${encodeURIComponent(project)}&person=${encodeURIComponent(person)}`,
-    provider_url: `${PUBLIC_ORIGIN}/docket-516r-cohort.html?person=${encodeURIComponent(person)}`,
-    account_profile_url: mUid ? `${PUBLIC_ORIGIN}/mccluster-creator.html?id=${encodeURIComponent(mUid)}` : null
+    profile_url: `${home}/cohort-profile.html?project=${encodeURIComponent(project)}&person=${encodeURIComponent(person)}`,
+    provider_url: `${home}/docket-516r-cohort.html?person=${encodeURIComponent(person)}`,
+    account_profile_url: mUid ? `${home}/mccluster-creator.html?id=${encodeURIComponent(mUid)}` : null
   };
 }
 
@@ -111,6 +113,7 @@ export async function handleActionArchive(request, env) {
     if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) throw problem('The cohort service is not configured.', 503);
     const origin = request.headers.get('origin');
     if (origin && !allowedOrigins(env).includes(origin)) throw problem('This origin is not allowed.', 403);
+    const home = returnOrigin(origin);
     const route = url.pathname.slice(PREFIX.length);
 
     if (route === '/invitation') {
@@ -130,7 +133,7 @@ export async function handleActionArchive(request, env) {
       const result = await service(env, 'rpc/action_archive_claim', {
         p_token_hash: await hashArchiveToken(body.token), p_auth_user_id: user.id
       });
-      return response(request, env, { ...result, ...pageLinks(result.project_slug, result.participant_slug, result.m_uid) });
+      return response(request, env, { ...result, ...pageLinks(home, result.project_slug, result.participant_slug, result.m_uid) });
     }
 
     if (route === '/me') {
@@ -145,7 +148,7 @@ export async function handleActionArchive(request, env) {
       if (!people?.length) return response(request, env, { participant: null });
       const archive = await service(env, 'rpc/action_archive_get', { p_project_slug: project });
       const participant = archive?.participants?.find(person => person.owner_m_uid === mUid) || null;
-      return response(request, env, { participant: participant ? { ...participant, ...pageLinks(project, participant.slug, mUid) } : null });
+      return response(request, env, { participant: participant ? { ...participant, ...pageLinks(home, project, participant.slug, mUid) } : null });
     }
 
     const edit = route.match(/^\/pages\/([a-z0-9][a-z0-9-]{1,80})$/);
@@ -186,7 +189,7 @@ export async function handleActionArchive(request, env) {
       });
       // The token appears only in this authenticated, uncacheable response.
       // Its fragment is not included in HTTP request URLs or referrers.
-      return response(request, env, { ...invitation, invitation_url: `${PUBLIC_ORIGIN}/cohort-claim.html#invite=${token}` });
+      return response(request, env, { ...invitation, invitation_url: `${home}/cohort-claim.html#invite=${token}` });
     }
 
     const project = route.slice(1);

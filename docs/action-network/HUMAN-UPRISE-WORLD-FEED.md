@@ -915,27 +915,26 @@ authorization is covered by the Worker test suite.
 
 `node scripts/e2e/human-uprise-door.e2e.mjs [outDir]` puts the real host
 routers (`workers/mccluster/src/company-site/router.js` for
-`https://mccluster.org`, the World's door today; `workers/mccluster/src/
+`https://mccluster.org`, the platform; `workers/mccluster/src/
 human-uprise/router.js` for `https://humanuprise.com`) in front of the same
 checkout in a real Chromium, with Matthew's site as a stub that records
-where a cross-site tap lands, and drives, on the company host (2026-10-15):
-the World at `https://mccluster.org/` on an iPhone with the company's
-canonical, site name and WebPage node, the bar Music | M | Globe with the
-Globe lit, the World's files through the host, noindex on the rooms and not
-on the root, `/mnet.html` → `/`, `www` → the apex, `/company` as the company
-page with its door to the World, `/album.html` → Matthew's site; the house
-root forwarding `?view=` to the World on its own origin (query and a carried
-fragment intact) while any other page with that query stays put; and the
-Globe tab tapped as a signed-in member on Matthew's site landing signed in
-on the company host. And on Human Uprise's host: the World
-at its own root on an iPhone (this host's canonical and `og:url`, no
-`noindex`, the Earth's frame on the same host, the World's files through
-this host, `noindex` on the rooms and not on the front door, no sideways
-scroll); the bar read back as the browser sees it (Music and the M to
-`matthew.mccluster.org`, the Globe at `/?view=feed`, the Globe coin lit);
-the 301s (`/mnet.html?view=missions` → `/?view=missions`, `www` → the apex,
-`/album.html` → Matthew's site), each recorded from the router and walked;
-a tap on Music landing on `matthew.mccluster.org/listen.html`. Then, on the
+where a cross-site tap lands (its carry page and the two scripts that page
+loads are the checkout's own), and drives the stage the record names (P1
+from 2026-11-24). On the platform: the World at `https://mccluster.org/` on
+an iPhone with the company's canonical, site name and WebPage node, the bar
+Music | M | Globe with the Globe lit and, from P1, Music and the M local
+(`/listen.html`, the HERE front door `/index.html`), the World's files
+through the host, no `noindex` header on the root or the Earth's frame,
+`/mnet.html` → `/`, `www` → the apex, `/company` as the company page with
+its door to the World, `/index.html` as the HERE front door with the M lit,
+`/index.html?view=missions` → `/?view=missions`, `/album.html` answered at
+its path, and `/whip.html` (Whip Equipped, Matthew's own) → his site; and
+the house root forwarding `?view=` to the World on its own origin (query
+and a carried fragment intact) while any other page with that query stays
+put. On `humanuprise.com`, the legacy door: `/`, `/mnet.html?view=missions`,
+`www` and `/album.html` each answer one 301 to the same path and query on
+the platform, recorded from the router and walked, and the door serves
+nothing itself. Then, on the
 checkout's own origin, a creator's perspective: Fixture Ana's front page
 puts her in the middle cell (her stored picture, round; her first name; her
 coin lit), Music keeps her there and shows the Artists rail (McCluster
@@ -944,15 +943,18 @@ initial), McCluster in Music opens the house where the M is back and the
 stored perspective is gone, a creator without a picture gets their initial,
 and on a desktop the held coin opens her wing with McCluster (the M) beside
 Everything.
-Then one M Account, every host: a member signed in on the checkout's own
-origin taps a page link to `https://humanuprise.com/?view=feed`; the run
-reads back that the fragment is gone from the address, that the World's host
-exchanged the carried token from its own origin, that Supabase was asked to
-turn the one-time magic-link token into a session, that the session stored
-on the World's host is the fresh one (not the house's), that the World booted
-as a member (composer, member feed with the fresh bearer, bar signed in), and
-that the Music tab then carries the fresh token back to Matthew's site in the
-fragment; a guest's crossing carries nothing.
+Then one M Account, every host, carried (P1): a member signed in on
+Matthew's site taps the Globe; the run reads back that the World at the
+platform's root arrived with nothing in its address (no request and no page
+address held a token or `#mcc_handoff`: from P1 the fragment writer is off),
+that the platform asked Matthew's host through his carry page and traded the
+carried token from its own origin at `POST /v1/auth/handoff`, that Supabase
+turned the one-time magic-link token into a session, that the session stored
+on the platform is the fresh one (not the house's), that the World booted as
+a member (composer, member feed with the fresh bearer, bar signed in), that
+Music then opens the platform's own `listen.html` still signed in, that a
+page link to `album.html` stays on the platform, and that a link to Whip
+Equipped goes to Matthew's site outright with no sign-in in its address.
 
 ## Still open (unchanged by this work)
 

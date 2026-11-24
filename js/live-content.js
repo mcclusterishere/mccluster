@@ -46,7 +46,14 @@
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   var page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
   var host = String(location.hostname || "").toLowerCase();
-  var cookieDomain = host === "mccluster.org" || /\.mccluster\.org$/.test(host) ? "mccluster.org" : "";
+  /* the shared cookie's domain is the table's (window.MCC_SITE.cookie_domain, js/shell-boot.js; one place,
+     data/seo/domain-architecture.json): that domain and every host under it share the answer, anywhere else it stays
+     host-only. The published pages that load this file without js/shell-boot.js first (embed.html, door.html and others,
+     scripts/test/site-hosts-client.test.mjs) keep today's domain as the fallback. */
+  var cookieDomain = (function (site) {
+    var domain = String((site && site.cookie_domain) || "mccluster.org").toLowerCase();
+    return host === domain || host.slice(-(domain.length + 1)) === "." + domain ? domain : "";
+  })(w.MCC_SITE);
   var synced = "";
 
   function stored(area, key) {
