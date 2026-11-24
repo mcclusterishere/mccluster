@@ -256,7 +256,7 @@ test('creator stem evidence binds the manifest key to the job creator-track iden
   const previous = { SUPABASE_URL: process.env.SUPABASE_URL, SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY };
   t.after(() => { for (const [key, value] of Object.entries(previous)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; } });
   process.env.SUPABASE_URL = 'https://storage.invalid';
-  process.env.SUPABASE_SECRET_KEY = 'sb_secret_synthetic_fixture';
+  process.env.SUPABASE_SECRET_KEY = 'synthetic-fixture-key';
   const currentJob = { ...stemJob, input: { source: 'creator', track_id: TRACK } };
   const output = await stemsSeparate(currentJob, stemDeps().deps);
   assert.equal(checkedEvidence(currentJob, output)[0].track_key, `ct-${TRACK}`);

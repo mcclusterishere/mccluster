@@ -63,7 +63,19 @@ const migration = file => db.transaction(tx => tx.exec(read(file)));
 const guard = (file, token, label) => deny(() => migration(file), error => error.code === '55000' && error.message.includes(token), label);
 async function boundedBaseline() {
   for (const file of ['supabase/tests/supabase_api_roles.stub.sql', 'supabase/tests/music_creator_onboarding.stub.sql', 'supabase/tests/music_release_integrity.stub.sql',
-    'supabase/migrations/20260920041011_music_creator_platform_v1.sql', 'supabase/migrations/20260920041250_music_commerce_v1.sql', 'supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql']) await db.transaction(tx => tx.exec(read(file)));
+    'supabase/migrations/20260920041011_music_creator_platform_v1.sql', 'supabase/migrations/20260920041250_music_commerce_v1.sql', 'supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql']) {
+    let sql = read(file);
+    if (file === 'supabase/tests/music_creator_onboarding.stub.sql') {
+      // Keep peripheral stand-ins, but use the actual original track table:
+      // audio_url is NOT NULL without a default in the canonical reset. The
+      // smaller onboarding stand-in otherwise hides an incomplete fixture.
+      const canonical = read('supabase/replay_migrations/0003_creator_cuts.sql').match(/^create table if not exists public\.creator_tracks \([\s\S]*?^\);/m)?.[0];
+      const placeholder = /^create table public\.creator_tracks\([\s\S]*?^\);/m;
+      assert.ok(canonical && placeholder.test(sql), 'canonical creator-track table and explicit fixture boundary exist');
+      sql = sql.replace(placeholder, canonical);
+    }
+    await db.transaction(tx => tx.exec(sql));
+  }
   // Supabase's role accessor accepts the singular claim before JSON claims.
   // This stand-in is used only locally; --full-reset never replaces Auth.
   await db.exec(`create or replace function auth.role() returns text language sql stable as $$
@@ -92,7 +104,9 @@ async function createTrack({ lyrics = null, published = false, master = true } =
     await service.query("insert into public.music_creator_assets(bucket_id,object_name,owner_user_id,owner_m_uid) values('creator-masters',$1,$2,$3)", [objectName, USER, person]);
     await db.query("insert into storage.objects(bucket_id,name,owner,owner_id,version,metadata) values('creator-masters',$1,$2,$3,$4,$5::jsonb)", [objectName, USER, USER, randomUUID(), db.sql.json({ eTag: hash(id), size: 4096 })]);
   }
-  await owner.query("insert into public.creator_tracks(id,title,artist,master_path,status,lyrics) values($1,'Synthetic native track','Synthetic artist',$2,$3,$4::jsonb)", [id, master ? objectName : '', published ? 'pending_review' : 'draft', lyrics === null ? null : owner.sql.json(lyrics)]);
+  // An empty preview URL is valid; the private master is independently owned
+  // and pinned through the real review flow below. Never weaken its NOT NULL.
+  await owner.query("insert into public.creator_tracks(id,title,artist,audio_url,master_path,status,lyrics) values($1,'Synthetic native track','Synthetic artist','',$2,$3,$4::jsonb)", [id, master ? objectName : '', published ? 'pending_review' : 'draft', lyrics === null ? null : owner.sql.json(lyrics)]);
   if (published) {
     const prepared = (await service.query('select * from public.music_prepare_review($1)', [id])).rows[0];
     const syntheticSha = hash(`Synthetic audio bytes for ${id}`);

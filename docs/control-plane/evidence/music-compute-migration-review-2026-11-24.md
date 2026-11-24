@@ -173,6 +173,42 @@ execution. The database runners accept only their explicit disposable local
 database configuration. No production write, advisor change, module enable,
 Core promotion or Edge deployment is implied by a test result.
 
+## CI follow-up at the prepared branch
+
+The first complete-reset attempt at head `16d1d206f673206d32e68aa6e4680bdaf61a0a5c`
+accepted the exact 468-entry plan, then rejected the synthetic music fixture
+with SQLSTATE `23502`: `creator_tracks.audio_url` is required. The proof now
+supplies that field explicitly and uses the exact canonical creator table even
+in its bounded local baseline. No reset constraint is relaxed. The corrected
+native run passes 101 assertions; its complete-reset run remains a CI gate.
+
+The dedicated compute workflow succeeded on that head:
+[run 45455902593, job 138665120954](https://github.com/mcclusterishere/mccluster/actions/runs/45455902593/job/138665120954).
+It passed all 19 D/E checks against the complete reset, the existing scheduler
+behavior/independent-connection checks, and all 10 gateway/node-agent staging
+steps. D/E SQL bytes are unchanged since that run.
+
+The broader branch checks also exposed stale catalog-derived listen waits and
+an AAC/MP4 upload named `.mp3` with its index after the audio. The candidate now
+publishes `assets/audio/rolling-with-me.m4a`; A and the album data use that same
+path. `qt-faststart` moved only the container index and adjusted chunk offsets.
+The entire audio payload and every non-index atom are byte-identical, and the
+encoder metadata is retained. Old file SHA-256:
+`71637053dfdf4954eb372780d2909f71445621a4c013a7752ceb53a5a19c91b6`;
+corrected file SHA-256:
+`bdfded5247eca36babde928bc531e0cfe8eb2123c216aef2cca3bfe4dc37d1ec`.
+The catalog generator now writes the added songs' per-song waits; all 34
+container/listen-ledger/length checks pass. The shortest counting margin is
+2.2 seconds, so its bounded wait is 1.1 seconds. Existing older-song regression
+vectors remain checked.
+
+The secret scanner matched a clearly synthetic key in a new test. The fixture
+now uses a plainly synthetic value without a production credential prefix;
+all 20 completion-evidence tests still pass. An inherited prose-only change
+to persistent execution authority was restored to the canonical main wording:
+owned devices remain specialized compute under Core, with no unpaired change
+to the architecture contract. No architecture rule or scanner was weakened.
+
 ## Named-file review receipt
 
 An approval must identify the exact reviewed file and its current commit. Fresh
@@ -184,7 +220,7 @@ preparation receipt.
 
 | Candidate | Bytes | SHA-256 |
 |---|---:|---|
-| `supabase/pending/20261123180000_tinderfessions_catalog_objects.sql` | 4,767 | `ce8f0d1297e7ac0278c5aca8b0f042721ca698117e1af0fdd59698bf4bcf78c6` |
+| `supabase/pending/20261123180000_tinderfessions_catalog_objects.sql` | 4,767 | `f6ddf2fa622617a68de3dab82a7beda1a64dbedb076556e809d5d04fbe88249b` |
 | `supabase/pending/20261123180000_tinderfessions_catalog_objects.rollback.sql` | 727 | `3562c02abe1f4fb0dc838473d4f0017c35f803663118e27f54633f0efa3edfef` |
 | `supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.sql` | 3,138 | `f7df2ac5d92e95408933bbd02a0c1fec91329a95882d4ea55b45a293177319d7` |
 | `supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.rollback.sql` | 601 | `924f0f6bf970d4f82d28541c3f9f886058963468d21b45fce69954276e7db9f8` |
@@ -196,7 +232,7 @@ preparation receipt.
 | `supabase/pending/compute_scheduler_lease_v1.rollback.sql` | 2,141 | `29247c1c83fb40d20b8f9628a0d3d9a4b25614739817ed1f3674030a29c78959` |
 | `supabase/pending/20261031180000_lyrics_machine_v1.sql` | 8,880 | `7533f4bfd78fa7c65e8202c34843011b2cccc9c4a0cc4a06e22dafdf7b97ff8a` |
 | `supabase/pending/20261031180000_lyrics_machine_v1.rollback.sql` | 2,881 | `672a025efb88c9ec2215145195c65df49291575d91cd7f0c615883197ddba5c4` |
-| `scripts/music-release-native-check.mjs` | 26,707 | `058a6f9fd1240278857e9e42365717eb9e8b8c22e27c7940d60191a103565284` |
+| `scripts/music-release-native-check.mjs` | 27,628 | `13c3a2cc5cf191cdf963105a216ddefe006adb1dd8e6b50300b26b6f6c9c333d` |
 | `scripts/compute-device-native-check.mjs` | 21,436 | `1a4d61d8808ca7108a5b9c603a174f6c04e69d9467b8da421cab00f4370a6b93` |
 | `scripts/native-admin-test-db.mjs` | 3,842 | `43ab5d522112d8a4569a69556669d389f2a644cf1fcc747155fde2e5664908cb` |
 | `.github/workflows/reconciliation-ci.yml` | 18,954 | `c54ca60638717056469888eb532d8a3adea26aae01dd47efb97afbbd51c44303` |
@@ -204,4 +240,4 @@ preparation receipt.
 | `core/src/completion-evidence.mjs` | 32,236 | `23ed37b6c9904d547c0be74a96e4dbaf53790d5db026d2ad851b8d25bd2e2daf` |
 | `core/src/executors/lyrics-align.mjs` | 9,593 | `991698c7df10d8006f004fc0e098e8d28252962ddae8eb170d5c866f2e338749` |
 | `core/src/executors/stems-separate.mjs` | 4,475 | `4781e32ca4b2543eb9de1ffe0bad264676494e404082f1de84f0f2caf9499ef6` |
-| `core/test/completion-evidence.test.mjs` | 18,289 | `ab05e32a1a22c75d3ddbd3e6cb9509a3038e7e5951a913ad9100ede7844f3cd8` |
+| `core/test/completion-evidence.test.mjs` | 18,283 | `7e730365fdad1519e0411a31bb1873006771531919c27f465a657f5b42387153` |
