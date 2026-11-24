@@ -20,7 +20,10 @@ the top (`leavesWorld`), the way a cross-origin link always did. On Matthew's ho
 frame is cross-origin, as it was everywhere before P1. The World's origin comes from
 `window.MCC_SITE`, the generated block at the top of `js/shell-boot.js` (this file left
 `scripts/test/site-hosts-pending/engine.json` with P1); the bridge keeps its exact
-origin, window and nonce checks either way.
+origin, window and nonce checks either way. The transport's title, tapped with the World
+closed, goes to Music on the host it stands on: on Matthew's host his own Listen until P3
+(`musicHome`), as the bar's Music tab does, since the platform's would be a page load that
+ends the song (the P1 amendment of 2026-11-24).
 
 The parent's address adds `world=1` to the existing Music URL and its history
 state records the clean World destination. Browser Back/Forward changes the

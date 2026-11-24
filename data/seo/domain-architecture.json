@@ -549,13 +549,13 @@
         },
         {
           "key": "bar_local",
-          "what": "The bar is local on the platform (Music listen.html, the M the HERE front door index.html, the Globe the World at /); on Matthew's host Music and the Globe point at the platform and the M at his own root; the World is / and /mnet.html only, never /index.html. Each is a small named function reading window.MCC_SITE in js/tabbar.js, js/world-audio-continuity.js and js/music-shell.js.",
-          "where": "js/tabbar.js (pageHref, worldAt, isWorldPath, houseBound), js/world-audio-continuity.js (worldURL, musicURL, leavesWorld), js/music-shell.js (world)"
+          "what": "The bar is local on the platform (Music listen.html, the M the HERE front door index.html, the Globe the World at /); on Matthew's host the Globe points at the platform's World and the M at his own root, and until P3 Music, the account and an artist's page stay on his host (the P1 amendment of 2026-11-24, SPEC-PLATFORM 4: a door to another origin is a page load, which would end the song playing there; Matthew: \"We must prepare without breaking anything to do that\" and \"I want a singular fucking music engine with 1 fucking player at all times\"); the World is / and /mnet.html only, never /index.html. Each is a small named function reading window.MCC_SITE in js/tabbar.js, js/world-audio-continuity.js and js/music-shell.js.",
+          "where": "js/tabbar.js (pageBase, pageHref, worldAt, isWorldPath, houseBound), js/world-audio-continuity.js (worldURL, musicURL, musicHome, leavesWorld), js/music-shell.js (world)"
         },
         {
           "key": "carry_on",
-          "what": "The carry is on: a platform page with no usable session asks Matthew's host once, through a hidden same-site frame of carry.html, for the access token this browser holds there, and exchanges it at the existing POST /v1/auth/handoff for a session of the platform's own. No token is in any URL, no refresh token crosses, and his host stays signed in. Where nothing can be carried, the sign-in page and the account chip say one line for 30 days.",
-          "where": "js/carry.js, carry.html, js/tabbar.js (carryWanted, startCarry), js/mnet.js (the World waits for it)"
+          "what": "The carry is on: a platform page with no usable session asks Matthew's host once, through a hidden same-site frame of carry.html, for the access token this browser holds there, and exchanges it at the existing POST /v1/auth/handoff for a session of the platform's own. No token is in any URL, no refresh token crosses, and his host stays signed in. Where nothing can be carried, the sign-in page and the account chip say one line for 30 days (on a phone, a note under the chip until it is closed; the World's door is its own sign-in). The songs kept at the old address are offered once on a top-level platform page other than the World that shows the chip, in the bar's own peek card (\"You kept 12 songs at the old address. Keep them here too?\"), and a tap keeps the same files at the same paths in the platform's vault.",
+          "where": "js/carry.js (paint, offer, keepHere), carry.html, js/tabbar.js (carryWanted, keptWaiting, startCarry), js/mnet.js (the World waits for it)"
         },
         {
           "key": "handoff_writer_off",
@@ -564,7 +564,7 @@
         },
         {
           "key": "move_card",
-          "what": "The app installed from Matthew's host, launched from the Home Screen there (standalone mode), says once that the app now lives at mccluster.org, in the bar's own peek card; index.html is not edited.",
+          "what": "The app installed from Matthew's host, launched from the Home Screen there (standalone mode), says once that the app now lives at mccluster.org, in the bar's own peek card; index.html is not edited. What it promises comes by the carry (carry_on): the sign-in, and the kept songs, offered on the platform and kept there on a tap.",
           "where": "js/tabbar.js (moveCardWanted, showMoveCard)"
         },
         {
@@ -641,7 +641,7 @@
           "returns_fallback": "platform",
           "metadata": "today"
         },
-        "what": "The platform serves every platform and profile page at its path (the World at /, the HERE front door at /index.html); profile_only pages answer 301 to the profile host; www sends everything to the apex; humanuprise.com, once routed, 301s to the platform; the platform's manifest starts its app on the World; the bar is local on the platform and points at the platform from the profile host; the carry is on and the fragment hand-off writer is off; the installed app's move card shows on the profile host in standalone mode. The bar's and the World's host changes are made in the engine's three files, as small named functions reading window.MCC_SITE (js/tabbar.js, js/world-audio-continuity.js, js/music-shell.js; scripts/test/site-hosts-engine.test.mjs), and their host literals left with them (scripts/test/site-hosts-pending/engine.json is empty). Canonicals, sitemaps and structured data unchanged (P2). Pages first, then the Worker."
+        "what": "The platform serves every platform and profile page at its path (the World at /, the HERE front door at /index.html); profile_only pages answer 301 to the profile host; www sends everything to the apex; humanuprise.com, once routed, 301s to the platform; the platform's manifest starts its app on the World; the bar is local on the platform, and from the profile host it points the Globe at the platform's World and, until P3, keeps Music, the account and an artist's page on the profile host (the amendment of 2026-11-24); the carry is on and the fragment hand-off writer is off; the installed app's move card shows on the profile host in standalone mode. The bar's and the World's host changes are made in the engine's three files, as small named functions reading window.MCC_SITE (js/tabbar.js, js/world-audio-continuity.js, js/music-shell.js; scripts/test/site-hosts-engine.test.mjs), and their host literals left with them (scripts/test/site-hosts-pending/engine.json is empty). Canonicals, sitemaps and structured data unchanged (P2). Pages first, then the Worker."
       },
       {
         "stage": "P2",

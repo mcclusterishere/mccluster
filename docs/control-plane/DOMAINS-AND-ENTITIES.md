@@ -261,24 +261,35 @@ host, his carry page aside, or an error the page's copy there does not log):**
   file's. Matthew's host serves the file unchanged, so the app installed from
   his host keeps starting on its HERE page.
 - **The bar is local on the platform**: Music `listen.html`, the M the HERE
-  front door `index.html`, the Globe the World at `/`; on Matthew's host
-  Music and the Globe point at the platform and the M at his own root. The
+  front door `index.html`, the Globe the World at `/`; on Matthew's host the
+  Globe points at the platform's World and the M at his own root, and until P3
+  Music, the account and an artist's page stay on his host, so a song playing
+  there keeps playing (a door to another origin is a page load; the P1
+  amendment of 2026-11-24 in `SPEC-PLATFORM.md` section 4, on Matthew's words
+  "We must prepare without breaking anything to do that" and "I want a
+  singular fucking music engine with 1 fucking player at all times"). The
   World is `/` and `/mnet.html` only, never `/index.html`. Each answer is a
-  small named function reading `window.MCC_SITE` (`js/tabbar.js`,
-  `js/world-audio-continuity.js`, `js/music-shell.js`).
+  small named function reading `window.MCC_SITE` (`js/tabbar.js` `pageBase`,
+  `js/world-audio-continuity.js` `musicHome`, `js/music-shell.js`).
 - **The carry is on**: a platform page with no usable session asks Matthew's
   host once, through a hidden same-site frame of `carry.html`, for the access
   token this browser holds there, and trades it at the existing
   `POST /v1/auth/handoff` for a session of the platform's own. No token is in
   any URL, no refresh token crosses, and his host stays signed in. Where
   nothing can be carried, the sign-in page and the account chip say one line
-  for 30 days.
+  for 30 days (on a phone, a note under the chip until it is closed; the
+  World's door is its own sign-in). The songs kept at the old address are
+  offered once on a top-level platform page other than the World that shows
+  the chip, in the bar's own peek card ("You kept 12 songs at the
+  old address. Keep them here too?"); a tap keeps the same files at the same
+  paths in the platform's vault.
 - **The fragment hand-off writer is off**: no link carries `#mcc_handoff` any
   more; its reader only scrubs an old link from the address until P4 and trades
   nothing (a token nobody writes any more is someone else's).
 - **The installed app's move card**: the app installed from Matthew's host,
   launched from the Home Screen there, says once, in the bar's own peek card,
-  that the app now lives at `mccluster.org`; `index.html` is not edited.
+  that the app now lives at `mccluster.org`; `index.html` is not edited. What
+  it promises, the sign-in and the kept songs, comes by the carry.
 - **Returns fall back to the platform**: a return whose request names no
   origin that serves pages comes back to the platform; a return started on his
   host still comes back to his host.
@@ -472,10 +483,12 @@ owner routes it, the host stays built and inert.
   every path on it with a 301 to the platform, once routed.
 - The bar (`js/tabbar.js`) reads the same on every host: Music | M | Globe.
   Since P1 it is local on the platform: Music `listen.html`, the M the HERE
-  front door `index.html`, the Globe the World at `/`. On Matthew's site Music
-  and the Globe go to the platform (the World at `https://mccluster.org/`
-  since 2026-10-15) and the M to his own root; each answer is a small named
-  function reading `window.MCC_SITE` (`pageHref`, `worldAt`, `isWorldPath`).
+  front door `index.html`, the Globe the World at `/`. On Matthew's site the
+  Globe goes to the platform (the World at `https://mccluster.org/` since
+  2026-10-15) and the M to his own root, and until P3 Music, the account and
+  an artist's page stay on his site, so a song playing there keeps playing
+  (the P1 amendment of 2026-11-24); each answer is a small named function
+  reading `window.MCC_SITE` (`pageBase`, `pageHref`, `worldAt`, `isWorldPath`).
   Before P1, on a World host, Music and the M linked to Matthew's site
   outright. Pointing the Globe at `humanuprise.com` is superseded by the
   owner's decision above.
