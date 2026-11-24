@@ -1562,3 +1562,67 @@ test('the album says Muted as a lasting note, never as a status: the dock stays 
   deck.muted = false; line = '';
   assert.deepEqual([spec.status(), spec.note()], ['', '']);
 });
+
+/* The actual bar and discovery engine share an event loop. A delayed fallback from Pause
+   used to run after the next Play announcement, repainting the button as Play over playing audio. */
+function barFor(e, clock) {
+  const source = read('js/tabbar.js');
+  const start = source.indexOf('  /* THE TRANSPORT STATE.');
+  const end = source.indexOf('  /* the veil the departure rides behind */', start);
+  assert.ok(start >= 0 && end > start);
+  const attrs = new Map([['aria-label', 'Music']]);
+  const classes = new Set();
+  const classList = { contains: (k) => classes.has(k), remove: (k) => classes.delete(k),
+    toggle: (k, yes) => { if (yes) classes.add(k); else classes.delete(k); } };
+  const tab = { classList, hasAttribute: (k) => attrs.has(k), getAttribute: (k) => attrs.get(k) || null,
+    setAttribute: (k, v) => attrs.set(k, v), removeAttribute: (k) => attrs.delete(k) };
+  const sandbox = {
+    window: e.win, document: { documentElement: { classList }, querySelector: () => null },
+    dock: { querySelector: () => tab }, WINGS: { music: { home: 'listen.html' } }, onPage: () => true,
+    worldAudioPending: false, worldCancelTap: null, location: e.win.location, HOUSE: 'https://fixture.invalid/', setTimeout: clock.setTimeout,
+    emit: (name, detail) => e.win.dispatchEvent(new e.win.CustomEvent(name, { detail }))
+  };
+  vm.runInNewContext(source.slice(start, end), sandbox);
+  return { press: () => sandbox.transport(), name: () => tab.getAttribute('aria-label') };
+}
+
+test('a delayed Pause fallback cannot overwrite a later Play announcement on the Music tab', async () => {
+  const c = clockOf(), e = engine({ clock: c, path: '/listen.html' });
+  const bar = barFor(e, c);
+  await e.play('Full song');
+  assert.equal(bar.name(), 'Pause music');
+  bar.press();
+  assert.equal(e.music.audio.paused, true);
+  assert.equal(bar.name(), 'Play music');
+  bar.press();
+  await settle();
+  assert.equal(e.music.audio.paused, false);
+  await c.tick(0); // pending tasks from both taps finally get their turn
+  assert.equal(bar.name(), 'Pause music', 'the control agrees with the actual playing audio');
+  bar.press();
+  assert.equal(e.music.audio.paused, true, 'the next tap still pauses rather than replaying');
+});
+
+test('creator URL renewal keeps the full song and position through transient network failure', async () => {
+  const c = clockOf();
+  let online = true, signing = 0;
+  const e = engine({ clock: c, member: true, access: () => online
+    ? { url: 'creator-' + (++signing) + '.mp3', expires_in: 120 } : new Error('offline') });
+  e.music.registerCreatorTrack({ id: 'c1', title: 'Creator song', access_mode: 'purchase', previewUrl: 'creator-preview.mp3' });
+  await e.music.playCreator('c1');
+  online = false;
+  await c.tick(131000); // the early renewal failed and the original grant is now expired
+  e.music.audio.currentTime = 70;
+  e.music.audio.fail(4);
+  await c.tick(600); // the resolver's network fallback must not revoke the purchase
+  assert.equal(e.music.access(), 'full');
+  assert.equal(e.music.audio.src, 'creator-1.mp3');
+  assert.equal(e.music.audio.currentTime, 70);
+  assert.equal(e.music.delivery().state, 'reconnecting');
+  assert.doesNotMatch(e.text('musicMiniNote'), /not open to this account|preview/);
+  online = true;
+  await c.tick(1000);
+  assert.equal(e.music.audio.src, 'creator-2.mp3');
+  assert.equal(e.music.audio.currentTime, 70);
+  assert.equal(e.music.audio.paused, false);
+});

@@ -1136,6 +1136,9 @@
         if (g.expiresAt) scheduleRefresh(g);
         return { url: g.url };
       }
+      /* A failed renewal may offer the public preview as a network fallback. It says nothing about
+         entitlement: keep the full song, its position and the bounded recovery attempts. */
+      if (out && out.reason === "network") return { failed: true };
       if (out && out.state === "preview" && out.url) { accessEnded(item, out); return null; }
       return { failed: true };
     }, function () { return { failed: true }; });
