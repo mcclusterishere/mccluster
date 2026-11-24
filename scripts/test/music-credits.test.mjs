@@ -547,3 +547,10 @@ test("CI runs the credit generators' own checks and these rules", () => {
     assert.equal(ci.split(`      - ${path}\n`).length - 1, 2, `${path} triggers the workflow on a pull request and on main`);
   }
 });
+
+test("the artist view is classified: a page of Matthew's music room, beside the album room and the catalogue", () => {
+  const own = json("data/seo/domain-architecture.json").url_ownership;
+  assert.ok(own.personal.includes("/artist.html"));
+  assert.equal(own.personal.indexOf("/artist.html"), own.personal.indexOf("/catalogue.html") + 1);
+  for (const list of Object.values(own)) if (Array.isArray(list) && list !== own.personal) assert.ok(!list.includes("/artist.html"), "classified once");
+});
