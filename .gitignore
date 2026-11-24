@@ -43,6 +43,13 @@ e2e-out/
 # Derived from Core fiction and existing Whip screenplay by the Pages publisher.
 /data/fictional-city/
 
+# Local workstream checkpoint spool (mccluster-workstream/1 files): private
+# work state, ingested into ai_context by scripts/workstream-sync.mjs. Private
+# cross-model context never goes in public Git (AGENTS.md). Keep a store
+# outside the repository; if one is ever created here, it stays untracked.
+# scripts/test/workstream-sync.test.mjs holds this line in place.
+.mccluster/
+
 # Server-only local provider credentials; never publish.
 /workers/mccluster/.dev.vars
 /workers/mccluster/.dev.vars.*
