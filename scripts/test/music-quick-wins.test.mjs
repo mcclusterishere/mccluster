@@ -591,6 +591,28 @@ test('Q6 listen engine: a creator\'s songs listed by Listen and again by their a
   assert.equal(e.music.audio.paused, true);
 });
 
+test('Q6 listen engine: the artist page\'s album order is the record\'s order, whatever order Listen\'s rail listed the songs in', async () => {
+  /* Listen's rail lists a creator's songs newest first (published_at.desc); their artist page then lists the same songs
+     in album order. The queue kept the rail's order, so on the album's first song Next found nothing after it and
+     stopped the record instead of playing track 2 (review of the release branch) */
+  const e = engine({ who: 'guest' });
+  const base = { m_uid: 'creator-1', artist: 'Fixture creator', poster_url: '', genre: '', access_mode: 'public' };
+  const one = { ...base, id: 'c-one', title: 'Track one', previewUrl: 'creator-one.mp3', published_at: '2026-11-01T00:00:00Z' };
+  const two = { ...base, id: 'c-two', title: 'Track two', previewUrl: 'creator-two.mp3', published_at: '2026-11-02T00:00:00Z' };
+  const three = { ...base, id: 'c-three', title: 'Track three', previewUrl: 'creator-three.mp3', published_at: '2026-11-03T00:00:00Z' };
+  [three, two, one].forEach((t) => e.music.registerCreatorTrack(t));                                  // Listen's rail, newest first
+  [one, two, three].forEach((t) => e.music.registerCreatorTrack({ ...t, release_name: 'The album' }));   // the artist page, album order
+  await e.music.playCreator('c-one'); await settle(); await settle();
+  await e.music.next(); await settle(); await settle();
+  assert.equal(e.music.current().creatorTrackId, 'c-two', 'Next on track 1 plays track 2');
+  assert.equal(e.music.audio.paused, false);
+  e.music.audio.end(); await settle(); await settle();
+  assert.equal(e.music.current().creatorTrackId, 'c-three', 'and the end of track 2 plays track 3');
+  assert.equal(e.music.audio.paused, false);
+  await e.music.previous(); await settle(); await settle();
+  assert.equal(e.music.current().creatorTrackId, 'c-two', 'Previous goes back one in album order');
+});
+
 test('Q6 album: the last row ends and the album stops; Next on the last row stops it at the end', async () => {
   const a = album({ signedIn: false });
   a.rows.pop();                                   // an album with no held song

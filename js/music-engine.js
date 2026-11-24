@@ -672,7 +672,10 @@
       title: t.title || "Untitled"
     });
     var item = CREATOR_TRACKS[String(t.id)];
-    if (!queue.some(function (q) { return sameItem(q, item); })) queue.push(item);
+    /* each page that lists a song registers it in that page's order (Listen's rail newest first, the artist page in
+       album order): the latest listing is the queue's order too, so Next follows the page that is shown */
+    queue = queue.filter(function (q) { return !sameItem(q, item); });
+    queue.push(item);
   }
 
   function openCreatorTrack(id, force, from) {
