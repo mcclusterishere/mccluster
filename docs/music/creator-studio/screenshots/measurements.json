@@ -1,0 +1,1378 @@
+{
+  "base": "loopback",
+  "browser": "msedge.exe",
+  "revealed": "#creatorGate hidden; #creatorApp, #creatorIdentity and the analytics card un-hidden in the page (signed out)",
+  "screenshots": [
+    "before-390.png",
+    "before-1280.png",
+    "after-make-390.png",
+    "after-releases-390.png",
+    "after-page-390.png",
+    "after-stats-390.png",
+    "after-make-1280.png",
+    "after-releases-1280.png",
+    "after-page-1280.png",
+    "after-stats-1280.png",
+    "after-releases-390-scrolled.png",
+    "after-make-take-open-390.png",
+    "after-make-take-saved-390.png",
+    "after-releases-take-handed-off-390.png",
+    "after-make-recording-390.png",
+    "after-releases-while-recording-390.png",
+    "after-make-mic-blocked-390.png",
+    "after-make-cannot-record-390.png"
+  ],
+  "chapters": {
+    "390": {
+      "make": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyScrollWidth": 390,
+        "pageHeight": 1162,
+        "minFontPx": 13,
+        "minFontOn": "#tbFormats \"Import takes MP3, WAV or M4A. No\"",
+        "minControlFontPx": null,
+        "targets": 6,
+        "smallestTarget": {
+          "what": "#cs-tab-make",
+          "w": 91.5,
+          "h": 44
+        },
+        "under44": [],
+        "inlineTextLinks": [],
+        "selected": [
+          "Make"
+        ],
+        "visiblePanels": [
+          "cs-panel-make"
+        ]
+      },
+      "releases": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyScrollWidth": 390,
+        "pageHeight": 4402,
+        "minFontPx": 13,
+        "minFontOn": "div.creator-status \"No releases yet.\"",
+        "minControlFontPx": 16,
+        "targets": 34,
+        "smallestTarget": {
+          "what": "#cs-tab-make",
+          "w": 91.5,
+          "h": 44
+        },
+        "under44": [],
+        "inlineTextLinks": [],
+        "selected": [
+          "Releases"
+        ],
+        "visiblePanels": [
+          "cs-panel-releases"
+        ]
+      },
+      "page": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyScrollWidth": 390,
+        "pageHeight": 2292,
+        "minFontPx": 13,
+        "minFontOn": "label \"Handle\"",
+        "minControlFontPx": 16,
+        "targets": 18,
+        "smallestTarget": {
+          "what": "#cs-tab-make",
+          "w": 91.5,
+          "h": 44
+        },
+        "under44": [],
+        "inlineTextLinks": [
+          {
+            "what": "a.",
+            "w": 257.5,
+            "h": 38.6
+          }
+        ],
+        "selected": [
+          "Page"
+        ],
+        "visiblePanels": [
+          "cs-panel-page"
+        ]
+      },
+      "stats": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "bodyScrollWidth": 390,
+        "pageHeight": 844,
+        "minFontPx": 14,
+        "minFontOn": "#cs-tab-make \"Make\"",
+        "minControlFontPx": null,
+        "targets": 5,
+        "smallestTarget": {
+          "what": "#cs-tab-make",
+          "w": 91.5,
+          "h": 44
+        },
+        "under44": [],
+        "inlineTextLinks": [],
+        "selected": [
+          "Stats"
+        ],
+        "visiblePanels": [
+          "cs-panel-stats"
+        ]
+      }
+    },
+    "1280": {
+      "make": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "bodyScrollWidth": 1280,
+        "pageHeight": 900,
+        "minFontPx": 13,
+        "minFontOn": "#tbFormats \"Import takes MP3, WAV or M4A. No\"",
+        "minControlFontPx": null,
+        "targets": 6,
+        "smallestTarget": {
+          "what": "#cs-tab-make",
+          "w": 272,
+          "h": 44
+        },
+        "under44": [],
+        "inlineTextLinks": [],
+        "selected": [
+          "Make"
+        ],
+        "visiblePanels": [
+          "cs-panel-make"
+        ]
+      },
+      "releases": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "bodyScrollWidth": 1280,
+        "pageHeight": 3454,
+        "minFontPx": 13,
+        "minFontOn": "div.creator-status \"No releases yet.\"",
+        "minControlFontPx": 16,
+        "targets": 34,
+        "smallestTarget": {
+          "what": "#cs-tab-make",
+          "w": 272,
+          "h": 44
+        },
+        "under44": [],
+        "inlineTextLinks": [],
+        "selected": [
+          "Releases"
+        ],
+        "visiblePanels": [
+          "cs-panel-releases"
+        ]
+      },
+      "page": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "bodyScrollWidth": 1280,
+        "pageHeight": 2074,
+        "minFontPx": 13,
+        "minFontOn": "label \"Handle\"",
+        "minControlFontPx": 16,
+        "targets": 18,
+        "smallestTarget": {
+          "what": "#cs-tab-make",
+          "w": 272,
+          "h": 44
+        },
+        "under44": [],
+        "inlineTextLinks": [
+          {
+            "what": "a.",
+            "w": 221.5,
+            "h": 19
+          }
+        ],
+        "selected": [
+          "Page"
+        ],
+        "visiblePanels": [
+          "cs-panel-page"
+        ]
+      },
+      "stats": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "bodyScrollWidth": 1280,
+        "pageHeight": 900,
+        "minFontPx": 14,
+        "minFontOn": "p \"Your catalog performance, based \"",
+        "minControlFontPx": null,
+        "targets": 5,
+        "smallestTarget": {
+          "what": "#cs-tab-make",
+          "w": 272,
+          "h": 44
+        },
+        "under44": [],
+        "inlineTextLinks": [],
+        "selected": [
+          "Stats"
+        ],
+        "visiblePanels": [
+          "cs-panel-stats"
+        ]
+      }
+    }
+  },
+  "before": {
+    "390": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyScrollWidth": 390,
+      "pageHeight": 4554,
+      "minFontPx": 8.5,
+      "minFontOn": "label \"Handle\"",
+      "minControlFontPx": 16,
+      "targets": 45,
+      "smallestTarget": {
+        "what": "#creatorTerms",
+        "w": 336,
+        "h": 15
+      },
+      "under44": [
+        {
+          "what": "#creatorTerms",
+          "w": 336,
+          "h": 15
+        },
+        {
+          "what": "#ownsMaster",
+          "w": 336,
+          "h": 15
+        },
+        {
+          "what": "#samplesCleared",
+          "w": 336,
+          "h": 15
+        },
+        {
+          "what": "#collaboratorsCleared",
+          "w": 336,
+          "h": 15
+        },
+        {
+          "what": "#isDerivative",
+          "w": 336,
+          "h": 15
+        },
+        {
+          "what": "#creatorAccent",
+          "w": 336,
+          "h": 27
+        },
+        {
+          "what": "#creatorBackground",
+          "w": 336,
+          "h": 27
+        },
+        {
+          "what": "#creatorForeground",
+          "w": 336,
+          "h": 27
+        },
+        {
+          "what": "#creatorSurface",
+          "w": 336,
+          "h": 27
+        },
+        {
+          "what": "#trackAccent",
+          "w": 336,
+          "h": 27
+        },
+        {
+          "what": "#trackBackground",
+          "w": 336,
+          "h": 27
+        },
+        {
+          "what": "#trackForeground",
+          "w": 336,
+          "h": 27
+        },
+        {
+          "what": "#trackSurface",
+          "w": 336,
+          "h": 27
+        },
+        {
+          "what": "#controlsComposition",
+          "w": 336,
+          "h": 29.4
+        },
+        {
+          "what": "#selfMusicRefresh",
+          "w": 114.7,
+          "h": 30.5
+        },
+        {
+          "what": "button.creator-btn",
+          "w": 125.5,
+          "h": 30.5
+        },
+        {
+          "what": "#newService",
+          "w": 83.8,
+          "h": 30.5
+        },
+        {
+          "what": "#newAlbum",
+          "w": 88.6,
+          "h": 30.5
+        },
+        {
+          "what": "#submitTrack",
+          "w": 161.3,
+          "h": 30.5
+        },
+        {
+          "what": "#creatorHandle",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#creatorName",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#creatorWebsite",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#trackTitle",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#trackArtist",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#trackGenre",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#trackMusicVideo",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#trackLyricsUrl",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#trackServiceLabel",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#trackServiceUrl",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#licensePrice",
+          "w": 336,
+          "h": 42.8
+        },
+        {
+          "what": "#licenseTitle",
+          "w": 336,
+          "h": 42.8
+        }
+      ],
+      "inlineTextLinks": [
+        {
+          "what": "a.",
+          "w": 166.1,
+          "h": 14
+        }
+      ]
+    },
+    "1280": {
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "bodyScrollWidth": 1280,
+      "pageHeight": 3715,
+      "minFontPx": 8.5,
+      "minFontOn": "label \"Handle\"",
+      "minControlFontPx": 16,
+      "targets": 45,
+      "smallestTarget": {
+        "what": "#creatorTerms",
+        "w": 372.8,
+        "h": 15
+      },
+      "under44": [
+        {
+          "what": "#creatorTerms",
+          "w": 372.8,
+          "h": 15
+        },
+        {
+          "what": "#ownsMaster",
+          "w": 1058,
+          "h": 15
+        },
+        {
+          "what": "#controlsComposition",
+          "w": 1058,
+          "h": 15
+        },
+        {
+          "what": "#samplesCleared",
+          "w": 1058,
+          "h": 15
+        },
+        {
+          "what": "#collaboratorsCleared",
+          "w": 1058,
+          "h": 15
+        },
+        {
+          "what": "#isDerivative",
+          "w": 1058,
+          "h": 15
+        },
+        {
+          "what": "#releaseTerms",
+          "w": 1058,
+          "h": 15
+        },
+        {
+          "what": "#creatorAccent",
+          "w": 372.8,
+          "h": 27
+        },
+        {
+          "what": "#creatorBackground",
+          "w": 372.8,
+          "h": 27
+        },
+        {
+          "what": "#creatorForeground",
+          "w": 372.8,
+          "h": 27
+        },
+        {
+          "what": "#creatorSurface",
+          "w": 372.8,
+          "h": 27
+        },
+        {
+          "what": "#trackAccent",
+          "w": 523.5,
+          "h": 27
+        },
+        {
+          "what": "#trackBackground",
+          "w": 523.5,
+          "h": 27
+        },
+        {
+          "what": "#trackForeground",
+          "w": 523.5,
+          "h": 27
+        },
+        {
+          "what": "#trackSurface",
+          "w": 523.5,
+          "h": 27
+        },
+        {
+          "what": "#selfMusicRefresh",
+          "w": 114.7,
+          "h": 30.5
+        },
+        {
+          "what": "button.creator-btn",
+          "w": 125.5,
+          "h": 30.5
+        },
+        {
+          "what": "#newService",
+          "w": 83.8,
+          "h": 30.5
+        },
+        {
+          "what": "#newAlbum",
+          "w": 88.6,
+          "h": 30.5
+        },
+        {
+          "what": "#submitTrack",
+          "w": 161.3,
+          "h": 30.5
+        },
+        {
+          "what": "#creatorHandle",
+          "w": 372.8,
+          "h": 42.8
+        },
+        {
+          "what": "#creatorName",
+          "w": 372.8,
+          "h": 42.8
+        },
+        {
+          "what": "#creatorWebsite",
+          "w": 372.8,
+          "h": 42.8
+        },
+        {
+          "what": "#trackTitle",
+          "w": 523.5,
+          "h": 42.8
+        },
+        {
+          "what": "#trackArtist",
+          "w": 523.5,
+          "h": 42.8
+        },
+        {
+          "what": "#trackMusicVideo",
+          "w": 523.5,
+          "h": 42.8
+        },
+        {
+          "what": "#trackLyricsUrl",
+          "w": 523.5,
+          "h": 42.8
+        },
+        {
+          "what": "#trackServiceLabel",
+          "w": 523.5,
+          "h": 42.8
+        },
+        {
+          "what": "#trackServiceUrl",
+          "w": 523.5,
+          "h": 42.8
+        },
+        {
+          "what": "#licensePrice",
+          "w": 523.5,
+          "h": 42.8
+        },
+        {
+          "what": "#licenseTitle",
+          "w": 523.5,
+          "h": 42.8
+        }
+      ],
+      "inlineTextLinks": [
+        {
+          "what": "a.",
+          "w": 166.1,
+          "h": 14
+        }
+      ]
+    }
+  },
+  "shell": {
+    "defaultChapter": "make",
+    "tabs": [
+      {
+        "text": "Make",
+        "w": 91.5,
+        "h": 44,
+        "font": "14px",
+        "weight": "800",
+        "underline": "2px rgb(229, 56, 59)",
+        "selected": "true",
+        "tabindex": 0,
+        "controls": "cs-panel-make",
+        "href": "#make"
+      },
+      {
+        "text": "Releases",
+        "w": 91.5,
+        "h": 44,
+        "font": "14px",
+        "weight": "600",
+        "underline": "2px rgba(0, 0, 0, 0)",
+        "selected": "false",
+        "tabindex": -1,
+        "controls": "cs-panel-releases",
+        "href": "#releases"
+      },
+      {
+        "text": "Page",
+        "w": 91.5,
+        "h": 44,
+        "font": "14px",
+        "weight": "600",
+        "underline": "2px rgba(0, 0, 0, 0)",
+        "selected": "false",
+        "tabindex": -1,
+        "controls": "cs-panel-page",
+        "href": "#page"
+      },
+      {
+        "text": "Stats",
+        "w": 91.5,
+        "h": 44,
+        "font": "14px",
+        "weight": "600",
+        "underline": "2px rgba(0, 0, 0, 0)",
+        "selected": "false",
+        "tabindex": -1,
+        "controls": "cs-panel-stats",
+        "href": "#stats"
+      }
+    ],
+    "cardsInChapters": {
+      "cs-panel-make": [
+        "takeBench"
+      ],
+      "cs-panel-releases": [
+        "Your releases",
+        "Submit a release"
+      ],
+      "cs-panel-page": [
+        "creatorSummary",
+        "creatorIdentity",
+        "albumCard",
+        "rateCard"
+      ],
+      "cs-panel-stats": [
+        "cs-empty",
+        "Artist Analytics"
+      ]
+    },
+    "strayCards": 0,
+    "releaseGroups": [
+      "The track (6)",
+      "Audio (2)",
+      "Artwork and player colours (5)",
+      "Lyrics and video (4)",
+      "Links on the player (3)",
+      "Rights (6)",
+      "License offer (3)",
+      "Send for review (1)"
+    ],
+    "releaseControlsStillInForm": 31,
+    "keyboard": [
+      {
+        "key": "ArrowRight",
+        "chapter": "releases",
+        "hash": "#releases",
+        "focus": "cs-tab-releases"
+      },
+      {
+        "key": "ArrowRight",
+        "chapter": "page",
+        "hash": "#page",
+        "focus": "cs-tab-page"
+      },
+      {
+        "key": "End",
+        "chapter": "stats",
+        "hash": "#stats",
+        "focus": "cs-tab-stats"
+      },
+      {
+        "key": "ArrowRight",
+        "chapter": "make",
+        "hash": "#make",
+        "focus": "cs-tab-make"
+      },
+      {
+        "key": "Home",
+        "chapter": "make",
+        "hash": "#make",
+        "focus": "cs-tab-make"
+      },
+      {
+        "key": "ArrowLeft",
+        "chapter": "stats",
+        "hash": "#stats",
+        "focus": "cs-tab-stats"
+      }
+    ],
+    "editProfileOpensOn": "page",
+    "parked": {
+      "rowTop": 64,
+      "rowBottom": 108,
+      "chip": {
+        "top": 12,
+        "bottom": 56,
+        "left": 299.390625,
+        "right": 378
+      },
+      "chipOverRow": false,
+      "isParked": true
+    },
+    "afterTabClickFromDeep": {
+      "chapter": "make",
+      "scrollY": 178,
+      "rowTop": 64
+    }
+  },
+  "bench": {
+    "startState": {
+      "open": false,
+      "name": "",
+      "duration": 0,
+      "sampleRate": 0,
+      "region": null,
+      "playing": false,
+      "recording": false,
+      "pending": false,
+      "busy": false,
+      "volatile": false,
+      "position": 0,
+      "canRecord": true,
+      "audioState": "none",
+      "takes": []
+    },
+    "importOk": 176444,
+    "opened": true,
+    "afterImport": {
+      "name": "Test tone 440",
+      "duration": 2,
+      "region": {
+        "start": 0,
+        "end": 2,
+        "length": 2,
+        "fadeIn": 0,
+        "fadeOut": 0
+      },
+      "status": "Opened “Test tone 440”, 0:02.00. Drag the handles to trim it.",
+      "canvas": "660x220",
+      "canvasPixelsDrawn": 80520,
+      "editorShown": true
+    },
+    "afterNumericTrim": {
+      "start": 0.5,
+      "end": 1.5,
+      "length": 1,
+      "fadeIn": 0.25,
+      "fadeOut": 0.25
+    },
+    "handle": {
+      "w": 44,
+      "h": 110
+    },
+    "afterHandleDrag": {
+      "start": 0.7108433734939759,
+      "end": 1.5,
+      "length": 0.7891566265060241,
+      "fadeIn": 0.25,
+      "fadeOut": 0.25
+    },
+    "startFieldAfterDrag": "0.71",
+    "afterEndHandleArrowLeft": 1.49,
+    "regionForRender": {
+      "start": 0.5,
+      "end": 1.5,
+      "length": 1,
+      "fadeIn": 0.25,
+      "fadeOut": 0.25
+    },
+    "measuredWithTakeOpen": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "bodyScrollWidth": 390,
+      "pageHeight": 1800,
+      "minFontPx": 13,
+      "minFontOn": "#tbFormats \"Import takes MP3, WAV or M4A. No\"",
+      "minControlFontPx": 16,
+      "targets": 17,
+      "smallestTarget": {
+        "what": "#cs-tab-make",
+        "w": 91.5,
+        "h": 44
+      },
+      "under44": [],
+      "inlineTextLinks": []
+    },
+    "siteAudioPlayingBefore": true,
+    "playing": {
+      "playing": true,
+      "position": 0.6908433734939758,
+      "button": "Pause",
+      "siteAudioPaused": true,
+      "mediaElementsInBench": 0
+    },
+    "paused": {
+      "playing": false,
+      "position": 0.6908433734939758
+    },
+    "afterRegionEnds": {
+      "playing": false,
+      "position": 0.5
+    },
+    "saved": true,
+    "take": {
+      "listed": {
+        "name": "Test tone 440",
+        "duration": 1,
+        "bytes": 88244,
+        "createdAt": "2026-11-24T17:45:06.248Z"
+      },
+      "volatile": false,
+      "status": "Saved “Test tone 440”, 0:01.00, on this device.",
+      "wav": {
+        "channels": 1,
+        "sampleRate": 44100,
+        "bits": 16,
+        "frames": 44100,
+        "duration": 1
+      },
+      "bytes": 88244,
+      "sessionDoc": {
+        "version": 1,
+        "sampleRate": 44100,
+        "tracks": [
+          {
+            "id": "t1",
+            "name": "Test tone 440",
+            "gainDb": 0,
+            "clips": [
+              {
+                "id": "c1",
+                "take": "808d5212-2be0-4061-ad53-943271901b8d",
+                "at": 0,
+                "offset": 0,
+                "duration": 1
+              }
+            ]
+          }
+        ]
+      },
+      "openedAtRate": 44100,
+      "listRecordHasAudio": false,
+      "listHoldsAudio": false,
+      "audioIsBlob": true,
+      "audioBlobBytes": 88244,
+      "peakFirst20ms": 0.048,
+      "peakMiddle": 0.6,
+      "peakLast20ms": 0.048,
+      "row": "0:01.00 · Nov 24, 2026, 12:45 PM · WAV, 86 KB · On this device only"
+    },
+    "afterReload": {
+      "takes": 1,
+      "name": "Test tone 440",
+      "duration": 1,
+      "rows": 1
+    },
+    "useInRelease": {
+      "hash": "#releases",
+      "chapter": "releases",
+      "releasesShown": true,
+      "files": 1,
+      "name": "Test-tone-440.wav",
+      "type": "audio/wav",
+      "size": 88244,
+      "wav": {
+        "channels": 1,
+        "sampleRate": 44100,
+        "bits": 16,
+        "frames": 44100,
+        "duration": 1
+      },
+      "acceptsWav": true,
+      "validity": true,
+      "title": "Test tone 440",
+      "note": "From your takes: Test-tone-440.wav (0:01.00, 86 KB). It is uploaded only when you submit this release.",
+      "focus": "trackMaster"
+    },
+    "deleteArmed": {
+      "label": "Delete for good?",
+      "name": "Delete “Test tone 440” for good?",
+      "said": "Press Delete again to remove “Test tone 440” for good. Escape keeps it.",
+      "takes": 1
+    },
+    "afterDeleteAndReload": {
+      "takes": 0,
+      "emptyShown": true
+    },
+    "badFile": {
+      "error": "This browser could not read that file as audio. Try an MP3, a WAV or an M4A.",
+      "editorOpen": false
+    }
+  },
+  "recording": {
+    "flags": "--use-fake-device-for-media-stream --use-fake-ui-for-media-stream",
+    "canRecord": true,
+    "started": true,
+    "meterLevels": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      100,
+      100,
+      0
+    ],
+    "during": {
+      "label": "Stop recording",
+      "liveShown": true,
+      "timer": "0:01.89",
+      "importWaiting": true,
+      "meter": "0 / Silent"
+    },
+    "kept": true,
+    "after": {
+      "open": true,
+      "duration": 2.1,
+      "takes": [
+        {
+          "name": "Take Nov 24 12.45 PM",
+          "duration": 2.1,
+          "bytes": 403244
+        }
+      ],
+      "status": "Recorded 0:02.10 and kept it as “Take Nov 24 12.45 PM”. Trim it and press Save take for the short version.",
+      "error": "",
+      "label": "Record"
+    },
+    "denySet": true,
+    "denied": {
+      "audio": "suspended",
+      "focusKept": "tbRecord",
+      "recording": false,
+      "error": "The microphone is blocked for this site. Allow it in your browser's site settings, then press Record again. You can still import a file.",
+      "label": "Record",
+      "recordDisabled": false
+    },
+    "unsupported": {
+      "canRecord": false,
+      "recordDisabled": true,
+      "importDisabled": false,
+      "hint": "This browser cannot record here. You can still import a file. Import takes MP3, WAV or M4A. Nothing here is uploaded."
+    }
+  },
+  "errors": [],
+  "findings": {
+    "roles": {
+      "tablists": 1,
+      "tabs": 4,
+      "panels": 4,
+      "selected": 1,
+      "panelTabIndex": [
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "labelled": true
+    },
+    "deepLink": {
+      "chapter": "stats",
+      "statsShown": true,
+      "selected": "Stats",
+      "headingInView": true,
+      "inPage": "page",
+      "fieldClearOfRow": true,
+      "unknownLeavesChapter": "page"
+    },
+    "back": {
+      "entry": "make",
+      "afterOneBack": "releases",
+      "afterTwoBacks": "make",
+      "hashAfterTwoBacks": "",
+      "selectedAfterTwoBacks": "Make",
+      "afterForward": "releases"
+    },
+    "altArrow": {
+      "prevented": false,
+      "chapter": "stats",
+      "plainArrowStillMoves": true
+    },
+    "focus": {
+      "chrome": {
+        "rowTop": 241.78125,
+        "rowBottom": 285.78125,
+        "barTop": 761.03125,
+        "scrollPaddingTop": "120px",
+        "scrollPaddingBottom": "95px"
+      },
+      "backward": {
+        "stops": 29,
+        "covered": []
+      },
+      "forward": {
+        "stops": 30,
+        "covered": []
+      },
+      "withoutReservedSpace": {
+        "backwardCovered": [
+          "licensePrice",
+          "trackLyricsUrl",
+          "trackDescription",
+          "trackTitle"
+        ],
+        "forwardCovered": [
+          "collaboratorsCleared",
+          "licenseTerms"
+        ]
+      }
+    },
+    "keyboard": {
+      "started": true,
+      "whileRecording": "tbRecord",
+      "label": "Stop recording",
+      "secondEnterStopped": true,
+      "afterStop": "tbRecord",
+      "busySeen": true,
+      "whileSaving": "tbSave",
+      "afterSave": "tbSave",
+      "saveIsDisabledProperty": false
+    },
+    "recordAway": {
+      "recording": true,
+      "chapter": "releases",
+      "stripShown": true,
+      "strip": {
+        "top": 124,
+        "height": 62,
+        "width": 366
+      },
+      "said": "Recording",
+      "time": "0:00.55",
+      "stopHeight": 44,
+      "stopWidth": 138.546875,
+      "tabMarked": true,
+      "tabName": "Make, recording",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "stripInViewWhenScrolled": true,
+      "timeMoves": true,
+      "afterStop": {
+        "recording": false,
+        "kept": true,
+        "chapter": "make",
+        "stripHidden": true,
+        "tabMarked": false,
+        "focus": "tbRecord"
+      }
+    },
+    "recovery": {
+      "askedBeforeLeaving": true,
+      "takesRightAfterReload": 0,
+      "recovered": true,
+      "take": {
+        "name": "Recovered take Nov 24 12.46 PM",
+        "duration": 1.44,
+        "bytes": 276524
+      },
+      "status": "A recording was cut short when the page closed. The 0:01.44 that had been captured is kept as “Recovered take Nov 24 12.46 PM”.",
+      "piecesLeft": 0,
+      "micStillLive": false
+    },
+    "exact": {
+      "rate": 44100,
+      "format": "Save take writes a 16-bit WAV at this take's own rate (44,100 Hz, mono). For a 24-bit master, choose the finished file under Releases instead.",
+      "identical": true,
+      "bytes": 132344,
+      "differingBytes": 0,
+      "wavRate": 44100
+    },
+    "longFile": {
+      "wav": {
+        "opened": false,
+        "ms": 36,
+        "decodes": 0,
+        "error": "That file is 31 minutes long. The take bench opens up to 30 minutes at a time.",
+        "fileBytes": 29760044
+      },
+      "mp3": {
+        "opened": false,
+        "ms": 57,
+        "decodes": 0,
+        "error": "That file is 44 minutes long. The take bench opens up to 30 minutes at a time.",
+        "fileBytes": 41943040
+      }
+    },
+    "writeFails": {
+      "listed": true,
+      "held": true,
+      "volatile": false,
+      "status": "Saved “putfail”, 0:01.00. This browser is not keeping takes, so download it before closing the tab.",
+      "row": "0:01.00 · Nov 24, 2026, 12:46 PM · WAV, 86 KB · Until this tab closes",
+      "note": "This browser could not keep every take. Any marked “Until this tab closes” is lost when the tab closes: download it. The others are kept in this browser, on this device only.",
+      "usable": true
+    },
+    "audioIdle": {
+      "whilePlaying": "running",
+      "playing": true,
+      "afterStop": "suspended",
+      "afterClose": "suspended",
+      "afterRecording": "suspended"
+    },
+    "otherMedia": {
+      "benchPlayingBefore": true,
+      "benchPlayingAfter": false,
+      "otherPlaying": true,
+      "button": "Play"
+    },
+    "handoff": {
+      "actions": [
+        "Use in a release",
+        "Use as preview",
+        "Open",
+        "Download",
+        "Delete"
+      ],
+      "titleAfterA": "Persist A",
+      "titleAfterB": "Persist B",
+      "masterFile": "Persist-B.wav",
+      "previewFile": "Persist-A.wav",
+      "previewNote": "From your takes: Persist-A.wav (0:01.00, 86 KB). This is the clip the public hears. It is uploaded only when you submit this release.",
+      "masterUnchangedByPreview": true,
+      "chapterAfterPreview": "releases",
+      "typedTitleKept": "My own title",
+      "bigBytes": 55680044,
+      "bigRow": "4:50.00 · Nov 24, 2026, 12:46 PM · WAV, 53.1 MB · On this device only | Over 50 MB: a release that uses this as its master also needs a shorter preview file.",
+      "bigNote": "From your takes: Big.wav (4:50.00, 53.1 MB). It is uploaded only when you submit this release. This WAV is over 50 MB, the most the file listeners hear can be: add a shorter preview file below, or the form will refuse a public release that has none.",
+      "bigMasterBytes": 55680044,
+      "bigPreviewError": "“Big” is 53.1 MB. A preview can be 50 MB at most. Open the take, trim a shorter part, save it, and use that as the preview.",
+      "previewStillA": "Persist-A.wav"
+    },
+    "deleteA11y": {
+      "takesBefore": 2,
+      "armedText": "Delete for good?",
+      "armedName": "Delete “Persist B” for good?",
+      "armedSaid": "Press Delete again to remove “Persist B” for good. Escape keeps it.",
+      "afterEscape": "Delete",
+      "nameAfterEscape": "Delete “Persist B”",
+      "saidAfterEscape": "Nothing was deleted.",
+      "takesAfter": 2
+    },
+    "sliders": {
+      "duration": 4,
+      "startMin": 0,
+      "startMax": 2.95,
+      "startNow": 1,
+      "endMin": 1.05,
+      "endMax": 4,
+      "endNow": 3
+    },
+    "meter": {
+      "samples": [
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "100",
+          "Too loud"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ],
+        [
+          "0",
+          "Silent"
+        ]
+      ],
+      "consistent": true,
+      "record": {
+        "pressed": null,
+        "name": "Stop recording"
+      },
+      "audioAfterRecording": "suspended"
+    },
+    "statusGap": {
+      "gap": 14,
+      "statusEmpty": true,
+      "statusInTree": true
+    },
+    "contrast": {
+      "trackTitle": {
+        "edgeVsCard": 3.62,
+        "fillVsCard": 1.06,
+        "placeholderVsField": 17.74,
+        "textVsField": 17.74
+      },
+      "trackAccess": {
+        "edgeVsCard": 3.62,
+        "fillVsCard": 1.06,
+        "placeholderVsField": 17.74,
+        "textVsField": 17.74
+      },
+      "trackDescription": {
+        "edgeVsCard": 3.62,
+        "fillVsCard": 1.06,
+        "placeholderVsField": 17.74,
+        "textVsField": 17.74
+      },
+      "trackLyricSheet": {
+        "edgeVsCard": 3.62,
+        "fillVsCard": 1.06,
+        "placeholderVsField": 7.39,
+        "textVsField": 17.74
+      },
+      "trackAccent": {
+        "edgeVsCard": 3.62,
+        "fillVsCard": 1.06,
+        "placeholderVsField": 17.74,
+        "textVsField": 17.74
+      },
+      "creatorHandle": {
+        "edgeVsCard": 3.62,
+        "fillVsCard": 1.06,
+        "placeholderVsField": 7.39,
+        "textVsField": 17.74
+      },
+      "creatorBio": {
+        "edgeVsCard": 3.62,
+        "fillVsCard": 1.06,
+        "placeholderVsField": 17.74,
+        "textVsField": 17.74
+      },
+      "tbName": {
+        "edgeVsCard": 3.62,
+        "fillVsCard": 1.06,
+        "placeholderVsField": 17.74,
+        "textVsField": 17.74
+      },
+      "tbStart": {
+        "edgeVsCard": 3.62,
+        "fillVsCard": 1.06,
+        "placeholderVsField": 17.74,
+        "textVsField": 17.74
+      }
+    },
+    "noShell": {
+      "shell": "undefined",
+      "rowShown": false,
+      "tabRoles": 0,
+      "cardsShown": 7,
+      "cards": [
+        "takeBench",
+        "Artist Analytics",
+        "creatorIdentity",
+        "rateCard",
+        "albumCard",
+        "Your releases",
+        "Submit a release"
+      ],
+      "benchLoaded": true,
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "handOffStillWorks": true
+    },
+    "noBench": {
+      "mount": "The take bench has not loaded. It needs JavaScript; if scripts are on, reload the page. Releases still work without it.",
+      "chapters": 4
+    },
+    "noAudio": {
+      "recordDisabled": true,
+      "importDisabled": true,
+      "error": "This browser cannot open audio here, so the take bench cannot run. Releases still work: choose a finished file there."
+    },
+    "idbHang": {
+      "volatile": true,
+      "takes": 1,
+      "held": true,
+      "locked": false,
+      "status": "Saved “Hang”, 0:01.00. This browser is not keeping takes, so download it before closing the tab.",
+      "note": "This browser is not letting the studio keep takes (private browsing, or storage is blocked). They last only until this tab closes: download any you want.",
+      "saved": true,
+      "secondsToSave": 7.2,
+      "usable": true
+    }
+  },
+  "checks": {
+    "controls were measured at 390": true,
+    "no sideways scroll at 390": true,
+    "no text under 12px at 390": true,
+    "form controls at 16px or more at 390": true,
+    "no target under 44px at 390": true,
+    "controls were measured at 1280": true,
+    "no sideways scroll at 1280": true,
+    "no text under 12px at 1280": true,
+    "form controls at 16px or more at 1280": true,
+    "no target under 44px at 1280": true,
+    "take open: no sideways scroll, no small target": true,
+    "roles are given by the shell": true,
+    "an element fragment opens its chapter": true,
+    "Back to the entry address shows Make": true,
+    "Alt+Arrow is left to the browser": true,
+    "no focused field under the chapter row or the bottom bar": true,
+    "focus stays on Record and Save from the keyboard": true,
+    "a recording stays in sight outside Make": true,
+    "an interrupted recording is recovered": true,
+    "the list holds no audio": true,
+    "a trimmed-only 16-bit file keeps its rate and its samples": true,
+    "a long file is refused before it is decoded": true,
+    "a take that cannot be written is held and listed": true,
+    "the audio session rests when idle": true,
+    "other media starting stops the bench": true,
+    "hand-off: title follows, preview slot, 50 MB said": true,
+    "Delete: the second press is named, said and called off by Escape": true,
+    "the trim sliders publish the range they can reach": true,
+    "the meter says one level": true,
+    "no gap from an empty status line": true,
+    "a field edge is 3:1 or better; placeholders 4.5:1": true,
+    "without the shell script: no dead tabs, every card shown": true,
+    "no AudioContext: Record and Import are both off": true,
+    "a database that never answers does not lock the bench": true,
+    "no page error": true
+  },
+  "failed": []
+}
