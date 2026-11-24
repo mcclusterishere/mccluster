@@ -53,10 +53,12 @@ SEEK_FIRST_ACCESS_REQUIRED = "false"
 INTEL_USGS_COLLECTOR_ENABLED = "true"
 INTEL_USGS_SPATIAL_ARCHIVE_ENABLED = "true"
 # The E=UP environmental event timeline's USGS ingest (src/eup/environment/ingest.js, docs/control-plane/EUP-EVENT-TIMELINE.md
-# slice S3) on the five-minute cron. "false" makes no USGS request and no store call. Turning it on is the owner's separate
-# go, after the pending event store is applied (supabase/pending/20261119100000_eup_environment_events_v1_01.sql to _05.sql)
-# and the USGS rule is set in Control; until the environment module is installed and enabled nothing it stores is public.
-EUP_ENVIRONMENT_USGS_INGEST_ENABLED = "false"
+# slice S3) on the five-minute cron. On from Release 1 of 2026-11-23, Matthew's go ("Switching the module on for sure,
+# alright?"; "ship it all baby"), with the event store applied in full (supabase/migrations/, parts 01 to 05, ledger 384).
+# Until he sets the USGS rule in Control a run reads the store's view once and stops: no USGS request, nothing stored. Until
+# he installs and enables the environment module in Control nothing it stores is public. "false" makes no USGS request and
+# no store call.
+EUP_ENVIRONMENT_USGS_INGEST_ENABLED = "true"
 # Identity verification levels: the Persona government-ID check stays OFF until the
 # owner approves the consent text, counsel review and Persona's terms. Secrets by name
 # only (wrangler secret put): PERSONA_API_KEY, PERSONA_TEMPLATE_ID, PERSONA_WEBHOOK_SECRET.

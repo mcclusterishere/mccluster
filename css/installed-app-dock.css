@@ -56,6 +56,47 @@ html.mcc-installed-app .appbar button.appbar__music-info {
 html.mcc-installed-app .appbar__music-info span { display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 html.mcc-installed-app .appbar__music-info [data-app-player="title"] { font:600 12px/15px system-ui,sans-serif; }
 html.mcc-installed-app .appbar__music-info [data-app-player="artist"] { font:400 10px/13px system-ui,sans-serif;opacity:.78; }
+/* Why the music is quiet, in its full words at every width: a line of its own across the top of the dock while it
+   applies; the controls stay where they were, on the row below. Under the title it was cut by the column's width,
+   "Reconnectin…" at 390 px and a few letters at 320 (music slice M3 follow-up). */
+html.mcc-installed-app .appbar__music-status { display:none; }
+html.mcc-installed-app.mcc-app-dock-active .appbar.has-status { height:auto;grid-template-rows:auto 44px; }
+html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__music-left,
+html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__tabs,
+html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__music-right { grid-row:2; }
+html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__music-status {
+  display:block;grid-column:1 / -1;grid-row:1;min-width:0;padding:5px 14px 0 45px;
+  font:600 11px/14px system-ui,sans-serif;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* ONE PLAY/PAUSE (the Release 1 dock fix). Where the red Music tab is the page's own Play/Pause (js/tabbar.js marks
+   it: listen.html, the engine's song or held record, no World open or opening, and the dock showing that same player),
+   it is the one control and the dock shows none of its own. Everywhere else the dock's own is the one control, and the
+   tab, the way to the music there (the album: it opens the shelf; the World over the music; Listen while a World song
+   carried back from the Globe plays there), wears its play triangle at rest (css/style.css), never a second pause
+   glyph. On its red coin (the album, the room it points at) the triangle stays white, as the pause glyph it replaces
+   was, so it never vanishes into the coin. */
+html.mcc-installed-app.mcc-music-tab-transport[data-app-player-surface="listen"] .appbar button[data-app-player="play"] { display:none; }
+html.mcc-installed-app.mcc-app-dock-active:not(.mcc-music-tab-transport) .appbar .appbar__tab[data-appnav="music"].is-sound::before {
+  top:calc(50% - 7px);left:calc(50% + 1px);width:13px;height:14px;color:inherit;background:currentColor;filter:none;
+  clip-path:polygon(0 0,100% 50%,0 100%);
+}
+html.mcc-installed-app.mcc-app-dock-active:not(.mcc-music-tab-transport) .appbar .appbar__tab[data-appnav="music"].is-sound.is-here::before,
+html.mcc-installed-app.mcc-app-dock-active:not(.mcc-music-tab-transport) .appbar .appbar__tab[data-appnav="music"].is-sound.is-active::before { color:#fff; }
+/* Where the tab is the one Play/Pause, its play triangle at rest is white on its red coin too, as its pause glyph is:
+   the room's grey (css/music-system-v2.css) was about 1.2:1 on the red, and with the dock's own Play gone it was the
+   only Play there (verification DFV-3). The owner's tab wears no coin and is white already: the owner's bar marks it
+   aria-current, which css/music-system-v2.css lights. */
+html.mcc-installed-app.mcc-music-tab-transport .appbar:not(.appbar--admin) .appbar__tab[data-appnav="music"].is-here:not(.is-sound)::before,
+html.mcc-installed-app.mcc-music-tab-transport .appbar:not(.appbar--admin) .appbar__tab[data-appnav="music"].is-active:not(.is-sound)::before { color:#fff; }
+/* The one Play/Pause never scrolls out of reach (verification DFV-1; BAR-RESTORE 4.2): the house owner's strip
+   scrolls (ten tabs in 132 px), so while the Music tab is the Play/Pause it is pinned at the strip's start, on the
+   bar's own ground (body.music-v2 .appbar, Listen), the other tabs passing under it. Every other tab keeps 44 px of
+   room before it, so the strip brings it to rest, and scrolls it into view, clear of the pin (js/site-navigation.js
+   reveals a focused tab the same way); the pinned tab, always in view, is no place to rest. */
+html.mcc-installed-app.mcc-music-tab-transport .appbar--admin .appbar__tabs > .appbar__tab[data-appnav="music"] {
+  position:sticky;left:0;z-index:1;background:#0e0e10;scroll-snap-align:none;
+}
+html.mcc-installed-app.mcc-music-tab-transport .appbar--admin .appbar__tabs > .appbar__tab:not([data-appnav="music"]) { scroll-margin-inline-start:44px; }
 /* Hide only the corresponding owner's duplicate floating chrome, after the
    integrated controls are ready. Its full player and its audio stay alive. */
 html.mcc-installed-app.mcc-app-dock-active[data-app-player-surface="listen"] .music-mini,
