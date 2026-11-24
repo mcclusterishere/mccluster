@@ -72,15 +72,15 @@
       "served_by": "worker:mccluster",
       "state": "routed",
       "api_cors": false,
-      "today": "301 to the same path and query on the platform, every path (P1; before P1 the platform's own paths and the World's rooms went to the apex and every other path to the same path on matthew.mccluster.org, workers/mccluster/src/company-site/router.js).",
-      "target": "301 to the platform, same path and query (P1)."
+      "today": "301 to the same path and query on the platform, every path, in one hop: straight to where the platform itself sends an address it answers with a 301 (P1; before P1 the platform's own paths and the World's rooms went to the apex and every other path to the same path on matthew.mccluster.org, workers/mccluster/src/company-site/router.js).",
+      "target": "301 to the platform, same path and query, in one hop (P1)."
     },
     "humanuprise.com": {
       "to": "platform",
       "served_by": "worker:mccluster",
       "state": "inert until the owner routes it",
       "api_cors": true,
-      "today": "Built 2026-10-14, not routed, no address records: when routed, workers/mccluster/src/human-uprise/router.js answers every path with a 301 to the same path and query on the platform (P1; before P1 it would have served the World and its rooms and 301ed every other path to matthew.mccluster.org).",
+      "today": "Built 2026-10-14, not routed, no address records: when routed, workers/mccluster/src/human-uprise/router.js answers every path with a 301 to the same path and query on the platform, in one hop as www does (P1; before P1 it would have served the World and its rooms and 301ed every other path to matthew.mccluster.org).",
       "target": "Once routed, 301 to the platform, same path and query (owner default of 2026-11-23, owner_decisions.humanuprise_com; the router answers so from P1)."
     },
     "www.humanuprise.com": {
@@ -88,7 +88,7 @@
       "served_by": "worker:mccluster",
       "state": "inert until the owner routes it",
       "api_cors": true,
-      "today": "Not routed; when routed it answers 301 to the platform, same path and query (P1; before P1 to https://humanuprise.com).",
+      "today": "Not routed; when routed it answers 301 to the platform, same path and query, in one hop (P1; before P1 to https://humanuprise.com).",
       "target": "Once routed, 301 to the platform, same path and query (P1)."
     },
     "here.mccluster.org": {
@@ -524,23 +524,23 @@
       "p1_changes": [
         {
           "key": "platform_serves_everything",
-          "what": "Every platform and profile page answers 200 on https://mccluster.org at its path, passed through from the static origin, query intact: music and the albums, Creator Studio, account and checkout, the company's products, member pages and Control, and the HERE front door at /index.html (World queries on it, ?view= and ?mission=, still answer 301 to /, and so does /mnet.html). Pages the platform serves are no longer noindex there (the World's rooms were); their canonicals do not move until P2.",
-          "where": "workers/mccluster/src/platform/router.js (platformRoute), workers/mccluster/src/world-host.js (passThrough)"
+          "what": "Every platform and profile page answers 200 on https://mccluster.org at its path, passed through from the static origin, query intact: music and the albums, Creator Studio, account and checkout, the company's products, member pages and Control, and the HERE front door at /index.html (World queries on it, ?view= and ?mission=, still answer 301 to /, and so does /mnet.html). Pages the platform serves are no longer noindex there (the World's rooms were); their canonicals do not move until P2. An address is read the way the static origin reads it (escapes decoded, repeated slashes as one, a name without .html, a directory without its slash): another spelling of a page answers 301 to the page itself, wherever it lives, and a path the record does not name is passed through only while the static origin answers it with no document, so the platform serves no page the record does not name. The documents it passes through are kept at the edge 60 s (the carry page aside).",
+          "where": "workers/mccluster/src/platform/router.js (platformRoute, addressOf, named, DOCUMENT_CACHE_TTL), workers/mccluster/src/world-host.js (passThrough)"
         },
         {
           "key": "profile_only_to_profile_host",
-          "what": "Whip Equipped (Matthew's separate company, never McCluster Corp's) and the owner's own pages (url_ownership.profile_only) answer 301 on the platform to the same path on https://matthew.mccluster.org, query intact.",
-          "where": "workers/mccluster/src/platform/router.js (platformRoute)"
+          "what": "Whip Equipped (Matthew's separate company, never McCluster Corp's) and the owner's own pages (url_ownership.profile_only) answer 301 on the platform to the same path on https://matthew.mccluster.org, query intact, at every spelling of their address the static origin reads (/whip, //whip.html, /whip%2Ehtml, /%77hip.html go to /whip.html), and so does everything under Whip Equipped's directories (/whip/).",
+          "where": "workers/mccluster/src/platform/router.js (platformRoute, addressOf, underProfileOnly)"
         },
         {
           "key": "www_to_apex",
-          "what": "www.mccluster.org answers 301 to the same path and query on https://mccluster.org for every path (before P1 some paths went to the apex and the rest to Matthew's host).",
-          "where": "workers/mccluster/src/platform/router.js (wwwRoute)"
+          "what": "www.mccluster.org answers 301 to the same path and query on https://mccluster.org for every path (before P1 some paths went to the apex and the rest to Matthew's host), in one hop: where the platform itself answers an address with a 301 (Whip Equipped to Matthew's host, the World's other addresses to its root, another spelling of a page to the page), www sends the visitor straight there.",
+          "where": "workers/mccluster/src/platform/router.js (wwwRoute, toPlatform)"
         },
         {
           "key": "humanuprise_to_platform",
-          "what": "humanuprise.com and its www, once the owner routes them, answer 301 to the same path and query on the platform (owner_decisions.humanuprise_com); until then they stay inert.",
-          "where": "workers/mccluster/src/platform/router.js (worldDoorRoute)"
+          "what": "humanuprise.com and its www, once the owner routes them, answer 301 to the same path and query on the platform, in one hop as www does (owner_decisions.humanuprise_com); until then they stay inert.",
+          "where": "workers/mccluster/src/platform/router.js (worldDoorRoute, toPlatform)"
         },
         {
           "key": "platform_app_start",
@@ -608,10 +608,10 @@
       "measured": "2026-11-23, GET and HEAD only (SPEC-PLATFORM section 1.1); P1's answers are those of the local crawl over this checkout (scripts/e2e/platform-hosts.e2e.mjs), until it is deployed and crawled live",
       "hosts": {
         "mccluster.org": "Worker mccluster by host (routed): the World at / with the platform's head (canonical https://mccluster.org/, og:site_name McCluster Corp); every platform and profile page at its path, passed through from the static origin, query intact (the HERE front door at /index.html; World queries there and /mnet.html 301 to /); Whip Equipped and the owner's own pages (profile_only) 301 to the same path on matthew.mccluster.org; the static files, embed.html (framed by any site), sw.js, manifest.json (the platform's app starts on the World) and carry.html; /company, /news/, robots.txt, sitemap.xml and llms.txt generated or server-rendered; plain http 301 to https.",
-        "www.mccluster.org": "Worker mccluster: 301 to the same path and query on https://mccluster.org, every path.",
+        "www.mccluster.org": "Worker mccluster: 301 to the same path and query on https://mccluster.org, every path, in one hop (straight to where the platform sends an address it answers with a 301).",
         "matthew.mccluster.org": "GitHub Pages through a DNS-only CNAME: every page of the static site, unchanged until P3, its own robots.txt (AI crawlers allowed) and its sitemaps; carry.html answers the platform's carry; manifest.json and sw.js serve the app installed from his host.",
         "here.mccluster.org": "Cloudflare zone redirect rule: 301 to the same path on matthew.mccluster.org.",
-        "humanuprise.com": "Inert: no address records; once the owner routes it, Worker mccluster answers 301 to the same path and query on the platform.",
+        "humanuprise.com": "Inert: no address records; once the owner routes it, Worker mccluster answers 301 to the same path and query on the platform, in one hop.",
         "equityuprise.com": "Not on Cloudflare: WordPress.com nameservers and a placeholder page. The platform's planned address (stage F).",
         "api.mccluster.org": "Worker mccluster, the API; no stage changes it."
       }
@@ -720,7 +720,7 @@
         {
           "host": "platform",
           "path": "profile_only page",
-          "answer": "301 to the profile host, same path (from P1)"
+          "answer": "301 to the profile host, same path, at every spelling of the address (from P1)"
         },
         {
           "host": "platform",
@@ -730,7 +730,7 @@
         {
           "host": "www",
           "path": "anything",
-          "answer": "301 to the platform, same path and query (from P1; at P0 some to the apex, the rest to the profile host)"
+          "answer": "301 to the platform, same path and query, in one hop to the platform's own 301 where it answers one (from P1; at P0 some to the apex, the rest to the profile host)"
         },
         {
           "host": "profile",
@@ -755,10 +755,10 @@
         {
           "host": "humanuprise.com, www",
           "path": "anything",
-          "answer": "301 to the platform, same path and query (from P1, once routed)"
+          "answer": "301 to the platform, same path and query, in one hop (from P1, once routed)"
         }
       ],
-      "pass_through_rules": "Never follow an upstream redirect (fetch with redirect manual, rewrite a Location on the static origin to the requesting host); headers by class (documents, embed.html with no frame restriction, carry.html framed by the platform only, static files as today); no noindex on platform or profile pages served by the platform; documents may be cached 60 s at the edge."
+      "pass_through_rules": "Never follow an upstream redirect (fetch with redirect manual, rewrite a Location on the static origin to the requesting host); headers by class (documents, embed.html with no frame restriction, carry.html framed by the platform only, static files as today); no noindex on platform or profile pages served by the platform; the documents the record names are kept at the edge 60 s (the carry page aside; workers/mccluster/src/platform/router.js DOCUMENT_CACHE_TTL), static files keep the static origin's caching."
     },
     "activation_owner_steps": [
       "Read SPEC-PLATFORM, say go, and confirm or change the five owner_decisions.",

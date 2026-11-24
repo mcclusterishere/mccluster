@@ -213,10 +213,10 @@ crawled live):**
 | Host | Answers |
 | --- | --- |
 | `mccluster.org` | Worker mccluster by host (routed): the World at / with the platform's head (canonical https://mccluster.org/, og:site_name McCluster Corp); every platform and profile page at its path, passed through from the static origin, query intact (the HERE front door at /index.html; World queries there and /mnet.html 301 to /); Whip Equipped and the owner's own pages (profile_only) 301 to the same path on matthew.mccluster.org; the static files, embed.html (framed by any site), sw.js, manifest.json (the platform's app starts on the World) and carry.html; /company, /news/, robots.txt, sitemap.xml and llms.txt generated or server-rendered; plain http 301 to https. |
-| `www.mccluster.org` | Worker mccluster: 301 to the same path and query on https://mccluster.org, every path. |
+| `www.mccluster.org` | Worker mccluster: 301 to the same path and query on https://mccluster.org, every path, in one hop (straight to where the platform sends an address it answers with a 301). |
 | `matthew.mccluster.org` | GitHub Pages through a DNS-only CNAME: every page of the static site, unchanged until P3, its own robots.txt (AI crawlers allowed) and its sitemaps; carry.html answers the platform's carry; manifest.json and sw.js serve the app installed from his host. |
 | `here.mccluster.org` | Cloudflare zone redirect rule: 301 to the same path on matthew.mccluster.org. |
-| `humanuprise.com` | Inert: no address records; once the owner routes it, Worker mccluster answers 301 to the same path and query on the platform. |
+| `humanuprise.com` | Inert: no address records; once the owner routes it, Worker mccluster answers 301 to the same path and query on the platform, in one hop. |
 | `equityuprise.com` | Not on Cloudflare: WordPress.com nameservers and a placeholder page. The platform's planned address (stage F). |
 | `api.mccluster.org` | Worker mccluster, the API; no stage changes it. |
 
@@ -231,15 +231,28 @@ crawled live):**
   front door at `/index.html`. World queries on it (`?view=`, `?mission=`)
   still answer 301 to `/`, and so does `/mnet.html`. The pages the platform
   serves are not noindex there (the World's rooms were at P0); their
-  canonicals do not move until P2.
+  canonicals do not move until P2. An address is read the way the static
+  origin (GitHub Pages) reads it: escapes decoded, repeated slashes as one, a
+  name without `.html`, a directory without its slash. Another spelling of a
+  page answers 301 to the page itself, wherever it lives (`/listen` to
+  `/listen.html`, `/mnet` to `/`), and a path the record does not name is
+  passed through only while the static origin answers it with no document,
+  so the platform serves no page the record does not name. The documents it
+  passes through are kept at the edge 60 s (the carry page aside).
 - **Whip and the owner's own pages stay on his host**: `profile_only` pages
   answer 301 on the platform to the same path on
-  `https://matthew.mccluster.org`, query intact.
+  `https://matthew.mccluster.org`, query intact, at every spelling of their
+  address the static origin reads (`/whip`, `//whip.html`, `/whip%2Ehtml`
+  and `/%77hip.html` all go to `/whip.html` there), and so does everything
+  under Whip Equipped's directories (`/whip/`).
 - **www goes to the apex**: `www.mccluster.org` answers 301 to the same path
-  and query on `https://mccluster.org` for every path.
+  and query on `https://mccluster.org` for every path, in one hop: where the
+  platform itself answers an address with a 301 (Whip Equipped to Matthew's
+  host, the World's other addresses to its root, another spelling to its
+  page, `/company/` to `/company`), www sends the visitor straight there.
 - **humanuprise.com goes to the platform**: once the owner routes it, it and
-  its www answer 301 to the same path and query on the platform
-  (`owner_decisions.humanuprise_com`); until then they stay inert.
+  its www answer 301 to the same path and query on the platform, in one hop
+  as www does (`owner_decisions.humanuprise_com`); until then they stay inert.
 - **The platform's app starts on the World**: the platform's `manifest.json`
   carries `start_url` `/` (`platform.app_start_path`,
   `owner_decisions.platform_app_start`); every other member is the published
@@ -354,16 +367,18 @@ turn on.
 | platform | /index.html with a World query (view=, mission=) | 301 to / with the query; without one, from P1, the HERE front door |
 | platform | /company, /robots.txt, /sitemap.xml, /llms.txt, /news/... | generated or server-rendered |
 | platform | platform or profile page, static file | pass-through from the static origin, path and query (from P1; at P0 the World's rooms and the static files only, everything else 301 to the static origin) |
-| platform | profile_only page | 301 to the profile host, same path (from P1) |
+| platform | profile_only page | 301 to the profile host, same path, at every spelling of the address (from P1) |
+| platform | another spelling of an address (no .html, doubled slash, escaped letter, directory without its slash) | 301 to the page it names, where it lives (from P1) |
+| platform | a path the record does not name | pass-through while the static origin answers it with no document; a document there is a 301 to the profile host (from P1) |
 | platform | http: | 301 to https: |
-| www | anything | 301 to the platform, same path and query (from P1; at P0 some to the apex, the rest to the profile host) |
+| www | anything | 301 to the platform, same path and query, in one hop to the platform's own 301 where it answers one (from P1; at P0 some to the apex, the rest to the profile host) |
 | profile | profile or profile_only page, both_hosts path, /.well-known/acme-challenge/... | fetch(request) to its origin (from P3) |
 | profile | / or /index.html with a World query | 301 to the platform root with the query (from P3) |
 | profile | platform page (any other .html or directory path) | 301 to the platform, same path and query (from P3) |
 | profile | any other path | pass-through; a 404 stays a 404 (from P3) |
-| humanuprise.com, www | anything | 301 to the platform, same path and query (from P1, once routed) |
+| humanuprise.com, www | anything | 301 to the platform, same path and query, in one hop (from P1, once routed) |
 
-Every pass-through keeps these rules: never follow an upstream redirect (fetch with redirect manual, rewrite a Location on the static origin to the requesting host); headers by class (documents, embed.html with no frame restriction, carry.html framed by the platform only, static files as today); no noindex on platform or profile pages served by the platform; documents may be cached 60 s at the edge.
+Every pass-through keeps these rules: never follow an upstream redirect (fetch with redirect manual, rewrite a Location on the static origin to the requesting host); headers by class (documents, embed.html with no frame restriction, carry.html framed by the platform only, static files as today); no noindex on platform or profile pages served by the platform; the documents the record names are kept at the edge 60 s (the carry page aside; workers/mccluster/src/platform/router.js DOCUMENT_CACHE_TTL), static files keep the static origin's caching.
 
 Why the one Worker, and not a second Pages site or a new Worker:
 

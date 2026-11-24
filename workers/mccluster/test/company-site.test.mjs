@@ -107,10 +107,10 @@ test('a shared /mnet.html?mission= link moves to /?mission= with every parameter
   const r = await ask(`https://mccluster.org/mnet.html${attributed}`);
   assert.equal(r.status, 301);
   assert.equal(r.headers.get('location'), `https://mccluster.org/${attributed}`);
-  /* www moves to the apex with the query kept; the apex's own hop then lands on the root, as above */
+  /* www moves straight to the apex's own answer, the World's root, with the query kept: one hop (P1 review, P1A-3) */
   const www = await ask(`https://www.mccluster.org/mnet.html?mission=${id}`);
   assert.equal(www.status, 301);
-  assert.equal(www.headers.get('location'), `https://mccluster.org/mnet.html?mission=${id}`);
+  assert.equal(www.headers.get('location'), `https://mccluster.org/?mission=${id}`);
   /* the root itself serves the World with the query passed through, so the page sees the mission */
   const root = await ask(`https://mccluster.org/?mission=${id}`);
   assert.equal(root.status, 200);
@@ -186,14 +186,17 @@ test('every other apex page answers at its path here; Whip and the owner\'s own 
 });
 
 /* P1: www sends every path to the apex (until P1 the apex's own paths went there and the rest to Matthew's host) */
-test('www sends every path to the apex, same path and query', async () => {
+test('www sends every path to the apex, same path and query, or in the same hop to where the apex sends it', async () => {
   assert.equal((await ask('https://www.mccluster.org/')).headers.get('location'), 'https://mccluster.org/');
   assert.equal((await ask('https://www.mccluster.org/?view=feed')).headers.get('location'), 'https://mccluster.org/?view=feed');
   assert.equal((await ask('https://www.mccluster.org/company')).headers.get('location'), 'https://mccluster.org/company');
   assert.equal((await ask('https://www.mccluster.org/sitemap.xml')).headers.get('location'), 'https://mccluster.org/sitemap.xml');
   assert.equal((await ask('https://www.mccluster.org/js/mnet.js')).headers.get('location'), 'https://mccluster.org/js/mnet.js');
   assert.equal((await ask('https://www.mccluster.org/hire.html')).headers.get('location'), 'https://mccluster.org/hire.html');
-  assert.equal((await ask('https://www.mccluster.org/whip.html?x=1')).headers.get('location'), 'https://mccluster.org/whip.html?x=1', 'the apex then sends Whip to Matthew\'s host');
+  /* one hop (P1 review, P1A-3): where the apex answers with a 301 of its own, www sends the visitor straight there */
+  assert.equal((await ask('https://www.mccluster.org/whip.html?x=1')).headers.get('location'), 'https://matthew.mccluster.org/whip.html?x=1', 'Whip, straight to Matthew\'s host');
+  assert.equal((await ask('https://www.mccluster.org/index.html?view=feed')).headers.get('location'), 'https://mccluster.org/?view=feed', 'a World query, straight to the World');
+  assert.equal((await ask('https://www.mccluster.org/listen')).headers.get('location'), 'https://mccluster.org/listen.html', 'another spelling, straight to the page');
 });
 
 test('robots, sitemap and llms belong to the company property and map the World and the company page', async () => {
@@ -224,8 +227,8 @@ test('plain http on the apex is one 301 to https; /company/ is the company page,
     ['http://mccluster.org/docket-516.html', 'https://mccluster.org/docket-516.html'],
     ['https://mccluster.org/company/', 'https://mccluster.org/company'],
     ['https://mccluster.org/company/?ref=x', 'https://mccluster.org/company?ref=x'],
-    /* P1: www keeps the path as asked; the apex folds the slash in its own hop (above) */
-    ['https://www.mccluster.org/company/', 'https://mccluster.org/company/'],
+    /* www lands on the apex's own answer in one hop: the slash folded (P1 review, P1A-3) */
+    ['https://www.mccluster.org/company/', 'https://mccluster.org/company'],
     ['http://www.mccluster.org/', 'https://mccluster.org/']
   ]) {
     const r = await ask(from);

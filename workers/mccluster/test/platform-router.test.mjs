@@ -165,7 +165,8 @@ test('P1 platform host: every page at its path (the HERE front door at /index.ht
     ['/mnet.html?view=feed', moved(`${PLAT}/?view=feed`)],
     ['/company', { kind: 'own' }], ['/company/', moved(`${PLAT}/company`)], ['/news/', { kind: 'own' }], ['/robots.txt', { kind: 'own' }],
     ['/account.html', page], ['/listen.html?track=1', page], ['/album.html?album=here', page], ['/music-creator.html?handle=x', page],
-    ['/matthew-mccluster.html', page], ['/engineering/', page], ['/engineering', page], ['/control.html', page], ['/nope.html', page],
+    ['/matthew-mccluster.html', page], ['/engineering/', page], ['/engineering', moved(`${PLAT}/engineering/`)], ['/control.html', page],
+    ['/nope.html', { ...page, unnamed: true }],
     ['/js/tabbar.js', { kind: 'pass', noindex: false }], ['/manifest.json', { kind: 'pass' }], ['/sw.js', { kind: 'pass' }],
     ['/embed.html?album=here', { kind: 'pass', framing: 'anyone' }], ['/carry.html', { kind: 'pass', framing: 'platform' }],
     ['/.well-known/acme-challenge/x', { kind: 'pass' }],
@@ -175,10 +176,12 @@ test('P1 platform host: every page at its path (the HERE front door at /index.ht
   check(P1, `${PLAT}/listen.html`, { kind: 'refused' }, { method: 'POST' });
 });
 
-test('P1 doors: www, humanuprise.com and its www answer 301 to the platform, same path and query, every path', () => {
+test('P1 doors: www, humanuprise.com and its www answer 301 to the platform, same path and query, every path, in one hop', () => {
+  /* where the platform answers with a 301 of its own, the door sends the visitor straight there (P1 review, P1A-3) */
+  const straight = { '/company/': `${PLAT}/company`, '/whip.html': `${PROF}/whip.html`, '/index.html?view=feed': `${PLAT}/?view=feed`, '/mnet.html': `${PLAT}/`, '/listen': `${PLAT}/listen.html` };
   for (const origin of [WWW, HU, HUW, 'http://www.mccluster.org', 'http://humanuprise.com']) {
-    for (const path of ['/', '/?view=feed', '/index.html', '/company/', '/listen.html?track=1', '/robots.txt', '/whip.html', '/js/x.js']) {
-      check(P1, origin + path, moved(PLAT + path));
+    for (const path of ['/', '/?view=feed', '/index.html', '/listen.html?track=1', '/robots.txt', '/js/x.js', ...Object.keys(straight)]) {
+      check(P1, origin + path, moved(straight[path] || PLAT + path));
     }
   }
   check(P1, `${PROF}/listen.html`, { kind: 'origin', classes: false }, {});
@@ -206,6 +209,13 @@ test('P3 Matthew\'s host routed: his pages, Whip and the files pass to GitHub; t
   /* the platform and the doors answer as in P1 */
   check(P3, `${PLAT}/listen.html`, { kind: 'pass' });
   check(P3, `${HU}/listen.html`, moved(`${PLAT}/listen.html`));
+  /* another spelling of a page that moved, or of the World, answers as its own address does; his own pages and Whip at
+     any spelling GitHub reads stay his (P1 review: an address is read the way the static origin reads it) */
+  for (const [path, want] of [
+    ['/listen', moved(`${PLAT}/listen.html`)], ['//album.html?album=here', moved(`${PLAT}/album.html?album=here`)], ['/%6Cisten.html', moved(`${PLAT}/listen.html`)],
+    ['/mnet', moved(`${PLAT}/`)], ['//mnet.html?view=feed', moved(`${PLAT}/?view=feed`)], ['/index?view=feed', moved(`${PLAT}/?view=feed`)],
+    ['/index', his], ['/whip', his], ['//whip.html', his], ['/portfolio', his], ['/engineering', his], ['/nope', his]
+  ]) check(P3, PROF + path, want);
 });
 
 /* ---------- stage F: the equityuprise rewrite through the router ---------- */
@@ -390,9 +400,12 @@ test('the pass-through never follows an upstream redirect: a Location on the sta
   r = await p1(new Request(`${PLAT}/engineering`, { method: 'HEAD' }), {}, gh);
   assert.equal(r.headers.get('location'), `${PLAT}/engineering/`);
   assert.equal(await r.text(), '');
-  /* /whip: the slash first, then the profile-only 301: two hops, never a loop */
+  /* /whip is whip.html to GitHub Pages (Measured 2026-11-24), so from P1 it is one 301 straight to Matthew's host, before
+     anything is fetched (P1 review, P1A-1) */
+  const before = asked.length;
   r = await p1(new Request(`${PLAT}/whip`), {}, gh);
-  assert.equal(r.headers.get('location'), `${PLAT}/whip/`);
+  assert.deepEqual([r.status, r.headers.get('location')], [301, `${PROF}/whip.html`]);
+  assert.equal(asked.length, before, 'nothing fetched');
   assert.equal(route(P1, `${PLAT}/whip/`).location, `${PROF}/whip/`);
   /* a relative Location is resolved on the static origin first; one on the static origin with userinfo keeps only its
      path; a path that starts with // stays a path on this host */

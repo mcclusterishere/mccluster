@@ -53,16 +53,20 @@ test('the router is inert for every host but humanuprise.com and www', async () 
   }
 });
 
-test('from P1, once routed, every path on humanuprise.com and its www answers one 301 to the same path and query on the platform', async () => {
+test('from P1, once routed, every path on humanuprise.com and its www answers one 301 to the same path and query on the platform, or straight to where the platform sends it', async () => {
   assert.equal(SITE.stage, 'P1');
-  const PLAT = SITE.platform.origin;
+  const PLAT = SITE.platform.origin, PROF = SITE.profile.origin;
+  /* one hop (P1 review, P1A-3): where the platform answers an address with a 301 of its own (the World's other
+     addresses, Whip Equipped, another spelling of a page), the door sends the visitor straight there */
+  const straight = { '/mnet.html?view=feed': `${PLAT}/?view=feed`, '/index.html?view=missions': `${PLAT}/?view=missions`, '/whip.html': `${PROF}/whip.html`,
+    '/whip': `${PROF}/whip.html`, '/listen': `${PLAT}/listen.html`, '/company/': `${PLAT}/company` };
   for (const host of ['humanuprise.com', 'www.humanuprise.com']) {
     for (const scheme of ['https', 'http']) {
-      for (const path of ['/', '/?view=missions', '/?mission=58eeb75d-a5b6-4280-9cd7-3b0cabf02264', '/mnet.html?view=feed', '/index.html', '/account.html', '/listen.html?track=1', '/robots.txt', '/sitemap.xml', '/js/mnet.js?v=1', '/whip.html']) {
+      for (const path of ['/', '/?view=missions', '/?mission=58eeb75d-a5b6-4280-9cd7-3b0cabf02264', '/index.html', '/account.html', '/listen.html?track=1', '/robots.txt', '/sitemap.xml', '/js/mnet.js?v=1', ...Object.keys(straight)]) {
         for (const method of ['GET', 'HEAD', 'POST']) {
           const r = await humanUpriseResponse(req(`${scheme}://${host}${path}`, method), {}, () => { throw new Error('must not fetch'); });
           assert.equal(r.status, 301, `${method} ${scheme}://${host}${path}`);
-          assert.equal(r.headers.get('location'), PLAT + path, `${method} ${scheme}://${host}${path}`);
+          assert.equal(r.headers.get('location'), straight[path] || PLAT + path, `${method} ${scheme}://${host}${path}`);
         }
       }
     }

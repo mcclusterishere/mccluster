@@ -264,14 +264,31 @@ test("the record lists what P1 itself changes once deployed, and each entry is w
   }
   assert.deepEqual(at(P + "/index.html?view=feed"), { kind: "moved", location: `${P}/?view=feed` });
   assert.deepEqual(at(P + "/mnet.html?mission=m1"), { kind: "moved", location: `${P}/?mission=m1` });
-  /* profile_only_to_profile_host */
-  for (const path of arch.url_ownership.profile_only) assert.deepEqual(at(P + path + "?q=1"), { kind: "moved", location: `${M}${path}?q=1` }, path);
-  /* www_to_apex: every path */
+  /* profile_only_to_profile_host, at every spelling the static origin reads (the P1 review), and under Whip's directories */
+  for (const path of arch.url_ownership.profile_only) {
+    assert.deepEqual(at(P + path + "?q=1"), { kind: "moved", location: `${M}${path}?q=1` }, path);
+    if (path.endsWith(".html")) {
+      for (const spelled of [path.slice(0, -5), "/" + path, path.slice(0, -5) + "%2Ehtml"]) assert.deepEqual(at(P + spelled + "?q=1"), { kind: "moved", location: `${M}${path}?q=1` }, spelled);
+    }
+  }
+  assert.equal(new URL(at(P + "/whip/driver/app.js").location).origin, M, "everything under Whip Equipped's directories");
+  /* platform_serves_everything: another spelling of a page is that page; an unnamed path never serves a document; the
+     documents are kept at the edge a minute */
+  assert.deepEqual(at(P + "/listen?x=1"), { kind: "moved", location: `${P}/listen.html?x=1` });
+  assert.deepEqual(at(P + "/mnet?view=feed"), { kind: "moved", location: `${P}/?view=feed` });
+  assert.equal(at(P + "/nope.html").unnamed, true);
+  const { DOCUMENT_CACHE_TTL } = await imp("workers/mccluster/src/platform/router.js");
+  assert.equal(DOCUMENT_CACHE_TTL, 60, "60 s, as SPEC-PLATFORM 2.4 says");
+  /* www_to_apex: every path, in one hop */
   const www = SITE.doors.find((d) => d.host === "www." + SITE.platform.host);
-  for (const path of ["/", "/whip.html", "/company", "/js/tabbar.js?v=1"]) assert.deepEqual(at(`https://${www.host}${path}`), { kind: "moved", location: `${P}${path}` }, path);
-  /* humanuprise_to_platform: the World door and its www, every path */
+  for (const path of ["/", "/company", "/js/tabbar.js?v=1", "/listen.html?a=1"]) assert.deepEqual(at(`https://${www.host}${path}`), { kind: "moved", location: `${P}${path}` }, path);
+  for (const [path, there] of [["/whip.html", `${M}/whip.html`], ["/company/", `${P}/company`], ["/index.html?view=feed", `${P}/?view=feed`], ["/listen", `${P}/listen.html`]]) {
+    assert.deepEqual(at(`https://${www.host}${path}`), { kind: "moved", location: there }, `www${path}: straight to the platform's own answer`);
+  }
+  /* humanuprise_to_platform: the World door and its www, every path, in one hop */
   for (const host of ["humanuprise.com", "www.humanuprise.com"]) {
     for (const path of ["/", "/album.html?a=1", "/robots.txt"]) assert.deepEqual(at(`https://${host}${path}`), { kind: "moved", location: `${P}${path}` }, host + path);
+    assert.deepEqual(at(`https://${host}/mnet.html?view=feed`), { kind: "moved", location: `${P}/?view=feed` }, `${host}: one hop to the World`);
   }
   /* platform_app_start: the platform's manifest starts where the table says; Matthew's host is not routed */
   assert.equal(SITE.platform.app_start_path, arch.platform.app_start_path);
@@ -326,7 +343,10 @@ test("the law's sentence about today says what the P1 router answers on the plat
     ["`/mnet.html` and a World query on `/index.html` (`?view=`, `?mission=`) answer 301 to its root", "/index.html?view=feed", (r) => r.kind === "moved" && r.location === `${P}/?view=feed`],
     ["`/mnet.html` and a World query on `/index.html` (`?view=`, `?mission=`) answer 301 to its root", "/index.html?mission=m1", (r) => r.kind === "moved" && r.location === `${P}/?mission=m1`],
     ["Whip Equipped and the owner's own pages (`profile_only`) answer 301 to the same path on Matthew's host", "/whip.html", (r) => r.kind === "moved" && r.location === `${M}/whip.html`],
-    ["Whip Equipped and the owner's own pages (`profile_only`) answer 301 to the same path on Matthew's host", "/prayer-closet.html?x=1", (r) => r.kind === "moved" && r.location === `${M}/prayer-closet.html?x=1`]
+    ["Whip Equipped and the owner's own pages (`profile_only`) answer 301 to the same path on Matthew's host", "/prayer-closet.html?x=1", (r) => r.kind === "moved" && r.location === `${M}/prayer-closet.html?x=1`],
+    ["another spelling of an address (no `.html`, a doubled slash, an escaped letter) answers 301 to the page it names, at any spelling the static origin reads", "/whip", (r) => r.kind === "moved" && r.location === `${M}/whip.html`],
+    ["another spelling of an address (no `.html`, a doubled slash, an escaped letter) answers 301 to the page it names, at any spelling the static origin reads", "//listen.html", (r) => r.kind === "moved" && r.location === `${P}/listen.html`],
+    ["another spelling of an address (no `.html`, a doubled slash, an escaped letter) answers 301 to the page it names, at any spelling the static origin reads", "/%77hip.html", (r) => r.kind === "moved" && r.location === `${M}/whip.html`]
   ];
   for (const [words, path, agrees] of claims) {
     assert.ok(sentence.includes(words), `AGENTS.md hard rule 15 says: ${words}`);

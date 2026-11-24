@@ -224,14 +224,22 @@ function frame(out, framing, site) {
 }
 
 /* A pass-through from the static origin: the client's safe headers up, the upstream's safe headers back, the host's
-   own security headers, and, on the World's root, the host's head. */
-export async function passThrough(request, upstream, fetchImpl, { root = false, noindex = false, head = null, site = SITE, framing = 'site', appStart = null } = {}) {
+   own security headers, and, on the World's root, the host's head.
+   `cacheTtl` keeps a document at the edge that many seconds (Cloudflare's cache, keyed by the static origin's address;
+   the World's head is written after, per host, so a cached body never carries another host's head). `elsewhere` is
+   for an address the router could not name: the static origin may answer it with anything but a document, and a
+   document there is sent to `elsewhere` (Matthew's host) instead, never served on this host. */
+export async function passThrough(request, upstream, fetchImpl, { root = false, noindex = false, head = null, site = SITE, framing = 'site', appStart = null, elsewhere = null, cacheTtl = 0 } = {}) {
   const headers = new Headers();
   for (const h of UPSTREAM_REQUEST) {
+    /* an unnamed address is asked for whole, never revalidated, so a document is always seen as one */
+    if (elsewhere && (h === 'if-none-match' || h === 'if-modified-since')) continue;
     const v = request.headers.get(h);
     if (v) headers.set(h, v);
   }
-  const res = await fetchImpl(new Request(upstream, { method: request.method, headers, redirect: 'manual' }));
+  const res = await fetchImpl(new Request(upstream, { method: request.method, headers, redirect: 'manual' }),
+    cacheTtl > 0 ? { cf: { cacheTtl, cacheEverything: true } } : undefined);
+  if (elsewhere && res.status >= 200 && res.status < 300 && /^text\/html/i.test(res.headers.get('content-type') || '')) return moved(elsewhere);
   const out = new Headers(securityHeaders(site));
   for (const h of UPSTREAM_RESPONSE) {
     const v = res.headers.get(h);
