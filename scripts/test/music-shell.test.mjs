@@ -500,13 +500,13 @@ test('the concealment allow-list keeps every fixed transport, chrome and status 
   const allowed = (sel) => ALLOW.some((a) => a === sel);
   /* body-level elements the stage pages and their scripts put on screen, and what each is */
   const KEEP = ['.appbar', '.mcc-auth-nav', '#mccProfileMenu', '#mccDestinations', '.cmdk-owner-nav', '.cmdk', '.mhd', '.pt-veil', '.dk-peek',
-    '#musicMini', '#musicNow', '#deckbar', '#now', '#seekStatus', '.ltoast', '.intu', '#mccWorldAudioShell', '#mccWorldAudioControls', '#mccPrivacyNotice', '#mccMusicView'];
+    '#musicMini', '#musicNow', '#deckbar', '#now', '#seekStatus', '.ltoast', '.intu', '#mccWorldAudioShell', '#mccWorldAudioControls', '#mccPrivacyNotice', '#mccMusicView', '#mccHold'];
   for (const sel of KEEP) assert.ok(allowed(sel), `${sel} must stay on screen over a view`);
   /* every element the stage pages' scripts append to the body is classified: kept above, or page content */
   /* page content (concealed with the page): the room's canvas and its premiere, the label's sheet, the masthead's page
      action, the licence desk, the CRM form, the pocket (never on a music page), and a sign-in link's error banner on arrival */
   const CONTENT = { 'js/chamber.js': 2, 'js/label.js': 1, 'js/masthead.js': 1, 'js/licensedesk.js': 1, 'js/crm.js': 1, 'js/pip.js': 1, 'js/backend.js': 1 };
-  const KEPT = { 'js/tabbar.js': 5, 'js/music-engine.js': 2, 'js/world-audio-continuity.js': 2, 'js/site-navigation.js': 2, 'js/label.js': 1, 'js/masthead.js': 1, 'js/intuition.js': 1, 'js/control-palette.js': 2 };
+  const KEPT = { 'js/tabbar.js': 5, 'js/music-engine.js': 2, 'js/world-audio-continuity.js': 2, 'js/site-navigation.js': 2, 'js/label.js': 1, 'js/masthead.js': 1, 'js/intuition.js': 1, 'js/control-palette.js': 2, 'js/gated-audio.js': 1 };
   const pages = ['listen.html', 'music-creator.html', 'album.html'];
   const scripts = new Set(['js/tabbar.js', 'js/music-engine.js', 'js/world-audio-continuity.js', 'js/site-navigation.js', 'js/live-content.js']);
   for (const p of pages) for (const m of read(p).matchAll(/<script\b[^>]*\bsrc="(js\/[^"?]+)/g)) scripts.add(m[1]);

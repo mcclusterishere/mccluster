@@ -250,7 +250,7 @@
      change, the end, the tab going to the background and leaving the page, each with the song and the seconds. A
      phone's own volume buttons are invisible to a web page, so a lowered volume is seen only when it is lowered here. */
   var FALLBACK_SONG = {title:"Heal the 3rd World", src:"assets/audio/heal-the-3rd-world.m4a", slug:"heal-the-3rd-world", album:"heal-the-3",
-    albumName:"Heal the 3", artist:"Matthew McCluster", art:"assets/img/heal-the-3-cover.jpg"};
+    albumName:"Heal the 3", artist:"McCluster", art:"assets/img/heal-the-3-cover.jpg"};
   var rotation = null, rotationLoad = null, song = null, songOrd = 0, songStarted = 0, songBegun = false, pauseBy = "", soundWas = null;
   function loadRotation() {
     if (rotationLoad) return rotationLoad;
@@ -267,7 +267,7 @@
           if (!t || t.gated || /preview/i.test(src) || !/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(src)) return;
           // what the lock screen names: the song, its record's billed artist and album, and the record's cover (a same-origin file only)
           list.push({title:String(t.title || "").slice(0, 120), src:src, slug:src.replace(/^.*\//, "").replace(/\.[a-z0-9]+$/i, "").toLowerCase(), album:String(a.slug || "").slice(0, 60),
-            albumName:String(a.name || "").slice(0, 120), artist:String(a.artist || "Matthew McCluster").slice(0, 120),
+            albumName:String(a.name || "").slice(0, 120), artist:String(a.artist || "McCluster").slice(0, 120),
             art:typeof a.art === "string" && /^assets\/img\/[a-z0-9._-]+$/i.test(a.art) ? a.art : ""});
         });
       });
@@ -378,7 +378,7 @@
     watch(audio); reactions(audio);
     if (root.MCC_NOW_PLAYING && root.MCC_NOW_PLAYING.bind) root.MCC_NOW_PLAYING.bind(audio, {
       surface: "world",
-      track: function () { return song ? {title:song.title, artist:song.artist || "Matthew McCluster", album:song.albumName || "", art:song.art || ""} : null; },
+      track: function () { return song ? {title:song.title, artist:song.artist || "McCluster", album:song.albumName || "", art:song.art || ""} : null; },
       play: function () { if (audio.paused || audio.ended) startTheme(); },
       pause: function () { pauseBy = "lock_screen"; preference.paused = true; savePreference(); audio.pause(); paint(); },
       previous: previousSong,

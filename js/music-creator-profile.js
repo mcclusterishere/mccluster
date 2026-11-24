@@ -16,6 +16,14 @@
      (css/music-artist.css). The house mark is McCluster's, not the artist's. */
   var NO_ART = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
   var handle = (new URLSearchParams(location.search).get("handle") || "").trim().toLowerCase();
+  /* ONE McCLUSTER (owner, 2026-11-23: "It needs to be one profile. McCluster is the artist."). His artist page is the
+     one the Listen rail and every album credit open. His records are the albums the catalogue bills to the house
+     (data/albums.json, no "artist" of their own), shown here from the same file the album pages play, so the page is
+     never empty; while his own directory row is missing it is still his page, never a dead end. On his page the bar
+     stays the house: there is no second McCluster in its middle cell. */
+  var HOUSE_ARTIST = "mccluster";
+  var IS_HOUSE = handle === HOUSE_ARTIST;
+  var HOUSE_PROFILE = { m_uid: null, handle: HOUSE_ARTIST, artist_name: "McCluster", bio: "", avatar_url: "", banner_url: "", website_url: "", verification_state: "unverified", settings: {} };
   var $ = function (id) { return doc.getElementById(id); };
 
   function esc(x) { var d = doc.createElement("i"); d.textContent = x == null ? "" : String(x); return d.innerHTML; }
@@ -284,15 +292,18 @@
     if (desc) desc.setAttribute("content", (p.bio || (p.artist_name + " on McCluster Music.")).slice(0, 300));
     $("creatorHandle").textContent = "@" + p.handle + (p.verification_state === "verified" ? " · verified" : "") + " · McCluster Music";
     setName(p.artist_name);
-    $("creatorBio").textContent = p.bio || "Independent artist on McCluster Music.";
+    $("creatorBio").textContent = p.bio || (IS_HOUSE ? "Every McCluster album, on McCluster Music." : "Independent artist on McCluster Music.");
     var avatar = PAGE.safeArtwork(p.avatar_url);
     if (avatar) { $("creatorAvatar").src = avatar; $("creatorAvatar").alt = p.artist_name; $("creatorAvatar").hidden = false; }
     /* The bar takes this creator's perspective for the session (js/tabbar.js):
        their front page in the middle cell, their own picture or initial.
        Owner, 2026-10-14: "experience the site from their perspective". */
     var perspective = { kind: "artist", handle: p.handle, name: p.artist_name, avatar: avatar || "" };
+    /* McCluster is the house's own artist: on his page the bar stays the house, never a second McCluster */
+    if (IS_HOUSE) perspective = { kind: "house" };
     try { root.sessionStorage.setItem("mcc_perspective", JSON.stringify(perspective)); } catch (_) {}
-    try { root.dispatchEvent(new CustomEvent("mcc:perspective", { detail: perspective })); } catch (_) {}
+    if (IS_HOUSE) { try { root.dispatchEvent(new CustomEvent("mcc:perspective-house")); } catch (_) {} }
+    else { try { root.dispatchEvent(new CustomEvent("mcc:perspective", { detail: perspective })); } catch (_) {} }
 
     /* Every published track goes to the player in page order: the featured
        album, the other albums, then the singles, so Next follows the page. */
@@ -317,7 +328,9 @@
       });
     }
 
-    var heroImg = PAGE.safeArtwork(p.banner_url) || (first && coverOf(first)) || avatar;
+    /* the backdrop is the artist's own banner or picture; a cover is never cropped into it (owner, 2026-11-23: whole
+       covers, uniform) */
+    var heroImg = PAGE.safeArtwork(p.banner_url) || avatar;
     if (heroImg && heroImg !== NO_ART) { $("apHeroImg").src = heroImg; $("apHeroImg").hidden = false; }
     else $("creatorHero").classList.add("ap-hero--plain");
     renderDoors(p, first ? first.rows[0] : cat.singles[0]);
@@ -327,6 +340,8 @@
     var wrap = $("creatorPublicTracks");
     if (!cat.albums.length && !cat.singles.length && state.services.length) {
       $("apSinglesWrap").hidden = true;
+    } else if (!cat.albums.length && !cat.singles.length && IS_HOUSE) {
+      $("apSinglesWrap").hidden = true;   // his records are the albums, above
     } else if (!cat.albums.length && !cat.singles.length) {
       wrap.innerHTML = '<div class="creator-status">No published releases yet.</div>';
     } else if (!cat.singles.length) {
@@ -335,14 +350,39 @@
       $("apSinglesTitle").textContent = cat.albums.length ? "Singles" : "Releases";
       wrap.innerHTML = cat.singles.map(function (t, i) { return rowHtml(t, i + 1, null, "div"); }).join("");
     }
+    if (IS_HOUSE) renderHouseAlbums();
     if (root.MCC_TRACK) root.MCC_TRACK("creator_profile_view", { handle: p.handle, albums: cat.albums.length, tracks: (tracks || []).length, rates: state.services.length });
+  }
+
+  /* McCluster's albums, from the catalogue: each opens its album page, its cover whole */
+  function renderHouseAlbums() {
+    var wrap = $("apHouseWrap"), shelf = $("apHouseShelf");
+    if (!wrap || !shelf) return;
+    fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then(function (d) {
+        var list = ((d && d.albums) || []).filter(function (a) { return a && a.slug && !a.artist; });
+        if (!list.length) return;
+        shelf.innerHTML = list.map(function (a) {
+          var n = (a.tracks || []).length;
+          return '<a class="ap-card" href="album.html?album=' + encodeURIComponent(a.slug) + '">' +
+            '<img src="' + attr(a.art || NO_ART) + '" alt="" loading="lazy">' +
+            "<b>" + esc(a.name) + "</b><small>" + esc("Album · " + n + (n === 1 ? " song" : " songs")) + "</small></a>";
+        }).join("");
+        wrap.hidden = false;
+      }).catch(function () {
+        shelf.innerHTML = '<div class="creator-status">His albums could not load right now. They are on the Listen page.</div>';
+        wrap.hidden = false;
+      });
   }
 
   api("music_creator_profiles?handle=eq." + encodeURIComponent(handle) +
       "&status=eq.active&select=m_uid,handle,artist_name,bio,avatar_url,banner_url,website_url,verification_state,settings&limit=1")
+    .catch(function (e) { if (IS_HOUSE) return []; throw e; })
     .then(function (profiles) {
       var p = profiles && profiles[0];
+      if (!p && IS_HOUSE) p = HOUSE_PROFILE;
       if (!p) throw new Error("profile missing");
+      if (!p.m_uid) return [p, [], []];
       return Promise.all([
         Promise.resolve(p),
         api("creator_tracks?m_uid=eq." + encodeURIComponent(p.m_uid) +

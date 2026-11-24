@@ -316,14 +316,62 @@
     return key(a.albumSlug, a.title) === key(b.albumSlug, b.title);
   }
 
+  /* ONE RECORD AT A TIME (owner, 2026-11-23: "end of the album, and just leave"). Next, Previous, the lock screen and
+     the end of a song move within the record that plays: a house album's own songs, or one creator release. After its
+     last song the record stops there, paused at the end of that song; it never runs on into the next album or back to
+     its first song, and Previous on the first song starts that song again. A held song on the way is passed by (one
+     pop-up says why), or the record stops there when it was the last one. */
+  function recordOf(item) {
+    if (!item) return "";
+    if (!item.creatorTrackId) return "a:" + String(item.albumSlug || "");
+    /* a creator's song is registered again by each page that lists it (Listen's rail, then its artist page with its
+       release): its record is what the latest registration says, for the song that plays and the queue alike */
+    var t = CREATOR_TRACKS[String(item.creatorTrackId)] || item;
+    return "c:" + String(t.artist || "") + "|" + String(t.albumName || "");
+  }
+  function recordList(item) {
+    var rec = recordOf(item);
+    return queue.filter(function (q) { return recordOf(q) === rec; });
+  }
   function playAdjacent(delta) {
     if (!current || !queue.length) return Promise.resolve(null);
-    var at = queue.findIndex(function (item) { return sameItem(item, current); });
+    return stepFrom(current, delta);
+  }
+  function stepFrom(item, delta) {
+    var list = recordList(item);
+    var at = list.findIndex(function (q) { return sameItem(q, item); });
     if (at < 0) at = 0;
-    var next = queue[(at + delta + queue.length) % queue.length];
-    if (!next) return Promise.resolve(null);
-    if (next.creatorTrackId) return openCreatorTrack(next.creatorTrackId, true, chosenOn);
-    return openTrack(next.albumSlug, next.title, true, chosenOn);
+    var i = at + delta;
+    if (i < 0) { restartCurrent(); return Promise.resolve({ state: currentAccess }); }
+    var next = list[i];
+    if (!next) { endRecord(); return Promise.resolve({ state: "ended" }); }
+    var opened = next.creatorTrackId ? openCreatorTrack(next.creatorTrackId, true, chosenOn) : openTrack(next.albumSlug, next.title, true, chosenOn, true);
+    return opened.then(function (out) { return out && out.state === "held" ? stepFrom(next, delta) : out; });
+  }
+  /* where the song that plays ends for this listener: a locked preview's boundary, or the song's own length. The end
+     of a record is the end of what this listener may hear, never a seek past a preview's boundary */
+  function hearableEnd() {
+    var d = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
+    return previewLimit ? (d ? Math.min(previewLimit, d) : previewLimit) : d;
+  }
+  /* the end of the record: paused at the end of its last song, the lock screen and the bar told it stopped */
+  function endRecord() {
+    if (!current) return;
+    wantPlay = false;
+    quietWatch();
+    if (!audio.paused) audio.pause();
+    /* skipped past it: to its end (a hair before it; a seek to the very end lands back on 0:00 in Chromium). A song
+       that ended, or a preview stopped at its boundary, is at its end already; Play there starts it again
+       (resumeCurrent) */
+    try { var end = hearableEnd(); if (!audio.ended && end && end - (audio.currentTime || 0) > 0.25) audio.currentTime = Math.max(0, end - 0.05); } catch (e) {}
+    paint();
+    setMedia();
+  }
+  function restartCurrent() {
+    if (!current) return;
+    try { audio.currentTime = 0; } catch (e) {}
+    paint();
+    setMedia();
   }
 
   /* THE BAR'S MIDDLE BUTTON ON THE LISTEN PAGE (music slice M3 follow-up; verification V-3). js/tabbar.js draws the
@@ -353,7 +401,7 @@
     p.hidden = false;
 
     var art = current.art || "assets/img/m-mark.png";
-    var artist = current.artist || "Matthew McCluster";
+    var artist = current.artist || "McCluster";
     var album = current.albumName || "";
     var accessLabel = currentAccess === "full" ? "Full track" :
       currentAccess === "preview" ? "Preview" : currentAccess === "loading" ? "Opening…" :
@@ -479,6 +527,8 @@
       tryAgainNow();
       return Promise.resolve({ state: currentAccess });
     }
+    /* Play on a song stopped at its end (the end of its record, or a preview's boundary) starts that song again */
+    try { var end = hearableEnd(); if (end && end - (audio.currentTime || 0) < 0.1) audio.currentTime = 0; } catch (e) {}
     audioSession();
     return audio.play();
   }
@@ -497,7 +547,7 @@
               albumSlug: a.slug,
               albumName: a.name,
               /* the album's billed artist; `by` is its tagline ("Have no fear."), never a name */
-              artist: a.artist || "Matthew McCluster",
+              artist: a.artist || "McCluster",
               art: a.art
             });
             by[key(a.slug, t.title)] = item;
@@ -686,7 +736,7 @@
     nowPlaying = root.MCC_NOW_PLAYING.bind(audio, {
       surface: "listen",
       track: function () {
-        return current ? { title: current.title, artist: current.artist || "Matthew McCluster", album: current.albumName || "", art: current.art } : null;
+        return current ? { title: current.title, artist: current.artist || "McCluster", album: current.albumName || "", art: current.art } : null;
       },
       play: function () { return resumeCurrent(); },
       pause: pauseCurrent,
@@ -708,7 +758,7 @@
     if (h) h.update();
   }
 
-  function openTrack(albumSlug, title, force, from) {
+  function openTrack(albumSlug, title, force, from, advance) {
     var request;
     var lookup = ++catalogueRequest;
     return loadLibrary().then(function (by) {
@@ -718,7 +768,25 @@
       if (lookup !== catalogueRequest) return {state:"superseded"};
       var t = by[key(albumSlug, title)];
       if (!t) throw new Error("Track not found");
+      if (!t.hold) return begin(t);
+      /* a held song: nothing changes here until its gate says it is the house owner's own play */
+      return heldSong(t, from, advance).then(function (d) {
+        if (!d.play) return { state: "held", signedIn: !!d.signedIn };
+        if (lookup !== catalogueRequest) return { state: "superseded" };
+        return begin(t);
+      });
+    }).catch(function (err) {
+      if (request === undefined ? lookup !== catalogueRequest : request !== playbackRequest) throw err;
+      var p = ensureUI();
+      p.hidden = false;
+      currentAccess = "unavailable";
+      paint();
+      var a = doc.getElementById("musicMiniAccess");
+      if (a) a.textContent = "Unavailable";
+      throw err;
+    });
 
+    function begin(t) {
       var same = current && key(current.albumSlug, current.title) === key(t.albumSlug, t.title);
       /* a spent play is not resumed: opening it again asks for a new one */
       if (same && !force && currentAccess === "loading") return {state:"loading"};
@@ -765,15 +833,22 @@
         audioSession();
         return audio.play().then(function () { return out; }).catch(function () { return out; });
       });
-    }).catch(function (err) {
-      if (request === undefined ? lookup !== catalogueRequest : request !== playbackRequest) throw err;
-      var p = ensureUI();
-      p.hidden = false;
-      currentAccess = "unavailable";
-      paint();
-      var a = doc.getElementById("musicMiniAccess");
-      if (a) a.textContent = "Unavailable";
-      throw err;
+    }
+  }
+
+  /* THE CLOSING SONG IS HELD (owner, 2026-11-23: "We keep the song up, but it won't play... it'll tell you why it
+     won't play when you try to click play"). A song marked "hold" in data/albums.json stays listed and plays for the
+     house owner alone, through its own gate's answer, the play he already had (js/gated-audio.js holdDecision). For
+     anyone else nothing is asked for it: no preview, no stream, no listen, nothing on the lock screen, and what was
+     playing keeps playing. One pop-up says why: this page shows it, unless the tap came from a music view over it,
+     which shows its own (music slice M5). */
+  function heldSong(t, from, advance) {
+    var no = { play: false, signedIn: false };
+    return gateReady().then(function (g) {
+      return g && g.holdDecision ? g.holdDecision(t.gated) : no;
+    }).then(function (d) { return d || no; }, function () { return no; }).then(function (d) {
+      if (!d.play && (advance || !from) && root.MCC_GATED && root.MCC_GATED.holdNotice) root.MCC_GATED.holdNotice({ signedIn: !!d.signedIn });
+      return d;
     });
   }
 
@@ -867,7 +942,7 @@
     var heardPreview = previewLimit ? current : null;
     paint();
     if (heardPreview) say(previewLine(heardPreview), { ms: 9000 });
-    if (queue.length > 1 && (!heardPreview || wantPlay)) playAdjacent(1);
+    if (!heardPreview || wantPlay) playAdjacent(1);
   });
   audio.addEventListener("error", function () {
     /* one error for the whole drop, or for a song that would not load, with the first failed read's code, however
@@ -1058,14 +1133,17 @@
     if (currentAccess !== "full" && currentAccess !== "preview") return false;
     quietWatch();
     var at = Math.max(0, audio.currentTime || 0), t = now();
-    if (!trouble || trouble.state === "loading" || !trouble.since) trouble = { state: "", at: at, attempt: 0, timer: 0, since: since || t, heard: heardNow(), seq: 0 };
+    var fresh = !trouble || trouble.state === "loading" || !trouble.since;   // a new drop, not another failed try of this one
+    if (fresh) trouble = { state: "", at: at, attempt: 0, timer: 0, since: since || t, heard: heardNow(), seq: 0 };
     else {
       trouble.at = Math.max(trouble.at, at);
       if (!trouble.state) trouble.since = since || t;          // it played again, then stopped: the ten seconds start again
     }
     trouble.timer = cancel(trouble.timer);
     if (!audio.paused) audio.pause();                          // the element is quiet (the label says why)
-    trackEvent("music_interrupted", { reason: why, at_s: Math.round(trouble.at), attempt: trouble.attempt, path: grant.kind });
+    /* one drop is one music_interrupted, sent when it begins (approved by Matthew, 2026-11-23: one event per drop,
+       never one per failed read; docs/music/MUSIC-RELEASE-20261119.md, "Quick wins") */
+    if (fresh) trackEvent("music_interrupted", { reason: why, at_s: Math.round(trouble.at), attempt: trouble.attempt, path: grant.kind });
     if (grant.kind === "gated" && lapsed(grant)) { playEnded("dropped"); return true; }
     if (!wantPlay) { trouble.state = "lost"; paint(); troubleChanged(); return true; }   // the listener paused: Play picks it up here
     scheduleTry();
@@ -1193,10 +1271,11 @@
   /* the song after this one: a creator release is signed ahead near the end, a gate is asked ahead
      (a play is still claimed only when it starts) */
   function upNext() {
-    if (!current || queue.length < 2) return null;
-    var at = queue.findIndex(function (item) { return sameItem(item, current); });
-    var next = queue[((at < 0 ? 0 : at) + 1) % queue.length];
-    return next && !sameItem(next, current) ? next : null;
+    if (!current) return null;
+    var list = recordList(current);
+    var at = list.findIndex(function (item) { return sameItem(item, current); });
+    var next = at < 0 ? null : list[at + 1];
+    return next && !next.hold && !sameItem(next, current) ? next : null;
   }
   function accountKey() {
     try { return root.MCC && root.MCC.account ? String(root.MCC.account() || "") : (sessionToken() ? "signed-in" : ""); }
@@ -1276,7 +1355,7 @@
     try {
       root.MCC_POCKET.save({
         src: current.src, title: current.title, album: current.albumSlug,
-        artist: current.artist || "Matthew McCluster", art: current.art || "",
+        artist: current.artist || "McCluster", art: current.art || "",
         music_video: film, video: film, poster: current.poster || "", lyrics: current.lyrics || "",
         t: audio.currentTime || 0, playing: !audio.paused, at: now
       }, !!force);
@@ -1418,7 +1497,10 @@
       e.stopPropagation();
       var creatorId = b.getAttribute("data-creator-track");
       var p = creatorId ? root.MCC_MUSIC.playCreator(creatorId) : root.MCC_MUSIC.play(b.getAttribute("data-album"), b.getAttribute("data-track"));
-      if (p && p.catch) p.catch(function () {});
+      /* a held song tapped here: this view says why (the engine it reached shows nothing behind it) */
+      if (p && p.then) p.then(function (out) {
+        if (out && out.state === "held" && root.MCC_GATED && root.MCC_GATED.holdNotice) root.MCC_GATED.holdNotice({ signedIn: !!out.signedIn });
+      }, function () {});
       if (doc.querySelectorAll) paintButtons();
     }, true);
     doc.addEventListener("keydown", function (e) {

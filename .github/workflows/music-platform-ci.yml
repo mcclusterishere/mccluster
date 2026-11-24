@@ -76,6 +76,11 @@ on:
       - 'account.html'
       - 'scripts/test/music-shell.test.mjs'
       - 'scripts/e2e/music-shell.e2e.mjs'
+      - 'js/listen.js'
+      - 'js/member-desk.js'
+      - 'js/member-desk-core.js'
+      - 'scripts/test/music-quick-wins.test.mjs'
+      - 'scripts/e2e/music-quick-wins.e2e.mjs'
       - '.github/workflows/music-platform-ci.yml'
   push:
     branches: [main]
@@ -153,6 +158,11 @@ on:
       - 'account.html'
       - 'scripts/test/music-shell.test.mjs'
       - 'scripts/e2e/music-shell.e2e.mjs'
+      - 'js/listen.js'
+      - 'js/member-desk.js'
+      - 'js/member-desk-core.js'
+      - 'scripts/test/music-quick-wins.test.mjs'
+      - 'scripts/e2e/music-quick-wins.e2e.mjs'
 
 permissions:
   contents: read
@@ -216,7 +226,7 @@ jobs:
         run: |
           node scripts/music-artwork.mjs --check
           node --test scripts/test/now-playing-contract.test.mjs
-      - name: A new event name waits for approval and is not sent; the names sent before still go
+      - name: The approved listening events go out once per dropped connection or failed song; no name waits for approval
         run: |
           node --check js/analytics.js
           node --test scripts/test/music-measurement.test.mjs
@@ -229,6 +239,14 @@ jobs:
           node --check js/music-shell.js
           node --check js/shell-boot.js
           node --test scripts/test/music-shell.test.mjs
+      - name: Quick wins (one McCluster profile, albums and artists only, whole covers, a creator never asked to join, the held closing song, an album stops after its last song, the approved events)
+        run: |
+          node --check js/listen.js
+          node --check js/gated-audio.js
+          node --check js/member-desk-core.js
+          node --check js/member-desk.js
+          node --check js/creator-onboarding.js
+          node --test scripts/test/music-quick-wins.test.mjs
 
   music-edge:
     runs-on: ubuntu-latest
@@ -284,6 +302,10 @@ jobs:
         env:
           PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
         run: node scripts/e2e/music-shell.e2e.mjs /tmp/music-proof/shell
+      - name: Quick wins in Chromium (one McCluster profile, albums and artists, whole covers, no join offer for a creator, the held closing song's pop-up, an album stops after its last song; 320 to 1280 px)
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/music-quick-wins.e2e.mjs /tmp/music-proof/quick-wins
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:

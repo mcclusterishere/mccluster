@@ -323,8 +323,9 @@
       var offer = offerFor({ signedIn: state.signedIn, creator: state.creator, owner: owner() });
       boxes.forEach(function (box) {
         Array.prototype.forEach.call(box.querySelectorAll("[data-offer]"), function (el) {
-          var k = el.getAttribute("data-offer");
-          el.hidden = k === "review" ? !offer.review : k !== offer.door;
+          /* an element may stand for more than one answer (listen.html's join pitch is for "signin become") */
+          var ks = String(el.getAttribute("data-offer") || "").split(/\s+/);
+          el.hidden = ks.indexOf("review") >= 0 ? !offer.review : ks.indexOf(offer.door) < 0;
         });
         box.removeAttribute("data-offer-pending");
         box.setAttribute("data-offer-state", offer.door);

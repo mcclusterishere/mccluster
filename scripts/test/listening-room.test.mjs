@@ -289,7 +289,8 @@ test('the listening room is built from the album room\'s vocabulary', async () =
     'the shared vocabulary must be loaded, not re-invented');
   assert.match(html, /class="music-room music-room--listen"|music-room music-room--listen/,
     'the room must declare itself a music room so the per-room overrides apply');
-  for (const cls of ['greet', 'chips', 'feat', 'lib__k', 'tr']) {
+  /* the filter row (chips) is gone since the quick wins (owner, 2026-11-23: "just list albums and artists right now") */
+  for (const cls of ['greet', 'feat', 'lib__k', 'tr']) {
     assert.match(html, new RegExp(`class="[^"]*\\b${cls}\\b`),
       `${cls} is the house's class for this element and must be the one used`);
   }
