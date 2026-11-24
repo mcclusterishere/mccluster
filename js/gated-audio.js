@@ -246,6 +246,15 @@
         var r = d.getBoundingClientRect();
         if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeHold(d);
       });
+      /* its way forward closes it (review JRN-3, engine stage 0). The music shell (an account view over Listen) and the
+         World (its profile page) take that link in the document's capture phase and stop it there, so the modal pop-up
+         stayed open over the account form, or under the World. The window hears a click before any document listener:
+         the pop-up closes there and the link goes where it goes. Opened elsewhere with a modifier, it stays. */
+      if (root.addEventListener) root.addEventListener("click", function (e) {
+        if (!d.open || !e || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var go = d.querySelector(".mcc-hold__go"), t = e.target;
+        if (go && t && (t === go || (go.contains && go.contains(t)))) closeHold(d);
+      }, true);
       doc.body.appendChild(d);
     }
     d.querySelector("h2").textContent = copy.title;

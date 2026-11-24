@@ -842,7 +842,7 @@ function holdDialog() {
       addEventListener(t, fn) { (this.listeners[t] = this.listeners[t] || []).push(fn); },
       fire(t, e) { (this.listeners[t] || []).forEach((fn) => fn(e)); },
       querySelector(sel) { return this.kids[sel] || (this.kids[sel] = make(sel)); },
-      showModal() { this.open = true; }, close() { this.open = false; }, focus() {},
+      showModal() { this.open = true; }, close() { this.open = false; }, focus() {}, contains(x) { return x === this; },
       /* where the pop-up sits on a 390 px screen (measured in Chromium): 358 x 244 */
       getBoundingClientRect: () => ({ left: 16, top: 300, right: 374, bottom: 544, width: 358, height: 244 }) };
     n.innerHTML = '';
@@ -851,11 +851,12 @@ function holdDialog() {
   let dialog = null;
   const document = { readyState: 'complete', addEventListener() {}, createElement: make,
     body: { appendChild(n) { dialog = n; return n; } }, getElementById: (id) => (dialog && dialog.id === id ? dialog : null) };
+  const listeners = [];
   const window = { console, Promise, document, location: { pathname: '/album.html', search: '?album=cia-mind-control' }, MCC: { session: () => null },
-    addEventListener() {}, dispatchEvent() {}, CustomEvent: class { constructor(t) { this.type = t; } } };
+    addEventListener(type, fn, options) { listeners.push({ type, fn, options }); }, dispatchEvent() {}, CustomEvent: class { constructor(t) { this.type = t; } } };
   window.window = window;
   vm.runInContext(read('js/gated-audio.js'), vm.createContext(window), { filename: 'js/gated-audio.js' });
-  return { G: window.MCC_GATED, dialog: () => dialog };
+  return { G: window.MCC_GATED, dialog: () => dialog, windowListeners: () => listeners.slice() };
 }
 
 /* QW-R5: a click on the dialog's own padding has the dialog itself as its target, as a click on the backdrop does, so
@@ -871,6 +872,30 @@ test('QW-R5 a tap inside the pop-up, on its own padding, leaves it open; a tap o
   }
   d.fire('click', { target: d, clientX: 8, clientY: 200 });
   assert.equal(d.open, false, 'a tap on the backdrop closes it');
+});
+
+/* JRN-3 (the engine stage 0 review): the pop-up's way forward (Sign in for a guest, Complete your profile for a member) is a
+   link the music shell (an account view over Listen) and the World (its profile page) take in the document's capture
+   phase and stop there, so the modal pop-up stayed open over the account form, or under the World. It hears its own link
+   on the window, which comes before every document listener, and closes; nothing else changes. */
+test('JRN-3 following the pop-up\'s way forward closes it first, whoever takes the link; a tap with a modifier, or elsewhere, leaves it', () => {
+  const h = holdDialog();
+  h.G.holdNotice({ signedIn: false });
+  const d = h.dialog(), go = d.querySelector('.mcc-hold__go');
+  const early = () => h.windowListeners().filter((l) => l.type === 'click' && (l.options === true || !!(l.options && l.options.capture)));
+  assert.equal(early().length, 1, 'one click listener on the window, in the capture phase (before the shell\'s and the World\'s)');
+  const click = (target, extra = {}) => early().forEach((l) => l.fn({ target, button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false, ...extra }));
+  click(go, { metaKey: true });
+  assert.equal(d.open, true, 'its link opened elsewhere with a modifier (a new tab): the pop-up stays');
+  click({ tagName: 'P' });
+  assert.equal(d.open, true, 'a tap that is not its way forward leaves it to its own rules (Close, Escape, the backdrop)');
+  click(go);
+  assert.equal(d.open, false, 'its Sign in closes it');
+  h.G.holdNotice({ signedIn: true });
+  assert.equal(d.open, true, 'shown again, for a member');
+  click(go);
+  assert.equal(d.open, false, 'its Complete your profile closes it too');
+  assert.equal(early().length, 1, 'one listener however often it shows');
 });
 
 /* QW-R6: a link to the closing song (album.html?album=...&t=, from the catalogue's registry and Listen's search), a
