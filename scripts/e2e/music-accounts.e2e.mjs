@@ -159,7 +159,9 @@ const SCENARIOS = {
       await members.getByRole('link', { name: 'Pax Tha Collector' }).click();
       const group = page.getByRole('region', { name: 'Groups', exact: true }).getByRole('link', { name: 'Equity Uprise' });
       await group.waitFor();
-      check(await page.locator('#artistName').innerText() === 'Pax Tha Collector', 'a group member opens their artist profile');
+      const profileUrl = new URL(page.url());
+      check(profileUrl.pathname.endsWith('/artist.html') && profileUrl.searchParams.get('artist') === 'pax' &&
+        await page.locator('#artistName').textContent() === 'Pax Tha Collector', 'a group member opens their artist profile');
       await fits(page, 'Member profile');
       await group.click();
       await members.waitFor();
