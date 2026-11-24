@@ -83,6 +83,7 @@ export function siteTable(record, { stage } = {}) {
     site_name: String(P.site_name),
     operator_id: String(P.operator),
     front_door_path: String(P.front_door_path),
+    app_start_path: paths([P.app_start_path], 'platform.app_start_path')[0],
     world_url: platformOrigin + String(world.root),
     static_origin: originOf(P.static_origin, 'platform.static_origin'),
     own_paths: ownPaths(P.own_paths, 'platform.own_paths')
@@ -358,7 +359,7 @@ export const EXPORTS = Object.freeze({ table: 'SITE_TABLE', site: 'SITE', factor
 const TS_TYPES = `export type PageSet = 'platform' | 'profile' | 'profile_only';
 export interface SiteOwnPaths { readonly generated: readonly string[]; readonly subtrees: readonly string[] }
 export interface SiteSwitches { readonly platform_serves: string; readonly profile_host_routed: boolean; readonly carry: boolean; readonly returns_fallback: string; readonly metadata: string }
-export interface SitePlatform { readonly origin: string; readonly host: string; readonly website_id: string; readonly site_name: string; readonly operator_id: string; readonly front_door_path: string; readonly world_url: string; readonly static_origin: string; readonly own_paths: SiteOwnPaths }
+export interface SitePlatform { readonly origin: string; readonly host: string; readonly website_id: string; readonly site_name: string; readonly operator_id: string; readonly front_door_path: string; readonly app_start_path: string; readonly world_url: string; readonly static_origin: string; readonly own_paths: SiteOwnPaths }
 export interface SiteTenant { readonly key: string; readonly host: string; readonly origin: string; readonly entity_id: string; readonly website_id: string; readonly site_name: string; readonly root_path: string; readonly carry_path: string | null; readonly sets: readonly string[]; readonly own_paths: SiteOwnPaths }
 export interface SiteDoor { readonly host: string; readonly origin: string; readonly to: string; readonly to_origin: string; readonly served_by: string; readonly state: string; readonly api_cors: boolean }
 export interface SiteIds { readonly person: string; readonly organization: string; readonly platform_website: string; readonly profile_website: string }
@@ -395,8 +396,7 @@ function header(audience) {
 
    ${audience}
    One table and one set of helpers (makeSite), the same in the Worker, on the pages (window.MCC_SITE) and in
-   the Supabase functions. The table's stage says what the platform serves now; with P0's switches it
-   describes today exactly. */`;
+   the Supabase functions. The table's stage (the record's edge.now) says what each host serves now. */`;
 }
 
 export function renderWorker(table) {
@@ -641,16 +641,16 @@ export const LANES = Object.freeze({
 });
 export const STAGE_NAMES = /^(?:P[0-4]|F|engine stage [0-4])$/;
 
-/* THE CEILING: the four lists as they stood when P0 was built (2026-11-23; 7 files, 112 host literals in code). A list
-   names no file outside this table and allows no file more than its count here, and every list allows exactly what the
-   scan finds, so a literal removed is a count lowered in the same change and freed room is never refilled. Nothing
-   raises a number here; scripts/test/site-hosts.test.mjs pins the same table, so it cannot be raised in one place. */
+/* THE CEILING: the four lists as they stand (P0 built them on 2026-11-23 with 7 files and 112 host literals in code; P1
+   converted the engine's three files and took them off). A list names no file outside this table and allows no file
+   more than its count here, and every list allows exactly what the scan finds, so a literal removed is a count lowered
+   in the same change and freed room is never refilled. The ceiling follows the lists down: a count lowered on a list is
+   lowered here in the same change, and a file that leaves its list leaves this table, or a later edit could raise the
+   list back up to it. Nothing raises a number here; scripts/test/site-hosts.test.mjs pins the same table, so it cannot be
+   raised in one place. */
 export const PENDING_CEILING = Object.freeze({
   'js/live-content.js': 1,
   'js/mcc-auth.js': 1,
-  'js/music-shell.js': 4,
-  'js/tabbar.js': 10,
-  'js/world-audio-continuity.js': 7,
   'workers/mccluster/src/company-site/pages.generated.js': 86,
   'workers/mccluster/src/seek-first/console.html': 3
 });
@@ -664,7 +664,7 @@ export function readPending(root = ROOT) {
 /* Every way the code and the lists disagree, as plain sentences (empty when they agree). The lists only
    shrink: an unlisted file may not name a host; a list never names a file the ceiling does not, nor allows more than
    the ceiling; a listed file names exactly as many hosts as its list allows (no more: a regression; no fewer: lower
-   the count now); and a file that no longer names one leaves its list. */
+   the count now); a file that no longer names one leaves its list; and the ceiling is exactly the lists. */
 export function pendingProblems(rows = scanHostLiterals(), lanes = readPending(), ceiling = PENDING_CEILING) {
   const problems = [];
   const listed = new Map();
@@ -680,8 +680,8 @@ export function pendingProblems(rows = scanHostLiterals(), lanes = readPending()
       if (lane === 'client' && engineOwned.has(entry.file)) problems.push(`${where} is engine-owned: it belongs in ${LANES.engine.list}`);
       if (!Number.isInteger(entry.count) || entry.count < 1) problems.push(`${where} needs a whole count of 1 or more`);
       if (!STAGE_NAMES.test(String(entry.stage || ''))) problems.push(`${where} needs the stage that converts it (P0..P4, F or "engine stage N"), got "${entry.stage}"`);
-      if (cap(entry.file) === null) problems.push(`${where} was not on any list when P0 was built (PENDING_CEILING): the lists only shrink, so a new file reads its hosts from the generated outputs instead`);
-      else if (Number.isInteger(entry.count) && entry.count > cap(entry.file)) problems.push(`${where} allows ${entry.count}, more than the ${cap(entry.file)} it allowed when P0 was built (PENDING_CEILING): the lists only shrink`);
+      if (cap(entry.file) === null) problems.push(`${where} is not on the ceiling (PENDING_CEILING: the lists as P0 built them, lowered with every conversion): the lists only shrink, so a new file reads its hosts from the generated outputs instead`);
+      else if (Number.isInteger(entry.count) && entry.count > cap(entry.file)) problems.push(`${where} allows ${entry.count}, more than the ${cap(entry.file)} the ceiling allows (PENDING_CEILING): the lists only shrink`);
     }
   }
   const found = new Map(rows.map((r) => [r.file, r.count]));
@@ -693,6 +693,13 @@ export function pendingProblems(rows = scanHostLiterals(), lanes = readPending()
   }
   for (const [file, lane] of listed) {
     if (!found.has(file)) problems.push(`${file} no longer names a site host: remove it from ${LANES[lane].list}`);
+  }
+  /* the ceiling follows the lists down (V-1 of the P0 verification) */
+  for (const [file, cap] of Object.entries(ceiling)) {
+    const lane = listed.get(file);
+    const entry = lane ? lanes[lane].files.find((e) => e.file === file) : null;
+    if (!entry) problems.push(`PENDING_CEILING still names ${file}, which no list names any more: drop it from the ceiling in the same change (tools/build-site-hosts.mjs and scripts/test/site-hosts.test.mjs)`);
+    else if (Number.isInteger(entry.count) && entry.count < cap) problems.push(`PENDING_CEILING still allows ${cap} for ${file}, and ${LANES[lane].list} now allows ${entry.count}: lower the ceiling in the same change (tools/build-site-hosts.mjs and scripts/test/site-hosts.test.mjs), or a later edit could raise the list back up to it`);
   }
   return problems;
 }

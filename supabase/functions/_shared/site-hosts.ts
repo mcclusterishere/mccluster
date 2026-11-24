@@ -4,12 +4,11 @@
    The Supabase functions read their hosts here: the address a checkout or account return names
    follows the request (returnOrigin), and nothing else names a host.
    One table and one set of helpers (makeSite), the same in the Worker, on the pages (window.MCC_SITE) and in
-   the Supabase functions. The table's stage says what the platform serves now; with P0's switches it
-   describes today exactly. */
+   the Supabase functions. The table's stage (the record's edge.now) says what each host serves now. */
 export type PageSet = 'platform' | 'profile' | 'profile_only';
 export interface SiteOwnPaths { readonly generated: readonly string[]; readonly subtrees: readonly string[] }
 export interface SiteSwitches { readonly platform_serves: string; readonly profile_host_routed: boolean; readonly carry: boolean; readonly returns_fallback: string; readonly metadata: string }
-export interface SitePlatform { readonly origin: string; readonly host: string; readonly website_id: string; readonly site_name: string; readonly operator_id: string; readonly front_door_path: string; readonly world_url: string; readonly static_origin: string; readonly own_paths: SiteOwnPaths }
+export interface SitePlatform { readonly origin: string; readonly host: string; readonly website_id: string; readonly site_name: string; readonly operator_id: string; readonly front_door_path: string; readonly app_start_path: string; readonly world_url: string; readonly static_origin: string; readonly own_paths: SiteOwnPaths }
 export interface SiteTenant { readonly key: string; readonly host: string; readonly origin: string; readonly entity_id: string; readonly website_id: string; readonly site_name: string; readonly root_path: string; readonly carry_path: string | null; readonly sets: readonly string[]; readonly own_paths: SiteOwnPaths }
 export interface SiteDoor { readonly host: string; readonly origin: string; readonly to: string; readonly to_origin: string; readonly served_by: string; readonly state: string; readonly api_cors: boolean }
 export interface SiteIds { readonly person: string; readonly organization: string; readonly platform_website: string; readonly profile_website: string }
@@ -147,12 +146,12 @@ export function makeSite(t: SiteTable): Site {
 export const SITE_TABLE: SiteTable = deepFreeze<SiteTable>({
   "schema": "mccluster-site-hosts/v1",
   "record": "mccluster-domain-architecture/v2",
-  "stage": "P0",
+  "stage": "P1",
   "switches": {
-    "platform_serves": "world",
+    "platform_serves": "everything",
     "profile_host_routed": false,
-    "carry": false,
-    "returns_fallback": "tenants.matthew",
+    "carry": true,
+    "returns_fallback": "platform",
     "metadata": "today"
   },
   "platform": {
@@ -162,6 +161,7 @@ export const SITE_TABLE: SiteTable = deepFreeze<SiteTable>({
     "site_name": "McCluster Corp",
     "operator_id": "https://matthew.mccluster.org/#mccluster-corp",
     "front_door_path": "/index.html",
+    "app_start_path": "/",
     "world_url": "https://mccluster.org/",
     "static_origin": "https://matthew.mccluster.org",
     "own_paths": {
@@ -296,7 +296,7 @@ export const SITE_TABLE: SiteTable = deepFreeze<SiteTable>({
     "https://mccluster.org",
     "https://matthew.mccluster.org"
   ],
-  "return_fallback_origin": "https://matthew.mccluster.org",
+  "return_fallback_origin": "https://mccluster.org",
   "cookie_domain": "mccluster.org",
   "ids": {
     "person": "https://matthew.mccluster.org/#matthew-mccluster",

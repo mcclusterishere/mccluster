@@ -1,5 +1,6 @@
-/* THE CARRY, THE PLATFORM'S SIDE (SPEC-PLATFORM 2.6 and 2.7). No page loads this file in P0, and the record keeps it
-   off until P1 (window.MCC_SITE.switches.carry, js/shell-boot.js).
+/* THE CARRY, THE PLATFORM'S SIDE (SPEC-PLATFORM 2.6 and 2.7). js/tabbar.js loads this file on a platform page with no
+   usable session once the record's stage has the carry on (window.MCC_SITE.switches.carry, js/shell-boot.js: from P1);
+   never on Matthew's host, which is the one asked, and never in a frame whose parent is this same origin.
 
    A platform page with no usable session, and no mark that it asked before, frames the tenant's carry page hidden
    (window.MCC_SITE.profile: its own origin and carry_path; carry.html) and asks it once for the sign-in this browser
@@ -10,14 +11,14 @@
    write js/tabbar.js uses, and only if nothing signed this page in or out meanwhile. No token is ever in a URL, no
    refresh token ever crosses, and the session on the old host is left as it is. The mark mcc_carry_v1 records the
    result, so the frame is asked once per browser; where nothing could be carried, line() is the one clear sentence the
-   account chip and the sign-in page show for 30 days (P1 draws it).
+   account chip and the sign-in page show for 30 days, and paint() says it there.
 
    The same answer brings what SPEC-PLATFORM 2.7 carries: the analytics device id (only where the privacy notice was
    agreed on both hosts, and only if this origin has none, so one listener stays one device), the song pocket, mute and
    theme (each only where unset here), and the paths of the songs kept at the old address, which keepHere() re-keeps
    from this origin on a tap (keptLine() is the offer).
 
-   window.MCC_CARRY: { started, run, line, keptLine, keepHere, MARK, REQUEST, ANSWER, WAIT_MS }. */
+   window.MCC_CARRY: { started, run, line, paint, keptLine, keepHere, MARK, REQUEST, ANSWER, WAIT_MS }. */
 (function (w, d) {
   "use strict";
   var MARK = "mcc_carry_v1", KEPT = "mcc_carry_kept_v1";
@@ -153,11 +154,17 @@
     });
   }
 
+  /* a frame whose parent is this same origin (the globe inside the World) asks nothing: its parent does. The World
+     framed over Music on Matthew's host has a parent of another origin, and asks for itself. */
+  function sameOriginParent() {
+    if (w.parent === w) return false;
+    try { return w.parent.location.origin === w.location.origin; } catch (e) { return false; }
+  }
   function run() {
     if (flight) return flight;
     if (!site || !site.switches || typeof site.hostRole !== "function") return Promise.resolve({ result: "no_table" });
     if (site.switches.carry !== true) return Promise.resolve({ result: "off" });
-    if (w.top !== w) return Promise.resolve({ result: "framed" });
+    if (sameOriginParent()) return Promise.resolve({ result: "framed" });
     var role = site.hostRole(w.location.hostname);
     if (!role || role.role !== "platform") return Promise.resolve({ result: "not_platform" });
     if (signedIn()) return Promise.resolve({ result: "signed_in" });
@@ -190,6 +197,39 @@
     if (!(at > 0) || Date.now() - at > LINE_DAYS * 864e5) return "";
     return "McCluster now lives at " + site.platform.host + ". If you were signed in before, you still are; if not, sign in once here.";
   }
+  /* the line where it is said: on the sign-in page (account.html's sign-in pane) and on the account chip (js/tabbar.js
+     draws the chip: the line is its title, and its description for a screen reader). Said again whenever the bar repaints
+     the chip or the sign-in changes; gone once signed in or after 30 days. */
+  var LINE_ID = "mccCarryLine", NOTE_ID = "mccCarryNote";
+  function paint() {
+    if (typeof d.getElementById !== "function") return;
+    var text = line();
+    var pane = d.getElementById("acSignInPane"), shown = d.getElementById(LINE_ID);
+    if (text && pane) {
+      if (!shown) {
+        shown = d.createElement("p");
+        shown.id = LINE_ID;
+        shown.className = "ac__sub";
+        pane.insertBefore(shown, pane.firstChild);
+      }
+      shown.textContent = text;
+    } else if (shown) shown.remove();
+    var chip = d.getElementById("mccAuthChip"), note = d.getElementById(NOTE_ID);
+    if (chip && text) {
+      if (!note) {
+        note = d.createElement("span");
+        note.id = NOTE_ID;
+        note.hidden = true;
+        (chip.parentNode || d.body).appendChild(note);
+      }
+      note.textContent = text;
+      chip.setAttribute("title", text);
+      chip.setAttribute("aria-describedby", NOTE_ID);
+    } else {
+      if (chip && chip.getAttribute("aria-describedby") === NOTE_ID) { chip.removeAttribute("title"); chip.removeAttribute("aria-describedby"); }
+      if (note) note.remove();
+    }
+  }
   /* SPEC-PLATFORM 2.7: the offer to keep here what was kept at the old address */
   function keptLine() {
     var n = keptPaths(json(read(KEPT))).length;
@@ -218,7 +258,12 @@
     }).then(function () { return { kept: kept, missed: missed }; }, function () { return { kept: kept, missed: paths.length - kept }; });
   }
 
-  var api = { MARK: MARK, REQUEST: REQUEST, ANSWER: ANSWER, WAIT_MS: WAIT_MS, run: run, line: line, keptLine: keptLine, keepHere: keepHere };
+  var api = { MARK: MARK, REQUEST: REQUEST, ANSWER: ANSWER, WAIT_MS: WAIT_MS, run: run, line: line, paint: paint, keptLine: keptLine, keepHere: keepHere };
   api.started = run();
   w.MCC_CARRY = Object.freeze(api);
+  api.started.then(paint, paint);
+  w.addEventListener("mcc:auth-state", paint);
+  w.addEventListener("mcc:auth-changed", paint);
+  if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", paint);
+  else paint();
 })(window, document);

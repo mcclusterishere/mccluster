@@ -22,7 +22,7 @@ jobs:
         run: npm run check --prefix core && npm test --prefix core
       - name: Generated site hosts match data/seo/domain-architecture.json
         run: node tools/build-site-hosts.mjs --check
-      - name: Every host answers every classified path as production did (local crawl, no network)
+      - name: Every host answers every classified path as the live stage says (local crawl, no network)
         run: node scripts/e2e/platform-hosts.e2e.mjs
       - name: Verify complete Worker and isolated transport suites
         run: |

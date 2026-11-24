@@ -61,7 +61,8 @@ export function formatLabel(format: string | null | undefined): string {
  * The origins that serve the site's pages (the generated return list, ./site-hosts.ts) are the only ones that
  * may call these functions from a browser: the same list a purchase returns to, so a buyer who starts on one
  * of them can read the answer and comes back there. Any other origin is answered with the fallback (the
- * profile host at stage P0, the only origin these functions answered before), which it cannot read.
+ * profile host at stage P0, the only origin these functions answered before; the platform from P1), which it
+ * cannot read.
  */
 export const SITE = RETURN_FALLBACK_ORIGIN;
 export const ALLOWED_ORIGINS: readonly string[] = RETURN_ORIGINS;

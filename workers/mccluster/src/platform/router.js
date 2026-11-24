@@ -3,15 +3,17 @@
    Worker mccluster answers the site's hosts before the API. Which host is the platform, which are tenants and which are
    doors, what the World's rooms are and which pages live where come from one table, generated from
    data/seo/domain-architecture.json (./hosts.generated.js; tools/build-site-hosts.mjs). Nothing here names a host. The
-   table's stage decides what each host answers; with the table that ships today (stage P0) every host and path answers
-   exactly as measured on 2026-11-23 (test/platform-router.test.mjs replays the measurement):
+   table's stage (the record's edge.now) decides what each host answers. With P0's table every host and path answers
+   exactly as measured on 2026-11-23 (test/platform-router.test.mjs replays the measurement); the table that ships is P1's
+   (test/platform-p1.test.mjs):
 
    - the platform (mccluster.org): the World at /, with the company's head; the World's rooms and the static files passed
      through from the static origin (rooms noindex); the company's own pages (the company page, its news, its crawler
      files); /index.html and /mnet.html 301 to /; every other path 301 to the same path where it is served today, query
      intact; plain http 301 to https. From P1 the platform serves every page at its path (the HERE front door at
      /index.html; World queries there still 301 to /), and profile_only pages (Whip Equipped, Matthew's separate
-     company) answer 301 to his host.
+     company) answer 301 to his host; its manifest.json starts the app added from the platform where the table says
+     (platform.app_start_path: the World, the owner's default of 2026-11-23).
    - its www door: the apex's own paths to the apex, every other path to where it is served; from P1 every path to the
      platform.
    - a World door (humanuprise.com, inert until the owner routes it): the World on its own host with its own head, its
@@ -34,6 +36,8 @@ import { WORKER, moved, methodNotAllowed, upstreamOrigin, passThrough, originPas
 const READS = new Set(['GET', 'HEAD']);
 /* the page other people's sites frame: no frame restriction (SPEC-PLATFORM 2.4) */
 const EMBED = '/embed.html';
+/* the installed app's manifest (SPEC-PLATFORM 2.8): the same file on both hosts, its start the host's own */
+const MANIFEST = '/manifest.json';
 const fileName = (p) => /\.[^/]*$/.test(p);
 /* a 301 to another address (the Worker answers it with ../world-host.js moved()) */
 const to = (location) => ({ kind: 'moved', location });
@@ -86,6 +90,8 @@ function platformRoute(site, url, method) {
     return readOnly(method, { kind: 'pass', path, noindex: isDocument(path), framing: framingOf(site, path) });
   }
   if (site.pageSet(path) === 'profile_only') return to(site.profile.origin + path + q);
+  /* the app added to a Home Screen from the platform is the platform's own app: its manifest starts where the table says */
+  if (path === MANIFEST) return readOnly(method, { kind: 'pass', path, noindex: false, framing: framingOf(site, path), appStart: site.platform.app_start_path });
   return readOnly(method, { kind: 'pass', path, noindex: false, framing: framingOf(site, path) });
 }
 
@@ -188,7 +194,7 @@ export function createSiteRouter({ site = SITE, company = null, worldDoor = null
         return passThrough(request, `${statics}${site.world.document}${url.search}`, fetchImpl, { root: true, head, site });
       }
       case 'pass':
-        return passThrough(request, `${statics}${url.pathname}${url.search}`, fetchImpl, { noindex: r.noindex, site, framing: r.framing });
+        return passThrough(request, `${statics}${url.pathname}${url.search}`, fetchImpl, { noindex: r.noindex, site, framing: r.framing, appStart: r.appStart || null });
       case 'origin':
         return originPass(request, `${statics}${url.pathname}${url.search}`, fetchImpl, { site, classes: r.classes, framing: r.framing });
       default:

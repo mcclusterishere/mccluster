@@ -98,11 +98,12 @@ unverified app URL is added to the global bar automatically.
 While already in Control, navigation changes the hash on the same document. The
 organization query, optional workspace presentation, editors and retained
 Analytics globe keep their existing lifecycle. Browser Back/Forward work normally.
-From a World host, Control points to Matthew's host using the bar's existing
-cross-origin sign-in handoff. That is today's split (stage P0 of the one-platform
-plan, `docs/control-plane/DOMAINS-AND-ENTITIES.md`): from P1 the platform serves
-Control at its own path (`control.html` is in `url_ownership.platform`), so the link
-stays on the platform's origin and a session moves through the carry page instead. Local chapter tabs, filters and editor tools remain
+From either host the bar's Control link goes to the platform, which serves
+Control at its own path (`control.html` is in `url_ownership.platform`), so on the
+platform the link stays on its origin and a session moves there through the carry
+page (stage P1 of the one-platform plan, `docs/control-plane/DOMAINS-AND-ENTITIES.md`).
+Before P1, Control on a World host pointed to Matthew's host with the bar's
+cross-origin sign-in hand-off, whose writer is off since P1 (its reader stays until P4). Local chapter tabs, filters and editor tools remain
 local; they do not replace the global destination menu.
 
 If the shared module fails, the original Home link and the Control sections

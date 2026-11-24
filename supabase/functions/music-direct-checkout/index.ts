@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
   const cors = corsHeaders(req.headers.get("origin"));
   /* The purchase page the buyer comes back to, and downloads on: the request's Origin when it is exactly
      an origin that serves pages (../_shared/site-hosts.ts; the same list CORS answers), else the generated
-     fallback, which at stage P0 is the profile host every return named before. */
+     fallback, which at stage P0 was the profile host every return named before and from P1 is the platform. */
   const SITE = returnOrigin(req.headers.get("origin"));
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
     status,

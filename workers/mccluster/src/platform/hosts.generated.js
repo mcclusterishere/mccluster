@@ -4,8 +4,7 @@
    Worker mccluster reads its hosts here: the host router, the CORS list, frame-ancestors and the
    origins a checkout or account return may name.
    One table and one set of helpers (makeSite), the same in the Worker, on the pages (window.MCC_SITE) and in
-   the Supabase functions. The table's stage says what the platform serves now; with P0's switches it
-   describes today exactly. */
+   the Supabase functions. The table's stage (the record's edge.now) says what each host serves now. */
 const SETS = ["platform","profile","profile_only"];
 
 function deepFreeze(value) {
@@ -120,12 +119,12 @@ export function makeSite(t) {
 export const SITE_TABLE = deepFreeze({
   "schema": "mccluster-site-hosts/v1",
   "record": "mccluster-domain-architecture/v2",
-  "stage": "P0",
+  "stage": "P1",
   "switches": {
-    "platform_serves": "world",
+    "platform_serves": "everything",
     "profile_host_routed": false,
-    "carry": false,
-    "returns_fallback": "tenants.matthew",
+    "carry": true,
+    "returns_fallback": "platform",
     "metadata": "today"
   },
   "platform": {
@@ -135,6 +134,7 @@ export const SITE_TABLE = deepFreeze({
     "site_name": "McCluster Corp",
     "operator_id": "https://matthew.mccluster.org/#mccluster-corp",
     "front_door_path": "/index.html",
+    "app_start_path": "/",
     "world_url": "https://mccluster.org/",
     "static_origin": "https://matthew.mccluster.org",
     "own_paths": {
@@ -269,7 +269,7 @@ export const SITE_TABLE = deepFreeze({
     "https://mccluster.org",
     "https://matthew.mccluster.org"
   ],
-  "return_fallback_origin": "https://matthew.mccluster.org",
+  "return_fallback_origin": "https://mccluster.org",
   "cookie_domain": "mccluster.org",
   "ids": {
     "person": "https://matthew.mccluster.org/#matthew-mccluster",

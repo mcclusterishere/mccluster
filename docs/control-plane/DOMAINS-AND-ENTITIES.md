@@ -21,23 +21,26 @@ There is **one platform**, there are **tenant properties** on it, and the
 tenant of the platform. **Hosting is not identity**: the host that serves a
 page never decides which entity the page is about.
 
-**Stage now: P0, prepared: every measured host and path answers as before,
-apart from the changes P0 itself makes.** The record, its generator and this
-page say where the platform goes; every host and path measured on 2026-11-23
-answers as measured (`edge.now`, below), apart from the changes P0 itself
-makes once deployed, which the record lists (`edge.now.p0_changes`, below).
-Each later stage updates the record's `stage_now` and `edge.now` in its own
-change. Until it does, this page names P1, P2 and P3 as planned, never as
-live.
+**Stage now: P1, the platform serves everything: every page answers at its
+path on the platform, and Matthew's host keeps answering every page.** The
+record lists what P1 changes once deployed (`edge.now.p1_changes`, below) and
+what P0 changed before it (`edge.now.p0_changes`, below); `edge.now` says
+what each host answers. P1 ships on the owner's word: Pages first, then the
+Worker. Each later stage updates the record's `stage_now` and `edge.now` in
+its own change. Until it does, this page names P2 and P3 as planned, never as
+live: **P2** moves each page's canonical, sitemap entry, share card and
+WebSite to its set's host (platform pages name the platform, profile pages
+keep Matthew's host); **P3** makes Matthew's host answer 301 to the same path
+on the platform for every page that moved.
 
 | | The platform `https://mccluster.org/` | Matthew's profile `https://matthew.mccluster.org/` |
 | --- | --- | --- |
 | Whose house | **McCluster Corp**, the platform's operator; Equity Uprise is the public brand | **Matthew McCluster**; McCluster is his artist name, the same Person |
-| Answers | At its root, the Equity Uprise World (where is the movement, what can I do today); at `/company`, what is McCluster Corp? From P1, every page of the site at its path | Who is Matthew McCluster, what has he made, what does he do? |
+| Answers | At its root, the Equity Uprise World (where is the movement, what can I do today); at `/company`, what is McCluster Corp? Since P1, every page of the site at its path | Who is Matthew McCluster, what has he made, what does he do? |
 | Share preview | McCluster Corp, explained; the World's root shares as "Equity Uprise · McCluster" | Matthew McCluster, not "only the album" |
 | Entity | Organization `https://matthew.mccluster.org/#mccluster-corp` | Person `https://matthew.mccluster.org/#matthew-mccluster` |
 | WebSite node | `https://mccluster.org/#website`, published by the Organization | `https://matthew.mccluster.org/#website`, published by the Person |
-| Source | the static site this repo publishes, fetched from `platform.static_origin` (today `/`, the World, `mnet.html`, with its rooms and the static files: `workers/mccluster/src/world-host.js`; from P1 every page), plus the generated company pages (`data/seo/company-site.json` → `tools/build-company-site.mjs` → `workers/mccluster/src/company-site/pages.generated.js`) | static HTML at the repository root: the `profile` and `profile_only` pages; today it serves every page of the static site |
+| Source | the static site this repo publishes, fetched from `platform.static_origin` (every page at its path and the static files, since P1, `workers/mccluster/src/world-host.js`; at P0 only `/`, the World, `mnet.html`, with its rooms), plus the generated company pages (`data/seo/company-site.json` → `tools/build-company-site.mjs` → `workers/mccluster/src/company-site/pages.generated.js`) | static HTML at the repository root: the `profile` and `profile_only` pages; today it serves every page of the static site |
 | Served by | Worker `mccluster` by host (routed) | GitHub Pages (`CNAME`, DNS only) until P3; from P3 Worker `mccluster` by host, from the same static files |
 
 **The front-door model.** The platform's door is the World: `mccluster.org/`
@@ -46,7 +49,7 @@ door. Matthew's profile's door is the I AM HERE album:
 `matthew.mccluster.org/` opens on it (`owner_decisions.profile_root`).
 **Do not confuse a door with the building.** The album stays the entrance to
 Matthew's profile; it is not the semantic identity of the profile, and it is
-never the platform's homepage: from P1 the platform serves the HERE page at
+never the platform's homepage: since P1 the platform serves the HERE page at
 `/index.html`, never at `/`.
 
 ## The public brand is Equity Uprise (owner, 2026-10-28)
@@ -139,10 +142,11 @@ none or in two:
   (`/action/`, `action-globe.html`), the campaign pages, PRIM3, McCluster
   Sites, services and booking, the privacy policy. PRIM3 Site 0 (`/site0/`)
   joins it at deploy (`promoted_at_deploy`).
-- **`profile`** (34 pages): its home is Matthew's host. The HERE front
+- **`profile`** (35 pages): its home is Matthew's host. The HERE front
   door (`/`), his profile, résumés, `/engineering/…`, portfolio, card, press,
-  gallery and walls, photography, films, policy writing, case studies and the
-  evidence newsroom (`owner_decisions.person_pages_home`).
+  gallery and walls, photography, films, policy writing, case studies, the
+  evidence newsroom (`owner_decisions.person_pages_home`) and the carry page
+  (`carry.html`, which answers the platform's carry).
 - **`profile_only`** (13 pages): only Matthew's host serves it. Whip
   Equipped LLC, his separate company (`whip.html`, `/whip/…`,
   `we-manufacture.html`), and the four owner-decision pages
@@ -153,11 +157,11 @@ none or in two:
   Never a 301 on Matthew's host: shared images, embeds, the installed app and
   certificate renewal depend on them.
 
-**Ownership names whose page it is; it never moves an `@id`.** Until P1 every
-page answers where it does today. A page moves in stages that never break a
-working address:
+**Ownership names whose page it is; it never moves an `@id`.** Before P1 every
+page answered where it did on 2026-11-23. A page moves in stages that never
+break a working address:
 
-1. **P1**: the platform serves the page at its path (its canonical still
+1. **P1** (live): the platform serves the page at its path (its canonical still
    names Matthew's host, so search does not move yet). A session moves
    through the carry page (`carry.html` on the profile host, `js/carry.js` on
    the platform), never with a token in a URL; where the carry finds nothing,
@@ -165,18 +169,20 @@ working address:
    as an in-app copy whose canonical stays on Matthew's host, so the player
    keeps running; a `profile_only` page answers 301 from the platform to
    Matthew's host.
-2. **P2**: its canonical, sitemap entry, share card and WebSite move to its
+2. **P2** (planned): its canonical, sitemap entry, share card and WebSite move to its
    set's host. `@id`s never move.
-3. **P3**: only then does its old address on Matthew's host answer 301 to the
+3. **P3** (planned): only then does its old address on Matthew's host answer 301 to the
    same path on the platform, query intact.
 
 The October 2026 reasons for keeping the company apps on Matthew's host, and
 how each is answered:
 
 - *Sessions are per-origin `localStorage` (`js/backend.js`).* The carry moves
-  a member's session to the platform in P1 (measured same-site in Chromium,
-  2026-11-23); until then the bar's hand-off carries a sign-in across
-  (`js/tabbar.js` → `POST /v1/auth/handoff`).
+  a member's session to the platform (since P1; measured same-site in
+  Chromium, 2026-11-23): `js/carry.js` frames `carry.html` on Matthew's host
+  and trades what it hands back at `POST /v1/auth/handoff`. Before P1 the bar's
+  fragment hand-off carried a sign-in across (`js/tabbar.js`); its writer is
+  off since P1 and its reader stays until P4.
 - *Checkout returns are hard-coded to `matthew.mccluster.org`
   (`supabase/functions/checkout/index.ts`).* Returns follow the request: a
   checkout or account return goes back to the origin it started from when
@@ -192,24 +198,75 @@ how each is answered:
   answers 301 to the same path, query intact.
 
 Serving the World at `https://mccluster.org/` (owner, 2026-10-15, below)
-moved nothing, and P0 moves nothing either: every URL on Matthew's host keeps
-working.
+moved nothing, and neither P0 nor P1 moves anything: every URL on Matthew's
+host keeps working (P1 adds the platform's answers and takes none from his
+host).
 
 ## The edge, today and target
 
-**Today (P0; measured 2026-11-23, GET and HEAD only; `edge.now`):**
+**Today (P1, once deployed; `edge.now`; P0's answers were measured on
+2026-11-23 with GET and HEAD only, and P1's are those of the local crawl over
+this checkout, `scripts/e2e/platform-hosts.e2e.mjs`, until it is deployed and
+crawled live):**
 
 | Host | Answers |
 | --- | --- |
-| `mccluster.org` | Worker mccluster by host (routed): the World at / with the platform's head (canonical https://mccluster.org/, og:site_name McCluster Corp); the World's rooms and the static files passed through from the static origin (rooms noindex); /company, /news/, robots.txt, sitemap.xml and llms.txt generated or server-rendered; /index.html and /mnet.html 301 to /; every other path 301 to the same path on matthew.mccluster.org, query intact; plain http 301 to https. |
-| `www.mccluster.org` | Worker mccluster: 301, the apex's own paths to the apex and every other path to matthew.mccluster.org. |
-| `matthew.mccluster.org` | GitHub Pages through a DNS-only CNAME: every page of the static site, its own robots.txt (AI crawlers allowed) and its sitemaps. |
+| `mccluster.org` | Worker mccluster by host (routed): the World at / with the platform's head (canonical https://mccluster.org/, og:site_name McCluster Corp); every platform and profile page at its path, passed through from the static origin, query intact (the HERE front door at /index.html; World queries there and /mnet.html 301 to /); Whip Equipped and the owner's own pages (profile_only) 301 to the same path on matthew.mccluster.org; the static files, embed.html (framed by any site), sw.js, manifest.json (the platform's app starts on the World) and carry.html; /company, /news/, robots.txt, sitemap.xml and llms.txt generated or server-rendered; plain http 301 to https. |
+| `www.mccluster.org` | Worker mccluster: 301 to the same path and query on https://mccluster.org, every path. |
+| `matthew.mccluster.org` | GitHub Pages through a DNS-only CNAME: every page of the static site, unchanged until P3, its own robots.txt (AI crawlers allowed) and its sitemaps; carry.html answers the platform's carry; manifest.json and sw.js serve the app installed from his host. |
 | `here.mccluster.org` | Cloudflare zone redirect rule: 301 to the same path on matthew.mccluster.org. |
-| `humanuprise.com` | Inert: no address records; Worker mccluster's door answers nothing until the owner routes it. |
+| `humanuprise.com` | Inert: no address records; once the owner routes it, Worker mccluster answers 301 to the same path and query on the platform. |
 | `equityuprise.com` | Not on Cloudflare: WordPress.com nameservers and a placeholder page. The platform's planned address (stage F). |
 | `api.mccluster.org` | Worker mccluster, the API; no stage changes it. |
 
-**What P0 itself changes once deployed** (`edge.now.p0_changes`;
+**What P1 changes once deployed** (`edge.now.p1_changes`;
+`scripts/test/domain-architecture.test.mjs` holds each to the code):
+
+- **The platform serves everything** (`workers/mccluster/src/platform/router.js`,
+  `workers/mccluster/src/world-host.js`): every platform and profile page
+  answers 200 on `https://mccluster.org` at its path, passed through from the
+  static origin, query intact: music and the albums, Creator Studio, account
+  and checkout, the company's products, member pages and Control, and the HERE
+  front door at `/index.html`. World queries on it (`?view=`, `?mission=`)
+  still answer 301 to `/`, and so does `/mnet.html`. The pages the platform
+  serves are not noindex there (the World's rooms were at P0); their
+  canonicals do not move until P2.
+- **Whip and the owner's own pages stay on his host**: `profile_only` pages
+  answer 301 on the platform to the same path on
+  `https://matthew.mccluster.org`, query intact.
+- **www goes to the apex**: `www.mccluster.org` answers 301 to the same path
+  and query on `https://mccluster.org` for every path.
+- **humanuprise.com goes to the platform**: once the owner routes it, it and
+  its www answer 301 to the same path and query on the platform
+  (`owner_decisions.humanuprise_com`); until then they stay inert.
+- **The platform's app starts on the World**: the platform's `manifest.json`
+  carries `start_url` `/` (`platform.app_start_path`,
+  `owner_decisions.platform_app_start`); every other member is the published
+  file's. Matthew's host serves the file unchanged, so the app installed from
+  his host keeps starting on its HERE page.
+- **The bar is local on the platform**: Music `listen.html`, the M the HERE
+  front door `index.html`, the Globe the World at `/`; on Matthew's host
+  Music and the Globe point at the platform and the M at his own root. The
+  World is `/` and `/mnet.html` only, never `/index.html`. Each answer is a
+  small named function reading `window.MCC_SITE` (`js/tabbar.js`,
+  `js/world-audio-continuity.js`, `js/music-shell.js`).
+- **The carry is on**: a platform page with no usable session asks Matthew's
+  host once, through a hidden same-site frame of `carry.html`, for the access
+  token this browser holds there, and trades it at the existing
+  `POST /v1/auth/handoff` for a session of the platform's own. No token is in
+  any URL, no refresh token crosses, and his host stays signed in. Where
+  nothing can be carried, the sign-in page and the account chip say one line
+  for 30 days.
+- **The fragment hand-off writer is off**: no link carries `#mcc_handoff` any
+  more; the reader still scrubs and trades an old link until P4.
+- **The installed app's move card**: the app installed from Matthew's host,
+  launched from the Home Screen there, says once, in the bar's own peek card,
+  that the app now lives at `mccluster.org`; `index.html` is not edited.
+- **Returns fall back to the platform**: a return whose request names no
+  origin that serves pages comes back to the platform; a return started on his
+  host still comes back to his host.
+
+**What P0 changed** (`edge.now.p0_changes`;
 `scripts/test/domain-architecture.test.mjs` holds each to the code):
 
 - **The pass-through's redirects** (`workers/mccluster/src/world-host.js`): a
@@ -221,18 +278,20 @@ working.
   404). A redirect to any other origin is refused with a 502.
 - **Returns follow the request** (SPEC-PLATFORM 2.9): a checkout, Connect or
   account return started on `https://mccluster.org` (a World room such as
-  `/account.html`) comes back there; from anywhere else it comes back to
-  `https://matthew.mccluster.org`, as before. shake-order keeps an operator's
+  `/account.html`) comes back there; at P0 a return from anywhere else came
+  back to `https://matthew.mccluster.org`, as before (since P1, to the
+  platform). shake-order keeps an operator's
   `SITE_URL` ahead of the request, as before.
 - **The dead Here returns**: the three returns that named
   `mcclusterishere.github.io/Here` (backend-sub, and pay-now and
   connect-onboard, which still answer 410) land on today's live page.
 - **The direct-sale CORS** (`supabase/functions/_shared/music-direct.ts`):
   Origin `https://mccluster.org` is answered with itself, so a buyer on the
-  platform can read the answer; no page the platform serves at P0 loads the
-  direct-sale scripts.
-- **The carry page**: `carry.html` is new on Matthew's host, inert (the carry
-  switch is off, and no page loads `js/carry.js`).
+  platform can read the answer; at P0 no page the platform served loaded the
+  direct-sale scripts, and since P1 it serves the pages that do.
+- **The carry page**: `carry.html` is new on Matthew's host; at P0 it was
+  inert (the carry switch off, no page loading `js/carry.js`), and P1 turns
+  the carry on.
 - **Inert until P3**: Matthew's host is not routed to the Worker; a request for
   it that reached the Worker would go to GitHub Pages untouched (before P0 the
   API answered it).
@@ -249,9 +308,11 @@ of the company WebSite), plus the World's rooms, the sign-in pages and the
 static files (noindex), so a member's session holds from the Earth to the
 mission dialog; `/mnet.html` is a 301 to `/`. It serves the company pages at
 `/company`, `/robots.txt`, `/sitemap.xml` and `/llms.txt`, and the news at
-`/news/`. Every other path gets a 301 to `https://matthew.mccluster.org/$1`,
-so every existing link, QR code and campaign funnel lands exactly where it
-always did.
+`/news/`. Until P1 every other path got a 301 to
+`https://matthew.mccluster.org/$1`, so every existing link, QR code and
+campaign funnel landed exactly where it always did; since P1 the platform
+serves every page itself, and only `profile_only` pages answer 301 to
+Matthew's host.
 
 **The hosts in code.** `tools/build-site-hosts.mjs` reads the record and
 writes, each checked by `--check` in CI:
@@ -273,7 +334,7 @@ setting):
 | Stage | What | State | Switches |
 | --- | --- | --- | --- |
 | P0 | prepare, with no visible change | prepared | `platform_serves` "world", `profile_host_routed` false, `carry` false, `returns_fallback` "tenants.matthew", `metadata` "today" |
-| P1 | the platform serves everything | planned | `platform_serves` "everything", `profile_host_routed` false, `carry` true, `returns_fallback` "platform", `metadata` "today" |
+| P1 | the platform serves everything | shipping: built on its own branch, it ships on the owner's word | `platform_serves` "everything", `profile_host_routed` false, `carry` true, `returns_fallback` "platform", `metadata` "today" |
 | P2 | canonicals, sitemaps and structured data move | planned | `platform_serves` "everything", `profile_host_routed` false, `carry` true, `returns_fallback` "platform", `metadata` "by_set" |
 | P3 | the profile host answers 301s for the pages that moved | planned | `platform_serves` "everything", `profile_host_routed` true, `carry` true, `returns_fallback` "platform", `metadata` "by_set" |
 | P4 | clean-up | planned | `platform_serves` "everything", `profile_host_routed` true, `carry` true, `returns_fallback` "platform", `metadata` "by_set" |
@@ -290,10 +351,10 @@ turn on.
 | platform | /mnet.html | 301 to / with the query |
 | platform | /index.html with a World query (view=, mission=) | 301 to / with the query; without one, from P1, the HERE front door |
 | platform | /company, /robots.txt, /sitemap.xml, /llms.txt, /news/... | generated or server-rendered |
-| platform | platform or profile page, static file | pass-through from the static origin, path and query (P0: the World's rooms and the static files only; everything else 301 to the static origin, as today) |
+| platform | platform or profile page, static file | pass-through from the static origin, path and query (from P1; at P0 the World's rooms and the static files only, everything else 301 to the static origin) |
 | platform | profile_only page | 301 to the profile host, same path (from P1) |
 | platform | http: | 301 to https: |
-| www | anything | 301 to the platform, same path and query (from P1; today some to the apex, the rest to the profile host) |
+| www | anything | 301 to the platform, same path and query (from P1; at P0 some to the apex, the rest to the profile host) |
 | profile | profile or profile_only page, both_hosts path, /.well-known/acme-challenge/... | fetch(request) to its origin (from P3) |
 | profile | / or /index.html with a World query | 301 to the platform root with the query (from P3) |
 | profile | platform page (any other .html or directory path) | 301 to the platform, same path and query (from P3) |
@@ -320,7 +381,7 @@ Why the one Worker, and not a second Pages site or a new Worker:
 6. Later, for equityuprise.com: move its DNS from WordPress.com to Cloudflare, then pick the day.
 
 The owner's current decisions (`owner_decisions`; the defaults of
-2026-11-23, each the owner's to change; none changes what P0 serves):
+2026-11-23, each the owner's to change; P1 applies them):
 
 - **profile_root**: It keeps opening on his HERE page (index.html, the I AM HERE front door). (default, the owner's to change)
 - **person_pages_home**: Yes: they are url_ownership.profile; the platform serves in-app copies from P1 with their canonical on his host. (default, the owner's to change)
@@ -344,7 +405,7 @@ McCluster Corp, a WebPage node that belongs to `https://mccluster.org/#website`
 and is about the Organization (the same stable `@id`). The company page,
 "What is McCluster Corp?", with the WebSite and Organization nodes, is
 `https://mccluster.org/company`, and it opens the World from its header.
-From P1 the World stays the platform's root and every other page joins it at
+Since P1 the World stays the platform's root and every other page joins it at
 its path.
 
 ## The company's news: `mccluster.org/news/` (owner, 2026-10-20)
@@ -374,31 +435,35 @@ Uprise (above): the host keeps its legacy name, and what it serves names
 Equity Uprise (`og:site_name` "Equity Uprise"). **The owner's current
 decision** (default of 2026-11-23, `owner_decisions.humanuprise_com`, the
 owner's to change): once routed, `humanuprise.com` answers 301 to the
-platform, same path and query; that router change lands with P1. Until the
+platform, same path and query; the router answers so since P1. Until the
 owner routes it, the host stays built and inert.
 
 | | `https://humanuprise.com/` |
 | --- | --- |
 | Whose | McCluster Corp's platform, the Equity Uprise World |
-| Answers | Today (built, inert): the World; once routed, from P1: 301 to the platform |
+| Answers | Today (built, inert until routed): once routed, 301 to the platform for every path (since P1; before P1 it would have served the World) |
 | Entity | Organization `https://matthew.mccluster.org/#mccluster-corp` (the same stable `@id`) |
 | Source | the World, `mnet.html`, as published by this repo; nothing is duplicated |
 | Served by | Worker `mccluster`, host-routed (`workers/mccluster/src/human-uprise/router.js`); inert until the owner routes the host |
 
-- As built today, `/` is the World, passed through from the static origin
-  with this host's own canonical. The World's rooms, the sign-in pages and
-  the static files ride the same way (noindex); every other path is a 301 to
-  the same path on `matthew.mccluster.org`. So Music, the M, every creator
-  page and every record land on Matthew's host; the World stays here.
+- Before P1, as built, `/` was the World, passed through from the static
+  origin with this host's own canonical; the World's rooms, the sign-in pages
+  and the static files rode the same way (noindex), and every other path was a
+  301 to the same path on `matthew.mccluster.org`. Since P1 the router answers
+  every path on it with a 301 to the platform, once routed.
 - The bar (`js/tabbar.js`) reads the same on every host: Music | M | Globe.
-  On a World host (`mccluster.org`, `humanuprise.com`), Music and the M link
-  to Matthew's site outright and the Globe is the root; on Matthew's site
-  the Globe goes to `WORLD_ORIGIN`, `https://mccluster.org/` since
-  2026-10-15. Pointing it at `humanuprise.com` is superseded by the owner's
-  decision above. From P1 the bar is local on the platform.
-- Sessions are per origin, and one M Account works on every host anyway: the
-  bar carries a member's sign-in across (`js/tabbar.js` → `/v1/auth/handoff`,
-  `workers/mccluster/src/auth-handoff.js`), and the arriving host earns a
+  Since P1 it is local on the platform: Music `listen.html`, the M the HERE
+  front door `index.html`, the Globe the World at `/`. On Matthew's site Music
+  and the Globe go to the platform (the World at `https://mccluster.org/`
+  since 2026-10-15) and the M to his own root; each answer is a small named
+  function reading `window.MCC_SITE` (`pageHref`, `worldAt`, `isWorldPath`).
+  Before P1, on a World host, Music and the M linked to Matthew's site
+  outright. Pointing the Globe at `humanuprise.com` is superseded by the
+  owner's decision above.
+- Sessions are per origin, and one M Account works on every host anyway:
+  since P1 the carry brings a member's sign-in to the platform (`js/carry.js`
+  → `/v1/auth/handoff`, `workers/mccluster/src/auth-handoff.js`; before P1 the
+  bar's fragment hand-off did, `js/tabbar.js`), and the arriving host earns a
   session of its own. No refresh token crosses. The API's CORS allowlist
   carries the host; it is also the list of hosts a sign-in may be carried to.
 - Why not a second Pages site or Worker: the same reasons as the platform

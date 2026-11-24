@@ -225,7 +225,7 @@ function frame(out, framing, site) {
 
 /* A pass-through from the static origin: the client's safe headers up, the upstream's safe headers back, the host's
    own security headers, and, on the World's root, the host's head. */
-export async function passThrough(request, upstream, fetchImpl, { root = false, noindex = false, head = null, site = SITE, framing = 'site' } = {}) {
+export async function passThrough(request, upstream, fetchImpl, { root = false, noindex = false, head = null, site = SITE, framing = 'site', appStart = null } = {}) {
   const headers = new Headers();
   for (const h of UPSTREAM_REQUEST) {
     const v = request.headers.get(h);
@@ -257,7 +257,24 @@ export async function passThrough(request, upstream, fetchImpl, { root = false, 
     out.set('cache-control', 'public, max-age=300');
     return new Response(request.method === 'HEAD' ? null : worldHeadFor(await res.text(), head), { status: 200, headers: out });
   }
+  if (appStart && res.status === 200 && /json/i.test(out.get('content-type') || '')) {
+    const body = request.method === 'HEAD' ? null : appManifest(await res.text(), appStart, out);
+    out.delete('etag');
+    return new Response(body, { status: 200, headers: out });
+  }
   return new Response(request.method === 'HEAD' ? null : res.body, { status: res.status, headers: out });
+}
+
+/* The installed app's manifest on a host whose app starts elsewhere (SPEC-PLATFORM 2.8; the platform's app opens on the
+   World, the owner's default of 2026-11-23): the published file with its start_url replaced and every other member as
+   it is. A body that is not a manifest object is handed on as it came. The body changes, so the upstream validator goes. */
+export function appManifest(text, start, headers) {
+  headers.delete('etag');
+  let manifest;
+  try { manifest = JSON.parse(text); } catch { return text; }
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return text;
+  manifest.start_url = start;
+  return JSON.stringify(manifest, null, 1) + '\n';
 }
 
 /* A host whose own origin is the static origin (Matthew's, once routed): the request goes to its origin as it came (a

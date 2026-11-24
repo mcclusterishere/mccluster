@@ -51,7 +51,6 @@
     ".pt-veil", ".dk-peek", "#musicMini", "#musicNow", "#deckbar", "#now", "#seekStatus", ".ltoast", ".intu",
     "#mccWorldAudioShell", "#mccWorldAudioControls", "#mccPrivacyNotice", "#mccHold"];
   var HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
-  var WORLD_HOSTS = ["mccluster.org", "www.mccluster.org", "humanuprise.com", "www.humanuprise.com"];
   var OPEN_MS = 8000;
 
   /* ---------- the core: plain decisions, no document needed (scripts/test/music-shell.test.mjs) ---------- */
@@ -75,8 +74,15 @@
     var x = url(a), y = url(b);
     return !!(x && y && x.origin === y.origin && x.pathname === y.pathname && x.search === y.search);
   }
+  /* a host that serves the World at its root, from the one table (window.MCC_SITE, js/shell-boot.js; SPEC-PLATFORM 4);
+     none without it */
+  function worldHost(host) { var S = root.MCC_SITE; return !!S && S.isWorldHost(host); }
+  /* the World's own address goes the Music-to-World path: a World host's root (before P1 its old root document name
+     too; from P1 /index.html on the platform is the HERE front door, a page load), the World's document anywhere, and
+     the globe page anywhere but in its own modes */
   function world(u) {
-    if (WORLD_HOSTS.indexOf(u.hostname) !== -1) return /^\/(?:mnet\.html|index\.html)?$/.test(u.pathname);
+    var S = root.MCC_SITE;
+    if (worldHost(u.hostname) && (u.pathname === S.world.root || (S.switches.platform_serves !== "everything" && u.pathname === S.platform.front_door_path))) return true;
     if (/\/mnet\.html$/.test(u.pathname)) return true;
     if (/\/action-globe\.html$/.test(u.pathname)) return !["explore", "halo", "games", "embedded"].some(function (k) { return u.searchParams.has(k); });
     return false;
