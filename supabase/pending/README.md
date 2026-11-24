@@ -605,6 +605,12 @@ Test: `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/compute-lea
 disposable database). Never applied here. Promote it using the steps above, then
 `notify pgrst, 'reload schema';` if a claim still answers PGRST202.
 
+The 2026-11-24 compatibility review adds a fail-closed guard to both yield files:
+neither may replace the owner-workspace scheduler (section 16 of `PROMOTION-ORDER.md`).
+Conversely, workspace installation refuses the yield signature. Both recovery directions
+verify the reviewed function body and metadata before replacing it. Combining the two
+schedulers needs a separately reviewed implementation; these files deliberately do not do so.
+
 Pending: `ai_context_workstreams_v1.sql` (rollback `ai_context_workstreams_v1.rollback.sql`) adds durable
 workstream checkpoints to the private context plane: `ai_context.workstreams`, the append-only
 `ai_context.workstream_events`, and four `service_role`-only `SECURITY DEFINER` functions
@@ -615,3 +621,39 @@ otherwise unchanged. Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`. O
 rollback: `PROMOTION-ORDER.md`, section 15. Test:
 `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/ai-context-workstreams-sql-check.mjs`
 (disposable database; apply twice, privileges, behaviour, rollback, re-apply). Never applied here.
+
+## Owner enrollment and workspace: prepared, not applied (2026-11-24)
+
+`compute_owner_enrollment_v1.sql` must precede `compute_owner_workspace_v1.sql`.
+Each now has a matching `.rollback.sql`. The two files remain pending; each needs
+explicit approval of its final bytes before production application. Finish the separate
+389-row ledger reconciliation first. Neither this review nor passing a disposable proof
+authorizes application, runtime deployment or enabling owner-device work.
+
+The enrollment file adds short-lived, single-use credential records. Core verifies the
+owner before issuing them; the service-only consume function trusts that broker-issued
+record. The workspace file adds pair/reservation records, two cleanup columns and guarded
+owner-turn functions. It replaces the four-argument claim function with the workspace-safe
+wrapper. It must not be mixed with `compute_claim_task_yield_v3.sql`; forward and recovery
+guards prevent either ordering from silently replacing the other scheduler.
+
+Both forward files and their rollbacks run as one migration-runner-owned transaction,
+with a shared advisory transaction lock and a five-second lock timeout. Function-body
+SHA-256 pins and catalog checks refuse an unknown body, signature, owner, security mode,
+search path or partial installation before changes. Workspace rollback goes first and
+retains enrollment. Enrollment rollback refuses an installed workspace. They refuse
+saved enrollment/pair/reservation records, scoped nodes, cleanup evidence and active work;
+there is no force-delete option. Disable the feature and retain its schema when records
+exist, then prepare an explicitly reviewed recovery plan.
+
+Proof: `scripts/owner-workspace-native-check.mjs` passes 180 checks on PostgreSQL 17.6,
+including separate sessions, actual denied-role calls, both scheduler orderings, exact
+legacy restoration and the preservation of two synthetic existing nodes, 30 tasks and
+40 leases. Its local mode uses selected canonical SQL and explicit Auth stand-ins.
+Reconciliation CI runs `--full-reset` against the complete repository reset without those
+stand-ins; that exact-head result is still required before promotion. The existing device,
+workspace and yield SQL checks remain in their current CI lanes.
+
+Full dependencies, preflight, recovery order and proof commands: `PROMOTION-ORDER.md`,
+section 16. Reviewed file hashes and the before/after proof boundary:
+`docs/control-plane/evidence/owner-workspace-migration-proof-2026-11-24.md`.

@@ -108,10 +108,15 @@ test('core.ai.turn.submit accepts allow_browser only from an owner actor and bou
   assert.equal(submit.inputSchema.properties.images.maxItems, 2);
   assert.equal(submit.inputSchema.properties.images.items.maxLength, 266668);
   const args = { org_id: '00000000-0000-4000-8000-000000000001', thread_id: '00000000-0000-4000-8000-000000000002', message_id: '00000000-0000-4000-8000-000000000003', content: 'open the docs', allow_browser: true };
-  await assert.rejects(callControlTool('core.ai.turn.submit', args), (error) => error.code === 'BROWSER_OWNER_REQUIRED' && error.status === 403);
-  await assert.rejects(callControlTool('core.ai.turn.submit', args, { actor: { user_id: '00000000-0000-4000-8000-000000000009', kind: 'member' } }), (error) => error.code === 'BROWSER_OWNER_REQUIRED');
-  await assert.rejects(callControlTool('core.ai.turn.submit', args, { actor: { user_id: 'owner', kind: 'owner' } }), (error) => error.code === 'BROWSER_OWNER_REQUIRED', 'the actor id must be a UUID');
+  await assert.rejects(callControlTool('core.ai.turn.submit', args), (error) => error.code === 'AI_OWNER_REQUIRED' && error.status === 403);
+  await assert.rejects(callControlTool('core.ai.turn.submit', args, { actor: { user_id: '00000000-0000-4000-8000-000000000009', kind: 'member' } }), (error) => error.code === 'AI_OWNER_REQUIRED');
+  await assert.rejects(callControlTool('core.ai.turn.submit', args, { actor: { user_id: 'owner', kind: 'owner' } }), (error) => error.code === 'AI_OWNER_REQUIRED', 'the actor id must be a UUID');
+  const previousOrg = process.env.MCCLUSTER_ORG_ID;
+  process.env.MCCLUSTER_ORG_ID = args.org_id;
+  const options = { actor: { user_id: '00000000-0000-4000-8000-000000000009', kind: 'owner' } };
   const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-  await assert.rejects(callControlTool('core.ai.turn.submit', { ...args, allow_browser: false, images: [png, png, png] }), (error) => error.code === 'AI_TURN_IMAGES_TOO_MANY' && error.status === 400);
-  await assert.rejects(callControlTool('core.ai.turn.submit', { ...args, allow_browser: false, images: ['%%%'] }), (error) => error.code === 'AI_CHAT_IMAGE_INVALID');
+  try {
+    await assert.rejects(callControlTool('core.ai.turn.submit', { ...args, allow_browser: false, images: [png, png, png] }, options), (error) => error.code === 'AI_TURN_IMAGES_TOO_MANY' && error.status === 400);
+    await assert.rejects(callControlTool('core.ai.turn.submit', { ...args, allow_browser: false, images: ['%%%'] }, options), (error) => error.code === 'AI_CHAT_IMAGE_INVALID');
+  } finally { if (previousOrg === undefined) delete process.env.MCCLUSTER_ORG_ID; else process.env.MCCLUSTER_ORG_ID = previousOrg; }
 });

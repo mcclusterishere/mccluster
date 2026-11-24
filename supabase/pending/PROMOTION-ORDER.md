@@ -441,7 +441,13 @@ item 7); each entry says what it would still do.
 
 Apply only when the owner wants the OVH node to yield to a live GPU node (then set
 `MCCLUSTER_NODE_YIELD_TO_GPU_MS` on that node); harmless otherwise. No prerequisite beyond the
-applied `20261020210718_compute_lease_authority_v2`. PostgREST reloads its schema cache on DDL; if
+applied `20261020210718_compute_lease_authority_v2` and an unchanged reviewed claim function.
+The 2026-11-24 compatibility guards additionally refuse any installed owner-workspace
+schema, function or cleanup column (section 16), in both forward and rollback files.
+The workspace forward file reciprocally refuses the five-argument yield signature.
+These schedulers are an unsupported combination; neither file may silently overwrite
+the other's admission rules. Each file runs in the migration runner's transaction,
+with a shared advisory transaction lock and a five-second lock timeout. PostgREST reloads its schema cache on DDL; if
 a claim still answers PGRST202 afterwards, run `notify pgrst, 'reload schema';`. Never applied here.
 
 ## 12. E=UP environmental event store (written 2026-11-19)
@@ -716,3 +722,95 @@ It leaves `ai_context.decisions` untouched. Core needs no rollback: without the 
 
 **Records** after the apply: move the file to `supabase/migrations/` under its ledger version; the ledger, the drift
 contract, the schema manifest from the CI reset, a new production snapshot; this section and `README.md`.
+
+## 16. Owner enrollment and workspace (reviewed 2026-11-24; pending)
+
+**Prepare and prove only. Neither forward file has been applied. Production application
+requires explicit approval for each exact file.** Finish the separate 389-row applied-ledger
+reconciliation first; do not replay any of those recorded migrations. This SQL review does
+not enable the owner-workspace runtime flag or prove a physical device or inference run.
+
+| Order | Forward file | Dependency and effect | Recovery file |
+|---|---|---|---|
+| 16.1 | `compute_owner_enrollment_v1.sql` | Applied canonical compute node and lease authority; adds `ops_compute_enrollments` and the service-only `compute_enroll_once(text,jsonb)` function. Core checks current owner membership before issuing a credential; the database consume function trusts that broker-issued record and enforces its expiry, scope and single use. | `compute_owner_enrollment_v1.rollback.sql` |
+| 16.2 | `compute_owner_workspace_v1.sql` | 16.1, canonical `orgs`, `ops_compute_nodes`, `ops_compute_tasks`, `ops_compute_leases`, `ops_ai_threads`, `ops_ai_messages`, `ops_agent_jobs`, and the exact applied four-argument lease-authority-v2 claim function. Adds pair/reservation records, cleanup state and 13 workspace functions; replaces the claim function with a four-argument wrapper of `compute_claim_task_v4`. | `compute_owner_workspace_v1.rollback.sql` |
+
+### Preflight and application boundary
+
+Read production with SELECT only. Require repository ledger/version parity, the expected
+function body and metadata, no partial workspace installation, no installed five-argument
+yield signature and a current count of nodes, tasks, leases and active work. The read-only
+2026-11-24 preflight found two nodes, 30 tasks, 40 leases, no active leased/running lease,
+no unfinished task and no scoped node; these counts are dated evidence, not a future guard.
+Keep runtime admission disabled while changing the scheduler and reread live state before
+an approved application. File guards enforce known function bodies and schema shape;
+they do not replace that operational check.
+
+All six related files (these four and the two yield files in section 11) run as postgres
+in **one transaction owned by the migration runner**. They set a five-second `lock_timeout`
+and take the same advisory transaction lock before the guard and changes. Do not feed a
+file statement by statement without a transaction. A disposable psql run uses `-1 -v
+ON_ERROR_STOP=1`; production uses `apply_migration` through the existing flow.
+
+The guards pin SHA-256 of reviewed `pg_proc.prosrc` and verify the language, signature,
+argument names/defaults, return type, volatility, parallel mode, owner, security mode and
+search path. An unknown body or partial installation fails with SQLSTATE `55000` and
+`COMPUTE_BASELINE_CHANGED`. Missing enrollment fails with `WORKSPACE_ENROLLMENT_REQUIRED`.
+The five-argument yield scheduler and workspace are deliberately mutually exclusive:
+`COMPUTE_WORKSPACE_YIELD_CONFLICT` refuses both apply orderings and prevents the yield
+rollback from overwriting the workspace wrapper. If yield is present, its separately
+approved guarded rollback must restore the exact v2 baseline before 16.2 can be considered.
+This review does not add a combined yield/workspace implementation.
+
+After approval, apply 16.1 and verify its version and exact stored bytes before considering
+16.2. After each, follow README's "To promote one": move only the actually applied file to
+its actual ledger version, update the ledger/drift contract and fresh schema evidence,
+then remove the pending apply step from CI. Do not assign a version in advance. Runtime
+deployment and activation remain separate steps with their existing review gates.
+
+### Recovery preserves records
+
+First disable the feature and stop admitting new owner work. Roll back workspace before
+enrollment. Neither rollback has a force or cascade option, and neither deletes a node,
+task, lease or transcript row. Their locks make the inspection and removal one transaction.
+
+Workspace rollback refuses any pair/reservation row, any cleanup hold or receipt, any scoped
+node, any queued/leased/running task or lease, any routed or pinned task, any active resident
+turn, or any workspace-route message. It verifies the full workspace installation before
+removing only its functions, empty pair tables and cleanup columns. It restores the exact
+canonical v2 claim body only after verifying the installed reviewed wrapper; an empty repeat
+accepts only the exact v2 baseline. Enrollment is retained.
+
+Enrollment rollback refuses an installed workspace, **any** issued/expired/consumed enrollment
+record, a scoped node or active lease. Only an empty reviewed enrollment table/function pair
+can be removed. The refusal tokens are `WORKSPACE_ROLLBACK_REQUIRED`,
+`WORKSPACE_ROLLBACK_DATA_PRESENT` and `ENROLLMENT_ROLLBACK_DATA_PRESENT`. If any record exists,
+retain the schema and prepare a reviewed export/forward repair; this recovery does not erase
+history to make itself pass.
+
+### Proof and remaining gate
+
+`scripts/owner-workspace-native-check.mjs` applies each actual file in a transaction and runs
+180 assertions on PostgreSQL 17.6. It observes 15 real blocked-session races and a separate
+expiry-during-lock wait; tests all 15 RPCs and three tables through the denied browser roles;
+checks canonical owner/member RLS; refuses scheduler conflicts, altered known bodies and
+partial schema; applies twice; and proves rollback/reapply preserves two synthetic existing
+nodes, 30 tasks and 40 leases, including exact legacy function ownership and grants.
+
+```sh
+POSTGRES_MODULE_PATH=<pinned-postgres-module> \
+NATIVE_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+node scripts/owner-workspace-native-check.mjs
+
+# Only on the disposable, complete Supabase reset used by Reconciliation CI:
+POSTGRES_MODULE_PATH=<pinned-postgres-module> \
+NATIVE_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+node scripts/owner-workspace-native-check.mjs --full-reset
+```
+
+Local mode uses selected canonical compute/queue migrations plus explicit peripheral Auth
+stand-ins. **The full-reset mode has not yet run on the reviewed PR head.** That CI step verifies
+the entire reset ledger before testing and does not replace baseline tables, functions,
+triggers or grants. Require it and the existing owner-device/workspace/yield CI lanes green
+on the final head before approval of any file. Safe before/after evidence and exact SQL hashes:
+`docs/control-plane/evidence/owner-workspace-migration-proof-2026-11-24.md`.

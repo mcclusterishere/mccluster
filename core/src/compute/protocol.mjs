@@ -139,7 +139,7 @@ export function capabilityIds(manifest) {
 // Windows doctor deletes from the node after enrolling) and never by a
 // heartbeat, which a node signs with its own key alone. labels.trust is what
 // a node asserts; it is not the authority.
-export const OWNED_ONLY_CAPABILITIES = new Set(['browser.act']);
+export const OWNED_ONLY_CAPABILITIES = new Set(['browser.act', 'compute.pair.control']);
 export const ENROLLED_TRUST_LABEL = 'enrolled_trust';
 // Labels the enrolment fixes: a heartbeat keeps the stored value (or leaves the
 // label out when the enrolment did not set it); enrolling again changes them.

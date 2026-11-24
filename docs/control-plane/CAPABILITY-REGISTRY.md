@@ -12,6 +12,17 @@ This prevents provider churn from leaking into the website, agents, workflows, o
 
 ## Capability vs. tool
 
+The owner AI workspace review branch (2026-11-22) keeps `ai.chat` and existing
+implementation IDs as the execution contract. Its owner-only
+`core.compute.devices.*`, enrollment, lifecycle and pair tools are registered
+on the existing Control tool bus behind `CORE_OWNER_AI_WORKSPACE_ENABLED`.
+The shared-runtime adapter uses the owned-node-only `compute.pair.control`
+capability and `exo.mlx.local` implementation. Its current diagnostic-only
+adapter does not advertise readiness for shared inference. See
+[OWNER-AI-WORKSPACE.md](OWNER-AI-WORKSPACE.md) for exact tools, migration gates
+and the unavailable Deep Reasoning acceptance criteria. These changes are
+review/staging source, not evidence of a production Core promotion.
+
 A **capability** is a McCluster-owned semantic contract:
 
 - stable id and description;

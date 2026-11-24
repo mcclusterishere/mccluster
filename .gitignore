@@ -53,3 +53,7 @@ e2e-out/
 # Server-only local provider credentials; never publish.
 /workers/mccluster/.dev.vars
 /workers/mccluster/.dev.vars.*
+# Generated reviewed worker bundles; build with scripts/package-macos-worker.mjs.
+/downloads/mccluster-macos-worker.zip
+/downloads/mccluster-macos-worker.sha256
+/downloads/mccluster-macos-worker.manifest.json

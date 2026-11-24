@@ -39,11 +39,39 @@
     aiHealth: null,
     aiThreads: [],
     aiMessages: {},
+    aiMessagesHasMore: {},
+    aiThreadOffset: 0,
+    aiThreadHasMore: false,
     selectedAiThreadId: null,
     aiChatPending: false,
     aiChatError: null,
     aiChatTask: null,
     aiChatDraft: "",
+    aiRuns: {},
+    aiDrafts: {},
+    aiHistorySearch: "",
+    aiHistoryOpen: false,
+    aiToolsOpen: false,
+    aiPanel: "chat",
+    aiRouteSelection: "auto",
+    aiImplementation: "qwen3.8b.local",
+    aiReviewOf: null,
+    aiDevices: [],
+    aiEnrollments: [],
+    aiPairs: [],
+    aiDevicesLoaded: false,
+    aiDeviceError: null,
+    aiPairError: null,
+    aiDeviceNotice: null,
+    aiEnrollmentAvailable: false,
+    aiEnrollment: null,
+    aiEnrollmentReveal: false,
+    aiInstaller: null,
+    aiInstallerLoaded: false,
+    aiAddDeviceOpen: false,
+    aiRenameId: null,
+    aiRevokeId: null,
+    aiCreatePairOpen: false,
     aiVoiceListening: false,
     aiVoiceSpeaking: false,
     aiVoiceError: null,
@@ -130,6 +158,46 @@
   var src = SRC.src, rowsOf = SRC.rowsOf, dataOf = SRC.dataOf, pickRows = SRC.pickRows;
   var sourceBanner = SRC.sourceBanner, sourceStates = SRC.sourceStates;
   var VOICE = window.CR.voice || null;
+  var OWNER_AI = window.CR.ownerAi;
+
+  function selectedAiRun() { return state.aiRuns[state.selectedAiThreadId] || null; }
+  function setAiRun(threadId, values) {
+    if (!threadId) return;
+    var previous = state.aiRuns[threadId] || {};
+    /* A poll already in flight cannot undo a confirmed stop. A new turn has
+       a new id and explicitly clears these flags when it is submitted. */
+    if (previous.stopped && previous.task && values.task && previous.task.id === values.task.id && ["queued", "running"].indexOf(values.task.status) >= 0) return;
+    state.aiRuns[threadId] = Object.assign({}, previous, values);
+    syncSelectedAiRun();
+  }
+  function syncSelectedAiRun() {
+    var run = selectedAiRun();
+    state.aiChatPending = Boolean(run && run.pending);
+    state.aiChatTask = run && run.task || null;
+  }
+  function aiRouteSupported() { return aiDeclared(aiToolSchema(state.coreTools, "core.ai.turn.submit"), "route"); }
+  function selectedAiRoute() { return OWNER_AI.route(state.aiRouteSelection, state.aiImplementation); }
+  function aiRouteProblem() {
+    if (!aiRouteSupported()) return state.aiRouteSelection !== "auto" ? "This Core does not support choosing a worker yet." : "";
+    var route = selectedAiRoute();
+    if (state.aiReviewOf) {
+      if (route.mode !== "node") return "Choose a specific second worker to review this saved result.";
+      var reviewed = aiMessagesFor(state.selectedAiThreadId).find(function (message) { return message.role === "assistant" && message.metadata && message.metadata.agent_job_id === state.aiReviewOf; });
+      if (reviewed && OWNER_AI.receipt(reviewed).node_id === route.node_id) return "Choose a different worker from the one that produced this answer.";
+    }
+    if (state.aiAttachments.length && route.mode === "pair") return "The shared-model route currently accepts text only. Remove the images or choose an individual vision worker.";
+    if (state.aiAttachments.length && route.implementation === "qwen3.8b.local") return "Qwen3 8B handles text. Choose a ready vision model for these images, or remove the attachments.";
+    if (route.mode === "node") {
+      var d = state.aiDevices.find(function (x) { return OWNER_AI.deviceId(x) === route.node_id; });
+      if (!d || !d.eligible) return "The selected device is unavailable. Choose another worker or Auto.";
+      if (!(d.models || []).some(function (m) { return m.implementation === route.implementation && m.ready; })) return "The selected model is not ready on this device. Open Devices to test or prepare it.";
+    }
+    if (route.mode === "pair") {
+      var pair = state.aiPairs.find(function (x) { return String(x.id || x.pair_id) === route.pair_id; });
+      if (!pair || !(pair.ready === true)) return "Deep Reasoning is unavailable until this pair passes its shared-model benchmark.";
+    }
+    return "";
+  }
 
   function token() { return window.MCC_SUPA && window.MCC_SUPA.token ? window.MCC_SUPA.token() : Promise.resolve(null); }
   function sbBase() { return window.MCC_SUPA && window.MCC_SUPA.url; }
@@ -397,9 +465,10 @@
     var key = "aiMessages:" + threadId;
     if (state.pending[key]) return Promise.resolve([]);
     state.pending[key] = true;
-    return supa("ops_ai_messages?select=*&thread_id=eq." + encodeURIComponent(threadId) + "&order=created_at.asc&limit=200")
+    return supa("ops_ai_messages?select=*&thread_id=eq." + encodeURIComponent(threadId) + "&order=created_at.desc&limit=200")
       .then(function (rows) {
-        state.aiMessages[threadId] = Array.isArray(rows) ? rows : [];
+        state.aiMessages[threadId] = (Array.isArray(rows) ? rows : []).sort(function (a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
+        state.aiMessagesHasMore[threadId] = Array.isArray(rows) && rows.length === 200;
         delete state.pending[key];
         delete state.pending[key + ":error"];
         render();
@@ -413,6 +482,29 @@
         render();
         return [];
       });
+  }
+
+  function loadEarlierAiMessages(threadId) {
+    var key = "aiEarlier:" + threadId;
+    if (!threadId || !aiBrowserOwner(state) || state.pending[key] || !state.aiMessagesHasMore[threadId]) return;
+    var offset = aiMessagesFor(threadId).length;
+    state.pending[key] = true; render();
+    return supa("ops_ai_messages?select=*&thread_id=eq." + encodeURIComponent(threadId) + "&order=created_at.desc&limit=200&offset=" + offset).then(function (rows) {
+      rows = Array.isArray(rows) ? rows : [];
+      rows.forEach(aiMergeMessage);
+      state.aiMessages[threadId].sort(function (a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
+      state.aiMessagesHasMore[threadId] = rows.length === 200;
+    }).catch(function (error) { if (state.selectedAiThreadId === threadId) state.aiChatError = "Earlier messages could not be read: " + (error.message || "Reconnect and try again."); }).then(function () { delete state.pending[key]; render(); });
+  }
+
+  function loadMoreAiThreads() {
+    if (!aiBrowserOwner(state) || state.pending.aiMoreThreads || !state.aiThreadHasMore) return;
+    state.pending.aiMoreThreads = true; render();
+    return supa("ops_ai_threads?select=*&org_id=eq." + encodeURIComponent(state.org.id) + "&status=eq.active&order=last_message_at.desc&limit=100&offset=" + state.aiThreadOffset).then(function (rows) {
+      rows = Array.isArray(rows) ? rows : [];
+      state.aiThreadOffset += rows.length; state.aiThreadHasMore = rows.length === 100;
+      rows.forEach(function (thread) { if (!aiThreadById(thread.id)) state.aiThreads.push(thread); });
+    }).catch(function (error) { state.aiChatError = "Earlier conversations could not be read: " + (error.message || "Reconnect and try again."); }).then(function () { delete state.pending.aiMoreThreads; render(); });
   }
 
   function createAiThread() {
@@ -430,6 +522,7 @@
       state.selectedAiThreadId = thread.id;
       state.aiMessages[thread.id] = [];
       state.aiChatDraft = "";
+      syncSelectedAiRun();
       delete state.pending.aiThreadCreate;
       render();
       return thread;
@@ -629,9 +722,20 @@
       return m.role === "user" &&
         meta.execution_kind === "resident_ai_turn" &&
         meta.agent_job_id &&
+        ["failed", "canceled"].indexOf(meta.task_status) < 0 &&
         !assistantJobIds.has(String(meta.agent_job_id));
     });
-    if (!unresolved.length) return Promise.resolve(messages);
+    if (!unresolved.length) {
+      var savedRun = state.aiRuns[thread.id];
+      if (savedRun && savedRun.task && assistantJobIds.has(String(savedRun.task.id))) {
+        setAiRun(thread.id, { pending: false, progress: null, error: null, task: Object.assign({}, savedRun.task, { status: "done" }) });
+        render();
+      } else if (savedRun && savedRun.task) {
+        var terminalUser = messages.find(function (message) { var meta = message.metadata || {}; return message.role === "user" && String(meta.agent_job_id) === String(savedRun.task.id) && ["failed", "canceled"].indexOf(meta.task_status) >= 0; });
+        if (terminalUser) { setAiRun(thread.id, { pending: false, progress: null, stopped: terminalUser.metadata.task_status === "canceled", task: Object.assign({}, savedRun.task, { status: terminalUser.metadata.task_status }) }); render(); }
+      }
+      return Promise.resolve(messages);
+    }
 
     var key = "aiResidentRecover:" + thread.id;
     if (state.pending[key]) return Promise.resolve(messages);
@@ -654,8 +758,11 @@
         if (!turn) throw new Error("Saved McCluster turn disappeared: " + turnId);
         if (payload.user_message) replaceMessage(payload.user_message);
         if (payload.assistant_message) replaceMessage(payload.assistant_message);
-        if (turn.status === "queued" || turn.status === "running") pending = true;
-        if (turn.status === "failed" || turn.status === "canceled") {
+        if (turn.status === "queued" || turn.status === "running") {
+          setAiRun(thread.id, { pending: true, task: turn, progress: payload.progress || null });
+          pending = Boolean(state.aiRuns[thread.id] && state.aiRuns[thread.id].pending);
+        }
+        if (turn.status === "failed") {
           failures.push(turn.last_error || ("Saved McCluster turn " + turn.status));
         }
       }).catch(function (error) {
@@ -664,33 +771,41 @@
     })).then(function () {
       delete state.pending[key];
       state.aiMessages[thread.id].sort(function (a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
-      if (failures.length) state.aiChatError = "Saved McCluster turn recovery: " + failures.join(" | ");
-      state.aiChatPending = pending;
-      state.aiChatTask = null;
+      if (failures.length) {
+        setAiRun(thread.id, { error: "Saved McCluster turn recovery: " + failures.join(" | ") });
+        if (String(state.selectedAiThreadId) === String(thread.id)) state.aiChatError = state.aiRuns[thread.id].error;
+      }
+      setAiRun(thread.id, { pending: pending, progress: pending ? (state.aiRuns[thread.id] || {}).progress : null });
       render();
       if (pending && state.surface === "ai" && String(state.selectedAiThreadId) === String(thread.id)) {
-        setTimeout(function () { loadAiMessages(thread.id, true); }, 2500);
+        var snapshot = authoritySnapshot();
+        setTimeout(function () { if (authorityHolds(snapshot)) loadAiMessages(thread.id, true); }, 2500);
       }
       return state.aiMessages[thread.id];
     }, function (error) {
       delete state.pending[key];
-      state.aiChatPending = false;
-      state.aiChatTask = null;
+      setAiRun(thread.id, { pending: false, task: null });
       state.aiChatError = "Saved McCluster turn recovery failed: " + (error.message || String(error));
       render();
       return state.aiMessages[thread.id] || messages;
     });
   }
 
-  function waitForResidentAiTurn(turnId, attempts) {
+  function waitForResidentAiTurn(turnId, attempts, threadId) {
     attempts = attempts || 330;
+    threadId = threadId || state.selectedAiThreadId;
     if (!turnId || !state.org || !state.org.id) return Promise.reject(new Error("Resident AI turn identity unavailable"));
     function poll(left) {
       return callCoreTool("core.ai.turn.get", { org_id: state.org.id, turn_id: turnId }).then(function (payload) {
         var turn = payload && payload.turn;
         if (!turn) throw new Error("Resident McCluster turn disappeared");
-        state.aiChatTask = turn;
+        var currentRun = state.aiRuns[threadId];
+        if (currentRun && currentRun.stopped && currentRun.task && currentRun.task.id === turnId && turn.status !== "done") {
+          var stoppedError = new Error("Stopped"); stoppedError.turn = currentRun.task; throw stoppedError;
+        }
+        if (!currentRun || !currentRun.task || currentRun.task.id === turnId) setAiRun(threadId, { task: turn, pending: turn.status === "queued" || turn.status === "running", progress: payload.progress || null });
         if (payload.user_message) aiMergeMessage(payload.user_message);
+        if (payload.assistant_message) aiMergeMessage(payload.assistant_message);
         render();
         if (turn.status === "done") {
           if (!payload.assistant_message) throw new Error("McCluster turn completed without a persisted assistant message");
@@ -706,7 +821,7 @@
           timeoutError.turn = turn;
           throw timeoutError;
         }
-        return sleep(2000).then(function () { return poll(left - 1); });
+        return sleep(payload.progress ? 750 : 2000).then(function () { return poll(left - 1); });
       });
     }
     return poll(attempts);
@@ -747,9 +862,17 @@
 
   function sendAiMessage(value, opts) {
     opts = opts || {};
+    syncSelectedAiRun();
     var content = String(value || "").trim();
     if (!content || state.aiChatPending) return Promise.resolve();
     state.aiChatError = null;
+    if (!aiBrowserOwner(state)) { state.aiChatError = "Sign in as the house owner to use this workspace."; render(); return Promise.resolve(); }
+    var routeProblem = aiRouteProblem();
+    if (routeProblem) { state.aiChatError = routeProblem; render(); return Promise.resolve(); }
+    var requestedRoute = aiRouteSupported() ? selectedAiRoute() : null;
+    var reviewOf = opts.reviewOfTurnId || state.aiReviewOf;
+    if (reviewOf && (!requestedRoute || requestedRoute.mode !== "node")) { state.aiChatError = "Choose a specific second worker for this review."; render(); return Promise.resolve(); }
+    if (reviewOf && !aiDeclared(aiToolSchema(state.coreTools, "core.ai.turn.submit"), "review_of_turn_id")) { state.aiChatError = "This Core does not support review jobs yet."; render(); return Promise.resolve(); }
     /* The Core's word on images and the browser, read before anything is
        created or shown as sent: a turn it would strip is refused here, with
        the attachments kept so they can be removed. */
@@ -760,6 +883,8 @@
       return Promise.resolve();
     }
     var inputMode = opts.inputMode === "voice" ? "voice" : "text";
+    var attachments = state.aiAttachments.slice();
+    var allowBrowser = state.aiAllowBrowser === true && support.turnBrowser;
     var threadPromise = state.selectedAiThreadId
       ? Promise.resolve(aiThreadById(state.selectedAiThreadId))
       : createAiThread();
@@ -773,11 +898,10 @@
       var messageId = newAiTurnId();
       var submittedAt = new Date().toISOString();
       var keepPendingAfterRecovery = false;
+      var accepted = false;
       /* The attachments and the switch belong to this turn: taken now, so a
          second send cannot carry them twice. A switch left on while the Core
          stopped declaring the flag sends nothing. */
-      var attachments = state.aiAttachments.slice();
-      var allowBrowser = state.aiAllowBrowser === true && support.turnBrowser;
       var optimistic = {
         id: messageId,
         thread_id: thread.id,
@@ -793,15 +917,18 @@
           agent_job_id: messageId,
           task_status: "submitting",
           images: aiAttachmentImages(attachments),
-          allow_browser: allowBrowser
+          allow_browser: allowBrowser,
+          route: requestedRoute,
+          review_of_turn_id: reviewOf || null
         },
         created_at: submittedAt
       };
 
-      state.aiChatPending = true;
-      state.aiChatTask = null;
+      setAiRun(thread.id, { pending: true, task: { id: messageId, status: "submitting" }, progress: null, error: null, stopRequested: false, stopped: false });
       state.aiChatDraft = "";
+      state.aiDrafts[thread.id] = "";
       state.aiAttachments = [];
+      state.aiReviewOf = null;
       var messages = aiMessagesFor(thread.id);
       messages.push(optimistic);
       state.aiMessages[thread.id] = messages;
@@ -809,18 +936,22 @@
       thread.last_message_at = submittedAt;
       render();
 
-      return callCoreTool("core.ai.turn.submit", aiTurnSubmission({
+      var submission = aiTurnSubmission({
         org_id: thread.org_id,
         thread_id: thread.id,
         message_id: messageId,
         content: content,
         input_mode: inputMode
-      }, attachments, allowBrowser, support)).then(function (queued) {
+      }, attachments, allowBrowser, support);
+      if (requestedRoute) submission.route = requestedRoute;
+      if (reviewOf) submission.review_of_turn_id = reviewOf;
+      return callCoreTool("core.ai.turn.submit", submission).then(function (queued) {
         if (!queued || !queued.turn_id) throw new Error("McCluster did not return a durable turn id");
+        accepted = true;
         optimistic.metadata.task_status = queued.job_status || "queued";
-        state.aiChatTask = { id: queued.turn_id, status: queued.job_status || "queued", job_type: "resident_ai_turn" };
+        setAiRun(thread.id, { task: { id: queued.turn_id, status: queued.job_status || "queued", job_type: "resident_ai_turn" } });
         render();
-        return waitForResidentAiTurn(queued.turn_id, 330);
+        return waitForResidentAiTurn(queued.turn_id, 880, thread.id);
       }).then(function (payload) {
         var list = state.aiMessages[thread.id] || [];
         if (payload.user_message) {
@@ -841,17 +972,27 @@
           return new Date(b.last_message_at || b.updated_at || 0) - new Date(a.last_message_at || a.updated_at || 0);
         });
       }).catch(function (error) {
-        state.aiChatError = error.message || String(error);
+        var canceled = error.turn && error.turn.status === "canceled";
+        var stillCurrent = state.aiRuns[thread.id] && state.aiRuns[thread.id].task && state.aiRuns[thread.id].task.id === messageId;
+        if (stillCurrent) setAiRun(thread.id, { error: canceled ? null : error.message || String(error) });
+        if (stillCurrent && String(state.selectedAiThreadId) === String(thread.id)) state.aiChatError = canceled ? null : error.message || String(error);
         return sleep(1000).then(function () {
           return loadAiMessages(thread.id, true).catch(function () { return []; });
         }).then(function (rows) {
-          keepPendingAfterRecovery = state.aiChatPending === true;
+          /* An explicit submit failure must not leave an unsent optimistic
+             message spinning forever. If the save did succeed before a lost
+             response, the canonical row and turn recovery take precedence. */
+          if (!accepted && stillCurrent && !rows.some(function (m) { return String(m.id) === messageId; })) {
+            optimistic.metadata.task_status = "failed";
+            aiMergeMessage(optimistic);
+            setAiRun(thread.id, { pending: false, task: { id: messageId, status: "failed" }, progress: null });
+          }
+          keepPendingAfterRecovery = Boolean(state.aiRuns[thread.id] && state.aiRuns[thread.id].pending);
           return rows;
         });
       }).then(function () {
-        if (!keepPendingAfterRecovery) {
-          state.aiChatPending = false;
-          state.aiChatTask = null;
+        if (!keepPendingAfterRecovery && state.aiRuns[thread.id] && state.aiRuns[thread.id].task && state.aiRuns[thread.id].task.id === messageId) {
+          setAiRun(thread.id, { pending: false, progress: null });
         }
         render();
       });
@@ -1400,101 +1541,271 @@
     if (idx >= 0) list[idx] = message; else list.push(message);
   }
 
+  function loadOwnerDevices(force) {
+    if (!aiBrowserOwner(state) || !coreToolAvailable("core.compute.devices.list") || state.pending.aiDevices || (!force && state.aiDevicesLoaded)) return Promise.resolve();
+    state.pending.aiDevices = true;
+    loadAiInstaller();
+    var snapshot = authoritySnapshot();
+    return Promise.all([
+      callCoreTool("core.compute.devices.list", { org_id: state.org.id }),
+      coreToolAvailable("core.compute.pairs.list") ? callCoreTool("core.compute.pairs.list", { org_id: state.org.id }).catch(function (error) { return { pairs: [], error: error.message || "Pair readiness could not be read." }; }) : Promise.resolve({ pairs: [] })
+    ]).then(function (values) {
+      if (!authorityHolds(snapshot)) return;
+      state.aiDevices = Array.isArray(values[0].devices) ? values[0].devices : [];
+      state.aiEnrollments = Array.isArray(values[0].enrollments) ? values[0].enrollments : [];
+      state.aiEnrollmentAvailable = values[0].enrollment_available === true;
+      state.aiPairs = Array.isArray(values[1].pairs) ? values[1].pairs : [];
+      state.aiPairError = values[1].error || null;
+      state.aiDeviceError = null;
+    }).catch(function (error) {
+      if (authorityHolds(snapshot)) state.aiDeviceError = error.message || "Devices could not be read. Try Refresh devices.";
+    }).then(function () {
+      if (!authorityHolds(snapshot)) return;
+      state.aiDevicesLoaded = true; delete state.pending.aiDevices; render();
+      if (state.surface === "ai" && state.aiPanel === "devices") {
+        clearTimeout(state.pending.aiDeviceTimer);
+        state.pending.aiDeviceTimer = setTimeout(function () {
+          if (authorityHolds(snapshot) && state.surface === "ai" && state.aiPanel === "devices") loadOwnerDevices(true);
+        }, 5000);
+      }
+    });
+  }
+  function loadAiInstaller() {
+    if (state.aiInstallerLoaded || state.pending.aiInstaller) return;
+    state.pending.aiInstaller = true;
+    var snapshot = authoritySnapshot();
+    /* Public package metadata, never enrollment material. A missing package
+       keeps the reviewed-checkout instructions visible instead of a dead link. */
+    fetch("downloads/mccluster-macos-worker.manifest.json", { cache: "no-store", credentials: "same-origin", referrerPolicy: "no-referrer" }).then(function (response) {
+      if (!response.ok) throw new Error("Mac package unavailable");
+      return response.json();
+    }).then(function (manifest) {
+      if (!authorityHolds(snapshot)) return;
+      if (manifest.schema !== "mccluster-macos-worker-package/1" || manifest.filename !== "mccluster-macos-worker.zip" || manifest.archive_root !== "mccluster-macos-worker" || !/^[a-f0-9]{64}$/.test(manifest.sha256 || "") || manifest.credential_input !== "hidden-terminal-stdin") throw new Error("Mac package manifest unverified");
+      state.aiInstaller = { sha256: manifest.sha256, bytes: manifest.bytes, physical_mac_verified: manifest.physical_mac_verified === true };
+    }).catch(function () { if (authorityHolds(snapshot)) state.aiInstaller = null; }).then(function () {
+      if (!authorityHolds(snapshot)) return;
+      state.aiInstallerLoaded = true; delete state.pending.aiInstaller;
+      if (state.surface === "ai" && state.aiPanel === "devices") render();
+    });
+  }
+  function aiCopyText(value, button) {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) { state.aiDeviceNotice = "Clipboard is unavailable here. Select and copy the displayed text."; render(); return; }
+    navigator.clipboard.writeText(String(value || "")).then(function () {
+      if (button && button.isConnected) button.textContent = "Copied";
+    }).catch(function () { state.aiDeviceNotice = "Clipboard access was refused. Select and copy the displayed text."; render(); });
+  }
+  function aiSetupDownload() {
+    if (!state.aiEnrollment || !state.aiEnrollment.setup) return;
+    /* A fixed allowlist prevents any future credential field from entering the file. */
+    var source = state.aiEnrollment.setup, setup = {};
+    ["org_id", "compute_url", "enrollment_id", "display_name", "platform", "implementation", "model", "context", "max_leases"].forEach(function (key) { if (source[key] !== undefined) setup[key] = source[key]; });
+    var blob = new Blob([JSON.stringify(setup, null, 2) + "\n"], { type: "application/json" });
+    var url = URL.createObjectURL(blob), anchor = document.createElement("a");
+    anchor.href = url; anchor.download = "mccluster-device-setup.json"; anchor.click();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  function issueAiEnrollment(enrollmentId) {
+    if (state.pending.aiDeviceMutation || !aiBrowserOwner(state)) return;
+    var snapshot = authoritySnapshot();
+    var nameInput = $("crAiDeviceName"), name = nameInput && nameInput.value.trim();
+    var existing = state.aiEnrollments.find(function (e) { return String(e.enrollment_id || e.id) === String(enrollmentId); });
+    if (existing) name = existing.display_name;
+    if (!name) { state.aiDeviceError = "Give this Mac a name so you can recognize it in chat."; render(); return; }
+    var args = { org_id: state.org.id, display_name: name, platform: "darwin" };
+    if (enrollmentId) args.enrollment_id = enrollmentId;
+    state.pending.aiDeviceMutation = true; state.aiDeviceError = null; state.aiEnrollment = null; render();
+    return callCoreTool("core.compute.enrollment.create", args).then(function (result) {
+      if (!authorityHolds(snapshot)) return;
+      if (!result.credential || !result.enrollment_id || !result.setup || !Number.isFinite(Date.parse(result.expires_at))) throw new Error("Core did not return a complete enrollment. Try again.");
+      state.aiEnrollment = result; state.aiEnrollmentReveal = false; state.aiAddDeviceOpen = true;
+      var id = result.enrollment_id;
+      setTimeout(function () {
+        if (authorityHolds(snapshot) && state.aiEnrollment && state.aiEnrollment.enrollment_id === id && Date.parse(state.aiEnrollment.expires_at) <= Date.now()) {
+          state.aiEnrollment.credential = null; state.aiEnrollmentReveal = false; render();
+        }
+      }, Math.max(0, Date.parse(result.expires_at) - Date.now()) + 50);
+      return loadOwnerDevices(true);
+    }).catch(function (error) { if (authorityHolds(snapshot)) state.aiDeviceError = error.message || "Enrollment could not be created."; }).then(function () { if (authorityHolds(snapshot)) { delete state.pending.aiDeviceMutation; render(); } });
+  }
+  function mutateAiDevice(nodeId, action) {
+    if (state.pending.aiDeviceMutation || !aiBrowserOwner(state)) return;
+    var args = { org_id: state.org.id, node_id: nodeId, action: action };
+    if (action === "rename") { args.display_name = $("crAiRename") && $("crAiRename").value.trim(); if (!args.display_name) return; }
+    state.pending.aiDeviceMutation = true; state.aiDeviceError = null; render();
+    callCoreTool("core.compute.device.update", args).then(function (result) {
+      state.aiRenameId = null; state.aiRevokeId = null;
+      state.aiDeviceNotice = action === "revoke" ? "Device revoked. New leases are blocked. " + (result.in_flight_policy || "Active work follows the existing lease rules.") : (action === "rename" ? "Device renamed." : action === "pause" ? "Device paused. It will not take new work." : "Device resumed. Waiting for a healthy heartbeat.");
+      return loadOwnerDevices(true);
+    }).catch(function (error) { state.aiDeviceError = error.message || "Device action failed."; }).then(function () { delete state.pending.aiDeviceMutation; render(); });
+  }
+  function testAiDevice(nodeId) {
+    if (state.pending.aiDeviceMutation) return;
+    state.pending.aiDeviceMutation = true; state.aiDeviceError = null; render();
+    callCoreTool("core.compute.device.test", { org_id: state.org.id, node_id: nodeId }).then(function (result) {
+      state.aiDeviceNotice = "Test queued on this device. Its status will update when the real job finishes.";
+      return loadOwnerDevices(true);
+    }).catch(function (error) { state.aiDeviceError = error.message || "The device test could not start."; }).then(function () { delete state.pending.aiDeviceMutation; render(); });
+  }
+  function createAiPair() {
+    if (state.pending.aiDeviceMutation) return;
+    var first = $("crAiPairFirst") && $("crAiPairFirst").value, second = $("crAiPairSecond") && $("crAiPairSecond").value;
+    var name = $("crAiPairName") && $("crAiPairName").value.trim();
+    if (!first || !second || first === second || !name) { state.aiDeviceError = "Name the pair and choose two different enrolled Macs."; render(); return; }
+    state.pending.aiDeviceMutation = true; state.aiDeviceError = null; render();
+    callCoreTool("core.compute.pair.create", { org_id: state.org.id, name: name, node_ids: [first, second] }).then(function () {
+      state.aiCreatePairOpen = false;
+      state.aiDeviceNotice = "Pair created. Deep Reasoning stays unavailable until a supported local runtime passes the shared-model benchmark.";
+      return loadOwnerDevices(true);
+    }).catch(function (error) { state.aiDeviceError = error.message || "The pair could not be created."; }).then(function () { delete state.pending.aiDeviceMutation; render(); });
+  }
+  function benchmarkAiPair(pairId) {
+    if (state.pending.aiDeviceMutation) return;
+    state.pending.aiDeviceMutation = true; state.aiDeviceError = null; render();
+    callCoreTool("core.compute.pair.benchmark", { org_id: state.org.id, pair_id: pairId }).then(function (result) {
+      state.aiDeviceNotice = result.queued ? "Shared-model benchmark queued. Both Macs must be available on the local network." : "No benchmark was queued. Check the pair's readiness details.";
+      return loadOwnerDevices(true);
+    }).catch(function (error) { state.aiDeviceError = error.message || "A supported distributed runtime is not ready on these Macs."; }).then(function () { delete state.pending.aiDeviceMutation; render(); });
+  }
+  function renderAiDevices() {
+    var ae = OWNER_AI.esc, busy = state.pending.aiDeviceMutation ? " disabled" : "";
+    var available = coreToolAvailable("core.compute.devices.list");
+    if (!available) return '<section class="cr-ai-devices"><h2>Devices</h2><p class="cr-ai-capability">Device management is unavailable on the running Core. The owner device tools must be deployed before setup can begin.</p></section>';
+    var enrollment = state.aiEnrollment;
+    if (enrollment && Date.parse(enrollment.expires_at) <= Date.now()) enrollment.credential = null;
+    var add = "";
+    if (state.aiAddDeviceOpen) {
+      if (!enrollment) add = '<section class="cr-ai-setup"><h3>Add a Mac</h3><p>Use this Mac, or start here and finish on another Mac. The worker runs only after you explicitly install it. Wi-Fi is enough.</p><label>Device name<input id="crAiDeviceName" class="cr-input" data-ai-preserve autocomplete="off" maxlength="80" placeholder="Studio iMac"></label><button class="cr-btn cr-btn--primary" type="button" data-action="ai-enroll"' + busy + '>Create setup</button><p class="cr-muted">Starting on your laptop? Create setup now, then sign in to this workspace on the target Mac and choose Finish setup below.</p></section>';
+      else {
+        var command = 'node ' + (state.aiInstaller ? 'mccluster-macos-worker/' : '') + 'core/macos/mccluster-node.mjs install --setup-file ./mccluster-device-setup.json';
+        var packageStep = state.aiInstaller ? '<p>Download and unzip the reviewed worker package on this Mac. Install Node 20 or newer and Ollama, then run <code>ollama pull qwen3:8b</code>. Keep Ollama local.</p><a class="cr-btn" href="downloads/mccluster-macos-worker.zip" download>Download Mac worker</a><details class="cr-ai-receipt"><summary>Package checksum</summary><span>SHA-256 ' + ae(state.aiInstaller.sha256) + '</span></details>' + (state.aiInstaller.physical_mac_verified ? '' : '<p class="cr-muted">Installer tests pass in the test environment. Installation on a physical Mac still needs verification.</p>') : '<p>The downloadable package is unavailable on this deployment. Use the reviewed McCluster worker checkout. Install Node 20 or newer and Ollama, then run <code>ollama pull qwen3:8b</code>. Keep Ollama local.</p>';
+        add = '<section class="cr-ai-setup" aria-label="Mac setup"><div class="cr-ai-sectionhead"><h3>Set up ' + ae(enrollment.display_name) + '</h3><button class="cr-ai-textbtn" type="button" data-action="ai-forget-enrollment">Close setup</button></div><ol class="cr-ai-setup__steps"><li><b>On the target Mac</b>' + packageStep + '</li><li><b>Save the setup file beside the worker folder</b><p>This file contains the coordinator address and device settings. It contains no credential.</p><button class="cr-btn" type="button" data-action="ai-download-setup">Download setup file</button></li><li><b>Install the worker</b><pre class="cr-ai-setup__command"><code id="crAiSetupCommand">' + ae(command) + '</code></pre><button class="cr-btn" type="button" data-action="ai-copy-setup-command">Copy setup command</button></li><li><b>Paste the credential only at the installer’s private prompt</b><p>Single use · expires ' + ae(formatDate(enrollment.expires_at)) + '. It must never go into a command or address bar.</p>' +
+          (enrollment.credential ? '<div class="cr-ai-credential"><input id="crAiCredential" type="' + (state.aiEnrollmentReveal ? "text" : "password") + '" value="' + ae(enrollment.credential) + '" readonly autocomplete="off" spellcheck="false" aria-label="Single-use enrollment credential"><button class="cr-btn" type="button" data-action="ai-reveal-credential">' + (state.aiEnrollmentReveal ? "Hide" : "Reveal") + '</button><button class="cr-btn" type="button" data-action="ai-copy-credential">Copy credential</button></div>' : '<p class="cr-ai-capability">Credential expired or cleared. Choose Finish setup to issue a new one.</p>') +
+          '</li></ol><p class="cr-muted">One active job · Qwen3 8B · 4K test context. The installer creates and protects this Mac’s own signing key. Open this workspace on the Mac to finish there; no credential is carried in the link.</p></section>';
+      }
+    }
+    var cards = state.aiDevices.map(function (device) {
+      var id = OWNER_AI.deviceId(device), s = OWNER_AI.deviceState(device), canUse = s !== "revoked" && s !== "offline";
+      var memory = Number(device.memory_bytes) > 0 ? Math.round(Number(device.memory_bytes) / 1073741824) + " GB" : "Memory not reported";
+      var details = [device.platform || "Platform not reported", device.arch, memory, (Number(device.active_jobs) || 0) + " active job" + (Number(device.active_jobs) === 1 ? "" : "s")].filter(Boolean).join(" · ");
+      var rename = state.aiRenameId === id ? '<div class="cr-ai-inlineform"><label>Device name<input id="crAiRename" class="cr-input" data-ai-preserve maxlength="80" value="' + ae(OWNER_AI.deviceName(device)) + '"></label><button class="cr-btn" type="button" data-action="ai-device-save-name" data-id="' + ae(id) + '"' + busy + '>Save name</button></div>' : "";
+      var revoke = state.aiRevokeId === id ? '<div class="cr-ai-revoke"><p>Revoke ' + ae(OWNER_AI.deviceName(device)) + '? New leases stop immediately. Active work follows the existing lease rules. Returning this device requires a fresh enrollment.</p><button class="cr-btn cr-btn--danger" type="button" data-action="ai-device-confirm-revoke" data-id="' + ae(id) + '"' + busy + '>Revoke device</button> <button class="cr-btn" type="button" data-action="ai-device-cancel-revoke">Keep device</button></div>' : "";
+      var models = (device.models || []).map(function (m) { return ae(m.model || m.implementation) + (m.ready ? " · ready" : " · not ready"); }).join(", ");
+      var cleanup = device.cleanup_required ? '<details class="cr-ai-receipt"><summary>Local model cleanup is required</summary><p>On this Mac, use its paired-runtime checkout and existing private configuration. The repair verifies an idle runtime and sends a signed receipt; then click Resume here.</p>' + (OWNER_AI.cleanupCommand(device) ? '<pre class="cr-ai-setup__command"><code>' + ae(OWNER_AI.cleanupCommand(device)) + '</code></pre><button class="cr-btn" type="button" data-action="ai-copy-cleanup" data-id="' + ae(id) + '">Copy local repair command</button>' : '<p>The coordinator has not supplied a cleanup reservation. Refresh devices before repairing.</p>') + '</details>' : '';
+      return '<article class="cr-ai-device" data-ai-device="' + ae(id) + '"><div class="cr-ai-sectionhead"><h3>' + ae(OWNER_AI.deviceName(device)) + '</h3><span class="cr-ai-state cr-ai-state--' + ae(s) + '">' + ae(OWNER_AI.stateLabel(device)) + '</span></div><p class="cr-ai-device__spec">' + ae(details) + '</p><p>' + ae(OWNER_AI.recovery(device)) + '</p><p class="cr-ai-device__models">' + (models || "No model reported yet") + '</p><small>Last seen ' + ae(ago(device.last_seen_at)) + '</small>' +
+        (device.test && device.test.status && device.test.status !== "done" ? '<p class="cr-ai-device__test">Device test: ' + ae(device.test.status) + '</p>' : "") + cleanup + rename + revoke +
+        '<div class="cr-ai-device__actions"><button class="cr-btn" type="button" data-action="ai-device-rename" data-id="' + ae(id) + '"' + busy + '>Rename</button>' +
+        (s !== "revoked" ? '<button class="cr-btn" type="button" data-action="ai-device-' + (s === "paused" ? "resume" : "pause") + '" data-id="' + ae(id) + '"' + (busy || s === 'paused' && device.resume_available === false ? ' disabled' : '') + '>' + (s === "paused" ? "Resume" : "Pause") + '</button><button class="cr-btn" type="button" data-action="ai-device-test" data-id="' + ae(id) + '"' + (busy || !canUse || s === "paused" ? " disabled" : "") + '>Test device</button><button class="cr-ai-textbtn" type="button" data-action="ai-device-revoke" data-id="' + ae(id) + '"' + busy + '>Revoke</button>' : "") + '</div></article>';
+    }).join("");
+    var pending = state.aiEnrollments.map(function (item) {
+      return '<article class="cr-ai-device cr-ai-device--pending"><div class="cr-ai-sectionhead"><h3>' + ae(item.display_name || "New Mac") + '</h3><span class="cr-ai-state">Pending</span></div><p>' + ae(item.recovery || "Sign in on the target Mac to finish installing its worker.") + '</p><small>' + (item.expired ? "Previous credential expired" : "Credential expires " + ae(formatDate(item.expires_at))) + '</small><button class="cr-btn" type="button" data-action="ai-finish-enrollment" data-id="' + ae(item.enrollment_id || item.id) + '"' + busy + '>Finish setup</button></article>';
+    }).join("");
+    var macs = state.aiDevices.filter(function (d) { return d.platform === "darwin" && d.state !== "revoked"; });
+    var macOptions = '<option value="">Choose a Mac</option>' + macs.map(function (d) { return '<option value="' + ae(OWNER_AI.deviceId(d)) + '">' + ae(OWNER_AI.deviceName(d)) + '</option>'; }).join("");
+    var pairForm = state.aiCreatePairOpen ? '<div class="cr-ai-setup"><h3>Create a pair</h3><label>Pair name<input id="crAiPairName" class="cr-input" data-ai-preserve maxlength="80" placeholder="Studio pair"></label><div class="cr-ai-formrow"><label>First Mac<select id="crAiPairFirst" class="cr-select" data-ai-preserve>' + macOptions + '</select></label><label>Second Mac<select id="crAiPairSecond" class="cr-select" data-ai-preserve>' + macOptions + '</select></label></div><p>Creating a pair does not combine memory by itself. A supported distributed runtime must see both Macs locally and pass a shared-model test.</p><button class="cr-btn cr-btn--primary" type="button" data-action="ai-pair-save"' + busy + '>Create pair</button></div>' : "";
+    var pairCards = state.aiPairs.map(function (pair) {
+      var ready = pair.ready === true, benchmark = pair.benchmark || {};
+      var pairLabel = ready ? "Ready" : ({ testing: "Testing", reserved: "Reserved", draining: "Waiting for current jobs", running: "Running", cleanup: "Freeing model memory" })[pair.state] || "Unavailable";
+      var peaks = (benchmark.devices || []).map(function (measured) { var named = state.aiDevices.find(function (device) { return OWNER_AI.deviceId(device) === measured.node_id; }); return '<li>' + ae(named ? OWNER_AI.deviceName(named) : measured.node_id) + ': peak ' + ae(measured.peak_memory_bytes != null ? (Number(measured.peak_memory_bytes) / 1073741824).toFixed(2) + ' GB' : 'not reported') + '</li>'; }).join('');
+      return '<article class="cr-ai-device"><div class="cr-ai-sectionhead"><h3>' + ae(pair.name || "Mac pair") + '</h3><span class="cr-ai-state' + (ready ? ' cr-ai-state--test_passed' : '') + '">' + ae(pairLabel) + '</span></div><p>' + ae(pair.unavailable_reason || pair.reason || pair.recovery || (ready ? "Shared-model benchmark passed. Both workers are reserved together for Deep Reasoning." : "Exact hardware and model setup is unverified. Install a supported runtime on both Macs, then run the benchmark.")) + '</p><p class="cr-ai-device__spec">' + ae(benchmark.model_id || pair.model_id || "Qwen3.5 27B · MLX 4-bit candidate") + '</p>' +
+        (benchmark.model_revision ? '<p class="cr-ai-device__spec">Model revision: ' + ae(benchmark.model_revision) + '</p>' : '') +
+        (benchmark.time_to_first_token_ms != null ? '<p>First token ' + ae(benchmark.time_to_first_token_ms) + ' ms · ' + ae(benchmark.output_tokens_per_second || "not reported") + ' tok/s</p>' + (peaks ? '<ul class="cr-ai-device__metrics">' + peaks + '</ul>' : '<p class="cr-muted">Per-device peak memory not reported.</p>') + (benchmark.runtime ? '<p class="cr-ai-device__spec">' + ae([benchmark.runtime.name, benchmark.runtime.version, benchmark.runtime.commit].filter(Boolean).join(' · ')) + '</p>' : '') : '<p class="cr-muted">No real-device performance measurements yet.</p>') +
+        '<button class="cr-btn" type="button" data-action="ai-pair-benchmark" data-id="' + ae(pair.id || pair.pair_id) + '"' + (busy || !coreToolAvailable("core.compute.pair.benchmark") ? " disabled" : "") + '>Run shared-model benchmark</button></article>';
+    }).join("");
+    return '<section class="cr-ai-devices"><div class="cr-ai-sectionhead"><div><h2>Your workers</h2><p>McCluster Core on OVH coordinates the queue. Each device connects outward; Ollama stays local.</p></div><button class="cr-btn cr-btn--primary" type="button" data-action="ai-add-device"' + (busy || !state.aiEnrollmentAvailable ? " disabled" : "") + '>Add this device</button><button class="cr-btn" type="button" data-action="ai-refresh-devices"' + (state.pending.aiDevices ? " disabled" : "") + '>Refresh devices</button></div>' +
+      (state.aiDeviceError ? '<p class="cr-fail" role="alert">' + ae(state.aiDeviceError) + '</p>' : '') + (state.aiDeviceNotice ? '<p class="cr-ai-notice" role="status">' + ae(state.aiDeviceNotice) + '</p>' : '') +
+      (!state.aiEnrollmentAvailable ? '<p class="cr-ai-capability">Enrollment is unavailable on this Core. Its enrollment service must be configured before a worker can be added.</p>' : '') + add +
+      '<div class="cr-ai-devicegrid">' + cards + pending + (!cards && !pending ? '<div class="cr-ai-blank"><h3>' + (state.pending.aiDevices ? "Reading devices…" : "Add your first worker") + '</h3><p>A browser session is your remote control. Install the worker explicitly on each Mac that should do the work.</p></div>' : '') + '</div>' +
+      '<section class="cr-ai-pairs"><div class="cr-ai-sectionhead"><div><h2>Deep Reasoning pairs</h2><p>Two enrolled Macs, one verified shared-model runtime. Model traffic stays on their local network.</p></div><button class="cr-btn" type="button" data-action="ai-pair-create"' + (busy || macs.length < 2 || !coreToolAvailable("core.compute.pair.create") ? " disabled" : "") + '>Create pair</button></div>' + (state.aiPairError ? '<p class="cr-ai-capability">Pair readiness unavailable: ' + ae(state.aiPairError) + '</p>' : '') + pairForm +
+      '<div class="cr-ai-devicegrid">' + (pairCards || '<div class="cr-ai-blank"><h3>Not verified on your Macs yet</h3><p>Start with two independent Qwen3 8B workers. A pair becomes ready only after local discovery, memory checks and a shared-model benchmark pass. A 27B model is a candidate, not a fit guarantee.</p></div>') + '</div></section></section>';
+  }
+
+  function renderAiRuns() {
+    var ae = OWNER_AI.esc, rows = [];
+    Object.keys(state.aiMessages).forEach(function (threadId) {
+      var messages = state.aiMessages[threadId] || [], thread = aiThreadById(threadId);
+      messages.filter(function (m) { return m.role === "user" && m.metadata && m.metadata.agent_job_id; }).forEach(function (m) {
+        var id = m.metadata.agent_job_id;
+        var reply = messages.find(function (a) { return a.role === "assistant" && a.metadata && a.metadata.agent_job_id === id; });
+        var run = state.aiRuns[threadId], task = run && run.task && run.task.id === id ? run.task : null;
+        var status = task && task.status || m.metadata.task_status || (reply ? "done" : "unknown");
+        rows.push({ threadId: threadId, title: thread && thread.title || "Conversation", when: m.created_at, status: status, prompt: m.content, receipt: reply ? OWNER_AI.receipt(reply) : null });
+      });
+    });
+    rows.sort(function (a, b) { return new Date(b.when || 0) - new Date(a.when || 0); });
+    return '<section class="cr-ai-runs"><h2>Run history</h2><p>Saved runs from the conversations you have opened. Open an older conversation to load its runs.</p>' + (rows.length ? rows.map(function (run) {
+      return '<article class="cr-ai-run"><div class="cr-ai-sectionhead"><button type="button" class="cr-ai-textbtn" data-action="ai-select-thread" data-id="' + ae(run.threadId) + '">' + ae(run.title) + '</button><span class="cr-ai-state">' + ae(run.status === "canceled" ? "Stopped" : titleCase(run.status)) + '</span></div><p>' + ae(String(run.prompt || "").slice(0, 180)) + '</p><small>' + ae(ago(run.when)) + (run.receipt ? ' · ' + ae(run.receipt.label) : ' · Device not yet reported') + '</small>' + (run.receipt && run.receipt.fallback ? '<p class="cr-ai-fallback">Fallback: ' + ae(run.receipt.fallback) + '</p>' : '') + '</article>';
+    }).join("") : '<div class="cr-ai-blank"><h3>Your work will appear here</h3><p>Each accepted message is saved with its durable run. Returning to a conversation reconnects to its progress.</p></div>') + '</section>';
+  }
+
   function renderAi() {
+    if (!OWNER_AI) return empty("AI workspace unavailable", "Reload the page to load the workspace controls.");
+    if (!aiBrowserOwner(state)) return '<section class="cr-ai-owner-gate"><h2>Owner AI workspace</h2><p>Sign in as the McCluster house owner to chat with your models and manage your devices.</p><p>The server verifies this access on every request.</p></section>';
+    var ae = OWNER_AI.esc;
     if (!state.selectedAiThreadId && state.aiThreads.length) state.selectedAiThreadId = state.aiThreads[0].id;
-    var selected = aiThreadById(state.selectedAiThreadId);
-    var messages = selected ? aiMessagesFor(selected.id) : [];
+    syncSelectedAiRun();
+    var selected = aiThreadById(state.selectedAiThreadId), messages = selected ? aiMessagesFor(selected.id) : [];
     var messageError = selected && state.pending["aiMessages:" + selected.id + ":error"];
-    var ready = coreToolAvailable("ai.chat");
-    var voiceCaps = aiVoiceCapabilities();
-
-    var threads = state.aiThreads.length
-      ? state.aiThreads.map(function (thread) {
-          return '<button class="cr-ai-thread' + (selected && String(selected.id) === String(thread.id) ? " is-on" : "") +
-            '" type="button" data-action="ai-select-thread" data-id="' + esc(thread.id) + '">' +
-            '<b>' + esc(thread.title || "New chat") + '</b><small>' + esc(ago(thread.last_message_at || thread.updated_at || thread.created_at)) + '</small></button>';
-        }).join("")
-      : '<p class="cr-muted" style="padding:4px 6px">No chats yet.</p>';
-
-    var body;
-    if (selected && state.pending["aiMessages:" + selected.id] && !messages.length) {
-      body = '<div class="cr-ai-chat__empty"><strong>Loading this conversation…</strong><span>Reading durable messages from McCluster.</span></div>';
-    } else if (!messages.length) {
-      body = '<div class="cr-ai-chat__empty"><strong>Talk to your own AI.</strong><span>This conversation runs through McCluster Core to your self-hosted model and is stored in your own Supabase.</span></div>';
-    } else {
-      body = messages.map(function (message) {
-        var mine = message.role === "user";
-        var label = mine ? "You" : (message.role === "assistant" ? "McCluster AI" : titleCase(message.role));
-        var detail = !mine && (message.model || message.implementation)
-          ? " · " + [message.model, message.implementation].filter(Boolean).join(" · ")
-          : "";
-        var speakControl = !mine && voiceCaps.synthesis
-          ? '<button class="cr-ai-voice-replay" type="button" data-action="ai-speak-message" data-id="' + esc(message.id) + '" aria-label="Speak this McCluster AI reply">Speak</button>'
-          : "";
-        return '<div class="cr-ai-message cr-ai-message--' + (mine ? "user" : "assistant") + '">' +
-          '<div class="cr-ai-message__meta"><span>' + esc(label) + '</span><span>' + esc(ago(message.created_at)) + detail + '</span>' + (mine ? "" : aiNodeBadgeHtml(message)) + speakControl + '</div>' +
-          (mine ? aiUserImagesHtml(message) : "") +
-          '<div class="cr-ai-message__body">' + esc(message.content || "") + '</div>' + (mine ? "" : aiErrorHtml(message)) + (mine ? "" : aiResearchHtml(message)) + (mine ? "" : aiBrowserHtml(message)) + '</div>';
-      }).join("");
-    }
-    if (state.aiChatPending) {
-      var taskStatus = state.aiChatTask && state.aiChatTask.status || "queued";
-      var pendingCopy = taskStatus === "running"
-        ? "Thinking on your compute…"
-        : taskStatus === "leased"
-          ? "Local compute reserved. Starting inference…"
-          : "Queued for local compute. Your message is saved and has not been lost.";
-      var lastUser = messages.filter(function (m) { return m.role === "user"; }).pop();
-      body += '<div class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__meta"><span>McCluster AI</span><span>' + esc(taskStatus) + '</span></div><div class="cr-ai-message__body"><span class="cr-spin"></span> ' + esc(pendingCopy) + aiReceiptStepsHtml(lastUser) + '</div></div>';
-    }
-    /* Each control only when the running Core declares what it sends; one
-       honest line in its place otherwise. Thumbnails stay while any image is
-       attached, so one attached before the Core changed can still be removed. */
+    var ready = coreToolAvailable("core.ai.turn.submit") && coreToolAvailable("core.ai.turn.get");
     var support = aiCoreWord();
-    var attachRow = (support.turnImages ? '<div class="cr-ai-attach">' +
-      '<button class="cr-btn cr-ai-attach__btn" type="button" data-action="ai-attach"' + (!ready || state.aiChatPending || state.aiAttachments.length >= AI_IMAGE_MAX ? " disabled" : "") + ' aria-describedby="crAiAttachHint">Attach image</button>' +
-      '<input id="crAiAttach" type="file" accept="image/*" multiple class="cr-ai-attach__input" aria-label="Attach up to two images" tabindex="-1">' +
-      '<span class="cr-ai-attach__hint" id="crAiAttachHint">' + esc(state.aiAttachments.length + "/" + AI_IMAGE_MAX + " · downscaled here to " + AI_IMAGE_MAX_SIDE + " px JPEG, at most " + Math.round(AI_IMAGE_MAX_BYTES / 1000) + " KB each · a turn with an image goes to a vision model or says that none is live") + '</span></div>' : aiCapabilityLine("images", support)) +
-      (state.aiAttachments.length ? '<div class="cr-ai-thumbs">' + state.aiAttachments.map(function (a, i) {
-        return '<div class="cr-ai-thumb"><img src="' + esc(a.preview) + '" alt="' + esc(a.name || ("Attached image " + (i + 1))) + '">' +
-          '<button class="cr-ai-thumb__remove" type="button" data-action="ai-remove-attachment" data-index="' + i + '" aria-label="Remove ' + esc(a.name || "this image") + '">×</button>' +
-          '<span class="cr-ai-thumb__meta">' + esc(a.width + "×" + a.height + " · " + aiKb(a.bytes)) + '</span></div>';
-      }).join("") + '</div>' : "");
-    var browserSwitch = "";
+    var voiceCaps = aiVoiceCapabilities(), run = selectedAiRun(), problem = aiRouteProblem();
+    var runningCount = Object.keys(state.aiRuns).filter(function (id) { return state.aiRuns[id].pending; }).length;
+    var workspaceHead = '<header class="cr-ai-workspace__head"><div><span class="cr-ai-eyebrow">Equity Upreneurs · owner workspace</span><h1>McCluster AI</h1><p>Think, build, and review with your own workers.</p></div><div class="cr-ai-workspace__state"><span class="cr-ai-state' + (ready ? ' cr-ai-state--connected' : '') + '">' + (ready ? 'Core connected' : 'Core unavailable') + '</span>' + (runningCount ? '<span>' + runningCount + ' active run' + (runningCount === 1 ? '' : 's') + '</span>' : '') + '</div></header>';
+    var tabs = '<div class="cr-ai-localnav" aria-label="AI workspace views">' + [["chat", "Chat"], ["devices", "Devices"], ["runs", "Run history"]].map(function (item) {
+      return '<button class="cr-ai-localnav__tab' + (state.aiPanel === item[0] ? ' is-on' : '') + '" type="button" data-action="ai-panel" data-panel="' + item[0] + '" aria-pressed="' + (state.aiPanel === item[0]) + '">' + item[1] + '</button>';
+    }).join("") + '</div>';
+    var banners = sourceBanner(state.sources.coreBridge, "Core bridge") + sourceBanner(state.sources.coreTools, "AI execution path") + sourceBanner(state.sources.aiThreads, "AI conversations");
+    if (state.aiPanel === "devices") return '<div class="cr-ai-workspace">' + workspaceHead + tabs + banners + renderAiDevices() + '</div>';
+    if (state.aiPanel === "runs") return '<div class="cr-ai-workspace">' + workspaceHead + tabs + banners + renderAiRuns() + '</div>';
+
+    var threads = state.aiThreads.length ? state.aiThreads.map(function (thread) {
+      var active = state.aiRuns[thread.id] && state.aiRuns[thread.id].pending;
+      var search = [thread.title || "", (state.aiMessages[thread.id] || []).map(function (m) { return m.content || ""; }).join(" ")].join(" ").toLowerCase();
+      var hidden = state.aiHistorySearch && search.indexOf(state.aiHistorySearch.toLowerCase()) < 0;
+      return '<button class="cr-ai-thread' + (selected && String(selected.id) === String(thread.id) ? " is-on" : "") + '" type="button" data-action="ai-select-thread" data-id="' + ae(thread.id) + '" data-ai-history-search="' + ae(search.slice(0, 6000)) + '"' + (hidden ? ' hidden' : '') + '><b>' + ae(thread.title || "New chat") + '</b><small>' + (active ? '<span class="cr-ai-running-dot"></span> Working · ' : '') + ae(ago(thread.last_message_at || thread.updated_at || thread.created_at)) + '</small></button>';
+    }).join("") : '<p class="cr-muted">No conversations yet.</p>';
+    var body;
+    if (selected && state.pending["aiMessages:" + selected.id] && !messages.length) body = '<div class="cr-ai-chat__empty"><strong>Opening your conversation…</strong><span>Restoring saved messages and run status.</span></div>';
+    else if (!messages.length) body = '<div class="cr-ai-chat__empty"><img class="cr-ai-empty-mark" src="assets/img/equity-uprise-mark-white.png" alt=""><span class="cr-ai-eyebrow">One workspace, wherever you are</span><strong>What are we working on?</strong><span>Choose a model and a worker, or let Auto find an available machine. Your accepted work continues when you close this window.</span><div class="cr-ai-starters"><button class="cr-btn" type="button" data-action="ai-starter" data-prompt="Help me plan the next steps for my project.">Plan a project</button><button class="cr-btn" type="button" data-action="ai-starter" data-prompt="Help me work through this problem step by step.">Work through a problem</button></div></div>';
+    else body = messages.map(function (message) {
+      var mine = message.role === "user", meta = message.metadata || {}, receipt = OWNER_AI.receipt(message);
+      var label = mine ? "You" : message.role === "assistant" ? "McCluster AI" : titleCase(message.role);
+      var status = mine && ["failed", "canceled"].indexOf(meta.task_status) >= 0 ? ' · ' + (meta.task_status === 'canceled' ? 'Stopped' : 'Failed') : '';
+      var speak = !mine && voiceCaps.synthesis ? '<button class="cr-ai-textbtn" type="button" data-action="ai-speak-message" data-id="' + ae(message.id) + '" aria-label="Speak this McCluster AI reply">Speak</button>' : '';
+      var controls = !mine ? '<div class="cr-ai-message__actions"><button class="cr-ai-textbtn" type="button" data-action="ai-copy-message" data-id="' + ae(message.id) + '">Copy</button>' + speak + '<button class="cr-ai-textbtn" type="button" data-action="ai-retry" data-id="' + ae(message.id) + '"' + (state.aiChatPending ? ' disabled' : '') + '>Retry</button>' + (receipt.turn_id && aiDeclared(aiToolSchema(state.coreTools, "core.ai.turn.submit"), "review_of_turn_id") ? '<button class="cr-ai-textbtn" type="button" data-action="ai-review" data-id="' + ae(message.id) + '"' + (state.aiChatPending ? ' disabled' : '') + '>Review on another worker</button>' : '') + '</div>' : (status ? '<button class="cr-ai-textbtn" type="button" data-action="ai-retry" data-id="' + ae(message.id) + '"' + (state.aiChatPending ? ' disabled' : '') + '>Retry with current selection</button>' : '');
+      var runReceipt = !mine ? '<details class="cr-ai-receipt"><summary>' + ae(receipt.label) + '</summary>' + (receipt.turn_id ? '<span>Run ' + ae(receipt.turn_id) + '</span>' : '<span>This older reply has no durable run receipt.</span>') + (receipt.node_id ? '<span>Worker ' + ae(receipt.node_id) + '</span>' : '') + '</details>' + (receipt.fallback ? '<p class="cr-ai-fallback">Fallback: ' + ae(receipt.fallback) + '</p>' : '') : '';
+      return '<article class="cr-ai-message cr-ai-message--' + (mine ? "user" : "assistant") + '" data-ai-message="' + ae(message.id) + '"><div class="cr-ai-message__meta"><span>' + ae(label) + '</span><span>' + ae(ago(message.created_at) + status) + '</span>' + (mine ? '' : aiNodeBadgeHtml(message)) + '</div>' + (mine ? aiUserImagesHtml(message) : '') + '<div class="cr-ai-message__body' + (mine ? '' : ' cr-ai-markdown') + '">' + (mine ? ae(message.content || "") : OWNER_AI.markdown(message.content || "")) + '</div>' + (mine ? '' : aiErrorHtml(message) + aiResearchHtml(message) + aiBrowserHtml(message)) + runReceipt + controls + '</article>';
+    }).join("");
+    if (selected && state.aiMessagesHasMore[selected.id]) body = '<div class="cr-ai-earlier"><button class="cr-btn" type="button" data-action="ai-earlier-messages"' + (state.pending['aiEarlier:' + selected.id] || state.aiChatPending ? ' disabled' : '') + '>Load earlier messages</button></div>' + body;
+    if (state.aiChatPending) {
+      var progress = run && run.progress || {}, taskStatus = progress.status || state.aiChatTask && state.aiChatTask.status || "queued";
+      var pendingCopy = taskStatus === "running" ? "Working on your request…" : taskStatus === "leased" ? "Worker reserved. Loading the model…" : taskStatus === "submitting" ? "Saving your message…" : "Queued. Your message is saved.";
+      var lastUser = messages.filter(function (m) { return m.role === "user"; }).pop();
+      body += '<article class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__meta" role="status"><span>McCluster AI</span><span>' + ae(taskStatus) + '</span>' + (progress.node ? '<span class="cr-ai-node">' + ae(OWNER_AI.nodeLabel(progress.node)) + '</span>' : '') + '</div><div class="cr-ai-message__body cr-ai-markdown" id="crAiProgress">' + (progress.content ? OWNER_AI.markdown(progress.content) : '<span class="cr-spin"></span> ' + ae(pendingCopy)) + '</div>' + (progress.fallback_reason ? '<p class="cr-ai-fallback">Fallback: ' + ae(progress.fallback_reason) + '</p>' : '') + aiReceiptStepsHtml(lastUser) + '</article>';
+    }
+    var modelOptions = [{ implementation: "qwen3.8b.local", model: "qwen3:8b" }];
+    state.aiDevices.forEach(function (device) { (device.models || []).forEach(function (model) { if (model.implementation && !modelOptions.some(function (x) { return x.implementation === model.implementation; })) modelOptions.push(model); }); });
+    var pairSelected = selectedAiRoute().mode === 'pair';
+    if (pairSelected) modelOptions = [{ implementation: 'qwen3.5.27b.pair', model: 'Qwen3.5 27B · MLX 4-bit' }];
+    var modelSelect = '<label class="cr-ai-picker"><span>Model</span><select id="crAiModel" aria-label="Model"' + (!aiRouteSupported() || state.aiChatPending || pairSelected ? ' disabled' : '') + '>' + modelOptions.map(function (model) { return '<option value="' + ae(model.implementation) + '"' + (state.aiImplementation === model.implementation || pairSelected ? ' selected' : '') + '>' + ae(model.model || model.implementation) + '</option>'; }).join("") + '</select></label>';
+    var deviceOptions = '<option value="auto"' + (state.aiRouteSelection === 'auto' ? ' selected' : '') + '>Auto · healthy worker</option>' + state.aiDevices.map(function (device) { var value = 'node:' + OWNER_AI.deviceId(device); return '<option value="' + ae(value) + '"' + (state.aiRouteSelection === value ? ' selected' : '') + '>' + ae(OWNER_AI.deviceName(device)) + (device.eligible ? Number(device.active_jobs) > 0 ? ' · busy' : '' : ' · ' + ae(OWNER_AI.stateLabel(device))) + '</option>'; }).join("");
+    deviceOptions += state.aiPairs.length ? state.aiPairs.map(function (pair) { var value = 'pair:' + (pair.id || pair.pair_id); return '<option value="' + ae(value) + '"' + (state.aiRouteSelection === value ? ' selected' : '') + '>Deep Reasoning · ' + ae(pair.name || 'Mac pair') + (pair.ready === true ? '' : ' · unavailable') + '</option>'; }).join("") : '<option disabled>Deep Reasoning · pair not verified</option>';
+    var deviceSelect = '<label class="cr-ai-picker"><span>Run on</span><select id="crAiDevice" aria-label="Run on"' + (!aiRouteSupported() || state.aiChatPending ? ' disabled' : '') + '>' + deviceOptions + '</select></label>';
+    var attachRow = (support.turnImages ? '<div class="cr-ai-attach"><button class="cr-btn cr-ai-attach__btn" type="button" data-action="ai-attach"' + (!ready || state.aiChatPending || state.aiAttachments.length >= AI_IMAGE_MAX ? ' disabled' : '') + '>Attach image</button><input id="crAiAttach" type="file" accept="image/*" multiple class="cr-ai-attach__input" aria-label="Attach up to two images" tabindex="-1"><span class="cr-ai-attach__hint" id="crAiAttachHint">' + state.aiAttachments.length + '/2 images · resized on this device</span></div>' : aiCapabilityLine('images', support)) +
+      (state.aiAttachments.length ? '<div class="cr-ai-thumbs">' + state.aiAttachments.map(function (a, i) { return '<div class="cr-ai-thumb"><img src="' + ae(a.preview) + '" alt="' + ae(a.name || 'Attached image') + '"><button class="cr-ai-thumb__remove" type="button" data-action="ai-remove-attachment" data-index="' + i + '" aria-label="Remove image">×</button><span class="cr-ai-thumb__meta">' + ae((a.width && a.height ? a.width + '×' + a.height + ' · ' : '') + aiKb(a.bytes)) + '</span></div>'; }).join('') + '</div>' : '');
+    var browserSwitch = '';
     if (aiBrowserSwitchVisible(state, support)) {
       var readiness = aiBrowserReadiness(messages);
-      browserSwitch = '<div class="cr-ai-browser-switch"><span class="cr-ai-browser-switch__text"><b>Use the browser</b><span>' +
-        esc(state.aiAllowBrowser ? "On: each turn you send may drive the node's own browser on its allowed sites (owner-only; the Core checks again)." : "Off: your turns run without the node's browser.") + '</span>' +
-        '<span class="cr-ai-browser-switch__ready" data-ai-browser-ready="' + esc(readiness.state) + '">' + esc(readiness.text) + '</span></span>' +
-        '<button class="cr-switch' + (state.aiAllowBrowser ? " is-on" : "") + '" type="button" role="switch" aria-checked="' + (state.aiAllowBrowser ? "true" : "false") + '" aria-label="Use the browser for this turn" data-action="ai-browser-toggle"' + (!ready || state.aiChatPending ? " disabled" : "") + '></button></div>';
-    } else if (aiBrowserOwner(state)) browserSwitch = aiCapabilityLine("browser", support);
-
-    return sourceBanner(state.sources.coreBridge, "Core bridge") +
-      sourceBanner(state.sources.coreTools, "AI execution path") +
-      sourceBanner(state.sources.aiThreads, "AI conversations") +
-      '<div class="cr-ai-chat">' +
-        '<aside class="cr-ai-chat__sidebar"><div class="cr-ai-chat__sidehead">' +
-          '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-new-thread"' + (state.pending.aiThreadCreate ? " disabled" : "") + '>+ New chat</button>' +
-          '<span class="cr-ai-local">' + (ready ? "LOCAL READY" : "AI OFFLINE") + '</span></div>' +
-          '<div class="cr-ai-chat__threads">' + threads + '</div></aside>' +
-        '<section class="cr-ai-chat__main">' +
-          '<header class="cr-ai-chat__head"><div><b>' + esc(selected ? selected.title : "McCluster AI") + '</b><p>ai.chat → McCluster compute fabric → self-hosted model</p></div><span class="cr-ai-local">' + (ready ? "QWEN LOCAL" : "CHECK CORE") + '</span></header>' +
-          '<div class="cr-ai-chat__messages">' + (messageError ? sourceBanner(messageError, "Conversation") : "") + body + '</div>' +
-          '<footer class="cr-ai-chat__composer">' +
-            (state.aiChatError ? '<p class="cr-fail">' + esc(state.aiChatError) + '</p>' : "") +
-            (state.aiVoiceError ? '<p class="cr-fail cr-ai-voice-error">' + esc(state.aiVoiceError) + '</p>' : "") +
-            attachRow + browserSwitch +
-            '<div class="cr-ai-chat__composerbox"><textarea class="cr-textarea" id="crAiComposer" rows="2" placeholder="' + (state.aiVoiceListening ? "Listening…" : "Message McCluster AI…") + '" aria-label="Message McCluster AI"' + (!ready || state.aiChatPending || state.aiVoiceListening ? " disabled" : "") + '></textarea>' +
-            '<button class="cr-btn cr-btn--voice' + (state.aiVoiceListening ? " is-listening" : "") + '" type="button" data-action="ai-voice-toggle"' + (!ready || state.aiChatPending || !voiceCaps.recognition ? " disabled" : "") + ' aria-pressed="' + (state.aiVoiceListening ? "true" : "false") + '">' + (state.aiVoiceListening ? "Stop" : "Talk") + '</button>' +
-            '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-send"' + (!ready || state.aiChatPending || state.aiVoiceListening ? " disabled" : "") + '>Send</button></div>' +
-            '<div class="cr-ai-voice-status" role="status" aria-live="polite">' +
-              '<span>' + (voiceCaps.recognition ? (state.aiVoiceListening ? "Listening now" : "Mic ready") : "Mic unavailable") + '</span>' +
-              '<span>' + (voiceCaps.synthesis ? (state.aiVoiceSpeaking ? "Speaking reply" : "Voice reply ready") : "Speech playback unavailable") + '</span>' +
-              (state.aiVoiceSpeaking ? '<button class="cr-ai-voice-stop" type="button" data-action="ai-stop-speaking">Stop voice</button>' : "") +
-              (state.aiVoiceTranscript ? '<span class="cr-ai-voice-transcript">Heard: ' + esc(state.aiVoiceTranscript) + '</span>' : "") +
-            '</div>' +
-            '<p class="cr-ai-chat__hint">Talk sends one voice turn and reads that reply aloud. Voice recognition is provided by your browser/device; the resulting text uses the same durable McCluster conversation. Enter sends text · Shift+Enter adds a line.</p>' +
-          '</footer></section></div>';
+      browserSwitch = '<div class="cr-ai-browser-switch"><span class="cr-ai-browser-switch__text"><b>Use the browser</b><span>' + (state.aiAllowBrowser ? 'Enabled for this turn on an allowed device.' : 'Off for this turn.') + '</span><span class="cr-ai-browser-switch__ready" data-ai-browser-ready="' + ae(readiness.state) + '">' + ae(readiness.text) + '</span></span><button class="cr-switch' + (state.aiAllowBrowser ? ' is-on' : '') + '" type="button" role="switch" aria-checked="' + state.aiAllowBrowser + '" aria-label="Use the browser for this turn" data-action="ai-browser-toggle"' + (!ready || state.aiChatPending ? ' disabled' : '') + '></button></div>';
+    } else browserSwitch = aiCapabilityLine('browser', support);
+    return '<div class="cr-ai-workspace">' + workspaceHead + tabs + banners + '<div class="cr-ai-chat"><details class="cr-ai-chat__sidebar" id="crAiHistory"' + (state.aiHistoryOpen ? ' open' : '') + '><summary>Conversations <span>' + state.aiThreads.length + '</span></summary><div class="cr-ai-chat__sidehead"><button class="cr-btn cr-btn--primary" type="button" data-action="ai-new-thread"' + (state.pending.aiThreadCreate ? ' disabled' : '') + '>+ New chat</button><label class="sr-only" for="crAiHistorySearch">Search loaded conversations</label><input id="crAiHistorySearch" class="cr-input" type="search" placeholder="Search loaded chats" value="' + ae(state.aiHistorySearch) + '"></div><div class="cr-ai-chat__threads">' + threads + '</div>' + (state.aiThreadHasMore ? '<button class="cr-ai-textbtn" type="button" data-action="ai-more-threads"' + (state.pending.aiMoreThreads ? ' disabled' : '') + '>Load earlier conversations</button>' : '') + '<div class="cr-ai-history__foot"><span>Search covers loaded titles and messages in opened chats.</span><a href="#create:projects" data-nav-route="#create:projects">Open projects</a><span>Linking projects to chats needs implementation.</span></div></details><section class="cr-ai-chat__main"><header class="cr-ai-chat__head"><div><b>' + ae(selected ? selected.title : 'New conversation') + '</b><p>' + (state.aiChatPending ? 'You can start another conversation while this job runs.' : 'Saved across devices through your owner account.') + '</p></div><button class="cr-ai-textbtn" type="button" data-action="ai-refresh-thread">Reconnect</button></header><div class="cr-ai-chat__messages" id="crAiMessages">' + (messageError ? sourceBanner(messageError, 'Conversation') : '') + body + '</div><footer class="cr-ai-chat__composer">' +
+      (state.aiChatError ? '<p class="cr-fail" role="alert">' + ae(state.aiChatError) + '</p>' : '') + (state.aiVoiceError ? '<p class="cr-fail cr-ai-voice-error">' + ae(state.aiVoiceError) + '</p>' : '') +
+      (state.aiReviewOf ? '<div class="cr-ai-notice">Reviewing a saved result. Choose a different worker below.<button class="cr-ai-textbtn" type="button" data-action="ai-cancel-review">Cancel review</button></div>' : '') +
+      '<div class="cr-ai-routing">' + modelSelect + deviceSelect + '</div>' + (problem ? '<p class="cr-ai-route-error" role="status">' + ae(problem) + '</p>' : '') + (!aiRouteSupported() ? '<p class="cr-ai-capability">Device routing needs the updated Core. This deployment uses its existing automatic route.</p>' : '') +
+      '<div class="cr-ai-chat__composerbox"><textarea class="cr-textarea" id="crAiComposer" rows="3" placeholder="Message McCluster…" aria-label="Message McCluster AI"' + (!ready || state.aiChatPending || state.aiVoiceListening ? ' disabled' : '') + '></textarea><div class="cr-ai-composer__actions"><details class="cr-ai-compose-tools" id="crAiComposeTools"><summary>Attachments &amp; tools</summary><div>' + attachRow + browserSwitch + '<p class="cr-muted">Document uploads and project knowledge need implementation. Images use a compatible vision model.</p></div></details><button class="cr-btn cr-btn--voice' + (state.aiVoiceListening ? ' is-listening' : '') + '" type="button" data-action="ai-voice-toggle"' + (!ready || state.aiChatPending || !voiceCaps.recognition ? ' disabled' : '') + ' aria-pressed="' + state.aiVoiceListening + '">' + (state.aiVoiceListening ? 'Stop mic' : 'Talk') + '</button>' +
+      (state.aiChatPending ? '<button class="cr-btn cr-btn--danger" type="button" data-action="ai-stop"' + (!coreToolAvailable('core.ai.turn.stop') || !state.aiChatTask || state.aiChatTask.status === 'submitting' || run && run.stopRequested ? ' disabled' : '') + '>' + (run && run.stopRequested ? 'Stopping…' : 'Stop') + '</button>' : '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-send"' + (!ready || state.aiVoiceListening || problem ? ' disabled' : '') + '>Send</button>') + '</div></div>' +
+      (state.aiVoiceListening || state.aiVoiceSpeaking || state.aiVoiceTranscript ? '<div class="cr-ai-voice-status" role="status"><span>' + (state.aiVoiceListening ? 'Listening…' : state.aiVoiceSpeaking ? 'Speaking reply' : '') + '</span>' + (state.aiVoiceTranscript ? '<span>' + ae(state.aiVoiceTranscript) + '</span>' : '') + (state.aiVoiceSpeaking ? '<button class="cr-ai-textbtn" type="button" data-action="ai-stop-speaking">Stop voice</button>' : '') + '</div>' : '') +
+      '<p class="cr-ai-chat__hint">Enter to send · Shift+Enter for a new line. Talk uses your browser’s speech service. Closing this page leaves accepted work running.</p></footer></section></div></div>';
   }
 
   function publicRecordLink(title, subtitle, href, value, external) {
@@ -2854,6 +3165,9 @@
       var on = entry.view && vw.id === entry.view.id;
       return '<a href="' + esc(vw.route) + '" data-nav-route="' + esc(vw.route) + '"' + (on ? ' class="is-on" aria-current="page"' : "") + '>' + esc(vw.label) + '</a>';
     }).join("") + '</nav>' : "";
+    /* The conversation workspace owns its one page heading. Keep the Home
+       tabs from the shared navigation without a second title above it. */
+    if (entry.leaf.renderer === "home.ask") return tabs + views;
     return '<header class="cr-head"><div class="cr-head__titles"><p class="cr-eyebrow">' + esc(s.label) + '</p><h1 class="cr-h1">' + esc(title) + '</h1></div>' +
       '<div class="cr-head__tools">' + (right || "") + '<button class="cr-btn cr-btn--ghost cr-btn--sm" type="button" data-action="refresh">Refresh</button></div></header>' + tabs + views;
   }
@@ -3180,6 +3494,16 @@
   function render() {
     renderNav(); renderTopStatus();
     var root = $("crSurface"); if (!root) return;
+    /* Progress paints must preserve the draft, focus, setup fields, and the
+       reader's scroll position. Credentials are deliberately excluded. */
+    var aiFields = [], aiFocus = null, aiScroll = null;
+    if (state.surface === "ai" && aiBrowserOwner(state) && !authority.reloading) {
+      root.querySelectorAll("[data-ai-preserve]").forEach(function (input) { aiFields.push({ id: input.id, value: input.value }); });
+      var active = document.activeElement;
+      if (active && active.id && root.contains(active) && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(active.tagName) && active.id !== "crAiCredential") aiFocus = { id: active.id, start: active.selectionStart, end: active.selectionEnd };
+      var oldMessages = $("crAiMessages");
+      if (oldMessages) aiScroll = { thread: oldMessages.getAttribute("data-thread-id"), top: oldMessages.scrollTop, atEnd: oldMessages.scrollHeight - oldMessages.clientHeight - oldMessages.scrollTop < 80 };
+    }
     var section = state.leaf ? state.leaf.section.id : "home";
     /* A page being replaced shows only why (and a way to reload by hand if
        the browser held the reload back). */
@@ -3200,6 +3524,16 @@
     document.body.setAttribute("data-cr-section", section);
     bindNavLinks(root);
     bindSurfaceControls();
+    aiFields.forEach(function (field) { var input = $(field.id); if (input && input.hasAttribute("data-ai-preserve")) input.value = field.value; });
+    if (aiFocus) {
+      var focus = $(aiFocus.id);
+      if (focus && !focus.disabled) { focus.focus({ preventScroll: true }); if (typeof aiFocus.start === "number" && focus.setSelectionRange && !/^(search|email|number)$/.test(focus.type)) { try { focus.setSelectionRange(aiFocus.start, aiFocus.end); } catch (_) {} } }
+    }
+    var messagesMount = $("crAiMessages");
+    if (messagesMount) {
+      messagesMount.setAttribute("data-thread-id", state.selectedAiThreadId || "");
+      messagesMount.scrollTop = !aiScroll || aiScroll.thread !== String(state.selectedAiThreadId || "") || aiScroll.atEnd ? messagesMount.scrollHeight : aiScroll.top;
+    }
     if (state.surface === "analytics" && window.CR.analytics) {
       var analyticsHost = $("crAnalyticsMount");
       if (analyticsHost) {
@@ -3226,9 +3560,10 @@
     /* Create's own sources load when Create is opened, the same way the
        inbox loads a transcript — not behind a button the operator has to
        find first. */
-    if (state.surface === "ai" && state.selectedAiThreadId && !state.aiMessages[state.selectedAiThreadId] && !state.pending["aiMessages:" + state.selectedAiThreadId]) {
+    if (state.surface === "ai" && aiBrowserOwner(state) && state.selectedAiThreadId && !state.aiMessages[state.selectedAiThreadId] && !state.pending["aiMessages:" + state.selectedAiThreadId]) {
       loadAiMessages(state.selectedAiThreadId);
     }
+    if (state.surface === "ai" && aiBrowserOwner(state) && !state.aiDevicesLoaded) loadOwnerDevices(false);
     if (state.surface === "create" && !state.socialAccounts && !state.pending.socialAccounts) {
       state.pending.socialAccounts = true;
       loadSocialAccounts().then(function () { delete state.pending.socialAccounts; });
@@ -3678,8 +4013,89 @@
   function openPalette() { var p = $("crPalette"); p.classList.add("is-open"); p.setAttribute("aria-hidden", "false"); var input = $("crPaletteInput"); input.value = ""; renderPalette(""); setTimeout(function () { input.focus(); }, 0); }
   function closePalette() { var p = $("crPalette"); p.classList.remove("is-open"); p.setAttribute("aria-hidden", "true"); }
 
+  function handleOwnerAiAction(action, el) {
+    var id = el && el.getAttribute("data-id");
+    if (action === "ai-panel") {
+      state.aiPanel = el.getAttribute("data-panel");
+      if (state.aiPanel !== "devices") { state.aiEnrollment = null; state.aiEnrollmentReveal = false; state.aiAddDeviceOpen = false; }
+      render(); if (state.aiPanel === "devices") loadOwnerDevices(true);
+    } else if (action === "ai-new-thread") {
+      stopAiVoiceListening(true); stopAiVoiceSpeech(); state.aiPanel = "chat"; state.aiChatError = null; state.aiReviewOf = null; state.aiAttachments = [];
+      createAiThread().catch(function () {});
+    } else if (action === "ai-select-thread") {
+      stopAiVoiceListening(true); stopAiVoiceSpeech();
+      if (state.selectedAiThreadId) state.aiDrafts[state.selectedAiThreadId] = state.aiChatDraft;
+      state.selectedAiThreadId = id; state.aiPanel = "chat"; state.aiChatDraft = state.aiDrafts[id] || "";
+      state.aiChatError = state.aiRuns[id] && state.aiRuns[id].error || null;
+      state.aiVoiceError = null; state.aiReviewOf = null; state.aiAttachments = []; syncSelectedAiRun(); render();
+    } else if (action === "ai-refresh-thread") {
+      if (state.selectedAiThreadId) loadAiMessages(state.selectedAiThreadId, true);
+      loadOwnerDevices(true);
+    } else if (action === "ai-earlier-messages") {
+      loadEarlierAiMessages(state.selectedAiThreadId);
+    } else if (action === "ai-more-threads") {
+      loadMoreAiThreads();
+    } else if (action === "ai-starter") {
+      state.aiChatDraft = el.getAttribute("data-prompt") || ""; render(); if ($("crAiComposer")) $("crAiComposer").focus();
+    } else if (action === "ai-copy-code") {
+      var code = el.closest(".cr-ai-code"); aiCopyText(code && code.querySelector("code").textContent, el);
+    } else if (action === "ai-copy-message") {
+      var copied = aiMessageById(id); if (copied) aiCopyText(copied.content, el);
+    } else if (action === "ai-retry") {
+      var original = aiMessageById(id), all = aiMessagesFor(state.selectedAiThreadId), user = original;
+      if (original && original.role !== "user") {
+        var turnId = original.metadata && original.metadata.agent_job_id;
+        user = all.find(function (m) { return m.role === "user" && m.metadata && m.metadata.agent_job_id === turnId; });
+        if (!user) user = all.slice(0, all.indexOf(original)).filter(function (m) { return m.role === "user"; }).pop();
+      }
+      if (user) {
+        state.aiAttachments = ((user.metadata && user.metadata.images) || []).filter(aiBase64Valid).map(function (b64) { return { base64: b64, preview: "data:image/jpeg;base64," + b64, bytes: aiBase64Bytes(b64), name: "Retried image" }; });
+        sendAiMessage(user.content, { inputMode: "text", speakReply: false });
+      }
+    } else if (action === "ai-review") {
+      var reviewed = aiMessageById(id); if (!reviewed) return true;
+      state.aiReviewOf = reviewed.metadata && reviewed.metadata.agent_job_id;
+      state.aiRouteSelection = "auto";
+      state.aiChatDraft = "Review this saved answer for accuracy, missing evidence and practical improvements. Explain any corrections clearly.";
+      render(); if ($("crAiDevice")) $("crAiDevice").focus();
+    } else if (action === "ai-cancel-review") {
+      state.aiReviewOf = null; render();
+    } else if (action === "ai-stop") {
+      var threadId = state.selectedAiThreadId, run = selectedAiRun(), task = run && run.task;
+      if (!task || !task.id || !coreToolAvailable("core.ai.turn.stop")) return true;
+      setAiRun(threadId, { stopRequested: true }); render();
+      callCoreTool("core.ai.turn.stop", { org_id: state.org.id, turn_id: task.id }).then(function () {
+        setAiRun(threadId, { pending: false, task: Object.assign({}, task, { status: "canceled" }), progress: null, stopped: true });
+        render(); return loadAiMessages(threadId, true);
+      }).catch(function (error) { setAiRun(threadId, { stopRequested: false }); if (state.selectedAiThreadId === threadId) state.aiChatError = error.message || "Stop was not confirmed. Reconnect to check the run."; render(); });
+    } else if (action === "ai-refresh-devices") loadOwnerDevices(true);
+    else if (action === "ai-add-device") { state.aiAddDeviceOpen = true; state.aiEnrollment = null; state.aiDeviceError = null; render(); }
+    else if (action === "ai-enroll") issueAiEnrollment(null);
+    else if (action === "ai-finish-enrollment") issueAiEnrollment(id);
+    else if (action === "ai-forget-enrollment") { state.aiEnrollment = null; state.aiEnrollmentReveal = false; state.aiAddDeviceOpen = false; render(); }
+    else if (action === "ai-reveal-credential") { state.aiEnrollmentReveal = !state.aiEnrollmentReveal; render(); }
+    else if (action === "ai-copy-credential") { if (state.aiEnrollment && state.aiEnrollment.credential) aiCopyText(state.aiEnrollment.credential, el); }
+    else if (action === "ai-copy-setup-command") aiCopyText($("crAiSetupCommand") && $("crAiSetupCommand").textContent, el);
+    else if (action === "ai-download-setup") aiSetupDownload();
+    else if (action === "ai-copy-cleanup") { var heldDevice = state.aiDevices.find(function (device) { return OWNER_AI.deviceId(device) === id; }); aiCopyText(OWNER_AI.cleanupCommand(heldDevice), el); }
+    else if (action === "ai-device-rename") { state.aiRenameId = id; render(); }
+    else if (action === "ai-device-save-name") mutateAiDevice(id, "rename");
+    else if (action === "ai-device-pause") mutateAiDevice(id, "pause");
+    else if (action === "ai-device-resume") mutateAiDevice(id, "resume");
+    else if (action === "ai-device-test") testAiDevice(id);
+    else if (action === "ai-device-revoke") { state.aiRevokeId = id; render(); }
+    else if (action === "ai-device-cancel-revoke") { state.aiRevokeId = null; render(); }
+    else if (action === "ai-device-confirm-revoke") mutateAiDevice(id, "revoke");
+    else if (action === "ai-pair-create") { state.aiCreatePairOpen = true; render(); }
+    else if (action === "ai-pair-save") createAiPair();
+    else if (action === "ai-pair-benchmark") benchmarkAiPair(id);
+    else return false;
+    return true;
+  }
+
   function runAction(action, el) {
     if (!action) return;
+    if (action.indexOf("ai-") === 0 && handleOwnerAiAction(action, el)) return;
     if (action.indexOf("open-bridge:") === 0) { openBridge(action.split(":")[1]); return; }
     /* Generation owns its own actions; everything else falls through. */
     if (window.CR.media.handleAction(action, el)) return;
@@ -4276,10 +4692,24 @@
     }
     var aiAttach = $("crAiAttach");
     if (aiAttach) aiAttach.addEventListener("change", function () { addAiAttachments(aiAttach.files); });
+    var aiHistory = $("crAiHistory");
+    if (aiHistory) aiHistory.addEventListener("toggle", function () { if (aiHistory.isConnected) state.aiHistoryOpen = aiHistory.open; });
+    var aiTools = $("crAiComposeTools");
+    if (aiTools) { aiTools.open = state.aiToolsOpen; aiTools.addEventListener("toggle", function () { if (aiTools.isConnected) state.aiToolsOpen = aiTools.open; }); }
+    var aiSearch = $("crAiHistorySearch");
+    if (aiSearch) aiSearch.addEventListener("input", function () {
+      state.aiHistorySearch = aiSearch.value;
+      var query = aiSearch.value.trim().toLowerCase();
+      document.querySelectorAll("[data-ai-history-search]").forEach(function (item) { item.hidden = query && item.getAttribute("data-ai-history-search").indexOf(query) < 0; });
+    });
+    var aiModel = $("crAiModel");
+    if (aiModel) aiModel.addEventListener("change", function () { state.aiImplementation = aiModel.value; render(); });
+    var aiDevice = $("crAiDevice");
+    if (aiDevice) aiDevice.addEventListener("change", function () { state.aiRouteSelection = aiDevice.value; state.aiChatError = null; render(); });
     var aiComposerInput = $("crAiComposer");
     if (aiComposerInput) {
       aiComposerInput.value = state.aiChatDraft || "";
-      aiComposerInput.addEventListener("input", function () { state.aiChatDraft = aiComposerInput.value; });
+      aiComposerInput.addEventListener("input", function () { state.aiChatDraft = aiComposerInput.value; if (state.selectedAiThreadId) state.aiDrafts[state.selectedAiThreadId] = aiComposerInput.value; });
       aiComposerInput.addEventListener("keydown", function (e) {
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
@@ -4666,6 +5096,7 @@
       if (state.sources.leads.ok) state.sources.leads = okResult(state.leads);
       state.siteRequests = rowsOf(state.sources.siteRequests); state.jobs = rowsOf(state.sources.jobs);
       state.aiThreads = rowsOf(state.sources.aiThreads);
+      state.aiThreadOffset = state.aiThreads.length; state.aiThreadHasMore = state.aiThreads.length === 100;
       if (state.selectedAiThreadId && !aiThreadById(state.selectedAiThreadId)) state.selectedAiThreadId = null;
       if (!state.selectedAiThreadId && state.aiThreads.length) state.selectedAiThreadId = state.aiThreads[0].id;
       state.mediaAssets = rowsOf(state.sources.mediaAssets); state.mediaJobs = rowsOf(state.sources.mediaJobs);
@@ -4714,7 +5145,7 @@
       if (location.hash === state.route) return;
       var before = state.surface;
       readHash(); setHash(true);
-      if (before === "ai" && state.surface !== "ai") { stopAiVoiceListening(true); stopAiVoiceSpeech(); }
+      if (before === "ai" && state.surface !== "ai") { stopAiVoiceListening(true); stopAiVoiceSpeech(); state.aiEnrollment = null; state.aiEnrollmentReveal = false; state.aiAddDeviceOpen = false; }
       state.selectedProjectId = null; closeInspector(); closeMore(); render();
     });
   }
@@ -4763,6 +5194,6 @@
     }
   });
 
-  function init() { bindAuthorityLifecycle(); bindAuth(); bindShell(); bindActions(document); tryResume(); setTimeout(tryResume, 700); }
+  function init() { state.aiHistoryOpen = Boolean(window.matchMedia && window.matchMedia("(min-width:960px)").matches); bindAuthorityLifecycle(); bindAuth(); bindShell(); bindActions(document); tryResume(); setTimeout(tryResume, 700); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

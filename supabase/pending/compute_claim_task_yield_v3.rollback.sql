@@ -1,9 +1,88 @@
+-- Equity Uprise shared-platform compute support; no independent building capability.
 -- Rollback of compute_claim_task_yield_v3.sql: drop the 5-argument function and
 -- recreate the applied v2 4-argument public.compute_claim_task verbatim
 -- (supabase/migrations/20261020210718_compute_lease_authority_v2.sql, lines
 -- 12-160: the function, its revoke and its grant). After this, a claim that
 -- sends p_yield_seconds fails with undefined_function, which
 -- core/src/compute/store.mjs tolerates by dropping the parameter.
+-- The migration runner owns the transaction. This lock serializes scheduler
+-- migrations and their recovery scripts; it does not serialize ordinary jobs.
+-- Reject transaction-wide snapshots before any lock wait or catalog/data read.
+-- Recovery must observe rows committed while it waits for ordinary writers.
+do $compute_migration_isolation$
+begin
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception using errcode='55000',message='COMPUTE_READ_COMMITTED_REQUIRED: fresh snapshots are required for migration and recovery checks';
+  end if;
+end $compute_migration_isolation$;
+set local lock_timeout = '5s';
+select pg_advisory_xact_lock(821,20261122);
+do $yield_preflight$
+declare expected record;actual record;function_oid oid;present_count integer:=0;legacy_matched integer:=0;
+begin
+  if to_regprocedure('public.compute_owner_workspace_status()') is not null
+    or to_regprocedure('public.compute_claim_task_v4(text,text[],text[],integer)') is not null
+    or to_regclass('public.ops_compute_pairs') is not null
+    or to_regclass('public.ops_compute_pair_reservations') is not null
+    or exists(select 1 from pg_attribute where attrelid='public.ops_compute_nodes'::regclass
+      and attname in('pair_cleanup_required','pair_cleanup_details') and not attisdropped) then
+    raise exception using errcode='55000',message='COMPUTE_WORKSPACE_YIELD_CONFLICT: workspace and legacy yield schedulers cannot overwrite each other';
+  end if;
+  if exists(select 1 from pg_proc where oid=to_regprocedure('public.compute_claim_task(text,text[],text[],integer)') and encode(sha256(convert_to(prosrc,'UTF8')),'hex')='f58ca22a92c5950fe79adb88e1b0f64d0a815f2e42a90c88aea8ae251df8dc15') then
+  for expected in select * from (values
+      ('compute_claim_task','compute_claim_task(text,text[],text[],integer)','f58ca22a92c5950fe79adb88e1b0f64d0a815f2e42a90c88aea8ae251df8dc15','plpgsql',true,'public, extensions, pg_temp',array['p_node_id','p_capabilities','p_implementations','p_lease_seconds']::text[],1,'120','jsonb')
+    ) as signatures(name,signature,body_sha,language_name,is_definer,search_path,arg_names,default_count,default_sql,return_type) loop
+    function_oid := to_regprocedure('public.'||expected.signature);
+    if (select count(*) from pg_proc where pronamespace='public'::regnamespace and proname=expected.name) > 1 then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: unexpected overload '||expected.name;
+    end if;
+    if function_oid is null then raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: missing reviewed function '||expected.signature; end if;
+    select p.*,l.lanname into actual from pg_proc p join pg_language l on l.oid=p.prolang where p.oid=function_oid;
+    if encode(sha256(convert_to(actual.prosrc,'UTF8')),'hex') <> expected.body_sha
+      or actual.lanname <> expected.language_name or actual.prosecdef is distinct from expected.is_definer
+      or actual.proconfig is distinct from array['search_path='||expected.search_path]
+      or coalesce(actual.proargnames,'{}'::text[]) is distinct from expected.arg_names
+      or actual.pronargdefaults <> expected.default_count
+      or coalesce(pg_get_expr(actual.proargdefaults,0),'') <> expected.default_sql
+      or actual.prorettype <> expected.return_type::regtype or actual.proretset
+      or actual.prokind <> 'f' or actual.proisstrict or actual.proleakproof
+      or actual.provolatile <> 'v' or actual.proparallel <> 'u'
+      or pg_get_userbyid(actual.proowner) <> 'postgres' then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: reviewed function changed '||expected.signature;
+    end if;
+    present_count := present_count + 1;
+  end loop;
+    legacy_matched := legacy_matched + 1;
+  end if;
+  if exists(select 1 from pg_proc where oid=to_regprocedure('public.compute_claim_task(text,text[],text[],integer,integer)') and encode(sha256(convert_to(prosrc,'UTF8')),'hex')='77c49d0d2fabe6f9b6e47e21bdfdd6136e2e527642edde9a0a7cc07b0b4d646a') then
+  for expected in select * from (values
+      ('compute_claim_task','compute_claim_task(text,text[],text[],integer,integer)','77c49d0d2fabe6f9b6e47e21bdfdd6136e2e527642edde9a0a7cc07b0b4d646a','plpgsql',true,'public, extensions, pg_temp',array['p_node_id','p_capabilities','p_implementations','p_lease_seconds','p_yield_seconds']::text[],2,'120, 0','jsonb')
+    ) as signatures(name,signature,body_sha,language_name,is_definer,search_path,arg_names,default_count,default_sql,return_type) loop
+    function_oid := to_regprocedure('public.'||expected.signature);
+    if (select count(*) from pg_proc where pronamespace='public'::regnamespace and proname=expected.name) > 1 then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: unexpected overload '||expected.name;
+    end if;
+    if function_oid is null then raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: missing reviewed function '||expected.signature; end if;
+    select p.*,l.lanname into actual from pg_proc p join pg_language l on l.oid=p.prolang where p.oid=function_oid;
+    if encode(sha256(convert_to(actual.prosrc,'UTF8')),'hex') <> expected.body_sha
+      or actual.lanname <> expected.language_name or actual.prosecdef is distinct from expected.is_definer
+      or actual.proconfig is distinct from array['search_path='||expected.search_path]
+      or coalesce(actual.proargnames,'{}'::text[]) is distinct from expected.arg_names
+      or actual.pronargdefaults <> expected.default_count
+      or coalesce(pg_get_expr(actual.proargdefaults,0),'') <> expected.default_sql
+      or actual.prorettype <> expected.return_type::regtype or actual.proretset
+      or actual.prokind <> 'f' or actual.proisstrict or actual.proleakproof
+      or actual.provolatile <> 'v' or actual.proparallel <> 'u'
+      or pg_get_userbyid(actual.proowner) <> 'postgres' then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: reviewed function changed '||expected.signature;
+    end if;
+    present_count := present_count + 1;
+  end loop;
+    legacy_matched := legacy_matched + 1;
+  end if;
+  if legacy_matched <> 1 then raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: claim scheduler is not an exact reviewed version'; end if;
+end $yield_preflight$;
+
 drop function if exists public.compute_claim_task(text,text[],text[],integer,integer);
 create or replace function public.compute_claim_task(
   p_node_id text,

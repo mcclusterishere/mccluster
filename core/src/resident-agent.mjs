@@ -61,7 +61,7 @@ function recordBrowser(browser, result) {
   while (browser.action_log.length > ACTION_LOG_ENTRIES || JSON.stringify(browser.action_log).length > ACTION_LOG_CHARS) { browser.action_log.shift(); browser.action_log_dropped += 1; }
 }
 
-export async function runResidentAgent({ messages, context, metadata, checkpoint = async () => {}, maxRounds = 3, maxCalls = 6, deadlineMs = 240000, numCtx = 16384, implementation, route = 'auto', requirements, tools }, dependencies = {}) {
+export async function runResidentAgent({ messages, context, metadata, checkpoint = async () => {}, maxRounds = 3, maxCalls = 6, deadlineMs = 240000, numCtx = 16384, implementation, route = 'auto', requirements, tools, ownerRoute, ownerExecution, signal, onProgress, onTask }, dependencies = {}) {
   const chat = dependencies.chat || localAiChat;
   const execute = dependencies.execute || executeResidentTool;
   const toolList = tools || residentToolsFor(context);
@@ -74,19 +74,28 @@ export async function runResidentAgent({ messages, context, metadata, checkpoint
   const deadline = started + Math.max(30000, Number(deadlineMs) || 240000);
   const scope = { ...context, turnDeadline: deadline };
   for (let round = 0; round <= maxRounds; round += 1) {
+    if (signal?.aborted) throw signal.reason;
     const allowTools = round < maxRounds && calls < maxCalls && Date.now() < deadline - 30000;
     const response = await chat({
       messages: history, tools: allowTools ? toolList : undefined,
       think: false, temperature: 0.3, numCtx, numPredict: allowTools ? 1024 : 1536,
-      timeoutMs: Math.max(30000, deadline - Date.now()), priority: 100, metadata,
+      timeoutMs: Math.max(30000, deadline - Date.now()), priority: 100, metadata: { ...metadata, round },
+      ...(ownerRoute ? { ownerRoute, ownerExecution, orgId: context.orgId, onProgress: update => onProgress?.({ ...update, round }), onTask } : {}),
+      ...(signal ? { signal } : {}),
       ...(implementation ? { implementation } : {}), ...(route !== 'auto' ? { route } : {}), ...(requirements ? { requirements } : {}),
     });
+    if (signal?.aborted) throw signal.reason;
     measurements.push({ round, model: response.model, implementation: response.implementation ?? null, queue_wait_ms: response.queue_wait_ms, usage: response.usage || {}, settings: response.settings, done_reason: response.done_reason, node: response.node ?? null });
     const requested = response.message?.tool_calls || [];
     if (!requested.length) return { ...response, tool_receipts: receipts, inference_rounds: measurements, duration_ms: Date.now() - started, ...(browser.tasks.length ? { browser } : {}) };
     if (!allowTools) throw new Error('Model requested tools after its execution budget was exhausted');
     history.push(response.message);
     for (const call of requested) {
+      if (signal?.aborted) throw signal.reason;
+      // Workspace checkpoints verify the current durable job lease, including
+      // an owner Stop that happened after the model returned its tool calls.
+      if (ownerRoute) await checkpoint(receipts);
+      if (signal?.aborted) throw signal.reason;
       const name = String(call.function?.name || '');
       let result, args;
       const toolStarted = Date.now();

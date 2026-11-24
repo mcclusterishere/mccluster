@@ -324,6 +324,16 @@ jobs:
             psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/ai_context_workstreams_v1.integration.sql
             psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/pending/ai_context_workstreams_v1.rollback.sql
           done
+      - name: Prove owner enrollment and workspace against the full reset
+        # Native sessions exercise real row-lock waits, browser-role denials,
+        # pending-migration conflicts and data-preserving rollback/reapply.
+        # The runner checks the exact reset ledger before applying either file.
+        # Run last: historical synthetic fixtures remain in this disposable
+        # database until stack shutdown; later checks must see canonical state.
+        env:
+          POSTGRES_MODULE_PATH: ${{ runner.temp }}/native-admin-tools/node_modules/postgres/src/index.js
+          NATIVE_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: node scripts/owner-workspace-native-check.mjs --full-reset
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true

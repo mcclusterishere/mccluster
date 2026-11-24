@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { rest } from './supabase.mjs';
 import { validateChatImages } from './compute/ai-chat-images.mjs';
+import { assertWorkspaceSchema, normalizeOwnerRoute, requireWorkspaceOwner, workspaceError } from './compute/owner-routing.mjs';
 
 // Images per chat turn (ai.chat itself takes four; a turn carries at most two).
 export const TURN_IMAGE_CAP = 2;
@@ -43,13 +44,14 @@ function normalizeImages(images, content) {
   return images;
 }
 
-export async function submitResidentAiTurn({ orgId, threadId, messageId, content, inputMode = 'text', images, allowBrowser = false, actor } = {}, { restImpl = rest } = {}) {
+export async function submitResidentAiTurn({ orgId, threadId, messageId, content, inputMode = 'text', images, allowBrowser = false, actor, route, reviewOfTurnId } = {}, { restImpl = rest } = {}) {
   const org = requireUuid(orgId, 'org_id');
   const thread = requireUuid(threadId, 'thread_id');
   const userMessageId = requireUuid(messageId, 'message_id');
   const assistantMessageId = randomUUID();
   const body = clean(content, 12000);
   if (!body) throw Object.assign(new Error('content is required'), { status: 400 });
+  if (route !== undefined) return submitWorkspaceTurn({ orgId: org, threadId: thread, messageId: userMessageId, assistantMessageId, content: body, inputMode, images, allowBrowser, actor, route, reviewOfTurnId }, { restImpl });
   const mode = inputMode === 'voice' ? 'voice' : 'text';
   const browser = allowBrowser === true;
   const actorUserId = browser ? requireOwnerActor(actor) : (UUID.test(clean(actor?.user_id, 100)) ? clean(actor.user_id, 100) : null);
@@ -123,7 +125,7 @@ export async function submitResidentAiTurn({ orgId, threadId, messageId, content
   };
 }
 
-export async function getResidentAiTurn({ orgId, turnId } = {}) {
+export async function getResidentAiTurn({ orgId, turnId } = {}, { restImpl = rest } = {}) {
   const org = requireUuid(orgId, 'org_id');
   const turn = requireUuid(turnId, 'turn_id');
   const params = new URLSearchParams({
@@ -133,7 +135,7 @@ export async function getResidentAiTurn({ orgId, turnId } = {}) {
     select: '*',
     limit: '1',
   });
-  const { body: jobs = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  const { body: jobs = [] } = await restImpl(`ops_agent_jobs?${params.toString()}`);
   const job = Array.isArray(jobs) ? jobs[0] : null;
   if (!job) throw Object.assign(new Error('Resident AI turn not found'), { status: 404 });
 
@@ -148,13 +150,53 @@ export async function getResidentAiTurn({ orgId, turnId } = {}) {
       select: '*',
       order: 'created_at.asc',
     });
-    const result = await rest(`ops_ai_messages?${messageParams.toString()}`);
+    const result = await restImpl(`ops_ai_messages?${messageParams.toString()}`);
     messages = Array.isArray(result.body) ? result.body : [];
   }
 
+  const user = messages.find((message) => String(message.id) === userId) || null;
+  const progress = user?.metadata?.workspace_progress || null;
   return {
+    ...(progress ? { progress: { ...progress, status: job.status === 'canceled' ? 'canceled' : progress.status } } : {}),
     turn: job,
     user_message: messages.find((message) => String(message.id) === userId) || null,
     assistant_message: messages.find((message) => String(message.id) === assistantId) || null,
   };
+}
+
+
+async function submitWorkspaceTurn({ orgId, threadId, messageId, assistantMessageId, content, inputMode, images, allowBrowser, actor, route, reviewOfTurnId }, { restImpl }) {
+  requireWorkspaceOwner(orgId, actor);
+  await assertWorkspaceSchema(restImpl);
+  const requestedRoute = normalizeOwnerRoute(route);
+  const turnImages = normalizeImages(images, content);
+  if ((turnImages.length || allowBrowser === true) && !requestedRoute.implementation.includes('-vl.')) throw workspaceError('AI_MODEL_NEEDS_VISION', 'Choose a connected vision model to use images or the browser.', 400);
+  let reviewSource = null;
+  if (reviewOfTurnId) {
+    const previous = await getResidentAiTurn({ orgId, turnId: requireUuid(reviewOfTurnId, 'review_of_turn_id') }, { restImpl });
+    const answer = previous.assistant_message;
+    const sourceNode = answer?.metadata?.node?.node_id;
+    if (!answer || answer.metadata?.inference === 'refused' || !sourceNode) throw workspaceError('AI_REVIEW_NOT_READY', 'Only a completed answer with a verified device receipt can be reviewed.');
+    if (requestedRoute.mode !== 'node' || requestedRoute.node_id === sourceNode) throw workspaceError('AI_REVIEW_DEVICE_REQUIRED', 'Choose a different worker for this review.');
+    reviewSource = { turn_id: reviewOfTurnId, message_id: answer.id, node_id: sourceNode };
+  }
+  const metadata = {
+    input_mode: inputMode === 'voice' ? 'voice' : 'text', execution_kind: 'resident_ai_turn',
+    agent_job_id: messageId, task_status: 'queued', workspace_route: requestedRoute,
+    actor_user_id: actor.user_id, actor_kind: 'owner', allow_browser: allowBrowser === true,
+    ...(turnImages.length ? { images: turnImages } : {}),
+    ...(reviewSource ? { review_of_turn_id: reviewOfTurnId, review_source: reviewSource } : {}),
+  };
+  const { body: row } = await restImpl('rpc/ops_ai_submit_workspace_turn', { method: 'POST', body: JSON.stringify({
+    p_org_id: orgId, p_thread_id: threadId, p_user_message_id: messageId, p_assistant_message_id: assistantMessageId, p_content: content, p_metadata: metadata,
+  }) });
+  if (!row?.job_id) throw workspaceError('AI_TURN_NOT_QUEUED', 'Core could not durably queue this turn.', 503);
+  return { queued: true, turn_id: row.job_id, job_status: row.job_status, thread_id: threadId, user_message_id: row.user_message_id, assistant_message_id: row.assistant_message_id, route: requestedRoute };
+}
+
+export async function stopResidentAiTurn({ orgId, turnId, actor } = {}, { restImpl = rest } = {}) {
+  requireWorkspaceOwner(orgId, actor);
+  await assertWorkspaceSchema(restImpl);
+  const { body } = await restImpl('rpc/ops_ai_stop_workspace_turn', { method: 'POST', body: JSON.stringify({ p_org_id: requireUuid(orgId, 'org_id'), p_turn_id: requireUuid(turnId, 'turn_id') }) });
+  return body;
 }

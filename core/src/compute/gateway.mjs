@@ -3,6 +3,7 @@ import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, clampYieldSeconds, claimableMa
 import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedRequest } from './signature.mjs';
 import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
 import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
+import { consumeScopedEnrollment, constrainScopedHeartbeat, isScopedEnrollmentCredential, acknowledgePairCleanup } from './devices.mjs';
 
 const HOST = process.env.CORE_COMPUTE_HOST || '127.0.0.1';
 const PORT = Number(process.env.CORE_COMPUTE_PORT || 4788);
@@ -64,7 +65,9 @@ function adminOrg(requested) {
 }
 
 async function authenticateNode(req, url, bodyBytes) {
-  const nodeId = validateNodeId(req.headers[SIGNATURE_HEADERS.node]);
+  let nodeId;
+  try { nodeId = validateNodeId(req.headers[SIGNATURE_HEADERS.node]); }
+  catch { throw Object.assign(new Error('A signed enrolled device is required.'), { status: 401, code: 'MISSING_SIGNATURE' }); }
   const node = await nodeById(nodeId);
   if (!node) throw Object.assign(new Error('Unknown compute node'), { status: 401, code: 'UNKNOWN_NODE' });
   if (node.state === 'revoked' || node.revoked_at) throw Object.assign(new Error('Compute node is revoked'), { status: 403, code: 'NODE_REVOKED' });
@@ -104,6 +107,21 @@ async function route(req, res) {
   const body = parseJson(bodyBytes);
 
   if (url.pathname === '/v1/compute/enroll' && req.method === 'POST') {
+    const credential = bearer(req);
+    if (isScopedEnrollmentCredential(credential)) {
+      const record = await consumeScopedEnrollment(credential, body);
+      return json(res, 201, {
+        node_id: record.id,
+        protocol: COMPUTE_PROTOCOL,
+        heartbeat_seconds: Number(process.env.CORE_COMPUTE_HEARTBEAT_SECONDS || 30),
+        lease_seconds: Number(process.env.CORE_COMPUTE_LEASE_SECONDS || 120)
+      });
+    }
+    // Existing workers keep their signed identity. The owner workspace rollout
+    // closes shared-token bootstrap unless an operator explicitly preserves it.
+    if (process.env.CORE_OWNER_AI_WORKSPACE_ENABLED === '1' && process.env.CORE_COMPUTE_ALLOW_LEGACY_ENROLL !== '1') {
+      throw Object.assign(new Error('Create a single-use enrollment credential in Devices.'), { status: 401, code: 'SCOPED_ENROLLMENT_REQUIRED' });
+    }
     requireSecret(req, 'CORE_COMPUTE_ENROLL_TOKEN', 'Compute enrollment');
     const enrollment = validateEnrollment(body);
     const scopedOrg = adminOrg(enrollment.org_id);
@@ -166,19 +184,27 @@ async function route(req, res) {
 
   const node = await authenticateNode(req, url, bodyBytes);
 
+  if (url.pathname === '/v1/compute/pair-cleanup' && req.method === 'POST') {
+    return json(res, 200, { ok: true, ...await acknowledgePairCleanup(node, body) });
+  }
+
   if (url.pathname === '/v1/compute/heartbeat' && req.method === 'POST') {
     const capabilities = body.capabilities ? validateCapabilityManifest(body.capabilities) : undefined;
     const inventory = body.inventory ? validateInventory(body.inventory) : undefined;
     const load = body.load ? validateLoad(body.load) : undefined;
+    const scoped = constrainScopedHeartbeat(node, {
+      capabilities, maxLeases: body.max_leases,
+      labels: body.labels && typeof body.labels === 'object' && !Array.isArray(body.labels) ? heartbeatLabels(node.labels, body.labels) : undefined
+    });
     const updated = await heartbeatNode(node.id, {
-      capabilities,
+      capabilities: scoped.capabilities,
       inventory,
       load,
       // A heartbeat is signed by the node's own key only: trust, role and the
       // enrolment record keep what the owner-gated enrolment stored.
-      labels: body.labels && typeof body.labels === 'object' && !Array.isArray(body.labels) ? heartbeatLabels(node.labels, body.labels) : undefined,
+      labels: scoped.labels,
       agentVersion: body.agent_version,
-      maxLeases: body.max_leases
+      maxLeases: scoped.maxLeases
     });
     // Other live gpu-verified nodes, so a CPU node can leave fresh tasks to
     // them (MCCLUSTER_NODE_YIELD_TO_GPU_MS). A failed read never fails the heartbeat.

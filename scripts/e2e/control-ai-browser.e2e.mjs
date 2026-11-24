@@ -15,7 +15,7 @@
    core/capabilities/catalog.json) for a Core that honours images and the browser flag, and the schemas of the
    Core on OVH at build eb942248 for one that does not. Against that older Core, at 390 and 1280, the owner
    sees no attach control and no switch, one honest line in place of each, and a turn sent carries neither
-   images nor allow_browser; a member sees the images line and nothing about the browser. When the tool list cannot be read
+   images nor allow_browser; a member sees the owner-only workspace gate. When the tool list cannot be read
    at all (the bridge answers 503), nothing is known about the Core: the controls stay off and each line says it is not
    known, never that the Core refuses (review LDR-F3, 2026-11-18).
 
@@ -39,7 +39,13 @@ const TOOLS = ['core.resume', 'ai.chat', 'compute.task.get', 'core.ai.turn.submi
 /* The input schemas the bridge's tools/list carries. 'current': this checkout's Core, as the broker lists it (raw tools
    from core/src/tools/control.mjs, capabilities from core/capabilities/catalog.json). 'eb942248': the Core on OVH at that
    build, copied from its two files: no images and no allow_browser on the durable turn, ai.chat's messages a bare array. */
+/* This N2 fixture represents the existing automatic vision path. The new
+   device-routing rollout has its own owner-ai-workspace acceptance tests. */
+const previousOwnerWorkspaceFlag = process.env.CORE_OWNER_AI_WORKSPACE_ENABLED;
+process.env.CORE_OWNER_AI_WORKSPACE_ENABLED = '0';
 const { CONTROL_TOOLS } = await import(pathToFileURL(join(ROOT, 'core/src/tools/control.mjs')).href);
+if (previousOwnerWorkspaceFlag === undefined) delete process.env.CORE_OWNER_AI_WORKSPACE_ENABLED;
+else process.env.CORE_OWNER_AI_WORKSPACE_ENABLED = previousOwnerWorkspaceFlag;
 const CATALOG = JSON.parse(await readFile(join(ROOT, 'core/capabilities/catalog.json'), 'utf8'));
 const SCHEMAS = {
   current: Object.fromEntries([
@@ -214,6 +220,7 @@ try {
     check(S, 'no horizontal overflow with the thread rendered', (await overflow(page)) === 0, await overflow(page));
     await page.screenshot({ path: join(OUT, `ask-thread-${vp.width}.png`) });
     /* the owner's switch, honest about readiness, off by default */
+    await page.locator('#crAiComposeTools > summary').click();
     const sw = page.locator('[data-action="ai-browser-toggle"]');
     check(S, 'the owner sees the "Use the browser" switch, off, with the readiness line from the last browser turn', (await sw.count()) === 1 && (await sw.getAttribute('aria-checked')) === 'false' && (await sw.getAttribute('role')) === 'switch' && (await page.locator('[data-ai-browser-ready="ready"]').count()) === 1);
     /* attach the big PNG: downscaled on the client */
@@ -282,7 +289,8 @@ try {
     /* the tool list could not be read (review LDR-F3): the page does not know what the Core accepts, and says so */
     const S = '390px owner, tool list unreadable';
     const app = await setup({ width: 390, height: 844 }, { core: 'down' }); const { page, submits } = app;
-    await page.waitForSelector('[data-ai-capability="images"]', { timeout: 30000 });
+    await page.waitForSelector('[data-ai-capability="images"]', { timeout: 30000, state: 'attached' });
+    await page.locator('#crAiComposeTools > summary').click();
     await page.waitForSelector('.cr-source', { timeout: 15000 }).catch(() => {});
     const off = await composer(page);
     const basis = await page.evaluate(() => [...document.querySelectorAll('[data-ai-capability]')].map((l) => l.getAttribute('data-ai-capability-basis') + ' ' + l.getAttribute('title')));
@@ -304,19 +312,19 @@ try {
   {
     const S = '390px member, Core eb942248';
     const app = await setup({ width: 390, height: 844 }, { owner: false, core: 'eb942248' }); const { page } = app;
-    await page.waitForSelector('#crAiComposer', { timeout: 30000 });
+    await page.waitForSelector('.cr-ai-owner-gate', { timeout: 30000 });
     await page.waitForTimeout(1500);
     const off = await composer(page);
-    check(S, 'a member sees the images line and nothing about the owner\'s browser', off.attach === 0 && !!off.images && off.switch === 0 && !off.browser, off);
+    check(S, 'a member sees no owner composer or private controls', off.attach === 0 && !off.images && off.switch === 0 && !off.browser && await page.locator('#crAiComposer').count() === 0, off);
     await app.ctx.close();
   }
   {
     const S = '390px member';
     const app = await setup({ width: 390, height: 844 }, { owner: false }); const { page, submits } = app;
-    await page.waitForSelector('#crAiComposer', { timeout: 30000 });
+    await page.waitForSelector('.cr-ai-owner-gate', { timeout: 30000 });
     await page.waitForTimeout(1500);
     check(S, 'a member never sees the browser switch', (await page.locator('[data-action="ai-browser-toggle"]').count()) === 0);
-    check(S, 'the attach control is still there (images are not owner-only)', (await page.locator('[data-action="ai-attach"]').count()) === 1);
+    check(S, 'the owner workspace hides the composer and attachments', (await page.locator('[data-action="ai-attach"]').count()) === 0 && (await page.locator('#crAiComposer').count()) === 0);
     check(S, 'nothing was submitted', submits.length === 0);
     check(S, 'no horizontal overflow', (await overflow(page)) === 0, await overflow(page));
     await page.screenshot({ path: join(OUT, 'ask-member-390.png') });

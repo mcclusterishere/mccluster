@@ -28,7 +28,7 @@ export const ROOT = process.env.AUTH_TEST_SOURCE_ROOT || new URL('../../../', im
 const read = path => readFileSync(join(ROOT, path), 'utf8');
 
 export const PRINCIPALS = {
-  'owner-a': { marker: 'AVOCADO', org: 'org-avocado', email: 'a@fixture.invalid' },
+  'owner-a': { marker: 'AVOCADO', org: 'org-avocado', slug: 'mccluster', email: 'a@fixture.invalid' },
   'member-b': { marker: 'BLUEBIRD', org: 'org-bluebird', email: 'b@fixture.invalid' }
 };
 export const MARKERS = { A: 'AVOCADO', B: 'BLUEBIRD' };
@@ -103,7 +103,7 @@ class El {
   addEventListener(type, fn) { if (!this.listeners.has(type)) this.listeners.set(type, []); this.listeners.get(type).push(fn); }
   removeEventListener() {}
   dispatch(type, init = {}) { for (const fn of this.listeners.get(type) || []) fn({ type, target: this, preventDefault() {}, stopPropagation() {}, ...init }); }
-  click() { this.dispatch('click', { button: 0 }); }
+  click() { if (!this.disabled) this.dispatch('click', { button: 0 }); }
   querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
   querySelectorAll(sel) { const test = matcher(sel); return children(this).filter(test); }
   closest() { return null; }
@@ -130,7 +130,7 @@ function answer(sub, method, url, body) {
   const P = PRINCIPALS[sub]; if (!P) return { status: 401, body: { error: 'unauthorized' } };
   const M = P.marker, now = new Date().toISOString(), u = new URL(url), p = u.pathname;
   if (u.hostname === 'api.mccluster.org') {
-    if (p === '/v1/workspaces/me') return { body: { ok: true, profile: { id: sub }, default_org_id: P.org, workspaces: [{ org_id: P.org, slug: 'ws-' + M.toLowerCase(), kind: 'studio', role: 'owner', enabled: true, name: M + ' workspace' }] } };
+    if (p === '/v1/workspaces/me') return { body: { ok: true, profile: { id: sub }, default_org_id: P.org, workspaces: [{ org_id: P.org, slug: P.slug || 'ws-' + M.toLowerCase(), kind: 'studio', role: 'owner', enabled: true, name: M + ' workspace' }] } };
     if (p === '/v1/status') return { body: { ok: true, operator: { email: M + '-operator@fixture.invalid' }, database: { reachable: true } } };
     if (p === '/v1/core') return { body: { ok: true, signed_dispatch: true } };
     if (p === '/v1/core/mcp') {
@@ -177,12 +177,12 @@ const abortError = () => Object.assign(new Error('The operation was aborted.'), 
 
 /* Opens control.html#<hash> for whoever the shared storage holds. `storage`
    (a Map) is shared between pages to simulate a reload or a second tab. */
-export async function openControl({ hash = '#home:today', storage = new Map(), search = '', hold = null, sessionStore = new Map() } = {}) {
+export async function openControl({ hash = '#home:today', storage = new Map(), search = '', hold = null, sessionStore = new Map(), initialOverrides = [] } = {}) {
   const elements = staticElements();
   const dynamic = new Map();
   const listeners = new Map();
   const fetchLog = [];
-  const holds = [], overrides = [];
+  const holds = [], overrides = [...initialOverrides], timers = new Set(), blobs = [], clipboard = [];
   /* A hold installed before the page boots catches the default load itself. */
   if (hold) holds.push({ match: hold, open: true, pending: [], release() { this.open = false; this.pending.splice(0).forEach(fn => fn()); } });
   let reloads = 0, tokenMode = 'normal';
@@ -216,8 +216,8 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
       if (!host._html || host._html.indexOf('id="' + id + '"') < 0) continue;
       const known = dynamic.get(id);
       if (known && known.host === host && known.html === host._html) return known.el;
-      const tag = (host._html.match(new RegExp('<([a-zA-Z0-9]+)[^>]*\\sid="' + id + '"')) || [])[1] || 'div';
-      const el = new El(id, tag);
+      const el = children(host).find(node => node.id === id);
+      if (!el) return null;
       dynamic.set(id, { host, html: host._html, el });
       return el;
     }
@@ -270,11 +270,17 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
     });
   }
 
+  const fixtureTimeout = (fn, ms, ...args) => { const id = setTimeout(fn, ms, ...args); id.unref(); timers.add(id); return id; };
+  const fixtureInterval = (fn, ms, ...args) => { const id = setInterval(fn, ms, ...args); id.unref(); timers.add(id); return id; };
+  class FixtureURL extends URL {
+    static createObjectURL(blob) { blobs.push(blob); return 'blob:https://fixture.invalid/' + blobs.length; }
+    static revokeObjectURL() {}
+  }
   Object.assign(win, {
     window: win, self: win, document, localStorage: local, sessionStorage, location, history,
-    navigator: { language: 'en-US' }, console: { log() {}, warn() {}, info() {}, error: (...a) => errors.push(a.join(' ')) },
-    setTimeout, clearTimeout, setInterval, clearInterval, setImmediate, queueMicrotask,
-    Promise, JSON, Math, Date, Object, Array, String, Number, Boolean, Error, TypeError, RegExp, Map, Set, WeakMap, Symbol, Intl, URL, URLSearchParams,
+    navigator: { language: 'en-US', clipboard: { writeText: async value => { clipboard.push(value); } } }, console: { log() {}, warn() {}, info() {}, error: (...a) => errors.push(a.join(' ')) },
+    setTimeout: fixtureTimeout, clearTimeout, setInterval: fixtureInterval, clearInterval, setImmediate, queueMicrotask,
+    Promise, JSON, Math, Date, Object, Array, String, Number, Boolean, Error, TypeError, RegExp, Map, Set, WeakMap, Symbol, Intl, URL: FixtureURL, URLSearchParams, Blob,
     AbortController, AbortSignal, Uint8Array, encodeURIComponent, decodeURIComponent, isNaN, isFinite, parseInt, parseFloat,
     atob: s => Buffer.from(String(s), 'base64').toString('binary'), btoa: s => Buffer.from(String(s), 'binary').toString('base64'),
     crypto: { randomUUID: () => globalThis.crypto.randomUUID(), getRandomValues: a => globalThis.crypto.getRandomValues(a) },
@@ -303,6 +309,7 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
   run('js/control-room/nav.js');
   run('js/control-room/format.js');
   run('js/control-room/sources.js');
+  run('js/control-room/owner-ai.js');
   win.CR.media = {
     init() {}, renderPanel: () => '', state: { catalog: {} }, loadCatalog: () => Promise.resolve(),
     trackedJobs: () => [], generatedAssets: () => [], handleAction: () => false, bind() {}
@@ -314,7 +321,8 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
   run('js/control-room-v2.js');
 
   const page = {
-    win, storage, sessionStore, fetchLog, errors, holds,
+    win, storage, sessionStore, fetchLog, errors, holds, blobs, clipboard,
+    close() { for (const id of timers) { clearTimeout(id); clearInterval(id); } },
     el: byId,
     /* What a module holds: Control's request/supa, and its state (getState). */
     module: moduleApi,
@@ -364,8 +372,14 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
       if (!hit) throw new Error('fixture: no rendered control for ' + action + (id ? ' ' + id : ''));
       hit.click(); await flush();
     },
+    async action(action, attributes = {}) {
+      const hit = document.querySelectorAll('[data-action="' + action + '"]').find(el => Object.entries(attributes).every(([key, value]) => el.getAttribute(key) === value));
+      if (!hit) throw new Error('fixture: no rendered action ' + action + ' ' + JSON.stringify(attributes));
+      hit.click(); await flush();
+    },
     /* Types into a rendered field the way the input event reaches the page. */
     type(id, text) { const el = byId(id); if (!el) throw new Error('fixture: no field ' + id); el.value = text; el.dispatch('input'); },
+    select(id, value) { const el = byId(id); if (!el) throw new Error('fixture: no field ' + id); el.value = value; el.dispatch('change'); },
     /* Rewrites the answer to matching reads sent from now on (the server's data changed). */
     override(match, body) { overrides.push({ match, body }); },
     /* Holds matching reads until released; they then answer for the account that sent them. */

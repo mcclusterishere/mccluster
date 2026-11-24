@@ -159,7 +159,7 @@ export async function quarantineUnsupportedJobs(supportedTypes, { now = new Date
   return quarantined;
 }
 
-export async function claimNext(supportedTypes) {
+export async function claimNext(supportedTypes, { allSupportedTypes = supportedTypes } = {}) {
   const supported = new Set(supportedTypes);
   if (!supported.size) return null;
   const orgId = await resolveHouseOrgId();
@@ -169,13 +169,14 @@ export async function claimNext(supportedTypes) {
     lastStaleSweepAt = sweepNow;
     const sweepDate = new Date(sweepNow);
     await recoverStaleJobs({ now: sweepDate, houseOrgId: orgId });
-    await quarantineUnsupportedJobs([...supported], { now: sweepDate, houseOrgId: orgId });
+    await quarantineUnsupportedJobs(allSupportedTypes, { now: sweepDate, houseOrgId: orgId });
   }
 
   const now = new Date().toISOString();
   const params = new URLSearchParams({
     org_id: `eq.${orgId}`,
     status: 'eq.queued',
+    job_type: `in.(${[...supported].join(',')})`,
     run_after: `lte.${now}`,
     select: '*',
     order: 'priority.desc,run_after.asc,created_at.asc',

@@ -8,8 +8,11 @@ import { computeTaskById } from '../compute/store.mjs';
 import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
 import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
 import { activeMeetingTools, callMeetingTool } from './meeting.mjs';
+import { submitResidentAiTurn, getResidentAiTurn, stopResidentAiTurn } from '../resident-ai.mjs';
+import { DEVICE_TOOLS, callDeviceTool } from './devices.mjs';
+import { PAIR_TOOLS, callPairTool } from './pairs.mjs';
+import { requireWorkspaceOwner } from '../compute/owner-routing.mjs';
 import { WORKSTREAM_TOOLS, callWorkstreamTool } from './workstream.mjs';
-import { submitResidentAiTurn, getResidentAiTurn } from '../resident-ai.mjs';
 import { GAME_LORE_INPUT_SCHEMA, readGameLore } from '../game-lore.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -122,6 +125,17 @@ const BASE_TOOLS = [
   }
 ];
 
+const OWNER_WORKSPACE_ENABLED = process.env.CORE_OWNER_AI_WORKSPACE_ENABLED === '1';
+if (OWNER_WORKSPACE_ENABLED) {
+  BASE_TOOLS.push(...DEVICE_TOOLS, ...PAIR_TOOLS);
+  const submit = BASE_TOOLS.find(tool => tool.name === 'core.ai.turn.submit');
+  Object.assign(submit.inputSchema.properties, {
+    route: { type: 'object', properties: { mode: { type: 'string', enum: ['auto', 'node', 'pair'] }, node_id: { type: 'string' }, pair_id: { type: 'string' }, implementation: { type: 'string' } }, additionalProperties: false },
+    review_of_turn_id: { type: 'string' },
+  });
+  BASE_TOOLS.push({ name: 'core.ai.turn.stop', title: 'Stop a saved conversation run', description: 'Stop an owner conversation run, cancel its outstanding compute leases and fence late results.', inputSchema: { type: 'object', required: ['org_id', 'turn_id'], properties: { org_id: { type: 'string' }, turn_id: { type: 'string' } }, additionalProperties: false } });
+}
+
 BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS, ...WORKSTREAM_TOOLS);
 BASE_TOOLS.push(...activeMeetingTools());
 
@@ -136,6 +150,22 @@ if (PREVIEW_CONFIGURED) {
 export const CONTROL_TOOLS = Object.freeze(BASE_TOOLS);
 
 export async function callControlTool(name, args = {}, options = {}) {
+  if (DEVICE_TOOLS.some(tool => tool.name === name)) {
+    if (!OWNER_WORKSPACE_ENABLED) throw Object.assign(new Error('Owner workspace release is pending'), { status: 503, code: 'AI_WORKSPACE_RELEASE_PENDING' });
+    return callDeviceTool(name, args, options);
+  }
+  if (PAIR_TOOLS.some(tool => tool.name === name)) {
+    if (!OWNER_WORKSPACE_ENABLED) throw Object.assign(new Error('Owner workspace release is pending'), { status: 503, code: 'AI_WORKSPACE_RELEASE_PENDING' });
+    return callPairTool(name, args, options);
+  }
+  if (name === 'core.ai.turn.stop') {
+    if (!OWNER_WORKSPACE_ENABLED) throw Object.assign(new Error('Owner workspace release is pending'), { status: 503, code: 'AI_WORKSPACE_RELEASE_PENDING' });
+    return stopResidentAiTurn({ orgId: args.org_id, turnId: args.turn_id, actor: options.actor });
+  }
+  if (name === 'core.ai.turn.submit' || name === 'core.ai.turn.get') {
+    requireWorkspaceOwner(args.org_id, options.actor);
+    if (args.route !== undefined && !OWNER_WORKSPACE_ENABLED) throw Object.assign(new Error('Owner workspace release is pending'), { status: 503, code: 'AI_WORKSPACE_RELEASE_PENDING' });
+  }
   if (name === 'core.game.lore.read') return readGameLore(args);
 
   if (name === 'core.resume') {
@@ -165,6 +195,8 @@ export async function callControlTool(name, args = {}, options = {}) {
       images: args.images,
       allowBrowser: args.allow_browser === true,
       actor: options?.actor,
+      route: args.route,
+      reviewOfTurnId: args.review_of_turn_id,
     });
   }
 

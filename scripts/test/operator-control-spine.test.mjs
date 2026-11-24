@@ -85,8 +85,10 @@ test('resident local AI chat is VPS-owned and survives browser loss', () => {
   assert.match(source, /execution_kind: "resident_ai_turn"/);
   assert.match(source, /McCluster is still working on this saved turn; you can close this window and return later\./);
   assert.match(source, /var keepPendingAfterRecovery = false/);
-  assert.match(source, /keepPendingAfterRecovery = state\.aiChatPending === true/);
-  assert.match(source, /if \(!keepPendingAfterRecovery\)/);
+  /* Recovery belongs to the submitted conversation. A late response may
+     clear its pending state only while the same turn is still current. */
+  assert.match(source, /keepPendingAfterRecovery = Boolean\(state\.aiRuns\[thread\.id\] && state\.aiRuns\[thread\.id\]\.pending\)/);
+  assert.match(source, /if \(!keepPendingAfterRecovery && state\.aiRuns\[thread\.id\] && state\.aiRuns\[thread\.id\]\.task && state\.aiRuns\[thread\.id\]\.task\.id === messageId\) \{\s+setAiRun\(thread\.id, \{ pending: false, progress: null \}\)/);
   assert.doesNotMatch(source, /callCoreTool\("ai\.chat", \{ messages: history/);
   assert.match(durableTurnMigration, /insert into public\.ops_ai_messages/);
   assert.match(durableTurnMigration, /insert into public\.ops_agent_jobs/);
