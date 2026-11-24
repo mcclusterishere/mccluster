@@ -95,7 +95,13 @@ test('in Music, McCluster opens the house and every artist opens their own front
   assert.match(music, /function paintArtists\(profiles\)/);
   assert.match(music, /paintArtists\(\[\]\);\n\n  Promise\.all\(/, 'the house is painted before the directory answers');
   assert.match(music, /paintArtists\(all\[1\] \|\| \[\]\);/);
-  assert.match(music, /<a class="artist artist--house" href="index\.html" aria-label="McCluster: the house">/);
+  assert.match(music, /<a class="artist artist--house" href="index\.html" aria-label="McCluster">/);
+  // Owner, 2026-11-24: one McCluster in the row. His card carries his handle and his own
+  // profile row is skipped, so he is never listed as both "the house" and an artist.
+  assert.match(music, /var HOUSE_HANDLE = "mccluster";/);
+  assert.match(music, /<b>McCluster<\/b><small>@' \+ HOUSE_HANDLE \+ '<\/small><\/a>/);
+  assert.match(music, /if \(String\(p\.handle\)\.toLowerCase\(\) === HOUSE_HANDLE\) return;/);
+  assert.doesNotMatch(music, /The house<|McCluster is the house/);
   assert.match(music, /<img class="artist__pic artist__pic--house" src="assets\/img\/m-mark\.png" alt="" width="56" height="56">/, 'the M as supplied');
   assert.match(music, /href="music-creator\.html\?handle=' \+ encodeURIComponent\(p\.handle\) \+ '"/);
   assert.match(music, /var ARTWORK = SB \+ "\/storage\/v1\/object\/public\/creator-artwork\/";/, 'a creator\'s picture is the one Creator Studio stored, the creator page\'s own rule');

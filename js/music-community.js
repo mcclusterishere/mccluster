@@ -53,16 +53,22 @@
       section.setAttribute("aria-label", "Artists");
       section.innerHTML =
         '<p class="lib__k">Artists</p>' +
-        '<p class="lib__why">McCluster is the house. Open an artist to see the site from their side.</p>' +
+        '<p class="lib__why">Open an artist to see the site from their side.</p>' +
         '<div class="artists__row" id="artistsRow"></div>';
       var first = ls.querySelector(".ls__sec");
       if (first) ls.insertBefore(section, first); else ls.appendChild(section);
     }
-    var cards = ['<a class="artist artist--house" href="index.html" aria-label="McCluster: the house">' +
+    /* ONE McCLUSTER. Owner, 2026-11-24: the row showed McCluster twice, once
+       as "the house" and once as the artist profile @mccluster. McCluster is
+       one artist here: this first card is his, it carries his handle like
+       every other card, and his own profile row is not drawn a second time. */
+    var HOUSE_HANDLE = "mccluster";
+    var cards = ['<a class="artist artist--house" href="index.html" aria-label="McCluster">' +
       '<img class="artist__pic artist__pic--house" src="assets/img/m-mark.png" alt="" width="56" height="56">' +
-      '<b>McCluster</b><small>The house</small></a>'];
+      '<b>McCluster</b><small>@' + HOUSE_HANDLE + '</small></a>'];
     (profiles || []).forEach(function (p) {
       if (!p || !p.handle) return;
+      if (String(p.handle).toLowerCase() === HOUSE_HANDLE) return;
       var name = p.artist_name || "@" + p.handle;
       var avatar = safeArtwork(p.avatar_url);
       cards.push('<a class="artist" href="music-creator.html?handle=' + encodeURIComponent(p.handle) + '">' +
