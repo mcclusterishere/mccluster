@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 384,
-  "latest_version": "20261123174034",
-  "latest_name": "eup_environment_events_v1_05",
-  "ledger_sha256": "8af712520bdf7daf353b36b801eb568849ed9bb1088e57b48ffd2e364c97ed9c",
+  "migration_count": 389,
+  "latest_version": "20261124164904",
+  "latest_name": "action_bounty_claim_existing_row_guard_v1",
+  "ledger_sha256": "08f933eb60484f323e910569915afa365684deba0d5063fbd2c88ece5592bf8b",
   "migrations": [
     {
       "version": "0001",
@@ -1542,6 +1542,26 @@
     {
       "version": "20261123174034",
       "name": "eup_environment_events_v1_05"
+    },
+    {
+      "version": "20261124164026",
+      "name": "member_fronts_shared_revision_directory"
+    },
+    {
+      "version": "20261124164529",
+      "name": "ai_context_workstreams_v1"
+    },
+    {
+      "version": "20261124164724",
+      "name": "commerce_stripe_reconciler_v3"
+    },
+    {
+      "version": "20261124164851",
+      "name": "equity_uprise_clipping_sources"
+    },
+    {
+      "version": "20261124164904",
+      "name": "action_bounty_claim_existing_row_guard_v1"
     }
   ]
 }

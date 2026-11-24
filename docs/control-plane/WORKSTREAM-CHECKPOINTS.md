@@ -1,8 +1,10 @@
 # Workstream checkpoints
 
-Status, 2026-11-23: code and contract on the branch; the SQL is **pending and not applied**
-(`supabase/pending/ai_context_workstreams_v1.sql`). Until the owner approves and applies it, both tools answer
-`WORKSTREAMS_NOT_APPLIED`, `core.resume` reports the source as `missing`, and nothing else changes.
+Status, 2026-11-24: the SQL is **applied** as `20261124164529`
+(`supabase/migrations/20261124164529_ai_context_workstreams_v1.sql`), with its exact reviewed hash.
+Core promotion and owner-session checkpoint replay are separate verification steps; see
+`evidence/migration-audit-applied-2026-11-24.md`. On a database without this migration the tools still answer
+`WORKSTREAMS_NOT_APPLIED`, and `core.resume` reports the source as `missing` with everything else unchanged.
 
 ## The problem this closes
 

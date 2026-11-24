@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 781,
+  "candidate_count": 783,
   "capability_source_count": 104,
-  "support_only_count": 677,
-  "checks_total": 3022,
-  "checks_passed": 3022,
+  "support_only_count": 679,
+  "checks_total": 3030,
+  "checks_passed": 3030,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -204,6 +204,8 @@
     "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/prim3-topology-learning.serve-root.e2e.mjs",
     "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/union_source_map.py",
     "docs/control-plane/deploy-gate.json",
+    "docs/control-plane/evidence/migration-audit-2026-11-24.md",
+    "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json",
@@ -215,6 +217,7 @@
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-18.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
+    "docs/control-plane/evidence/production-schema-snapshot-2026-11-24.json",
     "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
     "docs/control-plane/handoff-20261123/CODEX-HANDOFF.md",
     "docs/control-plane/handoff-20261123/specs/BAR-RESTORE.md",
@@ -636,6 +639,8 @@
     "supabase/migrations/20261114060150_equity_uprise_music_workspace.sql",
     "supabase/migrations/20261117144103_eup_module_policy_v1.sql",
     "supabase/migrations/20261118021521_action_mission_details.sql",
+    "supabase/migrations/20261124164851_equity_uprise_clipping_sources.sql",
+    "supabase/migrations/20261124164904_action_bounty_claim_existing_row_guard_v1.sql",
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
@@ -645,10 +650,7 @@
     "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql",
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
-    "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
-    "supabase/pending/equity_uprise_clipping_sources.sql",
     "supabase/pending/eup_module_policy_v1.provenance.json",
-    "supabase/pending/live-callers.json",
     "supabase/pending/live_missions_v1.sql",
     "supabase/pending/mission_admin_approval_v1.sql",
     "supabase/pending/music_label_artists_v1.sql",
@@ -795,7 +797,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "781 entries"
+      "detail": "783 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4523,6 +4525,46 @@
       "detail": ""
     },
     {
+      "name": "docs/control-plane/evidence/migration-audit-2026-11-24.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/migration-audit-2026-11-24.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/migration-audit-2026-11-24.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/migration-audit-2026-11-24.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json capability ids known",
       "passed": true,
       "detail": ""
@@ -4739,6 +4781,26 @@
     },
     {
       "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-24.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-24.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-24.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-24.json support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -12938,6 +13000,46 @@
       "detail": ""
     },
     {
+      "name": "supabase/migrations/20261124164851_equity_uprise_clipping_sources.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261124164851_equity_uprise_clipping_sources.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/migrations/20261124164851_equity_uprise_clipping_sources.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261124164851_equity_uprise_clipping_sources.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261124164904_action_bounty_claim_existing_row_guard_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20261124164904_action_bounty_claim_existing_row_guard_v1.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_security_support'"
+    },
+    {
+      "name": "supabase/migrations/20261124164904_action_bounty_claim_existing_row_guard_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20261124164904_action_bounty_claim_existing_row_guard_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -13118,46 +13220,6 @@
       "detail": ""
     },
     {
-      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql classified",
-      "passed": true,
-      "detail": "classification='runtime_security_support'"
-    },
-    {
-      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/pending/equity_uprise_clipping_sources.sql capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/pending/equity_uprise_clipping_sources.sql classified",
-      "passed": true,
-      "detail": "classification='shared_backend_support'"
-    },
-    {
-      "name": "supabase/pending/equity_uprise_clipping_sources.sql support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/pending/equity_uprise_clipping_sources.sql support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "supabase/pending/eup_module_policy_v1.provenance.json capability ids known",
       "passed": true,
       "detail": ""
@@ -13174,26 +13236,6 @@
     },
     {
       "name": "supabase/pending/eup_module_policy_v1.provenance.json support rationale present",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/pending/live-callers.json capability ids known",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "supabase/pending/live-callers.json classified",
-      "passed": true,
-      "detail": "classification='test_support'"
-    },
-    {
-      "name": "supabase/pending/live-callers.json support-only semantics coherent",
-      "passed": true,
-      "detail": "support-only sources must not also claim capability ownership"
-    },
-    {
-      "name": "supabase/pending/live-callers.json support rationale present",
       "passed": true,
       "detail": ""
     },

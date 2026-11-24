@@ -1,5 +1,5 @@
 -- Run only against the disposable Supabase stack after the repository's full migration/replay reset.
--- Apply ai_context_workstreams_v1.sql before this file. No base object is replaced or stubbed here.
+-- The reset applies canonical 20261124164529_ai_context_workstreams_v1.sql. No base object is replaced or stubbed here.
 -- Every fixture row, including rows created by the real ontology/decision triggers, rolls back.
 \set ON_ERROR_STOP on
 begin;
