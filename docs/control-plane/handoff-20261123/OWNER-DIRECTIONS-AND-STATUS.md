@@ -138,6 +138,7 @@ Write to him in short plain sentences, no codes (no D-5, M3F, RF-1), one questio
 - "start the platform P1 step too" -> P1 built on `claude/platform-p1-20261124`.
 - "keep it, ship P1 when it passes" -> keep the music-direct CORS answer for `mccluster.org` (review item SEC-F1);
   P1 ships in Release 2 once its fix round and verification pass.
+- "For #4 I think the world music and the other music should be on the same engine" (about phone check 4 of Release 1, where the World's song and Music still have separate players and mutes) -> one engine for both: the World's player is retired, the Globe starts a shuffle on the music engine when nothing is held, a held song keeps playing, one mute and one Pause. Built right after engine stage 0 (stage 1a, then stage 2).
 
 ## Order (one music workflow at a time; lean agents)
 0. Now: production steps (running). M5 build finishing (stop the workflow before its reviews; task b4ybefen4 waits for it).
