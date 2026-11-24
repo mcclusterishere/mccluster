@@ -444,7 +444,8 @@ function album(options = {}) {
     audioSession() {}, spend() {}, media() {}, paintRows() {}, paintDeck() {}, announce() {}, paintSheet() {},
     loadReel() {}, setRoom() {}, loadLyrics() {}, priming: false, countStart() {}, save() {}, roomPlay() {},
     el: elNode, bar: elNode('deckbar'), granted: () => false, gateSpec: (row) => ({ bucket: row.getAttribute('data-gated-bucket'), object: row.getAttribute('data-gated-object') }),
-    paintGate() {}, setTimeout, clearTimeout, Date,
+    /* the page's paintGate keeps the gate's last answer on the row (row._gateOut); a test that needs that answer asks for it */
+    paintGate: options.keepGateOut ? (row, out) => { row._gateOut = out; } : () => {}, setTimeout, clearTimeout, Date,
     fmt: (x) => String(x), ICO_PLAY: '', ICO_PAUSE: ''
   };
   const script = 'var cur = 0, listen = null, grantMax = 0, songTest = null, wantSound = true;\n' +
@@ -949,4 +950,58 @@ test('QW-R8 the album\'s heart says what it does in the words Listen uses, and n
   assert.match(album, /if \(b\) heartOn\(b, inRotation\(/, 'painted from the saves');
   assert.match(album, /heartOn\(b, toggleRotation\(/, 'and on every tap');
   assert.match(read('js/listen.js'), /'" aria-label="Save ' \+ escAttr\(t\.title\) \+ '">' \+ HEART/, 'Listen\'s heart, the same words');
+});
+
+/* VERIFICATION (2026-11-24): the house owner's own play of the held song is his one play until it is spent. Once his
+   claim has answered with the master (the row is granted, its gate answer "full"), a pause and Play (the deck bar, the
+   row, the lock screen) picks it up where it paused, as every other earned play does; it never claims a second play
+   and never starts the song again from 0:00. */
+test('VQW the house owner\'s own play of the held song, paused and played again, picks up where it paused with the same play', async () => {
+  for (const how of ['deck bar or lock screen Play', 'a tap on its row']) {
+    const a = album({ signedIn: true, owner: true, gate: 'earned', keepGateOut: true });
+    a.play(2); await settle(); await settle();
+    assert.equal(a.claims.length, 1, 'his play: one claim');
+    assert.equal(a.deck.src, 'held-master.mp3', 'the master');
+    a.deck.currentTime = 42;
+    a.deck.pause();
+    const loads = a.deck.loads.length;
+    if (how === 'a tap on its row') a.play(2); else a.play();
+    await settle(); await settle(); await settle();
+    assert.equal(a.claims.length, 1, how + ': no second play is claimed');
+    assert.equal(a.deck.loads.length, loads, how + ': nothing is loaded again');
+    assert.equal(a.deck.currentTime, 42, how + ': it picks up where it paused, never from 0:00');
+    assert.equal(a.deck.paused, false, how + ': it plays');
+    assert.equal(a.notices.length, 0, how + ': no pop-up for the house owner');
+  }
+});
+
+test('VQW the house owner\'s card keeps his own line while his play of the held song is on (the gate answered "full")', () => {
+  const source = read('album.html');
+  const begin = source.indexOf('    /* the held song is held for everyone but the house owner');
+  const end = source.indexOf('    function hasStoredSession() {', begin);
+  assert.ok(begin > 0 && end > begin);
+  let paints = 0;
+  const row = { values: { 'data-hold': 'profile', 'data-src': '', 'data-key': 'held' }, getAttribute(k) { return this.values[k] ?? null; },
+    hasAttribute(k) { return k in this.values; }, setAttribute(k, v) { this.values[k] = v; }, removeAttribute(k) { delete this.values[k]; },
+    classList: { add() {}, remove() {} }, querySelector: () => ({ innerHTML: '' }) };
+  const context = { window: {}, location: { pathname: '/album.html', search: '' }, esc: String, escAttr: String, chip: () => '', swapCurrent() {}, probeDuration() {},
+    songTest: { paint: () => { paints++; } } };
+  vm.runInContext(source.slice(begin, end) + '\nthis.paintGate = paintGate; this.heldFor = heldFor;', vm.createContext(context), { filename: 'album.html gate' });
+  context.paintGate(row, { state: 'earned', operator: true });
+  assert.equal(paints, 1, 'his gate answers operator: his card');
+  assert.equal(context.heldFor(row), false);
+  /* his claim answers with the master: the row is granted and the gate's answer is the play itself */
+  row.setAttribute('data-src', 'held-master.mp3');
+  row.setAttribute('data-granted', '');
+  context.paintGate(row, { state: 'full', url: 'held-master.mp3' });
+  assert.equal(context.heldFor(row), false, 'his granted play is his, not held');
+  assert.equal(paints, 1, 'his card is not drawn again with the held line while his play is on');
+  /* the play is spent: the row goes back to asking the gate, which answers operator again */
+  row.removeAttribute('data-granted');
+  context.paintGate(row, { state: 'earned', operator: true });
+  assert.equal(paints, 1);
+  /* anyone else stays held, granted or not never comes to them */
+  context.paintGate(row, { state: 'locked' });
+  assert.equal(context.heldFor(row), true);
+  assert.equal(paints, 2, 'signed out or a member: held, the card says why');
 });
