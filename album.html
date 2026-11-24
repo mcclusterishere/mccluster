@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme-lock="dark">
+<html lang="en" data-theme-lock="dark" data-music-view="album">
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -184,9 +184,20 @@
     /* Heal the 3 only: the door from the EP to Equity Uprise gateway */
     .alb-test { padding: 1.6rem 0 0.4rem; }
     .alb-test__sub { margin: 0.2rem 0 0.9rem; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.6; max-width: 60ch; }
-    .alb__gate { display: inline-flex; align-items: center; margin: 0.9rem 0 0 0.5rem; padding: 0.8rem 1.2rem;
-      border-radius: 100px; color: var(--cream); font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
-      text-decoration: none; box-shadow: inset 0 0 0 1px rgba(244,239,230,0.3); }
+    /* the door keeps clear of the account chip (music slice M3 follow-up, review RF-2). The chip is fixed top right on
+       every page, at most 104 px wide and 12 px from the edge (css/site-navigation.css), and covers whatever scrolls under
+       it; centred under Play the door ran under it at every width from 320 to about 590 px, and a tap there reached the
+       chip. On a phone the door has a line of its own at the hero's left edge, the edge the label rail under it keeps,
+       and ends 104 px short of the hero's right edge, before the chip's column begins: where its words do not fit in
+       that (below about 370 px) they take two lines, balanced so the arrow never sits alone. From 700 px it sits beside
+       Play, as before, far from the chip. */
+    .alb__gate { display: flex; width: max-content; max-width: calc(100% - 104px); align-items: center; margin: 0.9rem 0 0;
+      padding: 0.8rem 1.2rem; border-radius: 100px; color: var(--cream); font-family: var(--ui); font-weight: 800;
+      font-size: 0.98rem; text-wrap: balance; text-decoration: none; box-shadow: inset 0 0 0 1px rgba(244,239,230,0.3); }
+    @media (min-width: 700px) { .alb__gate { display: inline-flex; width: auto; max-width: none; margin-left: 0.5rem; } }
+    /* the door shows only where the page opens it (a record with a gateway: Heal the 3); the display above
+       overrode the hidden attribute, so it showed on every album (music slice M3 follow-up, review RL-12) */
+    .alb__gate[hidden] { display: none; }
 
     /* the record: soft app rows with the art up front; the playing row
        becomes a glowing card in the career's color, the way the streaming
@@ -288,6 +299,20 @@
     .deckbar button.tp { -webkit-appearance: none; appearance: none; border: 0; background: none; cursor: pointer; touch-action: manipulation;
       color: var(--cream); width: 40px; height: 40px; display: grid; place-items: center; flex: none; }
     .deckbar button.tp svg { width: 20px; height: 20px; fill: currentColor; }
+    /* the deck's own unmute (music slice M3, decision D-7): a 44 px target, only while the deck is muted */
+    .deckbar__sound { -webkit-appearance: none; appearance: none; flex: none; width: 44px; height: 44px; margin: 0; padding: 0;
+      border: 0; border-radius: 50%; background: rgba(244,239,230,0.12); color: var(--cream, #f4efe6); cursor: pointer;
+      display: grid; place-items: center; touch-action: manipulation; }
+    .deckbar__sound[hidden] { display: none; }
+    .deckbar__sound svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    /* the deck's own unmute in the sheet (decision D-7): a 44 px chip under the transport, never squeezed into it
+       (music slice M3, review RL-3: in the row it took the row's room and every chip went below 44 px) */
+    .now__unmute { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      display: flex; align-items: center; justify-content: center; gap: 0.45rem; min-height: 44px; margin: 0.6rem auto 0; padding: 0 1.1rem;
+      border-radius: 100px; color: var(--cream, #f4efe6); font-family: var(--ui); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em;
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.15); }
+    .now__unmute[hidden] { display: none; }
+    .now__unmute svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     .deckbar button.tp--play { background: var(--metal); color: #fff; border-radius: 50%;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
 
@@ -439,16 +464,19 @@
       color-mix(in srgb, var(--pulse, #e5383b) 60%, transparent)); }
     .now__times { display: flex; justify-content: space-between; font-family: var(--ui); font-size: 0.72rem; color: var(--cream-dim);
       font-variant-numeric: tabular-nums; margin-top: 0.15rem; }
-    /* the transport: soft circular chips either side of the filled play */
-    .now__tp { display: flex; align-items: center; justify-content: center; gap: 1.6rem; margin-top: 0.55rem; }
+    /* the transport: soft circular chips either side of the filled play. The space between them comes out of what
+       the row has, so a phone keeps every chip whole: with the AirPlay beam showing at 320 px they give up a little
+       size, never below a 44 px target (the play button 56), and stay round (music slice M3, review RL-3) */
+    .now__tp { display: flex; align-items: center; justify-content: space-evenly; gap: 4px; max-width: 22rem; margin: 0.55rem auto 0; }
     .now__tp button { -webkit-appearance: none; appearance: none; border: 0; color: var(--cream);
       background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045));
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 10px 24px -12px rgba(0,0,0,0.85);
-      width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; touch-action: manipulation; }
+      flex: 0 1 52px; width: 52px; min-width: 44px; height: auto; aspect-ratio: 1 / 1; padding: 0;
+      border-radius: 50%; display: grid; place-items: center; cursor: pointer; touch-action: manipulation; }
     /* a transport button the page holds back (the AirPlay picker until a device is in range) stays out of sight */
     .now__tp button[hidden] { display: none; }
     .now__tp button svg { width: 22px; height: 22px; fill: currentColor; }
-    .now__tp .now__play { color: #fff; width: 68px; height: 68px;
+    .now__tp .now__play { color: #fff; flex: 0 1 68px; width: 68px; min-width: 56px;
       background: var(--metal);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 18px 48px -14px rgba(229,56,59,0.6); }
     .now__tp .now__play svg { width: 30px; height: 30px; }
@@ -656,27 +684,24 @@
          command center is admin.html. -->
 
 
-    <!-- THE SHELF FRONT: the chips filter, the curated cards preview on tap -->
-    <div class="chips" id="chips" role="group" aria-label="Filter">
-      <button type="button" class="on" data-chip="all" aria-pressed="true">All</button>
-      <button type="button" data-chip="albums" aria-pressed="false">Albums</button>
-      <button type="button" data-chip="playlists" aria-pressed="false">Playlists</button>
-    </div>
-    <section id="featWrap" aria-label="Curated">
-      <p class="lib__k">Curated by the house</p>
+    <!-- THE SHELF: the albums, and nothing else (owner, 2026-11-23: "the albums need to be just ... albums ... We
+         don't have enough music to necessarily even have playlists right now. So just list albums and artists right
+         now."). A card previews on tap and opens its album. -->
+    <section id="featWrap" aria-label="Albums">
+      <p class="lib__k" id="featK">Albums</p>
       <div class="feat" id="featRail"></div>
     </section>
 
     <header class="alb" data-drift style="--drift:8">
       <img class="alb__art" id="albArt" src="assets/img/here-cover.jpg" alt="Album art">
       <div>
-        <p class="alb__k" id="albTag" data-daypart="The album">The album</p>
+        <p class="alb__k" id="albTag">Album</p>
         <h1 id="albName">I AM HERE</h1>
         <!-- The artist is per-album, not per-site. Most records here are
              McCluster's own and say so; an album that carries an "artist"
              in data/albums.json bills under that name instead. The separator
              only appears when there is a tagline to separate. -->
-        <p class="alb__by">by <b id="albArtist">Matthew McCluster</b><span id="albBySep"> · </span><span id="albBy">Have no fear.</span></p>
+        <p class="alb__by">by <b id="albArtist">McCluster</b><span id="albBySep"> · </span><span id="albBy">Have no fear.</span></p>
         <button class="alb__play" id="playAll" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>
         <a class="alb__gate" id="albGate" href="heal-the-3rd-world.html" hidden>Enter Heal the 3rd World &#8594;</a>
         <!-- THE LABEL RAIL: install it, download it, syndicate it -->
@@ -706,14 +731,8 @@
       <div id="albTestCards"></div>
     </section>
 
-    <!-- THE PLAYLISTS: app rows: tap the chip for a taste, tap the row to enter -->
-    <section class="lib" id="plWrap" aria-label="The playlists">
-      <p class="lib__k">The playlists</p>
-      <div id="plList"></div>
-    </section>
-
     <footer class="hr__foot">
-      Every track written &amp; performed by Matthew McCluster · QT6KV catalogue.<br>
+      Written &amp; performed by McCluster · QT6KV catalogue.<br>
       <a href="music-videos.html">Music videos</a> ·
       <a href="hire.html">Hire the agency</a> ·
       <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a><br>
@@ -736,7 +755,7 @@
     </div>
     <div class="now__meta">
       <div class="now__title" id="nowTitle">·</div>
-      <p class="now__by" id="nowBy">Matthew McCluster</p>
+      <p class="now__by" id="nowBy">McCluster</p>
       <a class="now__service" id="nowService" href="hire.html" hidden>Take the next step</a>
     </div>
     <div class="now__deck">
@@ -749,6 +768,8 @@
         <button id="nowNext" type="button" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M18 5h-2.5v14H18zM4 5v14l10-7z"/></svg></button>
         <button class="now__side" id="nowBeam" type="button" aria-label="Play on another screen" hidden><svg viewBox="0 0 24 24"><path d="M3 6h18v12h-7"/><path d="M3 10a10 10 0 0 1 8 8"/><path d="M3 14a6 6 0 0 1 4.5 4.5"/><path d="M3 18h.5"/></svg></button>
       </div>
+      <!-- the deck's own unmute, shown only while it is muted (decision D-7): its own chip under the transport -->
+      <button class="now__unmute" id="nowSound" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg><span>Unmute</span></button>
       <!-- the song is the hub: who made it, where it's registered, the doors around it -->
       <div class="now__eco">
         <p class="now__cred" id="nowCred"></p>
@@ -768,6 +789,8 @@
     <div class="deckbar__row">
       <img class="deckbar__art" src="assets/img/here-cover.jpg" alt="">
       <div class="deckbar__meta"><b id="npTitle">·</b><small id="npTime">0:00 · I AM HERE</small><small class="deckbar__lyr" id="npLyr"></small></div>
+      <!-- the deck's own mute, shown only while it is muted (decision D-7: the World's mute is the World's) -->
+      <button class="deckbar__sound" id="deckSound" type="button" aria-label="Unmute" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg></button>
       <button class="tp" id="tpPrev" type="button" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5v14l-10-7z"/></svg></button>
       <button class="tp tp--play" id="tpPlay" type="button" aria-label="Play or pause"><svg id="tpPlayIc" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button>
       <button class="tp" id="tpNext" type="button" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M18 5h-2.5v14H18zM4 5v14l10-7z"/></svg></button>
@@ -794,7 +817,6 @@
     </a>
   </nav>
 
-  <script src="js/env.js?v=__STAMP__"></script>
   <script src="js/backend.js?v=__STAMP__"></script>
   <script src="js/comments.js?v=__STAMP__"></script>
   <script src="js/payments.js?v=__STAMP__"></script>
@@ -822,6 +844,13 @@
     var Q0 = new URLSearchParams(location.search);
     var ALBUM = (Q0.get("album") || "here").toLowerCase();
     var PL = (Q0.get("playlist") || "").toLowerCase();
+    /* NO PLAYLISTS RIGHT NOW (owner, 2026-11-23: "So just list albums and artists right now."). An old playlist link
+       lands where its music is: the music videos playlist on the music videos page, any other on the albums and
+       artists (listen.html), before this page paints anything. data/playlists.json stays for when there is more. */
+    function playlistDoor(slug) {
+      return slug === "music-videos" || slug === "the-films" ? "music-videos.html" : "listen.html";
+    }
+    if (PL) { location.replace(playlistDoor(PL)); return; }
     var TRACK = Q0.get("track") || ""; /* a creator cut, straight from the database */
     /* THE TAP FROM THE LISTENING ROOM. listen.html lists every track in the
        house and links each one here; without this the tap landed on track
@@ -839,8 +868,11 @@
        One helper decides that for every player (js/now-playing.js). */
     function audioSession() { if (window.MCC_NOW_PLAYING) window.MCC_NOW_PLAYING.claim(); }
     /* HOUSE is whose records these are by default; ARTIST is who THIS
-       album is billed to. They differ only when data/albums.json says so. */
-    var HOUSE = "Matthew McCluster";
+       album is billed to. They differ only when data/albums.json says so.
+       One McCluster (owner, 2026-11-23: "It needs to be one profile. McCluster is the artist."): the house's records
+       are credited to McCluster, the artist, and his name opens his one artist page. */
+    var HOUSE = "McCluster";
+    var HOUSE_PAGE = "music-creator.html?handle=mccluster";
     var ARTIST = HOUSE;
     function esc(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; }
     /* esc() leaves quotes alone, which is fine inside an element and wrong
@@ -861,46 +893,6 @@
       return added;
     }
 
-    /* one track, dressed with its album (playlists cross album lines) */
-    function findTrack(data, ref) {
-      var out = null;
-      (data.albums || []).forEach(function (a) {
-        if (a.slug !== ref.album) return;
-        a.tracks.forEach(function (t) {
-          if (t.title === ref.title) {
-            out = Object.assign({}, t, { albSlug: a.slug, albName: a.name, art: a.art, artist: a.artist || "" });
-          }
-        });
-      });
-      return out;
-    }
-    function allTracks(data) {
-      var q = [];
-      (data.albums || []).forEach(function (a) {
-        a.tracks.forEach(function (t) { q.push(Object.assign({}, t, { albSlug: a.slug, albName: a.name, art: a.art, artist: a.artist || "" })); });
-      });
-      return q;
-    }
-    function resolvePlaylist(data, pls, slug) {
-      if (slug === "everything") {
-        var q = allTracks(data);
-        return { slug: slug, name: "Everything", tag: "The whole catalog · " + q.length + " tracks",
-          by: "Every record in the system, front to back.", art: "assets/img/here-cover.jpg", queue: q };
-      }
-      if (slug === "my-rotation") {
-        var q2 = rotation().map(function (r) { return findTrack(data, r); }).filter(Boolean);
-        return q2.length ? { slug: slug, name: "My Rotation", tag: "Saved on this device · " + q2.length + (q2.length === 1 ? " track" : " tracks"),
-          by: "The songs you hearted.", art: "assets/img/m-mark.png", queue: q2 } : null;
-      }
-      var pl = null;
-      (pls && pls.playlists || []).forEach(function (p) {
-        if (p.slug === slug || (Array.isArray(p.legacy_slugs) && p.legacy_slugs.indexOf(slug) >= 0)) pl = p;
-      });
-      if (!pl) return null;
-      var q3 = (pl.tracks || []).map(function (r) { return findTrack(data, r); }).filter(Boolean);
-      return q3.length ? { slug: pl.slug, name: pl.name, tag: pl.tag || (q3.length + " tracks"), by: pl.by || "", art: pl.art, queue: q3 } : null;
-    }
-
     /* title -> the slug license.html pre-picks in its Track select. This
        used to double as the path to a per-track page; those pages are gone
        and this is the half that was actually earning its keep. */
@@ -917,14 +909,20 @@
       if (t.gated && t.gated.object) return String(t.gated.object).split("/")[0];
       return String(t.src || "").split(/[?#]/)[0].split("/").pop().replace(/\.[a-z0-9]+$/i, "").toLowerCase();
     }
+    /* the album's kicker, in plain words (owner, 2026-11-23: an album is an album) */
+    function albumKicker(n) { return "Album · " + n + (n === 1 ? " song" : " songs"); }
     function trackRow(t, i) {
       var g = t.gated || null;
-      return '<li data-src="' + t.src + '"' +
+      /* THE CLOSING SONG IS HELD (owner, 2026-11-23): its row stays listed and carries no address at all, no preview
+         to fetch and nothing to stream; only the house owner's own play opens it, through its gate (holdThenPlay) */
+      var src = t.hold ? "" : t.src;
+      return '<li data-src="' + src + '"' +
+        (t.hold ? ' data-hold="' + escAttr(t.hold) + '"' : "") +
         ' data-key="' + escAttr(listenKey(t)) + '"' +
         (!g && t.seconds > 0 ? ' data-seconds="' + Number(t.seconds) + '"' : "") +
         (g ? ' data-gated-bucket="' + escAttr(g.bucket) + '"' +
              ' data-gated-object="' + escAttr(g.object) + '"' +
-             ' data-preview-src="' + escAttr(t.src) + '"' : "") +
+             (t.hold ? "" : ' data-preview-src="' + escAttr(t.src) + '"') : "") +
         ((t.music_video || t.video) ? ' data-music-video="' + escAttr(t.music_video || t.video) + '"' : "") +
         (t.experience ? ' data-experience="' + escAttr(JSON.stringify(t.experience)) + '"' : "") +
         (t.poster ? ' data-poster="' + t.poster + '"' : "") +
@@ -945,7 +943,9 @@
         '<small>' + esc(t.sub || t.albName || "") + '<span data-plays></span></small></span>' +
         '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
         (g ? '<span class="reclock" data-reclock></span>' : "") +
-        '<button class="hrt" type="button" data-hrt aria-label="Save to My Rotation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
+        /* the heart says what it does and whether the song is saved, as Listen's does; it names no list the pages do
+           not show (review QW-R8) */
+        '<button class="hrt" type="button" data-hrt aria-pressed="false" aria-label="Save ' + escAttr(t.title) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
         '<span class="d">-:--</span>' +
         /* The row used to carry an arrow out to a per-track page. Those
            pages are gone: their one real job was a licensing link that
@@ -965,9 +965,11 @@
       /* the card script is deferred and may land after the shelf paints */
       if (!window.MCC_SONGTEST) { if ((mountTest.tries = (mountTest.tries || 0) + 1) < 50) setTimeout(mountTest, 200); return; }
       box.hidden = false;
-      songTest = window.MCC_SONGTEST.mount(document.getElementById("albTestCards"), ALBUM, { signin: "account.html" });
+      songTest = window.MCC_SONGTEST.mount(document.getElementById("albTestCards"), ALBUM, { signin: "account.html",
+        /* the closing song is held for everyone but the house owner: its card says why, as its pop-up does (review QW-R4) */
+        held: function (key) { return heldFor(rows.filter(function (r) { return r.getAttribute("data-key") === key; })[0]); } });
     }
-    function boot(data, pls, ct) {
+    function boot(data, ct) {
       var head = null, queue = null;
       if (ct) {
         INLINE = { lyrics: ct.lyrics || null, reel: ct.reel || null };
@@ -979,17 +981,12 @@
           lyrics: ct.lyrics ? "@inline" : (ct.lyrics_url || ""), reel: ct.reel ? "@inline" : "",
           experience: ct.experience || {}, albSlug: ALBUM, albName: ct.artist || "", art: ct.poster_url || "" }];
       }
-      if (!queue && PL) {
-        var got = resolvePlaylist(data, pls, PL);
-        if (got) { head = got; queue = got.queue; ALBUM = "pl:" + got.slug; }
-        else PL = "";
-      }
       if (!queue) {
         var alb = null;
         (data.albums || []).forEach(function (a) { if (a.slug === ALBUM) alb = a; });
         if (!alb) alb = data.albums[0];
         ALBUM = alb.slug;
-        head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "", artistPage: alb.artist_page || "" };
+        head = { name: alb.name, tag: albumKicker(alb.tracks.length), by: alb.by || "", art: alb.art, artist: alb.artist || "", artistPage: alb.artist_page || "" };
         queue = alb.tracks.map(function (t) {
           return Object.assign({}, t, {
             albSlug: alb.slug, albName: "", art: alb.art,
@@ -997,8 +994,9 @@
           });
         });
       }
+      /* the still cover, whole (owner, 2026-11-23: "The full covers aren't shown ... We should fix that."): the living
+         sleeve that drew a cropped copy of it with a glow and fog over it is no longer mounted */
       document.getElementById("albArt").src = head.art;
-      if (window.MCC_ENV && !PL) window.MCC_ENV.mount(document.getElementById("albArt"), ALBUM);
       document.getElementById("albName").textContent = head.name;
       document.getElementById("albTag").textContent = head.tag;
       document.getElementById("albBy").textContent = head.by || "";
@@ -1009,7 +1007,7 @@
          page (data/albums.json artist_page, a same-site .html file) opens
          that, other billings stay text */
       document.getElementById("albArtist").textContent = ARTIST;
-      var artistHref = ARTIST === HOUSE ? "matthew-mccluster.html"
+      var artistHref = ARTIST === HOUSE ? HOUSE_PAGE
         : (/^[a-z0-9-]+\.html$/.test(head.artistPage || "") ? head.artistPage : "");
       if (artistHref) {
         var artistEl = document.getElementById("albArtist");
@@ -1037,7 +1035,7 @@
       rows = Array.prototype.slice.call(document.querySelectorAll("#tracks li"));
       paintHearts();
       paintGates();
-      buildRails(data, pls);
+      buildRails(data);
       fetchPlays();
       init();
     }
@@ -1045,7 +1043,6 @@
     var LEN = {};  /* listen key → seconds, the catalogue's stored lengths */
     Promise.all([
       fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.json(); }),
-      fetch("data/playlists.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).catch(function () { return null; }),
       fetch("data/catalogue.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).catch(function () { return null; }),
       Promise.resolve().then(function () {
         if (!TRACK) return null;
@@ -1056,12 +1053,12 @@
           .catch(function () { return null; });
       }),
     ]).then(function (all) {
-      ((all[2] && all[2].tracks) || []).forEach(function (t) {
+      ((all[1] && all[1].tracks) || []).forEach(function (t) {
         if (t.credit) CRED[t.title.toLowerCase()] = t.credit;
         var s = storedSeconds(t.length);
         if (s && t.slug) LEN[String(t.slug).toLowerCase()] = s;
       });
-      boot(all[0], all[1], all[3]);
+      boot(all[0], all[2]);
     }).catch(function () {
         document.getElementById("tracks").innerHTML = "<li><span class='t'>The shelf is warming up. Refresh in a moment.</span></li>";
       });
@@ -1081,7 +1078,7 @@
     function paintHearts() {
       rows.forEach(function (row) {
         var b = row.querySelector("[data-hrt]");
-        if (b) b.classList.toggle("on", inRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
+        if (b) heartOn(b, inRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
       });
     }
     document.getElementById("tracks").addEventListener("click", function (e) {
@@ -1089,8 +1086,13 @@
       if (!b) return;
       e.stopPropagation(); e.preventDefault();
       var row = b.closest("li");
-      b.classList.toggle("on", toggleRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
+      heartOn(b, toggleRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
     }, true);
+    /* the heart's look and its pressed state say the same thing (review QW-R8) */
+    function heartOn(b, on) {
+      b.classList.toggle("on", !!on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    }
 
     /* ============================================================
        THE GATE ON A RECORD. Some tracks ship a short preview here and
@@ -1147,6 +1149,7 @@
        preview or the signed master, and the catalogue knows neither. So is
        a row the catalogue has no length for. */
     function paintDuration(row) {
+      if (row.hasAttribute("data-hold")) return;   /* a held song's length is nobody's to fetch: its preview is not read */
       var s = row.getAttribute("data-gated-bucket") ? 0
         : (Number(row.getAttribute("data-seconds")) || LEN[String(row.getAttribute("data-key") || "").toLowerCase()]);
       if (!s) return probeDuration(row);
@@ -1174,13 +1177,32 @@
     function chip(cls, b, sub) {
       return '<span class="' + cls + '"><b>' + esc(b) + '</b><span>' + esc(sub) + '</span></span>';
     }
+    /* the held song is held for everyone but the house owner, whose own play opens it (review QW-R4). Once his claim
+       has answered with the master (the row is granted), that play is his until it is spent: a pause and Play picks it
+       up where it paused, never a second claim, and his card keeps his own line (verification, 2026-11-24) */
+    function heldFor(row) {
+      var out = row && row._gateOut;
+      return !!(row && row.hasAttribute("data-hold") && !row.hasAttribute("data-granted") && !(out && out.state === "earned" && out.operator));
+    }
     function paintGate(row, out) {
       var slot = row.querySelector("[data-reclock]");
       if (!slot) return;
       row.classList.remove("locked", "unlocked", "gone", "unlocking");
       row._gateOut = out;
+      /* the held song's test card follows who is listening, once the gate has said, and is drawn again only when that
+         changes: a card someone is writing is not drawn again under them when the gate is asked again (review QW-R4) */
+      if (row.hasAttribute("data-hold") && songTest && songTest.paint && row._heldCard !== heldFor(row)) {
+        row._heldCard = heldFor(row);
+        songTest.paint();
+      }
       var pv = row.getAttribute("data-preview-src");
       row.setAttribute("data-gate", out.state);
+      /* the held song: for anyone but the house owner it says so, and a tap says why (holdThenPlay) */
+      if (row.hasAttribute("data-hold") && out.state !== "full" && !(out.state === "earned" && out.operator)) {
+        row.classList.add("locked");
+        slot.innerHTML = chip("gatechip", "NOT YET", "tap to see why");
+        return;
+      }
       var line = window.MCC_GATED && window.MCC_GATED.progress ? window.MCC_GATED.progress(out) : null;
       if (out.state === "full") {
         row.classList.add("unlocked");
@@ -1319,9 +1341,9 @@
       }).catch(function () {});
     }
 
-    /* THE SHELF FRONT: the curated cards + playlist rows, with THE TASTE:
-       the play chip on any card pours its first record straight into your
-       ear, no navigation. Tap the card itself to walk in. */
+    /* THE SHELF FRONT: the album cards, with THE TASTE: the play chip on any
+       card pours its first record straight into your ear, no navigation. Tap
+       the card itself to walk in. */
     var PLAY_IC = '<svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>';
     var PAUSE_IC = '<svg viewBox="0 0 24 24"><path d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>';
     var pv = new Audio(); pv.preload = "none"; var pvKey = "", pvBtn = null, pvNow = null;
@@ -1348,7 +1370,7 @@
       return pvNow;
     }
     function pvStep(d) {
-      var all = Array.prototype.slice.call(document.querySelectorAll("#featRail [data-pv], #plList [data-pv]"));
+      var all = Array.prototype.slice.call(document.querySelectorAll("#featRail [data-pv]"));
       if (!all.length) return;
       var i = pvBtn ? all.indexOf(pvBtn) : -1;
       pvGo(all[(i + d + all.length) % all.length]);
@@ -1374,13 +1396,14 @@
       pvKey = key; btn.classList.add("on"); btn.innerHTML = PAUSE_IC;
       if (window.MCC_TRACK) window.MCC_TRACK("shelf_preview", { key: key });
     }
-    function buildRails(data, pls) {
+    function buildRails(data) {
       var feat = document.getElementById("featRail");
       if (feat) feat.innerHTML = (data.albums || []).map(function (a) {
         var first = a.tracks[0] || {};
         return '<div class="feat__card" data-open="album.html?album=' + a.slug + '">' +
           '<img class="feat__bg" src="' + a.art + '" alt="" loading="lazy"><span class="feat__smoke"></span>' +
-          "<b>" + esc(a.name) + "</b><small>" + esc(a.by || a.tag || "") + "</small>" +
+          /* what the card is, plainly: the album and its artist (owner, 2026-11-23) */
+          "<b>" + esc(a.name) + "</b><small>" + esc(a.artist || HOUSE) + "</small>" +
           '<div class="feat__acts">' +
           '<button class="feat__play" type="button" data-pv="alb:' + a.slug + '" data-src="' + first.src + '"' +
           ' data-title="' + escAttr(first.title || "") + '" data-artist="' + escAttr(a.artist || "") + '"' +
@@ -1393,40 +1416,12 @@
       /* the light coat is retired; nothing to flip, so retire the control */
       if (tf && window.MCC_THEME && !MCC_THEME.dual) { tf.hidden = true; }
       else if (tf && window.MCC_THEME) { tf.addEventListener("click", function () { MCC_THEME.flip(); }); }
-      var items = [{ slug: "everything", name: "Everything", tag: allTracks(data).length + " tracks", art: "assets/img/here-cover.jpg" }]
-        .concat((pls && pls.playlists) || []);
-      if (rotation().length) items.push({ slug: "my-rotation", name: "My Rotation", tag: rotation().length + " saved", art: "assets/img/m-mark.png" });
-      var list = document.getElementById("plList");
-      if (list) list.innerHTML = items.map(function (p) {
-        var got = resolvePlaylist(data, pls, p.slug);
-        var head = got && got.queue[0] ? got.queue[0] : null;
-        var first = head ? head.src : "";
-        return '<div class="pll' + (PL === p.slug ? " is-here" : "") + '" data-open="album.html?playlist=' + p.slug + '">' +
-          '<img class="pll__art" src="' + p.art + '" alt="" loading="lazy">' +
-          '<span class="pll__t"><b>' + esc(p.name) + "</b><small>" + esc(p.tag || "") + "</small></span>" +
-          (first ? '<button class="pll__play" type="button" data-pv="pl:' + p.slug + '" data-src="' + first + '"' +
-            ' data-title="' + escAttr(head.title || "") + '" data-artist="' + escAttr(head.artist || "") + '"' +
-            ' data-album-name="' + escAttr(head.albName || "") + '" data-art="' + escAttr(head.art || "") + '"' +
-            ' aria-label="Preview ' + esc(p.name) + '">' + PLAY_IC + "</button>" : "") +
-          "</div>";
-      }).join("");
-      /* one hand on the whole shelf: chips filter, plays preview, cards open */
-      document.querySelectorAll("#featRail, #plList").forEach(function (zone) {
-        zone.addEventListener("click", function (e) {
-          var b = e.target.closest && e.target.closest("[data-pv]");
-          if (b) { e.stopPropagation(); pvGo(b); return; }
-          var c = e.target.closest && e.target.closest("[data-open]");
-          if (c) location.href = c.getAttribute("data-open");
-        });
-      });
-      var chips = document.getElementById("chips");
-      if (chips) chips.addEventListener("click", function (e) {
-        var b = e.target.closest && e.target.closest("[data-chip]");
-        if (!b) return;
-        chips.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); });
-        var w = b.getAttribute("data-chip");
-        document.getElementById("featWrap").hidden = w === "playlists";
-        document.getElementById("plWrap").hidden = w === "albums";
+      /* one hand on the whole shelf: plays preview, cards open */
+      if (feat) feat.addEventListener("click", function (e) {
+        var b = e.target.closest && e.target.closest("[data-pv]");
+        if (b) { e.stopPropagation(); pvGo(b); return; }
+        var c = e.target.closest && e.target.closest("[data-open]");
+        if (c) location.href = c.getAttribute("data-open");
       });
     }
     function init() {
@@ -1463,6 +1458,10 @@
       if (cur < 0) { window.MCC_POCKET.clear(); return; }
       var row = rows[cur];
       if (!row) return;
+      /* THE HELD SONG IS NEVER BANKED (review QW-R7). It has no public preview, and the house owner's own play of it
+         is a signed one-play URL, which must not be stored here or sent to his shared row on every device. The pocket
+         cannot play it anyway, so while it plays the pocket holds nothing. */
+      if (row.hasAttribute("data-hold")) { window.MCC_POCKET.clear(); return; }
       /* A gated row's data-src is a SIGNED URL that expires within the hour.
          Banking that means the pocket tries to resume a record from a dead
          link on the next page. Bank the durable public preview instead: the
@@ -1493,9 +1492,17 @@
       if (cur < 0) { bar.dataset.off = "1"; return; }
       bar.dataset.off = "0";
       el("npTitle").textContent = rows[cur].getAttribute("data-title");
-      el("npTime").textContent = fmt(deck.currentTime) + " · " + (deck.duration ? fmt(deck.duration) : "I AM HERE");
+      /* never "playing" over silence: what the delivery is doing comes first, then the deck's own mute
+         (music slice M3; decision D-7: the World's mute is the World's, the deck says its own) */
+      var state = deckLabel() || (deck.muted ? "Muted" : "");
+      var at = deckTrouble && (deckTrouble.state === "reconnecting" || deckTrouble.state === "lost") ? deckTrouble.at : deck.currentTime;
+      el("npTime").textContent = state ? state + " · " + fmt(at)   // one line on a phone: the state and the second
+        : fmt(deck.currentTime) + " · " + (deck.duration ? fmt(deck.duration) : "I AM HERE");
       el("seekFill").style.width = deck.duration ? (deck.currentTime / deck.duration * 100) + "%" : "0";
-      el("tpPlayIc").innerHTML = deck.paused ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
+      /* Pause while the music plays or is being picked up again (Pause stops the tries), else Play */
+      el("tpPlayIc").innerHTML = !deckIntends() ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
+      var sound = el("deckSound");
+      if (sound) sound.hidden = !deck.muted;
     }
     /* THE LOCK SCREEN. One owner speaks to the device's Now Playing (js/now-playing.js): the deck says
        which row is playing and what play, pause, previous, next and seek mean here; the owner writes the
@@ -1516,14 +1523,22 @@
         pause: function () { pauseDeck(); },
         previous: function () { prev(); },
         next: function () { next(); },
-        /* the deck's own seeking guard keeps the one earned play from being rewound */
-        seek: function (t) { cancelPendingPlay(); deck.currentTime = t; }
+        /* the deck's own seeking guard keeps the one earned play from being rewound; during the trouble the chosen
+           second is where the song picks up (music slice M3, review) */
+        seek: function (t) { userSeek(t); },
+        /* a song being picked up again is quiet while the listener still wants it: the lock screen offers Pause, which
+           stops the tries; the installed app's dock, which hides the deck bar, says why it is quiet */
+        playing: function () { return deckIntends(); },
+        status: function () { return deckStatusLine(); },
+        /* Muted lasts: the dock says it in the song line, in one row (the Release 1 dock fix) */
+        note: function () { return deck.muted ? "Muted" : ""; }
       });
       return np;
     }
     function media() { var h = nowPlaying(); if (h) h.update(); }
     function load(i, at) {
       cancelPendingPlay();
+      clearDeckTrouble();
       var to = (i + rows.length) % rows.length;
       /* leaving a record mid-play spends it: the play was the grant */
       if (cur > -1 && cur !== to) spend(rows[cur]);
@@ -1571,13 +1586,23 @@
     /* A slow gate or listen receipt belongs to the selection that asked for
        it. A newer choice or Pause wins, even when the old reply arrives last. */
     var playRequest = 0, pendingClaim = null;
-    function cancelPendingPlay() {
+    function cancelPendingPlay(keepTries) {
       playRequest++;
       if (pendingClaim && pendingClaim.row._gateOut) paintGate(pendingClaim.row, pendingClaim.row._gateOut);
       pendingClaim = null;
       if (finishPrime) finishPrime(false);
+      /* a pending try belongs to the request that scheduled it: anything newer wins (music slice M3); a second the
+         listener chooses keeps the tries going, from there (review PB-R4) */
+      if (deckTrouble && deckTrouble.timer) {
+        if (keepTries) deckTrouble.request = playRequest;
+        else {
+          clearTimeout(deckTrouble.timer); deckTrouble.timer = 0;
+          if (deckTrouble.state === "reconnecting") { deckTrouble.state = "lost"; deckStatus(deckLostLine()); deckTroubleChanged(); }
+        }
+      }
     }
     function pauseDeck() {
+      wantSound = false;
       cancelPendingPlay();
       deck.pause();
     }
@@ -1600,6 +1625,9 @@
     }
     function startDeck(row) {
       if (finishPrime) finishPrime(false);
+      wantSound = true;
+      /* Play on a song stopped at its end (the album's end) starts that song again */
+      try { if (isFinite(deck.duration) && deck.duration > 0 && deck.duration - (deck.currentTime || 0) < 0.1) deck.currentTime = 0; } catch (e) {}
       audioSession();
       var p = deck.play();
       if (p && typeof p.catch === "function") p.catch(function (e) { playFailed(e, row); });
@@ -1631,10 +1659,19 @@
         if (p && typeof p.then === "function") p.then(function () { done(true); }, function () { done(true); }); else done(true);
       } catch (e) { if (finishPrime) finishPrime(false); else priming = false; }
     }
-    function play(i, at) {
+    function play(i, at, how) {
       var target = i !== undefined ? (i + rows.length) % rows.length : (cur < 0 ? 0 : cur);
       var row = rows[target];
       if (pendingClaim && pendingClaim.target === target && pendingClaim.request === playRequest) return;
+      if (row && row.hasAttribute("data-hold") && holdThenPlay(target, at, how || "tap")) return;
+      /* Play on a song that stopped on the way picks it up at the second it stopped (music slice M3); a song that
+         picked up again and plays on is not in trouble any more, and Play after a Pause just plays on (review PB-R5) */
+      if (deckTrouble && (deckTrouble.state === "reconnecting" || deckTrouble.state === "lost") &&
+          target === cur && deckTrouble.row === row && at === undefined) {
+        cancelPendingPlay();
+        resumeDeckTrouble();
+        return;
+      }
       cancelPendingPlay();
       /* An earned record is spent the moment it is played, not before:
          ask the API for this one play, then load what it signs. */
@@ -1662,6 +1699,46 @@
       else if (cur < 0) load(0, at);
       startDeck(rows[cur]);
       if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: rows[cur].getAttribute("data-title"), album: ALBUM });
+    }
+    /* THE CLOSING SONG IS HELD (owner, 2026-11-23: "We keep the song up, but it won't play... it'll tell you why it
+       won't play when you try to click play"). Its row stays listed; it plays for the house owner alone, through his
+       gate's own answer (operator), the play he already had. For anyone else nothing is loaded, streamed or counted
+       for it and one pop-up says why (js/gated-audio.js). A tap on it leaves what plays alone; Next into it, or the
+       album reaching it, moves on past it, or stops the album there when it is the last song. Returns false for the
+       house owner, whose play goes on below as before. */
+    /* held for this listener: everyone but the house owner, whose gate answered operator, or whose own play of it is
+       granted and not yet spent (the same rule as beside paintGate, which lives outside this scope) */
+    function heldFor(row) {
+      var out = row && row._gateOut;
+      return !!(row && row.hasAttribute("data-hold") && !row.hasAttribute("data-granted") && !(out && out.state === "earned" && out.operator));
+    }
+    function holdThenPlay(target, at, how) {
+      var row = rows[target];
+      if (!heldFor(row)) return false;
+      var G = window.MCC_GATED, request = playRequest;
+      var ask = G && G.holdDecision ? G.holdDecision(gateSpec(row)) : Promise.resolve({ play: false, signedIn: false });
+      ask.then(function (d) {
+        d = d || { play: false, signedIn: false };
+        if (request !== playRequest) return;   // something newer was chosen meanwhile
+        if (d.play) { claimThenPlay(target); return; }
+        if (G && G.holdNotice) G.holdNotice({ signedIn: !!d.signedIn });
+        if (how === "tap") return;
+        if (target + 1 < rows.length) play(target + 1, undefined, how);
+        else endAlbum();
+      }, function () {});
+      return true;
+    }
+    /* THE END OF THE RECORD (owner, 2026-11-23: "end of the album, and just leave"): after its last song, or Next past
+       it, the album stops there, paused at the end of that song, and the lock screen says it stopped. It never starts
+       again from the first song by itself. */
+    function endAlbum() {
+      cancelPendingPlay();
+      wantSound = false;
+      if (!deck.paused) deck.pause();
+      /* skipped past it: to its end (a hair before it; a seek to the very end lands back on 0:00 in Chromium). A song
+         that ended is at its end already. */
+      try { if (!deck.ended && isFinite(deck.duration) && deck.duration - (deck.currentTime || 0) > 0.25) deck.currentTime = Math.max(0, deck.duration - 0.05); } catch (e) {}
+      paintRows(); paintDeck(); media();
     }
     /* A GATED SONG'S PREVIEW IS SECONDS LONG, AND SAID SO NOWHERE. Listeners
        who came for that song heard a few seconds, then the deck moved on (or
@@ -1701,14 +1778,22 @@
         pendingClaim = null;
         if (out.state !== "full") {
           /* not earned after all (another tab spent it, or signed out):
-             say where they stand and play the preview */
-          paintGate(row, out);
+             say where they stand and play the preview. A claim whose answer
+             was lost may have spent the play: say so, ask the gate again
+             (a read, never a claim), and never claim again by itself
+             (music slice M3) */
+          if (out.uncertain) {
+            if (window.MCC_TOAST) window.MCC_TOAST("We could not confirm the play. If it went through, it may already be used. Tap the song to try again.");
+            if (window.MCC_GATED.forget) window.MCC_GATED.forget();
+          } else paintGate(row, out);
           gatedPlayEvent(row, false);
           playNow(target);
           return;
         }
         row.setAttribute("data-granted", "");
         row.setAttribute("data-src", out.url);
+        /* the one play's lifetime (the Worker's expires_in), so a dropped read knows whether it may pick it up */
+        row._grant = { expiresAt: Number(out.expires_in) > 0 ? Date.now() + Number(out.expires_in) * 1000 : 0 };
         paintGate(row, out);
         grantMax = 0;
         if (cur === target) cur = -1;   /* force a fresh load of the master */
@@ -1754,8 +1839,8 @@
         : window.MCC_LISTENS.start(key, deckPlaying);
       listen = h ? { row: row, handle: h } : null;
     }
-    function next() { play(cur + 1); }
-    function prev() { if (deck.currentTime > 4) { cancelPendingPlay(); deck.currentTime = 0; return; } play(cur - 1); }
+    function next() { if (cur + 1 >= rows.length) { endAlbum(); return; } play(cur + 1, undefined, "next"); }
+    function prev() { if (deckAt() > 4 || cur <= 0) { userSeek(0); return; } play(cur - 1, undefined, "prev"); }
 
     rows.forEach(function (row, i) {
       row.addEventListener("click", function () {
@@ -1764,10 +1849,10 @@
       });
     });
     el("playAll").addEventListener("click", function () {
-      if (cur > -1 && !deck.paused) { pauseDeck(); return; }
+      if (cur > -1 && deckIntends()) { pauseDeck(); return; }
       play(cur > -1 ? cur : 0);
     });
-    el("tpPlay").addEventListener("click", function () { if (deck.paused) play(); else pauseDeck(); });
+    el("tpPlay").addEventListener("click", deckToggle);
     el("tpNext").addEventListener("click", next);
     el("tpPrev").addEventListener("click", prev);
     function seekFeedback(message) {
@@ -1786,8 +1871,7 @@
         seekFeedback("This one-pass track cannot be rewound.");
         return;
       }
-      try { cancelPendingPlay(); deck.currentTime = target; seekFeedback(""); }
-      catch (error) { seekFeedback("Seeking is not available for this track."); }
+      seekFeedback(userSeek(target) ? "" : "Seeking is not available for this track.");
     }
     ["seek", "nowSeek"].forEach(function (id) {
       var control = el(id);
@@ -1809,8 +1893,10 @@
     var ICO_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
     deck.addEventListener("play", function () { if (priming) return; countStart(); paintRows(); paintDeck(); announce(true); save();
       el("playAll").innerHTML = ICO_PAUSE + "Pause"; roomPlay(true); });
-    deck.addEventListener("pause", function () { if (priming) return; paintRows(); paintDeck(); announce(false); save();
-      el("playAll").innerHTML = ICO_PLAY + "Play"; roomPlay(false); });
+    /* the bar's transport and Play all follow what the listener asked for: the browser pauses the deck itself when a
+       read fails (error first, then pause), and the song being picked up again still offers Pause (music slice M3) */
+    deck.addEventListener("pause", function () { if (priming) return; paintRows(); paintDeck(); var on = deckIntends(); announce(on); save();
+      el("playAll").innerHTML = on ? ICO_PAUSE + "Pause" : ICO_PLAY + "Play"; roomPlay(false); });
     var tick = 0;
     deck.addEventListener("timeupdate", function () {
       if (granted()) grantMax = Math.max(grantMax, deck.currentTime);
@@ -1828,6 +1914,8 @@
       if (granted() && deck.currentTime < grantMax - 0.75) deck.currentTime = grantMax;
     });
     deck.addEventListener("ended", function () {
+      /* a song that "ends" well short of its own length was cut off on the way: not finished (music slice M3) */
+      if (deckEndedShort() && deckFailed("ended-short")) return;
       var finished = Promise.resolve(null);
       if (listen && listen.row === rows[cur] && window.MCC_LISTENS) {
         var heardKey = rows[cur].getAttribute("data-key");
@@ -1841,21 +1929,300 @@
       /* read before spend(), which takes data-granted off a full play */
       var wasPreview = !!(rows[cur] && rows[cur].hasAttribute("data-gated-bucket") && !rows[cur].hasAttribute("data-granted"));
       spend(rows[cur]);
-      if (wasPreview) { previewNotice(rows[cur], true); return; }
+      /* A LOCKED PREVIEW NEVER STOPS THE ALBUM (music slice M3; decision D-11's default): it played to its
+         boundary, one short line says what it was, and the record moves on */
+      if (wasPreview) previewNotice(rows[cur], true);
       if (pendingClaim && pendingClaim.request === playRequest) return;
       /* Played straight through, the album arrives at its closer having just
          earned it. Wait for the song that just ended to be counted, then ask
          for the play: earned, it plays in full; not, it says where the
          listener stands and plays the preview. */
-      var upNext = (cur + 1) % rows.length;
-      if (rows[upNext] && rows[upNext].hasAttribute("data-gated-bucket") && window.MCC_GATED && window.MCC_GATED.signedIn()) {
+      var upNext = cur + 1, nextRow = rows[upNext];
+      /* a held song next goes through next() (holdThenPlay) */
+      if (nextRow && !heldFor(nextRow) && nextRow.hasAttribute("data-gated-bucket") && window.MCC_GATED && window.MCC_GATED.signedIn()) {
         var request = playRequest;
         var advance = function () { if (request === playRequest) claimThenPlay(upNext); };
         finished.then(advance, advance);
         return;
       }
-      next(); // the record keeps spinning, wraps at the end
+      next(); // the record keeps spinning, and stops after its last song (owner, 2026-11-23)
     });
+
+    /* ============================================================
+       DELIVERY (music slice M3). Matthew, 2026-11-19: "The music
+       never plays fully through." One failed read stopped the deck
+       with half a minute buffered, and nothing said so (music map 02,
+       DEL-6). Now a song that stops on the way says so, is never shown
+       playing over silence, and is asked for again at the second it
+       stopped: the same file, or the same one-play URL while its time
+       holds, a few times, then it stops and says how to pick it up.
+       Pause or another song wins over a pending try, and while a song
+       is being picked up the one button is Pause (the lock screen and
+       the bar's transport too), so the tries can always be stopped; a
+       second the listener chooses on the way is where it picks up; a
+       song cut off is never counted as heard; an earned play whose time
+       ran out is never claimed again by itself; a song that never
+       started is not called a dropped connection.
+       The tries are timed from the moment the sound stopped, and all
+       start inside ten seconds of it: WebKit's source keeps an audible
+       page awake for 10 s after its sound stops and lets a hidden page
+       start its sound again without a tap only within 10 s (what an
+       iPhone does is Inferred). A try whose read never answers gives
+       way to the next on time; a try the browser refuses to start
+       stops the tries and says how to pick the song up. A song that has
+       been heard and goes silent for 4 s with no progress is treated as
+       a dropped read; before its first sound a read is given 12 s, and
+       a short wait just says Loading.
+       ============================================================ */
+    var RETRY_AT_MS = [500, 1500, 3000, 5500, 8500], LAST_TRY_MS = 3000, LOADING_NOTE_MS = 1500, STALL_MS = 4000, FIRST_READ_MS = 12000;
+    var LAPSE_MARGIN_MS = 10000, SHORT_END_S = 2;
+    var deckTrouble = null, wantSound = !deck.paused, loadingTimer = 0, stallTimer = 0, progressAt = 0, ownPauses = 0;
+    var playingFrom = -1, deckHeard = false;
+    /* a pause this block makes for a song in trouble; any other pause (the World's transport, the lock
+       screen, this page) is the listener's, and no retry plays over it */
+    function troublePause() {
+      if (deck.paused) return;
+      ownPauses++;
+      try { deck.pause(); } catch (e) { ownPauses--; }
+    }
+    function deckStatus(text) {
+      var s = el("seekStatus");
+      if (s) { s.textContent = text || ""; s.hidden = !text; }
+      paintDeck();
+    }
+    function quietDeckWatch() {
+      if (loadingTimer) { clearTimeout(loadingTimer); loadingTimer = 0; }
+      if (stallTimer) { clearTimeout(stallTimer); stallTimer = 0; }
+    }
+    function clearDeckTrouble() {
+      quietDeckWatch();
+      playingFrom = -1; deckHeard = false; progressAt = 0;   // load() calls this for every new source: nothing of it heard yet
+      if (!deckTrouble) return;
+      if (deckTrouble.timer) clearTimeout(deckTrouble.timer);
+      var said = deckTrouble.state && !deckTrouble.silent;
+      deckTrouble = null;
+      if (said) deckStatus("");
+    }
+    /* has this song been heard: it moved on after it started playing, or it has metadata and a position past the start */
+    function deckHeardNow() { return deckHeard || (deck.readyState >= 1 && (deck.currentTime || 0) > 0); }
+    /* what the listener asked for: playing, or a song in trouble being picked up again (the deck is quiet then) */
+    function deckIntends() { return !deck.paused || !!(wantSound && deckTrouble && deckTrouble.state === "reconnecting"); }
+    /* the deck bar's and the sheet's one button: Pause while the music plays or is being picked up, else Play */
+    function deckToggle() { if (deckIntends()) pauseDeck(); else play(); }
+    /* the second the song is at, or was cut off at (Previous rewinds from there) */
+    function deckAt() { return deckTrouble && (deckTrouble.state === "reconnecting" || deckTrouble.state === "lost") ? deckTrouble.at : (deck.currentTime || 0); }
+    /* what the trouble is called: a song that was heard was cut off on the way; one that never started could not
+       load (a missing or unreadable file, or no network at all: the page cannot tell which, so it names neither) */
+    function deckLabel() {
+      var t = deckTrouble, st = t && !t.silent ? t.state : "";
+      if (!st) return "";
+      if (st === "loading") return "Loading…";
+      if (st === "reconnecting") return t.heard ? "Reconnecting…" : "Loading…";
+      return t.heard ? "Connection lost" : "Could not load";
+    }
+    function deckStatusLine() { var l = deckLabel(); return l && deckTrouble.state === "lost" ? l + " · tap play" : l; }
+    function deckReconnectingLine() {
+      if (deckTrouble && !deckTrouble.heard) return "This song would not load. Trying again…";
+      return deckTrouble && deckTrouble.moved ? "Picking up at " + fmt(deckTrouble.at) + "…"
+        : "The connection dropped at " + fmt(deckTrouble ? deckTrouble.at : deck.currentTime) + ". Picking up there…";
+    }
+    function deckLostLine() {
+      if (deckTrouble && !deckTrouble.heard) return "This song could not load. Tap play to try again.";
+      return "The connection dropped. Tap play to pick up at " + fmt(deckTrouble ? deckTrouble.at : deck.currentTime) + ".";
+    }
+    /* the deck bar, the sheet, the rows, the bar's transport and the lock screen follow the trouble */
+    function deckTroubleChanged() {
+      var on = deckIntends();
+      paintDeck(); paintSheet(); paintRows();
+      announce(on);
+      el("playAll").innerHTML = on ? ICO_PAUSE + "Pause" : ICO_PLAY + "Play";
+      media();
+    }
+    /* a second the listener chooses (the seek bars, Previous, the lock screen's scrubber, a lyric line): during the
+       trouble the next try reads from there, or Play does once the tries gave up (the one earned pass never rewinds) */
+    function userSeek(t) {
+      cancelPendingPlay(true);
+      t = Math.max(0, Number(t) || 0);
+      try { deck.currentTime = t; } catch (e) { return false; }
+      var d = deckTrouble;
+      if (d && (d.state === "reconnecting" || d.state === "lost")) {
+        if (granted() && t < grantMax - 0.75) t = grantMax;
+        d.at = t; d.moved = true;
+        if (d.state === "reconnecting") deckStatus(deckReconnectingLine());
+        else if (!d.silent) deckStatus(deckLostLine());
+        else paintDeck();
+      }
+      return true;
+    }
+    function grantLapsed(row) {
+      var g = row && row.hasAttribute("data-granted") ? row._grant : null;
+      return !!(g && g.expiresAt && Date.now() >= g.expiresAt - LAPSE_MARGIN_MS);
+    }
+    function deckEndedShort() {
+      var d = deck.duration;
+      if (cur < 0 || !rows[cur] || !isFinite(d) || d <= 0) return false;
+      if (rows[cur].hasAttribute("data-gated-bucket") && !rows[cur].hasAttribute("data-granted")) return false;   // a preview ends where it ends
+      return (deck.currentTime || 0) < d - SHORT_END_S;
+    }
+    function deckFailed(why, since) {
+      if (cur < 0 || !rows[cur]) return false;
+      var row = rows[cur], now = Date.now();
+      /* a held row has no source for anyone but the house owner: the error of an empty source is not a dropped
+         connection, and nothing is sent for it (review QW-R6) */
+      if (row.hasAttribute("data-hold") && !row.getAttribute("data-src")) return false;
+      quietDeckWatch();
+      var at = Math.max(0, deck.currentTime || 0);
+      var fresh = !deckTrouble || deckTrouble.row !== row || deckTrouble.state === "loading" || !deckTrouble.since;   // a new drop, not another failed try
+      if (fresh) {
+        deckTrouble = { row: row, at: at, attempt: 0, timer: 0, state: "", since: since || now, heard: deckHeardNow(), seq: 0, request: playRequest };
+      } else {
+        deckTrouble.at = Math.max(deckTrouble.at, at);
+        if (!deckTrouble.state) deckTrouble.since = since || now;   // it played again, then stopped: the ten seconds start again
+      }
+      if (deckTrouble.timer) { clearTimeout(deckTrouble.timer); deckTrouble.timer = 0; }
+      troublePause();   // the deck is quiet (the label says why)
+      /* one drop is one music_interrupted, sent when it begins (approved by Matthew, 2026-11-23; never one per failed read) */
+      if (fresh && window.MCC_TRACK) window.MCC_TRACK("music_interrupted", { track: row.getAttribute("data-title"), album: ALBUM, reason: why,
+        at_s: Math.round(deckTrouble.at), attempt: deckTrouble.attempt, path: row.hasAttribute("data-granted") ? "gated" : "public" });
+      if (grantLapsed(row)) { deckPlayEnded(row); return true; }
+      if (!wantSound) { deckTrouble.state = "lost"; deckTrouble.silent = true; deckTroubleChanged(); return true; }   // nobody asked for sound: Play picks it up
+      scheduleDeckTry();
+      return true;
+    }
+    /* the next try, at its time from the moment the sound stopped; a time already past is not made up for (one
+       try at once, never a burst); after the last, the song stops and says how to pick it up */
+    function scheduleDeckTry() {
+      var d = deckTrouble, row = d.row, elapsed = Date.now() - d.since, k = d.attempt;
+      while (k + 1 < RETRY_AT_MS.length && RETRY_AT_MS[k + 1] <= elapsed) k++;
+      if (k >= RETRY_AT_MS.length) {
+        d.state = "lost"; d.silent = false;
+        deckStatus(deckLostLine());
+        deckTroubleChanged();
+        return;
+      }
+      d.state = "reconnecting"; d.silent = false;
+      d.attempt = k + 1;
+      d.request = playRequest;
+      d.timer = setTimeout(function () {
+        if (deckTrouble !== d) return;
+        d.timer = 0;
+        deckRetry(row, d.request, k);
+      }, Math.max(0, RETRY_AT_MS[k] - elapsed));
+      deckStatus(deckReconnectingLine());
+      deckTroubleChanged();
+    }
+    function deckRetry(row, request, k) {
+      var d = deckTrouble;
+      if (!d || d.row !== row || request !== playRequest || rows[cur] !== row || !wantSound) return;
+      if (grantLapsed(row)) { deckPlayEnded(row); return; }
+      var seq = ++d.seq;
+      /* a try whose read never answers gives way to the next one on time; the last is given LAST_TRY_MS */
+      var due = k + 1 < RETRY_AT_MS.length ? RETRY_AT_MS[k + 1] : RETRY_AT_MS[RETRY_AT_MS.length - 1] + LAST_TRY_MS;
+      if (d.timer) clearTimeout(d.timer);
+      d.timer = setTimeout(function () {
+        if (deckTrouble !== d || d.seq !== seq) return;
+        d.timer = 0;
+        if (d.request === playRequest && rows[cur] === row && d.state === "reconnecting") deckFailed("stalled");
+      }, Math.max(0, due - (Date.now() - d.since)));
+      deck.src = row.getAttribute("data-src");
+      try { deck.currentTime = d.at; } catch (e) {}   // a ranged read from the second it stopped
+      audioSession();
+      var p = deck.play();
+      if (p && typeof p.catch === "function") p.catch(function (err) {
+        /* a hidden page may need a tap to start its sound again (WebKit refuses a play() then): stop trying and say
+           how to pick it up. Any other refusal (a failed load) reports itself as an error event, and the deadline
+           above covers one that does not. */
+        if (!err || err.name !== "NotAllowedError") return;
+        if (deckTrouble !== d || d.seq !== seq || d.state !== "reconnecting") return;
+        if (d.timer) { clearTimeout(d.timer); d.timer = 0; }
+        d.state = "lost"; d.silent = false;
+        deckStatus(deckLostLine());
+        deckTroubleChanged();
+      });
+      paintDeck();
+    }
+    /* Play (or the World's transport, the lock screen, a lyric line) on a song in trouble: a try at once, the tries
+       timed from this tap */
+    function resumeDeckTrouble() {
+      var d = deckTrouble, row = d.row;
+      wantSound = true;
+      if (grantLapsed(row)) { deckPlayEnded(row); return; }
+      if (d.timer) { clearTimeout(d.timer); d.timer = 0; }
+      d.attempt = 1; d.since = Date.now(); d.request = playRequest;
+      d.state = "reconnecting"; d.silent = false;
+      deckStatus(d.heard ? "Picking up at " + fmt(d.at) + "…" : deckReconnectingLine());
+      deckTroubleChanged();
+      deckRetry(row, playRequest, 0);
+    }
+    /* an earned play whose time ran out: over, said, never claimed again by itself */
+    function deckPlayEnded(row) {
+      clearDeckTrouble();
+      troublePause();
+      spend(row);
+      var msg = "The connection dropped and this play's time ran out. Playing it again starts a new play.";
+      if (window.MCC_TOAST) window.MCC_TOAST(msg);
+      deckStatus(msg);
+    }
+    deck.addEventListener("error", function () { deckFailed("error"); });
+    deck.addEventListener("pause", function () {
+      if (ownPauses > 0) { ownPauses--; return; }
+      /* the browser pauses the deck itself when a read fails (error first, then pause): that is the
+         trouble above, not the listener; nor is the end of a song, or a pause already undone */
+      if (deck.error || deck.ended || !deck.paused) return;
+      wantSound = false;
+      /* the listener's pause while a try was playing: the tries end, and every surface says how to pick it up */
+      if (deckTrouble && deckTrouble.state === "reconnecting") {
+        if (deckTrouble.timer) { clearTimeout(deckTrouble.timer); deckTrouble.timer = 0; }
+        deckTrouble.state = "lost"; deckStatus(deckLostLine()); deckTroubleChanged();
+      }
+    });
+    /* what the delivery is doing, for the World's transport when it plays this deck: the trouble in a few words and
+       what the listener asked for (the World's Pause stops the tries) */
+    window.MCC_DECK_DELIVERY = function () {
+      return { state: deckTrouble && !deckTrouble.silent ? deckTrouble.state || "" : "", label: deckLabel(), status: deckStatusLine(),
+        at: deckTrouble ? deckTrouble.at : null, playing: deckIntends() };
+    };
+    deck.addEventListener("waiting", function () {
+      if (deck.paused || cur < 0 || !wantSound) return;
+      if (deckTrouble && deckTrouble.state === "reconnecting") return;   // a try in flight has its own deadline
+      quietDeckWatch();
+      var at = deck.currentTime || 0, row = rows[cur], request = playRequest, since = Date.now(), heard = deckHeardNow();
+      loadingTimer = setTimeout(function () {
+        loadingTimer = 0;
+        if (request !== playRequest || rows[cur] !== row || deck.paused || deckTrouble) return;
+        deckTrouble = { row: row, at: at, attempt: 0, timer: 0, state: "loading" };
+        paintDeck(); media();
+      }, LOADING_NOTE_MS);
+      stallTimer = setTimeout(function () {
+        stallTimer = 0;
+        if (request !== playRequest || rows[cur] !== row || deck.paused) return;
+        /* the silence began at the wait: the tries are timed from there (before the first sound, from now) */
+        if ((deck.currentTime || 0) <= at + 0.25) deckFailed("stalled", heard ? since : 0);
+      }, heard ? STALL_MS : FIRST_READ_MS);
+    });
+    deck.addEventListener("playing", function () {
+      quietDeckWatch();
+      playingFrom = deck.currentTime || 0;
+      /* a slow read that came is nothing to keep; a song picked up again is watched for a few seconds more */
+      if (deckTrouble && deckTrouble.state === "loading") { deckTrouble = null; paintDeck(); media(); }
+      else if (deckTrouble && deckTrouble.state) {
+        var said = !deckTrouble.silent;
+        deckTrouble.state = "";
+        if (deckTrouble.timer) { clearTimeout(deckTrouble.timer); deckTrouble.timer = 0; }
+        if (said) deckStatus(""); else paintDeck();
+        deckTroubleChanged();
+      }
+    });
+    deck.addEventListener("timeupdate", function () {
+      if (!deck.paused && playingFrom >= 0 && (deck.currentTime || 0) > playingFrom + 0.25) deckHeard = true;
+      if (!deck.paused && (deck.currentTime || 0) > progressAt + 0.25) {
+        progressAt = deck.currentTime;
+        quietDeckWatch();
+        if (deckTrouble && deckTrouble.state === "loading") { deckTrouble = null; paintDeck(); media(); }
+      }
+      if (deckTrouble && !deckTrouble.state && deck.currentTime > deckTrouble.at + 5) deckTrouble = null;   // played on: recovered
+    });
+    deck.addEventListener("volumechange", function () { paintDeck(); media(); });
 
     /* ============================================================
        BANKING THE SECOND SOMEBODY ACTUALLY LEFT ON.
@@ -1905,6 +2272,7 @@
         }
         return;
       }
+      if (!seatable(at)) return;
       load(at, want);
     });
 
@@ -1914,6 +2282,13 @@
        It runs at the end of init() (restoreSeat() below): load() also dresses the sheet (film, scenes,
        words), whose elements are bound further down, and a seat restored before them threw inside load()
        and stopped short of the rows, the deck, the sheet's artist and the lock screen (music slice M2). */
+    /* A HELD SONG IS NEVER SEATED by a link, this device's seat, the pocket or the shared row (review QW-R6): its row
+       has no source, and the deck would report the empty source as a dropped connection. The album opens with nothing
+       chosen instead, and a tap on the row says why; the house owner's own play seats it through its claim. */
+    function seatable(i) {
+      var r = rows[i];
+      return !!r && !(r.hasAttribute("data-hold") && !r.getAttribute("data-src"));
+    }
     function restoreSeat() {
     try {
       var r0 = JSON.parse(localStorage.getItem(KEY));
@@ -1928,37 +2303,41 @@
             return (r.getAttribute("data-title") || "").toLowerCase() === WANT.toLowerCase();
           })
         : -1;
+      /* a link to the held song is asked for, so nothing remembered takes its place, and it is not seated: the album
+         opens with nothing chosen (review QW-R6) */
+      var asked = want > -1;
+      if (asked && !seatable(want)) want = -1;
       if (want > -1) {
         load(want, 0);
         if (window.MCC_TRACK) window.MCC_TRACK("listen_open", { track: rows[want].getAttribute("data-title"), album: ALBUM });
-        r0 = null;
       }
+      if (asked) r0 = null;
       /* COMING BACK FROM THE POCKET. If the corner player kept the record
          moving on another page, its second is newer than the one this album
          banked on the way out — so it wins, and the listener lands exactly
          where the music actually is rather than where they left this page. */
-      var pk = want > -1 ? null : (window.MCC_POCKET && window.MCC_POCKET.read());
+      var pk = asked ? null : (window.MCC_POCKET && window.MCC_POCKET.read());
       if (pk && pk.title) {
         var at = rows.findIndex(function (r) { return r.getAttribute("data-title") === pk.title; });
-        if (at > -1) {
+        if (at > -1 && seatable(at)) {
           var drift = pk.playing && pk.at ? Math.min(30, (Date.now() - pk.at) / 1000) : 0;
           load(at, (pk.t || 0) + drift);
           r0 = null;
         }
       }
-      if (r0 && r0.album === ALBUM && r0.i > -1 && r0.i < rows.length) load(r0.i, r0.t || 0);
+      if (r0 && r0.album === ALBUM && r0.i > -1 && r0.i < rows.length && seatable(r0.i)) load(r0.i, r0.t || 0);
       /* THE RECORD LEFT ON ANOTHER DEVICE (decision D-8, a default pending Matthew). For a member the one
          shared row (listener_state, through js/pip.js) is asked as well. It answers only when it is newer
          than anything this device banked; when it names a record on this page and nothing has been chosen
          or played since, the album opens on it, paused at its second. A link to a track wins over it. */
-      if (want < 0 && window.MCC_POCKET && window.MCC_POCKET.pull) {
+      if (!asked && window.MCC_POCKET && window.MCC_POCKET.pull) {
         var seated = cur;
         window.MCC_POCKET.pull().then(function (far) {
           if (!far || !far.title || cur !== seated || !deck.paused) return;
           var to = rows.findIndex(function (r) {
             return r.getAttribute("data-title") === far.title && (!far.album || r.getAttribute("data-albslug") === far.album);
           });
-          if (to > -1) load(to, Math.max(0, Number(far.t) || 0));
+          if (to > -1 && seatable(to)) load(to, Math.max(0, Number(far.t) || 0));
         }).catch(function () {});
       }
     } catch (e) {}
@@ -2009,11 +2388,17 @@
       room.classList.add("is-on");
       if (!deck.paused) { var p = roomFilm.play(); if (p && p.catch) p.catch(function () {}); }
     }
+    /* a music view over the album (music slice M5) covers the room: its film rests, and wakes with the deck on reveal */
+    var roomCovered = false;
     function roomPlay(on) {
       if (!roomFilm || !roomSrc) return;
-      if (on) { var p = roomFilm.play(); if (p && p.catch) p.catch(function () {}); }
+      if (on && !roomCovered) { var p = roomFilm.play(); if (p && p.catch) p.catch(function () {}); }
       else { try { roomFilm.pause(); } catch (e) {} }
     }
+    window.addEventListener("mcc:music-view", function (e) {
+      roomCovered = !!(e && e.detail && e.detail.open);
+      roomPlay(!roomCovered && !deck.paused);
+    });
     /* the room rides the song clock: reels scene-cut the walls, and
        the live bar lands on the deck, sheet open or not */
     function roomTick() {
@@ -2057,6 +2442,12 @@
           nowFilm.load();
         }
       }
+      /* a song with no film shows its album's cover: whole, nothing over it or behind it (owner, 2026-11-23; the
+         whole-covers rule in css/music-system-v2.css), and no film left over from another song */
+      var poster = row.getAttribute("data-poster") || "";
+      var coverOnly = !reelSrc && !row.getAttribute("data-video") && !!poster && poster === row.getAttribute("data-art");
+      nowFilm.parentNode.classList.toggle("now__art--cover", coverOnly);
+      if (coverOnly && nowFilm.getAttribute("src")) { nowFilm.removeAttribute("src"); try { nowFilm.load(); } catch (e) {} }
       nowFilm.muted = true;
       if (!deck.paused) { var pr = nowFilm.play(); if (pr && pr.catch) pr.catch(function () {}); }
       loadLyrics(row.getAttribute("data-lyrics") || "");
@@ -2222,7 +2613,7 @@
       if (cur > -1) { try { exp = JSON.parse(rows[cur].getAttribute("data-experience") || "{}"); } catch (e) {} }
       var context = { track: cur > -1 ? rows[cur].getAttribute("data-title") : null, album: ALBUM, surface: "album", track_view:false };
       lyrCtl = window.MCC_LYRICS ? window.MCC_LYRICS.mount(nowLyr, j, {
-        seek: function (t) { cancelPendingPlay(); try { deck.currentTime = Math.max(0, t); } catch (e) {} if (deck.paused) play(); },
+        seek: function (t) { userSeek(t); if (!deckIntends()) play(); },
         renderLine: function (p, text) {
           if (window.MCC_LYRIC_COMMERCE) return !!window.MCC_LYRIC_COMMERCE.renderLine(p, text, exp, context) || !!p.querySelector("a");
           p.textContent = text; return false;
@@ -2257,12 +2648,14 @@
       lyrRaf = requestAnimationFrame(lyrFrame);
     }
     function paintSheet() {
+      var nowSound = el("nowSound");
+      if (nowSound) nowSound.hidden = !deck.muted;
       if (!sheetOn()) return;
       el("nowT0").textContent = fmt(deck.currentTime);
       /* the premium read: what's LEFT, counting down */
       el("nowT1").textContent = deck.duration ? "-" + fmt(Math.max(0, deck.duration - deck.currentTime)) : "-:--";
       el("nowSeekFill").style.width = deck.duration ? (deck.currentTime / deck.duration * 100) + "%" : "0";
-      el("nowPlayIc").innerHTML = deck.paused ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
+      el("nowPlayIc").innerHTML = !deckIntends() ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
       /* the words ride the music (js/lyrics-sync.js) */
       if (lyrCtl) {
         lyrCtl.update(deck.currentTime, deck.duration);
@@ -2279,9 +2672,21 @@
     el("deckbar").querySelector(".deckbar__meta").addEventListener("click", openSheet);
     el("deckbar").querySelector(".deckbar__art").addEventListener("click", openSheet);
     el("nowDown").addEventListener("click", closeSheet);
-    el("nowPlay").addEventListener("click", function () { if (deck.paused) play(); else pauseDeck(); });
+    el("nowPlay").addEventListener("click", deckToggle);
     el("nowNext").addEventListener("click", function () { next(); setTimeout(openSheet, 60); });
     el("nowPrev").addEventListener("click", function () { prev(); setTimeout(openSheet, 60); });
+    /* the deck's own unmute: it governs this deck only (decision D-7). The button goes as the sound comes back, so
+       the keyboard stays in the same player, on its Play/Pause (music slice M3, review RL-4) */
+    [["deckSound", "tpPlay"], ["nowSound", "nowPlay"]].forEach(function (pair) {
+      var b = el(pair[0]);
+      if (b) b.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var had = document.activeElement === b;
+        deck.muted = false; paintDeck(); paintSheet();
+        if (had && el(pair[1])) el(pair[1]).focus();
+      });
+    });
+    deck.addEventListener("volumechange", paintSheet);
 
     deck.addEventListener("timeupdate", paintSheet);
     deck.addEventListener("play", paintSheet);

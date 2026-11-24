@@ -31,6 +31,8 @@
 import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import { recentJobs, recentObjectives, rest, workerId } from '../supabase.mjs';
+import { readWorkstreams, isNotApplied, WORKSTREAMS_PENDING_SQL, WORKSTREAM_ORG_OUTSIDE_AUTHORITY } from './workstream.mjs';
+import { buildResumePacket } from '../workstream-contract.mjs';
 
 const DEPLOY_MANIFEST = process.env.MCCLUSTER_DEPLOY_MANIFEST || '/opt/mccluster/core/.mccluster-deploy.json';
 /* Overridable so a test can point at a deliberately corrupt file without
@@ -318,10 +320,57 @@ export function partitionJobs(jobs, nowMs = Date.now(), staleMs = STALE_LEASE_MS
   return { active, stale };
 }
 
+/* WHERE THE WORK STANDS, NOT ONLY WHAT THE MACHINE IS DOING.
+ *
+ * Everything above answers "which jobs, leases and approvals exist". None
+ * of it says which branch a session was on, which pull request it had
+ * open, what it had decided or what it meant to do next: that lived in a
+ * model's context window, and core.resume returned nothing for two days
+ * of work because no outside session ever wrote it down. The workstream
+ * checkpoints in the private context plane are that record.
+ *
+ * Three outcomes, kept apart like every other source here:
+ *   ok       the rows (possibly none: [] is "no workstream checkpointed")
+ *   missing  the workstream SQL is not applied on this database. A known
+ *            state, not an outage: resume keeps working exactly as before
+ *            and names the source in degraded_sources.
+ *   throws   unreachable, or a 200 of the wrong shape (unavailable/invalid)
+ *
+ * And one answer that is not a failure at all: workstreams belong to the
+ * house organization only. core.resume accepts any org_id, so for any
+ * other organization the database says "outside Core authority". That is
+ * a known, complete answer (this organization has no workstreams, by
+ * design), reported as ok with `applicable: false` and no items, never as
+ * a degraded source: an organization that resumed cleanly before the SQL
+ * was applied still resumes cleanly after it.
+ *
+ * Read at `internal` sensitivity: the resident agent receives a bounded
+ * projection of this section through operations_read
+ * (core/src/resident-tools.mjs), and anything above internal comes back
+ * as a named stub.
+ */
+const WORKSTREAM_RESUME_LIMIT = 20;
+const WORKSTREAMS_MISSING = `workstream checkpoints are not applied on this database (${WORKSTREAMS_PENDING_SQL})`;
+
+export async function resumeWorkstreams(orgId) {
+  try {
+    const read = await readWorkstreams({ orgId, limit: WORKSTREAM_RESUME_LIMIT, maxSensitivity: 'internal' });
+    return { status: SOURCE_OK, error: null, applicable: true, ...read };
+  } catch (error) {
+    if (isNotApplied(error) || error?.code === 'WORKSTREAMS_NOT_APPLIED') {
+      return { status: SOURCE_MISSING, error: WORKSTREAMS_MISSING, workstreams: null, total: null };
+    }
+    if (error?.code === WORKSTREAM_ORG_OUTSIDE_AUTHORITY) {
+      return { status: SOURCE_OK, error: null, applicable: false, workstreams: [], total: 0 };
+    }
+    throw error;
+  }
+}
+
 export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = Date.now() } = {}) {
   if (!orgId) throw Object.assign(new Error('org_id is required'), { status: 400 });
 
-  const [deploy, catalog, recent, running, queued, objectives, approvals, health] = await Promise.all([
+  const [deploy, catalog, recent, running, queued, objectives, approvals, health, workstreams] = await Promise.all([
     source(deployFingerprint),
     source(catalogVersion),
     source(async () => checkedRows(await recentJobs({ orgId, sinceHours, limit }), 'ops_agent_jobs')),
@@ -329,7 +378,8 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
     source(() => queuedJobs(orgId)),
     source(async () => checkedRows(await recentObjectives({ orgId, limit }), 'ops_objectives')),
     source(() => pendingApprovals(orgId)),
-    source(() => systemHealth(orgId))
+    source(() => systemHealth(orgId)),
+    source(() => resumeWorkstreams(orgId))
   ]);
 
   /* A section that answered can still have answered badly. The top-level
@@ -345,6 +395,9 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
     if (sub.every((status) => status !== SOURCE_OK)) return SOURCE_UNAVAILABLE;
     return SOURCE_PARTIAL;
   })();
+  const workstreamStatus = workstreams.ok ? (workstreams.value?.status || SOURCE_OK) : statusOf(workstreams);
+  const workstreamRows = workstreamStatus === SOURCE_OK && Array.isArray(workstreams.value?.workstreams)
+    ? workstreams.value.workstreams : null;
 
   const sources = {
     runtime: runtimeStatus,
@@ -354,11 +407,18 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
     queued_jobs: statusOf(queued),
     objectives: statusOf(objectives),
     approvals: statusOf(approvals),
-    health: healthStatus
+    health: healthStatus,
+    workstreams: workstreamStatus
   };
   const degraded = Object.entries(sources)
     .filter(([, status]) => status !== 'ok')
     .map(([name]) => name);
+  /* The hint is advice about what to do next. A database that simply does
+     not have the workstream SQL yet is named in degraded_sources and in
+     source_errors, but it must not turn every hint into "partial state"
+     and bury a stale lease or a failure: until that SQL is applied the
+     hint reads exactly as it did before this source existed. */
+  const hintDegraded = degraded.filter((name) => !(name === 'workstreams' && workstreamStatus === SOURCE_MISSING));
 
   const recentList = recent.ok && Array.isArray(recent.value) ? recent.value : [];
   const leases = running.ok ? partitionJobs(running.value, nowMs) : null;
@@ -385,7 +445,9 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
       ...(healthStatus !== SOURCE_OK
         ? [['health', health.ok
             ? Object.entries(health.value?.source_errors || {}).map(([k, v]) => `${k}: ${v}`).join('; ') || `health ${healthStatus}`
-            : health.error]] : [])
+            : health.error]] : []),
+      ...(workstreamStatus !== SOURCE_OK
+        ? [['workstreams', workstreams.ok ? (workstreams.value?.error || `workstreams ${workstreamStatus}`) : workstreams.error]] : [])
     ]),
     workspace: {
       org_id: orgId,
@@ -432,7 +494,64 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
         }))
       : null,
     health: health.ok ? health.value : null,
-    next_step_hint: buildHint({ degraded, approvalsOk: approvals.ok, approvals: approvals.ok ? approvals.value : null, leases, queue, failed })
+    /* null means the checkpoints could not be read (see sources.workstreams:
+       missing, unavailable or invalid). An object with items [] means there
+       genuinely are none. The packet is a generated view of the items, for
+       a context window; the rows in ai_context are the record. */
+    workstreams: workstreamRows
+      ? (workstreams.value.applicable === false ? workstreamsNotApplicable() : workstreamSection(workstreamRows, workstreams.value.total, nowMs))
+      : null,
+    next_step_hint: buildHint({ degraded: hintDegraded, approvalsOk: approvals.ok, approvals: approvals.ok ? approvals.value : null, leases, queue, failed })
+  };
+}
+
+/* The same keys as a real section, so a reader needs no second shape. */
+function workstreamsNotApplicable() {
+  return {
+    schema: 'mccluster-workstream-resume/1',
+    canonical_store: 'supabase:ai_context.workstreams+ai_context.workstream_events',
+    applicable: false,
+    scope: 'house_organization_only',
+    total: 0,
+    returned: 0,
+    truncated: false,
+    items: [],
+    packet: 'Workstream checkpoints belong to the house organization only; this organization has none by design.',
+    packet_truncated: false
+  };
+}
+
+function workstreamSection(rows, total, nowMs) {
+  const packet = buildResumePacket(rows, { generatedAt: new Date(nowMs).toISOString(), total });
+  const known = Number.isFinite(total) ? Math.max(total, rows.length) : rows.length;
+  return {
+    schema: 'mccluster-workstream-resume/1',
+    canonical_store: 'supabase:ai_context.workstreams+ai_context.workstream_events',
+    applicable: true,
+    scope: 'house_organization_only',
+    total: known,
+    returned: rows.length,
+    truncated: known > rows.length,
+    items: rows.map((row) => (row.withheld
+      ? { id: row.id, status: row.status, withheld: true, sensitivity: row.sensitivity ?? null, updated_at: row.updated_at ?? null }
+      : {
+          id: row.id,
+          title: row.title,
+          status: row.status,
+          goal: row.goal,
+          branch: row.branch ?? null,
+          head: row.head ?? null,
+          pr: row.pr ?? null,
+          worktree: row.worktree ?? null,
+          next: row.next ?? null,
+          objective_id: row.objective_id ?? null,
+          job_ids: Array.isArray(row.job_ids) ? row.job_ids : [],
+          updated_at: row.updated_at ?? null,
+          open_blockers: row.events.filter((event) => event?.kind === 'blocker').length,
+          event_count: row.event_count ?? null
+        })),
+    packet: packet.text,
+    packet_truncated: packet.truncated
   };
 }
 

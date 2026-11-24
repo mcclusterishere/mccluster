@@ -114,6 +114,16 @@
     if (handoff.ok && handoff.pending && e.cancelable) e.preventDefault();
     handoff.waiters.splice(0).forEach(function (go) { go(); });
   });
+  /* A SIGN-IN CARRIED TO THE PLATFORM (SPEC-PLATFORM 2.6, from P1). On the platform with no session of its own, the bar
+     (js/tabbar.js, which runs before this World boots) asks Matthew's host once for the sign-in this browser holds there
+     (js/carry.js) and says whether that first answer is still to come (window.MCC_CARRY_PENDING). The World waits for it
+     as it waits for the hand-off, and a sign-in carried after the World opened as a guest is taken in place, no reload. */
+  var carry = { waiting: null, done: false };
+  window.addEventListener("mcc:carry", function (e) {
+    carry.done = true;
+    if (carry.waiting) { var go = carry.waiting; carry.waiting = null; go(); return; }
+    if (e.detail && e.detail.result === "carried" && state.guest) enterAfterAuth().catch(function (error) { showSignedInLoadError(error); });
+  });
   /* A ROOM ASKED FOR BY ADDRESS (?view=profile, the house's Profile chip) opens on that room for a member, never on the
      World first and then the room once the member's World has loaded */
   var DEEP_VIEW = "";
@@ -2659,7 +2669,7 @@
         var st = $("mnPostStatus");
         st.textContent = "Posted, and in the newsroom: ";
         var link = document.createElement("a");
-        link.href = "https://mccluster.org/news/" + id; link.target = "_blank"; link.rel = "noopener"; link.textContent = "read the article";
+        link.href = siteHref("/news/" + id); link.target = "_blank"; link.rel = "noopener"; link.textContent = "read the article";
         st.appendChild(link); st.classList.remove("is-error"); st.classList.add("is-ok");
       } else setStatus($("mnPostStatus"), "Posted.", "ok");
       track("mnet_post_created", { has_media:state.mediaAssets.length > 0, has_track:!!selectedTrack, visibility:$("mnVisibility").value });
@@ -3287,7 +3297,7 @@
       } })); } catch (_) {}
       var avatar=safeHttpUrl(p.avatar_url),banner=safeHttpUrl(p.banner_url),avatarHtml=avatar?'style="background-image:url(\''+esc(avatar.replace(/'/g,'%27'))+'\')"':"";
       var front=safeHttpUrl(presentation.front_page_url||p.website_url), frontHtml=front?'<div class="mn__frontpage mn__frontpage--person"><div class="mn__frontpage-head"><div><span>Front page</span><strong>'+esc(name)+' · public home</strong></div><a href="'+esc(front)+'" target="_blank" rel="noopener">Open site ↗</a></div><div class="mn__frontpage-stage"><iframe title="'+esc(name)+' front page" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="'+esc(front)+'"></iframe></div></div>':'';
-      var perspectiveLink='<p class="mn__perspective-link"><a href="'+esc('https://matthew.mccluster.org/member-front.html?handle='+encodeURIComponent(String(id.mccluster_id||handle).toLowerCase()))+'">Open '+esc(name)+'\u2019s full front page in the center →</a></p>';
+      var perspectiveLink='<p class="mn__perspective-link"><a href="'+esc(siteHref('/member-front.html?handle='+encodeURIComponent(String(id.mccluster_id||handle).toLowerCase())))+'">Open '+esc(name)+'\u2019s full front page in the center →</a></p>';
       $("mnPersonBody").innerHTML='<div class="mn__person-sheet">'+perspectiveLink+frontHtml+'<div class="mn__person-hero"'+(banner?' style="background-image:url(\''+esc(banner.replace(/'/g,'%27'))+'\')"':'')+'></div>' +
         '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+characterBadge(id)+'</p>' +
         (p.headline?'<p class="mn__profile-headline">'+esc(p.headline)+'</p>':'')+(p.bio?'<p class="mn__profile-bio">'+esc(p.bio)+'</p>':'')+
@@ -3351,12 +3361,27 @@
      an https address becomes a link, and McCluster's own walkthrough
      address (the one in Matthew's welcome) becomes a button that starts
      the tour in place. */
-  var TOUR_URL=/^https:\/\/(?:matthew\.)?mccluster\.org\/mnet\.html\?tour=1$/;
+  /* WHERE THE SITE IS: every absolute address this page writes comes from window.MCC_SITE (js/shell-boot.js, the first
+     script on mnet.html; data/seo/domain-architecture.json), where the path is served at this stage. Without the table an
+     address stays on this host. */
+  function siteHref(path) {
+    var S = window.MCC_SITE;
+    return S && typeof S.siteUrl === "function" ? S.siteUrl(path) : path;
+  }
+  /* McCluster's own walkthrough address, as Matthew's welcome names it: the World's document with ?tour=1 on a host that
+     serves pages, the platform's or a tenant's (the table's origins; today mccluster.org and matthew.mccluster.org) */
+  function tourAddress(raw) {
+    var S = window.MCC_SITE;
+    if (!S || !S.platform || !S.tenants) return false;
+    var origins = [S.platform.origin].concat(S.tenants.map(function (t) { return t.origin; }));
+    for (var i = 0; i < origins.length; i++) if (raw === origins[i] + "/mnet.html?tour=1") return true;
+    return false;
+  }
   function messageHtml(body) {
     return esc(body||"").replace(/https:\/\/[^\s<>"']+/g,function(url){
       var clean=url.replace(/[.,;:!?)]+$/,""), tail=url.slice(clean.length);
       var raw=clean.replace(/&amp;/g,"&");
-      if (TOUR_URL.test(raw)) return '<a class="mn__tour-cta" href="mnet.html?tour=1" data-tour-start>Start the walkthrough</a>'+tail;
+      if (tourAddress(raw)) return '<a class="mn__tour-cta" href="mnet.html?tour=1" data-tour-start>Start the walkthrough</a>'+tail;
       return '<a class="mn__message-link" href="'+clean+'" target="_blank" rel="noopener noreferrer">'+clean+'</a>'+tail;
     });
   }
@@ -3816,13 +3841,27 @@
        open on its own room (mnet.html), so that shell is the World, never the Live room; a room asked for by address is
        put up instead, empty, and filled once the member's World has loaded. */
     var stored = MCC.session && MCC.session();
-    if ((stored && stored.access_token) || handoff.pending) { showGate("app"); if (DEEP_VIEW) peekView(DEEP_VIEW); }
+    var carrying = !(stored && stored.access_token) && window.MCC_CARRY_PENDING === true && !carry.done;
+    if ((stored && stored.access_token) || handoff.pending || carrying) { showGate("app"); if (DEEP_VIEW) peekView(DEEP_VIEW); }
     /* a sign-in being carried in: the World waits for it (above) rather than opening as a guest first; if the trade
        never answers, the visitor's World opens as it would have, and a late answer reloads the page as before */
     if (handoff.pending && !handoff.done) {
       var once = false, go = function () { if (once) return; once = true; handoff.pending = handoff.pending && handoff.done; enterSession(); };
       handoff.waiters.push(go);
       setTimeout(go, 8000);
+      return;
+    }
+    if (carrying) {
+      var settled = false, after = function () {
+        if (settled) return;
+        settled = true; carry.waiting = null;
+        /* carried: the guest look the page booted with goes with the guest */
+        var now = MCC.session && MCC.session();
+        if (now && now.access_token) document.documentElement.classList.remove("mn-guest");
+        enterSession();
+      };
+      carry.waiting = after;
+      setTimeout(after, 8000);
       return;
     }
     enterSession();

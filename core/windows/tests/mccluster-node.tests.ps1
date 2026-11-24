@@ -104,6 +104,17 @@ function Register-McScheduledTasks {
 $script:MockProcesses = @()
 $script:MockStoppedProcessIds = New-Object System.Collections.Generic.List[int]
 $script:MockOnProcessStop = $null
+# Windows sharing modes block deletion of an open file. On Unix a held file can be unlinked.
+# Substitute only this OS operation on Unix; existence checks, retry, and revocation still use real files.
+$script:OriginalRemoveFileOnce = ${function:Remove-McFileOnce}
+$script:HeldIdentityPath = $null
+if (-not $script:McIsWindowsHost) {
+  function Remove-McFileOnce {
+    param([string]$Path)
+    if ($Path -eq $script:HeldIdentityPath) { throw [System.IO.IOException]::new('Fixture denies deletion of the open identity.') }
+    & $script:OriginalRemoveFileOnce -Path $Path
+  }
+}
 function Get-McProcessList { return @($script:MockProcesses) }
 function Stop-McProcessById {
   param([int]$Id)
@@ -921,13 +932,18 @@ try {
     [pscustomobject]@{ ProcessId = 201; ParentProcessId = 200; CommandLine = 'node src\compute\ollama-adapter.mjs' },
     [pscustomobject]@{ ProcessId = 300; ParentProcessId = 4; CommandLine = 'cmd.exe /c "D:\other-root\agent.cmd"' },
     [pscustomobject]@{ ProcessId = 301; ParentProcessId = 300; CommandLine = 'node src\compute\node-agent.mjs' },
-    [pscustomobject]@{ ProcessId = 400; ParentProcessId = 4; CommandLine = $null }
+    [pscustomobject]@{ ProcessId = 400; ParentProcessId = 4; CommandLine = $null },
+    [pscustomobject]@{ ProcessId = 401; ParentProcessId = 4; CommandLine = 'notepad.exe "C:\ProgramData\mccluster-node\agent.cmd"' },
+    [pscustomobject]@{ ProcessId = 402; ParentProcessId = 4; CommandLine = 'cmd.exe /c "C:\ProgramData\mccluster-node\browser.cmd.backup"' }
   )
   $selected = @(Select-McNodeProcessIds -Processes $procList -StateRoot $procRoot)
   Assert-Equal '100,101,102,200,201' ((@($selected | Sort-Object)) -join ',') 'process selection: the launchers of this state root and everything below them, nothing of another root'
   Assert-True ([array]::IndexOf($selected, 101) -lt [array]::IndexOf($selected, 100) -and [array]::IndexOf($selected, 102) -lt [array]::IndexOf($selected, 101)) 'process selection: children before parents'
   Assert-Equal 0 (@(Select-McNodeProcessIds -Processes $procList -StateRoot 'E:\nowhere')).Count 'process selection: an unrelated state root selects nothing'
   Assert-Equal 0 (@(Select-McNodeProcessIds -Processes $procList -StateRoot '')).Count 'process selection: no state root selects nothing'
+  $spacedRoot = 'C:\Node Data\test'
+  $spacedLauncher = [pscustomobject]@{ ProcessId = 403; ParentProcessId = 4; CommandLine = '"C:\Windows\System32\cmd.exe" /c "C:\Node Data\test\browser.cmd"' }
+  Assert-Equal 403 (Select-McNodeProcessIds -Processes @($spacedLauncher) -StateRoot $spacedRoot) 'process selection: a fully qualified cmd.exe runs the quoted launcher under a root containing spaces'
   $concurrent = (Set-McManifestConcurrency -ManifestJson (ConvertTo-McManifestJson -TemplateJson $templateJson -Settings (Get-McTierSettings 'C')) -MaxConcurrency 2) | ConvertFrom-Json
   Assert-Equal 2 $concurrent.max_leases 'manifest concurrency: max_leases follows'
   Assert-Equal '2,2' (@($concurrent.capabilities | ForEach-Object { $_.max_concurrency }) -join ',') 'manifest concurrency: every entry follows'
@@ -1057,11 +1073,12 @@ try {
   $script:MockProcesses = @([pscustomobject]@{ ProcessId = 999001; ParentProcessId = 4; CommandLine = ('cmd.exe /c "{0}"' -f (Join-Path $tempRoot 'agent.cmd')) })
   $script:MockStoppedProcessIds.Clear()
   $heldOpen = [System.IO.File]::Open($identityFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+  $script:HeldIdentityPath = $identityFile
   try {
     $failedRevoke = $null
     $failedOutput = (& { $script:failedRevokeResult = Invoke-McRevoke -StateRoot $tempRoot } 6>&1 | Out-String)
     $failedRevoke = $script:failedRevokeResult
-  } finally { $heldOpen.Dispose() }
+  } finally { $heldOpen.Dispose(); $script:HeldIdentityPath = $null }
   Assert-True (Test-Path -LiteralPath $identityFile) 'revoke (delete refused): identity.json is in fact still there'
   Assert-Equal 2 $failedRevoke.ExitCode 'revoke (delete refused): exits non-zero'
   Assert-Equal $false $failedRevoke.IdentityDeleted 'revoke (delete refused): the result says the key was not deleted'
@@ -1074,18 +1091,22 @@ try {
   # a process that holds the file until it is stopped: stopping it lets the retry succeed
   $script:MockStoppedProcessIds.Clear()
   $script:holder = [System.IO.File]::Open($identityFile, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
-  $script:MockOnProcessStop = { param($id) if ($null -ne $script:holder) { $script:holder.Dispose(); $script:holder = $null } }
+  $script:HeldIdentityPath = $identityFile
+  $script:MockOnProcessStop = {
+    param($id)
+    if ($id -eq 999002) { $script:holder.Dispose(); $script:holder = $null; $script:HeldIdentityPath = $null }
+  }
   $script:MockProcesses = @()
   $retryDeleted = $false
   try {
     # no process is found on the first pass (the handle stays open, the first delete fails); it appears for the retry
     $script:MockProcesses = @()
     $firstTry = $true
-    try { Remove-Item -LiteralPath $identityFile -Force -ErrorAction Stop; $firstTry = $false } catch { }
+    try { Remove-McFileOnce -Path $identityFile; $firstTry = $false } catch { }
     Assert-True ($firstTry -and (Test-Path -LiteralPath $identityFile)) 'verified delete: the held file really refuses a plain delete'
     $script:MockProcesses = @([pscustomobject]@{ ProcessId = 999002; ParentProcessId = 4; CommandLine = ('cmd.exe /c "{0}"' -f (Join-Path $tempRoot 'agent.cmd')) })
     $retryDeleted = Remove-McFileVerified -Path $identityFile -StateRoot $tempRoot
-  } finally { if ($null -ne $script:holder) { $script:holder.Dispose(); $script:holder = $null }; $script:MockOnProcessStop = $null; $script:MockProcesses = @() }
+  } finally { if ($null -ne $script:holder) { $script:holder.Dispose(); $script:holder = $null }; $script:HeldIdentityPath = $null; $script:MockOnProcessStop = $null; $script:MockProcesses = @() }
   Assert-True $retryDeleted 'verified delete: stopping the holder and retrying deletes the file'
   Assert-Equal $false (Test-Path -LiteralPath $identityFile) 'verified delete: true only once Test-Path is false'
   Assert-True ($script:MockStoppedProcessIds -contains 999002) 'verified delete: the holder was stopped before the retry'
@@ -1104,10 +1125,12 @@ try {
   Assert-Equal $false (Test-Path -LiteralPath (Join-Path $tempRoot 'last-heartbeat.json')) 'revoke: the heartbeat file goes with the identity'
   $revokedFile = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'revoked.json')) | ConvertFrom-Json
   Assert-Equal $fakeNodeId $revokedFile.node_id 'revoke: revoked.json carries the node id'
-  Assert-True ([string]$revokedFile.revoked_at -match '^\d{4}-\d{2}-\d{2}T') 'revoke: revoked.json carries the time'
+  $revokedJson = [System.IO.File]::ReadAllText((Join-Path $tempRoot 'revoked.json'))
+  Assert-True ($revokedJson -match '"revoked_at"\s*:\s*"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"') 'revoke: revoked.json carries the UTC timestamp'
+  $recordedRevocationTime = $Matches[1]
   Assert-Equal 'McCluster Node Adapter,McCluster Node Agent,McCluster Node Browser' ($script:MockUnregistered -join ',') 'revoke: the three tasks were stopped and unregistered'
   Assert-True (Test-Path -LiteralPath (Join-Path $tempRoot 'capabilities.json')) 'revoke: the manifest and config stay (uninstall removes them)'
-  Assert-True (((Format-McContributionReportLines -StateRoot $tempRoot -ThermalReading $null) -join "`n").Contains('revoked.json: node ' + $fakeNodeId + ' revoked locally at')) 'report: the revocation record is read'
+  Assert-True (((Format-McContributionReportLines -StateRoot $tempRoot -ThermalReading $null) -join "`n").Contains('revoked.json: node ' + $fakeNodeId + ' revoked locally at ' + $recordedRevocationTime + ';')) 'report: the revocation record is read'
   $again = Invoke-McRevoke -StateRoot $tempRoot
   Assert-Null $again.NodeId 'revoke twice: no identity left, no node id'
 

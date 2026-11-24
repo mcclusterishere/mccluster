@@ -1,5 +1,7 @@
 # Claude handoff — Stripe reconciler (2026-10-07 EDT / 2026-10-08 UTC)
 
+> Production update, 2026-11-24: commerce v3 (`20261124164724`) and clipping sources (`20261124164851`) are applied. The dated receipt in `evidence/migration-audit-applied-2026-11-24.md` supersedes older pending status below.
+
 ## Assignment and priorities
 User authorized proceeding with a **repeatably testable** Stripe-to-Control sales ledger and bookings pipeline. Keep implementation costs low and avoid expanding speculative systems. **Do the work, do not stop at an audit.** First reconcile/test Stripe, then paid booking end-to-end and revenue analytics. Do not change production or merge without proof.
 
@@ -35,7 +37,7 @@ Fetch fresh main and PR #396 head; inspect CI, ledger format and migration deplo
 
 ## State after the takeover (2026-10-08)
 - **Drift Guard.** The three migrations were checked against production's `supabase_migrations.schema_migrations` (read-only): v1 `20261006021431`, the leads vocabulary `20261006022702` and v2 `20261006023453` are applied and byte-identical, so they are now in `supabase/production-ledger.json` and `core/drift-contract.json`. `here_album_commerce_v1` is recorded under the version production gave it, `20261006233518_here_album_commerce_v1_reconcile`. Nothing unapplied is marked applied.
-- **Reconciler v3** (`supabase/pending/commerce_stripe_reconciler_v3.sql`) is **pending, not applied in production.** It serialises deliveries for one sale (a refund racing its checkout was lost on v2; `supabase/tests/commerce_stripe_concurrency.sh` reproduces that), promotes an owner-typed payment instead of shadowing it, and keeps partial refunds as `refunded_cents`. CI applies it to the rebuilt database and runs both regressions, the race and the replay harness. The deployed webhook works before and after it.
+- **Reconciler v3** (`supabase/migrations/20261124164724_commerce_stripe_reconciler_v3.sql`) is **pending, not applied in production.** It serialises deliveries for one sale (a refund racing its checkout was lost on v2; `supabase/tests/commerce_stripe_concurrency.sh` reproduces that), promotes an owner-typed payment instead of shadowing it, and keeps partial refunds as `refunded_cents`. CI applies it to the rebuilt database and runs both regressions, the race and the replay harness. The deployed webhook works before and after it.
 - **Repeatable testing.** `scripts/stripe-test/replay.mjs` (no Stripe; every scenario in random orders, repeats and races; CI runs it) and `scripts/stripe-test/stripe-test-mode.mjs` (Stripe test mode against the real site; refuses live keys). Runbook: `COMMERCE-RECONCILER.md` → "Repeatable testing".
 - **Test mode end to end** needs the owner: a Stripe test-mode endpoint for the same function and the `STRIPE_WEBHOOK_SECRET_TEST` and `STRIPE_SK_TEST` secrets, then a deploy. A test-endpoint event writes TEST commerce rows only: no plan, music licence or provider flag changes.
 - **Booking flow.** Service → `pay.html?offer=booking-deposit` → Stripe → `pay.html` asks `GET /v1/commerce/receipt` and shows the item, amount and the next step (an email to agree the date; no scheduling link is promised because none exists) → Control Work (order, verified payment, proposed booking, Schedule task) → Analytics Sales card (verified live sales net of refunds; test money named apart).

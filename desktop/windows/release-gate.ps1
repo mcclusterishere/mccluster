@@ -5,13 +5,9 @@ Release gate for McCluster for Windows: every first-party binary and the setup m
 timestamped Authenticode signature chained to a publicly trusted root, and SHA256SUMS.txt must match.
 
 .DESCRIPTION
-Run after build-inbox.ps1 -Installer. Without -Sign it only checks and writes dist\release-status.json;
-the exit code is 0 only when the gate passes. With -Sign it signs the first-party files with the
-certificate named by -Thumbprint (CurrentUser\My or LocalMachine\My) and the RFC 3161 timestamp server
--TimestampUrl, then checks. It refuses to sign with a self-signed or test certificate and never installs
-or trusts a certificate: public trust comes only from a certificate issued by a publicly trusted CA
-(see Microsoft's Smart App Control code-signing guidance). Smart App Control is not changed or probed
-here; whether SAC admits the result is decided by SAC on the installed machine.
+Run after build-inbox.ps1 -Installer. This check writes dist\release-status.json and verifies
+the executables delivered by the setup. Use build-inbox.ps1 -Installer -Release -Thumbprint
+to sign a release with a timestamp. Smart App Control admission requires a separate device check.
 
 Status values per file: valid-public (signed, timestamped, chain to a trusted root, not self-signed),
 valid-microsoft (third-party Microsoft file), unsigned, self-signed, untimestamped, invalid.
@@ -19,6 +15,7 @@ valid-microsoft (third-party Microsoft file), unsigned, self-signed, untimestamp
 [CmdletBinding()]
 param(
   [string]$Dist,
+  [string]$AppDir,
   [switch]$Sign,
   [string]$Thumbprint,
   [string]$TimestampUrl = 'http://timestamp.digicert.com',
@@ -26,18 +23,20 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
+if ($Sign -or $AllowUntimestamped) { throw 'Release verification requires timestamped artifacts. Sign before bundling with build-inbox.ps1 -Installer -Release -Thumbprint <id>.' }
 if (-not $Dist) { $Dist = Join-Path $here 'dist' }
-$firstParty = @('app\McCluster.exe')
-$thirdParty = @('app\Microsoft.Web.WebView2.Core.dll', 'app\Microsoft.Web.WebView2.WinForms.dll', 'app\WebView2Loader.dll')
-$setup = Get-ChildItem $Dist -Filter 'McCluster-Windows-x64-Setup-*.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
-if (-not $setup) { throw "no setup in ${Dist}; run build-inbox.ps1 -Installer first" }
+if (-not $AppDir) { $AppDir = Join-Path $Dist 'app' }
+. (Join-Path $here 'release-payload.ps1')
+$setups = @(Get-ChildItem -LiteralPath $Dist -File -Filter 'McCluster-Windows-x64-Setup-*.exe')
+if ($setups.Count -ne 1) { throw "Expected exactly one setup in $Dist; run build-inbox.ps1 -Installer first" }
+$setup = $setups[0]
 
 function Get-SignatureFacts([string]$path) {
   $sig = Get-AuthenticodeSignature $path
   $cert = $sig.SignerCertificate
-  $facts = [ordered]@{ file = $path; status = 'unsigned'; authenticode = [string]$sig.Status; subject = $null; issuer = $null; self_signed = $null; timestamped = $false; timestamp_signer = $null; chain_trusted = $null; not_after = $null }
+  $facts = [ordered]@{ file = $path; status = 'unsigned'; authenticode = [string]$sig.Status; subject = $null; thumbprint = $null; issuer = $null; self_signed = $null; timestamped = $false; timestamp_signer = $null; chain_trusted = $null; not_after = $null }
   if ($null -eq $cert) { return $facts }
-  $facts.subject = $cert.Subject; $facts.issuer = $cert.Issuer; $facts.not_after = $cert.NotAfter.ToString('o')
+  $facts.subject = $cert.Subject; $facts.thumbprint = $cert.Thumbprint; $facts.issuer = $cert.Issuer; $facts.not_after = $cert.NotAfter.ToString('o')
   $facts.self_signed = ($cert.Subject -eq $cert.Issuer)
   $facts.timestamped = ($null -ne $sig.TimeStamperCertificate)
   if ($facts.timestamped) { $facts.timestamp_signer = $sig.TimeStamperCertificate.Subject }
@@ -52,57 +51,58 @@ function Get-SignatureFacts([string]$path) {
   return $facts
 }
 
-if ($Sign) {
-  if (-not $Thumbprint) { throw '-Sign needs -Thumbprint of a code-signing certificate with a private key' }
-  $cert = @(Get-ChildItem Cert:\CurrentUser\My, Cert:\LocalMachine\My -ErrorAction SilentlyContinue | Where-Object { $_.Thumbprint -eq $Thumbprint }) | Select-Object -First 1
-  if (-not $cert) { throw "certificate $Thumbprint not found in CurrentUser\My or LocalMachine\My" }
-  if (-not $cert.HasPrivateKey) { throw 'certificate has no private key here' }
-  if ($cert.Subject -eq $cert.Issuer) { throw 'refusing a self-signed certificate: it cannot give public trust' }
-  if (-not ($cert.EnhancedKeyUsageList | Where-Object { $_.ObjectId -eq '1.3.6.1.5.5.7.3.3' })) { throw 'certificate lacks the Code Signing enhanced key usage' }
-  $chain = New-Object System.Security.Cryptography.X509Certificates.X509Chain
-  if (-not $chain.Build($cert)) { throw 'certificate does not chain to a trusted root on this machine; refusing' }
-  foreach ($rel in $firstParty + @($setup.Name)) {
-    $path = Join-Path $Dist $rel
-    $r = Set-AuthenticodeSignature -FilePath $path -Certificate $cert -HashAlgorithm SHA256 -TimestampServer $TimestampUrl -IncludeChain NotRoot
-    if ($r.Status -ne 'Valid') { throw "signing $rel failed: $($r.Status) $($r.StatusMessage)" }
-    Write-Host "signed  $rel  $($cert.Subject)"
-  }
-  Write-Warning 'The setup was signed after SHA256SUMS.txt was written; the sums are recomputed below.'
-  $sums = Join-Path $Dist 'SHA256SUMS.txt'
-  "$((Get-FileHash $setup.FullName).Hash.ToLowerInvariant())  $($setup.Name)`n$((Get-FileHash (Join-Path $Dist 'payload.zip')).Hash.ToLowerInvariant())  payload.zip" | Set-Content $sums -Encoding ascii
-}
-
-# 1. Sums: the file named in SHA256SUMS.txt must hash to the recorded value.
-$sumsPath = Join-Path $Dist 'SHA256SUMS.txt'
+# SHA256SUMS must cover exactly the artifacts this installer builds.
+$expectedSums = @($setup.Name, 'payload.zip')
 $sumsOk = $true
 $sumRows = @()
-foreach ($line in Get-Content $sumsPath) {
-  if ($line -notmatch '^([0-9a-f]{64})\s+(.+)$') { continue }
-  $expected = $matches[1]; $name = $matches[2].Trim()
-  $actual = (Get-FileHash (Join-Path $Dist $name)).Hash.ToLowerInvariant()
+$seen = @{}
+foreach ($line in Get-Content -LiteralPath (Join-Path $Dist 'SHA256SUMS.txt')) {
+  if ($line -notmatch '^([0-9a-f]{64})\s+(.+)$') { $sumsOk = $false; continue }
+  $expected = $Matches[1]; $name = $Matches[2]
+  if ($expectedSums -notcontains $name -or $seen.ContainsKey($name)) { $sumsOk = $false; continue }
+  $seen[$name] = $true
+  $actual = (Get-FileHash -LiteralPath (Join-Path $Dist $name)).Hash.ToLowerInvariant()
   $sumRows += [ordered]@{ file = $name; expected = $expected; actual = $actual; ok = ($expected -eq $actual) }
   if ($expected -ne $actual) { $sumsOk = $false }
 }
+$sumsOk = $sumsOk -and $seen.Count -eq $expectedSums.Count
 
-# 2. Signatures.
-$rows = @()
-foreach ($rel in $firstParty + @($setup.Name)) { $f = Get-SignatureFacts (Join-Path $Dist $rel); $f.role = 'first-party'; $rows += $f }
-foreach ($rel in $thirdParty) { $f = Get-SignatureFacts (Join-Path $Dist $rel); $f.role = 'third-party'; $rows += $f }
-$firstPartyOk = @($rows | Where-Object { $_.role -eq 'first-party' -and -not ($_.status -eq 'valid-public' -or ($AllowUntimestamped -and $_.status -eq 'untimestamped')) }).Count -eq 0
-$thirdPartyOk = @($rows | Where-Object { $_.role -eq 'third-party' -and $_.status -notin @('valid-microsoft', 'valid-public') }).Count -eq 0
+$setupFacts = Get-SignatureFacts $setup.FullName
+$setupFacts.role = 'first-party'
+$rows = @($setupFacts)
+$payloadVerified = $false
+$payloadError = $null
+# Read resources only from a setup whose outer signature has passed.
+$expectedPublisher = $Thumbprint -and $setupFacts.thumbprint -eq $Thumbprint
+if ($setupFacts.status -eq 'valid-public' -and $expectedPublisher) {
+  try {
+    $assembly = [Reflection.Assembly]::Load([IO.File]::ReadAllBytes($setup.FullName))
+    $stream = $assembly.GetManifestResourceStream('payload.zip')
+    if ($null -eq $stream) { throw 'The signed setup has no embedded payload.zip.' }
+    try { $rows += @(Get-ReleasePayloadFacts -Embedded $stream -Dist $Dist -AppDir $AppDir) }
+    finally { $stream.Dispose() }
+    $payloadVerified = $true
+  } catch { $payloadError = $_.Exception.Message }
+}
+$firstPartyOk = $payloadVerified -and $expectedPublisher -and @($rows | Where-Object {
+  $_.role -eq 'first-party' -and ($_.status -ne 'valid-public' -or $_.thumbprint -ne $setupFacts.thumbprint)
+}).Count -eq 0
+$thirdPartyOk = $payloadVerified -and @($rows | Where-Object { $_.role -eq 'third-party' -and $_.status -ne 'valid-microsoft' }).Count -eq 0
 $pass = $sumsOk -and $firstPartyOk -and $thirdPartyOk
 $blocker = $null
-if (-not $firstPartyOk) {
-  $unsigned = @($rows | Where-Object { $_.role -eq 'first-party' -and $_.status -eq 'unsigned' }).Count
-  if ($unsigned -gt 0) { $blocker = 'No code-signing identity: first-party binaries are unsigned. Public trust needs a certificate issued by a publicly trusted CA (an OV or EV code-signing certificate, or Azure Trusted Signing) in the signer''s store, then release-gate.ps1 -Sign -Thumbprint <id>. Self-signed and test certificates are refused by this gate and do not satisfy Smart App Control.' }
-  else { $blocker = 'First-party signature present but not acceptable: ' + ((@($rows | Where-Object { $_.role -eq 'first-party' -and $_.status -ne 'valid-public' }) | ForEach-Object { "$($_.file) $($_.status)" }) -join '; ') }
-}
+if ($payloadError) { $blocker = $payloadError }
+elseif ($setupFacts.status -ne 'valid-public') { $blocker = "The setup needs a publicly trusted, timestamped release signature ($($setupFacts.status))." }
+elseif (-not $expectedPublisher) { $blocker = 'Verify with the approved publicly issued publisher thumbprint using -Thumbprint.' }
+elseif (-not $firstPartyOk) { $blocker = 'The embedded app needs a valid timestamped signature from the setup signer.' }
+elseif (-not $thirdPartyOk) { $blocker = 'The embedded WebView2 files need valid Microsoft signatures.' }
+elseif (-not $sumsOk) { $blocker = 'The two release artifact checksums must be complete and match.' }
 $status = [ordered]@{
   schema = 'mccluster-release-status/1'
   checked_at = [DateTime]::UtcNow.ToString('o')
   dist = $Dist
   setup = $setup.Name
   setup_sha256 = (Get-FileHash $setup.FullName).Hash.ToLowerInvariant()
+  embedded_payload_verified = $payloadVerified
   sums_ok = $sumsOk
   sums = $sumRows
   first_party_signed_publicly = $firstPartyOk

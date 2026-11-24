@@ -1202,6 +1202,15 @@ function ConvertTo-McRevokedJson {
   return (($record | ConvertTo-Json -Depth 4) + "`r`n")
 }
 
+function Format-McReportTimestamp {
+  param($Value)
+  # PowerShell can deserialize an ISO JSON timestamp to a DateTime. Keep report times unambiguous.
+  if ($Value -is [datetime]) {
+    return $Value.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.FFFFFFF'Z'", [Globalization.CultureInfo]::InvariantCulture)
+  }
+  return [string]$Value
+}
+
 function Format-McContributionReportLines {
   # The CONTRIBUTION block of -Report: paused, the limits as the agent reads them, thermal_supported, the
   # revocation record and the last heartbeat the agent wrote. Pure over its arguments; never a key or token.
@@ -1218,7 +1227,7 @@ function Format-McContributionReportLines {
   $revokedText = Read-McTextFile (Get-McRevokedPath $StateRoot)
   if ($null -ne $revokedText) {
     $revokedLine = 'revoked.json: present (unreadable)'
-    try { $revoked = $revokedText | ConvertFrom-Json; $revokedLine = ('revoked.json: node {0} revoked locally at {1}; revoke it on the Core too' -f $revoked.node_id, $revoked.revoked_at) } catch { }
+    try { $revoked = $revokedText | ConvertFrom-Json; $revokedLine = ('revoked.json: node {0} revoked locally at {1}; revoke it on the Core too' -f $revoked.node_id, (Format-McReportTimestamp $revoked.revoked_at)) } catch { }
     $lines.Add('  ' + $revokedLine)
   } else { $lines.Add('  revoked.json: absent') }
   $heartbeatText = Read-McTextFile (Get-McHeartbeatPath $StateRoot)
@@ -1228,7 +1237,7 @@ function Format-McContributionReportLines {
       $heartbeat = $heartbeatText | ConvertFrom-Json
       $gate = ''
       if ($null -ne $heartbeat.labels -and $null -ne $heartbeat.labels.claim_gate) { $gate = ('; claim_gate {0}' -f $heartbeat.labels.claim_gate) }
-      $heartbeatLine = ('last-heartbeat.json: node {0} at {1}, agent {2}, {3} advertised{4}' -f $heartbeat.node_id, $heartbeat.at, $heartbeat.agent_version, $heartbeat.advertised, $gate)
+      $heartbeatLine = ('last-heartbeat.json: node {0} at {1}, agent {2}, {3} advertised{4}' -f $heartbeat.node_id, (Format-McReportTimestamp $heartbeat.at), $heartbeat.agent_version, $heartbeat.advertised, $gate)
     } catch { }
     $lines.Add('  ' + $heartbeatLine)
   } else { $lines.Add('  last-heartbeat.json: absent (no heartbeat accepted yet from this state root)') }
@@ -2324,12 +2333,15 @@ function Select-McNodeProcessIds {
   param($Processes, [string]$StateRoot)
   $ids = New-Object System.Collections.Generic.List[int]
   if (-not $StateRoot) { return @() }
-  $needles = @('adapter.cmd', 'agent.cmd', 'browser.cmd') | ForEach-Object { [System.IO.Path]::Combine($StateRoot, $_).ToLowerInvariant() }
+  $launcherRoot = $StateRoot.Replace('/', '\').TrimEnd('\') + '\'
+  $launchers = @('adapter.cmd', 'agent.cmd', 'browser.cmd') | ForEach-Object { $launcherRoot + $_ }
   $roots = New-Object System.Collections.Generic.List[int]
   foreach ($process in @($Processes)) {
     if ($null -eq $process -or -not $process.CommandLine) { continue }
-    $line = ([string]$process.CommandLine).ToLowerInvariant()
-    foreach ($needle in $needles) { if ($line.Contains($needle)) { $roots.Add([int]$process.ProcessId); break } }
+    # Match the scheduled task's cmd.exe /c invocation. An editor viewing a launcher is not its owner.
+    if ($process.CommandLine -notmatch '^\s*(?:"(?:[^"]*\\)?cmd\.exe"|(?:[^\s"]*\\)?cmd\.exe)\s+/c\s+(?:"([^"]+)"|([^\s"]+))\s*$') { continue }
+    $launcher = ([string]$Matches[1] + [string]$Matches[2]).Replace('/', '\')
+    if ($launchers -contains $launcher) { $roots.Add([int]$process.ProcessId) }
   }
   $queue = New-Object System.Collections.Generic.Queue[int]
   foreach ($root in $roots) { $queue.Enqueue($root) }
@@ -2363,6 +2375,11 @@ function Stop-McNodeProcesses {
   return @($stopped.ToArray())
 }
 
+function Remove-McFileOnce {
+  param([string]$Path)
+  Remove-Item -LiteralPath $Path -Force -ErrorAction Stop
+}
+
 function Remove-McFileVerified {
   # Deletes a file and returns $true only when Test-Path says it is gone. A failed delete is retried
   # ($script:McDeleteAttempts times, $script:McDeleteRetryMs apart), ending this state root's node processes
@@ -2370,7 +2387,7 @@ function Remove-McFileVerified {
   param([string]$Path, [string]$StateRoot)
   for ($attempt = 1; $attempt -le $script:McDeleteAttempts; $attempt++) {
     if (-not (Test-Path -LiteralPath $Path)) { return $true }
-    try { Remove-Item -LiteralPath $Path -Force -ErrorAction Stop } catch { }
+    try { Remove-McFileOnce -Path $Path } catch { }
     if (-not (Test-Path -LiteralPath $Path)) { return $true }
     if ($attempt -lt $script:McDeleteAttempts) {
       if ($StateRoot) { [void](Stop-McNodeProcesses -StateRoot $StateRoot) }

@@ -155,8 +155,10 @@ test('social sign-in follows Supabase and is never hardcoded on', async () => {
   assert.match(html, /el\("acSocialRow"\)\.hidden = !any;/,
     'the whole row hides when nothing is live');
   assert.match(html, /js\/mcc-auth\.js/, 'the page must load the client that owns the PKCE exchange');
-  /* back to this page, carrying where the person started (?next, owner 2026-10-20) */
-  assert.match(html, /var back = "\/account\.html" \+ \(NEXT \? "\?next=" \+ encodeURIComponent\(NEXT\) : ""\);\n\s*MCC\.signInWithProvider\(key, location\.origin \+ "\/auth\/\?next=" \+ encodeURIComponent\(back\)\)/,
+  /* back to this page, carrying where the person started (?next, owner 2026-10-20). In a music view (music slice M5,
+     js/music-shell.js) the same call is made on the top window's client, so the provider is never framed; the
+     redirect is the same either way. */
+  assert.match(html, /var back = "\/account\.html" \+ \(NEXT \? "\?next=" \+ encodeURIComponent\(NEXT\) : ""\);\n(?:\s*\/\*[\s\S]*?\*\/\n)?(?:\s*var top = window\.MCC_MUSIC_VIEW && MCC_MUSIC_VIEW\.top && MCC_MUSIC_VIEW\.top\(\);\n)?\s*(?:MCC|\(top && top\.MCC && top\.MCC\.signInWithProvider \? top\.MCC : MCC\))\.signInWithProvider\(key, location\.origin \+ "\/auth\/\?next=" \+ encodeURIComponent\(back\)\)/,
     'sign-in must return through the callback page that completes the exchange');
 });
 

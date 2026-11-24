@@ -477,7 +477,7 @@
     {
      "title": "Dealer Plates (B-Side)",
      "credit": "Prod. Zakir & McCluster",
-     "src": "assets/audio/dealer-plates-b.mp3",
+     "src": "assets/audio/dealer-plates-b.m4a",
      "poster": "assets/img/wing-whip-poster.jpg",
      "music_video": "assets/video/dealer-plates-b-video.mp4",
      "seconds": 97.4,
@@ -596,7 +596,8 @@
        "identity_verified": true,
        "identity_purpose": "referral_signup"
       }
-     }
+     },
+     "hold": "profile"
     }
    ]
   }

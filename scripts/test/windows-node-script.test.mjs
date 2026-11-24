@@ -286,3 +286,17 @@ test("PowerShell parse and core/windows/tests/mccluster-node.tests.ps1 (pwsh on 
   console.log(run.stdout);
   assert.equal(run.status, 0, `pwsh tests failed (${pwsh.version}):\n${run.stdout}\n${run.stderr}`);
 });
+
+test("release signs before hashing and packaging, then verifies the extracted binaries", (t) => {
+  const build = read("desktop/windows/build-inbox.ps1");
+  let previous = -1;
+  for (const marker of ["Set-ReleaseSignature $exe", "$manifestFiles +=", "$zip.CreateEntry('manifest.json'", "& $csc @setupArgs", "Set-ReleaseSignature $candidate", "& $instTestExe $candidate $OutDir", "Move-Item $candidate $setupExe", "release-gate.ps1') @gateArgs"]) {
+    const position = build.indexOf(marker);
+    assert.ok(position > previous, "release build order at " + marker);
+    previous = position;
+  }
+  const pwsh = findPwsh();
+  if (!pwsh) return t.skip(SKIP_LINE);
+  const result = spawnSync(pwsh.command, ["-NoProfile", "-NonInteractive", "-File", join(ROOT, "desktop/windows/tests/ReleasePackageTests.ps1")], { encoding: "utf8", timeout: 45_000 });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});

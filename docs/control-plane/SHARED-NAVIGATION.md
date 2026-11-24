@@ -48,8 +48,14 @@ with 44-pixel touch targets and the home-indicator clearance retained. The
 existing role-filtered navigation stays in its middle strip. When space is
 limited, that strip scrolls without removing destinations or shrinking buttons.
 The playing track's title and artist and its previous, play/pause and next
-controls occupy the sides. Opening the existing player keeps its deeper tools
-reachable.
+controls occupy the sides. Where the bar's own Music button is the page's
+Play/Pause (Listen, while the dock shows Listen's own player), it is the one
+Play/Pause and the side holds Next alone; in the house owner's strip, which
+scrolls, it is pinned at the strip's start meanwhile, so it never scrolls out of
+reach. Where the dock shows another player's song (the World's, carried back to
+Listen from the Globe while Listen holds a record of its own), the Music button
+is the way to the music and the dock's own Play/Pause is the one. The dock never
+shows two. Opening the existing player keeps its deeper tools reachable.
 
 The dock reads and commands the existing Now Playing owner. It creates no audio
 element and no second playback lifecycle. A paused track remains resumable;
@@ -98,8 +104,18 @@ unverified app URL is added to the global bar automatically.
 While already in Control, navigation changes the hash on the same document. The
 organization query, optional workspace presentation, editors and retained
 Analytics globe keep their existing lifecycle. Browser Back/Forward work normally.
-From a World host, Control points to Matthew's host using the bar's existing
-cross-origin sign-in handoff. Local chapter tabs, filters and editor tools remain
+From either host the bar's Control link goes to the platform, which serves
+Control at its own path (`control.html` is in `url_ownership.platform`), so on the
+platform the link stays on its origin and a session moves there through the carry
+page (stage P1 of the one-platform plan, `docs/control-plane/DOMAINS-AND-ENTITIES.md`).
+The owner's dock sections, the Home panel's Control destinations and the product doors
+(PRIM3, Game Hub, PRIM3 World, Hitman's Halo, E=Up, Whip, WE Manufacture) take the bar's own
+answer for each page (`MCC_BAR.navigation.page`, where the table serves it), never the dock's
+house (`navigation.house`), which the P1 amendment of 2026-11-24 keeps on Matthew's host until
+P3 for the song playing there (review V2-1, 2026-11-24; held on his host by
+`scripts/e2e/site-navigation.e2e.mjs`).
+Before P1, Control on a World host pointed to Matthew's host with the bar's
+cross-origin sign-in hand-off, whose writer is off since P1 (its reader only scrubs old links until P4 and trades nothing). Local chapter tabs, filters and editor tools remain
 local; they do not replace the global destination menu.
 
 If the shared module fails, the original Home link and the Control sections

@@ -311,6 +311,16 @@ jobs:
           # were promoted; the reset above applies them from supabase/migrations/.
           node scripts/compute-lease-sql-check.mjs
           node scripts/test-intel-integrity-db.mjs
+          node scripts/ai-context-workstreams-sql-check.mjs
+      - name: Verify workstreams against the full reset schema
+        # The behavioral proof above uses minimal base fixtures. This pass uses the
+        # real reset tables and their existing ontology/decision triggers.
+        env:
+          RESET_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          for pass in 1 2; do
+            psql "$RESET_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/ai_context_workstreams_v1.integration.sql
+          done
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true

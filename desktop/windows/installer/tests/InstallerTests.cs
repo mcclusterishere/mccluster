@@ -56,6 +56,7 @@ internal static class InstallerTests
     {
         if (args.Length < 1) { Console.Error.WriteLine("usage: InstallerTests <path to Setup.exe>"); return 2; }
         string setup = Path.GetFullPath(args[0]);
+        string staged = args.Length > 1 ? Path.GetFullPath(args[1]) : null;
         // Always a per-user location, so the installer's own profile check is not what is under test here.
         string root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "McClusterDesktopInstallerTest", Guid.NewGuid().ToString("N"));
         string app = Path.Combine(root, "App");
@@ -82,9 +83,11 @@ internal static class InstallerTests
                 string path = Path.Combine(app, f.Name);
                 Assert(File.Exists(path), "installed: " + f.Name);
                 Assert(string.Equals(Sha256(path), f.Sha256, StringComparison.OrdinalIgnoreCase), "hash matches manifest: " + f.Name);
+                if (staged != null) Assert(string.Equals(Sha256(path), Sha256(Path.Combine(staged, f.Name)), StringComparison.OrdinalIgnoreCase), "installed bytes match staged bytes: " + f.Name);
                 Assert(new FileInfo(path).Length == f.Size, "size matches manifest: " + f.Name);
             }
             Assert(File.Exists(Path.Combine(app, "Uninstall.exe")), "uninstaller written");
+            Assert(string.Equals(Sha256(Path.Combine(app, "Uninstall.exe")), Sha256(setup), StringComparison.OrdinalIgnoreCase), "installed uninstaller preserves the outer setup bytes");
             string receiptPath = Path.Combine(app, "install-receipt.json");
             Assert(File.Exists(receiptPath), "install receipt written");
             object receipt = Json.Parse(File.ReadAllText(receiptPath));

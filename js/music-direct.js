@@ -61,7 +61,9 @@
   }
 
   function decorate(scope) {
-    var rows = (scope || document).querySelectorAll("[data-albslug][data-title]:not([data-direct-done])");
+    /* a held song (album.html marks its row data-hold: listed, but it does not play, owner 2026-11-23) is never offered
+       for sale on its row */
+    var rows = (scope || document).querySelectorAll("[data-albslug][data-title]:not([data-direct-done]):not([data-hold])");
     if (!rows.length) return;
     offers().then(function (map) {
       Array.prototype.forEach.call(rows, function (row) {

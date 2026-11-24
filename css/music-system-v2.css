@@ -324,7 +324,7 @@ body.music-v2 .music-launch .music-launch__terms a{display:inline;padding:0;bord
 .music-v2 .music-mini__seek i{display:block;height:2px;background:rgba(255,255,255,.13)}
 .music-v2 .music-mini__seek b{display:block;height:100%;width:0;background:rgba(255,255,255,.8)}
 .music-v2 .music-mini__row{
-  display:grid;grid-template-columns:minmax(0,1fr) 39px;
+  display:grid;grid-template-columns:minmax(0,1fr);grid-auto-flow:column;grid-auto-columns:auto;
   align-items:center;gap:6px;padding:6px 7px
 }
 .music-v2 .music-mini__open{
@@ -349,6 +349,20 @@ body.music-v2 .music-launch .music-launch__terms a{display:inline;padding:0;bord
 }
 .music-v2 .music-mini__access.is-preview{color:#ffc887}
 .music-v2 .music-mini__access.is-full{color:var(--music-muted)}
+/* what happened to the music (music slice M3): a dropped connection, a preview that ended. Wraps, never clips. */
+.music-v2 .music-mini__access.is-trouble,.music-v2 .music-mini__access.is-muted{color:#ffc887}
+.music-v2 .music-mini__note{
+  display:block;margin-top:3px;color:#ffd9ad;
+  font-size:10px;font-weight:560;line-height:1.3;white-space:normal;overflow-wrap:anywhere
+}
+.music-v2 .music-mini__note[hidden]{display:none}
+/* the music's own unmute (decision D-7): only while it is muted, a 44px target */
+.music-v2 .music-mini__sound{
+  width:44px;height:44px;border:0;border-radius:50%;padding:0;cursor:pointer;
+  display:grid;place-items:center;background:rgba(255,255,255,.1);color:#ffd9ad
+}
+.music-v2 .music-mini__sound[hidden]{display:none}
+.music-v2 .music-mini__sound svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .music-v2 .music-mini__time{display:none}
 .music-v2 .music-mini__play{
   width:39px;height:39px;border:0;border-radius:50%;
@@ -423,6 +437,9 @@ body.music-v2 .music-launch .music-launch__terms a{display:inline;padding:0;bord
 }
 .music-now__access.is-preview{color:#ffc887}
 .music-now__access.is-full{color:#a9e9b8}
+.music-now__access.is-trouble,.music-now__access.is-muted{color:#ffc887}
+.music-now__note{margin:10px auto 0;max-width:30rem;color:#ffd9ad;font-size:11px;line-height:1.4;text-align:center}
+.music-now__note[hidden]{display:none}
 .music-now__seek{width:100%;height:31px;border:0;background:none;padding:16px 0 11px}
 .music-now__seek i{display:block;height:4px;border-radius:999px;background:rgba(255,255,255,.18);overflow:hidden}
 .music-now__seek b{display:block;height:100%;width:0;border-radius:inherit;background:#fff}
@@ -449,7 +466,13 @@ body.music-v2 .music-launch .music-launch__terms a{display:inline;padding:0;bord
 }
 .music-now__context span+span::before{content:"·";margin-right:7px}
 /* AirPlay where WebKit offers it, shown while a device is in range (js/now-playing.js); a 44px target */
-.music-now__devices{display:flex;justify-content:center}
+.music-now__devices{display:flex;justify-content:center;flex-wrap:wrap;gap:10px}
+.music-now__sound{
+  min-height:44px;margin-top:12px;border:0;border-radius:22px;padding:0 16px 0 12px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-size:12px;font-weight:700
+}
+.music-now__sound[hidden]{display:none}
+.music-now__sound svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .music-now__airplay{
   width:44px;height:44px;margin-top:12px;border:0;border-radius:50%;padding:0;cursor:pointer;
   display:grid;place-items:center;background:rgba(255,255,255,.08);color:#fff
@@ -710,4 +733,54 @@ body.music-v2 .appbar__tab.is-active{color:#fff}
 @media (prefers-reduced-motion: reduce){
   .music-v2 .music-now__artwrap.has-video .music-now__film{opacity:0}
   .music-v2 .music-now__artwrap.has-video .music-now__art{opacity:1}
+}
+
+/* WHOLE COVERS (owner, 2026-11-23: "The full covers aren't shown, and I agree. We should fix that." ... "as long as
+   everything's uniform"). Every cover on every music surface is the whole supplied artwork, scaled to fit inside the
+   same square box: nothing cropped, nothing drawn behind it (no plate, no tint, no glow), nothing laid over it, no
+   corner cut (AGENTS.md, hard rule 10). A cover that is not square shows the page above and below it, or beside it,
+   as in the approved comparison (V-1: object-fit contain, no radius, nothing behind). One rule, so the surfaces
+   cannot drift apart: the shelves, the album hero, the rows, the mini players, the Now Playing sheets, the artist
+   page, the catalogue and Creator Studio. The lock screen's artwork is the same files at their own sizes
+   (scripts/music-artwork.mjs). */
+.music-v2 .feat__bg,.music-v2 .alb__art,.music-v2 .deckbar__art,.music-v2 .music-mini__art,.music-v2 .music-now__art,
+.music-v2 .now__art--cover .now__film,.music-v2 .ap-album__art,.music-v2 .ap-card img,.music-v2 .ap-track img,
+.music-v2 .shelf .cov,.music-v2 .creator-track img{
+  object-fit:contain!important;object-position:center!important;
+  background:none!important;background-color:transparent!important;
+  border-radius:0!important;box-shadow:none!important;filter:none!important
+}
+.music-v2 .now__art--cover .now__film{opacity:1!important}
+.music-v2 .tr .th{
+  background-color:transparent!important;background-size:contain!important;
+  background-repeat:no-repeat!important;background-position:center!important;
+  border-radius:0!important;box-shadow:none!important
+}
+/* nothing behind a cover in the Now Playing sheets: no blurred copy of it, no plate in its frame */
+.music-v2 .music-now__ambient{display:none!important}
+.music-v2 .music-now__artwrap{background:transparent!important;border-radius:0!important}
+.music-v2 .now__art--cover{background:transparent!important;box-shadow:none!important;border-radius:0!important}
+.music-v2 .now__art--cover::after,.music-v2 .now__art--cover .now__scrim,.music-v2 .now__art--cover .now__flip{display:none!important}
+/* the album page's shelf (review QW-R1): its gallery rule in css/music-director.css paints the rule colour behind the
+   cards and frames them, and the v2 cards are clear, so that grey filled the empty part of every whole cover's square
+   and the clear pixels of every mark: a plate. Here the shelf gives no ground and no frame, and keeps the rail's own
+   spacing, as Listen's shelf does. */
+.music-v2.music-room--album .feat{background:none!important;border:0!important;gap:12px}
+/* WHOLE COVERS END */
+
+/* THE HELD SONG'S POP-UP (js/gated-audio.js holdNotice): why the closing song will not play, in one honest line,
+   with one way forward. Phone first: the full width less a 16px gutter each side; wider screens only give it room. */
+.mcc-hold{box-sizing:border-box;width:calc(100% - 32px);max-width:24rem;margin:auto;padding:20px;border:0;border-radius:14px;
+  background:#151417;color:#f5f5f6;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.mcc-hold::backdrop{background:rgba(5,5,6,.62)}
+.mcc-hold h2{margin:0 0 8px;font:800 17px/1.25 var(--ui,system-ui,sans-serif);letter-spacing:-.01em;color:#f5f5f6}
+.mcc-hold p{margin:0 0 16px;color:#c9c9ce;font:500 14px/1.5 var(--ui,system-ui,sans-serif)}
+.mcc-hold__acts{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.mcc-hold .mcc-hold__go,.mcc-hold .mcc-hold__close{box-sizing:border-box;min-height:44px;display:flex;align-items:center;justify-content:center;
+  padding:10px 14px;border-radius:10px;font:700 14px/1.2 var(--ui,system-ui,sans-serif);text-decoration:none;cursor:pointer}
+.mcc-hold a.mcc-hold__go{background:#fff;color:#09090b}
+.mcc-hold .mcc-hold__close{border:1px solid rgba(255,255,255,.2);background:transparent;color:#f5f5f6}
+@media (min-width:600px){
+  .mcc-hold{padding:24px}
+  .mcc-hold__acts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 }

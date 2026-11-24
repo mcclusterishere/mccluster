@@ -20,6 +20,10 @@ jobs:
         run: npm audit --omit=dev --audit-level=high --prefix workers/mccluster
       - name: Verify Core contracts and preview runtime
         run: npm run check --prefix core && npm test --prefix core
+      - name: Generated site hosts match data/seo/domain-architecture.json
+        run: node tools/build-site-hosts.mjs --check
+      - name: Every host answers every classified path as the live stage says (local crawl, no network)
+        run: node scripts/e2e/platform-hosts.e2e.mjs
       - name: Verify complete Worker and isolated transport suites
         run: |
           npm test --prefix workers/mccluster

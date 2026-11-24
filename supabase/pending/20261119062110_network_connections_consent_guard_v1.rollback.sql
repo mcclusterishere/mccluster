@@ -1,5 +1,6 @@
--- Rollback of supabase/pending/20261119062110_network_connections_consent_guard_v1.sql: a recovery artifact, never a
+-- Rollback of supabase/migrations/20261123173626_network_connections_consent_guard_v1.sql: a recovery artifact, never a
 -- forward migration.
+-- (Staged and reviewed as 20261119062110_network_connections_consent_guard_v1.sql; applied 2026-11-23 and promoted.)
 --
 -- Not applied. Apply only with Matthew's approval. Running it reopens the hole the forward file closes.
 --

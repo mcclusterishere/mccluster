@@ -14,8 +14,8 @@ the installer is compiled as dist\tests\Setup-candidate.exe, the installer tests
 then is it moved to dist\McCluster-Windows-x64-Setup-<version>.exe and SHA256SUMS.txt written. A dirty
 desktop\windows tree is refused unless -AllowDirty is passed; the manifest records built_from_clean_tree.
 Last, release-gate.ps1 checks Authenticode on every binary and the sums, writing dist\release-status.json;
-with -Release an unsigned or untrusted first-party binary fails the build (sign first with
-release-gate.ps1 -Sign -Thumbprint <publicly trusted code-signing certificate>).
+-Installer -Release -Thumbprint signs the app before hashing and embedding it, and signs the setup
+before testing the installed bytes. The build requires the signer's certificate and a timestamp.
 
 Outputs: dist\app\ (the app and the three WebView2 files), dist\payload.zip (deterministic: fixed entry
 timestamps, sorted entries, with manifest.json of SHA-256 hashes), dist\McCluster-Windows-x64-Setup-<version>.exe
@@ -30,13 +30,32 @@ param(
   [switch]$Installer,
   [string]$SourceCommit,
   [switch]$AllowDirty,
-  [switch]$Release
+  [switch]$Release,
+  [string]$Thumbprint,
+  [string]$TimestampUrl = 'http://timestamp.digicert.com'
 )
 $ErrorActionPreference = 'Stop'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not $WebView2Dir) { $WebView2Dir = Join-Path $env:LOCALAPPDATA 'McClusterDesktop\App' }
 if (-not $OutDir) { $OutDir = Join-Path $here 'dist\app' }
 $dist = Split-Path -Parent $OutDir
+if ($Release -and (-not $Installer -or -not $Thumbprint)) { throw 'A release requires -Installer -Release -Thumbprint <code-signing certificate>.' }
+if ($Thumbprint -and -not $Release) { throw 'Signing requires an explicit -Installer -Release build.' }
+if ($Release) {
+  $cert = @(Get-ChildItem Cert:\CurrentUser\My, Cert:\LocalMachine\My -ErrorAction SilentlyContinue | Where-Object { $_.Thumbprint -eq $Thumbprint }) | Select-Object -First 1
+  if (-not $cert) { throw "certificate $Thumbprint not found in CurrentUser\My or LocalMachine\My" }
+  if (-not $cert.HasPrivateKey) { throw 'certificate has no private key here' }
+  if ($cert.Subject -eq $cert.Issuer) { throw 'refusing a self-signed certificate: it cannot give public trust' }
+  if (-not ($cert.EnhancedKeyUsageList | Where-Object { $_.ObjectId -eq '1.3.6.1.5.5.7.3.3' })) { throw 'certificate lacks the Code Signing enhanced key usage' }
+  $chain = New-Object System.Security.Cryptography.X509Certificates.X509Chain
+  if (-not $chain.Build($cert)) { throw 'certificate does not chain to a trusted root on this machine; refusing' }
+}
+function Set-ReleaseSignature([string]$File) {
+  $signature = Set-AuthenticodeSignature -FilePath $File -Certificate $cert -HashAlgorithm SHA256 -TimestampServer $TimestampUrl -IncludeChain NotRoot
+  if ($signature.Status -ne 'Valid' -or -not $signature.TimeStamperCertificate -or $signature.SignerCertificate.Thumbprint -ne $cert.Thumbprint) {
+    throw "Release signing failed or returned no trusted timestamp for $File"
+  }
+}
 # Exactly what ships. Anything else in the output folder is a build error, not payload.
 $shipped = @('McCluster.exe','Microsoft.Web.WebView2.Core.dll','Microsoft.Web.WebView2.WinForms.dll','WebView2Loader.dll','README.txt','MICROSOFT-WEBVIEW2-LICENSE.txt')
 if (Test-Path $OutDir) { Remove-Item (Join-Path $OutDir '*') -Force -ErrorAction SilentlyContinue }
@@ -113,19 +132,25 @@ if ($Installer) {
   $missing = $shipped | Where-Object { $present -notcontains $_ }
   if ($missing) { throw "shipped files missing from ${OutDir}: $($missing -join ', ')" }
   $names = [string[]]$shipped; [Array]::Sort($names, [StringComparer]::Ordinal)
-  $files = $names | ForEach-Object { Get-Item (Join-Path $OutDir $_) }
-  $manifestFiles = @()
-  foreach ($f in $files) { $manifestFiles += [ordered]@{ name = $f.Name; sha256 = (Get-FileHash $f.FullName).Hash.ToLowerInvariant(); size = $f.Length } }
   # Source commit and tree state come from git, never from a guess; a dirty tree needs -AllowDirty.
   $gitExe = $null
   foreach ($candidate in @((Get-Command git -ErrorAction SilentlyContinue | ForEach-Object Source), (Join-Path $env:LOCALAPPDATA 'github-copilot-git-2.56.0-1\cmd\git.exe'))) { if ($candidate -and (Test-Path $candidate)) { $gitExe = $candidate; break } }
   $sourceDirty = $null
   if ($gitExe) {
     $head = (& $gitExe -C $here rev-parse HEAD 2>$null)
+    if ($Release -and ($LASTEXITCODE -ne 0 -or $head -notmatch '^[0-9a-f]{40}$')) { throw 'Git could not verify the release source revision.' }
     if ($head -match '^[0-9a-f]{40}$') { if ($SourceCommit -and $SourceCommit -ne $head -and -not $head.StartsWith($SourceCommit)) { throw "-SourceCommit $SourceCommit does not match HEAD $head" }; $SourceCommit = $head }
     $sourceDirty = [bool]((& $gitExe -C $here status --porcelain -- . 2>$null) | Where-Object { $_ })
+    if ($LASTEXITCODE -ne 0) { throw 'Git could not determine whether the desktop source is clean.' }
     if ($sourceDirty -and -not $AllowDirty) { throw 'the desktop/windows tree has uncommitted changes; commit them or pass -AllowDirty (the manifest will say built_from_clean_tree=false)' }
   } elseif ($SourceCommit -and $SourceCommit -notmatch '^[0-9a-f]{7,40}$') { throw '-SourceCommit must be a hex commit id' }
+  if ($Release) {
+    if ($sourceDirty -ne $false -or $SourceCommit -notmatch '^[0-9a-f]{40}$') { throw 'A release requires a verified clean desktop source revision.' }
+    Set-ReleaseSignature $exe
+  }
+  $files = $names | ForEach-Object { Get-Item (Join-Path $OutDir $_) }
+  $manifestFiles = @()
+  foreach ($f in $files) { $manifestFiles += [ordered]@{ name = $f.Name; sha256 = (Get-FileHash $f.FullName).Hash.ToLowerInvariant(); size = $f.Length } }
   $manifest = [ordered]@{ schema = 'mccluster-install-manifest/1'; product = 'McCluster'; version = $version; source_commit = $SourceCommit; built_from_clean_tree = $(if ($null -eq $sourceDirty) { $null } else { -not $sourceDirty }); built_with = 'in-box csc ' + (Get-Item $csc).VersionInfo.FileVersion; files = $manifestFiles }
   $manifestJson = ($manifest | ConvertTo-Json -Depth 4)
   $fixed = [DateTimeOffset]::new(2026, 1, 1, 0, 0, 0, [TimeSpan]::Zero)
@@ -151,13 +176,15 @@ if ($Installer) {
   & $csc @setupArgs
   if ($LASTEXITCODE -ne 0) { throw "setup build failed with exit $LASTEXITCODE" }
 
+  if ($Release) { Set-ReleaseSignature $candidate }
+
   # 3. Installer tests against the candidate into a throwaway per-user root, Start Menu folder and HKCU key.
   $instTestExe = Join-Path $dist 'tests\InstallerTests.exe'
   $instTestSources = @((Join-Path $here 'installer\tests\InstallerTests.cs'), (Join-Path $here 'installer\Setup.cs'), (Join-Path $src 'Json.cs'))
   $instTestArgs = @('/nologo','/noconfig','/nostdlib+','/warnaserror+','/target:exe','/platform:x64','/langversion:5',"/out:$instTestExe", '/main:InstallerTests') + $refs + $instTestSources
   & $csc @instTestArgs
   if ($LASTEXITCODE -ne 0) { throw "installer test build failed with exit $LASTEXITCODE" }
-  & $instTestExe $candidate
+  & $instTestExe $candidate $OutDir
   if ($LASTEXITCODE -ne 0) { throw "installer tests failed with exit $LASTEXITCODE; no setup was written" }
 
   $setupExe = Join-Path $dist "McCluster-Windows-x64-Setup-$version.exe"
@@ -169,7 +196,9 @@ if ($Installer) {
   # 4. Release gate: signatures and sums. Always recorded in dist\release-status.json; fatal only with -Release,
   #    so a developer build still produces an (unsigned) setup for the installer tests while a release cannot
   #    ship unsigned first-party binaries.
-  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $here 'release-gate.ps1') -Dist $dist
+  $gateArgs = @('-Dist', $dist, '-AppDir', $OutDir)
+  if ($Release) { $gateArgs += @('-Thumbprint', $Thumbprint) }
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $here 'release-gate.ps1') @gateArgs
   $gate = $LASTEXITCODE
   if ($gate -ne 0 -and $Release) { throw "release gate failed (exit $gate); see dist\release-status.json. No release without a publicly trusted signature." }
   if ($gate -ne 0) { Write-Warning 'release gate FAILED: this build is a developer build, not a release (dist\release-status.json)' }

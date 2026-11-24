@@ -1,8 +1,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { RETURN_FALLBACK_ORIGIN, RETURN_ORIGINS } from "../_shared/site-hosts.ts";
 
+/* the origins that serve the site's pages (generated, ../_shared/site-hosts.ts), the old GitHub Pages
+   address and two local previews; anything else is answered with the fallback, which it cannot read */
 const ALLOWED = new Set([
-  "https://matthew.mccluster.org",
-  "https://mccluster.org",
+  ...RETURN_ORIGINS,
   "https://mcclusterishere.github.io",
   "http://localhost:4173",
   "http://localhost:5173"
@@ -11,7 +13,7 @@ const ALLOWED = new Set([
 function cors(req: Request) {
   const origin = req.headers.get("origin") || "";
   return {
-    "access-control-allow-origin": ALLOWED.has(origin) ? origin : "https://matthew.mccluster.org",
+    "access-control-allow-origin": ALLOWED.has(origin) ? origin : RETURN_FALLBACK_ORIGIN,
     "access-control-allow-methods": "GET,POST,OPTIONS",
     "access-control-allow-headers": "authorization,apikey,content-type",
     "access-control-max-age": "86400",

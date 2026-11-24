@@ -102,6 +102,7 @@ McCluster.exe --core-submit --prompt "<text>" --implementation <id> [--profile <
   (removes exactly the receipt's files, keeps a foreign file, removes itself and an empty folder), refusal
   outside the user profile and refusal of a registry key outside the uninstall hive; only then is it moved
   to `dist\McCluster-Windows-x64-Setup-<version>.exe` with `SHA256SUMS.txt`.
+- For a signed in-box release, use `build-inbox.ps1 -Installer -Release -Thumbprint <certificate thumbprint>` on the authorized Windows signing machine. The build signs the app before creating the payload manifest and signs the setup before running the install test. Use the approved thumbprint of a publicly issued code-signing certificate. Windows also trusts roots added by local administrators. The standalone `release-gate.ps1 -Thumbprint <certificate thumbprint>` verifies the outer signature, embedded archive, staged and extracted bytes, both artifact checksums and timestamped signatures. The app and setup must share the signer, and the embedded WebView2 binaries must carry Microsoft signatures.
 - The installer (`installer/Setup.cs`) mirrors `package/mccluster.nsi`: per-user, `%LOCALAPPDATA%\McClusterDesktop\App`,
   Start Menu shortcut, HKCU uninstall entry, no admin, no services. The same executable is the uninstaller.
 

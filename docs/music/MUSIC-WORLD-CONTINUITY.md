@@ -13,6 +13,18 @@ document from `https://mccluster.org/` in a frame. The World host keeps its own
 origin, canonical metadata and M Account session. It is not copied into the
 personal property's DOM, and no product identity or host routing changes.
 
+On the platform the frame is same-origin: the platform serves Music too (stage P1
+of the one-platform plan, `docs/control-plane/DOMAINS-AND-ENTITIES.md`), and a link
+inside the World frame to a page served at another address of the same origin opens at
+the top (`leavesWorld`), the way a cross-origin link always did. On Matthew's host the
+frame is cross-origin, as it was everywhere before P1. The World's origin comes from
+`window.MCC_SITE`, the generated block at the top of `js/shell-boot.js` (this file left
+`scripts/test/site-hosts-pending/engine.json` with P1); the bridge keeps its exact
+origin, window and nonce checks either way. The transport's title, tapped with the World
+closed, goes to Music on the host it stands on: on Matthew's host his own Listen until P3
+(`musicHome`), as the bar's Music tab does, since the platform's would be a page load that
+ends the song (the P1 amendment of 2026-11-24).
+
 The parent's address adds `world=1` to the existing Music URL and its history
 state records the clean World destination. Browser Back/Forward changes the
 visible surface without replacing the Music document. The source, buffered
@@ -62,16 +74,45 @@ location work in a hidden frame.
 
 A full browser refresh, a deliberate navigation to another document, closing
 the tab or an operating-system eviction still ends the old document. The
-retention guarantee covers the Music ↔ World surface switch. It does not claim
-uninterrupted audio after the browser destroys the player. The older pocket
-widget remains timestamp recovery for other pages; it defers on discovery pages
-that already own `MCC_MUSIC` to prevent a second player.
+retention guarantee covers the Music ↔ World surface switch and, since music
+slice M5, the switches between the supported music pages (next section). It does
+not claim uninterrupted audio after the browser destroys the player. The older
+pocket widget remains timestamp recovery for other pages; it defers on discovery
+pages that already own `MCC_MUSIC`, and never mounts in a music view, to prevent
+a second player.
+
+## One player across music pages (music slice M5)
+
+Since music slice M5 (`docs/music/MUSIC-RELEASE-20261119.md`, "M5: one player
+across music pages"; on the branch only, because D-5 is Matthew's decision) the
+same pattern holds between music pages. `js/music-shell.js`, loaded by
+`js/tabbar.js` beside this module, keeps the first music page a tab opens
+(Listen, an artist page) as the retained document and opens the other music
+pages over it as views, each in a fresh same-origin frame, one at a time. Release
+2 ships M5 with the album contained (`docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md`,
+4.10; the record's "Engine stage 0"): the album is never retained and never a
+view, so it is a page of its own with its deck as its one player, and the World
+opens over it as over any other page. How the World relates to that:
+
+| Action | Result |
+| --- | --- |
+| Globe in a music view | The World opens from the retained document, over the view; the same element keeps playing. The address is the view's with `world=1`, the title the World's. |
+| Back from that World | The World closes onto the view, at the view's address and with the view's title (this module restores the title shown when the World opened, not the page's first title). |
+| Back again | The view closes onto the retained page, whose own title, description, canonical, JSON-LD and `og:` tags come back byte for byte. |
+| This module inside a view | Does nothing: no theme, no watchers, no greeting (a view is not the World frame). The World always opens from the retained document. |
+| A link to the World inside a view | Takes the same path as the bar's Globe. |
+| The album (contained in Release 2) | Never retained, so no view opens over it and no engine is loaded beside its deck: the deck is the one player on the album, and the World's transport acts on it. Stage 1 of the engine makes the album a page of the one engine. |
+
+Links from the World to an artist page or the album still navigate the top
+document, as in the table above: a page load, as before.
 
 ## Theme, gesture and preferences
 
 The theme uses the existing public catalog source
-`assets/audio/heal-the-3rd-world.m4a` from `data/albums.json`. Its URL and metadata
-are prepared before the gesture, and it is not an entitled or signed master.
+`assets/audio/heal-the-3rd-world.m4a` from `data/albums.json`. Its URL is prepared
+before the gesture, and it is not an entitled or signed master. Since music slice M3
+nothing of it is read before it is needed: on a Music page the theme fetches no audio
+until the Globe tap, and the standalone World reads only the song it drew.
 The theme loops until the listener pauses it or chooses another track.
 
 The parent's Globe click calls `play()` directly in that document. Standalone

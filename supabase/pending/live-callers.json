@@ -170,20 +170,6 @@
         "workers/mccluster/src/at-night.js"
       ]
     },
-    "clip_campaign_create_from_action": {
-      "kind": "function",
-      "pending": "equity_uprise_clipping_sources.sql",
-      "callers": [
-        "js/control-room/clipping.js"
-      ]
-    },
-    "clip_campaign_set_distribution": {
-      "kind": "function",
-      "pending": "equity_uprise_clipping_sources.sql",
-      "callers": [
-        "js/control-room/clipping.js"
-      ]
-    },
     "create_policy_memo": {
       "kind": "function",
       "pending": "policy_fellowship_ladder_v1.sql",
@@ -211,34 +197,6 @@
       "pending": "eup_intake_v1.sql",
       "callers": [
         "workers/mccluster/src/eup/intake.js"
-      ]
-    },
-    "eup_environment_ingest": {
-      "kind": "function",
-      "pending": "20261119100000_eup_environment_events_v1_03.sql",
-      "callers": [
-        "workers/mccluster/src/eup/environment/ingest.js"
-      ]
-    },
-    "eup_environment_ingest_state": {
-      "kind": "function",
-      "pending": "20261119100000_eup_environment_events_v1_03.sql",
-      "callers": [
-        "workers/mccluster/src/eup/environment/ingest.js"
-      ]
-    },
-    "eup_environment_owner_command": {
-      "kind": "function",
-      "pending": "20261119100000_eup_environment_events_v1_04.sql",
-      "callers": [
-        "workers/mccluster/src/eup/environment/owner.js"
-      ]
-    },
-    "eup_environment_owner_read": {
-      "kind": "function",
-      "pending": "20261119100000_eup_environment_events_v1_04.sql",
-      "callers": [
-        "workers/mccluster/src/eup/environment/owner.js"
       ]
     },
     "eup_import_run_claim": {
@@ -302,13 +260,6 @@
       "pending": "eup_intake_v1.sql",
       "callers": [
         "workers/mccluster/src/eup/intake.js"
-      ]
-    },
-    "front-media": {
-      "kind": "bucket",
-      "pending": "member_fronts_v1.sql",
-      "callers": [
-        "js/front-media.js"
       ]
     },
     "identity_apply_persona_event": {
@@ -408,13 +359,6 @@
       "pending": "live_missions_v1.sql",
       "callers": [
         "workers/mccluster/src/live/store.js"
-      ]
-    },
-    "member_fronts": {
-      "kind": "table",
-      "pending": "member_fronts_v1.sql",
-      "callers": [
-        "workers/mccluster/src/member-fronts.js"
       ]
     },
     "mission_catalog_source_command": {
