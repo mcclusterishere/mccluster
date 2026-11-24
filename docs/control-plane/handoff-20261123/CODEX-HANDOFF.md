@@ -274,3 +274,5 @@ before calling anything verified.
 Every local-only branch of the earlier session was pushed as `claude/archive-20261124-<name>` (21 branches: the
 close-out, communications, league, media, OVH review and Release 1 fix-round work). They are reference copies; do not
 merge them without reading what they hold.
+
+The fixer's last status, its unfinished patch for review finding 3 and its sign-in probe are in `release2/` beside this file (`STATUS.md` first).

@@ -1,0 +1,267 @@
+diff --git a/js/analytics.js b/js/analytics.js
+index 3db68d37..274f950f 100644
+--- a/js/analytics.js
++++ b/js/analytics.js
+@@ -249,10 +249,14 @@ window.MCC_TRACK = (function () {
+      clearing the store genuinely clears it. */
+   var DEVICE_KEY = "mcc_device";
+   var deviceId = store(function () { return localStorage.getItem(DEVICE_KEY); });
++  /* minted by this page load, and not yet given to anything: the one moment the carry may still replace it (below) */
++  var deviceMinted = false, deviceGiven = false;
+   if (!deviceId) {
+     deviceId = uuid();
++    deviceMinted = true;
+     store(function () { localStorage.setItem(DEVICE_KEY, deviceId); return 1; });
+   }
++  function device() { deviceGiven = true; return deviceId || null; }
+ 
+   /* ---- the visit ----
+      One session is one sitting. Half an hour of nothing ends it, which
+@@ -359,7 +363,7 @@ window.MCC_TRACK = (function () {
+     if (last && (!last.at || Date.now() - Number(last.at) > 24 * 60 * 60 * 1000)) last = null;
+     return {
+       version: 1,
+-      device_id: deviceId || null,
++      device_id: device(),
+       session_id: sessionId() || null,
+       source: ACQ && ACQ.src || "direct",
+       medium: ACQ && ACQ.med || "none",
+@@ -375,12 +379,26 @@ window.MCC_TRACK = (function () {
+   window.MCC_ANALYTICS_CONTEXT = {
+     experienceContext: function () {
+       return {
+-        device_id: deviceId || null,
++        device_id: device(),
+         session_id: sessionId() || null,
+         source: ACQ && ACQ.src || "direct",
+         path: location.pathname + location.search
+       };
+     },
++    /* ONE LISTENER STAYS ONE DEVICE ACROSS THE MOVE (SPEC-PLATFORM 2.7). This file runs before js/tabbar.js loads the
++       carry (js/carry.js) and mints this origin's device id as it starts, so the id the old host answers with always
++       found one here. The carry hands it to this instead: taken up only on the page load that minted this origin's
++       own, before that one was given to anything (no batch sent, no context read), and only while the notice is agreed
++       and the browser sends no privacy signal (this whole block runs only once it is agreed). Otherwise this origin
++       keeps the id it has. */
++    adoptDevice: function (id) {
++      if (typeof id !== "string" || !/^[A-Za-z0-9-]{8,64}$/.test(id)) return false;
++      if (!deviceMinted || deviceGiven || !mccPrivacyAcknowledged() || mccControlPreview() || privacySignal()) return false;
++      if (store(function () { localStorage.setItem(DEVICE_KEY, id); return 1; }) !== 1) return false;
++      deviceId = id;
++      deviceMinted = false;
++      return true;
++    },
+     signupAttribution: signupAttributionSnapshot,
+     prepareSignupAttribution: function () {
+       var snapshot = signupAttributionSnapshot();
+@@ -457,7 +475,7 @@ window.MCC_TRACK = (function () {
+       body: JSON.stringify({
+         // Recovered events have only minimal name/path evidence. Do not
+         // attribute their historical action to a newly minted session.
+-        device_id: replay ? null : deviceId,
++        device_id: replay ? null : device(),
+         session_id: replay ? null : sessionId(),
+         device: replay ? {} : deviceFacts(),
+         events: batch,
+diff --git a/js/carry.js b/js/carry.js
+index 2dfd4826..f2ee0231 100644
+--- a/js/carry.js
++++ b/js/carry.js
+@@ -14,7 +14,8 @@
+    account chip and the sign-in page show for 30 days, and paint() says it there.
+ 
+    The same answer brings what SPEC-PLATFORM 2.7 carries: the analytics device id (only where the privacy notice was
+-   agreed on both hosts, and only if this origin has none, so one listener stays one device), the song pocket, mute and
++   agreed on both hosts, and only if this origin has none or js/analytics.js minted its own on this same page load and
++   has given it to nothing yet, so one listener stays one device), the song pocket, mute and
+    theme (each only where unset here), and the paths of the songs kept at the old address. offer() says keptLine(), "You
+    kept 12 songs at the old address. Keep them here too?", once, in the bar's own peek card on a top-level platform page
+    that shows the account chip (js/tabbar.js also loads this file for a member the carry already signed in while that
+@@ -77,7 +78,13 @@
+   /* SPEC-PLATFORM 2.7: each adopted only where this origin has none */
+   function adopt(c) {
+     if (!c || typeof c !== "object") return;
+-    if (agreedHere() && typeof c.device === "string" && /^[A-Za-z0-9-]{8,64}$/.test(c.device) && read("mcc_device") === null) write("mcc_device", c.device);
++    if (agreedHere() && typeof c.device === "string" && /^[A-Za-z0-9-]{8,64}$/.test(c.device)) {
++      /* js/analytics.js runs before this file and mints this origin's id as it starts: it takes the carried one up
++         itself, only on the page load that minted its own and before that one was given to anything */
++      var A = w.MCC_ANALYTICS_CONTEXT;
++      if (read("mcc_device") === null) write("mcc_device", c.device);
++      else if (A && typeof A.adoptDevice === "function") { try { A.adoptDevice(c.device); } catch (e) { /* this origin keeps its own */ } }
++    }
+     if (typeof c.pocket === "string" && c.pocket.length <= 4096 && json(c.pocket) && read("mcc-pocket") === null) write("mcc-pocket", c.pocket);
+     if (typeof c.mute === "string" && /^[a-z0-9_-]{1,16}$/i.test(c.mute) && read("mcc_music_mute") === null) write("mcc_music_mute", c.mute);
+     if (typeof c.theme === "string" && /^[a-z0-9_-]{1,16}$/i.test(c.theme) && read("mcc_theme") === null) write("mcc_theme", c.theme);
+diff --git a/scripts/e2e/carry.e2e.mjs b/scripts/e2e/carry.e2e.mjs
+index a32363de..f7868b5f 100644
+--- a/scripts/e2e/carry.e2e.mjs
++++ b/scripts/e2e/carry.e2e.mjs
+@@ -67,7 +67,7 @@ function check(scope, name, ok, detail) {
+ 
+ const fetchOne = await localFetcher(SITE, { root: ROOT });
+ const served = [];     // every answer a site host gave: url, status, the framing headers
+-const api = { handoff: [], verify: [] };
++const api = { handoff: [], verify: [], collect: [] };
+ 
+ async function routes(ctx) {
+   const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' }, body: JSON.stringify(body) });
+@@ -83,6 +83,7 @@ async function routes(ctx) {
+         return h.authorization === `Bearer ${HOUSE_TOKEN}` ? json(route, { token_hash: 'th-fixture', type: 'magiclink' }) : json(route, { error: 'sign in first' }, 401);
+       }
+       if (u.pathname === '/v1/status') return json(route, { error: 'House owner only' }, 403);
++      if (u.pathname === '/v1/collect' && req.method() === 'POST') { try { api.collect.push({ origin: h.origin || '', body: req.postDataJSON() }); } catch (e) { /* not JSON */ } }
+       return json(route, { ok: true, items: [], tracks: [], posts: [], events: [], missions: [], layers: [], features: [], sources: [], next_before: null });
+     }
+     if (u.hostname.endsWith('supabase.co')) {
+@@ -497,6 +498,33 @@ try {
+     check(S, 'no page errors', errors.length === 0, errors);
+     await ctx.close();
+   }
++
++  /* ---------- 9. one listener stays one device across the move (SPEC-PLATFORM 2.7 and risk 15) ---------- */
++  {
++    /* js/analytics.js runs before js/tabbar.js loads the carry, and mints this origin's device id as it starts: by the
++       time his host answered, the platform always had one of its own, and the carried id was never taken up (review of
++       the release branch). The privacy notice is agreed on both hosts here (open() above) */
++    const S = 'one-device';
++    const { ctx, page, errors } = await open();
++    await page.goto(`${PROF}/listen.html`, { waitUntil: 'load' });
++    await page.waitForFunction(() => !!localStorage.getItem('mcc_device'), null, { timeout: 10000 }).catch(() => {});
++    const old = await page.evaluate(() => localStorage.getItem('mcc_device'));
++    check(S, 'his host has an analytics device id', /^[A-Za-z0-9-]{8,64}$/.test(old || ''), old);
++    api.collect.length = 0;
++    await page.goto(`${PLAT}/listen.html`, { waitUntil: 'load' });
++    await page.waitForFunction(() => !!localStorage.getItem('mcc_carry_v1'), null, { timeout: 20000 }).catch(() => {});
++    check(S, 'the platform keeps the same device id after the carry', await page.evaluate(() => localStorage.getItem('mcc_device')) === old, { old, here: await page.evaluate(() => localStorage.getItem('mcc_device')) });
++    await page.evaluate(() => window.MCC_TRACK && window.MCC_TRACK('share', { probe: 1 }));
++    await page.waitForTimeout(3200);     // longer than the collector's 2.5 s linger
++    const sent = api.collect.filter((c) => c.origin === PLAT).map((c) => c.body && c.body.device_id);
++    check(S, 'every event the platform sent is filed under that one device id', sent.length > 0 && sent.every((id) => id === old), { old, sent });
++    await page.reload({ waitUntil: 'load' });
++    await page.waitForTimeout(3200);
++    const later = api.collect.filter((c) => c.origin === PLAT).map((c) => c.body && c.body.device_id);
++    check(S, 'and so is the next page', later.length > sent.length && later.every((id) => id === old), { old, later });
++    check(S, 'no page errors', errors.length === 0, errors);
++    await ctx.close();
++  }
+ } finally {
+   await browser.close();
+ }
+diff --git a/scripts/test/carry.test.mjs b/scripts/test/carry.test.mjs
+index 6570f21c..2844b924 100644
+--- a/scripts/test/carry.test.mjs
++++ b/scripts/test/carry.test.mjs
+@@ -515,6 +515,113 @@ test('js/carry.js adopts the device id only with the platform\'s own agreement,
+   assert.equal(unagreed.window.localStorage.getItem('mcc_device'), null, 'no agreement on the platform: no device id');
+ });
+ 
++/* ONE DEVICE ACROSS THE MOVE (review of the release branch, 2026-11-24). js/analytics.js runs before js/tabbar.js loads
++   the carry and mints this origin's device id as it starts, so "only if this origin has none" was never true on a page
++   that counts: the carried id was dropped and one listener became two devices. The carry hands the id to analytics,
++   which takes it up only on the page load that minted its own, before that one was given to anything. */
++test('js/carry.js hands the carried device id to js/analytics.js where this origin already has one, only with the agreement', async () => {
++  const carry = { device: 'device-123' };
++  const asked = [];
++  const win = { MCC_ANALYTICS_CONTEXT: { adoptDevice: (id) => { asked.push(id); return true; } } };
++  const page = platformPage({ local: { mcc_device: 'minted-here' }, fetchImpl: exchange(), win });
++  page.frames[0].fireLoad();
++  answerFrom(page.frames[0], page.posts, page.ev, { carry });
++  await page.carry.started;
++  assert.deepEqual(asked, ['device-123'], 'analytics is asked once, with the carried id');
++  assert.equal(page.window.localStorage.getItem('mcc_device'), 'minted-here', 'the carry itself never writes over an id (analytics decides)');
++  const none = [];
++  const unagreed = platformPage({ accepted: false, local: { mcc_device: 'minted-here' }, fetchImpl: exchange(), win: { MCC_ANALYTICS_CONTEXT: { adoptDevice: (id) => { none.push(id); return true; } } } });
++  unagreed.frames[0].fireLoad();
++  answerFrom(unagreed.frames[0], unagreed.posts, unagreed.ev, { carry });
++  await unagreed.carry.started;
++  assert.deepEqual(none, [], 'no agreement on the platform: nothing is handed over');
++  const bad = [];
++  const odd = platformPage({ local: { mcc_device: 'minted-here' }, fetchImpl: exchange(), win: { MCC_ANALYTICS_CONTEXT: { adoptDevice: (id) => { bad.push(id); return true; } } } });
++  odd.frames[0].fireLoad();
++  answerFrom(odd.frames[0], odd.posts, odd.ev, { carry: { device: '<script>' } });
++  await odd.carry.started;
++  assert.deepEqual(bad, [], 'an id that is not an id is handed to nobody');
++});
++
++/* the real first-party sender out of js/analytics.js, as scripts/test/music-measurement.test.mjs stands it up: its
++   privacy gate, its device id, its outbox, MCC_TRACK and MCC_ANALYTICS_CONTEXT, every request recorded */
++function analyticsPage({ local = {}, agreed = true, gpc = false } = {}) {
++  const src = read('js/analytics.js');
++  const cut = (from, to) => { const a = src.indexOf(from), b = src.indexOf(to, a + from.length); assert.ok(a >= 0 && b > a, `could not find ${from}`); return src.slice(a, b); };
++  const code = cut('var MCC_PRIVACY_REQUIRED_VERSION', '/* EVENT_OUTBOX_FACTORY_END */') +
++    cut('window.MCC_TRACK = (function () {', '\n/* ============================================================\n   MCC_MODEL');
++  const localStorage = storage(Object.assign({ mcc_acq: JSON.stringify({ src: 'direct', med: 'none', cmp: '', plug: '', at: '2026-11-24' }) },
++    agreed ? { mcc_privacy_ack: JSON.stringify({ version: '2026-10-19', accepted_at: '2026-11-24T00:00:00Z' }) } : {}, local));
++  const docListeners = {}, sent = [];
++  const document = { referrer: '', cookie: '', visibilityState: 'visible', currentScript: null, addEventListener: (type, fn) => { (docListeners[type] = docListeners[type] || []).push(fn); } };
++  const context = { document, localStorage, sessionStorage: storage(), URL, URLSearchParams, Intl, Uint8Array,
++    navigator: { onLine: true, language: 'en-US', platform: 'test', userAgent: 'test', vendor: '', maxTouchPoints: 0, globalPrivacyControl: gpc },
++    screen: { width: 390, height: 844, availWidth: 390, availHeight: 844 }, innerWidth: 390, innerHeight: 844, devicePixelRatio: 1,
++    matchMedia: () => ({ matches: false }), addEventListener() {},
++    location: { pathname: '/listen.html', search: '', hostname: 'mccluster.org', origin: PLATFORM, href: PLATFORM + '/listen.html' },
++    crypto: { randomUUID: () => 'aaaaaaaa-aaaa-4aaa-8aaa-' + String(sent.length + Math.random()).replace(/\D/g, '').padEnd(12, '0').slice(0, 12) },
++    setTimeout: () => 0, clearTimeout() {}, setInterval: () => 0, console,
++    fetch: async (url, init) => { sent.push({ url: String(url), body: JSON.parse(init.body) }); return { ok: true, clone: () => ({ json: async () => ({ ok: true }) }) }; } };
++  context.window = context;
++  vm.createContext(context);
++  vm.runInContext(code, context, { filename: 'js/analytics.js (the first-party sender)' });
++  return { localStorage, sent, track: (n, p) => context.MCC_TRACK(n, p), context: context.MCC_ANALYTICS_CONTEXT,
++    async flush() { document.visibilityState = 'hidden'; (docListeners.visibilitychange || []).forEach((fn) => fn()); await new Promise((r) => setImmediate(r)); document.visibilityState = 'visible'; } };
++}
++
++test('js/analytics.js takes the carried device id up on the page load that minted its own, before that one was given to anything', async () => {
++  const OLD = 'd41815a4-f27c-444e-ab03-fc4a0ac5b2c6';
++  const first = analyticsPage();
++  const minted = first.localStorage.getItem('mcc_device');
++  assert.ok(minted && minted !== OLD, 'this origin minted its own id as analytics started');
++  first.track('page_view', {});                        // queued, not yet sent: the id has gone nowhere
++  assert.equal(first.context.adoptDevice(OLD), true);
++  assert.equal(first.localStorage.getItem('mcc_device'), OLD, 'kept for the next page');
++  first.track('share', {});
++  await first.flush();
++  assert.ok(first.sent.length >= 1 && first.sent.every((s) => s.body.device_id === OLD), 'every event of this page is filed under the one id');
++  assert.equal(first.context.adoptDevice('e41815a4-f27c-444e-ab03-fc4a0ac5b2c6'), false, 'once only');
++  assert.equal(first.localStorage.getItem('mcc_device'), OLD);
++});
++
++test('js/analytics.js keeps its own device id when it was here before, was already given out, or the visitor has not agreed', async () => {
++  const OLD = 'd41815a4-f27c-444e-ab03-fc4a0ac5b2c6';
++  const returning = analyticsPage({ local: { mcc_device: 'here-before-0001' } });
++  assert.equal(returning.context.adoptDevice(OLD), false, 'an id from an earlier page load is this origin\'s device already');
++  assert.equal(returning.localStorage.getItem('mcc_device'), 'here-before-0001');
++  const sentOne = analyticsPage();
++  const own = sentOne.localStorage.getItem('mcc_device');
++  sentOne.track('page_view', {});
++  await sentOne.flush();
++  assert.equal(sentOne.sent[0].body.device_id, own);
++  assert.equal(sentOne.context.adoptDevice(OLD), false, 'a batch already went out under this id');
++  sentOne.track('share', {});
++  await sentOne.flush();
++  assert.ok(sentOne.sent.every((s) => s.body.device_id === own), 'so the page stays one device');
++  const readOut = analyticsPage();
++  readOut.context.experienceContext();
++  assert.equal(readOut.context.adoptDevice(OLD), false, 'the id was already read by the experience plane');
++  const attributed = analyticsPage();
++  attributed.context.signupAttribution();
++  assert.equal(attributed.context.adoptDevice(OLD), false, 'or by a sign-up\'s attribution');
++  const signal = analyticsPage({ gpc: true });
++  const before = signal.localStorage.getItem('mcc_device');
++  assert.equal(signal.context.adoptDevice(OLD), false, 'a browser that sends a privacy signal is never joined to its old id');
++  assert.equal(signal.localStorage.getItem('mcc_device'), before);
++  const withdrew = analyticsPage();
++  withdrew.localStorage.removeItem('mcc_privacy_ack');
++  assert.equal(withdrew.context.adoptDevice(OLD), false, 'the agreement withdrawn since the page loaded');
++  for (const bad of ['', 'short', '<script>alert(1)</script>', 'x'.repeat(65), null, 123]) assert.equal(analyticsPage().context.adoptDevice(bad), false, `not an id: ${JSON.stringify(bad)}`);
++  /* never agreed: the whole sender, its device id and adoptDevice with it, sits inside the file's one consent gate (the
++     harness above runs the gate's body on its own), so there is no id and nothing to hand one to */
++  const src = read('js/analytics.js');
++  const gate = src.indexOf('\nif (mccPrivacyAcknowledged() && !mccControlPreview()) {'), closes = src.lastIndexOf('\n } else {');
++  for (const inside of ['var DEVICE_KEY = "mcc_device";', 'adoptDevice: function (id) {', 'window.MCC_ANALYTICS_CONTEXT = {']) {
++    const at = src.indexOf(inside);
++    assert.ok(gate > 0 && at > gate && at < closes && src.indexOf(inside, at + 1) === -1, `${inside} is inside the consent gate, once`);
++  }
++});
++
+ test('js/carry.js re-keeps the songs kept at the old address on a tap, from this origin, by the same paths', async () => {
+   const put = [];
+   const cachesImpl = { open: (name) => Promise.resolve({ put: (url, res) => { put.push({ name, url, body: res.body }); return Promise.resolve(); }, match: () => Promise.resolve(undefined) }) };
