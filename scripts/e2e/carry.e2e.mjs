@@ -1,6 +1,8 @@
 /* THE CARRY, IN A REAL BROWSER (SPEC-PLATFORM 2.6 to 2.8 and the P1 acceptance of section 4).
    ============================================================
-   Chromium, with its default storage partitioning, and every host of the site answered as P1 answers it: the platform
+   Chromium with its own default storage partitioning (Playwright launches it with ThirdPartyStoragePartitioning
+   disabled, so the suite takes that one feature back out of the list Playwright passes; scenario 7 checks partitioning
+   is on instead of assuming it), and every host of the site answered as P1 answers it: the platform
    (https://mccluster.org) by Worker mccluster's own site router run in-process, as workers/mccluster/src/entry-platform.js
    composes it, over this checkout's published files; Matthew's host (https://matthew.mccluster.org) by a model of GitHub
    Pages over the same files (it is not routed to the Worker until P3); the API and Supabase by fixtures that record what
@@ -17,6 +19,10 @@
    5. The installed app's move card shows once, on Matthew's host in standalone mode only.
    6. Matthew's host still answers the installed app's start page, manifest.json and sw.js; the platform's manifest starts
       its own app on the World.
+   7. A token in a link is never a way in (review SEC-P1-1): a guest who opens a platform address whose fragment holds
+      another account's access token (#mcc_handoff=) sends it nowhere and is signed in as nobody; a member signed in on
+      Matthew's host who opens the same link is signed in as themselves, by the carry. And the carry page framed by
+      another site sees an empty partition, not his host's storage (review SEC-P1-3).
 
      node scripts/e2e/carry.e2e.mjs [outDir]
    ============================================================ */
@@ -40,6 +46,11 @@ const USER = '11111111-1111-4111-8111-111111111111';
 const jwt = (tag) => `${tag}.${Buffer.from(JSON.stringify({ sub: USER, exp: Math.floor(Date.now() / 1000) + 3600, email: 'carry-fixture@invalid.test' })).toString('base64url')}.sig`;
 const HOUSE_TOKEN = jwt('house');
 const PLATFORM_TOKEN = jwt('platform');
+/* another account's access token, as a crafted link would carry it; the hand-off route mints a session for any account
+   whose bearer it is given (workers/mccluster/src/auth-handoff.js), so the fixture does too */
+const OTHER_USER = '22222222-2222-4222-8222-222222222222';
+const OTHER_TOKEN = `other.${Buffer.from(JSON.stringify({ sub: OTHER_USER, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.sig`;
+const OTHER_SESSION = `other-platform.${Buffer.from(JSON.stringify({ sub: OTHER_USER, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.sig`;
 const LINE = `McCluster now lives at ${SITE.platform.host}. If you were signed in before, you still are; if not, sign in once here.`;
 const results = [];
 function check(scope, name, ok, detail) {
@@ -61,6 +72,7 @@ async function routes(ctx) {
       const h = await req.allHeaders();
       if (u.pathname === '/v1/auth/handoff' && req.method() === 'POST') {
         api.handoff.push({ origin: h.origin || '', authorization: h.authorization || '', url: req.url() });
+        if (h.authorization === `Bearer ${OTHER_TOKEN}`) return json(route, { token_hash: 'th-other', type: 'magiclink' });
         return h.authorization === `Bearer ${HOUSE_TOKEN}` ? json(route, { token_hash: 'th-fixture', type: 'magiclink' }) : json(route, { error: 'sign in first' }, 401);
       }
       if (u.pathname === '/v1/status') return json(route, { error: 'House owner only' }, 403);
@@ -69,10 +81,15 @@ async function routes(ctx) {
     if (u.hostname.endsWith('supabase.co')) {
       const h = await req.allHeaders();
       if (u.pathname === '/auth/v1/verify' && req.method() === 'POST') {
-        api.verify.push({ origin: h.origin || '', body: req.postDataJSON() });
+        const body = req.postDataJSON();
+        api.verify.push({ origin: h.origin || '', body });
+        if (body && body.token_hash === 'th-other') return json(route, { access_token: OTHER_SESSION, refresh_token: 'refresh-other', token_type: 'bearer', expires_in: 3600, user: { id: OTHER_USER } });
         return json(route, { access_token: PLATFORM_TOKEN, refresh_token: 'refresh-platform', token_type: 'bearer', expires_in: 3600, user: { id: USER } });
       }
-      if (u.pathname === '/auth/v1/user') return [HOUSE_TOKEN, PLATFORM_TOKEN].map((t) => `Bearer ${t}`).includes(h.authorization) ? json(route, { id: USER, email: 'carry-fixture@invalid.test' }) : json(route, { msg: 'no' }, 401);
+      if (u.pathname === '/auth/v1/user') {
+        if (h.authorization === `Bearer ${OTHER_SESSION}`) return json(route, { id: OTHER_USER, email: 'other-fixture@invalid.test' });
+        return [HOUSE_TOKEN, PLATFORM_TOKEN].map((t) => `Bearer ${t}`).includes(h.authorization) ? json(route, { id: USER, email: 'carry-fixture@invalid.test' }) : json(route, { msg: 'no' }, 401);
+      }
       if (u.pathname === '/auth/v1/token') return json(route, { access_token: HOUSE_TOKEN, refresh_token: 'refresh-house', token_type: 'bearer', expires_in: 3600, user: { id: USER } });
       return json(route, []);
     }
@@ -99,7 +116,22 @@ async function routes(ctx) {
 }
 
 const LAUNCH_ARGS = ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'];
-const browser = await chromium.launch(process.env.PW_CHROME ? { executablePath: process.env.PW_CHROME, args: LAUNCH_ARGS } : { args: LAUNCH_ARGS });
+/* Chromium partitions a frame's storage by the top-level site (SPEC-PLATFORM 2.6 measured it so; risk 3 counts on it).
+   Playwright launches Chromium with ThirdPartyStoragePartitioning in its own default --disable-features list
+   (playwright issue 32230), so a plain launch runs unpartitioned. The list is read from the launch Playwright makes
+   with these options, that one feature is taken out, and the rest is passed as it was. */
+const PARTITIONING_OFF = 'ThirdPartyStoragePartitioning';
+async function launchPartitioned() {
+  const options = process.env.PW_CHROME ? { executablePath: process.env.PW_CHROME, args: LAUNCH_ARGS } : { args: LAUNCH_ARGS };
+  const probe = await chromium.launchServer(options);
+  const defaults = probe.process().spawnargs.filter((a) => a.startsWith('--disable-features='));
+  await probe.close();
+  const rest = defaults.flatMap((a) => a.slice('--disable-features='.length).split(',')).filter((f) => f && f !== PARTITIONING_OFF);
+  return { defaults, rest, browser: await chromium.launch({ ...options, ignoreDefaultArgs: defaults, args: [...LAUNCH_ARGS, ...(rest.length ? ['--disable-features=' + rest.join(',')] : [])] }) };
+}
+const launched = await launchPartitioned();
+const browser = launched.browser;
+check('launch', `Chromium ${browser.version()} runs with storage partitioning (Playwright's default list had it ${launched.defaults.some((a) => a.includes(PARTITIONING_OFF)) ? 'off; taken out' : 'on already'})`, !launched.rest.includes(PARTITIONING_OFF), launched.rest);
 async function open({ memberOn = '', standalone = false } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: 'reduce', serviceWorkers: 'block' });
   ctx.setDefaultTimeout(20000);
@@ -109,8 +141,9 @@ async function open({ memberOn = '', standalone = false } = {}) {
       localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
       localStorage.setItem('mnet_tour_seen', '1');
       sessionStorage.setItem('mcc_premiere', '1');
-      /* signed in on one host only: the other earns its own session */
-      if (memberOn && location.origin === memberOn && !localStorage.getItem('mccdb_session')) {
+      /* signed in on one host only, in its own first-party storage (a top-level visit; never inside a frame, so a frame
+         reads only what the browser lets it read): the other earns its own session */
+      if (memberOn && window.top === window && location.origin === memberOn && !localStorage.getItem('mccdb_session')) {
         localStorage.setItem('mccdb_session', JSON.stringify({ access_token: token, refresh_token: 'refresh-house', expires_at: Math.floor(Date.now() / 1000) + 3600 }));
       }
     } catch (e) { /* a frame without storage */ }
@@ -298,6 +331,52 @@ try {
     });
     check(S, 'the platform answers manifest.json and sw.js, and its app starts on the World', plat.status === 200 && plat.sw === 200 && plat.start === '/', plat);
     await ctx.close();
+  }
+
+  /* ---------- 7. a token in a link is never a way in; the carry page framed by another site sees nothing ---------- */
+  {
+    const S = 'link-token';
+    const crafted = `${PLAT}/listen.html#mcc_handoff=${encodeURIComponent(OTHER_TOKEN)}`;
+    const tradedOther = (from) => api.handoff.slice(from).filter((h) => h.authorization === `Bearer ${OTHER_TOKEN}`);
+    /* R1: a guest */
+    {
+      const from = api.handoff.length;
+      const { ctx, page, errors } = await open();
+      await page.goto(crafted, { waitUntil: 'load' });
+      await page.waitForFunction(() => !!localStorage.getItem('mcc_carry_v1'), null, { timeout: 20000 }).catch(() => {});
+      await page.waitForTimeout(1500);
+      check(S, 'a guest who opens a platform link holding another account\'s token sends that token nowhere', tradedOther(from).length === 0, tradedOther(from).map((h) => h.origin));
+      const held = await session(page);
+      check(S, 'and is signed in as nobody: no session was stored', !held && !(await signedIn(page)), held && { access: held.access_token === OTHER_SESSION ? '<the link\'s account>' : 'another' });
+      check(S, 'the token is scrubbed from the address', !/mcc_handoff/.test(await page.evaluate(() => location.href)), await page.evaluate(() => location.href.replace(/mcc_handoff=[^&]*/, 'mcc_handoff=<token>')));
+      check(S, 'the carry still asked his host once, and found nothing', (await mark(page))?.result === 'none', await mark(page));
+      check(S, 'no page errors (guest)', errors.length === 0, errors);
+      await ctx.close();
+    }
+    /* R2: a member signed in on Matthew's host opens the same link */
+    {
+      const from = api.handoff.length;
+      const { ctx, page, errors } = await open({ memberOn: PROF });
+      await page.goto(`${PROF}/listen.html`, { waitUntil: 'load' });
+      await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 20000 }).catch(() => {});
+      await page.goto(crafted, { waitUntil: 'load' });
+      await page.waitForFunction(() => !!localStorage.getItem('mcc_carry_v1'), null, { timeout: 20000 }).catch(() => {});
+      await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 20000 }).catch(() => {});
+      await page.waitForTimeout(1200);
+      const held = await session(page);
+      check(S, 'a member signed in on his host who opens it is signed in as themselves, by the carry', held?.access_token === PLATFORM_TOKEN && (await mark(page))?.result === 'carried', { session: held ? (held.access_token === PLATFORM_TOKEN ? 'own' : held.access_token === OTHER_SESSION ? '<the link\'s account>' : 'other') : null, mark: await mark(page) });
+      check(S, 'and the link\'s token was sent nowhere', tradedOther(from).length === 0 && api.handoff.slice(from).every((h) => h.authorization === `Bearer ${HOUSE_TOKEN}` && h.origin === PLAT), api.handoff.slice(from).map((h) => ({ origin: h.origin, own: h.authorization === `Bearer ${HOUSE_TOKEN}` })));
+      check(S, 'no page errors (member)', errors.length === 0, errors);
+      /* the carry page framed by another site reads that site's own partition of his host's storage: empty */
+      await page.goto(`${FOREIGN}/?frame=${encodeURIComponent(`${PROF}/carry.html`)}`, { waitUntil: 'load' });
+      const frame = await (await page.waitForSelector('#embed')).contentFrame();
+      await frame.waitForLoadState('load').catch(() => {});
+      const inside = await frame.evaluate(() => { try { return { origin: location.origin, stored: localStorage.getItem('mccdb_session') }; } catch (e) { return { origin: location.origin, blocked: String(e && e.message || e) }; } }).catch((e) => ({ error: String(e.message || e) }));
+      check(S, 'his carry page framed by another site sees an empty partition, not his host\'s session', inside && inside.origin === PROF && !inside.error && !inside.stored, inside && { origin: inside.origin, stored: inside.stored ? '<a session>' : inside.stored, blocked: inside.blocked, error: inside.error });
+      await page.goto(`${PROF}/carry.html`, { waitUntil: 'load' });
+      check(S, 'while his host itself still holds it', (await session(page))?.access_token === HOUSE_TOKEN);
+      await ctx.close();
+    }
   }
 } finally {
   await browser.close();
