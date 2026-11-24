@@ -276,8 +276,8 @@ body.cr[data-cr-surface="create"] #mccEditBar{display:none!important}
 .cad-body .cu-fact>span,.cad-body .cra-kpi small{text-transform:none;letter-spacing:0;font:500 12px/1.35 var(--ui,system-ui);color:#b3abb7}
 .cad-body .cu-fact>strong,.cad-body .cra-kpi strong{font:600 30px/1.1 var(--ui,system-ui);letter-spacing:-.03em;color:#fff}
 .cad-body .cu-metric-link i{color:#e5869a}
-/* the status line keeps clear of the app bar's scroll arrow (.mcc-dock-hints) and never clips a button */
-.cad-footer{padding:6px 60px 6px 12px;gap:6px;background:#0f0e11;border-top-color:#241f25}
+/* the status line never clips a button (the bar's scroll arrows live inside the bar: css/site-navigation.css) */
+.cad-footer{padding:6px 12px;gap:6px;background:#0f0e11;border-top-color:#241f25}
 .cad-footer>span:first-child{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cad-footer button{flex:none;border-radius:999px;padding:0 12px;background:#18151b;border-color:#332b31}
 @media(min-width:40rem){
@@ -294,7 +294,7 @@ body.cr[data-cr-surface="create"] #mccEditBar{display:none!important}
   .cad-chapter{padding:12px 18px}
   .cad-chapter p{display:block}
   .cad-chapter h2{font-size:22px}
-  .cad-footer{padding:6px 64px 6px 18px;gap:8px}
+  .cad-footer{padding:6px 18px;gap:8px}
 }
 @media(min-width:64rem){
   .cad-footer{padding:6px 18px}

@@ -39,3 +39,5 @@
   .crl-heard,.crl-tools{grid-column:2}
   .crl-tapbtn{flex:0 1 auto}
 }
+/* the player matches the dark editor instead of the browser's white slab */
+.crl-audio{color-scheme:dark;border-radius:12px}

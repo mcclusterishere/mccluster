@@ -139,9 +139,12 @@ body[data-admin-navigation] .appbar--admin{width:calc(100vw - 4px - env(safe-are
 body[data-admin-navigation] .appbar--admin::-webkit-scrollbar{display:none}
 body[data-admin-navigation] .appbar--admin .appbar__tab{flex:0 0 clamp(44px,calc((100vw - 20px)/7),80px);scroll-snap-align:start;min-height:52px}
 body[data-admin-navigation] .appbar--admin .appbar__tab > span:not(.appbar__sr){font-size:11px;line-height:1.2;white-space:nowrap}
-.mcc-dock-hints{position:fixed;bottom:calc(var(--appbar-h,4.6rem) + 18px + env(safe-area-inset-bottom));left:max(4px,env(safe-area-inset-left));right:max(4px,env(safe-area-inset-right));margin-inline:auto;width:auto;max-width:calc(60rem + 88px);display:flex;justify-content:space-between;pointer-events:none;z-index:1000}
-.mcc-dock-hints button{pointer-events:auto;width:44px;min-height:44px;flex:none;border:1px solid #51434b;border-radius:50%;background:#1b171ee8;color:#fff;font:24px/1 system-ui;cursor:pointer;animation:mcc-dock-cue .4s ease-out 2 alternate}
-.mcc-dock-hints button:last-child{margin-left:auto}
+/* THE ARROWS ARE IN THE BAR (owner, 2026-11-24). The slot is the scrolling strip's last child, sticky at its right
+   end: one 44px column the height of the bar, never over page content. One arrow fills it; mid-scroll the two share
+   it. While it shows, the seven primary tabs size to the room left of it, so none is ever under it. */
+.mcc-dock-hints{position:sticky;right:-4px;z-index:3;flex:0 0 44px;align-self:stretch;display:flex;flex-direction:column;gap:2px;margin:-2px -4px -2px auto;padding:2px 2px 2px 6px;box-sizing:border-box;background:linear-gradient(90deg,transparent,#141216 30%);border-radius:0 999px 999px 0}
+.mcc-dock-hints button{flex:1 1 0;min-height:0;width:100%;padding:0;border:0;border-left:1px solid #332b31;border-radius:0;background:none;color:#f1ecf3;font:22px/1 system-ui;cursor:pointer;animation:mcc-dock-cue .4s ease-out 2 alternate}
+body.cr[data-admin-navigation] .appbar--admin:has(.mcc-dock-hints:not([hidden])) .appbar__tab{flex-basis:clamp(44px,calc((100vw - 20px - 44px)/7),80px)}
 .mcc-dock-hints[hidden],.mcc-dock-hints button[hidden]{display:none!important}
 /* Seven primary tabs already fit on phones. On cinematic/world/game pages,
    these extra overflow arrows compete with independent bottom-corner controls.
@@ -199,3 +202,10 @@ html.globe-editorial .mcc-dock-hints{display:none!important}
 .cr-inbox-categories{gap:0;border-bottom:1px solid #26222a}
 .cr-inbox-category .cr-tab{justify-content:center;text-align:center;font-size:13px;font-weight:600}
 @media(min-width:600px){.cr-inbox-categories{display:flex;gap:4px}.cr-inbox-category .cr-tab{padding:0 16px;font-size:14px}}
+/* The account menu in the same list language as the destinations (2026-11-24): rows, hairlines, a chevron on the
+   places it goes, and Close set apart. Markup and behaviour unchanged. */
+.mcc-profile-menu{padding:6px;border-radius:20px;background:#111013;border-color:#2e2832;width:min(300px,calc(100% - 24px))}
+.mcc-profile-menu :is(a,button){min-height:48px;padding:0 14px;border-radius:12px;font-size:15px;font-weight:500;gap:10px}
+.mcc-profile-menu :is(a,button)+:is(a,button){box-shadow:0 -1px 0 #241f27}
+.mcc-profile-menu a::after{content:"›";margin-left:auto;font:400 22px/1 system-ui;color:#76697c}
+.mcc-profile-menu button:last-child{justify-content:center;margin-top:6px;box-shadow:none;background:#1b181e;color:#bfb6c4;font-size:14px}

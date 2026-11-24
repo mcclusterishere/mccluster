@@ -138,3 +138,15 @@ html,body{background:var(--mc-bg);color:var(--mc-text)}
   .creator-dist__row>input,.creator-dist__row>select{grid-column:auto}
   .creator-dist__del{grid-column:auto;grid-row:auto}
 }
+/* Distribution polish (2026-11-24): a progress line over the checklist (what is left comes first), and a credit or a
+   split is one row on a phone too. */
+.creator-dist__progress{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:baseline;margin:0 0 6px;padding:14px;border:1px solid var(--mc-line);border-radius:14px;background:rgba(255,255,255,.03)}
+.creator-dist__progress b{font-size:20px;letter-spacing:-.02em}
+.creator-dist__progress span{color:var(--mc-dim);font-size:12px}
+.creator-dist__progress i{grid-column:1/-1;height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.creator-dist__progress u{display:block;height:100%;border-radius:99px;background:var(--mc-green)}
+.creator-dist__state{min-width:5.2em;text-align:center}
+.creator-dist__row{grid-template-columns:minmax(0,1fr) minmax(0,.9fr) 44px}
+.creator-dist__row:has(> :nth-child(4)){grid-template-columns:minmax(0,.9fr) minmax(0,1fr) 62px 44px}
+.creator-dist__row>input,.creator-dist__row>select{grid-column:auto;padding:8px}
+.creator-dist__del{grid-column:auto;grid-row:auto}

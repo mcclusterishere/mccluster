@@ -191,13 +191,18 @@
   function revealDockItem(item) {
     if (!item || !bar.admin()) return;
     const strip = dockItems(), r = item.getBoundingClientRect(), d = strip.getBoundingClientRect();
+    /* the arrows live inside the bar's right end now: a tab is only "in view" left of them */
+    const slot = dockHints && !dockHints.hidden ? dockHints.offsetWidth : 0;
     if (r.left < d.left + 4) strip.scrollLeft -= d.left + 4 - r.left;
-    else if (r.right > d.right - 4) strip.scrollLeft += r.right - d.right + 4;
+    else if (r.right > d.right - 4 - slot) strip.scrollLeft += r.right - d.right + 4 + slot;
     updateDockHints();
   }
   function updateDockHints() {
     if (!dockHints) return;
-    const strip = dockItems(), overflow = bar.admin() && strip.scrollWidth > strip.clientWidth + 2;
+    /* overflow is the tabs' own width: the arrow slot (in the strip, sticky at its right end) is not counted,
+       so showing it can never be the reason it is shown */
+    const strip = dockItems(), slotWidth = dockHints.hidden ? 0 : dockHints.offsetWidth;
+    const overflow = bar.admin() && strip.scrollWidth - slotWidth > strip.clientWidth + 2;
     dockLeft.hidden = !overflow || strip.scrollLeft <= 2;
     dockRight.hidden = !overflow || strip.scrollLeft >= strip.scrollWidth - strip.clientWidth - 2;
     [dockLeft,dockRight].forEach(button=>button.setAttribute('aria-controls',strip.id || dock.id));
@@ -228,8 +233,10 @@
         button.onclick = () => {const strip=dockItems();strip.scrollBy({left:(i?1:-1)*strip.clientWidth*.7,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});};
         dockHints.append(button);
       });
-      document.body.append(dockHints);
     }
+    /* THE ARROWS ARE IN THE BAR (owner, 2026-11-24: "move those arrows into the bar"): the slot is the strip's last
+       child, sticky at its right end, so it never floats over page content. A rebuilt bar gets it back. */
+    if (dockItems().lastElementChild !== dockHints) dockItems().append(dockHints);
     if (!dockObservers) {
       dockObservers = true;
       dock.addEventListener('scroll',updateDockHints,{passive:true,capture:true});

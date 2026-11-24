@@ -434,7 +434,12 @@ function paintDistCheck() {
   if (!distOpen) return;
   const t = tracksCache.find((x) => x.id === distOpen.id) || {};
   const r = DIST.readiness(t, distFromForm(), { today: new Date().toISOString().slice(0, 10), art: distArt });
-  $("distCheck").innerHTML = r.items.map((i) => '<li class="creator-dist__item is-' + i.state + '"><span class="creator-dist__state">' + DIST_STATE[i.state] + '</span><b>' +
+  /* what is left comes first; a summary line and bar say how far along the release is */
+  const order = { todo: 0, warn: 1, mccluster: 2, ok: 3 };
+  const items = r.items.slice().sort((x, y) => order[x.state] - order[y.state]);
+  const done = r.items.filter((i) => i.state === "ok" || i.state === "mccluster").length;
+  $("distProgress").innerHTML = '<b>' + (r.blocking ? r.blocking + " to do" : "Ready for McCluster") + '</b><span>' + done + " of " + r.items.length + ' covered</span><i><u style="width:' + Math.round(done / r.items.length * 100) + '%"></u></i>';
+  $("distCheck").innerHTML = items.map((i) => '<li class="creator-dist__item is-' + i.state + '"><span class="creator-dist__state">' + DIST_STATE[i.state] + '</span><b>' +
     escapeHtml(i.label) + '</b>' + (i.hint ? '<small>' + escapeHtml(i.hint) + '</small>' : '') + '</li>').join("");
 }
 async function openDistribution(id) {
