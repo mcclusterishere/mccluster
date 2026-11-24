@@ -702,73 +702,7 @@
       ]
     }
   },
-  "applied_awaiting_evidence": {
-    "identity": {
-      "kind": "function",
-      "migration": "20261124164026_member_fronts_shared_revision_directory.sql",
-      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
-      "callers": [
-        "analytics.html",
-        "js/control-room/action-network.js",
-        "js/control-room/analytics-deck.js",
-        "js/control-room/analytics-unified.js",
-        "js/control-room/analytics.js",
-        "js/control-room/nav.js",
-        "js/gated-audio.js",
-        "supabase/functions/eu-orcid-oauth/index.ts",
-        "supabase/functions/music-access/review-audio.ts",
-        "workers/mccluster/src/platform-api.js"
-      ]
-    },
-    "clip_campaign_create_from_action": {
-      "kind": "function",
-      "migration": "20261124164851_equity_uprise_clipping_sources.sql",
-      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
-      "callers": [
-        "js/control-room/clipping.js"
-      ]
-    },
-    "clip_campaign_set_distribution": {
-      "kind": "function",
-      "migration": "20261124164851_equity_uprise_clipping_sources.sql",
-      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
-      "callers": [
-        "js/control-room/clipping.js"
-      ]
-    },
-    "directory": {
-      "kind": "function",
-      "migration": "20261124164026_member_fronts_shared_revision_directory.sql",
-      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
-      "callers": [
-        "js/eu-screens/apps/kiosk.mjs"
-      ]
-    },
-    "front-media": {
-      "kind": "bucket",
-      "migration": "20261124164026_member_fronts_shared_revision_directory.sql",
-      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
-      "callers": [
-        "js/front-media.js"
-      ]
-    },
-    "unpublish": {
-      "kind": "function",
-      "migration": "20261124164026_member_fronts_shared_revision_directory.sql",
-      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
-      "callers": [
-        "js/front-studio.js"
-      ]
-    },
-    "member_fronts": {
-      "kind": "table",
-      "migration": "20261124164026_member_fronts_shared_revision_directory.sql",
-      "receipt": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
-      "callers": [
-        "workers/mccluster/src/member-fronts.js"
-      ]
-    }
-  },
+  "applied_awaiting_evidence": {},
   "missing_everywhere": {
     "crm_contacts": {
       "kind": "table",

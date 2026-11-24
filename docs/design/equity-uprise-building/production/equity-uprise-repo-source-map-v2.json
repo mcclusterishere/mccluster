@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 771,
+  "candidate_count": 770,
   "capability_source_count": 104,
-  "support_only_count": 667,
+  "support_only_count": 666,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4638,13 +4638,6 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Provenance record for the E=Up module policy SQL, applied 2026-11-17 as supabase/migrations/20261117144103_eup_module_policy_v1.sql: which Equity Uprise control semantics were ported, from which patch and hashes, and every deliberate difference. Evidence only; no building capability, program or geometry."
-    },
-    {
-      "path": "supabase/pending/live-callers.json",
-      "classification": "test_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Allowlist read by scripts/test/rpc-names-exist.test.mjs: RPC, table and bucket names shipped code calls that the applied migration history does not define. Names the pending Equity Uprise rule objects as data; not a building capability."
     },
     {
       "path": "supabase/pending/live_missions_v1.sql",
