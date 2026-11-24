@@ -228,3 +228,49 @@ Release 1 is merged and live. Everything else is on GitHub as a branch; nothing 
 | Environmental timeline S6 | `claude/wip-eup-timeline-s6` | #830, draft | Unfinished (2026-11-19). |
 
 If a branch is ahead of what this table says, the branch wins.
+
+## Release 2 status (2026-11-24, about 18:35 UTC): open, NOT ready to merge
+
+Pull request **#837**, branch `claude/release2-20261124` (cut from `main` at `7f2644b4` by merging
+`claude/engine-s0-20261124` `bbefd55e`, then `claude/platform-p1-20261124` `983a985a`, then
+`claude/globe-timing-20261124` `2590754b`; merge in that order, engine first, or the merge conflicts).
+Each branch was verified alone; they were first tested together on the pull request, where CI found real defects.
+Do not merge until CI is green and the three review threads are resolved. Matthew's word for the merge:
+"ship P1 when it passes".
+
+Done on the release branch (after the three merges):
+
+| Commit | What |
+| --- | --- |
+| `8bef0fd9` | The five workflows that install Playwright's browsers on `ubuntu-latest` name `ubuntu-24.04` (Ubuntu 26.04 runners refuse Playwright 1.57.0). |
+| `5f967c9d` | Review finding 1, real: an artist page's album order is the queue's order. |
+| `e0d02a96` | Review finding 2, real: the pocket stops its sound when Next ends the record. |
+| `42455ebb` | `guest-travel`: the "Failed to read the 'localStorage' property" exception (the carry page framed from Matthew's host). |
+| `212b50c5` | `control-room-nav` suite: the platform answers the Control door from Matthew's host. |
+| `ea9b2ab9` | `owner-halo-globe` suite: the same door, for Halo. |
+| `72c682a6` | `music-shell` `s8-offline`: the network is really gone, for the service worker too. |
+| later commits | Read `git log origin/claude/release2-20261124` and, if present in a later handoff commit, the fixer's last status. |
+
+Still open at this writing:
+
+1. `browser (sign-in)` (`scripts/e2e/sign-in.e2e.mjs`) and `browser (world-gate)` (`scripts/e2e/world-gate.e2e.mjs`, timeout at
+   line 470, right after "the sealed note leads, Resend under it held, the fields after") fail together since the merge:
+   one shared cause on the World's sign-in path is likely (the carry note, the move card or kept-songs card, or the
+   site-hosts changes to auth returns). `sign-in` still failed at `72c682a6`.
+2. Review finding 3 (`js/carry.js` near line 80): on the platform, `analytics.js` runs before the carry and creates
+   `mcc_device`, so the old host's device ID is never adopted and analytics identity splits across the move. Verify it;
+   fix only if small and consent-safe (analytics stays off until the visitor agrees), otherwise give Matthew the options.
+3. `contracts`: `core/test/deploy-producer-drain.test.mjs` ("optional model pulls share one deadline…") failed once in CI
+   and passes locally 14 of 14; `core/` is not in this diff. It gives a 1 s deadline to a stub that sleeps 1.1 s. Re-run
+   once; if it fails again, make the test's timing deterministic without loosening what it asserts.
+4. After every fix: reply on and resolve the three Codex review threads (the ruleset requires resolved threads), read
+   the full check list again, and only then merge with a merge commit pinned to the head. Then verify
+   `deployment_sha` at `https://api.mccluster.org/v1/health`, the Pages deploy run, `https://mccluster.org/listen.html`
+   and `https://matthew.mccluster.org/`.
+
+Lesson for the next release: merge the branches first and run the whole pull-request check list on the merged head
+before calling anything verified.
+
+Every local-only branch of the earlier session was pushed as `claude/archive-20261124-<name>` (21 branches: the
+close-out, communications, league, media, OVH review and Release 1 fix-round work). They are reference copies; do not
+merge them without reading what they hold.
