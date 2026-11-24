@@ -1,6 +1,6 @@
 {
   "schema_version": "mccluster-domain-architecture/v2",
-  "updated_at": "2026-11-23",
+  "updated_at": "2026-11-24",
   "authority": "Owner instruction, 2026-10-03 (two entities, never collapsed) and owner instruction, 2026-11-23 (one platform: the whole site on mccluster.org, matthew.mccluster.org his personal profile, equityuprise.com the platform later). Human-readable companion: docs/control-plane/DOMAINS-AND-ENTITIES.md. Generated from this file by tools/build-site-hosts.mjs (--write; CI runs --check): workers/mccluster/src/platform/hosts.generated.js, the generated block at the top of js/shell-boot.js (window.MCC_SITE) and supabase/functions/_shared/site-hosts.ts. Tests: scripts/test/domain-architecture.test.mjs, scripts/test/site-hosts.test.mjs.",
   "owner_words": {
     "2026-10-03": "Two related but distinct canonical web properties: mccluster.org is McCluster Corp's house; matthew.mccluster.org is Matthew McCluster's house.",
@@ -182,7 +182,7 @@
       ]
     },
     "human_uprise": {
-      "alias_of": "doors.humanuprise.com",
+      "alias_of": "doors[\"humanuprise.com\"]",
       "host": "humanuprise.com",
       "origin": "https://humanuprise.com",
       "entity": "https://matthew.mccluster.org/#mccluster-corp",
@@ -520,7 +520,39 @@
   "edge": {
     "now": {
       "stage": "P0",
-      "state": "Prepared: the record, the generator and its outputs, and the law say where the platform goes. Nothing is served differently yet: every host and path answers as measured on 2026-11-23.",
+      "state": "Prepared: the record, the generator and its outputs, and the law say where the platform goes. Every host and path measured on 2026-11-23 answers as measured, apart from the changes P0 itself makes once deployed (p0_changes).",
+      "p0_changes": [
+        {
+          "key": "pass_through_redirects",
+          "what": "The pass-through never follows a redirect of the static origin (SPEC-PLATFORM 2.4). A directory under the World's prefixes asked for without its slash, which GitHub Pages answers with a 301 to the slash (such as /js/halo or /assets/img on mccluster.org, and the same on humanuprise.com once routed), now answers that 301 on the requesting host, to the same directory with its slash, where production followed the redirect and answered what the slashed address answers (for /js/halo, measured: 404; neither directory has an index page). A redirect of the static origin to any other origin is refused with a 502; GitHub Pages never answers one.",
+          "where": "workers/mccluster/src/world-host.js (passThrough, relocate)"
+        },
+        {
+          "key": "returns_follow_request",
+          "what": "Checkout, Connect and account returns follow the request (SPEC-PLATFORM 2.9): one started on https://mccluster.org (a World room, such as /account.html or /action-network-hire.html) comes back to https://mccluster.org; one started anywhere else comes back to https://matthew.mccluster.org, as before. shake-order keeps an operator's SITE_URL ahead of the request, as before.",
+          "where": "workers/mccluster/src/creator-billing.js, action-connect.js, action-archive.js, connect.js, social/router.js; supabase/functions/checkout, music-checkout, music-direct-checkout, connect-org, org-connect-onboard and shake-order, through returnOrigin (supabase/functions/_shared/site-hosts.ts)"
+        },
+        {
+          "key": "dead_here_returns",
+          "what": "The three returns that named the dead mcclusterishere.github.io/Here address (it answers 404) land on today's live page for their flow on the return origin: backend-sub's checkout, and pay-now and connect-onboard, which still answer 410 as deployed.",
+          "where": "supabase/functions/backend-sub, pay-now, connect-onboard"
+        },
+        {
+          "key": "music_direct_cors",
+          "what": "The direct-sale functions answer CORS for Origin https://mccluster.org with that origin, so a buyer on the platform can read the answer, and its return comes back there; every other origin is answered with https://matthew.mccluster.org, as before. No page the platform serves at P0 loads the direct-sale scripts.",
+          "where": "supabase/functions/_shared/music-direct.ts (music-direct-checkout, music-direct-access)"
+        },
+        {
+          "key": "carry_page",
+          "what": "carry.html is a new page on Matthew's host (200 where production answers 404). It is inert: it answers nothing while the carry switch is off, and no page loads js/carry.js.",
+          "where": "carry.html, js/carry.js"
+        },
+        {
+          "key": "profile_host_unrouted",
+          "what": "Inert until P3: Matthew's host is not routed to Worker mccluster; if a request for it ever reached the Worker, the router would hand it to GitHub Pages untouched, where before P0 the API answered it.",
+          "where": "workers/mccluster/src/platform/router.js"
+        }
+      ],
       "measured": "2026-11-23, GET and HEAD only (SPEC-PLATFORM section 1.1)",
       "hosts": {
         "mccluster.org": "Worker mccluster by host (routed): the World at / with the platform's head (canonical https://mccluster.org/, og:site_name McCluster Corp); the World's rooms and the static files passed through from the static origin (rooms noindex); /company, /news/, robots.txt, sitemap.xml and llms.txt generated or server-rendered; /index.html and /mnet.html 301 to /; every other path 301 to the same path on matthew.mccluster.org, query intact; plain http 301 to https.",
@@ -544,7 +576,7 @@
           "returns_fallback": "tenants.matthew",
           "metadata": "today"
         },
-        "what": "This record v2 and tools/build-site-hosts.mjs with its generated outputs; every host literal in js/, workers/mccluster/src/ and supabase/functions/ replaced by them, file by file (scripts/test/site-hosts-pending/); returns follow the request; the host router behind the generated table with the platform's \"serves everything\" and the profile host's 301s off; carry.html inert and js/carry.js not loaded; the law. With today's values every host and path answers as it did."
+        "what": "This record v2 and tools/build-site-hosts.mjs with its generated outputs; every host literal in js/, workers/mccluster/src/ and supabase/functions/ replaced by them, file by file (scripts/test/site-hosts-pending/); returns follow the request; the host router behind the generated table with the platform's \"serves everything\" and the profile host's 301s off; carry.html inert and js/carry.js not loaded; the law. With today's values every measured host and path answers as it did, apart from the changes P0 itself makes (edge.now.p0_changes: the pass-through's redirects, returns that follow the request, the dead Here returns, the direct-sale CORS for the platform, the inert carry page)."
       },
       {
         "stage": "P1",
@@ -557,7 +589,7 @@
           "returns_fallback": "platform",
           "metadata": "today"
         },
-        "what": "The platform serves every platform and profile page at its path (the World at /, the HERE front door at /index.html); profile_only pages answer 301 to the profile host; www sends everything to the apex; humanuprise.com, once routed, 301s to the platform; the bar is local on the platform; the carry is on and the fragment hand-off writer is off. Canonicals unchanged. Pages first, then the Worker."
+        "what": "The platform serves every platform and profile page at its path (the World at /, the HERE front door at /index.html); profile_only pages answer 301 to the profile host; www sends everything to the apex; humanuprise.com, once routed, 301s to the platform; the bar is local on the platform; the carry is on and the fragment hand-off writer is off. The bar's and the World's host changes are in engine-owned files (js/tabbar.js, js/world-audio-continuity.js, js/music-shell.js; scripts/test/site-hosts-pending/engine.json): their owner, the music engine build, makes them before P1 ships, and the host literals in those files leave at SPEC-ENGINE stage 2. Canonicals unchanged. Pages first, then the Worker."
       },
       {
         "stage": "P2",

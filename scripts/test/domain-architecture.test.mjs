@@ -15,7 +15,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (f) => readFileSync(join(ROOT, f), "utf8");
@@ -167,6 +167,118 @@ test("the law never claims a stage that has not shipped", () => {
   }
   const canon = json("docs/control-plane/canonical-architecture.json");
   assert.ok(canon.public_properties.stage.startsWith(`${now} `), "the machine contract states the same stage");
+  /* P0 changes some answers once deployed, and the law says which instead of denying it: no law file, note, record
+     or contract says nothing is served differently, and each place that states the stage points at the record's list */
+  for (const f of [...lawFiles, ...notes, "data/seo/domain-architecture.json", "docs/control-plane/canonical-architecture.json"]) {
+    assert.doesNotMatch(read(f), /nothing is served differently/i, `${f}: P0's own changes are listed (edge.now.p0_changes), never denied`);
+  }
+  for (const f of ["AGENTS.md", "CLAUDE.md", "CODEX.md", "GEMINI.md", ".github/copilot-instructions.md", "docs/control-plane/DOMAINS-AND-ENTITIES.md",
+    "docs/control-plane/CANONICAL-ARCHITECTURE.md"]) {
+    assert.match(read(f), /edge\.now\.p0_changes/, `${f}: points at the record's list of what P0 itself changes`);
+  }
+  assert.match(canon.public_properties.stage, /edge\.now\.p0_changes/, "and so does the machine contract");
+});
+
+test("the record lists what P0 itself changes once deployed, and each entry is what the code does", async () => {
+  const imp = (f) => import(pathToFileURL(join(ROOT, f)).href);
+  const changes = arch.edge.now.p0_changes;
+  assert.ok(Array.isArray(changes), "edge.now.p0_changes is a list");
+  const keys = changes.map((c) => c.key);
+  assert.deepEqual(keys, ["pass_through_redirects", "returns_follow_request", "dead_here_returns", "music_direct_cors", "carry_page", "profile_host_unrouted"]);
+  for (const c of changes) {
+    assert.ok(typeof c.what === "string" && c.what.length > 60, `${c.key}: says what changes`);
+    const first = c.where.split(/[ ,;(]/)[0];
+    assert.ok(existsSync(join(ROOT, first)), `${c.key}: names where (${first})`);
+  }
+  const { SITE } = await imp("workers/mccluster/src/platform/hosts.generated.js");
+  assert.equal(SITE.stage, arch.edge.now.stage);
+  const P = SITE.platform.origin, M = SITE.profile.origin;
+  /* the pass-through: GitHub's slash redirect is handed back on the requesting host, any other redirect refused */
+  const host = await imp("workers/mccluster/src/world-host.js");
+  assert.match(read("workers/mccluster/src/world-host.js"), /redirect: 'manual'/, "never follows an upstream redirect");
+  assert.equal(host.relocate(`${M}/js/halo/`, `${M}/js/halo`, `${P}/js/halo`), `${P}/js/halo/`);
+  assert.equal(host.relocate("https://elsewhere.example/x", `${M}/js/halo`, `${P}/js/halo`), null);
+  /* returns follow the request, and fall back to Matthew's host at P0 */
+  const sh = await imp("supabase/functions/_shared/site-hosts.ts");
+  assert.equal(sh.returnOrigin(P), P);
+  assert.equal(sh.returnOrigin(M), M);
+  assert.equal(sh.returnOrigin("https://elsewhere.example"), M);
+  assert.match(read("supabase/functions/shake-order/index.ts"), /const SITE = SITE_URL \?\? returnOrigin\(origin\);/, "an operator's SITE_URL still wins");
+  /* the dead Here address is named by no return */
+  for (const fn of ["backend-sub", "pay-now", "connect-onboard"]) {
+    assert.ok(!read(`supabase/functions/${fn}/index.ts`).includes("mcclusterishere.github.io/Here"), `${fn} names no dead address`);
+  }
+  /* the direct-sale CORS admits the platform: listed because the code does it */
+  const md = await imp("supabase/functions/_shared/music-direct.ts");
+  assert.equal(md.ALLOWED_ORIGINS.includes(P), keys.includes("music_direct_cors"), "the record lists the direct-sale CORS widening exactly when the code makes it");
+  assert.equal(md.corsHeaders(P)["Access-Control-Allow-Origin"], P);
+  assert.equal(md.corsHeaders("https://elsewhere.example")["Access-Control-Allow-Origin"], M);
+  /* the carry page exists and is inert; Matthew's host is not routed */
+  assert.ok(existsSync(join(ROOT, "carry.html")));
+  assert.equal(SITE.switches.carry, false);
+  assert.equal(SITE.switches.profile_host_routed, false);
+});
+
+test("the law's sentence about today says what the P0 router answers on the platform", async () => {
+  assert.equal(arch.edge.now.stage, "P0", "this reads the P0 sentence; the stage after it rewrites both");
+  const { SITE } = await import(pathToFileURL(join(ROOT, "workers/mccluster/src/platform/hosts.generated.js")).href);
+  const { routeFor } = await import(pathToFileURL(join(ROOT, "workers/mccluster/src/platform/router.js")).href);
+  const found = read("AGENTS.md").match(/Today the platform serves [^]*?Matthew's host serves every page\./);
+  assert.ok(found, "AGENTS.md hard rule 15 says what the platform serves today");
+  const sentence = found[0];
+  const P = SITE.platform.origin, M = SITE.profile.origin;
+  const at = (path) => routeFor(SITE, new URL(P + path));
+  const claims = [
+    ["the Equity Uprise World at its root", "/", (r) => r.kind === "world"],
+    ["the World's rooms", "/account.html", (r) => r.kind === "pass"],
+    ["the World's rooms", "/action-network-hire.html", (r) => r.kind === "pass"],
+    ["the static files they load", "/js/tabbar.js", (r) => r.kind === "pass"],
+    ["the static files they load", "/sw.js", (r) => r.kind === "pass"],
+    ["the company page `/company`", "/company", (r) => r.kind === "own"],
+    ["the company's news `/news/`", "/news/", (r) => r.kind === "own"],
+    ["`robots.txt`, `sitemap.xml` and `llms.txt`", "/robots.txt", (r) => r.kind === "own"],
+    ["`robots.txt`, `sitemap.xml` and `llms.txt`", "/sitemap.xml", (r) => r.kind === "own"],
+    ["`robots.txt`, `sitemap.xml` and `llms.txt`", "/llms.txt", (r) => r.kind === "own"],
+    ["`/index.html` and `/mnet.html` on it answer 301 to its root", "/index.html", (r) => r.kind === "moved" && r.location === `${P}/`],
+    ["`/index.html` and `/mnet.html` on it answer 301 to its root", "/mnet.html", (r) => r.kind === "moved" && r.location === `${P}/`],
+    ["every other path on it answers 301 to the same path on Matthew's host", "/listen.html?from=law", (r) => r.kind === "moved" && r.location === `${M}/listen.html?from=law`],
+    ["every other path on it answers 301 to the same path on Matthew's host", "/whip.html", (r) => r.kind === "moved" && r.location === `${M}/whip.html`]
+  ];
+  for (const [words, path, agrees] of claims) {
+    assert.ok(sentence.includes(words), `AGENTS.md hard rule 15 says: ${words}`);
+    assert.ok(agrees(at(path)), `and the P0 router agrees for ${path}: ${JSON.stringify(at(path))}`);
+  }
+});
+
+test("every alias_of names a block of its own file as a path the generator writes, never as a host name", () => {
+  /* a.b.c and a["host.name"]: the form tools/build-site-hosts.mjs writes in its messages (doors["humanuprise.com"]) */
+  function resolve(root, ref) {
+    let rest = String(ref), at = root;
+    while (rest) {
+      const m = rest.match(/^(?:\.?([A-Za-z_]\w*)|\["([^"]+)"\])/);
+      if (!m) return undefined;
+      const key = m[1] || m[2];
+      if (!at || typeof at !== "object" || !Object.prototype.hasOwnProperty.call(at, key)) return undefined;
+      at = at[key];
+      rest = rest.slice(m[0].length);
+    }
+    return at;
+  }
+  const HOSTISH = /[a-z0-9-]+\.(?:org|com|net|io|dev|app)\b/i;
+  const canon = json("docs/control-plane/canonical-architecture.json");
+  let seen = 0;
+  for (const [file, doc, scope] of [["data/seo/domain-architecture.json", arch, arch], ["docs/control-plane/canonical-architecture.json", canon, canon.public_properties]]) {
+    for (const n of nodes(doc)) {
+      if (typeof n.alias_of !== "string") continue;
+      seen += 1;
+      assert.doesNotMatch(n.alias_of.replace(/\["[^"]*"\]/g, ""), HOSTISH, `${file}: alias_of "${n.alias_of}" reads as a host name (hard rule 9)`);
+      const target = resolve(scope, n.alias_of);
+      assert.ok(target && typeof target === "object", `${file}: alias_of "${n.alias_of}" names a block of the file`);
+    }
+  }
+  assert.equal(seen, 5, "the five aliases the record and the contract carry");
+  assert.equal(arch.properties.human_uprise.alias_of, 'doors["humanuprise.com"]');
+  assert.equal(resolve(arch, arch.properties.human_uprise.alias_of).to, "platform", "the door it aliases");
 });
 
 test("every published page is in exactly one set", () => {

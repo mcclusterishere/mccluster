@@ -20,7 +20,7 @@
     "music-videos.html",
     "index.html"
   ],
-  "owned_note": "Owned by the music engine build (SPEC-ENGINE): the platform lanes never edit them, and their host literals stay until the engine converts them. Host logic in these files is rebuilt by SPEC-ENGINE stage 2 (the World on the engine), which lands after P1 so it is built once, for one origin (SPEC-PLATFORM 5).",
+  "owned_note": "Owned by the music engine build (SPEC-ENGINE): the platform lanes never edit them, and their host literals stay until the engine converts them. P1 needs host changes in three of them (SPEC-PLATFORM 4 and 8): the bar local on the platform and the fragment hand-off writer off in js/tabbar.js, and the World as / and /mnet.html only, never /index.html, in js/world-audio-continuity.js and js/music-shell.js. Their owner makes those before P1 ships (data/seo/domain-architecture.json, edge.stages P1). The literals themselves leave at SPEC-ENGINE stage 2 (the World on the engine), which lands after P1 so it is built once, for one origin (SPEC-PLATFORM 5).",
   "files": [
     {
       "file": "js/music-shell.js",

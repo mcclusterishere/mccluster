@@ -257,6 +257,18 @@ test('every file that names a site host in code is on exactly one pending list, 
     assert.ok(engine.includes(f), `${f} is engine-owned`);
   }
   for (const e of lanes.engine.files) assert.equal(e.stage, 'engine stage 2', `${e.file}: the engine converts it with the World on the engine`);
+  /* P1 needs host changes in three engine-owned files (SPEC-PLATFORM 4 and 8): the list and the record both say their
+     owner makes them before P1 ships, while the literals themselves leave at engine stage 2, which lands after P1 */
+  const note = lanes.engine.owned_note;
+  const p1 = record.edge.stages.find((s) => s.stage === 'P1').what;
+  assert.match(note, /P1 needs host changes in three of them/);
+  assert.match(note, /Their owner makes those before P1 ships/);
+  assert.match(note, /The literals themselves leave at SPEC-ENGINE stage 2/);
+  assert.doesNotMatch(note, /Host logic in these files is rebuilt by SPEC-ENGINE stage 2/, 'P1 cannot wait for engine stage 2');
+  assert.match(p1, /their owner, the music engine build, makes them before P1 ships/);
+  for (const f of ['js/tabbar.js', 'js/world-audio-continuity.js', 'js/music-shell.js']) {
+    assert.ok(engine.includes(f) && note.includes(f) && p1.includes(f), `${f}: P1's host change in it is recorded on the list and in the record`);
+  }
 });
 
 test('a planted literal fails, a grown count fails, a list never grows, freed room goes back at once, and a file that names no host leaves its list', () => {
