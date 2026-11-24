@@ -1118,7 +1118,7 @@
      bar's HTML, and both morph() and revert() rebuild the bar out of it, so
      a class on a tab does not survive a wing opening and closing mid-song.
      Every rebuild calls paintSound() for exactly that reason. */
-  var SOUND_ON = false;
+  var SOUND_ON = false, soundRevision = 0;
   function paintSound() {
     var mt = dock.querySelector('[data-appnav="music"]');
     /* a wing held open over the tab's column: no tab, so the installed app's dock keeps its own Play/Pause meanwhile */
@@ -1149,6 +1149,7 @@
     document.documentElement.classList.toggle("mcc-music-tab-transport", plays);
   }
   window.addEventListener("mcc:nowplaying", function (e) {
+    soundRevision++;
     SOUND_ON = !!(e.detail && e.detail.playing);
     paintSound();
   });
@@ -1198,7 +1199,7 @@
      the deck is doing, then do the other thing. SOUND_ON stands in for
      deck.paused, because the bar cannot see the deck from here. */
   function transport() {
-    var was = SOUND_ON;
+    var was = SOUND_ON, revision = soundRevision;
     if (!was) window.MCC_NP_PLAY();
     else window.MCC_NP_PAUSE();
     if (window.MCC_TRACK) window.MCC_TRACK("bar_transport", { play: !was, page: location.pathname.split("/").pop() });
@@ -1210,7 +1211,9 @@
        js/main.js both listen here and would otherwise sit holding a state
        the bar has already left. */
     setTimeout(function () {
-      if (SOUND_ON !== was) return; // the page answered; nothing to add
+      /* A Pause reply followed by a newer Play can return to the same boolean before this task runs.
+         Any announcement since this tap is an answer; an older fallback cannot overwrite it. */
+      if (soundRevision !== revision || SOUND_ON !== was) return;
       if (!was) return;             // we asked for sound and got none: already silent, already painted
       SOUND_ON = false;
       paintSound();

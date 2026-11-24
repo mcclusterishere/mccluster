@@ -223,3 +223,36 @@ test('a song the catalogue does not count waits the full 5 s for the last finish
   assert.equal(await waitBeforeStart('niggy-nigg'), 5000, 'the gated closer');
   assert.equal(await waitBeforeStart('not-in-the-catalogue'), 5000);
 });
+
+/* A shorter next song can exhaust its wait before an abandoned longer one. The old deferred
+   start then closed the actual playing listen as incomplete and replaced its saved handle. */
+test('releasing a deferred start prevents it from superseding a newer, shorter-wait song', async () => {
+  const { L, sent, finishes, timers } = await ordered();
+  const first = L.start('lightroom', () => true);
+  await first.id;
+  const done = L.finish(first);
+  const abandoned = L.start('data-breach', () => true);
+  L.release(abandoned);
+  const playing = L.start('towyard-killer', () => true);
+  await flush();
+  for (const t of [...timers.values()].sort((a, b) => a.ms - b.ms)) { t.fn(); await flush(); }
+  await playing.id;
+  assert.equal(await abandoned.id, null, 'the released song never opens a listen');
+  assert.deepEqual(sent, ['start:lightroom', 'finish', 'start:towyard-killer']);
+  finishes.shift()();
+  await done;
+});
+
+test('a newer selection cancels a deferred start even if its old handle was not released', async () => {
+  const { L, sent, finishes } = await ordered();
+  const first = L.start('lightroom', () => true);
+  await first.id;
+  const done = L.finish(first);
+  const abandoned = L.start('data-breach', () => true);
+  const playing = L.start('towyard-killer', () => true);
+  await flush();
+  finishes.shift()();
+  await done; await playing.id;
+  assert.equal(await abandoned.id, null);
+  assert.deepEqual(sent, ['start:lightroom', 'finish', 'start:towyard-killer']);
+});

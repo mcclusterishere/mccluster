@@ -98,9 +98,9 @@
     return h;
   }
 
-  function handle(key, idPromise, isPlaying) {
-    var h = { key: key, done: false, resolved: null, timer: null };
-    h.id = idPromise.then(function (id) { h.resolved = id; if (id) remember(h); return id; });
+  function handle(key, idPromise, isPlaying, isCurrent) {
+    var h = { key: key, done: false, released: false, resolved: null, timer: null };
+    h.id = idPromise.then(function (id) { h.resolved = id; if (id && (!isCurrent || isCurrent())) remember(h); return id; });
     return arm(h, isPlaying);
   }
 
@@ -136,7 +136,7 @@
     "upset": 5000, "vaunt": 2700, "who-did-the-shoot": 3400, "write-a-song": 3700, "you-the-feds": 5000
   };
   /* FINISH WAIT END */
-  var finishing = null;
+  var finishing = null, selection = 0;
   function afterFinish(key) {
     var pending = finishing;
     if (!pending) return Promise.resolve();
@@ -149,11 +149,17 @@
 
   function start(key, isPlaying) {
     if (!key || !token()) return null;
-    return handle(key, afterFinish(key).then(function () {
+    var chosen = ++selection;
+    function isCurrent() { return chosen === selection; }
+    var h = handle(key, afterFinish(key).then(function () {
+      /* A skipped song must never open later and close the actual playing listen. Different
+         tracks have different waits, so request order alone cannot protect the newer selection. */
+      if (h.released || !isCurrent()) return null;
       return post("/v1/music/listens", { track: key });
     }).then(function (d) {
       return (d && d.listen_id) || null;
-    }), isPlaying);
+    }), isPlaying, isCurrent);
+    return h;
   }
 
   /* Pick up the listen another page started (the album hands the song to
@@ -164,7 +170,8 @@
     try {
       var o = JSON.parse(root.localStorage.getItem(OPEN) || "null");
       if (!o || o.key !== key || !o.id || Date.now() - o.at > 10 * 60 * 1000) return null;
-      return handle(key, Promise.resolve(o.id), isPlaying);
+      var chosen = ++selection;
+      return handle(key, Promise.resolve(o.id), isPlaying, function () { return chosen === selection; });
     } catch (e) { return null; }
   }
 
@@ -193,7 +200,7 @@
 
   /* This page is done with the song but the song may go on elsewhere:
      stop beating here and leave it open for adopt(). */
-  function release(h) { stop(h); }
+  function release(h) { if (h) h.released = true; stop(h); }
 
   root.MCC_LISTENS = {
     keyOf: keyOf,
