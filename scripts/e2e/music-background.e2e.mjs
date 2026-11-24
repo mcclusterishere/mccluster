@@ -1120,6 +1120,46 @@ try {
     await context.close();
   });
 
+  /* PR #825's CI (a Release 1 follow-up to 3f12e039, which fixed the bar): the check above failed on a busy runner. The
+     second Enter reached the page before the first one's queued media events and the bar's look for an answer (a 0 ms
+     timer in js/tabbar.js's transport()); the first Enter's late timeupdate told the bar the song played again, and then
+     that look saw the value it started from, took it for no answer and said "nothing is playing". The song played on
+     under a tab that said "Play music", and a tap on it did nothing. Here the two taps reach the page in one task, and the
+     first tap's queued timeupdate is run in that task too, so the player has said the song plays again before either
+     look can run: CI's order, every time. */
+  await scenario('listen page: two taps on the Music tab before the page has run the first one\'s queued work leave the tab saying what the player does', async () => {
+    const { context, page, errors } = await setup({ width: 390 });
+    const state = () => page.evaluate(() => {
+      const t = document.querySelector('.appbar [data-appnav="music"]');
+      return { paused: MCC_MUSIC.audio.paused, mini: document.getElementById('musicMiniPlay').getAttribute('aria-label'),
+        sound: t.classList.contains('is-sound'), label: t.getAttribute('aria-label') };
+    });
+    await listenPlay(page);
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3 && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 15000 });
+    await page.evaluate(() => {
+      const t = document.querySelector('.appbar [data-appnav="music"]');
+      t.click();                                                  // Pause: the player answers at once
+      t.click();                                                  // Play, before the first tap's queued work has run
+      MCC_MUSIC.audio.dispatchEvent(new Event('timeupdate'));     // the first tap's queued timeupdate, ahead of its look
+    });
+    await sleep(1000);
+    const now = await state();
+    check('listen, two taps on the Music tab in one moment: the song plays again and the tab shows and says "Pause music", as the mini player does',
+      !now.paused && now.mini === 'Pause' && now.sound && now.label === 'Pause music', now);
+    await sleep(2500);
+    const later = await state();
+    check('listen, two taps on the Music tab in one moment, 2.5 s later: still "Pause music" while the song plays',
+      !later.paused && later.mini === 'Pause' && later.sound && later.label === 'Pause music', later);
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.waitForFunction(() => MCC_MUSIC.audio.paused, null, { timeout: 3000 }).catch(() => {});
+    await sleep(300);
+    const paused = await state();
+    check('listen, then one more tap on the Music tab pauses the song (it was a Play that did nothing over a playing song)',
+      paused.paused && paused.mini === 'Play' && !paused.sound && paused.label === 'Play music', paused);
+    check('listen, two taps on the Music tab in one moment: no script errors', errors.length === 0, errors);
+    await context.close();
+  });
+
   /* review RF-3, the other side: where the tab still opens the shelf it keeps its own name, even while a song plays and
      the tab shows the pause glyph (on the album a tap opens listen.html) */
   await scenario('album: while a song plays, the bar\'s Music tab keeps its own name (a tap there opens the shelf)', async () => {
