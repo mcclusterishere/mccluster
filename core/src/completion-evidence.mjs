@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 export const COMPLETION_EVIDENCE_SCHEMA = 'mccluster-completion-evidence/v1';
 
 const SHA40 = /^[0-9a-f]{40}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function fail(job, message) {
   throw new Error(`completion evidence rejected for ${job?.job_type || 'unknown'}: ${message}`);
@@ -35,6 +36,12 @@ function validHttpsUrl(value) {
   } catch {
     return false;
   }
+}
+
+function validLyricsRevision(value) {
+  // Before the revision migration, the executor fences by master_path and
+  // explicitly reports null. Never turn that fallback into a revision claim.
+  return value === null || (typeof value === 'string' && /^[0-9a-f]{32}$/.test(value));
 }
 
 function canonicalize(value) {
@@ -148,6 +155,59 @@ function policyEvidence(job, output) {
         clean: output.clean === true,
       });
       if (output?.tests?.ran === true) records.push({ kind: 'test_run', suite: 'repo_health', ok: output.tests.ok === true, duration_ms: output.tests.duration_ms ?? null });
+      break;
+    }
+
+    // Shared music-platform support: receipts describe persisted work or a
+    // bounded no-op, not a claim that host audio dependencies were inspected.
+    case 'lyrics_align': {
+      const expectedTrack = text(job?.input?.track_id || job?.target_id);
+      const trackId = text(output.track_id);
+      requireValue(job, output.executor === 'lyrics_align:v1', 'lyrics receipt must identify its executor');
+      requireValue(job, UUID.test(expectedTrack) && UUID.test(trackId) && trackId.toLowerCase() === expectedTrack.toLowerCase(), 'lyrics receipt track must match the job');
+      requireValue(job, typeof output.written === 'boolean', 'lyrics receipt must report written=true|false');
+      if (output.written) {
+        requireValue(job, output.reason == null, 'a lyrics write cannot also claim a no-op');
+        requireValue(job, validLyricsRevision(output.input_rev), 'lyrics write must report its input revision or explicit null fallback');
+        requireValue(job, ['auto', 'aligned', 'imported'].includes(output.source), 'lyrics write must report a machine lyric source');
+        requireValue(job, Number.isSafeInteger(output.lines) && output.lines >= 0 && Number.isSafeInteger(output.mismatched_lines) && output.mismatched_lines >= 0 && output.mismatched_lines <= output.lines, 'lyrics write must report valid line and mismatch counts');
+        const ran = output.ran_on;
+        requireValue(job, ran && ['local', 'fabric'].includes(ran.route), 'lyrics write must identify its execution route');
+        if (ran.route === 'fabric') {
+          requireValue(job, typeof ran.node_id === 'string' && Boolean(text(ran.node_id)) && typeof ran.task_id === 'string' && Boolean(text(ran.task_id)), 'fabric lyrics require node and task identifiers');
+        } else {
+          requireValue(job, ran.node_id === null && ran.task_id === null, 'local lyrics cannot claim a fabric node or task');
+        }
+        records.push({ kind: 'lyrics_write', table: 'creator_tracks', track_id: trackId, input_rev: output.input_rev,
+          source: output.source, lines: output.lines, mismatched_lines: output.mismatched_lines,
+          ran_on: { route: ran.route, node_id: ran.node_id, task_id: ran.task_id } });
+      } else {
+        requireValue(job, ['protected_lyrics', 'inputs_or_review_changed'].includes(output.reason), 'lyrics no-op requires a bounded reason');
+        requireValue(job, output.source == null && output.lines == null && output.mismatched_lines == null && output.ran_on == null, 'lyrics no-op cannot also claim a write receipt');
+        const receipt = { kind: 'bounded_noop', operation: 'lyrics_align', reason: output.reason, track_id: trackId };
+        if (output.reason === 'inputs_or_review_changed') {
+          requireValue(job, validLyricsRevision(output.input_rev), 'stale lyrics must report the attempted input revision or explicit null fallback');
+          receipt.input_rev = output.input_rev;
+        }
+        records.push(receipt);
+      }
+      break;
+    }
+
+    case 'stems_separate': {
+      const input = job?.input || {};
+      const creator = input.source === 'creator';
+      const track = text(creator ? input.track_id : input.track_key);
+      const expectedKey = creator ? `ct-${track.toLowerCase()}` : track;
+      requireValue(job, output.executor === 'stems_separate:v1', 'stem receipt must identify its executor');
+      requireValue(job, (creator ? UUID.test(track) : /^[a-z0-9][a-z0-9-]{0,79}$/.test(track) && !track.startsWith('ct-')) && output.track_key === expectedKey, 'stem manifest track must match the job');
+      requireValue(job, output.written !== false && output.reason == null && output.error == null, 'stem separation has no successful no-op or error result');
+      requireValue(job, typeof output.run_id === 'string' && /^r\d{14}-[0-9a-f]{6}$/.test(output.run_id), 'stem manifest must report its persisted run identifier');
+      requireValue(job, typeof output.model === 'string' && Boolean(text(output.model)), 'stem manifest must identify its separator model');
+      requireValue(job, Number.isSafeInteger(output.stems) && output.stems >= 2 && output.stems <= 7, 'stem manifest must report its stored stem count');
+      requireValue(job, Number.isSafeInteger(output.bytes) && output.bytes >= output.stems, 'stem manifest must report positive stored bytes');
+      records.push({ kind: 'stem_manifest', table: 'music_stem_sets', track_key: expectedKey, run_id: output.run_id,
+        model: output.model, stems: output.stems, bytes: output.bytes });
       break;
     }
 

@@ -1,3 +1,4 @@
+-- Shared music-platform support used by Equity Uprise; no building capability is added.
 -- Rollback for 20261123190000_in_hot_pursuit_catalog_objects.sql: the album's objects stop being live.
 -- (Rows are kept and set archived so any live-room reference to them stays resolvable.)
 update public.music_catalog_objects set status='archived', updated_at=now()

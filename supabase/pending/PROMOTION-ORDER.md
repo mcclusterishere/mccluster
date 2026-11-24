@@ -1,5 +1,15 @@
 # Promotion order for `supabase/pending/`
 
+**Current status, 2026-11-24:** production has 389 applied migrations. Draft
+[#836](https://github.com/mcclusterishere/mccluster/pull/836) records the five
+Nov 24 applications: `member_fronts_shared_revision_directory`,
+`ai_context_workstreams_v1`, `commerce_stripe_reconciler_v3`,
+`equity_uprise_clipping_sources`, and `action_bounty_claim_existing_row_guard_v1`.
+Do not replay their pending copies. This dated status supersedes the historical
+absence claims below. Integrate the reviewed ledger repair before promotion.
+The six #823 files in sections 11 and 15–18 are still pending. Production is
+read-only during preparation; each exact file needs the owner's approval.
+
 Written 2026-10-27 from each file's header, the dependency it states, the
 objects it creates, and `live-callers.json` (which names shipped code calls
 today). Every file is applied with the steps in `README.md` ("To promote one")
@@ -441,7 +451,22 @@ item 7); each entry says what it would still do.
 | `compute_job_attestations_v1.sql` (+ `compute_job_attestations_v1.rollback.sql`) | table `public.ops_compute_attestations` (one row per lease: the node's Ed25519 completion signature fields with `signed_at` kept verbatim as text, the body digest and the canonical result SHA-256; the first accepted completion wins) plus two indexes; RLS on, service role select/insert; no RPC | `core/src/compute/jobs-store.mjs` (the gateway records an attestation after `compute_complete_lease` accepts; without the table it logs `compute_attestation_store_unavailable` once and receipts say `node_attestation: null`), read by `GET /v1/compute/jobs/:id/receipt` and `core.compute.job.receipt` | `scripts/staging/device-jobs/run.mjs` on PGlite applies it, proves a verified attestation on a real completion, rolls it back (table gone, lease rows untouched) and re-applies; proof `docs/control-plane/evidence/device-jobs-staging-20261123/`. Never applied here. |
 | `compute_scheduler_lease_v1.sql` (+ `compute_scheduler_lease_v1.rollback.sql`) | table `public.ops_compute_scheduler_leases` (one row per org: holder, role, fencing term, expiry, handover, bounded history) and the service-role RPCs `compute_scheduler_acquire`, `compute_scheduler_renew`, `compute_scheduler_release`, `compute_scheduler_handover`, `compute_scheduler_status` (plus an internal history helper nobody may execute) | `core/src/compute/scheduler-election.mjs`, started by `core/src/compute/gateway.mjs` only when `MCCLUSTER_SCHEDULER_ROLE` is set; with the variable unset nothing calls it | `scripts/compute-scheduler-sql-check.mjs` (behaviour SQL, rollback, re-apply) and `scripts/staging/device-jobs/scheduler-failover.mjs` (two real gateways: takeover after expiry, fenced return, controlled handover); proof `docs/control-plane/evidence/device-jobs-staging-20261123/scheduler-failover/`. Never applied here. Design: `docs/control-plane/DEVICE-JOBS-SCHEDULER-STANDBY.md`. |
 
-Apply only when the owner wants the OVH node to yield to a live GPU node (then set
+**Nov 24 attestation/scheduler review:** apply `compute_job_attestations_v1.sql`
+only after the gateway containing `jobs-store.mjs` is deployed. The observed
+production Core revision did not contain that writer. Apply
+`compute_scheduler_lease_v1.sql` only after the owner decides to run a standby;
+that decision is not recorded by this audit. `signed_at` remains text. The
+attestation file now explicitly revokes inherited service-role privileges
+before granting SELECT/INSERT, so UPDATE, DELETE and TRUNCATE cannot rewrite
+the first receipt. Both rollback files take bounded locks and refuse nonempty
+evidence/history tables, including a writer that commits while recovery waits.
+They never erase signatures or reset a previously issued fencing term. The
+native PostgreSQL proof is `scripts/compute-device-native-check.mjs`; its
+dedicated CI job also runs the existing scheduler behavior proof and the
+gateway/node-agent staging path. The historical staging rollback description
+above describes the old proof; populated rollback is now a required refusal.
+
+Apply the yield file only when the owner wants the OVH node to yield to a live GPU node (then set
 `MCCLUSTER_NODE_YIELD_TO_GPU_MS` on that node); harmless otherwise. No prerequisite beyond the
 applied `20261020210718_compute_lease_authority_v2`. PostgREST reloads its schema cache on DDL; if
 a claim still answers PGRST202 afterwards, run `notify pgrst, 'reload schema';`. Never applied here.
@@ -457,32 +482,56 @@ log and news coverage bound to an event's revision. Five parts, each one transac
 |---|---|---|---|
 | 12.1 | `20261120061725_eup_environment_events_v1_01.sql` | `eup_environment_events_v1_01` | the seven tables (row level security on, no policy, no API-role privilege), their append-only and identity guards, the commit-time revision check, the pure helpers |
 | 12.2 | `20261120061759_eup_environment_events_v1_02.sql` | `eup_environment_events_v1_02` | the reads: the public page and event read (gated by the environment module policy: EUM01 / EUM03), the owner's preview |
-| 12.3 | `20261119100000_eup_environment_events_v1_03.sql` | `eup_environment_events_v1_03` | the ingest (USGS only), idempotent per run id, one health row per run; and the ingest's read, `eup_environment_ingest_state` (added by slice S3: the rule, the switches and the published events to look for) |
-| 12.4 | `20261119100000_eup_environment_events_v1_04.sql` | `eup_environment_events_v1_04` | the house owner's read and commands (hold, release, retract, restore, rollback, provider pause and hide, the publication rule, coverage decisions), each logged |
-| 12.5 | `20261119100000_eup_environment_events_v1_05.sql` | `eup_environment_events_v1_05` | the coverage intake |
+| 12.3 | `20261123173831_eup_environment_events_v1_03.sql` | `eup_environment_events_v1_03` | the ingest (USGS only), idempotent per run id, one health row per run; and the ingest's read, `eup_environment_ingest_state` (added by slice S3: the rule, the switches and the published events to look for) |
+| 12.4 | `20261123173951_eup_environment_events_v1_04.sql` | `eup_environment_events_v1_04` | the house owner's read and commands (hold, release, retract, restore, rollback, provider pause and hide, the publication rule, coverage decisions), each logged |
+| 12.5 | `20261123174034_eup_environment_events_v1_05.sql` | `eup_environment_events_v1_05` | the coverage intake |
 | | `20261119100000_eup_environment_events_v1.rollback.sql` | `eup_environment_events_v1_rollback` | drops everything the parts create, however many ran; the store's rows are lost |
 
-**Application in progress, 2026-11-20.** Parts 01 and 02 are applied under the versions in the table and their forward files
-are now under `supabase/migrations/`. Parts 03 to 05 remain under `supabase/pending/`; the ingest flag remains false.
-The assigned ledger rows each contain one stored statement equal to the file byte for byte, verified by byte count, MD5 and
-SHA-256. Current evidence is `docs/control-plane/evidence/releases-2026-11-20/ENVIRONMENT-TIMELINE-APPLIED.md`.
+**All five parts are applied (2026-11-20 and 2026-11-23); the store is empty and nothing public changed.** Every forward
+file is under `supabase/migrations/` with the version in the table, its bytes and original header unchanged.
 
-The original staging plan called for separate approval of the exact text; the owner-authorized completion proceeds after
-the mission publish. Continue with the Supabase MCP `apply_migration`, as postgres, under the names above, 03 to 05 in order,
-one call per part and a ledger read between calls. Part 01 refuses (55000) without the module policy (section 8); every later
-part refuses (55000), changing nothing, until the part before it is in. An unanswered call is resolved from the live ledger
-before a retry. Promote only a confirmed row to its assigned filename, preserving the exact SQL bytes and original headers.
-Reconcile the global ledger, drift contract, schema manifest and production snapshot in the same release.
+- Parts 01 and 02, 2026-11-20: the assigned ledger rows each contain one stored statement equal to the file byte for byte,
+  verified by byte count, MD5 and SHA-256 (`docs/control-plane/evidence/releases-2026-11-20/ENVIRONMENT-TIMELINE-APPLIED.md`).
+- Parts 03, 04 and 05, 2026-11-23, with Matthew's approval ("Approve the last 3 EUP database changes."), as
+  `20261123173831`, `20261123173951` and `20261123174034`: each ledger row holds one stored statement, the committed file
+  without its final line feed (31,084, 26,707 and 12,177 bytes; md5 `f4a2c6df817f2e963f9c6e1b0a486bc8`,
+  `d379700f7f371b9a8803f6aa6e6e05b9`, `2583ace662ac0494c07065e7e93ce633`, which the files give with their last byte
+  removed). The files moved unchanged, so the reviewed SHA-256 of each still holds
+  (`docs/control-plane/evidence/releases-2026-11-23/LEDGER-384-APPLIED.md`). After part 05 (read 2026-11-23,
+  17:48 UTC): 29 store functions, the five entry points of parts 03 to 05 executable by `service_role` only; 0 events,
+  0 providers, 0 source-health rows; 0 environment module policy rows.
+
+The original staging plan called for separate approval of the exact text; the owner-authorized completion proceeded after
+the mission publish, with the Supabase MCP `apply_migration`, as postgres, under the names above, in order, one call per
+part and a ledger read between calls. Each call asked a person to confirm it before it ran, and Matthew answered each one
+from the main session. Part 01 refuses (55000) without the module policy (section 8); every later part refuses (55000),
+changing nothing, until the part before it is in. An unanswered call is resolved from the live ledger before a retry: an
+attempt at 17:29 UTC on 2026-11-23 by an unattended agent timed out waiting for that confirmation and changed nothing.
 
 The recovery file stays pending. It destroys the store's records, so ordinary operational recovery pauses ingest and drains
 then disables the module. If destructive recovery is needed, disable callers and export records first; the store must be
 removed before the module policy's own rollback because its public reads depend on that policy.
 
 **Applying them changes nothing public until the ingest flag and the environment module are turned on.** The parts create no
-row. The owner controls, scheduled ingest and public routes shipped in PR #818. The ingest remains off until all five parts
-are applied and the USGS provider rule is configured; public reads retain the persisted module gate. Verify a durable source
-health row and the owner preview before installing and enabling the module. Remove each `live-callers.json` exception only
-when the refreshed production snapshot records its function.
+row. The owner controls, scheduled ingest and public routes shipped in PR #818. With all five parts in, a signed-out
+visitor's `GET https://api.mccluster.org/v1/world/environment/events?limit=20` still answers 404 `module_disabled`
+(2026-11-23, 17:49 UTC). What remains, in this order, and none of it is an agent's step:
+
+1. **The USGS rule**: Matthew, in his signed-in Control session, System > E=Up > Environmental events > Sources, "Set the
+   default rule" (the owner command of part 04, with its reason, the revision read and an idempotency key). The default
+   admits magnitude 4.5 and up, automatic readings included, or significance over 600, a PAGER alert or a tsunami flag.
+2. **The ingest switch ships on in Release 1 of 2026-11-23.** Matthew: "Switching the module on for sure, alright?" and,
+   for that release, "ship it all baby". The release commits the Worker variable `EUP_ENVIRONMENT_USGS_INGEST_ENABLED` as
+   `"true"` in `workers/mccluster/wrangler.toml` (it was `"false"` until then), so its merge and Worker deploy turn it on and
+   the existing five-minute cron runs the ingest. With no rule (item 1) the ingest asks nothing: each run reads the store's
+   view once and stops, with no USGS request and nothing stored. The rule can come before or after the deploy.
+3. Verify a durable source-health row (Sources) and the owner preview (Preview) before the module.
+4. **The module**: System > E=Up > Overview > Modules > Environment, Install (it starts disabled), then Enable, each with a
+   reason. Only then does the public timeline answer.
+
+The four `live-callers.json` exceptions for parts 03 and 04 (`eup_environment_ingest`, `eup_environment_ingest_state`,
+`eup_environment_owner_read`, `eup_environment_owner_command`) are removed: the 2026-11-23 production snapshot and the schema
+manifest both have the functions.
 
 The original headers preserve the reviewed defaults for canonical IDs and aliases (D5), revisions (D6), the publication rule
 (D7), tombstones and holds (D12), and the owner preview (D11). The authorized completion uses these exact statements.
@@ -550,7 +599,7 @@ promotion, fix the one fixture `README.md` names (`supabase/tests/action_clippin
 
 | File | Changes | Callers | Proof before apply |
 |---|---|---|---|
-| `20261119062110_network_connections_consent_guard_v1.sql` (+ `20261119062110_network_connections_consent_guard_v1.rollback.sql`) | drops the policies `network_connections_self_write` and `network_connections_self_update` and revokes INSERT, UPDATE and DELETE on `public.network_connections` from `authenticated`; keeps `network_connections_member_read`, SELECT and everything else | none new: the World already writes the table only through `request_connection`, `answer_connection` and `withdraw_connection` (SECURITY DEFINER, owned by the table's owner), and the Worker reads it with the service role | see below |
+| `../migrations/20261123173626_network_connections_consent_guard_v1.sql`, staged as `20261119062110_network_connections_consent_guard_v1.sql` (+ `20261119062110_network_connections_consent_guard_v1.rollback.sql`) | **Applied 2026-11-23** as `network_connections_consent_guard_v1` (version `20261123173626`). Drops the policies `network_connections_self_write` and `network_connections_self_update` and revokes INSERT, UPDATE and DELETE on `public.network_connections` from `authenticated`; keeps `network_connections_member_read`, SELECT and everything else | none new: the World already writes the table only through `request_connection`, `answer_connection` and `withdraw_connection` (SECURITY DEFINER, owned by the table's owner), and the Worker reads it with the service role | see below |
 
 The hole. Production carries two policies no migration here created (recorded in
 `supabase/replay_migrations/20261028230000_schema_reconcile_production_only_v1.sql:938-946`) and grants INSERT, UPDATE and DELETE
@@ -568,21 +617,31 @@ is left and that the three writer RPCs are still SECURITY DEFINER and owned by t
 and changes nothing. One transaction, safe to run twice, a 5 s lock bound. Independent of the World release and of every other
 section here; no prerequisite.
 
-**Not applied. Owner approval required.** Apply only on Matthew's approval of the exact text, with the Supabase MCP
-`apply_migration` (it runs as postgres, the table's owner) under the name `network_connections_consent_guard_v1`; rerun the
-header's read-only check query first (it must still answer the three policies and true for all four member privileges), then
-promote with the steps in `README.md` ("To promote one"). The CI reset holds the same hole today (`supabase/schema-manifest.json`:
-`authenticated=damrw` and the two policies, from the replay record). Once promoted, the reset applies the file after that record
-and closes it there too, so refresh the manifest from the reset's artifact in the same change, or its comparison fails.
+**Applied 2026-11-23, with Matthew's approval** ("Apply the connections fix."), through the Supabase MCP `apply_migration`
+(it runs as postgres, the table's owner) under the name `network_connections_consent_guard_v1`, ledger version
+`20261123173626`. The call asked a person to confirm it before it ran, and Matthew answered from the main session; an
+earlier attempt at 17:29 UTC by an unattended agent timed out waiting for that confirmation and changed nothing. Before it,
+the header's check answered the three policies, true for all four member privileges and `authenticated=arwdm` (read on
+2026-11-23 before 17:29 UTC, and again at 17:29:45 UTC). The stored statement is one statement, the committed file without its final line feed (11,395
+bytes, md5 `a08e29b94ffe898174c199f5eac0cecf`); the file moved unchanged (11,396 bytes, its reviewed header kept) with the
+steps in `README.md` ("To promote one"). Evidence: `docs/control-plane/evidence/releases-2026-11-23/LEDGER-384-APPLIED.md`.
 
-**Verify** with the same query afterwards: only `network_connections_member_read SELECT authenticated`; member SELECT true and
-INSERT, UPDATE, DELETE false; acl `{postgres=arwdDxtm/postgres,anon=rm/postgres,authenticated=rm/postgres,service_role=arwdDxtm/postgres}`;
-the ledger one row longer. In the World, Connect, Accept, Decline, Withdraw and End keep working; a member's direct POST or PATCH
-to `/rest/v1/network_connections` answers 403.
+The CI reset held the same hole (`supabase/schema-manifest.json`: `authenticated=damrw` and the two policies, from the replay
+record). Now that the file is under `supabase/migrations/`, the reset applies it after that record and closes it there too;
+the manifest was changed in the same change to what the reset builds after the file (its own `network_connections` row now
+`authenticated=mr`, the two policies gone). The next Reconciliation CI reset is the arbiter: if its artifact differs, refresh
+the manifest from it.
+
+**Verified** on 2026-11-23 at 17:48 UTC with the same query: only `network_connections_member_read SELECT authenticated`;
+member SELECT true and INSERT, UPDATE, DELETE false; acl
+`{postgres=arwdDxtm/postgres,anon=rm/postgres,authenticated=rm/postgres,service_role=arwdDxtm/postgres}`; the three writer
+RPCs still SECURITY DEFINER and owned by the table's owner; the ledger one row longer for this file. Not checked in production
+by this record (no member session was used): that Connect, Accept, Decline, Withdraw and End keep working in the World and
+that a member's direct POST or PATCH to `/rest/v1/network_connections` answers 403; the proofs below show both.
 
 **Roll back** with the rollback file (owner approval too; as postgres, name `network_connections_consent_guard_v1_rollback`). It
 puts back exactly the two policies, with production's expressions, and the three grants, touches nothing else, and reopens the
-hole; the query then answers what it answers today.
+hole; the query then answers what it answered before 2026-11-23.
 
 Proof before apply (disposable databases only):
 `PGLITE_MODULE=<PGlite 0.3.14 dist/index.js> node scripts/test/network-connections-consent.integration.mjs` (137 checks; CI matrix
@@ -655,11 +714,45 @@ PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/
 |---|---|---|---|
 | `20261123180000_tinderfessions_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's Tinderfessions (keys `tinderfessions:*`), upserted like the Whip Equipped and PRIM3 seeds | the shelf in `data/albums.json` (album `tinderfessions`); the live discovery and direct-sale lookups by catalog key | `scripts/test/action-network-live-governance.test.mjs` and `scripts/test/music-direct-sales.test.mjs` read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
 
+Nov 24 preflight: zero matching production rows; the album is absent from
+`main`. Hold this seed for the matching album release. The native proof derives
+all 12 keys independently from the branch album data, verifies public-role
+visibility, and preserves row IDs and references through archive and reapply.
+These are active catalog entries after application, so visibility must be
+coordinated with the release.
+
 ## 16. Lyric machine on uploaded releases (written 2026-10-31; entered here 2026-11-23)
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
 | `20261031180000_lyrics_machine_v1.sql` (+ `.rollback.sql`) | `creator_tracks.lyrics_sheet` and `lyrics_input_rev`, the revision function and the trigger that queues a `lyrics_align` job on `ops_agent_jobs` when a release's master or sheet changes | `js/music-creator-studio.js` (`attachLyricSheet`: the sheet column first; until this is applied the words are kept on the release as untimed `lyrics {source:"sheet"}` and the creator is told), Control's Lyrics review (`operator-lyrics-queue`), `core/src/executors/lyrics-align.mjs` | Apply only after the OVH Core is running with the `lyrics_align` executor (applied earlier, Core quarantines the jobs as an unknown type). Then upload a release with a sheet and watch the job finish with timed lyrics, unreviewed. Never applied here. |
+
+**Updated prerequisite and recovery, Nov 24:** apply the distribution file in
+section 18 **before this lyrics file**, despite the historical section numbers.
+Both take the same advisory lock and refuse an unknown content-helper body.
+The lyrics file excludes only the sheet and its derived revision from reviewed
+release content; the actual `lyrics` field remains protected. Its backfill
+temporarily sets and then restores both JWT role settings, preserves published
+snapshots and offers, and does not queue existing tracks. The revision is
+derived on every write, including attempts to forge only the revision column.
+The original backfill failed the canonical identity guard and, with a service
+claim, incorrectly sent published tracks back to review; the native regression
+now exercises an actually reviewed and published synthetic track.
+
+The rollback is operational: stop input writes and drain queued/running lyrics
+jobs first. It refuses active jobs, removes only automatic enqueueing, and
+keeps sheets, revisions, the revision trigger, reviewed-content exclusions and
+completed history. Reapplying the forward file restores enqueueing. Removing
+stored inputs is a separate reviewed migration. Do not run the older
+distribution forward or rollback over this later content helper.
+
+The observed deployed Core revision registers `lyrics_align`, but its completion
+validator rejects this job type after execution. This draft corrects that runtime
+blocker with explicit write/no-op receipts and strict evidence policies (55
+focused tests and 919 full-Core tests pass; 20 full-suite skips). Deploy that
+correction and verify audio tooling readiness before approval, then verify a
+controlled job after applying. Registration alone is insufficient.
+`scripts/music-release-native-check.mjs --full-reset` is the CI database gate.
 
 ## 17. In Hot Pursuit catalog objects (written 2026-11-23)
 
@@ -667,8 +760,69 @@ PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/
 |---|---|---|---|
 | `20261123190000_in_hot_pursuit_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's In Hot Pursuit (keys `in-hot-pursuit:*`), upserted like section 15 | the shelf in `data/albums.json` (album `in-hot-pursuit`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
 
+Nov 24 preflight: zero matching production rows; the album is absent from
+`main`. Hold for its album release. The same native proof checks all eight
+keys, actual public-role visibility, archive and stable IDs on reapply.
+
 ## 18. Creator distribution details (written 2026-11-23)
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
-| `20261123200000_music_creator_distribution_v1.sql` (+ `.rollback.sql`) | `creator_tracks.distribution` (jsonb object, at most 64 KB) for the creator's store details: release date, explicit, language, ℗/© lines, master owner, credits, master and publishing splits, an ISRC/UPC the creator already owns; `music_track_content` re-created with `distribution` left out of release content (everything else exactly as `20261030001000`) | `js/music-creator-studio.js` (Distribution card; until this is applied the card says so and saves nothing), `js/music-distribution.js` (shape and checklist) | `scripts/test/music-distribution.test.mjs` pins the content list to the applied one plus `distribution`. Apply on its own; nothing else depends on it. Never applied here. |
+| `20261123200000_music_creator_distribution_v1.sql` (+ `.rollback.sql`) | `creator_tracks.distribution` (jsonb object, at most 64 KB) for the creator's store details: release date, explicit, language, ℗/© lines, master owner, credits, master and publishing splits, an ISRC/UPC the creator already owns; `music_track_content` re-created with `distribution` left out of release content (everything else exactly as `20261030001000`) | `js/music-creator-studio.js` (Distribution card; until this is applied the card says so and saves nothing), `js/music-distribution.js` (shape and checklist), and `music-access` distribution staging | `scripts/test/music-distribution.test.mjs` pins the content list to the applied one plus `distribution`. Apply before the lyrics file in section 16. Never applied here. |
+
+Nov 24 production preflight matches the canonical content helper exactly after
+line-ending normalization (body MD5 `b2f96e6d2fa145d00adcc6267bbe0944`); the
+distribution column is absent. The forward and rollback files now refuse
+unknown or later helper definitions. Recovery refuses stored distribution
+data; if the column is empty, it restores the canonical helper and removes the
+column together, so a later owner update does not invalidate a published
+snapshot. The native proof checks real authenticated-owner updates, another
+owner's denial, shape/size limits, preserved review digests and active offers.
+
+Coordinate an approved redeploy of `supabase/functions/music-access` from this
+branch, including `_shared/creator-distribution.ts`. Production version 639
+has `verify_jwt = true` and lacks `operator-distribution-stage`; preserve that
+JWT setting. Run the creator-distribution-stage and function-deploy contracts.
+No function was deployed by this preparation audit.
+
+## 19. AI context workstream checkpoints (written 2026-11-23)
+
+**Applied 2026-11-24 as `20261124164529 ai_context_workstreams_v1`. Do not replay.**
+Draft #836 moves the exact stored statement into the ledger; integrate that
+record before release. The pending copy on this branch is historical until
+the ledger repair is merged. Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`.
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `ai_context_workstreams_v1.sql` (+ `ai_context_workstreams_v1.rollback.sql`) | `ai_context.workstreams` (where each line of work stands) and `ai_context.workstream_events` (append-only log; `UPDATE`, `DELETE`, `TRUNCATE` refused by trigger), RLS on with no policy and no privilege for any role but the owner; fourteen private `ai_context.workstream_*` helpers; four `SECURITY DEFINER`, `search_path = ''`, `service_role`-only functions: `public.ops_ai_workstream_upsert`, `_event_append`, `_checkpoint`, `_resume`. They verify an `owner` actor against `public.org_members`, hold a non-owner writer to the `internal` sensitivity ceiling, order events by the plane's own `seq` and bound volume per organization (500 workstreams, 5000 events and 200 proposed decisions per 24 hours). Changes no existing object. A decision event may insert one `proposed` row into the existing `ai_context.decisions`; it never approves one | Core only: `core/src/tools/workstream.mjs` (`core.workstream.checkpoint`, `core.workstream.list`) and `core/src/tools/resume.mjs` (the `workstreams` source of `core.resume`). Both tolerate its absence: on PostgREST PGRST202 the tools answer 503 `WORKSTREAMS_NOT_APPLIED` and `core.resume` reports `sources.workstreams: missing` with every other section unchanged. No Worker, page or Edge Function calls these names, so `live-callers.json` has no entry | `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/ai-context-workstreams-sql-check.mjs` (310 checks on PGlite, 313 on native PostgreSQL: the guard on a database without the context plane, apply twice, privileges and RLS, behaviour, the append-only trigger, idempotency on the operation key (a replay never rewinds the workstream; every field the caller said is content), every bound, credential and transcript refusal in every text column, proposed decisions, owner membership, the write-path sensitivity ceiling, append-order blockers, volume caps, resume order and caps, rollback refused with data then forced, re-apply, second behaviour pass); `node --test core/test/workstream-checkpoints.test.mjs` (37); `node --test scripts/test/workstream-sync.test.mjs` (12) |
+
+**Prerequisites, all already in production:** schema `ai_context` with `ai_context.decisions`, `public.orgs`, `public.org_members` (read to verify an owner actor),
+`public.ops_objectives`, `public.ops_agent_jobs`. The file's guard refuses (55000), changing nothing, without them.
+It adds a foreign key from `ai_context.workstreams.objective_id` to `public.ops_objectives(id)` (`on delete set null`),
+which takes a brief lock on `ops_objectives`; `lock_timeout` is 5 s, so a busy table fails the apply instead of
+waiting. Independent of every other file in this folder.
+
+**Completed database proof:** the stored statement's SHA-256 is
+`5baa5f09f1b2d7a823f63bbe78ae74065da57022ac854593e8d5790a6c9c03f0`.
+The standalone proof passes 310 checks on PGlite and 313 on native PostgreSQL 17.6;
+the native pass includes three concurrent final-slot quota checks. Both standalone modes use minimal base fixtures.
+The exact application review's Reconciliation CI database job passed: it runs the native proof and
+`supabase/tests/ai_context_workstreams_v1.integration.sql` against the complete repository reset, twice applying the
+pending SQL and testing rollback/re-apply with the real ontology and decision triggers. PostgREST
+reloads its schema cache on DDL; if `core.resume` still reports `workstreams: missing` afterwards, run
+`notify pgrst, 'reload schema';`.
+
+**Remaining runtime verification after Core promotion:** `core.resume` reports `sources.workstreams: ok`; anon and
+authenticated REST calls to the four functions are refused (neither role has execute); `ai_context` is still not an
+exposed schema; one `workstream.checkpoint` through the owner's MCP session returns `created: true`, and the same
+call again returns `replayed: true` for its event and `applied: false` for its workstream.
+
+**Roll back:** `ai_context_workstreams_v1.rollback.sql`, owner approval, as postgres. It refuses (55000), changing
+nothing, while either table holds a row: the log is a record, and dropping it is a data deletion. To delete it on
+purpose, export it, then run the rollback with `set local mccluster.workstreams_drop_data = 'on';` after `begin`.
+It leaves `ai_context.decisions` untouched. Core needs no rollback: without the functions it reports `missing`.
+
+**Records:** draft #836 contains the unchanged migration, ledger, drift contract,
+manifest built by the reset and Nov 24 production snapshot. Main remains behind
+production until that reviewed record is merged. Core promotion and Prime
+checkpoint ingestion remain separate release work; neither is claimed here.

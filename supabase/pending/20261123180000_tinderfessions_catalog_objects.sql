@@ -1,3 +1,4 @@
+-- Shared music-platform support used by Equity Uprise; no building capability is added.
 -- Tinderfessions by Benji Chase (Hitman Records, 2020), added to the shelf 2026-11-23 (owner: "I am Benji Chase, the
 -- artist on Apple Music ... I would like this upload to be Benji Chase's Tinderfessions"): its shelf songs become live
 -- discovery objects like every other shelf song (supabase/migrations/20261003233747_action_network_live_governance_v1.sql).

@@ -113,7 +113,7 @@ export async function lyricsAlign(job, deps = {}) {
   if (!track) throw new Error(`creator track ${trackId} not found`);
   if (!track.master_bucket || !track.master_path) throw new Error('release has no master to listen to');
   if (!mayReplace(track.lyrics)) {
-    return { executor: 'lyrics_align:v1', summary: `Lyrics for "${track.title}" are owner-reviewed; left as they are`, track_id: trackId, written: false };
+    return { executor: 'lyrics_align:v1', summary: `Existing lyrics for "${track.title}" are protected; left as they are`, track_id: trackId, written: false, reason: 'protected_lyrics' };
   }
 
   const dir = await mkdtemp(join(tmpdir(), 'mcc-lyrics-job-'));
@@ -153,13 +153,14 @@ export async function lyricsAlign(job, deps = {}) {
     });
     const m = doc.machine || {};
     if (!updated.length) {
-      return { executor: 'lyrics_align:v1', summary: `Lyrics for "${track.title}" not written: the master, sheet or review changed while McCluster listened (a newer job takes it)`, track_id: trackId, written: false, input_rev: rev.value };
+      return { executor: 'lyrics_align:v1', summary: `Lyrics for "${track.title}" not written: the master, sheet or review changed while McCluster listened (a newer job takes it)`, track_id: trackId, written: false, reason: 'inputs_or_review_changed', input_rev: rev.value };
     }
     return {
       executor: 'lyrics_align:v1',
       summary: `Lyrics ${doc.source} for "${track.title}": ${doc.timed.line.length} lines, ${m.mismatched_lines || 0} flagged for review`,
       track_id: trackId,
       written: updated.length > 0,
+      input_rev: rev.value,
       source: doc.source,
       lines: doc.timed.line.length,
       mismatched_lines: m.mismatched_lines || 0,

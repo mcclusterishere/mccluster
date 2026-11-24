@@ -1,3 +1,5 @@
+-- Equity Uprise shared-platform support-only: Core compute completion evidence.
+-- This internal receipt store does not define building capabilities or policy.
 -- PENDING ONLY. Owner review, isolated SQL proof and explicit migration approval
 -- are required before applying this to canonical Supabase. No ledger entry here.
 --
@@ -9,8 +11,10 @@
 -- only its digest, the public signature fields and the canonical SHA-256 of the
 -- committed result. Reuses ops_compute_leases/tasks/nodes; adds no RPC.
 -- Rollback: compute_job_attestations_v1.rollback.sql. Order and proof:
--- supabase/pending/PROMOTION-ORDER.md section 11. Exercised (apply, rollback,
--- re-apply) by scripts/staging/device-jobs/run.mjs on PGlite.
+-- supabase/pending/PROMOTION-ORDER.md section 11. Native role, signed-receipt,
+-- concurrent rollback and re-apply proof: scripts/compute-device-native-check.mjs.
+-- --from-reset exercises the actual rebuilt schema without base-table stubs.
+-- The end-to-end gateway/agent proof is scripts/staging/device-jobs/run.mjs.
 create table if not exists public.ops_compute_attestations (
   lease_id uuid primary key references public.ops_compute_leases(id) on delete cascade,
   task_id uuid not null references public.ops_compute_tasks(id) on delete cascade,
@@ -37,5 +41,9 @@ create index if not exists ops_compute_attestations_node_idx
   on public.ops_compute_attestations(node_id, recorded_at desc);
 
 alter table public.ops_compute_attestations enable row level security;
-revoke all on public.ops_compute_attestations from public, anon, authenticated;
+-- Supabase's public-table default ACL also grants ALL to service_role. RLS
+-- does not constrain that BYPASSRLS role: revoke its inherited UPDATE, DELETE,
+-- TRUNCATE, REFERENCES and TRIGGER rights before granting the two operations
+-- the completion recorder needs. Existing rows remain first accepted wins.
+revoke all on public.ops_compute_attestations from public, anon, authenticated, service_role;
 grant select, insert on public.ops_compute_attestations to service_role;

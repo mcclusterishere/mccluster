@@ -1,3 +1,4 @@
+-- Shared music-platform support used by Equity Uprise; no building capability is added.
 -- In Hot Pursuit by Benji Chase, added to the shelf 2026-11-23 with the owner's cover: its shelf songs become live
 -- discovery objects like every other shelf song (supabase/migrations/20261003233747_action_network_live_governance_v1.sql).
 -- PENDING: apply with the release of data/albums.json that adds them.

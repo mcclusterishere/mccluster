@@ -191,9 +191,14 @@
   function revealDockItem(item) {
     if (!item || !bar.admin()) return;
     const strip = dockItems(), r = item.getBoundingClientRect(), d = strip.getBoundingClientRect();
-    /* the arrows live inside the bar's right end now: a tab is only "in view" left of them */
+    /* A tab pinned at the strip's start (the installed app's Music tab while it is the one Play/Pause,
+       css/installed-app-dock.css) is in view by itself and the other tabs pass under it: a focused tab comes to rest
+       clear of it, never hidden beneath it. */
     const slot = dockHints && !dockHints.hidden ? dockHints.offsetWidth : 0;
-    if (r.left < d.left + 4) strip.scrollLeft -= d.left + 4 - r.left;
+    const pinned = n => getComputedStyle(n).position === 'sticky';
+    if (pinned(item)) { updateDockHints(); return; }
+    const pin = [...strip.querySelectorAll('[data-appnav]')].find(pinned), start = pin ? Math.max(d.left, pin.getBoundingClientRect().right) : d.left;
+    if (r.left < start + 4) strip.scrollLeft -= start + 4 - r.left;
     else if (r.right > d.right - 4 - slot) strip.scrollLeft += r.right - d.right + 4 + slot;
     updateDockHints();
   }
