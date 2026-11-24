@@ -102,6 +102,39 @@ operator's review. If albums ever need their own rights, sales or analytics, the
 should become a table; until then this keeps the artist's work in one place
 with no new infrastructure.
 
+## Artists credited in the house catalogue
+
+Owner, 2026-11-24: every artist credited on any track, featured artists
+included, has an entry in the Artists row, and opening one shows everything
+they appear on.
+
+- **The structure** is in `data/albums.json`. `artists` is the registry
+  (slug, name, `kind` person or act, and optionally `page`, `handle` and the
+  `id` an existing graph already gives them). Every track carries `credits`:
+  `primary`, `lead`, `featured`, `producers` (with `produced_as`), other
+  stated `roles` ("guitar by", "beat by"), and a `note`. Each names artists
+  by slug. McCluster is one slug, `mccluster`, in every role.
+- **The words** are never typed. `js/music-credits.js` writes the credit line
+  from the structure. `node tools/build-music-credits.mjs` stores it as
+  `track.credit` (and the short form as `track.sub`); then run
+  `tools/build-music-registry.mjs` and `tools/build-catalogue.mjs`, which
+  carry the structure into `data/catalogue.json` and the catalogue's JSON-LD.
+- **The Artists row** on `listen.html` (`js/music-community.js`) lists
+  McCluster, then every registered artist who is on at least one track, then
+  the creators the catalogue does not know. A creator profile with the same
+  handle or name is the same artist and is drawn once, with their page and
+  picture. Anyone else shows their initial.
+- **The artist view** is `artist.html?artist=<slug>` (`js/music-artist.js`):
+  the artist's tracks, the ones they are featured on, the ones they produced
+  and any other credit, each row playable and linked to its album. An artist
+  with a page of their own (the house, `prim3-artist.html`, a creator page)
+  keeps it; a creator page links to the view when the catalogue credits them.
+- To add an artist, add them to `artists`, name their slug in a track's
+  `credits`, and run the three generators. Name a producer only when the
+  owner has; an absent producer means unknown.
+- `node --test scripts/test/music-credits.test.mjs` holds the owner's rules,
+  the line against the function, the row and the view.
+
 ## Checking it
 
 - `node --test scripts/test/music-creator-page.test.mjs` covers the album
