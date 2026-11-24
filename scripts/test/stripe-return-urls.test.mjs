@@ -176,10 +176,10 @@ test('the pages the live functions return to are the ones that exist', () => {
   assert.deepEqual(by('workers/mccluster/src/connect.js'), ['/control.html', '/control.html']);
 });
 
-test('shake-order returns where the request started, else to the operator SITE_URL, else to the generated fallback', () => {
+test('shake-order returns to the operator SITE_URL when one is set (as before P0), else where the request started, else to the generated fallback', () => {
   const src = readFileSync(join(ROOT, 'supabase/functions/shake-order/index.ts'), 'utf8');
   assert.match(src, /const SITE_URL = Deno\.env\.get\("SITE_URL"\);/);
-  assert.match(src, /const SITE = origin && RETURN_ORIGINS\.includes\(origin\) \? origin : \(SITE_URL \?\? returnOrigin\(origin\)\);/);
+  assert.match(src, /const SITE = SITE_URL \?\? returnOrigin\(origin\);/);
   /* the house is one of the origins that serve pages at every stage, so the paths below are checked as its */
   assert.ok(RETURN_ORIGINS.includes(HOUSE));
   assert.deepEqual(literals().filter((l) => l.file === 'supabase/functions/shake-order/index.ts').map((l) => pathOf(l.url)), ['/shakes.html', '/shakes.html']);

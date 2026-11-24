@@ -6,8 +6,9 @@
    address with returnOrigin (supabase/functions/_shared/site-hosts.ts, generated from
    data/seo/domain-architecture.json): the request's Origin when it is EXACTLY one of the origins that serve
    pages (scheme and host as the browser sends them; no suffix, prefix or substring match), otherwise today's
-   default: the generated fallback (the profile host at P0, where every return went before), or shake-order's
-   SITE_URL when an operator set one. The three functions that named the dead mcclusterishere.github.io/Here
+   default: the generated fallback (the profile host at P0, where every return went before). shake-order keeps the
+   precedence it had before P0: an operator's SITE_URL, when set, is the return for every request; only without one
+   does its return follow the request. The three functions that named the dead mcclusterishere.github.io/Here
    address (it answers 404) now land on today's live page for the same flow.
 
    Each function runs as written (./support/edge-function-handler.mjs): its real handler and the real shared
@@ -156,7 +157,8 @@ const SCENARIOS = [
   ...[undefined, 'https://shop.fixture.invalid'].map((siteUrl) => ({
     name: siteUrl ? 'shake-order (an operator SITE_URL)' : 'shake-order',
     fn: 'shake-order',
-    fallback: siteUrl,
+    /* an operator's SITE_URL wins for every request, the origins that serve pages included, as before P0 */
+    fixed: siteUrl,
     load: (k) => ({ env: siteUrl ? { ...ENV, SITE_URL: siteUrl } : ENV, Stripe: fakeStripe(k.calls), fetch: routes([
       [(u) => u === `${SB}/rest/v1/shake_open_window?select=*`, () => jsonResponse([{ id: 'window-fixture', fee_cents: 0, taken: 0, max_orders: 10 }])],
       [(u) => u.startsWith(`${SB}/rest/v1/shake_stops?id=eq.stop-fixture&`), () => jsonResponse([{ id: 'stop-fixture', name: 'Fixture Hall', active: true }])],
@@ -217,12 +219,13 @@ async function run(scenario, origin) {
 }
 
 for (const scenario of SCENARIOS) {
-  test(`${scenario.name}: back to the request's origin only when it serves pages, else ${scenario.fallback ? 'the operator SITE_URL' : 'today\'s default'}`, async () => {
+  test(scenario.fixed ? `${scenario.name}: the operator's SITE_URL for every request, whatever the Origin, as before P0`
+    : `${scenario.name}: back to the request's origin only when it serves pages, else today's default`, async () => {
     for (const origin of ORIGINS) {
       const k = await run(scenario, origin);
       const where = `${scenario.name}, Origin ${label(origin)}`;
       assert.ok(k.status < 300, `${where}: answered ${k.status} ${JSON.stringify(k.body)} ${JSON.stringify(k.logged)}`);
-      const back = expected(origin, scenario.fallback);
+      const back = scenario.fixed || expected(origin);
       assert.deepEqual(scenario.returns(k), scenario.paths(k).map(([key, path]) => [key, back + path]), where);
     }
   });
