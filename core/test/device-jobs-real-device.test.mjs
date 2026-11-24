@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { validateCapabilityManifest } from '../src/compute/protocol.mjs';
 import { generateNodeIdentity, signRequest } from '../src/compute/signature.mjs';
 import { buildReceipt, completionAttestation, generateReceiptKey, hashJson, jobResult, receiptKeyInfo, signReceipt } from '../src/compute/jobs.mjs';
@@ -488,6 +488,45 @@ test('FIXTURE end to end: serve, enroll with a stand-in executor, submit, verify
   assert.deepEqual([draining?.signal, draining?.active_leases], ['stop-file', 1]);
   assert.equal(agentLog.find((record) => record.event === 'compute_node_shutdown')?.remaining_leases, 0);
   assert.equal(fs.existsSync(path.join(stateDir, 'node-agent.stop')), false);
+  await t.test('a recently disconnected device cannot prove the refusal fence', async () => {
+    const listed = await admin(`/v1/compute/nodes?org_id=${DEFAULT_ORG}`);
+    assert.ok(listed.body.nodes.some((node) => node.id === enrolled.node_id && node.state === 'online'));
+    const inactiveOut = path.join(work, 'disconnected-refusal');
+    const attempt = await runToExit('submit-job.mjs', ['--run-dir', runDir, '--implementation', 'qwen3.8b.local', '--out', inactiveOut, '--expect-refusal', '--bound-ms', '2500']);
+    assert.equal(attempt.code, 1, 'a stale listing cannot prove the device polled');
+    const inactive = JSON.parse(fs.readFileSync(path.join(inactiveOut, 'refusal.json')));
+    assert.deepEqual(Object.keys(inactive.checks).filter((name) => !inactive.checks[name]), ['live_devices_were_polling_during_the_probe']);
+    assert.deepEqual(inactive.live_devices_during_probe, []);
+    assert.equal(inactive.polling_control.cancel.status, 'canceled');
+    assert.equal(report.polling_control.observed_claim.node_id, enrolled.node_id);
+    assert.ok(report.polling_control.observed_claim.lease_id);
+  });
+
+  await t.test('stop after assignment but before the agent receives the lease response', async () => {
+    const delayedState = path.join(work, 'delayed-device');
+    const held = path.join(work, 'response-held');
+    const preload = pathToFileURL(path.join(ROOT, 'core/test/fixtures/hold-lease-response.mjs')).href;
+    const delayed = background(path.join(SCRIPTS, 'enroll-device.mjs'), ['--run-dir', runDir, '--state-dir', delayedState, '--name', 'delayed-fixture', '--implementation', 'fixture.echo.local', '--model', 'fixture-echo', '--executor-url', `http://127.0.0.1:${executorPort}`, '--no-stdin'], { ...process.env, FIXTURE_HELD_RESPONSE: held, NODE_OPTIONS: `--import=${preload}` });
+    await firstJsonLine(delayed, 'delayed device');
+    const submission = await admin('/v1/compute/jobs', { method: 'POST', headers: { 'idempotency-key': 'pending-claim-drain' }, body: { capability: 'ai.chat', implementation: 'fixture.echo.local', input: { prompt: 'delayed claim', num_predict: 16 } } });
+    assert.equal(submission.status, 202);
+    const wait = async (check, label) => {
+      const deadline = Date.now() + 12_000;
+      while (!check() && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 25));
+      assert.ok(check(), label);
+    };
+    await wait(() => fs.existsSync(held), 'the gateway assigned a real lease');
+    const stopping = stopByFile(delayed, delayedState);
+    const agentLogPath = path.join(delayedState, 'node-agent.log');
+    await wait(() => fs.readFileSync(agentLogPath, 'utf8').includes('compute_node_draining'), 'the stop reached the agent before delivery');
+    fs.unlinkSync(held);
+    assert.equal(await stopping, 0);
+    const actual = (await admin(`/v1/compute/jobs/${submission.body.job.job_id}?org_id=${DEFAULT_ORG}`)).body;
+    assert.deepEqual([actual.status, actual.attempts, actual.execution?.status], ['done', 1, 'done']);
+    const events = fs.readFileSync(agentLogPath, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+    assert.equal(events.find((record) => record.event === 'compute_node_draining').pending_claim, true);
+    assert.equal(events.find((record) => record.event === 'compute_node_shutdown').remaining_leases, 0);
+  });
   assert.equal(await stopByFile(serve, runDir), 0);
   assert.equal(typeof readStagingFile(runDir).stopped_at, 'string');
 });

@@ -329,20 +329,6 @@ async function executeTask(executor, task, signal) {
   throw permanentError(`Unsupported local executor type: ${executor.type || 'unknown'}`);
 }
 
-async function gracefulShutdown(active, signal) {
-  if (stopping) return;
-  stopping = true;
-  log({ event: 'compute_node_draining', signal, active_leases: active.size });
-  const deadline = Date.now() + SHUTDOWN_GRACE_MS;
-  while (active.size && Date.now() < deadline) {
-    await Promise.race([
-      Promise.allSettled([...active.values()]),
-      new Promise((resolve) => setTimeout(resolve, 500))
-    ]);
-  }
-  log({ event: 'compute_node_shutdown', signal, remaining_leases: active.size });
-}
-
 // Hardware discovery spawns processes (on Windows powershell.exe, reg.exe and
 // the nvidia-smi attempts, each with a 5 s timeout), so it runs once at start
 // and again only every HARDWARE_REFRESH_MS; the ENGINE_PROBE_MS cycle keeps
@@ -394,23 +380,71 @@ async function run() {
 
   const active = new Map();
   const shutdown = new AbortController();
+  let pendingClaim = null;
+  let draining = null;
+  function drain(signal) {
+    if (draining) return draining;
+    stopping = true;
+    const claim = pendingClaim;
+    log({ event: 'compute_node_draining', signal, active_leases: active.size, pending_claim: Boolean(claim) });
+    draining = (async () => {
+      let failedClaim = false;
+      const settled = async () => {
+        // A claim response can register a lease after shutdown starts. First let
+        // it register that work (or reject the lease), then snapshot active work.
+        if (claim) await claim.catch(() => { failedClaim = true; });
+        await Promise.allSettled([...active.values()]);
+      };
+      let timer;
+      try {
+        await Promise.race([settled(), new Promise((resolve) => { timer = setTimeout(resolve, SHUTDOWN_GRACE_MS); })]);
+      } finally { clearTimeout(timer); }
+      const incomplete = Boolean(pendingClaim) || active.size > 0 || failedClaim;
+      if (incomplete) shutdown.abort(new Error('Node shutdown'));
+      log({ event: 'compute_node_shutdown', signal, remaining_leases: active.size, pending_claim: Boolean(pendingClaim), claim_failed: failedClaim });
+      return incomplete ? 1 : 0;
+    })();
+    return draining;
+  }
   for (const signalName of shutdownSignals(process.platform)) {
     process.on(signalName, () => {
-      shutdown.abort(new Error('Node shutdown'));
-      gracefulShutdown(active, signalName).then(() => process.exit(active.size ? 1 : 0));
+      if (!stopping) shutdown.abort(new Error('Node shutdown'));
+      drain(signalName).then((code) => process.exit(code));
     });
   }
-  // A stop file is the graceful stop a parent process can always deliver. On
-  // Windows child.kill('SIGTERM') is TerminateProcess: no handler runs and a
-  // running lease is left to expire. The stop file drains instead: no new
-  // claim, and a running lease gets the grace period to finish and commit,
-  // which releases it; only what is still running after that is abandoned.
-  watchStopFile(STOP_FILE, () => {
-    gracefulShutdown(active, 'stop-file').then(() => {
-      if (active.size) shutdown.abort(new Error('Node shutdown'));
-      process.exit(active.size ? 1 : 0);
-    });
-  }, { exists: fs.existsSync });
+  // A Windows parent can request a graceful stop without terminating the child.
+  watchStopFile(STOP_FILE, () => drain('stop-file').then((code) => process.exit(code)), { exists: fs.existsSync });
+
+  async function claimAndRegister() {
+    const sentAt = systemClock();
+    const claimBody = yieldClaimBody({ yieldMs: YIELD_MS, liveGpuNodes: observed.liveGpuNodes, hardwareMode: observed.hardwareMode });
+    const { lease } = await signedRequest(identity, '/v1/compute/lease', claimBody, shutdown.signal);
+    if (lease) {
+      const { lease_id: leaseId, lease_token: leaseToken, task } = lease;
+      const executor = executorFor(task, manifest);
+      const ready = task.implementation
+        ? advertised.some((item) => item.implementation === task.implementation)
+        : advertised.some((item) => item.capability === task.capability);
+      if (!ready) {
+        await signedRequest(identity, `/v1/compute/leases/${leaseId}/fail`, {
+          lease_token: leaseToken,
+          error: 'Local execution engine or hardware became unavailable before task start',
+          retry: true
+        });
+        return;
+      }
+
+      const promise = runLease({
+        lease, nodeId: identity.nodeId, sentAt, signal: shutdown.signal,
+        request: (pathname, body, signal) => signedRequest(identity, pathname, body, signal),
+        execute: (leasedTask, signal) => executeTask(executor, leasedTask, signal),
+        onEvent: (event, error) => warn({ event, lease_id: leaseId, task_id: task.id, error: error.message })
+      }).catch((error) => {
+        warn({ event: 'lease_execution_rejected', lease_id: leaseId, task_id: task.id, error: error.message });
+      }).finally(() => active.delete(leaseId));
+      active.set(leaseId, promise);
+    }
+  }
 
   let lastHeartbeat = 0;
   let lastProbe = Date.now();
@@ -438,34 +472,8 @@ async function run() {
       }
 
       if (!stopping && advertised.length && active.size < manifest.maxLeases) {
-        const sentAt = systemClock();
-        const claimBody = yieldClaimBody({ yieldMs: YIELD_MS, liveGpuNodes: observed.liveGpuNodes, hardwareMode: observed.hardwareMode });
-        const { lease } = await signedRequest(identity, '/v1/compute/lease', claimBody, shutdown.signal);
-        if (lease) {
-          const { lease_id: leaseId, lease_token: leaseToken, task } = lease;
-          const executor = executorFor(task, manifest);
-          const ready = task.implementation
-            ? advertised.some((item) => item.implementation === task.implementation)
-            : advertised.some((item) => item.capability === task.capability);
-          if (!ready) {
-            await signedRequest(identity, `/v1/compute/leases/${leaseId}/fail`, {
-              lease_token: leaseToken,
-              error: 'Local execution engine or hardware became unavailable before task start',
-              retry: true
-            });
-            continue;
-          }
-
-          const promise = runLease({
-            lease, nodeId: identity.nodeId, sentAt, signal: shutdown.signal,
-            request: (pathname, body, signal) => signedRequest(identity, pathname, body, signal),
-            execute: (leasedTask, signal) => executeTask(executor, leasedTask, signal),
-            onEvent: (event, error) => warn({ event, lease_id: leaseId, task_id: task.id, error: error.message })
-          }).catch((error) => {
-            warn({ event: 'lease_execution_rejected', lease_id: leaseId, task_id: task.id, error: error.message });
-          }).finally(() => active.delete(leaseId));
-          active.set(leaseId, promise);
-        }
+        pendingClaim = claimAndRegister();
+        try { await pendingClaim; } finally { pendingClaim = null; }
       }
       consecutiveErrors = 0;
     } catch (error) {
@@ -482,7 +490,7 @@ async function run() {
     await new Promise((resolve) => setTimeout(resolve, backoff + jitter));
   }
 
-  await gracefulShutdown(active, 'loop-exit');
+  process.exitCode = await drain('loop-exit');
 }
 
 run().catch((error) => {

@@ -145,6 +145,10 @@ run it again with the model warm.
    a page) and cancels its probe job when the bound has passed
    (`POST /v1/compute/jobs/:id/cancel`, which cancels a queued job only). A
    gateway started before those two routes existed fails those two checks.
+   During the observation window the script also submits a 16-token positive
+   control on an advertised chat implementation. Its new lease identifies the
+   node that actually polled. The check fails if every listed device has
+   disconnected, and cancels the control if it is still queued.
 
 ### A second device (a Mac)
 

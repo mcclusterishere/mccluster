@@ -53,7 +53,7 @@ async function main() {
   const liveFor = async (implementation) => {
     const caps = await admin(`/v1/compute/capabilities?org_id=${org}`);
     if (caps.status !== 200) throw new Error(`capabilities read failed: HTTP ${caps.status} ${caps.body?.code || ''}`);
-    return caps.body.implementations.filter((item) => item.capability === 'ai.chat' && item.implementation === implementation);
+    return caps.body.implementations.filter((item) => item.capability === 'ai.chat' && (!implementation || item.implementation === implementation));
   };
   const body = (implementation, extra = {}) => ({
     capability: 'ai.chat', implementation, input: { prompt: options.prompt, num_predict: options.numPredict },
@@ -154,21 +154,55 @@ async function refusal({ admin, org, liveFor, body, staging }) {
   // nobody advertises, must stay unclaimed while the live devices keep polling.
   // The probe id is derived so that no real device will ever take it later.
   const probeImplementation = `${implementation}.unclaimed-probe`;
-  const liveNodesDuring = (await admin(`/v1/compute/nodes?org_id=${org}`)).body?.nodes?.filter((node) => node.state === 'online').map((node) => ({ id: node.id, display_name: node.display_name, implementations: (node.capabilities || []).map((item) => item.implementation) })) || [];
+  const candidates = await liveFor();
+  const controlImplementation = candidates.find((item) => item.implementation !== probeImplementation)?.implementation;
   const probeKey = `unclaimed-${crypto.randomUUID()}`;
   const queued = await admin('/v1/compute/jobs', { method: 'POST', headers: { 'idempotency-key': probeKey }, body: body(probeImplementation, { allow_offline: true, max_attempts: 1 }) });
   let probe = queued.body?.job || null;
+  const probeId = probe?.job_id;
+  let probeCancel = null;
+  let control = null;
+  let controlCancel = null;
+  let witnessed = null;
   const observations = [];
-  if (queued.status === 202 && probe) {
+  if (queued.status === 202 && probeId) {
     const deadline = Date.now() + options.boundMs;
-    while (Date.now() < deadline) {
-      await sleep(1_000);
-      probe = (await admin(`/v1/compute/jobs/${probe.job_id}?org_id=${org}`)).body;
-      observations.push({ at_ms: Date.now() - startedAt, status: probe.status, attempts: probe.attempts, locked_by_node_id: probe.locked_by_node_id, has_execution: Boolean(probe.execution) });
+    try {
+      // A stale online row cannot claim this new job. A lease on this supported
+      // implementation proves a device polled while the unsupported probe was queued.
+      if (controlImplementation) {
+        const reply = await admin('/v1/compute/jobs', {
+          method: 'POST', headers: { 'idempotency-key': `poll-control-${crypto.randomUUID()}` },
+          body: body(controlImplementation, { input: { prompt: 'Reply OK.', num_predict: 16 }, max_attempts: 1 })
+        });
+        if (reply.status === 202) control = reply.body?.job;
+      }
+      while (Date.now() < deadline) {
+        const [observedProbe, observedControl] = await Promise.all([
+          admin(`/v1/compute/jobs/${probeId}?org_id=${org}`),
+          control && !witnessed ? admin(`/v1/compute/jobs/${control.job_id}?org_id=${org}`) : null
+        ]);
+        if (observedProbe.status !== 200) throw new Error(`unclaimed probe read failed: HTTP ${observedProbe.status}`);
+        probe = observedProbe.body;
+        if (observedControl?.status === 200) control = observedControl.body;
+        const now = Date.now();
+        if (now > deadline) break;
+        observations.push({ at_ms: now - startedAt, status: probe.status, attempts: probe.attempts, locked_by_node_id: probe.locked_by_node_id, has_execution: Boolean(probe.execution) });
+        if (!witnessed && control?.attempts > 0 && control.execution?.node_id && control.implementation === controlImplementation) {
+          witnessed = { node_id: control.execution.node_id, lease_id: control.execution.lease_id, at_ms: now - startedAt };
+        }
+        await sleep(Math.min(500, deadline - now));
+      }
+    } finally {
+      // Both jobs belong to this run. A started control may finish its bounded
+      // response; remove any queued control before disconnecting.
+      try {
+        if (control && !control.terminal && !witnessed) controlCancel = await cancel(control.job_id, 'submit-job --expect-refusal: polling control finished');
+      } finally {
+        probeCancel = await cancel(probeId, 'submit-job --expect-refusal: unclaimed probe finished');
+      }
     }
   }
-  // The probe is this check's own job: cancel it, then read it back by its key.
-  const probeCancel = queued.status === 202 && probe ? await cancel(probe.job_id, 'submit-job --expect-refusal: unclaimed probe finished') : null;
   const probeAfter = (await jobsForKey(probeKey)) || [];
   const advertisedAfter = await liveFor(implementation);
 
@@ -179,7 +213,7 @@ async function refusal({ admin, org, liveFor, body, staging }) {
     no_job_row_created_by_the_refused_submit: Array.isArray(createdByRefusedSubmit) && createdByRefusedSubmit.length === 0,
     queued_probe_accepted_only_as_offline: queued.status === 202 && queued.body?.live_nodes === 0,
     queued_probe_never_claimed: observations.length > 0 && observations.every((seen) => seen.status === 'queued' && seen.attempts === 0 && !seen.locked_by_node_id && !seen.has_execution),
-    live_devices_were_polling_during_the_probe: liveNodesDuring.length > 0,
+    live_devices_were_polling_during_the_probe: Boolean(witnessed),
     queued_probe_canceled_afterwards: probeCancel?.http_status === 200 && probeCancel.status === 'canceled' && probeAfter.length === 1 && probeAfter[0].job_id === probe?.job_id && probeAfter[0].status === 'canceled' && probeAfter[0].attempts === 0
   };
   const report = {
@@ -196,7 +230,8 @@ async function refusal({ admin, org, liveFor, body, staging }) {
       cancel: probeCancel, status_after_cancel: probeAfter[0]?.status ?? null,
       note: 'final_status is the last observation inside the bound; the probe is then canceled and read back by its Idempotency-Key'
     },
-    live_devices_during_probe: liveNodesDuring,
+    polling_control: { implementation: controlImplementation ?? null, job_id: control?.job_id ?? null, observed_claim: witnessed, cancel: controlCancel },
+    live_devices_during_probe: witnessed ? [{ id: witnessed.node_id, implementations: [controlImplementation] }] : [],
     checked_at: new Date().toISOString()
   };
   write('refusal.json', report);
