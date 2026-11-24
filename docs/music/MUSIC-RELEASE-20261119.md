@@ -2478,3 +2478,18 @@ Device rows that change: none of rows 1 to 15. New rows, each in a Safari tab an
 18. On Listen with a song playing, tap Sign in, then Sign in again, then sign in with your password: you are back on
     Listen with the song still playing.
 19. On Listen, double-tap an artist card quickly: one artist page opens, and one Back returns to Listen.
+
+### Release 2 review (2026-11-24)
+
+An automated review of the release branch (`8bef0fd9`) left three findings. Two are fixed here, each with a test that
+fails before and passes after; nothing was merged, deployed, enabled or applied.
+
+1. **An artist page's album played out of order.** Listen's rail lists a creator's songs newest first and the artist
+   page then lists them in album order, but the queue kept the rail's order, so Next on track 1 (or its end) stopped the
+   record instead of playing track 2. A page that lists a song again now also places it in that page's order
+   (`js/music-engine.js`, `registerCreatorTrack`); `scripts/test/music-quick-wins.test.mjs`, "the artist page's album
+   order is the record's order".
+2. **The pocket said stopped while the song played on.** The lock screen's Next on a record's last song, or toward a
+   gated or held one, marked the pocket held and cleared Now Playing without pausing, and the next save wrote
+   `playing:true` back. The pocket now pauses its sound and film and saves the stop at once (`js/pip.js`);
+   `scripts/e2e/now-playing.e2e.mjs`, "pocket at the end of the record" (4 of 8 checks before, 8 of 8 after).

@@ -646,7 +646,16 @@
          own play, and says why to anyone else). */
       if (j < 0) { try { audio.currentTime = 0; } catch (e) {} return; }
       var next = j < list.length ? list[j] : null;
-      if (!next || next.gated || next.hold) { stash(false); box.classList.add("is-held"); if (np) np.clear(); return; }
+      if (!next || next.gated || next.hold) {
+        /* Next pressed while the song still plays stops it here too: the sound and the film first, then the stopped
+           state saved at once (a song left playing wrote playing:true back over it on its next timeupdate) */
+        try { audio.pause(); film.pause(); } catch (e) {}
+        playIc.setAttribute("d", ICON.play);
+        stash(false, true);
+        box.classList.add("is-held");
+        if (np) np.clear();
+        return;
+      }
 
       st.src = next.src;
       st.music_video = next.music_video || next.video || "";

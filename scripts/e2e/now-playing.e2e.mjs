@@ -415,6 +415,32 @@ try {
     await context.close();
   });
 
+  /* the lock screen's Next on the record's last song (and toward a gated or held one): the pocket marked itself held
+     and cleared Now Playing while the song went on playing, and its next timeupdate wrote playing:true back over the
+     stopped state (review of the release branch) */
+  await scenario('pocket at the end of the record', async () => {
+    for (const [slug, title, why] of [['here', ALBUM('here').tracks.at(-1).title, 'the last song'], ['cia-mind-control', ALBUM('cia-mind-control').tracks[1].title, 'the song before a gated one']]) {
+      const alb = ALBUM(slug), song = alb.tracks.find(t => t.title === title);
+      const { context, page, errors } = await setup({ webkit: true, pocket: { src: song.src, title, album: slug, artist: 'McCluster', poster: song.poster, t: 4, playing: true } });
+      await page.goto(HOUSE + '/catalogue.html', { waitUntil: 'load' });
+      await page.waitForSelector('.pocket .pocket__play', { timeout: 15000 });
+      await page.waitForTimeout(600);
+      if (!(await page.evaluate(() => { const a = document.querySelector('.pocket__audio'); return !!a && !a.paused; }))) await page.locator('.pocket .pocket__play').click({ force: true });
+      await page.waitForFunction(() => { const a = document.querySelector('.pocket__audio'); return a && !a.paused && a.currentTime > 0; }, null, { timeout: 15000 });
+      await press(page, 'nexttrack');
+      await page.waitForFunction(() => document.querySelector('.pocket').classList.contains('is-held'), null, { timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(1500);   // longer than the pocket's 900 ms between saves: a song still playing writes over the stop
+      const s = await page.evaluate(() => { const a = document.querySelector('.pocket__audio'), f = document.querySelector('.pocket__film'), b = document.querySelector('.pocket');
+        return { held: b.classList.contains('is-held'), audioPaused: a.paused, filmPaused: f.paused, title: document.querySelector('.pocket__title').textContent,
+          saved: (JSON.parse(localStorage.getItem('mcc-pocket') || '{}')).playing } });
+      check(`pocket, Next on ${why}: the record stops on that song, shown held`, s.held && s.title === title, s);
+      check(`pocket, Next on ${why}: the sound and the film stop with it`, s.audioPaused && s.filmPaused, s);
+      check(`pocket, Next on ${why}: the saved record says stopped, and stays so`, s.saved === false, s);
+      check(`pocket, Next on ${why}: no script errors`, errors.length === 0, errors);
+      await context.close();
+    }
+  });
+
   await scenario('gateway score', async () => {
     const { context, page, errors } = await setup();
     await page.goto(HOUSE + '/heal-the-3rd-world.html', { waitUntil: 'load' });
