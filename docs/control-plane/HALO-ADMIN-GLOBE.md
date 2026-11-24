@@ -10,7 +10,7 @@ Owner direction, 2026-10-21:
 > for last."
 
 Since 2026-11-23 Halo is also a registered owner-only module with an Admin card and a Control entry (`HALO-MODULE.md`), its
-extended feeds load without the map (`HALO-FEED-INVENTORY.md`), and one dated case exists (`HALO-CASE-FUKUSHIMA-RENESAS.md`).
+seven environmental feeds load without the map (`HALO-FEED-INVENTORY.md`), and one dated case exists (`HALO-CASE-FUKUSHIMA-RENESAS.md`).
 
 This record says what the admin globe now holds, where each piece lives, what is next, and the rules it keeps. Companions:
 `HALO-INTEL-IMPLEMENTATION-MAP.md` (Seek First retirement), `WORLD-GLOBE-FEED-AND-ANALYTICS.md` (the World globe),

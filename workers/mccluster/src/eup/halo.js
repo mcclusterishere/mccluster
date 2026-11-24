@@ -37,8 +37,8 @@ export const HALO_VIEWS = Object.freeze([
    the two lists to each other). `layer` names a ../world-halo-layers.js layer whose requirement this file can check. */
 const DECLARED = Object.freeze([
   { id: 'flights', label: 'Aircraft', group: 'Air & sea', route: '/v1/world/layers/flights', needs_map: true },
-  { id: 'military', label: 'Military aircraft', group: 'Air & sea', layer: 'military' },
-  { id: 'vessels', label: 'Ships (AIS)', group: 'Air & sea', layer: 'vessels' },
+  { id: 'military', label: 'Military aircraft', group: 'Air & sea', layer: 'military', needs_map: true },
+  { id: 'vessels', label: 'Ships (AIS)', group: 'Air & sea', layer: 'vessels', needs_map: true },
   { id: 'weather', label: 'Weather alerts (NOAA)', group: 'Earth & weather', layer: 'weather' },
   { id: 'natural', label: 'Natural events (NASA)', group: 'Earth & weather', layer: 'natural' },
   { id: 'quakes', label: 'Earthquakes', group: 'Earth & weather', layer: 'quakes' },

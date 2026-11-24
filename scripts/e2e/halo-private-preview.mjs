@@ -36,7 +36,7 @@ const API = `${ORIGIN}/__api`, SUPA = `${ORIGIN}/__supa`;
 const OWNER = '11111111-1111-4111-8111-111111111111', MEMBER = '22222222-2222-4222-8222-222222222222', ORG = '11111111-1111-4111-8111-222222222222';
 const TYPES = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.html': 'text/html', '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ico': 'image/x-icon' };
 const TEXT = new Set(['.js', '.mjs', '.html', '.css', '.json']);
-const FEED_IDS = ['weather', 'natural', 'military', 'vessels', 'quakes', 'fires', 'perimeters', 'cyclones', 'tides'];
+const FEED_IDS = ['weather', 'natural', 'quakes', 'fires', 'perimeters', 'cyclones', 'tides'];
 export const FEED_MODES = ['ok', 'stale', 'denied', 'down', 'malformed', 'empty', 'filtered'];
 
 /* the scenario, changed only by /__preview links */
@@ -173,8 +173,8 @@ ${link('Owner, older Worker without the section (404)', 'as=owner&store=producti
 ${link('Member (not the owner): refused', 'as=member&to=control.html%23system:halo')}
 ${link('Guest (signed out)', 'as=guest&to=control.html%23system:halo')}
 </ul><h2>Halo feeds (fixtures)</h2><ul>
-${FEED_MODES.map((m) => link('Owner, Halo with every feed ' + m, 'as=owner&feeds=' + m + '&to=action-globe.html%3Fexplore%3D1%26halo%3Dintel')).join('\n')}
-${FEED_MODES.map((m) => link('Owner, NO MAP (WebGL refused), every feed ' + m, 'as=owner&webgl=off&feeds=' + m + '&to=action-globe.html%3Fexplore%3D1%26halo%3Dintel')).join('\n')}
+${FEED_MODES.map((m) => link('Owner, Halo with environmental feeds ' + m, 'as=owner&feeds=' + m + '&to=action-globe.html%3Fexplore%3D1%26halo%3Dintel')).join('\n')}
+${FEED_MODES.map((m) => link('Owner, NO MAP (WebGL refused), environmental feeds ' + m, 'as=owner&webgl=off&feeds=' + m + '&to=action-globe.html%3Fexplore%3D1%26halo%3Dintel')).join('\n')}
 ${link('Guest on the Halo link: the plain public globe, no Halo', 'as=guest&to=action-globe.html%3Fexplore%3D1%26halo%3D1')}
 ${link('Member on the Halo link: no Halo', 'as=member&to=action-globe.html%3Fexplore%3D1%26halo%3D1')}
 </ul><p>Scenario now: <code>${JSON.stringify(scene)}</code></p>`;

@@ -114,10 +114,10 @@ jobs:
       # Reconciler v3 waits in supabase/pending/ until production applies it
       # (see its README). Apply it to this rebuild, prove the v1/v2 suite still
       # holds on it, then its own suite and the two-session race it fixes.
-      - name: Apply pending commerce reconciler v3 in the isolated database
+      - name: Verify commerce reconciler v3 reapplication in the isolated database
         env:
           PGPASSWORD: postgres
-        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --single-transaction -v ON_ERROR_STOP=1 -f supabase/pending/commerce_stripe_reconciler_v3.sql
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261124164724_commerce_stripe_reconciler_v3.sql
       - name: Run commerce reconciler regression suites on v3
         env:
           PGPASSWORD: postgres
@@ -139,10 +139,10 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/compute_cogs_regression.sql
-      - name: Apply pending clipping source expansion in the isolated database
+      - name: Verify clipping source reapplication in the isolated database
         env:
           PGPASSWORD: postgres
-        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/pending/equity_uprise_clipping_sources.sql
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/migrations/20261124164851_equity_uprise_clipping_sources.sql
       - name: Run clipping marketplace regression suite
         env:
           PGPASSWORD: postgres

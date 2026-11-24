@@ -101,11 +101,24 @@
   }
 
   /* 'approved' only when an authorization names the recorded event; anything else is 'proposed'. */
-  function decisionStatus(c) {
+  function decisionStatus(c, cutoffMs) {
     var a = c && c.proposed_decision && c.proposed_decision.authorization;
+    var approvedAt = a && instant(a.approved_at);
     var ok = a && typeof a === 'object' && a.store === 'ai_context.decisions' && typeof a.decision_id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(a.decision_id)
-      && typeof a.approved_by === 'string' && a.approved_by && instant(a.approved_at) !== null;
+      && typeof a.approved_by === 'string' && a.approved_by && approvedAt !== null && (cutoffMs === undefined || approvedAt <= cutoffMs);
     return ok ? 'approved' : 'proposed';
+  }
+
+  function decisionAsOf(c, cut) {
+    var proposal = c.proposed_decision;
+    if (!proposal) return null;
+    var status = decisionStatus(c, cut);
+    /* The case authoring session uses UTC. A date alone establishes the proposal by the end
+       of that day. A recorded authorization can establish it earlier at its exact instant. */
+    var written = instant(c.written);
+    if (written === null) written = endOfLocalDay(c.written, 'UTC');
+    if (status !== 'approved' && (written === null || cut < written)) return null;
+    return { status: status, title: proposal.title };
   }
 
   var RANK = { unknown: 0, halted: 1, partial: 2, recovered_operator_confirmed: 3 };
@@ -154,7 +167,7 @@
       statements: statements,
       regional_shaking: regional,
       sites: Object.keys(sites).map(function (k) { return sites[k]; }),
-      decision: c.proposed_decision ? { status: decisionStatus(c), title: c.proposed_decision.title } : null
+      decision: decisionAsOf(c, cut)
     };
   }
 

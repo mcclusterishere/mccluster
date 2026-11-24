@@ -109,8 +109,10 @@ test('feeds: every declared feed is listed once; configuration is a boolean or n
   const by = (b) => Object.fromEntries(b.feeds.map((f) => [f.id, f]));
   assert.equal(by(bare).fires.configured, false); assert.deepEqual(by(bare).fires.requires, ['FIRMS_MAP_KEY']);
   assert.equal(by(bare).vessels.configured, false); assert.deepEqual(by(bare).vessels.requires, ['AISSTREAM_API_KEY', 'HereTenantAgent']);
-  for (const id of ['weather', 'natural', 'military', 'quakes', 'perimeters', 'cyclones', 'tides']) { assert.equal(by(bare)[id].configured, true, id); assert.equal(by(bare)[id].needs_map, false, id); }
+  for (const id of ['weather', 'natural', 'quakes', 'perimeters', 'cyclones', 'tides']) { assert.equal(by(bare)[id].configured, true, id); assert.equal(by(bare)[id].needs_map, false, id); }
   for (const id of ['flights', 'satellites', 'launches', 'cctv', 'regions', 'intel', 'markets']) { assert.equal(by(bare)[id].configured, null, `${id} is not checked here, which is not "configured"`); assert.equal(by(bare)[id].needs_map, true, id); }
+  assert.equal(by(bare).military.configured, true);
+  for (const id of ['military', 'vessels']) assert.equal(by(bare)[id].needs_map, true, id);
   assert.equal(by(bare).missions.configured, null); assert.equal(by(bare).missions.needs_map, false);
   assert.equal(by(bare).quakes.route, '/v1/world/layers/quakes'); assert.equal(by(bare).tides.route, '/v1/world/layers/tides');
   const env = { ...BASE, FIRMS_MAP_KEY: secret, AISSTREAM_API_KEY: ais, HereTenantAgent: { idFromName() {}, get() {} } };

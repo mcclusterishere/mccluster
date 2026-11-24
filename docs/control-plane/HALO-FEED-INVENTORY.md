@@ -1,17 +1,15 @@
 # Hitman's Halo: feed inventory
 
-Written 2026-11-23 (readings taken 2026-11-24 04:36 UTC). Scope: every feed the Halo view **declares**
-(`js/halo/halo.js` `GROUPS`, 17 items), not only the ones that draw. The same list is served to the owner, with live
-configuration flags, by `GET /v1/eup/halo` (Control → System → Hitman's Halo → Declared feeds).
+Written 2026-11-23 (readings taken 2026-11-24 04:36 UTC). This inventory covers the seven environmental feeds that the owner can read when the map is unavailable. The full catalog and configuration flags are available to the owner through `GET /v1/eup/halo` (Control → System → Hitman's Halo → Declared feeds).
 
 ## What was and was not verified
 
 | Kind of number | Status |
 |---|---|
 | Counts through the Worker with the owner's session (what Halo actually returns and shows in production) | **Partly verified**, 2026-11-24 05:20 UTC, off the screen of the owner's signed-in desktop app: the two feeds that were on (Earthquakes 246, Tropical cyclones 0). The other feeds were off and were not switched on. No owner token was used by any script. Signed out, the production Halo link shows the plain public globe and loads no Halo script |
-| Which secrets are set on the production Worker (`FIRMS_MAP_KEY`, `AISSTREAM_API_KEY`) | **Not verified.** `GET /v1/eup/halo` reports this as booleans once this change is deployed |
+| Environmental feed configuration on the production Worker (`FIRMS_MAP_KEY`) | **Not verified.** `GET /v1/eup/halo` reports this as booleans once this change is deployed |
 | Public provider answers read directly, unauthenticated | Read for USGS, NOAA NHC and NASA EONET (below). These are the provider's numbers, **not** Halo's |
-| Fixture counts | The nine files in `scripts/e2e/fixtures/halo-feeds/` are synthetic. **Fixture counts are not live counts** |
+| Fixture counts | The seven environmental files in `scripts/e2e/fixtures/halo-feeds/` are synthetic. **Fixture counts are not live counts** |
 
 ## Live reading through the owner's session (2026-11-24 05:20 UTC)
 
@@ -27,7 +25,7 @@ expanded to read its counts and collapsed again.
 | Tropical cyclones | **On, 0 shown**, "Updated 2m ago" in green |
 | Missions; Intelligence connector; Missions and evidence | Updated just now; updated 5m ago; updated just now |
 | Member regions | "Live" |
-| Aircraft, Military aircraft, Ships, Weather alerts, Natural events, Thermal hotspots, Water levels, Wildfire perimeters, Satellites, Launches, Cameras, Intel events, Exchanges | **Off** on this device |
+| Weather alerts, Natural events, Thermal hotspots, Water levels, Wildfire perimeters, Satellites, Launches, Cameras, Intel events, Exchanges | **Off** on this device |
 
 ### Second reading, 05:22 to 05:26 UTC, with the owner's go-ahead
 
@@ -36,9 +34,6 @@ saved setup ends as it began (Earthquakes, Tropical cyclones, Missions and Membe
 
 | Feed | Shown in production | Note |
 |---|---|---|
-| Aircraft | 1,020 shown / 1,020 loaded | |
-| Military aircraft | 71 (67 four minutes later) | |
-| Ships (AIS) | **"Needs a key"** | `AISSTREAM_API_KEY` or its binding is not set on the production Worker |
 | Weather alerts | 9 mapped / 405 reports | 396 alerts carry no coordinates: listed, not mapped |
 | Natural events | 46 mapped / 46 reports | |
 | Earthquakes | 246, then 244 | already on |
@@ -54,16 +49,13 @@ saved setup ends as it began (Earthquakes, Tropical cyclones, Missions and Membe
 | Intel events | 69 | |
 | Exchanges | 13 open / 49 | |
 
-Every declared feed answered. **Two return nothing because a key is missing in production**, which the page says only
-once the feed is switched on. The narrow list column also breaks the "Aircraft" and "Satellites" labels across lines
-when a count is shown.
+The environmental feeds responded. Thermal hotspots reported a missing key when switched on.
 
 What this settles:
 
 - **With the map working, twelve of the seventeen declared feeds showed nothing because they were switched off** in this
   device's saved Halo setup, not because they failed. Only Earthquakes and Tropical cyclones were on (the Intelligence
-  tab turns those two on by itself). Whether the others return data is still unread: reading them means switching them
-  on, which changes the saved setup, so it was left for the owner.
+  tab turns those two on by itself). The second reading above records the other feeds after the owner authorized switching them on.
 - The cyclone feed read **0 with a green "Updated 2m ago"** while NHC listed no active storms: an empty answer shown as
   an ordinary fresh count, as described below. After this change it reads "No records".
 - "Updated 2m ago" is the Worker's fetch time. The earthquake count (246) is what the page could use; what the Worker
@@ -73,7 +65,7 @@ What this settles:
 
 ## The trace, per feed
 
-Path for every extended feed: release guard (owner only) → Worker route → provider fetch through `upstream` →
+Environmental feed path: release guard (owner only) → Worker route → provider fetch through `upstream` →
 `cachedLayer` (Cache API, last good answer kept 6 h past the TTL) → envelope → `js/halo/layers.js` normalize → list,
 Intelligence feed, timeline → paint on the map when there is one. There is no canonical store on this path: these are
 live reads, not ingested evidence. Canonical evidence (`intel_evidence`) reaches Halo separately through
@@ -81,9 +73,6 @@ live reads, not ingested evidence. Canonical evidence (`intel_evidence`) reaches
 
 | Feed | Source | Needs | Route | Provider time in the envelope | Lists without the map |
 |---|---|---|---|---|---|
-| Aircraft (`flights`) | adsb.lol, or OpenSky with credentials | optional OpenSky credentials | `/v1/world/layers/flights` | `observed_at` | **No** (a globe base layer) |
-| Military aircraft | adsb.lol `/v2/mil` | none | `/v1/world/layers/military` | `observed_at` (provider "now") | Yes |
-| Ships (AIS) | AISStream via the `HereTenantAgent` Durable Object | `AISSTREAM_API_KEY` + binding | `/v1/world/layers/vessels` | `last_message_at` | Yes |
 | Weather alerts | NOAA NWS | none | `/v1/world/layers/weather` | per row `observed_at` (alert sent) | Yes |
 | Natural events | NASA EONET | none | `/v1/world/layers/natural` | per row `observed_at` (latest geometry date) | Yes |
 | Earthquakes | USGS `all_day.geojson` | none | `/v1/world/layers/quakes` | `observed_at` (feed generated) and per row `time` | Yes |
@@ -104,13 +93,13 @@ live reads, not ingested evidence. Canonical evidence (`intel_evidence`) reaches
 
 ## Returned, shown, and why they differ
 
-`js/halo/layers.js` `status(id)` now carries, per feed: `returned` (rows the Worker sent), `count` (rows usable here),
+`js/halo/layers.js` `status(id)` now carries, per environmental feed: `returned` (rows the Worker sent), `count` (rows usable here),
 `dropped` with `dropWhy`, `mapped`, and four clocks (`provider`, `newest`, `fetched`, `checked`). The source detail in
 Halo shows them. The standing reasons a shown number is smaller than a returned one:
 
 | Step | Rule | Where |
 |---|---|---|
-| Worker | Caps per feed (quakes 2000, fires 25000 lowest radiative power first, vessels 8000, military 4000, perimeters 400, weather 1500, natural 500); privacy-flagged airframes withheld; AIS rows older than an hour dropped; rows without a valid id or position dropped | `workers/mccluster/src/world-halo-layers.js` |
+| Worker | Caps per feed (quakes 2000, fires 25000 lowest radiative power first, perimeters 400, weather 1500, natural 500); rows without a valid id or position dropped | `workers/mccluster/src/world-halo-layers.js` |
 | Page, reading | A row without a valid position, a perimeter without three valid points, a station id that is not seven digits, an alert without an id or already expired | `normalize` in `js/halo/layers.js` |
 | Page, map | Alerts and natural events with no coordinates are listed and not mapped | `mapped` vs `count` |
 | Intelligence feed | Quakes: M4.0 and above, the 12 strongest; fires: the 6 strongest by radiative power; then the timeline window (1, 6 or 24 hours) and the area filter | `feed()`, `feedFiltered()` in `js/halo/halo.js` |
@@ -123,8 +112,6 @@ Halo shows them. The standing reasons a shown number is smaller than a returned 
 | Tropical cyclones | 0 active storms: a real empty answer | not verified | returned 1, usable 1 |
 | Natural events | 500 open events with my own `limit=500` query (the cap was hit, so the true total is not known from this); the Worker's own query was not replayed | not verified | returned 2, usable 2 |
 | Weather alerts | not read | not verified | returned 3, usable 2, 1 dropped (no id) |
-| Military aircraft | not read | not verified | returned 3, usable 3 |
-| Ships (AIS) | cannot be read without the key | not verified | returned 3, usable 2, 1 dropped (no valid position) |
 | Thermal hotspots | cannot be read without the key | not verified | returned 3, usable 3 |
 | Wildfire perimeters | not read | not verified | returned 2, usable 1, 1 dropped (no drawable boundary) |
 | Water levels | not read | not verified | returned 3, usable 2, 1 dropped (station id) |
@@ -135,8 +122,8 @@ reads "No records: the provider answered with nothing", which is different from 
 ## What the owner was missing, and what is fixed
 
 1. **Fixed.** No extended feed was fetched when the Cesium viewer did not start (`layers = V && …` in `js/halo/halo.js`).
-   Nine feeds now load and list without the map.
-2. **Fixed.** A failed refresh dropped the count to "Unavailable" and cleared the rows. The last good answer is kept and
+   Seven environmental feeds now load and list without the map. Transport requires the map.
+2. **Fixed.** A failed refresh dropped the count to "Unavailable" and cleared the rows. An environmental feed’s last good answer is kept and
    labelled stale, by whom and why.
 3. **Kept and tightened.** A 403 already removed the rows. It now also forgets that there ever was a good answer, so a
    later outage cannot bring them back as "stale".
@@ -147,15 +134,11 @@ reads "No records: the provider answered with nothing", which is different from 
 
 ## Still open
 
-- **Seven declared items still need the map** (aircraft, satellites, launches, cameras, member regions, the intel map
-  layer, markets). They are drawn by the globe's own layer code (`G.layer`), which has no list path. Without WebGL they
-  read "Needs the map". Aircraft, satellites and launches have Worker routes and could be listed the same way; that is a
-  change to `js/action-globe.js`, which this change does not touch.
+- Aircraft, vessels, satellites, launches, cameras, member regions, the intel map layer and markets require the map.
 - **USGS revisions are dropped at the Worker.** `normalizeQuake` keeps `time` and drops `updated`, `status`, `magType`
   and `ids`, so Halo cannot show that an event was revised. Needed before quakes become keyed evidence (source, revision,
   content hash).
 - **NHC and NIFC supply no usable time in the envelope.** The Worker could pass the advisory time through.
-- **The live reading covers two feeds.** The rest need the owner to switch them on (or to say that may be done), and
-  returned-versus-shown needs the source detail panels this change adds, after deploy.
+- The dated desktop readings cover the earlier production interface. Production returned-versus-shown and the mapless interface still need verification on the released revision.
 - **A feed that is off looks the same as a feed with nothing in it** until the owner opens the list. Worth deciding
   whether the Intelligence tab should say how many declared feeds are off.

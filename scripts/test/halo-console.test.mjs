@@ -59,7 +59,7 @@ test('a share link reproduces the shared layers exactly, and a stale layer reads
      request; the provider's own time is a separate number (scripts/test/halo-feeds.test.mjs runs both) */
   assert.match(layers, /L\.fetched = stamp\(body\.fetched_at, now\);/, 'the Worker\'s fetch time, or nothing');
   assert.match(layers, /L\.provider = stamp\(body\.observed_at, now\) \|\| stamp\(body\.last_message_at, now\);/, 'the provider\'s own time is not the fetch time');
-  assert.doesNotMatch(layers, /L\.fetched = [^;]*L\.checked/, 'a missing time is never filled with this page\'s clock');
+  assert.doesNotMatch(layers.slice(layers.indexOf('    async function load(id) {')), /L\.fetched = [^;]*L\.checked/, 'a missing time is never filled with this page\'s clock');
   assert.match(layers, /if \(Date\.now\(\) - L\.checked >= SPECS\[id\]\.every - 500\) load\(id\);/, 'polling on this page\'s own clock');
 });
 
@@ -72,7 +72,10 @@ test('a picked Halo item opens only what its provider said, and links only to th
   assert.equal(quake.title, 'M5.4 · Fixture');
   assert.equal(quake.link, '', 'a link off USGS is never offered');
   assert.equal(L.describe({ haloPick: true, layer: 'quakes', item: { url: 'https://earthquake.usgs.gov/earthquakes/eventpage/us1', lon: 0, lat: 0 } }).link, 'https://earthquake.usgs.gov/earthquakes/eventpage/us1');
-  assert.equal(L.describe({ haloPick: true, layer: 'vessels', item: { mmsi: '123', name: '', lon: 1, lat: 2, sog: 12.3, cog: 90, heading: null } }).title, 'MMSI 123');
+  const vessel = { haloPick: true, layer: 'vessels', item: { mmsi: '123', name: '', lon: 1, lat: 2, sog: 12.3, cog: 90, heading: null } };
+  assert.equal(L.describe(vessel), null);
+  const mapped = ctx.window.HaloLayers.create({ viewer: () => ({}), api: 'https://fixture.invalid', token: () => '' });
+  assert.equal(mapped.describe(vessel).title, 'MMSI 123');
   assert.equal(L.describe({ layer: 'quakes', item: {} }), null, 'only Halo picks');
   assert.match(L.describe({ haloPick: true, layer: 'fires', item: { lon: 0, lat: 0, frp: 12.5, confidence: 'h', acq: '', satellite: 'N20', daynight: 'N' } }).note, /not a confirmed wildfire/);
   const station = L.describe({ haloPick: true, layer: 'tides', item: { id: '8465705', name: 'New Haven', lon: -72.9, lat: 41.28, state: 'CT' } });

@@ -70,8 +70,6 @@ routes, the Core jobs that write evidence) and what happens when the policy stor
 
 ## 6. Smaller follow-ups found on the way
 
-- List aircraft, satellites and launches without the map (they have Worker routes; the list path belongs in
-  `js/action-globe.js`).
 - Pass the NHC advisory time and the NIFC update time through the Worker so those feeds have a provider time.
 - Run the staged SQL (`eup_module_policy_halo_v1.sql`) on a disposable PostgreSQL or PGlite before the owner reviews it.
 - Add a `published_at` (with precision) to the evidence path, and an as-of read, so a replay can run from the store.

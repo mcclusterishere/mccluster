@@ -10,8 +10,8 @@
    provider said about that one thing (js/halo/halo.js asks describe()).
 
    THE LIST DOES NOT NEED THE MAP (2026-11-23). A layer used to be fetched only when the Cesium viewer existed, so a browser
-   without WebGL showed no extended feed at all. Reading a row (normalize) and drawing it (paint) are now two steps: every
-   layer is fetched, read, counted and listed with or without a viewer, and painted only when there is one.
+   without WebGL showed no extended feed at all. Reading a row (normalize) and drawing it (paint) are now two steps: the seven environmental
+   layers can be listed without a viewer. Transport layers use the existing map-only loader.
    What an answer does to what is shown:
      good answer (zero rows included)   replaces everything; zero rows is "empty", which is not "unavailable"
      Worker says stale                  shown, labelled stale (the Worker is serving its kept answer)
@@ -36,6 +36,8 @@
     tides: Object.freeze({ label: 'Water levels (NOAA)', rows: 'stations', every: 3600000, color: '#45b8f4' })
   });
   /* what each layer's points are: an observation, a calculation, or reference (docs/design/halo/HALO-VIEW-DESIGN.md) */
+  const ENVIRONMENTAL = new Set(['weather', 'natural', 'quakes', 'fires', 'perimeters', 'cyclones', 'tides']);
+  const supportsList = (id) => ENVIRONMENTAL.has(id);
   const PROVENANCE = Object.freeze({ weather: 'warning', natural: 'reported', military: 'observed', vessels: 'observed', quakes: 'observed', fires: 'observed', perimeters: 'reported', cyclones: 'observed', tides: 'reference' });
 
   const finite = (v) => typeof v === 'number' && Number.isFinite(v);
@@ -106,6 +108,11 @@
     Object.keys(SPECS).forEach((id) => { state[id] = { on: false, phase: 'off', count: 0, returned: 0, dropped: 0, dropWhy: '', lastGood: false, stale: false, staleBy: '', reason: '', credit: '', renderIssue: '', fetched: 0, provider: 0, newest: 0, checked: 0, prims: [], entities: [], timer: 0, seq: 0, items: [] }; });
 
     function viewer() { return G.viewer(); }
+    function accessible(id) {
+      if (supportsList(id) || viewer()) return true;
+      if (state[id] && state[id].on) setOn(id, false);
+      return false;
+    }
     function changed(id) { listeners.forEach((fn) => { try { fn(id, status(id)); } catch (_) { /* a listener's own fault */ } }); }
     /* One word for what the owner is looking at, so the six cases are never confused:
        loading · fresh · stale · empty (the provider answered with nothing) · unavailable (provider or key) ·
@@ -122,6 +129,10 @@
     }
     function status(id) {
       const L = state[id];
+      if (L && !supportsList(id)) {
+        accessible(id);
+        return { mapped: L.count, on: L.on, state: L.phase, count: L.count, stale: L.stale, reason: L.reason, credit: L.credit, fetched: L.fetched };
+      }
       return L ? { mapped: L.items.filter(it => lonLat(it.lon,it.lat)).length, on: L.on, state: L.phase, condition: condition(L), count: L.count, returned: L.returned, dropped: L.dropped, dropWhy: L.dropWhy, stale: L.stale, staleBy: L.staleBy, lastGood: L.lastGood, reason: L.reason, credit: L.credit, fetched: L.fetched, provider: L.provider, newest: L.newest, checked: L.checked, renderIssue: L.renderIssue } : null;
     }
     /* remove what is drawn; the listed items are a separate thing and are kept unless the caller forgets them */
@@ -148,15 +159,6 @@
     const normalize = {
       weather(r) { return r && typeof r === 'object' && !Array.isArray(r) && typeof r.id === 'string' && !(window.HaloEvents && HaloEvents.expired(r)) ? r : null; },
       natural(r) { return normalize.weather(r); },
-      military(r) {
-        if (!Array.isArray(r) || !lonLat(r[2], r[3])) return null;
-        return { hex: text(r[0], 12), callsign: text(r[1], 16), lon: r[2], lat: r[3], alt: finite(r[4]) ? r[4] : null, speed: finite(r[5]) ? r[5] : null, track: finite(r[6]) ? r[6] : null, type: text(r[7], 24), squawk: text(r[8], 8), emergency: r[9] === true };
-      },
-      vessels(r) {
-        if (!Array.isArray(r) || !lonLat(r[2], r[3])) return null;
-        const heading = finite(r[6]) && r[6] >= 0 && r[6] < 360 ? r[6] : (finite(r[5]) && r[5] >= 0 && r[5] < 360 ? r[5] : null);
-        return { mmsi: text(String(r[0] ?? ''), 12), name: text(r[1], 40), lon: r[2], lat: r[3], sog: finite(r[4]) ? r[4] : null, cog: finite(r[5]) ? r[5] : null, heading, status: r[7] ?? null };
-      },
       quakes(q) {
         if (!q || typeof q !== 'object' || !lonLat(q.lon, q.lat)) return null;
         const mag = finite(q.mag) ? Math.max(0, Math.min(9.9, q.mag)) : null;
@@ -190,30 +192,6 @@
     const paint = {
       weather() {},
       natural() {},
-      military(id, items) {
-        const v = viewer(), col = new C.BillboardCollection(), L = state[id];
-        items.forEach((item) => {
-          const position = C.Cartesian3.fromDegrees(item.lon, item.lat, Math.max(0, item.alt ?? 0));
-          col.add({
-            position, image: icon('aircraft', item.emergency ? '#ff4444' : SPECS.military.color), width: 22, height: 22,
-            rotation: item.track === null ? 0 : -C.Math.toRadians(item.track), alignedAxis: item.track === null ? C.Cartesian3.ZERO : headingAxis(C, position),
-            scaleByDistance: new C.NearFarScalar(100000, 1.25, 20000000, 0.4), id: pickId(id, item)
-          });
-        });
-        v.scene.primitives.add(col); L.prims.push(col);
-      },
-      vessels(id, items) {
-        const v = viewer(), col = new C.BillboardCollection(), L = state[id];
-        items.forEach((item) => {
-          const position = C.Cartesian3.fromDegrees(item.lon, item.lat, 0);
-          col.add({
-            position, image: icon('ship', SPECS.vessels.color), width: 16, height: 16,
-            rotation: item.heading === null ? 0 : -C.Math.toRadians(item.heading), alignedAxis: item.heading === null ? C.Cartesian3.ZERO : headingAxis(C, position),
-            scaleByDistance: new C.NearFarScalar(50000, 1.3, 15000000, 0.35), id: pickId(id, item)
-          });
-        });
-        v.scene.primitives.add(col); L.prims.push(col);
-      },
       quakes(id, items) {
         const v = viewer(), pts = new C.PointPrimitiveCollection(), labels = new C.LabelCollection(), L = state[id];
         items.forEach((item) => {
@@ -265,7 +243,83 @@
       }
     };
 
+    // Transport continues to use the existing map-only path. Failed reads and drawing failures clear its rows.
+    function clearMapped(id, keepVisual = false) {
+      unpaint(id, keepVisual);
+      state[id].items = [];
+      state[id].count = 0;
+    }
+
+    const draw = {
+      military(id, rows) {
+        const v = viewer(), col = new C.BillboardCollection(), L = state[id];
+        rows.forEach((r) => {
+          if (!Array.isArray(r) || !lonLat(r[2], r[3])) return;
+          const item = { hex: text(r[0], 12), callsign: text(r[1], 16), lon: r[2], lat: r[3], alt: finite(r[4]) ? r[4] : null, speed: finite(r[5]) ? r[5] : null, track: finite(r[6]) ? r[6] : null, type: text(r[7], 24), squawk: text(r[8], 8), emergency: r[9] === true };
+          const position = C.Cartesian3.fromDegrees(item.lon, item.lat, Math.max(0, item.alt ?? 0));
+          col.add({
+            position, image: icon('aircraft', item.emergency ? '#ff4444' : SPECS.military.color), width: 22, height: 22,
+            rotation: item.track === null ? 0 : -C.Math.toRadians(item.track), alignedAxis: item.track === null ? C.Cartesian3.ZERO : headingAxis(C, position),
+            scaleByDistance: new C.NearFarScalar(100000, 1.25, 20000000, 0.4), id: pickId(id, item)
+          });
+          L.items.push(item);
+        });
+        v.scene.primitives.add(col); L.prims.push(col); L.count = col.length;
+      },
+      vessels(id, rows) {
+        const v = viewer(), col = new C.BillboardCollection(), L = state[id];
+        rows.forEach((r) => {
+          if (!Array.isArray(r) || !lonLat(r[2], r[3])) return;
+          const heading = finite(r[6]) && r[6] >= 0 && r[6] < 360 ? r[6] : (finite(r[5]) && r[5] >= 0 && r[5] < 360 ? r[5] : null);
+          const item = { mmsi: text(String(r[0] ?? ''), 12), name: text(r[1], 40), lon: r[2], lat: r[3], sog: finite(r[4]) ? r[4] : null, cog: finite(r[5]) ? r[5] : null, heading, status: r[7] ?? null };
+          const position = C.Cartesian3.fromDegrees(item.lon, item.lat, 0);
+          col.add({
+            position, image: icon('ship', SPECS.vessels.color), width: 16, height: 16,
+            rotation: heading === null ? 0 : -C.Math.toRadians(heading), alignedAxis: heading === null ? C.Cartesian3.ZERO : headingAxis(C, position),
+            scaleByDistance: new C.NearFarScalar(50000, 1.3, 15000000, 0.35), id: pickId(id, item)
+          });
+          L.items.push(item);
+        });
+        v.scene.primitives.add(col); L.prims.push(col); L.count = col.length;
+      }
+    };
+
+    async function loadMapped(id) {
+      const L = state[id], seq = ++L.seq, v = viewer();
+      if (!v) return setOn(id, false);
+      L.phase = L.count ? L.phase : 'loading'; changed(id);
+      let body = null, phase = 'on', reason = '';
+      try {
+        const t = G.token();
+        const res = await fetch(G.api + '/v1/world/layers/' + id, { headers: t ? { accept: 'application/json', authorization: 'Bearer ' + t } : { accept: 'application/json' }, cache: 'no-store' });
+        if (res.status === 401 || res.status === 403) { phase = 'locked'; reason = 'owner only'; }
+        else if (!res.ok) { phase = 'error'; reason = 'answered ' + res.status; }
+        else body = await res.json();
+      } catch (e) { phase = 'error'; reason = 'could not reach the Worker'; }
+      if (seq !== L.seq || !L.on) return;
+      if (!viewer()) return setOn(id, false);
+      if (body && body.unavailable) { phase = 'unavailable'; reason = body.upstream_error === 'not_configured' ? 'needs a key' : 'provider unavailable'; }
+      /* checked: when this page last asked (the polling clock); fetched: when the provider last answered, as the Worker says,
+         so a stale answer reads its real age, not the time of this request */
+      const provided = body ? Date.parse(body.fetched_at) : NaN;
+      L.checked = Date.now(); L.fetched = Number.isFinite(provided) ? provided : body ? L.checked : L.fetched;
+      L.reason = reason; L.stale = !!(body && body.stale); L.credit = body ? text(body.credit || body.attribution, 80) : '';
+      if (body && !body.unavailable) {
+        clearMapped(id, true);
+        const rows = Array.isArray(body[SPECS[id].rows]) ? body[SPECS[id].rows] : [];
+        try { draw[id](id, rows); if (visuals) {
+          // Keep reported wildfire footprints; replace the generic markers of other feeds.
+          if (id !== 'perimeters') { L.prims.forEach(p => { if (v.scene.primitives.contains(p)) v.scene.primitives.remove(p); }); L.prims = []; }
+          visuals.setLayer(id, L.items);
+        } } catch (e) { phase = 'error'; reason = 'could not draw'; clearMapped(id); }
+      } else if (phase !== 'on') clearMapped(id);
+      L.phase = phase;
+      if (v.scene.requestRender) v.scene.requestRender();
+      changed(id);
+    }
+
     async function load(id) {
+      if (!supportsList(id)) return loadMapped(id);
       const L = state[id], seq = ++L.seq;
       /* a refresh keeps showing the last good answer; only a layer with nothing yet says it is loading */
       if (!L.lastGood) L.phase = 'loading';
@@ -338,6 +392,7 @@
 
     function setOn(id, on) {
       const L = state[id];
+      if (on && !supportsList(id) && !viewer()) on = false;
       if (!L || L.on === !!on) return Promise.resolve();
       L.on = !!on;
       if (!L.on) { L.seq++; clearInterval(L.timer); L.timer = 0; clear(id); L.phase = 'off'; L.reason = ''; changed(id); return Promise.resolve(); }
@@ -350,7 +405,7 @@
 
     /* what the provider said about one picked thing, for the sheet; position() is where to follow it */
     function describe(pick) {
-      if (!pick || !pick.haloPick || !state[pick.layer]) return null;
+      if (!pick || !pick.haloPick || !state[pick.layer] || !accessible(pick.layer)) return null;
       const it = pick.item || {}, L = state[pick.layer], C2 = window.Cesium;
       const fmt = (v, unit, k) => (!finite(v) ? 'Unknown' : Math.round(v * (k || 1)).toLocaleString('en-US') + (unit ? ' ' + unit : ''));
       const when = (iso) => { const d = iso ? new Date(iso) : null; return d && !isNaN(d) ? d.toLocaleString() : 'Unknown'; };
@@ -382,17 +437,17 @@
       toggle: (id) => setOn(id, !(state[id] && state[id].on)),
       set: setOn,
       /* ask again now (a layer that is off stays off) */
-      refresh: (id) => (state[id] && state[id].on ? load(id) : Promise.resolve()),
-      on: (id) => !!(state[id] && state[id].on),
+      refresh: (id) => (supportsList(id) && state[id].on ? load(id) : Promise.resolve()),
+      on: (id) => !!(state[id] && accessible(id) && state[id].on),
       status,
       describe,
       provenance: (id) => PROVENANCE[id] || 'observed',
       /* what a layer holds now (copies), for the feed and the timeline */
-      items: (id) => (state[id] ? state[id].items.slice() : []),
+      items: (id) => (state[id] && accessible(id) ? state[id].items.slice() : []),
       onChange: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
       destroy
     });
   }
 
-  window.HaloLayers = Object.freeze({ SPECS, PROVENANCE, create });
+  window.HaloLayers = Object.freeze({ SPECS, PROVENANCE, supportsList, create });
 })();

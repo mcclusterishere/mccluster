@@ -195,6 +195,31 @@ test('the decision is a proposal: nothing but an authorized, recorded event make
   const real = clone(CASE); real.proposed_decision.status = 'approved';
   real.proposed_decision.authorization = { store: 'ai_context.decisions', decision_id: '11111111-1111-4111-8111-111111111111', approved_by: 'house-owner-fixture', approved_at: '2026-11-24T12:00:00Z' };
   assert.equal(H.decisionStatus(real), 'approved'); assert.deepEqual(H.validate(real), []);
+  for (const [cutoff, expected] of [
+    ['2022-03-01T00:00:00Z', null],
+    ['2026-11-24T11:59:59.999Z', null],
+    ['2026-11-24T12:00:00Z', 'approved'],
+    ['2026-11-24T12:00:00.001Z', 'approved']
+  ]) {
+    const decision = H.asOf(real, cutoff).decision;
+    assert.deepEqual(decision, expected ? { status: expected, title: d.title } : null, cutoff);
+  }
+  const midnight = '2026-11-25T00:00:00Z';
+  assert.equal(H.asOf(CASE, '2026-11-24T23:59:59.999Z').decision, null);
+  assert.deepEqual(H.asOf(CASE, midnight).decision, { status: 'proposed', title: d.title });
+  assert.equal(H.asOf(said, '2022-03-16T15:06:00Z').decision, null);
+  assert.equal(H.asOf(said, midnight).decision.status, 'proposed');
+  real.proposed_decision.authorization.approved_at = '2026-11-26T10:00:00Z';
+  assert.equal(H.asOf(real, midnight).decision.status, 'proposed');
+  assert.equal(H.asOf(real, '2026-11-26T10:00:00Z').decision.status, 'approved');
+  const preciselyDated = clone(CASE);
+  preciselyDated.written = '2026-11-24T09:00:00Z';
+  assert.equal(H.asOf(preciselyDated, '2026-11-24T08:59:59.999Z').decision, null);
+  assert.equal(H.asOf(preciselyDated, preciselyDated.written).decision.status, 'proposed');
+  for (const bad of [null, '2026-02-30', 'undated']) {
+    const undated = clone(said); undated.written = bad;
+    assert.equal(H.asOf(undated, midnight).decision, null);
+  }
 });
 
 test('the case is not published: it lives under core/, which the Pages deploy strips, and no page links it', () => {

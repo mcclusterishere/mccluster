@@ -152,9 +152,7 @@
   const shortId = (id) => String(id || '').replace(/-/g, '').slice(0, 6).toUpperCase();
 
   /* ---------- layers: one switchboard for the globe's, Halo's and this view's own ---------- */
-  /* An item that only exists as something drawn on the globe. Everything else (the extended feeds, the missions) is
-     fetched and listed whether or not the 3D map started: a browser without WebGL still gets its data. */
-  function needsMap(it) { return !!(it.core || it.globe || it.mkt); }
+  function needsMap(it) { return !it.own && !window.HaloLayers?.supportsList(it.id); }
   function isOn(it) {
     if (it.planned) return false;
     if (it.own) return missionsOn;
@@ -180,6 +178,10 @@
     }
     const s = layers && layers.status(it.id);
     if (!s) return { state: 'off', text: '' };
+    if (needsMap(it)) {
+      const words = { off: '', loading: 'Loading…', locked: 'Owner only', error: 'Unavailable', unavailable: s.reason === 'needs a key' ? 'Needs a key' : 'Unavailable' };
+      return { state: s.state, text: s.state === 'on' ? (['weather','natural'].includes(it.id) ? n(s.mapped)+' mapped / '+n(s.count)+' reports' : n(s.count)) + (s.stale ? ' · stale' : '') : (words[s.state] || ''), stale: s.stale, fetched: s.fetched, reason: s.reason };
+    }
     /* six conditions, six different words (js/halo/layers.js condition): loading, a count (fresh), kept and stale,
        no records (the provider answered with nothing), unavailable (provider or key), failed (no readable answer) */
     const words = { off: '', loading: 'Loading…', locked: 'Owner only', failed: 'Failed', unavailable: s.reason === 'needs a key' ? 'Needs a key' : 'Unavailable', empty: 'No records' };
@@ -205,6 +207,15 @@
     if (it.id === 'cctv') return { tone: 'hollow', text: 'Catalog loaded · snapshots checked when opened' };
     if (it.core && it.id !== 'satellites') return { tone: 'hollow', text: 'Snapshot loaded · freshness varies by source' };
     if (it.id === 'satellites') return { tone: 'cyan', text: 'Calculated from orbital elements' };
+    if (needsMap(it)) {
+      if (s.state === 'locked') return { tone: 'amber', text: 'Locked for this session' };
+      if (s.state === 'unavailable') return { tone: 'amber', text: s.reason === 'needs a key' ? 'Needs a key' : 'Provider unavailable' };
+      if (s.state === 'error') return { tone: 'red', text: 'Could not reach the Worker' };
+      if (s.state === 'loading') return { tone: 'mute', text: 'Loading…' };
+      if (s.stale) return { tone: 'amber', text: 'Stale: last good answer ' + ago(s.fetched) };
+      if (fin(s.fetched) && s.fetched) return { tone: 'green', text: 'Updated ' + ago(s.fetched) };
+      return { tone: 'green', text: 'Live' };
+    }
     return feedHealth(it, s);
   }
   /* An extended feed's condition in words. Provider time is not fetch time: "provider time" and "newest record" come
@@ -337,7 +348,7 @@
     rememberRoute(); schedulePaint();
   }
   function whereIs(s) {
-    if (!s) return null;
+    if (!s || !V || !C) return null;
     if (s.kind === 'mission') { const m = missionById(s.id); return placed(m) ? { lon: m.place.lon, lat: m.place.lat } : null; }
     if (s.kind === 'person') { const p = personById(s.id), m = p && (p.missions || []).map((x) => missionById(x.id)).find(placed); return m ? { lon: m.place.lon, lat: m.place.lat } : null; }
     if (s.kind === 'obs' && s.d && s.d.position) { const c = C.Cartographic.fromCartesian(s.d.position()); return { lon: C.Math.toDegrees(c.longitude), lat: C.Math.toDegrees(c.latitude), close: Math.max(s.d.range * 12, 1.5e6) }; }
@@ -555,7 +566,7 @@
         out.push({ key: 'f:' + i + ':' + f.lon + ',' + f.lat, sel: { kind: 'obs', id: 'fires:' + f.lon + ',' + f.lat, layer: 'fires', d, item: f }, title: 'Thermal hotspot · ' + f.frp.toFixed(0) + ' MW', place: f.lat.toFixed(2) + ', ' + f.lon.toFixed(2), source: 'NASA FIRMS', icon: 'flame', prov: 'observed', t: ms(f.acq), lat: f.lat, lon: f.lon });
       });
       const ships = layers.status('vessels');
-      if (ships && ships.lastGood) out.push({ key: 'ais', sel: { kind: 'source', id: 'vessels' }, title: 'Vessel positions', place: n(ships.count) + ' ships' + (ships.stale ? ' · stale' : ''), source: 'AIS feed', icon: 'ship', prov: 'observed', /* the stream's last message, not the fetch */ t: ships.provider || null });
+      if (ships && ships.state === 'on') out.push({ key: 'ais', sel: { kind: 'source', id: 'vessels' }, title: 'Vessel positions', place: n(ships.count) + ' ships', source: 'AIS feed', icon: 'ship', prov: 'observed', t: ships.fetched || null });
     }
     if (G.layer.on('satellites')) out.push({ key: 'sats', sel: { kind: 'source', id: 'satellites' }, title: 'Satellite positions', place: n(G.layer.count('satellites')) + ' objects', source: 'Orbital model (CelesTrak elements)', icon: 'sat', prov: 'calculated', t: Date.now() });
     return out.sort((a, b) => (b.t ?? 0) - (a.t ?? 0));
@@ -905,7 +916,9 @@
       const near = fin(it.lat) ? nearMissions(it.lat, it.lon, 2) : [];
       if (near.length) html += '<div class="hx-section"><p class="hx-label">Missions within 300 km</p>' + near.map((x) => missionLink(x.m, Math.round(x.d) + ' km away')).join('') + '</div>';
     } else html += dl([['Source', d.credit || ''], ['Provenance', cap(prov)], ['Provider time', layers && layers.status(s.layer) && layers.status(s.layer).provider ? ago(layers.status(s.layer).provider) : 'Not supplied'], ['Retrieved by the Worker', layers && layers.status(s.layer) && layers.status(s.layer).fetched ? ago(layers.status(s.layer).fetched) : '—']]);
-    const foot = (d.link ? '<a class="hx-cta" href="' + esc(d.link) + '" target="_blank" rel="noopener noreferrer">View source ' + ICON.external + '</a>' : '') + (d.position ? '<button type="button" class="hx-cta" data-event-orbit>Orbit object</button><div class="hx-pair"><button type="button" class="hx-btn" data-follow>' + ICON.locate + 'Follow</button><button type="button" class="hx-btn" data-fly>' + ICON.pin + 'Go there</button></div>' : '<p class="hx-note">This source supplies no map coordinates.</p>');
+    let foot = d.link ? '<a class="hx-cta" href="' + esc(d.link) + '" target="_blank" rel="noopener noreferrer">View source ' + ICON.external + '</a>' : '';
+    if (!d.position) foot += '<p class="hx-note">This source supplies no map coordinates.</p>';
+    else if (V && C) foot += '<button type="button" class="hx-cta" data-event-orbit>Orbit object</button><div class="hx-pair"><button type="button" class="hx-btn" data-follow>' + ICON.locate + 'Follow</button><button type="button" class="hx-btn" data-fly>' + ICON.pin + 'Go there</button></div>';
     return { html, foot };
   }
   function detailEvidence(e) {
@@ -940,7 +953,7 @@
     const at = (t) => (t ? ago(t) + ' · ' + new Date(t).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'Not supplied');
     const counts = st && st.lastGood ? '<div class="hx-section" data-feed-counts="' + esc(id) + '"><p class="hx-label">Counts and times</p>' + dl([['Returned by the Worker', n(st.returned)], ['Usable here', n(st.count)], st.dropped ? ['Not usable', n(st.dropped) + ' (' + st.dropWhy + ')'] : null, ['On the map', V ? (st.renderIssue ? 'None: ' + st.renderIssue : n(st.mapped)) : 'Map unavailable; listed only'], id === 'quakes' ? ['In the Intelligence feed', 'M4.0 and above, the 12 strongest, inside the timeline window'] : id === 'fires' ? ['In the Intelligence feed', 'the 6 strongest by radiative power, inside the timeline window'] : null, ['Provider time', at(st.provider)], ['Newest record', at(st.newest)], ['Retrieved by the Worker', at(st.fetched)], ['Last checked by this page', at(st.checked)]]) + '</div>' : '';
     const sample = !V && st ? layers.items(id).slice(0, 8) : [];
-    const listing = sample.length ? '<div class="hx-section" data-feed-sample="' + esc(id) + '"><p class="hx-label">First ' + sample.length + ' of ' + n(st.count) + ' records</p><ul>' + sample.map((x) => '<li>' + esc(String(x.place || x.event || x.name || x.callsign || x.hex || x.mmsi || x.id || (fin(x.frp) ? x.frp.toFixed(1) + ' MW at ' + x.lat.toFixed(2) + ', ' + x.lon.toFixed(2) : 'Reported record')).slice(0, 120)) + '</li>').join('') + '</ul></div>' : '';
+    const listing = sample.length ? '<div class="hx-section" data-feed-sample="' + esc(id) + '"><p class="hx-label">First ' + sample.length + ' of ' + n(st.count) + ' records</p><ul>' + sample.map((x) => '<li>' + esc(String(x.place || x.event || x.name || x.id || (fin(x.frp) ? x.frp.toFixed(1) + ' MW at ' + x.lat.toFixed(2) + ', ' + x.lon.toFixed(2) : 'Reported record')).slice(0, 120)) + '</li>').join('') + '</ul></div>' : '';
     const foot = it && !it.planned && (V || !needsMap(it)) ? '<button type="button" class="hx-btn" data-toggle-source="' + esc(id) + '">' + (isOn(it) ? 'Turn off' : 'Turn on') + '</button>' : '';
     return { html: html + counts + listing, foot };
   }
@@ -1158,7 +1171,7 @@
         setView(next); $('#hxTab-' + next).focus();
       };
     });
-    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs(true);if(markets&&markets.on())await markets.refresh();/* every extended feed that is on is asked again now, map or no map */if(layers)await Promise.all(layers.ids.map(id=>layers.refresh(id)));}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
+    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs(true);if(markets&&markets.on())await markets.refresh();/* refresh enabled environmental feeds */if(layers)await Promise.all(layers.ids.map(id=>layers.refresh(id)));}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
     ui.operator.onclick = () => { const chip = document.getElementById('mccAuthChip'); if (chip) chip.click(); else location.href = 'account.html'; };
     const toggleSheet = () => {
       if (wide()) { collapsed = !collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false'; savePrefs(); }
@@ -1294,7 +1307,7 @@
     if (V) V.scene.backgroundColor = C.Color.fromCssColorString('#020610');
     if (V && G.missions) G.missions.show(false);
     vision = V && window.HaloVision ? HaloVision.mount(V) : null;
-    /* the extended feeds load and list without the map (js/halo/layers.js); only painting needs the viewer */
+    /* environmental feeds can list without a map; transport requires the viewer */
     layers = window.HaloLayers ? HaloLayers.create(G) : null;
     data = window.HaloData ? HaloData.create(G) : null;
     markets = V && window.HaloMarkets ? HaloMarkets.create(G, { changed: () => schedulePaint() }) : null;

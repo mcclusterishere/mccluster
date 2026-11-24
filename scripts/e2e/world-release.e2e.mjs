@@ -383,7 +383,16 @@ for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDT
   await haloChecks(scope,page,host,width,ctx,()=>{owner=false},()=>calls);
   // The authorized data shell must survive missing WebGL/runtime assets.
   owner=true;
+  const maplessTransport = [];
+  page.on('request', request => {
+    if (/\/v1\/world\/layers\/(military|vessels)(?:[?]|$)/.test(request.url())) maplessTransport.push(request.url());
+  });
   await ctx.route('**/Build/Cesium/Cesium.js',r=>r.abort());
+  const cyclone = JSON.parse(await readFile(join(ROOT, 'scripts/e2e/fixtures/halo-feeds/cyclones.json'), 'utf8')).answer;
+  await ctx.route('**/v1/world/layers/cyclones', route => route.fulfill({
+    headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' },
+    json: { ...cyclone, fetched_at: iso(0), observed_at: iso(10) }
+  }));
   await page.goto(BASE+'/action-globe.html?explore=1&halo=missions');
   // The shell contains fixed-position panels and has no layout box of its own.
   await page.waitForSelector('html.halo-no-map #haloShell .hx-left',{timeout:20000});
@@ -405,6 +414,11 @@ for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDT
     await page.waitForFunction(()=>HaloConsole.state().hours===24);
     check(scope,'Back restores both time selectors',await page.locator('[data-hours]').inputValue()==='24'&&await page.locator('.hx-window').inputValue()==='24');
   }
+  await page.locator('[data-view="world"]').click();
+  for (const id of ['military', 'vessels']) {
+    const toggle = page.locator('[data-item="' + id + '"] input');
+    check(scope, 'mapless transport stays off: ' + id, await toggle.isDisabled() && !(await toggle.isChecked()));
+  }
   for(const v of ['world','missions','people','intel']){
     await page.locator('[data-view="'+v+'"]').click();
     await page.waitForTimeout(150);
@@ -414,8 +428,17 @@ for(const width of (process.env.WORLD_QA_WIDTH?[Number(process.env.WORLD_QA_WIDT
   await page.waitForFunction(()=>document.querySelector('.hx-panel__body')?.textContent.includes('Harbor flooding report'));
   check(scope,'mapless Intelligence loads evidence independently of map layers',await page.locator('.hx-left').getByText('Harbor flooding report',{exact:true}).isVisible());
   await page.screenshot({path:join(OUT,'halo-fallback-'+width+'.png')});
+  for (const [key, detail] of [['q:us1', 'Magnitude'], ['c:fx012026', 'Tropical Storm']]) {
+    await page.locator('[data-feed="' + key + '"]').click();
+    const body = page.locator('html[data-halo-detail="open"] .hx-detail__body');
+    await body.getByText(detail, { exact: true }).first().waitFor();
+    const actions = page.locator('.hx-detail__foot [data-fly], .hx-detail__foot [data-follow], .hx-detail__foot [data-event-orbit]');
+    check(scope, 'mapless observation ' + key + ' opens its source details without map controls', await actions.count() === 0);
+    await page.locator('.hx-close').click();
+  }
   owner=false;await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
   await page.waitForFunction(()=>!document.getElementById('haloShell'));
+  check(scope,'mapless owner made no transport requests',maplessTransport.length===0);
   check(scope,'mapless owner revocation removes private data',!(await page.locator('#haloShell').count()));
 
  }else{
