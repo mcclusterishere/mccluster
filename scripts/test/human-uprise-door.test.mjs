@@ -111,14 +111,23 @@ test('in Music, McCluster opens the house and every artist opens their own front
 
 test('the Worker answers the World\'s host: the router is wired by host and its origins may call the API', async () => {
   const entry = await read('workers/mccluster/src/entry-platform.js');
-  assert.match(entry, /import \{ humanUpriseResponse \} from '\.\/human-uprise\/router\.js';/);
-  const http = await read('workers/mccluster/src/lib/http.js');
-  assert.match(http, /'https:\/\/humanuprise\.com',\n  'https:\/\/www\.humanuprise\.com',/);
+  assert.match(entry, /import \{ WORLD_DOOR_PARTS \} from '\.\/human-uprise\/router\.js';/);
+  assert.match(entry, /createSiteRouter\(\{ company: COMPANY_PARTS, worldDoor: WORLD_DOOR_PARTS \}\)/, 'one host router, the door\'s own files in it');
+  /* the door's origin and the API's CORS list come from the generated table, never a literal (SPEC-PLATFORM 2.3) */
+  const table = await import('../../workers/mccluster/src/platform/hosts.generated.js');
+  const http = await import('../../workers/mccluster/src/lib/http.js');
+  for (const origin of ['https://humanuprise.com', 'https://www.humanuprise.com']) {
+    assert.ok(table.CORS_ORIGINS.includes(origin), `the table lets ${origin} call the API`);
+    assert.ok(http.allowedOrigins({}).includes(origin), `and the API answers ${origin}`);
+  }
   const wrangler = await read('workers/mccluster/wrangler.toml');
   assert.match(wrangler, /ALLOWED_ORIGINS = "https:\/\/matthew\.mccluster\.org,https:\/\/mccluster\.org,https:\/\/humanuprise\.com,https:\/\/www\.humanuprise\.com,/);
+  const door = await import('../../workers/mccluster/src/human-uprise/router.js');
+  assert.equal(door.HUMAN_UPRISE_ORIGIN, 'https://humanuprise.com');
+  for (const u of ['https://api.mccluster.org/v1/health', 'https://mccluster.org/', 'https://matthew.mccluster.org/', 'https://humanuprise.com.evil.example/', 'https://evil-humanuprise.com/']) {
+    assert.equal(await door.humanUpriseResponse(new Request(u), {}, () => { throw new Error('must not fetch'); }), null, `inert for ${u}`);
+  }
   const router = await read('workers/mccluster/src/human-uprise/router.js');
-  assert.match(router, /export const HUMAN_UPRISE_ORIGIN = 'https:\/\/humanuprise\.com';/);
-  assert.match(router, /if \(host !== APEX && host !== WWW\) return null;/, 'inert for every other host');
   assert.doesNotMatch(router, /mccluster-core/, 'no second Worker');
 });
 

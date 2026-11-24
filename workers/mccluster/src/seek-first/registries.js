@@ -15,6 +15,7 @@
   serve protocols not implemented here, and a directory listing something is
   not permission to ingest it.
 */
+import { CONTACT_ORIGIN } from '../platform/contact.js';
 
 export const REGISTRY_PROTOCOLS = Object.freeze({
   RE3DATA: 're3data'
@@ -121,7 +122,7 @@ export function parseRepository(xml) {
 /** Fetch the registry's repository ids. */
 export async function listRepositories(reg, { fetchImpl = fetch } = {}) {
   const response = await fetchImpl(reg.listEndpoint, {
-    headers: { accept: 'application/xml', 'user-agent': 'mccluster-seek-first-registry/1.0 (+https://mccluster.org)' },
+    headers: { accept: 'application/xml', 'user-agent': `mccluster-seek-first-registry/1.0 (+${CONTACT_ORIGIN})` },
     signal: AbortSignal.timeout(45_000)
   });
   if (!response.ok) throw new Error(`${reg.key} registry list failed: HTTP ${response.status}`);
@@ -132,7 +133,7 @@ export async function listRepositories(reg, { fetchImpl = fetch } = {}) {
 export async function fetchRepository(reg, id, { fetchImpl = fetch } = {}) {
   if (!/^r3d\d+$/.test(String(id))) throw new Error(`invalid repository id: ${id}`);
   const response = await fetchImpl(`${reg.detailEndpoint}/${id}`, {
-    headers: { accept: 'application/xml', 'user-agent': 'mccluster-seek-first-registry/1.0 (+https://mccluster.org)' },
+    headers: { accept: 'application/xml', 'user-agent': `mccluster-seek-first-registry/1.0 (+${CONTACT_ORIGIN})` },
     signal: AbortSignal.timeout(30_000)
   });
   if (!response.ok) throw new Error(`${reg.key} repository ${id} failed: HTTP ${response.status}`);

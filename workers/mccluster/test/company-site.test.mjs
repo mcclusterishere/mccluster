@@ -186,10 +186,11 @@ test('robots, sitemap and llms belong to the company property and map the World 
   assert.deepEqual(Object.keys(PAGES).sort(), ['/company', '/llms.txt', '/robots.txt', '/sitemap.xml']);
 });
 
-test('the platform entry consults the company router before the API, with the env it needs', async () => {
+test('the platform entry consults the host router, with the company\'s pages, before the API and with the env it needs', async () => {
   const src = await readFile(new URL('../src/entry-platform.js', import.meta.url), 'utf8');
-  const i = src.indexOf('await companySiteResponse(request, env)'), j = src.indexOf('enforceApiRateLimit(request, env)');
-  assert.ok(i > 0 && j > i, 'company routing runs first and only for its own hosts');
+  assert.match(src, /createSiteRouter\(\{ company: COMPANY_PARTS, worldDoor: WORLD_DOOR_PARTS \}\)/, 'the company\'s pages ride the one host router (src/platform/router.js)');
+  const i = src.indexOf('await siteResponse(request, env)'), j = src.indexOf('enforceApiRateLimit(request, env)');
+  assert.ok(i > 0 && j > i, 'host routing runs first and only for the site\'s hosts');
 });
 
 test('plain http on the apex is one 301 to https; /company/ is the company page, not a path on Matthew\'s site', async () => {
