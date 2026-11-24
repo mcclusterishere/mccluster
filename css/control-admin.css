@@ -155,3 +155,16 @@
   .crs-stem{grid-template-columns:minmax(0,1fr) 300px;align-items:center}
 }
 ul.cro-list{list-style:none;margin:0;padding:0}
+/* Music ops polish (2026-11-24). The tab rule above used `font:700 12px/1 inherit`, which is not a valid shorthand,
+   so browsers dropped it and these tabs and buttons fell back to large default text. One quiet chip row, buttons at
+   a readable size, cards rounded like the rest of Control, and the review player dark. */
+.cro-tab,.cro-chip{min-height:44px;padding:0 14px;font:600 13px/1 var(--ui,system-ui);background:transparent;border-color:#2e2832;color:#bfb6c4}
+.cro-tab.is-on,.cro-chip.is-on{background:#f3eef5;border-color:#f3eef5;color:#121014}
+.cro-card{border-radius:18px;background:#141217;border-color:#26222a;padding:16px}
+.cro-card h2,.cro-card h3{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.cro-card p{font-size:13px}
+.cro-meta{font-size:12px}
+.cro-note{font-size:13px;border-radius:12px}
+.cro-pill{font-size:11px;padding:3px 9px}
+.cro .cr-btn{font:600 14px/1.2 var(--ui,system-ui);border-radius:999px;padding:0 16px;min-height:44px}
+.cro audio{color-scheme:dark;width:100%;border-radius:12px}
