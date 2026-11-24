@@ -64,6 +64,8 @@
   }
 
   /* ---------- launch ---------- */
+  /* an example destination: the platform's action pages, where they are served (window.MCC_SITE, js/shell-boot.js) */
+  function actionExample(){var S=window.MCC_SITE;return(S&&typeof S.siteUrl==="function"?S.siteUrl("/action/"):"/action/")+"…";}
   function launchForm(){
     if(!C.songs)loadForm();
     var songs=(C.songs||[]).map(function(s){return'<option value="'+e(s.id)+'">'+e(s.album_title+" · "+s.track_title)+'</option>';}).join("");
@@ -80,7 +82,7 @@
       '<label>Campaign title<input id="clTitle" maxlength="160" required placeholder="'+(action?"Amplify this action":"Clip this release")+'"></label>'+
       '<label>Creator / campaign brand<input id="clBrand" maxlength="120" placeholder="Your creator name or brand"></label>'+
       (action?'<label>Equity Uprise source<select id="clSource"><option value="">Choose approved content…</option>'+sources+'</select></label>'+
-        '<label class="cro-span-2">Send traffic here<input id="clDestination" type="url" placeholder="https://mccluster.org/action/…"></label>':
+        '<label class="cro-span-2">Send traffic here<input id="clDestination" type="url" placeholder="'+e(actionExample())+'"></label>':
         '<label>Song<select id="clSong"><option value="">Choose a song…</option>'+songs+'</select></label>')+
       '</div></section>'+
       '<section class="cro-card"><h3>2 · Distribution brief</h3><div class="cro-form">'+

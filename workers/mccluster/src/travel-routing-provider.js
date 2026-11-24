@@ -1,4 +1,5 @@
 import { normalizeRouteRequest, normalizeRoute, coordinate, distanceBetween, boundedJson, MAX_ROUTE_POINTS, MAX_ROUTE_STEPS } from '../../../js/travel/route-core.mjs';
+import { CONTACT_ORIGIN, CONTACT_URL } from './platform/contact.js';
 
 const issue = (message, status = 503, retryAfter = 0) => Object.assign(new Error(message), { status, retryAfter });
 const clean = value => typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 180) : '';
@@ -114,7 +115,7 @@ export async function performStreetRoute(input, env, { request = fetch } = {}) {
     // workerd supports manual redirects; never follow one with precise endpoints
     // or a provider secret. A redirect is rejected by the non-OK branch below.
     const response = await request(url.href, { signal: controller.signal, redirect: 'manual', headers: {
-      accept: 'application/json', 'user-agent': 'McCluster-Travel/1.0 (+https://mccluster.org; matthew@mccluster.org)', referer: 'https://mccluster.org/'
+      accept: 'application/json', 'user-agent': `McCluster-Travel/1.0 (+${CONTACT_ORIGIN}; matthew@mccluster.org)`, referer: CONTACT_URL
     } });
     if (response.status === 429) { await response.body?.cancel(); throw issue('The routing service is busy. Please try again in a minute.', 429, 60); }
     if (!response.ok) { await response.body?.cancel(); throw issue(response.status === 400 ? 'No route reaches one of these places. Try its entrance or a nearby street.' : 'The routing service is temporarily unavailable. Please try again.', response.status === 400 ? 422 : 503); }

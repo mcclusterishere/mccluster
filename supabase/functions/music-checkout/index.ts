@@ -2,12 +2,12 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from "npm:stripe@14";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { musicPlatformFee } from "../_shared/music-commission.ts";
+import { returnOrigin } from "../_shared/site-hosts.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(SB, SRV, { auth: { persistSession: false, autoRefreshToken: false } });
-const SITE = "https://matthew.mccluster.org";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
@@ -21,6 +21,9 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (req.method !== "POST") return json({ error: "POST required" }, 405);
+  /* back where the buyer started when that origin serves pages (exactly; ../_shared/site-hosts.ts), else
+     the generated fallback: the profile host at stage P0, as every return was before */
+  const SITE = returnOrigin(req.headers.get("origin"));
   const auth = req.headers.get("authorization") || "";
   const token = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7) : "";
   const { data: userData, error: userError } = await admin.auth.getUser(token);

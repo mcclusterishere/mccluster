@@ -24,8 +24,8 @@
       padding: .8rem .95rem; color: #f4efe6; overflow: hidden; position: relative; }
     .card::after { content: ""; position: absolute; inset: 0; pointer-events: none;
       background: radial-gradient(120% 90% at 12% 110%, rgba(229,56,59,.2), transparent 60%); }
-    .art { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; flex: none;
-      box-shadow: 0 10px 24px -12px rgba(0,0,0,.9); }
+    /* the whole cover, scaled inside its square: nothing cropped, nothing drawn over or behind it (owner, 2026-11-23) */
+    .art { width: 72px; height: 72px; object-fit: contain; flex: none; position: relative; z-index: 1; }
     .mid { flex: 1; min-width: 0; position: relative; z-index: 1; }
     .k { font-size: .56rem; font-weight: 800; letter-spacing: .32em; text-transform: uppercase;
       color: rgba(244,239,230,.55); }
@@ -57,7 +57,7 @@
     <div class="mid">
       <p class="k"><a id="out" href="album.html" target="_blank" rel="noopener">McCluster Sound <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M7 17L17 7M9.5 7H17v7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a></p>
       <h1 class="t" id="title">·</h1>
-      <p class="by"><span id="by">Matthew McCluster</span> <span class="time" id="time"></span></p>
+      <p class="by"><span id="by">McCluster</span> <span class="time" id="time"></span></p>
       <button class="seek" id="seek" type="button" aria-label="Seek"><i><b id="fill"></b></i></button>
     </div>
     <button class="play" id="play" type="button" aria-label="Play or pause">
@@ -76,9 +76,16 @@
     function fmt(s) { s = Math.max(0, s | 0); return (s / 60 | 0) + ":" + ("0" + s % 60).slice(-2); }
 
     /* the album's billed artist, never a blanket credit: PRIM3's songs are PRIM3's (music slice M2) */
-    var alb = null, at = 0, artist = "Matthew McCluster";
+    var alb = null, at = 0, artist = "McCluster";
     function seat(i, go) {
       var t = alb.tracks[i];
+      /* a gated or held song is never played here: the embed has no gate, and a held song says why on its album page
+         (owner, 2026-11-23). Stepping onto one stays where it was; a link to one opens on the album's first song that plays */
+      if (t.hold || t.gated) {
+        var k = alb.tracks.findIndex(function (x) { return !x.hold && !x.gated; });
+        if (go || k < 0) { if (go) deck.pause(); return; }
+        i = k; t = alb.tracks[k];
+      }
       at = i;
       $("title").textContent = t.title;
       $("by").textContent = artist;
@@ -93,7 +100,7 @@
     fetch("data/albums.json").then(function (r) { return r.json(); }).then(function (d) {
       (d.albums || []).forEach(function (a) { if (a.slug === ALBUM) alb = a; });
       if (!alb) alb = d.albums[0];
-      artist = alb.artist || "Matthew McCluster";
+      artist = alb.artist || "McCluster";
       seat(Math.min(T, alb.tracks.length - 1), false);
       nowPlaying();
     }).catch(function () { $("title").textContent = "McCluster Sound"; });
@@ -110,7 +117,8 @@
         play: function () { audioSession(); deck.play().catch(function () {}); },
         pause: function () { deck.pause(); },
         previous: function () { if (deck.currentTime > 4 || at === 0) { deck.currentTime = 0; return; } seat(at - 1, true); },
-        next: function () { seat((at + 1) % alb.tracks.length, true); }
+        /* one record, start to end: after its last song the embed stops there (owner, 2026-11-23) */
+        next: function () { if (at + 1 >= alb.tracks.length) { deck.pause(); return; } seat(at + 1, true); }
       });
       return np;
     }

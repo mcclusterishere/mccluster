@@ -164,6 +164,30 @@ function ledgerOf() {
   return L;
 }
 
+/* JRN-2 (the engine stage 0 review): the listen ledger can arrive after a song started. The music shell loads it into an
+   artist page when Listen first opens over it (SPEC-M5 3.3); the song playing when it says it is ready is counted from
+   then, as on Listen, where it is there before the engine */
+test('JRN-2 a ledger that arrives while a catalogue song plays starts that song\'s listen, once; one that arrives while it is paused starts none', async () => {
+  const e = engine();
+  await e.play('Full song');
+  assert.equal(e.music.audio.paused, false, 'the song plays, with no ledger on the page yet');
+  const L = ledgerOf();
+  e.win.MCC_LISTENS = L;
+  e.win.dispatchEvent(new Event('mcc:listens-ready'));
+  assert.deepEqual(L.starts, ['whole-song.mp3'], 'the song playing is counted from the ledger\'s arrival');
+  e.win.dispatchEvent(new Event('mcc:listens-ready'));
+  assert.equal(L.starts.length, 1, 'once');
+  const p = engine();
+  await p.play('Full song');
+  p.music.pause(); await settle();
+  const quiet = ledgerOf();
+  p.win.MCC_LISTENS = quiet;
+  p.win.dispatchEvent(new Event('mcc:listens-ready'));
+  assert.deepEqual(quiet.starts, [], 'paused: nothing starts; the next play counts as it always did');
+  await p.music.resume(); await settle();
+  assert.deepEqual(quiet.starts, ['whole-song.mp3'], 'and Play starts it');
+});
+
 test('a late access refresh cannot replace a newer song', async () => {
   const e = engine();
   await e.play('First preview');
@@ -599,14 +623,19 @@ test('gated path: a claim whose answer was lost is never retried by itself; the 
 });
 
 test('near the end of a song the next creator stream is signed ahead, so the next song starts without waiting on the network', async () => {
+  /* one creator release of two songs: since the quick wins (owner, 2026-11-23: "end of the album, and just leave") a
+     record never runs on into another one, so the song signed ahead is the release's own next song */
   const c = clockOf(), pending = deferred();
-  const e = engine({ clock: c, member: true, access: () => pending.promise });
-  e.music.registerCreatorTrack({ id: 'c2', title: 'Creator next', access_mode: 'account', previewUrl: 'creator-next-preview.mp3' });
-  await e.play('Next full song');                  // the last catalogue song: the creator track is next
+  let n = 0;
+  const e = engine({ clock: c, member: true, access: () => (++n === 1 ? { url: 'creator-first.mp3', expires_in: 3600 } : pending.promise) });
+  e.music.registerCreatorTrack({ id: 'c1', title: 'Creator first', access_mode: 'account', previewUrl: 'creator-first-preview.mp3', artist_name: 'Fixture Artist', release_name: 'Fixture release' });
+  e.music.registerCreatorTrack({ id: 'c2', title: 'Creator next', access_mode: 'account', previewUrl: 'creator-next-preview.mp3', artist_name: 'Fixture Artist', release_name: 'Fixture release' });
+  await e.music.playCreator('c1'); await settle();
+  assert.equal(e.music.audio.src, 'creator-first.mp3');
   e.music.audio.duration = 180;
   e.music.audio.currentTime = 170;
   e.music.audio.fire('timeupdate');
-  assert.equal(e.accessCalls(), 1, 'asked ahead, near the end');
+  assert.equal(e.accessCalls(), 2, 'asked ahead, near the end');
   pending.resolve({ url: 'creator-next.mp3', expires_in: 3600 });
   await settle();
   e.music.audio.currentTime = 179.95;
@@ -615,7 +644,7 @@ test('near the end of a song the next creator stream is signed ahead, so the nex
   assert.equal(e.music.current().title, 'Creator next');
   assert.equal(e.music.audio.src, 'creator-next.mp3', 'it starts from what was fetched ahead');
   assert.equal(e.music.audio.paused, false);
-  assert.equal(e.accessCalls(), 1, 'no second request at the change');
+  assert.equal(e.accessCalls(), 2, 'no second request at the change');
 });
 
 /* ------------------------------------------------------------------------------------------------------
@@ -695,19 +724,21 @@ test('a try whose play() is refused (a hidden page may need a tap) stops trying 
 
 test('a signing-ahead that failed is not kept: the next creator release is asked for again when it starts', async () => {
   const c = clockOf();
-  const answers = [new Error('offline'), { url: 'creator-next.mp3', expires_in: 3600 }];
+  const answers = [{ url: 'creator-first.mp3', expires_in: 3600 }, new Error('offline'), { url: 'creator-next.mp3', expires_in: 3600 }];
   const e = engine({ clock: c, member: true, access: () => answers.shift() });
-  e.music.registerCreatorTrack({ id: 'c2', title: 'Creator next', access_mode: 'account', previewUrl: 'creator-next-preview.mp3' });
-  await e.play('Next full song');                  // the last catalogue song: the creator release is next
+  /* one release of two songs (a record never runs on into another one since the quick wins) */
+  e.music.registerCreatorTrack({ id: 'c1', title: 'Creator first', access_mode: 'account', previewUrl: 'creator-first-preview.mp3', artist_name: 'Fixture Artist', release_name: 'Fixture release' });
+  e.music.registerCreatorTrack({ id: 'c2', title: 'Creator next', access_mode: 'account', previewUrl: 'creator-next-preview.mp3', artist_name: 'Fixture Artist', release_name: 'Fixture release' });
+  await e.music.playCreator('c1'); await settle();
   e.music.audio.duration = 180;
   e.music.audio.currentTime = 170;
   e.music.audio.fire('timeupdate');                // signed ahead, near the end: the network blips
   await settle();
-  assert.equal(e.accessCalls(), 1);
+  assert.equal(e.accessCalls(), 2);
   e.music.audio.currentTime = 179.95;
   e.music.audio.fire('ended');
   await settle(); await settle();
-  assert.equal(e.accessCalls(), 2, 'asked again at the start (PB-R7: the failed answer was reused)');
+  assert.equal(e.accessCalls(), 3, 'asked again at the start (PB-R7: the failed answer was reused)');
   assert.equal(e.music.current().title, 'Creator next');
   assert.equal(e.music.access(), 'full', 'an entitled member hears the release, not its preview');
   assert.equal(e.music.audio.src, 'creator-next.mp3');
@@ -1376,8 +1407,8 @@ test('the album\'s "two records deep" tip counts records, not the tries that pic
 
 /* ONE DROP, ONE ERROR (review RL-9). music_error went out once per failed read: a drop and its five tries sent six,
    and a file that would not load sent six too. It is sent once per failed song or drop episode now, with the first
-   failed read's code; a song that plays on after picking up and then drops again is a new episode. (The new
-   music_interrupted waits for Matthew's approval in js/analytics.js: scripts/test/music-measurement.test.mjs.) */
+   failed read's code; a song that plays on after picking up and then drops again is a new episode. (Matthew approved
+   music_interrupted on 2026-11-23; it goes out once per drop too: scripts/test/music-quick-wins.test.mjs.) */
 test('a dropped connection is one music_error with its code, however many reads fail; a song that never started is one too', async () => {
   const c = clockOf();
   const e = engine({ clock: c });
@@ -1625,4 +1656,47 @@ test('creator URL renewal keeps the full song and position through transient net
   assert.equal(e.music.audio.src, 'creator-2.mp3');
   assert.equal(e.music.audio.currentTime, 70);
   assert.equal(e.music.audio.paused, false);
+});
+
+/* PAUSE WINS OVER A LATE REFUSAL (the review of PR #825, CX-2, its last leg; a follow-up to 3f12e039, which keeps the full
+   song when the renewal never reached music-access). A member 70 s into an account release whose 120 s URL has lapsed (the
+   refresh a minute before the lapse failed too), and the next read fails: a try signs the URL again. When music-access
+   answers that try with the entitlement check's own no (402 "purchase", 401 or 403 "account") after the listener pressed
+   Pause, the preview must not start: the refusal is applied by the try only while the listener still asks for music, and
+   Play asks music-access again, whose answer then decides. */
+const CREATOR_SONG = { id: 'c1', title: 'Creator song', access_mode: 'account', previewUrl: 'creator-preview.mp3', preview_seconds: 30 };
+async function lapsedMidSong(c, answer) {
+  let n = 0;
+  const e = engine({ clock: c, member: true, access: (body) => (++n === 1 ? { url: 'creator-1.mp3', expires_in: 120 } : answer(n, body)) });
+  e.music.registerCreatorTrack(CREATOR_SONG);
+  await e.music.playCreator('c1');
+  await c.tick(61 * 1000);                         // the refresh a minute before the lapse: offline too, left to the next read
+  e.music.audio.currentTime = 70;
+  await c.tick(70 * 1000);                         // the 120 s URL has lapsed
+  e.music.audio.fail(2);                           // and the next read fails, at 1:10
+  return e;
+}
+test('entitled creator path: a refusal that comes after the listener pressed Pause starts nothing (Pause wins); Play asks again', async () => {
+  const c = clockOf(), late = deferred();
+  const e = await lapsedMidSong(c, (n) => (n === 2 ? new Error('offline') : n === 3 ? late.promise : { status: 402 }));
+  await c.tick(600);                               // the first try asks music-access; the answer is on its way
+  assert.equal(e.accessCalls(), 3);
+  e.music.pause();                                 // the listener pauses while the song is being picked up
+  const plays = e.music.audio.playCalls, loads = e.music.audio.loads.length;
+  late.resolve({ status: 402 });                   // then the entitlement check says no
+  await settle(); await settle(); await settle();
+  await c.tick(30000);
+  assert.equal(e.music.audio.paused, true, 'nothing plays behind the listener\'s Pause (the preview started)');
+  assert.equal(e.music.audio.playCalls, plays, 'no play()');
+  assert.equal(e.music.audio.loads.length, loads, 'nothing loaded');
+  assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Play');
+  assert.equal(e.music.delivery().playing, false);
+  assert.equal(e.text('musicMiniNote'), 'The connection dropped. Tap play to pick up at 1:10.', 'what the Pause left stands');
+  /* Play asks music-access again, and the answer it gets decides: the preview, labelled as one */
+  await e.music.resume(); await settle(); await settle(); await settle();
+  assert.equal(e.accessCalls(), 4, 'asked again on Play');
+  assert.equal(e.music.access(), 'preview');
+  assert.equal(e.music.audio.src, 'creator-preview.mp3');
+  assert.equal(e.music.audio.paused, false);
+  assert.equal(e.text('musicMiniNote'), 'The full song is not open to this account any more. Playing its preview.');
 });

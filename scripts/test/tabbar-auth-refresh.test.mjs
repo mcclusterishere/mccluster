@@ -6,6 +6,7 @@ import { test as runnerTest } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
+import { stageSite } from './support/mcc-site.mjs';
 
 const read = (path) => readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
 const AUTH = read('js/mcc-auth.js');
@@ -549,7 +550,10 @@ test('on a clock an hour behind, a token the server has expired is refreshed bef
   assert.deepEqual(second.state(), signedIn('member-1'), 'and the lookup is answered with the new one');
 });
 
-/* ---------- the handoff's own write, cut from the bar and run beside the canonical client in one tab ---------- */
+/* ---------- the handoff's own write, cut from the bar and run beside the canonical client in one tab ----------
+   The write is the reader's at P0's table, the stage before the carry (and the one a rollback restores), where the
+   reader still trades; from P1 it only scrubs (scripts/test/auth-handoff-commit.test.mjs, review SEC-P1-1). */
+const P0_SITE = stageSite('P0');
 
 function arrival({ clockAhead = 0, answer }) {
   const shelf = new Map(), requests = [];
@@ -558,7 +562,8 @@ function arrival({ clockAhead = 0, answer }) {
     localStorage: local, sessionStorage: local,
     location: { origin: 'https://mccluster.org', hostname: 'mccluster.org', pathname: '/mnet.html', search: '', hash: '#mcc_handoff=fixture-carried',
       reload() { throw new Error('this page takes the carried session where it stands'); } },
-    addEventListener() {}, dispatchEvent() { return true; }
+    addEventListener() {}, dispatchEvent() { return true; },
+    MCC_SITE: P0_SITE
   };
   const real = Date;
   const context = vm.createContext({
@@ -576,7 +581,8 @@ function arrival({ clockAhead = 0, answer }) {
     }
   });
   vm.runInContext(AUTH, context, { filename: 'js/mcc-auth.js' });
-  vm.runInContext('"use strict";\n' + cut('function readAuthSession()', 'function jwtPayload(') + cut('function arriveWithHandoff()', "/* ON THE WORLD'S HOST"), context, { filename: 'js/tabbar.js' });
+  vm.runInContext('"use strict";\n' + cut('function readAuthSession()', 'function jwtPayload(') + cut('function handoffWriterOn()', '/* the link, with the sign-in riding along') +
+    cut('function arriveWithHandoff()', "/* ON THE WORLD'S HOST"), context, { filename: 'js/tabbar.js' });
   return { context, window, shelf, requests, stored: () => JSON.parse(shelf.get('mccdb_session') || 'null') };
 }
 const carriedAnswer = (serverNow, fields) => ({

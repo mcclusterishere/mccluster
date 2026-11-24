@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handleSocialRequest } from '../src/social/router.js';
 import { processInstagramPublishQueue } from '../src/social/meta.js';
+import { RETURN_FALLBACK_ORIGIN } from '../src/platform/hosts.generated.js';
 
 const ORG = '123e4567-e89b-42d3-a456-426614174000';
 const ACCOUNT = '223e4567-e89b-42d3-a456-426614174000';
@@ -82,7 +83,10 @@ test('an actionable Reel creates one content identity across Instagram and Human
   assert.match(data.action_url, /src=instagram/);
   const job = calls.find((x) => x.u.includes('/social_publish_jobs') && x.m === 'POST').body;
   assert.equal(job.content_id, data.content.id);
-  assert.match(job.payload.caption, /Take action: https:\/\/matthew\.mccluster\.org\/mnet\.html\?/);
+  /* a request that names no site origin links the stage's fallback: Matthew's host at P0, the platform from P1, which
+     answers /mnet.html with one 301 to the World's root, query kept */
+  assert.equal(RETURN_FALLBACK_ORIGIN, 'https://mccluster.org');
+  assert.ok(job.payload.caption.includes(`Take action: ${RETURN_FALLBACK_ORIGIN}/mnet.html?`), job.payload.caption);
   const network = calls.find((x) => x.u.endsWith('/network_posts') && x.m === 'POST').body;
   assert.equal(network.author_m_uid, MUID);
   assert.equal(network.content_id, data.content.id);

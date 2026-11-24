@@ -336,6 +336,29 @@ test('no page pauses music on visibilitychange, pagehide, blur or freeze', () =>
   assert.ok(checked.some(c => c === 'album.html:visibilitychange') && checked.some(c => c === 'js/pip.js:pagehide'), 'the players\' own banking handlers are among them');
 });
 
+test('opening, switching, revealing or closing a music view never pauses, plays or mutes anything (music slice M5)', () => {
+  /* the retained document's shell (js/music-shell.js) moves views over the one player; it has no say over the sound.
+     Every function on the way a view opens, is swapped, revealed or torn down, and the local functions each calls,
+     three levels down, is free of play(), pause(), a mute or the bar's own Play and Pause. The one place the shell
+     asks a player to pause is the album's owner switch, when a song is chosen (stage 2), which is not on this path. */
+  if (!existsSync(join(ROOT, 'js/music-shell.js'))) return;   /* no shell, nothing that could pause (dc0185aa) */
+  const code = codeOf('js/music-shell.js');
+  const path = ['openView', 'ready', 'reveal', 'teardown', 'conceal', 'uncover', 'onPop', 'fail', 'unexpected', 'adopt'];
+  for (const name of path) {
+    const defs = definitionsOf(code, name);
+    assert.ok(defs.length, `js/music-shell.js defines ${name}`);
+    for (const body of defs) {
+      const all = expand(code, body, 3);
+      assert.doesNotMatch(all, /\.pause\s*\(|\.play\s*\(|\.muted\s*=|\.volume\s*=|MCC_NP_PAUSE|MCC_NP_PLAY|\.resume\s*\(|\.toggle\s*\(\s*\)/,
+        `js/music-shell.js ${name} reaches a pause, a play or a mute: ${body.slice(0, 200)}`);
+    }
+  }
+  for (const h of lifecycleHandlers(code)) {
+    assert.ok(h.body !== null, `js/music-shell.js: a ${h.event} handler this guard cannot read`);
+    assert.doesNotMatch(expand(code, h.body), /\.pause\s*\(|\.suspend\s*\(|\.muted\s*=\s*true/, `js/music-shell.js: a ${h.event} handler pauses or mutes`);
+  }
+});
+
 test('one request per play: the album asks nothing else of a song it is playing', () => {
   const album = codeOf('album.html');
   const claim = definitionsOf(album, 'claimThenPlay')[0] || '';

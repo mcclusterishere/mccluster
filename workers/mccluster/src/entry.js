@@ -30,6 +30,7 @@ import { collectorEnabled, runScheduledIntelCollectors } from './intel/usgs-coll
 import { runUsgsIngest, usgsIngestEnabled } from './eup/environment/ingest.js';
 import { recentAudit } from './lib/audit.js';
 import { listObservabilityEvents, observeControlRequest, observeScheduled, pruneObservabilityEvents } from './lib/observability.js';
+import { siteUrl } from './platform/hosts.generated.js';
 
 /* The recovery sweep polls stale open paid jobs and settles them on the
    provider's definite answer. It is a new scheduled behaviour, so a deploy
@@ -112,7 +113,7 @@ async function dispatchRequest(request, env, ctx) {
           headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-store' }
         });
       }
-      const js = `(function(){var s=document.createElement("script");s.async=true;s.src="https://mccluster.org/js/mc-analytics.js";s.dataset.site=${JSON.stringify(site)};s.dataset.consent=${JSON.stringify(consent)};(document.head||document.documentElement).appendChild(s);}());`;
+      const js = `(function(){var s=document.createElement("script");s.async=true;s.src=${JSON.stringify(siteUrl('/js/mc-analytics.js'))};s.dataset.site=${JSON.stringify(site)};s.dataset.consent=${JSON.stringify(consent)};(document.head||document.documentElement).appendChild(s);}());`;
       return new Response(js, {
         headers: {
           'content-type': 'application/javascript; charset=utf-8',

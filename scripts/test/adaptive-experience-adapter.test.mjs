@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 
 const read=(p)=>readFile(p,'utf8');
 
@@ -61,4 +62,33 @@ test('evidence client still falls back without blocking live pages',async()=>{
   assert.match(experience,/fallback: true/);
   assert.match(experience,/error: error && error\.message \|\| "decision unavailable"/);
   assert.match(experience,/candidates: body\.candidates\.slice/);
+});
+
+/* The P1 review (P1A-4): a page in a folder (engineering/, action/) loads analytics.js as ../js/analytics.js, and the
+   experience scripts sit beside it in js/. Named from the page's address they were asked for at engineering/js/, a 404
+   that a host sending nosniff also refused to run (one more console error on the platform than on Matthew's host). They
+   are named from analytics.js's own address, query and all; with no address to read, from the page's, as before. */
+test('the experience scripts load from beside analytics.js, wherever the page is',async()=>{
+  const analytics=await read('js/analytics.js');
+  const start=analytics.indexOf('/* EXPERIENCE PLANE BOOTSTRAP.');
+  const end=analytics.indexOf('/* ====',start);
+  assert.ok(start>0&&end>start,'the bootstrap is found');
+  const boot=analytics.slice(start,end);
+  const run=(src)=>{
+    const added=[];
+    const document={
+      currentScript:src===null?null:{src},
+      querySelector:()=>null,
+      createElement:()=>({setAttribute(){}}),
+      head:{appendChild:(s)=>{added.push(s.src);if(s.onload)s.onload();}}
+    };
+    vm.runInNewContext(boot,{document});
+    return added;
+  };
+  const names=['experience.js','mcc-model-adapter.js','adaptive-surfaces.js'];
+  assert.deepEqual(run('https://mccluster.org/js/analytics.js?v=7'),names.map((n)=>`https://mccluster.org/js/${n}?v=7`),'a page in a folder on the platform');
+  assert.deepEqual(run('https://matthew.mccluster.org/js/analytics.js'),names.map((n)=>`https://matthew.mccluster.org/js/${n}`),'no query');
+  assert.deepEqual(run('http://127.0.0.1:8080/js/analytics.js?v=__STAMP__'),names.map((n)=>`http://127.0.0.1:8080/js/${n}?v=__STAMP__`),'a local copy');
+  assert.deepEqual(run(null),names.map((n)=>`js/${n}`),'no current script: the page\'s own address, as before');
+  assert.deepEqual(run('https://mccluster.org/assets/bundle.js?v=2'),names.map((n)=>`js/${n}?v=2`),'a file of another name: as before');
 });

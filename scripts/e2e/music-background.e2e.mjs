@@ -25,7 +25,10 @@
         signed URL signed again before it lapsed); an earned play whose time ran out is never claimed
         again by itself; a locked preview plays to its boundary and the album moves on; the World's
         stored mute never silences Music, and each music page shows its own Unmute; a music page reads
-        no song before a tap
+        no song before a tap. The catalogue's one gated song is held for everyone but the house owner
+        (Quick wins Q5), so its preview and its earned one-play are proved with that hold taken off, the
+        song first on its record, in this suite's catalogue fixture (setup's unheld); a song is started
+        on Listen from its search results, Listen listing albums and artists (Quick wins Q2)
 
    What an iPhone does with the screen locked is not shown here: Chromium only stands in
    for it. That stays Inferred until Matthew's devices run the checklist
@@ -77,7 +80,7 @@ const EARNED = { mode: 'rule', allowed: true, missing: [], missions: { have: 3, 
    { status } instead of the bytes. read = { key, start, n } (n: that file's nth read). creator: a creator's
    release behind music-access, its signed URL's lifetime given by expiresIn(nth signing). */
 async function setup({ width = 390, member = false, earned = false, ua, pocket = null, session = true, day = null,
-  deliver = null, creator = null, expiresIn = 300, worldMute = false, standalone = false } = {}) {
+  deliver = null, creator = null, expiresIn = 300, worldMute = false, standalone = false, unheld = false } = {}) {
   const context = await browser.newContext({ viewport: { width, height: 844 }, hasTouch: true, isMobile: width < 700, userAgent: ua,
     reducedMotion: 'no-preference', serviceWorkers: 'block', timezoneId: 'America/New_York' });
   const requests = [], errors = [], stream = { token: '', hits: [], claims: 0 }, reads = [], signed = [];
@@ -183,6 +186,19 @@ async function setup({ width = 390, member = false, earned = false, ua, pocket =
     }
     if (u.origin === WORLD) return r.fulfill({ contentType: 'text/html', body: '<!doctype html><title>World</title><body>World fixture</body>' });
     if (u.origin === HOUSE) {
+      /* a gated song that is not held: the catalogue's one gated song is held for everyone but the house owner (Matthew,
+         2026-11-23, "Quick wins" Q5 in docs/music/MUSIC-RELEASE-20261119.md), so the preview and the earned one-play,
+         which stay for any other gated song, are proved on it with its hold taken off here, in this fixture only */
+      if (unheld && p === '/data/albums.json') {
+        const doc = JSON.parse(await readFile(join(ROOT, 'data/albums.json'), 'utf8'));
+        /* first on its record too, so what follows its preview is a song of the same record (an album stops after its
+           last song since Quick wins Q6) */
+        for (const a of doc.albums || []) {
+          for (const t of a.tracks || []) delete t.hold;
+          a.tracks = (a.tracks || []).filter(t => t.gated).concat((a.tracks || []).filter(t => !t.gated));
+        }
+        return r.fulfill({ contentType: 'application/json', headers: { 'cache-control': 'no-store' }, body: JSON.stringify(doc) });
+      }
       if (p.startsWith('/assets/audio/')) {
         const file = resolve(ROOT, '.' + decodeURIComponent(p));
         if (!file.startsWith(resolve(ROOT) + sep)) return r.fulfill({ status: 403 });
@@ -203,6 +219,15 @@ async function setup({ width = 390, member = false, earned = false, ua, pocket =
   return { context, page, requests, errors, stream, reads, signed, sent: () => [...collected.values()] };
 }
 const sleep = ms => new Promise(res => setTimeout(res, ms));
+/* LISTEN LISTS ALBUMS AND ARTISTS (Matthew, 2026-11-23, "Quick wins" Q2 in docs/music/MUSIC-RELEASE-20261119.md): a
+   song's own play button is in Listen's search results, so a song is started there by searching for it */
+async function findSong(page, album, title) {
+  const sel = `[data-music-play][data-album="${album}"][data-track="${title}"]`;
+  await page.waitForFunction(() => !!window.MCC_MUSIC && !!document.getElementById('q'), null, { timeout: 20000 });
+  await page.fill('#q', title);
+  await page.waitForFunction(s => !!document.querySelector(s), sel, { timeout: 20000 });
+  return page.locator(sel).first();
+}
 /* ONE SONG'S MID-TRACK DROP (music slice M3). Its first read stops early, so the browser asks for the rest
    with a Range read; that read is held for a few seconds of playback and refused, and every read in the
    next `down` ms is refused too. After that each read from the top is cut short, so the way back to the
@@ -315,7 +340,7 @@ try {
   });
 
   await scenario('album, earned one-play', async () => {
-    const { context, page, stream, requests, errors } = await setup({ width: 390, member: true, earned: true });
+    const { context, page, stream, requests, errors } = await setup({ width: 390, member: true, earned: true, unheld: true });
     await page.goto(HOUSE + '/album.html?album=cia-mind-control', { waitUntil: 'load' });
     await page.waitForFunction(() => { const r = document.querySelector('#tracks li[data-gated-bucket]'); return r && r.getAttribute('data-gate') === 'earned'; }, null, { timeout: 20000 });
     await page.locator('#tracks li[data-gated-bucket]').click();
@@ -336,8 +361,7 @@ try {
   await scenario('listen engine', async () => {
     const { context, page, errors } = await setup({ width: 390 });
     await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
-    await page.waitForFunction(() => window.MCC_MUSIC && document.querySelector('[data-music-play][data-album="here"]'), null, { timeout: 20000 });
-    await page.locator('[data-music-play][data-album="here"]').first().click();
+    await (await findSong(page, 'here', 'Who Did The Shoot')).click();
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > 0.3, null, { timeout: 15000 });
     check('listen: the engine claimed the playback audio session before it played', await page.evaluate(() => navigator.audioSession.type) === 'playback');
     await hide(page);
@@ -453,9 +477,9 @@ try {
     const fault = drop({ match: k => k === song, first: { delay: 4000, cut: 480000 } });
     const { context, page, errors, reads, sent } = await setup({ width: 390, deliver: fault.deliver });
     await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
-    await page.waitForFunction(() => window.MCC_MUSIC && document.querySelector('[data-music-play][data-album="here"][data-track="Who Did The Shoot"]'), null, { timeout: 20000 });
+    const wdts = await findSong(page, 'here', 'Who Did The Shoot');
     await traceOf(page, 'MCC_MUSIC.audio');
-    await page.locator('[data-music-play][data-album="here"][data-track="Who Did The Shoot"]').first().click();
+    await wdts.click();
     await page.waitForFunction(() => window.MCC_MUSIC.delivery && MCC_MUSIC.delivery().state === 'loading', null, { timeout: 3800 }).catch(() => {});
     const slow = await engineUi(page);
     check('slow read: while the first bytes are on the way the player says Loading…, not Full track', slow.state === 'loading' && slow.label === 'Loading…', slow);
@@ -484,11 +508,13 @@ try {
     check('mid-track drop: back to its own label, the line gone', back.label === 'Full track' && back.note === '', back);
     const events = await page.evaluate(() => window.__events);
     check('mid-track drop: recorded as an interruption, never as a finished song', events.includes('music_interrupted') && !events.includes('music_complete'), events);
-    /* what leaves the page (music slice M3 follow-up, review RL-9): the new name waits for Matthew's approval in
-       js/analytics.js, and the drop is one music_error however many reads failed (it was one per failed read) */
+    /* what leaves the page (music slice M3 follow-up, review RL-9; approved by Matthew, 2026-11-23, "Quick wins" Q7 in
+       docs/music/MUSIC-RELEASE-20261119.md): one music_interrupted for the drop and one music_error, however many reads
+       failed (it was one per failed read) */
     await page.waitForFunction(() => true); await sleep(3200);   /* the analytics batch goes 2.5 s after its first event */
     const wire = sent();
-    check('mid-track drop: nothing named music_interrupted leaves the page (it waits for approval)', !wire.includes('music_interrupted'), wire);
+    check('mid-track drop: one music_interrupted leaves the page for the drop, never one per read (approved)', wire.filter(n => n === 'music_interrupted').length === 1 && events.filter(n => n === 'music_interrupted').length === 1,
+      { wire, page: events.filter(n => /^music_(error|interrupted)$/.test(n)) });
     check('mid-track drop: one music_error for the drop, however many reads failed', wire.filter(n => n === 'music_error').length === 1 && events.filter(n => n === 'music_error').length === 1,
       { wire, page: events.filter(n => /^music_(error|interrupted)$/.test(n)) });
     check('listen engine, delivery: no script errors', errors.length === 0, errors);
@@ -573,7 +599,7 @@ try {
     check('album drop: recorded as an interruption, never as a finished song', events.includes('music_interrupted') && !events.includes('music_complete'), events);
     await sleep(3200);   /* the analytics batch goes 2.5 s after its first event */
     const wire = sent();
-    check('album drop: nothing named music_interrupted leaves the page (it waits for approval), and no music_error per read', !wire.includes('music_interrupted') && !wire.includes('music_error'), wire);
+    check('album drop: one music_interrupted leaves the page for the drop (approved, 2026-11-23), and no music_error per read', wire.filter(n => n === 'music_interrupted').length === 1 && !wire.includes('music_error'), wire);
     check('album, delivery: no script errors', errors.length === 0, errors);
     await context.close();
   });
@@ -581,7 +607,7 @@ try {
   await scenario('album, an earned one-play: a drop inside its time, and a play whose time ran out', async () => {
     {
       const fault = drop({ match: k => k.startsWith('stream:'), first: { cut: 240000 } });
-      const { context, page, stream, reads, errors } = await setup({ width: 390, member: true, earned: true, deliver: fault.deliver });
+      const { context, page, stream, reads, errors } = await setup({ width: 390, member: true, earned: true, unheld: true, deliver: fault.deliver });
       await page.goto(HOUSE + '/album.html?album=cia-mind-control', { waitUntil: 'load' });
       await page.waitForFunction(() => { const r = document.querySelector('#tracks li[data-gated-bucket]'); return r && r.getAttribute('data-gate') === 'earned'; }, null, { timeout: 20000 });
       await traceOf(page, 'document.getElementById("deck")');
@@ -609,7 +635,7 @@ try {
         if (q.n === 2 && q.start > 0) { await sleep(4000); held = Date.now(); return { status: 410 }; }
         return { status: 410 };
       };
-      const { context, page, stream, reads, errors } = await setup({ width: 390, member: true, earned: true, expiresIn: 12, deliver });
+      const { context, page, stream, reads, errors } = await setup({ width: 390, member: true, earned: true, unheld: true, expiresIn: 12, deliver });
       await page.goto(HOUSE + '/album.html?album=cia-mind-control', { waitUntil: 'load' });
       await page.waitForFunction(() => { const r = document.querySelector('#tracks li[data-gated-bucket]'); return r && r.getAttribute('data-gate') === 'earned'; }, null, { timeout: 20000 });
       await page.locator('#tracks li[data-gated-bucket]').click();
@@ -628,7 +654,7 @@ try {
   });
 
   await scenario('album, a locked preview', async () => {
-    const { context, page, errors } = await setup({ width: 390 });
+    const { context, page, errors } = await setup({ width: 390, unheld: true });
     await page.goto(HOUSE + '/album.html?album=cia-mind-control', { waitUntil: 'load' });
     await page.waitForSelector('#tracks li[data-gated-bucket]', { timeout: 20000 });
     await page.locator('#tracks li[data-gated-bucket] .t').click();   /* the title: the row's chip is a way to the full song */
@@ -645,8 +671,7 @@ try {
     {
       const { context, page, errors } = await setup({ width: 390, worldMute: true });
       await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
-      await page.waitForFunction(() => window.MCC_MUSIC && document.querySelector('[data-music-play][data-album="here"]'), null, { timeout: 20000 });
-      await page.locator('[data-music-play][data-album="here"]').first().click();
+      await (await findSong(page, 'here', 'Who Did The Shoot')).click();
       await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3, null, { timeout: 15000 });
       const heard = await engineUi(page);
       check('stored World mute: a Music song is not silenced by it', !heard.muted && heard.label === 'Full track', heard);
@@ -701,8 +726,7 @@ try {
   const WDTS = '[data-music-play][data-album="here"][data-track="Who Did The Shoot"]';
   async function listenPlay(page) {
     await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
-    await page.waitForFunction(sel => window.MCC_MUSIC && document.querySelector(sel), WDTS, { timeout: 20000 });
-    await page.locator(WDTS).first().click();
+    await (await findSong(page, 'here', 'Who Did The Shoot')).click();
   }
   async function albumPlay(page) {
     await page.goto(HOUSE + '/album.html?album=here', { waitUntil: 'load' });
@@ -1009,7 +1033,7 @@ try {
     const fault = drop({ match: k => k === song, first: { cut: 480000 }, hold: 9000, down: 60000 });
     const { context, page, errors, reads } = await setup({ width: 390, deliver: fault.deliver });
     await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
-    await page.waitForFunction(sel => window.MCC_MUSIC && document.querySelector(sel), WDTS, { timeout: 20000 });
+    const wdts = await findSong(page, 'here', 'Who Did The Shoot');
     const tab = () => page.evaluate(() => { const t = document.querySelector('.appbar [data-appnav="music"]'); return { sound: !!t && t.classList.contains('is-sound'), y: Math.round(scrollY) }; });
     const engine = () => page.evaluate(() => ({ paused: MCC_MUSIC.audio.paused, button: document.getElementById('musicMiniPlay').getAttribute('aria-label'), state: MCC_MUSIC.delivery().state }));
     /* review RF-3: what a keyboard or a screen reader is told about the tab (its role and name, as the browser computes
@@ -1017,7 +1041,7 @@ try {
     const told = async () => { const s = await page.locator('.appbar [data-appnav="music"]').ariaSnapshot(); const m = /^- (\w+) "([^"]*)"/.exec(s.trim()); return m ? `${m[1]} "${m[2]}"` : s; };
     check('listen, nothing chosen: the middle button shows its play triangle', !(await tab()).sound);
     check('listen, nothing chosen: the bar\'s Music tab is told as link "Music" (a tap scrolls to the top)', await told() === 'link "Music"', await told());
-    await page.locator(WDTS).first().click();
+    await wdts.click();
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3, null, { timeout: 15000 });
     await page.waitForFunction(() => document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 3000 }).catch(() => {});
     check('listen, a song playing: the middle button shows Pause, as on the album', (await tab()).sound, await tab());
@@ -1093,6 +1117,46 @@ try {
     check('listen, back from the World with the song still playing: the Music tab is the player\'s Pause again', !back.world && !back.paused && back.told === 'link "Pause music"', back);
     check('listen, the Music tab\'s name: the page fits the screen', await fits(page));
     check('listen, the Music tab\'s name: no script errors', errors.length === 0, errors);
+    await context.close();
+  });
+
+  /* PR #825's CI (a Release 1 follow-up to 3f12e039, which fixed the bar): the check above failed on a busy runner. The
+     second Enter reached the page before the first one's queued media events and the bar's look for an answer (a 0 ms
+     timer in js/tabbar.js's transport()); the first Enter's late timeupdate told the bar the song played again, and then
+     that look saw the value it started from, took it for no answer and said "nothing is playing". The song played on
+     under a tab that said "Play music", and a tap on it did nothing. Here the two taps reach the page in one task, and the
+     first tap's queued timeupdate is run in that task too, so the player has said the song plays again before either
+     look can run: CI's order, every time. */
+  await scenario('listen page: two taps on the Music tab before the page has run the first one\'s queued work leave the tab saying what the player does', async () => {
+    const { context, page, errors } = await setup({ width: 390 });
+    const state = () => page.evaluate(() => {
+      const t = document.querySelector('.appbar [data-appnav="music"]');
+      return { paused: MCC_MUSIC.audio.paused, mini: document.getElementById('musicMiniPlay').getAttribute('aria-label'),
+        sound: t.classList.contains('is-sound'), label: t.getAttribute('aria-label') };
+    });
+    await listenPlay(page);
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3 && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 15000 });
+    await page.evaluate(() => {
+      const t = document.querySelector('.appbar [data-appnav="music"]');
+      t.click();                                                  // Pause: the player answers at once
+      t.click();                                                  // Play, before the first tap's queued work has run
+      MCC_MUSIC.audio.dispatchEvent(new Event('timeupdate'));     // the first tap's queued timeupdate, ahead of its look
+    });
+    await sleep(1000);
+    const now = await state();
+    check('listen, two taps on the Music tab in one moment: the song plays again and the tab shows and says "Pause music", as the mini player does',
+      !now.paused && now.mini === 'Pause' && now.sound && now.label === 'Pause music', now);
+    await sleep(2500);
+    const later = await state();
+    check('listen, two taps on the Music tab in one moment, 2.5 s later: still "Pause music" while the song plays',
+      !later.paused && later.mini === 'Pause' && later.sound && later.label === 'Pause music', later);
+    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.waitForFunction(() => MCC_MUSIC.audio.paused, null, { timeout: 3000 }).catch(() => {});
+    await sleep(300);
+    const paused = await state();
+    check('listen, then one more tap on the Music tab pauses the song (it was a Play that did nothing over a playing song)',
+      paused.paused && paused.mini === 'Play' && !paused.sound && paused.label === 'Play music', paused);
+    check('listen, two taps on the Music tab in one moment: no script errors', errors.length === 0, errors);
     await context.close();
   });
 

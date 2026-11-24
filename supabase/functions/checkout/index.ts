@@ -11,12 +11,12 @@
 // or fixed price. Those all come from server-side records.
 
 import Stripe from "npm:stripe@14";
+import { returnOrigin } from "../_shared/site-hosts.ts";
 
 const SK = Deno.env.get("STRIPE_SK")!;
 const stripe = new Stripe(SK);
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SITE = "https://matthew.mccluster.org";
 const LIVEMODE = /_(live)_/.test(SK || "");
 
 const SQ_TOKEN = Deno.env.get("SQUARE_ACCESS_TOKEN") ?? "";
@@ -42,6 +42,10 @@ async function rows(path: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
+  /* The buyer comes back where they started: the request's Origin when it is exactly an origin that
+     serves pages (../_shared/site-hosts.ts, generated from data/seo/domain-architecture.json), else the
+     generated fallback, which at stage P0 is the profile host every return named before. */
+  const SITE = returnOrigin(req.headers.get("origin"));
 
   const { offer, amount, note } = await req.json().catch(() => ({}));
   const slug = String(offer || "").toLowerCase().trim();

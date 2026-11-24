@@ -6,6 +6,7 @@ import app from './identity-gateway.js';
 import { bookingSettings, bookingReadiness, bookingLocations, calculateFare,
   signQuote, verifyQuote, bookingRequestId, bookingProblem, BOOKING_QUOTE_TTL_MS } from './booking-core.js';
 import { boundedJson } from '../../../../js/travel/route-core.mjs';
+import { siteUrl } from '../platform/hosts.generated.js';
 
 const JSON_HEADERS={'content-type':'application/json; charset=utf-8','cache-control':'no-store, private'};
 const clean = (body,status=200)=>new Response(JSON.stringify(body),{status,headers:JSON_HEADERS});
@@ -99,7 +100,7 @@ export function createWhipBookingGate(next=app,options={}) {
       const ready=bookingReadiness(env);
       return clean({operator:'Whip Equipped LLC',rides_live:ready.live,
         quote_supported:ready.commercialRouting&&ready.prices&&ready.quoteAuth,
-        driver_signup_url:'https://matthew.mccluster.org/whip/driver/',
+        driver_signup_url:siteUrl('/whip/driver/'),
         message:ready.live?'Ride booking is connected. A ride is confirmed only when a cleared driver accepts.':
           'Ride booking is in preparation. No live driver or fare has been promised.'});
     }
