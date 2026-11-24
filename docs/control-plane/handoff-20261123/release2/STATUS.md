@@ -36,3 +36,18 @@ Release 2 (pull request #837) merged with a merge commit pinned to head `1dfaf9a
 - Deployed and verified at 19:33 UTC: `GET https://api.mccluster.org/v1/health` answers `deployment_sha` `467b5db5...`; `mccluster.org/`, `mccluster.org/listen.html`, `mccluster.org/company`, `matthew.mccluster.org/` and `matthew.mccluster.org/listen.html` answer 200.
 - Still to confirm when this was written: the GitHub Pages deploy for `467b5db5` (the `?v=` stamp on the published pages) and a live play on `mccluster.org/listen.html`.
 - Open after the merge: the device-ID carry (must-fix before more traffic is pointed at the platform host; see the decision above); the World on the one music engine; the parked globe camera's render hold; the database steps in the Codex prompt.
+
+## After the merge: live verification and one defect on the platform host (2026-11-24, 19:44 to 20:00 UTC)
+
+Verified live at merge commit `467b5db5`:
+- GitHub Pages deployed: the published pages carry `?v=467b5db5175d` on both hosts (stamp seen 19:43 UTC).
+- An album plays on both hosts: `album.html?album=heal-the-3`, first row tapped, audio at 6 s and not paused, no page errors, on `mccluster.org` and on `matthew.mccluster.org`.
+- Listen on both hosts lists artists and albums and answers 200.
+
+**Defect, platform host only: a view opened inside Listen is blank on `mccluster.org`.** Tap an artist on `mccluster.org/listen.html`: the address changes to `music-creator.html?handle=...`, the bar stays, the page area is empty. The same tap on `matthew.mccluster.org` shows the artist page.
+
+Cause, measured: Cloudflare **Rocket Loader** is on for the `mccluster.org` zone. It rewrites every `<script>` on HTML that passes through the zone (`type="<hash>-text/javascript"`, plus `cdn-cgi/scripts/.../rocket-loader.min.js`) and runs them late. `js/shell-boot.js` must run before the view document's body so the shell adopts the frame; with Rocket Loader it runs after the frame's `load` event, so `loaded()` in `js/music-shell.js` treats the document as unexpected and sets the frame `visibility: hidden` (the frame is later adopted, class `mcc-music-view`, but stays hidden). GitHub Pages serves `matthew.mccluster.org` without Rocket Loader, so it is unaffected. A 503 seen on the artist address is Cloudflare's speculative prefetch (`sec-purpose: prefetch`), not the page.
+
+Fix, in order of preference:
+1. Owner, in Cloudflare: zone `mccluster.org`, Speed, Settings, Content Optimization, Rocket Loader off (or a Configuration Rule turning it off for the host). Then re-test the tap above.
+2. Code hardening, not done: in `js/music-shell.js`, `loaded()` should not call `unexpected()` for a document that carries `data-music-view` and is not yet adopted, and `adopt()` should clear the frame's inline `visibility`. It needs a browser test that delays `js/shell-boot.js` past the frame's load event. Other pages may also depend on script order before first paint, so option 1 is still wanted.
