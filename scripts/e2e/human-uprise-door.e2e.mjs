@@ -715,10 +715,11 @@ const settleWorld = async (page) => {
   await linkOnWorld('roomLink', 'album.html');
   await page.waitForURL((u) => u.pathname === '/album.html', { timeout: 90000 }).catch(() => {});
   check(S, 'a page link to one of the site\'s pages stays on the platform, which serves it', page.url() === `${CO}/album.html` && served.some((x) => x.url === `${CO}/album.html` && x.status === 200), page.url());
+  const servedBeforeWhip = served.length;   // the platform's own 301 for /whip.html was recorded in 3b; count this tap's alone
   await linkOnWorld('whipLink', '/whip.html');
   await page.waitForURL(/matthew\.mccluster\.org/, { timeout: 90000 });
   const room = page.url();
-  check(S, 'a link to Whip Equipped (Matthew\'s own, profile_only) goes to his host outright, with no sign-in in the address', room === `${HOUSE}/whip.html` && !served.some((x) => x.url.startsWith(`${CO}/whip.html`)), room);
+  check(S, 'a link to Whip Equipped (Matthew\'s own, profile_only) goes to his host outright, with no sign-in in the address', room === `${HOUSE}/whip.html` && !served.slice(servedBeforeWhip).some((x) => x.url.startsWith(`${CO}/whip.html`)), room);
   check(S, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }
