@@ -1679,3 +1679,275 @@ not changed, because it was there at `dc0185aa` and lies outside this slice: a c
 avatar takes the house mark (`assets/img/m-mark.png`) as its card art (`js/music-engine.js`), and Listen's "From
 creators" card crops the mark and sets the release's title over it, at 390 px and at 1280 px. The logo law says the
 mark is shown whole, scaled, or not at all; what such a card should show instead is Matthew's call.
+
+## Quick wins (2026-11-23)
+
+Seven small things Matthew asked for on 2026-11-23, built on the working branch only, at base `5d8c533e` (the
+branch after M5). Nothing was merged, deployed, enabled or applied; no SQL, `supabase/`, auth or session code
+changed, and no second backend, database, Worker, auth or player engine was added. The one file under `workers/`
+that changed is the measurement dictionary (two rows, below). The gate's SQL is untouched, and no production data
+changed or needed to: the one McCluster artist row the pages point at is already there (read-only check below).
+
+### Matthew's words
+
+* **Q1** "McCluster has two profiles. One says the house, one says the artist. It needs to be one profile. McCluster
+  is the artist."
+* **Q2** "the albums need to be just fucking albums, and the playlist... We don't have enough music to necessarily
+  even have playlists right now. So just list albums and artists right now."
+* **Q3** "The full covers aren't shown, and I agree. We should fix that." "as long as everything's uniform" (V-1 in
+  the M3 follow-up's list).
+* **Q4** "The shit should know whether you have a creator's account or not already."
+* **Q5** the closing song of CIA Mind Control: "We keep the song up, but it won't play... it'll tell you why it won't
+  play when you try to click play." (D-11 in the M3 follow-up's list.) This record calls it the closing song and
+  never writes its title.
+* **Q6** "end of the album, and just leave" (PB-R11 in the M3 follow-up's list).
+* **Q7** "For 6, I approved them": item 6 of the M3 follow-up's list, `music_interrupted`, and with it the song that
+  would not load, `music_error`.
+
+### What reproduced at the base
+
+Measured at `5d8c533e` in Chromium over the music accounts plane (`scripts/e2e/support/music-accounts-plane.mjs`,
+every request a route fixture, every song a short synthetic WAV), and in Node:
+* **Q1** Listen's Artists rail showed McCluster twice: "McCluster · The house" (the M mark, a link to the house's
+  root, `index.html`) and the directory's "McCluster @mccluster", whose artist page said "No published releases yet".
+  The album's byline and the Now sheet credited "Matthew McCluster" and linked to `matthew-mccluster.html`; the lock
+  screen said "Matthew McCluster" on every player that falls back to the house's artist.
+* **Q2** Listen showed Artists, Albums and "Everything" (every song as a list) under a filter row; the album page had
+  its own filter row, a playlists shelf and "Curated by the house" over the albums, and its kicker read "The album ·
+  6 tracks · good evening". An old `album.html?playlist=` link stayed on a playlist page.
+* **Q3** No cover was whole: every music surface drew its cover with `object-fit: cover` or a `cover` background, cut
+  its corners (2 to 20 px), set it on a plate (three dark browns) and, on the album's hero, under a shadow; the Now
+  Playing sheets showed a blurred copy behind it and a poster box; the album's living sleeve drew a cropped copy of
+  the cover with a glow and fog over it; the embedded player cropped it at 12 px corners; an artist page with no
+  banner set a cropped cover as its hero backdrop. CIA Mind Control's cover (544 × 246) lost most of its width.
+* **Q4** The offers by state already held on Listen, an artist page's foot and Creator Studio for every persona,
+  fresh and after the token's hour. Two things did not: Listen kept the join pitch ("For artists & creators / Put
+  your music in the same ecosystem people are listening in.") beside a creator's and the owner's "Open Creator
+  Studio" (fresh, after the token's hour, and right after a sign-in in another tab); and the World's member desk
+  treated any failed or early answer about creator state as "not a creator", so it offered "Become a creator" to a
+  creator and to the owner whenever that answer failed or came before the token's refresh.
+* **Q5** The closing song's row carried its preview address. A guest's tap played the preview (8 reads of it); Next
+  and the album's own advance reached it; the lock screen named it. A signed-in member's play asked the gate 5 times
+  and posted the listen ledger 12 times. The listen engine played it too (5 reads). The house owner's own play
+  worked.
+* **Q6** The album went on from its last song to its first (Heal the 3: Deep End read again), and Next on the last
+  song did the same. The listen engine ran on into the next album on the shelf.
+* **Q7** `music_interrupted` was held in `js/analytics.js` (`AWAITING_APPROVAL`) and never sent; neither name was in
+  the measurement dictionary. The players named a drop on every failed read (the album up to six times a drop).
+
+Read-only in production (counts and catalogue rows only, no person): one active artist profile with the handle
+`mccluster` and the artist name McCluster (no releases, no albums, no avatar); no published creator tracks; the
+closing song has one direct-sale offer, inactive (matched by hash, so its title is not written here); the reviewed
+event taxonomy lists neither `music_interrupted` nor `music_error`.
+
+### Readings made here (Inferred, his to correct)
+
+* "The house" in Q1 is Matthew's house, the personal property's root that the rail's card opened, standing in as a
+  second McCluster beside the artist. It is not McCluster Corp, and nothing about the company changed: the two
+  entities stay two, and the property's own titles, descriptions and structured data, which are Matthew-first by the
+  domain rules, are untouched.
+* "McCluster is the artist": the one card is McCluster, Artist, and opens McCluster's artist page
+  (`music-creator.html?handle=mccluster`), which now carries his albums from the catalogue and keeps the house's M
+  in the bar's middle (he is the house's own artist, so his page is not a guest perspective).
+* Q2's "right now": the song rails and the Everything list are switched off in one place (`SONG_RAILS` in
+  `js/listen.js`), not deleted, so they can come back when there is more music; a search still lists songs.
+* Q5's account states: a guest is asked to sign in; a signed-in member is told the song plays only for members who
+  complete their full profile and answer a short questionnaire, and that the questionnaire opens soon. Nothing is
+  collected: there is no questionnaire yet, and the pop-up only links to sign-in or the profile.
+
+### What changed
+
+* **Q1, one McCluster.** Listen's Artists rail has one McCluster card (the M as supplied, "McCluster", "Artist") that
+  opens his artist page; the directory's own row for him is not drawn a second time (`js/music-community.js`). His
+  artist page shows his albums from `data/albums.json` (each a link to the album), keeps the house in the bar, and
+  falls back to a built-in profile when the row is missing (`js/music-creator-profile.js`, `music-creator.html`,
+  `css/music-artist.css`); opened as a view over Listen, it passes the house up to the bar, as an artist page passes
+  up any other artist (`js/music-shell.js`; found by the door suite). The album's byline and Now sheet credit
+  McCluster and link to that page (`album.html`); every player that falls back to the house's artist says McCluster
+  on the lock screen: the listen engine, the World's soundtrack, the pocket, the embedded player, the music video
+  feed and a shared album link (`js/music-engine.js`, `js/world-audio-continuity.js`, `js/pip.js`, `embed.html`,
+  `music-videos.html`, `js/label.js`; the music video feed was found by the Now Playing suite). The credit lines on
+  Listen and the album read "Written & performed by McCluster".
+* **Q2, albums and artists.** Listen: Artists and Albums, no filter row, no song rails, a song list only for a search
+  (`listen.html`, `js/listen.js`). The album page: no filter row, no playlists, "Albums" over the shelf, and the
+  kicker "Album · 6 songs" (`album.html`); it no longer reads `data/playlists.json`. An old playlist link lands on
+  the Listen page, or on the music videos page for the two film playlists. Every album stays one tap away.
+* **Q3, whole covers.** One rule in `css/music-system-v2.css` ("WHOLE COVERS") for every music cover: the whole
+  artwork scaled inside its square (`object-fit: contain`, centred), nothing behind it, no corner cut, no shadow, no
+  filter. It covers Listen's shelf, the album's hero, rows and deck bar, the mini player, both Now Playing sheets,
+  the artist page (album, cards, rows), the catalogue's shelf and creator releases. The album's Now sheet shows the
+  cover itself when a song has no film; the blurred copy behind the Now Playing cover is gone; the living sleeve is
+  no longer mounted on the album, and `js/env.js` is loaded by no page now (the file stays); the embedded player
+  shows its cover whole; an artist page's hero is a banner or an avatar, never a cropped cover. No artwork file
+  changed and nothing was drawn: the supplied covers are only scaled.
+* **Q4, a creator is never asked to join.** Listen's Creator Studio box answers by account: the join pitch for a
+  guest (Sign in) or a member (Become a creator), "Creator Studio" with "Open Creator Studio" for a creator or the
+  owner, and nothing at all until the account is known (at most 6 s); it follows a sign-in elsewhere and the token's
+  refresh through the shared account (`listen.html`, `js/creator-onboarding.js`). The World's desk asks the server
+  and believes only its answer: creator, not a creator, or not known, and "not known" offers nothing
+  (`js/member-desk-core.js`, `js/member-desk.js`). No second auth.
+* **Q5, the closing song is held.** `data/albums.json` marks it `"hold": "profile"`; it stays listed, last on the
+  album. Its row carries no source and no preview address, so nothing reads either; its chip says "NOT YET, tap to see
+  why". A tap, Next, or the album or the listen engine reaching it opens one pop-up by account state
+  (`js/gated-audio.js`: `holdDecision`, `holdCopy`, `holdNotice`; `css/music-system-v2.css`): "Why this song won't
+  play", with Sign in (back to the album) for a guest, "Complete your profile" for a member, and Close; Escape and a
+  tap outside close it. A guest is not asked over the network at all. A tap on it never stops what is playing;
+  Next or the album's own advance moves on past it, or stops when it is the last song (it is). The house owner's own
+  play is his unchanged path: the gate answers operator, one claim, the master. The pocket, the embedded player and
+  keeping an album offline never take it (`js/pip.js`, `embed.html`, `js/label.js`), the direct checkout never puts
+  a buy button on its row (`js/music-direct.js`), and the M5 shell keeps the pop-up when a view covers the page
+  (`js/music-shell.js`).
+* **Q6, an album stops after its last song.** The album: after the last song it stops there, paused at its end, the
+  lock screen paused; Next on the last song stops it at the end; Previous on the first starts it again; Play at the
+  end starts the last song again (`album.html`). The listen engine's queue is the record (an album, or a creator's
+  release) and it stops at the record's end the same way (`js/music-engine.js`). Two things the M5 shell suite caught
+  in the first build, both fixed with a test that failed before the fix: the end of a record is where the listener's
+  song ends, so a guest's 30-second preview of a creator release's last song stops the record at the preview's end,
+  never past it, and Play there starts the preview again (the first build sought to the end of the whole file, past
+  the preview, and the preview ended twice); and a creator's songs that Listen's "From creators" row listed before
+  their artist page listed them again with their release stay one record (the first build read the record from the
+  older listing for the queue and the newer one for the song that played, and Next stopped at once). The pocket and
+  the embedded player stop at a record's end too. The World's soundtrack keeps its own rotation, unchanged.
+* **Q7, the approved events.** The hold in `js/analytics.js` is gone. `music_interrupted` and `music_error` are rows
+  in the measurement dictionary, with what they mean and who sends them
+  (`workers/mccluster/src/analytics/measurement-dictionary.js`; its version and the reviewed taxonomy's 30 rows are
+  unchanged). The listen engine and the album send one `music_interrupted` when a drop begins, never one per failed
+  read; `music_error` goes once per failed song or drop, as before.
+* **Tests and CI.** New: `scripts/test/music-quick-wins.test.mjs` (33) and `scripts/e2e/music-quick-wins.e2e.mjs`
+  (148 checks), both in the music job (`.github/workflows/music-platform-ci.yml`: its paths, the contract step and the
+  browser step; no new workflow or trigger). Existing tests changed to the new behaviour, each only where it pinned
+  the old one: `music-measurement`, `music-playback-races` (two signing-ahead tests now cross a creator's two-song
+  release, since an album no longer runs into the next), `listening-room`, `human-uprise-door` (unit and e2e: the
+  rail's card opens his page), `journey-errors`, `song-test`, `music-shell` (the pop-up is kept over a view),
+  `now-playing-contract`. The browser suites that started a song from a Listen row now find it by Listen's search,
+  since Listen lists no songs until a search (`music-background`, `music-world-continuity`, `now-playing`,
+  `installed-app`, `music-shell`). Their scenarios that test a locked preview and an earned play (the gate's
+  mechanics, which stay for any gated song) run on a copy of the catalogue served by the test with the hold lifted and
+  the gated song first on its record, so they still reach it (`music-background`, `music-world-continuity`); the
+  real catalogue's held song is the quick wins suite's to test. Other changes there: one `music_interrupted` per drop
+  leaves the page (`music-background`); McCluster on the lock screen and no playlist scenario (`now-playing`); his
+  card opens his page, the closing song tapped from a Listen view stays held with the view's own pop-up and no
+  claim, a guest's preview of an artist's last song stops the record, and the steps that waited for Listen's song
+  list wait for its albums, or search first (`music-shell`).
+
+### Tests: failing at the base, passing after
+
+Every new test was run on `5d8c533e` with only the tests added (its sources untouched), in a worktree made for it
+and removed after:
+
+| Test | At `5d8c533e` | After |
+| --- | --- | --- |
+| `scripts/test/music-quick-wins.test.mjs` (new, 33) | 30 fail. The 3 that pass are controls: the lock screen's artwork registry already handed each cover whole, and the house owner's own play of the closing song already worked on the listen engine and on the album | 33 of 33 |
+| `scripts/e2e/music-quick-wins.e2e.mjs` (new, Chromium; 390 px, 320 px and 1280 px) | 51 of 142 checks pass: the guards that hold today too (every page fits at 320 and 390 px, every album is reachable, a search finds songs, a guest's and a member's offers, the house owner's own play). Six more never ran, their scenarios stopping at an earlier failure | 148 of 148 (Q1 11, Q2 20, Q3 56, Q4 23, Q5 25, Q6 5, 320 px 8) |
+
+**Revert and fail.** 21 behaviours taken out one at a time, in a separate worktree holding the slice, each file put
+back by its hash after (the slice's files checked equal after every pass): every one fails a test that holds it. They
+are: the Artists rail as it was (the house card and his directory row); Matthew McCluster on the listen engine's lock
+screen; his artist page without his albums; an old playlist link staying on a playlist page; the song rails switched
+back on; the whole-covers rule; the living sleeve mounted on the album; the desk taking a failed answer as "not a
+creator"; the offer box ignoring the account; the closing song not marked held; no hold decision and no pop-up; the
+album playing the held row on a tap; the listen engine opening a held song; a buy button on the held row; the pocket
+wrapping round and playing a held or gated song; the listen engine running on through the whole shelf; the album
+wrapping to its first song; `music_interrupted` held again; the dictionary without the two rows; one
+`music_interrupted` per failed read on the engine, and on the album. The first pass caught 19 of 21. One revert only
+loaded the sleeve's script, which mounts nothing; put back as it was (the mount itself), it fails. The other, the
+engine running on through the shelf, passed because the test's album was the last on its shelf; the test's shelf now
+puts that album first, and it fails. Four more were found after that pass, by the browser suites below, and each
+test ran on the slice before its fix and failed there: the record's end sought past a guest's 30-second preview (the
+record's end at 179.95 s of a 180 s file); Next stopped at once on a creator's song listed twice (the song stayed
+where it was); the music video feed's credit (`music-videos.html`, the person's name); and a view of his page that
+did not tell the bar it is the house. At the base the first two fail too, the record running on to its first song.
+
+### Suites at the final code
+
+At the final code, each once; the browser suites one at a time, in Chromium, under the shared browser lock:
+
+| Suite | Result |
+| --- | --- |
+| Root, `node --test scripts/test/*.test.mjs` | 3134 tests: 3127 pass, 7 skipped, none fail |
+| The music job's contract step (its parse checks and 16 test files) | 241 of 241 |
+| `scripts/test/domain-architecture.test.mjs` | 7 of 7 |
+| Worker, `workers/mccluster` (network off) | 2032 tests: 2022 pass, 9 skipped, 1 fails, the same one at `5d8c533e` and outside these files: `analytics-creator-attribution`, "real tracker retains only a validated public creator handle beside the path" (`MCC_PAGE_IDENTITY is not defined`) |
+| Peaks, artwork and track-length checks | current (41 peaks files, 8 covers) |
+| Source map validator | 2966 checks, none failed |
+| Quick wins, `scripts/e2e/music-quick-wins.e2e.mjs` | 148 of 148 (and 148 of 148 again in its screenshot mode, at device scale 2) |
+| M5 shell, background playback, World continuity | 141 of 141; 293 of 293; 140 of 140 |
+| Now Playing, accounts, installed app | 120 of 120; 128 of 128; 246 of 246 |
+| Native Control review, direct checkout | 49 of 49; 40 of 40 |
+| The house door, member desk, creator onboarding | 122 of 122; 60 of 60; 85 of 85 |
+| World first visit, site navigation | 83 of 83; 429 of 429 |
+
+The suites caught four faults in the first build, each fixed with a test that failed before its fix: the music video
+feed still credited the person; McCluster's page, opened as a view, did not tell the bar it is the house; and the two
+record faults under Q6 above.
+
+### What is Inferred
+
+* Everything on an iPhone or iPad: that the pop-up reads well with VoiceOver and the keyboard, that the lock screen
+  shows the album paused at its end, and that a whole cover inside its square looks right on every screen. Chromium
+  only here.
+* The readings above (who "the house" is, "right now" for the song rails, the pop-up's words).
+* A pocket saved before this change keeps the artist name it was saved with ("Matthew McCluster") until a new song
+  is chosen; it is a stored string, not a credit drawn by the pages.
+
+### What waits for Matthew
+
+* **The pop-up's words** (Q5): the guest and member lines above, and whether the album's own advance should open it
+  (built: it does, once) or only a tap.
+* **The questionnaire and the full-profile check** behind the closing song: not built; the pop-up says it opens soon.
+  The gate's SQL is untouched, so today the closing song plays for the house owner alone.
+* **The closing song's direct-sale offer** is inactive in production and its row has no buy button; keep it inactive
+  while the song is held.
+* **The catalogue's credit line** (`catalogue.html`) still reads "Written & performed by Matthew McCluster" beside the
+  registered ISRCs: the registered writer's name. Change it to McCluster or keep it.
+* **The song rails** (Trending, Most saved, Hidden gems and the rest) and the playlists: off until he says there is
+  enough music; `data/playlists.json` and the rail code stay.
+* **"From creators" on Listen**: when the first creator release is published (none is today), Listen shows a row of
+  creators' releases under that heading, beside Artists and Albums (`js/music-community.js`, unchanged). A release
+  is a creator's record, so it was kept; whether releases show there or only on each creator's artist page is his
+  call.
+* **The living sleeve** on the album (the animated surround that cropped the cover): unmounted; whether it comes back
+  around a whole cover, or `js/env.js` is deleted.
+* **The reviewed event taxonomy** in production lists neither `music_interrupted` nor `music_error`, so the funnel
+  reports file them as unclassified; the owner's measurement dictionary names them. Adding them there is a production
+  change, his to approve, and was not prepared here.
+
+Rows for his devices; until they are run, everything here about an iPhone or iPad stays Inferred. For each, note
+the page, a Safari tab or the Home Screen icon, signed in or not, and the iOS version.
+1. Listen: one McCluster under Artists; tap it: his page, with his albums.
+2. Listen and an album: Artists and Albums only; covers whole, nothing cut, nothing behind them.
+3. Signed out, CIA Mind Control: tap the last song: the pop-up, Sign in; Close.
+4. Signed in as a member, the same: the pop-up, "Complete your profile".
+5. Play CIA Mind Control's second song and let it end: the album stops; the lock screen shows it paused.
+6. Heal the 3: play the last song to its end: the album stops there, paused, and does not start Deep End again.
+7. As a creator: Listen's Creator Studio box never says "For artists & creators" or "Become a creator", right after
+   signing in and an hour later.
+8. VoiceOver on the pop-up: the title is read, then the line, then the button.
+
+### Screenshots for Matthew
+
+Rendered in Chromium at device scale 2 by the browser suite's screenshot mode (`QW_SHOTS=<folder> node
+scripts/e2e/music-quick-wins.e2e.mjs`), every request answered by a route fixture ("Fixture Artist" is a fixture);
+kept with the slice's results, not in the repository:
+* `listen-390-albums-and-artists`, `listen-1280-albums-and-artists` (whole page): Artists, then Albums, nothing else.
+* `listen-390-artists-one-mccluster`: one McCluster, Artist, first.
+* `artist-390-mccluster-one-profile`, `artist-1280-mccluster-one-profile`: his page, with his albums.
+* `listen-390-shelf-whole-covers`, `album-390-hero-whole-cover`, `album-1280-hero-whole-cover`,
+  `listen-390-mini-player-whole-cover`, `album-390-mini-player-whole-cover`, `listen-390-now-playing-whole-cover`:
+  whole covers on the shelf, the album's hero, both mini players and the Now Playing sheet.
+* `album-390-closing-song-signed-out`, `album-1280-closing-song-signed-out`, `album-390-closing-song-signed-in`: the
+  pop-up for a guest and for a member.
+* `listen-390-creator-no-join-offer`: a creator's Creator Studio box, with no join pitch.
+* `album-390-stopped-after-last-song`: Heal the 3 stopped after its last song, paused at 0:02 of 0:02.
+
+The World desk's change is held by its four checks over the real desk code, rendered on its own rather than in the
+World, so no picture of it is offered.
+
+Art direction: the first renders caught four things in the suite, not in the pages: a phone screenshot of Listen
+taken before its sections had faded in (the house's scroll reveal), the 1280 album hero taken under the album's
+once-a-session premiere curtain, the deck bar before the song's length was known, and two Listen shots that never
+left the top (the house scrolls smoothly, and the shot's own second scroll cancelled the first). Each shot now
+scrolls straight to what it shows and waits. Seen and not changed, because they were there at `5d8c533e` and lie
+outside these seven: before a song's length is known the album's deck bar reads "0:00 · I AM HERE" on every album
+(`album.html`, a placeholder from the first album); a search on Listen lists its songs below the Creator Studio box
+and the Artists row; and the album page's own shelf of albums sets each whole cover on its card's grey ground.
