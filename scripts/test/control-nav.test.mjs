@@ -82,7 +82,19 @@ test('every renderer a leaf names exists in the Control shell',async()=>{
 
 test('the in-flight PRs only have to register a renderer',()=>{
   const slots=Object.fromEntries(N.leaves().filter(l=>l.leaf.module).map(l=>[l.leaf.route,l.leaf.module]));
-  assert.deepEqual(slots,{'#sell:store:marketplace':'marketplace','#sell:store:direct':'musicDirect','#sell:music:lyrics':'lyrics','#create:level-forge':'prim3Levels','#sell:music:artists':'musicLabel','#system:eup':'eup'});
+  assert.deepEqual(slots,{'#sell:store:marketplace':'marketplace','#sell:store:direct':'musicDirect','#sell:music:lyrics':'lyrics','#create:level-forge':'prim3Levels','#sell:music:artists':'musicLabel','#system:halo':'haloModule','#system:eup':'eup'});
+});
+
+test('Hitman\u2019s Halo is a direct Control entry under System; the old Analytics door and every old name still land',()=>{
+  const leaf=N.resolve('#system:halo');assert.equal(leaf.entry.leaf.route,'#system:halo');assert.equal(leaf.legacy,false);
+  assert.equal(leaf.entry.leaf.label,'Hitman\u2019s Halo');assert.equal(leaf.entry.leaf.renderer,'slot');assert.equal(leaf.entry.leaf.module,'haloModule');
+  for(const old of ['#products:halo','#halo']){const r=N.resolve(old);assert.equal(r.entry.leaf.route,'#system:halo',old);assert.equal(r.legacy,true,old);}
+  /* preserved: the Analytics tab's door keeps its route, its renderer and the first place for the bare word */
+  const kept=N.resolve('#insights:halo');assert.equal(kept.entry.leaf.route,'#insights:halo');assert.equal(kept.entry.leaf.renderer,'insights.halo');assert.equal(kept.legacy,false);
+  assert.equal(N.search('halo')[0].route,'#insights:halo');
+  for(const q of ['hitman','halo module'])assert.equal(N.search(q)[0].route,'#system:halo',q);
+  assert.equal(N.entries().find(e=>e.route==='#system:halo').href,'control.html#system:halo');
+  assert.equal(N.leaves().filter(l=>l.leaf.module==='haloModule').length,1,'one module leaf, not a second Halo');
 });
 
 test('E=Up is an owner door under System: #products:eup and its old names land on #system:eup',()=>{

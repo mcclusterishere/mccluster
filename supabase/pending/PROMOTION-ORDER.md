@@ -646,3 +646,29 @@ mutated copies each failing a named check; CI matrix entry `mission-sources-stor
 (87 checks: the same proof, one key from two sessions recorded once, a moved revision refused, the 5 s lock bound; passed on
 PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/test/mission-sources-owner.integration.mjs` (CI
 `mission-sources-owner`); the static checks: `node --test scripts/test/mission-catalog-sources-sql.test.mjs`.
+
+## 15. E=Up module policy: the Hitman's Halo unit (written 2026-11-23)
+
+| File | Changes | Callers | Proof before apply |
+|---|---|---|---|
+| `eup_module_policy_halo_v1.sql` (+ `eup_module_policy_halo_v1.rollback.sql`) | the `module_id` CHECK on `eup_module_policies` and `eup_module_policy_commands` admits `halo`; `eup_module_control_read`, `eup_module_policy_install` and `eup_module_policy_command` are replaced with bodies that are the applied ones byte for byte except for the module list | `workers/mccluster/src/eup/modules.js` (`MODULE_IDS`, `MODULE_PENDING_SQL`), `workers/mccluster/src/eup/halo.js`, the Modules card in Control | `node --test scripts/test/eup-module-policy-halo-sql.test.mjs` (text only: the bodies, the checks, the grants, the refusals) |
+
+What it is: the policy unit of Hitman's Halo as an owner-only module (`docs/control-plane/HALO-MODULE.md`). It adds no table, no
+function name, no grant and no row. Until it is applied the store does not know the unit: the owner read answers for the three
+applied units, the Worker reports `halo` as `registered: false` with this file's path, and Control offers no command for it.
+Nothing fails closed or open either way, because **no Halo route reads this unit yet**: the house-owner release guard decides
+who opens Halo before and after.
+
+**Prerequisite:** section 8 (applied 2026-11-17). The file refuses (55000, nothing changed) without it. Independent of every
+other pending file.
+
+**Not applied. Owner approval required.** No execution proof exists yet: the text test above does not start a database. Before
+approval, run it on a disposable PostgreSQL or PGlite over the applied policy migration (install, enable, drain, disable and a
+replayed key for `halo`; the three existing units unchanged; `scripts/test/eup-module-policy.integration.mjs` is the pattern).
+
+**Verify** right after: `GET /v1/eup/modules` lists four units with `halo` not installed; Control → System → E=Up → Overview
+shows Install for Hitman's Halo; `GET /v1/eup/halo` says `policy.status: "available"`.
+
+**Roll back:** the rollback file restores the three-unit checks and the applied function bodies. It refuses (55000), changing
+nothing, once `halo` has a policy row or a recorded command: the command log is append-only and a policy row is never deleted,
+so a unit with history is disabled, not unregistered.

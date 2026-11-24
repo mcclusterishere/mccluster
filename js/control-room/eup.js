@@ -123,13 +123,14 @@
 
   /* ---------- module policy: pure helpers ---------- */
   /* The three persisted policy units, in the order the Worker answers them. */
-  var POLICY_UNITS = [{ id: 'environment', label: 'Environment' }, { id: 'league', label: 'League' }, { id: 'intake', label: 'Intake' }];
-  var POLICY_TEXT = { not_installed: 'not installed', disabled: 'disabled', enabled: 'enabled', draining: 'draining', unknown: 'unknown' };
+  var POLICY_UNITS = [{ id: 'environment', label: 'Environment' }, { id: 'league', label: 'League' }, { id: 'intake', label: 'Intake' }, { id: 'halo', label: 'Hitman’s Halo', optional: true }];
+  var POLICY_TEXT = { unregistered: 'not in the store yet', not_installed: 'not installed', disabled: 'disabled', enabled: 'enabled', draining: 'draining', unknown: 'unknown' };
   var POLICY_ACTIONS = {
     not_installed: [{ verb: 'install', label: 'Install' }],
     disabled: [{ verb: 'enabled', label: 'Enable' }],
     enabled: [{ verb: 'draining', label: 'Drain' }],
     draining: [{ verb: 'disabled', label: 'Disable' }, { verb: 'enabled', label: 'Re-enable' }],
+    unregistered: [],
     unknown: []
   };
   function revisionOk(v) { return Number.isInteger(v) && v >= 0; }
@@ -137,6 +138,8 @@
      A row that is not exactly an installed row with a state and a revision is never read as enabled. */
   function policyStateOf(row) {
     if (!row || typeof row !== 'object') return 'unknown';
+    /* a unit the Worker registers but the store does not know yet (its staged SQL is unapplied): no command exists for it */
+    if (row.registered === false) return 'unregistered';
     if (row.installed === false) return 'not_installed';
     if (row.installed === true && (row.state === 'enabled' || row.state === 'draining' || row.state === 'disabled') && revisionOk(row.revision)) return row.state;
     return 'unknown';
@@ -222,8 +225,10 @@
   /* policy: the last owner read of /v1/eup/modules (control), why it failed (error), the reason being typed per
      unit, and a counter so only the newest read is committed. Reset with everything private. */
   function freshPolicy() { return { control: null, error: null, loading: false, readAt: null, reasons: {}, seq: 0 }; }
-  var model = { section: 'overview', geo: { country: null, state: null }, data: {}, errors: {}, loading: {}, query: '', civic: { jurisdiction: null, office: null, bill: null }, company: null, outcomes: {}, policy: freshPolicy() };
-  function resetModel() { model.data = {}; model.errors = {}; model.loading = {}; model.civic = { jurisdiction: null, office: null, bill: null }; model.company = null; model.outcomes = {}; model.policy = freshPolicy(); if (league) league.reset(); if (envView) envView.reset(); }
+  /* halo: the owner read of GET /v1/eup/halo for the Hitman's Halo card (js/control-room/halo-module.js). */
+  function freshHalo() { return { loading: false, data: null, error: null }; }
+  var model = { section: 'overview', geo: { country: null, state: null }, data: {}, errors: {}, loading: {}, query: '', civic: { jurisdiction: null, office: null, bill: null }, company: null, outcomes: {}, policy: freshPolicy(), halo: freshHalo() };
+  function resetModel() { model.data = {}; model.errors = {}; model.loading = {}; model.civic = { jurisdiction: null, office: null, bill: null }; model.company = null; model.outcomes = {}; model.policy = freshPolicy(); model.halo = freshHalo(); if (league) league.reset(); if (envView) envView.reset(); }
 
   /* ---------- rendering (strings only; bind() wires them) ---------- */
   function render() {
@@ -265,12 +270,12 @@
     var html = '<li data-eup-module="' + esc(m.id) + '"><strong>' + esc(m.label || m.id) + '</strong> <span class="cr-eup__chip cr-eup__chip--' + esc(posture) + '" data-eup-posture="' + esc(posture) + '">release: ' + esc(posture) + '</span>';
     if (unit) {
       var P = model.policy, row = P.control ? unitRow(unit) : (P.error ? null : m.policy), st = policyStateOf(row);
-      html += ' ' + policyChip(st) + ' <small>' + (st !== 'unknown' && st !== 'not_installed' ? 'rev ' + esc(row.revision) + ' · ' : '') + 'unit ' + esc(unit) + '</small>';
+      html += ' ' + policyChip(st) + ' <small>' + (st !== 'unknown' && st !== 'not_installed' && st !== 'unregistered' ? 'rev ' + esc(row.revision) + ' · ' : '') + 'unit ' + esc(unit) + '</small>';
     } else if (m.policy_module === null) html += ' <small>no policy unit</small>';
     return html + (m.detail ? '<br><small>' + esc(m.detail) + '</small>' : '') + '</li>';
   }
   function lastCommandLine(last, st) {
-    if (!last || typeof last !== 'object') return st === 'not_installed' ? 'No command recorded for this unit.' : 'Last command: not returned.';
+    if (!last || typeof last !== 'object') return st === 'not_installed' || st === 'unregistered' ? 'No command recorded for this unit.' : 'Last command: not returned.';
     var what = last.command === 'install' ? 'install (created disabled)' : (last.requested_state || 'unknown state');
     var same = last.receipt && last.receipt.changed === false ? ' · no state change' : '';
     return 'Last command: ' + what + same + ' · reason: ' + (last.reason || 'not returned') + ' · ' + when(last.created_at);
@@ -285,16 +290,20 @@
     draining: { environment: 'Draining: the consumer E=Up tab still answers reads and refuses every write.' + DRAIN_NEXT, league: 'Draining: ' + STILL_OPEN + DRAIN_NEXT, intake: 'Draining: ' + STILL_OPEN + DRAIN_NEXT },
     disabled: { environment: 'Disabled: that includes a participant\'s own saved records.', league: 'Disabled: ' + STILL_OPEN, intake: 'Disabled: ' + STILL_OPEN }
   };
+  /* Halo's unit is recorded and not yet read by any Halo route: every stopped state says that instead of implying a closed door. */
+  var HALO_RECORDED = 'recorded only. No Halo route reads this unit yet, so Halo still opens for the house owner; the release guard decides.';
+  STATE_MEANING.draining.halo = 'Draining: ' + HALO_RECORDED; STATE_MEANING.disabled.halo = 'Disabled: ' + HALO_RECORDED;
   /* What enabling a unit does, where one plain sentence can say it. */
-  var UNIT_EFFECT = { environment: 'The consumer E=Up tab answers nothing until this unit is installed and enabled.' };
+  var UNIT_EFFECT = { environment: 'The consumer E=Up tab answers nothing until this unit is installed and enabled.', halo: 'Hitman’s Halo, the owner-only intelligence workspace. This unit records the owner’s policy for it; it does not open or close Halo yet, and enabled is not a readiness check.' };
+  var UNREGISTERED_LINE = 'The policy store does not know this unit yet: its staged SQL (supabase/pending/eup_module_policy_halo_v1.sql) is not applied, or this Worker does not report it. No command is offered.';
   function unitCard(u, d) {
-    var P = model.policy, row = unitRow(u.id), st = policyStateOf(row), o = model.outcomes['policy:' + u.id];
+    var P = model.policy, row = unitRow(u.id), st = !row && u.optional ? 'unregistered' : policyStateOf(row), o = model.outcomes['policy:' + u.id];
     var busy = !!(o && o.kind === 'pending') || P.loading, off = busy ? ' aria-disabled="true"' : '';
     var mods = d && Array.isArray(d.modules) ? d.modules : [];
     var governs = mods.filter(function (m) { return m && m.policy_module === u.id; }).map(function (m) { return m.label || m.id; });
     var acts = policyActions(st), rid = 'eupPolicyReason-' + u.id;
     return '<li class="cr-eup__unit" tabindex="-1" data-eup-policy="' + u.id + '" data-eup-policy-state="' + u.id + ':' + st + '" data-eup-focus="policy:' + u.id + '">' +
-      '<div class="cr-eup__unit-head"><strong>' + esc(u.label) + '</strong> ' + policyChip(st) + (st !== 'unknown' && st !== 'not_installed' ? ' <small data-eup-policy-rev="' + u.id + ':' + esc(row.revision) + '">rev ' + esc(row.revision) + '</small>' : '') + '</div>' +
+      '<div class="cr-eup__unit-head"><strong>' + esc(u.label) + '</strong> ' + policyChip(st) + (st !== 'unknown' && st !== 'not_installed' && st !== 'unregistered' ? ' <small data-eup-policy-rev="' + u.id + ':' + esc(row.revision) + '">rev ' + esc(row.revision) + '</small>' : '') + '</div>' +
       (governs.length ? '<p class="cr-eup__unit-line">Governs: ' + esc(governs.join(', ')) + '</p>' : '') +
       '<p class="cr-eup__unit-line" data-eup-policy-last="' + u.id + '">' + esc(lastCommandLine(row && row.last_command, st)) + '</p>' +
       (UNIT_EFFECT[u.id] ? '<p class="cr-eup__unit-line" data-eup-policy-effect="' + u.id + '">' + esc(UNIT_EFFECT[u.id]) + '</p>' : '') +
@@ -302,7 +311,7 @@
       (st === 'not_installed' ? '<p class="cr-eup__unit-line">Install creates this unit disabled at revision 0. Nothing it governs can write until it is enabled.</p>' : '') +
       (acts.length ? '<label class="cr-eup__field" for="' + rid + '"><span>Reason (required, recorded with the command)</span><input type="text" id="' + rid + '" maxlength="500" autocomplete="off" autocapitalize="sentences" spellcheck="true" value="' + esc(P.reasons[u.id] || '') + '" data-eup-policy-reason="' + u.id + '" data-eup-focus="policy:' + u.id + ':reason"></label>' +
         '<div class="cr-eup__actions cr-eup__actions--policy">' + acts.map(function (a) { return '<button type="button" class="cr-btn" data-eup-policy-command="' + u.id + ':' + a.verb + '" data-eup-focus="policy:' + u.id + ':' + a.verb + '"' + off + '>' + esc(a.label) + '</button>'; }).join('') + '</div>'
-        : '<p class="cr-eup__unit-line">The state of this unit could not be read; no command is offered.</p>') +
+        : '<p class="cr-eup__unit-line" data-eup-policy-nocommand="' + u.id + ':' + st + '">' + (st === 'unregistered' ? esc(UNREGISTERED_LINE) : 'The state of this unit could not be read; no command is offered.') + '</p>') +
       (o ? outcomeNote(u.id, o) : '') +
       (o && o.resend && o.command ? '<div class="cr-eup__actions cr-eup__actions--policy"><button type="button" class="cr-btn" data-eup-policy-resend="' + u.id + '" data-eup-focus="policy:' + u.id + ':resend"' + off + '>Send the same command again</button></div><p class="cr-eup__unit-line">Uses the same key, so it is recorded at most once. Only the account that sent it can; another owner is refused.</p>' : '') +
       '</li>';
@@ -326,15 +335,29 @@
     if (!P.control) return P.error ? '<p class="cr-eup__unit-line" data-eup-policy-unread>' + esc(policyReadFailure(P.error).text + ' Select Overview again to read both again.') + '</p>' : '';
     return '<div class="cr-eup__grid"><article class="cr-eup__card cr-eup__card--wide" data-eup-modules><h3>Modules</h3><p class="cr-eup__unit-line">The overview was not read, so release posture is not shown.</p>' + policyBlock(null) + '</article></div>';
   }
+  /* The explicit Hitman's Halo card. It is drawn whenever the owner's Overview is drawn at all: with the overview read,
+     without it, with the policy unread and with the Halo backend unreachable. Its policy line comes from the owner read
+     of /v1/eup/modules when there is one, else from /v1/eup/halo, else it says unknown. A 403 or a sign-out never
+     reaches here: drawPane and conceal() replace the whole pane first. */
+  function haloCard() {
+    var P = model.policy, H = model.halo, row = P.control ? (unitRow('halo') || { registered: false }) : (H.data && H.data.policy ? H.data.policy : null);
+    var view = { policyRow: row, policyReading: !row && (P.loading || H.loading), backend: H, moduleHref: 'control.html#system:halo' };
+    if (window.CR.haloModule && typeof window.CR.haloModule.card === 'function') { try { return window.CR.haloModule.card(view); } catch (e) { /* fall through to the plain door */ } }
+    return '<article class="cr-eup__card cr-eup__card--wide" data-halo-module data-halo-policy="unknown" data-halo-backend="unknown"><h3>Hitman\u2019s Halo</h3><p class="cr-eup__unit-line">Owner only. The module card did not load (js/control-room/halo-module.js), so its state is not shown; the door is unchanged.</p><div class="cr-eup__actions"><a class="cr-btn cr-btn--primary" href="action-globe.html?explore=1&amp;halo=1" data-halo-open="world">Open Hitman\u2019s Halo</a></div></article>';
+  }
+  function haloOnly() { return '<div class="cr-eup__grid">' + haloCard() + '</div>'; }
   function paneOverview() {
     if (model.loading.overview) return note('loading', 'Loading overview…');
     var r = reasonFor(model.errors.overview);
-    if (r) return note(r.kind, r.text) + policyOnly();
-    var d = model.data.overview; if (!d || d.ok !== true) return note('error', 'The overview answered without ok:true; nothing is shown.') + policyOnly();
+    /* a signed-out or refused overview shows the refusal and nothing else: no card, no door, no policy */
+    if (r && (r.kind === 'signed_out' || r.kind === 'denied')) return note(r.kind, r.text);
+    if (r) return note(r.kind, r.text) + haloOnly() + policyOnly();
+    var d = model.data.overview; if (!d || d.ok !== true) return note('error', 'The overview answered without ok:true; nothing is shown.') + haloOnly() + policyOnly();
     var mods = Array.isArray(d.modules) ? d.modules : [];
     var geo = d.geography && d.geography.selected;
     return '<div class="cr-eup__grid">' +
       '<article class="cr-eup__card cr-eup__card--wide" data-eup-modules><h3>Modules</h3>' + (mods.length ? '<ul class="cr-eup__list">' + mods.map(moduleRow).join('') + '</ul>' : note('empty', 'The Worker returned no module records (0) at ' + when(new Date().toISOString()) + '.')) + policyBlock(d) + '</article>' +
+      haloCard() +
       '<article class="cr-eup__card"><h3>Geography</h3><p>' + esc(geo ? [geo.country, geo.state, geo.municipality].filter(Boolean).join(' › ') : 'None selected server-side.') + '</p><p class="cr-muted">Globe selection: ' + esc(model.geo.country ? model.geo.country + (model.geo.state ? ' › ' + model.geo.state : '') : 'none') + '</p></article>' +
       '<article class="cr-eup__card"><h3>Campaigns</h3><p>Drafts: ' + count(d.campaigns && d.campaigns.drafts) + ' · Released: ' + count(d.campaigns && d.campaigns.released) + '</p></article>' +
       '<article class="cr-eup__card"><h3>Queues</h3><p>Applications: ' + count(d.queues && d.queues.applications) + ' · Proofs: ' + count(d.queues && d.queues.proofs) + ' · Reviews: ' + count(d.queues && d.queues.reviews) + '</p></article>' +
@@ -487,7 +510,7 @@
         var e = model.errors.overview;
         if (!alive() || (e && reasonFor(e).kind === 'signed_out')) return;
         return loadPolicy();
-      }).then(done);
+      }).then(function () { return loadHalo(); }).then(done);
       if (section === 'league') { drawPane(); return (league ? league.load() : Promise.resolve()).then(done); }
       if (section === 'environment') { drawPane(); return (envView ? envView.load() : Promise.resolve()).then(done); }
       if (section === 'civic') return loadCivic().then(done);
@@ -557,7 +580,8 @@
     }
     function controlReadable(d) {
       if (!d || d.ok !== true || !Array.isArray(d.modules)) return false;
-      return POLICY_UNITS.every(function (u) { return d.modules.filter(function (m) { return m && m.moduleId === u.id; }).length === 1; });
+      /* a unit added after the first three may be absent from an older Worker's answer; it is then shown as not in the store */
+      return POLICY_UNITS.every(function (u) { var k = d.modules.filter(function (m) { return m && m.moduleId === u.id; }).length; return k === 1 || (u.optional === true && k === 0); });
     }
     function loadPolicy(announce) {
       if (!alive()) return Promise.resolve();
@@ -584,6 +608,24 @@
         if (stop || stale()) return;
         P.loading = false; drawPane();
       });
+    }
+    /* The Hitman's Halo card's own read. It never conceals less than the other reads: 401 and 403 end the workspace.
+       Any other failure keeps the card and says the backend state is unknown. */
+    function loadHalo() {
+      if (!alive()) return Promise.resolve();
+      var H = model.halo;
+      H.loading = true; H.error = null; if (model.section === 'overview') drawPane();
+      var p = request('/v1/eup/halo');
+      return p.then(function (d) {
+        if (!alive() || p.epoch !== epoch || H !== model.halo) return;
+        var ok = window.CR.haloModule && window.CR.haloModule.helpers.readable(d);
+        if (!ok) throw Object.assign(new Error('unreadable Halo module answer'), { malformed: true });
+        H.data = d;
+      }).catch(function (err) {
+        if (!alive() || p.epoch !== epoch || H !== model.halo) return;
+        if (concealed(err)) return;
+        H.data = null; H.error = err;
+      }).then(function () { if (!alive() || H !== model.halo) return; H.loading = false; if (model.section === 'overview') drawPane(); });
     }
     /* One owner command on one unit. verb: install | enabled | draining | disabled. `again` resends the stored
        command with its stored key and body (never a new key, never a re-read revision). */
