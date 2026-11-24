@@ -8,7 +8,8 @@
 
    1. Signed in on Matthew's host, a member opens the platform: one carry (a hidden same-site frame of his host's
       carry.html, the existing POST /v1/auth/handoff as a bearer header, Supabase's one-time token) signs the platform in.
-      No request URL and no history entry holds a token; his host stays signed in; the carry asks once.
+      No request URL and no history entry holds a token; his host stays signed in; the carry asks once. On his host the
+      bar points Music and the Globe at the platform, except that on his own Listen the Music tab is that page itself.
    2. Nothing to carry: the platform says one clear line on the sign-in page and on the account chip, for 30 days, and
       does not ask again.
    3. embed.html on the platform renders inside a page of a foreign origin; a page that is not the embed does not.
@@ -140,7 +141,15 @@ try {
     await page.goto(`${PROF}/listen.html`, { waitUntil: 'load' });
     await page.waitForFunction(() => document.body.classList.contains('mcc-auth-in'), null, { timeout: 20000 }).catch(() => {});
     check(S, 'signed in on Matthew\'s host', await signedIn(page) && (await session(page))?.access_token === HOUSE_TOKEN);
-    const bar = await page.evaluate(() => ({ music: document.querySelector('.appbar [data-appnav="music"]')?.href, home: document.querySelector('.appbar [data-appnav="home"]')?.href, world: document.querySelector('.appbar [data-appnav="world"]')?.href }));
+    const barOf = () => page.evaluate(() => ({ music: document.querySelector('.appbar [data-appnav="music"]')?.href, home: document.querySelector('.appbar [data-appnav="home"]')?.href, world: document.querySelector('.appbar [data-appnav="world"]')?.href }));
+    /* standing on his own Listen the Music tab is this page (pageOrHere in js/tabbar.js): the player's own Play and Pause,
+       never a load of the platform's copy of the page, which would stop the song */
+    const onListen = await barOf();
+    check(S, 'on his own Listen the Music tab is this page, the Globe points at the platform and the M at his own root', onListen.music === `${PROF}/listen.html` && onListen.world === `${PLAT}/?view=feed` && onListen.home === `${PROF}/index.html`, onListen);
+    /* from his other pages, the HERE front door his host opens on among them, Music points at the platform's Listen */
+    await page.goto(`${PROF}/index.html`, { waitUntil: 'load' });
+    await page.waitForSelector('.appbar [data-appnav="music"]', { timeout: 10000 }).catch(() => {});
+    const bar = await barOf();
     check(S, 'on his host the bar points Music and the Globe at the platform and the M at his own root', bar.music === `${PLAT}/listen.html` && bar.world === `${PLAT}/?view=feed` && bar.home === `${PROF}/index.html`, bar);
     await page.goto(`${PLAT}/listen.html`, { waitUntil: 'load' });
     await page.waitForFunction(() => !!localStorage.getItem('mcc_carry_v1'), null, { timeout: 20000 }).catch(() => {});
