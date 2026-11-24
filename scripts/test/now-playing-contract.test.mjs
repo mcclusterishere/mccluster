@@ -477,8 +477,8 @@ for (const withSession of [true, false]) {
     const state = p.snapshot();
     assert.equal(state.title, 'Here'); assert.equal(state.artist, 'Fixture artist');
     assert.equal(state.playing, true); assert.equal(Object.isFrozen(state), true);
-    assert.deepEqual(Object.keys(state).sort(), ['album','artist','canNext','canPause','canPlay','canPrevious','playing','status','surface','title'],
-      'no media element, source URL or player mutation is exposed (status: why a player is quiet, music slice M3 review)');
+    assert.deepEqual(Object.keys(state).sort(), ['album','artist','canNext','canPause','canPlay','canPrevious','note','playing','status','surface','title'],
+      'no media element, source URL or player mutation is exposed (status: why a player is quiet, music slice M3 review; note: a lasting word, the Release 1 dock fix)');
     assert.equal(p.command('pause'), true); assert.equal(p.snapshot().playing, false);
     assert.equal(p.command('play'), true); assert.equal(p.snapshot().playing, true);
     p.command('previous'); p.command('next');
@@ -520,6 +520,41 @@ test('a player in trouble: the lock screen and the installed app\'s dock follow 
   m2.play(); m2.pause();
   assert.equal(s2.playbackState, 'paused');
   assert.equal(w2.MCC_NOW_PLAYING.snapshot().status, '');
+  assert.equal(w2.MCC_NOW_PLAYING.snapshot().note, '');
+});
+
+/* MUTED LASTS (the Release 1 dock fix, 2026-11-23). The installed app's dock gives the player's trouble words a row
+   of their own above its controls, because they do not fit the song line and pass in seconds. Muted came the same way
+   and grew the dock a second row for as long as the song stayed muted. A player now says a lasting word apart
+   (note: "Muted"), and the dock puts it in the song line's second line; status keeps only the passing trouble. */
+test('a lasting word rides apart from the trouble words: note for the song line, status for the dock\'s status row', () => {
+  const { win } = browser();
+  const NP = win.MCC_NOW_PLAYING, m = media(), seen = [];
+  let status = '', note = '';
+  NP.bind(m, { surface: 'fixture', track: () => ({ title: 'Here', artist: 'Fixture artist', album: 'Fixture album' }),
+    play: () => m.play(), pause: () => m.pause(), status: () => status, note: () => note });
+  NP.subscribe(s => seen.push(s && { status: s.status, note: s.note }));
+  m.play();
+  assert.deepEqual([NP.snapshot().status, NP.snapshot().note], ['', '']);
+  note = 'Muted';
+  m.fire('durationchange');                          // any change the owner hears publishes the new word
+  assert.equal(NP.snapshot().note, 'Muted', 'the dock says Muted in the song line');
+  assert.equal(NP.snapshot().status, '', 'Muted is no trouble: the dock adds no status row for it');
+  assert.deepEqual(seen.at(-1), { status: '', note: 'Muted' }, 'the dock is told');
+  status = 'Reconnecting…';
+  m.fire('durationchange');
+  assert.deepEqual([NP.snapshot().status, NP.snapshot().note], ['Reconnecting…', 'Muted'], 'trouble while muted: both are said, each in its place');
+  status = ''; note = '';
+  m.fire('durationchange');
+  assert.deepEqual(seen.at(-1), { status: '', note: '' });
+  /* a note that throws says nothing, and takes nothing else with it */
+  note = null;
+  const { win: w2 } = browser(), m2 = media();
+  w2.MCC_NOW_PLAYING.bind(m2, { surface: 'plain', track: () => ({ title: 'Plain' }), play: () => m2.play(), pause: () => m2.pause(),
+    note: () => { throw new Error('fixture'); } });
+  m2.play();
+  assert.equal(w2.MCC_NOW_PLAYING.snapshot().note, '');
+  assert.equal(w2.MCC_NOW_PLAYING.snapshot().title, 'Plain');
 });
 
 test('a subscriber can switch players without older metadata overwriting the new owner', () => {

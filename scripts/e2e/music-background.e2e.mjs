@@ -866,10 +866,13 @@ try {
     await page.waitForFunction(() => { const d = document.getElementById('mccInstalledDock'); return d && /Reconnecting/.test((d.querySelector('[data-app-player="status"]') || {}).textContent || ''); }, null, { timeout: 5000 }).catch(() => {});
     const dock = () => page.evaluate(() => {
       const d = document.getElementById('mccInstalledDock'), q = s => d && d.querySelector(s);
+      /* the one Play/Pause the bar shows (the Release 1 dock fix): on this page the red Music tab, the dock's own hidden */
+      const shown = [...document.querySelectorAll('.appbar [data-appnav="music"], .appbar [data-app-player="play"]')]
+        .filter(n => n.getClientRects().length && /^(Pause|Play) music$/.test(n.getAttribute('aria-label') || '')).map(n => n.getAttribute('aria-label'));
       /* the words ride on the dock's own status line since the M3 follow-up (they were cut under the title) */
       return { active: document.documentElement.classList.contains('mcc-app-dock-active'), mini: getComputedStyle(document.getElementById('musicMini')).display,
         line: q('[data-app-player="status"]') ? q('[data-app-player="status"]').textContent : null,
-        play: q('[data-app-player="play"]') ? q('[data-app-player="play"]').getAttribute('aria-label') : null,
+        play: shown.join(' + ') || null,
         label: q('[data-app-player="open"]') ? q('[data-app-player="open"]').getAttribute('aria-label') : null };
     });
     const down = await dock();
@@ -1115,13 +1118,14 @@ try {
           const d = document.getElementById('mccInstalledDock'), s = d && d.querySelector('[data-app-player="status"]');
           if (!s || getComputedStyle(s).display === 'none') return null;
           const box = el => { const r = el.getBoundingClientRect(); return { l: Math.round(r.left), t: Math.round(r.top), r: Math.round(r.right), b: Math.round(r.bottom) }; };
-          const play = d.querySelector('[data-app-player="play"]'), prev = d.querySelector('[data-app-player="previous"]');
-          return { text: s.textContent, sw: s.scrollWidth, cw: s.clientWidth, line: box(s), dock: box(d), play: box(play), prev: box(prev),
+          /* Previous and Next: the dock's own Play/Pause is not shown on this page, where the Music tab is the one (the Release 1 dock fix) */
+          const next = d.querySelector('[data-app-player="next"]'), prev = d.querySelector('[data-app-player="previous"]');
+          return { text: s.textContent, sw: s.scrollWidth, cw: s.clientWidth, line: box(s), dock: box(d), next: box(next), prev: box(prev),
             artist: d.querySelector('[data-app-player="artist"]').textContent, vw: innerWidth };
         });
         /* whole words, inside the dock and the screen, above the controls (which keep the dock's bottom row) */
         const placed = !!m && m.line.l >= m.dock.l && m.line.r <= m.dock.r && m.line.r <= m.vw && m.line.t >= m.dock.t &&
-          m.line.b <= m.play.t && m.line.b <= m.prev.t && m.dock.b - m.play.b <= 2 && m.dock.b - m.prev.b <= 2;
+          m.line.b <= m.next.t && m.line.b <= m.prev.t && m.dock.b - m.next.b <= 2 && m.dock.b - m.prev.b <= 2;
         check(`installed app at ${w}: the dock says "${label}" in full, on its own line above its controls`,
           !!m && m.text === label && m.cw > 0 && m.sw <= m.cw && placed, m);
         check(`installed app at ${w} ("${label}"): the page fits the screen`, await fits(page));
@@ -1157,12 +1161,24 @@ try {
       await context.close();
     }
     {
+      /* Muted lasts, so it is no trouble line: the dock says it in the song line's second line and stays one row, 46 px
+         (the Release 1 dock fix; the M3 follow-up gave it the status row) */
       const { context, page } = await setup({ width: 390, standalone: true });
       await listenPlay(page);
       await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3, null, { timeout: 15000 });
       await page.evaluate(() => { MCC_MUSIC.audio.muted = true; });
-      await page.waitForFunction(() => /Muted/.test((document.querySelector('#mccInstalledDock [data-app-player="status"]') || {}).textContent || ''), null, { timeout: 5000 }).catch(() => {});
-      await said(page, 'Muted');
+      await page.waitForFunction(() => (document.querySelector('#mccInstalledDock [data-app-player="artist"]') || {}).textContent === 'Muted', null, { timeout: 5000 }).catch(() => {});
+      for (const w of [390, 320]) {
+        await page.setViewportSize({ width: w, height: 844 });
+        await sleep(300);
+        const m = await page.evaluate(() => {
+          const d = document.getElementById('mccInstalledDock'), s = d && d.querySelector('[data-app-player="status"]');
+          return { height: d ? Math.round(d.getBoundingClientRect().height) : null, artist: d && d.querySelector('[data-app-player="artist"]').textContent,
+            status: !!s && getComputedStyle(s).display !== 'none' };
+        });
+        check(`installed app at ${w}: muted, the dock says "Muted" in its song line and stays one row (46 px)`, m.height >= 45 && m.height <= 47 && m.artist === 'Muted' && !m.status, m);
+        check(`installed app at ${w} ("Muted"): the page fits the screen`, await fits(page));
+      }
       await context.close();
     }
   });
