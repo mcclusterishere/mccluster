@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-11-17.1",
+  "catalogVersion": "2026-11-23.1",
   "capabilities": [
     {
       "id": "core.resume",
       "title": "Resume working session",
-      "description": "Return durable McCluster session state \u2014 workspace, active and stale work, pending approvals, catalog version, system health and exact deploy commit \u2014 so a model can rehydrate after context loss. Read-only.",
+      "description": "Return durable McCluster session state \u2014 workspace, active and stale work, pending approvals, checkpointed workstreams, catalog version, system health and exact deploy commit \u2014 so a model can rehydrate after context loss. Read-only.",
       "domain": "control",
       "lifecycle": "active",
       "execution": "sync",
@@ -40,6 +40,107 @@
         "control",
         "continuity",
         "session"
+      ]
+    },
+    {
+      "id": "workstream.checkpoint",
+      "title": "Checkpoint a workstream",
+      "description": "Owner-attributed record of where a line of work stands (branch, head, pull request, next step) plus one optional append-only event (decision, done, verified, blocker, unblocked, note, open), written to the private context plane in one transaction. Idempotent on the operation key; refuses credentials and raw transcripts. Queues no job, changes no code, deploys nothing, sends nothing and approves no decision. MCP only: the write needs the actor that only the MCP path carries.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "workstream"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "workstream": {
+            "type": "object",
+            "required": [
+              "id"
+            ]
+          },
+          "event": {
+            "type": "object",
+            "required": [
+              "kind",
+              "text"
+            ]
+          },
+          "operation_key": {
+            "type": "string"
+          },
+          "provenance": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "continuity",
+        "context",
+        "provenance"
+      ]
+    },
+    {
+      "id": "workstream.list",
+      "title": "Read workstream checkpoints",
+      "description": "Read the checkpointed workstreams, active first, with their recent decisions, verified results, open questions and uncleared blockers, plus the generated resume packet. Read-only.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "workstream_id": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "max_sensitivity": {
+            "type": "string"
+          },
+          "max_chars": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "continuity",
+        "context"
       ]
     },
     {
@@ -2322,6 +2423,41 @@
       "capability": "core.resume",
       "provider": "mccluster-core",
       "tool": "core.resume",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.workstream-checkpoint",
+      "capability": "workstream.checkpoint",
+      "provider": "mccluster-core",
+      "tool": "core.workstream.checkpoint",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "self_hosted": true,
+        "provenance": true,
+        "idempotent": true
+      }
+    },
+    {
+      "id": "core.workstream-list",
+      "capability": "workstream.list",
+      "provider": "mccluster-core",
+      "tool": "core.workstream.list",
       "transport": "local-control",
       "status": "active",
       "priority": 200,

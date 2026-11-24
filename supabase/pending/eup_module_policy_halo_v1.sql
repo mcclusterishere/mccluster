@@ -8,22 +8,113 @@
 --   3. public.eup_module_policy_install and public.eup_module_policy_command accept p_module = 'halo'.
 -- The three function bodies are the applied ones byte for byte except for the module list
 -- (scripts/test/eup-module-policy-halo-sql.test.mjs holds them to that). Signatures, owners, search_path,
--- lock_timeout and grants are unchanged: CREATE OR REPLACE keeps the existing grants, and the grants are restated
--- below so a database whose grants drifted ends in the reviewed state.
+-- lock_timeout and grants are unchanged: the preflight refuses unknown grant drift,
+-- CREATE OR REPLACE keeps the known grants, and the same grants are restated below.
 --
 -- No seed and no copied data: this file creates no policy row. Until the house owner installs the unit it has no
 -- row; installing creates it 'disabled' at revision 0. The guard functions take any module id and are untouched.
 -- Nothing in the Worker reads the 'halo' policy to open or close a route yet (docs/control-plane/HALO-MODULE.md):
 -- applying this file changes who can open Halo for nobody.
 -- Idempotent: safe to run twice. Rollback: eup_module_policy_halo_v1.rollback.sql.
+-- Equity Uprise shared-platform support only; no module activation or building capability.
 begin;
 set local lock_timeout = '5s';
 
-do $$ begin
-  if to_regclass('public.eup_module_policies') is null or to_regclass('public.eup_module_policy_commands') is null then
-    raise exception 'eup_module_policy_v1 is not applied; nothing changed' using errcode = '55000';
+-- READ COMMITTED is required before any catalog or application-row read: a
+-- transaction snapshot taken before a lock wait must never authorize recovery.
+do $isolation$ begin
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception 'HALO_READ_COMMITTED_REQUIRED; nothing changed' using errcode = '55000';
   end if;
-end $$;
+end $isolation$;
+-- Forward and recovery use the same transaction lock. All ordinary table reads,
+-- writes and table DDL are excluded before inspecting history or schema shape.
+select pg_advisory_xact_lock(1163219023, 1212238927);
+do $locks$ begin
+  lock table public.eup_module_policies, public.eup_module_policy_commands in access exclusive mode;
+exception when undefined_table then
+  raise exception 'eup_module_policy_v1 is not applied; nothing changed' using errcode = '55000';
+end $locks$;
+
+-- Exact reviewed baseline OR this extension, never a partial or unfamiliar mix.
+-- Both directions compare the complete catalog including the untouched guard
+-- functions, owner/ACLs, columns, constraints, indexes, RLS, policies and triggers.
+-- Fingerprints: scripts/db/halo-module-policy-preflight.sql; native proof rebuilds
+-- the applied policy bytes and compares them with fresh production catalog evidence.
+do $shape$
+declare actual jsonb;
+begin
+-- BEGIN HALO CATALOG PREFLIGHT
+with catalog as (
+  select jsonb_build_object(
+    'functions', (select jsonb_agg(jsonb_build_object(
+      'name', p.proname, 'arguments', pg_get_function_identity_arguments(p.oid),
+      'definition_md5', md5(pg_get_functiondef(p.oid)), 'owner', pg_get_userbyid(p.proowner),
+      'acl', (select jsonb_agg(jsonb_build_array(case when a.grantee = 0 then 'PUBLIC' else pg_get_userbyid(a.grantee) end,
+        pg_get_userbyid(a.grantor), a.privilege_type, a.is_grantable)
+        order by case when a.grantee = 0 then 'PUBLIC' else pg_get_userbyid(a.grantee) end, a.privilege_type, a.is_grantable)
+        from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a)) order by p.proname, pg_get_function_identity_arguments(p.oid))
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and p.proname in ('eup_module_control_read', 'eup_module_policy_install',
+        'eup_module_policy_command', 'eup_module_policy_read', 'eup_module_policy_json', 'eup_module_policy_immutable',
+        'eup_module_guard', 'eup_module_guard_reduce', 'eup_module_guard_trigger')),
+    'relations', (select jsonb_agg(jsonb_build_object(
+      'name', c.relname, 'kind', c.relkind, 'owner', pg_get_userbyid(c.relowner),
+      'persistence', c.relpersistence, 'rls', c.relrowsecurity, 'force_rls', c.relforcerowsecurity,
+      'replica_identity', c.relreplident, 'options', c.reloptions, 'partition', c.relispartition,
+      'acl', (select jsonb_agg(jsonb_build_array(case when a.grantee = 0 then 'PUBLIC' else pg_get_userbyid(a.grantee) end,
+        pg_get_userbyid(a.grantor), a.privilege_type, a.is_grantable)
+        order by case when a.grantee = 0 then 'PUBLIC' else pg_get_userbyid(a.grantee) end, a.privilege_type, a.is_grantable)
+        from aclexplode(coalesce(c.relacl, acldefault(case when c.relkind = 'S' then 'S'::"char" else 'r'::"char" end, c.relowner))) a)) order by c.relname)
+      from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public'
+        and c.relname in ('eup_module_policies', 'eup_module_policy_commands', 'eup_module_policy_commands_seq_seq')),
+    'columns', (select jsonb_agg(jsonb_build_object(
+      'table', c.relname, 'position', a.attnum, 'name', a.attname, 'type', format_type(a.atttypid, a.atttypmod),
+      'not_null', a.attnotnull, 'identity', a.attidentity, 'generated', a.attgenerated,
+      'default', replace(pg_get_expr(d.adbin, d.adrelid), 'public.', ''),
+      'collation', col.collname, 'acl', a.attacl::text) order by c.relname, a.attnum)
+      from pg_attribute a join pg_class c on c.oid = a.attrelid join pg_namespace n on n.oid = c.relnamespace
+      left join pg_attrdef d on d.adrelid = a.attrelid and d.adnum = a.attnum
+      left join pg_collation col on col.oid = a.attcollation
+      where n.nspname = 'public' and c.relname in ('eup_module_policies', 'eup_module_policy_commands')
+        and a.attnum > 0 and not a.attisdropped),
+    'constraints', (select jsonb_agg(jsonb_build_object(
+      'table', t.relname, 'name', c.conname, 'type', c.contype, 'validated', c.convalidated,
+      'deferrable', c.condeferrable, 'deferred', c.condeferred, 'no_inherit', c.connoinherit,
+      'definition', replace(pg_get_constraintdef(c.oid, true), 'public.', '')) order by t.relname, c.conname)
+      from pg_constraint c join pg_class t on t.oid = c.conrelid join pg_namespace n on n.oid = t.relnamespace
+      where n.nspname = 'public' and t.relname in ('eup_module_policies', 'eup_module_policy_commands')),
+    'indexes', (select jsonb_agg(jsonb_build_object(
+      'table', t.relname, 'name', c.relname, 'valid', i.indisvalid, 'ready', i.indisready,
+      'definition', replace(pg_get_indexdef(i.indexrelid), 'public.', '')) order by t.relname, c.relname)
+      from pg_index i join pg_class t on t.oid = i.indrelid join pg_class c on c.oid = i.indexrelid
+      join pg_namespace n on n.oid = t.relnamespace
+      where n.nspname = 'public' and t.relname in ('eup_module_policies', 'eup_module_policy_commands')),
+    'triggers', (select jsonb_agg(jsonb_build_object(
+      'table', c.relname, 'name', t.tgname, 'enabled', t.tgenabled,
+      'definition', replace(pg_get_triggerdef(t.oid, true), 'public.', '')) order by c.relname, t.tgname)
+      from pg_trigger t join pg_class c on c.oid = t.tgrelid join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relname in ('eup_module_policies', 'eup_module_policy_commands') and not t.tgisinternal),
+    'policies', (select coalesce(jsonb_agg(jsonb_build_object('table', c.relname, 'name', p.polname,
+      'command', p.polcmd, 'permissive', p.polpermissive,
+      'using', pg_get_expr(p.polqual, p.polrelid), 'check', pg_get_expr(p.polwithcheck, p.polrelid)) order by c.relname, p.polname), '[]'::jsonb)
+      from pg_policy p join pg_class c on c.oid = p.polrelid join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relname in ('eup_module_policies', 'eup_module_policy_commands')),
+    'rules', (select coalesce(jsonb_agg(jsonb_build_object('table', c.relname, 'name', r.rulename,
+      'enabled', r.ev_enabled, 'definition', replace(pg_get_ruledef(r.oid, true), 'public.', '')) order by c.relname, r.rulename), '[]'::jsonb)
+      from pg_rewrite r join pg_class c on c.oid = r.ev_class join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relname in ('eup_module_policies', 'eup_module_policy_commands'))
+  ) as detail
+)
+select (select jsonb_object_agg(key, md5(value::text)) from jsonb_each(detail)) into actual
+from catalog;
+-- END HALO CATALOG PREFLIGHT
+  if actual is distinct from '{"rules":"d751713988987e9331980363e24189ce","columns":"2f6d26466365640e2a25228923f04749","indexes":"f85291a5ad99d0d0afe39067481d8bd4","policies":"d751713988987e9331980363e24189ce","triggers":"ce521d000a5ce4b35efd9b408c1e12ee","functions":"7192b3d8f40ca2f36db0583230633a8d","relations":"a70803fbc257d141ecfec4e7f8f4fcfe","constraints":"f8d7400df5de5fee7324c2932056e00d"}'::jsonb
+     and actual is distinct from '{"rules":"d751713988987e9331980363e24189ce","columns":"2f6d26466365640e2a25228923f04749","indexes":"f85291a5ad99d0d0afe39067481d8bd4","policies":"d751713988987e9331980363e24189ce","triggers":"ce521d000a5ce4b35efd9b408c1e12ee","functions":"458ab1e67c3570af97bc2ac01b35c330","relations":"a70803fbc257d141ecfec4e7f8f4fcfe","constraints":"a8dbe8f75efcb05510da5965f62608d6"}'::jsonb then
+    raise exception 'HALO_CATALOG_DRIFT; nothing changed. Re-review the current policy schema.' using errcode = '55000';
+  end if;
+end $shape$;
+
 
 alter table public.eup_module_policies drop constraint if exists eup_module_policies_module_id_check;
 alter table public.eup_module_policies add constraint eup_module_policies_module_id_check

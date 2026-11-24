@@ -5,7 +5,7 @@
      - the rollback restores exactly the applied bodies and refuses once the unit has history;
      - it creates no policy row, grants nothing new and never touches the guard functions;
      - it is still pending: not in supabase/migrations and not in the production ledger.
-   Execution proof on a real PostgreSQL (or PGlite) is NOT part of this file and has not been run for it. */
+   Native PostgreSQL execution proof is separate: scripts/halo-module-policy-native-check.mjs, including --full-reset. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
@@ -50,7 +50,7 @@ test('it creates no row, no table, no new grant, and leaves the guards and the r
     const code = sql.split('\n').filter((l) => !l.startsWith('--')).join('\n');
     assert.doesNotMatch(code, /\binsert\s+into\s+public\.eup_module_policies\s*\([^)]*\)\s*values\s*\([^)]*'halo'/i, label);
     assert.doesNotMatch(code, /create table|drop table|drop function|truncate|delete from|alter .* owner|security invoker/i, label);
-    assert.doesNotMatch(code, /eup_module_guard|eup_module_policy_read\(|eup_module_policy_json\s*\(p_module text/, label + ': guards and the gate read are untouched');
+    assert.doesNotMatch(code, /create or replace function public\.(?:eup_module_guard(?:_reduce|_trigger)?|eup_module_policy_read|eup_module_policy_json)\s*\(/, label + ': guards and the gate read are untouched');
     assert.doesNotMatch(code, /grant [^;]* to (anon|authenticated|public)\b/i, label);
     assert.match(code, /revoke all on function public\.eup_module_control_read\(uuid, integer\), public\.eup_module_policy_install\(uuid, text, text, text\),\n  public\.eup_module_policy_command\(uuid, text, text, bigint, text, text\) from public, anon, authenticated;/, label);
     assert.match(code, /to service_role;\ncommit;\n$/, label);
@@ -69,4 +69,23 @@ test('it is pending: not a migration, not in the production ledger, and the Work
   assert.equal(MODULE_PENDING_SQL.halo, 'supabase/pending/eup_module_policy_halo_v1.sql');
   assert.deepEqual([...MODULE_IDS], ['environment', 'league', 'intake', 'halo'], 'registry order is the order the staged read answers in');
   assert.match(await read('supabase/pending/PROMOTION-ORDER.md'), /eup_module_policy_halo_v1\.sql/);
+});
+
+test('both directions pin the catalog after isolation and locks, before any row read or replacement', async () => {
+  const preflight = await read('scripts/db/halo-module-policy-preflight.sql');
+  const query = preflight.slice(preflight.indexOf('with catalog as ('), preflight.indexOf("select current_setting('server_version')"));
+  for (const [label, sql] of [['forward', forward], ['rollback', rollback]]) {
+    const isolation = sql.indexOf("current_setting('transaction_isolation')");
+    const advisory = sql.indexOf('select pg_advisory_xact_lock(1163219023, 1212238927)');
+    const locks = sql.indexOf('lock table public.eup_module_policies, public.eup_module_policy_commands in access exclusive mode');
+    const catalog = sql.indexOf('with catalog as (');
+    const replacement = sql.indexOf('alter table public.eup_module_policies drop constraint');
+    assert.ok(isolation > 0 && isolation < advisory && advisory < locks && locks < catalog && catalog < replacement, label);
+    assert.match(sql, /HALO_READ_COMMITTED_REQUIRED/);
+    assert.match(sql, /HALO_CATALOG_DRIFT/);
+    assert.ok(sql.includes(query), label + ': exact production preflight query');
+    assert.match(sql, /set local lock_timeout = '5s'/);
+  }
+  assert.ok(rollback.indexOf("if exists (select 1 from public.eup_module_policies where module_id = 'halo')")
+    > rollback.indexOf('end $shape$;'), 'history is inspected only after locks and drift preflight');
 });

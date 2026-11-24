@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 767,
+  "candidate_count": 776,
   "capability_source_count": 104,
-  "support_only_count": 663,
+  "support_only_count": 672,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1481,6 +1481,20 @@
       "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
     },
     {
+      "path": "docs/control-plane/evidence/HALO-POLICY-PREPARATION-2026-11-24.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Optional Halo module policy preparation and database proof in the existing Equity Uprise shared platform; no building capability, spatial change, module activation or access-policy change."
+    },
+    {
+      "path": "docs/control-plane/evidence/halo-policy-catalog-2026-11-24.json",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Optional Halo module policy preparation and database proof in the existing Equity Uprise shared platform; no building capability, spatial change, module activation or access-policy change."
+    },
+    {
       "path": "docs/control-plane/evidence/production-advisors-2026-10-28.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1549,6 +1563,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Read-only production schema snapshot taken on 2026-11-20 after the Drawdown credit correction and publication and Environment parts 01 and 02 were recorded at ledger 380; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
+    },
+    {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken on 2026-11-23 after the network connections consent guard and Environment parts 03 to 05 were recorded at ledger 384; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
     },
     {
       "path": "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
@@ -3043,6 +3064,13 @@
       "rationale": "Building screens and screen apps: owner-gated phone apps opened from the 3D building's display surfaces over the Lab Runtime SANDBOX (SCREENS-AND-SCREEN-APPS-SPEC.md). Projects existing building/runtime authority; defines no new program capability."
     },
     {
+      "path": "scripts/db/halo-module-policy-preflight.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Optional Halo module policy preparation and database proof in the existing Equity Uprise shared platform; no building capability, spatial change, module activation or access-policy change."
+    },
+    {
       "path": "scripts/e2e/control-eup.e2e.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3141,6 +3169,13 @@
       "rationale": "Browser checks for the owner-only globe Games overlay verify that its Bridgeport links reach the existing Equity Uprise HQ and B1 routes; verification support only, with no building program or geometry implementation."
     },
     {
+      "path": "scripts/e2e/halo-private-preview.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Existing synthetic private Halo preview proof reads shared Equity Uprise policy surfaces; no building capability or activation."
+    },
+    {
       "path": "scripts/e2e/prim3-artist.e2e.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3230,6 +3265,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Isolated funding-register SQL tests stub the existing admin helper; they define no building capability."
+    },
+    {
+      "path": "scripts/halo-module-policy-native-check.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Optional Halo module policy preparation and database proof in the existing Equity Uprise shared platform; no building capability, spatial change, module activation or access-policy change."
     },
     {
       "path": "scripts/kb-build.mjs",
@@ -3526,6 +3568,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Verifies existing HQ stair links through the tactical resolver without modifying floors, circulation or building capabilities."
+    },
+    {
+      "path": "scripts/test/fixtures/eup-module-policy-halo-original.json",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Optional Halo module policy preparation and database proof in the existing Equity Uprise shared platform; no building capability, spatial change, module activation or access-policy change."
     },
     {
       "path": "scripts/test/fixtures/hq-drill-full-strength-win.json",
@@ -4603,6 +4652,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Clipping distribution support on the existing Action Network commerce plane; no spatial or program capability is added."
+    },
+    {
+      "path": "supabase/pending/eup_module_policy_halo_v1.rollback.sql",
+      "classification": "data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Optional Halo module policy preparation and database proof in the existing Equity Uprise shared platform; no building capability, spatial change, module activation or access-policy change."
+    },
+    {
+      "path": "supabase/pending/eup_module_policy_halo_v1.sql",
+      "classification": "data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Optional Halo module policy preparation and database proof in the existing Equity Uprise shared platform; no building capability, spatial change, module activation or access-policy change."
     },
     {
       "path": "supabase/pending/eup_module_policy_v1.provenance.json",

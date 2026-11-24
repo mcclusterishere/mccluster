@@ -39,7 +39,10 @@
        plays owns the lock screen; previous and next on every surface,
        never a 15-second skip (decision D-4, a default pending
        Matthew).
-     playbackState follows the element; setPositionState is sent on
+     playbackState follows the element, or what the listener asked for
+       when the player says so (spec.playing(): a song being picked up
+       again after a dropped read is quiet, and the lock screen offers
+       Pause, which stops the tries; music slice M3); setPositionState is sent on
        play, pause, seek, rate change and a new length, and at most
        once a second while it plays, with an unknown or endless length
        left unsaid and the position clamped to the song.
@@ -139,8 +142,14 @@
     var d = describe(owner);
     if (!d) return null;
     var s = owner.spec;
+    var status = "", note = "";
+    try { status = typeof s.status === "function" ? String(s.status() || "") : ""; } catch (e) {}
+    try { note = typeof s.note === "function" ? String(s.note() || "") : ""; } catch (e) {}
+    /* status: why the player is quiet for a while, in a few words ("Reconnecting…", "Connection lost · tap play"), for
+       a surface that shows no player of its own (the installed app's dock hides the mini player); note: a word that
+       lasts ("Muted"), which that surface says in place of the artist (the Release 1 dock fix) */
     return Object.freeze({ surface: s.surface || "player", title: d.title, artist: d.artist, album: d.album,
-      playing: !owner.media.paused && !owner.media.ended,
+      playing: playing(owner), status: status, note: note,
       canPlay: typeof s.play === "function", canPause: typeof s.pause === "function",
       canPrevious: typeof s.previous === "function", canNext: typeof s.next === "function" });
   }
@@ -234,11 +243,17 @@
       try { d.artwork = []; ms.metadata = new root.MediaMetadata(d); } catch (e2) {}
     }
   }
+  /* what the listener asked for: the element, unless the player knows better (a song being picked up again after a
+     dropped read: its element is quiet while the listener still wants it, and Pause must stop the tries) */
+  function playing(b) {
+    if (typeof b.spec.playing === "function") { try { return !!b.spec.playing(); } catch (e) {} }
+    return !b.media.paused && !b.media.ended;
+  }
   function state(b) {
     if (owner !== b) return;
     var ms = mediaSession();
     if (!ms) return;
-    try { ms.playbackState = b.media.paused || b.media.ended ? "paused" : "playing"; } catch (e) {}
+    try { ms.playbackState = playing(b) ? "playing" : "paused"; } catch (e) {}
   }
   function position(b, now) {
     var ms = mediaSession();

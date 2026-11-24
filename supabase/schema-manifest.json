@@ -8,7 +8,7 @@
    ["private","postgres","anon=U;authenticated=U"],
    ["public","pg_database_owner","PUBLIC=U;anon=U;authenticated=U"]
   ]},
-  "relations": {"md5": "c0650f2d60be30a0f2b2d19e57564382", "rows": [
+  "relations": {"md5": "c4deb482f17f79adbc0219b6ff484a43", "rows": [
    ["ai_context","artifact_links","r",true,false,"",13,"b774fceb642e","b3b16d106caf","ff696abe0b16","",""],
    ["ai_context","context_snapshots","r",true,false,"",11,"5a3dd3b31e14","763fdc6a8354","bbf14d876094","",""],
    ["ai_context","conversations","r",true,false,"",13,"73aa22ced17b","882731ea3d27","e574df182ad5","",""],
@@ -392,7 +392,7 @@
    ["public","network_attribution","r",true,false,"",16,"362bc9520a20","777fb8b7e5bb","e96c6f217d4b","","anon=damrw;authenticated=damrw"],
    ["public","network_blocks","r",true,false,"",3,"3c3a1414be2b","6f32c55ac776","40c960e60e71","","authenticated=damrw"],
    ["public","network_bookmarks","r",true,false,"",3,"74d94df3ff56","519944461c91","eb289bbd1c1e","","authenticated=damrw"],
-   ["public","network_connections","r",true,false,"",6,"e0fb4e28192f","e374759e237d","849ddc9e1ef7","","authenticated=damrw"],
+   ["public","network_connections","r",true,false,"",6,"e0fb4e28192f","e374759e237d","849ddc9e1ef7","","authenticated=mr"],
    ["public","network_conversation_members","r",true,false,"",7,"e3c4a397ce74","495c4e9316fc","933c36cf7c40","","authenticated=damrw"],
    ["public","network_conversations","r",true,false,"",7,"16eea0ec3441","379e41318fb3","8a04e2595560","","authenticated=damrw"],
    ["public","network_feed_items","r",true,false,"",11,"285f2e665743","7a09bdb9b2b0","5cbd654be54b","","anon=damrw;authenticated=damrw"],
@@ -574,7 +574,7 @@
    ["public","world_news_pairs","r",true,false,"",14,"5de761fbdc0f","76b13db8ea63","55500d48ba73","",""],
    ["public","world_region_sharing","r",true,true,"",5,"4b843b55af0a","24a36f9e1660","42bce73daf3b","",""]
   ]},
-  "functions": {"md5": "23efa98bcc2936bcec53f22a27b53b31", "rows": [
+  "functions": {"md5": "c662f4146365cbfb29b53ffa9118e3e8", "rows": [
    ["private","clip_audit","p_org uuid, p_event text, p_type text, p_id text, p_detail jsonb","void",true,"v","search_path=\"\"","60b42e062739",""],
    ["private","clip_canonical_url","p_platform text, p_media text","text",false,"i","search_path=\"\"","485e72ed39b5",""],
    ["private","clip_code","","text",false,"v","search_path=\"\"","f5d91b3988d5",""],
@@ -818,16 +818,22 @@
    ["public","eu_runtime_configure_service","p_org uuid, p_project_url text, p_worker_secret text, p_google_secret text","void",true,"v","search_path=pg_catalog, public, private, vault","e095fd3e9ebd",""],
    ["public","eu_vault_store_service","p_secret text, p_name text, p_description text","uuid",true,"v","search_path=pg_catalog, public, vault","66abb4da75a8",""],
    ["public","eup_environment_coverage_follow","p_event text, p_revision bigint, p_retract boolean, p_decision bigint","integer",false,"v","search_path=\"\"","8b45256d9901",""],
+   ["public","eup_environment_coverage_input","p jsonb","jsonb",false,"s","search_path=\"\"","40a3e929b349",""],
+   ["public","eup_environment_coverage_propose","p_proposals jsonb","jsonb",true,"v","lock_timeout=5s,search_path=\"\"","1f6c206755bd",""],
    ["public","eup_environment_default_rule","p_provider text","jsonb",false,"i","search_path=\"\"","b8ca782fbbbd",""],
    ["public","eup_environment_event_consistent","","trigger",true,"v","search_path=\"\"","3f41426a5570",""],
    ["public","eup_environment_gate","","void",false,"s","search_path=\"\"","64d13e524356",""],
    ["public","eup_environment_guard","","trigger",false,"v","search_path=\"\"","767bcb1acd82",""],
    ["public","eup_environment_house_owner","p_actor uuid","uuid",false,"s","search_path=\"\"","f8a28237fccb",""],
    ["public","eup_environment_inc","p jsonb, p_key text","jsonb",false,"i","search_path=\"\"","044037197a63",""],
+   ["public","eup_environment_ingest","p_provider text, p_run_id text, p_fetched_at timestamp with time zone, p_health jsonb, p_events jsonb","jsonb",true,"v","lock_timeout=5s,search_path=\"\"","22586114be44",""],
+   ["public","eup_environment_ingest_state","p_provider text, p_since timestamp with time zone, p_limit integer","jsonb",true,"s","search_path=\"\"","79955de5ff19",""],
    ["public","eup_environment_iso","p jsonb","timestamp with time zone",false,"s","search_path=\"\"","4fc99de77435",""],
    ["public","eup_environment_iso_text","p timestamp with time zone","text",false,"s","search_path=\"\"","8fbfbabc554c",""],
    ["public","eup_environment_km","p_lon1 numeric, p_lat1 numeric, p_lon2 numeric, p_lat2 numeric","double precision",false,"i","search_path=\"\"","de23a7f99c2d",""],
+   ["public","eup_environment_owner_command","p_actor uuid, p_command text, p_target text, p_expected_revision bigint, p_key text, p_reason text, p_payload jsonb","jsonb",true,"v","lock_timeout=5s,search_path=\"\"","e72df1183cd5",""],
    ["public","eup_environment_owner_preview","p_actor uuid, p_since timestamp with time zone, p_until timestamp with time zone, p_cursor text, p_limit integer","jsonb",true,"s","search_path=\"\"","9e4313498327",""],
+   ["public","eup_environment_owner_read","p_actor uuid, p_event_id text, p_limit integer","jsonb",true,"s","search_path=\"\"","82d20d78db31",""],
    ["public","eup_environment_owner_summary","p_id text","jsonb",false,"s","search_path=\"\"","24c184c2460a",""],
    ["public","eup_environment_page","p_since timestamp with time zone, p_until timestamp with time zone, p_cursor text, p_limit integer","jsonb",false,"s","search_path=\"\"","722b0a62e073",""],
    ["public","eup_environment_project","p_id text","jsonb",false,"s","search_path=\"\"","e248b8913d34",""],
@@ -839,6 +845,7 @@
    ["public","eup_environment_rule_valid","p_provider text, p_rule jsonb","boolean",false,"i","search_path=\"\"","5f473b6ba40b",""],
    ["public","eup_environment_state_of","p_merged_into text, p_held_at timestamp with time zone, p_retracted_at timestamp with time zone, p_withdrawn_at timestamp with time zone, p_first_published_at timestamp with time zone","text",false,"i","search_path=\"\"","94172700d6b4",""],
    ["public","eup_environment_usgs_changes","p_old jsonb, p_new jsonb","jsonb",false,"s","search_path=\"\"","ec7eca8cd25c",""],
+   ["public","eup_environment_usgs_input","p jsonb","jsonb",false,"s","search_path=\"\"","6aa650c89110",""],
    ["public","eup_module_control_read","p_actor uuid, p_limit integer","jsonb",true,"s","search_path=\"\"","98236410c6b3",""],
    ["public","eup_module_guard","p_module text, p_expected_revision bigint","bigint",true,"v","lock_timeout=5s,search_path=\"\"","d2d863e159e3",""],
    ["public","eup_module_guard_reduce","p_module text","bigint",true,"v","lock_timeout=5s,search_path=\"\"","269885f11463",""],
@@ -1143,7 +1150,7 @@
    ["public","world_region_sharing_get","","TABLE(country_code text, subdivision_code text, consented_at timestamp with time zone)",true,"s","search_path=\"\"","8abf5cf315e3","authenticated=X"],
    ["public","world_region_sharing_set","p_country_code text, p_subdivision_code text","TABLE(country_code text, subdivision_code text, consented_at timestamp with time zone)",true,"v","search_path=\"\"","f4b7eb59636b","authenticated=X"]
   ]},
-  "policies": {"md5": "8c05b2d911cb25b3bc48f5a159170bea", "rows": [
+  "policies": {"md5": "5bd2124fb5ef77492f6bf9bdda2cc163", "rows": [
    ["private","eu_platform_artist_bindings","eu_platform_artist_self","PERMISSIVE","SELECT","authenticated","cf9d8b109599",""],
    ["private","eu_platform_release_checks","eu_platform_checks_service","PERMISSIVE","SELECT","service_role","b326b5062b2f",""],
    ["public","action_antisocial_levels","owner reads own antisocial levels","PERMISSIVE","SELECT","authenticated","65f25830dac2",""],
@@ -1470,8 +1477,6 @@
    ["public","network_bookmarks","network_bookmarks_owner_read","PERMISSIVE","SELECT","authenticated","7e7ebd85bbbe",""],
    ["public","network_bookmarks","network_bookmarks_self","PERMISSIVE","ALL","authenticated","7e7ebd85bbbe","7e7ebd85bbbe"],
    ["public","network_connections","network_connections_member_read","PERMISSIVE","SELECT","authenticated","49ce381f710d",""],
-   ["public","network_connections","network_connections_self_update","PERMISSIVE","UPDATE","authenticated","49ce381f710d","49ce381f710d"],
-   ["public","network_connections","network_connections_self_write","PERMISSIVE","INSERT","authenticated","","2cc8e4ed470d"],
    ["public","network_conversation_members","network_conversation_members_member_read","PERMISSIVE","SELECT","authenticated","c5e4bc856548",""],
    ["public","network_conversations","network_conversations_member_read","PERMISSIVE","SELECT","authenticated","d4b4c3499a9c",""],
    ["public","network_feed_items","network_feed_items_auth_read","PERMISSIVE","SELECT","authenticated","6e655a151473",""],

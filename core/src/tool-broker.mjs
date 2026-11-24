@@ -293,6 +293,9 @@ const server = http.createServer(async (req, res) => {
       const started = Date.now();
       let policy = { options: { requirements: body.requirements || {} }, vision: false, images: 0 };
       try {
+        // This route is the http and the agent interface. A capability that
+        // lists neither is refused here by name.
+        requireCapabilityInterface(capabilities, body.capability, ['http', 'agent']);
         policy = capabilityCallPolicy(capabilities, body.capability, body.arguments || {}, policy.options);
         const result = await capabilities.call(body.capability, body.arguments || {}, policy.options);
         observeCapability(req, body.capability, started, { result });

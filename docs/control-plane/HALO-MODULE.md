@@ -1,7 +1,7 @@
 # Hitman's Halo as an owner-only module
 
 Written 2026-11-23. Companions: `HALO-ADMIN-GLOBE.md` (what the Halo view holds), `INTEL-TO-MISSION-CANON.md` (the evidence
-and decision canon), `supabase/pending/PROMOTION-ORDER.md` section 15 (the staged SQL).
+and decision canon), `supabase/pending/PROMOTION-ORDER.md` section 16 (the staged SQL).
 
 ## What Halo is, and is not
 
@@ -78,5 +78,8 @@ store reports `halo` as `registered: false` and answers normally for the other t
 - `scripts/e2e/halo-private-preview.mjs`: a loopback preview with synthetic data for looking at the card and the feeds by
   hand. It proves layout and behaviour, not any production reading.
 
-Not yet proven: the staged SQL has not been executed on any database; the repository's Playwright suites
-(`scripts/e2e/control-eup.e2e.mjs`, `owner-halo-globe.e2e.mjs`) were not run on the machine this was written on.
+Database review updated 2026-11-24: the exact applied policy SQL matched a fresh production catalog on a disposable
+PostgreSQL 17.6 database, and the original extension produced its expected fingerprints there. The corrected guards and
+behavioral proof are prepared; their execution remains a gate on the exact PR head's Reconciliation CI. See
+`evidence/HALO-POLICY-PREPARATION-2026-11-24.md`. The staged file remains optional and unapplied. No module is enabled.
+The repository's Playwright suites (`scripts/e2e/control-eup.e2e.mjs`, `owner-halo-globe.e2e.mjs`) were not run for this database review.
