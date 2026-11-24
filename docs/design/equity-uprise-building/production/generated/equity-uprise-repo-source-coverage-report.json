@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 770,
+  "candidate_count": 796,
   "capability_source_count": 104,
-  "support_only_count": 666,
-  "checks_total": 2978,
-  "checks_passed": 2978,
+  "support_only_count": 692,
+  "checks_total": 3082,
+  "checks_passed": 3082,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -206,6 +206,7 @@
     "docs/control-plane/deploy-gate.json",
     "docs/control-plane/evidence/migration-audit-2026-11-24.md",
     "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
+    "docs/control-plane/evidence/pending-repairs-proof-2026-11-24.md",
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-29.json",
@@ -218,6 +219,8 @@
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-24.json",
+    "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.json",
+    "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.md",
     "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
@@ -421,6 +424,7 @@
     "screens/terminal.html",
     "screens/vms.html",
     "screens/wall.html",
+    "scripts/creator-cohort-news-sql-check.mjs",
     "scripts/e2e/control-eup.e2e.mjs",
     "scripts/e2e/docket-cohort-showcase.e2e.mjs",
     "scripts/e2e/environment-globe.e2e.mjs",
@@ -457,8 +461,12 @@
     "scripts/smoke.mjs",
     "scripts/stage-cloudflare-pages.mjs",
     "scripts/test-environment-proofs-pglite.mjs",
+    "scripts/test-member-fronts-publication-guard-db.sh",
     "scripts/test-music-label-db.sh",
     "scripts/test-schema-hygiene-db.sh",
+    "scripts/test-small-pending-reset.sh",
+    "scripts/test-world-member-fronts-native.mjs",
+    "scripts/test-world-member-regions-db.sh",
     "scripts/test/action-gamification.test.mjs",
     "scripts/test/action-mission-curation.test.mjs",
     "scripts/test/action-network-live-governance.test.mjs",
@@ -630,20 +638,38 @@
     "supabase/migrations/20261118021521_action_mission_details.sql",
     "supabase/migrations/20261124164851_equity_uprise_clipping_sources.sql",
     "supabase/migrations/20261124164904_action_bounty_claim_existing_row_guard_v1.sql",
+    "supabase/pending/20261010009000_creator_site_cohort_grants.rollback.sql",
+    "supabase/pending/20261010009000_creator_site_cohort_grants.sql",
+    "supabase/pending/20261010009100_creator_publish_cohort_entitlement.rollback.sql",
+    "supabase/pending/20261010009100_creator_publish_cohort_entitlement.sql",
     "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql",
     "supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql",
     "supabase/pending/20261015230000_action_mission_pins_arcs_black_business.sql",
     "supabase/pending/20261015230000_identity_verification_levels_v1.sql",
+    "supabase/pending/20261020170000_news_region_leads.rollback.sql",
+    "supabase/pending/20261020170000_news_region_leads.sql",
+    "supabase/pending/20261022015000_market_layer1_preserve_source_policy.rollback.sql",
+    "supabase/pending/20261022015000_market_layer1_preserve_source_policy.sql",
     "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql",
     "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql",
     "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql",
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
+    "supabase/pending/core_reflection_read_indexes_v1.rollback.sql",
+    "supabase/pending/core_reflection_read_indexes_v1.sql",
     "supabase/pending/eup_module_policy_v1.provenance.json",
     "supabase/pending/live_missions_v1.sql",
+    "supabase/pending/member_fronts_publication_visibility_guard_v1.rollback.sql",
+    "supabase/pending/member_fronts_publication_visibility_guard_v1.sql",
     "supabase/pending/mission_admin_approval_v1.sql",
     "supabase/pending/music_label_artists_v1.sql",
+    "supabase/pending/ops_signals_digest_window_unique_v1.rollback.sql",
+    "supabase/pending/ops_signals_digest_window_unique_v1.sql",
     "supabase/pending/policy_fellowship_ladder_v1.sql",
+    "supabase/pending/world_member_regions_v1.rollback.sql",
+    "supabase/pending/world_member_regions_v1.sql",
+    "supabase/pending/world_publisher_verified_geo_v1.rollback.sql",
+    "supabase/pending/world_publisher_verified_geo_v1.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -784,7 +810,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "770 entries"
+      "detail": "796 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4552,6 +4578,26 @@
       "detail": ""
     },
     {
+      "name": "docs/control-plane/evidence/pending-repairs-proof-2026-11-24.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/pending-repairs-proof-2026-11-24.md classified",
+      "passed": true,
+      "detail": "classification='verification_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/pending-repairs-proof-2026-11-24.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/pending-repairs-proof-2026-11-24.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/control-plane/evidence/production-advisors-2026-10-28.json capability ids known",
       "passed": true,
       "detail": ""
@@ -4788,6 +4834,46 @@
     },
     {
       "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-24.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.json classified",
+      "passed": true,
+      "detail": "classification='verification_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.md classified",
+      "passed": true,
+      "detail": "classification='verification_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/release2-database-dependencies-2026-11-24.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -8732,6 +8818,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/creator-cohort-news-sql-check.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/creator-cohort-news-sql-check.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/creator-cohort-news-sql-check.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/creator-cohort-news-sql-check.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/e2e/control-eup.e2e.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -9447,6 +9553,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/test-member-fronts-publication-guard-db.sh capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-member-fronts-publication-guard-db.sh classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test-member-fronts-publication-guard-db.sh support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test-member-fronts-publication-guard-db.sh support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/test-music-label-db.sh capability ids known",
       "passed": true,
       "detail": ""
@@ -9483,6 +9609,66 @@
     },
     {
       "name": "scripts/test-schema-hygiene-db.sh support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-small-pending-reset.sh capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-small-pending-reset.sh classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test-small-pending-reset.sh support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test-small-pending-reset.sh support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-world-member-fronts-native.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-world-member-fronts-native.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test-world-member-fronts-native.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test-world-member-fronts-native.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-world-member-regions-db.sh capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test-world-member-regions-db.sh classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test-world-member-regions-db.sh support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test-world-member-regions-db.sh support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -12807,6 +12993,86 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/20261010009000_creator_site_cohort_grants.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261010009000_creator_site_cohort_grants.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/20261010009000_creator_site_cohort_grants.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261010009000_creator_site_cohort_grants.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261010009000_creator_site_cohort_grants.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261010009000_creator_site_cohort_grants.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/20261010009000_creator_site_cohort_grants.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261010009000_creator_site_cohort_grants.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261010009100_creator_publish_cohort_entitlement.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/20261013180000_qt6kv_creator_isrc_ledger.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -12883,6 +13149,86 @@
     },
     {
       "name": "supabase/pending/20261015230000_identity_verification_levels_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261020170000_news_region_leads.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261020170000_news_region_leads.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/20261020170000_news_region_leads.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261020170000_news_region_leads.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261020170000_news_region_leads.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261020170000_news_region_leads.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/20261020170000_news_region_leads.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261020170000_news_region_leads.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261022015000_market_layer1_preserve_source_policy.sql support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -12987,6 +13333,46 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/core_reflection_read_indexes_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/core_reflection_read_indexes_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/core_reflection_read_indexes_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/core_reflection_read_indexes_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/core_reflection_read_indexes_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/core_reflection_read_indexes_v1.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/core_reflection_read_indexes_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/core_reflection_read_indexes_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/eup_module_policy_v1.provenance.json capability ids known",
       "passed": true,
       "detail": ""
@@ -13023,6 +13409,46 @@
     },
     {
       "name": "supabase/pending/live_missions_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/member_fronts_publication_visibility_guard_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/member_fronts_publication_visibility_guard_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/member_fronts_publication_visibility_guard_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/member_fronts_publication_visibility_guard_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/member_fronts_publication_visibility_guard_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/member_fronts_publication_visibility_guard_v1.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/member_fronts_publication_visibility_guard_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/member_fronts_publication_visibility_guard_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -13067,6 +13493,46 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/ops_signals_digest_window_unique_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/ops_signals_digest_window_unique_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/ops_signals_digest_window_unique_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/ops_signals_digest_window_unique_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/ops_signals_digest_window_unique_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/ops_signals_digest_window_unique_v1.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/ops_signals_digest_window_unique_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/ops_signals_digest_window_unique_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/policy_fellowship_ladder_v1.sql capability ids known",
       "passed": true,
       "detail": ""
@@ -13083,6 +13549,86 @@
     },
     {
       "name": "supabase/pending/policy_fellowship_ladder_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/world_member_regions_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/world_member_regions_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/world_member_regions_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/world_member_regions_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/world_member_regions_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/world_member_regions_v1.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/world_member_regions_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/world_member_regions_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/world_publisher_verified_geo_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/world_publisher_verified_geo_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/world_publisher_verified_geo_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/world_publisher_verified_geo_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/world_publisher_verified_geo_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/world_publisher_verified_geo_v1.sql classified",
+      "passed": true,
+      "detail": "classification='database_support'"
+    },
+    {
+      "name": "supabase/pending/world_publisher_verified_geo_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/world_publisher_verified_geo_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },
