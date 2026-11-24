@@ -66,13 +66,15 @@ async function boundedBaseline() {
     'supabase/migrations/20260920041011_music_creator_platform_v1.sql', 'supabase/migrations/20260920041250_music_commerce_v1.sql', 'supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql']) {
     let sql = read(file);
     if (file === 'supabase/tests/music_creator_onboarding.stub.sql') {
-      // Keep peripheral stand-ins, but use the actual original track table:
-      // audio_url is NOT NULL without a default in the canonical reset. The
-      // smaller onboarding stand-in otherwise hides an incomplete fixture.
-      const canonical = read('supabase/replay_migrations/0003_creator_cuts.sql').match(/^create table if not exists public\.creator_tracks \([\s\S]*?^\);/m)?.[0];
+      // Keep peripheral stand-ins, but use the actual original track table
+      // and its RLS enablement. Its NOT NULL audio URL and row filtering must
+      // agree with the canonical reset; the real music migration adds policies.
+      const source = read('supabase/replay_migrations/0003_creator_cuts.sql');
+      const canonical = source.match(/^create table if not exists public\.creator_tracks \([\s\S]*?^\);/m)?.[0];
+      const rowSecurity = source.match(/^alter table public\.creator_tracks enable row level security;$/gm);
       const placeholder = /^create table public\.creator_tracks\([\s\S]*?^\);/m;
-      assert.ok(canonical && placeholder.test(sql), 'canonical creator-track table and explicit fixture boundary exist');
-      sql = sql.replace(placeholder, canonical);
+      assert.ok(canonical && rowSecurity?.length === 1 && placeholder.test(sql), 'canonical creator-track table, RLS and explicit fixture boundary exist');
+      sql = sql.replace(placeholder, `${canonical}\n${rowSecurity[0]}`);
     }
     await db.transaction(tx => tx.exec(sql));
   }
@@ -120,6 +122,7 @@ async function createTrack({ lyrics = null, published = false, master = true } =
 
 try {
   if (!fullReset) await boundedBaseline();
+  equal(await scalar("select relrowsecurity as value from pg_class where oid='public.creator_tracks'::regclass"), true, 'creator-track authorization uses the canonical RLS boundary');
   for (const file of [C, CR, F, FR]) {
     await deny(() => db.transaction(async tx => {
       await tx.exec('set transaction isolation level repeatable read');
@@ -211,7 +214,23 @@ try {
   for (const role of ['anon', 'authenticated']) {
     for (const signature of ['music_track_content(public.creator_tracks)', 'music_lyrics_input_rev()', 'music_queue_lyrics_align()']) equal(await scalar("select has_function_privilege($1,$2,'EXECUTE') as value", [role, `public.${signature}`]), false, 'browser role cannot call private content or trigger functions');
   }
-  await deny(() => anon.query("update public.creator_tracks set lyrics_sheet='forbidden' where id=$1", [published]), error => error.code === '42501' || error.message.includes('creator_identity_missing'), 'anonymous user cannot attach a sheet');
+  // Canonical RLS can filter an UPDATE to zero rows instead of raising a
+  // privilege error. Both outcomes must leave the inputs and job history exact.
+  const anonymousWriteState = () => scalar(`select jsonb_build_object(
+    'sheet',t.lyrics_sheet,'revision',t.lyrics_input_rev,
+    'jobs',(select coalesce(jsonb_agg(to_jsonb(j) order by j.id),'[]'::jsonb)
+      from public.ops_agent_jobs j where j.job_type='lyrics_align'
+      and j.target_type='creator_track' and j.target_id=t.id::text)) as value
+    from public.creator_tracks t where t.id=$1`, [published]);
+  const beforeAnonymousWrite = await anonymousWriteState();
+  let anonymousWriteResult;
+  try {
+    anonymousWriteResult = await anon.query("update public.creator_tracks set lyrics_sheet='forbidden' where id=$1 returning id", [published]);
+  } catch (error) {
+    equal(error.code, '42501', 'anonymous sheet update may be refused only by a privilege denial');
+  }
+  if (anonymousWriteResult) equal(anonymousWriteResult.rows.length, 0, 'anonymous sheet update returns no writable row');
+  equal(await anonymousWriteState(), beforeAnonymousWrite, 'anonymous update preserves the exact sheet, revision and complete job state');
   await deny(() => owner.query('update public.creator_tracks set lyrics_sheet=$2 where id=$1', [published, 'x'.repeat(40001)]), { code: '23514' }, 'lyric sheet length is bounded at the database');
   await owner.query('update public.creator_tracks set lyrics_sheet=$2 where id=$1', [published, 'Synthetic processing words.']);
   equal(await reviewState(published), beforeReview, 'sheet-only edit preserves already reviewed lyrics and publication');

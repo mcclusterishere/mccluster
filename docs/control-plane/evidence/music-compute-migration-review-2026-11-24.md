@@ -124,7 +124,7 @@ there is no destructive override. E's forward SQL behavior is unchanged.
 
 | Proof | Observed result | Scope |
 |---|---:|---|
-| Music native proof | 101 passed | PostgreSQL 17.6; actual canonical music guards/review functions and explicit peripheral Auth/Storage fixtures. |
+| Music native proof | 103 passed | PostgreSQL 17.6; actual canonical music guards/review functions and explicit peripheral Auth/Storage fixtures. |
 | Compute database before correction | 9 passed, 10 failed | Reproduces inherited privilege and destructive recovery defects. |
 | Compute database after correction | 19 passed | PostgreSQL 17.6; actual API roles, Supabase default privileges, concurrent writers and safe recovery. |
 | Real gateway/node-agent staging | 10 passed | Native PostgreSQL with disposable synthetic compute/org fixtures; signed receipts, replay, retry, revocation and guarded rollback. |
@@ -179,8 +179,14 @@ The first complete-reset attempt at head `16d1d206f673206d32e68aa6e4680bdaf61a0a
 accepted the exact 468-entry plan, then rejected the synthetic music fixture
 with SQLSTATE `23502`: `creator_tracks.audio_url` is required. The proof now
 supplies that field explicitly and uses the exact canonical creator table even
-in its bounded local baseline. No reset constraint is relaxed. The corrected
-native run passes 101 assertions; its complete-reset run remains a CI gate.
+in its bounded local baseline. No reset constraint is relaxed. The first corrected native run passed 101 assertions. The next complete-reset
+run reached the anonymous-write assertion and correctly returned zero updated
+rows under canonical row-level security. The proof had wrongly required a
+raised exception. It now accepts only SQLSTATE `42501` or an `UPDATE RETURNING`
+result with zero rows, then compares the exact sheet, revision and complete
+target-job state. The bounded fixture now copies canonical row-security
+enablement, and both modes explicitly require it. The native run passes
+**103 assertions**; the final complete-reset rerun remains a CI gate.
 
 The dedicated compute workflow succeeded on that head:
 [run 45455902593, job 138665120954](https://github.com/mcclusterishere/mccluster/actions/runs/45455902593/job/138665120954).
@@ -214,6 +220,16 @@ longer duplicates backend credential lookup in the compute entrypoint. The
 credential remains on Core and is never sent to a device. Existing backend-auth,
 device-grant and signed-gateway trust checks pass (12 tests).
 
+The integrated MCP contracts also caught three stale derived/test expectations.
+The lyrics-format contract now requires the all-write revision trigger that
+prevents direct revision forgery. The existing peaks generator refreshed only
+Rolling With Me's path and source hash; its bars and bands are unchanged. The
+Windows bootstrap test now accounts for six execution tiers, with lyrics at
+index four and browser work at index five. Targeted local contracts pass
+22 tests with one explicit PowerShell skip; CI must execute that Windows test.
+No production schema, permission or runtime behavior was weakened for these
+fixture and derived-data corrections.
+
 ## Named-file review receipt
 
 An approval must identify the exact reviewed file and its current commit. Fresh
@@ -237,7 +253,7 @@ preparation receipt.
 | `supabase/pending/compute_scheduler_lease_v1.rollback.sql` | 2,141 | `29247c1c83fb40d20b8f9628a0d3d9a4b25614739817ed1f3674030a29c78959` |
 | `supabase/pending/20261031180000_lyrics_machine_v1.sql` | 8,880 | `7533f4bfd78fa7c65e8202c34843011b2cccc9c4a0cc4a06e22dafdf7b97ff8a` |
 | `supabase/pending/20261031180000_lyrics_machine_v1.rollback.sql` | 2,881 | `672a025efb88c9ec2215145195c65df49291575d91cd7f0c615883197ddba5c4` |
-| `scripts/music-release-native-check.mjs` | 27,628 | `13c3a2cc5cf191cdf963105a216ddefe006adb1dd8e6b50300b26b6f6c9c333d` |
+| `scripts/music-release-native-check.mjs` | 28,964 | `ebb6dfb955fbab1c9165189f2eacde2853ceecc22f1658f41dc14dceb33b9429` |
 | `scripts/compute-device-native-check.mjs` | 21,436 | `1a4d61d8808ca7108a5b9c603a174f6c04e69d9467b8da421cab00f4370a6b93` |
 | `scripts/native-admin-test-db.mjs` | 3,842 | `43ab5d522112d8a4569a69556669d389f2a644cf1fcc747155fde2e5664908cb` |
 | `.github/workflows/reconciliation-ci.yml` | 18,954 | `c54ca60638717056469888eb532d8a3adea26aae01dd47efb97afbbd51c44303` |
