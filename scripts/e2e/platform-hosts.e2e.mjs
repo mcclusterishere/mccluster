@@ -32,6 +32,13 @@
          LIVE (opt-in; never in pull-request CI): the production hosts, GET only, nobody signed in, four requests at a
          time. Writes the crawl to --out; with --baseline, compares it and exits 1 on any difference.
 
+     node scripts/e2e/platform-hosts.e2e.mjs --browser [outDir] [--only <path,path>]
+         BROWSER (CI's browser job platform-pages; from P1, a no-op before it): the crawl's browser half. The same
+         in-process hosts, in Chromium at 390 px; every page the platform serves (the World at its root, the HERE front
+         door, every platform and profile page) is opened there, nobody signed in, and fails if it asks for a document on
+         Matthew's host (his carry page aside) or logs an error that the same document opened on his host does not log.
+         Writes report.json to outDir.
+
      node scripts/e2e/platform-hosts.e2e.mjs --diff <before.json> <after.json>
          Compares two crawls already written (either mode).
 
@@ -43,7 +50,8 @@
          dated; refuses once production no longer answers as before P0.
 
    Nothing here changes anything anywhere: no POST, no sign-in, no DNS, no settings. */
-import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, statSync, mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, join, extname, normalize, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -584,6 +592,163 @@ export function judgeLocal(local, fixture, site, addressOf = null) {
   return { failures, added, skipped, compared };
 }
 
+/* ---------- the browser half (from P1) ---------- */
+
+/* SPEC-PLATFORM 4, P1's acceptance: every public path on the platform "with no console error the P0 baseline does not
+   have ... and no request for a document on Matthew's host". The crawl above holds the answers; this opens the pages
+   (the P1 review, P1A-4). Chromium at 390 px, phone first; the same in-process hosts as the local crawl (localFetcher);
+   nobody signed in, the visitor's privacy answer given so a page runs everything it runs for a visitor who agreed;
+   service workers blocked; McCluster's API and Supabase answered with empty lists; every other host refused, alike on
+   both hosts. The baseline is the same document on Matthew's host, which serves it as before P0: what both copies log is
+   not the platform's doing. A page whose platform copy logs nothing and asks for no document on his host passes
+   without opening his copy; any other is opened on both hosts, and an error that only the platform's copy logs is
+   counted only when it comes back on a second pair of visits. */
+export const BROWSER_LAUNCH_ARGS = Object.freeze(['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage']);
+const SERVICES = Object.freeze({ api: 'api.mccluster.org', supabase: /\.supabase\.co$/ });
+
+/* the pages the platform serves: the World at its root, the HERE front door, every platform and profile page (the World's
+   document name only answers 301 to the root on the platform) */
+export function browserPages(site) {
+  return [...new Set([site.world.root, site.platform.front_door_path, ...site.pages.platform, ...site.pages.profile])]
+    .filter((p) => p !== site.world.document);
+}
+/* the same document on Matthew's host: the platform's root is the World, which is its document there */
+export function hisCopy(site, path) {
+  return site.profile.origin + (path === site.world.root ? site.world.document : path);
+}
+/* an error as logged, comparable between the hosts: both origins written alike */
+export function errorText(site, text) {
+  return String(text).split(site.platform.origin).join('<host>').split(site.profile.origin).join('<host>').slice(0, 300);
+}
+/* one page's problems from its visits: a document asked for on Matthew's host on any platform visit (his carry page
+   aside, which js/carry.js frames on purpose); a page that opens on his host and not on the platform; an error the
+   platform's copy logged on every visit that opened and his copy logged on none */
+export function judgePage(site, { platform, his = [] }) {
+  const problems = [];
+  const carry = site.profile.origin + site.profile.carry_path;
+  const documents = [...new Set(platform.flatMap((v) => v.documents || []))]
+    .filter((u) => u.startsWith(site.profile.origin + '/') && u.split(/[?#]/)[0] !== carry);
+  if (documents.length) problems.push(`asks for a document on Matthew's host: ${documents.join(' ')}`);
+  const opened = platform.filter((v) => !v.nav);
+  if (!opened.length && his.some((v) => !v.nav)) problems.push(`does not open on the platform (${platform.map((v) => v.nav).join('; ')}), while its copy on Matthew's host does`);
+  if (opened.length) {
+    const theirs = new Set(his.flatMap((v) => v.errors || []));
+    const every = opened.map((v) => new Set(v.errors || [])).reduce((a, b) => new Set([...a].filter((e) => b.has(e))));
+    const only = [...every].filter((e) => !theirs.has(e));
+    if (only.length) problems.push(`logs ${only.length} error(s) its copy on Matthew's host does not: ${JSON.stringify(only)}`);
+  }
+  return problems;
+}
+
+function playwright() {
+  const require = createRequire(import.meta.url);
+  try { return require('playwright'); }
+  catch { return createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright'); }
+}
+
+export async function browserAcceptance(site, { root = ROOT, outDir = null, only = null, log = console.log } = {}) {
+  if (site.switches.platform_serves !== 'everything') return { skipped: `stage ${site.stage}: the platform does not serve every page yet`, pages: [], failures: [] };
+  const fetchOne = await localFetcher(site, { root });
+  const { chromium } = playwright();
+  const browser = await chromium.launch({ args: [...BROWSER_LAUNCH_ARGS] });
+  const json = (route, status, body) => {
+    const origin = route.request().headers().origin;
+    return route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': origin || '*', 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
+  };
+  async function open(url) {
+    const v = { url, status: null, final: null, nav: null, errors: [], documents: [] };
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, reducedMotion: 'reduce', serviceWorkers: 'block' });
+    try {
+      ctx.setDefaultTimeout(20000);
+      await ctx.addInitScript(() => {
+        try {
+          localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() }));
+          localStorage.setItem('mnet_tour_seen', '1');
+          sessionStorage.setItem('mcc_premiere', '1');
+        } catch (e) { /* a frame without storage */ }
+      });
+      await ctx.route('**/*', async (route) => {
+        const req = route.request();
+        let u;
+        try { u = new URL(req.url()); } catch { return route.abort(); }
+        if (req.resourceType() === 'document') v.documents.push(u.href);
+        const preflight = req.method() === 'OPTIONS';
+        if (u.hostname === SERVICES.api || SERVICES.supabase.test(u.hostname)) {
+          if (preflight) return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': req.headers().origin || '*', 'access-control-allow-credentials': 'true', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
+          if (u.pathname === '/v1/auth/handoff' || u.pathname === '/auth/v1/user') return json(route, 401, { error: 'not signed in' });
+          if (u.pathname.startsWith('/rest/v1/')) return json(route, 200, []);
+          return json(route, 200, { ok: true, items: [], tracks: [], posts: [], events: [], missions: [], layers: [], features: [], sources: [], notifications: [], sessions: [] });
+        }
+        if (!site.hostRole(u.hostname)) return route.abort();
+        if (!['GET', 'HEAD'].includes(req.method())) return route.fulfill({ status: 405, body: '' });
+        if (/\.(mp3|m4a|aac|wav|ogg|mp4|webm|mov)$/i.test(u.pathname)) return route.fulfill({ status: 204, body: '' });
+        let res;
+        try { res = await fetchOne(u.href); } catch { return route.abort(); }
+        const location = res.headers.get('location');
+        /* a fulfilled redirect is followed outside interception, so a document's 301 is walked as a navigation here */
+        if (res.status >= 300 && res.status < 400 && location && req.resourceType() === 'document') {
+          return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: `<!doctype html><title>${res.status}</title><script>location.replace(${JSON.stringify(new URL(location, u.href).href)})</script>` });
+        }
+        const headers = {};
+        res.headers.forEach((value, key) => { headers[key] = value; });
+        return route.fulfill({ status: res.status, headers, body: Buffer.from(await res.arrayBuffer()) });
+      });
+      const page = await ctx.newPage();
+      page.on('pageerror', (e) => v.errors.push(errorText(site, `pageerror: ${e && e.message || e}`)));
+      page.on('console', (m) => { if (m.type() === 'error') v.errors.push(errorText(site, `console: ${m.text()}`)); });
+      try {
+        const r = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        v.status = r ? r.status() : null;
+        await page.waitForLoadState('load', { timeout: 20000 }).catch(() => {});
+        await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+        await page.waitForTimeout(400);
+      } catch (e) { v.nav = String(e && e.message || e).split('\n')[0].slice(0, 200); }
+      v.final = page.url();
+    } finally {
+      await ctx.close().catch(() => {});
+    }
+    v.errors = [...new Set(v.errors)];
+    return v;
+  }
+
+  const P = site.platform.origin;
+  const rows = [], failures = [];
+  const pages = browserPages(site).filter((p) => !only || only.includes(p));
+  try {
+    for (const path of pages) {
+      const answer = await fetchOne(P + path);
+      if (answer.status !== 200) {
+        rows.push({ path, answered: answer.status, opened: false });
+        log(`skip    ${path}: the platform answers ${answer.status} (the crawl judges it)`);
+        continue;
+      }
+      const platform = [await open(P + path)];
+      const his = [];
+      const clean = (vs) => vs.every((v) => !v.nav && !v.errors.length) && !judgePage(site, { platform: vs }).length;
+      if (!clean(platform)) {
+        his.push(await open(hisCopy(site, path)));
+        if (judgePage(site, { platform, his }).length) {
+          platform.push(await open(P + path));
+          his.push(await open(hisCopy(site, path)));
+        }
+      }
+      const problems = judgePage(site, { platform, his });
+      rows.push({ path, answered: answer.status, platform, his, problems });
+      for (const problem of problems) failures.push({ url: P + path, problem });
+      log(`${problems.length ? 'FAIL' : 'ok  '}    ${path}: ${platform.map((v) => `${v.errors.length} error(s)`).join(', ')} on the platform` +
+        (his.length ? `; ${his.map((v) => `${v.errors.length}`).join(', ')} on his host` : '') + (problems.length ? ` :: ${problems.join(' | ')}` : ''));
+    }
+  } finally {
+    await browser.close();
+  }
+  const report = { schema: 'mccluster-platform-pages-browser/v1', stage: site.stage, captured_at: new Date().toISOString(), viewport: '390x844', pages: rows, failures };
+  if (outDir) {
+    mkdirSync(outDir, { recursive: true });
+    writeFileSync(join(outDir, 'report.json'), JSON.stringify(report, null, 1) + '\n');
+  }
+  return report;
+}
+
 /* ---------- the command ---------- */
 
 function arg(argv, name) {
@@ -618,6 +783,18 @@ async function main(argv) {
     return diffs.length ? 1 : 0;
   }
   const site = await loadSite();
+  const browserAt = argv.indexOf('--browser');
+  if (browserAt !== -1) {
+    const outDir = argv[browserAt + 1] && !argv[browserAt + 1].startsWith('--') ? argv[browserAt + 1] : null;
+    const only = arg(argv, '--only');
+    const report = await browserAcceptance(site, { outDir, only: only ? only.split(',') : null });
+    if (report.skipped) { console.log(report.skipped); return 0; }
+    const opened = report.pages.filter((r) => r.platform).length;
+    const compared = report.pages.filter((r) => r.his && r.his.length).length;
+    for (const f of report.failures) console.log(`FAIL    ${f.url}: ${f.problem}`);
+    console.log(`browser half at stage ${site.stage}: ${report.pages.length} pages, ${opened} opened on the platform, ${compared} also opened on Matthew's host, ${report.failures.length} failure(s)`);
+    return report.failures.length ? 1 : 0;
+  }
   const fixtureFromLive = arg(argv, '--write-fixture');
   if (fixtureFromLive) {
     const fixture = fixtureFrom(readCrawl(fixtureFromLive), site);

@@ -208,7 +208,9 @@ host).
 **Today (P1, once deployed; `edge.now`; P0's answers were measured on
 2026-11-23 with GET and HEAD only, and P1's are those of the local crawl over
 this checkout, `scripts/e2e/platform-hosts.e2e.mjs`, until it is deployed and
-crawled live):**
+crawled live; its browser half, `--browser`, opens every page the platform
+serves in Chromium at 390 px and fails on a document asked for on Matthew's
+host, his carry page aside, or an error the page's copy there does not log):**
 
 | Host | Answers |
 | --- | --- |

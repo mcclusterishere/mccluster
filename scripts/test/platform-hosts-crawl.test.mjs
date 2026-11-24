@@ -13,7 +13,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ROOT, localFetcher, githubPages, workerEnv, crawlPlan, crawlUrls, diffCrawls, judgeServesEverything, stageJudged, COMPARED_HEADERS, cloudflareNormalized, addressReader } from '../e2e/platform-hosts.e2e.mjs';
+import { ROOT, localFetcher, githubPages, workerEnv, crawlPlan, crawlUrls, diffCrawls, judgeServesEverything, stageJudged, COMPARED_HEADERS, cloudflareNormalized, addressReader,
+  browserPages, hisCopy, errorText, judgePage } from '../e2e/platform-hosts.e2e.mjs';
 import { siteTable, readRecord } from '../../tools/build-site-hosts.mjs';
 
 const imp = (rel) => import(pathToFileURL(join(ROOT, rel)).href);
@@ -223,4 +224,33 @@ test('the crawl asks for other spellings of an address, judges each by the page 
   const fetchOne = await localFetcher(P1, { root: ROOT });
   assert.equal((await fetchOne('https://here.mccluster.org//whip%2Ehtml?x=1')).headers.get('location'), `${PROF}/whip.html?x=1`);
   assert.equal((await fetchOne(`${PLAT}//whip.html?x=1`)).headers.get('location'), `${PROF}/whip.html?x=1`, 'the platform, one hop to his page');
+});
+
+/* The browser half (the P1 review, P1A-4; SPEC-PLATFORM 4, P1's acceptance): which pages it opens, which copy on
+   Matthew's host is the baseline, and the verdict it reads from the visits. */
+test('the crawl\'s browser half opens every page the platform serves and judges it against its copy on Matthew\'s host', () => {
+  const P1 = tableOf('P1');
+  const PLAT = P1.platform.origin, PROF = P1.profile.origin;
+  const pages = browserPages(P1);
+  assert.equal(pages[0], '/', 'the World at the platform\'s root first');
+  assert.ok(pages.includes('/index.html') && pages.includes('/listen.html') && pages.includes('/engineering/') && pages.includes('/action/'), 'the front door, platform and profile pages');
+  assert.ok(!pages.includes('/mnet.html'), 'the World\'s document name only answers 301 to the root there');
+  for (const p of P1.pages.profile_only) assert.ok(!pages.includes(p), `${p} is Matthew's own: never served by the platform`);
+  assert.equal(new Set(pages).size, pages.length, 'each page once');
+  assert.equal(hisCopy(P1, '/'), `${PROF}/mnet.html`, 'the World\'s root is its document on his host');
+  assert.equal(hisCopy(P1, '/engineering/'), `${PROF}/engineering/`);
+  assert.equal(errorText(P1, `Refused to execute script from '${PLAT}/engineering/js/experience.js'`), errorText(P1, `Refused to execute script from '${PROF}/engineering/js/experience.js'`), 'the two origins read alike');
+
+  const visit = (errors = [], extra = {}) => ({ errors, documents: [], nav: null, ...extra });
+  const refused = errorText(P1, `console: Refused to execute script from '${PLAT}/engineering/js/experience.js?v=1' because its MIME type ('text/html') is not executable`);
+  const missing = 'console: Failed to load resource: the server responded with a status of 404 ()';
+  assert.deepEqual(judgePage(P1, { platform: [visit()] }), [], 'a quiet page passes');
+  assert.deepEqual(judgePage(P1, { platform: [visit([missing])], his: [visit([missing])] }), [], 'what both copies log is not the platform\'s doing');
+  assert.match(judgePage(P1, { platform: [visit([missing, refused])], his: [visit([missing])] })[0], /logs 1 error\(s\) its copy on Matthew's host does not/, 'an error only the platform logs');
+  assert.deepEqual(judgePage(P1, { platform: [visit([refused]), visit([])], his: [visit([]), visit([])] }), [], 'an error the second pair of visits does not repeat is not counted');
+  assert.deepEqual(judgePage(P1, { platform: [visit([refused]), visit([refused])], his: [visit([]), visit([refused])] }), [], 'nor one his copy logs on either visit');
+  assert.match(judgePage(P1, { platform: [visit([], { documents: [`${PLAT}/listen.html`, `${PROF}/listen.html?x=1`] })] })[0], /asks for a document on Matthew's host: https:\/\/matthew\.mccluster\.org\/listen\.html\?x=1/);
+  assert.deepEqual(judgePage(P1, { platform: [visit([], { documents: [`${PLAT}/listen.html`, `${PROF}${P1.profile.carry_path}`, `${PROF}${P1.profile.carry_path}?r=2`] })] }), [], 'his carry page, framed on purpose, is not a document the visitor is sent to');
+  assert.match(judgePage(P1, { platform: [visit([], { nav: 'Timeout 30000ms exceeded.' })], his: [visit()] })[0], /does not open on the platform/);
+  assert.deepEqual(judgePage(P1, { platform: [visit([], { nav: 'Timeout' })], his: [visit([], { nav: 'Timeout' })] }), [], 'a page neither host opens is not the platform\'s doing');
 });
