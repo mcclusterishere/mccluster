@@ -520,3 +520,22 @@ test("the catalogue graph carries the structured credits with the identities it 
   const kkk = alb("cia-mind-control");
   assert.ok(!kkk.byArtist && !kkk.producer && !kkk.track, "CIA Mind Control stays out of the graph's credits");
 });
+
+test("staged SQL: the plane's three catalog rows that said something else take the owner's words", () => {
+  /* never applied here: supabase/pending, with a rollback and a PROMOTION-ORDER row */
+  const sql = read("supabase/pending/20261124130000_music_catalog_owner_credits.sql"), back = read("supabase/pending/20261124130000_music_catalog_owner_credits.rollback.sql");
+  const upset = track("singles", "Upset"), main = track("equity-uprise", "Environmental Injustice"), brave = track("equity-uprise", "Environmental Injustice (Brave mix)");
+  assert.ok(sql.includes(`set artist_name='${upset.artist}', updated_at=now()\n where catalog_key='singles:upset' and artist_name='McCluster';`), "Upset names its own artists");
+  assert.ok(sql.includes(`set credit_line='${main.credit}', updated_at=now()\n where catalog_key='equity-uprise:environmental-injustice' and credit_line='McCluster ft. Angel Kastro & Ocho';`));
+  assert.ok(sql.includes(`set credit_line='${brave.credit}', updated_at=now()\n where catalog_key='equity-uprise:environmental-injustice-brave-mix' and credit_line='McCluster ft. Angel Kastro & Ocho · the GA edition';`));
+  /* each guard is the word the 2026-10-03 seed wrote, so the update finds the row it means to change */
+  const seed = read("supabase/migrations/20261003233747_action_network_live_governance_v1.sql");
+  assert.ok(seed.includes("('singles:upset','singles','Singles','Upset','McCluster',"));
+  assert.ok(seed.includes("'Environmental Injustice','Equity Uprise','McCluster ft. Angel Kastro & Ocho','assets/"));
+  assert.ok(seed.includes("'Environmental Injustice (Brave mix)','Equity Uprise','McCluster ft. Angel Kastro & Ocho · the GA edition','assets/"));
+  const code = (text) => text.split("\n").filter((l) => !l.startsWith("--")).join("\n");
+  assert.equal((code(sql).match(/\bupdate public\.music_catalog_objects\b/g) || []).length, 3, "three rows, nothing else");
+  assert.doesNotMatch(code(sql) + code(back), /\b(insert|delete|drop|alter|create|truncate|grant)\b/i, "words only: no row added or removed, no schema");
+  for (const words of [upset.artist, main.credit, brave.credit]) assert.ok(back.includes(`='${words}';`), "the rollback is guarded by the words this file wrote");
+  assert.match(read("supabase/pending/PROMOTION-ORDER.md"), /## 19\. Music catalog rows: the owner's credit rules of 2026-11-24[\s\S]*20261124130000_music_catalog_owner_credits\.sql/);
+});
