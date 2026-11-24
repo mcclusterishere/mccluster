@@ -51,6 +51,7 @@ begin
     end if;
   end loop;
 
+  drop function if exists public.compute_ledger_resolve_submission(uuid,uuid,text);
   drop function if exists public.compute_ledger_reserve(text,text,uuid,bigint,integer,text,integer);
   drop function if exists public.compute_ledger_settle(text,uuid,text,integer,jsonb,text,text,bigint);
   drop function if exists public.compute_ledger_release(text,uuid,text,text,bigint);
@@ -65,6 +66,8 @@ begin
   foreach target in array ledger_tables loop
     execute format('drop table public.%I restrict', target);
   end loop;
+  drop function public.compute_ledger_check_commit_term();
+  drop function public.compute_ledger_lock_term(uuid,text,bigint);
   drop function public.compute_ledger_append_only();
 end
 $rollback$;

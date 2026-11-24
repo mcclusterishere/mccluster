@@ -189,12 +189,14 @@ test('validateCompletion for a reserved task: a real Ollama result passes; count
 });
 
 test('the real Ollama adapter returns model_digest and ollama_version inside usage on the /execute response', { timeout: 20000 }, async () => {
+  let loadedDigest='sha256:feedfacefeedface', reportedModel='qwen3:8b';
   const upstream = http.createServer(async (req, res) => {
     let raw = ''; for await (const chunk of req) raw += chunk;
     const responses = {
       '/api/version': { version: '0.6.0-test' },
       '/api/tags': { models: [{ name: 'qwen3:8b', digest: 'sha256:feedfacefeedface', size: 123 }] },
-      '/api/chat': { message: { role: 'assistant', content: 'hello' }, done_reason: 'stop', total_duration: 3e9, load_duration: 1e9, prompt_eval_duration: 5e8, eval_duration: 1e9, prompt_eval_count: 100, eval_count: 50 }
+      '/api/ps': { models:[{ name:'qwen3:8b',digest:loadedDigest }] },
+      '/api/chat': { model:reportedModel, message: { role: 'assistant', content: 'hello' }, done_reason: 'stop', total_duration: 3e9, load_duration: 1e9, prompt_eval_duration: 5e8, eval_duration: 1e9, prompt_eval_count: 100, eval_count: 50 }
     };
     res.setHeader('content-type', 'application/json'); res.end(JSON.stringify(responses[req.url] || {}));
   });
@@ -207,6 +209,12 @@ test('the real Ollama adapter returns model_digest and ollama_version inside usa
     const result = await fetch(`http://127.0.0.1:${port}/execute`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ capability: 'ai.chat', input: { prompt: 'hi' } }) }).then((r) => r.json());
     assert.equal(result.model, 'qwen3:8b');
     assert.equal(result.usage.model_digest, 'sha256:feedfacefeedface');
+    assert.equal(result.usage.model_digest_source,'ollama-tags-and-ps');
+    const execute=()=>fetch(`http://127.0.0.1:${port}/execute`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({capability:'ai.chat',input:{prompt:'Which model?'}})}).then(r=>r.json());
+    loadedDigest='sha256:different';
+    assert.equal((await execute()).usage.model_digest,null);
+    loadedDigest='sha256:feedfacefeedface';reportedModel='other:latest';
+    assert.equal((await execute()).usage.model_digest,null);
     assert.equal(result.usage.ollama_version, '0.6.0-test');
     assert.equal(result.usage.eval_count, 50);
     assert.equal(result.usage.prompt_eval_cached_count, null, 'a counter the daemon did not report stays null');

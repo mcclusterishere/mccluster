@@ -4,7 +4,13 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { nativeTestDb, migrationPath, waitForBlocked } from './native-admin-test-db.mjs';
-import { hashJson } from '../core/src/compute/jobs.mjs';
+import { hashJson, meteringBlock } from '../core/src/compute/jobs.mjs';
+import { estimateMaxUnitsMicro } from '../core/src/compute/contribution-ledger.mjs';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import http from 'node:http';
+import { createInterface } from 'node:readline';
+import { submitJob, validateCompletion } from '../core/src/compute/jobs-service.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Disposable WASM or local native PostgreSQL; never connects to canonical Supabase.
 // Loads the applied compute migrations, the pending scheduler lease and attestation
@@ -203,9 +209,9 @@ alter default privileges in schema public revoke truncate, references, trigger o
   assert.equal(await priv('service_role',table,'select'),true);
  }
  const fpriv=async(role,sig)=>(await one('select has_function_privilege($1,$2,\'execute\') as v',[role,sig])).v;
- const rpcs=['public.compute_ledger_reserve(text,text,uuid,bigint,integer,text,integer)','public.compute_ledger_settle(text,uuid,text,integer,jsonb,text,text,bigint)','public.compute_ledger_release(text,uuid,text,text,bigint)','public.compute_ledger_correct(text,bigint,text,bigint,bigint,text)','public.compute_ledger_balances(text)','public.compute_ledger_receipt(uuid)'];
+ const rpcs=['public.compute_ledger_resolve_submission(uuid,uuid,text)','public.compute_ledger_reserve(text,text,uuid,bigint,integer,text,integer)','public.compute_ledger_settle(text,uuid,text,integer,jsonb,text,text,bigint)','public.compute_ledger_release(text,uuid,text,text,bigint)','public.compute_ledger_correct(text,bigint,text,bigint,bigint,text)','public.compute_ledger_balances(text)','public.compute_ledger_receipt(uuid)'];
  for(const sig of rpcs){assert.equal(await fpriv('service_role',sig),true,`${sig} service_role`);assert.equal(await fpriv('anon',sig),false,`${sig} anon`);assert.equal(await fpriv('authenticated',sig),false,`${sig} authenticated`);}
- for(const sig of ['public.compute_ledger_sha256(text)','public.compute_ledger_term_ok(uuid,text,bigint)','public.compute_ledger_operation_lookup(text,text,text)','public.compute_ledger_balances_internal(text)','public.compute_ledger_append_only()']) assert.equal(await fpriv('service_role',sig),false,`${sig} helper exposed`);
+ for(const sig of ['public.compute_ledger_sha256(text)','public.compute_ledger_term_ok(uuid,text,bigint)','public.compute_ledger_operation_lookup(text,text,text)','public.compute_ledger_balances_internal(text)','public.compute_ledger_append_only()','public.compute_ledger_check_commit_term()','public.compute_ledger_lock_term(uuid,text,bigint)']) assert.equal(await fpriv('service_role',sig),false,`${sig} helper exposed`);
  const rls=await q("select relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and relname like 'ops_compute_%' and relkind='r' and not relrowsecurity and relname not in ('ops_compute_nodes','ops_compute_tasks','ops_compute_leases','ops_compute_nonces','ops_compute_attestations','ops_compute_scheduler_leases')");
  assert.deepEqual(rls,[],'every ledger table has RLS on');
  ok('privileges: service_role select-only on the ledger tables, RPCs to service_role only, helpers to nobody, RLS on');
@@ -237,6 +243,71 @@ alter default privileges in schema public revoke truncate, references, trigger o
  const MAX=4096*1000+32768*100; // the class bound: max_eval_count*out + max_prompt_eval_count*in
  const UNITS=50*1000+(100-20)*100; // 58,000 micro-units for usage()
 
+ // Exercise the actual submit service against the SQL RPCs. Only the HTTP
+ // transport and fleet advertisement are substituted by the disposable fixture.
+ {
+  const body={capability:'ai.chat',implementation:'qwen3.8b.local',input:{prompt:'submission retry'},account_id:'owner-1'};
+  const options={canonicalOrg:ORG,idempotencyKey:'accepted-price'};
+  let loseReserve=true, loseActivation=true, prices=0, taskId;
+  const deps={
+   env:{}, ledgerEnabled:()=>true, live:async()=>[{node_id:NODE_A,capability:'ai.chat',implementation:body.implementation}], log:()=>{},
+   enqueue:async a=>{
+    const result=(await one('select public.compute_enqueue_task($1::uuid,$2,$3,$4::text::jsonb,$5::text::jsonb,$6,$7::timestamptz,$8,$9::text::jsonb,$10) as r',
+     [a.orgId,a.capability,a.implementation,JSON.stringify(a.input),JSON.stringify(a.requirements),a.priority,a.runAfter,a.maxAttempts,JSON.stringify(a.metadata),a.idempotencyKey])).r;
+    assert.equal(result.conflict,false); taskId=result.task.id; return result;
+   },
+   modelClasses:async()=>{prices++;return q('select * from public.ops_compute_model_classes');},
+   rpc:async(name,p)=>{
+    if(name==='compute_ledger_resolve_submission') return (await one('select public.compute_ledger_resolve_submission($1,$2,$3) as r',[p.p_task_id,p.p_org_id,p.p_cancel_reason])).r;
+    assert.equal(name,'compute_ledger_reserve');
+    const result=await reserve(p.p_op_key,p.p_account_id,p.p_task_id,p.p_max_units_micro,p.p_deadline_seconds,p.p_model_class,p.p_unit_version);
+    if(loseReserve){loseReserve=false;throw new Error('fixture dropped accepted reserve response');}
+    return result;
+   },
+   activateHeld:async({taskId:task,runAfter})=>{
+    if(loseActivation){loseActivation=false;throw new Error('fixture activation unavailable');}
+    return one("update public.ops_compute_tasks set run_after=coalesce($2::timestamptz,clock_timestamp()) where id=$1 and status='queued' and run_after='9999-12-31 00:00:00+00' returning *",[task,runAfter]);
+   }
+  };
+  await assert.rejects(()=>submitJob(body,options,deps),e=>e.code==='LEDGER_RESERVE_FAILED');
+  const pinned=await one('select model_class,unit_version,max_units_micro::text as price from public.ops_compute_spend_reservations where task_id=$1',[taskId]);
+  await q("update public.ops_compute_model_classes set unit_version=2,out_unit_micro=17 where model_class='pilot.qwen3-8b'");
+  await assert.rejects(()=>submitJob(body,options,deps),e=>e.code==='LEDGER_ACTIVATE_FAILED');
+  const replay=await submitJob(body,options,deps);
+  assert.equal(replay.ledger.replayed,true);assert.equal(replay.ledger.unit_version,pinned.unit_version);
+  assert.equal(String(replay.ledger.max_units_micro),pinned.price);assert.equal(prices,1);
+  assert.equal((await ledgerRows(taskId)).length,1);
+  const guarded=(await one("select public.compute_ledger_resolve_submission($1,$2,'late refusal') as r",[taskId,ORG])).r;
+  assert.equal(guarded.canceled,false);assert.equal(guarded.reservation.reservation_id,replay.ledger.reservation_id);
+  await q("update public.ops_compute_model_classes set unit_version=1,out_unit_micro=1000 where model_class='pilot.qwen3-8b'");
+  await cancelTask(taskId);assert.equal((await release(key('release'),taskId,'fixture complete')).ok,true);
+  ok('submit retries recover original SQL reservation after response loss, repricing and failed activation');
+ }
+ if(db.native) {
+  // A worker has just reserved an old held job while the sweep is deciding
+  // whether it was abandoned. The conditional cancel must see that commit.
+  const create=async()=> (await one("select public.compute_enqueue_task($1::uuid,'ai.chat','qwen3.8b.local','{}','{}',0,'9999-12-31 00:00:00+00',1,$2::text::jsonb,null) as r",[ORG,JSON.stringify({contribution:{account_id:'owner-1'}})])).r.task.id;
+  const task=await create(), orphan=await create();
+  const writer=db.fork(), cleanup=db.fork();
+  let pending;
+  try {
+   await writer.exec('begin');
+   const {rows}=await writer.query('select public.compute_ledger_reserve($1,$2,$3::uuid,$4::bigint) as r',[`reserve:${task}`,'owner-1',task,'100']);
+   assert.equal(rows[0].r.ok,true);
+   pending=cleanup.query("select public.compute_ledger_resolve_submission($1,$2,'never reserved') as r",[task,ORG]);
+   pending.catch(()=>{});
+   await waitForBlocked(db);await writer.exec('commit');
+   const state=(await pending).rows[0].r;
+   assert.equal(state.canceled,false);assert.equal(state.reservation.reservation_id,rows[0].r.reservation_id);
+   assert.equal((await one('select status from public.ops_compute_tasks where id=$1',[task])).status,'queued');
+   assert.equal((await one("select public.compute_ledger_resolve_submission($1,$2,'never reserved') as r",[orphan,ORG])).r.canceled,true);
+  } finally {
+   await writer.exec('rollback');await Promise.allSettled([pending]);
+   await Promise.all([writer.close(),cleanup.close()]);
+  }
+  await cancelTask(task);assert.equal((await release(key('release'),task,'fixture complete')).ok,true);
+  ok('native hold cleanup waits for a concurrent reservation and cancels only the unreserved job');
+ }
  // 1. Accepted settle; concurrent settle under one key (two in flight, one mint).
  {
   const task=await enqueue();
@@ -700,7 +771,7 @@ alter default privileges in schema public revoke truncate, references, trigger o
   assert.equal((await one("select points::text as n from public.ops_compute_display_points where account_id='range-worker'")).n,String(maxEntry));
 
   await q("update public.ops_compute_model_classes set out_unit_micro=1,min_tokens_per_s=0,max_tokens_per_s=2147483647 where model_class='pilot.micro'");
-  const timing=await microAttempt(NODE_C,1,{usageOverrides:{eval_duration_ns:100_000_000_000_000,total_duration_ns:100_000_000_000_000}});
+  const timing=await microAttempt(NODE_C,1,{usageOverrides:{eval_duration_ns:80_000_000_000_000,total_duration_ns:80_000_000_000_000}});
   assert.equal((await timing.settle()).accepted,true);
   const counters=await microAttempt(NODE_C,Number.MAX_SAFE_INTEGER);
   const refused=await counters.settle();
@@ -775,6 +846,140 @@ alter default privileges in schema public revoke truncate, references, trigger o
   ok('corrections append and replay; balances are the sums (pending, earned, spent, available)');
  }
 
+ if(db.native) {
+  // The daemon only supplies the inference response. The real HTTP adapter,
+  // pre-commit Core validator, metering reader and native SQL all see its bytes.
+  let runtimeDigest=DIGEST, promptCount=12000;
+  const observed=[];
+  const daemon=http.createServer(async(req,res)=>{
+   res.setHeader('content-type','application/json');
+   if(req.url==='/api/tags') return res.end(JSON.stringify({models:[{name:'qwen3:8b',digest:DIGEST}]}));
+   if(req.url==='/api/ps') return res.end(JSON.stringify({models:[{name:'qwen3:8b',digest:runtimeDigest}]}));
+   if(req.url==='/api/version') return res.end(JSON.stringify({version:'0.6.0-fixture'}));
+   if(req.url!=='/api/chat'){res.statusCode=404;return res.end('{}');}
+   let raw='';for await(const part of req)raw+=part;
+   const request=JSON.parse(raw);observed.push(request.options.num_ctx);
+   res.end(JSON.stringify({model:request.model,message:{role:'assistant',content:''},done_reason:'stop',
+    prompt_eval_count:promptCount,eval_count:0,eval_duration:0,total_duration:4e9,prompt_eval_duration:1e9}));
+  });
+  daemon.listen(0,'127.0.0.1');await once(daemon,'listening');
+  const adapter=spawn(process.execPath,[path.join(root,'core/src/compute/ollama-adapter.mjs')],{env:{
+   PATH:process.env.PATH,MCCLUSTER_OLLAMA_ADAPTER_HOST:'127.0.0.1',MCCLUSTER_OLLAMA_ADAPTER_PORT:'0',
+   MCCLUSTER_OLLAMA_CONTEXT:'16384',MCCLUSTER_OLLAMA_URL:`http://127.0.0.1:${daemon.address().port}`},stdio:['ignore','pipe','ignore']});
+  const stopped=once(adapter,'exit');
+  const output=createInterface({input:adapter.stdout});
+  try {
+   const [line]=await once(output,'line',{signal:AbortSignal.timeout(10000)});
+   const ready=JSON.parse(line);assert.equal(ready.event,'ollama_adapter_ready');
+   const input={prompt:'runtime proof',num_ctx:4096,num_predict:64};
+   const execute=async()=>{
+    const res=await fetch(`http://127.0.0.1:${ready.port}/execute`,{method:'POST',headers:{'content-type':'application/json'},
+     body:JSON.stringify({capability:'ai.chat',implementation:'qwen3.8b.local',input}),signal:AbortSignal.timeout(10000)});
+    assert.equal(res.status,200);return res.json();
+   };
+   const classes=await q('select * from public.ops_compute_model_classes');
+   const price=estimateMaxUnitsMicro({input,modelClass:classes.find(c=>c.model_class==='pilot.qwen3-8b')});
+   for(const expected of ['accepted','DIGEST_NOT_APPROVED','COUNTERS_OUT_OF_WINDOW']){
+    runtimeDigest=expected==='DIGEST_NOT_APPROVED'?'sha256:changed':DIGEST;
+    promptCount=expected==='COUNTERS_OUT_OF_WINDOW'?17000:12000;
+    const result=await execute();
+    assert.equal(result.settings.num_ctx,16384);assert.equal(result.usage.eval_count,0);
+    const task=await enqueue({input});assert.equal((await reserve(key('reserve'),'owner-1',task,price)).ok,true);
+    const lease=await claim(NODE_A,task);
+    const getTask=()=>one('select * from public.ops_compute_tasks where id=$1',[task]);
+    const getLease=()=>one('select * from public.ops_compute_leases where id=$1',[lease.leaseId]);
+    const deps={ledgerEnabled:()=>true,leaseById:getLease,taskRowById:getTask,log:()=>{},
+     reservationForTask:()=>one('select * from public.ops_compute_spend_reservations where task_id=$1',[task]),modelClasses:async()=>classes};
+    const validation=validateCompletion({leaseId:lease.leaseId,result},deps);
+    if(expected==='COUNTERS_OUT_OF_WINDOW') await assert.rejects(()=>validation,e=>e.code==='RESULT_USAGE_OUT_OF_BOUNDS');
+    else assert.equal((await validation).checked,true);
+    // SQL independently rechecks a stored completion even if Core validation
+    // was unavailable. This also covers receipt processing after an upgrade.
+    await one('select public.compute_start_lease($1,$2,$3)',[NODE_A,lease.leaseId,lease.token]);
+    assert.equal((await one('select public.compute_complete_lease($1,$2,$3,$4::text::jsonb) as yes',[NODE_A,lease.leaseId,lease.token,JSON.stringify(result)])).yes,true);
+    const stored=await getTask(), met=meteringBlock({task:stored,lease:await getLease()});
+    const settled=await settle(key('settle'),task,lease.tokenHash,lease.attempt,met,hashJson(stored.output));
+    assert.equal(settled.reason,expected);
+    assert.equal(settled.spend_micro,expected==='accepted'?1200000:0);
+    if(expected==='accepted') assert.equal(met.model_digest_source,'ollama-tags-and-ps');
+    if(expected==='DIGEST_NOT_APPROVED') assert.equal(met.model_digest,null);
+   }
+   assert.deepEqual(observed,[16384,16384,16384]);
+  } finally {
+   output.close();adapter.kill();await stopped;
+   daemon.closeAllConnections();await new Promise(resolve=>daemon.close(resolve));
+  }
+  ok('HTTP adapter to native settlement: executed resident context, zero-token completion, loaded-model change and actual context ceiling');
+ }
+ if(db.native) {
+  const task=await enqueue(), operation=key('fenced-settle');
+  assert.equal((await reserve(key('reserve'),'owner-1',task,MAX)).ok,true);
+  const result={model:'qwen3:8b',content:'handover',usage:usage()};
+  const lease=await runTask(NODE_A,task,result), met=metering(result,{nodeId:NODE_A,attempt:lease.attempt});
+  const blocker=db.fork(), candidate=db.fork();
+  let waiting;
+  try {
+   await blocker.exec('begin');
+   await blocker.query("select account_id from public.ops_compute_accounts where account_id='worker-a' for no key update");
+   waiting=settle(operation,task,lease.tokenHash,lease.attempt,met,hashJson(result),HOLDER,1,candidate);
+   waiting.catch(()=>{});
+   await waitForBlocked(db);
+   await one('select public.compute_scheduler_release($1,$2,$3) as r',[ORG,HOLDER,1]);
+   const takeover=(await one("select public.compute_scheduler_acquire($1,'next-holder','primary',300) as r",[ORG])).r;
+   assert.equal(takeover.active,true);assert.equal(takeover.term,2);
+   await blocker.exec('commit');
+   assert.equal((await waiting).code,'STALE_TERM');
+   assert.deepEqual((await ledgerRows(task)).map(row=>row.kind),['reserve']);
+   assert.equal((await settle(operation,task,lease.tokenHash,lease.attempt,met,hashJson(result),'next-holder',2)).accepted,true);
+  } finally {
+   await blocker.exec('rollback');await Promise.allSettled([waiting]);
+   await Promise.all([blocker.close(),candidate.close()]);
+  }
+  ok('native scheduler takeover during a worker-row wait refuses old settle and permits the new holder to retry');
+
+  const expiring=await enqueue(), releaseKey=key('fenced-release');
+  assert.equal((await reserve(key('reserve'),'owner-1',expiring,MAX)).ok,true);
+  await cancelTask(expiring);
+  await q("update public.ops_compute_scheduler_leases set expires_at=clock_timestamp()+interval '1 second' where org_id=$1",[ORG]);
+  const writer=db.fork();
+  try {
+   await writer.exec('begin');
+   const {rows}=await writer.query("select public.compute_ledger_release($1,$2,'expired at commit','next-holder',2) as r",[releaseKey,expiring]);
+   assert.equal(rows[0].r.released,true);
+   await writer.query('select pg_sleep(greatest(0,extract(epoch from expires_at-clock_timestamp()))::float8+0.02) from public.ops_compute_scheduler_leases where org_id=$1',[ORG]);
+   await assert.rejects(()=>writer.exec('commit'),e=>e.code==='40001' && /scheduler term/.test(e.message));
+  } finally { await writer.exec('rollback');await writer.close(); }
+  assert.deepEqual((await ledgerRows(expiring)).map(row=>row.kind),['reserve']);
+  assert.equal((await one('select status from public.ops_compute_spend_reservations where task_id=$1',[expiring])).status,'open');
+  const active=(await one("select public.compute_scheduler_acquire($1,'next-holder','primary',300) as r",[ORG])).r;
+  assert.equal(active.term,3);assert.equal((await release(releaseKey,expiring,'expired at commit','next-holder',3)).released,true);
+  ok('native expiry between successful release and COMMIT rolls back all accounting and permits reacquisition');
+
+  const singleOrg='00000000-0000-4000-8000-0000000000ab';
+  await q('insert into public.orgs(id) values($1)',[singleOrg]);
+  await q("insert into public.ops_compute_accounts(account_id,org_id,kind) values ('single-org',$1,'owner')",[singleOrg]);
+  assert.equal((await correct(key('grant'),null,'single-org',-1000,0,'single scheduler fixture')).ok,true);
+  const single=(await one("select public.compute_enqueue_task($1,'ai.chat','qwen3.8b.local','{}','{}',0,null,1,'{}',null) as r",[singleOrg])).r.task.id;
+  assert.equal((await reserve(key('reserve'),'single-org',single,100)).ok,true);
+  await cancelTask(single);
+  const first=db.fork(), election=db.fork();
+  let acquiring;
+  try {
+   await first.exec('begin');
+   const {rows}=await first.query("select public.compute_ledger_release($1,$2,'single','single-holder',null) as r",[key('release'),single]);
+   assert.equal(rows[0].r.released,true);
+   acquiring=election.query("select public.compute_scheduler_acquire($1,'elected','primary',300) as r",[singleOrg]);
+   acquiring.catch(()=>{});
+   await waitForBlocked(db); await first.exec('commit');
+   const won=(await acquiring).rows[0].r;
+   assert.equal(won.active,true);assert.equal(won.term,1);
+   assert.equal((await release(key('release'),single,'single','single-holder',null)).code,'STALE_TERM');
+  } finally {
+   await first.exec('rollback');await Promise.allSettled([acquiring]);
+   await Promise.all([first.close(),election.close()]);
+  }
+  ok('native first scheduler acquisition waits for the single-scheduler transaction to commit');
+ }
  // After first use the recovery must preserve accounting, configuration and receipts.
  {
   const counts=()=>Promise.all(tables.map(async t=>(await one(`select count(*)::int as n from public.${t}`)).n));

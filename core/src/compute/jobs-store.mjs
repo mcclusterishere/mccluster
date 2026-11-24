@@ -58,13 +58,15 @@ function reservationsMissing(error) {
 // input (a done task to settle, a failed or canceled one to release, a queued
 // one that is still held or has outlived its reservation). Oldest first.
 // Degrades to an empty list while the ledger SQL is not promoted.
-export async function openReservations({ orgId = null, limit = 100 } = {}, { restImpl = rest } = {}) {
+export async function openReservations({ orgId = null, limit = 100, after = null, asOf = null } = {}, { restImpl = rest } = {}) {
   const params = new URLSearchParams({
     status: 'eq.open',
-    select: 'reservation_id,task_id,account_id,max_units_micro,created_at,expires_at,ops_compute_tasks!inner(id,org_id,status,run_after,metadata)',
+    select: 'reservation_id::text,task_id,account_id,max_units_micro,created_at,expires_at,ops_compute_tasks!inner(id,org_id,status,run_after,metadata)',
     order: 'reservation_id.asc',
     limit: String(Math.min(500, Math.max(1, Number(limit) || 100)))
   });
+  if (after !== null) params.set('reservation_id', `gt.${after}`);
+  if (asOf) params.set('created_at', `lte.${asOf}`);
   if (orgId) params.set('ops_compute_tasks.org_id', `eq.${orgId}`);
   try {
     const { body = [] } = await restImpl(`ops_compute_spend_reservations?${params}`);
@@ -119,9 +121,10 @@ export async function activateHeldTask({ orgId, taskId, runAfter = null } = {}, 
 // Held device jobs older than the cutoff: a submission whose reserve never
 // landed and whose client never retried. The sweep cancels the ones that have
 // no open reservation.
-export async function staleHeldTasks({ orgId = null, olderThan, limit = 100 } = {}, { restImpl = rest } = {}) {
+export async function staleHeldTasks({ orgId = null, olderThan, limit = 100, after = null } = {}, { restImpl = rest } = {}) {
   if (!olderThan) return [];
-  const params = new URLSearchParams({ status: 'eq.queued', run_after: `eq.${LEDGER_HOLD_RUN_AFTER}`, created_at: `lt.${olderThan}`, select: 'id,org_id,status,run_after,created_at', order: 'created_at.asc', limit: String(Math.min(500, Math.max(1, Number(limit) || 100))) });
+  const params = new URLSearchParams({ status: 'eq.queued', run_after: `eq.${LEDGER_HOLD_RUN_AFTER}`, created_at: `lt.${olderThan}`, select: 'id,org_id,status,run_after,created_at', order: 'id.asc', limit: String(Math.min(500, Math.max(1, Number(limit) || 100))) });
+  if (after !== null) params.set('id', `gt.${after}`);
   // Only tasks the ledger path enqueued (they carry metadata.contribution).
   params.set('metadata->contribution', 'not.is.null');
   if (orgId) params.set('org_id', `eq.${orgId}`);

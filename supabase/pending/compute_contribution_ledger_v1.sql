@@ -343,6 +343,48 @@ end;
 $$;
 revoke all on function public.compute_ledger_term_ok(uuid,text,bigint) from public, anon, authenticated, service_role;
 
+-- Called after the economic row locks. The scheduler uses the same org key
+-- for its first insertion. Shared locks allow independent ledger operations.
+create or replace function public.compute_ledger_lock_term(p_org_id uuid, p_holder_id text, p_term bigint)
+returns boolean language plpgsql
+set search_path = public, extensions, pg_temp
+as $$
+begin
+  if to_regclass('public.ops_compute_scheduler_leases') is null then return false; end if;
+  perform 1 from public.ops_compute_scheduler_leases where org_id = p_org_id for share;
+  if not found then
+    perform pg_advisory_xact_lock_shared(hashtextextended('compute_scheduler_lease:' || p_org_id::text, 0));
+    perform 1 from public.ops_compute_scheduler_leases where org_id = p_org_id for share;
+  end if;
+  return public.compute_ledger_term_ok(p_org_id, p_holder_id, p_term);
+end;
+$$;
+revoke all on function public.compute_ledger_lock_term(uuid,text,bigint) from public, anon, authenticated, service_role;
+
+-- A holder can expire between an RPC's last row wait and its transaction
+-- committing. Reject the transaction so its key and entries remain retryable.
+create or replace function public.compute_ledger_check_commit_term()
+returns trigger language plpgsql security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  authority record;
+begin
+  select t.org_id, e.scheduler_holder_id, e.scheduler_term into strict authority
+    from public.ops_compute_contribution_ledger e join public.ops_compute_tasks t on t.id = e.task_id
+   where e.operation_key = new.operation_key and e.kind = new.kind;
+  if not public.compute_ledger_lock_term(authority.org_id, authority.scheduler_holder_id, authority.scheduler_term) then
+    raise exception 'scheduler term expired before ledger commit' using errcode = '40001';
+  end if;
+  return null;
+end;
+$$;
+revoke all on function public.compute_ledger_check_commit_term() from public, anon, authenticated, service_role;
+drop trigger if exists ops_compute_ledger_check_commit_term on public.ops_compute_ledger_operations;
+create constraint trigger ops_compute_ledger_check_commit_term
+  after insert on public.ops_compute_ledger_operations deferrable initially deferred
+  for each row when (new.kind in ('settle','release')) execute function public.compute_ledger_check_commit_term();
+
 create or replace function public.compute_ledger_operation_lookup(p_key text, p_kind text, p_payload_hash text)
 returns jsonb
 language plpgsql stable
@@ -505,6 +547,41 @@ begin
 end;
 $$;
 
+-- Submission retries recover the first durable acceptance before repricing.
+-- Refusal cleanup uses the reserve RPC's task lock so a fresh reservation
+-- cannot commit between checking for it and canceling the unreserved hold.
+create or replace function public.compute_ledger_resolve_submission(
+  p_task_id uuid, p_org_id uuid, p_cancel_reason text default null
+) returns jsonb
+language plpgsql security definer
+set search_path = public, extensions, pg_temp
+as $$
+declare
+  v_task public.ops_compute_tasks%rowtype;
+  v_res public.ops_compute_spend_reservations%rowtype;
+  v_outcome jsonb;
+  v_canceled boolean := false;
+begin
+  select * into strict v_task from public.ops_compute_tasks
+   where id = p_task_id and org_id = p_org_id for update;
+  select * into v_res from public.ops_compute_spend_reservations where task_id = p_task_id;
+  if found then
+    select outcome into strict v_outcome from public.ops_compute_ledger_operations
+     where operation_key = v_res.operation_key and kind = 'reserve';
+    return jsonb_build_object('reservation', v_outcome || jsonb_build_object('replayed', true),
+                              'operation_key', v_res.operation_key, 'canceled', false);
+  end if;
+  if p_cancel_reason is not null and v_task.status = 'queued'
+     and v_task.run_after = '9999-12-31 00:00:00+00'::timestamptz
+     and v_task.metadata->'contribution'->>'account_id' is not null then
+    update public.ops_compute_tasks set status = 'canceled', last_error = left(p_cancel_reason, 4000),
+      updated_at = clock_timestamp() where id = p_task_id;
+    v_canceled := true;
+  end if;
+  return jsonb_build_object('reservation', null, 'canceled', v_canceled);
+end;
+$$;
+
 -- b) settle: every acceptance check, then settle + mint + release in one transaction.
 create or replace function public.compute_ledger_settle(
   p_op_key text,
@@ -559,6 +636,8 @@ declare
   v_counter text;
   v_value jsonb;
   v_counters_ok boolean := true;
+  v_observed_counter boolean := false;
+  v_context jsonb;
   v_counts jsonb := '{}'::jsonb;
   v_node_id text;
   v_node_found boolean := false;
@@ -657,15 +736,23 @@ begin
   -- prompt_eval_cached_count) counts as 0; a present one must be well formed.
   foreach v_counter in array array['prompt_eval_count','prompt_eval_cached_count','eval_count','total_duration_ns','load_duration_ns','prompt_eval_duration_ns','eval_duration_ns'] loop
     v_value := v_metering->v_counter;
+    if jsonb_typeof(v_task.output->'usage'->v_counter) = 'number' then v_observed_counter := true; end if;
     if v_value is null or jsonb_typeof(v_value) = 'null' then
       v_counts := v_counts || jsonb_build_object(v_counter, 0);
     elsif jsonb_typeof(v_value) <> 'number' or (v_value::text) !~ '^[0-9]{1,18}$' then
+      v_counters_ok := false;
+      v_reason := coalesce(v_reason, 'COUNTERS_INVALID'); v_fault := true;
+    elsif v_value::text::numeric > 9007199254740991 then
       v_counters_ok := false;
       v_reason := coalesce(v_reason, 'COUNTERS_INVALID'); v_fault := true;
     else
       v_counts := v_counts || jsonb_build_object(v_counter, v_value);
     end if;
   end loop;
+  if not v_observed_counter then
+    v_counters_ok := false;
+    v_reason := coalesce(v_reason, 'COUNTERS_INVALID'); v_fault := true;
+  end if;
   if v_counters_ok then
     v_prompt := (v_counts->>'prompt_eval_count')::bigint;
     v_cached := (v_counts->>'prompt_eval_cached_count')::bigint;
@@ -675,24 +762,35 @@ begin
     v_load_ns := (v_counts->>'load_duration_ns')::bigint;
     v_prompt_ns := (v_counts->>'prompt_eval_duration_ns')::bigint;
     if v_cached > v_prompt then v_reason := coalesce(v_reason, 'COUNTERS_INVALID'); v_fault := true; end if;
-    if v_eval_ns <= 0 then v_reason := coalesce(v_reason, 'COUNTERS_INVALID'); v_fault := true; end if;
+    if v_eval > 0 and v_eval_ns <= 0 then v_reason := coalesce(v_reason, 'COUNTERS_INVALID'); v_fault := true; end if;
+    if greatest(v_eval_ns, v_total_ns, v_load_ns, v_prompt_ns) > 86400000000000 then
+      v_reason := coalesce(v_reason, 'COUNTERS_OUT_OF_WINDOW'); v_fault := true;
+    end if;
     if v_class.model_class is not null then
-      -- The task's own caps bound the counters as well as the class maxima:
-      -- input.num_predict (the adapter never generates fewer than 16) and
-      -- input.num_ctx (the adapter never runs a context under 2048). Same rule
-      -- as taskCounterCaps() in core/src/compute/contribution-ledger.mjs, which
-      -- priced the reservation.
+      -- Bound generation by its request and context by the execution setting.
       v_cap_eval := v_class.max_eval_count;
-      v_cap_prompt := v_class.max_prompt_eval_count;
+      v_cap_prompt := least(v_class.max_prompt_eval_count, 32768);
       if jsonb_typeof(v_task.input->'num_predict') = 'number' and (v_task.input->>'num_predict') ~ '^[0-9]{1,9}$' and (v_task.input->>'num_predict')::bigint > 0 then
         v_cap_eval := least(v_cap_eval, greatest(16, (v_task.input->>'num_predict')::bigint));
       end if;
-      if jsonb_typeof(v_task.input->'num_ctx') = 'number' and (v_task.input->>'num_ctx') ~ '^[0-9]{1,9}$' and (v_task.input->>'num_ctx')::bigint > 0 then
+      -- Current adapters return the setting actually sent to the execution
+      -- node, whose resident context can exceed the request. Older outputs
+      -- without this evidence retain the original request-based bound.
+      v_context := v_task.output->'settings'->'num_ctx';
+      if v_context is not null then
+        if jsonb_typeof(v_context) <> 'number' or v_context::text !~ '^[0-9]{1,5}$' then
+          v_reason := coalesce(v_reason, 'COUNTERS_INVALID'); v_fault := true;
+        elsif v_context::text::integer not between 2048 and 32768 then
+          v_reason := coalesce(v_reason, 'COUNTERS_INVALID'); v_fault := true;
+        else
+          v_cap_prompt := least(v_cap_prompt, v_context::text::integer);
+        end if;
+      elsif jsonb_typeof(v_task.input->'num_ctx') = 'number' and (v_task.input->>'num_ctx') ~ '^[0-9]{1,9}$' and (v_task.input->>'num_ctx')::bigint > 0 then
         v_cap_prompt := least(v_cap_prompt, greatest(2048, (v_task.input->>'num_ctx')::bigint));
       end if;
       if v_eval > v_cap_eval or v_prompt > v_cap_prompt then
         v_reason := coalesce(v_reason, 'COUNTERS_OUT_OF_WINDOW'); v_fault := true;
-      elsif v_eval_ns > 0 and (v_eval::numeric * 1000000000 < v_class.min_tokens_per_s::numeric * v_eval_ns or v_eval::numeric * 1000000000 > v_class.max_tokens_per_s::numeric * v_eval_ns) then
+      elsif v_eval > 0 and v_eval_ns > 0 and (v_eval::numeric * 1000000000 < v_class.min_tokens_per_s::numeric * v_eval_ns or v_eval::numeric * 1000000000 > v_class.max_tokens_per_s::numeric * v_eval_ns) then
         v_reason := coalesce(v_reason, 'COUNTERS_OUT_OF_WINDOW'); v_fault := true;
       end if;
       -- Keep exact intermediate products even for declined work. If the claim
@@ -778,6 +876,10 @@ begin
       v_reason := 'ACCOUNTING_OUT_OF_RANGE'; v_fault := true;
       v_points_delta := 0;
     end if;
+  end if;
+
+  if not public.compute_ledger_lock_term(v_task.org_id, p_scheduler_holder_id, p_scheduler_term) then
+    return jsonb_build_object('ok', false, 'code', 'STALE_TERM', 'replayed', false, 'reason', 'scheduler authority changed before ledger writes');
   end if;
 
   -- Writes. 1) settle: the submitter pays the units of an attempt that is
@@ -893,6 +995,10 @@ begin
   end if;
   if v_res.status <> 'open' then
     return jsonb_build_object('ok', false, 'code', 'RESERVATION_CLOSED', 'replayed', false, 'reason', 'the reservation is ' || v_res.status);
+  end if;
+
+  if not public.compute_ledger_lock_term(v_task.org_id, p_scheduler_holder_id, p_scheduler_term) then
+    return jsonb_build_object('ok', false, 'code', 'STALE_TERM', 'replayed', false, 'reason', 'scheduler authority changed before ledger writes');
   end if;
 
   update public.ops_compute_spend_reservations set status = 'released' where reservation_id = v_res.reservation_id;
@@ -1028,3 +1134,5 @@ grant execute on function public.compute_ledger_release(text,uuid,text,text,bigi
 grant execute on function public.compute_ledger_correct(text,bigint,text,bigint,bigint,text) to service_role;
 grant execute on function public.compute_ledger_balances(text) to service_role;
 grant execute on function public.compute_ledger_receipt(uuid) to service_role;
+revoke all on function public.compute_ledger_resolve_submission(uuid,uuid,text) from public, anon, authenticated;
+grant execute on function public.compute_ledger_resolve_submission(uuid,uuid,text) to service_role;

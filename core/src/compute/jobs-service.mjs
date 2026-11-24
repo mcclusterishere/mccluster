@@ -6,7 +6,7 @@ import { cancelQueuedComputeTask, computeTaskById, enqueueComputeTask, liveCapab
 import { LEDGER_HOLD_RUN_AFTER, activateHeldTask, attestationForLease, completingLeaseForSettle, isLedgerHold, leaseById, leasesForTask, listComputeTasks, nodesById, openReservations, recordAttestation, reservationForTask, staleHeldTasks, taskRowById } from './jobs-store.mjs';
 import { buildReceipt, completingLease, completionAttestation, hashJson, jobResult, jobView, latestLease, meteringBlock, receiptKeyFromEnv, receiptKeyInfo, signReceipt, validateJobSubmission, validateResultUsage } from './jobs.mjs';
 import { ownedOnlyAdmitted } from './protocol.mjs';
-import { createLedgerRpc, estimateMaxUnitsMicro, leaseTokenHash, ledgerEnabled, listModelClasses, operationKey, resolveModelClass, schedulerIdentity, taskCounterCaps, balances as ledgerBalancesRpc, receipt as ledgerReceiptRpc, release as ledgerRelease, reserve as ledgerReserve, settle as ledgerSettle } from './contribution-ledger.mjs';
+import { MAX_PROMPT_CAP, MIN_PROMPT_CAP, createLedgerRpc, estimateMaxUnitsMicro, leaseTokenHash, ledgerEnabled, listModelClasses, operationKey, resolveModelClass, schedulerIdentity, taskCounterCaps, balances as ledgerBalancesRpc, receipt as ledgerReceiptRpc, release as ledgerRelease, reserve as ledgerReserve, settle as ledgerSettle } from './contribution-ledger.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const JOB_SOURCE = 'device-jobs/1';
@@ -136,24 +136,36 @@ function ledgerIsOn(deps) {
 //   reserve refuses     -> the held task is canceled and the ledger's code answers 409.
 //   lifting the hold throws -> 503 retryable; held and reserved, a retry lifts
 //                          it, else the sweep cancels and releases it.
+async function resolveSubmission({ taskId, orgId, cancelReason = null }, deps) {
+  return deps.rpc('compute_ledger_resolve_submission', { p_task_id: taskId, p_org_id: orgId, p_cancel_reason: cancelReason });
+}
+
 async function reserveThenRelease({ task, submission, accountId, replayed }, deps) {
   let ledger;
+  const recover = async (cancelReason = null) => {
+    const state = await resolveSubmission({ taskId: task.id, orgId: submission.org_id, cancelReason }, deps);
+    if (!state?.reservation) return null;
+    if (state.operation_key !== operationKey('reserve', [task.id]) || state.reservation.account_id !== accountId) {
+      return { ok: false, code: 'TASK_RESERVED', reason: 'another reservation owns this job' };
+    }
+    return state.reservation;
+  };
   try {
-    ledger = await reserveForTask({ task, submission, accountId }, deps);
+    ledger = replayed ? await recover() : null;
+    if (!ledger) ledger = await reserveForTask({ task, submission, accountId }, deps);
+    if (!ledger.ok && ledger.code !== 'TASK_NOT_QUEUED') {
+      // Another same-key submission can have won while this caller priced
+      // or attempted its reserve. Recovery and guarded cleanup are atomic.
+      ledger = await recover(`contribution ledger refused: ${ledger.code}`) || ledger;
+    }
   } catch (error) {
     deps.log({ event: 'compute_ledger_reserve_failed', task_id: task.id, account_id: accountId, replayed, message: error.message, code: error.code || null });
-    throw httpError('The contribution ledger could not reserve this job; it is held and will not run. Retry with the same Idempotency-Key', 503, 'LEDGER_RESERVE_FAILED', { retryable: true, job_id: task.id });
+    throw httpError('The contribution reservation could not be confirmed. Retry with the same Idempotency-Key', 503, 'LEDGER_RESERVE_FAILED', { retryable: true, job_id: task.id });
   }
   if (!ledger.ok) {
     if (ledger.code === 'TASK_NOT_QUEUED') {
-      // Only a replay gets here: the first acceptance was refused and its task
-      // canceled (or the task left the queue with no reservation under this key).
       throw httpError(`This job was not reserved and is ${ledger.task_status || task.status}; submit it again under a new Idempotency-Key`, 409, 'LEDGER_RESERVATION_REFUSED', { ledger, job_id: task.id, job_status: ledger.task_status || task.status });
     }
-    await deps.cancelQueued({ orgId: submission.org_id, taskId: task.id, reason: `contribution ledger refused: ${ledger.code}` }).catch((error) => {
-      // The task is held, so nothing claims it; the sweep cancels the stale hold.
-      deps.log({ event: 'compute_ledger_cancel_failed', task_id: task.id, message: error.message, code: error.code || null });
-    });
     throw httpError(`The contribution ledger refused the reservation (${ledger.code})`, 409, ledger.code, { ledger, job_id: task.id });
   }
   let live = task;
@@ -208,7 +220,11 @@ export async function validateCompletion({ leaseId, result }, deps = defaultDeps
   }
   const pinned = (Array.isArray(classes) ? classes : []).find((row) => row?.model_class === reservation.model_class) || null;
   const modelClass = pinned || resolveModelClass(classes, { implementation: lease.implementation ?? task.implementation ?? null });
-  const bounds = taskCounterCaps({ input: task.input || {}, modelClass }) || {};
+  const executionContext = result?.settings?.num_ctx;
+  if (executionContext !== undefined && (!Number.isSafeInteger(executionContext) || executionContext < MIN_PROMPT_CAP || executionContext > MAX_PROMPT_CAP)) {
+    throw httpError('Result has an invalid execution context size', 422, 'RESULT_USAGE_INVALID', { lease_id: leaseId });
+  }
+  const bounds = taskCounterCaps({ input: task.input || {}, modelClass, executionContext }) || {};
   const usage = result && typeof result === 'object' && !Array.isArray(result) ? result.usage : undefined;
   const verdict = validateResultUsage(usage, bounds);
   if (!verdict.ok) throw httpError(`Result usage refused: ${verdict.reason}`, 422, verdict.code, { lease_id: leaseId });
@@ -327,24 +343,40 @@ export const DEFAULT_SWEEP_INTERVAL_MS = 30_000;
 export const DEFAULT_HOLD_GRACE_MS = 600_000;
 const UNSETTLEABLE = new Set(['LEASE_REJECTED']);
 
+// Keyset pages remain stable when this pass closes a row. Continue through
+// an empty page even if the REST server imposes a lower per-request page cap.
+async function* sweepRows(readPage, query, cursorField) {
+  let after = null;
+  for (;;) {
+    const rows = await readPage({ ...query, after });
+    if (!rows.length) return;
+    const next = rows.at(-1)[cursorField];
+    if (next == null || next === after) throw new Error('ledger sweep page did not advance');
+    yield* rows;
+    after = next;
+  }
+}
+
 export async function sweepContributionLedger({ orgId = null, election = null, limit = 100 } = {}, deps = defaultDeps()) {
-  const tally = { scanned: 0, settled: 0, released: 0, canceled: 0, errors: 0 };
+  const tally = { scanned: 0, held_scanned: 0, settled: 0, released: 0, canceled: 0, errors: 0 };
   if (!ledgerIsOn(deps)) return { enabled: false, ...tally };
   const scheduler = schedulerIdentity(election, deps.env);
   if (scheduler.configured && !scheduler.active) return { enabled: true, skipped: 'standby', ...tally };
   const nowMs = Date.parse(deps.now());
   const graceMs = Math.max(60_000, Number(deps.env?.CORE_CONTRIBUTION_HOLD_GRACE_MS) || DEFAULT_HOLD_GRACE_MS);
-  const rows = await deps.openReservations({ orgId, limit });
+  const pageSize = Math.min(500, Math.max(1, Math.trunc(Number(limit) || 100)));
+  const asOf = new Date(nowMs).toISOString();
+  const rows = sweepRows(deps.openReservations, { orgId, limit: pageSize, asOf }, 'reservation_id');
   const outcomes = [];
   const cancelAndRelease = async (row, why) => {
-    const canceled = await deps.cancelQueued({ orgId: row.org_id, taskId: row.task_id, reason: `contribution ledger: ${why}` });
+    const canceled = await deps.cancelQueued({ orgId: row.org_id, taskId: row.task_id, reason: `contribution ledger: ${why}`, expectedRunAfter: why === 'hold_never_lifted' ? row.run_after : null });
     if (!canceled) return { task_id: row.task_id, action: 'skip', reason: 'claimed_meanwhile' };
     tally.canceled += 1;
     const out = await releaseTaskReservation({ taskId: row.task_id, reason: why, election }, deps);
     if (out.released === true) tally.released += 1;
     return { task_id: row.task_id, action: 'cancel_release', ...out };
   };
-  for (const row of rows) {
+  for await (const row of rows) {
     tally.scanned += 1;
     try {
       const expired = Number.isFinite(Date.parse(row.expires_at)) && Date.parse(row.expires_at) <= nowMs;
@@ -372,12 +404,21 @@ export async function sweepContributionLedger({ orgId = null, election = null, l
   }
   // Held tasks that never got a reservation (the reserve threw and nobody retried).
   try {
-    const reserved = new Set(rows.map((row) => row.task_id));
-    const stale = await deps.staleHeldTasks({ orgId, olderThan: new Date(nowMs - graceMs).toISOString(), limit });
-    for (const task of stale) {
-      if (reserved.has(task.id)) continue;
-      const canceled = await deps.cancelQueued({ orgId: task.org_id, taskId: task.id, reason: 'contribution ledger: never reserved' });
-      if (canceled) { tally.canceled += 1; outcomes.push({ task_id: task.id, action: 'cancel_unreserved' }); }
+    const olderThan = new Date(nowMs - graceMs).toISOString();
+    const stale = sweepRows(deps.staleHeldTasks, { orgId, olderThan, limit: pageSize }, 'id');
+    for await (const task of stale) {
+      tally.held_scanned += 1;
+      try {
+        // The reserve RPC and this conditional cancel share the task lock.
+        const state = await resolveSubmission({ taskId: task.id, orgId: task.org_id, cancelReason: 'contribution ledger: never reserved' }, deps);
+        if (state.canceled) {
+          tally.canceled += 1;
+          outcomes.push({ task_id: task.id, action: 'cancel_unreserved' });
+        }
+      } catch (error) {
+        tally.errors += 1;
+        deps.log({ event: 'compute_ledger_sweep_hold_failed', task_id: task.id, message: error.message });
+      }
     }
   } catch (error) {
     tally.errors += 1;

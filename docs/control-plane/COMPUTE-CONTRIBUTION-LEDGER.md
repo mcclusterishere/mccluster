@@ -52,11 +52,14 @@ enrollment trust is `owned` by the requesting account or explicitly permitted by
 Raw counters from Ollama, recorded separately and never summed into one number:
 `prompt_eval_count`, `prompt_eval_cached_count`, `eval_count`, `total_duration_ns`, `load_duration_ns`,
 `prompt_eval_duration_ns`, `eval_duration_ns` (all per the Ollama usage document; durations in
-nanoseconds). Plus `model` (name as served), `model_digest` (from the runtime, bound to the same execution),
-`runtime_version`, `node_id`, `node_key_fingerprint`, `hardware_mode`, lease `attempt`, wall-clock
-`duration_ms` of the lease. The adapter returns the digest with the result (`/execute` response), not from
-a separate probe. The Core receipt carries this block as `metering`; the desktop local receipt carries the
-same block for local jobs.
+nanoseconds). The receipt also records the reported model, daemon version, node identity, hardware mode,
+attempt and lease wall time. The adapter corroborates the selected manifest before generation, the model
+name on the chat response and the loaded-model digest after generation. Matching observations produce
+`model_digest_source: ollama-tags-and-ps`. Missing or conflicting observations yield a null digest,
+which declines minting. These observations identify the daemon's reported state at sample time.
+The documented chat response supplies a model name; it has no per-generation digest attestation.
+[Ollama chat response](https://docs.ollama.com/api/chat) · [Loaded models](https://docs.ollama.com/api/ps).
+
 
 ## Work units and credits
 
@@ -90,13 +93,14 @@ to accept the attempt, which means all of the following, checked server-side in 
 2. The node is `online` or `draining` and not revoked or quarantined at settle time.
 3. The model and digest are on the class allowlist; the class is the one the reservation pinned
    (`MODEL_CLASS_MISMATCH`) and its `unit_version` is still the pinned one (`UNIT_VERSION_STALE`).
-4. Counters are bounded: all non-negative integers (an unreported one is 0), `prompt_eval_cached_count <=
-   prompt_eval_count`, `eval_duration_ns > 0`, `eval_count / eval_duration_s` inside `[min_tokens_per_s,
-   max_tokens_per_s]`, and the counts inside BOTH the class maxima and the task's own caps: `eval_count <=
-   min(max_eval_count, max(16, input.num_predict))` and `prompt_eval_count <= min(max_prompt_eval_count, max(2048,
-   input.num_ctx))` (16 and 2048 are the Ollama adapter's own floors; a task that names neither is bounded by the
-   class). The reservation is priced from the same caps (`taskCounterCaps()`), and units above the reservation's
-   `max_units_micro` are refused (`UNITS_EXCEED_RESERVATION`).
+4. Present counters are non-negative safe integers. Cached prompt tokens cannot exceed prompt tokens,
+   and duration counters are limited to 24 hours. Positive generation requires positive duration and a
+   rate in the class window. A measured zero-token completion may have zero generation duration.
+   The class and requested generation limit bound output. The context returned in the saved completion
+   bounds prompt tokens, up to 32,768 and the class limit. Older receipts missing the setting keep the
+   original request-based bound. Since nodes have independent resident context sizes, the reservation
+   holds the class-limited maximum supported prompt and charges only the measured usage.
+   The reservation's maximum remains an absolute spend limit.
 5. The lease's stored result is the task's stored output, and the `output_sha256` the Core passes (computed in one
    place, `hashJson()` over the stored output) equals the hash the gateway recorded with the node's completion
    attestation when one exists. The SQL does not re-derive the hash: jsonb text and `JSON.stringify` spell numbers
@@ -246,6 +250,15 @@ Nothing is applied or deployed; the SQL is pending and the Core wiring is off un
   otherwise valid mint or display-point total exceeds bigint, `ACCOUNTING_OUT_OF_RANGE` closes the
   reservation with zero spend and preserves existing carry and points. The Core accepts reservation
   estimates only in JavaScript's safe integer range.
+- Submission retries recover the accepted reserve operation under the task lock. A changed class or
+  lost response cannot reprice it. Cleanup cancels a queued ledger hold only while that same lock
+  establishes that the task has no reservation.
+- Each sweep visits open reservations created through the start of its pass using reservation ID pages.
+  It visits aged queued holds using task ID pages. The final hold check and cancel take the reserve
+  task lock, including when a concurrent reservation was absent from an earlier page.
+- Settlement and release lock the scheduler authority after their economic row waits. The first election
+  shares its organization lock with single-scheduler writes. A deferred check rejects an expired term
+  at transaction commit so another holder can retry the still-open reservation.
 - The pending rollback requires an empty installation, READ COMMITTED and bounded table locks. It refuses
   any stored configuration or history and fails if row-level security filters the visibility check. After first use, preserve records and prepare a reviewed forward repair.
 - `core/src/compute/contribution-ledger.mjs`: `reserve`, `settle`, `release`, `balances`, `receipt`, `correct` over the
@@ -275,7 +288,7 @@ Nothing is applied or deployed; the SQL is pending and the Core wiring is off un
     `CORE_CONTRIBUTION_DEFAULT_ACCOUNT`; account rows are the owner's to create (direct `service_role` writes to
     `ops_compute_accounts`, `ops_compute_node_accounts`, `ops_compute_model_classes`; no Core tool yet).
 - Metering: `core/src/compute/ollama-adapter.mjs` returns `model_digest` and `ollama_version` inside `usage` on `/execute`,
-  read from the same daemon right after the generation; `meteringBlock()` in `jobs.mjs` builds the receipt's `metering`
+  with digest evidence corroborated before and after generation; `meteringBlock()` in `jobs.mjs` builds the receipt's `metering`
   member (`mccluster-job-receipt/1` kept, the member is additive and signed); `DEVICE-JOBS-CONTRACT.md` documents the
   block, the validation codes and the submission-time ledger behaviour.
 - Tests: `core/test/contribution-ledger.test.mjs`, `core/test/metering-validation.test.mjs` (`node --test` with fakes, plus
@@ -285,9 +298,8 @@ Nothing is applied or deployed; the SQL is pending and the Core wiring is off un
 - Known limits, each a chosen rule:
   - A task submitted through `POST /v1/compute/tasks` (not the job contract) is never reserved; its settle answers
     `NO_RESERVATION` and nothing is minted or charged.
-  - A submitter that declares `num_ctx` smaller than its prompt, or relies on more output than its `num_predict`, gets
-    the completion refused (`422 RESULT_USAGE_OUT_OF_BOUNDS` at the gateway, `COUNTERS_OUT_OF_WINDOW` at the settle):
-    the reservation was priced from those caps and is never exceeded.
+  - Prompt measurements exceeding the class limit or the returned execution context are refused.
+    Output exceeding the class or requested generation bound is also refused.
   - Bumping a class's `unit_version` while reserved tasks are in flight makes their settles `UNIT_VERSION_STALE` (no
     charge, no mint): drain the queue before a bump.
   - A held task whose client got `503` and never retried is canceled by the sweep after the hold grace; it does not run.

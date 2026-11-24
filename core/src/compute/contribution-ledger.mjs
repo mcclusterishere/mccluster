@@ -79,13 +79,11 @@ export function resolveModelClass(classes, { implementation = null } = {}) {
 // that asks for less is capped at these, not at what it asked for.
 export const MIN_EVAL_CAP = 16;
 export const MIN_PROMPT_CAP = 2048;
+export const MAX_PROMPT_CAP = 32768;
 
-// The counters one attempt of a task may report: the class maxima, lowered by
-// the task's own input.num_predict and input.num_ctx (JSON numbers only, as
-// the SQL reads them). The reservation is priced from these caps and
-// compute_ledger_settle applies the same rule to the node's counters, so an
-// attempt inside its caps can never cost more than was reserved.
-export function taskCounterCaps({ input = {}, modelClass = null } = {}) {
+// Current receipts carry the context sent to their execution node. Receipts
+// predating that setting keep their original request-based validation bound.
+export function taskCounterCaps({ input = {}, modelClass = null, executionContext = null } = {}) {
   if (!modelClass) return null;
   const maxEval = Number(modelClass.max_eval_count);
   const maxPrompt = Number(modelClass.max_prompt_eval_count);
@@ -95,7 +93,7 @@ export function taskCounterCaps({ input = {}, modelClass = null } = {}) {
   const ctx = asked(input?.num_ctx);
   return {
     max_eval_count: predict === null ? maxEval : Math.min(maxEval, Math.max(MIN_EVAL_CAP, predict)),
-    max_prompt_eval_count: ctx === null ? maxPrompt : Math.min(maxPrompt, Math.max(MIN_PROMPT_CAP, ctx))
+    max_prompt_eval_count: Math.min(maxPrompt, MAX_PROMPT_CAP, executionContext ?? (ctx === null ? MAX_PROMPT_CAP : Math.max(MIN_PROMPT_CAP, ctx)))
   };
 }
 
@@ -107,7 +105,10 @@ export function estimateMaxUnitsMicro({ input = {}, modelClass = null } = {}) {
   const out = Number(modelClass.out_unit_micro);
   const inp = Number(modelClass.in_unit_micro);
   if (![out, inp].every((n) => Number.isSafeInteger(n) && n >= 0)) return null;
-  const maxUnits = caps.max_eval_count * out + caps.max_prompt_eval_count * inp;
+  // The execution node is chosen after reservation. Its resident context can
+  // raise a small request to any supported size. Charge only measured tokens.
+  const promptBound = Math.min(Number(modelClass.max_prompt_eval_count), MAX_PROMPT_CAP);
+  const maxUnits = caps.max_eval_count * out + promptBound * inp;
   return Number.isSafeInteger(maxUnits) ? maxUnits : null;
 }
 

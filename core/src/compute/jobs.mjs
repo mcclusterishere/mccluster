@@ -172,6 +172,7 @@ export function meteringBlock({ task, lease = null, node = null } = {}) {
     eval_duration_ns: counter('eval_duration_ns'),
     model: output.model == null ? null : String(output.model),
     model_digest: usage.model_digest == null ? null : String(usage.model_digest),
+    ...(usage.model_digest_source === 'ollama-tags-and-ps' ? { model_digest_source: usage.model_digest_source } : {}),
     runtime_version: usage.ollama_version == null ? (usage.runtime_version == null ? null : String(usage.runtime_version)) : String(usage.ollama_version),
     node_id: lease?.node_id ?? node?.id ?? null,
     node_key_fingerprint: node?.key_fingerprint ?? null,

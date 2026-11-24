@@ -146,14 +146,15 @@ The receipt schema is open to additive members, so `metering` is added to `/1` a
 covered by the Core signature like every other member, and a client that does not know it ignores it. It is `null` for a
 failed or canceled receipt and for a done job whose output carries no counters (the fixture executor, a non-Ollama
 adapter). Otherwise it is the raw Ollama counters of the completing attempt exactly as the node committed them in
-`output.usage`, never summed into one number, plus the model and digest bound to that execution and who ran it:
+`output.usage`, never summed into one number, plus the runtime model evidence and who ran it:
 `prompt_eval_count`, `prompt_eval_cached_count`, `eval_count`, `total_duration_ns`, `load_duration_ns`,
 `prompt_eval_duration_ns`, `eval_duration_ns` (nanoseconds), `model` (as served), `model_digest`, `runtime_version`
 (`usage.ollama_version`), `node_id`, `node_key_fingerprint`, `hardware_mode`, lease `attempt`, and the lease's wall-clock
 `duration_ms`. `meteringBlock()` in `core/src/compute/jobs.mjs` is the reference. The Ollama adapter
 (`core/src/compute/ollama-adapter.mjs`) returns `model_digest` and `ollama_version` inside `usage` on every `/execute`
-response, read from the same daemon right after the generation, not from a separate probe; both are `null` when the daemon
-cannot say. `docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md` is the contract this block serves.
+response. The adapter checks the pre-call manifest, returned model name and post-call loaded digest for
+that attempt. Consistent observations carry `model_digest_source: ollama-tags-and-ps` into the signed
+receipt. Missing or inconsistent observations leave the digest null. `docs/control-plane/COMPUTE-CONTRIBUTION-LEDGER.md` is the contract this block serves.
 
 **Validation at completion (only with the ledger on, only for a reserved task).** With
 `CORE_CONTRIBUTION_LEDGER_ENABLED` unset the `complete` route is exactly as it was before the ledger: `result.usage` is
@@ -164,8 +165,7 @@ commits an `ai.*` result for a task that holds an OPEN contribution reservation,
 (`422 RESULT_USAGE_MISSING`); each present counter must be a non-negative safe integer and one the runtime did not report
 (absent or `null`) counts as 0; `prompt_eval_cached_count <= prompt_eval_count`; `eval_duration_ns > 0` when tokens were
 generated; and the counts must be inside the task's own caps and the model class the reservation pinned
-(`eval_count <= min(max_eval_count, max(16, input.num_predict))`, `prompt_eval_count <= min(max_prompt_eval_count,
-max(2048, input.num_ctx))`; the conservative defaults `eval_count <= 32768`, `prompt_eval_count <= 131072`, durations
+(`eval_count <= min(max_eval_count, max(16, input.num_predict))`, `prompt_eval_count <= min(max_prompt_eval_count, returned settings.num_ctx, 32768)`; the conservative defaults `eval_count <= 32768`, `prompt_eval_count <= 131072`, durations
 under a day when no class is readable). A refusal answers `422 RESULT_USAGE_INVALID` (malformed) or
 `422 RESULT_USAGE_OUT_OF_BOUNDS`, commits nothing, and leaves the lease as it was. Tasks with no open reservation and
 non-`ai.*` capabilities are not checked, and a ledger read that fails never blocks a completion: the settle enforces the

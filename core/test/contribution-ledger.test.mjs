@@ -40,6 +40,14 @@ function fakeLedger({ answers = {}, ledgerOn = true, classes = [CLASS], live = [
     env: {},
     ledgerEnabled: () => ledgerOn,
     rpc: async (name, payload) => {
+      if (name === 'compute_ledger_resolve_submission') {
+        reads.push('resolveSubmission');
+        const reservation = reservations.get(payload.p_task_id);
+        if (reservation) return { reservation: { ...reservation, ok: true, replayed: true }, operation_key: `reserve:${payload.p_task_id}`, canceled: false };
+        const task = tasks.get(payload.p_task_id);
+        const canceled = payload.p_cancel_reason && isLedgerHold(task?.run_after) ? await deps.cancelQueued({ taskId: task.id, reason: payload.p_cancel_reason }) : null;
+        return { reservation: null, canceled: Boolean(canceled) };
+      }
       calls.push({ name, payload });
       const answer = answers[name];
       if (typeof answer === 'function') return answer(payload);
@@ -55,10 +63,10 @@ function fakeLedger({ answers = {}, ledgerOn = true, classes = [CLASS], live = [
       tasks.set(task.id, task);
       return { task, replayed: false };
     },
-    cancelQueued: async ({ taskId, reason }) => {
+    cancelQueued: async ({ taskId, reason, expectedRunAfter = null }) => {
       if (faults.cancel) throw faults.cancel;
       const t = tasks.get(taskId);
-      if (!t || t.status !== 'queued') return null;
+      if (!t || t.status !== 'queued' || (expectedRunAfter && t.run_after !== expectedRunAfter)) return null;
       canceled.push({ taskId, reason }); t.status = 'canceled';
       return t;
     },
@@ -74,8 +82,8 @@ function fakeLedger({ answers = {}, ledgerOn = true, classes = [CLASS], live = [
     nodeById: async (id) => ({ id, key_fingerprint: 'fp', inventory: { runtime: { hardware_mode: 'gpu-verified' } } }),
     reservationForTask: async ({ taskId }) => { reads.push('reservationForTask'); return reservations.get(taskId) || null; },
     completingLeaseForSettle: async ({ taskId }) => [...leases.values()].find((l) => l.task_id === taskId && l.status === 'done') || null,
-    openReservations: async () => [...reservations.values()].filter((r) => r.status === 'open').map((r) => { const t = tasks.get(r.task_id); return { ...r, task_status: t?.status ?? null, org_id: t?.org_id ?? ORG, run_after: t?.run_after ?? null, metadata: t?.metadata ?? null }; }),
-    staleHeldTasks: async ({ olderThan }) => [...tasks.values()].filter((t) => t.status === 'queued' && isLedgerHold(t.run_after) && (t.created_at || '') < olderThan),
+    openReservations: async ({after, limit}) => [...reservations.values()].filter((r) => r.status === 'open' && (after == null || r.reservation_id > after)).sort((a,b)=>a.reservation_id-b.reservation_id).slice(0,limit).map((r) => { const t = tasks.get(r.task_id); return { ...r, task_status: t?.status ?? null, org_id: t?.org_id ?? ORG, run_after: t?.run_after ?? null, metadata: t?.metadata ?? null }; }),
+    staleHeldTasks: async ({ olderThan, after, limit }) => [...tasks.values()].filter((t) => t.status === 'queued' && isLedgerHold(t.run_after) && (t.created_at || '') < olderThan && (after == null || t.id > after)).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,limit),
     now: () => NOW,
     log: (record) => logs.push(record)
   };
@@ -98,11 +106,12 @@ test('pure helpers: the flag, operation keys, token hash, class resolution, the 
   assert.equal(resolveModelClass([], {}), null);
   assert.equal(estimateMaxUnitsMicro({ input: {}, modelClass: CLASS }), 4096 * 1000 + 32768 * 100);
   assert.equal(estimateMaxUnitsMicro({ input: { num_predict: 64 }, modelClass: CLASS }), 64 * 1000 + 32768 * 100);
-  assert.equal(estimateMaxUnitsMicro({ input: { num_predict: 64, num_ctx: 2048 }, modelClass: CLASS }), 64 * 1000 + 2048 * 100);
+  assert.equal(estimateMaxUnitsMicro({ input: { num_predict: 64, num_ctx: 2048 }, modelClass: CLASS }), 64 * 1000 + 32768 * 100);
   assert.equal(estimateMaxUnitsMicro({ input: { num_predict: 1_000_000 }, modelClass: CLASS }), 4096 * 1000 + 32768 * 100, 'the class bound caps a greedy request');
   assert.equal(estimateMaxUnitsMicro({ input: {}, modelClass: null }), null);
   assert.equal(estimateMaxUnitsMicro({ input: {}, modelClass: { ...CLASS, out_unit_micro: 1.5 } }), null, 'integer weights only');
-  // The caps the settle enforces are the caps the reservation is priced from.
+  assert.equal(taskCounterCaps({input:{num_ctx:2048},modelClass:CLASS,executionContext:32768}).max_prompt_eval_count,32768);
+  // All supported execution settings fit within the quoted reservation.
   const single = { ...CLASS, max_eval_count: 1, max_prompt_eval_count: 1, out_unit_micro: Number.MAX_SAFE_INTEGER, in_unit_micro: 0 };
   assert.equal(estimateMaxUnitsMicro({ modelClass: single }), Number.MAX_SAFE_INTEGER);
   assert.equal(estimateMaxUnitsMicro({ modelClass: { ...single, in_unit_micro: 1 } }), null);
@@ -115,7 +124,7 @@ test('pure helpers: the flag, operation keys, token hash, class resolution, the 
   assert.equal(taskCounterCaps({ input: {}, modelClass: null }), null);
   for (const input of [{}, { num_predict: 64 }, { num_predict: 8, num_ctx: 512 }, { num_predict: 4096, num_ctx: 32768 }]) {
     const caps = taskCounterCaps({ input, modelClass: CLASS });
-    assert.equal(caps.max_eval_count * CLASS.out_unit_micro + caps.max_prompt_eval_count * CLASS.in_unit_micro, estimateMaxUnitsMicro({ input, modelClass: CLASS }), 'an attempt inside its caps cannot cost more than the reservation');
+    assert.ok(caps.max_eval_count * CLASS.out_unit_micro + caps.max_prompt_eval_count * CLASS.in_unit_micro <= estimateMaxUnitsMicro({ input, modelClass: CLASS }), 'an attempt inside its caps cannot cost more than the reservation');
   }
 });
 
@@ -220,6 +229,26 @@ test('submission with the ledger on enqueues the task held, reserves its max uni
   await assert.rejects(() => submitJob({ capability: 'ai.chat', input: {}, account_id: 'bad id!' }, { canonicalOrg: ORG }, fakeLedger().deps), (e) => e.code === 'JOB_INVALID');
 });
 
+test('accepted submission recovers its original price after response loss and class change', async () => {
+  const f = fakeLedger({ answers: { compute_ledger_reserve: (p) => {
+    const accepted = { ok: true, reservation_id: 17, account_id: p.p_account_id, max_units_micro: p.p_max_units_micro, model_class: p.p_model_class, unit_version: p.p_unit_version };
+    f.reservations.set(p.p_task_id, accepted);
+    throw new Error('acceptance response lost');
+  } } });
+  const body = { capability: 'ai.chat', implementation: 'qwen3.8b.local', input: {}, account_id: 'owner-1' };
+  const options = { canonicalOrg: ORG, idempotencyKey: 'retry-price' };
+  await assert.rejects(()=>submitJob(body, options, f.deps), e=>e.code==='LEDGER_RESERVE_FAILED');
+  f.deps.modelClasses = async () => { throw new Error('the original class is no longer available'); };
+  const replay = await submitJob(body, options, f.deps);
+  assert.equal(replay.ledger.reservation_id,17);
+  assert.equal(replay.ledger.unit_version,1);
+  assert.equal(replay.ledger.replayed,true);
+  assert.equal(replay.job.status,'queued');
+  assert.equal(isLedgerHold(replay.job.run_after),false);
+  assert.equal(f.canceled.length,0);
+  assert.equal(f.calls.length,1);
+});
+
 test('a refused reservation cancels the held task and surfaces the ledger code; an unknown class refuses too; a replay of the refusal is an error, not an ok canceled job', async () => {
   const f = fakeLedger({ answers: { compute_ledger_reserve: { ok: false, code: 'OVER_BUDGET', available: 5, requested: 7_372_800 } } });
   const body = { capability: 'ai.chat', implementation: 'qwen3.8b.local', input: {}, account_id: 'owner-1' };
@@ -246,10 +275,10 @@ test('a refused reservation cancels the held task and surfaces the ledger code; 
   // The cancel itself failing leaves a HELD task: nothing can claim it, and the sweep cancels the stale hold.
   const stuck = fakeLedger({ answers: { compute_ledger_reserve: { ok: false, code: 'OVER_BUDGET' } } });
   stuck.faults.cancel = new Error('database away');
-  await assert.rejects(() => submitJob(body, { canonicalOrg: ORG }, stuck.deps), (e) => e.code === 'OVER_BUDGET');
+  await assert.rejects(() => submitJob(body, { canonicalOrg: ORG }, stuck.deps), (e) => e.code === 'LEDGER_RESERVE_FAILED' && e.retryable);
   assert.equal(stuck.tasks.get(TASK).status, 'queued');
   assert.equal(isLedgerHold(stuck.tasks.get(TASK).run_after), true, 'still held: unclaimable');
-  assert.equal(stuck.logs.some((l) => l.event === 'compute_ledger_cancel_failed'), true);
+  assert.equal(stuck.logs.some((l) => l.event === 'compute_ledger_reserve_failed'), true);
 });
 
 test('a reserve that THROWS never leaves a claimable unreserved task, and an idempotent replay re-attempts the missing reservation', async () => {
@@ -497,6 +526,31 @@ test('a failure releases the reservation only once the task is terminal; a retry
   assert.equal(partial.errors >= 1, true); assert.equal(partial.released, 1);
 });
 
+test('sweep reaches later open reservations and held tasks past the first hundred', async () => {
+  const f = fakeLedger({ answers: { compute_ledger_release: p => {
+    f.reservations.get(p.p_task_id).status='released';
+    return { ok:true, released:true };
+  } } });
+  const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+  for(let n=1;n<=103;n++) {
+    f.tasks.set(id(n),{id:id(n),org_id:ORG,status:n===103?'failed':'running'});
+    f.reservations.set(id(n),{reservation_id:n,task_id:id(n),account_id:'owner-1',status:'open',expires_at:'2026-12-01T00:00:00.000Z'});
+  }
+  for(let n=104;n<=207;n++) f.tasks.set(id(n),{id:id(n),org_id:ORG,status:'queued',run_after:LEDGER_HOLD_RUN_AFTER,created_at:'2026-11-01T00:00:00Z'});
+  const original=f.deps.staleHeldTasks;
+  f.deps.staleHeldTasks=async query=>{
+    const page=await original(query);
+    if(query.after===null) f.reservations.set(id(207),{reservation_id:104,task_id:id(207),account_id:'owner-1',status:'open'});
+    return page;
+  };
+  const result=await sweepContributionLedger({orgId:ORG,limit:100},f.deps);
+  assert.equal(result.scanned,103);assert.equal(result.held_scanned,104);
+  assert.equal(result.released,1);assert.equal(result.canceled,103);
+  assert.equal(f.reservations.get(id(103)).status,'released');
+  assert.equal(f.tasks.get(id(207)).status,'queued');
+  assert.equal(result.errors,0);
+});
+
 test('startContributionSweep arms an interval, asks the election on every pass, never overlaps, and the gateway starts it beside the election loop', async () => {
   const timers = [];
   const cleared = [];
@@ -578,6 +632,11 @@ test('the ledger store reads: open reservations of every task state, the task re
   assert.equal(await activateHeldTask({ orgId: ORG, taskId: TASK }, { restImpl: restImpl([]), now: () => NOW }), null, 'nothing held: nothing lifted');
   await staleHeldTasks({ orgId: ORG, olderThan: NOW }, { restImpl: restImpl([]) });
   assert.match(seen.at(-1).path, /status=eq\.queued/); assert.match(seen.at(-1).path, /created_at=lt\./); assert.match(seen.at(-1).path, /metadata->contribution=not\.is\.null/);
+  await openReservations({orgId:ORG,after:'9223372036854775800',asOf:NOW},{restImpl:restImpl([])});
+  assert.match(seen.at(-1).path,/reservation_id=gt\.9223372036854775800/);
+  assert.match(seen.at(-1).path,/created_at=lte\./);
+  await staleHeldTasks({orgId:ORG,after:TASK,olderThan:NOW},{restImpl:restImpl([])});
+  assert.match(seen.at(-1).path,/order=id\.asc/);assert.match(seen.at(-1).path,new RegExp('id=gt\\.'+TASK));
   assert.deepEqual(await staleHeldTasks({ orgId: ORG }, { restImpl: missing }), [], 'no cutoff: no query');
 });
 

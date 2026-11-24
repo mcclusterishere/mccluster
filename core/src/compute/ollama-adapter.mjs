@@ -155,6 +155,7 @@ async function execute(body, queuedAt, callerSignal) {
   const signal = callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout;
   const callOllama = async (model) => {
     try {
+      const before = await observedDigest(model, 'tags', signal);
       const response = await inferenceFetch(`${OLLAMA}/api/chat`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -178,7 +179,7 @@ async function execute(body, queuedAt, callerSignal) {
         }),
         signal,
       });
-      return { response, data: await inferenceJson(response) };
+      return { response, data: await inferenceJson(response), before };
     } catch (error) {
       throw inferenceError(error, { signal, peer: 'ollama' });
     }
@@ -186,12 +187,12 @@ async function execute(body, queuedAt, callerSignal) {
 
   let usedModel = requestedModel;
   let fallbackFrom = null;
-  let { response, data } = await callOllama(usedModel);
+  let { response, data, before } = await callOllama(usedModel);
   // A missing mapped model falls back to the default model, except when the
   // request carries images and the default cannot see them.
   if (!response.ok && usedModel !== MODEL && (imagesIn === 0 || VISION_MODELS.has(MODEL)) && (response.status === 404 || /not found|pull/i.test(String(data?.error || '')))) {
     fallbackFrom = usedModel; usedModel = MODEL;
-    ({ response, data } = await callOllama(usedModel));
+    ({ response, data, before } = await callOllama(usedModel));
   }
   if (!response.ok) {
     throw Object.assign(new Error(`Ollama returned HTTP ${response.status}`), {
@@ -199,11 +200,10 @@ async function execute(body, queuedAt, callerSignal) {
       code: 'OLLAMA_UPSTREAM_ERROR'
     });
   }
-  // Metering (COMPUTE-CONTRIBUTION-LEDGER.md): the digest of the model that
-  // served this execution and the daemon's version, read from the same runtime
-  // right after the generation and returned with the result, not from a
-  // separate probe. Null when the daemon cannot say; never a failure.
-  const runtime = await runtimeEvidence(usedModel);
+  // /api/chat identifies the requested model by name. Corroborate its
+  // pre-call manifest against the actual loaded runtime after this attempt.
+  const [loaded, version] = await Promise.all([observedDigest(usedModel, 'ps', signal), readVersion()]);
+  const digest = sameRuntimeModel(data?.model, usedModel) && before && before === loaded ? before : null;
 
   return {
     model: usedModel,
@@ -217,7 +217,7 @@ async function execute(body, queuedAt, callerSignal) {
     thinking_chars: String(data?.message?.thinking || '').length,
     images_in: imagesIn,
     queue_wait_ms: queueWaitMs,
-    usage: { ...inferenceUsage(data), model_digest: runtime.model_digest, ollama_version: runtime.ollama_version },
+    usage: { ...inferenceUsage(data), model_digest: digest, ...(digest ? { model_digest_source: 'ollama-tags-and-ps' } : {}), ollama_version: version },
   };
 }
 
@@ -230,10 +230,19 @@ async function readVersion() {
   } catch { return null; }
 }
 
-async function runtimeEvidence(model) {
-  const [{ tags }, version] = await Promise.all([readTags(), readVersion()]);
-  const installed = tags?.models?.find(item => modelMatches(item, model));
-  return { model_digest: installed?.digest ? String(installed.digest) : null, ollama_version: version };
+function sameRuntimeModel(left, right) {
+  return typeof left === 'string' && typeof right === 'string' && left.replace(/:latest$/, '') === right.replace(/:latest$/, '');
+}
+
+async function observedDigest(model, endpoint, signal) {
+  try {
+    const response = await fetch(`${OLLAMA}/api/${endpoint}`, { signal: AbortSignal.any([signal, AbortSignal.timeout(3000)]) });
+    if (!response.ok) return null;
+    const body = await response.json();
+    const matching = (body.models || []).filter(item => sameRuntimeModel(item?.name, model) || sameRuntimeModel(item?.model, model));
+    if (matching.length !== 1 || typeof matching[0].digest !== 'string') return null;
+    return matching[0].digest || null;
+  } catch { return null; }
 }
 
 function pump() {
