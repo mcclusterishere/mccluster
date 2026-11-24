@@ -92,12 +92,13 @@
       dock.setAttribute("aria-label", "Sections and music controls");
       var title = dock.querySelector("[data-app-player='title']"), artist = dock.querySelector("[data-app-player='artist']");
       /* the dock hides the player's own bar, so it says why the music is quiet in its place ("Reconnecting…",
-         "Connection lost · tap play", "Loading…", "Could not load · tap play", "Muted"; music slice M3, review
-         RL-6). In the second line, under the title, the words were cut by its width ("Reconnectin…" at 390 px, a
-         few letters at 320): they now take a line of their own across the dock, above its controls, which keep
-         their place, and the second line keeps the artist (music slice M3 follow-up) */
-      var line = s.status || s.artist;
-      title.textContent = s.title; artist.textContent = s.artist || "";
+         "Connection lost · tap play", "Loading…", "Could not load · tap play"; music slice M3, review RL-6). In the
+         second line, under the title, those words were cut by its width ("Reconnectin…" at 390 px, a few letters at
+         320): they take a line of their own across the dock, above its controls, which keep their place, for the
+         seconds the trouble lasts (music slice M3 follow-up). "Muted" lasts, so it is the second line, in place of
+         the artist, and the dock stays one row (the Release 1 dock fix). The words are the player's, never the dock's. */
+      var line = s.status || s.note || s.artist;
+      title.textContent = s.title; artist.textContent = s.note || s.artist || "";
       status.textContent = s.status || ""; status.hidden = !s.status;
       dock.classList.toggle("has-status", !!s.status);
       var info = dock.querySelector("[data-app-player='open']"), full = s.title + (line ? " — " + line : "");

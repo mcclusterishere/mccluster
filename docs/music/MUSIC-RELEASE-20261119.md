@@ -6,8 +6,56 @@ Studio, collaboration and album upload fall short ("better than Apple"). The wor
 M10 from the 2026-11-19 music maps (gaps, playback, delivery, external, accounts, studio, collaboration, law).
 
 Each slice appends its own section below: what changed and why, the tests (failing at the base, passing after),
-what is Inferred, and what waits for Matthew. Nothing here is merged, deployed or applied. Every iPhone, iPad,
-AirPods and lock-screen statement stays Inferred until Matthew's own devices run the checklist rows a section names.
+what is Inferred, and what waits for Matthew. Each section says what was merged, deployed or applied when it was
+written; "Shipped 2026-11-23" says what has gone out since. Every iPhone, iPad, AirPods and lock-screen statement stays
+Inferred until Matthew's own devices run the checklist rows a section names.
+
+## Shipped 2026-11-23
+
+Release 1 of 2026-11-23 (Matthew: "ship it all baby"; `docs/control-plane/WORLD-RELEASE-20261118.md`, "Release 1,
+2026-11-23") carries **M3** and **the M3 follow-up** below, as verified at `dc0185aa`, and **the installed app's dock fix**
+(one Play/Pause in the Home Screen app's bar, Muted in one row; `4e2d4352` and `eca8c401`, verified at `eca8c401`, merged at
+`4b6d58cc`; RL-6, item 10 and "Also his call" below). M1, M4, M2 and the recovery
+continuation reached `main` before it, with PR #818 (2026-11-19), and the installed app's dock with PR #820 (2026-11-20).
+
+**What ships, in plain words.** Songs play to the end. When the connection drops, the song says Reconnecting…, offers
+Pause and picks up at the second it stopped; if the network stays away it says Connection lost, and Play picks it up
+there. A song that never started says it could not load. A locked preview no longer stops the album: one line says what
+it was, and the album moves on. The World's mute stays the World's, and a muted Music song has its own Unmute. A finished
+song is counted before the next one starts. The B-side plays as the M4A it is, four songs start sooner with their audio
+unchanged, and the Worker answers a read past a song's end with 416. On the listen page the bar's Music button pauses and
+plays the song and says which; the installed app's dock says what is happening in full, shows one Play/Pause on every page
+and stays one row when muted; Heal the 3's door sits clear of
+the account chip. `music_interrupted` waits for Matthew's approval and is not sent.
+
+**What does not ship.** **M5**, one player across the music pages: not reviewed yet, and it breaks a Worker test the
+deploy gate runs (`workers/mccluster/test/analytics-creator-attribution.test.mjs`). **The quick wins**: built and in
+review on `claude/new-session-83ken5`. Both are the next release. The decisions under each "What waits for Matthew" below stay his.
+
+**On his phone, in five plain steps** (the device rows of M3 and its follow-up). For each, note the page, a Safari tab or
+the Home Screen icon, signed in or not, and the iOS version.
+
+1. **Two songs in a row, phone locked.** On the Listen page and on the I AM HERE album, start a song near its end, lock the
+   phone and wait: the next song starts by itself. Note the gap and the next song's title, once with Reduce Motion on.
+   Then Heal the 3, Whip Equipped and CIA Mind Control: each song plays to its end and the next follows, with no click at
+   the joins. On CIA Mind Control, signed in as the owner, the last song starts by itself once Pull Up is counted; signed
+   out, it plays its short preview, one line says the full song opens later, and the album goes on.
+2. **The lock screen.** Next, then Pause, then Play: each does what it says, the title changes with Next, and back on the
+   page the same song shows.
+3. **A dropped connection.** Mid-song, phone locked, airplane mode on for 5 seconds, then off: the song plays on or picks
+   up at the second it stopped. Then for 15 seconds: it says Connection lost, and Play picks it up there. Pause during
+   Reconnecting… keeps it paused when the network comes back. From the Home Screen icon the dock says Reconnecting…, then
+   Connection lost · tap play, in full. With VoiceOver on the Listen page, the line is read out.
+4. **Mute and the Music button.** Mute the World's own song, then play a Music song: it has sound. Mute a Music song: the
+   page says Muted and shows its own Unmute. On the Listen page in a Safari tab, the bar's Music button (the red play and
+   pause circle left of the M) shows Pause while a song plays, and a tap pauses it; VoiceOver reads it as "Pause music". From
+   the Home Screen icon, the bar shows one Pause while a song plays, and a muted song keeps the dock one row that says Muted.
+5. **The small things.** Dealer Plates (B-Side) on Whip Equipped plays; on a phone that kept Whip Equipped before, in
+   airplane mode, it still plays and the album says In your pocket. On the narrowest phone (an iPhone SE), scroll Heal the
+   3's door up under the Sign in chip: they never overlap.
+
+Nothing here is labelled gapless, and the closer's full play inside its 300 s allowance still needs the master's real
+length and an authorized play.
 
 ## M1: the album keeps playing with the screen locked
 
@@ -845,7 +893,7 @@ answered under "Verification of M3" below.
 | RL-3 | The album sheet's Unmute sat in the transport row: with the AirPlay beam showing (Chromium shows its Remote Playback beam, as WebKit does with a device in range) every chip was 33 px wide at 320 before muting and 23 muted, 34 muted at 390 | Unmute is its own 44 px chip under the transport, in words; the transport's chips keep at least 44 px (the play 56) and stay round at 320 and 390, the space between them taken from the row |
 | RL-4 | Unmute hid itself and the keyboard focus fell to the page | Unmute from the keyboard leaves the focus on the same player's Play/Pause (listen and album) |
 | RL-5 | The listen page's only live region sat inside a button, whose children a screen reader is not given (WebKit builds none) | The same line is spoken from a visually hidden live region beside the mini player's row, once per change; the visible line stays where it was |
-| RL-6 | In the installed app the dock hid the mini player and said nothing of the delivery (its second line kept the artist, its button said Play music) | The dock's second line and label say why the music is quiet (Reconnecting…, Connection lost · tap play, Loading…, Could not load · tap play, Muted; `spec.status` in `js/now-playing.js`), and it offers Pause while a song is picked up (since the M3 follow-up the words take a line of their own across the top of the dock, and the second line keeps the artist) |
+| RL-6 | In the installed app the dock hid the mini player and said nothing of the delivery (its second line kept the artist, its button said Play music) | The dock's second line and label say why the music is quiet (Reconnecting…, Connection lost · tap play, Loading…, Could not load · tap play, Muted; `spec.status` in `js/now-playing.js`), and it offers Pause while a song is picked up (since the M3 follow-up the trouble words take a line of their own across the top of the dock, and the second line keeps the artist; since the Release 1 dock fix Muted, which lasts, is the second line itself, `spec.note`, and the dock stays one row) |
 
 Four more defects came up in this round's own runs and renders and were fixed before anything was committed, each
 with a test:
@@ -1152,9 +1200,10 @@ was built for them.
    last ten seconds ends it at once: Play ended, the right line, Play (never Pause), the lock screen not told music
    is wanted, no read and no second claim.
 10. **The installed app's dock says why the music is quiet on a line of its own** (`js/installed-app-dock.js`,
-    `css/installed-app-dock.css`): while there is something to say (Reconnecting…, Connection lost · tap play,
-    Loading…, Could not load · tap play, Muted) the words run across the top of the dock, whole, and the controls
-    keep their row at the bottom; the second line keeps the artist; the open button's label still carries the words.
+    `css/installed-app-dock.css`): while there is trouble to say (Reconnecting…, Connection lost · tap play,
+    Loading…, Could not load · tap play) the words run across the top of the dock, whole, and the controls keep their
+    row at the bottom; the second line keeps the artist; the open button's label still carries the words. Muted lasts,
+    so since the Release 1 dock fix it is the second line instead (`spec.note`), and the dock stays one row.
 11. **CI.** `music-platform-ci.yml` watches `sw.js`, `js/analytics.js`, the measurement dictionary and the two new
     tests; `music-contract` runs them. No new workflow and no new trigger.
 
@@ -1379,8 +1428,14 @@ with this check's own probes; nothing above was taken on trust. Nothing was merg
   meet, and the dock's title and artist cut short.
 * **Also his call:** on the album the same bar button opens the shelf and the album's song ends, as before this slice
   (review RF-5); whether it should pause the album's song there may belong with M5. In the installed app on the listen
-  page the dock now holds two Pause buttons side by side, the bar's Music button and the dock's own (both named "Pause
-  music", both pause the song); whether the Music button should stay the way to the shelf there is a design call.
+  page the dock held two Pause buttons side by side, the bar's Music button and the dock's own (both named "Pause
+  music", both pause the song); since the Release 1 dock fix it holds one, the Music button, and the dock shows its own
+  Play/Pause only where the Music button is the way to the music (the album, where it opens the shelf; the World open
+  over the music; the listen page while a World song carried back from the Globe plays there and the page holds a
+  record of its own, which the Music button would take up instead). In the house owner's strip, which scrolls, the
+  Music button is pinned at the strip's start while it is the Play/Pause. On the album, in the installed app, the
+  Music button wears its play triangle while the album plays (the dock's own is the Pause) and a tap still opens the
+  shelf and ends the album's song: whether it should be the album's Pause there is the same call.
 
 ## M5: one player across music pages (2026-11-23)
 

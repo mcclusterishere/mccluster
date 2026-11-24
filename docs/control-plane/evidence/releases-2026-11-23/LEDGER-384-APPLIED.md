@@ -2,8 +2,9 @@
 
 **Four migrations were applied to production project `zmnhbrjyhxzhkxmhkexs` on 23 November 2026, with Matthew's approval.**
 The ledger went from 380 to 384 rows. The network connections consent hole is closed. The E=UP environmental event store is
-complete and empty, and nothing public changed: a signed-out visitor still gets `404 module_disabled`. The USGS rule, the
-ingest switch and the Environment module remain to be done, and none of them is an agent's step.
+complete and empty, and nothing public changed: a signed-out visitor still gets `404 module_disabled`. The USGS rule and the
+Environment module remain to be done, and neither is an agent's step. The ingest switch, still `"false"` when this record was
+written, ships on in Release 1 of 2026-11-23 with Matthew's go (item 2 under "Not done", below).
 
 This record was written from the records session after the applies. Every production read in it was a single `SELECT`
 through the Supabase `execute_sql` connector, over `supabase_migrations.schema_migrations` (version, name, and the stored
@@ -19,6 +20,7 @@ Matthew approved in the working session of 2026-11-23, in his words:
 | "Apply the connections fix." | `network_connections_consent_guard_v1` | `supabase/pending/PROMOTION-ORDER.md`, section 13 |
 | "Approve the last 3 EUP database changes." | `eup_environment_events_v1_03`, `_04` and `_05` | the same, section 12 |
 | "Switching the module on for sure, alright?" | the Environment module, once its prerequisites are in | section 12, "What remains"; **not done** (below) |
+| "ship it all baby" (later the same day) | Release 1 of 2026-11-23, and with it the ingest switch, one of the module's prerequisites | section 12, "What remains", item 2; ships with the release (below) |
 
 Each statement was sent with the Supabase MCP `apply_migration` from the main session, under its migration name and with the
 committed file's text. The connector asks a person to confirm each such call before it runs. The calls were made from the
@@ -151,9 +153,11 @@ answered 200 for Worker `mccluster`, deployment `b51ede03a4faefe000749ec71630b1a
 
 1. **The USGS rule.** An owner command in Matthew's signed-in Control session: System > E=Up > Environmental events >
    Sources > "Set the default rule", with a reason. No provider row exists.
-2. **The ingest switch.** The Worker variable `EUP_ENVIRONMENT_USGS_INGEST_ENABLED`, committed `"false"` in
-   `workers/mccluster/wrangler.toml`. Turning it on needs a pull request, a merge and a Worker deploy; the existing
-   five-minute cron then runs the ingest.
+2. **The ingest switch ships on in Release 1 of 2026-11-23.** The Worker variable `EUP_ENVIRONMENT_USGS_INGEST_ENABLED` was
+   committed `"false"` in `workers/mccluster/wrangler.toml` when this record was written. With Matthew's "Switching the module
+   on for sure, alright?" and "ship it all baby", the release commits it `"true"`: its merge and Worker deploy turn it on,
+   and the existing five-minute cron runs the ingest. With no rule (item 1) the ingest asks nothing: each run reads the
+   store's view once and stops, with no USGS request and nothing stored.
 3. **Check before the module:** a durable source-health row under Sources and the timeline in Preview.
 4. **The module.** Install, then Enable, in Control: System > E=Up > Overview > Modules > Environment, each with a reason.
    Matthew's "Switching the module on for sure, alright?" is recorded here; the switch itself is his command in his session

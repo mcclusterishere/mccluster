@@ -1521,3 +1521,51 @@ test('away from the listen page the engine tells the bar nothing: there its midd
     assert.equal(typeof e.win.MCC_NP_PLAY, 'undefined', path);
   }
 });
+
+/* ------------------------------------------------------------------------------------------------------
+   MUTED LASTS (the Release 1 dock fix, 2026-11-23). The installed app's dock gives the player's trouble words a row of
+   their own above its controls: they do not fit the song line, and they pass in seconds. Muted came the same way, in
+   status(), and grew the dock to two rows for as long as the song stayed muted. Each player now says it apart, as a
+   lasting note the dock puts in the song line's second line (js/now-playing.js snapshot().note); status() keeps the
+   passing trouble only. Each case below failed at the release head 22bfd37d.
+   ------------------------------------------------------------------------------------------------------ */
+test('the engine says Muted as a lasting note, never as a status: the dock stays one row', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c });
+  await e.play('Full song');
+  const spec = e.np().spec;
+  assert.equal(typeof spec.note, 'function', 'a lasting word for the song line');
+  assert.deepEqual([spec.status(), spec.note()], ['', '']);
+  e.music.audio.muted = true;
+  assert.equal(spec.status(), '', 'Muted is no trouble: the dock adds no status row for it');
+  assert.equal(spec.note(), 'Muted', 'the engine\'s own word, for the song line');
+  e.music.audio.currentTime = 60;
+  e.music.audio.fail(2);
+  assert.equal(spec.status(), 'Reconnecting…', 'the trouble keeps its words and its row');
+  assert.equal(spec.note(), 'Muted', 'and the song is still muted');
+  e.music.audio.muted = false;
+  assert.equal(spec.note(), '');
+});
+
+test('the album says Muted as a lasting note, never as a status: the dock stays one row', () => {
+  const source = read('album.html');
+  const begin = source.indexOf('    function nowPlaying() {');
+  const end = source.indexOf('    function media() {', begin);
+  assert.ok(begin > 0 && end > begin, 'the deck\'s Now Playing binding');
+  let spec = null, line = '';
+  const deck = { muted: false };
+  const context = { deck, cur: -1, rows: [], ARTIST: 'Fixture artist', document: { getElementById: () => ({ textContent: '', getAttribute: () => '' }) },
+    window: { MCC_NOW_PLAYING: { bind: (media, s) => { spec = s; return {}; } } },
+    play() {}, pauseDeck() {}, prev() {}, next() {}, userSeek() {}, deckIntends: () => true, deckStatusLine: () => line };
+  vm.runInContext('var np = null;\n' + source.slice(begin, end) + '\nnowPlaying();', vm.createContext(context), { filename: 'album.html now playing' });
+  assert.equal(typeof spec.note, 'function', 'a lasting word for the song line');
+  assert.deepEqual([spec.status(), spec.note()], ['', '']);
+  deck.muted = true;
+  assert.equal(spec.status(), '', 'Muted is no trouble: the dock adds no status row for it');
+  assert.equal(spec.note(), 'Muted');
+  line = 'Reconnecting…';
+  assert.equal(spec.status(), 'Reconnecting…', 'the trouble keeps its words and its row');
+  assert.equal(spec.note(), 'Muted');
+  deck.muted = false; line = '';
+  assert.deepEqual([spec.status(), spec.note()], ['', '']);
+});

@@ -1527,7 +1527,9 @@
         /* a song being picked up again is quiet while the listener still wants it: the lock screen offers Pause, which
            stops the tries; the installed app's dock, which hides the deck bar, says why it is quiet */
         playing: function () { return deckIntends(); },
-        status: function () { return deckStatusLine() || (deck.muted ? "Muted" : ""); }
+        status: function () { return deckStatusLine(); },
+        /* Muted lasts: the dock says it in the song line, in one row (the Release 1 dock fix) */
+        note: function () { return deck.muted ? "Muted" : ""; }
       });
       return np;
     }

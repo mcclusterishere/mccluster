@@ -35,7 +35,7 @@ its last byte removed (the 2026-11-20 rows kept that byte and match their files 
 
 Nothing public changed: the USGS rule and the Environment module's install and enable are Matthew's commands in Control, and
 the ingest switch is a committed Worker variable that needs a pull request, a merge and a deploy (`PROMOTION-ORDER.md`
-section 12).
+section 12). It ships `"true"` in Release 1 of 2026-11-23, with Matthew's go; with no rule the ingest asks nothing.
 
 Promoted 2026-11-20: the guarded Drawdown credit correction and the exact mission publication,
 then Environment event-store parts 01 and 02. The ledger now has **380 rows**, latest
@@ -43,7 +43,8 @@ then Environment event-store parts 01 and 02. The ledger now has **380 rows**, l
 excerpts and unsupported permission claims were removed first, with all 43 research citations
 preserved. Exact statements, hashes, verification and incomplete operations are recorded in
 `docs/control-plane/evidence/releases-2026-11-20/RELEASE-FINISH.md`. Environment parts 03–05 and
-the Connections guard remained pending until 2026-11-23 (above); the ingest flag and public module remain off.
+the Connections guard remained pending until 2026-11-23 (above); the ingest flag stayed off until Release 1 of 2026-11-23
+(above), and the public module remains off.
 
 Promoted 2026-11-18: the E=Up module policy (`PROMOTION-ORDER.md` section 8) and the World missions (section 10:
 10.1, 10.2 and the seven parts of 10.3), applied with the owner's approval, and the two Equity Uprise platform
@@ -105,7 +106,8 @@ and 02 are `supabase/migrations/20261120061725_eup_environment_events_v1_01.sql`
 `supabase/migrations/20261123173951_eup_environment_events_v1_04.sql` and
 `supabase/migrations/20261123174034_eup_environment_events_v1_05.sql`.
 `20261119100000_eup_environment_events_v1.rollback.sql` remains here, a recovery artifact. All files preserve their reviewed
-bytes. The ingest flag is still false and the module is not installed; no public activation is claimed.
+bytes. The ingest flag ships `"true"` in Release 1 of 2026-11-23 (with no USGS rule a run asks USGS nothing), and the module
+is not installed; no public activation is claimed.
 See `docs/control-plane/evidence/releases-2026-11-23/LEDGER-384-APPLIED.md` for the versions and what remains.
 
 Promoted 2026-11-23: the network connections consent guard, staged as `20261119062110_network_connections_consent_guard_v1.sql`,

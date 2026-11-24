@@ -3,9 +3,9 @@
    owner sets the USGS rule and the environment module is installed and enabled (each Matthew's separate go).
 
    FLAG. Nothing runs unless EUP_ENVIRONMENT_USGS_INGEST_ENABLED is exactly "true" (workers/mccluster/wrangler.toml sets
-   "false"; decision D20, default adopted pending Matthew's confirmation: the Worker's five-minute cron, like the private
-   USGS collector). With the flag off the scheduled hook (../../entry.js) returns before any network or store call, and so
-   does runUsgsIngest.
+   "true" from Release 1 of 2026-11-23, Matthew's go; decision D20, default adopted pending Matthew's confirmation: the
+   Worker's five-minute cron, like the private USGS collector). With the flag off the scheduled hook (../../entry.js)
+   returns before any network or store call, and so does runUsgsIngest.
 
    ONE RUN (one cron tick), in order; every store call is service-role and names an entry point of store part 03
    (supabase/migrations/20261123173831_eup_environment_events_v1_03.sql, applied 2026-11-23):
