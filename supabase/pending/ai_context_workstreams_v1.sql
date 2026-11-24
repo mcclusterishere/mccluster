@@ -394,6 +394,10 @@ declare
   v_job text;
 begin
   perform ai_context.workstream_require_house(p_org);
+  -- All write RPCs take this organization lock before any workstream or operation-key lock.
+  -- It makes the organization-wide volume checks atomic across distinct keys and keeps a
+  -- workstream's classification stable until every read or write in the checkpoint finishes.
+  perform pg_advisory_xact_lock(hashtextextended('ai_context.workstream_write:' || p_org::text, 0));
   if jsonb_typeof(w) <> 'object' then raise exception 'workstream must be an object' using errcode = '22023'; end if;
   if exists (select 1 from jsonb_object_keys(w) k
               where k not in ('schema', 'id', 'title', 'goal', 'status', 'branch', 'head', 'pr', 'worktree', 'next',
@@ -542,6 +546,7 @@ declare
   v_decision_said jsonb;
 begin
   perform ai_context.workstream_require_house(p_org);
+  perform pg_advisory_xact_lock(hashtextextended('ai_context.workstream_write:' || p_org::text, 0));
   if p_operation_key is null or p_operation_key !~ '^[A-Za-z0-9._:-]{1,200}$' then
     raise exception 'operation_key must match ^[A-Za-z0-9._:-]{1,200}$' using errcode = '22023';
   end if;
@@ -624,6 +629,11 @@ begin
   perform pg_advisory_xact_lock(hashtextextended('ai_context.workstream_event:' || p_org::text || ':' || p_operation_key, 0));
   select * into v_existing from ai_context.workstream_events where org_id = p_org and operation_key = p_operation_key;
   if found then
+    -- Events keep their original classification even when the owner later lowers the
+    -- workstream's. A replay is a read of this stored event, not a new inherited event.
+    if ai_context.workstream_sensitivity_rank(v_existing.sensitivity) > v_ceiling then
+      raise exception 'stored event is above this writer''s sensitivity ceiling; nothing was read or changed' using errcode = '42501';
+    end if;
     if v_existing.content_hash <> v_hash or v_existing.workstream_id <> v_ws.id then
       raise exception 'operation_key % was already used for a different checkpoint', p_operation_key using errcode = '23505';
     end if;
@@ -707,6 +717,8 @@ declare
   v_has_event boolean := p_event is not null and jsonb_typeof(p_event) <> 'null';
 begin
   perform ai_context.workstream_require_house(p_org);
+  -- Take the shared write lock before the replay lock; nested RPCs re-enter it in this transaction.
+  perform pg_advisory_xact_lock(hashtextextended('ai_context.workstream_write:' || p_org::text, 0));
   if v_has_event and p_operation_key is not null then
     -- The same lock _event_append takes (re-entrant in this transaction), taken before the workstream is
     -- touched so two sends of one key cannot both see "not recorded yet".

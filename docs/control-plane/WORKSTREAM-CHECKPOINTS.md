@@ -83,7 +83,9 @@ What the plane adds to that shape:
 - **Order.** Each event gets the plane's own sequence number (`seq`) when it is appended. That order, not a
   timestamp, decides which events are the most recent and which blocker an `unblocked` clears.
 - **Volume.** Per organization: at most 500 workstreams, 5000 appended events in any 24 hours and 200 decisions
-  proposed through checkpoints in any 24 hours. Past a bound the write is refused (429) and nothing is written.
+  proposed through checkpoints in any 24 hours. All three write RPCs take the same organization transaction
+  lock before any workstream or operation-key lock, so concurrent calls with different keys cannot consume
+  the same final slot. Past a bound the write is refused (429) and nothing is written.
 - **Decisions.** See "Owner decisions".
 
 Every field is bounded, and nothing is ever silently cut: a value over its bound is refused with the field's name.
@@ -98,6 +100,8 @@ An unknown field is refused, so a writer cannot believe something was stored tha
   content returns the stored event (`replayed: true`) and writes nothing. Sending the same key with different content
   is refused (409): a key is never reused to overwrite. Content is everything the caller said: workstream, kind,
   text, evidence, by, at, sensitivity, `objective_id`, `job_id`, `decision_id` and the `decision` object.
+  A replay checks the stored event's own sensitivity before returning it: lowering a workstream's sensitivity
+  does not lower any event already in its append-only log.
 - The key covers the whole checkpoint, not only its event. When a checkpoint's key is already recorded, the
   workstream fields sent with it are **not** applied again (`workstream.applied: false`, `replayed: true`, and the
   answer shows the current state): a late retry of an old checkpoint cannot rewind `branch`, `head`, `pr` or
@@ -353,3 +357,9 @@ inside a Git working tree anywhere except under that ignored directory.
 | SQL | `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/ai-context-workstreams-sql-check.mjs` | guard, apply twice, privileges, behaviour, append-only trigger, idempotency (a replay never rewinds; every said field is content), bounds, decisions, owner membership, the write-path sensitivity ceiling, append-order blockers, table-level credential checks, volume caps, resume order and caps, rollback, re-apply |
 | Sync | `node --test scripts/test/workstream-sync.test.mjs` | files ingested unchanged, dry run sends nothing, no default endpoint, re-run repeats nothing, the answer read from Core's real capability envelope, a store inside a working tree refused, `.gitignore`, parity with the secret scan |
 | Edge | `npm test --prefix workers/mccluster` (`core-bridge`, `core-mcp-continuity`) | owner gate, org overwrite, actor stamping, raw names refused |
+
+The standalone SQL proof passes 310 checks on PGlite 0.5.10 and 313 on native PostgreSQL 17.6. The native run
+adds separate-connection contention for the final workstream, proposed-decision and event slots. Both modes use
+minimal base fixtures. Reconciliation CI also applies the exact SQL twice against the full repository reset,
+runs `supabase/tests/ai_context_workstreams_v1.integration.sql` with the existing ontology and decision triggers,
+and rolls back/re-applies for a second pass. Its exact-head result is required before production apply.

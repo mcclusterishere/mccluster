@@ -5,6 +5,8 @@ import fs from 'node:fs';
 // Proof for the PENDING supabase/pending/ai_context_workstreams_v1.sql on a disposable WASM (PGlite) or local
 // native PostgreSQL. It never connects to canonical Supabase and never applies anything there.
 //   PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/ai-context-workstreams-sql-check.mjs
+//   NATIVE_TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+//     POSTGRES_MODULE_PATH=<pinned postgres>/src/index.js node scripts/ai-context-workstreams-sql-check.mjs
 // Base: the roles and default privileges production has, public.orgs, public.ops_objectives, public.ops_agent_jobs
 // and ai_context.decisions with the columns the replay DDL gives them (PGlite has no pgmq or pgvector, so the
 // replay file itself cannot load here; only the objects this file touches are stubbed). Then: the guard on a
@@ -37,7 +39,8 @@ const STAFF = 'd0000000-0000-4000-8000-000000000002';
 const STRANGER = 'd0000000-0000-4000-8000-000000000003';
 const AGENT = { actor_kind: 'agent', actor_id: 'e0000000-0000-4000-8000-000000000001', actor_source: 'test', harness: 'resident' };
 const PROV = { actor_kind: 'owner', actor_id: ACTOR, actor_source: 'signed-edge', harness: 'claude-code', model_id: 'model-x', session_id: 'session-1', device: 'laptop' };
-const J = (value) => JSON.stringify(value);
+// postgres.js serializes jsonb parameters itself; passing JSON text would encode it a second time.
+const J = (value) => db.native ? db.sql.json(value) : JSON.stringify(value);
 
 let checks = 0;
 async function check(name, fn) {
@@ -537,6 +540,24 @@ async function behaviour(tag) {
     assert.equal((await upsert({ id: k('agent-ws'), sensitivity: 'public' })).workstream.sensitivity, 'public', 'the owner may lower');
     assert.equal((await upsert({ id: k('agent-ws'), sensitivity: 'internal' }, AGENT)).workstream.sensitivity, 'internal', 'anyone may raise within their ceiling');
   });
+  await check('lowering a workstream never lowers the ceiling on a stored event replay', async () => {
+    const ws = { id: k('lowered'), title: 'Lowered workstream', goal: 'Stored events keep their own classification', sensitivity: 'restricted' };
+    const event = { kind: 'verified', text: 'Restricted verification evidence' };
+    await checkpoint(ws, k('lowered-event'), event);
+    await upsert({ id: ws.id, sensitivity: 'internal', next: 'Continue at internal' });
+    for (const replay of [
+      () => append(ws.id, k('lowered-event'), event, AGENT),
+      () => checkpoint({ id: ws.id, next: 'must not land' }, k('lowered-event'), event, AGENT)
+    ]) await refused(replay(), /sensitivity ceiling/, '42501');
+    const owner = await checkpoint(ws, k('lowered-event'), event);
+    assert.equal(owner.event.replayed, true);
+    assert.equal(owner.event.event.sensitivity, 'restricted');
+    assert.equal(owner.workstream.workstream.sensitivity, 'internal');
+    assert.equal(owner.workstream.workstream.next, 'Continue at internal');
+    const [row] = await resume(1, 'internal', ws.id);
+    assert.equal(row.events.length, 0);
+    assert.equal(row.events_withheld, 1);
+  });
 
   /* ---- one operation key is one checkpoint ---- */
   await check('a replayed checkpoint never rewinds the workstream', async () => {
@@ -691,6 +712,73 @@ async function behaviour(tag) {
   });
 }
 
+// PGlite has one connection. Native PostgreSQL proves the organization-wide caps under real, distinct-key
+// contention. These cases run in their own disposable database so quota fillers never alter the behavior pass.
+async function nativeQuotaRaces() {
+  if (!db.native) return;
+  const originalDb = db;
+  const { nativeTestDb } = await import('./native-admin-test-db.mjs');
+  db = await nativeTestDb('ai_context_workstream_races');
+  async function lastSlot(statement, firstParams, secondParams, countSql, expected) {
+    const first = db.fork();
+    const second = db.fork();
+    let pending;
+    try {
+      await first.exec('begin; set local role service_role');
+      await second.exec('set role service_role');
+      await first.query(statement, firstParams);
+      let settled = false;
+      pending = second.query(statement, secondParams).then(
+        (value) => { settled = true; return { value }; },
+        (error) => { settled = true; return { error }; });
+      let blocked = false;
+      const deadline = Date.now() + 5000;
+      while (!settled && Date.now() < deadline) {
+        blocked = Number((await one("select count(*)::int as n from pg_stat_activity where datname=current_database() and wait_event_type='Lock'")).n) > 0;
+        if (blocked) break;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      assert.equal(blocked, true, 'a distinct-key writer must wait for the organization quota transaction');
+      await first.exec('commit');
+      const result = await pending;
+      assert.equal(result.error?.code, '54000', 'the second writer must observe the committed final slot');
+      assert.equal(Number((await one(countSql)).n), expected, 'the quota must never be exceeded');
+    } finally {
+      await first.exec('rollback');
+      if (pending) await pending;
+      await first.close(); await second.close();
+    }
+  }
+  try {
+    await base();
+    await db.exec(read(PENDING));
+    await check('native concurrent different workstreams share the last workstream slot', async () => {
+      await db.query("insert into ai_context.workstreams(org_id, workstream_key, title, goal) select $1, 'race-fill-' || g::text, 'Quota fixture', 'g' from generate_series(1,499) g", [ORG]);
+      const args = (id) => [ORG, J({ id, title: 'Final slot', goal: 'Quota contention' }), J(PROV)];
+      await lastSlot('select public.ops_ai_workstream_upsert($1::uuid,$2::jsonb,$3::jsonb)', args('race-new-a'), args('race-new-b'),
+        'select count(*)::int as n from ai_context.workstreams', 500);
+    });
+    await check('native concurrent different events share the last proposed-decision slot', async () => {
+      await db.query("insert into ai_context.decisions(org_id,title,decision,proposed_by,metadata) select $1,'Quota fixture','x','fixture',jsonb_build_object('ingress','workstream-checkpoint','idempotency_key','race-decision-fill:' || g::text) from generate_series(1,199) g", [ORG]);
+      const args = (suffix) => [ORG, `race-fill-${suffix}`, `race-decision:${suffix}`, J({ kind: 'decision', text: 'Proposal', decision: { title: 'Final decision slot' } }), J(PROV)];
+      await lastSlot('select public.ops_ai_workstream_event_append($1::uuid,$2,$3,$4::jsonb,$5::jsonb)', args(1), args(2),
+        'select count(*)::int as n from ai_context.decisions', 200);
+      assert.equal(await count('ai_context.workstream_events'), 1, 'the refused decision leaves no orphan event');
+    });
+    await check('native concurrent different workstreams share the last event slot', async () => {
+      const ws = (await one("select id from ai_context.workstreams where workstream_key='race-fill-1'")).id;
+      await db.query("insert into ai_context.workstream_events(org_id,workstream_id,operation_key,kind,body,occurred_at,actor_kind,actor_id,content_hash) select $1,$2,'race-event-fill:' || g::text,'note','Quota fixture',now(),'service','fixture',repeat('0',64) from generate_series(1,4998) g", [ORG, ws]);
+      const args = (suffix) => [ORG, `race-fill-${suffix}`, `race-event:${suffix}`, J({ kind: 'note', text: 'Final event slot' }), J(PROV)];
+      await lastSlot('select public.ops_ai_workstream_event_append($1::uuid,$2,$3,$4::jsonb,$5::jsonb)', args(1), args(2),
+        'select count(*)::int as n from ai_context.workstream_events', 5000);
+    });
+    console.log('native distinct-key quota races: PASS');
+  } finally {
+    await db.close();
+    db = originalDb;
+  }
+}
+
 try {
   await check('the guard refuses a database without the context plane and changes nothing', async () => {
     await refused(db.exec(read(PENDING)), /ai_context_workstreams_v1 needs schema ai_context/, '55000');
@@ -736,5 +824,6 @@ try {
   await privileges();
   await behaviour('two');
   console.log('rollback, re-apply and second behaviour pass: PASS');
+  await nativeQuotaRaces();
   console.log(`ai_context workstreams SQL: ${checks} checks PASS`);
 } finally { await db.close(); }
