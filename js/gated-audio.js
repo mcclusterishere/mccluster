@@ -239,7 +239,13 @@
         '<div class="mcc-hold__acts"><a class="mcc-hold__go" href="account.html"></a>' +
         '<button type="button" class="mcc-hold__close">Close</button></div>';
       d.querySelector(".mcc-hold__close").addEventListener("click", function () { closeHold(d); });
-      d.addEventListener("click", function (e) { if (e.target === d) closeHold(d); });   // a tap outside it
+      /* a tap on the backdrop closes it. A tap on the dialog's own padding has the dialog as its target too, so the
+         point decides: only outside the dialog's box (review QW-R5) */
+      d.addEventListener("click", function (e) {
+        if (e.target !== d) return;
+        var r = d.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closeHold(d);
+      });
       doc.body.appendChild(d);
     }
     d.querySelector("h2").textContent = copy.title;

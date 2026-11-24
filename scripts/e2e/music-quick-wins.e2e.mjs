@@ -67,11 +67,17 @@ async function context(browser, plane, width = 390, opts = {}) {
   const mobile = width < 600;
   const ctx = await browser.newContext({ viewport: { width, height: mobile ? 844 : 900 }, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: opts.dsf || (SHOTS ? 2 : 1), serviceWorkers: 'block' });
   await plane.install(ctx, ROOT);
-  const audio = [];
+  const audio = [], events = [];
   /* registered after the plane, so these answer first; anything they do not take falls back to the plane */
   await ctx.route('**/*', async (route) => {
     const req = route.request();
     let url; try { url = new URL(req.url()); } catch (e) { return route.fallback(); }
+    /* the measurement wire, read here (it sends only with the visitor's consent) */
+    if ((url.origin === 'https://api.mccluster.org' && url.pathname === '/v1/collect') || (url.origin === SB && url.pathname === '/functions/v1/collect')) {
+      if (req.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
+      try { const body = JSON.parse(req.postData() || '{}'); (body.events || []).forEach((e) => events.push({ name: e && e.name, props: (e && e.props) || {} })); } catch (e) { events.push({ name: 'unreadable' }); }
+      return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"ok":true}' });
+    }
     if (url.origin === HOUSE && (/^\/assets\/audio\//.test(url.pathname) || /^\/__(master|fixture-song)\.wav$/.test(url.pathname))) {
       audio.push({ t: Date.now(), path: url.pathname, page: (() => { try { return new URL(req.frame().url()).pathname; } catch (e) { return ''; } })() });
       /* served as Pages serves it, with byte ranges: a song that is not seekable lands any seek on 0:00 */
@@ -104,7 +110,7 @@ async function context(browser, plane, width = 390, opts = {}) {
     if (url.origin === HOUSE && url.pathname === '/__desk.html') return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: DESK_HARNESS });
     return route.fallback();
   });
-  return { ctx, audio };
+  return { ctx, audio, events };
 }
 /* the World's member desk on its own: the real js/mcc-auth.js, js/member-desk-core.js and js/member-desk.js over a stand-in
    for the World's identity (MCC_MNET) and its account menu */
@@ -132,6 +138,9 @@ async function fits(page, label) {
    screenshot first scrolls to what it shows, or, for a whole page, through the whole page, and waits for the fade */
 async function shot(page, name, opts = {}) {
   if (!SHOTS) return;
+  /* the album's once-a-session premiere curtain (js/chamber.js) lifts on its own: a shot waits for it, or it shows only
+     the curtain */
+  await page.waitForFunction(() => !document.getElementById('prem'), null, { timeout: 12000 }).catch(() => {});
   if (opts.full) {
     /* the house scrolls smoothly (scroll-behavior on <html>): each step is instant, so the page is where the shot says */
     await page.evaluate(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += Math.round(innerHeight * 0.6)) { scrollTo({ top: y, behavior: 'instant' }); await new Promise((r) => setTimeout(r, 160)); } scrollTo({ top: 0, behavior: 'instant' }); });
@@ -159,6 +168,64 @@ function coverOk(list, label, { span = false } = {}) {
     check(whole && nothingBehind && square && corners && c.shadow === 'none', `${label}: ${c.sel} draws the whole cover in a uniform ${c.w} px square, nothing behind it, no corner cut`, c);
   }
 }
+
+/* WHAT SHOWS IN THE EMPTY PART OF A COVER'S SQUARE (review QW-R1). A cover that is not square leaves bands above
+   and below it (or beside it), and a mark on a clear ground leaves its clear pixels: there the screen must show the
+   ground the card sits on, never a plate added behind the artwork. Read from a real screenshot of the square: the
+   middle of each band, and the artwork's own clear corners, against the ground just outside the card: above it (a
+   shelf: outside the shelf itself), or beside it at the same height (a player whose own panel is a gradient: the
+   pocket). coverOk above reads only the image's own background; a plate drawn by a container behind a transparent
+   card passed it. */
+async function groundOk(page, sel, label, { max = 8, settleMs = 800, ref = 'above' } = {}) {
+  const n = await page.evaluate((s) => document.querySelectorAll(s).length, sel);
+  let looked = 0;
+  for (let i = 0; i < Math.min(n, max); i++) {
+    await page.evaluate(({ s, i }) => { const e = document.querySelectorAll(s)[i]; if (e) e.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' }); }, { s: sel, i });
+    await sleep(settleMs);
+    const m = await page.evaluate(async ({ s, i, ref }) => {
+      const e = document.querySelectorAll(s)[i];
+      if (!e) return { skip: 'gone' };
+      const r = e.getBoundingClientRect();
+      const src = e.tagName === 'VIDEO' ? (e.getAttribute('poster') || '') : (e.currentSrc || e.getAttribute('src') || '');
+      if (!src || r.width < 8 || r.height < 8) return { skip: 'no picture' };
+      const im = new Image(); im.src = src;
+      try { await im.decode(); } catch (err) { return { skip: 'not decoded' }; }
+      const nw = im.naturalWidth, nh = im.naturalHeight;
+      const k = Math.min(r.width / nw, r.height / nh), dw = nw * k, dh = nh * k, dx = r.left + (r.width - dw) / 2, dy = r.top + (r.height - dh) / 2;
+      const pts = [];
+      if (dh < r.height - 4) pts.push(['band above', r.left + r.width / 2, r.top + (dy - r.top) / 2], ['band below', r.left + r.width / 2, dy + dh + (r.bottom - dy - dh) / 2]);
+      if (dw < r.width - 4) pts.push(['band left', r.left + (dx - r.left) / 2, r.top + r.height / 2], ['band right', dx + dw + (r.right - dx - dw) / 2, r.top + r.height / 2]);
+      const c = document.createElement('canvas'); c.width = nw; c.height = nh;
+      const g = c.getContext('2d'); g.drawImage(im, 0, 0);
+      for (const [fx, fy, name] of [[0.04, 0.04, 'clear top-left'], [0.96, 0.04, 'clear top-right'], [0.04, 0.96, 'clear bottom-left'], [0.96, 0.96, 'clear bottom-right']]) {
+        if (g.getImageData(Math.floor(fx * (nw - 1)), Math.floor(fy * (nh - 1)), 1, 1).data[3] === 0) pts.push([name, dx + fx * dw, dy + fy * dh]);
+      }
+      const side = r.left >= 4 ? r.left - 3 : r.right + 3;
+      const ground = (p) => (ref === 'beside' ? [side, p[2]] : r.top >= 4 ? [r.left + r.width / 2, r.top - 3] : [r.left - 3, r.top + r.height / 2]);
+      return { file: src.split('/').pop().split('?')[0], nw, nh, box: { x: r.left, y: r.top, w: r.width, h: r.height }, pts: pts.map((p) => p.concat([ground(p)])), vw: innerWidth, vh: innerHeight };
+    }, { s: sel, i, ref });
+    if (m.skip || !m.pts.length) continue;   // a square, opaque cover fills its square: nothing can show behind it
+    const xs = m.pts.flatMap((p) => [p[1], p[3][0]]), ys = m.pts.flatMap((p) => [p[2], p[3][1]]);
+    const x0 = Math.max(0, Math.floor(Math.min(...xs)) - 2), y0 = Math.max(0, Math.floor(Math.min(...ys)) - 2);
+    const clip = { x: x0, y: y0, width: Math.min(m.vw - x0, Math.ceil(Math.max(...xs)) + 3 - x0), height: Math.min(m.vh - y0, Math.ceil(Math.max(...ys)) + 3 - y0) };
+    if (clip.width < 3 || clip.height < 3) continue;
+    const png = await page.screenshot({ clip });
+    const px = await page.evaluate(async ({ b64, clip, pts }) => {
+      const im = new Image(); im.src = 'data:image/png;base64,' + b64; await im.decode();
+      const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+      const g = c.getContext('2d'); g.drawImage(im, 0, 0);
+      const k = im.width / clip.width;
+      const at = (X, Y) => Array.from(g.getImageData(Math.min(im.width - 1, Math.round((X - clip.x) * k)), Math.min(im.height - 1, Math.round((Y - clip.y) * k)), 1, 1).data.slice(0, 3));
+      return { pts: pts.map((p) => [p[0], at(p[1], p[2]), at(p[3][0], p[3][1])]) };
+    }, { b64: png.toString('base64'), clip, pts: m.pts });
+    const far = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]), Math.abs(a[2] - b[2]));
+    looked++;
+    check(px.pts.every((p) => far(p[1], p[2]) <= 10), `${label}: ${m.file} (${m.nw} x ${m.nh}): the empty part of its square shows the ground it sits on, nothing added behind it`, px);
+  }
+  check(looked > 0, `${label}: there are covers with an empty part to look at`, { n });
+}
+/* the visitor agreed to measurement, so the wire carries what the page sends */
+const CONSENT = () => ({ mcc_privacy_ack: JSON.stringify({ version: '2026-10-19', at: new Date().toISOString() }) });
 
 const SCENARIOS = {
   /* ---------------------------------------------------------------- Q1 */
@@ -528,6 +595,248 @@ const SCENARIOS = {
     check(e.title === last && e.paused && !e.playing && reads.length === 0, 'Q6 listen engine: the album stops after its last song (no next album, no first song)', { e, reads });
     check(e.np === 'paused', 'Q6 listen engine: Now Playing shows it paused', e);
     await c2.close();
+  },
+
+  /* ---------------------------------------------------------------- the review's findings (QW-R1 .. QW-R8) */
+  /* QW-R1: the album page's shelf of albums put every whole cover, and the M, PRIM3 and VAUNT marks, on a grey plate */
+  async r1_nothing_behind_a_cover(browser) {
+    for (const width of [390, 1280]) {
+      const plane = makePlane();
+      const { ctx } = await context(browser, plane, width);
+      const page = await ctx.newPage();
+      await seed(page, {});
+      await page.goto(HOUSE + '/album.html?album=here', { waitUntil: 'load' });
+      await until(page, (n) => { const i = document.querySelectorAll('#featRail .feat__bg'); return i.length === n && Array.from(i).every((x) => x.complete && x.naturalWidth > 0); }, CATALOG.length, 15000);
+      /* the album's once-a-session premiere curtain (js/chamber.js) lifts on its own */
+      await until(page, () => !document.getElementById('prem'), null, 10000);
+      await groundOk(page, '#featRail .feat__bg', `QW-R1 album shelf at ${width}`, { max: CATALOG.length });
+      const shelf = await page.evaluate(() => { const f = getComputedStyle(document.getElementById('featRail')); return { bg: f.backgroundColor, border: f.borderTopWidth, gap: f.columnGap }; });
+      check(/rgba\(0, 0, 0, 0\)/.test(shelf.bg) && shelf.border === '0px' && shelf.gap === '12px', `QW-R1 album shelf at ${width}: no ground, no frame, the rail's own spacing`, shelf);
+      if (width === 390) await fits(page, 'QW-R1 album at 390');
+      await page.evaluate(() => { const w = document.getElementById('featWrap'); scrollTo({ top: Math.max(0, w.getBoundingClientRect().top + scrollY - 72), behavior: 'instant' }); document.getElementById('featRail').scrollLeft = 0; });
+      await sleep(900);
+      await shot(page, `album-${width}-shelf-whole-covers`);
+      /* the other shelves, which were right, stay right */
+      if (width === 390) {
+        await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
+        await until(page, () => { const i = document.querySelectorAll('#shelf .feat__bg'); return i.length > 3 && Array.from(i).every((x) => x.complete && x.naturalWidth > 0); }, null, 15000);
+        await groundOk(page, '#shelf .feat__bg', 'QW-R1 control: Listen shelf at 390', { max: CATALOG.length });
+        await page.goto(HOUSE + '/catalogue.html', { waitUntil: 'load' });
+        await until(page, () => { const i = document.querySelectorAll('#shelf .cov'); return i.length > 3 && Array.from(i).every((x) => x.complete && x.naturalWidth > 0); }, null, 15000);
+        await groundOk(page, '#shelf .cov', 'QW-R1 control: catalogue shelf at 390', { max: CATALOG.length });
+      }
+      await ctx.close();
+    }
+  },
+
+  /* QW-R2: the pocket (the mini player of every page that is not a music page) cropped a cover into a rounded tile, on
+     black, under a dark gradient */
+  async r2_pocket_whole_cover(browser) {
+    const WHIP = CATALOG.find((a) => a.slug === 'whip-equipped');
+    const coverSong = WHIP.tracks.find((t) => t.poster === WHIP.art && !t.music_video);
+    const HERE = CATALOG.find((a) => a.slug === 'here');
+    const filmSong = HERE.tracks.find((t) => t.music_video);
+    const record = (a, t) => JSON.stringify({ src: t.src, title: t.title, album: a.slug, artist: 'McCluster', art: a.art, poster: t.poster || '',
+      music_video: t.music_video || '', video: t.music_video || '', lyrics: '', t: 1, playing: false, at: Date.now() });
+    const tile = () => {
+      const t = document.querySelector('.pocket__tile'), f = document.querySelector('.pocket__film');
+      const ct = getComputedStyle(t), cf = getComputedStyle(f), r = t.getBoundingClientRect();
+      const shown = (sel) => { const e = document.querySelector(sel); return !!e && getComputedStyle(e).display !== 'none'; };
+      return { cover: t.classList.contains('pocket__tile--cover'), w: Math.round(r.width), h: Math.round(r.height), radius: ct.borderTopLeftRadius, bg: ct.backgroundColor,
+        shadow: ct.boxShadow, fit: cf.objectFit, scrim: shown('.pocket__scrim'), lyr: shown('.pocket__lyr'), poster: (f.getAttribute('poster') || '').split('/').pop() };
+    };
+    for (const width of [320, 390, 1280]) {
+      const plane = makePlane();
+      const { ctx } = await context(browser, plane, width);
+      const page = await ctx.newPage();
+      await seed(page, { 'mcc-pocket': record(WHIP, coverSong) });
+      await page.goto(HOUSE + '/catalogue.html', { waitUntil: 'load' });
+      const mounted = await until(page, () => !!document.querySelector('.pocket.is-in .pocket__film'), null, 12000);
+      await sleep(700);
+      const s = mounted ? await page.evaluate(tile) : null;
+      const side = width < 561 ? 50 : 56;
+      check(!!s && s.cover && s.fit === 'contain' && s.radius === '0px' && /rgba\(0, 0, 0, 0\)/.test(s.bg) && s.shadow === 'none' && !s.scrim && !s.lyr && s.w === side && s.h === side,
+        `QW-R2 pocket at ${width}: a song whose picture is its album's cover shows that cover whole, in a ${side} px square, nothing behind it or over it, no corner cut`, s);
+      if (s) await groundOk(page, '.pocket__film', `QW-R2 pocket at ${width}`, { max: 1, settleMs: 200, ref: 'beside' });
+      if (width < 600) await fits(page, `QW-R2 catalogue at ${width} with the pocket`);
+      if (width === 390) await shot(page, 'pocket-390-whole-cover');
+      await ctx.close();
+    }
+    /* a film keeps its tile */
+    const plane = makePlane();
+    const { ctx } = await context(browser, plane, 390);
+    const page = await ctx.newPage();
+    await seed(page, { 'mcc-pocket': record(HERE, filmSong) });
+    await page.goto(HOUSE + '/catalogue.html', { waitUntil: 'load' });
+    const mounted = await until(page, () => !!document.querySelector('.pocket.is-in .pocket__film'), null, 12000);
+    await sleep(700);
+    const f = mounted ? await page.evaluate(tile) : null;
+    check(!!f && !f.cover && f.w === 64 && f.h === 50, 'QW-R2 pocket at 390: a song with a film keeps the film\'s tile', f);
+    await ctx.close();
+  },
+
+  /* QW-R3: a pocket record of the closing song (its preview, banked before the hold) mounted on every other page and its
+     Play read the preview to its end; a member's shared row carried it to other devices */
+  async r3_pocket_never_carries_the_closing_song(browser) {
+    const held = { src: CLOSER.src, title: CLOSER.title, album: CIA.slug, artist: 'McCluster', art: CIA.art, poster: CLOSER.poster || '',
+      music_video: '', video: '', lyrics: '', t: 1, playing: false, at: Date.now() - 60000 };
+    const readsOf = (audio) => audio.filter((x) => x.path === '/' + CLOSER.src || x.path.includes(CLOSER_KEY)).length;
+    {
+      const plane = makePlane();
+      const { ctx, audio } = await context(browser, plane, 390);
+      const page = await ctx.newPage();
+      await seed(page, { 'mcc-pocket': JSON.stringify(held) });
+      await page.goto(HOUSE + '/catalogue.html', { waitUntil: 'load' });
+      await sleep(3500);
+      const p = await page.evaluate(() => ({ mounted: !!document.querySelector('.pocket'), kept: localStorage.getItem('mcc-pocket') !== null }));
+      check(!p.mounted, 'QW-R3 this device: a pocket record of the closing song mounts no player on another page', p);
+      check(!p.kept, 'QW-R3 this device: and the record is not kept to come back', p);
+      check(readsOf(audio) === 0, 'QW-R3 this device: nothing of it is read', { reads: readsOf(audio) });
+      await ctx.close();
+    }
+    {
+      const plane = makePlane();
+      const { ctx, audio } = await context(browser, plane, 390);
+      let asked = 0;
+      await ctx.route(SB + '/rest/v1/listener_state**', (route) => {
+        if (route.request().method() !== 'GET') return route.fallback();
+        asked++;
+        return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify([{ state: held, updated_at: new Date().toISOString() }]) });
+      });
+      const page = await ctx.newPage();
+      await seed(page, slots(plane.storedSession('member', 3600)));
+      /* a page outside music that reads the shared row (js/backend.js) and carries the pocket */
+      await page.goto(HOUSE + '/press.html', { waitUntil: 'load' });
+      await sleep(3500);
+      const p = await page.evaluate(() => ({ mounted: !!document.querySelector('.pocket'), copied: localStorage.getItem('mcc-pocket') !== null }));
+      check(asked > 0, 'QW-R3 another device: the member\'s shared row was asked', { asked });
+      check(!p.mounted && !p.copied, 'QW-R3 another device: the shared row naming the closing song mounts nothing and is not copied here', p);
+      check(readsOf(audio) === 0, 'QW-R3 another device: nothing of it is read', { reads: readsOf(audio) });
+      await ctx.close();
+    }
+  },
+
+  /* QW-R4 to QW-R7: the closing song's test card, the pop-up's own padding, a link or a stale seat to it, and the house
+     owner's own play of it */
+  async r4_to_r7_the_closing_song(browser) {
+    const HELD = '#tracks li[data-gated-object]';
+    const LAST = CIA.tracks.length - 1;
+    const keyOf = (t) => (t.gated && t.gated.object ? String(t.gated.object).split('/')[0] : String(t.src || '').split('/').pop().replace(/\.[a-z0-9]+$/i, '').toLowerCase());
+    const gateAnswered = (page) => until(page, (sel) => { const r = document.querySelector(sel); return r && r.getAttribute('data-gate') && r.getAttribute('data-gate') !== 'opening'; }, HELD, 15000);
+    /* QW-R4: the song test's card for the closing song, by account; song_test_state answers as production does (two
+       open songs and the gated one) */
+    for (const [who, width] of [['member', 390], ['member', 320], ['owner', 390]]) {
+      const plane = makePlane();
+      const { ctx } = await context(browser, plane, width);
+      await ctx.route(SB + '/rest/v1/rpc/song_test_state', (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' },
+        body: JSON.stringify(CIA.tracks.map((t, i) => ({ track: keyOf(t), label: t.gated ? 'The earned track' : 'Song ' + (i + 1), question: 'Was this song racist? Why?', heard: false, gated: !!t.gated, answer: null, split: null }))) }));
+      const page = await ctx.newPage();
+      await seed(page, slots(plane.storedSession(who, 3600)));
+      await page.goto(HOUSE + '/album.html?album=cia-mind-control', { waitUntil: 'load' });
+      await gateAnswered(page);
+      await until(page, () => document.querySelectorAll('.stq-card').length === 3, null, 15000);
+      await sleep(600);
+      const card = await page.evaluate((k) => { const c = document.querySelector('.stq-card[data-stq="' + k + '"]'); return c ? (c.querySelector('.stq-lock') || {}).textContent || '' : null; }, keyOf(CLOSER));
+      const line = await page.evaluate(() => window.MCC_GATED.holdCopy(true).text);
+      if (who === 'member') {
+        check(card === line, `QW-R4 member at ${width}: the closing song's test card says what its pop-up says, never that an earned play opens it`, { card });
+        await fits(page, `QW-R4 album at ${width} with the song test`);
+        if (width === 390) {
+          await page.evaluate(() => { const b = document.getElementById('albTest'); if (b) scrollTo({ top: Math.max(0, b.getBoundingClientRect().top + scrollY - 72), behavior: 'instant' }); });
+          await sleep(900);
+          await shot(page, 'album-390-song-test-held-card');
+        }
+      } else check(/spend your earned play/.test(card || ''), 'QW-R4 the house owner: his card keeps his own play', { card });
+      await ctx.close();
+    }
+    /* QW-R5: a tap inside the pop-up, on its own padding, leaves it open; a tap on the backdrop closes it */
+    {
+      const plane = makePlane();
+      const { ctx } = await context(browser, plane, 390, { dsf: 1 });
+      const page = await ctx.newPage();
+      await seed(page, {});
+      await page.goto(HOUSE + '/album.html?album=cia-mind-control', { waitUntil: 'load' });
+      await gateAnswered(page);
+      await page.click(HELD);
+      await holdOpen(page);
+      const box = await page.evaluate(() => { const r = document.getElementById('mccHold').getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, h: r.height }; });
+      for (const [where, x, y] of [['top-left corner', box.l + 6, box.t + 6], ['bottom-right corner', box.r - 6, box.b - 6], ['beside the line', box.r - 8, box.t + box.h / 2]]) {
+        await page.mouse.click(x, y);
+        await sleep(300);
+        const open = await page.evaluate(() => !!(document.getElementById('mccHold') || {}).open);
+        check(open, `QW-R5 a tap 6 px inside the pop-up (${where}) leaves it open`, { box, x, y });
+        if (!open) { await page.click(HELD); await holdOpen(page); }
+      }
+      await page.mouse.click(Math.max(2, box.l / 2), Math.max(2, box.t / 2));
+      check(await until(page, () => !(document.getElementById('mccHold') || {}).open, null, 3000), 'QW-R5 a tap on the backdrop outside it closes it');
+      await ctx.close();
+    }
+    /* QW-R6: a link to the closing song (the catalogue's registry, Listen's search rows), or this device's stale seat on
+       it, seats nothing and says nothing on the wire; a tap on it still says why */
+    for (const who of ['guest', 'member']) {
+      for (const how of ['link', 'seat']) {
+        const plane = makePlane();
+        const { ctx, audio, events } = await context(browser, plane, 390);
+        const page = await ctx.newPage();
+        await seed(page, Object.assign(CONSENT(), who === 'guest' ? {} : slots(plane.storedSession(who, 3600)),
+          how === 'seat' ? { mcc_here_radio: JSON.stringify({ album: CIA.slug, i: LAST, t: 1, paused: true }) } : {}));
+        await page.goto(HOUSE + '/album.html?album=cia-mind-control' + (how === 'link' ? '&t=' + encodeURIComponent(CLOSER.title) : ''), { waitUntil: 'load' });
+        await gateAnswered(page);
+        await sleep(4000);
+        const s = await page.evaluate(({ t, last }) => { const d = document.getElementById('deck'); const rows = Array.from(document.querySelectorAll('#tracks li'));
+          return { titled: (document.getElementById('npTitle').textContent || '').trim() === t, on: rows.findIndex((r) => r.classList.contains('on')) === last, err: d.error ? d.error.code : 0 }; },
+          { t: CLOSER.title, last: LAST });
+        check(!s.titled && !s.on && !s.err, `QW-R6 ${who}, ${how === 'link' ? 'a link to it' : 'a stale seat on it'}: the closing song is not seated (no deck error, the deck bar not titled with it)`, s);
+        const drops = events.filter((e) => e.name === 'music_interrupted' || e.name === 'music_error').map((e) => e.name);
+        check(events.length > 0 && drops.length === 0, `QW-R6 ${who}, ${how === 'link' ? 'a link to it' : 'a stale seat on it'}: no music_interrupted or music_error on the wire for a song nobody asked to play`, { drops, watched: events.length });
+        check(audio.filter((x) => x.path === '/' + CLOSER.src || x.path.includes(CLOSER_KEY)).length === 0, `QW-R6 ${who}, ${how}: nothing of it is read`);
+        await page.click(HELD);
+        check(await holdOpen(page), `QW-R6 ${who}, ${how}: a tap on it still says why`);
+        await ctx.close();
+      }
+    }
+    /* QW-R7: the house owner's own play banks nothing: no signed one-play URL on this device or in his shared row */
+    {
+      const plane = makePlane();
+      const { ctx } = await context(browser, plane, 390);
+      const sent = [];
+      await ctx.route(SB + '/rest/v1/listener_state**', (route) => { if (route.request().method() === 'POST') sent.push(route.request().postData() || ''); return route.fallback(); });
+      const page = await ctx.newPage();
+      await seed(page, slots(plane.storedSession('owner', 3600)));
+      await page.goto(HOUSE + '/album.html?album=cia-mind-control', { waitUntil: 'load' });
+      await until(page, (sel) => { const r = document.querySelector(sel); return r && r.getAttribute('data-gate') === 'earned'; }, HELD, 15000);
+      await page.click(HELD);
+      const played = await until(page, () => /__master\.wav$/.test(document.getElementById('deck').currentSrc) && !document.getElementById('deck').paused && document.getElementById('deck').currentTime > 0.3, null, 15000);
+      await page.click('#tpPlay');
+      await sleep(1500);
+      const kept = await page.evaluate(() => localStorage.getItem('mcc-pocket') || '');
+      check(played, 'QW-R7 the house owner: his own play of the closing song plays the master', { played });
+      check(!/__master/.test(kept), 'QW-R7 the house owner: the pocket keeps no signed one-play URL', { kept: kept ? 'a record' : 'nothing' });
+      check(!sent.some((b) => /__master/.test(b)), 'QW-R7 the house owner: nothing of it is sent to his shared row', { posts: sent.length });
+      await ctx.close();
+    }
+  },
+
+  /* QW-R8: the heart on every album row said "Save to My Rotation", a list no music page shows since the quick wins */
+  async r8_the_heart(browser) {
+    const plane = makePlane();
+    const { ctx } = await context(browser, plane, 390);
+    const page = await ctx.newPage();
+    await seed(page, {});
+    await page.goto(HOUSE + '/album.html?album=here', { waitUntil: 'load' });
+    await until(page, () => document.querySelectorAll('#tracks li [data-hrt]').length > 0, null, 15000);
+    const labels = await page.evaluate(() => Array.from(document.querySelectorAll('#tracks li')).map((li) => ({ title: li.getAttribute('data-title'), label: li.querySelector('[data-hrt]').getAttribute('aria-label') })));
+    check(labels.length > 0 && labels.every((l) => l.label === 'Save ' + l.title), 'QW-R8 album: each heart says "Save" and the song, as Listen\'s does; none names a list the pages do not show', labels);
+    /* and whether the song is saved, as Listen's heart does: pressed after a tap, not pressed after the next */
+    const heart = () => page.evaluate(() => { const b = document.querySelector('#tracks li [data-hrt]'); return { pressed: b.getAttribute('aria-pressed'), on: b.classList.contains('on'), label: b.getAttribute('aria-label') }; });
+    const before = await heart();
+    await page.click('#tracks li [data-hrt]');
+    const saved = await heart();
+    await page.click('#tracks li [data-hrt]');
+    const unsaved = await heart();
+    check(before.pressed === 'false' && !before.on && saved.pressed === 'true' && saved.on && unsaved.pressed === 'false' && !unsaved.on && saved.label === before.label,
+      'QW-R8 album: the heart says whether the song is saved (pressed after a tap, not after the next), its words unchanged', { before, saved, unsaved });
+    await ctx.close();
   },
 
   /* ---------------------------------------------------------------- 320 px */

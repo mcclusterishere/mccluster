@@ -943,7 +943,9 @@
         '<small>' + esc(t.sub || t.albName || "") + '<span data-plays></span></small></span>' +
         '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
         (g ? '<span class="reclock" data-reclock></span>' : "") +
-        '<button class="hrt" type="button" data-hrt aria-label="Save to My Rotation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
+        /* the heart says what it does and whether the song is saved, as Listen's does; it names no list the pages do
+           not show (review QW-R8) */
+        '<button class="hrt" type="button" data-hrt aria-pressed="false" aria-label="Save ' + escAttr(t.title) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
         '<span class="d">-:--</span>' +
         /* The row used to carry an arrow out to a per-track page. Those
            pages are gone: their one real job was a licensing link that
@@ -963,7 +965,9 @@
       /* the card script is deferred and may land after the shelf paints */
       if (!window.MCC_SONGTEST) { if ((mountTest.tries = (mountTest.tries || 0) + 1) < 50) setTimeout(mountTest, 200); return; }
       box.hidden = false;
-      songTest = window.MCC_SONGTEST.mount(document.getElementById("albTestCards"), ALBUM, { signin: "account.html" });
+      songTest = window.MCC_SONGTEST.mount(document.getElementById("albTestCards"), ALBUM, { signin: "account.html",
+        /* the closing song is held for everyone but the house owner: its card says why, as its pop-up does (review QW-R4) */
+        held: function (key) { return heldFor(rows.filter(function (r) { return r.getAttribute("data-key") === key; })[0]); } });
     }
     function boot(data, ct) {
       var head = null, queue = null;
@@ -1074,7 +1078,7 @@
     function paintHearts() {
       rows.forEach(function (row) {
         var b = row.querySelector("[data-hrt]");
-        if (b) b.classList.toggle("on", inRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
+        if (b) heartOn(b, inRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
       });
     }
     document.getElementById("tracks").addEventListener("click", function (e) {
@@ -1082,8 +1086,13 @@
       if (!b) return;
       e.stopPropagation(); e.preventDefault();
       var row = b.closest("li");
-      b.classList.toggle("on", toggleRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
+      heartOn(b, toggleRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
     }, true);
+    /* the heart's look and its pressed state say the same thing (review QW-R8) */
+    function heartOn(b, on) {
+      b.classList.toggle("on", !!on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    }
 
     /* ============================================================
        THE GATE ON A RECORD. Some tracks ship a short preview here and
@@ -1168,11 +1177,22 @@
     function chip(cls, b, sub) {
       return '<span class="' + cls + '"><b>' + esc(b) + '</b><span>' + esc(sub) + '</span></span>';
     }
+    /* the held song is held for everyone but the house owner, whose own play opens it (review QW-R4) */
+    function heldFor(row) {
+      var out = row && row._gateOut;
+      return !!(row && row.hasAttribute("data-hold") && !(out && out.state === "earned" && out.operator));
+    }
     function paintGate(row, out) {
       var slot = row.querySelector("[data-reclock]");
       if (!slot) return;
       row.classList.remove("locked", "unlocked", "gone", "unlocking");
       row._gateOut = out;
+      /* the held song's test card follows who is listening, once the gate has said, and is drawn again only when that
+         changes: a card someone is writing is not drawn again under them when the gate is asked again (review QW-R4) */
+      if (row.hasAttribute("data-hold") && songTest && songTest.paint && row._heldCard !== heldFor(row)) {
+        row._heldCard = heldFor(row);
+        songTest.paint();
+      }
       var pv = row.getAttribute("data-preview-src");
       row.setAttribute("data-gate", out.state);
       /* the held song: for anyone but the house owner it says so, and a tap says why (holdThenPlay) */
@@ -1436,6 +1456,10 @@
       if (cur < 0) { window.MCC_POCKET.clear(); return; }
       var row = rows[cur];
       if (!row) return;
+      /* THE HELD SONG IS NEVER BANKED (review QW-R7). It has no public preview, and the house owner's own play of it
+         is a signed one-play URL, which must not be stored here or sent to his shared row on every device. The pocket
+         cannot play it anyway, so while it plays the pocket holds nothing. */
+      if (row.hasAttribute("data-hold")) { window.MCC_POCKET.clear(); return; }
       /* A gated row's data-src is a SIGNED URL that expires within the hour.
          Banking that means the pocket tries to resume a record from a dead
          link on the next page. Bank the durable public preview instead: the
@@ -2038,6 +2062,9 @@
     function deckFailed(why, since) {
       if (cur < 0 || !rows[cur]) return false;
       var row = rows[cur], now = Date.now();
+      /* a held row has no source for anyone but the house owner: the error of an empty source is not a dropped
+         connection, and nothing is sent for it (review QW-R6) */
+      if (row.hasAttribute("data-hold") && !row.getAttribute("data-src")) return false;
       quietDeckWatch();
       var at = Math.max(0, deck.currentTime || 0);
       var fresh = !deckTrouble || deckTrouble.row !== row || deckTrouble.state === "loading" || !deckTrouble.since;   // a new drop, not another failed try
@@ -2240,6 +2267,7 @@
         }
         return;
       }
+      if (!seatable(at)) return;
       load(at, want);
     });
 
@@ -2249,6 +2277,13 @@
        It runs at the end of init() (restoreSeat() below): load() also dresses the sheet (film, scenes,
        words), whose elements are bound further down, and a seat restored before them threw inside load()
        and stopped short of the rows, the deck, the sheet's artist and the lock screen (music slice M2). */
+    /* A HELD SONG IS NEVER SEATED by a link, this device's seat, the pocket or the shared row (review QW-R6): its row
+       has no source, and the deck would report the empty source as a dropped connection. The album opens with nothing
+       chosen instead, and a tap on the row says why; the house owner's own play seats it through its claim. */
+    function seatable(i) {
+      var r = rows[i];
+      return !!r && !(r.hasAttribute("data-hold") && !r.getAttribute("data-src"));
+    }
     function restoreSeat() {
     try {
       var r0 = JSON.parse(localStorage.getItem(KEY));
@@ -2263,37 +2298,41 @@
             return (r.getAttribute("data-title") || "").toLowerCase() === WANT.toLowerCase();
           })
         : -1;
+      /* a link to the held song is asked for, so nothing remembered takes its place, and it is not seated: the album
+         opens with nothing chosen (review QW-R6) */
+      var asked = want > -1;
+      if (asked && !seatable(want)) want = -1;
       if (want > -1) {
         load(want, 0);
         if (window.MCC_TRACK) window.MCC_TRACK("listen_open", { track: rows[want].getAttribute("data-title"), album: ALBUM });
-        r0 = null;
       }
+      if (asked) r0 = null;
       /* COMING BACK FROM THE POCKET. If the corner player kept the record
          moving on another page, its second is newer than the one this album
          banked on the way out — so it wins, and the listener lands exactly
          where the music actually is rather than where they left this page. */
-      var pk = want > -1 ? null : (window.MCC_POCKET && window.MCC_POCKET.read());
+      var pk = asked ? null : (window.MCC_POCKET && window.MCC_POCKET.read());
       if (pk && pk.title) {
         var at = rows.findIndex(function (r) { return r.getAttribute("data-title") === pk.title; });
-        if (at > -1) {
+        if (at > -1 && seatable(at)) {
           var drift = pk.playing && pk.at ? Math.min(30, (Date.now() - pk.at) / 1000) : 0;
           load(at, (pk.t || 0) + drift);
           r0 = null;
         }
       }
-      if (r0 && r0.album === ALBUM && r0.i > -1 && r0.i < rows.length) load(r0.i, r0.t || 0);
+      if (r0 && r0.album === ALBUM && r0.i > -1 && r0.i < rows.length && seatable(r0.i)) load(r0.i, r0.t || 0);
       /* THE RECORD LEFT ON ANOTHER DEVICE (decision D-8, a default pending Matthew). For a member the one
          shared row (listener_state, through js/pip.js) is asked as well. It answers only when it is newer
          than anything this device banked; when it names a record on this page and nothing has been chosen
          or played since, the album opens on it, paused at its second. A link to a track wins over it. */
-      if (want < 0 && window.MCC_POCKET && window.MCC_POCKET.pull) {
+      if (!asked && window.MCC_POCKET && window.MCC_POCKET.pull) {
         var seated = cur;
         window.MCC_POCKET.pull().then(function (far) {
           if (!far || !far.title || cur !== seated || !deck.paused) return;
           var to = rows.findIndex(function (r) {
             return r.getAttribute("data-title") === far.title && (!far.album || r.getAttribute("data-albslug") === far.album);
           });
-          if (to > -1) load(to, Math.max(0, Number(far.t) || 0));
+          if (to > -1 && seatable(to)) load(to, Math.max(0, Number(far.t) || 0));
         }).catch(function () {});
       }
     } catch (e) {}
