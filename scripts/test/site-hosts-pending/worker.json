@@ -14,8 +14,8 @@
     {
       "file": "workers/mccluster/src/seek-first/console.html",
       "count": 3,
-      "stage": "P0",
-      "note": "The owner's Seek First console (served as text by src/index.js): its sign-in copy and the address of its own fragment hand-off page (auth/seek-first-handoff.html), which SPEC-PLATFORM 2.6 leaves outside this move and lists for the same review as the bar's hand-off. Converting it means rendering the console's HTML with the table at serve time."
+      "stage": "P3",
+      "note": "The owner's Seek First console (served as text by src/index.js): its sign-in copy and the address of its own fragment hand-off page (auth/seek-first-handoff.html), which SPEC-PLATFORM 2.6 leaves outside this move and lists for the same review as the bar's hand-off. Converting it means rendering the console's HTML with the table at serve time. Not converted in P0: it is reviewed with the bar's hand-off when P1 turns the fragment hand-off off, and it must be converted before P3, when matthew.mccluster.org/auth/ answers 301 to the platform (/auth/ pages are url_ownership.platform)."
     }
   ]
 }
