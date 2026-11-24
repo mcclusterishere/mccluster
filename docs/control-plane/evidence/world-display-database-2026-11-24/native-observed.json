@@ -1,0 +1,19 @@
+{
+  "scope": "Equity Uprise shared World presentation support; no activation",
+  "evidence_type": "observed command output, not the unavailable detailed local receipt",
+  "command": "node scripts/world-display-native-check.mjs",
+  "observed_stdout": {
+    "result": "passed",
+    "mode": "canonical-tenancy-native-fixture",
+    "postgres_version": "17.6",
+    "passed": 75,
+    "failed": 0
+  },
+  "observation_date": "2026-11-24",
+  "limitations": [
+    "The workspace became unavailable after the native run and before the targeted Worker and contract checks could start.",
+    "The detailed local JSON receipt was written and copied but its contents were not retrieved before the outage.",
+    "SQL and proof sources were reconstructed from the exact writer inputs; require native and complete-reset CI receipts for the published head.",
+    "No production migration, module activation, Edge deployment, merge or acceptance test was performed."
+  ]
+}

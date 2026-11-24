@@ -932,7 +932,7 @@ try {
      line takes a second line. */
   if (runs('door-art')) for (const [w, phase] of [[1280, 'day'], [1280, 'night'], [390, 'night']]) {
     const scope = `door-art-${w}-${phase}`;
-    const { ctx, page } = await openWorld(browser, server.base, DEVICES[w], '/mnet.html?view=feed', { phase, dpr: 1 });
+    const { ctx, page } = await openWorld(browser, server.base, DEVICES[w], '/mnet.html?view=feed', { phase, dpr: 1, publicNewsHeatMap: true });
     const tint = () => page.evaluate(() => { try { return document.getElementById('mnWorldFrame').contentWindow.__huWorldNewsPins().tint; } catch (e) { return 'unread: ' + e.message; } });
     try {
       await worldReady(page);

@@ -32,10 +32,12 @@
      card's gold and read as a news map; carried release item 6: the door's backdrop goes as quiet as the tab): the door
      (html.mn-door-open, js/mnet.js showGate) says when it opens and closes (mcc:door) */
   const doorOpen = () => document.documentElement.classList.contains('mn-door-open');
+  let publicHeatEnabled = false;
+  let displayRequest = 0;
   function sync() {
     const quiet = scope() === 'equity' || doorOpen();
     const on = mode() !== 'travel' && mode() !== 'environment' && !quiet;
-    send({type:'hu:world-news-pins',on,tint:scope() !== 'equity' && !doorOpen(),items:on ? items().filter(geo).map(x => ({id:x.id,lat:x.lat,lon:x.lon})) : []});
+    send({type:'hu:world-news-pins',on,tint:publicHeatEnabled && !quiet,suppressCounts:quiet,items:on ? items().filter(geo).map(x => ({id:x.id,lat:x.lat,lon:x.lon})) : []});
   }
 
   const reader = document.createElement('dialog');
@@ -114,5 +116,21 @@
       discussion(data.id);
     }
   });
+  async function loadDisplay() {
+    const current = ++displayRequest;
+    let enabled = false;
+    try {
+      const response = await fetch('https://api.mccluster.org/v1/world/display', {
+        cache:'no-store', credentials:'omit', signal:AbortSignal.timeout(5000)
+      });
+      const data = response.ok ? await response.json() : null;
+      enabled = data?.ok === true && data.publicNewsHeatMap === true;
+    } catch (_) { /* Old API or unavailable setting: no public heat shading. */ }
+    if (current !== displayRequest) return;
+    publicHeatEnabled = enabled;
+    sync();
+  }
+  window.addEventListener('pageshow', e => { if (e.persisted) { publicHeatEnabled = false; sync(); loadDisplay(); } });
   sync();
+  loadDisplay();
 })();

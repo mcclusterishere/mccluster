@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 767,
+  "candidate_count": 774,
   "capability_source_count": 104,
-  "support_only_count": 663,
+  "support_only_count": 670,
   "entries": [
     {
       "path": ".cursorrules",
@@ -576,7 +576,7 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
     },
     {
       "path": "create.html",
@@ -1565,6 +1565,27 @@
       "rationale": "Read-only verification of the twelve production-only migrations recorded at ledger 376, including the two Equity Uprise platform migrations applied outside Git (eu_platform_* objects): what production holds, what was read and what it does not establish. Evidence only; no building capability, program or geometry."
     },
     {
+      "path": "docs/control-plane/evidence/world-display-database-2026-11-24/README.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Review and promotion packet for the optional shared World preference, including recovery conditions and evidence limits. Adds no building capability or activation."
+    },
+    {
+      "path": "docs/control-plane/evidence/world-display-database-2026-11-24/native-observed.json",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Observed native proof stdout with explicit unavailable-receipt and CI limitations for the shared World preference. Evidence only; no building capability or activation."
+    },
+    {
+      "path": "docs/control-plane/evidence/world-display-database-2026-11-24/production-catalog.json",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "SELECT-only catalog evidence for the optional shared World display migration. Contains no personal rows and creates no building capability or activation."
+    },
+    {
       "path": "docs/control-plane/registry.json",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -2187,7 +2208,7 @@
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Control · Sell · Music · Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+      "rationale": "Control \u00b7 Sell \u00b7 Music \u00b7 Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
     },
     {
       "path": "js/control-room/nav.js",
@@ -2959,7 +2980,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "screens/building.html",
@@ -3089,7 +3110,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Captures actual canonical B1–L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
+      "rationale": "Captures actual canonical B1\u2013L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
     },
     {
       "path": "scripts/e2e/eu-screens.e2e.mjs",
@@ -3850,6 +3871,13 @@
       "rationale": "Unit test that the consumer World's news shading and its legend step aside while the feed's scope is the Equity Uprise tab and return unchanged afterwards, on fakes. Not a building capability."
     },
     {
+      "path": "scripts/world-display-native-check.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native PostgreSQL and complete-reset proof for optional shared World display SQL, role boundaries, recovery races and default-off behavior. Test support only; no building capability or activation."
+    },
+    {
       "path": "services.html",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -4582,6 +4610,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
+    },
+    {
+      "path": "supabase/pending/20261123013000_eup_world_display_v1.rollback.sql",
+      "classification": "data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Guarded recovery for the optional shared World preference; preserves every saved owner choice and refuses drift. Adds no building capability or activation."
+    },
+    {
+      "path": "supabase/pending/20261123013000_eup_world_display_v1.sql",
+      "classification": "data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pending shared World presentation preference with exact-shape guards and default-off behavior. Supports Equity Uprise platform use without a new building capability or activation."
     },
     {
       "path": "supabase/pending/PROMOTION-ORDER.md",

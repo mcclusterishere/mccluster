@@ -29,6 +29,7 @@ import { handleCivic } from './civic.js';
 import { handleCompanies } from './companies.js';
 import { handleSources } from './sources.js';
 import { handleModules } from './modules.js';
+import { handleWorldDisplayOwner } from './world-display.js';
 import { handleEnvironmentOwner } from './environment/owner.js';
 
 export const EUP_PREFIX = '/v1/eup';
@@ -91,6 +92,9 @@ export async function handleEup(request, env, { requireHouseOwner, authUser, fet
       throw fail(503, 'Authorization unavailable', 'authorization_unavailable');
     }
     if (!user?.id) throw fail(401, 'Authentication required', 'authentication_required');
+    if (path === EUP_PREFIX + '/world-display') {
+      return respond(await handleWorldDisplayOwner(request, env, { user, parts: [], fetchImpl }));
+    }
     const rest = path.slice(EUP_PREFIX.length + 1);
     const [section, ...parts] = rest ? rest.split('/') : [];
     if (!section) return respond({ ok: true, sections: EUP_SECTIONS, scope: 'house_owner' });

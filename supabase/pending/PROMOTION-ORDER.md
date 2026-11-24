@@ -716,3 +716,43 @@ It leaves `ai_context.decisions` untouched. Core needs no rollback: without the 
 
 **Records** after the apply: move the file to `supabase/migrations/` under its ledger version; the ledger, the drift
 contract, the schema manifest from the CI reset, a new production snapshot; this section and `README.md`.
+
+
+## Optional World display preference (pending, 2026-11-24; PR #822)
+
+| File (+ rollback) | Creates | Callers | Proof before approval |
+|---|---|---|---|
+| `20261123013000_eup_world_display_v1.sql` (+ `20261123013000_eup_world_display_v1.rollback.sql`) | `public.eup_world_display` and two service-role-only SECURITY DEFINER RPCs, `eup_world_display_read()` and `eup_world_display_set(uuid,boolean)`; public news heat-map presentation only | `workers/mccluster/src/eup/world-display.js`; the public route falls back to false without the SQL, and the owner route reports unavailable | `node scripts/world-display-native-check.mjs` on disposable PostgreSQL 17, then `--full-reset` against the complete local Supabase reset; both run in Reconciliation CI and upload receipts |
+
+**Optional, pending and off by default. No activation is approved.** This is shared Equity Uprise platform support, not a
+building capability or a module-enablement change. It changes no news source, pin, Analytics, private owner overlay or existing
+function. The table starts empty, which the read function returns as false. The verified house owner must separately save a
+choice through Control; every save, including false, creates a durable row.
+
+**Prerequisites:** the already-applied `public.orgs` and `public.org_members` columns named in the file, with their current
+UUID/text types. The catalog-only production read at 2026-11-24 19:05 UTC found all five prerequisite columns and none of the
+three proposed objects; it read no member rows or settings. Evidence:
+`docs/control-plane/evidence/world-display-database-2026-11-24/README.md`. Re-run that catalog query immediately before an
+approved apply. No pending dependency, Edge Function redeploy or new backend is needed.
+
+**Before apply:** review this exact file and its CI SHA-256 receipt, require the exact PR head's Worker contracts and Supabase
+migration reset jobs to pass, and obtain Matthew's approval by this filename. Apply only that committed file as one transaction,
+under `eup_world_display_v1`, through the README promotion flow. It requires READ COMMITTED, bounds lock waits at five seconds,
+and refuses partial objects, overloads, changed table contracts or changed function bodies/grants. A reviewed-shape reapply
+preserves every owner decision; never replay an already-recorded ledger migration.
+
+**After an approved apply:** default read is false with an empty store; browser roles cannot call either RPC or access the table,
+and service_role can call the RPCs but cannot directly read or write the table. The setter rechecks the verified actor's house
+owner membership. Record the actual version and move the file unchanged; update ledger, drift contract, schema manifest,
+production snapshot, these records and the two `live-callers.json` exceptions together. Remove the pending CI application step.
+A service credential remains trusted to assert an actor UUID; keep the Worker's verified-owner boundary and credential isolation.
+
+**Recovery:** roll callers back first, then separately approve the recovery file. It drops only its exact reviewed empty store
+and functions, with no CASCADE. Any saved choice, including false, blocks recovery; so do drift, later dependencies and an
+obsolete transaction snapshot. There is no force flag. Preserve/export a saved choice and review a separate recovery before
+considering any deletion. The native proof includes a real owner-save/recovery race and proves the saved choice survives.
+
+**Evidence levels:** local PostgreSQL 17.6 was observed passing 75 checks before the workspace became unavailable; the captured
+stdout is recorded, while its detailed local receipt could not be recovered. The prepared files were reconstructed from their
+exact writer inputs. Complete-reset CI and a fresh native CI receipt are required independent gates; bounded tenancy fixtures
+are not a claim that the complete reset or production acceptance passed.

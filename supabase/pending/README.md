@@ -615,3 +615,13 @@ otherwise unchanged. Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`. O
 rollback: `PROMOTION-ORDER.md`, section 15. Test:
 `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/ai-context-workstreams-sql-check.mjs`
 (disposable database; apply twice, privileges, behaviour, rollback, re-apply). Never applied here.
+
+
+Pending, optional and off by default (2026-11-24): `20261123013000_eup_world_display_v1.sql` with
+`20261123013000_eup_world_display_v1.rollback.sql` supplies the public World news heat-map preference. An empty store reads
+false; only the verified house owner's service-backed command records a choice. Every saved choice, including false, prevents
+recovery from dropping the store. No module, news source, pin or Analytics setting is enabled. Order, named approval,
+production catalog preflight and recovery conditions are in `PROMOTION-ORDER.md`, "Optional World display preference".
+Native PostgreSQL 17 proof: `node scripts/world-display-native-check.mjs`; complete-reset proof: the same command with
+`--full-reset`, both in Reconciliation CI. This remains pending until its exact text is separately approved and applied through
+"To promote one". Source and local evidence: `docs/control-plane/evidence/world-display-database-2026-11-24/README.md`.

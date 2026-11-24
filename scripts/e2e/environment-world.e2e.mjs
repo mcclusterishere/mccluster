@@ -164,6 +164,8 @@ async function openPage(size, { daylight = 'night', feed = 'available', fail = n
       if (p === '/v1/mnet/public-feed') return json(route, { items: POSTS, scope: 'public', next_before: null });
       if (p === '/v1/world/news') return json(route, { ok: true, items: NEWS, next_before: null, attribution: { name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' } });
       if (p === '/v1/world/place-scope') return json(route, { ok: true, enabled: false, country: null });
+      // Fixtures testing the retained visual deliberately opt in like the owner would.
+      if (p === '/v1/world/display') return json(route, { ok: true, publicNewsHeatMap: true });
       if (p === '/v1/world/news-heat') return json(route, { ok: true, window_hours: 24, countries: { US: 6 }, total: 6, capped: false, posts: {} });
       if (p === '/v1/world/members') return json(route, { ok: true, basis: 'accounts_by_latest_signed_in_ip_place', window_days: 400, exact: false, k: 5, countries: {} });
       if (p === '/v1/world/access') return json(route, { release: { version: 'globe-admin-preview/v1', admin_preview: false }, level: 'public', unlocked_layers: [], locked_layers: [], layers: {} });

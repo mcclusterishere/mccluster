@@ -1,0 +1,46 @@
+{
+  "project_id": "zmnhbrjyhxzhkxmhkexs",
+  "scope": "Equity Uprise shared World presentation support; SELECT-only catalog inspection; no personal rows",
+  "query": "select now() as checked_at, current_setting('server_version') as postgres_version, to_regclass('public.eup_world_display')::text as display_table, to_regprocedure('public.eup_world_display_read()')::text as display_read, to_regprocedure('public.eup_world_display_set(uuid,boolean)')::text as display_set, (select jsonb_agg(jsonb_build_object('table_name',table_name,'column_name',column_name,'data_type',data_type,'is_nullable',is_nullable) order by table_name,ordinal_position) from information_schema.columns where table_schema='public' and ((table_name='orgs' and column_name in ('id','slug')) or (table_name='org_members' and column_name in ('org_id','profile_id','role')))) as prerequisites;",
+  "result": [
+    {
+      "checked_at": "2026-11-24 19:05:21.223198+00",
+      "postgres_version": "17.6",
+      "display_table": null,
+      "display_read": null,
+      "display_set": null,
+      "prerequisites": [
+        {
+          "data_type": "uuid",
+          "table_name": "org_members",
+          "column_name": "org_id",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "org_members",
+          "column_name": "profile_id",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "text",
+          "table_name": "org_members",
+          "column_name": "role",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "uuid",
+          "table_name": "orgs",
+          "column_name": "id",
+          "is_nullable": "NO"
+        },
+        {
+          "data_type": "text",
+          "table_name": "orgs",
+          "column_name": "slug",
+          "is_nullable": "NO"
+        }
+      ]
+    }
+  ]
+}

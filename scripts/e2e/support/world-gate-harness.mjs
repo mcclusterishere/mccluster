@@ -132,6 +132,7 @@ export async function openWorld(browser, base, device, path, opts = {}) {
     if (p === '/v1/mnet/feed') return json(route, { items: POSTS, next_before: null });
     if (p === '/v1/mnet/bootstrap') return json(route, { identity: { m_uid: ME.m_uid, mccluster_id: o.nextStep === 'profile' ? null : 'fixture.member' }, profile: { display_name: o.nextStep === 'profile' ? '' : 'Fixture Member' }, next_step: o.nextStep, tour_done_at: new Date().toISOString() });
     if (p === '/v1/world/news') return json(route, { ok: true, items: [], next_before: null, attribution: { name: 'The GDELT Project', url: 'https://www.gdeltproject.org/' } });
+    if (p === '/v1/world/display') return json(route, { ok: true, publicNewsHeatMap: o.publicNewsHeatMap === true });
     if (p === '/v1/world/news-heat') {
       if (u.searchParams.get('country')) return json(route, { ok: true, cells: [], total: 0 });
       if (o.heat === '503') return json(route, { error: 'unavailable' }, 503);
