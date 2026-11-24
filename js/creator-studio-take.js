@@ -423,8 +423,12 @@
     }).catch(function () {});
     return calibrated;
   }
-  function decode(arrayBuffer, rate) {
-    return calibrate().then(function () { return decodeIn(decodeContext(rate), arrayBuffer); });
+  function decode(arrayBuffer, rate, scope) {
+    if (!current(scope)) return Promise.reject(new Error("account-changed"));
+    return calibrate().then(function () {
+      if (!current(scope)) throw new Error("account-changed");
+      return decodeIn(decodeContext(rate), arrayBuffer);
+    });
   }
   function readFile(file) {
     if (file.arrayBuffer) return file.arrayBuffer();
@@ -464,6 +468,8 @@
 
   /* ---------- import ---------- */
   function importFile(file) {
+    var scope = active;
+    if (!current(scope) || S.busy) return Promise.resolve(false);
     fail("");
     if (!file) return Promise.resolve(false);
     if (S.recording || S.pending) { fail("Stop the recording first, then import."); return Promise.resolve(false); }
@@ -476,10 +482,12 @@
     setBusy(true);
     say("Opening " + (file.name || "the file") + "…");
     return probeFile(file).then(function (info) {
+      if (!current(scope)) return false;
       /* refused from the header, before any of it is decoded */
       var why = tooLong(info, ctx && ctx.sampleRate);
       if (why) { setBusy(false); say(""); fail(why); return false; }
-      return readFile(file).then(function (ab) { return decode(ab, info && info.sampleRate); }).then(function (buffer) {
+      return readFile(file).then(function (ab) { return decode(ab, info && info.sampleRate, scope); }).then(function (buffer) {
+        if (!current(scope)) return false;
         setBusy(false);
         if (!buffer || !buffer.length) throw new Error("empty");
         /* the header could not be read, or was wrong: the decoded length is the last word */
@@ -490,6 +498,7 @@
         return true;
       });
     }).catch(function () {
+      if (!current(scope)) return false;
       setBusy(false);
       say("");
       fail("This browser could not read that file as audio. Try an MP3, a WAV or an M4A.");
@@ -620,7 +629,7 @@
     }
   }
   function play() {
-    if (!S.buffer || S.recording || S.busy) return;
+    if (!current(active) || !S.buffer || S.recording || S.busy) return;
     var c;
     try { c = audio(); } catch (_) { fail("This browser cannot play audio here."); return; }
     stopSource();
@@ -675,7 +684,7 @@
 
   /* ---------- write the WAV ---------- */
   /* straight from the buffer, a slice at a time, so the page stays alive and there is never a second decoded copy */
-  function render(buffer, r) {
+  function render(buffer, r, scope) {
     if (!buffer) return Promise.reject(new Error("nothing"));
     var ch = [];
     for (var c = 0; c < buffer.numberOfChannels; c++) ch.push(buffer.getChannelData(c));
@@ -684,6 +693,7 @@
     return new Promise(function (resolve, reject) {
       (function step() {
         try {
+          if (!current(scope)) throw new Error("account-changed");
           var to = Math.min(rf.frames, at + STEP);
           parts.push(pcm16(ch, rf, at, to, POS));
           at = to;
@@ -703,6 +713,20 @@
   var dbp = null, memory = [];
   function owner() {
     try { return String((w.MCC && typeof w.MCC.account === "function" && w.MCC.account()) || ""); } catch (_) { return ""; }
+  }
+  // A return to the same account is a new activation. Work started on the old one
+  // cannot deliver audio or messages to the currently visible editor.
+  function activation(me, journalWrites) {
+    return { owner: me, writes: new Set(), journalWrites: journalWrites || new Set() };
+  }
+  // On same-account navigation, MediaRecorder may still deliver its last chunk.
+  // Only journal writes survive that transition. Switching accounts retires both sets.
+  function journalCurrent(scope) {
+    return scope.journalWrites === active.journalWrites && scope.owner === owner();
+  }
+  var active = activation(owner()), parked = false;
+  function current(scope) {
+    return !parked && scope === active && scope.owner === owner();
   }
   function db() {
     if (dbp) return dbp;
@@ -746,77 +770,110 @@
     dbp.catch(function () {});
     return dbp;
   }
-  function tx(stores, mode, work) {
+  function tx(stores, mode, work, scope, journal) {
     return db().then(function (x) {
+      // Opening the database can finish after the owner who requested this operation left.
+      if (!(journal ? journalCurrent(scope) : current(scope))) throw new Error("account-changed");
       return new Promise(function (resolve, reject) {
         var t = x.transaction(stores, mode), out;
-        t.oncomplete = function () { resolve(out); };
-        t.onerror = function () { reject(t.error || new Error("idb")); };
-        t.onabort = function () { reject(t.error || new Error("idb-abort")); };
-        var req = work(t);
-        if (req) req.onsuccess = function () { out = req.result; };
+        var writes = journal ? scope.journalWrites : scope.writes;
+        if (mode === "readwrite") writes.add(t);
+        t.oncomplete = function () { writes.delete(t); resolve(out); };
+        t.onabort = function () { writes.delete(t); reject(t.error || new Error("idb-abort")); };
+        t.onerror = function (e) { reject(t.error || (e.target && e.target.error) || new Error("idb")); };
+        try {
+          var req = work(t);
+          if (req) req.onsuccess = function () { out = req.result; };
+        } catch (err) {
+          try { t.abort(); } catch (_) {}
+          reject(err);
+        }
       });
     });
   }
-  function mine(list) {
-    var me = owner();
+  function mine(list, me) {
     return (list || []).filter(function (t) { return (t.owner || "") === me; })
       .sort(function (a, b) { return String(b.createdAt).localeCompare(String(a.createdAt)); });
   }
   /* the list: metadata from the database, plus any take this tab is holding because it could not be written */
-  function loadTakes() {
-    return tx([STORE], "readonly", function (t) { return t.objectStore(STORE).getAll(); }).then(function (all) {
+  function loadTakes(scope) {
+    return tx([STORE], "readonly", function (t) { return t.objectStore(STORE).getAll(); }, scope).then(function (all) {
+      if (!current(scope)) return;
       S.volatile = false;
-      S.takes = mine((all || []).concat(memory));
+      S.takes = mine((all || []).concat(memory), scope.owner);
+      listTakes();
     }, function () {
+      if (!current(scope)) return;
       S.volatile = true;
-      S.takes = mine(memory);
-    }).then(listTakes);
+      S.takes = mine(memory, scope.owner);
+      listTakes();
+    });
   }
-  function hold(take, blob) {
+  function hold(take, blob, scope) {
+    if (!current(scope)) throw new Error("account-changed");
     take.local = true; take.data = blob;
     memory.push(take);
     return false;
   }
-  function putTake(take, blob) {
-    if (S.volatile) return Promise.resolve(hold(take, blob));
-    return tx([STORE, AUDIO], "readwrite", function (t) {
-      t.objectStore(AUDIO).put({ id: take.id, data: blob });
-      return t.objectStore(STORE).put(take);
-    }).then(function () { return true; }, function (err) {
-      if (err && /quota/i.test(String(err.name || err.message || ""))) throw err;
-      /* the write failed for another reason: the take is held in this tab, and the list says so */
-      return hold(take, blob);
+  function putTake(take, blob, recording, scope, recoveryKeys) {
+    if (S.volatile) return Promise.resolve(recoveryKeys ? null : hold(take, blob, scope));
+    var written = false;
+    return tx(recording ? [STORE, AUDIO, RECS] : [STORE, AUDIO], "readwrite", function (t) {
+      function write() {
+        t.objectStore(AUDIO).put({ id: take.id, data: blob });
+        t.objectStore(STORE).put(take);
+        written = true;
+      }
+      if (!recording) { write(); return; }
+      var pieces = t.objectStore(RECS);
+      if (!recoveryKeys) {
+        write();
+        clearPieces(pieces, recording, take.owner);
+        return;
+      }
+      // Another tab may have finished this recording or received more chunks while
+      // we decoded. Compare the append-only chunk keys under the same write lock.
+      t.objectStore(STORE).get(take.id).onsuccess = function (e) {
+        if (e.target.result) return;
+        clearPieces(pieces, recording, take.owner, recoveryKeys, write);
+      };
+    }, scope).then(function () { return written ? true : null; }, function (err) {
+      if (recoveryKeys || /quota/i.test(String(err && (err.name || err.message)))) throw err;
+      return hold(take, blob, scope);
     });
   }
   /* a take's audio, read only when it is needed */
-  function dataOf(take) {
-    if (!take) return Promise.reject(new Error("gone"));
+  function dataOf(take, scope) {
+    if (!current(scope) || !take || (take.owner || "") !== scope.owner) return Promise.reject(new Error("gone"));
     if (take.data) return Promise.resolve(take.data);
-    return tx([AUDIO], "readonly", function (t) { return t.objectStore(AUDIO).get(take.id); }).then(function (rec) {
-      if (!rec || !rec.data) throw new Error("gone");
+    return tx([AUDIO], "readonly", function (t) { return t.objectStore(AUDIO).get(take.id); }, scope).then(function (rec) {
+      if (!current(scope) || !rec || !rec.data) throw new Error("gone");
       return rec.data instanceof Blob ? rec.data : new Blob([rec.data], { type: "audio/wav" });
     });
   }
-  function dropTake(id) {
+  function dropTake(id, scope) {
+    if (!current(scope)) return Promise.reject(new Error("account-changed"));
     var held = memory.some(function (t) { return t.id === id; });
     memory = memory.filter(function (t) { return t.id !== id; });
     if (S.volatile || held) return Promise.resolve();
-    return tx([STORE, AUDIO], "readwrite", function (t) { t.objectStore(AUDIO).delete(id); return t.objectStore(STORE).delete(id); });
+    return tx([STORE, AUDIO], "readwrite", function (t) { t.objectStore(AUDIO).delete(id); return t.objectStore(STORE).delete(id); }, scope);
   }
   function newId() {
     try { if (w.crypto && w.crypto.randomUUID) return w.crypto.randomUUID(); } catch (_) {}
     return "take-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
   }
-  function keep(rendered, name) {
+  function keep(rendered, name, scope, recording, recoveryKeys) {
+    if (!current(scope)) return Promise.resolve(null);
     var take = {
-      id: newId(), owner: owner(), name: safeName(name), duration: rendered.duration,
+      // Tabs recovering the same interrupted recording refer to one take.
+      id: recording || newId(), owner: scope.owner, name: safeName(name), duration: rendered.duration,
       sampleRate: rendered.sampleRate, channels: rendered.channels, bytes: rendered.bytes,
       createdAt: new Date().toISOString(), format: "wav"
     };
     take.session = sessionDoc(take);
-    return putTake(take, rendered.data).then(function (stored) {
-      return loadTakes().then(function () { return { take: take, stored: stored }; });
+    return putTake(take, rendered.data, recording, scope, recoveryKeys).then(function (stored) {
+      if (stored === null) return null;
+      return loadTakes(scope).then(function () { return { take: take, stored: stored }; });
     });
   }
 
@@ -867,16 +924,33 @@
       ul.appendChild(li);
     });
   }
-  function takeById(id) { for (var i = 0; i < S.takes.length; i++) if (S.takes[i].id === id) return S.takes[i]; return null; }
-  function fileOf(take) {
+  function takeById(id) {
+    if (!current(active)) return null;
+    for (var i = 0; i < S.takes.length; i++) {
+      if (S.takes[i].id === id && (S.takes[i].owner || "") === active.owner) return S.takes[i];
+    }
+    return null;
+  }
+  function fileOf(take, scope) {
     var name = safeName(take.name).replace(/\s+/g, "-") + ".wav";
-    return dataOf(take).then(function (blob) {
+    return dataOf(take, scope).then(function (blob) {
       return new File([blob], name, { type: "audio/wav", lastModified: Date.parse(take.createdAt) || Date.now() });
     });
   }
 
   /* ---------- hand a take to the release form ---------- */
-  var autoTitle = "";
+  var autoTitle = "", handoffs = {};
+  function clearHandoffs() {
+    Object.keys(handoffs).forEach(function (id) {
+      var slot = handoffs[id];
+      if (slot.file && slot.input.files && slot.input.files[0] === slot.file) slot.input.value = "";
+      slot.note.textContent = ""; slot.note.hidden = true;
+    });
+    handoffs = {};
+    var title = d.getElementById("trackTitle");
+    if (title && autoTitle && title.value === autoTitle) title.value = "";
+    autoTitle = "";
+  }
   function handoffNote(input, id) {
     var note = d.getElementById(id);
     if (note) return note;
@@ -884,8 +958,10 @@
     note.id = id; note.className = "cs-handoff";
     note.setAttribute("role", "status");
     input.parentNode.appendChild(note);
-    if (input.form) input.form.addEventListener("reset", function () { note.hidden = true; });
-    input.addEventListener("change", function (e) { if (e.isTrusted) note.hidden = true; });
+    note.hidden = true;
+    function clearSlot() { note.textContent = ""; note.hidden = true; delete handoffs[id]; }
+    if (input.form) input.form.addEventListener("reset", clearSlot);
+    input.addEventListener("change", function (e) { if (e.isTrusted) clearSlot(); });
     return note;
   }
   /* slot "master" (the default) fills the release's master audio; slot "preview" fills its public preview */
@@ -899,7 +975,12 @@
       fail("“" + take.name + "” is " + size(take.bytes) + ". A preview can be 50 MB at most. Open the take, trim a shorter part, save it, and use that as the preview.");
       return Promise.resolve(false);
     }
-    return fileOf(take).then(function (file) {
+    var scope = active, noteId = preview ? "tbHandoffPreview" : "tbHandoff";
+    var note = handoffNote(input, noteId);
+    var request = { input: input, note: note, file: handoffs[noteId] && handoffs[noteId].file };
+    handoffs[noteId] = request;
+    return fileOf(take, scope).then(function (file) {
+      if (!current(scope) || handoffs[noteId] !== request) return false;
       var placed = false;
       try {
         var dt = new DataTransfer();
@@ -911,10 +992,12 @@
         fail("This browser will not let the studio place a file in the form for you. Press Download, then choose that WAV under Releases.");
         return false;
       }
+      request.file = input.files[0];
       input.dispatchEvent(new Event("input", { bubbles: true }));
+      if (!current(scope) || handoffs[noteId] !== request) return false;
       input.dispatchEvent(new Event("change", { bubbles: true }));
+      if (!current(scope) || handoffs[noteId] !== request) return false;
       var what = "From your takes: " + file.name + " (" + clock(take.duration) + ", " + size(take.bytes) + "). ";
-      var note = handoffNote(input, preview ? "tbHandoffPreview" : "tbHandoff");
       note.hidden = false;
       if (preview) {
         note.textContent = what + "This is the clip the public hears. It is uploaded only when you submit this release.";
@@ -924,6 +1007,7 @@
         if (title && (!title.value || title.value === autoTitle)) {
           title.value = take.name; autoTitle = take.name;
           title.dispatchEvent(new Event("input", { bubbles: true }));
+          if (!current(scope) || handoffs[noteId] !== request) return false;
         }
         note.textContent = what + "It is uploaded only when you submit this release." + (take.bytes > PREVIEW_MAX_BYTES
           ? " This WAV is over 50 MB, the most the file listeners hear can be: add a shorter preview file below, or the form will refuse a public release that has none."
@@ -936,20 +1020,22 @@
       try { input.scrollIntoView({ block: "center" }); input.focus({ preventScroll: true }); } catch (_) {}
       return true;
     }, function () {
-      fail("That take's audio could not be read on this device.");
+      if (current(scope) && handoffs[noteId] === request) fail("That take's audio could not be read on this device.");
       return false;
     });
   }
   function download(id) {
     var take = takeById(id);
     if (!take) { fail("That take is no longer on this device."); return Promise.resolve(false); }
-    return fileOf(take).then(function (file) {
+    var scope = active;
+    return fileOf(take, scope).then(function (file) {
+      if (!current(scope)) return false;
       var url = URL.createObjectURL(file), a = d.createElement("a");
       a.href = url; a.download = file.name; a.hidden = true;
       d.body.appendChild(a); a.click(); a.remove();
       w.setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
       return true;
-    }, function () { fail("That take could not be prepared for download."); return false; });
+    }, function () { if (current(scope)) fail("That take could not be prepared for download."); return false; });
   }
   function openTake(id) {
     var take = takeById(id);
@@ -957,14 +1043,17 @@
     fail("");
     if (S.recording || S.pending) { fail("Stop the recording first."); return Promise.resolve(false); }
     if (S.busy) return Promise.resolve(false);
+    var scope = active;
     setBusy(true);
-    return dataOf(take).then(readFile).then(function (ab) { return decode(ab, take.sampleRate); }).then(function (buffer) {
+    return dataOf(take, scope).then(readFile).then(function (ab) { return decode(ab, take.sampleRate, scope); }).then(function (buffer) {
+      if (!current(scope)) return false;
       setBusy(false);
       open(buffer, take.name);
       say("Opened “" + take.name + "” to trim again. Saving makes a new take; this one stays.");
       try { $("tbName").focus(); } catch (_) {}
       return true;
     }, function () {
+      if (!current(scope)) return false;
       setBusy(false);
       fail("That take could not be opened.");
       return false;
@@ -980,21 +1069,24 @@
     if (err && /quota/i.test(String(err.name || err.message || ""))) return "This device is out of room for another take. Delete one, or download and remove older takes.";
     return "The take could not be made. Nothing was changed.";
   }
-  function save(opts) {
+  function save(opts, recording) {
     opts = opts || {};
-    if (!S.buffer || S.busy) return Promise.resolve(null);
+    var scope = active;
+    if (!current(scope) || !S.buffer || S.busy) return Promise.resolve(null);
     fail("");
     stopPlayback();
     setBusy(true);
     say("Making the WAV. Keep this tab open…");
     var name = safeName($("tbName").value || S.name);
-    return render(S.buffer, reg()).then(function (out) {
-      return keep(out, name);
+    return render(S.buffer, reg(), scope).then(function (out) {
+      return keep(out, name, scope, recording);
     }).then(function (res) {
+      if (!current(scope) || !res) return null;
       setBusy(false);
       say(res.stored && opts.message ? opts.message : saved(res));
       return res.take;
     }).catch(function (err) {
+      if (!current(scope)) return null;
       setBusy(false);
       say("");
       fail(saveError(err));
@@ -1046,7 +1138,7 @@
   function setBusy(on) { S.busy = !!on; ui(); }
 
   /* ---------- record ---------- */
-  var REC = { stream: null, rec: null, chunks: [], node: null, analyser: null, raf: 0, t0: 0, data: null, level: 0, said: 0, session: "", mime: "" };
+  var REC = null;
   function canRecord() {
     return !!(AC && w.MediaRecorder && w.navigator && w.navigator.mediaDevices && w.navigator.mediaDevices.getUserMedia);
   }
@@ -1069,20 +1161,39 @@
 
   /* each piece of a recording is written to this device as it arrives, so the page closing mid-take does not
      lose what was captured; the pieces are removed once the finished take is kept */
-  function recPut(blob) {
-    if (S.volatile) return;
-    var row = { session: REC.session, owner: owner(), mime: REC.mime, at: Date.now(), blob: blob };
-    tx([RECS], "readwrite", function (t) { t.objectStore(RECS).add(row); }).catch(function () {});
+  function recPut(capture, blob) {
+    if (!capture.persistent) return;
+    var row = { session: capture.session, owner: capture.scope.owner, mime: capture.mime, at: Date.now(), blob: blob };
+    tx([RECS], "readwrite", function (t) { t.objectStore(RECS).add(row); }, capture.scope, true).then(function () {
+      if (capture.navigationTail && !parked && journalCurrent(capture.scope)) retryRecovery(active);
+    }, function () {});
   }
-  function recClear(session) {
+  function scanPieces(store, visit, done) {
+    store.openCursor().onsuccess = function (e) {
+      var cursor = e.target.result;
+      if (!cursor) { if (done) done(); return; }
+      visit(cursor);
+      cursor.continue();
+    };
+  }
+  function clearPieces(store, session, me, expectedKeys, onMatch) {
+    function matches(cursor) {
+      return cursor.value.session === session && (cursor.value.owner || "") === me;
+    }
+    function remove() {
+      scanPieces(store, function (cursor) { if (matches(cursor)) cursor.delete(); });
+      if (onMatch) onMatch();
+    }
+    if (!expectedKeys) { remove(); return; }
+    var keys = [];
+    scanPieces(store, function (cursor) { if (matches(cursor)) keys.push(cursor.primaryKey); }, function () {
+      if (keys.length === expectedKeys.length && keys.every(function (key, i) { return key === expectedKeys[i]; })) remove();
+    });
+  }
+  function recClear(session, scope, expectedKeys) {
     return tx([RECS], "readwrite", function (t) {
-      t.objectStore(RECS).openCursor().onsuccess = function (e) {
-        var cur = e.target.result;
-        if (!cur) return;
-        if (cur.value && cur.value.session === session) cur.delete();
-        cur.continue();
-      };
-    }).catch(function () {});
+      clearPieces(t.objectStore(RECS), session, scope.owner, expectedKeys);
+    }, scope).catch(function () {});
   }
   function takeName(prefix, date) {
     return prefix + " " + date.toLocaleDateString(undefined, { day: "numeric", month: "short" }) + " " +
@@ -1090,36 +1201,53 @@
   }
   /* pieces left behind by a recording that never reached Stop: keep what was captured as a take */
   var RECOVER_QUIET_MS = 5000, recoverTimer = 0;
-  function recover() {
+  function retryRecovery(scope) {
     w.clearTimeout(recoverTimer);
-    return tx([RECS], "readonly", function (t) { return t.objectStore(RECS).getAll(); }).then(function (rows) {
-      var me = owner(), sessions = {}, order = [], fresh = false, now = Date.now();
-      (rows || []).forEach(function (r) {
-        if (!r || !r.blob || (r.owner || "") !== me || r.session === REC.session) return;
-        if (!sessions[r.session]) { sessions[r.session] = { mime: r.mime, at: 0, first: r.at, blobs: [] }; order.push(r.session); }
-        sessions[r.session].blobs.push(r.blob);
-        if (r.at > sessions[r.session].at) sessions[r.session].at = r.at;
+    recoverTimer = w.setTimeout(function () { recover(scope); }, RECOVER_QUIET_MS + 500);
+  }
+  function recover(scope) {
+    if (!current(scope)) return Promise.resolve(0);
+    w.clearTimeout(recoverTimer);
+    var sessions = new Map(), fresh = false, now = Date.now();
+    return tx([RECS], "readonly", function (t) {
+      scanPieces(t.objectStore(RECS), function (cursor) {
+        var r = cursor.value;
+        if (!r.blob || (r.owner || "") !== scope.owner || (REC && r.session === REC.session)) return;
+        if (!sessions.has(r.session)) sessions.set(r.session, { mime: r.mime, at: 0, first: r.at, blobs: [], keys: [] });
+        var group = sessions.get(r.session);
+        group.blobs.push(r.blob);
+        group.keys.push(cursor.primaryKey);
+        if (r.at > group.at) group.at = r.at;
       });
+    }, scope).then(function () {
+      if (!current(scope)) return 0;
       var chain = Promise.resolve(0);
-      order.forEach(function (key) {
-        var s = sessions[key];
+      sessions.forEach(function (s, key) {
         /* pieces that are still arriving belong to a recording running in another tab: leave them */
         if (now - s.at < RECOVER_QUIET_MS) { fresh = true; return; }
         chain = chain.then(function (n) {
+          if (!current(scope)) return n;
           var name = takeName("Recovered take", new Date(s.first || now));
-          return readFile(new Blob(s.blobs, { type: s.mime || "audio/webm" })).then(function (ab) { return decode(ab); }).then(function (buffer) {
-            return render(buffer, region(buffer.duration, 0, buffer.duration, 0, 0));
-          }).then(function (out) { return keep(out, name); }).then(function (res) {
+          return readFile(new Blob(s.blobs, { type: s.mime || "audio/webm" })).then(function (ab) { return decode(ab, null, scope); }).then(function (buffer) {
+            return render(buffer, region(buffer.duration, 0, buffer.duration, 0, 0), scope);
+          }).then(function (out) {
+            return keep(out, name, scope, key, s.keys).catch(function (err) {
+              if (current(scope)) fail(saveError(err));
+              return null; // Leave the original journal intact when the recovered WAV could not be stored.
+            });
+          }).then(function (res) {
+            if (!current(scope) || !res) return n;
             say("A recording was cut short when the page closed. The " + clock(res.take.duration) + " that had been captured is kept as “" + res.take.name + "”.");
-            return recClear(key).then(function () { return n + 1; });
+            return n + 1;
           }, function (err) {
+            if (!current(scope)) return n;
             if (err && /quota/i.test(String(err.name || err.message || ""))) { fail(saveError(err)); return n; }
             fail("A recording was cut short when the page closed, and what was captured could not be read back.");
-            return recClear(key).then(function () { return n; });
+            return recClear(key, scope, s.keys).then(function () { return n; });
           });
         });
       });
-      if (fresh) recoverTimer = w.setTimeout(recover, RECOVER_QUIET_MS + 500);
+      if (fresh) retryRecovery(scope);
       return chain;
     }, function () { return 0; });
   }
@@ -1127,6 +1255,8 @@
   function warnLeaving(e) { e.preventDefault(); e.returnValue = ""; return ""; }
 
   function startRecording() {
+    var scope = active;
+    if (!current(scope)) return Promise.resolve(false);
     fail("");
     if (!canRecord()) { fail(noRecordReason()); return Promise.resolve(false); }
     if (S.recording || S.pending || S.busy) return Promise.resolve(false);
@@ -1138,15 +1268,28 @@
     return w.navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
     }).then(function (stream) {
+      if (!current(scope)) { stopTracks(stream); return false; }
       quietSite();
       var type = recorderType(), rec;
       try { rec = type ? new w.MediaRecorder(stream, { mimeType: type }) : new w.MediaRecorder(stream); }
-      catch (e) { stream.getTracks().forEach(function (t) { t.stop(); }); throw e; }
-      REC.stream = stream; REC.rec = rec; REC.chunks = [];
-      REC.session = newId(); REC.mime = rec.mimeType || type || "audio/webm";
-      rec.ondataavailable = function (e) { if (e.data && e.data.size) { REC.chunks.push(e.data); recPut(e.data); } };
-      rec.onstop = finishRecording;
-      rec.onerror = function () { fail("The recording stopped because of an error. What was captured is being kept."); stopRecording(); };
+      catch (e) { stopTracks(stream); throw e; }
+      var capture = {
+        scope: scope, rec: rec, stream: stream, chunks: [], session: newId(), mime: rec.mimeType || type || "audio/webm",
+        persistent: !S.volatile, level: 0, said: 0, raf: 0
+      };
+      REC = capture;
+      rec.ondataavailable = function (e) {
+        if (capture.finished || !e.data || !e.data.size) return;
+        if (REC === capture && current(scope)) capture.chunks.push(e.data);
+        else if (!capture.navigationTail || !journalCurrent(scope)) return;
+        recPut(capture, e.data);
+      };
+      rec.onstop = function () { finishRecording(capture); };
+      rec.onerror = function () {
+        if (REC !== capture || !current(scope)) return;
+        fail("The recording stopped because of an error. What was captured is being kept.");
+        stopRecording();
+      };
       /* the meter listens to the microphone; nothing is sent to the speakers, so there is no feedback */
       try {
         REC.node = c.createMediaStreamSource(stream);
@@ -1157,7 +1300,6 @@
       } catch (_) { REC.node = null; REC.analyser = null; }
       rec.start(250);
       REC.t0 = (w.performance && w.performance.now()) || Date.now();
-      REC.level = 0; REC.said = 0;
       S.pending = false; S.recording = true;
       w.addEventListener("beforeunload", warnLeaving);
       ui();
@@ -1165,6 +1307,8 @@
       meter();
       return true;
     }).catch(function (err) {
+      if (!current(scope)) return false;
+      if (REC) { releaseMic(REC); REC = null; }
       S.pending = false; S.recording = false;
       ui();
       rest();
@@ -1173,8 +1317,8 @@
     });
   }
   function meter() {
+    if (!REC || !S.recording) return;
     w.cancelAnimationFrame(REC.raf);
-    if (!S.recording) return;
     var now = (w.performance && w.performance.now()) || Date.now();
     var time = clock((now - REC.t0) / 1000);
     $("tbRecTime").textContent = time;
@@ -1200,43 +1344,59 @@
     }
     REC.raf = w.requestAnimationFrame(meter);
   }
+  function stopTracks(stream) {
+    try { stream.getTracks().forEach(function (track) { track.stop(); }); } catch (_) {}
+  }
+  function releaseMic(capture) {
+    if (capture.node) { try { capture.node.disconnect(); } catch (_) {} }
+    if (capture.stream) stopTracks(capture.stream);
+    capture.node = null; capture.analyser = null; capture.stream = null;
+  }
   function stopRecording() {
-    if (!S.recording) return;
+    var capture = REC;
+    if (!S.recording || !capture) return;
     S.recording = false;
-    w.cancelAnimationFrame(REC.raf);
+    // MediaRecorder delivers its final data and stop events asynchronously.
+    // Keep the bench locked until those events have finished this capture.
+    setBusy(true);
+    w.cancelAnimationFrame(capture.raf);
     w.removeEventListener("beforeunload", warnLeaving);
-    ui();
-    try { if (REC.rec && REC.rec.state !== "inactive") REC.rec.stop(); else finishRecording(); } catch (_) { finishRecording(); }
+    try {
+      if (capture.rec.state !== "inactive") capture.rec.stop();
+      else finishRecording(capture);
+    } catch (_) { finishRecording(capture); }
+    releaseMic(capture);
   }
-  function releaseMic() {
-    try { if (REC.node) REC.node.disconnect(); } catch (_) {}
-    try { if (REC.stream) REC.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (_) {}
-    REC.node = null; REC.analyser = null; REC.stream = null;
-  }
-  function finishRecording() {
-    var rec = REC.rec, chunks = REC.chunks, session = REC.session;
-    REC.rec = null; REC.chunks = []; REC.session = "";
-    releaseMic();
+  function finishRecording(capture) {
+    capture.finished = true;
+    releaseMic(capture);
+    if (REC !== capture || !current(capture.scope)) return;
+    REC = null;
+    S.recording = false;
+    w.cancelAnimationFrame(capture.raf);
+    w.removeEventListener("beforeunload", warnLeaving);
     rest();
-    if (!rec) return;
-    var blob = new Blob(chunks, { type: (rec.mimeType || "audio/webm") });
-    if (!blob.size) { recClear(session); say(""); fail("Nothing was recorded. Check the microphone is not muted and try again."); return; }
+    var blob = new Blob(capture.chunks, { type: capture.mime });
+    capture.chunks = [];
+    if (!blob.size) {
+      setBusy(false); recClear(capture.session, capture.scope);
+      say(""); fail("Nothing was recorded. Check the microphone is not muted and try again."); return;
+    }
     setBusy(true);
     say("Reading the recording…");
     var name = takeName("Take", new Date());
-    readFile(blob).then(function (ab) { return decode(ab); }).then(function (buffer) {
+    readFile(blob).then(function (ab) { return decode(ab, null, capture.scope); }).then(function (buffer) {
+      if (!current(capture.scope)) return;
       setBusy(false);
       open(buffer, name);
-      /* a recording is kept at once, whole; trimming it saves a second take */
-      return save({ message: "Recorded " + clock(buffer.duration) + " and kept it as “" + S.name + "”. Trim it and press Save take for the short version." });
-    }).then(function (take) {
-      /* the pieces are no longer needed once the whole take is kept */
-      if (take) recClear(session);
+      // Saving the WAV and removing its recovery pieces share one transaction.
+      return save({ message: "Recorded " + clock(buffer.duration) + " and kept it as “" + S.name + "”. Trim it and press Save take for the short version." }, capture.session);
     }).catch(function () {
+      if (!current(capture.scope)) return;
       setBusy(false);
       say("");
       fail("The recording could not be read back on this browser. Nothing was kept.");
-      recClear(session);
+      recClear(capture.session, capture.scope);
     });
   }
   function noRecordReason() {
@@ -1255,8 +1415,10 @@
   $("tbImport").addEventListener("click", function () { $("tbFile").click(); });
   $("tbFile").addEventListener("change", function () {
     var f = this.files && this.files[0];
-    var input = this;
-    if (f) importFile(f).then(function () { try { input.value = ""; } catch (_) {} });
+    var input = this, scope = active;
+    if (f) importFile(f).then(function () {
+      if (current(scope) && input.files && input.files[0] === f) input.value = "";
+    });
   });
   $("tbPlay").addEventListener("click", function () { if (S.playing) pause(); else play(); });
   $("tbStop").addEventListener("click", stopPlayback);
@@ -1356,10 +1518,13 @@
         w.setTimeout(function () { if (btn.isConnected) disarm(btn); }, 6000);
         return;
       }
-      dropTake(id).then(loadTakes).then(function () {
+      if (!take) return;
+      var scope = active;
+      dropTake(id, scope).then(function () { return loadTakes(scope); }).then(function () {
+        if (!current(scope)) return;
         say(take ? "Deleted “" + take.name + "” from this device." : "Deleted.");
         try { $("tbTakesHeading").setAttribute("tabindex", "-1"); $("tbTakesHeading").focus(); } catch (_) {}
-      }, function () { fail("That take could not be deleted."); });
+      }, function () { if (current(scope)) fail("That take could not be deleted."); });
     }
   });
   $("tbTakes").addEventListener("keydown", function (e) {
@@ -1381,13 +1546,56 @@
     else if (S.playing) pause();
     ui();
   });
+  function refreshTakes() {
+    var scope = active;
+    loadTakes(scope).then(function () { if (current(scope) && !S.volatile) recover(scope); });
+  }
+  function abortWrites(writes) {
+    writes.forEach(function (transaction) {
+      // A committed transaction already belongs to the original owner.
+      try { transaction.abort(); } catch (_) {}
+    });
+  }
+  function retire(me, navigation) {
+    var previous = active;
+    active = activation(me, navigation && previous.journalWrites);
+    abortWrites(previous.writes);
+    if (!navigation) abortWrites(previous.journalWrites);
+    w.clearTimeout(recoverTimer);
+    var capture = REC;
+    REC = null;
+    S.pending = S.recording = S.busy = false;
+    if (capture) {
+      capture.navigationTail = !!navigation;
+      w.cancelAnimationFrame(capture.raf);
+      w.removeEventListener("beforeunload", warnLeaving);
+      try { if (capture.rec.state !== "inactive") capture.rec.stop(); } catch (_) {}
+      releaseMic(capture);
+      capture.chunks = [];
+    }
+    stopPlayback();
+    ui();
+  }
+  function changeAccount() {
+    if (active.owner === owner()) return;
+    retire(owner());
+    close();
+    S.name = ""; S.takes = [];
+    $("tbName").value = ""; $("tbFile").value = "";
+    listTakes(); clearHandoffs(); fail("");
+    if (!parked) refreshTakes();
+  }
   w.addEventListener("pagehide", function () {
-    if (S.recording) { try { if (REC.rec && REC.rec.state !== "inactive") REC.rec.stop(); } catch (_) {} }
-    releaseMic();
-    stopSource();
+    parked = true;
+    if (active.owner !== owner()) changeAccount(); else retire(active.owner, true);
+  });
+  w.addEventListener("pageshow", function () {
+    if (!parked) return;
+    parked = false;
+    if (active.owner !== owner()) changeAccount(); else refreshTakes();
   });
   d.addEventListener("visibilitychange", function () { if (d.hidden && S.playing) pause(); });
-  try { if (w.MCC && typeof w.MCC.onAccountChange === "function") w.MCC.onAccountChange(function () { close(); loadTakes(); }); } catch (_) {}
+  try { if (w.MCC && typeof w.MCC.onAccountChange === "function") w.MCC.onAccountChange(changeAccount); } catch (_) {}
 
   if (!AC) {
     fail("This browser cannot open audio here, so the take bench cannot run. Releases still work: choose a finished file there.");
@@ -1395,15 +1603,22 @@
     $("tbFormats").textContent = noRecordReason() + " Import takes MP3, WAV or M4A. Nothing here is uploaded.";
   }
   ui();
-  loadTakes().then(function () { if (!S.volatile) recover(); });
+  refreshTakes();
 
   w.MCC_TAKE_BENCH = {
-    importFile: importFile, save: save, useInRelease: useInRelease, openTake: openTake, download: download,
+    importFile: importFile, save: function (opts) { return save(opts); }, useInRelease: useInRelease, openTake: openTake, download: download,
     setTrim: function (a, b) { setTrim(a, b); }, setFades: function (i, o) { $("tbFadeIn").value = i; $("tbFadeOut").value = o; fades(); },
     play: play, pause: pause, stop: stopPlayback, startRecording: startRecording, stopRecording: stopRecording,
     /* a take's WAV bytes, read from this device on request */
-    bytes: function (id) { return dataOf(takeById(id)).then(readFile); },
+    bytes: function (id) {
+      var scope = active;
+      return dataOf(takeById(id), scope).then(readFile).then(function (bytes) {
+        if (!current(scope)) throw new Error("gone");
+        return bytes;
+      });
+    },
     state: function () {
+      if (active.owner !== owner()) changeAccount();
       var r = S.buffer ? reg() : null;
       return {
         open: !!S.buffer, name: S.name, duration: S.buffer ? S.buffer.duration : 0, sampleRate: S.buffer ? S.buffer.sampleRate : 0, region: r,

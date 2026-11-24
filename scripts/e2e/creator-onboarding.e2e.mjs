@@ -154,6 +154,22 @@ async function run(browser, width, name, opts = {}) {
   };
   const shot = (suffix) => page.screenshot({ path: join(OUT, `${tag}${suffix ? '-' + suffix : ''}.png`), fullPage: false });
   const visible = (sel) => page.locator(sel).isVisible();
+  const checkCreatorPage = async () => {
+    await page.locator('#cs-panel-page #creatorSummary').waitFor({ state: 'visible' });
+    check(await visible('#cs-tab-page[aria-selected="true"]') && new URL(page.url()).hash === '#page',
+      `${tag}: Page is selected at its address`);
+    check(await page.textContent('#cmeName') === db.creator.artist_name && await page.textContent('#cmeHandle') === '@' + db.creator.handle,
+      `${tag}: Page shows the saved creator name and handle`);
+    check(!(await visible('#creatorIdentity')), `${tag}: viewing the profile keeps the edit form closed`);
+  };
+  const openCreatorPage = async () => {
+    await page.locator('#cs-panel-make').waitFor({ state: 'visible' });
+    check(await visible('#cs-tab-make[aria-selected="true"]') && !(await visible('#creatorOnboard')),
+      `${tag}: activation opens Make with onboarding closed`);
+    await fit('make');
+    await page.getByRole('tab', { name: 'Page', exact: true }).click();
+    await checkCreatorPage();
+  };
 
   if (BEFORE) { await shot(); await page.screenshot({ path: join(OUT, `${tag}-full.png`), fullPage: true }); await ctx.close(); return; }
 
@@ -164,15 +180,15 @@ async function run(browser, width, name, opts = {}) {
     check((await page.getAttribute('#cobAvatar img', 'src').catch(() => null)) === AVATAR, `${tag}: the card shows the member's own picture`);
     await fit('onboarding'); await shot('1-card');
     await page.click('#cobGo');
-    await page.waitForSelector('#creatorSummary:not([hidden])');
-    check(!(await visible('#creatorOnboard')), `${tag}: onboarding gone after one click`);
-    check(!(await visible('#creatorIdentity')), `${tag}: the profile form stays closed`);
+    await openCreatorPage();
     const become = calls.filter((c) => c.fn === 'music_become_creator');
     check(become.length === 1 && become[0].body.p_accept_terms === true && become[0].body.p_handle === null, `${tag}: exactly one become call, terms accepted, nothing typed`);
     check(db.creator && db.creator.avatar_url === AVATAR, `${tag}: the profile picture became the artist picture`);
     await fit('studio'); await shot('2-studio');
-    await page.reload({ waitUntil: 'load' }); await settled(); await page.waitForTimeout(400);
-    check(!(await visible('#creatorOnboard')) && (await visible('#creatorSummary')), `${tag}: reload never shows the onboarding`);
+    await page.reload({ waitUntil: 'load' });
+    await checkCreatorPage();
+    check(!(await visible('#creatorOnboard')) && calls.filter((c) => c.fn === 'music_become_creator').length === 1,
+      `${tag}: reloading Page keeps the creator without repeating onboarding`);
   }
   if (name === 'incomplete') {
     const u = new URL(page.url());
@@ -182,10 +198,9 @@ async function run(browser, width, name, opts = {}) {
     return;
   }
   if (name === 'door') {
-    await page.waitForSelector('#creatorSummary:not([hidden])', { timeout: 10000 }).catch(() => {});
+    await openCreatorPage();
     const become = calls.filter((c) => c.fn === 'music_become_creator');
     check(become.length === 1 && become[0].body.p_accept_terms === true && become[0].body.p_handle === null && become[0].body.p_artist_name === null, `${tag}: one tap, terms accepted, nothing asked`);
-    check(!(await visible('#creatorOnboard')) && await visible('#creatorSummary'), `${tag}: lands in Creator Studio as a creator`);
     check(db.creator && db.creator.avatar_url === AVATAR && (await page.getAttribute('#cmeAvatar img', 'src').catch(() => null)) === AVATAR, `${tag}: the profile picture is the artist picture`);
     await fit('studio'); await shot('1-studio');
   }
@@ -197,28 +212,28 @@ async function run(browser, width, name, opts = {}) {
     await page.fill('#cobHandleInput', '@Fixture-Newcomer');
     await shot('2-filled');
     await page.click('#cobGo');
-    await page.waitForSelector('#creatorSummary:not([hidden])');
+    await openCreatorPage();
     const become = calls.filter((c) => c.fn === 'music_become_creator').pop();
     check(become && become.body.p_handle === 'fixture-newcomer' && become.body.p_artist_name === 'Fixture Newcomer', `${tag}: only the typed fields are sent, handle normalised`);
     check((await page.textContent('#cmeHandle')) === '@fixture-newcomer', `${tag}: studio shows the new handle`);
     await fit('studio'); await shot('3-studio');
   }
   if (name === 'creator' || name === 'fallback') {
-    check(!(await visible('#creatorOnboard')), `${tag}: an existing creator never sees the onboarding`);
-    check(await visible('#creatorSummary') && !(await visible('#creatorIdentity')), `${tag}: studio with the summary, form closed`);
+    await openCreatorPage();
     check((await page.getAttribute('#cmeEdit', 'href')) === 'creator.html?edit=profile', `${tag}: edit goes to profile edit`);
     check(calls.every((c) => c.fn !== 'music_become_creator' && c.fn !== 'rest:insert'), `${tag}: nothing written`);
     await fit('studio'); await shot();
   }
   if (name === 'edit') {
     check(await visible('#creatorIdentity'), `${tag}: the profile form opens for editing`);
+    check(await visible('#cs-tab-page[aria-selected="true"]'), `${tag}: the edit link opens Page`);
     check(!(await visible('#creatorOnboard')), `${tag}: not the onboarding`);
     check((await page.inputValue('#creatorName')) === 'Fixture Artist', `${tag}: prefilled`);
     await fit('edit'); await shot();
   }
   if (name === 'fallback-complete') {
     await page.click('#cobGo');
-    await page.waitForSelector('#creatorSummary:not([hidden])');
+    await openCreatorPage();
     const ins = calls.find((c) => c.fn === 'rest:insert');
     check(ins && ins.body.handle === 'fixture.artist' && ins.body.artist_name === 'Fixture Artist' && ins.body.terms_version === 'music-creator-v1', `${tag}: RPC missing, the same profile is written`);
   }
