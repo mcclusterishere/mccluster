@@ -102,7 +102,8 @@ try {
     await db.exec(`do $$ begin create role anon; exception when duplicate_object then null; end $$;
       do $$ begin create role authenticated; exception when duplicate_object then null; end $$;
       do $$ begin create role service_role bypassrls; exception when duplicate_object then null; end $$;
-      alter role service_role bypassrls;
+      -- Supabase supplies a reserved service_role. Verify its existing BYPASSRLS
+      -- attribute below instead of trying to ALTER a canonical role.
       grant anon, authenticated, service_role to postgres;
       create schema auth; grant usage on schema auth, public to anon, authenticated, service_role;
       create table auth.users(id uuid primary key, email text);
