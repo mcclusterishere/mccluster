@@ -99,10 +99,14 @@ function shell(opts = {}) {
 }
 
 /* ---------- the route table ---------- */
-test('the route table: stage 1 (Listen and the artist pages), stage 2 (the album as the retained document), stage 3 (sign-in)', () => {
+/* Release 2 ships M5 contained (SPEC-ENGINE 4.10; engine stage 0): the album is never the retained document and never a
+   view, so no view ever opens over its deck and two players never share the bar. Stage 2's own table (the album as the
+   retained document, Listen and the artist pages over it) changed on purpose to the contained one below; stage 1 of the
+   engine turns the album back on as a page of the one engine. */
+test('the route table: stage 1 (Listen and the artist pages), the album contained (a page load from every music page), stage 3 (sign-in over Listen and the artist pages)', () => {
   const { core } = shell();
   const R = core.ROUTES;
-  const listenTop = { kind: 'listen', url: '/listen.html' }, artistTop = { kind: 'artist', url: '/music-creator.html?handle=probe-artist' }, albumTop = { kind: 'album', url: '/album.html?album=here' };
+  const listenTop = { kind: 'listen', url: '/listen.html' }, artistTop = { kind: 'artist', url: '/music-creator.html?handle=probe-artist' };
   const d = (href, from, top, shown) => core.decide(href, from, top, R, HOUSE + (shown || top.url));
   /* stage 1 */
   assert.equal(d('music-creator.html?handle=probe-artist', 'top', listenTop).action, 'view', 'Listen -> an artist page opens as a view');
@@ -123,23 +127,27 @@ test('the route table: stage 1 (Listen and the artist pages), stage 2 (the album
   assert.equal(d('mailto:?subject=Music', 'artist', listenTop, '/music-creator.html?handle=probe-artist').action, 'native', 'not a web address: the page\'s own');
   assert.equal(d('https://mccluster.org/?view=feed', 'artist', listenTop, '/music-creator.html?handle=probe-artist').action, 'world', 'the World keeps the Music-to-World path');
   assert.equal(d('mnet.html?join=1', 'listen', artistTop, '/listen.html').action, 'world', 'the house\'s World page too');
-  /* stage 2 */
-  assert.equal(d('listen.html', 'top', albumTop).action, 'view', 'album -> Listen opens as a view');
-  assert.equal(d('music-creator.html?handle=probe-artist', 'listen', albumTop, '/listen.html').action, 'view');
-  const asked = d('album.html?album=here&t=Lightroom', 'listen', albumTop, '/listen.html');
-  assert.equal(asked.action, 'reveal', 'the album shown, with another t=, reveals the album');
-  assert.equal(asked.t, 'Lightroom', 'and names the row to bring into view');
-  assert.equal(d('album.html?album=prim3', 'listen', albumTop, '/listen.html').action, 'load', 'another album is a page load');
-  assert.equal(d('album.html?album=here&playlist=late', 'listen', albumTop, '/listen.html').action, 'load', 'a playlist of it is another document');
-  /* stage 3 */
-  const acc = d('account.html', 'top', albumTop);
+  /* the album, contained (was stage 2: the album retained, Listen and the artist pages as views over it) */
+  assert.deepEqual({ ...R.album }, { top: false, view: false }, 'ROUTES.album: never retained, never a view (SPEC-ENGINE 4.10)');
+  assert.equal(core.retains('album', R), false, 'the album is never the retained document');
+  for (const [href, from, top, shown] of [
+    ['album.html?album=here', 'top', listenTop],
+    ['album.html?album=here&t=Lightroom', 'top', listenTop],
+    ['album.html?album=here&t=Lightroom', 'listen', artistTop, '/listen.html'],
+    ['album.html?album=prim3', 'top', artistTop],
+    ['album.html?album=here&playlist=late', 'artist', listenTop, '/music-creator.html?handle=probe-artist']
+  ]) assert.equal(d(href, from, top, shown).action, 'load', `${href} from ${from === 'top' ? top.kind + ' at the top' : 'a ' + from + ' view'}: a page load (no album view, no reveal of an album)`);
+  /* stage 3: the account page as a sign-in view over Listen and the artist pages (the album's sign-in is a page load) */
+  const acc = d('account.html', 'top', listenTop);
   assert.equal(acc.action, 'view', 'account.html opens as a sign-in view');
-  assert.equal(new URL(acc.url, HOUSE).searchParams.get('next'), '/album.html?album=here', 'a sign-in link without next comes back to the music page shown (the default for Matthew to confirm)');
-  assert.equal(new URL(d('account.html?next=%2Fcreator.html', 'listen', albumTop, '/listen.html').url, HOUSE).searchParams.get('next'), '/creator.html', 'a next already there is kept');
-  assert.equal(new URL(d('account.html?stay=1', 'top', albumTop).url, HOUSE).searchParams.get('next'), null, 'settings (stay=1) are not sent anywhere after');
-  assert.equal(d('mnet.html?join=1&next=%2Falbum.html', 'account', albumTop, '/account.html?next=%2Falbum.html').action, 'load', 'Create account leaves by a page load of the top');
-  assert.equal(d('forgot-password.html', 'account', albumTop, '/account.html').action, 'load', 'Forgot password too');
-  assert.equal(d('/album.html?album=here', 'account', albumTop, '/account.html').action, 'reveal', 'the sign-in\'s way back reveals the album');
+  assert.equal(new URL(acc.url, HOUSE).searchParams.get('next'), '/listen.html', 'a sign-in link without next comes back to the music page shown (the default for Matthew to confirm)');
+  assert.equal(new URL(d('account.html', 'top', artistTop).url, HOUSE).searchParams.get('next'), '/music-creator.html?handle=probe-artist', 'from an artist page too');
+  assert.equal(new URL(d('account.html?next=%2Fcreator.html', 'listen', artistTop, '/listen.html').url, HOUSE).searchParams.get('next'), '/creator.html', 'a next already there is kept');
+  assert.equal(new URL(d('account.html?stay=1', 'top', listenTop).url, HOUSE).searchParams.get('next'), null, 'settings (stay=1) are not sent anywhere after');
+  assert.equal(d('mnet.html?join=1&next=%2Flisten.html', 'account', listenTop, '/account.html?next=%2Flisten.html').action, 'load', 'Create account leaves by a page load of the top');
+  assert.equal(d('forgot-password.html', 'account', listenTop, '/account.html').action, 'load', 'Forgot password too');
+  assert.equal(d('/listen.html', 'account', listenTop, '/account.html').action, 'reveal', 'the sign-in\'s way back reveals Listen');
+  assert.equal(d('/album.html?album=here', 'account', listenTop, '/account.html').action, 'load', 'a sign-in that goes on to the album is a page load of the top (the album is not retained)');
 });
 
 test('one switch: with every route off nothing opens as a view and nothing is retained (the behaviour at dc0185aa)', () => {
@@ -151,9 +159,33 @@ test('one switch: with every route off nothing opens as a view and nothing is re
   assert.equal(core.retains('listen', off), false);
   assert.equal(core.retains('listen', core.ROUTES), true);
   assert.equal(core.retains('artist', core.ROUTES), true);
-  assert.equal(core.retains('album', core.ROUTES), true);
+  /* Release 2 ships M5 contained (SPEC-ENGINE 4.10): changed on purpose from true (stage 2 retained the album) */
+  assert.equal(core.retains('album', core.ROUTES), false, 'the album is never the retained document in Release 2');
   assert.equal(core.retains('account', core.ROUTES), false, 'the account page is never the retained document');
-  assert.equal(core.ROUTES.album.view, false, 'the album as a view is a later route');
+  assert.equal(core.ROUTES.album.view, false, 'the album as a view waits for stage 1 of the engine');
+});
+
+/* ---------- the album, contained (SPEC-ENGINE 4.10) ---------- */
+test('the album contained: on album.html the shell retains nothing, takes no link and no bar tap, and writes no history', () => {
+  const writes = [];
+  const win = browserWindow({ path: '/album.html', search: '?album=here', marker: 'album' });
+  win.history.pushState = (s, t, u) => writes.push(['push', u]);
+  win.history.replaceState = (s, t, u) => writes.push(['replace', u]);
+  win.history.state = { mccMusicView: { href: HOUSE + '/listen.html', from: '', scroll: 0 } };   /* even an entry that names a view */
+  run('js/music-shell.js', win);
+  const S = win.MCC_MUSIC_SHELL;
+  assert.ok(S && S.core, 'the shell still loads on the album (its marker stays for stage 1)');
+  assert.equal(S.active(), false, 'but the album is not the retained document');
+  assert.equal((win.__docListeners.click || []).length, 0, 'no link of the album page is taken: every one is the page\'s own, as at Release 1');
+  assert.equal((win.__listeners.popstate || []).length + (win.__listeners.pageshow || []).length, 0, 'Back and Forward are the browser\'s');
+  for (const href of ['listen.html', 'music-creator.html?handle=probe-artist', 'account.html', 'account.html?next=%2Falbum.html%3Falbum%3Dhere'])
+    assert.equal(S.navigate(href), false, `the bar's tap to ${href} is the bar's own page load, never a view over the album`);
+  assert.equal(S.view(), null, 'no view');
+  assert.equal(S.owner(), '', 'no second player beside the deck (no guest engine, no owner flag)');
+  assert.equal(win.document.documentElement.getAttribute('data-music-owner'), null);
+  assert.equal(win.MCC_MUSIC_GUEST, undefined, 'the engine is never loaded beside the deck');
+  assert.deepEqual(writes, [], 'no history entry is written or rewritten (no album view entry, no retained-page entry)');
+  assert.equal(win.document.head.appended.length + win.__appended.length, 0, 'nothing added to the page: no view layer, no shell style');
 });
 
 /* ---------- a card's play button inside its link (SPEC-ENGINE 10, row A0.4) ---------- */

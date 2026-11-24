@@ -236,7 +236,7 @@ jobs:
         run: |
           node --check sw.js
           node --test scripts/test/music-offline-vault.test.mjs
-      - name: One player across music pages (the route table and its one switch, history, the live head, which frame is adopted, the engine in a view)
+      - name: One player across music pages (the route table and its one switch, the album contained, a card's play button left to the player, history, the live head, which frame is adopted, the engine in a view)
         run: |
           node --check js/music-shell.js
           node --check js/shell-boot.js
@@ -300,7 +300,7 @@ jobs:
         env:
           PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
         run: node scripts/e2e/control-music-review.e2e.mjs /tmp/music-proof/control-review
-      - name: One player across music pages (a song plays on across Listen, an artist page, the album and sign-in; Back, Forward, deep links, the live head, the World; 320 to 1280 px)
+      - name: One player across music pages (a song plays on across Listen, an artist page and sign-in; a card's play button plays its song; the album a page of its own in Release 2; Back, Forward, deep links, the live head, the World; 320 to 1280 px)
         env:
           PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
         run: node scripts/e2e/music-shell.e2e.mjs /tmp/music-proof/shell

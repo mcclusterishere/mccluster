@@ -191,7 +191,6 @@ async function scenario(name,fn){
   console.log('== '+name);
   try{await fn();}catch(e){check(`${name}: aborted (${String(e&&e.message||e).split('\n')[0].slice(0,160)})`,false);}
 }
-
 /* ENGINE STAGE 0, A0.3: a card's play button inside its link. Listen's cards wrap the button in the card's link: a
    creator's card in the artist page's (js/music-community.js), and a song card in its album's (js/listen.js card(), shown
    while the song rails are on). Where a page renders no such card today (an artist page; Listen with the song rails
@@ -235,18 +234,14 @@ if(RENDER){
      await shot(page,`artist-view-over-listen-${width}-song-plays-on`);
      await page.goBack();await settle(page,900);await shot(page,`listen-${width}-back-song-plays-on`);
      await context.close();}
+    /* the album, contained in Release 2: a page of its own with its own deck (no view ever opens over it) */
     {const {context,page}=await setup({width,scale:2,start:'/album.html?album=here'});
      await playAlbumRow(page,1);await shot(page,`album-${width}-playing`);
-     await page.locator('.appbar [data-appnav="music"]').click();await waitView(page,/listen\.html/);
-     await shot(page,`listen-view-over-album-${width}-deck-plays-on`);
-     const v=await view(page);await (await findListen(v,'OSINT','prim3')).click();
-     await page.waitForFunction(()=>document.documentElement.getAttribute('data-music-owner')==='engine'&&window.MCC_MUSIC&&!MCC_MUSIC.audio.paused);
-     await shot(page,`listen-view-over-album-${width}-listen-song-owns-the-bar`);
-     await page.goBack();await settle(page,900);await shot(page,`album-${width}-back`);
      await context.close();}
-    {const {context,page}=await setup({width,scale:2,start:'/album.html?album=here'});
-     await playAlbumRow(page,1);await page.locator('[data-comments] a[href^="account.html?next="]').first().click();await waitView(page,/account\.html/);
-     await shot(page,`account-view-over-album-${width}-deck-plays-on`);await context.close();}
+    /* signing in over the music: the account page as a view over Listen, the song playing on */
+    {const {context,page}=await setup({width,scale:2});
+     await playListen(page);await page.locator('#mccAuthChip').click();await waitView(page,/account\.html/);
+     await shot(page,`account-view-over-listen-${width}-song-plays-on`);await context.close();}
     /* engine stage 0: a creator card's play button tapped in Listen shown over an artist page plays it; the view stays */
     {const {context,page}=await setup({width,scale:2,start:'/music-creator.html?handle=probe-artist'});
      await page.waitForSelector('a.music-contextbar__brand');await page.locator('a.music-contextbar__brand').click();
@@ -425,14 +420,19 @@ await scenario('s5',async()=>{
   check('7. in a Listen view over an artist page the top names Listen and its canonical',/^Listen/.test(lt.title)&&lt.canonical==='https://matthew.mccluster.org/listen.html',lt);
   await page.goBack();await settle(page,900);
   check('7. and the artist page\'s own head comes back byte for byte',JSON.stringify(await ident())===JSON.stringify(own2));
-  /* the album as the retained document: its JSON-LD and og: are held aside under a Listen view and come back byte for byte */
+  /* the album, contained in Release 2 (SPEC-ENGINE 4.10; changed on purpose from "the album as the retained document: its
+     JSON-LD and og: are held aside under a Listen view and come back byte for byte"): the album is never covered, so its
+     head is never held aside or mirrored; its Music tab is a page load of Listen, which arrives with its own head */
   await page.goto(HOUSE+'/album.html?album=here');await page.waitForLoadState('load');await sleep(600);
   const own3=await ident();
-  await page.locator('.appbar [data-appnav="music"]').click();await waitView(page,/listen\.html/);await sleep(400);
-  const al=await page.evaluate(()=>({ld:document.querySelectorAll('script[type="application/ld+json"]').length,og:document.querySelectorAll('meta[property^="og:"]').length,title:document.title}));
-  check('7. in a Listen view over the album none of the album\'s JSON-LD or og: is readable, and the title is Listen\'s',al.ld===0&&al.og===0&&/^Listen/.test(al.title),al);
+  check('7. the album\'s own head is whole on the album, its JSON-LD with it',own3.some(n=>/application\/ld\+json/.test(n))&&own3.some(n=>/og:/.test(n)),{own:own3.length});
+  await page.evaluate(()=>{window.__docMark='album';});
+  await page.locator('.appbar [data-appnav="music"]').click();
+  await page.waitForURL(/\/listen\.html$/,{timeout:10000}).catch(()=>{});await page.waitForLoadState('load');await sleep(400);
+  const al=await page.evaluate(()=>({mark:window.__docMark||null,title:document.title,canonical:(document.querySelector('link[rel="canonical"]')||{}).href||null,frames:document.querySelectorAll('#mccMusicViewFrame').length}));
+  check('7. the album\'s Music tab is a page load of Listen (no view over the album): Listen\'s own title and canonical',al.mark!=='album'&&al.frames===0&&/^Listen/.test(al.title)&&al.canonical==='https://matthew.mccluster.org/listen.html',al);
   await page.goBack();await settle(page,900);
-  check('7. and the album\'s own head, its JSON-LD with it, comes back byte for byte',JSON.stringify(await ident())===JSON.stringify(own3)&&own3.some(n=>/application\/ld\+json/.test(n)),{own:own3.length});
+  check('7. and Back is the album with its own head, byte for byte',JSON.stringify(await ident())===JSON.stringify(own3));
   await context.close();
 });
 await scenario('s6',async()=>{
@@ -766,166 +766,237 @@ await scenario('a03-listen-view',async()=>{
   await context.close();
 });
 
-/* ---------- STAGE 2: the album through its own deck ---------- */
-await scenario('s15',async()=>{
-  /* test 18: the album's deck plays on under a Listen view; its bar stays on top */
-  const {context,page}=await setup({start:'/album.html?album=here'});
-  await playAlbumRow(page,1);await markDeck(page);const before=await deck(page);
-  await page.locator('.appbar [data-appnav="music"]').click();await settle(page);
-  const d=await deck(page);
-  check('18. album -> the bar\'s Music tab: Listen opens over the album, the same deck element advancing',d.mark==='retained'&&d.same&&d.t>before.t+1&&!d.paused,{before,d});
-  check('18. the address is Listen\'s',await path(page)==='/listen.html',await path(page));
-  await waitView(page,/listen\.html/,4000);
-  /* the heading focus here matches the house :focus-visible rule (js/masthead.js), which draws an outline and a glow */
-  const ring=await page.evaluate(()=>{const f=document.getElementById('mccMusicViewFrame');const a=f&&f.contentDocument&&f.contentDocument.activeElement;if(!a)return null;const cs=f.contentWindow.getComputedStyle(a);return {tag:a.tagName,fv:a.matches(':focus-visible'),outline:cs.outlineStyle,glow:cs.boxShadow};});
-  check('16. over the album the Listen heading takes the focus without a ring or glow, also where the house focus-visible rule applies',!!ring&&ring.tag==='H1'&&ring.outline==='none'&&ring.glow==='none',ring);
-  const hit=await page.evaluate(()=>{const b=document.getElementById('deckbar').getBoundingClientRect();const e=document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);return !!e&&!!e.closest('#deckbar');});
-  check('18. the deck bar is on top of the view (a hit test at its centre finds it)',hit);
-  check('18. one playing element',(await playing(page)).n===1,await playing(page));
-  /* the bar's Music tab again, in the Listen view: the way to Listen (the view goes to its top), never the deck's Pause */
-  await page.locator('.appbar [data-appnav="music"]').click();await sleep(800);
-  const again=await deck(page);
-  check('9. the bar\'s Music tab in a Listen view over the album never pauses the deck, and the view stays',again.same&&!again.paused&&await frames(page)===1&&await path(page)==='/listen.html',{again,path:await path(page)});
-  await page.goBack();await settle(page,1000);
-  const b=await deck(page);
-  check('18. Back reveals the album with the same element playing',b.same&&!b.paused&&b.t>d.t&&await path(page)==='/album.html?album=here'&&await frames(page)===0,{b,path:await path(page)});
+/* THE ALBUM, CONTAINED (SPEC-ENGINE 4.10): Release 2 ships M5 with ROUTES.album = { top: false, view: false }. The album
+   is a page of its own, as at Release 1 with the quick wins: its own deck, one player on the page, a link to it is a page
+   load and every link on it is the page's own. No view ever opens over the deck and two players never share the bar. */
+await scenario('contained',async()=>{
+  const {context,page,log}=await setup();
+  await playListen(page);
+  await page.fill('#q','');   /* the search found the song; with the field empty Listen shows its albums again */
+  await page.waitForSelector('#shelf a[href="album.html?album=here"]',{state:'visible',timeout:15000});
+  const listenState=await page.evaluate(()=>history.state);
+  await page.locator('#shelf a[href="album.html?album=here"]').first().click();
+  await page.waitForURL(/\/album\.html\?album=here$/,{timeout:10000});await page.waitForLoadState('load');await sleep(600);
+  const arrived=await page.evaluate(()=>({mark:window.__docMark||null,state:history.state,shell:!!window.MCC_MUSIC_SHELL,active:!!(window.MCC_MUSIC_SHELL&&MCC_MUSIC_SHELL.active())}));
+  check('contained: from Listen a tap on an album is a page load (the album is not a view), and Listen\'s entry names no view',arrived.mark!=='retained'&&!(listenState&&listenState.mccMusicView),{arrived,listenState});
+  check('contained: on the album the shell is loaded but retains nothing',arrived.shell&&!arrived.active,arrived);
+  await playAlbumRow(page,1);await markDeck(page);
+  await page.evaluate(()=>{window.__docMark='album';});
+  const one=await page.evaluate(()=>({engine:!!window.MCC_MUSIC,engineScript:!!document.querySelector('script[src*="js/music-engine.js"]'),mini:!!document.getElementById('musicMini'),owner:document.documentElement.getAttribute('data-music-owner'),state:history.state,deck:!document.getElementById('deck').paused}));
+  check('contained: the album page holds one player, its own deck (no engine beside it, no mini player, no owner flag)',one.deck&&!one.engine&&!one.engineScript&&!one.mini&&one.owner===null,one);
+  check('contained: exactly one playing element on the album',(await playing(page)).n===1,await playing(page));
+  check('contained: the album writes no history entry of the shell\'s',!(one.state&&(one.state.mccMusicView||one.state.mccMusicShell)),one.state);
+  /* the bar's Music tab on the album: a page load of Listen, as at Release 1 (no view over the deck) */
+  await page.locator('.appbar [data-appnav="music"]').click();
+  await page.waitForURL(/\/listen\.html$/,{timeout:10000}).catch(()=>{});await page.waitForLoadState('load');await sleep(800);
+  const tab=await page.evaluate(()=>({mark:window.__docMark||null,path:location.pathname+location.search,frames:document.querySelectorAll('#mccMusicViewFrame').length,state:history.state}));
+  check('contained: the album\'s Music tab is a page load of Listen, never a view over the album',tab.mark!=='album'&&tab.path==='/listen.html'&&tab.frames===0,tab);
+  await page.goBack();await page.waitForLoadState('load');await sleep(800);
+  const back=await page.evaluate(()=>({path:location.pathname+location.search,state:history.state,frames:document.querySelectorAll('#mccMusicViewFrame').length}));
+  check('contained: Back is the album again, by the browser, its entry naming no view and no retained page',back.path==='/album.html?album=here'&&back.frames===0&&!(back.state&&(back.state.mccMusicView||back.state.mccMusicShell)),back);
+  /* the chip on the album: a page load of the account page, as at Release 1 */
+  await page.evaluate(()=>{window.__docMark='album-again';});
+  await page.waitForSelector('#mccAuthChip',{timeout:10000});await page.locator('#mccAuthChip').click();
+  await page.waitForURL(/\/account\.html/,{timeout:10000}).catch(()=>{});await page.waitForLoadState('load');await sleep(600);
+  const chip=await page.evaluate(()=>({mark:window.__docMark||null,path:location.pathname,frames:document.querySelectorAll('#mccMusicViewFrame').length}));
+  check('contained: the album\'s Sign in chip is a page load of the account page, never a sign-in view over the album',chip.mark!=='album-again'&&chip.path==='/account.html'&&chip.frames===0,chip);
+  /* McCluster's album from his artist page shown as a view over Listen: a page load of the top, no album view entry */
+  await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await page.evaluate(()=>{window.__docMark='listen';});
+  await page.waitForSelector('a.artist--house',{timeout:15000});await page.locator('a.artist--house').click();
+  const hv=await waitView(page,/handle=mccluster/);
+  await hv.waitForSelector('#apHouseShelf a.ap-card[href="album.html?album=here"]',{timeout:15000});
+  await hv.locator('#apHouseShelf a.ap-card[href="album.html?album=here"]').click();
+  await page.waitForURL(/\/album\.html\?album=here$/,{timeout:10000}).catch(()=>{});await page.waitForLoadState('load');await sleep(600);
+  const fromView=await page.evaluate(()=>({mark:window.__docMark||null,path:location.pathname+location.search,state:history.state,frames:document.querySelectorAll('#mccMusicViewFrame').length}));
+  check('contained: an album link in an artist view is a page load of the top (no album view, no album view entry)',fromView.mark!=='listen'&&fromView.path==='/album.html?album=here'&&fromView.frames===0&&!(fromView.state&&fromView.state.mccMusicView),fromView);
+  check('contained: no page error',log.errors.length===0,log.errors);
   await context.close();
 });
+
+/* ---------- STAGE 2, CONTAINED IN RELEASE 2 (SPEC-ENGINE 4.10) ---------- */
+/* M5's stage 2 retained the album with its own deck, and Listen and the artist pages opened over it as views. Release 2
+   ships M5 with ROUTES.album = { top: false, view: false }, so each scenario below changed on purpose to what the album
+   does now: it is a page of its own, as at Release 1 with the quick wins, every link on it a page load. What stage 2
+   proved that still holds without the album (the bar's own gestures over a view, the heading's focus where the house
+   focus-visible rule applies, the view's place under the bar) is now proved over an artist page. Stage 1 of the engine
+   turns the album back on as a page of the one engine. */
+await scenario('s15',async()=>{
+  /* test 18, contained (was: the album's deck plays on under a Listen view; its bar stays on top) */
+  const {context,page}=await setup({start:'/album.html?album=here'});
+  await playAlbumRow(page,1);await markDeck(page);
+  check('18. the album is not the retained document',await page.evaluate(()=>!!window.MCC_MUSIC_SHELL&&!MCC_MUSIC_SHELL.active()));
+  await page.evaluate(()=>{window.__docMark='album';});
+  await page.locator('.appbar [data-appnav="music"]').click();
+  await page.waitForURL(/\/listen\.html$/,{timeout:10000}).catch(()=>{});await page.waitForLoadState('load');await sleep(800);
+  const l=await page.evaluate(()=>({mark:window.__docMark||null,frames:document.querySelectorAll('#mccMusicViewFrame').length,path:location.pathname+location.search}));
+  check('18. album -> the bar\'s Music tab: a page load of Listen, as at Release 1 (no view over the deck)',l.mark!=='album'&&l.frames===0&&l.path==='/listen.html',l);
+  check('18. nothing plays on Listen after the page load: the album\'s song ended with its page',(await playing(page)).n===0,await playing(page));
+  await page.goBack();await page.waitForLoadState('load');await sleep(800);
+  const b=await page.evaluate(()=>({path:location.pathname+location.search,frames:document.querySelectorAll('#mccMusicViewFrame').length,state:history.state}));
+  check('18. Back is the album, by the browser: its entry names no view and no retained page',b.path==='/album.html?album=here'&&b.frames===0&&!(b.state&&(b.state.mccMusicView||b.state.mccMusicShell)),b);
+  await context.close();
+  /* test 16 (moved from over the album): the bar's Music tab on an artist page opens Listen over it; the heading focus here
+     matches the house :focus-visible rule (js/masthead.js), which draws an outline and a glow */
+  const k=await setup({start:'/music-creator.html?handle=probe-artist'});
+  await k.page.waitForSelector(`#creatorPublicTracks [data-creator-track="${T_PUBLIC}"]`,{timeout:15000});
+  await k.page.locator(`#creatorPublicTracks [data-creator-track="${T_PUBLIC}"]`).click();
+  await k.page.waitForFunction(()=>!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>.3,null,{timeout:15000});
+  await markEngine(k.page);
+  await k.page.locator('.appbar [data-appnav="music"]').click();
+  await waitView(k.page,/listen\.html/);await sleep(400);
+  const ring=await k.page.evaluate(()=>{const f=document.getElementById('mccMusicViewFrame');const a=f&&f.contentDocument&&f.contentDocument.activeElement;if(!a)return null;const cs=f.contentWindow.getComputedStyle(a);return {tag:a.tagName,fv:a.matches(':focus-visible'),outline:cs.outlineStyle,glow:cs.boxShadow};});
+  check('16. over an artist page the Listen heading takes the focus without a ring or glow, also where the house focus-visible rule applies',!!ring&&ring.tag==='H1'&&ring.fv&&ring.outline==='none'&&ring.glow==='none',ring);
+  /* the bar's Music tab again, in the Listen view: the way to Listen (the view goes to its top), never the player's Pause */
+  await k.page.locator('.appbar [data-appnav="music"]').click();await sleep(800);
+  const again=await engine(k.page);
+  check('9. the bar\'s Music tab in a Listen view over an artist page never pauses the song, and the view stays',again.same&&!again.paused&&await frames(k.page)===1&&await path(k.page)==='/listen.html',{again,path:await path(k.page)});
+  await k.context.close();
+});
 await scenario('s15b',async()=>{
-  /* test 9: the bar keeps its own gestures over the album: a held Music tab opens its wing and no view; the next tap opens Listen */
+  /* test 9, contained (was: the bar keeps its own gestures over the album; the next tap opens Listen over it, and Step
+     inside a held wing slot over a view reveals the album): the bar's gestures are its own on the album too, and the next
+     tap is a page load; over a view (an artist page over Listen) the bar's gestures hold, and Step inside the album slot
+     is a page load of the top */
   const {context,page}=await setup({start:'/album.html?album=here'});
   await playAlbumRow(page,1);await markDeck(page);
   const box=await page.locator('.appbar [data-appnav="music"]').boundingBox();
   await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await sleep(700);await page.mouse.up();await sleep(700);
   const held=await page.evaluate(()=>({frames:document.querySelectorAll('#mccMusicView .mcc-music-frame').length,path:location.pathname+location.search,wing:!!document.querySelector('.appbar.appbar--morph, .appbar--morph'),slots:document.querySelectorAll('.appbar a[data-dock]').length}));
-  check('9. a held Music tab over the album opens the music wing and no view',held.frames===0&&held.path==='/album.html?album=here'&&held.slots>0,held);
+  check('9. a held Music tab on the album opens the music wing and no view',held.frames===0&&held.path==='/album.html?album=here'&&held.slots>0,held);
+  await page.evaluate(()=>{window.__docMark='album';});
   await page.locator('.appbar [data-appnav="music"]').click();
-  await waitView(page,/listen\.html/);
-  const d=await deck(page);
-  check('9. the next tap on the Music tab opens Listen over the album, the deck playing on',d.same&&!d.paused&&await path(page)==='/listen.html',d);
-  /* over the view the bar's own gestures still hold: a held wing slot shows its card (the hold's click is the bar's,
-     never a navigation), and Step inside then reveals the album */
-  const hold=async loc=>{const b=await page.locator(loc).first().boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await sleep(700);await page.mouse.up();await sleep(700);};
+  await page.waitForURL(/\/listen\.html$/,{timeout:10000}).catch(()=>{});await page.waitForLoadState('load');await sleep(600);
+  check('9. the next tap on the Music tab is a page load of Listen (the album is not retained)',await page.evaluate(()=>window.__docMark!=='album'&&!document.querySelector('#mccMusicViewFrame'))&&await path(page)==='/listen.html',await path(page));
+  await context.close();
+  /* over a view the bar's own gestures still hold: a held wing slot shows its card (the hold's click is the bar's, never a
+     navigation), and Step inside the album's slot is a page load of the top */
+  const o=await setup();
+  await playListen(o.page);await markEngine(o.page);
+  await o.page.locator('a.artist[href*="handle=probe-artist"]').first().click();
+  await waitView(o.page,/probe-artist/);
+  const hold=async loc=>{const b=await o.page.locator(loc).first().boundingBox();await o.page.mouse.move(b.x+b.width/2,b.y+b.height/2);await o.page.mouse.down();await sleep(700);await o.page.mouse.up();await sleep(700);};
   await hold('.appbar [data-appnav="music"]');
   await hold('.appbar a[data-dock$="/album.html"]');
-  const card=await page.evaluate(()=>({peek:!!document.querySelector('.dk-peek'),frames:document.querySelectorAll('#mccMusicView .mcc-music-frame').length,path:location.pathname+location.search}));
-  check('9. over a view, a held wing slot shows its card and goes nowhere (the hold stays the bar\'s)',card.peek&&card.frames===1&&card.path==='/listen.html',card);
-  await page.locator('.dk-peek__go').click();await settle(page,900);
-  const back=await deck(page);
-  check('9. and Step inside reveals the album, the deck playing on',await frames(page)===0&&await path(page)==='/album.html?album=here'&&back.same&&!back.paused,{back,path:await path(page)});
-  await context.close();
+  const card=await o.page.evaluate(()=>({peek:!!document.querySelector('.dk-peek'),frames:document.querySelectorAll('#mccMusicView .mcc-music-frame').length,path:location.pathname+location.search}));
+  check('9. over a view, a held wing slot shows its card and goes nowhere (the hold stays the bar\'s)',card.peek&&card.frames===1&&card.path==='/music-creator.html?handle=probe-artist',card);
+  const e=await engine(o.page);
+  check('9. and the song plays on under it',e.same&&!e.paused,e);
+  await o.page.locator('.dk-peek__go').click();
+  await o.page.waitForURL(/\/album\.html/,{timeout:10000}).catch(()=>{});await o.page.waitForLoadState('load');await sleep(600);
+  check('9. and Step inside the album\'s slot is a page load of the top, never a view of the album',await o.page.evaluate(()=>window.__docMark!=='retained'&&!document.querySelector('#mccMusicViewFrame'))&&/^\/album\.html/.test(await path(o.page)),await path(o.page));
+  await o.context.close();
 });
 await scenario('s16',async()=>{
-  /* test 19: one owner of sound in the album document; the visible bar and the pocket follow it */
+  /* test 19, contained (was: one owner of sound in the album document, the engine loaded beside the deck when a view
+     opened over it): the album never holds a second player. Its deck is the one player on the page, its bar the one
+     transport, the pocket holds its song; the engine is never loaded there, so there is no owner to choose */
   const {context,page}=await setup({start:'/album.html?album=here'});
   await playAlbumRow(page,1);await markDeck(page);
-  await page.evaluate(()=>{const orig=window.MCC_NP_PAUSE;window.__npPause=0;window.MCC_NP_PAUSE=function(){window.__npPause++;window.__deckWhenPaused=document.getElementById('deck').paused;return orig.apply(this,arguments);};});
-  await page.locator('.appbar [data-appnav="music"]').click();
-  const v=await waitView(page,/listen\.html/);
-  await (await findListen(v,'OSINT','prim3')).click();
-  await page.waitForFunction(()=>window.MCC_MUSIC&&MCC_MUSIC.current()&&MCC_MUSIC.current().title==='OSINT'&&!MCC_MUSIC.audio.paused,null,{timeout:12000});
-  const s1=await page.evaluate(()=>({np:window.__npPause,deckWas:window.__deckWhenPaused,deck:document.getElementById('deck').paused,owner:document.documentElement.getAttribute('data-music-owner'),
+  const s1=await page.evaluate(()=>({engine:!!window.MCC_MUSIC,guest:!!window.MCC_MUSIC_GUEST,engineScript:!!document.querySelector('script[src*="js/music-engine.js"]'),owner:document.documentElement.getAttribute('data-music-owner'),
     deckbar:getComputedStyle(document.getElementById('deckbar')).display!=='none'&&getComputedStyle(document.getElementById('deckbar')).visibility!=='hidden',
-    mini:!!document.getElementById('musicMini')&&!document.getElementById('musicMini').hidden&&getComputedStyle(document.getElementById('musicMini')).display!=='none',
-    pocket:(JSON.parse(localStorage.getItem('mcc-pocket')||'{}')||{}).title}));
-  check('19. a song tapped in a Listen view over the album pauses the deck through the album\'s own Pause first',s1.np>=1&&s1.deckWas===false&&s1.deck===true,s1);
+    mini:!!document.getElementById('musicMini'),pocket:(JSON.parse(localStorage.getItem('mcc-pocket')||'{}')||{}).title,row:document.querySelectorAll('#tracks li')[1].getAttribute('data-title')}));
+  check('19. the album page holds one player, its deck: no engine beside it, no mini player, no owner flag',!s1.engine&&!s1.guest&&!s1.engineScript&&s1.owner===null&&!s1.mini,s1);
   check('19. exactly one element plays',(await playing(page)).n===1,await playing(page));
-  check('19. the owner is the engine and only its bar shows',s1.owner==='engine'&&!s1.deckbar&&s1.mini,s1);
-  check('19. the pocket holds the owner\'s song',s1.pocket==='OSINT',s1.pocket);
-  await page.goBack();await settle(page,900);
+  check('19. the deck bar shows',s1.deckbar,s1);
+  check('19. the pocket holds the deck\'s song',s1.pocket===s1.row,s1);
   await page.locator('#tracks li').nth(2).click();
-  await page.waitForFunction(()=>!document.getElementById('deck').paused&&MCC_MUSIC.audio.paused,null,{timeout:12000});await sleep(500);
-  const s2=await page.evaluate(()=>({owner:document.documentElement.getAttribute('data-music-owner'),deckbar:getComputedStyle(document.getElementById('deckbar')).display!=='none',mini:getComputedStyle(document.getElementById('musicMini')).display!=='none'&&!document.getElementById('musicMini').hidden,pocket:(JSON.parse(localStorage.getItem('mcc-pocket')||'{}')||{}).title,row:document.querySelectorAll('#tracks li')[2].getAttribute('data-title')}));
-  check('19. an album row tapped after Back: the engine pauses, the deck plays, only the deck bar shows',s2.owner==='deck'&&s2.deckbar&&!s2.mini&&(await playing(page)).n===1,s2);
-  check('19. the pocket holds the deck\'s song',s2.pocket===s2.row,s2);
+  await page.waitForFunction(()=>!document.getElementById('deck').paused&&document.getElementById('npTitle').textContent===document.querySelectorAll('#tracks li')[2].getAttribute('data-title'),null,{timeout:12000});await sleep(500);
+  const s2=await page.evaluate(()=>({engine:!!window.MCC_MUSIC,owner:document.documentElement.getAttribute('data-music-owner'),pocket:(JSON.parse(localStorage.getItem('mcc-pocket')||'{}')||{}).title,row:document.querySelectorAll('#tracks li')[2].getAttribute('data-title'),same:window.__orig===document.getElementById('deck')}));
+  check('19. another row: the same deck plays it, still the one player',s2.same&&!s2.engine&&s2.owner===null&&(await playing(page)).n===1,s2);
+  check('19. the pocket holds the deck\'s new song',s2.pocket===s2.row,s2);
   await context.close();
 });
 await scenario('s17',async()=>{
-  /* test 20: the album's own controls act on the deck while a view shows */
+  /* test 20, contained (was: the album's own controls act on the deck while a view shows): no view ever shows over the
+     album, so its own controls act on its deck on the album page itself, as at Release 1 */
   const {context,page}=await setup({start:'/album.html?album=here'});
   await playAlbumRow(page,1);await markDeck(page);
-  await page.locator('.appbar [data-appnav="music"]').click();
-  await waitView(page,/listen\.html/);
   await page.locator('#tpPlay').click();await page.waitForFunction(()=>document.getElementById('deck').paused,null,{timeout:5000}).catch(()=>{});
-  check('20. the deck bar\'s Pause pauses the deck over a view',await page.evaluate(()=>document.getElementById('deck').paused));
+  check('20. the deck bar\'s Pause pauses the deck',await page.evaluate(()=>document.getElementById('deck').paused));
   await page.locator('#tpPlay').click();await page.waitForFunction(()=>!document.getElementById('deck').paused,null,{timeout:5000}).catch(()=>{});
   const row0=await page.evaluate(()=>document.getElementById('npTitle').textContent);
   await page.locator('#deckbar .deckbar__meta').click();await sleep(600);
   await page.locator('#nowNext').click();await sleep(900);
-  check('20. the sheet\'s Next moves the deck on over a view',await page.evaluate(()=>document.getElementById('npTitle').textContent)!==row0&&(await deck(page)).same,{row0});
+  check('20. the sheet\'s Next moves the deck on',await page.evaluate(()=>document.getElementById('npTitle').textContent)!==row0&&(await deck(page)).same,{row0});
   await page.locator('#nowDown').click().catch(()=>{});await sleep(400);
-  /* a Listen song chosen in the view and paused, then the deck again: the World's transport acts on the owner, the deck */
-  const v=await view(page);
-  await (await findListen(v,'OSINT','prim3')).click();
-  await page.waitForFunction(()=>window.MCC_MUSIC&&!MCC_MUSIC.audio.paused,null,{timeout:10000});
-  await page.goBack();await settle(page,800);
-  await page.locator('#tracks li').nth(3).click();await page.waitForFunction(()=>!document.getElementById('deck').paused&&MCC_MUSIC.audio.paused,null,{timeout:10000});
-  await page.locator('a.music-contextbar__brand').click();await waitView(page,/listen\.html/);
+  /* the World over the album: its compact transport acts on the deck, the album's one player */
   await page.locator('.appbar [data-appnav="world"]').click();
   await page.waitForFunction(()=>window.MCC_WORLD_AUDIO&&MCC_WORLD_AUDIO.active(),null,{timeout:10000});
   await page.waitForSelector('#mccWorldAudioControls .world-audio__play',{state:'visible',timeout:10000});
   await page.locator('#mccWorldAudioControls .world-audio__play').click();await sleep(600);
-  check('20. the World\'s compact transport pauses the deck (the owner), not the engine\'s paused song',await page.evaluate(()=>document.getElementById('deck').paused&&MCC_MUSIC.audio.paused&&document.documentElement.getAttribute('data-music-owner')==='deck'));
+  check('20. the World\'s compact transport pauses the deck, the album\'s one player (no engine beside it)',await page.evaluate(()=>document.getElementById('deck').paused&&!window.MCC_MUSIC&&!document.documentElement.hasAttribute('data-music-owner')));
+  check('20. never a view over the album',await frames(page)===0);
   await context.close();
-  /* the deck's words during a dropped read still show on the deck bar over a view (music slice M3, unchanged) */
+  /* the deck's words during a dropped read show on the deck bar (music slice M3, unchanged) */
   HOLD.cut=170000;
   const c=await setup({start:'/album.html?album=here'});
   try{
     await playAlbumRow(c.page,1);
-    await c.page.locator('.appbar [data-appnav="music"]').click();await waitView(c.page,/listen\.html/);
     await c.page.waitForFunction(()=>/Reconnecting|Connection lost/.test(document.getElementById('deckbar').innerText),null,{timeout:30000}).catch(()=>{});
     const words=await c.page.evaluate(()=>({bar:document.getElementById('deckbar').innerText,delivery:window.MCC_DECK_DELIVERY&&MCC_DECK_DELIVERY()}));
-    check('20. during a dropped read the deck bar says Reconnecting\u2026 or Connection lost over a view (M3 unchanged)',/Reconnecting|Connection lost/.test(words.bar)&&!!words.delivery&&!!words.delivery.state,words);
+    check('20. during a dropped read the deck bar says Reconnecting\u2026 or Connection lost (M3 unchanged)',/Reconnecting|Connection lost/.test(words.bar)&&!!words.delivery&&!!words.delivery.state,words);
   }finally{HOLD.cut=0;await c.context.close();}
-  /* the installed app's dock acts on the deck over a view */
+  /* the installed app's dock acts on the deck, and its Music tab is a page load of Listen (no view over the album) */
   const i=await setup({start:'/album.html?album=here',standalone:true});
   await playAlbumRow(i.page,1);
   await i.page.waitForSelector('[data-app-player="play"]',{timeout:10000}).catch(()=>{});
-  await i.page.locator('#mccInstalledDockTabs [data-appnav="music"], .appbar [data-appnav="music"]').first().click();
-  await waitView(i.page,/listen\.html/);
   await i.page.locator('[data-app-player="play"]').click();await sleep(600);
-  check('20. the installed dock pauses the deck over a view',await i.page.evaluate(()=>document.getElementById('deck').paused&&document.querySelectorAll('#mccMusicViewFrame').length===1));
+  check('20. the installed dock pauses the deck',await i.page.evaluate(()=>document.getElementById('deck').paused));
+  await i.page.evaluate(()=>{window.__docMark='album';});
+  await i.page.locator('#mccInstalledDockTabs [data-appnav="music"], .appbar [data-appnav="music"]').first().click();
+  await i.page.waitForURL(/\/listen\.html$/,{timeout:10000}).catch(()=>{});await i.page.waitForLoadState('load');await sleep(400);
+  check('20. the installed app\'s Music tab on the album is a page load of Listen, never a view over the album',await i.page.evaluate(()=>window.__docMark!=='album'&&!document.querySelector('#mccMusicViewFrame'))&&await path(i.page)==='/listen.html',await path(i.page));
   await i.context.close();
 });
 await scenario('s18',async()=>{
-  /* test 21: a link to the album the retained album shows, with another t=, reveals it with that row in view */
+  /* test 21, contained (was: a link to the album the retained album shows, with another t=, reveals it with that row in
+     view): the album is never retained, so its context bar's Music link is a page load of Listen, and a Listen row of the
+     album is a page load of the album that seats the row it names, paused, as at Release 1 */
   const {context,page}=await setup({start:'/album.html?album=here'});
-  await playAlbumRow(page,1);await markDeck(page);const playingTitle=await page.evaluate(()=>document.getElementById('npTitle').textContent);
+  await playAlbumRow(page,1);await markDeck(page);
+  await page.evaluate(()=>{window.__docMark='album';});
   await page.locator('a.music-contextbar__brand').click();
-  const v=await waitView(page,/listen\.html/);
-  await v.waitForSelector('#q',{timeout:15000});await v.fill('#q','Lightroom');
-  await v.waitForSelector('#all a.row[href*="album=here"][href*="t=Lightroom"]',{state:'visible',timeout:15000});
-  await v.locator('#all a.row[href*="album=here"][href*="t=Lightroom"]').first().click();await settle(page,1200);
-  const r=await page.evaluate(()=>{const row=[...document.querySelectorAll('#tracks li')].find(li=>li.getAttribute('data-title')==='Lightroom');const b=row&&row.getBoundingClientRect();return {path:location.pathname+location.search,frames:document.querySelectorAll('#mccMusicViewFrame').length,asked:!!row&&row.classList.contains('mcc-music-asked'),inView:!!b&&b.top>=0&&b.bottom<=innerHeight,now:document.getElementById('npTitle').textContent};});
-  check('21. a Listen row for the album shown reveals the album with that row in view and marked',r.frames===0&&r.asked&&r.inView&&/album\.html\?album=here/.test(r.path),r);
-  check('21. what plays does not change',r.now===playingTitle&&(await deck(page)).same&&!(await deck(page)).paused,r);
-  await page.locator('a.music-contextbar__brand').click();
-  const v2=await waitView(page,/listen\.html/);
-  await v2.waitForSelector('#q',{timeout:15000});await v2.fill('#q','OSINT');
-  await v2.waitForSelector('#all a.row[href*="album=prim3"]',{state:'visible',timeout:15000});
-  await v2.locator('#all a.row[href*="album=prim3"]').first().click();
+  await page.waitForURL(/\/listen\.html$/,{timeout:10000}).catch(()=>{});await page.waitForLoadState('load');
+  check('21. the album\'s Music link is a page load of Listen (no view over the album)',await page.evaluate(()=>window.__docMark!=='album'&&!document.querySelector('#mccMusicViewFrame'))&&await path(page)==='/listen.html',await path(page));
+  await page.waitForSelector('#q',{timeout:15000});await page.fill('#q','Lightroom');
+  await page.waitForSelector('#all a.row[href*="album=here"][href*="t=Lightroom"]',{state:'visible',timeout:15000});
+  await page.evaluate(()=>{window.__docMark='listen';});
+  await page.locator('#all a.row[href*="album=here"][href*="t=Lightroom"]').first().click();
+  await page.waitForURL(/album=here&t=Lightroom/,{timeout:10000}).catch(()=>{});await page.waitForLoadState('load');await sleep(1200);
+  const r=await page.evaluate(()=>({mark:window.__docMark||null,path:location.pathname+location.search,frames:document.querySelectorAll('#mccMusicViewFrame').length,seated:document.getElementById('npTitle').textContent,paused:document.getElementById('deck').paused}));
+  check('21. a Listen row of the album is a page load of the album, which seats the row it names, paused (nothing starts by itself)',r.mark!=='listen'&&r.frames===0&&/album\.html\?album=here&t=Lightroom/.test(r.path)&&r.seated==='Lightroom'&&r.paused,r);
+  await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});
+  await page.waitForSelector('#q',{timeout:15000});await page.fill('#q','OSINT');
+  await page.waitForSelector('#all a.row[href*="album=prim3"]',{state:'visible',timeout:15000});
+  await page.evaluate(()=>{window.__docMark='listen';});
+  await page.locator('#all a.row[href*="album=prim3"]').first().click();
   await page.waitForURL(/album=prim3/,{timeout:10000});await page.waitForLoadState('load');
-  check('21. a row of another album is a page load (the named gap)',await page.evaluate(()=>window.__docMark!=='retained'));
+  check('21. a row of another album is a page load too',await page.evaluate(()=>window.__docMark!=='listen'));
   await context.close();
 });
 
 await scenario('s24',async()=>{
-  /* test 15: every view at 320 and 390 px (the artist view over Listen is s12): Listen over the album, the account view
-     over the album, Listen over an artist page; no sideways scroll in the top or the view */
+  /* test 15 at 320 and 390 px, contained (was: Listen over the album and the account view over the album): the album is
+     a page of its own and fits as one; the account view over Listen; Listen over an artist page; Listen and an artist page
+     at the top (the artist view over Listen at every width is s12); no sideways scroll in the top or the view */
   const fit=page=>page.evaluate(()=>{const d=document.documentElement,f=document.getElementById('mccMusicViewFrame');const v=f&&f.contentDocument&&f.contentDocument.documentElement;return {top:[d.scrollWidth,d.clientWidth],view:v?[v.scrollWidth,v.clientWidth]:null};});
   const ok=x=>!!x.view&&x.top[0]===x.top[1]&&x.view[0]===x.view[1];
+  const flat=x=>x.top[0]===x.top[1]&&!x.view;
   for(const width of [320,390]){
     const {context,page}=await setup({width,start:'/album.html?album=here'});
-    await playAlbumRow(page,1);
-    await page.locator('.appbar [data-appnav="music"]').click();
-    const lv=await waitView(page,/listen\.html/);await lv.waitForSelector('#shelf a',{timeout:15000});await sleep(400);
-    const a=await fit(page);check(`15. ${width} px: Listen over the album fits, top and view`,ok(a),a);
-    await page.goBack();await settle(page,800);
-    await page.locator('#mccAuthChip').click();
-    const av=await waitView(page,/account\.html/);await av.waitForSelector('#acInEmail',{timeout:10000});await sleep(300);
-    const b=await fit(page);check(`15. ${width} px: the account view over the album fits, top and view`,ok(b),b);
+    await playAlbumRow(page,1);await sleep(400);
+    const a=await fit(page);check(`15. ${width} px: the album fits, a page of its own with no view`,flat(a),a);
     await context.close();
+    const l=await setup({width});
+    await playListen(l.page);await l.page.fill('#q','');await l.page.waitForSelector('#shelf a',{state:'visible',timeout:15000});await sleep(400);
+    const lt=await fit(l.page);check(`15. ${width} px: Listen at the top fits`,flat(lt),lt);
+    await l.page.locator('#mccAuthChip').click();
+    const av=await waitView(l.page,/account\.html/);await av.waitForSelector('#acInEmail',{timeout:10000});await sleep(300);
+    const b=await fit(l.page);check(`15. ${width} px: the account view over Listen fits, top and view`,ok(b),b);
+    await l.context.close();
     const k=await setup({width,start:'/music-creator.html?handle=probe-artist'});
+    await k.page.waitForSelector('#creatorArtist .ap-hero__line',{timeout:15000});await sleep(300);
+    const kt=await fit(k.page);check(`15. ${width} px: an artist page at the top fits`,flat(kt),kt);
     await k.page.waitForSelector('a.music-contextbar__brand');await k.page.locator('a.music-contextbar__brand').click();
     const kv=await waitView(k.page,/listen\.html/);await kv.waitForSelector('#shelf a',{timeout:15000});await sleep(400);
     const c=await fit(k.page);check(`15. ${width} px: Listen over an artist page fits, top and view`,ok(c),c);
@@ -933,51 +1004,74 @@ await scenario('s24',async()=>{
   }
 });
 
-/* ---------- STAGE 3: signing in without leaving the music ---------- */
+/* ---------- STAGE 3: signing in without leaving the music (over Listen and the artist pages) ---------- */
+/* M5 proved stage 3 over the retained album. With the album contained in Release 2 the sign-in view opens over Listen
+   and the artist pages, so each scenario below changed on purpose to Listen at the top; on the album the comment box's
+   and the chip's Sign in are page loads of the account page, as at Release 1. */
 await scenario('s19',async()=>{
-  /* test 22: album playing -> the comment box's Sign in -> password -> back on the album, the same element playing */
-  const {context,page,log}=await setup({start:'/album.html?album=here'});
-  await playAlbumRow(page,1);await markDeck(page);
-  await page.waitForSelector('[data-comments] a[href^="account.html?next="]',{timeout:15000});
-  await page.locator('[data-comments] a[href^="account.html?next="]').first().click();
-  const v=await waitView(page,/account\.html\?next=/);
-  check('22. the account page opens as a view at its own address',/^\/account\.html\?next=/.test(await path(page)),await path(page));
-  check('22. no pocket mounts in the account view',await v.evaluate(()=>!document.querySelector('.pocket')));
-  const d0=await deck(page);await sleep(1000);const d1=await deck(page);
-  check('22. the deck advances while the account view shows',d1.same&&d1.t>d0.t+.5&&!d1.paused,{d0,d1});
-  await v.fill('#acInEmail','shell-fixture@invalid.test');await v.fill('#acInPass','fixture-password');await v.locator('#acGo').click();
-  await page.waitForFunction(()=>location.pathname==='/album.html'&&!document.querySelector('#mccMusicViewFrame'),null,{timeout:15000});await sleep(1500);
-  const d2=await deck(page);
-  check('22. password sign-in reveals the album with the same element still advancing',d2.mark==='retained'&&d2.same&&!d2.paused&&d2.t>d1.t,{d2});
-  check('22. the chip says Profile',await page.evaluate(()=>(document.querySelector('#mccAuthChip .mcc-auth-chip__text')||{}).textContent)==='Profile');
-  await page.waitForFunction(()=>{const r=[...document.querySelectorAll('#tracks li')].find(li=>li.hasAttribute('data-gated-bucket'));return !r||r.getAttribute('data-gate')==='earned';},null,{timeout:8000}).catch(()=>{});
-  check('22. the album\'s gated row repaints for the member',await page.evaluate(()=>{const r=[...document.querySelectorAll('#tracks li')].find(li=>li.hasAttribute('data-gated-bucket'));return !r||r.getAttribute('data-gate')==='earned';}));
-  void log;await context.close();
-});
-await scenario('s20',async()=>{
-  /* test 23: album -> the chip (no next) -> password -> back on the album */
+  /* test 22, contained (was: album playing -> the comment box's Sign in -> password -> back on the album, the same element
+     playing): the comment box's Sign in is a page load of the account page, which goes on to the album after the password
+     sign-in; the album's gated row is painted for the member */
   const {context,page}=await setup({start:'/album.html?album=here'});
   await playAlbumRow(page,1);await markDeck(page);
-  await page.waitForSelector('#mccAuthChip');await page.locator('#mccAuthChip').click();
-  const v=await waitView(page,/account\.html/);
-  check('23. the chip opens the account view, carrying the album as next',/^\/account\.html\?next=%2Falbum\.html%3Falbum%3Dhere$/.test(await path(page)),await path(page));
-  await v.fill('#acInEmail','shell-fixture@invalid.test');await v.fill('#acInPass','fixture-password');await v.locator('#acGo').click();
-  await page.waitForFunction(()=>location.pathname==='/album.html'&&!document.querySelector('#mccMusicViewFrame'),null,{timeout:15000});await sleep(1200);
-  const d=await deck(page);
-  check('23. after sign-in the album is back with the same element playing (not the World)',d.mark==='retained'&&d.same&&!d.paused,{d,path:await path(page)});
+  await page.waitForSelector('[data-comments] a[href^="account.html?next="]',{timeout:15000});
+  await page.evaluate(()=>{window.__docMark='album';});
+  await page.locator('[data-comments] a[href^="account.html?next="]').first().click();
+  await page.waitForURL(/\/account\.html\?next=/,{timeout:10000}).catch(()=>{});await page.waitForLoadState('load');
+  check('22. the comment box\'s Sign in is a page load of the account page (no sign-in view over the album)',await page.evaluate(()=>window.__docMark!=='album'&&!document.querySelector('#mccMusicViewFrame'))&&/^\/account\.html\?next=%2Falbum\.html/.test(await path(page)),await path(page));
+  await page.waitForSelector('#acInEmail',{timeout:10000});
+  await page.fill('#acInEmail','shell-fixture@invalid.test');await page.fill('#acInPass','fixture-password');await page.locator('#acGo').click();
+  await page.waitForURL(/\/album\.html\?album=here/,{timeout:15000}).catch(()=>{});await page.waitForLoadState('load');await sleep(1500);
+  check('22. after the password sign-in the account page goes on to the album it came from',await path(page)==='/album.html?album=here',await path(page));
+  check('22. the chip says Profile',await page.evaluate(()=>(document.querySelector('#mccAuthChip .mcc-auth-chip__text')||{}).textContent)==='Profile');
+  await page.waitForFunction(()=>{const r=[...document.querySelectorAll('#tracks li')].find(li=>li.hasAttribute('data-gated-bucket'));return !r||r.getAttribute('data-gate')==='earned';},null,{timeout:8000}).catch(()=>{});
+  check('22. the album\'s gated row is painted for the member',await page.evaluate(()=>{const r=[...document.querySelectorAll('#tracks li')].find(li=>li.hasAttribute('data-gated-bucket'));return !r||r.getAttribute('data-gate')==='earned';}));
   await context.close();
 });
+await scenario('s20',async()=>{
+  /* test 23, over Listen (was over the album): Listen playing -> the chip (no next) -> password -> Listen again, the same
+     element playing */
+  const {context,page}=await setup();
+  await playListen(page);await markEngine(page);
+  await page.waitForSelector('#mccAuthChip');await page.locator('#mccAuthChip').click();
+  const v=await waitView(page,/account\.html/);
+  check('23. the chip opens the account view, carrying Listen as next',/^\/account\.html\?next=%2Flisten\.html$/.test(await path(page)),await path(page));
+  check('22. no pocket mounts in the account view',await v.evaluate(()=>!document.querySelector('.pocket')));
+  const e0=await engine(page);await sleep(1000);const e1=await engine(page);
+  check('22. the song advances while the account view shows',e1.same&&e1.t>e0.t+.5&&!e1.paused,{e0,e1});
+  await v.fill('#acInEmail','shell-fixture@invalid.test');await v.fill('#acInPass','fixture-password');await v.locator('#acGo').click();
+  await page.waitForFunction(()=>location.pathname==='/listen.html'&&!document.querySelector('#mccMusicViewFrame'),null,{timeout:15000});await sleep(1200);
+  const e=await engine(page);
+  check('23. after sign-in Listen is back with the same element playing (not the World)',e.mark==='retained'&&e.same&&!e.paused&&e.t>e1.t,{e,path:await path(page)});
+  check('22. the chip says Profile',await page.evaluate(()=>(document.querySelector('#mccAuthChip .mcc-auth-chip__text')||{}).textContent)==='Profile');
+  await context.close();
+  /* the same from an artist page: the chip carries the artist page as next and the sign-in comes back to it */
+  const a=await setup({start:'/music-creator.html?handle=probe-artist'});
+  await a.page.waitForSelector(`#creatorPublicTracks [data-creator-track="${T_PUBLIC}"]`,{timeout:15000});
+  await a.page.locator(`#creatorPublicTracks [data-creator-track="${T_PUBLIC}"]`).click();
+  await a.page.waitForFunction(()=>!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>.3,null,{timeout:15000});
+  await markEngine(a.page);
+  await a.page.locator('#mccAuthChip').click();
+  const av=await waitView(a.page,/account\.html/);
+  check('23. on an artist page the chip carries that page as next',/^\/account\.html\?next=%2Fmusic-creator\.html%3Fhandle%3Dprobe-artist$/.test(await path(a.page)),await path(a.page));
+  await av.fill('#acInEmail','shell-fixture@invalid.test');await av.fill('#acInPass','fixture-password');await av.locator('#acGo').click();
+  await a.page.waitForFunction(()=>location.pathname==='/music-creator.html'&&!document.querySelector('#mccMusicViewFrame'),null,{timeout:15000});await sleep(1000);
+  const ae=await engine(a.page);
+  check('23. after sign-in the artist page is back with the same element playing',ae.mark==='retained'&&ae.same&&!ae.paused,ae);
+  await a.context.close();
+});
 await scenario('s21',async()=>{
-  /* test 24: the sign-in in the view makes exactly the calls and storage writes account.html makes on its own */
+  /* test 24, over Listen (was over the album): the sign-in in the view makes exactly the calls and storage writes
+     account.html makes on its own */
   const run=async viewMode=>{
-    const s=await setup({start:viewMode?'/album.html?album=here':'/account.html?next=%2Falbum.html%3Falbum%3Dhere'});
+    const s=await setup({start:viewMode?'/listen.html':'/account.html?next=%2Flisten.html'});
     let doc=s.page.mainFrame();
     if(viewMode){await s.page.waitForSelector('#mccAuthChip');await s.page.locator('#mccAuthChip').click();doc=await waitView(s.page,/account\.html/);}
     await doc.waitForSelector('#acInEmail');
     const keys0=await s.page.evaluate(()=>Object.keys(localStorage).sort());
     const mark=s.log.requests.length;
     await doc.fill('#acInEmail','shell-fixture@invalid.test');await doc.fill('#acInPass','fixture-password');await doc.locator('#acGo').click();
-    await s.page.waitForURL(/\/album\.html/,{timeout:15000});await s.page.waitForLoadState('load');await sleep(1500);
+    await s.page.waitForURL(/\/listen\.html/,{timeout:15000});await s.page.waitForLoadState('load');await sleep(1500);
     const auth=s.log.requests.slice(mark).filter(q=>/auth\/v1\/(token|user)|\/v1\/mnet\/bootstrap/.test(q.url)).map(q=>q.method+' '+q.url.replace(/^https:\/\/[^/]+/,'').replace(/\?.*$/,m=>m.includes('grant_type')?m:''));
     const keys1=await s.page.evaluate(()=>Object.keys(localStorage).sort());
     await s.context.close();
@@ -988,9 +1082,10 @@ await scenario('s21',async()=>{
   check('24. the same storage keys written',JSON.stringify(direct.added)===JSON.stringify(inView.added)&&inView.added.includes('mccdb_session'),{direct:direct.added,inView:inView.added});
 });
 await scenario('s22',async()=>{
-  /* test 25: a provider starts in the top window; Create account and Forgot password are page loads of the top */
-  const {context,page,log}=await setup({start:'/album.html?album=here',google:true});
-  await playAlbumRow(page,1);
+  /* test 25, over Listen (was over the album): a provider starts in the top window; Create account and Forgot password
+     are page loads of the top */
+  const {context,page,log}=await setup({google:true});
+  await playListen(page);
   await page.locator('#mccAuthChip').click();const v=await waitView(page,/account\.html/);
   await v.waitForSelector('#acProviders .ac__prov',{timeout:10000});
   HOLD.authorize=4000;
@@ -1007,13 +1102,13 @@ await scenario('s22',async()=>{
   const pk=await page.evaluate(async()=>{const v=sessionStorage.getItem('mcc.pkce');if(!v)return null;const d=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)));let b='';for(const x of d)b+=String.fromCharCode(x);return {length:v.length,challenge:btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};}).catch(e=>({error:String(e)}));
   check('25. the PKCE verifier is in the tab\'s sessionStorage, the one the challenge sent was made from',!!pk&&!!sent&&pk.challenge===sent&&pk.length>20,{pk,sent});
   await context.close();
-  const c=await setup({start:'/album.html?album=here'});
+  const c=await setup();
   await c.page.locator('#mccAuthChip').click();const cv=await waitView(c.page,/account\.html/);
   await cv.locator('#acCreateTab').click();await cv.locator('#acCreateGo').click();
   await c.page.waitForURL(/mnet\.html\?join=1|mccluster\.org\/\?join=1/,{timeout:10000});
-  check('25. Create account is a page load of the top, to today\'s address',/\/mnet\.html\?join=1&next=%2Falbum\.html%3Falbum%3Dhere/.test(c.page.url()),c.page.url());
+  check('25. Create account is a page load of the top, to today\'s address',/\/mnet\.html\?join=1&next=%2Flisten\.html/.test(c.page.url()),c.page.url());
   await c.context.close();
-  const f=await setup({start:'/album.html?album=here'});
+  const f=await setup();
   await f.page.locator('#mccAuthChip').click();const fv=await waitView(f.page,/account\.html/);
   await fv.locator('#acForgot').click();
   await f.page.waitForURL(/forgot-password\.html/,{timeout:10000});
@@ -1021,19 +1116,21 @@ await scenario('s22',async()=>{
   await f.context.close();
 });
 await scenario('s23',async()=>{
-  /* test 26: signing out in the account view: the chip says Sign in, gated rows repaint as a guest's, the deck plays on */
-  const {context,page}=await setup({start:'/album.html?album=here',member:true});
+  /* test 26, over Listen (was over the album): signing out in the account view: the chip says Sign in, Listen repaints
+     its offer as a guest's (the album's gated rows were the album's own way of saying so), the song plays on */
+  const {context,page}=await setup({member:true});
   await page.waitForFunction(()=>(document.querySelector('#mccAuthChip .mcc-auth-chip__text')||{}).textContent==='Profile',null,{timeout:12000});
-  await playAlbumRow(page,1);await markDeck(page);
-  await page.evaluate(()=>{const a=document.createElement('a');a.href='account.html?stay=1';a.id='acLink';a.textContent='Account';document.querySelector('#deckbar').appendChild(a);});
+  await playListen(page);await markEngine(page);
+  await page.evaluate(()=>{const a=document.createElement('a');a.href='account.html?stay=1';a.id='acLink';a.textContent='Account';(document.querySelector('main')||document.body).prepend(a);});
   await page.locator('#acLink').click();const v=await waitView(page,/account\.html\?stay=1/);
   await v.waitForSelector('#acOut',{state:'visible',timeout:10000});await v.locator('#acOut').click();
   await page.waitForFunction(()=>(document.querySelector('#mccAuthChip .mcc-auth-chip__text')||{}).textContent==='Sign in',null,{timeout:12000}).catch(()=>{});
   await sleep(1200);
   check('26. signing out in the account view: the chip says Sign in',await page.evaluate(()=>(document.querySelector('#mccAuthChip .mcc-auth-chip__text')||{}).textContent)==='Sign in');
-  check('26. the gated row repaints as a guest\'s',await page.evaluate(()=>{const r=[...document.querySelectorAll('#tracks li')].find(li=>li.hasAttribute('data-gated-bucket'));return !r||r.getAttribute('data-gate')!=='earned';}));
-  const d=await deck(page);
-  check('26. the deck keeps playing on the same element',d.same&&!d.paused&&d.mark==='retained',d);
+  await page.waitForFunction(()=>{const s=document.querySelector('[data-creator-offer] .music-launch__go[data-offer="signin"]');return !!s&&!s.hidden;},null,{timeout:8000}).catch(()=>{});
+  check('26. Listen repaints its offer as a guest\'s (Sign in)',await page.evaluate(()=>{const s=document.querySelector('[data-creator-offer] .music-launch__go[data-offer="signin"]');return !!s&&!s.hidden;}));
+  const e=await engine(page);
+  check('26. the song keeps playing on the same element',e.same&&!e.paused&&e.mark==='retained',e);
   await context.close();
 });
 }finally{

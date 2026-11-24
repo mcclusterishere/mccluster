@@ -83,9 +83,12 @@ Since music slice M5 (`docs/music/MUSIC-RELEASE-20261119.md`, "M5: one player
 across music pages"; on the branch only, because D-5 is Matthew's decision) the
 same pattern holds between music pages. `js/music-shell.js`, loaded by
 `js/tabbar.js` beside this module, keeps the first music page a tab opens
-(Listen, an artist page, the album) as the retained document and opens the other
-music pages over it as views, each in a fresh same-origin frame, one at a time.
-How the World relates to that:
+(Listen, an artist page) as the retained document and opens the other music
+pages over it as views, each in a fresh same-origin frame, one at a time. Release
+2 ships M5 with the album contained (`docs/control-plane/handoff-20261123/specs/SPEC-ENGINE.md`,
+4.10; the record's "Engine stage 0"): the album is never retained and never a
+view, so it is a page of its own with its deck as its one player, and the World
+opens over it as over any other page. How the World relates to that:
 
 | Action | Result |
 | --- | --- |
@@ -94,7 +97,7 @@ How the World relates to that:
 | Back again | The view closes onto the retained page, whose own title, description, canonical, JSON-LD and `og:` tags come back byte for byte. |
 | This module inside a view | Does nothing: no theme, no watchers, no greeting (a view is not the World frame). The World always opens from the retained document. |
 | A link to the World inside a view | Takes the same path as the bar's Globe. |
-| The album retained, a Listen song chosen in a view | One owner of sound at a time (the album's deck, or the engine loaded beside it); the World's transport acts on the owner. |
+| The album (contained in Release 2) | Never retained, so no view opens over it and no engine is loaded beside its deck: the deck is the one player on the album, and the World's transport acts on it. Stage 1 of the engine makes the album a page of the one engine. |
 
 Links from the World to an artist page or the album still navigate the top
 document, as in the table above: a page load, as before.

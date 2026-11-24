@@ -5,15 +5,15 @@
    loaded a new document, and a new document cannot keep the old one's <audio> element or, on an iPhone, start
    sound without a tap.
 
-   So the first music page a tab opens (Listen, an artist page, the album) stays the one document that plays: the
-   RETAINED document. It owns every element that can sound and the one js/now-playing.js that speaks to the device,
-   the bar, the account chip, the installed app's dock and the history. The other music pages open over it as
-   VIEWS, each in a fresh same-origin frame, one at a time: their own document, head, scripts and address, but no
-   music element and no Now Playing of their own; a play button in a view calls the retained player in the same
-   tap (js/music-engine.js, view mode). The address bar shows the view's own address (history.pushState), so a
-   share, a bookmark or a refresh lands on that exact page, and Back and Forward move between views without
-   reloading the retained document. This is the Music-to-World pattern (js/world-audio-continuity.js) generalised
-   from one cross-origin World frame to same-origin music views.
+   So the first music page a tab opens (Listen, an artist page; the album is contained in Release 2, see ROUTES)
+   stays the one document that plays: the RETAINED document. It owns every element that can sound and the one
+   js/now-playing.js that speaks to the device, the bar, the account chip, the installed app's dock and the history.
+   The other music pages open over it as VIEWS, each in a fresh same-origin frame, one at a time: their own document,
+   head, scripts and address, but no music element and no Now Playing of their own; a play button in a view calls the
+   retained player in the same tap (js/music-engine.js, view mode). The address bar shows the view's own address
+   (history.pushState), so a share, a bookmark or a refresh lands on that exact page, and Back and Forward move
+   between views without reloading the retained document. This is the Music-to-World pattern
+   (js/world-audio-continuity.js) generalised from one cross-origin World frame to same-origin music views.
 
    D-5 (one long-lived player across music pages) is Matthew's decision and is still unanswered: this is the music
    map's recommended default, built on the branch behind ROUTES below. Every route off is the behaviour before it.
@@ -33,13 +33,19 @@
   var ROOT = src ? src.replace(/js\/music-shell\.js.*$/, "") : "";
 
   /* THE ONE SWITCH. top: the page may be the retained document; view: it may open as a view over one.
-     Stage 1, the first pair: Listen and the artist pages, each both. Stage 2: the album as the retained document,
-     its player its own deck (as a view it waits: its player is page-bound). Stage 3: the account page as a sign-in
-     view over any of them, on the password path. Every route off is the site at dc0185aa: every link a page load. */
+     Stage 1, the first pair: Listen and the artist pages, each both. Stage 3: the account page as a sign-in view over
+     them, on the password path. Every route off is the site at dc0185aa: every link a page load.
+     THE ALBUM IS CONTAINED IN RELEASE 2 (SPEC-ENGINE 4.10, engine stage 0): never retained, never a view. M5's stage 2
+     retained it with its own deck, and a song chosen in a view over it put the engine beside the deck: two players
+     behind one bar, which Matthew ruled out (one engine, one player at all times; SPEC-ENGINE section 2). So the
+     album is a page of its own, as at Release 1: its deck the one player on the page, a link to it a page load and
+     every link on it its own.
+     Stage 1 of the engine makes the album a page of the one engine and turns it back on as both (top and view); the
+     stage-2 code below (guestEngine, ownerWatch) is left in place for it and never runs while the album is off. */
   var ROUTES = {
     listen: { top: true, view: true },
     artist: { top: true, view: true },
-    album: { top: true, view: false },
+    album: { top: false, view: false },
     account: { top: false, view: true }
   };
   /* What stays on screen and reachable over a view: the shell itself, the one bar and its chip, menus and peeks, the
