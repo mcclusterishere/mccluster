@@ -2110,3 +2110,105 @@ artwork's own) and `album-390-song-test-held-card` (a member's song test on CIA 
 in the pop-up's words; the cards' names are the suite's stand-ins). Art direction: the first render of the card showed
 only the album's once-a-session opening curtain; every render now waits for it to lift, and the card was rendered
 again.
+
+### Verification (2026-11-24)
+
+An independent check of the quick wins and the review round at the branch head `3b3db968`, against `5d8c533e`, in
+worktrees of its own: the review's probes run again; each item checked by account state (a guest, a member, a creator
+and the house owner) with probes of its own; behaviours taken out one at a time to see their tests fail; every suite
+once; renders at device scale 2. It found one fault the slice brought in and fixed it here, with tests. The rest of
+what the sections above say held, apart from the corrections below. Nothing went to `main`; nothing was deployed,
+enabled or applied; production was only read (counts, no person).
+
+**Found and fixed: the house owner's play of the closing song, paused and played again.** At `3b3db968` his play
+started as the sections above say (one claim, the master). But once he paused it, Play (the deck bar's, the row's or
+the lock screen's) asked the gate for a second play and started the song again from 0:00, one more claim each time,
+and while his play was on, his song test card changed to the held line. At `5d8c533e` the same steps went on from where
+the song paused, with its one claim. The cause: the album decided whom the song is held for from the gate's first
+answer alone (the owner's), and once his claim had answered with the master, the row's answer was that one play, so
+his own Play went back to the hold and claimed again. Now a row whose play has been granted is not held until that play
+is spent: Play goes on from where it paused, with no second claim, and his card keeps his own line (`album.html`, in
+both places the rule is written). Tests: two in `scripts/test/music-quick-wins.test.mjs` and one browser scenario in
+`scripts/e2e/music-quick-wins.e2e.mjs` (he pauses and plays again by the deck bar, the row and the lock screen). At
+`3b3db968` both unit tests fail (two claims where there is one; the cards' rule reads his granted row as held) and the
+scenario passes 1 of its 5 checks; after the fix, 45 of 45 and 5 of 5.
+
+**Corrections to the sections above.**
+* The album does not decide in one place whom the song is held for (QW-R4): the rule is written twice in `album.html`,
+  once beside the gate's paint, for the cards, and once in the player. This round changed both; each has its own test.
+* The one Worker failure in the slice's suite table (`analytics-creator-attribution`) passes now. The platform's P0
+  work fixed it (`1580bde5`), not the quick wins.
+* The slice's two whole-page renders of Listen (`listen-390-albums-and-artists`, `listen-1280-albums-and-artists`)
+  show only the first screen: below it is the page's ground, and the albums are cut off. This Chromium paints a
+  whole-page capture of these pages only as far as the first screen, so the renders below are taken a screen at a time.
+
+**What held**, at the head, by account state:
+* The review's probes, run again: every cover surface and shelf (198 checks), the pocket's whole cover (1), the closing
+  song never mounted, seated, banked or read (13, 4 and 1), the card's and the heart's words (6), the pop-up's padding
+  (8), Listen's offers by account (14), the listen engine stopping at a record's end (5), and the pages at 320 to
+  1280 px (36): all pass.
+* This check's own probes (51 checks): one McCluster card for a guest, a member, a creator and the owner; his page
+  with and without his directory row, carrying the five albums billed to the house and not the three billed to other
+  names (Cyber Security Specialist, Docket 516R and CIA Mind Control); each album's byline; McCluster on the lock
+  screen and in the embedded player; Artists and Albums only on Listen for every account; the album never reads the
+  playlists; and for a guest, a member, a member whose gate has earned a play, and a creator, the closing song says
+  NOT YET, the pop-up opens with its way forward focused, Next from the lock screen stops the album there, and nothing
+  of the song is claimed, read or counted.
+* The review's four nits stand as it says: taking the desk's unknown-creator guard out (QW-R9) passes the unit file and
+  fails two of the quick wins suite's desk checks (a creator and the owner offered "Become a creator" while the creator
+  answer fails); Listen and the catalogue's shelf say "tracks" (QW-R10); the shelves print each album's billed artist
+  (QW-R11); the catalogue's rows are not marked held, and the closing song's direct-sale offer is inactive (QW-R12).
+
+**Revert and fail, at the final code.** In a separate worktree, each behaviour taken out alone, its file put back by its
+hash and the tree checked clean after each: 16 in the unit file (the one McCluster card, the song rails off, the
+whole-covers rule, the offer by account, the hold mark, the listen engine's hold, the album's stop at its end, one
+`music_interrupted` per drop on the album, the shelf rule, the pocket's carry check, the held card, the pop-up's
+padding, the seat rule, the banking rule, and each of the two copies of the owner rule): all 16 fail their tests,
+against 45 of 45 with nothing taken out. In Chromium, 4: the album shelf's ground and frame (14 of 31 checks fail), the
+hold mark (19 of 25), the pocket's cover tile (6 of 12) and the player's copy of the owner rule (3 of 5).
+
+**Suites at the final code**, one at a time: root suite 3,212 tests, 3,205 pass, 7 skipped, none fail; the music job's
+contract steps 277 of 277; `scripts/test/domain-architecture.test.mjs` 14 of 14; the Worker suite, run at `3b3db968`
+(no file under `workers/` changed since), 2,059 tests, 2,050 pass, 9 skipped, none fail; the peaks, artwork and
+track-length checks current; the source map validator 3,018 checks, none failed (no file added). In Chromium, under the
+shared lock: quick wins 232 of 232; M5 shell 141 of 141; background 293 of 293; Music to World 140 of 140; Now Playing
+120 of 120; accounts 128 of 128; installed app 246 of 246; Control's music review 49 of 49; direct checkout 40 of 40;
+the house door 122 of 122; member desk 60 of 60; creator onboarding 85 of 85.
+
+**Production, read only** (counts, no person): one active artist profile with the handle `mccluster` (no avatar, no
+banner) among three active creator profiles; no published creator tracks; the closing song's direct-sale offers: none
+active, one inactive; CIA Mind Control's song test: one gated card and two open; the reviewed event taxonomy (149 rows)
+still names neither `music_interrupted` nor `music_error`. As the sections above say.
+
+**Seen and not changed** (none stops a listener):
+* A device, or a shared row, that kept the closing song from before the hold shows it in Listen's mini player ("Pick up
+  at", with its name); Play there opens the pop-up and reads nothing.
+* Listen still asks for the song rails' numbers on every load (two reads), though the rails are off and nothing shows
+  them.
+* The closing song's short preview file is still in `assets/audio/`, and the site's publish keeps that folder, so it
+  stays public at its address, though no page reads it now.
+* The catalogue page's album grid keeps 1 px rule lines around each card, a frame Listen's and the album page's
+  shelves no longer have (`css/music-director.css`, untouched by the slice). No plate shows: the card's ground is within
+  three levels of the page's.
+* Listen's albums rail starts with its first card against the screen's left edge and its caption at 0 px; the same at
+  `5d8c533e`.
+
+**What waits for Matthew** (added to the lists above):
+* Whether the closing song's preview file comes down from the published site while the song is held.
+* Whether the catalogue page keeps the rule lines around its albums or matches Listen's frameless shelf.
+
+Row to add for his devices:
+12. Signed in as the house owner, CIA Mind Control: play the closing song, pause it, then Play (and once from the lock
+    screen): it goes on from where it paused, without asking again, and his song test card keeps its line.
+
+**Renders for this check**, at device scale 2 and 390 px, a screen at a time, every request a route fixture ("Fixture
+Artist" and "Fixture Owner" are fixtures), every page `scrollWidth === clientWidth`; kept with the results, not in the
+repository: `verify-listen-390-a-top` and `verify-listen-390-b-artists-and-albums` (Listen: one McCluster, then
+Artists and Albums, nothing else), `verify-catalogue-390-albums`, `verify-artist-390-a-mccluster-one-profile`,
+`verify-artist-390-b-his-albums` and `verify-artist-390-c-end` (his one page, with his albums),
+`verify-album-390-hero-and-mini-player-whole-cover` and `verify-listen-390-mini-player-whole-cover` (CIA Mind
+Control's wide cover whole in the hero, in the deck bar and in Listen's mini player),
+`verify-album-390-closing-song-signed-out` and `verify-album-390-closing-song-signed-in` (the pop-up, its way forward
+focused), and
+`verify-listen-390-creator-account-menu` and `verify-listen-390-creator-studio-box` (a creator: the account menu offers
+no way to join, and Listen's box is Creator Studio).

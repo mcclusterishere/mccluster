@@ -1177,10 +1177,12 @@
     function chip(cls, b, sub) {
       return '<span class="' + cls + '"><b>' + esc(b) + '</b><span>' + esc(sub) + '</span></span>';
     }
-    /* the held song is held for everyone but the house owner, whose own play opens it (review QW-R4) */
+    /* the held song is held for everyone but the house owner, whose own play opens it (review QW-R4). Once his claim
+       has answered with the master (the row is granted), that play is his until it is spent: a pause and Play picks it
+       up where it paused, never a second claim, and his card keeps his own line (verification, 2026-11-24) */
     function heldFor(row) {
       var out = row && row._gateOut;
-      return !!(row && row.hasAttribute("data-hold") && !(out && out.state === "earned" && out.operator));
+      return !!(row && row.hasAttribute("data-hold") && !row.hasAttribute("data-granted") && !(out && out.state === "earned" && out.operator));
     }
     function paintGate(row, out) {
       var slot = row.querySelector("[data-reclock]");
@@ -1704,10 +1706,11 @@
        for it and one pop-up says why (js/gated-audio.js). A tap on it leaves what plays alone; Next into it, or the
        album reaching it, moves on past it, or stops the album there when it is the last song. Returns false for the
        house owner, whose play goes on below as before. */
-    /* held for this listener: everyone but the house owner, whose gate answered operator */
+    /* held for this listener: everyone but the house owner, whose gate answered operator, or whose own play of it is
+       granted and not yet spent (the same rule as beside paintGate, which lives outside this scope) */
     function heldFor(row) {
       var out = row && row._gateOut;
-      return !!(row && row.hasAttribute("data-hold") && !(out && out.state === "earned" && out.operator));
+      return !!(row && row.hasAttribute("data-hold") && !row.hasAttribute("data-granted") && !(out && out.state === "earned" && out.operator));
     }
     function holdThenPlay(target, at, how) {
       var row = rows[target];
