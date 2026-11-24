@@ -18,3 +18,8 @@ Pushed head: 1dfaf9a6. Commits of this round, oldest first: 5f967c9d, e0d02a96, 
 - Root suite `node --test scripts/test/*.test.mjs` was not run after the changes; music-quick-wins e2e, the whole now-playing e2e, world-first-visit, human-uprise-door, carry (whole, after fixes) and world-gate were not run.
 - sw.js: measured in both Chromiums, its cache held fonts and images only after pages were fetched through it, so the offline index.html fallback has nothing to serve. As on main; not changed. Cause inferred (clone after the response is handed over).
 - A CPU-load probe used three busy loops for a few minutes; all killed. No processes left running.
+
+## Later CI note at head 1dfaf9a6 (2026-11-24, about 18:40 UTC)
+
+- Check "Credits, billing, idempotency, rate-limit, and COGS regression" (run 45461001831, job 138683216510) failed before any test ran: the local database container could not start because host port 54322 was already in use on the runner (`failed to bind host port 0.0.0.0:54322/tcp: address already in use`). The workflow is `.github/workflows/api-economic-core-ci.yml` on `ubuntu-latest` (the runner image was Ubuntu 26.04). "Communications database regression" started the same kind of database on the same head and passed, so this reads as a runner fault, not the release's code. Not yet re-run: the run was still in progress. Re-run the failed job once when the run finishes. If it fails the same way again, pin that workflow to `ubuntu-24.04` as the five others were, and say so on the pull request.
+- At the same moment most browser jobs for 1dfaf9a6 were still queued, so the results for `browser (sign-in)` and `browser (world-gate)` at this head were not known.
