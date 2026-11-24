@@ -16,7 +16,8 @@
    decides where each one lands. An upstream redirect is never followed: a
    Location on the static origin is handed back on the requesting host
    (GitHub answers /engineering and /action with an absolute 301 to its own
-   host; following it served a directory at a slashless address). */
+   host; following it served a directory at a slashless address), and a
+   Location anywhere else is refused with a 502, never handed to the visitor. */
 import { SITE } from './platform/hosts.generated.js';
 
 /* The World's own rooms, by exact path and by prefix: the table's world.rooms and world.room_prefixes */
@@ -178,7 +179,8 @@ export function methodNotAllowed() {
   return new Response('Method Not Allowed', { status: 405, headers: { allow: 'GET, HEAD' } });
 }
 /* the static origin answered with something this Worker will not hand on (a redirect back to the very address asked
-   for, or any redirect of the World's own document): an honest 502, never a loop in the visitor's browser */
+   for, a redirect to any origin but its own, or any redirect of the World's own document): an honest 502, never a loop
+   in the visitor's browser and never this host's redirect to somewhere else */
 function upstreamRefused() {
   return new Response('The static origin answered with a redirect this host will not follow.', {
     status: 502, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' }
@@ -192,9 +194,12 @@ export function upstreamOrigin(env, fallback = SITE.platform.static_origin) {
   return String((env && env.PUBLIC_ORIGIN) || fallback).replace(/\/$/, '');
 }
 
-/* A Location the static origin answered with, as the requesting host hands it on: one on the static origin (absolute, or
-   relative to the upstream address) is the same path on the requesting host; any other is handed on as it is. The
-   requesting origin is joined as text, so a path that starts with // can never turn into another host. */
+/* A Location the static origin answered with, as the requesting host hands it on: one on the static origin itself
+   (absolute, or relative to the upstream address; scheme, host and port exactly) is the same path on the requesting
+   host. Any other (another host, the same host over plain http, a host hidden behind userinfo, a protocol-relative
+   //host) is null, which the pass-through refuses with a 502: the static origin only ever redirects to itself (GitHub
+   Pages' directory slash), so a redirect anywhere else is never this host's to make. The requesting origin is joined as
+   text, so a path that starts with // can never turn into another host. */
 export function relocate(location, upstream, requestUrl, site = SITE) {
   if (!location) return null;
   let target;
@@ -202,7 +207,7 @@ export function relocate(location, upstream, requestUrl, site = SITE) {
   if (target.origin === new URL(upstream).origin || target.origin === site.platform.static_origin) {
     return new URL(requestUrl).origin + target.pathname + target.search + target.hash;
   }
-  return target.href;
+  return null;
 }
 
 /* The framing a page answers with, by class (SPEC-PLATFORM 2.4): the site's own ancestors for documents and files
@@ -233,7 +238,8 @@ export async function passThrough(request, upstream, fetchImpl, { root = false, 
     if (v) out.set(h, v);
   }
   if (REDIRECTS.has(res.status) && res.headers.get('location')) {
-    /* the World's document never moves; any other redirect is handed back on this host, and never to itself */
+    /* the World's document never moves; a redirect on the static origin is handed back on this host, never to itself,
+       and a redirect anywhere else is refused (relocate answers null) */
     if (root) return upstreamRefused();
     const location = relocate(res.headers.get('location'), upstream, request.url, site);
     if (!location || new URL(location).href === new URL(request.url).href) return upstreamRefused();
