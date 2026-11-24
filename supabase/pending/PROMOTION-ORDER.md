@@ -728,3 +728,11 @@ contract, the schema manifest from the CI reset, a new production snapshot; this
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
 | `20261123190000_in_hot_pursuit_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's In Hot Pursuit (keys `in-hot-pursuit:*`), upserted like section 16 | the shelf in `data/albums.json` (album `in-hot-pursuit`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+
+## 18. Audio Engineer catalog objects (written 2026-11-24)
+
+**Pending. Never applied.**
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261124120000_audio_engineer_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of McCluster's Audio Engineer EP (keys `audio-engineer:*`), upserted like section 16 | the shelf in `data/albums.json` (album `audio-engineer`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
