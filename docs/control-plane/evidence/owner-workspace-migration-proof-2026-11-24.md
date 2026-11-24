@@ -35,8 +35,12 @@ record, credential, token, transcript or private identity is included in this ev
 
 ## Correction and boundaries
 
-- Forward and recovery files take a common advisory transaction lock and set a five-second
-  lock timeout. The migration runner owns one transaction for the whole file.
+- All six forward and recovery files require `READ COMMITTED` before taking a lock or
+  reading catalog/data state. A transaction-wide snapshot could otherwise miss rows
+  committed while recovery waits. Refusal uses SQLSTATE `55000` and
+  `COMPUTE_READ_COMMITTED_REQUIRED`; isolation is never silently changed for the caller.
+- Forward and recovery files then take a common advisory transaction lock and set a
+  five-second lock timeout. The migration runner owns one transaction for the whole file.
 - Workspace and legacy yield refuse both unsupported apply orderings and refuse a yield
   rollback over workspace. No combined scheduler feature was invented.
 - Exact SHA-256 function-body pins and metadata checks refuse altered or partial baseline
@@ -74,7 +78,7 @@ A production apply remains disallowed without the per-file approval and a fresh 
 ## Final native result
 
 The final run used PostgreSQL 17.6 and the actual six migration/recovery files, applying each
-inside an explicit driver transaction. It passed **180 assertions**, including 15 logged
+inside an explicit driver transaction. It passed **196 assertions**, including 15 logged
 blocked-session races and an additional observed expiry-during-lock wait. The runner checks:
 
 - Single-use consumption, reissue invalidation, expiry after waiting, and two credentials
@@ -86,6 +90,12 @@ blocked-session races and an additional observed expiry-during-lock wait. The ru
   plus canonical owner/member row-level security on conversations.
 - Both scheduler installation orders and rollback conflicts, altered function bodies,
   incomplete cleanup columns and orphan wrapper refusal without partial mutation.
+- All six files refuse Repeatable Read while another native connection holds the shared
+  migration lock, proving refusal precedes that lock wait. Historical rows and the claim
+  definition remain unchanged. Separate enrollment and workspace recovery cases establish
+  an empty Repeatable Read snapshot, commit a new row from another native connection,
+  confirm the old snapshot cannot see it, and verify refusal preserves the committed row
+  exactly. These isolation and preservation cases add 16 assertions to the prior proof.
 - Apply twice, refused rollback with data and with a cleanup-only hold, empty rollback,
   reapply and rollback again, preserving two synthetic preexisting nodes, 30 tasks and
   40 historical leases byte for byte, plus original legacy function ownership and grants.
@@ -98,7 +108,7 @@ copied into the proof database.
 {
   "suite": "owner-workspace-native",
   "engine": "PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
-  "checks": 180,
+  "checks": 196,
   "passed": true,
   "concurrent_sessions": true,
   "full_reset": false,
@@ -134,15 +144,19 @@ Full-reset mode uses the real baseline roles, grants, tables and triggers and ne
 the stand-in setup. The corrected head `83671ec493287c04ef177d76508daa69f4b647f2`
 passed [run 45452504057, job 138653087813](https://github.com/mcclusterishere/mccluster/actions/runs/45452504057/job/138653087813)
 on PostgreSQL 17.6: **181 assertions, full_reset: true**, with the exact 468-row
-canonical-plus-replay plan and preserved synthetic history. The 180-check result above
-remains the separate bounded local proof. The pinned PGlite device/workspace/yield CI
-job and Core/Worker contracts also passed on that head.
+canonical-plus-replay plan and preserved synthetic history. The retrieved job log identifies
+tested PR merge `a27594545c20f0a8536c7f1b9c3ea16941178abf`, combining that head with main
+`7f2644b417994d1b994d763485b6448906bdfdb0`, and records the successful native receipt at
+`2026-11-24T17:50:12.6154556Z`. The pinned PGlite device/workspace/yield CI job and Core/Worker
+contracts also passed on that head.
 
-The final follow-up adds only truthful source-map context comments to the six SQL files
-and moves the owner proof after the transactional workstream integration test, so its
-synthetic retained history cannot affect later baseline checks. SQL function bodies are
-unchanged. That final head must pass CI again; the cited run establishes the preceding
-corrected full-reset result, not a claim about an unrun revision.
+Later follow-ups add truthful source-map context comments, move the owner proof after the
+transactional workstream integration test so its retained synthetic history cannot affect
+later baseline checks, and add the strict isolation preconditions and 16 assertions described
+above. Runtime SQL function bodies remain unchanged. The **196-check local result is the
+new guarded revision and remains a bounded proof**. That head must pass full-reset CI again;
+the cited 181-check run establishes the preceding corrected full-reset result, not the newer
+isolation-guard revision.
 
 Commands and operational recovery order are in `supabase/pending/PROMOTION-ORDER.md`, section 16.
 The new test is executable CI infrastructure, not an unrun standalone test added to the repo.
@@ -158,12 +172,12 @@ the proof implementation as well as the SQL it exercised.
 
 | File | Bytes | SHA-256 |
 |---|---:|---|
-| `supabase/pending/compute_owner_enrollment_v1.sql` | 8,197 | `6c8e4002281b38004edbe7f89fd01da3f247bb52508ce407b8ddf890368eecf9` |
-| `supabase/pending/compute_owner_enrollment_v1.rollback.sql` | 4,557 | `f0f29e93850b8f6923dcd47fda8ea755e304145e84f4e671de5632b140cab113` |
-| `supabase/pending/compute_owner_workspace_v1.sql` | 49,663 | `f040cba90ed61971adbb335ab4f9bf32f4df92ddde89e7439b1b16f78e48b119` |
-| `supabase/pending/compute_owner_workspace_v1.rollback.sql` | 21,884 | `10173e0edb797cb08eefccd88bce581186c4ba3920b41e797bce0c3318845413` |
-| `supabase/pending/compute_claim_task_yield_v3.sql` | 13,742 | `2e9439809d0c6f044defa4b87be01874b9a45658ff442623df9366d6528a6e9e` |
-| `supabase/pending/compute_claim_task_yield_v3.rollback.sql` | 12,134 | `0b0ef15e67258628a64522e549458f0fb9e4c6eb51b106712ba9b5d38e6b4cc7` |
-| `scripts/owner-workspace-native-check.mjs` | 34,326 | `1cb62cabe1c4dca9197cfad1173d2ed14421c554fe71b8d8e8da384b8bc7abf1` |
+| `supabase/pending/compute_owner_enrollment_v1.sql` | 8,658 | `6fffa6e41a4be022555da1d757e2fc4bfc95bead4f34a486ff7cb71310d0c723` |
+| `supabase/pending/compute_owner_enrollment_v1.rollback.sql` | 5,018 | `3e076196ef16ae8f22aa15924fa9fd319f749c78cccfd8a53cc349441fec3476` |
+| `supabase/pending/compute_owner_workspace_v1.sql` | 50,124 | `5e9ce6a9866c64676c2094d9bc22bb6563286a0f7cd4ad6b9aab47a29db92be1` |
+| `supabase/pending/compute_owner_workspace_v1.rollback.sql` | 22,345 | `032f6ce7df045ced48cf7555a28e2dfbff923751c7c5bfeb06ee6e21a3ebf486` |
+| `supabase/pending/compute_claim_task_yield_v3.sql` | 14,203 | `a05f1ae4fec5684629142004a5ced08625faa466b7309d25428c244e211c80c5` |
+| `supabase/pending/compute_claim_task_yield_v3.rollback.sql` | 12,595 | `b5ce2e5f206fc9197ea019e5c38bf45dde984250d1528365663623da7f78d057` |
+| `scripts/owner-workspace-native-check.mjs` | 37,019 | `8b3177577891211132b854b2ecef4671e03eaad699bc59370357c2723f9b43d0` |
 | `scripts/native-admin-test-db.mjs` | 3,842 | `43ab5d522112d8a4569a69556669d389f2a644cf1fcc747155fde2e5664908cb` |
 | `.github/workflows/reconciliation-ci.yml` | 18,960 | `a642f29b3cb892496bd66131791f13b099a1ee6dfa7ae5b1a50d2e9b1346aeca` |

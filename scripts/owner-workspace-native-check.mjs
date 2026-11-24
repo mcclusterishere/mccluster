@@ -124,6 +124,21 @@ const claimPrivileges = async () => (await db.query(`select p.proowner::regrole:
 async function guard(file, token, label) {
   await deny(() => migration(file), error => error.code === '55000' && error.message.includes(token), label);
 }
+const requiresReadCommitted = error => error.code === '55000' && error.message.includes('COMPUTE_READ_COMMITTED_REQUIRED');
+async function staleRecovery(file, table, insert, label) {
+  assert.ok(['ops_compute_enrollments', 'ops_compute_pairs'].includes(table));
+  let id, committedRow;
+  await deny(() => db.transaction(async tx => {
+    await tx.exec('set transaction isolation level repeatable read');
+    equal((await tx.query(`select count(*)::integer as n from public.${table}`)).rows[0].n, 0, `${label}: snapshot begins empty`);
+    id = await insert(); // a different native connection commits after that snapshot
+    committedRow = (await service.query(`select to_jsonb(t) as row from public.${table} t where id=$1`, [id])).rows[0].row;
+    equal((await tx.query(`select exists(select 1 from public.${table} where id=$1) as visible`, [id])).rows[0].visible, false, `${label}: repeatable-read snapshot cannot see the later commit`);
+    await tx.exec(read(file));
+  }), requiresReadCommitted, `${label}: recovery rejects an obsolete snapshot`);
+  equal((await db.query(`select to_jsonb(t) as row from public.${table} t where id=$1`, [id])).rows[0].row, committedRow, `${label}: refused recovery preserves the later committed row exactly`);
+  await db.query(`delete from public.${table} where id=$1`, [id]);
+}
 async function race(winner, contender, label) {
   const first = await session(), second = await session(), observer = db.fork();
   const ready = deferred(), release = deferred();
@@ -186,7 +201,23 @@ try {
   for (let i = 0; i < 30; i++) { const id = randomUUID(); priorTasks.push(id); await db.query("insert into public.ops_compute_tasks(id,org_id,capability,status,attempts,output) values($1,$2,'ai.chat','done',2,'{\"preserved\":true}')", [id, BASE_ORG]); }
   for (let i = 0; i < 40; i++) await db.query("insert into public.ops_compute_leases(task_id,node_id,status,lease_token_hash,expires_at,attempt,implementation,result) values($1,$2,'done',$3,clock_timestamp()-interval '1 day',$4,'fixture.local','{\"preserved\":true}')", [priorTasks[i % 30], priorNodes[i % 2].nodeId, digest(`synthetic-old-${i}`), i < 30 ? 1 : 2]);
   const before = await snapshot(), baselineClaim = await claimDefinition(), baselinePrivileges = await claimPrivileges();
+  const migrationBlocker = db.fork();
+  try {
+    await migrationBlocker.transaction(async blocker => {
+      await blocker.query('select pg_advisory_xact_lock(821,20261122)');
+      for (const file of [enrollmentFile, workspaceFile, yieldFile, enrollmentRollback, workspaceRollback, yieldRollback]) {
+        await deny(() => db.transaction(async tx => {
+          await tx.exec('set transaction isolation level repeatable read');
+          await tx.query('select count(*) from public.ops_compute_nodes');
+          await tx.exec(read(file));
+        }), requiresReadCommitted, `${file} refuses repeatable read before waiting for the shared migration lock`);
+      }
+    });
+  } finally { await migrationBlocker.close(); }
+  equal(await snapshot(), before, 'all isolation refusals preserve historical compute rows');
+  equal(await claimDefinition(), baselineClaim, 'all isolation refusals preserve the canonical claim definition');
   await migration(enrollmentFile); await migration(enrollmentFile);
+  await staleRecovery(enrollmentRollback, 'ops_compute_enrollments', async () => (await issue()).id, 'late enrollment receipt');
   await migration(yieldFile);
   const yieldDefinition = (await db.query("select pg_get_functiondef('public.compute_claim_task(text,text[],text[],integer,integer)'::regprocedure) as definition")).rows[0].definition;
   await guard(workspaceFile, 'COMPUTE_WORKSPACE_YIELD_CONFLICT', 'workspace refuses installed yield without modifying it');
@@ -201,6 +232,10 @@ try {
   equal((await db.query("select to_regclass('public.ops_compute_pairs') as relation")).rows[0].relation, null, 'changed-baseline refusal leaves no new tables');
   await migration(workspaceFile); await migration(workspaceFile);
   const safeClaim = await claimDefinition();
+  await staleRecovery(workspaceRollback, 'ops_compute_pairs', async () => (await service.query(
+    'insert into public.ops_compute_pairs(org_id,name,node_ids) values($1,$2,$3) returning id',
+    [BASE_ORG, 'Synthetic late pair', priorNodes.map(node => node.nodeId)],
+  )).rows[0].id, 'late saved workspace pair');
   for (const file of [yieldFile, yieldRollback]) { await guard(file, 'COMPUTE_WORKSPACE_YIELD_CONFLICT', 'yield cannot replace a workspace claim'); equal(await claimDefinition(), safeClaim, 'rejected yield leaves safe wrapper unchanged'); }
   await guard(enrollmentRollback, 'WORKSPACE_ROLLBACK_REQUIRED', 'enrollment cannot roll back before its workspace dependent');
   equal(await snapshot(), before, 'apply twice and rejected ordering preserve all preexisting compute rows');

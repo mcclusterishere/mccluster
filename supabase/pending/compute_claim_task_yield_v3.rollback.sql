@@ -7,6 +7,14 @@
 -- core/src/compute/store.mjs tolerates by dropping the parameter.
 -- The migration runner owns the transaction. This lock serializes scheduler
 -- migrations and their recovery scripts; it does not serialize ordinary jobs.
+-- Reject transaction-wide snapshots before any lock wait or catalog/data read.
+-- Recovery must observe rows committed while it waits for ordinary writers.
+do $compute_migration_isolation$
+begin
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception using errcode='55000',message='COMPUTE_READ_COMMITTED_REQUIRED: fresh snapshots are required for migration and recovery checks';
+  end if;
+end $compute_migration_isolation$;
 set local lock_timeout = '5s';
 select pg_advisory_xact_lock(821,20261122);
 do $yield_preflight$
