@@ -563,6 +563,112 @@ test('entitled creator path: an expired URL with nothing fresh is signed again t
   assert.equal(e.music.audio.src, 'creator-preview.mp3');
 });
 
+/* ONLY THE ENTITLEMENT CHECK'S OWN NO ENDS A FULL SONG (the review of PR #825, js/music-engine.js sourceAgain). A creator's
+   URL signed again on the way is asked of music-access; a request that never reached it comes back from
+   creatorSourceFor() as the preview with reason "network", and it was taken for a refusal: an entitled member, offline
+   for a moment, heard the full song swapped for its 30-second preview at 0:00, was told the song was no longer open to
+   their account, and nothing asked again. A member 70 s into an account release whose 120 s URL has lapsed (the
+   refresh a minute before the lapse failed too), and the next read fails: */
+const CREATOR_SONG = { id: 'c1', title: 'Creator song', access_mode: 'account', previewUrl: 'creator-preview.mp3', preview_seconds: 30 };
+async function lapsedMidSong(c, answer) {
+  let n = 0;
+  const e = engine({ clock: c, member: true, access: (body) => (++n === 1 ? { url: 'creator-1.mp3', expires_in: 120 } : answer(n, body)) });
+  e.music.registerCreatorTrack(CREATOR_SONG);
+  await e.music.playCreator('c1');
+  await c.tick(61 * 1000);                         // the refresh a minute before the lapse: offline too, left to the next read
+  e.music.audio.currentTime = 70;
+  await c.tick(70 * 1000);                         // the 120 s URL has lapsed
+  e.music.audio.fail(2);                           // and the next read fails, at 1:10
+  return e;
+}
+
+test('entitled creator path: a renewal that never reached music-access, or came back with nothing to play, is a failed try: the full song picks up at its second', async (t) => {
+  for (const [why, miss] of [
+    ['the request never reached music-access (offline)', () => new Error('offline')],
+    ['music-access failed (HTTP 503)', () => ({ status: 503 })],
+    ['an answer with no address', () => ({ url: '' })]
+  ]) await t.test(why, async () => {
+    const c = clockOf();
+    let online = false;
+    const e = await lapsedMidSong(c, (n) => (n === 2 ? new Error('offline') : online ? { url: 'creator-2.mp3', expires_in: 3600 } : miss()));
+    await c.tick(600);                             // the first try signs it again, and misses
+    assert.equal(e.accessCalls(), 3, why);
+    assert.equal(e.music.access(), 'full', `${why}: still the member's full song (it became its preview)`);
+    assert.equal(e.music.audio.src, 'creator-1.mp3', `${why}: no preview loaded`);
+    assert.equal(e.music.delivery().state, 'reconnecting', `${why}: still being picked up`);
+    assert.equal(e.music.delivery().at, 70, `${why}: at the second it stopped`);
+    assert.equal(e.music.delivery().path, 'creator', `${why}: through the release's own resolver`);
+    assert.equal(e.text('musicMiniAccess'), 'Reconnecting…', why);
+    assert.equal(e.text('musicMiniNote'), 'The connection dropped at 1:10. Picking up there…', `${why}: no word about the account`);
+    assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Pause', `${why}: its Pause stops the tries`);
+    online = true;                                 // the network is back before the tries run out
+    await c.tick(1000);                            // the next try asks music-access again
+    assert.equal(e.accessCalls(), 4, `${why}: asked again`);
+    assert.equal(e.music.access(), 'full', why);
+    assert.equal(e.music.audio.src, 'creator-2.mp3', `${why}: the full song, signed again`);
+    assert.equal(e.music.audio.currentTime, 70, `${why}: at the same second`);
+    assert.equal(e.music.audio.paused, false, why);
+  });
+  /* offline through every try: it says so at 1:10, and Play asks music-access again and picks the full song up there */
+  const c = clockOf();
+  let online = false;
+  const e = await lapsedMidSong(c, () => (online ? { url: 'creator-2.mp3', expires_in: 3600 } : new Error('offline')));
+  await c.tick(15000);
+  assert.equal(e.music.delivery().state, 'lost');
+  assert.equal(e.music.access(), 'full');
+  assert.equal(e.text('musicMiniAccess'), 'Connection lost');
+  assert.equal(e.text('musicMiniNote'), 'The connection dropped. Tap play to pick up at 1:10.');
+  assert.equal(e.music.audio.src, 'creator-1.mp3', 'the preview was never loaded');
+  online = true;
+  const calls = e.accessCalls();
+  await e.music.resume(); await settle(); await settle();
+  assert.equal(e.accessCalls(), calls + 1, 'Play asks music-access again');
+  assert.equal(e.music.audio.src, 'creator-2.mp3');
+  assert.equal(e.music.audio.currentTime, 70);
+  assert.equal(e.music.access(), 'full');
+  assert.equal(e.music.audio.paused, false);
+});
+
+test('entitled creator path: the entitlement check\'s own no (402, 403, 401) still gives the preview, labelled, with its note', async (t) => {
+  for (const status of [402, 403, 401]) await t.test(`HTTP ${status}`, async () => {
+    const c = clockOf();
+    const e = await lapsedMidSong(c, (n) => (n === 2 ? new Error('offline') : { status }));
+    await c.tick(600);
+    assert.equal(e.music.access(), 'preview', 'the server decides');
+    assert.equal(e.music.audio.src, 'creator-preview.mp3');
+    assert.equal(e.music.audio.currentTime, 0);
+    assert.equal(e.music.audio.paused, false, 'the listener asked for music: the preview plays');
+    assert.equal(e.music.delivery().state, '');
+    assert.equal(e.text('musicMiniAccess'), 'Preview');
+    assert.equal(e.text('musicMiniNote'), 'The full song is not open to this account any more. Playing its preview.');
+  });
+});
+
+test('entitled creator path: a refusal that comes after the listener pressed Pause starts nothing (Pause wins); Play asks again', async () => {
+  const c = clockOf(), late = deferred();
+  const e = await lapsedMidSong(c, (n) => (n === 2 ? new Error('offline') : n === 3 ? late.promise : { status: 402 }));
+  await c.tick(600);                               // the first try asks music-access; the answer is on its way
+  assert.equal(e.accessCalls(), 3);
+  e.music.pause();                                 // the listener pauses while the song is being picked up
+  const plays = e.music.audio.playCalls, loads = e.music.audio.loads.length;
+  late.resolve({ status: 402 });                   // then the entitlement check says no
+  await settle(); await settle(); await settle();
+  await c.tick(30000);
+  assert.equal(e.music.audio.paused, true, 'nothing plays behind the listener\'s Pause (the preview started)');
+  assert.equal(e.music.audio.playCalls, plays, 'no play()');
+  assert.equal(e.music.audio.loads.length, loads, 'nothing loaded');
+  assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Play');
+  assert.equal(e.music.delivery().playing, false);
+  assert.equal(e.text('musicMiniNote'), 'The connection dropped. Tap play to pick up at 1:10.', 'what the Pause left stands');
+  /* Play asks music-access again, and the answer it gets decides: the preview, labelled as one */
+  await e.music.resume(); await settle(); await settle(); await settle();
+  assert.equal(e.accessCalls(), 4, 'asked again on Play');
+  assert.equal(e.music.access(), 'preview');
+  assert.equal(e.music.audio.src, 'creator-preview.mp3');
+  assert.equal(e.music.audio.paused, false);
+  assert.equal(e.text('musicMiniNote'), 'The full song is not open to this account any more. Playing its preview.');
+});
+
 test('gated path: inside its time an interrupted earned play picks up at the same second; once it lapses it is never claimed again by itself', async () => {
   const c = clockOf();
   const e = engine({ clock: c, claim: () => ({ state: 'full', url: 'earned-master.mp3', expires_in: 300 }) });

@@ -1096,7 +1096,10 @@
     Promise.resolve(sourceAgain(item)).then(function (got) {
       if (!trouble || trouble.seq !== seq || request !== playbackRequest || current !== item || !wantPlay) return;
       if (got && got.failed) { deliveryFailed("resolve"); return; }
-      if (!got || !got.url) return;                           // already said and settled (an ended play, a preview)
+      /* the entitlement check said no to this try, and the listener still asks for music: the preview, labelled. An
+         answer that comes after Pause, or after a newer try, changes nothing: Play asks again, and that answer decides */
+      if (got && got.refused) { accessEnded(item, got.refused); return; }
+      if (!got || !got.url) return;                           // already said and settled (an ended play)
       audio.src = got.url;
       try { audio.currentTime = trouble.at; } catch (e) {}    // a ranged read from the second it stopped
       audioSession();
@@ -1136,7 +1139,12 @@
         if (g.expiresAt) scheduleRefresh(g);
         return { url: g.url };
       }
-      if (out && out.state === "preview" && out.url) { accessEnded(item, out); return null; }
+      /* ONLY THE ENTITLEMENT CHECK'S OWN NO ENDS THE FULL SONG (the review of PR #825): music-access answering 402 ("purchase")
+         or 401/403 ("account"). A request that never reached it comes back as the preview too, with reason "network",
+         and it swapped an entitled member's song for its preview at 0:00, said the account had lost it, and never asked
+         again. That, a server error ("http-NNN") and an answer with no address ("no-url") are a failed try: the tries go
+         on from the same second, and the next one, or Play, asks music-access again */
+      if (out && out.state === "preview" && out.url && (out.reason === "purchase" || out.reason === "account")) return { refused: out };
       return { failed: true };
     }, function () { return { failed: true }; });
   }
