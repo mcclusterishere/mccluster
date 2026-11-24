@@ -428,7 +428,10 @@
      --------------------------------------------------------------- */
   var box = el("q");
   var typed = null;
-  function clear() { box.value = ""; q = ""; el("qClear").hidden = true; paint(); }
+  function clear() {
+    box.value = "";
+    box.dispatchEvent(new Event("input", { bubbles: true }));
+  }
 
   box.addEventListener("input", function () {
     q = box.value;

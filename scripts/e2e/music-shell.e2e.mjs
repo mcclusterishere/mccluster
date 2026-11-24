@@ -179,6 +179,8 @@ async function findListen(where,title,album){
 async function playListen(page,title='Who Did The Shoot',album='here',where=page){
   await (await findListen(where,title,album)).click();
   await page.waitForFunction(t=>window.MCC_MUSIC&&MCC_MUSIC.current()&&MCC_MUSIC.current().title===t&&!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>.3,title,{timeout:15000});
+  // Return to browsing after finding the song so artists and albums can be selected while it plays.
+  await where.locator('#qClear').click();
 }
 async function playAlbumRow(page,n=1){
   await page.waitForSelector('#tracks li',{timeout:15000});
@@ -326,6 +328,7 @@ await scenario('s2',async()=>{
   await page.waitForFunction(()=>MCC_MUSIC.current()&&MCC_MUSIC.current().title!=='OSINT'&&!MCC_MUSIC.audio.paused,null,{timeout:12000});
   check('4. a catalogue song plays to its end and the engine\'s queue moves on',(await engine(page)).same,await engine(page));
   /* test 14: a view to another view: a new frame element (a fresh document), the old one gone once the new one painted, one entry */
+  await v.locator('#qClear').click();
   const len0=await page.evaluate(()=>history.length);
   await page.evaluate(()=>{document.getElementById('mccMusicViewFrame').__mark='listen';});
   await v.waitForSelector('a.artist[href*="handle=second-artist"]',{timeout:15000});

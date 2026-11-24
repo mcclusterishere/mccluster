@@ -167,8 +167,6 @@
   var searchBox = doc.getElementById("q");
   if (searchBox && searchBox.addEventListener) {
     searchBox.addEventListener("input", narrowArtists);
-    var searchClear = doc.getElementById("qClear");
-    if (searchClear && searchClear.addEventListener) searchClear.addEventListener("click", function () { setTimeout(narrowArtists, 0); });
   }
   root.MCC_ARTISTS_ROW = { fold: fold, narrow: narrowArtists };
   /* the catalogue's artists, as soon as the shelf answers; the row is repainted with whatever profiles it has */

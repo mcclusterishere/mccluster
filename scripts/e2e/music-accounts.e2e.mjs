@@ -149,6 +149,12 @@ const SCENARIOS = {
       check(await artist('pax').isVisible() && await producer('pax').isVisible(), 'Pax Tha Collector is selectable as both artist and producer');
       check(await producer('zakir-elhajoui').locator('.artist__credit-badge').count() === 1, 'Zakir has a release credit badge on the producer card');
       check(await producer('tazzy-jay').locator('.artist__credit-badge').count() === 0, 'Trackout production alone earns no Equity Uprise badge');
+      const search = page.getByRole('searchbox', { name: 'Search the catalogue' });
+      await search.fill('Who Did The Shoot');
+      check(!await artist('pax').isVisible() && !await producer('pax').isVisible(), 'a song-only search filters both people rails');
+      await search.press('Escape');
+      check(await search.inputValue() === '' && await artist('pax').isVisible() && await producer('pax').isVisible(),
+        'Escape clears the search and restores both artist and producer selection');
       await fits(page, 'Artist and producer selection');
       await page.screenshot({ path: join(OUT, 'catalogue-selectors-390.png') });
       await page.waitForFunction(() => window.MCC_MUSIC_SHELL?.active());
