@@ -36,6 +36,7 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { execFileSync, spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { claimGate, deviceProbeCommand, parseDeviceProbe } from "../../core/src/compute/node-agent-config.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SCRIPT = "core/windows/mccluster-node.ps1";
@@ -299,4 +300,34 @@ test("release signs before hashing and packaging, then verifies the extracted bi
   if (!pwsh) return t.skip(SKIP_LINE);
   const result = spawnSync(pwsh.command, ["-NoProfile", "-NonInteractive", "-File", join(ROOT, "desktop/windows/tests/ReleasePackageTests.ps1")], { encoding: "utf8", timeout: 45_000 });
   assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test("Windows idle-only claims follow last input across tick counter rollover", (t) => {
+  const pwsh = findPwsh();
+  if (!pwsh) return t.skip(SKIP_LINE);
+  const command = deviceProbeCommand("win32");
+  const probe = Buffer.from(command.args.at(-1), "base64").toString("utf16le");
+  const cases = [
+    { name: "after 25 days of uptime", now: 25 * 86_400_000, elapsed: 300_000, seconds: 300 },
+    { name: "across the sign bit", now: 0x80000010, elapsed: 299_999, seconds: 299 },
+    { name: "across full rollover", now: 100_000, elapsed: 300_000, seconds: 300 },
+    { name: "input immediately before the sample", now: 0xfffffff0, elapsed: 999, seconds: 0 },
+    { name: "a future input timestamp", now: 20_000, elapsed: -10, seconds: 0 }
+  ];
+  for (const { name, now, elapsed, seconds } of cases) {
+    // Supply only the native session, clock, last-input and WMI readings. Run the
+    // shipped PowerShell/C# probe, its JSON parser, and the actual claim gate.
+    const last = (now - elapsed) >>> 0;
+    const fixture = "function Get-CimInstance { throw 'no fixture hardware' }\n" + probe
+      .replace("[System.Diagnostics.Process]::GetCurrentProcess().SessionId", "1")
+      .replace("Environment.TickCount", "(" + (now | 0) + ")")
+      .replace(/^\s*\[DllImport\("user32\.dll"\)\].*GetLastInputInfo[^;]+;/m,
+        "\n  static bool GetLastInputInfo(ref LASTINPUTINFO info) { info.dwTime = " + last + "U; return true; }");
+    const encoded = Buffer.from(fixture, "utf16le").toString("base64");
+    const output = execFileSync(pwsh.command, ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], { encoding: "utf8", timeout: 30_000 });
+    const device = parseDeviceProbe(output);
+    assert.equal(device.idle_source, "lastinput", name);
+    assert.equal(device.idle_seconds, seconds, name);
+    assert.equal(claimGate({ limits: { idle_only: true }, idleThresholdSeconds: 300, device }).allowed, seconds >= 300, name);
+  }
 });

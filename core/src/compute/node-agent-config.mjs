@@ -423,8 +423,11 @@ public static class McWts {
   public static long LastInputSeconds() {
     LASTINPUTINFO info = new LASTINPUTINFO(); info.cbSize = (uint)Marshal.SizeOf(info);
     if (!GetLastInputInfo(ref info)) return -1;
-    long idle = ((long)Environment.TickCount - (long)info.dwTime) / 1000L;
-    return idle < 0 ? 0 : idle;
+    // Both readings use the low 32 bits of uptime. Subtract before widening so
+    // a signed tick or a counter wrap still measures short idle intervals.
+    uint elapsed = unchecked((uint)Environment.TickCount - info.dwTime);
+    // A future input time and an idle interval over half a cycle are ambiguous.
+    return elapsed > Int32.MaxValue ? 0L : elapsed / 1000L;
   }
 }
 '@
