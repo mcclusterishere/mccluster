@@ -1,3 +1,4 @@
+-- Equity Uprise shared-platform compute support; no independent building capability.
 -- Rollback of compute_claim_task_yield_v3.sql: drop the 5-argument function and
 -- recreate the applied v2 4-argument public.compute_claim_task verbatim
 -- (supabase/migrations/20261020210718_compute_lease_authority_v2.sql, lines

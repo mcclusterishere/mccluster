@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 770,
+  "candidate_count": 776,
   "capability_source_count": 104,
-  "support_only_count": 666,
-  "checks_total": 2978,
-  "checks_passed": 2978,
+  "support_only_count": 672,
+  "checks_total": 3002,
+  "checks_passed": 3002,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -637,6 +637,12 @@
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
     "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql",
+    "supabase/pending/compute_claim_task_yield_v3.rollback.sql",
+    "supabase/pending/compute_claim_task_yield_v3.sql",
+    "supabase/pending/compute_owner_enrollment_v1.rollback.sql",
+    "supabase/pending/compute_owner_enrollment_v1.sql",
+    "supabase/pending/compute_owner_workspace_v1.rollback.sql",
+    "supabase/pending/compute_owner_workspace_v1.sql",
     "supabase/pending/equity_uprise_clipping_sources.sql",
     "supabase/pending/eup_module_policy_v1.provenance.json",
     "supabase/pending/live-callers.json",
@@ -784,7 +790,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "770 entries"
+      "detail": "776 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -12943,6 +12949,126 @@
     },
     {
       "name": "supabase/pending/action_bounty_claim_existing_row_guard_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_claim_task_yield_v3.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_claim_task_yield_v3.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_recovery_support'"
+    },
+    {
+      "name": "supabase/pending/compute_claim_task_yield_v3.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/compute_claim_task_yield_v3.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_claim_task_yield_v3.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_claim_task_yield_v3.sql classified",
+      "passed": true,
+      "detail": "classification='migration_support'"
+    },
+    {
+      "name": "supabase/pending/compute_claim_task_yield_v3.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/compute_claim_task_yield_v3.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_owner_enrollment_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_owner_enrollment_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_recovery_support'"
+    },
+    {
+      "name": "supabase/pending/compute_owner_enrollment_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/compute_owner_enrollment_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_owner_enrollment_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_owner_enrollment_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_support'"
+    },
+    {
+      "name": "supabase/pending/compute_owner_enrollment_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/compute_owner_enrollment_v1.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_owner_workspace_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_owner_workspace_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='migration_recovery_support'"
+    },
+    {
+      "name": "supabase/pending/compute_owner_workspace_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/compute_owner_workspace_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_owner_workspace_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/compute_owner_workspace_v1.sql classified",
+      "passed": true,
+      "detail": "classification='migration_support'"
+    },
+    {
+      "name": "supabase/pending/compute_owner_workspace_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/compute_owner_workspace_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },

@@ -1,3 +1,4 @@
+-- Equity Uprise shared-platform compute support; no independent building capability.
 -- compute_claim_task_yield_v3: pending, owner-approved only. Never applied here.
 --
 -- What it changes: public.compute_claim_task gains ONE optional parameter,

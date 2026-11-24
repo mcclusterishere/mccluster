@@ -1,3 +1,4 @@
+-- Equity Uprise shared-platform compute support; no independent building capability.
 -- Recovery for compute_owner_workspace_v1. Explicit per-file approval required.
 -- Stop new admission and quiesce the reviewed runtime first. This file refuses
 -- active jobs/leases, every saved pair/reservation, cleanup details, scoped nodes

@@ -1,3 +1,4 @@
+-- Equity Uprise shared-platform compute support; no independent building capability.
 -- PENDING ONLY. Owner review, isolated SQL proof and explicit migration approval
 -- are required before applying this to canonical Supabase. No ledger entry here.
 -- Reuses ops_compute_nodes/tasks/leases. A secret is never stored: only SHA-256

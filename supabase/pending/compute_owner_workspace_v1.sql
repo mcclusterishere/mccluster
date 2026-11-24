@@ -1,3 +1,4 @@
+-- Equity Uprise shared-platform compute support; no independent building capability.
 -- PENDING ONLY. Requires compute_lease_authority_v2 and resident AI tables.
 -- The reviewed release must apply this alongside compute_owner_enrollment_v1.
 -- No migration history entry is created by this source file.

@@ -1,3 +1,4 @@
+-- Equity Uprise shared-platform compute support; no independent building capability.
 -- Recovery for compute_owner_enrollment_v1. Explicit per-file approval required.
 -- Disable new workspace/device admission first and recover the workspace file
 -- before this one. Refuses any enrollment record, scoped node or active lease.

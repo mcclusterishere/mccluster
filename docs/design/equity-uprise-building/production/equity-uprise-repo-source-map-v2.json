@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 770,
+  "candidate_count": 776,
   "capability_source_count": 104,
-  "support_only_count": 666,
+  "support_only_count": 672,
   "entries": [
     {
       "path": ".cursorrules",
@@ -4617,6 +4617,48 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
+    },
+    {
+      "path": "supabase/pending/compute_claim_task_yield_v3.rollback.sql",
+      "classification": "migration_recovery_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Guarded owner compute enrollment/workspace and scheduler compatibility on the shared platform; supports existing Equity Uprise operations without adding a building capability or authorizing production application."
+    },
+    {
+      "path": "supabase/pending/compute_claim_task_yield_v3.sql",
+      "classification": "migration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Guarded owner compute enrollment/workspace and scheduler compatibility on the shared platform; supports existing Equity Uprise operations without adding a building capability or authorizing production application."
+    },
+    {
+      "path": "supabase/pending/compute_owner_enrollment_v1.rollback.sql",
+      "classification": "migration_recovery_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Guarded owner compute enrollment/workspace and scheduler compatibility on the shared platform; supports existing Equity Uprise operations without adding a building capability or authorizing production application."
+    },
+    {
+      "path": "supabase/pending/compute_owner_enrollment_v1.sql",
+      "classification": "migration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Guarded owner compute enrollment/workspace and scheduler compatibility on the shared platform; supports existing Equity Uprise operations without adding a building capability or authorizing production application."
+    },
+    {
+      "path": "supabase/pending/compute_owner_workspace_v1.rollback.sql",
+      "classification": "migration_recovery_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Guarded owner compute enrollment/workspace and scheduler compatibility on the shared platform; supports existing Equity Uprise operations without adding a building capability or authorizing production application."
+    },
+    {
+      "path": "supabase/pending/compute_owner_workspace_v1.sql",
+      "classification": "migration_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Guarded owner compute enrollment/workspace and scheduler compatibility on the shared platform; supports existing Equity Uprise operations without adding a building capability or authorizing production application."
     },
     {
       "path": "supabase/pending/equity_uprise_clipping_sources.sql",

@@ -131,16 +131,23 @@ contains 384 canonical files plus 84 replay-only files. A later ledger update is
 from its actual files rather than a hard-coded count.
 
 Full-reset mode uses the real baseline roles, grants, tables and triggers and never executes
-the stand-in setup. Its successful run on the corrected PR head is still pending. The
-180-check native result above remains a local bounded-baseline result. Existing pinned
-PGlite device, workspace and yield checks also remain CI gates; no fresh local PGlite
-result is claimed here.
+the stand-in setup. The corrected head `83671ec493287c04ef177d76508daa69f4b647f2`
+passed [run 45452504057, job 138653087813](https://github.com/mcclusterishere/mccluster/actions/runs/45452504057/job/138653087813)
+on PostgreSQL 17.6: **181 assertions, full_reset: true**, with the exact 468-row
+canonical-plus-replay plan and preserved synthetic history. The 180-check result above
+remains the separate bounded local proof. The pinned PGlite device/workspace/yield CI
+job and Core/Worker contracts also passed on that head.
+
+The final follow-up adds only truthful source-map context comments to the six SQL files
+and moves the owner proof after the transactional workstream integration test, so its
+synthetic retained history cannot affect later baseline checks. SQL function bodies are
+unchanged. That final head must pass CI again; the cited run establishes the preceding
+corrected full-reset result, not a claim about an unrun revision.
 
 Commands and operational recovery order are in `supabase/pending/PROMOTION-ORDER.md`, section 16.
 The new test is executable CI infrastructure, not an unrun standalone test added to the repo.
-The complete checkout also passes all 2,978 repository source-coverage checks: 770 classified
-sources, with 104 capability sources and 666 support-only sources. The new native runner is
-verification support; its addition does not create a product capability. Syntax and whitespace
+The regenerated repository source-coverage report classifies the proof and every reviewed
+forward/recovery file as support, with no new building capability. Syntax and whitespace
 checks pass. No fresh local browser or PGlite run is claimed.
 
 ## Exact reviewed bytes
@@ -151,12 +158,12 @@ the proof implementation as well as the SQL it exercised.
 
 | File | Bytes | SHA-256 |
 |---|---:|---|
-| `supabase/pending/compute_owner_enrollment_v1.sql` | 8,111 | `2be3f91854b953eacb6c7bec8f574c409a174290026ea116752a8db029f7c0ad` |
-| `supabase/pending/compute_owner_enrollment_v1.rollback.sql` | 4,471 | `a6e17ab7b741a00f107c83d6aa02a4f45788e43e922b6aeafc895439ac201890` |
-| `supabase/pending/compute_owner_workspace_v1.sql` | 49,577 | `b4270aa12672f4d54cf5b765bf30752fef369485de25b8a1fc7374884f9b47f8` |
-| `supabase/pending/compute_owner_workspace_v1.rollback.sql` | 21,798 | `5718c5f1498a608186c7140f54cefe157c7cdd1ccd1357c0c0121f02b6407563` |
-| `supabase/pending/compute_claim_task_yield_v3.sql` | 13,656 | `8bd5e9e9d3b0c6c14fd8b07f09b657373c5441ef4769fa1934cbd428019c31e9` |
-| `supabase/pending/compute_claim_task_yield_v3.rollback.sql` | 12,048 | `db474edc66c82dfa3f90089141f939ac24aff14e3d29dea5cb7913fc7be63d52` |
+| `supabase/pending/compute_owner_enrollment_v1.sql` | 8,197 | `6c8e4002281b38004edbe7f89fd01da3f247bb52508ce407b8ddf890368eecf9` |
+| `supabase/pending/compute_owner_enrollment_v1.rollback.sql` | 4,557 | `f0f29e93850b8f6923dcd47fda8ea755e304145e84f4e671de5632b140cab113` |
+| `supabase/pending/compute_owner_workspace_v1.sql` | 49,663 | `f040cba90ed61971adbb335ab4f9bf32f4df92ddde89e7439b1b16f78e48b119` |
+| `supabase/pending/compute_owner_workspace_v1.rollback.sql` | 21,884 | `10173e0edb797cb08eefccd88bce581186c4ba3920b41e797bce0c3318845413` |
+| `supabase/pending/compute_claim_task_yield_v3.sql` | 13,742 | `2e9439809d0c6f044defa4b87be01874b9a45658ff442623df9366d6528a6e9e` |
+| `supabase/pending/compute_claim_task_yield_v3.rollback.sql` | 12,134 | `0b0ef15e67258628a64522e549458f0fb9e4c6eb51b106712ba9b5d38e6b4cc7` |
 | `scripts/owner-workspace-native-check.mjs` | 34,326 | `1cb62cabe1c4dca9197cfad1173d2ed14421c554fe71b8d8e8da384b8bc7abf1` |
 | `scripts/native-admin-test-db.mjs` | 3,842 | `43ab5d522112d8a4569a69556669d389f2a644cf1fcc747155fde2e5664908cb` |
-| `.github/workflows/reconciliation-ci.yml` | 18,804 | `eacde125e3135763ec99733e0012be8b328460736d731f907398e3b0d810589f` |
+| `.github/workflows/reconciliation-ci.yml` | 18,960 | `a642f29b3cb892496bd66131791f13b099a1ee6dfa7ae5b1a50d2e9b1346aeca` |
