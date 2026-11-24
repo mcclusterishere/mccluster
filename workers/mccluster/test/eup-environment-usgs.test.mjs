@@ -174,11 +174,19 @@ test('flag off: no network call and no store call', async () => {
     assert.equal(p.calls.length, 0, `${JSON.stringify(value)}: nothing was fetched`);
   }
   assert.equal(usgsIngestEnabled({ [USGS_INGEST_FLAG]: ' TRUE ' }), true, 'the same reading as the private collector\'s flag');
-  const toml = readFileSync(new URL('../wrangler.toml', import.meta.url), 'utf8');
-  assert.match(toml, /^EUP_ENVIRONMENT_USGS_INGEST_ENABLED = "false"$/m, 'the committed configuration keeps it off');
   const p = plane();
   assert.equal((await run(p, { env: { [USGS_INGEST_FLAG]: 'true' } })).skipped, 'store_not_configured');
   assert.equal(p.calls.length, 0, 'flag on without the store\'s credentials: still nothing');
+});
+
+/* Matthew approved turning the ingest on, on 2026-11-23: "Switching the module on for sure, alright?", then, for Release 1 of
+   that day, "ship it all baby". The committed configuration turns it on with that release; until 2026-11-23 it was "false".
+   On, with no USGS rule set in Control yet, a run reads the store's view once and asks USGS nothing ("the store first",
+   below). */
+test('the committed configuration turns the ingest on, as Matthew approved on 2026-11-23', () => {
+  const toml = readFileSync(new URL('../wrangler.toml', import.meta.url), 'utf8');
+  assert.match(toml, /^EUP_ENVIRONMENT_USGS_INGEST_ENABLED = "true"$/m, 'on in the committed configuration: Matthew, 2026-11-23');
+  assert.equal((toml.match(/^EUP_ENVIRONMENT_USGS_INGEST_ENABLED\s*=/gm) || []).length, 1, 'set once, so nothing later in the file turns it off');
 });
 
 test('the cron hook runs the ingest only with the flag, and the hook is wired', async () => {

@@ -87,7 +87,10 @@ test('the album says what happened: failed plays, gated previews, no dead tip do
   assert.match(album, /function playFailed\(err, row\)[\s\S]{0,200}if \(name === "AbortError"\) return;/);
   assert.match(album, /window\.MCC_TRACK\("play_failed"/);
   assert.match(album, /function primeDeck\(\)/);
-  assert.match(album, /if \(wasPreview\) \{ previewNotice\(rows\[cur\], true\); return; \}/, 'a preview ending waits instead of jumping to another song');
+  /* a locked preview never stops the record (music slice M3, decision D-11's default): it says what it was and
+     the album moves on; this guard used to keep the old stop */
+  assert.match(album, /if \(wasPreview\) previewNotice\(rows\[cur\], true\);\n/, 'a preview ending says what it was');
+  assert.doesNotMatch(album, /if \(wasPreview\) \{ previewNotice\(rows\[cur\], true\); return; \}/, 'and the album moves on instead of stopping');
   assert.match(album, /ARTIST === HOUSE \? "matthew-mccluster\.html"/, 'the house artist name opens his page');
   /* an act with its own artist page (data/albums.json artist_page) opens it: PRIM3 (owner, 2026-11-02) */
   assert.match(album, /artistPage: alb\.artist_page \|\| ""/, 'the album reads the act\'s artist page');

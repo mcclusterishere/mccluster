@@ -51,9 +51,9 @@ import { OFF, refusalOf } from '../../world-environment-guard.js';
 export const ENVIRONMENT_STORE_PARTS = Object.freeze([
   'supabase/migrations/20261120061725_eup_environment_events_v1_01.sql',
   'supabase/migrations/20261120061759_eup_environment_events_v1_02.sql',
-  'supabase/pending/20261119100000_eup_environment_events_v1_03.sql',
-  'supabase/pending/20261119100000_eup_environment_events_v1_04.sql',
-  'supabase/pending/20261119100000_eup_environment_events_v1_05.sql'
+  'supabase/migrations/20261123173831_eup_environment_events_v1_03.sql',
+  'supabase/migrations/20261123173951_eup_environment_events_v1_04.sql',
+  'supabase/migrations/20261123174034_eup_environment_events_v1_05.sql'
 ]);
 export const GOVERNMENT_PROVIDERS = Object.freeze(['usgs', 'nws', 'nhc', 'eonet', 'firms', 'wfigs', 'coops']);
 export const EVENT_COMMANDS = Object.freeze(['hold', 'release', 'retract', 'restore', 'rollback']);

@@ -1551,6 +1551,13 @@
       "rationale": "Read-only production schema snapshot taken on 2026-11-20 after the Drawdown credit correction and publication and Environment parts 01 and 02 were recorded at ledger 380; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
     },
     {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken on 2026-11-23 after the network connections consent guard and Environment parts 03 to 05 were recorded at ledger 384; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
+    },
+    {
       "path": "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
       "classification": "documentation_support",
       "capability_ids": [],

@@ -68,6 +68,19 @@
       : { state: "locked", gate: gate };
   }
 
+  /* THE GATE IS NOT READY (music slice M3; music map 02, DEL-2). While the rule's SQL is not in
+     production the Worker answers gate_not_ready: nobody's missions or identity can open the full
+     song yet, signed in or not. The row painted "0/3 MISSIONS + identity verification" from this
+     file's own defaults, numbers no server sent. Now every listener is told the same true thing:
+     the full song opens later. */
+  function notReady(gate) {
+    return !!gate && (gate.reason === "gate_not_ready" ||
+      (Array.isArray(gate.missing) && gate.missing.indexOf("gate_not_ready") > -1));
+  }
+  function later(out) { return !!(out && notReady(out.gate)); }
+  /* a count the server sent, or nothing: never the page's own 0/3 */
+  function count(n) { return typeof n === "number" && isFinite(n) ? n : (typeof n === "string" && /^\d+$/.test(n) ? Number(n) : null); }
+
   /* Where does this listener stand? Resolves, never rejects: every caller
      is painting a row, and a thrown error would leave the row lying
      about which situation it is in. */
@@ -80,8 +93,10 @@
     var p = ask("/v1/music/gates/" + encodeURIComponent(key)).then(function (r) {
       /* signed in is decided when the answer is back: a session the server ended on the way is a guest's answer */
       var signedIn = !!sessionToken();
+      var gate = r.data && r.data.gate;
       var out = r.status === 200
-          ? (signedIn ? fromGate(r.data && r.data.gate) : { state: "preview", reason: "account", gate: r.data && r.data.gate })
+          ? (notReady(gate) ? { state: "locked", reason: "later", gate: gate }
+            : signedIn ? fromGate(gate) : { state: "preview", reason: "account", gate: gate })
         : r.status === 401 ? { state: "preview", reason: "account" }
         : { state: "unavailable", reason: r.status ? "http-" + r.status : "network" };
       cache[key] = { at: Date.now(), out: out };
@@ -98,11 +113,18 @@
     delete cache[key];
     if (!key) return Promise.resolve({ state: "unavailable", reason: "unconfigured" });
     return ask("/v1/music/gates/" + encodeURIComponent(key) + "/play", "POST").then(function (r) {
-      if (r.status === 200 && r.data && r.data.url) return { state: "full", url: r.data.url, gate: r.data.gate };
+      /* the play's lifetime comes with its URL (the Worker's expires_in: 300 s for a listener's one play,
+         600 s for the house's own), so the player knows when it has lapsed (music slice M3) */
+      if (r.status === 200 && r.data && r.data.url) {
+        var life = Number(r.data.expires_in);
+        return { state: "full", url: r.data.url, gate: r.data.gate, expires_in: life > 0 ? life : null };
+      }
       if (r.status === 403) return { state: "locked", gate: r.data && r.data.gate };
       if (r.status === 401) return { state: "preview", reason: "account" };
       if (r.status === 404) return { state: "unavailable", reason: "missing" };
-      return { state: "unavailable", reason: r.status ? "http-" + r.status : "network" };
+      /* no answer, or a server error: the play may or may not have been spent. The page says so and
+         never claims again by itself (music slice M3) */
+      return { state: "unavailable", reason: r.status ? "http-" + r.status : "network", uncertain: !r.status || r.status >= 500 };
     });
   }
 
@@ -114,10 +136,12 @@
       if (out.operator) return { b: "PLAY", s: "owner" };
       return g && g.mode === "rule" ? { b: "PLAY", s: "full track" } : { b: "PLAY ONCE", s: "you earned it" };
     }
+    if (notReady(g)) return { b: "FULL SONG", s: "opens later" };
     if (out.state !== "locked" || !g) return null;
-    /* Three admin-verified missions and a verified identity. */
+    /* Three admin-verified missions and a verified identity, as the server counted them. */
     if (g.mode === "rule") {
-      var m = g.missions || {}, have = Number(m.have) || 0, needM = Number(m.need) || 3;
+      var m = g.missions || {}, have = count(m.have), needM = count(m.need);
+      if (have === null || !needM) return { b: "LOCKED", s: "not available yet" };
       if (have < needM) return { b: have + "/" + needM + " MISSIONS", s: g.identity_verified ? "verified missions unlock it" : "+ identity verification" };
       if (!g.identity_verified) return { b: "VERIFY ID", s: have + "/" + needM + " missions done" };
       return { b: "LOCKED", s: "not available yet" };
@@ -141,15 +165,19 @@
      what is actually missing, from the server's own answer. */
   function explain(out) {
     var g = out && out.gate;
+    if (notReady(g)) return { text: "The full song opens later.", links: [] };
     if (!g || g.mode !== "rule") return null;
-    var m = g.missions || {}, have = Number(m.have) || 0, need = Number(m.need) || 3;
+    var m = g.missions || {}, have = count(m.have), need = count(m.need);
     var links = g.links || {}, missing = g.missing || [], parts = [], go = [];
     /* signing in (or making the account) comes back to this record (account.html honours ?next) */
     var here = window.location && window.location.pathname ? window.location.pathname + (window.location.search || "") : "";
     if (missing.indexOf("sign_in") > -1) go.push({ key: "sign_in", label: "Sign in", href: "account.html" + (here && !/(^|\/)account\.html$/.test(here) ? "?next=" + encodeURIComponent(here) : "") });
-    if (have < need) {
+    if (have !== null && need && have < need) {
       parts.push(need + " verified missions (you have " + have + ")");
       if (links.missions) go.push({ key: "missions", label: "Missions (" + have + "/" + need + ")", href: links.missions });
+    } else if ((have === null || !need) && missing.indexOf("missions") > -1) {
+      parts.push("verified missions");
+      if (links.missions) go.push({ key: "missions", label: "Missions", href: links.missions });
     }
     if (!g.identity_verified) {
       parts.push("a verified identity");
@@ -172,6 +200,7 @@
     claim: claim,
     progress: progress,
     explain: explain,
+    later: later,
     keyOf: keyOf,
     forget: forget,
     onChange: onChange,

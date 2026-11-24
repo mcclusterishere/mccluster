@@ -36,10 +36,37 @@ self.addEventListener("activate", function (e) {
   );
 });
 
+/* THE SAME AUDIO UNDER TWO NAMES (music slice M3 follow-up; review RL-10). Dealer Plates (B-Side) was published as
+   assets/audio/dealer-plates-b.mp3, an MP4 under an MP3's name; music slice M3 gave it its true name, .m4a (the same
+   bytes, only the index moved in front of the audio), and left the old name for old links. A listener who kept Whip
+   Equipped before that holds the old name, and the album now asks for the new one: either name is answered from a
+   copy kept under the other, labelled as the MP4 it is. js/label.js reads the same table and counts that copy kept. */
+var SAME_AUDIO = [["/assets/audio/dealer-plates-b.m4a", "/assets/audio/dealer-plates-b.mp3"]];
+function sameAudio(url) {
+  var path = new URL(url).pathname;
+  for (var i = 0; i < SAME_AUDIO.length; i++) {
+    var k = SAME_AUDIO[i].indexOf(path);
+    if (k >= 0) return new URL(SAME_AUDIO[i][1 - k], url).href;
+  }
+  return null;
+}
+function keptCopy(c, url) {
+  return c.match(url).then(function (hit) {
+    var other = hit ? null : sameAudio(url);
+    if (hit || !other) return hit;
+    return c.match(other).then(function (alt) {
+      if (!alt) return alt;
+      return alt.arrayBuffer().then(function (buf) {
+        return new Response(buf, { headers: { "Content-Type": "audio/mp4", "Content-Length": String(buf.byteLength) } });
+      });
+    });
+  });
+}
+
 /* a kept record, sliced to order: media elements ask in ranges */
 function fromVault(r) {
   return caches.open(VAULT).then(function (c) {
-    return c.match(r.url.split("?")[0]).then(function (hit) {
+    return keptCopy(c, r.url.split("?")[0]).then(function (hit) {
       if (!hit) return fetch(r); // not kept: stream from the network, untouched
       var range = r.headers.get("range");
       var m = range && /bytes=(\d+)-(\d*)/.exec(range);
