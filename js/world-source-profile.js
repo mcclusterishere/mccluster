@@ -45,10 +45,15 @@
   var DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
   var CONTROL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
   var MISSION_SLUG = /^[a-z0-9][a-z0-9-]{0,119}$/;
+  /* the site's hosts come from window.MCC_SITE (js/shell-boot.js, the first script on mnet.html; one place,
+     data/seo/domain-architecture.json): which hosts are the World's, where a shared link points, where the company page is */
+  var SITE = root.MCC_SITE || null;
   /* the World's own hosts: there the World is the root, elsewhere it is mnet.html */
-  var WORLD_HOST = /^(?:www\.)?(?:mccluster\.org|humanuprise\.com)$/i;
-  /* a shared page link always names the company's World, whatever host it was copied on (js/tabbar.js, WORLD_ORIGIN) */
-  var SHARE_ORIGIN = 'https://mccluster.org/';
+  function worldHost(hostname) { return !!SITE && typeof SITE.isWorldHost === 'function' && SITE.isWorldHost(hostname); }
+  /* a shared page link always names the platform's World, whatever host it was copied on (js/tabbar.js, WORLD_ORIGIN) */
+  var SHARE_ORIGIN = SITE ? SITE.platform.world_url : '';
+  /* McCluster Corp's company page, where its host answers it */
+  var COMPANY_PAGE = SITE ? SITE.siteUrl('/company') : '';
   /* an installation without the table answers the first read with 404 (PGRST205); remembered for the session */
   var ABSENT_KEY = 'mcc.missionSources.absent';
   /* the day this site read the Drawdown Explorer for the catalog: data/missions/drawdown/solutions-catalog.json, "generated"
@@ -109,7 +114,7 @@
         'Write to McCluster Corp through its company page; its address is at the foot of that page. Say which page and what to correct or remove.'
       ]),
       changeLink: 'McCluster Corp’s company page',
-      changeHref: 'https://mccluster.org/company',
+      changeHref: COMPANY_PAGE,
       aboutRows: Object.freeze([
         Object.freeze({ id: 'A1', term: 'What this page is', text: 'A page McCluster Corp keeps about the source of some of the missions on this platform. It is not Project Drawdown’s account: no one signs in as Project Drawdown, and nothing here is posted by it.' }),
         Object.freeze({ id: 'A2', term: 'Made by', text: 'McCluster Corp, from Project Drawdown’s public pages and the research it publishes under CC BY 4.0.' }),
@@ -146,7 +151,7 @@
         inMission: 'Every mission’s full credit is in the mission itself.',
         askLead: 'To ask for a change, write to McCluster Corp through its ',
         askLink: 'company page',
-        askHref: 'https://mccluster.org/company'
+        askHref: COMPANY_PAGE
       })
     })
   });
@@ -192,7 +197,7 @@
   function areaKey(name) {
     return String(name || '').toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
-  function worldPath(hostname) { return WORLD_HOST.test(String(hostname || '')) ? '/' : '/mnet.html'; }
+  function worldPath(hostname) { return worldHost(String(hostname || '')) ? '/' : '/mnet.html'; }
   /* the page's own address on this host */
   function sourceHref(hostname, slug, area, preview) {
     var q = new URLSearchParams();
@@ -209,7 +214,7 @@
     var rest = q.toString();
     return worldPath(hostname) + (rest ? '?' + rest : '');
   }
-  function shareLink(slug) { return SLUG.test(String(slug || '')) ? SHARE_ORIGIN + '?source=' + encodeURIComponent(slug) : ''; }
+  function shareLink(slug) { return SHARE_ORIGIN && SLUG.test(String(slug || '')) ? SHARE_ORIGIN + '?source=' + encodeURIComponent(slug) : ''; }
   /* a history state without the page's key (a state that held only it becomes null) */
   function withoutSource(state) {
     if (!state || typeof state !== 'object') return null;
