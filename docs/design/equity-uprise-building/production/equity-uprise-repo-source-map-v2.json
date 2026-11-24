@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 796,
+  "candidate_count": 800,
   "capability_source_count": 104,
-  "support_only_count": 692,
+  "support_only_count": 696,
   "entries": [
     {
       "path": ".cursorrules",
@@ -1481,6 +1481,20 @@
       "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
     },
     {
+      "path": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/README.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared-platform migration inventory or bounded defect-reproduction evidence. Records review limits and blocked proposals; grants no production activation or building capability."
+    },
+    {
+      "path": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/native-audit.mjs",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared-platform migration inventory or bounded defect-reproduction evidence. Records review limits and blocked proposals; grants no production activation or building capability."
+    },
+    {
       "path": "docs/control-plane/evidence/migration-audit-2026-11-24.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -1493,6 +1507,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Actual production migration versions, SQL hashes and verification boundaries for the 389-row ledger; release evidence only."
+    },
+    {
+      "path": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.json",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared-platform migration inventory or bounded defect-reproduction evidence. Records review limits and blocked proposals; grants no production activation or building capability."
+    },
+    {
+      "path": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.md",
+      "classification": "audit_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared-platform migration inventory or bounded defect-reproduction evidence. Records review limits and blocked proposals; grants no production activation or building capability."
     },
     {
       "path": "docs/control-plane/evidence/pending-repairs-proof-2026-11-24.md",

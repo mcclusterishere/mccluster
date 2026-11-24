@@ -92,13 +92,33 @@ DDL plus explicitly documented peripheral Auth/Storage/FK stand-ins. They are no
 entire repository reset. Assertions execute actual forward and recovery files; proof setup
 removes only its own synthetic state, while recovery SQL itself never wipes saved rows.
 
-## Exact-head CI still required
+## Exact-head CI receipt
 
-Reconciliation CI now runs all new native proof entry points and a second set against its
-complete canonical migration/replay reset after the baseline snapshot comparison. Full-reset
-mode does not replace baseline roles/tables/functions/triggers or apply blanket fixture grants.
-The expected reset is the canonical/replay overlay, not merely a count of production-ledger
-rows. No local full-reset success is claimed here; require the new draft head's CI result.
+**Reconciliation CI passed all six jobs at `1e5c5c2aa92281cadb1ec065120376246ed466e2`.**
+The [complete Supabase reset and native repair proof](https://github.com/mcclusterishere/mccluster/actions/runs/45460932797/job/138682976782)
+finished successfully at 18:38:29 UTC on 2026-11-24. This is actual PostgreSQL 17.6 coverage
+against the complete canonical migration/replay reset after the baseline schema comparison.
+Full-reset mode did not replace baseline roles/tables/functions/triggers or apply blanket
+fixture grants. All 18 reviewed candidate SQL files retain the exact hashes below.
+
+The isolated lanes passed first, followed by World (three wrapper groups and 12 behavior
+groups twice), member fronts (four groups), and creator/news (39 plus 17 assertions twice,
+with 18 explicit guards) on the complete reset. The four optional repairs passed their real
+trigger fixture three times, repeated recovery or expected data-preserving refusal, canonical
+connector-policy byte comparison, and reapplication.
+
+Two earlier CI failures remain part of the record. Head `4b4f47be` failed because the bounded
+creator/news setup redundantly tried to alter Supabase's reserved service role; the correction
+removed that ALTER and retained the explicit BYPASSRLS preflight. Head `2d159551` passed the
+actual database refusal but its shell check required an unavailable `rg`; the correction
+preserved the identical refusal-token assertion using Bash built-ins. Neither correction
+changed migration SQL, permissions assertions, canonical roles, or recovery guards.
+
+The [public profile preview](https://github.com/mcclusterishere/mccluster/actions/runs/45460931949/job/138682972662)
+also passed on the same head at 18:38:49 UTC, including both browser entry points and all
+67 member-front checks. Its runner is pinned to Ubuntu 24.04 for the existing Playwright
+1.58.2 dependency set; the earlier Ubuntu 26.04 install failure occurred before assertions.
+No browser proof was skipped. These CI receipts do not grant production application approval.
 
 The four-optional-repairs reset fixture checks the real ontology and signal-rescore triggers,
 rolls its synthetic side effects back, and tests repeated recovery. If canonical connector
@@ -107,15 +127,33 @@ not clear canonical records to manufacture a rollback success. The bounded nativ
 covers the distinct empty-store restore case. The new proof steps are last, before stack
 cleanup, so their disposable pending schema cannot affect earlier baseline proofs.
 
-The complete checkout passes all 3,082 source-coverage checks: 796 classified files, 104
-capability sources and 692 support-only sources. All 18 prepared SQL files are explicitly
-support-only. Script syntax and whitespace checks also pass.
+The original prepared checkout passed all 3,082 source-coverage checks: 796 classified files,
+104 capability sources and 692 support-only sources. The documentation follow-up adds the
+frozen inventory and bounded blocker evidence as support-only; its regenerated report records
+the current exact counts. All 18 prepared SQL files remain explicitly support-only. Script
+syntax and whitespace checks also pass.
 
 Commands, ordering, operational boundaries and actual-version promotion steps are in
 `supabase/pending/PROMOTION-ORDER.md` under "Prepared repair candidates". This review does not
 remove any `live-callers.json` absence or change applied migration/ledger/schema-manifest data.
 The copied Release 2 evidence reports no new branch-specific server SQL dependency while
 retaining its 15 inherited missing names and separate release gates; it is not release approval.
+
+## Frozen open-PR inventory and separate blocked pilot
+
+The [open-PR inventory](open-pr-database-inventory-2026-11-24.md) preserves its 18:30:47 UTC
+capture: all 120 open PRs, 3,183 changed filenames, 253 SQL occurrences and 62 branch-only
+pending forward paths. It is an inventory of proposals and evidence, not 62 approved
+migrations. Its exact heads, file variants, production correspondences and coverage limits
+remain unchanged. Later #839 commits through the green head changed proof/CI compatibility
+only; this evidence follow-up is outside the immutable snapshot.
+
+The [contribution-ledger blocker packet](contribution-ledger-blockers-2026-11-24/README.md)
+records a separate optional, unmerged pilot. Native reproductions demonstrate carried-remainder
+and concurrent daily-cap overruns, an unguarded privileged TRUNCATE boundary, and destructive
+rollback of nonempty accounting history. A successful defect reproduction is not a passing
+release proof. The ledger SQL is not copied into this preparation and remains blocked;
+no model, routing, feature or accounting policy is activated.
 
 ## Reviewed file bytes
 

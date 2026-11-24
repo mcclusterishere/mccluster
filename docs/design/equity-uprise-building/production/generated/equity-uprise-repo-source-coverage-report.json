@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 796,
+  "candidate_count": 800,
   "capability_source_count": 104,
-  "support_only_count": 692,
-  "checks_total": 3082,
-  "checks_passed": 3082,
+  "support_only_count": 696,
+  "checks_total": 3098,
+  "checks_passed": 3098,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -204,8 +204,12 @@
     "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/prim3-topology-learning.serve-root.e2e.mjs",
     "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/union_source_map.py",
     "docs/control-plane/deploy-gate.json",
+    "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/README.md",
+    "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/native-audit.mjs",
     "docs/control-plane/evidence/migration-audit-2026-11-24.md",
     "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
+    "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.json",
+    "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.md",
     "docs/control-plane/evidence/pending-repairs-proof-2026-11-24.md",
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-10-28.json",
@@ -810,7 +814,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "796 entries"
+      "detail": "800 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4538,6 +4542,46 @@
       "detail": ""
     },
     {
+      "name": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/README.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/README.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/README.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/README.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/native-audit.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/native-audit.mjs classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/native-audit.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/native-audit.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/control-plane/evidence/migration-audit-2026-11-24.md capability ids known",
       "passed": true,
       "detail": ""
@@ -4574,6 +4618,46 @@
     },
     {
       "name": "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.json classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.md classified",
+      "passed": true,
+      "detail": "classification='audit_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/open-pr-database-inventory-2026-11-24.md support rationale present",
       "passed": true,
       "detail": ""
     },

@@ -1,0 +1,39 @@
+{
+  "status": "BLOCKED_OPTIONAL_PILOT",
+  "head": "b9c2ed1d86de175b5a5d1f8ce1a442ec6d45312d",
+  "main": "7f2644b417994d1b994d763485b6448906bdfdb0",
+  "production_changes": false,
+  "native_postgresql": "17.6",
+  "full_reset": false,
+  "fixture_boundary": "Actual compute SQL chain with explicit peripheral org and role fixtures; the old #831 scheduler/attestation candidates, not the separately corrected #823 candidates.",
+  "reproduced": [
+    "daily_mint_cap_excludes_carry",
+    "concurrent_daily_mint_cap_overrun",
+    "truncate_not_append_only_guarded",
+    "rollback_drops_nonempty_ledger"
+  ],
+  "candidate_files": [
+    {
+      "path": "supabase/pending/compute_contribution_ledger_v1.sql",
+      "bytes": 58076,
+      "sha256": "57e79053f37ed0cf91b1bb6623ab316f5b5956587474cd446d3fc7f8d9a08b18"
+    },
+    {
+      "path": "supabase/pending/compute_contribution_ledger_v1.rollback.sql",
+      "bytes": 2156,
+      "sha256": "0f167349c1fbd0f593fedaf53ad323afa0e3c89542ad92c8c9f048cf5a5cd1c6"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/native-audit.mjs",
+      "sha256": "bb3cd439c74f61d953ee97fafb101c903bc047932382ac8a48a1c4dcb854f6ea"
+    },
+    {
+      "path": "docs/control-plane/evidence/contribution-ledger-blockers-2026-11-24/native-audit.log",
+      "sha256": "46cdb6cdd58947a66647140885fa33ed904d7cfe4e476ff75a35105536ed9797"
+    }
+  ],
+  "reproducer_variant": "Synthetic implementation labels; audited SQL bytes unchanged; four native defects reproduced again.",
+  "reproof_recorded_at": "2026-11-24T18:59:43.974297Z"
+}
