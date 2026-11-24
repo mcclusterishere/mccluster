@@ -19,6 +19,7 @@ for(const world of ['https://mccluster.org/?view=feed','https://humanuprise.com/
 }
 test('Halo still uses its separate existing Products door and the owner gate remains',()=>{
   const nav=read('js/site-navigation.js');
-  assert.match(nav,/label:'Hitman’s Halo', group:'Products', href:new URL\('action-globe\.html\?explore=1&halo=1', house\)\.href/);
+  /* the doors ask the bar where the page is (page(): the table's serving host), never the dock's house, which keeps Matthew's host until P3 (review V2-1, 2026-11-24); the door's target is unchanged */
+  assert.match(nav,/label:'Hitman’s Halo', group:'Products', href:page\('action-globe\.html\?explore=1&halo=1'\)/);
   assert.match(nav,/if \(!bar\.admin\(\)\)/);
 });

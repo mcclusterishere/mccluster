@@ -102,7 +102,8 @@ test('the Control Room and the site menu no longer point at Seek First; every Ha
   assert.doesNotMatch(nav, /seek-first-handoff|context:'Seek First'/);
   /* one Halo (owner, 2026-10-22: "it takes you to multiple different places"): the menu's Hitman's Halo is the four screens,
      never the separate app, and there is no second Halo entry */
-  assert.match(nav, /label:'Hitman’s Halo', group:'Products', href:new URL\('action-globe\.html\?explore=1&halo=1', house\)\.href/);
+  /* the doors ask the bar where the page is (page(): the table's serving host), never the dock's house, which keeps Matthew's host until P3 (review V2-1, 2026-11-24); the door's target is unchanged */
+  assert.match(nav, /label:'Hitman’s Halo', group:'Products', href:page\('action-globe\.html\?explore=1&halo=1'\)/);
   assert.doesNotMatch(nav, /prime\.mccluster\.org|Halo on the globe/);
   for (const f of ['js/control-room-v2.js', 'js/control-room/workspace.js', 'js/control-room/workspace-core.js', 'js/action-globe.js', 'js/halo/halo.js'])
     assert.doesNotMatch(read(f), /prime\.mccluster\.org/, f + ' links no other Halo');
