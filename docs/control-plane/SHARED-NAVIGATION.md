@@ -103,7 +103,7 @@ Control at its own path (`control.html` is in `url_ownership.platform`), so on t
 platform the link stays on its origin and a session moves there through the carry
 page (stage P1 of the one-platform plan, `docs/control-plane/DOMAINS-AND-ENTITIES.md`).
 Before P1, Control on a World host pointed to Matthew's host with the bar's
-cross-origin sign-in hand-off, whose writer is off since P1 (its reader stays until P4). Local chapter tabs, filters and editor tools remain
+cross-origin sign-in hand-off, whose writer is off since P1 (its reader only scrubs old links until P4 and trades nothing). Local chapter tabs, filters and editor tools remain
 local; they do not replace the global destination menu.
 
 If the shared module fails, the original Home link and the Control sections

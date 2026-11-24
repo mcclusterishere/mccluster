@@ -559,8 +559,8 @@
         },
         {
           "key": "handoff_writer_off",
-          "what": "The fragment hand-off writer is off: no link carries #mcc_handoff any more. The reader still scrubs an old link and trades it until P4.",
-          "where": "js/tabbar.js (handoffWriterOn, handoffHref)"
+          "what": "The fragment hand-off writer is off: no link carries #mcc_handoff any more. Its reader only scrubs an old link from the address until P4: it sends nothing and stores nothing (a token nobody writes any more is someone else's, so trading it would sign a visitor in as another account), and the carry signs the platform in instead.",
+          "where": "js/tabbar.js (handoffWriterOn, handoffHref, handoffReaderTrades, arriveWithHandoff)"
         },
         {
           "key": "move_card",

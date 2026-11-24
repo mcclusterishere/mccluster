@@ -948,7 +948,8 @@
      no second sign-in. A page that already holds a session keeps it.
      FROM P1 THE WRITER IS OFF (SPEC-PLATFORM 2.6): no token rides in any
      link; the carry (js/carry.js, below) brings the sign-in to the platform
-     instead. The reader stays until P4, scrubbing any old link. */
+     instead. The reader only scrubs an old link from the address until P4,
+     and trades nothing: a token nobody writes any more is someone else's. */
   var API_ORIGIN = "https://api.mccluster.org";
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
@@ -962,6 +963,11 @@
   function handoffWriterOn() {
     var S = window.MCC_SITE;
     return !!(S && S.switches && S.switches.carry !== true);
+  }
+  /* the fragment hand-off reader trades a token for a session only while the writer writes one (P0); from P1, and with
+     no table, a token in an address was put there by someone else, so it is scrubbed and traded for nothing */
+  function handoffReaderTrades() {
+    return handoffWriterOn();
   }
   /* the link, with the sign-in riding along when there is one to carry */
   function handoffHref(dest) {
@@ -990,6 +996,8 @@
     var rest = hash.replace(/(?:^#|&)mcc_handoff=[^&]*/, "");
     if (rest === "#") rest = "";
     try { history.replaceState(null, "", location.pathname + location.search + rest); } catch (e) {}
+    /* From P1 the reader only scrubs: nothing is sent and nothing stored, and the pages waiting for a hand-off settle */
+    if (!handoffReaderTrades()) { emit("mcc:handoff", { ok: false, reason: "retired" }); return Promise.resolve(false); }
     /* A malformed fragment is a finished handoff with a clear outcome, never
        an exception out of the bar's initialisation. */
     if (!token) { emit("mcc:handoff", { ok: false, reason: "malformed" }); return Promise.resolve(false); }

@@ -653,7 +653,7 @@ const settleWorld = async (page) => {
 
 /* ---------- 4. one M Account, every host: a member taps the Globe and arrives signed in, carried (P1) ---------- */
 /* Before P1 the bar wrote the member's sign-in into the crossing link's fragment (#mcc_handoff) and the World's host
-   traded it. From P1 that writer is off (its reader stays until P4) and the platform carries the sign-in itself: a page
+   traded it. From P1 that writer is off (its reader only scrubs old links until P4) and the platform carries the sign-in itself: a page
    there with no session asks Matthew's host once, through a hidden same-site frame of his carry page, and trades the
    answer at the same POST /v1/auth/handoff. No token rides in any address. The platform serves every page from P1, so
    Music and the site's pages stay on it; only Whip Equipped and the owner's own pages are his host's alone. */

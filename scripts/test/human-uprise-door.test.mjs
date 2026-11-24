@@ -173,7 +173,8 @@ test('one M Account, every host: the bar carries the sign-in across and the arri
   assert.match(bar, /var HANDOFF = "mcc_handoff";/);
   assert.match(bar, /return !!\(S && url && \/\^https\?:\$\/\.test\(url\.protocol\) && url\.origin !== location\.origin && S\.isSiteOrigin\(url\.origin\)\);/);
   /* from P1 the writer is off: the carry (js/carry.js, scripts/test/carry.test.mjs) brings the sign-in instead, and no
-     link carries a token; the reader below stays until P4 */
+     link carries a token; the reader below only scrubs an old link until P4 and trades nothing from P1 (review
+     SEC-P1-1: a token nobody writes any more is someone else's; scripts/test/auth-handoff-commit.test.mjs runs it) */
   assert.match(bar, /if \(!handoffWriterOn\(\) \|\| !crossesHouse\(url\) \|\| !stored \|\| !stored\.access_token\) return Promise\.resolve\(url\.href\);/);
   assert.match(bar, /function handoffWriterOn\(\) \{\n    var S = window\.MCC_SITE;\n    return !!\(S && S\.switches && S\.switches\.carry !== true\);\n  \}/);
   /* leaving, while the writer is on (P0's table): the token rides in the fragment, never a query */
@@ -182,10 +183,13 @@ test('one M Account, every host: the bar carries the sign-in across and the arri
   assert.match(bar, /handoffHref\(dest\)\.then\(function \(h\) \{ navigateDocument\(h\); \}, function \(\) \{ navigateDocument\(dest\); \}\);/, 'the bar\'s own tabs carry the handed-off destination through document navigation');
   assert.match(bar, /function navigateDocument\(href\) \{\s*if \(window\.MCC_WORLD_AUDIO && window\.MCC_WORLD_AUDIO\.leaveFrame\(href\)\) return;\s*location\.href = href;\s*\}/, 'document navigation passes the same destination to the retained-frame exit or the current window');
   assert.match(bar, /if \(!a \|\| a\.target === "_blank" \|\| a\.hasAttribute\("download"\) \|\| a\.closest\("\.appbar"\)\) return;/, 'any page link carries it; the bar sails itself');
-  /* arriving: scrub first, exchange from this origin, verify, store, reload */
+  /* arriving: scrub first, then (only while the writer writes, P0) exchange from this origin, verify, store, reload */
   const scrub = bar.indexOf('history.replaceState(null, "", location.pathname + location.search + rest)');
+  const retired = bar.indexOf('if (!handoffReaderTrades()) { emit("mcc:handoff", { ok: false, reason: "retired" }); return Promise.resolve(false); }');
   const exchange = bar.indexOf('boundedFetchJson(API_ORIGIN + "/v1/auth/handoff"');
   assert.ok(scrub > 0 && exchange > scrub, 'the fragment is scrubbed before anything is sent');
+  assert.ok(retired > scrub && exchange > retired, 'from P1 the reader stops after the scrub, before anything is sent');
+  assert.match(bar, /function handoffReaderTrades\(\) \{\n    return handoffWriterOn\(\);\n  \}/, 'the reader trades exactly while the writer writes');
   assert.match(bar, /if \(!token\) \{ emit\("mcc:handoff", \{ ok: false, reason: "malformed" \}\); return Promise\.resolve\(false\); \}/, 'a malformed fragment ends the handoff without throwing');
   assert.match(bar, /if \(existing && storedSessionUsable\(existing\)\) return Promise\.resolve\(false\);/, 'a page that already holds a usable session keeps it');
   assert.match(bar, /if \(now\.main !== before\.main \|\| now\.keep !== before\.keep\) throw/, 'a session that changed while the handoff was verified is never overwritten (audit A2)');

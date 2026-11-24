@@ -282,6 +282,9 @@ test("the record lists what P1 itself changes once deployed, and each entry is w
   /* bar_local, handoff_writer_off, move_card, carry_on: the named functions read the table (scripts/test/site-hosts-engine.test.mjs runs them) */
   const bar = read("js/tabbar.js");
   assert.match(bar, /function handoffWriterOn\(\) \{\s*var S = window\.MCC_SITE;\s*return !!\(S && S\.switches && S\.switches\.carry !== true\);/);
+  /* and its reader only scrubs: it trades exactly while the writer writes (scripts/test/auth-handoff-commit.test.mjs runs it) */
+  assert.match(bar, /function handoffReaderTrades\(\) \{\s*return handoffWriterOn\(\);\s*\}/);
+  assert.match(bar, /if \(!handoffReaderTrades\(\)\) \{ emit\("mcc:handoff", \{ ok: false, reason: "retired" \}\); return Promise\.resolve\(false\); \}/);
   assert.match(bar, /function moveCardWanted\(\)/);
   assert.match(bar, /function startCarry\(\)/);
   assert.equal(SITE.switches.carry, true, "the carry is on");

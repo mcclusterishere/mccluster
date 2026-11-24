@@ -182,7 +182,8 @@ how each is answered:
   Chromium, 2026-11-23): `js/carry.js` frames `carry.html` on Matthew's host
   and trades what it hands back at `POST /v1/auth/handoff`. Before P1 the bar's
   fragment hand-off carried a sign-in across (`js/tabbar.js`); its writer is
-  off since P1 and its reader stays until P4.
+  off since P1, and its reader only scrubs an old link until P4 and trades
+  nothing.
 - *Checkout returns are hard-coded to `matthew.mccluster.org`
   (`supabase/functions/checkout/index.ts`).* Returns follow the request: a
   checkout or account return goes back to the origin it started from when
@@ -258,7 +259,8 @@ crawled live):**
   nothing can be carried, the sign-in page and the account chip say one line
   for 30 days.
 - **The fragment hand-off writer is off**: no link carries `#mcc_handoff` any
-  more; the reader still scrubs and trades an old link until P4.
+  more; its reader only scrubs an old link from the address until P4 and trades
+  nothing (a token nobody writes any more is someone else's).
 - **The installed app's move card**: the app installed from Matthew's host,
   launched from the Home Screen there, says once, in the bar's own peek card,
   that the app now lives at `mccluster.org`; `index.html` is not edited.
