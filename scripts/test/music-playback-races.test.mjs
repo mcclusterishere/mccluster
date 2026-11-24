@@ -1633,3 +1633,46 @@ test('creator URL renewal keeps the full song and position through transient net
   assert.equal(e.music.audio.currentTime, 70);
   assert.equal(e.music.audio.paused, false);
 });
+
+/* PAUSE WINS OVER A LATE REFUSAL (the review of PR #825, CX-2, its last leg; a follow-up to 3f12e039, which keeps the full
+   song when the renewal never reached music-access). A member 70 s into an account release whose 120 s URL has lapsed (the
+   refresh a minute before the lapse failed too), and the next read fails: a try signs the URL again. When music-access
+   answers that try with the entitlement check's own no (402 "purchase", 401 or 403 "account") after the listener pressed
+   Pause, the preview must not start: the refusal is applied by the try only while the listener still asks for music, and
+   Play asks music-access again, whose answer then decides. */
+const CREATOR_SONG = { id: 'c1', title: 'Creator song', access_mode: 'account', previewUrl: 'creator-preview.mp3', preview_seconds: 30 };
+async function lapsedMidSong(c, answer) {
+  let n = 0;
+  const e = engine({ clock: c, member: true, access: (body) => (++n === 1 ? { url: 'creator-1.mp3', expires_in: 120 } : answer(n, body)) });
+  e.music.registerCreatorTrack(CREATOR_SONG);
+  await e.music.playCreator('c1');
+  await c.tick(61 * 1000);                         // the refresh a minute before the lapse: offline too, left to the next read
+  e.music.audio.currentTime = 70;
+  await c.tick(70 * 1000);                         // the 120 s URL has lapsed
+  e.music.audio.fail(2);                           // and the next read fails, at 1:10
+  return e;
+}
+test('entitled creator path: a refusal that comes after the listener pressed Pause starts nothing (Pause wins); Play asks again', async () => {
+  const c = clockOf(), late = deferred();
+  const e = await lapsedMidSong(c, (n) => (n === 2 ? new Error('offline') : n === 3 ? late.promise : { status: 402 }));
+  await c.tick(600);                               // the first try asks music-access; the answer is on its way
+  assert.equal(e.accessCalls(), 3);
+  e.music.pause();                                 // the listener pauses while the song is being picked up
+  const plays = e.music.audio.playCalls, loads = e.music.audio.loads.length;
+  late.resolve({ status: 402 });                   // then the entitlement check says no
+  await settle(); await settle(); await settle();
+  await c.tick(30000);
+  assert.equal(e.music.audio.paused, true, 'nothing plays behind the listener\'s Pause (the preview started)');
+  assert.equal(e.music.audio.playCalls, plays, 'no play()');
+  assert.equal(e.music.audio.loads.length, loads, 'nothing loaded');
+  assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Play');
+  assert.equal(e.music.delivery().playing, false);
+  assert.equal(e.text('musicMiniNote'), 'The connection dropped. Tap play to pick up at 1:10.', 'what the Pause left stands');
+  /* Play asks music-access again, and the answer it gets decides: the preview, labelled as one */
+  await e.music.resume(); await settle(); await settle(); await settle();
+  assert.equal(e.accessCalls(), 4, 'asked again on Play');
+  assert.equal(e.music.access(), 'preview');
+  assert.equal(e.music.audio.src, 'creator-preview.mp3');
+  assert.equal(e.music.audio.paused, false);
+  assert.equal(e.text('musicMiniNote'), 'The full song is not open to this account any more. Playing its preview.');
+});

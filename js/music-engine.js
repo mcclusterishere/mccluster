@@ -1191,7 +1191,11 @@
     Promise.resolve(sourceAgain(item)).then(function (got) {
       if (!trouble || trouble.seq !== seq || request !== playbackRequest || current !== item || !wantPlay) return;
       if (got && got.failed) { deliveryFailed("resolve"); return; }
-      if (!got || !got.url) return;                           // already said and settled (an ended play, a preview)
+      /* the entitlement check said no to this try, and the listener still asks for music: the preview, labelled. An
+         answer that comes after Pause, or after a newer try, changes nothing (the guard above): Play asks again, and
+         that answer decides (a Release 1 follow-up: the review of PR #825, CX-2) */
+      if (got && got.refused) { accessEnded(item, got.refused); return; }
+      if (!got || !got.url) return;                           // already said and settled (an ended play)
       audio.src = got.url;
       try { audio.currentTime = trouble.at; } catch (e) {}    // a ranged read from the second it stopped
       audioSession();
@@ -1234,7 +1238,10 @@
       /* A failed renewal may offer the public preview as a network fallback. It says nothing about
          entitlement: keep the full song, its position and the bounded recovery attempts. */
       if (out && out.reason === "network") return { failed: true };
-      if (out && out.state === "preview" && out.url) { accessEnded(item, out); return null; }
+      /* ONLY THE ENTITLEMENT CHECK'S OWN NO ENDS THE FULL SONG: music-access answering 402 ("purchase") or 401/403
+         ("account"). It is handed to the try (retry() above), which applies it only while the listener still asks for
+         music, so a refusal that arrives after Pause starts no preview. Anything else is a failed try. */
+      if (out && out.state === "preview" && out.url && (out.reason === "purchase" || out.reason === "account")) return { refused: out };
       return { failed: true };
     }, function () { return { failed: true }; });
   }
