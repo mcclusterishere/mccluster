@@ -1,7 +1,151 @@
 -- PENDING ONLY. Requires compute_lease_authority_v2 and resident AI tables.
 -- The reviewed release must apply this alongside compute_owner_enrollment_v1.
 -- No migration history entry is created by this source file.
-begin;
+-- The migration runner owns the transaction. This lock serializes scheduler
+-- migrations and their recovery scripts; it does not serialize ordinary jobs.
+set local lock_timeout = '5s';
+select pg_advisory_xact_lock(821,20261122);
+do $workspace_preflight$
+declare expected record;actual record;function_oid oid;present_count integer:=0;legacy_matched integer:=0;new_count integer;table_name text;
+begin
+  foreach table_name in array array['public.orgs','public.ops_compute_nodes','public.ops_compute_tasks','public.ops_compute_leases','public.ops_ai_threads','public.ops_ai_messages','public.ops_agent_jobs'] loop
+    if to_regclass(table_name) is null then raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: missing canonical table '||table_name; end if;
+  end loop;
+  if to_regclass('public.ops_compute_enrollments') is null or to_regprocedure('public.compute_enroll_once(text,jsonb)') is null then
+    raise exception using errcode='55000',message='WORKSPACE_ENROLLMENT_REQUIRED: apply reviewed enrollment first';
+  end if;
+  if to_regprocedure('public.compute_claim_task(text,text[],text[],integer,integer)') is not null then
+    raise exception using errcode='55000',message='COMPUTE_WORKSPACE_YIELD_CONFLICT: roll back the reviewed yield proposal before workspace';
+  end if;
+  for expected in select * from (values
+      ('compute_enroll_once','compute_enroll_once(text,jsonb)','97918135eb8ec6a39d432bd52b6fe5e06649a8c808671c1528ecb6bf3abe0e24','plpgsql',false,'public, extensions, pg_temp',array['p_credential_hash','p_node']::text[],0,'','jsonb')
+    ) as signatures(name,signature,body_sha,language_name,is_definer,search_path,arg_names,default_count,default_sql,return_type) loop
+    function_oid := to_regprocedure('public.'||expected.signature);
+    if (select count(*) from pg_proc where pronamespace='public'::regnamespace and proname=expected.name) > 1 then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: unexpected overload '||expected.name;
+    end if;
+    if function_oid is null then raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: missing reviewed function '||expected.signature; end if;
+    select p.*,l.lanname into actual from pg_proc p join pg_language l on l.oid=p.prolang where p.oid=function_oid;
+    if encode(sha256(convert_to(actual.prosrc,'UTF8')),'hex') <> expected.body_sha
+      or actual.lanname <> expected.language_name or actual.prosecdef is distinct from expected.is_definer
+      or actual.proconfig is distinct from array['search_path='||expected.search_path]
+      or coalesce(actual.proargnames,'{}'::text[]) is distinct from expected.arg_names
+      or actual.pronargdefaults <> expected.default_count
+      or coalesce(pg_get_expr(actual.proargdefaults,0),'') <> expected.default_sql
+      or actual.prorettype <> expected.return_type::regtype or actual.proretset
+      or actual.prokind <> 'f' or actual.proisstrict or actual.proleakproof
+      or actual.provolatile <> 'v' or actual.proparallel <> 'u'
+      or pg_get_userbyid(actual.proowner) <> 'postgres' then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: reviewed function changed '||expected.signature;
+    end if;
+    present_count := present_count + 1;
+  end loop;
+  present_count:=0;
+  for expected in select * from (values
+      ('compute_owner_workspace_status','compute_owner_workspace_status()','d0932c7153b91e0964b0344d4a580a8669e2913f4d3692e0777d955517fb9fda','sql',false,'public, pg_temp',array[]::text[],0,'','jsonb'),
+      ('compute_reserve_pair','compute_reserve_pair(uuid,uuid,uuid,integer)','a0c56951d6bff5c0f6357292e332ee39a774f47f0c046720aac486c201ad0338','plpgsql',false,'public, pg_temp',array['p_org_id','p_pair_id','p_reservation_id','p_seconds']::text[],1,'900','jsonb'),
+      ('compute_release_pair','compute_release_pair(uuid,uuid,text[])','de8db5c0cfcbe247874fd592794dbd618d9bb57df414d83ea17a68f2d50465c8','plpgsql',false,'public, pg_temp',array['p_org_id','p_reservation_id','p_clean_node_ids']::text[],1,'''{}''::text[]','jsonb'),
+      ('compute_resume_owner_device','compute_resume_owner_device(uuid,text)','a1cb89104f37e53b39ef5906255e3302418a1e8294555fb507e79a3324b255ce','plpgsql',false,'public, pg_temp',array['p_org_id','p_node_id']::text[],0,'','jsonb'),
+      ('compute_ack_pair_cleanup','compute_ack_pair_cleanup(text,uuid,jsonb)','88d1d01b7a3bb6e00c9872655adeb276dba8ba904a9f01d1b17a3fd6d2320fa8','plpgsql',false,'public, pg_temp',array['p_node_id','p_reservation_id','p_receipt']::text[],0,'','jsonb'),
+      ('compute_reconcile_expired_pairs','compute_reconcile_expired_pairs(uuid)','5d4752fa02bd75782c0f6397c612841da1938e2a2864d6abe48bf676f45ccdb4','plpgsql',false,'public, pg_temp',array['p_org_id']::text[],0,'','jsonb'),
+      ('compute_enqueue_pair_task','compute_enqueue_pair_task(uuid,uuid,jsonb,text)','aaf1369e65602e4bda79a7bfce33f484c233fe0b7ef9d151382a5c00377eff63','plpgsql',false,'public, extensions, pg_temp',array['p_org_id','p_reservation_id','p_task','p_idempotency_key']::text[],0,'','jsonb'),
+      ('compute_claim_task_v4','compute_claim_task_v4(text,text[],text[],integer)','2957a4663c8be57f69fa4ebbc27e84c5095718da70df9ee3361770472fc196b9','plpgsql',false,'public, extensions, pg_temp',array['p_node_id','p_capabilities','p_implementations','p_lease_seconds']::text[],1,'120','jsonb'),
+      ('ops_ai_submit_workspace_turn','ops_ai_submit_workspace_turn(uuid,uuid,uuid,uuid,text,jsonb)','892fc62123ef11f966dd682773ec7fc58bfd32214e3288094db10ca1b89d8de3','plpgsql',false,'public, pg_temp',array['p_org_id','p_thread_id','p_user_message_id','p_assistant_message_id','p_content','p_metadata']::text[],0,'','jsonb'),
+      ('ops_ai_enqueue_workspace_task','ops_ai_enqueue_workspace_task(uuid,uuid,text,integer,jsonb,text)','1fb86d6c361e28b02df099b54397d570dae3c13626c536a3943d8699cd094f2e','plpgsql',false,'public, extensions, pg_temp',array['p_org_id','p_turn_id','p_job_lease','p_job_attempt','p_task','p_idempotency_key']::text[],0,'','jsonb'),
+      ('ops_ai_checkpoint_workspace_turn','ops_ai_checkpoint_workspace_turn(uuid,uuid,text,integer,jsonb)','8c0b184b93772da3178bf42b48114647caca185e62ba388e429c597d82640394','plpgsql',false,'public, pg_temp',array['p_org_id','p_turn_id','p_job_lease','p_job_attempt','p_metadata']::text[],0,'','boolean'),
+      ('ops_ai_complete_workspace_turn','ops_ai_complete_workspace_turn(uuid,uuid,text,integer,jsonb)','260338e864fbd8de95db509585ab11c6afd8415d390c852bf09ef0b9dc734184','plpgsql',false,'public, pg_temp',array['p_org_id','p_turn_id','p_job_lease','p_job_attempt','p_message']::text[],0,'','boolean'),
+      ('ops_ai_stop_workspace_turn','ops_ai_stop_workspace_turn(uuid,uuid)','726074df73e9a148f057933672919a5f2fbc48ad9d17f8018cbc49fc50557ed0','plpgsql',false,'public, pg_temp',array['p_org_id','p_turn_id']::text[],0,'','jsonb')
+    ) as signatures(name,signature,body_sha,language_name,is_definer,search_path,arg_names,default_count,default_sql,return_type) loop
+    function_oid := to_regprocedure('public.'||expected.signature);
+    if (select count(*) from pg_proc where pronamespace='public'::regnamespace and proname=expected.name) > 1 then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: unexpected overload '||expected.name;
+    end if;
+    if function_oid is null then continue; end if;
+    select p.*,l.lanname into actual from pg_proc p join pg_language l on l.oid=p.prolang where p.oid=function_oid;
+    if encode(sha256(convert_to(actual.prosrc,'UTF8')),'hex') <> expected.body_sha
+      or actual.lanname <> expected.language_name or actual.prosecdef is distinct from expected.is_definer
+      or actual.proconfig is distinct from array['search_path='||expected.search_path]
+      or coalesce(actual.proargnames,'{}'::text[]) is distinct from expected.arg_names
+      or actual.pronargdefaults <> expected.default_count
+      or coalesce(pg_get_expr(actual.proargdefaults,0),'') <> expected.default_sql
+      or actual.prorettype <> expected.return_type::regtype or actual.proretset
+      or actual.prokind <> 'f' or actual.proisstrict or actual.proleakproof
+      or actual.provolatile <> 'v' or actual.proparallel <> 'u'
+      or pg_get_userbyid(actual.proowner) <> 'postgres' then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: reviewed function changed '||expected.signature;
+    end if;
+    present_count := present_count + 1;
+  end loop;
+  new_count:=present_count;
+  if exists(select 1 from pg_proc where oid=to_regprocedure('public.compute_claim_task(text,text[],text[],integer)') and encode(sha256(convert_to(prosrc,'UTF8')),'hex')='f58ca22a92c5950fe79adb88e1b0f64d0a815f2e42a90c88aea8ae251df8dc15') then
+  for expected in select * from (values
+      ('compute_claim_task','compute_claim_task(text,text[],text[],integer)','f58ca22a92c5950fe79adb88e1b0f64d0a815f2e42a90c88aea8ae251df8dc15','plpgsql',true,'public, extensions, pg_temp',array['p_node_id','p_capabilities','p_implementations','p_lease_seconds']::text[],1,'120','jsonb')
+    ) as signatures(name,signature,body_sha,language_name,is_definer,search_path,arg_names,default_count,default_sql,return_type) loop
+    function_oid := to_regprocedure('public.'||expected.signature);
+    if (select count(*) from pg_proc where pronamespace='public'::regnamespace and proname=expected.name) > 1 then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: unexpected overload '||expected.name;
+    end if;
+    if function_oid is null then raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: missing reviewed function '||expected.signature; end if;
+    select p.*,l.lanname into actual from pg_proc p join pg_language l on l.oid=p.prolang where p.oid=function_oid;
+    if encode(sha256(convert_to(actual.prosrc,'UTF8')),'hex') <> expected.body_sha
+      or actual.lanname <> expected.language_name or actual.prosecdef is distinct from expected.is_definer
+      or actual.proconfig is distinct from array['search_path='||expected.search_path]
+      or coalesce(actual.proargnames,'{}'::text[]) is distinct from expected.arg_names
+      or actual.pronargdefaults <> expected.default_count
+      or coalesce(pg_get_expr(actual.proargdefaults,0),'') <> expected.default_sql
+      or actual.prorettype <> expected.return_type::regtype or actual.proretset
+      or actual.prokind <> 'f' or actual.proisstrict or actual.proleakproof
+      or actual.provolatile <> 'v' or actual.proparallel <> 'u'
+      or pg_get_userbyid(actual.proowner) <> 'postgres' then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: reviewed function changed '||expected.signature;
+    end if;
+    present_count := present_count + 1;
+  end loop;
+    legacy_matched := legacy_matched + 1;
+  end if;
+  if exists(select 1 from pg_proc where oid=to_regprocedure('public.compute_claim_task(text,text[],text[],integer)') and encode(sha256(convert_to(prosrc,'UTF8')),'hex')='16f2a71a0699c2bd0177de78f40253bd4f355e79e5e5fd873073640bccd39b5a') then
+  for expected in select * from (values
+      ('compute_claim_task','compute_claim_task(text,text[],text[],integer)','16f2a71a0699c2bd0177de78f40253bd4f355e79e5e5fd873073640bccd39b5a','sql',false,'public, extensions, pg_temp',array['p_node_id','p_capabilities','p_implementations','p_lease_seconds']::text[],1,'120','jsonb')
+    ) as signatures(name,signature,body_sha,language_name,is_definer,search_path,arg_names,default_count,default_sql,return_type) loop
+    function_oid := to_regprocedure('public.'||expected.signature);
+    if (select count(*) from pg_proc where pronamespace='public'::regnamespace and proname=expected.name) > 1 then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: unexpected overload '||expected.name;
+    end if;
+    if function_oid is null then raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: missing reviewed function '||expected.signature; end if;
+    select p.*,l.lanname into actual from pg_proc p join pg_language l on l.oid=p.prolang where p.oid=function_oid;
+    if encode(sha256(convert_to(actual.prosrc,'UTF8')),'hex') <> expected.body_sha
+      or actual.lanname <> expected.language_name or actual.prosecdef is distinct from expected.is_definer
+      or actual.proconfig is distinct from array['search_path='||expected.search_path]
+      or coalesce(actual.proargnames,'{}'::text[]) is distinct from expected.arg_names
+      or actual.pronargdefaults <> expected.default_count
+      or coalesce(pg_get_expr(actual.proargdefaults,0),'') <> expected.default_sql
+      or actual.prorettype <> expected.return_type::regtype or actual.proretset
+      or actual.prokind <> 'f' or actual.proisstrict or actual.proleakproof
+      or actual.provolatile <> 'v' or actual.proparallel <> 'u'
+      or pg_get_userbyid(actual.proowner) <> 'postgres' then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: reviewed function changed '||expected.signature;
+    end if;
+    present_count := present_count + 1;
+  end loop;
+    legacy_matched := legacy_matched + 1;
+  end if;
+  if legacy_matched <> 1 then raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: claim scheduler is not an exact reviewed version'; end if;
+  if new_count not in (0,13) then raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: partial workspace function set'; end if;
+  if new_count=0 then
+    if to_regclass('public.ops_compute_pairs') is not null or to_regclass('public.ops_compute_pair_reservations') is not null
+      or exists(select 1 from pg_attribute where attrelid='public.ops_compute_nodes'::regclass and attname in('pair_cleanup_required','pair_cleanup_details') and not attisdropped)
+      or not exists(select 1 from pg_proc where oid='public.compute_claim_task(text,text[],text[],integer)'::regprocedure and encode(sha256(convert_to(prosrc,'UTF8')),'hex')='f58ca22a92c5950fe79adb88e1b0f64d0a815f2e42a90c88aea8ae251df8dc15') then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: unexpected workspace objects before first application';
+    end if;
+  else
+    if to_regclass('public.ops_compute_pairs') is null or to_regclass('public.ops_compute_pair_reservations') is null
+      or (select count(*) from pg_attribute where attrelid='public.ops_compute_nodes'::regclass and attname in('pair_cleanup_required','pair_cleanup_details') and not attisdropped)<>2
+      or not exists(select 1 from pg_proc where oid='public.compute_claim_task(text,text[],text[],integer)'::regprocedure and encode(sha256(convert_to(prosrc,'UTF8')),'hex')='16f2a71a0699c2bd0177de78f40253bd4f355e79e5e5fd873073640bccd39b5a') then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: incomplete workspace or replaced claim wrapper';
+    end if;
+  end if;
+end $workspace_preflight$;
+
 -- Server-owned recovery holds are separate from worker-supplied labels. A
 -- signed heartbeat cannot clear a model-memory cleanup requirement.
 alter table public.ops_compute_nodes add column if not exists pair_cleanup_required boolean not null default false;
@@ -481,4 +625,3 @@ begin
 end;$$;
 revoke all on function public.ops_ai_stop_workspace_turn(uuid,uuid) from public,anon,authenticated;
 grant execute on function public.ops_ai_stop_workspace_turn(uuid,uuid) to service_role;
-commit;

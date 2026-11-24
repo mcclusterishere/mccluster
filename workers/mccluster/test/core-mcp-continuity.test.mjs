@@ -165,7 +165,8 @@ test('the remote allowlist is enforced and still carries media.job.get', async (
   for (const capability of [
     'core.resume', 'system.health', 'ai.chat', 'compute.task.get', 'core.ai.turn.submit', 'core.ai.turn.get', 'research.web', 'objective.plan',
     'media.job.get', 'media.models.search', 'image.generate', 'video.generate',
-    'audio.generate', 'model3d.generate', 'world.generate', 'game.build'
+    'audio.generate', 'model3d.generate', 'world.generate', 'game.build',
+    'workstream.checkpoint', 'workstream.list'
   ]) {
     assert.ok(source.includes(`'${capability}'`), `${capability} dropped out of the remote allowlist`);
   }

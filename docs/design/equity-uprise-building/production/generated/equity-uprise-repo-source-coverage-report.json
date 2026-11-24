@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 768,
+  "candidate_count": 770,
   "capability_source_count": 104,
-  "support_only_count": 664,
-  "checks_total": 2970,
-  "checks_passed": 2970,
+  "support_only_count": 666,
+  "checks_total": 2978,
+  "checks_passed": 2978,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -215,6 +215,7 @@
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-10.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-18.json",
     "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json",
+    "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
     "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
     "docs/control-plane/registry.json",
     "docs/design/HERE-BRAND-LIBRARY.md",
@@ -446,6 +447,7 @@
     "scripts/export-equity-environment.mjs",
     "scripts/funding/validate-register-db.mjs",
     "scripts/kb-build.mjs",
+    "scripts/owner-workspace-native-check.mjs",
     "scripts/prim3/blind-the-floor-sim.mjs",
     "scripts/prim3/build-equity-uprise-package.mjs",
     "scripts/prim3/check-tactics-layout.mjs",
@@ -782,7 +784,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "768 entries"
+      "detail": "770 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4726,6 +4728,26 @@
     },
     {
       "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-20.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -9223,6 +9245,26 @@
       "name": "scripts/kb-build.mjs support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/owner-workspace-native-check.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/owner-workspace-native-check.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/owner-workspace-native-check.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/owner-workspace-native-check.mjs support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "scripts/prim3/blind-the-floor-sim.mjs capability ids known",

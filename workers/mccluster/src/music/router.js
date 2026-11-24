@@ -257,6 +257,15 @@ async function streamPlay(request, env, token) {
   const range = request.headers.get('range');
   if (range) headers.range = range;
   const upstream = await fetch(`${env.SUPABASE_URL}/storage/v1/object/authenticated/${path}`, { headers });
+  /* A range past the end is the player's own question (416, Range Not Satisfiable), not a broken
+     master: it is answered as Storage answered it, with the object's length, never as a 502. */
+  if (upstream.status === 416) {
+    const out = new Headers(corsHeaders(request, env));
+    const range416 = upstream.headers.get('content-range');
+    if (range416) out.set('content-range', range416);
+    out.set('cache-control', 'no-store, private');
+    return new Response(null, { status: 416, headers: out });
+  }
   if (!upstream.ok && upstream.status !== 206) {
     return fail(request, env, upstream.status === 404 ? 'The full track is not uploaded' : 'Could not open the full track',
       upstream.status === 404 ? 404 : 502);

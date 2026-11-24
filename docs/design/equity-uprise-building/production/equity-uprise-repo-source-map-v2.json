@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 768,
+  "candidate_count": 770,
   "capability_source_count": 104,
-  "support_only_count": 664,
+  "support_only_count": 666,
   "entries": [
     {
       "path": ".cursorrules",
@@ -576,7 +576,7 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
     },
     {
       "path": "core/test/helpers/owner-workspace-db.mjs",
@@ -1558,6 +1558,13 @@
       "rationale": "Read-only production schema snapshot taken on 2026-11-20 after the Drawdown credit correction and publication and Environment parts 01 and 02 were recorded at ledger 380; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
     },
     {
+      "path": "docs/control-plane/evidence/production-schema-snapshot-2026-11-23.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Read-only production schema snapshot taken on 2026-11-23 after the network connections consent guard and Environment parts 03 to 05 were recorded at ledger 384; catalog metadata and hashes, including eu_* objects. Evidence only; no building capability, program or geometry."
+    },
+    {
       "path": "docs/control-plane/evidence/releases-2026-11-18/LEDGER-376-APPLIED-VERIFICATION.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -2187,7 +2194,7 @@
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Control · Sell · Music · Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+      "rationale": "Control \u00b7 Sell \u00b7 Music \u00b7 Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
     },
     {
       "path": "js/control-room/nav.js",
@@ -2959,7 +2966,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "screens/building.html",
@@ -3089,7 +3096,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Captures actual canonical B1–L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
+      "rationale": "Captures actual canonical B1\u2013L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
     },
     {
       "path": "scripts/e2e/eu-screens.e2e.mjs",
@@ -3246,6 +3253,13 @@
       ],
       "support_only": false,
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "scripts/owner-workspace-native-check.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Disposable native database verification for shared owner enrollment and workspace support. References the existing authorization helper only in a bounded fixture; full-reset mode uses canonical roles, policies and triggers. Adds no building capability or production runtime."
     },
     {
       "path": "scripts/prim3/blind-the-floor-sim.mjs",

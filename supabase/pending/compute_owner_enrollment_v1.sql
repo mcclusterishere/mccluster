@@ -2,6 +2,47 @@
 -- are required before applying this to canonical Supabase. No ledger entry here.
 -- Reuses ops_compute_nodes/tasks/leases. A secret is never stored: only SHA-256
 -- of a 256-bit random enrollment credential, scoped to one owned device.
+-- The migration runner owns the transaction. This lock serializes scheduler
+-- migrations and their recovery scripts; it does not serialize ordinary jobs.
+set local lock_timeout = '5s';
+select pg_advisory_xact_lock(821,20261122);
+do $enrollment_preflight$
+declare expected record;actual record;function_oid oid;present_count integer:=0;
+begin
+  if to_regclass('public.orgs') is null or to_regclass('public.ops_compute_nodes') is null
+    or to_regprocedure('public.compute_start_lease(text,uuid,text,integer)') is null
+    or to_regprocedure('public.compute_heartbeat_lease(text,uuid,text,jsonb,integer)') is null
+    or to_regprocedure('public.compute_complete_lease(text,uuid,text,jsonb)') is null then
+    raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: canonical compute lease authority is required';
+  end if;
+  for expected in select * from (values
+      ('compute_enroll_once','compute_enroll_once(text,jsonb)','97918135eb8ec6a39d432bd52b6fe5e06649a8c808671c1528ecb6bf3abe0e24','plpgsql',false,'public, extensions, pg_temp',array['p_credential_hash','p_node']::text[],0,'','jsonb')
+    ) as signatures(name,signature,body_sha,language_name,is_definer,search_path,arg_names,default_count,default_sql,return_type) loop
+    function_oid := to_regprocedure('public.'||expected.signature);
+    if (select count(*) from pg_proc where pronamespace='public'::regnamespace and proname=expected.name) > 1 then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: unexpected overload '||expected.name;
+    end if;
+    if function_oid is null then continue; end if;
+    select p.*,l.lanname into actual from pg_proc p join pg_language l on l.oid=p.prolang where p.oid=function_oid;
+    if encode(sha256(convert_to(actual.prosrc,'UTF8')),'hex') <> expected.body_sha
+      or actual.lanname <> expected.language_name or actual.prosecdef is distinct from expected.is_definer
+      or actual.proconfig is distinct from array['search_path='||expected.search_path]
+      or coalesce(actual.proargnames,'{}'::text[]) is distinct from expected.arg_names
+      or actual.pronargdefaults <> expected.default_count
+      or coalesce(pg_get_expr(actual.proargdefaults,0),'') <> expected.default_sql
+      or actual.prorettype <> expected.return_type::regtype or actual.proretset
+      or actual.prokind <> 'f' or actual.proisstrict or actual.proleakproof
+      or actual.provolatile <> 'v' or actual.proparallel <> 'u'
+      or pg_get_userbyid(actual.proowner) <> 'postgres' then
+      raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: reviewed function changed '||expected.signature;
+    end if;
+    present_count := present_count + 1;
+  end loop;
+  if (to_regclass('public.ops_compute_enrollments') is not null) is distinct from (present_count=1) then
+    raise exception using errcode='55000',message='COMPUTE_BASELINE_CHANGED: partial enrollment schema';
+  end if;
+end $enrollment_preflight$;
+
 create table if not exists public.ops_compute_enrollments (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,

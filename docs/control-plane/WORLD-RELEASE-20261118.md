@@ -1,5 +1,108 @@
 # The World release of 2026-11-18: record and runbook
 
+## Release 1, 2026-11-23
+
+Matthew, 2026-11-23: "ship it all baby". Release 1 is the branch `claude/release-20261123`: `main` at `b51ede03` (the merge of
+PR #820, which the Worker and the site serve today) and, on top of it, only work that passed its own independent verification:
+the music slices M3 and the M3 follow-up as verified at `dc0185aa`, the installed app's dock fix (`4e2d4352` and `eca8c401`,
+verified at `eca8c401`, merged at `4b6d58cc`), the two production records of 2026-11-23, the ingest switch, a steadier music
+browser check (`63dd9117`, test only), and this record. Nothing in it is merged or deployed as this is written; the pull request carries the checks. The
+runbook below applies from step 1 to step 8 as written, with 384 where it says 376, and three differences. In step 2, 21
+workflows start, 79 jobs in all (the branch cleanup starts only when the pull request closes). In step 7, `deployment_sha`
+alone tells the new Worker from the old, because `/company` has no tagline on either; and the environment reads that must not
+change answer `404 module_disabled` today, not the 503 the step names (the anchors below). Steps 9 to 11 belong to the mission
+publish, which ran and was recorded on 2026-11-20, and do not repeat. "Supabase migration reset" runs on the four moved
+migration files for the first time in this pull request: if its schema comparison differs, step 3 says what to commit.
+
+**What ships, in plain words.**
+
+- **Songs play to the end.** When the connection drops, the song says Reconnecting…, offers Pause and picks up at the second
+  it stopped; if the network stays away it says Connection lost, and Play picks it up there. A song that never started says it
+  could not load. A locked preview no longer stops the album: one line says what it was and the album moves on. A mute set in
+  the World no longer silences Music, and a muted Music song has its own Unmute. A finished song is counted before the next
+  one starts. The B-side plays as the M4A it is, and four songs start sooner (their index moved in front of the audio, the
+  audio itself unchanged). On the listen page the bar's Music button pauses and plays the song and is named for what it does;
+  the installed app's dock says Reconnecting… and Connection lost in full, shows one Play/Pause on every page (on Listen the
+  bar's red Music button, elsewhere the dock's own) and stays one row when muted, with Muted in place of the artist; Heal the
+  3's door shows only on its own album and
+  sits clear of the account chip. A new measurement, `music_interrupted`, waits in `js/analytics.js` for Matthew's approval and
+  is not sent. The music record is `docs/music/MUSIC-RELEASE-20261119.md`, "Shipped 2026-11-23".
+- **The Worker** answers a read past a song's end with 416 instead of 502, and turns the USGS ingest on (below).
+- **The records of production on 2026-11-23:** the ledger at 384 (the connections consent guard and Environment store parts
+  03 to 05, applied with Matthew's approval: the checkpoint below) and his attestation about Project Drawdown's permission for
+  the quotations (`data/missions/drawdown/README.md`). Records only: the merge applies no SQL.
+- **The USGS ingest switch, on:** `EUP_ENVIRONMENT_USGS_INGEST_ENABLED = "true"` (Matthew: "Switching the module on for sure,
+  alright?", and "ship it all baby"). With no USGS rule each five-minute run reads the store once and asks USGS nothing, and
+  nothing the ingest stores is public until the Environment module is installed and enabled
+  (`docs/control-plane/EUP-EVENT-TIMELINE.md`, "Release 1, 2026-11-23").
+
+**What does not ship, and why.**
+
+- **M5, one player across the music pages** (`2000c609` and `5d8c533e` on `claude/new-session-83ken5`): not reviewed yet, and
+  it breaks `workers/mccluster/test/analytics-creator-attribution.test.mjs`, which the deploy-gate checks run. The next release.
+- **The quick wins slice:** built and in review on `claude/new-session-83ken5`. The next release.
+- Each still its own step, as before: the USGS rule and the Environment module's install and enable (Matthew, in Control), the
+  source page's SQL and showing, restoring the 87 quotations, opening on the visitor's country, the OVH Core promotion.
+
+**After the merge, Matthew in Control**, once steps 7 and 8 report the merge commit:
+
+1. Set the USGS rule: System > E=Up > Environmental events > Sources, "Set the default rule", with a reason.
+2. Wait for the first healthy run, a source-health row under Sources (the cron runs every five minutes).
+3. Look at the timeline in Preview.
+4. Install, and then Enable, the Environment module: System > E=Up > Overview > Modules > Environment, each with a reason.
+   Only then does a signed-out visitor see the timeline; until then the routes answer `404 module_disabled`.
+
+**On his phone, in five plain steps.** For each, note the page, a Safari tab or the Home Screen icon, signed in or not, and the
+iOS version. Until they are run, everything the records say about an iPhone or an iPad stays Inferred.
+
+1. **Two songs in a row, phone locked.** On the Listen page and on the I AM HERE album, start a song near its end, lock the
+   phone and wait: the next song starts by itself. Note the gap and the next song's title, once with Reduce Motion on. Then
+   Heal the 3, Whip Equipped and CIA Mind Control: each song plays to its end and the next follows, with no click at the joins.
+   On CIA Mind Control, signed in as the owner, the last song starts by itself once Pull Up is counted; signed out, it plays its
+   short preview, one line says the full song opens later, and the album goes on.
+2. **The lock screen.** Next, then Pause, then Play: each does what it says, the title changes with Next, and back on the
+   page the same song shows.
+3. **A dropped connection.** Mid-song, phone locked, airplane mode on for 5 seconds, then off: the song plays on or picks
+   up at the second it stopped. Then for 15 seconds: it says Connection lost, and Play picks it up there. Pause during
+   Reconnecting… keeps it paused when the network comes back. From the Home Screen icon the dock says Reconnecting…, then
+   Connection lost · tap play, in full. With VoiceOver on the Listen page, the line is read out.
+4. **Mute and the Music button.** Mute the World's own song, then play a Music song: it has sound. Mute a Music song: the
+   page says Muted and shows its own Unmute. On the Listen page in a Safari tab, the bar's Music button (the red play and pause
+   circle left of the M) shows Pause while a song plays, and a tap pauses it; VoiceOver reads it as "Pause music". From the
+   Home Screen icon, the bar shows one Pause while a song plays, and a muted song keeps the dock one row that says Muted.
+5. **The small things.** Dealer Plates (B-Side) on Whip Equipped plays; on a phone that kept Whip Equipped before, in
+   airplane mode, it still plays and the album says In your pocket. On the narrowest phone (an iPhone SE), scroll Heal the 3's
+   door up under the Sign in chip: they never overlap.
+
+**Anchors before the merge**, read between 18:39 and 18:41 UTC on 2026-11-23 with plain `GET`s, `git ls-remote` and one
+`SELECT`: `https://api.mccluster.org/v1/health` answers `deployment_sha` `b51ede03a4faefe000749ec71630b1a584146fed`,
+`deployment_ref` `HEAD` and the six capability flags true; `https://matthew.mccluster.org/mnet.html` and
+`https://mccluster.org/` stamp their assets `?v=b51ede03a4fa`; `main` is `b51ede03`, `gh-pages`
+`436a672adbc783d9c045979769da3e4b1cf29bf4`, `deploy/ovh-production` `eb94224883685c0e3d2cf8a54eb14bbc1349d0bf`; production's
+ledger has 384 rows, latest `20261123174034 eup_environment_events_v1_05`, digest
+`8af712520bdf7daf353b36b801eb568849ed9bb1088e57b48ffd2e364c97ed9c`, the digest of `supabase/production-ledger.json`. Read again
+between 19:08 and 19:11 UTC, signed out: `https://api.mccluster.org/v1/world/environment`,
+`/v1/world/environment/events?limit=20` and `/v1/world/environment/layers/fires` answer `404 module_disabled` (with `Origin:
+https://mccluster.org`), and `https://mccluster.org/mnet.html?mission=<id>` answers one 301 to `/?mission=<id>`. After the
+merge the 301 stays, and the three environment reads answer the same until the Environment module is installed and enabled.
+Step 5 still asks for the live Worker version from Cloudflare, which this record cannot read. The open pull requests on
+2026-11-23 include #760, #816, #817 and the newer #821, #822 and #823; the rule of step 5 is the hold, not the list.
+
+The production checkpoint below is historical where it calls the ingest flag `"false"`.
+
+## Production checkpoint, 2026-11-23
+
+With Matthew's approval, the Connections consent guard and Environment parts 03, 04 and 05 were applied:
+production has 384 migration records, latest `20261123174034 eup_environment_events_v1_05`, and all five
+Environment parts are in. The store is empty and nothing public changed: the USGS rule and the module's
+install and enable are Matthew's commands in Control, the ingest flag `EUP_ENVIRONMENT_USGS_INGEST_ENABLED`
+is still `"false"` (turning it on is a pull request, a merge and a deploy), and a signed-out visitor still
+gets `404 module_disabled`. The source-page SQL remains pending. Matthew's attestation of 2026-11-23 about
+Project Drawdown's permission for the quotations is in `data/missions/drawdown/README.md`; restoring the 87
+quotations and finishing the source page are separate steps. The receipt is
+`docs/control-plane/evidence/releases-2026-11-23/LEDGER-384-APPLIED.md`; the 2026-11-20 checkpoint below is
+historical where it calls parts 03–05 and the Connections guard pending.
+
 ## Live completion checkpoint, 2026-11-20
 
 PR #818 merged as `95db84602d8edef4e4a0143833f37ab3e67d91f7`; its website and Worker deployment
