@@ -413,6 +413,7 @@
     "profile": [
       "/",
       "/card.html",
+      "/carry.html",
       "/case-designer-kicks.html",
       "/cut.html",
       "/door.html",
@@ -582,7 +583,7 @@
           "returns_fallback": "platform",
           "metadata": "by_set"
         },
-        "what": "The owner's Cloudflare steps (SSL rule check, proxy the matthew record, the route matthew.mccluster.org/* to Worker mccluster): platform pages on his host answer 301 to the platform; profile, profile_only and both_hosts paths answer 200 from the static origin through the Worker."
+        "what": "First the Worker ships the P3 table (edge.now.stage P3, so profile_host_routed is true); then the owner's Cloudflare steps (SSL rule check, proxy the matthew record, the route matthew.mccluster.org/* to Worker mccluster): platform pages on his host answer 301 to the platform; profile, profile_only and both_hosts paths answer 200 from the static origin through the Worker. A route added before the P3 table only passes his host to GitHub untouched."
       },
       {
         "stage": "P4",

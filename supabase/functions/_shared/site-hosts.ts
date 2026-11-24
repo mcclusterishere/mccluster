@@ -494,6 +494,7 @@ export const SITE_TABLE: SiteTable = deepFreeze<SiteTable>({
     "profile": [
       "/",
       "/card.html",
+      "/carry.html",
       "/case-designer-kicks.html",
       "/cut.html",
       "/door.html",

@@ -467,6 +467,7 @@ export const SITE_TABLE = deepFreeze({
     "profile": [
       "/",
       "/card.html",
+      "/carry.html",
       "/case-designer-kicks.html",
       "/cut.html",
       "/door.html",
