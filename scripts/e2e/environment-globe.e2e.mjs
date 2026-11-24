@@ -1,10 +1,11 @@
 /* The environmental globe inside its frame (slice G1, 2026-11-17), in a real browser at 390 and 1280 with every layer
    route answered from the fixtures: counts per layer, the legend sentences, the selection payload per layer (source,
    recorded time under its own label, retrieval time, coverage, status), ShakeMap contours on the selected quake with
-   the modelled label, the ripple's bounded hold (its end at the module's own deadline, late only by the stall the test's
-   clock inside the frame measured: RIPPLE_BOUND below), reduced motion, the 2D toggle, the policy gate (503 and 404), one
-   layer unavailable and one stale reported truthfully, a real pick and a miss that falls through, the feed route never
-   requested by the frame, scrollWidth === clientWidth, no page errors, and the perf script in --check mode.
+   the modelled label, the ripple's bounded hold (its end at the module's own deadline, late only by the stall in progress
+   at the deadline that the test's clock inside the frame measured, less the ripple's own work: RIPPLE_BOUND below), reduced
+   motion, the 2D toggle, the policy gate (503 and 404), one layer unavailable and one stale reported truthfully, a real pick
+   and a miss that falls through, the feed route never requested by the frame, scrollWidth === clientWidth, no page errors,
+   and the perf script in --check mode.
    Event timeline slice S5 (2026-11-19): every quake a labelled glyph, the labels inside the frame's free area, a real tap 15 px
    off a glyph selecting it and pushing the camera to its regional frame, the visitor's wheel cancelling the push, the rings
    waiting for the landing and ending inside their bound, the modelled up-dip edge of a USGS finite fault (the Worker's own
@@ -152,53 +153,76 @@ async function viewAtLod(frame, lon, lat, height, lod) {
 const fact = (payload, label) => (payload && Array.isArray(payload.facts) ? payload.facts.find((f) => f.label === label) : null);
 /* like until, but the predicate returns what it saw (or false): what the test waits for and what it checks are one read */
 async function untilRead(target, fn, arg, ms = 20000) { const h = await target.waitForFunction(fn, arg, { timeout: ms, polling: 100 }).catch(() => null); return h ? h.jsonValue() : null; }
-/* THE RIPPLE'S BOUND, ON THE FRAME'S OWN CLOCK (2026-11-24, after PR #825's 1280 run on a slow runner: 6579 ms against what
-   was a fixed 6.5 s). js/environment-ripple.js ends the ripple at its deadline, min(chosen + HOLD_MAX_MS, chosen + WAIT_MAX_MS +
+/* THE RIPPLE'S BOUND, ON THE FRAME'S OWN CLOCK (2026-11-24, after PR #825's 1280 run on a slow runner: 6579 ms against what was
+   a fixed 6.5 s). js/environment-ripple.js ends the ripple at its deadline, min(chosen + HOLD_MAX_MS, chosen + WAIT_MAX_MS +
    DURATION_MS, rings + DURATION_MS), by a timer and by a frame. The deadline is the design and is held as it stands, from the
-   module's own pure constants: at most 4.9 s after the choice (a 2.5 s wait for the landing at most, then 2.4 s of rings,
-   D17), never above the 6 s hold, and the ripple never over in under a second. What a slow runner adds is a frame whose main
-   thread cannot run anything: on software GL one draw held it for 1.7 s across the deadline, so neither the timer nor a frame
-   could end the ripple until it returned. So the test keeps its own clock inside the frame, a timer every 20 ms on Date.now()
-   (the ripple's clock): a beat set at a that runs at b proves the frame could run no due timer from a + 20 ms to b. The ripple
-   may end late by the stall that clock measured after its deadline (stalledMs) plus 100 ms, by no more, and never early. A
-   frame interval is not the allowance: on software GL frames come seconds apart while the timers run on time, and a ripple
-   that only a sparse frame ends must fail. */
+   module's own pure constants: at most 4.9 s after the choice (a 2.5 s wait for the landing at most, then 2.4 s of rings, D17),
+   never above the 6 s hold, and the ripple never over in under a second. What a slow runner adds is a main thread busy at the
+   deadline, so neither the timer nor a frame can end the ripple until it is free. Measured here on software GL (SwiftShader,
+   2026-11-24), the first draws at the regional frame held the frame's main thread in one piece for up to 4.5 s, up to 2.1 s of
+   it past the deadline, and with the whole browser pinned to one CPU for up to 5.6 s, 4.2 s past it; PR #825's runner kept no
+   clock, so that its 1.68 s past the deadline was such a stall is inferred, not recorded. So the test keeps its own clock
+   inside the frame: a timer every 20 ms on Date.now() (the ripple's clock), where a beat set at a that runs at b proves the
+   frame could run no due timer from 20 ms after a until b; and the start and end of every call of a timer or frame step that
+   the ripple module set itself (its own work, told apart by the module's own frame on the stack when it set them; a ripple
+   whose own steps the clock never saw fails, so the attribution cannot quietly stop). The ripple may end late only by the stall
+   in progress at its deadline (from the deadline, or from 20 ms after the last beat before it if that is later, to the first
+   beat after it), less its own work inside that stall, plus 100 ms; never early. So the ripple's own work at or after its
+   deadline (a slow end, a slow frame step) is never excused, and once one beat has run after the deadline the ripple has 100 ms
+   left, whatever stalls the frame later. Not a frame interval: on software GL frames come seconds apart while the timers run on
+   time, and a ripple that only a sparse frame ends must fail. What this clock cannot see: an overrun shorter than a stall that
+   spans the deadline, and the module's code when the layers call it directly (go(), clear()) rather than through its own timers
+   and frame steps. */
 const RIPPLE_BOUND = Object.freeze({ lifetimeMs: 4900, holdMaxMs: 6000, minMs: 1000, toleranceMs: 100, earlyMs: 50, beatMs: 20 });
-/* started once per page before the first choice, kept for the last 60 s; it notes the camera's moveStart and moveEnd too */
+/* started once per page before the first choice, kept for the last 60 s: the beats, the frames, the camera's moveStart and
+   moveEnd, and the ripple's own work. A timer or a preRender listener is the ripple's when the function that set it is in
+   js/environment-ripple.js (the frame under setTimeout or addEventListener); each call of it is timed. The beat keeps the
+   page's own setTimeout, so the clock never times itself. */
 const startClock = (frame) => frame.evaluate((beatMs) => {
   if (window.__mccTestClock) return true;
-  const k = { beatMs, beats: [], frames: [], moves: [] };
-  const keep = (list, t) => { while (list.length && list[0] < t - 60000) list.shift(); };
-  const beat = () => { const t = Date.now(); k.beats.push(t); keep(k.beats, t); setTimeout(beat, beatMs); };
+  const k = { beatMs, beats: [], frames: [], moves: [], own: [], ownSet: 0 };
+  const keep = (list, t, at = (x) => x) => { while (list.length && at(list[0]) < t - 60000) list.shift(); };
+  const later = window.setTimeout.bind(window), pre = window.HuGlobe.viewer().scene.preRender, add = pre.addEventListener, remove = pre.removeEventListener, wrapped = new Map();
+  const setter = () => { const n = Error.stackTraceLimit; Error.stackTraceLimit = 3; const lines = String(new Error().stack).split('\n'); Error.stackTraceLimit = n; return /\/js\/environment-ripple\.js/.test(lines[3] || ''); };
+  const timed = (fn) => { k.ownSet += 1; return function () { const t0 = Date.now(); try { return fn.apply(this, arguments); } finally { const t1 = Date.now(); k.own.push([t0, t1]); keep(k.own, t1, (x) => x[1]); } }; };
+  window.setTimeout = function (fn, ...rest) { return later(typeof fn === 'function' && setter() ? timed(fn) : fn, ...rest); };
+  pre.addEventListener = function (fn, scope) { if (typeof fn !== 'function' || !setter()) return add.call(this, fn, scope); const w = timed(fn); wrapped.set(fn, w); return add.call(this, w, scope); };
+  pre.removeEventListener = function (fn, scope) { const w = wrapped.get(fn); if (w) wrapped.delete(fn); return remove.call(this, w || fn, scope); };
+  const beat = () => { const t = Date.now(); k.beats.push(t); keep(k.beats, t); later(beat, beatMs); };
   const tick = () => { const t = Date.now(); k.frames.push(t); keep(k.frames, t); requestAnimationFrame(tick); };
   const move = (ev) => () => { k.moves.push([ev, Date.now()]); if (k.moves.length > 100) k.moves.shift(); };
   window.HuGlobe.viewer().camera.moveStart.addEventListener(move('start'));
   window.HuGlobe.viewer().camera.moveEnd.addEventListener(move('end'));
   window.__mccTestClock = k;
-  setTimeout(beat, beatMs); requestAnimationFrame(tick);
+  later(beat, beatMs); requestAnimationFrame(tick);
   return true;
 }, RIPPLE_BOUND.beatMs);
-/* one read, once the clock has beaten past the ripple's end: its deadline from the module's constants, how late it ended, the
-   stall the clock saw after the deadline, and for the record the longest beat gap and the frame interval at the deadline */
+/* one read, once the clock has beaten past both the ripple's end and its deadline: the deadline from the module's constants, how
+   late the ripple ended, the stall in progress at the deadline (gapMs: the beats either side of it, relative to it), the
+   ripple's own work inside that stall and anywhere from the deadline to its end (ownLateMs), and the frame interval at the
+   deadline, for the record */
 async function rippleTiming(frame, id) {
   return untilRead(frame, (id) => {
     const s = window.__mccEnvironmentLayers(), r = s.lastRipple, k = window.__mccTestClock, P = window.MCC_ENVIRONMENT_RIPPLE && window.MCC_ENVIRONMENT_RIPPLE.pure;
-    if (s.ripple !== null || !r || r.id !== id || !k || !P || !(k.beats[k.beats.length - 1] > r.endedAt)) return false;
+    if (s.ripple !== null || !r || r.id !== id || !k || !P) return false;
     const deadline = Math.min(r.startedAt + P.HOLD_MAX_MS, r.startedAt + P.WAIT_MAX_MS + P.DURATION_MS, r.ringsAt === null ? Infinity : r.ringsAt + P.DURATION_MS);
-    let stalledMs = 0, beatGapMs = 0, frameMs = null;
-    for (let i = 1; i < k.beats.length; i += 1) {
-      const a = k.beats[i - 1], b = k.beats[i], from = Math.max(a + k.beatMs, deadline), to = Math.min(b, r.endedAt);
-      if (to > from) stalledMs += to - from;
-      if (b >= deadline && a <= r.endedAt) beatGapMs = Math.max(beatGapMs, b - a);
-    }
-    for (let i = 1; i < k.frames.length; i += 1) if (k.frames[i - 1] <= deadline && k.frames[i] >= deadline) frameMs = k.frames[i] - k.frames[i - 1];
-    return { lateMs: r.endedAt - deadline, stalledMs, designMs: deadline - r.startedAt, rippleMs: r.endedAt - r.startedAt, beatGapMs, frameMs, clocked: k.beats[0] <= deadline, constants: { WAIT_MAX_MS: P.WAIT_MAX_MS, DURATION_MS: P.DURATION_MS, HOLD_MAX_MS: P.HOLD_MAX_MS }, ripple: { startedAt: r.startedAt, ringsAt: r.ringsAt, endedAt: r.endedAt } };
+    const i = k.beats.findIndex((t) => t > deadline);
+    if (i < 0 || !(k.beats[k.beats.length - 1] > r.endedAt)) return false;
+    const a = i > 0 ? k.beats[i - 1] : null, b = k.beats[i], from = a === null ? deadline : Math.max(a + k.beatMs, deadline), to = Math.min(b, r.endedAt);
+    const within = (x, y, lo, hi) => Math.max(0, Math.min(y, hi) - Math.max(x, lo));
+    const stallMs = Math.max(0, to - from), ownMs = k.own.reduce((n, [x, y]) => n + within(x, y, from, to), 0), ownLateMs = k.own.reduce((n, [x, y]) => n + within(x, y, deadline, r.endedAt), 0);
+    let frameMs = null;
+    for (let j = 1; j < k.frames.length; j += 1) if (k.frames[j - 1] <= deadline && k.frames[j] >= deadline) frameMs = k.frames[j] - k.frames[j - 1];
+    const ownCalls = k.own.filter(([x, y]) => y >= r.startedAt && x <= r.endedAt).length;
+    return { lateMs: r.endedAt - deadline, excusedMs: stallMs - ownMs, stallMs, ownMs, ownLateMs, ownCalls, gapMs: [a === null ? null : a - deadline, b - deadline], designMs: deadline - r.startedAt, rippleMs: r.endedAt - r.startedAt, frameMs, clocked: a !== null, constants: { WAIT_MAX_MS: P.WAIT_MAX_MS, DURATION_MS: P.DURATION_MS, HOLD_MAX_MS: P.HOLD_MAX_MS }, ripple: { startedAt: r.startedAt, ringsAt: r.ringsAt, endedAt: r.endedAt } };
   }, id, 15000);
 }
-/* the design bound, then the end at that deadline: never before it, and late only by the stall the frame's clock measured */
-const rippleWithinBound = (t) => !!t && t.clocked && t.constants.WAIT_MAX_MS + t.constants.DURATION_MS <= RIPPLE_BOUND.lifetimeMs && t.constants.HOLD_MAX_MS <= RIPPLE_BOUND.holdMaxMs
+/* the design bound, then the end at that deadline: never before it, and late only by the stall in progress at the deadline less
+   the ripple's own work in it (excusedMs), plus the tolerance; the clock must have covered the deadline and seen the ripple's
+   own work (ownCalls) */
+const rippleWithinBound = (t) => !!t && t.clocked && t.ownCalls > 0 && t.constants.WAIT_MAX_MS + t.constants.DURATION_MS <= RIPPLE_BOUND.lifetimeMs && t.constants.HOLD_MAX_MS <= RIPPLE_BOUND.holdMaxMs
   && t.designMs <= RIPPLE_BOUND.lifetimeMs && t.designMs <= t.constants.HOLD_MAX_MS && t.rippleMs >= RIPPLE_BOUND.minMs
-  && t.lateMs >= -RIPPLE_BOUND.earlyMs && t.lateMs <= t.stalledMs + RIPPLE_BOUND.toleranceMs;
+  && t.lateMs >= -RIPPLE_BOUND.earlyMs && t.lateMs <= t.excusedMs + RIPPLE_BOUND.toleranceMs;
 
 await mkdir(OUT, { recursive: true });
 const launchOptions = process.env.E2E_GL_ARGS === '1' || process.env.CI ? { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] } : {};
@@ -279,10 +303,11 @@ for (const size of SIZES) {
   const built = await until(frame, () => window.__mccEnvironmentLayers().counts.shakemapLines === 10 && window.__mccEnvironmentLayers().built, null, 30000);
   check(scope, 'ten contour lines are drawn exactly as received', built, (await env(frame)).counts);
   /* the ripple's hold is bounded: the frame records when its ripple started and ended on its own clock, and the test's clock in
-     the frame says how long after the deadline the frame could run no timer (RIPPLE_BOUND above) */
+     the frame says how long the stall in progress at the deadline lasted and how much of it was the ripple's own work
+     (RIPPLE_BOUND above) */
   const ended = await until(frame, () => { const s = window.__mccEnvironmentLayers(); return s.ripple === null && !!s.lastRipple && !window.__mccGlobeGovernor().holds.includes('env-ripple'); }, null, 12000);
   const timing = ended ? await rippleTiming(frame, 'usgs:us7000tyhr') : null;
-  check(scope, 'the ripple and its env-ripple hold end at the ripple\'s deadline (4.9 s at most after its start, within the 6 s hold, by the module\'s own constants), never before it and late only by the stall the frame\'s own clock measured after it, plus 100 ms', ended && rippleWithinBound(timing), timing ? { ...timing, sinceFocusMs: Date.now() - t0 } : { ended, lastRipple: (await env(frame)).lastRipple, sinceFocusMs: Date.now() - t0 });
+  check(scope, 'the ripple and its env-ripple hold end at the ripple\'s deadline (4.9 s at most after its start, within the 6 s hold, by the module\'s own constants), never before it, late only by the stall in progress at the deadline on the frame\'s own clock less the ripple\'s own work in it, plus 100 ms', ended && rippleWithinBound(timing), timing ? { ...timing, sinceFocusMs: Date.now() - t0 } : { ended, lastRipple: (await env(frame)).lastRipple, sinceFocusMs: Date.now() - t0 });
   /* every hold released, the ripple gone and the governor on demand, seen in ONE read (PR #825's runner saw no hold, then a
      separate read 200 ms later found 'camera': the reads straddled a new camera hold). That hold was not the push. With the
      camera parked, Cesium's heading and roll getters, read every frame because the page listens to camera.changed, rewrite the
@@ -421,7 +446,7 @@ for (const size of SIZES) {
   const rang = await until(frame, () => { const s = window.__mccEnvironmentLayers(); return s.ripple === null && !!s.lastRipple && s.lastRipple.id === 'usgs:fx-m62' && !window.__mccGlobeGovernor().holds.includes('env-ripple'); }, null, 12000);
   const after = await env(frame), lr = after.lastRipple, landAt = after.camera && after.camera.last ? after.camera.last.at : null;
   const s5Timing = rang ? await rippleTiming(frame, 'usgs:fx-m62') : null;
-  check(scope, 'S5: the ring clock starts no earlier than landing (50 ms tolerance), cleanup ends at the ripple\'s deadline (4.9 s at most after the choice) late only by the frame\'s own measured stall plus 100 ms, and its hold is released', rang && !!lr && lr.ringsAt !== null && landAt !== null && lr.ringsAt >= landAt - 50 && rippleWithinBound(s5Timing), { timing: s5Timing, landAt, sinceTapMs: Date.now() - t61 });
+  check(scope, 'S5: the ring clock starts no earlier than landing (50 ms tolerance), cleanup ends at the ripple\'s deadline (4.9 s at most after the choice) late only by the stall in progress at the deadline on the frame\'s own clock less the ripple\'s own work in it, plus 100 ms, and its hold is released', rang && !!lr && lr.ringsAt !== null && landAt !== null && lr.ringsAt >= landAt - 50 && rippleWithinBound(s5Timing), { timing: s5Timing, landAt, sinceTapMs: Date.now() - t61 });
   check(scope, 'S5: every hold let go after the push and the rings: back on demand', await until(frame, () => { const g = window.__mccGlobeGovernor(); return g.enabled && g.holds.length === 0; }, null, 20000), await gov(frame));
   /* a documented rupture: the recorded M7.0 of 2026-10-22, 189 km ENE of Nagqu, China (USGS us6000u43g), joins the pins; its
      USGS finite-fault plane's modelled up-dip edge is drawn as one line and called a model in the selection and the legend */
