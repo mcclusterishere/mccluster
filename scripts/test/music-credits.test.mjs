@@ -539,3 +539,11 @@ test("staged SQL: the plane's three catalog rows that said something else take t
   for (const words of [upset.artist, main.credit, brave.credit]) assert.ok(back.includes(`='${words}';`), "the rollback is guarded by the words this file wrote");
   assert.match(read("supabase/pending/PROMOTION-ORDER.md"), /## 19\. Music catalog rows: the owner's credit rules of 2026-11-24[\s\S]*20261124130000_music_catalog_owner_credits\.sql/);
 });
+
+test("CI runs the credit generators' own checks and these rules", () => {
+  const ci = read(".github/workflows/music-platform-ci.yml");
+  for (const step of ["node tools/build-music-credits.mjs --check", "node tools/build-music-registry.mjs --check", "node tools/build-catalogue.mjs --check", "node --test scripts/test/music-credits.test.mjs"]) assert.ok(ci.includes(step), step);
+  for (const path of ["'artist.html'", "'data/catalogue.json'", "'tools/build-music-credits.mjs'", "'tools/build-music-registry.mjs'", "'tools/build-catalogue.mjs'", "'scripts/test/music-credits.test.mjs'"]) {
+    assert.equal(ci.split(`      - ${path}\n`).length - 1, 2, `${path} triggers the workflow on a pull request and on main`);
+  }
+});

@@ -72,6 +72,12 @@ on:
       - 'workers/mccluster/src/analytics/measurement-dictionary.js'
       - 'scripts/test/music-measurement.test.mjs'
       - 'scripts/test/music-offline-vault.test.mjs'
+      - 'artist.html'
+      - 'data/catalogue.json'
+      - 'tools/build-music-credits.mjs'
+      - 'tools/build-music-registry.mjs'
+      - 'tools/build-catalogue.mjs'
+      - 'scripts/test/music-credits.test.mjs'
       - '.github/workflows/music-platform-ci.yml'
   push:
     branches: [main]
@@ -145,6 +151,12 @@ on:
       - 'workers/mccluster/src/analytics/measurement-dictionary.js'
       - 'scripts/test/music-measurement.test.mjs'
       - 'scripts/test/music-offline-vault.test.mjs'
+      - 'artist.html'
+      - 'data/catalogue.json'
+      - 'tools/build-music-credits.mjs'
+      - 'tools/build-music-registry.mjs'
+      - 'tools/build-catalogue.mjs'
+      - 'scripts/test/music-credits.test.mjs'
 
 permissions:
   contents: read
@@ -216,6 +228,14 @@ jobs:
         run: |
           node --check sw.js
           node --test scripts/test/music-offline-vault.test.mjs
+      - name: Who is on a record (the credit lines are the structure's own words, the registry and the catalogue page are current, the owner's credit rules hold)
+        run: |
+          node --check js/music-credits.js
+          node --check js/music-artist.js
+          node tools/build-music-credits.mjs --check
+          node tools/build-music-registry.mjs --check
+          node tools/build-catalogue.mjs --check
+          node --test scripts/test/music-credits.test.mjs
 
   music-edge:
     runs-on: ubuntu-latest
