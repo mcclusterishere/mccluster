@@ -748,7 +748,9 @@
     </section>
 
     <footer class="hr__foot">
-      Every track written &amp; performed by Matthew McCluster · QT6KV catalogue.<br>
+      <!-- true only of a record that is all his own, so it is shown only there (boot, js/music-credits.js houseOnly):
+           never under PRIM3, Equity Uprise, Benji Chase, KKK, a single by somebody else or a mixed playlist -->
+      <span id="albWritten" hidden>Every track written &amp; performed by Matthew McCluster · </span>QT6KV catalogue.<br>
       <a href="music-videos.html">Music videos</a> ·
       <a href="hire.html">Hire the agency</a> ·
       <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a><br>
@@ -846,6 +848,7 @@
        session, js/now-playing.js), and the measured light of each record
        that js/chamber.js and js/filament.js read (js/peaks.js) -->
   <script src="js/now-playing.js?v=__STAMP__"></script>
+  <script src="js/music-credits.js?v=__STAMP__"></script>
   <script src="js/peaks.js?v=__STAMP__"></script>
   <script>
   /* ============================================================
@@ -1050,6 +1053,16 @@
       document.getElementById("albArtist").textContent = ARTIST;
       var artistHref = ARTIST === HOUSE ? "matthew-mccluster.html"
         : (/^[a-z0-9-]+\.html$/.test(head.artistPage || "") ? head.artistPage : "");
+      /* an act with no page of its own opens the artist view, which lists everything it appears on
+         (data/albums.json artists, js/music-credits.js) */
+      if (!artistHref && window.MCC_CREDITS) {
+        ((data && data.artists) || []).forEach(function (a) {
+          if (a && a.name === ARTIST && /^[a-z0-9-]+$/.test(a.slug || "")) artistHref = window.MCC_CREDITS.href(a);
+        });
+      }
+      /* "written & performed by Matthew McCluster" stands only under a record that is all his own */
+      var written = document.getElementById("albWritten");
+      if (written) written.hidden = !(window.MCC_CREDITS && window.MCC_CREDITS.houseOnly(queue));
       if (artistHref) {
         var artistEl = document.getElementById("albArtist");
         var artistLink = document.createElement("a");
@@ -2420,8 +2433,10 @@
       var row = rows[cur];
       now.dataset.on = "1";
       el("nowTitle").textContent = row.getAttribute("data-title");
+      /* the track's own credit line; with none, the claim is made for the house artist only: another act's
+         record is never said to be written and performed by anybody the catalogue does not name */
       el("nowCred").textContent = CRED[(row.getAttribute("data-title") || "").toLowerCase()] ||
-        "Written & performed by " + ARTIST + " · QT6KV";
+        (ARTIST === HOUSE ? "Written & performed by " + ARTIST + " · QT6KV" : ARTIST);
       var reelSrc = row.getAttribute("data-reel") || "";
       loadReel(reelSrc);
       if (!reelSrc) {

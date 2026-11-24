@@ -136,7 +136,7 @@ either into a verdict.
 
 ## Optional
 
-- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 65 registered tracks, 18 with ISRCs; [as a page](https://matthew.mccluster.org/catalogue.html). Credit only the artist the catalogue names; "Written & performed by Matthew McCluster unless credited otherwise."
+- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 65 registered tracks, 18 with ISRCs; [as a page](https://matthew.mccluster.org/catalogue.html). Credit only the artists the catalogue names. Each track carries structured `credits` (primary artist, lead and featured artists, producers, other stated roles) naming entries in the file's `artists` registry by slug, and `credit` is the line written from them. The catalogue holds other artists' records too (Equity Uprise, PRIM3, Benji Chase, KKK, and "Upset" by Hitman Benji × Raheem × Rahndrx): a record is Matthew McCluster's only where `credits.primary` is `mccluster`. Where a record names no producer, none is known; do not infer one. Every credited artist opens at `https://matthew.mccluster.org/artist.html?artist=<slug>`.
 - [Portfolio](https://matthew.mccluster.org/data/portfolio.json): 21 items
 - [Sitemap](https://matthew.mccluster.org/sitemap.xml) · [video sitemap](https://matthew.mccluster.org/sitemap-video.xml)
 - [Crawl policy](https://matthew.mccluster.org/robots.txt)
