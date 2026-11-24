@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
+import { fileURLToPath } from 'node:url';
 
 async function withAdapter({ installed }, run) {
   const requests = [];
@@ -19,7 +20,7 @@ async function withAdapter({ installed }, run) {
   upstream.listen(0, '127.0.0.1'); await once(upstream, 'listening');
   const reservation = http.createServer(); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
   const port = reservation.address().port; await new Promise(resolve => reservation.close(resolve));
-  const child = spawn(process.execPath, [new URL('../src/compute/ollama-adapter.mjs', import.meta.url).pathname], { env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${upstream.address().port}`, MCCLUSTER_OLLAMA_EXTRA_MODELS: 'fast:4b' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, [fileURLToPath(new URL('../src/compute/ollama-adapter.mjs', import.meta.url))], { env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${upstream.address().port}`, MCCLUSTER_OLLAMA_EXTRA_MODELS: 'fast:4b' }, stdio: ['ignore', 'pipe', 'pipe'] });
   try {
     await once(child.stdout, 'data');
     const call = input => fetch(`http://127.0.0.1:${port}/execute`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ capability: 'ai.chat', input }) }).then(r => r.json());
@@ -71,7 +72,7 @@ test('the adapter refuses to pull a model outside the allowlist', { timeout: 150
   const http2 = await import('node:http');
   const reservation = http2.createServer(); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
   const port = reservation.address().port; await new Promise(r => reservation.close(r));
-  const child = spawn(process.execPath, [new URL('../src/compute/ollama-adapter.mjs', import.meta.url).pathname], { env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: 'http://127.0.0.1:9', MCCLUSTER_OLLAMA_EXTRA_MODELS: 'fast:4b' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, [fileURLToPath(new URL('../src/compute/ollama-adapter.mjs', import.meta.url))], { env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: 'http://127.0.0.1:9', MCCLUSTER_OLLAMA_EXTRA_MODELS: 'fast:4b' }, stdio: ['ignore', 'pipe', 'pipe'] });
   try {
     await once(child.stdout, 'data');
     const res = await fetch(`http://127.0.0.1:${port}/models/pull`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ model: 'huge:70b' }) });
@@ -95,7 +96,7 @@ test('embeddings use the allowlisted model; on-demand models unload quickly whil
   upstream.listen(0, '127.0.0.1'); await once(upstream, 'listening');
   const reservation = http.createServer(); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
   const port = reservation.address().port; await new Promise(r => reservation.close(r));
-  const child = spawn(process.execPath, [new URL('../src/compute/ollama-adapter.mjs', import.meta.url).pathname], { env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${upstream.address().port}`, MCCLUSTER_OLLAMA_EXTRA_MODELS: 'fast:4b,embed:v1,coder:7b', MCCLUSTER_OLLAMA_RESIDENT_MODELS: 'fast:4b,embed:v1', MCCLUSTER_OLLAMA_EMBED_MODEL: 'embed:v1' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, [fileURLToPath(new URL('../src/compute/ollama-adapter.mjs', import.meta.url))], { env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${upstream.address().port}`, MCCLUSTER_OLLAMA_EXTRA_MODELS: 'fast:4b,embed:v1,coder:7b', MCCLUSTER_OLLAMA_RESIDENT_MODELS: 'fast:4b,embed:v1', MCCLUSTER_OLLAMA_EMBED_MODEL: 'embed:v1' }, stdio: ['ignore', 'pipe', 'pipe'] });
   try {
     await once(child.stdout, 'data');
     const post = (path, body) => fetch(`http://127.0.0.1:${port}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });

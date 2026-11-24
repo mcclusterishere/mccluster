@@ -7,7 +7,8 @@
 -- lease; the first accepted completion wins and a replayed completion does not
 -- overwrite it. The signed body is never stored (it carries the lease token):
 -- only its digest, the public signature fields and the canonical SHA-256 of the
--- committed result. Reuses ops_compute_leases/tasks/nodes; adds no RPC.
+-- committed result, plus the node-reported device facts bound at that moment
+-- (device_facts). Reuses ops_compute_leases/tasks/nodes; adds no RPC.
 -- Rollback: compute_job_attestations_v1.rollback.sql. Order and proof:
 -- supabase/pending/PROMOTION-ORDER.md section 11. Exercised (apply, rollback,
 -- re-apply) by scripts/staging/device-jobs/run.mjs on PGlite.
@@ -28,8 +29,21 @@ create table if not exists public.ops_compute_attestations (
   body_digest text not null check (body_digest ~ '^[A-Za-z0-9_-]{43}$'),
   signature text not null check (signature ~ '^[A-Za-z0-9_-]{86}$'),
   result_sha256 text not null check (result_sha256 ~ '^[a-f0-9]{64}$'),
+  -- mccluster-device-facts/1: the device, its compute mode with the engine
+  -- evidence, what it advertised for the implementation and the model in the
+  -- committed result, as the node row and the result stood when the gateway
+  -- accepted this completion. Node-reported, bound once with the signature and
+  -- never rewritten (the table grants no update), so a receipt built from it
+  -- does not change when the node's inventory later does. Null on a row
+  -- recorded without it; the receipt then reports the facts as unbound.
+  device_facts jsonb check (device_facts is null or (jsonb_typeof(device_facts) = 'object' and pg_column_size(device_facts) <= 32768)),
   recorded_at timestamptz not null default now()
 );
+
+-- A table created from this file before device_facts existed gains the column
+-- on re-apply; create table if not exists alone would leave it without.
+alter table public.ops_compute_attestations
+  add column if not exists device_facts jsonb check (device_facts is null or (jsonb_typeof(device_facts) = 'object' and pg_column_size(device_facts) <= 32768));
 
 create index if not exists ops_compute_attestations_task_idx
   on public.ops_compute_attestations(task_id, recorded_at desc);

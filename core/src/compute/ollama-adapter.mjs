@@ -200,6 +200,11 @@ async function execute(body, queuedAt, callerSignal) {
     });
   }
 
+  // What ran, as the same daemon reports it after the generation: the digest
+  // of the model that answered and the engine version. Both are bounded reads
+  // and both are null when the daemon cannot say; neither fails the result.
+  const [modelDigest, ollamaVersion] = await Promise.all([installedDigest(usedModel), daemonVersion()]);
+
   return {
     model: usedModel,
     model_source: modelSource,
@@ -212,8 +217,23 @@ async function execute(body, queuedAt, callerSignal) {
     thinking_chars: String(data?.message?.thinking || '').length,
     images_in: imagesIn,
     queue_wait_ms: queueWaitMs,
-    usage: inferenceUsage(data),
+    usage: { ...inferenceUsage(data), model_digest: modelDigest, ollama_version: ollamaVersion },
   };
+}
+
+async function installedDigest(model) {
+  const { tags } = await readTags();
+  const installed = tags?.models.find(item => modelMatches(item, model));
+  return installed?.digest ? String(installed.digest).slice(0, 200) : null;
+}
+
+async function daemonVersion() {
+  try {
+    const response = await fetch(`${OLLAMA}/api/version`, { signal: AbortSignal.timeout(3000) });
+    if (!response.ok) return null;
+    const version = (await response.json())?.version;
+    return version ? String(version).slice(0, 80) : null;
+  } catch { return null; }
 }
 
 function pump() {
@@ -322,13 +342,13 @@ async function gpuEvidence() {
       const models = Array.isArray(data?.models) ? data.models.filter(item => item && typeof item === 'object') : [];
       const checked_at = new Date().toISOString();
       if (!models.length) {
-        value = { source: 'ollama:/api/ps', model: null, size_vram_bytes: 0, size_bytes: 0, processor_gpu_percent: null, running_models: 0, checked_at };
+        value = { source: 'ollama:/api/ps', model: null, digest: null, size_vram_bytes: 0, size_bytes: 0, processor_gpu_percent: null, running_models: 0, checked_at };
       } else {
         const top = models.reduce((best, item) => ((Number(item.size_vram) || 0) > (Number(best.size_vram) || 0) ? item : best), models[0]);
         const size = Math.max(0, Number(top.size) || 0);
         const vram = Math.max(0, Number(top.size_vram) || 0);
         value = {
-          source: 'ollama:/api/ps', model: top.name || top.model || null, size_vram_bytes: vram, size_bytes: size,
+          source: 'ollama:/api/ps', model: top.name || top.model || null, digest: top.digest ? String(top.digest).slice(0, 200) : null, size_vram_bytes: vram, size_bytes: size,
           processor_gpu_percent: size > 0 ? Math.max(0, Math.min(100, Math.round(vram / size * 100))) : null,
           running_models: models.length, checked_at,
         };

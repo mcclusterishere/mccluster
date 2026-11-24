@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
+import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { inferenceFetch } from '../src/compute/inference-http.mjs';
 
@@ -66,7 +67,7 @@ async function withAdapter(t, handler, env = {}) {
     }
   });
   phase = 'adapter startup';
-  child = spawn(process.execPath, [new URL('../src/compute/ollama-adapter.mjs', import.meta.url).pathname], {
+  child = spawn(process.execPath, [fileURLToPath(new URL('../src/compute/ollama-adapter.mjs', import.meta.url))], {
     env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: '0', MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${upstream.address().port}`, MCCLUSTER_OLLAMA_ADAPTER_TIMEOUT_MS: '3000', ...env },
     stdio: ['ignore', 'pipe', 'pipe'],
   });

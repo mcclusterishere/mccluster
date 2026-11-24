@@ -2,7 +2,7 @@
 // routes (admin token, staging and ops) and the Core control tools (the owner's
 // path through the Worker). Durable truth stays in ops_compute_tasks and
 // ops_compute_leases; this layer only reads them into the contract shapes.
-import { computeTaskById, enqueueComputeTask, liveCapabilityImplementations, nodeById } from './store.mjs';
+import { cancelQueuedComputeTask, computeTaskById, enqueueComputeTask, liveCapabilityImplementations, nodeById } from './store.mjs';
 import { attestationForLease, leaseById, leasesForTask, listComputeTasks, nodesById, recordAttestation } from './jobs-store.mjs';
 import { buildReceipt, completingLease, completionAttestation, jobResult, jobView, latestLease, receiptKeyFromEnv, receiptKeyInfo, signReceipt, validateJobSubmission } from './jobs.mjs';
 import { ownedOnlyAdmitted } from './protocol.mjs';
@@ -34,6 +34,7 @@ export function defaultDeps(env = process.env) {
     leasesForTask,
     leaseById,
     listTasks: listComputeTasks,
+    cancelQueued: cancelQueuedComputeTask,
     nodesById,
     recordAttestation,
     attestationForLease,
@@ -121,11 +122,32 @@ export async function getJobReceipt({ orgId, jobId, issuer = {} }, deps = defaul
   return signReceipt(receipt, deps.receiptKey());
 }
 
-export async function listJobs({ orgId, status = null, capability = null, limit = 50 }, deps = defaultDeps()) {
-  const tasks = await deps.listTasks({ orgId, status, capability, limit });
+const IDEMPOTENCY_KEY = /^[!-~]{1,128}$/;
+
+// idempotencyKey narrows the list to the one job a submission with that key
+// created, so "did this submit create a job?" is an exact lookup and never a
+// count of a capped page.
+export async function listJobs({ orgId, status = null, capability = null, limit = 50, idempotencyKey = null }, deps = defaultDeps()) {
+  if (idempotencyKey != null && !IDEMPOTENCY_KEY.test(String(idempotencyKey))) throw httpError('idempotency_key must be 1-128 printable ASCII characters without spaces', 400, 'BAD_IDEMPOTENCY_KEY');
+  const tasks = await deps.listTasks({ orgId, status, capability, limit, idempotencyKey: idempotencyKey == null ? null : String(idempotencyKey) });
   const nodes = await deps.nodesById({ ids: tasks.map((task) => task.locked_by_node_id).filter(Boolean) });
   const byId = new Map(nodes.map((node) => [node.id, node]));
   return { schema: 'mccluster-job-list/1', org_id: orgId, count: tasks.length, jobs: tasks.map((task) => jobView({ task, leases: [], node: byId.get(task.locked_by_node_id) || null })) };
+}
+
+// Cancel a job that is still queued. The store's conditional update is atomic
+// against the claim: a job a node already holds is not canceled here, and the
+// caller is told its state instead.
+export async function cancelJob({ orgId, jobId, reason = 'canceled by the submitter' }, deps = defaultDeps()) {
+  const taskId = requireJobId(jobId);
+  const existing = await deps.taskById({ orgId, taskId });
+  if (!existing || existing.org_id !== orgId) throw httpError('compute job not found', 404, 'JOB_NOT_FOUND');
+  const canceled = await deps.cancelQueued({ orgId, taskId, reason: String(reason || 'canceled').slice(0, 400) });
+  if (!canceled) {
+    const current = await deps.taskById({ orgId, taskId });
+    throw httpError(`compute job is ${current?.status ?? existing.status}; only a queued job can be canceled`, 409, 'JOB_NOT_CANCELABLE', { job_status: current?.status ?? existing.status });
+  }
+  return jobView({ task: canceled, leases: await deps.leasesForTask({ taskId }), node: null });
 }
 
 export function receiptKey(deps = defaultDeps()) {
@@ -138,7 +160,11 @@ export function receiptKey(deps = defaultDeps()) {
 export async function recordCompletionAttestation({ node, leaseId, path, headers, result }, deps = defaultDeps()) {
   try {
     const lease = await deps.leaseById({ leaseId });
-    const attestation = completionAttestation({ node, leaseId, attempt: lease?.attempt ?? null, method: 'POST', path, headers, result });
+    // `node` is the row the gateway authenticated this very completion request
+    // against: its inventory and manifest as they stood when the completion
+    // was accepted. Those device facts are bound here, with the signature, and
+    // never read from the node row again for this lease.
+    const attestation = completionAttestation({ node, leaseId, attempt: lease?.attempt ?? null, method: 'POST', path, headers, result, implementation: lease?.implementation ?? null, capturedAt: deps.now() });
     const outcome = await deps.recordAttestation({ ...attestation, task_id: lease?.task_id ?? null }, { log: (line) => deps.log(typeof line === 'string' ? JSON.parse(line) : line) });
     return { ...outcome, lease_id: leaseId };
   } catch (error) {

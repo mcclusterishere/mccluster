@@ -67,6 +67,26 @@ export function shutdownSignals(platform = process.platform) {
   return platform === 'win32' ? ['SIGTERM', 'SIGINT', 'SIGBREAK'] : ['SIGTERM', 'SIGINT'];
 }
 
+// Calls onStop once when `exists(file)` turns true, checking every intervalMs.
+// Returns the function that cancels the watch; an empty path watches nothing.
+// The caller supplies `exists` (this module does no I/O). The timer is unref'd:
+// the watch never keeps a process alive.
+export function watchStopFile(file, onStop, { intervalMs = 500, exists = () => false, setIntervalImpl = setInterval, clearIntervalImpl = clearInterval } = {}) {
+  if (!file) return () => {};
+  let fired = false;
+  const timer = setIntervalImpl(() => {
+    if (fired) return;
+    let present = false;
+    try { present = exists(file) === true; } catch { present = false; }
+    if (!present) return;
+    fired = true;
+    clearIntervalImpl(timer);
+    onStop();
+  }, intervalMs);
+  timer?.unref?.();
+  return () => { fired = true; clearIntervalImpl(timer); };
+}
+
 export function yieldToGpuMs(env = process.env) {
   const n = Number(env.MCCLUSTER_NODE_YIELD_TO_GPU_MS || 0);
   if (!Number.isFinite(n)) return 0;

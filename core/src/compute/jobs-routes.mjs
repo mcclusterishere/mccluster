@@ -5,9 +5,9 @@
 // admin token (CORE_COMPUTE_ADMIN_TOKEN): nodes never reach these.
 import { parseIdempotencyKey } from './http-security.mjs';
 import { assertActiveScheduler } from './scheduler-election.mjs';
-import { defaultDeps, getJob, getJobReceipt, getJobResult, listJobs, receiptKey, submitJob } from './jobs-service.mjs';
+import { cancelJob, defaultDeps, getJob, getJobReceipt, getJobResult, listJobs, receiptKey, submitJob } from './jobs-service.mjs';
 
-const JOB_PATH = /^\/v1\/compute\/jobs\/([0-9a-f-]{36})(?:\/(result|receipt))?$/i;
+const JOB_PATH = /^\/v1\/compute\/jobs\/([0-9a-f-]{36})(?:\/(result|receipt|cancel))?$/i;
 
 const SCHEDULER_PATHS = new Set(['/v1/compute/scheduler', '/v1/compute/scheduler/handover']);
 
@@ -60,10 +60,16 @@ export async function handleJobRoute({ req, url, body, requireAdmin, adminOrg, c
   if (pathname === '/v1/compute/jobs' && req.method === 'GET') {
     const orgId = adminOrg(url.searchParams.get('org_id'));
     if (!orgId) throw Object.assign(new Error('org_id is required'), { status: 400, code: 'ORG_REQUIRED' });
-    return { status: 200, body: await listJobs({ orgId, status: url.searchParams.get('status'), capability: url.searchParams.get('capability'), limit: url.searchParams.get('limit') || 50 }, deps) };
+    return { status: 200, body: await listJobs({ orgId, status: url.searchParams.get('status'), capability: url.searchParams.get('capability'), limit: url.searchParams.get('limit') || 50, idempotencyKey: url.searchParams.get('idempotency_key') }, deps) };
   }
 
   const match = pathname.match(JOB_PATH);
+  if (match && match[2] === 'cancel') {
+    if (req.method !== 'POST') return { status: 405, body: { error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' } };
+    const orgId = adminOrg(body?.org_id || url.searchParams.get('org_id'));
+    if (!orgId) throw Object.assign(new Error('org_id is required'), { status: 400, code: 'ORG_REQUIRED' });
+    return { status: 200, body: await cancelJob({ orgId, jobId: match[1], reason: body?.reason }, deps) };
+  }
   if (match && req.method === 'GET') {
     const orgId = adminOrg(url.searchParams.get('org_id'));
     if (!orgId) throw Object.assign(new Error('org_id is required'), { status: 400, code: 'ORG_REQUIRED' });

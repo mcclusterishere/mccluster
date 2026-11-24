@@ -30,11 +30,13 @@ export async function leaseById({ leaseId } = {}, { restImpl = rest } = {}) {
   return body[0] || null;
 }
 
-export async function listComputeTasks({ orgId, status = null, capability = null, limit = 50 } = {}, { restImpl = rest } = {}) {
+export async function listComputeTasks({ orgId, status = null, capability = null, limit = 50, idempotencyKey = null } = {}, { restImpl = rest } = {}) {
   if (!orgId) return [];
   const params = new URLSearchParams({ org_id: `eq.${orgId}`, select: TASK_SELECT, order: 'created_at.desc', limit: String(Math.min(200, Math.max(1, Number(limit) || 50))) });
   if (status) params.set('status', `in.(${String(status).split(',').map((s) => s.trim()).filter(Boolean).join(',')})`);
   if (capability) params.set('capability', `eq.${capability}`);
+  // Exact lookup of the one task a submission with this Idempotency-Key created (unique per org).
+  if (idempotencyKey) params.set('idempotency_key', `eq.${idempotencyKey}`);
   const { body = [] } = await restImpl(`ops_compute_tasks?${params}`);
   return Array.isArray(body) ? body : [];
 }
@@ -47,9 +49,25 @@ export async function nodesById({ ids = [] } = {}, { restImpl = rest } = {}) {
   return Array.isArray(body) ? body : [];
 }
 
+// A table created before the device_facts column existed answers an insert
+// that names it with 400 PGRST204 (PostgreSQL 42703).
+let deviceFactsUnavailableLogged = false;
+function deviceFactsColumnMissing(error) {
+  return Number(error?.status) === 400 && ['PGRST204', '42703'].includes(error?.detail?.code) && /device_facts/.test(String(error?.message || ''));
+}
+
 // First write wins: a replayed completion (same lease, same payload) is
-// accepted by the SQL fence and must not overwrite the recorded attestation.
+// accepted by the SQL fence and must not overwrite the recorded attestation
+// or the device facts bound with it (the table grants no update).
 export async function recordAttestation(attestation, { restImpl = rest, log = console.log } = {}) {
+  const insert = async (record) => {
+    const { body = [] } = await restImpl('ops_compute_attestations?on_conflict=lease_id', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+      body: JSON.stringify(record)
+    });
+    return { recorded: Array.isArray(body) && body.length > 0, replayed: Array.isArray(body) && body.length === 0, available: true };
+  };
   const row = {
     lease_id: attestation.lease_id,
     task_id: attestation.task_id,
@@ -64,13 +82,20 @@ export async function recordAttestation(attestation, { restImpl = rest, log = co
     signature: attestation.signature,
     result_sha256: attestation.result_sha256
   };
+  const facts = attestation.device_facts && typeof attestation.device_facts === 'object' ? attestation.device_facts : null;
   try {
-    const { body = [] } = await restImpl('ops_compute_attestations?on_conflict=lease_id', {
-      method: 'POST',
-      headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
-      body: JSON.stringify(row)
-    });
-    return { recorded: Array.isArray(body) && body.length > 0, replayed: Array.isArray(body) && body.length === 0, available: true };
+    if (!facts) return await insert(row);
+    try {
+      return await insert({ ...row, device_facts: facts });
+    } catch (error) {
+      if (!deviceFactsColumnMissing(error)) throw error;
+      // The signature is still worth keeping; the receipt will say the device facts are unbound.
+      if (!deviceFactsUnavailableLogged) {
+        deviceFactsUnavailableLogged = true;
+        log(JSON.stringify({ event: 'compute_attestation_device_facts_unavailable', detail: 'ops_compute_attestations has no device_facts column (re-apply supabase/pending/compute_job_attestations_v1.sql); attestations are recorded without the device facts and receipts report them unbound' }));
+      }
+      return await insert(row);
+    }
   } catch (error) {
     if (!tableMissing(error)) throw error;
     if (!attestationsUnavailableLogged) {

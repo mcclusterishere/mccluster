@@ -10,7 +10,7 @@ import { deriveHardwareMode, discoverHardware, loadSnapshot } from './hardware.m
 import { capabilityReadiness, engineHealthSummary, healthyCapabilities, probeExecutors } from './engine-probes.mjs';
 import {
   aclCommand, gpuEvidenceTtlMs, hardwareRefreshMs, isPositiveGpuEvidence, readMeasuredInferenceSidecar, resolveNodePaths,
-  selectGpuEvidence, selectMeasuredInference, shutdownSignals, yieldClaimBody, yieldToGpuMs
+  selectGpuEvidence, selectMeasuredInference, shutdownSignals, watchStopFile, yieldClaimBody, yieldToGpuMs
 } from './node-agent-config.mjs';
 
 const BASE_URL = String(process.env.MCCLUSTER_COMPUTE_URL || '').replace(/\/$/, '');
@@ -29,7 +29,9 @@ const REQUEST_TIMEOUT_MS = Number(process.env.MCCLUSTER_NODE_REQUEST_TIMEOUT_MS 
 const POLL_MS = Math.max(1_000, Number(process.env.MCCLUSTER_NODE_POLL_MS || 5_000));
 const HEARTBEAT_MS = Math.max(10_000, Number(process.env.MCCLUSTER_NODE_HEARTBEAT_MS || 30_000));
 const ENGINE_PROBE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_ENGINE_PROBE_MS || 15_000));
-const SHUTDOWN_GRACE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_SHUTDOWN_GRACE_MS || 30_000));
+// Optional: a file whose appearance asks this agent to drain and exit (see run()).
+const STOP_FILE = String(process.env.MCCLUSTER_NODE_STOP_FILE || '').trim();
+const SHUTDOWN_GRACE_MS =Math.max(5_000, Number(process.env.MCCLUSTER_NODE_SHUTDOWN_GRACE_MS || 30_000));
 const GPU_EVIDENCE_TTL_MS = gpuEvidenceTtlMs(process.env);
 // Full hardware discovery (process spawns) this often; the engine probe in between reuses the snapshot.
 const HARDWARE_REFRESH_MS = hardwareRefreshMs(process.env);
@@ -391,6 +393,17 @@ async function run() {
       gracefulShutdown(active, signalName).then(() => process.exit(active.size ? 1 : 0));
     });
   }
+  // A stop file is the graceful stop a parent process can always deliver. On
+  // Windows child.kill('SIGTERM') is TerminateProcess: no handler runs and a
+  // running lease is left to expire. The stop file drains instead: no new
+  // claim, and a running lease gets the grace period to finish and commit,
+  // which releases it; only what is still running after that is abandoned.
+  watchStopFile(STOP_FILE, () => {
+    gracefulShutdown(active, 'stop-file').then(() => {
+      if (active.size) shutdown.abort(new Error('Node shutdown'));
+      process.exit(active.size ? 1 : 0);
+    });
+  }, { exists: fs.existsSync });
 
   let lastHeartbeat = 0;
   let lastProbe = Date.now();

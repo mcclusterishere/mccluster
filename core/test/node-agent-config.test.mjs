@@ -18,6 +18,7 @@ import {
   selectGpuEvidence,
   selectMeasuredInference,
   shutdownSignals,
+  watchStopFile,
   yieldClaimBody,
   yieldToGpuMs
 } from '../src/compute/node-agent-config.mjs';
@@ -209,4 +210,41 @@ test('node-agent.mjs is wired to the 0.4.0 contract', () => {
   assert.match(agentSource, /MCCLUSTER_COMPUTE_URL must be an https:\/\/ URL/);
   assert.match(agentSource, /Node executors must be loopback services/);
   assert.doesNotMatch(agentSource, /SUPABASE_SERVICE_ROLE_KEY/);
+});
+
+test('a stop file is noticed once, by polling, and an empty path watches nothing', () => {
+  const timers = [];
+  const cleared = [];
+  const setIntervalImpl = (fn, ms) => { const timer = { fn, ms, unrefd: false, unref() { this.unrefd = true; } }; timers.push(timer); return timer; };
+  const clearIntervalImpl = (timer) => cleared.push(timer);
+  let present = false;
+  let stops = 0;
+  const cancel = watchStopFile('state/node-agent.stop', () => { stops += 1; }, { intervalMs: 250, exists: (file) => { assert.equal(file, 'state/node-agent.stop'); return present; }, setIntervalImpl, clearIntervalImpl });
+  assert.equal(timers.length, 1);
+  assert.deepEqual([timers[0].ms, timers[0].unrefd], [250, true], 'the watch never keeps the process alive');
+  timers[0].fn(); timers[0].fn();
+  assert.equal(stops, 0, 'no file, no stop');
+  present = true;
+  timers[0].fn(); timers[0].fn(); timers[0].fn();
+  assert.equal(stops, 1, 'the stop is delivered exactly once');
+  assert.deepEqual(cleared, [timers[0]]);
+  cancel();
+
+  // A probe that throws is "not there yet", never a stop and never a crash.
+  let threw = 0;
+  watchStopFile('x', () => { threw += 1; }, { exists: () => { throw new Error('EACCES'); }, setIntervalImpl, clearIntervalImpl });
+  timers[1].fn();
+  assert.equal(threw, 0);
+  // Cancelled before the file appears: nothing fires afterwards.
+  let late = 0;
+  const cancelLate = watchStopFile('y', () => { late += 1; }, { exists: () => true, setIntervalImpl, clearIntervalImpl });
+  cancelLate();
+  timers[2].fn();
+  assert.equal(late, 0);
+  // No path configured: no timer at all.
+  assert.equal(typeof watchStopFile('', () => { throw new Error('must not run'); }, { setIntervalImpl, clearIntervalImpl }), 'function');
+  assert.equal(timers.length, 3);
+  // The agent wires it to MCCLUSTER_NODE_STOP_FILE and drains: it does not abort a running lease on a stop file.
+  assert.match(agentSource, /MCCLUSTER_NODE_STOP_FILE/);
+  assert.match(agentSource, /watchStopFile\(STOP_FILE, \(\) => \{\s*gracefulShutdown\(active, 'stop-file'\)/);
 });
