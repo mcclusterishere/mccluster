@@ -1662,7 +1662,9 @@
     ownPerspective: function(){return SELF_PROFILE;},
     admin: function () { return ADMIN_ON; },
     verifyAdmin: function () { return checkAdmin(true); },
-    navigation: Object.freeze({root: ROOT, house: pageBase("listen.html"), world: worldAt("?view=feed"), go: function (href) { sail(href, 0); },
+    /* house: the installed dock's house (Listen's base: Matthew's host until P3 there, the P1 amendment); page: where the
+       table serves any other page, for js/site-navigation.js's Control and product doors (review V2-1) */
+    navigation: Object.freeze({root: ROOT, house: pageBase("listen.html"), page: pageHref, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); },
       // The retained Music document uses the existing, origin-bound sign-in
       // handoff for its real World frame. Credentials never enter its messages.
       handoff: handoffHref})

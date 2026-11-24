@@ -5,6 +5,11 @@
   const bar = window.MCC_BAR;
   if (!bar || document.body.hasAttribute('data-no-appbar')) return;
   const {root, house, world, go} = bar.navigation;
+  /* where one of the site's pages is linked from here: the bar's own answer (MCC_BAR.navigation.page, the table's
+     serving host; review V2-1, 2026-11-24). Control and the product doors go where the table serves them from either
+     host; only the bar's Music, account and artist doors keep Matthew's host until P3 (the P1 amendment), and `house`
+     answers that rule, so it is never the base for these. With an older bar, beside its house as before. */
+  const page = path => bar.navigation.page ? new URL(bar.navigation.page(path), location.href).href : new URL(path, house).href;
   const dock = document.querySelector('.appbar');
   const get = id => document.getElementById(id);
   let coreReady, panel, profile, installed = false, group = 'All', opening = 0, lastControlTap = null;
@@ -29,7 +34,7 @@
   }
   function controlHref(hash) {
     // Same-page changes keep the active organization and workspace presentation.
-    const url = /\/control\.html$/.test(location.pathname) ? new URL(location.href) : new URL('control.html', house);
+    const url = /\/control\.html$/.test(location.pathname) ? new URL(location.href) : new URL(page('control.html'));
     url.hash = hash; return url.href;
   }
   function entries() {
@@ -45,18 +50,18 @@
       {label:'Your desk', group:'Inbox', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
       /* ONE HALO (owner, 2026-10-22: "it takes you to multiple different places. Not everything is consolidated"): every
          Halo door opens the four screens on the globe (World, Missions, People, Intelligence), never the separate app */
-      {label:'Hitman’s Halo', group:'Products', href:new URL('action-globe.html?explore=1&halo=1', house).href, context:'World · Missions · People · Intelligence'},
-      {label:'PRIM3', group:'Products', href:new URL('prim3.html', house).href, context:'Learning'},
+      {label:'Hitman’s Halo', group:'Products', href:page('action-globe.html?explore=1&halo=1'), context:'World · Missions · People · Intelligence'},
+      {label:'PRIM3', group:'Products', href:page('prim3.html'), context:'Learning'},
       /* the learning hub is now the game hub (owner, 2026-11-03): a mini game per course, each with its paired music */
-      {label:'Game Hub', group:'Products', href:new URL('game-hub.html', house).href, context:'Course mini games'},
+      {label:'Game Hub', group:'Products', href:page('game-hub.html'), context:'Course mini games'},
       /* the owner's mission globe and World builder (owner, 2026-11-02: "its own tab … only admin can see as its own app");
          this panel is the owner's only, and the page checks the owner again itself */
-      {label:'PRIM3 World', group:'Products', href:new URL('prim3-world.html', house).href, context:'Missions · World builder'},
+      {label:'PRIM3 World', group:'Products', href:page('prim3-world.html'), context:'Missions · World builder'},
       /* the admin-only E=Up product workspace (owner, 2026-11-09: "an admin only experience … the E=Up tab in the admin
          experience"): Control › System › E=Up; the Worker's /v1/eup routes repeat the owner check on every request */
-      {label:'E=Up', group:'Products', href:new URL('control.html#system:eup', house).href, context:'Admin only · League · Civic · Companies · Sources'},
-      {label:'Whip', group:'Products', href:new URL('whip.html', house).href, context:'Mobility'},
-      {label:'WE Manufacture', group:'Products', href:new URL('we-manufacture.html', house).href, context:'Manufacturing'}
+      {label:'E=Up', group:'Products', href:page('control.html#system:eup'), context:'Admin only · League · Civic · Companies · Sources'},
+      {label:'Whip', group:'Products', href:page('whip.html'), context:'Mobility'},
+      {label:'WE Manufacture', group:'Products', href:page('we-manufacture.html'), context:'Manufacturing'}
     ]);
   }
   function closePanel(focus = false) {
