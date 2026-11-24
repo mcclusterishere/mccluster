@@ -7,9 +7,10 @@
 // get retired, and has been serving traffic ever since.
 //
 // It belongs to the marketplace era of `mcclusterishere/Here`, which
-// CLAUDE.md rule 11 says publishes nothing. Its SITE constant still
-// points at that dead GitHub Pages origin, so its success and cancel
-// redirects land nowhere.
+// CLAUDE.md rule 11 says publishes nothing. Its success and cancel
+// redirects named that dead GitHub Pages address (it answers 404); since
+// SPEC-PLATFORM stage P0 they follow the request like every return
+// (../_shared/site-hosts.ts) and land on the live album page.
 //
 // It reads `public.providers`, which holds ZERO rows, and
 // `public.payments` also holds zero — no payment has ever completed
@@ -24,12 +25,12 @@
 // Requires PREMIUM_PRICE_ID, a secret for a price in a product line that
 // is no longer sold. It will throw at module load if that is ever unset.
 import Stripe from "npm:stripe@14";
+import { returnOrigin } from "../_shared/site-hosts.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PRICE = Deno.env.get("PREMIUM_PRICE_ID")!;
-const SITE = "https://mcclusterishere.github.io/Here";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -42,6 +43,9 @@ const json = (b: unknown, s = 200) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
+  /* the request's Origin when it is exactly an origin that serves pages (../_shared/site-hosts.ts), else the
+     generated fallback: at stage P0 the profile host, whose album.html is the live page for this flow */
+  const SITE = returnOrigin(req.headers.get("origin"));
 
   const auth = req.headers.get("Authorization") || "";
   const who = await fetch(`${SB}/auth/v1/user`, {

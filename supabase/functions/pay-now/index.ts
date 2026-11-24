@@ -7,9 +7,10 @@
 // get retired, and has been serving traffic ever since.
 //
 // It belongs to the marketplace era of `mcclusterishere/Here`, which
-// CLAUDE.md rule 11 says publishes nothing. Its SITE constant still
-// points at that dead GitHub Pages origin, so its success and cancel
-// redirects land nowhere.
+// CLAUDE.md rule 11 says publishes nothing. Its success and cancel
+// redirects named that dead GitHub Pages address (it answers 404); since
+// SPEC-PLATFORM stage P0 they follow the request like every return
+// (../_shared/site-hosts.ts) and land on the live pay page.
 //
 // It reads `public.providers`, which holds ZERO rows, and
 // `public.payments` also holds zero — no payment has ever completed
@@ -35,11 +36,11 @@
 // by anyone who knows the URL. Nothing in either repository calls it.
 // Retiring it closes this; see the header above.
 import Stripe from "npm:stripe@14";
+import { returnOrigin } from "../_shared/site-hosts.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SK")!);
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SITE = "https://mcclusterishere.github.io/Here";
 const RATE = 0.10; // the all-in spread — must match MCC_STRIPE.RATE in js/payments.js
 const HOUSE: Record<string, boolean> = { mccluster: true, "equity-uprise": true };
 
@@ -65,6 +66,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (RETIRED) return json({ error: "gone", use: "checkout" }, 410);
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
+  /* the request's Origin when it is exactly an origin that serves pages (../_shared/site-hosts.ts), else the
+     generated fallback: at stage P0 the profile host, whose pay.html is the live page for this flow */
+  const SITE = returnOrigin(req.headers.get("origin"));
 
   const { slug, amount, title } = await req.json().catch(() => ({}));
   const s = String(slug || "").toLowerCase().trim();

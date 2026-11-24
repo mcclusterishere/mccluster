@@ -1,5 +1,6 @@
 import Stripe from "npm:stripe@14";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { returnOrigin } from "../_shared/site-hosts.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
   let account: Stripe.Account;
   if (row?.stripe_account_id) {
     const existing = await stripe.accounts.retrieve(row.stripe_account_id);
-    if ((existing as Stripe.DeletedAccount).deleted) return json({ error: "connected_account_deleted" }, 409);
+    if ((existing as unknown as Stripe.DeletedAccount).deleted) return json({ error: "connected_account_deleted" }, 409);
     account = existing as Stripe.Account;
   } else {
     if (req.method === "GET") return json({ org: org.slug, livemode, account: null, onboarding_status: row?.onboarding_status || "not_started" });
@@ -99,12 +100,15 @@ Deno.serve(async (req) => {
 
   if (req.method === "GET" || state.onboarding_status === "ready") return json({ org: org.slug, livemode, account: account.id, ...state });
 
-  const site = "https://matthew.mccluster.org/account.html";
+  /* Stripe sends the owner back to the account page where they started: the request's Origin when it is
+     exactly an origin that serves pages (../_shared/site-hosts.ts), else the generated fallback, which at
+     stage P0 is the profile host this return named before. */
+  const site = returnOrigin(req.headers.get("origin"));
   const link = await stripe.accountLinks.create({
     account: account.id,
     type: "account_onboarding",
-    refresh_url: `${site}?stripe=refresh&org=${encodeURIComponent(org.slug)}`,
-    return_url: `${site}?stripe=return&org=${encodeURIComponent(org.slug)}`,
+    refresh_url: `${site}/account.html?stripe=refresh&org=${encodeURIComponent(org.slug)}`,
+    return_url: `${site}/account.html?stripe=return&org=${encodeURIComponent(org.slug)}`,
   });
   return json({ org: org.slug, livemode, account: account.id, ...state, onboarding_url: link.url });
 });
