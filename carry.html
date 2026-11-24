@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="js/shell-boot.js?v=__STAMP__"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Sign-in carry · McCluster</title>
+<script>
+/* THE CARRY PAGE (SPEC-PLATFORM 2.6 and 2.7): the tenant's side. The platform's page (js/carry.js) frames this page,
+   hidden, at the tenant's own origin (window.MCC_SITE.profile.carry_path) and asks it once for the sign-in this browser
+   holds here. It answers only when every one of these holds, and otherwise does nothing at all:
+   - the record's stage has the carry on (window.MCC_SITE.switches.carry; off in P0, so in P0 this page answers nothing);
+   - it is framed, and the message comes from its own parent;
+   - the message's origin is the platform's, exactly (window.MCC_SITE.platform.origin);
+   - it is a well-formed request, and the first one: one request is ever answered.
+   The answer goes back to the parent at the platform's exact origin, never "*": the access token alone (renewed first
+   when it is due, through js/mcc-auth.js; never the refresh token), and the conveniences of 2.7: the analytics device id
+   only where the privacy notice was agreed (the shared cookie), the song pocket, mute and theme, and the paths of the
+   songs kept on this origin. Nothing here signs anyone out or changes anything stored here. */
+(function (w, d) {
+  "use strict";
+  var REQUEST = "mcc:carry-request", ANSWER = "mcc:carry-answer";
+  var ID = /^[A-Za-z0-9_-]{16,64}$/;
+  var site = w.MCC_SITE;
+  var asked = false;
+  function framed() { try { return !!w.parent && w.parent !== w; } catch (e) { return false; } }
+  function local(key) { try { return w.localStorage.getItem(key); } catch (e) { return null; } }
+  function agreed() { try { return /(?:^|;\s*)mcc_privacy_ack=/.test(String(d.cookie || "")); } catch (e) { return false; } }
+  /* the shared sign-in client, loaded only once a request has been accepted */
+  function auth() {
+    if (w.MCC && typeof w.MCC.refreshIfNeeded === "function") return Promise.resolve(w.MCC);
+    return new Promise(function (resolve) {
+      var s = d.createElement("script");
+      s.src = "js/mcc-auth.js?v=__STAMP__";
+      s.onload = function () { resolve(w.MCC || null); };
+      s.onerror = function () { resolve(null); };
+      d.head.appendChild(s);
+    });
+  }
+  function accessToken() {
+    return auth().then(function (M) { return M && typeof M.refreshIfNeeded === "function" ? M.refreshIfNeeded() : null; })
+      .then(function (s) { return s && typeof s.access_token === "string" && s.access_token ? s.access_token : null; }, function () { return null; });
+  }
+  /* the songs kept on this origin (the offline vault, sw.js), by path */
+  function keptPaths() {
+    if (!w.caches || typeof w.caches.open !== "function") return Promise.resolve([]);
+    return w.caches.open("mcc-vault-v1").then(function (c) { return c.keys(); }).then(function (requests) {
+      var out = [];
+      (requests || []).forEach(function (r) {
+        var u;
+        try { u = new URL(r.url); } catch (e) { return; }
+        if (u.origin === w.location.origin && out.length < 500) out.push(u.pathname + u.search);
+      });
+      return out;
+    }, function () { return []; });
+  }
+  w.addEventListener("message", function (e) {
+    if (asked || !site || !site.switches || site.switches.carry !== true) return;
+    if (!framed() || e.source !== w.parent || e.origin !== site.platform.origin) return;
+    var q = e.data;
+    if (!q || q.type !== REQUEST || q.v !== 1 || typeof q.id !== "string" || !ID.test(q.id)) return;
+    asked = true;
+    var to = e.source, origin = site.platform.origin;
+    Promise.all([accessToken(), keptPaths()]).then(function (got) {
+      to.postMessage({
+        type: ANSWER, v: 1, id: q.id, access_token: got[0],
+        carry: { device: agreed() ? local("mcc_device") : null, pocket: local("mcc-pocket"), mute: local("mcc_music_mute"), theme: local("mcc_theme"), kept: got[1] }
+      }, origin);
+    });
+  });
+})(window, document);
+</script>
+</head>
+<body>
+<p>This page carries a sign-in to the platform when the platform asks for it. There is nothing to do here.</p>
+</body>
+</html>
