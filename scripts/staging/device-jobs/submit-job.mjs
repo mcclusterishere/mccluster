@@ -14,22 +14,41 @@
 // code, and a queued job pinned to an implementation nobody advertises must
 // stay unclaimed for --bound-ms while live devices keep polling. It writes
 // refusal.json and exits 0 only when both hold.
+//
+// From another device, through the Access-protected staging hostname
+// (docs/control-plane/DEVICE-STAGING-ACCESS.md): --compute-url https://<staging-hostname>
+// --trust system --org <org id> --admin-token-file <file>. Trust is exactly one
+// of --trust system or --ca <file>. The Access service token is read only from
+// MCCLUSTER_ACCESS_CLIENT_ID / MCCLUSTER_ACCESS_CLIENT_SECRET. --preflight
+// checks the path and exits. The production hosts are refused.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { REFUSAL_SCHEMA, RUN_FILES, connectStaging, requestJson, validateSubmitOptions, verifyJobEvidence } from './real-device-lib.mjs';
+import { ACCESS_ENV, preflightExitCode, preflightStaging, redactSecrets } from './staging-access.mjs';
 
 let options;
 try { options = validateSubmitOptions(process.argv.slice(2)); }
 catch (error) { console.error(JSON.stringify({ event: 'submit_usage_error', error: error.message })); process.exit(2); }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const write = (name, value) => fs.writeFileSync(path.join(options.out, name), JSON.stringify(value, null, 2));
+// Every credential this process holds; nothing it prints or writes may contain one.
+let secrets = [process.env.MCCLUSTER_STAGING_ADMIN_TOKEN, process.env[ACCESS_ENV.id], process.env[ACCESS_ENV.secret]].filter(Boolean).map((value) => String(value).trim());
+const write = (name, value) => fs.writeFileSync(path.join(options.out, name), JSON.stringify(redactSecrets(value, secrets), null, 2));
+const say = (stream, record) => stream(JSON.stringify(redactSecrets(record, secrets)));
 
 async function main() {
-  const staging = connectStaging(options.staging, { tokenEnv: 'MCCLUSTER_STAGING_ADMIN_TOKEN' });
+  const staging = connectStaging(options.staging, { tokenEnv: 'MCCLUSTER_STAGING_ADMIN_TOKEN', needToken: !options.preflight });
+  secrets = [...new Set([...secrets, ...staging.secrets])];
+  if (options.preflight) {
+    const report = await preflightStaging({ computeUrl: staging.computeUrl, trust: staging.trust, ca: staging.ca, access: staging.access, request: requestJson });
+    say(console.log, { event: 'staging_preflight', ...report });
+    return preflightExitCode(report);
+  }
   fs.mkdirSync(options.out, { recursive: true });
-  const admin = (pathname, init = {}) => requestJson(`${staging.computeUrl}${pathname}`, { ...init, ca: staging.ca, headers: { authorization: `Bearer ${staging.token}`, ...(init.headers || {}) } });
+  // staging.request adds the Access headers (when set), verifies TLS under the
+  // chosen trust and names an Access block instead of returning its login page.
+  const admin = (pathname, init = {}) => staging.request(pathname, { ...init, headers: { authorization: `Bearer ${staging.token}`, ...(init.headers || {}) } });
   const org = encodeURIComponent(staging.org);
   const liveFor = async (implementation) => {
     const caps = await admin(`/v1/compute/capabilities?org_id=${org}`);
@@ -91,7 +110,7 @@ async function main() {
   write('result.json', result);
   write('receipt.json', receipt);
   write('verify.json', verify);
-  console.log(JSON.stringify({
+  say(console.log, ({
     event: 'job_verified', ok: verify.ok, hardware_proof: verify.hardware_proof, fixture: verify.fixture, job_id: jobId, status: job.status,
     node_id: verify.device.node_id, hardware_mode: verify.device.hardware_mode, model: verify.model.name, model_digest: verify.model.digest,
     lease_duration_ms: verify.execution.lease_duration_ms, submit_to_terminal_ms: wallMs,
@@ -181,11 +200,11 @@ async function refusal({ admin, org, liveFor, body, staging }) {
     checked_at: new Date().toISOString()
   };
   write('refusal.json', report);
-  console.log(JSON.stringify({ event: 'refusal_checked', ok: report.ok, implementation, http_status: refused.status, code: report.refusal.code, elapsed_ms: refusedMs, probe_final_status: report.unclaimed_probe.final_status, failed_checks: Object.entries(checks).filter(([, value]) => value !== true).map(([name]) => name), out: options.out }));
+  say(console.log, { event: 'refusal_checked', ok: report.ok, implementation, http_status: refused.status, code: report.refusal.code, elapsed_ms: refusedMs, probe_final_status: report.unclaimed_probe.final_status, failed_checks: Object.entries(checks).filter(([, value]) => value !== true).map(([name]) => name), out: options.out });
   return report.ok ? 0 : 1;
 }
 
 main().then((code) => process.exit(code)).catch((error) => {
-  console.error(JSON.stringify({ event: 'submit_failed', error: error.message, code: error.code || null }));
-  process.exit(1);
+  say(console.error, { event: 'submit_failed', error: error.message, code: error.code || null });
+  process.exit(error.code === 'ACCESS_BLOCKED' ? 3 : 1);
 });

@@ -148,8 +148,31 @@ run it again with the model warm.
 
 ### A second device (a Mac)
 
-The same script, unchanged. On the Mac, from a checkout of this branch, with
-Node 22 or newer and the model pulled into its own Ollama:
+**Through an Access-protected hostname (the owner's chosen path):** see
+`docs/control-plane/DEVICE-STAGING-ACCESS.md` for the owner steps, the single
+command, the preflight, revocation and teardown. In short, on the Mac:
+
+```bash
+MCCLUSTER_ACCESS_CLIENT_ID="$(cat ~/mccluster-staging/access-client-id)" \
+MCCLUSTER_ACCESS_CLIENT_SECRET="$(cat ~/mccluster-staging/access-client-secret)" \
+node scripts/staging/device-jobs/enroll-device.mjs \
+  --compute-url https://<staging-hostname> --trust system --org <org-id> \
+  --enroll-token-file ~/mccluster-staging/enroll.token \
+  --state-dir ~/mccluster-staging/device --name <display-name> \
+  --implementation qwen3.8b.local --model qwen3:8b
+```
+
+Trust is exactly one of `--trust system` (a public-CA hostname) or `--ca <file>`
+(a pinned CA); nothing turns verification off. The Access service token is read
+only from those two environment variables, the enrolment token only from
+`MCCLUSTER_NODE_ENROLL_TOKEN` or `--enroll-token-file`; neither is logged or
+written. `--preflight` checks DNS, TLS, `/health` and an Access block and exits
+(0 ready, 3 blocked by Access, 1 otherwise). The production hosts are refused.
+Proven against a loopback fixture that imitates Access; no Mac has run yet.
+
+**Through a private forward to the loopback ingress (pinned CA):** the same
+script. On the Mac, from a checkout of this branch, with Node 20 or newer and
+the model pulled into its own Ollama:
 
 ```bash
 MCCLUSTER_NODE_ENROLL_TOKEN="$(cat enroll.token)" \

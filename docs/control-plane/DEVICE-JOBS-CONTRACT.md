@@ -171,7 +171,8 @@ Verification, in the client:
    `null` and `device_facts.bound` is `false`: the Core does not sign the node's read-time inventory in their place,
    and such a receipt is dated by the read. The live job view (`GET /v1/compute/jobs/:id`) still follows the node row;
    it is a status view, not evidence.
-   `execution.model` is taken from the committed output, which is itself immutable: the model name, and
+   `execution.model` is the model bound in the snapshot; without a snapshot it is read from the committed output,
+   which is itself immutable (never from the node row). Either way it is what the node's result said: the model name, and
    `usage.model_digest` and `usage.ollama_version`, which the Ollama adapter reads from the same daemon after the
    generation (`null` when the daemon cannot say, or for an executor that reports neither); `null` for a failed or
    canceled job. All of these are inside the Core signature, and the model fields are inside `output_sha256` and the

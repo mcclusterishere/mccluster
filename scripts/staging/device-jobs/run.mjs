@@ -97,6 +97,20 @@ async function stopChild(name, signal = 'SIGTERM') {
   await new Promise((resolve) => { child.once('exit', resolve); child.kill(signal); setTimeout(() => { try { child.kill('SIGKILL'); } catch {} resolve(); }, 8_000).unref(); });
 }
 
+// The agent's own graceful stop (MCCLUSTER_NODE_STOP_FILE). The signal in
+// stopChild is the fallback when it has not exited within its drain period.
+const AGENT_STOP_FILE = path.join(OUT, 'node', 'node-agent.stop');
+async function stopAgentByFile(waitMs = 40_000) {
+  const child = children.get('node-agent');
+  if (!child || child.exitCode !== null) return;
+  await new Promise((resolve) => {
+    child.once('exit', resolve);
+    try { fs.writeFileSync(AGENT_STOP_FILE, ''); } catch { resolve(); }
+    setTimeout(resolve, waitMs).unref();
+  });
+  fs.rmSync(AGENT_STOP_FILE, { force: true });
+}
+
 function tail(name, lines = 40) {
   try { return fs.readFileSync(path.join(OUT, `${name}.log`), 'utf8').trim().split('\n').slice(-lines); } catch { return []; }
 }
@@ -192,9 +206,10 @@ async function main() {
   const agentEnv = {
     MCCLUSTER_COMPUTE_URL: `https://127.0.0.1:${ports.tls}`, MCCLUSTER_ORG_ID: ORG, MCCLUSTER_NODE_NAME: 'staging-fixture-node',
     MCCLUSTER_NODE_ENROLL_TOKEN: secrets.enroll, MCCLUSTER_NODE_STATE_DIR: path.join(OUT, 'node', 'state'), MCCLUSTER_NODE_MANIFEST: path.join(OUT, 'node', 'capabilities.json'),
-    MCCLUSTER_NODE_POLL_MS: '1000', MCCLUSTER_NODE_HEARTBEAT_MS: '10000', MCCLUSTER_NODE_ENGINE_PROBE_MS: '5000', NODE_EXTRA_CA_CERTS: tlsFiles.cert
+    MCCLUSTER_NODE_POLL_MS: '1000', MCCLUSTER_NODE_HEARTBEAT_MS: '10000', MCCLUSTER_NODE_ENGINE_PROBE_MS: '5000', NODE_EXTRA_CA_CERTS: tlsFiles.cert,
+    MCCLUSTER_NODE_STOP_FILE: AGENT_STOP_FILE
   };
-  const startAgent = () => spawnChild('node-agent', path.join(ROOT, 'core/src/compute/node-agent.mjs'), agentEnv);
+  const startAgent = () => { fs.rmSync(AGENT_STOP_FILE, { force: true }); return spawnChild('node-agent', path.join(ROOT, 'core/src/compute/node-agent.mjs'), agentEnv); };
   startAgent();
 
   let fixtureNode = null;
@@ -458,6 +473,11 @@ try {
   steps.push({ name: 'harness', ok: false, error: error.message });
   try { fs.writeFileSync(path.join(OUT, 'proof.json'), JSON.stringify({ schema: 'mccluster-device-jobs-staging-proof/1', ok: false, fatal: error.message, steps }, null, 2)); } catch {}
 } finally {
+  // The node agent first, through its stop file: on Windows a SIGTERM is
+  // TerminateProcess and a lease it still held would be left to expire. The
+  // stop file drains (a running lease commits, which releases it). The other
+  // children hold no lease; a signal is enough for them.
+  await stopAgentByFile();
   for (const name of [...children.keys()]) await stopChild(name);
   try { tls?.close(); } catch {}
   try { await shim?.close(); } catch {}

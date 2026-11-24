@@ -9,6 +9,7 @@ import https from 'node:https';
 import path from 'node:path';
 import { DEVICE_FACTS_SOURCE, hashJson, verifyAttestation, verifyReceipt, RECEIPT_SCHEMA } from '../../../core/src/compute/jobs.mjs';
 import { keyFingerprint, nodeIdFromPublicKey } from '../../../core/src/compute/signature.mjs';
+import { accessBlockedError, accessFromEnv, assertNotProduction, classifyAccessBlock, redactSecrets, resolveTrust, tlsOptionsFor } from './staging-access.mjs';
 
 export const STAGING_SCHEMA = 'mccluster-device-jobs-staging/1';
 export const VERIFY_SCHEMA = 'mccluster-device-job-verify/1';
@@ -81,7 +82,10 @@ function httpsUrl(value, flag) {
   let url;
   try { url = new URL(value); } catch { throw usageError(`--${flag} must be a URL`); }
   if (url.protocol !== 'https:') throw usageError(`--${flag} must be an https:// URL`);
-  return url.toString().replace(/\/$/, '');
+  if (url.username || url.password) throw usageError(`--${flag} must not carry credentials`);
+  // Staging only: the production compute and Core hosts are refused outright.
+  assertNotProduction(url, flag);
+  return url.origin;
 }
 
 export const SERVE_FLAGS = { run_dir: { type: 'string' }, port_base: { type: 'int', default: DEFAULT_PORT_BASE }, org: { type: 'string', default: DEFAULT_ORG }, tls_san: { type: 'string' }, lease_seconds: { type: 'int', default: 120 }, no_stdin: { type: 'boolean' } };
@@ -103,24 +107,35 @@ export function validateServeOptions(argv) {
 
 // Where the staging lives, either from a run directory on this machine or from
 // explicit flags on another device. Never both halves of each.
-function resolveStaging(flags, { tokenFile, tokenFlag }) {
+// Trust is exactly one of two things, never neither: the platform trust store
+// (--trust system, for a public-CA hostname such as an Access-protected one) or
+// one pinned CA file (--ca; in the loopback mode the run directory's own CA is
+// the pin when neither flag is given). No flag turns verification off.
+function resolveStaging(flags, { tokenFile, tokenFlag, preflight = false }) {
   if (flags.run_dir) {
     const runDir = path.resolve(flags.run_dir);
-    return { runDir, computeUrl: flags.compute_url ? httpsUrl(flags.compute_url, 'compute-url') : null, org: flags.org || null, ca: flags.ca ? path.resolve(flags.ca) : path.join(runDir, RUN_FILES.ca_cert), tokenFile: flags[tokenFlag] ? path.resolve(flags[tokenFlag]) : path.join(runDir, tokenFile) };
+    const trust = resolveTrust({ trust: flags.trust, ca: flags.ca, haveDefaultCa: true });
+    return { runDir, computeUrl: flags.compute_url ? httpsUrl(flags.compute_url, 'compute-url') : null, org: flags.org || null, trust, ca: trust === 'system' ? null : flags.ca ? path.resolve(flags.ca) : path.join(runDir, RUN_FILES.ca_cert), tokenFile: flags[tokenFlag] ? path.resolve(flags[tokenFlag]) : path.join(runDir, tokenFile) };
   }
   const computeUrl = httpsUrl(requireText(flags.compute_url, 'compute-url (or --run-dir)'), 'compute-url');
-  if (!UUID.test(String(flags.org || ''))) throw usageError('--org must be a UUID (or pass --run-dir)');
-  return { runDir: null, computeUrl, org: flags.org.toLowerCase(), ca: path.resolve(requireText(flags.ca, 'ca (or --run-dir)')), tokenFile: flags[tokenFlag] ? path.resolve(flags[tokenFlag]) : null };
+  // The preflight reads /health only: it needs neither the org nor a token.
+  if (!preflight && !UUID.test(String(flags.org || ''))) throw usageError('--org must be a UUID (or pass --run-dir)');
+  if (flags.org !== undefined && !UUID.test(String(flags.org))) throw usageError('--org must be a UUID (or pass --run-dir)');
+  if (flags.trust === undefined && !flags.ca) throw usageError('--ca <file> or --trust system is required (or pass --run-dir): exactly one of them');
+  const trust = resolveTrust({ trust: flags.trust, ca: flags.ca });
+  return { runDir: null, computeUrl, org: flags.org ? flags.org.toLowerCase() : null, trust, ca: trust === 'system' ? null : path.resolve(flags.ca), tokenFile: flags[tokenFlag] ? path.resolve(flags[tokenFlag]) : null };
 }
 
 export const ENROLL_FLAGS = {
   implementation: { type: 'string' }, model: { type: 'string' }, state_dir: { type: 'string' }, name: { type: 'string' },
-  run_dir: { type: 'string' }, compute_url: { type: 'string' }, org: { type: 'string' }, ca: { type: 'string' }, enroll_token_file: { type: 'string' },
+  run_dir: { type: 'string' }, compute_url: { type: 'string' }, org: { type: 'string' }, ca: { type: 'string' }, trust: { type: 'string' }, preflight: { type: 'boolean' }, enroll_token_file: { type: 'string' },
   ollama_url: { type: 'string', default: 'http://127.0.0.1:11434' }, adapter_port: { type: 'int', default: 0 }, context: { type: 'int' },
   executor_url: { type: 'string' }, site: { type: 'string', default: 'staging-real-device' }, no_stdin: { type: 'boolean' }
 };
 export function validateEnrollOptions(argv) {
   const flags = parseFlags(argv, ENROLL_FLAGS);
+  // --preflight checks the path to the staging and exits: no device flags, no token.
+  if (flags.preflight === true) return { preflight: true, staging: resolveStaging(flags, { tokenFile: RUN_FILES.enroll_token, tokenFlag: 'enroll_token_file', preflight: true }) };
   const implementation = requireText(flags.implementation, 'implementation');
   if (!IMPLEMENTATION_ID.test(implementation)) throw usageError('--implementation is not a valid implementation id');
   const model = requireText(flags.model, 'model');
@@ -135,7 +150,7 @@ export function validateEnrollOptions(argv) {
     ollamaUrl: loopbackUrl(flags.ollama_url, 'ollama-url'),
     // A stand-in executor is for tests only and is labelled as a fixture everywhere it shows.
     executorUrl: flags.executor_url ? loopbackUrl(flags.executor_url, 'executor-url') : null,
-    watchStdin: flags.no_stdin !== true,
+    watchStdin: flags.no_stdin !== true, preflight: false,
     staging: resolveStaging(flags, { tokenFile: RUN_FILES.enroll_token, tokenFlag: 'enroll_token_file' })
   };
 }
@@ -143,11 +158,12 @@ export function validateEnrollOptions(argv) {
 export const SUBMIT_FLAGS = {
   implementation: { type: 'string' }, out: { type: 'string' }, prompt: { type: 'string', default: 'Reply with one short sentence about what a signed receipt proves.' },
   num_predict: { type: 'int', default: 512 }, idempotency_key: { type: 'string' }, timeout_ms: { type: 'int', default: 600_000 },
-  run_dir: { type: 'string' }, compute_url: { type: 'string' }, org: { type: 'string' }, ca: { type: 'string' }, admin_token_file: { type: 'string' },
+  run_dir: { type: 'string' }, compute_url: { type: 'string' }, org: { type: 'string' }, ca: { type: 'string' }, trust: { type: 'string' }, preflight: { type: 'boolean' }, admin_token_file: { type: 'string' },
   expect_refusal: { type: 'boolean' }, bound_ms: { type: 'int', default: 15_000 }, expect_hardware_mode: { type: 'string' }, client_name: { type: 'string', default: 'submit-job-cli' }
 };
 export function validateSubmitOptions(argv) {
   const flags = parseFlags(argv, SUBMIT_FLAGS);
+  if (flags.preflight === true) return { preflight: true, staging: resolveStaging(flags, { tokenFile: RUN_FILES.admin_token, tokenFlag: 'admin_token_file', preflight: true }) };
   const implementation = requireText(flags.implementation, 'implementation');
   if (!IMPLEMENTATION_ID.test(implementation)) throw usageError('--implementation is not a valid implementation id');
   const out = path.resolve(requireText(flags.out, 'out'));
@@ -160,7 +176,7 @@ export function validateSubmitOptions(argv) {
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(flags.client_name)) throw usageError('--client-name must be a short identifier');
   return {
     implementation, out, prompt: flags.prompt, numPredict: flags.num_predict, idempotencyKey: flags.idempotency_key || null, timeoutMs: flags.timeout_ms,
-    expectRefusal: flags.expect_refusal === true, boundMs: flags.bound_ms, expectHardwareMode: flags.expect_hardware_mode || null, clientName: flags.client_name,
+    expectRefusal: flags.expect_refusal === true, boundMs: flags.bound_ms, expectHardwareMode: flags.expect_hardware_mode || null, clientName: flags.client_name, preflight: false,
     staging: resolveStaging(flags, { tokenFile: RUN_FILES.admin_token, tokenFlag: 'admin_token_file' })
   };
 }
@@ -176,23 +192,44 @@ export function readStagingFile(runDir) {
   return parsed;
 }
 
-export function connectStaging(staging, { tokenEnv, env = process.env } = {}) {
+// The token comes from the named environment variable or from the token file
+// the operator supplied, in that order; it is never a flag value and is never
+// printed. `needToken: false` is the preflight, which reads /health only.
+// The Cloudflare Access service token, when there is one, comes from the
+// environment only (staging-access.mjs). `request` is the one way the scripts
+// talk to the staging host: it adds the Access headers to every call, verifies
+// TLS under the chosen trust, and turns an Access block into a named error.
+export function connectStaging(staging, { tokenEnv, env = process.env, needToken = true } = {}) {
   let { computeUrl, org } = staging;
   if (staging.runDir && (!computeUrl || !org)) {
     const file = readStagingFile(staging.runDir);
     computeUrl = computeUrl || file.urls.compute;
     org = org || file.org_id;
   }
-  let token = String(env[tokenEnv] || '').trim();
-  if (!token && staging.tokenFile) {
+  assertNotProduction(computeUrl, 'compute-url');
+  let token = needToken ? String(env[tokenEnv] || '').trim() : '';
+  if (needToken && !token && staging.tokenFile) {
     try { token = fs.readFileSync(staging.tokenFile, 'utf8').trim(); }
     catch (error) { throw Object.assign(new Error(`token file is not readable (${error.code || error.message})`), { code: 'TOKEN_UNAVAILABLE' }); }
   }
-  if (!token) throw Object.assign(new Error(`no token: set ${tokenEnv} or pass a token file`), { code: 'TOKEN_UNAVAILABLE' });
-  let ca;
-  try { ca = fs.readFileSync(staging.ca); }
-  catch (error) { throw Object.assign(new Error(`CA certificate is not readable (${error.code || error.message})`), { code: 'CA_UNAVAILABLE' }); }
-  return { computeUrl, org, token, ca, caPath: staging.ca };
+  if (needToken && !token) throw Object.assign(new Error(`no token: set ${tokenEnv} or pass a token file`), { code: 'TOKEN_UNAVAILABLE' });
+  const trust = staging.trust === 'system' ? 'system' : 'ca';
+  let ca = null;
+  if (trust === 'ca') {
+    try { ca = fs.readFileSync(staging.ca); }
+    catch (error) { throw Object.assign(new Error(`CA certificate is not readable (${error.code || error.message})`), { code: 'CA_UNAVAILABLE' }); }
+  }
+  const access = accessFromEnv(env);
+  const secrets = [...access.secrets, ...(token ? [token] : [])];
+  const request = async (pathname, init = {}) => {
+    let reply;
+    try { reply = await requestJson(`${computeUrl}${pathname}`, { ...init, trust, ca, headers: { ...access.headers, ...(init.headers || {}) } }); }
+    catch (error) { throw Object.assign(new Error(redactSecrets(String(error.message || error), secrets)), { code: error.code || null }); }
+    const block = classifyAccessBlock(reply);
+    if (block.blocked) throw accessBlockedError(block, { tokenSent: access.configured });
+    return reply;
+  };
+  return { computeUrl, org, token, trust, ca, caPath: trust === 'ca' ? staging.ca : null, access, secrets, request, redact: (value) => redactSecrets(value, secrets) };
 }
 
 // One advertised implementation, concurrency 1, behind a loopback executor.
@@ -215,14 +252,16 @@ export function buildDeviceManifest({ implementation, model, executorBase, site 
   };
 }
 
-// JSON over http or https. An https call trusts exactly the CA bytes given.
-export function requestJson(url, { method = 'GET', headers = {}, body, ca, timeoutMs = 15_000 } = {}) {
+// JSON over http or https. An https call trusts exactly the CA bytes given, or
+// with trust "system" the platform trust store; the peer is always verified.
+// Redirects are never followed: the status and Location are handed back.
+export function requestJson(url, { method = 'GET', headers = {}, body, ca, trust = 'ca', timeoutMs = 15_000 } = {}) {
   const target = new URL(url);
   const payload = body === undefined ? null : Buffer.from(JSON.stringify(body));
   const lib = target.protocol === 'https:' ? https : http;
   return new Promise((resolve, reject) => {
     const req = lib.request(target, {
-      method, ...(target.protocol === 'https:' ? { ca } : {}),
+      method, ...(target.protocol === 'https:' ? tlsOptionsFor({ trust, ca }) : {}),
       headers: { accept: 'application/json', ...(payload ? { 'content-type': 'application/json', 'content-length': payload.length } : {}), ...headers }
     }, (res) => {
       const chunks = [];

@@ -172,6 +172,8 @@ test('device facts are bound at completion: a receipt read after the node invent
   assert.equal(first.issued_at, '2026-11-23T00:00:04.500Z', 'a bound receipt is dated by the binding, not by the read');
   assert.equal(second.execution.hardware_mode, 'gpu-verified');
   assert.deepEqual(verifyReceipt(second, key.publicKeyPem), { ok: true, reason: null });
+  // The model is the snapshot's too: it is the one bound at completion, not re-derived on the read.
+  assert.deepEqual(buildReceipt({ task: { ...task, output: { ...output, model: 'renamed:1b', usage: {} } }, leases: [lease], node: later, attestation }).execution.model, attestation.device_facts.model);
 
   // No snapshot (an attestation recorded without one, or none at all): the
   // device facts are null and declared unbound; the node row as it reads at

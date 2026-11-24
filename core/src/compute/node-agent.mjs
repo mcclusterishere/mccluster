@@ -9,7 +9,7 @@ import { generateNodeIdentity, nodeIdFromPublicKey, signRequest } from './signat
 import { deriveHardwareMode, discoverHardware, loadSnapshot } from './hardware.mjs';
 import { capabilityReadiness, engineHealthSummary, healthyCapabilities, probeExecutors } from './engine-probes.mjs';
 import {
-  aclCommand, gpuEvidenceTtlMs, hardwareRefreshMs, isPositiveGpuEvidence, readMeasuredInferenceSidecar, resolveNodePaths,
+  accessServiceToken, aclCommand, gatewayRequestHeaders, gpuEvidenceTtlMs, hardwareRefreshMs, isPositiveGpuEvidence, readMeasuredInferenceSidecar, redactSecrets, resolveNodePaths,
   selectGpuEvidence, selectMeasuredInference, shutdownSignals, watchStopFile, yieldClaimBody, yieldToGpuMs
 } from './node-agent-config.mjs';
 
@@ -42,6 +42,12 @@ const ENROLL_ONLY = ['1', 'true'].includes(String(process.env.MCCLUSTER_NODE_ENR
 
 if (!BASE_URL || !/^https:\/\//.test(BASE_URL)) throw new Error('MCCLUSTER_COMPUTE_URL must be an https:// URL');
 if (!ORG_ID) throw new Error('MCCLUSTER_ORG_ID is required');
+// Optional Cloudflare Access service token for a gateway published behind an
+// Access application (MCCLUSTER_ACCESS_CLIENT_ID / MCCLUSTER_ACCESS_CLIENT_SECRET,
+// environment only). Sent to BASE_URL and nowhere else; never logged.
+const ACCESS = accessServiceToken(process.env);
+// Nothing this process prints may carry a credential it was started with.
+const LOG_SECRETS = [...ACCESS.secrets, process.env.MCCLUSTER_NODE_ENROLL_TOKEN, process.env.MCCLUSTER_NODE_ENROLL_GRANT].filter(Boolean);
 
 let stopping = false;
 let labelOverrideLogged = false;
@@ -69,8 +75,8 @@ function permanentError(message) {
   return error;
 }
 
-function log(record) { console.log(JSON.stringify(record)); }
-function warn(record) { console.error(JSON.stringify(record)); }
+function log(record) { console.log(JSON.stringify(redactSecrets(record, LOG_SECRETS))); }
+function warn(record) { console.error(JSON.stringify(redactSecrets(record, LOG_SECRETS))); }
 
 // Best-effort NTFS ACL (chmod is a no-op on Windows); never fatal.
 function applyAcl(target, isDirectory) {
@@ -228,7 +234,7 @@ function inventory(hardware, engineHealth = [], manifest = { publicCapabilities:
 async function rawRequest(pathname, { method = 'POST', body = {}, headers = {}, signal } = {}) {
   return requestJson(`${BASE_URL}${pathname}`, {
     method, signal, timeoutMs: REQUEST_TIMEOUT_MS,
-    headers: { 'content-type': 'application/json', accept: 'application/json', ...headers },
+    headers: gatewayRequestHeaders(ACCESS, headers),
     body: method === 'GET' ? undefined : JSON.stringify(body)
   });
 }
@@ -241,7 +247,8 @@ async function signedRequest(identity, pathname, body = {}, signal) {
   });
   return requestJson(`${BASE_URL}${pathname}`, {
     method: 'POST', signal, timeoutMs: REQUEST_TIMEOUT_MS,
-    headers: { 'content-type': 'application/json', accept: 'application/json', ...headers },
+    // The signature covers the body digest and the request line, not these extra headers.
+    headers: gatewayRequestHeaders(ACCESS, headers),
     body: bodyBytes
   });
 }
@@ -479,6 +486,6 @@ async function run() {
 }
 
 run().catch((error) => {
-  warn({ event: 'compute_node_fatal', error: error.message });
+  warn({ event: 'compute_node_fatal', error: error.message, code: error.code || null, status: error.status || null });
   process.exit(1);
 });

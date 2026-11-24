@@ -478,9 +478,10 @@ export function buildReceipt({ task, leases = [], node = null, attestation = nul
       arch: facts?.arch ?? null,
       hardware_evidence: facts?.hardware_evidence ?? null,
       advertised: facts?.advertised ?? null,
-      // The committed output is itself immutable and inside output_sha256, so
-      // the model is read from it; the snapshot holds the same three fields.
-      model: done ? executedModel(task.output) : null,
+      // With a snapshot, the model is the one bound in it. Without one it is
+      // read from the committed output, which is itself immutable and inside
+      // output_sha256 (never from the node row).
+      model: done ? (facts ? facts.model ?? null : executedModel(task.output)) : null,
       started_at: lease.started_at ?? null, completed_at: lease.completed_at ?? null,
       duration_ms: durationMs(lease),
       result_consistent: resultConsistent
