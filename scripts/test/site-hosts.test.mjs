@@ -204,7 +204,7 @@ test('the scanner counts a site host in code and nothing else', () => {
   assert.equal(n('fetch("https://equityuprise.com/x")'), 1);
   assert.equal(n('// see https://matthew.mccluster.org\n/* mccluster.org */ const x = 1;'), 0, 'comments are documentation, not routing');
   assert.equal(n('const a = "https://api.mccluster.org"; const b = "https://esmer.mccluster.org"; const c = "core.mccluster.org";'), 0, 'other subdomains are not site hosts');
-  assert.equal(n('const mail = "matthew@mccluster.org";'), 0, 'an e-mail address is not a host');
+  assert.equal(n('const mail = "name@mccluster.org";'), 0, 'an e-mail address is not a host');
   assert.equal(n('const s = "https://mcclusterishere.github.io/esmer/";'), 0, 'another satellite on GitHub Pages is not this site');
   assert.equal(n('const a = "//not a comment https://mccluster.org";'), 1, 'a // inside a string does not start a comment');
   assert.equal(n('const r = a / b; const u = "https://mccluster.org"; // https://mccluster.org'), 1, 'division is not a regular expression');
