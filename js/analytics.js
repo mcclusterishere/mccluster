@@ -829,11 +829,15 @@ window.MCC_MODEL = (function () {
   if (!document || document.querySelector('script[data-mcc-experience-bootstrap]')) return;
   var current = document.currentScript && document.currentScript.src || "";
   var q = current.indexOf("?") >= 0 ? current.slice(current.indexOf("?")) : "";
+  /* the three files sit beside this one in js/; a page in a folder (engineering/, action/) loads this file as
+     ../js/analytics.js, so they are named from this file's own address, never the page's */
+  var at = current.search(/js\/analytics\.js(?:[?#]|$)/);
+  var base = at >= 0 ? current.slice(0, at) : "";
   var files = ["js/experience.js","js/mcc-model-adapter.js","js/adaptive-surfaces.js"];
   function next(i) {
     if (i >= files.length) return;
     var s = document.createElement("script");
-    s.src = files[i] + q;
+    s.src = base + files[i] + q;
     s.async = false;
     s.setAttribute("data-mcc-experience-bootstrap", files[i]);
     s.onload = function(){ next(i + 1); };

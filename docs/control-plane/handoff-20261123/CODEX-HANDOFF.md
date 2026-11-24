@@ -206,19 +206,21 @@ fails. Every new test file must be run by a CI workflow job.
 | `specs/SPEC-M5.md` | M5's design (one player across the music pages); its stage 2 was later rejected by Matthew. |
 | `patches/` | Unfinished work saved as patches, with their bases (`patches/README.md`). |
 
-## Status (updated at the end of the earlier session)
+## Status (updated by the earlier session, 2026-11-24, about 07:10 UTC)
 
-Every piece of work is on GitHub as a branch, most with a pull request (2026-11-24, about 02:45 UTC):
+Release 1 is merged and live. Everything else is on GitHub as a branch; nothing below is lost if a session ends.
 
 | Work | Branch | Pull request | State |
 | --- | --- | --- | --- |
-| Release 1 | `claude/release-20261123` (at `4b6d58cc`: the dock fix merged in) | #825 to `main` | Matthew: "ship it when it passes". A final independent go/no-go and CI were running; merge with a merge commit when both pass (section 3.A). |
-| Release 1 dock fix | merged into the release branch (`eca8c401`) | #827, closed | Verified go twice. |
-| Music quick wins | on `claude/new-session-83ken5` (`2191cfdd`, `ef167fe4`) | #826, superseded snapshot | The review found 12 items (one blocker); a fix round was running, then a final verification. |
-| Platform move P0 | on `claude/new-session-83ken5` (head `3dbb7718`) | none | Verified go. No visible change. Ships with the next release cut from the working branch. |
-| Platform move P1 | `claude/platform-p1-20261124` | to be opened when pushed | Building (build, two reviews, fix, verify). Changes what visitors see: ships only on Matthew's word. |
-| One engine, one player | not started | none | Matthew: "start the one engine build after that" (after Release 1). |
-| Known failure on the working branch | | | `workers/mccluster/test/analytics-creator-attribution.test.mjs` ("MCC_PAGE_IDENTITY is not defined"), from M5; the engine build's stage 0 fixes it before the next release. |
+| Release 1 | merged into `main` as `df21444f` (the branch at `3f12e039`) | #825, merged 2026-11-24 06:40 UTC | Live. `GET https://api.mccluster.org/v1/health` answered `deployment_sha` `df21444f42fa7226a8016f265c20ec2f112ca296` at 06:40:45 UTC. Site deploy: the deploy run `45342165555` passed the ten deploy-gate checks and finished green at 06:52 UTC; `HEAD https://matthew.mccluster.org/assets/audio/dealer-plates-b.m4a` answers 200 `audio/mp4` (it was 404 before), and `https://matthew.mccluster.org/listen.html` loads its scripts stamped `?v=df21444f42fa`. CI on the pull request was green except `environment-globe` (a timing check, 6,579 ms against a 6,500 ms budget on a slow runner; not a deploy gate, not in the diff; fixed on its own branch below). Matthew's steps in Control are section 3.A.5. |
+| Release 1 follow-ups | `claude/release1-followups-20261124` (`4f7d283c`) | none | This session's fixes of the four findings (CX-1, CX-2, CI-1, CI-2). Matthew's `3f12e039` on the release branch fixed the same four first and shipped. The edges `3f12e039` left are carried into engine stage 0. Reference only: do not merge. |
+| Music quick wins | `claude/new-session-83ken5` (`60d356f7`) | #826, closed | Independently verified: go at `60d356f7`. Ships in Release 2. Matthew's open decisions are listed in `OWNER-DIRECTIONS-AND-STATUS.md`. |
+| Platform move P0 | `claude/new-session-83ken5` | none | Verified go. No visible change. Ships in Release 2. |
+| Platform move P1 | `claude/platform-p1-20261124` (`a82de11a`) | none yet | Built. Two independent reviews found eight items, one blocker (retire the `#mcc_handoff` reader's trade once the carry is on). The fix round and a final verification are running. Matthew: "keep it, ship P1 when it passes" (keep the music-direct CORS for `mccluster.org`). Ships in Release 2. |
+| One engine, stage 0 | `claude/engine-s0-20261124` (base `d1375242`: the working branch with `main` merged) | none | Building: the card's Play on the music pages, album containment (`ROUTES.album = { top: false, view: false }`), the analytics view case, and the Release 1 follow-up edges. Then two reviews, a fix round and a verification. |
+| Globe e2e timing | `claude/globe-timing-20261124` (from `df21444f`) | none | Building: the 6.5 s ripple checks in `scripts/e2e/environment-globe.e2e.mjs` judged against the page's own measured stall, still failing on a real overrun. |
+| Release 2 | to be cut from the branches above | to be opened | Quick wins, P0, M5 with album containment, engine stage 0, P1 and the globe timing fix. Same routine as section 3.A.3 to A.4. |
+| Known failure on the working branch | | | Fixed: `workers/mccluster/test/analytics-creator-attribution.test.mjs` passes again from `1580bde5`. |
 | Creator Studio publishing | `claude/wip-creator-studio-publish` | #828, draft | Unfinished (2026-11-19). |
 | Project Drawdown source page | `claude/wip-drawdown-source-page` | #829, draft | Unfinished (2026-11-19). |
 | Environmental timeline S6 | `claude/wip-eup-timeline-s6` | #830, draft | Unfinished (2026-11-19). |

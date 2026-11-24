@@ -2,8 +2,8 @@
 
    Where Stripe sends a buyer back after Checkout or Connect onboarding, where a cohort claim links, and where a
    published Reel's action link opens: the request's Origin when it is EXACTLY one of the generated return origins
-   (RETURN_ORIGINS in src/platform/hosts.generated.js: scheme and host, nothing else), and today's default otherwise
-   (RETURN_FALLBACK_ORIGIN; at stage P0 Matthew's host, where every one of these pages is served today). No suffix or
+   (RETURN_ORIGINS in src/platform/hosts.generated.js: scheme and host, nothing else), and the stage's default otherwise
+   (RETURN_FALLBACK_ORIGIN: Matthew's host at P0; from P1 the platform, which serves every one of these pages). No suffix or
    substring match, and neither a Referer nor X-Forwarded-Host is ever trusted. One test per module, driven against a
    fake Supabase and a fake Stripe. */
 import test from 'node:test';
@@ -18,9 +18,11 @@ import { reply, fail, logEvent } from '../src/lib/http.js';
 
 const PLAT = 'https://mccluster.org';
 const PROF = 'https://matthew.mccluster.org';
-const DEFAULT = PROF;
+/* the fallback is the live stage's: Matthew's host at P0, the platform from P1 (edge.now.p1_changes
+   returns_fallback_platform); a return started on his host still comes back there */
+const DEFAULT = PLAT;
 
-test('the generated lists are the ones this test reads: the platform and Matthew\'s host, falling back to his host at P0', () => {
+test('the generated lists are the ones this test reads: the platform and Matthew\'s host, falling back to the platform from P1', () => {
   assert.deepEqual([...RETURN_ORIGINS].sort(), [PLAT, PROF].sort());
   assert.equal(RETURN_FALLBACK_ORIGIN, DEFAULT);
 });

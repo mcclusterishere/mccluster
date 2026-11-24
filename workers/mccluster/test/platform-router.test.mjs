@@ -1,12 +1,13 @@
 /* THE HOST ROUTER (SPEC-PLATFORM 2.4): one table, every host, every path class, every stage.
 
    workers/mccluster/src/platform/router.js reads the generated table (src/platform/hosts.generated.js, from
-   data/seo/domain-architecture.json) and decides, per host and path, what Worker mccluster answers. With today's
-   table (stage P0) it must answer exactly what was measured on 2026-11-23 (test/fixtures/platform-hosts-probe-20261123.json,
-   from the SPEC-PLATFORM probe record: GET and HEAD only). The later stages' tables exist only here, built by
-   tools/build-site-hosts.mjs from the same record: P1 (the platform serves every page), P3 (Matthew's host routed to the
-   Worker answers 301s for the pages that moved) and stage F (the equityuprise rewrite: platform.origin
-   https://equityuprise.com, mccluster.org McCluster Corp's tenant). Nothing here reaches the network. */
+   data/seo/domain-architecture.json) and decides, per host and path, what Worker mccluster answers. With P0's table it
+   must answer exactly what was measured on 2026-11-23 (test/fixtures/platform-hosts-probe-20261123.json, from the
+   SPEC-PLATFORM probe record: GET and HEAD only), so a rollback to P0 restores exactly that. The table that ships is P1's
+   (the generated SITE; test/platform-p1.test.mjs holds it to every published page). The other stages' tables are built
+   here by tools/build-site-hosts.mjs from the same record: P0, P1, P3 (Matthew's host routed to the Worker answers 301s
+   for the pages that moved) and stage F (the equityuprise rewrite: platform.origin https://equityuprise.com,
+   mccluster.org McCluster Corp's tenant). Nothing here reaches the network. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -26,7 +27,9 @@ const EQ = 'https://equityuprise.com';
 
 const record = readRecord();
 const tableOf = (stage, rec = record) => makeSite(siteTable(rec, { stage }));
-const P0 = SITE;
+/* P0's table, rebuilt from the record: what shipped before P1 and what a rollback to P0 (edge.now back to P0) restores.
+   The generated SITE is the stage that ships (P1, test/platform-p1.test.mjs). */
+const P0 = tableOf('P0');
 const P1 = tableOf('P1');
 const P3 = tableOf('P3');
 
@@ -63,7 +66,7 @@ function check(site, url, want, init = {}) {
   assert.deepEqual(seen, want, `${site.stage} ${init.method || 'GET'} ${url}`);
 }
 
-/* ---------- P0: today, exactly ---------- */
+/* ---------- P0: as measured on 2026-11-23, exactly ---------- */
 
 test('P0 platform host: the World at /, its rooms and files passed through, the company\'s own pages, every other path 301 to the same path on Matthew\'s host', () => {
   const world = { kind: 'world', origin: PLAT, head: 'platform' };
@@ -162,7 +165,8 @@ test('P1 platform host: every page at its path (the HERE front door at /index.ht
     ['/mnet.html?view=feed', moved(`${PLAT}/?view=feed`)],
     ['/company', { kind: 'own' }], ['/company/', moved(`${PLAT}/company`)], ['/news/', { kind: 'own' }], ['/robots.txt', { kind: 'own' }],
     ['/account.html', page], ['/listen.html?track=1', page], ['/album.html?album=here', page], ['/music-creator.html?handle=x', page],
-    ['/matthew-mccluster.html', page], ['/engineering/', page], ['/engineering', page], ['/control.html', page], ['/nope.html', page],
+    ['/matthew-mccluster.html', page], ['/engineering/', page], ['/engineering', moved(`${PLAT}/engineering/`)], ['/control.html', page],
+    ['/nope.html', { ...page, unnamed: true }],
     ['/js/tabbar.js', { kind: 'pass', noindex: false }], ['/manifest.json', { kind: 'pass' }], ['/sw.js', { kind: 'pass' }],
     ['/embed.html?album=here', { kind: 'pass', framing: 'anyone' }], ['/carry.html', { kind: 'pass', framing: 'platform' }],
     ['/.well-known/acme-challenge/x', { kind: 'pass' }],
@@ -172,10 +176,12 @@ test('P1 platform host: every page at its path (the HERE front door at /index.ht
   check(P1, `${PLAT}/listen.html`, { kind: 'refused' }, { method: 'POST' });
 });
 
-test('P1 doors: www, humanuprise.com and its www answer 301 to the platform, same path and query, every path', () => {
+test('P1 doors: www, humanuprise.com and its www answer 301 to the platform, same path and query, every path, in one hop', () => {
+  /* where the platform answers with a 301 of its own, the door sends the visitor straight there (P1 review, P1A-3) */
+  const straight = { '/company/': `${PLAT}/company`, '/whip.html': `${PROF}/whip.html`, '/index.html?view=feed': `${PLAT}/?view=feed`, '/mnet.html': `${PLAT}/`, '/listen': `${PLAT}/listen.html` };
   for (const origin of [WWW, HU, HUW, 'http://www.mccluster.org', 'http://humanuprise.com']) {
-    for (const path of ['/', '/?view=feed', '/index.html', '/company/', '/listen.html?track=1', '/robots.txt', '/whip.html', '/js/x.js']) {
-      check(P1, origin + path, moved(PLAT + path));
+    for (const path of ['/', '/?view=feed', '/index.html', '/listen.html?track=1', '/robots.txt', '/js/x.js', ...Object.keys(straight)]) {
+      check(P1, origin + path, moved(straight[path] || PLAT + path));
     }
   }
   check(P1, `${PROF}/listen.html`, { kind: 'origin', classes: false }, {});
@@ -203,6 +209,13 @@ test('P3 Matthew\'s host routed: his pages, Whip and the files pass to GitHub; t
   /* the platform and the doors answer as in P1 */
   check(P3, `${PLAT}/listen.html`, { kind: 'pass' });
   check(P3, `${HU}/listen.html`, moved(`${PLAT}/listen.html`));
+  /* another spelling of a page that moved, or of the World, answers as its own address does; his own pages and Whip at
+     any spelling GitHub reads stay his (P1 review: an address is read the way the static origin reads it) */
+  for (const [path, want] of [
+    ['/listen', moved(`${PLAT}/listen.html`)], ['//album.html?album=here', moved(`${PLAT}/album.html?album=here`)], ['/%6Cisten.html', moved(`${PLAT}/listen.html`)],
+    ['/mnet', moved(`${PLAT}/`)], ['//mnet.html?view=feed', moved(`${PLAT}/?view=feed`)], ['/index?view=feed', moved(`${PLAT}/?view=feed`)],
+    ['/index', his], ['/whip', his], ['//whip.html', his], ['/portfolio', his], ['/engineering', his], ['/nope', his]
+  ]) check(P3, PROF + path, want);
 });
 
 /* ---------- stage F: the equityuprise rewrite through the router ---------- */
@@ -307,7 +320,29 @@ const P0_ROUTER = routerFor(P0);
    what GitHub sent. */
 const EDGE_TTL = /\.(?:js|png)$/;
 
-test('with today\'s table every probed path on mccluster.org and www.mccluster.org answers as measured on 2026-11-23: status, location and the headers that matter', async () => {
+/* The 60 s edge cache is P1's (the P1 review, P1A-5): with P0's table the Worker fetches the World and its rooms as P0
+   shipped, so a rollback to P0 restores P0 exactly; with P1's the documents the table names are kept a minute. */
+test('the edge cache of documents is P1\'s: P0 fetches the static origin as it shipped', async () => {
+  const seen = [];
+  const origin = async (input, init) => {
+    const req = input instanceof Request ? input : new Request(input);
+    seen.push({ path: new URL(req.url).pathname, cf: init && init.cf ? { ...init.cf } : null });
+    return new Response(req.method === 'HEAD' ? null : '<!doctype html><html><head><title>x</title></head><body></body></html>', { status: 200, headers: { 'content-type': /\.js$/.test(req.url) ? 'application/javascript' : 'text/html; charset=utf-8' } });
+  };
+  const P1_ROUTER = routerFor(P1);
+  for (const path of ['/', '/?view=feed', '/action-globe.html', '/js/tabbar.js']) {
+    seen.length = 0;
+    await P0_ROUTER(new Request(PLAT + path), NEWS_ENV, origin);
+    assert.ok(seen.length > 0 && seen.every((c) => c.cf === null), `P0 ${path}: ${JSON.stringify(seen)}`);
+  }
+  for (const [path, cached] of [['/', true], ['/action-globe.html', true], ['/listen.html', true], ['/js/tabbar.js', false]]) {
+    seen.length = 0;
+    await P1_ROUTER(new Request(PLAT + path), NEWS_ENV, origin);
+    assert.deepEqual(seen.at(-1).cf, cached ? { cacheTtl: 60, cacheEverything: true } : null, `P1 ${path}`);
+  }
+});
+
+test('with P0\'s table every probed path on mccluster.org and www.mccluster.org answers as measured on 2026-11-23: status, location and the headers that matter', async () => {
   const hops = PROBE.head_hops.filter((h) => /^https?:\/\/(?:www\.)?mccluster\.org\//.test(h.url));
   assert.ok(hops.length >= 90, 'the fixture holds both hosts');
   let compared = 0;
@@ -387,9 +422,12 @@ test('the pass-through never follows an upstream redirect: a Location on the sta
   r = await p1(new Request(`${PLAT}/engineering`, { method: 'HEAD' }), {}, gh);
   assert.equal(r.headers.get('location'), `${PLAT}/engineering/`);
   assert.equal(await r.text(), '');
-  /* /whip: the slash first, then the profile-only 301: two hops, never a loop */
+  /* /whip is whip.html to GitHub Pages (Measured 2026-11-24), so from P1 it is one 301 straight to Matthew's host, before
+     anything is fetched (P1 review, P1A-1) */
+  const before = asked.length;
   r = await p1(new Request(`${PLAT}/whip`), {}, gh);
-  assert.equal(r.headers.get('location'), `${PLAT}/whip/`);
+  assert.deepEqual([r.status, r.headers.get('location')], [301, `${PROF}/whip.html`]);
+  assert.equal(asked.length, before, 'nothing fetched');
   assert.equal(route(P1, `${PLAT}/whip/`).location, `${PROF}/whip/`);
   /* a relative Location is resolved on the static origin first; one on the static origin with userinfo keeps only its
      path; a path that starts with // stays a path on this host */

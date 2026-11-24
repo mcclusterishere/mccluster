@@ -7,8 +7,9 @@
    each in its own sandbox with its own origin, joined by a message bus that behaves as a browser's postMessage does: a
    message reaches a window only when the target origin is that window's own origin exactly (or "*"), and the receiver
    sees the sender's real origin and window. This holds:
-   - inert in P0: the record's stage keeps the carry off; js/carry.js frames nothing and carry.html answers nothing,
-     whoever asks; no page loads js/carry.js yet;
+   - inert with P0's table: the carry is off; js/carry.js frames nothing and carry.html answers nothing, whoever asks;
+     from P1 (the table that ships) js/tabbar.js loads js/carry.js, on a platform page with no usable session, and no
+     other page or script does;
    - exact origins both ways: carry.html answers only its parent, only when the message comes from the platform's exact
      origin; js/carry.js accepts only its own frame, only from the tenant's exact origin and only for its request id;
    - one answer per request id: the first valid request is the only one ever answered;
@@ -16,7 +17,12 @@
      Supabase gives it for its own origin (POST /v1/auth/handoff, then verify), never the tenant's;
    - nothing is posted to another origin, and no postMessage names "*";
    - the device id only with the privacy agreement on both sides; the pocket, mute and theme only where unset; kept songs
-     by path, re-kept on a tap; the clear line for 30 days when nothing could be carried. */
+     by path, counted as songs (not every file the album kept beside them), offered once on a top-level platform page in
+     the bar's own peek card and re-kept on a tap (review VP1-1); the clear line for 30 days when nothing could be
+     carried, said on the sign-in page and on the account chip, where a phone sees it under the chip until it is closed
+     (review VP1-2);
+   - a frame whose parent is the platform's own origin asks nothing (its parent does); the World framed over Music on
+     Matthew's host, whose parent is another origin, asks for itself. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -27,8 +33,9 @@ import { hostLiterals, codeOf } from '../../tools/build-site-hosts.mjs';
 import { publishedFilter } from '../e2e/platform-hosts.e2e.mjs';
 
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
-const P0 = shippedSite();
+const P0 = stageSite('P0');
 const P1 = stageSite('P1');
+const SHIPPED = shippedSite();
 const PLATFORM = P1.platform.origin;
 const PROFILE = P1.profile.origin;
 const plain = (v) => JSON.parse(JSON.stringify(v));
@@ -191,10 +198,12 @@ test('carry.html carries the device id only with the privacy agreement, and kept
 
 /* ---------- the platform's side (js/carry.js), alone and with the frame ---------- */
 
-function platformPage({ site = P1, origin = PLATFORM, local = {}, framed = false, accepted = true, answerWith = null, fetchImpl = null, cachesImpl = null } = {}) {
+/* framed: false (a top page), true (a frame whose parent is this same origin) or 'other' (a frame whose parent is another
+   origin, whose location throws as a browser's does); nodes: elements the page holds, by id */
+function platformPage({ site = P1, origin = PLATFORM, local = {}, framed = false, accepted = true, answerWith = null, fetchImpl = null, cachesImpl = null, nodes = {}, win = {} } = {}) {
   const ev = events();
   const t = timers();
-  const frames = [], posts = [], fetches = [], dispatched = [];
+  const frames = [], posts = [], fetches = [], dispatched = [], body = [];
   const window = Object.assign(ev, {
     MCC_SITE: site, localStorage: storage(local), sessionStorage: storage(),
     location: { origin, hostname: new URL(origin).hostname, href: origin + '/listen.html' },
@@ -203,28 +212,53 @@ function platformPage({ site = P1, origin = PLATFORM, local = {}, framed = false
     caches: cachesImpl
   });
   window.top = framed ? {} : window;
+  window.parent = framed === 'other' ? { get location() { throw new Error('SecurityError: cross-origin'); } } : framed ? { location: { origin } } : window;
   window.dispatchEvent = (e) => { dispatched.push({ type: e.type, detail: e.detail }); return true; };
+  Object.assign(window, win);
+  /* the body holds the frame the carry asks (an iframe: it answers through answerWith) and, since the review round of
+     2026-11-24, what the carry draws on the page (the offer of kept songs, review VP1-1); getElementById finds both the
+     page's own nodes and what was drawn */
+  const bodyNode = {
+    children: body,
+    appendChild(node) {
+      if (node.tagName !== 'IFRAME') { node.parentNode = bodyNode; body.push(node); return node; }
+      frames.push(node);
+      node.contentWindow = { postMessage: (msg, target) => posts.push({ msg: JSON.parse(JSON.stringify(msg)), target, to: node }) };
+      if (answerWith) answerWith(node, { window, ev, posts });
+      return node;
+    }
+  };
   const document = {
     readyState: 'complete', documentElement: { appendChild: (n) => n },
-    body: {
-      appendChild(node) {
-        frames.push(node);
-        node.contentWindow = { postMessage: (msg, target) => posts.push({ msg: JSON.parse(JSON.stringify(msg)), target, to: node }) };
-        if (answerWith) answerWith(node, { window, ev, posts });
-        return node;
-      }
+    getElementById: (id) => {
+      const find = (n) => (n && n.id === id && !n.removed ? n : ((n && n.children) || []).map(find).find(Boolean));
+      return nodes[id] || Object.values(nodes).map(find).find(Boolean) || body.map(find).find(Boolean) || null;
     },
+    body: bodyNode,
     createElement: (tag) => {
       const attrs = {}, on = events();
-      return { tagName: tag.toUpperCase(), attrs, style: {}, setAttribute(k, v) { attrs[k] = String(v); }, getAttribute: (k) => (k in attrs ? attrs[k] : null),
-        addEventListener: on.addEventListener, fireLoad: () => on.dispatch('load', {}), removed: false, remove() { this.removed = true; } };
+      return { tagName: tag.toUpperCase(), attrs, style: {}, children: [], parentNode: null, hidden: false, textContent: '', className: '', id: '',
+        setAttribute(k, v) { attrs[k] = String(v); }, getAttribute: (k) => (k in attrs ? attrs[k] : null), removeAttribute(k) { delete attrs[k]; },
+        appendChild(n) { n.parentNode = this; this.children.push(n); return n; },
+        addEventListener: on.addEventListener, fire: (type, e = {}) => on.dispatch(type, e), fireLoad: () => on.dispatch('load', {}),
+        focus() { this.focused = true; }, removed: false,
+        remove() { this.removed = true; const up = this.parentNode; if (up && up.children) { const i = up.children.indexOf(this); if (i !== -1) up.children.splice(i, 1); } } };
     }
   };
   const fetch = (url, init = {}) => { fetches.push({ url: String(url), init }); return (fetchImpl || (() => Promise.reject(new Error('no network'))))(String(url), init); };
   class CustomEvent { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } }
   vm.runInNewContext(read('js/carry.js'), { window, document, fetch, CustomEvent, JSON, Promise, URL, Date, Math, Error, Uint8Array, String, Number, Object, Array,
     setTimeout: t.setTimeout, clearTimeout: t.clearTimeout });
-  return { window, frames, posts, fetches, dispatched, timers: t, carry: window.MCC_CARRY, ev };
+  return { window, frames, posts, fetches, dispatched, body, timers: t, carry: window.MCC_CARRY, ev };
+}
+/* the first node under `node` (itself included) that `pred` accepts */
+/* a Cache Storage with nothing in it, that keeps what it is given */
+const emptyVault = () => ({ open: () => Promise.resolve({ match: () => Promise.resolve(undefined), put: () => Promise.resolve() }) });
+function findNode(node, pred) {
+  if (!node) return null;
+  if (pred(node)) return node;
+  for (const c of node.children || []) { const hit = findNode(c, pred); if (hit) return hit; }
+  return null;
 }
 /* Supabase's answers for the platform's own session */
 const exchange = (calls = []) => (url, init) => {
@@ -242,7 +276,9 @@ const answerFrom = (node, posts, ev, { origin = PROFILE, source = node.contentWi
   ev.dispatch('message', { origin, source, data: { type: 'mcc:carry-answer', v: 1, id: id || req.msg.id, access_token, carry: { device: null, pocket: null, mute: null, theme: null, kept: [], ...carry } } });
 };
 
-test('js/carry.js is inert in P0 and loaded by no page', async () => {
+test('js/carry.js is inert with P0\'s table, and from P1 the bar alone loads it', async () => {
+  assert.equal(SHIPPED.stage, 'P1');
+  assert.equal(SHIPPED.switches.carry, true, 'the table that ships has the carry on');
   const p = platformPage({ site: P0 });
   assert.deepEqual(plain(await p.carry.started), { result: 'off' });
   assert.deepEqual(p.frames, [], 'no frame');
@@ -258,14 +294,21 @@ test('js/carry.js is inert in P0 and loaded by no page', async () => {
       else if (/\.(html|m?js)$/.test(e.name) && rel !== 'js/carry.js' && /js\/carry\.js/.test(codeOf(read(rel), rel))) loaders.push(rel);
     }
   })('');
-  assert.deepEqual(loaders, [], 'no published page or script loads js/carry.js in P0');
+  assert.deepEqual(loaders, ['js/tabbar.js'], 'one script loads js/carry.js: the bar');
+  const bar = read('js/tabbar.js');
+  /* changed on purpose (review VP1-1): the bar also loads js/carry.js where an offer of kept songs is waiting, a member
+     the carry already signed in among them (keptWaiting(); scripts/test/site-hosts-engine.test.mjs runs both) */
+  assert.match(bar, /function startCarry\(\) \{\n    if \(!carryWanted\(\) && !keptWaiting\(\)\) return;/, 'and only where carryWanted() or keptWaiting() says (scripts/test/site-hosts-engine.test.mjs)');
   assert.deepEqual(hostLiterals(read('js/carry.js'), 'js/carry.js'), [], 'js/carry.js names no site host');
   assert.deepEqual(hostLiterals(read('carry.html'), 'carry.html'), [], 'carry.html names no site host');
 });
 
 test('js/carry.js stays out of the way: not the platform, framed, signed in, or asked before', async () => {
   assert.equal((await platformPage({ origin: PROFILE }).carry.started).result, 'not_platform');
-  assert.equal((await platformPage({ framed: true }).carry.started).result, 'framed');
+  assert.equal((await platformPage({ framed: true }).carry.started).result, 'framed', 'the globe inside the World: the World asks');
+  const overMusic = platformPage({ framed: 'other' });
+  assert.equal(overMusic.frames.length, 1, 'the World framed over Music on Matthew\'s host asks for itself');
+  assert.equal(overMusic.frames[0].attrs.src, `${PROFILE}/carry.html`);
   const signedIn = { mccdb_session: JSON.stringify({ access_token: 'here', refresh_token: 'r', expires_at: 4102444800 }) };
   assert.equal((await platformPage({ local: signedIn }).carry.started).result, 'signed_in');
   const marked = { mcc_carry_v1: JSON.stringify({ v: 1, result: 'none', at: new Date().toISOString() }) };
@@ -339,9 +382,117 @@ test('js/carry.js: nothing to carry, a silent frame, or a refused token leave a 
   assert.equal(f.switches.carry, true);
 });
 
+/* an element of the page, as much of one as the line needs */
+function fakeNode(id) {
+  return { id, children: [], attrs: {}, parentNode: null,
+    get firstChild() { return this.children[0] || null; },
+    insertBefore(n, ref) { n.parentNode = this; const i = ref ? this.children.indexOf(ref) : -1; if (i === -1) this.children.push(n); else this.children.splice(i, 0, n); return n; },
+    appendChild(n) { n.parentNode = this; this.children.push(n); return n; },
+    setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }, removeAttribute(k) { delete this.attrs[k]; } };
+}
+
+test('js/carry.js says the clear line on the sign-in page and on the account chip, and says it no more once signed in', async () => {
+  const pane = fakeNode('acSignInPane');
+  pane.appendChild(fakeNode('acInEmail'));
+  const nav = fakeNode('mccAuthNav');
+  const chip = nav.appendChild(fakeNode('mccAuthChip'));
+  const page = platformPage({ nodes: { acSignInPane: pane, mccAuthNav: nav } });
+  page.frames[0].fireLoad();
+  answerFrom(page.frames[0], page.posts, page.ev, { access_token: null });
+  assert.equal((await page.carry.started).result, 'none');
+  await flush();
+  const text = page.carry.line();
+  assert.ok(text.startsWith(`McCluster now lives at ${P1.platform.host}.`));
+  const shown = pane.children[0];
+  assert.equal(shown.id, 'mccCarryLine', 'first in the sign-in pane');
+  assert.equal(shown.textContent, text);
+  assert.equal(shown.className, 'ac__sub', 'in the page\'s own text style: nothing restyled');
+  assert.equal(chip.getAttribute('title'), text, 'the chip says it');
+  /* CHANGED ON PURPOSE (review VP1-2): the description was a hidden span beside the chip, so a phone, which never shows
+     a title, saw the line nowhere but the sign-in page. The chip is described by the line itself (the note's text, not
+     its close); on the sign-in page, which says it in its pane, the note under the chip stays hidden (said once on a
+     screen), and elsewhere it shows (the next test) */
+  const note = nav.children.find((n) => n.id === 'mccCarryNote');
+  const said = findNode(note, (n) => n.id === chip.getAttribute('aria-describedby'));
+  assert.ok(said && said.textContent === text, 'the chip describes itself with the line to a screen reader');
+  assert.equal(note.hidden, true, 'on the sign-in page the pane says it: the note under the chip waits hidden');
+  page.carry.paint();
+  assert.equal(pane.children.filter((n) => n.id === 'mccCarryLine').length, 1, 'said once, however often the bar repaints');
+  assert.equal(nav.children.filter((n) => n.id === 'mccCarryNote').length, 1, 'one note, however often the bar repaints');
+  page.window.localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'here', refresh_token: 'r', expires_at: 4102444800 }));
+  page.carry.paint();
+  assert.equal(chip.getAttribute('title'), null, 'signed in: the chip says nothing more');
+  assert.equal(chip.getAttribute('aria-describedby'), null);
+  assert.ok(shown.removed && note.removed, 'and the sign-in page neither');
+});
+
+test('js/carry.js shows the clear line under the account chip where the page has no sign-in pane: a phone sees it, and its close keeps it closed (SPEC-PLATFORM 2.6.5, review VP1-2)', async () => {
+  const nav = fakeNode('mccAuthNav');
+  const chip = nav.appendChild(fakeNode('mccAuthChip'));
+  const page = platformPage({ nodes: { mccAuthNav: nav } });
+  page.frames[0].fireLoad();
+  answerFrom(page.frames[0], page.posts, page.ev, { access_token: null });
+  assert.equal((await page.carry.started).result, 'none');
+  await flush();
+  const text = page.carry.line();
+  const note = nav.children.find((n) => n.id === 'mccCarryNote');
+  assert.ok(note, 'a note beside the chip, inside the chip\'s own Account landmark');
+  assert.equal(note.hidden, false, 'shown: a title is never seen on a touch screen');
+  assert.equal(note.className, 'mcc-carry-note');
+  const said = findNode(note, (n) => n.id === 'mccCarryNoteText');
+  assert.equal(said && said.textContent, text, 'the one line, word for word');
+  assert.equal(chip.getAttribute('aria-describedby'), 'mccCarryNoteText', 'the chip is described by the line, not by its close');
+  assert.equal(chip.getAttribute('title'), text);
+  const close = findNode(note, (n) => n.tagName === 'BUTTON');
+  assert.ok(close && close.getAttribute('type') === 'button' && /close/i.test(close.getAttribute('aria-label') || ''), 'a button that says what it does');
+  close.fire('click', {});
+  assert.equal(note.hidden, true, 'closed');
+  assert.ok(page.window.localStorage.getItem('mcc_carry_note_closed_v1'), 'and remembered on this device');
+  page.carry.paint();
+  assert.equal(note.hidden, true, 'a repaint keeps it closed');
+  assert.equal(chip.getAttribute('title'), text, 'the chip still carries the line, as its title and description, for the rest of the 30 days');
+  /* a later page, the close remembered: the note waits hidden, the chip still says it */
+  const nav2 = fakeNode('mccAuthNav');
+  const chip2 = nav2.appendChild(fakeNode('mccAuthChip'));
+  const mark = JSON.stringify({ v: 1, result: 'none', at: new Date().toISOString() });
+  const later = platformPage({ local: { mcc_carry_v1: mark, mcc_carry_note_closed_v1: new Date().toISOString() }, nodes: { mccAuthNav: nav2 } });
+  assert.equal((await later.carry.started).result, 'done_before');
+  await flush();
+  assert.equal(nav2.children.find((n) => n.id === 'mccCarryNote').hidden, true, 'closed before: not shown again');
+  assert.equal(chip2.getAttribute('title'), text);
+  /* where the chip itself is not shown (the World hides it for its own sign-in), neither is the note */
+  const nav3 = fakeNode('mccAuthNav');
+  const chip3 = nav3.appendChild(fakeNode('mccAuthChip'));
+  chip3.getClientRects = () => [];
+  const world = platformPage({ local: { mcc_carry_v1: mark }, nodes: { mccAuthNav: nav3 } });
+  await world.carry.started;
+  await flush();
+  assert.equal(nav3.children.find((n) => n.id === 'mccCarryNote').hidden, true, 'no note without its chip');
+  /* on the World (its root and mnet.html) the door is its sign-in: the note waits for another page, the chip keeps the
+     line as its title */
+  for (const path of ['/', '/mnet.html']) {
+    const navW = fakeNode('mccAuthNav');
+    const chipW = navW.appendChild(fakeNode('mccAuthChip'));
+    const onWorld = platformPage({ local: { mcc_carry_v1: mark }, nodes: { mccAuthNav: navW },
+      win: { location: { origin: PLATFORM, hostname: new URL(PLATFORM).hostname, href: PLATFORM + path, pathname: path } } });
+    await onWorld.carry.started;
+    await flush();
+    assert.equal(navW.children.find((n) => n.id === 'mccCarryNote').hidden, true, `${path}: no note on the World`);
+    assert.equal(chipW.getAttribute('title'), text, `${path}: the chip still carries the line`);
+  }
+  /* nothing is said once signed in, and after 30 days */
+  const old = platformPage({ local: { mcc_carry_v1: JSON.stringify({ v: 1, result: 'none', at: new Date(Date.now() - 31 * 864e5).toISOString() }) }, nodes: { mccAuthNav: (() => { const n = fakeNode('mccAuthNav'); n.appendChild(fakeNode('mccAuthChip')); return n; })() } });
+  await old.carry.started;
+  await flush();
+  assert.equal(old.carry.line(), '');
+});
+
 test('js/carry.js adopts the device id only with the platform\'s own agreement, and pocket, mute and theme only where unset', async () => {
   const carry = { device: 'device-123', pocket: '{"t":83}', mute: '1', theme: 'dark', kept: ['/assets/audio/here.mp3'] };
-  const agreed = platformPage({ fetchImpl: exchange() });
+  /* the platform page has a Cache Storage, as every https page does: since review VP1-1 a browser without one is offered
+     nothing and keeps nothing waiting (js/carry.js offer()), so the page this test reads the kept line on has one
+     (setup changed on purpose; every assertion is as it was) */
+  const agreed = platformPage({ fetchImpl: exchange(), cachesImpl: emptyVault() });
   agreed.frames[0].fireLoad();
   answerFrom(agreed.frames[0], agreed.posts, agreed.ev, { carry });
   await agreed.carry.started;
@@ -377,10 +528,126 @@ test('js/carry.js re-keeps the songs kept at the old address on a tap, from this
   await p.carry.started;
   assert.equal(p.carry.keptLine(), 'You kept 2 songs at the old address. Keep them here too?', 'only this site\'s own paths are offered');
   const out = await p.carry.keepHere();
-  assert.deepEqual(plain(out), { kept: 2, missed: 0 });
+  /* extended on purpose (review VP1-1): the result also counts the songs among the files kept, for the offer's line
+     that says what happened */
+  assert.deepEqual(plain(out), { kept: 2, missed: 0, songs: 2 });
   assert.deepEqual(fetched, [`${PLATFORM}/assets/audio/here.mp3`, `${PLATFORM}/assets/audio/far.m4a`], 'fetched from this origin');
   assert.deepEqual(put.map((x) => [x.name, x.url]), [['mcc-vault-v1', `${PLATFORM}/assets/audio/here.mp3`], ['mcc-vault-v1', `${PLATFORM}/assets/audio/far.m4a`]]);
   assert.equal(p.carry.keptLine(), '', 'asked once');
+});
+
+test('js/carry.js counts the songs kept at the old address, not every file the album kept beside them (SPEC-PLATFORM 2.7, review VP1-1)', async () => {
+  /* the album's vault (js/label.js, "Keep the masters") holds each song's audio and, beside it, its lyrics, poster and
+     cover; carry.html hands over every kept path. "You kept 12 songs" counts the songs */
+  const p = platformPage({ fetchImpl: exchange(), cachesImpl: emptyVault() });
+  p.frames[0].fireLoad();
+  answerFrom(p.frames[0], p.posts, p.ev, { carry: { kept: ['/assets/audio/iot.mp3', '/assets/audio/got-wifi.mp3', '/assets/audio/dealer-plates-b.m4a?v=2',
+    '/data/lyrics/iot.json', '/assets/frames/prim3_0001.jpg', '/assets/img/albums/prim3.webp'] } });
+  await p.carry.started;
+  assert.equal(p.carry.keptLine(), 'You kept 3 songs at the old address. Keep them here too?', 'three songs; their lyrics, poster and cover ride along uncounted');
+});
+
+test('js/carry.js offers the kept songs once on a top-level platform page, in the bar\'s own card; a tap keeps them here, Not now lets them be (SPEC-PLATFORM 2.7, review VP1-1)', async () => {
+  const usable = { mccdb_session: JSON.stringify({ access_token: 'here', refresh_token: 'r', expires_at: 4102444800 }) };
+  /* the bar's account chip in its Account landmark: the offer is made on a page that shows it */
+  const withChip = () => { const nav = fakeNode('mccAuthNav'); nav.appendChild(fakeNode('mccAuthChip')); return { mccAuthNav: nav }; };
+  const KEPT = ['/assets/audio/iot.mp3', '/assets/audio/got-wifi.mp3', '/data/lyrics/iot.json'];
+  const vault = () => {
+    const put = [];
+    return { put, impl: { open: (name) => Promise.resolve({ put: (url, res) => { put.push([name, url]); return Promise.resolve(); }, match: () => Promise.resolve(undefined) }) } };
+  };
+  const fetchHere = (url) => (url.startsWith(PLATFORM + '/') ? Promise.resolve({ ok: true, body: url }) : Promise.reject(new Error('unexpected ' + url)));
+  /* a member the carry signed in on an earlier page: no frame, only the offer */
+  const v = vault();
+  const p = platformPage({ local: { ...usable, mcc_carry_kept_v1: JSON.stringify(KEPT) }, cachesImpl: v.impl, fetchImpl: fetchHere, nodes: withChip() });
+  assert.equal((await p.carry.started).result, 'signed_in');
+  await flush();
+  assert.deepEqual(p.frames, [], 'nothing asked: the songs were carried before');
+  const card = p.body.find((n) => n.id === 'mccKeptOffer');
+  assert.ok(card && !card.removed, 'the offer is on the page');
+  assert.equal(card.className, 'dk-peek', 'in the bar\'s own peek card, no new look');
+  const line = findNode(card, (n) => n.getAttribute && n.getAttribute('role') === 'status');
+  assert.equal(line && line.textContent, 'You kept 2 songs at the old address. Keep them here too?', 'the one line, said as it changes');
+  const go = findNode(card, (n) => n.className === 'dk-peek__go'), not = findNode(card, (n) => n.className === 'dk-peek__alt');
+  assert.ok(go && not && go.getAttribute('type') === 'button' && not.getAttribute('type') === 'button');
+  assert.equal(go.textContent, 'Keep them here');
+  assert.equal(not.textContent, 'Not now');
+  p.carry.paint();
+  await flush();
+  assert.equal(p.body.filter((n) => n.id === 'mccKeptOffer' && !n.removed).length, 1, 'said once, however often the bar repaints');
+  assert.deepEqual(v.put, [], 'nothing kept before the tap');
+  go.fire('click', {});
+  await flush(60);
+  assert.deepEqual(v.put.map((x) => x[1]).sort(), KEPT.map((k) => PLATFORM + k).sort(), 'the same files, at the same paths, fetched and kept from this origin');
+  assert.ok(v.put.every((x) => x[0] === 'mcc-vault-v1'), 'into this origin\'s vault, which its service worker plays offline');
+  assert.equal(line.textContent, 'Kept 2 songs here too.', 'it says what happened');
+  assert.equal(not.textContent, 'Done');
+  assert.equal(p.window.localStorage.getItem('mcc_carry_kept_v1'), null, 'asked once');
+  not.fire('click', {});
+  assert.ok(card.removed, 'Done closes the card');
+  /* a song that does not come: said as it is */
+  const w = vault();
+  const part = platformPage({ local: { ...usable, mcc_carry_kept_v1: JSON.stringify(KEPT) }, cachesImpl: w.impl, nodes: withChip(),
+    fetchImpl: (url) => (/got-wifi/.test(url) ? Promise.resolve({ ok: false, status: 503 }) : fetchHere(url)) });
+  await part.carry.started;
+  await flush();
+  findNode(part.body.find((n) => n.id === 'mccKeptOffer'), (n) => n.className === 'dk-peek__go').fire('click', {});
+  await flush(60);
+  assert.equal(findNode(part.body.find((n) => n.id === 'mccKeptOffer'), (n) => n.getAttribute && n.getAttribute('role') === 'status').textContent,
+    'Kept 1 of 2 songs here; the rest did not download.');
+  /* Not now: the offer goes, and is not made again */
+  const x = vault();
+  const later = platformPage({ local: { ...usable, mcc_carry_kept_v1: JSON.stringify(KEPT) }, cachesImpl: x.impl, fetchImpl: fetchHere, nodes: withChip() });
+  await later.carry.started;
+  await flush();
+  const card2 = later.body.find((n) => n.id === 'mccKeptOffer');
+  findNode(card2, (n) => n.className === 'dk-peek__alt').fire('click', {});
+  assert.ok(card2.removed, 'Not now closes it');
+  assert.equal(later.window.localStorage.getItem('mcc_carry_kept_v1'), null, 'and the offer is not made again');
+  assert.deepEqual(x.put, [], 'nothing fetched');
+  /* never in a frame (the World framed over Music on his host): the top page says it */
+  const framed = platformPage({ framed: 'other', local: { ...usable, mcc_carry_kept_v1: JSON.stringify(KEPT) }, cachesImpl: vault().impl, fetchImpl: fetchHere, nodes: withChip() });
+  await framed.carry.started;
+  await flush();
+  assert.equal(framed.body.filter((n) => n.id === 'mccKeptOffer').length, 0, 'no offer inside a frame');
+  assert.notEqual(framed.window.localStorage.getItem('mcc_carry_kept_v1'), null, 'it waits for a top page');
+  /* nothing that is a song, or no vault in this browser: no offer, and nothing left waiting */
+  for (const [label, kept, cachesImpl] of [['no song among the kept files', ['/data/lyrics/iot.json', '/assets/frames/prim3_0001.jpg'], vault().impl], ['no Cache Storage', KEPT, null]]) {
+    const q = platformPage({ local: { ...usable, mcc_carry_kept_v1: JSON.stringify(kept) }, cachesImpl, fetchImpl: fetchHere, nodes: withChip() });
+    await q.carry.started;
+    await flush();
+    assert.equal(q.body.filter((n) => n.id === 'mccKeptOffer').length, 0, `${label}: no offer`);
+    assert.equal(q.window.localStorage.getItem('mcc_carry_kept_v1'), null, `${label}: nothing left waiting`);
+  }
+  /* a page that does not show the chip (the World's own sign-in covers it), or has no bar's card to draw it in (no
+     css/style.css): no offer there, and it waits for the next page */
+  const hiddenChip = withChip();
+  hiddenChip.mccAuthNav.children[0].getClientRects = () => [];
+  const under = platformPage({ local: { ...usable, mcc_carry_kept_v1: JSON.stringify(KEPT) }, cachesImpl: vault().impl, fetchImpl: fetchHere, nodes: hiddenChip });
+  await under.carry.started;
+  await flush();
+  assert.equal(under.body.filter((n) => n.id === 'mccKeptOffer' && !n.removed).length, 0, 'no offer where the chip is not shown');
+  assert.notEqual(under.window.localStorage.getItem('mcc_carry_kept_v1'), null, 'it waits for a page that shows it');
+  const plainPage = platformPage({ local: { ...usable, mcc_carry_kept_v1: JSON.stringify(KEPT) }, cachesImpl: vault().impl, fetchImpl: fetchHere, nodes: withChip(),
+    win: { getComputedStyle: () => ({ position: 'static' }) } });
+  await plainPage.carry.started;
+  await flush();
+  assert.equal(plainPage.body.filter((n) => n.id === 'mccKeptOffer' && !n.removed).length, 0, 'no offer on a page without the bar\'s card');
+  assert.notEqual(plainPage.window.localStorage.getItem('mcc_carry_kept_v1'), null, 'it waits for the next page');
+  const styledPage = platformPage({ local: { ...usable, mcc_carry_kept_v1: JSON.stringify(KEPT) }, cachesImpl: vault().impl, fetchImpl: fetchHere, nodes: withChip(),
+    win: { getComputedStyle: () => ({ position: 'fixed' }) } });
+  await styledPage.carry.started;
+  await flush();
+  assert.equal(styledPage.body.filter((n) => n.id === 'mccKeptOffer' && !n.removed).length, 1, 'and is made where the bar\'s card is');
+  /* the World (its root and mnet.html): its door is over everything, so the offer waits for another page */
+  for (const path of ['/', '/mnet.html']) {
+    const world = platformPage({ local: { ...usable, mcc_carry_kept_v1: JSON.stringify(KEPT) }, cachesImpl: vault().impl, fetchImpl: fetchHere, nodes: withChip(),
+      win: { location: { origin: PLATFORM, hostname: new URL(PLATFORM).hostname, href: PLATFORM + path, pathname: path } } });
+    await world.carry.started;
+    await flush();
+    assert.equal(world.body.filter((n) => n.id === 'mccKeptOffer').length, 0, `${path}: no offer on the World`);
+    assert.notEqual(world.window.localStorage.getItem('mcc_carry_kept_v1'), null, `${path}: it waits for another page`);
+  }
 });
 
 test('the two sides together: a member signed in on Matthew\'s host arrives signed in on the platform, and nothing else moves', async () => {

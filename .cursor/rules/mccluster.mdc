@@ -14,8 +14,8 @@ The plane:
 - Client social lives on McCluster Control.
 
 One platform, tenant properties, separate entities (docs/control-plane/DOMAINS-AND-ENTITIES.md):
-- Platform: mccluster.org (McCluster Corp; Worker `mccluster` by host; set in one place, data/seo/domain-architecture.json → platform.origin; stage P0: the World and /company today, the whole site from P1; equityuprise.com later); humanuprise.com is a McCluster Corp door too, never a third entity
-- Tenant: matthew.mccluster.org (Matthew McCluster's personal profile; GitHub Pages, this repo; from P3 the pages that moved answer 301 to the platform)
+- Platform: mccluster.org (McCluster Corp; Worker `mccluster` by host; set in one place, data/seo/domain-architecture.json → platform.origin; stage P1: the whole site today, every page at its path; P2 moves canonicals and sitemaps, P3 makes Matthew's host answer 301s; equityuprise.com later); humanuprise.com is a McCluster Corp door too, never a third entity
+- Tenant: matthew.mccluster.org (Matthew McCluster's personal profile; GitHub Pages, this repo; it still serves every page; from P3 the pages that moved answer 301 to the platform)
 - Hosting is not identity: never collapse the two entities
 
 Hard rules — headings only; the law is AGENTS.md → Hard rules:

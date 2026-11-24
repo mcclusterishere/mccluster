@@ -590,7 +590,8 @@ every host with the same status, location and canonical as before the deploy; th
 What:
 - Table: the platform serves every page (2.2); `www` sends everything to the apex.
 - Client: on the platform the bar is local (Music `listen.html`, M `index.html`, Globe `/`); on the profile host
-  Music and the Globe go to the platform and the M to its own root; the World is `/` and `/mnet.html` only, never
+  Music and the Globe go to the platform and the M to its own root (amended 2026-11-24, below: Music, the account
+  and an artist's page stay on the profile host until P3); the World is `/` and `/mnet.html` only, never
   `/index.html` (`js/tabbar.js:346`, `js/world-audio-continuity.js:17`, `js/music-shell.js` `world()` on the branch).
 - The carry is on (platform pages load `js/carry.js`); the fragment hand-off writer is off; the clear line shows where
   the carry found nothing.
@@ -598,6 +599,43 @@ What:
 - Order inside P1: Pages first (the client is right on both today's and tomorrow's Worker), then the Worker. Either
   order is safe: an old client on the new Worker links to Matthew's host, which still serves everything; a new client
   on the old Worker links locally and gets today's 301.
+
+**Amendment, 2026-11-24 (the P1 review, VP1-3): on the profile host the song keeps playing until P3.** As first
+written, the bar on `matthew.mccluster.org` sent Music and the account chip to the platform. A door to another
+origin is a page load (`js/music-shell.js` `decide()`), so a song playing on his album or artist page stopped at the
+first tap on Music or the chip, where P0 opened Listen or the sign-in over the one player as a view and the song
+played on (the music shell's e2e: 10 of 113 checks failed). Matthew's direction decides it: "We must prepare without
+breaking anything to do that" and "I want a singular fucking music engine with 1 fucking player at all times". So,
+from P1 until P3 answers its 301s:
+- On the profile host, the bar's doors to the pages the one player opens over itself as views stay on the profile
+  host, as at P0: the Music tab and the owner's Play tab (`listen.html`), the account chip, the signed-out person tab
+  and the World wing's Account room (`account.html`), an artist's page in the bar's middle cell
+  (`music-creator.html?handle=`), the installed dock's house (`navigation.house`), and the World transport's title,
+  which returns to Music (`musicHome`). One small function decides it, `pageBase` in `js/tabbar.js` (and `musicHome`
+  in `js/world-audio-continuity.js`), reading `profile_host_routed` from the table: at P3 it is true and these go to
+  the platform like every other page.
+- A link that already crossed hosts at P0 keeps P0's behaviour: the Globe (the platform's World, over Music as
+  before), and every other page (the album from Listen or an artist page, music videos, hire, Control, the games, a
+  member's front page), each a page load at P0 too. The M is his own root, as written. The Now sheet's album and
+  artist links are relative, so they stay on the host they are on.
+  The shared navigation (`js/site-navigation.js`: the owner's dock sections, the Home panel's Control destinations
+  and the product doors) asks the bar where each page is (`navigation.page`, the table's answer), never the dock's
+  house, so on the profile host Control and the games go to the platform like the bar's own Games tab (review V2-1,
+  2026-11-24; held by `scripts/e2e/site-navigation.e2e.mjs` on his host).
+- On the platform nothing changes: the bar is local.
+The rest of P1 stands. Recorded in `data/seo/domain-architecture.json` (`edge.now.p1_changes` `bar_local`,
+`edge.stages` P1), `docs/control-plane/DOMAINS-AND-ENTITIES.md`, hard rule 15 in `AGENTS.md` and the music record
+(`docs/music/MUSIC-RELEASE-20261119.md`, M5); held by `scripts/test/site-hosts-engine.test.mjs` and
+`scripts/e2e/carry.e2e.mjs` (on his album: Music and the chip on his host, the Globe on the platform), with
+`scripts/e2e/music-shell.e2e.mjs` unchanged.
+
+The same review made the carry's two promises visible (2.6.5 and 2.7, nothing else changed): on a phone, which never
+shows a title, the account chip shows the clear line in a note under itself until it is closed (remembered on that
+device; the sign-in page says it in its pane instead, and the World, whose door is its sign-in, leaves it to the next
+page), and a top-level platform page other than the World that shows the chip offers the songs kept at the old
+address once, in the bar's own peek card ("You kept 2 songs at the old address. Keep them here
+too?"; a tap keeps the same files at the same paths in the platform's vault, Not now lets them be). Songs are counted
+as songs: the lyrics, posters and covers the album kept beside them ride along uncounted.
 
 Acceptance:
 - The crawl: every public path on `mccluster.org` answers 200 or the same redirect class as on Matthew's host, with no

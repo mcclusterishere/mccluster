@@ -14,7 +14,8 @@
    the door this code never runs. Until P1 the door serves the World by host: `/` is mnet.html with the door's own
    canonical, the World's rooms and files pass through (noindex on the documents), its robots.txt and one-line sitemap
    are its own, and every other path answers 301 to Matthew's host. From P1 (the owner's default of 2026-11-23) the door
-   answers 301 to the platform, same path and query. */
+   answers 301 to the platform, same path and query, in one hop: where the platform itself answers the address with a
+   301, the door sends the visitor straight there. */
 import { SITE } from '../platform/hosts.generated.js';
 import { createSiteRouter } from '../platform/router.js';
 import { worldHeadFor, own, wwwAliasOf, worldDoors } from '../world-host.js';

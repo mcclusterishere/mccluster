@@ -8,11 +8,13 @@
 
    - the outputs are current (--check) and answer every question the same way, in the Worker, on the pages and in
      the functions;
-   - with P0's switches the table describes today exactly (the values the code names today);
+   - the table that ships is the record's stage (edge.now: P1, the platform serves everything), and P0's table, the
+     stage before, still describes what P0 served (the values the code named before P1);
    - js/, workers/mccluster/src/ and supabase/functions/ name no site host in code outside the outputs, except the
      files listed in scripts/test/site-hosts-pending/ (worker, functions, client, engine), each with its count and
-     the stage that converts it, and those lists only shrink: no list names a file or allows a count beyond the P0
-     ceiling pinned below (7 files, 112 literals), and every list allows exactly what the scan finds;
+     the stage that converts it, and those lists only shrink: no list names a file or allows a count beyond the
+     ceiling pinned below (P0 built it with 7 files and 112 literals; since P1, 4 files and 91 literals), and every
+     list allows exactly what the scan finds;
    - the equityuprise rewrite (SPEC-PLATFORM 2.3): with platform.origin https://equityuprise.com and mccluster.org a
      tenant, every classified path still resolves and nothing answers a host it should not.
    The router of SPEC-PLATFORM 2.4 and the client's host logic extend the rewrite check when they exist. */
@@ -29,16 +31,15 @@ import {
   findClientBlock, drift, hostLiterals, scanHostLiterals, readPending, pendingProblems, LANES, PENDING_CEILING
 } from '../../tools/build-site-hosts.mjs';
 
-/* THE P0 CEILING, pinned here as well as in the generator (PENDING_CEILING): the four pending lists as they stood when
-   P0 was built (2026-11-23). No list may name a file outside it or allow more than its count, so a list cannot grow by
-   an edit to the list alone; and every list must allow exactly what the scan finds, so a literal removed is a count
-   lowered at once and freed room is never refilled. A number here is only ever lowered or deleted. */
-const P0_PENDING_CEILING = Object.freeze({
+/* THE CEILING, pinned here as well as in the generator (PENDING_CEILING): the four pending lists as P0 built them
+   (2026-11-23: 7 files, 112 literals), lowered with every conversion (P1 converted js/tabbar.js, js/music-shell.js and
+   js/world-audio-continuity.js: 4 files, 91 literals). No list may name a file outside it or allow more than its count,
+   so a list cannot grow by an edit to the list alone; and every list must allow exactly what the scan finds, so a
+   literal removed is a count lowered at once and freed room is never refilled. A number here is only ever lowered or
+   deleted, in the same change as the list. */
+const PINNED_CEILING = Object.freeze({
   'js/live-content.js': 1,
   'js/mcc-auth.js': 1,
-  'js/music-shell.js': 4,
-  'js/tabbar.js': 10,
-  'js/world-audio-continuity.js': 7,
   'workers/mccluster/src/company-site/pages.generated.js': 86,
   'workers/mccluster/src/seek-first/console.html': 3
 });
@@ -147,16 +148,18 @@ test('the block sits at the very top of js/shell-boot.js, once, and only sets wi
   assert.match(rest, /^\/\* Before first paint: reserve navigation while the server verifies this session\./, 'the rest of the file starts where it always did');
 });
 
-test('with P0\'s switches the table describes today exactly', async () => {
+test('the table that ships is the record\'s stage (P1), and its hosts are the ones the code named before', async () => {
   const S = worker;
-  assert.equal(S.STAGE, 'P0');
-  assert.deepEqual(plain(S.SWITCHES), { platform_serves: 'world', profile_host_routed: false, carry: false, returns_fallback: 'tenants.matthew', metadata: 'today' });
+  assert.equal(S.STAGE, record.edge.now.stage);
+  assert.equal(S.STAGE, 'P1');
+  assert.deepEqual(plain(S.SWITCHES), { platform_serves: 'everything', profile_host_routed: false, carry: true, returns_fallback: 'platform', metadata: 'today' });
   assert.equal(S.PLATFORM_ORIGIN, 'https://mccluster.org');
   assert.equal(S.WORLD_URL, 'https://mccluster.org/');
   assert.equal(S.PROFILE_ORIGIN, 'https://matthew.mccluster.org');
   assert.equal(S.STATIC_ORIGIN, 'https://matthew.mccluster.org');
-  /* the values the code names today (js/tabbar.js, js/music-shell.js, js/world-audio-continuity.js,
-     workers/mccluster/src/world-host.js, lib/http.js, supabase/functions/collect/index.ts at d33b189d) */
+  /* the values the code named before it read them from the table (js/tabbar.js, js/music-shell.js,
+     js/world-audio-continuity.js, workers/mccluster/src/world-host.js, lib/http.js, supabase/functions/collect/index.ts
+     at d33b189d): P1 moves no host */
   assert.deepEqual([...S.WORLD_HOSTS], ['mccluster.org', 'www.mccluster.org', 'humanuprise.com', 'www.humanuprise.com']);
   assert.deepEqual([...S.SITE_ORIGINS], ['https://matthew.mccluster.org', 'https://mccluster.org', 'https://www.mccluster.org', 'https://humanuprise.com', 'https://www.humanuprise.com']);
   assert.deepEqual([...S.FRAME_ANCESTORS], ["'self'", 'https://matthew.mccluster.org', 'https://mccluster.org', 'https://www.mccluster.org', 'https://humanuprise.com', 'https://www.humanuprise.com']);
@@ -177,31 +180,39 @@ test('with P0\'s switches the table describes today exactly', async () => {
   assert.equal(company.COMPANY_ORIGIN, S.PLATFORM_ORIGIN);
   assert.equal(company.PERSONAL_ORIGIN, S.STATIC_ORIGIN);
   assert.deepEqual(Object.keys(company.PAGES), [...S.SITE.platform.own_paths.generated], 'the company pages the router serves are the platform\'s own paths');
-  /* P0 serves as today: the World's rooms and the platform's own paths on the platform, every other page where it is now */
+  /* P1 serves every page on the platform: Whip Equipped and the owner's own pages (profile_only) stay his host's */
   assert.equal(S.servingOrigin('/account.html'), 'https://mccluster.org');
   assert.equal(S.servingOrigin('/news/a-1'), 'https://mccluster.org');
-  assert.equal(S.siteUrl('/member-front.html?handle=x'), 'https://matthew.mccluster.org/member-front.html?handle=x');
+  assert.equal(S.siteUrl('/member-front.html?handle=x'), 'https://mccluster.org/member-front.html?handle=x');
   assert.equal(S.siteUrl('/whip/driver/'), 'https://matthew.mccluster.org/whip/driver/');
-  assert.equal(S.siteUrl('/listen.html'), 'https://matthew.mccluster.org/listen.html');
-  /* returns: an origin that serves pages gets its buyer back; anything else goes where every page is served today */
+  assert.equal(S.siteUrl('/listen.html'), 'https://mccluster.org/listen.html');
+  assert.equal(S.siteUrl('/matthew-mccluster.html'), 'https://mccluster.org/matthew-mccluster.html', 'a profile page has an in-app copy on the platform');
+  assert.equal(S.homeOrigin('/matthew-mccluster.html'), 'https://matthew.mccluster.org', 'whose home stays his host (P2 moves no canonical of it)');
+  /* returns: an origin that serves pages gets its buyer back; anything else goes to the platform */
   assert.equal(S.returnOrigin('https://matthew.mccluster.org'), 'https://matthew.mccluster.org');
   assert.equal(S.returnOrigin('https://mccluster.org'), 'https://mccluster.org');
-  assert.equal(S.returnOrigin('https://www.mccluster.org'), 'https://matthew.mccluster.org', 'www serves no page');
-  assert.equal(S.returnOrigin('https://evil.example'), 'https://matthew.mccluster.org');
-  assert.equal(S.returnOrigin(null), 'https://matthew.mccluster.org');
+  assert.equal(S.returnOrigin('https://www.mccluster.org'), 'https://mccluster.org', 'www serves no page');
+  assert.equal(S.returnOrigin('https://evil.example'), 'https://mccluster.org');
+  assert.equal(S.returnOrigin(null), 'https://mccluster.org');
   /* the stable @ids come from the record's entities, never from a host */
   assert.equal(S.IDS.organization, 'https://matthew.mccluster.org/#mccluster-corp');
   assert.equal(S.IDS.person, 'https://matthew.mccluster.org/#matthew-mccluster');
   assert.equal(S.ENTITY_URLS.organization, 'https://mccluster.org/');
 });
 
-test('a later stage\'s table exists only here: P1 serves everything on the platform, P3 routes the profile host', () => {
-  const p1 = worker.makeSite(siteTable(record, { stage: 'P1' }));
-  assert.equal(p1.siteUrl('/listen.html'), 'https://mccluster.org/listen.html');
-  assert.equal(p1.siteUrl('/matthew-mccluster.html'), 'https://mccluster.org/matthew-mccluster.html', 'a profile page has an in-app copy on the platform');
-  assert.equal(p1.homeOrigin('/matthew-mccluster.html'), 'https://matthew.mccluster.org', 'whose home stays his host');
-  assert.equal(p1.siteUrl('/whip.html'), 'https://matthew.mccluster.org/whip.html', 'profile_only never leaves his host');
-  assert.equal(p1.returnOrigin('https://evil.example'), 'https://mccluster.org');
+test('P0\'s table, the stage before P1, still describes what P0 served; a later stage\'s table exists only here', () => {
+  const p0 = worker.makeSite(siteTable(record, { stage: 'P0' }));
+  assert.deepEqual(plain(p0.switches), { platform_serves: 'world', profile_host_routed: false, carry: false, returns_fallback: 'tenants.matthew', metadata: 'today' });
+  /* P0 served the World's rooms and the platform's own paths on the platform, every other page on Matthew's host */
+  assert.equal(p0.servingOrigin('/account.html'), 'https://mccluster.org');
+  assert.equal(p0.servingOrigin('/news/a-1'), 'https://mccluster.org');
+  assert.equal(p0.siteUrl('/member-front.html?handle=x'), 'https://matthew.mccluster.org/member-front.html?handle=x');
+  assert.equal(p0.siteUrl('/whip/driver/'), 'https://matthew.mccluster.org/whip/driver/');
+  assert.equal(p0.siteUrl('/listen.html'), 'https://matthew.mccluster.org/listen.html');
+  assert.equal(p0.returnOrigin('https://www.mccluster.org'), 'https://matthew.mccluster.org', 'www serves no page');
+  assert.equal(p0.returnOrigin('https://evil.example'), 'https://matthew.mccluster.org');
+  assert.equal(p0.returnOrigin(null), 'https://matthew.mccluster.org');
+  assert.equal(p0.siteUrl('/whip.html'), 'https://matthew.mccluster.org/whip.html', 'profile_only never leaves his host');
   const p3 = siteTable(record, { stage: 'P3' });
   assert.equal(p3.switches.profile_host_routed, true);
   assert.throws(() => siteTable(record, { stage: 'P9' }), /no switches for stage "P9"/);
@@ -231,10 +242,10 @@ test('every file that names a site host in code is on exactly one pending list, 
   const rows = scanHostLiterals(ROOT);
   const lanes = readPending(ROOT);
   assert.deepEqual(pendingProblems(rows, lanes), []);
-  assert.deepEqual({ ...PENDING_CEILING }, { ...P0_PENDING_CEILING }, 'the generator holds the same P0 ceiling as this test');
-  const ceilingFiles = Object.keys(P0_PENDING_CEILING);
-  assert.equal(ceilingFiles.length, 7, 'the P0 ceiling: 7 files');
-  assert.equal(Object.values(P0_PENDING_CEILING).reduce((s, n) => s + n, 0), 112, 'the P0 ceiling: 112 literals');
+  assert.deepEqual({ ...PENDING_CEILING }, { ...PINNED_CEILING }, 'the generator holds the same ceiling as this test');
+  const ceilingFiles = Object.keys(PINNED_CEILING);
+  assert.equal(ceilingFiles.length, 4, 'the ceiling since P1: 4 files (P0 built it with 7)');
+  assert.equal(Object.values(PINNED_CEILING).reduce((s, n) => s + n, 0), 91, 'the ceiling since P1: 91 literals (P0 built it with 112)');
   /* the rule itself, here as well as in pendingProblems: whatever the lists say, they never exceed the ceiling, and
      each allows exactly what the scan finds (mobile-rule.test.mjs's ratchet) */
   const scanned = new Map(rows.map((r) => [r.file, r.count]));
@@ -243,31 +254,31 @@ test('every file that names a site host in code is on exactly one pending list, 
     assert.equal(data.lane, lane, `${LANES[lane].list} names its lane`);
     assert.match(data.rule, /only shrinks/, `${LANES[lane].list} states the rule`);
     for (const e of data.files) {
-      assert.ok(ceilingFiles.includes(e.file), `${LANES[lane].list}: ${e.file} was on no list when P0 was built: a list never gains a file`);
-      assert.ok(e.count <= P0_PENDING_CEILING[e.file], `${LANES[lane].list}: ${e.file} allows ${e.count}, the P0 ceiling is ${P0_PENDING_CEILING[e.file]}: a list never raises a count`);
+      assert.ok(ceilingFiles.includes(e.file), `${LANES[lane].list}: ${e.file} is not on the ceiling: a list never gains a file`);
+      assert.ok(e.count <= PINNED_CEILING[e.file], `${LANES[lane].list}: ${e.file} allows ${e.count}, the ceiling is ${PINNED_CEILING[e.file]}: a list never raises a count`);
       assert.equal(scanned.get(e.file) || 0, e.count, `${LANES[lane].list}: ${e.file} allows ${e.count} and the scan finds ${scanned.get(e.file) || 0}: the list allows exactly what is left`);
       total += e.count;
     }
   }
   assert.equal(total, rows.reduce((s, r) => s + r.count, 0), 'every literal the scan finds is allowed by exactly one entry');
-  assert.ok(total <= 112);
+  assert.ok(total <= 91);
   const engine = lanes.engine.owned_files;
   for (const f of ['js/tabbar.js', 'js/music-shell.js', 'js/world-audio-continuity.js', 'js/music-engine.js', 'js/installed-app-dock.js', 'js/now-playing.js',
     'js/music-sheet.js', 'js/pip.js', 'js/label.js', 'listen.html', 'album.html', 'music-creator.html', 'music-videos.html', 'index.html']) {
     assert.ok(engine.includes(f), `${f} is engine-owned`);
   }
-  for (const e of lanes.engine.files) assert.equal(e.stage, 'engine stage 2', `${e.file}: the engine converts it with the World on the engine`);
-  /* P1 needs host changes in three engine-owned files (SPEC-PLATFORM 4 and 8): the list and the record both say their
-     owner makes them before P1 ships, while the literals themselves leave at engine stage 2, which lands after P1 */
+  /* P1 made the host changes in three engine-owned files (SPEC-PLATFORM 4 and 8), each a small named function reading
+     window.MCC_SITE (scripts/test/site-hosts-engine.test.mjs), and their literals left with them: the engine's list is
+     empty, and the list and the record both say so */
+  assert.deepEqual(lanes.engine.files, [], 'the engine\'s pending list is empty since P1');
   const note = lanes.engine.owned_note;
   const p1 = record.edge.stages.find((s) => s.stage === 'P1').what;
-  assert.match(note, /P1 needs host changes in three of them/);
-  assert.match(note, /Their owner makes those before P1 ships/);
-  assert.match(note, /The literals themselves leave at SPEC-ENGINE stage 2/);
-  assert.doesNotMatch(note, /Host logic in these files is rebuilt by SPEC-ENGINE stage 2/, 'P1 cannot wait for engine stage 2');
-  assert.match(p1, /their owner, the music engine build, makes them before P1 ships/);
+  assert.match(note, /P1 made the host changes in three of them/);
+  assert.match(note, /Their host literals left with that change/);
+  assert.match(p1, /made in the engine's three files, as small named functions reading window\.MCC_SITE/);
   for (const f of ['js/tabbar.js', 'js/world-audio-continuity.js', 'js/music-shell.js']) {
     assert.ok(engine.includes(f) && note.includes(f) && p1.includes(f), `${f}: P1's host change in it is recorded on the list and in the record`);
+    assert.deepEqual(hostLiterals(read(f), f), [], `${f} names no site host in code`);
   }
 });
 
@@ -291,18 +302,19 @@ test('a planted literal fails, a grown count fails, a list never grows, freed ro
   const grownList = JSON.parse(JSON.stringify(lanes));
   grownList.client.files.push({ file: 'js/new-thing.js', count: 2, stage: 'P1' });
   const newEntry = pendingProblems([...rows, { file: 'js/new-thing.js', count: 2 }], grownList);
-  assert.deepEqual(newEntry, [`${LANES.client.list}: js/new-thing.js was not on any list when P0 was built (PENDING_CEILING): the lists only shrink, so a new file reads its hosts from the generated outputs instead`]);
+  assert.deepEqual(newEntry, [`${LANES.client.list}: js/new-thing.js is not on the ceiling (PENDING_CEILING: the lists as P0 built them, lowered with every conversion): the lists only shrink, so a new file reads its hosts from the generated outputs instead`]);
   /* a count raised together with the literals it covers (review mutation M5) */
   const raised = JSON.parse(JSON.stringify(lanes));
   const live = raised.client.files.find((e) => e.file === 'js/live-content.js');
   live.count += 2;
   const raisedProblems = pendingProblems(rows.map((r) => (r.file === live.file ? { ...r, count: live.count } : r)), raised);
-  assert.deepEqual(raisedProblems, [`${LANES.client.list}: js/live-content.js allows ${live.count}, more than the ${P0_PENDING_CEILING['js/live-content.js']} it allowed when P0 was built (PENDING_CEILING): the lists only shrink`]);
+  assert.deepEqual(raisedProblems, [`${LANES.client.list}: js/live-content.js allows ${live.count}, more than the ${PINNED_CEILING['js/live-content.js']} the ceiling allows (PENDING_CEILING): the lists only shrink`]);
   /* and a lower ceiling (a file converted further) binds the lists at once */
-  const lowered = { ...P0_PENDING_CEILING, [listed.file]: listed.count - 1 };
+  const lowered = { ...PINNED_CEILING, [listed.file]: listed.count - 1 };
   assert.ok(pendingProblems(rows, lanes, lowered).some((p) => p.includes(`allows ${listed.count}, more than the ${listed.count - 1}`)));
+  /* an engine-owned file put on the client list (since P1 the engine's list is empty: one of its files, made up) */
   const misfiled = JSON.parse(JSON.stringify(lanes));
-  misfiled.client.files.push(misfiled.engine.files.pop());
+  misfiled.client.files.push({ file: 'js/music-engine.js', count: 1, stage: 'engine stage 2' });
   assert.ok(pendingProblems(rows, misfiled).some((p) => /is engine-owned: it belongs in/.test(p)), 'an engine-owned file cannot move to the client list');
   const shell = read(OUTPUTS.client);
   const found = findClientBlock(shell);
@@ -389,4 +401,36 @@ test('the equityuprise rewrite: every classified path resolves, and nothing answ
   const text = renderWorker(siteTable(F));
   const platformLines = text.split('\n').filter((l) => l.includes('"origin": "https://mccluster.org"'));
   assert.equal(platformLines.length, 1, 'mccluster.org is named as an origin once: the company\'s tenant');
+});
+
+/* V-1 of the P0 verification: the ceiling follows a conversion down. A count a conversion lowered on its list, or a file
+   that left its list, and the ceiling left as it was, is room a later edit could raise the list back into without any
+   check noticing (a static test has no history). So the ceiling is lowered, or the file dropped from it, in the same
+   change, in the generator and in the copy pinned here. */
+test('the ceiling follows a conversion down: a lowered count, or a file gone from its list, must leave the ceiling in the same change', () => {
+  const lanes = readPending(ROOT);
+  const rows = Object.values(lanes).flatMap((d) => d.files.map((e) => ({ file: e.file, count: e.count })));
+  assert.deepEqual(pendingProblems(rows, lanes), [], 'the tree as it stands: the ceiling is exactly the lists');
+  const ceilingNow = Object.fromEntries(Object.values(lanes).flatMap((d) => d.files.map((e) => [e.file, e.count])).sort(([a], [b]) => (a < b ? -1 : 1)));
+  assert.deepEqual({ ...PENDING_CEILING }, ceilingNow, 'the generator\'s ceiling is the lists, file for file and count for count');
+  const entry = lanes.worker.files.find((e) => e.count > 1);
+  assert.ok(entry, 'a listed file with more than one literal to convert');
+  /* one literal converted: the list and the scan go down, the ceiling does not */
+  const lowered = JSON.parse(JSON.stringify(lanes));
+  lowered.worker.files.find((e) => e.file === entry.file).count -= 1;
+  const scanned = rows.map((r) => (r.file === entry.file ? { ...r, count: r.count - 1 } : r));
+  assert.deepEqual(pendingProblems(scanned, lowered, { ...PENDING_CEILING }), [
+    `PENDING_CEILING still allows ${entry.count} for ${entry.file}, and ${LANES.worker.list} now allows ${entry.count - 1}: lower the ceiling in the same change (tools/build-site-hosts.mjs and scripts/test/site-hosts.test.mjs), or a later edit could raise the list back up to it`
+  ]);
+  assert.deepEqual(pendingProblems(scanned, lowered, { ...PENDING_CEILING, [entry.file]: entry.count - 1 }), [], 'lowered on the ceiling too: clean');
+  /* every literal of a file converted: it leaves its list, and must leave the ceiling */
+  const gone = JSON.parse(JSON.stringify(lanes));
+  gone.worker.files = gone.worker.files.filter((e) => e.file !== entry.file);
+  const none = rows.filter((r) => r.file !== entry.file);
+  assert.deepEqual(pendingProblems(none, gone, { ...PENDING_CEILING }), [
+    `PENDING_CEILING still names ${entry.file}, which no list names any more: drop it from the ceiling in the same change (tools/build-site-hosts.mjs and scripts/test/site-hosts.test.mjs)`
+  ]);
+  const { [entry.file]: dropped, ...rest } = PENDING_CEILING;
+  assert.equal(dropped, entry.count);
+  assert.deepEqual(pendingProblems(none, gone, rest), []);
 });

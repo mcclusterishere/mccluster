@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
 
   /* Stripe sends the owner back to the account page where they started: the request's Origin when it is
      exactly an origin that serves pages (../_shared/site-hosts.ts), else the generated fallback, which at
-     stage P0 is the profile host this return named before. */
+     stage P0 was the profile host this return named before and from P1 is the platform. */
   const site = returnOrigin(req.headers.get("origin"));
   const link = await stripe.accountLinks.create({
     account: account.id,

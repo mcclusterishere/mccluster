@@ -70,38 +70,64 @@
     document.head.appendChild(musicShell);
   }
 
-  /* ---------- THREE HOSTS, ONE BAR ----------
-     The World is served on a host of its own as well: the company's,
-     mccluster.org (owner, 2026-10-15: "we need mccluster.org to actually
-     show the World"; workers/mccluster/src/company-site/router.js), and
-     Equity Uprise's own door, humanuprise.com, when the owner routes it
-     (owner, 2026-10-14: "the globe experience as its own solo experience
-     ... interconnected with all the systems"; workers/mccluster/src/
-     human-uprise/router.js). Standing on either, Music and the M are
-     Matthew's site and link to it outright; the Globe stays home. Standing
-     on Matthew's site, the Globe goes to WORLD_ORIGIN, the company's root.
-     A session is per origin (localStorage), and the bar carries a member's
-     sign-in across (the handoff, below), so nobody signs in twice.
-
-     UNTIL THE OWNER ROUTES mccluster.org/* TO THE WORKER, the zone's
-     redirect rule sends https://mccluster.org/?view=feed to this house's
-     root with the World's query; the house forwards it on to the World
-     here (below), so the Globe tab works today and is direct the day the
-     route lands (docs/control-plane/DOMAINS-AND-ENTITIES.md, Activation). */
-  var WORLD_HOSTS = ["mccluster.org", "www.mccluster.org", "humanuprise.com", "www.humanuprise.com"];
-  var ON_WORLD_HOST = WORLD_HOSTS.indexOf(String(location.hostname).toLowerCase()) !== -1;
-  var HOUSE_ORIGIN = "https://matthew.mccluster.org/";
-  var WORLD_ORIGIN = "https://mccluster.org/";
-  /* where Matthew's rooms are, and where the World is, seen from here;
-     static files always come from ROOT (the World's host carries them) */
-  var HOUSE = ON_WORLD_HOST ? HOUSE_ORIGIN : ROOT;
-  var WORLD = ON_WORLD_HOST ? ROOT : (WORLD_ORIGIN || ROOT);
-  /* the World's address: the root of its own host, mnet.html elsewhere */
-  function worldAt(query) { return (ON_WORLD_HOST || WORLD_ORIGIN ? WORLD : WORLD + "mnet.html") + (query || ""); }
-  /* the house's root with the World's query is the World, sent here by the
-     zone rule above: on to mnet.html on this origin, query and fragment
-     (a carried sign-in) intact */
-  if (!ON_WORLD_HOST && /(?:^\?|&)view=/.test(location.search)) {
+  /* ---------- THE SITE'S HOSTS, ONE BAR (SPEC-PLATFORM 2.2 and 4) ----------
+     Which host serves which page, and where the World is, are the one table's (window.MCC_SITE: the generated block at
+     the top of js/shell-boot.js, from data/seo/domain-architecture.json), never a host written here. Each decision is
+     one small function below. From P1 the platform (mccluster.org) serves every page at its path, so standing on it the
+     bar is local: Music listen.html, the M the HERE front door (index.html), the Globe the World at its root. Standing on
+     Matthew's host (it serves every page until P3, and opens on his HERE page), the Globe points at the platform's World
+     and the M at his own root; Music, the account and an artist's page stay on his host until P3, so a song playing
+     there keeps playing (pageBase, the P1 amendment of 2026-11-24); every other page is the platform's. With P0's table
+     these functions answer what the literals they replaced did:
+     the World's hosts served the World and its rooms, and the bar linked Matthew's rooms on his host outright. With no
+     table (a preview, a local server) every link stays beside this page. A session is per origin (localStorage); the
+     carry (js/carry.js, P1) brings a member's sign-in to the platform, never in a URL.
+     Static files always come from ROOT (both hosts carry them). */
+  /* is this page on a host that serves the World at its root (the platform, its www door, a World door)? */
+  function onWorldHost() {
+    var S = window.MCC_SITE;
+    return !!S && S.isWorldHost(location.hostname);
+  }
+  /* is `path` the World's own address on `host` (this page's host when none is named): the World's document
+     (mnet.html) on any host, and the root of a World host; before P1 the old root document name there too, which the
+     Worker sent to the root. From P1 /index.html on the platform is the HERE front door, never the World. */
+  function isWorldPath(path, host) {
+    var S = window.MCC_SITE, p = String(path || "");
+    if (/(?:^|\/)mnet\.html$/.test(p)) return true;
+    if (!S || !S.isWorldHost(host == null ? location.hostname : host)) return false;
+    return p === S.world.root || (S.switches.platform_serves !== "everything" && p === S.platform.front_door_path);
+  }
+  /* where one of the site's pages (a path beside the root; query and fragment ride along) is linked from here: on the
+     site's own hosts, where the table serves it (from P1 the platform for all but Whip Equipped and the owner's own
+     pages, which are his host's alone; before P1 his host for all but the World's rooms), except the M, the HERE front
+     door, which on his host is his own root. Anywhere else, beside this page. */
+  function pageBase(path) {
+    var S = window.MCC_SITE;
+    if (!S || !S.hostRole(location.hostname)) return ROOT;
+    var p = "/" + String(path == null ? "" : path);
+    if (location.origin === S.profile.origin && S.cleanPath(p) === S.profile.root_path) return S.profile.origin + "/";
+    /* THE SONG KEEPS PLAYING ON HIS HOST UNTIL P3 (the P1 amendment of 2026-11-24, SPEC-PLATFORM 4). Matthew: "We must
+       prepare without breaking anything to do that" and "I want a singular fucking music engine with 1 fucking player at
+       all times". A door to another origin is a page load (js/music-shell.js decide()), which ends a song playing on his
+       album or artist page; so while his host serves every page (until P3 answers its 301s), the bar's doors to the
+       pages the one player opens over itself as views (Listen, an artist's page, the account: the music shell's view
+       routes) stay on his host, as at P0. Every other page is where the table serves it; the platform is unchanged. */
+    if (location.origin === S.profile.origin && S.switches.profile_host_routed !== true &&
+        /^\/(?:listen|music-creator|account)\.html$/.test(S.cleanPath(p))) return S.profile.origin + "/";
+    return S.servingOrigin(p) + "/";
+  }
+  function pageHref(path) { return pageBase(path) + path; }
+  /* the World's address seen from here: the root of this host when it is a World host, else the platform's World; with
+     no table, mnet.html beside this page */
+  function worldBase() {
+    var S = window.MCC_SITE;
+    if (!S) return ROOT + "mnet.html";
+    return onWorldHost() ? location.origin + S.world.root : S.platform.world_url;
+  }
+  function worldAt(query) { return worldBase() + (query || ""); }
+  /* the house's root with the World's query is the World: on to mnet.html on this origin, query and fragment (an old
+     link's carried sign-in) intact (once his host is routed, P3, the Worker answers it with a 301 to the platform) */
+  if (!onWorldHost() && /(?:^\?|&)view=/.test(location.search)) {
     var atRoot = false;
     try { atRoot = location.pathname.replace(/index\.html$/, "") === new URL(ROOT || "./", location.href).pathname; } catch (e) {}
     if (atRoot) { location.replace(ROOT + "mnet.html" + location.search + location.hash); return; }
@@ -157,15 +183,15 @@
     nav.className = "appbar";
     nav.setAttribute("aria-label", "Sections");
     nav.innerHTML =
-      '<a class="appbar__tab" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music">' +
+      '<a class="appbar__tab" id="appbarNP" href="' + pageHref("listen.html") + '" data-appnav="music">' +
         eqSvg(true) + '<span>Music</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'index.html" data-appnav="home">' +
+      '<a class="appbar__tab" href="' + pageHref("index.html") + '" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
       /* LAST COLUMN: the Globe, Equity Uprise's World screen. It replaced the
          Profile column (owner, 2026-10-14): Music | M | Globe for everyone.
          Account and profile are contextual now (the auth chip, the header
          avatar, and the Globe wing's Account room). */
-      '<a class="appbar__tab appbar__world" href="' + WORLD + 'mnet.html?view=feed" data-appnav="world">' +
+      '<a class="appbar__tab appbar__world" href="' + worldAt("?view=feed") + '" data-appnav="world">' +
         WORLD_SVG + '<span>Globe</span></a>';
     document.body.appendChild(nav);
     return nav;
@@ -285,18 +311,38 @@
     },
   };
   /* every wing door resolves against its own host, wherever the page sits:
-     Matthew's rooms against the house, the World's rooms against the
-     World's door, and the account against the page's own host (a session
-     is per origin). The map is not a room, so it never takes a path. */
+     the site's pages where the table serves them, the World at the World's
+     address, and the account through sessionRoom (a session is per origin).
+     The map is not a room, so it never takes a path. */
   function resolveRoom(wing, path) {
     if (path === MAP) return MAP;
     if (path.indexOf("mnet.html") === 0) return worldAt(path.slice("mnet.html".length));
-    return (wing === "world" ? ROOT : HOUSE) + path;
+    return wing === "world" ? sessionRoom(path) : pageOrHere(path);
+  }
+  /* a page of the site, seen from that very page: the tab is this page (a tap goes back to the top, and on Listen it is
+     the player's own Play and Pause), never a load of the same page from another host, which would stop the song.
+     Anywhere else it is where the table serves the page (pageHref): from P1, on Matthew's host, the platform. */
+  function pageOrHere(path) {
+    return onPage(ROOT + path) ? ROOT + path : pageHref(path);
+  }
+  /* a room whose page reads this host's own session (the account): before P1 the page's own host, since a session is
+     per origin and nothing carried it there; from P1 where the table serves it (the platform, where the carry brings
+     the sign-in) */
+  function sessionRoom(path) {
+    var S = window.MCC_SITE;
+    return S && S.switches.carry === true ? pageHref(path) : ROOT + path;
+  }
+  /* the Music tab, drawn by this script or written into the page, points where its tap goes (WINGS.music.home): a
+     page link written beside this page would stay on this host */
+  function pointMusicTab() {
+    var music = dock.querySelector('[data-appnav="music"]');
+    if (music) music.href = WINGS.music.home;
   }
   Object.keys(WINGS).forEach(function (k) {
     WINGS[k].home = resolveRoom(k, WINGS[k].home);
     WINGS[k].slots.forEach(function (s) { s[0] = resolveRoom(k, s[0]); });
   });
+  pointMusicTab();
   /* ORDER is the bar's DOM order, and morph() reads it as such: the column a
      held tab keeps is its index here, so this list and the hand-written
      markup in every page must stay in step.
@@ -363,8 +409,8 @@
        editorial claim the pages do not make. Left for the owner to call. */
   };
   var PAGE_KEY = location.pathname.split("/").pop();
-  /* on the World's own host the root is the World, not the house */
-  if (ON_WORLD_HOST && (PAGE_KEY === "" || PAGE_KEY === "index.html")) PAGE_KEY = "mnet.html";
+  /* the World's own address lights the Globe: a World host's root, never the HERE front door (isWorldPath) */
+  if (isWorldPath(location.pathname)) PAGE_KEY = "mnet.html";
   var hereTab = dock.querySelector('[data-appnav="' + (PAGE_WING[PAGE_KEY] || "") + '"]');
   if (hereTab) hereTab.classList.add("is-here");
   /* The tab you are already on: a tap used to reload the same page (slow in
@@ -448,8 +494,9 @@
     }catch(e){}
   }
   /* Visiting the actual founder's profile is an explicit perspective switch.
-     Opening /index.html normally does not replace the signed-in member's home. */
-  var HOUSE_VISIT = !ON_WORLD_HOST && (/matthew-mccluster\.html$/.test(location.pathname) ||
+     Opening /index.html normally does not replace the signed-in member's home.
+     Wherever his pages are served (from P1 the platform too), never on the World. */
+  var HOUSE_VISIT = !isWorldPath(location.pathname) && (/matthew-mccluster\.html$/.test(location.pathname) ||
     new URLSearchParams(location.search).get("front")==="house");
   var PERSPECTIVE=readPerspective();
   if(HOUSE_VISIT && currentSubject()) {
@@ -470,19 +517,19 @@
     if (!p) {
       /* M is the McCluster platform home for everyone (owner, 2026-10-14);
          the member feed lives in World, not behind the emblem. */
-      homeTab.href = HOUSE + "index.html";
+      homeTab.href = pageHref("index.html");
       homeTab.setAttribute("aria-label", "Open the McCluster home");
       homeTab.removeAttribute("data-perspective");
       if (coin && (coin.tagName !== "IMG" || coin.classList.contains("appbar__m--creator"))) {
         coin.outerHTML = '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt="">';
       }
       if (label) label.textContent = HOUSE_LABEL;
-      WINGS.home.home = HOUSE + "index.html";
+      WINGS.home.home = pageHref("index.html");
       WINGS.home.slots[0] = HOUSE_ROOM;
       return;
     }
-    var door = HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
-      "?handle=" + encodeURIComponent(p.handle);
+    var door = pageHref((p.kind==="artist" ? "music-creator.html" : "member-front.html") +
+      "?handle=" + encodeURIComponent(p.handle));
     homeTab.href = door;
     homeTab.setAttribute("aria-label", "Open " + p.name + "\u2019s front page");
     homeTab.setAttribute("data-perspective", p.handle);
@@ -497,7 +544,7 @@
       String(new URLSearchParams(location.search).get("handle") || "").toLowerCase() === p.handle;
     homeTab.classList.toggle("is-here", theirs);
     WINGS.home.home = door;
-    WINGS.home.slots[0] = [HOUSE + "index.html?front=house", "mmark", "McCluster", { title: "McCluster, the house",
+    WINGS.home.slots[0] = [pageHref("index.html?front=house"), "mmark", "McCluster", { title: "McCluster, the house",
       sub: "Matthew McCluster\u2019s front door: the M, the records and the World from his side." }];
   }
   function setPerspective(raw) {
@@ -600,7 +647,7 @@
       var label = tab.querySelector("span:last-child");
       var svg = tab.querySelector(":scope > svg");
       var av = tab.querySelector(".appbar__auth-avatar");
-      tab.href = signedIn ? worldAt("?view=profile") : ROOT + "account.html";
+      tab.href = signedIn ? worldAt("?view=profile") : sessionRoom("account.html");
       tab.setAttribute("aria-label", signedIn ? "Open your member workspace" : "Sign in or create an account");
       tab.classList.toggle("is-authenticated", !!signedIn);
       if (label) label.textContent = signedIn ? "Me" : "Sign in";
@@ -626,7 +673,7 @@
       chipNav.appendChild(chip);
       document.body.appendChild(chipNav);
     }
-    chip.href = signedIn ? worldAt("?view=profile") : ROOT + "account.html";
+    chip.href = signedIn ? worldAt("?view=profile") : sessionRoom("account.html");
     chip.querySelector(".mcc-auth-chip__text").textContent = signedIn ? "Profile" : "Sign in";
     chip.setAttribute("aria-label", signedIn ? "Profile and account: " + name : "Sign in or create an account");
     window.MCC_AUTH_STATE = AUTH_STATE;
@@ -670,14 +717,14 @@
     return /^#(analytics|insights)/i.test(location.hash) ? "analytics" : "admin-home";
   }
   function adminBar() {
-    return '<a class="appbar__tab appbar__tab--icon" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music" aria-label="Play: the player">' + PLAY_SVG + '<span class="appbar__sr">Play</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'control.html#people:inbox:conversations" data-appnav="admin-inbox" aria-label="Inbox"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Inbox</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'control.html#home" data-appnav="admin-home" aria-label="Home: admin workspace">' + HOME_SVG + '<span>Home</span></a>' +
-      '<a class="appbar__tab appbar__tab--mid" href="' + HOUSE + 'index.html" data-appnav="home"><img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span class="appbar__sr">' + textOf(HOUSE_LABEL) + '</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'control.html#analytics" data-appnav="analytics" aria-label="Analytics">' + CHART_SVG + '<span>Analytics</span></a>' +
+    return '<a class="appbar__tab appbar__tab--icon" id="appbarNP" href="' + pageHref("listen.html") + '" data-appnav="music" aria-label="Play: the player">' + PLAY_SVG + '<span class="appbar__sr">Play</span></a>' +
+      '<a class="appbar__tab" href="' + pageHref("control.html#people:inbox:conversations") + '" data-appnav="admin-inbox" aria-label="Inbox"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Inbox</span></a>' +
+      '<a class="appbar__tab" href="' + pageHref("control.html#home") + '" data-appnav="admin-home" aria-label="Home: admin workspace">' + HOME_SVG + '<span>Home</span></a>' +
+      '<a class="appbar__tab appbar__tab--mid" href="' + pageHref("index.html") + '" data-appnav="home"><img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span class="appbar__sr">' + textOf(HOUSE_LABEL) + '</span></a>' +
+      '<a class="appbar__tab" href="' + pageHref("control.html#analytics") + '" data-appnav="analytics" aria-label="Analytics">' + CHART_SVG + '<span>Analytics</span></a>' +
       /* The owner also needs the consumer World. Halo keeps its separate Products and Control doors. */
       '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + worldAt("?view=feed") + '" data-appnav="world" aria-label="Open the World globe">' + WORLD_SVG + '<span class="appbar__sr">World globe</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'game-hub.html" data-appnav="games" aria-label="Games: courses, arcade and worlds"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="4"/><path d="M6 12h6M9 9v6M16 11h1M18 14h1"/></svg><span>Games</span></a>';
+      '<a class="appbar__tab" href="' + pageHref("game-hub.html") + '" data-appnav="games" aria-label="Games: courses, arcade and worlds"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="4"/><path d="M6 12h6M9 9v6M16 11h1M18 14h1"/></svg><span>Games</span></a>';
   }
   function markAdminHere() {
     if (!ADMIN_ON) return;
@@ -908,21 +955,36 @@
      origins and checks the token with Supabase) for a one-time magic-link
      token, Supabase turns that into a session of THIS origin's own, it is
      stored the ordinary way, and the page reloads signed in. No password,
-     no second sign-in. A page that already holds a session keeps it. */
+     no second sign-in. A page that already holds a session keeps it.
+     FROM P1 THE WRITER IS OFF (SPEC-PLATFORM 2.6): no token rides in any
+     link; the carry (js/carry.js, below) brings the sign-in to the platform
+     instead. The reader only scrubs an old link from the address until P4,
+     and trades nothing: a token nobody writes any more is someone else's. */
   var API_ORIGIN = "https://api.mccluster.org";
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
-  var ECOSYSTEM = [HOUSE_ORIGIN.replace(/\/$/, ""), "https://mccluster.org", "https://www.mccluster.org", "https://humanuprise.com", "https://www.humanuprise.com"];
   var HANDOFF = "mcc_handoff";
+  /* a link to another of the site's own origins (the table's site_origins); with no table nothing crosses */
   function crossesHouse(url) {
-    return url && /^https?:$/.test(url.protocol) && url.origin !== location.origin && ECOSYSTEM.indexOf(url.origin) !== -1;
+    var S = window.MCC_SITE;
+    return !!(S && url && /^https?:$/.test(url.protocol) && url.origin !== location.origin && S.isSiteOrigin(url.origin));
+  }
+  /* the fragment hand-off writer: on until the carry is (P0), off from P1, off with no table */
+  function handoffWriterOn() {
+    var S = window.MCC_SITE;
+    return !!(S && S.switches && S.switches.carry !== true);
+  }
+  /* the fragment hand-off reader trades a token for a session only while the writer writes one (P0); from P1, and with
+     no table, a token in an address was put there by someone else, so it is scrubbed and traded for nothing */
+  function handoffReaderTrades() {
+    return handoffWriterOn();
   }
   /* the link, with the sign-in riding along when there is one to carry */
   function handoffHref(dest) {
     var url;
     try { url = new URL(dest, location.href); } catch (e) { return Promise.resolve(dest); }
     var stored = readAuthSession();
-    if (!crossesHouse(url) || !stored || !stored.access_token) return Promise.resolve(url.href);
+    if (!handoffWriterOn() || !crossesHouse(url) || !stored || !stored.access_token) return Promise.resolve(url.href);
     var fresh = window.MCC && typeof window.MCC.refreshIfNeeded === "function"
       ? window.MCC.refreshIfNeeded().then(function (s) { return (s && s.access_token) || stored.access_token; })
       : Promise.resolve(stored.access_token);
@@ -944,6 +1006,8 @@
     var rest = hash.replace(/(?:^#|&)mcc_handoff=[^&]*/, "");
     if (rest === "#") rest = "";
     try { history.replaceState(null, "", location.pathname + location.search + rest); } catch (e) {}
+    /* From P1 the reader only scrubs: nothing is sent and nothing stored, and the pages waiting for a hand-off settle */
+    if (!handoffReaderTrades()) { emit("mcc:handoff", { ok: false, reason: "retired" }); return Promise.resolve(false); }
     /* A malformed fragment is a finished handoff with a clear outcome, never
        an exception out of the bar's initialisation. */
     if (!token) { emit("mcc:handoff", { ok: false, reason: "malformed" }); return Promise.resolve(false); }
@@ -1019,14 +1083,16 @@
               function (e) { if (!done) { done = true; clearTimeout(timer); reject(e); } });
     });
   }
-  /* ON THE WORLD'S HOST, A LINK TO ONE OF MATTHEW'S ROOMS LOOKS SAME-ORIGIN
-     (album.html, creator.html, a receipt), and the Worker would 301 it to his
-     site without the sign-in. The paths the host serves are listed here as the
-     Worker lists them (workers/mccluster/src/world-host.js); every other path
-     is the house's, so it goes there outright, carrying the sign-in. */
-  var WORLD_HOST_PATHS = /^\/(?:$|mnet\.html$|action-globe\.html$|action-policy\.html$|world-news\.html$|create\.html$|give\.html$|privacy\.html$|account\.html$|login\.html$|forgot-password\.html$|reset-password\.html$|onboard\.html$|sw\.js$|company$|robots\.txt$|sitemap\.xml$|llms\.txt$|action-network-|action\/|auth\/|js\/|css\/|assets\/|data\/|vendor\/)/;
+  /* ON THE WORLD'S HOST, A LINK TO A PAGE SERVED ELSEWHERE LOOKS SAME-ORIGIN,
+     and the Worker would 301 it there without the sign-in. Where each path is served
+     is the table's, as the Worker reads it (workers/mccluster/src/platform/
+     router.js): before P1 Matthew's rooms (album.html, creator.html, a receipt);
+     from P1 only Whip Equipped and the owner's own pages (profile_only). Such a
+     link goes there outright, carrying the sign-in while the writer is on. */
   function houseBound(url) {
-    return ON_WORLD_HOST && url.origin === location.origin && !WORLD_HOST_PATHS.test(url.pathname);
+    var S = window.MCC_SITE;
+    return !!S && onWorldHost() && url.origin === location.origin && !isWorldPath(url.pathname) &&
+      S.servingOrigin(url.pathname) !== location.origin;
   }
   /* any link on the page that crosses to another of the houses carries the sign-in */
   document.addEventListener("click", function (e) {
@@ -1035,7 +1101,7 @@
     if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".appbar")) return;
     var url;
     try { url = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
-    if (houseBound(url)) url = new URL(url.pathname + url.search + url.hash, HOUSE_ORIGIN);
+    if (houseBound(url)) url = new URL(url.pathname + url.search + url.hash, window.MCC_SITE.servingOrigin(url.pathname));
     else if (!crossesHouse(url)) return;
     var stored = readAuthSession();
     if (!stored || !stored.access_token) { if (url.origin !== location.origin) { e.preventDefault(); navigateDocument(url.href); } return; }
@@ -1044,6 +1110,79 @@
   });
 
   arriveWithHandoff().then(function (carried) { if (!carried) refreshAuthState(); });
+
+  /* ---------- THE CARRY (SPEC-PLATFORM 2.6, from P1) ----------
+     A platform page with no usable session loads js/carry.js, which asks Matthew's host once (a hidden frame of his
+     carry page; same site, so it reads his host's own storage) for the sign-in this browser holds there, and says the
+     one clear line where nothing could be carried. Never on his host (the one asked), never on a door, never with no
+     table, and never in a frame whose parent is this same origin (the globe inside the World: the World asks); the
+     World framed over Music on his host asks for itself. */
+  function carryWanted() {
+    var S = window.MCC_SITE;
+    var role = S && S.switches && S.switches.carry === true ? S.hostRole(location.hostname) : null;
+    if (!role || role.role !== "platform") return false;
+    if (window.parent !== window) {
+      try { if (window.parent.location.origin === location.origin) return false; } catch (e) { /* another origin's frame */ }
+    }
+    return !storedSessionUsable(readAuthSession());
+  }
+  /* never asked before (no mark): the World waits for the answer, as it waited for the hand-off */
+  function carryPending() {
+    if (!carryWanted()) return false;
+    try { return localStorage.getItem("mcc_carry_v1") === null; } catch (e) { return false; }
+  }
+  /* songs kept at the old address wait for their offer (SPEC-PLATFORM 2.7): js/carry.js says it on a top-level platform
+     page, signed in or not (the carry may have signed this browser in on an earlier page), until it is answered */
+  function keptWaiting() {
+    var S = window.MCC_SITE;
+    var role = S && S.switches && S.switches.carry === true ? S.hostRole(location.hostname) : null;
+    if (!role || role.role !== "platform" || window.parent !== window) return false;
+    try { return localStorage.getItem("mcc_carry_kept_v1") !== null; } catch (e) { return false; }
+  }
+  function startCarry() {
+    if (!carryWanted() && !keptWaiting()) return;
+    window.MCC_CARRY_PENDING = carryPending();
+    if (window.MCC_CARRY || document.querySelector("script[data-mcc-carry]")) return;
+    var carry = document.createElement("script");
+    carry.src = ROOT + "js/carry.js?v=__STAMP__";
+    carry.async = false;
+    carry.setAttribute("data-mcc-carry", "");
+    document.head.appendChild(carry);
+  }
+  startCarry();
+
+  /* ---------- THE INSTALLED APP MOVED (SPEC-PLATFORM 2.8, from P1) ----------
+     The app added to a Home Screen from Matthew's host keeps launching there (its start page, manifest.json and sw.js
+     stay on his host). Launched in standalone mode on his host, it says once that the app now lives on the platform,
+     in the bar's own peek card (index.html is not edited: this script, which the front door loads, draws it). */
+  function moveCardWanted() {
+    var S = window.MCC_SITE;
+    if (!S || !S.switches || S.switches.platform_serves !== "everything" || location.origin !== S.profile.origin) return false;
+    if (window.parent !== window) return false;
+    var installed = false;
+    try { installed = window.navigator.standalone === true || !!(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches); } catch (e) {}
+    if (!installed) return false;
+    try { return localStorage.getItem("mcc_app_moved_v1") === null; } catch (e) { return false; }
+  }
+  function showMoveCard() {
+    var S = window.MCC_SITE;
+    try { localStorage.setItem("mcc_app_moved_v1", new Date().toISOString()); } catch (e) { return; }
+    var card = document.createElement("section");
+    card.id = "mccAppMoved";
+    card.className = "dk-peek";
+    card.setAttribute("aria-label", "The app has moved");
+    card.innerHTML = '<div class="dk-peek__card"><div class="dk-peek__top"><span>' +
+      '<b role="status">The app now lives at ' + textOf(S.platform.host) + '.</b>' +
+      '<small>Open it there and add it to your Home Screen; your sign-in and kept songs come with you.</small></span></div>' +
+      '<div class="dk-peek__acts"><button class="dk-peek__go" type="button">Open ' + textOf(S.platform.host) + '</button>' +
+      '<button class="dk-peek__alt" type="button">Not now</button></div></div>';
+    var go = card.querySelector(".dk-peek__go"), not = card.querySelector(".dk-peek__alt");
+    go.style.minHeight = not.style.minHeight = "44px";
+    go.onclick = function () { location.href = S.platform.origin + S.platform.app_start_path; };
+    not.onclick = function () { card.remove(); };
+    document.body.appendChild(card);
+  }
+  if (moveCardWanted()) showMoveCard();
   window.addEventListener("storage", function (e) {
     if (!e || e.key === "mccdb_session" || e.key === "mcc_sess_keep") currentAuthState();
   });
@@ -1217,7 +1356,7 @@
       if (!was) return;             // we asked for sound and got none: already silent, already painted
       SOUND_ON = false;
       paintSound();
-      emit("mcc:nowplaying", { title: "I AM HERE", href: HOUSE + "album.html", playing: false });
+      emit("mcc:nowplaying", { title: "I AM HERE", href: pageHref("album.html"), playing: false });
     }, 0);
   }
 
@@ -1234,10 +1373,12 @@
     if (here === "day" || here === "night") return here;
     try { return window.MCC_DAYLIGHT_CORE ? window.MCC_DAYLIGHT_CORE.estimate(new Date()) : ""; } catch (e) { return ""; }
   }
+  /* is this destination the World's screen: the World's own address on a World host, or on this one */
   function worldScreen(url) {
     if (!url || !/^https?:$/.test(url.protocol)) return false;
-    if (WORLD_HOSTS.indexOf(url.hostname) !== -1) return /^\/(?:index\.html|mnet\.html)?$/.test(url.pathname);
-    return url.origin === location.origin && /\/mnet\.html$/.test(url.pathname);
+    var S = window.MCC_SITE;
+    if (url.origin !== location.origin && !(S && S.isWorldHost(url.hostname))) return false;
+    return isWorldPath(url.pathname, url.hostname);
   }
   function veilOn(dest) {
     var root = document.documentElement, url = null, phase = "";
@@ -1249,7 +1390,7 @@
   }
   function veilOff() { document.documentElement.classList.remove("pt-out", "pt-to-day", "pt-to-night"); }
   /* the arithmetic only, for the veil above: the World's own page has it already, nothing else on this page is touched */
-  if (!window.MCC_DAYLIGHT_CORE && !ON_WORLD_HOST) {
+  if (!window.MCC_DAYLIGHT_CORE && !onWorldHost()) {
     var daylightCore = document.createElement("script");
     daylightCore.src = ROOT + "js/daylight.js?v=__STAMP__";
     daylightCore.async = true;
@@ -1284,13 +1425,15 @@
     return false;
   }
 
+  /* from a music page the World's own address opens over the music (js/world-audio-continuity.js), and so does the
+     World's document or globe page where Music itself is served (his host's copy; from P1 the platform's too) */
   function musicWorldDestination(dest) {
     if (window.parent !== window || !(window.MCC_MUSIC || document.getElementById("deck"))) return false;
     try {
-      var u = new URL(dest, location.href);
-      return u.protocol === "https:" &&
-        (WORLD_HOSTS.indexOf(u.hostname) !== -1 && /^\/(?:mnet\.html|index\.html)?$/.test(u.pathname) ||
-         u.origin + "/" === HOUSE_ORIGIN && /\/(?:mnet|action-globe)\.html$/.test(u.pathname));
+      var u = new URL(dest, location.href), S = window.MCC_SITE;
+      return !!S && u.protocol === "https:" &&
+        (S.isWorldHost(u.hostname) && isWorldPath(u.pathname, u.hostname) ||
+         (u.origin === S.profile.origin || u.origin === S.servingOrigin("/listen.html")) && /\/(?:mnet|action-globe)\.html$/.test(u.pathname));
     } catch (_) { return false; }
   }
   function cancelWorldAudio() {
@@ -1332,7 +1475,7 @@
 
   function sail(dest, wait) {
     cancelWorldAudio();
-    if (dest === MAP) { if (openMap()) return; dest = HOUSE + "index.html"; }
+    if (dest === MAP) { if (openMap()) return; dest = pageHref("index.html"); }
     unpeek();
     if (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.navigate(dest)) { veilOff(); revert(); return; }
     if (waitForWorldAudio(dest)) return;
@@ -1514,7 +1657,7 @@
        A held press never reaches this line (the lpFired gate above swallows
        it), so hold-to-open-the-music-wing is untouched. */
     var dest = w ? w.home : (slot || a.getAttribute("href"));
-    if (key === "profile") dest = AUTH_STATE.signed_in ? worldAt("?view=profile") : ROOT + "account.html";
+    if (key === "profile") dest = AUTH_STATE.signed_in ? worldAt("?view=profile") : sessionRoom("account.html");
 
     /* This column used to open the desk widget in place instead of sailing
        anywhere, because the tab WAS Chat. It is the Closet now, and a tab
@@ -1548,7 +1691,9 @@
     ownPerspective: function(){return SELF_PROFILE;},
     admin: function () { return ADMIN_ON; },
     verifyAdmin: function () { return checkAdmin(true); },
-    navigation: Object.freeze({root: ROOT, house: HOUSE, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); },
+    /* house: the installed dock's house (Listen's base: Matthew's host until P3 there, the P1 amendment); page: where the
+       table serves any other page, for js/site-navigation.js's Control and product doors (review V2-1) */
+    navigation: Object.freeze({root: ROOT, house: pageBase("listen.html"), page: pageHref, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); },
       // The retained Music document uses the existing, origin-bound sign-in
       // handoff for its real World frame. Credentials never enter its messages.
       handoff: handoffHref})

@@ -1527,6 +1527,11 @@ Limits, as built:
   they were looking at; the record says so because it is not the album's own address.
 * **The back-forward cache** is not measured: this Chromium never restored a page from it. A restored retained
   document is handled as a Back (`pageshow` with `persisted`); that is Inferred.
+* **The bar on each host, from the platform's stage P1** (the P1 amendment of 2026-11-24, `SPEC-PLATFORM.md` section
+  4): on `mccluster.org` the Music tab, the account chip and an artist's page are the platform's own pages, opened
+  over the one player there as views, and on `matthew.mccluster.org` they stay on his host until P3, so a song
+  playing on his album or artist page keeps playing (a door to another origin is a page load), while the Globe opens
+  the platform's World over Music there as before.
 
 ### What changed
 

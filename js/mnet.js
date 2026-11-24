@@ -114,6 +114,16 @@
     if (handoff.ok && handoff.pending && e.cancelable) e.preventDefault();
     handoff.waiters.splice(0).forEach(function (go) { go(); });
   });
+  /* A SIGN-IN CARRIED TO THE PLATFORM (SPEC-PLATFORM 2.6, from P1). On the platform with no session of its own, the bar
+     (js/tabbar.js, which runs before this World boots) asks Matthew's host once for the sign-in this browser holds there
+     (js/carry.js) and says whether that first answer is still to come (window.MCC_CARRY_PENDING). The World waits for it
+     as it waits for the hand-off, and a sign-in carried after the World opened as a guest is taken in place, no reload. */
+  var carry = { waiting: null, done: false };
+  window.addEventListener("mcc:carry", function (e) {
+    carry.done = true;
+    if (carry.waiting) { var go = carry.waiting; carry.waiting = null; go(); return; }
+    if (e.detail && e.detail.result === "carried" && state.guest) enterAfterAuth().catch(function (error) { showSignedInLoadError(error); });
+  });
   /* A ROOM ASKED FOR BY ADDRESS (?view=profile, the house's Profile chip) opens on that room for a member, never on the
      World first and then the room once the member's World has loaded */
   var DEEP_VIEW = "";
@@ -3831,13 +3841,27 @@
        open on its own room (mnet.html), so that shell is the World, never the Live room; a room asked for by address is
        put up instead, empty, and filled once the member's World has loaded. */
     var stored = MCC.session && MCC.session();
-    if ((stored && stored.access_token) || handoff.pending) { showGate("app"); if (DEEP_VIEW) peekView(DEEP_VIEW); }
+    var carrying = !(stored && stored.access_token) && window.MCC_CARRY_PENDING === true && !carry.done;
+    if ((stored && stored.access_token) || handoff.pending || carrying) { showGate("app"); if (DEEP_VIEW) peekView(DEEP_VIEW); }
     /* a sign-in being carried in: the World waits for it (above) rather than opening as a guest first; if the trade
        never answers, the visitor's World opens as it would have, and a late answer reloads the page as before */
     if (handoff.pending && !handoff.done) {
       var once = false, go = function () { if (once) return; once = true; handoff.pending = handoff.pending && handoff.done; enterSession(); };
       handoff.waiters.push(go);
       setTimeout(go, 8000);
+      return;
+    }
+    if (carrying) {
+      var settled = false, after = function () {
+        if (settled) return;
+        settled = true; carry.waiting = null;
+        /* carried: the guest look the page booted with goes with the guest */
+        var now = MCC.session && MCC.session();
+        if (now && now.access_token) document.documentElement.classList.remove("mn-guest");
+        enterSession();
+      };
+      carry.waiting = after;
+      setTimeout(after, 8000);
       return;
     }
     enterSession();

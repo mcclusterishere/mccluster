@@ -125,6 +125,20 @@ Write to him in short plain sentences, no codes (no D-5, M3F, RF-1), one questio
   BAR-RESTORE.md's bar (the Before look) on every page; he did not object to the one change (red middle button = the
   one Play/Pause; right side Next + Sound).
 
+## His later words (2026-11-23 evening to 2026-11-24 morning, verbatim), and the reading
+
+- "How many of these things will finish before i run out of tokens? can you figure it out and push these to their
+  absolute closest and before you run out have a handoff ready for codex to finish what you started and bring it home"
+  -> keep this folder current; every piece of work lives on a pushed branch.
+- "I need as much as these features pushed that are stable as possible ... push as much as possible ... keep the
+  branches and prs around" -> push finished, checked work; keep unfinished work as draft branches and pull requests.
+- "I found a free reset so this is okay we will keep going ill reset it when it gets close" -> keep going.
+- "ship it when it passes" (Release 1) -> merged as `df21444f` once its checks passed; live 2026-11-24 06:52 UTC.
+- "start the one engine build after that" -> engine stage 0 started after Release 1 merged.
+- "start the platform P1 step too" -> P1 built on `claude/platform-p1-20261124`.
+- "keep it, ship P1 when it passes" -> keep the music-direct CORS answer for `mccluster.org` (review item SEC-F1);
+  P1 ships in Release 2 once its fix round and verification pass.
+
 ## Order (one music workflow at a time; lean agents)
 0. Now: production steps (running). M5 build finishing (stop the workflow before its reviews; task b4ybefen4 waits for it).
 1. Quick wins: one McCluster profile, albums + artists only, whole uniform covers, creator awareness ("join as a creator"

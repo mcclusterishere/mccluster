@@ -73,9 +73,10 @@ test('every tab destination has the bar it was reached from', async () => {
   const all = await read('js/tabbar.js');
   /* the canonical bar is buildBar(); the owner's five-tab bar (adminBar) is checked below */
   const bar = all.slice(all.indexOf('function buildBar()'), all.indexOf('return nav;', all.indexOf('function buildBar()')));
-  /* Music and the M resolve against the house, the Globe against the World's
-     own door, so the bar reads the same from either host (js/tabbar.js) */
-  const hrefs = [...bar.matchAll(/href="'\s*\+\s*(?:ROOT|HOUSE|WORLD)\s*\+\s*'([a-z0-9-]+\.html)(?:\?[a-z=&]*)?"/g)].map((m) => m[1]);
+  /* Music and the M are pages linked where the table serves them (pageHref), the Globe is the World's own address
+     (worldAt, the World's document mnet.html with no table), so the bar reads the same from every host (js/tabbar.js;
+     SPEC-PLATFORM 4: since P1 these read window.MCC_SITE instead of host literals) */
+  const hrefs = [...bar.matchAll(/href="'\s*\+\s*(?:pageHref\("([a-z0-9-]+\.html)(?:\?[a-z=&]*)?"\)|worldAt\("\?[a-z=&]*"\))\s*\+\s*'"/g)].map((m) => m[1] || 'mnet.html');
   /* Music | M | Globe (owner, 2026-10-14): the Globe replaced Profile */
   assert.deepEqual(hrefs, ['listen.html', 'index.html', 'mnet.html'],
     `expected the three canonical tab destinations, found ${hrefs.join(', ')}`);
@@ -87,7 +88,7 @@ test('every tab destination has the bar it was reached from', async () => {
   /* the owner's five tabs (admin first, owner 2026-10-15): Play, Home (Control Room), M, Analytics, Globe; every
      destination carries the bar, the Control Room included (it no longer opts out) */
   const admin = all.slice(all.indexOf('function adminBar()'), all.indexOf('function markAdminHere()'));
-  const adminHrefs = [...admin.matchAll(/href="'\s*\+\s*HOUSE\s*\+\s*'([a-z0-9-]+\.html)/g)].map((m) => m[1]);
+  const adminHrefs = [...admin.matchAll(/href="'\s*\+\s*pageHref\("([a-z0-9-]+\.html)/g)].map((m) => m[1]);
   /* World follows the canonical World host; the other owner destinations stay on the house. */
   assert.deepEqual(adminHrefs, ['listen.html', 'control.html', 'control.html', 'index.html', 'control.html', 'game-hub.html']);
   assert.ok(admin.includes('worldAt("?view=feed")'));

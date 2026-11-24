@@ -6,8 +6,9 @@
    the visitor agrees, as before."
 
    This holds the decision without a browser, on the World as each of its doors serves it: mnet.html on Matthew's property,
-   and the same document passed through Worker mccluster on https://mccluster.org/ (the World's door today) and
-   https://humanuprise.com/ (inert until routed), each with its host's own head (workers/mccluster/src/world-host.js).
+   and the same document passed through Worker mccluster on https://mccluster.org/ (the platform), with its host's own
+   head (workers/mccluster/src/world-host.js); https://humanuprise.com/ (inert until routed) answers 301 to the platform
+   from P1.
    The notice block of js/live-content.js runs in a small document stand-in that sees exactly the head a browser has parsed
    when that script runs, so a meta placed after the script would not count. The browser proof, at 390, 820 and 1280 with
    the globe and the mission posts, is scripts/e2e/world-first-visit.e2e.mjs.
@@ -152,9 +153,16 @@ const recorded = (visit) => ({
 const DOORS = [
   ["https://matthew.mccluster.org/mnet.html", async () => WORLD],
   ["https://matthew.mccluster.org/mnet.html?mission=0e1f0000-0000-4000-8000-000000000001", async () => WORLD],
-  ["https://mccluster.org/", () => served(companySiteResponse, "https://mccluster.org/")],
-  ["https://humanuprise.com/", () => served(humanUpriseResponse, "https://humanuprise.com/")]
+  ["https://mccluster.org/", () => served(companySiteResponse, "https://mccluster.org/")]
 ];
+/* humanuprise.com served the World on its own host before P1; from P1 (the owner's default of 2026-11-23,
+   data/seo/domain-architecture.json owner_decisions.humanuprise_com) it answers 301 to the platform, so its first visit is
+   the platform's World above */
+test("humanuprise.com sends a first visit to the platform's World, where the banner is (P1)", async () => {
+  const res = await humanUpriseResponse(new Request("https://humanuprise.com/"), {}, () => { throw new Error("a door fetches nothing"); });
+  assert.equal(res.status, 301);
+  assert.equal(res.headers.get("location"), "https://mccluster.org/");
+});
 
 test("the World's head carries the banner meta and the answered meta once each, before js/live-content.js reads them", () => {
   const head = WORLD.slice(0, WORLD.indexOf("</head>"));

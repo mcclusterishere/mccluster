@@ -93,9 +93,9 @@ test('the bar built for pages that lack one agrees with the bar they ship', asyn
      had its own hardcoded destination, so fixing the markup alone would
      have left every generated bar pointing at the album. */
   const js = await read('js/tabbar.js');
-  /* the cell resolves against the house, which is ROOT on Matthew's site and
-     his origin on the World's own host (js/tabbar.js) */
-  assert.match(js, /HOUSE \+ 'listen\.html" data-appnav="music"/,
+  /* the cell is linked where the table serves the page (pageHref, js/tabbar.js; SPEC-PLATFORM 4: from P1 the platform's
+     own listen.html, before it Matthew's) */
+  assert.match(js, /pageHref\("listen\.html"\) \+ '" data-appnav="music"/,
     'the generated bar must open the listening room too');
 });
 

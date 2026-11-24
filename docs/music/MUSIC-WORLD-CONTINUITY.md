@@ -13,13 +13,17 @@ document from `https://mccluster.org/` in a frame. The World host keeps its own
 origin, canonical metadata and M Account session. It is not copied into the
 personal property's DOM, and no product identity or host routing changes.
 
-That frame is cross-origin today because Music runs on Matthew's host and the World
-on the platform (stage P0 of the one-platform plan,
-`docs/control-plane/DOMAINS-AND-ENTITIES.md`; the World's origin comes from
-`window.MCC_SITE`, the generated block at the top of `js/shell-boot.js`, once this
-file leaves `scripts/test/site-hosts-pending/engine.json`). From P1 the platform serves
-Music too, so on the platform the frame is same-origin; the bridge keeps its exact
-origin, window and nonce checks either way.
+On the platform the frame is same-origin: the platform serves Music too (stage P1
+of the one-platform plan, `docs/control-plane/DOMAINS-AND-ENTITIES.md`), and a link
+inside the World frame to a page served at another address of the same origin opens at
+the top (`leavesWorld`), the way a cross-origin link always did. On Matthew's host the
+frame is cross-origin, as it was everywhere before P1. The World's origin comes from
+`window.MCC_SITE`, the generated block at the top of `js/shell-boot.js` (this file left
+`scripts/test/site-hosts-pending/engine.json` with P1); the bridge keeps its exact
+origin, window and nonce checks either way. The transport's title, tapped with the World
+closed, goes to Music on the host it stands on: on Matthew's host his own Listen until P3
+(`musicHome`), as the bar's Music tab does, since the platform's would be a page load that
+ends the song (the P1 amendment of 2026-11-24).
 
 The parent's address adds `world=1` to the existing Music URL and its history
 state records the clean World destination. Browser Back/Forward changes the

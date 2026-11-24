@@ -224,14 +224,22 @@ function frame(out, framing, site) {
 }
 
 /* A pass-through from the static origin: the client's safe headers up, the upstream's safe headers back, the host's
-   own security headers, and, on the World's root, the host's head. */
-export async function passThrough(request, upstream, fetchImpl, { root = false, noindex = false, head = null, site = SITE, framing = 'site' } = {}) {
+   own security headers, and, on the World's root, the host's head.
+   `cacheTtl` keeps a document at the edge that many seconds (Cloudflare's cache, keyed by the static origin's address;
+   the World's head is written after, per host, so a cached body never carries another host's head). `elsewhere` is
+   for an address the router could not name: the static origin may answer it with anything but a document, and a
+   document there is sent to `elsewhere` (Matthew's host) instead, never served on this host. */
+export async function passThrough(request, upstream, fetchImpl, { root = false, noindex = false, head = null, site = SITE, framing = 'site', appStart = null, elsewhere = null, cacheTtl = 0 } = {}) {
   const headers = new Headers();
   for (const h of UPSTREAM_REQUEST) {
+    /* an unnamed address is asked for whole, never revalidated, so a document is always seen as one */
+    if (elsewhere && (h === 'if-none-match' || h === 'if-modified-since')) continue;
     const v = request.headers.get(h);
     if (v) headers.set(h, v);
   }
-  const res = await fetchImpl(new Request(upstream, { method: request.method, headers, redirect: 'manual' }));
+  const res = await fetchImpl(new Request(upstream, { method: request.method, headers, redirect: 'manual' }),
+    cacheTtl > 0 ? { cf: { cacheTtl, cacheEverything: true } } : undefined);
+  if (elsewhere && res.status >= 200 && res.status < 300 && /^text\/html/i.test(res.headers.get('content-type') || '')) return moved(elsewhere);
   const out = new Headers(securityHeaders(site));
   for (const h of UPSTREAM_RESPONSE) {
     const v = res.headers.get(h);
@@ -257,7 +265,24 @@ export async function passThrough(request, upstream, fetchImpl, { root = false, 
     out.set('cache-control', 'public, max-age=300');
     return new Response(request.method === 'HEAD' ? null : worldHeadFor(await res.text(), head), { status: 200, headers: out });
   }
+  if (appStart && res.status === 200 && /json/i.test(out.get('content-type') || '')) {
+    const body = request.method === 'HEAD' ? null : appManifest(await res.text(), appStart, out);
+    out.delete('etag');
+    return new Response(body, { status: 200, headers: out });
+  }
   return new Response(request.method === 'HEAD' ? null : res.body, { status: res.status, headers: out });
+}
+
+/* The installed app's manifest on a host whose app starts elsewhere (SPEC-PLATFORM 2.8; the platform's app opens on the
+   World, the owner's default of 2026-11-23): the published file with its start_url replaced and every other member as
+   it is. A body that is not a manifest object is handed on as it came. The body changes, so the upstream validator goes. */
+export function appManifest(text, start, headers) {
+  headers.delete('etag');
+  let manifest;
+  try { manifest = JSON.parse(text); } catch { return text; }
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return text;
+  manifest.start_url = start;
+  return JSON.stringify(manifest, null, 1) + '\n';
 }
 
 /* A host whose own origin is the static origin (Matthew's, once routed): the request goes to its origin as it came (a
