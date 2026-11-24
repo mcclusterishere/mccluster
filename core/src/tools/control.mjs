@@ -8,6 +8,7 @@ import { computeTaskById } from '../compute/store.mjs';
 import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
 import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
 import { activeMeetingTools, callMeetingTool } from './meeting.mjs';
+import { WORKSTREAM_TOOLS, callWorkstreamTool } from './workstream.mjs';
 import { submitResidentAiTurn, getResidentAiTurn } from '../resident-ai.mjs';
 import { GAME_LORE_INPUT_SCHEMA, readGameLore } from '../game-lore.mjs';
 
@@ -43,7 +44,7 @@ const BASE_TOOLS = [
        owner. Read-only by construction: a session that has just lost
        its memory is the worst possible moment to take an action. */
     name: 'core.resume', title: 'Resume a McCluster working session',
-    description: 'Return the current workspace, running/queued work, stale leases, pending approvals, capability catalog version, system health and exact deploy commit. Read-only; queues and changes nothing.',
+    description: 'Return the current workspace, running/queued work, stale leases, pending approvals, checkpointed workstreams (branch, pull request, decisions, next step), capability catalog version, system health and exact deploy commit. Read-only; queues and changes nothing.',
     inputSchema: { type: 'object', required: ['org_id'], properties: { org_id: { type: 'string' }, since_hours: { type: 'integer', minimum: 1, maximum: 168 }, limit: { type: 'integer', minimum: 1, maximum: 50 } }, additionalProperties: false }
   },
   {
@@ -121,7 +122,7 @@ const BASE_TOOLS = [
   }
 ];
 
-BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS);
+BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS, ...WORKSTREAM_TOOLS);
 BASE_TOOLS.push(...activeMeetingTools());
 
 if (PREVIEW_CONFIGURED) {
@@ -281,6 +282,8 @@ export async function callControlTool(name, args = {}, options = {}) {
   if (name.startsWith('core.ingest.') || name.startsWith('core.entity.') || name.startsWith('core.facts.')) {
     return callIngestionTool(name, args, options);
   }
+
+  if (name.startsWith('core.workstream.')) return callWorkstreamTool(name, args, options);
 
   if (name.startsWith('core.meeting.')) return callMeetingTool(name, args, options);
 

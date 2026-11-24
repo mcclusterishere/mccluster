@@ -64,6 +64,20 @@ test('the MCP path refuses a capability whose interfaces exclude mcp with 403 CA
   assert.equal(requireCapabilityInterface(registry, 'mccluster.health', 'mcp'), true, 'not a stable capability: nothing to refuse here');
 });
 
+test('the loopback call route is the http and agent interface: workstream.checkpoint (mcp only) is refused there, browser.act and the rest pass', () => {
+  assert.deepEqual(registry.get('workstream.checkpoint').interfaces, ['mcp'], 'only the MCP path carries the actor a checkpoint needs');
+  assert.throws(() => requireCapabilityInterface(registry, 'workstream.checkpoint', ['http', 'agent']), (error) => {
+    assert.equal(error.code, 'CAPABILITY_INTERFACE_REFUSED');
+    assert.equal(error.status, 403);
+    assert.match(error.message, /workstream\.checkpoint is not exposed over http or agent/);
+    return true;
+  });
+  assert.equal(requireCapabilityInterface(registry, 'workstream.checkpoint', 'mcp'), true);
+  assert.equal(requireCapabilityInterface(registry, 'workstream.list', ['http', 'agent']), true, 'the read is callable on the loopback (internal ceiling)');
+  assert.equal(requireCapabilityInterface(registry, 'browser.act', ['http', 'agent']), true);
+  assert.equal(requireCapabilityInterface(registry, 'ai.chat', ['http', 'agent']), true);
+});
+
 // The running broker, on the two paths that need no network: a stable
 // capability outside the MCP interface is refused with its code, and an
 // invalid ai.chat image is refused before any resolution.
