@@ -6,6 +6,10 @@ import { handleAnalyticsRequest } from '../src/analytics/router.js';
 
 const source = readFileSync(new URL('../../../js/analytics.js', import.meta.url), 'utf8');
 function tracker(search, pathname = '/music-creator.html') {
+  /* the page identity the tracker files every event under, fixed when the page loads (js/analytics.js, music M5) */
+  const identityStart = source.indexOf('var MCC_PAGE_IDENTITY = (function () {');
+  const identityEnd = source.indexOf('\n})();', identityStart) + 6;
+  assert.ok(identityStart>=0 && identityEnd>identityStart);
   const factoryStart = source.indexOf('/* EVENT_OUTBOX_FACTORY_BEGIN */');
   const factoryEnd = source.indexOf('/* EVENT_OUTBOX_FACTORY_END */',factoryStart);
   assert.ok(factoryStart>=0 && factoryEnd>factoryStart);
@@ -22,6 +26,7 @@ function tracker(search, pathname = '/music-creator.html') {
     fetch: async (_, init) => { sent.push(JSON.parse(init.body)); return { ok: true }; },
   };
   context.window = { navigator: context.navigator, addEventListener(n, fn) { listeners[n] = fn; } };
+  vm.runInNewContext(source.slice(identityStart, identityEnd), context);
   vm.runInNewContext(source.slice(factoryStart, factoryEnd), context);
   vm.runInNewContext(source.slice(start, end), context);
   return { async emit() { context.window.MCC_TRACK('page_view', {}); listeners.pagehide(); await Promise.resolve(); return sent[0].events[0]; } };
