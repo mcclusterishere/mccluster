@@ -208,17 +208,19 @@ fails. Every new test file must be run by a CI workflow job.
 
 ## Status (updated at the end of the earlier session)
 
-Every piece of work is on GitHub as a branch with a pull request (2026-11-23, about 21:40 UTC):
+Every piece of work is on GitHub as a branch, most with a pull request (2026-11-24, about 02:45 UTC):
 
 | Work | Branch | Pull request | State |
 | --- | --- | --- | --- |
-| Release 1 | `claude/release-20261123` (at `22bfd37d` when opened) | #825 to `main`, draft | Ready except the dock fix. Merge when the dock fix has joined and CI is green (section 3.A). |
-| Release 1 dock fix | `claude/wip-release-dock-fix` | #827 to `claude/release-20261123`, draft | In progress: tests being written, then the fix (section 3.A.2). |
-| Music quick wins | `claude/wip-music-quick-wins` | #826 to `claude/new-session-83ken5`, draft | Built and self-tested, not reviewed (section 3.B). |
+| Release 1 | `claude/release-20261123` (at `4b6d58cc`: the dock fix merged in) | #825 to `main` | Matthew: "ship it when it passes". A final independent go/no-go and CI were running; merge with a merge commit when both pass (section 3.A). |
+| Release 1 dock fix | merged into the release branch (`eca8c401`) | #827, closed | Verified go twice. |
+| Music quick wins | on `claude/new-session-83ken5` (`2191cfdd`, `ef167fe4`) | #826, superseded snapshot | The review found 12 items (one blocker); a fix round was running, then a final verification. |
+| Platform move P0 | on `claude/new-session-83ken5` (head `3dbb7718`) | none | Verified go. No visible change. Ships with the next release cut from the working branch. |
+| Platform move P1 | `claude/platform-p1-20261124` | to be opened when pushed | Building (build, two reviews, fix, verify). Changes what visitors see: ships only on Matthew's word. |
+| One engine, one player | not started | none | Matthew: "start the one engine build after that" (after Release 1). |
+| Known failure on the working branch | | | `workers/mccluster/test/analytics-creator-attribution.test.mjs` ("MCC_PAGE_IDENTITY is not defined"), from M5; the engine build's stage 0 fixes it before the next release. |
 | Creator Studio publishing | `claude/wip-creator-studio-publish` | #828, draft | Unfinished (2026-11-19). |
 | Project Drawdown source page | `claude/wip-drawdown-source-page` | #829, draft | Unfinished (2026-11-19). |
 | Environmental timeline S6 | `claude/wip-eup-timeline-s6` | #830, draft | Unfinished (2026-11-19). |
-| Platform move P0 | none | none | Not started; nothing was pushed. |
 
-The earlier session pushes newer snapshots to these branches while its usage lasts. If a branch is behind what a
-pull request describes, the branch wins.
+If a branch is ahead of what this table says, the branch wins.
