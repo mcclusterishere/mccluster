@@ -74,7 +74,7 @@
   }
 
   /* the line under a title in a track list: who is on it and who produced it (the owner, 2026-11-24, keeps every
-     credit a row showed: "prod. PAX" was in this line and stays in it). Only the trailing remark (`after`) is left
+     credit a row showed: "prod. Pax Tha Collector" was in this line and stays in it). Only the trailing remark (`after`) is left
      to the full line. null when the record has nobody on it but its own artist, so a hand-written subtitle ("the
      title track") is left alone; rowLine() below still shows that record's producer. */
   function sub(doc, track) {
@@ -191,11 +191,42 @@
     return "artist.html?artist=" + encodeURIComponent((artist && artist.slug) || "");
   }
 
-  /* the artists selector: the house first, then every registered artist who is on at least one track */
-  function roster(doc) {
-    var all = arr(doc && doc.artists).map(function (a) {
-      return { slug: a.slug, name: a.name, kind: a.kind, page: a.page || "", handle: a.handle || "", href: href(a, doc), tracks: count(doc, a.slug) };
+  // The credit badge is specifically about public Equity Uprise releases, not account verification.
+  function equityCredit(doc, slug) {
+    return arr(doc && doc.albums).some(function (album) {
+      return arr(album.tracks).some(function (track) {
+        var primary = arr(track.credits && track.credits.primary);
+        return primary.indexOf("equity-uprise") !== -1 && credited(track).some(function (x) {
+          return x.slug === slug && x.group !== "other";
+        });
+      });
+    });
+  }
+  function groupLinks(doc, slug) {
+    var artists = index(doc), a = artists[slug];
+    return {
+      members: arr(a && a.members).map(function (id) { return artists[id]; }).filter(Boolean),
+      groups: arr(doc && doc.artists).filter(function (group) { return arr(group.members).indexOf(slug) !== -1; })
+    };
+  }
+
+  function producers(doc) {
+    return arr(doc && doc.artists).map(function (a) {
+      return { slug: a.slug, name: a.name, handle: a.handle || "",
+        href: "artist.html?artist=" + encodeURIComponent(a.slug) + "#produced",
+        tracks: appearances(doc, a.slug).produced.length, equityCredit: equityCredit(doc, a.slug) };
     }).filter(function (a) { return a.tracks > 0; });
+  }
+
+  /* A member is an artist even when their only recording credit so far is production. */
+  function roster(doc) {
+    var all = arr(doc && doc.artists).filter(function (a) {
+      var roles = appearances(doc, a.slug);
+      return roles.own.length || roles.featured.length || groupLinks(doc, a.slug).groups.length;
+    }).map(function (a) {
+      return { slug: a.slug, name: a.name, kind: a.kind, page: a.page || "", handle: a.handle || "",
+        href: href(a, doc), tracks: count(doc, a.slug), equityCredit: equityCredit(doc, a.slug) };
+    });
     return all.filter(function (a) { return a.slug === HOUSE; }).concat(all.filter(function (a) { return a.slug !== HOUSE; }));
   }
 
@@ -211,6 +242,6 @@
 
   root.MCC_CREDITS = {
     HOUSE: HOUSE, index: index, list: list, line: line, sub: sub, rowLine: rowLine, billedTo: billedTo, albumBilling: albumBilling, pageListsAll: pageListsAll, credited: credited, names: names,
-    appearances: appearances, count: count, href: href, roster: roster, houseOnly: houseOnly
+    appearances: appearances, count: count, href: href, roster: roster, producers: producers, equityCredit: equityCredit, groupLinks: groupLinks, houseOnly: houseOnly
   };
 })(typeof globalThis !== "undefined" ? globalThis : this);

@@ -477,7 +477,7 @@
   {
    "slug": "money-or-the-power",
    "title": "Money or the Power",
-   "credit": "Equity Uprise ft. Ocho, McCluster & Old Jay · prod. PAX",
+   "credit": "Equity Uprise ft. Ocho, McCluster & Old Jay · prod. Pax Tha Collector",
    "album": "Docket 516R",
    "albumSlug": "equity-uprise",
    "page": "album.html?album=equity-uprise",
@@ -1294,7 +1294,15 @@
    "slug": "equity-uprise",
    "name": "Equity Uprise",
    "kind": "act",
-   "id": "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise"
+   "id": "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise",
+   "members": [
+    "mccluster",
+    "angel-kastro",
+    "ocho",
+    "los-fidel",
+    "old-jay",
+    "pax"
+   ]
   },
   {
    "slug": "angel-kastro",
@@ -1318,7 +1326,7 @@
   },
   {
    "slug": "pax",
-   "name": "PAX",
+   "name": "Pax Tha Collector",
    "kind": "person"
   },
   {

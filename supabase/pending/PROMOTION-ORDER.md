@@ -749,3 +749,13 @@ Not changed, and the owner's to decide: the seeded rows whose `credit_line` is t
 "Scored by Dealer Plates.", "Between the albums.") rather than a credit; the Tinderfessions seed's
 "Hitman Records, 2020." (section 16, as its commit made it); and the artist column of the historical rows in
 `20261013180000_qt6kv_creator_isrc_ledger.sql`, which lists Upset and the Equity Uprise songs under McCluster.
+
+## 20. Pax Tha Collector stage name
+
+Pending owner approval for `20261124190000_music_pax_stage_name.sql`. The Docket catalogue
+row for Money or the Power and three artist/producer credits in two archive works use
+the current stage name. The public catalogue and archive readers consume these fields.
+The forward statement returns one JSON rollback receipt. Save the receipt from the
+approved application with its release evidence. Subsequent runs can return an empty
+receipt. The paired rollback takes the original receipt in the session setting
+`mccluster.pax_stage_name_receipt` and checks each current value before restoring it.

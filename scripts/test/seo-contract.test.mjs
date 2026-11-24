@@ -316,13 +316,16 @@ test("the music graph credits only what the site states, and never prints a gate
   const act = nodes(ld).find((n) => n["@id"] === "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise");
   assert.ok(act && types(act).includes("MusicGroup") && act.name === "Equity Uprise", "the Equity Uprise act is its own MusicGroup");
   const album = nodes(ld).find((n) => n["@id"] === "https://matthew.mccluster.org/catalogue.html#album-equity-uprise");
+  assert.deepEqual(act.member.map(m => m.name || m["@id"]), [
+    "https://matthew.mccluster.org/#matthew-mccluster", "Angel Kastro", "Ocho", "Los Fidel", "Old Jay", "Pax Tha Collector"
+  ]);
   assert.equal(album.name, "Docket 516R");
   assert.equal(album.byArtist["@id"], act["@id"]);
   const names = (r) => [].concat(r.contributor || []).map((c) => c.name || c["@id"]);
   const money = recs.find((r) => r.name === "Money or the Power");
   assert.equal(money.byArtist["@id"], act["@id"]);
   assert.deepEqual(names(money), ["Ocho", "https://matthew.mccluster.org/#matthew-mccluster", "Old Jay"]);
-  assert.equal(money.producer.name, "PAX");
+  assert.equal(money.producer.name, "Pax Tha Collector");
   const free = recs.find((r) => r.name === "Please Set Me Free");
   assert.deepEqual(names(free), ["Los Fidel"]);
   assert.equal(free.producer["@id"], "https://matthew.mccluster.org/#matthew-mccluster", "the beat is his: a producer credit, not an artist credit");
@@ -336,7 +339,7 @@ test("the music graph credits only what the site states, and never prints a gate
   assert.equal(wifi.byArtist["@id"], p3.byArtist["@id"]);
   assert.equal(wifi.producer["@id"], p3.producer["@id"]);
   assert.equal(wifi.description, "The PRIM3 blue-team anthem · Scored and produced by McCluster", "its own line is kept beside the credit");
-  assert.doesNotMatch(html + read("data/albums.json") + read("docket-516.html") + read("data/lyrics/environmental-injustice.json") + read("data/lyrics/environmental-injustice-brave.json"), /Evangelist Angel|Angel Castro|Old Jay ft\. Ocho|prod\. Pax\b/, "superseded credits are gone");
+  assert.doesNotMatch(html + read("data/albums.json") + read("docket-516.html") + read("data/lyrics/environmental-injustice.json") + read("data/lyrics/environmental-injustice-brave.json"), /Evangelist Angel|Angel Castro|Old Jay ft\. Ocho|prod\. Pax\b(?! Tha Collector)/, "superseded credits are gone");
   const cat = JSON.parse(read("data/catalogue.json"));
   for (const t of cat.tracks.filter((t) => t.gated)) {
     assert.ok(!html.includes(t.title), `the gated title "${t.title}" must not be written into the page`);

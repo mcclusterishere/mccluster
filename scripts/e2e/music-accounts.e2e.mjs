@@ -67,7 +67,7 @@ const slots = (s) => { const v = JSON.stringify(s); return { mccdb_session: v, m
 const until = (page, fn, arg, timeout = 10000) => page.waitForFunction(fn, arg, { timeout, polling: 100 }).then(() => true, () => false);
 const fits = async (page, label) => {
   const m = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, c: document.documentElement.clientWidth }));
-  check(m.s === m.c, `${label}: at 390 px scrollWidth ${m.s} === clientWidth ${m.c}`);
+  check(m.s === m.c && m.c === 390, `${label}: at 390 px scrollWidth ${m.s} === clientWidth ${m.c}`);
 };
 async function ownerShot(page, name, focus = '.music-launch') {
   if (!SHOTS) return;
@@ -134,6 +134,46 @@ const SCENARIOS = {
         }
         await ctx.close();
       }
+    }
+  },
+
+  async catalogue_roles(browser) {
+    const ctx = await context(browser, makePlane(), 390);
+    try {
+      const page = await ctx.newPage();
+      await seed(page, {});
+      await page.goto(HOUSE + '/listen.html');
+      const artist = (slug) => page.locator('#artistsRow a[href="artist.html?artist=' + slug + '"]');
+      const producer = (slug) => page.locator('#producersRow a[href="artist.html?artist=' + slug + '#produced"]');
+      await producer('pax').waitFor();
+      check(await artist('pax').isVisible() && await producer('pax').isVisible(), 'Pax Tha Collector is selectable as both artist and producer');
+      check(await producer('zakir-elhajoui').locator('.artist__credit-badge').count() === 1, 'Zakir has a release credit badge on the producer card');
+      check(await producer('tazzy-jay').locator('.artist__credit-badge').count() === 0, 'Trackout production alone earns no Equity Uprise badge');
+      await fits(page, 'Artist and producer selection');
+      await artist('equity-uprise').click();
+      const members = page.getByRole('region', { name: 'Members', exact: true });
+      await members.waitFor();
+      check(await members.getByRole('link').count() === 6, 'the group links its six individual artists');
+      check(await page.locator('#artistCreditBadge').isVisible(), 'the group profile displays its release badge');
+      await fits(page, 'Group profile');
+      await members.getByRole('link', { name: 'Pax Tha Collector' }).click();
+      const group = page.getByRole('region', { name: 'Groups', exact: true }).getByRole('link', { name: 'Equity Uprise' });
+      await group.waitFor();
+      check(await page.locator('#artistName').innerText() === 'Pax Tha Collector', 'a group member opens their artist profile');
+      await fits(page, 'Member profile');
+      await group.click();
+      await members.waitFor();
+      await page.goto(HOUSE + '/listen.html');
+      await producer('zakir-elhajoui').click();
+      const produced = page.locator('#produced');
+      await produced.waitFor();
+      check(new URL(page.url()).hash === '#produced' && await produced.locator('button[data-music-play]').count() === 21,
+        'the producer bubble opens all 21 of Zakir’s playable productions');
+      check(await page.locator('#artistCreditBadge').isVisible() && await page.getByRole('region', { name: 'Groups', exact: true }).count() === 0,
+        'Zakir has the release badge on his profile and no group membership');
+      await fits(page, 'Producer profile');
+    } finally {
+      await ctx.close();
     }
   },
 

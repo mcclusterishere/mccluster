@@ -98,14 +98,14 @@ test('in Music, McCluster opens everything he appears on, with the house one lin
   // Owner, 2026-10-14: McCluster's card opened the house. Owner, 2026-11-24, newer: opening an artist shows
   // everything they appear on, and the house does not list his features, so the card opens the artist view;
   // the view's first link is the house, and the M in the bar goes there from every page.
-  assert.match(music, /<a class="artist artist--house" href="artist\.html\?artist=' \+ HOUSE_HANDLE \+ '" data-name="McCluster" aria-label="McCluster">/);
+  assert.match(music, /<a class="artist artist--house" href="artist\.html\?artist=' \+ HOUSE_HANDLE \+ '" data-name="McCluster">/);
   assert.match(await read('js/music-artist.js'), /own\.href = v\.page;/, 'the artist view links to the artist\'s own page: the house for McCluster');
   assert.equal(JSON.parse(await read('data/albums.json')).artists.find((a) => a.slug === 'mccluster').page, 'index.html');
   // Owner, 2026-11-24: one McCluster in the row. His card carries his handle and his own
   // profile row is skipped, so he is never listed as both "the house" and an artist.
   assert.match(music, /var HOUSE_HANDLE = "mccluster";/);
-  assert.match(music, /<b>McCluster<\/b><small>@' \+ HOUSE_HANDLE \+ '<\/small><\/a>/);
-  assert.match(music, /if \(String\(p\.handle\)\.toLowerCase\(\) === HOUSE_HANDLE\) return;/);
+  assert.match(music, /<b>McCluster<\/b><small>@' \+ HOUSE_HANDLE \+ '<\/small>' \+ creditBadge\(/);
+  assert.match(music, /String\(p\.handle\)\.toLowerCase\(\) === HOUSE_HANDLE\) return;/);
   assert.doesNotMatch(music, /The house<|McCluster is the house/);
   assert.match(music, /<img class="artist__pic artist__pic--house" src="assets\/img\/m-mark\.png" alt="" width="56" height="56">/, 'the M as supplied');
   assert.match(music, /href="music-creator\.html\?handle=' \+ encodeURIComponent\(p\.handle\) \+ '"/);

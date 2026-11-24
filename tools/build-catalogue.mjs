@@ -28,7 +28,7 @@
    - The Docket 516R album (slug equity-uprise) is billed to Equity Uprise,
      the program's own music act, per the owner (2026-10-03). Its tracks
      are Equity Uprise records; the performers on each are contributors:
-       Money or the Power      ft. Ocho, McCluster & Old Jay, prod. PAX
+       Money or the Power      ft. Ocho, McCluster & Old Jay, prod. Pax Tha Collector
        Please Set Me Free      Los Fidel, beat by McCluster (a producer
                                credit for him, not an artist credit)
        Environmental Injustice McCluster ft. Angel Kastro & Ocho; produced
@@ -192,6 +192,10 @@ export function buildGraph(cat, albums) {
         "@type": "MusicGroup",
         "@id": EQUITY_UPRISE_ACT["@id"],
         name: "Equity Uprise",
+        member: ((cat.artists || []).find((a) => a.slug === "equity-uprise")?.members || []).map((slug) => {
+          const member = cat.artists.find((a) => a.slug === slug);
+          return member.id ? { "@id": member.id } : { "@type": "Person", name: member.name };
+        }),
         url: `${SITE}/album.html?album=equity-uprise`,
         description: "The music act of Equity Uprise, McCluster Corp's civic program. Its album is Docket 516R."
       },

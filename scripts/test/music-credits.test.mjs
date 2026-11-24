@@ -163,10 +163,10 @@ test("owner: the Equity Uprise album is Equity Uprise's own, with every credit i
   assert.equal(free.credits.producers, undefined, "no producer beyond the stated beat");
   assert.deepEqual(money.credits.featured, ["ocho", "mccluster", "old-jay"]);
   assert.deepEqual(money.credits.producers, ["pax"]);
-  assert.match(money.credit, /ft\. Ocho, McCluster & Old Jay · prod\. PAX$/);
-  /* "prod. PAX" was in the line under the title in the album's track list, and it still is: the owner keeps every
+  assert.match(money.credit, /ft\. Ocho, McCluster & Old Jay · prod\. Pax Tha Collector$/);
+  /* "prod. Pax Tha Collector" was in the line under the title in the album's track list, and it still is: the owner keeps every
      credit the row showed. The two producer facts he set are in that line too. */
-  assert.match(money.sub, /ft\. Ocho, McCluster & Old Jay · prod\. PAX$/, "the track row keeps prod. PAX");
+  assert.match(money.sub, /ft\. Ocho, McCluster & Old Jay · prod\. Pax Tha Collector$/, "the track row keeps prod. Pax Tha Collector");
   assert.match(main.sub, / · Produced by McCluster$/);
   assert.match(brave.sub, / · the GA edition · Produced by Zakir Elhajoui & McCluster$/);
   assert.equal(free.sub, "Los Fidel · beat by McCluster");
@@ -174,7 +174,7 @@ test("owner: the Equity Uprise album is Equity Uprise's own, with every credit i
 
 test("an album's track row says who is on the song and who produced it, each once", () => {
   const row = (slug, title) => C.rowLine(track(slug, title));
-  assert.equal(row("equity-uprise", "Money or the Power"), "Equity Uprise ft. Ocho, McCluster & Old Jay · prod. PAX");
+  assert.equal(row("equity-uprise", "Money or the Power"), "Equity Uprise ft. Ocho, McCluster & Old Jay · prod. Pax Tha Collector");
   assert.equal(row("equity-uprise", "Environmental Injustice (Brave mix)"), "McCluster ft. Angel Kastro & Ocho · the GA edition · Produced by Zakir Elhajoui & McCluster");
   assert.equal(row("audio-engineer", "Outta Tune"), "Produced by McCluster");
   assert.equal(row("audio-engineer", "Trackout"), "Co-produced by Tazzy Jay & McCluster");
@@ -265,12 +265,25 @@ test("owner: the Audio Engineer EP, in order, produced by McCluster, Trackout wi
 test("owner: every credited artist has an entry, and opening one shows everything they appear on", () => {
   const roster = C.roster(DOC);
   assert.equal(roster[0].slug, "mccluster", "McCluster first");
-  const credited = new Set();
-  for (const al of DOC.albums) for (const t of al.tracks) for (const x of C.credited(t)) credited.add(x.slug);
-  assert.deepEqual([...credited].sort(), roster.map((a) => a.slug).sort(), "the roster is exactly everybody credited");
-  for (const slug of ["los-fidel", "angel-kastro", "ocho", "old-jay", "pax", "vvs-made", "jiddy", "tazzy-jay", "raheem", "rahndrx", "hitman-benji", "zakir-elhajoui", "equity-uprise", "prim3", "kkk", "benji-chase"]) {
-    assert.ok(roster.some((a) => a.slug === slug), `${slug} has an entry`);
+  const members = ["mccluster", "angel-kastro", "ocho", "los-fidel", "old-jay", "pax"];
+  assert.deepEqual(C.groupLinks(DOC, "equity-uprise").members.map(a => a.slug), members);
+  for (const member of members) assert.deepEqual(C.groupLinks(DOC, member).groups.map(a => a.slug), ["equity-uprise"]);
+  assert.deepEqual(C.groupLinks(DOC, "zakir-elhajoui").groups, []);
+  const performers = new Set(members);
+  for (const al of DOC.albums) for (const t of al.tracks) for (const x of C.credited(t)) {
+    if (x.group === "own" || x.group === "featured") performers.add(x.slug);
   }
+  assert.deepEqual(roster.map(a => a.slug).sort(), [...performers].sort());
+  const producers = C.producers(DOC);
+  assert.deepEqual(producers.map(a => [a.slug, a.tracks]), [
+    ["mccluster", 40], ["zakir-elhajoui", 21], ["pax", 1], ["tazzy-jay", 1]
+  ]);
+  for (const p of producers) assert.equal(p.href, "artist.html?artist=" + p.slug + "#produced");
+  assert.deepEqual(DOC.artists.filter(a => C.equityCredit(DOC, a.slug)).map(a => a.slug).sort(),
+    [...members, "equity-uprise", "zakir-elhajoui"].sort());
+  const future = {artists: [{slug:"group-member"}, {slug:"equity-uprise", members:["group-member"]}], albums: []};
+  assert.equal(C.equityCredit(future, "group-member"), false, "membership alone supplies no recording credit");
+  assert.ok(C.roster(future).some(a => a.slug === "group-member"), "a member can open their own page before a release");
   /* the owner's example */
   const fidel = C.appearances(DOC, "los-fidel");
   assert.deepEqual([...fidel.own, ...fidel.featured, ...fidel.produced, ...fidel.other].map((x) => [x.album.slug, x.track.title]), [["equity-uprise", "Please Set Me Free"]]);
@@ -309,7 +322,10 @@ async function artistsRow(profiles) {
     body: { classList: { contains: (c) => c === "music-room--listen" } },
     createElement: make,
     querySelector: (q) => (q === ".ls" ? ls : null),
-    getElementById: (id) => { if (id === "artistsRow") return els.artistsWrap ? (els.artistsRow || (els.artistsRow = make())) : null; return els[id] || null; }
+    getElementById: (id) => { if (id === "artistsRow" || id === "producersRow") {
+      const wrap = id.replace("Row", "Wrap");
+      return els[wrap] ? (els[id] || (els[id] = make())) : null;
+    } return els[id] || null; }
   };
   const fetch = async (url) => {
     const u = String(url);
@@ -324,6 +340,7 @@ async function artistsRow(profiles) {
   const html = els.artistsRow.innerHTML;
   artistsRow.fold = window.MCC_ARTISTS_ROW.fold;
   artistsRow.html = html;
+  artistsRow.producers = els.producersRow.innerHTML;
   return [...html.matchAll(/<a class="artist[^"]*" href="([^"]+)"[^>]*>(.*?)<\/a>/g)].map((m) => ({
     href: m[1].replace(/&amp;/g, "&"), name: /<b>(.*?)<\/b>/.exec(m[2])[1], small: /<small>(.*?)<\/small>/.exec(m[2])[1],
     img: /<img/.test(m[2]), initial: (/artist__pic--initial[^>]*>(.*?)<\/span>/.exec(m[2]) || [])[1] || ""
@@ -336,25 +353,32 @@ test("the Artists row: McCluster first, everybody credited, a profile merged by 
     { m_uid: "a", handle: "mccluster", artist_name: "McCluster", avatar_url: "", verification_state: "verified" },
     { m_uid: "b", handle: "benjichase", artist_name: "Benji Chase", avatar_url: AVATAR, verification_state: "none" },
     { m_uid: "c", handle: "newvoice", artist_name: "New Voice", avatar_url: "", verification_state: "none" },
-    { m_uid: "d", handle: "ocho", artist_name: "", avatar_url: "", verification_state: "none" }
+    { m_uid: "d", handle: "ocho", artist_name: "", avatar_url: "", verification_state: "none" },
+    { m_uid: "e", handle: "anothercreator", artist_name: "Zakir Elhajoui", avatar_url: "", verification_state: "verified" }
   ]);
   const names = cards.map((c) => c.name);
   assert.equal(new Set(names.map((n) => n.toLowerCase())).size, names.length, `no name twice: ${names.join(", ")}`);
   assert.deepEqual(cards[0], { href: "artist.html?artist=mccluster", name: "McCluster", small: "@mccluster", img: true, initial: "" }, "McCluster first, once, the M as supplied, opening everything he appears on");
   const roster = C.roster(DOC).filter((a) => a.slug !== "mccluster");
   /* every catalogue artist is in the row, in the registry's order, before the creators the catalogue does not know */
-  assert.deepEqual(cards.slice(1, 1 + roster.length).map((c) => c.name), roster.map((a) => (a.slug === "ocho" ? "@ocho" : a.name)));
-  assert.deepEqual(cards.slice(1 + roster.length).map((c) => c.name), ["New Voice"]);
+  assert.deepEqual(cards.slice(1, 1 + roster.length).map((c) => c.name), roster.map((a) => a.name));
+  assert.deepEqual(cards.slice(1 + roster.length).map((c) => c.name), ["New Voice", "@ocho", "@anothercreator"]);
   /* an artist with no profile: the artist view, their initial, how much they are on */
   const fidel = cards.find((c) => c.name === "Los Fidel");
   assert.deepEqual(fidel, { href: "artist.html?artist=los-fidel", name: "Los Fidel", small: "1 track", img: false, initial: "L" });
-  assert.equal(cards.find((c) => c.name === "Zakir Elhajoui").small, "21 tracks");
+  assert.ok(!cards.some(c => c.name === "Zakir Elhajoui" || c.name === "Tazzy Jay"));
+  assert.match(artistsRow.producers, /artist=zakir-elhajoui#produced[^<]*>[\s\S]*?<b>Zakir Elhajoui<\/b><small>21 tracks<\/small><span class="artist__credit-badge">/);
+  assert.equal((artistsRow.producers.match(/class="artist__credit-badge"/g) || []).length, 3);
+  assert.equal((artistsRow.html.match(/class="artist__credit-badge"/g) || []).length, 7);
+  assert.equal(cards.find(c => c.name === "Ocho").href, "artist.html?artist=ocho");
+
   assert.equal(cards.find((c) => c.name === "Equity Uprise").href, "artist.html?artist=equity-uprise");
   assert.equal(cards.find((c) => c.name === "PRIM3").href, "prim3-artist.html", "an act with its own page opens it");
   /* an artist with a profile: their own page and picture, once (handle benjichase is slug benji-chase; handle ocho is slug ocho) */
   const benji = cards.filter((c) => /benji chase/i.test(c.name));
   assert.deepEqual(benji, [{ href: "music-creator.html?handle=benjichase", name: "Benji Chase", small: "@benjichase", img: true, initial: "" }]);
-  assert.equal(cards.filter((c) => /ocho/i.test(c.name)).length, 1);
+  assert.equal(cards.find(c => c.name === "@ocho").href, "music-creator.html?handle=ocho");
+  assert.equal(cards.find(c => c.name === "@anothercreator").small, "@anothercreator · verified");
   /* nothing is drawn for anybody: a picture is a stored avatar or the supplied M, else a letter */
   for (const c of cards) assert.ok(c.img || /^[A-Z0-9@]$/.test(c.initial), `${c.name}: an avatar or an initial`);
   /* with no directory at all the catalogue's artists are still listed */
@@ -368,13 +392,13 @@ test("the Artists row: McCluster first, everybody credited, a profile merged by 
   /* a search narrows the row by name: every card carries the name it is found by, and a hidden card is gone */
   assert.match(css, /\.artist\[hidden\] \{ display: none; \}/);
   assert.match(artistsRow.html, /<a class="artist" href="artist\.html\?artist=los-fidel" data-name="Los Fidel">/);
-  assert.match(artistsRow.html, /<a class="artist artist--house" href="artist\.html\?artist=mccluster" data-name="McCluster" aria-label="McCluster">/);
+  assert.match(artistsRow.html, /<a class="artist artist--house" href="artist\.html\?artist=mccluster" data-name="McCluster">/);
   const fold = artistsRow.fold;
   assert.equal(fold("VVS Madè"), fold("vvs made"), "an accent is not a different letter");
   assert.equal(fold("  Los   FIDEL "), "los fidel");
   const community = read("js/music-community.js");
   assert.match(community, /searchBox\.addEventListener\("input", narrowArtists\);/);
-  assert.match(community, /wrap\.hidden = words\.length > 0 && shown === 0;/, "a search that names no artist takes the row out of the way");
+  assert.match(community, /wrap\.hidden = \(hideWhenEmpty \|\| words\.length > 0\) && shown === 0;/, "a search that names no artist takes the row out of the way");
   assert.match(read("listen.html"), /js\/music-credits\.js\?v=__STAMP__"><\/script>\n  <script src="js\/listen\.js/, "the credits reader loads before the room");
 });
 
@@ -394,9 +418,11 @@ test("the artist view renders an artist's appearances, grouped by role, playable
   assert.match(html, /<small>Docket 516R &middot; Los Fidel · beat by McCluster<\/small>/, "the album and the generated credit line");
   assert.match(html, /<span class="d">3:23<\/span>/);
   const eu = V.view(DOC, "equity-uprise");
-  assert.equal(eu.summary, "Act · on 4 tracks in the McCluster catalogue");
+  assert.equal(eu.summary, "Group · on 4 tracks in the McCluster catalogue");
   assert.deepEqual(eu.sections.map((s) => [s.key, s.count]), [["own", 4]]);
   const z = V.view(DOC, "zakir-elhajoui");
+  assert.match(z.summary, /^Producer · /);
+  assert.match(V.view(DOC, "pax").summary, /^Artist and producer · /);
   assert.deepEqual(z.sections.map((s) => [s.title, s.count]), [["Produced", 21], ["Also credited", 1]]);
   const m = V.view(DOC, "mccluster");
   assert.deepEqual(m.sections.map((s) => s.key), ["own", "featured", "produced"]);
@@ -426,6 +452,10 @@ test("the artist view renders an artist's appearances, grouped by role, playable
   assert.equal(who("bc.official", "Benji Chase"), "benji-chase", "or the same name");
   assert.equal(who("royce.r01", "Royce"), null, "a creator the catalogue does not credit gets no line");
   assert.equal(who("", ""), null);
+  assert.equal(who("another-account", "Ocho"), null, "a chosen account display name cannot claim release verification");
+  assert.equal(who("ocho", "Ocho"), null, "an artist slug alone does not establish an account link");
+  assert.equal(who("m.ccluster", "McCluster"), null);
+  assert.equal(who("mccluster", "McCluster"), "mccluster");
   const creator = read("music-creator.html");
   /* a creator's own front page lists everything the catalogue credits them on, on the page itself */
   assert.match(creator, /<section class="ap-singles ap-cat" id="apCatalogue" aria-labelledby="apCatalogueTitle" hidden><\/section>/);
@@ -463,7 +493,7 @@ test("search finds a track by any credited artist's name", () => {
   const names = (slug, title) => C.names(DOC, track(slug, title));
   assert.deepEqual(names("vaunt-ep", "Vaunt (Acoustic)"), ["McCluster", "Zakir Elhajoui", "Zakir"], "the full name, though the line says guitar by Zakir");
   assert.deepEqual(names("equity-uprise", "Please Set Me Free"), ["Equity Uprise", "Los Fidel", "McCluster"]);
-  assert.deepEqual(names("equity-uprise", "Money or the Power"), ["Equity Uprise", "Ocho", "McCluster", "Old Jay", "PAX"]);
+  assert.deepEqual(names("equity-uprise", "Money or the Power"), ["Equity Uprise", "Ocho", "McCluster", "Old Jay", "Pax Tha Collector"]);
   assert.ok(names("tinderfessions", "One Gon' Ride (feat. Jiddy)").includes("Jiddy"));
   assert.ok(names("audio-engineer", "Trackout").includes("Tazzy Jay"));
 });
@@ -538,6 +568,19 @@ test("staged SQL: the plane's three catalog rows that said something else take t
   assert.doesNotMatch(code(sql) + code(back), /\b(insert|delete|drop|alter|create|truncate|grant)\b/i, "words only: no row added or removed, no schema");
   for (const words of [upset.artist, main.credit, brave.credit]) assert.ok(back.includes(`='${words}';`), "the rollback is guarded by the words this file wrote");
   assert.match(read("supabase/pending/PROMOTION-ORDER.md"), /## 19\. Music catalog rows: the owner's credit rules of 2026-11-24[\s\S]*20261124130000_music_catalog_owner_credits\.sql/);
+});
+
+test("the staged Pax correction follows the existing catalogue key, participant and credited roles", () => {
+  const stem = "supabase/pending/20261124190000_music_pax_stage_name";
+  const forward = read(stem + ".sql"), rollback = read(stem + ".rollback.sql");
+  const oldLine = "ft. Ocho, McCluster & Old Jay · prod. PAX";
+  const newLine = oldLine.replace("PAX", C.index(DOC).pax.name);
+  assert.ok(read("supabase/migrations/20261003233747_action_network_live_governance_v1.sql").includes(oldLine));
+  assert.ok(forward.includes("set credit_line='" + newLine + "'"));
+  assert.ok(rollback.includes("set credit_line='" + oldLine + "'"));
+  assert.match(forward, /credit->>'participant_slug' = 'paxton-cobb' and credit->>'role' = any\(l.roles\)/);
+  assert.match(forward, /order by position/);
+  assert.match(rollback, /w\.public_data->'credits' = a\.after/);
 });
 
 test("CI runs the credit generators' own checks and these rules", () => {

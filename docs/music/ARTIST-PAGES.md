@@ -126,14 +126,15 @@ they appear on.
   carry the structure into `data/catalogue.json` and the catalogue's JSON-LD.
 - **An album's track rows** (`album.html`) print who is on each song and who
   produced it (`rowLine`: a hand-written subtitle first, then the credit
-  line, each once). "prod. PAX" stays in the Money or the Power row.
-- **The Artists row** on `listen.html` (`js/music-community.js`) lists
-  McCluster, then every registered artist who is on at least one track, then
-  the creators the catalogue does not know. A creator profile with the same
-  handle or name is the same artist and is drawn once, with their page and
-  picture. Anyone else shows their initial. On a phone it is a rail; from
-  600px it wraps so no card is off the edge. The room's search narrows it to
-  the artists it names (accents and case do not matter).
+  line, each once). "prod. Pax Tha Collector" stays in the Money or the Power row.
+- The Artists row lists performers and group members, then active creators. The Producers
+  row links to the Produced section for each person with a production credit. A person
+  can appear in both rows. Both respond to the listening room's search.
+- Docket 516R belongs to Equity Uprise. Its registry entry lists the six member artist
+  slugs. Each member links back to the group. The Equity Uprise verified badge follows
+  artist and producer credits on releases billed to the group. Membership alone does
+  not grant the badge. A creator account can display it when the catalogue explicitly
+  identifies its handle. Account verification remains in the creator's handle line.
 - **Opening an artist shows everything they appear on.** Every card opens
   the artist view, with two exceptions that already list everything: PRIM3
   opens `prim3-artist.html` (all its songs are on the one record that names

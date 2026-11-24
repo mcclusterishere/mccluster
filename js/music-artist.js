@@ -54,6 +54,12 @@
     if (!artist) return null;
     var seen = C.appearances(doc, slug);
     var total = C.count(doc, slug);
+    var relations = C.groupLinks(doc, slug);
+    var label = artist.kind === "act" ? "Act" : "Artist";
+    if (relations.members.length) label = "Group";
+    else if (seen.produced.length) {
+      label = seen.own.length || seen.featured.length || relations.groups.length ? "Artist and producer" : "Producer";
+    }
     var sections = GROUPS.map(function (g) {
       var items = seen[g.key];
       return { key: g.key, title: g.title, why: g.why, count: items.length,
@@ -63,8 +69,8 @@
       slug: artist.slug, name: artist.name, kind: artist.kind, initial: initialOf(artist.name), total: total,
       /* their own page, when they have one (data/albums.json artists[].page, a same-site .html file) */
       page: /^[a-z0-9-]+\.html$/.test(artist.page || "") ? artist.page : "",
-      summary: (artist.kind === "act" ? "Act" : "Artist") + " · on " + total + (total === 1 ? " track" : " tracks") + " in the McCluster catalogue",
-      sections: sections
+      summary: label + " · on " + total + (total === 1 ? " track" : " tracks") + " in the McCluster catalogue",
+      sections: sections, relations: relations, equityCredit: C.equityCredit(doc, slug)
     };
   }
 
@@ -77,6 +83,10 @@
     var found = null;
     ((doc && doc.artists) || []).forEach(function (a) {
       if (found || !a || !a.slug) return;
+      if (root.MCC_CREDITS.equityCredit(doc, a.slug)) {
+        if (a.handle && a.handle.toLowerCase() === String(handle || "").toLowerCase()) found = a;
+        return;
+      }
       var h = same(handle);
       if ((h && (h === same(a.slug) || (a.handle && h === same(a.handle)))) || (name && same(name) === same(a.name))) found = a;
     });
@@ -88,7 +98,6 @@
   /* THE SAME LIST ON A CREATOR'S OWN FRONT PAGE, in that page's own rows (css/music-artist.css .ap-track): every
      track the catalogue credits them on, in the view's order, each one playable and linked to its album, with what
      they did there said when the record is not their own. The cover is shown whole (contain), never cropped. */
-  var ROLE = { featured: "featured", lead: "lead", producer: "producer" };
   function creatorRows(doc, slug) {
     var C = root.MCC_CREDITS, seen = C.appearances(doc, slug), done = {}, rows = [];
     GROUPS.forEach(function (g) {
@@ -115,6 +124,16 @@
   }
   root.MCC_ARTIST_VIEW.creatorRows = creatorRows;
 
+  function relationMarkup(relations) {
+    return [["Members", relations.members], ["Groups", relations.groups]].map(function (pair) {
+      if (!pair[1].length) return "";
+      return '<section class="artist-relations" aria-label="' + pair[0] + '"><h2 class="lib__k">' + pair[0] +
+        '</h2><ul>' + pair[1].map(function (a) {
+          return '<li><a href="artist.html?artist=' + esc(encodeURIComponent(a.slug)) + '">' + esc(a.name) + '</a></li>';
+        }).join("") + '</ul></section>';
+    }).join("");
+  }
+
   var doc = root.document;
   if (!doc || !doc.getElementById) return;
   function el(id) { return doc.getElementById(id); }
@@ -124,27 +143,30 @@
      opening an artist shows everything they appear on), with a link to the same list grouped by role. */
   var line = el("apCatalogue");
   if (line) {
-    var handle = "";
-    try { handle = String(new URLSearchParams(root.location.search).get("handle") || "").trim().toLowerCase(); } catch (e) { handle = ""; }
+    var nameEl = el("creatorArtist");
+    if (!nameEl) return;
     fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (albums) {
       if (!albums) return;
-      function show(name) {
-        var a = artistFor(albums, handle, name);
+      function show() {
+        var handle = nameEl.dataset.creatorHandle;
+        if (!handle) return false;
+        var a = artistFor(albums, handle, nameEl.dataset.catalogueName);
         var n = a ? root.MCC_CREDITS.count(albums, a.slug) : 0;
-        if (!n) return false;
+        if (!a) return false;
+        var relations = root.MCC_CREDITS.groupLinks(albums, a.slug);
+        if (!n && !relations.groups.length && !relations.members.length) return false;
+        el("creatorEquityCredit").hidden = !root.MCC_CREDITS.equityCredit(albums, a.slug);
         line.innerHTML = '<h2 class="ap-label" id="apCatalogueTitle">In the McCluster catalogue</h2>' +
-          '<ol class="ap-tracks">' + creatorRows(albums, a.slug) + "</ol>" +
+          relationMarkup(relations) + '<ol class="ap-tracks">' + creatorRows(albums, a.slug) + "</ol>" +
           '<p class="ap-cat__more"><a href="artist.html?artist=' + esc(encodeURIComponent(a.slug)) + '" data-cta="creator-catalogue">' +
           n + (n === 1 ? " track" : " tracks") + " credited to " + esc(a.name) + ", grouped by role</a></p>";
         line.hidden = false;
         return true;
       }
-      if (show("")) return;
-      /* no match on the handle: try the artist's name once the profile has written it */
-      var nameEl = el("creatorArtist");
-      if (!nameEl || typeof root.MutationObserver !== "function") return;
-      var seen = new root.MutationObserver(function () { if (show(nameEl.textContent)) seen.disconnect(); });
-      seen.observe(nameEl, { childList: true, characterData: true, subtree: true });
+      /* Either the active creator record or the catalogue can arrive first. */
+      if (show() || typeof root.MutationObserver !== "function") return;
+      var seen = new root.MutationObserver(function () { show(); seen.disconnect(); });
+      seen.observe(nameEl, { attributes: true, attributeFilter: ["data-creator-handle"] });
     }).catch(function () { /* the page is the creator's; the line is an extra */ });
     return;
   }
@@ -169,18 +191,20 @@
     el("artistName").textContent = v.name;
     el("artistPic").textContent = v.initial;
     el("artistSummary").textContent = v.summary + ".";
+    el("artistCreditBadge").hidden = !v.equityCredit;
     if (v.page) {
       var own = el("artistOwn");
       own.href = v.page;
       own.textContent = "Open " + v.name + "’s page →";
       own.hidden = false;
     }
-    el("artistSections").innerHTML = v.sections.map(function (s) {
-      return '<section class="ls__sec" aria-label="' + esc(s.title) + '" data-group="' + esc(s.key) + '">' +
+    el("artistSections").innerHTML = relationMarkup(v.relations) + v.sections.map(function (s) {
+      return '<section class="ls__sec" id="' + s.key + '" aria-label="' + esc(s.title) + '" data-group="' + esc(s.key) + '">' +
         '<p class="lib__k">' + esc(s.title) + "</p>" +
         '<p class="lib__why">' + esc(s.why) + "</p>" +
         '<ul class="tr">' + s.html + "</ul></section>";
     }).join("");
+    if (root.location.hash === "#produced" && el("produced")) el("produced").scrollIntoView();
     /* music_artist_view is a new event name: js/analytics.js holds it (AWAITING_APPROVAL) and sends nothing until
        Matthew approves measuring it and it is added to the measurement dictionary */
     if (root.MCC_TRACK) root.MCC_TRACK("music_artist_view", { artist: v.slug, tracks: v.total });

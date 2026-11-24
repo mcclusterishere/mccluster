@@ -284,6 +284,8 @@
     if (desc) desc.setAttribute("content", (p.bio || (p.artist_name + " on McCluster Music.")).slice(0, 300));
     $("creatorHandle").textContent = "@" + p.handle + (p.verification_state === "verified" ? " · verified" : "") + " · McCluster Music";
     setName(p.artist_name);
+    $("creatorArtist").dataset.catalogueName = p.artist_name || "";
+    $("creatorArtist").dataset.creatorHandle = p.handle;
     $("creatorBio").textContent = p.bio || "Independent artist on McCluster Music.";
     var avatar = PAGE.safeArtwork(p.avatar_url);
     if (avatar) { $("creatorAvatar").src = avatar; $("creatorAvatar").alt = p.artist_name; $("creatorAvatar").hidden = false; }
