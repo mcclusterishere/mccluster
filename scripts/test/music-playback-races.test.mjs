@@ -1515,6 +1515,103 @@ test('away from the listen page the engine tells the bar nothing: there its midd
   }
 });
 
+/* THE MUSIC TAB FOLLOWS THE PLAYER ON THE LISTEN PAGE (Release 1, PR #825's CI: music-background "browser", "listen,
+   Enter again"). After Enter paused the song and Enter played it again, the song played and the mini player said
+   Pause, but the bar's Music tab said "Play music" for as long as the song played. js/tabbar.js's transport() looks
+   once more, one 0 ms timer after a tap, for the page's answer, and said "nothing is playing" when SOUND_ON was the
+   value it had before the tap. A Pause is answered at once (playing:false); a Play right after it, or the first tap's
+   own queued timeupdate seen after it, is answered playing:true; the value is back where it was, and the late look
+   took it for no answer and said playing:false. The engine says only what changes, so it never said true again. Here
+   the bar's transport block runs beside the real engine on one hand-moved clock: the engine answers the second tap
+   before either timer can run, the order a busy CI runner produced by chance, every time. */
+function barOn(e) {
+  const src = read('js/tabbar.js');
+  const from = src.indexOf('  var SOUND_ON = false'), to = src.indexOf('  /* the veil the departure rides behind */');
+  assert.ok(from !== -1 && to > from, 'js/tabbar.js still has its transport block');
+  const classes = (set) => ({
+    toggle(c, on) { if (on === undefined ? !set.has(c) : on) set.add(c); else set.delete(c); },
+    add(c) { set.add(c); }, remove(...c) { c.forEach((x) => set.delete(x)); }, contains: (c) => set.has(c)
+  });
+  const tab = { cls: new Set(), attrs: { 'aria-label': 'Music' } };
+  Object.assign(tab, {
+    classList: classes(tab.cls),
+    hasAttribute: (k) => k in tab.attrs, getAttribute: (k) => (k in tab.attrs ? tab.attrs[k] : null),
+    setAttribute: (k, v) => { tab.attrs[k] = String(v); }, removeAttribute: (k) => { delete tab.attrs[k]; }
+  });
+  /* the page's own <html> classes, and no Now Playing helper tag to wait for (the harness binds its stand-in) */
+  Object.assign(e.win.document, { querySelector: () => null, documentElement: { classList: classes(new Set()) } });
+  const heard = [];
+  e.win.addEventListener('mcc:nowplaying', (ev) => heard.push(JSON.parse(JSON.stringify(ev.detail))));
+  e.win.__tab = tab;
+  vm.runInContext('(function () { "use strict";\n' +
+    /* a one-tab dock, and the names the block reads from the rest of js/tabbar.js */
+    'var dock = { querySelector: function (s) { return s === \'[data-appnav="music"]\' ? window.__tab : null; } };\n' +
+    'var HOUSE = "https://matthew.mccluster.org/", WINGS = { music: { home: "listen.html" } }, worldAudioPending = null, worldCancelTap = null;\n' +
+    'function onPage(dest) { return dest === "listen.html"; }\n' +
+    'function emit(n, d, cancelable) { var ev = null; try { ev = new CustomEvent(n, { detail: d || {}, cancelable: !!cancelable }); window.dispatchEvent(ev); } catch (e) {} return !!(ev && ev.defaultPrevented); }\n' +
+    src.slice(from, to) + '\nwindow.__bar = { transport: transport };\n})();', e.win, { filename: 'js/tabbar.js' });
+  return {
+    transport: () => e.win.__bar.transport(),
+    told: () => tab.attrs['aria-label'],
+    sound: () => tab.cls.has('is-sound'),
+    heard
+  };
+}
+
+test('on the listen page a Play straight after the bar\'s Pause, before its look for an answer, leaves the Music tab the player\'s Pause (PR #825 CI)', async (t) => {
+  /* the second tap is the CI case; any resume while the first tap's look is pending reached the same state */
+  for (const [how, resume] of [
+    ['a second tap on the Music tab', (e, bar) => bar.transport()],
+    ['the mini player\'s Play', (e) => e.music.toggle()],
+    ['the lock screen\'s play', (e) => e.np().spec.play()]
+  ]) await t.test(how, async () => {
+    const c = clockOf();
+    const e = engine({ clock: c, path: '/listen.html' });
+    const bar = barOn(e);
+    await e.play('Full song');
+    assert.equal(bar.told(), 'Pause music', how);
+    assert.equal(bar.sound(), true, how);
+    bar.transport();                                 // Pause: the engine answers at once (playing:false)
+    assert.equal(e.music.audio.paused, true, how);
+    assert.equal(bar.told(), 'Play music', how);
+    resume(e, bar);                                  // Play, before the first tap's 0 ms look has run
+    assert.equal(e.music.audio.paused, false, how);
+    await c.tick(1);                                 // the looks run now, after the engine said the song plays again
+    assert.equal(bar.sound(), e.music.playing(), `${how}: the tab follows the engine, as the mini player does`);
+    assert.equal(bar.told(), 'Pause music', `${how}: told as what a tap does (it said "Play music" over a playing song)`);
+    assert.equal(e.attr('musicMiniPlay', 'aria-label'), 'Pause', how);
+    assert.deepEqual(bar.heard.filter((d) => d.href !== '#np'), [], `${how}: nothing but the player spoke for the music`);
+    for (let i = 0; i < 8; i++) { e.music.audio.currentTime += .25; e.music.audio.fire('timeupdate'); }
+    assert.equal(bar.told(), 'Pause music', `${how}: and it stays so while the song plays`);
+    bar.transport();                                 // one more tap is the player's Pause (stuck, it was a Play that did nothing)
+    assert.equal(e.music.audio.paused, true, `${how}: one more tap pauses the song`);
+    await c.tick(1);
+    assert.equal(bar.told(), 'Play music', how);
+  });
+});
+
+test('the bar still says nothing plays when a page never answers its Pause (the look\'s own job, kept)', async () => {
+  const c = clockOf();
+  const e = engine({ clock: c, path: '/listen.html' });
+  const bar = barOn(e);
+  /* a deck that said it plays and then never answers the bar: a refusing deck, or a later player that forgets */
+  e.win.MCC_NP_PLAY = () => {};
+  e.win.MCC_NP_PAUSE = () => {};
+  e.win.dispatchEvent(new e.win.CustomEvent('mcc:nowplaying', { detail: { title: 'Deck song', href: '#np', playing: true } }));
+  assert.equal(bar.told(), 'Pause music');
+  bar.transport();
+  bar.transport();                                 // two taps, neither answered
+  assert.equal(bar.told(), 'Pause music', 'nothing answered yet');
+  await c.tick(1);
+  assert.equal(bar.sound(), false, 'the one thing the bar can see for certain: nothing is playing');
+  assert.equal(bar.told(), 'Play music');
+  assert.deepEqual(bar.heard.slice(1), [{ title: 'I AM HERE', href: 'https://matthew.mccluster.org/album.html', playing: false }],
+    'said once, on the wire, for the pages that listen there');
+  bar.transport();                                 // a Play the page never answers: already silent, nothing more to say
+  await c.tick(1);
+  assert.equal(bar.heard.length, 2);
+});
+
 /* ------------------------------------------------------------------------------------------------------
    MUTED LASTS (the Release 1 dock fix, 2026-11-23). The installed app's dock gives the player's trouble words a row of
    their own above its controls: they do not fit the song line, and they pass in seconds. Muted came the same way, in

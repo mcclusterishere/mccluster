@@ -1098,6 +1098,8 @@
      a class on a tab does not survive a wing opening and closing mid-song.
      Every rebuild calls paintSound() for exactly that reason. */
   var SOUND_ON = false;
+  /* every word the bar has heard on the wire, whoever said it, and every tap that waits for one (transport, below) */
+  var SOUND_HEARD = 0, transportTap = 0;
   function paintSound() {
     var mt = dock.querySelector('[data-appnav="music"]');
     /* a wing held open over the tab's column: no tab, so the installed app's dock keeps its own Play/Pause meanwhile */
@@ -1128,6 +1130,7 @@
     document.documentElement.classList.toggle("mcc-music-tab-transport", plays);
   }
   window.addEventListener("mcc:nowplaying", function (e) {
+    SOUND_HEARD++;
     SOUND_ON = !!(e.detail && e.detail.playing);
     paintSound();
   });
@@ -1174,7 +1177,7 @@
      the deck is doing, then do the other thing. SOUND_ON stands in for
      deck.paused, because the bar cannot see the deck from here. */
   function transport() {
-    var was = SOUND_ON;
+    var was = SOUND_ON, heard = SOUND_HEARD, tap = ++transportTap;
     if (!was) window.MCC_NP_PLAY();
     else window.MCC_NP_PAUSE();
     if (window.MCC_TRACK) window.MCC_TRACK("bar_transport", { play: !was, page: location.pathname.split("/").pop() });
@@ -1184,10 +1187,16 @@
        say out loud the one thing we can still see for certain, which is that
        nothing is playing. js/volumecall.js and the sound beacon in
        js/main.js both listen here and would otherwise sit holding a state
-       the bar has already left. */
+       the bar has already left.
+       ANSWERED MEANS "SPOKE SINCE THE TAP", NOT "SOUND_ON MOVED" (Release 1, PR #825's CI). The listen page's player
+       answers a Pause at once; a Play straight after it (a second tap, the mini player, the lock screen), or the first
+       tap's own late media event seen after that Play, answers "playing" before this timer runs. SOUND_ON is then back
+       where it was, and read by its value two answers looked like none: this said "nothing is playing" over the song the
+       player had just said was playing, and the player, which says only what changes, never said it again. */
     setTimeout(function () {
-      if (SOUND_ON !== was) return; // the page answered; nothing to add
-      if (!was) return;             // we asked for sound and got none: already silent, already painted
+      if (tap !== transportTap) return;   // a newer tap is the one waiting for the page now
+      if (SOUND_HEARD !== heard) return;  // the page answered (whatever it said since the tap); nothing to add
+      if (!was) return;                   // we asked for sound and got none: already silent, already painted
       SOUND_ON = false;
       paintSound();
       emit("mcc:nowplaying", { title: "I AM HERE", href: HOUSE + "album.html", playing: false });
