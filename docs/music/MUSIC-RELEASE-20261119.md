@@ -1779,7 +1779,8 @@ event taxonomy lists neither `music_interrupted` nor `music_error`.
   cover itself when a song has no film; the blurred copy behind the Now Playing cover is gone; the living sleeve is
   no longer mounted on the album, and `js/env.js` is loaded by no page now (the file stays); the embedded player
   shows its cover whole; an artist page's hero is a banner or an avatar, never a cropped cover. No artwork file
-  changed and nothing was drawn: the supplied covers are only scaled.
+  changed and nothing was drawn: the supplied covers are only scaled. The review round below brought in the album
+  page's own shelf of albums (QW-R1) and the pocket, the corner player of the other pages (QW-R2).
 * **Q4, a creator is never asked to join.** Listen's Creator Studio box answers by account: the join pitch for a
   guest (Sign in) or a member (Become a creator), "Creator Studio" with "Open Creator Studio" for a creator or the
   owner, and nothing at all until the account is known (at most 6 s); it follows a sign-in elsewhere and the token's
@@ -1796,7 +1797,9 @@ event taxonomy lists neither `music_interrupted` nor `music_error`.
   play is his unchanged path: the gate answers operator, one claim, the master. The pocket, the embedded player and
   keeping an album offline never take it (`js/pip.js`, `embed.html`, `js/label.js`), the direct checkout never puts
   a buy button on its row (`js/music-direct.js`), and the M5 shell keeps the pop-up when a view covers the page
-  (`js/music-shell.js`).
+  (`js/music-shell.js`). For the pocket that held only for its stepping from song to song: the review round below
+  found a record of the song, banked before the hold, still mounting there, and a link to the song seating it in the
+  album's deck. Neither does now (QW-R3, QW-R6).
 * **Q6, an album stops after its last song.** The album: after the last song it stops there, paused at its end, the
   lock screen paused; Next on the last song stops it at the end; Previous on the first starts it again; Play at the
   end starts the last song again (`album.html`). The listen engine's queue is the record (an album, or a creator's
@@ -1950,4 +1953,105 @@ left the top (the house scrolls smoothly, and the shot's own second scroll cance
 scrolls straight to what it shows and waits. Seen and not changed, because they were there at `5d8c533e` and lie
 outside these seven: before a song's length is known the album's deck bar reads "0:00 · I AM HERE" on every album
 (`album.html`, a placeholder from the first album); a search on Listen lists its songs below the Creator Studio box
-and the Artists row; and the album page's own shelf of albums sets each whole cover on its card's grey ground.
+and the Artists row; and the album page's own shelf of albums sets each whole cover on its card's grey ground. The
+review round below took that ground away (QW-R1).
+
+### Review and fixes
+
+An independent review of the quick wins at `3b71aa7b`, against `5d8c533e`, found four blockers (QW-R1 to QW-R4), four
+minor findings (QW-R5 to QW-R8) and four nits. This round took the blockers and the minors. Each was reproduced first
+at the branch head `1580bde5` (the quick wins with the platform's P0 merges on top, which touch none of these files):
+the review's own Chromium probes, run again, and for the pop-up a probe of this round's own, because the review's
+stops early (its page script reads a constant defined only outside the page). Each then got tests that fail at
+`1580bde5`, then its fix; none was set aside. Nothing went to `main`, and nothing was deployed, enabled or applied; no
+SQL, `supabase/`, Worker, auth or session file changed, and no production data was read or written in this round.
+
+| Finding | At `1580bde5` (reproduced) | Now |
+| --- | --- | --- |
+| QW-R1 (blocker) | The album page's shelf of albums: `css/music-director.css` gives it the rule colour as its ground and a 1 px frame, and the v2 cards over it are clear, so a grey plate (rgb 53, 52, 50 on the page's 5, 5, 6) filled the empty part of the three covers that are not square (I AM HERE, Whip Equipped, CIA Mind Control) and the clear pixels of the M, PRIM3 and VAUNT marks, at 390 and 1280 px. The marks' plate was there before the quick wins; the covers' showed once they were whole. The slice's browser check read only each image's own background, so it passed | The shelf gives no ground and no frame and keeps the rail's 12 px spacing, as Listen's shelf does: one rule in the whole-covers block of `css/music-system-v2.css`. The empty part of every square, and every mark's clear pixels, show the page |
+| QW-R2 (blocker) | The pocket, the corner player of every page outside music, cut a song's album cover into a 74 by 56 px tile (64 by 50 on a phone), set it on black with 11 px corners and laid a dark gradient over it. 12 of the 41 songs have their album's cover as their picture: nine on Whip Equipped, three on CIA Mind Control | When a song's picture is its album's cover (it has no film, and its still is that cover or it has none of its own), the pocket shows the whole cover in a square, 50 px on a phone and 56 px wider, on the player's own panel with nothing over it: no gradient, no lyric line, no corner cut (`js/pip.js`, `css/style.css`). A film keeps its tile. The film also follows the song the pocket rolls into; before, the first song's film went on playing |
+| QW-R3 (blocker) | A pocket record of the closing song, banked before the hold with its public preview, mounted on every page outside music with the song's name, and its Play read the preview to its end; a member's shared row (`listener_state`, which exists in production) carried it to the member's other devices | Before it mounts, the pocket asks the catalogue whether the record is its to carry: a held or gated song, found by its album and title or by its file, is not (today only the closing song is either), so nothing mounts and nothing is read (`js/pip.js`). This device's record of it is put away; a shared row naming it is left as it is and not copied here. The catalogue (`data/albums.json`, from the browser's cache when it has it) is waited for at most 2.5 s, beside the lock screen's helper the pocket already waited for; unanswered, a preview file is never the pocket's to play and any other record mounts as before |
+| QW-R4 (blocker) | A member's song test card for the closing song said "Unlocks after you spend your earned play on it in the album player", beside the pop-up saying it plays only for members with a full profile and a short questionnaire; since the hold no member can spend a play on it. Production's song test for the album has that card (the review's read-only count) | For everyone it is held for, its card says what the member's pop-up says, word for word (`js/song-test.js`). The house owner's card keeps the earned-play line: his own play is how it opens for him. The album decides in one place whom the song is held for and tells the cards; it draws them again only when that changes (the gate's first answer, signing in or out), so a card someone is writing is not drawn again under them each time the gate is asked (`album.html`) |
+| QW-R5 (minor) | A tap on the pop-up's own padding closed it (6 px in from a corner, or beside the line): a click on a dialog's padding has the dialog as its target, as a click on the backdrop does | Only a tap outside the pop-up's box closes it; Escape and Close work as before (`js/gated-audio.js`) |
+| QW-R6 (minor) | A link to the closing song (the catalogue's registry and a Listen search row both open `album.html?album=cia-mind-control&t=` with it), or this device's stale seat on it, seated it in the deck with no source. Chromium reports an empty source as error 4, and the album sent `music_interrupted` (reason error, at 0 s, path public) for a song nobody could play, for a guest and for a member | A held song is never seated by a link, this device's seat, the pocket or the shared row: a link to it opens the album with nothing chosen, a stale seat is passed over, and a tap on the row still says why. An empty held source is not counted as a dropped connection either (`album.html`). The house owner's own play seats it through its claim, as before |
+| QW-R7 (minor) | The house owner's own play of the closing song banked its signed one-play URL in the pocket, and the pocket's save sent it to his shared row | Nothing of the held song is banked: while it plays the pocket holds nothing, and nothing of it is sent to his shared row (`album.html`). His play is unchanged: one claim, the master |
+| QW-R8 (minor) | The heart on every album row said "Save to My Rotation", a list no music page shows since the song rails were switched off; the saves were kept and shown nowhere | The heart says "Save" and the song's name, the words Listen's heart uses, and, as Listen's does, whether the song is saved (pressed or not) (`album.html`). Where saves are listed is Matthew's to say (below) |
+
+**Tests, failing at `1580bde5` and passing after.** The new tests were run on `1580bde5` with its sources untouched:
+
+| Test | At `1580bde5` | After |
+| --- | --- | --- |
+| `scripts/test/music-quick-wins.test.mjs` (10 new: one or two per finding) | all 10 fail, each on its finding | 43 of 43 (the slice's 33 and these 10) |
+| `scripts/e2e/music-quick-wins.e2e.mjs` (6 new scenarios) | 37 of 79 checks pass (run with the final browser file). Every failure is a finding: the album shelf's plate behind the three wide covers and the M, PRIM3 and VAUNT marks, and its ground and frame, at 390 and 1280 (14); the pocket's crop at 320, 390 and 1280 (6); the pocket mounting and reading the closing song, from this device and from a shared row (5); the member's card at 390 and 320 (2); three taps on the pop-up's padding (3); the link and the stale seat, seated with error 4 and `music_interrupted` on the wire, for a guest and for a member (8); the house owner's signed URL kept in the pocket and posted to his shared row (2); the heart's words and its pressed state (2). The 37 that pass are controls: Listen's and the catalogue's shelves, a film's tile, the owner's card, the backdrop closing the pop-up, nothing of the closing song read after a link or a seat and a tap still saying why, the owner's play of the master, and the pages fitting at 320 and 390 | 227 of 227 (the slice's 148 and these 79); in its screenshot mode at device scale 2, the scenarios rendered, 71 of 71 |
+
+The browser check now reads what shows in the empty part of a cover's square from a real screenshot (the middle of
+each empty band and the artwork's own clear corners, against the ground 3 px outside the square, or beside it in the
+pocket, whose panel is a gradient), not only the image's own background, so a plate drawn by anything behind a clear
+card fails it; and it reads the measurement wire (with the visitor's consent) to see what is sent. Existing tests
+changed, each only where it pinned the old code: `scripts/test/music-shell.test.mjs` (its pocket stand-in now answers
+the catalogue, which the pocket asks before it mounts; the stand-in never answered) and one assertion in
+`scripts/test/listening-room.test.mjs` (the pocket line now reads `asked`, the link's song as found, before a held
+song is set aside). The album harness in `music-quick-wins.test.mjs` gives the deck its icons and reports its events.
+CI: `js/song-test.js` joins the music job's paths; no new workflow or trigger.
+
+**Revert and fail.** Each fix was taken out on its own in a separate worktree, its old form put back, the tests that
+hold it run, and the file restored by its hash. At the unit level 16 changes, on the final code: the shelf rule; the
+pocket's picture rule, and its CSS; the pocket carrying any record, and a preview file when the catalogue does not
+answer; the card ignoring the hold, the album mounting it without saying what is held, no way to draw it again, and
+drawing it again at every answer of the gate; the pop-up closing on any tap; an empty held source counted as a drop;
+every row seatable, and a link seating the held song; the held row banked; the old label, and a heart that never says
+it is saved. All 16 fail their tests (a control run of the same file in that worktree, nothing taken out: 43 of 43).
+(A first pass, before the last two fixes, had 13 changes and 12 failed: one was built wrong and left the album's
+option in place; rebuilt, it fails.) In Chromium 11 changes: the shelf's ground and frame; the pocket's cover CSS
+taken out, and the tile never told it shows a cover; the pocket mounting whatever it holds; the album mounting the
+cards without the hold, and never drawing them again; any click closing the pop-up; every row seatable; the held row
+banked; the old label, and a heart that never says it is saved. All 11 fail their checks: 7 on the code before the
+last two fixes (the cards' redraw only on a change, and the heart's pressed state, which they do not touch), and the 4
+for R4 and R8 again on the final code.
+
+**Suites**, one at a time, on the final code: root suite 3,204 tests, 3,197 pass, 0 fail, 7 skipped; the music job's
+contract commands (its parse checks and 15 test files) 251 of 251; `scripts/test/domain-architecture.test.mjs` 11 of
+11; the peaks, artwork and track-length checks current (41 peaks files, 8 covers); the source map validator 3,018
+checks, none failed (no file added). No file under `workers/` or `supabase/` changed, so the Worker suite was not run
+again. In Chromium, under the shared lock: quick wins 227 of 227; the M5 shell 141 of 141; background 293 of 293;
+Music to World 140 of 140; Now Playing 120 of 120; accounts 128 of 128; installed app 246 of 246; direct checkout 40
+of 40; the house door 122 of 122; Control's music review 49 of 49; site navigation 429 of 429; member desk 60 of 60;
+creator onboarding 85 of 85; World first visit 83 of 83. Every changed page fits the screen at 320 and 390 px
+(`scrollWidth === clientWidth`): the album with its shelf and with the song test, the catalogue with the pocket, and
+the slice's 320 px pages.
+
+**What is Inferred.**
+* On an iPhone or iPad: that Safari scales the pocket's picture (its film's poster) the way Chromium does, and how the
+  square sits with the real fonts and safe areas.
+* That a pocket record of the closing song always names its album and title or its file: every record the pages write
+  does, and the review's case did.
+
+**What waits for Matthew.**
+* **The closing song's test card**: built, it stays and says why the song will not play, in the pop-up's words; or it
+  waits, hidden, with the song until the questionnaire exists.
+* **Saved songs**: a heart keeps the song on this device and counts toward what is most saved, but no page lists the
+  saves while the song rails and playlists are off. A plain saved list on Listen, or no hearts until the rails come
+  back. Built: the honest label and, as on Listen, whether the song is saved.
+* **The pocket's lyric line**: it rode over the film; over a whole cover it is not drawn. Whether it should show as a
+  line under the song's name instead.
+* **The review's four nits** did not come to this round: the desk's unknown-creator guard is held only by the browser
+  suite (QW-R9); Listen says "tracks" where the album and the artist page say "songs" (QW-R10); the shelves print
+  each album's billed artist, CIA Mind Control's among them (QW-R11, his call); the catalogue's rows are not marked
+  held, so its buy button would appear if the closing song's inactive direct-sale offer were switched on (QW-R12: keep
+  the offer inactive).
+
+Rows to add for his devices:
+9. Play a Whip Equipped song, then open the catalogue: the corner player shows the whole cover in a small square,
+   nothing over it and no rounded corners.
+10. From the catalogue's list, open the closing song: the album opens with nothing playing; tap the song: the pop-up.
+11. Signed in as a member, CIA Mind Control, scroll to the song test: the closing song's card says what the pop-up
+    says.
+
+**Renders for Matthew** at device scale 2 (`QW_SHOTS=<folder> node scripts/e2e/music-quick-wins.e2e.mjs`), kept with
+the results, not in the repository: `album-390-shelf-whole-covers` and `album-1280-shelf-whole-covers` (the album
+page's shelf: every cover and mark on the page itself, the rail as Listen's), `pocket-390-whole-cover` (the catalogue
+with a Whip Equipped song in the pocket: the whole cover in a small square; the black above and below the car is the
+artwork's own) and `album-390-song-test-held-card` (a member's song test on CIA Mind Control: the closing song's card
+in the pop-up's words; the cards' names are the suite's stand-ins). Art direction: the first render of the card showed
+only the album's once-a-session opening curtain; every render now waits for it to lift, and the card was rendered
+again.
