@@ -42,7 +42,26 @@
     return /^[0-9a-f-]{36}\/[A-Za-z0-9._-]+$/.test(u.slice(ARTWORK.length)) ? u : "";
   }
   function initialOf(name) { var m = String(name || "").match(/[A-Za-z0-9\u00C0-\u024F]/); return m ? m[0].toUpperCase() : "@"; }
+  /* EVERY CREDITED ARTIST HAS AN ENTRY. Owner, 2026-11-24: an artist who is credited on any track, featured
+     artists included, is in this row, and opening one shows everything they appear on. The catalogue's artists come
+     from data/albums.json through js/music-credits.js (roster: on at least one track); a creator profile with the
+     same handle or the same name is the same artist, drawn once, with their own page and picture. An artist with
+     no profile opens the artist view (artist.html) and shows their initial, never a mark drawn for them. */
+  var ROSTER = [];
+  var PROFILES = [];
+  function same(x) { return String(x || "").toLowerCase().replace(/[^a-z0-9À-ɏ]+/g, ""); }
+  function profileOf(a, profiles) {
+    var found = null;
+    for (var i = 0; i < profiles.length && !found; i++) {
+      var p = profiles[i];
+      if (!p || !p.handle) continue;
+      var h = same(p.handle);
+      if (h === same(a.slug) || (a.handle && h === same(a.handle)) || (p.artist_name && same(p.artist_name) === same(a.name))) found = p;
+    }
+    return found;
+  }
   function paintArtists(profiles) {
+    PROFILES = profiles || [];
     var ls = doc.querySelector(".ls");
     if (!ls) return;
     var section = doc.getElementById("artistsWrap");
@@ -66,18 +85,45 @@
     var cards = ['<a class="artist artist--house" href="index.html" aria-label="McCluster">' +
       '<img class="artist__pic artist__pic--house" src="assets/img/m-mark.png" alt="" width="56" height="56">' +
       '<b>McCluster</b><small>@' + HOUSE_HANDLE + '</small></a>'];
-    (profiles || []).forEach(function (p) {
-      if (!p || !p.handle) return;
-      if (String(p.handle).toLowerCase() === HOUSE_HANDLE) return;
+    var shown = {};
+    function profileCard(p) {
+      shown[String(p.handle).toLowerCase()] = true;
       var name = p.artist_name || "@" + p.handle;
       var avatar = safeArtwork(p.avatar_url);
-      cards.push('<a class="artist" href="music-creator.html?handle=' + encodeURIComponent(p.handle) + '">' +
+      return '<a class="artist" href="music-creator.html?handle=' + encodeURIComponent(p.handle) + '">' +
         (avatar
           ? '<img class="artist__pic" src="' + attr(avatar) + '" alt="" loading="lazy" width="56" height="56">'
           : '<span class="artist__pic artist__pic--initial" aria-hidden="true">' + esc(initialOf(name)) + '</span>') +
-        '<b>' + esc(name) + '</b><small>@' + esc(p.handle) + (p.verification_state === "verified" ? " \u00b7 verified" : "") + '</small></a>');
+        '<b>' + esc(name) + '</b><small>@' + esc(p.handle) + (p.verification_state === "verified" ? " \u00b7 verified" : "") + '</small></a>';
+    }
+    /* the catalogue's artists next, in the registry's order: with their profile's page and picture when they have
+       one, else the artist view and their initial */
+    ROSTER.forEach(function (a) {
+      if (a.slug === HOUSE_HANDLE) return;
+      var p = profileOf(a, (profiles || []).filter(function (x) {
+        return x && x.handle && String(x.handle).toLowerCase() !== HOUSE_HANDLE && !shown[String(x.handle).toLowerCase()];
+      }));
+      if (p) { cards.push(profileCard(p)); return; }
+      cards.push('<a class="artist" href="' + attr(a.href) + '">' +
+        '<span class="artist__pic artist__pic--initial" aria-hidden="true">' + esc(initialOf(a.name)) + '</span>' +
+        '<b>' + esc(a.name) + '</b><small>' + a.tracks + (a.tracks === 1 ? " track" : " tracks") + '</small></a>');
+    });
+    /* then every creator the catalogue did not already list */
+    (profiles || []).forEach(function (p) {
+      if (!p || !p.handle) return;
+      if (String(p.handle).toLowerCase() === HOUSE_HANDLE) return;
+      if (shown[String(p.handle).toLowerCase()]) return;
+      cards.push(profileCard(p));
     });
     doc.getElementById("artistsRow").innerHTML = cards.join("");
+  }
+  /* the catalogue's artists, as soon as the shelf answers; the row is repainted with whatever profiles it has */
+  if (root.MCC_CREDITS) {
+    fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (albums) {
+      if (!albums) return;
+      ROSTER = root.MCC_CREDITS.roster(albums);
+      paintArtists(PROFILES);
+    }).catch(function () { /* the row keeps the house and the creators */ });
   }
   paintArtists([]);
 

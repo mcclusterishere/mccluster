@@ -110,6 +110,9 @@
           gated: !!(t.gated || m.gated),
           length: m.length || "",
           credit: m.credit || "",
+          /* every artist credited on it, by name (js/music-credits.js): a search for a featured artist or a
+             producer finds the track even where the line shows the name another way ("guitar by Zakir") */
+          people: root.MCC_CREDITS ? root.MCC_CREDITS.names(albums, t).join(" ") : "",
           isrc: m.isrc || "",
           /* THE FALLBACK ORDER IS THE SHELF'S OWN, not the registry's.
              data/catalogue.json numbers the fifteen tracks it has registered
@@ -147,7 +150,7 @@
      --------------------------------------------------------------- */
   function matches(t, needle) {
     if (!needle) return true;
-    var hay = key(t.title + " " + t.album + " " + t.credit + " " + t.sub) + " " +
+    var hay = key(t.title + " " + t.album + " " + t.credit + " " + t.sub) + " " + key(t.people) + " " +
       String(t.isrc || "").toLowerCase();
     /* Every word has to appear somewhere, in any order, so "song write"
        finds "Write a Song". */
