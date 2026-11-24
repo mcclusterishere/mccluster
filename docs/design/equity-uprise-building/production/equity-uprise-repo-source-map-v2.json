@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 778,
+  "candidate_count": 780,
   "capability_source_count": 104,
-  "support_only_count": 674,
+  "support_only_count": 676,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3183,6 +3183,13 @@
       "rationale": "Test-only read-only loopback server and observation fixture for canonical building visual evidence. It is not a published viewer or geometry authority."
     },
     {
+      "path": "scripts/e2e/fixtures/platform-hosts-20261123.json",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Recorded answers of the live hosts on 2026-11-23 (status, Location, canonical and security headers of every classified path, GET and HEAD only), the offline baseline of scripts/e2e/platform-hosts.e2e.mjs; it names the Equity Uprise pages by path only. No building capability, program or geometry."
+    },
+    {
       "path": "scripts/e2e/globe-games.e2e.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3834,6 +3841,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test harness that applies the pending E=Up module policy SQL; names the Equity Uprise policy schema identifier. Test only; no building capability, program or geometry."
+    },
+    {
+      "path": "scripts/test/support/mcc-site.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test helper that reads the generated host table (window.MCC_SITE) from js/shell-boot.js and builds the equityuprise.com rewrite of scripts/test/site-hosts.test.mjs, where Equity Uprise is only the next platform's site name. Not a building capability."
     },
     {
       "path": "scripts/test/world-environment-lifecycle.test.mjs",

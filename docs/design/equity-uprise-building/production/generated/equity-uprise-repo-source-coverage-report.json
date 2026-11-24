@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 778,
+  "candidate_count": 780,
   "capability_source_count": 104,
-  "support_only_count": 674,
-  "checks_total": 3010,
-  "checks_passed": 3010,
+  "support_only_count": 676,
+  "checks_total": 3018,
+  "checks_passed": 3018,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -437,6 +437,7 @@
     "scripts/e2e/fictional-city.e2e.mjs",
     "scripts/e2e/fixtures/axe-baseline.json",
     "scripts/e2e/fixtures/eu-building-visual.mjs",
+    "scripts/e2e/fixtures/platform-hosts-20261123.json",
     "scripts/e2e/globe-games.e2e.mjs",
     "scripts/e2e/prim3-artist.e2e.mjs",
     "scripts/e2e/prim3-direct-landings.e2e.mjs",
@@ -530,6 +531,7 @@
     "scripts/test/song-test.test.mjs",
     "scripts/test/supabase-functions-deploy.test.mjs",
     "scripts/test/support/eup-module-policy-database.mjs",
+    "scripts/test/support/mcc-site.mjs",
     "scripts/test/world-environment-lifecycle.test.mjs",
     "scripts/test/world-environment-panel.test.mjs",
     "scripts/test/world-environment-posts.test.mjs",
@@ -792,7 +794,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "778 entries"
+      "detail": "780 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -9060,6 +9062,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/e2e/fixtures/platform-hosts-20261123.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/fixtures/platform-hosts-20261123.json classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/fixtures/platform-hosts-20261123.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/fixtures/platform-hosts-20261123.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/e2e/globe-games.e2e.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -10911,6 +10933,26 @@
     },
     {
       "name": "scripts/test/support/eup-module-policy-database.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/support/mcc-site.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/support/mcc-site.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/support/mcc-site.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/support/mcc-site.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

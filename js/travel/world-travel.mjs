@@ -11,6 +11,8 @@ const $ = id => document.getElementById(id), root = document.documentElement;
 const frame = $('mnWorldFrame'), panel = $('wtPlanner');
 panel.setAttribute('data-private', '');
 $('wtDestination').setAttribute('data-private', '');
+/* Whip Equipped's apps where they are served (window.MCC_SITE, js/shell-boot.js, the first script on the World's page: Whip lives only on Matthew's host) */
+const whipHref = path => (window.MCC_SITE && typeof window.MCC_SITE.siteUrl === 'function' ? window.MCC_SITE.siteUrl(path) : path);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const paths = {
   flight:'m3 15 7-4V4l2-2 2 2v7l7 4v2l-7-2v4l2 2h-8l2-2v-4-0L3 17z',
@@ -113,7 +115,7 @@ panel.innerHTML = `
         <div class="wt-switch" role="group" aria-label="Flights"><button type="button" data-travel-sub="commercial" aria-pressed="true">Commercial</button><button type="button" data-travel-sub="private" aria-pressed="false">Private</button></div></div>
     </div>
     <section id="wtRentals" class="wt-rentals" aria-labelledby="wtRentalsTitle" hidden>
-      <div class="wt-rentals-head"><h3 id="wtRentalsTitle" class="wt-section-h">Rent a car</h3><a href="https://matthew.mccluster.org/whip/rentals/" target="_blank" rel="noopener">See all ›</a></div>
+      <div class="wt-rentals-head"><h3 id="wtRentalsTitle" class="wt-section-h">Rent a car</h3><a href="${esc(whipHref('/whip/rentals/'))}" target="_blank" rel="noopener">See all ›</a></div>
       <p class="wt-rentals-by">From Whip Equipped LLC, a separate company. Booking and payment happen in Whip Equipped's rentals app.</p>
       <div class="wt-cars" id="wtCars"></div>
     </section>
@@ -798,7 +800,7 @@ const carArt = color => `<svg class="wt-car-svg" viewBox="0 0 120 50" aria-hidde
 function renderCars() {
   $('wtCars').innerHTML = RENTAL_CARS.map(car => `<article class="wt-car"><div class="wt-car-art">${carArt(car.color)}</div>
     <h4>${esc(car.name)}</h4><p>${esc(car.kind)} · ${car.seats} seats</p><p class="wt-car-price"><strong>$${car.weekly}</strong><small>/week</small></p>
-    <a class="wt-car-go" href="https://matthew.mccluster.org/whip/rentals/?vehicle=${encodeURIComponent(car.id)}" target="_blank" rel="noopener" aria-label="Reserve the ${esc(car.name)} with Whip Equipped">Reserve</a></article>`).join('');
+    <a class="wt-car-go" href="${esc(whipHref('/whip/rentals/?vehicle=' + encodeURIComponent(car.id)))}" target="_blank" rel="noopener" aria-label="Reserve the ${esc(car.name)} with Whip Equipped">Reserve</a></article>`).join('');
 }
 renderCars();
 /* the switch under each tile: one side on, the other off. Rentals and Private stand in for the route and the flight draft. */
