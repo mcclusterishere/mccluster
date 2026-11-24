@@ -380,7 +380,7 @@ turn on.
 | profile | any other path | pass-through; a 404 stays a 404 (from P3) |
 | humanuprise.com, www | anything | 301 to the platform, same path and query, in one hop (from P1, once routed) |
 
-Every pass-through keeps these rules: never follow an upstream redirect (fetch with redirect manual, rewrite a Location on the static origin to the requesting host); headers by class (documents, embed.html with no frame restriction, carry.html framed by the platform only, static files as today); no noindex on platform or profile pages served by the platform; the documents the record names are kept at the edge 60 s (the carry page aside; workers/mccluster/src/platform/router.js DOCUMENT_CACHE_TTL), static files keep the static origin's caching.
+Every pass-through keeps these rules: never follow an upstream redirect (fetch with redirect manual, rewrite a Location on the static origin to the requesting host); headers by class (documents, embed.html with no frame restriction, carry.html framed by the platform only, static files as today); no noindex on platform or profile pages served by the platform; from P1 the documents the record names are kept at the edge 60 s (the carry page aside; workers/mccluster/src/platform/router.js DOCUMENT_CACHE_TTL), static files keep the static origin's caching.
 
 Why the one Worker, and not a second Pages site or a new Worker:
 

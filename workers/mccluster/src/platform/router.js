@@ -267,15 +267,16 @@ export function createSiteRouter({ site = SITE, company = null, worldDoor = null
       case 'world': {
         const head = r.head === 'platform' ? (company && company.head(site)) : (worldDoor && worldDoor.head(r.origin, site));
         if (!head) return null;
-        return passThrough(request, `${statics}${site.world.document}${url.search}`, fetchImpl, { root: true, head, site, cacheTtl: DOCUMENT_CACHE_TTL });
+        return passThrough(request, `${statics}${site.world.document}${url.search}`, fetchImpl, { root: true, head, site, cacheTtl: everything(site) ? DOCUMENT_CACHE_TTL : 0 });
       }
       case 'pass':
         return passThrough(request, `${statics}${url.pathname}${url.search}`, fetchImpl, {
           noindex: r.noindex, site, framing: r.framing, appStart: r.appStart || null,
           /* a path the table does not name: never answered with a document here (Matthew's host answers it, as before P1) */
           elsewhere: r.unnamed ? site.profile.origin + url.pathname + url.search : null,
-          /* the documents the table names, the carry page aside, are kept at the edge a minute (SPEC-PLATFORM 2.4, risk 12) */
-          cacheTtl: !r.unnamed && r.framing !== 'platform' && isDocument(url.pathname) ? DOCUMENT_CACHE_TTL : 0
+          /* from P1 the documents the table names, the carry page aside, are kept at the edge a minute (SPEC-PLATFORM 2.4,
+             risk 12); P0 fetches as it shipped, so a rollback to P0 restores it exactly */
+          cacheTtl: everything(site) && !r.unnamed && r.framing !== 'platform' && isDocument(url.pathname) ? DOCUMENT_CACHE_TTL : 0
         });
       case 'origin':
         return originPass(request, `${statics}${url.pathname}${url.search}`, fetchImpl, { site, classes: r.classes, framing: r.framing });

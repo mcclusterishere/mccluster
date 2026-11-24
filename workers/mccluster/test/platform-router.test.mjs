@@ -320,6 +320,28 @@ const P0_ROUTER = routerFor(P0);
    what GitHub sent. */
 const EDGE_TTL = /\.(?:js|png)$/;
 
+/* The 60 s edge cache is P1's (the P1 review, P1A-5): with P0's table the Worker fetches the World and its rooms as P0
+   shipped, so a rollback to P0 restores P0 exactly; with P1's the documents the table names are kept a minute. */
+test('the edge cache of documents is P1\'s: P0 fetches the static origin as it shipped', async () => {
+  const seen = [];
+  const origin = async (input, init) => {
+    const req = input instanceof Request ? input : new Request(input);
+    seen.push({ path: new URL(req.url).pathname, cf: init && init.cf ? { ...init.cf } : null });
+    return new Response(req.method === 'HEAD' ? null : '<!doctype html><html><head><title>x</title></head><body></body></html>', { status: 200, headers: { 'content-type': /\.js$/.test(req.url) ? 'application/javascript' : 'text/html; charset=utf-8' } });
+  };
+  const P1_ROUTER = routerFor(P1);
+  for (const path of ['/', '/?view=feed', '/action-globe.html', '/js/tabbar.js']) {
+    seen.length = 0;
+    await P0_ROUTER(new Request(PLAT + path), NEWS_ENV, origin);
+    assert.ok(seen.length > 0 && seen.every((c) => c.cf === null), `P0 ${path}: ${JSON.stringify(seen)}`);
+  }
+  for (const [path, cached] of [['/', true], ['/action-globe.html', true], ['/listen.html', true], ['/js/tabbar.js', false]]) {
+    seen.length = 0;
+    await P1_ROUTER(new Request(PLAT + path), NEWS_ENV, origin);
+    assert.deepEqual(seen.at(-1).cf, cached ? { cacheTtl: 60, cacheEverything: true } : null, `P1 ${path}`);
+  }
+});
+
 test('with P0\'s table every probed path on mccluster.org and www.mccluster.org answers as measured on 2026-11-23: status, location and the headers that matter', async () => {
   const hops = PROBE.head_hops.filter((h) => /^https?:\/\/(?:www\.)?mccluster\.org\//.test(h.url));
   assert.ok(hops.length >= 90, 'the fixture holds both hosts');
