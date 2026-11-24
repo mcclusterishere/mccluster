@@ -238,7 +238,7 @@ try{
     await page.waitForSelector('#mnMe:not([hidden])');
     check('World keeps one top-right native profile',await topRight(page,'#mnMe')&&await page.locator('#mccAuthChip').isHidden());
     await open(page);const url=await page.locator('[data-control-route="#create:projects:library"]').getAttribute('href');
-    check('World routes Control to Matthew’s host',url===BASE+'/control.html#create:projects:library');
+    check('World routes Control to the platform’s own Control (from P1 the platform serves Control)',url===PLATFORM+'/control.html#create:projects:library');
     await page.keyboard.press('Escape');await page.click('#mnMe');
     check('World account menu still opens',await page.locator('#mnMenu').isVisible());
     check('World has no horizontal overflow',await fits(page));
