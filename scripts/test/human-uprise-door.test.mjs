@@ -51,7 +51,9 @@ test('the bar reads the World\'s hosts and where each page is served from the on
   assert.match(bar, /src="' \+ ROOT \+ 'assets\/img\/m-mark\.png"/, 'static files come from the page\'s own host');
   assert.match(bar, /worldTab\.href = worldAt\("\?view=feed"\);/);
   /* the wings resolve the same way; the account reads this host's session (its own host before P1, the platform's after) */
-  assert.match(bar, /function resolveRoom\(wing, path\) \{\n    if \(path === MAP\) return MAP;\n    if \(path\.indexOf\("mnet\.html"\) === 0\) return worldAt\(path\.slice\("mnet\.html"\.length\)\);\n    return wing === "world" \? sessionRoom\(path\) : pageHref\(path\);\n  \}/);
+  assert.match(bar, /function resolveRoom\(wing, path\) \{\n    if \(path === MAP\) return MAP;\n    if \(path\.indexOf\("mnet\.html"\) === 0\) return worldAt\(path\.slice\("mnet\.html"\.length\)\);\n    return wing === "world" \? sessionRoom\(path\) : pageOrHere\(path\);\n  \}/);
+  /* a door to the page you stand on is that page, on either host: on Matthew's Listen the Music tab stays the player's */
+  assert.match(bar, /function pageOrHere\(path\) \{\n    return onPage\(ROOT \+ path\) \? ROOT \+ path : pageHref\(path\);\n  \}/);
   assert.match(bar, /return S && S\.switches\.carry === true \? pageHref\(path\) : ROOT \+ path;/);
   assert.equal((bar.match(/ROOT \+ "mnet\.html/g) || []).length, 2, 'the World doors that bypass worldAt: the forward from the house root, which stays on this origin, and worldBase\'s own answer with no table');
   /* the World's own address lights the Globe, never the HERE front door */
