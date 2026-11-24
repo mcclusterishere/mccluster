@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { handleEup, EUP_PREFIX, EUP_SECTIONS } from '../src/eup/router.js';
 import * as modules from '../src/eup/modules.js';
-import { MODULE_IDS, MODULE_STATES, MODULE_POLICY_ERRORS, modulePolicyRefusal, readModulePolicy, moduleControl } from '../src/eup/modules.js';
+import { MODULE_IDS, MODULE_PENDING_SQL, MODULE_STATES, MODULE_POLICY_ERRORS, modulePolicyRefusal, readModulePolicy, moduleControl } from '../src/eup/modules.js';
 
 const OWNER = '11111111-1111-4111-8111-111111111111';
 const OTHER = '99999999-9999-4999-8999-999999999999';
@@ -30,6 +30,9 @@ const controlOf = (rows = {}, commands = []) => ({
     : { moduleId, installed: false, state: null, revision: null, updated_at: null, updated_by: null, last_command: null }),
   commands
 });
+// The owner read of a store WITHOUT a unit's staged SQL (production today for 'halo'): it answers for the applied units only.
+const APPLIED_IDS = MODULE_IDS.filter((id) => !Object.hasOwn(MODULE_PENDING_SQL, id));
+const controlOfApplied = (rows = {}, commands = []) => { const c = controlOf(rows, commands); c.modules = c.modules.filter((m) => APPLIED_IDS.includes(m.moduleId)); return c; };
 const storeError = (code, message = 'database text that must not reach the owner', status = 400) => Response.json({ code, message, details: null, hint: null }, { status });
 function fake(reply) {
   const calls = [];
@@ -52,7 +55,9 @@ const ROUTES = [
 
 test('modules is a registered E=Up section behind the same owner check as every other section', () => {
   assert.ok(EUP_SECTIONS.includes('modules'));
-  assert.deepEqual([...MODULE_IDS], ['environment', 'league', 'intake']);
+  assert.deepEqual([...MODULE_IDS], ['environment', 'league', 'intake', 'halo']);
+  assert.deepEqual({ ...MODULE_PENDING_SQL }, { halo: 'supabase/pending/eup_module_policy_halo_v1.sql' });
+  assert.deepEqual(APPLIED_IDS, ['environment', 'league', 'intake']);
   assert.deepEqual([...MODULE_STATES], ['enabled', 'draining', 'disabled']);
 });
 
@@ -103,7 +108,8 @@ test('GET /modules returns one normalised row per registered module, the last co
   assert.equal(r.status, 200);
   assert.deepEqual(Object.keys(b), ['ok', 'installationId', 'modules', 'commands']);
   assert.equal(b.installationId, 'mccluster');
-  assert.deepEqual(b.modules.map((m) => m.moduleId), ['environment', 'league', 'intake']);
+  assert.deepEqual(b.modules.map((m) => m.moduleId), ['environment', 'league', 'intake', 'halo']);
+  assert.deepEqual(b.modules[3], { moduleId: 'halo', registered: true, installed: false, state: null, revision: null, updated_at: null, updated_by: null, last_command: null }, 'a store that answers for halo: registered, not installed');
   assert.deepEqual(b.modules[0], { moduleId: 'environment', installed: false, state: null, revision: null, updated_at: null, updated_by: null, last_command: null });
   assert.deepEqual(b.modules[1], {
     moduleId: 'league', installed: true, state: 'draining', revision: 2, updated_at: '2026-11-10T00:00:00Z', updated_by: OWNER,
@@ -112,7 +118,27 @@ test('GET /modules returns one normalised row per registered module, the last co
   assert.deepEqual(b.commands, log);
   /* registry order and one row per module whatever order the store answers in */
   const shuffled = controlOf({ intake: { state: 'enabled', revision: 1 } }); shuffled.modules.reverse();
-  assert.deepEqual((await (await run(req(), fake(shuffled))).json()).modules.map((m) => [m.moduleId, m.state]), [['environment', null], ['league', null], ['intake', 'enabled']]);
+  assert.deepEqual((await (await run(req(), fake(shuffled))).json()).modules.map((m) => [m.moduleId, m.state]), [['environment', null], ['league', null], ['intake', 'enabled'], ['halo', null]]);
+});
+
+test('a store without the staged halo SQL still answers for the applied units; halo is reported unregistered, never guessed', async () => {
+  const f = fake(controlOfApplied({ league: { state: 'enabled', revision: 1 } }));
+  const r = await run(req(), f); const b = await r.json();
+  assert.equal(r.status, 200, 'the three applied units do not fail because a fourth is registered in code');
+  assert.deepEqual(b.modules.map((m) => [m.moduleId, m.installed, m.state]), [['environment', false, null], ['league', true, 'enabled'], ['intake', false, null], ['halo', false, null]]);
+  assert.deepEqual(b.modules[3], { moduleId: 'halo', registered: false, installed: false, state: null, revision: null, updated_at: null, updated_by: null, last_command: null, pending_sql: 'supabase/pending/eup_module_policy_halo_v1.sql' });
+  assert.ok(!('registered' in b.modules[0]) && !('registered' in b.modules[1]), 'the applied units keep their exact shape');
+  /* an applied unit that is missing is still a failed read, as before */
+  const broken = controlOfApplied(); broken.modules.shift();
+  assert.equal((await run(req(), fake(broken))).status, 503);
+  /* a halo row the store does answer for is read like any other: an unreadable one fails the read */
+  const bad = controlOf({ halo: { state: 'on', revision: 1 } });
+  assert.equal((await run(req(), fake(bad))).status, 503);
+  const good = await (await run(req(), fake(controlOf({ halo: { state: 'disabled', revision: 0 } })))).json();
+  assert.deepEqual(good.modules[3], { moduleId: 'halo', registered: true, installed: true, state: 'disabled', revision: 0, updated_at: '2026-11-10T00:00:00Z', updated_by: OWNER, last_command: null });
+  /* the store's own refusal of a command on a unit it does not know is passed as 422 invalid, nothing invented */
+  const refused = await run(post('/halo/install', { idempotency_key: KEY, reason: REASON }), fake(() => storeError('22023', 'invalid_policy_command')));
+  assert.equal(refused.status, 422); assert.equal((await refused.json()).reason, 'invalid');
 });
 
 test('GET /modules takes a bounded limit and nothing else from the query', async () => {
@@ -293,7 +319,7 @@ test('unknown modules, unknown verbs and wrong methods never reach the store', a
   const f = fake({});
   const body = { idempotency_key: KEY, reason: REASON, state: 'enabled', expected_revision: 0 };
   for (const [request, status, reason] of [
-    [post('/halo/install', body), 404, 'unknown_module'], [post('/consumer_environment/state', body), 404, 'unknown_module'], [post('/LEAGUE/state', body), 404, 'unknown_module'],
+    [post('/prim3/install', body), 404, 'unknown_module'], [post('/consumer_environment/state', body), 404, 'unknown_module'], [post('/LEAGUE/state', body), 404, 'unknown_module'],
     [post('/__proto__/install', body), 404, 'unknown_module'], [post('/league', body), 404, 'not_found'], [req('/league'), 404, 'not_found'],
     [post('/league/enable', body), 404, 'not_found'], [post('/league/state/extra', body), 404, 'not_found'], [post('/league/install/', body), 404, 'not_found'],
     [req('/league/state'), 405, 'method_not_allowed'], [req('/league/install'), 405, 'method_not_allowed'],
@@ -380,7 +406,7 @@ test('readModulePolicy returns only a well-formed persisted policy and throws on
     await refused(Response.json(answer), 'environment', 'module_policy_unavailable', label);
   }
   const never = fake(policyOf('environment', 'enabled', 1));
-  for (const module of ['halo', '', undefined, null, 'consumer_environment']) {
+  for (const module of ['prim3', '', undefined, null, 'consumer_environment']) {
     await assert.rejects(readModulePolicy(env, never.fetchImpl, module), (error) => error.reason === 'module_policy_unavailable');
   }
   assert.equal(never.calls.length, 0, 'an unregistered module is refused without a request');
@@ -397,7 +423,7 @@ test('moduleControl is the owner read other sections use: same normalisation, sa
 });
 
 test('the module exports are the documented ones', () => {
-  assert.deepEqual(Object.keys(modules).sort(), ['MODULE_IDS', 'MODULE_INSTALLATION', 'MODULE_POLICY_ERRORS', 'MODULE_POLICY_MIGRATION', 'MODULE_POLICY_SCHEMA', 'MODULE_STATES', 'handleModules', 'moduleControl', 'modulePolicyRefusal', 'readModulePolicy']);
+  assert.deepEqual(Object.keys(modules).sort(), ['MODULE_IDS', 'MODULE_INSTALLATION', 'MODULE_PENDING_SQL', 'MODULE_POLICY_ERRORS', 'MODULE_POLICY_MIGRATION', 'MODULE_POLICY_SCHEMA', 'MODULE_STATES', 'handleModules', 'moduleControl', 'modulePolicyRefusal', 'readModulePolicy']);
 });
 
 // --- Overview: release posture and persisted policy are two fields -------------------------------------
@@ -410,8 +436,8 @@ const overview = (reply) => {
   });
   return handleEup(new Request(`https://fixture.invalid${EUP_PREFIX}/overview`), env, { requireHouseOwner: owner, fetchImpl: f.fetchImpl, now: () => Date.parse('2026-11-10T12:00:00Z') }).then(async (r) => ({ status: r.status, body: await r.json(), calls: f.calls }));
 };
-const POSTURE = { league: 'draft', civic: 'planned', companies: 'planned', sources: 'planned', consumer_environment: 'held', arcade: 'dormant', c5: 'partial' };
-const UNIT = { league: 'league', civic: 'intake', companies: 'intake', sources: 'intake', consumer_environment: 'environment', arcade: null, c5: null };
+const POSTURE = { league: 'draft', civic: 'planned', companies: 'planned', sources: 'planned', consumer_environment: 'held', halo: 'owner_only', arcade: 'dormant', c5: 'partial' };
+const UNIT = { league: 'league', civic: 'intake', companies: 'intake', sources: 'intake', consumer_environment: 'environment', halo: 'halo', arcade: null, c5: null };
 
 test('overview gives each module its release posture and, separately, the persisted policy of the unit that governs it', async () => {
   const { status, body, calls } = await overview(controlOf({ league: { state: 'enabled', revision: 1 }, intake: { state: 'draining', revision: 4, updated_at: '2026-11-10T01:00:00Z' } }));
@@ -432,8 +458,19 @@ test('overview gives each module its release posture and, separately, the persis
 
 test('overview with nothing installed reports installed false for every governed module', async () => {
   const { body } = await overview(controlOf());
-  for (const m of body.modules) assert.deepEqual(m.policy, UNIT[m.id] ? { installed: false, state: null, revision: null, updated_at: null } : null, m.id);
+  for (const m of body.modules) assert.deepEqual(m.policy, UNIT[m.id] ? { ...(m.id === 'halo' ? { registered: true } : {}), installed: false, state: null, revision: null, updated_at: null } : null, m.id);
   assert.deepEqual(body.module_policy, { status: 'available', reason: null });
+});
+
+test('overview lists Hitman\u2019s Halo with its own unit, and says unregistered when the store does not know the unit', async () => {
+  const { status, body } = await overview(controlOfApplied({ league: { state: 'enabled', revision: 1 } }));
+  assert.equal(status, 200);
+  const halo = body.modules.find((m) => m.id === 'halo');
+  assert.equal(halo.label, 'Hitman\u2019s Halo'); assert.equal(halo.state, 'owner_only'); assert.equal(halo.policy_module, 'halo');
+  assert.deepEqual(halo.policy, { registered: false, installed: false, state: null, revision: null, updated_at: null });
+  assert.match(halo.detail, /not yet enforced/);
+  assert.deepEqual(body.module_policy, { status: 'available', reason: null }, 'an unregistered optional unit is not a failed policy read');
+  assert.deepEqual(body.modules.find((m) => m.id === 'league').policy, { installed: true, state: 'enabled', revision: 1, updated_at: '2026-11-10T00:00:00Z' });
 });
 
 test('overview names the absent policy schema as a blocker and reports no module enabled', async () => {
@@ -451,7 +488,7 @@ test('overview never reports enabled when the policy read failed, whatever the f
     ['store error', () => storeError('XX000'), 'storage_unavailable'], ['lock wait', () => storeError('55P03'), 'drain_busy'], ['statement timeout', () => storeError('57014'), 'drain_busy'],
     ['not the owner', () => storeError('42501', 'House owner required', 403), 'owner_required'], ['offline', () => { throw new Error('offline'); }, 'storage_unavailable'],
     ['gateway', () => new Response('bad gateway', { status: 502 }), 'storage_unavailable'], ['empty answer', () => Response.json({}), 'storage_unavailable'],
-    ['one module missing', () => { const c = controlOf({ league: { state: 'enabled', revision: 1 }, intake: { state: 'enabled', revision: 1 }, environment: { state: 'enabled', revision: 1 } }); c.modules.pop(); return Response.json(c); }, 'storage_unavailable'],
+    ['one module missing', () => { const c = controlOf({ league: { state: 'enabled', revision: 1 }, intake: { state: 'enabled', revision: 1 }, environment: { state: 'enabled', revision: 1 } }); c.modules.shift(); return Response.json(c); }, 'storage_unavailable'],
     ['one module unreadable', () => Response.json(controlOf({ league: { state: 'enabled', revision: 1 }, intake: { state: 'enabled', revision: 'x' }, environment: { state: 'enabled', revision: 1 } })), 'storage_unavailable']
   ];
   for (const [label, reply, reason] of failures) {

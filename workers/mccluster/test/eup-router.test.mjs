@@ -33,13 +33,16 @@ test('a hidden tab or admin parameter is not authorization', async () => {
 test('the owner gets the section index and unknown sections 404', async () => {
   const r = await handleEup(req(EUP_PREFIX), env, { requireHouseOwner: owner });
   assert.equal(r.status, 200); assert.deepEqual((await r.json()).sections, EUP_SECTIONS);
-  const u = await handleEup(req(`${EUP_PREFIX}/halo`), env, { requireHouseOwner: owner });
-  assert.equal(u.status, 404);
+  /* 'halo' was the unknown section here until 2026-11-23, when Hitman's Halo became a registered module with its own
+     section (test/eup-halo.test.mjs); a name no section has is used instead */
+  const u = await handleEup(req(`${EUP_PREFIX}/prim3`), env, { requireHouseOwner: owner });
+  assert.equal(u.status, 404); assert.equal((await u.json()).reason, 'unknown_section');
 });
 
 test('modules is one of the sections: listed in the index, and its commands are owner-only before anything is read', async () => {
   /* changed on purpose (E=UP event timeline slice S2, 2026-11-19): 'environment' joins, the timeline's owner controls */
-  assert.deepEqual([...EUP_SECTIONS], ['overview', 'league', 'civic', 'companies', 'sources', 'modules', 'environment']);
+  /* changed on purpose (2026-11-23): 'halo' joins, the owner's read of Hitman's Halo as a module (src/eup/halo.js) */
+  assert.deepEqual([...EUP_SECTIONS], ['overview', 'league', 'civic', 'companies', 'sources', 'modules', 'environment', 'halo']);
   let fetched = 0;
   const fetchImpl = async () => { fetched += 1; return Response.json({}); };
   const command = (path, body) => req(`${EUP_PREFIX}/modules/${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });

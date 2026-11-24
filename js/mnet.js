@@ -549,6 +549,8 @@
      opens sign-in instead, and the server refuses it anyway. */
   function enterGuestWorld() {
     state.guest = true;
+    actionRecordVersion++;
+    if(missions){missions.record=null;missions.recordOwner=null;paintActionRecord();}
     paintNewsroom();
     document.documentElement.classList.add("mn-guest");
     $("mnGuestBar").hidden = false;
@@ -4344,11 +4346,14 @@
   /* the mission's field in words, as the feed's posts say it (js/world-mission-posts.js, domainLabel): "Mutual aid", never the
      raw key "mutual_aid" (release review RS-7, 2026-11-19) */
   function missionDomainLabel(m){var d=(m&&m.domain)||"community";return (MISSION_POSTS&&MISSION_POSTS.domainLabel?MISSION_POSTS.domainLabel(d):String(d).replace(/[_-]+/g," "))||"Mission";}
+  function missionLevelLabel(id){
+    var mine=!state.guest&&state.user&&missions.recordOwner===state.user.id&&missions.levelsByMission&&missions.levelsByMission[id];
+    return "One mission, three levels"+(mine?" · you: "+mine.done+" / "+mine.total:"");
+  }
   function missionCard(m){
     var st=missions.stats[m.id]||{}, joined=Number(st.joined)||0, submitted=Number(st.submitted)||0, verified=Number(st.verified)||0;
     var activity=joined+" joined · "+verified+" completed"+(submitted?" · "+submitted+" awaiting review":"");
-    var mine=missions.levelsByMission&&missions.levelsByMission[m.id];
-    if(m.id===ANTISOCIAL_ID)activity="One mission, three levels"+(mine?" · you: "+mine.done+" / "+mine.total:"")+" · "+activity;
+    var progress=m.id===ANTISOCIAL_ID?'<span data-mission-level-progress>'+esc(missionLevelLabel(m.id))+'</span> · ':"";
     /* where it started, what comes next, how far it reaches, its own call to action:
        action_mission_card_extras() (pending SQL); absent until applied, so nothing shows */
     var x=missions.extras&&missions.extras[m.id]||{};
@@ -4357,7 +4362,7 @@
       (x.next_mission_title?'<p class="mn__hint">Next in this arc: '+esc(x.next_mission_title)+'</p>':"")+
       (x.previous_mission_title?'<p class="mn__hint">Opens once your \u201c'+esc(x.previous_mission_title)+'\u201d is verified</p>':"");
     var cta=x.cta_key==="business_listing"?' <button class="mn__quiet" type="button" data-open-mission="'+esc(m.id)+'" data-focus="business">'+esc(x.cta_label||"Put your Black business on the map")+'</button>':"";
-    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(missionDomainLabel(m))+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
+    return '<article class="mn__panel" data-mission="'+esc(m.id)+'"><p class="mn__eyebrow">'+esc(missionDomainLabel(m))+' · difficulty '+esc(m.difficulty)+'</p><h3>'+esc(m.title)+'</h3><p>'+esc(m.description||"")+'</p><small>'+esc(m.base_points)+' base pts · '+esc((m.skills||[]).join(" · "))+'</small><p class="mn__hint">'+progress+esc(activity)+'</p>'+extra+'<div><button class="mn__primary" type="button" data-open-mission="'+esc(m.id)+'">View mission</button>'+cta+'</div></article>';
   }
   /* Public display name; stable mission IDs and the published historical source remain unchanged. */
   function publicMission(m) {
@@ -4393,13 +4398,16 @@
   /* THE ACTION RECORD: verified work, skills, cohorts, and what it unlocks.
      Points are feedback; access is the reward. */
   var STATUS_LABEL={in_progress:"In progress",joined:"In progress",submitted:"Waiting for review",verified:"Verified",rejected:"Not verified"};
+  var actionRecordVersion=0;
   function loadActionRecord(){
+    var version=++actionRecordVersion,owner=state.user&&state.user.id;
     return Promise.all([
       sbRpc("action_record").catch(function(){return null;}),
       sbRpc("action_fellowship_status").catch(function(){return null;}),
       sbRpc("my_action_shares").catch(function(){return [];})
     ]).then(function(x){
-      missions.record=x[0]||null;missions.fellowship=x[1]||null;
+      if(!owner||state.guest||!state.user||state.user.id!==owner||version!==actionRecordVersion)return;
+      missions.recordOwner=owner;missions.record=x[0]||null;missions.fellowship=x[1]||null;
       missions.shared={};(x[2]||[]).forEach(function(s){missions.shared[s.assignment_id]=s.post_id;});
       paintActionRecord();
     });
@@ -4459,15 +4467,22 @@
     return open.slice().sort(function(a,b){return near(b)-near(a)||joined(b)-joined(a);})[0];
   }
   function paintActionRecord(){
-    var r=missions.record; if(!r)return;
+    var r=!state.guest&&state.user&&missions.recordOwner===state.user.id&&missions.record;
+    var cardProgress=document.querySelector("#mnMissionList [data-mission-level-progress]");
+    missions.levelsByMission={};
+    var host=$("mnRecord");
+    if(!r){
+      if(cardProgress)cardProgress.textContent=missionLevelLabel(ANTISOCIAL_ID);
+      if(host){host.hidden=true;host.textContent="";}
+      return;
+    }
     var verified=Number(r.verified_actions)||0, points=Number(r.points)||0, cohorts=r.cohorts||[];
     if($("mnActionScore"))$("mnActionScore").textContent=points.toLocaleString()+" pts";
     if($("mnVerifiedActions"))$("mnVerifiedActions").textContent=verified.toLocaleString();
     if($("mnCohortProgress"))$("mnCohortProgress").textContent=cohorts.length?(cohorts[0].goal_points?Math.min(100,Math.round(cohorts[0].points/cohorts[0].goal_points*100))+"%":cohorts[0].name):"-";
-    var host=$("mnRecord"); if(!host)return;
+    if(!host)return;
     var fellowship=fellowshipBlock(verified);
     var skills=(r.skills||[]).map(function(k){var top=(r.skills[0]&&r.skills[0].xp)||1;return '<li><span>'+esc(k.skill)+'</span><i style="--pct:'+Math.max(4,Math.round(k.xp/top*100))+'%"></i><b>'+esc(k.verified_actions)+'</b></li>';}).join("");
-    missions.levelsByMission={};
     var list=(r.missions||[]).map(function(m){
       /* a mission with levels reads its progress: n / 3 (owner, 2026-10-14: 1 / 3 → 2 / 3 → 3 / 3) */
       var done=(m.levels||[]).filter(function(x){return x.status==="verified";}).length, total=Number(m.level_count)||0;
@@ -4478,6 +4493,7 @@
           (missions.shared&&missions.shared[m.assignment_id]?'<span class="mn__record-shared">On the feed</span>':'<button class="mn__record-share" type="button" data-share-action="'+esc(m.assignment_id)+'">Share to feed</button>'):"")+
         (m.status==="rejected"&&m.review_note?'<small>'+esc(m.review_note)+'</small>':"")+'</li>';
     }).join("");
+    if(cardProgress)cardProgress.textContent=missionLevelLabel(ANTISOCIAL_ID);
     host.hidden=false;
     var next=nextMission(r);
     host.innerHTML='<div class="mn__record-head"><div><p class="mn__eyebrow">Your Action Record</p><h2>'+verified+' verified '+(verified===1?"action":"actions")+'</h2></div><strong>'+points.toLocaleString()+' pts</strong></div>'+

@@ -286,7 +286,10 @@ async function send(m, id, verb, reason) {
 async function opened(options) { const w = policyWorker(options); const m = mount({ deadlineMs: options && options.deadlineMs, request: w.request }); await settleAll(); return { w, m }; }
 
 test('policy helpers: a state is read strictly, each state offers only its commands, a reason is checked before sending', () => {
-  assert.deepEqual(H.POLICY_UNITS.map((u) => u.id), UNITS, 'the three units, in the order the Worker answers them');
+  assert.deepEqual(H.POLICY_UNITS.map((u) => u.id), [...UNITS, 'halo'], 'the three applied units in the order the Worker answers them, then Hitman\u2019s Halo');
+  assert.deepEqual(H.POLICY_UNITS.filter((u) => u.optional).map((u) => u.id), ['halo'], 'only the unit whose SQL is staged may be absent from an answer');
+  assert.equal(H.policyStateOf({ moduleId: 'halo', registered: false, installed: false, state: null, revision: null }), 'unregistered');
+  assert.deepEqual(H.policyActions('unregistered'), [], 'a unit the store does not know offers no command');
   assert.equal(H.policyStateOf({ installed: false, state: null, revision: null }), 'not_installed');
   for (const st of ['enabled', 'draining', 'disabled']) assert.equal(H.policyStateOf({ installed: true, state: st, revision: 3 }), st);
   assert.equal(H.policyStateOf({ installed: true, state: 'enabled', revision: 0 }), 'enabled', 'revision 0 is a revision');
@@ -356,7 +359,11 @@ test('policy: nothing installed → each unit offers Install only; posture and p
   assert.doesNotMatch(m.pane().querySelector('[data-eup-module="arcade"]').textContent, /policy:/);
   assert.equal(m.pane().querySelectorAll('[data-eup-posture]').length, 4); assert.equal(m.pane().querySelectorAll('[data-eup-posture="held"]').length, 1);
   const effect = m.pane().querySelectorAll('[data-eup-policy-effect]');
-  assert.deepEqual(effect.map((e) => e.attrs['data-eup-policy-effect']), ['environment']);
+  assert.deepEqual(effect.map((e) => e.attrs['data-eup-policy-effect']), ['environment', 'halo']);
+  /* this stand-in answers for the three applied units only (production today): Halo's unit is shown, says why, offers nothing */
+  assert.equal(unitState(m, 'halo'), 'unregistered'); assert.deepEqual(commandsOf(m, 'halo'), []);
+  assert.match(unit(m, 'halo').textContent, /policy: not in the store yet/); assert.match(unit(m, 'halo').textContent, /supabase\/pending\/eup_module_policy_halo_v1\.sql/);
+  assert.doesNotMatch(unit(m, 'halo').textContent, /rev /);
   assert.equal(effect[0].textContent, 'The consumer E=Up tab answers nothing until this unit is installed and enabled.');
   assert.match(unit(m, 'intake').textContent, /Governs: Civic League/); assert.match(unit(m, 'environment').textContent, /Governs: Consumer environment globe/);
   assert.match(unit(m, 'league').textContent, /No command recorded for this unit/);

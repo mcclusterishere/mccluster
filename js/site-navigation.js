@@ -41,7 +41,9 @@
     const C = window.CR.workspaceCore;
     const native = C.routes.map(route => ({
       href: controlHref(route.hash), hash: route.hash,
-      label: route.label, group: route.group, context: route.group
+      // In the shared menu the product and its Control status card sit beside each other.
+      label: route.hash === '#system:halo' ? 'Halo module status' : route.label,
+      group: route.group, context: route.group
     }));
     // Existing product doors; these are links, not newly granted entitlements.
     return native.concat([

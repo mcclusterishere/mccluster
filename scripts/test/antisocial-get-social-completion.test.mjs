@@ -11,6 +11,7 @@
    scripts/test-antisocial-db.sh. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { runInNewContext } from 'node:vm';
 import { readFile, access } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -124,9 +125,28 @@ test('the page publishes together from Level 3, confirms a project published wit
   assert.match(js, /c\.verified \? "Verified collaboration" : "Made together · in review"/);
   /* progress outside the dialog */
   assert.match(js, /var label=total\?\(m\.status==="verified"\?total\+" \/ "\+total\+" · Verified":done\+" \/ "\+total/);
-  assert.match(js, /if\(m\.id===ANTISOCIAL_ID\)activity="One mission, three levels"\+\(mine\?" · you: "\+mine\.done\+" \/ "\+mine\.total:""\)/);
   assert.match(js, /n\.type==="collaboration_published"/);
   /* the partner's page lists the projects they are credited on */
   const worker = await read('workers/mccluster/src/platform-api.js');
   assert.match(worker, /action_collaboration_posts\?partner_m_uid=eq\.\$\{resolved\.m_uid\}&select=post_id/);
+});
+
+test('the mission card shows personal level progress only for its current signed-in record owner', async () => {
+  const js = await read('js/mnet.js');
+  const start = js.indexOf('  function missionDomainLabel(');
+  const end = js.indexOf('  function publicMission(', start);
+  assert.ok(start >= 0 && end > start);
+  const missions = { recordOwner: 'member', stats: {}, levelsByMission: { social: { done: 1, total: 3 } } };
+  const state = { guest: false, user: { id: 'member' } };
+  const render = runInNewContext(js.slice(start, end) + '\nmissionCard', {
+    state, missions, MISSION_POSTS: null, ANTISOCIAL_ID: 'social', esc: String
+  });
+  const card = id => render({ id, title: 'Fixture mission' });
+  assert.match(card('social'), /data-mission-level-progress>One mission, three levels · you: 1 \/ 3<\/span>/);
+  assert.doesNotMatch(card('ordinary'), /data-mission-level-progress|One mission, three levels/);
+  state.user = { id: 'next-member' };
+  assert.match(card('social'), /data-mission-level-progress>One mission, three levels<\/span>/);
+  state.guest = true;
+  state.user = { id: 'member' };
+  assert.doesNotMatch(card('social'), / · you:/);
 });

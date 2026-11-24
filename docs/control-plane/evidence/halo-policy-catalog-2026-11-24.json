@@ -1,0 +1,818 @@
+{
+  "project_ref": "zmnhbrjyhxzhkxmhkexs",
+  "read_only": true,
+  "scope": "Schema catalogs only; no application rows or migration authors. Equity Uprise shared-platform support only.",
+  "production_read_at": "2026-11-24 19:01:57.3075+00",
+  "production_server_version": "17.6",
+  "canonical_migration": "supabase/migrations/20261117144103_eup_module_policy_v1.sql",
+  "canonical_git_blob_sha": "392b7d842fc07065d4aa844181a902a2d0cf4082",
+  "native_baseline_result": "PostgreSQL 17.6: canonical policy SQL exactly matched every production catalog detail; original Halo SQL produced the recorded extension fingerprints. Corrected behavioral proof pending CI.",
+  "baseline": {
+    "rules": "d751713988987e9331980363e24189ce",
+    "columns": "2f6d26466365640e2a25228923f04749",
+    "indexes": "f85291a5ad99d0d0afe39067481d8bd4",
+    "policies": "d751713988987e9331980363e24189ce",
+    "triggers": "ce521d000a5ce4b35efd9b408c1e12ee",
+    "functions": "7192b3d8f40ca2f36db0583230633a8d",
+    "relations": "a70803fbc257d141ecfec4e7f8f4fcfe",
+    "constraints": "f8d7400df5de5fee7324c2932056e00d"
+  },
+  "halo": {
+    "rules": "d751713988987e9331980363e24189ce",
+    "columns": "2f6d26466365640e2a25228923f04749",
+    "indexes": "f85291a5ad99d0d0afe39067481d8bd4",
+    "policies": "d751713988987e9331980363e24189ce",
+    "triggers": "ce521d000a5ce4b35efd9b408c1e12ee",
+    "functions": "458ab1e67c3570af97bc2ac01b35c330",
+    "relations": "a70803fbc257d141ecfec4e7f8f4fcfe",
+    "constraints": "a8dbe8f75efcb05510da5965f62608d6"
+  },
+  "baseline_detail": {
+    "rules": [],
+    "columns": [
+      {
+        "acl": null,
+        "name": "org_id",
+        "type": "uuid",
+        "table": "eup_module_policies",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 1,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "module_id",
+        "type": "text",
+        "table": "eup_module_policies",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2,
+        "collation": "default",
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "state",
+        "type": "text",
+        "table": "eup_module_policies",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3,
+        "collation": "default",
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "revision",
+        "type": "bigint",
+        "table": "eup_module_policies",
+        "default": "0",
+        "identity": "",
+        "not_null": true,
+        "position": 4,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "updated_by",
+        "type": "uuid",
+        "table": "eup_module_policies",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "eup_module_policies",
+        "default": "clock_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 6,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "eup_module_policies",
+        "default": "clock_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 7,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "seq",
+        "type": "bigint",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "a",
+        "not_null": true,
+        "position": 1,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "org_id",
+        "type": "uuid",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "idempotency_key",
+        "type": "text",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3,
+        "collation": "default",
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "actor",
+        "type": "uuid",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "module_id",
+        "type": "text",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5,
+        "collation": "default",
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "command",
+        "type": "text",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6,
+        "collation": "default",
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "requested_state",
+        "type": "text",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7,
+        "collation": "default",
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "expected_revision",
+        "type": "bigint",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 8,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "reason",
+        "type": "text",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9,
+        "collation": "default",
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "payload_digest",
+        "type": "text",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 10,
+        "collation": "default",
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "prior_state",
+        "type": "text",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 11,
+        "collation": "default",
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "prior_revision",
+        "type": "bigint",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 12,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "receipt",
+        "type": "jsonb",
+        "table": "eup_module_policy_commands",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 13,
+        "collation": null,
+        "generated": ""
+      },
+      {
+        "acl": null,
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "eup_module_policy_commands",
+        "default": "clock_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 14,
+        "collation": null,
+        "generated": ""
+      }
+    ],
+    "indexes": [
+      {
+        "name": "eup_module_policies_pkey",
+        "ready": true,
+        "table": "eup_module_policies",
+        "valid": true,
+        "definition": "CREATE UNIQUE INDEX eup_module_policies_pkey ON eup_module_policies USING btree (org_id, module_id)"
+      },
+      {
+        "name": "eup_module_policy_commands_module_time",
+        "ready": true,
+        "table": "eup_module_policy_commands",
+        "valid": true,
+        "definition": "CREATE INDEX eup_module_policy_commands_module_time ON eup_module_policy_commands USING btree (org_id, module_id, seq DESC)"
+      },
+      {
+        "name": "eup_module_policy_commands_pkey",
+        "ready": true,
+        "table": "eup_module_policy_commands",
+        "valid": true,
+        "definition": "CREATE UNIQUE INDEX eup_module_policy_commands_pkey ON eup_module_policy_commands USING btree (org_id, idempotency_key)"
+      }
+    ],
+    "policies": [],
+    "triggers": [
+      {
+        "name": "eup_module_policies_monotonic",
+        "table": "eup_module_policies",
+        "enabled": "O",
+        "definition": "CREATE TRIGGER eup_module_policies_monotonic BEFORE DELETE OR UPDATE ON eup_module_policies FOR EACH ROW EXECUTE FUNCTION eup_module_policy_immutable()"
+      },
+      {
+        "name": "eup_module_policies_no_truncate",
+        "table": "eup_module_policies",
+        "enabled": "O",
+        "definition": "CREATE TRIGGER eup_module_policies_no_truncate BEFORE TRUNCATE ON eup_module_policies FOR EACH STATEMENT EXECUTE FUNCTION eup_module_policy_immutable()"
+      },
+      {
+        "name": "eup_module_policy_commands_append_only",
+        "table": "eup_module_policy_commands",
+        "enabled": "O",
+        "definition": "CREATE TRIGGER eup_module_policy_commands_append_only BEFORE DELETE OR UPDATE ON eup_module_policy_commands FOR EACH ROW EXECUTE FUNCTION eup_module_policy_immutable()"
+      },
+      {
+        "name": "eup_module_policy_commands_no_truncate",
+        "table": "eup_module_policy_commands",
+        "enabled": "O",
+        "definition": "CREATE TRIGGER eup_module_policy_commands_no_truncate BEFORE TRUNCATE ON eup_module_policy_commands FOR EACH STATEMENT EXECUTE FUNCTION eup_module_policy_immutable()"
+      }
+    ],
+    "functions": [
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "EXECUTE",
+            false
+          ],
+          [
+            "service_role",
+            "postgres",
+            "EXECUTE",
+            false
+          ]
+        ],
+        "name": "eup_module_control_read",
+        "owner": "postgres",
+        "arguments": "p_actor uuid, p_limit integer",
+        "definition_md5": "df0c8931526669f01563f7679e1df90e"
+      },
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "EXECUTE",
+            false
+          ],
+          [
+            "service_role",
+            "postgres",
+            "EXECUTE",
+            false
+          ]
+        ],
+        "name": "eup_module_guard",
+        "owner": "postgres",
+        "arguments": "p_module text, p_expected_revision bigint",
+        "definition_md5": "95d00a815122d8e52fe3168eb54a549b"
+      },
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "EXECUTE",
+            false
+          ],
+          [
+            "service_role",
+            "postgres",
+            "EXECUTE",
+            false
+          ]
+        ],
+        "name": "eup_module_guard_reduce",
+        "owner": "postgres",
+        "arguments": "p_module text",
+        "definition_md5": "da3d614151c18fc3fe4fbb9b35a54428"
+      },
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "EXECUTE",
+            false
+          ]
+        ],
+        "name": "eup_module_guard_trigger",
+        "owner": "postgres",
+        "arguments": "",
+        "definition_md5": "d3421b4ddd7effb2f70c8c2dde57d3d9"
+      },
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "EXECUTE",
+            false
+          ],
+          [
+            "service_role",
+            "postgres",
+            "EXECUTE",
+            false
+          ]
+        ],
+        "name": "eup_module_policy_command",
+        "owner": "postgres",
+        "arguments": "p_actor uuid, p_module text, p_state text, p_expected_revision bigint, p_key text, p_reason text",
+        "definition_md5": "f8805dde0204d0b00b5d6fd2ea80730c"
+      },
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "EXECUTE",
+            false
+          ]
+        ],
+        "name": "eup_module_policy_immutable",
+        "owner": "postgres",
+        "arguments": "",
+        "definition_md5": "091574551055baab60a2628b3fff2696"
+      },
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "EXECUTE",
+            false
+          ],
+          [
+            "service_role",
+            "postgres",
+            "EXECUTE",
+            false
+          ]
+        ],
+        "name": "eup_module_policy_install",
+        "owner": "postgres",
+        "arguments": "p_actor uuid, p_module text, p_key text, p_reason text",
+        "definition_md5": "d220a28ce67b85c3ad32ec6802e074cc"
+      },
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "EXECUTE",
+            false
+          ]
+        ],
+        "name": "eup_module_policy_json",
+        "owner": "postgres",
+        "arguments": "p_module text, p_state text, p_revision bigint",
+        "definition_md5": "788cd96255a6ce27585c7d559ea523e2"
+      },
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "EXECUTE",
+            false
+          ],
+          [
+            "service_role",
+            "postgres",
+            "EXECUTE",
+            false
+          ]
+        ],
+        "name": "eup_module_policy_read",
+        "owner": "postgres",
+        "arguments": "p_module text",
+        "definition_md5": "d0d0075ded4b645cd701efd26b45e386"
+      }
+    ],
+    "relations": [
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "DELETE",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "INSERT",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "MAINTAIN",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "REFERENCES",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "SELECT",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "TRIGGER",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "TRUNCATE",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "UPDATE",
+            false
+          ]
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "eup_module_policies",
+        "owner": "postgres",
+        "options": null,
+        "force_rls": false,
+        "partition": false,
+        "persistence": "p",
+        "replica_identity": "d"
+      },
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "DELETE",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "INSERT",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "MAINTAIN",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "REFERENCES",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "SELECT",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "TRIGGER",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "TRUNCATE",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "UPDATE",
+            false
+          ]
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "eup_module_policy_commands",
+        "owner": "postgres",
+        "options": null,
+        "force_rls": false,
+        "partition": false,
+        "persistence": "p",
+        "replica_identity": "d"
+      },
+      {
+        "acl": [
+          [
+            "postgres",
+            "postgres",
+            "SELECT",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "UPDATE",
+            false
+          ],
+          [
+            "postgres",
+            "postgres",
+            "USAGE",
+            false
+          ]
+        ],
+        "rls": false,
+        "kind": "S",
+        "name": "eup_module_policy_commands_seq_seq",
+        "owner": "postgres",
+        "options": null,
+        "force_rls": false,
+        "partition": false,
+        "persistence": "p",
+        "replica_identity": "n"
+      }
+    ],
+    "constraints": [
+      {
+        "name": "eup_module_policies_module_id_check",
+        "type": "c",
+        "table": "eup_module_policies",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK (module_id = ANY (ARRAY['environment'::text, 'league'::text, 'intake'::text]))",
+        "no_inherit": false
+      },
+      {
+        "name": "eup_module_policies_org_id_fkey",
+        "type": "f",
+        "table": "eup_module_policies",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (org_id) REFERENCES orgs(id)",
+        "no_inherit": true
+      },
+      {
+        "name": "eup_module_policies_pkey",
+        "type": "p",
+        "table": "eup_module_policies",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "PRIMARY KEY (org_id, module_id)",
+        "no_inherit": true
+      },
+      {
+        "name": "eup_module_policies_revision_check",
+        "type": "c",
+        "table": "eup_module_policies",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK (revision >= 0 AND revision <= '9007199254740991'::bigint)",
+        "no_inherit": false
+      },
+      {
+        "name": "eup_module_policies_state_check",
+        "type": "c",
+        "table": "eup_module_policies",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK (state = ANY (ARRAY['enabled'::text, 'draining'::text, 'disabled'::text]))",
+        "no_inherit": false
+      },
+      {
+        "name": "eup_module_policies_updated_by_fkey",
+        "type": "f",
+        "table": "eup_module_policies",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id)",
+        "no_inherit": true
+      },
+      {
+        "name": "eup_module_policy_commands_actor_fkey",
+        "type": "f",
+        "table": "eup_module_policy_commands",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (actor) REFERENCES auth.users(id)",
+        "no_inherit": true
+      },
+      {
+        "name": "eup_module_policy_commands_command_check",
+        "type": "c",
+        "table": "eup_module_policy_commands",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK (command = ANY (ARRAY['install'::text, 'set_state'::text]))",
+        "no_inherit": false
+      },
+      {
+        "name": "eup_module_policy_commands_expected_revision_check",
+        "type": "c",
+        "table": "eup_module_policy_commands",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK (expected_revision IS NULL OR expected_revision >= 0)",
+        "no_inherit": false
+      },
+      {
+        "name": "eup_module_policy_commands_idempotency_key_check",
+        "type": "c",
+        "table": "eup_module_policy_commands",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK (idempotency_key ~ '^[A-Za-z0-9._:-]{8,128}$'::text)",
+        "no_inherit": false
+      },
+      {
+        "name": "eup_module_policy_commands_module_id_check",
+        "type": "c",
+        "table": "eup_module_policy_commands",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK (module_id = ANY (ARRAY['environment'::text, 'league'::text, 'intake'::text]))",
+        "no_inherit": false
+      },
+      {
+        "name": "eup_module_policy_commands_org_id_fkey",
+        "type": "f",
+        "table": "eup_module_policy_commands",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "FOREIGN KEY (org_id) REFERENCES orgs(id)",
+        "no_inherit": true
+      },
+      {
+        "name": "eup_module_policy_commands_payload_digest_check",
+        "type": "c",
+        "table": "eup_module_policy_commands",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK (payload_digest ~ '^[0-9a-f]{64}$'::text)",
+        "no_inherit": false
+      },
+      {
+        "name": "eup_module_policy_commands_pkey",
+        "type": "p",
+        "table": "eup_module_policy_commands",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "PRIMARY KEY (org_id, idempotency_key)",
+        "no_inherit": true
+      },
+      {
+        "name": "eup_module_policy_commands_reason_check",
+        "type": "c",
+        "table": "eup_module_policy_commands",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK (length(reason) >= 1 AND length(reason) <= 500)",
+        "no_inherit": false
+      },
+      {
+        "name": "eup_module_policy_commands_requested_state_check",
+        "type": "c",
+        "table": "eup_module_policy_commands",
+        "deferred": false,
+        "validated": true,
+        "deferrable": false,
+        "definition": "CHECK (requested_state = ANY (ARRAY['enabled'::text, 'draining'::text, 'disabled'::text]))",
+        "no_inherit": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,811 @@
+{
+  "schema": "halo-case/v1",
+  "id": "fukushima-oki-2022-renesas",
+  "title": "Fukushima-oki earthquake, 16 March 2022, and Renesas semiconductor production",
+  "kind": "historical_replay_exercise",
+  "written": "2026-11-24",
+  "summary": "A dated record of what original sources said, and when, about the 16 March 2022 earthquake off Fukushima and three Renesas factories. It exists to prove one path end to end: evidence with its own times and identity, a replay that shows only what was available at a cutoff, and a decision that stays a proposal until an authorized event says otherwise.",
+  "time_rules": {
+    "observed_at": "When the thing happened or was measured.",
+    "published_at": "When the source says it published, with its precision. A notice that prints only a date has precision \"date\".",
+    "available_at": "The earliest instant the evidence may be used in a replay: the published instant; or, for a date-only notice, the end of that day in the source's zone (Asia/Tokyo: 15:00:00Z on the printed date); or, for a retrospective source, the time it was retrieved.",
+    "ingested_at": "When McCluster stored it. null throughout: this file has not been ingested into the canonical store.",
+    "retrieved_at": "When the bytes were read for this file."
+  },
+  "event": {
+    "name": "Earthquake off the coast of Fukushima Prefecture (Fukushima-ken Oki)",
+    "origin_time": {
+      "usgs": "2022-03-16T14:36:30.997Z",
+      "jma_local": "2022-03-16 23:36:32.6 JST (JMA seismic intensity database)"
+    },
+    "magnitude": {
+      "jma_first_report": "M7.3 preliminary (17 March 2022)",
+      "jma_second_report": "M7.4 provisional (24 March 2022)",
+      "usgs_current": "M7.3 mww"
+    },
+    "depth_km": {
+      "jma_first_report": 60,
+      "jma_second_report": 57,
+      "usgs_current": 41
+    },
+    "note": "The figures differ by source and by revision. None is \"the\" value: each is what that source said at that revision."
+  },
+  "sites": [
+    {
+      "id": "renesas-naka",
+      "name": "Naka Factory",
+      "operator": "Renesas Semiconductor Manufacturing Co., Ltd.",
+      "municipality": "Hitachinaka, Ibaraki",
+      "coordinates": null,
+      "coordinates_note": "Not geocoded. The address is the operator's published one; no point is placed on a map from it here."
+    },
+    {
+      "id": "renesas-takasaki",
+      "name": "Takasaki Factory",
+      "operator": "Renesas Semiconductor Manufacturing Co., Ltd.",
+      "municipality": "Takasaki, Gunma",
+      "coordinates": null,
+      "coordinates_note": "Not geocoded."
+    },
+    {
+      "id": "renesas-yonezawa",
+      "name": "Yonezawa Factory",
+      "operator": "Renesas Electronics Corporation",
+      "municipality": "Yonezawa, Yamagata",
+      "coordinates": null,
+      "coordinates_note": "Not geocoded."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "jma-press-20220317",
+      "source": "jma-press",
+      "source_record_id": "fukushima-oki-20220316-2336",
+      "revision": "1",
+      "kind": "agency_bulletin",
+      "title": "JMA press release, first report: the earthquake off Fukushima at about 23:36 on 16 March 2022",
+      "publisher": "Japan Meteorological Agency",
+      "language": "ja",
+      "url": "https://www.jma.go.jp/jma/press/2203/17a/202203170130.html",
+      "observed_at": "2022-03-16T14:36:00Z",
+      "published_at": {
+        "value": "2022-03-17",
+        "precision": "date",
+        "tz": "Asia/Tokyo"
+      },
+      "printed_date": "Reiwa 4 (2022) March 17",
+      "publisher_metadata_time": null,
+      "publisher_metadata_note": "The URL ends 202203170130, which suggests 01:30 JST. No release time is printed on the page, so the replay does not use it.",
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:17.557Z",
+      "content_sha256": "916027aa5df08b44bf2dbfe7e962b033196b93dcbc9bb0c34a1f34abe6d35802",
+      "content_bytes": 9715,
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "statements": [
+        {
+          "id": "jma1-regional",
+          "class": "shaking_observed",
+          "site": null,
+          "scope": "municipal_stations",
+          "text": "First report: M7.3 (preliminary), depth 60 km, off Fukushima. Maximum seismic intensity 6-upper was observed in five municipalities: Tome and Zao (Miyagi), Kunimi, Soma and Minamisoma (Fukushima). None of the five is a city with one of the three factories, and the page lists no intensity for Hitachinaka, Takasaki or Yonezawa."
+        }
+      ],
+      "available_at": "2022-03-17T15:00:00.000Z"
+    },
+    {
+      "id": "jma-press-20220324",
+      "source": "jma-press",
+      "source_record_id": "fukushima-oki-20220316-2336",
+      "revision": "2",
+      "kind": "agency_bulletin",
+      "title": "JMA press release, second report",
+      "publisher": "Japan Meteorological Agency",
+      "language": "ja",
+      "url": "https://www.jma.go.jp/jma/press/2203/24b/202203241400.html",
+      "observed_at": "2022-03-16T14:36:00Z",
+      "published_at": {
+        "value": "2022-03-24",
+        "precision": "date",
+        "tz": "Asia/Tokyo"
+      },
+      "printed_date": "Reiwa 4 (2022) March 24",
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T03:55:00Z",
+      "retrieved_at_note": "Approximate: read by a delegated research pass on 2026-11-23 local time, whose fetch time was not recorded to the second.",
+      "content_sha256": null,
+      "content_hash_note": "Read through a fetch summary by a delegated research pass, not re-read in the authoring session; the bytes were not captured.",
+      "verified_by": "Delegated research pass, 2026-11-23, from a fetch summary. Not re-read.",
+      "retrospective": false,
+      "statements": [
+        {
+          "id": "jma2-revision",
+          "class": "context",
+          "site": null,
+          "text": "Second report: magnitude revised to M7.4 and depth to 57 km (both provisional); a foreshock about two minutes earlier, M6.1."
+        }
+      ],
+      "available_at": "2022-03-24T15:00:00.000Z"
+    },
+    {
+      "id": "renesas-notice-1",
+      "source": "renesas-newsroom",
+      "source_record_id": "impact-march-16-earthquake-fukushima",
+      "revision": "1",
+      "kind": "operator_notice",
+      "title": "Impact of the March 16 Earthquake in the Coast of Fukushima Prefecture on Renesas Operation",
+      "publisher": "Renesas Electronics Corporation",
+      "language": "en",
+      "url": "https://www.renesas.com/en/about/newsroom/impact-march-16-earthquake-coast-fukushima-prefecture-renesas-operation-0",
+      "observed_at": null,
+      "published_at": {
+        "value": "2022-03-17",
+        "precision": "date",
+        "tz": "Asia/Tokyo"
+      },
+      "printed_date": "March 17, 2022",
+      "publisher_metadata_time": "2022-03-17T11:46:33+09:00",
+      "publisher_metadata_note": "datePublished in the page's JSON-LD. It is not printed on the notice, so the replay does not use it: the notice enters at the end of its printed day in Japan.",
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:09.653Z",
+      "content_sha256": "957623724bf7b5859ffcec82cd610fd0e90c5f5f5a627b40bd20dfb8aecd0add",
+      "content_bytes": 235371,
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "statements": [
+        {
+          "id": "n1-naka-halt",
+          "class": "halt_confirmed",
+          "site": "renesas-naka",
+          "text": "Production halted since the earthquake. A temporary blackout; power restored and utilities partly resumed. Clean-room safety assessment began the morning of 17 March. No employee casualties."
+        },
+        {
+          "id": "n1-takasaki-halt",
+          "class": "halt_confirmed",
+          "site": "renesas-takasaki",
+          "text": "Production halted. A blackout; power restored and utilities resumed. Checks of clean-room equipment and products began the morning of 17 March. No casualties."
+        },
+        {
+          "id": "n1-yonezawa-halt",
+          "class": "halt_confirmed",
+          "site": "renesas-yonezawa",
+          "text": "Production suspended immediately after the earthquake."
+        },
+        {
+          "id": "n1-yonezawa-partial",
+          "class": "restart_partial",
+          "site": "renesas-yonezawa",
+          "text": "Partially resumed on some test lines as of 8:00 on 17 March, Japan time. This is the only clock time printed in any of the four notices."
+        },
+        {
+          "id": "n1-no-forecast",
+          "class": "context",
+          "site": null,
+          "text": "No restart date is given for Naka or Takasaki: it will be decided on the condition of the facilities. Supply-chain impact was still being assessed."
+        }
+      ],
+      "available_at": "2022-03-17T15:00:00.000Z"
+    },
+    {
+      "id": "renesas-notice-2",
+      "source": "renesas-newsroom",
+      "source_record_id": "impact-march-16-earthquake-fukushima",
+      "revision": "2",
+      "kind": "operator_notice",
+      "title": "UPDATE 2 - Impact of the March 16 Earthquake in the Coast of Fukushima Prefecture on Renesas Operation",
+      "publisher": "Renesas Electronics Corporation",
+      "language": "en",
+      "url": "https://www.renesas.com/en/about/newsroom/update-2-impact-march-16-earthquake-coast-fukushima-prefecture-renesas-operation",
+      "observed_at": null,
+      "published_at": {
+        "value": "2022-03-18",
+        "precision": "date",
+        "tz": "Asia/Tokyo"
+      },
+      "printed_date": "March 18, 2022",
+      "publisher_metadata_time": "2022-03-18T15:47:58+09:00",
+      "publisher_metadata_note": "datePublished in the page's JSON-LD. It is not printed on the notice, so the replay does not use it: the notice enters at the end of its printed day in Japan.",
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:11.587Z",
+      "content_sha256": "d4afe4beebd68a5ab3b418061f3d9d5a452f557ec5d93e19e632fb1b3ed428f7",
+      "content_bytes": 234633,
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "statements": [
+        {
+          "id": "n2-naka-partial",
+          "class": "restart_partial",
+          "site": "renesas-naka",
+          "text": "Equipment start-up began on 17 March and production partially resumed on test lines the same day. Nothing is said about when front-end wafer processing restarted."
+        },
+        {
+          "id": "n2-takasaki-partial",
+          "class": "restart_partial",
+          "site": "renesas-takasaki",
+          "text": "Equipment start-up began on 17 March and production partially resumed on test lines the same day. Nothing is said about when front-end wafer processing restarted."
+        },
+        {
+          "id": "n2-yonezawa-partial",
+          "class": "restart_partial",
+          "site": "renesas-yonezawa",
+          "text": "All processes resumed as of 18 March. Capacity was not yet back to the pre-earthquake level."
+        },
+        {
+          "id": "n2-naka-forecast",
+          "class": "forecast",
+          "site": "renesas-naka",
+          "forecast_for": "2022-03-23",
+          "text": "Expected to reach full pre-earthquake production capacity, on a wafer-input basis, on 23 March."
+        },
+        {
+          "id": "n2-takasaki-forecast",
+          "class": "forecast",
+          "site": "renesas-takasaki",
+          "forecast_for": "2022-03-23",
+          "text": "Expected to reach full pre-earthquake production capacity, on a wafer-input basis, on 23 March."
+        },
+        {
+          "id": "n2-yonezawa-forecast",
+          "class": "forecast",
+          "site": "renesas-yonezawa",
+          "forecast_for": "2022-03-20",
+          "text": "Expected to reach full pre-earthquake production capacity, on an input basis, on 20 March."
+        }
+      ],
+      "available_at": "2022-03-18T15:00:00.000Z"
+    },
+    {
+      "id": "renesas-notice-3",
+      "source": "renesas-newsroom",
+      "source_record_id": "impact-march-16-earthquake-fukushima",
+      "revision": "3",
+      "kind": "operator_notice",
+      "title": "UPDATE 3 - Impact of the March 16 Earthquake in the Coast of Fukushima Prefecture on Renesas Operation",
+      "publisher": "Renesas Electronics Corporation",
+      "language": "en",
+      "url": "https://www.renesas.com/en/about/newsroom/update-3-impact-march-16-earthquake-coast-fukushima-prefecture-renesas-operation",
+      "observed_at": null,
+      "published_at": {
+        "value": "2022-03-23",
+        "precision": "date",
+        "tz": "Asia/Tokyo"
+      },
+      "printed_date": "March 23, 2022",
+      "publisher_metadata_time": "2022-03-23T15:23:51+09:00",
+      "publisher_metadata_note": "datePublished in the page's JSON-LD. It is not printed on the notice, so the replay does not use it: the notice enters at the end of its printed day in Japan.",
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:13.032Z",
+      "content_sha256": "8753e638741c03dd4bfea92529c9ab82d427f9b4f7dd10b587c6f8cba64a516e",
+      "content_bytes": 233750,
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "statements": [
+        {
+          "id": "n3-naka-partial",
+          "class": "restart_partial",
+          "site": "renesas-naka",
+          "text": "At about 50% of pre-earthquake production capacity as of 23 March."
+        },
+        {
+          "id": "n3-naka-missed",
+          "class": "forecast_missed",
+          "site": "renesas-naka",
+          "settles": "n2-naka-forecast",
+          "text": "The 23 March target was not met: some manufacturing equipment failed."
+        },
+        {
+          "id": "n3-naka-forecast",
+          "class": "forecast",
+          "site": "renesas-naka",
+          "forecast_for": "2022-03-26",
+          "text": "Expected to reach close to full pre-earthquake production capacity, on a wafer-input basis, on 26 March."
+        },
+        {
+          "id": "n3-naka-loss",
+          "class": "loss_reported",
+          "site": "renesas-naka",
+          "text": "Some work-in-process was damaged; the loss was still being assessed."
+        },
+        {
+          "id": "n3-takasaki-recovered",
+          "class": "recovery_confirmed_by_operator",
+          "site": "renesas-takasaki",
+          "settles": "n2-takasaki-forecast",
+          "text": "Back to full pre-earthquake production capacity, on a wafer-input basis, on 23 March as scheduled. All equipment start-up was completed on 22 March."
+        },
+        {
+          "id": "n3-takasaki-loss",
+          "class": "loss_reported",
+          "site": "renesas-takasaki",
+          "text": "Damaged work-in-process plus the halt equal about 10 days of production, which the company said it would work to recover."
+        },
+        {
+          "id": "n3-yonezawa-recovered",
+          "class": "recovery_confirmed_by_operator",
+          "site": "renesas-yonezawa",
+          "settles": "n2-yonezawa-forecast",
+          "text": "Back to full pre-earthquake production capacity, on an input basis, on 20 March as scheduled. All equipment start-up was completed on 18 March."
+        },
+        {
+          "id": "n3-yonezawa-loss",
+          "class": "loss_reported",
+          "site": "renesas-yonezawa",
+          "text": "The loss equals about 2 days of production."
+        }
+      ],
+      "available_at": "2022-03-23T15:00:00.000Z"
+    },
+    {
+      "id": "renesas-notice-4",
+      "source": "renesas-newsroom",
+      "source_record_id": "impact-march-16-earthquake-fukushima",
+      "revision": "4",
+      "kind": "operator_notice",
+      "title": "UPDATE 4 (FINAL) - Impact of the March 16 Earthquake in the Coast of Fukushima Prefecture on Renesas Operation",
+      "publisher": "Renesas Electronics Corporation",
+      "language": "en",
+      "url": "https://www.renesas.com/en/about/newsroom/update-4-final-impact-march-16-earthquake-coast-fukushima-prefecture-renesas-operation-1",
+      "observed_at": null,
+      "published_at": {
+        "value": "2022-03-26",
+        "precision": "date",
+        "tz": "Asia/Tokyo"
+      },
+      "printed_date": "March 26, 2022",
+      "publisher_metadata_time": "2022-03-26T13:28:50+09:00",
+      "publisher_metadata_note": "datePublished in the page's JSON-LD. It is not printed on the notice, so the replay does not use it: the notice enters at the end of its printed day in Japan.",
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:14.739Z",
+      "content_sha256": "f46bf561885312374b932b8a25936483b60ef4a3577a0bd402766ac9a0ec96cb",
+      "content_bytes": 228518,
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "statements": [
+        {
+          "id": "n4-naka-recovered",
+          "class": "recovery_confirmed_by_operator",
+          "site": "renesas-naka",
+          "settles": "n3-naka-forecast",
+          "text": "Reached full pre-earthquake production capacity, on a wafer-input basis, on 26 March."
+        },
+        {
+          "id": "n4-naka-loss",
+          "class": "loss_reported",
+          "site": "renesas-naka",
+          "text": "Ruined work-in-process plus reduced production equal about 2 weeks of output on the 200-mm line and about 3 weeks on the 300-mm line, which the company said it would work to recover."
+        },
+        {
+          "id": "n4-others",
+          "class": "context",
+          "site": null,
+          "text": "Takasaki and Yonezawa are described as already fully resumed. This is the final notice in the series."
+        }
+      ],
+      "available_at": "2022-03-26T15:00:00.000Z"
+    },
+    {
+      "id": "usgs-shakemap-v1",
+      "source": "usgs-shakemap",
+      "source_record_id": "us6000h519",
+      "revision": "1",
+      "kind": "modeled_shaking",
+      "title": "USGS ShakeMap us6000h519, version 1",
+      "publisher": "U.S. Geological Survey",
+      "language": "en",
+      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us6000h519&format=geojson&includesuperseded=true",
+      "observed_at": "2022-03-16T14:36:30.997Z",
+      "published_at": {
+        "value": "2022-03-16T14:59:37.938Z",
+        "precision": "instant",
+        "tz": "UTC"
+      },
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:38.443Z",
+      "content_sha256": null,
+      "content_hash_note": "Only this version's metadata (update time, review status, map-wide maximum) was read, from the event detail listing. Its grid files were not downloaded, so nothing here is a hash of the version and its geometry is not verified.",
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "geometry_verified": false,
+      "statements": [
+        {
+          "id": "v1-exists",
+          "class": "shaking_modeled",
+          "site": null,
+          "scope": "map_wide",
+          "text": "ShakeMap version 1 (automatic) existed from this time, with a map-wide maximum intensity of MMI 7.278. That maximum is for the whole map. Its geometry was not verified, so no value at any facility is taken from it."
+        }
+      ],
+      "available_at": "2022-03-16T14:59:37.938Z"
+    },
+    {
+      "id": "usgs-shakemap-v2",
+      "source": "usgs-shakemap",
+      "source_record_id": "us6000h519",
+      "revision": "2",
+      "kind": "modeled_shaking",
+      "title": "USGS ShakeMap us6000h519, version 2",
+      "publisher": "U.S. Geological Survey",
+      "language": "en",
+      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us6000h519&format=geojson&includesuperseded=true",
+      "observed_at": "2022-03-16T14:36:30.997Z",
+      "published_at": {
+        "value": "2022-03-16T16:42:19.981Z",
+        "precision": "instant",
+        "tz": "UTC"
+      },
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:38.443Z",
+      "content_sha256": null,
+      "content_hash_note": "Only this version's metadata (update time, review status, map-wide maximum) was read, from the event detail listing. Its grid files were not downloaded, so nothing here is a hash of the version and its geometry is not verified.",
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "geometry_verified": false,
+      "statements": [
+        {
+          "id": "v2-exists",
+          "class": "shaking_modeled",
+          "site": null,
+          "scope": "map_wide",
+          "text": "ShakeMap version 2 (reviewed) existed from this time, with a map-wide maximum intensity of MMI 7.575. That maximum is for the whole map. Its geometry was not verified, so no value at any facility is taken from it."
+        }
+      ],
+      "available_at": "2022-03-16T16:42:19.981Z"
+    },
+    {
+      "id": "usgs-shakemap-v3",
+      "source": "usgs-shakemap",
+      "source_record_id": "us6000h519",
+      "revision": "3",
+      "kind": "modeled_shaking",
+      "title": "USGS ShakeMap us6000h519, version 3",
+      "publisher": "U.S. Geological Survey",
+      "language": "en",
+      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us6000h519&format=geojson&includesuperseded=true",
+      "observed_at": "2022-03-16T14:36:30.997Z",
+      "published_at": {
+        "value": "2022-03-17T14:41:26.210Z",
+        "precision": "instant",
+        "tz": "UTC"
+      },
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:38.443Z",
+      "content_sha256": null,
+      "content_hash_note": "Only this version's metadata (update time, review status, map-wide maximum) was read, from the event detail listing. Its grid files were not downloaded, so nothing here is a hash of the version and its geometry is not verified.",
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "geometry_verified": false,
+      "statements": [
+        {
+          "id": "v3-exists",
+          "class": "shaking_modeled",
+          "site": null,
+          "scope": "map_wide",
+          "text": "ShakeMap version 3 (automatic) existed from this time, with a map-wide maximum intensity of MMI 7.593. That maximum is for the whole map. Its geometry was not verified, so no value at any facility is taken from it."
+        }
+      ],
+      "available_at": "2022-03-17T14:41:26.210Z"
+    },
+    {
+      "id": "usgs-shakemap-v4",
+      "source": "usgs-shakemap",
+      "source_record_id": "us6000h519",
+      "revision": "4",
+      "kind": "modeled_shaking",
+      "title": "USGS ShakeMap us6000h519, version 4",
+      "publisher": "U.S. Geological Survey",
+      "language": "en",
+      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us6000h519&format=geojson&includesuperseded=true",
+      "observed_at": "2022-03-16T14:36:30.997Z",
+      "published_at": {
+        "value": "2022-03-17T17:25:45.901Z",
+        "precision": "instant",
+        "tz": "UTC"
+      },
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:38.443Z",
+      "content_sha256": null,
+      "content_hash_note": "Only this version's metadata (update time, review status, map-wide maximum) was read, from the event detail listing. Its grid files were not downloaded, so nothing here is a hash of the version and its geometry is not verified.",
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "geometry_verified": false,
+      "statements": [
+        {
+          "id": "v4-exists",
+          "class": "shaking_modeled",
+          "site": null,
+          "scope": "map_wide",
+          "text": "ShakeMap version 4 (reviewed) existed from this time, with a map-wide maximum intensity of MMI 8.008. That maximum is for the whole map. Its geometry was not verified, so no value at any facility is taken from it."
+        }
+      ],
+      "available_at": "2022-03-17T17:25:45.901Z"
+    },
+    {
+      "id": "usgs-shakemap-v5",
+      "source": "usgs-shakemap",
+      "source_record_id": "us6000h519",
+      "revision": "5",
+      "kind": "modeled_shaking",
+      "title": "USGS ShakeMap us6000h519, version 5",
+      "publisher": "U.S. Geological Survey",
+      "language": "en",
+      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us6000h519&format=geojson&includesuperseded=true",
+      "observed_at": "2022-03-16T14:36:30.997Z",
+      "published_at": {
+        "value": "2022-04-14T13:26:23.493Z",
+        "precision": "instant",
+        "tz": "UTC"
+      },
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:38.443Z",
+      "content_sha256": null,
+      "content_hash_note": "Only this version's metadata (update time, review status, map-wide maximum) was read, from the event detail listing. Its grid files were not downloaded, so nothing here is a hash of the version and its geometry is not verified.",
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "geometry_verified": false,
+      "statements": [
+        {
+          "id": "v5-exists",
+          "class": "shaking_modeled",
+          "site": null,
+          "scope": "map_wide",
+          "text": "ShakeMap version 5 (automatic) existed from this time, with a map-wide maximum intensity of MMI 8.023. That maximum is for the whole map. Its geometry was not verified, so no value at any facility is taken from it."
+        }
+      ],
+      "available_at": "2022-04-14T13:26:23.493Z"
+    },
+    {
+      "id": "usgs-shakemap-v6",
+      "source": "usgs-shakemap",
+      "source_record_id": "us6000h519",
+      "revision": "6",
+      "kind": "modeled_shaking",
+      "title": "USGS ShakeMap us6000h519, version 6",
+      "publisher": "U.S. Geological Survey",
+      "language": "en",
+      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us6000h519&format=geojson&includesuperseded=true",
+      "observed_at": "2022-03-16T14:36:30.997Z",
+      "published_at": {
+        "value": "2022-04-22T15:04:31.408Z",
+        "precision": "instant",
+        "tz": "UTC"
+      },
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:38.443Z",
+      "content_sha256": null,
+      "content_hash_note": "Only this version's metadata (update time, review status, map-wide maximum) was read, from the event detail listing. Its grid files were not downloaded, so nothing here is a hash of the version and its geometry is not verified.",
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "geometry_verified": false,
+      "statements": [
+        {
+          "id": "v6-exists",
+          "class": "shaking_modeled",
+          "site": null,
+          "scope": "map_wide",
+          "text": "ShakeMap version 6 (automatic) existed from this time, with a map-wide maximum intensity of MMI 8.023. That maximum is for the whole map. Its geometry was not verified, so no value at any facility is taken from it."
+        }
+      ],
+      "available_at": "2022-04-22T15:04:31.408Z"
+    },
+    {
+      "id": "usgs-shakemap-v7",
+      "source": "usgs-shakemap",
+      "source_record_id": "us6000h519",
+      "revision": "7",
+      "kind": "modeled_shaking",
+      "title": "USGS ShakeMap us6000h519, version 7",
+      "publisher": "U.S. Geological Survey",
+      "language": "en",
+      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us6000h519&format=geojson&includesuperseded=true",
+      "observed_at": "2022-03-16T14:36:30.997Z",
+      "published_at": {
+        "value": "2022-05-16T10:41:29.971Z",
+        "precision": "instant",
+        "tz": "UTC"
+      },
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:38.443Z",
+      "content_sha256": null,
+      "content_hash_note": "Only this version's metadata (update time, review status, map-wide maximum) was read, from the event detail listing. Its grid files were not downloaded, so nothing here is a hash of the version and its geometry is not verified.",
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": false,
+      "geometry_verified": false,
+      "statements": [
+        {
+          "id": "v7-exists",
+          "class": "shaking_modeled",
+          "site": null,
+          "scope": "map_wide",
+          "text": "ShakeMap version 7 (automatic) existed from this time, with a map-wide maximum intensity of MMI 7.905. That maximum is for the whole map. Its geometry was not verified, so no value at any facility is taken from it. This is the latest version. It is a May revision: it describes the event in retrospect and was not available to anyone deciding in March."
+        }
+      ],
+      "available_at": "2022-05-16T10:41:29.971Z"
+    },
+    {
+      "id": "usgs-event-detail",
+      "source": "usgs-event",
+      "source_record_id": "us6000h519",
+      "revision": "updated-2025-09-10T18:42:15.235Z",
+      "kind": "agency_catalogue",
+      "title": "USGS event detail us6000h519",
+      "publisher": "U.S. Geological Survey",
+      "language": "en",
+      "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us6000h519&format=geojson",
+      "observed_at": "2022-03-16T14:36:30.997Z",
+      "published_at": null,
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:38:38.443Z",
+      "content_sha256": "151415e022f1fb41610dae4b04b5dc1b6473081c93af0ba6afd7f82021a4c87a",
+      "content_bytes": 75065,
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": true,
+      "retrospective_note": "The current catalogue record, last updated by USGS on 2025-09-10. It is the source of the ShakeMap version list above; as a solution it is today's, not March 2022's.",
+      "statements": [
+        {
+          "id": "usgs-current",
+          "class": "context",
+          "site": null,
+          "text": "Current solution: M7.3 (mww), origin 2022-03-16T14:36:30.997Z, 37.7132 N 141.5793 E, depth 41 km, \"57 km ENE of Namie, Japan\". Seven ShakeMap versions are listed, from 16 March to 16 May 2022."
+        }
+      ],
+      "available_at": "2026-11-24T04:38:38.443Z"
+    },
+    {
+      "id": "jma-intensity-db",
+      "source": "jma-eqdb",
+      "source_record_id": "20220316233632",
+      "revision": "catalogue-read-2026-11-24",
+      "kind": "agency_catalogue",
+      "title": "JMA seismic intensity database, event 20220316233632",
+      "publisher": "Japan Meteorological Agency",
+      "language": "ja",
+      "url": "https://www.data.jma.go.jp/eqdb/data/shindo/index.html#20220316233632",
+      "observed_at": "2022-03-16T14:36:32.600Z",
+      "published_at": null,
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:40:41.545Z",
+      "content_sha256": "9cb6bbb9cc8e8b03a07d8f32d16c5cf893f57efe0b4ccfddb0dc6d541dfc4b25",
+      "content_bytes": 786825,
+      "content_note": "The hash is of the database's own answer for this event (POST mode=event to its api path), not of the index page in url.",
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": true,
+      "retrospective_note": "The current catalogue. The database gives no publication date for these values, and no event-day release listing them for these three cities was verified, so they enter a replay only at the time they were read.",
+      "statements": [
+        {
+          "id": "db-hitachinaka",
+          "class": "shaking_observed",
+          "site": "renesas-naka",
+          "applies_to_site": false,
+          "scope": "municipal_stations",
+          "text": "Stations in Hitachinaka city recorded seismic intensity 5-lower (two stations run by local government or NIED) and 4 (one JMA station). These are public network stations in the city, not instruments at the factory. Which station is nearest the factory was not determined."
+        },
+        {
+          "id": "db-takasaki",
+          "class": "shaking_observed",
+          "site": "renesas-takasaki",
+          "applies_to_site": false,
+          "scope": "municipal_stations",
+          "text": "Stations in Takasaki city recorded seismic intensity 4 (one station) and 3 (six stations). Public network stations, not instruments at the factory."
+        },
+        {
+          "id": "db-yonezawa",
+          "class": "shaking_observed",
+          "site": "renesas-yonezawa",
+          "applies_to_site": false,
+          "scope": "municipal_stations",
+          "text": "Stations in Yonezawa city recorded seismic intensity 5-lower (one station) and 4 (three stations). Public network stations, not instruments at the factory."
+        },
+        {
+          "id": "db-hypocentre",
+          "class": "context",
+          "site": null,
+          "text": "Catalogue hypocentre: 23:36:32.6 JST, off Fukushima, depth 57 km, M7.4, maximum intensity 6-upper. The record also lists a second hypocentre at 23:38:29.9 JST under the same id, so its station values are for the record as the database groups it."
+        }
+      ],
+      "available_at": "2026-11-24T04:40:41.545Z"
+    },
+    {
+      "id": "renesas-global-operations",
+      "source": "renesas-profile",
+      "source_record_id": "global-operations",
+      "revision": "page-read-2026-11-24",
+      "kind": "operator_reference",
+      "title": "Renesas, Global Operations",
+      "publisher": "Renesas Electronics Corporation",
+      "language": "en",
+      "url": "https://www.renesas.com/en/about/profile/global",
+      "observed_at": null,
+      "published_at": null,
+      "ingested_at": null,
+      "retrieved_at": "2026-11-24T04:40:43.612Z",
+      "content_sha256": "25aaf279d3768237cd45809d90c2ff9601d688a0e297adb621e46f8a932b9ab6",
+      "content_bytes": 226479,
+      "verified_by": "Read in a browser in the authoring session on 2026-11-24 UTC; bytes hashed as served then.",
+      "retrospective": true,
+      "retrospective_note": "The operator's current listing, read in 2026. The March 2022 version of this page was not checked.",
+      "statements": [
+        {
+          "id": "addr-naka",
+          "class": "site_location",
+          "site": "renesas-naka",
+          "address": "751, Horiguchi, Hitachinaka-shi, Ibaraki, 312-8511, Japan",
+          "text": "Published address of the Naka Factory."
+        },
+        {
+          "id": "addr-takasaki",
+          "class": "site_location",
+          "site": "renesas-takasaki",
+          "address": "111, Nishiyokotemachi, Takasaki-shi, Gunma, 370-0021, Japan",
+          "text": "Published address of the Takasaki Factory."
+        },
+        {
+          "id": "addr-yonezawa",
+          "class": "site_location",
+          "site": "renesas-yonezawa",
+          "address": "3-3274, Aza-Yagihashi Higashi, Oaza-Hanazawa, Yonezawa-shi, Yamagata, 992-8530, Japan",
+          "text": "Published address of the Yonezawa Factory."
+        }
+      ],
+      "available_at": "2026-11-24T04:40:43.612Z"
+    }
+  ],
+  "not_claimed": [
+    "Shaking at any factory. No source here is an instrument at a factory: JMA values are public stations in the same city, and the ShakeMap maxima are for the whole map.",
+    "Any supplier or customer relationship. The notices name no customer, and none is inferred.",
+    "Any effect on revenue, earnings, a share price, an index or GDP. The four notices state none; they give losses only as days or weeks of production.",
+    "That \"full capacity\" means shipped output. Every recovery statement is on a wafer-input (production start) basis.",
+    "Independent verification of recovery. Recovery is the operator's own statement."
+  ],
+  "unknowns": [
+    "When front-end wafer processing restarted at Naka and Takasaki. The notices give equipment start-up and test-line restart only.",
+    "The JMA first report's release time (the page prints a date only).",
+    "Whether event-day JMA intensities for the three cities differed from the catalogue values read in 2026.",
+    "Which public station is nearest each factory, and how well it represents the site.",
+    "The geometry of every ShakeMap version. No grid was downloaded; the preferred version was not confirmed.",
+    "The operator's plant addresses as published in March 2022 (the 2026 listing was read).",
+    "Whether the lost production was recovered, and any financial effect. Later company reports were not read.",
+    "Renesas's Japanese-language notices and any exchange filing times were not compared against the English pages used here."
+  ],
+  "proposed_decision": {
+    "title": "Adopt operator-confirmed staging as the rule for facility cases after an earthquake",
+    "status": "proposed",
+    "authorization": null,
+    "authorization_note": "No authorized event exists. This is a proposal written by an agent for the owner; it is approved only when a decision recorded in ai_context.decisions by the house owner says so, and that record's id, actor and time are written here.",
+    "question": "When an earthquake is reported near a tracked facility, what may Halo say about the facility, and when?",
+    "recommendation": "Option A.",
+    "options": [
+      {
+        "id": "A",
+        "label": "Stage by operator confirmation",
+        "detail": "Open a case on the agency bulletin. Show the regional shaking as regional. Say \"status unknown\" for each facility until the operator or a regulator publishes. Move a facility to halted, partial or recovered only on such a statement, keep forecasts separate from confirmed states, and record a missed forecast as missed. In this case that would have shown three unknown sites for about a day, then the first notice."
+      },
+      {
+        "id": "B",
+        "label": "Infer exposure from shaking",
+        "detail": "State a likely facility impact from modeled or nearby observed shaking before the operator speaks. Faster by about a day here. It would have been a claim no source supported, and in this case public stations in the three cities read 3 to 5-lower while the reported loss ranged from about 2 days to about 3 weeks of production, so the inference would not have separated the three sites."
+      },
+      {
+        "id": "C",
+        "label": "Do not open facility cases from earthquakes",
+        "detail": "Leave earthquakes as a map layer only. Nothing is claimed, and the owner learns of a halt only from the news."
+      }
+    ],
+    "uncertainty": "One event and one operator. Renesas published quickly and in detail; many operators do not. A date-only notice is treated as known at the end of its day, which can understate how early it was actually known by up to a day.",
+    "what_would_change_it": [
+      "A verified facility-level instrument reading or a regulator inspection report available on the event day would justify stating shaking at the site.",
+      "A second and third case in which operator notices came late or never would argue for an explicit \"no operator statement after N hours\" state rather than plain unknown.",
+      "A verified early ShakeMap geometry, joined in code to verified site coordinates, would justify showing modeled intensity at the site, labelled as modeled."
+    ],
+    "evidence_ids": [
+      "jma-press-20220317",
+      "renesas-notice-1",
+      "renesas-notice-2",
+      "renesas-notice-3",
+      "renesas-notice-4",
+      "usgs-shakemap-v1",
+      "usgs-shakemap-v7",
+      "jma-intensity-db"
+    ],
+    "outcome": null
+  }
+}

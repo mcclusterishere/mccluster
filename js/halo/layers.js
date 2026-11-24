@@ -7,7 +7,20 @@
    Each layer is one primitive collection, so thousands of points stay cheap; it refreshes on its own clock while it is on and
    the page is visible, and it says honestly what it holds: a count, a stale answer, "needs a key", or unavailable. Nothing is
    invented: no motion between snapshots, no routes, no identities beyond what the provider broadcast. A tap opens what the
-   provider said about that one thing (js/halo/halo.js asks describe()). */
+   provider said about that one thing (js/halo/halo.js asks describe()).
+
+   THE LIST DOES NOT NEED THE MAP (2026-11-23). A layer used to be fetched only when the Cesium viewer existed, so a browser
+   without WebGL showed no extended feed at all. Reading a row (normalize) and drawing it (paint) are now two steps: the seven environmental
+   layers can be listed without a viewer. Transport layers use the existing map-only loader.
+   What an answer does to what is shown:
+     good answer (zero rows included)   replaces everything; zero rows is "empty", which is not "unavailable"
+     Worker says stale                  shown, labelled stale (the Worker is serving its kept answer)
+     401 / 403                          everything read before is removed: denied access shows no cached private data
+     5xx, no connection, unreadable,    the last good answer stays and is labelled stale by this page; with no good
+     rows missing, no usable row        answer yet the layer says it failed
+     provider unavailable / no key      the same, said as unavailable
+   Provider time is not fetch time: status() carries the provider's own time, the newest record's time, the Worker's fetch
+   time and this page's last check as four separate numbers, and 0 means "not supplied". */
 (function () {
   'use strict';
 
@@ -23,11 +36,22 @@
     tides: Object.freeze({ label: 'Water levels (NOAA)', rows: 'stations', every: 3600000, color: '#45b8f4' })
   });
   /* what each layer's points are: an observation, a calculation, or reference (docs/design/halo/HALO-VIEW-DESIGN.md) */
+  const ENVIRONMENTAL = new Set(['weather', 'natural', 'quakes', 'fires', 'perimeters', 'cyclones', 'tides']);
+  const supportsList = (id) => ENVIRONMENTAL.has(id);
   const PROVENANCE = Object.freeze({ weather: 'warning', natural: 'reported', military: 'observed', vessels: 'observed', quakes: 'observed', fires: 'observed', perimeters: 'reported', cyclones: 'observed', tides: 'reference' });
 
   const finite = (v) => typeof v === 'number' && Number.isFinite(v);
   const lonLat = (lon, lat) => finite(lon) && finite(lat) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
   const text = (v, max) => (typeof v === 'string' ? v.slice(0, max || 120) : '');
+  /* A time someone else supplied, as ms, or 0. Only a full ISO instant with its zone counts: a bare date says nothing
+     about the hour and a zoneless time is ambiguous. A time ahead of this page's clock (beyond five minutes of skew) is
+     not believed. 0 always means "not supplied", never "now". */
+  const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:\d{2})$/;
+  function stamp(v, now) {
+    if (typeof v !== 'string' || !ISO_INSTANT.test(v)) return 0;
+    const t = Date.parse(v);
+    return Number.isFinite(t) && t > 0 && t <= now + 300000 ? t : 0;
+  }
 
   /* small canvases, drawn once: an aircraft, a ship, a storm */
   const icons = {};
@@ -67,31 +91,166 @@
   function create(G) {
     const C = window.Cesium;
     const state = {};
-    const visuals = window.HaloEvents ? HaloEvents.create(C, G.viewer()) : null;
+    /* the event visuals draw on the globe, so they exist only when the map does */
+    const visuals = G.viewer() && window.HaloEvents ? HaloEvents.create(C, G.viewer()) : null;
     const listeners = new Set();
-    Object.keys(SPECS).forEach((id) => { state[id] = { on: false, phase: 'off', count: 0, stale: false, reason: '', credit: '', fetched: 0, checked: 0, prims: [], entities: [], timer: 0, seq: 0, items: [] }; });
+    /* per layer, what the last answers said. Counts are never merged:
+         returned  rows the Worker sent in its last good answer
+         count     rows this page could use (the list, the feed and the map all read these)
+         dropped   returned rows this page could not use, with dropWhy saying why
+       Times are never merged either:
+         provider  the provider's own time for the answer (ms; 0 when the provider or the Worker supplied none)
+         newest    the newest record's own time (ms; 0 when the rows carry none)
+         fetched   when the Worker got the answer it is serving (ms; 0 when it did not say, or said something unusable)
+         checked   when this page last asked (the polling clock)
+       lastGood is true while items come from a good answer; staleBy says who called it stale: the Worker (it is
+       serving its kept answer) or this page (the last refresh failed and the earlier answer is still shown). */
+    Object.keys(SPECS).forEach((id) => { state[id] = { on: false, phase: 'off', count: 0, returned: 0, dropped: 0, dropWhy: '', lastGood: false, stale: false, staleBy: '', reason: '', credit: '', renderIssue: '', fetched: 0, provider: 0, newest: 0, checked: 0, prims: [], entities: [], timer: 0, seq: 0, items: [] }; });
 
     function viewer() { return G.viewer(); }
+    function accessible(id) {
+      if (supportsList(id) || viewer()) return true;
+      if (state[id] && state[id].on) setOn(id, false);
+      return false;
+    }
     function changed(id) { listeners.forEach((fn) => { try { fn(id, status(id)); } catch (_) { /* a listener's own fault */ } }); }
+    /* One word for what the owner is looking at, so the six cases are never confused:
+       loading · fresh · stale · empty (the provider answered with nothing) · unavailable (provider or key) ·
+       failed (this page could not get or read an answer) · locked (not this session's to see) · off */
+    function condition(L) {
+      if (!L.on) return 'off';
+      if (L.phase === 'locked') return 'locked';
+      if (L.lastGood && L.stale) return 'stale';
+      if (L.phase === 'loading') return 'loading';
+      if (L.phase === 'unavailable') return 'unavailable';
+      if (L.phase === 'error') return 'failed';
+      if (L.phase === 'on') return L.count === 0 && L.returned === 0 ? 'empty' : 'fresh';
+      return 'off';
+    }
     function status(id) {
       const L = state[id];
-      return L ? { mapped: L.items.filter(it => lonLat(it.lon,it.lat)).length, on: L.on, state: L.phase, count: L.count, stale: L.stale, reason: L.reason, credit: L.credit, fetched: L.fetched } : null;
+      if (L && !supportsList(id)) {
+        accessible(id);
+        return { mapped: L.count, on: L.on, state: L.phase, count: L.count, stale: L.stale, reason: L.reason, credit: L.credit, fetched: L.fetched };
+      }
+      return L ? { mapped: L.items.filter(it => lonLat(it.lon,it.lat)).length, on: L.on, state: L.phase, condition: condition(L), count: L.count, returned: L.returned, dropped: L.dropped, dropWhy: L.dropWhy, stale: L.stale, staleBy: L.staleBy, lastGood: L.lastGood, reason: L.reason, credit: L.credit, fetched: L.fetched, provider: L.provider, newest: L.newest, checked: L.checked, renderIssue: L.renderIssue } : null;
     }
-    function clear(id, keepVisual = false) {
+    /* remove what is drawn; the listed items are a separate thing and are kept unless the caller forgets them */
+    function unpaint(id, keepVisual = false) {
       if (!keepVisual && visuals) visuals.clear(id);
       const L = state[id], v = viewer();
       if (v) {
         L.prims.forEach((p) => { if (v.scene.primitives.contains(p)) v.scene.primitives.remove(p); });
         L.entities.forEach((e) => v.entities.remove(e));
       }
-      L.prims = []; L.entities = []; L.items = []; L.count = 0;
+      L.prims = []; L.entities = [];
     }
+    function forget(id) {
+      const L = state[id];
+      L.items = []; L.count = 0; L.returned = 0; L.dropped = 0; L.dropWhy = ''; L.lastGood = false; L.stale = false; L.staleBy = ''; L.fetched = 0; L.provider = 0; L.newest = 0; L.credit = ''; L.renderIssue = '';
+    }
+    function clear(id, keepVisual = false) { unpaint(id, keepVisual); forget(id); }
 
     function pickId(id, item) { return { haloPick: true, layer: id, item }; }
 
+    /* ROWS → ITEMS, with no map involved. This is the one reading of a provider row: the list, the Intelligence feed, the
+       timeline and the map all use these items, so the list is the same with or without WebGL. A row that cannot be
+       used returns null and is counted as dropped; nothing is repaired or invented. */
+    const normalize = {
+      weather(r) { return r && typeof r === 'object' && !Array.isArray(r) && typeof r.id === 'string' && !(window.HaloEvents && HaloEvents.expired(r)) ? r : null; },
+      natural(r) { return normalize.weather(r); },
+      quakes(q) {
+        if (!q || typeof q !== 'object' || !lonLat(q.lon, q.lat)) return null;
+        const mag = finite(q.mag) ? Math.max(0, Math.min(9.9, q.mag)) : null;
+        return { id: text(q.id, 40), mag, place: text(q.place, 120), time: text(q.time, 40), lon: q.lon, lat: q.lat, depth: finite(q.depth_km) ? q.depth_km : null, url: text(q.url, 300), tsunami: q.tsunami === true || q.tsunami === 1, alert: text(q.alert, 12) };
+      },
+      fires(r) {
+        if (!Array.isArray(r) || !lonLat(r[0], r[1])) return null;
+        return { lon: r[0], lat: r[1], frp: finite(r[2]) ? r[2] : null, confidence: text(String(r[3] ?? ''), 8), acq: text(r[4], 40), satellite: text(r[5], 16), daynight: text(r[6], 2) };
+      },
+      perimeters(p) {
+        if (!p || !Array.isArray(p.rings) || !Array.isArray(p.rings[0])) return null;
+        const ring = p.rings[0].filter((pt) => Array.isArray(pt) && lonLat(pt[0], pt[1]));
+        if (ring.length < 3) return null;
+        return { id: text(String(p.id ?? ''), 60), name: text(p.name, 120), acres: finite(p.acres) ? p.acres : null, contained: finite(p.contained_pct) ? p.contained_pct : null, discovered: text(p.discovered, 40), lon: ring[0][0], lat: ring[0][1], ring };
+      },
+      cyclones(s) {
+        if (!s || typeof s !== 'object' || !lonLat(s.lon, s.lat)) return null;
+        return { id: text(String(s.id ?? ''), 20), name: text(s.name, 60), classification: text(s.classification, 40), intensity: finite(s.intensity_kt) ? s.intensity_kt : null, pressure: finite(s.pressure_mb) ? s.pressure_mb : null, dir: finite(s.movement_dir) ? s.movement_dir : null, speed: finite(s.movement_kt) ? s.movement_kt : null, basin: text(s.basin, 20), url: text(s.advisory_url, 300), lon: s.lon, lat: s.lat };
+      },
+      tides(r) {
+        if (!Array.isArray(r) || !/^\d{7}$/.test(String(r[0])) || !lonLat(r[2], r[3])) return null;
+        return { id: String(r[0]), name: text(r[1], 80), lon: r[2], lat: r[3], state: text(r[4], 4) };
+      }
+    };
+    /* why a returned row was not usable, in the owner's words */
+    const DROP_WHY = Object.freeze({ weather: 'no id, or already expired', natural: 'no id, or already expired', military: 'no valid position', vessels: 'no valid position', quakes: 'no valid position', fires: 'no valid position', perimeters: 'no drawable boundary', cyclones: 'no valid position', tides: 'no station id or position' });
+    /* the record's own time, where a row carries one (never the time of this request) */
+    const ROW_TIME = Object.freeze({ weather: 'observed_at', natural: 'observed_at', quakes: 'time', fires: 'acq' });
+
+    /* ITEMS → THE MAP. Only called with a viewer. */
+    const paint = {
+      weather() {},
+      natural() {},
+      quakes(id, items) {
+        const v = viewer(), pts = new C.PointPrimitiveCollection(), labels = new C.LabelCollection(), L = state[id];
+        items.forEach((item) => {
+          const mag = item.mag, position = C.Cartesian3.fromDegrees(item.lon, item.lat, 0);
+          pts.add({ position, pixelSize: 5 + (mag ?? 1) * 2.4, color: depthColor(C, item.depth).withAlpha(0.85), outlineColor: C.Color.BLACK.withAlpha(0.6), outlineWidth: 1, id: pickId(id, item) });
+          if (mag !== null && mag >= 4.5) labels.add({ position, text: 'M' + mag.toFixed(1), font: '600 12px Inter, system-ui, sans-serif', fillColor: C.Color.WHITE, outlineColor: C.Color.BLACK, outlineWidth: 3, style: C.LabelStyle.FILL_AND_OUTLINE, pixelOffset: new C.Cartesian2(0, -14), distanceDisplayCondition: new C.DistanceDisplayCondition(0, 1.6e7) });
+        });
+        v.scene.primitives.add(pts); v.scene.primitives.add(labels); L.prims.push(pts, labels);
+      },
+      fires(id, items) {
+        const v = viewer(), pts = new C.PointPrimitiveCollection(), L = state[id], color = C.Color.fromCssColorString(SPECS.fires.color).withAlpha(0.85);
+        items.forEach((item) => {
+          pts.add({ position: C.Cartesian3.fromDegrees(item.lon, item.lat, 0), pixelSize: item.frp === null ? 3 : Math.min(8, 3 + Math.log10(1 + item.frp) * 2), color, scaleByDistance: new C.NearFarScalar(100000, 1.6, 15000000, 0.7), id: pickId(id, item) });
+        });
+        v.scene.primitives.add(pts); L.prims.push(pts);
+      },
+      perimeters(id, items) {
+        const v = viewer(), L = state[id], fill = C.Color.fromCssColorString(SPECS.perimeters.color);
+        const polys = [], lines = [];
+        items.forEach((item) => {
+          const positions = C.Cartesian3.fromDegreesArray(item.ring.flat());
+          polys.push(new C.GeometryInstance({ geometry: new C.PolygonGeometry({ polygonHierarchy: new C.PolygonHierarchy(positions) }), attributes: { color: C.ColorGeometryInstanceAttribute.fromColor(fill.withAlpha(0.28)) }, id: pickId(id, item) }));
+          lines.push(new C.GeometryInstance({ geometry: new C.GroundPolylineGeometry({ positions: positions.concat([positions[0]]), width: 2 }), attributes: { color: C.ColorGeometryInstanceAttribute.fromColor(fill.withAlpha(0.95)) }, id: pickId(id, item) }));
+        });
+        if (polys.length) {
+          const ground = C.GroundPrimitive.isSupported(v.scene);
+          const area = ground
+            ? new C.GroundPrimitive({ geometryInstances: polys, appearance: new C.PerInstanceColorAppearance({ flat: true, translucent: true }) })
+            : new C.Primitive({ geometryInstances: polys, appearance: new C.PerInstanceColorAppearance({ flat: true, translucent: true }) });
+          v.scene.primitives.add(area); L.prims.push(area);
+          if (ground) { const edge = new C.GroundPolylinePrimitive({ geometryInstances: lines, appearance: new C.PolylineColorAppearance() }); v.scene.primitives.add(edge); L.prims.push(edge); }
+        }
+      },
+      cyclones(id, items) {
+        const v = viewer(), col = new C.BillboardCollection(), labels = new C.LabelCollection(), L = state[id];
+        items.forEach((item) => {
+          const position = C.Cartesian3.fromDegrees(item.lon, item.lat, 0);
+          col.add({ position, image: icon('storm', SPECS.cyclones.color), width: 34, height: 34, id: pickId(id, item) });
+          labels.add({ position, text: (item.name || 'Storm') + (item.intensity !== null ? ' · ' + Math.round(item.intensity) + ' kt' : ''), font: '600 12px Inter, system-ui, sans-serif', fillColor: C.Color.WHITE, outlineColor: C.Color.BLACK, outlineWidth: 3, style: C.LabelStyle.FILL_AND_OUTLINE, pixelOffset: new C.Cartesian2(0, -24) });
+        });
+        v.scene.primitives.add(col); v.scene.primitives.add(labels); L.prims.push(col, labels);
+      },
+      tides(id, items) {
+        const v = viewer(), pts = new C.PointPrimitiveCollection(), L = state[id], color = C.Color.fromCssColorString(SPECS.tides.color);
+        items.forEach((item) => {
+          pts.add({ position: C.Cartesian3.fromDegrees(item.lon, item.lat, 0), pixelSize: 7, color: color.withAlpha(0.9), outlineColor: C.Color.fromCssColorString('#04101d'), outlineWidth: 2, scaleByDistance: new C.NearFarScalar(200000, 1.4, 15000000, 0.7), id: pickId(id, item) });
+        });
+        v.scene.primitives.add(pts); L.prims.push(pts);
+      }
+    };
+
+    // Transport continues to use the existing map-only path. Failed reads and drawing failures clear its rows.
+    function clearMapped(id, keepVisual = false) {
+      unpaint(id, keepVisual);
+      state[id].items = [];
+      state[id].count = 0;
+    }
+
     const draw = {
-      weather(id, rows) { state[id].items = rows.filter(r => r && typeof r.id === 'string' && !window.HaloEvents?.expired(r)); state[id].count = state[id].items.length; },
-      natural(id, rows) { draw.weather(id, rows); },
       military(id, rows) {
         const v = viewer(), col = new C.BillboardCollection(), L = state[id];
         rows.forEach((r) => {
@@ -122,80 +281,12 @@
           L.items.push(item);
         });
         v.scene.primitives.add(col); L.prims.push(col); L.count = col.length;
-      },
-      quakes(id, rows) {
-        const v = viewer(), pts = new C.PointPrimitiveCollection(), labels = new C.LabelCollection(), L = state[id];
-        rows.forEach((q) => {
-          if (!q || !lonLat(q.lon, q.lat)) return;
-          const mag = finite(q.mag) ? Math.max(0, Math.min(9.9, q.mag)) : null;
-          const item = { id: text(q.id, 40), mag, place: text(q.place, 120), time: text(q.time, 40), lon: q.lon, lat: q.lat, depth: finite(q.depth_km) ? q.depth_km : null, url: text(q.url, 300), tsunami: q.tsunami === true || q.tsunami === 1, alert: text(q.alert, 12) };
-          const position = C.Cartesian3.fromDegrees(item.lon, item.lat, 0);
-          pts.add({ position, pixelSize: 5 + (mag ?? 1) * 2.4, color: depthColor(C, item.depth).withAlpha(0.85), outlineColor: C.Color.BLACK.withAlpha(0.6), outlineWidth: 1, id: pickId(id, item) });
-          if (mag !== null && mag >= 4.5) labels.add({ position, text: 'M' + mag.toFixed(1), font: '600 12px Inter, system-ui, sans-serif', fillColor: C.Color.WHITE, outlineColor: C.Color.BLACK, outlineWidth: 3, style: C.LabelStyle.FILL_AND_OUTLINE, pixelOffset: new C.Cartesian2(0, -14), distanceDisplayCondition: new C.DistanceDisplayCondition(0, 1.6e7) });
-          L.items.push(item);
-        });
-        v.scene.primitives.add(pts); v.scene.primitives.add(labels); L.prims.push(pts, labels); L.count = pts.length;
-      },
-      fires(id, rows) {
-        const v = viewer(), pts = new C.PointPrimitiveCollection(), L = state[id], color = C.Color.fromCssColorString(SPECS.fires.color).withAlpha(0.85);
-        rows.forEach((r) => {
-          if (!Array.isArray(r) || !lonLat(r[0], r[1])) return;
-          const item = { lon: r[0], lat: r[1], frp: finite(r[2]) ? r[2] : null, confidence: text(String(r[3] ?? ''), 8), acq: text(r[4], 40), satellite: text(r[5], 16), daynight: text(r[6], 2) };
-          pts.add({ position: C.Cartesian3.fromDegrees(item.lon, item.lat, 0), pixelSize: item.frp === null ? 3 : Math.min(8, 3 + Math.log10(1 + item.frp) * 2), color, scaleByDistance: new C.NearFarScalar(100000, 1.6, 15000000, 0.7), id: pickId(id, item) });
-          L.items.push(item);
-        });
-        v.scene.primitives.add(pts); L.prims.push(pts); L.count = pts.length;
-      },
-      perimeters(id, rows) {
-        const v = viewer(), L = state[id], fill = C.Color.fromCssColorString(SPECS.perimeters.color);
-        const polys = [], lines = [];
-        rows.forEach((p) => {
-          if (!p || !Array.isArray(p.rings) || !Array.isArray(p.rings[0])) return;
-          const ring = p.rings[0].filter((pt) => Array.isArray(pt) && lonLat(pt[0], pt[1]));
-          if (ring.length < 3) return;
-          const item = { id: text(String(p.id ?? ''), 60), name: text(p.name, 120), acres: finite(p.acres) ? p.acres : null, contained: finite(p.contained_pct) ? p.contained_pct : null, discovered: text(p.discovered, 40), lon: ring[0][0], lat: ring[0][1] };
-          const positions = C.Cartesian3.fromDegreesArray(ring.flat());
-          polys.push(new C.GeometryInstance({ geometry: new C.PolygonGeometry({ polygonHierarchy: new C.PolygonHierarchy(positions) }), attributes: { color: C.ColorGeometryInstanceAttribute.fromColor(fill.withAlpha(0.28)) }, id: pickId(id, item) }));
-          lines.push(new C.GeometryInstance({ geometry: new C.GroundPolylineGeometry({ positions: positions.concat([positions[0]]), width: 2 }), attributes: { color: C.ColorGeometryInstanceAttribute.fromColor(fill.withAlpha(0.95)) }, id: pickId(id, item) }));
-          L.items.push(item);
-        });
-        if (polys.length) {
-          const ground = C.GroundPrimitive.isSupported(v.scene);
-          const area = ground
-            ? new C.GroundPrimitive({ geometryInstances: polys, appearance: new C.PerInstanceColorAppearance({ flat: true, translucent: true }) })
-            : new C.Primitive({ geometryInstances: polys, appearance: new C.PerInstanceColorAppearance({ flat: true, translucent: true }) });
-          v.scene.primitives.add(area); L.prims.push(area);
-          if (ground) { const edge = new C.GroundPolylinePrimitive({ geometryInstances: lines, appearance: new C.PolylineColorAppearance() }); v.scene.primitives.add(edge); L.prims.push(edge); }
-        }
-        L.count = L.items.length;
-      },
-      cyclones(id, rows) {
-        const v = viewer(), col = new C.BillboardCollection(), labels = new C.LabelCollection(), L = state[id];
-        rows.forEach((s) => {
-          if (!s || !lonLat(s.lon, s.lat)) return;
-          const item = { id: text(String(s.id ?? ''), 20), name: text(s.name, 60), classification: text(s.classification, 40), intensity: finite(s.intensity_kt) ? s.intensity_kt : null, pressure: finite(s.pressure_mb) ? s.pressure_mb : null, dir: finite(s.movement_dir) ? s.movement_dir : null, speed: finite(s.movement_kt) ? s.movement_kt : null, basin: text(s.basin, 20), url: text(s.advisory_url, 300), lon: s.lon, lat: s.lat };
-          const position = C.Cartesian3.fromDegrees(item.lon, item.lat, 0);
-          col.add({ position, image: icon('storm', SPECS.cyclones.color), width: 34, height: 34, id: pickId(id, item) });
-          labels.add({ position, text: (item.name || 'Storm') + (item.intensity !== null ? ' · ' + Math.round(item.intensity) + ' kt' : ''), font: '600 12px Inter, system-ui, sans-serif', fillColor: C.Color.WHITE, outlineColor: C.Color.BLACK, outlineWidth: 3, style: C.LabelStyle.FILL_AND_OUTLINE, pixelOffset: new C.Cartesian2(0, -24) });
-          L.items.push(item);
-        });
-        v.scene.primitives.add(col); v.scene.primitives.add(labels); L.prims.push(col, labels); L.count = col.length;
-      },
-      tides(id, rows) {
-        const v = viewer(), pts = new C.PointPrimitiveCollection(), L = state[id], color = C.Color.fromCssColorString(SPECS.tides.color);
-        rows.forEach((r) => {
-          if (!Array.isArray(r) || !/^\d{7}$/.test(String(r[0])) || !lonLat(r[2], r[3])) return;
-          const item = { id: String(r[0]), name: text(r[1], 80), lon: r[2], lat: r[3], state: text(r[4], 4) };
-          pts.add({ position: C.Cartesian3.fromDegrees(item.lon, item.lat, 0), pixelSize: 7, color: color.withAlpha(0.9), outlineColor: C.Color.fromCssColorString('#04101d'), outlineWidth: 2, scaleByDistance: new C.NearFarScalar(200000, 1.4, 15000000, 0.7), id: pickId(id, item) });
-          L.items.push(item);
-        });
-        v.scene.primitives.add(pts); L.prims.push(pts); L.count = pts.length;
       }
     };
 
-    async function load(id) {
+    async function loadMapped(id) {
       const L = state[id], seq = ++L.seq, v = viewer();
-      if (!v) return;
+      if (!v) return setOn(id, false);
       L.phase = L.count ? L.phase : 'loading'; changed(id);
       let body = null, phase = 'on', reason = '';
       try {
@@ -206,6 +297,7 @@
         else body = await res.json();
       } catch (e) { phase = 'error'; reason = 'could not reach the Worker'; }
       if (seq !== L.seq || !L.on) return;
+      if (!viewer()) return setOn(id, false);
       if (body && body.unavailable) { phase = 'unavailable'; reason = body.upstream_error === 'not_configured' ? 'needs a key' : 'provider unavailable'; }
       /* checked: when this page last asked (the polling clock); fetched: when the provider last answered, as the Worker says,
          so a stale answer reads its real age, not the time of this request */
@@ -213,16 +305,82 @@
       L.checked = Date.now(); L.fetched = Number.isFinite(provided) ? provided : body ? L.checked : L.fetched;
       L.reason = reason; L.stale = !!(body && body.stale); L.credit = body ? text(body.credit || body.attribution, 80) : '';
       if (body && !body.unavailable) {
-        clear(id, true);
+        clearMapped(id, true);
         const rows = Array.isArray(body[SPECS[id].rows]) ? body[SPECS[id].rows] : [];
         try { draw[id](id, rows); if (visuals) {
           // Keep reported wildfire footprints; replace the generic markers of other feeds.
           if (id !== 'perimeters') { L.prims.forEach(p => { if (v.scene.primitives.contains(p)) v.scene.primitives.remove(p); }); L.prims = []; }
           visuals.setLayer(id, L.items);
-        } } catch (e) { phase = 'error'; reason = 'could not draw'; clear(id); }
-      } else if (phase !== 'on') clear(id);
+        } } catch (e) { phase = 'error'; reason = 'could not draw'; clearMapped(id); }
+      } else if (phase !== 'on') clearMapped(id);
       L.phase = phase;
       if (v.scene.requestRender) v.scene.requestRender();
+      changed(id);
+    }
+
+    async function load(id) {
+      if (!supportsList(id)) return loadMapped(id);
+      const L = state[id], seq = ++L.seq;
+      /* a refresh keeps showing the last good answer; only a layer with nothing yet says it is loading */
+      if (!L.lastGood) L.phase = 'loading';
+      changed(id);
+      let body = null, phase = 'on', reason = '';
+      try {
+        const t = G.token();
+        const res = await fetch(G.api + '/v1/world/layers/' + id, { headers: t ? { accept: 'application/json', authorization: 'Bearer ' + t } : { accept: 'application/json' }, cache: 'no-store' });
+        if (res.status === 401 || res.status === 403) { phase = 'locked'; reason = 'owner only'; }
+        else if (!res.ok) { phase = 'error'; reason = 'the Worker answered ' + res.status; }
+        else {
+          try { body = await res.json(); } catch (e) { body = null; }
+          if (!body || typeof body !== 'object' || Array.isArray(body)) { body = null; phase = 'error'; reason = 'the answer was not readable'; }
+        }
+      } catch (e) { phase = 'error'; reason = 'could not reach the Worker'; }
+      if (seq !== L.seq || !L.on) return;
+      const now = Date.now();
+      L.checked = now;
+      if (phase === 'on' && body.unavailable) { phase = 'unavailable'; reason = body.upstream_error === 'not_configured' ? 'needs a key' : 'provider unavailable'; }
+      const rows = phase === 'on' ? body[SPECS[id].rows] : null;
+      if (phase === 'on' && !Array.isArray(rows)) { phase = 'error'; reason = 'the answer did not carry its rows'; }
+      let items = null;
+      if (phase === 'on') {
+        items = [];
+        rows.forEach((r) => { let it = null; try { it = normalize[id](r); } catch (e) { it = null; } if (it) items.push(it); });
+        /* rows came back and not one was usable: that is a broken answer, not an empty world */
+        if (rows.length && !items.length) { phase = 'error'; reason = rows.length + ' returned, none usable (' + DROP_WHY[id] + ')'; }
+      }
+      if (phase === 'on') {
+        /* A GOOD ANSWER replaces everything, an empty one included: zero rows is what the provider said. */
+        unpaint(id, true);
+        L.items = items; L.count = items.length; L.returned = rows.length; L.dropped = rows.length - items.length; L.dropWhy = L.dropped ? DROP_WHY[id] : '';
+        L.lastGood = true; L.stale = body.stale === true; L.staleBy = L.stale ? 'worker' : '';
+        L.fetched = stamp(body.fetched_at, now);
+        L.provider = stamp(body.observed_at, now) || stamp(body.last_message_at, now);
+        L.newest = ROW_TIME[id] ? items.reduce((m, it) => Math.max(m, stamp(it[ROW_TIME[id]], now)), 0) : 0;
+        L.credit = text(body.credit || body.attribution, 80);
+        L.renderIssue = '';
+        if (L.stale && !reason) reason = body.upstream_error ? 'the provider did not answer; the Worker is serving its kept answer' : 'the Worker is serving its kept answer';
+        const v = viewer();
+        if (v) {
+          try {
+            paint[id](id, items);
+            if (visuals) {
+              // Keep reported wildfire footprints; replace the generic markers of other feeds.
+              if (id !== 'perimeters') { L.prims.forEach(p => { if (v.scene.primitives.contains(p)) v.scene.primitives.remove(p); }); L.prims = []; }
+              visuals.setLayer(id, L.items);
+            }
+          } catch (e) { unpaint(id); L.renderIssue = 'could not draw on the map'; }
+        }
+      } else if (phase === 'locked') {
+        /* not this session's to see: nothing that was read before stays on the page */
+        clear(id);
+      } else if (L.lastGood) {
+        /* a transient failure: the last good answer stays, and is called stale by this page */
+        L.stale = true; L.staleBy = 'page';
+      }
+      L.reason = reason;
+      L.phase = phase;
+      const v2 = viewer();
+      if (v2 && v2.scene.requestRender) v2.scene.requestRender();
       changed(id);
     }
 
@@ -234,9 +392,10 @@
 
     function setOn(id, on) {
       const L = state[id];
+      if (on && !supportsList(id) && !viewer()) on = false;
       if (!L || L.on === !!on) return Promise.resolve();
       L.on = !!on;
-      if (!L.on) { L.seq++; clearInterval(L.timer); L.timer = 0; clear(id); L.phase = 'off'; L.reason = ''; L.stale = false; changed(id); return Promise.resolve(); }
+      if (!L.on) { L.seq++; clearInterval(L.timer); L.timer = 0; clear(id); L.phase = 'off'; L.reason = ''; changed(id); return Promise.resolve(); }
       L.timer = setInterval(() => tick(id), Math.min(SPECS[id].every, 30000));
       return load(id);
     }
@@ -246,7 +405,7 @@
 
     /* what the provider said about one picked thing, for the sheet; position() is where to follow it */
     function describe(pick) {
-      if (!pick || !pick.haloPick || !state[pick.layer]) return null;
+      if (!pick || !pick.haloPick || !state[pick.layer] || !accessible(pick.layer)) return null;
       const it = pick.item || {}, L = state[pick.layer], C2 = window.Cesium;
       const fmt = (v, unit, k) => (!finite(v) ? 'Unknown' : Math.round(v * (k || 1)).toLocaleString('en-US') + (unit ? ' ' + unit : ''));
       const when = (iso) => { const d = iso ? new Date(iso) : null; return d && !isNaN(d) ? d.toLocaleString() : 'Unknown'; };
@@ -267,7 +426,7 @@
 
     function destroy() {
       document.removeEventListener('visibilitychange', onVisible);
-      Object.keys(state).forEach((id) => { const L = state[id]; L.on = false; L.seq++; clearInterval(L.timer); clear(id); });
+      Object.keys(state).forEach((id) => { const L = state[id]; L.on = false; L.seq++; clearInterval(L.timer); clear(id); L.phase = 'off'; L.reason = ''; });
       if (visuals) visuals.destroy();
       listeners.clear();
     }
@@ -277,16 +436,18 @@
       ids: Object.keys(SPECS),
       toggle: (id) => setOn(id, !(state[id] && state[id].on)),
       set: setOn,
-      on: (id) => !!(state[id] && state[id].on),
+      /* ask again now (a layer that is off stays off) */
+      refresh: (id) => (supportsList(id) && state[id].on ? load(id) : Promise.resolve()),
+      on: (id) => !!(state[id] && accessible(id) && state[id].on),
       status,
       describe,
       provenance: (id) => PROVENANCE[id] || 'observed',
       /* what a layer holds now (copies), for the feed and the timeline */
-      items: (id) => (state[id] ? state[id].items.slice() : []),
+      items: (id) => (state[id] && accessible(id) ? state[id].items.slice() : []),
       onChange: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
       destroy
     });
   }
 
-  window.HaloLayers = Object.freeze({ SPECS, PROVENANCE, create });
+  window.HaloLayers = Object.freeze({ SPECS, PROVENANCE, supportsList, create });
 })();

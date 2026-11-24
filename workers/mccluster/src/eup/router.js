@@ -13,6 +13,8 @@
      modules    persisted module policy: install, enable, drain, disable (owner commands)
      environment  the E=UP environmental event timeline's owner controls: source health (off, outage, no data), review,
                 rollback and the owner preview, honest while the pending event store is not applied (./environment/owner.js)
+     halo       Hitman's Halo as a module: its one route, who can open it, its policy unit, and the configuration of every
+                feed it declares. No feed data (./halo.js)
    This router does not touch the consumer `/v1/world/environment` contract.
 
    ONE explicit exception to "owner-only": the League member branch, PREFIX.member of ./league-contract.js
@@ -30,12 +32,13 @@ import { handleCompanies } from './companies.js';
 import { handleSources } from './sources.js';
 import { handleModules } from './modules.js';
 import { handleEnvironmentOwner } from './environment/owner.js';
+import { handleHalo } from './halo.js';
 
 export const EUP_PREFIX = '/v1/eup';
-export const EUP_SECTIONS = Object.freeze(['overview', 'league', 'civic', 'companies', 'sources', 'modules', 'environment']);
+export const EUP_SECTIONS = Object.freeze(['overview', 'league', 'civic', 'companies', 'sources', 'modules', 'environment', 'halo']);
 /* The one prefix under EUP_PREFIX that a signed-in account which is not a house owner can reach. */
 export const EUP_MEMBER_LEAGUE_PREFIX = PREFIX.member;
-const SECTION_HANDLERS = { overview: handleOverview, league: handleLeague, civic: handleCivic, companies: handleCompanies, sources: handleSources, modules: handleModules, environment: handleEnvironmentOwner };
+const SECTION_HANDLERS = { overview: handleOverview, league: handleLeague, civic: handleCivic, companies: handleCompanies, sources: handleSources, modules: handleModules, environment: handleEnvironmentOwner, halo: handleHalo };
 const fail = (status, message, reason) => Object.assign(new Error(message), { status, reason });
 
 /* The error body every E=Up answer uses: a fixed sentence and a reason, never upstream text for a 5xx. */

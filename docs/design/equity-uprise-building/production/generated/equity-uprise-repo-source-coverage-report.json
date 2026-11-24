@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 782,
+  "candidate_count": 790,
   "capability_source_count": 104,
-  "support_only_count": 678,
-  "checks_total": 3026,
-  "checks_passed": 3026,
+  "support_only_count": 686,
+  "checks_total": 3058,
+  "checks_passed": 3058,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -204,6 +204,8 @@
     "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/prim3-topology-learning.serve-root.e2e.mjs",
     "docs/control-plane/deep-audit-20261109/patches/pr-787-w5/evidence/union_source_map.py",
     "docs/control-plane/deploy-gate.json",
+    "docs/control-plane/evidence/HALO-POLICY-PREPARATION-2026-11-24.md",
+    "docs/control-plane/evidence/halo-policy-catalog-2026-11-24.json",
     "docs/control-plane/evidence/migration-audit-2026-11-24.md",
     "docs/control-plane/evidence/migration-audit-applied-2026-11-24.md",
     "docs/control-plane/evidence/production-advisors-2026-10-28.json",
@@ -427,6 +429,7 @@
     "screens/terminal.html",
     "screens/vms.html",
     "screens/wall.html",
+    "scripts/db/halo-module-policy-preflight.sql",
     "scripts/e2e/control-eup.e2e.mjs",
     "scripts/e2e/docket-cohort-showcase.e2e.mjs",
     "scripts/e2e/environment-globe.e2e.mjs",
@@ -442,6 +445,7 @@
     "scripts/e2e/fixtures/eu-building-visual.mjs",
     "scripts/e2e/fixtures/platform-hosts-20261123.json",
     "scripts/e2e/globe-games.e2e.mjs",
+    "scripts/e2e/halo-private-preview.mjs",
     "scripts/e2e/prim3-artist.e2e.mjs",
     "scripts/e2e/prim3-direct-landings.e2e.mjs",
     "scripts/e2e/prim3-hq-stairs.e2e.mjs",
@@ -455,6 +459,7 @@
     "scripts/e2e/world-screen.e2e.mjs",
     "scripts/export-equity-environment.mjs",
     "scripts/funding/validate-register-db.mjs",
+    "scripts/halo-module-policy-native-check.mjs",
     "scripts/kb-build.mjs",
     "scripts/prim3/blind-the-floor-sim.mjs",
     "scripts/prim3/build-equity-uprise-package.mjs",
@@ -497,6 +502,7 @@
     "scripts/test/fictional-city-hq-b1.test.mjs",
     "scripts/test/fictional-city-places.test.mjs",
     "scripts/test/fictional-city-vertical-handoff.test.mjs",
+    "scripts/test/fixtures/eup-module-policy-halo-original.json",
     "scripts/test/fixtures/hq-drill-full-strength-win.json",
     "scripts/test/games-world.test.mjs",
     "scripts/test/heat-scale.test.mjs",
@@ -649,6 +655,8 @@
     "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql",
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
+    "supabase/pending/eup_module_policy_halo_v1.rollback.sql",
+    "supabase/pending/eup_module_policy_halo_v1.sql",
     "supabase/pending/eup_module_policy_v1.provenance.json",
     "supabase/pending/live_missions_v1.sql",
     "supabase/pending/mission_admin_approval_v1.sql",
@@ -796,7 +804,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "782 entries"
+      "detail": "790 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4520,6 +4528,46 @@
     },
     {
       "name": "docs/control-plane/deploy-gate.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/HALO-POLICY-PREPARATION-2026-11-24.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/HALO-POLICY-PREPARATION-2026-11-24.md classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/HALO-POLICY-PREPARATION-2026-11-24.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/HALO-POLICY-PREPARATION-2026-11-24.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/halo-policy-catalog-2026-11-24.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/evidence/halo-policy-catalog-2026-11-24.json classified",
+      "passed": true,
+      "detail": "classification='governance_support'"
+    },
+    {
+      "name": "docs/control-plane/evidence/halo-policy-catalog-2026-11-24.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/evidence/halo-policy-catalog-2026-11-24.json support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -8864,6 +8912,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/db/halo-module-policy-preflight.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/db/halo-module-policy-preflight.sql classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/db/halo-module-policy-preflight.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/db/halo-module-policy-preflight.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/e2e/control-eup.e2e.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -9164,6 +9232,26 @@
       "detail": ""
     },
     {
+      "name": "scripts/e2e/halo-private-preview.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/halo-private-preview.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/halo-private-preview.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/halo-private-preview.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "scripts/e2e/prim3-artist.e2e.mjs capability ids known",
       "passed": true,
       "detail": ""
@@ -9420,6 +9508,26 @@
     },
     {
       "name": "scripts/funding/validate-register-db.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/halo-module-policy-native-check.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/halo-module-policy-native-check.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/halo-module-policy-native-check.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/halo-module-policy-native-check.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -10255,6 +10363,26 @@
     },
     {
       "name": "scripts/test/fictional-city-vertical-handoff.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/fixtures/eup-module-policy-halo-original.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/fixtures/eup-module-policy-halo-original.json classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/fixtures/eup-module-policy-halo-original.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/fixtures/eup-module-policy-halo-original.json support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -13195,6 +13323,46 @@
     },
     {
       "name": "supabase/pending/README.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_halo_v1.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_halo_v1.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='data_support'"
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_halo_v1.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_halo_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_halo_v1.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_halo_v1.sql classified",
+      "passed": true,
+      "detail": "classification='data_support'"
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_halo_v1.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/eup_module_policy_halo_v1.sql support rationale present",
       "passed": true,
       "detail": ""
     },

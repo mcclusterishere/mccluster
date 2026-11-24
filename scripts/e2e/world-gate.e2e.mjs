@@ -371,8 +371,9 @@ try {
       try {
         await worldReady(page);
         await openBy(page, 'signin');
-        await pulseSettled(page);
-        await page.waitForTimeout(400);
+        // The mission list and news heat are independent reads. Both cards must render before comparing their counts.
+        await page.locator('#wgPulseMission:not([hidden])').waitFor();
+        await page.locator('#wgPulseNews:not([hidden])').waitFor();
         const cards = (await doorFrame(page)).cards;
         check('pulse-' + label, `${list.length} open missions read "${kicker}"`, cards[0].text.includes(kicker), cards[0]);
         check('pulse-' + label, label === 'two' ? 'one country reads "News from 1 country"' : 'three countries read "News from 3 countries"', cards[1].text.includes(label === 'two' ? 'News from 1 country' : 'News from 3 countries'), cards[1]);

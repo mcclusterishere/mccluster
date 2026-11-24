@@ -152,6 +152,7 @@
   const shortId = (id) => String(id || '').replace(/-/g, '').slice(0, 6).toUpperCase();
 
   /* ---------- layers: one switchboard for the globe's, Halo's and this view's own ---------- */
+  function needsMap(it) { return !it.own && !window.HaloLayers?.supportsList(it.id); }
   function isOn(it) {
     if (it.planned) return false;
     if (it.own) return missionsOn;
@@ -161,6 +162,7 @@
   }
   function stateOf(it) {
     if (it.planned) return { state: 'planned', text: 'Planned' };
+    if (!V && needsMap(it)) return { state: 'off', text: 'Needs the map' };
     if (it.own) { const s = data.peek('missions'), k = missions().filter(placed).length; return { state: missionsOn ? (s.error && !s.body ? 'error' : 'on') : 'off', text: missionsOn ? (s.body ? n(k) : s.error ? 'Unavailable' : 'Loading…') : '', fetched: s.at }; }
     if (it.globe) return { state: isOn(it) ? 'on' : 'off', text: isOn(it) ? 'Shown' : '' };
     if (it.mkt) {
@@ -176,11 +178,19 @@
     }
     const s = layers && layers.status(it.id);
     if (!s) return { state: 'off', text: '' };
-    const words = { off: '', loading: 'Loading…', locked: 'Owner only', error: 'Unavailable', unavailable: s.reason === 'needs a key' ? 'Needs a key' : 'Unavailable' };
-    return { state: s.state, text: s.state === 'on' ? (['weather','natural'].includes(it.id) ? n(s.mapped)+' mapped / '+n(s.count)+' reports' : n(s.count)) + (s.stale ? ' · stale' : '') : (words[s.state] || ''), stale: s.stale, fetched: s.fetched, reason: s.reason };
+    if (needsMap(it)) {
+      const words = { off: '', loading: 'Loading…', locked: 'Owner only', error: 'Unavailable', unavailable: s.reason === 'needs a key' ? 'Needs a key' : 'Unavailable' };
+      return { state: s.state, text: s.state === 'on' ? (['weather','natural'].includes(it.id) ? n(s.mapped)+' mapped / '+n(s.count)+' reports' : n(s.count)) + (s.stale ? ' · stale' : '') : (words[s.state] || ''), stale: s.stale, fetched: s.fetched, reason: s.reason };
+    }
+    /* six conditions, six different words (js/halo/layers.js condition): loading, a count (fresh), kept and stale,
+       no records (the provider answered with nothing), unavailable (provider or key), failed (no readable answer) */
+    const words = { off: '', loading: 'Loading…', locked: 'Owner only', failed: 'Failed', unavailable: s.reason === 'needs a key' ? 'Needs a key' : 'Unavailable', empty: 'No records' };
+    const held = ['weather','natural'].includes(it.id) ? n(s.mapped)+' mapped / '+n(s.count)+' reports' : n(s.count) + (s.dropped ? ' of ' + n(s.returned) : '');
+    const text = s.condition === 'fresh' ? held : s.condition === 'stale' ? held + ' · stale' : (words[s.condition] || '');
+    return { state: s.state, condition: s.condition, text, stale: s.stale, staleBy: s.staleBy, fetched: s.fetched, provider: s.provider, newest: s.newest, reason: s.reason, count: s.count, returned: s.returned, dropped: s.dropped, dropWhy: s.dropWhy, renderIssue: s.renderIssue };
   }
   async function setItem(it, on) {
-    if (!V && !it.own) return;
+    if (!V && needsMap(it)) return;
     if (it.planned || isOn(it) === !!on) return;
     if (it.own) { missionsOn = !!on; markSig = ''; }
     else if (it.globe) { if (G.regions) G.regions.show(!!on); }
@@ -197,14 +207,33 @@
     if (it.id === 'cctv') return { tone: 'hollow', text: 'Catalog loaded · snapshots checked when opened' };
     if (it.core && it.id !== 'satellites') return { tone: 'hollow', text: 'Snapshot loaded · freshness varies by source' };
     if (it.id === 'satellites') return { tone: 'cyan', text: 'Calculated from orbital elements' };
-    if (it.id === 'tides' && s.state === 'on') return { tone: 'hollow', text: 'Reference: ' + n(layers.status('tides').count) + ' stations' };
-    if (s.state === 'locked') return { tone: 'amber', text: 'Locked for this session' };
-    if (s.state === 'unavailable') return { tone: 'amber', text: s.reason === 'needs a key' ? 'Needs a key' : 'Provider unavailable' };
-    if (s.state === 'error') return { tone: 'red', text: 'Could not reach the Worker' };
-    if (s.state === 'loading') return { tone: 'mute', text: 'Loading…' };
-    if (s.stale) return { tone: 'amber', text: 'Stale: last good answer ' + ago(s.fetched) };
-    if (fin(s.fetched) && s.fetched) return { tone: 'green', text: 'Updated ' + ago(s.fetched) };
-    return { tone: 'green', text: 'Live' };
+    if (needsMap(it)) {
+      if (s.state === 'locked') return { tone: 'amber', text: 'Locked for this session' };
+      if (s.state === 'unavailable') return { tone: 'amber', text: s.reason === 'needs a key' ? 'Needs a key' : 'Provider unavailable' };
+      if (s.state === 'error') return { tone: 'red', text: 'Could not reach the Worker' };
+      if (s.state === 'loading') return { tone: 'mute', text: 'Loading…' };
+      if (s.stale) return { tone: 'amber', text: 'Stale: last good answer ' + ago(s.fetched) };
+      if (fin(s.fetched) && s.fetched) return { tone: 'green', text: 'Updated ' + ago(s.fetched) };
+      return { tone: 'green', text: 'Live' };
+    }
+    return feedHealth(it, s);
+  }
+  /* An extended feed's condition in words. Provider time is not fetch time: "provider time" and "newest record" come
+     from the provider's own data, "retrieved" is when the Worker got its answer, and a feed whose provider gives no
+     time says so instead of reading "Live". A kept answer says who called it stale and why. */
+  function feedHealth(it, s) {
+    const c = s.condition, got = s.fetched ? 'retrieved ' + ago(s.fetched) : 'retrieval time not supplied';
+    if (c === 'locked') return { tone: 'amber', text: 'Locked for this session' };
+    if (c === 'loading') return { tone: 'mute', text: 'Loading…' };
+    if (c === 'stale') return { tone: 'amber', text: 'Stale: ' + (s.staleBy === 'page' ? 'the last refresh failed (' + (s.reason || 'no answer') + '); showing the earlier answer, ' : 'the Worker is serving its kept answer, ') + got };
+    if (c === 'unavailable') return { tone: 'amber', text: s.reason === 'needs a key' ? 'Needs a key' : 'Provider unavailable' };
+    if (c === 'failed') return { tone: 'red', text: 'Failed: ' + (s.reason || 'no readable answer') };
+    if (c === 'empty') return { tone: 'hollow', text: 'No records: the provider answered with nothing · ' + got };
+    if (it.id === 'tides') return { tone: 'hollow', text: 'Reference: ' + n(s.count) + ' stations' };
+    const issue = s.renderIssue ? ' · ' + s.renderIssue : '';
+    if (s.provider) return { tone: 'green', text: 'Provider time ' + ago(s.provider) + ' · ' + got + issue };
+    if (s.newest) return { tone: 'green', text: 'Newest record ' + ago(s.newest) + ' · ' + got + issue };
+    return { tone: 'hollow', text: 'Provider supplies no time · ' + got + issue };
   }
 
   /* ---------- Google Photorealistic 3D Tiles, through the Worker's ion route ---------- */
@@ -319,7 +348,7 @@
     rememberRoute(); schedulePaint();
   }
   function whereIs(s) {
-    if (!s) return null;
+    if (!s || !V || !C) return null;
     if (s.kind === 'mission') { const m = missionById(s.id); return placed(m) ? { lon: m.place.lon, lat: m.place.lat } : null; }
     if (s.kind === 'person') { const p = personById(s.id), m = p && (p.missions || []).map((x) => missionById(x.id)).find(placed); return m ? { lon: m.place.lon, lat: m.place.lat } : null; }
     if (s.kind === 'obs' && s.d && s.d.position) { const c = C.Cartographic.fromCartesian(s.d.position()); return { lon: C.Math.toDegrees(c.longitude), lat: C.Math.toDegrees(c.latitude), close: Math.max(s.d.range * 12, 1.5e6) }; }
@@ -530,7 +559,7 @@
       });
       layers.items('cyclones').forEach((s) => {
         const d = layers.describe({ haloPick: true, layer: 'cyclones', item: s });
-        out.push({ key: 'c:' + s.id, sel: { kind: 'obs', id: 'cyclones:' + s.id, layer: 'cyclones', d, item: s }, title: (s.classification || 'Cyclone') + ' ' + (s.name || ''), place: s.basin, source: 'NOAA NHC', icon: 'storm', prov: 'observed', t: (layers.status('cyclones') || {}).fetched || null, lat: s.lat, lon: s.lon });
+        out.push({ key: 'c:' + s.id, sel: { kind: 'obs', id: 'cyclones:' + s.id, layer: 'cyclones', d, item: s }, title: (s.classification || 'Cyclone') + ' ' + (s.name || ''), place: s.basin, source: 'NOAA NHC', icon: 'storm', prov: 'observed', /* the advisory's own time when supplied; never the time it was fetched */ t: (layers.status('cyclones') || {}).provider || null, lat: s.lat, lon: s.lon });
       });
       layers.items('fires').filter((f) => fin(f.frp)).sort((a, b) => b.frp - a.frp).slice(0, 6).forEach((f, i) => {
         const d = layers.describe({ haloPick: true, layer: 'fires', item: f });
@@ -598,7 +627,7 @@
   }
   function paint() {
     paintStrip(); paintList(); drawMarks(); paintDetail(); paintTimeline(); paintOperator(); paintBase();
-    if (!V) $$('[data-fly],[data-follow],[data-toggle-source]',ui.right).forEach(b => b.disabled = true);
+    if (!V) $$('[data-fly],[data-follow]',ui.right).forEach(b => b.disabled = true);
   }
 
   function stat(v, label, tone, title) { return '<li data-tone="' + (tone || 'cyan') + '"' + (title ? ' title="' + esc(title) + '"' : '') + '><b>' + esc(v) + '</b>' + esc(label) + '</li>'; }
@@ -688,7 +717,7 @@
         const row = $('[data-item="' + it.id + '"]', li), st = stateOf(it);
         row.dataset.state = st.state; $('input', row).checked = isOn(it);
         $('.hx-layer__state', row).textContent = st.text;
-        $('input', row).disabled = st.state === 'locked' || (!V && !it.own);
+        $('input', row).disabled = st.state === 'locked' || (!V && needsMap(it));
       });
     });
     const hl = $('.hx-health', ui.leftBody), on = ALL_ITEMS.filter((it) => !it.planned && isOn(it));
@@ -886,8 +915,10 @@
       html += dl(d.rows) + '<p class="hx-note">' + esc(d.note) + '</p>';
       const near = fin(it.lat) ? nearMissions(it.lat, it.lon, 2) : [];
       if (near.length) html += '<div class="hx-section"><p class="hx-label">Missions within 300 km</p>' + near.map((x) => missionLink(x.m, Math.round(x.d) + ' km away')).join('') + '</div>';
-    } else html += dl([['Source', d.credit || ''], ['Provenance', cap(prov)], ['Retrieved', layers && layers.status(s.layer) && layers.status(s.layer).fetched ? ago(layers.status(s.layer).fetched) : '—']]);
-    const foot = (d.link ? '<a class="hx-cta" href="' + esc(d.link) + '" target="_blank" rel="noopener noreferrer">View source ' + ICON.external + '</a>' : '') + (d.position ? '<button type="button" class="hx-cta" data-event-orbit>Orbit object</button><div class="hx-pair"><button type="button" class="hx-btn" data-follow>' + ICON.locate + 'Follow</button><button type="button" class="hx-btn" data-fly>' + ICON.pin + 'Go there</button></div>' : '<p class="hx-note">This source supplies no map coordinates.</p>');
+    } else html += dl([['Source', d.credit || ''], ['Provenance', cap(prov)], ['Provider time', layers && layers.status(s.layer) && layers.status(s.layer).provider ? ago(layers.status(s.layer).provider) : 'Not supplied'], ['Retrieved by the Worker', layers && layers.status(s.layer) && layers.status(s.layer).fetched ? ago(layers.status(s.layer).fetched) : '—']]);
+    let foot = d.link ? '<a class="hx-cta" href="' + esc(d.link) + '" target="_blank" rel="noopener noreferrer">View source ' + ICON.external + '</a>' : '';
+    if (!d.position) foot += '<p class="hx-note">This source supplies no map coordinates.</p>';
+    else if (V && C) foot += '<button type="button" class="hx-cta" data-event-orbit>Orbit object</button><div class="hx-pair"><button type="button" class="hx-btn" data-follow>' + ICON.locate + 'Follow</button><button type="button" class="hx-btn" data-fly>' + ICON.pin + 'Go there</button></div>';
     return { html, foot };
   }
   function detailEvidence(e) {
@@ -917,8 +948,14 @@
     const html = head('Source', r.name, cap(r.prov), pill(r.h.text, r.h.tone === 'green' ? 'green' : r.h.tone === 'red' ? 'red' : r.h.tone === 'cyan' ? 'cyan' : 'amber', true)) +
       dl([['State', r.on ? 'On' : 'Off'], ['Kind', cap(r.prov)], it && layers && layers.status(it.id) ? ['Credit', layers.status(it.id).credit || '—'] : null, it && stateOf(it).text ? ['Holding', stateOf(it).text] : null]) +
       '<p class="hx-note">' + esc(r.prov === 'calculated' ? 'Positions are calculated from published orbital elements; they are not imagery.' : r.prov === 'reference' ? 'Reference data: where the stations are, not a reading.' : 'Each point is what the provider reported; missing reports do not mean absence.') + '</p>';
-    const foot = it && !it.planned ? '<button type="button" class="hx-btn" data-toggle-source="' + esc(id) + '">' + (isOn(it) ? 'Turn off' : 'Turn on') + '</button>' : '';
-    return { html, foot };
+    /* an extended feed says what it was sent, what it could use and whose clock each time is */
+    const st = it && !needsMap(it) && !it.own && layers ? layers.status(it.id) : null;
+    const at = (t) => (t ? ago(t) + ' · ' + new Date(t).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'Not supplied');
+    const counts = st && st.lastGood ? '<div class="hx-section" data-feed-counts="' + esc(id) + '"><p class="hx-label">Counts and times</p>' + dl([['Returned by the Worker', n(st.returned)], ['Usable here', n(st.count)], st.dropped ? ['Not usable', n(st.dropped) + ' (' + st.dropWhy + ')'] : null, ['On the map', V ? (st.renderIssue ? 'None: ' + st.renderIssue : n(st.mapped)) : 'Map unavailable; listed only'], id === 'quakes' ? ['In the Intelligence feed', 'M4.0 and above, the 12 strongest, inside the timeline window'] : id === 'fires' ? ['In the Intelligence feed', 'the 6 strongest by radiative power, inside the timeline window'] : null, ['Provider time', at(st.provider)], ['Newest record', at(st.newest)], ['Retrieved by the Worker', at(st.fetched)], ['Last checked by this page', at(st.checked)]]) + '</div>' : '';
+    const sample = !V && st ? layers.items(id).slice(0, 8) : [];
+    const listing = sample.length ? '<div class="hx-section" data-feed-sample="' + esc(id) + '"><p class="hx-label">First ' + sample.length + ' of ' + n(st.count) + ' records</p><ul>' + sample.map((x) => '<li>' + esc(String(x.place || x.event || x.name || x.id || (fin(x.frp) ? x.frp.toFixed(1) + ' MW at ' + x.lat.toFixed(2) + ', ' + x.lon.toFixed(2) : 'Reported record')).slice(0, 120)) + '</li>').join('') + '</ul></div>' : '';
+    const foot = it && !it.planned && (V || !needsMap(it)) ? '<button type="button" class="hx-btn" data-toggle-source="' + esc(id) + '">' + (isOn(it) ? 'Turn off' : 'Turn on') + '</button>' : '';
+    return { html: html + counts + listing, foot };
   }
   function paintDetail() {
     const cur = current();
@@ -1134,7 +1171,7 @@
         setView(next); $('#hxTab-' + next).focus();
       };
     });
-    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs(true);if(markets&&markets.on())await markets.refresh();}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
+    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs(true);if(markets&&markets.on())await markets.refresh();/* refresh enabled environmental feeds */if(layers)await Promise.all(layers.ids.map(id=>layers.refresh(id)));}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
     ui.operator.onclick = () => { const chip = document.getElementById('mccAuthChip'); if (chip) chip.click(); else location.href = 'account.html'; };
     const toggleSheet = () => {
       if (wide()) { collapsed = !collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false'; savePrefs(); }
@@ -1270,7 +1307,8 @@
     if (V) V.scene.backgroundColor = C.Color.fromCssColorString('#020610');
     if (V && G.missions) G.missions.show(false);
     vision = V && window.HaloVision ? HaloVision.mount(V) : null;
-    layers = V && window.HaloLayers ? HaloLayers.create(G) : null;
+    /* environmental feeds can list without a map; transport requires the viewer */
+    layers = window.HaloLayers ? HaloLayers.create(G) : null;
     data = window.HaloData ? HaloData.create(G) : null;
     markets = V && window.HaloMarkets ? HaloMarkets.create(G, { changed: () => schedulePaint() }) : null;
     build(); window.MCC_SHELL?.haloReady();

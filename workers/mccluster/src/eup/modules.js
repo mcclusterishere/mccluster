@@ -16,7 +16,14 @@ export const MODULE_POLICY_MIGRATION = 'supabase/migrations/20261117144103_eup_m
 
 export const MODULE_POLICY_SCHEMA = 'equity-uprise.module-policy/v1';
 export const MODULE_INSTALLATION = 'mccluster';
-export const MODULE_IDS = Object.freeze(['environment', 'league', 'intake']);
+export const MODULE_IDS = Object.freeze(['environment', 'league', 'intake', 'halo']);
+/* Units registered here AFTER the applied policy migration, each with the staged SQL that teaches the store its id.
+   Until that SQL is applied the store neither answers for the unit nor accepts a command on it. The owner read then
+   reports the unit as { registered: false, installed: false, pending_sql } instead of failing for every unit: that is
+   what the store said (no row, no knowledge of the id), not a guess. The unit's rows carry registered: true once the
+   store answers for it. 'halo' is Hitman's Halo, the owner-only intelligence and decision workspace
+   (docs/control-plane/HALO-MODULE.md); nothing reads its policy to open or close a route yet. */
+export const MODULE_PENDING_SQL = Object.freeze({ halo: 'supabase/pending/eup_module_policy_halo_v1.sql' });
 export const MODULE_STATES = Object.freeze(['enabled', 'draining', 'disabled']);
 
 const table = (rows) => Object.freeze(Object.fromEntries(Object.entries(rows).map(([code, pair]) => [code, Object.freeze(pair)])));
@@ -145,10 +152,12 @@ function controlShape(value, fail) {
   if (!rows || value.installationId !== MODULE_INSTALLATION) throw unavailable(fail);
   const modules = MODULE_IDS.map((id) => {
     const row = rows.find((r) => r && r.moduleId === id);
+    if (!row && Object.hasOwn(MODULE_PENDING_SQL, id)) return { moduleId: id, registered: false, installed: false, state: null, revision: null, updated_at: null, updated_by: null, last_command: null, pending_sql: MODULE_PENDING_SQL[id] };
     if (!row || typeof row.installed !== 'boolean') throw unavailable(fail);
-    if (!row.installed) return { moduleId: id, installed: false, state: null, revision: null, updated_at: null, updated_by: null, last_command: null };
+    const registered = Object.hasOwn(MODULE_PENDING_SQL, id) ? { registered: true } : {};
+    if (!row.installed) return { moduleId: id, ...registered, installed: false, state: null, revision: null, updated_at: null, updated_by: null, last_command: null };
     if (!MODULE_STATES.includes(row.state) || !revisionOk(row.revision)) throw unavailable(fail);
-    return { moduleId: id, installed: true, state: row.state, revision: row.revision, updated_at: text(row.updated_at), updated_by: text(row.updated_by), last_command: lastCommand(row.last_command) };
+    return { moduleId: id, ...registered, installed: true, state: row.state, revision: row.revision, updated_at: text(row.updated_at), updated_by: text(row.updated_by), last_command: lastCommand(row.last_command) };
   });
   return { installationId: MODULE_INSTALLATION, modules, commands: (Array.isArray(value.commands) ? value.commands : []).map(commandRow).filter(Boolean) };
 }

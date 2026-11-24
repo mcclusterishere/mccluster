@@ -528,7 +528,9 @@ function refuse(request, env, message, status) {
   return res;
 }
 
-function configured(layer, env) {
+/* Whether a layer's credential and binding are present. A boolean only: no value is ever returned (also read by
+   ./eup/halo.js for the owner's module card). */
+export function configured(layer, env) {
   if (layer === 'fires') return Boolean(String(env.FIRMS_MAP_KEY || '').trim());
   if (layer === 'vessels') return Boolean(env.AISSTREAM_API_KEY && env.HereTenantAgent && typeof env.HereTenantAgent.idFromName === 'function' && typeof env.HereTenantAgent.get === 'function');
   return true;

@@ -148,6 +148,10 @@
          doors) and a mount point: js/control-room/eup.js registers
          window.CR.eup; its five sections are local tabs, never six NAV tabs.
          The old-style "#products:eup" hash lands here too. */
+      /* Hitman's Halo as a first-class owner module (2026-11-23): a direct Control entry that shows the module's
+         state (access, policy unit, backend) and its door. js/control-room/halo-module.js registers
+         window.CR.haloModule. Halo itself stays the one full-screen page; "#insights:halo" keeps working. */
+      v("halo", "Hitman’s Halo", "slot", ["#products:halo", "#halo", "Products · Hitman's Halo", "hitman", "intelligence workspace", "decision workspace", "halo module"], { module: "haloModule" }),
       v("eup", "E=Up", "slot", ["#products:eup", "Products · E=Up", "E=Up", "e up", "equity uprise admin", "environmental justice league", "civic league", "companies & finance", "sources & review", "offices", "legislation", "elections"], { module: "eup" })
     ] }
   ];

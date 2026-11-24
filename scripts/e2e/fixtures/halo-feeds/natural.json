@@ -1,0 +1,47 @@
+{
+  "fixture": {
+    "schema": "halo-feed-fixture/v1",
+    "feed": "natural",
+    "route": "/v1/world/layers/natural",
+    "synthetic": true,
+    "warning": "SYNTHETIC FIXTURE. Invented rows in the Worker's documented envelope for /v1/world/layers/natural. Not a provider answer and not a production reading; its counts are not live counts.",
+    "provider_named_in_envelope": "NASA EONET",
+    "rows": "events",
+    "returned": 2,
+    "usable": 2
+  },
+  "answer": {
+    "ok": true,
+    "layer": "natural",
+    "fetched_at": "2026-11-23T12:00:00.000Z",
+    "credit": "Natural events: NASA EONET",
+    "attribution_url": "https://eonet.gsfc.nasa.gov",
+    "license": "NASA open data",
+    "count": 2,
+    "stale": false,
+    "events": [
+      {
+        "id": "fixture-natural-1",
+        "event": "Volcano",
+        "name": "FIXTURE volcano report",
+        "source": "NASA EONET",
+        "observed_at": "2026-11-22T06:00:00Z",
+        "expires_at": null,
+        "lon": 130.66,
+        "lat": 31.59,
+        "location_kind": "reported_point"
+      },
+      {
+        "id": "fixture-natural-2",
+        "event": "Sea and lake ice",
+        "name": "FIXTURE iceberg report",
+        "source": "NASA EONET",
+        "observed_at": "2026-11-20T00:00:00Z",
+        "expires_at": null,
+        "lon": -45.1,
+        "lat": -60.2,
+        "location_kind": "reported_point"
+      }
+    ]
+  }
+}

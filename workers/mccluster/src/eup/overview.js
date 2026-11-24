@@ -37,6 +37,7 @@ const MODULES = [
   { id: 'companies', label: 'Companies & Finance', state: 'planned', detail: 'SEC/GLEIF identity, sourced locations, filings, federal awards; market quotes only under a verified licence.' },
   { id: 'sources', label: 'Sources & Review', state: 'planned', detail: 'Connector registry (all disabled), rights/configuration, review queue, bounded refresh/pause.' },
   { id: 'consumer_environment', label: 'Consumer environment globe', state: 'held', detail: '20261107120000_world_environment_v1.sql and 20261108120000_world_environment_proofs_v1.sql are held for admin-only scope; no member join/proof activation.' },
+  { id: 'halo', label: 'Hitman’s Halo', state: 'owner_only', detail: 'The owner’s intelligence and decision workspace on the full-screen globe (World, Missions, People, Intelligence). Open to the house owner by the release guard; its policy unit is recorded and not yet enforced on any route (docs/control-plane/HALO-MODULE.md).' },
   { id: 'arcade', label: 'City Arcade cloud', state: 'dormant', detail: 'Schema applied as 20261109181623_city_arcade_v1; ARCADE_CLOUD_ENABLED absent; startKey-aware Worker not deployed.' },
   { id: 'c5', label: 'Core-signed replay protection', state: 'partial', detail: '' }
 ];
@@ -49,14 +50,14 @@ function c5Detail(env) {
       : 'CORE_REPLAY_STORE is not set, so signed mutating requests are refused';
   return `Nonce table applied as 20261109180829_core_signed_nonces_v1; ${replay}. Paid-operation claims v1 applied as 20261109194957; claims v2 (crash and operator recovery) is pending and must be applied before this Worker ships.`;
 }
-const POLICY_UNIT = Object.freeze({ league: 'league', civic: 'intake', companies: 'intake', sources: 'intake', consumer_environment: 'environment', arcade: null, c5: null });
+const POLICY_UNIT = Object.freeze({ league: 'league', civic: 'intake', companies: 'intake', sources: 'intake', consumer_environment: 'environment', halo: 'halo', arcade: null, c5: null });
 const POLICY_UNKNOWN = Object.freeze({ installed: null, state: 'unknown', revision: null, updated_at: null });
 
 /* The persisted policy of every unit, or the reason it could not be read. One service read, no cache. */
 async function modulePolicies(env, ctx) {
   try {
     const control = await moduleControl(env, ctx.fetchImpl, ctx.fail, ctx.user.id, 1);
-    return { status: 'available', reason: null, units: new Map(control.modules.map((m) => [m.moduleId, { installed: m.installed, state: m.state, revision: m.revision, updated_at: m.updated_at }])) };
+    return { status: 'available', reason: null, units: new Map(control.modules.map((m) => [m.moduleId, { ...(typeof m.registered === 'boolean' ? { registered: m.registered } : {}), installed: m.installed, state: m.state, revision: m.revision, updated_at: m.updated_at }])) };
   } catch (error) {
     const reason = error?.reason || 'unavailable';
     return { status: reason === 'schema_not_applied' ? 'schema_not_applied' : 'unavailable', reason, units: null };

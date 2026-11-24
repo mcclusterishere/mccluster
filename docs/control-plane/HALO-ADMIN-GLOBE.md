@@ -9,6 +9,9 @@ Owner direction, 2026-10-21:
 > "And fix the fact that the control room points to seek first … Hitman Halo's UI also needs a redesign, but we'll save that
 > for last."
 
+Since 2026-11-23 Halo is also a registered owner-only module with an Admin card and a Control entry (`HALO-MODULE.md`), its
+seven environmental feeds load without the map (`HALO-FEED-INVENTORY.md`), and one dated case exists (`HALO-CASE-FUKUSHIMA-RENESAS.md`).
+
 This record says what the admin globe now holds, where each piece lives, what is next, and the rules it keeps. Companions:
 `HALO-INTEL-IMPLEMENTATION-MAP.md` (Seek First retirement), `WORLD-GLOBE-FEED-AND-ANALYTICS.md` (the World globe),
 `INTEL-TO-MISSION-CANON.md`.

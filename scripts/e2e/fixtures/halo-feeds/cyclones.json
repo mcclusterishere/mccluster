@@ -1,0 +1,39 @@
+{
+  "fixture": {
+    "schema": "halo-feed-fixture/v1",
+    "feed": "cyclones",
+    "route": "/v1/world/layers/cyclones",
+    "synthetic": true,
+    "warning": "SYNTHETIC FIXTURE. Invented rows in the Worker's documented envelope for /v1/world/layers/cyclones. Not a provider answer and not a production reading; its counts are not live counts.",
+    "provider_named_in_envelope": "NOAA NHC",
+    "rows": "cyclones",
+    "returned": 1,
+    "usable": 1,
+    "provider_time": "none in the envelope and none on the row"
+  },
+  "answer": {
+    "ok": true,
+    "layer": "cyclones",
+    "fetched_at": "2026-11-23T12:00:00.000Z",
+    "attribution": "NOAA National Hurricane Center",
+    "credit": "Tropical cyclones: NOAA NHC",
+    "license": "Public domain (U.S. Government work)",
+    "count": 1,
+    "stale": false,
+    "cyclones": [
+      {
+        "id": "fx012026",
+        "name": "FIXTURE",
+        "classification": "Tropical Storm",
+        "intensity_kt": 45,
+        "pressure_mb": 1000,
+        "movement_dir": 300,
+        "movement_kt": 9,
+        "basin": "Atlantic",
+        "advisory_url": "https://www.nhc.noaa.gov/",
+        "lon": -60.2,
+        "lat": 18.4
+      }
+    ]
+  }
+}

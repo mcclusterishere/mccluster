@@ -731,3 +731,21 @@ It leaves `ai_context.decisions` untouched. Core needs no rollback: without the 
 
 **Records** after the apply: move the file to `supabase/migrations/` under its ledger version; the ledger, the drift
 contract, the schema manifest from the CI reset, a new production snapshot; this section and `README.md`.
+
+## 16. E=Up module policy: the Hitman's Halo unit (reviewed 2026-11-24)
+
+| File | Changes | Callers | Proof before apply |
+|---|---|---|---|
+| `eup_module_policy_halo_v1.sql` (+ `eup_module_policy_halo_v1.rollback.sql`) | The two module CHECKs and the three existing owner RPCs admit `halo`. The function bodies remain the applied bodies byte for byte except the module list. Both directions require READ COMMITTED, one shared advisory transaction lock, deterministic exclusive table locks, and exact baseline-or-Halo catalog fingerprints. | Existing module registry and Control card. **Optional registration**: no Halo route consumes this policy unit, and owner access does not depend on this migration. | `node --test scripts/test/eup-module-policy-halo-sql.test.mjs`; `node scripts/halo-module-policy-native-check.mjs`; the same command with `--full-reset` in Reconciliation CI. **Corrected execution proof is pending CI.** |
+
+**Prerequisite:** section 8, applied as `20261117144103_eup_module_policy_v1`. This candidate creates no new object name, no row and no grant. It enables no module and changes no Halo route or release guard. Shipped code already handles absent registration, so there is no new `live-callers.json` exception.
+
+**Current evidence.** A SELECT-only catalog read at 2026-11-24 19:01:57 UTC on the sole production project matched the exact applied policy SQL rebuilt on disposable PostgreSQL 17.6, including all nine functions and their ACLs, the tables and sequence, every column, constraint, index and protection trigger, RLS, policies and rules. The original Halo SQL also ran on that disposable database to establish the known extension fingerprints. This is baseline evidence, **not a pass of the corrected behavioral proof**. The executor became unavailable before that proof ran. Records: `docs/control-plane/evidence/halo-policy-catalog-2026-11-24.json` and `HALO-POLICY-PREPARATION-2026-11-24.md` in that directory.
+
+**Before proposing production apply:** require the exact draft head's Supabase migration reset job to pass both native modes and the source-map/contract checks. Bounded mode uses minimal identity fixtures; full-reset mode verifies the exact canonical and replay ledger, retains existing base objects, and uses synthetic rows only. Fault injections deliberately change policy objects inside transactions to prove refusal and then roll those transactions back. The suite covers original failure/corrected refusal, role boundaries, idempotent commands, non-Halo preservation, empty recovery/reapply, history-only and policy-only refusal, lock waits, concurrent DDL, concurrent install, and an obsolete Repeatable Read snapshot.
+
+**Apply only after Matthew approves this file by name.** Re-run `scripts/db/halo-module-policy-preflight.sql` SELECT-only immediately beforehand. Its fingerprints must equal the recorded baseline or known Halo state as a whole; an unfamiliar or partial state is a blocker requiring fresh review. Serialize administrative policy-function DDL with the release; table locks do not promise exclusion of an uncoordinated database administrator changing a function. Apply this one exact committed file, then follow README “To promote one” for ledger, snapshot, manifest and records. Do not replay a migration already in the live ledger.
+
+**Verify:** the owner module read lists four units, Halo uninstalled; the three existing units and their command history are unchanged; anon/authenticated still cannot execute the owner RPCs or read private tables. No route/access or enablement claim follows from registration. Verify the card separately when its code is deployed.
+
+**Recovery:** the paired file restores exactly the three-unit schema only when no Halo policy or command history exists in any organization, checked after both table locks. It refuses unknown catalog drift and non-READ-COMMITTED isolation. Once the unit has history, disable it through the existing command API; do not remove its history or registration. Recovery also requires approval by filename.

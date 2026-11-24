@@ -311,6 +311,8 @@ try{
     check(width+' game page marks Games active',await page.locator('[data-appnav="games"][aria-current="page"]').count()===1);
     await page.locator('#mccControlToggle').click();
     await page.locator('#mccDestinations:popover-open').waitFor();
+    const moduleStatus=page.locator('#mccDestinationList [data-control-route="#system:halo"]');
+    check(width+' Halo module status is a separate destination in Control',await moduleStatus.count()===1&&/Halo module status/.test(await moduleStatus.innerText())&&new URL(await moduleStatus.getAttribute('href')).hash==='#system:halo');
     await page.locator('#mccDestinationList a').filter({hasText:'Hitman’s Halo'}).click();
     await page.waitForURL('**/action-globe.html?explore=1&halo=1');
     await page.waitForSelector('body[data-admin-navigation]');
