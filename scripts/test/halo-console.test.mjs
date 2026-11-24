@@ -55,7 +55,11 @@ test('a share link reproduces the shared layers exactly, and a stale layer reads
   assert.match(halo, /for \(const it of ALL_ITEMS\) \{ if \(it\.planned\) continue; const want = v\.l\.includes\(it\.id\); if \(want !== isOn\(it\)\) await setItem\(it, want\); \}/, 'names on, everything else off');
   assert.match(halo, /l: Array\.isArray\(p\.layers\) \? p\.layers : null/, 'a first visit keeps the globe\'s defaults');
   const layers = read('js/halo/layers.js');
-  assert.match(layers, /L\.fetched = Number\.isFinite\(provided\) \? provided : body \? L\.checked : L\.fetched;/, 'freshness from the Worker\'s fetched_at');
+  /* 2026-11-23: the Worker's fetch time is kept only when it is a real instant, and is never replaced by the time of this
+     request; the provider's own time is a separate number (scripts/test/halo-feeds.test.mjs runs both) */
+  assert.match(layers, /L\.fetched = stamp\(body\.fetched_at, now\);/, 'the Worker\'s fetch time, or nothing');
+  assert.match(layers, /L\.provider = stamp\(body\.observed_at, now\) \|\| stamp\(body\.last_message_at, now\);/, 'the provider\'s own time is not the fetch time');
+  assert.doesNotMatch(layers, /L\.fetched = [^;]*L\.checked/, 'a missing time is never filled with this page\'s clock');
   assert.match(layers, /if \(Date\.now\(\) - L\.checked >= SPECS\[id\]\.every - 500\) load\(id\);/, 'polling on this page\'s own clock');
 });
 

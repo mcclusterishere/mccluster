@@ -1,0 +1,64 @@
+{
+  "fixture": {
+    "schema": "halo-feed-fixture/v1",
+    "feed": "military",
+    "route": "/v1/world/layers/military",
+    "synthetic": true,
+    "warning": "SYNTHETIC FIXTURE. Invented rows in the Worker's documented envelope for /v1/world/layers/military. Not a provider answer and not a production reading; its counts are not live counts.",
+    "provider_named_in_envelope": "adsb.lol",
+    "rows": "aircraft",
+    "returned": 3,
+    "usable": 3,
+    "provider_time": "observed_at (the provider's own \"now\")"
+  },
+  "answer": {
+    "ok": true,
+    "layer": "military",
+    "fetched_at": "2026-11-23T12:00:00.000Z",
+    "observed_at": "2026-11-23T11:59:40.000Z",
+    "attribution": "adsb.lol, Open Database License (ODbL) 1.0",
+    "credit": "Military flights: adsb.lol (ODbL)",
+    "license": "ODbL-1.0",
+    "withheld": 0,
+    "count": 3,
+    "stale": false,
+    "aircraft": [
+      [
+        "f1x001",
+        "FIXTR01",
+        -77,
+        38.9,
+        9100,
+        220,
+        85,
+        "C17",
+        "1200",
+        false
+      ],
+      [
+        "f1x002",
+        "FIXTR02",
+        8.6,
+        50,
+        10300,
+        235,
+        270,
+        "A400",
+        "",
+        false
+      ],
+      [
+        "f1x003",
+        "FIXTR03",
+        139.8,
+        35.6,
+        7000,
+        190,
+        10,
+        "KC46",
+        "7700",
+        true
+      ]
+    ]
+  }
+}

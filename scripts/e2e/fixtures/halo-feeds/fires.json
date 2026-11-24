@@ -1,0 +1,53 @@
+{
+  "fixture": {
+    "schema": "halo-feed-fixture/v1",
+    "feed": "fires",
+    "route": "/v1/world/layers/fires",
+    "synthetic": true,
+    "warning": "SYNTHETIC FIXTURE. Invented rows in the Worker's documented envelope for /v1/world/layers/fires. Not a provider answer and not a production reading; its counts are not live counts.",
+    "provider_named_in_envelope": "NASA FIRMS",
+    "rows": "fires",
+    "returned": 3,
+    "usable": 3,
+    "requires": "FIRMS_MAP_KEY in production"
+  },
+  "answer": {
+    "ok": true,
+    "layer": "fires",
+    "fetched_at": "2026-11-23T12:00:00.000Z",
+    "attribution": "NASA FIRMS, VIIRS 375 m near real-time (Suomi NPP and NOAA-20)",
+    "credit": "Fires: NASA FIRMS",
+    "license": "NASA open data",
+    "count": 3,
+    "stale": false,
+    "fires": [
+      [
+        -120.5,
+        38.9,
+        84.2,
+        "high",
+        "2026-11-23T09:42:00Z",
+        "N20",
+        "D"
+      ],
+      [
+        149.1,
+        -35.3,
+        12.5,
+        "nominal",
+        "2026-11-23T03:10:00Z",
+        "SNPP",
+        "N"
+      ],
+      [
+        23.7,
+        -12.9,
+        null,
+        "low",
+        "2026-11-22T22:55:00Z",
+        "N20",
+        "N"
+      ]
+    ]
+  }
+}
