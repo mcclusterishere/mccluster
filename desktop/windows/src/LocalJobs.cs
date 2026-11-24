@@ -30,6 +30,7 @@ namespace McClusterDesktop
         public const string LocalDevice = "local-device";        // this computer only
         public const string RemoteWorker = "remote-worker";      // one enrolled device through the OVH Core
         public const string VerifiedGroup = "verified-group";    // a verified shared-model group through the OVH Core
+        public const string CoreStaging = "core-staging";        // owner-only: a staging Core named by the staging profile (CoreJobs.cs); never production
     }
 
     internal static class JobKind

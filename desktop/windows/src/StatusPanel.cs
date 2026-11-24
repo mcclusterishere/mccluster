@@ -26,6 +26,11 @@ namespace McClusterDesktop
         private readonly RadioButton targetLocal = new RadioButton();
         private readonly RadioButton targetRemote = new RadioButton();
         private readonly RadioButton targetGroup = new RadioButton();
+        // Owner-only: shown only while a staging profile exists (CoreJobs.cs). Never production.
+        private readonly RadioButton targetStaging = new RadioButton();
+        private readonly Label stagingCaption = new Label();
+        private readonly ComboBox implementationBox = new ComboBox();
+        private bool stagingProfilePresent;
         private readonly ComboBox kindBox = new ComboBox();
         private readonly ComboBox modelBox = new ComboBox();
         private readonly ComboBox deviceBox = new ComboBox();
@@ -67,7 +72,8 @@ namespace McClusterDesktop
         private AdapterStatus adapter;
         private DeviceInventory device;
         private bool draftDirty;
-        private CancellationTokenSource running;
+        // The local job runner and the staging wait each have their own cancellation (PanelRuns).
+        private readonly PanelRuns runs = new PanelRuns();
 
         internal StatusPanel(JobStore store, Action<string> navigate)
         {
@@ -114,6 +120,27 @@ namespace McClusterDesktop
                 layout.Controls.Add(rb);
             }
             targetLocal.Checked = true;
+            // Core (staging): its own option, never a relabelled production target. Visible only while
+            // %LOCALAPPDATA%\McClusterDesktop\staging\profile.json exists; the profile decides the host,
+            // the one CA trusted for it and the file the admin token is read from at call time.
+            targetStaging.Text = "Core (staging): owner only, the staging profile's Core, never production";
+            targetStaging.AutoSize = true;
+            targetStaging.MaximumSize = new Size(380, 0);
+            targetStaging.ForeColor = ForeColor;
+            targetStaging.CheckedChanged += delegate { UpdateTargetAvailability(); };
+            layout.Controls.Add(targetStaging);
+            stagingCaption.AutoSize = true;
+            stagingCaption.MaximumSize = new Size(380, 0);
+            stagingCaption.ForeColor = Color.FromArgb(180, 174, 165);
+            stagingCaption.Text = "Implementation the target device advertises (free text; the last one used is kept). The draft below is the prompt.";
+            layout.Controls.Add(stagingCaption);
+            implementationBox.DropDownStyle = ComboBoxStyle.DropDown;
+            implementationBox.Width = 380;
+            implementationBox.TextChanged += delegate { UpdateTargetAvailability(); };
+            layout.Controls.Add(implementationBox);
+            string lastImplementation = LoadLastImplementation();
+            if (lastImplementation != null) { implementationBox.Items.Add(lastImplementation); implementationBox.Text = lastImplementation; }
+            RefreshStagingProfile();
 
             kindBox.DropDownStyle = ComboBoxStyle.DropDownList;
             kindBox.Items.Add(JobKind.Inventory + " (hash a sample folder, no model needed)");
@@ -500,7 +527,7 @@ namespace McClusterDesktop
         {
             if (!draftDirty) return;
             draftDirty = false;
-            string target = targetRemote.Checked ? JobTarget.RemoteWorker : (targetGroup.Checked ? JobTarget.VerifiedGroup : JobTarget.LocalDevice);
+            string target = targetStaging.Checked ? JobTarget.CoreStaging : (targetRemote.Checked ? JobTarget.RemoteWorker : (targetGroup.Checked ? JobTarget.VerifiedGroup : JobTarget.LocalDevice));
             store.SaveDraft(target, draftBox.Text, SelectedKind(), sampleBox.Text);
         }
 
@@ -515,6 +542,7 @@ namespace McClusterDesktop
             string target = Json.Str(draft, "target");
             if (target == JobTarget.RemoteWorker) targetRemote.Checked = true;
             else if (target == JobTarget.VerifiedGroup) targetGroup.Checked = true;
+            else if (target == JobTarget.CoreStaging && stagingProfilePresent) targetStaging.Checked = true;
             draftDirty = false;
         }
 
@@ -540,6 +568,7 @@ namespace McClusterDesktop
                 adapter = await adapterTask;
                 Render();
                 RenderContribution();
+                RefreshStagingProfile();
                 store.Log("status_probe", new Dictionary<string, object> {
                     { "api", core.Api.Detail }, { "deployment_sha", core.DeploymentSha }, { "compute_gateway", core.ComputeGateway.Detail },
                     { "ollama", ollama.Reachable ? ollama.Version : ollama.Detail }, { "models", ollama.Models.Count },
@@ -601,22 +630,39 @@ namespace McClusterDesktop
         private void UpdateTargetAvailability()
         {
             bool online = core != null && core.Reachable;
-            targetRemote.Enabled = online;
+            // While a local job runs or a staging submission waits, the target stays what it was: the
+            // radios are disabled until that work ends.
+            bool selectable = runs.TargetsSelectable;
+            targetLocal.Enabled = selectable;
+            targetStaging.Enabled = selectable;
+            targetRemote.Enabled = online && selectable;
             // Never selectable here: a verified group needs two verified members and a pair
             // benchmark on the owner surface, which no desktop build can show today (matches --status-json).
             targetGroup.Enabled = false;
             targetRemote.Text = "One remote worker (through the OVH Core)" + (online ? "" : " — unavailable: Core unreachable");
             targetGroup.Text = "Verified shared-model group — unavailable: needs two verified members and a pair benchmark on the owner surface" + (online ? "" : "; Core unreachable");
-            if (!online && !targetLocal.Checked) targetLocal.Checked = true;
+            if (selectable && !online && (targetRemote.Checked || targetGroup.Checked)) targetLocal.Checked = true;
+            bool staging = (stagingProfilePresent || runs.StagingBusy) && targetStaging.Checked;
+            stagingCaption.Visible = staging;
+            implementationBox.Visible = staging;
             bool chat = SelectedKind() == JobKind.Chat;
-            modelBox.Visible = chat;
-            deviceBox.Visible = chat;
-            contextBox.Visible = chat;
-            sampleBox.Enabled = !chat;
-            if (targetLocal.Checked)
+            // A staging submission is always one ai.chat job on a device the Core picks: the local job
+            // kind, model, device and context controls do not apply to it.
+            kindBox.Enabled = !staging;
+            modelBox.Visible = chat && !staging;
+            deviceBox.Visible = chat && !staging;
+            contextBox.Visible = chat && !staging;
+            sampleBox.Enabled = !chat && !staging;
+            if (staging)
             {
-                runButton.Text = "Run on this device";
-                runButton.Enabled = !chat || (ollama != null && ollama.Reachable && modelBox.Items.Count > 0);
+                runButton.Text = runs.StagingBusy ? "Stop waiting" : "Submit to Core (staging)";
+                runButton.Enabled = runs.StagingBusy || implementationBox.Text.Trim().Length > 0;
+                openChatButton.Enabled = online;
+            }
+            else if (targetLocal.Checked)
+            {
+                runButton.Text = runs.LocalBusy ? "Cancel" : "Run on this device";
+                runButton.Enabled = runs.LocalBusy || !chat || (ollama != null && ollama.Reachable && modelBox.Items.Count > 0);
                 openChatButton.Enabled = online;
             }
             else
@@ -630,6 +676,7 @@ namespace McClusterDesktop
         private async Task RunSelected()
         {
             FlushDraft();
+            if ((stagingProfilePresent || runs.StagingBusy) && targetStaging.Checked) { await RunStaging(); return; }
             if (!targetLocal.Checked)
             {
                 // Remote and group work is owned by the OVH Core and submitted by the
@@ -641,7 +688,7 @@ namespace McClusterDesktop
                 MessageBox.Show(this, "Remote and group jobs are submitted from the signed-in Ask McCluster surface, which the Core stores and streams back. Your draft was copied to the clipboard.", "Submit via the site", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            if (running != null) { running.Cancel(); return; }
+            if (runs.LocalBusy) { runs.CancelLocal(); return; }
             var input = new Dictionary<string, object>();
             string kind = SelectedKind();
             if (kind == JobKind.Inventory) input["path"] = sampleBox.Text;
@@ -654,11 +701,11 @@ namespace McClusterDesktop
                 if (routes.Count > 0) input["context_routes"] = routes;
             }
             LocalJob job = store.Create(kind, JobTarget.LocalDevice, input);
-            running = new CancellationTokenSource();
-            runButton.Text = "Cancel";
+            CancellationToken localToken = runs.StartLocal();
+            UpdateTargetAvailability();
             try
             {
-                await runner.Run(job, j => BeginInvoke((Action)ReloadJobs), running.Token);
+                await runner.Run(job, j => BeginInvoke((Action)ReloadJobs), localToken);
             }
             catch (Exception ex)
             {
@@ -666,11 +713,106 @@ namespace McClusterDesktop
             }
             finally
             {
-                running = null;
+                runs.FinishLocal();
                 UpdateTargetAvailability();
                 ReloadJobs();
                 SelectJob(job.Id);
             }
+        }
+
+        // The staging profile can appear or disappear while the app is open (the staging serve script
+        // writes it); the option follows the file.
+        private void RefreshStagingProfile()
+        {
+            stagingProfilePresent = CoreProfile.DefaultExists();
+            targetStaging.Visible = stagingProfilePresent || runs.StagingBusy;
+            // Not while something runs: the target follows the file again when that work ends.
+            if (!stagingProfilePresent && targetStaging.Checked && runs.TargetsSelectable) targetLocal.Checked = true;
+            UpdateTargetAvailability();
+        }
+
+        private string LastImplementationPath()
+        {
+            return System.IO.Path.Combine(store.Root, "staging", "last-implementation.txt");
+        }
+
+        private string LoadLastImplementation()
+        {
+            try
+            {
+                if (!System.IO.File.Exists(LastImplementationPath())) return null;
+                string text = System.IO.File.ReadAllText(LastImplementationPath()).Trim();
+                return text.Length == 0 || text.Length > 200 ? null : text;
+            }
+            catch (Exception) { return null; }
+        }
+
+        private void SaveLastImplementation(string implementation)
+        {
+            try
+            {
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(LastImplementationPath()));
+                System.IO.File.WriteAllText(LastImplementationPath(), implementation, new System.Text.UTF8Encoding(false));
+                if (!implementationBox.Items.Contains(implementation)) implementationBox.Items.Insert(0, implementation);
+            }
+            catch (Exception) { }
+        }
+
+        // One job through the staging Core, by the same client the headless --core-submit uses. The
+        // document it returns is shown whole in the receipt box; the lines above it say which physical
+        // device ran it, the model and digest, the compute mode, attempts, timing, and what was and was
+        // not verified. The document is also kept under core-staging\ beside the local jobs.
+        private async Task RunStaging()
+        {
+            if (runs.StagingBusy) { runs.CancelStaging(); return; }
+            string implementation = implementationBox.Text.Trim();
+            string prompt = draftBox.Text;
+            if (implementation.Length == 0) return;
+            if (string.IsNullOrWhiteSpace(prompt))
+            {
+                receiptVerdict.Text = "Core (staging): write the prompt in the draft box first. Nothing was submitted.";
+                receiptVerdict.ForeColor = Color.FromArgb(240, 180, 120);
+                return;
+            }
+            SaveLastImplementation(implementation);
+            jobsList.SelectedItems.Clear();
+            CancellationToken token = runs.StartStaging();
+            UpdateTargetAvailability();
+            receiptVerdict.ForeColor = ForeColor;
+            receiptVerdict.Text = "Core (staging): submitted through the staging profile; waiting for a device to finish (up to " + CoreSubmit.DefaultTimeoutSeconds + " s)…";
+            receiptBox.Text = "";
+            string folder = System.IO.Path.Combine(store.Root, "core-staging");
+            string file = System.IO.Path.Combine(folder, "core-submit-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + ".json");
+            Dictionary<string, object> payload = null;
+            string failure = null;
+            try
+            {
+                payload = await Task.Run(() => CoreSubmit.Run(null, prompt, implementation, CoreSubmit.DefaultTimeoutSeconds, false, file, store, token, 1000));
+            }
+            catch (Exception ex) { failure = ex.GetType().Name + ": " + ex.Message; }
+            runs.FinishStaging();
+            if (IsDisposed) return;
+            if (payload == null)
+            {
+                receiptVerdict.Text = "Core (staging): " + failure;
+                receiptVerdict.ForeColor = Color.Firebrick;
+            }
+            else
+            {
+                string text = Json.Pretty(payload);
+                try
+                {
+                    System.IO.Directory.CreateDirectory(folder);
+                    System.IO.File.WriteAllText(file, text, new System.Text.UTF8Encoding(false));
+                }
+                catch (Exception ex) { store.Log("core_staging_document_not_saved", "error", ex.GetType().Name); }
+                string state = payload["state"] as string;
+                receiptVerdict.Text = CoreSubmit.Summary(payload);
+                // Never green: the Core's signature is not checked by this app, and the line says so.
+                receiptVerdict.ForeColor = state == "done" ? Color.FromArgb(240, 180, 120) : Color.Firebrick;
+                receiptBox.Text = text.Replace("\n", "\r\n");
+            }
+            RefreshStagingProfile();
         }
 
         internal void ReloadJobs()

@@ -43,6 +43,28 @@ an ECDSA P-256 signature from this device's DPAPI-protected key over the canonic
 documents (vector and hash pinned in the tests). `--verify-receipt` reports signature consistency, key
 trust and hash binding as separate booleans.
 
+## Core (staging)
+
+Owner only, added after 0.4.0 on this branch (the version number is unchanged). `src/CoreJobs.cs` lets the
+desktop itself submit one `ai.chat` job through a **staging** Core named by
+`%LOCALAPPDATA%\McClusterDesktop\staging\profile.json` (`core_url`, `staging`, `ca_cert_path`,
+`admin_token_file`, `org_id`; written by the owner or the staging serve script, never committed), poll it
+with a bound, and read the result and the receipt of #823's device-job contract. Production hosts
+(`mccluster.org`, `humanuprise.com` and every subdomain of either, by suffix, and any `supabase.co` host)
+are refused outright; any other host that is not loopback needs `staging: true`, https and the profile's
+CA; TLS trusts only that CA for that host through a per-request callback (no global override, no installed
+certificate) and builds the chain from what the server presented, with no AIA download and no revocation
+lookup; the admin token is read from its file per request and never logged, stored or printed. The desktop
+does not verify the Core's Ed25519 receipt signature (.NET Framework 4.8 has none): it records
+`receipt_signature_checked: false`, the reason and the node command that does verify it, and checks what
+it can (receipt schema, job id, that a device is named, that the receipt says signed with a signature and
+a key id, that the Core published that key, and that the input and output hashes are present and match).
+A job is `done` only when all of that holds, otherwise `done_unverified` with the reasons. Only the Core's
+named "no eligible device" codes are a refusal; a 401 or 403 is `auth_failed` and a 5xx or gateway error
+is `core_fault`, each with exit 1 even under `--expect-refusal`. The panel shows a
+"Core (staging)" option only while the profile exists; "One remote worker (through the OVH Core)" is
+unchanged and no production submit was added. Details and the document's fields: `PROOF-MODE.md`.
+
 ## Local jobs, drafts and reconnect safety
 
 `%LOCALAPPDATA%\McClusterDesktop\jobs\job_<32 hex>.json`, written atomically. States `queued → running →
@@ -63,6 +85,7 @@ McCluster.exe --device-key --out key.json                        # key_id and pu
 McCluster.exe --parity-audit [--route <url>]... [--width 1280 --height 800] [--dir <folder>] --out audit.json
 McCluster.exe --image-diff --a <png> --b <png> [--diff <png>] [--tolerance n] --out diff.json
 McCluster.exe --exo-rank-probe --runtime-url http://127.0.0.1:52415 [--node-id node_...] --out rank.json
+McCluster.exe --core-submit --prompt "<text>" --implementation <id> [--profile <path>] [--timeout-seconds n] [--expect-refusal] --out core-submit.json   # staging Core only
 ```
 
 ## Build, tests, installer
@@ -83,6 +106,42 @@ McCluster.exe --exo-rank-probe --runtime-url http://127.0.0.1:52415 [--node-id n
   Start Menu shortcut, HKCU uninstall entry, no admin, no services. The same executable is the uninstaller.
 
 ## Verified on the device (2026-11-23) and not verified
+
+A real run (2026-11-24): the desktop app submitted one job through a loopback staging Core (#823's gateway
+over https on `127.0.0.1`, its certificate pinned by the profile) and the job ran on this device's Radeon
+(`hardware_mode: gpu-verified`, `qwen3-vl:4b`); the document was `done` and the repository verifier
+returned `{"ok":true}` on its receipt. Repeated the same day with the build described here, with the same
+result, plus an unadvertised implementation recorded as `refused_as_expected` (`COMPUTE_NO_LIVE_NODE`) and
+a wrong token under `--expect-refusal` recorded as `auth_failed` with exit 1. Single device: it was both
+submitter and worker; no second device and no Mac has run a job this way yet. Nothing went to production.
+
+Verified for Core (staging) (2026-11-24): the in-box build with `-Tests -AllowDirty`, 407 desktop checks
+passed. Added after the first pass: a submit answer is a refusal only for the Core's named codes, and 401,
+403, 500, 502, 503 without such a code, 504 and gateway HTML pages each land in `auth_failed`, `core_fault`
+or `submit_rejected` with exit 1 with and without `--expect-refusal`; `done` requires `signed: true`, a
+signature value and key id, the published receipt key, and both hashes present and matching, with each
+missing piece tried alone and recorded as `done_unverified`; production refusal by suffix; the chain built
+from presented certificates only, with a loopback listener at a certificate's AIA URL that is never asked;
+no absolute local path in any output document; the panel's two cancellations kept apart and the target
+options disabled while either runs. The first checks: the profile rules (production hosts refused with and without `staging: true`,
+non-loopback without the flag refused, plain http off loopback refused, https without a CA refused); the
+TLS decision at the callback level with certificates generated in memory for the run (the profile's CA
+accepted, any other CA, a name mismatch, another host and an expired certificate refused; the source holds
+no global callback and no certificate store); and the client against **a fixture**: an in-process
+`HttpListener` over plain loopback HTTP that answers the contract's routes (document shape, output hash
+passing and failing, a failed job, the Core's refusal recorded with and without `--expect-refusal`, an
+expected refusal that did not happen, a wrong token, a bounded poll ending in `timeout`, an unreachable
+Core, and a sentinel token that appears in no output document and no log, including when the server echoes
+it back). Also run once: the built `McCluster.exe --core-submit` against a second loopback **fixture**, a
+Node script serving the routes with #823's own `jobs.mjs` functions and a receipt key generated for that
+run; the desktop's output hash equalled the repository's, and the recorded node command returned
+`{"ok":true}` on the output file and `Core signature does not verify` on an altered copy. Both fixtures
+have no device and no model behind them: neither is hardware proof; the real run above is the hardware
+evidence, on one device. Not verified: a staging Core on another machine or a second device (Mac
+included), TLS against an ingress that presents a leaf under an intermediate (the real run's ingress
+presented a self-signed certificate that is itself the pinned one; the leaf and intermediate cases are
+tested at the callback level), and the panel's "Core (staging)" option (compiled, not driven or
+screenshotted).
 
 Verified for 0.4.0 (the same day, later): the in-box build with `-Tests -AllowDirty`; the desktop checks
 below plus the new ones (the metering block's keys pinned to the contract on both paths, counters kept

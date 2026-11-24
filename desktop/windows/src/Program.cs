@@ -162,8 +162,21 @@ namespace McClusterDesktop
                             Write(outPath, job.ToDictionary());
                             return job.State == JobState.Done ? 0 : 1;
                         }
+                    case "--core-submit":
+                        {
+                            // Owner-only: one job through the staging Core the staging profile names (CoreJobs.cs).
+                            // The admin token is read from the profile's token file inside the client; it is
+                            // never an argument, never in the output file and never in the log.
+                            string prompt = Option(args, "--prompt");
+                            string implementation = Option(args, "--implementation");
+                            if (prompt == null || implementation == null) { Write(outPath, new Dictionary<string, object> { { "error", "missing --prompt or --implementation" } }); return 2; }
+                            int timeout = Number(args, "--timeout-seconds", CoreSubmit.DefaultTimeoutSeconds, 5, 3600);
+                            Dictionary<string, object> payload = CoreSubmit.Run(Option(args, "--profile"), prompt, implementation, timeout, args.Contains("--expect-refusal"), outPath, store, CancellationToken.None, 1000);
+                            Write(outPath, payload);
+                            return CoreSubmit.ExitCode(payload);
+                        }
                     default:
-                        Write(outPath, new Dictionary<string, object> { { "error", "unknown option " + args[0] }, { "options", new[] { "--status-json --out <file>", "--jobs-json --out <file>", "--run-local-inventory <folder> --out <file>", "--run-local-chat <prompt> --model <name> [--device auto|adapter|ollama] [--max-attempts n] [--context-route <first-party url>]... --out <file>", "--verify-receipt --file <job.json> [--trusted-key-id <id> | --any-key] --out <file>", "--device-key --out <file>", "--image-diff --a <png> --b <png> [--diff <png>] [--tolerance n] --out <file>", "--exo-rank-probe --runtime-url http://127.0.0.1:52415 [--node-id node_...] --out <file>", "--parity-audit [--route <url>]... [--width 1280 --height 800] [--dir <folder>] --out <file>" } } });
+                        Write(outPath, new Dictionary<string, object> { { "error", "unknown option " + args[0] }, { "options", new[] { "--core-submit --prompt <text> --implementation <id> [--profile <path>] [--timeout-seconds n] [--expect-refusal] --out <file>", "--status-json --out <file>", "--jobs-json --out <file>", "--run-local-inventory <folder> --out <file>", "--run-local-chat <prompt> --model <name> [--device auto|adapter|ollama] [--max-attempts n] [--context-route <first-party url>]... --out <file>", "--verify-receipt --file <job.json> [--trusted-key-id <id> | --any-key] --out <file>", "--device-key --out <file>", "--image-diff --a <png> --b <png> [--diff <png>] [--tolerance n] --out <file>", "--exo-rank-probe --runtime-url http://127.0.0.1:52415 [--node-id node_...] --out <file>", "--parity-audit [--route <url>]... [--width 1280 --height 800] [--dir <folder>] --out <file>" } } });
                         return 2;
                 }
             }

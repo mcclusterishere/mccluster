@@ -17,7 +17,8 @@ facts.
 
 Not on this device: "one remote worker" and "verified group" are targets of the OVH Core. The desktop
 shows them with their availability and, when the Core is reachable, opens the owner's signed-in site
-surface with the draft on the clipboard; it submits nothing natively and holds no Core token. The group
+surface with the draft on the clipboard; it submits nothing natively to production and holds no production
+Core token (the one native submission path is "Core (staging)", below, and it refuses production). The group
 target is never selectable from the desktop: it needs two verified members and a pair benchmark on the
 owner surface. Auto's fall-through from the adapter to Ollama (`routing.failover = true`) and the adapter
 refusal for a model it does not serve are covered by code, not by a recorded run on Prime: every recorded
@@ -27,6 +28,164 @@ Capability-aware routing on the device: a chat job goes only to an executor whos
 names the selected model and reports it installed (the adapter's `/health` implementations), the same
 `capability` and `implementation` match the Core claim makes. Feature-subset requirements (for example
 vision) are not checked by the desktop.
+
+## Core (staging): the desktop submits one job through a staging Core
+
+Owner only, staging only. It is the device-job contract of #823 (`mccluster-job/1`,
+`mccluster-job-result/1`, `mccluster-job-receipt/1`; `docs/control-plane/DEVICE-JOBS-CONTRACT.md` on that
+branch, not in this tree) driven by the desktop itself: submit, bounded status poll, result, receipt,
+receipt key. Code: `src/CoreJobs.cs`. No production submit exists; "One remote worker (through the OVH
+Core)" is unchanged.
+
+**The profile.** `%LOCALAPPDATA%\McClusterDesktop\staging\profile.json`, written by the owner or by the
+staging serve script, never committed:
+
+| Field | Meaning |
+| --- | --- |
+| `core_url` | the staging Core's origin (scheme, host, port; no path, query or credentials) |
+| `staging` | must be the boolean `true` for any host that is not loopback |
+| `ca_cert_path` | the one CA (PEM or DER) trusted for that host; required whenever `core_url` is https |
+| `admin_token_file` | a file holding the compute admin token; the token itself is never in the profile |
+| `org_id` | the organization id (uuid) the staging Core is configured for |
+
+Relative paths resolve beside the profile. Rules, each a recorded refusal:
+
+- `mccluster.org`, `humanuprise.com` and every host under either are refused outright
+  (`PRODUCTION_HOST_REFUSED`), by suffix and not by a list of names: `compute.mccluster.org`,
+  `core.mccluster.org`, `api.mccluster.org`, `matthew.mccluster.org` and any subdomain nobody listed, such
+  as `staging.mccluster.org`. So is any `supabase.co` host. No flag, scheme, port or CA changes that. The
+  match is on whole labels: `notmccluster.org` is not production, and the next rule decides it.
+- Any other host that is not loopback (`127.0.0.1`, `localhost`, `::1`) without `staging: true` is refused
+  (`NOT_STAGING_REFUSED`); with it, plain http is refused (`PLAINTEXT_REFUSED`).
+- https without `ca_cert_path` is refused (`CA_REQUIRED`), on loopback too. Plain http is accepted on
+  loopback only.
+
+**TLS.** Each request carries its own certificate validation callback. It accepts a certificate only when
+the request is for the profile's host, the certificate names that host, its chain has no fault other than
+an untrusted root, and that root is byte-for-byte the profile's CA (a self-signed ingress certificate that
+is itself the pinned certificate qualifies). The system trust store does not decide in either direction:
+a certificate from a public CA is refused unless it chains to the profile's CA. The chain is built from the
+leaf, the certificates the server presented in the handshake and the pinned CA, and from nothing fetched:
+.NET Framework 4.8 cannot switch off AIA retrieval on `X509Chain`, so the decision calls crypt32's
+`CertGetCertificateChain` itself with `CERT_CHAIN_DISABLE_AIA` and `CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL`
+and with no revocation flag (the equivalent of `X509RevocationMode.NoCheck`; a private staging CA
+publishes no revocation data). A leaf whose intermediate was not presented is refused even when its AIA
+extension says where to download it; the tests hold a loopback listener at that URL and it is never asked.
+One limit: before it calls the callback, the framework's TLS layer builds a chain of its own with its
+defaults, and that build is outside this code; its result is not used for the verdict. No global callback
+is set and no certificate is installed. No redirect is followed and no proxy is used.
+
+**The token.** Read from `admin_token_file` for each request, sent as the `Authorization: Bearer` header
+of that request, and held nowhere else: not in the output document, not in `logs\desktop.log`, not on a
+command line. Anything the Core sends back has the token's text replaced with `[redacted]` before it is
+kept. This is the one place the desktop touches a control-plane secret, and only a staging one.
+
+**The job.** `POST /v1/compute/jobs` with `capability: ai.chat`, the chosen `implementation`, `input`
+`{ prompt, think: false, temperature: 0.2, num_predict: 1536 }`, `max_attempts: 3` and one generated
+`Idempotency-Key`. Only a transport fault is retried (at most 3 requests, the same key, so a retry cannot
+create a second job). An HTTP answer that is not 2xx is recorded, not retried, and classified: it is a
+**refusal** only when it is a JSON object carrying one of the Core's named codes for "no eligible device"
+or "capability refused" (`COMPUTE_NO_LIVE_NODE`, `NO_CAPABILITY_BINDING`, `CAPABILITY_NOT_ACTIVE`); `401`
+and `403` are `auth_failed` whatever code they carry; any other `5xx` (500, 502, 504, a 503 without one of
+those codes, a gateway's HTML page) is `core_fault`; anything else (400, 409, 413, ...) is
+`submit_rejected`.
+Status is polled once a second up to `--timeout-seconds` (default 300, 5 to 3600); at the bound the run is
+recorded as `timeout` with no result, receipt or device claimed. There is no cancel route in the contract:
+a job the desktop stops waiting for stays on the Core, and the document says so.
+
+**Headless.**
+
+```powershell
+McCluster.exe --core-submit --prompt "<text>" --implementation <id> [--profile <path>] [--timeout-seconds n] [--expect-refusal] --out <file>
+```
+
+The document (`mccluster-desktop-core-submit/1`) has `state`, `core_url_host` (host and port only),
+`submitted` (capability, implementation, input, its hash, the idempotency key), `job`, `result`,
+`receipt`, `receipt_key` (as the Core returned them), `refusal`, `submit_failure` (`kind`, `http_status`,
+`code`, `error`, for a submission answered with something that is neither acceptance nor a refusal),
+`error`, and:
+
+- `device`: `node_id`, `node_display_name`, `platform`, `hardware_mode`, `node_key_fingerprint` from
+  `receipt.execution` (the Core's statement about the node that held the completing lease);
+  `implementation` from `receipt.job`; `model`, `model_digest`, `runtime_version` from the result's
+  `output` as the node committed it (`output.model`, `output.usage.model_digest`,
+  `output.usage.ollama_version`; `null` when the node's executor did not report one); `sources` says this
+  per field. `output_marked_fixture` is true when the output carries `fixture: true` (the staging fixture
+  executor): that is never hardware proof and the panel says so.
+- `attempts`: `submit_requests`, `status_polls`, `poll_errors`, and the Core's `job_attempts`,
+  `max_attempts` and `lease_attempt`.
+- `timings`: the desktop's clock (`submitted_at`, `submit_ms`, `wait_ms`, `terminal_at`, `total_ms`, each
+  status change with its offset) and the Core's lease clock (`core_started_at`, `core_completed_at`,
+  `core_duration_ms`).
+- `verification`: see below.
+
+`state` and exit code: `done` (0) only when the job is done and every check the desktop can make was made
+and passed; `refused_as_expected` (0) when `--expect-refusal` was passed and a refusal was recorded;
+everything else exits 1: `refused`, `auth_failed`, `core_fault`, `submit_rejected`,
+`accepted_but_refusal_expected` (the job exists on the Core and was not polled), `done_unverified`,
+`job_failed` / `job_canceled`, `timeout`, `canceled_by_owner`, `error`. A refusal records `stage` and
+`refused_by`: `core` at `submit` (with the HTTP status and one of the named codes above), or
+`desktop-profile-check` at `profile` (the rules above, before any request). `--expect-refusal` exits 0 for
+either; read `refused_by` to tell them apart. It exits 1 for `auth_failed`, `core_fault` and
+`submit_rejected`: a wrong token, a 5xx or a gateway error is not the refusal that was expected, and the
+document says so. A missing profile, an unreadable or empty token file and an unreachable Core are errors,
+never refusals. The document carries no absolute local path: a missing profile is named by its file name
+and a placeholder for its folder, and any error text is scrubbed of this device's folders.
+
+**What is verified, and what is not.** .NET Framework 4.8 has no Ed25519, so the desktop does not verify
+the Core's receipt signature and does not claim to: `verification.receipt_signature_checked` is always
+`false`, with `receipt_signature_reason` and `receipt_signature_verify_command`, the exact command that
+runs the repository's verifier (`verifyReceipt` in `core/src/compute/jobs.mjs`) on the output file from
+the root of a checkout that carries #823. The command names the output file by its file name inside a
+placeholder (`"<path to core-submit.json>"`), never by where it was written; put the path in:
+
+```
+node --input-type=module -e "import fs from 'node:fs'; import { verifyReceipt } from './core/src/compute/jobs.mjs'; const o = JSON.parse(fs.readFileSync(process.argv[1], 'utf8')); const v = verifyReceipt(o.receipt, o.receipt_key ? o.receipt_key.public_key_pem : null); console.log(JSON.stringify(v)); process.exit(v.ok ? 0 : 1);" "<the file --core-submit wrote>"
+```
+
+That command takes the public key from `receipt_key`, which the desktop read from the same Core over the
+same channel; a verifier that needs an independent trust anchor pins the key id separately. What the
+desktop does check, each a separate field: `receipt_schema_ok` (`mccluster-job-receipt/1`),
+`job_id_matches`, `output_hash_matches` (the SHA-256 of the canonical JSON of the result's `output`, by
+the existing `Canonical` class, against `receipt.output_sha256`; `null` when the receipt carries no output
+hash), `result_hash_field_matches` (the same against the result's own `output_sha256`),
+`input_hash_matches` (what was submitted against `receipt.input_sha256`), `receipt_names_device`
+(`execution.node_id` is present), `receipt_signature_present` (the signature block has a value) and
+`receipt_key_present` (the Core published a receipt key with a key id and a public key).
+`desktop_checks_passed` is true only when every one of these holds for a `done` receipt: the schema, the
+job id and the device; `signed` is `true` with a signature value and a key id; the receipt key is present
+and its key id is the signature's; the input hash and the output hash are both present in the receipt and
+both match. A check that could not be made (no input hash, no output hash, no signature, no key) is a
+failed check, not a pass by absence. `desktop_checks_failed` lists the reasons; when it is not empty a job
+the Core reports done is recorded as `done_unverified` with those reasons in `error`, exit 1.
+`receipt_claims_signed`, `receipt_signature_alg`, `receipt_signature_key_id`,
+`receipt_key_id_equals_published_key_id` (a string comparison) and `node_attestation_as_reported_by_core`
+(`core_reports_verified`, `matches_output`, `node_id`, and `checked_by_desktop: false`) are the Core's own
+statements copied and labelled, not checks. The desktop's own `verification` block has no field named
+`verified`; the embedded Core receipt keeps the Core's own `node_attestation.verified`, which is the Core's
+statement and not a desktop check. Until
+the command above is run, the receipt's origin rests on the channel (loopback, or TLS pinned to the
+profile's CA), not on a signature this app verified.
+
+**A real run (2026-11-24).** On this device the desktop app submitted one `ai.chat` job through a loopback
+staging Core (#823's gateway over https on `127.0.0.1`, its self-signed certificate pinned by the profile), the job ran on this
+device's Radeon (`hardware_mode: gpu-verified`, `qwen3-vl:4b`, node `prime-windows`), the document came
+back `done`, and the repository verifier returned `{"ok":true}` on it. It was repeated the same day with
+the build that carries the rules above (state `done`, the verifier `{"ok":true}` again; an unadvertised
+implementation recorded `refused_as_expected` with `COMPUTE_NO_LIVE_NODE`; a wrong token under
+`--expect-refusal` recorded `auth_failed`, exit 1). That is one device acting as both submitter and
+worker: no second device and no Mac has run a job this way yet, and nothing was sent to production.
+
+**Panel.** A "Core (staging)" option appears under "Run on" only while the profile file exists. It has an
+implementation box (free text; the last value used is kept in `staging\last-implementation.txt` and
+offered again) and uses the draft as the prompt. It runs the same client with a 300 s bound, shows the
+whole document in the receipt box, saves it under `core-staging\`, and writes above it: which physical
+device ran it (display name, node id shortened, platform), model, digest and implementation, compute mode
+(`hardware_mode`), attempts, timing, and the verification sentence, which always says the Core signature
+was not checked here. The line is never green. The wait on a staging submission and the local job runner
+each have their own cancellation ("Stop waiting" never cancels a local job, and "Cancel" never stops a
+staging wait), and while either is in flight the "Run on" options are disabled, so the button always acts
+on the target that is busy.
 
 ## Bounded delegation and retry
 
