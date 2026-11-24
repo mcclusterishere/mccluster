@@ -2273,8 +2273,9 @@ the verified quick wins merged in). Nothing was merged to `main`, deployed, enab
    * **Pause wins over a late refusal** (the review's CX-2). A creator's full song renewing its link: when the
      entitlement check said no after the listener pressed Pause, the engine still started the preview. The refusal now
      goes back to the try that asked for it, which applies it only while the listener still asks for music; Play asks
-     again, and that answer decides. Only the check's own no (402, or 401 and 403) ends the full song; any other answer
-     is a failed try (`js/music-engine.js`).
+     again, and that answer decides. Only the check's own no (402, or 401 and 403), or no session at all (signed out in
+     another tab, the session cleared: the engine then ends the full song without asking), ends the full song; any other
+     answer is a failed try (`js/music-engine.js`).
    * **A finished song sends no start** (CX-1). A start still waiting for the last finish was sent even when the page
      had finished that song meanwhile (the pocket player rolling on at the end of its queue), so a listen was opened
      and closed for a song that was left at once. It is no longer sent, and a song that sent no start sends no finish
@@ -2373,3 +2374,102 @@ New rows:
     artist's card: that song plays and Listen stays. Tap the card's name: that artist's page opens.
 15. On Listen in a Safari tab, a song playing: tap the bar's Music button twice quickly. The song ends up playing, the
     button shows Pause and VoiceOver reads "Pause music"; one more tap pauses it.
+
+### Review and fixes (2026-11-24)
+
+Two reviews of `2bb82abf` (the journeys, played in Chromium against the plane's fixtures; and measurement, security and
+law) found six defects and one sentence that said more than the code. None of the six was in stage 0's own changes:
+each is M5 code that stage 0 left as it was (the same at `d1375242`), and Release 2 would have shipped it. Each is fixed
+here with a test that fails at `2bb82abf` and passes after. Nothing was merged, deployed, enabled or applied.
+
+1. **Back showed the wrong page** (review JRN-1). The history entries one retained document writes belong to that
+   document. A reload at a view's address (Listen, an artist card, then a reload there), or a return to it from a page
+   out of music, makes a new retained document over the same entries, so Back to Listen's own entry was a step inside
+   the artist page: the address said `/listen.html` while the artist page, its head and its bar stayed on screen.
+   Release 1 showed Listen there. Now an entry that names no view belongs to the retained page only at the retained
+   page's own address; at any other, the shell shows the page at that address: a music page it can show opens as a
+   view (the entry then names that view, with the scroll it had), and any other page is loaded. An entry naming a view
+   of the retained page itself shows the retained page (`js/music-shell.js`).
+2. **Songs chosen in Listen over an artist page were never counted or banked** (JRN-2). The artist page loads neither
+   the listen ledger nor the pocket, and the engine counts and banks through the page it plays in. As SPEC-M5 3.3 asked,
+   the first Listen view over an artist page now loads both into that page, after the page's own start-up has run, so
+   the pocket arriving holds nothing the page did not hold before (`js/music-shell.js`); a song already playing when the
+   ledger arrives is counted from then (`js/music-engine.js`). An artist page loaded on its own is unchanged.
+3. **The closing song's pop-up stayed open over the next page** (JRN-3). On Listen, the pop-up's way forward (Sign in for
+   a guest, Complete your profile for a member) is a link the shell turns into the sign-in view and the World into its
+   profile page, both before the pop-up could hear it: the pop-up stayed over the sign-in form, which could not be
+   reached until the pop-up was closed, or under the World. The pop-up now hears its own link first and closes; the
+   link goes where it went (`js/gated-audio.js`).
+4. **A second tap on the Sign in chip sent the sign-in to the World** (JRN-4). The chip stays on screen over the
+   sign-in view. A second tap opened a sign-in view whose way back was the sign-in page itself, which `account.html`
+   refuses, so a password sign-in went on to the World as a page load and the song stopped. Over the sign-in view the
+   way back is now that view's own, or the retained page's: a second tap is the page already shown and changes nothing
+   (`js/music-shell.js`).
+5. **A double tap opened a page twice** (MSL-1). A second tap before a view had painted (a double tap, or the bar and a
+   link at once) made a second frame and a second history entry, and could file a second `page_view`, which the
+   creator report counts; another link tapped while a view still opened left that view's entry behind, so Back went to
+   a page the person never saw. Now a view asked for again while it opens is the same view, and a view that takes the
+   place of one still opening takes its entry too, as a browser leaves no entry for a page load it cancelled
+   (`js/music-shell.js`).
+6. **Two smaller ones** (JRN-5, JRN-6). A view left by Back came back on Forward at its top: its scroll is now kept on
+   its entry half a second after the person stops scrolling (well inside Safari's limit of 100 history writes in 30
+   seconds), and the retained page's own scroll too, once a view has been shown over it. Listen's search Enter inside
+   a view, the frame's own navigation, left an entry of its own before the album's page load added another, so one
+   Back did nothing: the page load now takes the frame's entry. A frame that replaces its own entry (the account page
+   after a sign-in, which goes on with `location.replace()`) leaves none, so its page load keeps its entry, as before
+   (`js/music-shell.js`).
+7. **The sentence** (MSL-2): "only the check's own no ends the full song" (item 4 of "What changed" above, and the
+   comment in `js/music-engine.js`) now names the other case the code already had: no session at all.
+
+What stays as it was: a view whose own analytics has already run when another link takes its place (a second, different
+link in the moment between that page's scripts running and its first paint) still files its `page_view`; holding a
+view's `page_view` until it shows would change `js/analytics.js`, which stage 0 leaves alone. The page under a view
+still opening stays tappable and shows nothing while it waits; a tap there now opens the page tapped, never a second
+copy.
+
+| Test | At `2bb82abf` (only the tests changed) | After |
+| --- | --- | --- |
+| `scripts/test/music-shell.test.mjs` (9 new) | 20 of 29: all nine fail | 29 of 29 |
+| `scripts/test/music-quick-wins.test.mjs` (1 new: the pop-up's way forward) | 45 of 46 | 46 of 46 |
+| `scripts/test/music-playback-races.test.mjs` (1 new: a ledger that arrives while a song plays) | 64 of 65 | 65 of 65 |
+| `scripts/e2e/music-shell.e2e.mjs` (7 new scenarios, 29 checks) | 13 of 29: every check of a finding fails where the reviews saw it; the guards pass | 29 of 29 |
+
+The e2e fixture's listen start now answers a listen id, so a song's finish can be counted (JRN-2); no other check reads
+it. **Revert and fail**, each fix taken out alone, its file put back by its hash after: the route of an entry another
+document wrote (3 of the JRN-1 tests fail), the view of the retained page itself (1), the ledger and pocket loaded into
+the artist page (the JRN-2 shell test), the engine hearing a late ledger (the JRN-2 engine test), the pop-up closing (the
+JRN-3 test), the sign-in view's own way back (the JRN-4 test), the same view while it opens and the entry taken over
+(one MSL-1 test each), the view's and the retained page's scroll (the JRN-5 test, each), and the frame's entry replaced
+(the JRN-6 test).
+
+**Suites at the fixed code** (the files of `e9a0eba7`), each once unless said; the browser suites one at a time, in
+Chromium (CI's Playwright 1.57.0, Chromium 1200), under the shared browser lock:
+
+| Suite | Result |
+| --- | --- |
+| Root, `npm test` | 3235 tests: 3228 pass, 7 skipped, none fail; the Python checks 7 of 7 |
+| Worker, `workers/mccluster` (network off) | 2061 tests: 2052 pass, 9 skipped, none fail |
+| The music job's contract steps (`music-platform-ci.yml`, 18 steps) | every step passes; 300 of 300 tests |
+| Source map validator | 3018 checks, none failed |
+| M5 shell, background playback, Now Playing | 210 of 210; 297 of 297; 120 of 120 |
+| Accounts, installed app, quick wins | 128 of 128; 360 of 360; 232 of 232 |
+| Music to World, site navigation, the game hub capsule (with axe) | 140 of 140; 429 of 429; passes |
+| Direct checkout, lyrics sync, creator onboarding | 40 of 40; 328 of 328; 85 of 85 |
+| PRIM3's artist page and album, analytics globe, the house door | 49 of 49; 116 of 116; 122 of 122 |
+| Member front | stopped after 12 checks the first time, then 67 of 67 |
+
+The member front's first run stopped on the Studio page at 390 px: after a film upload, its preview did not report
+ready within 90 seconds, on a shared machine (load 4). That page loads none of the files this round changed (the shell
+loads only on a page marked `data-music-view`); stage 0's own first run of this suite also missed once on that page,
+with another symptom, and the next run passed. No CSS changed: the shell suite's test 15 still finds no sideways scroll
+at 320 and 390 px (and 820 and 1280). No test file was added, so no CI wiring and no source map row changed: the new
+tests are in files `music-platform-ci.yml` already runs.
+
+Device rows that change: none of rows 1 to 15. New rows, each in a Safari tab and from the Home Screen icon:
+16. On Listen, tap an artist card, then reload the page, then Back: Listen is on screen (not the artist page) and the
+    address says Listen.
+17. Signed out, on Listen, search CIA Mind Control and tap the play button of its closing song: the pop-up says why it
+    will not play. Tap its Sign in: the pop-up closes and the sign-in form takes your typing at once.
+18. On Listen with a song playing, tap Sign in, then Sign in again, then sign in with your password: you are back on
+    Listen with the song still playing.
+19. On Listen, double-tap an artist card quickly: one artist page opens, and one Back returns to Listen.
