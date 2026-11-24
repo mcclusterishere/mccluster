@@ -11,9 +11,11 @@
 
      node scripts/e2e/platform-hosts.e2e.mjs [--out <file.json>]
          LOCAL (CI; no internet): this tree's published files served the way GitHub Pages serves them (measured), Worker
-         mccluster's host routers run in-process on them (companySiteResponse, then humanUpriseResponse, as
-         workers/mccluster/src/entry-platform.js calls them, with wrangler.toml's [vars]), the zone's redirect rule for
-         here.mccluster.org and an inert door that does not resolve, as the table's stage says each host is served. It
+         mccluster's one site router run in-process on them as workers/mccluster/src/entry-platform.js composes it
+         (createSiteRouter with the company's parts and the World door's) over the table being crawled, with
+         wrangler.toml's [vars], the zone's redirect rule for here.mccluster.org and an inert door that does not
+         resolve, as the table's stage says each host is served (scripts/test/platform-hosts-crawl.test.mjs holds the
+         composition to entry-platform.js's for every stage's table). It
          fails when any host and path answers differently from the answers measured on production before P0
          (scripts/e2e/fixtures/platform-hosts-20261123.json), apart from what that file names as the live edge's alone
          (Cloudflare's managed robots.txt and its plain-http redirects) or as built at deploy (/site0/); when the platform
@@ -332,11 +334,14 @@ export function workerEnv(root = ROOT) {
   return env;
 }
 
-/* Worker mccluster's host routers, in-process, as entry-platform.js calls them before the API */
-export async function workerHosts(root = ROOT) {
-  const { companySiteResponse } = await import(pathToFileURL(join(root, 'workers/mccluster/src/company-site/router.js')).href);
-  const { humanUpriseResponse } = await import(pathToFileURL(join(root, 'workers/mccluster/src/human-uprise/router.js')).href);
-  return async (request, env, upstream) => (await companySiteResponse(request, env, upstream)) || (await humanUpriseResponse(request, env, upstream));
+/* Worker mccluster's site router, in-process, composed as entry-platform.js composes it before the API
+   (createSiteRouter({ company: COMPANY_PARTS, worldDoor: WORLD_DOOR_PARTS })), over the table being crawled: the
+   shipped one by default, or a later stage's, so each stage's crawl runs production's composition for that stage */
+export async function workerHosts(root = ROOT, site = null) {
+  const { createSiteRouter } = await import(pathToFileURL(join(root, 'workers/mccluster/src/platform/router.js')).href);
+  const { COMPANY_PARTS } = await import(pathToFileURL(join(root, 'workers/mccluster/src/company-site/router.js')).href);
+  const { WORLD_DOOR_PARTS } = await import(pathToFileURL(join(root, 'workers/mccluster/src/human-uprise/router.js')).href);
+  return createSiteRouter({ site: site || await loadSite(root), company: COMPANY_PARTS, worldDoor: WORLD_DOOR_PARTS });
 }
 
 class NotFound extends Error {
@@ -347,7 +352,7 @@ class NotFound extends Error {
 export async function localFetcher(site, { root = ROOT } = {}) {
   const pages = githubPages(root);
   const env = workerEnv(root);
-  const worker = await workerHosts(root);
+  const worker = await workerHosts(root, site);
   /* what the Worker's own fetch reaches: the static origin (GitHub Pages) and Supabase for the news (no posts) */
   const upstream = async (input, init = {}) => {
     const req = input instanceof Request ? input : new Request(input, init);
