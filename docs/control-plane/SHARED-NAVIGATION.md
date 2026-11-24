@@ -102,6 +102,12 @@ From either host the bar's Control link goes to the platform, which serves
 Control at its own path (`control.html` is in `url_ownership.platform`), so on the
 platform the link stays on its origin and a session moves there through the carry
 page (stage P1 of the one-platform plan, `docs/control-plane/DOMAINS-AND-ENTITIES.md`).
+The owner's dock sections, the Home panel's Control destinations and the product doors
+(PRIM3, Game Hub, PRIM3 World, Hitman's Halo, E=Up, Whip, WE Manufacture) take the bar's own
+answer for each page (`MCC_BAR.navigation.page`, where the table serves it), never the dock's
+house (`navigation.house`), which the P1 amendment of 2026-11-24 keeps on Matthew's host until
+P3 for the song playing there (review V2-1, 2026-11-24; held on his host by
+`scripts/e2e/site-navigation.e2e.mjs`).
 Before P1, Control on a World host pointed to Matthew's host with the bar's
 cross-origin sign-in hand-off, whose writer is off since P1 (its reader only scrubs old links until P4 and trades nothing). Local chapter tabs, filters and editor tools remain
 local; they do not replace the global destination menu.

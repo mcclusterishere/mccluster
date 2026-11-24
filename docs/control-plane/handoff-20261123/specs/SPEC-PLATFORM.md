@@ -618,6 +618,10 @@ from P1 until P3 answers its 301s:
   before), and every other page (the album from Listen or an artist page, music videos, hire, Control, the games, a
   member's front page), each a page load at P0 too. The M is his own root, as written. The Now sheet's album and
   artist links are relative, so they stay on the host they are on.
+  The shared navigation (`js/site-navigation.js`: the owner's dock sections, the Home panel's Control destinations
+  and the product doors) asks the bar where each page is (`navigation.page`, the table's answer), never the dock's
+  house, so on the profile host Control and the games go to the platform like the bar's own Games tab (review V2-1,
+  2026-11-24; held by `scripts/e2e/site-navigation.e2e.mjs` on his host).
 - On the platform nothing changes: the bar is local.
 The rest of P1 stands. Recorded in `data/seo/domain-architecture.json` (`edge.now.p1_changes` `bar_local`,
 `edge.stages` P1), `docs/control-plane/DOMAINS-AND-ENTITIES.md`, hard rule 15 in `AGENTS.md` and the music record
