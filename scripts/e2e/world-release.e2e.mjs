@@ -110,9 +110,9 @@ async function haloChecks(scope,page,host,width,ctx,loseOwner,calls){
  await page.locator('[data-group="earth"] .hx-group__row .hx-switch input').click({force:true});
  await page.waitForFunction(()=>{const l=HaloConsole.state().layers;return l.quakes.state==='on'&&l.fires.state==='unavailable'&&l.tides.state==='on'},null,{timeout:10000}).catch(()=>{});
  st=await state();
- check(scope,'Earth & weather turns on Earthquakes (3), NOAA water levels (2); Thermal says it needs a key',st.layers.quakes.text==='3'&&st.layers.tides.text==='2'&&st.layers.fires.text==='Needs a key'&&st.layers.networks.state==='planned',{q:st.layers.quakes,t:st.layers.tides,f:st.layers.fires});
+ check(scope,'Earth & weather turns on Earthquakes (3), NOAA water levels (2); Thermal says it needs a key',st.layers.quakes.text==='3'&&st.layers.tides.text==='2'&&st.layers.fires.text==='Needs a key'&&!st.layers.networks,{q:st.layers.quakes,t:st.layers.tides,f:st.layers.fires});
  check(scope,'Source health says each source\'s state in words',/Earthquakes[\s\S]*Updated/.test(await page.textContent('.hx-health'))&&/Needs a key/.test(await page.textContent('.hx-health')));
- check(scope,'the World panel counts what is available, context and planned',/\d+ available · 4 context · 5 planned/.test(await page.textContent('.hx-panel__head p')));
+ check(scope,'the World panel counts actual sources without planned placeholders',/\d+ available · 4 context$/.test(await page.textContent('.hx-panel__head p')));
  await shot('world');
  /* a NOAA station opens its observed water level with a chart */
  await page.evaluate(()=>HaloConsole.pick({id:{haloPick:true,layer:'tides',item:{id:'8465705',name:'New Haven',lon:-72.9083,lat:41.2833,state:'CT'}}}));
