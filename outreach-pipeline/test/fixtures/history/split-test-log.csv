@@ -1,0 +1,3 @@
+date_sent,recipient,email,category,frame,message_id,replied (y/n),reply_date,followup_sent
+2026-11-20 10:15,Riley Stone,riley@stonefield.example,operations,A,1a2b3c4d5e6f7a8b,y,2026-11-21,
+2026-11-20 10:20,Avery Stone,avery@stonecut.example,founder,B,1a2b3c4d5e6f7a8c,n,,

@@ -1,0 +1,17 @@
+{
+  "name": "@mccluster/outreach-pipeline",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Mentor outreach research pipeline: discovery, verification, research, unique drafts, similarity guard, human review queue, per frame reply tracking. Never sends on its own.",
+  "engines": { "node": ">=20" },
+  "bin": { "mccluster-outreach": "bin/outreach.mjs" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "run:fixture": "node bin/outreach.mjs run --fixture",
+    "run": "node bin/outreach.mjs run",
+    "review": "node bin/outreach.mjs review list",
+    "stats": "node bin/outreach.mjs stats",
+    "seed-history": "node bin/outreach.mjs seed-history"
+  }
+}

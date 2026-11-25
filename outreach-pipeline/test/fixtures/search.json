@@ -1,0 +1,206 @@
+{
+ "queries": {
+  "general partner*": [
+   {
+    "url": "https://news.example.com/2026/larkspur",
+    "title": "Dana Whitfield, general partner at Larkspur Ventures, raises third fund",
+    "snippet": "",
+    "published": "2026-03-05"
+   },
+   {
+    "url": "https://news.example.com/2026/brandt",
+    "title": "Ellis Brandt, managing partner at Brandt Capital, closes fund",
+    "snippet": "",
+    "published": "2026-01-10"
+   },
+   {
+    "url": "https://news.example.com/2026/quinn",
+    "title": "Quinn Harrow, general partner at Harrow Fund, on seed pricing",
+    "snippet": "",
+    "published": "2026-02-01"
+   }
+  ],
+  "managing partner*": [
+   {
+    "url": "https://news.example.com/2026/larkspur",
+    "title": "Dana Whitfield, general partner at Larkspur Ventures, raises third fund",
+    "snippet": "",
+    "published": "2026-03-05"
+   },
+   {
+    "url": "https://news.example.com/2026/brandt",
+    "title": "Ellis Brandt, managing partner at Brandt Capital, closes fund",
+    "snippet": "",
+    "published": "2026-01-10"
+   },
+   {
+    "url": "https://news.example.com/2026/quinn",
+    "title": "Quinn Harrow, general partner at Harrow Fund, on seed pricing",
+    "snippet": "",
+    "published": "2026-02-01"
+   }
+  ],
+  "founder sold*": [
+   {
+    "url": "https://news.example.com/2025/tidewell",
+    "title": "Tidewell founder Marcus Oyelaran sells company to Portline",
+    "snippet": "",
+    "published": "2025-06-10"
+   },
+   {
+    "url": "https://news.example.com/2026/voss",
+    "title": "Harlan Voss, founder of Vossway, sold the company",
+    "snippet": "",
+    "published": "2026-04-01"
+   },
+   {
+    "url": "https://news.example.com/2025/pike",
+    "title": "Pike Tools founder Jordan Pike sells company to a small studio",
+    "snippet": "",
+    "published": "2025-02-02"
+   },
+   {
+    "url": "https://news.example.com/2025/avery",
+    "title": "Avery Stone, founder of Stonecut, after the exit",
+    "snippet": "",
+    "published": "2025-09-09"
+   }
+  ],
+  "startup acquired*": [
+   {
+    "url": "https://news.example.com/2025/tidewell",
+    "title": "Tidewell founder Marcus Oyelaran sells company to Portline",
+    "snippet": "",
+    "published": "2025-06-10"
+   },
+   {
+    "url": "https://news.example.com/2026/voss",
+    "title": "Harlan Voss, founder of Vossway, sold the company",
+    "snippet": "",
+    "published": "2026-04-01"
+   },
+   {
+    "url": "https://news.example.com/2025/pike",
+    "title": "Pike Tools founder Jordan Pike sells company to a small studio",
+    "snippet": "",
+    "published": "2025-02-02"
+   },
+   {
+    "url": "https://news.example.com/2025/avery",
+    "title": "Avery Stone, founder of Stonecut, after the exit",
+    "snippet": "",
+    "published": "2025-09-09"
+   }
+  ],
+  "chief operating officer*": [
+   {
+    "url": "https://news.example.com/2026/northbeam-coo",
+    "title": "Priya Castellanos, chief operating officer at Northbeam Robotics",
+    "snippet": "joined in 2026",
+    "published": "2026-05-01"
+   }
+  ],
+  "\"Dana Whitfield\"*": [
+   {
+    "url": "https://danawhitfield.example/contact",
+    "title": "https://danawhitfield.example/contact",
+    "snippet": "",
+    "published": null
+   },
+   {
+    "url": "https://www.forbes.com/profile/dana-whitfield/",
+    "title": "https://www.forbes.com/profile/dana-whitfield/",
+    "snippet": "",
+    "published": null
+   },
+   {
+    "url": "https://danawhitfield.example/2026/03/larkspur-fund-three",
+    "title": "https://danawhitfield.example/2026/03/larkspur-fund-three",
+    "snippet": "",
+    "published": null
+   }
+  ],
+  "\"Marcus Oyelaran\"*": [
+   {
+    "url": "https://oyelaran.example/about",
+    "title": "https://oyelaran.example/about",
+    "snippet": "",
+    "published": null
+   },
+   {
+    "url": "https://techcrunch.com/2025/06/10/tidewell-acquired/",
+    "title": "https://techcrunch.com/2025/06/10/tidewell-acquired/",
+    "snippet": "",
+    "published": null
+   },
+   {
+    "url": "https://oyelaran.example/notes/2026-dispatch-desks",
+    "title": "https://oyelaran.example/notes/2026-dispatch-desks",
+    "snippet": "",
+    "published": null
+   }
+  ],
+  "\"Priya Castellanos\"*": [
+   {
+    "url": "https://northbeam.example/team",
+    "title": "https://northbeam.example/team",
+    "snippet": "",
+    "published": null
+   },
+   {
+    "url": "https://northbeam.example/blog/2026-apprentices",
+    "title": "https://northbeam.example/blog/2026-apprentices",
+    "snippet": "",
+    "published": null
+   }
+  ],
+  "\"Jordan Pike\"*": [
+   {
+    "url": "https://jordanpike.example/",
+    "title": "https://jordanpike.example/",
+    "snippet": "",
+    "published": null
+   },
+   {
+    "url": "https://techcrunch.com/2025/02/02/pike-tools-sold/",
+    "title": "https://techcrunch.com/2025/02/02/pike-tools-sold/",
+    "snippet": "",
+    "published": null
+   },
+   {
+    "url": "https://jordanpike.example/2026/bootstrapped-year",
+    "title": "https://jordanpike.example/2026/bootstrapped-year",
+    "snippet": "",
+    "published": null
+   }
+  ],
+  "\"Ellis Brandt\"*": [
+   {
+    "url": "https://rocketreach.co/ellis-brandt-email",
+    "title": "https://rocketreach.co/ellis-brandt-email",
+    "snippet": "",
+    "published": null
+   },
+   {
+    "url": "https://news.example.com/2026/brandt",
+    "title": "https://news.example.com/2026/brandt",
+    "snippet": "",
+    "published": null
+   }
+  ],
+  "\"Harlan Voss\"*": [
+   {
+    "url": "https://voss.example/contact",
+    "title": "https://voss.example/contact",
+    "snippet": "",
+    "published": null
+   },
+   {
+    "url": "https://news.example.com/2026/voss",
+    "title": "https://news.example.com/2026/voss",
+    "snippet": "",
+    "published": null
+   }
+  ]
+ }
+}

@@ -49,6 +49,7 @@ export const EXCLUDED_JOB_TYPES = Object.freeze({
   game_implementation_collect: 'Continuation enqueued by game_studio_cycle; reached through game.build.',
   game_branch_smoke: 'Needs the approval packet of a game_studio_cycle iteration; reached through game.build.',
   game_release_decision: 'Records the owner\'s release decision on an approval packet; reached through game.build, never from a free-text message.',
+  mentor_outreach_research: 'Daily mentor outreach research (outreach-pipeline/). Queued only by mccluster-core-mentor-outreach.timer when OUTREACH_PIPELINE_ENABLED=true; it fills a review queue and never sends, and chat does not touch outreach.',
 });
 
 /* Job types reached through a capability route (the capability's Core

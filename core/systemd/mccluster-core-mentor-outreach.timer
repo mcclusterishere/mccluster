@@ -1,0 +1,9 @@
+[Unit]
+Description=Queue the daily mentor outreach research run at 06:15 New York time (installed, NOT enabled by deploy; see core/src/seed-mentor-outreach.mjs)
+[Timer]
+OnCalendar=*-*-* 06:15:00 America/New_York
+Persistent=true
+RandomizedDelaySec=120
+Unit=mccluster-core-mentor-outreach.service
+[Install]
+WantedBy=timers.target
