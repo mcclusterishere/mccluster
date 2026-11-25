@@ -56,7 +56,7 @@ def count_in(rel, key):
 # (claim as written in llms.txt, data file, key)
 CLAIMS = [
     (r"(\d+) programs, (\d+) sources", "data/eu-fellowships.json", ["fellowships", "sources"]),
-    (r"(\d+) tracks with ISRCs",       "data/catalogue.json",      ["tracks"]),
+    (r"(\d+) registered tracks",       "data/catalogue.json",      ["tracks"]),
     (r"(\d+) items",                   "data/portfolio.json",      ["items"]),
 ]
 for pattern, rel, keys in CLAIMS:

@@ -57,12 +57,6 @@ html[data-daylight="day"].hu-editorial .mn__guest-card button, html[data-dayligh
 html[data-daylight="day"].hu-editorial .mn__clipdoor :is(a,button,p,h2,h3,span) { color:#ffffff; }
 html[data-daylight="day"] .hu-feed-tabs button { color:#333333; }
 html[data-daylight="day"] .hu-feed-tabs [aria-pressed="true"] { color:#000000; }
-/* missions deck chrome */
-html[data-daylight="day"] .mn-swipe__filters { background:#ffffffee; border-color:#00000022; }
-html[data-daylight="day"] .mn-swipe__filters button { color:#333333; }
-html[data-daylight="day"] .mn-swipe__filters [aria-pressed="true"] { color:#ffffff; background:#dc0f2d; }
-html[data-daylight="day"] .mn-swipe__undo { background:#ffffff; border-color:#00000033; color:#000000; }
-html[data-daylight="day"] .mn-swipe__empty { background:#f3f3f3; border-color:#00000022; color:#000000; }
 /* travel planner */
 html[data-daylight="day"] .wt-search, html[data-daylight="day"].hu-travel-enabled.mn-world-on .wt-search { background:#ffffffee; border-color:#00000022; }
 html[data-daylight="day"] .wt-search input, html[data-daylight="day"] #wtTitle, html[data-daylight="day"] .wt-leg strong, html[data-daylight="day"] .wt-empty h3 { color:#000000; }
@@ -76,6 +70,21 @@ html[data-daylight="day"] .wt-suggest button { color:#000000; }
 html[data-daylight="day"] .wt-suggest button:is(:hover,:focus-visible) { background:#f0f0f0; }
 html[data-daylight="day"] .wt-date-row button, html[data-daylight="day"] .wt-text-button, html[data-daylight="day"] .wt-toolbar button { color:#000000; }
 html[data-daylight="day"] .wt-toolbar [aria-pressed="true"] { color:#dc0f2d; border-bottom-color:#dc0f2d; }
+/* Ground modes need a complete day palette: black labels on the night
+   toolbar looked disabled and the selected red label disappeared on red. */
+html[data-daylight="day"] .wt-local-toolbar { background:#edf1f5;border-color:#b5c0cc; }
+html[data-daylight="day"] .wt-local-toolbar button { background:#ffffff;color:#172536;border-color:#9daab8; }
+html[data-daylight="day"] .wt-local-toolbar [aria-pressed="true"] { background:#a9082b;color:#ffffff;border-color:#a9082b;box-shadow:inset 0 -3px #ffc1cf; }
+html[data-daylight="day"] .wt-local-toolbar button:hover { border-color:#172536; }
+html[data-daylight="day"] :is(.wt-location-status,.wt-route-privacy,.wt-navigation-hint,.wt-route-label,.wt-attribution,.wt-search-note) { color:#435263; }
+html[data-daylight="day"] .wt-field>label { color:#435263; }
+html[data-daylight="day"] .wt-route-card { background:#f2f5f8;border-color:#bbc6d0; }
+html[data-daylight="day"] :is(.wt-route-summary strong,.wt-route-summary span,.wt-route-message,.wt-steps>summary) { color:#172536; }
+html[data-daylight="day"] .wt-steps { border-color:#bbc6d0; }
+html[data-daylight="day"] .wt-steps button { color:#243548; }
+html[data-daylight="day"] .wt-steps button small { color:#435263; }
+html[data-daylight="day"] .wt-steps button[aria-current="step"] { background:#daeee8;border-color:#688c80;color:#163e32; }
+html[data-daylight="day"] #wtPlanner :is(button,a,input,select,summary):focus-visible { outline-color:#172536; }
 html[data-daylight="day"] .wt-inspiration button, html[data-daylight="day"] .wt-actions button, html[data-daylight="day"] .wt-leg a, html[data-daylight="day"] .wt-leg button { background:#000000; color:#ffffff; border-color:#000000; }
 html[data-daylight="day"] .wt-actions .wt-primary { background:#dc0f2d; border-color:#dc0f2d; }
 html[data-daylight="day"] .wt-leg, html[data-daylight="day"] .wt-leg-symbol { border-color:#00000026; color:#000000; }
@@ -112,28 +121,54 @@ html[data-daylight="day"] .wt-section-h, html[data-daylight="day"] .wt-plan-text
 /* feed (owner's reference, 2026-10-19) */
 html[data-daylight="day"] .hu-feed-scope button { background:#ffffff; border-color:#00000026; color:#000000; }
 html[data-daylight="day"] .hu-feed-scope [aria-pressed="true"] { background:#dc0f2d; border-color:#dc0f2d; color:#ffffff; box-shadow:none; }
+html[data-daylight="day"] .hu-feed-scope button:focus-visible { outline-color:#000000; }
+html[data-daylight="day"].hu-editorial #mnMissionDialog .mn__primary { background-color:#dc0f2d; color:#ffffff; }
+/* the Equity Uprise tab by day: the owner's dark mark on the white pill, the white mark on the pressed red (both supplied,
+   scaled only; choosing the variant for the ground is not recolouring) */
+html[data-daylight="day"] .hu-feed-scope .hu-feed-scope__eup:not([aria-pressed="true"]) .hu-eup-mark--white { display:none; }
+html[data-daylight="day"] .hu-feed-scope .hu-feed-scope__eup:not([aria-pressed="true"]) .hu-eup-mark--dark { display:block; }
 html[data-daylight="day"] .mn__livehero-card { background:#ffffff; border-color:#00000026; color:#000000; }
 html[data-daylight="day"] .mn__livehero-card p, html[data-daylight="day"] .mn__livehero-count { color:#444444; }
 html[data-daylight="day"] .mn__news-avatar { background:#000000; color:#ffffff; }
-/* mission deck */
-html[data-daylight="day"] .mn-swipe__card { background:#ffffff; border-color:#00000026; color:#000000; box-shadow:0 18px 40px -28px #0006; }
-html[data-daylight="day"] .mn-swipe__card h3, html[data-daylight="day"] .mn-swipe__description, html[data-daylight="day"] .mn-swipe__tag, html[data-daylight="day"] .mn-swipe__details { color:#000000; }
-html[data-daylight="day"] .mn-swipe__tag { background:#f2f2f2; border-color:#00000020; }
-html[data-daylight="day"] .mn-swipe__tag--xp { background:#dc0f2d; border-color:#dc0f2d; color:#ffffff; }
-html[data-daylight="day"] .mn-swipe__peek { background:#eeeeee; border-color:#00000020; }
-html[data-daylight="day"] .mn-swipe__actions .mn-swipe__pass { background:#ffffff; border-color:#00000033; color:#000000; }
-html[data-daylight="day"] .mn-swipe__browse, html[data-daylight="day"] .mn-swipe__count { color:#444444; }
-html[data-daylight="day"] .mn-swipe__dots i { background:#00000025; }
-html[data-daylight="day"] .mn-swipe__dots i.is-on { background:#dc0f2d; }
-html[data-daylight="day"] .mn-swipe__filters { background:#ffffff; border-color:#00000026; }
-html[data-daylight="day"] .mn-swipe__filters button { color:#333333; }
-html[data-daylight="day"] .mn-swipe__filters button[aria-selected="true"] { background:#000000; color:#ffffff; border-color:#000000; }
 /* THE ROOMS BY DAY (owner, 2026-10-20: "I see a lot of shit flashing in between moving screens"): the profile's panels, an
    empty room's card and the shapes a loading room shows take the day colours too. They stayed night-dark on the white
    page, so every room switch flashed dark blocks, and an empty card faded up through grey to black. */
 html[data-daylight="day"].hu-editorial :is(.mn__panel, .mn__empty) { background:#ffffff; border-color:#00000018; color:#000000; }
+/* THE ACTION RECORD BY DAY (release review RS-3, 2026-11-19): the view's veil (css/mnet.css, #mnMissionsView::after) is a night
+   gradient, and by day it lay under the day's black ink: the title read 1.1:1, Refresh 1.4:1. By day the view is the white page
+   like every other room; the points take a gold made for white (6.4:1) and a record's verified and rejected lines the day's green
+   and red (5.4:1 and 6.5:1, the panel's own day pair). scripts/e2e/world-missions-guest.e2e.mjs measures the view by day and night. */
+html[data-daylight="day"] #mnMissionsView::after { background:none; }
+html[data-daylight="day"] .mn__record-head strong { color:#7a5a00; }
+html[data-daylight="day"] .mn__record-item.is-verified button span { color:#0f7a3a; }
+html[data-daylight="day"] .mn__record-item.is-rejected button span { color:#b3261e; }
 html[data-daylight="day"] .mn__skel { background:#ffffff; box-shadow:inset 0 0 0 1px #00000018; }
 html[data-daylight="day"] .mn__skel i { background:linear-gradient(90deg, #ededed 0%, #f6f6f6 40%, #ededed 80%); background-size:240% 100%; }
 /* a change of phase while the World is already on screen (js/daylight.js) fades across instead of flipping */
 html.daylight-shift, html.daylight-shift body, html.daylight-shift body * { transition:background-color .6s ease, color .6s ease, border-color .6s ease, fill .6s ease, stroke .6s ease !important; }
 @media (prefers-reduced-motion: reduce) { html.daylight-shift, html.daylight-shift body, html.daylight-shift body * { transition:none !important; } }
+/* a mission post's join by day: the owner's dark mark on the white feed, the white one stepping aside (both supplied, scaled only;
+   choosing the variant for the ground is not recolouring) */
+html[data-daylight="day"] .mn__mission-join .mn__eup--white { display:none; }
+html[data-daylight="day"] .mn__mission-join .mn__eup--dark { display:block; }
+/* THE ENVIRONMENTAL JUSTICE PANEL BY DAY (#wePanel at the top of the Equity Uprise tab): css/world-environment.css paints it
+   for the night, and on the white page its words read 1.1:1. By day the panel takes the page's black ink and the day's grounds;
+   every pair below is 4.5:1 or better on its ground (scripts/test/world-environment.test.mjs measures them). The night look
+   is untouched. */
+/* Slice G1 (2026-11-17): the panel reads its palette from tokens on .we-panel (css/world-environment.css), so the day turns them
+   here in one place; every pair reads 4.5:1 or better on its ground (computed on white: ink 17.9:1, dim 8.8:1, accent 6.5:1,
+   ok 5.4:1, stale 5.9:1, down 6.5:1; scripts/e2e/world-environment.mjs measures the rendered colours). The literal rules below
+   it stay as they were. */
+html[data-daylight="day"] .we-panel { color:#0b1a15; --we-ink:#0b1a15; --we-dim:#35504a; --we-bg:#ffffff; --we-raise:#f3f6f5; --we-raise-2:#eaf0ee; --we-rule:#0000001f; --we-rule-2:#00000029; --we-accent:#0f6b4f; --we-accent-ink:#0f6b4f; --we-ok:#0f7a3a; --we-stale:#8a5a00; --we-down:#b3261e; --we-focus:#172536; --we-detail-bg:#f2f7f4; --we-pressed:#d6ebe2; --we-label:#35504a; --we-safety-bg:#fff6d9; --we-button-ink:#0b2f24; --we-input-ink:#000000; }
+html[data-daylight="day"] .mn__we-note { color:#262626; }
+html[data-daylight="day"] .we-eyebrow { color:#0b5a3c; }
+html[data-daylight="day"] :is(.we-subtle,.we-panel small,.we-detail dt) { color:#3b3b3b; }
+html[data-daylight="day"] .we-panel a { color:#0b5a3c; }
+html[data-daylight="day"] :is(.we-panel button,.we-button) { background:#f2f6f4; border-color:#00000033; color:#0b2f24; }
+html[data-daylight="day"] .we-list button { background:#f7f7f7; }
+html[data-daylight="day"] .we-list button[aria-pressed="true"] { background:#d6ebe2; border-color:#2f6f57; }
+html[data-daylight="day"] :is(.we-panel button,.we-panel a,.we-panel input):focus-visible { outline-color:#000000; }
+html[data-daylight="day"] :is(.we-filter input,.we-proof-form textarea,.we-proof-form input[type="url"]) { background:#ffffff; color:#000000; border-color:#00000033; }
+html[data-daylight="day"] :is(.we-detail,.we-team,.we-owner) { border-color:#00000022; }
+html[data-daylight="day"] .we-detail { background:#f2f7f4; }
+html[data-daylight="day"] .we-safety { background:#fff6d9; border-left-color:#8a6a12; }

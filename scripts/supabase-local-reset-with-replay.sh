@@ -28,6 +28,21 @@ for replay in "${replays[@]}"; do
   cp "$replay" "$ACTIVE/$name"
 done
 
+# Production applied these migrations atomically via apply_migration. The CLI reset
+# can execute top-level statements separately (their LOCK TABLE then fails with
+# 25P01), so stage transaction boundaries only in the disposable reset copy. Keep
+# the canonical stored statements byte-exact.
+transactional=(
+  "20261031180839_music_direct_sales_v1.sql"
+  "20261109175747_music_direct_asset_versions_v1.sql"
+)
+for name in "${transactional[@]}"; do
+  if [[ -f "$ACTIVE/$name" ]]; then
+    cp "$ACTIVE/$name" "$BACKUP/$name"
+    { printf 'begin;\n'; cat "$BACKUP/$name"; printf '\ncommit;\n'; } > "$ACTIVE/$name"
+  fi
+done
+
 mode="${1:-reset}"
 if [[ "$mode" = "start" ]]; then
   shift

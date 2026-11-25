@@ -37,7 +37,7 @@ test('the album only plays the master for a play the API granted, and never twic
   assert.match(album,/function paintGateOpening\(row\)/);
   assert.match(album,/if \(signed\) paintGateOpening\(row\);\s*\n\s*else paintGate\(row, \{ state: "preview" \}\);/);
   /* pressing play on an earned row spends it through the API first */
-  assert.match(album,/data-gate"\) === "earned" && !row\.hasAttribute\("data-granted"\)[\s\S]*claimThenPlay\(target\)/);
+  assert.match(album,/data-gate"\) === "earned" && !row\.hasAttribute\("data-granted"\)[\s\S]*claimThenPlay\(target, playRequest\)/);
   assert.match(album,/window\.MCC_GATED\.claim\(gateSpec\(row\)\)/);
   /* the master URL is only ever set from a granted claim */
   const masterSets=album.match(/setAttribute\("data-src", out\.url\)/g)||[];
@@ -48,7 +48,7 @@ test('the album only plays the master for a play the API granted, and never twic
   assert.ok(ended.indexOf('spend(rows[cur]);')>-1&&ended.indexOf('spend(rows[cur]);')<ended.indexOf('next();'),'the play is spent before the record moves on');
   /* played straight through, the album asks for its closer only after the
      song before it has been counted */
-  assert.match(ended,/spend\(rows\[cur\]\);[\s\S]*finished\.then\(function \(\) \{ claimThenPlay\(upNext\); \}/);
+  assert.match(ended,/spend\(rows\[cur\]\);[\s\S]*if \(request === playRequest\) claimThenPlay\(upNext\);[\s\S]*finished\.then\(advance, advance\)/);
   assert.match(album,/deck\.addEventListener\("seeking"[\s\S]*granted\(\) && deck\.currentTime < grantMax/);
   /* no file to keep */
   assert.doesNotMatch(album,/data-dl|data-fmt|MCC_GATED\.download/);
@@ -108,7 +108,12 @@ test('derivative and parody releases cannot self-clear commercial rights', async
   assert.match(studio,/parody_or_derivative/);
   assert.match(studio,/derivativePermissions/);
   assert.match(access,/operator-review/);
-  assert.match(access,/patch\.rights_status = "cleared"/);
+  /* only the operator's decision clears rights: music-access calls the
+     operator-only RPC, which sets 'cleared' for publish/approve (and needs
+     the reviewed audio's hash, supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql) */
+  assert.match(access,/admin\.rpc\("music_operator_review"/);
+  const integrity=await read('supabase/migrations/20261030001000_music_release_payment_integrity_v1.sql');
+  assert.match(integrity,/rights_status = case p_decision when 'publish' then 'cleared' when 'approve' then 'cleared'/);
   assert.match(access,/operator permission required/);
   assert.match(terms,/does not automatically clear it for commercial licensing/i);
 });
@@ -139,10 +144,12 @@ test('public creator profiles play in-place and can enter first-party checkout',
 });
 
 test('operator review desk is gated by existing ops authority', async()=>{
+  /* music-admin.html is a compatibility stub into Control → Sell → Music; the
+     review client and its server gate are what this guards. */
   const page=await read('music-admin.html');
   const js=await read('js/music-admin.js');
   const access=await read('supabase/functions/music-access/index.ts');
-  assert.match(page,/Operator only/);
+  assert.match(page,/control\.html#sell:music:catalog/);
   assert.match(js,/operator-status/);
   assert.match(js,/operator-review/);
   assert.match(js,/operator-license/);
@@ -154,7 +161,7 @@ test('operator review desk is gated by existing ops authority', async()=>{
 test('Music V2 uses one shell across listener, creator, licensing and operator surfaces', async()=>{
   const surfaces=[
     'listen.html','album.html','catalogue.html','creator.html',
-    'music-creator.html','music-admin.html','music-creator-terms.html'
+    'music-creator.html','music-creator-terms.html'
   ];
   for(const path of surfaces){
     const html=await read(path);
@@ -171,8 +178,10 @@ test('unified transport expands from mini player into full Now Playing', async()
   assert.match(engine,/id = "musicNow"/);
   assert.match(engine,/function openNow\(\)/);
   assert.match(engine,/function playAdjacent\(delta\)/);
-  assert.match(engine,/setActionHandler\("previoustrack"/);
-  assert.match(engine,/setActionHandler\("nexttrack"/);
+  /* the lock screen's previous and next walk the same queue, through the one Now Playing owner (music slice M2) */
+  assert.match(engine,/MCC_NOW_PLAYING\.bind\(audio,/);
+  assert.match(engine,/previous: function \(\) \{ return playAdjacent\(-1\); \}/);
+  assert.match(engine,/next: function \(\) \{ return playAdjacent\(1\); \}/);
   assert.match(engine,/music_now_open/);
   assert.match(css,/\.music-now\.is-open/);
   assert.match(css,/\.music-mini__open/);
@@ -199,7 +208,7 @@ test('Music V2 is mobile-first dark by contract, not desktop-first responsive', 
   const css=await read('css/music-system-v2.css');
   const firstMedia=css.indexOf('@media(');
   const baseShell=css.indexOf('--music-shell:calc(100vw - 24px)');
-  const mobileGrid=css.indexOf('.music-v2 .creator-grid{display:grid;grid-template-columns:1fr');
+  const mobileGrid=css.indexOf('.music-v2 .creator-grid{display:grid;grid-template-columns:minmax(0,1fr)');
   const darkBg=css.indexOf('--music-bg:#050506');
   assert.ok(baseShell > -1 && baseShell < firstMedia, 'phone-width shell must be a base rule');
   assert.ok(mobileGrid > -1 && mobileGrid < firstMedia, 'one-column creator layout must be a base rule');
@@ -275,7 +284,7 @@ test('Creator Studio validates rights, metadata and file sizes before any storag
   const preflight=submit.indexOf('Validate metadata, rights and all file sizes before transferring any bytes.');
   const upload=submit.indexOf('await uploadGrant("creator-masters", master)');
   assert.ok(preflight>=0 && upload>preflight,'preflight must run before master upload');
-  for(const clause of ['BUCKET_MAX_BYTES[bucket]','!file.size','!$("ownsMaster").checked','!$("collaboratorsCleared").checked','durationMs(master)','!Number.isFinite(dur)']){
+  for(const clause of ['BUCKET_MAX_BYTES[bucket]','!file.size','!rights.owns_master','!rights.controls_composition','!rights.samples_cleared','!rights.collaborators_cleared','!$("releaseTerms").checked','durationMs(master)','!Number.isFinite(dur)']){
     const index=submit.indexOf(clause);
     assert.ok(index>preflight && index<upload,clause+' must be checked before storage transfer');
   }

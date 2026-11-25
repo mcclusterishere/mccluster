@@ -26,7 +26,7 @@ function json(value, status = 200) {
   return new Response(JSON.stringify(value), { status, headers: { 'content-type': 'application/json' } });
 }
 
-function plane({ falOk = true, decisionStatus = 200 } = {}) {
+function plane({ falOk = true, falStatus = 422, decisionStatus = 200 } = {}) {
   const calls = [];
   const original = globalThis.fetch;
   globalThis.fetch = async (url, options = {}) => {
@@ -44,7 +44,7 @@ function plane({ falOk = true, decisionStatus = 200 } = {}) {
     if (href.includes('/rest/v1/rpc/media_release_cost_reservation')) return json(null);
     if (href.includes('/rest/v1/media_jobs?') && method === 'PATCH') return json([{ id: JOB, org_id: ORG, status: body?.status }]);
     if (href.includes('queue.fal.run')) {
-      return falOk ? json({ request_id: 'fal-req-1', status: 'IN_QUEUE' }) : json({ detail: 'provider down' }, 503);
+      return falOk ? json({ request_id: 'fal-req-1', status: 'IN_QUEUE' }) : json({ detail: falStatus < 500 ? 'Unprocessable input' : 'provider down' }, falStatus);
     }
     if (href.includes('/functions/v1/context-decision')) {
       return json(decisionStatus < 400 ? { decision: { id: DECISION, status: 'approved' } } : { error: 'decision is not proposed' }, decisionStatus);
@@ -100,8 +100,8 @@ test('a paid media generation records reservation and provider submission under 
   }
 });
 
-test('a failed provider submission records an error event and the reservation release', async () => {
-  const be = plane({ falOk: false });
+test('a refused provider submission records an error event and the reservation release', async () => {
+  const be = plane({ falOk: false, falStatus: 422 });
   try {
     await traced('/v1/media/generate', { org_id: ORG, model_id: 't2i', prompt: 'a lighthouse' },
       async (req) => {
@@ -114,6 +114,23 @@ test('a failed provider submission records an error event and the reservation re
     assert.equal(failed.outcome, 'error');
     assert.equal(failed.resource_id, JOB);
     assert.ok(be.calls.some((c) => c.href.includes('media_release_cost_reservation')), 'the reservation is released');
+  } finally {
+    be.restore();
+  }
+});
+
+test('a provider 5xx on submit is recorded as uncertain and the reservation is kept for reconciliation', async () => {
+  const be = plane({ falOk: false, falStatus: 503 });
+  try {
+    await traced('/v1/media/generate', { org_id: ORG, model_id: 't2i', prompt: 'a lighthouse' },
+      async (req) => {
+        try { await createGeneration(req, env, USER); } catch (error) { return json({ error: error.message }, 502); }
+        return json({}, 202);
+      });
+    const uncertain = be.events().find((e) => e.event_name === 'media.generation.submit_uncertain');
+    assert.ok(uncertain, 'an uncertain submit is an event');
+    assert.equal(be.events().some((e) => e.event_name === 'media.generation.submit_failed'), false, 'a 5xx is not recorded as a refusal');
+    assert.equal(be.calls.some((c) => c.href.includes('media_release_cost_reservation')), false, 'the reservation is not released on a 5xx');
   } finally {
     be.restore();
   }

@@ -42,7 +42,7 @@
   "step4c_componentized_fire_alarm_control_panel_total": 1,
   "step4c_componentized_fire_alarm_read_only_gateway_total": 1,
   "wireless_links_total": 45,
-  "lab_scenarios_total": 40,
+  "lab_scenarios_total": 51,
   "new_asset_type_counts": {
     "access_controller": 8,
     "access_reader": 10,
@@ -217,8 +217,8 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 13675824,
-  "overlay_glb_sha256": "c6d9a5594a42e3931464dc60b8fadceae1af87aa5b218c1aee28c52125489716",
+  "overlay_glb_bytes": 12432680,
+  "overlay_glb_sha256": "797ec46913e749902a526d43e4a51e45b4bc0ad63ad78b732bb72f89e87f2f8f",
   "checks_total": 86,
   "checks_passed": 86,
   "checks_failed": 0,
@@ -477,7 +477,7 @@
       "detail": "36/36"
     },
     {
-      "name": "workstation assemblies expose chassis, IO, power, NIC, display outputs, and status",
+      "name": "workstation assemblies match their source-backed exterior or generic simulation archetype",
       "passed": true,
       "detail": ""
     },
@@ -680,12 +680,12 @@
     {
       "name": "at least forty IT labs generated",
       "passed": true,
-      "detail": 40
+      "detail": 51
     },
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 13675824
+      "detail": 12432680
     }
   ],
   "passed": true

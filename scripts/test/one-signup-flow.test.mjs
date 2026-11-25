@@ -49,6 +49,39 @@ test('?next is this origin only: //evil, https://evil, javascript: and friends a
   assert.equal(MCC.safeNext('https://matthew.mccluster.org/creator.html'), '', 'a full URL carries a scheme: refused, even on this origin');
 });
 
+/* release review SEC-1 (2026-11-19): the URL parser collapses a dot segment, so "/.//evil.example/phish" resolves on this origin
+   to the path "//evil.example/phish", and that path handed to location (js/mnet.js does, after signing in) is another site. */
+const DOT_SEGMENT_ESCAPES = ['/.//evil.example/phish', '/%2e//evil.example', '/%2E//evil.example/a?x=1', '/x/..//evil.example/a', '/..//evil.example',
+  './/evil.example', 'x/../..//evil.example', '/././/evil.example', '/.%2e//evil.example', '/a/b/../..//evil.example#t'];
+test('?next is this origin only after dot segments collapse: /.//host and its spellings are refused, and every answer stays here', () => {
+  for (const href of ['https://matthew.mccluster.org/account.html?next=x', 'https://mccluster.org/mnet.html?signin=1']) {
+    const MCC = mccOn(href), origin = new URL(href).origin;
+    for (const bad of DOT_SEGMENT_ESCAPES) assert.equal(MCC.safeNext(bad), '', 'refused on ' + origin + ': ' + bad);
+    /* whatever it accepts lands on this origin when location is handed it, as js/mnet.js hands it */
+    for (const raw of DOT_SEGMENT_ESCAPES.concat(['creator.html', '/album.html?from=i-am-here#track-3', '/./creator.html', '/x/../creator.html', '/%2F%2Fevil.example', '/a//b', '?view=missions&mission=x'])) {
+      const out = MCC.safeNext(raw);
+      assert.ok(out === '' || (out.startsWith('/') && !/^[/\\]{2}/.test(out) && new URL(out, href).origin === origin), raw + ' -> ' + out);
+    }
+    assert.equal(MCC.safeNext('/./creator.html'), '/creator.html', 'a harmless dot segment still resolves');
+    assert.equal(MCC.safeNext('/a//b'), '/a//b', 'two slashes after the first segment are a path on this origin');
+  }
+});
+
+/* login.html forwards old links to account.html under the same rule, with its own copy of it */
+test('login.html forwards a dot-segment escape with no destination, and a real path with it', () => {
+  const html = read('login.html');
+  const src = html.slice(html.indexOf('(function () {\n  function safeNext()'), html.indexOf('})();', html.indexOf('function safeNext()')) + 5);
+  assert.ok(src.includes('location.replace(to)'), 'the forwarding script was found');
+  const forward = (next) => {
+    const went = [];
+    const location = { search: '?next=' + encodeURIComponent(next), origin: 'https://matthew.mccluster.org', replace: (to) => went.push(to) };
+    vm.runInNewContext(src, { location, URL, URLSearchParams, String, encodeURIComponent, document: { getElementById: () => null } });
+    return went[0];
+  };
+  for (const bad of DOT_SEGMENT_ESCAPES) assert.equal(forward(bad), 'account.html', 'dropped: ' + bad);
+  assert.equal(forward('/creator.html?x=1'), 'account.html?next=' + encodeURIComponent('/creator.html?x=1'));
+});
+
 test('account.html honours ?next: signing in goes back there, Create account carries it into the one sign-up', () => {
   const html = read('account.html');
   assert.match(html, /var safe = window\.MCC && MCC\.safeNext \? MCC\.safeNext\(raw\) : "";\n\s*return safe && !\/\(\^\|\\\/\)account\\\.html\$\/\.test\(safe\.split\(\/\[\?#\]\/\)\[0\]\) \? safe : "";/, 'through MCC.safeNext, never this page');

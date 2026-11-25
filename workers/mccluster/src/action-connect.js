@@ -1,7 +1,7 @@
 import { stripeRequest } from './whip/stripe.js';
 import { reply, fail } from './lib/http.js';
+import { returnOrigin } from './platform/hosts.generated.js';
 
-const ORIGIN='https://matthew.mccluster.org';
 async function userFromBearer(request,env){
  const token=request.headers.get('authorization')||'';
  if(!/^Bearer\s+\S+$/i.test(token))return null;
@@ -57,10 +57,14 @@ export async function handleActionConnect(request,env){
    message:'Recipient record reserved. Stripe account provisioning requires the controlled backend job.'},202);
  }
  if(record.environment!=='test')return fail(request,env,'Account environment mismatch',409);
+ /* back where onboarding started when that origin serves pages (the generated return origins, exact match on the
+    request's Origin), else where the hire page is served today (SPEC-PLATFORM 2.9) */
+ const origin=returnOrigin(request.headers.get('origin'));
  const link=await stripeRequest(env,'account_links',{
   account:record.stripe_account_id,
-  refresh_url:ORIGIN+'/action-network.html?connect=refresh',
-  return_url:ORIGIN+'/action-network.html?connect=returned',
+  /* the hire page is where recipients onboard; action-network.html never existed (scripts/test/stripe-return-urls.test.mjs) */
+  refresh_url:origin+'/action-network-hire.html?connect=refresh',
+  return_url:origin+'/action-network-hire.html?connect=returned',
   type:'account_onboarding'
  });
  return reply(request,env,{url:link.url,expires_at:link.expires_at});

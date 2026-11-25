@@ -60,7 +60,7 @@ Every mission proposal names (1) the **actual funder or grant program**, (2) the
 3. Reserved, reconciled actual funds; do not confuse opportunity amount with available cash.
 4. Program-specific proof checks, reviewer role, duplicate and fraud controls.
 5. Privacy and vulnerable-population review.
-6. Existing bounty SQL fix `supabase/pending/action_bounty_claim_existing_row_guard_v1.sql` applied only after scratch tests and production ledger verification.
+6. Existing bounty SQL fix `supabase/migrations/20261124164904_action_bounty_claim_existing_row_guard_v1.sql` applied only after scratch tests and production ledger verification.
 
 The new prospective records are in a **separate, non-public draft table** with `status='draft'`, `visibility='admin_only'`, `claim_enabled=false`, `compensation_cents IS NULL` enforced by DB checks. They do not enter `action_globe_public_region_missions()` and are not public offers.
 

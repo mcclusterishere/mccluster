@@ -4,6 +4,27 @@
   var STORAGE_KEY = "prim3_course_progress_v4";
   var BOOT_FLAG = "prim3_progress_bootstrap_v3";
   var SYNC_LABEL_ID = "prim3ProgressSync";
+  // Which M Account the device-local course cache belongs to. Without it, a
+  // second account on a shared device inherited the first account's passes
+  // (the remote profile is merged into whatever the cache already held).
+  var OWNER_KEY = "prim3_course_progress_owner_v1";
+
+  /* Returns true when the cache was cleared because it belonged to someone else.
+     A cache with no recorded owner is adopted by the first account that signs in
+     (progress studied before signing in is kept). */
+  function claimCacheFor(userId) {
+    if (!userId) return false;
+    var owner = null;
+    try { owner = localStorage.getItem(OWNER_KEY); } catch (_) { return false; }
+    if (owner === userId) return false;
+    var cleared = false;
+    if (owner && owner !== userId) {
+      writeState({ read: [], passed: [], scores: {} });
+      cleared = true;
+    }
+    try { localStorage.setItem(OWNER_KEY, userId); } catch (_) {}
+    return cleared;
+  }
 
   function localState() {
     try {
@@ -99,8 +120,9 @@
         return null;
       }
       syncLabel("M ACCOUNT · SYNCING", "syncing");
+      var cleared = claimCacheFor(session.user && session.user.id ? String(session.user.id) : null);
       return api("/v1/prim3/progress").then(function (data) {
-        var changed = mergeRemote(data && data.progress);
+        var changed = mergeRemote(data && data.progress) || cleared;
         syncLabel("M ACCOUNT · SYNCED", "synced");
         if (changed && sessionStorage.getItem(BOOT_FLAG) !== "1") {
           sessionStorage.setItem(BOOT_FLAG, "1");
@@ -162,6 +184,8 @@
       }).catch(function () { syncLabel("M ACCOUNT · SYNC LATER", "error"); });
     }, 0);
   }
+
+  window.PRIM3_SYNC_TEST = { claimCacheFor: claimCacheFor, localState: localState, writeState: writeState, OWNER_KEY: OWNER_KEY, STORAGE_KEY: STORAGE_KEY };
 
   function wire() {
     var read = document.getElementById("markRead");

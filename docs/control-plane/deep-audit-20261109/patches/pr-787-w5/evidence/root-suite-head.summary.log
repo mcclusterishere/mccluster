@@ -1,0 +1,16 @@
+# series head f8499fad, 2026-11-10T12:20:17Z, node v22.23.4
+# node --test scripts/test/*.test.mjs
+# summary of the full TAP log (kept outside evidence/, 12378 lines): the totals, every 'not ok' line (none) and every SKIP line
+# tests 2055
+# suites 0
+# pass 2052
+# fail 0
+# cancelled 0
+# skipped 3
+# todo 0
+# duration_ms 35354.446021
+exit=0
+# not ok lines: 0
+ok 1464 - when Floor 1 is built, its reception, vestibule and stair barriers land on the plan # SKIP Floor 1 GLB is built at publish time (deploy-pages.yml); build it locally to run this
+ok 1561 - one mission for each of the 24 CAST-NATIONS mains, from that nation's main character # SKIP Prim3 checkout not found
+ok 1565 - every cited source file exists in Prim3 origin/main, and every section is a heading in it # SKIP Prim3 checkout not found

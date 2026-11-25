@@ -17,7 +17,7 @@ html.halo-on{
   --hx-bg:#030912;--hx-bar:#050c17;--hx-panel:rgba(7,14,26,.95);--hx-panel-2:#0b1526;--hx-raise:#0e1b2f;
   --hx-line:#15243a;--hx-line-2:#22364f;--hx-ink:#eef3f9;--hx-ink-2:#c6d1df;--hx-mute:#8e9fb5;
   --hx-cyan:#45b8f4;--hx-cyan-2:#91e1f6;--hx-amber:#f2b448;--hx-green:#4fdf98;--hx-red:#ff7a7a;
-  --hx-top:52px;--hx-tabs:44px;--hx-strip:40px;--hx-time:44px;--hx-peek:68px;
+  --hx-top:64px;--hx-tabs:44px;--hx-strip:40px;--hx-time:44px;--hx-peek:68px;
   --hx-safe-top:env(safe-area-inset-top,0px);
   --hx-head:calc(var(--hx-top) + var(--hx-tabs) + var(--hx-strip) + var(--hx-safe-top));
   --hx-bottom:calc(var(--hu-bar-h,0px) + var(--hx-time));
@@ -28,8 +28,7 @@ html.halo-on body{background:var(--hx-bg)}
 /* the page's own chrome steps aside (Halo has its own controls for each) */
 html.halo-on.globe-explore header,html.halo-on .globe-controls,html.halo-on .globe-data,html.halo-on #deck,html.halo-on .explore-line,
 html.halo-on .bare-exit,html.halo-on .world-mode,html.halo-on .world-tools,html.halo-on .globe-editorial-tools,html.halo-on .globe-editorial-world,
-html.halo-on .globe-editorial-shelf,html.halo-on .halo-enter{display:none!important}
-html.halo-on body[data-site-navigation] #mccAuthChip{display:none!important}
+html.halo-on .globe-editorial-shelf,html.halo-on .halo-enter,html.halo-on #bridgeportEnter,html.halo-on #bridgeportWalk{display:none!important}
 /* The globe is the interaction surface: search floats over it instead of claiming a separate row. */
 html.halo-on.globe-explore #globe{inset:var(--hx-head) 0 calc(var(--hx-bottom) + var(--hx-peek)) 0}
 html.halo-on.globe-explore .osm-credit{z-index:7;left:8px;right:auto;bottom:calc(var(--hx-bottom) + var(--hx-peek) + 4px);max-width:calc(100% - 16px);background:rgba(3,9,18,.72)}
@@ -81,7 +80,7 @@ html.halo-on.globe-explore .osm-credit{z-index:7;left:8px;right:auto;bottom:calc
 /* ---------- panels ---------- */
 .hx-panel{background:var(--hx-panel);border:1px solid var(--hx-line-2);color:var(--hx-ink);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 18px 40px rgba(0,0,0,.45)}
 .hx-left{position:fixed;z-index:8;left:0;right:0;bottom:var(--hx-bottom);height:var(--hx-peek);display:flex;flex-direction:column;border-radius:18px 18px 0 0;border-bottom:0;overflow:hidden;transition:height .22s ease}
-.hx-left[data-expanded="true"]{height:calc(100dvh - var(--hx-head) - var(--hx-bottom) - 8px)}
+.hx-left[data-expanded="true"]{height:calc(100dvh - var(--hx-head) - var(--hx-bottom) - 64px)}
 .hx-grip{position:relative;z-index:1;flex:none;display:flex;justify-content:center;align-items:flex-start;width:100%;min-height:44px;margin-bottom:-28px;padding:8px 0 0;border:0;background:transparent;cursor:pointer}
 .hx-grip::before{content:"";width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.24)}
 .hx-panel__head{position:relative;z-index:2;flex:none;display:flex;align-items:flex-start;gap:8px;padding:2px 16px 10px;pointer-events:none}
@@ -352,9 +351,9 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
 .hx-window{min-height:44px;max-width:120px;padding:0 6px;border:1px solid var(--hx-line-2);border-radius:5px;background:#08111f;color:var(--hx-ink);font:400 max(16px,1rem)/1 Inter,system-ui,sans-serif;cursor:pointer}
 
 /* following something */
-.hx-follow{position:fixed;z-index:9;left:50%;top:calc(var(--hx-head) + 60px);transform:translateX(-50%);display:flex;align-items:center;gap:8px;max-width:calc(100% - 32px);min-height:44px;padding:0 4px 0 16px;border:1px solid var(--hx-cyan);border-radius:999px;background:rgba(5,11,21,.94);color:var(--hx-ink);font-size:13px}
+.hx-follow{position:fixed;z-index:9;left:8px;top:calc(var(--hx-head) + 112px);transform:none;display:flex;align-items:center;gap:8px;max-width:calc(100% - 88px);min-height:44px;padding:0 4px 0 16px;border:1px solid var(--hx-cyan);border-radius:999px;background:rgba(5,11,21,.94);color:var(--hx-ink);font-size:13px}
 .hx-follow span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hx-follow button{min-height:40px;padding:0 14px;border:0;border-radius:999px;background:#13243a;color:#fff;font-weight:600;cursor:pointer}
+.hx-follow button{min-height:44px;padding:0 14px;border:0;border-radius:999px;background:#13243a;color:#fff;font-weight:600;cursor:pointer}
 .hx-follow-btn{margin-top:10px}
 .hx-hud-host{position:fixed;z-index:7;top:calc(var(--hx-head) + 60px);left:8px;max-width:calc(100% - 72px);pointer-events:none}
 
@@ -368,9 +367,11 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   .hx-map-focus svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .hx-map-focus[aria-pressed="true"]{border-color:var(--hx-cyan);background:rgba(12,28,49,.94)}
   html.halo-on[data-halo-map="focus"]{--hx-peek:0px;--hx-time:0px}
+  html.halo-on[data-halo-map="focus"] .hx-right,
+  html.halo-on[data-halo-map="focus"] .cctv-sheet,
   html.halo-on[data-halo-map="focus"] .hx-left,
   html.halo-on[data-halo-map="focus"] .hx-time{display:none}
-  html.halo-on[data-halo-map="focus"] .hx-legend{bottom:12px}
+  html.halo-on[data-halo-map="focus"] .hx-legend{bottom:30px}
 
 /* ---------- tablet: the tabs join the bar; the list and the detail float as columns ---------- */
 @media (min-width:1100px){
@@ -382,7 +383,7 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   html.halo-on[data-halo-map="focus"]{--hx-peek:0px;--hx-time:92px}
   html.halo-on[data-halo-map="focus"] .hx-left{display:flex}
   html.halo-on[data-halo-map="focus"] .hx-time{display:grid}
-  html.halo-on{--hx-tabs:0px;--hx-top:56px;--hx-strip:46px;--hx-time:92px;--hx-peek:0px;--hx-left-w:320px;--hx-right-w:320px;--hx-gap:16px}
+  html.halo-on{--hx-tabs:0px;--hx-top:64px;--hx-strip:46px;--hx-time:92px;--hx-peek:0px;--hx-left-w:320px;--hx-right-w:320px;--hx-gap:16px}
   html.halo-on[data-halo-view]:not([data-halo-view="world"]){--hx-strip:96px}
   html.halo-on.globe-explore #globe{inset:var(--hx-head) 0 var(--hx-bottom) 0}
   html.halo-on.globe-explore .osm-credit{left:calc(var(--hx-gap) + var(--hx-left-w) + 12px);bottom:calc(var(--hx-bottom) + 6px)}
@@ -428,7 +429,7 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   .hx-layers-btn{top:14px;right:16px}
   .hx-pop{top:64px;right:16px}
   .hx-ctl{top:72px;right:16px}
-  .hx-legend{left:16px;transform:none;bottom:40px}
+  .hx-legend{left:16px;transform:none;bottom:86px}
   .hx-hint__narrow{display:none}
   .hx-hint__wide{display:inline}
 
@@ -439,7 +440,7 @@ html.halo-on .cctv-act{border-radius:4px;background:linear-gradient(180deg,#f6cb
   .hx-time__mode button[aria-pressed="true"]{background:#16263c;color:#fff}
   .hx-time__mode button:disabled{opacity:.45;cursor:not-allowed}
   .hx-window{max-width:none;padding:0 10px}
-  .hx-follow{top:calc(var(--hx-head) + 22px)}
+  .hx-follow{left:50%;transform:translateX(-50%);top:calc(var(--hx-head) + 22px);max-width:calc(100% - 32px)}
   .hx-hud-host{left:calc(var(--hx-gap) + var(--hx-left-w) + 16px);top:calc(var(--hx-head) + 70px);max-width:calc(100% - var(--hx-left-w) - 120px)}
 }
 
@@ -474,3 +475,23 @@ html.halo-no-map .hx-right[data-open="true"]{top:calc(var(--hx-head) + 100px);bo
 html.halo-no-map .hx-panel__head .hx-btn{display:inline-flex}
 @media (min-width:1100px){.hx-left:not([data-expanded="true"]) .hx-panel__head .hx-btn{display:inline-flex}}
 @media (min-width:1100px){html.halo-no-map .hx-left{right:52%}html.halo-no-map .hx-right[data-open="true"]{left:50%}}
+
+/* Layer-specific object budgets, usable on phone and tablet. */
+.hx-density{margin:16px 0;padding:12px;border:1px solid var(--hx-line,#283746);min-width:0;border-radius:10px}
+.hx-density legend{font-size:13px;font-weight:600;color:#dcecf7}
+.hx-density label{display:grid;gap:6px;margin:10px 0;font-size:14px}
+.hx-density input[type=range]{width:100%;min-height:44px;accent-color:#45b8f4}
+.hx-density input[type=checkbox]{width:22px;height:22px;accent-color:#45b8f4}
+.hx-density output{font:12px ui-monospace,monospace;color:#a7b9c8}
+
+/* Event identity is carried by shape and a persistent explanation, not color. */
+.hx-legend{flex-wrap:wrap;gap:6px 14px;border-radius:12px}
+.hx-legend .hx-event-key{flex-basis:100%;font-size:11px;color:#d5e4ef;white-space:normal}
+.hx-density label:has(input[type=checkbox]){display:flex;align-items:center;gap:10px}
+.hx-density input[type=range]{cursor:pointer}
+.hx-detail__actions{gap:8px}
+
+/* The shared Profile replaces Halo's operator; keep its header space at every width. */
+html.halo-on body[data-site-navigation] .hx-top__row{padding-right:calc(max(12px,env(safe-area-inset-right)) + 114px)}
+html.halo-on body[data-site-navigation] .hx-brand span{font-size:14px;letter-spacing:.10em}
+@media(min-width:600px){html.halo-on body[data-site-navigation] .hx-brand span{font-size:19px;letter-spacing:.24em}}

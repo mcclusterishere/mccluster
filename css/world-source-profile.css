@@ -1,0 +1,285 @@
+/* A MISSION SOURCE'S PAGE IN THE WORLD: the sheet (#mnSourceDialog, inside <main class="mn">, after the mission dialog) and
+   its door at the foot of a sourced mission's dialog (.mn__source-door). js/world-source-profile.js draws both;
+   docs/control-plane/WORLD-MISSION-SOURCES.md is the record (every decision a default adopted pending Matthew's confirmation).
+
+   Type only: the name in the door's serif (Playfair Display, self-hosted by css/world-gate.css), everything else in the
+   World's UI face; the World's own line icons are the only drawn shapes. Nothing here paints a picture of any kind.
+   The sheet's own frame is the one place with a gradient.
+
+   Phone first: 390 px is the design (a sheet under the World's header, above its bar, one scroller: the index, or a list).
+   From 700 px a floating folio adds the areas as tiles, a description line on each mission and a two-column About. From
+   1100 px two panes, each its own scroller: who, search, areas and credit on the left, the list on the right. min-width
+   queries only (and one min-height query that gives a tall screen the header's and the bar's room), minmax(0, 1fr) for every
+   flexible track, the field at max(16px, 1rem). Every colour is a token, redefined once by day. */
+
+/* ---------- tokens: night, then day ---------- */
+#mnSourceDialog, .mn__source-door {
+  --src-ink: #f6f7f8; --src-dim: #c9ced4; --src-faint: #aeb5bd;
+  --src-ground: #14171c; --src-ground-end: #0e1014;
+  --src-gold: #e8c877; --src-gold-line: rgba(232, 200, 119, 0.34); --src-gold-soft: rgba(232, 200, 119, 0.08); --src-hair: rgba(232, 200, 119, 0.16);
+  --src-rule: rgba(255, 255, 255, 0.10); --src-rule-strong: rgba(255, 255, 255, 0.22);
+  --src-field: rgba(255, 255, 255, 0.06); --src-field-line: rgba(255, 255, 255, 0.26);
+  --src-chip: #12171c; --src-chip-line: rgba(255, 255, 255, 0.20); --src-on: #c00028; --src-on-ink: #ffffff;
+  --src-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --src-ui: var(--mn-ui, Inter, system-ui, -apple-system, "Segoe UI", sans-serif);
+  --src-pad: 20px;
+}
+html[data-daylight="day"] #mnSourceDialog, html[data-daylight="day"] .mn__source-door {
+  --src-ink: #0b0c0e; --src-dim: #2e3339; --src-faint: #4a5057;
+  --src-ground: #ffffff; --src-ground-end: #ffffff;
+  --src-gold: #7a5810; --src-gold-line: rgba(122, 88, 16, 0.40); --src-gold-soft: rgba(122, 88, 16, 0.06); --src-hair: rgba(122, 88, 16, 0.20);
+  --src-rule: rgba(0, 0, 0, 0.10); --src-rule-strong: rgba(0, 0, 0, 0.24);
+  --src-field: rgba(12, 14, 18, 0.03); --src-field-line: rgba(12, 14, 18, 0.34);
+  --src-chip: #ffffff; --src-chip-line: rgba(0, 0, 0, 0.24); --src-on: #d4002b; --src-on-ink: #ffffff;
+  /* the World's focus ring and field ring (css/mnet.css) read 6.5:1 on the white sheet */
+  --mn-gold: #7a5810;
+}
+
+/* ---------- the sheet: under the World's header, above its bar ---------- */
+#mnSourceDialog.mn__thread {
+  --src-top: 12px; --src-bottom: 12px;
+  width: calc(100% - 16px); max-width: none;
+  height: min(calc(100vh - var(--src-top) - var(--src-bottom)), 52rem);
+  height: min(calc(100dvh - var(--src-top) - var(--src-bottom)), 52rem);
+  max-height: none; margin: auto auto var(--src-bottom); padding: 0;
+  border: 1px solid var(--src-gold-line); border-radius: 22px;
+  color: var(--src-ink); font-family: var(--src-ui);
+  background: radial-gradient(110% 36% at 100% 0, rgba(112, 12, 38, 0.22), transparent 64%), linear-gradient(180deg, var(--src-ground), var(--src-ground-end) 240px);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.55);
+}
+html[data-daylight="day"] #mnSourceDialog.mn__thread { background: var(--src-ground); box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28); }
+/* a tall screen keeps the World's header and its bar in view, as the World's own dialogs do */
+@media (min-height: 560px) {
+  #mnSourceDialog.mn__thread { --src-top: 68px; --src-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+}
+/* open, a flex column with one inner scroller, so a privacy bar the World appends as the dialog's last child stays in view */
+#mnSourceDialog.mn__thread.mn__source[open] { display: flex; flex-direction: column; overflow: hidden; }
+#mnSourceDialog > #mccPrivacyNotice { flex: none; }
+#mnSourceBody { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+#mnSourceDialog *, #mnSourceDialog *::before, #mnSourceDialog *::after { box-sizing: border-box; }
+#mnSourceDialog :is(button, a, input, [tabindex="-1"]):focus-visible { outline: 2px solid var(--mn-gold); outline-offset: 2px; }
+#mnSourceDialog :is(#mnSourceName, .mn__source-list-title):focus { outline: none; }
+#mnSourceDialog :is(#mnSourceName, .mn__source-list-title):focus-visible { outline: 2px solid var(--mn-gold); outline-offset: 4px; }
+
+/* ---------- the head: the kicker (the name once it has scrolled away; "All areas" in a list), Share and Close ---------- */
+#mnSourceDialog .mn__source-head {
+  flex: none; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px;
+  min-height: 64px; padding: 10px 10px 6px var(--src-pad); border-bottom: 1px solid transparent;
+}
+#mnSourceDialog[data-scrolled] .mn__source-head { border-bottom-color: var(--src-rule); }
+#mnSourceDialog .mn__source-head-left { display: flex; align-items: center; min-width: 0; }
+#mnSourceDialog .mn__source-kicker { margin: 0; color: var(--src-gold); font: 800 11.5px/1.2 var(--src-ui); letter-spacing: 0.24em; text-transform: uppercase; }
+#mnSourceDialog .mn__source-headname { display: none; margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--src-ink); font: 600 15px/1.2 var(--src-ui); }
+#mnSourceDialog .mn__source-back {
+  display: none; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px 0 12px; border: 1px solid var(--src-rule-strong);
+  border-radius: 22px; background: transparent; color: var(--src-ink); font: 500 max(16px, 1rem)/1 var(--src-ui); cursor: pointer; white-space: nowrap;
+}
+#mnSourceDialog .mn__source-back-chev { font-size: 20px; line-height: 1; }
+#mnSourceDialog[data-scrolled] .mn__source-kicker { display: none; }
+#mnSourceDialog[data-scrolled] .mn__source-headname { display: block; }
+#mnSourceDialog[data-view="list"] :is(.mn__source-kicker, .mn__source-headname) { display: none; }
+#mnSourceDialog[data-view="list"] .mn__source-back { display: inline-flex; }
+#mnSourceDialog .mn__source-copied { margin: 0; color: var(--src-dim); font: 500 13px/1.2 var(--src-ui); white-space: nowrap; }
+#mnSourceDialog .mn__source-copied:empty { display: none; }
+#mnSourceDialog .mn__source-tools { display: flex; align-items: center; gap: 6px; }
+#mnSourceDialog .mn__source-tool {
+  display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--src-rule-strong);
+  border-radius: 50%; background: transparent; color: var(--src-ink); cursor: pointer; font: 400 22px/1 var(--src-ui);
+}
+#mnSourceDialog .mn__source-tool .mn__source-icon { width: 20px; height: 20px; border: 0; }
+
+/* ---------- the one scroller (two panes from 1100 px) ---------- */
+#mnSourceDialog .mn__source-scroll {
+  flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  padding: 0 var(--src-pad) calc(24px + env(safe-area-inset-bottom, 0px));
+  scrollbar-width: thin; scrollbar-color: var(--src-faint) transparent;
+}
+#mnSourceDialog .mn__source-left, #mnSourceDialog .mn__source-right { min-width: 0; }
+#mnSourceDialog .mn__source-preview { margin: 4px 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--src-gold-soft); box-shadow: inset 0 0 0 1px var(--src-gold-line); color: var(--src-ink); font: 600 14px/1.45 var(--src-ui); }
+
+/* ---------- who: the name, the role line, the trust note and its two buttons, the facts line ---------- */
+#mnSourceDialog .mn__source-who { padding-top: 6px; }
+#mnSourceDialog .mn__source-name { margin: 0; color: var(--src-ink); font: 500 clamp(32px, 9.2vw, 42px)/1.06 var(--src-serif); letter-spacing: -0.012em; overflow-wrap: anywhere; }
+#mnSourceDialog .mn__source-role { max-width: 36rem; margin: 10px 0 0; color: var(--src-dim); font: 400 16px/1.5 var(--src-ui); }
+#mnSourceDialog .mn__source-trustbox { margin: 14px 0 0; padding: 2px 0 0 14px; border-left: 2px solid var(--src-gold); }
+#mnSourceDialog .mn__source-trust { margin: 0; color: var(--src-dim); font: 400 15px/1.5 var(--src-ui); }
+#mnSourceDialog .mn__source-trust strong { color: var(--src-ink); font-weight: 600; }
+#mnSourceDialog .mn__source-trust-actions { display: flex; flex-wrap: wrap; gap: 0 22px; }
+#mnSourceDialog .mn__source-link {
+  min-height: 44px; padding: 0; border: 0; background: none; color: var(--src-ink); cursor: pointer; text-align: left;
+  font: 600 max(16px, 1rem)/1.2 var(--src-ui); text-decoration: underline; text-decoration-color: var(--src-gold-line); text-underline-offset: 5px;
+}
+#mnSourceDialog .mn__source-link[aria-expanded="true"] { text-decoration-color: var(--src-gold); }
+#mnSourceDialog :is(.mn__source-change, .mn__source-about) { margin: 2px 0 8px; color: var(--src-dim); font: 400 14.5px/1.55 var(--src-ui); }
+#mnSourceDialog .mn__source-change p { margin: 8px 0 0; }
+#mnSourceDialog .mn__source-about:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr); }
+#mnSourceDialog .mn__source-about-row { padding: 10px 0; border-top: 1px solid var(--src-rule); }
+#mnSourceDialog .mn__source-about dt { color: var(--src-gold); font: 700 11px/1.3 var(--src-ui); letter-spacing: 0.16em; text-transform: uppercase; }
+#mnSourceDialog .mn__source-about dd { margin: 4px 0 0; min-width: 0; overflow-wrap: anywhere; }
+#mnSourceDialog .mn__source-fact { margin: 0 0 6px; }
+#mnSourceDialog .mn__source-fact-text { display: block; color: var(--src-ink); }
+#mnSourceDialog .mn__source-fact-source { display: block; color: var(--src-faint); }
+#mnSourceDialog .mn__source-dated { margin: 6px 0 0; color: var(--src-faint); font-size: 13.5px; }
+#mnSourceDialog :is(.mn__source-change, .mn__source-about, .mn__source-credit) a {
+  color: var(--src-ink); text-decoration: underline; text-decoration-color: var(--src-gold-line); text-underline-offset: 3px;
+}
+#mnSourceDialog :is(.mn__source-change, .mn__source-fact-source, .mn__source-links) a { display: inline-flex; align-items: center; min-height: 44px; }
+#mnSourceDialog .mn__source-out { color: var(--src-faint); text-decoration: none; }
+#mnSourceDialog .mn__source-facts { margin: 12px 0 0; color: var(--src-dim); font: 500 14px/1.45 var(--src-ui); }
+
+/* ---------- search ---------- */
+#mnSourceDialog .mn__source-search { margin: 18px 0 0; }
+#mnSourceDialog .mn__source-input {
+  width: 100%; min-height: 50px; margin: 0; padding: 0 16px; border: 1px solid var(--src-field-line); border-radius: 14px;
+  background: var(--src-field); color: var(--src-ink); font: 400 max(16px, 1rem)/1.2 var(--src-ui); -webkit-appearance: none; appearance: none;
+}
+#mnSourceDialog .mn__source-input::placeholder { color: var(--src-faint); opacity: 1; }
+#mnSourceDialog .mn__source-input:focus { outline: none; box-shadow: none; border-color: var(--src-gold); }
+#mnSourceDialog .mn__source-input:focus-visible { outline: 2px solid var(--mn-gold); outline-offset: 2px; box-shadow: none; }
+
+/* ---------- the areas: this site's grouping, each with its count and its first two missions ---------- */
+#mnSourceDialog .mn__source-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 24px 0 6px; }
+#mnSourceDialog .mn__source-label { margin: 0; color: var(--src-gold); font: 800 11.5px/1.2 var(--src-ui); letter-spacing: 0.24em; text-transform: uppercase; }
+#mnSourceDialog .mn__source-note { margin: 0; color: var(--src-faint); font: 400 13px/1.4 var(--src-ui); }
+#mnSourceDialog .mn__source-areas { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--src-rule); }
+#mnSourceDialog .mn__source-area {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto 14px; align-items: baseline; column-gap: 12px; width: 100%; min-height: 64px;
+  margin: 0; padding: 12px 0; border: 0; border-bottom: 1px solid var(--src-rule); background: none; color: inherit; text-align: left; cursor: pointer; font: inherit;
+}
+#mnSourceDialog .mn__source-area-name { min-width: 0; color: var(--src-ink); font: 500 21px/1.2 var(--src-serif); overflow-wrap: anywhere; }
+#mnSourceDialog .mn__source-area--all .mn__source-area-name { font-style: italic; }
+#mnSourceDialog .mn__source-area-count { color: var(--src-gold); font: 500 21px/1 var(--src-serif); font-variant-numeric: lining-nums tabular-nums; }
+#mnSourceDialog .mn__source-chev { align-self: center; color: var(--src-faint); font: 400 20px/1 var(--src-ui); }
+#mnSourceDialog .mn__source-area-sample { grid-column: 1 / -1; min-width: 0; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--src-faint); font: 400 13.5px/1.4 var(--src-ui); }
+#mnSourceDialog .mn__source-state:empty { display: none; }
+#mnSourceDialog :is(.mn__source-state, .mn__source-results) > :is(p, div) { margin: 14px 0 0; }
+#mnSourceDialog .mn__source-empty { color: var(--src-dim); font: 400 15px/1.5 var(--src-ui); }
+#mnSourceDialog .mn__source-failed p { margin: 0; color: var(--src-dim); font: 400 15px/1.5 var(--src-ui); }
+#mnSourceDialog .mn__source-skelrow { list-style: none; }
+#mnSourceDialog .mn__skel { grid-template-columns: minmax(0, 1fr); padding: 16px 0; border-radius: 0; background: none; box-shadow: none; border-bottom: 1px solid var(--src-rule); }
+
+/* ---------- the credit (the foot of the index) ---------- */
+#mnSourceDialog .mn__source-credit { margin: 28px 0 0; padding: 16px 0 0; border-top: 1px solid var(--src-gold-line); color: var(--src-dim); font: 400 14.5px/1.55 var(--src-ui); }
+#mnSourceDialog .mn__source-credit p { margin: 10px 0 0; }
+#mnSourceDialog .mn__source-num { color: var(--src-gold); font: 500 19px/1 var(--src-serif); font-variant-numeric: lining-nums; }
+#mnSourceDialog .mn__source-tm { font-size: 13.5px; }
+#mnSourceDialog .mn__source-credit .mn__source-cite-label { margin-top: 16px; color: var(--src-faint); font: 700 11px/1.4 var(--src-ui); letter-spacing: 0.14em; text-transform: uppercase; }
+#mnSourceDialog .mn__source-credit .mn__source-cite { margin-top: 6px; padding: 2px 0 2px 12px; border-left: 2px solid var(--src-gold-line); color: var(--src-ink); overflow-wrap: anywhere; }
+#mnSourceDialog .mn__source-cite cite { font-style: italic; }
+#mnSourceDialog .mn__source-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; }
+#mnSourceDialog .mn__source-dot { color: var(--src-faint); }
+
+/* ---------- a list: an area, All, or a search ---------- */
+#mnSourceDialog .mn__source-list-title {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 18px 0 0; color: var(--src-ink);
+  font: 500 clamp(30px, 8.4vw, 36px)/1.08 var(--src-serif); letter-spacing: -0.01em; overflow-wrap: anywhere;
+}
+#mnSourceDialog .mn__source-count { color: var(--src-gold); font-family: var(--src-serif); font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
+#mnSourceDialog .mn__source-list-title .mn__source-count { font-size: 22px; }
+#mnSourceDialog .mn__source-list-note { margin: 6px 0 0; color: var(--src-faint); font: 400 14px/1.45 var(--src-ui); }
+#mnSourceDialog .mn__source-chips {
+  display: flex; gap: 8px; margin: 14px calc(var(--src-pad) * -1) 0; padding: 2px var(--src-pad) 8px; overflow-x: auto; overscroll-behavior-x: contain;
+  scrollbar-width: thin; scrollbar-color: var(--src-faint) transparent;
+}
+#mnSourceDialog .mn__source-chips:empty { display: none; }
+#mnSourceDialog .mn__source-chip {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid var(--src-chip-line);
+  border-radius: 22px; background: var(--src-chip); color: var(--src-ink); font: 400 max(16px, 1rem)/1 var(--src-ui); white-space: nowrap; cursor: pointer;
+}
+#mnSourceDialog .mn__source-chip b { color: var(--src-faint); font-weight: 400; font-variant-numeric: tabular-nums; }
+#mnSourceDialog .mn__source-chip[aria-pressed="true"] { border-color: var(--src-on); background: var(--src-on); color: var(--src-on-ink); }
+#mnSourceDialog .mn__source-chip[aria-pressed="true"] b { color: var(--src-on-ink); }
+#mnSourceDialog .mn__source-status { margin: 12px 0 2px; color: var(--src-dim); font: 400 14px/1.5 var(--src-ui); }
+#mnSourceDialog .mn__source-status:empty { margin: 0; }
+#mnSourceDialog .mn__source-group { margin: 22px 0 0; min-width: 0; }
+#mnSourceDialog .mn__source-group-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; padding-bottom: 8px;
+  border-bottom: 1px solid var(--src-gold-line); color: var(--src-ink); font: 500 20px/1.2 var(--src-serif);
+}
+#mnSourceDialog .mn__source-group-head .mn__source-count { font-size: 18px; }
+#mnSourceDialog .mn__source-rows { list-style: none; margin: 0; padding: 0; min-width: 0; }
+#mnSourceDialog .mn__source-row {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) 14px; align-items: center; column-gap: 14px; width: 100%; min-height: 76px;
+  margin: 0; padding: 14px 0; border: 0; border-bottom: 1px solid var(--src-rule); background: none; color: inherit; text-align: left; cursor: pointer; font: inherit;
+}
+#mnSourceDialog .mn__source-icon { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--src-rule-strong); border-radius: 50%; color: var(--src-ink); }
+#mnSourceDialog .mn__source-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+#mnSourceDialog .mn__source-row-text { min-width: 0; }
+#mnSourceDialog .mn__source-row-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--src-ink); font: 600 16px/1.35 var(--src-ui); overflow-wrap: anywhere; }
+#mnSourceDialog .mn__source-row-meta { display: block; margin-top: 4px; color: var(--src-faint); font: 400 13.5px/1.35 var(--src-ui); }
+#mnSourceDialog .mn__source-row-desc { display: none; }
+#mnSourceDialog mark { border-radius: 2px; background: var(--src-gold-soft); color: inherit; box-shadow: inset 0 -1px 0 var(--src-gold); }
+#mnSourceDialog .mn__source-more {
+  display: block; width: 100%; min-height: 44px; margin: 12px 0 0; padding: 0 16px; border: 1px solid var(--src-rule-strong); border-radius: 999px;
+  background: transparent; color: var(--src-ink); font: 500 max(16px, 1rem)/1.2 var(--src-ui); cursor: pointer;
+}
+#mnSourceDialog .mn__source-next {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; width: 100%; min-height: 64px; margin: 18px 0 0;
+  padding: 12px 16px; border: 1px solid var(--src-gold-line); border-radius: 16px; background: transparent; color: var(--src-ink); text-align: left; cursor: pointer; font: inherit;
+}
+#mnSourceDialog .mn__source-next small { grid-column: 1 / -1; color: var(--src-faint); font: 700 11px/1.2 var(--src-ui); letter-spacing: 0.16em; text-transform: uppercase; }
+#mnSourceDialog .mn__source-next strong { min-width: 0; font: 500 19px/1.2 var(--src-serif); overflow-wrap: anywhere; }
+#mnSourceDialog .mn__source-next .mn__source-count { font-size: 19px; }
+@media (hover: hover) {
+  #mnSourceDialog :is(.mn__source-area:hover .mn__source-area-name, .mn__source-row:hover .mn__source-row-title) {
+    text-decoration: underline; text-decoration-color: var(--src-gold-line); text-underline-offset: 4px;
+  }
+}
+
+/* ---------- two states on a phone: the index (who, search, areas, credit) or a list (search, then the list) ---------- */
+#mnSourceDialog[data-view="list"] :is(.mn__source-who, .mn__source-index, .mn__source-credit) { display: none; }
+#mnSourceDialog[data-view="index"] .mn__source-right { display: none; }
+
+/* ---------- the door in a mission's dialog: after Join, outside the mission's detail and credit ---------- */
+.mn__source-door { margin: 0 16px 14px; }
+.mn__source-door[hidden] { display: none; }
+.mn__source-door .mn__source-door-button {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px; width: 100%; min-height: 56px; margin: 0;
+  padding: 10px 14px; border: 1px solid var(--src-gold-line); border-radius: 12px; background: var(--src-gold-soft); color: var(--src-ink);
+  text-align: left; cursor: pointer; font: inherit;
+}
+.mn__source-door .mn__source-door-kicker { grid-column: 1; color: var(--src-gold); font: 800 0.7rem/1.2 var(--src-ui); letter-spacing: 0.2em; text-transform: uppercase; }
+.mn__source-door .mn__source-door-name { grid-column: 1; min-width: 0; color: var(--src-ink); font: 600 0.82rem/1.35 var(--src-ui); overflow-wrap: anywhere; }
+.mn__source-door .mn__source-door-line { grid-column: 1; min-width: 0; color: var(--src-dim); font: 400 0.82rem/1.4 var(--src-ui); }
+.mn__source-door .mn__source-door-go { grid-column: 2; grid-row: 1 / span 3; color: var(--src-faint); font: 400 20px/1 var(--src-ui); }
+.mn__source-door .mn__source-door-button:focus-visible { outline: 2px solid var(--mn-gold); outline-offset: 2px; }
+
+/* ---------- more room: 700 px and up ADD a floating folio, tiles, a description line, a two-column About ---------- */
+@media (min-width: 700px) {
+  #mnSourceDialog { --src-pad: 32px; }
+  #mnSourceDialog.mn__thread { width: min(48rem, calc(100% - 48px)); margin: var(--src-top) auto auto; }
+  #mnSourceDialog .mn__source-who { max-width: 40rem; }
+  #mnSourceDialog .mn__source-areas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 20px; }
+  #mnSourceDialog .mn__source-area { column-gap: 8px; }
+  #mnSourceDialog :is(.mn__source-area-name, .mn__source-area-count) { font-size: 19px; }
+  #mnSourceDialog .mn__source-area-sample { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; }
+  #mnSourceDialog .mn__source-row-desc { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; margin-top: 3px; color: var(--src-dim); font: 400 14px/1.4 var(--src-ui); }
+  #mnSourceDialog .mn__source-about-row { display: grid; grid-template-columns: minmax(0, 12rem) minmax(0, 1fr); column-gap: 16px; }
+  #mnSourceDialog .mn__source-about dd { margin: 0; }
+}
+@media (min-width: 700px) and (min-height: 560px) {
+  #mnSourceDialog.mn__thread { --src-top: 76px; height: min(calc(100vh - 76px - 5.5rem), 56rem); height: min(calc(100dvh - 76px - 5.5rem), 56rem); }
+}
+
+/* ---------- 1100 px and up ADD the second pane: who, search, areas and credit beside the list, each its own scroller ---------- */
+@media (min-width: 1100px) {
+  #mnSourceDialog.mn__thread { width: min(76rem, calc(100% - 96px)); }
+  #mnSourceDialog .mn__source-scroll { display: grid; grid-template-columns: minmax(0, 24rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); overflow: hidden; padding: 0; }
+  #mnSourceDialog :is(.mn__source-left, .mn__source-right) {
+    min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--src-faint) transparent;
+    padding-bottom: 28px;
+  }
+  #mnSourceDialog .mn__source-left { padding-left: 32px; padding-right: 24px; border-right: 1px solid var(--src-hair); }
+  #mnSourceDialog .mn__source-right { padding-left: 28px; padding-right: 32px; }
+  #mnSourceDialog[data-view] :is(.mn__source-who, .mn__source-index, .mn__source-credit, .mn__source-right) { display: block; }
+  #mnSourceDialog[data-view="list"] .mn__source-back { display: none; }
+  #mnSourceDialog[data-view="list"]:not([data-scrolled]) .mn__source-kicker { display: block; }
+  #mnSourceDialog[data-view="list"][data-scrolled] .mn__source-headname { display: block; }
+  #mnSourceDialog .mn__source-name { font-size: 40px; }
+  #mnSourceDialog .mn__source-areas { display: block; }
+  #mnSourceDialog .mn__source-area { min-height: 48px; padding: 10px 0; }
+  #mnSourceDialog .mn__source-area-sample { display: block; white-space: nowrap; }
+  #mnSourceDialog .mn__source-area[aria-current="true"] { padding-left: 14px; box-shadow: inset 3px 0 0 var(--src-on); }
+  #mnSourceDialog .mn__source-chips { flex-wrap: wrap; overflow: visible; margin: 14px 0 0; padding: 2px 0 6px; }
+  #mnSourceDialog .mn__source-rows--cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
+}

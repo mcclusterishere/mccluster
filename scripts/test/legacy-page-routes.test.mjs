@@ -10,7 +10,7 @@ const read = name => readFile(join(root, name), 'utf8');
 
 test('every legacy alias is a real page with a same-origin destination', async () => {
   const routes = JSON.parse(await read('data/legacy-page-routes.json'));
-  assert.equal(Object.keys(routes).length, 11, 'keep all known legacy entrypoints covered');
+  assert.equal(Object.keys(routes).length, 9, 'keep all known legacy entrypoints covered (lab-landmark and lab-props left with asset-lab.html, shelved in _unfinished/)');
   for (const [alias, target] of Object.entries(routes)) {
     assert.match(alias, /^[a-z][a-z0-9-]*\.html$/);
     assert.ok(target.startsWith('/') && !target.startsWith('//') && !target.includes('\\'));
@@ -51,7 +51,8 @@ test('legacy navigation preserves harmless campaign context but refuses credenti
 });
 
 test('CRM no longer sends visitors to the retired verification page', async () => {
+  /* crm.html is a compatibility stub now: it goes to Control → People → Deals and nowhere else. */
   const crm = await read('crm.html');
   assert.doesNotMatch(crm, /href="verify\.html"/);
-  assert.match(crm, /href="mnet\.html\?view=discover"/);
+  assert.match(crm, /control\.html#people:deals:pipeline/);
 });

@@ -1,0 +1,3611 @@
+{
+ "duration_seconds": 219,
+ "language": "en",
+ "songTitle": "RAID (Hot Site)",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper small.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:52:20.161Z",
+  "confidence": 0.701,
+  "mismatched_lines": 9,
+  "sheet_lines": 61,
+  "heard_words": 573,
+  "ctc_aligned_lines": 63,
+  "timing": {
+   "align_seconds": 160.5,
+   "separate_seconds": 142.3,
+   "asr_seconds": 104.7,
+   "map_seconds": 0.3
+  }
+ },
+ "plain": "Reading Linux. Spinning.\nEvil twinning\n\nIf raided by opps I got backups for raid I\nLay low at the hot site equipped like my main site\nThey get the drop again we dip off to the warm site\nit’s not as well equipped but the cost to restore is light\nIt’s better than the cold site that’s a bare bone site\nThe cost to restore is high and cost even more time\nI made this for my troubled shooters show em the storage types\nTill I got em troubleshooting Mafia corporate ties\n\nRaids an acronym for redundant array of independent disk\nRaid 0 to 10 have different advantages and even risks\nRaid 0 stripes all drives all data evenly divides\nThey read the data at the same time high read speeds oh my but\nMalfunction on one drive now it unrecoverable for life\nThat’s a risk you gotta take when in you in the fast lane living thug life\nRAID 1, got mirroring, that’s double drives with no stripes\nIt’s slow but less scary, if one dies you’ll recover just fine\nDon’t believe me ask Siri, or Cortana like what’s raid 5?\nNo joke no parody turns hard drives to repair machines\nIf you lose a drive the other two revive\nAny spare you keep that’s parity\nRaid 6 has double parity two drives down but you still up\nRAID 10 is like Raid 1 and Raid 0 had a kid then split up\nStriping and mirroring but no parity to to give us when we and spin up\n\nIf raided by swat I got backups for raid I\nLay low at the hot site it’s equipped like my main site\nThey get the drop again we dip off to the warm site\nit’s not as well equipped but the cost to restore is light\nIt’s better than the cold site that’s a bare-bone site\nThe cost to restore is high and cost even more time\nI made this for my troubled shooters show em the storage types\nTill I got em troubleshooting Mafia corporate ties\n\nI’m not 100. I told em lies\nFuck 100. stay fortune five\nHot site full of honey files\nPadded cells enough for 4 asylums\nOn the run so I wore disguises\nSelling nothing this stores a lie\nIt’s a front for a warm environment\nOn the hunt till the score is tied\nI pull up they look mortified\nGetting physical more than cyber\nTook a risk the reward was higher\nAll these missions I’m bored of lining\nthen my shit ain't\nGoing dum because I know a lil something\nPull a card they wore I clone for fun\nI don’t knuckle up or roll with punches\nBucka bucka bucka no discussion\nTill im up I can’t afford a conscience\nBig combustion melt the murder gun\nHit the button on the Porsche and gun it\n\nIf raided by opps I got backups raid I\nLay low at the hot site equipped like my main site\nThey get the drop again we dip off to the warm si\nit’s not as well equipped but the cost to restore is light\nIt’s better than the cold site that’s a bare bone site\nThe cost to restore is high and cost even more time\nI made this for my troubled shooters show em the storage types\nTill I got em troubleshooting Mafia corporate ties\n\nFuck a hundred, stay fortune -fied I wish you\nfive.",
+ "timed": {
+  "line": [
+   {
+    "begin": 8.964,
+    "end": 11.818,
+    "content": "Reading Linux. Spinning.",
+    "confidence": 0.74,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 8.964,
+      "end": 9.366,
+      "content": "Reading"
+     },
+     {
+      "begin": 9.768,
+      "end": 10.029,
+      "content": "Linux."
+     },
+     {
+      "begin": 11.436,
+      "end": 11.818,
+      "content": "Spinning."
+     }
+    ],
+    "align_score": 0.679
+   },
+   {
+    "begin": 12.525,
+    "end": 14.423,
+    "content": "Evil twinning",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 12.525,
+      "end": 12.747,
+      "content": "Evil"
+     },
+     {
+      "begin": 13.25,
+      "end": 14.423,
+      "content": "twinning"
+     }
+    ],
+    "align_score": 0.634
+   },
+   {
+    "begin": 14.423,
+    "end": 17.8,
+    "content": "If raided by opps I got backups for raid I",
+    "confidence": 0.343,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "ready outside, pack of spirit, ain't",
+    "words": [
+     {
+      "begin": 14.423,
+      "end": 14.484,
+      "content": "If"
+     },
+     {
+      "begin": 14.644,
+      "end": 14.966,
+      "content": "raided"
+     },
+     {
+      "begin": 15.046,
+      "end": 15.227,
+      "content": "by"
+     },
+     {
+      "begin": 15.388,
+      "end": 15.689,
+      "content": "opps"
+     },
+     {
+      "begin": 15.97,
+      "end": 15.99,
+      "content": "I"
+     },
+     {
+      "begin": 16.171,
+      "end": 16.291,
+      "content": "got"
+     },
+     {
+      "begin": 16.352,
+      "end": 16.693,
+      "content": "backups"
+     },
+     {
+      "begin": 16.733,
+      "end": 16.894,
+      "content": "for"
+     },
+     {
+      "begin": 16.995,
+      "end": 17.356,
+      "content": "raid"
+     },
+     {
+      "begin": 17.8,
+      "end": 17.8,
+      "content": "I"
+     }
+    ],
+    "align_score": 0.468
+   },
+   {
+    "begin": 17.8,
+    "end": 21.02,
+    "content": "Lay low at the hot site equipped like my main site",
+    "confidence": 0.693,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 17.8,
+      "end": 17.981,
+      "content": "Lay"
+     },
+     {
+      "begin": 18.102,
+      "end": 18.182,
+      "content": "low"
+     },
+     {
+      "begin": 18.323,
+      "end": 18.363,
+      "content": "at"
+     },
+     {
+      "begin": 18.464,
+      "end": 18.584,
+      "content": "the"
+     },
+     {
+      "begin": 18.705,
+      "end": 18.906,
+      "content": "hot"
+     },
+     {
+      "begin": 19.087,
+      "end": 19.408,
+      "content": "site"
+     },
+     {
+      "begin": 19.65,
+      "end": 20.012,
+      "content": "equipped"
+     },
+     {
+      "begin": 20.032,
+      "end": 20.152,
+      "content": "like"
+     },
+     {
+      "begin": 20.213,
+      "end": 20.313,
+      "content": "my"
+     },
+     {
+      "begin": 20.414,
+      "end": 20.615,
+      "content": "main"
+     },
+     {
+      "begin": 20.816,
+      "end": 21.02,
+      "content": "site"
+     }
+    ],
+    "align_score": 0.449
+   },
+   {
+    "begin": 21.02,
+    "end": 23.42,
+    "content": "They get the drop again we dip off to the warm site",
+    "confidence": 0.333,
+    "mismatch": true,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 21.02,
+      "end": 21.524,
+      "content": "They"
+     },
+     {
+      "begin": 21.544,
+      "end": 21.645,
+      "content": "get"
+     },
+     {
+      "begin": 21.726,
+      "end": 21.806,
+      "content": "the"
+     },
+     {
+      "begin": 21.867,
+      "end": 22.129,
+      "content": "drop"
+     },
+     {
+      "begin": 22.23,
+      "end": 22.573,
+      "content": "again"
+     },
+     {
+      "begin": 22.593,
+      "end": 22.633,
+      "content": "we"
+     },
+     {
+      "begin": 22.654,
+      "end": 22.714,
+      "content": "dip"
+     },
+     {
+      "begin": 22.734,
+      "end": 22.855,
+      "content": "off"
+     },
+     {
+      "begin": 22.916,
+      "end": 22.956,
+      "content": "to"
+     },
+     {
+      "begin": 22.976,
+      "end": 23.077,
+      "content": "the"
+     },
+     {
+      "begin": 23.158,
+      "end": 23.319,
+      "content": "warm"
+     },
+     {
+      "begin": 23.339,
+      "end": 23.42,
+      "content": "site"
+     }
+    ],
+    "align_score": 0.315
+   },
+   {
+    "begin": 24.407,
+    "end": 27.801,
+    "content": "it’s not as well equipped but the cost to restore is light",
+    "confidence": 0.765,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 24.407,
+      "end": 24.869,
+      "content": "it’s"
+     },
+     {
+      "begin": 24.969,
+      "end": 25.13,
+      "content": "not"
+     },
+     {
+      "begin": 25.21,
+      "end": 25.27,
+      "content": "as"
+     },
+     {
+      "begin": 25.35,
+      "end": 25.511,
+      "content": "well"
+     },
+     {
+      "begin": 25.611,
+      "end": 25.993,
+      "content": "equipped"
+     },
+     {
+      "begin": 26.193,
+      "end": 26.314,
+      "content": "but"
+     },
+     {
+      "begin": 26.414,
+      "end": 26.494,
+      "content": "the"
+     },
+     {
+      "begin": 26.574,
+      "end": 26.896,
+      "content": "cost"
+     },
+     {
+      "begin": 26.956,
+      "end": 27.036,
+      "content": "to"
+     },
+     {
+      "begin": 27.096,
+      "end": 27.498,
+      "content": "restore"
+     },
+     {
+      "begin": 27.558,
+      "end": 27.638,
+      "content": "is"
+     },
+     {
+      "begin": 27.718,
+      "end": 27.801,
+      "content": "light"
+     }
+    ],
+    "align_score": 0.811
+   },
+   {
+    "begin": 27.801,
+    "end": 31.061,
+    "content": "It’s better than the cold site that’s a bare bone site",
+    "confidence": 0.937,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 27.801,
+      "end": 28.243,
+      "content": "It’s"
+     },
+     {
+      "begin": 28.303,
+      "end": 28.665,
+      "content": "better"
+     },
+     {
+      "begin": 28.705,
+      "end": 28.846,
+      "content": "than"
+     },
+     {
+      "begin": 28.966,
+      "end": 29.047,
+      "content": "the"
+     },
+     {
+      "begin": 29.147,
+      "end": 29.469,
+      "content": "cold"
+     },
+     {
+      "begin": 29.589,
+      "end": 29.81,
+      "content": "site"
+     },
+     {
+      "begin": 30.011,
+      "end": 30.232,
+      "content": "that’s"
+     },
+     {
+      "begin": 30.333,
+      "end": 30.353,
+      "content": "a"
+     },
+     {
+      "begin": 30.453,
+      "end": 30.614,
+      "content": "bare"
+     },
+     {
+      "begin": 30.674,
+      "end": 30.996,
+      "content": "bone"
+     },
+     {
+      "begin": 31.061,
+      "end": 31.061,
+      "content": "site"
+     }
+    ],
+    "align_score": 0.448
+   },
+   {
+    "begin": 31.061,
+    "end": 34.722,
+    "content": "The cost to restore is high and cost even more time",
+    "confidence": 0.655,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 31.061,
+      "end": 31.323,
+      "content": "The"
+     },
+     {
+      "begin": 31.744,
+      "end": 31.985,
+      "content": "cost"
+     },
+     {
+      "begin": 32.086,
+      "end": 32.146,
+      "content": "to"
+     },
+     {
+      "begin": 32.206,
+      "end": 32.648,
+      "content": "restore"
+     },
+     {
+      "begin": 32.688,
+      "end": 32.749,
+      "content": "is"
+     },
+     {
+      "begin": 32.809,
+      "end": 33.05,
+      "content": "high"
+     },
+     {
+      "begin": 33.331,
+      "end": 33.391,
+      "content": "and"
+     },
+     {
+      "begin": 33.472,
+      "end": 33.733,
+      "content": "cost"
+     },
+     {
+      "begin": 33.853,
+      "end": 34.014,
+      "content": "even"
+     },
+     {
+      "begin": 34.134,
+      "end": 34.396,
+      "content": "more"
+     },
+     {
+      "begin": 34.536,
+      "end": 34.722,
+      "content": "time"
+     }
+    ],
+    "align_score": 0.791
+   },
+   {
+    "begin": 34.722,
+    "end": 38.665,
+    "content": "I made this for my troubled shooters show em the storage types",
+    "confidence": 0.468,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "troubleshooter store stores",
+    "words": [
+     {
+      "begin": 34.722,
+      "end": 34.742,
+      "content": "I"
+     },
+     {
+      "begin": 35.204,
+      "end": 35.365,
+      "content": "made"
+     },
+     {
+      "begin": 35.425,
+      "end": 35.526,
+      "content": "this"
+     },
+     {
+      "begin": 35.606,
+      "end": 35.726,
+      "content": "for"
+     },
+     {
+      "begin": 35.807,
+      "end": 35.907,
+      "content": "my"
+     },
+     {
+      "begin": 36.028,
+      "end": 36.349,
+      "content": "troubled"
+     },
+     {
+      "begin": 36.47,
+      "end": 36.831,
+      "content": "shooters"
+     },
+     {
+      "begin": 36.851,
+      "end": 37.153,
+      "content": "show"
+     },
+     {
+      "begin": 37.253,
+      "end": 37.293,
+      "content": "em"
+     },
+     {
+      "begin": 37.313,
+      "end": 37.374,
+      "content": "the"
+     },
+     {
+      "begin": 37.454,
+      "end": 37.916,
+      "content": "storage"
+     },
+     {
+      "begin": 37.976,
+      "end": 38.665,
+      "content": "types"
+     }
+    ],
+    "align_score": 0.682
+   },
+   {
+    "begin": 38.665,
+    "end": 41.76,
+    "content": "Till I got em troubleshooting Mafia corporate ties",
+    "confidence": 0.6,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 38.665,
+      "end": 38.826,
+      "content": "Till"
+     },
+     {
+      "begin": 38.906,
+      "end": 38.926,
+      "content": "I"
+     },
+     {
+      "begin": 39.047,
+      "end": 39.228,
+      "content": "got"
+     },
+     {
+      "begin": 39.288,
+      "end": 39.328,
+      "content": "em"
+     },
+     {
+      "begin": 39.429,
+      "end": 40.273,
+      "content": "troubleshooting"
+     },
+     {
+      "begin": 40.313,
+      "end": 40.815,
+      "content": "Mafia"
+     },
+     {
+      "begin": 40.916,
+      "end": 41.298,
+      "content": "corporate"
+     },
+     {
+      "begin": 41.338,
+      "end": 41.76,
+      "content": "ties"
+     }
+    ],
+    "align_score": 0.676
+   },
+   {
+    "begin": 42.043,
+    "end": 44.857,
+    "content": "Raids an acronym for redundant array of independent disk",
+    "confidence": 0.975,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 42.043,
+      "end": 42.305,
+      "content": "Raids"
+     },
+     {
+      "begin": 42.365,
+      "end": 42.405,
+      "content": "an"
+     },
+     {
+      "begin": 42.506,
+      "end": 42.908,
+      "content": "acronym"
+     },
+     {
+      "begin": 43.028,
+      "end": 43.129,
+      "content": "for"
+     },
+     {
+      "begin": 43.169,
+      "end": 43.611,
+      "content": "redundant"
+     },
+     {
+      "begin": 43.631,
+      "end": 43.852,
+      "content": "array"
+     },
+     {
+      "begin": 43.912,
+      "end": 43.953,
+      "content": "of"
+     },
+     {
+      "begin": 44.073,
+      "end": 44.576,
+      "content": "independent"
+     },
+     {
+      "begin": 44.596,
+      "end": 44.857,
+      "content": "disk"
+     }
+    ],
+    "align_score": 0.611
+   },
+   {
+    "begin": 45.465,
+    "end": 48.337,
+    "content": "Raid 0 to 10 have different advantages and even risks",
+    "confidence": 0.772,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 45.465,
+      "end": 45.626,
+      "content": "Raid"
+     },
+     {
+      "begin": 45.706,
+      "end": 45.927,
+      "content": "0"
+     },
+     {
+      "begin": 46.027,
+      "end": 46.088,
+      "content": "to"
+     },
+     {
+      "begin": 46.168,
+      "end": 46.329,
+      "content": "10"
+     },
+     {
+      "begin": 46.449,
+      "end": 46.63,
+      "content": "have"
+     },
+     {
+      "begin": 46.71,
+      "end": 46.991,
+      "content": "different"
+     },
+     {
+      "begin": 47.032,
+      "end": 47.534,
+      "content": "advantages"
+     },
+     {
+      "begin": 47.594,
+      "end": 47.654,
+      "content": "and"
+     },
+     {
+      "begin": 47.755,
+      "end": 47.915,
+      "content": "even"
+     },
+     {
+      "begin": 47.976,
+      "end": 48.337,
+      "content": "risks"
+     }
+    ],
+    "align_score": 0.729
+   },
+   {
+    "begin": 48.883,
+    "end": 51.56,
+    "content": "Raid 0 stripes all drives all data evenly divides",
+    "confidence": 0.657,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 48.883,
+      "end": 49.063,
+      "content": "Raid"
+     },
+     {
+      "begin": 49.164,
+      "end": 49.365,
+      "content": "0"
+     },
+     {
+      "begin": 49.485,
+      "end": 49.767,
+      "content": "stripes"
+     },
+     {
+      "begin": 49.968,
+      "end": 50.068,
+      "content": "all"
+     },
+     {
+      "begin": 50.128,
+      "end": 50.51,
+      "content": "drives"
+     },
+     {
+      "begin": 50.731,
+      "end": 50.831,
+      "content": "all"
+     },
+     {
+      "begin": 50.932,
+      "end": 51.193,
+      "content": "data"
+     },
+     {
+      "begin": 51.354,
+      "end": 51.56,
+      "content": "evenly"
+     },
+     {
+      "begin": 51.56,
+      "end": 51.56,
+      "content": "divides"
+     }
+    ],
+    "align_score": 0.564
+   },
+   {
+    "begin": 51.56,
+    "end": 55.302,
+    "content": "They read the data at the same time high read speeds oh my but",
+    "confidence": 0.769,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 51.56,
+      "end": 51.781,
+      "content": "They"
+     },
+     {
+      "begin": 51.841,
+      "end": 52.163,
+      "content": "read"
+     },
+     {
+      "begin": 52.283,
+      "end": 52.444,
+      "content": "the"
+     },
+     {
+      "begin": 52.605,
+      "end": 52.866,
+      "content": "data"
+     },
+     {
+      "begin": 53.006,
+      "end": 53.047,
+      "content": "at"
+     },
+     {
+      "begin": 53.127,
+      "end": 53.207,
+      "content": "the"
+     },
+     {
+      "begin": 53.268,
+      "end": 53.509,
+      "content": "same"
+     },
+     {
+      "begin": 53.609,
+      "end": 53.93,
+      "content": "time"
+     },
+     {
+      "begin": 54.051,
+      "end": 54.272,
+      "content": "high"
+     },
+     {
+      "begin": 54.352,
+      "end": 54.533,
+      "content": "read"
+     },
+     {
+      "begin": 54.613,
+      "end": 55.015,
+      "content": "speeds"
+     },
+     {
+      "begin": 55.136,
+      "end": 55.236,
+      "content": "oh"
+     },
+     {
+      "begin": 55.302,
+      "end": 55.302,
+      "content": "my"
+     },
+     {
+      "begin": 55.302,
+      "end": 55.302,
+      "content": "but"
+     }
+    ],
+    "align_score": 0.551
+   },
+   {
+    "begin": 55.302,
+    "end": 58.54,
+    "content": "Malfunction on one drive now it unrecoverable for life",
+    "confidence": 0.944,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 55.302,
+      "end": 56.366,
+      "content": "Malfunction"
+     },
+     {
+      "begin": 56.547,
+      "end": 56.607,
+      "content": "on"
+     },
+     {
+      "begin": 56.828,
+      "end": 56.929,
+      "content": "one"
+     },
+     {
+      "begin": 57.009,
+      "end": 57.27,
+      "content": "drive"
+     },
+     {
+      "begin": 57.511,
+      "end": 57.612,
+      "content": "now"
+     },
+     {
+      "begin": 57.672,
+      "end": 57.712,
+      "content": "it"
+     },
+     {
+      "begin": 57.833,
+      "end": 58.516,
+      "content": "unrecoverable"
+     },
+     {
+      "begin": 58.54,
+      "end": 58.54,
+      "content": "for"
+     },
+     {
+      "begin": 58.54,
+      "end": 58.54,
+      "content": "life"
+     }
+    ],
+    "align_score": 0.725
+   },
+   {
+    "begin": 58.54,
+    "end": 62.622,
+    "content": "That’s a risk you gotta take when in you in the fast lane living thug life",
+    "confidence": 0.75,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 58.54,
+      "end": 59.243,
+      "content": "That’s"
+     },
+     {
+      "begin": 59.364,
+      "end": 59.384,
+      "content": "a"
+     },
+     {
+      "begin": 59.444,
+      "end": 59.565,
+      "content": "risk"
+     },
+     {
+      "begin": 59.605,
+      "end": 59.685,
+      "content": "you"
+     },
+     {
+      "begin": 59.766,
+      "end": 59.966,
+      "content": "gotta"
+     },
+     {
+      "begin": 60.027,
+      "end": 60.308,
+      "content": "take"
+     },
+     {
+      "begin": 60.368,
+      "end": 60.469,
+      "content": "when"
+     },
+     {
+      "begin": 60.489,
+      "end": 60.569,
+      "content": "in"
+     },
+     {
+      "begin": 60.669,
+      "end": 60.83,
+      "content": "you"
+     },
+     {
+      "begin": 60.931,
+      "end": 60.971,
+      "content": "in"
+     },
+     {
+      "begin": 61.031,
+      "end": 61.091,
+      "content": "the"
+     },
+     {
+      "begin": 61.152,
+      "end": 61.433,
+      "content": "fast"
+     },
+     {
+      "begin": 61.553,
+      "end": 61.794,
+      "content": "lane"
+     },
+     {
+      "begin": 61.814,
+      "end": 62.116,
+      "content": "living"
+     },
+     {
+      "begin": 62.196,
+      "end": 62.337,
+      "content": "thug"
+     },
+     {
+      "begin": 62.622,
+      "end": 62.622,
+      "content": "life"
+     }
+    ],
+    "align_score": 0.508
+   },
+   {
+    "begin": 62.622,
+    "end": 65.661,
+    "content": "RAID 1, got mirroring, that’s double drives with no stripes",
+    "confidence": 0.973,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 62.622,
+      "end": 62.823,
+      "content": "RAID"
+     },
+     {
+      "begin": 63.004,
+      "end": 63.105,
+      "content": "1,"
+     },
+     {
+      "begin": 63.185,
+      "end": 63.386,
+      "content": "got"
+     },
+     {
+      "begin": 63.446,
+      "end": 63.949,
+      "content": "mirroring,"
+     },
+     {
+      "begin": 64.029,
+      "end": 64.21,
+      "content": "that’s"
+     },
+     {
+      "begin": 64.31,
+      "end": 64.532,
+      "content": "double"
+     },
+     {
+      "begin": 64.592,
+      "end": 64.954,
+      "content": "drives"
+     },
+     {
+      "begin": 65.034,
+      "end": 65.195,
+      "content": "with"
+     },
+     {
+      "begin": 65.275,
+      "end": 65.376,
+      "content": "no"
+     },
+     {
+      "begin": 65.516,
+      "end": 65.661,
+      "content": "stripes"
+     }
+    ],
+    "align_score": 0.71
+   },
+   {
+    "begin": 65.661,
+    "end": 69.237,
+    "content": "It’s slow but less scary, if one dies you’ll recover just fine",
+    "confidence": 0.836,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 65.661,
+      "end": 66.204,
+      "content": "It’s"
+     },
+     {
+      "begin": 66.244,
+      "end": 66.425,
+      "content": "slow"
+     },
+     {
+      "begin": 66.465,
+      "end": 66.565,
+      "content": "but"
+     },
+     {
+      "begin": 66.606,
+      "end": 66.786,
+      "content": "less"
+     },
+     {
+      "begin": 66.806,
+      "end": 67.168,
+      "content": "scary,"
+     },
+     {
+      "begin": 67.289,
+      "end": 67.329,
+      "content": "if"
+     },
+     {
+      "begin": 67.57,
+      "end": 67.67,
+      "content": "one"
+     },
+     {
+      "begin": 67.751,
+      "end": 68.032,
+      "content": "dies"
+     },
+     {
+      "begin": 68.092,
+      "end": 68.233,
+      "content": "you’ll"
+     },
+     {
+      "begin": 68.273,
+      "end": 68.574,
+      "content": "recover"
+     },
+     {
+      "begin": 68.695,
+      "end": 68.876,
+      "content": "just"
+     },
+     {
+      "begin": 68.976,
+      "end": 69.237,
+      "content": "fine"
+     }
+    ],
+    "align_score": 0.637
+   },
+   {
+    "begin": 69.482,
+    "end": 72.637,
+    "content": "Don’t believe me ask Siri, or Cortana like what’s raid 5?",
+    "confidence": 0.693,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 69.482,
+      "end": 69.623,
+      "content": "Don’t"
+     },
+     {
+      "begin": 69.643,
+      "end": 69.904,
+      "content": "believe"
+     },
+     {
+      "begin": 69.945,
+      "end": 70.005,
+      "content": "me"
+     },
+     {
+      "begin": 70.166,
+      "end": 70.246,
+      "content": "ask"
+     },
+     {
+      "begin": 70.306,
+      "end": 70.547,
+      "content": "Siri,"
+     },
+     {
+      "begin": 70.668,
+      "end": 70.768,
+      "content": "or"
+     },
+     {
+      "begin": 70.889,
+      "end": 71.391,
+      "content": "Cortana"
+     },
+     {
+      "begin": 71.653,
+      "end": 71.793,
+      "content": "like"
+     },
+     {
+      "begin": 71.854,
+      "end": 72.034,
+      "content": "what’s"
+     },
+     {
+      "begin": 72.135,
+      "end": 72.276,
+      "content": "raid"
+     },
+     {
+      "begin": 72.376,
+      "end": 72.637,
+      "content": "5?"
+     }
+    ],
+    "align_score": 0.609
+   },
+   {
+    "begin": 72.863,
+    "end": 75.864,
+    "content": "No joke no parody turns hard drives to repair machines",
+    "confidence": 0.863,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 72.863,
+      "end": 72.944,
+      "content": "No"
+     },
+     {
+      "begin": 73.125,
+      "end": 73.346,
+      "content": "joke"
+     },
+     {
+      "begin": 73.446,
+      "end": 73.527,
+      "content": "no"
+     },
+     {
+      "begin": 73.667,
+      "end": 74.049,
+      "content": "parody"
+     },
+     {
+      "begin": 74.129,
+      "end": 74.371,
+      "content": "turns"
+     },
+     {
+      "begin": 74.431,
+      "end": 74.632,
+      "content": "hard"
+     },
+     {
+      "begin": 74.712,
+      "end": 74.994,
+      "content": "drives"
+     },
+     {
+      "begin": 75.114,
+      "end": 75.154,
+      "content": "to"
+     },
+     {
+      "begin": 75.235,
+      "end": 75.516,
+      "content": "repair"
+     },
+     {
+      "begin": 75.536,
+      "end": 75.864,
+      "content": "machines"
+     }
+    ],
+    "align_score": 0.74
+   },
+   {
+    "begin": 75.864,
+    "end": 77.536,
+    "content": "If you lose a drive the other two revive",
+    "confidence": 0.96,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 75.864,
+      "end": 75.905,
+      "content": "If"
+     },
+     {
+      "begin": 75.945,
+      "end": 76.005,
+      "content": "you"
+     },
+     {
+      "begin": 76.106,
+      "end": 76.227,
+      "content": "lose"
+     },
+     {
+      "begin": 76.287,
+      "end": 76.308,
+      "content": "a"
+     },
+     {
+      "begin": 76.368,
+      "end": 76.569,
+      "content": "drive"
+     },
+     {
+      "begin": 76.61,
+      "end": 76.69,
+      "content": "the"
+     },
+     {
+      "begin": 76.731,
+      "end": 76.912,
+      "content": "other"
+     },
+     {
+      "begin": 76.952,
+      "end": 77.033,
+      "content": "two"
+     },
+     {
+      "begin": 77.134,
+      "end": 77.536,
+      "content": "revive"
+     }
+    ],
+    "align_score": 0.815
+   },
+   {
+    "begin": 77.605,
+    "end": 78.82,
+    "content": "Any spare you keep that’s parity",
+    "confidence": 0.611,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 77.605,
+      "end": 77.726,
+      "content": "Any"
+     },
+     {
+      "begin": 77.807,
+      "end": 78.008,
+      "content": "spare"
+     },
+     {
+      "begin": 78.049,
+      "end": 78.109,
+      "content": "you"
+     },
+     {
+      "begin": 78.149,
+      "end": 78.351,
+      "content": "keep"
+     },
+     {
+      "begin": 78.391,
+      "end": 78.82,
+      "content": "that’s"
+     },
+     {
+      "begin": 78.82,
+      "end": 78.82,
+      "content": "parity"
+     }
+    ],
+    "align_score": 0.407
+   },
+   {
+    "begin": 78.82,
+    "end": 82.497,
+    "content": "Raid 6 has double parity two drives down but you still up",
+    "confidence": 0.841,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 78.82,
+      "end": 79.122,
+      "content": "Raid"
+     },
+     {
+      "begin": 79.564,
+      "end": 79.704,
+      "content": "6"
+     },
+     {
+      "begin": 79.885,
+      "end": 80.086,
+      "content": "has"
+     },
+     {
+      "begin": 80.227,
+      "end": 80.448,
+      "content": "double"
+     },
+     {
+      "begin": 80.528,
+      "end": 80.87,
+      "content": "parity"
+     },
+     {
+      "begin": 80.95,
+      "end": 81.071,
+      "content": "two"
+     },
+     {
+      "begin": 81.231,
+      "end": 81.573,
+      "content": "drives"
+     },
+     {
+      "begin": 81.633,
+      "end": 81.894,
+      "content": "down"
+     },
+     {
+      "begin": 81.975,
+      "end": 82.055,
+      "content": "but"
+     },
+     {
+      "begin": 82.115,
+      "end": 82.176,
+      "content": "you"
+     },
+     {
+      "begin": 82.216,
+      "end": 82.417,
+      "content": "still"
+     },
+     {
+      "begin": 82.457,
+      "end": 82.497,
+      "content": "up"
+     }
+    ],
+    "align_score": 0.731
+   },
+   {
+    "begin": 82.762,
+    "end": 85.52,
+    "content": "RAID 10 is like Raid 1 and Raid 0 had a kid then split up",
+    "confidence": 0.975,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 82.762,
+      "end": 82.903,
+      "content": "RAID"
+     },
+     {
+      "begin": 83.004,
+      "end": 83.144,
+      "content": "10"
+     },
+     {
+      "begin": 83.225,
+      "end": 83.285,
+      "content": "is"
+     },
+     {
+      "begin": 83.325,
+      "end": 83.506,
+      "content": "like"
+     },
+     {
+      "begin": 83.606,
+      "end": 83.807,
+      "content": "Raid"
+     },
+     {
+      "begin": 83.948,
+      "end": 84.028,
+      "content": "1"
+     },
+     {
+      "begin": 84.089,
+      "end": 84.149,
+      "content": "and"
+     },
+     {
+      "begin": 84.189,
+      "end": 84.35,
+      "content": "Raid"
+     },
+     {
+      "begin": 84.41,
+      "end": 84.631,
+      "content": "0"
+     },
+     {
+      "begin": 84.732,
+      "end": 84.852,
+      "content": "had"
+     },
+     {
+      "begin": 84.913,
+      "end": 84.933,
+      "content": "a"
+     },
+     {
+      "begin": 85.013,
+      "end": 85.174,
+      "content": "kid"
+     },
+     {
+      "begin": 85.254,
+      "end": 85.475,
+      "content": "then"
+     },
+     {
+      "begin": 85.52,
+      "end": 85.52,
+      "content": "split"
+     },
+     {
+      "begin": 85.52,
+      "end": 85.52,
+      "content": "up"
+     }
+    ],
+    "align_score": 0.669
+   },
+   {
+    "begin": 85.52,
+    "end": 89.377,
+    "content": "Striping and mirroring but no parity to to give us when we and spin up",
+    "confidence": 0.559,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 85.52,
+      "end": 86.565,
+      "content": "Striping"
+     },
+     {
+      "begin": 86.625,
+      "end": 86.685,
+      "content": "and"
+     },
+     {
+      "begin": 86.745,
+      "end": 87.207,
+      "content": "mirroring"
+     },
+     {
+      "begin": 87.268,
+      "end": 87.368,
+      "content": "but"
+     },
+     {
+      "begin": 87.448,
+      "end": 87.529,
+      "content": "no"
+     },
+     {
+      "begin": 87.689,
+      "end": 87.971,
+      "content": "parity"
+     },
+     {
+      "begin": 88.011,
+      "end": 88.091,
+      "content": "to"
+     },
+     {
+      "begin": 88.151,
+      "end": 88.212,
+      "content": "to"
+     },
+     {
+      "begin": 88.272,
+      "end": 88.453,
+      "content": "give"
+     },
+     {
+      "begin": 88.473,
+      "end": 88.513,
+      "content": "us"
+     },
+     {
+      "begin": 88.553,
+      "end": 88.654,
+      "content": "when"
+     },
+     {
+      "begin": 88.834,
+      "end": 88.935,
+      "content": "we"
+     },
+     {
+      "begin": 88.995,
+      "end": 89.055,
+      "content": "and"
+     },
+     {
+      "begin": 89.075,
+      "end": 89.256,
+      "content": "spin"
+     },
+     {
+      "begin": 89.336,
+      "end": 89.377,
+      "content": "up"
+     }
+    ],
+    "align_score": 0.586
+   },
+   {
+    "begin": 89.881,
+    "end": 93.24,
+    "content": "If raided by swat I got backups for raid I",
+    "confidence": 0.551,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 89.881,
+      "end": 89.921,
+      "content": "If"
+     },
+     {
+      "begin": 90.041,
+      "end": 90.343,
+      "content": "raided"
+     },
+     {
+      "begin": 90.423,
+      "end": 90.524,
+      "content": "by"
+     },
+     {
+      "begin": 90.645,
+      "end": 90.986,
+      "content": "swat"
+     },
+     {
+      "begin": 91.328,
+      "end": 91.348,
+      "content": "I"
+     },
+     {
+      "begin": 91.509,
+      "end": 91.67,
+      "content": "got"
+     },
+     {
+      "begin": 91.73,
+      "end": 92.112,
+      "content": "backups"
+     },
+     {
+      "begin": 92.193,
+      "end": 92.373,
+      "content": "for"
+     },
+     {
+      "begin": 92.434,
+      "end": 92.776,
+      "content": "raid"
+     },
+     {
+      "begin": 93.24,
+      "end": 93.24,
+      "content": "I"
+     }
+    ],
+    "align_score": 0.581
+   },
+   {
+    "begin": 93.24,
+    "end": 96.704,
+    "content": "Lay low at the hot site it’s equipped like my main site",
+    "confidence": 0.667,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 93.24,
+      "end": 93.401,
+      "content": "Lay"
+     },
+     {
+      "begin": 93.542,
+      "end": 93.602,
+      "content": "low"
+     },
+     {
+      "begin": 93.743,
+      "end": 93.803,
+      "content": "at"
+     },
+     {
+      "begin": 93.924,
+      "end": 94.044,
+      "content": "the"
+     },
+     {
+      "begin": 94.145,
+      "end": 94.366,
+      "content": "hot"
+     },
+     {
+      "begin": 94.527,
+      "end": 94.768,
+      "content": "site"
+     },
+     {
+      "begin": 94.788,
+      "end": 94.869,
+      "content": "it’s"
+     },
+     {
+      "begin": 95.07,
+      "end": 95.432,
+      "content": "equipped"
+     },
+     {
+      "begin": 95.472,
+      "end": 95.572,
+      "content": "like"
+     },
+     {
+      "begin": 95.653,
+      "end": 95.733,
+      "content": "my"
+     },
+     {
+      "begin": 95.854,
+      "end": 96.095,
+      "content": "main"
+     },
+     {
+      "begin": 96.216,
+      "end": 96.704,
+      "content": "site"
+     }
+    ],
+    "align_score": 0.648
+   },
+   {
+    "begin": 96.704,
+    "end": 99.762,
+    "content": "They get the drop again we dip off to the warm site",
+    "confidence": 0.833,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 96.704,
+      "end": 96.804,
+      "content": "They"
+     },
+     {
+      "begin": 96.905,
+      "end": 97.045,
+      "content": "get"
+     },
+     {
+      "begin": 97.126,
+      "end": 97.206,
+      "content": "the"
+     },
+     {
+      "begin": 97.286,
+      "end": 97.527,
+      "content": "drop"
+     },
+     {
+      "begin": 97.648,
+      "end": 98.09,
+      "content": "again"
+     },
+     {
+      "begin": 98.21,
+      "end": 98.291,
+      "content": "we"
+     },
+     {
+      "begin": 98.451,
+      "end": 98.612,
+      "content": "dip"
+     },
+     {
+      "begin": 98.753,
+      "end": 98.853,
+      "content": "off"
+     },
+     {
+      "begin": 98.933,
+      "end": 99.034,
+      "content": "to"
+     },
+     {
+      "begin": 99.114,
+      "end": 99.175,
+      "content": "the"
+     },
+     {
+      "begin": 99.275,
+      "end": 99.516,
+      "content": "warm"
+     },
+     {
+      "begin": 99.657,
+      "end": 99.762,
+      "content": "site"
+     }
+    ],
+    "align_score": 0.786
+   },
+   {
+    "begin": 99.762,
+    "end": 103.222,
+    "content": "it’s not as well equipped but the cost to restore is light",
+    "confidence": 0.74,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 99.762,
+      "end": 100.265,
+      "content": "it’s"
+     },
+     {
+      "begin": 100.385,
+      "end": 100.546,
+      "content": "not"
+     },
+     {
+      "begin": 100.627,
+      "end": 100.687,
+      "content": "as"
+     },
+     {
+      "begin": 100.787,
+      "end": 100.968,
+      "content": "well"
+     },
+     {
+      "begin": 101.029,
+      "end": 101.39,
+      "content": "equipped"
+     },
+     {
+      "begin": 101.692,
+      "end": 101.792,
+      "content": "but"
+     },
+     {
+      "begin": 101.873,
+      "end": 101.953,
+      "content": "the"
+     },
+     {
+      "begin": 102.013,
+      "end": 102.335,
+      "content": "cost"
+     },
+     {
+      "begin": 102.395,
+      "end": 102.435,
+      "content": "to"
+     },
+     {
+      "begin": 102.516,
+      "end": 102.938,
+      "content": "restore"
+     },
+     {
+      "begin": 102.958,
+      "end": 103.018,
+      "content": "is"
+     },
+     {
+      "begin": 103.139,
+      "end": 103.222,
+      "content": "light"
+     }
+    ],
+    "align_score": 0.77
+   },
+   {
+    "begin": 103.222,
+    "end": 106.758,
+    "content": "It’s better than the cold site that’s a bare-bone site",
+    "confidence": 0.9,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 103.222,
+      "end": 103.704,
+      "content": "It’s"
+     },
+     {
+      "begin": 103.765,
+      "end": 104.086,
+      "content": "better"
+     },
+     {
+      "begin": 104.166,
+      "end": 104.287,
+      "content": "than"
+     },
+     {
+      "begin": 104.407,
+      "end": 104.488,
+      "content": "the"
+     },
+     {
+      "begin": 104.568,
+      "end": 104.889,
+      "content": "cold"
+     },
+     {
+      "begin": 105.03,
+      "end": 105.291,
+      "content": "site"
+     },
+     {
+      "begin": 105.452,
+      "end": 105.673,
+      "content": "that’s"
+     },
+     {
+      "begin": 105.793,
+      "end": 105.813,
+      "content": "a"
+     },
+     {
+      "begin": 105.894,
+      "end": 106.396,
+      "content": "bare-bone"
+     },
+     {
+      "begin": 106.496,
+      "end": 106.758,
+      "content": "site"
+     }
+    ],
+    "align_score": 0.628
+   },
+   {
+    "begin": 107.004,
+    "end": 110.102,
+    "content": "The cost to restore is high and cost even more time",
+    "confidence": 0.704,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 107.004,
+      "end": 107.064,
+      "content": "The"
+     },
+     {
+      "begin": 107.124,
+      "end": 107.466,
+      "content": "cost"
+     },
+     {
+      "begin": 107.486,
+      "end": 107.566,
+      "content": "to"
+     },
+     {
+      "begin": 107.647,
+      "end": 108.068,
+      "content": "restore"
+     },
+     {
+      "begin": 108.109,
+      "end": 108.169,
+      "content": "is"
+     },
+     {
+      "begin": 108.229,
+      "end": 108.43,
+      "content": "high"
+     },
+     {
+      "begin": 108.791,
+      "end": 108.872,
+      "content": "and"
+     },
+     {
+      "begin": 108.912,
+      "end": 109.153,
+      "content": "cost"
+     },
+     {
+      "begin": 109.233,
+      "end": 109.515,
+      "content": "even"
+     },
+     {
+      "begin": 109.575,
+      "end": 109.816,
+      "content": "more"
+     },
+     {
+      "begin": 109.936,
+      "end": 110.102,
+      "content": "time"
+     }
+    ],
+    "align_score": 0.745
+   },
+   {
+    "begin": 110.102,
+    "end": 113.638,
+    "content": "I made this for my troubled shooters show em the storage types",
+    "confidence": 0.583,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 110.102,
+      "end": 110.122,
+      "content": "I"
+     },
+     {
+      "begin": 110.604,
+      "end": 110.785,
+      "content": "made"
+     },
+     {
+      "begin": 110.825,
+      "end": 110.926,
+      "content": "this"
+     },
+     {
+      "begin": 111.026,
+      "end": 111.127,
+      "content": "for"
+     },
+     {
+      "begin": 111.207,
+      "end": 111.308,
+      "content": "my"
+     },
+     {
+      "begin": 111.448,
+      "end": 111.77,
+      "content": "troubled"
+     },
+     {
+      "begin": 111.91,
+      "end": 112.272,
+      "content": "shooters"
+     },
+     {
+      "begin": 112.352,
+      "end": 112.633,
+      "content": "show"
+     },
+     {
+      "begin": 112.653,
+      "end": 112.694,
+      "content": "em"
+     },
+     {
+      "begin": 112.754,
+      "end": 112.814,
+      "content": "the"
+     },
+     {
+      "begin": 112.894,
+      "end": 113.316,
+      "content": "storage"
+     },
+     {
+      "begin": 113.377,
+      "end": 113.638,
+      "content": "types"
+     }
+    ],
+    "align_score": 0.638
+   },
+   {
+    "begin": 114.067,
+    "end": 116.16,
+    "content": "Till I got em troubleshooting Mafia corporate ties",
+    "confidence": 0.5,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 114.067,
+      "end": 114.228,
+      "content": "Till"
+     },
+     {
+      "begin": 114.308,
+      "end": 114.328,
+      "content": "I"
+     },
+     {
+      "begin": 114.489,
+      "end": 114.651,
+      "content": "got"
+     },
+     {
+      "begin": 114.731,
+      "end": 114.771,
+      "content": "em"
+     },
+     {
+      "begin": 114.852,
+      "end": 115.677,
+      "content": "troubleshooting"
+     },
+     {
+      "begin": 115.737,
+      "end": 115.838,
+      "content": "Mafia"
+     },
+     {
+      "begin": 115.858,
+      "end": 116.059,
+      "content": "corporate"
+     },
+     {
+      "begin": 116.079,
+      "end": 116.16,
+      "content": "ties"
+     }
+    ],
+    "align_score": 0.512
+   },
+   {
+    "begin": 116.884,
+    "end": 118.796,
+    "content": "I’m not 100. I told em lies",
+    "confidence": 0.491,
+    "mismatch": true,
+    "section": "Verse",
+    "heard": "a hunnid, them",
+    "words": [
+     {
+      "begin": 116.884,
+      "end": 117.045,
+      "content": "I’m"
+     },
+     {
+      "begin": 117.206,
+      "end": 117.347,
+      "content": "not"
+     },
+     {
+      "begin": 117.448,
+      "end": 117.629,
+      "content": "100."
+     },
+     {
+      "begin": 117.931,
+      "end": 117.951,
+      "content": "I"
+     },
+     {
+      "begin": 118.112,
+      "end": 118.313,
+      "content": "told"
+     },
+     {
+      "begin": 118.414,
+      "end": 118.454,
+      "content": "em"
+     },
+     {
+      "begin": 118.535,
+      "end": 118.796,
+      "content": "lies"
+     }
+    ],
+    "align_score": 0.6
+   },
+   {
+    "begin": 118.925,
+    "end": 120.605,
+    "content": "Fuck 100. stay fortune five",
+    "confidence": 0.574,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 118.925,
+      "end": 119.086,
+      "content": "Fuck"
+     },
+     {
+      "begin": 119.207,
+      "end": 119.368,
+      "content": "100."
+     },
+     {
+      "begin": 119.569,
+      "end": 119.751,
+      "content": "stay"
+     },
+     {
+      "begin": 119.831,
+      "end": 120.093,
+      "content": "fortune"
+     },
+     {
+      "begin": 120.597,
+      "end": 120.605,
+      "content": "five"
+     }
+    ],
+    "align_score": 0.449
+   },
+   {
+    "begin": 120.605,
+    "end": 122.323,
+    "content": "Hot site full of honey files",
+    "confidence": 0.805,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 120.605,
+      "end": 120.726,
+      "content": "Hot"
+     },
+     {
+      "begin": 120.826,
+      "end": 121.048,
+      "content": "site"
+     },
+     {
+      "begin": 121.088,
+      "end": 121.249,
+      "content": "full"
+     },
+     {
+      "begin": 121.39,
+      "end": 121.43,
+      "content": "of"
+     },
+     {
+      "begin": 121.551,
+      "end": 121.813,
+      "content": "honey"
+     },
+     {
+      "begin": 121.934,
+      "end": 122.323,
+      "content": "files"
+     }
+    ],
+    "align_score": 0.589
+   },
+   {
+    "begin": 122.323,
+    "end": 123.341,
+    "content": "Padded cells enough for 4 asylums",
+    "confidence": 0.269,
+    "mismatch": true,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 122.323,
+      "end": 122.545,
+      "content": "Padded"
+     },
+     {
+      "begin": 122.566,
+      "end": 122.748,
+      "content": "cells"
+     },
+     {
+      "begin": 122.789,
+      "end": 122.951,
+      "content": "enough"
+     },
+     {
+      "begin": 122.991,
+      "end": 123.072,
+      "content": "for"
+     },
+     {
+      "begin": 123.255,
+      "end": 123.341,
+      "content": "4"
+     },
+     {
+      "begin": 123.341,
+      "end": 123.341,
+      "content": "asylums"
+     }
+    ],
+    "align_score": 0.585
+   },
+   {
+    "begin": 123.341,
+    "end": 125.62,
+    "content": "On the run so I wore disguises",
+    "confidence": 0.665,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 123.341,
+      "end": 123.966,
+      "content": "On"
+     },
+     {
+      "begin": 124.208,
+      "end": 124.269,
+      "content": "the"
+     },
+     {
+      "begin": 124.329,
+      "end": 124.43,
+      "content": "run"
+     },
+     {
+      "begin": 124.551,
+      "end": 124.631,
+      "content": "so"
+     },
+     {
+      "begin": 124.813,
+      "end": 124.833,
+      "content": "I"
+     },
+     {
+      "begin": 124.934,
+      "end": 125.115,
+      "content": "wore"
+     },
+     {
+      "begin": 125.136,
+      "end": 125.62,
+      "content": "disguises"
+     }
+    ],
+    "align_score": 0.413
+   },
+   {
+    "begin": 125.743,
+    "end": 127.324,
+    "content": "Selling nothing this stores a lie",
+    "confidence": 0.657,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 125.743,
+      "end": 126.005,
+      "content": "Selling"
+     },
+     {
+      "begin": 126.025,
+      "end": 126.307,
+      "content": "nothing"
+     },
+     {
+      "begin": 126.428,
+      "end": 126.549,
+      "content": "this"
+     },
+     {
+      "begin": 126.59,
+      "end": 126.932,
+      "content": "stores"
+     },
+     {
+      "begin": 126.993,
+      "end": 127.013,
+      "content": "a"
+     },
+     {
+      "begin": 127.114,
+      "end": 127.324,
+      "content": "lie"
+     }
+    ],
+    "align_score": 0.625
+   },
+   {
+    "begin": 127.324,
+    "end": 128.48,
+    "content": "It’s a front for a warm environment",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 127.324,
+      "end": 127.505,
+      "content": "It’s"
+     },
+     {
+      "begin": 127.586,
+      "end": 127.606,
+      "content": "a"
+     },
+     {
+      "begin": 127.687,
+      "end": 127.908,
+      "content": "front"
+     },
+     {
+      "begin": 127.969,
+      "end": 128.11,
+      "content": "for"
+     },
+     {
+      "begin": 128.23,
+      "end": 128.25,
+      "content": "a"
+     },
+     {
+      "begin": 128.391,
+      "end": 128.48,
+      "content": "warm"
+     },
+     {
+      "begin": 128.48,
+      "end": 128.48,
+      "content": "environment"
+     }
+    ],
+    "align_score": 0.403
+   },
+   {
+    "begin": 128.48,
+    "end": 130.684,
+    "content": "On the hunt till the score is tied",
+    "confidence": 0.596,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 128.48,
+      "end": 128.521,
+      "content": "On"
+     },
+     {
+      "begin": 128.621,
+      "end": 128.702,
+      "content": "the"
+     },
+     {
+      "begin": 128.964,
+      "end": 129.205,
+      "content": "hunt"
+     },
+     {
+      "begin": 129.225,
+      "end": 129.346,
+      "content": "till"
+     },
+     {
+      "begin": 129.588,
+      "end": 129.789,
+      "content": "the"
+     },
+     {
+      "begin": 129.991,
+      "end": 130.293,
+      "content": "score"
+     },
+     {
+      "begin": 130.333,
+      "end": 130.394,
+      "content": "is"
+     },
+     {
+      "begin": 130.474,
+      "end": 130.684,
+      "content": "tied"
+     }
+    ],
+    "align_score": 0.477
+   },
+   {
+    "begin": 130.684,
+    "end": 132.201,
+    "content": "I pull up they look mortified",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 130.684,
+      "end": 130.704,
+      "content": "I"
+     },
+     {
+      "begin": 130.966,
+      "end": 131.127,
+      "content": "pull"
+     },
+     {
+      "begin": 131.228,
+      "end": 131.268,
+      "content": "up"
+     },
+     {
+      "begin": 131.369,
+      "end": 131.49,
+      "content": "they"
+     },
+     {
+      "begin": 131.57,
+      "end": 131.731,
+      "content": "look"
+     },
+     {
+      "begin": 131.792,
+      "end": 132.201,
+      "content": "mortified"
+     }
+    ],
+    "align_score": 0.757
+   },
+   {
+    "begin": 132.201,
+    "end": 133.721,
+    "content": "Getting physical more than cyber",
+    "confidence": 0.994,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 132.201,
+      "end": 132.745,
+      "content": "Getting"
+     },
+     {
+      "begin": 132.886,
+      "end": 133.309,
+      "content": "physical"
+     },
+     {
+      "begin": 133.571,
+      "end": 133.721,
+      "content": "more"
+     },
+     {
+      "begin": 133.721,
+      "end": 133.721,
+      "content": "than"
+     },
+     {
+      "begin": 133.721,
+      "end": 133.721,
+      "content": "cyber"
+     }
+    ],
+    "align_score": 0.448
+   },
+   {
+    "begin": 133.721,
+    "end": 136.006,
+    "content": "Took a risk the reward was higher",
+    "confidence": 0.571,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 133.721,
+      "end": 134.144,
+      "content": "Took"
+     },
+     {
+      "begin": 134.184,
+      "end": 134.204,
+      "content": "a"
+     },
+     {
+      "begin": 134.285,
+      "end": 134.405,
+      "content": "risk"
+     },
+     {
+      "begin": 134.446,
+      "end": 134.526,
+      "content": "the"
+     },
+     {
+      "begin": 134.607,
+      "end": 135.473,
+      "content": "reward"
+     },
+     {
+      "begin": 135.493,
+      "end": 135.594,
+      "content": "was"
+     },
+     {
+      "begin": 135.634,
+      "end": 136.006,
+      "content": "higher"
+     }
+    ],
+    "align_score": 0.473
+   },
+   {
+    "begin": 136.006,
+    "end": 137.12,
+    "content": "All these missions I’m bored of lining",
+    "confidence": 0.571,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 136.006,
+      "end": 136.087,
+      "content": "All"
+     },
+     {
+      "begin": 136.128,
+      "end": 136.228,
+      "content": "these"
+     },
+     {
+      "begin": 136.289,
+      "end": 136.672,
+      "content": "missions"
+     },
+     {
+      "begin": 136.773,
+      "end": 136.834,
+      "content": "I’m"
+     },
+     {
+      "begin": 136.935,
+      "end": 137.12,
+      "content": "bored"
+     },
+     {
+      "begin": 137.12,
+      "end": 137.12,
+      "content": "of"
+     },
+     {
+      "begin": 137.12,
+      "end": 137.12,
+      "content": "lining"
+     }
+    ],
+    "align_score": 0.589
+   },
+   {
+    "begin": 137.12,
+    "end": 139.445,
+    "content": "then my shit ain't",
+    "confidence": 0.239,
+    "mismatch": true,
+    "section": "Verse",
+    "heard": "then my shit ain't",
+    "sheet": "Am I mixy? Border lining",
+    "words": [
+     {
+      "begin": 137.12,
+      "end": 137.241,
+      "content": "then"
+     },
+     {
+      "begin": 137.745,
+      "end": 137.865,
+      "content": "my"
+     },
+     {
+      "begin": 138.087,
+      "end": 138.409,
+      "content": "shit"
+     },
+     {
+      "begin": 138.772,
+      "end": 139.445,
+      "content": "ain't"
+     }
+    ],
+    "align_score": 0.462
+   },
+   {
+    "begin": 139.445,
+    "end": 141.105,
+    "content": "Going dum because I know a lil something",
+    "confidence": 0.83,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 139.445,
+      "end": 139.646,
+      "content": "Going"
+     },
+     {
+      "begin": 139.686,
+      "end": 139.828,
+      "content": "dum"
+     },
+     {
+      "begin": 139.888,
+      "end": 140.15,
+      "content": "because"
+     },
+     {
+      "begin": 140.251,
+      "end": 140.271,
+      "content": "I"
+     },
+     {
+      "begin": 140.331,
+      "end": 140.492,
+      "content": "know"
+     },
+     {
+      "begin": 140.512,
+      "end": 140.533,
+      "content": "a"
+     },
+     {
+      "begin": 140.573,
+      "end": 140.714,
+      "content": "lil"
+     },
+     {
+      "begin": 140.815,
+      "end": 141.105,
+      "content": "something"
+     }
+    ],
+    "align_score": 0.673
+   },
+   {
+    "begin": 141.105,
+    "end": 142.604,
+    "content": "Pull a card they wore I clone for fun",
+    "confidence": 0.444,
+    "mismatch": true,
+    "section": "Verse",
+    "heard": "the a to the",
+    "words": [
+     {
+      "begin": 141.105,
+      "end": 141.266,
+      "content": "Pull"
+     },
+     {
+      "begin": 141.367,
+      "end": 141.387,
+      "content": "a"
+     },
+     {
+      "begin": 141.448,
+      "end": 141.629,
+      "content": "card"
+     },
+     {
+      "begin": 141.67,
+      "end": 141.75,
+      "content": "they"
+     },
+     {
+      "begin": 141.811,
+      "end": 141.952,
+      "content": "wore"
+     },
+     {
+      "begin": 141.992,
+      "end": 142.013,
+      "content": "I"
+     },
+     {
+      "begin": 142.093,
+      "end": 142.416,
+      "content": "clone"
+     },
+     {
+      "begin": 142.537,
+      "end": 142.604,
+      "content": "for"
+     },
+     {
+      "begin": 142.604,
+      "end": 142.604,
+      "content": "fun"
+     }
+    ],
+    "align_score": 0.49
+   },
+   {
+    "begin": 142.604,
+    "end": 144.162,
+    "content": "I don’t knuckle up or roll with punches",
+    "confidence": 0.589,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 142.604,
+      "end": 142.624,
+      "content": "I"
+     },
+     {
+      "begin": 142.866,
+      "end": 143.027,
+      "content": "don’t"
+     },
+     {
+      "begin": 143.188,
+      "end": 143.45,
+      "content": "knuckle"
+     },
+     {
+      "begin": 143.571,
+      "end": 143.631,
+      "content": "up"
+     },
+     {
+      "begin": 143.712,
+      "end": 143.752,
+      "content": "or"
+     },
+     {
+      "begin": 143.893,
+      "end": 144.074,
+      "content": "roll"
+     },
+     {
+      "begin": 144.162,
+      "end": 144.162,
+      "content": "with"
+     },
+     {
+      "begin": 144.162,
+      "end": 144.162,
+      "content": "punches"
+     }
+    ],
+    "align_score": 0.421
+   },
+   {
+    "begin": 144.162,
+    "end": 146.307,
+    "content": "Bucka bucka bucka no discussion",
+    "confidence": 0.73,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 144.162,
+      "end": 144.444,
+      "content": "Bucka"
+     },
+     {
+      "begin": 144.585,
+      "end": 144.988,
+      "content": "bucka"
+     },
+     {
+      "begin": 145.189,
+      "end": 145.451,
+      "content": "bucka"
+     },
+     {
+      "begin": 145.552,
+      "end": 145.612,
+      "content": "no"
+     },
+     {
+      "begin": 145.733,
+      "end": 146.307,
+      "content": "discussion"
+     }
+    ],
+    "align_score": 0.593
+   },
+   {
+    "begin": 146.307,
+    "end": 147.96,
+    "content": "Till im up I can’t afford a conscience",
+    "confidence": 0.578,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 146.307,
+      "end": 146.448,
+      "content": "Till"
+     },
+     {
+      "begin": 146.508,
+      "end": 146.549,
+      "content": "im"
+     },
+     {
+      "begin": 146.649,
+      "end": 146.75,
+      "content": "up"
+     },
+     {
+      "begin": 146.811,
+      "end": 146.831,
+      "content": "I"
+     },
+     {
+      "begin": 146.911,
+      "end": 147.113,
+      "content": "can’t"
+     },
+     {
+      "begin": 147.153,
+      "end": 147.456,
+      "content": "afford"
+     },
+     {
+      "begin": 147.516,
+      "end": 147.536,
+      "content": "a"
+     },
+     {
+      "begin": 147.637,
+      "end": 147.96,
+      "content": "conscience"
+     }
+    ],
+    "align_score": 0.635
+   },
+   {
+    "begin": 148.024,
+    "end": 149.496,
+    "content": "Big combustion melt the murder gun",
+    "confidence": 0.755,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 148.024,
+      "end": 148.145,
+      "content": "Big"
+     },
+     {
+      "begin": 148.186,
+      "end": 148.589,
+      "content": "combustion"
+     },
+     {
+      "begin": 148.609,
+      "end": 148.73,
+      "content": "melt"
+     },
+     {
+      "begin": 148.79,
+      "end": 148.851,
+      "content": "the"
+     },
+     {
+      "begin": 148.952,
+      "end": 149.193,
+      "content": "murder"
+     },
+     {
+      "begin": 149.355,
+      "end": 149.496,
+      "content": "gun"
+     }
+    ],
+    "align_score": 0.493
+   },
+   {
+    "begin": 149.664,
+    "end": 151.563,
+    "content": "Hit the button on the Porsche and gun it",
+    "confidence": 0.889,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 149.664,
+      "end": 149.785,
+      "content": "Hit"
+     },
+     {
+      "begin": 149.845,
+      "end": 149.926,
+      "content": "the"
+     },
+     {
+      "begin": 150.007,
+      "end": 150.309,
+      "content": "button"
+     },
+     {
+      "begin": 150.369,
+      "end": 150.429,
+      "content": "on"
+     },
+     {
+      "begin": 150.47,
+      "end": 150.53,
+      "content": "the"
+     },
+     {
+      "begin": 150.611,
+      "end": 150.893,
+      "content": "Porsche"
+     },
+     {
+      "begin": 150.913,
+      "end": 151.013,
+      "content": "and"
+     },
+     {
+      "begin": 151.094,
+      "end": 151.235,
+      "content": "gun"
+     },
+     {
+      "begin": 151.563,
+      "end": 151.563,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.596
+   },
+   {
+    "begin": 151.563,
+    "end": 154.94,
+    "content": "If raided by opps I got backups raid I",
+    "confidence": 0.63,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 151.563,
+      "end": 151.624,
+      "content": "If"
+     },
+     {
+      "begin": 151.764,
+      "end": 152.066,
+      "content": "raided"
+     },
+     {
+      "begin": 152.166,
+      "end": 152.367,
+      "content": "by"
+     },
+     {
+      "begin": 152.548,
+      "end": 152.789,
+      "content": "opps"
+     },
+     {
+      "begin": 153.171,
+      "end": 153.191,
+      "content": "I"
+     },
+     {
+      "begin": 153.291,
+      "end": 153.412,
+      "content": "got"
+     },
+     {
+      "begin": 153.472,
+      "end": 153.833,
+      "content": "backups"
+     },
+     {
+      "begin": 154.135,
+      "end": 154.557,
+      "content": "raid"
+     },
+     {
+      "begin": 154.94,
+      "end": 154.94,
+      "content": "I"
+     }
+    ],
+    "align_score": 0.608
+   },
+   {
+    "begin": 154.94,
+    "end": 157.52,
+    "content": "Lay low at the hot site equipped like my main site",
+    "confidence": 0.537,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 154.94,
+      "end": 155.141,
+      "content": "Lay"
+     },
+     {
+      "begin": 155.242,
+      "end": 155.322,
+      "content": "low"
+     },
+     {
+      "begin": 155.483,
+      "end": 155.523,
+      "content": "at"
+     },
+     {
+      "begin": 155.644,
+      "end": 155.765,
+      "content": "the"
+     },
+     {
+      "begin": 155.865,
+      "end": 156.067,
+      "content": "hot"
+     },
+     {
+      "begin": 156.207,
+      "end": 156.55,
+      "content": "site"
+     },
+     {
+      "begin": 156.731,
+      "end": 157.113,
+      "content": "equipped"
+     },
+     {
+      "begin": 157.153,
+      "end": 157.254,
+      "content": "like"
+     },
+     {
+      "begin": 157.294,
+      "end": 157.395,
+      "content": "my"
+     },
+     {
+      "begin": 157.515,
+      "end": 157.52,
+      "content": "main"
+     },
+     {
+      "begin": 157.52,
+      "end": 157.52,
+      "content": "site"
+     }
+    ],
+    "align_score": 0.482
+   },
+   {
+    "begin": 157.52,
+    "end": 161.523,
+    "content": "They get the drop again we dip off to the warm si",
+    "confidence": 0.583,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 157.52,
+      "end": 158.063,
+      "content": "They"
+     },
+     {
+      "begin": 158.645,
+      "end": 158.806,
+      "content": "get"
+     },
+     {
+      "begin": 158.886,
+      "end": 158.947,
+      "content": "the"
+     },
+     {
+      "begin": 159.027,
+      "end": 159.288,
+      "content": "drop"
+     },
+     {
+      "begin": 159.389,
+      "end": 159.851,
+      "content": "again"
+     },
+     {
+      "begin": 159.951,
+      "end": 160.012,
+      "content": "we"
+     },
+     {
+      "begin": 160.112,
+      "end": 160.313,
+      "content": "dip"
+     },
+     {
+      "begin": 160.474,
+      "end": 160.655,
+      "content": "off"
+     },
+     {
+      "begin": 160.675,
+      "end": 160.735,
+      "content": "to"
+     },
+     {
+      "begin": 160.795,
+      "end": 160.916,
+      "content": "the"
+     },
+     {
+      "begin": 161.016,
+      "end": 161.237,
+      "content": "warm"
+     },
+     {
+      "begin": 161.358,
+      "end": 161.523,
+      "content": "si"
+     }
+    ],
+    "align_score": 0.553
+   },
+   {
+    "begin": 161.523,
+    "end": 164.541,
+    "content": "it’s not as well equipped but the cost to restore is light",
+    "confidence": 0.74,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 161.523,
+      "end": 162.025,
+      "content": "it’s"
+     },
+     {
+      "begin": 162.125,
+      "end": 162.306,
+      "content": "not"
+     },
+     {
+      "begin": 162.367,
+      "end": 162.427,
+      "content": "as"
+     },
+     {
+      "begin": 162.507,
+      "end": 162.668,
+      "content": "well"
+     },
+     {
+      "begin": 162.748,
+      "end": 163.191,
+      "content": "equipped"
+     },
+     {
+      "begin": 163.351,
+      "end": 163.492,
+      "content": "but"
+     },
+     {
+      "begin": 163.552,
+      "end": 163.613,
+      "content": "the"
+     },
+     {
+      "begin": 163.733,
+      "end": 164.055,
+      "content": "cost"
+     },
+     {
+      "begin": 164.095,
+      "end": 164.155,
+      "content": "to"
+     },
+     {
+      "begin": 164.215,
+      "end": 164.541,
+      "content": "restore"
+     },
+     {
+      "begin": 164.541,
+      "end": 164.541,
+      "content": "is"
+     },
+     {
+      "begin": 164.541,
+      "end": 164.541,
+      "content": "light"
+     }
+    ],
+    "align_score": 0.667
+   },
+   {
+    "begin": 164.541,
+    "end": 168.519,
+    "content": "It’s better than the cold site that’s a bare bone site",
+    "confidence": 0.801,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 164.541,
+      "end": 164.722,
+      "content": "It’s"
+     },
+     {
+      "begin": 165.485,
+      "end": 165.807,
+      "content": "better"
+     },
+     {
+      "begin": 165.867,
+      "end": 166.008,
+      "content": "than"
+     },
+     {
+      "begin": 166.128,
+      "end": 166.208,
+      "content": "the"
+     },
+     {
+      "begin": 166.329,
+      "end": 166.63,
+      "content": "cold"
+     },
+     {
+      "begin": 166.751,
+      "end": 167.012,
+      "content": "site"
+     },
+     {
+      "begin": 167.173,
+      "end": 167.434,
+      "content": "that’s"
+     },
+     {
+      "begin": 167.515,
+      "end": 167.535,
+      "content": "a"
+     },
+     {
+      "begin": 167.595,
+      "end": 167.796,
+      "content": "bare"
+     },
+     {
+      "begin": 167.856,
+      "end": 168.137,
+      "content": "bone"
+     },
+     {
+      "begin": 168.258,
+      "end": 168.519,
+      "content": "site"
+     }
+    ],
+    "align_score": 0.625
+   },
+   {
+    "begin": 168.704,
+    "end": 171.882,
+    "content": "The cost to restore is high and cost even more time",
+    "confidence": 0.698,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 168.704,
+      "end": 168.784,
+      "content": "The"
+     },
+     {
+      "begin": 168.884,
+      "end": 169.165,
+      "content": "cost"
+     },
+     {
+      "begin": 169.246,
+      "end": 169.286,
+      "content": "to"
+     },
+     {
+      "begin": 169.366,
+      "end": 169.828,
+      "content": "restore"
+     },
+     {
+      "begin": 169.868,
+      "end": 169.909,
+      "content": "is"
+     },
+     {
+      "begin": 169.989,
+      "end": 170.25,
+      "content": "high"
+     },
+     {
+      "begin": 170.29,
+      "end": 170.571,
+      "content": "and"
+     },
+     {
+      "begin": 170.612,
+      "end": 170.873,
+      "content": "cost"
+     },
+     {
+      "begin": 171.013,
+      "end": 171.154,
+      "content": "even"
+     },
+     {
+      "begin": 171.274,
+      "end": 171.535,
+      "content": "more"
+     },
+     {
+      "begin": 171.676,
+      "end": 171.882,
+      "content": "time"
+     }
+    ],
+    "align_score": 0.825
+   },
+   {
+    "begin": 171.882,
+    "end": 175.437,
+    "content": "I made this for my troubled shooters show em the storage types",
+    "confidence": 0.658,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 171.882,
+      "end": 171.902,
+      "content": "I"
+     },
+     {
+      "begin": 172.384,
+      "end": 172.545,
+      "content": "made"
+     },
+     {
+      "begin": 172.585,
+      "end": 172.685,
+      "content": "this"
+     },
+     {
+      "begin": 172.746,
+      "end": 172.866,
+      "content": "for"
+     },
+     {
+      "begin": 172.967,
+      "end": 173.047,
+      "content": "my"
+     },
+     {
+      "begin": 173.188,
+      "end": 173.529,
+      "content": "troubled"
+     },
+     {
+      "begin": 173.609,
+      "end": 173.971,
+      "content": "shooters"
+     },
+     {
+      "begin": 174.011,
+      "end": 174.313,
+      "content": "show"
+     },
+     {
+      "begin": 174.353,
+      "end": 174.393,
+      "content": "em"
+     },
+     {
+      "begin": 174.473,
+      "end": 174.534,
+      "content": "the"
+     },
+     {
+      "begin": 174.614,
+      "end": 175.036,
+      "content": "storage"
+     },
+     {
+      "begin": 175.116,
+      "end": 175.437,
+      "content": "types"
+     }
+    ],
+    "align_score": 0.666
+   },
+   {
+    "begin": 175.784,
+    "end": 178.886,
+    "content": "Till I got em troubleshooting Mafia corporate ties",
+    "confidence": 0.709,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 175.784,
+      "end": 175.945,
+      "content": "Till"
+     },
+     {
+      "begin": 176.025,
+      "end": 176.045,
+      "content": "I"
+     },
+     {
+      "begin": 176.166,
+      "end": 176.347,
+      "content": "got"
+     },
+     {
+      "begin": 176.427,
+      "end": 176.467,
+      "content": "em"
+     },
+     {
+      "begin": 176.548,
+      "end": 177.311,
+      "content": "troubleshooting"
+     },
+     {
+      "begin": 177.412,
+      "end": 177.874,
+      "content": "Mafia"
+     },
+     {
+      "begin": 177.994,
+      "end": 178.657,
+      "content": "corporate"
+     },
+     {
+      "begin": 178.886,
+      "end": 178.886,
+      "content": "ties"
+     }
+    ],
+    "align_score": 0.66
+   },
+   {
+    "begin": 178.886,
+    "end": 180.209,
+    "content": "Fuck a hundred, stay fortune -fied I wish you",
+    "confidence": 0.636,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 178.886,
+      "end": 179.047,
+      "content": "Fuck"
+     },
+     {
+      "begin": 179.067,
+      "end": 179.087,
+      "content": "a"
+     },
+     {
+      "begin": 179.148,
+      "end": 179.309,
+      "content": "hundred,"
+     },
+     {
+      "begin": 179.511,
+      "end": 179.692,
+      "content": "stay"
+     },
+     {
+      "begin": 179.773,
+      "end": 179.994,
+      "content": "fortune"
+     },
+     {
+      "begin": 180.014,
+      "end": 180.135,
+      "content": "-fied"
+     },
+     {
+      "begin": 180.155,
+      "end": 180.176,
+      "content": "I"
+     },
+     {
+      "begin": 180.209,
+      "end": 180.209,
+      "content": "wish"
+     },
+     {
+      "begin": 180.209,
+      "end": 180.209,
+      "content": "you"
+     }
+    ],
+    "added": true,
+    "align_score": 0.328
+   },
+   {
+    "begin": 180.209,
+    "end": 180.553,
+    "content": "five.",
+    "confidence": 0.741,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 180.209,
+      "end": 180.553,
+      "content": "five."
+     }
+    ],
+    "added": true,
+    "align_score": 0.499
+   }
+  ]
+ }
+}

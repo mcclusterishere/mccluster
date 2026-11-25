@@ -1,0 +1,31 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {handleProductWidgetReadiness as handle,PRODUCT_WIDGET_READINESS as path} from '../src/product-widget-readiness.js';
+import {__resetCapabilityCache} from '../src/lib/capabilities.js';
+const org='11111111-1111-4111-8111-111111111111',uid='22222222-2222-4222-8222-222222222222';
+const env={SUPABASE_URL:'https://db.fixture.invalid',SUPABASE_SERVICE_ROLE_KEY:'fixture-only',CREATOR_STARTER_MONTHLY_PRICE_ID:'price_fixture'};
+const policy={kind:'subscription',configured:true,capability:'fixture.read',plans:{'fixture-plan':['CREATOR_STARTER_MONTHLY_PRICE_ID']}};
+function fixture(t,options={}){
+ __resetCapabilityCache();const previous=globalThis.fetch,calls=[],registry=[];
+ globalThis.fetch=async(url,init={})=>{const u=new URL(url);calls.push(u);assert.equal(init.method||'GET','GET');assert.equal(u.origin,'https://db.fixture.invalid');
+  if(u.pathname.endsWith('/org_members'))return Response.json(options.members??[{role:'owner',orgs:{id:org,enabled:true}}]);
+  if(u.pathname.endsWith('/control_role_capabilities'))return Response.json([{role:'owner',capability:'fixture.read',allowed:options.capability!==false}]);
+  assert.equal(u.pathname,'/rest/v1/creator_billing_subscriptions');assert.equal(u.searchParams.get('org_id'),'eq.'+org);return Response.json(options.rows??[]);
+ };
+ t.after(()=>{globalThis.fetch=previous;__resetCapabilityCache();});
+ const app=options.app??{app_key:'fixture-product',name:'Fixture product',enabled:true,settings:{privateCredential:'must-not-leak',widget_access_v1:{version:1,widgets:{summary:policy}}}};
+ const deps={requireHouseOwner:async()=>{if(options.denied)throw Object.assign(Error('Owner required'),{status:options.denied});return {id:uid};},read:async p=>{registry.push(p);if(options.failure)throw Error('private backend detail');return options.registry??[app];}};
+ const req=(body)=>new Request('https://api.fixture.invalid'+path+(body?'':'?org_id='+org),body?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}:{});
+ return {calls,registry,deps,app,req};
+}
+for(const code of [401,403])test('owner gate '+code+' runs before registry or billing',async t=>{const f=fixture(t,{denied:code});const r=await handle(f.req(),env,f.deps);assert.equal(r.status,code);assert.equal(f.calls.length,0);assert.equal(f.registry.length,0);});
+test('house owner still requires membership in selected tenant',async t=>{const f=fixture(t,{members:[]});assert.equal((await handle(f.req(),env,f.deps)).status,403);assert.equal(f.registry.length,0);});
+test('list returns only safe registry fields and no-store',async t=>{const f=fixture(t);const r=await handle(f.req(),env,f.deps);assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'private, no-store');const d=await r.json();assert.deepEqual(Object.keys(d.apps[0]),['app_key','name','enabled']);assert.ok(!JSON.stringify(d).includes('must-not-leak'));});
+test('no catalog is unconfigured, not locked or granted',async t=>{const f=fixture(t,{app:{app_key:'fixture-product',enabled:true,settings:{}}});const d=await (await handle(f.req({org_id:org,app_key:'fixture-product'}),env,f.deps)).json();assert.equal(d.state,'unconfigured');assert.equal(d.reason,'widget_policy_missing');});
+test('configured widget uses canonical gate, actual lock remains during plan preview',async t=>{const f=fixture(t);const d=await (await handle(f.req({org_id:org,app_key:'fixture-product',widget_id:'summary',preview_plan:'fixture-plan'}),env,f.deps)).json();assert.equal(d.state,'inspected');assert.equal(d.widgets[0].state,'locked');assert.equal(d.widgets[0].allowed,false);assert.equal(d.widgets[0].presentation.grants_access,false);assert.ok(!JSON.stringify(d).includes('price_fixture'));});
+test('capability refusal hides plan presentation',async t=>{const f=fixture(t,{capability:false});const d=await (await handle(f.req({org_id:org,app_key:'fixture-product'}),env,f.deps)).json();assert.equal(d.widgets[0].state,'forbidden');assert.deepEqual(d.widgets[0].preview_plans,[]);});
+test('active plan permits only registry inspection, no product-data action',async t=>{const f=fixture(t,{rows:[{org_id:org,status:'active',stripe_price_id:'price_fixture',current_period_end:'2099-01-01'}]});const d=await (await handle(f.req({org_id:org,app_key:'fixture-product'}),env,f.deps)).json();assert.equal(d.widgets[0].allowed,true);assert.match(d.next,/independently enforce/);assert.equal(d.read_only,true);});
+for(const enabled of [null,false])test('product enablement '+enabled+' cannot be bypassed',async t=>{const f=fixture(t,{app:{app_key:'fixture-product',enabled}});const d=await (await handle(f.req({org_id:org,app_key:'fixture-product'}),env,f.deps)).json();assert.equal(d.state,enabled===false?'forbidden':'unavailable');assert.equal(d.widgets.length,0);});
+test('System remains internal despite a registered subscription policy',async t=>{const f=fixture(t);f.app.app_key='system';const d=await (await handle(f.req({org_id:org,app_key:'system'}),env,f.deps)).json();assert.equal(d.widgets[0].state,'unconfigured');assert.equal(d.widgets[0].allowed,false);});
+test('unknown fields cannot supply identity, catalog or grant changes',async t=>{const f=fixture(t);for(const extra of [{user_id:uid},{catalog:{}},{enabled:true},{price:'price_fixture'}])assert.equal((await handle(f.req({org_id:org,app_key:'fixture-product',...extra}),env,f.deps)).status,400);assert.equal(f.registry.length,0);});
+test('unsupported methods, foreign routes and oversized input',async t=>{const f=fixture(t);assert.equal(await handle(new Request('https://api.fixture.invalid/other'),env,f.deps),null);assert.equal((await handle(new Request('https://api.fixture.invalid'+path,{method:'DELETE'}),env,f.deps)).status,405);assert.equal((await handle(f.req({org_id:org,app_key:'x'.repeat(2100)}),env,f.deps)).status,413);});
+test('failed registry read exposes no private backend details',async t=>{const f=fixture(t,{failure:true});const r=await handle(f.req(),env,f.deps);assert.equal(r.status,503);assert.ok(!(await r.text()).includes('private backend detail'));});

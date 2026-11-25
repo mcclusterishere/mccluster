@@ -98,12 +98,12 @@
       "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
       "b1_access_policy": {
         "physical_stop": true,
-        "visible_in_normal_floor_selector": false,
+        "visible_in_normal_floor_selector": true,
         "authorized_roles": [
-          "mccluster_house_owner",
-          "underground_operations_admin"
+          "everyone"
         ],
-        "ordinary_equity_uprise_admin_sufficient": false
+        "ordinary_equity_uprise_admin_sufficient": true,
+        "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
       }
     },
     "service_freight_elevator": {
@@ -190,8 +190,9 @@
       "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
       "b1_access_policy": {
         "physical_connection": true,
-        "floor1_downward_entry": "access-controlled-restricted",
-        "b1_to_floor1_egress": "preserved"
+        "floor1_downward_entry": "open-normal-use; discharge-direction barrier engages only in evacuation mode",
+        "b1_to_floor1_egress": "preserved",
+        "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
       }
     },
     "stair_b": {
@@ -242,8 +243,9 @@
       "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
       "b1_access_policy": {
         "physical_connection": true,
-        "floor1_downward_entry": "access-controlled-restricted",
-        "b1_to_floor1_egress": "preserved"
+        "floor1_downward_entry": "open-normal-use; discharge-direction barrier engages only in evacuation mode",
+        "b1_to_floor1_egress": "preserved",
+        "owner_decision": "Owner, 2026-11-03: \"We can have B1. Everybody's welcome to B1 ... Make it normal.\""
       }
     },
     "mep_riser": {

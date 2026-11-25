@@ -1,0 +1,5896 @@
+{
+  "schema_version": "1.0.0",
+  "status": "diagnostic_not_visual_approval",
+  "not_for_construction": true,
+  "scope": "Authored workstation chassis and monitor stands against the actual B1-L7 furnished floor meshes; monitor-panel pair intersections",
+  "limitations": [
+    "Five base samples establish geometric contact only, not structural or installation safety.",
+    "Monitor pair AABBs are exact only for the current axis-aligned rectangular display panels.",
+    "No inferred surface is an approved mount binding. Other electronics, cables, rack-room conflicts and decorative monitors require separate review.",
+    "No vendor accuracy, sponsor relationship, physical ownership, live connection or visual approval is asserted."
+  ],
+  "contact_tolerance_ft": 0.020833333333333332,
+  "sources": [
+    {
+      "path": "electronics/generated/equity-uprise-device-components-v1.json",
+      "sha256": "bb770791a28978eb155ce31a84fbae1ee310a710f3997cab2f53012f57d75fea"
+    },
+    {
+      "path": "electronics/generated/equity-uprise-electronics-fabric-v1.glb",
+      "sha256": "5dbb51b5a9fd786be055aae30ee401a9c5f8d8a701566ceef631fade075a2d42"
+    },
+    {
+      "path": "building-core-v2.json",
+      "sha256": "a7c25e51ce146ffc165701f05740af7014f33be7108bc159ecf1f6b046e6c267"
+    },
+    {
+      "path": "generated/equity-uprise-basement-b1-core-v2.glb",
+      "sha256": "b054de2c5e02d15c17a14d5570798defe0b8daee27411c8d41dc60a01325a6e8"
+    },
+    {
+      "path": "generated/equity-uprise-floor-01-core-v2.glb",
+      "sha256": "b4d5b220ef3a51d6b33acb11a68145fc4700d14cc8ed9567d40d1f3debeee53c"
+    },
+    {
+      "path": "generated/equity-uprise-floor-02-core-v2.glb",
+      "sha256": "25a8186435173585c139b5f583a67eb03457438d6c90886ef0cef3aec2426329"
+    },
+    {
+      "path": "generated/equity-uprise-floor-03-core-v2.glb",
+      "sha256": "79725a2ed46731ea796778690fffce4f70023bbd7e61676c1b3bb1bb413e59bd"
+    },
+    {
+      "path": "generated/equity-uprise-floor-04-core-v2.glb",
+      "sha256": "53146fb2eef996196b41bf2e39e4bba6549df1987951eb76175fa4bc805a25fc"
+    },
+    {
+      "path": "generated/equity-uprise-floor-05-core-v2.glb",
+      "sha256": "e1ae2b2bfef0736d6ff94996c96a2d9bcd7c205eee3fd59f9dfdd6fee9ad7533"
+    },
+    {
+      "path": "generated/equity-uprise-floor-06-core-v2.glb",
+      "sha256": "fe46cff7ef44e3d9e2896b213473ed9b3efba064694a2c63df98ba22e04c5e96"
+    },
+    {
+      "path": "generated/equity-uprise-floor-07-core-v2.glb",
+      "sha256": "aee60fb4828a7dc1f907e5d8ac326fa7140b03ff6c556b10f94d61ca1773fd67"
+    }
+  ],
+  "summary": {
+    "hosts": 36,
+    "monitors": 62,
+    "unresolved_support_contacts": 98,
+    "monitor_panel_intersections": 33
+  },
+  "passed": false,
+  "floors": [
+    {
+      "level": 0,
+      "level_id": "B1",
+      "hosts": 4,
+      "monitors": 8,
+      "monitor_panel_intersections": [
+        {
+          "asset_ids": [
+            "B1-USER-MON-01-01",
+            "B1-USER-MON-01-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "B1-USER-MON-01-01",
+            "B1-USER-MON-02-01"
+          ],
+          "panel_overlap_ft": [
+            0.52,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "B1-USER-MON-01-01",
+            "B1-USER-MON-03-01"
+          ],
+          "panel_overlap_ft": [
+            0.52,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "B1-USER-MON-01-01",
+            "B1-USER-MON-03-02"
+          ],
+          "panel_overlap_ft": [
+            1.22,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "B1-USER-MON-01-02",
+            "B1-USER-MON-02-01"
+          ],
+          "panel_overlap_ft": [
+            1.22,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "B1-USER-MON-01-02",
+            "B1-USER-MON-02-02"
+          ],
+          "panel_overlap_ft": [
+            0.52,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "B1-USER-MON-01-02",
+            "B1-USER-MON-03-02"
+          ],
+          "panel_overlap_ft": [
+            0.52,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "B1-USER-MON-02-01",
+            "B1-USER-MON-02-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "B1-USER-MON-02-01",
+            "B1-USER-MON-03-02"
+          ],
+          "panel_overlap_ft": [
+            0.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "B1-USER-MON-03-01",
+            "B1-USER-MON-03-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "B1-USER-MON-04-01",
+            "B1-USER-MON-04-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        }
+      ],
+      "support_contacts": [
+        {
+          "asset_id": "B1-USER-MON-01-01",
+          "asset_type": "monitor",
+          "mesh_node": "B1-USER-MON-01-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.641,
+                39.841
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                39.841
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                40.319
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.641,
+                40.319
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                40.08
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-MON-01-02",
+          "asset_type": "monitor",
+          "mesh_node": "B1-USER-MON-01-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                36.341,
+                39.841
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.059,
+                39.841
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.059,
+                40.319
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.341,
+                40.319
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.7,
+                40.08
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-MON-02-01",
+          "asset_type": "monitor",
+          "mesh_node": "B1-USER-MON-02-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                36.841,
+                39.841
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.559,
+                39.841
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.559,
+                40.319
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.841,
+                40.319
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.2,
+                40.08
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-MON-02-02",
+          "asset_type": "monitor",
+          "mesh_node": "B1-USER-MON-02-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                37.541,
+                39.841
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.259,
+                39.841
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.259,
+                40.319
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.541,
+                40.319
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.9,
+                40.08
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-MON-03-01",
+          "asset_type": "monitor",
+          "mesh_node": "B1-USER-MON-03-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                34.441,
+                39.841
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.159,
+                39.841
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.159,
+                40.319
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.441,
+                40.319
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.8,
+                40.08
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-MON-03-02",
+          "asset_type": "monitor",
+          "mesh_node": "B1-USER-MON-03-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.141,
+                39.841
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.859,
+                39.841
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.859,
+                40.319
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.06667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.141,
+                40.319
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.5,
+                40.08
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-MON-04-01",
+          "asset_type": "monitor",
+          "mesh_node": "B1-USER-MON-04-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.641,
+                41.041
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 1.74667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                41.041
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                41.519
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.641,
+                41.519
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                41.28
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-MON-04-02",
+          "asset_type": "monitor",
+          "mesh_node": "B1-USER-MON-04-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                36.341,
+                41.041
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.059,
+                41.041
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.059,
+                41.519
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.341,
+                41.519
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.7,
+                41.28
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-WS-01",
+          "asset_type": "workstation",
+          "mesh_node": "B1-USER-WS-01",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.621,
+                39.441
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                39.441
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                40.559
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.621,
+                40.559
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 0.75667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                40.0
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-WS-02",
+          "asset_type": "workstation",
+          "mesh_node": "B1-USER-WS-02",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                36.821,
+                39.441
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.579,
+                39.441
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.579,
+                40.559
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.821,
+                40.559
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.2,
+                40.0
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-WS-03",
+          "asset_type": "workstation",
+          "mesh_node": "B1-USER-WS-03",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                34.421,
+                39.441
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.179,
+                39.441
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.179,
+                40.559
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 0.75667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.421,
+                40.559
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 0.75667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.8,
+                40.0
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 0.75667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "B1-USER-WS-04",
+          "asset_type": "workstation",
+          "mesh_node": "B1-USER-WS-04",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.621,
+                40.641
+              ],
+              "surface_node": "B1-LAB-CHAIRS-01-02::task_chair",
+              "gap_ft": 0.75667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                40.641
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                41.759
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.621,
+                41.759
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                41.2
+              ],
+              "surface_node": "B1-SLAB-01",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "level_id": "F1",
+      "hosts": 4,
+      "monitors": 4,
+      "monitor_panel_intersections": [],
+      "support_contacts": [
+        {
+          "asset_id": "F1-USER-MON-01-01",
+          "asset_type": "monitor",
+          "mesh_node": "F1-USER-MON-01-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.741,
+                44.016
+              ],
+              "surface_node": "F1-RECEPTION-DESK-01::plinth",
+              "gap_ft": 0.48,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.459,
+                44.016
+              ],
+              "surface_node": "F1-RECEPTION-DESK-01::plinth",
+              "gap_ft": 0.48,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.459,
+                44.494
+              ],
+              "surface_node": "F1-RECEPTION-DESK-01::plinth",
+              "gap_ft": 0.48,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.741,
+                44.494
+              ],
+              "surface_node": "F1-RECEPTION-DESK-01::plinth",
+              "gap_ft": 0.48,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.1,
+                44.255
+              ],
+              "surface_node": "F1-RECEPTION-DESK-01::plinth",
+              "gap_ft": 0.48,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F1-USER-MON-02-01",
+          "asset_type": "monitor",
+          "mesh_node": "F1-USER-MON-02-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                27.591,
+                35.441
+              ],
+              "surface_node": "F1-PASSPORT-TABLE-01::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                28.309,
+                35.441
+              ],
+              "surface_node": "F1-PASSPORT-TABLE-01::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                28.309,
+                35.919
+              ],
+              "surface_node": "F1-PASSPORT-TABLE-01::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                27.591,
+                35.919
+              ],
+              "surface_node": "F1-PASSPORT-TABLE-01::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                27.95,
+                35.68
+              ],
+              "surface_node": "F1-PASSPORT-TABLE-01::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F1-USER-MON-03-01",
+          "asset_type": "monitor",
+          "mesh_node": "F1-USER-MON-03-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                38.191,
+                40.641
+              ],
+              "surface_node": "F1-PASSPORT-TABLE-02::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.909,
+                40.641
+              ],
+              "surface_node": "F1-PASSPORT-TABLE-02::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.909,
+                41.119
+              ],
+              "surface_node": "F1-PASSPORT-TABLE-02::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.191,
+                41.119
+              ],
+              "surface_node": "F1-PASSPORT-TABLE-02::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.55,
+                40.88
+              ],
+              "surface_node": "F1-PASSPORT-TABLE-02::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F1-USER-MON-04-01",
+          "asset_type": "monitor",
+          "mesh_node": "F1-USER-MON-04-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.641,
+                39.041
+              ],
+              "surface_node": "F1-INTAKE-TABLE-01::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.359,
+                39.041
+              ],
+              "surface_node": "F1-INTAKE-TABLE-01::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.359,
+                39.519
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.641,
+                39.519
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.0,
+                39.28
+              ],
+              "surface_node": "F1-INTAKE-TABLE-01::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F1-USER-WS-01",
+          "asset_type": "workstation",
+          "mesh_node": "F1-USER-WS-01",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.721,
+                43.616
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.479,
+                43.616
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.479,
+                44.734
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.721,
+                44.734
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.1,
+                44.175
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F1-USER-WS-02",
+          "asset_type": "workstation",
+          "mesh_node": "F1-USER-WS-02",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                27.571,
+                35.041
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                28.329,
+                35.041
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                28.329,
+                36.159
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                27.571,
+                36.159
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                27.95,
+                35.6
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F1-USER-WS-03",
+          "asset_type": "workstation",
+          "mesh_node": "F1-USER-WS-03",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                38.171,
+                40.241
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.929,
+                40.241
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.929,
+                41.359
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.171,
+                41.359
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.55,
+                40.8
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F1-USER-WS-04",
+          "asset_type": "workstation",
+          "mesh_node": "F1-USER-WS-04",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.621,
+                38.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.379,
+                38.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.379,
+                39.759
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.621,
+                39.759
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.0,
+                39.2
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "level_id": "F2",
+      "hosts": 2,
+      "monitors": 2,
+      "monitor_panel_intersections": [],
+      "support_contacts": [
+        {
+          "asset_id": "F2-USER-MON-01-01",
+          "asset_type": "monitor",
+          "mesh_node": "F2-USER-MON-01-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.641,
+                38.841
+              ],
+              "surface_node": "F2-FORUM-POWER-01::hub",
+              "gap_ft": 0.86,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                38.841
+              ],
+              "surface_node": "F2-FORUM-POWER-01::hub",
+              "gap_ft": 0.86,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                39.319
+              ],
+              "surface_node": "F2-FORUM-POWER-01::hub",
+              "gap_ft": 0.86,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.641,
+                39.319
+              ],
+              "surface_node": "F2-FORUM-POWER-01::hub",
+              "gap_ft": 0.86,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                39.08
+              ],
+              "surface_node": "F2-FORUM-POWER-01::hub",
+              "gap_ft": 0.86,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F2-USER-MON-02-01",
+          "asset_type": "monitor",
+          "mesh_node": "F2-USER-MON-02-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                50.841,
+                26.341
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.559,
+                26.341
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.559,
+                26.819
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.841,
+                26.819
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.2,
+                26.58
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F2-USER-WS-01",
+          "asset_type": "workstation",
+          "mesh_node": "F2-USER-WS-01",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.621,
+                38.441
+              ],
+              "surface_node": "F2-FORUM-TABLE-01::table_round",
+              "gap_ft": 0.04833,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                38.441
+              ],
+              "surface_node": "F2-FORUM-TABLE-01::table_round",
+              "gap_ft": 0.04833,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                39.559
+              ],
+              "surface_node": "F2-FORUM-TABLE-01::table_round",
+              "gap_ft": 0.04833,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.621,
+                39.559
+              ],
+              "surface_node": "F2-FORUM-TABLE-01::table_round",
+              "gap_ft": 0.04833,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                39.0
+              ],
+              "surface_node": "F2-FORUM-TABLE-01::table_round",
+              "gap_ft": 0.04833,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F2-USER-WS-02",
+          "asset_type": "workstation",
+          "mesh_node": "F2-USER-WS-02",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                50.821,
+                25.941
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.579,
+                25.941
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.579,
+                27.059
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.821,
+                27.059
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.2,
+                26.5
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level": 3,
+      "level_id": "F3",
+      "hosts": 4,
+      "monitors": 4,
+      "monitor_panel_intersections": [],
+      "support_contacts": [
+        {
+          "asset_id": "F3-USER-MON-01-01",
+          "asset_type": "monitor",
+          "mesh_node": "F3-USER-MON-01-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.641,
+                40.841
+              ],
+              "surface_node": "F3-OPPORTUNITY-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                40.841
+              ],
+              "surface_node": "F3-OPPORTUNITY-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                41.319
+              ],
+              "surface_node": "F3-OPPORTUNITY-TABLE-01::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.641,
+                41.319
+              ],
+              "surface_node": "F3-OPPORTUNITY-TABLE-01::table_rect",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                41.08
+              ],
+              "surface_node": "F3-OPPORTUNITY-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F3-USER-MON-02-01",
+          "asset_type": "monitor",
+          "mesh_node": "F3-USER-MON-02-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.841,
+                9.841
+              ],
+              "surface_node": "F3-INTERVIEW-A-TABLE-01::table_round",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.559,
+                9.841
+              ],
+              "surface_node": "F3-INTERVIEW-A-TABLE-01::table_round",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.559,
+                10.319
+              ],
+              "surface_node": "F3-INTERVIEW-A-TABLE-01::table_round",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.841,
+                10.319
+              ],
+              "surface_node": "F3-INTERVIEW-A-TABLE-01::table_round",
+              "gap_ft": 0.91333,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.2,
+                10.08
+              ],
+              "surface_node": "F3-INTERVIEW-A-TABLE-01::table_round",
+              "gap_ft": 0.91333,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F3-USER-MON-03-01",
+          "asset_type": "monitor",
+          "mesh_node": "F3-USER-MON-03-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                20.441,
+                9.841
+              ],
+              "surface_node": "F3-INTERVIEW-B-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                21.159,
+                9.841
+              ],
+              "surface_node": "F3-INTERVIEW-B-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                21.159,
+                10.319
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                20.441,
+                10.319
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                20.8,
+                10.08
+              ],
+              "surface_node": "F3-INTERVIEW-B-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F3-USER-MON-04-01",
+          "asset_type": "monitor",
+          "mesh_node": "F3-USER-MON-04-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                49.641,
+                27.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.359,
+                27.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.359,
+                28.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                49.641,
+                28.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.0,
+                27.78
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F3-USER-WS-01",
+          "asset_type": "workstation",
+          "mesh_node": "F3-USER-WS-01",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.621,
+                40.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                40.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                41.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.621,
+                41.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                41.0
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F3-USER-WS-02",
+          "asset_type": "workstation",
+          "mesh_node": "F3-USER-WS-02",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.821,
+                9.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.579,
+                9.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.579,
+                10.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.821,
+                10.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.2,
+                10.0
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F3-USER-WS-03",
+          "asset_type": "workstation",
+          "mesh_node": "F3-USER-WS-03",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                20.421,
+                9.441
+              ],
+              "surface_node": "F3-INTERVIEW-B-TABLE-01::coffee_table",
+              "gap_ft": 1.00667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                21.179,
+                9.441
+              ],
+              "surface_node": "F3-INTERVIEW-B-TABLE-01::coffee_table",
+              "gap_ft": 1.00667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                21.179,
+                10.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                20.421,
+                10.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                20.8,
+                10.0
+              ],
+              "surface_node": "F3-INTERVIEW-B-TABLE-01::coffee_table",
+              "gap_ft": 1.00667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F3-USER-WS-04",
+          "asset_type": "workstation",
+          "mesh_node": "F3-USER-WS-04",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                49.621,
+                27.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.379,
+                27.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.379,
+                28.259
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                49.621,
+                28.259
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.0,
+                27.7
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "level_id": "F4",
+      "hosts": 8,
+      "monitors": 16,
+      "monitor_panel_intersections": [
+        {
+          "asset_ids": [
+            "F4-USER-MON-01-01",
+            "F4-USER-MON-01-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F4-USER-MON-02-01",
+            "F4-USER-MON-02-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F4-USER-MON-03-01",
+            "F4-USER-MON-03-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F4-USER-MON-04-01",
+            "F4-USER-MON-04-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F4-USER-MON-05-01",
+            "F4-USER-MON-05-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F4-USER-MON-06-01",
+            "F4-USER-MON-06-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F4-USER-MON-07-01",
+            "F4-USER-MON-07-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F4-USER-MON-08-01",
+            "F4-USER-MON-08-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        }
+      ],
+      "support_contacts": [
+        {
+          "asset_id": "F4-USER-MON-01-01",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-01-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                22.641,
+                8.341
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.359,
+                8.341
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.359,
+                8.819
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.641,
+                8.819
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.0,
+                8.58
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-01-02",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-01-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                23.341,
+                8.341
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                24.059,
+                8.341
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                24.059,
+                8.819
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.341,
+                8.819
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.7,
+                8.58
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-02-01",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-02-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                7.341,
+                6.841
+              ],
+              "surface_node": "F4-RECORDING-WORKSURFACE-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.059,
+                6.841
+              ],
+              "surface_node": "F4-RECORDING-WORKSURFACE-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.059,
+                7.319
+              ],
+              "surface_node": "F4-RECORDING-WORKSURFACE-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.341,
+                7.319
+              ],
+              "surface_node": "F4-RECORDING-WORKSURFACE-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.7,
+                7.08
+              ],
+              "surface_node": "F4-RECORDING-WORKSURFACE-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-02-02",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-02-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.041,
+                6.841
+              ],
+              "surface_node": "F4-RECORDING-WORKSURFACE-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.759,
+                6.841
+              ],
+              "surface_node": "F4-RECORDING-WORKSURFACE-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.759,
+                7.319
+              ],
+              "surface_node": "F4-RECORDING-WORKSURFACE-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.041,
+                7.319
+              ],
+              "surface_node": "F4-RECORDING-WORKSURFACE-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.4,
+                7.08
+              ],
+              "surface_node": "F4-RECORDING-WORKSURFACE-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-03-01",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-03-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                34.441,
+                42.841
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.159,
+                42.841
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.159,
+                43.319
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.441,
+                43.319
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.8,
+                43.08
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-03-02",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-03-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.141,
+                42.841
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.859,
+                42.841
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.859,
+                43.319
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.141,
+                43.319
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.5,
+                43.08
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-04-01",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-04-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                49.641,
+                27.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.359,
+                27.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.359,
+                28.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                49.641,
+                28.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.0,
+                27.78
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-04-02",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-04-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                50.341,
+                27.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.059,
+                27.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.059,
+                28.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.341,
+                28.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.7,
+                27.78
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-05-01",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-05-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                22.641,
+                7.141
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.359,
+                7.141
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.359,
+                7.619
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.641,
+                7.619
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.0,
+                7.38
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-05-02",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-05-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                23.341,
+                7.141
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                24.059,
+                7.141
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                24.059,
+                7.619
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.341,
+                7.619
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.7,
+                7.38
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-06-01",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-06-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                7.341,
+                8.041
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.059,
+                8.041
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.059,
+                8.519
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.341,
+                8.519
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.7,
+                8.28
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-06-02",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-06-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.041,
+                8.041
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.759,
+                8.041
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.759,
+                8.519
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.041,
+                8.519
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.4,
+                8.28
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-07-01",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-07-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                34.441,
+                44.041
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.159,
+                44.041
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.159,
+                44.519
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.441,
+                44.519
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.8,
+                44.28
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-07-02",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-07-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.141,
+                44.041
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.859,
+                44.041
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.859,
+                44.519
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.141,
+                44.519
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.5,
+                44.28
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.99667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-08-01",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-08-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                50.841,
+                25.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.559,
+                25.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.559,
+                25.619
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.841,
+                25.619
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.2,
+                25.38
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-MON-08-02",
+          "asset_type": "monitor",
+          "mesh_node": "F4-USER-MON-08-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                51.541,
+                25.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                52.259,
+                25.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                52.259,
+                25.619
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.541,
+                25.619
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.9,
+                25.38
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-WS-01",
+          "asset_type": "workstation",
+          "mesh_node": "F4-USER-WS-01",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                22.621,
+                7.941
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.379,
+                7.941
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.379,
+                9.059
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.621,
+                9.059
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.0,
+                8.5
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-WS-02",
+          "asset_type": "workstation",
+          "mesh_node": "F4-USER-WS-02",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                7.321,
+                6.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.079,
+                6.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.079,
+                7.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.321,
+                7.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.7,
+                7.0
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-WS-03",
+          "asset_type": "workstation",
+          "mesh_node": "F4-USER-WS-03",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                34.421,
+                42.441
+              ],
+              "surface_node": "F4-LISTENING-RUG-01::rug",
+              "gap_ft": 2.29833,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.179,
+                42.441
+              ],
+              "surface_node": "F4-LISTENING-RUG-01::rug",
+              "gap_ft": 2.29833,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.179,
+                43.559
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.00667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.421,
+                43.559
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.00667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.8,
+                43.0
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.00667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-WS-04",
+          "asset_type": "workstation",
+          "mesh_node": "F4-USER-WS-04",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                49.621,
+                27.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.379,
+                27.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.379,
+                28.259
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                49.621,
+                28.259
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.0,
+                27.7
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-WS-05",
+          "asset_type": "workstation",
+          "mesh_node": "F4-USER-WS-05",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                22.621,
+                6.741
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.379,
+                6.741
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.379,
+                7.859
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.621,
+                7.859
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.0,
+                7.3
+              ],
+              "surface_node": "F4-EDIT-DESK-01::desk",
+              "gap_ft": 0.0275,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-WS-06",
+          "asset_type": "workstation",
+          "mesh_node": "F4-USER-WS-06",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                7.321,
+                7.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.079,
+                7.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.079,
+                8.759
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.321,
+                8.759
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.7,
+                8.2
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-WS-07",
+          "asset_type": "workstation",
+          "mesh_node": "F4-USER-WS-07",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                34.421,
+                43.641
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.00667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.179,
+                43.641
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.00667,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.179,
+                44.759
+              ],
+              "surface_node": "F4-LISTENING-RUG-01::rug",
+              "gap_ft": 2.29833,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.421,
+                44.759
+              ],
+              "surface_node": "F4-LISTENING-RUG-01::rug",
+              "gap_ft": 2.29833,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                34.8,
+                44.2
+              ],
+              "surface_node": "F4-LISTENING-TABLE-01::coffee_table",
+              "gap_ft": 1.00667,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F4-USER-WS-08",
+          "asset_type": "workstation",
+          "mesh_node": "F4-USER-WS-08",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                50.821,
+                24.741
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.579,
+                24.741
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.579,
+                25.859
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.821,
+                25.859
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.2,
+                25.3
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "level_id": "F5",
+      "hosts": 8,
+      "monitors": 16,
+      "monitor_panel_intersections": [
+        {
+          "asset_ids": [
+            "F5-USER-MON-01-01",
+            "F5-USER-MON-01-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F5-USER-MON-02-01",
+            "F5-USER-MON-02-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F5-USER-MON-03-01",
+            "F5-USER-MON-03-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F5-USER-MON-04-01",
+            "F5-USER-MON-04-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F5-USER-MON-05-01",
+            "F5-USER-MON-05-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F5-USER-MON-06-01",
+            "F5-USER-MON-06-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F5-USER-MON-07-01",
+            "F5-USER-MON-07-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F5-USER-MON-08-01",
+            "F5-USER-MON-08-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        }
+      ],
+      "support_contacts": [
+        {
+          "asset_id": "F5-USER-MON-01-01",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-01-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.641,
+                40.841
+              ],
+              "surface_node": "F5-POLICY-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                40.841
+              ],
+              "surface_node": "F5-POLICY-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                41.319
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.641,
+                41.319
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                41.08
+              ],
+              "surface_node": "F5-POLICY-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-01-02",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-01-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                36.341,
+                40.841
+              ],
+              "surface_node": "F5-POLICY-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.059,
+                40.841
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.059,
+                41.319
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.341,
+                41.319
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.7,
+                41.08
+              ],
+              "surface_node": "F5-POLICY-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-02-01",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-02-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.341,
+                9.841
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.059,
+                9.841
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.059,
+                10.319
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.341,
+                10.319
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.7,
+                10.08
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-02-02",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-02-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                9.041,
+                9.841
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.759,
+                9.841
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.759,
+                10.319
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.041,
+                10.319
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.4,
+                10.08
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-03-01",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-03-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                21.941,
+                9.841
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.659,
+                9.841
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.659,
+                10.319
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                21.941,
+                10.319
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.3,
+                10.08
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-03-02",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-03-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                22.641,
+                9.841
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.359,
+                9.841
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.359,
+                10.319
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.641,
+                10.319
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.0,
+                10.08
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-04-01",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-04-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                18.241,
+                8.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                18.959,
+                8.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                18.959,
+                9.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                18.241,
+                9.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                18.6,
+                8.78
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-04-02",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-04-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                18.941,
+                8.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                19.659,
+                8.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                19.659,
+                9.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                18.941,
+                9.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                19.3,
+                8.78
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-05-01",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-05-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                11.641,
+                30.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                12.359,
+                30.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                12.359,
+                31.119
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                11.641,
+                31.119
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                12.0,
+                30.88
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-05-02",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-05-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                12.341,
+                30.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                13.059,
+                30.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                13.059,
+                31.119
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                12.341,
+                31.119
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                12.7,
+                30.88
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-06-01",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-06-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                36.841,
+                42.041
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.559,
+                42.041
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.559,
+                42.519
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.841,
+                42.519
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.2,
+                42.28
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-06-02",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-06-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                37.541,
+                42.041
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.259,
+                42.041
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                38.259,
+                42.519
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.541,
+                42.519
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.9,
+                42.28
+              ],
+              "surface_node": "F5-POLICY-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-07-01",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-07-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                5.941,
+                11.041
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                6.659,
+                11.041
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                6.659,
+                11.519
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                5.941,
+                11.519
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                6.3,
+                11.28
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-07-02",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-07-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                6.641,
+                11.041
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.359,
+                11.041
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.359,
+                11.519
+              ],
+              "surface_node": "F5-SOURCE-CHAIR-03::side_chair",
+              "gap_ft": 1.83,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                6.641,
+                11.519
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                7.0,
+                11.28
+              ],
+              "surface_node": "F5-SOURCE-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-08-01",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-08-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                24.341,
+                8.641
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                25.059,
+                8.641
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                25.059,
+                9.119
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                24.341,
+                9.119
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                24.7,
+                8.88
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-MON-08-02",
+          "asset_type": "monitor",
+          "mesh_node": "F5-USER-MON-08-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                25.041,
+                8.641
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                25.759,
+                8.641
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                25.759,
+                9.119
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                25.041,
+                9.119
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                25.4,
+                8.88
+              ],
+              "surface_node": "F5-PUB-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-WS-01",
+          "asset_type": "workstation",
+          "mesh_node": "F5-USER-WS-01",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.621,
+                40.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                40.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                41.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.621,
+                41.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                41.0
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-WS-02",
+          "asset_type": "workstation",
+          "mesh_node": "F5-USER-WS-02",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.321,
+                9.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.079,
+                9.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.079,
+                10.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.321,
+                10.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.7,
+                10.0
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-WS-03",
+          "asset_type": "workstation",
+          "mesh_node": "F5-USER-WS-03",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                21.921,
+                9.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.679,
+                9.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.679,
+                10.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                21.921,
+                10.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.3,
+                10.0
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-WS-04",
+          "asset_type": "workstation",
+          "mesh_node": "F5-USER-WS-04",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                18.221,
+                8.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                18.979,
+                8.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                18.979,
+                9.259
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                18.221,
+                9.259
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                18.6,
+                8.7
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-WS-05",
+          "asset_type": "workstation",
+          "mesh_node": "F5-USER-WS-05",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                11.621,
+                30.241
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                12.379,
+                30.241
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                12.379,
+                31.359
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                11.621,
+                31.359
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                12.0,
+                30.8
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-WS-06",
+          "asset_type": "workstation",
+          "mesh_node": "F5-USER-WS-06",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                36.821,
+                41.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.579,
+                41.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.579,
+                42.759
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.821,
+                42.759
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.2,
+                42.2
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-WS-07",
+          "asset_type": "workstation",
+          "mesh_node": "F5-USER-WS-07",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                5.921,
+                10.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                6.679,
+                10.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                6.679,
+                11.759
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                5.921,
+                11.759
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                6.3,
+                11.2
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F5-USER-WS-08",
+          "asset_type": "workstation",
+          "mesh_node": "F5-USER-WS-08",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                24.321,
+                8.241
+              ],
+              "surface_node": "F5-PUB-CHAIR-02::side_chair",
+              "gap_ft": 0.84,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                25.079,
+                8.241
+              ],
+              "surface_node": "F5-PUB-CHAIR-02::side_chair",
+              "gap_ft": 0.84,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                25.079,
+                9.359
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                24.321,
+                9.359
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                24.7,
+                8.8
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level": 6,
+      "level_id": "F6",
+      "hosts": 6,
+      "monitors": 12,
+      "monitor_panel_intersections": [
+        {
+          "asset_ids": [
+            "F6-USER-MON-01-01",
+            "F6-USER-MON-01-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F6-USER-MON-02-01",
+            "F6-USER-MON-02-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F6-USER-MON-03-01",
+            "F6-USER-MON-03-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F6-USER-MON-04-01",
+            "F6-USER-MON-04-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F6-USER-MON-05-01",
+            "F6-USER-MON-05-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        },
+        {
+          "asset_ids": [
+            "F6-USER-MON-06-01",
+            "F6-USER-MON-06-02"
+          ],
+          "panel_overlap_ft": [
+            1.02,
+            0.12,
+            0.98
+          ]
+        }
+      ],
+      "support_contacts": [
+        {
+          "asset_id": "F6-USER-MON-01-01",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-01-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.641,
+                40.841
+              ],
+              "surface_node": "F6-COMMAND-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                40.841
+              ],
+              "surface_node": "F6-COMMAND-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                41.319
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.641,
+                41.319
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                41.08
+              ],
+              "surface_node": "F6-COMMAND-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-01-02",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-01-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                36.341,
+                40.841
+              ],
+              "surface_node": "F6-COMMAND-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.059,
+                40.841
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.059,
+                41.319
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.341,
+                41.319
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.7,
+                41.08
+              ],
+              "surface_node": "F6-COMMAND-POWER-01::module",
+              "gap_ft": 0.63,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-02-01",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-02-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.341,
+                9.841
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.059,
+                9.841
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.059,
+                10.319
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.341,
+                10.319
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.7,
+                10.08
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-02-02",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-02-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                9.041,
+                9.841
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.759,
+                9.841
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.759,
+                10.319
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.041,
+                10.319
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.4,
+                10.08
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-03-01",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-03-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                21.941,
+                9.841
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.659,
+                9.841
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.659,
+                10.319
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                21.941,
+                10.319
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.3,
+                10.08
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-03-02",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-03-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                22.641,
+                9.841
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.359,
+                9.841
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.359,
+                10.319
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.641,
+                10.319
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                23.0,
+                10.08
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-04-01",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-04-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                49.641,
+                27.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.359,
+                27.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.359,
+                28.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                49.641,
+                28.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.0,
+                27.78
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-04-02",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-04-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                50.341,
+                27.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.059,
+                27.541
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                51.059,
+                28.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.341,
+                28.019
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.7,
+                27.78
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 3.33,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-05-01",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-05-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.641,
+                39.641
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                39.641
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.359,
+                40.119
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.641,
+                40.119
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                39.88
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-05-02",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-05-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                36.341,
+                39.641
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.059,
+                39.641
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                37.059,
+                40.119
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.341,
+                40.119
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.7,
+                39.88
+              ],
+              "surface_node": "F6-COMMAND-TABLE-01::table_rect",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-06-01",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-06-01::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.341,
+                11.041
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.059,
+                11.041
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.059,
+                11.519
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.341,
+                11.519
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.7,
+                11.28
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-MON-06-02",
+          "asset_type": "monitor",
+          "mesh_node": "F6-USER-MON-06-02::PART::STAND_OR_MOUNT",
+          "bottom_aff_ft": 3.33,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                9.041,
+                11.041
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.759,
+                11.041
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.759,
+                11.519
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.041,
+                11.519
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.4,
+                11.28
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 0.91334,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-WS-01",
+          "asset_type": "workstation",
+          "mesh_node": "F6-USER-WS-01",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.621,
+                40.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                40.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                41.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.621,
+                41.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                41.0
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-WS-02",
+          "asset_type": "workstation",
+          "mesh_node": "F6-USER-WS-02",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.321,
+                9.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.079,
+                9.441
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 2.26,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.079,
+                10.559
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 2.26,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.321,
+                10.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.7,
+                10.0
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 2.26,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-WS-03",
+          "asset_type": "workstation",
+          "mesh_node": "F6-USER-WS-03",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                21.921,
+                9.441
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.679,
+                9.441
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 2.26,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.679,
+                10.559
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 0.04833,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                21.921,
+                10.559
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                22.3,
+                10.0
+              ],
+              "surface_node": "F6-BRIEFING-TABLE-01::table_rect",
+              "gap_ft": 2.26,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-WS-04",
+          "asset_type": "workstation",
+          "mesh_node": "F6-USER-WS-04",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                49.621,
+                27.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.379,
+                27.141
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.379,
+                28.259
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                49.621,
+                28.259
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                50.0,
+                27.7
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-WS-05",
+          "asset_type": "workstation",
+          "mesh_node": "F6-USER-WS-05",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                35.621,
+                39.241
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                39.241
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.379,
+                40.359
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                35.621,
+                40.359
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                36.0,
+                39.8
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        },
+        {
+          "asset_id": "F6-USER-WS-06",
+          "asset_type": "workstation",
+          "mesh_node": "F6-USER-WS-06",
+          "bottom_aff_ft": 2.34,
+          "status": "no_contact",
+          "contact_samples": 0,
+          "samples": [
+            {
+              "xy_ft": [
+                8.321,
+                10.641
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.079,
+                10.641
+              ],
+              "surface_node": "F6-STRATEGY-TABLE-01::table_round",
+              "gap_ft": 2.26,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                9.079,
+                11.759
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.321,
+                11.759
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            },
+            {
+              "xy_ft": [
+                8.7,
+                11.2
+              ],
+              "surface_node": "floor_slab",
+              "gap_ft": 2.34,
+              "contact": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level": 7,
+      "level_id": "L7",
+      "hosts": 0,
+      "monitors": 0,
+      "monitor_panel_intersections": [],
+      "support_contacts": []
+    }
+  ]
+}

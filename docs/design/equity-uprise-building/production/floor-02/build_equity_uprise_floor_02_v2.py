@@ -17,6 +17,12 @@ INV_PATH=HERE/"floor-02-object-inventory.json"
 inventory=json.loads(INV_PATH.read_text())
 INV={o["id"]:o for o in inventory["objects"]}
 scene=trimesh.Scene(); records=[]; modeled=set()
+import sys
+sys.path.insert(0,str(HERE.parent/"interiors"))
+from eu_furniture_kit import FurnitureKit, load_layout
+sys.path.insert(0,str(HERE.parent/"brand"))
+from eu_brand_slots import slots_for, add_brand_slots
+LAYOUT=load_layout(HERE/"floor-02-interior-layout-v3.json")
 
 W=D=72.0;H=11.0
 PASS=(54.0,34.0,62.0,44.0);FREIGHT=(0.0,60.0,8.0,72.0);SB=(8.0,54.0,18.0,72.0);SA=(60.0,54.0,72.0,72.0);MEP=(50.0,66.0,60.0,72.0)
@@ -144,23 +150,17 @@ for x in range(0,73,9):
 box("F2-FEATURE-WALL-01::wall",(24,52.15,48,52.85),10.6,0,C["stone"],"F2-FEATURE-WALL-01")
 for inv in ("F2-DISPLAY-CURRENT-ISSUES","F2-DISPLAY-PERSPECTIVES","F2-DISPLAY-OPPORTUNITIES"):
     screen(inv,bounds(inv),3.2,4.8)
-box("F2-IDENTITY-SIGN-01::identity",(30,52.02,42,52.16),1.2,8.9,C["stone_top"],"F2-IDENTITY-SIGN-01")
+# Identity: a runtime brand slot only (no plate, no drawn mark).
+BRAND_SLOTS=add_brand_slots(scene,slots_for("interior/F2/"),13.5,mark)
 for i,x in enumerate((24.6,35.2,45.8),1):
     box(f"F2-ACOUSTIC-WALL-01::{i}",(x,51.85,x+1.6,52.05),6.4,2.0,C["acoustic"],"F2-ACOUSTIC-WALL-01")
 
-# Forum table / power / chairs.
-p=INV["F2-FORUM-TABLE-01"]["placement"];table_round("F2-FORUM-TABLE-01",(p["center_ft"]["x"],p["center_ft"]["y"]),p["diameter_ft"],p["height_ft"])
-cyl("F2-FORUM-POWER-01::hub",(36,39),.55,.16,2.56,C["core"],"F2-FORUM-POWER-01",24)
-for i in range(1,9):
-    inv=f"F2-FORUM-CHAIR-{i:02d}";xy=center(inv);chair(inv,xy[0],xy[1],(36,39))
-
-# Lounge.
-sofa("F2-LOUNGE-SOFA-01",bounds("F2-LOUNGE-SOFA-01"))
-for inv in ("F2-LOUNGE-CHAIR-01","F2-LOUNGE-CHAIR-02"):
-    b=bounds(inv);chair(inv,(b[0]+b[2])/2,(b[1]+b[3])/2,(9.5,23))
-p=INV["F2-LOUNGE-TABLE-01"]["placement"];table_round("F2-LOUNGE-TABLE-01",(p["center_ft"]["x"],p["center_ft"]["y"]),p["diameter_ft"],p["height_ft"])
-box("F2-LOUNGE-RUG-01::rug",bounds("F2-LOUNGE-RUG-01"),.05,.01,C["rug"],"F2-LOUNGE-RUG-01")
-plant("F2-LOUNGE-PLANT-01",center("F2-LOUNGE-PLANT-01"));plant("F2-LOUNGE-PLANT-02",center("F2-LOUNGE-PLANT-02"))
+# v3 interior furnishing layer: every seat, table, rug and plant comes from the
+# shared catalog + this floor's layout (forum, listening lounge, cohort workshop,
+# named cohort desks). Architecture, displays and life safety stay below/above.
+KIT=FurnitureKit(scene,LAYOUT["palette"],"F2",0.0,mark)
+KIT.build_layout(LAYOUT)
+cyl("F2-FORUM-POWER-01::hub",(36,39),.55,.05,2.42,C["core"],"F2-FORUM-POWER-01",24)
 screen("F2-TALK-INTERFACE-01",bounds("F2-TALK-INTERFACE-01"),2.5,5.0)
 
 # Member terminal.
@@ -214,12 +214,16 @@ ext=(scene.extents/FT).tolist();missing=sorted(set(INV)-modeled)
 checks=[]
 def ck(n,p,a=None,e=None):checks.append({"name":n,"passed":bool(p),"actual":a,"expected":e})
 ck("72ft width",abs(ext[0]-72)<.05,ext[0],72);ck("72ft depth",abs(ext[1]-72)<.05,ext[1],72)
-ck("48 inventory records",len(INV)==48,len(INV),48);ck("all inventory records modeled",not missing,len(modeled),len(INV))
+ck("48 inventory records",len(INV)==48,len(INV),48)
+ck("feature-wall identity is a brand slot",len(BRAND_SLOTS)==1)
+_lay_inv={i.get("realizes_inventory_id") for i in LAYOUT["items"]}-{None}
+_furn={k for k,o in INV.items() if o["category"] in ("furniture","decorative_functional")}
+ck("v3 layout realizes every inventory furniture record",_furn<=_lay_inv,sorted(_furn-_lay_inv));ck("all inventory records modeled",not missing,len(modeled),len(INV))
 ck("forum table modeled","F2-FORUM-TABLE-01" in modeled);ck("8 forum chairs modeled",all(f"F2-FORUM-CHAIR-{i:02d}" in modeled for i in range(1,9)))
 ck("feature wall modeled","F2-FEATURE-WALL-01" in modeled);ck("listening lounge modeled","F2-LOUNGE-SOFA-01" in modeled)
 ck("member checkin modeled","F2-MEMBER-CHECKIN-01" in modeled);ck("passenger elevator modeled","F2-PASS-ELEV-DOOR-01" in modeled)
 ck("freight modeled","F2-FREIGHT-DOOR-01" in modeled);ck("Stair A door modeled","F2-STAIR-A-DOOR-01" in modeled);ck("Stair B door modeled","F2-STAIR-B-DOOR-01" in modeled)
 failed=[x for x in checks if not x["passed"]]
-report={"scene_id":"equity-uprise-floor-02","version":"public-forum-hybrid-v1","mesh_count":len(scene.geometry),"glb_bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"extents_ft":ext,"inventory_records":len(INV),"inventory_records_modeled":len(modeled),"inventory_records_missing":missing,"checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
+report={"scene_id":"equity-uprise-floor-02","version":"public-forum-hybrid-v1","mesh_count":len(scene.geometry),"glb_bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"extents_ft":ext,"inventory_records":len(INV),"inventory_records_modeled":len(modeled),"inventory_records_missing":missing,"interior_layout":"floor-02-interior-layout-v3.json","furniture":KIT.summary(),"furniture_placements":KIT.placed,"brand_slots":BRAND_SLOTS,"triangles":int(sum(len(scene.geometry[scene.graph[n][1]].faces) for n in scene.graph.nodes_geometry)),"checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
 REPORT.write_text(json.dumps(report,indent=2)+"\n");print(json.dumps({k:report[k] for k in ("version","mesh_count","inventory_records","inventory_records_modeled","checks_passed","checks_total","passed")},indent=2))
 if failed:raise SystemExit(1)

@@ -2,7 +2,7 @@
    HUMAN UPRISE — the campaign page (/action/?c=<slug>).
 
    Attention in, organized people out. Someone taps the link under a
-   Reel (/action/?c=cobalt&src=ig&reel=0047), reads what is true and
+   Reel (/action/?c=<slug>&src=ig&reel=0047), reads what is true and
    where it comes from, says what they can bring, and becomes a
    numbered participant with a link of their own to recruit with.
 
@@ -223,13 +223,13 @@
 
   function paintCampaign() {
     doc.title = (C.headline || C.title) + " · " + C.title;
-    $("anKicker").textContent = C.kicker || "Human Uprise";
+    $("anKicker").textContent = C.kicker || "Equity Uprise";
     paintHeadline(C.headline || "You saw it. Now do something.");
     $("anTitle").textContent = C.title || "";
     $("anBody").textContent = C.body || "";
     $("anCrumb").textContent = C.title || "Campaign";
     doc.body.classList.add("an-action-first");
-    if ($("anActionCampaign")) $("anActionCampaign").textContent = C.title || "Human Uprise";
+    if ($("anActionCampaign")) $("anActionCampaign").textContent = C.title || "Equity Uprise";
     if ($("anActionHead")) $("anActionHead").textContent = "Pick an action.";
     if ($("anActionSub")) $("anActionSub").textContent = "Tap one. The system takes you straight to the mission.";
     if (URL_ORIGIN.reel || URL_ORIGIN.src) {
@@ -709,7 +709,7 @@
 
     $("anCta").hidden = true;
     if ($("anMnet")) {
-      $("anMnet").textContent = signedIn() ? "Choose another mission →" : "Enter Human Uprise →";
+      $("anMnet").textContent = signedIn() ? "Choose another mission →" : "Enter Equity Uprise →";
       $("anMnet").setAttribute("href", signedIn() ? missionHubHref() : "/mnet.html");
     }
 
@@ -729,7 +729,7 @@
         ? "Take action"
         : (mode === "new" ? "Create account & take action" : "Sign in & take action");
     } else {
-      $("anJoinH").textContent = "Join Human Uprise.";
+      $("anJoinH").textContent = "Join Equity Uprise.";
       $("anJoinSub").textContent = "Choose an action above first.";
       $("anJoin").textContent = signedIn() ? "Join campaign" : (mode === "new" ? "Create account & join" : "Sign in & join");
     }

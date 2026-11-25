@@ -14,11 +14,11 @@ const labs = catalog.labs;
 
 assert.equal(LAB_RUNTIME_VERSION, "1.0.0");
 assert.ok(Array.isArray(labs), "canonical Step 4A lab catalog must expose labs[]");
-assert.equal(labs.length, 40, "Step 1 is pinned to the current 40-lab Step 4A catalog");
+assert.equal(labs.length, 51, "Step 1 is pinned to the 40 Step 4A labs plus the 11 Server Lab labs");
 assert.equal(new Set(labs.map((lab) => lab.lab_id)).size, labs.length, "source lab IDs must be unique");
 
 const adapted = labs.map(adaptCatalogLab);
-assert.equal(adapted.length, 40);
+assert.equal(adapted.length, 51);
 for (const scenario of adapted) {
   assert.equal(scenario.mode, "SIMULATION");
   assert.equal(scenario.execution_target, "SANDBOX");

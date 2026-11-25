@@ -229,11 +229,19 @@
      on a tenant site looked the same in Forensics. Origin says whether it is
      the site's own code or something injected into the page (in-app
      browsers, extensions) or an opaque cross-origin "Script error.". */
-  var INJECTED = /webkit\.messageHandlers|Java object is gone|_AutofillCallbackHandler|__gCrWeb/i;
-  function errorOrigin(file, msg) {
+  var INJECTED = /webkit\.messageHandlers|Java object is gone|__gCrWeb/i;
+  // A name mention alone is not proof of browser injection. Keep script-backed
+  // failures actionable, even when a browser callback is named in the message.
+  function autofillDiagnostic(file, msg, stack) {
+    return /^(?:ReferenceError: )?Can't find variable: _AutofillCallbackHandler$/.test(String(msg || "").trim()) &&
+      !/\.(?:m?js)(?:[?:#]|$)/i.test(String(file || "")) &&
+      !/\.(?:m?js)(?:[?:#]|$)/i.test(String(stack || ""));
+  }
+  function errorOrigin(file, msg, stack) {
     file = String(file || ""); msg = String(msg || "");
     if (/^script error\.?$/i.test(msg) && !file) return "opaque";
     if (/^(iabjs|chrome-extension|moz-extension|safari-extension|safari-web-extension|webkit-masked-url):/i.test(file) || INJECTED.test(msg)) return "injected";
+    if (autofillDiagnostic(file, msg, stack)) return "injected";
     try { if (file && new URL(file, location.href).origin !== location.origin) return "third_party"; } catch (_) {}
     return "site";
   }
@@ -241,13 +249,13 @@
     track("js_error", {
       msg: String((e && e.message) || "").slice(0, 200),
       file: String(e.filename || "").slice(-160), line: e.lineno || null, col: e.colno || null,
-      origin: errorOrigin(e.filename, e.message)
+      origin: errorOrigin(e.filename, e.message, e.error && e.error.stack)
     });
   });
   addEventListener("unhandledrejection", function (e) {
     var r = e && e.reason;
     var msg = String((r && (r.message || r)) || "").slice(0, 200);
-    track("js_rejection", { msg: msg, origin: INJECTED.test(msg) ? "injected" : "site" });
+    track("js_rejection", { msg: msg, origin: errorOrigin("", msg, r && r.stack) });
   });
   addEventListener("pagehide", function () { track("page_leave", {}); flush(true); });
   document.addEventListener("visibilitychange", function () {

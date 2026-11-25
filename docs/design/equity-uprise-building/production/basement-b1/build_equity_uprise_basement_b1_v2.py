@@ -9,15 +9,26 @@ OUTDIR=HERE.parent/"generated";OUTDIR.mkdir(parents=True,exist_ok=True)
 OUT=OUTDIR/"equity-uprise-basement-b1-core-v2.glb";REPORT=OUTDIR/"equity-uprise-basement-b1-core-v2-report.json";FT=.3048
 C={"floor":[76,78,79,255],"ceiling":[54,57,60,255],"wall":[71,74,77,255],"partition":[89,91,92,255],"metal":[47,52,57,255],"metal2":[73,78,82,255],"equipment":[83,88,92,255],"pipe":[105,109,107,255],"copper":[111,74,48,255],"accent":[133,26,29,255],"safety":[178,133,40,255],"screen":[22,35,41,255],"glass":[171,190,196,150],"wood":[99,74,53,255],"light":[235,225,198,255],"blue":[46,85,105,255],"drain":[34,37,39,255],"rubber":[43,45,46,255]}
 scene=trimesh.Scene();modeled=set()
+import sys
+sys.path.insert(0,str(HERE.parent/"interiors"))
+from eu_furniture_kit import FurnitureKit, load_layout
+LAYOUT=load_layout(HERE/"basement-b1-interior-layout-v3.json")
+# Loose furniture realized by the v3 layout (lab/ops chairs, workshop bench) is built
+# only by the shared kit; the legacy box versions are suppressed.
+_REALIZED={i["realizes_inventory_id"] for i in LAYOUT["items"] if i.get("realizes_inventory_id")}
 def mark(i):
     if i: modeled.add(i)
 def add(name,mesh,color,obj=None):
+    if name.split("::")[0] in _REALIZED: return None
     mesh.visual.face_colors=color;scene.add_geometry(mesh,node_name=name,geom_name=name);mark(obj);return mesh
 def box(name,b,z0,h,color,obj=None):
     x1,y1,x2,y2=b;m=trimesh.creation.box(extents=((x2-x1)*FT,(y2-y1)*FT,h*FT));m.apply_translation((((x1+x2)/2)*FT,((y1+y2)/2)*FT,(z0+h/2)*FT));return add(name,m,color,obj)
 def cyl(name,cx,cy,z0,r,h,color,obj=None,sections=20):
     m=trimesh.creation.cylinder(radius=r*FT,height=h*FT,sections=sections);m.apply_translation((cx*FT,cy*FT,(z0+h/2)*FT));return add(name,m,color,obj)
 def room_shell(prefix,obj,b,door_side="south",door_center=None,glass=False,h=10.5):
+    # v3 (owner 2026-11-03, B1 is a normal floor): room extents leave 3.5-6 ft
+    # corridors (elevator landing X50.5-54, east spine X50/51-55, workshop/lab
+    # X14.5-20) instead of the former 2 ft slots between plant rooms.
     x1,y1,x2,y2=b;t=.35;col=C["glass"] if glass else C["partition"];dw=3.0
     if door_center is None: door_center=(x1+x2)/2 if door_side in ("south","north") else (y1+y2)/2
     if door_side=="north":
@@ -79,26 +90,29 @@ for n,b in [("n",(54,43.55,62,44)),("s",(54,34,62,34.45)),("e",(61.55,34,62,44))
 box("B1-PASSENGER-CORE-01::w-lintel",(54,37,54.45,41),7.5,5.5,C["wall"]);box("B1-PASSENGER-CORE-01::door",(53.96,37.2,54.08,40.8),.15,7.0,C["metal2"])
 for n,b in [("n",(0,71.55,8,72)),("e",(7.55,60,8,72)),("w",(0,60,.45,72)),("s-left",(0,60,1.5,60.45)),("s-right",(6.5,60,8,60.45))]: box("B1-FREIGHT-CORE-01::"+n,b,0,13,C["wall"],"B1-FREIGHT-CORE-01" if n=="n" else None)
 box("B1-FREIGHT-CORE-01::s-lintel",(1.5,60,6.5,60.45),8,5,C["wall"]);box("B1-FREIGHT-CORE-01::door",(1.65,59.95,6.35,60.08),.15,7.6,C["metal2"]);box("B1-MEP-RISER-01",(50,66,60,72),0,11.5,C["wall"],"B1-MEP-RISER-01")
-room_shell("B1-MECH-ROOM-01","B1-MECH-ROOM-01",(2,4,30,26),"south",16);room_shell("B1-ELEC-ROOM-01","B1-ELEC-ROOM-01",(32,4,52,20),"south",42);room_shell("B1-FIRE-ROOM-01","B1-FIRE-ROOM-01",(54,4,70,20),"south",62);room_shell("B1-TELECOM-ROOM-01","B1-TELECOM-ROOM-01",(32,22,52,34),"south",42);room_shell("B1-FLOOD-ROOM-01","B1-FLOOD-ROOM-01",(54,22,70,32),"south",62);room_shell("B1-WORKSHOP-ROOM-01","B1-WORKSHOP-ROOM-01",(2,30,16,52),"east",41);room_shell("B1-LAB-ZONE-01","B1-LAB-ZONE-01",(18,36,52,54),"south",35,glass=True,h=9.5);box("B1-STAGING-ZONE-01",(0.6,54.4,7.4,59.6),.01,.05,C["safety"],"B1-STAGING-ZONE-01");box("B1-OPS-ZONE-01",(20,54,48,64),.015,.07,C["metal2"],"B1-OPS-ZONE-01");room_shell("B1-LOCK-ROOM-01","B1-LOCK-ROOM-01",(24,64,44,72),"south",34,h=11)
+room_shell("B1-MECH-ROOM-01","B1-MECH-ROOM-01",(2,4,30,26),"south",16);room_shell("B1-ELEC-ROOM-01","B1-ELEC-ROOM-01",(32,4,51,20),"south",42);room_shell("B1-FIRE-ROOM-01","B1-FIRE-ROOM-01",(55,4,70,20),"south",62);room_shell("B1-TELECOM-ROOM-01","B1-TELECOM-ROOM-01",(32,22,50,34),"east",30);room_shell("B1-FLOOD-ROOM-01","B1-FLOOD-ROOM-01",(55.5,22,70,32),"west",27);room_shell("B1-WORKSHOP-ROOM-01","B1-WORKSHOP-ROOM-01",(2,30,14.5,50),"east",41);room_shell("B1-LAB-ZONE-01","B1-LAB-ZONE-01",(20,37.5,50.5,54),"east",45,glass=True,h=9.5);box("B1-STAGING-ZONE-01",(0.6,54.4,7.4,59.6),.01,.05,C["safety"],"B1-STAGING-ZONE-01");box("B1-OPS-ZONE-01",(20,54,48,64),.015,.07,C["metal2"],"B1-OPS-ZONE-01");room_shell("B1-LOCK-ROOM-01","B1-LOCK-ROOM-01",(24,64,44,72),"south",34,h=11)
 box("B1-MECH-AHU-01::a",(5,8,13,14),.1,4.4,C["equipment"],"B1-MECH-AHU-01");box("B1-MECH-AHU-01::b",(16,8,24,14),.1,4.4,C["equipment"])
 for j,x in enumerate([8,15,22]): cyl(f"B1-MECH-PUMP-01::{j}",x,20,.2,.9,2.2,C["blue"],"B1-MECH-PUMP-01" if j==0 else None,24)
 pipe_x("B1-MECH-PIPE-RACK-01::a",4,28,23.5,8.6,.18,C["pipe"],"B1-MECH-PIPE-RACK-01");pipe_x("B1-MECH-PIPE-RACK-01::b",4,28,24.4,9.1,.18,C["copper"]);box("B1-MECH-BAS-01",(27.2,14,29.2,18),1,5.8,C["screen"],"B1-MECH-BAS-01")
 for k in range(6): box(f"B1-ELEC-SWITCHGEAR-01::{k}",(33+k*2.8,7,35.3+k*2.8,9.2),.1,7,C["metal2"],"B1-ELEC-SWITCHGEAR-01" if k==0 else None)
-box("B1-ELEC-UPS-01::a",(34,13,39,18),.1,5.5,C["equipment"],"B1-ELEC-UPS-01");box("B1-ELEC-UPS-01::b",(40,13,45,18),.1,5.5,C["equipment"]);box("B1-ELEC-METER-01",(47,13,50.5,18),.7,6.2,C["screen"],"B1-ELEC-METER-01")
+box("B1-ELEC-UPS-01::a",(34,13,39,18),.1,5.5,C["equipment"],"B1-ELEC-UPS-01");box("B1-ELEC-UPS-01::b",(40,13,45,18),.1,5.5,C["equipment"]);box("B1-ELEC-METER-01",(47,13,50.3,18),.7,6.2,C["screen"],"B1-ELEC-METER-01")
 box("B1-FIRE-PUMP-01::base",(56,8,62,14),.15,.6,C["metal"],"B1-FIRE-PUMP-01");cyl("B1-FIRE-PUMP-01::pump",59,11,.75,1.2,2.4,C["accent"]);cyl("B1-FIRE-WATER-01::tank",66,11,.1,2.2,6.5,C["equipment"],"B1-FIRE-WATER-01",28);pipe_y("B1-FIRE-RISER-01::riser",68,6,18,8.8,.22,C["accent"],"B1-FIRE-RISER-01");box("B1-FIRE-RISER-01::panel",(63.5,16,67,18.5),2,4.5,C["screen"])
 for j,(x,y) in enumerate([(35,26),(39,26),(43,26),(47,26)]): rack(f"B1-TELECOM-RACKS-01::{j}","B1-TELECOM-RACKS-01" if j==0 else None,x,y,2.2,3,7.5)
 box("B1-TELECOM-TRAY-01",(33,30.5,51,31.3),8.7,.35,C["metal"],"B1-TELECOM-TRAY-01");box("B1-TELECOM-CONSOLE-01::desk",(34,23,41,25),2.3,.35,C["metal2"],"B1-TELECOM-CONSOLE-01");box("B1-TELECOM-CONSOLE-01::screen",(36,24.7,39,24.9),3.1,2,C["screen"])
 for j,x in enumerate([58,66]): cyl(f"B1-FLOOD-SUMP-01::{j}",x,27,-.25,1.5,.35,C["drain"],"B1-FLOOD-SUMP-01" if j==0 else None,28)
 for j,x in enumerate([58,66]): cyl(f"B1-FLOOD-PUMP-01::{j}",x,27,.1,.55,2.2,C["blue"],"B1-FLOOD-PUMP-01" if j==0 else None,20)
-box("B1-FLOOD-SENSOR-01",(55.2,30,58,31.7),2.5,3.4,C["screen"],"B1-FLOOD-SENSOR-01")
+box("B1-FLOOD-SENSOR-01",(56,30,58.8,31.7),2.5,3.4,C["screen"],"B1-FLOOD-SENSOR-01")
 box("B1-WORKSHOP-BENCH-01::top",(3.2,33,14.8,36),3,.35,C["wood"],"B1-WORKSHOP-BENCH-01")
-for j,y in enumerate([39,44,49]): rack(f"B1-WORKSHOP-RACKS-01::{j}","B1-WORKSHOP-RACKS-01" if j==0 else None,5,y,5,2.6,7)
-box("B1-WORKSHOP-PPE-01",(11.5,39,15,44),.1,7,C["safety"],"B1-WORKSHOP-PPE-01");box("B1-WORKSHOP-SPILL-01",(11.5,46,15,50),.1,5.5,C["accent"],"B1-WORKSHOP-SPILL-01")
+for j,y in enumerate([38,42.5,47]): rack(f"B1-WORKSHOP-RACKS-01::{j}","B1-WORKSHOP-RACKS-01" if j==0 else None,5,y,5,2.6,7)
+box("B1-WORKSHOP-PPE-01",(10.6,43.4,14.0,47.2),.1,7,C["safety"],"B1-WORKSHOP-PPE-01");box("B1-WORKSHOP-SPILL-01",(10.6,47.4,14.0,49.4),.1,5.5,C["accent"],"B1-WORKSHOP-SPILL-01")
 box("B1-LAB-TABLE-01",(26,42,44,47),2.5,.5,C["wood"],"B1-LAB-TABLE-01")
 for j,(x,y) in enumerate([(28,40.5),(35,40.5),(42,40.5),(28,48.5),(35,48.5),(42,48.5)]): chair(f"B1-LAB-CHAIRS-01::{j}",x,y,"B1-LAB-CHAIRS-01" if j==0 else None)
-box("B1-LAB-DASHBOARD-01",(21,52.2,49,52.45),3,5.4,C["screen"],"B1-LAB-DASHBOARD-01");box("B1-LAB-CONSOLE-01::desk",(45,38,50,40.5),2.3,.4,C["metal2"],"B1-LAB-CONSOLE-01");box("B1-LAB-CONSOLE-01::screen",(46,40.25,49,40.45),3.2,2.2,C["screen"]);box("B1-LAB-GLASS-01",(18.1,53.45,51.9,53.75),0,9,C["glass"],"B1-LAB-GLASS-01")
-rack("B1-STAGING-RACK-01","B1-STAGING-RACK-01",4,56.8,5.5,2.3,7.5)
-for j,y in enumerate([55.3,58.4]): box(f"B1-STAGING-CART-01::{j}",(1.2,y,3.1,y+1.5),1.1,1.4,C["metal2"],"B1-STAGING-CART-01" if j==0 else None)
+box("B1-LAB-DASHBOARD-01",(21,52.2,49,52.45),3,5.4,C["screen"],"B1-LAB-DASHBOARD-01");box("B1-LAB-CONSOLE-01::desk",(45,38,50,40.5),2.3,.4,C["metal2"],"B1-LAB-CONSOLE-01");box("B1-LAB-CONSOLE-01::screen",(46,40.25,49,40.45),3.2,2.2,C["screen"]);box("B1-LAB-GLASS-01",(20.4,53.3,50.1,53.6),0,9,C["glass"],"B1-LAB-GLASS-01")
+# v3: the staging rack stood in front of the freight door; it now lines the
+# west service corridor wall and the freight landing stays clear.
+rack("B1-STAGING-RACK-01","B1-STAGING-RACK-01",1.75,46.0,2.3,5.5,7.5)
+# v3: carts park against the Stair B wall, clear of the freight door approach.
+for j,y in enumerate([54.6,56.5]): box(f"B1-STAGING-CART-01::{j}",(6.45,y,7.95,y+1.8),1.1,1.4,C["metal2"],"B1-STAGING-CART-01" if j==0 else None)
 for j in range(5): box(f"B1-STAGING-MARK-01::{j}",(.7+j*1.4,54.6,1.4+j*1.4,54.9),.02,.035,C["safety"],"B1-STAGING-MARK-01" if j==0 else None)
 for j,x in enumerate([23,27,31,35,39,43,47]): box(f"B1-OPS-GATE-01::bar{j}",(x-.09,63.4,x+.09,63.7),0,8.5,C["metal"],"B1-OPS-GATE-01" if j==0 else None)
 box("B1-OPS-GATE-01::top",(22,63.35,47,63.75),8.2,.35,C["metal"]);box("B1-OPS-DESK-01",(27,56,41,59),2.4,.45,C["metal2"],"B1-OPS-DESK-01")
@@ -107,18 +121,23 @@ box("B1-OPS-STATUS-01",(22,61.2,31,61.45),3,4.6,C["screen"],"B1-OPS-STATUS-01");
 box("B1-LOCK-INNER-DOOR-01",(30.2,63.95,37.8,64.18),.05,8,C["metal2"],"B1-LOCK-INNER-DOOR-01");box("B1-LOCK-OUTER-DOOR-01",(30.2,71.82,37.8,72),.05,8,C["metal"],"B1-LOCK-OUTER-DOOR-01");box("B1-LOCK-FRAME-01::left",(24.8,70.8,26,72),0,11,C["metal"],"B1-LOCK-FRAME-01");box("B1-LOCK-FRAME-01::right",(42,70.8,43.2,72),0,11,C["metal"]);box("B1-LOCK-FRAME-01::top",(25,70.8,43,72),9.8,1.2,C["metal"]);box("B1-LOCK-PANEL-01",(27.2,65,29.5,65.3),3,3.4,C["screen"],"B1-LOCK-PANEL-01")
 for j,x in enumerate([28,40]): cyl(f"B1-LOCK-WARNING-01::{j}",x,69.5,8.5,.16,.3,C["accent"],"B1-LOCK-WARNING-01" if j==0 else None,16)
 for j,(x,y) in enumerate([(6,28),(18,28),(30,28),(42,28),(58,34),(68,34),(20,58),(28,58),(36,58),(44,58),(56,58),(66,50),(66,42),(24,34),(36,34),(48,34),(20,50),(50,50)]): box(f"B1-LIGHTS-GENERAL-01::{j}",(x-2,y-.18,x+2,y+.18),11.6,.22,C["light"],"B1-LIGHTS-GENERAL-01" if j==0 else None)
-for j,(x,y) in enumerate([(8,27),(20,27),(32,27),(44,27),(56,33),(66,33),(18,55),(26,55),(34,55),(42,55),(50,55),(62,52)]): box(f"B1-LIGHTS-EMERGENCY-01::{j}",(x-.25,y-.25,x+.25,y+.25),1,.18,C["safety"],"B1-LIGHTS-EMERGENCY-01" if j==0 else None)
+# v3: emergency path markers are floor-recessed LED strips (they used to float
+# as 1 ft-high cubes in the middle of corridors).
+for j,(x,y) in enumerate([(8,27),(20,27),(32,27),(44,27),(56,33),(66,33),(18,55),(26,55),(34,55),(42,55),(50,55),(62,52)]): box(f"B1-LIGHTS-EMERGENCY-01::{j}",(x-.25,y-.25,x+.25,y+.25),.005,.03,C["safety"],"B1-LIGHTS-EMERGENCY-01" if j==0 else None)
 box("B1-CABLE-TRAY-01",(18,34.5,54,35.3),10.3,.35,C["metal"],"B1-CABLE-TRAY-01");pipe_x("B1-PIPE-SPINE-01",2,70,2,10.4,.16,C["pipe"],"B1-PIPE-SPINE-01")
 for j,(x,y) in enumerate([(8,3),(24,3),(40,3),(56,3),(68,26),(18,33),(52,33),(34,55)]): cyl(f"B1-FLOOR-DRAINS-01::{j}",x,y,-.02,.28,.06,C["drain"],"B1-FLOOR-DRAINS-01" if j==0 else None,18)
 for j,(x,y) in enumerate([(63,53.7),(15.5,53.7),(52.5,38.5),(5,59)]): box(f"B1-EXIT-SIGNS-01::{j}",(x-.8,y-.12,x+.8,y+.12),7.7,.6,C["accent"],"B1-EXIT-SIGNS-01" if j==0 else None)
-for j,(x,y) in enumerate([(30.5,27),(52.5,21),(17,53),(50,55)]): box(f"B1-EXTINGUISHERS-01::{j}",(x-.3,y-.18,x+.3,y+.18),2,2,C["accent"],"B1-EXTINGUISHERS-01" if j==0 else None)
+for j,(x,y) in enumerate([(30.5,27),(52.5,21),(19.4,53.4),(50,55)]): box(f"B1-EXTINGUISHERS-01::{j}",(x-.3,y-.18,x+.3,y+.18),2,2,C["accent"],"B1-EXTINGUISHERS-01" if j==0 else None)
 for j,(x,y) in enumerate([(58,46),(20,55)]): box(f"B1-EMERGENCY-COMMS-01::{j}",(x-.25,y-.15,x+.25,y+.15),3.3,.9,C["blue"],"B1-EMERGENCY-COMMS-01" if j==0 else None)
 
+# v3 interior furnishing layer: named staff stations, staff commons, real bench/chairs.
+KIT=FurnitureKit(scene,LAYOUT["palette"],"B1",0.0,mark)
+KIT.build_layout(LAYOUT)
 required={x["id"] for x in INV_RAW["objects"]};missing=sorted(required-modeled);checks=[]
 def ck(n,ok,d=""): checks.append({"name":n,"passed":bool(ok),"detail":d})
 ck("inventory coverage",not missing,", ".join(missing));ck("72ft basement footprint",True);ck("below-grade perimeter enclosed","B1-PERIMETER-01" in modeled);ck("ceiling/support plane modeled","B1-CEILING-01" in modeled);ck("both protected stairs modeled",all(x in modeled for x in ["B1-STAIR-A-ENCLOSURE-01","B1-STAIR-B-ENCLOSURE-01"]));ck("B1 to Floor 1 stair transitions modeled",all(x in modeled for x in ["B1-STAIR-A-TRANSITION-01","B1-STAIR-B-TRANSITION-01"]));ck("passenger and freight landings modeled",all(x in modeled for x in ["B1-PASSENGER-CORE-01","B1-FREIGHT-CORE-01"]));ck("MEP riser modeled","B1-MEP-RISER-01" in modeled);ck("technical plant rooms equipped",all(x in modeled for x in ["B1-MECH-AHU-01","B1-ELEC-SWITCHGEAR-01","B1-FIRE-PUMP-01","B1-TELECOM-RACKS-01","B1-FLOOD-SUMP-01"]));ck("facilities workshop equipped",all(x in modeled for x in ["B1-WORKSHOP-BENCH-01","B1-WORKSHOP-RACKS-01","B1-WORKSHOP-PPE-01"]));ck("systems lab equipped",all(x in modeled for x in ["B1-LAB-TABLE-01","B1-LAB-DASHBOARD-01","B1-LAB-CONSOLE-01"]));ck("service staging equipped",all(x in modeled for x in ["B1-STAGING-RACK-01","B1-STAGING-CART-01"]));ck("tunnel operations represented",all(x in modeled for x in ["B1-OPS-GATE-01","B1-OPS-DESK-01","B1-OPS-STATUS-01","B1-OPS-OCCUPANCY-01","B1-OPS-ROUTE-01"]));ck("transfer lock represented",all(x in modeled for x in ["B1-LOCK-INNER-DOOR-01","B1-LOCK-OUTER-DOOR-01","B1-LOCK-FRAME-01","B1-LOCK-PANEL-01"]));ck("visual completeness: lighting",all(x in modeled for x in ["B1-LIGHTS-GENERAL-01","B1-LIGHTS-EMERGENCY-01"]));ck("visual completeness: overhead services",all(x in modeled for x in ["B1-CABLE-TRAY-01","B1-PIPE-SPINE-01"]));ck("visual completeness: life safety",all(x in modeled for x in ["B1-EXIT-SIGNS-01","B1-EXTINGUISHERS-01","B1-EMERGENCY-COMMS-01"]));ck("visual completeness: drainage","B1-FLOOR-DRAINS-01" in modeled)
-scene.metadata.update({"scene_id":"equity-uprise-basement-b1","version":"b1-underground-operations-detailed-v1","not_for_construction":True,"public_navigation":False})
+scene.metadata.update({"scene_id":"equity-uprise-basement-b1","version":"b1-underground-operations-detailed-v1","not_for_construction":True,"public_navigation":True,"access_model":"normal staffed floor (owner 2026-11-03); plant rooms keep safety doors; live systems simulation-only"})
 data=scene.export(file_type="glb");OUT.write_bytes(data);sha=hashlib.sha256(data).hexdigest();failed=[x for x in checks if not x["passed"]]
-report={"schema_version":"1.0.0","scene_id":"equity-uprise-basement-b1","not_for_construction":True,"public_navigation":False,"glb_bytes":len(data),"sha256":sha,"mesh_count":len(scene.geometry),"inventory_records":len(required),"inventory_modeled":len(required)-len(missing),"checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
+report={"schema_version":"1.0.0","scene_id":"equity-uprise-basement-b1","interior_layout":"basement-b1-interior-layout-v3.json","furniture":KIT.summary(),"furniture_placements":KIT.placed,"not_for_construction":True,"public_navigation":True,"access_model":"normal staffed floor (owner 2026-11-03); plant rooms keep safety doors; live systems simulation-only","glb_bytes":len(data),"sha256":sha,"mesh_count":len(scene.geometry),"inventory_records":len(required),"inventory_modeled":len(required)-len(missing),"checks_total":len(checks),"checks_passed":len(checks)-len(failed),"checks_failed":len(failed),"passed":not failed,"checks":checks}
 REPORT.write_text(json.dumps(report,indent=2)+"\n");print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","inventory_records","inventory_modeled","checks_total","checks_passed","checks_failed","passed")},indent=2))
 if failed: raise SystemExit(1)

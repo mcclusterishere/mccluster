@@ -1,14 +1,16 @@
 {
   "schema_version": "1.0.0",
   "status": "canonical-federal-training-catalog-v1",
-  "last_verified": "2026-09-22",
+  "last_verified": "2026-11-03",
   "purpose": "Canonical issuer-grounded catalog for federal training/resources referenced by Equity Uprise, with competency/building/scenario/lab bindings and explicit readiness/truth boundaries.",
   "authority_rules": [
     "Official issuer pages control title, code, delivery, award and active-status claims.",
     "A credential or course completion is external evidence; it is never identical to Equity Uprise competency mastery.",
     "Reference standards, manuals, vulnerability datasets and advisories are not course completions.",
     "Generic agency references are retained only when an exact stable course is not appropriate or the issuer catalog is intentionally dynamic.",
-    "B1 and OT learner activity is sandboxed-clone-only; no catalog record grants live control."
+    "B1 and OT learner activity is sandboxed-clone-only; no catalog record grants live control.",
+    "Learner-facing copy says 'prepares you for' and links the issuer; it never says certified or that a credential is earned on Equity Uprise.",
+    "Retired courses (retired_do_not_cite) are never bound or recommended."
   ],
   "source_system_refs": {
     "competency_rubrics": "competency-rubrics.json",
@@ -25,7 +27,16 @@
       "FEMA-IS-200-C",
       "FEMA-IS-201-A",
       "FEMA-IS-235-C",
-      "FEMA-IS-238"
+      "FEMA-IS-238",
+      "FEMA-IS-700-B",
+      "FEMA-IS-800-D",
+      "FEMA-IS-317-A",
+      "FEMA-IS-907-A",
+      "FEMA-IS-230-E",
+      "FEMA-IS-240-C",
+      "FEMA-IS-241-C",
+      "FEMA-IS-242-C",
+      "FEMA-IS-244-B"
     ],
     "IRS": [
       "IRS-VITA-BASIC-2025",
@@ -51,7 +62,9 @@
     "CISA": [
       "CISA-ICS-300",
       "CISA-ICS-401",
-      "CISA-ICS-301"
+      "CISA-ICS-301",
+      "CISA-ICS-100W",
+      "CISA-ICS-210W"
     ],
     "DOE": [
       "DOE-FEMP-TRAINING-CATALOG"
@@ -66,7 +79,6 @@
   "readiness_summary": {
     "usable_now": [
       "FEMA Independent Study courses listed here",
-      "IRS VITA/TCE Link & Learn Taxes plus Practice Lab for the current 2025 tax-year training season",
       "HHS/OHRP Human Research Protection Foundational Training and Participant-Centered Informed Consent Training",
       "CISA ICS 300 and ICS 401 virtual courses with associated hands-on labs",
       "DOE FEMP training catalog (course availability is dynamic during current catalog updates)",
@@ -74,7 +86,8 @@
       "NOAA Digital Coast Academy on-demand resources",
       "NASA ARSET current/self-paced offerings, with certificate rules varying by delivery",
       "CDC EHTER Awareness",
-      "ATSDR Public Health Assessment Training curriculum"
+      "ATSDR Public Health Assessment Training curriculum",
+      "CISA ICS 100W and 210W web-based modules (the entry point before ICS 401/300)"
     ],
     "real_lab_or_eligibility_later": [
       "CISA ICS 301 in-person Red Team/Blue Team lab after ICS 300 and current enrollment availability",
@@ -83,10 +96,15 @@
       "Any physical cabling, RF survey, live BAS/OT, life-safety, electrical or commissioning exercise"
     ],
     "remediation_gaps": [
-      "Pin individual DOE/FEMP course IDs only after each course remains available through the current phased catalog refresh.",
-      "Treat NOAA Digital Coast and NASA ARSET as dynamic training programs; bind individual offerings when selected for a cohort.",
+      "Classroom ICS-300/400 (G0300/G0400), CERT Basic and K/L0146 HSEEP are delivered by states/local government and are not cataloged as online courses.",
       "Do not convert OSHA, FHWA, NIST, NVD or CISA KEV references into credentials.",
-      "Refresh IRS records for each tax year before a new VITA cohort begins."
+      "Pin individual DOE/FEMP course IDs only after each course remains available through the current phased catalog refresh.",
+      "Re-confirm hours/CEU for IS-230.E, IS-240.C, IS-241.C, IS-242.C and IS-244.B on each course page.",
+      "Refresh IRS records for each tax year before a new VITA cohort begins.",
+      "Treat NOAA Digital Coast and NASA ARSET as dynamic training programs; bind individual offerings when selected for a cohort."
+    ],
+    "refresh_required": [
+      "IRS VITA/TCE records are pinned to tax year 2025: refresh for the next filing season before any cohort (due 2026-11-30)."
     ]
   },
   "records": [
@@ -147,6 +165,14 @@
       ],
       "stale_retired_aliases": [
         "FEMA ICS-100"
+      ],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-FIRE-SMOKE-V1",
+        "EU-HSEEP-SHELTER-WEATHER-V1",
+        "EU-HSEEP-ACTIVE-THREAT-TTX-V1",
+        "EU-HSEEP-HAZMAT-V1",
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1",
+        "EU-HSEEP-ACCESSIBLE-EVAC-V1"
       ]
     },
     {
@@ -205,7 +231,12 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-FIRE-SMOKE-V1",
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1",
+        "EU-HSEEP-PLAN-TTX-V1"
+      ]
     },
     {
       "credential_is_not_competency": true,
@@ -263,7 +294,10 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-PLAN-TTX-V1"
+      ]
     },
     {
       "credential_is_not_competency": true,
@@ -321,7 +355,11 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-HAZMAT-V1",
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1"
+      ]
     },
     {
       "credential_is_not_competency": true,
@@ -377,7 +415,8 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -418,15 +457,12 @@
         "BUILDING"
       ],
       "scenario_ids": [
-        "basic_evacuation",
-        "blocked_stair_a",
-        "passenger_elevator_outage",
         "power_interruption"
       ],
       "lab_ids": [
         "IT-LAB-039"
       ],
-      "hands_on_level": "planning-plus-building-simulation",
+      "hands_on_level": "planning-tabletop",
       "current_lab_readiness": "ready-now-simulation",
       "real_lab_requirements": [
         "none for tabletop/simulation"
@@ -437,7 +473,12 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "binding_notes": "IS-235.C teaches jurisdictional (community) emergency operations planning, not a workplace emergency action plan. Rebound 2026-11-03 from the evacuation drills to the plan tabletop, the shelter-in-place drill and continuity planning. The workplace EAP authority is OSHA 29 CFR 1910.38 (reference only).",
+      "hseep_scenario_ids": [
+        "EU-HSEEP-SHELTER-WEATHER-V1",
+        "EU-HSEEP-PLAN-TTX-V1"
+      ]
     },
     {
       "credential_is_not_competency": true,
@@ -476,7 +517,6 @@
       ],
       "scenario_ids": [
         "power_interruption",
-        "public_service_surge",
         "service_area_incident"
       ],
       "lab_ids": [
@@ -495,7 +535,9 @@
       ],
       "stale_retired_aliases": [
         "Planning and Analysis for Safety and Security (incorrect handoff title; not the current IS-238 title)"
-      ]
+      ],
+      "binding_notes": "Supply-chain flow and resilience: bound to continuity of power and the freight/service delivery area. Unbound from the lobby public-service queue surge on 2026-11-03 (a queue is not a supply chain).",
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -557,7 +599,11 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "refresh_status": "stale-pin: tax year 2025 records; refresh for the next filing season before any cohort",
+      "refresh_due": "2026-11-30",
+      "refresh_note": "Link & Learn materials for the new tax year usually arrive mid-to-late November. Re-verify titles, pass mark, Form 13615 rules and the catalog ID suffix, then rename the records in one change with the public-service pack.",
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -619,7 +665,11 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "refresh_status": "stale-pin: tax year 2025 records; refresh for the next filing season before any cohort",
+      "refresh_due": "2026-11-30",
+      "refresh_note": "Link & Learn materials for the new tax year usually arrive mid-to-late November. Re-verify titles, pass mark, Form 13615 rules and the catalog ID suffix, then rename the records in one change with the public-service pack.",
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -669,7 +719,11 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "refresh_status": "stale-pin: tax year 2025 records; refresh for the next filing season before any cohort",
+      "refresh_due": "2026-11-30",
+      "refresh_note": "Link & Learn materials for the new tax year usually arrive mid-to-late November. Re-verify titles, pass mark, Form 13615 rules and the catalog ID suffix, then rename the records in one change with the public-service pack.",
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -726,7 +780,11 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "refresh_status": "stale-pin: tax year 2025 records; refresh for the next filing season before any cohort",
+      "refresh_due": "2026-11-30",
+      "refresh_note": "Link & Learn materials for the new tax year usually arrive mid-to-late November. Re-verify titles, pass mark, Form 13615 rules and the catalog ID suffix, then rename the records in one change with the public-service pack.",
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -777,7 +835,8 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -828,7 +887,8 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -879,7 +939,6 @@
         "L7"
       ],
       "scenario_ids": [
-        "network_checkin_outage",
         "power_interruption"
       ],
       "lab_ids": [
@@ -908,7 +967,9 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "binding_notes": "Industrial Control Systems (OT) cybersecurity. Unbound from the directory/IdP check-in outage on 2026-11-03: that outage is IT, not OT. The honest fits are BAS, BACnet, IT/OT segmentation and the cross-system incident labs.",
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -958,7 +1019,6 @@
         "L7"
       ],
       "scenario_ids": [
-        "network_checkin_outage",
         "power_interruption"
       ],
       "lab_ids": [
@@ -979,7 +1039,9 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "binding_notes": "Industrial Control Systems (OT) cybersecurity. Unbound from the directory/IdP check-in outage on 2026-11-03: that outage is IT, not OT. The honest fits are BAS, BACnet, IT/OT segmentation and the cross-system incident labs.",
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -1024,7 +1086,6 @@
         "BUILDING"
       ],
       "scenario_ids": [
-        "network_checkin_outage",
         "power_interruption"
       ],
       "lab_ids": [
@@ -1045,7 +1106,9 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "binding_notes": "Industrial Control Systems (OT) cybersecurity. Unbound from the directory/IdP check-in outage on 2026-11-03: that outage is IT, not OT. The honest fits are BAS, BACnet, IT/OT segmentation and the cross-system incident labs.",
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -1118,7 +1181,8 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -1180,7 +1244,8 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -1227,7 +1292,8 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -1282,7 +1348,8 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -1342,7 +1409,10 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": [
+        "EU-HSEEP-HAZMAT-V1"
+      ]
     },
     {
       "credential_is_not_competency": true,
@@ -1399,7 +1469,8 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": []
     },
     {
       "credential_is_not_competency": true,
@@ -1455,7 +1526,613 @@
           "verified": "2026-09-22"
         }
       ],
-      "stale_retired_aliases": []
+      "stale_retired_aliases": [],
+      "hseep_scenario_ids": []
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-700-B",
+      "record_type": "course",
+      "agency": "FEMA",
+      "program": "National Disaster & Emergency Management University Independent Study",
+      "course_code": "IS-700.B",
+      "official_title": "An Introduction to the National Incident Management System",
+      "official_url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-700.b",
+      "last_verified": "2026-11-03",
+      "free_status": "free",
+      "active_status": "active",
+      "delivery_mode": "online self-paced",
+      "duration": "3.5 hours",
+      "award_type": "FEMA Independent Study certificate of completion; 0.4 CEU listed by issuer; not college credit, not a licence",
+      "prerequisites": [],
+      "annual_refresh": "none stated; track issuer revision suffix/date",
+      "expiration_rules": "none stated",
+      "eligibility": "public; FEMA SID required for final exam (Equity Uprise never stores the SID)",
+      "competency_ids": [
+        "CORE-06",
+        "CORE-08",
+        "PSC-05"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "scenario_ids": [
+        "basic_evacuation",
+        "medical_incident_lobby"
+      ],
+      "lab_ids": [],
+      "hands_on_level": "knowledge-plus-exercise-role",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "provenance": [
+        {
+          "url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-700.b",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "NIMS baseline taken with IS-100.C; a usual prerequisite for classroom ICS-300.",
+      "hseep_scenario_ids": [
+        "EU-HSEEP-FIRE-SMOKE-V1",
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1"
+      ]
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-800-D",
+      "record_type": "course",
+      "agency": "FEMA",
+      "program": "National Disaster & Emergency Management University Independent Study",
+      "course_code": "IS-800.D",
+      "official_title": "National Response Framework, An Introduction",
+      "official_url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-800.d",
+      "last_verified": "2026-11-03",
+      "free_status": "free",
+      "active_status": "active",
+      "delivery_mode": "online self-paced",
+      "duration": "3 hours",
+      "award_type": "FEMA Independent Study certificate of completion; 0.3 CEU listed by issuer; not college credit, not a licence",
+      "prerequisites": [],
+      "annual_refresh": "none stated; track issuer revision suffix/date",
+      "expiration_rules": "none stated",
+      "eligibility": "public; FEMA SID required for final exam (Equity Uprise never stores the SID)",
+      "competency_ids": [
+        "CORE-06",
+        "PSC-03",
+        "PSC-05"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hands_on_level": "knowledge-plus-exercise-role",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "provenance": [
+        {
+          "url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-800.d",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "Usual prerequisite for classroom ICS-300 (G0300), with IS-100, IS-200 and IS-700.",
+      "hseep_scenario_ids": [
+        "EU-HSEEP-PLAN-TTX-V1"
+      ]
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-317-A",
+      "record_type": "course",
+      "agency": "FEMA",
+      "program": "National Disaster & Emergency Management University Independent Study",
+      "course_code": "IS-317.A",
+      "official_title": "Introduction to Community Emergency Response Teams (CERTs)",
+      "official_url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-317.a",
+      "last_verified": "2026-11-03",
+      "free_status": "free",
+      "active_status": "active",
+      "delivery_mode": "online self-paced",
+      "duration": "2 hours",
+      "award_type": "FEMA Independent Study certificate of completion; 0.2 CEU listed by issuer; not college credit, not a licence",
+      "prerequisites": [],
+      "annual_refresh": "none stated; track issuer revision suffix/date",
+      "expiration_rules": "none stated",
+      "eligibility": "public; FEMA SID required for final exam (Equity Uprise never stores the SID)",
+      "competency_ids": [
+        "PSC-01",
+        "PSC-05",
+        "CORE-08"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "floor_ids": [
+        "F1"
+      ],
+      "scenario_ids": [
+        "medical_incident_lobby",
+        "service_area_incident"
+      ],
+      "lab_ids": [],
+      "hands_on_level": "knowledge-plus-exercise-role",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "local CERT Basic Training (classroom, delivered by local government) for the full program; IS-317.A does not replace it"
+      ],
+      "provenance": [
+        {
+          "url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-317.a",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "Online introduction only. CERT Basic Training is classroom-based and delivered by local emergency management, fire or police.",
+      "hseep_scenario_ids": [
+        "EU-HSEEP-SHELTER-WEATHER-V1",
+        "EU-HSEEP-ACCESSIBLE-EVAC-V1"
+      ]
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-907-A",
+      "record_type": "course",
+      "agency": "FEMA",
+      "program": "National Disaster & Emergency Management University Independent Study",
+      "course_code": "IS-907.A",
+      "official_title": "Active Shooter: What You Can Do",
+      "official_url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-907",
+      "last_verified": "2026-11-03",
+      "free_status": "free",
+      "active_status": "active",
+      "delivery_mode": "online self-paced",
+      "duration": "1 hour",
+      "award_type": "FEMA Independent Study certificate of completion; 0.1 CEU listed by issuer; not college credit, not a licence",
+      "prerequisites": [],
+      "annual_refresh": "none stated; track issuer revision suffix/date",
+      "expiration_rules": "none stated",
+      "eligibility": "public; FEMA SID required for final exam (Equity Uprise never stores the SID)",
+      "competency_ids": [
+        "CORE-08",
+        "CORE-02"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "floor_ids": [
+        "F1"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hands_on_level": "discussion-tabletop-only",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "provenance": [
+        {
+          "url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-907",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "Bound only to a non-graphic tabletop that repeats the official Run, Hide, Fight guidance and adds no tactics.",
+      "hseep_scenario_ids": [
+        "EU-HSEEP-ACTIVE-THREAT-TTX-V1"
+      ]
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-230-E",
+      "record_type": "course",
+      "agency": "FEMA",
+      "program": "National Disaster & Emergency Management University Independent Study",
+      "course_code": "IS-230.E",
+      "official_title": "Fundamentals of Emergency Management",
+      "official_url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-230.e",
+      "last_verified": "2026-11-03",
+      "free_status": "free",
+      "active_status": "active",
+      "delivery_mode": "online self-paced",
+      "duration": "see issuer course page",
+      "award_type": "FEMA Independent Study certificate of completion; not college credit, not a licence",
+      "prerequisites": [],
+      "annual_refresh": "none stated; track issuer revision suffix/date",
+      "expiration_rules": "none stated",
+      "eligibility": "public; FEMA SID required for final exam (Equity Uprise never stores the SID)",
+      "competency_ids": [
+        "CORE-06",
+        "PSC-05",
+        "SHR-01"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hands_on_level": "knowledge-plus-exercise-role",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "provenance": [
+        {
+          "url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-230.e",
+          "verified": "2026-11-03"
+        },
+        {
+          "url": "https://training.fema.gov/is/pds.aspx",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "FEMA Professional Development Series course. Code verified on the PDS page 2026-11-03; hours/CEU to re-confirm on the course page.",
+      "hseep_scenario_ids": [
+        "EU-HSEEP-PLAN-TTX-V1"
+      ]
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-240-C",
+      "record_type": "course",
+      "agency": "FEMA",
+      "program": "National Disaster & Emergency Management University Independent Study",
+      "course_code": "IS-240.C",
+      "official_title": "Leadership and Influence",
+      "official_url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-240.c",
+      "last_verified": "2026-11-03",
+      "free_status": "free",
+      "active_status": "active",
+      "delivery_mode": "online self-paced",
+      "duration": "see issuer course page",
+      "award_type": "FEMA Independent Study certificate of completion; not college credit, not a licence",
+      "prerequisites": [],
+      "annual_refresh": "none stated; track issuer revision suffix/date",
+      "expiration_rules": "none stated",
+      "eligibility": "public; FEMA SID required for final exam (Equity Uprise never stores the SID)",
+      "competency_ids": [
+        "CORE-03",
+        "SHR-05",
+        "PSC-05"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hands_on_level": "knowledge-plus-exercise-role",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "provenance": [
+        {
+          "url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-240.c",
+          "verified": "2026-11-03"
+        },
+        {
+          "url": "https://training.fema.gov/is/pds.aspx",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "FEMA Professional Development Series course. Code verified on the PDS page 2026-11-03; hours/CEU to re-confirm on the course page.",
+      "hseep_scenario_ids": [
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1"
+      ]
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-241-C",
+      "record_type": "course",
+      "agency": "FEMA",
+      "program": "National Disaster & Emergency Management University Independent Study",
+      "course_code": "IS-241.C",
+      "official_title": "Decision Making and Problem Solving",
+      "official_url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-241.c",
+      "last_verified": "2026-11-03",
+      "free_status": "free",
+      "active_status": "active",
+      "delivery_mode": "online self-paced",
+      "duration": "see issuer course page",
+      "award_type": "FEMA Independent Study certificate of completion; not college credit, not a licence",
+      "prerequisites": [],
+      "annual_refresh": "none stated; track issuer revision suffix/date",
+      "expiration_rules": "none stated",
+      "eligibility": "public; FEMA SID required for final exam (Equity Uprise never stores the SID)",
+      "competency_ids": [
+        "CORE-08",
+        "OPS-05",
+        "PSC-05"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hands_on_level": "knowledge-plus-exercise-role",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "provenance": [
+        {
+          "url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-241.c",
+          "verified": "2026-11-03"
+        },
+        {
+          "url": "https://training.fema.gov/is/pds.aspx",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "FEMA Professional Development Series course. Code verified on the PDS page 2026-11-03; hours/CEU to re-confirm on the course page.",
+      "hseep_scenario_ids": [
+        "EU-HSEEP-FULL-BUILDING-EVAC-V1"
+      ]
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-242-C",
+      "record_type": "course",
+      "agency": "FEMA",
+      "program": "National Disaster & Emergency Management University Independent Study",
+      "course_code": "IS-242.C",
+      "official_title": "Effective Communication",
+      "official_url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-242.c",
+      "last_verified": "2026-11-03",
+      "free_status": "free",
+      "active_status": "active",
+      "delivery_mode": "online self-paced",
+      "duration": "see issuer course page",
+      "award_type": "FEMA Independent Study certificate of completion; not college credit, not a licence",
+      "prerequisites": [],
+      "annual_refresh": "none stated; track issuer revision suffix/date",
+      "expiration_rules": "none stated",
+      "eligibility": "public; FEMA SID required for final exam (Equity Uprise never stores the SID)",
+      "competency_ids": [
+        "CORE-02",
+        "PSC-05",
+        "SHR-05"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "floor_ids": [
+        "F1",
+        "BUILDING"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hands_on_level": "knowledge-plus-exercise-role",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "provenance": [
+        {
+          "url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-242.c",
+          "verified": "2026-11-03"
+        },
+        {
+          "url": "https://training.fema.gov/is/pds.aspx",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "FEMA Professional Development Series course. Code verified on the PDS page 2026-11-03; hours/CEU to re-confirm on the course page.",
+      "hseep_scenario_ids": [
+        "EU-HSEEP-SHELTER-WEATHER-V1"
+      ]
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "FEMA-IS-244-B",
+      "record_type": "course",
+      "agency": "FEMA",
+      "program": "National Disaster & Emergency Management University Independent Study",
+      "course_code": "IS-244.B",
+      "official_title": "Developing and Managing Volunteers",
+      "official_url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-244.b",
+      "last_verified": "2026-11-03",
+      "free_status": "free",
+      "active_status": "active",
+      "delivery_mode": "online self-paced",
+      "duration": "see issuer course page",
+      "award_type": "FEMA Independent Study certificate of completion; not college credit, not a licence",
+      "prerequisites": [],
+      "annual_refresh": "none stated; track issuer revision suffix/date",
+      "expiration_rules": "none stated",
+      "eligibility": "public; FEMA SID required for final exam (Equity Uprise never stores the SID)",
+      "competency_ids": [
+        "PSC-01",
+        "PSC-04",
+        "SHR-01"
+      ],
+      "building_asset_ids": [],
+      "building_space_ids": [
+        "f1-building-ops"
+      ],
+      "floor_ids": [
+        "F1"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [],
+      "hands_on_level": "knowledge-plus-exercise-role",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "none for tabletop/simulation"
+      ],
+      "provenance": [
+        {
+          "url": "https://training.fema.gov/is/courseoverview.aspx?code=IS-244.b",
+          "verified": "2026-11-03"
+        },
+        {
+          "url": "https://training.fema.gov/is/pds.aspx",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "FEMA Professional Development Series course. Code verified on the PDS page 2026-11-03; hours/CEU to re-confirm on the course page.",
+      "hseep_scenario_ids": [
+        "EU-HSEEP-ACCESSIBLE-EVAC-V1"
+      ]
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "CISA-ICS-100W",
+      "record_type": "course",
+      "agency": "CISA",
+      "program": "Industrial Control Systems Cybersecurity Training (web-based, on demand)",
+      "course_code": "ICS 100W",
+      "official_title": "Operational Security (OPSEC) for Control Systems (100W)",
+      "official_url": "https://www.cisa.gov/resources-tools/programs/ics-training-available-through-cisa",
+      "last_verified": "2026-11-03",
+      "free_status": "no tuition; registration terms set by CISA",
+      "active_status": "active-on-demand",
+      "delivery_mode": "CISA Virtual Learning Portal, web-based, on demand",
+      "duration": "about 1 hour",
+      "award_type": "CISA training completion; certificate details verified at enrollment",
+      "prerequisites": [],
+      "annual_refresh": "none stated",
+      "expiration_rules": "none stated",
+      "eligibility": "registration required; CISA lists corporate, government, military or education email for its ICS courses",
+      "competency_ids": [
+        "CORE-05",
+        "OPS-01",
+        "OPS-02",
+        "OPS-04"
+      ],
+      "building_asset_ids": [
+        "LOGIC-VLAN-BAS-OT"
+      ],
+      "building_space_ids": [
+        "f1-it-electrical"
+      ],
+      "floor_ids": [
+        "B1",
+        "L7"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [
+        "IT-LAB-027",
+        "IT-LAB-029"
+      ],
+      "hands_on_level": "awareness-plus-building-simulation",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "isolated OT cyber range for any non-simulated exercise"
+      ],
+      "provenance": [
+        {
+          "url": "https://www.cisa.gov/resources-tools/programs/ics-training-available-through-cisa",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "Entry point for building OT cyber before ICS 401/300. 'ICS' here means Industrial Control Systems, not FEMA's Incident Command System.",
+      "hseep_scenario_ids": []
+    },
+    {
+      "credential_is_not_competency": true,
+      "simulation_only_boundary": "External training may inform or support Equity Uprise evidence, but completion never grants live building-system control. Any learner B1/OT exercise uses a sandboxed clone only.",
+      "catalog_id": "CISA-ICS-210W",
+      "record_type": "course_series",
+      "agency": "CISA",
+      "program": "Industrial Control Systems Cybersecurity Training (web-based, on demand)",
+      "course_code": "ICS 210W",
+      "official_title": "Cybersecurity for Industrial Control Systems (210W-1 through 210W-11)",
+      "official_url": "https://www.cisa.gov/resources-tools/programs/ics-training-available-through-cisa",
+      "last_verified": "2026-11-03",
+      "free_status": "no tuition; registration terms set by CISA",
+      "active_status": "active-on-demand",
+      "delivery_mode": "CISA Virtual Learning Portal, web-based, on demand",
+      "duration": "about 1 to 1.5 hours per module",
+      "award_type": "CISA training completion; certificate details verified at enrollment",
+      "prerequisites": [],
+      "annual_refresh": "none stated",
+      "expiration_rules": "none stated",
+      "eligibility": "registration required; CISA lists corporate, government, military or education email for its ICS courses",
+      "competency_ids": [
+        "CORE-05",
+        "OPS-01",
+        "OPS-02",
+        "OPS-04"
+      ],
+      "building_asset_ids": [
+        "LOGIC-VLAN-BAS-OT"
+      ],
+      "building_space_ids": [
+        "f1-it-electrical"
+      ],
+      "floor_ids": [
+        "B1",
+        "L7"
+      ],
+      "scenario_ids": [],
+      "lab_ids": [
+        "IT-LAB-027",
+        "IT-LAB-028",
+        "IT-LAB-029"
+      ],
+      "hands_on_level": "awareness-plus-building-simulation",
+      "current_lab_readiness": "ready-now-simulation",
+      "real_lab_requirements": [
+        "isolated OT cyber range for any non-simulated exercise"
+      ],
+      "provenance": [
+        {
+          "url": "https://www.cisa.gov/resources-tools/programs/ics-training-available-through-cisa",
+          "verified": "2026-11-03"
+        }
+      ],
+      "stale_retired_aliases": [],
+      "binding_notes": "Entry point for building OT cyber before ICS 401/300. 'ICS' here means Industrial Control Systems, not FEMA's Incident Command System.",
+      "hseep_scenario_ids": []
     }
   ],
   "reference_materials": [
@@ -1506,7 +2183,99 @@
       "url": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog",
       "classification": "dataset-reference-not-course",
       "credential_awarded": false
+    },
+    {
+      "reference_id": "REF-OSHA-1910-39",
+      "agency": "OSHA",
+      "title": "29 CFR 1910.39 Fire Prevention Plans",
+      "url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.39",
+      "classification": "reference-only-not-course",
+      "credential_awarded": false
+    },
+    {
+      "reference_id": "REF-NFPA-101",
+      "agency": "NFPA",
+      "title": "NFPA 101 Life Safety Code, section 4.7 fire exit drills",
+      "url": "https://www.nfpa.org/codes-and-standards/nfpa-101-standard-development/101",
+      "classification": "consensus-code-reference-not-course",
+      "credential_awarded": false,
+      "note": "Adopted and enforced by the local authority having jurisdiction; drill frequency comes from the adopted edition, not from a federal rule."
+    },
+    {
+      "reference_id": "REF-NFPA-1660",
+      "agency": "NFPA",
+      "title": "NFPA 1660 (2024) Standard for Emergency, Continuity, and Crisis Management: Preparedness, Response, and Recovery",
+      "url": "https://webstore.ansi.org/standards/nfpa/nfpa16602024",
+      "classification": "consensus-standard-reference-not-course",
+      "credential_awarded": false,
+      "stale_retired_aliases": [
+        "NFPA 1600",
+        "NFPA 1616",
+        "NFPA 1620"
+      ],
+      "note": "NFPA 1660 (2024) consolidates NFPA 1600, 1616 and 1620. Cite 1660, never 1600."
+    },
+    {
+      "reference_id": "REF-FEMA-HSEEP-2020",
+      "agency": "FEMA",
+      "title": "Homeland Security Exercise and Evaluation Program (HSEEP), January 2020",
+      "url": "https://www.fema.gov/emergency-managers/national-preparedness/exercises/hseep",
+      "classification": "doctrine-reference-not-course",
+      "credential_awarded": false
+    },
+    {
+      "reference_id": "REF-DHS-ACTIVE-SHOOTER-PREPAREDNESS",
+      "agency": "CISA",
+      "title": "Active Shooter Preparedness (Run, Hide, Fight guidance)",
+      "url": "https://www.cisa.gov/topics/physical-security/active-shooter-preparedness",
+      "classification": "guidance-reference-not-course",
+      "credential_awarded": false
+    },
+    {
+      "reference_id": "REF-JAN-EMERGENCY-EVACUATION",
+      "agency": "DOL/ODEP (JAN)",
+      "title": "Job Accommodation Network: Emergency Evacuation",
+      "url": "https://askjan.org/topics/emevac.cfm",
+      "classification": "guidance-reference-not-course",
+      "credential_awarded": false
+    },
+    {
+      "reference_id": "REF-EEOC-EVACUATION",
+      "agency": "EEOC",
+      "title": "Obtaining and Using Employee Medical Information as Part of Emergency Evacuation Procedures",
+      "url": "https://www.eeoc.gov/facts/evacuation.html",
+      "classification": "guidance-reference-not-course",
+      "credential_awarded": false
     }
   ],
-  "credential_is_not_competency": true
+  "credential_is_not_competency": true,
+  "retired_do_not_cite": [
+    {
+      "course_code": "IS-139.A",
+      "official_title": "Exercise Design and Development",
+      "status": "retired by FEMA without replacement",
+      "verified": "2026-11-03",
+      "rule": "Never add, bind or recommend IS-139.A. Use IS-120.C and IS-130.A, then classroom K/L0146 HSEEP."
+    }
+  ],
+  "credential_programs": [
+    {
+      "program_id": "FEMA-PDS",
+      "agency": "FEMA",
+      "title": "Professional Development Series (PDS) certificate",
+      "official_url": "https://training.fema.gov/is/pds.aspx",
+      "last_verified": "2026-11-03",
+      "required_catalog_ids": [
+        "FEMA-IS-120-C",
+        "FEMA-IS-230-E",
+        "FEMA-IS-235-C",
+        "FEMA-IS-240-C",
+        "FEMA-IS-241-C",
+        "FEMA-IS-242-C",
+        "FEMA-IS-244-B"
+      ],
+      "issued_by": "FEMA NDEMU Student Portal after all seven courses; Equity Uprise only records the uploaded certificate",
+      "credential_is_not_competency": true
+    }
+  ]
 }

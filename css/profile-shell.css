@@ -1,0 +1,26 @@
+/* Shared public-profile footer, outside identity/metric containers. */
+.guest-world{box-sizing:border-box;position:relative;width:100%;max-width:1100px;min-width:0;margin:24px auto 7rem;padding:0 16px}
+.guest-world[hidden],[data-project-detail][hidden]{display:none!important}
+.guest-world__frame{height:clamp(320px,55svh,690px);min-width:0;position:relative;border:1px solid #ffffff26;border-radius:22px;overflow:hidden;background:#080d17}
+.guest-world iframe{display:block;width:100%;height:100%;border:0}
+.guest-world__cta{display:flex;align-items:center;gap:12px;flex-direction:column;text-align:center;padding:20px 0;color:#d8dce6;font:14px/1.5 system-ui,sans-serif}
+.guest-world__cta a{display:inline-flex;align-items:center;min-height:48px;box-sizing:border-box;max-width:100%;padding:13px 20px;border-radius:999px;background:#070b14;color:#fff;border:1px solid #ffffff66;text-decoration:none;font-weight:700;overflow-wrap:anywhere}
+.guest-world a:focus-visible,.project-feature a:focus-visible,.front-links a:focus-visible{outline:3px solid #f5ce6c;outline-offset:5px}
+.project-feature{box-sizing:border-box;width:100%;max-width:1100px;margin:48px auto;padding:0 16px}
+.project-feature__link{display:grid;grid-template-columns:minmax(0,1fr);overflow:hidden;border:1px solid #ffffff40;border-radius:22px;background:#141414;color:#f5efe6;text-decoration:none}
+.project-feature__link img{width:100%;aspect-ratio:16/10;object-fit:cover;min-width:0}
+.project-feature__link div{min-width:0;padding:24px;align-self:center}
+.project-feature__link h2{font:400 clamp(2.8rem,8vw,5rem)/1.1 Anton,Impact,sans-serif;margin:12px 0}
+.project-feature__link p{font:16px/1.6 system-ui,sans-serif;overflow-wrap:anywhere}
+.project-feature__link span{display:inline-block;padding:12px 0;font:700 16px/1.5 system-ui,sans-serif}
+.front-project-note{max-width:48rem;margin:16px auto;padding:0 16px;color:#d8cfc3;font:14px/1.6 system-ui,sans-serif;text-align:center}
+.front-project-note a{color:inherit}
+@media(min-width:760px){.project-feature__link{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.project-feature__link img{height:100%;aspect-ratio:1/1}}
+
+html[data-front-project] .hero{height:100svh;min-height:680px}
+html[data-front-project] .hero__sticky{min-height:680px}
+
+#work.project-feature{height:auto}
+/* The night film used to overlap the departing jet by one viewport. A project
+   card is ordinary document content and must never sit under that stage. */
+.project-feature ~ .services{margin-top:0}

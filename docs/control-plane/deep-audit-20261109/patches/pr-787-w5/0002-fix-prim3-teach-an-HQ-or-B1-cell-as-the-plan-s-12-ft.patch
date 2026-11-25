@@ -1,0 +1,100 @@
+From 841736be6a9906ddd6a4b350876d1ce66c2c3b6a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 10 Nov 2026 11:53:59 +0000
+Subject: [PATCH 2/2] fix(prim3): teach an HQ or B1 cell as the plan's 12 ft
+ (3.6576 m) and name the 3.54 m rule tile apart (W5)
+
+The Equity Uprise HQ and both B1 variants told learners "3.54 m/tile". Their
+level module lays the building plan at 12 ft a cell and draws the level at
+WORLD_M = 12 ft = 3.6576 m a cell; 3.54 m is the shared tactical-rule tile
+(TILE_M), 3.2% smaller (the cell is 3.3% larger). The frame shown above every HQ and B1 question now
+says both, separately: one cell is 12 ft (3.6576 m) on the building plan;
+tactical rules use the separate 3.54 m game tile. Transit / Relay, the
+generated operation, the courtyard and the City keep their frames.
+
+Only display text changes. The evaluator, the expected answers, the
+feedback and hint strings that signed evidence replays, and the
+prim3.lattice-learning/v1 context are unchanged, so existing sessions
+replay as before.
+
+The new parity test reads FRAME, WORLD_M, TILE_M, FT and FT_PER_TILE from
+the Transit, HQ and B1 level modules and checks each authored square
+frame's origin, cell scale and rule tile against them, and that every
+question shows the frame. It fails on the PR head (the HQ frame names
+3.54 m/tile as the cell) and passes here. docs/prim3/TOPOLOGY-LEARNING.md
+records the two scales.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01RNT2Nvh5aJGtEzBMdqUF4T
+---
+ docs/prim3/TOPOLOGY-LEARNING.md               |  2 +-
+ js/prim3-mission/topology-learning.mjs        |  6 +++---
+ scripts/test/prim3-topology-learning.test.mjs | 15 +++++++++++++++
+ 3 files changed, 19 insertions(+), 4 deletions(-)
+
+diff --git a/docs/prim3/TOPOLOGY-LEARNING.md b/docs/prim3/TOPOLOGY-LEARNING.md
+index d148afaa..2fa6270e 100644
+--- a/docs/prim3/TOPOLOGY-LEARNING.md
++++ b/docs/prim3/TOPOLOGY-LEARNING.md
+@@ -26,7 +26,7 @@ These are explicitly **unobstructed practice lattice exercises**, not shortest p
+ 
+ Authorities:
+ - `js/prim3-tactics/levels/transit-relay.mjs`: display `(x-32,31-y)`, north-positive Y, 3.54 m tiles.
+-- HQ and B1 level modules: display `(x-3,8-y)`, north-positive Y, same tile scale.
++- HQ and B1 level modules: display `(x-3,8-y)`, north-positive Y. A cell is the building plan's 12 ft (`WORLD_M` = 3.6576 m), not the 3.54 m tile: the tactical rules keep the shared 3.54 m `TILE_M`, and the frame names the two separately. `scripts/test/prim3-topology-learning.test.mjs` checks each authored frame's origin and scales against its level module.
+ - Courtyard `rules.js` and `game.js`: integer cell-column/row exercises `(q,r)`, q right/r down; centered 10-cell display `(q-4.5,4.5-r)` is a separate half-cell translation. No geographic or surveyed metre claim.
+ - `data/spatial/bridgeport-downtown.v2.json` and `js/spatial/metric-frame.mjs`: street floor, `bridgeport-golden-hill.enu.v1`, x east/y up/z south, square side 2 m, pointy hex radius 1.5 m. Hex +q is east, +r southeast; neighbor spacing is sqrt(3)*1.5 m. The pure tests compare the evaluator to BFS using the actual contract's neighbors and verify cell-center metric spacing.
+ 
+diff --git a/js/prim3-mission/topology-learning.mjs b/js/prim3-mission/topology-learning.mjs
+index 89b30c92..913b8326 100644
+--- a/js/prim3-mission/topology-learning.mjs
++++ b/js/prim3-mission/topology-learning.mjs
+@@ -3,9 +3,9 @@
+ export const LEARNING_VARIANTS = Object.freeze({
+  'generated': {title:'Generated side operation',href:null,frame:'Signed Forge display: +X east, +Y north; origin is the tile containing Forge (0,0); 3.54 m/tile',topologies:['square']},
+  'transit-relay': {title:'Transit / Relay',href:'prim3-transit.html?level=transit-relay',frame:'X=x−32, Y=31−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
+- 'equity-uprise-hq': {title:'Equity Uprise HQ',href:'prim3-transit.html?level=equity-uprise-hq',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
+- 'equity-uprise-b1': {title:'Equity Uprise B1 · Restore the Picture',href:'prim3-transit.html?level=equity-uprise-b1&side=defend',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
+- 'equity-uprise-b1-attack': {title:'Equity Uprise B1 · Blind the Floor',href:'prim3-transit.html?level=equity-uprise-b1&side=attack',frame:'X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile',topologies:['square']},
++ 'equity-uprise-hq': {title:'Equity Uprise HQ',href:'prim3-transit.html?level=equity-uprise-hq',frame:'X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile',topologies:['square']},
++ 'equity-uprise-b1': {title:'Equity Uprise B1 · Restore the Picture',href:'prim3-transit.html?level=equity-uprise-b1&side=defend',frame:'X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile',topologies:['square']},
++ 'equity-uprise-b1-attack': {title:'Equity Uprise B1 · Blind the Floor',href:'prim3-transit.html?level=equity-uprise-b1&side=attack',frame:'X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile',topologies:['square']},
+  'courtyard': {title:'Courtyard study',href:'demos/prim3-courtyard/index.html',frame:'Integer cell (q,r): +q right, +r down. Display X=q−4.5, Y=4.5−r; no geographic anchor or metre scale',topologies:['square']},
+  'city': {title:'City street simulation',href:'prim3-city-tactics.html',frame:'bridgeport-golden-hill.enu.v1; +x east, +y up, +z south; street floor',topologies:['square','hex']}
+ });
+diff --git a/scripts/test/prim3-topology-learning.test.mjs b/scripts/test/prim3-topology-learning.test.mjs
+index 03c6841f..6c43bd2a 100644
+--- a/scripts/test/prim3-topology-learning.test.mjs
++++ b/scripts/test/prim3-topology-learning.test.mjs
+@@ -5,6 +5,9 @@ import {LEARNING_VARIANTS,learningContext,latticeQuestion} from '../../js/prim3-
+ import {cellCenter} from '../../js/spatial/metric-frame.mjs';
+ import {FRAME as transit} from '../../js/prim3-tactics/levels/transit-relay.mjs';
+ import {FRAME as hq} from '../../js/prim3-tactics/levels/equity-uprise-hq.mjs';
++import * as transitLevel from '../../js/prim3-tactics/levels/transit-relay.mjs';
++import * as hqLevel from '../../js/prim3-tactics/levels/equity-uprise-hq.mjs';
++import * as b1Level from '../../js/prim3-tactics/levels/equity-uprise-b1.mjs';
+ const region=JSON.parse(readFileSync('data/spatial/bridgeport-downtown.v2.json'));
+ for(const topology of ['square','hex'])test(`${topology} evaluator agrees with canonical neighbor BFS, not graph indices`,()=>{
+  const context={version:'prim3.lattice-learning/v1',variant:'city',topology},neighbors=region.contract.topologies[topology].neighbors;
+@@ -21,6 +24,18 @@ test('authored frames and unsupported/forged context fail closed',()=>{
+  assert.deepEqual(transit,{x0:32,y0:31,yUp:true});assert.deepEqual(hq,{x0:3,y0:8,yUp:true});
+  for(const value of [{version:'future',variant:'city',topology:'hex'},{version:'prim3.lattice-learning/v1',variant:'equity-uprise-hq',topology:'hex'},{version:'prim3.lattice-learning/v1',variant:'city',topology:'hex',expected:1}])assert.throws(()=>learningContext(value));
+ });
++test('authored frames follow their level modules: an HQ/B1 cell is the plan\'s 12 ft WORLD_M, the 3.54 m rule tile is named apart (audit W5)',()=>{
++ for(const [variant,level] of [['transit-relay',transitLevel],['equity-uprise-hq',hqLevel],['equity-uprise-b1',b1Level],['equity-uprise-b1-attack',b1Level]]){
++  const {frame}=LEARNING_VARIANTS[variant],prompt=latticeQuestion({version:'prim3.lattice-learning/v1',variant,topology:'square'},0,1,1).prompt;
++  assert.ok(frame.startsWith(`X=x−${level.FRAME.x0}, Y=${level.FRAME.y0}−y; +X east, +Y north; `),`${variant}: origin and axes follow the level FRAME`);
++  assert.ok(prompt.startsWith(frame),`${variant}: every question shows the frame`);
++  if(level.WORLD_M===undefined){assert.equal(Number(frame.match(/; (\d+(?:\.\d+)?) m\/tile$/)?.[1]),level.TILE_M,`${variant}: drawn and ruled on the shared tile`);continue;}
++  const cell=frame.match(/one cell is (\d+) ft \((\d+(?:\.\d+)?) m\) on the building plan/),rule=frame.match(/tactical rules use the separate (\d+(?:\.\d+)?) m game tile/);
++  assert.ok(cell&&rule,`${variant}: names the plan cell and the rule tile separately: ${frame}`);
++  assert.equal(Number(cell[1]),hqLevel.FT_PER_TILE);assert.ok(Math.abs(Number(cell[2])-level.WORLD_M)<1e-9&&Math.abs(Number(cell[1])*hqLevel.FT-level.WORLD_M)<1e-9,`${variant}: a cell is the level's WORLD_M`);
++  assert.equal(Number(rule[1]),level.TILE_M);assert.doesNotMatch(frame,/m\/tile/,`${variant}: the rule tile is not the cell size`);
++ }
++});
+ test('the published mission UI imports the published runtime; the private path only re-exports it (audit W5)',async()=>{
+  // deploy-pages.yml strips PRIM3/: a published import of PRIM3/game/halo/adaptive/ leaves the page without its runtime.
+  for(const file of ['js/prim3-mission/released-app.mjs','js/prim3-mission/released-learning.mjs']){
+-- 
+2.43.0
+

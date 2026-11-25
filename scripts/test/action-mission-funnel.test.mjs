@@ -38,8 +38,9 @@ test("mission deep links survive OAuth and first-profile onboarding", () => {
   /* the return is this page, path, query and hash; from Create account it also carries ?join=1 back into the pages (owner, 2026-10-20) */
   assert.match(mnet, /var back = new URL\(location\.href\);\n\s*if \(\$\("mnSignedOut"\)\.getAttribute\("data-auth-mode"\) === "create"\) back\.searchParams\.set\("join", "1"\);\n\s*var next=back\.pathname\+back\.search\+back\.hash/);
   assert.match(mnet, /\/auth\/\?next=" \+ encodeURIComponent\(next\)/);
-  /* while the World is the social feed (owner, 2026-10-20) the link lands on the feed; the route is kept for Missions' return */
-  assert.match(mnet, /missionDeepLink=!MISSIONS_OFF&&\/\[\?&\]\(mission=\|view=missions/);
+  /* missions are public again (owner, 2026-11-17): back from the profile pages, a mission link opens that mission for everyone */
+  assert.match(mnet, /missionDeepLink=\/\[\?&\]\(mission=\|view=missions/);
+  assert.doesNotMatch(mnet, /MISSIONS_OFF/, 'no switch keeps the missions from anyone');
   assert.match(mnet, /if\(missionDeepLink\)\{\s*setView\("missions"\);\s*openDeepLinkedMission\(\)/);
   assert.match(mnet, /return u\.pathname\+u\.search\+u\.hash/);
   assert.match(mnet, /return "\/mnet\.html\?"\+q\.toString\(\)/);

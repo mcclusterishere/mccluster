@@ -1,24 +1,34 @@
 <!doctype html>
-<html lang="en" data-theme-lock="dark" class="hu-editorial hu-travel-enabled hu-social-only mn-world-on" data-world-mode="posts">
-<head>
+<html lang="en" data-theme-lock="dark" class="hu-editorial hu-travel-enabled hu-travel-off mn-world-on" data-world-mode="posts">
+<head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Equity Uprise · McCluster</title>
   <meta name="description" content="Equity Uprise is the McCluster social network: the people, posts, groups and campaigns organizing across McCluster.">
   <meta name="robots" content="noindex">
+  <!-- FIRST VISIT (owner, 2026-11-17: the full-screen "Privacy before entry" wall on the World "becomes the existing banner
+       mode ... so the globe and the missions show at once"): js/live-content.js shows the notice as a bar along the bottom,
+       read before that script runs, and js/analytics.js still records nothing until the visitor agrees. The World is the
+       house itself, not a document page, so its bar counts only once it is answered, as the wall did and as
+       privacy.html#entry-notice says: leaving without answering is not an answer, so the next page asks again. -->
+  <meta name="mcc-privacy-notice" content="banner">
+  <meta name="mcc-privacy-notice-seen" content="answered">
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mnet.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
-  <!-- the house owner keeps Travel, Missions and Feed: must run before the scripts that read hu-social-only -->
+  <!-- the house owner keeps Travel: must run before the scripts that read hu-travel-off -->
   <script src="js/world-owner-modes.js?v=__STAMP__"></script>
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <link rel="stylesheet" href="css/member-desk.css?v=__STAMP__">
   <link rel="stylesheet" href="css/human-uprise-editorial.css?v=__STAMP__">
   <link rel="stylesheet" href="css/world-travel.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/mission-swipe-deck.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/world-environment.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/policy-mode.css?v=__STAMP__">
   <link rel="stylesheet" href="css/mnet-audio.css?v=__STAMP__">
   <link rel="stylesheet" href="css/daylight.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/world-gate.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/world-source-profile.css?v=__STAMP__">
   <!-- day or night follows the real Sun before first paint (owner, 2026-10-19) -->
   <script src="js/daylight.js?v=__STAMP__"></script>
   <!-- NO SCREEN FLASHES (owner, 2026-10-20: "I'll see like other screens flash up instead of just a smooth transition from
@@ -35,10 +45,11 @@
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body class="songpage has-appbar">
-  <!-- THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the
-       social feature will be the only feature with no tab selecting between the other two"). Travel and Missions stay in
-       the code, switched off, until they are refined: hu-social-only on <html> is the switch, and missions=0 tells the
-       globe (the frame and the expanded globe) to draw no missions. Remove both to bring them back. -->
+  <!-- ONE FEED, MISSIONS IN IT (owner, 2026-11-17: "the missions should low key just be placed in the newsfeed instead of
+       having that Tinder swipe tab"; AGENTS.md, "Public World"). Missions are public: the globe draws their pins for
+       everyone and the feed's Equity Uprise tab is the mission feed, with Environmental Justice above it. Travel stays
+       the house owner's (owner, 2026-10-20): hu-travel-off on <html> is its switch, and js/world-owner-modes.js lifts it
+       for the house owner alone, who keeps the centre mode bar (Travel, News feed). Nobody else sees that bar. -->
   <main class="mn">
     <header class="mn__top">
       <a class="mn__brand" href="mnet.html" aria-label="Equity Uprise home">
@@ -60,7 +71,7 @@
         <div class="mn__suggest" id="mnSuggest" hidden>
           <div id="mnSuggestRows"></div>
           <div class="mn__suggest-foot">
-            <button type="button" data-mn-view="missions">All missions</button>
+            <button type="button" data-mn-feed="equity">All missions</button>
             <button type="button" data-mn-view="discover">Find people</button>
             <button type="button" data-mn-view="groups">Browse groups</button>
           </div>
@@ -118,46 +129,86 @@
       </nav>
     </header>
 
-    <!-- hidden until it is asked for: the World never flashes the sign-in form on the way in (owner, 2026-10-20) -->
-    <section class="mn__gate" id="mnSignedOut" hidden>
-      <!-- opened from the World: say why, and keep the way back in reach -->
-      <div class="mn__gate-why" id="mnGuestWhyRow" hidden>
-        <button class="mn__to-world" id="mnSignedOutBack" type="button">← Back to the World</button>
-        <p id="mnGuestWhy" role="status"></p>
+    <!-- THE DOOR (owner, 2026-11-18: "the sign-in page just looks like shit ... This is royalty shit over here"):
+         docs/design/WORLD-SIGN-IN-DOOR.md. The sign-in rises over the living World instead of replacing it: the real globe
+         turns under a scrim, the World's real pulse sits on the Earth (open missions, the countries in today's news credited
+         to GDELT, a completed record), and the supplied Equity Uprise artwork crowns the World above the door, scaled and
+         nothing else, never captioned. Hidden until it is asked for: the World never flashes the sign-in form on the way in
+         (owner, 2026-10-20). Presentation lives in css/world-gate.css and js/world-gate.js; every auth call stays in
+         js/mnet.js. -->
+    <section class="mn__gate wg-door" id="mnSignedOut" role="dialog" aria-label="Sign in" tabindex="-1" hidden>
+      <div class="wg-scrim" aria-hidden="true"></div>
+      <div class="wg-veil" aria-hidden="true"></div>
+      <div class="wg-stage">
+        <button class="mn__to-world wg-back" id="mnSignedOutBack" type="button" aria-label="Back to the World">← Back<span class="wg-back-more"> to the World</span></button>
+        <!-- the supplied artwork, complete and scaled only: the white mark, on the stage's dark band by night and by day;
+             never captioned -->
+        <img class="wg-crest" src="assets/img/equity-uprise-mark-white.png" alt="" width="160" height="160" draggable="false">
+        <!-- the World now: public reads only, each card hidden until its own read answers (js/world-gate.js) -->
+        <div class="wg-lower">
+          <p class="wg-dateline" id="wgDateline" hidden><span class="wg-dateline__k">Today in the World</span><span class="wg-dateline__sep" aria-hidden="true"> · </span><time class="wg-dateline__d" id="wgDate"></time></p>
+          <ul class="wg-pulse" id="wgPulse" role="list" aria-label="The World now">
+            <li class="wg-card wg-card--mission" id="wgPulseMission" hidden></li>
+            <li class="wg-card wg-card--news" id="wgPulseNews" hidden></li>
+            <li class="wg-card wg-card--record" id="wgPulseRecord" hidden></li>
+          </ul>
+          <p class="wg-credit" id="wgCredit">NASA imagery · Natural Earth · © OpenStreetMap</p>
+        </div>
       </div>
-      <p class="mn__eyebrow">The place for doers.</p>
-      <h1>Turn what you care about into action.</h1>
-      <p class="mn__lede">Get Your Hu Up!</p>
-      <div class="mn__panel">
-        <div class="mn__auth-tabs" role="tablist" aria-label="Equity Uprise account">
-          <button class="mn__auth-tab is-active" id="mnSignInTab" type="button" role="tab" aria-selected="true">Sign in</button>
-          <button class="mn__auth-tab" id="mnCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
+      <div class="wg-sheet" id="wgSheet">
+        <!-- opened from the World: why it was asked for -->
+        <div class="mn__gate-why" id="mnGuestWhyRow" hidden><p id="mnGuestWhy" role="status"></p></div>
+        <p class="mn__eyebrow">The place for doers.</p>
+        <h2 class="wg-title" id="wgTitle">Turn what you care about <em>into action</em><span class="wg-stop">.</span></h2>
+        <div class="mn__panel">
+          <div class="mn__auth-tabs" role="tablist" aria-label="Sign in or create an account">
+            <button class="mn__auth-tab is-active" id="mnSignInTab" type="button" role="tab" aria-selected="true" aria-controls="mnAuthPanel"><span class="wg-tab-k" aria-hidden="true">Welcome back</span><span class="wg-tab-w">Sign in</span></button>
+            <button class="mn__auth-tab" id="mnCreateTab" type="button" role="tab" aria-selected="false" aria-controls="mnAuthPanel" tabindex="-1"><span class="wg-tab-k" aria-hidden="true">New here</span><span class="wg-tab-w">Create account</span></button>
+            <i class="wg-tabline" aria-hidden="true"></i>
+          </div>
+          <div id="mnAuthPanel" role="tabpanel" aria-labelledby="mnSignInTab">
+            <div class="wg-field">
+              <span class="wg-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg></span>
+              <span class="wg-field__body"><label class="mn__label" for="mnEmail">Email</label><input class="mn__input" id="mnEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="you@example.com" aria-describedby="mnAuthStatus"></span>
+            </div>
+            <div class="wg-field">
+              <span class="wg-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></span>
+              <span class="wg-field__body"><label class="mn__label" for="mnPassword">Password</label><input class="mn__input" id="mnPassword" type="password" autocomplete="current-password" minlength="8" placeholder="Your password" aria-describedby="mnAuthStatus"></span>
+              <button class="wg-show" type="button" data-reveal="mnPassword" aria-controls="mnPassword" aria-label="Show password">Show</button>
+            </div>
+            <p class="mn__hint wg-rule" id="mnPasswordHint" hidden>Use at least 8 characters.</p>
+            <button class="mn__secondary" id="mnForgot" type="button">Forgot or don't know your password?</button>
+            <div id="mnConfirmWrap" hidden>
+              <div class="wg-field">
+                <span class="wg-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></span>
+                <span class="wg-field__body"><label class="mn__label" for="mnPassword2">Confirm password</label><input class="mn__input" id="mnPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Type it again" aria-describedby="wgMatch mnAuthStatus"></span>
+                <span class="wg-state" aria-hidden="true"></span>
+                <button class="wg-show" type="button" data-reveal="mnPassword2" aria-controls="mnPassword2" aria-label="Show password">Show</button>
+                <span class="wg-sr" id="wgMatch" aria-live="polite"></span>
+              </div>
+            </div>
+            <!-- the privacy agreement is asked once: someone who agreed on the way in (js/live-content.js) reads the line;
+                 someone who only saw the notice ticks the box, as the account page's own form asked -->
+            <p class="mn__hint" id="mnCreatePrivacy" hidden>Creating an account means you agree to the <a href="privacy.html">Privacy Policy</a>.</p>
+            <label class="mn__check" id="mnCreateAgree" hidden><input type="checkbox" id="mnCreateAgreeBox"><span>I agree to the <a href="privacy.html">Privacy Policy</a>.</span></label>
+            <p class="mn__status" id="mnAuthStatus" role="status"></p>
+            <button class="mn__primary" id="mnAuthGo" type="button">Sign in</button>
+            <!-- ONE SIGN-UP (owner, 2026-10-20): an account is an email and a password (or Google), and then the same three
+                 pages every new member fills in, straight away; the person goes back to where they started after the last one.
+                 Said under the action, so the action stays in view above the privacy notice on a phone -->
+            <p class="mn__hint" id="mnCreateNote" hidden><b>Next:</b> your profile, where we can reach you, and your phone. One short page each.</p>
+            <button class="mn__text-button" id="mnResend" type="button" hidden>Resend verification email</button>
+            <div id="mnProviders" hidden>
+              <div class="mn__or"><span>or</span></div>
+              <div id="mnProviderButtons"></div>
+            </div>
+          </div>
         </div>
-        <label class="mn__label" for="mnEmail">Email</label>
-        <input class="mn__input" id="mnEmail" type="email" autocomplete="email" placeholder="you@example.com">
-        <label class="mn__label" for="mnPassword">Password</label>
-        <input class="mn__input" id="mnPassword" type="password" autocomplete="current-password" minlength="8" placeholder="Your password">
-        <div id="mnConfirmWrap" hidden>
-          <label class="mn__label" for="mnPassword2">Confirm password</label>
-          <input class="mn__input" id="mnPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Type it again">
-        </div>
-        <button class="mn__primary" id="mnAuthGo" type="button">Sign in</button>
-        <!-- ONE SIGN-UP (owner, 2026-10-20): an account is an email and a password (or Google), and then the same three
-             pages every new member fills in, straight away; the person goes back to where they started after the last one -->
-        <p class="mn__hint" id="mnCreateNote" hidden>Next: your profile, where we can reach you, and your phone. One short page each.</p>
-        <!-- the privacy agreement is asked once: someone who agreed on the way in (js/live-content.js) reads the line;
-             someone who only saw the notice ticks the box, as the account page's own form asked -->
-        <p class="mn__hint" id="mnCreatePrivacy" hidden>Creating an account means you agree to the <a href="privacy.html">Privacy Policy</a>.</p>
-        <label class="mn__check" id="mnCreateAgree" hidden><input type="checkbox" id="mnCreateAgreeBox"><span>I agree to the <a href="privacy.html">Privacy Policy</a>.</span></label>
-        <button class="mn__secondary" id="mnForgot" type="button">Forgot or don't know your password?</button>
-        <p class="mn__hint" id="mnPasswordHint" hidden>Use at least 8 characters.</p>
-        <p class="mn__status" id="mnAuthStatus" role="status"></p>
-        <button class="mn__text-button" id="mnResend" type="button" hidden>Resend verification email</button>
-        <div id="mnProviders" hidden>
-          <div class="mn__or"><span>or</span></div>
-          <div id="mnProviderButtons"></div>
-        </div>
-        <a class="mn__text-link" href="account.html?stay=1">Manage your M Account</a>
+        <footer class="wg-foot">
+          <p class="wg-colophon">A McCluster Corp program.</p>
+          <a href="privacy.html">Privacy Policy</a>
+          <a class="mn__text-link" href="account.html?stay=1">Manage your M Account</a>
+        </footer>
       </div>
     </section>
 
@@ -177,7 +228,7 @@
       </div>
       <form class="mn__profile-form mn__onboard-form" id="mnProfileForm" novalidate>
         <section class="mn__step" id="mnStep1" data-step="1">
-          <h1 class="mn__onboard-h" id="mnProfileTitle">Make your profile<em>.</em></h1>
+          <h2 class="mn__onboard-h" id="mnProfileTitle">Make your profile<em>.</em></h2>
           <p class="mn__lede" id="mnProfileLede">Your username and name. It's how people find you.</p>
           <label class="mn__label" for="mnHandle">Username</label>
           <div class="mn__field mn__field--handle"><span class="mn__field-at" aria-hidden="true">@</span><input class="mn__input" id="mnHandle" maxlength="32" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="yourname" required><span class="mn__field-state" id="mnHandleState" aria-live="polite"></span></div>
@@ -190,7 +241,7 @@
           </details>
         </section>
         <section class="mn__step" id="mnStep2" data-step="2" hidden>
-          <h1 class="mn__onboard-h">Where we can reach you<em>.</em></h1>
+          <h2 class="mn__onboard-h">Where we can reach you<em>.</em></h2>
           <p class="mn__lede">Your legal name and mailing address. Private, never on your profile.</p>
           <label class="mn__label" for="mnLegalName">Full legal name</label>
           <div class="mn__field"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></span><input class="mn__input" id="mnLegalName" maxlength="160" autocomplete="name" placeholder="First and last name" required></div>
@@ -208,7 +259,7 @@
           <p class="mn__hint">A complete address also makes the account eligible for McCluster's monthly swag selections.</p>
         </section>
         <section class="mn__step" id="mnStep3" data-step="3" hidden>
-          <h1 class="mn__onboard-h" id="mnStep3Title">Your phone and sign-in<em>.</em></h1>
+          <h2 class="mn__onboard-h" id="mnStep3Title">Your phone and sign-in<em>.</em></h2>
           <p class="mn__lede" id="mnStep3Lede">Your phone is optional and private. Add a password to sign in with your email too.</p>
           <label class="mn__label" for="mnPhone">Phone <span>optional</span></label>
           <div class="mn__field mn__field--phone"><span class="mn__field-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h4l1.5 4.5-2.2 1.6a12 12 0 0 0 4.6 4.6l1.6-2.2 4.5 1.5v4a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z"/></svg></span><input class="mn__input mn__dial" id="mnDial" inputmode="tel" autocomplete="tel-country-code" maxlength="5" placeholder="+ code" aria-label="Country code"><input class="mn__input" id="mnPhone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Your number"></div>
@@ -258,7 +309,7 @@
       <section class="mn__view" id="mnLiveView" hidden>
         <section class="mn__onair mn__onair--directory" id="mnLive" aria-live="polite">
           <div class="mn__live-head">
-            <div><p class="mn__live-k"><i aria-hidden="true"></i>Live now</p><h1 class="mn__live-title">See the work while it happens.</h1></div>
+            <div><p class="mn__live-k"><i aria-hidden="true"></i>Live now</p><h2 class="mn__live-title">See the work while it happens.</h2></div>
             <button class="mn__golive" id="mnGoLive" type="button" hidden>Go live</button>
           </div>
           <div class="mn__live-filters" id="mnLiveFilters" aria-label="Live room filters">
@@ -291,16 +342,15 @@
         <section class="mn__world-home" id="mnWorld" aria-label="The world">
           <h1 class="wt-headline">The world is your feed.</h1>
           <div id="wtDestination" class="wt-destination" hidden></div>
-          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="true">Travel</button><button type="button" data-world-mode="missions" aria-pressed="false">Missions</button><button type="button" data-world-mode="posts" aria-pressed="false">News feed</button></nav>
-          <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;missions=0&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          <nav class="wt-world-modes" aria-label="World mode"><button type="button" data-world-mode="travel" aria-pressed="false">Travel</button><button type="button" data-world-mode="posts" aria-pressed="true">News feed</button></nav>
+          <iframe class="mn__world-frame" id="mnWorldFrame" src="action-globe.html?embedded=1&amp;surface=network&amp;v=__STAMP__" title="Equity Uprise globe. Drag to turn the Earth; tap a red pin to open its mission." loading="lazy" allow="geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
           <!-- the place card (owner, 2026-10-21: "only in the middle ... how many users ... news articles ... posts"): drawn by paintPlaceCard in the page script -->
           <div class="mn__place-card" id="mnPlaceCard" role="status" aria-live="polite" hidden></div>
           <!-- the globe's corner stack (owner, 2026-10-19): the World music play/pause sits with the fullscreen control, same size, same place -->
           <div class="mn__world-stack" id="mnWorldStack">
           <button class="mn__world-play" id="mnWorldPlay" type="button" aria-label="Play music" aria-pressed="false" hidden><span aria-hidden="true">▶</span></button>
-          <a class="mn__world-expand" href="action-globe.html?explore=1&amp;missions=0" aria-label="Expand the globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></a>
+          <a class="mn__world-expand" href="action-globe.html?explore=1" aria-label="Expand the globe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></a>
           </div>
-          <!-- DO SOMETHING ABOUT IT (owner, 2026-10-15): the supplied Equity Uprise artwork, white, scaled only, is the control; no plate, no caption, never written out. It opens the missions. -->
 
           <!-- what is on air right now, over the Earth; opens the live rooms -->
           <button class="mn__world-live" id="mnWorldLive" type="button" data-mn-view="live" hidden><i aria-hidden="true"></i>Live <b id="mnWorldLiveCount"></b></button>
@@ -345,27 +395,44 @@
               <button class="mn__world-locate" id="mnWorldFocusFund" type="button" aria-label="Fund this mission"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="19" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg><span>Fund</span></button>
               <button class="mn__world-locate" id="mnWorldFocusLocate" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Locate</span></button>
               <button class="mn__world-filter" id="mnWorldFocusFilter" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span class="mn__label-short">Posts</span><span class="mn__label-long" id="mnWorldFocusFilterLong">Only posts about this</span></button>
-              <!-- every open mission, pinned or not, with your Action Record -->
-              <button class="mn__world-locate mn__world-all" type="button" data-mn-view="missions"><span class="mn__label-short">All</span><span class="mn__label-long">All missions</span></button>
+              <!-- every open mission, pinned or not: the feed's Equity Uprise tab (owner, 2026-11-17) -->
+              <button class="mn__world-locate mn__world-all" type="button" data-mn-feed="equity"><span class="mn__label-short">All</span><span class="mn__label-long">All missions</span></button>
             </div>
             <button class="mn__world-close" id="mnWorldFocusClear" type="button" aria-label="Let go of this mission">✕</button>
           </article>
         </section>
-          <section class="hu-mission-preview" aria-labelledby="huMissionHeading">
-            <div class="hu-section-head hu-section-head--compact"><h2 id="huMissionHeading">Missions</h2>          <button class="mn__world-eup" id="mnWorldEup" type="button" data-mn-view="missions" aria-label="Browse all missions and your Action Record"><img src="assets/img/equity-uprise-mark-white.png" alt="" width="160" height="160"></button></div>
-            <div id="huMissionList"><p class="hu-muted">Loading missions…</p></div>
-          </section>
         <!-- a guest's door into the members' side: a real Equity Uprise rally
              (Bridgeport Creates), then the public posts, read-only -->
-        <!-- THE FEED'S SCOPE (owner's reference, 2026-10-19): Local is the place the globe is on, Global is everything, Live and
-             People are the rooms and the directory, News is the publishers only. Nothing here is a new feed; it narrows the one stream. -->
+        <!-- THE FEED'S ROW, IN THE OWNER'S ORDER (owner, 2026-11-18, looking at the World signed out: "I wanted that E equals up
+             tab next to local, global, live news people ... There should be no tabs from news feed to E equals up. It should just
+             be local, equity up, global, live news people."): Local · the Equity Uprise tab · Global · Live · News · People, and
+             nothing above the row for a visitor (the centre mode bar is the house owner's alone: hu-travel-off). Local is the
+             place the globe is on. Global is the whole stream (owner, 2026-10-19: "Global is everything"; labelled Everything
+             from 2026-11-17 to 2026-11-18): the key stays global and it is chosen on load, or Local for the visitor's own country
+             once WORLD_PLACE_SCOPE_ENABLED is on (owner, 2026-11-17). Live and People are the rooms and the directory, News is the
+             publishers only. THE EQUITY UPRISE TAB (owner, 2026-11-17: "another tab called the equity uprise tab ... on the feed
+             section under the globe"; "the PNG logo that is there, put that on that tab ... Just keep it as is") is the mission
+             feed, with Environmental Justice above it: the supplied artwork alone, scaled only, white on the night ground and the
+             supplied dark mark on the white daylight ground (css/daylight.css), never written out; its name is for assistive
+             technology. Nothing here is a new feed; it narrows the one stream. A finger drags the row; a mouse drags it too, and
+             the arrow keys walk it in this order (js/mnet.js). -->
         <nav class="hu-feed-scope" id="mnFeedScope" aria-label="What the feed shows">
           <button type="button" data-feed-scope="local" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>Local</button>
+          <button class="hu-feed-scope__eup" type="button" data-feed-scope="equity" aria-pressed="false" aria-label="Equity Uprise"><img class="hu-eup-mark hu-eup-mark--white" src="assets/img/equity-uprise-mark-white.png" alt="" width="40" height="40"><img class="hu-eup-mark hu-eup-mark--dark" src="assets/img/equity-uprise-mark.png" alt="" width="40" height="40"></button>
           <button type="button" data-feed-scope="global" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-3 3-3 15 0 18m0-18c3 3 3 15 0 18"/></svg>Global</button>
           <button type="button" data-mn-view="live"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>Live</button>
           <button type="button" data-feed-scope="news" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h5"/></svg>News</button>
           <button type="button" data-mn-view="discover"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 18.5a4.5 4.5 0 0 1 7 0"/></svg>People</button>
         </nav>
+        <!-- ENVIRONMENTAL JUSTICE, behind the Equity Uprise tab and above its missions (owner, 2026-11-17; from 2026-11-07 it
+             was a mode button in the centre of the globe). The panel shows and hides itself (js/world-environment-mccluster.mjs). -->
+        <section id="wePanel" class="we-panel" aria-labelledby="weTitle" hidden></section>
+        <!-- the panel shows once its source has answered; until then the public gets one honest line by cause, never a broken
+             panel (js/world-environment-mccluster.mjs sets html[data-we-feed], css/world-environment.css): off, not available
+             right now (an outage or this browser's network), or nothing to report (event timeline slice S0, 2026-11-19) -->
+        <p class="mn__we-note" id="weUnavailable" role="status">Environmental reports are not available right now.</p>
+        <p class="mn__we-note" id="weOff" role="status">Environmental reports are turned off for now.</p>
+        <p class="mn__we-note" id="weEmpty" role="status">No qualifying environmental events right now.</p>
         <aside class="mn__guest-card" id="mnGuestCard">
           <p>Sign in to share an update and connect.</p>
           <div class="mn__guest-card-row"><button class="mn__world-go" type="button" data-guest-open="signin">Sign in →</button><button class="mn__world-filter" type="button" data-guest-open="create">Create account</button></div>
@@ -432,7 +499,9 @@
           <p><b>Clip songs. Get paid on real views.</b> <span id="mnClipDoorLine"></span></p>
           <button class="mn__world-go" type="button" data-mn-view="clips">See campaigns →</button>
         </aside>
-        <section class="mn__feedmissions" id="mnFeedMissions" hidden></section>
+        <!-- COMPLETED MISSIONS (docs/control-plane/MISSION-RESET-DOCKET-516R.md): the Docket 516R series, shown in the Equity
+             Uprise tab after its missions; drawn by js/docket-cohort-showcase.js the first time the tab opens -->
+        <section class="mn__completed" id="mnCompletedSeries" aria-label="Completed mission series" hidden></section>
         </div>
       </div>
       </section>
@@ -448,7 +517,7 @@
         <p class="mn__status mn__status--center" id="mnMissionStatus" role="status"></p>
       </section>
 
-      <dialog class="mn__thread" id="mnMissionDialog">
+      <dialog class="mn__thread" id="mnMissionDialog" aria-labelledby="mnMissionTitle">
         <div class="mn__thread-head"><strong id="mnMissionTitle">Mission</strong><button type="button" id="mnMissionClose" aria-label="Close mission">×</button></div>
         <div id="mnMissionDetail"></div>
         <button class="mn__primary" id="mnMissionJoin" type="button">Take this mission</button>
@@ -507,7 +576,9 @@
           <p class="mn__status" id="mnAntisocialStatus" role="status"></p>
         </section>
         <p class="mn__status" id="mnMissionDialogStatus" role="status"></p>
+        <div class="mn__source-door" id="mnMissionSource" hidden></div>
       </dialog>
+      <dialog class="mn__thread mn__source" id="mnSourceDialog" aria-labelledby="mnSourceName" aria-describedby="mnSourceTrust"><div class="mn__source-body" id="mnSourceBody"></div></dialog>
 
       <section class="mn__view" id="mnDiscoverView" hidden>
         <div class="mn__section-head">
@@ -719,13 +790,19 @@
   <script src="js/fan-intake.js?v=__STAMP__"></script>
   <script src="js/name-integrity.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
-  <script src="js/mission-swipe-deck.js?v=__STAMP__"></script>
+  <script src="js/image-resize.js?v=__STAMP__"></script>
+  <script src="js/world-mission-posts.js?v=__STAMP__"></script>
+  <script src="js/world-environment-posts.js?v=__STAMP__"></script>
+  <script src="js/world-environment-timeline.js?v=__STAMP__"></script>
+  <script src="js/world-gate.js?v=__STAMP__"></script>
   <script src="js/video-poster.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
+  <script src="js/mission-source-words.js?v=__STAMP__"></script><script src="js/world-source-profile.js?v=__STAMP__"></script>
   <script src="js/docket-cohort-showcase.js?v=__STAMP__"></script><script src="js/world-news-globe.js?v=__STAMP__"></script>
-  <!-- async: the Travel module (switched off while the World is the social feed) never holds the World's boot, which runs
-       at DOMContentLoaded; it wires itself whenever it arrives -->
+  <!-- async: the Travel module (the house owner's alone, hu-travel-off) never holds the World's boot, which runs at
+       DOMContentLoaded; it wires itself whenever it arrives -->
   <script type="module" async src="js/travel/world-travel.mjs?v=__STAMP__"></script>
+  <script type="module" src="js/world-environment-mccluster.mjs?v=__STAMP__"></script>
   <script src="js/mnet-tour.js?v=__STAMP__"></script>
   <script src="js/mnet-live.js?v=__STAMP__"></script>
   <script src="js/mnet-audio.js?v=__STAMP__"></script>
@@ -736,8 +813,11 @@
   <script src="js/identity-capture-core.js?v=__STAMP__"></script>
   <script src="js/profile-edit-gate.js?v=__STAMP__"></script>
   <script src="js/member-desk.js?v=__STAMP__"></script>
+  <script src="js/control-room/nav.js?v=__STAMP__"></script>
   <script src="js/control-registry.js?v=__STAMP__"></script>
   <script src="js/control-palette.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
+  <script src="js/policy-mode-core.js?v=__STAMP__"></script>
+  <script src="js/policy-mode.js?v=__STAMP__"></script>
 </body>
 </html>

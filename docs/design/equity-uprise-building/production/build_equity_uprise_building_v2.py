@@ -101,11 +101,41 @@ def slab_with_openings(prefix,elev,th=.5):
             count+=1
     return count
 
+# Floor 1 exterior exit doors come from the site/egress authority, so the model
+# can never again carry an egress door that does not physically exist.
+EXIT_DOOR_IDS=("F1-DOOR-STAIR-A-DISCHARGE","F1-DOOR-STAIR-B-DISCHARGE","F1-DOOR-SERVICE-WEST")
+EXIT_DOORS=[o for o in SITE["exterior_openings"] if o["object_id"] in EXIT_DOOR_IDS]
+DOOR_H=7.5
+MODELED_EXIT_DOORS=[]
+
+def wall_with_openings(name,axis,fixed,lo,hi,z0,h,openings,color,t=.5):
+    """Exterior wall line with door openings (axis 'y' = east/west wall at x=fixed..fixed+t)."""
+    cur=lo
+    for i,(a,b) in enumerate(sorted(openings)):
+        if a>cur:
+            add_box(f"{name}_seg{i}",(fixed,cur,fixed+t,a) if axis=="y" else (cur,fixed,a,fixed+t),z0,h,color)
+        add_box(f"{name}_lintel{i}",(fixed,a,fixed+t,b) if axis=="y" else (a,fixed,b,fixed+t),z0+DOOR_H,h-DOOR_H,color)
+        cur=b
+    if hi>cur:
+        add_box(f"{name}_seg_end",(fixed,cur,fixed+t,hi) if axis=="y" else (cur,fixed,hi,fixed+t),z0,h,color)
+
+def facade_openings(facade):
+    return [(o["location"]["y1"],o["location"]["y2"]) for o in EXIT_DOORS if o["location"]["facade"]==facade]
+
 def perimeter(level,elev):
     # occupied floors only; roof gets parapet separately
     h=13.0;t=.5
     # north/west/east opaque perimeter
     add_box(f"L{level}_north_wall",(0,71.5,72,72),elev,h,COL["wall"])
+    if level==1:
+        wall_with_openings("L1_west_wall","y",0,0,72,elev,h,facade_openings("west"),COL["wall"])
+        wall_with_openings("L1_east_wall","y",71.5,0,72,elev,h,facade_openings("east"),COL["wall"])
+        for o in EXIT_DOORS:
+            loc=o["location"];y1,y2=loc["y1"],loc["y2"]
+            x1,x2=(71.55,71.75) if loc["facade"]=="east" else (.05,.25)
+            add_box(f"{o['object_id']}::leaf",(x1,y1+.05,x2,y2-.05),elev+.05,DOOR_H-.1,COL["freight"])
+            MODELED_EXIT_DOORS.append({"object_id":o["object_id"],"facade":loc["facade"],"y1":y1,"y2":y2,"height_ft":DOOR_H})
+        return
     add_box(f"L{level}_west_wall",(0,0,.5,72),elev,h,COL["wall"])
     add_box(f"L{level}_east_wall",(71.5,0,72,72),elev,h,COL["wall"])
     if level==0:
@@ -135,7 +165,15 @@ def stair_enclosure_with_doors(name,b,opening,levels,roof_z,color):
     top=roof_z+9.0
     base=levels[0]["finished_floor_elevation_ft"]
     add_box(name+"_north",(x1,y2-t,x2,y2),base,top-base,color)
-    add_box(name+"_east",(x2-t,y1,x2,y2),base,top-base,color)
+    east_doors=facade_openings("east") if x2>=72 else []
+    if east_doors:
+        # Stair A meets the east facade: its east wall IS the exterior wall at the
+        # Floor 1 discharge door, so it is opened there too.
+        add_box(name+"_east_below_L1",(x2-t,y1,x2,y2),base,0-base,color)
+        wall_with_openings(name+"_east_L1","y",x2-t,y1,y2,0,13.5,east_doors,color,t)
+        add_box(name+"_east_above_L1",(x2-t,y1,x2,y2),13.5,top-13.5,color)
+    else:
+        add_box(name+"_east",(x2-t,y1,x2,y2),base,top-base,color)
     add_box(name+"_west",(x1,y1,x1+t,y2),base,top-base,color)
     dx1,dx2=opening["x1"],opening["x2"]
     door_h=7.5
@@ -270,11 +308,13 @@ for i,obj in enumerate(SITE.get("exterior_openings",[]),1):
         y=loc.get("y",0)
         add_box(f"SITE_door_{i:02d}",(loc["x1"],y-.3,loc["x2"],y+.3),0,.12,COL["site_marker"])
 
+# Discharge-direction barriers sit across the HEAD OF THE DOWN FLIGHT to B1 (the
+# east strip at Y58.25), never across the stair's own Floor 1 access door.
 for i,obj in enumerate(SITE.get("floor1_discharge_controls",[]),1):
     if "STAIR-A" in obj["object_id"]:
-        add_box(f"SITE_discharge_barrier_{i:02d}",(60.5,54.4,71.5,55.0),.05,3.0,COL["site_marker"])
+        add_box(f"SITE_discharge_barrier_{i:02d}",(66.25,58.25,71.25,58.55),.05,3.0,COL["site_marker"])
     else:
-        add_box(f"SITE_discharge_barrier_{i:02d}",(8.5,54.4,17.5,55.0),.05,3.0,COL["site_marker"])
+        add_box(f"SITE_discharge_barrier_{i:02d}",(13.25,58.25,17.25,58.55),.05,3.0,COL["site_marker"])
 
 for i,obj in enumerate(SITE.get("emergency_equipment",[]),1):
     p=obj["location_ft"]
@@ -315,6 +355,18 @@ check("site defines both protected-stair discharge doors",
 check("Floor 1 defines two basement-direction discharge controls",len(SITE.get("floor1_discharge_controls",[]))==2,
       len(SITE.get("floor1_discharge_controls",[])),2)
 
+def _door_ok(oid):
+    site=next((o for o in EXIT_DOORS if o["object_id"]==oid),None)
+    mod=next((d for d in MODELED_EXIT_DOORS if d["object_id"]==oid),None)
+    return bool(site and mod and site["location"]["facade"]==mod["facade"] and site["location"]["y1"]==mod["y1"] and site["location"]["y2"]==mod["y2"])
+for oid in EXIT_DOOR_IDS:
+    check(f"{oid} modeled as a real opening + leaf where the egress plan says",_door_ok(oid),
+          next((d for d in MODELED_EXIT_DOORS if d["object_id"]==oid),None),next((o["location"] for o in EXIT_DOORS if o["object_id"]==oid),None))
+_sa=next(o for o in EXIT_DOORS if o["object_id"]=="F1-DOOR-STAIR-A-DISCHARGE")["location"]
+check("Stair A exit door opens onto the Stair A Floor 1 landing (Y54.75-58.25)",54.75<=_sa["y1"] and _sa["y2"]<=58.25,[_sa["y1"],_sa["y2"]],[54.75,58.25])
+_sb=next(o for o in EXIT_DOORS if o["object_id"]=="F1-DOOR-STAIR-B-DISCHARGE")["location"]
+check("Stair B exit is reachable at Floor 1 level (not behind the stair mid-landing)",_sb["facade"]!="north",_sb["facade"],"west or south")
+
 halo_items=[(lvl,s) for lvl in PROGRAMS["levels"] for s in lvl.get("spheres",[]) if s.get("route_key")=="halo_spatial_intelligence"]
 check("exactly one Halo Globe instrument",len(halo_items)==1,len(halo_items),1)
 if halo_items:
@@ -351,6 +403,7 @@ report={
  "checks_failed":sum(not x["passed"] for x in checks),
  "passed":all(x["passed"] for x in checks),
  "stair_transitions":stair_reports,
+ "exit_doors":MODELED_EXIT_DOORS,
  "checks":checks
 }
 REPORT.write_text(json.dumps(report,indent=2))

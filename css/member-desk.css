@@ -40,7 +40,6 @@
 .hu-desk__grip { width: 40px; height: 4px; border-radius: 4px; background: var(--hd-rule); margin: 8px auto 0; flex: none; }
 .hu-desk__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 8px 16px 4px; flex: none; }
 .hu-desk__head h2 { margin: 0; font-size: 1.3rem; letter-spacing: 0.01em; }
-.hu-desk__k { margin: 0; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hd-gold); }
 .hu-desk__close { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--hd-rule); background: transparent; color: var(--hd-ink); font-size: 1rem; cursor: pointer; }
 .hu-desk__tabs { display: flex; gap: 6px; padding: 6px 16px 8px; overflow-x: auto; overscroll-behavior-x: contain; flex: none; scrollbar-width: none; }
 .hu-desk__tabs::-webkit-scrollbar { display: none; }

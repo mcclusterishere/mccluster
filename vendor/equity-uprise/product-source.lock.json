@@ -1,0 +1,222 @@
+{
+  "schema": "equity-uprise.consumer-lock/v1",
+  "repository": "mcclusterishere/Equity-Uprise",
+  "commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+  "version": "0.1.0-review.2",
+  "status": "Local product follow-on and consumer candidate; neither commit is remotely published; public publication and release remain unauthorized",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "052edcdd83590be9ea9d37a32b03c5f967b8b1fdfde75f557bd7aa675f39defd"
+    },
+    {
+      "path": "src/environment/evidence.mjs",
+      "sha256": "211ca60b6b2f0c3d8807a9c86bdc5aec7d8dc7282a0589045ae2e34a0cf09db3"
+    },
+    {
+      "path": "src/environment/panel.mjs",
+      "sha256": "41f12ad57d6b98decd40d494ea200239695918a620860bc81c0862ffb4529034"
+    },
+    {
+      "path": "src/environment/server.mjs",
+      "sha256": "49e300efe2f135dce6d9ebbc66ad9a0dfb94000f5af4028ad5895afac9e45010"
+    },
+    {
+      "path": "src/environment/transport.mjs",
+      "sha256": "7f88ac25f7d7bcd7b912c4f46908e282d6cb6dc4f71f5408d5d91a80856aa687"
+    },
+    {
+      "path": "src/installation/config.mjs",
+      "sha256": "0a4777b5508d2e63f615e08fea359350ecd1666348d09da1ac2464c3693fa2b5"
+    },
+    {
+      "path": "src/server/module-policy.mjs",
+      "sha256": "5303806ec74d442cff6f1166ca109992f9d77061726c4693c4188897c4c72e54"
+    }
+  ],
+  "upstream_commit": "4ad69a35470427153d46842890b4c6d8f34ac8aa",
+  "local_patches": [
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-09",
+      "files": [
+        "src/environment/panel.mjs",
+        "src/environment/transport.mjs"
+      ],
+      "defects": [
+        {
+          "id": "EQ1",
+          "summary": "Transport requires expectedToken+isCurrent on every private write; panel captures the confirming identity and lifecycle generation for team join/leave, mission join/review/propose, planning, proof submit/share/review and rechecks after the credential step and before fetch."
+        },
+        {
+          "id": "EQ2",
+          "summary": "destroy() is idempotent and only the current owner of the host panel clears its DOM or switches off globe pins."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-lifecycle.test.mjs"
+      ],
+      "note": "Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-17",
+      "files": [
+        "src/environment/panel.mjs",
+        "src/environment/transport.mjs"
+      ],
+      "defects": [
+        {
+          "id": "G1-PANEL",
+          "summary": "Slice G1, the environmental globe (lane L2): the panel speaks to the one globe in a fixed order (hu:environment-layers before the pins on activation and on hu:globe-ready; layers off, then exactly the pins-off object last, on destroy), sends the pins with their additive public fields and the host adapter’s significance flag, shows per-source health rows for the feed and for the globe’s hu:environment-layer-state (status, reason in plain words, Retrieved and Last success with how long ago or never known, coverage, attribution, licence, link), adds the tour (play, pause, previous, next, replay of the last 24 h of quakes) and the 2D map toggle driven by hu:environment-scene-state and hu:environment-view-state, draws a globe-only hu:environment-selected as a card with the item’s own time under its own label (never the fetch time), reads the feed once at mount and hands it to the host page as a DOM CustomEvent named by the adapter (with the gate’s code when it refused, and the layers’ digests), and autostarts the tour once per opening of the tab only while the frame is in view, the page visible, motion allowed and the visitor has not paused. The transport attaches a refusing body’s string code to its error beside the status (additive)."
+        },
+        {
+          "id": "G1-INT-GLOBE-READY",
+          "summary": "Integration pass of slice G1 (the World page with the real globe frame): landing on the Equity Uprise tab before the frame has booted, the panel's activation words (hu:environment-layers, the pins, the one autostart of the tour) reached a frame that could not listen yet; hu:globe-ready now clears the stale tour words and says them again, the autostart included, under the same rule (frame in view, page visible, motion allowed, the visitor has not paused). The globe's director treats a second play on a tour under way as a no-op. The review of the slice at fe0d53b2 named the same defect G1R-4."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/test/world-environment-lifecycle.test.mjs"
+      ],
+      "note": "Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-18",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "G1R-3",
+          "summary": "Review of slice G1: a globe layer's health row renders every source record the layer carries (the water levels' station catalogue and readings, a ShakeMap's event detail and contours, one satellite each for the fires), each with its own status, reason, Retrieved and Last success, under the layer's own status and counts, so a reading is never shown as retrieved before it was observed and no record speaks for another; the digests handed to the host page take their label from the record the layer's own fields came from (the layer state's source_id)."
+        },
+        {
+          "id": "G1R-7",
+          "summary": "Review of slice G1: a layer state's digest is handed to the host page only when it changed from the last one handed on for that layer, so a tour selecting quake after quake, or a refresh whose words did not change, repaints nothing there."
+        },
+        {
+          "id": "G1R-9",
+          "summary": "Review of slice G1: the search narrows the list on every keystroke and re-sends the pins to the globe once the typing pauses (250 ms), never per keystroke, so the globe does not rebuild its events layer as a visitor types."
+        },
+        {
+          "id": "G1R-10",
+          "summary": "Review of slice G1: the pins carry the feed providers' terms as the feed's own source records give them (id, label, url, attribution, licence, coverage; never on an off message), so the globe answers a feed item's selection and credits its earthquake legend in the Worker's words and keeps no copy of its own."
+        },
+        {
+          "id": "G1R-11",
+          "summary": "Review of slice G1: the Play/Pause control changes its label (Play tour / Pause tour) and carries no aria-pressed: a toggle keeps one label and says its state, or changes its label and says nothing more, never both."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/test/world-environment-lifecycle.test.mjs"
+      ],
+      "note": "Review of slice G1 at fe0d53b2 (2026-11-18); its G1R-4 is G1-INT-GLOBE-READY above. Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-18",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "RV2-1",
+          "summary": "Second review of slice G1: hu:globe-ready re-arms the one autostart only for a globe that has just booted (a boot id the panel has not heard, or the first ready of all), never in an opening of the tab whose tour the visitor stopped by hand (input) or that ran to its end, and the autostart waits for the feed; the same globe saying ready again (its missions read, a hu:hello answered, a bfcache restore) gets the layers and pins only and keeps the words of a tour still playing."
+        },
+        {
+          "id": "RV2-2",
+          "summary": "Second review of slice G1: the page is told again when the whole entry it receives for a layer changed (the digest rows with the layer status, reason, retrieval, label, link, coverage and terms), not the digest rows alone, so a layer gone stale with the same rows reaches every post that carries its status."
+        },
+        {
+          "id": "RV2-3",
+          "summary": "Second review of slice G1: the panel keeps the layer state label and the digest handed to the page takes it, so the fire areas, which the Worker sums from both satellites, name every satellite record that served them."
+        },
+        {
+          "id": "RV2-6",
+          "summary": "Second review of slice G1: the 2D map toggle keeps its one label and says its state with aria-pressed, never a label naming the other view beside a pressed state."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/test/world-environment-lifecycle.test.mjs"
+      ],
+      "note": "Second review of slice G1 at 58fef668 (2026-11-18). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-18",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "V2-M2",
+          "summary": "Release polish of the World's Equity Uprise tab: the observation list opens compact (compactRows: up to two significant observations, the host's rule, newest first, then the newest of the rest, two in all, and the selected row wherever it is), so the first post sits within about a screen and a half of the feed's row at 390 with the fixtures; “Show all N observations” lists every observation in place (the few first, the rest in the feed’s order) and collapses again. The list stays the accessible alternative to the globe: the toggle is a button with aria-expanded and aria-controls, opening moves the focus to the first row it revealed, closing keeps it on the toggle; the count line says which few are shown."
+        },
+        {
+          "id": "V2-M2-TOUR-CARD",
+          "summary": "Release polish: a hu:environment-selected with via 'tour' (a scene the tour chose) opens no card in the panel; the scene line names the scene, and a card the tour moved the globe away from closes. The panel used to open the full card for every scene (723 px above the posts at 390 with the fixtures), and select() revealed the panel (closing an expanded map) and scrolled the card into view each time. A visitor's own choice (pick, focus, a row) opens the card as before."
+        },
+        {
+          "id": "G1-SHOW-ON-GLOBE",
+          "summary": "Release polish: a hu:environment-selected from the globe is followed without sending the pins back. Pins carrying a selection the globe answers in turn (its ShakeMap read tells a quake the pins selected) let two selections echo between panel and globe for as long as the page was open: Show on globe from Global, with the panel holding an older selection, sent the globe back and forth between the clicked event and the older one, and the panel with it (17 changes in ten seconds at 390 with the fixtures)."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/e2e/environment-world.e2e.mjs"
+      ],
+      "note": "Release polish of 2026-11-18 (the verifier's V2-M2 and the G1 close-out's Show on globe flip). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-18",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "RP-1",
+          "summary": "Review of the release polish: a scene the visitor steps to with Next or Previous while the tour is not playing is the visitor's choice and opens its card (Observed, Retrieved, the source) with its row pressed, as before the polish. The polish had treated every arrival via 'tour' as the tour's own choice, so stepping, the only way through the significant events under reduced motion, named a scene without its dates or source. The step is matched to the scene the globe's scene state names, so a late answer for the scene before it takes nothing from the step; a scene of a playing tour, Next pressed while it plays included, and a late answer for a scene the visitor only paused on still open no card."
+        },
+        {
+          "id": "RP-2",
+          "summary": "Review of the release polish: the open list holds still. The rows the compact list showed when the toggle opened it lead the full list in the order they had and the rest follow in the feed's order, so choosing a row, or the globe choosing one, never moves a row (a row chosen deep in the list used to jump to third place); a row that has the focus keeps it through every re-render of the list, so the focus never drops to the page."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/e2e/environment-world.e2e.mjs"
+      ],
+      "note": "Review of the release polish at e495b7ee (2026-11-18). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    },
+    {
+      "base_commit": "645d68a740c835271ca185c52e0b31220aab16ad",
+      "applied_in": "mcclusterishere/mccluster (this consumer checkout), not published upstream",
+      "date": "2026-11-19",
+      "files": [
+        "src/environment/panel.mjs"
+      ],
+      "defects": [
+        {
+          "id": "S5-TOUR",
+          "summary": "Event timeline slice S5 (release review, carried): at 390 px the World's floating app bar lay over the tour's controls (Previous, Next and part of Replay) where the panel first shows them. The tour's group (Play, Previous, Next, Replay and its status line) now follows the panel's description, before the sources toolbar and the feed's status line, so in the markup and on screen alike the globe's own controls come first and clear the bar at rest on a 390 x 844 phone; nothing is hidden and the order a keyboard meets them is the order they are shown."
+        }
+      ],
+      "regression_tests": [
+        "scripts/test/world-environment-panel.test.mjs",
+        "scripts/e2e/environment-world.e2e.mjs"
+      ],
+      "note": "Event timeline slice S5 (2026-11-19). Upstream Equity-Uprise still carries the unpatched files at base_commit; port these patches upstream before re-pinning."
+    }
+  ]
+}

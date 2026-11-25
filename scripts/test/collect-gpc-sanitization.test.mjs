@@ -4,9 +4,11 @@ import { readFile } from 'node:fs/promises';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
+import { SITE_HOSTS } from '../../supabase/functions/_shared/site-hosts.ts';
 
 const source = await readFile(new URL('../../supabase/functions/collect/index.ts', import.meta.url), 'utf8');
-const compiled = stripTypeScriptTypes(source, { mode: 'strip' });
+/* collect reads the site's own hosts from the generated module: its one import line becomes that module's value */
+const compiled = stripTypeScriptTypes(source.replace('import { SITE_HOSTS } from "../_shared/site-hosts.ts";', ''), { mode: 'strip' });
 
 async function collect({ headers = {}, body }) {
   let handler;
@@ -14,7 +16,7 @@ async function collect({ headers = {}, body }) {
   const ctx = {
     Deno: { env: { get: name => name === 'SUPABASE_URL' ? 'https://local.test.supabase.co' : 'not-a-real-secret' },
       serve: fn => { handler = fn; } },
-    Response, Request, Headers, TextEncoder, URL, console, crypto: webcrypto, setTimeout,
+    Response, Request, Headers, TextEncoder, URL, console, crypto: webcrypto, setTimeout, SITE_HOSTS,
     fetch: async (url, init = {}) => {
       const href = String(url);
       calls.push({ href, method: init.method || 'GET', body: init.body });

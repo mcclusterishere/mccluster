@@ -1,13 +1,13 @@
 // ORG-CONNECT-ONBOARD — McCluster client organizations get their own Stripe Express account.
 // The signed-in M Account must be an owner of the org. Stripe credentials stay server-side.
 import Stripe from "npm:stripe@14";
+import { returnOrigin } from "../_shared/site-hosts.ts";
 
 const SK = Deno.env.get("STRIPE_SK")!;
 const stripe = new Stripe(SK);
 const LIVEMODE = SK.startsWith("sk_live_");
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const RETURN = "https://matthew.mccluster.org/account.html";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -96,11 +96,15 @@ Deno.serve(async (req) => {
 
   if (ready) return json({ status: "ready", account: account.id, livemode: LIVEMODE });
 
+  /* back to the account page where the owner started: the request's Origin when it is exactly an origin
+     that serves pages (../_shared/site-hosts.ts), else the generated fallback, which at stage P0 is the
+     profile host this return named before */
+  const site = returnOrigin(req.headers.get("origin"));
   const link = await stripe.accountLinks.create({
     account: account.id,
     type: "account_onboarding",
-    refresh_url: `${RETURN}?stripe=refresh&org=${encodeURIComponent(orgId)}`,
-    return_url: `${RETURN}?stripe=return&org=${encodeURIComponent(orgId)}`,
+    refresh_url: `${site}/account.html?stripe=refresh&org=${encodeURIComponent(orgId)}`,
+    return_url: `${site}/account.html?stripe=return&org=${encodeURIComponent(orgId)}`,
   });
 
   return json({ status: "onboarding", url: link.url, livemode: LIVEMODE });

@@ -1,4 +1,4 @@
--- Commerce reconciler v3 regression (supabase/pending/commerce_stripe_reconciler_v3.sql).
+-- Commerce reconciler v3 regression (supabase/migrations/20261124164724_commerce_stripe_reconciler_v3.sql).
 -- Runs after v3 is applied, inside a transaction that is rolled back.
 -- The concurrent half of the deferral fix (two sessions racing) is in
 -- supabase/tests/commerce_stripe_concurrency.sh.

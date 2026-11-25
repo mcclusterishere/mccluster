@@ -3,16 +3,28 @@
 
    A fragment shader breathes behind the catalog: domain-warped silk
    in the playing track's own color, bass as mass, highs as sparkle,
-   a light sweep on every track change. The audio analyser feeds the
-   shader's uniforms frame by frame — the record is the renderer.
+   a light sweep on every track change. The record's own light feeds
+   the shader's uniforms frame by frame — the record is the renderer.
+
+   THE LIGHT IS MEASURED, NOT HEARD. This file used to wire the deck
+   into an AudioContext and an analyser on its first play. After that
+   the song reached the speaker only through Web Audio, and iOS
+   silences Web Audio when the screen locks or Safari is left: the
+   album went quiet in the background (Matthew, 2026-11-19; music map
+   01 PB-1, 03 EXT-1). The deck is a plain <audio> element now and is
+   never routed anywhere (decision D-3, a default pending his review).
+   The same analysis, a 512-point FFT smoothed at 0.82 into the same
+   three bands, is run once per song by scripts/music-peaks.mjs and
+   read here at the deck's current second (js/peaks.js). Nothing is
+   fetched or drawn while the page is hidden.
 
    The fall is graceful three times over:
-     WebGL refused        → the 2D bloom (canvas) takes the room
-     WebAudio refused     → clockwork sway, playback untouched
-     reduced motion       → nothing moves, everything still works
+     WebGL refused         → the 2D bloom (canvas) takes the room
+     a record not measured → a quiet, even light, playback untouched
+     reduced motion        → nothing moves, everything still works
 
    Also here: THE PREMIERE (the page opens like a show, once per
-   session), monument type (the album name sets itself), the honest
+   session), monument type (the album name sets itself), the measured
    EQ, and the cover leaning toward the hand.
    ============================================================ */
 (function () {
@@ -21,35 +33,25 @@
   var deck = document.getElementById("deck");
   var root = document.documentElement;
 
-  /* ---------------- the analyser (playback never pays) ---------------- */
-  var actx = null, an = null, bins = null, wired = false, clockwork = false;
-  function arm() {
-    if (!deck || wired || clockwork) return;
-    try {
-      actx = new (window.AudioContext || window.webkitAudioContext)();
-      var src = actx.createMediaElementSource(deck);
-      an = actx.createAnalyser();
-      an.fftSize = 512;
-      an.smoothingTimeConstant = 0.82;
-      src.connect(an);
-      an.connect(actx.destination); /* forget this and the deck goes silent */
-      bins = new Uint8Array(an.frequencyBinCount);
-      wired = true;
-    } catch (e) { clockwork = true; }
+  /* ---------------- the light (measured once; playback never pays) ---------------- */
+  var PEAKS = window.MCC_PEAKS || null;
+  var measured = null, measuredSrc = "";
+  /* the measured light of whatever the deck is playing, asked for once per
+     song and only while the page is seen: a hidden page fetches nothing */
+  function follow() {
+    if (!deck || !PEAKS || document.hidden) return;
+    var src = deck.currentSrc || deck.src || "";
+    if (src === measuredSrc) return;
+    measuredSrc = src;
+    measured = null;
+    PEAKS.load(src).then(function (p) { if (measuredSrc === src) measured = p; });
   }
   function bands() {
-    if (wired) {
-      an.getByteFrequencyData(bins);
-      var b = 0, m = 0, h = 0, i;
-      for (i = 1; i < 9; i++) b += bins[i];
-      for (i = 9; i < 48; i++) m += bins[i];
-      for (i = 48; i < 140; i++) h += bins[i];
-      return { bass: b / 8 / 255, mid: m / 39 / 255, high: h / 92 / 255 };
-    }
-    var t = deck ? deck.currentTime : 0;
-    return { bass: 0.28 + 0.16 * Math.abs(Math.sin(t * 2.1)),
-             mid: 0.22 + 0.12 * Math.abs(Math.sin(t * 3.3 + 1)),
-             high: 0.16 + 0.1 * Math.abs(Math.sin(t * 5.2 + 2)) };
+    /* the light follows what is heard: a muted deck goes dark, as it did when
+       the analyser listened after the element's volume */
+    if (deck && (deck.muted || deck.volume === 0)) return { bass: 0, mid: 0, high: 0 };
+    if (!PEAKS) return { bass: 0.16, mid: 0.12, high: 0.08 };
+    return PEAKS.at(measured, deck ? deck.currentTime : 0);   /* quiet and even when not measured */
   }
 
   /* ---------------- the track's own color ---------------- */
@@ -181,7 +183,7 @@
   /* ---------------- the loop ---------------- */
   var raf = 0, running = false;
   function frame() {
-    if (!running) return;
+    if (!running || document.hidden) { running = false; return; }
     var f = bands();
     var amp = Math.min(1, f.bass * 0.55 + f.mid * 0.3 + f.high * 0.15);
     root.style.setProperty("--amp", amp.toFixed(3));
@@ -195,10 +197,11 @@
     }
     raf = requestAnimationFrame(frame);
   }
+  /* a music view over the album (music slice M5) covers the room: it draws nothing, the same as a hidden page */
+  var covered = false;
   function up() {
-    if (CALM || !cv) return;
-    arm();
-    if (actx && actx.state === "suspended") actx.resume().catch(function () {});
+    if (CALM || !cv || document.hidden || covered) return;
+    follow();
     pulseColor();
     root.classList.add("sig-live");
     if (!running) { running = true; frame(); }
@@ -215,9 +218,14 @@
     deck.addEventListener("play", up);
     deck.addEventListener("pause", down);
     deck.addEventListener("ended", down);
-    deck.addEventListener("loadedmetadata", function () { pulseColor(); sweep = 1; });
+    deck.addEventListener("loadedmetadata", function () { pulseColor(); sweep = 1; follow(); });
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) { running = false; cancelAnimationFrame(raf); }
+      else if (deck && !deck.paused) up();
+    });
+    addEventListener("mcc:music-view", function (e) {
+      covered = !!(e && e.detail && e.detail.open);
+      if (covered) { running = false; cancelAnimationFrame(raf); }
       else if (deck && !deck.paused) up();
     });
   }

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Operations Center</title>
+  <meta name="description" content="Equity Uprise B1 network operations and command dashboards over the sandbox digital twin.">
+  <meta name="theme-color" content="#050709">
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/eu-favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap">
+  <link rel="stylesheet" href="screens.css?v=__STAMP__">
+</head>
+<body>
+  <section class="owner-gate" data-owner-gate data-owner-template="appTpl">
+    <h1>Operations Center</h1>
+    <p data-owner-msg>Checking access with the server…</p>
+  </section>
+  <template id="appTpl"><div id="app"></div></template>
+  <script src="../js/mcc-auth.js?v=__STAMP__"></script>
+  <script type="module" src="../js/eu-screens/apps/noc.mjs?v=__STAMP__"></script>
+</body>
+</html>

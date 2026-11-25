@@ -1,0 +1,13 @@
+# apply check, 2026-11-10T11:59:14Z; git version 2.43.0; base 8255fb35bb1821df74411e9ec726139c8b23c727; lane head 9604a966354aaecba2f373e6e674b296ac269bb8, tree 07b93a2d548a013dea9d2895beb5a35299c452c8
+## 1. index only: GIT_INDEX_FILE=<scratch index> git read-tree 8255fb35 && git apply --cached --check/--cached each patch in order && git write-tree
+resulting tree 07b93a2d548a013dea9d2895beb5a35299c452c8
+MATCH: equals the lane head's tree
+## 2. git am on a detached checkout of the base in the lane worktree (afterwards: git checkout fix-c8-20261110)
+git am exit=0
+resulting tree 07b93a2d548a013dea9d2895beb5a35299c452c8
+applied: test(core): queue-to-coverage contract for actor previews (C8)
+applied: fix(core): coverage reads the queue's done status and reports the preview outcome beside it (C8)
+MATCH: equals the lane head's tree
+back on fix-c8-20261110 at 9604a966354aaecba2f373e6e674b296ac269bb8
+## 3. git diff --check 8255fb35 9604a966354aaecba2f373e6e674b296ac269bb8
+clean

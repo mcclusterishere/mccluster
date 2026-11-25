@@ -1,5 +1,13 @@
 # Turning the desk on for Instagram and Facebook
 
+> Historical runbook, originally describing an August 2026 deployment. Its
+> “everything built/live” statements below are historical claims, not current
+> acceptance evidence. Do not follow its retired `Here` repository instructions.
+> Use canonical `mcclusterishere/mccluster` and Worker `mccluster` per `AGENTS.md`.
+> For the November recovery, current boundaries, and secure connection steps,
+> start with [API connection manual](control-plane/API-CONNECTION-MANUAL.md)
+> and [recovery audit](control-plane/API-RECOVERY-20261104.md).
+
 Everything in this repo is built and tested. What is left is the half only
 you can do: the accounts, the app, the tokens and the two secrets. This is
 that list, in the order it has to happen, with the check that proves each

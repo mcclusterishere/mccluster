@@ -31,6 +31,7 @@ import {
   connectedAccountReady,
   verifyStripeWebhook
 } from './whip/stripe.js';
+import { returnOrigin } from './platform/hosts.generated.js';
 
 function sbHeaders(env, extra = {}) {
   return {
@@ -416,7 +417,9 @@ export default {
          client bounced to an attacker-supplied return_url after onboarding
          is a phishing surface. Only origins this Worker already trusts. */
       const trusted = String(env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
-      const fallback = env.PUBLIC_APP_URL || 'https://matthew.mccluster.org';
+      /* without one, back where the owner started when that origin serves pages (the generated return origins, exact
+         match on the request's Origin), else where Control is served today (SPEC-PLATFORM 2.9) */
+      const fallback = returnOrigin(request.headers.get('origin'));
       const safeUrl = (candidate) => {
         if (!candidate) return null;
         try {

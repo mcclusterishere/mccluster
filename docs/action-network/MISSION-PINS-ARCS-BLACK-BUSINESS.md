@@ -116,8 +116,8 @@ should carry pins (today they have none, so anyone can join them).*
 - `supabase/pending/20261014170000_action_mission_curated_catalog_resources.sql` would **close**
   File a public comment, Spend with intention and Trace the minerals, which the owner reopened.
   Do not apply it as written.
-- `supabase/pending/action_globe_demo_pins_v1.sql` is already applied (rows dated 2026-10-15 17:55Z)
-  and uses `ON CONFLICT (mission_id)`; promote it before this file and do not re-run it after.
+- `action_globe_demo_pins_v1.sql` (now `supabase/tests/action_globe_demo_pins_v1.applied.sql`) is already applied (rows dated 2026-10-15 17:55Z)
+  and uses `ON CONFLICT (mission_id)`; it stays before this file in the scratch harness and is never re-run in production.
 
 ## Apply checklist (owner approval required)
 

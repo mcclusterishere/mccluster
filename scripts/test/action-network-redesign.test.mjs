@@ -41,11 +41,14 @@ test('every room that left the menu has a contextual home',()=>{
  assert.match(page,/id="mnBell"[^>]*aria-controls="mnAlerts"[\s\S]{0,1200}<div class="mn__alerts" id="mnAlerts" role="dialog" aria-label="Notifications" hidden>/);
  assert.doesNotMatch(page,/id="mnNotificationsView"/,'no notifications page');
  assert.match(client,/if \(name === "notifications"\) \{ if \(state\.guest\) \{ askToSignIn\(name\); return; \} openAlerts\(\); return; \}/,'a link to the notifications opens the drop down');
- /* Missions: pins, the mission card, and search */
+ /* Missions: pins, the mission card, and search. "All missions" is the feed's Equity Uprise tab (owner, 2026-11-17) */
  const card=page.match(/<article class="mn__mission-card" id="mnWorldFocus"[\s\S]*?<\/article>/)?.[0]||'';
- assert.match(card,/data-mn-view="missions"/,'All missions from the mission card');
+ assert.match(card,/data-mn-feed="equity"/,'All missions from the mission card');
  const suggest=page.match(/<div class="mn__suggest" id="mnSuggest"[\s\S]*?<\/form>/)?.[0]||'';
- for(const view of ['missions','discover','groups'])assert.match(suggest,new RegExp('data-mn-view="'+view+'"'),view+' from the World search');
+ assert.match(suggest,/<button type="button" data-mn-feed="equity">All missions<\/button>/,'missions from the World search');
+ for(const view of ['discover','groups'])assert.match(suggest,new RegExp('data-mn-view="'+view+'"'),view+' from the World search');
+ assert.match(client,/document\.querySelectorAll\("\[data-mn-feed\]"\)\.forEach\(function \(b\) \{ b\.onclick = function \(\) \{ showMissionFeed\(\); \}; \}\);/,'All missions opens the mission feed');
+ assert.match(client,/function showMissionFeed\(\) \{\n    if \(state\.currentView !== "feed"\) setView\("feed"\);\n    setFeedScope\("equity"\);/);
  /* People and Groups: the World search finds them */
  assert.match(client,/api\("\/v1\/mnet\/discover\?q=" \+ encodeURIComponent\(who\) \+ "&limit=3"\)/);
  assert.match(client,/function exploreGroups\(q\)/);
@@ -90,7 +93,7 @@ test('the World look is graphite and one red, scoped to the World screen',()=>{
  assert.match(look,/--w-steel: linear-gradient\(180deg, #181b21, #0d0f13\)/);
  assert.doesNotMatch(look,/#0f1626|#131c31|#070b14/,'the navy of the earlier mockup is gone');
  assert.match(look,/\.mn-world-on \.mn__top \.mn__brand strong::after \{[^}]*background: var\(--mn-hot\)/,'the red rule under HUMAN UPRISE');
- assert.doesNotMatch(page,/mn__brand-world/,'the wordmark is Human Uprise, and only that');
+ assert.doesNotMatch(page,/mn__brand-world/,'the wordmark is Equity Uprise, and only that');
  assert.doesNotMatch(look,/\.appbar/,'the house bar is styled by the house');
  assert.match(look,/\.mn__world-tag \{ display: none;/,'the corner tag waits for tablet width, where the credit line leaves room');
 });
@@ -111,6 +114,8 @@ test('the emblem or Fund it: no like, comment or reaction; a mission post offers
  assert.equal((client.match(/EUP_MARK \+ '<\/a>'/g)||[]).length,3,'every feed join is the mark alone: offer, verified action, made together');
  assert.match(page,/id="mnWorldFocusJoin"[^>]*aria-label="Join this mission and do it"[^>]*><img class="mn__eup" src="assets\/img\/equity-uprise-mark-white\.png" alt="" width="28" height="28"><\/button>/);
  for(const [name,text] of [['the page',page],['the script',client],['the stylesheet',css]]) assert.doesNotMatch(text,/E\s*=\s*Up/i,name+' never writes the mark out');
+ /* the feed's Equity Uprise tab is the mark alone too: an accessible name, no words, the two supplied variants (owner, 2026-11-17) */
+ assert.match(page,/<button class="hu-feed-scope__eup" type="button" data-feed-scope="equity" aria-pressed="false" aria-label="Equity Uprise"><img class="hu-eup-mark hu-eup-mark--white" src="assets\/img\/equity-uprise-mark-white\.png" alt="" width="40" height="40"><img class="hu-eup-mark hu-eup-mark--dark" src="assets\/img\/equity-uprise-mark\.png" alt="" width="40" height="40"><\/button>/);
  assert.match(css,/\.mn__eup \{ width: 28px; height: 28px; object-fit: contain; flex: none; \}/,'the complete artwork, scaled only, no rounding');
  assert.match(css,/\.mn__primary--eup, \.mn__world-go--eup \{ display: inline-flex; align-items: center; justify-content: center; gap: 0; min-width: 44px;/,'the pill is the tap target');
  assert.match(css,/\.mn-world-on #mnFeed \.mn__actcard-row \.mn__primary--eup::after \{ content: none; \}/,'no chevron beside the mark');

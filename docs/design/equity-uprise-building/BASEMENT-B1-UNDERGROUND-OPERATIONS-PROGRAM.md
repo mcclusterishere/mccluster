@@ -5,6 +5,8 @@
 > B1 is **not** part of the E-Q-U-I-T-Y developmental floor sequence.
 >
 > B1 **is** a known, staffed Equity Uprise workplace floor.
+>
+> **Owner decision, 2026-11-03:** "We can have B1. Everybody's welcome to B1 … Make it normal." B1 is a **normal, open floor**: no special restricted or sandbox-only access rule for the floor itself. What remains is real life safety: plant, electrical, fire/water, flood, telecom and transfer-lock rooms keep their safety doors, Floor 1 keeps its evacuation-mode discharge barriers, and live building systems are simulation-only (never live control). Machine authority: `production/basement-b1-program.json` (`access: open-normal-floor`), `production/building-core-v2.json` (`basement_policy`, elevator/stair `b1_access_policy`), `production/floor-01/floor-01-site-egress.json` (`underground_access_controls`). v3 also widened B1's 2 ft slot corridors and added a staff commons and the named staff stations (`production/basement-b1/basement-b1-interior-layout-v3.json`).
 
 ## Purpose
 

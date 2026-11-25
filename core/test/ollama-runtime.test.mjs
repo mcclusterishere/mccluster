@@ -28,7 +28,7 @@ test('real adapter HTTP contract preserves tool calls, explicit settings and mea
     await once(child.stdout, 'data');
     const result = await fetch(`http://127.0.0.1:${port}/execute`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ capability: 'ai.chat', input: { prompt: 'Check operations', tools: [{ type: 'function', function: { name: 'operations_read', parameters: { type: 'object' } } }] } }) }).then(r => r.json());
     assert.equal(request.think, false);
-    assert.equal(request.keep_alive, '30m');
+    assert.equal(request.keep_alive, '24h');
     assert.equal(request.options.num_predict, 1024);
     assert.equal(request.options.num_ctx, 16384);
     assert.equal(request.tools[0].function.name, 'operations_read');

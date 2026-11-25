@@ -1,0 +1,9 @@
+# series head f8499fad, 2026-11-10T12:21:59Z, Python 3.13.18
+# python3 -m unittest discover -s scripts/test -p 'test_*.py'   (second half of the package.json test script)
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.000s
+
+OK
+exit=0
+# git status --short after (empty = nothing written into the tree)

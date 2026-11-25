@@ -1,0 +1,23 @@
+-- Tinderfessions by Benji Chase (Hitman Records, 2020), added to the shelf 2026-11-23 (owner: "I am Benji Chase, the
+-- artist on Apple Music ... I would like this upload to be Benji Chase's Tinderfessions"): its shelf songs become live
+-- discovery objects like every other shelf song (supabase/migrations/20261003233747_action_network_live_governance_v1.sql).
+-- Rolling With Me opens the shelf album as its bonus song (owner, 2026-11-23); Tinderella, track 1 on the stores,
+-- follows it.
+-- PENDING: apply with the release of data/albums.json that adds them.
+-- Rollback: 20261123180000_tinderfessions_catalog_objects.rollback.sql
+insert into public.music_catalog_objects(catalog_key,album_slug,album_title,track_title,artist_name,credit_line,audio_path,artwork_path,canonical_url,source_kind,status)
+values ('tinderfessions:rolling-with-me','tinderfessions','Tinderfessions','Rolling With Me','Benji Chase','Hitman Records, 2020.','assets/audio/rolling-with-me.m4a','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Rolling%20With%20Me','site_catalog','active'),
+('tinderfessions:tinderella','tinderfessions','Tinderfessions','Tinderella','Benji Chase','Hitman Records, 2020.','assets/audio/tinderella.m4a','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Tinderella','site_catalog','active'),
+('tinderfessions:alquifina-new-chick','tinderfessions','Tinderfessions','Alquifina (New Chick)','Benji Chase','Hitman Records, 2020.','assets/audio/alquifina-new-chick.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Alquifina%20(New%20Chick)','site_catalog','active'),
+('tinderfessions:bussin-juggs','tinderfessions','Tinderfessions','Bussin'' Juggs','Benji Chase','Hitman Records, 2020.','assets/audio/bussin-juggs.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Bussin%27%20Juggs','site_catalog','active'),
+('tinderfessions:one-gon-ride-feat-jiddy','tinderfessions','Tinderfessions','One Gon'' Ride (feat. Jiddy)','Benji Chase','Hitman Records, 2020.','assets/audio/one-gon-ride.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=One%20Gon%27%20Ride%20(feat.%20Jiddy)','site_catalog','active'),
+('tinderfessions:recipe','tinderfessions','Tinderfessions','Recipe','Benji Chase','Hitman Records, 2020.','assets/audio/recipe.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Recipe','site_catalog','active'),
+('tinderfessions:spell','tinderfessions','Tinderfessions','Spell','Benji Chase','Hitman Records, 2020.','assets/audio/spell.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Spell','site_catalog','active'),
+('tinderfessions:fire','tinderfessions','Tinderfessions','Fire','Benji Chase','Hitman Records, 2020.','assets/audio/fire.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Fire','site_catalog','active'),
+('tinderfessions:promises','tinderfessions','Tinderfessions','Promises','Benji Chase','Hitman Records, 2020.','assets/audio/promises.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Promises','site_catalog','active'),
+('tinderfessions:drunk-driving','tinderfessions','Tinderfessions','Drunk Driving','Benji Chase','Hitman Records, 2020.','assets/audio/drunk-driving.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Drunk%20Driving','site_catalog','active'),
+('tinderfessions:no-friend','tinderfessions','Tinderfessions','No Friend','Benji Chase','Hitman Records, 2020.','assets/audio/no-friend.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=No%20Friend','site_catalog','active'),
+('tinderfessions:numb','tinderfessions','Tinderfessions','Numb','Benji Chase','Hitman Records, 2020.','assets/audio/numb.mp3','assets/img/tinderfessions-cover.jpg','https://matthew.mccluster.org/album.html?album=tinderfessions&t=Numb','site_catalog','active')
+on conflict(catalog_key) do update set album_slug=excluded.album_slug,album_title=excluded.album_title,track_title=excluded.track_title,
+ artist_name=excluded.artist_name,credit_line=excluded.credit_line,audio_path=excluded.audio_path,artwork_path=excluded.artwork_path,
+ canonical_url=excluded.canonical_url,source_kind=excluded.source_kind,status=excluded.status,updated_at=now();

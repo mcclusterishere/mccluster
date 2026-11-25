@@ -1,0 +1,53 @@
+{
+ "type": "Feature",
+ "properties": {
+  "mag": 3.01,
+  "place": "11 km ESE of Silver Springs, Nevada",
+  "time": 1794897125466,
+  "updated": 1794983782676,
+  "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nn00927068",
+  "detail": null,
+  "status": "reviewed",
+  "net": "nn",
+  "code": "00927068",
+  "ids": ",nn00927068,us7000tyr4,",
+  "sources": ",nn,us,",
+  "types": ",dyfi,origin,phase-data,shakemap,",
+  "products": {
+   "shakemap": [
+    {
+     "id": "urn:usgs-product:us:shakemap:us7000tyr4:1794983782676",
+     "type": "shakemap",
+     "code": "us7000tyr4",
+     "source": "us",
+     "updateTime": 1794983782676,
+     "status": "UPDATE",
+     "preferredWeight": 83,
+     "properties": {
+      "event-description": "USGS NEIC ShakeMap",
+      "eventsource": "us",
+      "eventsourcecode": "7000tyr4",
+      "map-status": "automatic",
+      "maxmmi": "2.93",
+      "process-timestamp": "2026-11-18T06:35:46Z",
+      "review-status": "automatic",
+      "version": "3"
+     },
+     "contents": {
+      "download/cont_mmi.json": {
+       "contentType": "application/json",
+       "length": 2803,
+       "url": "https://earthquake.usgs.gov/pdl/products/urn:usgs-product:us:shakemap:us7000tyr4:1794983782676/contents/download/cont_mmi.json"
+      },
+      "download/rupture.json": {
+       "contentType": "application/json",
+       "length": 502,
+       "url": "https://earthquake.usgs.gov/pdl/products/urn:usgs-product:us:shakemap:us7000tyr4:1794983782676/contents/download/rupture.json"
+      }
+     }
+    }
+   ]
+  }
+ },
+ "id": "nn00927068"
+}

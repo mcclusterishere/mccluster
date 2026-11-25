@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { HARDWARE_MODE_RANK } from '../compute/protocol.mjs';
 
 const ID = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -9,6 +10,8 @@ const HOSTING = new Set(['owned', 'self-hosted', 'external']);
 const BILLING = new Set(['free', 'compute', 'metered']);
 const HOSTING_SCORE = { owned: 30, 'self-hosted': 20, external: 0 };
 const BILLING_SCORE = { free: 300, compute: 200, metered: 0 };
+// A compute binding whose nodes cannot take the task right now: try the next candidate.
+const FALLBACK_CODES = new Set(['COMPUTE_ENQUEUE_FAILED', 'COMPUTE_NO_LIVE_NODE']);
 
 function parseJsonEnv(name, fallback = []) {
   const raw = process.env[name];
@@ -111,6 +114,19 @@ function bindingScore(binding, preferOwned = true) {
   return economicScore + binding.priority;
 }
 
+// Evidence a live compute binding carries (tools/compute.mjs): the best
+// hardware_mode among its nodes and the measured generation rate. Economics
+// stay the first-order policy; evidence only orders bindings that tie on it.
+function evidenceRank(binding) {
+  const evidence = binding.evidence;
+  if (Number.isFinite(evidence?.hardware_mode_rank)) return evidence.hardware_mode_rank;
+  return HARDWARE_MODE_RANK[evidence?.hardware_mode] ?? 0;
+}
+
+function evidenceRate(binding) {
+  return Number(binding.evidence?.generation_tokens_per_second) || 0;
+}
+
 function publicBinding(binding, available, preferOwned = true) {
   return {
     id: binding.id,
@@ -122,6 +138,7 @@ function publicBinding(binding, available, preferOwned = true) {
     routingScore: bindingScore(binding, preferOwned),
     economics: binding.economics,
     features: binding.features || {},
+    evidence: binding.evidence || null,
     available
   };
 }
@@ -222,7 +239,10 @@ export class CapabilityRegistry {
       .filter((binding) => binding.status === 'active')
       .filter((binding) => availableTools.has(binding.tool))
       .filter((binding) => featureMatch(binding, requirements))
-      .sort((a, b) => bindingScore(b, preferOwned) - bindingScore(a, preferOwned) || a.id.localeCompare(b.id));
+      .sort((a, b) => bindingScore(b, preferOwned) - bindingScore(a, preferOwned)
+        || evidenceRank(b) - evidenceRank(a)
+        || evidenceRate(b) - evidenceRate(a)
+        || a.id.localeCompare(b.id));
 
     if (!candidates.length) {
       throw Object.assign(new Error(`No available implementation satisfies ${id}`), {
@@ -241,24 +261,44 @@ export class CapabilityRegistry {
     };
   }
 
+  // Candidates are tried in resolve() order. Only a compute binding that
+  // cannot take the task right now (no live node, enqueue failed) hands over
+  // to the next one; every other error is the caller's and surfaces unchanged,
+  // with `tried` naming the candidates that were skipped before it.
   async call(id, args = {}, options = {}) {
     const resolved = await this.resolve(id, options);
+    const candidates = [resolved.binding, ...resolved.alternatives];
+    const tried = [];
     const startedAt = Date.now();
-    const result = await this.toolRegistry.call(resolved.binding.tool, args, {
-      ...options,
-      source: `capability:${id}`,
-      requirements: options.requirements || {}
-    });
-    return {
-      capability: id,
-      catalogVersion: this.catalogVersion,
-      provider: resolved.binding.provider,
-      binding: resolved.binding.id,
-      economics: resolved.binding.economics,
-      tool: resolved.binding.tool,
-      durationMs: Date.now() - startedAt,
-      result
-    };
+    for (let index = 0; index < candidates.length; index += 1) {
+      const candidate = candidates[index];
+      try {
+        const result = await this.toolRegistry.call(candidate.tool, args, {
+          ...options,
+          source: `capability:${id}`,
+          requirements: options.requirements || {}
+        });
+        return {
+          capability: id,
+          catalogVersion: this.catalogVersion,
+          provider: candidate.provider,
+          binding: candidate.id,
+          economics: candidate.economics,
+          tool: candidate.tool,
+          durationMs: Date.now() - startedAt,
+          result,
+          fallback_from: tried
+        };
+      } catch (error) {
+        if (FALLBACK_CODES.has(error?.code) && index < candidates.length - 1) {
+          tried.push({ binding: candidate.id, code: error.code });
+          continue;
+        }
+        if (error && typeof error === 'object') error.tried = tried;
+        throw error;
+      }
+    }
+    throw Object.assign(new Error(`No available implementation satisfies ${id}`), { status: 503, code: 'NO_CAPABILITY_BINDING', tried });
   }
 
   async asMcpTools(options = {}) {

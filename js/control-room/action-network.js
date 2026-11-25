@@ -1,6 +1,6 @@
-/* Native Control · Create · Human Uprise.
+/* Native Control · Create · Equity Uprise.
 
-   The owner's side of Human Uprise (/action/?c=<slug>).
+   The owner's side of Equity Uprise (/action/?c=<slug>).
    A campaign is a row in public.action_campaigns, so the next one is
    launched here, not in a deploy: write it as a draft, check it, then
    set it live. Row-level security lets only the owner write.
@@ -379,9 +379,10 @@
 
     if(!A.loaded&&!A.loading)load();
     var c=current(),d=c&&A.detail[c.id];
-    var chips='<div class="cro-chips">'+A.campaigns.map(function(x){return'<button class="cro-chip'+(x.id===A.sel&&A.tab!=="new"?" is-on":"")+'" type="button" data-crn-pick="'+e(x.id)+'">'+e(x.title)+' · '+e(x.status)+'</button>';}).join("")+'<button class="cro-chip'+(A.tab==="new"?" is-on":"")+'" type="button" data-crn-tab="new">+ New campaign</button></div>';
-    var head=(key?'<p class="cro-note"><a href="action-globe.html?explore=1&amp;halo=missions'+(A.haloMission?'&amp;item=mission:'+e(A.haloMission):'')+'">← Back to Halo</a> · '+(A.haloMission?'Selected mission':'Mission workspace')+' <button type="button" class="cr-btn" data-halo-clear>Show all missions</button></p>':'')+(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, Human Uprise migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
+    var chips='<div class="cro-chips">'+A.campaigns.map(function(x){return'<button class="cro-chip'+(x.id===A.sel&&A.tab!=="new"&&A.tab!=="sources"?" is-on":"")+'" type="button" data-crn-pick="'+e(x.id)+'">'+e(x.title)+' · '+e(x.status)+'</button>';}).join("")+'<button class="cro-chip'+(A.tab==="sources"?" is-on":"")+'" type="button" data-crn-tab="sources">Mission sources</button><button class="cro-chip'+(A.tab==="new"?" is-on":"")+'" type="button" data-crn-tab="new">+ New campaign</button></div>';
+    var head=(key?'<p class="cro-note"><a href="action-globe.html?explore=1&amp;halo=missions'+(A.haloMission?'&amp;item=mission:'+e(A.haloMission):'')+'">← Back to Halo</a> · '+(A.haloMission?'Selected mission':'Mission workspace')+' <button type="button" class="cr-btn" data-halo-clear>Show all missions</button></p>':'')+(A.loading&&!A.loaded?note("Loading campaigns…"):A.error?note("Campaigns could not be read: "+(A.error.message||A.error)+". If the table is missing, Equity Uprise migration has not been applied.",true):"")+(A.msg?note(A.msg):"");
     if(A.tab==="new")return'<div class="cro">'+chips+head+creator()+'</div>';
+    if(A.tab==="sources")return'<div class="cro">'+chips+head+(window.CR.missionSources?window.CR.missionSources.render():note("The mission sources module did not load (js/control-room/mission-sources.js).",true))+'</div>';
     if(!c)return'<div class="cro">'+chips+head+(A.loaded&&!A.error?note("No campaigns yet."):"")+'</div>';
     var tabs='<div class="cro-tabs">'+[["overview","Overview"],["missions","Missions"],["reviews","Proof review"],["fellows","Fellowship"],["memos","Policy memos"],["identity","Identity"],["state","State & money"],["content","Content"],["ledger","Ledger"]].map(function(t){return'<button class="cro-tab'+(A.tab===t[0]?" is-on":"")+'" type="button" data-crn-tab="'+t[0]+'">'+t[1]+'</button>';}).join("")+'</div>';
     var body=!d?note("Loading "+c.title+"…"):(d.errors.length?note("Some reads failed: "+d.errors.join("; "),true):"")+
@@ -429,11 +430,12 @@
   }
   function bind(root){
     if(window.CR.identityReview&&A.tab==="identity")window.CR.identityReview.bind(root);
+    if(window.CR.missionSources&&A.tab==="sources")window.CR.missionSources.bind(root);
     if(!root)return;
     loadUploads(root);
     var retry=root.querySelector('[data-proof-retry]');if(retry)retry.onclick=loadProofs;
     var clear=root.querySelector('[data-halo-clear]');if(clear)clear.onclick=function(){A.haloMission='';var u=new URL(location.href);u.searchParams.delete('mission');u.searchParams.delete('haloTask');history.replaceState(null,'',u);redraw();};
-    root.querySelectorAll("[data-crn-pick]").forEach(function(b){b.onclick=function(){A.sel=b.getAttribute("data-crn-pick");if(A.tab==="new")A.tab="overview";A.msg="";if(!A.detail[A.sel])loadDetail(A.sel).then(redraw);redraw();};});
+    root.querySelectorAll("[data-crn-pick]").forEach(function(b){b.onclick=function(){A.sel=b.getAttribute("data-crn-pick");if(A.tab==="new"||A.tab==="sources")A.tab="overview";A.msg="";if(!A.detail[A.sel])loadDetail(A.sel).then(redraw);redraw();};});
     root.querySelectorAll("[data-crn-tab]").forEach(function(b){b.onclick=function(){A.tab=b.getAttribute("data-crn-tab");A.msg="";redraw();};});
     var mc=root.querySelector("[data-mission-create]");
     if(mc)mc.onclick=function(){
@@ -569,5 +571,5 @@
       if(!title){alert("A title, please.");return;}
       run(cr,function(){return A.supa("action_campaigns",{method:"POST",body:{id:id,slug:slug,title:title,status:"draft"}}).then(function(){A.sel=id;A.tab="content";});},"Draft created. Write its content, facts and sources, then set it live.");};
   }
-  window.CR.actionNetwork={init:function(opts){A.supa=opts.supa;A.request=opts.request;A.rerender=opts.render;if(window.CR.identityReview)window.CR.identityReview.init(opts);},render:render,bind:bind,load:load,state:A};
+  window.CR.actionNetwork={init:function(opts){A.supa=opts.supa;A.request=opts.request;A.rerender=opts.render;if(window.CR.identityReview)window.CR.identityReview.init(opts);if(window.CR.missionSources)window.CR.missionSources.init(opts);},render:render,bind:bind,load:load,state:A};
 })();

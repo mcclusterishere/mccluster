@@ -12,22 +12,49 @@
    MusicAlbum / MusicRecording graph beside it, each recording at a stable
    address: catalogue.html#<slug>.
 
-   CREDITS ARE CLAIMS, so they are made only where the site states them:
-   - byArtist is Matthew McCluster only where nothing on the site credits
-     anybody else ("Written & performed by Matthew McCluster unless credited
-     otherwise").
+   CREDITS ARE CLAIMS, so they are made only where the site states them.
+   Since 2026-11-24 the site states them as structure: every track in
+   data/albums.json carries `credits`, naming artists in the registry by
+   slug (js/music-credits.js), and data/catalogue.json carries the same
+   record. This graph is read from that structure and from nothing else:
+     byArtist     credits.primary
+     contributor  credits.lead, credits.featured, and any stated role that
+                  is not a production credit ("guitar by")
+     producer     credits.producers, and a stated "beat by"
+   An artist the registry gives an `id` is that existing node (Matthew's
+   Person, the Equity Uprise act, the PRIM3 act); anybody else is a name
+   and a type, never a new identity. What the structure says, and why:
+   - byArtist is Matthew McCluster only where the record is his.
    - The Docket 516R album (slug equity-uprise) is billed to Equity Uprise,
      the program's own music act, per the owner (2026-10-03). Its tracks
      are Equity Uprise records; the performers on each are contributors:
-       Money or the Power      ft. Ocho, McCluster & Old Jay, prod. PAX
+       Money or the Power      ft. Ocho, McCluster & Old Jay, prod. Pax Tha Collector
        Please Set Me Free      Los Fidel, beat by McCluster (a producer
                                credit for him, not an artist credit)
-       Environmental Injustice McCluster ft. Angel Kastro & Ocho
+       Environmental Injustice McCluster ft. Angel Kastro & Ocho; produced
+                               by McCluster, and the Brave mix by Zakir
+                               Elhajoui and McCluster (owner, 2026-11-24)
      The act is its own node (#artist-equity-uprise), never the Equity
      Uprise program (#equity-uprise) or McCluster Corp.
-   - "Dealer Plates" is "Prod. Zakir & McCluster": a producer credit, not an
-     artist credit.
-   - "Upset" names three other artists and no role for him: no artist claim.
+   - The Cyber Security Specialist album (slug prim3, catalog keys prim3:*)
+     is billed to PRIM3, per the owner (2026-11-02: "the album is actually
+     called Cyber Security Specialist ... the artist is PRIM3 ... its own
+     artist. Separate entity from Matthew McCluster"). PRIM3 the act is its
+     own node (prim3-artist.html#prim3-artist), the music act of PRIM3,
+     McCluster Corp's learning product; never the PRIM3 Project
+     (prim3.html#prim3), McCluster Corp or Matthew. Its producer is the
+     person, per the owner (2026-11-24: "the cyber security album was
+     produced fully by McCluster. Scored and produced, whatever language
+     you want to use."): every recording and the album carry producer =
+     Matthew's @id ("McCluster" is an alternateName of that Person in
+     data/seo/entity-graph.json), and the credit line reads "Scored and
+     produced by McCluster". A producer credit, never an artist credit:
+     byArtist stays the act. No contributor is known, so none is claimed.
+   - I AM HERE, Whip Equipped, Heal the 3 and the Vaunt EP are produced by
+     McCluster and Zakir Elhajoui, every track (owner, 2026-11-24); the
+     Audio Engineer EP by McCluster, with Tazzy Jay on Trackout.
+   - "Upset" is Hitman Benji × Raheem × Rahndrx (owner, 2026-11-24: Hitman
+     Benji, not Hitman Halo): three artists and no role for Matthew.
    - CIA Mind Control is published under an alias, and one of its titles is
      gated on purpose. The album is listed, with no artist and no track
      list; gated titles are never written into the static page or the
@@ -56,25 +83,43 @@ export function isoDuration(len) {
 
 /* who made it, as far as the site actually says */
 const EQUITY_UPRISE_ACT = { "@id": `${SITE}/catalogue.html#artist-equity-uprise` };
-const act = (name) => ({ "@type": "MusicGroup", name });
-const CREDIT = {
-  "money-or-the-power": { byArtist: EQUITY_UPRISE_ACT, contributor: [act("Ocho"), PERSON, act("Old Jay")], producer: { "@type": "Person", name: "PAX" } },
-  "please-set-me-free": { byArtist: EQUITY_UPRISE_ACT, contributor: [act("Los Fidel")], producer: PERSON },
-  "environmental-injustice": { byArtist: EQUITY_UPRISE_ACT, contributor: [PERSON, act("Angel Kastro"), act("Ocho")] },
-  "dealer-plates": { producer: [PERSON, { "@type": "Person", name: "Zakir" }] },
-  "dealer-plates-b": { producer: [PERSON, { "@type": "Person", name: "Zakir" }] },
-  "upset": {}
-};
+/* defined in full on its own page (prim3-artist.html) and in
+   data/seo/entity-graph.json -> creative_works.prim3_artist */
+export const PRIM3_ACT = { "@id": `${SITE}/prim3-artist.html#prim3-artist` };
 const NO_GRAPH_ALBUMS = new Set(["cia-mind-control"]);
+/* a stated role that is a production credit ("beat by McCluster"): the same list js/music-credits.js keeps */
+const PRODUCTION_ROLES = new Set(["beat", "score"]);
 
-function creditFor(t) {
-  if (CREDIT[t.slug]) return CREDIT[t.slug];
-  return { byArtist: PERSON };
+/* one artist as a node: the existing @id when the registry gives one, else a name and a type. A performer is a
+   MusicGroup (schema.org's type for a musical artist, solo or not); a producer who is a person is a Person. */
+function nodeFor(artists, slug, as) {
+  const a = (artists || []).find((x) => x.slug === slug);
+  if (!a) throw new Error(`"${slug}" is credited but is not in the artists registry`);
+  if (a.id) return { "@id": a.id };
+  return { "@type": as === "producer" && a.kind === "person" ? "Person" : "MusicGroup", name: a.name };
+}
+const oneOrMany = (list) => (list.length === 0 ? undefined : list.length === 1 ? list[0] : list);
+
+/* byArtist / contributor / producer for one track's structured credits */
+export function creditFor(credits, artists) {
+  const c = credits || {};
+  const roles = c.roles || [];
+  return {
+    byArtist: oneOrMany((c.primary || []).map((s) => nodeFor(artists, s, "artist"))),
+    contributor: [...(c.lead || []), ...(c.featured || [])].map((s) => nodeFor(artists, s, "artist"))
+      /* a stated role ("guitar by") is a person's contribution, typed like a producer's */
+      .concat(roles.filter((r) => !PRODUCTION_ROLES.has(r.role)).map((r) => nodeFor(artists, r.artist, "producer"))),
+    producer: oneOrMany([...(c.producers || []), ...roles.filter((r) => PRODUCTION_ROLES.has(r.role)).map((r) => r.artist)]
+      .map((s) => nodeFor(artists, s, "producer")))
+  };
 }
 
 export function recordings(cat) {
   return (cat.tracks || [])
-    .filter((t) => !t.gated && !NO_GRAPH_ALBUMS.has(t.albumSlug))
+    /* the graph is the REGISTERED discography: a recording joins it when its
+       ISRC is in the ledger (data/ddex/identifiers.json, minted by the owner),
+       never before; until then it is on the shelf and the registry list only */
+    .filter((t) => !t.gated && !NO_GRAPH_ALBUMS.has(t.albumSlug) && t.isrc)
     .map((t) => JSON.parse(JSON.stringify({
       "@type": "MusicRecording",
       "@id": `${SITE}/catalogue.html#${t.slug}`,
@@ -84,7 +129,7 @@ export function recordings(cat) {
       duration: isoDuration(t.length),
       description: t.credit || undefined,
       inAlbum: t.album && slugOfAlbumName(t.album) !== "singles" ? { "@id": albumId(t) } : undefined,
-      ...creditFor(t)
+      ...(({ byArtist, contributor, producer }) => ({ byArtist, contributor: contributor.length ? contributor : undefined, producer }))(creditFor(t.credits, cat.artists))
     })));
 }
 
@@ -108,21 +153,20 @@ export function buildGraph(cat, albums) {
       url: `${SITE}/album.html${a.slug === "here" ? "" : "?album=" + a.slug}`,
       image: `${SITE}/${a.art}`
     };
-    if (NO_GRAPH_ALBUMS.has(a.slug)) {
-      node.subjectOf = { "@type": "WebPage", url: `${SITE}/end-racism.html` };
-      return node;
-    }
+    if (NO_GRAPH_ALBUMS.has(a.slug)) return node;
+    /* who the album is by, and who produced it, when every track on it says the same thing: I AM HERE is
+       Matthew's, Heal the 3 is his and VVS Madè's, Cyber Security Specialist is PRIM3's and produced by him,
+       Docket 516R is Equity Uprise's and has no one producer */
+    const said = (cat.tracks || []).filter((t) => t.albumSlug === a.slug).map((t) => t.credits || {});
+    const shared = (key) => (said.length && said.every((c) => JSON.stringify(c[key] || []) === JSON.stringify(said[0][key] || [])) ? said[0][key] || [] : []);
+    node.byArtist = oneOrMany(shared("primary").map((s) => nodeFor(cat.artists, s, "artist")));
+    node.producer = oneOrMany(shared("producers").map((s) => nodeFor(cat.artists, s, "producer")));
     if (a.slug === "here") {
-      Object.assign(node, { byArtist: PERSON, albumProductionType: "https://schema.org/StudioAlbum", albumReleaseType: "https://schema.org/AlbumRelease", datePublished: "2026" });
+      Object.assign(node, { albumProductionType: "https://schema.org/StudioAlbum", albumReleaseType: "https://schema.org/AlbumRelease", datePublished: "2026" });
     }
-    if (a.slug === "heal-the-3") {
-      node.byArtist = [PERSON, { "@type": "MusicGroup", name: "VVS Madè" }];
-      node.albumReleaseType = "https://schema.org/EPRelease";
-    }
-    if (a.slug === "equity-uprise") {
-      node.byArtist = EQUITY_UPRISE_ACT;
-      node.subjectOf = { "@type": "WebPage", url: `${SITE}/docket-516.html` };
-    }
+    if (a.slug === "heal-the-3") node.albumReleaseType = "https://schema.org/EPRelease";
+    if (a.slug === "prim3") node.subjectOf = { "@type": "WebPage", url: `${SITE}/prim3-artist.html` };
+    if (a.slug === "equity-uprise") node.subjectOf = { "@type": "WebPage", url: `${SITE}/docket-516.html` };
     if (mine.length) {
       node.numTracks = mine.length;
       node.track = { "@type": "ItemList", numberOfItems: mine.length,
@@ -148,8 +192,18 @@ export function buildGraph(cat, albums) {
         "@type": "MusicGroup",
         "@id": EQUITY_UPRISE_ACT["@id"],
         name: "Equity Uprise",
+        member: ((cat.artists || []).find((a) => a.slug === "equity-uprise")?.members || []).map((slug) => {
+          const member = cat.artists.find((a) => a.slug === slug);
+          return member.id ? { "@id": member.id } : { "@type": "Person", name: member.name };
+        }),
         url: `${SITE}/album.html?album=equity-uprise`,
         description: "The music act of Equity Uprise, McCluster Corp's civic program. Its album is Docket 516R."
+      },
+      {
+        "@type": "MusicGroup",
+        "@id": PRIM3_ACT["@id"],
+        name: "PRIM3",
+        url: `${SITE}/prim3-artist.html`
       },
       ...albumNodes,
       ...recs

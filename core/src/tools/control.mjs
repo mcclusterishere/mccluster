@@ -8,7 +8,10 @@ import { computeTaskById } from '../compute/store.mjs';
 import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
 import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
 import { activeMeetingTools, callMeetingTool } from './meeting.mjs';
+import { WORKSTREAM_TOOLS, callWorkstreamTool } from './workstream.mjs';
 import { submitResidentAiTurn, getResidentAiTurn } from '../resident-ai.mjs';
+import { GAME_LORE_INPUT_SCHEMA, readGameLore } from '../game-lore.mjs';
+import { DISPATCH_TOOLS, callDispatchTool, dispatchDependencies } from './dispatch.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PREVIEW_CONFIGURED = previewConfigured();
@@ -31,13 +34,18 @@ function requireOrg(value) {
 
 const BASE_TOOLS = [
   {
+    name: 'core.game.lore.read', title: 'Read city lore',
+    description: 'Read the versioned city manifest or bounded authored business, NPC, item, brand and portal records. Read-only release data; no private memory, inference or purchases.',
+    inputSchema: GAME_LORE_INPUT_SCHEMA
+  },
+  {
     /* The rehydration call. A fresh model session — or the same one
        after its context window rolled — asks this first and gets the
        durable state it lost, instead of re-deriving it or asking the
        owner. Read-only by construction: a session that has just lost
        its memory is the worst possible moment to take an action. */
     name: 'core.resume', title: 'Resume a McCluster working session',
-    description: 'Return the current workspace, running/queued work, stale leases, pending approvals, capability catalog version, system health and exact deploy commit. Read-only; queues and changes nothing.',
+    description: 'Return the current workspace, running/queued work, stale leases, pending approvals, checkpointed workstreams (branch, pull request, decisions, next step), capability catalog version, system health and exact deploy commit. Read-only; queues and changes nothing.',
     inputSchema: { type: 'object', required: ['org_id'], properties: { org_id: { type: 'string' }, since_hours: { type: 'integer', minimum: 1, maximum: 168 }, limit: { type: 'integer', minimum: 1, maximum: 50 } }, additionalProperties: false }
   },
   {
@@ -56,7 +64,9 @@ const BASE_TOOLS = [
         thread_id: { type: 'string' },
         message_id: { type: 'string' },
         content: { type: 'string', minLength: 1, maxLength: 12000 },
-        input_mode: { type: 'string', enum: ['text', 'voice'] }
+        input_mode: { type: 'string', enum: ['text', 'voice'] },
+        images: { type: 'array', maxItems: 2, description: 'base64 JPEG/PNG/WebP, each <=200000 decoded bytes, sniffed from bytes; the turn then runs on a vision implementation', items: { type: 'string', contentEncoding: 'base64', maxLength: 266668 } },
+        allow_browser: { type: 'boolean', description: 'Owner session only: lets this turn drive the owner\'s node browser on allowlisted sites (browser_act).' }
       },
       additionalProperties: false
     }
@@ -82,6 +92,16 @@ const BASE_TOOLS = [
     inputSchema: { type: 'object', required: ['org_id', 'objective'], properties: { org_id: { type: 'string' }, objective: { type: 'string' }, target_id: { type: 'string' }, max_steps: { type: 'integer', minimum: 1, maximum: 12 }, since_hours: { type: 'integer', minimum: 1, maximum: 168 }, priority: { type: 'number' } }, additionalProperties: false }
   },
   {
+    name: 'core.lyrics.align', title: 'Time lyrics to a release',
+    description: 'Queue the owned lyric machine for one uploaded release: Demucs vocal separation, faster-whisper, the creator\'s lyric sheet (or TTML/LRC) mapped to the audio, wav2vec2 word alignment. Writes unreviewed timed lyrics; never replaces lyrics the owner reviewed.',
+    inputSchema: { type: 'object', required: ['org_id', 'track_id'], properties: { org_id: { type: 'string' }, track_id: { type: 'string' }, priority: { type: 'number' } }, additionalProperties: false }
+  },
+  {
+    name: 'core.stems.separate', title: 'Separate a track into stems',
+    description: 'Queue owned Demucs separation of one track into every instrument (vocals, drums, bass, guitar, piano, other) plus an instrumental, stored privately in mcc-gated-audio/stems/<track_key>/ with a manifest. Shelf tracks by slug, uploads by creator track id.',
+    inputSchema: { type: 'object', required: ['org_id'], properties: { org_id: { type: 'string' }, track_key: { type: 'string' }, src: { type: 'string' }, track_id: { type: 'string' }, priority: { type: 'number' } }, additionalProperties: false }
+  },
+  {
     name: 'core.code.build', title: 'Build code change',
     description: 'Queue an isolated autonomous code change that can produce a draft branch/PR but never auto-merge.',
     inputSchema: { type: 'object', required: ['org_id', 'repository', 'task'], properties: { org_id: { type: 'string' }, repository: { type: 'string' }, task: { type: 'string' }, title: { type: 'string' }, allowed_paths: { type: 'array', items: { type: 'string' } }, priority: { type: 'number' } } }
@@ -103,7 +123,7 @@ const BASE_TOOLS = [
   }
 ];
 
-BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS);
+BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS, ...WORKSTREAM_TOOLS, ...DISPATCH_TOOLS);
 BASE_TOOLS.push(...activeMeetingTools());
 
 if (PREVIEW_CONFIGURED) {
@@ -117,6 +137,8 @@ if (PREVIEW_CONFIGURED) {
 export const CONTROL_TOOLS = Object.freeze(BASE_TOOLS);
 
 export async function callControlTool(name, args = {}, options = {}) {
+  if (name === 'core.game.lore.read') return readGameLore(args);
+
   if (name === 'core.resume') {
     return coreResume({
       orgId: requireOrg(args.org_id),
@@ -141,6 +163,9 @@ export async function callControlTool(name, args = {}, options = {}) {
       messageId: args.message_id,
       content: args.content,
       inputMode: args.input_mode,
+      images: args.images,
+      allowBrowser: args.allow_browser === true,
+      actor: options?.actor,
     });
   }
 
@@ -191,6 +216,25 @@ export async function callControlTool(name, args = {}, options = {}) {
     };
   }
 
+  if (name === 'core.lyrics.align') {
+    const orgId = requireOrg(args.org_id);
+    const trackId = text(args.track_id, 80);
+    if (!/^[0-9a-f-]{36}$/i.test(trackId)) throw Object.assign(new Error('track_id must be a creator track uuid'), { status: 400 });
+    const job = await enqueueJob({ orgId, jobType: 'lyrics_align', targetType: 'creator_track', targetId: trackId, priority: Math.min(100, Math.max(0, Number(args.priority ?? 40))), maxAttempts: 2, input: { track_id: trackId, trigger: 'tool' } });
+    return { queued: true, job_id: job.id, job_type: job.job_type, track_id: trackId, safety: { paid_provider: false, overwrites_reviewed_lyrics: false } };
+  }
+
+  if (name === 'core.stems.separate') {
+    const orgId = requireOrg(args.org_id);
+    const trackId = text(args.track_id, 80);
+    const creator = /^[0-9a-f-]{36}$/i.test(trackId);
+    const trackKey = creator ? `ct-${trackId.toLowerCase()}` : text(args.track_key, 80);
+    if (!creator && !/^[a-z0-9][a-z0-9-]{0,79}$/.test(trackKey)) throw Object.assign(new Error('track_key (shelf slug) or track_id (upload) is required'), { status: 400 });
+    const input = creator ? { source: 'creator', track_id: trackId } : { source: 'shelf', track_key: trackKey, src: text(args.src, 200) || undefined };
+    const job = await enqueueJob({ orgId, jobType: 'stems_separate', targetType: 'stems', targetId: trackKey, priority: Math.min(100, Math.max(0, Number(args.priority ?? 35))), maxAttempts: 2, input });
+    return { queued: true, job_id: job.id, job_type: job.job_type, track_key: trackKey, safety: { public: false, paid_provider: false } };
+  }
+
   if (name === 'core.code.build') {
     const orgId = requireOrg(args.org_id);
     const repository = requireRepo(args.repository);
@@ -238,6 +282,18 @@ export async function callControlTool(name, args = {}, options = {}) {
   if (name.startsWith('core.ontology.')) return callOntologyTool(name, args, options);
   if (name.startsWith('core.ingest.') || name.startsWith('core.entity.') || name.startsWith('core.facts.')) {
     return callIngestionTool(name, args, options);
+  }
+
+  if (name.startsWith('core.workstream.')) return callWorkstreamTool(name, args, options);
+
+  // The dispatch front end routes into the tools above (never into
+  // itself): it receives callControlTool so the gate it applies is the
+  // only way a routed message reaches them.
+  if (name.startsWith('core.dispatch.')) {
+    return callDispatchTool(name, args, options, dispatchDependencies((tool, toolArgs, toolOptions) => {
+      if (String(tool).startsWith('core.dispatch.')) throw Object.assign(new Error('dispatch cannot route into itself'), { status: 400 });
+      return callControlTool(tool, toolArgs, toolOptions);
+    }));
   }
 
   if (name.startsWith('core.meeting.')) return callMeetingTool(name, args, options);

@@ -1,0 +1,35 @@
+/* Control › Missions & fellows › Mission sources (js/control-room/mission-sources.js). Mobile first: one column at phone
+   width with full-width 44px buttons and 16px fields; room is added at 720px with min-width queries only; every grid track
+   is minmax(0,1fr) so a long name, reason or source address never widens the page. States are written out in words.
+   Text headings only; nothing here draws a mark. */
+.crm-src { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; margin-block-start: .75rem; }
+.crm-src h3 { margin: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
+.crm-src h4 { margin: .4rem 0 0; font-size: 1rem; overflow-wrap: anywhere; }
+.crm-src__intro, .crm-src__line, .crm-src__hint, .crm-src__status { margin: 0; font-size: .9rem; line-height: 1.45; overflow-wrap: anywhere; }
+.crm-src__hint { opacity: .82; font-size: .85rem; }
+.crm-src__status:empty { display: none; }
+.crm-src__status[data-ms-status="refused"], .crm-src__status[data-ms-status="unknown"] { font-weight: 600; }
+.crm-src__row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; align-content: start; padding: .8rem; border: 1px solid color-mix(in srgb, currentColor 16%, transparent); border-radius: .7rem; }
+.crm-src__actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; }
+.crm-src__actions .cr-btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-width: 0; max-width: 100%; min-height: 44px; box-sizing: border-box; font-size: max(16px, .95rem); text-align: center; text-decoration: none; overflow-wrap: anywhere; }
+.crm-src__actions .cr-btn[aria-disabled="true"] { opacity: .52; cursor: default; }
+.crm-src__actions .cr-btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.crm-src__panel { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .55rem; padding: .7rem; border-radius: .6rem; border: 1px solid color-mix(in srgb, currentColor 22%, transparent); background: color-mix(in srgb, currentColor 4%, transparent); }
+.crm-src__field { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .25rem; font-size: .88rem; }
+.crm-src__field span { overflow-wrap: anywhere; }
+.crm-src__field input { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; font: inherit; font-size: max(16px, 1rem); min-height: 44px; padding: .4rem .6rem; border-radius: .5rem; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; }
+.crm-src__field input:focus-visible, .crm-src__check input:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.crm-src__check { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: .6rem; min-height: 44px; min-width: 0; font-size: max(16px, .95rem); line-height: 1.45; cursor: pointer; overflow-wrap: anywhere; }
+.crm-src__check input { width: 22px; height: 22px; margin: .15rem 0 0; }
+.crm-src__fact { min-width: 0; margin: 0; padding: .55rem .6rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: .45rem; border: 1px solid color-mix(in srgb, currentColor 14%, transparent); border-radius: .55rem; }
+.crm-src__fact legend { padding: 0 .3rem; font-size: .88rem; font-weight: 600; }
+.crm-src__history, .crm-src__cannot { margin: 0; padding-inline-start: 1.2rem; display: grid; gap: .4rem; font-size: .86rem; line-height: 1.45; }
+.crm-src__history li, .crm-src__cannot li { min-width: 0; overflow-wrap: anywhere; }
+.crm-src__sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (min-width: 720px) {
+  .crm-src__actions { display: flex; flex-wrap: wrap; }
+  .crm-src__actions .cr-btn { width: auto; }
+  .crm-src__fact { grid-template-columns: minmax(0, 12rem) minmax(0, 1fr); }
+  .crm-src__fact legend { grid-column: 1 / -1; }
+  .crm-src__fact .crm-src__field:last-child { grid-column: 1 / -1; }
+}

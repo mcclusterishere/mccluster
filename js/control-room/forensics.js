@@ -14,7 +14,7 @@
     mode: "sessions", filter: "all", sort: "recent", q: "",
     list: null, items: [], listError: null, loadingList: false, loadingMore: false, seq: 0,
     stack: [], detail: null, detailError: null, loadingDetail: false, dseq: 0,
-    showSystem: false, raw: {}, timer: null,
+    historyLoading: false, historyError: null, showSystem: false, raw: {}, timer: null,
     insight: { flows: null, errors: null }, insightError: { flows: null, errors: null }, insightLoading: { flows: false, errors: false },
     iseq: 0, iseqOf: { flows: 0, errors: 0 }, showInjected: false
   };
@@ -146,6 +146,25 @@
     m = /^server_(.+)$/.exec(r); if (m) return "the server refused it (" + m[1].replace(/_/g, " ") + ")";
     return r.replace(/_/g, " ");
   }
+  // A name mention alone is not proof of browser injection. Keep script-backed
+  // failures actionable, even when a browser callback is named in the message.
+  function autofillDiagnostic(file, msg, stack) {
+    return /^(?:ReferenceError: )?Can't find variable: _AutofillCallbackHandler$/.test(String(msg || "").trim()) &&
+      !/\.(?:m?js)(?:[?:#]|$)/i.test(String(file || "")) &&
+      !/\.(?:m?js)(?:[?:#]|$)/i.test(String(stack || ""));
+  }
+  function eventOrigin(p) {
+    var msg = String(p.msg || p.message || "");
+    if (msg.indexOf('_AutofillCallbackHandler') !== -1) {
+      if (p.origin === "site") return "site";
+      if (autofillDiagnostic(p.src || p.file, msg, p.stack)) return "injected";
+      if (p.origin === "injected") return "site";
+    }
+    return p.origin || "site";
+  }
+  function isDiagnostic(x) {
+    return (x.name === "js_error" || x.name === "js_rejection") && eventOrigin(x.props || {}) === "injected";
+  }
   function describe(x) {
     var p = x.props && typeof x.props === "object" ? x.props : {}, nm = x.name || "event", cat = category(nm), t, d = "";
     switch (nm) {
@@ -157,7 +176,8 @@
       case "dead_click": t = "Tapped " + q(p.text || p.el || "something") + " and nothing happened"; d = trim(p.el || "", 60); break;
       case "rage_click": t = "Rage-tapped " + q(p.text || p.el || "something"); d = trim(p.el || "", 60); break;
       case "js_error": case "js_rejection":
-        t = (p.origin === "injected" ? "In-app browser error (not this site): " : p.origin === "opaque" ? "Cross-origin script error: " : "Page error: ") + trim(p.msg || p.message || "unknown", 110);
+        cat = isDiagnostic(x) ? "diagnostic" : "friction";
+        t = (isDiagnostic(x) ? "Browser diagnostic (likely injected): " : eventOrigin(p) === "opaque" ? "Cross-origin script error: " : eventOrigin(p) === "third_party" ? "Third-party script error: " : "Page error: ") + trim(p.msg || p.message || "unknown", 110);
         d = [p.src ? trim(p.src, 70) + (p.line ? ":" + p.line : "") : "", p.iab ? "inside " + p.iab : ""].filter(Boolean).join(" · "); break;
       case "play_failed": t = "Could not start " + q(p.track || "the track"); d = [p.error, p.gated ? "gated" + (p.gate ? " · " + p.gate : "") : ""].filter(Boolean).join(" · "); break;
       case "signup_blocked": t = "Sign-up refused: " + signupReason(p.reason); break;
@@ -253,13 +273,24 @@
     if (replace) F.stack = [];
     F.stack.push(entry); F.raw = {}; loadDetail(); scrollToTop();
   }
-  function back() { F.stack.pop(); F.raw = {}; if (top()) loadDetail(); else { F.detail = null; paint(); } }
+  function back() { F.dseq++; F.loadingDetail = false; F.historyLoading = false; F.stack.pop(); F.raw = {}; if (top()) loadDetail(); else { F.detail = null; paint(); } }
   function loadDetail() {
     var t = top(); if (!t || !F.request) return;
-    var seq = ++F.dseq; F.loadingDetail = true; F.detailError = null; F.detail = null; paint();
+    var seq = ++F.dseq, key = F.rangeKey; F.historyLoading = false; F.historyError = null; F.loadingDetail = true; F.detailError = null; F.detail = null; paint();
     var path = t.type === "session" ? "/v1/analytics/sessions/" + encodeURIComponent(t.id) : "/v1/analytics/visitors/" + encodeURIComponent(t.key);
-    F.request(path).then(function (out) { if (seq === F.dseq) F.detail = out; }, function (err) { if (seq === F.dseq) F.detailError = err; })
-      .then(function () { if (seq === F.dseq) { F.loadingDetail = false; paint(); } });
+    F.request(path).then(function (out) { if (seq === F.dseq && key === F.rangeKey && top() === t) F.detail = out; }, function (err) { if (seq === F.dseq && key === F.rangeKey && top() === t) F.detailError = err; })
+      .then(function () { if (seq === F.dseq && key === F.rangeKey && top() === t) { F.loadingDetail = false; paint(); } });
+  }
+  function loadHistory() {
+    var t = top(); if (!t || t.type !== "session" || !F.detail || F.historyLoading) return;
+    var seq = F.dseq, key = F.rangeKey;
+    var mine = function () { return seq === F.dseq && key === F.rangeKey && top() === t; };
+    F.historyLoading = true; F.historyError = null; paint();
+    F.request("/v1/analytics/sessions/" + encodeURIComponent(t.id) + "?include_history=1").then(function (out) {
+      if (mine()) F.detail.visitor = out.visitor;
+    }, function (err) { if (mine()) F.historyError = err; }).then(function () {
+      if (mine()) { F.historyLoading = false; paint(); }
+    });
   }
   function scrollToTop() { try { if (F.host && F.host.scrollIntoView) F.host.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (_) {} }
 
@@ -272,7 +303,7 @@
     if (s.checkout) b.push(badge("Checkout", "win"));
     if (s.submitted) b.push(badge("Sent a form", "win"));
     if (s.plays) b.push(badge("▶ " + n(s.plays), "music", s.plays + " plays"));
-    if (s.friction) b.push(badge("⚠ " + n(s.friction), "bad", [s.rage_clicks ? s.rage_clicks + " rage" : "", s.dead_clicks ? s.dead_clicks + " dead" : "", s.errors ? s.errors + " errors" : ""].filter(Boolean).join(", ")));
+    if (s.friction) b.push(badge("⚠ " + n(s.friction), "bad", [s.rage_clicks ? s.rage_clicks + " rage" : "", s.dead_clicks ? s.dead_clicks + " dead" : "", s.errors ? s.errors + " script events (includes browser diagnostics)" : ""].filter(Boolean).join(", ")));
     if (s.visit_number > 1) b.push(badge("Visit " + n(s.visit_number), "info"));
     else if (s.device_sessions > 1) b.push(badge("Returning", "info"));
     if (s.source && s.source !== "direct") b.push(badge(sourceLabel(s.source), "src"));
@@ -494,6 +525,9 @@
     return (hidden || F.showSystem ? toggle : "") + out.join("");
   }
   function historyList(v, currentId) {
+    if (v && v.history_status === "not_loaded") return '<p class="crf-muted">The session is loaded. Visitor history is a separate read covering up to 180 days.</p>' +
+      (F.historyError ? '<p role="alert" class="crf-muted">Visitor history did not load: ' + e(F.historyError.message || F.historyError) + '. The recorded session remains available.</p>' : '') +
+      '<button type="button" class="crf-btn" data-crf-history' + (F.historyLoading ? ' disabled' : '') + '>' + (F.historyLoading ? 'Loading visitor history…' : F.historyError ? 'Retry visitor history' : 'Load visitor history') + '</button>';
     var list = (v && v.sessions) || [];
     if (!list.length) return '<p class="crf-muted">No other sessions on this device in the last 180 days.</p>';
     var oldest = list[list.length - 1];
@@ -507,12 +541,12 @@
   var TROUBLE = CATS.friction.concat(["gated_preview_end", "checkout_retired_link"]);
   var TAPS = ["click", "cta_click", "dead_click", "rage_click"];
   var PLAYS = ["album_play", "music_play", "song_start", "music_full_play", "music_preview_play"];
-  function isTrouble(nm) { return TROUBLE.indexOf(nm) !== -1; }
+  function isTrouble(x) { return TROUBLE.indexOf(x.name) !== -1 && !isDiagnostic(x); }
   function troubleMoments(groups, start) {
     var out = [];
     groups.forEach(function (g, gi) {
       g.events.forEach(function (it, k) {
-        var x = it.ev; if (!isTrouble(x.name)) return;
+        var x = it.ev; if (!isTrouble(x)) return;
         var before = null, after = null;
         for (var b = k - 1; b >= 0; b--) {
           var pb = g.events[b].ev;
@@ -521,7 +555,7 @@
         }
         for (var a = k + 1; a < g.events.length; a++) {
           var pa = g.events[a].ev;
-          if (category(pa.name) !== "system" && !isTrouble(pa.name)) { after = pa; break; }
+          if (category(pa.name) !== "system" && !isTrouble(pa) && !isDiagnostic(pa)) { after = pa; break; }
         }
         if (!after && groups[gi + 1]) after = { name: "page_view", at: groups[gi + 1].start, path: groups[gi + 1].path, props: {} };
         out.push({ ev: x, gi: gi, before: before, after: after, off: Math.max(0, Math.round(ms(start, x.at) / 1000)) });
@@ -531,9 +565,9 @@
   }
   function troubleSection(groups, start) {
     var list = troubleMoments(groups, start);
-    if (!list.length) return '<section class="crf-sec"><h3>Where it went wrong</h3><p class="crf-muted">No errors, dead taps or blocked steps in this session.</p></section>';
+    if (!list.length) return '<section class="crf-sec"><h3>Where it went wrong</h3><p class="crf-muted">No actionable errors, dead taps or blocked steps in the recorded events.</p></section>';
     return '<section class="crf-sec"><h3>Where it went wrong <small>' + n(list.length) + "</small></h3><ol class=\"crf-errs\">" + list.map(function (m) {
-      var x = m.ev, d = describe(x), p = x.props || {}, own = !(x.name === "js_error" || x.name === "js_rejection") || !p.origin || p.origin === "site";
+      var x = m.ev, d = describe(x), p = x.props || {}, own = !(x.name === "js_error" || x.name === "js_rejection") || eventOrigin(p) === "site";
       var lines = [];
       if (m.before) lines.push("Just before: " + describe(m.before).text.charAt(0).toLowerCase() + describe(m.before).text.slice(1) + " (" + dur(Math.max(0, ms(m.before.at, x.at) / 1000)) + " earlier)");
       lines.push(m.after ? "Then: " + (m.after.name === "page_view" && m.after.path !== x.path ? "went to " + page(m.after.path) : describe(m.after).text.charAt(0).toLowerCase() + describe(m.after).text.slice(1)) +
@@ -556,7 +590,7 @@
         var nm = it.ev.name;
         if (TAPS.indexOf(nm) !== -1) c.taps++;
         if (PLAYS.indexOf(nm) !== -1) c.plays++;
-        if (isTrouble(nm)) c.trouble++;
+        if (isTrouble(it.ev)) c.trouble++;
         if (category(nm) === "convert") c.won++;
       });
       var t = visitTime(g), meta = [dur(t) + " on screen", g.depth != null ? "read " + pct(g.depth) : "", n(c.taps) + (c.taps === 1 ? " tap" : " taps"),
@@ -574,7 +608,7 @@
       (v.key ? '<button type="button" class="crf-btn" data-crf-visitor="' + e(v.key) + '">Visitor profile</button>' : "") + "</header>";
     var kpis = '<div class="crf-kpis">' + kpi("Session", dur(s.duration_s), clock(s.started_at) + " – " + clock(s.ended_at)) + kpi("On screen", dur(s.engaged_s)) +
       kpi("Pages", n(s.page_views)) + kpi("Taps", n(s.clicks)) + kpi("Plays", n(s.plays)) + kpi("Deepest read", maxDepth ? pct(maxDepth) : "—") +
-      kpi("Friction", n(s.friction), [s.rage_clicks ? s.rage_clicks + " rage" : "", s.dead_clicks ? s.dead_clicks + " dead" : "", s.errors ? s.errors + " errors" : ""].filter(Boolean).join(" · ")) + "</div>";
+      kpi("Recorded friction signals", n(s.friction), [s.rage_clicks ? s.rage_clicks + " rage" : "", s.dead_clicks ? s.dead_clicks + " dead" : "", s.errors ? s.errors + " script events (includes browser diagnostics)" : ""].filter(Boolean).join(" · ")) + "</div>";
     var cards = '<div class="crf-cards">' +
       card("Who", facts([["Person", w.known ? w.name : "Not signed in"], ["Account", w.sub], ["Visit", s.visit_number ? "#" + n(s.visit_number) + (s.days_known ? " · known " + n(s.days_known) + " days" : "") : (s.device_sessions > 1 ? "Returning in this range" : "First seen in this range")],
         ["Device id", s.device_id ? "<code>" + e(s.device_id) + "</code>" : "", true], ["Session id", "<code>" + e(s.session_id) + "</code>", true]])) +
@@ -590,7 +624,9 @@
       journeyPath(groups) + '<div class="crf-timeline">' + timeline(ev) + "</div></section>";
     var tracks = (s.tracks || []).length ? '<section class="crf-sec"><h3>Music heard</h3><div class="crf-badges">' + s.tracks.map(function (t) { return badge("▶ " + t, "music"); }).join("") + "</div></section>" : "";
     var hist = v.key ? '<section class="crf-sec"><h3>' + (w.known ? e(w.name) + "’s sessions" : "This visitor’s sessions") + "</h3>" + historyList(v, s.session_id) + "</section>" : "";
-    return head + kpis + wrong + cards + pagesSec + journey + tracks + hist;
+    var diagnostics = ev.filter(isDiagnostic).length;
+    var diagnosticNote = diagnostics ? '<section class="crf-sec"><h3>Browser diagnostics <small>' + n(diagnostics) + '</small></h3><p class="crf-muted">Likely injected by an in-app browser or extension. These events alone do not establish a failed user flow. Each remains visible in Journey; tap it for the original record.</p></section>' : "";
+    return head + kpis + wrong + diagnosticNote + cards + pagesSec + journey + tracks + hist;
   }
   function card(title, body) { return '<section class="crf-card"><h3>' + e(title) + "</h3>" + body + "</section>"; }
 
@@ -629,7 +665,7 @@
     var label = F.stack.length > 1 ? (F.stack[F.stack.length - 2].type === "visitor" ? "Back to visitor" : "Back to session") : (isInsight(F.mode) ? "Back to " : "All ") + F.mode;
     var body;
     if (F.loadingDetail) body = '<div class="crf-empty" aria-busy="true"><b>Opening ' + (t.type === "session" ? "session" : "visitor") + "…</b></div>";
-    else if (F.detailError) body = '<div class="crf-empty crf-empty--bad"><b>Could not open it.</b><span>' + e(F.detailError.message || F.detailError) + "</span></div>";
+    else if (F.detailError) body = '<div class="crf-empty crf-empty--bad"><b>Could not open it.</b><span>' + e(F.detailError.message || F.detailError) + "</span><p>Retry this read, or return to the list to choose another record.</p><button type=\"button\" class=\"crf-btn\" data-crf-detail-retry>Retry</button></div>";
     else if (F.detail) body = t.type === "session" ? sessionDetail(F.detail) : visitorDetail(F.detail);
     else body = "";
     return '<section class="crf-detail" aria-label="' + (t.type === "session" ? "Session" : "Visitor") + '"><div class="crf-detail__bar"><button type="button" class="crf-back" data-crf-back>← ' + e(label) + "</button>" +
@@ -654,13 +690,15 @@
     }; });
     h.querySelectorAll("[data-crf-insight-retry]").forEach(function (b) { b.onclick = function () { loadInsight(F.mode); }; });
     h.querySelectorAll("[data-crf-injected]").forEach(function (b) { b.onclick = function () { F.showInjected = !F.showInjected; paint(); }; });
-    h.querySelectorAll("[data-crf-filter]").forEach(function (b) { b.onclick = function () { F.filter = b.getAttribute("data-crf-filter"); loadList(false); }; });
+    h.querySelectorAll("[data-crf-filter]").forEach(function (b) { b.onclick = function () { F.dseq++; F.stack = []; F.detail = null; F.loadingDetail = false; F.historyLoading = false; F.filter = b.getAttribute("data-crf-filter"); loadList(false); }; });
     var sort = h.querySelector("[data-crf-sort]"); if (sort) sort.onchange = function () { F.sort = sort.value; loadList(false); };
     var input = h.querySelector("[data-crf-q]");
     if (input) {
       input.oninput = function () { F.q = input.value; clearTimeout(F.timer); F.timer = setTimeout(function () { loadList(false); }, 380); };
       input.onkeydown = function (ev) { if (ev.key === "Enter") { ev.preventDefault(); clearTimeout(F.timer); loadList(false); } };
     }
+    h.querySelectorAll("[data-crf-history]").forEach(function (b) { b.onclick = loadHistory; });
+    h.querySelectorAll("[data-crf-detail-retry]").forEach(function (b) { b.onclick = loadDetail; });
     h.querySelectorAll("[data-crf-retry]").forEach(function (b) { b.onclick = function () { loadList(false); }; });
     h.querySelectorAll("[data-crf-more]").forEach(function (b) { b.onclick = function () { loadList(true); }; });
     h.querySelectorAll("[data-crf-session]").forEach(function (b) { b.onclick = function () {
@@ -672,7 +710,7 @@
       open({ type: "visitor", key: key }, !inDetail);
     }; });
     h.querySelectorAll("[data-crf-back]").forEach(function (b) { b.onclick = back; });
-    h.querySelectorAll("[data-crf-close]").forEach(function (b) { b.onclick = function () { F.stack = []; F.detail = null; paint(); }; });
+    h.querySelectorAll("[data-crf-close]").forEach(function (b) { b.onclick = function () { F.dseq++; F.loadingDetail = false; F.historyLoading = false; F.stack = []; F.detail = null; paint(); }; });
     h.querySelectorAll("[data-crf-system]").forEach(function (b) { b.onclick = function () { F.showSystem = !F.showSystem; paint(); }; });
     h.querySelectorAll("[data-crf-raw]").forEach(function (b) { b.onclick = function () { var i = b.getAttribute("data-crf-raw"); F.raw[i] = !F.raw[i]; paint(); }; });
     h.querySelectorAll("[data-crf-jump]").forEach(function (a) { a.onclick = function (ev) {

@@ -19,23 +19,28 @@ stack. Do not mix them.
 ## Allocation order
 
 ISRCs `QT6KV2600001`–`QT6KV2600017` follow `data/albums.json` release order,
-including three recordings that `data/catalogue.json` does not yet list:
+including three recordings that `data/catalogue.json` did not list while it
+was kept by hand (it is generated from the shelf and this ledger now, by
+`tools/build-music-registry.mjs`, and lists every record on the shelf):
 
 - `environmental-injustice-brave` → `QT6KV2600009`
 - `deep-end` → `QT6KV2600012`
 - `heal-the-3rd-world` → `QT6KV2600013`
 
-Catalogue `no` (`QT6KV·01`–`14`) is the public house index on the 14 listed
-tracks. After the albums-only recordings, house `no` and ISRC designation
-diverge — Please Set Me Free is `QT6KV·09` on the catalogue page and
-`QT6KV2600010` on the ledger. Always deliver the 12-character ISRC.
+Catalogue `no` (`QT6KV·NN`) is the public house index. Since the registry
+is generated, it is the ISRC's designation wherever one is issued (Please Set
+Me Free is `QT6KV·10` on the catalogue page and `QT6KV2600010` here); a
+recording with no ISRC yet takes the next number after the ledger, in shelf
+order, and that number is not an ISRC. Always deliver the 12-character ISRC.
 
 ## Rules
 
 1. **Do not remint a slug that already has an ISRC.** The ledger is append-only
    for recordings. A code that has been delivered is burned.
-2. **`data/albums.json` is the release list.** Catalogue is the public track
-   list. The three albums-only recordings still get ISRCs.
+2. **`data/albums.json` is the release list.** `data/catalogue.json` is the
+   public track list, generated from it, this ledger and the measured lengths
+   (`node tools/build-music-registry.mjs`; never edited by hand). Every
+   recording on the shelf gets an ISRC here.
 3. **Git MP3s are not delivery masters.** ERN still wants WAV/FLAC + duration.
 4. **Merlin is a licensor.** This pipe is the catalog they inspect. It is not
    membership and it is not a DSP.

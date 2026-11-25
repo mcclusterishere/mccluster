@@ -1,3 +1,4 @@
+/* Portions derived from gods-eye-view (MIT, Copyright (c) 2026 Bilawal Sidhu): see THIRD-PARTY-NOTICES at the repository root. */
 /* Current release policy: world-release.js requires live house-owner preview
    before dispatch. packages/release-policy/globe.mjs maps every path below to
    an owner-only globe feature; nothing in this file publishes a feed. */
@@ -92,11 +93,15 @@
      trimmed and must be 2 to 120 characters; each normalized query is kept
      24 h. At most 6 results. Both providers failing is an honest
      `unavailable` with no results, never cached. */
+import { fetchWeather, fetchNatural } from './world-events.js';
 import { fail, reply } from './lib/http.js';
 import { UpstreamError } from './lib/safe-fetch.js';
 import { cachedLayer, normalizeAdsbAircraft, upstream } from './world-layers.js';
+import { CONTACT_ORIGIN } from './platform/contact.js';
 
 export const HALO_LAYERS = Object.freeze({
+  weather: Object.freeze({ ttl: 120, max: 1500, rows: 'events', base: Object.freeze({ credit: 'Weather alerts: NOAA NWS', attribution_url: 'https://www.weather.gov', license: 'Public domain (U.S. Government work)' }) }),
+  natural: Object.freeze({ ttl: 600, max: 500, rows: 'events', base: Object.freeze({ credit: 'Natural events: NASA EONET', attribution_url: 'https://eonet.gsfc.nasa.gov', license: 'NASA open data' }) }),
   airquality: Object.freeze({ ttl: 600, max: 500, rows: 'readings', base: Object.freeze({ attribution: 'Environment and Climate Change Canada', attribution_url: 'https://api.weather.gc.ca', credit: 'Air quality: ECCC · Canada only', license: 'Open Government Licence – Canada', coverage: 'Canada AQHI stations', scale: 'AQHI' }) }),
   military: Object.freeze({ ttl: 30, max: 4000, rows: 'aircraft', base: Object.freeze({ attribution: 'adsb.lol, Open Database License (ODbL) 1.0', attribution_url: 'https://adsb.lol', credit: 'Military flights: adsb.lol (ODbL)', license: 'ODbL-1.0' }) }),
   quakes: Object.freeze({ ttl: 120, max: 2000, rows: 'quakes', base: Object.freeze({ attribution: 'U.S. Geological Survey, Earthquake Hazards Program', attribution_url: 'https://earthquake.usgs.gov', credit: 'Earthquakes: USGS', license: 'Public domain (U.S. Government work)' }) }),
@@ -105,7 +110,7 @@ export const HALO_LAYERS = Object.freeze({
   cyclones: Object.freeze({ ttl: 600, max: 50, rows: 'cyclones', base: Object.freeze({ attribution: 'NOAA National Hurricane Center', attribution_url: 'https://www.nhc.noaa.gov', credit: 'Tropical cyclones: NOAA NHC', license: 'Public domain (U.S. Government work)' }) }),
   vessels: Object.freeze({ ttl: 0, max: 8000, rows: 'vessels', requires: Object.freeze(['AISSTREAM_API_KEY', 'HereTenantAgent']), base: Object.freeze({ attribution: 'AISStream.io', attribution_url: 'https://aisstream.io', credit: 'Ships: AISStream.io', license: 'AISStream.io terms of service' }) })
 });
-const HALO_PATH = /^\/v1\/world\/layers\/(military|quakes|fires|perimeters|cyclones|vessels|airquality)$/;
+const HALO_PATH = /^\/v1\/world\/layers\/(military|quakes|fires|perimeters|cyclones|vessels|weather|natural|airquality)$/;
 export const WORLD_GEOCODE_PATH = '/v1/world/geocode';
 
 /* ---------- trust nothing: numbers, strings and links from a provider ----------
@@ -131,7 +136,7 @@ export function clip(v, max) {
   return s ? s.slice(0, max).trim() : null;
 }
 /* a link kept only when it is https on one of the provider's own hosts */
-function providerUrl(v, hosts) {
+export function providerUrl(v, hosts) {
   if (typeof v !== 'string' || v.length > 500) return null;
   try {
     const u = new URL(v);
@@ -142,7 +147,7 @@ function providerUrl(v, hosts) {
   }
 }
 /* epoch milliseconds to ISO, within a sane span (1900 to 2200) */
-function isoFromMs(v) {
+export function isoFromMs(v) {
   const n = finite(v);
   return n === null || n < -2208988800000 || n > 7258118400000 ? null : new Date(n).toISOString();
 }
@@ -277,16 +282,21 @@ function keepTop(rows, cap) {
   return rows;
 }
 
-/* one FIRMS CSV body to fire rows; columns by header name, never by position */
-export async function parseFirmsCsv(res, satellite, cap = HALO_LAYERS.fires.max) {
-  let cols = null, total = 0, lines = 0;
+/* one FIRMS CSV body to fire rows; columns by header name, never by position.
+   `keep(row)`, when given, is asked about every valid row before it is kept (the public
+   environmental layer keeps its trailing 24 hours this way, ./world-environment-layers.js);
+   a row it refuses is neither counted in `total` nor kept. `dropped` counts the data lines
+   that could not be used (ragged, too long, or without a valid position); `cut` is true
+   when the line budget stopped the read early. */
+export async function parseFirmsCsv(res, satellite, cap = HALO_LAYERS.fires.max, { keep = null } = {}) {
+  let cols = null, total = 0, lines = 0, dropped = 0, cut = false;
   const rows = [];
   await eachLine(res, (raw) => {
     lines += 1;
-    if (lines > FIRMS_MAX_LINES) return false;
+    if (lines > FIRMS_MAX_LINES) { cut = true; return false; }
     const line = raw.replace(/\r$/, '');
     if (!line.trim()) return true;
-    if (line.length > FIRMS_MAX_LINE) return true;
+    if (line.length > FIRMS_MAX_LINE) { if (cols) dropped += 1; return true; }
     const cells = line.split(',');
     if (!cols) {
       const names = cells.map((c) => c.trim().toLowerCase());
@@ -295,18 +305,20 @@ export async function parseFirmsCsv(res, satellite, cap = HALO_LAYERS.fires.max)
       if (cols.latitude < 0 || cols.longitude < 0) throw new UpstreamError('upstream_invalid_csv', 'provider answer is not the expected CSV');
       return true;
     }
-    if (cells.length !== cols.width) return true;
+    if (cells.length !== cols.width) { dropped += 1; return true; }
     const get = (n) => (cols[n] >= 0 ? cells[cols[n]].trim() : '');
     const lon = lonOf(get('longitude')), lat = latOf(get('latitude'));
-    if (lon === null || lat === null) return true;
+    if (lon === null || lat === null) { dropped += 1; return true; }
     const dn = get('daynight').toUpperCase();
-    rows.push([lon, lat, within(get('frp'), 0, 100000, 1), FIRE_CONFIDENCE[get('confidence').toLowerCase()] || null, firmsAcq(get('acq_date'), get('acq_time')), satellite, dn === 'D' || dn === 'N' ? dn : null]);
+    const row = [lon, lat, within(get('frp'), 0, 100000, 1), FIRE_CONFIDENCE[get('confidence').toLowerCase()] || null, firmsAcq(get('acq_date'), get('acq_time')), satellite, dn === 'D' || dn === 'N' ? dn : null];
+    if (keep && !keep(row)) return true;
+    rows.push(row);
     total += 1;
     if (rows.length >= cap * 2) keepTop(rows, cap);
     return true;
   });
   if (!cols) throw new UpstreamError('upstream_invalid_csv', 'provider answer is empty');
-  return { total, rows: keepTop(rows, cap) };
+  return { total, dropped, cut, rows: keepTop(rows, cap) };
 }
 
 export async function fetchFires(env, fetchImpl = fetch) {
@@ -550,7 +562,7 @@ export async function fetchAirQuality(env, fetchImpl = fetch) {
 }
 
 /* ---------- the routes ---------- */
-const FETCHERS = { airquality: fetchAirQuality, military: fetchMilitary, quakes: fetchQuakes, fires: fetchFires, perimeters: fetchPerimeters, cyclones: fetchCyclones };
+const FETCHERS = { weather: fetchWeather, natural: fetchNatural, airquality: fetchAirQuality, military: fetchMilitary, quakes: fetchQuakes, fires: fetchFires, perimeters: fetchPerimeters, cyclones: fetchCyclones };
 
 /* owner-only answers never sit in a browser or shared cache */
 function send(request, env, body, status = 200) {
@@ -590,7 +602,7 @@ export async function handleHaloLayers(request, env, { fetchImpl = fetch, cacheI
 const GEOCODE_TTL = 86400;
 const GEOCODE_LIMIT = 6;
 const GEOCODE_TIMEOUT_MS = 6000;
-const GEOCODE_USER_AGENT = 'McCluster-World/1.0 (+https://mccluster.org; owner place search, results cached 24 h)';
+const GEOCODE_USER_AGENT = `McCluster-World/1.0 (+${CONTACT_ORIGIN}; owner place search, results cached 24 h)`;
 const GEOCODE_SOURCES = Object.freeze({
   photon: Object.freeze({ attribution: 'Photon by komoot; data © OpenStreetMap contributors', attribution_url: 'https://photon.komoot.io', license: 'ODbL-1.0' }),
   nominatim: Object.freeze({ attribution: 'Nominatim; data © OpenStreetMap contributors', attribution_url: 'https://nominatim.openstreetmap.org', license: 'ODbL-1.0' })

@@ -114,6 +114,44 @@
     return null;
   }
 
+  /* Event photography is an hourly service with a minimum engagement,
+     not a one-hour product. The ledger remains the price authority. */
+  function eventPhotographyLine(L) {
+    var o = offerOf(L, "who-did-the-shoot");
+    return ((((o || {}).pricing || {}).m || {}).rate_lines || []).filter(function (r) {
+      return r.id === "photo-event";
+    })[0];
+  }
+  function minimumFor(line) {
+    return Math.round(line.amount * (line.minimum_hours || 1) * 100) / 100;
+  }
+  function eventPhotographyTerms(L) {
+    var r = eventPhotographyLine(L);
+    return dollars(r.amount) + "/hour · " + r.minimum_hours + "-hour minimum (" +
+      dollars(minimumFor(r)) + " base). " + r.travel_note;
+  }
+  function eventPhotographyIntro(L) {
+    var r = eventPhotographyLine(L);
+    return r.service_area_note + " Coverage starts at " + dollars(minimumFor(r)) +
+      " for " + r.minimum_hours + " hours. " + r.travel_note;
+  }
+  function eventPhotographySelected(state) {
+    if (state.offer !== "who-did-the-shoot") return false;
+    var photos = Array.isArray(state.photoNeeds) ? state.photoNeeds : [];
+    var deliverables = Array.isArray(state.deliverables) ? state.deliverables : [];
+    return photos.indexOf("event") !== -1 || (state.projectType === "event" &&
+      (photos.length > 0 || deliverables.indexOf("edited-photos") !== -1));
+  }
+  function eventPhotographyQuote(L, hours) {
+    var r = eventPhotographyLine(L);
+    var n = typeof hours === "number" || (typeof hours === "string" && hours.trim()) ? Number(hours) : NaN;
+    if (!Number.isFinite(n) || n < r.minimum_hours || !Number.isSafeInteger(Math.round(n * r.amount * 100))) {
+      return { valid: false, error: "Enter at least " + r.minimum_hours + " hours for event photography." };
+    }
+    return { valid: true, hours: n, hourly: r.amount,
+      base: Math.round(n * r.amount * 100) / 100, travel_note: r.travel_note };
+  }
+
   /* the price line a configuration shows, as plain data any page can render */
   function priceOf(L, offerId, mode) {
     var o = offerOf(L, offerId);
@@ -736,6 +774,9 @@
         (c.offering ? ' data-buy="' + esc(c.offering) + '"' : "") +
         ' data-cta="sites-buy-' + esc(o.id) + "-" + esc(mode) + '">' + esc(c.label || "Start") + "</a>";
 
+    if (o.id === "who-did-the-shoot" && mode === "m") {
+      out += '<p class="buy__after">' + esc(eventPhotographyIntro(L)) + "</p>";
+    }
     var after = buyAfter(pr, c.after);
     if (after) out += '<p class="buy__after">' + esc(after) + "</p>";
 
@@ -969,6 +1010,10 @@
     load: load, derive: derive, money: money, dollars: dollars,
     priced: priced, publicNote: publicNote,
     offerOf: offerOf, priceOf: priceOf, configOf: configOf,
+    minimumFor: minimumFor, eventPhotographyLine: eventPhotographyLine,
+    eventPhotographyTerms: eventPhotographyTerms, eventPhotographyIntro: eventPhotographyIntro,
+    eventPhotographySelected: eventPhotographySelected,
+    eventPhotographyQuote: eventPhotographyQuote,
     listed: listed, renderActivation: renderActivation, renderDrafts: renderDrafts,
     priceButtons: priceButtons, modeButton: modeButton, renderLicense: renderLicense
   };

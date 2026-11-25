@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 const read=p=>readFile(new URL('../../'+p,import.meta.url),'utf8');
 test('creator publish stores tenant-owned plain text via paid-only RPC',async()=>{
  const src=await read('workers/mccluster/src/creator-site-publish.js');
- const sql=await read('supabase/migrations/pending/20261009173000_creator_published_sites.sql');
+ const sql=await read('supabase/migrations/20261009204158_creator_published_sites_v1.sql');
  assert.match(src,/creator_publish_site/);
  assert.match(sql,/org_id uuid primary key/);
  assert.match(sql,/status='active' and current_period_end>now\(\)/);

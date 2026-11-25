@@ -1,0 +1,6 @@
+.cr-product-readiness { margin-block: 1rem; min-width: 0; }
+.cr-product-readiness label { display: grid; gap: .4rem; margin-block: 1rem; }
+.cr-product-readiness select { width: 100%; max-width: 100%; min-width: 0; font-size: max(16px, 1rem); }
+.cr-product-readiness article { border-block-start: 1px solid currentColor; padding-block: 1rem; }
+.cr-product-readiness p, .cr-product-readiness h3, .cr-product-readiness h4 { overflow-wrap: anywhere; }
+.cr-product-readiness [role=status] { padding-block: .75rem; }

@@ -12,20 +12,42 @@
 // a cross-origin failure arrives as a bare "Script error.". Older events have
 // no origin of their own, so the same rules the collector now applies are
 // applied here to classify them.
-const INJECTED_MSG = /webkit\.messageHandlers|Java object is gone|_AutofillCallbackHandler|__gCrWeb|instantSearchSDKJSBridge|zaloJSV2|ucbrowser|vivoNewsDetailPage/i;
+import { PROFILE_HOST, SITE_HOSTS, COOKIE_DOMAIN } from '../platform/hosts.generated.js';
+
+const INJECTED_MSG = /webkit\.messageHandlers|Java object is gone|__gCrWeb|instantSearchSDKJSBridge|zaloJSV2|ucbrowser|vivoNewsDetailPage/i;
 const INJECTED_SRC = /^(iabjs|chrome-extension|moz-extension|safari-extension|safari-web-extension|webkit-masked-url|resource):/i;
 
-export function errorOrigin(props, siteHost = 'matthew.mccluster.org') {
+  // A name mention alone is not proof of browser injection. Keep script-backed
+  // failures actionable, even when a browser callback is named in the message.
+function autofillDiagnostic(file, msg, stack) {
+    return /^(?:ReferenceError: )?Can't find variable: _AutofillCallbackHandler$/.test(String(msg || "").trim()) &&
+      !/\.(?:m?js)(?:[?:#]|$)/i.test(String(file || "")) &&
+      !/\.(?:m?js)(?:[?:#]|$)/i.test(String(stack || ""));
+  }
+
+/* the site's own hosts (the generated table) and every host under its registrable domain are first party */
+function ownHost(hostname) {
+  const h = String(hostname).toLowerCase();
+  return SITE_HOSTS.includes(h) || h === COOKIE_DOMAIN || h.endsWith('.' + COOKIE_DOMAIN);
+}
+
+export function errorOrigin(props, siteHost = PROFILE_HOST) {
   const p = props && typeof props === 'object' ? props : {};
-  if (['site', 'injected', 'third_party', 'opaque'].includes(p.origin)) return p.origin;
   const msg = String(p.msg || p.message || '');
   const src = String(p.src || p.file || '');
+  // Re-evaluate old broad autofill matches without rewriting stored props.
+  if (String(p.msg || p.message || '').includes('_AutofillCallbackHandler')) {
+    if (p.origin === 'site') return 'site';
+    if (autofillDiagnostic(src, msg, p.stack)) return 'injected';
+    if (p.origin === 'injected') return 'site';
+  }
+  if (['site', 'injected', 'third_party', 'opaque'].includes(p.origin)) return p.origin;
   if (/^script error\.?$/i.test(msg.trim()) && !src) return 'opaque';
   if (INJECTED_SRC.test(src) || INJECTED_MSG.test(msg)) return 'injected';
   if (src) {
     try {
       const u = new URL(src);
-      if (u.hostname && u.hostname !== siteHost && !/(^|\.)mccluster\.org$/i.test(u.hostname)) return 'third_party';
+      if (u.hostname && u.hostname !== siteHost && !ownHost(u.hostname)) return 'third_party';
     } catch { /* relative or odd: treat as the site's own */ }
   }
   return 'site';
@@ -197,7 +219,7 @@ export function summarizeErrors(rows, { limit = 40 } = {}) {
     let bucket, key, base;
     if (ERROR_NAMES.has(r.name)) {
       const origin = errorOrigin(p);
-      key = errorFingerprint(r.name, p);
+      key = origin + "|" + errorFingerprint(r.name, p);
       bucket = errors;
       base = () => ({ kind: r.name, origin, message: String(p.msg || p.message || '(no message)').slice(0, 200),
         // The page URL an error came from carries campaign and click ids

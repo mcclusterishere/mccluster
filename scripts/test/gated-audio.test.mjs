@@ -56,23 +56,27 @@ test('the master of a gated track is NOT committed to the site', async () => {
   }
 });
 
-test('the deck opts into CORS so a cross-origin master is not silenced', async () => {
+test('the deck is a plain element nothing routes or reads, so a cross-origin master needs no CORS opt-in', async () => {
   const html = await read('album.html');
   const deck = /<audio[^>]*id="deck"[^>]*>/.exec(html);
   assert.ok(deck, 'no deck element on album.html');
-  assert.match(deck[0], /crossorigin="anonymous"/,
-    'js/chamber.js runs the deck through createMediaElementSource; a ' +
-    'cross-origin element without crossorigin is tainted and that graph ' +
-    'outputs silence, so a gated record would play to nobody');
+  /* crossorigin was load-bearing while js/chamber.js ran the deck through
+     createMediaElementSource (a tainted element pushes silence through that
+     graph) and js/filament.js decoded the song. Neither touches the audio now
+     (music slice M1: iOS silences Web Audio with the screen locked), so a
+     CORS-mode load would only add a way for a signed master to fail. */
+  assert.doesNotMatch(deck[0], /crossorigin/i, 'nothing reads the deck\'s samples any more');
+  assert.doesNotMatch(await read('js/chamber.js'), /createMediaElementSource\(/);
 });
 
-test('the waveform fetches the signed URL, token and all', async () => {
+test('the waveform never fetches the song, signed or not: it reads the measured peaks', async () => {
   const src = await read('js/filament.js');
-  assert.match(src, /fetch\(src\)/,
-    'filament must fetch the full src: fetching the query-stripped cache ' +
-    'key drops the Supabase signing token, and the JSON error that comes ' +
-    'back goes straight into decodeAudioData');
-  assert.doesNotMatch(src, /fetch\(key\)/, 'fetching the stripped key is the bug');
+  assert.doesNotMatch(src, /fetch\(/,
+    'a second download of the song spent an earned play\'s one-play token and decoded ' +
+    'about 50 MB of samples per track (music map G-8); the shape is in data/peaks');
+  assert.match(src, /PEAKS\.load\(src\)/, 'the shape comes from js/peaks.js');
+  const peaks = await read('js/peaks.js');
+  assert.match(peaks, /if \(!key\) return Promise\.resolve\(null\);/, 'a signed master is never asked for its shape');
 });
 
 test('the row slot does not reuse a class the stylesheet already owns', async () => {
@@ -144,7 +148,8 @@ test('an album billed to another name says so everywhere it credits', async () =
     assert.match(html, new RegExp(`getElementById\\("${id}"\\)\\.textContent = ARTIST`),
       `#${id} must follow the billed artist`);
   }
-  assert.match(html, /artist: ARTIST,/, 'MediaSession must follow the billed artist');
+  /* the lock screen (js/now-playing.js, music slice M2) names the playing row's billed artist, the page's when it has none */
+  assert.match(html, /artist: r\.getAttribute\("data-artist"\) \|\| ARTIST,/, 'MediaSession must follow the billed artist');
   assert.doesNotMatch(html, /artist: "Matthew McCluster"/, 'no hardcoded artist left in the player');
   assert.match(html, /© 2026 Matthew McCluster/, 'the rights notice stays with the owner');
 });
@@ -232,4 +237,84 @@ test('no bar clearance is parked mid-document', async () => {
   }
   assert.match(html, /\[data-comments\] \{ margin-bottom: 6rem; \}/,
     'the last content must clear the deck, whose top sits 189px off the bottom');
+});
+
+/* WHAT THE ROW SAYS WHEN THE GATE IS NOT READY (music slice M3; music map 02, DEL-2).
+   The Worker answers gate_not_ready while the rule's SQL is not in production, and the row
+   painted "0/3 MISSIONS + identity verification" from the page's own defaults (have = 0,
+   need = 3), numbers no server sent: members were told to do missions that cannot open it.
+   The real js/gated-audio.js runs here against the answers the Worker gives, the live one of
+   2026-11-19 and the rule's own shape (control: once the rule answers, a member's real numbers). */
+import vm from 'node:vm';
+async function gateRun({ session = null, gate, play = null }) {
+  const src = await read('js/gated-audio.js');
+  const window = {
+    MCC: { session: () => session },
+    location: { pathname: '/album.html', search: '?album=cia-mind-control' },
+    addEventListener() {}, removeEventListener() {}, dispatchEvent() {}
+  };
+  window.fetch = async (url, init = {}) => {
+    if (/\/play$/.test(String(url))) {
+      if (play === 'network') throw new TypeError('Failed to fetch');
+      return { status: play.status, json: async () => play.body };
+    }
+    return { status: 200, json: async () => ({ ok: true, gate }) };
+  };
+  vm.runInNewContext(src, { window, fetch: window.fetch, CustomEvent: class { constructor(t) { this.type = t; } }, Date, Promise, JSON, String, Number, encodeURIComponent });
+  const G = window.MCC_GATED;
+  const out = await G.resolve({ object: 'niggy-nigg/niggy-nigg.mp3' });
+  return { G, out, progress: G.progress(out), explain: G.explain(out) };
+}
+const NOT_READY = { mode: 'rule', rule: 'gated_track_niggy_nigg', track: 'niggy-nigg', allowed: false, claimed: false,
+  preview_only: true, reason: 'gate_not_ready', missing: ['gate_not_ready'] };
+const MEMBER = { access_token: 'x', expires_at: Math.floor(Date.now() / 1000) + 3000 };
+function ruleGate(user, { have = 0, identity = false } = {}) {
+  const missing = []; if (!user) missing.push('sign_in'); if (have < 3) missing.push('missions'); if (!identity) missing.push('identity_verification');
+  return { mode: 'rule', rule: 'gated_track_niggy_nigg', track: 'niggy-nigg', allowed: !!user && have >= 3 && identity, signed_in: !!user,
+    missions: { have, need: 3 }, identity_verified: identity, missing, links: { missions: 'mnet.html?view=missions', identity: 'identity-verify.html' } };
+}
+
+test('a gate that is not ready says the full song opens later, for a member and a guest, never a count nobody sent', async () => {
+  for (const session of [MEMBER, null]) {
+    const r = await gateRun({ session, gate: NOT_READY });
+    const said = JSON.stringify([r.progress, r.explain]);
+    assert.doesNotMatch(said, /0\/3|you have 0|MISSIONS|identity|sign in/i, `${session ? 'member' : 'guest'}: ${said}`);
+    assert.deepEqual({ b: r.progress && r.progress.b, s: r.progress && r.progress.s }, { b: 'FULL SONG', s: 'opens later' });
+    assert.equal(r.explain && r.explain.text, 'The full song opens later.');
+    assert.equal(r.explain.links.length, 0, 'no link to a step that cannot open it');
+    assert.equal(r.out.state, 'locked', 'the preview plays; nothing to sign in for');
+    assert.equal(r.G.later(r.out), true);
+  }
+});
+
+test('once the rule answers, the row shows the member\'s own numbers and links (control)', async () => {
+  const one = await gateRun({ session: MEMBER, gate: ruleGate('u', { have: 1 }) });
+  assert.deepEqual({ b: one.progress.b, s: one.progress.s }, { b: '1/3 MISSIONS', s: '+ identity verification' });
+  assert.match(one.explain.text, /3 verified missions \(you have 1\) and a verified identity/);
+  assert.ok(one.explain.links.some((l) => l.key === 'missions'));
+  assert.equal(one.G.later(one.out), false);
+  const all = await gateRun({ session: MEMBER, gate: ruleGate('u', { have: 3, identity: true }) });
+  assert.equal(all.out.state, 'earned');
+  assert.deepEqual({ b: all.progress.b, s: all.progress.s }, { b: 'PLAY', s: 'full track' });
+  const guest = await gateRun({ gate: ruleGate(null) });
+  assert.match(guest.explain.text, /Sign in first/);
+  /* a rule answer without numbers never gets the page's own 0/3 */
+  const bare = await gateRun({ session: MEMBER, gate: { mode: 'rule', allowed: false, missing: ['missions'] } });
+  assert.doesNotMatch(JSON.stringify([bare.progress, bare.explain]), /0\/3|you have 0/);
+});
+
+test('a claim keeps the expiry the Worker returns, and a claim whose answer was lost is reported as uncertain', async () => {
+  const granted = await gateRun({ session: MEMBER, gate: ruleGate('u', { have: 3, identity: true }),
+    play: { status: 200, body: { ok: true, url: 'https://api.mccluster.org/v1/music/stream/' + 'a'.repeat(64), expires_in: 300, gate: { allowed: true } } } });
+  const c = await granted.G.claim({ object: 'niggy-nigg/niggy-nigg.mp3' });
+  assert.equal(c.state, 'full');
+  assert.equal(c.expires_in, 300, 'the one play\'s lifetime travels with its URL');
+  const lost = await gateRun({ session: MEMBER, gate: ruleGate('u', { have: 3, identity: true }), play: 'network' });
+  const u = await lost.G.claim({ object: 'niggy-nigg/niggy-nigg.mp3' });
+  assert.equal(u.state, 'unavailable');
+  assert.equal(u.uncertain, true, 'the play may have been spent: the page must say so, never claim again by itself');
+  const refused = await gateRun({ session: MEMBER, gate: ruleGate('u', { have: 3, identity: true }), play: { status: 403, body: { error: 'Locked', gate: NOT_READY } } });
+  const r = await refused.G.claim({ object: 'niggy-nigg/niggy-nigg.mp3' });
+  assert.equal(r.state, 'locked');
+  assert.ok(!r.uncertain, 'a refusal is certain: nothing was spent');
 });

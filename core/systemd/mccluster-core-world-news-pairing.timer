@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule news <-> Halo map pairing
+[Timer]
+OnBootSec=12min
+OnUnitActiveSec=15min
+Persistent=true
+RandomizedDelaySec=120
+Unit=mccluster-core-world-news-pairing.service
+[Install]
+WantedBy=timers.target

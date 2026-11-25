@@ -1,0 +1,13 @@
+# series head f8499fad in a scratch checkout, workers/mccluster/node_modules symlinked to the main checkout's locked install (wrangler 4.156.0); 2026-11-10T12:22:40Z
+# WRANGLER_SEND_METRICS=false CI=1 wrangler versions upload --dry-run --outdir <scratch> --config workers/mccluster/wrangler.toml   (the contracts job's compile step; summary of its output, the bindings table omitted)
+ ⛅️ wrangler 4.156.0
+[custom build] Running: cd "$(git rev-parse --show-toplevel)/workers/mccluster" && node ../../scripts/worker-build-provenance.mjs
+[custom build] Worker build provenance: f8499fada78c8788f41b90b66dd661db9b1e07aa
+Total Upload: 2512.03 KiB / gzip: 550.92 KiB
+--dry-run: exiting now.
+exit=0 (from the run)
+# bundle checks on entry-platform.js (2537830 bytes):
+module comments for the runtime and the engine:
+11124:// ../../js/prim3-mission/topology-learning.mjs
+11654:// ../../PRIM3/game/halo/adaptive/engine.mjs
+occurrences of the new HQ/B1 frame text: 3

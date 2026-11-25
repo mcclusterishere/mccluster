@@ -1,4 +1,5 @@
-import { enqueueJob, recentObjectives, rest } from '../supabase.mjs';
+import { createHash } from 'node:crypto';
+import { checkpointJobInput, enqueueJob, recentObjectives, rest } from '../supabase.mjs';
 import { allowedReflectionJobTypes, extractJsonObject, normalizeReflectionPlan } from '../reflection-policy.mjs';
 import { localAiChat } from '../compute/local-ai-client.mjs';
 import { compactReflectionContext, loadReflectionJobs, loadReflectionHealth } from '../reflection-context.mjs';
@@ -8,6 +9,24 @@ const bounded = (value, max) => String(value ?? '').slice(0, max);
 const limit = (value, fallback, min, max) => Number.isFinite(Number(value))
   ? Math.min(max, Math.max(min, Math.trunc(Number(value)))) : fallback;
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const CHECKPOINT_SCHEMA = 'objective_reflection_checkpoint/v1';
+
+/* Audit finding C2: children were enqueued one by one with fresh database ids,
+   so a failure after the first insert made the retry ask the model for a new
+   plan and insert the first task again. The normalized plan is checkpointed on
+   the parent before any child exists, and each child id is a deterministic
+   function of the parent id and plan step, so enqueueJob({jobId}) is idempotent
+   across retries and lost responses. */
+export function reflectionChildJobId(parentId, index) {
+  const hex = createHash('sha256').update(`objective_reflection:${parentId}:${index}`).digest('hex').slice(0, 32);
+  // RFC 4122 layout with version 8 (custom) and variant bits, so Postgres uuid accepts it.
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-8${hex.slice(13, 16)}-${(parseInt(hex[16], 16) & 0x3 | 0x8).toString(16)}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+function validCheckpoint(value) {
+  return value && typeof value === 'object' && value.schema_version === CHECKPOINT_SCHEMA
+    && value.plan && typeof value.plan === 'object' && Array.isArray(value.plan.next_jobs);
+}
 
 export async function fetchReflectionResponse(messages, {
   chatImpl = localAiChat,
@@ -43,6 +62,7 @@ export async function objectiveReflection(job, {
   getHealth = orgId => loadReflectionHealth(rest, orgId),
   chat = fetchReflectionResponse,
   enqueue = enqueueJob,
+  checkpoint = checkpointJobInput,
 } = {}) {
   if (!job.org_id) throw new Error('objective_reflection requires org_id');
   const objective = bounded(job.input?.objective || job.input?.task || 'Advance active McCluster objectives safely using existing evidence.', 1200).trim();
@@ -69,35 +89,55 @@ export async function objectiveReflection(job, {
   const messages = [{role: 'system', content: system}, {role: 'user', content: compact.json}];
   const requestBytes = Buffer.byteLength(JSON.stringify(messages));
   const started = Date.now();
-  let data;
-  try {
-    data = await chat(messages, {metadata: {
-      job_type: job.job_type || 'objective_reflection', job_id: job.id || null,
-      prompt_bytes: requestBytes, compact_evidence: true,
-    }});
-  } catch (error) {
-    // Report timing/size, not prompt content, credentials or arbitrary nested errors.
-    const code = String(error?.code || error?.cause?.code || error?.name || 'Error').replace(/[^A-Za-z0-9_]/g, '').slice(0, 64);
-    throw Object.assign(new Error(`Reflection AI request failed (${code}; elapsed_ms=${Date.now() - started}; prompt_bytes=${requestBytes})`, {cause: error}), {
-      status: error?.status, retryable: error?.retryable !== false, code,
-    });
+  const existing = job.input?.objective_reflection_checkpoint;
+  let data = null;
+  let plan;
+  let planSource;
+  if (validCheckpoint(existing) && existing.objective === objective && existing.max_next_jobs === maxJobs) {
+    plan = existing.plan;
+    data = existing.model_response || null;
+    planSource = 'checkpoint';
+  } else {
+    try {
+      data = await chat(messages, {metadata: {
+        job_type: job.job_type || 'objective_reflection', job_id: job.id || null,
+        prompt_bytes: requestBytes, compact_evidence: true,
+      }});
+    } catch (error) {
+      // Report timing/size, not prompt content, credentials or arbitrary nested errors.
+      const code = String(error?.code || error?.cause?.code || error?.name || 'Error').replace(/[^A-Za-z0-9_]/g, '').slice(0, 64);
+      throw Object.assign(new Error(`Reflection AI request failed (${code}; elapsed_ms=${Date.now() - started}; prompt_bytes=${requestBytes})`, {cause: error}), {
+        status: error?.status, retryable: error?.retryable !== false, code,
+      });
+    }
+    const text = String(data?.message?.content || '').trim();
+    if (!text) throw new Error('Local AI returned an empty reflection');
+    const parsed = extractJsonObject(text);
+    if (!parsed) throw new Error('Local AI returned invalid reflection JSON');
+    plan = normalizeReflectionPlan(parsed, {maxJobs});
+    planSource = 'model';
+    if (plan.next_jobs.length) {
+      const base = job.input && typeof job.input === 'object' ? job.input : {};
+      await checkpoint(job, {...base, objective_reflection_checkpoint: {
+        schema_version: CHECKPOINT_SCHEMA, objective, max_next_jobs: maxJobs, plan,
+        model_response: {model: data?.model || MODEL, prompt_eval_count: data?.prompt_eval_count ?? null, eval_count: data?.eval_count ?? null,
+          total_duration: data?.total_duration ?? null, queue_wait_ms: data?.queue_wait_ms ?? null},
+        source_counts: {objectives: objectives.length, recent_jobs: jobs.length}, checkpointed_at: new Date().toISOString(),
+      }});
+    }
   }
-  const text = String(data?.message?.content || '').trim();
-  if (!text) throw new Error('Local AI returned an empty reflection');
-  const parsed = extractJsonObject(text);
-  if (!parsed) throw new Error('Local AI returned invalid reflection JSON');
-  const plan = normalizeReflectionPlan(parsed, {maxJobs});
   const queued = [];
-  for (const next of plan.next_jobs) {
+  for (const [index, next] of plan.next_jobs.entries()) {
     const created = await enqueue({
+      jobId: reflectionChildJobId(job.id, index),
       orgId: job.org_id, jobType: next.job_type, targetType: next.target_type,
       targetId: next.target_id, priority: next.priority,
-      input: {...next.input, reflection_parent_job_id: job.id, reflection_objective: objective},
+      input: {...next.input, reflection_parent_job_id: job.id, reflection_plan_step: index, reflection_objective: objective},
     });
     queued.push({id: created.id, job_type: created.job_type, target_type: created.target_type, target_id: created.target_id, priority: created.priority});
   }
   return {
-    executor: 'objective_reflection:v2', model: data?.model || MODEL,
+    executor: 'objective_reflection:v2', model: data?.model || MODEL, plan_source: planSource,
     evidence_scope: 'canonical_objectives_and_recent_jobs', objective,
     summary: plan.summary, rationale: plan.rationale, queued_jobs: queued,
     dropped_job_count: plan.dropped_job_count,

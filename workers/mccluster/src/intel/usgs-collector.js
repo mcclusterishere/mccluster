@@ -38,6 +38,7 @@ import { effectiveEntitlement, assertConsumable, LANES } from '../seek-first/ent
 import { sourceByKey } from '../seek-first/source-registry.js';
 import { IntelError, configured, resolveHouseOrg, rpc } from './store.js';
 import { evidenceProjection } from './projection.js';
+import { CONTACT_ORIGIN } from '../platform/contact.js';
 
 export const USGS_CONNECTOR_KEY = 'usgs.earthquakes';
 export const USGS_ENDPOINT = 'https://earthquake.usgs.gov/fdsnws/event/1/query';
@@ -111,7 +112,7 @@ export async function fetchUsgsPage(url, fetchImpl = fetch, { timeoutMs = TIMEOU
     try {
       res = await fetchImpl(url.toString(), {
         redirect: 'manual', signal: controller.signal,
-        headers: { accept: 'application/json', 'user-agent': 'McCluster-Intel/1.0 (https://mccluster.org)' }
+        headers: { accept: 'application/json', 'user-agent': `McCluster-Intel/1.0 (${CONTACT_ORIGIN})` }
       });
     } catch (error) {
       throw new UpstreamFailure(error?.name === 'AbortError' ? 'provider_timeout' : 'provider_network_error');

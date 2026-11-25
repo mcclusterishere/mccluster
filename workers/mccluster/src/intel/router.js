@@ -21,7 +21,17 @@ import { evidenceProjection, sourceHealthProjection, TRUTH_KINDS } from './proje
 
 import { createIndicatorClient, IndicatorError } from './world-indicators.js';
 import { buildNewsContext, newsContextQuery } from './news-context.js';
+import { MarketsError, companyQuery, countryCode, createMarketsClient, listingsQuery } from './world-markets.js';
+import { PRODUCT as FINANCE_PRODUCT, SOURCES as FINANCE_SOURCES } from '../finance/foundation.js';
+import { PaperError, readDemoCommands, replayDemo } from '../finance/paper.js';
+import { portfolioRequest } from '../finance/portfolio.js';
+import { createAlpacaClient } from '../finance/alpaca.js';
+import { accountRequest } from '../finance/account.js';
+import { valueAccount } from '../finance/valuation.js';
+const alpacaClient = createAlpacaClient();
+import EXCHANGE_REFERENCE from '../../../../data/markets/exchanges.json' with { type: 'json' };
 const indicatorClient = createIndicatorClient();
+const marketsClient = createMarketsClient({ indicatorClient });
 
 const SERVICE = 'mccluster-intel';
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
@@ -153,6 +163,69 @@ export async function handleIntelRequest(request, env, options = {}) {
     if (path === '/v1/intel/geo' && request.method === 'GET') return await geo(request, env, url, options);
 
     const user = await options.requireHouseOwner(request, env);
+    if (path === '/v1/intel/finance' || path.startsWith('/v1/intel/finance/')) {
+      const respond = (data, status = 200) => {
+        const response = reply(request, env, data, status);
+        response.headers.set('cache-control', 'private, no-store'); return response;
+      };
+      if (env.FINANCE_DEV_ENABLED !== 'true') return respond({ ok: false, code: 'not_found' }, 404);
+      const market = options.financeMarket || alpacaClient;
+      if (path === '/v1/intel/finance/market' && request.method === 'GET') {
+        if ([...url.searchParams.keys()].some(k=>!['q','symbol','period'].includes(k)||url.searchParams.getAll(k).length!==1)) return respond({ok:false,code:'unsupported_parameter'},400);
+        try {
+          const symbol=url.searchParams.get('symbol');
+          if (!symbol) return respond({ok:true,...await market.search(env,url.searchParams.get('q')||'')});
+          const [quote,history]=await Promise.allSettled([market.quote(env,symbol),market.history(env,symbol,url.searchParams.get('period')||'1Y')]);
+          return respond({ok:true,symbol,quote:quote.status==='fulfilled'?quote.value:null,history:history.status==='fulfilled'?history.value:null,
+            quote_error:quote.status==='rejected'?(quote.reason.code||'unavailable'):null,history_error:history.status==='rejected'?(history.reason.code||'unavailable'):null});
+        } catch(error) { return respond({ok:false,code:error.code||'provider_unavailable'},error.status||503); }
+      }
+      if (path === '/v1/intel/finance/valuation' && request.method === 'GET') {
+        if(url.search)return respond({ok:false,code:'unsupported_parameter'},400);
+        if(env.FINANCE_PERSISTENCE_ENABLED!=='true')return respond({ok:false,code:'finance_persistence_disabled'},503);
+        try {return respond({ok:true,valuation:await valueAccount(env,user.id,market,{call:options.financeRpc})});}
+        catch(error){return respond({ok:false,code:error.code||'valuation_unavailable'},error.status||503);}
+      }
+      if (path === '/v1/intel/finance/account' && ['GET','POST'].includes(request.method)) {
+        if(url.search)return respond({ok:false,code:'unsupported_parameter'},400);
+        if(env.FINANCE_PERSISTENCE_ENABLED!=='true')return respond({ok:false,code:'finance_persistence_disabled'},503);
+        try {
+          let action=null;
+          if(request.method==='POST'){const commands=await readDemoCommands(request);if(!Array.isArray(commands)||commands.length!==1||!commands[0])throw new PaperError('one_action_required');action=commands[0];}
+          return respond({ok:true,account:await accountRequest(env,user.id,action,market,{call:options.financeRpc})});
+        } catch(error){return respond({ok:false,code:error.code||'account_unavailable'},error.status||(error.code==='body_too_large'?413:400));}
+      }
+      if (url.search) return respond({ ok: false, code: 'unsupported_parameter' }, 400);
+      if (path === '/v1/intel/finance' && request.method === 'GET') return respond({ ok: true, product: FINANCE_PRODUCT, sources: FINANCE_SOURCES,
+        controls:{development:true,persistence:env.FINANCE_PERSISTENCE_ENABLED==='true',collection:false,member_release:false} });
+      if(path === '/v1/intel/finance/control' && request.method === 'GET') {
+        let storage='disabled';
+        if(env.FINANCE_PERSISTENCE_ENABLED==='true') {
+          try { await accountRequest(env,user.id,null,market,{call:options.financeRpc});storage='ready'; }
+          catch(error) { storage=error.code || 'unavailable'; }
+        }
+        return respond({ok:true,storage,collection:false,member_release:false,configuration:'server_environment_only',alpaca:{configured:!!(env.APCA_API_KEY_ID&&env.APCA_API_SECRET_KEY),enabled:env.FINANCE_ALPACA_ENABLED==='true',feed:'iex',mode:'read_only'},paper_mode:'Halo simulation; never brokerage orders'});
+      }
+      if (path === '/v1/intel/finance/reference' && request.method === 'GET') return respond({ok:true,kind:'static_reference',is_live:false,
+        version:EXCHANGE_REFERENCE.version,sources:EXCHANGE_REFERENCE.sources,coordinates:EXCHANGE_REFERENCE.coordinates,
+        exchanges:EXCHANGE_REFERENCE.exchanges.map(({mic,name,city,country})=>({mic,name,city,country}))});
+      if (path === '/v1/intel/finance/portfolio' && ['GET','POST'].includes(request.method)) {
+        if(env.FINANCE_PERSISTENCE_ENABLED !== 'true') return respond({ok:false,code:'finance_persistence_disabled'},503);
+        try {
+          let command=null;
+          if(request.method==='POST') { const commands=await readDemoCommands(request); if(!Array.isArray(commands)||commands.length!==1||!commands[0]||typeof commands[0]!=='object')throw new PaperError('one_order_required'); command=commands[0]; }
+          return respond({ok:true,portfolio:await portfolioRequest(env,user.id,command,options.financeRpc)});
+        } catch(error) {
+          if(!(error instanceof PaperError) && !(error instanceof IntelError))throw error;
+          return respond({ok:false,code:error.code},error.status || (error.code==='body_too_large'?413:400));
+        }
+      }
+      if (path === '/v1/intel/finance/paper-demo' && request.method === 'POST') {
+        try { return respond({ ok: true, portfolio: replayDemo(await readDemoCommands(request)) }); }
+        catch (error) { if (!(error instanceof PaperError)) throw error; return respond({ ok: false, code: error.code }, error.code === 'body_too_large' ? 413 : 400); }
+      }
+      return respond({ ok: false, code: 'method_or_route_unavailable' }, 405);
+    }
     if (path === '/v1/intel/news-context') {
       if (request.method !== 'GET') {
         const response = reply(request, env, { ok: false, error: 'Method not allowed', code: 'method_not_allowed' }, 405);
@@ -181,6 +254,43 @@ export async function handleIntelRequest(request, env, options = {}) {
         if (!(error instanceof IndicatorError)) throw error;
         const status = error.code.startsWith('invalid_') && ['invalid_economy', 'invalid_indicators'].includes(error.code) ? 400 : error.code === 'too_many_indicator_requests' ? 429 : error.code === 'provider_timeout' ? 504 : 502;
         return fail(request, env, 'World indicators unavailable', status, { code: error.code });
+      }
+    }
+    /* World markets for the owner's Halo globe (./world-markets.js): GDP, exchanges, listings, market news */
+    if (path === '/v1/intel/markets' || path.startsWith('/v1/intel/markets/')) {
+      if (request.method !== 'GET') {
+        const response = fail(request, env, 'Method not allowed', 405, { code: 'method_not_allowed' });
+        response.headers.set('allow', 'GET');
+        return response;
+      }
+      const markets = options.marketsClient || marketsClient;
+      try {
+        let data = null, m;
+        if (path === '/v1/intel/markets/exchanges') {
+          if ([...url.searchParams.keys()].length) throw new MarketsError('invalid_parameter', 400, 'Unsupported parameter');
+          data = markets.exchanges(env);
+        } else if ((m = path.match(/^\/v1\/intel\/markets\/country\/([^/]+)$/))) {
+          if ([...url.searchParams.keys()].length) throw new MarketsError('invalid_parameter', 400, 'Unsupported parameter');
+          data = await markets.country(countryCode(m[1]), env);
+        } else if ((m = path.match(/^\/v1\/intel\/markets\/country\/([^/]+)\/listings$/))) {
+          data = await markets.listings(listingsQuery(m[1], url.searchParams), env);
+        } else if ((m = path.match(/^\/v1\/intel\/markets\/quote\/([^/]+)$/))) {
+          let symbol = '';
+          try { symbol = decodeURIComponent(m[1]); } catch { throw new MarketsError('invalid_symbol', 400, 'Unsupported symbol'); }
+          data = await markets.selectedQuote(companyQuery(symbol, url.searchParams), env);
+        } else if ((m = path.match(/^\/v1\/intel\/markets\/company\/([^/]+)$/))) {
+          let symbol = '';
+          try { symbol = decodeURIComponent(m[1]); } catch { throw new MarketsError('invalid_symbol', 400, 'Unsupported symbol'); }
+          data = await markets.company(companyQuery(symbol, url.searchParams), env);
+        } else return fail(request, env, 'Not found', 404, { code: 'not_found' });
+        const response = reply(request, env, data);
+        response.headers.set('cache-control', 'private, no-store');
+        return response;
+      } catch (error) {
+        if (!(error instanceof MarketsError)) throw error;
+        const response = fail(request, env, error.message, error.status, { code: error.code });
+        response.headers.set('cache-control', 'private, no-store');
+        return response;
       }
     }
     const org = await resolveHouseOrg(env);

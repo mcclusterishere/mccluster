@@ -1,4 +1,5 @@
 import { fail, reply } from './lib/http.js';
+import { MEDIA_BUCKET, ownMediaSignPath, ownMediaUploads } from './lib/media-storage.js';
 import { approveNewsroomRevision, hasNewsroomApproval, newsroomPostId } from './newsroom-review.js';
 import { isCountry } from './intel/news-country-codes.js';
 import { pushEnabled, validSubscription, runPushCycle } from './web-push.js';
@@ -54,14 +55,15 @@ async function networkActors(env,muids=[]){
   const platform=authIds.length?await service(env,`platform_profiles?user_id=in.(${authIds.join(',')})&select=user_id,mccluster_id`):[];
   const handleByUser=new Map((platform||[]).map(x=>[x.user_id,x.mccluster_id||'']));
   const handleByMuid=new Map((links||[]).map(x=>[x.m_uid,handleByUser.get(x.auth_user_id)||'']));
-  const actorIds=new Set();
+  const actorIds=new Set(),characterIds=new Set();
   const unlinked=ids.filter(id=>!handleByMuid.get(id));
   if(unlinked.length){
-    const actors=await service(env,`ops_platform_actors?m_uid=in.(${unlinked.join(',')})&select=m_uid,handle`).catch(()=>[]);
-    for(const actor of actors||[]) {handleByMuid.set(actor.m_uid,actor.handle);actorIds.add(actor.m_uid);}
+    /* A platform actor whose persona says actor_kind 'character' is a story character (MNET cast): the UI shows a small Character badge. */
+    const actors=await service(env,`ops_platform_actors?m_uid=in.(${unlinked.join(',')})&select=m_uid,handle,actor_kind:persona->>actor_kind`).catch(()=>[]);
+    for(const actor of actors||[]) {handleByMuid.set(actor.m_uid,actor.handle);actorIds.add(actor.m_uid);if(actor.actor_kind==='character')characterIds.add(actor.m_uid);}
   }
   const out={};
-  for(const id of ids) out[id]={m_uid:id,display_name:'',headline:'',bio:'',avatar_url:'',banner_url:'',website_url:'',verification_state:'unverified',mccluster_id:handleByMuid.get(id)||'',is_ai:actorIds.has(id)};
+  for(const id of ids) out[id]={m_uid:id,display_name:'',headline:'',bio:'',avatar_url:'',banner_url:'',website_url:'',verification_state:'unverified',mccluster_id:handleByMuid.get(id)||'',is_ai:actorIds.has(id),...(characterIds.has(id)?{actor_kind:'character'}:{})};
   for(const p of profiles||[]) out[p.m_uid]={...out[p.m_uid],...p,mccluster_id:handleByMuid.get(p.m_uid)||''};
   return out;
 }
@@ -104,11 +106,11 @@ async function networkBlocked(env,a,b){
 }
 async function resolvePlatformActor(env,id){
   const filter=uuidLike(id)?'m_uid=eq.'+id:'handle=eq.'+encodeURIComponent(id);
-  const actors=await service(env,'ops_platform_actors?'+filter+'&select=m_uid,handle&limit=1');
+  const actors=await service(env,'ops_platform_actors?'+filter+'&select=m_uid,handle,actor_kind:persona->>actor_kind&limit=1');
   const actor=actors?.[0]; if(!actor)return null;
   const profiles=await service(env,'network_profiles?m_uid=eq.'+actor.m_uid+'&select=*&limit=1');
   const profile=profiles?.[0]; if(!profile)return null;
-  return {m_uid:actor.m_uid,profile,identity:{user_id:null,mccluster_id:actor.handle,display_name:profile.display_name,avatar_url:profile.avatar_url,actor_kind:'fictional_ai'}};
+  return {m_uid:actor.m_uid,profile,identity:{user_id:null,mccluster_id:actor.handle,display_name:profile.display_name,avatar_url:profile.avatar_url,actor_kind:actor.actor_kind==='character'?'character':'fictional_ai'}};
 }
 async function resolveMnetPerson(env,id){
   /* A person is named by their handle, or by their m_uid (live sessions
@@ -335,7 +337,7 @@ async function prepareNetworkPost(env,muid,b,appKey,options={}){
      they wrote without knowing. Comments are retired; every new row here is
      a top-level post, ideally carrying or reporting an action. */
   const body=String(b.body||'').trim();
-  if(b.reply_to_id)return {error:'Comments are retired on Human Uprise. Take the mission or share proof instead.',status:410};
+  if(b.reply_to_id)return {error:'Comments are retired on Equity Uprise. Take the mission or share proof instead.',status:410};
   if(chars(body)>2000)return {error:'Posts are limited to 2,000 characters.',status:413};
   const rawMediaIds=Array.isArray(b.media_asset_ids)?b.media_asset_ids.filter(uuidLike).slice(0,10):[];
   const mediaIds=uniq(rawMediaIds);
@@ -577,7 +579,7 @@ function publicFeedItem(item){
   const p=item.post,a=item.actor||{},meta=p.metadata&&typeof p.metadata==='object'?p.metadata:{};
   const media=(Array.isArray(p.media)?p.media:[]).slice(0,4).map(m=>({type:String(m&&(m.type||m.media_type)||'file').slice(0,16)}));
   return {item_type:'post',post_id:p.id,occurred_at:item.occurred_at||p.created_at,
-    actor:{display_name:a.display_name||'',avatar_url:a.avatar_url||'',mccluster_id:a.mccluster_id||'',verification_state:a.verification_state||'unverified'},
+    actor:{display_name:a.display_name||'',avatar_url:a.avatar_url||'',mccluster_id:a.mccluster_id||'',verification_state:a.verification_state||'unverified',...(a.actor_kind==='character'?{actor_kind:'character'}:{})},
     post:{id:p.id,body:p.body||'',post_type:p.post_type||'post',visibility:'public',created_at:p.created_at,
       like_count:p.like_count||0,liked_by_me:false,bookmarked_by_me:false,media_locked:media.length,
       metadata:{...(postTrack(meta.track)?{track:postTrack(meta.track)}:{}),...(meta.action?{action:true}:{})}}};
@@ -907,7 +909,7 @@ async function handleMnet(req,env,path,url){
     if(external)return fail(req,env,'Post mutation requires a McCluster user session',403);
     const muid=await currentMuid(env,user.id),rows=await service(env,`network_posts?id=eq.${postOne[1]}&deleted_at=is.null&select=*&limit=1`),post=rows?.[0];
     if(!post||post.author_m_uid!==muid||!(await canReadNetworkPost(env,muid,post)))return fail(req,env,'Post not found',404);
-    if(post.reply_to_id)return fail(req,env,'Comments are retired on Human Uprise. Take the mission or share proof instead.',410);
+    if(post.reply_to_id)return fail(req,env,'Comments are retired on Equity Uprise. Take the mission or share proof instead.',410);
     const b=await json(req),patch={updated_at:new Date().toISOString()};
     if(b.body!==undefined){patch.body=String(b.body||'').trim();const cap=post.reply_to_id?1000:2000;if(chars(patch.body)>cap)return fail(req,env,`${post.reply_to_id?'Replies':'Posts'} are limited to ${cap.toLocaleString('en-US')} characters.`,413);}
     /* a newsroom article keeps its words (company-site/news.js renders the post's text as the article) */
@@ -1262,6 +1264,8 @@ async function handleMnet(req,env,path,url){
       if(act==='actors'&&req.method==='POST'){
         const b=await json(req);
         if(!Array.isArray(b.actor_keys)||b.actor_keys.length>3||b.actor_keys.some(k=>typeof k!=='string'||!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(k)))return fail(req,env,'Choose up to three platform characters',400);
+        /* MNET story characters (chr.*) post and reply among themselves; they do not join member live rooms yet. */
+        if(b.actor_keys.some(k=>k.startsWith('chr.')))return fail(req,env,'Story characters cannot join live rooms yet',400);
         if(b.actor_keys.length){
           const cutoff=encodeURIComponent(new Date(Date.now()-120000).toISOString());
           const nodes=await service(env,`ops_compute_nodes?display_name=eq.ovh-primary&state=eq.online&last_seen_at=gte.${cutoff}&select=id&limit=1`);
@@ -1320,7 +1324,11 @@ async function handleMnet(req,env,path,url){
     ]);
     const asset=assets?.[0];
     if(!asset||!assignments?.[0]||asset.owner_m_uid!==assignments[0].m_uid)return fail(req,env,'Proof has no upload',404);
-    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${encodeURIComponent(asset.bucket_id)}/${String(asset.object_path).split('/').map(encodeURIComponent).join('/')}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
+    /* The row's bucket and path are the member's to edit (./lib/media-storage.js): the desk is shown the file only
+       when it is that member's own upload, never whatever object the row was pointed at. */
+    const signPath=await ownMediaSignPath(asset,(p)=>service(env,p));
+    if(!signPath)return fail(req,env,'Proof has no upload',404);
+    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${signPath}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
     const signed=await res.json().catch(()=>null);
     if(!res.ok||!signed?.signedURL)return fail(req,env,'Could not sign the upload',502);
     return reply(req,env,{url:`${env.SUPABASE_URL}/storage/v1${signed.signedURL}`,media_type:asset.media_type,mime_type:asset.mime_type,expires_in:900});
@@ -1342,7 +1350,11 @@ async function handleMnet(req,env,path,url){
     ]);
     const asset=assets?.[0];
     if(!asset||!assignments?.[0]||asset.owner_m_uid!==assignments[0].m_uid)return fail(req,env,'Proof has no upload',404);
-    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${encodeURIComponent(asset.bucket_id)}/${String(asset.object_path).split('/').map(encodeURIComponent).join('/')}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
+    /* The row's bucket and path are the member's to edit (./lib/media-storage.js): the desk is shown the file only
+       when it is that member's own upload, never whatever object the row was pointed at. */
+    const signPath=await ownMediaSignPath(asset,(p)=>service(env,p));
+    if(!signPath)return fail(req,env,'Proof has no upload',404);
+    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${signPath}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:900})});
     const signed=await res.json().catch(()=>null);
     if(!res.ok||!signed?.signedURL)return fail(req,env,'Could not sign the upload',502);
     return reply(req,env,{url:`${env.SUPABASE_URL}/storage/v1${signed.signedURL}`,media_type:asset.media_type,mime_type:asset.mime_type,expires_in:900});
@@ -1385,15 +1397,17 @@ export function fbiVerdict(row){
 }
 async function fbiPhotos(env,ids){
   const list=uniq(ids).filter(uuidLike);if(!list.length)return {};
-  const assets=await service(env,`network_media_assets?id=in.(${list.join(',')})&select=id,bucket_id,object_path`);
-  const out={};const byBucket={};
-  for(const a of assets||[])(byBucket[a.bucket_id]=byBucket[a.bucket_id]||[]).push(a);
-  for(const [bucket,rows] of Object.entries(byBucket)){
-    const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${encodeURIComponent(bucket)}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:3600,paths:rows.map(r=>r.object_path)})});
-    const signed=await res.json().catch(()=>[]);
-    if(!res.ok||!Array.isArray(signed))continue;
-    for(const r of rows){const hit=signed.find(x=>x.path===r.object_path&&x.signedURL);if(hit)out[r.id]=`${env.SUPABASE_URL}/storage/v1${hit.signedURL}`;}
-  }
+  const assets=await service(env,`network_media_assets?id=in.(${list.join(',')})&select=id,bucket_id,object_path,owner_m_uid`);
+  /* A photo row is its reporter's to edit, bucket and path included, and these links go to the public board and
+     back to the reporter ("my cases"). Only the reporter's own uploads are signed, and only in the upload bucket
+     (./lib/media-storage.js); a row pointed anywhere else simply has no photo. */
+  const rows=await ownMediaUploads(assets,(p)=>service(env,p));
+  const out={};
+  if(!rows.length)return out;
+  const res=await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/${MEDIA_BUCKET}`,{method:'POST',headers:serviceHeaders(env),body:JSON.stringify({expiresIn:3600,paths:rows.map(r=>r.object_path)})});
+  const signed=await res.json().catch(()=>[]);
+  if(!res.ok||!Array.isArray(signed))return out;
+  for(const r of rows){const hit=signed.find(x=>x&&x.path===r.object_path&&x.signedURL);if(hit)out[r.id]=`${env.SUPABASE_URL}/storage/v1${hit.signedURL}`;}
   return out;
 }
 async function fbiCards(env,rows,muid,{withStatus=false}={}){

@@ -36,7 +36,7 @@ This is the short version of what to actually type.
 | **The machines** | `supabase/functions/inbox/mcp.ts` — MCP 2026-07-28. 29 tests, against a strict server. |
 | **The function** | `supabase/functions/inbox/index.ts` — ingestion, sending, back office. 35 tests. |
 | **The schema** | `0021`–`0028` |
-| **The desk** | `inbox.html` — threads, channels, tools, knowledge, spend, queue |
+| **The desk** | Control → Work → Desk bot (`control.html#work:desk-bot`, `js/control-room/desk-bot.js`) — knowledge, spend, refusals, channels, tools. `inbox.html` is only a compatibility URL back to Control. |
 
 Run everything:
 
@@ -44,7 +44,7 @@ Run everything:
 for t in flows platforms inbox-auth price brain mcp; do
   node --experimental-strip-types supabase/tests/$t.test.mjs
 done
-node scripts/inbox-desk-smoke.mjs          # drives the desk in a browser
+PLAYWRIGHT_DIR=<node_modules> node scripts/e2e/control-desk-bot.e2e.mjs   # drives the desk in Control, function stubbed
 ```
 
 Three things are SQL, so they are tested against a real database instead —

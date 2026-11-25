@@ -1,0 +1,21 @@
+# BROWSER, series head ALONE (not merged with #793): the PUBLISHED tree of the series head f8499fad (build-export.sh) served to Chromium by the recorded scratch variant (MCC_SERVE_ROOT; diff in e2e-serve-root-variant.diff), all 8 journeys; Worker from the series source tree over memory-rest.mjs; 2026-11-10T12:09:21Z, node v22.23.4
+# RESULT: blocked before any W5 code runs: released-app.mjs also imports js/prim3-tactics/levels/generated.mjs -> PRIM3/game/halo/generated/recipe.mjs (audit W1, fixed on claude/new-session-83ken5, not on this PR base). The W5 browser proof therefore uses the trees merged with that branch: e2e-export-merged-*.log
+DRIVER: worker /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5; journey module /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/w5-tools/prim3-topology-learning.serve-root.e2e.mjs; served root /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/w5-export-head; variant filter (all)
+Learning journey transit-relay/square 390px
+HTTP 404 https://matthew.mccluster.org/PRIM3/game/halo/generated/recipe.mjs
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+CONSOLE ERROR TypeError: Failed to fetch dynamically imported module: https://matthew.mccluster.org/js/prim3-mission/released-app.mjs?v=localexport00
+DRIVER: FAIL after 30.5 s; fixture requests 0
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 30000ms exceeded.
+    at runTopologyLearningBrowser (/tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/w5-tools/prim3-topology-learning.serve-root.e2e.mjs:37:14)
+    at async file:///tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/w5-tools/topology-e2e-driver.mjs:24:3 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.4
+exit=1

@@ -3,6 +3,12 @@ export const SIGNATURE_ALGORITHM = 'ed25519';
 export const DEFAULT_LEASE_SECONDS = 120;
 export const DEFAULT_HEARTBEAT_SECONDS = 30;
 export const DEFAULT_CLOCK_SKEW_MS = 5 * 60_000;
+// hardware_mode is derived by the node agent (hardware.mjs deriveHardwareMode)
+// and published in inventory.runtime.hardware_mode; the rank orders bindings.
+export const HARDWARE_MODES = Object.freeze(['gpu-verified', 'gpu-present-unverified', 'cpu-only', 'unknown']);
+export const HARDWARE_MODE_RANK = Object.freeze({ 'gpu-verified': 3, 'gpu-present-unverified': 2, 'cpu-only': 1, unknown: 0 });
+// A claim may ask the scheduler to leave tasks younger than this to a GPU node.
+export const MAX_YIELD_SECONDS = 300;
 
 const CAPABILITY_ID = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
 const IMPLEMENTATION_ID = /^[a-z][a-z0-9]*(?:[._:/-][a-z0-9]+)*$/;
@@ -58,7 +64,12 @@ export function validateInventory(input) {
       uuid: value.uuid == null ? null : String(value.uuid).slice(0, 160),
       vram_bytes: Math.floor(finite(value.vram_bytes ?? 0, `inventory.gpus[${i}].vram_bytes`, { min: 0 })),
       driver: value.driver == null ? null : String(value.driver).slice(0, 120),
-      compute: value.compute == null ? null : String(value.compute).slice(0, 120)
+      compute: value.compute == null ? null : String(value.compute).slice(0, 120),
+      // integrated|discrete|unknown, dedicated|shared|unknown, and where the
+      // VRAM number came from (nvidia-smi|registry|cim|sysfs|none).
+      form: value.form == null ? null : String(value.form).slice(0, 40),
+      memory: value.memory == null ? null : String(value.memory).slice(0, 40),
+      vram_source: value.vram_source == null ? null : String(value.vram_source).slice(0, 40)
     };
   }) : [];
   return {
@@ -106,6 +117,65 @@ export function validateLoad(input = {}) {
   };
 }
 
+// Gateway helpers shared with the node agent's vocabulary.
+export function clampYieldSeconds(value) {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(MAX_YIELD_SECONDS, n));
+}
+
+export function countLiveGpuNodes(nodes, { excludeNodeId = null } = {}) {
+  if (!Array.isArray(nodes)) return 0;
+  return nodes.filter((node) => node && node.id !== excludeNodeId && node?.inventory?.runtime?.hardware_mode === 'gpu-verified').length;
+}
+
 export function capabilityIds(manifest) {
   return [...new Set(validateCapabilityManifest(manifest).map((item) => item.capability))];
+}
+
+// Owned-only capabilities: the owner's own browser runs only on a node whose
+// enrolment recorded trust 'owned'. The record is labels.enrolled_trust,
+// written by the enrol call (gated by the owner's enrolment token, which the
+// Windows doctor deletes from the node after enrolling) and never by a
+// heartbeat, which a node signs with its own key alone. labels.trust is what
+// a node asserts; it is not the authority.
+export const OWNED_ONLY_CAPABILITIES = new Set(['browser.act']);
+export const ENROLLED_TRUST_LABEL = 'enrolled_trust';
+// Labels the enrolment fixes: a heartbeat keeps the stored value (or leaves the
+// label out when the enrolment did not set it); enrolling again changes them.
+export const ENROLLMENT_PINNED_LABELS = Object.freeze(['trust', 'role']);
+
+function labelObject(labels) {
+  return labels && typeof labels === 'object' && !Array.isArray(labels) ? labels : {};
+}
+
+// At enrolment: the labels as sent, with the trust they carry recorded as
+// enrolled_trust. A value the node sends for the record itself is ignored.
+export function enrollmentLabels(labels) {
+  const out = { ...labelObject(labels) };
+  delete out[ENROLLED_TRUST_LABEL];
+  if (typeof out.trust === 'string' && out.trust.trim()) out[ENROLLED_TRUST_LABEL] = out.trust.trim().slice(0, 40);
+  return out;
+}
+
+// At heartbeat: the node's labels, except that trust, role and the enrolment
+// record stay exactly what the enrolment stored.
+export function heartbeatLabels(stored, incoming) {
+  const before = labelObject(stored);
+  const out = { ...labelObject(incoming) };
+  for (const key of [...ENROLLMENT_PINNED_LABELS, ENROLLED_TRUST_LABEL]) {
+    if (before[key] === undefined) delete out[key];
+    else out[key] = before[key];
+  }
+  return out;
+}
+
+export function ownedOnlyAdmitted(capability, labels) {
+  return !OWNED_ONLY_CAPABILITIES.has(capability) || labelObject(labels)[ENROLLED_TRUST_LABEL] === 'owned';
+}
+
+// The manifest entries a node may claim tasks for: owned-only capabilities
+// only when its enrolment recorded trust 'owned'.
+export function claimableManifest(capabilities, labels) {
+  return (Array.isArray(capabilities) ? capabilities : []).filter((item) => ownedOnlyAdmitted(item?.capability, labels));
 }

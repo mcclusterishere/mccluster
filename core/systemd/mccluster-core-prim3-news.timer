@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule the PRIM3 regional agents news desk
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=15min
+Persistent=true
+RandomizedDelaySec=120
+Unit=mccluster-core-prim3-news.service
+[Install]
+WantedBy=timers.target

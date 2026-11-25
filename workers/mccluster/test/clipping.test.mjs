@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { platformStatus, readClip, isGone } from '../src/clipping/platforms.js';
 import { runClipping } from '../src/clipping/runner.js';
 import { handleClippingRequest } from '../src/clipping/router.js';
+import { linkRows, selectedColumns } from './support/auth-links.mjs';
 
 const env = { SUPABASE_URL: 'https://db.example', SUPABASE_SERVICE_ROLE_KEY: 'service', SOCIAL_IG_CLIPPER_ACCESS_TOKEN: 'ig-token' };
 const json = (v, status = 200) => new Response(JSON.stringify(v), { status, headers: { 'content-type': 'application/json' } });
@@ -144,26 +145,98 @@ test('account verification needs the desk\'s credential and the member\'s code i
   });
 });
 
+/* A campaign's source files are its creator's own uploads, and the creator can
+   still edit those network_media_assets rows after launch. A clipper is only
+   ever given a link to mnet-media/<the creator's auth user id>/<uuid>-<name>;
+   a row that says anything else is reported unavailable and never signed. */
+const CREATOR = '99999999-9999-4999-8999-999999999999';
+const CREATOR_AUTH = '66666666-6666-4666-8666-666666666666';
+const STRANGER_AUTH = '77777777-7777-4777-8777-777777777777';
+const HOOK = `${CREATOR_AUTH}/88888888-8888-4888-8888-888888888888-hook.mp3`;
+function sourceFiles({ file = {}, links = [{ auth_user_id: CREATOR_AUTH, m_uid: CREATOR }], claimed = () => true, signAnswer = null, linkStatus = 200 } = {}) {
+  return (u, init) => {
+    if (u.includes('/m_auth_user_links?') && u.includes('select=auth_user_id')) return linkStatus === 200 ? json(linkRows(u, links)) : json({ message: 'link table unreachable' }, linkStatus);
+    if (u.includes('/m_auth_user_links?')) return json([{ m_uid: M_UID }]);
+    if (u.includes('/action_clip_claims?')) return json(claimed() ? [{ id: 'c1' }] : []);
+    if (u.includes('/action_clip_assets?')) return json([
+      { id: 'a1', kind: 'audio', label: 'Hook stem', network_media_asset_id: 'f1', sort: 0 },
+      { id: 'a2', kind: 'moment', label: 'The hook', start_ms: 42000, end_ms: 58000, sort: 1 }]);
+    if (u.includes('/network_media_assets?')) return json(selectedColumns(u, [{ id: 'f1', bucket_id: 'mnet-media', object_path: HOOK, owner_m_uid: CREATOR, media_type: 'audio', mime_type: 'audio/mpeg', status: 'ready', post_id: null, ...file }]));
+    if (u.includes('/storage/v1/object/sign/')) {
+      // Storage signs whatever a service-role caller names, in any bucket: the Worker is the only gate.
+      const bucket = u.split('/storage/v1/object/sign/')[1];
+      const honest = (JSON.parse(init.body).paths || []).map((path) => ({ path, signedURL: `/object/sign/${bucket}/${path}?token=t` }));
+      return json(signAnswer ? signAnswer(honest) : honest);
+    }
+    return json({}, 404);
+  };
+}
+
 test('source files go only to clippers with an active claim, as expiring links', async () => {
   const request = new Request(`https://api.example/v1/clips/campaigns/${MISSION}/assets`);
   const url = new URL(request.url);
   let claimed = false;
-  const handler = (u) => {
-    if (u.includes('/m_auth_user_links?')) return json([{ m_uid: M_UID }]);
-    if (u.includes('/action_clip_claims?')) return json(claimed ? [{ id: 'c1' }] : []);
-    if (u.includes('/action_clip_assets?')) return json([
-      { id: 'a1', kind: 'audio', label: 'Hook stem', network_media_asset_id: 'f1', sort: 0 },
-      { id: 'a2', kind: 'moment', label: 'The hook', start_ms: 42000, end_ms: 58000, sort: 1 }]);
-    if (u.includes('/network_media_assets?')) return json([{ id: 'f1', bucket_id: 'mnet-media', object_path: 'm/hook.mp3', media_type: 'audio', mime_type: 'audio/mpeg' }]);
-    if (u.includes('/storage/v1/object/sign/mnet-media')) return json([{ path: 'm/hook.mp3', signedURL: '/object/sign/mnet-media/m/hook.mp3?token=t' }]);
-    return json({}, 404);
-  };
-  await withFetch(handler, async () => {
+  await withFetch(sourceFiles({ claimed: () => claimed }), async (calls) => {
     await assert.rejects(handleClippingRequest(request, env, USER, url), { status: 403 });
     claimed = true;
     const out = await handleClippingRequest(request, env, USER, url);
     assert.equal(out.expires_in, 900);
-    assert.equal(out.assets[0].url, 'https://db.example/storage/v1/object/sign/mnet-media/m/hook.mp3?token=t');
+    assert.equal(out.assets[0].url, `https://db.example/storage/v1/object/sign/mnet-media/${HOOK}?token=t`);
     assert.equal(out.assets[1].url, undefined, 'a moment is a time range, not a file');
+    const signs = calls.filter((c) => c.url.includes('/storage/v1/object/sign/'));
+    assert.equal(signs.length, 1);
+    assert.equal(signs[0].url, 'https://db.example/storage/v1/object/sign/mnet-media');
+    assert.deepEqual(signs[0].body.paths, [HOOK]);
+  });
+});
+
+test('a source file row repointed at another bucket, prefix or path is unavailable and never signed', async () => {
+  const request = new Request(`https://api.example/v1/clips/campaigns/${MISSION}/assets`);
+  const url = new URL(request.url);
+  const forged = [
+    { bucket_id: 'mcc-gated-audio', object_path: 'albums/i-am-here/01-master.wav' },
+    { bucket_id: 'creator-masters', object_path: HOOK },
+    { bucket_id: 'mnet-media', object_path: `${STRANGER_AUTH}/88888888-8888-4888-8888-888888888888-hook.mp3` },
+    { bucket_id: 'mnet-media', object_path: 'm/hook.mp3' },
+    { bucket_id: 'mnet-media', object_path: `${CREATOR_AUTH}/../${STRANGER_AUTH}/88888888-8888-4888-8888-888888888888-hook.mp3` },
+    { owner_m_uid: undefined },
+  ];
+  for (const file of forged) {
+    await withFetch(sourceFiles({ file }), async (calls) => {
+      const out = await handleClippingRequest(request, env, USER, url);
+      assert.equal(out.assets[0].url, undefined, JSON.stringify(file));
+      assert.equal(out.assets[0].unavailable, true);
+      assert.deepEqual(calls.filter((c) => c.url.includes('/storage/v1/object/sign/')), [], 'nothing is signed');
+    });
+  }
+  // the prefix is a real auth user, but not one linked to the file's owner
+  await withFetch(sourceFiles({ links: [{ auth_user_id: CREATOR_AUTH, m_uid: M_UID }] }), async (calls) => {
+    const out = await handleClippingRequest(request, env, USER, url);
+    assert.equal(out.assets[0].unavailable, true);
+    assert.deepEqual(calls.filter((c) => c.url.includes('/storage/v1/object/sign/')), []);
+  });
+});
+
+test('a storage answer padded with entries nobody asked for, or with holes, hands a clipper only the proven file', async () => {
+  const request = new Request(`https://api.example/v1/clips/campaigns/${MISSION}/assets`);
+  const url = new URL(request.url);
+  const evil = { path: 'albums/i-am-here/01-master.wav', signedURL: '/object/sign/mcc-gated-audio/albums/i-am-here/01-master.wav?token=EVIL' };
+  await withFetch(sourceFiles({ signAnswer: (honest) => [null, evil, ...honest, undefined, 7, 'x', {}] }), async () => {
+    const out = await handleClippingRequest(request, env, USER, url);
+    assert.equal(out.assets[0].url, `https://db.example/storage/v1/object/sign/mnet-media/${HOOK}?token=t`);
+    assert.equal(JSON.stringify(out).includes('EVIL'), false);
+  });
+  await withFetch(sourceFiles({ signAnswer: () => [null] }), async () => {
+    const out = await handleClippingRequest(request, env, USER, url);
+    assert.equal(out.assets[0].unavailable, true, 'holes are an unavailable file, not a failed request');
+  });
+});
+
+test('when the link table cannot be read no source file is signed and the request fails', async () => {
+  const request = new Request(`https://api.example/v1/clips/campaigns/${MISSION}/assets`);
+  const url = new URL(request.url);
+  await withFetch(sourceFiles({ linkStatus: 503 }), async (calls) => {
+    await assert.rejects(handleClippingRequest(request, env, USER, url));
+    assert.deepEqual(calls.filter((c) => c.url.includes('/storage/v1/object/sign/')), []);
   });
 });

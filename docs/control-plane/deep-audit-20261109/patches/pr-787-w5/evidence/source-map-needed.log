@@ -1,0 +1,12 @@
+# why the series edits the source map: series head f8499fad with ONLY the source map put back to the PR head's version, 2026-11-10T11:57:13Z
+{
+  "candidate_count": 640,
+  "capability_source_count": 104,
+  "support_only_count": 536,
+  "checks_total": 2458,
+  "checks_passed": 2457,
+  "checks_failed": 1,
+  "passed": false
+}
+FAIL: repo-wide discovered source set exactly classified {"missing_from_map": ["js/prim3-mission/topology-learning.mjs"], "stale_in_map": ["PRIM3/game/halo/adaptive/topology-learning.mjs"]}
+exit=1

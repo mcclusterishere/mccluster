@@ -14,6 +14,9 @@ from collections import Counter,defaultdict
 from pathlib import Path
 import numpy as np
 import trimesh
+from device_placement_bindings import load_bindings, bound_position, model_reference, origin_height
+from manufacturer_models import build_manufacturer_model
+from functools import lru_cache
 
 ROOT=Path(__file__).resolve().parents[5]
 HERE=Path(__file__).resolve().parent
@@ -29,6 +32,11 @@ LABS=OUT/"equity-uprise-it-lab-catalog-v1.json"
 REPORT=OUT/"equity-uprise-electronics-step4a-report.json"
 GLB=OUT/"equity-uprise-electronics-fabric-v1.glb"
 DEVICE_COMPONENTS=OUT/"equity-uprise-device-components-v1.json"
+WORKSTATIONS_GLB=OUT/"equity-uprise-workstations-v1.glb"
+
+@lru_cache(maxsize=16)
+def manufacturer_model(model_id):
+    return build_manufacturer_model(model_id)
 SOURCE_REL="docs/design/equity-uprise-building/production/electronics/electronics-population-policy-v1.json"
 MODEL_REL="docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb"
 FLOOR_INVENTORIES={
@@ -68,6 +76,7 @@ wireless_links=[]
 transient_profiles=[]
 positions={}
 device_component_records=[]
+placement_bindings=load_bindings()
 connection_counter=0
 rel_counter=0
 
@@ -225,7 +234,7 @@ def default_pos(n,kind,i=0,count=1):
 B1_DETAILED_POSITIONS={
     "B1-ELEC-UPS-01-I001":[36.5,15.5,2.85],
     "B1-ELEC-UPS-01-I002":[42.5,15.5,2.85],
-    "B1-TELECOM-CONSOLE-01":[37.5,24.0,3.15],
+    "B1-TELECOM-CONSOLE-01":[37.5,32.75,3.15],  # v3: console moved off the rack row
     "B1-LAB-CONSOLE-01":[47.5,39.25,3.2],
     "B1-LAB-DASHBOARD-01":[35.0,52.325,5.7],
     "B1-OPS-STATUS-01":[26.5,61.325,5.3],
@@ -322,7 +331,10 @@ def make_asset(aid,label,asset_type,level=None,position=None,systems=None,logica
     physical_status="not_applicable" if logical else "planned"
     commissioning="not_applicable" if logical else "not_started"
     tag_status="not_applicable" if logical else "unassigned"
-    p=position
+    binding=placement_bindings.get(aid)
+    if binding and (binding["asset_type"] != asset_type or binding["level"] != ln):
+        raise ValueError(f"Placement binding does not match asset {aid}")
+    p=bound_position(binding,ffe(ln)) if binding else position
     a={
       "asset_id":aid,"label":label,
       "source_snapshot":{"source":"electronics_step4a_policy","asset_type":asset_type,"design_intent":True},
@@ -358,6 +370,15 @@ def make_asset(aid,label,asset_type,level=None,position=None,systems=None,logica
       "lifecycle":{"design_status":"conceptual","physical_status":physical_status,"as_built_verified":False,"commissioning_status":commissioning,"last_verified_revision":None},
       "operations":{"service_access_required":not logical,"service_access_refs":[],"maintenance_procedure_refs":[],"documentation_refs":[SOURCE_REL],"replacement_route_refs":[]}
     }
+    if binding:
+        a["source_snapshot"]["support_binding"]=binding
+        if binding.get("model_id"):
+            reference=model_reference(binding["model_id"])
+            a["label"] += " · " + reference["display_name"] + " (proposed)"
+            a["source_snapshot"]["manufacturer_exterior"]={"model_id":binding["model_id"],"manufacturer":reference["manufacturer"],"display_name":reference["display_name"],"dimensions_m":reference["dimensions_m"],"fidelity":reference["fidelity"],"physical_asset_status":"not_received","sponsor_status":"unconfirmed_prospect","live_connection_status":"not_connected"}
+            a["authority"]["source_refs"].append("docs/design/equity-uprise-building/production/electronics/manufacturer-model-references-v1.json")
+        a["authority"]["source_refs"].append("docs/design/equity-uprise-building/production/electronics/device-placement-bindings-v1.json")
+        a["authority"]["provenance_notes"] += " Authored support binding; generic model, not visually or physically approved."
     return a
 
 def add_asset(a):
@@ -1239,6 +1260,23 @@ expert=[
  ("IT-LAB-040","Commissioning / As-Built Audit",["asset registry","cable certification","documentation"],["documentation_mismatch"],["whole_building"],["reconcile digital and physical evidence"],["registry/test records agree"])
 ]
 for x in expert: lab(x[0],"EXPERT",x[1],x[2],x[3],x[4],x[5],x[6],"restore baseline")
+# Server Lab ladder (owner, 2026-11-03): hands-on rack/server hardware labs on the
+# B1 MDF virtualization host. Authority: production/electronics/server-lab-hardware-v1.json,
+# production/lab-runtime/server-lab-scenario-pack-v1.json and SERVER-LAB-SPEC.md.
+server_labs=[
+ ("IT-LAB-041","FOUNDATION","Server Rack & Component Identification",["rack units","server components","identification"],["none"],["B1-SRV-HYP-01-I001","collapsed_core_switch","rack_ups","pdu"],["identify rack equipment and server components"],["every prompted item identified"]),
+ ("IT-LAB-042","TECHNICIAN","Server Rebuild: CPU, Memory, Storage, Power",["CPU/heatsink","memory population","drives/RAID card","redundant power","cabling"],["none"],["B1-SRV-HYP-01-I001","pdu","collapsed_core_switch"],["rebuild a stripped 2U server to specification"],["build validated with no seating, order or population error"]),
+ ("IT-LAB-043","ADMIN","Server Bring-Up: POST, Out-of-Band, RAID",["POST","BMC/SEL","RAID levels","link verification"],["none"],["B1-SRV-HYP-01-I001","LOGIC-VLAN-MGMT"],["power on, read POST/BMC, configure RAID, verify links"],["virtual disk meets requirement and both links verified"]),
+ ("IT-LAB-044","ADVANCED","Server Memory Failure",["ECC","POST","DIMM replacement"],["dimm_uncorrectable_error"],["B1-SRV-HYP-01-I001"],["locate and replace the failed DIMM"],["full memory restored"]),
+ ("IT-LAB-045","ADVANCED","Degraded RAID Member",["RAID","hot-swap","rebuild"],["raid_member_failed"],["B1-SRV-HYP-01-I001"],["replace the failed member only"],["virtual disk optimal"]),
+ ("IT-LAB-046","ADVANCED","Server PSU Failure",["redundant power","hot-swap"],["psu_failed"],["B1-SRV-HYP-01-I001"],["restore 1+1 redundancy"],["redundancy regained"]),
+ ("IT-LAB-047","ADVANCED","Server Fan Failure / Thermal Throttle",["cooling","sensors"],["fan_failed"],["B1-SRV-HYP-01-I001"],["replace the failed fan"],["temperatures and clocks normal"]),
+ ("IT-LAB-048","ADVANCED","Server NIC Link Down",["NIC bonding","DAC/transceivers"],["server_nic_link_down"],["B1-SRV-HYP-01-I001"],["restore the failed bond member"],["both links up at 10 Gb/s"]),
+ ("IT-LAB-049","ADVANCED","CMOS Battery / Clock Drift",["RTC","firmware settings","NTP"],["cmos_battery_depleted"],["B1-SRV-HYP-01-I001"],["replace battery and restore time"],["clock synchronized and settings persist"]),
+ ("IT-LAB-050","EXPERT","Server Firmware Baseline Mismatch",["firmware","update order"],["firmware_mismatch"],["B1-SRV-HYP-01-I001"],["apply the baseline in dependency order"],["inventory matches baseline"]),
+ ("IT-LAB-051","EXPERT","Multi-Fault Server Incident",["prioritization","redundancy","RAID"],["psu_failed","raid_member_failed"],["B1-SRV-HYP-01-I001"],["restore power redundancy before the rebuild"],["redundancy regained and virtual disk optimal"]),
+]
+for x in server_labs: lab(x[0],x[1],x[2],x[3],x[4],x[5],x[6],x[7],"restore baseline")
 
 # overlay geometry
 scene=trimesh.Scene()
@@ -1274,6 +1312,9 @@ def _place(mesh,center,direction=None):
     return mesh
 
 def _component_mesh(asset_id,component_id,mesh,color,role,asset_type,metadata=None):
+    binding=placement_bindings.get(asset_id)
+    if binding:
+        mesh.apply_transform(trimesh.transformations.rotation_matrix(math.radians(binding["yaw_degrees"]),[0,0,1],point=positions[asset_id]))
     mesh.visual.face_colors=color
     mesh.metadata={
         "asset_id":asset_id,
@@ -1432,6 +1473,13 @@ def _record_componentized_device(a,archetype_key,parts):
         "simulated_capabilities":archetype.get("simulated_capabilities",[]),
         "planned_behaviors":archetype.get("planned_behaviors",[]),
     }
+    if aid in placement_bindings:
+        record["support_binding"]=placement_bindings[aid]
+        model_id=placement_bindings[aid].get("model_id")
+        if model_id:
+            record["manufacturer_model"]=manufacturer_model(model_id).metadata
+            record["port_scope"]="Simulation-archetype connections only; not the proposed manufacturer physical IO or an adapter/commissioning claim."
+            record["physical_port_features"]=manufacturer_model(model_id).metadata["component_features"]
     device_component_records.append(record)
 
 def access_switch_component_meshes(a):
@@ -2469,9 +2517,27 @@ def physical_meshes_for_asset(a):
 
 for a in new_assets:
     if a["classification"]["registry_role"]=="capability_semantic": continue
-    for component_id,mesh in physical_meshes_for_asset(a):
-        name=a["asset_id"] if _is_primary_component(a["classification"]["asset_type"],component_id) else f"{a['asset_id']}::PART::{component_id}"
-        scene.add_geometry(mesh,node_name=name,geom_name=name)
+    binding=placement_bindings.get(a["asset_id"],{})
+    if a["classification"]["asset_type"]=="workstation" and binding.get("model_id"):
+        # One source-backed geometry per model/component, with exact instance IDs.
+        # Rigid graph transforms retain the manufacturer support datum and avoid
+        # replicating every grille vertex for every host on a floor.
+        model=manufacturer_model(binding["model_id"])
+        bottom=list(positions[a["asset_id"]]); bottom[2]-=origin_height(binding)
+        transform=trimesh.transformations.translation_matrix(bottom) @ trimesh.transformations.rotation_matrix(math.radians(binding["yaw_degrees"]),[0,0,1])
+        parts=list(model.components.items())
+        for component_id,mesh in parts:
+            name=a["asset_id"] if component_id=="CHASSIS" else f"{a['asset_id']}::PART::{component_id}"
+            geometry_name=f"manufacturer::{model.model_id}::{component_id}"
+            if geometry_name not in scene.geometry:
+                mesh=mesh.copy(); mesh.metadata={**mesh.metadata,"asset_type":"workstation","component_role":"source_backed_exterior","installation_status":"proposed_manufacturer_exterior"}
+                scene.geometry[geometry_name]=mesh
+            scene.graph.update(frame_to=name,frame_from=scene.graph.base_frame,matrix=transform,geometry=geometry_name)
+        _record_componentized_device(a,"workstation",parts)
+    else:
+        for component_id,mesh in physical_meshes_for_asset(a):
+            name=a["asset_id"] if _is_primary_component(a["classification"]["asset_type"],component_id) else f"{a['asset_id']}::PART::{component_id}"
+            scene.add_geometry(mesh,node_name=name,geom_name=name)
 
 cable_colors={
  "CAT6A-HORIZONTAL":[40,120,255,180],"CAT6A-WAP-SPARE":[80,150,255,130],"OS2-SM-DUPLEX":[220,80,255,210],
@@ -2506,8 +2572,11 @@ def cyl_between(a,b,radius,color):
     T[:3,3]=np.round((a+b)/2,6)
     m=trimesh.creation.cylinder(radius=round(float(radius),6),height=L,sections=8,transform=T)
     m.vertices=np.round(m.vertices,6)
-    # trimesh exports primitive metadata as GLTF extras; pin it too.
-    m.metadata={"shape":"cylinder","height":L,"radius":round(float(radius),6),"sections":8}
+    # Cable identity is the exact connection/segment node name. Constructor
+    # recipes are redundant with vertices and are not operational metadata.
+    # Omitting these 19k repeated extras reduces download/parse cost without
+    # touching vertices, materials, device-component extras or connection IDs.
+    m.metadata={}
     m.visual.face_colors=color
     return m
 for c in connections:
@@ -2523,10 +2592,28 @@ for c in connections:
         m=cyl_between(route[i],route[i+1],radius,cable_colors[ctype])
         if m is not None: scene.add_geometry(m,node_name=f"{c['connection_id']}::{i}")
 
+def omit_empty_mesh_extras(tree):
+    # Exact node IDs are authoritative. Omit only proven-redundant optional
+    # mesh names/empty extras; retain all populated manufacturer/device metadata.
+    from glb_export_hygiene import clean_export_tree
+    clean_export_tree(tree)
+
 OUT.mkdir(parents=True,exist_ok=True)
-glb=scene.export(file_type="glb")
+from glb_export_hygiene import clean_glb_bytes
+glb, export_proof = clean_glb_bytes(scene.export(file_type="glb"))
+write(OUT/"glb-export-equivalence-v2.json", export_proof)
 GLB.write_bytes(glb if isinstance(glb,(bytes,bytearray)) else bytes(glb))
 glb_sha=hashlib.sha256(GLB.read_bytes()).hexdigest()
+# Normal furnished views need only authored workstations and monitors, never the
+# full cable/plant graph. Preserve their exact node IDs and existing transforms.
+workstations_scene=trimesh.Scene()
+workstation_ids={a["asset_id"] for a in new_assets if a["classification"]["asset_type"] in {"workstation","monitor"}}
+for name in scene.graph.nodes_geometry:
+    if name.split("::PART::",1)[0] not in workstation_ids: continue
+    transform,geometry=scene.graph[name]
+    if geometry not in workstations_scene.geometry: workstations_scene.geometry[geometry]=scene.geometry[geometry]
+    workstations_scene.graph.update(frame_to=name,frame_from=workstations_scene.graph.base_frame,matrix=transform,geometry=geometry)
+WORKSTATIONS_GLB.write_bytes(workstations_scene.export(file_type="glb",tree_postprocessor=omit_empty_mesh_extras))
 
 # update registry
 registry["registry_version"]="step4b-physical-installation-fabric-v1"
@@ -2555,7 +2642,10 @@ manifest={
  "device_archetype_authority":"docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
  "device_component_catalog":"docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-device-components-v1.json",
  "step4c_componentized_devices_total":len(device_component_records),
- "overlay_glb":MODEL_REL,"overlay_sha256":glb_sha
+ "overlay_glb":MODEL_REL,"overlay_sha256":glb_sha,
+ "workstations_glb":str(WORKSTATIONS_GLB.relative_to(ROOT)),
+ "workstations_sha256":hashlib.sha256(WORKSTATIONS_GLB.read_bytes()).hexdigest(),
+ "workstations_asset_ids":sorted(workstation_ids)
 }
 write(MANIFEST,manifest)
 write(CONNECTIONS,{"schema_version":"1.1.0","status":"step4b-physical-installation-connections","connections":connections,"wireless_links":wireless_links})
@@ -2783,8 +2873,8 @@ ck("wireless AP assemblies expose mount, radome, LED, PoE port, and cable entry"
     for record in wireless_ap_component_records
 ), "")
 ck("all workstations use Step 4C component assemblies",len(workstation_component_records)==len(modeled_workstations),f"{len(workstation_component_records)}/{len(modeled_workstations)}")
-ck("workstation assemblies expose chassis, IO, power, NIC, display outputs, and status",all(
-    {x["component_id"] for x in record["components"]}.issuperset({"CHASSIS","FRONT_IO","REAR_IO","POWER_SUPPLY","NIC_PORT","DISPLAY_OUTPUTS","STATUS_INDICATOR"})
+ck("workstation assemblies match their source-backed exterior or generic simulation archetype",all(
+    {x["component_id"] for x in record["components"]} == (set(manufacturer_model(record["manufacturer_model"]["model_id"]).components) if record.get("manufacturer_model") else {"CHASSIS","FRONT_IO","REAR_IO","POWER_SUPPLY","NIC_PORT","DISPLAY_OUTPUTS","STATUS_INDICATOR"})
     and record.get("maturity")=="componentized"
     for record in workstation_component_records
 ), "")

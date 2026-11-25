@@ -1,6 +1,6 @@
 <!doctype html>
-<html lang="en">
-<head>
+<html lang="en" data-music-view="artist">
+<head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Artist · McCluster Music</title>
@@ -31,9 +31,17 @@
         <img class="ap-hero__avatar" id="creatorAvatar" alt="" hidden>
         <p class="ap-hero__kicker" id="creatorHandle">McCluster Music</p>
         <h1 class="ap-hero__name" id="creatorArtist">Artist</h1>
+        <span class="artist__credit-badge" id="creatorEquityCredit" hidden>Equity Uprise verified</span>
         <p class="ap-hero__bio" id="creatorBio">Opening the artist's page…</p>
         <p class="ap-hero__doors" id="apDoors"></p>
       </div>
+    </section>
+
+    <!-- McCLUSTER'S RECORDS (owner, 2026-11-23: "McCluster is the artist"): on his own artist page, the albums the
+         catalogue bills to the house, each opening its album (filled by the artist page's own script) -->
+    <section class="ap-shelf" id="apHouseWrap" aria-labelledby="apHouseTitle" hidden>
+      <h2 class="ap-label" id="apHouseTitle">Albums</h2>
+      <div class="ap-shelf__grid" id="apHouseShelf"></div>
     </section>
 
     <!-- THE RATE SHEET: what the artist sells. A request, never a charge:
@@ -67,6 +75,11 @@
       <div class="ap-tracks" id="creatorPublicTracks" role="list"><div class="creator-status">Loading releases…</div></div>
     </section>
 
+    <!-- a creator who is also credited in the house catalogue (data/albums.json): everything they appear on there,
+         listed here and playable (js/music-artist.js; owner, 2026-11-24: opening an artist shows everything they
+         appear on). Hidden unless the catalogue names them. -->
+    <section class="ap-singles ap-cat" id="apCatalogue" aria-labelledby="apCatalogueTitle" hidden></section>
+
     <dialog class="ap-book" id="apBook" aria-labelledby="apBookTitle">
       <form class="ap-book__form" id="apBookForm" method="dialog" novalidate>
         <p class="ap-label" id="apBookKicker">Booking request</p>
@@ -87,7 +100,9 @@
       </form>
     </dialog>
 
-    <p class="ap-foot">On McCluster Music · <a href="music-creator-terms.html">Creator terms</a> · <a href="creator.html" data-creator-door>Make your own artist page</a> <span class="ap-foot__terms">(one tap with your profile; accepts the Creator terms)</span></p>
+
+    <!-- the offer for whoever is looking (js/creator-onboarding.js, music slice M4): a guest is asked to sign in, a member who is not a creator gets the one tap, a creator opens Creator Studio -->
+    <p class="ap-foot">On McCluster Music · <a href="music-creator-terms.html">Creator terms</a> · <span data-creator-offer><span data-offer="become" hidden><a href="creator.html" data-creator-door>Make your own artist page</a> <span class="ap-foot__terms">(one tap with your profile; accepts the Creator terms)</span></span><span data-offer="studio"><a href="creator.html">Open Creator Studio</a></span><span data-offer="signin" hidden><a href="account.html?next=creator.html">Sign in to make your own artist page</a></span></span></p>
   </main>
 
   <script src="js/analytics.js?v=__STAMP__"></script>
@@ -95,10 +110,13 @@
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/gated-audio.js?v=__STAMP__"></script>
+  <script src="js/now-playing.js?v=__STAMP__"></script>
   <script src="js/music-engine.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/music-creator-page.js?v=__STAMP__"></script>
+  <script src="js/music-credits.js?v=__STAMP__"></script>
   <script src="js/music-creator-profile.js?v=__STAMP__"></script>
+  <script src="js/music-artist.js?v=__STAMP__"></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>
 </html>

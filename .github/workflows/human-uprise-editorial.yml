@@ -17,18 +17,144 @@ on:
       - 'supabase/tests/travel_journeys.behaviour.sql'
       - 'scripts/test/travel-journeys-db.mjs'
       - 'js/mnet.js'
+      - 'js/mnet-live.js'
+      - 'js/policy-mode*.js'
+      - 'css/policy-mode.css'
+      - 'js/site-navigation.js'
+      - 'scripts/e2e/policy-mode.e2e.mjs'
       - 'js/member-desk.js'
       - 'js/member-desk-core.js'
       - 'js/world-audio-continuity.js'
       - 'js/music-engine.js'
       - 'js/pip.js'
       - 'js/tabbar.js'
+      - 'js/shell-boot.js'
+      - 'js/now-playing.js'
+      - 'js/installed-app-dock.js'
+      - 'css/installed-app-dock.css'
+      - 'scripts/test/installed-app-shell.test.mjs'
+      - 'scripts/e2e/installed-app.e2e.mjs'
       - 'js/action-globe.js'
       - 'js/world-countries.js'
       - 'scripts/e2e/world-screen.e2e.mjs'
       - 'scripts/e2e/member-desk.e2e.mjs'
       - 'scripts/e2e/world-travel-guest.e2e.mjs'
       - 'scripts/e2e/music-world-continuity.e2e.mjs'
+      - 'creator.html'
+      - 'js/creator-onboarding.js'
+      - 'scripts/e2e/creator-onboarding.e2e.mjs'
+      - 'scripts/e2e/mission-pins.e2e.mjs'
+      - 'css/action-globe.css'
+      - 'css/world-countries.css'
+      - 'css/halo.css'
+      - 'js/world-space.js'
+      - 'js/world-transport.js'
+      - 'js/halo/**'
+      - 'data/geo/**'
+      - 'data/albums.json'
+      - 'index.html'
+      - 'listen.html'
+      - 'music-creator.html'
+      - 'account.html'
+      - 'js/music-community.js'
+      - 'js/music-creator-profile.js'
+      - 'workers/mccluster/src/human-uprise/**'
+      - 'workers/mccluster/src/company-site/**'
+      - 'workers/mccluster/src/world-host.js'
+      - 'scripts/e2e/world-switch.mjs'
+      - 'scripts/e2e/world-missions-guest.e2e.mjs'
+      - 'scripts/e2e/world-first-visit.e2e.mjs'
+      - 'js/live-content.js'
+      - 'css/world-gate.css'
+      - 'js/world-gate.js'
+      - 'scripts/e2e/world-gate.e2e.mjs'
+      - 'scripts/e2e/sign-in.e2e.mjs'
+      - 'scripts/e2e/support/world-gate-harness.mjs'
+      - 'js/world-mission-posts.js'
+      - 'tools/build-mission-import.mjs'
+      - 'data/missions/drawdown/missions.json'
+      - 'js/world-owner-modes.js'
+      - 'js/world-environment-mccluster.mjs'
+      - 'js/world-environment.mjs'
+      - 'js/world-environment-posts.js'
+      - 'js/world-environment-timeline.js'
+      - 'js/world-news-globe.js'
+      - 'js/environment-*.js'
+      - 'js/globe-*.js'
+      - 'vendor/equity-uprise/**'
+      - 'css/world-environment.css'
+      - 'scripts/e2e/world-environment.mjs'
+      - 'scripts/e2e/environment-globe.e2e.mjs'
+      - 'scripts/e2e/environment-world.e2e.mjs'
+      - 'scripts/e2e/fixtures/environment/**'
+      - 'scripts/e2e/support/**'
+      - 'scripts/test/world-environment*.test.mjs'
+      - 'scripts/test/environment-*.test.mjs'
+      - 'scripts/test/globe-*.test.mjs'
+      - 'scripts/test/eup-environment-plane.integration.mjs'
+      - 'scripts/test/support/eup-environment-plane.mjs'
+      - 'scripts/test/support/eup-module-policy-database.mjs'
+      - 'workers/mccluster/src/world-environment*.js'
+      - 'workers/mccluster/src/eup/modules.js'
+      - 'supabase/migrations/20261117144103_eup_module_policy_v1.sql'
+      - 'supabase/pending/20261119100000_eup_environment_events_v1*'
+      - 'supabase/migrations/*_eup_environment_events_v1_0*.sql'
+      - 'scripts/test/eup-environment-events*.mjs'
+      - 'scripts/test/support/eup-environment-database.mjs'
+      - 'workers/mccluster/src/eup/environment/**'
+      - 'workers/mccluster/src/eup/router.js'
+      - 'scripts/test/eup-environment-owner*.mjs'
+      - 'scripts/test/support/eup-environment-owner-plane.mjs'
+      - 'scripts/test/eup-environment-ingest*.mjs'
+      - 'scripts/test/eup-environment-timeline*.mjs'
+      - 'scripts/test/support/eup-environment-timeline-plane.mjs'
+      - 'scripts/e2e/environment-timeline.e2e.mjs'
+      - 'packages/release-policy/globe.mjs'
+      - 'workers/mccluster/test/support/usgs-ingest-fixtures.mjs'
+      - 'supabase/pending/20261119062110_network_connections_consent_guard_v1*'
+      - 'supabase/migrations/*_network_connections_consent_guard_v1.sql'
+      - 'scripts/test/network-connections-consent*.mjs'
+      - 'scripts/test/support/network-connections-database.mjs'
+      - 'supabase/pending/20261119140000_mission_catalog_sources_v1*'
+      - 'supabase/tests/mission_catalog_sources.stub.sql'
+      - 'scripts/test/mission-catalog-sources*.mjs'
+      - 'scripts/test/support/mission-catalog-sources-database.mjs'
+      - 'js/mission-source-words.js'
+      - 'js/world-source-profile.js'
+      - 'css/world-source-profile.css'
+      - 'data/missions/drawdown-areas.json'
+      - 'scripts/test/world-source-profile.test.mjs'
+      - 'scripts/test/mission-areas.test.mjs'
+      - 'scripts/e2e/world-source-profile.e2e.mjs'
+      - 'workers/mccluster/src/mission-sources.js'
+      - 'scripts/test/mission-sources-owner*.mjs'
+      - 'scripts/test/support/mission-sources-plane.mjs'
+      - 'js/control-room/mission-sources.js'
+      - 'js/control-room/action-network.js'
+      - 'css/control-mission-sources.css'
+      - 'scripts/e2e/control-mission-sources.e2e.mjs'
+      - 'workers/mccluster/test/fixtures/environment/usgs-ingest/**'
+      - 'workers/mccluster/src/world-layers.js'
+      - 'scripts/test/support/eup-league-plane.mjs'
+      - 'scripts/e2e/control-eup-environment.e2e.mjs'
+      - 'js/control-room/eup-environment.js'
+      - 'js/control-room/eup.js'
+      - 'css/control-eup-environment.css'
+      - 'control.html'
+      - 'scripts/perf/**'
+      - 'css/daylight.css'
+      - 'scripts/e2e/world-countries.e2e.mjs'
+      - 'scripts/e2e/world-globe-feed.e2e.mjs'
+      - 'scripts/e2e/world-transport.e2e.mjs'
+      - 'scripts/e2e/anti-social.e2e.mjs'
+      - 'scripts/e2e/human-uprise-door.e2e.mjs'
+      - 'scripts/e2e/owner-halo-globe.e2e.mjs'
+      - 'carry.html'
+      - 'js/carry.js'
+      - 'scripts/e2e/carry.e2e.mjs'
+      - 'scripts/e2e/platform-hosts.e2e.mjs'
+      - 'data/seo/domain-architecture.json'
+      - 'workers/mccluster/src/platform/**'
       - '.github/workflows/human-uprise-editorial.yml'
   workflow_dispatch:
 permissions:
@@ -39,17 +165,18 @@ concurrency:
 jobs:
   browser:
     name: browser (${{ matrix.suite }})
-    runs-on: ubuntu-latest
+    # Keep the pinned Playwright browser dependencies on a supported image.
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        suite: [database, editorial, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation]
+        suite: [database, editorial-iphone-portrait, editorial-iphone-landscape, editorial-ipad-portrait, editorial-ipad-landscape, editorial-desktop, editorial-video-composer, travel-iphone-portrait, travel-iphone-landscape, travel-ipad-portrait, travel-ipad-landscape, travel-desktop, guest-travel, member-desk, music-world, news-guest, navigation, installed-app, creator-onboarding, mission-pins, world-missions-guest, world-first-visit, world-gate, sign-in, world-countries, world-globe-feed, world-transport, anti-social, human-uprise-door, owner-halo-globe, policy-mode, world-environment, environment-globe, environment-world, environment-unit, environment-plane, environment-store, environment-owner, environment-control, environment-ingest, connections-consent, mission-sources-store, mission-sources-owner, environment-timeline, environment-timeline-world, mission-sources-control, world-source-profile, carry, platform-pages]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '22'
       - name: Prepare browser dependencies outside the repository
@@ -67,7 +194,11 @@ jobs:
           mkdir -p /tmp/hu-proof
           case "${{ matrix.suite }}" in
             database) node scripts/test/travel-journeys-db.mjs ;;
-            editorial) E2E_ONLY=editorial node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/world ;;
+            editorial-iphone-portrait|editorial-iphone-landscape|editorial-ipad-portrait|editorial-ipad-landscape|editorial-desktop)
+              device="${{ matrix.suite }}"
+              EDITORIAL_DEVICE="${device#editorial-}" E2E_EXCLUDE=editorial-video-composer E2E_ONLY=editorial node scripts/e2e/world-screen.e2e.mjs "/tmp/hu-proof/${{ matrix.suite }}"
+              ;;
+            editorial-video-composer) E2E_ONLY=editorial-video-composer node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/editorial-video-composer ;;
             travel-iphone-portrait) E2E_ONLY=travel-iphone-portrait node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/travel-iphone-portrait ;;
             travel-iphone-landscape) E2E_ONLY=travel-iphone-landscape node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/travel-iphone-landscape ;;
             travel-ipad-portrait) E2E_ONLY=travel-ipad-portrait node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/travel-ipad-portrait ;;
@@ -78,9 +209,47 @@ jobs:
             music-world) node scripts/e2e/music-world-continuity.e2e.mjs /tmp/hu-proof/music-world ;;
             news-guest) E2E_ONLY=news-guest node scripts/e2e/world-screen.e2e.mjs /tmp/hu-proof/news-guest ;;
             navigation) node scripts/e2e/site-navigation.e2e.mjs /tmp/hu-proof/navigation ;;
+            installed-app)
+              node --test scripts/test/installed-app-shell.test.mjs
+              node scripts/e2e/installed-app.e2e.mjs /tmp/hu-proof/installed-app
+              ;;
+            creator-onboarding) node scripts/e2e/creator-onboarding.e2e.mjs /tmp/hu-proof/creator-onboarding ;;
+            mission-pins) node scripts/e2e/mission-pins.e2e.mjs /tmp/hu-proof/mission-pins ;;
+            world-missions-guest) node scripts/e2e/world-missions-guest.e2e.mjs /tmp/hu-proof/world-missions-guest ;;
+            world-first-visit) node scripts/e2e/world-first-visit.e2e.mjs /tmp/hu-proof/world-first-visit ;;
+            world-gate) node scripts/e2e/world-gate.e2e.mjs /tmp/hu-proof/world-gate ;;
+            sign-in) node scripts/e2e/sign-in.e2e.mjs /tmp/hu-proof/sign-in ;;
+            world-countries) node scripts/e2e/world-countries.e2e.mjs /tmp/hu-proof/world-countries ;;
+            world-globe-feed) node scripts/e2e/world-globe-feed.e2e.mjs /tmp/hu-proof/world-globe-feed ;;
+            world-transport) node scripts/e2e/world-transport.e2e.mjs /tmp/hu-proof/world-transport ;;
+            anti-social) node scripts/e2e/anti-social.e2e.mjs /tmp/hu-proof/anti-social ;;
+            human-uprise-door) node scripts/e2e/human-uprise-door.e2e.mjs /tmp/hu-proof/human-uprise-door ;;
+            policy-mode) node scripts/e2e/policy-mode.e2e.mjs /tmp/hu-proof/policy-mode ;;
+            owner-halo-globe) node scripts/e2e/owner-halo-globe.e2e.mjs /tmp/hu-proof/owner-halo-globe ;;
+            world-environment) node scripts/e2e/world-environment.mjs /tmp/hu-proof/world-environment ;;
+            environment-globe) CESIUM_DIR=$CESIUM_DIR node scripts/e2e/environment-globe.e2e.mjs /tmp/hu-proof/environment-globe ;;
+            environment-world) CESIUM_DIR=$CESIUM_DIR node scripts/e2e/environment-world.e2e.mjs /tmp/hu-proof/environment-world ;;
+            environment-unit) node --test scripts/test/world-environment*.test.mjs scripts/test/environment-*.test.mjs scripts/test/globe-*.test.mjs ;;
+            environment-plane) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/eup-environment-plane.integration.mjs ;;
+            environment-store) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/eup-environment-events.integration.mjs ;;
+            environment-owner) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/eup-environment-owner.integration.mjs ;;
+            environment-control) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/e2e/control-eup-environment.e2e.mjs /tmp/hu-proof/environment-control ;;
+            environment-ingest) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/eup-environment-ingest.integration.mjs ;;
+            environment-timeline) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/eup-environment-timeline.integration.mjs ;;
+            environment-timeline-world) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" CESIUM_DIR=$CESIUM_DIR node scripts/e2e/environment-timeline.e2e.mjs /tmp/hu-proof/environment-timeline-world ;;
+            connections-consent) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/network-connections-consent.integration.mjs ;;
+            mission-sources-store) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/mission-catalog-sources.integration.mjs ;;
+            mission-sources-owner) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/test/mission-sources-owner.integration.mjs ;;
+            mission-sources-control) PGLITE_MODULE="$PGLITE_DIR/@electric-sql/pglite/dist/index.js" node scripts/e2e/control-mission-sources.e2e.mjs /tmp/hu-proof/mission-sources-control ;;
+            world-source-profile)
+              node --test scripts/test/world-source-profile.test.mjs scripts/test/mission-areas.test.mjs
+              node scripts/e2e/world-source-profile.e2e.mjs /tmp/hu-proof/world-source-profile
+              ;;
+            carry) node scripts/e2e/carry.e2e.mjs /tmp/hu-proof/carry ;;
+            platform-pages) node scripts/e2e/platform-hosts.e2e.mjs --browser /tmp/hu-proof/platform-pages ;;
             *) echo 'Unknown suite' >&2; exit 2 ;;
           esac
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: human-uprise-editorial-${{ github.run_id }}-${{ matrix.suite }}

@@ -1,0 +1,60 @@
+From d389185bbe31583d4f7454d7dd6000f5e20bf5c6 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 10 Nov 2026 00:26:37 +0000
+Subject: [PATCH 3/3] docs(privacy): record the wall's states and what may take
+ it down
+
+Section 2.1 of the authority record now says what the entry notice does
+when a visitor comes back to it, agrees somewhere else, or arrives with a
+sign-in still being carried in (audit findings A3 and A4), where that is
+tested, and that WebKit and iPad Safari are not covered by any automated
+run.
+
+Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01RNT2Nvh5aJGtEzBMdqUF4T
+---
+ docs/SEO-AEO-AUTHORITY-SYSTEM.md | 28 ++++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+diff --git a/docs/SEO-AEO-AUTHORITY-SYSTEM.md b/docs/SEO-AEO-AUTHORITY-SYSTEM.md
+index 534f6185..d3323910 100644
+--- a/docs/SEO-AEO-AUTHORITY-SYSTEM.md
++++ b/docs/SEO-AEO-AUTHORITY-SYSTEM.md
+@@ -124,6 +124,34 @@ Blocking document pages can affect reader and crawler access; the owner chose
+ this explicit either-agree-or-exit behavior. Do not quietly re-enable a
+ dismissible banner as an SEO optimization.
+ 
++The wall has no dead end and no gap in front of it (deep audit 2026-11-09,
++findings A3 and A4):
++
++- **Go back is a transition, not an end state.** Both answers are set aside
++  only while the browser leaves. A document the browser keeps and shows again
++  (the back/forward cache: Go back, then Forward), a step back that stays in
++  the same document, or a history with nothing behind the entry asks again
++  with both answers working; after a Go back that went nowhere, the next one
++  leaves by the referrer or a blank page.
++- **Only a recorded agreement takes a standing wall down.** Agreement given on
++  the Privacy Policy page, in another tab, on another McCluster host, or held
++  in the arriving member's own account record is read when the page is shown,
++  focused or told of the change, and the wall comes down where it stands,
++  once. Go back, Escape, a timeout and a failed sign-in handoff never do.
++  As with agreeing on the Privacy Policy page, analytics start with the next
++  page.
++- **A sign-in being carried in waits behind the wall.** A page opened with
++  `#mcc_handoff=` is concealed at once and shows one status line with no
++  answers. It ends in entry on the member's own record, or in the question:
++  ten seconds without word of the sign-in is the limit, and four more for a
++  page that reloads signed in.
++
++Unit and contract coverage is in `scripts/test/account-identity-gate.test.mjs`
++and `scripts/test/privacy-notice-policy.test.mjs`; the real-browser journeys,
++including a real back/forward-cache restore in full Chromium, are in
++`scripts/e2e/music-world-continuity.e2e.mjs`. WebKit and iPad Safari are not
++covered by any automated run.
++
+ ---
+ 
+ ## 3. The entity graph
+-- 
+2.43.0
+

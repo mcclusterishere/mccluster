@@ -21,7 +21,7 @@ let chromium;
 try { ({ chromium } = require('playwright')); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   try { const body = await readFile(join(ROOT, path === '/' ? 'index.html' : path)); res.writeHead(200, { 'content-type': TYPES[extname(path)] || 'application/octet-stream' }); res.end(body); }
@@ -45,7 +45,7 @@ const REGIONS = [{ region_key: 'GB-LND', region_label: 'London', country_code: '
 
 async function context(viewport, { reducedMotion = 'no-preference' } = {}) {
   const mobile = viewport.width < 600;
-  const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile: mobile, hasTouch: mobile, reducedMotion });
+  const ctx = await browser.newContext({ serviceWorkers: 'block', viewport, deviceScaleFactor: 1, isMobile: mobile, hasTouch: mobile, reducedMotion });
   await ctx.addInitScript(() => { localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() })); });
   await ctx.route('https://api.mccluster.org/**', (route) => {
     const p = new URL(route.request().url()).pathname;
@@ -59,6 +59,11 @@ async function context(viewport, { reducedMotion = 'no-preference' } = {}) {
     if (p === '/rest/v1/rpc/action_globe_public_regions') return json(route, REGIONS);
     return json(route, []);
   });
+  /* NASA GIBS imagery (day and city-light tiles, js/action-globe.js): served locally so a CDN
+     hiccup or a CORS-less error page from gibs.earthdata.nasa.gov can never fail this page's
+     own console-error check. Any small JPEG stands in for a tile. */
+  const TILE = await readFile(new URL('../../assets/img/closet/seek-first/sf-33.jpg', import.meta.url));
+  await ctx.route('https://gibs.earthdata.nasa.gov/**', (route) => route.fulfill({ status: 200, contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*' }, body: TILE }));
   /* CESIUM_DIR: serve Cesium from a local build, as scripts/e2e/world-screen.e2e.mjs does, when the CDN is out of reach */
   if (process.env.CESIUM_DIR) await ctx.route('https://cesium.com/**/Build/Cesium/**', async (route) => {
     const rel = new URL(route.request().url()).pathname.split('/Build/Cesium/')[1];
@@ -67,6 +72,7 @@ async function context(viewport, { reducedMotion = 'no-preference' } = {}) {
     catch { return route.abort(); }
   });
   const page = await ctx.newPage();
+  page.setDefaultTimeout(90000);   // software GL: a screenshot of the globe can take longer than 30 s
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });

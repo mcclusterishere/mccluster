@@ -62,6 +62,18 @@ scene = trimesh.Scene()
 records = []
 modelled_inventory_ids = set()
 
+import sys
+sys.path.insert(0, str(HERE.parent / "interiors"))
+sys.path.insert(0, str(HERE.parent / "brand"))
+from eu_furniture_kit import FurnitureKit, load_layout
+from eu_brand_slots import slots_for, add_brand_slots
+
+LAYOUT = load_layout(HERE / "floor-01-interior-layout-v3.json")
+SITE = json.loads((HERE / "floor-01-site-egress.json").read_text())
+EXITS = {o["object_id"]: o["location"] for o in SITE["exterior_openings"]}
+# Inventory furniture realized by the v3 layout is built ONLY by the shared kit.
+_REALIZED = {i["realizes_inventory_id"] for i in LAYOUT["items"] if i.get("realizes_inventory_id")}
+
 
 def mark(inv_id):
     if inv_id:
@@ -71,6 +83,8 @@ def mark(inv_id):
 
 
 def box(name, bounds, height, z=0, color=None, inv_id=None):
+    if name.split("::")[0] in _REALIZED:
+        return None
     x1, y1, x2, y2 = map(float, bounds)
     mesh = trimesh.creation.box(
         extents=((x2 - x1) * FT, (y2 - y1) * FT, height * FT)
@@ -86,6 +100,8 @@ def box(name, bounds, height, z=0, color=None, inv_id=None):
 
 
 def cyl(name, xy, radius, height, z=0, color=None, inv_id=None, sections=32):
+    if name.split("::")[0] in _REALIZED:
+        return None
     mesh = trimesh.creation.cylinder(
         radius=radius * FT, height=height * FT, sections=sections
     )
@@ -271,23 +287,29 @@ def light_bar(name, bounds, inv_id="F1-LIGHT-GRID-01", color=None):
 
 
 def stair(name, bounds, flight_width):
+    """Floor 1 -> Floor 2 run, matching the combined Core V2 chassis exactly.
+
+    v3: the previous local stair started its first tread at Y54.75, on top of the
+    landing and inside the stair door opening; the chassis lands at Y54.75-58.25
+    and starts climbing at Y58.25 (11 in treads, 22 risers per 13.5 ft).
+    """
     x1, y1, x2, y2 = bounds
     margin = 0.75
     west = (x1 + margin, x1 + margin + flight_width)
     east = (x2 - margin - flight_width, x2 - margin)
-    sy = y1 + 0.75
-    ny = y2 - 4.5
-    tread = (ny - sy) / 10
+    sy, ny = 58.25, 67.416666667
     rise = 13.5 / 22
-    box(name + "::lower-landing", (west[0], y1 + 0.75, west[1], sy + 2.5), 0.25, 0, C["stair"])
-    for i in range(10):
-        box(name + f"::flight1-{i+1:02d}", (west[0], sy + i * tread, west[1], sy + (i + 0.92) * tread), 0.22, (i + 1) * rise - 0.22, C["stair"])
+    tread = 11 / 12
     mid = 11 * rise
+    box(name + "::lower-landing", (west[0], 54.75, west[1], sy), 0.25, 0, C["stair"])
+    for i in range(10):
+        ya = sy + i * tread
+        box(name + f"::flight1-{i+1:02d}", (west[0], ya, west[1], ya + tread * 0.92), 0.22, (i + 1) * rise - 0.22, C["stair"])
     box(name + "::mid-landing", (west[0], ny, east[1], y2 - 0.75), 0.25, mid - 0.25, C["stair"])
     for i in range(10):
-        box(name + f"::flight2-{i+1:02d}", (east[0], ny - (i + 0.92) * tread, east[1], ny - i * tread), 0.22, mid + (i + 1) * rise - 0.22, C["stair"])
-    box(name + "::upper-landing", (east[0], y1 + 0.75, east[1], sy + 2.5), 0.25, 13.25, C["stair"])
-    # rails make the stairs read spatially without claiming permit detail
+        yb = ny - i * tread
+        box(name + f"::flight2-{i+1:02d}", (east[0], yb - tread * 0.92, east[1], yb), 0.22, mid + (i + 1) * rise - 0.22, C["stair"])
+    box(name + "::upper-landing", (east[0], 54.75, east[1], sy), 0.25, 13.25, C["stair"])
     for x in (west[0], west[1], east[0], east[1]):
         box(name + f"::rail-{x:.2f}", (x - 0.035, sy, x + 0.035, ny), 3.0, 2.0, C["core"])
 
@@ -297,8 +319,30 @@ def stair(name, bounds, flight_width):
 # ---------------------------------------------------------------------------
 box("floor_slab", (0, 0, 72, 72), 0.5, -0.5, C["floor"])
 box("north_exterior_wall", (0, 71.25, 72, 72), H, 0, C["wall"])
-box("west_exterior_wall", (0, 0, 0.75, 60), H, 0, C["wall"])
-box("east_exterior_wall", (71.25, 0, 72, 72), H, 0, C["wall"])
+# Exterior walls carry the real Floor 1 exit doors from floor-01-site-egress.json:
+# Stair A discharge (east, on the Stair A landing) and the paired west door
+# (Stair B exit leaf + secure service leaf).
+DOOR_H = 7.5
+def exterior_wall_with_doors(name, x1, x2, y1, y2, facade):
+    ops = sorted((loc["y1"], loc["y2"]) for loc in EXITS.values() if loc["facade"] == facade and y1 <= loc["y1"] < y2)
+    cur = y1
+    for i, (a, b) in enumerate(ops):
+        if a > cur:
+            box(f"{name}_{i}", (x1, cur, x2, a), H, 0, C["wall"])
+        box(f"{name}_lintel_{i}", (x1, a, x2, b), H - DOOR_H, DOOR_H, C["wall"])
+        cur = b
+    if y2 > cur:
+        box(f"{name}_end", (x1, cur, x2, y2), H, 0, C["wall"])
+exterior_wall_with_doors("west_exterior_wall", 0, 0.75, 0, 60, "west")
+exterior_wall_with_doors("east_exterior_wall", 71.25, 72, 0, 72, "east")
+EXIT_DOOR_NODES = []
+for oid, loc in sorted(EXITS.items()):
+    if loc["facade"] not in ("east", "west"):
+        continue
+    xa, xb = (71.3, 71.45) if loc["facade"] == "east" else (0.3, 0.45)
+    box(f"{oid}::leaf", (xa, loc["y1"] + 0.05, xb, loc["y2"] - 0.05), DOOR_H - 0.1, 0.05, C["freight"])
+    box(f"{oid}::push-bar", (xa - 0.12 if loc["facade"] == "east" else xb, loc["y1"] + 0.3, xa if loc["facade"] == "east" else xb + 0.12, loc["y2"] - 0.3), 0.12, 3.4, C["core"])
+    EXIT_DOOR_NODES.append({"object_id": oid, **loc})
 box("south_exterior_left", (0, 0, 29, 0.75), H, 0, C["wall"])
 box("south_exterior_right", (43, 0, 72, 0.75), H, 0, C["wall"])
 
@@ -320,8 +364,14 @@ box("ceiling_corridor", (18, 54, 60, 60), 0.25, 10.75, C["wall"])
 wv("vestibule_west_glass", 29, 0, 9, 0.2, H, color=C["glass"])
 wv("vestibule_east_glass", 43, 0, 9, 0.2, H, color=C["glass"])
 wh("vestibule_inner_glass", 29, 43, 9, 0.2, H, [(31, 41)], C["glass"])
-for x in (29, 31, 36, 41, 43):
+# Side frames run with the vestibule glass; door-line frames are short posts at
+# the outer (Y0) and inner (Y9) door lines only. (v3: the old continuous 9 ft
+# frames at X31/36/41 split the vestibule into 2-5 ft slots.)
+for x in (29, 43):
     box(f"entry_frame_{x}", (x - 0.08, 0, x + 0.08, 9), H, 0, C["core"])
+for x in (31, 36, 41):
+    box(f"entry_frame_{x}_outer", (x - 0.08, 0, x + 0.08, 0.6), H, 0, C["core"])
+    box(f"entry_frame_{x}_inner", (x - 0.08, 8.6, x + 0.08, 9.2), H, 0, C["core"])
 
 # Inventory-driven public door pairs
 for inv_id, y in [("F1-ENTRY-DOOR-OUTER", 0.36), ("F1-ENTRY-DOOR-INNER", 8.92)]:
@@ -333,11 +383,17 @@ for inv_id, y in [("F1-ENTRY-DOOR-OUTER", 0.36), ("F1-ENTRY-DOOR-INNER", 8.92)]:
         box(f"{inv_id}::frame-{x:.1f}", (x - 0.06, y - 0.12, x + 0.06, y + 0.12), 8.8, 0, C["core"], inv_id)
 
 box("F1-ENTRY-MAT-01::mat", ibounds("F1-ENTRY-MAT-01"), 0.06, 0.01, C["rug"], "F1-ENTRY-MAT-01")
-box("F1-ENTRY-SIGN-01::panel", (33, 8.88, 39, 9.08), 1.8, 6.65, C["stone"], "F1-ENTRY-SIGN-01")
-box("F1-ENTRY-SIGN-01::red-line", (34, 8.84, 38, 9.02), 0.12, 6.95, C["red"], "F1-ENTRY-SIGN-01")
+# Vestibule identity: runtime brand slot only (no plate, no drawn mark); the
+# restrained red reveal below it is architecture, not part of any mark.
+BRAND_SLOTS = add_brand_slots(scene, slots_for("interior/F1/"), 0.0, mark)
+box("vestibule_red_reveal", (34, 8.84, 38, 9.02), 0.12, 8.62, C["red"])  # transom line above the inner doors
 
 box("F1-ARRIVAL-INSET-01::floor-field", ibounds("F1-ARRIVAL-INSET-01"), 0.06, 0.01, C["floor_alt"], "F1-ARRIVAL-INSET-01")
 box("F1-ARRIVAL-NAV-01::reveal", ibounds("F1-ARRIVAL-NAV-01"), 0.10, 0.02, C["red"], "F1-ARRIVAL-NAV-01")
+
+# v3 interior furnishing layer: shared catalog + floor-01-interior-layout-v3.json
+KIT = FurnitureKit(scene, LAYOUT["palette"], "F1", 0.0, mark)
+KIT.build_layout(LAYOUT)
 
 # ---------------------------------------------------------------------------
 # Orientation Lounge — preserve V1 composition, upgrade primitives
@@ -437,10 +493,15 @@ stair("stair_b", SB, 3.9)
 wh("stair_a_south", 60, 72, 54, 0.65, H, [(61.5, 64.5)], C["core"])
 wh("stair_a_north", 60, 72, 71.675, 0.65, H, color=C["core"])
 wv("stair_a_west", 60, 54, 72, 0.65, H, color=C["core"])
-wv("stair_a_east", 71.675, 54, 72, 0.65, H, color=C["core"])
+_sa = EXITS["F1-DOOR-STAIR-A-DISCHARGE"]
+wv("stair_a_east", 71.675, 54, 72, 0.65, H, [(_sa["y1"], _sa["y2"])], C["core"])
+box("stair_a_east_exit_lintel", (71.35, _sa["y1"], 72.0, _sa["y2"]), H - DOOR_H, DOOR_H, C["core"])
 stair("stair_a", SA, 4.8)
-box("F1-STAIR-B-BARRIER-DOWN::barrier", (13.9, 54.22, 17.1, 54.42), 3.0, 0, C["red"], "F1-STAIR-B-BARRIER-DOWN")
-box("F1-STAIR-A-BARRIER-DOWN::barrier", (61.4, 54.22, 64.6, 54.42), 3.0, 0, C["red"], "F1-STAIR-A-BARRIER-DOWN")
+# Discharge-direction barriers: across the head of the flight that continues DOWN
+# to B1 (east strip of each stair at Y58.25), never across the stair door itself.
+# The previous bars sat in the X61.5-64.5 / X14-17 doorways and blocked entry.
+box("F1-STAIR-B-BARRIER-DOWN::gate", (13.35, 58.3, 17.25, 58.5), 3.0, 0, C["red"], "F1-STAIR-B-BARRIER-DOWN")
+box("F1-STAIR-A-BARRIER-DOWN::gate", (66.4, 58.3, 71.25, 58.5), 3.0, 0, C["red"], "F1-STAIR-A-BARRIER-DOWN")
 
 # ---------------------------------------------------------------------------
 # Support band / life safety / operations
@@ -551,6 +612,14 @@ check("Orientation Lounge modeled", "F1-LOUNGE-SOFA-01" in modelled_inventory_id
 check("Intake modeled", "F1-INTAKE-TABLE-01" in modelled_inventory_ids)
 check("Passport Studio modeled", "F1-PASSPORT-TABLE-01" in modelled_inventory_ids)
 check("Directory modeled", "F1-DIRECTORY-01" in modelled_inventory_ids)
+check("vestibule identity is a brand slot", len(BRAND_SLOTS) == 1)
+# Reception millwork and the entry mat are built-in architecture (V1 focal composition), not loose furniture.
+_BUILT_IN = {"F1-RECEPTION-DESK-01", "F1-RECEPTION-ACCESS-01", "F1-ENTRY-MAT-01"}
+_furn = {k for k, o in INV.items() if o["category"] in ("furniture", "decorative_functional")} - _BUILT_IN
+_lay = {i.get("realizes_inventory_id") for i in LAYOUT["items"]} - {None}
+check("v3 layout realizes every inventory furniture record", _furn <= _lay, sorted(_furn - _lay))
+for _oid in ("F1-DOOR-STAIR-A-DISCHARGE", "F1-DOOR-STAIR-B-DISCHARGE", "F1-DOOR-SERVICE-WEST"):
+    check(f"{_oid} door opening + leaf modeled at the egress-plan location", any(d["object_id"] == _oid for d in EXIT_DOOR_NODES))
 
 failed = [x for x in checks if not x["passed"]]
 report = {
@@ -566,6 +635,12 @@ report = {
     "inventory_records": len(INV),
     "inventory_records_modeled": len(modelled_inventory_ids),
     "inventory_records_missing": missing_inventory,
+    "interior_layout": "floor-01-interior-layout-v3.json",
+    "furniture": KIT.summary(),
+    "furniture_placements": KIT.placed,
+    "brand_slots": BRAND_SLOTS,
+    "exit_doors": EXIT_DOOR_NODES,
+    "triangles": int(sum(len(scene.geometry[scene.graph[_n][1]].faces) for _n in scene.graph.nodes_geometry)),
     "checks_total": len(checks),
     "checks_passed": len(checks) - len(failed),
     "checks_failed": len(failed),

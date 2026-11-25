@@ -13,6 +13,7 @@ import {
   cancelPaymentIntent,
   verifyStripeWebhook
 } from './stripe.js';
+import { allowedOrigins } from '../lib/http.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const TRANSITIONS = {
@@ -89,9 +90,14 @@ export function rentalQuote(vehicle, tenant, body = {}, serverTimeZone) {
   return { days, daily_rate_cents: daily, extras_cents: extras, protection_cents: protection, tax_cents: tax, platform_fee_cents: platform, total_cents: total, protection_plan: plan, extras: extraIds };
 }
 
+/* never '*': an origin that is not allowlisted gets the first allowlisted
+   one, as ../lib/http.js answers */
+function corsOrigin(env) {
+  return env.ALLOWED_ORIGIN && env.ALLOWED_ORIGIN !== '*' ? env.ALLOWED_ORIGIN : allowedOrigins(env)[0];
+}
 function cors(env) {
   return {
-    'access-control-allow-origin': env.ALLOWED_ORIGIN || '*',
+    'access-control-allow-origin': corsOrigin(env),
     'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS',
     'access-control-allow-headers': 'content-type,authorization,x-we-user-id,x-we-role',
     'access-control-max-age': '86400'

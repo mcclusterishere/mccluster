@@ -1,0 +1,61 @@
+{
+ "type": "Feature",
+ "properties": {
+  "mag": 1.01,
+  "place": "8 km NW of The Geysers, CA",
+  "time": 1794928244020,
+  "updated": 1794928342642,
+  "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75467542",
+  "detail": null,
+  "status": "automatic",
+  "net": "nc",
+  "code": "75467542",
+  "ids": ",nc75467542,",
+  "sources": ",nc,",
+  "types": ",nearby-cities,origin,phase-data,",
+  "products": {
+   "nearby-cities": [
+    {
+     "id": "urn:usgs-product:nc:nearby-cities:nc75467542:1794928342642",
+     "type": "nearby-cities",
+     "code": "nc75467542",
+     "source": "nc",
+     "updateTime": 1794928342642,
+     "status": "UPDATE",
+     "preferredWeight": 7
+    }
+   ],
+   "origin": [
+    {
+     "id": "urn:usgs-product:nc:origin:nc75467542:1794928340300",
+     "type": "origin",
+     "code": "nc75467542",
+     "source": "nc",
+     "updateTime": 1794928340300,
+     "status": "UPDATE",
+     "preferredWeight": 157
+    }
+   ],
+   "phase-data": [
+    {
+     "id": "urn:usgs-product:nc:phase-data:nc75467542:1794928340300",
+     "type": "phase-data",
+     "code": "nc75467542",
+     "source": "nc",
+     "updateTime": 1794928340300,
+     "status": "UPDATE",
+     "preferredWeight": 157
+    }
+   ]
+  }
+ },
+ "geometry": {
+  "type": "Point",
+  "coordinates": [
+   -122.816329956055,
+   38.832332611084,
+   1.82000005245209
+  ]
+ },
+ "id": "nc75467542"
+}

@@ -1,0 +1,2990 @@
+{
+ "duration_seconds": 110,
+ "language": "en",
+ "songTitle": "Anti-Social Engineering",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper small.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T19:18:14.260Z",
+  "confidence": 0.543,
+  "mismatched_lines": 24,
+  "sheet_lines": 59,
+  "heard_words": 461,
+  "ctc_aligned_lines": 60,
+  "timing": {
+   "align_seconds": 114.5,
+   "separate_seconds": 61.7,
+   "asr_seconds": 36.2,
+   "map_seconds": 0.2
+  }
+ },
+ "plain": "He’s antisocial cause he fears unless he’s Social Engineering\nHe got folks who know your social. He gon smoke you if they clear it\nDon’t think he’s broke cause his appearance he’s laying low YOU’RE here to drip\nJitt drone something serious\nSurfed your shoulder from the air wit it\nLil bro belongs with terrorists\n\nbe on some airhead shit From inside the\n\nYour tinder and Instagram hacked\nWomen are phishing with smshing attacks\nFlick of a finger you’re matched\nprotocol I do be with some\nGot your Internet Protocol, keep clicking links in the chat\nHe would spear fish your gang, hack a set of users who got it\nBut your set of losers are jobless, always got two cents to talk can’t provide a two cent deposit\nAlways got new drip and balling, really nice shoes, electronics\nAnd they say they walk how they talk it, they walk cause they carless\nTrust made him toothless, impoverished\nLust make him ruthless no conscience\nMoney make the roof on his car lift\nGuns he making blueprints for all em\nDrugs he makes em too chemist doctor\ntruth, when I'm talking, homie made the news, he was robbing, police\nHomie taking shoots like you modeling or something\nCrew already on you in the cut\nSpoof you on the router it was nothing to\nNuke and blow up your spot up push a button\nPutin take your time with this you Russian\nYou’ll believe his vibe is 100\nUsually his speedometer is touching it\nShoot’ him down he’s getting up again\ntoo busy out grinding to be struggling I was\nHe been sliding to a couple licks\nLining niggas up who switched\nLying to the government\nFlying through my bucket list\nthe one all\nBro said he need to button the blick\nI’ll have the switch in a couple of prints\nPlus the extension that come with the clip\nHe’s not a ex con\nthey be always trying to dead things I be a death\nFound him at deff con\nCaught him lining up a red team\nIn God he say we trust in\nReligious my denominations hunnids\nVicious as the cycle that we stuck in\nBlick you if you acting off by 1 inch\nInches flip to miles of abundance\nTrenches give us rivals with no conscience\nThem a end up dying after 1 print\nFlexing like you shooting me or something\nPesticide to you now you bugging\nCatch you in a studio he busting\nLet you dying doing what you love… Kid\nI got folks who know your social. They gone smoke you if I clear it\nDon’t think I’m broke cause my appearance\nI’m laying low I ain’t here to drip\nThis drone something serious\nSurfed your shoulder from the air with it\nYeah yeah",
+ "timed": {
+  "line": [
+   {
+    "begin": 2.381,
+    "end": 5.061,
+    "content": "He’s antisocial cause he fears unless he’s Social Engineering",
+    "confidence": 0.307,
+    "mismatch": true,
+    "heard": "anti like a ferret, I'm",
+    "words": [
+     {
+      "begin": 2.381,
+      "end": 2.502,
+      "content": "He’s"
+     },
+     {
+      "begin": 2.562,
+      "end": 3.186,
+      "content": "antisocial"
+     },
+     {
+      "begin": 3.226,
+      "end": 3.347,
+      "content": "cause"
+     },
+     {
+      "begin": 3.387,
+      "end": 3.427,
+      "content": "he"
+     },
+     {
+      "begin": 3.508,
+      "end": 3.83,
+      "content": "fears"
+     },
+     {
+      "begin": 3.97,
+      "end": 4.172,
+      "content": "unless"
+     },
+     {
+      "begin": 4.212,
+      "end": 4.333,
+      "content": "he’s"
+     },
+     {
+      "begin": 4.393,
+      "end": 4.654,
+      "content": "Social"
+     },
+     {
+      "begin": 4.715,
+      "end": 5.061,
+      "content": "Engineering"
+     }
+    ],
+    "align_score": 0.531
+   },
+   {
+    "begin": 5.061,
+    "end": 8.139,
+    "content": "He got folks who know your social. He gon smoke you if they clear it",
+    "confidence": 0.462,
+    "mismatch": true,
+    "heard": "it's they don't em a",
+    "words": [
+     {
+      "begin": 5.061,
+      "end": 5.121,
+      "content": "He"
+     },
+     {
+      "begin": 5.644,
+      "end": 5.765,
+      "content": "got"
+     },
+     {
+      "begin": 5.825,
+      "end": 6.006,
+      "content": "folks"
+     },
+     {
+      "begin": 6.026,
+      "end": 6.087,
+      "content": "who"
+     },
+     {
+      "begin": 6.147,
+      "end": 6.228,
+      "content": "know"
+     },
+     {
+      "begin": 6.268,
+      "end": 6.348,
+      "content": "your"
+     },
+     {
+      "begin": 6.389,
+      "end": 6.69,
+      "content": "social."
+     },
+     {
+      "begin": 6.992,
+      "end": 7.032,
+      "content": "He"
+     },
+     {
+      "begin": 7.133,
+      "end": 7.214,
+      "content": "gon"
+     },
+     {
+      "begin": 7.294,
+      "end": 7.475,
+      "content": "smoke"
+     },
+     {
+      "begin": 7.495,
+      "end": 7.556,
+      "content": "you"
+     },
+     {
+      "begin": 7.616,
+      "end": 7.656,
+      "content": "if"
+     },
+     {
+      "begin": 7.717,
+      "end": 7.817,
+      "content": "they"
+     },
+     {
+      "begin": 7.857,
+      "end": 8.079,
+      "content": "clear"
+     },
+     {
+      "begin": 8.099,
+      "end": 8.139,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.574
+   },
+   {
+    "begin": 8.203,
+    "end": 11.101,
+    "content": "Don’t think he’s broke cause his appearance he’s laying low YOU’RE here to drip",
+    "confidence": 0.628,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 8.203,
+      "end": 8.364,
+      "content": "Don’t"
+     },
+     {
+      "begin": 8.384,
+      "end": 8.505,
+      "content": "think"
+     },
+     {
+      "begin": 8.565,
+      "end": 8.645,
+      "content": "he’s"
+     },
+     {
+      "begin": 8.706,
+      "end": 8.907,
+      "content": "broke"
+     },
+     {
+      "begin": 8.927,
+      "end": 9.027,
+      "content": "cause"
+     },
+     {
+      "begin": 9.067,
+      "end": 9.188,
+      "content": "his"
+     },
+     {
+      "begin": 9.248,
+      "end": 9.65,
+      "content": "appearance"
+     },
+     {
+      "begin": 9.67,
+      "end": 9.831,
+      "content": "he’s"
+     },
+     {
+      "begin": 9.891,
+      "end": 10.152,
+      "content": "laying"
+     },
+     {
+      "begin": 10.192,
+      "end": 10.313,
+      "content": "low"
+     },
+     {
+      "begin": 10.554,
+      "end": 10.775,
+      "content": "YOU’RE"
+     },
+     {
+      "begin": 10.795,
+      "end": 10.936,
+      "content": "here"
+     },
+     {
+      "begin": 10.976,
+      "end": 11.056,
+      "content": "to"
+     },
+     {
+      "begin": 11.101,
+      "end": 11.101,
+      "content": "drip"
+     }
+    ],
+    "align_score": 0.511
+   },
+   {
+    "begin": 11.101,
+    "end": 12.36,
+    "content": "Jitt drone something serious",
+    "confidence": 0.75,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 11.101,
+      "end": 11.404,
+      "content": "Jitt"
+     },
+     {
+      "begin": 11.606,
+      "end": 11.807,
+      "content": "drone"
+     },
+     {
+      "begin": 11.929,
+      "end": 12.36,
+      "content": "something"
+     },
+     {
+      "begin": 12.36,
+      "end": 12.36,
+      "content": "serious"
+     }
+    ],
+    "align_score": 0.556
+   },
+   {
+    "begin": 12.36,
+    "end": 13.921,
+    "content": "Surfed your shoulder from the air wit it",
+    "confidence": 0.594,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 12.36,
+      "end": 12.662,
+      "content": "Surfed"
+     },
+     {
+      "begin": 12.763,
+      "end": 12.864,
+      "content": "your"
+     },
+     {
+      "begin": 13.066,
+      "end": 13.288,
+      "content": "shoulder"
+     },
+     {
+      "begin": 13.368,
+      "end": 13.469,
+      "content": "from"
+     },
+     {
+      "begin": 13.55,
+      "end": 13.61,
+      "content": "the"
+     },
+     {
+      "begin": 13.751,
+      "end": 13.852,
+      "content": "air"
+     },
+     {
+      "begin": 13.913,
+      "end": 13.921,
+      "content": "wit"
+     },
+     {
+      "begin": 13.921,
+      "end": 13.921,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.522
+   },
+   {
+    "begin": 13.921,
+    "end": 14.362,
+    "content": "Lil bro belongs with terrorists",
+    "confidence": 0.379,
+    "mismatch": true,
+    "heard": "be",
+    "words": [
+     {
+      "begin": 13.921,
+      "end": 14.063,
+      "content": "Lil"
+     },
+     {
+      "begin": 14.362,
+      "end": 14.362,
+      "content": "bro"
+     },
+     {
+      "begin": 14.362,
+      "end": 14.362,
+      "content": "belongs"
+     },
+     {
+      "begin": 14.362,
+      "end": 14.362,
+      "content": "with"
+     },
+     {
+      "begin": 14.362,
+      "end": 14.362,
+      "content": "terrorists"
+     }
+    ],
+    "align_score": 0.168
+   },
+   {
+    "begin": 14.362,
+    "end": 15.882,
+    "content": "be on some airhead shit From inside the",
+    "confidence": 0.718,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 14.362,
+      "end": 14.423,
+      "content": "be"
+     },
+     {
+      "begin": 14.866,
+      "end": 14.926,
+      "content": "on"
+     },
+     {
+      "begin": 14.986,
+      "end": 15.087,
+      "content": "some"
+     },
+     {
+      "begin": 15.148,
+      "end": 15.389,
+      "content": "airhead"
+     },
+     {
+      "begin": 15.47,
+      "end": 15.631,
+      "content": "shit"
+     },
+     {
+      "begin": 15.882,
+      "end": 15.882,
+      "content": "From"
+     },
+     {
+      "begin": 15.882,
+      "end": 15.882,
+      "content": "inside"
+     },
+     {
+      "begin": 15.882,
+      "end": 15.882,
+      "content": "the"
+     }
+    ],
+    "added": true,
+    "align_score": 0.581
+   },
+   {
+    "begin": 15.882,
+    "end": 17.199,
+    "content": "Your tinder and Instagram hacked",
+    "confidence": 0.342,
+    "mismatch": true,
+    "heard": "the back",
+    "words": [
+     {
+      "begin": 15.882,
+      "end": 15.983,
+      "content": "Your"
+     },
+     {
+      "begin": 16.023,
+      "end": 16.246,
+      "content": "tinder"
+     },
+     {
+      "begin": 16.267,
+      "end": 16.327,
+      "content": "and"
+     },
+     {
+      "begin": 16.429,
+      "end": 16.692,
+      "content": "Instagram"
+     },
+     {
+      "begin": 16.733,
+      "end": 17.199,
+      "content": "hacked"
+     }
+    ],
+    "align_score": 0.308
+   },
+   {
+    "begin": 17.465,
+    "end": 18.14,
+    "content": "Women are phishing with smshing attacks",
+    "confidence": 0.429,
+    "mismatch": true,
+    "heard": "got some and they this mission",
+    "words": [
+     {
+      "begin": 17.465,
+      "end": 17.667,
+      "content": "Women"
+     },
+     {
+      "begin": 17.707,
+      "end": 17.768,
+      "content": "are"
+     },
+     {
+      "begin": 17.808,
+      "end": 18.01,
+      "content": "phishing"
+     },
+     {
+      "begin": 18.05,
+      "end": 18.14,
+      "content": "with"
+     },
+     {
+      "begin": 18.14,
+      "end": 18.14,
+      "content": "smshing"
+     },
+     {
+      "begin": 18.14,
+      "end": 18.14,
+      "content": "attacks"
+     }
+    ],
+    "align_score": 0.441
+   },
+   {
+    "begin": 18.14,
+    "end": 20.218,
+    "content": "Flick of a finger you’re matched",
+    "confidence": 0.619,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 18.14,
+      "end": 18.322,
+      "content": "Flick"
+     },
+     {
+      "begin": 18.342,
+      "end": 18.382,
+      "content": "of"
+     },
+     {
+      "begin": 18.624,
+      "end": 18.645,
+      "content": "a"
+     },
+     {
+      "begin": 18.907,
+      "end": 19.149,
+      "content": "finger"
+     },
+     {
+      "begin": 19.27,
+      "end": 19.553,
+      "content": "you’re"
+     },
+     {
+      "begin": 19.653,
+      "end": 20.218,
+      "content": "matched"
+     }
+    ],
+    "align_score": 0.373
+   },
+   {
+    "begin": 20.885,
+    "end": 22.341,
+    "content": "protocol I do be with some",
+    "confidence": 0.293,
+    "mismatch": true,
+    "heard": "protocol I do be with some",
+    "sheet": "He’s that internet pro to call they did the hit for the cash",
+    "words": [
+     {
+      "begin": 20.885,
+      "end": 21.429,
+      "content": "protocol"
+     },
+     {
+      "begin": 21.872,
+      "end": 21.892,
+      "content": "I"
+     },
+     {
+      "begin": 21.972,
+      "end": 22.033,
+      "content": "do"
+     },
+     {
+      "begin": 22.073,
+      "end": 22.194,
+      "content": "be"
+     },
+     {
+      "begin": 22.295,
+      "end": 22.341,
+      "content": "with"
+     },
+     {
+      "begin": 22.341,
+      "end": 22.341,
+      "content": "some"
+     }
+    ],
+    "align_score": 0.597
+   },
+   {
+    "begin": 22.341,
+    "end": 25.637,
+    "content": "Got your Internet Protocol, keep clicking links in the chat",
+    "confidence": 0.725,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 22.341,
+      "end": 22.562,
+      "content": "Got"
+     },
+     {
+      "begin": 22.944,
+      "end": 23.105,
+      "content": "your"
+     },
+     {
+      "begin": 23.326,
+      "end": 23.728,
+      "content": "Internet"
+     },
+     {
+      "begin": 23.848,
+      "end": 24.371,
+      "content": "Protocol,"
+     },
+     {
+      "begin": 24.451,
+      "end": 24.793,
+      "content": "keep"
+     },
+     {
+      "begin": 24.833,
+      "end": 25.034,
+      "content": "clicking"
+     },
+     {
+      "begin": 25.094,
+      "end": 25.235,
+      "content": "links"
+     },
+     {
+      "begin": 25.275,
+      "end": 25.316,
+      "content": "in"
+     },
+     {
+      "begin": 25.356,
+      "end": 25.416,
+      "content": "the"
+     },
+     {
+      "begin": 25.456,
+      "end": 25.637,
+      "content": "chat"
+     }
+    ],
+    "align_score": 0.513
+   },
+   {
+    "begin": 25.861,
+    "end": 28.18,
+    "content": "He would spear fish your gang, hack a set of users who got it",
+    "confidence": 0.508,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 25.861,
+      "end": 25.922,
+      "content": "He"
+     },
+     {
+      "begin": 25.982,
+      "end": 26.143,
+      "content": "would"
+     },
+     {
+      "begin": 26.183,
+      "end": 26.364,
+      "content": "spear"
+     },
+     {
+      "begin": 26.425,
+      "end": 26.585,
+      "content": "fish"
+     },
+     {
+      "begin": 26.606,
+      "end": 26.686,
+      "content": "your"
+     },
+     {
+      "begin": 26.766,
+      "end": 27.028,
+      "content": "gang,"
+     },
+     {
+      "begin": 27.108,
+      "end": 27.249,
+      "content": "hack"
+     },
+     {
+      "begin": 27.31,
+      "end": 27.33,
+      "content": "a"
+     },
+     {
+      "begin": 27.41,
+      "end": 27.531,
+      "content": "set"
+     },
+     {
+      "begin": 27.591,
+      "end": 27.631,
+      "content": "of"
+     },
+     {
+      "begin": 27.732,
+      "end": 27.994,
+      "content": "users"
+     },
+     {
+      "begin": 28.034,
+      "end": 28.114,
+      "content": "who"
+     },
+     {
+      "begin": 28.18,
+      "end": 28.18,
+      "content": "got"
+     },
+     {
+      "begin": 28.18,
+      "end": 28.18,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.551
+   },
+   {
+    "begin": 28.18,
+    "end": 32.938,
+    "content": "But your set of losers are jobless, always got two cents to talk can’t provide a two cent deposit",
+    "confidence": 0.832,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 28.18,
+      "end": 28.461,
+      "content": "But"
+     },
+     {
+      "begin": 28.542,
+      "end": 28.763,
+      "content": "your"
+     },
+     {
+      "begin": 28.803,
+      "end": 28.903,
+      "content": "set"
+     },
+     {
+      "begin": 29.003,
+      "end": 29.044,
+      "content": "of"
+     },
+     {
+      "begin": 29.104,
+      "end": 29.425,
+      "content": "losers"
+     },
+     {
+      "begin": 29.485,
+      "end": 29.566,
+      "content": "are"
+     },
+     {
+      "begin": 29.626,
+      "end": 30.027,
+      "content": "jobless,"
+     },
+     {
+      "begin": 30.067,
+      "end": 30.268,
+      "content": "always"
+     },
+     {
+      "begin": 30.328,
+      "end": 30.469,
+      "content": "got"
+     },
+     {
+      "begin": 30.529,
+      "end": 30.65,
+      "content": "two"
+     },
+     {
+      "begin": 30.71,
+      "end": 30.89,
+      "content": "cents"
+     },
+     {
+      "begin": 30.931,
+      "end": 30.971,
+      "content": "to"
+     },
+     {
+      "begin": 31.111,
+      "end": 31.272,
+      "content": "talk"
+     },
+     {
+      "begin": 31.473,
+      "end": 31.633,
+      "content": "can’t"
+     },
+     {
+      "begin": 31.653,
+      "end": 31.934,
+      "content": "provide"
+     },
+     {
+      "begin": 31.975,
+      "end": 31.995,
+      "content": "a"
+     },
+     {
+      "begin": 32.055,
+      "end": 32.155,
+      "content": "two"
+     },
+     {
+      "begin": 32.215,
+      "end": 32.376,
+      "content": "cent"
+     },
+     {
+      "begin": 32.436,
+      "end": 32.938,
+      "content": "deposit"
+     }
+    ],
+    "align_score": 0.638
+   },
+   {
+    "begin": 32.983,
+    "end": 35.521,
+    "content": "Always got new drip and balling, really nice shoes, electronics",
+    "confidence": 0.8,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 32.983,
+      "end": 33.184,
+      "content": "Always"
+     },
+     {
+      "begin": 33.224,
+      "end": 33.345,
+      "content": "got"
+     },
+     {
+      "begin": 33.446,
+      "end": 33.546,
+      "content": "new"
+     },
+     {
+      "begin": 33.606,
+      "end": 33.787,
+      "content": "drip"
+     },
+     {
+      "begin": 33.888,
+      "end": 33.968,
+      "content": "and"
+     },
+     {
+      "begin": 34.029,
+      "end": 34.35,
+      "content": "balling,"
+     },
+     {
+      "begin": 34.391,
+      "end": 34.592,
+      "content": "really"
+     },
+     {
+      "begin": 34.672,
+      "end": 34.813,
+      "content": "nice"
+     },
+     {
+      "begin": 34.873,
+      "end": 35.054,
+      "content": "shoes,"
+     },
+     {
+      "begin": 35.195,
+      "end": 35.521,
+      "content": "electronics"
+     }
+    ],
+    "align_score": 0.604
+   },
+   {
+    "begin": 35.521,
+    "end": 38.745,
+    "content": "And they say they walk how they talk it, they walk cause they carless",
+    "confidence": 0.612,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 35.521,
+      "end": 35.642,
+      "content": "And"
+     },
+     {
+      "begin": 35.682,
+      "end": 35.923,
+      "content": "they"
+     },
+     {
+      "begin": 36.044,
+      "end": 36.145,
+      "content": "say"
+     },
+     {
+      "begin": 36.185,
+      "end": 36.265,
+      "content": "they"
+     },
+     {
+      "begin": 36.326,
+      "end": 36.486,
+      "content": "walk"
+     },
+     {
+      "begin": 36.607,
+      "end": 36.688,
+      "content": "how"
+     },
+     {
+      "begin": 36.728,
+      "end": 36.808,
+      "content": "they"
+     },
+     {
+      "begin": 36.889,
+      "end": 37.11,
+      "content": "talk"
+     },
+     {
+      "begin": 37.17,
+      "end": 37.21,
+      "content": "it,"
+     },
+     {
+      "begin": 37.673,
+      "end": 37.774,
+      "content": "they"
+     },
+     {
+      "begin": 37.854,
+      "end": 38.035,
+      "content": "walk"
+     },
+     {
+      "begin": 38.095,
+      "end": 38.196,
+      "content": "cause"
+     },
+     {
+      "begin": 38.216,
+      "end": 38.316,
+      "content": "they"
+     },
+     {
+      "begin": 38.417,
+      "end": 38.745,
+      "content": "carless"
+     }
+    ],
+    "align_score": 0.593
+   },
+   {
+    "begin": 38.745,
+    "end": 39.841,
+    "content": "Trust made him toothless, impoverished",
+    "confidence": 0.8,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 38.745,
+      "end": 38.926,
+      "content": "Trust"
+     },
+     {
+      "begin": 38.967,
+      "end": 39.088,
+      "content": "made"
+     },
+     {
+      "begin": 39.128,
+      "end": 39.189,
+      "content": "him"
+     },
+     {
+      "begin": 39.269,
+      "end": 39.673,
+      "content": "toothless,"
+     },
+     {
+      "begin": 39.713,
+      "end": 39.841,
+      "content": "impoverished"
+     }
+    ],
+    "align_score": 0.504
+   },
+   {
+    "begin": 39.841,
+    "end": 41.685,
+    "content": "Lust make him ruthless no conscience",
+    "confidence": 0.616,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 39.841,
+      "end": 40.345,
+      "content": "Lust"
+     },
+     {
+      "begin": 40.406,
+      "end": 40.527,
+      "content": "make"
+     },
+     {
+      "begin": 40.567,
+      "end": 40.668,
+      "content": "him"
+     },
+     {
+      "begin": 40.708,
+      "end": 41.031,
+      "content": "ruthless"
+     },
+     {
+      "begin": 41.071,
+      "end": 41.132,
+      "content": "no"
+     },
+     {
+      "begin": 41.253,
+      "end": 41.685,
+      "content": "conscience"
+     }
+    ],
+    "align_score": 0.495
+   },
+   {
+    "begin": 41.685,
+    "end": 42.722,
+    "content": "Money make the roof on his car lift",
+    "confidence": 0.813,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 41.685,
+      "end": 41.867,
+      "content": "Money"
+     },
+     {
+      "begin": 41.927,
+      "end": 42.028,
+      "content": "make"
+     },
+     {
+      "begin": 42.068,
+      "end": 42.149,
+      "content": "the"
+     },
+     {
+      "begin": 42.189,
+      "end": 42.351,
+      "content": "roof"
+     },
+     {
+      "begin": 42.472,
+      "end": 42.532,
+      "content": "on"
+     },
+     {
+      "begin": 42.593,
+      "end": 42.673,
+      "content": "his"
+     },
+     {
+      "begin": 42.722,
+      "end": 42.722,
+      "content": "car"
+     },
+     {
+      "begin": 42.722,
+      "end": 42.722,
+      "content": "lift"
+     }
+    ],
+    "align_score": 0.775
+   },
+   {
+    "begin": 42.722,
+    "end": 44.32,
+    "content": "Guns he making blueprints for all em",
+    "confidence": 0.714,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 42.722,
+      "end": 42.964,
+      "content": "Guns"
+     },
+     {
+      "begin": 43.125,
+      "end": 43.226,
+      "content": "he"
+     },
+     {
+      "begin": 43.408,
+      "end": 43.65,
+      "content": "making"
+     },
+     {
+      "begin": 43.67,
+      "end": 43.992,
+      "content": "blueprints"
+     },
+     {
+      "begin": 44.053,
+      "end": 44.274,
+      "content": "for"
+     },
+     {
+      "begin": 44.32,
+      "end": 44.32,
+      "content": "all"
+     },
+     {
+      "begin": 44.32,
+      "end": 44.32,
+      "content": "em"
+     }
+    ],
+    "align_score": 0.489
+   },
+   {
+    "begin": 44.32,
+    "end": 44.48,
+    "content": "Drugs he makes em too chemist doctor",
+    "confidence": 0.095,
+    "mismatch": true,
+    "heard": "say truth,",
+    "words": [
+     {
+      "begin": 44.32,
+      "end": 44.422,
+      "content": "Drugs"
+     },
+     {
+      "begin": 44.442,
+      "end": 44.48,
+      "content": "he"
+     },
+     {
+      "begin": 44.48,
+      "end": 44.48,
+      "content": "makes"
+     },
+     {
+      "begin": 44.48,
+      "end": 44.48,
+      "content": "em"
+     },
+     {
+      "begin": 44.48,
+      "end": 44.48,
+      "content": "too"
+     },
+     {
+      "begin": 44.48,
+      "end": 44.48,
+      "content": "chemist"
+     },
+     {
+      "begin": 44.48,
+      "end": 44.48,
+      "content": "doctor"
+     }
+    ],
+    "align_score": 0.147
+   },
+   {
+    "begin": 44.48,
+    "end": 47.101,
+    "content": "truth, when I'm talking, homie made the news, he was robbing, police",
+    "confidence": 0,
+    "mismatch": true,
+    "heard": "truth, when I'm talking, homie made the news, he was robbing, police",
+    "sheet": "Police can’t even prove if they solve it",
+    "words": [
+     {
+      "begin": 44.48,
+      "end": 44.902,
+      "content": "truth,"
+     },
+     {
+      "begin": 45.345,
+      "end": 45.445,
+      "content": "when"
+     },
+     {
+      "begin": 45.506,
+      "end": 45.586,
+      "content": "I'm"
+     },
+     {
+      "begin": 45.666,
+      "end": 45.948,
+      "content": "talking,"
+     },
+     {
+      "begin": 46.048,
+      "end": 46.229,
+      "content": "homie"
+     },
+     {
+      "begin": 46.29,
+      "end": 46.431,
+      "content": "made"
+     },
+     {
+      "begin": 46.471,
+      "end": 46.531,
+      "content": "the"
+     },
+     {
+      "begin": 46.591,
+      "end": 46.752,
+      "content": "news,"
+     },
+     {
+      "begin": 46.813,
+      "end": 46.873,
+      "content": "he"
+     },
+     {
+      "begin": 46.933,
+      "end": 47.034,
+      "content": "was"
+     },
+     {
+      "begin": 47.101,
+      "end": 47.101,
+      "content": "robbing,"
+     },
+     {
+      "begin": 47.101,
+      "end": 47.101,
+      "content": "police"
+     }
+    ],
+    "align_score": 0.719
+   },
+   {
+    "begin": 47.101,
+    "end": 49.06,
+    "content": "Homie taking shoots like you modeling or something",
+    "confidence": 0.7,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 47.101,
+      "end": 47.624,
+      "content": "Homie"
+     },
+     {
+      "begin": 47.705,
+      "end": 47.927,
+      "content": "taking"
+     },
+     {
+      "begin": 47.967,
+      "end": 48.148,
+      "content": "shoots"
+     },
+     {
+      "begin": 48.168,
+      "end": 48.269,
+      "content": "like"
+     },
+     {
+      "begin": 48.37,
+      "end": 48.43,
+      "content": "you"
+     },
+     {
+      "begin": 48.531,
+      "end": 48.914,
+      "content": "modeling"
+     },
+     {
+      "begin": 48.974,
+      "end": 49.014,
+      "content": "or"
+     },
+     {
+      "begin": 49.055,
+      "end": 49.06,
+      "content": "something"
+     }
+    ],
+    "align_score": 0.543
+   },
+   {
+    "begin": 49.06,
+    "end": 50.32,
+    "content": "Crew already on you in the cut",
+    "confidence": 0.714,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 49.06,
+      "end": 49.524,
+      "content": "Crew"
+     },
+     {
+      "begin": 49.666,
+      "end": 49.968,
+      "content": "already"
+     },
+     {
+      "begin": 50.069,
+      "end": 50.15,
+      "content": "on"
+     },
+     {
+      "begin": 50.19,
+      "end": 50.251,
+      "content": "you"
+     },
+     {
+      "begin": 50.32,
+      "end": 50.32,
+      "content": "in"
+     },
+     {
+      "begin": 50.32,
+      "end": 50.32,
+      "content": "the"
+     },
+     {
+      "begin": 50.32,
+      "end": 50.32,
+      "content": "cut"
+     }
+    ],
+    "align_score": 0.46
+   },
+   {
+    "begin": 50.32,
+    "end": 52.002,
+    "content": "Spoof you on the router it was nothing to",
+    "confidence": 0.413,
+    "mismatch": true,
+    "heard": "him a ride, who a",
+    "words": [
+     {
+      "begin": 50.32,
+      "end": 50.461,
+      "content": "Spoof"
+     },
+     {
+      "begin": 50.502,
+      "end": 50.602,
+      "content": "you"
+     },
+     {
+      "begin": 50.885,
+      "end": 50.986,
+      "content": "on"
+     },
+     {
+      "begin": 51.066,
+      "end": 51.127,
+      "content": "the"
+     },
+     {
+      "begin": 51.207,
+      "end": 51.429,
+      "content": "router"
+     },
+     {
+      "begin": 51.53,
+      "end": 51.631,
+      "content": "it"
+     },
+     {
+      "begin": 51.812,
+      "end": 51.933,
+      "content": "was"
+     },
+     {
+      "begin": 51.994,
+      "end": 52.002,
+      "content": "nothing"
+     },
+     {
+      "begin": 52.002,
+      "end": 52.002,
+      "content": "to"
+     }
+    ],
+    "align_score": 0.297
+   },
+   {
+    "begin": 52.002,
+    "end": 53.806,
+    "content": "Nuke and blow up your spot up push a button",
+    "confidence": 0.349,
+    "mismatch": true,
+    "heard": "a I'm bloody my",
+    "words": [
+     {
+      "begin": 52.002,
+      "end": 52.123,
+      "content": "Nuke"
+     },
+     {
+      "begin": 52.143,
+      "end": 52.204,
+      "content": "and"
+     },
+     {
+      "begin": 52.305,
+      "end": 52.486,
+      "content": "blow"
+     },
+     {
+      "begin": 52.506,
+      "end": 52.567,
+      "content": "up"
+     },
+     {
+      "begin": 52.627,
+      "end": 52.768,
+      "content": "your"
+     },
+     {
+      "begin": 52.909,
+      "end": 53.071,
+      "content": "spot"
+     },
+     {
+      "begin": 53.111,
+      "end": 53.151,
+      "content": "up"
+     },
+     {
+      "begin": 53.171,
+      "end": 53.313,
+      "content": "push"
+     },
+     {
+      "begin": 53.373,
+      "end": 53.393,
+      "content": "a"
+     },
+     {
+      "begin": 53.494,
+      "end": 53.806,
+      "content": "button"
+     }
+    ],
+    "align_score": 0.282
+   },
+   {
+    "begin": 53.806,
+    "end": 55.099,
+    "content": "Putin take your time with this you Russian",
+    "confidence": 0.375,
+    "mismatch": true,
+    "heard": "taking issue",
+    "words": [
+     {
+      "begin": 53.806,
+      "end": 54.008,
+      "content": "Putin"
+     },
+     {
+      "begin": 54.089,
+      "end": 54.21,
+      "content": "take"
+     },
+     {
+      "begin": 54.23,
+      "end": 54.331,
+      "content": "your"
+     },
+     {
+      "begin": 54.351,
+      "end": 54.493,
+      "content": "time"
+     },
+     {
+      "begin": 54.513,
+      "end": 54.614,
+      "content": "with"
+     },
+     {
+      "begin": 54.634,
+      "end": 54.735,
+      "content": "this"
+     },
+     {
+      "begin": 54.755,
+      "end": 54.836,
+      "content": "you"
+     },
+     {
+      "begin": 54.897,
+      "end": 55.099,
+      "content": "Russian"
+     }
+    ],
+    "align_score": 0.665
+   },
+   {
+    "begin": 55.281,
+    "end": 56.719,
+    "content": "You’ll believe his vibe is 100",
+    "confidence": 0.333,
+    "mismatch": true,
+    "heard": "my a",
+    "words": [
+     {
+      "begin": 55.281,
+      "end": 55.443,
+      "content": "You’ll"
+     },
+     {
+      "begin": 55.504,
+      "end": 55.706,
+      "content": "believe"
+     },
+     {
+      "begin": 55.727,
+      "end": 55.828,
+      "content": "his"
+     },
+     {
+      "begin": 55.868,
+      "end": 56.071,
+      "content": "vibe"
+     },
+     {
+      "begin": 56.172,
+      "end": 56.273,
+      "content": "is"
+     },
+     {
+      "begin": 56.374,
+      "end": 56.719,
+      "content": "100"
+     }
+    ],
+    "align_score": 0.157
+   },
+   {
+    "begin": 56.765,
+    "end": 58.12,
+    "content": "Usually his speedometer is touching it",
+    "confidence": 0.791,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 56.765,
+      "end": 56.986,
+      "content": "Usually"
+     },
+     {
+      "begin": 57.027,
+      "end": 57.087,
+      "content": "his"
+     },
+     {
+      "begin": 57.107,
+      "end": 57.591,
+      "content": "speedometer"
+     },
+     {
+      "begin": 57.631,
+      "end": 57.792,
+      "content": "is"
+     },
+     {
+      "begin": 57.833,
+      "end": 58.095,
+      "content": "touching"
+     },
+     {
+      "begin": 58.12,
+      "end": 58.12,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.636
+   },
+   {
+    "begin": 58.12,
+    "end": 59,
+    "content": "Shoot’ him down he’s getting up again",
+    "confidence": 0.429,
+    "mismatch": true,
+    "heard": "was but now I'm too",
+    "words": [
+     {
+      "begin": 58.12,
+      "end": 58.625,
+      "content": "Shoot’"
+     },
+     {
+      "begin": 58.645,
+      "end": 58.726,
+      "content": "him"
+     },
+     {
+      "begin": 58.766,
+      "end": 58.887,
+      "content": "down"
+     },
+     {
+      "begin": 58.948,
+      "end": 59,
+      "content": "he’s"
+     },
+     {
+      "begin": 59,
+      "end": 59,
+      "content": "getting"
+     },
+     {
+      "begin": 59,
+      "end": 59,
+      "content": "up"
+     },
+     {
+      "begin": 59,
+      "end": 59,
+      "content": "again"
+     }
+    ],
+    "align_score": 0.192
+   },
+   {
+    "begin": 59,
+    "end": 61.444,
+    "content": "too busy out grinding to be struggling I was",
+    "confidence": 0,
+    "mismatch": true,
+    "heard": "too busy out grinding to be struggling I was",
+    "sheet": "Body armor under every covering",
+    "words": [
+     {
+      "begin": 59,
+      "end": 59.121,
+      "content": "too"
+     },
+     {
+      "begin": 59.241,
+      "end": 59.463,
+      "content": "busy"
+     },
+     {
+      "begin": 59.664,
+      "end": 59.825,
+      "content": "out"
+     },
+     {
+      "begin": 60.187,
+      "end": 60.429,
+      "content": "grinding"
+     },
+     {
+      "begin": 60.469,
+      "end": 60.529,
+      "content": "to"
+     },
+     {
+      "begin": 60.57,
+      "end": 60.65,
+      "content": "be"
+     },
+     {
+      "begin": 60.69,
+      "end": 61.093,
+      "content": "struggling"
+     },
+     {
+      "begin": 61.444,
+      "end": 61.444,
+      "content": "I"
+     },
+     {
+      "begin": 61.444,
+      "end": 61.444,
+      "content": "was"
+     }
+    ],
+    "align_score": 0.582
+   },
+   {
+    "begin": 61.444,
+    "end": 62.4,
+    "content": "He been sliding to a couple licks",
+    "confidence": 0.714,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 61.444,
+      "end": 61.484,
+      "content": "He"
+     },
+     {
+      "begin": 61.544,
+      "end": 61.645,
+      "content": "been"
+     },
+     {
+      "begin": 61.666,
+      "end": 61.888,
+      "content": "sliding"
+     },
+     {
+      "begin": 61.928,
+      "end": 62.009,
+      "content": "to"
+     },
+     {
+      "begin": 62.089,
+      "end": 62.109,
+      "content": "a"
+     },
+     {
+      "begin": 62.15,
+      "end": 62.311,
+      "content": "couple"
+     },
+     {
+      "begin": 62.4,
+      "end": 62.4,
+      "content": "licks"
+     }
+    ],
+    "align_score": 0.538
+   },
+   {
+    "begin": 62.4,
+    "end": 64.135,
+    "content": "Lining niggas up who switched",
+    "confidence": 0.533,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 62.4,
+      "end": 63.389,
+      "content": "Lining"
+     },
+     {
+      "begin": 63.409,
+      "end": 63.631,
+      "content": "niggas"
+     },
+     {
+      "begin": 63.671,
+      "end": 63.711,
+      "content": "up"
+     },
+     {
+      "begin": 63.752,
+      "end": 63.812,
+      "content": "who"
+     },
+     {
+      "begin": 63.873,
+      "end": 64.135,
+      "content": "switched"
+     }
+    ],
+    "align_score": 0.635
+   },
+   {
+    "begin": 64.588,
+    "end": 65.536,
+    "content": "Lying to the government",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 64.588,
+      "end": 64.83,
+      "content": "Lying"
+     },
+     {
+      "begin": 64.871,
+      "end": 64.931,
+      "content": "to"
+     },
+     {
+      "begin": 64.992,
+      "end": 65.052,
+      "content": "the"
+     },
+     {
+      "begin": 65.133,
+      "end": 65.536,
+      "content": "government"
+     }
+    ],
+    "align_score": 0.787
+   },
+   {
+    "begin": 65.986,
+    "end": 67.367,
+    "content": "Flying through my bucket list",
+    "confidence": 0.8,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 65.986,
+      "end": 66.248,
+      "content": "Flying"
+     },
+     {
+      "begin": 66.289,
+      "end": 66.43,
+      "content": "through"
+     },
+     {
+      "begin": 66.47,
+      "end": 66.511,
+      "content": "my"
+     },
+     {
+      "begin": 66.551,
+      "end": 66.935,
+      "content": "bucket"
+     },
+     {
+      "begin": 67.367,
+      "end": 67.367,
+      "content": "list"
+     }
+    ],
+    "align_score": 0.435
+   },
+   {
+    "begin": 67.367,
+    "end": 67.873,
+    "content": "the one all",
+    "confidence": 0.194,
+    "mismatch": true,
+    "heard": "the one all",
+    "sheet": "I know him cause I’m stuck in the mix",
+    "words": [
+     {
+      "begin": 67.367,
+      "end": 67.428,
+      "content": "the"
+     },
+     {
+      "begin": 67.509,
+      "end": 67.651,
+      "content": "one"
+     },
+     {
+      "begin": 67.772,
+      "end": 67.873,
+      "content": "all"
+     }
+    ],
+    "align_score": 0.665
+   },
+   {
+    "begin": 68.725,
+    "end": 69.92,
+    "content": "Bro said he need to button the blick",
+    "confidence": 0.579,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 68.725,
+      "end": 68.846,
+      "content": "Bro"
+     },
+     {
+      "begin": 68.947,
+      "end": 69.108,
+      "content": "said"
+     },
+     {
+      "begin": 69.148,
+      "end": 69.189,
+      "content": "he"
+     },
+     {
+      "begin": 69.249,
+      "end": 69.35,
+      "content": "need"
+     },
+     {
+      "begin": 69.37,
+      "end": 69.41,
+      "content": "to"
+     },
+     {
+      "begin": 69.491,
+      "end": 69.693,
+      "content": "button"
+     },
+     {
+      "begin": 69.733,
+      "end": 69.794,
+      "content": "the"
+     },
+     {
+      "begin": 69.834,
+      "end": 69.92,
+      "content": "blick"
+     }
+    ],
+    "align_score": 0.597
+   },
+   {
+    "begin": 69.92,
+    "end": 71.021,
+    "content": "I’ll have the switch in a couple of prints",
+    "confidence": 0.667,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 69.92,
+      "end": 70.223,
+      "content": "I’ll"
+     },
+     {
+      "begin": 70.284,
+      "end": 70.385,
+      "content": "have"
+     },
+     {
+      "begin": 70.405,
+      "end": 70.465,
+      "content": "the"
+     },
+     {
+      "begin": 70.506,
+      "end": 70.687,
+      "content": "switch"
+     },
+     {
+      "begin": 70.728,
+      "end": 70.768,
+      "content": "in"
+     },
+     {
+      "begin": 70.829,
+      "end": 70.849,
+      "content": "a"
+     },
+     {
+      "begin": 70.91,
+      "end": 71.021,
+      "content": "couple"
+     },
+     {
+      "begin": 71.021,
+      "end": 71.021,
+      "content": "of"
+     },
+     {
+      "begin": 71.021,
+      "end": 71.021,
+      "content": "prints"
+     }
+    ],
+    "align_score": 0.703
+   },
+   {
+    "begin": 71.021,
+    "end": 72.875,
+    "content": "Plus the extension that come with the clip",
+    "confidence": 0.991,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 71.021,
+      "end": 71.142,
+      "content": "Plus"
+     },
+     {
+      "begin": 71.263,
+      "end": 71.444,
+      "content": "the"
+     },
+     {
+      "begin": 71.908,
+      "end": 72.23,
+      "content": "extension"
+     },
+     {
+      "begin": 72.25,
+      "end": 72.331,
+      "content": "that"
+     },
+     {
+      "begin": 72.371,
+      "end": 72.472,
+      "content": "come"
+     },
+     {
+      "begin": 72.492,
+      "end": 72.573,
+      "content": "with"
+     },
+     {
+      "begin": 72.613,
+      "end": 72.674,
+      "content": "the"
+     },
+     {
+      "begin": 72.714,
+      "end": 72.875,
+      "content": "clip"
+     }
+    ],
+    "align_score": 0.575
+   },
+   {
+    "begin": 73.123,
+    "end": 74.163,
+    "content": "He’s not a ex con",
+    "confidence": 0.35,
+    "mismatch": true,
+    "heard": "with",
+    "words": [
+     {
+      "begin": 73.123,
+      "end": 73.224,
+      "content": "He’s"
+     },
+     {
+      "begin": 73.245,
+      "end": 73.326,
+      "content": "not"
+     },
+     {
+      "begin": 73.407,
+      "end": 73.427,
+      "content": "a"
+     },
+     {
+      "begin": 73.548,
+      "end": 73.629,
+      "content": "ex"
+     },
+     {
+      "begin": 73.71,
+      "end": 74.163,
+      "content": "con"
+     }
+    ],
+    "align_score": 0.152
+   },
+   {
+    "begin": 74.163,
+    "end": 75.961,
+    "content": "they be always trying to dead things I be a death",
+    "confidence": 0,
+    "mismatch": true,
+    "heard": "they be always trying to dead things I be a death",
+    "sheet": "He’s not even on a fed team",
+    "words": [
+     {
+      "begin": 74.163,
+      "end": 74.243,
+      "content": "they"
+     },
+     {
+      "begin": 74.344,
+      "end": 74.424,
+      "content": "be"
+     },
+     {
+      "begin": 74.465,
+      "end": 74.626,
+      "content": "always"
+     },
+     {
+      "begin": 74.666,
+      "end": 74.787,
+      "content": "trying"
+     },
+     {
+      "begin": 74.807,
+      "end": 74.847,
+      "content": "to"
+     },
+     {
+      "begin": 74.927,
+      "end": 75.088,
+      "content": "dead"
+     },
+     {
+      "begin": 75.149,
+      "end": 75.43,
+      "content": "things"
+     },
+     {
+      "begin": 75.961,
+      "end": 75.961,
+      "content": "I"
+     },
+     {
+      "begin": 75.961,
+      "end": 75.961,
+      "content": "be"
+     },
+     {
+      "begin": 75.961,
+      "end": 75.961,
+      "content": "a"
+     },
+     {
+      "begin": 75.961,
+      "end": 75.961,
+      "content": "death"
+     }
+    ],
+    "align_score": 0.76
+   },
+   {
+    "begin": 75.961,
+    "end": 76.731,
+    "content": "Found him at deff con",
+    "confidence": 0.2,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 75.961,
+      "end": 76.083,
+      "content": "Found"
+     },
+     {
+      "begin": 76.103,
+      "end": 76.204,
+      "content": "him"
+     },
+     {
+      "begin": 76.224,
+      "end": 76.265,
+      "content": "at"
+     },
+     {
+      "begin": 76.326,
+      "end": 76.488,
+      "content": "deff"
+     },
+     {
+      "begin": 76.569,
+      "end": 76.731,
+      "content": "con"
+     }
+    ],
+    "align_score": 0.271
+   },
+   {
+    "begin": 77.221,
+    "end": 78.255,
+    "content": "Caught him lining up a red team",
+    "confidence": 0.143,
+    "mismatch": true,
+    "heard": "the",
+    "words": [
+     {
+      "begin": 77.221,
+      "end": 77.342,
+      "content": "Caught"
+     },
+     {
+      "begin": 77.363,
+      "end": 77.444,
+      "content": "him"
+     },
+     {
+      "begin": 77.484,
+      "end": 77.667,
+      "content": "lining"
+     },
+     {
+      "begin": 77.708,
+      "end": 77.748,
+      "content": "up"
+     },
+     {
+      "begin": 77.768,
+      "end": 77.789,
+      "content": "a"
+     },
+     {
+      "begin": 77.85,
+      "end": 77.992,
+      "content": "red"
+     },
+     {
+      "begin": 78.073,
+      "end": 78.255,
+      "content": "team"
+     }
+    ],
+    "align_score": 0.31
+   },
+   {
+    "begin": 78.445,
+    "end": 79.385,
+    "content": "In God he say we trust in",
+    "confidence": 0.667,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 78.445,
+      "end": 78.486,
+      "content": "In"
+     },
+     {
+      "begin": 78.566,
+      "end": 78.667,
+      "content": "God"
+     },
+     {
+      "begin": 78.708,
+      "end": 78.748,
+      "content": "he"
+     },
+     {
+      "begin": 78.809,
+      "end": 78.89,
+      "content": "say"
+     },
+     {
+      "begin": 78.93,
+      "end": 78.991,
+      "content": "we"
+     },
+     {
+      "begin": 79.071,
+      "end": 79.233,
+      "content": "trust"
+     },
+     {
+      "begin": 79.385,
+      "end": 79.385,
+      "content": "in"
+     }
+    ],
+    "align_score": 0.793
+   },
+   {
+    "begin": 79.385,
+    "end": 80.12,
+    "content": "Religious my denominations hunnids",
+    "confidence": 0.652,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 79.385,
+      "end": 79.708,
+      "content": "Religious"
+     },
+     {
+      "begin": 79.748,
+      "end": 79.809,
+      "content": "my"
+     },
+     {
+      "begin": 79.89,
+      "end": 80.12,
+      "content": "denominations"
+     },
+     {
+      "begin": 80.12,
+      "end": 80.12,
+      "content": "hunnids"
+     }
+    ],
+    "align_score": 0.833
+   },
+   {
+    "begin": 80.12,
+    "end": 82.1,
+    "content": "Vicious as the cycle that we stuck in",
+    "confidence": 0.862,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 80.12,
+      "end": 81.006,
+      "content": "Vicious"
+     },
+     {
+      "begin": 81.188,
+      "end": 81.248,
+      "content": "as"
+     },
+     {
+      "begin": 81.268,
+      "end": 81.329,
+      "content": "the"
+     },
+     {
+      "begin": 81.389,
+      "end": 81.651,
+      "content": "cycle"
+     },
+     {
+      "begin": 81.691,
+      "end": 81.792,
+      "content": "that"
+     },
+     {
+      "begin": 81.832,
+      "end": 81.893,
+      "content": "we"
+     },
+     {
+      "begin": 81.973,
+      "end": 82.1,
+      "content": "stuck"
+     },
+     {
+      "begin": 82.1,
+      "end": 82.1,
+      "content": "in"
+     }
+    ],
+    "align_score": 0.64
+   },
+   {
+    "begin": 82.1,
+    "end": 83.875,
+    "content": "Blick you if you acting off by 1 inch",
+    "confidence": 0.384,
+    "mismatch": true,
+    "heard": "advice something one",
+    "words": [
+     {
+      "begin": 82.1,
+      "end": 82.302,
+      "content": "Blick"
+     },
+     {
+      "begin": 82.342,
+      "end": 82.403,
+      "content": "you"
+     },
+     {
+      "begin": 82.524,
+      "end": 82.624,
+      "content": "if"
+     },
+     {
+      "begin": 82.665,
+      "end": 82.846,
+      "content": "you"
+     },
+     {
+      "begin": 82.866,
+      "end": 83.149,
+      "content": "acting"
+     },
+     {
+      "begin": 83.209,
+      "end": 83.29,
+      "content": "off"
+     },
+     {
+      "begin": 83.31,
+      "end": 83.391,
+      "content": "by"
+     },
+     {
+      "begin": 83.552,
+      "end": 83.633,
+      "content": "1"
+     },
+     {
+      "begin": 83.754,
+      "end": 83.875,
+      "content": "inch"
+     }
+    ],
+    "align_score": 0.306
+   },
+   {
+    "begin": 84.381,
+    "end": 85.825,
+    "content": "Inches flip to miles of abundance",
+    "confidence": 0.5,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 84.381,
+      "end": 84.583,
+      "content": "Inches"
+     },
+     {
+      "begin": 84.644,
+      "end": 84.745,
+      "content": "flip"
+     },
+     {
+      "begin": 84.785,
+      "end": 84.846,
+      "content": "to"
+     },
+     {
+      "begin": 84.927,
+      "end": 85.169,
+      "content": "miles"
+     },
+     {
+      "begin": 85.23,
+      "end": 85.27,
+      "content": "of"
+     },
+     {
+      "begin": 85.371,
+      "end": 85.825,
+      "content": "abundance"
+     }
+    ],
+    "align_score": 0.603
+   },
+   {
+    "begin": 85.825,
+    "end": 87.285,
+    "content": "Trenches give us rivals with no conscience",
+    "confidence": 0.791,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 85.825,
+      "end": 86.087,
+      "content": "Trenches"
+     },
+     {
+      "begin": 86.128,
+      "end": 86.249,
+      "content": "give"
+     },
+     {
+      "begin": 86.289,
+      "end": 86.329,
+      "content": "us"
+     },
+     {
+      "begin": 86.43,
+      "end": 86.672,
+      "content": "rivals"
+     },
+     {
+      "begin": 86.692,
+      "end": 86.793,
+      "content": "with"
+     },
+     {
+      "begin": 86.813,
+      "end": 86.853,
+      "content": "no"
+     },
+     {
+      "begin": 86.934,
+      "end": 87.285,
+      "content": "conscience"
+     }
+    ],
+    "align_score": 0.806
+   },
+   {
+    "begin": 87.285,
+    "end": 88.836,
+    "content": "Them a end up dying after 1 print",
+    "confidence": 0.421,
+    "mismatch": true,
+    "heard": "gonna down with a gun",
+    "words": [
+     {
+      "begin": 87.285,
+      "end": 87.385,
+      "content": "Them"
+     },
+     {
+      "begin": 87.466,
+      "end": 87.486,
+      "content": "a"
+     },
+     {
+      "begin": 87.587,
+      "end": 87.687,
+      "content": "end"
+     },
+     {
+      "begin": 87.708,
+      "end": 87.768,
+      "content": "up"
+     },
+     {
+      "begin": 87.849,
+      "end": 88.151,
+      "content": "dying"
+     },
+     {
+      "begin": 88.191,
+      "end": 88.332,
+      "content": "after"
+     },
+     {
+      "begin": 88.473,
+      "end": 88.554,
+      "content": "1"
+     },
+     {
+      "begin": 88.594,
+      "end": 88.836,
+      "content": "print"
+     }
+    ],
+    "align_score": 0.252
+   },
+   {
+    "begin": 90.146,
+    "end": 91.041,
+    "content": "Flexing like you shooting me or something",
+    "confidence": 0.692,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 90.146,
+      "end": 90.469,
+      "content": "Flexing"
+     },
+     {
+      "begin": 90.489,
+      "end": 90.59,
+      "content": "like"
+     },
+     {
+      "begin": 90.63,
+      "end": 90.691,
+      "content": "you"
+     },
+     {
+      "begin": 90.751,
+      "end": 90.973,
+      "content": "shooting"
+     },
+     {
+      "begin": 91.041,
+      "end": 91.041,
+      "content": "me"
+     },
+     {
+      "begin": 91.041,
+      "end": 91.041,
+      "content": "or"
+     },
+     {
+      "begin": 91.041,
+      "end": 91.041,
+      "content": "something"
+     }
+    ],
+    "align_score": 0.633
+   },
+   {
+    "begin": 91.041,
+    "end": 92.823,
+    "content": "Pesticide to you now you bugging",
+    "confidence": 0.667,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 91.041,
+      "end": 92.19,
+      "content": "Pesticide"
+     },
+     {
+      "begin": 92.25,
+      "end": 92.311,
+      "content": "to"
+     },
+     {
+      "begin": 92.351,
+      "end": 92.432,
+      "content": "you"
+     },
+     {
+      "begin": 92.452,
+      "end": 92.512,
+      "content": "now"
+     },
+     {
+      "begin": 92.532,
+      "end": 92.613,
+      "content": "you"
+     },
+     {
+      "begin": 92.714,
+      "end": 92.823,
+      "content": "bugging"
+     }
+    ],
+    "align_score": 0.51
+   },
+   {
+    "begin": 92.823,
+    "end": 94.2,
+    "content": "Catch you in a studio he busting",
+    "confidence": 0.551,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 92.823,
+      "end": 93.226,
+      "content": "Catch"
+     },
+     {
+      "begin": 93.247,
+      "end": 93.307,
+      "content": "you"
+     },
+     {
+      "begin": 93.388,
+      "end": 93.428,
+      "content": "in"
+     },
+     {
+      "begin": 93.488,
+      "end": 93.508,
+      "content": "a"
+     },
+     {
+      "begin": 93.549,
+      "end": 93.891,
+      "content": "studio"
+     },
+     {
+      "begin": 93.992,
+      "end": 94.032,
+      "content": "he"
+     },
+     {
+      "begin": 94.153,
+      "end": 94.2,
+      "content": "busting"
+     }
+    ],
+    "align_score": 0.541
+   },
+   {
+    "begin": 94.2,
+    "end": 96.6,
+    "content": "Let you dying doing what you love… Kid",
+    "confidence": 0.236,
+    "mismatch": true,
+    "heard": "and do all the",
+    "words": [
+     {
+      "begin": 94.2,
+      "end": 94.321,
+      "content": "Let"
+     },
+     {
+      "begin": 94.543,
+      "end": 94.624,
+      "content": "you"
+     },
+     {
+      "begin": 94.664,
+      "end": 94.805,
+      "content": "dying"
+     },
+     {
+      "begin": 94.825,
+      "end": 95.108,
+      "content": "doing"
+     },
+     {
+      "begin": 95.289,
+      "end": 95.45,
+      "content": "what"
+     },
+     {
+      "begin": 95.491,
+      "end": 95.551,
+      "content": "you"
+     },
+     {
+      "begin": 95.612,
+      "end": 95.874,
+      "content": "love…"
+     },
+     {
+      "begin": 96.418,
+      "end": 96.6,
+      "content": "Kid"
+     }
+    ],
+    "align_score": 0.345
+   },
+   {
+    "begin": 98.624,
+    "end": 101.346,
+    "content": "I got folks who know your social. They gone smoke you if I clear it",
+    "confidence": 0.626,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 98.624,
+      "end": 98.644,
+      "content": "I"
+     },
+     {
+      "begin": 98.745,
+      "end": 98.865,
+      "content": "got"
+     },
+     {
+      "begin": 98.946,
+      "end": 99.127,
+      "content": "folks"
+     },
+     {
+      "begin": 99.147,
+      "end": 99.207,
+      "content": "who"
+     },
+     {
+      "begin": 99.247,
+      "end": 99.328,
+      "content": "know"
+     },
+     {
+      "begin": 99.368,
+      "end": 99.468,
+      "content": "your"
+     },
+     {
+      "begin": 99.508,
+      "end": 99.83,
+      "content": "social."
+     },
+     {
+      "begin": 100.111,
+      "end": 100.212,
+      "content": "They"
+     },
+     {
+      "begin": 100.272,
+      "end": 100.373,
+      "content": "gone"
+     },
+     {
+      "begin": 100.433,
+      "end": 100.634,
+      "content": "smoke"
+     },
+     {
+      "begin": 100.654,
+      "end": 100.714,
+      "content": "you"
+     },
+     {
+      "begin": 100.795,
+      "end": 100.835,
+      "content": "if"
+     },
+     {
+      "begin": 100.915,
+      "end": 100.935,
+      "content": "I"
+     },
+     {
+      "begin": 101.036,
+      "end": 101.237,
+      "content": "clear"
+     },
+     {
+      "begin": 101.346,
+      "end": 101.346,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.716
+   },
+   {
+    "begin": 101.346,
+    "end": 102.66,
+    "content": "Don’t think I’m broke cause my appearance",
+    "confidence": 0.699,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 101.346,
+      "end": 101.487,
+      "content": "Don’t"
+     },
+     {
+      "begin": 101.527,
+      "end": 101.628,
+      "content": "think"
+     },
+     {
+      "begin": 101.669,
+      "end": 101.77,
+      "content": "I’m"
+     },
+     {
+      "begin": 101.85,
+      "end": 102.032,
+      "content": "broke"
+     },
+     {
+      "begin": 102.052,
+      "end": 102.153,
+      "content": "cause"
+     },
+     {
+      "begin": 102.173,
+      "end": 102.274,
+      "content": "my"
+     },
+     {
+      "begin": 102.375,
+      "end": 102.66,
+      "content": "appearance"
+     }
+    ],
+    "align_score": 0.559
+   },
+   {
+    "begin": 102.66,
+    "end": 104.202,
+    "content": "I’m laying low I ain’t here to drip",
+    "confidence": 0.715,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 102.66,
+      "end": 102.882,
+      "content": "I’m"
+     },
+     {
+      "begin": 103.003,
+      "end": 103.245,
+      "content": "laying"
+     },
+     {
+      "begin": 103.306,
+      "end": 103.447,
+      "content": "low"
+     },
+     {
+      "begin": 103.729,
+      "end": 103.77,
+      "content": "I"
+     },
+     {
+      "begin": 103.83,
+      "end": 103.931,
+      "content": "ain’t"
+     },
+     {
+      "begin": 103.951,
+      "end": 104.072,
+      "content": "here"
+     },
+     {
+      "begin": 104.113,
+      "end": 104.173,
+      "content": "to"
+     },
+     {
+      "begin": 104.202,
+      "end": 104.202,
+      "content": "drip"
+     }
+    ],
+    "align_score": 0.672
+   },
+   {
+    "begin": 104.202,
+    "end": 105.823,
+    "content": "This drone something serious",
+    "confidence": 0.924,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 104.202,
+      "end": 104.687,
+      "content": "This"
+     },
+     {
+      "begin": 104.727,
+      "end": 104.929,
+      "content": "drone"
+     },
+     {
+      "begin": 105.029,
+      "end": 105.776,
+      "content": "something"
+     },
+     {
+      "begin": 105.823,
+      "end": 105.823,
+      "content": "serious"
+     }
+    ],
+    "align_score": 0.467
+   },
+   {
+    "begin": 105.823,
+    "end": 106.681,
+    "content": "Surfed your shoulder from the air with it",
+    "confidence": 0.375,
+    "mismatch": true,
+    "heard": "through",
+    "words": [
+     {
+      "begin": 105.823,
+      "end": 106.025,
+      "content": "Surfed"
+     },
+     {
+      "begin": 106.066,
+      "end": 106.146,
+      "content": "your"
+     },
+     {
+      "begin": 106.166,
+      "end": 106.429,
+      "content": "shoulder"
+     },
+     {
+      "begin": 106.449,
+      "end": 106.611,
+      "content": "from"
+     },
+     {
+      "begin": 106.671,
+      "end": 106.681,
+      "content": "the"
+     },
+     {
+      "begin": 106.681,
+      "end": 106.681,
+      "content": "air"
+     },
+     {
+      "begin": 106.681,
+      "end": 106.681,
+      "content": "with"
+     },
+     {
+      "begin": 106.681,
+      "end": 106.681,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.26
+   },
+   {
+    "begin": 106.681,
+    "end": 107.876,
+    "content": "Yeah yeah",
+    "confidence": 0.5,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 106.681,
+      "end": 107.349,
+      "content": "Yeah"
+     },
+     {
+      "begin": 107.673,
+      "end": 107.876,
+      "content": "yeah"
+     }
+    ],
+    "align_score": 0.142
+   }
+  ]
+ }
+}

@@ -33,8 +33,8 @@
       "federal_training_ids": [
         "FEMA-IS-100-C",
         "FEMA-IS-120-C",
-        "FEMA-IS-235-C",
-        "CDC-EHTER-AWARENESS"
+        "CDC-EHTER-AWARENESS",
+        "FEMA-IS-700-B"
       ],
       "competency_ids": [
         "CORE-08",
@@ -110,7 +110,86 @@
             "evac-account"
           ]
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-OPS-BASIC-EVAC-V1-01",
+            "text": "evac inspect"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-BASIC-EVAC-V1-02",
+            "text": "evac route"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-BASIC-EVAC-V1-03",
+            "text": "evac assembly"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-BASIC-EVAC-V1-04",
+            "text": "evac account"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-BASIC-EVAC-V1-05",
+            "text": "evac close"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-OPS-BASIC-EVAC-V1-EEG-1",
+            "objective_id": "OBJ-EU-OPS-BASIC-EVAC-V1-01",
+            "task": "evac inspect",
+            "action_ids": [
+              "evac-inspect"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-BASIC-EVAC-V1-EEG-2",
+            "objective_id": "OBJ-EU-OPS-BASIC-EVAC-V1-02",
+            "task": "evac route",
+            "action_ids": [
+              "evac-route"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-BASIC-EVAC-V1-EEG-3",
+            "objective_id": "OBJ-EU-OPS-BASIC-EVAC-V1-03",
+            "task": "evac assembly",
+            "action_ids": [
+              "evac-assembly"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-BASIC-EVAC-V1-EEG-4",
+            "objective_id": "OBJ-EU-OPS-BASIC-EVAC-V1-04",
+            "task": "evac account",
+            "action_ids": [
+              "evac-account"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-BASIC-EVAC-V1-EEG-5",
+            "objective_id": "OBJ-EU-OPS-BASIC-EVAC-V1-05",
+            "task": "evac close",
+            "action_ids": [
+              "evac-close"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-OPS-BLOCKED-STAIR-V1",
@@ -118,8 +197,7 @@
       "title": "Blocked Stair A / Alternate Egress",
       "federal_training_ids": [
         "FEMA-IS-120-C",
-        "FEMA-IS-130-A",
-        "FEMA-IS-235-C"
+        "FEMA-IS-130-A"
       ],
       "competency_ids": [
         "CORE-08",
@@ -187,15 +265,92 @@
             "stair-assembly"
           ]
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-OPS-BLOCKED-STAIR-V1-01",
+            "text": "stair inspect a"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-BLOCKED-STAIR-V1-02",
+            "text": "stair inspect b"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-BLOCKED-STAIR-V1-03",
+            "text": "stair route"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-BLOCKED-STAIR-V1-04",
+            "text": "stair assembly"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-BLOCKED-STAIR-V1-05",
+            "text": "stair close"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-OPS-BLOCKED-STAIR-V1-EEG-1",
+            "objective_id": "OBJ-EU-OPS-BLOCKED-STAIR-V1-01",
+            "task": "stair inspect a",
+            "action_ids": [
+              "stair-inspect-a"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-BLOCKED-STAIR-V1-EEG-2",
+            "objective_id": "OBJ-EU-OPS-BLOCKED-STAIR-V1-02",
+            "task": "stair inspect b",
+            "action_ids": [
+              "stair-inspect-b"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-BLOCKED-STAIR-V1-EEG-3",
+            "objective_id": "OBJ-EU-OPS-BLOCKED-STAIR-V1-03",
+            "task": "stair route",
+            "action_ids": [
+              "stair-route"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-BLOCKED-STAIR-V1-EEG-4",
+            "objective_id": "OBJ-EU-OPS-BLOCKED-STAIR-V1-04",
+            "task": "stair assembly",
+            "action_ids": [
+              "stair-assembly"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-BLOCKED-STAIR-V1-EEG-5",
+            "objective_id": "OBJ-EU-OPS-BLOCKED-STAIR-V1-05",
+            "task": "stair close",
+            "action_ids": [
+              "stair-close"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-OPS-ELEVATOR-OUTAGE-V1",
       "canonical_scenario_id": "passenger_elevator_outage",
       "title": "Passenger Elevator Outage / Accessibility Response",
-      "federal_training_ids": [
-        "FEMA-IS-235-C"
-      ],
+      "federal_training_ids": [],
       "competency_ids": [
         "CORE-08",
         "SHR-06"
@@ -250,7 +405,73 @@
             "elev-plan"
           ]
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-OPS-ELEVATOR-OUTAGE-V1-01",
+            "text": "elev inspect"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-ELEVATOR-OUTAGE-V1-02",
+            "text": "elev comms"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-ELEVATOR-OUTAGE-V1-03",
+            "text": "elev plan"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-ELEVATOR-OUTAGE-V1-04",
+            "text": "elev close"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-OPS-ELEVATOR-OUTAGE-V1-EEG-1",
+            "objective_id": "OBJ-EU-OPS-ELEVATOR-OUTAGE-V1-01",
+            "task": "elev inspect",
+            "action_ids": [
+              "elev-inspect"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-ELEVATOR-OUTAGE-V1-EEG-2",
+            "objective_id": "OBJ-EU-OPS-ELEVATOR-OUTAGE-V1-02",
+            "task": "elev comms",
+            "action_ids": [
+              "elev-comms"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-ELEVATOR-OUTAGE-V1-EEG-3",
+            "objective_id": "OBJ-EU-OPS-ELEVATOR-OUTAGE-V1-03",
+            "task": "elev plan",
+            "action_ids": [
+              "elev-plan"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-ELEVATOR-OUTAGE-V1-EEG-4",
+            "objective_id": "OBJ-EU-OPS-ELEVATOR-OUTAGE-V1-04",
+            "task": "elev close",
+            "action_ids": [
+              "elev-close"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-OPS-POWER-V1",
@@ -333,14 +554,95 @@
             "power-restore"
           ]
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-OPS-POWER-V1-01",
+            "text": "power inspect"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-POWER-V1-02",
+            "text": "power interface"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-POWER-V1-03",
+            "text": "power plan"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-POWER-V1-04",
+            "text": "power restore"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-POWER-V1-05",
+            "text": "power validate"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-OPS-POWER-V1-EEG-1",
+            "objective_id": "OBJ-EU-OPS-POWER-V1-01",
+            "task": "power inspect",
+            "action_ids": [
+              "power-inspect"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-POWER-V1-EEG-2",
+            "objective_id": "OBJ-EU-OPS-POWER-V1-02",
+            "task": "power interface",
+            "action_ids": [
+              "power-interface"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-POWER-V1-EEG-3",
+            "objective_id": "OBJ-EU-OPS-POWER-V1-03",
+            "task": "power plan",
+            "action_ids": [
+              "power-plan"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-POWER-V1-EEG-4",
+            "objective_id": "OBJ-EU-OPS-POWER-V1-04",
+            "task": "power restore",
+            "action_ids": [
+              "power-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-POWER-V1-EEG-5",
+            "objective_id": "OBJ-EU-OPS-POWER-V1-05",
+            "task": "power validate",
+            "action_ids": [
+              "power-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-OPS-MEDICAL-V1",
       "canonical_scenario_id": "medical_incident_lobby",
       "title": "Medical Incident / Escalation and Handoff",
       "federal_training_ids": [
-        "FEMA-IS-200-C"
+        "FEMA-IS-200-C",
+        "FEMA-IS-317-A",
+        "FEMA-IS-700-B"
       ],
       "competency_ids": [
         "CORE-08",
@@ -414,7 +716,86 @@
             "med-aed"
           ]
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-OPS-MEDICAL-V1-01",
+            "text": "med inspect"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-MEDICAL-V1-02",
+            "text": "med escalate"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-MEDICAL-V1-03",
+            "text": "med clear"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-MEDICAL-V1-04",
+            "text": "med aed"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-MEDICAL-V1-05",
+            "text": "med handoff"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-OPS-MEDICAL-V1-EEG-1",
+            "objective_id": "OBJ-EU-OPS-MEDICAL-V1-01",
+            "task": "med inspect",
+            "action_ids": [
+              "med-inspect"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-MEDICAL-V1-EEG-2",
+            "objective_id": "OBJ-EU-OPS-MEDICAL-V1-02",
+            "task": "med escalate",
+            "action_ids": [
+              "med-escalate"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-MEDICAL-V1-EEG-3",
+            "objective_id": "OBJ-EU-OPS-MEDICAL-V1-03",
+            "task": "med clear",
+            "action_ids": [
+              "med-clear"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-MEDICAL-V1-EEG-4",
+            "objective_id": "OBJ-EU-OPS-MEDICAL-V1-04",
+            "task": "med aed",
+            "action_ids": [
+              "med-aed"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-MEDICAL-V1-EEG-5",
+            "objective_id": "OBJ-EU-OPS-MEDICAL-V1-05",
+            "task": "med handoff",
+            "action_ids": [
+              "med-handoff"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-OPS-SURGE-V1",
@@ -422,8 +803,7 @@
       "title": "Public-Service Surge / Queue Continuity",
       "federal_training_ids": [
         "IRS-VITA-BASIC-2025",
-        "IRS-VITA-ADVANCED-2025",
-        "FEMA-IS-238"
+        "IRS-VITA-ADVANCED-2025"
       ],
       "competency_ids": [
         "CORE-02",
@@ -482,16 +862,79 @@
             "surge-comms"
           ]
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-OPS-SURGE-V1-01",
+            "text": "surge inspect"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-SURGE-V1-02",
+            "text": "surge plan"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-SURGE-V1-03",
+            "text": "surge comms"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-SURGE-V1-04",
+            "text": "surge close"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-OPS-SURGE-V1-EEG-1",
+            "objective_id": "OBJ-EU-OPS-SURGE-V1-01",
+            "task": "surge inspect",
+            "action_ids": [
+              "surge-inspect"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-SURGE-V1-EEG-2",
+            "objective_id": "OBJ-EU-OPS-SURGE-V1-02",
+            "task": "surge plan",
+            "action_ids": [
+              "surge-plan"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-SURGE-V1-EEG-3",
+            "objective_id": "OBJ-EU-OPS-SURGE-V1-03",
+            "task": "surge comms",
+            "action_ids": [
+              "surge-comms"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-SURGE-V1-EEG-4",
+            "objective_id": "OBJ-EU-OPS-SURGE-V1-04",
+            "task": "surge close",
+            "action_ids": [
+              "surge-close"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-OPS-CHECKIN-OUTAGE-V1",
       "canonical_scenario_id": "network_checkin_outage",
       "title": "Network / Check-In Outage Fallback",
-      "federal_training_ids": [
-        "CISA-ICS-300",
-        "CISA-ICS-401"
-      ],
+      "federal_training_ids": [],
       "competency_ids": [
         "CORE-05",
         "CORE-07",
@@ -571,7 +1014,99 @@
             "checkin-restore"
           ]
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-01",
+            "text": "checkin terminal"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-02",
+            "text": "checkin service"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-03",
+            "text": "checkin fallback"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-04",
+            "text": "checkin doc"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-05",
+            "text": "checkin restore"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-06",
+            "text": "checkin validate"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-OPS-CHECKIN-OUTAGE-V1-EEG-1",
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-01",
+            "task": "checkin terminal",
+            "action_ids": [
+              "checkin-terminal"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-CHECKIN-OUTAGE-V1-EEG-2",
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-02",
+            "task": "checkin service",
+            "action_ids": [
+              "checkin-service"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-CHECKIN-OUTAGE-V1-EEG-3",
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-03",
+            "task": "checkin fallback",
+            "action_ids": [
+              "checkin-fallback"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-CHECKIN-OUTAGE-V1-EEG-4",
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-04",
+            "task": "checkin doc",
+            "action_ids": [
+              "checkin-doc"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-CHECKIN-OUTAGE-V1-EEG-5",
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-05",
+            "task": "checkin restore",
+            "action_ids": [
+              "checkin-restore"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-CHECKIN-OUTAGE-V1-EEG-6",
+            "objective_id": "OBJ-EU-OPS-CHECKIN-OUTAGE-V1-06",
+            "task": "checkin validate",
+            "action_ids": [
+              "checkin-validate"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-OPS-SERVICE-INCIDENT-V1",
@@ -582,7 +1117,8 @@
         "FEMA-IS-200-C",
         "FEMA-IS-238",
         "CDC-EHTER-AWARENESS",
-        "ATSDR-PHAT"
+        "ATSDR-PHAT",
+        "FEMA-IS-317-A"
       ],
       "competency_ids": [
         "CORE-08",
@@ -656,7 +1192,91 @@
             "service-clear"
           ]
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-EU-OPS-SERVICE-INCIDENT-V1-01",
+            "text": "service inspect"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-SERVICE-INCIDENT-V1-02",
+            "text": "service restrict"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-SERVICE-INCIDENT-V1-03",
+            "text": "service report"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-SERVICE-INCIDENT-V1-04",
+            "text": "service clear"
+          },
+          {
+            "objective_id": "OBJ-EU-OPS-SERVICE-INCIDENT-V1-05",
+            "text": "service close"
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-OPS-SERVICE-INCIDENT-V1-EEG-1",
+            "objective_id": "OBJ-EU-OPS-SERVICE-INCIDENT-V1-01",
+            "task": "service inspect",
+            "action_ids": [
+              "service-inspect"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-SERVICE-INCIDENT-V1-EEG-2",
+            "objective_id": "OBJ-EU-OPS-SERVICE-INCIDENT-V1-02",
+            "task": "service restrict",
+            "action_ids": [
+              "service-restrict"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-SERVICE-INCIDENT-V1-EEG-3",
+            "objective_id": "OBJ-EU-OPS-SERVICE-INCIDENT-V1-03",
+            "task": "service report",
+            "action_ids": [
+              "service-report"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-SERVICE-INCIDENT-V1-EEG-4",
+            "objective_id": "OBJ-EU-OPS-SERVICE-INCIDENT-V1-04",
+            "task": "service clear",
+            "action_ids": [
+              "service-clear"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-OPS-SERVICE-INCIDENT-V1-EEG-5",
+            "objective_id": "OBJ-EU-OPS-SERVICE-INCIDENT-V1-05",
+            "task": "service close",
+            "action_ids": [
+              "service-close"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     }
-  ]
+  ],
+  "hseep": {
+    "doctrine_ref": "hseep-building-safety-scenario-pack-v1.json#/doctrine",
+    "aar_ip_fields_ref": "hseep-building-safety-scenario-pack-v1.json#/doctrine/aar_ip_fields",
+    "automation_boundary": "The runtime drafts EEG ratings and an AAR/IP; a human evaluator finalises them and assigns improvement owners."
+  }
 }

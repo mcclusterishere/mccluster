@@ -47,5 +47,6 @@ test('when every open mission is taken, nothing is suggested', () => {
 
 test('the record draws it with one button that opens the mission, and repaints once missions load', () => {
   assert.match(src, /Next for you<\/p><b>'\+esc\(next\.title\)\+'<\/b><button class="mn__primary" type="button" data-open-mission="'\+esc\(next\.id\)\+'">View mission<\/button>/);
-  assert.match(src, /worldMissionDeckLoaded=true;\n      paintActionRecord\(\);/);
+  /* the list is drawn, then the record (the swipe deck that sat between them went on 2026-11-17) */
+  assert.match(src, /host\.innerHTML=helpGateway\+\(missions\.all\.length\?missions\.all\.map\(missionCard\)\.join\(""\)[^\n]*\n      paintActionRecord\(\);/);
 });

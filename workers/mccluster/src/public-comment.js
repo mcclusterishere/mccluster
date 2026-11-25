@@ -37,6 +37,7 @@
    that fails says "error". Neither is ever a count of zero. */
 import { fail, reply } from './lib/http.js';
 import { bearerUser } from './world-layers.js';
+import { CONTACT_ORIGIN } from './platform/contact.js';
 
 export const PUBLIC_COMMENT_FLAG = 'PUBLIC_COMMENT_LISTING_ENABLED';
 export const REGULATIONS_GOV_KEY_ENV = 'REGULATIONS_GOV_API_KEY';
@@ -83,7 +84,7 @@ async function upstream(url, init, fetchImpl) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetchImpl(url, { ...init, redirect: 'manual', signal: controller.signal, headers: { accept: 'application/json', 'user-agent': 'McCluster-Action/1.0 (https://mccluster.org)', ...((init && init.headers) || {}) } });
+    const res = await fetchImpl(url, { ...init, redirect: 'manual', signal: controller.signal, headers: { accept: 'application/json', 'user-agent': `McCluster-Action/1.0 (${CONTACT_ORIGIN})`, ...((init && init.headers) || {}) } });
     if (!res.ok) throw new Error(`provider ${res.status}`);
     return await res.json();
   } finally {

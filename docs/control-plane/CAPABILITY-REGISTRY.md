@@ -112,6 +112,45 @@ The first active bindings reuse the existing McCluster Worker and media MCP surf
 
 Declaring a capability as planned does **not** authorize or implement it.
 
+## City lore reads
+
+`game.lore.read` resolves to the owned, synchronous `core.game.lore.read` tool.
+Its source is `core/data/fictional-city/district.v1.json`, inside the Core
+release tree so ordinary deployment, rollback and drift checks include it.
+Pages publishes a derived copy of those exact bytes for the city client. Neither
+copy is a private-memory store: authored game data does not read or amend
+`ai_context`, resident conversations, jobs, purchase records or account state.
+
+The existing remote MCP bridge deliberately allowlists this capability behind
+its existing house-owner session and signed edge-to-Core dispatch. This does not
+change the site's preview audience or make the static game assets confidential.
+
+Arguments:
+
+| Field | Meaning |
+| --- | --- |
+| `universe_id` | Omit or use `mccluster-fictional-city`; other universes fail closed. |
+| `section` | `manifest` (default), `brands`, `businesses`, `npcs`, `items`, or `portals`. |
+| `id` | One exact entity ID, without pagination. |
+| `business_id` | Optional business filter for `npcs` or `items`. |
+| `offset`, `limit` | Collection pagination; offset 0–1000, limit 1–24, default 8. |
+
+A manifest response includes schema, universe ID, revision, exact SHA-256, the
+repo-relative source name, district, constraints and counts. Collection responses
+include that same manifest identity, `records`, and `pagination` with `offset`,
+`count`, `total` and `next_offset`. The garage is included in businesses and its
+crew in NPCs. A page also stops before 64 KiB, preserving whole records and
+complete scripted dialogue. Unknown IDs return `GAME_LORE_NOT_FOUND`; invalid
+selectors return `GAME_LORE_QUERY_INVALID`; missing or malformed release data
+returns `GAME_LORE_UNAVAILABLE`. Paths, URLs, prompts and private-context selectors
+are not accepted. Item prices are local game credits; this tool performs no
+purchase or inference.
+
+Example MCP arguments: `{"section":"npcs","business_id":"whip-equipped-garage","limit":3}`.
+The capability reaches a deployed Core only after the ordinary exact-main-SHA
+promotion and green deployment gates. Verify the returned revision/hash against
+the Pages-exported manifest before claiming both surfaces share live canon.
+
 ## Extension model
 
 Root-controlled VPS configuration may add definitions and bindings through:

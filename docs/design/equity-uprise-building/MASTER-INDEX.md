@@ -347,3 +347,70 @@ Step 9 adds floor-scoped asset/cable selectors, executable labs on B1 and every 
 The canonical learner presentation is now **symptom-first rather than engineering-first**. `learner-experience-v1.json` maps the existing deterministic scenarios into plain-language work tickets using the loop **OBSERVE → HYPOTHESIZE → TEST → FIX → VERIFY**. Foundation and Technician users begin with a human report, friendly action labels and bounded diagnosis choices; raw target selectors, JSON input and assessment internals are moved behind instructor/technical disclosure. Beginner sessions do **not** force Engineering/X-Ray on startup. Advanced/Admin/Expert use may still reveal engineering state according to difficulty and instructor intent.
 
 The first explicit PRIM3 reinforcement binding is the Floor 2 Wi-Fi outage (`IT-LAB-017`): after successful diagnosis and verification, the learner can open **Got WiFi?** as a post-lab refresher. This is reinforcement, not the primary lesson or proof of mastery.
+
+### Step 10 Server Lab — hands-on rack / server hardware (owner, 2026-11-03)
+- `SERVER-LAB-SPEC.md`
+- `production/electronics/server-lab-hardware-v1.json`
+- `production/lab-runtime/equity-uprise-server-lab-runtime.mjs`
+- `production/lab-runtime/server-lab-scenario-pack-v1.json`
+- `production/lab-runtime/verify_server_lab_v1.mjs`
+- page: `equity-uprise-server-lab-3d.html` (owner-gated), `js/server-lab/`, `css/server-lab.css`
+
+MDF rack 01 in B1 (42U EIA-310, mirrors `B1-TELECOM-RACKS-01-I001`) and a generic 2U/1U server built from data. Four levels on the existing runtime chain: L1 Identify (IT-LAB-041), L2 Rebuild (IT-LAB-042), L3 Bring-up (IT-LAB-043), L4 Troubleshoot (IT-LAB-044..051, injected hardware faults on the sandbox clone of `B1-SRV-HYP-01-I001`). Step 6 assessment; SANDBOX only; generic unbranded hardware.
+
+
+## v3 interiors, brand slots and model consistency (2026-11-03)
+
+- `production/interiors/furniture-catalog-v3.json` — shared furniture types with real dimensions.
+- `production/interiors/eu_furniture_kit.py` — catalog → instanced meshes for every floor builder.
+- `production/interiors/audit_interior_consistency.py` — model-consistency audit (CI + deploy); report `production/generated/equity-uprise-interior-consistency-report.json`.
+- `production/basement-b1/basement-b1-interior-layout-v3.json`, `production/floor-0{1..6}/floor-0X-interior-layout-v3.json` — per-floor furnishing layouts.
+- `production/brand/brand-manifest.json`, `eu_brand_slots.py`, `equity-uprise-brand-slots.mjs` — brand-slot contract (assign a new logo by changing the manifest artwork).
+
+## Screens and screen apps
+- `SCREENS-AND-SCREEN-APPS-SPEC.md`
+- `production/screens/build_screen_registry_v1.mjs`
+- `production/screens/equity-uprise-screen-registry-v1.json`
+- `production/screens/roof-destination-registry-v1.json`
+- published apps: `screens/*.html`, `js/eu-screens/`; demo `screens/building.html`
+
+Every display surface (148 screens, B1–L7) is bound to its canonical asset id and opens a full phone-first app (terminal, kiosk, NOC, cameras, studio, evidence, departures, wall) over the Lab Runtime sandbox, with an enter/return contract that brings you back to the same floor, pose and mode.
+
+## Physical computer workbench — review-only extension (2026-11-03)
+
+- `COMPUTER-HARDWARE-WORKBENCH.md` — 42 registered computers, physical reference profiles, shared sandbox state, tests and explicit remaining spatial bindings. Not a deployment or full-building completion claim.
+- `HIGGSFIELD-EQUIPMENT-EXPLAINERS.md` — source-bound frame/storyboard handoff; no generated video or provider spend claimed.
+- `production/lab-runtime/computer-hardware-profile-v1.json`
+- `production/lab-runtime/equity-uprise-computer-hardware.mjs`
+- `production/lab-runtime/equity-uprise-computer-view.mjs`
+- `production/lab-runtime/equity-uprise-computer-workbench.mjs`
+- `production/lab-runtime/verify_computer_hardware_v1.mjs`
+- `production/lab-runtime/verify_computer_workbench_browser.mjs`
+
+This extension does not change the reconciled floor programs, equipment placement authority, original server-lab scoring or #707 learning-backend status.
+
+## Device placement reconciliation and manufacturer references
+
+- `FLOOR-DEVICE-REPAIR-V1.md` — all-floor source repair, model proposals, passed final strict/bound diagnostic gate and remaining review gates.
+- `references/device-repair-visual-v1/README.md` — 66 unmodified real phone/desktop captures from source head c17c20bf, 110/110 checks each, scoped geometry/framing review and explicit remaining limits; not geometry authority or deployment evidence.
+- `DEVICE-PLACEMENT-RECONCILIATION.md` — exact baseline, historical F1 pilot, current repair sequence and live-device truth boundary.
+- `MANUFACTURER-MODEL-REFERENCES.md` — eight exact product references, dimensions, source links and explicit fidelity/variant limits. These are partial exterior proxies, not approved CAD.
+- `production/electronics/manufacturer-model-references-v1.json`, `manufacturer_models.py`, `test_manufacturer_models.py` — reference catalog, deterministic exterior geometry and tests.
+- `production/electronics/device-placement-bindings-v1.json` and `device_placement_bindings.py` — canonical entrypoint resolving all 98 explicit bindings. No proximity or hash-derived station ownership.
+- `production/electronics/device-stations-b1-v1.json`, `device-stations-f2-f3-v1.json`, `device-stations-f4-f6-v1.json` — authored station fragments, reasons and exact scenic supersession.
+- `production/electronics/device-repair-b1-v1.md`, `device-stations-f2-f3-repair-report-v1.md`, `device-stations-f4-f6-repair-report-v1.md` — floor design and clearance evidence.
+- `production/electronics/test_device_stations_f2_f3.py`, `test_device_stations_f4_f6.py` — persistent real-floor station regressions.
+- `production/interiors/audit_device_placement.py`, `test_device_placement.py` — integrated real-mesh contact, origin/facing and monitor-intersection checks; strict/bound mode is the acceptance gate.
+- `production/interiors/device-placement-audit-v1.json` — exact-source baseline, 98 unsupported contacts and 33 panel intersections.
+- `production/interiors/device-placement-audit-v2.json` — historical F1-only pilot.
+- `production/interiors/device-placement-audit-v3.json` — final all-floor diagnostic report: 98/98 bindings, zero unsupported contacts and zero monitor-panel intersections. Recheck source hashes and both placement/binding results after each rebuild; this is not visual or installation approval.
+- `production/interiors/test_furniture_device_bindings.py` — keyboard retention and concave L-desk footprint regressions.
+- `production/interiors/glb-export-equivalence-v1.json` — historical cable-metadata cleanup equivalence, not later-model or visual approval.
+- `production/electronics/generated/equity-uprise-workstations-v1.glb` — derived workstation/monitor-only asset for normal room views, separate from racks/cabling/plant overlays.
+- Repository `js/eu-screens/workstation-layer.mjs` and `scripts/test/eu-workstation-layer.test.mjs` — shared authored-geometry consumer and loading/visibility/state checks.
+
+B1–F6 maker assignments are unconfirmed prospects: no supplied hardware, physical
+ownership, commissioned device or live connection is asserted. The ASUS ET900N
+reference covers its published main body only; installed height including
+unsized projecting handles/feet is unverified. L7 stays an open roof and its
+closed ProArt laptop remains a portable prospect with no permanent station.

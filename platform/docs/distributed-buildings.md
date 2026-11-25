@@ -1,5 +1,7 @@
 # HERE distributed building backend
 
+> **Archived; fail-closed (see `../DISABLED.md`).** Nothing below is deployed. The systemd units and env templates were removed, every `npm run` entry point named here exits with `DISABLED`, and the one McCluster backend is `workers/mccluster`.
+
 This deployment supports the first ten buildings with two local servers per building and allocates all 33 owned servers without making every machine a global dependency.
 
 ## Allocation

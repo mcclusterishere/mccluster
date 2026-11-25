@@ -6,9 +6,9 @@ Status: **staged cutover only**. The existing site stays on GitHub Pages until a
 
 | Surface | Current | Target |
 | --- | --- | --- |
-| `matthew.mccluster.org` personal website | GitHub Pages `gh-pages` | Cloudflare Pages `mccluster-web` |
+| `matthew.mccluster.org` Matthew's profile, a tenant of the platform (`docs/control-plane/DOMAINS-AND-ENTITIES.md`) | GitHub Pages `gh-pages` | Cloudflare Pages `mccluster-web` |
 | `api.mccluster.org` | Worker `mccluster` | **Unchanged** |
-| `mccluster.org` company / World host | Existing Cloudflare rules / Worker `mccluster` | **Unchanged** |
+| `mccluster.org` the platform (`platform.origin`; stage P1: the whole site, every page at its path) | Worker `mccluster` by host, fetching the static files from `platform.static_origin` (`https://matthew.mccluster.org`) | **Unchanged host.** If this cutover changes where the static files are fetched, `platform.static_origin` in `data/seo/domain-architecture.json` follows it (then `node tools/build-site-hosts.mjs --write`); the static origin must answer files without redirecting |
 | Supabase data plane | `zmnhbrjyhxzhkxmhkexs` | **Unchanged** |
 | Source of truth | Public `mcclusterishere/mccluster` | Private repository, then optional OVH primary Git remote |
 | Static release builder | `.github/workflows/deploy-pages.yml` | Independently operated, pinned OVH build/release runner |
@@ -24,7 +24,7 @@ This **does not prove a secret was leaked**. It proves the packaging boundary is
 ## Stage a clean public-only release
 
 1. Produce a complete, built **static public export** on a trusted machine. The existing `gh-pages` output can be used temporarily as an input to test parity, but `main` is never an acceptable input and must be refused.
-2. Run `scripts/stage-cloudflare-pages.mjs`. It permits only known public routes/assets (including the album's `data/environments.json`), excludes Site 0 authoring geometry under `assets/3d/prim3-site0/`, refuses symlinks, scans **all** accepted text assets including large bundles for obvious key patterns, enforces Cloudflare file limits, and generates `mccluster-release.json` with the exact source SHA and a content-manifest hash.
+2. Run `scripts/stage-cloudflare-pages.mjs`. It permits only known public routes/assets (including the album's `data/environments.json`), excludes Site 0 authoring geometry under `assets/3d/prim3-site0/`, refuses `data/missions/drawdown/` (the frozen mission catalog, which no page reads), refuses symlinks, scans **all** accepted text assets including large bundles for obvious key patterns, enforces Cloudflare file limits, and generates `mccluster-release.json` with the exact source SHA and a content-manifest hash.
 3. Examine the operator-only exclusion report, automatically saved to `<output-directory>.excluded.json` **outside the public artifact**, compare critical public routes and ensure all required frontend assets are retained. The report is a sorted inventory of excluded paths and must never be uploaded. **The allowlist still needs human review** whenever new asset types or paths are added.
 4. Test the package before any domain or repository settings change.
 
@@ -66,7 +66,7 @@ Use `PAGES_STAGE_ONLY=1` to stage without uploading (with a separate empty relea
 ## Acceptance before the domain cutover
 
 - The deployed Pages release manifest reports the approved exact source SHA.
-- Index, music/album (including `data/environments.json`), Human Uprise social pages, Travel, frontend JS and media all load correctly, with phone and desktop browser tests.
+- Index, music/album (including `data/environments.json`), Equity Uprise social pages, Travel, frontend JS and media all load correctly, with phone and desktop browser tests.
 - Direct GETs to `/.mcp.json`, `/core/src/*`, `/platform/config/*`, `/dns/*`, the internal schema inventory, and `/assets/3d/prim3-site0/*` return 403/404, not a source file or a successful SPA fallback.
 - Sign-in, cross-domain handoff, Stripe returns and service-worker caching still behave correctly. **Do not** alter OAuth redirect allowlists until the canonical hostname actually changes (it is not changing in this cutover).
 - Worker `mccluster` and Supabase remain their own separately verified release surfaces.

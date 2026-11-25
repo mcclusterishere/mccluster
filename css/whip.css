@@ -161,7 +161,7 @@ html[data-theme="light"] .we h1 em {
   transition: filter .15s ease; }
 .we-cta:hover, .we-cta:focus-visible { filter: brightness(1.09); }
 
-.we-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+.we-facts { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1px;
   list-style: none; margin: 1.25rem 0 0; padding: 0;
   background: var(--edge); box-shadow: 0 0 0 1px var(--edge); border-radius: 10px;
   overflow: hidden; }
@@ -280,11 +280,11 @@ html[data-theme="light"] .we-foot__logo { content: url("../assets/img/we-logo.pn
   .we-cta { display: inline-block; padding-inline: 2rem; }
   .we-facts { max-width: 24rem; }
   .we-sec { padding: 3rem 2.2rem 0; }
-  .we-list { grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+  .we-list { grid-template-columns: repeat(3, minmax(0,1fr)); gap: .7rem; }
   .we-row { flex-direction: column; }
   .we-row__body { width: 100%; }
-  .we-steps { grid-template-columns: repeat(3, 1fr); }
-  .we-form { grid-template-columns: 1fr auto; }
+  .we-steps { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .we-form { grid-template-columns: minmax(0,1fr) auto; }
   .we-foot { padding: 1.8rem 2.2rem 0; }
 }
 

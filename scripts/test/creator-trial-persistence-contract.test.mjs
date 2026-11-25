@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const sql=readFileSync(new URL('../../supabase/migrations/pending/20261010001000_creator_trial_reports_consultations.sql',import.meta.url),'utf8');
+const sql=readFileSync(new URL('../../supabase/migrations/20261009222938_creator_trial_reports_consultations_v1.sql',import.meta.url),'utf8');
 const page=readFileSync(new URL('../../mccluster-creator.html',import.meta.url),'utf8');
 const js=readFileSync(new URL('../../js/mccluster-public-profile.js',import.meta.url),'utf8');
 test('report cards are versioned and immutable',()=>{

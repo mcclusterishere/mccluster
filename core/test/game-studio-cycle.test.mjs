@@ -46,6 +46,30 @@ test('production cycle submits image and 3D jobs and schedules collection', asyn
   assert.deepEqual(h.calls.find((x) => x.name === 'media.generate').args.input, { prompt: h.calls.find((x) => x.name === 'media.generate').args.prompt });
 });
 
+test('each paid media call carries one job-scoped operation id that a re-run of the same job repeats and another job never shares', async () => {
+  const h = harness();
+  const input = { campaign: 'PRIM3', brief: 'Build Site 0 tactical arrival zone.', budget_cents: 300 };
+  const first = await h.gameStudioCycle({ id: 'studio-1', org_id: 'org-1', input });
+  const again = await h.gameStudioCycle({ id: 'studio-1', org_id: 'org-1', input });
+  const other = await h.gameStudioCycle({ id: 'studio-2', org_id: 'org-1', input });
+  const ids = (out) => out.submissions.map((s) => s.operation_id);
+  assert.deepEqual(ids(first), ['core:studio-1:0', 'core:studio-1:1', 'core:studio-1:2']);
+  assert.deepEqual(ids(again), ids(first), 'a re-attempt of the same job asks the Worker for the same operations');
+  assert.deepEqual(ids(other), ['core:studio-2:0', 'core:studio-2:1', 'core:studio-2:2']);
+  assert.equal(new Set([...ids(first), ...ids(other)]).size, 6, 'distinct per deliverable and per job');
+  const generated = h.calls.filter((x) => x.name === 'media.generate');
+  assert.deepEqual(generated.map((x) => x.args.operation_id), [...ids(first), ...ids(again), ...ids(other)], 'the id travels as an explicit media.generate argument');
+  for (const call of generated) assert.match(call.args.operation_id, /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/);
+  assert.equal(h.calls.some((x) => x.name !== 'media.generate' && 'operation_id' in x.args), false, 'only the paid call is scoped');
+  assert.equal(h.enqueued.at(-1).input.submissions[0].operation_id, 'core:studio-2:0', 'the collector keeps the id as lineage');
+});
+
+test('a cycle without a job id refuses before any paid call rather than minting an unscoped one', async () => {
+  const h = harness();
+  await assert.rejects(h.gameStudioCycle({ org_id: 'org-1', input: { campaign: 'PRIM3', brief: 'Site 0', budget_cents: 300 } }), /job id/);
+  assert.equal(h.calls.filter((x) => x.name === 'media.generate').length, 0);
+});
+
 test('collector emits owner review packet with generated assets', async () => {
   const h = harness();
   await h.gameStudioCycle({ id: 'studio-1', org_id: 'org-1', input: { campaign: 'PRIM3', repository: 'mcclusterishere/hitmans-halo', brief: 'Build Site 0 tactical arrival zone.', budget_cents: 300 } });

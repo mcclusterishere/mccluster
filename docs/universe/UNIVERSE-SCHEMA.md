@@ -15,7 +15,7 @@ entrance, its own engine, and its own play style. Universes are **separate but c
 you teleport between them through registered **portals**, and every universe keeps its own
 saved state, so you **continue exactly where you left off** in each one.
 
-Two play styles exist:
+The original two play styles are described below. The owner-authorized November 3 city adds `exploration`; see the current addendum at the end and the machine registry.
 
 - **`visual`** — a decision tree. You click/tap things; each choice plays a **generated
   transition clip** that carries you from A to B (Google-Earth feel, real animation instead
@@ -278,3 +278,26 @@ Mapping the existing branch sprawl onto this schema. Execution order follows
 3. Naming/branding of the Hitman universe on the tab bar (`data-appnav` key, icon).
 4. When do Higgsfield transition clips enter production (which A→B routes first)?
 5. Supabase `universe_state` sync: tie to existing `MCC_AUTH` sign-in, or stay local-first?
+
+
+## 15. Current addition — McCluster fictional city (2026-11-03)
+
+The owner has explicitly authorized a new commercial district with original joke storefronts, walking NPCs, a Whip Equipped garage and an Equity Uprise island. Its primary style is `exploration`: independent third-person free roaming with keyboard, touch and tap-to-walk controls, dialogue and game-credit inventory. It is neither a shooter nor the earlier tap-only generated-clip style.
+
+`fictional-city.html` uses the existing owner-only server check. Its engine and state are independent, and its contract is `docs/fictional-city/AGENTS.md`. The canonical authored data lives in Core and is exported byte-for-byte for the browser.
+
+The city records existing-route handoffs separately from universe-to-universe portals because the HQ viewer, Halo globe, PRIM3 world and album are already independent surfaces. A handoff saves city state and opens the actual destination route; each destination retains its own permissions and state rules. This does not claim a reciprocal portal or named spawn feature those destinations do not implement.
+
+The older inventory and phased-Uprise references above are historical. The machine registry continues to mark Uprise World as shelved. This city does not revive it.
+
+## 16. Games on the globe — places and storylines on repeat (2026-11-03)
+
+The owner asked for a new **Games** tab on the existing globe (`action-globe.html`), its own overlay beside the data layers. It is experimental and the **house owner's only**: the tab, its `?games=` deep link and the World frame's Games door appear only on the server's owner answer (`/v1/world/access` → `release.admin_preview`, the same answer as Halo; `js/action-globe.js` `isOwner`). Every destination it opens keeps its own gate. It is a new hub; it does not revive or route into the shelved Uprise World.
+
+The registry is extended, not paralleled: `docs/universe/universe-registry.json` → `gamesWorld` is the authored source. `tools/publish-games-world.mjs` derives `data/games/world.v1.json` from it and from the story sources it names; the overlay (`js/globe-games.js`) reads only that file.
+
+- **Places** are `country → state → town`. A town lists **entries** (`place`, `story` or `mission`, each with an existing `route` and a blurb quoted from its cited `source`) grouped by **neighborhood**, and the ids of its **storylines**. Only destinations that exist are listed; there is no "coming soon".
+- **Imports** add real places from other canonical files. PRIM3 World side operations (`data/prim3/world-missions.json`) are mapped to a state and town by the registry; a mission without a mapping is omitted, never guessed.
+- **Storylines run on repeat.** A storyline names its `town`, `neighborhood`, `start` route and ordered scenes (`id`, `title`, `durationMs`, a location `anchor`, optional per-scene `route`). Published scenes carry `offsetMs`; `loop` is `{ epoch, periodMs }` with `periodMs` the sum of scene durations. The scene playing at time `t` is the one whose window holds `(t − epoch) mod periodMs`; the next scene follows it, wrapping. Scenes come from their sources where possible (`scenesFrom`): the Robbery 1s beats (`core/data/fictional-city/district.v1.json` → `storyArcs`), the Whip Equipped core sequence (`docs/music/whip-equipped/CANON.json`, durations from `TIMING.json`), and the B1 mission's objectives at their authority anchors. A duration the source does not supply is a declared schedule slot (`timing: "slot"`), not story timing.
+- **Imports** also bring in the city expansion's playable neighbourhoods (`expansionNeighborhoods` with `authorship: new-2026-11-03`; each opens `fictional-city.html`, which has no per-neighbourhood entrance) and the City Arcade's playable games (`data/city-arcade/catalog.v1.json` → `city-arcade.html?game=<id>`; planned games are omitted). Individual businesses are reached through their neighbourhood, and nothing authored but not yet placed in a playable surface is a destination.
+- **Conditional slots.** An entry may carry `requires: { built, source }`: `built` is the path the deployed site serves when the feature exists, `source` is where it is authored. The overlay checks `built` when it opens (`HuGames.resolveRequires`) and omits the entry when the file is missing or the check fails. The published data does not change when the feature lands, so nothing has to be regenerated. The first such slot is Bridgeport's Computer Workbench (`screens/terminal.html?tab=hardware&mode=TRAINING`, which waits for PR #728's workbench module), listed beside the Server Lab and the Building Screens under Equity Uprise HQ.

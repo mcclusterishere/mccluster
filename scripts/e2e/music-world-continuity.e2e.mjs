@@ -2,7 +2,7 @@
    Music/World documents. No production API, account or audio request escapes
    the route fixtures. The globe renderer itself is covered by World suites. */
 import {createRequire} from 'node:module';
-import { withTravelAndMissions } from './world-switch.mjs';
+import { withTravel } from './world-switch.mjs';
 import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {resolve, join, extname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -27,12 +27,21 @@ function wav(seconds=24){
 const AUDIO=wav();
 const IMAGE=Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64');
 function token(origin){return 'x.'+Buffer.from(JSON.stringify({sub:USER,exp:Math.floor(Date.now()/1000)+3600,email:'audio-fixture@invalid.test',origin})).toString('base64url')+'.y';}
-async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html'}={}){
-  const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
-  const requests=[],messages=[],errors=[];
+/* motion: 'reduce' keeps the album room's light off, as this suite always ran; 'no-preference'
+   is what most listeners have, with js/chamber.js drawing the room (music map PB-13) */
+/* deliver({key,start,n}) answers each audio read as the network would (music slice M3): null for the plain answer,
+   {cut} bytes at most (a short 206: the browser asks for the rest with a Range read) or {status} instead */
+async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html',motion='reduce',deliver=null}={}){
+  const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:motion,serviceWorkers:'block'});
+  const requests=[],messages=[],errors=[],reads=[];
   await context.addInitScript(({HOUSE,member,token,privacy})=>{
     if(privacy)localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
     if(member&&location.origin===HOUSE&&!localStorage.getItem('mccdb_session'))localStorage.setItem('mccdb_session',JSON.stringify({access_token:token,refresh_token:'fixture-house-refresh',expires_at:Math.floor(Date.now()/1000)+3600}));
+    try{sessionStorage.setItem('mcc_premiere','1');}catch{}
+    /* every AudioContext a page makes, so a check can suspend them all the way WebKit does when Safari leaves the screen */
+    window.__audioContexts=[];
+    const NativeContext=window.AudioContext;
+    if(NativeContext){const Recorded=function(...args){const c=new NativeContext(...args);window.__audioContexts.push(c);return c;};Recorded.prototype=NativeContext.prototype;window.AudioContext=Recorded;window.webkitAudioContext=Recorded;}
     const NativeAudio=window.Audio;
     window.__audioObjects=[];window.__audioEvents=[];window.__unloads=0;window.__bridgeMessages=[];
     window.Audio=function(...args){const a=new NativeAudio(...args);window.__audioObjects.push(a);for(const type of ['play','pause','emptied','seeking'])a.addEventListener(type,()=>window.__audioEvents.push({type,src:a.currentSrc||a.src,time:a.currentTime}));return a;};
@@ -59,13 +68,20 @@ async function setup(width=390,member=false,{parentScript,privacy=true,start='/l
       if(u.origin===HOUSE&&p==='/js/world-audio-continuity.js'&&parentScript&&await parentScript()===false)return r.abort();
       if(p.startsWith('/assets/audio/')){
         const range=/bytes=(\d+)-(\d*)/.exec(req.headers().range||'');
-        if(range){const start=Number(range[1]),end=Math.min(Number(range[2]||AUDIO.length-1),AUDIO.length-1);return r.fulfill({status:206,contentType:'audio/wav',headers:{'accept-ranges':'bytes','content-range':`bytes ${start}-${end}/${AUDIO.length}`},body:AUDIO.subarray(start,end+1)});}
-        return r.fulfill({status:200,contentType:'audio/wav',headers:{'accept-ranges':'bytes'},body:AUDIO});
+        const read={key:p.split('/').pop(),start:range?Number(range[1]):0,n:0,at:Date.now(),status:0};
+        read.n=reads.filter(q=>q.key===read.key).length+1;reads.push(read);
+        const fault=deliver?await deliver(read):null;
+        try{
+          if(fault&&fault.status){read.status=fault.status;return await r.fulfill({status:fault.status,body:''});}
+          if(range){const start=read.start;let end=Math.min(Number(range[2]||AUDIO.length-1),AUDIO.length-1);if(fault&&fault.cut)end=Math.min(end,start+fault.cut-1);read.status=206;return await r.fulfill({status:206,contentType:'audio/wav',headers:{'accept-ranges':'bytes','content-range':`bytes ${start}-${end}/${AUDIO.length}`},body:AUDIO.subarray(start,end+1)});}
+          read.status=200;return await r.fulfill({status:200,contentType:'audio/wav',headers:{'accept-ranges':'bytes'},body:AUDIO});
+        }catch{/* the page moved on while this read was held */}
+        return;
       }
       const path=resolve(ROOT,'.'+(p==='/'?'/mnet.html':decodeURIComponent(p)));
       if(path.startsWith(resolve(ROOT)+sep)){
         /* the World's first touch here is Travel's Where to, so this suite drives the World with Travel switched on */
-        try{let body=await readFile(path);if(path===resolve(ROOT,'mnet.html'))body=Buffer.from(withTravelAndMissions(body));return r.fulfill({body,contentType:MIME[extname(path)]||'application/octet-stream'});}catch{}
+        try{let body=await readFile(path);if(path===resolve(ROOT,'mnet.html'))body=Buffer.from(withTravel(body));return r.fulfill({body,contentType:MIME[extname(path)]||'application/octet-stream'});}catch{}
       }
       if(/\.(?:png|jpe?g|webp|gif)$/.test(p))return r.fulfill({contentType:'image/gif',body:IMAGE});
       return r.fulfill({status:404,body:'Fixture: file absent'});
@@ -74,11 +90,14 @@ async function setup(width=390,member=false,{parentScript,privacy=true,start='/l
   });
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   await page.goto(HOUSE+start,{waitUntil:parentScript?'domcontentloaded':'load'});
-  if(start==='/listen.html')await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'),!parentScript);
-  return {context,page,requests,messages,errors};
+  if(start==='/listen.html')await page.waitForFunction(ready=>(!ready||!!window.MCC_WORLD_AUDIO)&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&!!document.getElementById('q'),!parentScript);
+  return {context,page,requests,messages,errors,reads};
 }
 async function play(page,album='here',title='Who Did The Shoot'){
   const selector=`[data-music-play][data-album=${JSON.stringify(album)}][data-track=${JSON.stringify(title)}]`;
+  /* Listen lists albums and artists (Matthew, 2026-11-23, "Quick wins" Q2 in docs/music/MUSIC-RELEASE-20261119.md): a
+     song's own play button is in Listen's search results */
+  if(!(await page.$(selector))){await page.fill('#q',title);await page.waitForSelector(selector);}
   await page.locator(selector).first().click();
   await page.waitForFunction(()=>MCC_MUSIC.current()&&!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>.15);
 }
@@ -132,14 +151,21 @@ try{
     let release;
     const held=new Promise(resolve=>release=resolve);
     const {context,page}=await setup(390,false,{parentScript:()=>held});
+    /* review RF-3: the Music tab's name says what a tap on it does (js/tabbar.js); while a World opening is pending a tap
+       calls it off and pauses nothing, so the tab keeps its own name; once called off it is the player's Pause again */
+    const told=async()=>{const s=await page.locator('.appbar [data-appnav="music"]').ariaSnapshot();const m=/^- (\w+) "([^"]*)"/.exec(s.trim());return m?`${m[1]} "${m[2]}"`:s;};
     await play(page);await page.evaluate(()=>window.__originalAudio=MCC_MUSIC.audio);
     await page.locator('.appbar [data-appnav="world"]').click();
+    await page.locator('#mccWorldAudioLoading').waitFor();
+    check('while a World opening is pending, the Music tab is told as link "Music" (a tap calls it off, it pauses nothing)',await told()==='link "Music"',await told());
     await page.locator('[data-world-audio-cancel]').click();
     check('Stay in Music cancels a pending World opening',await page.locator('#mccWorldAudioLoading').count()===0&&await page.evaluate(()=>__unloads===0&&!MCC_MUSIC.audio.paused));
+    check('after Stay in Music the Music tab is the player\'s Pause again ("Pause music")',await told()==='link "Pause music"',await told());
     await page.locator('.appbar [data-appnav="world"]').click();
     await page.locator('.appbar [data-appnav="music"]').click();
     release(true);await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO);await page.waitForTimeout(100);
     check('explicit Music destination cancels queued World even when its helper arrives later',await page.locator('#mccWorldAudioLoading').count()===0&&await page.evaluate(()=>!MCC_WORLD_AUDIO.active()&&__unloads===0&&__originalAudio===MCC_MUSIC.audio&&!MCC_MUSIC.audio.paused));
+    check('after the Music tab called the World off, it is the player\'s Pause again ("Pause music")',await told()==='link "Pause music"',await told());
     await context.close();
   }
   for(const width of [390,1280]){
@@ -244,11 +270,87 @@ try{
     await context.close();
   }
   {
-    const {context,page}=await setup();await play(page,'cia-mind-control','Niggy Nigg Niggr');await world(page);
-    await page.waitForFunction(()=>MCC_MUSIC.audio.paused,{timeout:7000});
-    const state=await audioState(page);
-    check('guest preview remains capped at four seconds after World entry',state.time>=3.8&&state.time<=4.01&&await page.evaluate(()=>MCC_MUSIC.access()==='preview'),state);
-    check('theme never replaces a completed preview',state.playing===0);
+    /* A LOCKED PREVIEW NEVER STOPS THE QUEUE (music slice M3; decision D-11's default): the preview ends at its
+       four seconds, one short line says what it was, and the next song plays in the same player, never the theme */
+    const {context,page}=await setup();
+    /* the catalogue's one gated song is held for everyone but the house owner (Quick wins Q5), and an album stops after
+       its last song (Q6): the preview is proved on that song with its hold taken off and first on its record, in this
+       fixture only, so what follows the preview is the next song of the same record */
+    const unheld=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8'));
+    for(const a of unheld.albums){for(const t of a.tracks||[])delete t.hold;a.tracks=(a.tracks||[]).filter(t=>t.gated).concat((a.tracks||[]).filter(t=>!t.gated));}
+    await context.route('**/data/albums.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify(unheld)}));
+    /* where the preview was stopped, read at the engine's own pause (the next song's source is set before the pause event is heard) */
+    await page.evaluate(()=>{window.__previewStops=[];const a=MCC_MUSIC.audio,pause=a.pause;a.pause=function(){if(/niggy-nigg-preview/.test(a.currentSrc)&&!a.paused)__previewStops.push(a.currentTime);return pause.apply(this,arguments);};});
+    await play(page,'cia-mind-control','Niggy Nigg Niggr');await world(page);
+    await page.waitForFunction(()=>MCC_MUSIC.current()&&MCC_MUSIC.current().title!=='Niggy Nigg Niggr'&&!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>.2,null,{timeout:12000}).catch(()=>{});
+    const state=await audioState(page),stops=await page.evaluate(()=>__previewStops);
+    check('guest preview remains capped at four seconds after World entry (stopped within one clock tick of its boundary)',stops.length===1&&stops[0]>=3.8&&stops[0]<=4.3,stops);
+    check('a locked preview never stops the queue: the next song plays on in the same player',await page.evaluate(()=>MCC_MUSIC.current().title!=='Niggy Nigg Niggr'&&MCC_MUSIC.access()==='full'&&!MCC_MUSIC.audio.paused),{state,current:await page.evaluate(()=>MCC_MUSIC.current()&&MCC_MUSIC.current().title)});
+    check('theme never replaces a completed preview',state.playing===1&&await page.evaluate(()=>__audioObjects.filter(a=>!a.paused).every(a=>a===MCC_MUSIC.audio)),state);
+    check('the preview says what it was in one short line',await page.evaluate(()=>/^That was the preview of Niggy Nigg Niggr\./.test((document.getElementById('musicMiniNote')||{}).textContent||'')));
+    await context.close();
+  }
+  {
+    /* SONGS PLAY TO THE END (music slice M3): the read under a song in the World's retained player stops mid-track and
+       the network stays down for a moment. The World's control says so and never shows Pause over silence; the same
+       Audio element picks up at the second it stopped. */
+    const song='who-did-the-shoot.mp3';let failedAt=0;
+    const deliver=async q=>{
+      if(q.key!==song)return null;
+      if(!failedAt){if(q.n===1)return {cut:240000};if(q.start>0){await new Promise(r=>setTimeout(r,6000));failedAt=Date.now();return {status:503};}return null;}
+      if(Date.now()-failedAt<2500)return {status:503};
+      return q.start===0?{cut:16044}:null;
+    };
+    const {context,page,reads}=await setup(390,false,{deliver});
+    await play(page);const frame=await world(page);
+    await page.evaluate(()=>{window.__originalAudio=MCC_MUSIC.audio;window.__playingAt=[];MCC_MUSIC.audio.addEventListener('playing',()=>__playingAt.push(MCC_MUSIC.audio.currentTime));});
+    await page.waitForFunction(()=>MCC_MUSIC.delivery&&MCC_MUSIC.delivery().state==='reconnecting',null,{timeout:15000}).catch(()=>{});
+    const down=await page.evaluate(()=>({paused:MCC_MUSIC.audio.paused,state:document.getElementById('mccWorldAudioState').textContent,play:document.querySelector('#mccWorldAudioControls .world-audio__play').getAttribute('aria-label'),at:MCC_MUSIC.delivery?MCC_MUSIC.delivery().at:null}));
+    /* the element is quiet and the World's control says why; its button is Pause, which stops the tries (music slice M3,
+       review PB-R3: it showed Play, and Play tried again at once) */
+    check('a drop under the World says Reconnecting…, and the World\'s control offers Pause, which stops the tries',down.paused&&down.state==='Reconnecting…'&&down.play==='Pause music',down);
+    const at=down.at||0;
+    await page.waitForFunction(at=>!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>at+1,at,{timeout:20000}).catch(()=>{});
+    const back=await page.evaluate(()=>({same:__originalAudio===MCC_MUSIC.audio,paused:MCC_MUSIC.audio.paused,time:MCC_MUSIC.audio.currentTime,resumed:__playingAt[__playingAt.length-1],state:document.getElementById('mccWorldAudioState').textContent,unloads:__unloads}));
+    check('the same Audio element picks up at the second it stopped, with the World still open',back.same&&!back.paused&&back.resumed>=at-.5&&back.unloads===0&&await page.evaluate(()=>MCC_WORLD_AUDIO.active()),{at,back});
+    check('the World control is back to Playing',back.state==='Playing',back);
+    check('the way back is a Range read from the middle of the file',reads.some(q=>q.key===song&&failedAt&&q.at>=failedAt&&q.start>0&&q.status===206),reads.filter(q=>q.key===song));
+    check('the World frame is untouched by the drop',await frame.evaluate(()=>document.body.dataset.worldAudioChild==='ready'));
+    await context.close();
+  }
+  {
+    /* THE WORLD'S PAUSE IS THE LISTENER'S (music slice M3, review PB-R2). The album's song is being picked up again under
+       the World: the deck is already quiet, so the World's control used to call deck.pause(), which changed nothing and
+       fired no event, and the next try started the music again behind the listener. It now goes through the album's own
+       Pause; so do the World's "pause" message and the sleep timer. */
+    /* until the drop every read is short and slow, so the deck keeps asking for the song as it plays (it reads the
+       start of it when the page opens); once the World is open the next read fails, and every one after it */
+    const song='who-did-the-shoot.mp3';let armed=false,failedAt=0,back=false;
+    const deliver=async q=>{
+      if(q.key!==song)return null;
+      if(!armed){await new Promise(r=>setTimeout(r,1500));return {cut:64000};}
+      if(!failedAt){failedAt=Date.now();return {status:503};}
+      return back?null:{status:503};
+    };
+    const {context,page,reads,errors}=await setup(390,false,{deliver,start:'/album.html?album=here'});
+    await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&typeof window.MCC_NP_PLAY==='function');
+    await page.locator('#playAll').click();
+    await page.waitForFunction(()=>!document.getElementById('deck').paused&&document.getElementById('deck').currentTime>.15);
+    await world(page);
+    armed=true;
+    await page.waitForFunction(()=>/^Reconnecting…/.test(document.getElementById('npTime').textContent),null,{timeout:20000}).catch(()=>{});
+    const state=()=>page.evaluate(()=>({paused:document.getElementById('deck').paused,time:document.getElementById('npTime').textContent,
+      state:document.getElementById('mccWorldAudioState').textContent,play:document.querySelector('#mccWorldAudioControls .world-audio__play').getAttribute('aria-label')}));
+    const down=await state();
+    check('album under the World: a drop says Reconnecting… on the World\'s control, which offers Pause',down.paused&&down.state==='Reconnecting…'&&down.play==='Pause music',down);
+    const clickAt=Date.now();
+    await page.locator('.world-audio__play').click();   // the World's own Pause, while a try is waiting
+    back=true;                                          // the network comes back
+    await page.waitForTimeout(10000);
+    const after=await state(),later=reads.filter(q=>q.key===song&&q.at>clickAt+50);
+    check('album under the World: the World\'s Pause during a try is the listener\'s: nothing reads or plays behind it',after.paused&&later.length===0&&after.play==='Play music',{after,later});
+    check('album under the World: the World\'s control says how to pick it up',after.state==='Connection lost · tap play',after);
+    check('album under the World, the World\'s Pause: no script errors',errors.length===0,errors);
     await context.close();
   }
   {
@@ -264,11 +366,36 @@ try{
     check('World transport controls the original album deck',await page.evaluate(()=>document.getElementById('deck').paused));
     await context.close();
   }
+  /* WITHOUT REDUCED MOTION (music map PB-13): every check above ran with reduced motion, so the album room's light
+     (js/chamber.js) never ran and nothing here ever saw the deck routed through Web Audio. Here the light is on, as
+     for most listeners, and every AudioContext the page made is suspended once the World is open: that is what WebKit
+     does to Web Audio when Safari leaves the screen. The music must keep advancing all the same. */
+  for(const start of ['/listen.html','/album.html?album=here']){
+    const {context,page,errors}=await setup(390,false,{motion:'no-preference',start});
+    const album=start.startsWith('/album');
+    if(album){
+      await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&typeof window.MCC_NP_PLAY==='function');
+      await page.locator('#playAll').click();
+      await page.waitForFunction(()=>!document.getElementById('deck').paused&&document.getElementById('deck').currentTime>.15);
+    }else await play(page);
+    const element=()=>page.evaluate(album=>{const a=album?document.getElementById('deck'):MCC_MUSIC.audio;return {time:a.currentTime,paused:a.paused,src:a.currentSrc};},album);
+    check(`default motion ${album?'album':'listen'}: the room's light is on`,!album||await page.evaluate(()=>document.documentElement.classList.contains('sig-live')));
+    const before=await element();
+    await world(page);
+    await page.evaluate(()=>Promise.all(window.__audioContexts.map(c=>c.suspend().catch(()=>{}))));
+    const suspended=await element();await page.waitForTimeout(900);const after=await element();
+    check(`default motion ${album?'album':'listen'}: across Globe, with every AudioContext suspended, the same music keeps advancing`,
+      after.src===before.src&&!after.paused&&after.time>suspended.time+.6,{before,suspended,after,contexts:await page.evaluate(()=>window.__audioContexts.length)});
+    check(`default motion ${album?'album':'listen'}: parent fits the phone`,await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    check(`default motion ${album?'album':'listen'}: no script errors`,errors.length===0,errors);
+    await context.close();
+  }
   {
     const {context,page}=await setup();
     const catalog=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8'));
     const album=catalog.albums.find(a=>a.slug==='cia-mind-control');
-    album.tracks=album.tracks.filter(t=>t.gated);
+    /* a gated song that is not held (the catalogue's one gated song is held since Quick wins Q5) */
+    album.tracks=album.tracks.filter(t=>t.gated).map(t=>{delete t.hold;return t;});
     await context.route('**/data/albums.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({albums:[album]})}));
     await context.route('**/assets/audio/fixture-grant.wav',r=>r.fulfill({contentType:'audio/wav',body:wav(2)}));
     await page.evaluate(()=>{
@@ -311,10 +438,14 @@ try{
     await context.close();
   }
   {
-    /* the catalog's draw can land on the song the theme already holds (1 in 19): it is still the catalog's pick, and its
-       events say so (pick random, the whole pool), never a fallback of one */
+    /* the catalog's draw can land on the song the theme already holds (1 in the pool): it is still the catalog's pick, and
+       its events say so (pick random, the whole pool), never a fallback of one. The draw is pinned to Heal the 3rd World
+       (the theme's fallback) wherever it sits in the public catalog, so a longer or reordered shelf cannot move it */
     const {context,page}=await setup();
-    await page.addInitScript(()=>{Math.random=()=>12.5/19;}); // index 12 of the 19 public songs: Heal the 3rd World
+    const shelf=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.flatMap(a=>a.tracks||[]).filter(t=>!t.gated&&/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(t.src||'')&&!/preview/i.test(t.src));
+    const heal=shelf.findIndex(t=>t.src==='assets/audio/heal-the-3rd-world.m4a');
+    if(heal<0)throw new Error('Heal the 3rd World is no longer a public song: this check needs a new fixed point');
+    await page.addInitScript(([i,n])=>{Math.random=()=>(i+0.5)/n;},[heal,shelf.length]);
     await page.goto(WORLD+'/?view=feed');
     await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool);
     await page.waitForTimeout(200);
@@ -323,12 +454,21 @@ try{
     await context.close();
   }
   {
-    const {context,page}=await setup();
-    /* timed lyrics are looked up by the audio file's slug; the theme has none in the repo, so the fixture supplies two lines */
+    const {context,page,requests}=await setup();
+    /* timed lyrics come from the lyrics file data/albums.json names for the song; a song it lists without one has no words.
+       The draw is pinned to the first public song that names a file, and the fixture supplies two lines for it */
+    const songs=JSON.parse(await readFile(join(ROOT,'data/albums.json'),'utf8')).albums.flatMap(a=>a.tracks||[]).filter(t=>!t.gated&&/^assets\/audio\/[a-z0-9._-]+\.(?:mp3|m4a)$/i.test(t.src||'')&&!/preview/i.test(t.src));
+    const worded=songs.findIndex(t=>typeof t.lyrics==='string'&&t.lyrics);
+    await page.addInitScript(([i,n])=>{Math.random=()=>(i+0.5)/n;},[worded,songs.length]);
     await context.route('**/data/lyrics/*.json',r=>r.fulfill({contentType:'application/json',body:JSON.stringify({title:'Fixture song',lines:[{t:0.2,text:'Fixture line one'},{t:40,text:'Fixture line two'}]})}));
+    const mark=requests.length;
     await page.goto(WORLD+'/?view=feed');
     await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO?.song()?.pool&&document.getElementById('mnWorldPlay'));
     const theme=await page.evaluate(()=>MCC_WORLD_AUDIO.song());
+    await page.waitForTimeout(600);
+    /* music slice M3 (PB-12): the theme's element read its fallback song (twice, its index sat at the end) and then the drawn one */
+    const themeReads=requests.slice(mark).map(r=>new URL(r.url)).filter(u=>u.pathname.startsWith('/assets/audio/')).map(u=>u.pathname.split('/').pop());
+    check('standalone World reads only the song it drew before the first touch (never the fallback first)',themeReads.every(f=>f.replace(/\.[a-z0-9]+$/,'')===theme.slug),{themeReads,drawn:theme.slug});
     await page.evaluate(()=>{window.__songEvents=[];window.MCC_TRACK=(name,params)=>{if(/^song_/.test(name))__songEvents.push({name,...params});};});
     check('standalone World prepares the theme without autoplay',await page.evaluate(()=>__audioObjects.every(a=>a.paused)));
     check('the corner play button sits in the globe stack with the fullscreen control and the floating transport stays out of the World',
@@ -384,7 +524,7 @@ try{
   const notice=f=>f.evaluate(()=>({wall:!!document.getElementById('mccPrivacyGate'),pending:document.documentElement.getAttribute('data-privacy-gate'),banner:!!document.getElementById('mccPrivacyNotice')}));
   const none=n=>!n.wall&&!n.pending&&!n.banner;
   const privacyErrors=errors=>errors.filter(e=>/privacy|cookie/i.test(e));
-  const musicReady=page=>page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&document.querySelector('[data-music-play][data-album="here"]'));
+  const musicReady=page=>page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO&&!!window.MCC_MUSIC&&!!window.MCC_BAR&&!!document.getElementById('q'));
   {
     const {context,page,errors}=await setup(390,false,{privacy:false});
     const first=await notice(page);
@@ -424,6 +564,27 @@ try{
     await play(page);const frame=await world(page);
     check('privacy: after Not now, the World that Music opens does not show it either',none(await notice(page))&&none(await notice(frame))&&await frame.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()));
     check('privacy: no notice errors after Not now',privacyErrors(errors).length===0,errors);
+    await context.close();
+  }
+  {
+    /* owner finding, 2026-10-28: "The policy promises 'Not now', but the live entry dialog doesn't offer it."
+       The wall offers it now, with the behaviour privacy.html#entry-notice describes: in without a reload, seen and
+       never agreed, analytics off, not asked again on either host or in the World that Music opens. */
+    const {context,page,errors}=await setup(390,false,{privacy:false});
+    const first=await notice(page);
+    check('privacy: the entry dialog offers Not now',first.wall&&first.pending==='pending'&&await page.locator('#mccPrivacyLater').isVisible()&&(await page.locator('#mccPrivacyLater').boundingBox()).height>=44,first);
+    let reloaded=false;page.on('framenavigated',f=>{if(f===page.mainFrame())reloaded=true;});
+    await page.locator('#mccPrivacyLater').click();
+    check('privacy: Not now on the entry dialog lets the visitor in without a reload',none(await notice(page))&&!reloaded&&await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
+    const jar=await context.cookies(HOUSE),seen=jar.find(c=>c.name==='mcc_privacy_seen');
+    check('privacy: Not now on the entry dialog is kept as seen, never as agreed',seen?.domain==='.mccluster.org'&&seen.value==='2026-10-19'&&!jar.some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&MCC_PRIVACY.seen()),jar);
+    for(const url of [HOUSE+'/account.html',WORLD+'/mnet.html?view=feed']){
+      await page.goto(url,{waitUntil:'load'});
+      const u=new URL(url);
+      check(`privacy: after Not now on the entry dialog, ${u.host}${u.pathname} does not ask again`,none(await notice(page))&&await page.evaluate(()=>!MCC_PRIVACY.accepted()));
+    }
+    check('privacy: after Not now on the entry dialog, analytics records nothing',await page.evaluate(()=>window.MCC_TRACK('privacy_fixture')===false));
+    check('privacy: no notice errors after Not now on the entry dialog',privacyErrors(errors).length===0,errors);
     await context.close();
   }
   {

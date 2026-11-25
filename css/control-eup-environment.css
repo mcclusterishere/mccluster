@@ -1,0 +1,60 @@
+/* Control · System · E=Up › Environmental events (js/control-room/eup-environment.js). Mobile first: one column at phone
+   width with full-width 44px buttons and 16px fields; room is added at 720px and 1024px with min-width queries only; every
+   grid track is minmax(0,1fr) so a long event id, reason or source line never widens the page. The four local views are a
+   row of tabs that scrolls sideways inside itself, never the page. States are always written out in words; the chips only
+   repeat them. Tokens come from the flat house system; nothing here draws a mark. */
+.cr-eup-env { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; }
+.cr-eup-env h3 { margin: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
+.cr-eup-env h4 { margin: .9rem 0 .35rem; font-size: .98rem; overflow-wrap: anywhere; }
+.cr-eup-env h5 { margin: .8rem 0 .3rem; font-size: .92rem; overflow-wrap: anywhere; }
+.cr-eup-env__lede, .cr-eup-env__hint, .cr-eup-env__line { margin: 0; font-size: .88rem; line-height: 1.45; overflow-wrap: anywhere; }
+.cr-eup-env__hint { opacity: .82; font-size: .82rem; }
+.cr-eup-env__standing { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .35rem; padding: .7rem .8rem; border: 1px solid color-mix(in srgb, currentColor 16%, transparent); border-radius: .7rem; }
+.cr-eup-env__standing p { margin: 0; font-size: .88rem; line-height: 1.45; overflow-wrap: anywhere; }
+.cr-eup-env__tabs { display: flex; gap: .4rem; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; padding-block: .2rem; scrollbar-width: thin; min-width: 0; }
+.cr-eup-env__tabs [role="tab"] { flex: 0 0 auto; min-height: 44px; padding: .45rem .85rem; border-radius: .6rem; border: 1px solid color-mix(in srgb, currentColor 22%, transparent); background: transparent; color: inherit; font: inherit; font-size: max(16px, .92rem); white-space: nowrap; cursor: pointer; }
+.cr-eup-env__tabs [role="tab"][aria-selected="true"] { background: color-mix(in srgb, currentColor 12%, transparent); border-color: currentColor; font-weight: 600; }
+.cr-eup-env__tabs [role="tab"]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup-env__view { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .6rem; align-content: start; }
+.cr-eup-env__sources { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .7rem; }
+.cr-eup-env__source { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .4rem; align-content: start; padding: .75rem; border: 1px solid color-mix(in srgb, currentColor 14%, transparent); border-radius: .6rem; }
+.cr-eup-env__source-head { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem; min-width: 0; }
+.cr-eup-env__source-head strong { font-size: 1rem; overflow-wrap: anywhere; }
+.cr-eup-env__surfaces { margin: 0; padding-inline-start: 1.1rem; display: grid; gap: .25rem; font-size: .82rem; line-height: 1.4; }
+.cr-eup-env__surfaces li { overflow-wrap: anywhere; }
+.cr-eup__chip--off { border-style: dashed; }
+.cr-eup__chip--outage { border-color: #d05a5a; }
+.cr-eup__chip--no_data { border-color: #d9a441; }
+.cr-eup__chip--reporting { border-color: #3fa66b; }
+.cr-eup-env__controls, .cr-eup-env__event { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; align-content: start; }
+.cr-eup-env__controls { margin-block-start: .3rem; padding-block-start: .6rem; border-block-start: 1px solid color-mix(in srgb, currentColor 14%, transparent); }
+.cr-eup-env__event { padding: .75rem; border-radius: .6rem; border: 1px solid color-mix(in srgb, currentColor 22%, transparent); background: color-mix(in srgb, currentColor 4%, transparent); }
+.cr-eup-env__event:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup-env__event h4 { margin-block-start: 0; overflow-wrap: anywhere; word-break: break-word; }
+.cr-eup-env__rule { min-width: 0; margin: 0; padding: .6rem .7rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; border: 1px solid color-mix(in srgb, currentColor 14%, transparent); border-radius: .6rem; }
+.cr-eup-env__rule legend { padding: 0 .3rem; font-size: .9rem; font-weight: 600; }
+.cr-eup-env .cr-eup__field input { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; font: inherit; font-size: max(16px, 1rem); min-height: 44px; padding: .4rem .6rem; border-radius: .5rem; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; }
+.cr-eup-env .cr-eup__field input:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup-env__check { display: flex; align-items: center; gap: .6rem; min-height: 44px; min-width: 0; font-size: max(16px, .95rem); cursor: pointer; overflow-wrap: anywhere; }
+.cr-eup-env__check input { flex: 0 0 auto; width: 22px; height: 22px; margin: 0; }
+.cr-eup-env__check input:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup-env__actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; margin-block-start: 0; }
+.cr-eup-env__actions .cr-btn { width: 100%; min-width: 0; max-width: 100%; min-height: 44px; font-size: max(16px, .95rem); overflow-wrap: anywhere; }
+.cr-eup-env__actions .cr-btn[aria-disabled="true"] { opacity: .52; cursor: default; }
+.cr-eup-env .cr-eup__list > li { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .35rem; }
+.cr-eup-env .cr-eup__list > li > span { overflow-wrap: anywhere; word-break: break-word; font-size: .88rem; }
+.cr-eup-env__revisions { margin: 0; padding-inline-start: 1.2rem; display: grid; gap: .5rem; }
+.cr-eup-env__revisions li { min-width: 0; overflow-wrap: anywhere; font-size: .85rem; }
+.cr-eup-env .cr-eup__note { margin: 0; }
+@media (min-width: 720px) {
+  .cr-eup-env__sources { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cr-eup-env__actions { display: flex; flex-wrap: wrap; }
+  .cr-eup-env__actions .cr-btn { width: auto; }
+  .cr-eup-env__rule { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cr-eup-env__rule legend { grid-column: 1 / -1; }
+  .cr-eup-env__source[data-eup-env-source="usgs"] { grid-column: 1 / -1; }
+}
+@media (min-width: 1024px) {
+  .cr-eup-env__sources { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .cr-eup-env__tabs { scroll-behavior: auto; } }

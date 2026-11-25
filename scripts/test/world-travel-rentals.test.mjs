@@ -11,7 +11,9 @@ test('Travel lists the Isabeata 2024 at $350 a week, from Whip Equipped as a sep
   const js = await read('js/travel/world-travel.mjs');
   assert.match(js, /const RENTAL_CARS = \[\{ id:'we-rental-isabeata-2024', name:'Isabeata 2024', kind:'Economy', seats:5, weekly:350, color:'#c9ced4' \}\];/);
   assert.match(js, /From Whip Equipped LLC, a separate company\./);
-  assert.match(js, /href="https:\/\/matthew\.mccluster\.org\/whip\/rentals\/\?vehicle=\$\{encodeURIComponent\(car\.id\)\}"/);
+  /* Whip's rentals app on the host that serves it (window.MCC_SITE; today https://matthew.mccluster.org/whip/rentals/,
+     held in scripts/test/site-hosts-client.test.mjs) */
+  assert.match(js, /href="\$\{esc\(whipHref\('\/whip\/rentals\/\?vehicle=' \+ encodeURIComponent\(car\.id\)\)\)\}"/);
   assert.match(js, /data-travel-sub="directions"[^]*data-travel-sub="rentals"[^]*data-travel-sub="commercial"[^]*data-travel-sub="private"/);
   assert.doesNotMatch(js, /data-travel-chip="multi"/, 'Door-to-door stays under Plan a trip');
 });

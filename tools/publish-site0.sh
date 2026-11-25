@@ -56,8 +56,14 @@ mkdir -p "$DST/assets" "$DST/vendor"
 #                             file that changes beats versioning half of them.
 STAMP="${STAMP:-${GITHUB_SHA:-dev}}"
 STAMP="${STAMP:0:12}"
+#   the exit  -> the FACILITY level selector lives in _unfinished/ (owner,
+#                2026-10-28: developed privately, not published), so the
+#                published game's exit goes to the public PRIM3 page instead.
+#                The source keeps its relative link for private development.
 sed -e 's|\.\./vendor/|./vendor/|g' -e "s/__STAMP__/$STAMP/g" \
+    -e 's|<a id="exit" href="\.\./\.\./hitman-facility/hitman-facility\.html">&larr; FACILITY</a>|<a id="exit" href="/prim3.html">\&larr; PRIM3</a>|' \
     "$SRC/game/index.html" > "$DST/index.html"
+grep -q 'id="exit" href="/prim3.html"' "$DST/index.html" || { echo "site0: exit link was not rewritten for publication"; exit 1; }
 
 cp "$SRC/game/icon.png" "$DST/icon.png"
 # The perfect exterior. 17 MB, streamed in the background after the interior --

@@ -1,0 +1,7 @@
+{
+  "actions": [
+    { "actionDate": "2026-01-14", "actionCode": "Intro-H", "text": "Introduced in House", "sourceSystem": { "name": "House floor actions" } },
+    { "actionDate": "2026-01-14", "actionCode": "H11100", "text": "Referred to the House Committee on Energy and Commerce.", "sourceSystem": { "name": "House floor actions" }, "committees": [ { "systemCode": "hsif00", "name": "Energy and Commerce Committee" } ] },
+    { "actionDate": "2026-05-20", "actionCode": "H12200", "text": "Reported (Amended) by the Committee on Energy and Commerce. H. Rept. 119-999.", "sourceSystem": { "name": "House floor actions" }, "committees": [ { "systemCode": "hsif00", "name": "Energy and Commerce Committee" } ] }
+  ]
+}

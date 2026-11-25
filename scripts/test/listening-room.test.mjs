@@ -10,7 +10,9 @@
    them: the tab opens the whole shelf, the search searches, and the
    ordering is an enhancement the page can lose without breaking.
    ============================================================ */
-import { test } from 'node:test';
+import { test, describe } from 'node:test';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -93,9 +95,9 @@ test('the bar built for pages that lack one agrees with the bar they ship', asyn
      had its own hardcoded destination, so fixing the markup alone would
      have left every generated bar pointing at the album. */
   const js = await read('js/tabbar.js');
-  /* the cell resolves against the house, which is ROOT on Matthew's site and
-     his origin on the World's own host (js/tabbar.js) */
-  assert.match(js, /HOUSE \+ 'listen\.html" data-appnav="music"/,
+  /* the cell is linked where the table serves the page (pageHref, js/tabbar.js; SPEC-PLATFORM 4: from P1 the platform's
+     own listen.html, before it Matthew's) */
+  assert.match(js, /pageHref\("listen\.html"\) \+ '" data-appnav="music"/,
     'the generated bar must open the listening room too');
 });
 
@@ -144,9 +146,11 @@ test('the field does not file an event for every keystroke', async () => {
    --------------------------------------------------------------- */
 
 test('every playable track reaches the index', async () => {
-  /* data/albums.json is what can actually be played; data/catalogue.json is
-     the registry and is three tracks short of it. Joining on the registry
-     would have silently dropped those three from the room. */
+  /* data/albums.json is what can actually be played. data/catalogue.json
+     used to be a hand-kept registry three tracks short of it, and joining on
+     it would have silently dropped those three from the room. It is now
+     generated from the shelf (tools/build-music-registry.mjs), so the two
+     agree; the room still walks the shelf, because that is what plays. */
   const albums = await json('data/albums.json');
   const cat = await json('data/catalogue.json');
   const playable = albums.albums.flatMap((a) => a.tracks.map((t) => t.title));
@@ -155,9 +159,7 @@ test('every playable track reaches the index', async () => {
   const key = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const registered = new Set(cat.tracks.map((t) => key(t.title)));
   const unregistered = playable.filter((t) => !registered.has(key(t)));
-  assert.ok(unregistered.length > 0,
-    'this test is only meaningful while the two files disagree; if they now ' +
-    'agree, the join below stops being load-bearing and this can relax');
+  assert.deepEqual(unregistered, [], 'the registry is generated from the shelf: run node tools/build-music-registry.mjs');
 
   const js = await read('js/listen.js');
   assert.match(js, /ALBUMS\.forEach\(function \(a, ai\) \{/,
@@ -219,7 +221,8 @@ test('an asked-for track beats both resumes', async () => {
   /* The album resumes from the pocket and from a saved position. Either one
      would have overwritten the track somebody just tapped. */
   const album = await read('album.html');
-  assert.match(album, /var pk = want > -1 \? null : \(window\.MCC_POCKET && window\.MCC_POCKET\.read\(\)\);/,
+  /* "asked" is the link's track found, before a held song is set aside (music quick wins, review QW-R6) */
+  assert.match(album, /var asked = want > -1;[\s\S]{0,900}var pk = asked \? null : \(window\.MCC_POCKET && window\.MCC_POCKET\.read\(\)\);/,
     'the pocket resume must stand down for an explicit tap');
   assert.match(album, /load\(want, 0\);[\s\S]{0,220}r0 = null;/,
     'the saved position must stand down too');
@@ -289,7 +292,8 @@ test('the listening room is built from the album room\'s vocabulary', async () =
     'the shared vocabulary must be loaded, not re-invented');
   assert.match(html, /class="music-room music-room--listen"|music-room music-room--listen/,
     'the room must declare itself a music room so the per-room overrides apply');
-  for (const cls of ['greet', 'chips', 'feat', 'lib__k', 'tr']) {
+  /* the filter row (chips) is gone since the quick wins (owner, 2026-11-23: "just list albums and artists right now") */
+  for (const cls of ['greet', 'feat', 'lib__k', 'tr']) {
     assert.match(html, new RegExp(`class="[^"]*\\b${cls}\\b`),
       `${cls} is the house's class for this element and must be the one used`);
   }
@@ -460,4 +464,144 @@ test('the local history is capped and deduplicated', async () => {
   assert.match(js, /list\.slice\(0, CAP\)/, 'and actually truncated');
   assert.match(js, /read\(\)\.filter\(function \(r\) \{ return r && r\.t !== t; \}\)/,
     'one entry per track, most recent first');
+});
+
+/* The complete track browser is exercised with the real catalogue, not only source assertions. */
+describe('all tracks are browsable before searching', () => {
+  const read = (path) => readFileSync(new URL('../../' + path, import.meta.url), 'utf8');
+  const albums = JSON.parse(read('data/albums.json'));
+  const catalogue = JSON.parse(read('data/catalogue.json'));
+  const expected = albums.albums.flatMap((a) => a.tracks.map((t) => `${a.slug}|${t.title}`)).sort();
+  const settle = () => new Promise((resolve) => setImmediate(resolve));
+  const decode = (s) => String(s).replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const escape = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  function room({ failCatalogue = false, delayAlbums = false } = {}) {
+    const html = read('listen.html');
+    const nodes = new Map();
+    function node(id, tag = '') {
+      if (!nodes.has(id)) {
+        let text = '', inner = '';
+        const listeners = new Map(), attrs = new Map();
+        nodes.set(id, {
+          id, hidden: /\bhidden(?:\s|>|=)/.test(tag), value: '',
+          get textContent() { return text; }, set textContent(v) { text = String(v); inner = escape(v); },
+          get innerHTML() { return inner; }, set innerHTML(v) { inner = String(v); text = decode(inner.replace(/<[^>]*>/g, '')); },
+          addEventListener(type, listener) { if (!listeners.has(type)) listeners.set(type, []); listeners.get(type).push(listener); },
+          dispatchEvent(event) { for (const listener of listeners.get(event.type) || []) listener(event); return true; },
+          setAttribute(k, v) { attrs.set(k, String(v)); }, getAttribute(k) { return attrs.get(k) ?? null; },
+          classList: { toggle() {}, add() {}, remove() {} }, focus() {},
+          querySelector() { return null; }
+        });
+      }
+      return nodes.get(id);
+    }
+    for (const [tag, id] of html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g)) node(id, tag);
+    const doc = {
+      getElementById: (id) => nodes.get(id) || null,
+      createElement: () => node(Symbol('element')),
+      querySelectorAll: () => []
+    };
+    let releaseAlbums;
+    const delayed = new Promise((resolve) => { releaseAlbums = resolve; });
+    const storage = new Map();
+    const window = {
+      document: doc, console, Event, Promise, AbortSignal,
+      localStorage: { getItem: (k) => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v) },
+      setTimeout: () => 1, clearTimeout() {},
+      fetch: async (url) => {
+        if (url === 'data/albums.json') {
+          if (delayAlbums) await delayed;
+          return { ok: !failCatalogue, status: failCatalogue ? 503 : 200, json: async () => albums };
+        }
+        if (url === 'data/catalogue.json') return { ok: true, json: async () => catalogue };
+        // Optional ranking/affinity outages must not remove catalogue tracks.
+        throw new Error('optional recommendations unavailable');
+      }
+    };
+    window.window = window;
+    const context = vm.createContext(window);
+    vm.runInContext(read('js/music-credits.js'), context, { filename: 'js/music-credits.js' });
+    vm.runInContext(read('js/listen.js'), context, { filename: 'js/listen.js' });
+    return {
+      node: (id) => nodes.get(id), releaseAlbums,
+      async ready() { await settle(); await settle(); },
+      search(value) { node('q').value = value; node('q').dispatchEvent(new Event('input')); },
+      clear() { node('qClear').dispatchEvent(new Event('click')); },
+      escape() { node('q').dispatchEvent({ type: 'keydown', key: 'Escape' }); },
+      tracks() {
+        return [...node('all').innerHTML.matchAll(/<button\b[^>]*\bdata-music-play\b[^>]*>/g)].map(([tag]) => {
+          const album = /\bdata-album="([^"]*)"/.exec(tag)?.[1];
+          const title = /\bdata-track="([^"]*)"/.exec(tag)?.[1];
+          return `${decode(album)}|${decode(title)}`;
+        }).sort();
+      }
+    };
+  }
+
+  test('opening Music lists every published album track with its existing playback identity', async () => {
+    const r = room();
+    await r.ready();
+    assert.equal(r.node('allWrap').hidden, false, 'all tracks are visible before any search');
+    assert.equal(r.node('allK').textContent, 'All tracks');
+    assert.deepEqual(r.tracks(), expected, 'no album or track is silently omitted or duplicated');
+    assert.equal(r.node('shelfWrap').hidden, false, 'albums remain browsable alongside the tracks');
+    assert.equal(r.node('browseMusic').hidden, false, 'the section shortcuts are visible while browsing');
+    assert.equal(r.node('count').hidden, false);
+    assert.ok(r.node('count').textContent.includes(String(expected.length)), 'the count agrees with the complete list');
+    // Held and gated songs remain listed; their existing player decides access.
+    const held = albums.albums.flatMap((a) => a.tracks.filter((t) => t.hold).map((t) => `${a.slug}|${t.title}`));
+    for (const id of held) assert.ok(r.tracks().includes(id), `held track stays discoverable: ${id}`);
+  });
+
+  test('title, album, credited artist and accent-insensitive searches filter the full track list', async () => {
+    const r = room();
+    await r.ready();
+    for (const [query, wanted] of [
+      ['Studio Trapped', ['audio-engineer|Studio Trapped']],
+      ['Audio Engineer', expected.filter((id) => id.startsWith('audio-engineer|'))],
+      ['Los Fidel', ['equity-uprise|Please Set Me Free']],
+      ['Jiddy', expected.filter((id) => id.includes('Jiddy'))],
+      ['VVS Made', ['heal-the-3|Deep End', 'heal-the-3|Heal the 3rd World']]
+    ]) {
+      r.search(query);
+      assert.equal(r.node('allWrap').hidden, false, query);
+      assert.equal(r.node('allK').textContent, 'Results', query);
+      assert.equal(r.node('shelfWrap').hidden, true, 'search focuses the matches');
+      assert.equal(r.node('browseMusic').hidden, true, 'hidden sections have no visible jump links');
+      assert.deepEqual(r.tracks(), wanted.slice().sort(), query);
+    }
+  });
+
+  test('clearing a search or pressing Escape restores every track; no matches stays visible', async () => {
+    const r = room();
+    await r.ready();
+    r.search('there-is-no-record-with-this-title-6021');
+    assert.equal(r.node('allWrap').hidden, false);
+    assert.deepEqual(r.tracks(), []);
+    assert.match(r.node('all').textContent, /No track|No match/i);
+    r.clear();
+    assert.equal(r.node('q').value, '');
+    assert.equal(r.node('allK').textContent, 'All tracks');
+    assert.deepEqual(r.tracks(), expected);
+    r.search('Audio Engineer');
+    r.escape();
+    assert.equal(r.node('q').value, '');
+    assert.equal(r.node('allWrap').hidden, false);
+    assert.deepEqual(r.tracks(), expected);
+  });
+
+  test('typing before the catalogue answers preserves a visible loading or failure state', async () => {
+    const r = room({ delayAlbums: true, failCatalogue: true });
+    r.search('Audio Engineer');
+    assert.equal(r.node('allWrap').hidden, false, 'the loading list does not disappear');
+    assert.match(r.node('all').textContent, /Loading|Opening/i, 'pending data is not reported as no matches');
+    r.releaseAlbums();
+    await r.ready();
+    assert.equal(r.node('allWrap').hidden, false, 'a catalogue failure is visible');
+    assert.match(r.node('all').textContent, /refresh|try again|could not|couldn.t|unable/i);
+    r.clear();
+    assert.equal(r.node('allWrap').hidden, false);
+    assert.match(r.node('all').textContent, /refresh|try again|could not|couldn.t|unable/i, 'clearing search does not erase the recovery message');
+  });
 });

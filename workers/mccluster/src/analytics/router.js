@@ -12,6 +12,7 @@ import { readAnalyticsPages } from './paged-reads.js';
 import { loadBusinessEventCounts } from './business-event-counts.js';
 import { databaseErrorMetadata, readFailureDiagnostics, successfulReadDiagnostics, visibleBusinessSnapshot } from './read-diagnostics.js';
 import { DICTIONARY_VERSION, DICTIONARY_SOURCE, EVENT_DICTIONARY, METRIC_DICTIONARY } from './measurement-dictionary.js';
+import { PROFILE_ORIGIN } from '../platform/hosts.generated.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
 const HOUSE_SLUG = 'mccluster';
@@ -1031,7 +1032,7 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
    for(const value of [e.props?.url,raw]){
      try{
        if(typeof value!=='string')continue;
-       const u=new URL(value,'https://matthew.mccluster.org/');
+       const u=new URL(value,PROFILE_ORIGIN+'/');
        if(u.pathname==='/music-creator.html'&&u.searchParams.get('handle')===handle)return true;
      }catch{}
    }

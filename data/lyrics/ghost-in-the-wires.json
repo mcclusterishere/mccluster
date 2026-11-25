@@ -1,0 +1,2788 @@
+{
+ "duration_seconds": 250,
+ "language": "en",
+ "songTitle": "Ghost in the Wires",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper small.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T19:14:57.935Z",
+  "confidence": 0.733,
+  "mismatched_lines": 12,
+  "sheet_lines": 56,
+  "heard_words": 424,
+  "ctc_aligned_lines": 56,
+  "timing": {
+   "align_seconds": 98,
+   "separate_seconds": 123.8,
+   "asr_seconds": 60.1,
+   "map_seconds": 0.2
+  }
+ },
+ "plain": "Prim3 Ghost In The Wires\n\nI’m the ghost in the wires\nGhost in the wires\nGhost in the wires\nGhost in the wires\nShow you the ropes to get right.\nI just hope you don’t get tied up\nI’m the ghost in the wire\nThe ghost in the wires.\n\nWhat does infrastructure mean? It’s how computers transfer data\nNetwork media is the proper nomenclature.\nBound and unbound are the two different layers.\nBound is wires like cables, unbound is radio and light waves.\nUp-time so connected, I know every cable type gang.\nSo out this world, need RG-6 for satellite waves.\nKeep it short with the connect, my operation RG-59 based\nI don’t got time to waste\nYou Cat 5 in these streets, keep it 100mbps, 100MHZ.. heh\n\n100 M .V .P .S, 100 M .H .Z,\n\nCat 8.2 at best 40 GBPs, 2000MHz yep\n\nG .V .P .S, 2000 M .H .Zs,\n\nSome might consider that the best. Me? I’m on a different type of flex.\nYou’re high on life, stay twisted. They intercept your transmissions.\nWe don’t have the same issues, I’m fiber optics made different.\nNow I’m onto light speed, loose ends chopped off.\nI wear my heart on my sheath, I don’t do cross talk cause\n\nI’m the ghost in the wires\nI hope you don’t get tied up\nI’m the ghost in the wires\nYeah Yeah!\nHope you don’t get tied up\nGhost in the wire\nOOOHHHHHHHH\nGhost in the wire\nOOOHHHHHHHH\nGhost in the wire\n\nIf troubleshooting is a crime, I’m like a troubled shooter out his mind.\nPull up with the RJ-45… Ethernet and got em’ back online.\nPS2.. Not to play with. This is what we call mini din 6\nGreen one means mouse clicks. Purple plugs they keyboard in.\nNext is, sony philips digital interface format.\nAlso known as SPIDIF. Audio signals through coax\nAnd fiber optics transmit audio. Facts.\nAnalogue zone jacks go by this color code:\nBlack: connects the speakers to computer\nBrown: connects the music to the woofer\nGreen: in line for the aux\nPink: microphone you can talk\nGreen: Line out send a song from your device\nNeed a visual to go along? HDMI\nSend video and music all at the same time\nI move in silence like VGA lines\nNever had a day off I’m missing daylight\nAnd I really just did it all so when it’s game time\n\nI’m the ghost in the wires\nGhost in the wires\nGhost in the wires. Yeah.\nGhost in the wires…",
+ "timed": {
+  "line": [
+   {
+    "begin": 0,
+    "end": 13.92,
+    "content": "Prim3 Ghost In The Wires",
+    "confidence": 0,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 0,
+      "end": 2.784,
+      "content": "Prim3"
+     },
+     {
+      "begin": 2.784,
+      "end": 5.568,
+      "content": "Ghost"
+     },
+     {
+      "begin": 5.568,
+      "end": 8.352,
+      "content": "In"
+     },
+     {
+      "begin": 8.352,
+      "end": 11.136,
+      "content": "The"
+     },
+     {
+      "begin": 11.136,
+      "end": 13.92,
+      "content": "Wires"
+     }
+    ],
+    "align_score": 0.006
+   },
+   {
+    "begin": 14.387,
+    "end": 15.896,
+    "content": "I’m the ghost in the wires",
+    "confidence": 0.72,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 14.387,
+      "end": 14.447,
+      "content": "I’m"
+     },
+     {
+      "begin": 14.507,
+      "end": 14.588,
+      "content": "the"
+     },
+     {
+      "begin": 14.689,
+      "end": 15.011,
+      "content": "ghost"
+     },
+     {
+      "begin": 15.131,
+      "end": 15.172,
+      "content": "in"
+     },
+     {
+      "begin": 15.232,
+      "end": 15.292,
+      "content": "the"
+     },
+     {
+      "begin": 15.373,
+      "end": 15.896,
+      "content": "wires"
+     }
+    ],
+    "align_score": 0.224
+   },
+   {
+    "begin": 18.551,
+    "end": 20.017,
+    "content": "Ghost in the wires",
+    "confidence": 0.89,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 18.551,
+      "end": 18.912,
+      "content": "Ghost"
+     },
+     {
+      "begin": 19.013,
+      "end": 19.053,
+      "content": "in"
+     },
+     {
+      "begin": 19.113,
+      "end": 19.173,
+      "content": "the"
+     },
+     {
+      "begin": 19.274,
+      "end": 20.017,
+      "content": "wires"
+     }
+    ],
+    "align_score": 0.529
+   },
+   {
+    "begin": 22.504,
+    "end": 24.156,
+    "content": "Ghost in the wires",
+    "confidence": 0.9,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 22.504,
+      "end": 22.887,
+      "content": "Ghost"
+     },
+     {
+      "begin": 22.948,
+      "end": 23.008,
+      "content": "in"
+     },
+     {
+      "begin": 23.069,
+      "end": 23.149,
+      "content": "the"
+     },
+     {
+      "begin": 23.21,
+      "end": 24.156,
+      "content": "wires"
+     }
+    ],
+    "align_score": 0.327
+   },
+   {
+    "begin": 26.407,
+    "end": 27.54,
+    "content": "Ghost in the wires",
+    "confidence": 0.5,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 26.407,
+      "end": 26.731,
+      "content": "Ghost"
+     },
+     {
+      "begin": 26.852,
+      "end": 26.893,
+      "content": "in"
+     },
+     {
+      "begin": 26.973,
+      "end": 27.034,
+      "content": "the"
+     },
+     {
+      "begin": 27.135,
+      "end": 27.54,
+      "content": "wires"
+     }
+    ],
+    "align_score": 0.399
+   },
+   {
+    "begin": 30.063,
+    "end": 32.497,
+    "content": "Show you the ropes to get right.",
+    "confidence": 0.514,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 30.063,
+      "end": 30.183,
+      "content": "Show"
+     },
+     {
+      "begin": 30.264,
+      "end": 30.344,
+      "content": "you"
+     },
+     {
+      "begin": 30.405,
+      "end": 30.485,
+      "content": "the"
+     },
+     {
+      "begin": 30.586,
+      "end": 30.908,
+      "content": "ropes"
+     },
+     {
+      "begin": 30.968,
+      "end": 31.069,
+      "content": "to"
+     },
+     {
+      "begin": 31.189,
+      "end": 31.31,
+      "content": "get"
+     },
+     {
+      "begin": 32.075,
+      "end": 32.497,
+      "content": "right."
+     }
+    ],
+    "align_score": 0.34
+   },
+   {
+    "begin": 33.943,
+    "end": 35.261,
+    "content": "I just hope you don’t get tied up",
+    "confidence": 0.6,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 33.943,
+      "end": 33.963,
+      "content": "I"
+     },
+     {
+      "begin": 34.003,
+      "end": 34.124,
+      "content": "just"
+     },
+     {
+      "begin": 34.185,
+      "end": 34.407,
+      "content": "hope"
+     },
+     {
+      "begin": 34.467,
+      "end": 34.548,
+      "content": "you"
+     },
+     {
+      "begin": 34.568,
+      "end": 34.73,
+      "content": "don’t"
+     },
+     {
+      "begin": 34.77,
+      "end": 34.851,
+      "content": "get"
+     },
+     {
+      "begin": 34.972,
+      "end": 35.261,
+      "content": "tied"
+     },
+     {
+      "begin": 35.261,
+      "end": 35.261,
+      "content": "up"
+     }
+    ],
+    "align_score": 0.302
+   },
+   {
+    "begin": 35.261,
+    "end": 39.958,
+    "content": "I’m the ghost in the wire",
+    "confidence": 0.468,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "a",
+    "words": [
+     {
+      "begin": 35.261,
+      "end": 35.542,
+      "content": "I’m"
+     },
+     {
+      "begin": 37.871,
+      "end": 37.951,
+      "content": "the"
+     },
+     {
+      "begin": 38.091,
+      "end": 38.433,
+      "content": "ghost"
+     },
+     {
+      "begin": 38.533,
+      "end": 38.573,
+      "content": "in"
+     },
+     {
+      "begin": 38.613,
+      "end": 38.694,
+      "content": "the"
+     },
+     {
+      "begin": 38.794,
+      "end": 39.958,
+      "content": "wire"
+     }
+    ],
+    "align_score": 0.36
+   },
+   {
+    "begin": 42.007,
+    "end": 43.18,
+    "content": "The ghost in the wires.",
+    "confidence": 0.335,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "a",
+    "words": [
+     {
+      "begin": 42.007,
+      "end": 42.23,
+      "content": "The"
+     },
+     {
+      "begin": 42.27,
+      "end": 42.412,
+      "content": "ghost"
+     },
+     {
+      "begin": 42.513,
+      "end": 42.553,
+      "content": "in"
+     },
+     {
+      "begin": 42.614,
+      "end": 42.675,
+      "content": "the"
+     },
+     {
+      "begin": 42.715,
+      "end": 43.18,
+      "content": "wires."
+     }
+    ],
+    "align_score": 0.156
+   },
+   {
+    "begin": 45.645,
+    "end": 48.978,
+    "content": "What does infrastructure mean? It’s how computers transfer data",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 45.645,
+      "end": 45.745,
+      "content": "What"
+     },
+     {
+      "begin": 45.805,
+      "end": 45.906,
+      "content": "does"
+     },
+     {
+      "begin": 45.986,
+      "end": 46.589,
+      "content": "infrastructure"
+     },
+     {
+      "begin": 46.669,
+      "end": 46.95,
+      "content": "mean?"
+     },
+     {
+      "begin": 47.191,
+      "end": 47.311,
+      "content": "It’s"
+     },
+     {
+      "begin": 47.412,
+      "end": 47.532,
+      "content": "how"
+     },
+     {
+      "begin": 47.633,
+      "end": 48.054,
+      "content": "computers"
+     },
+     {
+      "begin": 48.095,
+      "end": 48.376,
+      "content": "transfer"
+     },
+     {
+      "begin": 48.536,
+      "end": 48.978,
+      "content": "data"
+     }
+    ],
+    "align_score": 0.728
+   },
+   {
+    "begin": 49.743,
+    "end": 53.098,
+    "content": "Network media is the proper nomenclature.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 49.743,
+      "end": 50.305,
+      "content": "Network"
+     },
+     {
+      "begin": 50.486,
+      "end": 51.129,
+      "content": "media"
+     },
+     {
+      "begin": 51.39,
+      "end": 51.45,
+      "content": "is"
+     },
+     {
+      "begin": 51.551,
+      "end": 51.631,
+      "content": "the"
+     },
+     {
+      "begin": 51.691,
+      "end": 52.033,
+      "content": "proper"
+     },
+     {
+      "begin": 52.093,
+      "end": 53.098,
+      "content": "nomenclature."
+     }
+    ],
+    "align_score": 0.691
+   },
+   {
+    "begin": 53.722,
+    "end": 56.757,
+    "content": "Bound and unbound are the two different layers.",
+    "confidence": 0.839,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 53.722,
+      "end": 54.204,
+      "content": "Bound"
+     },
+     {
+      "begin": 54.305,
+      "end": 54.385,
+      "content": "and"
+     },
+     {
+      "begin": 54.586,
+      "end": 55.27,
+      "content": "unbound"
+     },
+     {
+      "begin": 55.37,
+      "end": 55.43,
+      "content": "are"
+     },
+     {
+      "begin": 55.47,
+      "end": 55.531,
+      "content": "the"
+     },
+     {
+      "begin": 55.651,
+      "end": 55.812,
+      "content": "two"
+     },
+     {
+      "begin": 55.953,
+      "end": 56.274,
+      "content": "different"
+     },
+     {
+      "begin": 56.335,
+      "end": 56.757,
+      "content": "layers."
+     }
+    ],
+    "align_score": 0.894
+   },
+   {
+    "begin": 57.163,
+    "end": 61.218,
+    "content": "Bound is wires like cables, unbound is radio and light waves.",
+    "confidence": 0.948,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 57.163,
+      "end": 57.364,
+      "content": "Bound"
+     },
+     {
+      "begin": 57.444,
+      "end": 57.505,
+      "content": "is"
+     },
+     {
+      "begin": 57.585,
+      "end": 57.966,
+      "content": "wires"
+     },
+     {
+      "begin": 58.047,
+      "end": 58.187,
+      "content": "like"
+     },
+     {
+      "begin": 58.267,
+      "end": 58.689,
+      "content": "cables,"
+     },
+     {
+      "begin": 58.93,
+      "end": 59.351,
+      "content": "unbound"
+     },
+     {
+      "begin": 59.411,
+      "end": 59.492,
+      "content": "is"
+     },
+     {
+      "begin": 59.532,
+      "end": 59.773,
+      "content": "radio"
+     },
+     {
+      "begin": 59.933,
+      "end": 60.174,
+      "content": "and"
+     },
+     {
+      "begin": 60.335,
+      "end": 60.596,
+      "content": "light"
+     },
+     {
+      "begin": 60.776,
+      "end": 61.218,
+      "content": "waves."
+     }
+    ],
+    "align_score": 0.885
+   },
+   {
+    "begin": 61.462,
+    "end": 65.018,
+    "content": "Up-time so connected, I know every cable type gang.",
+    "confidence": 0.963,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 61.462,
+      "end": 61.864,
+      "content": "Up-time"
+     },
+     {
+      "begin": 61.924,
+      "end": 62.025,
+      "content": "so"
+     },
+     {
+      "begin": 62.165,
+      "end": 62.627,
+      "content": "connected,"
+     },
+     {
+      "begin": 62.868,
+      "end": 62.889,
+      "content": "I"
+     },
+     {
+      "begin": 62.969,
+      "end": 63.089,
+      "content": "know"
+     },
+     {
+      "begin": 63.23,
+      "end": 63.411,
+      "content": "every"
+     },
+     {
+      "begin": 63.853,
+      "end": 64.134,
+      "content": "cable"
+     },
+     {
+      "begin": 64.254,
+      "end": 64.516,
+      "content": "type"
+     },
+     {
+      "begin": 64.716,
+      "end": 65.018,
+      "content": "gang."
+     }
+    ],
+    "align_score": 0.984
+   },
+   {
+    "begin": 65.123,
+    "end": 68.943,
+    "content": "So out this world, need RG-6 for satellite waves.",
+    "confidence": 0.841,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 65.123,
+      "end": 65.244,
+      "content": "So"
+     },
+     {
+      "begin": 65.545,
+      "end": 65.625,
+      "content": "out"
+     },
+     {
+      "begin": 65.786,
+      "end": 65.966,
+      "content": "this"
+     },
+     {
+      "begin": 66.087,
+      "end": 66.328,
+      "content": "world,"
+     },
+     {
+      "begin": 66.629,
+      "end": 66.79,
+      "content": "need"
+     },
+     {
+      "begin": 66.97,
+      "end": 67.392,
+      "content": "RG-6"
+     },
+     {
+      "begin": 67.492,
+      "end": 67.593,
+      "content": "for"
+     },
+     {
+      "begin": 67.653,
+      "end": 68.316,
+      "content": "satellite"
+     },
+     {
+      "begin": 68.537,
+      "end": 68.943,
+      "content": "waves."
+     }
+    ],
+    "align_score": 0.85
+   },
+   {
+    "begin": 68.943,
+    "end": 72.32,
+    "content": "Keep it short with the connect, my operation RG-59 based",
+    "confidence": 0.7,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 68.943,
+      "end": 69.103,
+      "content": "Keep"
+     },
+     {
+      "begin": 69.164,
+      "end": 69.204,
+      "content": "it"
+     },
+     {
+      "begin": 69.264,
+      "end": 69.465,
+      "content": "short"
+     },
+     {
+      "begin": 69.485,
+      "end": 69.565,
+      "content": "with"
+     },
+     {
+      "begin": 69.625,
+      "end": 69.726,
+      "content": "the"
+     },
+     {
+      "begin": 69.846,
+      "end": 70.268,
+      "content": "connect,"
+     },
+     {
+      "begin": 70.288,
+      "end": 70.328,
+      "content": "my"
+     },
+     {
+      "begin": 70.629,
+      "end": 71.191,
+      "content": "operation"
+     },
+     {
+      "begin": 71.372,
+      "end": 72.32,
+      "content": "RG-59"
+     },
+     {
+      "begin": 72.32,
+      "end": 72.32,
+      "content": "based"
+     }
+    ],
+    "align_score": 0.662
+   },
+   {
+    "begin": 72.32,
+    "end": 76.704,
+    "content": "I don’t got time to waste",
+    "confidence": 0.78,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 72.32,
+      "end": 72.34,
+      "content": "I"
+     },
+     {
+      "begin": 74.971,
+      "end": 75.493,
+      "content": "don’t"
+     },
+     {
+      "begin": 75.553,
+      "end": 75.754,
+      "content": "got"
+     },
+     {
+      "begin": 75.875,
+      "end": 76.136,
+      "content": "time"
+     },
+     {
+      "begin": 76.236,
+      "end": 76.316,
+      "content": "to"
+     },
+     {
+      "begin": 76.397,
+      "end": 76.704,
+      "content": "waste"
+     }
+    ],
+    "align_score": 0.698
+   },
+   {
+    "begin": 76.704,
+    "end": 79.084,
+    "content": "You Cat 5 in these streets, keep it 100mbps, 100MHZ.. heh",
+    "confidence": 0.412,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "five any",
+    "words": [
+     {
+      "begin": 76.704,
+      "end": 76.805,
+      "content": "You"
+     },
+     {
+      "begin": 76.966,
+      "end": 77.167,
+      "content": "Cat"
+     },
+     {
+      "begin": 77.288,
+      "end": 77.609,
+      "content": "5"
+     },
+     {
+      "begin": 77.69,
+      "end": 77.75,
+      "content": "in"
+     },
+     {
+      "begin": 77.791,
+      "end": 77.891,
+      "content": "these"
+     },
+     {
+      "begin": 77.951,
+      "end": 78.253,
+      "content": "streets,"
+     },
+     {
+      "begin": 78.294,
+      "end": 78.394,
+      "content": "keep"
+     },
+     {
+      "begin": 78.434,
+      "end": 78.475,
+      "content": "it"
+     },
+     {
+      "begin": 78.495,
+      "end": 78.837,
+      "content": "100mbps,"
+     },
+     {
+      "begin": 78.857,
+      "end": 79.084,
+      "content": "100MHZ.."
+     },
+     {
+      "begin": 79.084,
+      "end": 79.084,
+      "content": "heh"
+     }
+    ],
+    "align_score": 0.307
+   },
+   {
+    "begin": 79.084,
+    "end": 82.257,
+    "content": "100 M .V .P .S, 100 M .H .Z,",
+    "confidence": 0.711,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 79.084,
+      "end": 79.365,
+      "content": "100"
+     },
+     {
+      "begin": 79.646,
+      "end": 79.666,
+      "content": "M"
+     },
+     {
+      "begin": 79.867,
+      "end": 79.887,
+      "content": ".V"
+     },
+     {
+      "begin": 80.248,
+      "end": 80.269,
+      "content": ".P"
+     },
+     {
+      "begin": 80.791,
+      "end": 80.811,
+      "content": ".S,"
+     },
+     {
+      "begin": 81.052,
+      "end": 81.373,
+      "content": "100"
+     },
+     {
+      "begin": 81.654,
+      "end": 81.694,
+      "content": "M"
+     },
+     {
+      "begin": 82.076,
+      "end": 82.116,
+      "content": ".H"
+     },
+     {
+      "begin": 82.237,
+      "end": 82.257,
+      "content": ".Z,"
+     }
+    ],
+    "added": true,
+    "align_score": 0.574
+   },
+   {
+    "begin": 83.025,
+    "end": 85.323,
+    "content": "Cat 8.2 at best 40 GBPs, 2000MHz yep",
+    "confidence": 0.454,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "8 .2",
+    "words": [
+     {
+      "begin": 83.025,
+      "end": 83.266,
+      "content": "Cat"
+     },
+     {
+      "begin": 83.447,
+      "end": 83.87,
+      "content": "8.2"
+     },
+     {
+      "begin": 83.89,
+      "end": 83.95,
+      "content": "at"
+     },
+     {
+      "begin": 83.97,
+      "end": 84.051,
+      "content": "best"
+     },
+     {
+      "begin": 84.091,
+      "end": 84.392,
+      "content": "40"
+     },
+     {
+      "begin": 84.412,
+      "end": 84.614,
+      "content": "GBPs,"
+     },
+     {
+      "begin": 84.654,
+      "end": 85.323,
+      "content": "2000MHz"
+     },
+     {
+      "begin": 85.323,
+      "end": 85.323,
+      "content": "yep"
+     }
+    ],
+    "align_score": 0.268
+   },
+   {
+    "begin": 85.323,
+    "end": 88.903,
+    "content": "G .V .P .S, 2000 M .H .Zs,",
+    "confidence": 0.905,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 85.323,
+      "end": 85.363,
+      "content": "G"
+     },
+     {
+      "begin": 85.725,
+      "end": 85.745,
+      "content": ".V"
+     },
+     {
+      "begin": 86.047,
+      "end": 86.067,
+      "content": ".P"
+     },
+     {
+      "begin": 86.549,
+      "end": 86.589,
+      "content": ".S,"
+     },
+     {
+      "begin": 86.89,
+      "end": 88.277,
+      "content": "2000"
+     },
+     {
+      "begin": 88.317,
+      "end": 88.337,
+      "content": "M"
+     },
+     {
+      "begin": 88.417,
+      "end": 88.438,
+      "content": ".H"
+     },
+     {
+      "begin": 88.903,
+      "end": 88.903,
+      "content": ".Zs,"
+     }
+    ],
+    "added": true,
+    "align_score": 0.327
+   },
+   {
+    "begin": 88.903,
+    "end": 92.26,
+    "content": "Some might consider that the best. Me? I’m on a different type of flex.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 88.903,
+      "end": 89.104,
+      "content": "Some"
+     },
+     {
+      "begin": 89.204,
+      "end": 89.385,
+      "content": "might"
+     },
+     {
+      "begin": 89.445,
+      "end": 89.927,
+      "content": "consider"
+     },
+     {
+      "begin": 89.967,
+      "end": 90.068,
+      "content": "that"
+     },
+     {
+      "begin": 90.128,
+      "end": 90.208,
+      "content": "the"
+     },
+     {
+      "begin": 90.329,
+      "end": 90.59,
+      "content": "best."
+     },
+     {
+      "begin": 90.891,
+      "end": 90.991,
+      "content": "Me?"
+     },
+     {
+      "begin": 91.112,
+      "end": 91.172,
+      "content": "I’m"
+     },
+     {
+      "begin": 91.293,
+      "end": 91.333,
+      "content": "on"
+     },
+     {
+      "begin": 91.433,
+      "end": 91.453,
+      "content": "a"
+     },
+     {
+      "begin": 91.534,
+      "end": 91.835,
+      "content": "different"
+     },
+     {
+      "begin": 91.875,
+      "end": 92.076,
+      "content": "type"
+     },
+     {
+      "begin": 92.136,
+      "end": 92.176,
+      "content": "of"
+     },
+     {
+      "begin": 92.26,
+      "end": 92.26,
+      "content": "flex."
+     }
+    ],
+    "align_score": 0.712
+   },
+   {
+    "begin": 92.26,
+    "end": 96.02,
+    "content": "You’re high on life, stay twisted. They intercept your transmissions.",
+    "confidence": 0.926,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 92.26,
+      "end": 92.823,
+      "content": "You’re"
+     },
+     {
+      "begin": 92.903,
+      "end": 93.084,
+      "content": "high"
+     },
+     {
+      "begin": 93.144,
+      "end": 93.184,
+      "content": "on"
+     },
+     {
+      "begin": 93.265,
+      "end": 93.466,
+      "content": "life,"
+     },
+     {
+      "begin": 93.566,
+      "end": 93.827,
+      "content": "stay"
+     },
+     {
+      "begin": 94.008,
+      "end": 94.47,
+      "content": "twisted."
+     },
+     {
+      "begin": 94.55,
+      "end": 94.671,
+      "content": "They"
+     },
+     {
+      "begin": 94.832,
+      "end": 95.274,
+      "content": "intercept"
+     },
+     {
+      "begin": 95.334,
+      "end": 95.434,
+      "content": "your"
+     },
+     {
+      "begin": 95.495,
+      "end": 96.02,
+      "content": "transmissions."
+     }
+    ],
+    "align_score": 0.621
+   },
+   {
+    "begin": 96.02,
+    "end": 100.138,
+    "content": "We don’t have the same issues, I’m fiber optics made different.",
+    "confidence": 0.905,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 96.02,
+      "end": 96.06,
+      "content": "We"
+     },
+     {
+      "begin": 96.221,
+      "end": 96.904,
+      "content": "don’t"
+     },
+     {
+      "begin": 96.964,
+      "end": 97.085,
+      "content": "have"
+     },
+     {
+      "begin": 97.145,
+      "end": 97.225,
+      "content": "the"
+     },
+     {
+      "begin": 97.366,
+      "end": 97.627,
+      "content": "same"
+     },
+     {
+      "begin": 97.868,
+      "end": 98.229,
+      "content": "issues,"
+     },
+     {
+      "begin": 98.29,
+      "end": 98.35,
+      "content": "I’m"
+     },
+     {
+      "begin": 98.511,
+      "end": 98.732,
+      "content": "fiber"
+     },
+     {
+      "begin": 98.933,
+      "end": 99.214,
+      "content": "optics"
+     },
+     {
+      "begin": 99.314,
+      "end": 99.495,
+      "content": "made"
+     },
+     {
+      "begin": 99.696,
+      "end": 100.138,
+      "content": "different."
+     }
+    ],
+    "align_score": 0.744
+   },
+   {
+    "begin": 100.483,
+    "end": 103.921,
+    "content": "Now I’m onto light speed, loose ends chopped off.",
+    "confidence": 0.889,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 100.483,
+      "end": 100.643,
+      "content": "Now"
+     },
+     {
+      "begin": 100.724,
+      "end": 100.844,
+      "content": "I’m"
+     },
+     {
+      "begin": 100.925,
+      "end": 101.125,
+      "content": "onto"
+     },
+     {
+      "begin": 101.246,
+      "end": 101.527,
+      "content": "light"
+     },
+     {
+      "begin": 101.587,
+      "end": 102.431,
+      "content": "speed,"
+     },
+     {
+      "begin": 102.491,
+      "end": 102.732,
+      "content": "loose"
+     },
+     {
+      "begin": 102.933,
+      "end": 103.134,
+      "content": "ends"
+     },
+     {
+      "begin": 103.274,
+      "end": 103.696,
+      "content": "chopped"
+     },
+     {
+      "begin": 103.921,
+      "end": 103.921,
+      "content": "off."
+     }
+    ],
+    "align_score": 0.507
+   },
+   {
+    "begin": 103.921,
+    "end": 107.783,
+    "content": "I wear my heart on my sheath, I don’t do cross talk cause",
+    "confidence": 0.846,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 103.921,
+      "end": 103.941,
+      "content": "I"
+     },
+     {
+      "begin": 104.443,
+      "end": 104.584,
+      "content": "wear"
+     },
+     {
+      "begin": 104.644,
+      "end": 104.724,
+      "content": "my"
+     },
+     {
+      "begin": 104.825,
+      "end": 105.005,
+      "content": "heart"
+     },
+     {
+      "begin": 105.086,
+      "end": 105.126,
+      "content": "on"
+     },
+     {
+      "begin": 105.206,
+      "end": 105.347,
+      "content": "my"
+     },
+     {
+      "begin": 105.628,
+      "end": 105.909,
+      "content": "sheath,"
+     },
+     {
+      "begin": 106.19,
+      "end": 106.211,
+      "content": "I"
+     },
+     {
+      "begin": 106.351,
+      "end": 106.652,
+      "content": "don’t"
+     },
+     {
+      "begin": 106.713,
+      "end": 106.833,
+      "content": "do"
+     },
+     {
+      "begin": 107.094,
+      "end": 107.516,
+      "content": "cross"
+     },
+     {
+      "begin": 107.637,
+      "end": 107.783,
+      "content": "talk"
+     },
+     {
+      "begin": 107.783,
+      "end": 107.783,
+      "content": "cause"
+     }
+    ],
+    "align_score": 0.633
+   },
+   {
+    "begin": 107.783,
+    "end": 109.379,
+    "content": "I’m the ghost in the wires",
+    "confidence": 0.5,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 107.783,
+      "end": 108.167,
+      "content": "I’m"
+     },
+     {
+      "begin": 108.248,
+      "end": 108.308,
+      "content": "the"
+     },
+     {
+      "begin": 108.389,
+      "end": 108.712,
+      "content": "ghost"
+     },
+     {
+      "begin": 108.813,
+      "end": 108.854,
+      "content": "in"
+     },
+     {
+      "begin": 108.935,
+      "end": 108.995,
+      "content": "the"
+     },
+     {
+      "begin": 109.096,
+      "end": 109.379,
+      "content": "wires"
+     }
+    ],
+    "align_score": 0.415
+   },
+   {
+    "begin": 111.932,
+    "end": 113.321,
+    "content": "I hope you don’t get tied up",
+    "confidence": 0.829,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 111.932,
+      "end": 111.952,
+      "content": "I"
+     },
+     {
+      "begin": 112.253,
+      "end": 112.414,
+      "content": "hope"
+     },
+     {
+      "begin": 112.454,
+      "end": 112.514,
+      "content": "you"
+     },
+     {
+      "begin": 112.575,
+      "end": 112.715,
+      "content": "don’t"
+     },
+     {
+      "begin": 112.755,
+      "end": 112.896,
+      "content": "get"
+     },
+     {
+      "begin": 112.996,
+      "end": 113.321,
+      "content": "tied"
+     },
+     {
+      "begin": 113.321,
+      "end": 113.321,
+      "content": "up"
+     }
+    ],
+    "align_score": 0.679
+   },
+   {
+    "begin": 113.321,
+    "end": 117.121,
+    "content": "I’m the ghost in the wires",
+    "confidence": 0.294,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "a",
+    "words": [
+     {
+      "begin": 113.321,
+      "end": 113.442,
+      "content": "I’m"
+     },
+     {
+      "begin": 113.482,
+      "end": 113.562,
+      "content": "the"
+     },
+     {
+      "begin": 116.155,
+      "end": 116.556,
+      "content": "ghost"
+     },
+     {
+      "begin": 116.657,
+      "end": 116.697,
+      "content": "in"
+     },
+     {
+      "begin": 116.757,
+      "end": 116.838,
+      "content": "the"
+     },
+     {
+      "begin": 116.898,
+      "end": 117.121,
+      "content": "wires"
+     }
+    ],
+    "align_score": 0.299
+   },
+   {
+    "begin": 117.121,
+    "end": 120.028,
+    "content": "Yeah Yeah!",
+    "confidence": 0.996,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 117.121,
+      "end": 117.685,
+      "content": "Yeah"
+     },
+     {
+      "begin": 118.57,
+      "end": 120.028,
+      "content": "Yeah!"
+     }
+    ],
+    "align_score": 0.448
+   },
+   {
+    "begin": 120.028,
+    "end": 121.76,
+    "content": "Hope you don’t get tied up",
+    "confidence": 0.8,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 120.028,
+      "end": 120.229,
+      "content": "Hope"
+     },
+     {
+      "begin": 120.31,
+      "end": 120.39,
+      "content": "you"
+     },
+     {
+      "begin": 120.45,
+      "end": 120.591,
+      "content": "don’t"
+     },
+     {
+      "begin": 120.612,
+      "end": 120.692,
+      "content": "get"
+     },
+     {
+      "begin": 120.753,
+      "end": 121.296,
+      "content": "tied"
+     },
+     {
+      "begin": 121.679,
+      "end": 121.76,
+      "content": "up"
+     }
+    ],
+    "align_score": 0.431
+   },
+   {
+    "begin": 123.906,
+    "end": 127.817,
+    "content": "Ghost in the wire",
+    "confidence": 0.659,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 123.906,
+      "end": 124.307,
+      "content": "Ghost"
+     },
+     {
+      "begin": 124.367,
+      "end": 124.408,
+      "content": "in"
+     },
+     {
+      "begin": 124.488,
+      "end": 124.548,
+      "content": "the"
+     },
+     {
+      "begin": 124.688,
+      "end": 127.817,
+      "content": "wire"
+     }
+    ],
+    "align_score": 0.373
+   },
+   {
+    "begin": 128.141,
+    "end": 131.741,
+    "content": "OOOHHHHHHHH",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "to wild, ooh, go to",
+    "words": [
+     {
+      "begin": 128.141,
+      "end": 131.741,
+      "content": "OOOHHHHHHHH"
+     }
+    ],
+    "align_score": 0.149
+   },
+   {
+    "begin": 131.741,
+    "end": 133.02,
+    "content": "Ghost in the wire",
+    "confidence": 0.25,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "wild,",
+    "words": [
+     {
+      "begin": 131.741,
+      "end": 132.004,
+      "content": "Ghost"
+     },
+     {
+      "begin": 132.185,
+      "end": 132.246,
+      "content": "in"
+     },
+     {
+      "begin": 132.307,
+      "end": 132.367,
+      "content": "the"
+     },
+     {
+      "begin": 132.448,
+      "end": 133.02,
+      "content": "wire"
+     }
+    ],
+    "align_score": 0.293
+   },
+   {
+    "begin": 133.02,
+    "end": 139.524,
+    "content": "OOOHHHHHHHH",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "wild, ooh, Oooooooh,",
+    "words": [
+     {
+      "begin": 133.02,
+      "end": 139.524,
+      "content": "OOOHHHHHHHH"
+     }
+    ],
+    "align_score": 0.101
+   },
+   {
+    "begin": 139.524,
+    "end": 140.736,
+    "content": "Ghost in the wire",
+    "confidence": 0.764,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 139.524,
+      "end": 139.867,
+      "content": "Ghost"
+     },
+     {
+      "begin": 139.989,
+      "end": 140.049,
+      "content": "in"
+     },
+     {
+      "begin": 140.11,
+      "end": 140.17,
+      "content": "the"
+     },
+     {
+      "begin": 140.291,
+      "end": 140.736,
+      "content": "wire"
+     }
+    ],
+    "align_score": 0.281
+   },
+   {
+    "begin": 155.203,
+    "end": 158.878,
+    "content": "If troubleshooting is a crime, I’m like a troubled shooter out his mind.",
+    "confidence": 0.817,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 155.203,
+      "end": 155.243,
+      "content": "If"
+     },
+     {
+      "begin": 155.484,
+      "end": 156.187,
+      "content": "troubleshooting"
+     },
+     {
+      "begin": 156.287,
+      "end": 156.368,
+      "content": "is"
+     },
+     {
+      "begin": 156.448,
+      "end": 156.468,
+      "content": "a"
+     },
+     {
+      "begin": 156.569,
+      "end": 156.91,
+      "content": "crime,"
+     },
+     {
+      "begin": 157.05,
+      "end": 157.131,
+      "content": "I’m"
+     },
+     {
+      "begin": 157.191,
+      "end": 157.291,
+      "content": "like"
+     },
+     {
+      "begin": 157.392,
+      "end": 157.412,
+      "content": "a"
+     },
+     {
+      "begin": 157.472,
+      "end": 157.753,
+      "content": "troubled"
+     },
+     {
+      "begin": 157.874,
+      "end": 158.215,
+      "content": "shooter"
+     },
+     {
+      "begin": 158.275,
+      "end": 158.376,
+      "content": "out"
+     },
+     {
+      "begin": 158.436,
+      "end": 158.516,
+      "content": "his"
+     },
+     {
+      "begin": 158.637,
+      "end": 158.878,
+      "content": "mind."
+     }
+    ],
+    "align_score": 0.925
+   },
+   {
+    "begin": 159.123,
+    "end": 162.738,
+    "content": "Pull up with the RJ-45… Ethernet and got em’ back online.",
+    "confidence": 0.909,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 159.123,
+      "end": 159.284,
+      "content": "Pull"
+     },
+     {
+      "begin": 159.324,
+      "end": 159.384,
+      "content": "up"
+     },
+     {
+      "begin": 159.445,
+      "end": 159.565,
+      "content": "with"
+     },
+     {
+      "begin": 159.625,
+      "end": 159.686,
+      "content": "the"
+     },
+     {
+      "begin": 159.826,
+      "end": 160.77,
+      "content": "RJ-45…"
+     },
+     {
+      "begin": 161.071,
+      "end": 161.493,
+      "content": "Ethernet"
+     },
+     {
+      "begin": 161.533,
+      "end": 161.613,
+      "content": "and"
+     },
+     {
+      "begin": 161.714,
+      "end": 161.894,
+      "content": "got"
+     },
+     {
+      "begin": 161.975,
+      "end": 162.035,
+      "content": "em’"
+     },
+     {
+      "begin": 162.095,
+      "end": 162.256,
+      "content": "back"
+     },
+     {
+      "begin": 162.356,
+      "end": 162.738,
+      "content": "online."
+     }
+    ],
+    "align_score": 0.865
+   },
+   {
+    "begin": 162.964,
+    "end": 166.559,
+    "content": "PS2.. Not to play with. This is what we call mini din 6",
+    "confidence": 0.84,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 162.964,
+      "end": 163.526,
+      "content": "PS2.."
+     },
+     {
+      "begin": 163.707,
+      "end": 163.847,
+      "content": "Not"
+     },
+     {
+      "begin": 163.908,
+      "end": 163.968,
+      "content": "to"
+     },
+     {
+      "begin": 164.068,
+      "end": 164.35,
+      "content": "play"
+     },
+     {
+      "begin": 164.47,
+      "end": 164.671,
+      "content": "with."
+     },
+     {
+      "begin": 164.912,
+      "end": 165.012,
+      "content": "This"
+     },
+     {
+      "begin": 165.073,
+      "end": 165.133,
+      "content": "is"
+     },
+     {
+      "begin": 165.173,
+      "end": 165.294,
+      "content": "what"
+     },
+     {
+      "begin": 165.354,
+      "end": 165.414,
+      "content": "we"
+     },
+     {
+      "begin": 165.474,
+      "end": 165.635,
+      "content": "call"
+     },
+     {
+      "begin": 165.715,
+      "end": 165.936,
+      "content": "mini"
+     },
+     {
+      "begin": 166.037,
+      "end": 166.218,
+      "content": "din"
+     },
+     {
+      "begin": 166.358,
+      "end": 166.559,
+      "content": "6"
+     }
+    ],
+    "align_score": 0.795
+   },
+   {
+    "begin": 166.964,
+    "end": 170.399,
+    "content": "Green one means mouse clicks. Purple plugs they keyboard in.",
+    "confidence": 0.875,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 166.964,
+      "end": 167.205,
+      "content": "Green"
+     },
+     {
+      "begin": 167.406,
+      "end": 167.527,
+      "content": "one"
+     },
+     {
+      "begin": 167.627,
+      "end": 167.888,
+      "content": "means"
+     },
+     {
+      "begin": 167.989,
+      "end": 168.209,
+      "content": "mouse"
+     },
+     {
+      "begin": 168.31,
+      "end": 168.571,
+      "content": "clicks."
+     },
+     {
+      "begin": 168.812,
+      "end": 169.093,
+      "content": "Purple"
+     },
+     {
+      "begin": 169.153,
+      "end": 169.394,
+      "content": "plugs"
+     },
+     {
+      "begin": 169.455,
+      "end": 169.535,
+      "content": "they"
+     },
+     {
+      "begin": 169.595,
+      "end": 170.218,
+      "content": "keyboard"
+     },
+     {
+      "begin": 170.359,
+      "end": 170.399,
+      "content": "in."
+     }
+    ],
+    "align_score": 0.933
+   },
+   {
+    "begin": 170.844,
+    "end": 174.358,
+    "content": "Next is, sony philips digital interface format.",
+    "confidence": 0.895,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 170.844,
+      "end": 171.025,
+      "content": "Next"
+     },
+     {
+      "begin": 171.265,
+      "end": 171.366,
+      "content": "is,"
+     },
+     {
+      "begin": 171.486,
+      "end": 171.848,
+      "content": "sony"
+     },
+     {
+      "begin": 172.008,
+      "end": 172.551,
+      "content": "philips"
+     },
+     {
+      "begin": 172.651,
+      "end": 173.053,
+      "content": "digital"
+     },
+     {
+      "begin": 173.173,
+      "end": 173.735,
+      "content": "interface"
+     },
+     {
+      "begin": 173.836,
+      "end": 174.358,
+      "content": "format."
+     }
+    ],
+    "align_score": 0.695
+   },
+   {
+    "begin": 174.684,
+    "end": 178.358,
+    "content": "Also known as SPIDIF. Audio signals through coax",
+    "confidence": 0.875,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 174.684,
+      "end": 174.925,
+      "content": "Also"
+     },
+     {
+      "begin": 175.025,
+      "end": 175.246,
+      "content": "known"
+     },
+     {
+      "begin": 175.447,
+      "end": 175.507,
+      "content": "as"
+     },
+     {
+      "begin": 175.627,
+      "end": 176.21,
+      "content": "SPIDIF."
+     },
+     {
+      "begin": 176.631,
+      "end": 176.872,
+      "content": "Audio"
+     },
+     {
+      "begin": 177.013,
+      "end": 177.354,
+      "content": "signals"
+     },
+     {
+      "begin": 177.434,
+      "end": 177.655,
+      "content": "through"
+     },
+     {
+      "begin": 177.776,
+      "end": 178.358,
+      "content": "coax"
+     }
+    ],
+    "align_score": 0.828
+   },
+   {
+    "begin": 178.744,
+    "end": 182.142,
+    "content": "And fiber optics transmit audio. Facts.",
+    "confidence": 0.998,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 178.744,
+      "end": 178.845,
+      "content": "And"
+     },
+     {
+      "begin": 178.985,
+      "end": 179.487,
+      "content": "fiber"
+     },
+     {
+      "begin": 179.808,
+      "end": 180.21,
+      "content": "optics"
+     },
+     {
+      "begin": 180.451,
+      "end": 181.133,
+      "content": "transmit"
+     },
+     {
+      "begin": 181.394,
+      "end": 181.776,
+      "content": "audio."
+     },
+     {
+      "begin": 181.997,
+      "end": 182.142,
+      "content": "Facts."
+     }
+    ],
+    "align_score": 0.879
+   },
+   {
+    "begin": 182.142,
+    "end": 185.241,
+    "content": "Analogue zone jacks go by this color code:",
+    "confidence": 0.926,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 182.142,
+      "end": 183.146,
+      "content": "Analogue"
+     },
+     {
+      "begin": 183.227,
+      "end": 183.488,
+      "content": "zone"
+     },
+     {
+      "begin": 183.629,
+      "end": 184.03,
+      "content": "jacks"
+     },
+     {
+      "begin": 184.131,
+      "end": 184.271,
+      "content": "go"
+     },
+     {
+      "begin": 184.452,
+      "end": 184.673,
+      "content": "by"
+     },
+     {
+      "begin": 184.814,
+      "end": 185.015,
+      "content": "this"
+     },
+     {
+      "begin": 185.135,
+      "end": 185.241,
+      "content": "color"
+     },
+     {
+      "begin": 185.241,
+      "end": 185.241,
+      "content": "code:"
+     }
+    ],
+    "align_score": 0.671
+   },
+   {
+    "begin": 185.241,
+    "end": 188.303,
+    "content": "Black: connects the speakers to computer",
+    "confidence": 0.777,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 185.241,
+      "end": 185.442,
+      "content": "Black:"
+     },
+     {
+      "begin": 185.482,
+      "end": 186.247,
+      "content": "connects"
+     },
+     {
+      "begin": 186.528,
+      "end": 186.609,
+      "content": "the"
+     },
+     {
+      "begin": 186.649,
+      "end": 187.052,
+      "content": "speakers"
+     },
+     {
+      "begin": 187.092,
+      "end": 187.212,
+      "content": "to"
+     },
+     {
+      "begin": 187.373,
+      "end": 188.303,
+      "content": "computer"
+     }
+    ],
+    "align_score": 0.599
+   },
+   {
+    "begin": 188.303,
+    "end": 190.136,
+    "content": "Brown: connects the music to the woofer",
+    "confidence": 0.815,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 188.303,
+      "end": 188.524,
+      "content": "Brown:"
+     },
+     {
+      "begin": 188.585,
+      "end": 188.887,
+      "content": "connects"
+     },
+     {
+      "begin": 188.907,
+      "end": 188.968,
+      "content": "the"
+     },
+     {
+      "begin": 189.048,
+      "end": 189.33,
+      "content": "music"
+     },
+     {
+      "begin": 189.411,
+      "end": 189.491,
+      "content": "to"
+     },
+     {
+      "begin": 189.592,
+      "end": 189.673,
+      "content": "the"
+     },
+     {
+      "begin": 189.753,
+      "end": 190.136,
+      "content": "woofer"
+     }
+    ],
+    "align_score": 0.663
+   },
+   {
+    "begin": 190.242,
+    "end": 191.875,
+    "content": "Green: in line for the aux",
+    "confidence": 0.775,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 190.242,
+      "end": 190.645,
+      "content": "Green:"
+     },
+     {
+      "begin": 190.766,
+      "end": 190.826,
+      "content": "in"
+     },
+     {
+      "begin": 191.008,
+      "end": 191.27,
+      "content": "line"
+     },
+     {
+      "begin": 191.351,
+      "end": 191.451,
+      "content": "for"
+     },
+     {
+      "begin": 191.512,
+      "end": 191.572,
+      "content": "the"
+     },
+     {
+      "begin": 191.754,
+      "end": 191.875,
+      "content": "aux"
+     }
+    ],
+    "align_score": 0.534
+   },
+   {
+    "begin": 192.286,
+    "end": 193.876,
+    "content": "Pink: microphone you can talk",
+    "confidence": 0.824,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 192.286,
+      "end": 192.447,
+      "content": "Pink:"
+     },
+     {
+      "begin": 192.669,
+      "end": 193.232,
+      "content": "microphone"
+     },
+     {
+      "begin": 193.292,
+      "end": 193.373,
+      "content": "you"
+     },
+     {
+      "begin": 193.453,
+      "end": 193.534,
+      "content": "can"
+     },
+     {
+      "begin": 193.635,
+      "end": 193.876,
+      "content": "talk"
+     }
+    ],
+    "align_score": 0.617
+   },
+   {
+    "begin": 194.123,
+    "end": 198.024,
+    "content": "Green: Line out send a song from your device",
+    "confidence": 0.977,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 194.123,
+      "end": 194.344,
+      "content": "Green:"
+     },
+     {
+      "begin": 194.605,
+      "end": 194.927,
+      "content": "Line"
+     },
+     {
+      "begin": 195.027,
+      "end": 195.147,
+      "content": "out"
+     },
+     {
+      "begin": 195.228,
+      "end": 195.408,
+      "content": "send"
+     },
+     {
+      "begin": 195.469,
+      "end": 195.489,
+      "content": "a"
+     },
+     {
+      "begin": 195.589,
+      "end": 196.653,
+      "content": "song"
+     },
+     {
+      "begin": 196.774,
+      "end": 196.894,
+      "content": "from"
+     },
+     {
+      "begin": 196.975,
+      "end": 197.095,
+      "content": "your"
+     },
+     {
+      "begin": 197.155,
+      "end": 198.024,
+      "content": "device"
+     }
+    ],
+    "align_score": 0.68
+   },
+   {
+    "begin": 198.024,
+    "end": 201.759,
+    "content": "Need a visual to go along? HDMI",
+    "confidence": 0.968,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 198.024,
+      "end": 198.185,
+      "content": "Need"
+     },
+     {
+      "begin": 198.265,
+      "end": 198.285,
+      "content": "a"
+     },
+     {
+      "begin": 198.365,
+      "end": 198.867,
+      "content": "visual"
+     },
+     {
+      "begin": 198.968,
+      "end": 199.028,
+      "content": "to"
+     },
+     {
+      "begin": 199.128,
+      "end": 199.229,
+      "content": "go"
+     },
+     {
+      "begin": 199.39,
+      "end": 200.595,
+      "content": "along?"
+     },
+     {
+      "begin": 200.976,
+      "end": 201.759,
+      "content": "HDMI"
+     }
+    ],
+    "align_score": 0.631
+   },
+   {
+    "begin": 201.965,
+    "end": 205.941,
+    "content": "Send video and music all at the same time",
+    "confidence": 0.876,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 201.965,
+      "end": 202.225,
+      "content": "Send"
+     },
+     {
+      "begin": 202.366,
+      "end": 202.828,
+      "content": "video"
+     },
+     {
+      "begin": 202.868,
+      "end": 202.968,
+      "content": "and"
+     },
+     {
+      "begin": 203.008,
+      "end": 203.329,
+      "content": "music"
+     },
+     {
+      "begin": 204.273,
+      "end": 204.433,
+      "content": "all"
+     },
+     {
+      "begin": 204.714,
+      "end": 204.815,
+      "content": "at"
+     },
+     {
+      "begin": 204.855,
+      "end": 204.935,
+      "content": "the"
+     },
+     {
+      "begin": 205.016,
+      "end": 205.638,
+      "content": "same"
+     },
+     {
+      "begin": 205.899,
+      "end": 205.941,
+      "content": "time"
+     }
+    ],
+    "align_score": 0.543
+   },
+   {
+    "begin": 205.941,
+    "end": 209.803,
+    "content": "I move in silence like VGA lines",
+    "confidence": 0.36,
+    "mismatch": true,
+    "section": "Verse",
+    "heard": "open analog yeah",
+    "words": [
+     {
+      "begin": 205.941,
+      "end": 205.961,
+      "content": "I"
+     },
+     {
+      "begin": 206.062,
+      "end": 206.182,
+      "content": "move"
+     },
+     {
+      "begin": 206.263,
+      "end": 206.323,
+      "content": "in"
+     },
+     {
+      "begin": 206.363,
+      "end": 206.685,
+      "content": "silence"
+     },
+     {
+      "begin": 206.765,
+      "end": 206.946,
+      "content": "like"
+     },
+     {
+      "begin": 207.368,
+      "end": 209.075,
+      "content": "VGA"
+     },
+     {
+      "begin": 209.276,
+      "end": 209.803,
+      "content": "lines"
+     }
+    ],
+    "align_score": 0.563
+   },
+   {
+    "begin": 209.803,
+    "end": 213.458,
+    "content": "Never had a day off I’m missing daylight",
+    "confidence": 0.988,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 209.803,
+      "end": 210.024,
+      "content": "Never"
+     },
+     {
+      "begin": 210.105,
+      "end": 210.285,
+      "content": "had"
+     },
+     {
+      "begin": 210.386,
+      "end": 210.406,
+      "content": "a"
+     },
+     {
+      "begin": 210.526,
+      "end": 210.807,
+      "content": "day"
+     },
+     {
+      "begin": 211.912,
+      "end": 212.032,
+      "content": "off"
+     },
+     {
+      "begin": 212.293,
+      "end": 212.354,
+      "content": "I’m"
+     },
+     {
+      "begin": 212.374,
+      "end": 212.695,
+      "content": "missing"
+     },
+     {
+      "begin": 212.795,
+      "end": 213.458,
+      "content": "daylight"
+     }
+    ],
+    "align_score": 0.72
+   },
+   {
+    "begin": 213.724,
+    "end": 217.144,
+    "content": "And I really just did it all so when it’s game time",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 213.724,
+      "end": 213.824,
+      "content": "And"
+     },
+     {
+      "begin": 213.905,
+      "end": 213.925,
+      "content": "I"
+     },
+     {
+      "begin": 214.025,
+      "end": 214.286,
+      "content": "really"
+     },
+     {
+      "begin": 214.407,
+      "end": 214.668,
+      "content": "just"
+     },
+     {
+      "begin": 214.748,
+      "end": 214.929,
+      "content": "did"
+     },
+     {
+      "begin": 215.069,
+      "end": 215.129,
+      "content": "it"
+     },
+     {
+      "begin": 215.852,
+      "end": 215.973,
+      "content": "all"
+     },
+     {
+      "begin": 216.093,
+      "end": 216.214,
+      "content": "so"
+     },
+     {
+      "begin": 216.294,
+      "end": 216.394,
+      "content": "when"
+     },
+     {
+      "begin": 216.475,
+      "end": 216.575,
+      "content": "it’s"
+     },
+     {
+      "begin": 216.635,
+      "end": 216.896,
+      "content": "game"
+     },
+     {
+      "begin": 216.997,
+      "end": 217.144,
+      "content": "time"
+     }
+    ],
+    "align_score": 0.906
+   },
+   {
+    "begin": 217.144,
+    "end": 218.736,
+    "content": "I’m the ghost in the wires",
+    "confidence": 0.776,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 217.144,
+      "end": 217.225,
+      "content": "I’m"
+     },
+     {
+      "begin": 217.466,
+      "end": 217.527,
+      "content": "the"
+     },
+     {
+      "begin": 217.607,
+      "end": 217.93,
+      "content": "ghost"
+     },
+     {
+      "begin": 218.051,
+      "end": 218.091,
+      "content": "in"
+     },
+     {
+      "begin": 218.172,
+      "end": 218.232,
+      "content": "the"
+     },
+     {
+      "begin": 218.293,
+      "end": 218.736,
+      "content": "wires"
+     }
+    ],
+    "align_score": 0.645
+   },
+   {
+    "begin": 221.51,
+    "end": 222.9,
+    "content": "Ghost in the wires",
+    "confidence": 0.621,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 221.51,
+      "end": 221.852,
+      "content": "Ghost"
+     },
+     {
+      "begin": 221.953,
+      "end": 221.993,
+      "content": "in"
+     },
+     {
+      "begin": 222.054,
+      "end": 222.114,
+      "content": "the"
+     },
+     {
+      "begin": 222.195,
+      "end": 222.9,
+      "content": "wires"
+     }
+    ],
+    "align_score": 0.374
+   },
+   {
+    "begin": 225.385,
+    "end": 228.418,
+    "content": "Ghost in the wires. Yeah.",
+    "confidence": 0.767,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 225.385,
+      "end": 225.747,
+      "content": "Ghost"
+     },
+     {
+      "begin": 225.807,
+      "end": 225.867,
+      "content": "in"
+     },
+     {
+      "begin": 225.928,
+      "end": 225.988,
+      "content": "the"
+     },
+     {
+      "begin": 226.108,
+      "end": 226.711,
+      "content": "wires."
+     },
+     {
+      "begin": 228.077,
+      "end": 228.418,
+      "content": "Yeah."
+     }
+    ],
+    "align_score": 0.457
+   },
+   {
+    "begin": 229.307,
+    "end": 230.76,
+    "content": "Ghost in the wires…",
+    "confidence": 0.708,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 229.307,
+      "end": 229.71,
+      "content": "Ghost"
+     },
+     {
+      "begin": 229.751,
+      "end": 229.831,
+      "content": "in"
+     },
+     {
+      "begin": 229.852,
+      "end": 229.912,
+      "content": "the"
+     },
+     {
+      "begin": 230.013,
+      "end": 230.76,
+      "content": "wires…"
+     }
+    ],
+    "align_score": 0.334
+   }
+  ]
+ }
+}

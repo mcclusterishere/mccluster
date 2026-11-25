@@ -1,5 +1,10 @@
 # Mission reset and the Docket 516R cohort
 
+> Superseded in part, 2026-11-17 (`WORLD-FEED-AND-MISSIONS-20261117.md`): the swipe deck described below was removed on
+> 2026-11-17, with its suite `scripts/e2e/mission-swipe.e2e.mjs`; missions are posts in the World feed and the Equity
+> Uprise tab, and the completed series sits in that tab. "Travel remains the default World mode" is stale: the feed is
+> the default and Travel is owner-only (owner, 2026-10-20). The archive, the cohort pages and the claims below stand.
+
 The owner directed a smaller mission catalog on 2026-10-17: give someone a free
 ride, write a policy memo, and record a song about an issue in the community
 (Write the Change). The World Missions tab presents one explanatory card at a

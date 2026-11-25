@@ -379,7 +379,7 @@ test('the real Durable Object serializes concurrent requests across restart and 
   const serialized = JSON.stringify(storage.writes);
   assert.ok(!serialized.includes(String(TRIP.origin[0])) && !serialized.includes(String(TRIP.destination[1])));
   assert.ok(!serialized.includes('Private home') && !serialized.includes('private-person'));
-  for (const value of storage.writes) assert.deepEqual(Object.keys(value).sort(), ['activeUntil', 'count', 'day', 'nextAt', 'token']);
+  for (const value of storage.writes) assert.deepEqual(Object.keys(value).sort(), ['activeUntil', 'count', 'day', 'month', 'monthCount', 'nextAt', 'token']);
 });
 
 test('the actual Durable Object keeps the daily budget through eviction and resumes the next day', async t => {
@@ -390,7 +390,7 @@ test('the actual Durable Object keeps the daily budget through eviction and resu
   assert.equal((await new HereTenantAgent({ storage }, PILOT).routeTravel(TRIP)).status, 200);
   now += 2000;
   const denied = await new HereTenantAgent({ storage }, PILOT).routeTravel(TRIP);
-  assert.equal(denied.status, 429); assert.match(denied.error, /daily limit/);
+  assert.equal(denied.status, 429); assert.match(denied.error, /daily request budget/);
   assert.equal(calls, 1);
   now = (day + 1) * 86400000;
   assert.equal((await new HereTenantAgent({ storage }, PILOT).routeTravel(TRIP)).status, 200);
@@ -422,4 +422,61 @@ test('a late completion cannot release a newer durable quota reservation', async
   storage.state = newer;
   release(); await pending;
   assert.deepEqual(storage.state, newer, 'finally must release only its own reservation token');
+});
+
+
+test('TomTom monthly budget persists across days and resets at the UTC month boundary', () => {
+  const now = Date.UTC(2028, 1, 28, 23, 59, 57), provider = { provider: 'tomtom' };
+  const last = reserveRoutingQuota({ day: Math.floor(now / 86400000), count: 1, month: '2028-2', monthCount: 19999 }, now, provider);
+  assert.equal(last.allowed, true);
+  const saved = JSON.parse(JSON.stringify(releaseRoutingQuota(last.state, now)));
+  const denied = reserveRoutingQuota(saved, Date.UTC(2028, 1, 29), provider);
+  assert.equal(denied.monthly, true);
+  assert.equal(denied.retryAfter, 86400, 'leap-day is included in the remaining month');
+  const reset = reserveRoutingQuota(saved, Date.UTC(2028, 2, 1), provider);
+  assert.equal(reset.allowed, true); assert.equal(reset.state.monthCount, 1);
+  const december = { month: '2028-12', monthCount: 20000 };
+  assert.equal(reserveRoutingQuota(december, Date.UTC(2028, 11, 31), provider).retryAfter, 86400);
+  assert.equal(reserveRoutingQuota(december, Date.UTC(2029, 0, 1), provider).state.monthCount, 1);
+});
+
+test('legacy quota upgrade carries known daily use without inventing earlier history', () => {
+  const now = Date.UTC(2026, 10, 7, 12), day = Math.floor(now / 86400000);
+  const upgraded = reserveRoutingQuota({ day, count: 17 }, now, { provider: 'tomtom' });
+  assert.equal(upgraded.state.monthCount, 18);
+  assert.equal(upgraded.state.month, '2026-11');
+  const nextDay = reserveRoutingQuota(releaseRoutingQuota(upgraded.state, now), now + 86400000, { provider: 'tomtom' });
+  assert.equal(nextDay.state.monthCount, 19);
+  assert.equal(nextDay.state.count, 1);
+});
+
+test('real endpoint and restarted Durable Object stop at the monthly budget without contacting TomTom', async t => {
+  let now = Date.UTC(2026, 10, 29, 12), calls = 0;
+  t.mock.method(Date, 'now', () => now);
+  t.mock.method(globalThis, 'fetch', async () => { calls++; return json(tomtomFixture()); });
+  const storage = quotaStorage({ day: Math.floor(now / 86400000), count: 0, month: '2026-11', monthCount: 19999 });
+  const env = { TRAVEL_ROUTING_PROVIDER: 'tomtom', TRAVEL_TOMTOM_API_KEY: 'fixture-only' };
+  env.HereTenantAgent = binding(input => new HereTenantAgent({ storage }, env).routeTravel(input));
+  assert.equal((await call(request(), env)).status, 200);
+  now += 86400000;
+  const denied = await call(request(), env);
+  assert.equal(denied.status, 429);
+  assert.equal(denied.headers.get('retry-after'), '43200');
+  assert.match((await denied.json()).error, /monthly request budget/);
+  assert.equal(calls, 1);
+  // Rotating the key does not buy a fresh quota ledger.
+  env.TRAVEL_TOMTOM_API_KEY = 'rotated-fixture-only';
+  assert.equal((await call(request(), env)).status, 429);
+  now = Date.UTC(2026, 11, 1);
+  assert.equal((await call(request(), env)).status, 200);
+  assert.equal(calls, 2); assert.equal(storage.state.monthCount, 1);
+  assert.ok(!JSON.stringify(storage.writes).includes('fixture-only'));
+});
+
+test('provider switching retains the month count while the keyless pilot keeps its daily policy', () => {
+  const now = Date.UTC(2026, 10, 7, 12);
+  const pilot = reserveRoutingQuota({ month: '2026-11', monthCount: 20000 }, now);
+  assert.equal(pilot.allowed, true);
+  const saved = releaseRoutingQuota(pilot.state, now);
+  assert.equal(reserveRoutingQuota(saved, now + 2000, { provider: 'tomtom' }).monthly, true);
 });

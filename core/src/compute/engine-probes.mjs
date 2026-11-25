@@ -1,4 +1,21 @@
+import { readBoundedText } from './request-json.mjs';
+
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', '[::1]', 'localhost']);
+const HEALTH_BODY_LIMIT = 65_536;
+
+// An executor's health body may carry `gpu_evidence`, the engine's own
+// account of what it has loaded (the Ollama adapter reads GET /api/ps). It is
+// evidence for hardware_mode; a body without it, or a non-JSON body, is null.
+async function readEvidence(response) {
+  try {
+    const text = await readBoundedText(response, HEALTH_BODY_LIMIT);
+    const body = text ? JSON.parse(text) : null;
+    const value = body?.gpu_evidence;
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
 
 function timeoutMs(value, fallback = 2_500) {
   const n = Number(value);
@@ -28,18 +45,21 @@ export async function probeHttpExecutor(executor, fetchImpl = fetch) {
       headers: { accept: 'application/json', ...(executor.health_headers || {}) },
       signal: controller.signal
     });
+    const evidence = await readEvidence(res);
     return {
       healthy: res.ok,
       status: res.status,
       reason: res.ok ? null : `HTTP ${res.status}`,
-      checked_at: new Date().toISOString()
+      checked_at: new Date().toISOString(),
+      evidence
     };
   } catch (error) {
     return {
       healthy: false,
       status: null,
       reason: error.name === 'AbortError' ? 'probe timeout' : String(error.message || error),
-      checked_at: new Date().toISOString()
+      checked_at: new Date().toISOString(),
+      evidence: null
     };
   } finally { clearTimeout(timer); }
 }
@@ -100,6 +120,7 @@ export function engineHealthSummary(health, readiness = []) {
   return [...health.entries()].map(([implementation, result]) => ({
     implementation,
     ...result,
+    evidence: result?.evidence ?? null,
     capabilities: byImplementation.get(implementation) || []
   }));
 }

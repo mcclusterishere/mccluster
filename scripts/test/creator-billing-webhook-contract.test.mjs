@@ -11,7 +11,7 @@ test('Stripe webhook verifies signature and retrieves provider subscription',asy
  assert.doesNotMatch(src,/request\.json\(/);
 });
 test('billing event ledger is private and provision requires active subscription',async()=>{
- const sql=await read('supabase/migrations/pending/20261009170000_creator_billing_subscriptions.sql');
+ const sql=await read('supabase/migrations/20261009204152_creator_billing_subscriptions_v1.sql');
  assert.match(sql,/enable row level security/g);
  assert.match(sql,/current_user <> 'service_role'/);
  assert.match(sql,/pg_advisory_xact_lock/);

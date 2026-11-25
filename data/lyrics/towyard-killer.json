@@ -1,0 +1,1492 @@
+{
+ "duration_seconds": 66,
+ "language": "en",
+ "songTitle": "Towyard Killer",
+ "source": "auto",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:29:22.345Z",
+  "confidence": 0.867,
+  "mismatched_lines": 0,
+  "sheet_lines": 0,
+  "heard_words": 238,
+  "ctc_aligned_lines": 27,
+  "timing": {
+   "align_seconds": 7.8,
+   "separate_seconds": 36.7,
+   "asr_seconds": 47.2,
+   "map_seconds": 0
+  }
+ },
+ "plain": "That tol y 'all kill a pack, tol y\n'all kill a pack Been scammed by a tol\ny 'all, show y 'all how to deal with\nthat That tol y 'all kill a pack, tol\ny 'all kill a pack Been scammed by a\ntol y 'all, show y 'all how to deal\nwith that Look, I been through this feeling back\nNonprofit is chartered, now I'm the one who gets\nthe tax If they hit a lick on you,\nI'll show you how to get it back Search\nmotor vehicle commission nerve, where you at?\nHere we only deal with facts They should have\na fee schedule Read it twice, spin it back\nreal quick If they overdid the maximum Even by\nassentin' cash, I'm into this There are three levels\nCriminal liftin' static here Civil if you get an\nactivist Commissions if you been in savvy care First,\nwrite an affidavit Take it to the secretary in\na state that you livin' baby Notarized, authenticated, expedited,\nclinched the matrix 24 hours, almost kill me from\nanticipation Now they defendin', we the plaintiffs That toll\nyard, kill a pack Toll yard, kill a pack\nBeen scammed by a toll yard Show y 'all\nhow to deal with that That toe y 'all\nkill a pack, toe y 'all kill a pack\nBeen skittin' by the toe y 'all, show y\n'all how to deal with that",
+ "timed": {
+  "line": [
+   {
+    "begin": 2.764,
+    "end": 4.541,
+    "content": "That tol y 'all kill a pack, tol y",
+    "confidence": 0.629,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 2.764,
+      "end": 2.925,
+      "content": "That"
+     },
+     {
+      "begin": 3.066,
+      "end": 3.227,
+      "content": "tol"
+     },
+     {
+      "begin": 3.307,
+      "end": 3.327,
+      "content": "y"
+     },
+     {
+      "begin": 3.408,
+      "end": 3.549,
+      "content": "'all"
+     },
+     {
+      "begin": 3.609,
+      "end": 3.77,
+      "content": "kill"
+     },
+     {
+      "begin": 3.83,
+      "end": 3.85,
+      "content": "a"
+     },
+     {
+      "begin": 3.931,
+      "end": 4.132,
+      "content": "pack,"
+     },
+     {
+      "begin": 4.541,
+      "end": 4.541,
+      "content": "tol"
+     },
+     {
+      "begin": 4.541,
+      "end": 4.541,
+      "content": "y"
+     }
+    ],
+    "align_score": 0.641
+   },
+   {
+    "begin": 4.541,
+    "end": 6.481,
+    "content": "'all kill a pack Been scammed by a tol",
+    "confidence": 0.933,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 4.541,
+      "end": 5.024,
+      "content": "'all"
+     },
+     {
+      "begin": 5.125,
+      "end": 5.306,
+      "content": "kill"
+     },
+     {
+      "begin": 5.346,
+      "end": 5.366,
+      "content": "a"
+     },
+     {
+      "begin": 5.467,
+      "end": 5.688,
+      "content": "pack"
+     },
+     {
+      "begin": 5.849,
+      "end": 5.99,
+      "content": "Been"
+     },
+     {
+      "begin": 6.01,
+      "end": 6.373,
+      "content": "scammed"
+     },
+     {
+      "begin": 6.413,
+      "end": 6.481,
+      "content": "by"
+     },
+     {
+      "begin": 6.481,
+      "end": 6.481,
+      "content": "a"
+     },
+     {
+      "begin": 6.481,
+      "end": 6.481,
+      "content": "tol"
+     }
+    ],
+    "align_score": 0.491
+   },
+   {
+    "begin": 6.481,
+    "end": 8.503,
+    "content": "y 'all, show y 'all how to deal with",
+    "confidence": 0.97,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 6.481,
+      "end": 6.501,
+      "content": "y"
+     },
+     {
+      "begin": 6.582,
+      "end": 7.247,
+      "content": "'all,"
+     },
+     {
+      "begin": 7.388,
+      "end": 7.549,
+      "content": "show"
+     },
+     {
+      "begin": 7.649,
+      "end": 7.67,
+      "content": "y"
+     },
+     {
+      "begin": 7.831,
+      "end": 8.012,
+      "content": "'all"
+     },
+     {
+      "begin": 8.214,
+      "end": 8.274,
+      "content": "how"
+     },
+     {
+      "begin": 8.415,
+      "end": 8.455,
+      "content": "to"
+     },
+     {
+      "begin": 8.503,
+      "end": 8.503,
+      "content": "deal"
+     },
+     {
+      "begin": 8.503,
+      "end": 8.503,
+      "content": "with"
+     }
+    ],
+    "align_score": 0.356
+   },
+   {
+    "begin": 8.503,
+    "end": 10.642,
+    "content": "that That tol y 'all kill a pack, tol",
+    "confidence": 0.953,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 8.503,
+      "end": 8.664,
+      "content": "that"
+     },
+     {
+      "begin": 8.926,
+      "end": 9.066,
+      "content": "That"
+     },
+     {
+      "begin": 9.187,
+      "end": 9.388,
+      "content": "tol"
+     },
+     {
+      "begin": 9.448,
+      "end": 9.469,
+      "content": "y"
+     },
+     {
+      "begin": 9.549,
+      "end": 9.65,
+      "content": "'all"
+     },
+     {
+      "begin": 9.71,
+      "end": 9.871,
+      "content": "kill"
+     },
+     {
+      "begin": 9.991,
+      "end": 10.011,
+      "content": "a"
+     },
+     {
+      "begin": 10.052,
+      "end": 10.253,
+      "content": "pack,"
+     },
+     {
+      "begin": 10.642,
+      "end": 10.642,
+      "content": "tol"
+     }
+    ],
+    "align_score": 0.542
+   },
+   {
+    "begin": 10.642,
+    "end": 12.26,
+    "content": "y 'all kill a pack Been scammed by a",
+    "confidence": 0.996,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 10.642,
+      "end": 10.662,
+      "content": "y"
+     },
+     {
+      "begin": 10.803,
+      "end": 11.205,
+      "content": "'all"
+     },
+     {
+      "begin": 11.246,
+      "end": 11.407,
+      "content": "kill"
+     },
+     {
+      "begin": 11.447,
+      "end": 11.467,
+      "content": "a"
+     },
+     {
+      "begin": 11.588,
+      "end": 11.809,
+      "content": "pack"
+     },
+     {
+      "begin": 11.95,
+      "end": 12.111,
+      "content": "Been"
+     },
+     {
+      "begin": 12.152,
+      "end": 12.26,
+      "content": "scammed"
+     },
+     {
+      "begin": 12.26,
+      "end": 12.26,
+      "content": "by"
+     },
+     {
+      "begin": 12.26,
+      "end": 12.26,
+      "content": "a"
+     }
+    ],
+    "align_score": 0.432
+   },
+   {
+    "begin": 12.26,
+    "end": 13.8,
+    "content": "tol y 'all, show y 'all how to deal",
+    "confidence": 0.996,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 12.26,
+      "end": 12.401,
+      "content": "tol"
+     },
+     {
+      "begin": 12.582,
+      "end": 12.603,
+      "content": "y"
+     },
+     {
+      "begin": 12.905,
+      "end": 13.348,
+      "content": "'all,"
+     },
+     {
+      "begin": 13.449,
+      "end": 13.61,
+      "content": "show"
+     },
+     {
+      "begin": 13.691,
+      "end": 13.711,
+      "content": "y"
+     },
+     {
+      "begin": 13.8,
+      "end": 13.8,
+      "content": "'all"
+     },
+     {
+      "begin": 13.8,
+      "end": 13.8,
+      "content": "how"
+     },
+     {
+      "begin": 13.8,
+      "end": 13.8,
+      "content": "to"
+     },
+     {
+      "begin": 13.8,
+      "end": 13.8,
+      "content": "deal"
+     }
+    ],
+    "align_score": 0.461
+   },
+   {
+    "begin": 13.8,
+    "end": 16.316,
+    "content": "with that Look, I been through this feeling back",
+    "confidence": 0.903,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 13.8,
+      "end": 13.881,
+      "content": "with"
+     },
+     {
+      "begin": 13.961,
+      "end": 14.062,
+      "content": "that"
+     },
+     {
+      "begin": 14.122,
+      "end": 14.384,
+      "content": "Look,"
+     },
+     {
+      "begin": 14.444,
+      "end": 14.464,
+      "content": "I"
+     },
+     {
+      "begin": 14.565,
+      "end": 14.726,
+      "content": "been"
+     },
+     {
+      "begin": 15.128,
+      "end": 15.39,
+      "content": "through"
+     },
+     {
+      "begin": 15.491,
+      "end": 15.712,
+      "content": "this"
+     },
+     {
+      "begin": 15.772,
+      "end": 16.094,
+      "content": "feeling"
+     },
+     {
+      "begin": 16.114,
+      "end": 16.316,
+      "content": "back"
+     }
+    ],
+    "align_score": 0.338
+   },
+   {
+    "begin": 16.703,
+    "end": 18.42,
+    "content": "Nonprofit is chartered, now I'm the one who gets",
+    "confidence": 0.879,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 16.703,
+      "end": 17.266,
+      "content": "Nonprofit"
+     },
+     {
+      "begin": 17.347,
+      "end": 17.427,
+      "content": "is"
+     },
+     {
+      "begin": 17.468,
+      "end": 17.87,
+      "content": "chartered,"
+     },
+     {
+      "begin": 18.051,
+      "end": 18.132,
+      "content": "now"
+     },
+     {
+      "begin": 18.272,
+      "end": 18.353,
+      "content": "I'm"
+     },
+     {
+      "begin": 18.42,
+      "end": 18.42,
+      "content": "the"
+     },
+     {
+      "begin": 18.42,
+      "end": 18.42,
+      "content": "one"
+     },
+     {
+      "begin": 18.42,
+      "end": 18.42,
+      "content": "who"
+     },
+     {
+      "begin": 18.42,
+      "end": 18.42,
+      "content": "gets"
+     }
+    ],
+    "align_score": 0.418
+   },
+   {
+    "begin": 18.42,
+    "end": 20.882,
+    "content": "the tax If they hit a lick on you,",
+    "confidence": 0.858,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 18.42,
+      "end": 18.622,
+      "content": "the"
+     },
+     {
+      "begin": 19.145,
+      "end": 19.366,
+      "content": "tax"
+     },
+     {
+      "begin": 19.809,
+      "end": 19.849,
+      "content": "If"
+     },
+     {
+      "begin": 19.909,
+      "end": 19.99,
+      "content": "they"
+     },
+     {
+      "begin": 20.07,
+      "end": 20.191,
+      "content": "hit"
+     },
+     {
+      "begin": 20.252,
+      "end": 20.272,
+      "content": "a"
+     },
+     {
+      "begin": 20.332,
+      "end": 20.493,
+      "content": "lick"
+     },
+     {
+      "begin": 20.775,
+      "end": 20.835,
+      "content": "on"
+     },
+     {
+      "begin": 20.882,
+      "end": 20.882,
+      "content": "you,"
+     }
+    ],
+    "align_score": 0.771
+   },
+   {
+    "begin": 20.882,
+    "end": 22.976,
+    "content": "I'll show you how to get it back Search",
+    "confidence": 0.979,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 20.882,
+      "end": 21.244,
+      "content": "I'll"
+     },
+     {
+      "begin": 21.285,
+      "end": 21.426,
+      "content": "show"
+     },
+     {
+      "begin": 21.466,
+      "end": 21.526,
+      "content": "you"
+     },
+     {
+      "begin": 21.587,
+      "end": 21.667,
+      "content": "how"
+     },
+     {
+      "begin": 21.748,
+      "end": 21.788,
+      "content": "to"
+     },
+     {
+      "begin": 21.889,
+      "end": 22.01,
+      "content": "get"
+     },
+     {
+      "begin": 22.07,
+      "end": 22.11,
+      "content": "it"
+     },
+     {
+      "begin": 22.211,
+      "end": 22.392,
+      "content": "back"
+     },
+     {
+      "begin": 22.755,
+      "end": 22.976,
+      "content": "Search"
+     }
+    ],
+    "align_score": 0.682
+   },
+   {
+    "begin": 23.064,
+    "end": 25.497,
+    "content": "motor vehicle commission nerve, where you at?",
+    "confidence": 0.79,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 23.064,
+      "end": 23.305,
+      "content": "motor"
+     },
+     {
+      "begin": 23.406,
+      "end": 23.848,
+      "content": "vehicle"
+     },
+     {
+      "begin": 23.948,
+      "end": 24.532,
+      "content": "commission"
+     },
+     {
+      "begin": 24.612,
+      "end": 24.893,
+      "content": "nerve,"
+     },
+     {
+      "begin": 24.934,
+      "end": 25.095,
+      "content": "where"
+     },
+     {
+      "begin": 25.135,
+      "end": 25.235,
+      "content": "you"
+     },
+     {
+      "begin": 25.396,
+      "end": 25.497,
+      "content": "at?"
+     }
+    ],
+    "align_score": 0.474
+   },
+   {
+    "begin": 25.864,
+    "end": 27.683,
+    "content": "Here we only deal with facts They should have",
+    "confidence": 0.945,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 25.864,
+      "end": 26.025,
+      "content": "Here"
+     },
+     {
+      "begin": 26.045,
+      "end": 26.106,
+      "content": "we"
+     },
+     {
+      "begin": 26.186,
+      "end": 26.327,
+      "content": "only"
+     },
+     {
+      "begin": 26.407,
+      "end": 26.569,
+      "content": "deal"
+     },
+     {
+      "begin": 26.609,
+      "end": 26.709,
+      "content": "with"
+     },
+     {
+      "begin": 26.73,
+      "end": 27.052,
+      "content": "facts"
+     },
+     {
+      "begin": 27.333,
+      "end": 27.434,
+      "content": "They"
+     },
+     {
+      "begin": 27.474,
+      "end": 27.615,
+      "content": "should"
+     },
+     {
+      "begin": 27.683,
+      "end": 27.683,
+      "content": "have"
+     }
+    ],
+    "align_score": 0.63
+   },
+   {
+    "begin": 27.683,
+    "end": 29.521,
+    "content": "a fee schedule Read it twice, spin it back",
+    "confidence": 0.84,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 27.683,
+      "end": 27.703,
+      "content": "a"
+     },
+     {
+      "begin": 27.924,
+      "end": 28.085,
+      "content": "fee"
+     },
+     {
+      "begin": 28.206,
+      "end": 28.649,
+      "content": "schedule"
+     },
+     {
+      "begin": 28.87,
+      "end": 29.011,
+      "content": "Read"
+     },
+     {
+      "begin": 29.071,
+      "end": 29.111,
+      "content": "it"
+     },
+     {
+      "begin": 29.152,
+      "end": 29.393,
+      "content": "twice,"
+     },
+     {
+      "begin": 29.453,
+      "end": 29.521,
+      "content": "spin"
+     },
+     {
+      "begin": 29.521,
+      "end": 29.521,
+      "content": "it"
+     },
+     {
+      "begin": 29.521,
+      "end": 29.521,
+      "content": "back"
+     }
+    ],
+    "align_score": 0.65
+   },
+   {
+    "begin": 29.521,
+    "end": 32.276,
+    "content": "real quick If they overdid the maximum Even by",
+    "confidence": 0.874,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 29.521,
+      "end": 30.104,
+      "content": "real"
+     },
+     {
+      "begin": 30.204,
+      "end": 30.386,
+      "content": "quick"
+     },
+     {
+      "begin": 30.486,
+      "end": 30.526,
+      "content": "If"
+     },
+     {
+      "begin": 30.587,
+      "end": 30.687,
+      "content": "they"
+     },
+     {
+      "begin": 30.768,
+      "end": 31.11,
+      "content": "overdid"
+     },
+     {
+      "begin": 31.17,
+      "end": 31.23,
+      "content": "the"
+     },
+     {
+      "begin": 31.311,
+      "end": 31.834,
+      "content": "maximum"
+     },
+     {
+      "begin": 31.975,
+      "end": 32.115,
+      "content": "Even"
+     },
+     {
+      "begin": 32.176,
+      "end": 32.276,
+      "content": "by"
+     }
+    ],
+    "align_score": 0.893
+   },
+   {
+    "begin": 32.384,
+    "end": 34.677,
+    "content": "assentin' cash, I'm into this There are three levels",
+    "confidence": 0.765,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 32.384,
+      "end": 32.786,
+      "content": "assentin'"
+     },
+     {
+      "begin": 32.826,
+      "end": 33.088,
+      "content": "cash,"
+     },
+     {
+      "begin": 33.148,
+      "end": 33.228,
+      "content": "I'm"
+     },
+     {
+      "begin": 33.249,
+      "end": 33.389,
+      "content": "into"
+     },
+     {
+      "begin": 33.49,
+      "end": 33.651,
+      "content": "this"
+     },
+     {
+      "begin": 33.691,
+      "end": 33.832,
+      "content": "There"
+     },
+     {
+      "begin": 33.892,
+      "end": 33.973,
+      "content": "are"
+     },
+     {
+      "begin": 34.033,
+      "end": 34.254,
+      "content": "three"
+     },
+     {
+      "begin": 34.355,
+      "end": 34.677,
+      "content": "levels"
+     }
+    ],
+    "align_score": 0.729
+   },
+   {
+    "begin": 34.964,
+    "end": 37.337,
+    "content": "Criminal liftin' static here Civil if you get an",
+    "confidence": 0.713,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 34.964,
+      "end": 35.407,
+      "content": "Criminal"
+     },
+     {
+      "begin": 35.547,
+      "end": 35.789,
+      "content": "liftin'"
+     },
+     {
+      "begin": 35.829,
+      "end": 36.191,
+      "content": "static"
+     },
+     {
+      "begin": 36.211,
+      "end": 36.432,
+      "content": "here"
+     },
+     {
+      "begin": 36.492,
+      "end": 36.733,
+      "content": "Civil"
+     },
+     {
+      "begin": 36.814,
+      "end": 36.854,
+      "content": "if"
+     },
+     {
+      "begin": 36.894,
+      "end": 36.995,
+      "content": "you"
+     },
+     {
+      "begin": 37.055,
+      "end": 37.216,
+      "content": "get"
+     },
+     {
+      "begin": 37.276,
+      "end": 37.337,
+      "content": "an"
+     }
+    ],
+    "align_score": 0.594
+   },
+   {
+    "begin": 37.424,
+    "end": 39.441,
+    "content": "activist Commissions if you been in savvy care First,",
+    "confidence": 0.747,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 37.424,
+      "end": 37.786,
+      "content": "activist"
+     },
+     {
+      "begin": 37.826,
+      "end": 38.208,
+      "content": "Commissions"
+     },
+     {
+      "begin": 38.268,
+      "end": 38.309,
+      "content": "if"
+     },
+     {
+      "begin": 38.369,
+      "end": 38.449,
+      "content": "you"
+     },
+     {
+      "begin": 38.51,
+      "end": 38.631,
+      "content": "been"
+     },
+     {
+      "begin": 38.711,
+      "end": 38.751,
+      "content": "in"
+     },
+     {
+      "begin": 38.812,
+      "end": 39.093,
+      "content": "savvy"
+     },
+     {
+      "begin": 39.154,
+      "end": 39.375,
+      "content": "care"
+     },
+     {
+      "begin": 39.441,
+      "end": 39.441,
+      "content": "First,"
+     }
+    ],
+    "align_score": 0.746
+   },
+   {
+    "begin": 39.441,
+    "end": 42.061,
+    "content": "write an affidavit Take it to the secretary in",
+    "confidence": 0.853,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 39.441,
+      "end": 40.004,
+      "content": "write"
+     },
+     {
+      "begin": 40.024,
+      "end": 40.084,
+      "content": "an"
+     },
+     {
+      "begin": 40.185,
+      "end": 40.748,
+      "content": "affidavit"
+     },
+     {
+      "begin": 41.049,
+      "end": 41.21,
+      "content": "Take"
+     },
+     {
+      "begin": 41.271,
+      "end": 41.311,
+      "content": "it"
+     },
+     {
+      "begin": 41.331,
+      "end": 41.411,
+      "content": "to"
+     },
+     {
+      "begin": 41.492,
+      "end": 41.552,
+      "content": "the"
+     },
+     {
+      "begin": 41.633,
+      "end": 42.061,
+      "content": "secretary"
+     },
+     {
+      "begin": 42.061,
+      "end": 42.061,
+      "content": "in"
+     }
+    ],
+    "align_score": 0.74
+   },
+   {
+    "begin": 42.061,
+    "end": 46.123,
+    "content": "a state that you livin' baby Notarized, authenticated, expedited,",
+    "confidence": 0.856,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 42.061,
+      "end": 42.081,
+      "content": "a"
+     },
+     {
+      "begin": 42.523,
+      "end": 42.764,
+      "content": "state"
+     },
+     {
+      "begin": 42.804,
+      "end": 42.904,
+      "content": "that"
+     },
+     {
+      "begin": 42.965,
+      "end": 43.045,
+      "content": "you"
+     },
+     {
+      "begin": 43.125,
+      "end": 43.407,
+      "content": "livin'"
+     },
+     {
+      "begin": 43.447,
+      "end": 43.788,
+      "content": "baby"
+     },
+     {
+      "begin": 44.049,
+      "end": 44.471,
+      "content": "Notarized,"
+     },
+     {
+      "begin": 44.511,
+      "end": 45.294,
+      "content": "authenticated,"
+     },
+     {
+      "begin": 45.576,
+      "end": 46.123,
+      "content": "expedited,"
+     }
+    ],
+    "align_score": 0.639
+   },
+   {
+    "begin": 46.123,
+    "end": 49.057,
+    "content": "clinched the matrix 24 hours, almost kill me from",
+    "confidence": 0.836,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 46.123,
+      "end": 46.364,
+      "content": "clinched"
+     },
+     {
+      "begin": 46.404,
+      "end": 46.465,
+      "content": "the"
+     },
+     {
+      "begin": 46.525,
+      "end": 46.826,
+      "content": "matrix"
+     },
+     {
+      "begin": 47.128,
+      "end": 47.65,
+      "content": "24"
+     },
+     {
+      "begin": 47.731,
+      "end": 48.032,
+      "content": "hours,"
+     },
+     {
+      "begin": 48.193,
+      "end": 48.514,
+      "content": "almost"
+     },
+     {
+      "begin": 48.595,
+      "end": 48.776,
+      "content": "kill"
+     },
+     {
+      "begin": 48.836,
+      "end": 48.876,
+      "content": "me"
+     },
+     {
+      "begin": 48.936,
+      "end": 49.057,
+      "content": "from"
+     }
+    ],
+    "align_score": 0.842
+   },
+   {
+    "begin": 49.123,
+    "end": 51.924,
+    "content": "anticipation Now they defendin', we the plaintiffs That toll",
+    "confidence": 0.865,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 49.123,
+      "end": 49.847,
+      "content": "anticipation"
+     },
+     {
+      "begin": 49.927,
+      "end": 50.008,
+      "content": "Now"
+     },
+     {
+      "begin": 50.108,
+      "end": 50.209,
+      "content": "they"
+     },
+     {
+      "begin": 50.289,
+      "end": 50.671,
+      "content": "defendin',"
+     },
+     {
+      "begin": 50.731,
+      "end": 50.812,
+      "content": "we"
+     },
+     {
+      "begin": 50.892,
+      "end": 50.952,
+      "content": "the"
+     },
+     {
+      "begin": 51.013,
+      "end": 51.375,
+      "content": "plaintiffs"
+     },
+     {
+      "begin": 51.415,
+      "end": 51.515,
+      "content": "That"
+     },
+     {
+      "begin": 51.696,
+      "end": 51.924,
+      "content": "toll"
+     }
+    ],
+    "align_score": 0.727
+   },
+   {
+    "begin": 51.924,
+    "end": 54.082,
+    "content": "yard, kill a pack Toll yard, kill a pack",
+    "confidence": 0.828,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 51.924,
+      "end": 52.165,
+      "content": "yard,"
+     },
+     {
+      "begin": 52.205,
+      "end": 52.366,
+      "content": "kill"
+     },
+     {
+      "begin": 52.406,
+      "end": 52.426,
+      "content": "a"
+     },
+     {
+      "begin": 52.527,
+      "end": 52.748,
+      "content": "pack"
+     },
+     {
+      "begin": 53.15,
+      "end": 53.412,
+      "content": "Toll"
+     },
+     {
+      "begin": 53.472,
+      "end": 53.693,
+      "content": "yard,"
+     },
+     {
+      "begin": 53.733,
+      "end": 53.914,
+      "content": "kill"
+     },
+     {
+      "begin": 53.955,
+      "end": 53.975,
+      "content": "a"
+     },
+     {
+      "begin": 54.082,
+      "end": 54.082,
+      "content": "pack"
+     }
+    ],
+    "align_score": 0.637
+   },
+   {
+    "begin": 54.082,
+    "end": 56.001,
+    "content": "Been scammed by a toll yard Show y 'all",
+    "confidence": 0.857,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 54.082,
+      "end": 54.344,
+      "content": "Been"
+     },
+     {
+      "begin": 54.605,
+      "end": 54.967,
+      "content": "scammed"
+     },
+     {
+      "begin": 55.008,
+      "end": 55.108,
+      "content": "by"
+     },
+     {
+      "begin": 55.189,
+      "end": 55.209,
+      "content": "a"
+     },
+     {
+      "begin": 55.269,
+      "end": 55.49,
+      "content": "toll"
+     },
+     {
+      "begin": 55.611,
+      "end": 55.873,
+      "content": "yard"
+     },
+     {
+      "begin": 56.001,
+      "end": 56.001,
+      "content": "Show"
+     },
+     {
+      "begin": 56.001,
+      "end": 56.001,
+      "content": "y"
+     },
+     {
+      "begin": 56.001,
+      "end": 56.001,
+      "content": "'all"
+     }
+    ],
+    "align_score": 0.433
+   },
+   {
+    "begin": 56.001,
+    "end": 57.74,
+    "content": "how to deal with that That toe y 'all",
+    "confidence": 0.79,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 56.001,
+      "end": 56.504,
+      "content": "how"
+     },
+     {
+      "begin": 56.645,
+      "end": 56.706,
+      "content": "to"
+     },
+     {
+      "begin": 56.786,
+      "end": 56.927,
+      "content": "deal"
+     },
+     {
+      "begin": 56.947,
+      "end": 57.028,
+      "content": "with"
+     },
+     {
+      "begin": 57.108,
+      "end": 57.249,
+      "content": "that"
+     },
+     {
+      "begin": 57.531,
+      "end": 57.692,
+      "content": "That"
+     },
+     {
+      "begin": 57.74,
+      "end": 57.74,
+      "content": "toe"
+     },
+     {
+      "begin": 57.74,
+      "end": 57.74,
+      "content": "y"
+     },
+     {
+      "begin": 57.74,
+      "end": 57.74,
+      "content": "'all"
+     }
+    ],
+    "align_score": 0.445
+   },
+   {
+    "begin": 57.74,
+    "end": 59.86,
+    "content": "kill a pack, toe y 'all kill a pack",
+    "confidence": 0.89,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 57.74,
+      "end": 58.465,
+      "content": "kill"
+     },
+     {
+      "begin": 58.505,
+      "end": 58.525,
+      "content": "a"
+     },
+     {
+      "begin": 58.646,
+      "end": 58.867,
+      "content": "pack,"
+     },
+     {
+      "begin": 59.249,
+      "end": 59.491,
+      "content": "toe"
+     },
+     {
+      "begin": 59.571,
+      "end": 59.591,
+      "content": "y"
+     },
+     {
+      "begin": 59.632,
+      "end": 59.813,
+      "content": "'all"
+     },
+     {
+      "begin": 59.833,
+      "end": 59.86,
+      "content": "kill"
+     },
+     {
+      "begin": 59.86,
+      "end": 59.86,
+      "content": "a"
+     },
+     {
+      "begin": 59.86,
+      "end": 59.86,
+      "content": "pack"
+     }
+    ],
+    "align_score": 0.389
+   },
+   {
+    "begin": 59.86,
+    "end": 62.142,
+    "content": "Been skittin' by the toe y 'all, show y",
+    "confidence": 0.916,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 59.86,
+      "end": 60.122,
+      "content": "Been"
+     },
+     {
+      "begin": 60.182,
+      "end": 61.027,
+      "content": "skittin'"
+     },
+     {
+      "begin": 61.108,
+      "end": 61.208,
+      "content": "by"
+     },
+     {
+      "begin": 61.269,
+      "end": 61.329,
+      "content": "the"
+     },
+     {
+      "begin": 61.369,
+      "end": 61.651,
+      "content": "toe"
+     },
+     {
+      "begin": 61.712,
+      "end": 61.732,
+      "content": "y"
+     },
+     {
+      "begin": 61.873,
+      "end": 61.973,
+      "content": "'all,"
+     },
+     {
+      "begin": 62.054,
+      "end": 62.142,
+      "content": "show"
+     },
+     {
+      "begin": 62.142,
+      "end": 62.142,
+      "content": "y"
+     }
+    ],
+    "align_score": 0.347
+   },
+   {
+    "begin": 62.142,
+    "end": 63.354,
+    "content": "'all how to deal with that",
+    "confidence": 0.959,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 62.142,
+      "end": 62.546,
+      "content": "'all"
+     },
+     {
+      "begin": 62.607,
+      "end": 62.667,
+      "content": "how"
+     },
+     {
+      "begin": 62.748,
+      "end": 62.788,
+      "content": "to"
+     },
+     {
+      "begin": 62.849,
+      "end": 62.99,
+      "content": "deal"
+     },
+     {
+      "begin": 63.031,
+      "end": 63.132,
+      "content": "with"
+     },
+     {
+      "begin": 63.192,
+      "end": 63.354,
+      "content": "that"
+     }
+    ],
+    "align_score": 0.732
+   }
+  ]
+ }
+}

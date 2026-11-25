@@ -8,8 +8,8 @@
 <text x="510.0" y="790.0" text-anchor="middle" dominant-baseline="middle" class="t small">PUBLIC / ACCESSIBLE APPROACH</text>
 <rect x="720.0" y="358.3333333333333" width="70.0" height="501.66666666666663" fill="#e8e8e3" class="site"/>
 <text x="755.0" y="609.1666666666666" text-anchor="middle" dominant-baseline="middle" class="t small">EAST EXIT DISCHARGE WALK</text>
-<polyline points="378.75,300.0 378.75,195.0 790.0,195.0 790.0,860.0" fill="none" stroke="#666" stroke-width="6"/>
-<text x="790.0" y="195.0" text-anchor="middle" class="t small">NORTH / REAR EXIT DISCHARGE WALK</text>
+<polyline points="300.0,395.0833333333333 230.0,395.0833333333333 230.0,860.0" fill="none" stroke="#666" stroke-width="6"/>
+<text x="230.0" y="395.0833333333333" text-anchor="middle" class="t small">WEST EXIT DISCHARGE WALK (STAIR B)</text>
 <rect x="160.0" y="323.3333333333333" width="140.0" height="116.66666666666666" fill="#d7cdc1" class="site"/>
 <text x="230.0" y="381.66666666666663" text-anchor="middle" dominant-baseline="middle" class="t small">SECURE SERVICE / DELIVERY APRON</text>
 <rect x="813.3333333333333" y="626.6666666666666" width="116.66666666666666" height="140.0" fill="#dde4d7" class="site"/>
@@ -24,12 +24,12 @@
 <text x="510.0" y="713.0" class="t small">PUBLIC ENTRANCE OUTER DOORS</text>
 <line x1="480.8333333333333" y1="667.5" x2="539.1666666666666" y2="667.5" class="door"/>
 <text x="510.0" y="660.5" class="t small">PUBLIC ENTRANCE INNER DOORS</text>
-<line x1="720.0" y1="393.3333333333333" x2="720.0" y2="370.0" class="door"/>
-<text x="727.0" y="381.66666666666663" class="t small">STAIR A EXIT DISCHARGE</text>
-<line x1="370.0" y1="300.0" x2="387.5" y2="300.0" class="door"/>
-<text x="378.75" y="293.0" class="t small">STAIR B EXIT DISCHARGE</text>
-<line x1="300.0" y1="393.3333333333333" x2="300.0" y2="375.8333333333333" class="door"/>
-<text x="307.0" y="384.5833333333333" class="t small">SECURE SERVICE / DELIVERY ENTRANCE</text>
+<line x1="720.0" y1="399.16666666666663" x2="720.0" y2="380.49999999999994" class="door"/>
+<text x="727.0" y="389.83333333333326" class="t small">STAIR A EXIT DISCHARGE</text>
+<line x1="300.0" y1="403.25" x2="300.0" y2="386.91666666666663" class="door"/>
+<text x="307.0" y="395.0833333333333" class="t small">STAIR B EXIT DISCHARGE</text>
+<line x1="300.0" y1="386.91666666666663" x2="300.0" y2="370.5833333333333" class="door"/>
+<text x="307.0" y="378.75" class="t small">SECURE SERVICE / DELIVERY ENTRANCE</text>
 <circle cx="556.6666666666666" cy="451.66666666666663" r="4" class="equip"/>
 <text x="563.6666666666666" y="454.66666666666663" class="t small">AED</text>
 <circle cx="550.8333333333333" cy="451.66666666666663" r="4" class="equip"/>

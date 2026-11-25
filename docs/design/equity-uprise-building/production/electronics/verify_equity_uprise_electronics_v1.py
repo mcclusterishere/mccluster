@@ -251,7 +251,13 @@ for record in wireless_ap_records:
 
 if len(workstation_records)!=len(modeled_workstations):fail(f"Step 4C workstation coverage mismatch {len(workstation_records)}/{len(modeled_workstations)}")
 for record in workstation_records:
-    required={"CHASSIS","FRONT_IO","REAR_IO","POWER_SUPPLY","NIC_PORT","DISPLAY_OUTPUTS","STATUS_INDICATOR"}
+    if record.get("manufacturer_model"):
+        from manufacturer_models import build_manufacturer_model
+        required=set(build_manufacturer_model(record["manufacturer_model"]["model_id"]).components)
+        if not record.get("port_scope") or record["manufacturer_model"].get("live_host") is not False:
+            fail(f"{record.get('asset_id')} missing proposed-exterior/simulation boundary")
+    else:
+        required={"CHASSIS","FRONT_IO","REAR_IO","POWER_SUPPLY","NIC_PORT","DISPLAY_OUTPUTS","STATUS_INDICATOR"}
     parts={x.get("component_id") for x in record.get("components",[])}
     if not required.issubset(parts):fail(f"{record.get('asset_id')} missing workstation component(s): {sorted(required-parts)}")
     if not {"AC_IN","RJ45_ETH","DISPLAY_OUT"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing workstation power/network/display ports")

@@ -22,9 +22,7 @@
 .hu-travel-enabled .hu-world-filters { bottom:66px;left:16px;transform:none;max-width:calc(100% - 90px); }
 .hu-travel-enabled #mnWorldLive { top:96px; }
 [data-world-mode="travel"] :is(#huWorldFilters,#mnWorldLive,#mnWorldLayers,#wtSocial),
-[data-world-mode="missions"] #wtPlanner,[data-world-mode="posts"] #wtPlanner { display:none!important; }
-[data-world-mode="missions"] #wtSocial>:not(.mn__world-context):not(.hu-mission-preview) { display:none!important; }
-[data-world-mode="posts"] .hu-mission-preview { display:none; }
+[data-world-mode="posts"] #wtPlanner { display:none!important; }
 .hu-travel-enabled .mn__world-feed { padding-top:14px; }
 .wt-planner-head { display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px; }
 #wtTitle { margin:0;color:#f6f2eb;font:400 clamp(27px,3vw,36px)/1.15 Georgia,'Times New Roman',serif;letter-spacing:-.03em; }
@@ -161,6 +159,27 @@
   border:0;backdrop-filter:none;-webkit-backdrop-filter:none;pointer-events:none;
 }
 .hu-travel-enabled.mn-world-on .mn__top>* { pointer-events:auto; }
+/* An installed World owns one device inset. Move its complete viewport, so
+   the header, place card and embedded globe keep their existing coordinates.
+   The Music host insets a retained World frame instead; that child has no
+   mcc-app-top marker and must not consume the same safe area again. */
+html.mcc-installed-app.mcc-app-top.hu-travel-enabled .mn {
+  position:relative;left:var(--mcc-app-safe-left,env(safe-area-inset-left,0px));margin-inline:0;
+  width:calc(100% - var(--mcc-app-safe-left,env(safe-area-inset-left,0px)) - var(--mcc-app-safe-right,env(safe-area-inset-right,0px)));
+}
+html.mcc-installed-app.mcc-app-top.hu-travel-enabled.mn-world-on .mn {
+  top:var(--mcc-app-safe-top,env(safe-area-inset-top,0px));
+  height:calc(100dvh - var(--mcc-app-safe-top,env(safe-area-inset-top,0px)));min-height:0;
+}
+/* Other World destinations keep ordinary document scrolling. Only their
+   sticky header needs the inset; a retained child is already inside it. */
+html.mcc-installed-app.mcc-app-top.hu-travel-enabled:not(.mn-world-on) .mn__top {
+  padding-top:calc(12px + var(--mcc-app-safe-top,env(safe-area-inset-top,0px)));
+}
+html.mcc-installed-app.mcc-app-top.hu-travel-enabled.mn-world-on .mn__top::before {
+  content:"";position:absolute;bottom:100%;left:0;right:0;
+  height:var(--mcc-app-safe-top,env(safe-area-inset-top,0px));background:#090b0d;pointer-events:none;
+}
 .hu-travel-enabled.mn-world-on body[data-site-navigation]:not([data-native-profile]) .mn__top { padding-right:116px; }
 .hu-travel-enabled.mn-world-on .mn__brand { margin-right:auto;flex:none; }
 .hu-travel-enabled.mn-world-on .mn__brand-mark { width:52px;height:36px; }
@@ -169,9 +188,7 @@
 .hu-travel-enabled.mn-world-on #mnFeedView:not([hidden]) {
   margin:0;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,.43fr) minmax(0,.57fr);
 }
-.hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,.35fr) minmax(0,.65fr); }
-/* Missions is one screen (css/mission-swipe-deck.css): the globe gives the deck the room, as it does for navigation */
-.hu-travel-enabled.mn-world-on[data-world-mode="missions"] #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,.34fr) minmax(0,.66fr); }
+.hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr) minmax(0,calc(var(--mn-bar-clear,96px) + 260px)); }
 .hu-travel-enabled.mn-world-on .mn__world-home { margin:0;grid-row:1;grid-column:1; }
 .hu-travel-enabled.mn-world-on .mn__world-frame { inset:0;width:100%;height:100%; }
 .hu-travel-enabled.mn-world-on .wt-headline { top:70px;left:16px;font-size:24px;z-index:9; }
@@ -231,6 +248,11 @@
 .hu-travel-enabled.mn-world-on #mnWorldLive { top:158px; }
 .hu-travel-enabled.mn-world-on .hu-world-filters { bottom:58px; }
 .hu-travel-enabled.mn-world-on.wt-expanded .mn__world-home { position:fixed;inset:0 0 var(--mn-bar-clear,96px);z-index:30; }
+html.mcc-installed-app.mcc-app-top.hu-travel-enabled.mn-world-on.wt-expanded .mn__world-home {
+  top:var(--mcc-app-safe-top,env(safe-area-inset-top,0px));
+  left:var(--mcc-app-safe-left,env(safe-area-inset-left,0px));
+  right:var(--mcc-app-safe-right,env(safe-area-inset-right,0px));
+}
 .hu-travel-enabled.mn-world-on.wt-expanded .mn__world-feed { visibility:hidden; }
 .hu-travel-enabled.mn-world-on.wt-expanded .mn__world-frame { inset:0;height:100%; }
 .hu-travel-enabled.mn-world-on.wt-expanded .wt-world-modes { bottom:28px; }
@@ -245,7 +267,6 @@
 @media (min-width:1000px), (min-width:600px) and (orientation:landscape) {
   .hu-travel-enabled.mn-world-on #mnFeedView:not([hidden]) { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr); }
   .hu-travel-enabled.mn-world-on.wt-navigating #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr); }
-  .hu-travel-enabled.mn-world-on[data-world-mode="missions"] #mnFeedView:not([hidden]) { grid-template-rows:minmax(0,1fr); }
   .hu-travel-enabled.mn-world-on .mn__world-feed { grid-row:1;grid-column:2;margin:72px 16px 0 0;padding-top:20px;border:1px solid #ffffff20;border-radius:22px 22px 0 0; }
   .hu-travel-enabled.mn-world-on .wt-world-modes { bottom:calc(var(--mn-bar-clear,96px) + 28px); }
   .hu-travel-enabled.mn-world-on .wt-destination,.hu-travel-enabled.mn-world-on .hu-world-filters { bottom:calc(var(--mn-bar-clear,96px) + 58px); }
@@ -272,9 +293,10 @@
 .wt-route-privacy a { color:inherit;text-underline-offset:3px; }
 .wt-ground-options { display:flex;align-items:stretch;gap:8px;margin:12px 0;min-width:0; }
 .wt-local-toolbar { flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;min-width:0;margin:0;padding:3px;border:1px solid #ffffff20;border-radius:16px;overflow:visible;background:#10161c; }
-.wt-local-toolbar button { min-width:0;min-height:44px;justify-content:center;gap:4px;padding:0 3px;border:1px solid transparent;border-radius:12px;font-size:13px; }
+.wt-local-toolbar button { min-width:0;min-height:44px;justify-content:center;gap:4px;padding:0 3px;border:1px solid #526170;border-radius:12px;font-size:13px;font-weight:600;background:#263340;color:#f5f7fa; }
 .wt-local-toolbar .wt-icon { width:17px;height:17px; }
-.wt-local-toolbar [aria-pressed="true"] { background:#790d24;border-color:#bf1b3d;color:#fff; }
+.wt-local-toolbar [aria-pressed="true"] { background:#990b2d;border-color:#ff7897;color:#fff;box-shadow:inset 0 -3px #ffb3c4; }
+.wt-local-toolbar button:hover { border-color:#f3f6fa; }
 .wt-ride-button { flex:none;min-width:82px;min-height:50px;padding:0 10px;border:1px solid #ffffff30;border-radius:16px;color:#e8eef2;background:#171e26;font:400 13px var(--mn-ui);cursor:pointer; }
 .wt-ride-button[aria-expanded="true"] { border-color:#e7b5c1;background:#281821; }
 .wt-ride-panel { margin:0 0 14px;padding:14px;border:1px solid #ffffff2c;border-radius:14px;background:#151c23; }
@@ -310,6 +332,11 @@
 .wt-navigating .wt-route-card { padding:0;border:0;background:none;margin-bottom:8px; }
 .wt-navigating .wt-navigation { margin:0;padding:10px 12px; }
 .wt-navigating .wt-navigation h3 { font-size:20px; }
+/* Live guidance gets the sheet; Stop brings the trip editor and extras back. */
+.wt-navigating #wtForm > :not(#wtDirections),
+.wt-navigating #wtPlanner > :is(.wt-planner-head,.wt-footer,.wt-attribution) { display:none!important; }
+.wt-navigating #wtDirections { scroll-margin-top:0; }
+.wt-navigating .wt-navigation-hint { margin-block:6px; }
 .wt-steps { min-width:0;border-top:1px solid #ffffff20; }
 .wt-steps>summary { min-height:48px;padding:14px 0;color:#d7e0e7;font:400 14px/1.45 var(--mn-ui);cursor:pointer; }
 .wt-steps ol { margin:0;padding:0 0 0 26px;color:#91a4b6; }
@@ -374,11 +401,12 @@ body:has(.wt-suggest:not([hidden])) #mccWorldAudioControls {
 .wt-field-glyph { display:grid;place-items:center;width:44px;height:44px;color:#9aa6b0; }
 .wt-field-glyph .wt-icon { width:22px;height:22px; }
 .wt-trip .wt-suggest,.wt-trip .wt-field:nth-child(2) .wt-suggest { left:12px;right:12px;max-width:none; }
+.wt-suggest { touch-action:pan-y;overscroll-behavior:contain; }
 /* two tiles, the icon on top, each split by an on/off switch (owner, 2026-10-20) */
 .wt-kinds { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 10px; }
 .wt-kind { display:grid;gap:6px;min-width:0;padding:5px;border:1px solid #ffffff2a;border-radius:18px;background:#12171c; }
 .wt-kind:has(.wt-kind-head[aria-pressed="true"]) { border-color:#f0284d;box-shadow:0 10px 26px -16px #ff1744; }
-.wt-kind-head { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:64px;padding:6px 4px;border:0;border-radius:13px;background:transparent;color:#e6eaee;font:500 15px var(--mn-ui);cursor:pointer; }
+.wt-kind-head { display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:6px 4px;border:0;border-radius:13px;background:transparent;color:#e6eaee;font:500 15px var(--mn-ui);cursor:pointer; }
 .wt-kind-head .wt-icon { width:26px;height:26px; }
 .wt-kind-head[aria-pressed="true"] { background:#c00028;color:#fff; }
 .wt-switch { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;padding:2px;border-radius:13px;background:#0b0f13; }
@@ -428,6 +456,11 @@ body:has(.wt-suggest:not([hidden])) #mccWorldAudioControls {
   .wt-go-row button { font-size:12px; }
 }
 
-/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20): Travel and Missions are off (hu-social-only on <html>, mnet.html), so
-   there is no tab to choose between them and no door into Missions: not in search, not on the profile, not on Live */
-.hu-social-only :is(.wt-world-modes,[data-mn-view="missions"],#mnProfileRecord,#mnClipDoor,#mnFeedMissions,.mn__actionboard,.mn__understand) { display:none!important; }
+/* TRAVEL IS THE HOUSE OWNER'S (owner, 2026-10-20; AGENTS.md, "Public World"): hu-travel-off on <html> (mnet.html) keeps the
+   centre mode bar off everyone else's World, so the feed is their one mode and nothing sits in the middle of the globe.
+   The house owner's bar (js/world-owner-modes.js lifts the switch) holds Travel and News feed. Missions are public
+   (owner, 2026-11-17): their doors show for everyone. The same switch keeps the two other things the 2026-10-20 switch
+   held, the clip-campaign door and the Live room's action blocks, with the house owner: they were not asked back. */
+.hu-travel-off .wt-world-modes { display:none; }
+.wt-world-modes { width:184px; }
+.hu-travel-off :is(#mnClipDoor,.mn__actionboard,.mn__understand) { display:none!important; }

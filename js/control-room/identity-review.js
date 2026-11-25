@@ -1,4 +1,4 @@
-/* Native Control · Human Uprise · Identity.
+/* Native Control · Equity Uprise · Identity.
 
    The owner's review queue for the identity verification levels
    (docs/control-plane/IDENTITY-VERIFICATION-LEVELS.md). Each submitted live

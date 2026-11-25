@@ -29,7 +29,7 @@
    resolvable from here) and network access to the Cesium CDN and
    OpenStreetMap tiles. Exits non-zero on any failed check. */
 import { createServer } from 'node:http';
-import { withTravelAndMissions } from './world-switch.mjs';
+import { withTravel } from './world-switch.mjs';
 import { createRequire } from 'node:module';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -49,8 +49,9 @@ const server = createServer(async (req, res) => {
   try {
     let body = await readFile(join(ROOT, path === '/' ? 'index.html' : path));
     const type = TYPES[extname(path)] || 'application/octet-stream';
-    /* the World as it ships is the social feed; the suites that guard Travel and Missions get them switched back on */
-    if (/^[/\\]mnet\.html$/.test(path) && !/(?:^|; )world=social(?:;|$)/.test(req.headers.cookie || '')) body = Buffer.from(withTravelAndMissions(body));
+    /* the World as it ships keeps Travel the house owner's (missions are public in it); the suites that guard Travel get it
+       switched back on, the house owner's World, and the cookie world=social asks for the page exactly as it ships */
+    if (/^[/\\]mnet\.html$/.test(path) && !/(?:^|; )world=social(?:;|$)/.test(req.headers.cookie || '')) body = Buffer.from(withTravel(body));
     /* a video is read in ranges, the way storage serves it, so a player can seek */
     const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
     if (range && (range[1] || range[2])) {
@@ -397,7 +398,7 @@ const DEVICES = [
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ proxy: process.env.HTTPS_PROXY ? {server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'} : undefined, executablePath: process.env.CHROMIUM_EXECUTABLE || undefined, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 
-async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false, social = false, owner = false, videoPosts = false }) {
+async function open(device, { member, creator = true, verified = true, bootFail = [], userCheck = 0, newsFail = 0, postPage = 0, noGlobe = false, geo = 'denied', travel = false, entryPath = '/action-globe.html', placeHome = null, admin = false, social = false, owner = false, videoPosts = false, feedReady = '#mnFeed [data-post-id]' }) {
   const world = freshWorld();
   world.owner = owner;
   if (videoPosts) addVideoPosts(world);
@@ -476,7 +477,8 @@ async function open(device, { member, creator = true, verified = true, bootFail 
   await page.goto(BASE + entryPath, { waitUntil: 'domcontentloaded' });
   await page.waitForURL(entryPath.startsWith('/mnet.html') ? /mnet\.html(?:\?|$)/ : /mnet\.html\?view=feed/, { timeout: 15000 });
   await page.waitForFunction(() => /pinned on the Earth|No missions are pinned|could not load|can.t run/.test((document.getElementById('mnWorldCaption') || {}).textContent || ''), null, { timeout: 90000 });
-  await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 20000, state:'attached' });
+  /* an address that opens the Equity Uprise tab shows the mission feed, not posts (feedReady) */
+  await page.waitForSelector(feedReady, { timeout: 20000, state:'attached' });
   await page.waitForFunction(()=>!!window.MCC_WORLD_MODE);
   if(!travel&&process.env.E2E_ONLY !== 'travel')await page.evaluate(()=>window.MCC_WORLD_MODE.set('posts'));
   /* evidence shots wait for the Earth's tiles, up to 25s */
@@ -489,7 +491,10 @@ const req = (world, m, re) => world.requests.filter((r) => r.m === m && re.test(
 
 /* E2E_ONLY=layers (or any scope prefix) reruns one family of scenarios alone; the full run is the evidence */
 const ONLY = process.env.E2E_ONLY || '';
-const runs = (scope) => !ONLY || scope.startsWith(ONLY);
+// CI runs the expensive composer scenario in its own fresh browser job.
+// An ordinary E2E_ONLY=editorial run still includes every scenario.
+const EXCLUDE = process.env.E2E_EXCLUDE || '';
+const runs = (scope) => (!ONLY || scope.startsWith(ONLY)) && (!EXCLUDE || scope !== EXCLUDE);
 
 /* Travel acceptance: the shipping UI and real Cesium, with recorded public road routes.
    Provider fixtures never claim to be a live service, a fare or a dispatched ride. */
@@ -676,10 +681,12 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
     const dimensions=await page.evaluate(()=>{const r=document.documentElement,f=document.getElementById('mnWorldFeed'),g=document.getElementById('mnWorld'),before=g.getBoundingClientRect().top;f.scrollTop=130;return{sw:r.scrollWidth,cw:r.clientWidth,fixed:before===g.getBoundingClientRect().top,pageY:scrollY,minInput:Math.min(...[...document.querySelectorAll('#wtForm input')].filter(e=>e.offsetParent).map(e=>parseFloat(getComputedStyle(e).fontSize)))}});
     check(scope,'readable controls, no document overflow and stationary globe',dimensions.sw===dimensions.cw&&dimensions.fixed&&dimensions.pageY===0&&dimensions.minInput>=16,dimensions);
     await page.locator('#wtOptions').evaluate(e=>e.open=false);await page.evaluate(()=>document.getElementById('mnWorldFeed').scrollTop=0);await page.screenshot({path:join(OUT,scope+'-journey.png')});
-    await page.click('.wt-world-modes [data-world-mode=missions]');
+    /* the house owner's two modes walk with the keys: from Travel, ArrowRight is the News feed */
+    await page.press('.wt-world-modes [data-world-mode=travel]','ArrowRight');
     await globe.waitForFunction(()=>!__huNavigation().travel&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible);
-    await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
-    check(scope,'Missions opens published missions and hides private navigation overlays',await page.isVisible('.mn-swipe__card[data-mission="'+M1+'"]')&&await page.isHidden('#wtPlanner')&&await globe.evaluate(()=>!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    check(scope,'keyboard switches to the News feed, which hides private navigation overlays',await page.getAttribute('html','data-world-mode')==='posts'&&await page.isVisible('#mnFeed')&&await page.isHidden('#wtPlanner')&&await globe.evaluate(()=>!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    /* the mission feed is the feed's Equity Uprise tab (owner, 2026-11-17); the completed capstone's marker is drawn there */
+    await page.click('#mnFeedScope [data-feed-scope="equity"]');
     try {
       await globe.waitForFunction(()=>__huCompletedMissions().on&&__huCompletedMissions().pins===1);
     } catch (error) {
@@ -695,6 +702,7 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
         capture(() => page.evaluate(() => ({
           mode: document.documentElement.dataset.worldMode,
           modeApi: window.MCC_WORLD_MODE?.get?.(),
+          feedScope: window.MCC_FEED_SCOPE?.get?.(),
           showcaseAvailable: !!window.DocketCohortShowcase,
           seriesText: document.getElementById('mnCompletedSeries')?.innerText ?? null,
           capstonePresent: !!document.getElementById('dcPreviewCapstone'),
@@ -714,10 +722,10 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
       await capture(() => writeFile(join(OUT, scope + '-completed-marker-failure.json'), JSON.stringify(diagnostic, null, 2)));
       throw error;
     }
-    check(scope,'the completed capstone has its own public marker in Missions',await page.isVisible('.mn-swipe__filters [data-status="completed"]')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
-    await page.press('.wt-world-modes [data-world-mode=missions]','ArrowRight');check(scope,'keyboard switches to Posts',await page.getAttribute('html','data-world-mode')==='posts'&&await page.isVisible('#mnFeed'));
+    check(scope,'the completed capstone has its own public marker under the Equity Uprise tab',await page.isVisible('#mnCompletedSeries')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    await page.click('#mnFeedScope [data-feed-scope="global"]');
     await globe.waitForFunction(()=>!__huCompletedMissions().on&&__huCompletedMissions().pins===0);
-    check(scope,'Posts hides completed markers and private navigation overlays',await globe.evaluate(()=>__huCompletedMissions().pins===0&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    check(scope,'Global hides completed markers and private navigation overlays',await globe.evaluate(()=>__huCompletedMissions().pins===0&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
     await page.click('.wt-world-modes [data-world-mode=travel]');check(scope,'switching modes preserves the planning draft',/Lisbon/.test(await page.inputValue('#wtTo')));
     if(member){
       await page.click('#wtSave');await page.waitForFunction(()=>document.getElementById('wtDraftStatus').textContent==='Saved');
@@ -804,26 +812,26 @@ if(runs('travel-rides')){
 }
 
 /* A completed event link owns its focus, including when a later Travel GPS
-   request finishes after the visitor has returned to Missions. */
+   request finishes after the visitor has returned to the mission feed (the feed's Equity Uprise tab). */
 if(runs('mission-archive')) {
   const scope='mission-archive-iphone', event=COHORT_ARCHIVE.event;
-  const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'delayed',travel:true,entryPath:'/mnet.html?mode=missions&completed='+encodeURIComponent(event.slug)});
+  const {ctx,page,world,errors}=await open(DEVICES[0],{member:false,geo:'delayed',travel:true,entryPath:'/mnet.html?feed=equity&completed='+encodeURIComponent(event.slug),feedReady:'#mnFeed [data-mission-post], #mnFeed [data-mission-feed-empty]'});
   try{
     const globe=page.frame({url:/action-globe\.html/});
     await page.waitForSelector('#mnCompletedSeries .dc-series__card',{state:'attached'});
     await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
-    check(scope,'completed link opens Missions without requesting travel location',await page.getAttribute('html','data-world-mode')==='missions'&&await page.evaluate(()=>__travelGeoRequests===0&&__travelWatchStarts===0));
+    check(scope,'completed link opens the Equity Uprise tab on the feed without requesting travel location',await page.getAttribute('html','data-world-mode')==='posts'&&await page.evaluate(()=>MCC_FEED_SCOPE.get()==='equity'&&__travelGeoRequests===0&&__travelWatchStarts===0));
     const focus=await globe.evaluate(()=>__huFocusPlace());
     check(scope,'archive and real globe readiness produce the capstone focus',focus?.lat===event.latitude&&focus?.lon===event.longitude&&await globe.evaluate(()=>__huCompletedMissions().on&&!__huNavigation().location&&!__huNavigation().routeVisible),focus);
     await page.click('.wt-world-modes [data-world-mode=travel]');
     await page.waitForFunction(()=>__travelGeoRequests===1&&typeof __travelGeoResolve==='function');
-    await page.click('.wt-world-modes [data-world-mode=missions]');
+    await page.click('.wt-world-modes [data-world-mode=posts]');
     const completedSeries=page.locator('#mnCompletedSeries .dc-series');
     if(!(await completedSeries.evaluate(e=>e.open)))await completedSeries.locator('summary').click();
     await completedSeries.getByRole('button',{name:'Show on globe'}).click();
     await page.evaluate(()=>__travelGeoResolve());
     await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
-    check(scope,'late Travel GPS cannot replace the capstone focus or restore private overlays',await page.getAttribute('html','data-world-mode')==='missions'&&await globe.evaluate(()=>!__huNavigation().location&&!__huNavigation().routeVisible&&__huCompletedMissions().pins===1)&&(await page.inputValue('#wtFrom'))==='');
+    check(scope,'late Travel GPS cannot replace the capstone focus or restore private overlays',await page.getAttribute('html','data-world-mode')==='posts'&&await page.evaluate(()=>MCC_FEED_SCOPE.get()==='equity')&&await globe.evaluate(()=>!__huNavigation().location&&!__huNavigation().routeVisible&&__huCompletedMissions().pins===1)&&(await page.inputValue('#wtFrom'))==='');
     check(scope,'archive browsing makes no routing or persistence request',req(world,'POST',/^\/v1\/travel\/route$|^\/travel_journeys$/).length===0&&await page.evaluate(()=>__travelWatchStarts===0));
     check(scope,'completed link has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth&&innerWidth===390));
     await page.screenshot({path:join(OUT,scope+'.png')});
@@ -941,7 +949,9 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     check(scope,'the place card sits in the middle at the top, not the full width: centred, under the bar, nothing over it, the buttons stepped aside',Math.abs(pc.left-pc.right)<=2&&pc.w<=300&&pc.w<pc.vw-40&&pc.top>=pc.barBottom&&pc.onTop&&pc.stackClear&&pc.liveClear&&pc.frameCard==='none',pc);
     const under = await Promise.all([eastern,nairobi].map((p)=>page.evaluate(([x,y])=>{const t=document.elementFromPoint(x,y);return t&&t.id},[p.x,p.y])));
     check(scope,'with the card up, the places to tap are still the globe\'s',under.every((t)=>t==='mnWorldFrame'),under);
-    check(scope,'it gives Kenya\'s three counts: news today, posts placed there, accounts from there (five or more, so shown)',JSON.stringify(pc.stats)===JSON.stringify(['8news · 24 h','3posts','19members'])&&/Kenya/.test(pc.text)&&/Double-tap a state to choose it/.test(pc.text),pc.stats);
+    /* and its missions (owner, 2026-11-17: "see X amount of news, X amount of missions"): the ones pinned in Kenya (none here) and the
+       one open mission pinned nowhere, which can be done anywhere */
+    check(scope,'it gives Kenya\'s counts: news today, missions (pinned there or nowhere), posts placed there, accounts from there (five or more, so shown)',JSON.stringify(pc.stats)===JSON.stringify(['8news · 24 h','1missions','3posts','19members'])&&/Kenya/.test(pc.text)&&/Double-tap a state to choose it/.test(pc.text),pc.stats);
     await page.screenshot({path:join(OUT,scope+'-place-card.png')});
     await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:8000}).catch(()=>{});
     const kenya = await page.locator('#mnFeed [data-news-id]').count();
@@ -952,7 +962,8 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     const east = await now();
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:5000}).catch(()=>{});
     check(scope,'a double tap inside the selected country picks the state: lit, named on the card and the label',east.selected==='KE'&&!!east.state&&/^Eastern\s*Kenya\s*×?\s*0news · 24 h/.test(east.card||'')&&await page.textContent('#huRegionLabel')==='Eastern, Kenya',east);
-    check(scope,'Local keeps only the stories placed in it: none in Eastern',await page.locator('#mnFeed [data-news-id]').count()===0&&/No news from Eastern, Kenya in the last 24 hours/.test(await page.textContent('#mnFeed')));
+    check(scope,'Local keeps only the stories placed in it: none in Eastern, said so above the one mission that can be done anywhere',await page.locator('#mnFeed [data-news-id]').count()===0&&/No news from Eastern, Kenya in the last 24 hours/.test(await page.textContent('#mnFeed'))
+      &&await page.locator('#mnFeed [data-mission-post]').count()===1&&await page.getAttribute('#mnFeed [data-mission-post]','data-mission-post')==='44444444-4444-4444-8444-444444444441');
     await page.screenshot({path:join(OUT,scope+'-eastern.png')});
     await gap();
     /* another state of the same country: picked the same way, with no second read of the country */
@@ -1002,19 +1013,19 @@ if (runs('editorial-members') && (!process.env.EDITORIAL_DEVICE || process.env.E
     await twice(eastern);
     await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/\b23\b/.test(c.textContent)},null,{timeout:10000}).catch(()=>{});
     const ke = await stats();
-    check(scope,'Kenya\'s card gives the exact count of accounts from there',JSON.stringify(ke)===JSON.stringify(['8news · 24 h','3posts','23members']),ke);
+    check(scope,'Kenya\'s card gives the exact count of accounts from there',JSON.stringify(ke)===JSON.stringify(['8news · 24 h','1missions','3posts','23members']),ke);
     await page.waitForTimeout(700);
     await twice(eastern);
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Eastern, Kenya',null,{timeout:8000}).catch(()=>{});
     await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/members/.test(c.textContent)},null,{timeout:8000}).catch(()=>{});
     const east = await stats();
-    check(scope,'a state picked gives that state\'s accounts: 4 in Eastern',JSON.stringify(east)===JSON.stringify(['0news · 24 h','4members']),east);
+    check(scope,'a state picked gives that state\'s accounts: 4 in Eastern',JSON.stringify(east)===JSON.stringify(['0news · 24 h','1missions','4members']),east);
     await page.waitForTimeout(700);
     await twice(nairobi);
     await page.waitForFunction(()=>document.getElementById('huRegionLabel').textContent==='Nairobi, Kenya',null,{timeout:8000}).catch(()=>{});
     await page.waitForFunction(()=>{const c=document.getElementById('mnPlaceCard');return c&&!c.hidden&&/\b15\b/.test(c.textContent)},null,{timeout:8000}).catch(()=>{});
     const nb = await stats();
-    check(scope,'and Nairobi\'s 15, found by its shape (its region code is a county\'s, not the state\'s)',JSON.stringify(nb)===JSON.stringify(['8news · 24 h','15members']),nb);
+    check(scope,'and Nairobi\'s 15, found by its shape (its region code is a county\'s, not the state\'s)',JSON.stringify(nb)===JSON.stringify(['8news · 24 h','1missions','15members']),nb);
     await page.screenshot({path:join(OUT,scope+'-nairobi.png')});
     check(scope,'no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
     check(scope,'no JavaScript errors',errors.length===0,errors);
@@ -1152,13 +1163,93 @@ if (runs('editorial-video')) for (const device of DEVICES.filter((d) => ['iphone
 }
 
 /* the composer: the picture is taken while the clip uploads, shown on the chip, and posted beside the video */
-if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) {
-  const scope = 'editorial-video-composer';
+/* Three bounded fresh-page samples retain the original failing run and expose scheduling-sensitive capture loss.
+   Every sample uploads/posts through the real composer and must satisfy all original checks. */
+if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || process.env.EDITORIAL_DEVICE === 'iphone-portrait')) for (let sample = 0; sample < 3; sample++) {
+  const scope = 'editorial-video-composer' + (sample ? '-sample-' + (sample + 1) : '');
   const { ctx, page, world, errors } = await open(DEVICES[0], { member: true });
   try {
     await page.waitForSelector('#mnPostBody');
     await page.focus('#mnPostBody');
     await page.waitForFunction(() => document.getElementById('mnComposer').classList.contains('is-open'), null, { timeout: 5000 }).catch(() => {});
+    /* Capture actual decoder/encoder progress without changing media behavior or deadlines. A missing poster must
+       retain its reason and event timing even if a later screenshot fails. This observes only the fixture upload. */
+    await page.evaluate(() => {
+      const trace = window.__composerPosterTrace = { started: performance.now(), captures: [], videos: [], encodes: [], canvasCalls: [], longTasks: [] };
+      const at = () => Math.round(performance.now() - trace.started);
+      if (typeof PerformanceObserver === 'function' && PerformanceObserver.supportedEntryTypes.includes('longtask')) {
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) trace.longTasks.push({ at: Math.round(entry.startTime - trace.started), duration: Math.round(entry.duration) });
+        }).observe({ type: 'longtask' });
+      }
+      const create = document.createElement, observedContexts = new WeakSet();
+      document.createElement = function (tag, ...args) {
+        const node = create.call(this, tag, ...args);
+        if (String(tag).toLowerCase() === 'video') {
+          const record = { events: [], frames: [], plays: [] }; trace.videos.push(record);
+          if (node.requestVideoFrameCallback) {
+            const frame = node.requestVideoFrameCallback;
+            node.requestVideoFrameCallback = function (callback) {
+              const call = { requested: at() }; record.frames.push(call);
+              return frame.call(this, (now, metadata) => {
+                call.finished = at(); call.mediaTime = metadata.mediaTime; callback(now, metadata);
+              });
+            };
+          }
+          const play = node.play;
+          node.play = function (...args) {
+            const call = { started: at() }; record.plays.push(call);
+            const promise = play.apply(this, args);
+            if (promise && typeof promise.then === 'function') promise.then(() => { call.finished = at(); }, (error) => { call.finished = at(); call.error = String(error); });
+            return promise;
+          };
+          const state = (event) => ({ at: at(), event, ready: node.readyState, network: node.networkState,
+            time: node.currentTime, duration: Number.isFinite(node.duration) ? node.duration : String(node.duration),
+            width: node.videoWidth, height: node.videoHeight, paused: node.paused, seeking: node.seeking,
+            error: node.error && { code: node.error.code, message: node.error.message },
+            ranges: Array.from({ length: node.seekable.length }, (_, i) => [node.seekable.start(i), node.seekable.end(i)]) });
+          for (const event of ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'play', 'playing', 'pause', 'waiting', 'stalled', 'seeking', 'seeked', 'error', 'emptied']) {
+            node.addEventListener(event, () => record.events.push(state(event)));
+          }
+        } else if (String(tag).toLowerCase() === 'canvas') {
+          const context = node.getContext;
+          node.getContext = function (...args) {
+            const ctx = context.apply(this, args);
+            if (args[0] === '2d' && ctx && !observedContexts.has(ctx)) {
+              observedContexts.add(ctx);
+              for (const method of ['drawImage', 'getImageData']) {
+                const original = ctx[method];
+                ctx[method] = function (...args) {
+                  const call = { method, started: at(), width: node.width, height: node.height,
+                    source: args[0] && args[0].tagName || null }; trace.canvasCalls.push(call);
+                  try { return original.apply(this, args); }
+                  finally { call.finished = at(); }
+                };
+              }
+            }
+            return ctx;
+          };
+          const encode = node.toBlob;
+          node.toBlob = function (callback, ...args) {
+            const record = { started: at(), width: node.width, height: node.height }; trace.encodes.push(record);
+            return encode.call(this, (blob) => {
+              record.finished = at(); record.bytes = blob && blob.size; record.type = blob && blob.type;
+              callback(blob);
+            }, ...args);
+          };
+        }
+        return node;
+      };
+      const capture = window.MCCVideoPoster.capture;
+      window.MCCVideoPoster.capture = function (...args) {
+        const record = { started: at() }; trace.captures.push(record);
+        return capture.apply(this, args).then((result) => {
+          Object.assign(record, { finished: at(), reason: result && result.reason, bytes: result && result.file && result.file.size,
+            width: result && result.width, height: result && result.height, frame: result && result.at, video: result && result.video });
+          return result;
+        }, (error) => { record.finished = at(); record.error = String(error); throw error; });
+      };
+    });
     await page.setInputFiles('#mnMediaInput', join(ROOT, 'assets/video/hero.webm'));
     await page.waitForSelector('#mnMediaQueue .mn__media-chip.is-video', { timeout: 20000 }).catch(() => {});
     const chip = await page.evaluate(() => { const c = document.querySelector('#mnMediaQueue .mn__media-chip.is-video'); const img = c && c.querySelector('img'); return c ? { img: img ? img.src.slice(0, 5) : '', w: img ? img.naturalWidth : 0, play: !!c.querySelector('.mn__media-play'), video: !!c.querySelector('video') } : null; });
@@ -1174,10 +1265,17 @@ if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     check(scope, 'no horizontal overflow with the chip', await noSideways(page));
     await page.locator('#mnComposer').screenshot({ path: join(OUT, scope + '-chip.png') });
     await page.fill('#mnPostBody', 'Fresh clip from the river.');
-    await page.click('#mnPost');
+    try { await page.click('#mnPost'); }
+    catch(error) {
+      const diagnostic=await page.evaluate(()=>{const b=document.getElementById('mnPost'),c=document.getElementById('mnComposer');return {button:{disabled:b.disabled,rect:b.getBoundingClientRect().toJSON(),visibility:getComputedStyle(b).visibility,display:getComputedStyle(b).display,transform:getComputedStyle(b).transform},composer:{class:c.className,rect:c.getBoundingClientRect().toJSON()},active:document.activeElement?.id,scroll:scrollY,status:document.getElementById('mnPostStatus').textContent};});
+      console.error('Composer Post actionability failure:', JSON.stringify(diagnostic));
+      await writeFile(join(OUT,scope+'-post-failure.json'),JSON.stringify(diagnostic,null,2));
+      await page.screenshot({path:join(OUT,scope+'-post-failure.png')});
+      throw error;
+    }
     await page.waitForFunction(() => /Posted/.test(document.getElementById('mnPostStatus').textContent), null, { timeout: 8000 }).catch(() => {});
     const sent = req(world, 'POST', /^\/v1\/mnet\/posts$/).at(-1);
-    check(scope, 'Post sends the clip with its picture beside it', !!sent && JSON.stringify(sent.body.media_asset_ids) === JSON.stringify([vId]) && JSON.stringify(sent.body.poster_asset_ids) === JSON.stringify([pId]), sent && sent.body);
+    check(scope, 'Post sends the clip with its picture beside it', !!vId && !!pId && !!sent && JSON.stringify(sent.body.media_asset_ids) === JSON.stringify([vId]) && JSON.stringify(sent.body.poster_asset_ids) === JSON.stringify([pId]), sent && sent.body);
     const posted = world.posts[0];
     await page.waitForSelector(`#mnFeed article[data-post-id="${posted.id}"] video[poster]`, { timeout: 10000 }).catch(() => {});
     const card = await thumbOf(page, posted.id).evaluate((n) => { const v = n.querySelector('video'); return v ? { poster: v.getAttribute('poster'), preload: v.getAttribute('preload') } : null; }).catch(() => null);
@@ -1187,7 +1285,13 @@ if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     await page.waitForTimeout(600);
     await page.locator(`#mnFeed article[data-post-id="${posted.id}"]`).screenshot({ path: join(OUT, scope + '-feed-card.png') });
     check(scope, 'no JavaScript errors', errors.length === 0, errors);
-  } finally { await ctx.close(); }
+  } finally {
+    const diagnostic = await page.evaluate(() => window.__composerPosterTrace || null).catch(() => null);
+    const report = { trace: diagnostic, errors, mediaRequests: world.requests.filter((r) => /\/mnet\/(?:media|posts)/.test(r.path)) };
+    console.log('Composer poster diagnostic:', JSON.stringify(report));
+    await writeFile(join(OUT, scope + '-poster-diagnostic.json'), JSON.stringify(report, null, 2));
+    await ctx.close();
+  }
 }
 
 /* Create: a cover is taken while the clip uploads; a tap on a frame of the strip chooses another; Post sends it */
@@ -1252,9 +1356,10 @@ if (runs('editorial-video') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
   } finally { await ctx.close(); }
 }
 
-/* THE WORLD IS THE SOCIAL FEED (owner, 2026-10-20: "the transport and the missions feature will be taken off and the social
-   feature will be the only feature with no tab selecting between the other two"; "open missions belong in missions not inside
-   the newsfeed"; "Notification should be a drop down menu not open a whole new page"). The page exactly as it ships. */
+/* ONE FEED WITH THE MISSIONS IN IT (owner, 2026-11-17: "the missions should low key just be placed in the newsfeed instead of
+   having that Tinder swipe tab"; "another tab called the equity uprise tab ... on the feed section under the globe"; Travel
+   stays the house owner's, owner 2026-10-20; "Notification should be a drop down menu not open a whole new page"). The page
+   exactly as it ships. */
 if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDITORIAL_DEVICE&&['iphone-portrait','desktop'].includes(d.name))||d.name===process.env.EDITORIAL_DEVICE)) for (const member of [false, true]) {
   const scope = `editorial-social-${device.name}-${member ? 'member' : 'guest'}`;
   const {ctx,page,world,errors} = await open(device,{member,social:true});
@@ -1262,38 +1367,62 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     const globe = page.frame({url:/action-globe\.html/});
     await page.waitForSelector('#mnFeed [data-post-id]',{timeout:15000}).catch(()=>{});
     const shell = await page.evaluate(()=>{const h=document.documentElement,visible=el=>!!el&&el.getClientRects().length>0&&getComputedStyle(el).visibility!=='hidden';
-      return {social:h.classList.contains('hu-social-only'),mode:h.dataset.worldMode,tabs:[...document.querySelectorAll('.wt-world-modes,.wt-world-modes button')].some(visible),
+      return {travelOff:h.classList.contains('hu-travel-off'),mode:h.dataset.worldMode,tabs:[...document.querySelectorAll('.wt-world-modes,.wt-world-modes button')].some(visible),
+        modes:[...document.querySelectorAll('.wt-world-modes button')].filter(visible).map(b=>b.dataset.worldMode),
         feed:!document.getElementById('mnFeedView').hidden,posts:document.querySelectorAll('#mnFeed [data-post-id]').length,
         planner:visible(document.getElementById('wtPlanner')),frame:document.getElementById('mnWorldFrame').getAttribute('src'),
-        expand:document.querySelector('.mn__world-expand').getAttribute('href')};});
-    check(scope,'the World is the social feed: no Travel or Missions tab, the feed is what it shows',shell.social&&shell.mode==='posts'&&!shell.tabs&&shell.feed&&shell.posts>0&&!shell.planner,shell);
-    check(scope,'the globe, and the expanded globe, are told to leave missions out',/[?&]missions=0(&|$)/.test(shell.frame)&&/[?&]missions=0(&|$)/.test(shell.expand),shell);
-    await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&document.documentElement.classList.contains('globe-no-missions'),null,{timeout:25000}).catch(()=>{});
-    await page.waitForTimeout(800);
-    check(scope,'the Earth carries no mission pins',await globe.evaluate(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()===0&&document.documentElement.classList.contains('globe-no-missions')));
+        expand:document.querySelector('.mn__world-expand').getAttribute('href'),
+        strip:[...document.querySelectorAll('#mnFeedScope > button')].map(b=>({key:b.dataset.feedScope||b.dataset.mnView,name:b.getAttribute('aria-label')||b.textContent.trim(),pressed:b.getAttribute('aria-pressed'),words:b.textContent.trim(),imgs:b.querySelectorAll('img').length}))};});
+    /* owner, 2026-11-17: no Missions or E=UP button in the centre of the globe, and Travel stays the house owner's, so a visitor
+       or a member who is not the house owner sees no centre mode bar at all; the feed is what the World shows */
+    check(scope,'the World is one feed: no centre mode bar (no Travel, Missions or E=UP), the feed is what it shows',shell.travelOff&&shell.mode==='posts'&&!shell.tabs&&shell.modes.length===0&&shell.feed&&shell.posts>0&&!shell.planner,shell);
+    /* the row under the globe, in the owner's order (owner, 2026-11-18: "It should just be local, equity up, global, live news people"):
+       Local, the Equity Uprise tab (the supplied mark alone), Global (pressed on load), Live, News, People */
+    check(scope,'the feed row reads Local, the Equity Uprise tab (image only), Global (pressed), Live, News, People',JSON.stringify(shell.strip.map(b=>b.name))===JSON.stringify(['Local','Equity Uprise','Global','Live','News','People'])
+      &&shell.strip[2].pressed==='true'&&shell.strip[2].key==='global'&&shell.strip[1].key==='equity'&&shell.strip[1].words===''&&shell.strip[1].imgs===2,shell.strip);
+    check(scope,'the globe, and the expanded globe, draw the public missions',!/missions=0/.test(shell.frame)&&!/missions=0/.test(shell.expand),shell);
+    await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()>0,null,{timeout:25000}).catch(()=>{});
+    check(scope,'the Earth carries the published mission pins for everyone',await globe.evaluate(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()===5&&!document.documentElement.classList.contains('globe-no-missions')));
     /* the World as it ships has the same World button where the controls menu was, and nothing on the page covers it */
     const worldBtn=await globe.evaluate(()=>{const w=document.getElementById('ctlWorld'),r=w&&w.getBoundingClientRect();return{inCorner:!!(w&&w.closest('.globe-editorial-world')),menu:!!document.querySelector('.globe-editorial-tools'),w:r&&Math.round(r.width),cx:r&&r.left+r.width/2,cy:r&&r.top+r.height/2,label:w&&w.getAttribute('aria-label')}});
     const worldAt=await page.evaluate(({cx,cy})=>{const f=document.getElementById('mnWorldFrame').getBoundingClientRect(),t=document.elementFromPoint(f.left+cx,f.top+cy);return t&&t.id},worldBtn);
     check(scope,'World, back to the whole Earth, is the button where the controls menu was, and nothing covers it',worldBtn.inCorner&&!worldBtn.menu&&worldBtn.w===44&&/whole world/i.test(worldBtn.label)&&worldAt==='mnWorldFrame',{worldBtn,worldAt});
-    const missionBits = await page.evaluate(()=>[...document.querySelectorAll('[data-take-mission],.mn__actcard:not(.mn__actcard--collab),#mnFeedMissions,#mnClipDoor,.hu-mission-preview,[data-mn-view="missions"],#mnProfileRecord,.mn-swipe__card')].filter(el=>el.getClientRects().length>0).map(el=>el.id||el.className));
-    check(scope,'no mission card, list or rail in the feed, and no door into Missions',missionBits.length===0,missionBits);
+    /* the swipe deck and its preview are gone (owner, 2026-11-17: "I don't like it"); the clip-campaign door stays the house owner's */
+    const deck = await page.evaluate(()=>({gone:[...document.querySelectorAll('.hu-mission-preview,#huMissionList,#mnWorldEup,#mnFeedMissions,.mn-swipe,.mn-swipe__card')].map(el=>el.id||el.className),deckScript:!!window.MCC_MISSION_DECK,
+      clipDoor:document.getElementById('mnClipDoor').getClientRects().length>0,allMissions:[...document.querySelectorAll('[data-mn-feed="equity"]')].length}));
+    check(scope,'no swipe deck, no deck preview and no Open missions rail; All missions opens the Equity Uprise tab; no clip-campaign door',deck.gone.length===0&&!deck.deckScript&&!deck.clipDoor&&deck.allMissions===2,deck);
     const promoted = await page.evaluate(()=>{const t=document.body.innerText;return {rail:!!document.getElementById('mnRail'),words:/WAYS TO MOVE|Campaigns & missions|See campaigns/i.test(t)};});
     check(scope,'Ways to move is gone: no campaigns or missions promoted on the feed',!promoted.rail&&!promoted.words,promoted);
-    /* swiping the feed sideways used to change tabs; there is nothing to change to */
-    await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed');const fire=(type,x)=>f.dispatchEvent(new TouchEvent(type,{bubbles:true,touches:type==='touchend'?[]:[new Touch({identifier:1,target:f,clientX:x,clientY:300})],changedTouches:[new Touch({identifier:1,target:f,clientX:x,clientY:300})]}));try{fire('touchstart',300);fire('touchend',60);}catch(_){}});
-    check(scope,'a sideways swipe stays on the feed',await page.evaluate(()=>document.documentElement.dataset.worldMode)==='posts');
+    /* the feed is the one mode: a sideways swipe never leaves it for Travel (or for any mode that is gone) */
+    const swipe=(from,to)=>page.evaluate(([from,to])=>{const f=document.getElementById('mnWorldFeed');const fire=(type,x)=>f.dispatchEvent(new TouchEvent(type,{bubbles:true,touches:type==='touchend'?[]:[new Touch({identifier:1,target:f,clientX:x,clientY:300})],changedTouches:[new Touch({identifier:1,target:f,clientX:x,clientY:300})]}));try{fire('touchstart',from);fire('touchend',to);}catch(_){}return document.documentElement.dataset.worldMode;},[from,to]);
+    const swipedLeft=await swipe(300,60);const swipedBack=await swipe(60,300);
+    check(scope,'a sideways swipe keeps the feed, never Travel',swipedLeft==='posts'&&swipedBack==='posts',{swipedLeft,swipedBack});
+    /* the Equity Uprise tab: the mission feed, with Environmental Justice above it, and back to Global */
+    await page.click('#mnFeedScope [data-feed-scope="equity"]');
+    await page.waitForSelector('#wePanel:not([hidden])',{timeout:10000}).catch(()=>{});
+    const tab=await page.evaluate(()=>({pressed:document.querySelector('[data-feed-scope="equity"]').getAttribute('aria-pressed'),scope:window.MCC_FEED_SCOPE.get(),
+      panel:!document.getElementById('wePanel').hidden&&document.getElementById('wePanel').getClientRects().length>0,note:getComputedStyle(document.getElementById('weUnavailable')).display==='block',missions:document.querySelectorAll('#mnFeed [data-mission-post]').length,news:document.querySelectorAll('#mnFeed [data-news-id]').length,posts:document.querySelectorAll('#mnFeed [data-post-id]').length,
+      order:document.getElementById('mnFeedScope').compareDocumentPosition(document.getElementById('wePanel'))&Node.DOCUMENT_POSITION_FOLLOWING&&document.getElementById('wePanel').compareDocumentPosition(document.getElementById('mnFeed'))&Node.DOCUMENT_POSITION_FOLLOWING}));
+    /* the open missions as posts (six: the clip job is the Clips tab's), nothing else; this fixture's Environmental Justice source
+       answers 401, so the tab shows the one honest line in the panel's place, never a broken panel (owner, 2026-11-17) */
+    check(scope,'the Equity Uprise tab shows the mission posts, no posts or news, with Environmental Justice above them (one honest line while its source is unavailable)',tab.pressed==='true'&&tab.scope==='equity'&&(tab.panel||tab.note)&&!(tab.panel&&tab.note)&&tab.missions===6&&tab.posts===0&&tab.news===0&&!!tab.order,tab);
+    await page.screenshot({path:join(OUT,scope+'-equity.png')});
+    await page.click('#mnFeedScope [data-feed-scope="global"]');
+    check(scope,'leaving the tab returns to the whole feed, and the panel goes',await page.evaluate(()=>document.getElementById('wePanel').hidden&&window.MCC_FEED_SCOPE.get()==='global'&&document.querySelectorAll('#mnFeed [data-post-id]').length>0));
     if (member) {
-      /* a search finds people and groups, never missions */
+      /* a search finds the public missions too (owner, 2026-11-17), with people and groups */
       /* on a phone the field opens from the search button */
       if (await page.isVisible('#huSearchToggle')) await page.click('#huSearchToggle');
       await page.fill('#mnSearchInput','Mill River');
       await page.waitForSelector('#mnSuggest:not([hidden])',{timeout:5000}).catch(()=>{});
-      check(scope,'search lists no missions',await page.evaluate(()=>![...document.querySelectorAll('#mnSuggest [data-suggest="mission"],#mnSuggest [data-suggest="globe"]')].some(b=>b.getClientRects().length)));
+      await page.waitForSelector('#mnSuggest [data-suggest="globe"]',{timeout:5000}).catch(()=>{});
+      check(scope,'search lists the pinned mission',await page.evaluate(()=>[...document.querySelectorAll('#mnSuggest [data-suggest="globe"]')].some(b=>b.getClientRects().length&&/Clean up the Mill River/.test(b.textContent))));
       await page.fill('#mnSearchInput','');await page.keyboard.press('Escape');
       if (await page.getAttribute('#huSearchToggle','aria-expanded')==='true') await page.click('#huSearchToggle');
-      /* a link into Missions lands on the feed */
+      /* a member's Missions room is their Action Record, as it was for the house owner */
       await page.evaluate(()=>window.MCC_MNET.setView('missions'));
-      check(scope,'asking for Missions shows the feed',await page.evaluate(()=>!document.getElementById('mnFeedView').hidden&&document.getElementById('mnMissionsView').hidden));
+      check(scope,'asking for Missions opens the member\'s Action Record',await page.evaluate(()=>document.getElementById('mnFeedView').hidden&&!document.getElementById('mnMissionsView').hidden));
+      await page.evaluate(()=>window.MCC_MNET.setView('feed'));
       /* NOTIFICATIONS DROP DOWN FROM THE BELL */
       const before = await page.evaluate(()=>({feed:!document.getElementById('mnFeedView').hidden,scroll:document.getElementById('mnWorldFeed').scrollTop}));
       await page.click('#mnBell');
@@ -1327,51 +1456,50 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
   } finally { await ctx.close(); }
 }
 
-/* ALL THREE FOR THE HOUSE OWNER (owner, 2026-10-20: "keep the social feed on and then develop those other projects in the
-   back end. Probably keep all three on admin"). The page as it ships; the server says this member is the house owner. */
+/* TRAVEL FOR THE HOUSE OWNER (owner, 2026-10-20: "Probably keep all three on admin"; missions are public since 2026-11-17, so
+   the switch holds Travel). The page as it ships; the server says this member is the house owner. */
 if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDITORIAL_DEVICE&&d.name==='iphone-portrait')||d.name===process.env.EDITORIAL_DEVICE)) {
   const scope = `editorial-owner-${device.name}`;
   const {ctx,page,world,errors} = await open(device,{member:true,social:true,owner:true});
   try {
-    /* the first time on this browser, the owner's answer opens the World again, once, with all three */
-    await page.waitForFunction(()=>!document.documentElement.classList.contains('hu-social-only')&&document.documentElement.hasAttribute('data-world-owner'),null,{timeout:20000}).catch(()=>{});
+    /* the first time on this browser, the owner's answer opens the World again, once, with Travel */
+    await page.waitForFunction(()=>!document.documentElement.classList.contains('hu-travel-off')&&document.documentElement.hasAttribute('data-world-owner'),null,{timeout:20000}).catch(()=>{});
     await page.waitForSelector('.wt-world-modes button',{state:'visible',timeout:15000}).catch(()=>{});
     const shell=await page.evaluate(()=>({modes:[...document.querySelectorAll('.wt-world-modes button')].filter(b=>b.getClientRects().length).map(b=>b.dataset.worldMode),
       mode:document.documentElement.dataset.worldMode,memo:JSON.parse(localStorage.getItem('mcc_world_owner')||'null'),reloaded:performance.getEntriesByType('navigation')[0].type,
       expand:document.querySelector('.mn__world-expand').getAttribute('href')}));
-    check(scope,'the owner\'s World has Travel, Missions and Feed, and opens on the Feed',JSON.stringify(shell.modes)===JSON.stringify(['travel','missions','posts'])&&shell.mode==='posts',shell);
+    check(scope,'the owner\'s World has Travel and News feed in the centre bar, and opens on the feed',JSON.stringify(shell.modes)===JSON.stringify(['travel','posts'])&&shell.mode==='posts',shell);
     check(scope,'the server\'s yes is remembered for this account; the World opened again once to show it',!!shell.memo&&/^aaaaaaaa/.test(shell.memo.sub)&&shell.reloaded==='reload',shell);
     check(scope,'the expanded globe shows the missions too',!/missions=0/.test(shell.expand),shell.expand);
     const globe=page.frame({url:/action-globe\.html/});
     await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()>0,null,{timeout:25000}).catch(()=>{});
-    check(scope,'the Earth carries the mission pins again for the owner',await globe.evaluate(()=>window.__huMissionPins()>0&&!document.documentElement.classList.contains('globe-no-missions')));
-    await page.click('.wt-world-modes [data-world-mode=missions]');
-    await page.waitForSelector('.mn-swipe__card',{timeout:15000}).catch(()=>{});
-    check(scope,'Missions opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='missions'&&!!document.querySelector('.mn-swipe__card')));
+    check(scope,'the Earth carries the mission pins for the owner, as for everyone',await globe.evaluate(()=>window.__huMissionPins()>0&&!document.documentElement.classList.contains('globe-no-missions')));
+    /* the missions are in the feed's Equity Uprise tab for the owner too; there is no Missions mode */
+    check(scope,'no Missions or E=UP mode for the owner either; the Equity Uprise tab is in the strip',await page.evaluate(()=>!document.querySelector('.wt-world-modes [data-world-mode="missions"],.wt-world-modes [data-world-mode="environment"]')&&!!document.querySelector('#mnFeedScope [data-feed-scope="equity"]')));
     await page.click('.wt-world-modes [data-world-mode=travel]');
     check(scope,'Travel opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='travel'));
-    /* the next World opens with all three straight away: no second opening */
+    /* the next World opens with Travel straight away: no second opening */
     await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});
-    const early=await page.evaluate(()=>({social:document.documentElement.classList.contains('hu-social-only'),type:performance.getEntriesByType('navigation')[0].type}));
+    const early=await page.evaluate(()=>({travelOff:document.documentElement.classList.contains('hu-travel-off'),type:performance.getEntriesByType('navigation')[0].type}));
     await page.waitForTimeout(2500);
     const after=await page.evaluate(()=>performance.getEntriesByType('navigation')[0].type);
-    check(scope,'the next visit opens with all three from the first paint, without opening again',!early.social&&early.type==='navigate'&&after==='navigate',{early,after});
-    /* signed out, the World is the social feed again */
+    check(scope,'the next visit opens with Travel from the first paint, without opening again',!early.travelOff&&early.type==='navigate'&&after==='navigate',{early,after});
+    /* signed out, Travel is switched off again */
     await page.evaluate(()=>localStorage.removeItem('mccdb_session'));
     await page.goto(BASE+'/mnet.html',{waitUntil:'domcontentloaded'});
-    check(scope,'signed out, the World is the social feed and the remembered answer is gone',await page.evaluate(()=>document.documentElement.classList.contains('hu-social-only')&&!localStorage.getItem('mcc_world_owner')));
+    check(scope,'signed out, Travel is switched off and the remembered answer is gone',await page.evaluate(()=>document.documentElement.classList.contains('hu-travel-off')&&!localStorage.getItem('mcc_world_owner')));
     /* this scope opens the World three times; a fetch the globe had out when it did (its borders) is cut off, not broken */
     const real=errors.filter(e=>!/Failed to fetch/.test(e));
     check(scope,'no JavaScript errors',real.length===0,real);
   } finally { await ctx.close(); }
 }
-/* and a member who is not the owner keeps the social feed, with nothing remembered */
+/* and a member who is not the owner keeps Travel switched off, with nothing remembered */
 if (runs('editorial')) {
   const {ctx,page,errors} = await open(DEVICES.find(d=>d.name==='iphone-portrait'),{member:true,social:true});
   try {
     await page.waitForSelector('#mnFeed [data-post-id]',{timeout:15000}).catch(()=>{});
     await page.waitForTimeout(2500);
-    check('editorial-not-owner','a member the server does not call the owner keeps the social feed, nothing remembered, no second opening',await page.evaluate(()=>document.documentElement.classList.contains('hu-social-only')&&!localStorage.getItem('mcc_world_owner')&&performance.getEntriesByType('navigation')[0].type==='navigate'));
+    check('editorial-not-owner','a member the server does not call the owner keeps Travel switched off, nothing remembered, no second opening',await page.evaluate(()=>document.documentElement.classList.contains('hu-travel-off')&&!localStorage.getItem('mcc_world_owner')&&performance.getEntriesByType('navigation')[0].type==='navigate'));
     check('editorial-not-owner','no JavaScript errors',errors.length===0,errors);
   } finally { await ctx.close(); }
 }
@@ -1395,9 +1523,10 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       const coin = await page.evaluate(()=>{const c=document.querySelector('.appbar [data-appnav="home"] .appbar__m--initial'),r=c&&c.getBoundingClientRect();return {coin:!!c,text:c?c.textContent:'',w:r?Math.round(r.width):0,img:!!document.querySelector('.appbar [data-appnav="home"] img.appbar__m--creator')};});
       check(scope,'a member without a photo gets the initial of their name in the middle tab, drawn at full size, never an image',coin.coin&&coin.text==='F'&&coin.w>=20&&!coin.img,coin);
     }
-    check(scope,'actual Cesium uses natural Earth colors, soft clouds and no starfield', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && !s.stars; }));
-    await page.click('.wt-world-modes [data-world-mode=missions]');
-    await page.waitForSelector('.mn-swipe__card[data-mission="'+M1+'"]');
+    check(scope,'actual Cesium keeps its starfield, natural Earth colors and soft clouds', await globe.evaluate(() => { const s=window.__huGlobeStyle?.();return s?.editorial && s.saturation===1.1 && s.cloudAlpha===.65 && s.atmosphereSaturation===.1 && s.stars; }));
+    /* the mission feed is the feed's Equity Uprise tab (owner, 2026-11-17), where the Missions mode used to be */
+    await page.click('#mnFeedScope [data-feed-scope="equity"]');
+    await page.waitForSelector('#mnFeed [data-mission-post]');
     /* THE WORLD'S GLOBE (owner, 2026-10-20: "Replace the filter button with the button that zooms you all the way back out"):
        World sits where the controls menu was, nothing on the page covers it, and one tap takes the camera back to the whole Earth */
     const corner=await globe.evaluate(()=>{const w=document.getElementById('ctlWorld'),r=w&&w.getBoundingClientRect();return{inCorner:!!(w&&w.closest('.globe-editorial-world')),menu:!!document.querySelector('.globe-editorial-tools'),visible:!!(w&&w.getClientRects().length),w:r&&Math.round(r.width),h:r&&Math.round(r.height),cx:r&&r.left+r.width/2,cy:r&&r.top+r.height/2,label:w&&w.getAttribute('aria-label'),right:r&&Math.round(innerWidth-r.right),bottom:r&&Math.round(innerHeight-r.bottom)}});
@@ -1415,21 +1544,23 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.mouse.click(at.x,at.y);
     const back=await globe.waitForFunction(w=>window.__huIon().height>w*.98,whole,{timeout:45000}).then(settled,()=>globe.evaluate(()=>window.__huIon().height));
     check(scope,'one tap on World flies all the way back out to the whole Earth',whole>8e6&&down<2.5e6&&Math.abs(back-whole)<whole*0.02,{whole,down,back,again,inFrame});
-    /* MISSIONS IS ONE SCREEN (owner, 2026-10-20): nothing scrolls, Pass and Accept clear the bar, a card takes the whole touch */
-    const fit=await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed'),a=document.querySelector('.mn-swipe__actions').getBoundingClientRect(),b=document.querySelector('.appbar').getBoundingClientRect(),c=document.querySelector('.mn-swipe__card');
-      const overlap=a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;return{scroll:f.scrollHeight-f.clientHeight,bottom:Math.round(a.bottom),inner:innerHeight,overlap,touch:getComputedStyle(c).touchAction,card:Math.round(c.getBoundingClientRect().height)};});
-    if(fit.inner>=560)check(scope,'Missions is one screen: nothing scrolls, Pass and Accept stay on screen clear of the bar, and a swipe is never a scroll',fit.scroll<=1&&fit.bottom<=fit.inner&&!fit.overlap&&fit.touch==='none'&&fit.card>=150,fit);
-    /* a phone on its side is too short for that: the card keeps its full size and the sheet scrolls to Pass and Accept */
-    else check(scope,'on a short screen the card keeps its full size, a swipe is never a scroll, and the sheet reaches Pass and Accept',fit.card>=220&&fit.touch==='none'
-      &&await page.evaluate(()=>{const f=document.getElementById('mnWorldFeed');f.scrollTop=f.scrollHeight;const a=document.querySelector('.mn-swipe__actions').getBoundingClientRect(),b=document.querySelector('.appbar').getBoundingClientRect(),r=a.bottom<=innerHeight&&!(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top);f.scrollTop=0;return r;}),fit);
-    await page.screenshot({path:join(OUT,scope+'-missions.png')});
+    /* THE EQUITY UPRISE TAB (owner, 2026-11-17): the supplied mark alone, pressed; Environmental Justice above the mission feed;
+       no swipe deck; the strip reachable by keyboard; nothing pushes the page sideways */
+    const eup=await page.evaluate(()=>{const b=document.querySelector('#mnFeedScope [data-feed-scope="equity"]'),shown=[...b.querySelectorAll('img')].filter(i=>i.getClientRects().length),r=shown[0]?.getBoundingClientRect();
+      return{pressed:b.getAttribute('aria-pressed'),name:b.getAttribute('aria-label'),words:b.textContent.trim(),shown:shown.map(i=>i.getAttribute('src')),w:r&&Math.round(r.width),h:r&&Math.round(r.height),
+        panel:!document.getElementById('wePanel').hidden&&(getComputedStyle(document.getElementById('wePanel')).display!=='none'||getComputedStyle(document.getElementById('weUnavailable')).display==='block'),deck:!!document.querySelector('.mn-swipe,.hu-mission-preview,#mnWorldEup'),sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth};});
+    check(scope,'the Equity Uprise tab is the supplied mark alone, scaled, pressed, with Environmental Justice above the mission feed and no deck',eup.pressed==='true'&&eup.name==='Equity Uprise'&&eup.words===''&&eup.shown.length===1&&eup.w===eup.h&&eup.w>=24&&eup.panel&&!eup.deck&&eup.sw===eup.cw,eup);
+    /* the row in the owner's order (2026-11-18): after Local, the Equity Uprise tab */
+    await page.focus('#mnFeedScope [data-feed-scope="local"]');await page.keyboard.press('ArrowRight');
+    check(scope,'the arrow keys walk the row: after Local, the Equity Uprise tab',await page.evaluate(()=>document.activeElement&&document.activeElement.dataset.feedScope==='equity'));
+    await page.screenshot({path:join(OUT,scope+'-equity.png')});
     if(!member){
       const dayM=await page.evaluate(()=>{const h=document.documentElement,was=h.getAttribute('data-daylight');h.setAttribute('data-daylight','day');const m=document.querySelector('.appbar__tab[data-appnav="home"] .appbar__m'),c=m?getComputedStyle(m).content:'';if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return c;});
       check(scope,'on the white daytime bar the M is the owner\'s supplied dark M',/m-mark-dark\.png/.test(dayM),dayM);
     }
     /* OVER THE GLOBE THE TOP STAYS TRANSPARENT (owner, 2026-10-20): by day as by night the header is a fade over the Earth,
        never a solid band, and its words stay white; every World mode */
-    for(const mode of ['missions','travel','posts']){
+    for(const mode of ['travel','posts']){
       await page.click('.wt-world-modes [data-world-mode='+mode+']');
       const top=await page.evaluate(async()=>{const h=document.documentElement,was=h.getAttribute('data-daylight'),t=document.querySelector('.mn__top');
         const read=()=>{const c=getComputedStyle(t);return {color:c.backgroundColor,image:c.backgroundImage,brand:getComputedStyle(t.querySelector('.mn__brand small')||t).color};};
@@ -1439,9 +1570,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
       check(scope,'by day the top over the globe is the same transparent fade as by night ('+mode+')',
         top.day.color==='rgba(0, 0, 0, 0)'&&/linear-gradient/.test(top.day.image)&&top.day.image===top.night.image&&top.day.brand==='rgb(255, 255, 255)',top);
     }
-    await page.click('.wt-world-modes [data-world-mode=missions]');
-    check(scope,'published open missions populate the swipe deck and exclude clips',await page.locator('.mn-swipe__card').count()===1 && await page.textContent('.mn-swipe__count')===OPEN_MISSIONS.filter(m=>m.status==='open'&&m.kind!=='clip').length+' open missions');
-    await page.click('.wt-world-modes [data-world-mode=posts]');
+    await page.click('#mnFeedScope [data-feed-scope="global"]');
     const dims=await page.evaluate(()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,iw:innerWidth,body:document.body.className,bar:document.querySelector('.appbar')?.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>document.documentElement.clientWidth+1).slice(0,15).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])}));
     check(scope,'no horizontal page overflow', dims.sw===dims.cw,dims);
     check(scope,'phone stack / iPad landscape split', await page.evaluate(()=>{
@@ -1464,8 +1593,6 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     if(member) check(scope,'Live remains compact',await page.locator('#mnWorldLive').evaluate(e=>{const r=e.getBoundingClientRect();return r.width<=100 && getComputedStyle(e).backgroundImage==='none';}));
     await page.screenshot({path:join(OUT,scope+'.png')});
     check(scope,'redundant globe region filter is removed from the visible canvas',await page.locator('#huWorldFilters').isHidden());
-    check(scope,'mission status switch is available without category clutter',
-      await page.locator('.mn-swipe__filters [data-status="open"]').count()===1&&await page.locator('.mn-swipe__filters [data-status="completed"]').count()===1);
     if(device.viewport.width<600)await page.click('#huSearchToggle');
     await page.fill('#mnSearchInput','Mill');
     await page.waitForSelector('#mnSuggestRows [data-suggest="globe"]');
@@ -1501,14 +1628,19 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await globe.waitForFunction(()=>window.__huCountries?.().selected==='FR');
     check(scope,'country selection updates the region label',await page.textContent('#huRegionLabel')==='France');
     check(scope,'tapping a country narrows the one feed to it (Local) with no extra press',await page.getAttribute('[data-feed-scope=local]','aria-pressed')==='true');
-    await page.click('.wt-world-modes [data-world-mode=missions]');
-    await page.locator('.mn-swipe__card[data-mission="'+M1+'"] .mn-swipe__details').click();
-    await page.waitForSelector('#mnMissionDialog[open]');
-    check(scope,'Read full mission opens the canonical mission instructions',await page.textContent('#mnMissionTitle')===MISSIONS[0].title && (await page.textContent('#mnMissionDetail')).includes(MISSIONS[0].description));
-    await page.click('#mnMissionClose');
-    await page.waitForFunction(()=>!document.getElementById('mnWorldFocus').hidden && document.getElementById('huRegionLabel').textContent==='All regions',null,{timeout:5000}).catch(()=>{});
+    /* a pinned mission outside the picked country, found from the search, opens its card and lets the country go
+       (the swipe deck's Read full mission did this before 2026-11-17; the mission dialog is world-missions-guest's) */
+    if(device.viewport.width<600)await page.click('#huSearchToggle');
+    await page.fill('#mnSearchInput','Mill');
+    await page.waitForSelector('#mnSuggestRows [data-suggest="globe"]');
+    await page.click('#mnSuggestRows [data-suggest="globe"]');
+    await page.waitForFunction(()=>!document.getElementById('mnWorldFocus').hidden && document.getElementById('huRegionLabel').textContent==='All regions',null,{timeout:8000}).catch(()=>{});
     check(scope,'a mission card outside the selected country opens and clears the country filter',await page.isVisible('#mnWorldFocus') && await page.textContent('#huRegionLabel')==='All regions' && await globe.evaluate(()=>window.__huCountries().selected===null));
-    check(scope,'letting the tapped country go returns the feed to Global',await page.getAttribute('[data-feed-scope=global]','aria-pressed')==='true');
+    check(scope,'letting the tapped country go returns the feed to Global',await page.getAttribute('[data-feed-scope=global]','aria-pressed')==='true'&&(await page.textContent('[data-feed-scope=global]')).trim()==='Global');
+    /* the search's words narrow the feed as they are typed: clear them, so the feed below is the whole one feed again */
+    await page.evaluate(()=>{const i=document.getElementById('mnSearchInput');i.value='';i.dispatchEvent(new Event('input',{bubbles:true}));});
+    await page.waitForTimeout(400);
+    if(await page.getAttribute('#huSearchToggle','aria-expanded')==='true')await page.click('#huSearchToggle');
     check(scope,'mission card selects the real mission',/Clean up the Mill River/.test(await page.textContent('#mnWorldFocusTitle')));
     await page.click('#mnWorldFocusClear');
     await page.click('.wt-world-modes [data-world-mode=posts]');
@@ -1542,8 +1674,10 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     await page.locator('#mnFeed [data-post-id]').first().scrollIntoViewIfNeeded();
     await page.screenshot({path:join(OUT,scope+'-feed.png')});
     if(member){
-      await page.click('.wt-world-modes [data-world-mode=missions]');
-      await page.click('#mnWorldEup');
+      /* a member's Action Record (the Missions room) from their profile, where its door is */
+      await page.click('#mnMe');
+      await page.click('#mnMenu [data-mn-view="profile"]');
+      await page.click('#mnProfileRecord [data-mn-view="missions"]');
       await page.waitForSelector('#mnMissionsView:not([hidden])');
       check(scope,'leaving World restores normal page scrolling',await page.evaluate(()=>!document.documentElement.classList.contains('mn-world-on') && getComputedStyle(document.documentElement).overflowY!=='hidden'));
       await page.click('#mnToWorld');
@@ -1666,8 +1800,9 @@ if (runs('member-interactions')) {
   await page.waitForFunction(() => /River Keepers/.test(document.getElementById('mnSuggest')?.textContent || ''), null, { timeout: 8000 }).catch(() => {});
   const sug = await page.$$eval('#mnSuggest [data-suggest]', (a) => a.map((b) => b.getAttribute('data-suggest') + ':' + b.querySelector('span').textContent));
   check(scope, 'search suggests the pinned mission, an unpinned open mission (never a clip job), people and groups', sug.includes('globe:Clean up the Mill River') && sug.includes('mission:Write to the river council') && !sug.some((x) => /Clip the river song/.test(x)) && sug.includes('group:River Keepers') && sug.some((x) => /^people:Search people for/.test(x)) && sug.some((x) => /^groups:Groups about/.test(x)), sug);
-  const foot = await page.$$eval('#mnSuggest .mn__suggest-foot [data-mn-view]', (a) => a.map((b) => b.getAttribute('data-mn-view')));
-  check(scope, 'search keeps the full lists one tap away: all missions, people, groups', JSON.stringify(foot) === JSON.stringify(['missions', 'discover', 'groups']), foot);
+  const foot = await page.$$eval('#mnSuggest .mn__suggest-foot button', (a) => a.map((b) => b.getAttribute('data-mn-view') || 'feed:' + b.getAttribute('data-mn-feed')));
+  /* All missions is the feed's Equity Uprise tab (owner, 2026-11-17) */
+  check(scope, 'search keeps the full lists one tap away: all missions, people, groups', JSON.stringify(foot) === JSON.stringify(['feed:equity', 'discover', 'groups']), foot);
   const sugBox = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
   check(scope, 'the suggestions never push the page sideways', sugBox.sw === sugBox.cw, sugBox);
   await page.screenshot({ path: join(OUT, 'member-iphone-search-suggestions.png') });
@@ -2038,7 +2173,13 @@ for (const device of [DEVICES[0], DEVICES[2]]) {
 
 /* ---------- WORLD NEWS IN THE FEED (owner, 2026-10-15: "GDELT news as the feed … sprinkled into that. At a ratio to like one …
    from them."). One member post to one news item, for a guest and a member, free and with no session. ---------- */
-const feedSeq = (page) => page.$$eval('#mnFeed > article', (a) => a.map((x) => x.hasAttribute('data-news-id') ? 'n' : x.hasAttribute('data-post-id') ? 'p' : '?').join(''));
+const feedSeq = (page) => page.$$eval('#mnFeed > article', (a) => a.map((x) => x.hasAttribute('data-news-id') ? 'n' : x.hasAttribute('data-post-id') ? 'p' : x.hasAttribute('data-mission-post') ? 'm' : '?').join(''));
+/* MISSIONS AS POSTS (owner, 2026-11-17): the open missions join the stream, one after every three other items (newest first, each
+   once; js/world-mission-posts.js). This fixture has six open missions that are not clip jobs. Without them, the posts and the
+   news read exactly as before; with them, every mission sits after three other items while missions remain. */
+const OPEN_FEED_MISSIONS = 6;
+const withoutMissions = (seq) => seq.replace(/m/g, '');
+const missionsEveryThird = (seq) => { const others = withoutMissions(seq).length, n = Math.min(OPEN_FEED_MISSIONS, Math.floor(others / 3)); return new RegExp('^(?:[pn]{3}m){' + n + '}[pn]*' + 'm'.repeat(Math.max(0, Math.min(OPEN_FEED_MISSIONS - n, 20 - others - n))) + '$').test(seq); };
 const newsState = (page) => page.evaluate(() => {
   const credit = document.getElementById('mnNewsCredit'), a = credit && credit.querySelector('a'), more = document.getElementById('mnMore');
   const cards = [...document.querySelectorAll('#mnFeed [data-news-id]')];
@@ -2062,7 +2203,8 @@ if (runs('news-guest')) {
   const scope = 'news-guest';
   await page.waitForSelector('#mnFeed [data-news-id]', { timeout: 15000 });
   let st = await newsState(page), seq = await feedSeq(page);
-  check(scope, 'one member post to one news item, then the news carries on once the loaded posts run out', seq === 'pn'.repeat(5) + 'n'.repeat(15) && st.posts === 5 && st.news === 20, seq);
+  check(scope, 'one member post to one news item, then the news carries on once the loaded posts run out', withoutMissions(seq) === 'pn'.repeat(5) + 'n'.repeat(15) && st.posts === 5 && st.news === 20, seq);
+  check(scope, 'the open missions join that stream, one after every three other items, each once', missionsEveryThird(seq) && (seq.match(/m/g) || []).length === OPEN_FEED_MISSIONS, seq);
   const reads = req(world, 'GET', /^\/v1\/world\/news$/);
   check(scope, 'the mixed feed and geographic news read the Worker without a session', reads.some((r) => /[?&]limit=20$/.test(r.search)) && reads.length <= 2 && reads.every((r) => !r.auth && /[?&]limit=(?:20|50)$/.test(r.search)), reads);
   check(scope, 'the GDELT credit is one line over the feed, visible with the news, to the project in a new tab', st.credit && st.creditText === 'World news from The GDELT Project' && st.href === 'https://www.gdeltproject.org/' && st.target === '_blank' && /noopener/.test(st.rel) && /noreferrer/.test(st.rel), brief(st));
@@ -2136,7 +2278,7 @@ if (runs('news-guest')) {
   st = await newsState(page); seq = await feedSeq(page);
   const pageTwo = { posts: req(world, 'GET', /^\/v1\/mnet\/public-feed$/).filter((r) => /[?&]before=/.test(r.search)), news: req(world, 'GET', /^\/v1\/world\/news$/).filter((r) => /[?&]before=/.test(r.search)) };
   check(scope, 'Load more reads the next page of both: posts from theirs, news from its opaque cursor, sent back verbatim', st.posts === 8 && st.news === 30 && pageTwo.posts.length === 1 && pageTwo.news.length === 1 && /[?&]before=cur%7C20$/.test(pageTwo.news[0].search) && !pageTwo.news[0].auth, { st: { posts: st.posts, news: st.news }, pageTwo });
-  check(scope, 'after the next page the feed is still one for one, and Load more goes when both are done', seq === 'pn'.repeat(8) + 'n'.repeat(22) && !st.more, seq);
+  check(scope, 'after the next page the feed is still one for one, and Load more goes when both are done', withoutMissions(seq) === 'pn'.repeat(8) + 'n'.repeat(22) && missionsEveryThird(seq) && !st.more, seq);
   check(scope, 'no page errors', errors.length === 0, errors);
   await ctx.close();
 }
@@ -2146,7 +2288,7 @@ if (runs('news-member')) {
   const scope = 'news-member';
   await page.waitForSelector('#mnFeed [data-news-id]', { timeout: 15000 });
   const seq = await feedSeq(page), st = await newsState(page);
-  check(scope, 'a member gets the same: one of their posts, one news item, then the news carries on', seq === 'pn'.repeat(9) + 'n'.repeat(11), seq);
+  check(scope, 'a member gets the same: one of their posts, one news item, then the news carries on', withoutMissions(seq) === 'pn'.repeat(9) + 'n'.repeat(11) && missionsEveryThird(seq), seq);
   const reads = req(world, 'GET', /^\/v1\/world\/news$/), feed = req(world, 'GET', /^\/v1\/mnet\/feed$/);
   check(scope, 'the member\'s own feed carries the session; the news never does', feed.length > 0 && feed.every((r) => r.auth) && reads.length === 1 && !reads[0].auth, { feed: feed.length, reads });
   check(scope, 'the credit is there for a member too, and nothing scrolls sideways', st.credit && st.href === 'https://www.gdeltproject.org/' && st.sw === st.cw && st.cardsFit, brief(st));
@@ -2186,4 +2328,4 @@ server.close();
 const failed = results.filter((r) => !r.ok);
 await writeFile(join(OUT, 'world-screen-e2e.json'), JSON.stringify({ ran_at: new Date().toISOString(), passed: results.length - failed.length, failed: failed.length, results }, null, 2));
 console.log(`\n${results.length - failed.length}/${results.length} checks passed. Screenshots and report in ${OUT}`);
-process.exit(failed.length ? 1 : 0);
+process.exit(failed.length || results.length === 0 ? 1 : 0);

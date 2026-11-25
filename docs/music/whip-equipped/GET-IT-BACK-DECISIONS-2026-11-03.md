@@ -1,0 +1,19 @@
+# Get It Back — accepted fictional continuation decisions
+
+This narrowly scoped decision ledger records the new chapter direction alongside the unchanged base [Whip Equipped decisions](DECISIONS.md). Read it with [the authoritative guide](../WHIP-EQUIPPED-STORY.md), [CANON.json](CANON.json) and [the authored chapter](GET-IT-BACK-CROSSOVER-DRAFT-2026-11-03.md). It adds no raw recollection or real-person allegation.
+
+## Get It Back and Slasher — owner decisions, 2026-11-03
+
+- Add the title and Connecticut chapter direction **Get It Back** as a separate authored extension, not another name for Acworth's Repo Guy. [The draft](./GET-IT-BACK-CROSSOVER-DRAFT-2026-11-03.md) contains actual before/after scenes rather than only production instructions.
+- Directly after the new song slot, hand the plot to **Dave the Slasher / Dave the Warrior / The Slasher**. His controlling fictional outcome is recovery and reform, participation in a recovery program, survival, wealthy early retirement and a later move to Miami. Do not replace this with death, hopelessness or a supernatural cure. Exact program, dates and wealth provenance remain unassigned.
+- Preserve **Tazi J** and **Yaya** as owner-supplied fictional names, with roles unassigned. Do not assign them alleged actions from a private recollection or manufacture fuller identities. Do not merge this Slasher with original-pair Dave, either Rico, Gunny, Majid or another established role.
+- The standalone stories can share consequences and visual clues. A scuffed commercial replica and its repair ticket are newly written connective staging, not the original pair or evidence that a replica is cursed. The original-pair chain and pastor question remain untouched.
+- Supersede the exploratory Rico/Bridgeport visit and failed-attempt bridge. They were not adopted into current lore. No same-day Connecticut/Acworth transition is established.
+- Keep the supplied rental-search premise fictionalized and any crash report unconfirmed. The draft does not publish raw recollection, real identifiers, unnecessary accusations, alleged threats, ethnicity or employer details. Names in fiction do not turn invented dialogue into verified biography.
+- The current twelve-song core, existing chapter counts, final Dealer Plates → Tears Won't Fall → Salvage Title sequence, and measured timing totals remain unchanged. New audio, lyrics, duration, sequence position, exact shoe model and Hitman/PRIM3 casting are open. Additional draft dialogue counts are tracked separately from base screenplay totals.
+- Close this episode, after Slasher's reform, with a fictional Great Plates cooking/meal delivery scene at an invented shelter: a dispute between two unnamed adult women, ziti striking one woman's chest, and Slasher's closing reaction. Do not claim a real nonprofit or identifiable residents did this, or equate unhoused people with monsters. Keep his later retirement/Miami outcome and the separate Whip finale unchanged. Owner-reported cooking footage has not been reviewed; no asset or rights availability is established.
+- Recording consenting performers' own faces and lines for compositing is a proposed production method. The owner's assurance is recorded as such, not independent verification. Confirm applicable rights before capture, upload or likeness use; no voice cloning or actual media transmission is authorized by this continuity record.
+- Do not depict a real nonprofit or unhoused people as monsters. Any separate fictional outbreak and invented location remain an unadopted idea, not an event in these scenes.
+
+Owner-approved outcomes are canon direction in this review branch; the newly authored lines and staging remain editable adaptation. Repository preservation is not a merge, deployment, released recording, live mission or independent consent verification.
+

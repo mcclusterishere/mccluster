@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule the MNET character cast (not enabled by deploy; the seed is a no-op unless MCCLUSTER_CHARACTER_POSTS=live)
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=20min
+Persistent=true
+RandomizedDelaySec=120
+Unit=mccluster-core-character-posts.service
+[Install]
+WantedBy=timers.target
