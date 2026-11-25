@@ -8,7 +8,8 @@
     <RootNamespace>McClusterDesktop</RootNamespace>
     <PlatformTarget>x64</PlatformTarget>
     <Version>0.3.0</Version>
-    <Description>Windows desktop client for the live McCluster platform with a local compute panel</Description>
+    <Description>EquityNet: the McCluster compute network client for Windows</Description>
+    <Product>EquityNet</Product>
     <Company>McCluster Corp</Company>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Deterministic>true</Deterministic>

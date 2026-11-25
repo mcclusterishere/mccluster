@@ -1,6 +1,7 @@
 using System.Reflection;
-[assembly: AssemblyTitle("McCluster")]
-[assembly: AssemblyDescription("Windows desktop client for the live McCluster platform with a local compute panel and Proof Mode")]
+[assembly: AssemblyTitle("EquityNet")]
+[assembly: AssemblyDescription("EquityNet: the McCluster compute network client for Windows (devices as workers, local Ollama runs, signed receipts, Proof Mode)")]
 [assembly: AssemblyVersion("0.4.0.0")]
 [assembly: AssemblyFileVersion("0.4.0.0")]
-[assembly: AssemblyProduct("McCluster for Windows")]
+[assembly: AssemblyProduct("EquityNet")]
+[assembly: AssemblyCompany("McCluster Corp")]

@@ -1,5 +1,7 @@
 # McCluster for Windows preview 0.1.0
 
+> Historical record. The app is now named EquityNet (see README.md, "Name and compatibility"); this file describes the 0.1.0 preview as it shipped.
+
 Native Windows shell (WinForms/.NET Framework 4.8 + Microsoft WebView2 Evergreen), connected to the canonical live web app. The shell is not a PWA, alternate backend, embedded web copy, or compute-worker installer. It has no remote native-call surface, login bridge, updater, startup action, or admin requirement. The application is x64; NSIS uses its standard x86 setup stub to install that x64 package. The application permits top-level HTTPS navigation only on the canonical company, creator, and legacy World site hosts. DNS validation and exact host matching reject lookalikes, alternative ports, IP literals, URLs with credentials, backslashes, and unsafe schemes. Third-party sites open in the regular browser only after confirmation. Social sign-in falls back to the regular browser without copying tokens; the browser session does not sign into the Windows app. Canonical site routes and API fetches remain web-controlled. A signed release and device smoke test are pending.
 
 ## Build locally

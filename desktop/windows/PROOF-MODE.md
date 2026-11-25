@@ -1,11 +1,13 @@
 # Proof Mode: what the desktop proves, and what it refuses to claim
 
-Equity Fighter on Prime is the control desk; the OVH Core coordinates; devices execute. Proof Mode is the
+EquityNet on Prime is the control desk; the OVH Core coordinates; devices execute. Proof Mode is the
 part of the desktop that shows, for every job, exactly which device ran it, which model build, which
 attempt, how long, with which inputs it was allowed to read, and how a holder can check that later. It
 reuses the shapes of draft PRs #821 (node-pinned routes, device receipts in message metadata) and #823
 (`mccluster-job/1`, `mccluster-job-receipt/1`, canonical JSON, `inference.mode`) where the desktop has the
 facts.
+
+(Naming: this app is EquityNet, formerly "McCluster for Windows". "Equity Fighter" now refers to the separate chat layer that dispatches jobs to EquityNet workers.)
 
 ## Devices on this computer: Auto or Pick
 

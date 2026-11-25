@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-Build McCluster for Windows, its tests and its per-user installer with the compiler that ships inside Windows (no .NET SDK, no NuGet, no NSIS).
+Build EquityNet (the McCluster compute network client for Windows), its tests and its per-user installer with the compiler that ships inside Windows (no .NET SDK, no NuGet, no NSIS).
 
 .DESCRIPTION
 Uses C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe (the .NET Framework 4.8 C# 5 compiler)
@@ -11,14 +11,14 @@ against the framework's own assemblies and the Microsoft WebView2 managed assemb
 Order, tests first: the desktop tests (tests\DesktopTests.cs) must pass before the installer is built;
 the installer is compiled as dist\tests\Setup-candidate.exe, the installer tests
 (installer\tests\InstallerTests.cs) must pass against that candidate with its real embedded payload, and only
-then is it moved to dist\McCluster-Windows-x64-Setup-<version>.exe and SHA256SUMS.txt written. A dirty
+then is it moved to dist\EquityNet-Windows-x64-Setup-<version>.exe and SHA256SUMS.txt written. A dirty
 desktop\windows tree is refused unless -AllowDirty is passed; the manifest records built_from_clean_tree.
 Last, release-gate.ps1 checks Authenticode on every binary and the sums, writing dist\release-status.json;
 -Installer -Release -Thumbprint signs the app before hashing and embedding it, and signs the setup
 before testing the installed bytes. The build requires the signer's certificate and a timestamp.
 
 Outputs: dist\app\ (the app and the three WebView2 files), dist\payload.zip (deterministic: fixed entry
-timestamps, sorted entries, with manifest.json of SHA-256 hashes), dist\McCluster-Windows-x64-Setup-<version>.exe
+timestamps, sorted entries, with manifest.json of SHA-256 hashes), dist\EquityNet-Windows-x64-Setup-<version>.exe
 (the payload embedded as a resource), dist\SHA256SUMS.txt. The SDK project src\McClusterDesktop.csproj remains the
 ordinary build; both compile the same sources, which stay inside the C# 5 subset.
 #>
@@ -125,7 +125,7 @@ if ($Installer) {
   # 1. Deterministic payload: sorted entries, fixed timestamps, manifest of hashes.
   Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
   $payload = Join-Path $dist 'payload.zip'
-  foreach ($stale in @($payload, (Join-Path $dist 'SHA256SUMS.txt')) + (Get-ChildItem $dist -Filter 'McCluster-Windows-x64-Setup-*.exe' -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })) { if ($stale -and (Test-Path $stale)) { Remove-Item $stale -Force } }
+  foreach ($stale in @($payload, (Join-Path $dist 'SHA256SUMS.txt')) + (@(Get-ChildItem $dist -Filter 'EquityNet-Windows-x64-Setup-*.exe' -ErrorAction SilentlyContinue) + @(Get-ChildItem $dist -Filter 'McCluster-Windows-x64-Setup-*.exe' -ErrorAction SilentlyContinue) | ForEach-Object { $_.FullName })) { if ($stale -and (Test-Path $stale)) { Remove-Item $stale -Force } }
   $present = Get-ChildItem $OutDir -File | ForEach-Object { $_.Name }
   $extra = $present | Where-Object { $shipped -notcontains $_ }
   if ($extra) { throw "unexpected files in ${OutDir}: $($extra -join ', ')" }
@@ -151,7 +151,7 @@ if ($Installer) {
   $files = $names | ForEach-Object { Get-Item (Join-Path $OutDir $_) }
   $manifestFiles = @()
   foreach ($f in $files) { $manifestFiles += [ordered]@{ name = $f.Name; sha256 = (Get-FileHash $f.FullName).Hash.ToLowerInvariant(); size = $f.Length } }
-  $manifest = [ordered]@{ schema = 'mccluster-install-manifest/1'; product = 'McCluster'; version = $version; source_commit = $SourceCommit; built_from_clean_tree = $(if ($null -eq $sourceDirty) { $null } else { -not $sourceDirty }); built_with = 'in-box csc ' + (Get-Item $csc).VersionInfo.FileVersion; files = $manifestFiles }
+  $manifest = [ordered]@{ schema = 'mccluster-install-manifest/1'; product = 'EquityNet'; version = $version; source_commit = $SourceCommit; built_from_clean_tree = $(if ($null -eq $sourceDirty) { $null } else { -not $sourceDirty }); built_with = 'in-box csc ' + (Get-Item $csc).VersionInfo.FileVersion; files = $manifestFiles }
   $manifestJson = ($manifest | ConvertTo-Json -Depth 4)
   $fixed = [DateTimeOffset]::new(2026, 1, 1, 0, 0, 0, [TimeSpan]::Zero)
   $zipStream = [IO.File]::Open($payload, [IO.FileMode]::CreateNew)
@@ -187,7 +187,7 @@ if ($Installer) {
   & $instTestExe $candidate $OutDir
   if ($LASTEXITCODE -ne 0) { throw "installer tests failed with exit $LASTEXITCODE; no setup was written" }
 
-  $setupExe = Join-Path $dist "McCluster-Windows-x64-Setup-$version.exe"
+  $setupExe = Join-Path $dist "EquityNet-Windows-x64-Setup-$version.exe"
   Move-Item $candidate $setupExe -Force
   $sums = Join-Path $dist 'SHA256SUMS.txt'
   "$((Get-FileHash $setupExe).Hash.ToLowerInvariant())  $(Split-Path $setupExe -Leaf)`n$((Get-FileHash $payload).Hash.ToLowerInvariant())  payload.zip" | Set-Content $sums -Encoding ascii

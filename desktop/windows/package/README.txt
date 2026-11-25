@@ -1,8 +1,9 @@
-McCluster for Windows __VERSION__ (private x64 build)
+EquityNet __VERSION__ (private x64 build), by McCluster Corp
 
 What it is
-  A standalone Windows desktop window for https://mccluster.org/ with a
-  native Compute panel (Proof Mode). It loads the live service, not an
+  EquityNet is the McCluster compute network client (formerly "McCluster
+  for Windows"): a standalone Windows desktop window for
+  https://mccluster.org/ with a native Compute panel (Proof Mode). It loads the live service, not an
   offline copy. It does not enroll this computer as an inference worker
   and adds no background services.
 
@@ -31,6 +32,6 @@ Proof Mode
   signed by this device's own key; see PROOF-MODE.md in the source.
 
 Remove
-  Close the app, then remove McCluster from Windows Installed apps, or run
+  Close the app, then remove EquityNet from Windows Installed apps, or run
   Uninstall.exe in the install folder. Uninstall keeps the WebView2
   profile, jobs, receipts and keys under %LOCALAPPDATA%\McClusterDesktop.

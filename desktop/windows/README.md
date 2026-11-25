@@ -1,8 +1,39 @@
-# McCluster for Windows 0.4.0: the live site in a desktop window, a local compute panel, Proof Mode, Contribute
+# EquityNet 0.4.0 (Windows): the McCluster compute network client — local compute panel, Proof Mode, Contribute, the live site in a desktop window
+
+EquityNet is the compute/network layer of McCluster: devices as workers, local Qwen via Ollama on Prime,
+signed receipts per job, pause/revoke device controls. Published by McCluster Corp; formerly "McCluster for
+Windows". See [Name and compatibility](#name-and-compatibility-equitynet-rename).
 
 Status: built and run on one owner Windows device (the in-box compiler, `build-inbox.ps1`). The SDK
 project (`src/McClusterDesktop.csproj`) is kept in step but is **not built on this branch** (no .NET SDK on
 the build device). A signed release is not claimed. What is and is not verified is listed at the end.
+
+## Name and compatibility (EquityNet rename)
+
+This app is **EquityNet**, published by McCluster Corp: the compute and network layer where your own devices
+are workers, Qwen runs locally through Ollama on Prime, every job gets a signed receipt, and devices can be
+paused or revoked. It was called "McCluster for Windows" (and, informally, "Equity Fighter") up to 0.4.0.
+"Equity Fighter" now refers to the separate chat layer that dispatches to EquityNet workers; it is not this app.
+
+Renamed: window and dialog titles, the assembly title/product (company McCluster Corp), the installer's
+prompts and Installed apps entry (DisplayName `EquityNet`, Publisher `McCluster Corp`), the Start Menu
+shortcut (`EquityNet.lnk`), the manifest product (`EquityNet`) and the setup file
+(`EquityNet-Windows-x64-Setup-<version>.exe`).
+
+Kept on purpose, so existing installs, keys, receipts and contracts keep working (do not rename without a
+migration):
+
+| Kept identifier | Why |
+| --- | --- |
+| `%LOCALAPPDATA%\McClusterDesktop\` (`App`, `Profile`, `staging\profile.json`, `jobs`, `keys`, receipts) | install folder, WebView2 profile, job store and the DPAPI-protected device key live here; renaming would orphan keys and receipts |
+| `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop` | the same key lets an EquityNet setup upgrade a 0.4.0 install in place and keeps Installed apps to one entry |
+| `McCluster.exe` | payload manifests, release gate and installed shortcuts point at it |
+| receipt schema `mccluster-desktop-receipt/2`, `mccluster-job/1`, `mccluster-job-receipt/1`, `mccluster-install-manifest/1`, `mccluster-install-receipt/1` | signed and verified data; the canonical JSON vector is pinned in the tests |
+| Core API endpoints (`api.mccluster.org`, `compute.mccluster.org`), the node agent (`mccluster-node`, `%ProgramData%\mccluster-node`, `MCCLUSTER_NODE_*`) | server and job contracts |
+| C# namespace `McClusterDesktop`, `src/McClusterDesktop.csproj`, assembly identity `McCluster.Desktop`, directory `desktop/windows/` | code and CI paths only; no user-visible effect |
+
+Upgrade from 0.4.0 or earlier: the setup writes into the same folder and key, adds `EquityNet.lnk` and
+deletes the old `McCluster Desktop.lnk`; uninstall removes either shortcut.
 
 ## What it is
 

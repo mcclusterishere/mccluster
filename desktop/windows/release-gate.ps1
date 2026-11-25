@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-Release gate for McCluster for Windows: every first-party binary and the setup must carry a valid,
+Release gate for EquityNet (McCluster compute network client for Windows): every first-party binary and the setup must carry a valid,
 timestamped Authenticode signature chained to a publicly trusted root, and SHA256SUMS.txt must match.
 
 .DESCRIPTION
@@ -27,7 +27,7 @@ if ($Sign -or $AllowUntimestamped) { throw 'Release verification requires timest
 if (-not $Dist) { $Dist = Join-Path $here 'dist' }
 if (-not $AppDir) { $AppDir = Join-Path $Dist 'app' }
 . (Join-Path $here 'release-payload.ps1')
-$setups = @(Get-ChildItem -LiteralPath $Dist -File -Filter 'McCluster-Windows-x64-Setup-*.exe')
+$setups = @(Get-ChildItem -LiteralPath $Dist -File -Filter 'EquityNet-Windows-x64-Setup-*.exe')
 if ($setups.Count -ne 1) { throw "Expected exactly one setup in $Dist; run build-inbox.ps1 -Installer first" }
 $setup = $setups[0]
 

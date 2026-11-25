@@ -1,9 +1,11 @@
 ﻿Unicode True
 RequestExecutionLevel user
 ManifestDPIAware True
-Name "McCluster"
-Caption "McCluster for Windows"
-OutFile "..\dist\McCluster-Windows-x64-Setup-0.3.0.exe"
+; EquityNet (published by McCluster Corp). Compatibility: the install folder, McCluster.exe and the
+; Uninstall\McClusterDesktop key keep their pre-rename names so this setup upgrades an existing install in place.
+Name "EquityNet"
+Caption "EquityNet"
+OutFile "..\dist\EquityNet-Windows-x64-Setup-0.3.0.exe"
 InstallDir "$LOCALAPPDATA\McClusterDesktop\App"
 SetCompress auto
 SetCompressor /SOLID lzma
@@ -11,18 +13,19 @@ ShowInstDetails show
 ShowUninstDetails show
 
 VIProductVersion "0.3.0.0"
-VIAddVersionKey /LANG=1033 "ProductName" "McCluster for Windows"
-VIAddVersionKey /LANG=1033 "FileDescription" "McCluster for Windows setup"
+VIAddVersionKey /LANG=1033 "ProductName" "EquityNet"
+VIAddVersionKey /LANG=1033 "FileDescription" "EquityNet setup"
+VIAddVersionKey /LANG=1033 "CompanyName" "McCluster Corp"
 VIAddVersionKey /LANG=1033 "FileVersion" "0.3.0.0"
 VIAddVersionKey /LANG=1033 "ProductVersion" "0.3.0.0"
-VIAddVersionKey /LANG=1033 "OriginalFilename" "McCluster-Windows-x64-Setup-0.3.0.exe"
+VIAddVersionKey /LANG=1033 "OriginalFilename" "EquityNet-Windows-x64-Setup-0.3.0.exe"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2026 McCluster Corp"
 
 !include "MUI2.nsh"
 !include "x64.nsh"
 
-!define MUI_WELCOMEPAGE_TITLE "Install McCluster"
-!define MUI_WELCOMEPAGE_TEXT "McCluster opens your live site in a Windows desktop window. This setup installs the app for the current Windows user and adds a Start menu shortcut. It does not install a worker, add a startup task, or request administrator access."
+!define MUI_WELCOMEPAGE_TITLE "Install EquityNet"
+!define MUI_WELCOMEPAGE_TEXT "EquityNet, the McCluster compute network client, opens your live site in a Windows desktop window with a local compute panel. This setup installs the app for the current Windows user and adds a Start menu shortcut. It does not install a worker, add a startup task, or request administrator access."
 !define MUI_ABORTWARNING
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_INSTFILES
@@ -42,7 +45,7 @@ Function .onInit
   ${EndIf}
 FunctionEnd
 
-Section "McCluster" SEC_APP
+Section "EquityNet" SEC_APP
   SetShellVarContext current
   SetOutPath "$INSTDIR"
   File "app\McCluster.exe"
@@ -52,8 +55,10 @@ Section "McCluster" SEC_APP
   File "README.txt"
   File "MICROSOFT-WEBVIEW2-LICENSE.txt"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
-  CreateShortCut "$SMPROGRAMS\McCluster Desktop.lnk" "$INSTDIR\McCluster.exe"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayName" "McCluster"
+  Delete "$SMPROGRAMS\McCluster Desktop.lnk"
+  CreateShortCut "$SMPROGRAMS\EquityNet.lnk" "$INSTDIR\McCluster.exe"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayName" "EquityNet"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "Publisher" "McCluster Corp"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayVersion" "0.3.0"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayIcon" "$INSTDIR\McCluster.exe"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "UninstallString" '$\"$INSTDIR\Uninstall.exe$\"'
@@ -69,6 +74,7 @@ FunctionEnd
 
 Section "Uninstall"
   SetShellVarContext current
+  Delete "$SMPROGRAMS\EquityNet.lnk"
   Delete "$SMPROGRAMS\McCluster Desktop.lnk"
   Delete "$INSTDIR\McCluster.exe"
   Delete "$INSTDIR\Microsoft.Web.WebView2.Core.dll"

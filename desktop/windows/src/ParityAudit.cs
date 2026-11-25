@@ -55,7 +55,7 @@ namespace McClusterDesktop
             this.outDir = outDir;
             this.width = width;
             this.height = height;
-            Text = "McCluster parity audit";
+            Text = "EquityNet parity audit";
             FormBorderStyle = FormBorderStyle.None;
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.Manual;

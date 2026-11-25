@@ -2,7 +2,7 @@
 
 Produced 2026-11-23 by a parallel inventory (one agent per dependency, one independent verifier each) from primary sources; verifier disagreement and unverified items are listed at the end. Full per-item evidence (URLs, notes) stays in the owner's evidence packet, not in this public repository. Not legal advice.
 
-# Third-party licence inventory — McCluster Desktop (Windows)
+# Third-party licence inventory — EquityNet (Windows; formerly McCluster Desktop / McCluster for Windows)
 
 Draft for `desktop/windows/LICENSES.md` and `THIRD-PARTY-NOTICES`. Inventory date: 2026-11-22. Every entry below was read from the primary licence source at the pinned revision by the inventory pass and independently re-checked by a verifier; the "Verifier agreed" column records that result. Not legal advice.
 

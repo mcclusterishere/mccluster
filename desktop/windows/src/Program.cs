@@ -260,7 +260,7 @@ namespace McClusterDesktop
 
         internal DesktopWindow()
         {
-            Text = "McCluster";
+            Text = "EquityNet";
             Width = 1350;
             Height = 870;
             MinimumSize = new Size(520, 570);
@@ -359,15 +359,15 @@ namespace McClusterDesktop
             {
                 if (IsDisposed) return;
                 store.Log("webview2_runtime_missing", null);
-                MessageBox.Show(this, "The Microsoft Edge WebView2 Runtime is missing. Install the official Evergreen Runtime from Microsoft, then reopen McCluster. Local jobs in the Compute panel still work.",
+                MessageBox.Show(this, "The Microsoft Edge WebView2 Runtime is missing. Install the official Evergreen Runtime from Microsoft, then reopen EquityNet. Local jobs in the Compute panel still work.",
                     "Microsoft WebView2 required", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 store.Log("webview2_error", "error", ex.GetType().Name + ": " + ex.Message);
                 if (!IsDisposed)
-                    MessageBox.Show(this, "McCluster could not open its WebView2 session (" + ex.GetType().Name + "). You can still use Open in browser and the Compute panel.",
-                        "McCluster", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(this, "EquityNet could not open its WebView2 session (" + ex.GetType().Name + "). You can still use Open in browser and the Compute panel.",
+                        "EquityNet", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             await status;
         }
@@ -411,7 +411,7 @@ namespace McClusterDesktop
             noticePending = true;
             BeginInvoke((Action)delegate
             {
-                try { if (!IsDisposed) MessageBox.Show(this, text, "McCluster", MessageBoxButtons.OK, MessageBoxIcon.Information); }
+                try { if (!IsDisposed) MessageBox.Show(this, text, "EquityNet", MessageBoxButtons.OK, MessageBoxIcon.Information); }
                 finally { noticePending = false; }
             });
         }

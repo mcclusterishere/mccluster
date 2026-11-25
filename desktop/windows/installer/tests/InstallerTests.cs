@@ -75,6 +75,12 @@ internal static class InstallerTests
             Assert(manifest.Files.Exists(f => f.Name == "McCluster.exe"), "manifest names McCluster.exe");
             Assert(manifest.Version.Length > 0 && manifest.Version != "0.0.0", "manifest carries a version");
 
+            Assert(manifest.Product == "EquityNet", "manifest names the product EquityNet");
+
+            // Upgrade from a pre-rename install: a leftover "McCluster Desktop.lnk" is replaced by "EquityNet.lnk".
+            Directory.CreateDirectory(startMenu);
+            File.WriteAllText(Path.Combine(startMenu, "McCluster Desktop.lnk"), "legacy shortcut placeholder");
+
             // Silent install into the throwaway root.
             RunResult r = Run(setup, installArgs, 120000);
             Assert(r.ExitCode == 0, "install exits 0 (was " + r.ExitCode + "; stderr: " + r.StdErr.Trim() + ")");
@@ -98,11 +104,13 @@ internal static class InstallerTests
             foreach (object o in Json.List(receipt, "files")) receiptFiles.Add(Convert.ToString(o));
             Assert(receiptFiles.Contains("Uninstall.exe"), "receipt lists Uninstall.exe (the uninstaller's self-removal depends on it)");
             foreach (InstallerFile f in manifest.Files) Assert(receiptFiles.Contains(f.Name), "receipt lists " + f.Name);
-            Assert(File.Exists(Path.Combine(startMenu, "McCluster Desktop.lnk")), "Start Menu shortcut created");
+            Assert(File.Exists(Path.Combine(startMenu, "EquityNet.lnk")), "Start Menu shortcut created");
+            Assert(!File.Exists(Path.Combine(startMenu, "McCluster Desktop.lnk")), "pre-rename shortcut removed on upgrade");
             using (RegistryKey key = Registry.CurrentUser.OpenSubKey(regKey))
             {
                 Assert(key != null, "uninstall registry key written");
-                Assert((string)key.GetValue("DisplayName") == "McCluster", "DisplayName");
+                Assert((string)key.GetValue("DisplayName") == "EquityNet", "DisplayName");
+                Assert((string)key.GetValue("Publisher") == "McCluster Corp", "Publisher");
                 Assert((string)key.GetValue("DisplayVersion") == manifest.Version, "DisplayVersion");
                 Assert(((string)key.GetValue("InstallLocation")).TrimEnd('\\').Equals(app.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase), "InstallLocation");
                 Assert(((string)key.GetValue("UninstallString")).Contains("Uninstall.exe"), "UninstallString");
@@ -123,7 +131,7 @@ internal static class InstallerTests
             Assert(r.ExitCode == 0, "uninstall exits 0 (was " + r.ExitCode + "; stderr: " + r.StdErr.Trim() + ")");
             foreach (InstallerFile f in manifest.Files) Assert(!File.Exists(Path.Combine(app, f.Name)), "removed: " + f.Name);
             Assert(!File.Exists(receiptPath), "receipt removed");
-            Assert(!File.Exists(Path.Combine(startMenu, "McCluster Desktop.lnk")), "shortcut removed");
+            Assert(!File.Exists(Path.Combine(startMenu, "EquityNet.lnk")), "shortcut removed");
             Assert(Registry.CurrentUser.OpenSubKey(regKey) == null, "registry key removed");
             Assert(WaitUntil(() => !File.Exists(Path.Combine(app, "Uninstall.exe")), 15000), "uninstaller removed itself after exit");
             Assert(File.Exists(foreign), "foreign file kept");

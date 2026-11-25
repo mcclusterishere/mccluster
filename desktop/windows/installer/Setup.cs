@@ -12,7 +12,7 @@ using Microsoft.Win32;
 
 namespace McClusterDesktop
 {
-    // Self-contained per-user installer and uninstaller for McCluster for Windows, built with the
+    // Self-contained per-user installer and uninstaller for EquityNet (published by McCluster Corp), built with the
     // in-box compiler so the installer is reproducible wherever the app is. It mirrors
     // package/mccluster.nsi: user scope, %LOCALAPPDATA%\McClusterDesktop\App, a Start Menu
     // shortcut, an HKCU uninstall entry, no admin, no services, no startup task. The payload is an
@@ -29,7 +29,7 @@ namespace McClusterDesktop
     internal sealed class InstallerManifest
     {
         public string Schema = "mccluster-install-manifest/1";
-        public string Product = "McCluster";
+        public string Product = "EquityNet";
         public string Version = "0.0.0";
         public string SourceCommit;
         public List<InstallerFile> Files = new List<InstallerFile>();
@@ -74,7 +74,11 @@ namespace McClusterDesktop
 
     internal static class SetupProgram
     {
+        // Compatibility: the uninstall key, the install folder (%LOCALAPPDATA%\McClusterDesktop\App) and
+        // McCluster.exe keep their pre-rename names so an EquityNet setup upgrades an existing install in place.
         private const string DefaultRegistryKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop";
+        internal const string ShortcutName = "EquityNet.lnk";
+        internal const string LegacyShortcutName = "McCluster Desktop.lnk";
         private const string AllowedRegistryPrefix = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\";
         private const long MaxEntryBytes = 256L * 1024 * 1024;
         private static readonly HashSet<string> ReservedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" };
@@ -100,7 +104,7 @@ namespace McClusterDesktop
             {
                 if (!InsideUserProfile(root))
                 {
-                    Report(silent, "McCluster installs per user only. Refusing to touch a folder outside your user profile: " + root, MessageBoxIcon.Warning);
+                    Report(silent, "EquityNet installs per user only. Refusing to touch a folder outside your user profile: " + root, MessageBoxIcon.Warning);
                     return 3;
                 }
                 if (uninstall) return Uninstall(root, startMenu, registryKey, silent);
@@ -115,7 +119,7 @@ namespace McClusterDesktop
 
         private static void Report(bool silent, string message, MessageBoxIcon icon)
         {
-            if (!silent) MessageBox.Show(message, "McCluster setup", MessageBoxButtons.OK, icon);
+            if (!silent) MessageBox.Show(message, "EquityNet setup", MessageBoxButtons.OK, icon);
             else Console.Error.WriteLine(message);
         }
 
@@ -158,8 +162,8 @@ namespace McClusterDesktop
                 using (var reader = new StreamReader(manifestEntry.Open(), Encoding.UTF8)) manifest = InstallerManifest.Parse(reader.ReadToEnd());
                 if (!silent)
                 {
-                    DialogResult answer = MessageBox.Show("Install McCluster for Windows " + manifest.Version + " for the current user?\n\nFolder: " + root + "\nAdds a Start Menu shortcut. No administrator rights, no services, no startup task. The app opens the live site; it does not enrol this computer as a worker.",
-                        "Install McCluster", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
+                    DialogResult answer = MessageBox.Show("Install EquityNet " + manifest.Version + " for the current user?\n\nFolder: " + root + "\nAdds a Start Menu shortcut. No administrator rights, no services, no startup task. The app opens the live site; it does not enrol this computer as a worker.",
+                        "Install EquityNet", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
                     if (answer != DialogResult.OK) return 2;
                 }
                 Directory.CreateDirectory(root);
@@ -183,11 +187,16 @@ namespace McClusterDesktop
                 File.Copy(exe, Path.Combine(root, "Uninstall.exe"), true);
                 written.Add("Uninstall.exe");
                 Directory.CreateDirectory(startMenu);
-                string shortcut = Path.Combine(startMenu, "McCluster Desktop.lnk");
+                string shortcut = Path.Combine(startMenu, ShortcutName);
                 CreateShortcut(shortcut, Path.Combine(root, "McCluster.exe"), root);
+                // Upgrade from a pre-rename install (0.4.0 and earlier): same folder and uninstall key,
+                // only the Start Menu shortcut name changed, so the old one is removed here.
+                string legacyShortcut = Path.Combine(startMenu, LegacyShortcutName);
+                if (File.Exists(legacyShortcut)) File.Delete(legacyShortcut);
                 using (RegistryKey key = Registry.CurrentUser.CreateSubKey(registryKey))
                 {
-                    key.SetValue("DisplayName", "McCluster");
+                    key.SetValue("DisplayName", "EquityNet");
+                    key.SetValue("Publisher", "McCluster Corp");
                     key.SetValue("DisplayVersion", manifest.Version);
                     key.SetValue("DisplayIcon", Path.Combine(root, "McCluster.exe"));
                     key.SetValue("UninstallString", "\"" + Path.Combine(root, "Uninstall.exe") + "\"");
@@ -210,7 +219,7 @@ namespace McClusterDesktop
                 receipt["sha256"] = hashes;
                 File.WriteAllText(Path.Combine(root, "install-receipt.json"), Json.Pretty(receipt), new UTF8Encoding(false));
             }
-            if (!silent) MessageBox.Show("McCluster " + manifest.Version + " is installed. Open it from the Start Menu.", "McCluster setup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (!silent) MessageBox.Show("EquityNet " + manifest.Version + " is installed. Open it from the Start Menu.", "EquityNet setup", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return 0;
         }
 
@@ -221,14 +230,14 @@ namespace McClusterDesktop
             object receipt = Json.Parse(File.ReadAllText(receiptPath));
             if (!silent)
             {
-                if (MessageBox.Show("Remove McCluster from " + root + "? Your WebView2 profile, local jobs and receipts under McClusterDesktop are kept.", "Uninstall McCluster", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return 2;
+                if (MessageBox.Show("Remove EquityNet from " + root + "? Your WebView2 profile, local jobs, receipts and device keys under McClusterDesktop are kept.", "Uninstall EquityNet", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return 2;
             }
             // The receipt is data written by an earlier run; every path and key it names is checked
             // against what this uninstaller is allowed to remove before it is used.
             // The shortcut: only a .lnk inside this user's profile, else the default location.
             string shortcut = Json.Str(receipt, "start_menu_shortcut");
             if (shortcut == null || !shortcut.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) || !InsideUserProfile(shortcut))
-                shortcut = Path.Combine(startMenu, "McCluster Desktop.lnk");
+                shortcut = Path.Combine(startMenu, ShortcutName);
             // The registry key: only one this installer could have written (the uninstall hive or the test hive).
             string regFromReceipt = Json.Str(receipt, "registry_key");
             if (regFromReceipt != null && regFromReceipt.StartsWith("HKCU\\", StringComparison.OrdinalIgnoreCase))
@@ -250,6 +259,12 @@ namespace McClusterDesktop
                     if (File.Exists(path)) File.Delete(path);
                 }
             if (File.Exists(shortcut)) File.Delete(shortcut);
+            // A receipt written before the rename names the old shortcut; also clear whichever is left.
+            foreach (string name in new[] { ShortcutName, LegacyShortcutName })
+            {
+                string candidate = Path.Combine(startMenu, name);
+                if (File.Exists(candidate)) File.Delete(candidate);
+            }
             try { Registry.CurrentUser.DeleteSubKeyTree(registryKey, false); } catch (Exception) { }
             File.Delete(receiptPath);
             // Remove ourselves after exit through a script file (paths never go on a command line),
@@ -261,7 +276,7 @@ namespace McClusterDesktop
                 Process.Start(new ProcessStartInfo("cmd.exe", "/c \"" + script + "\"") { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden });
             }
             if (deferred.Count == 0) { try { if (Directory.GetFileSystemEntries(root).Length == 0) Directory.Delete(root); } catch (Exception) { } }
-            if (!silent) MessageBox.Show("McCluster was removed.", "Uninstall McCluster", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (!silent) MessageBox.Show("EquityNet was removed.", "Uninstall EquityNet", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return 0;
         }
 
@@ -274,7 +289,7 @@ namespace McClusterDesktop
             Type linkType = link.GetType();
             linkType.InvokeMember("TargetPath", BindingFlags.SetProperty, null, link, new object[] { target });
             linkType.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, link, new object[] { workingDirectory });
-            linkType.InvokeMember("Description", BindingFlags.SetProperty, null, link, new object[] { "McCluster for Windows" });
+            linkType.InvokeMember("Description", BindingFlags.SetProperty, null, link, new object[] { "EquityNet by McCluster Corp" });
             linkType.InvokeMember("Save", BindingFlags.InvokeMethod, null, link, null);
         }
 

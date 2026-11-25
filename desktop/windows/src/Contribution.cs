@@ -28,7 +28,7 @@ namespace McClusterDesktop
         // The consent text the contract requires, shown before anything is enrolled. Plain words, exactly:
         // what runs, which workload class, the limits, what is never sent, and that Pause and Revoke are one click away.
         internal const string ConsentText =
-            "Contributing makes this device a compute node of the McCluster fabric.\n" +
+            "Contributing makes this device a compute node of EquityNet, the McCluster compute network.\n" +
             "What runs here: only the approved model class (the local Ollama models this device's tier names), through the node adapter on loopback; nothing else is installed by enabling this.\n" +
             "Which work: workload class public only, by default for a community device: open or synthetic inputs, never another owner's data. Private work reaches a device only when its enrolment trust is owned by the requesting account or that account explicitly permits it; that is a claim-time fence on the Core, not a promise made here.\n" +
             "Your limits: idle only, AC power only, max concurrency (1 in the pilot), CPU busy ceiling, battery floor and a thermal limit (best effort: unsupported on this device when no thermal zone can be read, never silently off). The node agent enforces them before every claim and reports them in every heartbeat.\n" +
