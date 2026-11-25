@@ -95,6 +95,9 @@ it, like Control already polls `core.ai.turn.get`.
   {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"dispatch.turn",
    "arguments":{"org_id":"house","message_id":"<new uuid>","message":"plan the music catalogue audit"}}}
   ```
+* **Equity Fighter** (chat layer, `packages/equity-fighter`, `docs/control-plane/EQUITY-FIGHTER.md`): Slack and
+  Telegram messages from the paired owner go to `dispatch.turn` with a `message_id` derived from the platform event
+  id; `dispatch.get` relays results; `go` calls `dispatch.execute` after Control approval.
 * **Control**: not wired into the UI yet. The Control chat can call the same three tools through its existing
   `callCoreTool` (`js/control-room-v2.js`), passing its current `thread_id` so chat answers stay in the thread.
 
