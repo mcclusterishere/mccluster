@@ -4,6 +4,15 @@
   'use strict';window.CR=window.CR||{};
   var sections=[['overview','Overview','The essential signals'],['audience','Audience','Reach, return visits and behavior'],['identity','Journeys','From first visit to account'],['content','Content','Music, attention and engagement'],['action','Action & business','Participation, proof and commerce'],['intelligence','World intelligence','Explore connected sources'],['cameras','Cameras','Catalog and verified image coverage'],['adaptive','Adaptive','Decisions and experiments'],['forensics','Site health','Errors and interrupted journeys'],['inventory','Data explorer','Dataset health, connections and fields'],['setup','Setup','Properties and collection']];
   var chapters=[['overview','Overview',['overview']],['audience','Audience',['audience','identity']],['content','Content',['content','adaptive']],['action','Action & business',['action']],['intelligence','World intelligence',['intelligence','cameras']],['inventory','Data & setup',['inventory','forensics','setup']]];
+  var baseChapters=chapters.slice(), defaultDetails={};
+  function configure(layout){
+    if(layout==null){chapters.splice.apply(chapters,[0,chapters.length].concat(baseChapters));defaultDetails={};return;}
+    if(!window.CR.analyticsLayout)throw Error('Analytics layout validator unavailable');
+    var value=window.CR.analyticsLayout.validate(layout);
+    chapters.splice.apply(chapters,[0,chapters.length].concat(value.order.map(function(id){return baseChapters.find(function(c){return c[0]===id;});})));
+    defaultDetails=value.defaults;
+  }
+  function target(group){return defaultDetails[group[0]]||group[0];}
   function chapter(id){return chapters.find(function(c){return c[2].includes(id);})||chapters[0];}
   var reads=[['hourly','Hourly traffic','audience'],['daily','Daily traffic','audience'],['totals','Audience totals','audience'],['business','Accounts, music & sales','action',true],['pages','Page engagement','audience'],['sources','Referrers','audience'],['countries','Top countries','audience'],['geo','Globe coverage','overview'],['intel','Intelligence evidence','intelligence',true],['networks','Network breakdown','audience'],['contentEvents','Media events','content'],['content','Track activity','content'],['acquisition','Acquisition','audience'],['paths','Page transitions','audience'],['funnel','Stage activity','identity',true],['identity','Signup journeys','identity',true],['audienceScience','Listening behavior','audience',true],['experience','Adaptive decisions','adaptive',true],['countryTotals','Country visitors','overview'],['visitors','Returning visitors','audience',true],['flows','Session flows','audience',true],['errors','Site errors & friction','forensics',true],['coverage','Stored record counts','inventory',true],['missions','Mission assignments','action',true]];
   function applicable(S){return reads.filter(function(r){return (!r[3]||S.site==='__first_party__')&&(r[0]!=='hourly'||S.rangeId==='24h')&&(r[0]!=='daily'||S.rangeId!=='24h');});}
@@ -16,7 +25,7 @@
   function entry(id){return sections.find(function(s){return s[0]===id;})||sections[0];}
   function render(S,content){
     var item=entry(S.section),group=chapter(S.section),index=chapters.indexOf(group);
-    return '<div class="cad-deck"><nav class="cad-tabs" role="tablist" aria-label="Analytics views">'+chapters.map(function(s){var on=s===group;return '<button type="button" role="tab" id="cad-tab-'+s[0]+'" aria-controls="cad-panel" aria-selected="'+on+'" tabindex="'+(on?'0':'-1')+'" data-cra-sec="'+s[0]+'">'+s[1]+'</button>';}).join('')+'</nav>'+
+    return '<div class="cad-deck"><nav class="cad-tabs" role="tablist" aria-label="Analytics views">'+chapters.map(function(s){var on=s===group;return '<button type="button" role="tab" id="cad-tab-'+s[0]+'" aria-controls="cad-panel" aria-selected="'+on+'" tabindex="'+(on?'0':'-1')+'" data-cra-sec="'+target(s)+'">'+s[1]+'</button>';}).join('')+'</nav>'+
       '<div class="cad-chapter"><div><small>'+String(index+1).padStart(2,'0')+' / '+chapters.length+'</small><h2>'+item[1]+'</h2><p>'+item[2]+'</p></div><div class="cad-arrows"><button type="button" data-cad-step="-1" aria-label="Previous analytics view"'+(index===0?' disabled':'')+'>←</button><button type="button" data-cad-step="1" aria-label="Next analytics view"'+(index===chapters.length-1?' disabled':'')+'>→</button></div></div>'+
       (group[2].length>1?'<nav class="cu-inventory-tabs cad-local-views" aria-label="'+group[1]+' detail views">'+group[2].map(function(id){return '<button type="button" data-cra-sec="'+id+'" aria-pressed="'+(id===S.section)+'">'+entry(id)[1]+'</button>';}).join('')+'</nav>':'')+'<section class="cad-body" id="cad-panel" role="tabpanel" tabindex="0" aria-labelledby="cad-tab-'+group[0]+'" data-cu-details>'+content+'</section>'+
       '<footer class="cad-footer"><span role="status">'+(S.loading?'Updating…':Object.keys(S.errors||{}).length?'Some reads unavailable':Object.keys(S.quality||{}).length?'Some measurements incomplete':S.updatedAt?'Updated '+esc(new Date(S.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})):'Ready')+'</span><button type="button" data-cad-health aria-label="Inspect data connections">Data status</button><button type="button" data-cad-refresh'+(S.loading?' disabled':'')+'>Refresh</button><button type="button" data-cad-auto aria-pressed="'+!!S.autoRefresh+'">Auto · '+(S.autoRefresh?'60s':'off')+'</button><span class="cad-swipe-hint">Swipe to change view</span></footer></div>';
@@ -37,7 +46,7 @@
       (saved.controls||[]).forEach(function(c){var el=document.getElementById(c.id);if(el&&root.contains(el)&&c.source===el.getAttribute('data-source')){el.value=c.value;if(c.id===saved.focus){el.focus({preventScroll:true});if(el.setSelectionRange&&c.start!=null)try{el.setSelectionRange(c.start,c.end);}catch(_){}}}});
       root.querySelectorAll('details').forEach(function(el){if((saved.open||[]).includes(el.querySelector('summary')?.textContent))el.open=true;});
     }
-    function go(i,focus){var next=chapters[Math.max(0,Math.min(chapters.length-1,i))];if(next===chapter(S.section))return;select(next[0]);if(focus){var b=document.getElementById('cad-tab-'+next[0]);if(b)b.focus({preventScroll:true});}}
+    function go(i,focus){var next=chapters[Math.max(0,Math.min(chapters.length-1,i))];if(next===chapter(S.section))return;select(target(next));if(focus){var b=document.getElementById('cad-tab-'+next[0]);if(b)b.focus({preventScroll:true});}}
     if(tabs){var selected=tabs.querySelector('[aria-selected="true"]');if(selected)tabs.scrollLeft=Math.max(0,selected.offsetLeft-tabs.offsetLeft-(tabs.clientWidth-selected.clientWidth)/2);
       tabs.onkeydown=function(ev){var i=chapters.indexOf(chapter(S.section));if(['ArrowLeft','ArrowRight','Home','End'].includes(ev.key)){ev.preventDefault();go(ev.key==='Home'?0:ev.key==='End'?chapters.length-1:i+(ev.key==='ArrowRight'?1:-1),true);}};
     }
@@ -79,5 +88,5 @@
     document.querySelectorAll('.appbar,.cr-sections').forEach(function(el){var r=el.getBoundingClientRect();if(r.height&&r.top>0&&getComputedStyle(el).position==='fixed')bottom=Math.min(bottom,r.top-8);});
     app.style.setProperty('--cad-height',Math.max(320,bottom-app.getBoundingClientRect().top)+'px');
   }
-  window.CR.analyticsDeck={render:render,bind:bind,before:before,fit:fit,sections:sections,chapters:chapters,chapter:chapter,health:health,reads:reads};
+  window.CR.analyticsDeck={configure:configure,render:render,bind:bind,before:before,fit:fit,sections:sections,chapters:chapters,chapter:chapter,health:health,reads:reads};
 })();
