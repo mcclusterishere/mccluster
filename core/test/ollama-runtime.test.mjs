@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
+import { fileURLToPath } from 'node:url';
 
 test('real adapter HTTP contract preserves tool calls, explicit settings and measured runtime', { timeout: 15000 }, async () => {
   let request;
@@ -23,7 +24,7 @@ test('real adapter HTTP contract preserves tool calls, explicit settings and mea
   upstream.listen(0, '127.0.0.1'); await once(upstream, 'listening');
   const reservation = http.createServer(); reservation.listen(0, '127.0.0.1'); await once(reservation, 'listening');
   const port = reservation.address().port; await new Promise(resolve => reservation.close(resolve));
-  const child = spawn(process.execPath, [new URL('../src/compute/ollama-adapter.mjs', import.meta.url).pathname], { env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${upstream.address().port}` }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(process.execPath, [fileURLToPath(new URL('../src/compute/ollama-adapter.mjs', import.meta.url))], { env: { ...process.env, MCCLUSTER_OLLAMA_ADAPTER_PORT: String(port), MCCLUSTER_OLLAMA_URL: `http://127.0.0.1:${upstream.address().port}` }, stdio: ['ignore', 'pipe', 'pipe'] });
   try {
     await once(child.stdout, 'data');
     const result = await fetch(`http://127.0.0.1:${port}/execute`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ capability: 'ai.chat', input: { prompt: 'Check operations', tools: [{ type: 'function', function: { name: 'operations_read', parameters: { type: 'object' } } }] } }) }).then(r => r.json());
@@ -34,6 +35,9 @@ test('real adapter HTTP contract preserves tool calls, explicit settings and mea
     assert.equal(request.tools[0].function.name, 'operations_read');
     assert.equal(result.tool_calls[0].function.name, 'operations_read');
     assert.equal(result.usage.generation_tokens_per_second, 10);
+    // What ran, read from the same daemon after the generation.
+    assert.equal(result.usage.model_digest, 'sha256:test');
+    assert.equal(result.usage.ollama_version, 'test-version');
     const diagnostics = await fetch(`http://127.0.0.1:${port}/diagnostics`).then(r => r.json());
     assert.equal(diagnostics.ollama_version, 'test-version');
     assert.equal(diagnostics.digest, 'sha256:test');

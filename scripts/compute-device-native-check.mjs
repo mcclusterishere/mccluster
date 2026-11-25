@@ -20,6 +20,8 @@ const read = (name) => fs.readFile(path.join(root, name), 'utf8');
 const names = {
   D: 'supabase/pending/compute_job_attestations_v1.sql',
   Drollback: 'supabase/pending/compute_job_attestations_v1.rollback.sql',
+  DF: 'supabase/pending/compute_job_attestations_device_facts_v1.sql',
+  DFrollback: 'supabase/pending/compute_job_attestations_device_facts_v1.rollback.sql',
   E: 'supabase/pending/compute_scheduler_lease_v1.sql',
   Erollback: 'supabase/pending/compute_scheduler_lease_v1.rollback.sql'
 };
@@ -89,6 +91,7 @@ async function fixture(db) {
 async function insertAttestation(db, f, patch = {}, suffix = '') {
   const a = { ...f.attestation, task_id: f.task, ...patch };
   const columns = ['lease_id','task_id','node_id','attempt','protocol','method','path','signed_at','nonce','body_digest','signature','result_sha256'];
+  if (Object.hasOwn(patch, 'device_facts')) columns.push('device_facts');
   return db.query(`insert into public.ops_compute_attestations(${columns.join(',')}) values (${columns.map((_, i) => `$${i + 1}`).join(',')}) ${suffix} returning *`, columns.map((column) => a[column]));
 }
 
@@ -111,7 +114,6 @@ try {
     await db.exec(`do $$ begin create role anon; exception when duplicate_object then null; end $$;
       do $$ begin create role authenticated; exception when duplicate_object then null; end $$;
       do $$ begin create role service_role bypassrls; exception when duplicate_object then null; end $$;
-      alter role service_role bypassrls;
       create schema extensions;
       grant usage on schema public to anon, authenticated, service_role;
       create table public.orgs(id uuid primary key, slug text not null unique, name text not null, enabled boolean not null default true);
@@ -135,6 +137,10 @@ try {
   assert.ok(preflight.d_absent && preflight.e_absent, 'D/E objects already exist; refusing to replace or later drop them');
   assert.equal(preflight.bypassrls, true, 'proof must use the real BYPASSRLS service role');
   const baseCounts = (await db.query('select (select count(*)::int from public.ops_compute_nodes) as nodes,(select count(*)::int from public.ops_compute_tasks) as tasks,(select count(*)::int from public.ops_compute_leases) as leases')).rows[0];
+  await test('DF: missing base migration is refused before any change', async () => {
+    await assert.rejects(db.exec(source.DF), error => error.code === '55000' && error.message === 'DEVICE_FACTS_BASE_MIGRATION_REQUIRED');
+    assert.equal((await db.query("select to_regclass('public.ops_compute_attestations') is null as absent")).rows[0].absent, true);
+  });
   await db.exec(source.D); await db.exec(source.E); installed = true;
 
   await test('D: real service_role inserts and reads a verifiable signed receipt; first accepted receipt wins', () => isolated(db, async (tx, f) => {
@@ -283,6 +289,107 @@ try {
       has_table_privilege('service_role','public.ops_compute_scheduler_leases','INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') as raw_write`)).rows[0];
     assert.deepEqual(grants, { evidence: true, mutate: false, diagnostics: true, raw_write: false });
   });
+
+  await test('DF: bound facts cannot be stored without the new forward migration', () => isolated(db, async (tx, f) => {
+    await expectState(tx, '42703', async () => { await tx.exec('set local role service_role'); await insertAttestation(tx, f, { device_facts: { source: 'synthetic-proof' } }); });
+  }));
+  await db.exec(source.DF);
+  await db.exec(source.DF);
+
+  await test('DF: real service_role saves bounded facts once and cannot rewrite them', () => isolated(db, async (tx, f) => {
+    const facts = { schema: 'mccluster-device-facts/1', source: 'synthetic-proof', model: { name: 'fixture', digest: 'a'.repeat(64) } };
+    await tx.exec('set local role service_role');
+    const saved = (await insertAttestation(tx, f, { device_facts: facts })).rows[0];
+    assert.deepEqual(saved.device_facts, facts);
+    assert.equal(verifyAttestation(saved, f.node.publicKeyPem).ok, true);
+    const retry = await insertAttestation(tx, f, { device_facts: { source: 'invented-retry' } }, 'on conflict (lease_id) do nothing');
+    assert.equal(retry.rows.length, 0);
+    await expectState(tx, '42501', () => tx.exec("update public.ops_compute_attestations set device_facts='{}'::jsonb"));
+    assert.deepEqual((await tx.query('select device_facts from public.ops_compute_attestations where lease_id=$1', [f.lease])).rows[0].device_facts, facts);
+    await tx.exec('reset role');
+  }));
+
+  await test('DF: arrays, JSON null and oversized UTF-8 objects are rejected', () => isolated(db, async (tx, f) => {
+    for (const value of [[], 'not-an-object', { text: 'a'.repeat(32768) }, { text: 'é'.repeat(16384) }]) {
+      await expectState(tx, '23514', async () => { await tx.exec('set local role service_role'); await insertAttestation(tx, f, { device_facts: value }); });
+    }
+    await expectState(tx, '23514', async () => {
+      await insertAttestation(tx, f);
+      await tx.exec("update public.ops_compute_attestations set device_facts='null'::jsonb");
+    });
+    const empty = (await insertAttestation(tx, f, { device_facts: null })).rows[0];
+    assert.equal(empty.device_facts, null, 'legacy receipts may explicitly lack bound facts');
+  }));
+
+  await test('DF: recovery refuses saved facts and preserves the signature and facts', () => isolated(db, async (tx, f) => {
+    const before = (await insertAttestation(tx, f, { device_facts: { source: 'synthetic-proof' } })).rows[0];
+    await expectState(tx, '55000', () => tx.exec(source.DFrollback));
+    const after = (await tx.query('select * from public.ops_compute_attestations where lease_id=$1', [f.lease])).rows[0];
+    assert.deepEqual(after, before);
+  }));
+
+  for (const operation of ['DF', 'DFrollback']) await test(`${operation}: stale transaction snapshots are refused`, async () => {
+    try {
+      await db.transaction(async (tx) => {
+        await tx.exec('set transaction isolation level repeatable read');
+        await expectState(tx, '55000', () => tx.exec(source[operation]));
+        throw fixtureRollback;
+      });
+    } catch (error) { if (error !== fixtureRollback) throw error; }
+  });
+
+  await test('DF: unknown column metadata and broadened base grants are refused', () => isolated(db, async (tx) => {
+    await tx.exec("comment on column public.ops_compute_attestations.device_facts is 'unknown revision'");
+    await expectState(tx, '55000', () => tx.exec(source.DF));
+    await expectState(tx, '55000', () => tx.exec(source.DFrollback));
+    await tx.exec('grant update on public.ops_compute_attestations to service_role');
+    await expectState(tx, '55000', () => tx.exec(source.DF));
+  }));
+
+  for (const [name, definition] of [
+    ['native_facts_expression_idx', "create index native_facts_expression_idx on public.ops_compute_attestations ((device_facts->>'source'))"],
+    ['native_facts_predicate_idx', 'create index native_facts_predicate_idx on public.ops_compute_attestations (node_id) where device_facts is null']
+  ]) await test(`DF: recovery preserves owner-added dependent index ${name}`, () => isolated(db, async (tx, f) => {
+    const before = (await insertAttestation(tx, f)).rows[0];
+    await tx.exec(definition);
+    const indexBefore = (await tx.query('select pg_get_indexdef($1::regclass) as definition', [name])).rows[0].definition;
+    await expectState(tx, '55000', () => tx.exec(source.DFrollback));
+    assert.equal((await tx.query('select pg_get_indexdef($1::regclass) as definition', [name])).rows[0].definition, indexBefore);
+    assert.deepEqual((await tx.query('select * from public.ops_compute_attestations where lease_id=$1', [f.lease])).rows[0], before);
+  }));
+
+  await test('DF: recovery waits for a writer then preserves its committed facts', async () => {
+    const f = await db.transaction(tx => fixture(tx));
+    const writer = db.fork(), recovery = db.fork();
+    let release, began;
+    const waiting = new Promise(resolve => { release = resolve; });
+    const ready = new Promise(resolve => { began = resolve; });
+    let attempt;
+    try {
+      const write = writer.transaction(async tx => { await insertAttestation(tx, f, { device_facts: { source: 'inflight-proof' } }); began(); await waiting; });
+      await ready;
+      attempt = recovery.exec(source.DFrollback).then(() => null, error => error.code);
+      try { await waitForBlocked(db); } finally { release(); }
+      await write;
+      assert.equal(await attempt, '55000');
+      assert.deepEqual((await db.query('select device_facts from public.ops_compute_attestations where lease_id=$1', [f.lease])).rows[0].device_facts, { source: 'inflight-proof' });
+    } finally {
+      release(); if (attempt) await attempt;
+      await writer.close(); await recovery.close();
+      await db.query('delete from public.orgs where id=$1', [f.org]);
+    }
+  });
+
+  await test('DF: empty-column recovery and reapply retain legacy signed receipts', () => isolated(db, async (tx, f) => {
+    const before = (await insertAttestation(tx, f)).rows[0];
+    await tx.exec(source.DFrollback); await tx.exec(source.DFrollback);
+    const after = (await tx.query('select * from public.ops_compute_attestations where lease_id=$1', [f.lease])).rows[0];
+    const { device_facts, ...base } = before;
+    assert.equal(device_facts, null); assert.deepEqual(after, base);
+    await tx.exec(source.DF); await tx.exec(source.DF);
+    assert.deepEqual((await tx.query('select * from public.ops_compute_attestations where lease_id=$1', [f.lease])).rows[0], before);
+  }));
+
 } finally {
   if (fromReset && installed) {
     // The guarded files themselves decide whether cleanup is safe. A failed
@@ -299,5 +406,5 @@ const proof = {
   checks, passed: checks.filter((x) => x.ok).length, failed: checks.filter((x) => !x.ok).length
 };
 if (reportArg !== -1) { assert.ok(process.argv[reportArg + 1], '--report requires a path'); await fs.writeFile(process.argv[reportArg + 1], `${JSON.stringify(proof, null, 2)}\n`); }
-console.log(`D/E native proof: ${proof.passed} passed, ${proof.failed} failed`);
+console.log(`D/E and device-facts native proof: ${proof.passed} passed, ${proof.failed} failed`);
 if (proof.failed) process.exitCode = 1;

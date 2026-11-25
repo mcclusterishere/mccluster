@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateNodeIdentity, signRequest, SIGNATURE_HEADERS } from '../src/compute/signature.mjs';
 import {
-  ATTESTATION_SCHEMA, JOB_CONTRACT, RECEIPT_SCHEMA, buildReceipt, canonicalJson, completionAttestation, completingLease,
+  ATTESTATION_SCHEMA, DEVICE_FACTS_SCHEMA, JOB_CONTRACT, RECEIPT_SCHEMA, buildReceipt, canonicalJson, completionAttestation, completingLease, deviceFactsAtCompletion,
   featureRequirements, generateReceiptKey, hashJson, jobResult, jobView, receiptKeyFromEnv, receiptKeyInfo, signReceipt,
   validateJobSubmission, verifyAttestation, verifyReceipt
 } from '../src/compute/jobs.mjs';
@@ -108,6 +108,91 @@ test('receipts are versioned, hash input and output, report single-device honest
   assert.match(verifyReceipt(unsigned, key.publicKeyPem).reason, /unsigned/);
 });
 
+// A completion as the gateway records it: the node's signature plus the device
+// facts read from the node row at that moment.
+function completed({ output, node, identity = generateNodeIdentity(), capturedAt = '2026-11-23T00:00:04.500Z' }) {
+  const { task, lease } = fixture({ output });
+  const bound = { ...lease, node_id: identity.nodeId, implementation: 'qwen3-vl.4b.local', result: output };
+  const path = `/v1/compute/leases/${bound.id}/complete`;
+  const headers = signRequest({ privateKeyPem: identity.privateKeyPem, method: 'POST', path, nodeId: identity.nodeId, bodyBytes: Buffer.from(JSON.stringify({ lease_token: 't', result: output })) });
+  const enrolled = { ...node, id: identity.nodeId, public_key_pem: identity.publicKeyPem, key_fingerprint: identity.fingerprint };
+  const attestation = completionAttestation({ node: enrolled, leaseId: bound.id, attempt: 1, path, headers, result: output, implementation: bound.implementation, capturedAt });
+  return { task, lease: bound, node: enrolled, attestation, identity };
+}
+
+const DEVICE_A = {
+  display_name: 'device-a', labels: {},
+  capabilities: [{ capability: 'ai.chat', implementation: 'qwen3-vl.4b.local', backend: 'ollama', model: 'qwen3-vl:4b', features: { chat: true, model_digest: 'abc123', runtime_version: '0.0.0-test' } }],
+  inventory: {
+    platform: 'darwin', arch: 'arm64',
+    gpus: [{ vendor: 'apple', model: 'M-series', form: 'integrated', memory: 'shared', compute: 'metal', uuid: 'must-not-appear', vram_bytes: 1 }],
+    runtime: { hardware_mode: 'gpu-verified', gpu_verified_at: '2026-11-23T00:00:01.000Z', gpu_evidence: { source: 'ollama:/api/ps', model: 'qwen3-vl:4b', digest: 'abc123', size_vram_bytes: 10, size_bytes: 10, processor_gpu_percent: 100, running_models: 1, checked_at: '2026-11-23T00:00:01.000Z', extra: 'dropped' } }
+  }
+};
+
+test('the receipt names the device, the compute mode with its engine evidence and the model that ran, under the Core signature', () => {
+  const output = { model: 'qwen3-vl:4b', content: 'ok', usage: { eval_count: 3, model_digest: 'abc123', ollama_version: '0.0.0-test' } };
+  const { task, lease, node, attestation } = completed({ output, node: DEVICE_A });
+  const key = generateReceiptKey();
+  const receipt = signReceipt(buildReceipt({ task, leases: [lease], node, attestation }), key);
+  assert.equal(receipt.execution.arch, 'arm64');
+  assert.equal(receipt.execution.platform, 'darwin');
+  assert.equal(receipt.execution.hardware_mode, 'gpu-verified');
+  assert.equal(receipt.execution.node_display_name, 'device-a');
+  assert.deepEqual(receipt.execution.device_facts, { bound: true, source: 'node-reported-at-completion', captured_at: '2026-11-23T00:00:04.500Z' });
+  assert.deepEqual(receipt.execution.hardware_evidence, {
+    gpu_verified_at: '2026-11-23T00:00:01.000Z',
+    engine: { source: 'ollama:/api/ps', model: 'qwen3-vl:4b', digest: 'abc123', size_vram_bytes: 10, size_bytes: 10, processor_gpu_percent: 100, checked_at: '2026-11-23T00:00:01.000Z' },
+    gpus: [{ vendor: 'apple', model: 'M-series', form: 'integrated', memory: 'shared', compute: 'metal' }]
+  });
+  assert.deepEqual(receipt.execution.advertised, { backend: 'ollama', model: 'qwen3-vl:4b', model_digest: 'abc123', runtime_version: '0.0.0-test' });
+  assert.deepEqual(receipt.execution.model, { name: 'qwen3-vl:4b', digest: 'abc123', runtime_version: '0.0.0-test', reported_by: 'node-result' });
+  assert.deepEqual(verifyReceipt(receipt, key.publicKeyPem), { ok: true, reason: null });
+  // The new fields are inside the signature: changing the digest or the mode breaks it.
+  assert.equal(verifyReceipt({ ...receipt, execution: { ...receipt.execution, model: { ...receipt.execution.model, digest: 'other' } } }, key.publicKeyPem).ok, false);
+  assert.equal(verifyReceipt({ ...receipt, execution: { ...receipt.execution, hardware_mode: 'cpu-only' } }, key.publicKeyPem).ok, false);
+  const failed = buildReceipt({ task: { ...task, status: 'failed', output: null }, leases: [{ ...lease, status: 'failed' }], node });
+  assert.equal(failed.execution.model, null);
+});
+
+test('device facts are bound at completion: a receipt read after the node inventory changed is byte-identical', () => {
+  const output = { model: 'qwen3-vl:4b', content: 'ok', usage: { model_digest: 'abc123', ollama_version: '0.0.0-test' } };
+  const { task, lease, node, attestation } = completed({ output, node: DEVICE_A });
+  assert.equal(attestation.device_facts.schema, DEVICE_FACTS_SCHEMA);
+  assert.deepEqual(attestation.device_facts.model, { name: 'qwen3-vl:4b', digest: 'abc123', runtime_version: '0.0.0-test', reported_by: 'node-result' });
+  const key = generateReceiptKey();
+  const first = signReceipt(buildReceipt({ task, leases: [lease], node, attestation, issuedAt: '2026-11-23T00:00:06.000Z' }), key);
+  // Later: the same node now reports another mode, platform, name, evidence and manifest, and the read happens at another time.
+  const later = {
+    ...node, display_name: 'renamed', capabilities: [{ capability: 'ai.chat', implementation: 'qwen3-vl.4b.local', backend: 'other', model: 'other:1b', features: {} }],
+    inventory: { platform: 'linux', arch: 'x64', gpus: [], runtime: { hardware_mode: 'cpu-only', gpu_verified_at: null, gpu_evidence: { source: 'ollama:/api/ps', model: 'other:1b', size_vram_bytes: 0, size_bytes: 9, checked_at: '2026-11-30T00:00:00.000Z' } } }
+  };
+  const second = signReceipt(buildReceipt({ task, leases: [lease], node: later, attestation, issuedAt: '2026-11-30T00:00:00.000Z' }), key);
+  assert.equal(JSON.stringify(second), JSON.stringify(first), 'the signed receipt does not follow the node row');
+  assert.equal(first.issued_at, '2026-11-23T00:00:04.500Z', 'a bound receipt is dated by the binding, not by the read');
+  assert.equal(second.execution.hardware_mode, 'gpu-verified');
+  assert.deepEqual(verifyReceipt(second, key.publicKeyPem), { ok: true, reason: null });
+  // The model is the snapshot's too: it is the one bound at completion, not re-derived on the read.
+  assert.deepEqual(buildReceipt({ task: { ...task, output: { ...output, model: 'renamed:1b', usage: {} } }, leases: [lease], node: later, attestation }).execution.model, attestation.device_facts.model);
+
+  // No snapshot (an attestation recorded without one, or none at all): the
+  // device facts are null and declared unbound; the node row as it reads at
+  // that moment is never signed in their place.
+  const { device_facts: _dropped, ...bare } = attestation;
+  for (const unbound of [buildReceipt({ task, leases: [lease], node: later, attestation: bare, issuedAt: '2026-11-30T00:00:00.000Z' }), buildReceipt({ task, leases: [lease], node: later, issuedAt: '2026-11-30T00:00:00.000Z' })]) {
+    assert.deepEqual(unbound.execution.device_facts, { bound: false, source: null, captured_at: null });
+    assert.deepEqual([unbound.execution.hardware_mode, unbound.execution.platform, unbound.execution.arch, unbound.execution.hardware_evidence, unbound.execution.advertised], [null, null, null, null, null]);
+    assert.equal(unbound.issued_at, '2026-11-30T00:00:00.000Z');
+    assert.equal(unbound.execution.model.digest, 'abc123', 'the model still comes from the committed output');
+  }
+  // A snapshot bound to another lease is not this lease's evidence.
+  assert.equal(buildReceipt({ task, leases: [lease], node, attestation: { ...attestation, lease_id: '20000000-0000-4000-8000-0000000000ff' } }).execution.device_facts.bound, false);
+  // The facts are what the node row said, field for field, and nothing unnamed.
+  const facts = deviceFactsAtCompletion({ node: later, implementation: 'none.local', result: {}, capturedAt: 't' });
+  assert.deepEqual([facts.hardware_mode, facts.platform, facts.advertised, facts.model, facts.source], ['cpu-only', 'linux', null, null, 'node-reported-at-completion']);
+  assert.equal(facts.hardware_evidence.engine.digest, null);
+});
+
 test('a failed job still gets a receipt that says why, without an output hash', () => {
   const { task, lease, node } = fixture({ status: 'failed' });
   const receipt = buildReceipt({ task, leases: [lease], node });
@@ -123,7 +208,9 @@ test('completion attestation keeps only public signature fields and verifies aga
   const result = { model: 'fixture', content: 'hello', usage: { tokens: 2 } };
   const body = Buffer.from(JSON.stringify({ lease_token: 'secret-lease-token', result }));
   const headers = signRequest({ privateKeyPem: identity.privateKeyPem, method: 'POST', path, nodeId: identity.nodeId, bodyBytes: body });
-  const attestation = completionAttestation({ node: { id: identity.nodeId }, leaseId: '20000000-0000-4000-8000-000000000001', attempt: 1, path, headers, result });
+  // The node row as the gateway holds it when the completion arrives: the device facts are bound from it.
+  const node = { id: identity.nodeId, display_name: 'n', public_key_pem: identity.publicKeyPem, key_fingerprint: identity.fingerprint, inventory: { platform: 'win32', runtime: { hardware_mode: 'gpu-verified' } }, labels: {} };
+  const attestation = completionAttestation({ node, leaseId: '20000000-0000-4000-8000-000000000001', attempt: 1, path, headers, result });
   assert.equal(attestation.schema, ATTESTATION_SCHEMA);
   assert.equal(attestation.result_sha256, hashJson(result));
   assert.equal(attestation.body_digest, headers[SIGNATURE_HEADERS.digest]);
@@ -135,12 +222,15 @@ test('completion attestation keeps only public signature fields and verifies aga
   assert.throws(() => completionAttestation({ node: { id: identity.nodeId }, leaseId: 'x', path, headers: {}, result }), (e) => e.code === 'ATTESTATION_INCOMPLETE');
 
   const { task, lease } = fixture({ output: result });
-  const node = { id: identity.nodeId, display_name: 'n', public_key_pem: identity.publicKeyPem, key_fingerprint: identity.fingerprint, inventory: { platform: 'win32', runtime: { hardware_mode: 'gpu-verified' } }, labels: {} };
   const receipt = buildReceipt({ task, leases: [{ ...lease, node_id: identity.nodeId }], node, attestation });
   assert.equal(receipt.node_attestation.verified, true);
   assert.equal(receipt.node_attestation.matches_output, true);
   assert.equal(receipt.execution.hardware_mode, 'gpu-verified');
   assert.equal(receipt.node_public_key_pem, identity.publicKeyPem);
+  // Additive execution fields: a node that reports no arch, evidence or digest gets nulls, never guesses.
+  assert.equal(receipt.execution.arch, null);
+  assert.deepEqual(receipt.execution.hardware_evidence, { gpu_verified_at: null, engine: null, gpus: [] });
+  assert.deepEqual(receipt.execution.model, { name: 'fixture', digest: null, runtime_version: null, reported_by: 'node-result' });
   const forgedOutput = buildReceipt({ task: { ...task, output: { ...result, content: 'forged' } }, leases: [{ ...lease, node_id: identity.nodeId, result: { ...result, content: 'forged' } }], node, attestation });
   assert.equal(forgedOutput.node_attestation.matches_output, false);
 });

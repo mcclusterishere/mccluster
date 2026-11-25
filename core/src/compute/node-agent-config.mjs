@@ -67,6 +67,69 @@ export function shutdownSignals(platform = process.platform) {
   return platform === 'win32' ? ['SIGTERM', 'SIGINT', 'SIGBREAK'] : ['SIGTERM', 'SIGINT'];
 }
 
+// Calls onStop once when `exists(file)` turns true, checking every intervalMs.
+// Returns the function that cancels the watch; an empty path watches nothing.
+// The caller supplies `exists` (this module does no I/O). The timer is unref'd:
+// the watch never keeps a process alive.
+export function watchStopFile(file, onStop, { intervalMs = 500, exists = () => false, setIntervalImpl = setInterval, clearIntervalImpl = clearInterval } = {}) {
+  if (!file) return () => {};
+  let fired = false;
+  const timer = setIntervalImpl(() => {
+    if (fired) return;
+    let present = false;
+    try { present = exists(file) === true; } catch { present = false; }
+    if (!present) return;
+    fired = true;
+    clearIntervalImpl(timer);
+    onStop();
+  }, intervalMs);
+  timer?.unref?.();
+  return () => { fired = true; clearIntervalImpl(timer); };
+}
+
+// ---- Cloudflare Access service token (optional) ------------------------------
+// A gateway published behind a Cloudflare Access application admits a
+// non-browser client by a service token: two request headers. They are read
+// from the environment only (never a flag, never a file), sent on every
+// request to the gateway, and are not part of the node's signature: the signed
+// canonical request covers method, path, node id, timestamp, nonce and the body
+// digest, so adding them changes nothing the gateway verifies.
+export const ACCESS_ENV = Object.freeze({ id: 'MCCLUSTER_ACCESS_CLIENT_ID', secret: 'MCCLUSTER_ACCESS_CLIENT_SECRET' });
+export const ACCESS_HEADERS = Object.freeze({ id: 'CF-Access-Client-Id', secret: 'CF-Access-Client-Secret' });
+const ACCESS_VALUE = /^[\x21-\x7e]{1,512}$/;
+
+// Both variables or neither. The error names the variables, never a value.
+export function accessServiceToken(env = process.env) {
+  const id = String(env[ACCESS_ENV.id] ?? '').trim();
+  const secret = String(env[ACCESS_ENV.secret] ?? '').trim();
+  if (!id && !secret) return { configured: false, headers: {}, secrets: [] };
+  if (!id || !secret) throw Object.assign(new Error(`${ACCESS_ENV.id} and ${ACCESS_ENV.secret} must be set together (one is missing)`), { code: 'ACCESS_TOKEN_INCOMPLETE' });
+  if (!ACCESS_VALUE.test(id) || !ACCESS_VALUE.test(secret)) throw Object.assign(new Error(`${ACCESS_ENV.id} and ${ACCESS_ENV.secret} must be printable ASCII without spaces`), { code: 'ACCESS_TOKEN_INVALID' });
+  return { configured: true, headers: { [ACCESS_HEADERS.id]: id, [ACCESS_HEADERS.secret]: secret }, secrets: [secret, id] };
+}
+
+// The headers of one gateway request. The Access headers go in first so that
+// nothing they carry can replace a content or signature header.
+export function gatewayRequestHeaders(access, headers = {}) {
+  return { ...(access?.headers || {}), 'content-type': 'application/json', accept: 'application/json', ...headers };
+}
+
+// Every occurrence of every secret is removed from a string, or from every
+// string inside a JSON-shaped value, before it is logged or shown. Secrets
+// shorter than four characters are ignored (they would shred ordinary text).
+export function redactSecrets(value, secrets = []) {
+  const list = [...new Set((secrets || []).filter((item) => typeof item === 'string' && item.length >= 4))].sort((a, b) => b.length - a.length);
+  if (!list.length) return value;
+  const clean = (text) => list.reduce((out, secret) => out.split(secret).join('[redacted]'), text);
+  const walk = (item) => {
+    if (typeof item === 'string') return clean(item);
+    if (Array.isArray(item)) return item.map(walk);
+    if (item && typeof item === 'object') return Object.fromEntries(Object.entries(item).map(([key, inner]) => [clean(key), walk(inner)]));
+    return item;
+  };
+  return walk(value);
+}
+
 export function yieldToGpuMs(env = process.env) {
   const n = Number(env.MCCLUSTER_NODE_YIELD_TO_GPU_MS || 0);
   if (!Number.isFinite(n)) return 0;

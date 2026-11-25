@@ -25,7 +25,7 @@ export async function openPglite({ modulePath = process.env.PGLITE_MODULE_PATH }
 
 // The compute schema exactly as the repository holds it, plus the pending
 // files this slice depends on (named explicitly so the proof says which).
-export async function loadComputeSchema(db, root, { pending = ['compute_job_attestations_v1'] } = {}) {
+export async function loadComputeSchema(db, root, { pending = ['compute_job_attestations_v1', 'compute_job_attestations_device_facts_v1'] } = {}) {
   await db.exec(`do $$ begin create role anon; create role authenticated; create role service_role; exception when duplicate_object then null; end $$;
     create schema if not exists extensions; create extension if not exists pgcrypto;
     create table if not exists public.orgs(id uuid primary key, slug text unique, enabled boolean not null default true);`);

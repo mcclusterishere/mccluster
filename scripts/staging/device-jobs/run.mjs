@@ -47,7 +47,13 @@ const secrets = {
   admin: crypto.randomBytes(24).toString('hex')
 };
 const receiptKey = generateReceiptKey();
-const ports = { shim: 0, gateway: 47880 + Math.floor(Math.random() * 100), tls: 47990 + Math.floor(Math.random() * 100), executor: 47700 + Math.floor(Math.random() * 100) };
+// --port-base N pins the three listeners to N, N+1 and N+2 (so a run can be kept
+// clear of another staging on the same machine); without it they are picked at random.
+const portBase = args.has('port-base') ? Number(args.get('port-base')) : null;
+if (portBase !== null && (!Number.isInteger(portBase) || portBase < 1024 || portBase > 65000)) { console.error('--port-base must be a whole number between 1024 and 65000'); process.exit(2); }
+const ports = portBase !== null
+  ? { shim: 0, gateway: portBase, tls: portBase + 1, executor: portBase + 2 }
+  : { shim: 0, gateway: 47880 + Math.floor(Math.random() * 100), tls: 47990 + Math.floor(Math.random() * 100), executor: 47700 + Math.floor(Math.random() * 100) };
 const children = new Map();
 const steps = [];
 const startedAt = new Date().toISOString();
@@ -94,6 +100,20 @@ async function stopChild(name, signal = 'SIGTERM') {
   const child = children.get(name);
   if (!child || child.exitCode !== null) return;
   await new Promise((resolve) => { child.once('exit', resolve); child.kill(signal); setTimeout(() => { try { child.kill('SIGKILL'); } catch {} resolve(); }, 8_000).unref(); });
+}
+
+// The agent's own graceful stop (MCCLUSTER_NODE_STOP_FILE). The signal in
+// stopChild is the fallback when it has not exited within its drain period.
+const AGENT_STOP_FILE = path.join(OUT, 'node', 'node-agent.stop');
+async function stopAgentByFile(waitMs = 40_000) {
+  const child = children.get('node-agent');
+  if (!child || child.exitCode !== null) return;
+  await new Promise((resolve) => {
+    child.once('exit', resolve);
+    try { fs.writeFileSync(AGENT_STOP_FILE, ''); } catch { resolve(); }
+    setTimeout(resolve, waitMs).unref();
+  });
+  fs.rmSync(AGENT_STOP_FILE, { force: true });
 }
 
 function tail(name, lines = 40) {
@@ -191,9 +211,10 @@ async function main() {
   const agentEnv = {
     MCCLUSTER_COMPUTE_URL: `https://127.0.0.1:${ports.tls}`, MCCLUSTER_ORG_ID: ORG, MCCLUSTER_NODE_NAME: 'staging-fixture-node',
     MCCLUSTER_NODE_ENROLL_TOKEN: secrets.enroll, MCCLUSTER_NODE_STATE_DIR: path.join(OUT, 'node', 'state'), MCCLUSTER_NODE_MANIFEST: path.join(OUT, 'node', 'capabilities.json'),
-    MCCLUSTER_NODE_POLL_MS: '1000', MCCLUSTER_NODE_HEARTBEAT_MS: '10000', MCCLUSTER_NODE_ENGINE_PROBE_MS: '5000', NODE_EXTRA_CA_CERTS: tlsFiles.cert
+    MCCLUSTER_NODE_POLL_MS: '1000', MCCLUSTER_NODE_HEARTBEAT_MS: '10000', MCCLUSTER_NODE_ENGINE_PROBE_MS: '5000', NODE_EXTRA_CA_CERTS: tlsFiles.cert,
+    MCCLUSTER_NODE_STOP_FILE: AGENT_STOP_FILE
   };
-  const startAgent = () => spawnChild('node-agent', path.join(ROOT, 'core/src/compute/node-agent.mjs'), agentEnv);
+  const startAgent = () => { fs.rmSync(AGENT_STOP_FILE, { force: true }); return spawnChild('node-agent', path.join(ROOT, 'core/src/compute/node-agent.mjs'), agentEnv); };
   startAgent();
 
   let fixtureNode = null;
@@ -279,6 +300,7 @@ async function main() {
     return redact({ attempts: done.attempts, duration_ms: receipt.execution.duration_ms, output_sha256: receipt.output_sha256, receipt_key_id: receipt.signature.key_id, attestation_verified: receipt.node_attestation.verified });
   });
 
+  let harnessRun = null;
   await step('duplicate results are rejected: same payload replays idempotently, a different payload is refused, a replayed nonce is refused, a late failure cannot undo a commit', async () => {
     const harness = generateNodeIdentity();
     const enrol = await call(`${gatewayUrl()}/v1/compute/enroll`, { method: 'POST', headers: { authorization: `Bearer ${secrets.enroll}` }, body: {
@@ -317,7 +339,32 @@ async function main() {
     assert(receipt.node_attestation?.verified === true && receipt.node_attestation.result_sha256 === hashJson(payloadA), 'attestation verifies and names the committed result');
     assert(receipt.node_attestation.nonce === firstNonce, `attestation is the FIRST accepted completion (nonce ${receipt.node_attestation.nonce} vs ${firstNonce})`);
     assert(/^\d{4}-\d{2}-\d{2}T.*Z$/.test(receipt.node_attestation.signed_at), `signed_at survives the round trip verbatim: ${receipt.node_attestation.signed_at}`);
+    harnessRun = { harness, jobId, leaseId, token, payloadA, receipt };
     return { job_id: jobId, nonce_replay: replayedNonce.body.code, same_payload: samePayload.status, different_payload: differentPayload.body.code, late_fail: lateFail.status, wrong_token: wrongToken.status, first_nonce_kept: true };
+  });
+
+  await step('device facts are bound at completion: the node then reports a different inventory and replays its completion, and the signed receipt is byte-identical', async () => {
+    assert(harnessRun, 'the duplicate-results step did not complete');
+    const { harness, jobId, leaseId, token, payloadA, receipt } = harnessRun;
+    const facts = receipt.execution.device_facts;
+    assert(facts?.bound === true && facts.source === 'node-reported-at-completion' && receipt.issued_at === facts.captured_at, `device facts: ${JSON.stringify(facts)}`);
+    assert(receipt.execution.hardware_mode === 'cpu-only' && receipt.execution.platform === 'linux' && receipt.execution.arch === 'x64', 'the receipt carries the mode and platform in force at completion');
+    assert(receipt.execution.advertised?.backend === 'fixture' && receipt.execution.advertised.model === 'manual', `advertised: ${JSON.stringify(receipt.execution.advertised)}`);
+    const stored = (await db.query('select device_facts from public.ops_compute_attestations where lease_id = $1', [leaseId])).rows[0]?.device_facts;
+    assert(stored?.schema === 'mccluster-device-facts/1' && stored.hardware_mode === 'cpu-only', 'the snapshot is one row beside the signature');
+    // The same node now publishes another machine entirely.
+    const changed = await signed(harness, '/v1/compute/heartbeat', { load: { running_leases: 0 }, inventory: { platform: 'darwin', arch: 'arm64', cpu_count: 8, memory_bytes: 2, disk_free_bytes: 2, gpus: [], runtime: { hardware_mode: 'gpu-verified', gpu_verified_at: new Date().toISOString() } } }).send();
+    assert(changed.status === 200, `heartbeat with a new inventory ${changed.status} ${changed.body?.code || ''}`);
+    const listed = (await admin(`/v1/compute/nodes?org_id=${ORG}`)).body.nodes.find((node) => node.id === harness.nodeId);
+    assert(listed?.inventory?.platform === 'darwin' && listed.inventory.runtime?.hardware_mode === 'gpu-verified', 'the node row really changed');
+    const replay = await signed(harness, `/v1/compute/leases/${leaseId}/complete`, { lease_token: token, result: payloadA }).send();
+    assert(replay.status === 200, `replayed completion ${replay.status}`);
+    await sleep(1_100);
+    const again = (await admin(`/v1/compute/jobs/${jobId}/receipt?org_id=${ORG}`)).body;
+    assert(JSON.stringify(again) === JSON.stringify(receipt), 'the receipt read after the inventory change differs from the first one');
+    assert(verifyReceipt(again, receiptKey.publicKeyPem).ok, 'the later receipt verifies');
+    const liveView = (await admin(`/v1/compute/jobs/${jobId}?org_id=${ORG}`)).body;
+    return { job_id: jobId, bound_hardware_mode: again.execution.hardware_mode, node_row_hardware_mode_now: listed.inventory.runtime.hardware_mode, live_view_follows_the_node: liveView.node?.hardware_mode ?? null, receipts_byte_identical: true, issued_at: again.issued_at };
   });
 
   await step('disconnect and retry: an injected executor failure fails the lease, the task requeues with backoff and the second attempt completes', async () => {
@@ -369,27 +416,33 @@ async function main() {
     return { agent_exited: Boolean(exited), refusal_seen_by_agent: true, submit_after_revoke: refused.body.code };
   });
 
-  await step('pending SQL hygiene: populated evidence blocks rollback; an empty fixture rolls back and re-applies', async () => {
-    const rollbackSql = fs.readFileSync(path.join(ROOT, 'supabase/pending/compute_job_attestations_v1.rollback.sql'), 'utf8');
-    const before = (await db.query('select lease_id,signature from public.ops_compute_attestations order by lease_id')).rows;
-    assert(before.length > 0, 'staging must have recorded signed completion evidence');
-    let refused = null;
-    try { await db.exec(rollbackSql); } catch (error) { refused = error; }
-    assert(refused?.code === '55000', `populated rollback was not refused: ${refused?.code || 'success'}`);
-    const preserved = (await db.query('select lease_id,signature from public.ops_compute_attestations order by lease_id')).rows;
-    assert(JSON.stringify(preserved) === JSON.stringify(before), 'refused rollback changed signed completion evidence');
-    // This database contains only synthetic staging data and is discarded on
-    // exit. Production rollback deliberately contains no evidence deletion.
+  await step('pending SQL hygiene: saved facts and signatures block recovery; an empty fixture recovers and re-applies both files', async () => {
+    const baseRollback = fs.readFileSync(path.join(ROOT, 'supabase/pending/compute_job_attestations_v1.rollback.sql'), 'utf8');
+    const factsRollback = fs.readFileSync(path.join(ROOT, 'supabase/pending/compute_job_attestations_device_facts_v1.rollback.sql'), 'utf8');
+    const before = (await db.query('select * from public.ops_compute_attestations order by lease_id')).rows;
+    assert(before.some(row => row.device_facts !== null), 'staging must have recorded bound completion facts');
+    for (const sql of [factsRollback, baseRollback]) {
+      let refused = null;
+      try { await db.exec(sql); } catch (error) { refused = error; }
+      assert(refused?.code === '55000', `populated rollback was not refused: ${refused?.code || 'success'}`);
+      const preserved = (await db.query('select * from public.ops_compute_attestations order by lease_id')).rows;
+      assert(JSON.stringify(preserved) === JSON.stringify(before), 'refused rollback changed signed completion evidence or facts');
+    }
+    // Only this disposable synthetic fixture is cleaned. The shipped recovery
+    // files never delete signed evidence or populated device facts.
     await db.exec('delete from public.ops_compute_attestations');
-    await db.exec(rollbackSql);
+    await db.exec(factsRollback);
+    await db.exec(baseRollback);
     const gone = (await db.query("select to_regclass('public.ops_compute_attestations') as t")).rows[0].t;
-    assert(gone === null, 'rollback left the table behind');
+    assert(gone === null, 'empty base recovery left the table behind');
     const leases = (await db.query('select count(*)::int as n from public.ops_compute_leases')).rows[0].n;
-    assert(leases > 0, 'rollback must not touch the lease rows');
-    await db.exec(fs.readFileSync(path.join(ROOT, 'supabase/pending/compute_job_attestations_v1.sql'), 'utf8'));
-    const back = (await db.query("select to_regclass('public.ops_compute_attestations') as t")).rows[0].t;
-    assert(back !== null, 're-apply failed');
-    return { populated_rollback_refused: true, signed_evidence_preserved: before.length, empty_fixture_rollback_reapplied: true, lease_rows_untouched: leases };
+    assert(leases > 0, 'recovery must not touch the lease rows');
+    for (const name of ['compute_job_attestations_v1', 'compute_job_attestations_device_facts_v1']) {
+      await db.exec(fs.readFileSync(path.join(ROOT, 'supabase/pending', `${name}.sql`), 'utf8'));
+    }
+    const back = (await db.query("select count(*)::int as n from information_schema.columns where table_schema='public' and table_name='ops_compute_attestations' and column_name='device_facts'")).rows[0].n;
+    assert(back === 1, 'base and extension re-apply failed');
+    return { populated_recoveries_refused: true, signed_evidence_preserved: before.length, empty_fixture_reapplied: true, lease_rows_untouched: leases };
   });
 
   const ok = steps.every((s) => s.ok);
@@ -442,6 +495,11 @@ try {
   steps.push({ name: 'harness', ok: false, error: error.message });
   try { fs.writeFileSync(path.join(OUT, 'proof.json'), JSON.stringify({ schema: 'mccluster-device-jobs-staging-proof/1', ok: false, fatal: error.message, steps }, null, 2)); } catch {}
 } finally {
+  // The node agent first, through its stop file: on Windows a SIGTERM is
+  // TerminateProcess and a lease it still held would be left to expire. The
+  // stop file drains (a running lease commits, which releases it). The other
+  // children hold no lease; a signal is enough for them.
+  await stopAgentByFile();
   for (const name of [...children.keys()]) await stopChild(name);
   try { tls?.close(); } catch {}
   try { await shim?.close(); } catch {}

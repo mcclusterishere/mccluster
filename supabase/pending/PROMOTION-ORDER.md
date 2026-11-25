@@ -471,6 +471,24 @@ Apply the yield file only when the owner wants the OVH node to yield to a live G
 applied `20261020210718_compute_lease_authority_v2`. PostgREST reloads its schema cache on DDL; if
 a claim still answers PGRST202 afterwards, run `notify pgrst, 'reload schema';`. Never applied here.
 
+
+### Device-facts extension — PR #834, after the attestation base
+
+| File (+ rollback) | Adds | Callers | Proof and release condition |
+|---|---|---|---|
+| `compute_job_attestations_device_facts_v1.sql` (+ `compute_job_attestations_device_facts_v1.rollback.sql`) | Nullable `ops_compute_attestations.device_facts`, JSON object limited to 32,768 UTF-8 bytes of JSON text; existing signed receipts remain intact | Existing Core completion store and receipt reader; absent-column fallback records the base signature and reports facts unbound | `scripts/compute-device-native-check.mjs` and the dedicated complete-reset CI job, followed by real gateway/node-agent synthetic staging; separate named-file approval after the exact reviewed base file |
+
+The base `compute_job_attestations_v1.sql` stays byte-identical to #823.
+Never reapply that migration with altered bytes to add this column. The new
+extension requires its narrow service-role SELECT/INSERT grants, expected base
+shape and RLS boundary. Both extension files require READ COMMITTED and acquire
+a five-second bounded exclusive table lock before inspecting saved state.
+Recovery refuses recorded facts and unknown dependent constraints or indexes,
+including expression and predicate-only indexes; it retains legacy signatures.
+A populated installation needs a reviewed forward repair, not a deletion
+override. These facts are node-reported observations, not independent hardware
+attestation. No device, feature, scheduler or policy is enabled by preparation.
+
 ## 12. E=UP environmental event store (written 2026-11-19)
 
 The canonical, revisioned store behind the signed-out E=UP timeline (slice S1 of `docs/control-plane/EUP-EVENT-TIMELINE.md`):

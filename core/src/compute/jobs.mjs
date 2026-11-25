@@ -21,6 +21,8 @@ export const JOB_RESULT_SCHEMA = 'mccluster-job-result/1';
 export const RECEIPT_SCHEMA = 'mccluster-job-receipt/1';
 export const RECEIPT_KEY_SCHEMA = 'mccluster-receipt-key/1';
 export const ATTESTATION_SCHEMA = 'mccluster-completion-attestation/1';
+export const DEVICE_FACTS_SCHEMA = 'mccluster-device-facts/1';
+export const DEVICE_FACTS_SOURCE = 'node-reported-at-completion';
 export const JOB_STATES = Object.freeze(['queued', 'leased', 'running', 'done', 'failed', 'canceled']);
 export const TERMINAL_STATES = new Set(['done', 'failed', 'canceled']);
 // Only two inference modes are ever reported. 'shared-inference' is claimed
@@ -260,7 +262,9 @@ export function jobResult({ task, leases = [], node = null }) {
 // node id, timestamp, nonce, body digest) with its own Ed25519 key. The gateway
 // keeps those public fields plus the canonical hash of the result it committed.
 // The body itself is never stored: it carries the lease token.
-export function completionAttestation({ node, leaseId, attempt = null, method = 'POST', path, headers, result }) {
+// device_facts (deviceFactsAtCompletion) rides in the same record: the facts
+// are bound in the step that accepts the completion and never rewritten.
+export function completionAttestation({ node, leaseId, attempt = null, method = 'POST', path, headers, result, implementation = null, capturedAt = undefined }) {
   const read = (name) => (typeof headers?.get === 'function' ? headers.get(name) : headers?.[name]) ?? null;
   const attestation = {
     schema: ATTESTATION_SCHEMA,
@@ -274,7 +278,8 @@ export function completionAttestation({ node, leaseId, attempt = null, method = 
     nonce: read('x-mccluster-nonce'),
     body_digest: read('x-mccluster-content-sha256'),
     signature: read('x-mccluster-signature'),
-    result_sha256: hashJson(result ?? {})
+    result_sha256: hashJson(result ?? {}),
+    device_facts: deviceFactsAtCompletion({ node, implementation, result, capturedAt })
   };
   for (const key of ['node_id', 'protocol', 'signed_at', 'nonce', 'body_digest', 'signature']) {
     if (!attestation[key]) throw httpError(`completion attestation is missing ${key}`, 500, 'ATTESTATION_INCOMPLETE');
@@ -337,6 +342,87 @@ function durationMs(lease) {
   return Number.isFinite(start) && Number.isFinite(end) && end >= start ? end - start : null;
 }
 
+// The node's own account of why it reports its hardware_mode: when an engine
+// last proved a model loaded with VRAM, that observation, and the adapters it
+// found. Node-reported inventory, bounded to named fields; the Core signs that
+// this is what the enrolled node published, not that it inspected the machine.
+function hardwareEvidence(node) {
+  const runtime = node?.inventory?.runtime;
+  if (!isObject(runtime)) return null;
+  const seen = isObject(runtime.gpu_evidence) ? runtime.gpu_evidence : null;
+  const count = (value) => (value != null && Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : null);
+  return {
+    gpu_verified_at: text(runtime.gpu_verified_at, 40),
+    engine: seen ? {
+      source: text(seen.source, 80), model: text(seen.model, 200), digest: text(seen.digest, 200),
+      size_vram_bytes: count(seen.size_vram_bytes), size_bytes: count(seen.size_bytes),
+      processor_gpu_percent: count(seen.processor_gpu_percent), checked_at: text(seen.checked_at, 40)
+    } : null,
+    gpus: (Array.isArray(node.inventory.gpus) ? node.inventory.gpus : []).slice(0, 8).map((gpu) => ({
+      vendor: text(gpu?.vendor, 80), model: text(gpu?.model, 160), form: text(gpu?.form, 40),
+      memory: text(gpu?.memory, 40), compute: text(gpu?.compute, 120)
+    }))
+  };
+}
+
+// The model the node says answered, taken from the committed output (which
+// output_sha256 and the node attestation's result_sha256 cover): name, the
+// engine's digest for it and the engine version. Null when the output names no
+// model; a field the node did not report is null, never guessed.
+function executedModel(output) {
+  if (!isObject(output) || output.model == null) return null;
+  const usage = isObject(output.usage) ? output.usage : {};
+  return {
+    name: text(output.model, 200),
+    digest: text(usage.model_digest, 200),
+    runtime_version: text(usage.ollama_version, 80),
+    reported_by: 'node-result'
+  };
+}
+
+// What the node's capability manifest said about the implementation that ran:
+// the backend, the model and, when the enrolment published them, the model
+// digest and engine version (features.model_digest / features.runtime_version).
+function advertisedImplementation(node, implementation) {
+  if (!implementation) return null;
+  const entry = (Array.isArray(node?.capabilities) ? node.capabilities : []).find((item) => item?.implementation === implementation);
+  if (!entry) return null;
+  const features = isObject(entry.features) ? entry.features : {};
+  return {
+    backend: text(entry.backend, 120), model: text(entry.model, 200),
+    model_digest: text(features.model_digest, 200), runtime_version: text(features.runtime_version, 80)
+  };
+}
+
+// ---- Device facts, bound at completion --------------------------------------
+// The device, its compute mode with the engine evidence, what it advertised
+// for the implementation and the model in the committed result, exactly as the
+// node row and the result stood when the gateway accepted the completion. They
+// are stored once with the completion attestation (first write wins) and every
+// receipt is built from that stored snapshot, so a later change of the node's
+// inventory cannot change what a receipt says about a job that already ran.
+// All of it is NODE-REPORTED: the node's own heartbeat inventory and its own
+// result, never a third party's inspection of the hardware.
+export function deviceFactsAtCompletion({ node, implementation = null, result = null, capturedAt = new Date().toISOString() } = {}) {
+  return {
+    schema: DEVICE_FACTS_SCHEMA,
+    source: DEVICE_FACTS_SOURCE,
+    captured_at: text(capturedAt, 40),
+    node_display_name: text(node?.display_name, 200),
+    platform: text(node?.inventory?.platform, 40),
+    arch: text(node?.inventory?.arch, 40),
+    hardware_mode: text(node?.inventory?.runtime?.hardware_mode, 40),
+    hardware_evidence: hardwareEvidence(node),
+    advertised: advertisedImplementation(node, implementation),
+    model: executedModel(result)
+  };
+}
+
+function boundDeviceFacts(attestation) {
+  const facts = attestation?.device_facts;
+  return isObject(facts) && facts.schema === DEVICE_FACTS_SCHEMA && Boolean(facts.captured_at) ? facts : null;
+}
+
 export function buildReceipt({ task, leases = [], node = null, attestation = null, nodePublicKeyPem = null, issuedAt = new Date().toISOString(), issuer = {} }) {
   if (!task) throw httpError('compute job not found', 404, 'JOB_NOT_FOUND');
   if (!TERMINAL_STATES.has(task.status)) {
@@ -358,9 +444,18 @@ export function buildReceipt({ task, leases = [], node = null, attestation = nul
       verification_note: verification.reason
     };
   })() : null;
+  // The device facts come only from the snapshot bound when the completion was
+  // accepted, never from the node row as it reads today. Without a snapshot
+  // (a failed or canceled job, a completion recorded before the snapshot
+  // existed, or an attestation store that is not promoted) they are null and
+  // the receipt says it is unbound, instead of signing whatever the node
+  // reports at read time.
+  const facts = lease && attestation?.lease_id === lease.id ? boundDeviceFacts(attestation) : null;
   return {
     schema: RECEIPT_SCHEMA,
-    issued_at: issuedAt,
+    // A receipt built from a bound snapshot is dated by the binding, so every
+    // read of it returns the same signed bytes; otherwise it is dated by the read.
+    issued_at: facts ? facts.captured_at : issuedAt,
     issuer: { kind: 'mccluster-core', instance: issuer.instance ?? null, deployment_sha: issuer.deployment_sha ?? null },
     job: {
       id: task.id, org_id: task.org_id, capability: task.capability,
@@ -376,9 +471,17 @@ export function buildReceipt({ task, leases = [], node = null, attestation = nul
     execution: lease ? {
       lease_id: lease.id, attempt: lease.attempt ?? null, status: lease.status,
       node_id: lease.node_id, node_key_fingerprint: node?.key_fingerprint ?? null,
-      node_display_name: node?.display_name ?? null,
-      hardware_mode: node?.inventory?.runtime?.hardware_mode ?? null,
-      platform: node?.inventory?.platform ?? null,
+      node_display_name: facts ? facts.node_display_name ?? null : node?.display_name ?? null,
+      device_facts: { bound: Boolean(facts), source: facts ? facts.source ?? DEVICE_FACTS_SOURCE : null, captured_at: facts ? facts.captured_at : null },
+      hardware_mode: facts?.hardware_mode ?? null,
+      platform: facts?.platform ?? null,
+      arch: facts?.arch ?? null,
+      hardware_evidence: facts?.hardware_evidence ?? null,
+      advertised: facts?.advertised ?? null,
+      // With a snapshot, the model is the one bound in it. Without one it is
+      // read from the committed output, which is itself immutable and inside
+      // output_sha256 (never from the node row).
+      model: done ? (facts ? facts.model ?? null : executedModel(task.output)) : null,
       started_at: lease.started_at ?? null, completed_at: lease.completed_at ?? null,
       duration_ms: durationMs(lease),
       result_consistent: resultConsistent

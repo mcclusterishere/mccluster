@@ -4,9 +4,9 @@ name: Compute device database proof
 
 on:
   pull_request:
-    branches: [main]
     paths:
       - 'supabase/pending/compute_job_attestations_v1*'
+      - 'supabase/pending/compute_job_attestations_device_facts_v1*'
       - 'supabase/pending/compute_scheduler_lease_v1*'
       - 'supabase/tests/compute_scheduler_lease.behaviour.sql'
       - 'supabase/migrations/**'
@@ -39,13 +39,18 @@ jobs:
       - uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v1
         with:
           version: 2.117.0
+      - name: Verify repository name and source-map contracts
+        run: |
+          node --test scripts/test/rpc-names-exist.test.mjs
+          python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
+          git diff --exit-code -- docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json
       - name: Start isolated Supabase stack
         run: bash scripts/supabase-local-reset-with-replay.sh start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Rebuild the complete canonical schema
         run: bash scripts/supabase-local-reset-with-replay.sh
       - name: Install pinned native driver
         run: npm install --prefix "$RUNNER_TEMP/compute-device-tools" --ignore-scripts --no-audit --no-fund --package-lock=false postgres@3.4.5
-      - name: Prove D/E against the actual reset schema
+      - name: Prove attestations, scheduler and device facts against the actual reset schema
         env:
           POSTGRES_MODULE_PATH: ${{ runner.temp }}/compute-device-tools/node_modules/postgres/src/index.js
           NATIVE_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres

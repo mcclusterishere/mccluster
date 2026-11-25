@@ -9,8 +9,8 @@ import { generateNodeIdentity, nodeIdFromPublicKey, signRequest } from './signat
 import { deriveHardwareMode, discoverHardware, loadSnapshot } from './hardware.mjs';
 import { capabilityReadiness, engineHealthSummary, healthyCapabilities, probeExecutors } from './engine-probes.mjs';
 import {
-  aclCommand, gpuEvidenceTtlMs, hardwareRefreshMs, isPositiveGpuEvidence, readMeasuredInferenceSidecar, resolveNodePaths,
-  selectGpuEvidence, selectMeasuredInference, shutdownSignals, yieldClaimBody, yieldToGpuMs
+  accessServiceToken, aclCommand, gatewayRequestHeaders, gpuEvidenceTtlMs, hardwareRefreshMs, isPositiveGpuEvidence, readMeasuredInferenceSidecar, redactSecrets, resolveNodePaths,
+  selectGpuEvidence, selectMeasuredInference, shutdownSignals, watchStopFile, yieldClaimBody, yieldToGpuMs
 } from './node-agent-config.mjs';
 
 const BASE_URL = String(process.env.MCCLUSTER_COMPUTE_URL || '').replace(/\/$/, '');
@@ -29,7 +29,9 @@ const REQUEST_TIMEOUT_MS = Number(process.env.MCCLUSTER_NODE_REQUEST_TIMEOUT_MS 
 const POLL_MS = Math.max(1_000, Number(process.env.MCCLUSTER_NODE_POLL_MS || 5_000));
 const HEARTBEAT_MS = Math.max(10_000, Number(process.env.MCCLUSTER_NODE_HEARTBEAT_MS || 30_000));
 const ENGINE_PROBE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_ENGINE_PROBE_MS || 15_000));
-const SHUTDOWN_GRACE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_SHUTDOWN_GRACE_MS || 30_000));
+// Optional: a file whose appearance asks this agent to drain and exit (see run()).
+const STOP_FILE = String(process.env.MCCLUSTER_NODE_STOP_FILE || '').trim();
+const SHUTDOWN_GRACE_MS =Math.max(5_000, Number(process.env.MCCLUSTER_NODE_SHUTDOWN_GRACE_MS || 30_000));
 const GPU_EVIDENCE_TTL_MS = gpuEvidenceTtlMs(process.env);
 // Full hardware discovery (process spawns) this often; the engine probe in between reuses the snapshot.
 const HARDWARE_REFRESH_MS = hardwareRefreshMs(process.env);
@@ -40,6 +42,12 @@ const ENROLL_ONLY = ['1', 'true'].includes(String(process.env.MCCLUSTER_NODE_ENR
 
 if (!BASE_URL || !/^https:\/\//.test(BASE_URL)) throw new Error('MCCLUSTER_COMPUTE_URL must be an https:// URL');
 if (!ORG_ID) throw new Error('MCCLUSTER_ORG_ID is required');
+// Optional Cloudflare Access service token for a gateway published behind an
+// Access application (MCCLUSTER_ACCESS_CLIENT_ID / MCCLUSTER_ACCESS_CLIENT_SECRET,
+// environment only). Sent to BASE_URL and nowhere else; never logged.
+const ACCESS = accessServiceToken(process.env);
+// Nothing this process prints may carry a credential it was started with.
+const LOG_SECRETS = [...ACCESS.secrets, process.env.MCCLUSTER_NODE_ENROLL_TOKEN, process.env.MCCLUSTER_NODE_ENROLL_GRANT].filter(Boolean);
 
 let stopping = false;
 let labelOverrideLogged = false;
@@ -67,8 +75,8 @@ function permanentError(message) {
   return error;
 }
 
-function log(record) { console.log(JSON.stringify(record)); }
-function warn(record) { console.error(JSON.stringify(record)); }
+function log(record) { console.log(JSON.stringify(redactSecrets(record, LOG_SECRETS))); }
+function warn(record) { console.error(JSON.stringify(redactSecrets(record, LOG_SECRETS))); }
 
 // Best-effort NTFS ACL (chmod is a no-op on Windows); never fatal.
 function applyAcl(target, isDirectory) {
@@ -226,7 +234,7 @@ function inventory(hardware, engineHealth = [], manifest = { publicCapabilities:
 async function rawRequest(pathname, { method = 'POST', body = {}, headers = {}, signal } = {}) {
   return requestJson(`${BASE_URL}${pathname}`, {
     method, signal, timeoutMs: REQUEST_TIMEOUT_MS,
-    headers: { 'content-type': 'application/json', accept: 'application/json', ...headers },
+    headers: gatewayRequestHeaders(ACCESS, headers),
     body: method === 'GET' ? undefined : JSON.stringify(body)
   });
 }
@@ -239,7 +247,8 @@ async function signedRequest(identity, pathname, body = {}, signal) {
   });
   return requestJson(`${BASE_URL}${pathname}`, {
     method: 'POST', signal, timeoutMs: REQUEST_TIMEOUT_MS,
-    headers: { 'content-type': 'application/json', accept: 'application/json', ...headers },
+    // The signature covers the body digest and the request line, not these extra headers.
+    headers: gatewayRequestHeaders(ACCESS, headers),
     body: bodyBytes
   });
 }
@@ -320,20 +329,6 @@ async function executeTask(executor, task, signal) {
   throw permanentError(`Unsupported local executor type: ${executor.type || 'unknown'}`);
 }
 
-async function gracefulShutdown(active, signal) {
-  if (stopping) return;
-  stopping = true;
-  log({ event: 'compute_node_draining', signal, active_leases: active.size });
-  const deadline = Date.now() + SHUTDOWN_GRACE_MS;
-  while (active.size && Date.now() < deadline) {
-    await Promise.race([
-      Promise.allSettled([...active.values()]),
-      new Promise((resolve) => setTimeout(resolve, 500))
-    ]);
-  }
-  log({ event: 'compute_node_shutdown', signal, remaining_leases: active.size });
-}
-
 // Hardware discovery spawns processes (on Windows powershell.exe, reg.exe and
 // the nvidia-smi attempts, each with a 5 s timeout), so it runs once at start
 // and again only every HARDWARE_REFRESH_MS; the ENGINE_PROBE_MS cycle keeps
@@ -385,11 +380,70 @@ async function run() {
 
   const active = new Map();
   const shutdown = new AbortController();
+  let pendingClaim = null;
+  let draining = null;
+  function drain(signal) {
+    if (draining) return draining;
+    stopping = true;
+    const claim = pendingClaim;
+    log({ event: 'compute_node_draining', signal, active_leases: active.size, pending_claim: Boolean(claim) });
+    draining = (async () => {
+      let failedClaim = false;
+      const settled = async () => {
+        // A claim response can register a lease after shutdown starts. First let
+        // it register that work (or reject the lease), then snapshot active work.
+        if (claim) await claim.catch(() => { failedClaim = true; });
+        await Promise.allSettled([...active.values()]);
+      };
+      let timer;
+      try {
+        await Promise.race([settled(), new Promise((resolve) => { timer = setTimeout(resolve, SHUTDOWN_GRACE_MS); })]);
+      } finally { clearTimeout(timer); }
+      const incomplete = Boolean(pendingClaim) || active.size > 0 || failedClaim;
+      if (incomplete) shutdown.abort(new Error('Node shutdown'));
+      log({ event: 'compute_node_shutdown', signal, remaining_leases: active.size, pending_claim: Boolean(pendingClaim), claim_failed: failedClaim });
+      return incomplete ? 1 : 0;
+    })();
+    return draining;
+  }
   for (const signalName of shutdownSignals(process.platform)) {
     process.on(signalName, () => {
-      shutdown.abort(new Error('Node shutdown'));
-      gracefulShutdown(active, signalName).then(() => process.exit(active.size ? 1 : 0));
+      if (!stopping) shutdown.abort(new Error('Node shutdown'));
+      drain(signalName).then((code) => process.exit(code));
     });
+  }
+  // A Windows parent can request a graceful stop without terminating the child.
+  watchStopFile(STOP_FILE, () => drain('stop-file').then((code) => process.exit(code)), { exists: fs.existsSync });
+
+  async function claimAndRegister() {
+    const sentAt = systemClock();
+    const claimBody = yieldClaimBody({ yieldMs: YIELD_MS, liveGpuNodes: observed.liveGpuNodes, hardwareMode: observed.hardwareMode });
+    const { lease } = await signedRequest(identity, '/v1/compute/lease', claimBody, shutdown.signal);
+    if (lease) {
+      const { lease_id: leaseId, lease_token: leaseToken, task } = lease;
+      const executor = executorFor(task, manifest);
+      const ready = task.implementation
+        ? advertised.some((item) => item.implementation === task.implementation)
+        : advertised.some((item) => item.capability === task.capability);
+      if (!ready) {
+        await signedRequest(identity, `/v1/compute/leases/${leaseId}/fail`, {
+          lease_token: leaseToken,
+          error: 'Local execution engine or hardware became unavailable before task start',
+          retry: true
+        });
+        return;
+      }
+
+      const promise = runLease({
+        lease, nodeId: identity.nodeId, sentAt, signal: shutdown.signal,
+        request: (pathname, body, signal) => signedRequest(identity, pathname, body, signal),
+        execute: (leasedTask, signal) => executeTask(executor, leasedTask, signal),
+        onEvent: (event, error) => warn({ event, lease_id: leaseId, task_id: task.id, error: error.message })
+      }).catch((error) => {
+        warn({ event: 'lease_execution_rejected', lease_id: leaseId, task_id: task.id, error: error.message });
+      }).finally(() => active.delete(leaseId));
+      active.set(leaseId, promise);
+    }
   }
 
   let lastHeartbeat = 0;
@@ -418,34 +472,8 @@ async function run() {
       }
 
       if (!stopping && advertised.length && active.size < manifest.maxLeases) {
-        const sentAt = systemClock();
-        const claimBody = yieldClaimBody({ yieldMs: YIELD_MS, liveGpuNodes: observed.liveGpuNodes, hardwareMode: observed.hardwareMode });
-        const { lease } = await signedRequest(identity, '/v1/compute/lease', claimBody, shutdown.signal);
-        if (lease) {
-          const { lease_id: leaseId, lease_token: leaseToken, task } = lease;
-          const executor = executorFor(task, manifest);
-          const ready = task.implementation
-            ? advertised.some((item) => item.implementation === task.implementation)
-            : advertised.some((item) => item.capability === task.capability);
-          if (!ready) {
-            await signedRequest(identity, `/v1/compute/leases/${leaseId}/fail`, {
-              lease_token: leaseToken,
-              error: 'Local execution engine or hardware became unavailable before task start',
-              retry: true
-            });
-            continue;
-          }
-
-          const promise = runLease({
-            lease, nodeId: identity.nodeId, sentAt, signal: shutdown.signal,
-            request: (pathname, body, signal) => signedRequest(identity, pathname, body, signal),
-            execute: (leasedTask, signal) => executeTask(executor, leasedTask, signal),
-            onEvent: (event, error) => warn({ event, lease_id: leaseId, task_id: task.id, error: error.message })
-          }).catch((error) => {
-            warn({ event: 'lease_execution_rejected', lease_id: leaseId, task_id: task.id, error: error.message });
-          }).finally(() => active.delete(leaseId));
-          active.set(leaseId, promise);
-        }
+        pendingClaim = claimAndRegister();
+        try { await pendingClaim; } finally { pendingClaim = null; }
       }
       consecutiveErrors = 0;
     } catch (error) {
@@ -462,10 +490,10 @@ async function run() {
     await new Promise((resolve) => setTimeout(resolve, backoff + jitter));
   }
 
-  await gracefulShutdown(active, 'loop-exit');
+  process.exitCode = await drain('loop-exit');
 }
 
 run().catch((error) => {
-  warn({ event: 'compute_node_fatal', error: error.message });
+  warn({ event: 'compute_node_fatal', error: error.message, code: error.code || null, status: error.status || null });
   process.exit(1);
 });

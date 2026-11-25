@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 792,
+  "candidate_count": 795,
   "capability_source_count": 104,
-  "support_only_count": 688,
+  "support_only_count": 691,
   "entries": [
     {
       "path": ".cursorrules",
@@ -583,7 +583,7 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
     },
     {
       "path": "create.html",
@@ -1488,6 +1488,13 @@
       "rationale": "Requires existing Equity Uprise CI checks before production deployment; no building capability is introduced."
     },
     {
+      "path": "docs/control-plane/evidence/device-facts-migration-preparation-2026-11-24.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Records exact pending device-facts SQL, dependency and proof limits for shared Core compute support; no building capability or activation."
+    },
+    {
       "path": "docs/control-plane/evidence/music-compute-migration-review-2026-11-24.md",
       "classification": "evidence_support",
       "capability_ids": [],
@@ -2215,7 +2222,7 @@
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Control \u00b7 Sell \u00b7 Music \u00b7 Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+      "rationale": "Control · Sell · Music · Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
     },
     {
       "path": "js/control-room/music-ops.js",
@@ -2994,7 +3001,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "screens/building.html",
@@ -3131,7 +3138,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Captures actual canonical B1\u2013L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
+      "rationale": "Captures actual canonical B1–L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
     },
     {
       "path": "scripts/e2e/eu-screens.e2e.mjs",
@@ -4743,6 +4750,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Pending Action Network bounty claim-row existence guard preserves the lookup result across aggregate SELECT statements. Runtime reservation integrity support, not a physical building capability."
+    },
+    {
+      "path": "supabase/pending/compute_job_attestations_device_facts_v1.rollback.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Guarded empty-column recovery preserves signed compute receipts and owner-added dependencies; no building capability or activation."
+    },
+    {
+      "path": "supabase/pending/compute_job_attestations_device_facts_v1.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Separately reviewed Core completion-facts column used by shared compute support; no building capability or activation."
     },
     {
       "path": "supabase/pending/compute_job_attestations_v1.rollback.sql",

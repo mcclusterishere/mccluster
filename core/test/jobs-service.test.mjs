@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateNodeIdentity, signRequest } from '../src/compute/signature.mjs';
 import { generateReceiptKey, hashJson, verifyReceipt } from '../src/compute/jobs.mjs';
-import { getJob, getJobReceipt, getJobResult, listJobs, receiptKey, recordCompletionAttestation, submitJob } from '../src/compute/jobs-service.mjs';
+import { cancelJob, getJob, getJobReceipt, getJobResult, listJobs, receiptKey, recordCompletionAttestation, submitJob } from '../src/compute/jobs-service.mjs';
 import { handleJobRoute, matchesJobRoute } from '../src/compute/jobs-routes.mjs';
 import { CONTROL_TOOLS, callControlTool } from '../src/tools/control.mjs';
 import { JOB_TOOLS } from '../src/tools/jobs.mjs';
@@ -36,7 +36,9 @@ function memoryDeps({ live = [{ node_id: 'node_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
     nodeById: async (id) => nodes.get(id) || null,
     leasesForTask: async ({ taskId }) => [...leases.values()].filter((l) => l.task_id === taskId),
     leaseById: async ({ leaseId }) => leases.get(leaseId) || null,
-    listTasks: async ({ orgId, status }) => [...tasks.values()].filter((t) => t.org_id === orgId && (!status || status.split(',').includes(t.status))),
+    listTasks: async ({ orgId, status, idempotencyKey = null }) => [...tasks.values()].filter((t) => t.org_id === orgId && (!status || status.split(',').includes(t.status)) && (!idempotencyKey || t.idempotency_key === idempotencyKey)),
+    // As the store does it: only a queued task is canceled, anything else answers null.
+    cancelQueued: async ({ orgId, taskId, reason }) => { const t = tasks.get(taskId); if (!t || t.org_id !== orgId || t.status !== 'queued') return null; Object.assign(t, { status: 'canceled', last_error: reason }); return t; },
     nodesById: async ({ ids }) => ids.map((id) => nodes.get(id)).filter(Boolean),
     recordAttestation: async (row) => { if (attestations.has(row.lease_id)) return { recorded: false, replayed: true, available: true }; attestations.set(row.lease_id, row); return { recorded: true, replayed: false, available: true }; },
     attestationForLease: async ({ leaseId }) => attestations.get(leaseId) || null,
@@ -218,4 +220,71 @@ test('job routes fail closed when the gateway has no canonical org, and the job 
   } finally {
     if (previous === undefined) delete process.env.MCCLUSTER_ORG_ID; else process.env.MCCLUSTER_ORG_ID = previous;
   }
+});
+
+test('the receipt is built from the device facts bound at completion: a later inventory change, rename or re-read leaves it byte-identical', async () => {
+  const m = memoryDeps();
+  const identity = generateNodeIdentity();
+  const { job } = await submitJob({ capability: 'ai.chat', implementation: 'fixture.echo.local', input: { prompt: 'hi' } }, { canonicalOrg: ORG }, m.deps);
+  const task = m.tasks.get(job.job_id);
+  const output = { model: 'qwen3-vl:4b', content: 'ok', usage: { model_digest: 'a'.repeat(64), ollama_version: '0.0.0-test' } };
+  const atCompletion = {
+    id: identity.nodeId, org_id: ORG, display_name: 'device-a', public_key_pem: identity.publicKeyPem, key_fingerprint: identity.fingerprint, state: 'online', labels: { enrolled_trust: 'owned' },
+    capabilities: [{ capability: 'ai.chat', implementation: 'fixture.echo.local', backend: 'ollama', model: 'qwen3-vl:4b', features: { model_digest: 'a'.repeat(64), runtime_version: '0.0.0-test' } }],
+    inventory: { platform: 'win32', arch: 'x64', gpus: [{ vendor: 'amd', model: 'integrated' }], runtime: { hardware_mode: 'gpu-verified', gpu_verified_at: '2026-11-23T00:00:03.000Z', gpu_evidence: { source: 'ollama:/api/ps', model: 'qwen3-vl:4b', digest: 'a'.repeat(64), size_vram_bytes: 7, size_bytes: 7, processor_gpu_percent: 100, checked_at: '2026-11-23T00:00:03.000Z' } } }
+  };
+  m.nodes.set(identity.nodeId, atCompletion);
+  m.leases.set(LEASE, { id: LEASE, task_id: task.id, node_id: identity.nodeId, implementation: 'fixture.echo.local', attempt: 1, status: 'done', result: output, created_at: '2026-11-23T00:00:01.000Z', started_at: '2026-11-23T00:00:01.000Z', completed_at: '2026-11-23T00:00:04.000Z' });
+  Object.assign(task, { status: 'done', attempts: 1, output });
+  const path = `/v1/compute/leases/${LEASE}/complete`;
+  const headers = signRequest({ privateKeyPem: identity.privateKeyPem, method: 'POST', path, nodeId: identity.nodeId, bodyBytes: Buffer.from(JSON.stringify({ lease_token: 't', result: output })) });
+  // The gateway hands over the node row it authenticated the completion against.
+  assert.equal((await recordCompletionAttestation({ node: atCompletion, leaseId: LEASE, path, headers, result: output }, m.deps)).recorded, true);
+  const stored = m.attestations.get(LEASE);
+  assert.equal(stored.device_facts.captured_at, '2026-11-23T00:00:09.000Z');
+  assert.equal(stored.device_facts.hardware_mode, 'gpu-verified');
+  assert.equal(stored.device_facts.advertised.model_digest, 'a'.repeat(64), 'the manifest entry is the one for the lease\'s implementation');
+
+  const first = await getJobReceipt({ orgId: ORG, jobId: task.id, issuer: { instance: 'core-test' } }, m.deps);
+  assert.deepEqual([first.execution.hardware_mode, first.execution.platform, first.execution.arch, first.execution.node_display_name], ['gpu-verified', 'win32', 'x64', 'device-a']);
+  assert.equal(first.execution.hardware_evidence.engine.checked_at, '2026-11-23T00:00:03.000Z');
+  assert.deepEqual(first.execution.model, { name: 'qwen3-vl:4b', digest: 'a'.repeat(64), runtime_version: '0.0.0-test', reported_by: 'node-result' });
+
+  // Afterwards the node heartbeats a different machine state, is renamed, and
+  // a replayed completion arrives; the receipt is read again at a later time.
+  const later = { ...atCompletion, display_name: 'renamed', capabilities: [], inventory: { platform: 'linux', arch: 'arm64', gpus: [], runtime: { hardware_mode: 'cpu-only', gpu_verified_at: null, gpu_evidence: { source: 'ollama:/api/ps', model: null, size_vram_bytes: 0, size_bytes: 0, checked_at: '2026-11-25T00:00:00.000Z' } } } };
+  m.nodes.set(identity.nodeId, later);
+  m.deps.now = () => '2026-11-25T00:00:00.000Z';
+  assert.equal((await recordCompletionAttestation({ node: later, leaseId: LEASE, path, headers, result: output }, m.deps)).replayed, true);
+  assert.equal(m.attestations.get(LEASE).device_facts.hardware_mode, 'gpu-verified', 'a replayed completion does not rebind the facts');
+  const second = await getJobReceipt({ orgId: ORG, jobId: task.id, issuer: { instance: 'core-test' } }, m.deps);
+  assert.equal(JSON.stringify(second), JSON.stringify(first), 'two reads of a bound receipt are byte-identical, signature included');
+  assert.equal(second.signature.value, first.signature.value);
+  assert.deepEqual(verifyReceipt(second, m.key.publicKeyPem), { ok: true, reason: null });
+  // The live view is allowed to follow the node; only the signed receipt is bound.
+  assert.equal((await getJob({ orgId: ORG, jobId: task.id }, m.deps)).node.hardware_mode, 'cpu-only');
+});
+
+test('a job is found by its Idempotency-Key exactly, and only a queued job can be canceled', async () => {
+  const m = memoryDeps();
+  const requireAdmin = () => {};
+  const adminOrg = (requested) => { if (requested && requested !== ORG) throw Object.assign(new Error('cross org'), { status: 403, code: 'CROSS_ORG_DENIED' }); return requested || ORG; };
+  const route = (method, pathname, body = {}, headers = {}) => handleJobRoute({ req: { method, headers }, url: new URL(`http://127.0.0.1${pathname}`), body, requireAdmin, adminOrg, canonicalOrg: ORG }, m.deps);
+  const submitted = await route('POST', '/v1/compute/jobs', { capability: 'ai.chat', input: { prompt: 'x' } }, { 'idempotency-key': 'probe-1' });
+  const id = submitted.body.job.job_id;
+  assert.deepEqual((await route('GET', '/v1/compute/jobs?idempotency_key=probe-1')).body.jobs.map((job) => job.job_id), [id]);
+  assert.equal((await route('GET', '/v1/compute/jobs?idempotency_key=never-used')).body.count, 0);
+  await assert.rejects(() => route('GET', '/v1/compute/jobs?idempotency_key=has%20space'), (e) => e.code === 'BAD_IDEMPOTENCY_KEY' && e.status === 400);
+
+  assert.equal((await route('GET', `/v1/compute/jobs/${id}/cancel`)).status, 405);
+  await assert.rejects(() => route('POST', `/v1/compute/jobs/${id}/cancel`, { org_id: OTHER_ORG }), (e) => e.code === 'CROSS_ORG_DENIED');
+  await assert.rejects(() => cancelJob({ orgId: OTHER_ORG, jobId: id }, m.deps), (e) => e.code === 'JOB_NOT_FOUND');
+  const canceled = await route('POST', `/v1/compute/jobs/${id}/cancel`, { reason: 'probe finished' });
+  assert.deepEqual([canceled.status, canceled.body.status, canceled.body.terminal, canceled.body.last_error], [200, 'canceled', true, 'probe finished']);
+  // Already terminal, or held by a node: refused by name with the state it is in.
+  await assert.rejects(() => route('POST', `/v1/compute/jobs/${id}/cancel`), (e) => e.code === 'JOB_NOT_CANCELABLE' && e.status === 409 && e.job_status === 'canceled');
+  m.tasks.get(id).status = 'running';
+  await assert.rejects(() => cancelJob({ orgId: ORG, jobId: id }, m.deps), (e) => e.code === 'JOB_NOT_CANCELABLE' && e.job_status === 'running');
+  const denied = () => { throw Object.assign(new Error('Unauthorized'), { status: 401, code: 'UNAUTHORIZED' }); };
+  await assert.rejects(() => handleJobRoute({ req: { method: 'POST', headers: {} }, url: new URL(`http://127.0.0.1/v1/compute/jobs/${id}/cancel`), body: {}, requireAdmin: denied, adminOrg, canonicalOrg: ORG }, m.deps), (e) => e.status === 401);
 });
