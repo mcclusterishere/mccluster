@@ -774,3 +774,11 @@ The forward statement returns one JSON rollback receipt. Save the receipt from t
 approved application with its release evidence. Subsequent runs can return an empty
 receipt. The paired rollback takes the original receipt in the session setting
 `mccluster.pax_stage_name_receipt` and checks each current value before restoring it.
+
+## Mentor outreach pipeline (added 2026-11-25)
+
+`20261125090000_mentor_outreach_pipeline_v1.sql`, rollback `20261125090000_mentor_outreach_pipeline_v1.rollback.sql`.
+Pending, not applied. Additive only: six private `outreach_*` tables, two guard triggers and the `outreach_frame_stats` view;
+no existing object changes and no dependency. Needs Matthew's approval. Proof on a throwaway database:
+`OUTREACH_PGLITE_MODULE=<path to @electric-sql/pglite/dist/index.js> node --test outreach-pipeline/test/migration-pglite.test.mjs`.
+Used by `outreach-pipeline/` and the Core job `mentor_outreach_research`, which is off until `OUTREACH_PIPELINE_ENABLED=true`.

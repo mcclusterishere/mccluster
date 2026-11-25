@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 801,
+  "candidate_count": 803,
   "capability_source_count": 107,
-  "support_only_count": 694,
+  "support_only_count": 696,
   "entries": [
     {
       "path": ".cursorrules",
@@ -2992,6 +2992,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Public evidence-backed newsroom; contains Equity Uprise recognition text but adds no building capability."
+    },
+    {
+      "path": "outreach-pipeline/src/compose.mjs",
+      "classification": "incidental_text_match",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Mentor outreach draft composer. The copy may mention Equity Uprise as context for a founder; the pipeline only fills a review queue and never sends, and this file does not define a building capability."
+    },
+    {
+      "path": "outreach-pipeline/src/text-rules.mjs",
+      "classification": "incidental_text_match",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Mentor outreach text rules. The forbidden-phrase list includes 'Equity Uprise' so drafts stay off-pitch; this file does not define a building capability."
     },
     {
       "path": "packages/equity-uprise/environment/README.md",
