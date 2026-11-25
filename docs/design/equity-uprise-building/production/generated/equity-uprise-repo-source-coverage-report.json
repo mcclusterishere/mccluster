@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 796,
+  "candidate_count": 801,
   "capability_source_count": 107,
-  "support_only_count": 689,
-  "checks_total": 3079,
-  "checks_passed": 3079,
+  "support_only_count": 694,
+  "checks_total": 3099,
+  "checks_passed": 3099,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -83,6 +83,7 @@
     "core/data/characters/cast.v1.json",
     "core/data/fictional-city/district.v1.json",
     "core/data/fictional-city/places.v1.json",
+    "core/ontology/graph-v2.json",
     "create.html",
     "css/daylight.css",
     "css/equity-uprise-app.css",
@@ -167,6 +168,7 @@
     "docs/control-plane/LIVE-MISSIONS.md",
     "docs/control-plane/MEMBER-DESK-AND-PROFILE-EDIT-GATE.md",
     "docs/control-plane/MISSION-ADMIN-APPROVAL.md",
+    "docs/control-plane/ONTOLOGY-GRAPH-V2.md",
     "docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md",
     "docs/control-plane/POLICY-FELLOWSHIP-LADDER.md",
     "docs/control-plane/PRODUCTION-SCHEMA-RECONCILIATION-2026-10-28.md",
@@ -661,6 +663,7 @@
     "supabase/pending/20261124130000_music_catalog_owner_credits.sql",
     "supabase/pending/20261124190000_music_pax_stage_name.rollback.sql",
     "supabase/pending/20261124190000_music_pax_stage_name.sql",
+    "supabase/pending/20261125010000_ops_ontology_graph_v2.sql",
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
     "supabase/pending/eup_module_policy_v1.provenance.json",
@@ -726,6 +729,8 @@
     "supabase/tests/mission_admin_approval.behaviour.sql",
     "supabase/tests/mission_catalog_sources.stub.sql",
     "supabase/tests/music_label_artists.behaviour.sql",
+    "supabase/tests/ops_ontology_graph_v2.behaviour.sql",
+    "supabase/tests/ops_ontology_graph_v2.stub.sql",
     "supabase/tests/policy_fellowship_ladder.behaviour.sql",
     "supabase/tests/privilege_hygiene_v1.behaviour.sql",
     "supabase/tests/privilege_hygiene_v1.stub.sql",
@@ -810,7 +815,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "796 entries"
+      "detail": "801 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2209,6 +2214,26 @@
     },
     {
       "name": "core/data/fictional-city/places.v1.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/ontology/graph-v2.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "core/ontology/graph-v2.json classified",
+      "passed": true,
+      "detail": "classification='data_graph_support'"
+    },
+    {
+      "name": "core/ontology/graph-v2.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "core/ontology/graph-v2.json support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -3794,6 +3819,26 @@
     },
     {
       "name": "docs/control-plane/MISSION-ADMIN-APPROVAL.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/ONTOLOGY-GRAPH-V2.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/ONTOLOGY-GRAPH-V2.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/ONTOLOGY-GRAPH-V2.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/ONTOLOGY-GRAPH-V2.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -13438,6 +13483,26 @@
       "detail": ""
     },
     {
+      "name": "supabase/pending/20261125010000_ops_ontology_graph_v2.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261125010000_ops_ontology_graph_v2.sql classified",
+      "passed": true,
+      "detail": "classification='data_graph_support'"
+    },
+    {
+      "name": "supabase/pending/20261125010000_ops_ontology_graph_v2.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261125010000_ops_ontology_graph_v2.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "supabase/pending/PROMOTION-ORDER.md capability ids known",
       "passed": true,
       "detail": ""
@@ -14639,6 +14704,46 @@
     },
     {
       "name": "supabase/tests/music_label_artists.behaviour.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/ops_ontology_graph_v2.behaviour.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/ops_ontology_graph_v2.behaviour.sql classified",
+      "passed": true,
+      "detail": "classification='data_graph_support'"
+    },
+    {
+      "name": "supabase/tests/ops_ontology_graph_v2.behaviour.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/ops_ontology_graph_v2.behaviour.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/ops_ontology_graph_v2.stub.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/tests/ops_ontology_graph_v2.stub.sql classified",
+      "passed": true,
+      "detail": "classification='data_graph_support'"
+    },
+    {
+      "name": "supabase/tests/ops_ontology_graph_v2.stub.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/tests/ops_ontology_graph_v2.stub.sql support rationale present",
       "passed": true,
       "detail": ""
     },
