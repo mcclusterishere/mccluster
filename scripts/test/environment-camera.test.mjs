@@ -68,7 +68,7 @@ function rig({ reduced = false } = {}) {
   const timers = [];
   const cam = C.create({ viewer: { camera }, Cesium, hold: (o, ms) => holds.push([o, ms]), release: (o) => released.push(o), reducedMotion: () => reduced, setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clearTimeout: () => {} });
   cam.attachInput({ canvas: target(listeners.canvas), document: target(listeners.doc) });
-  return { cam, calls, holds, released, listeners, complete: () => { if (pending) { const o = pending; pending = null; o.complete(); } }, timers };
+  return { cam, camera, calls, holds, released, listeners, complete: () => { if (pending) { const o = pending; pending = null; o.complete(); } }, timers };
 }
 
 test('a push: one flight to the regional frame with cubic in-out, the heading kept, the env-focus hold bounded by its duration', () => {
@@ -143,6 +143,19 @@ test('a flight whose callbacks never come still settles through its safety timer
   safety.fn();
   assert.deepEqual(settled, ['timeout']);
   assert.equal(r.cam.state().flying, false);
+});
+
+test('if the camera already sits on the regional frame when the safety timer fires, the push landed (complete), not a timeout', () => {
+  const r = rig();
+  const settled = [];
+  const frame = P.quakeFrame(6);
+  r.cam.push({ id: 'usgs:a', lon: 10, lat: 20 }, frame, 'pick', (how) => settled.push(how));
+  r.camera.positionCartographic.height = frame.rangeM;
+  r.camera.pitch = frame.pitchDeg * Math.PI / 180;
+  r.timers[r.timers.length - 1].fn();
+  assert.deepEqual(settled, ['complete']);
+  assert.equal(r.cam.state().flying, false);
+  assert.equal(r.cam.state().last.how, 'complete');
 });
 
 test('the source: original code, no per-frame callback, no storage, the reference name nowhere', () => {

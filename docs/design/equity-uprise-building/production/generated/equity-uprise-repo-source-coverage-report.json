@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 801,
+  "candidate_count": 802,
   "capability_source_count": 107,
-  "support_only_count": 694,
-  "checks_total": 3099,
-  "checks_passed": 3099,
+  "support_only_count": 695,
+  "checks_total": 3103,
+  "checks_passed": 3103,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -382,6 +382,7 @@
     "js/travel/world-travel.mjs",
     "js/world-audio-continuity.js",
     "js/world-countries.js",
+    "js/world-environment-cursor.js",
     "js/world-environment-mccluster.mjs",
     "js/world-environment-posts.js",
     "js/world-environment-timeline.js",
@@ -815,7 +816,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "801 entries"
+      "detail": "802 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8004,6 +8005,26 @@
     },
     {
       "name": "js/world-countries.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/world-environment-cursor.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/world-environment-cursor.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "js/world-environment-cursor.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/world-environment-cursor.js support rationale present",
       "passed": true,
       "detail": ""
     },

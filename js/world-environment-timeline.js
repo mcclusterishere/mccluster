@@ -179,7 +179,7 @@
   /* ---------- the page's part ---------- */
   function createController(w, opts) {
     const o = opts || {}, api = o.api || API, clock = o.now || (() => Date.now());
-    const st = { gate: 'unknown', status: 'idle', posts: [], next: null, loadedAt: 0, failedAt: 0, busy: false, extra: {}, selected: '', note: '', wanted: eventIdFromSearch(w.location && w.location.search) };
+    const st = { gate: 'unknown', status: 'idle', posts: [], next: null, loadedAt: 0, failedAt: 0, busy: false, extra: {}, selected: '', selectedRevision: null, note: '', wanted: eventIdFromSearch(w.location && w.location.search) };
     /* A refusal ends every read begun under the old gate. Event selection has its own generation so a late deep link cannot
        take the camera or address back from a newer choice (including Back to an address without an event). */
     let gateVersion = 0, selectionVersion = 0;
@@ -187,6 +187,34 @@
     const scope = () => { try { return w.MCC_FEED_SCOPE && w.MCC_FEED_SCOPE.get ? w.MCC_FEED_SCOPE.get() : ''; } catch (e) { return ''; } };
     const changed = () => { try { if (hooks.render) hooks.render(); } catch (e) {} };
     const find = (id) => st.posts.find((p) => p.id === id) || st.extra[id] || null;
+    /* event timeline slice S6: a live post of the page (any provider, by its own id or its globe id), for the globe's selection */
+    const livePost = (id) => { try { return hooks.livePost ? hooks.livePost(id) || null : null; } catch (e) { return null; } };
+    const owned = (id) => typeof id === 'string' && EVENT_ID.test(id) && OWNED.includes(providerOf(id));
+    const revisionOf = (v) => (Number.isSafeInteger(v) && v > 0 ? v : null);
+    /* a chosen event is never hidden by the time cursor (js/world-environment-cursor.js): one recorded after it moves it up to it */
+    const reveal = (p) => { const c = w.MCC_ENVIRONMENT_CURSOR; if (p && c && typeof c.reveal === 'function') { try { c.reveal(p); } catch (e) {} } };
+    /* the globe's pick: its post comes into view in the feed's own scrolling column (never the window, so the globe stays where it
+       is) and nothing takes the focus; after the panel's own answer to the same message, which scrolls its card */
+    function keepInView(id) {
+      if (!/^[A-Za-z0-9:_./-]{1,200}$/.test(id) || !w.document || typeof w.setTimeout !== 'function') return;
+      w.setTimeout(() => {
+        let el = null;
+        try { el = w.document.querySelector('#mnFeed [data-observation-post="' + id + '"]'); } catch (e) { el = null; }
+        if (!el || typeof el.getBoundingClientRect !== 'function') return;
+        let box = el.parentElement;
+        while (box && box !== w.document.body) {
+          const s = typeof w.getComputedStyle === 'function' ? w.getComputedStyle(box) : null;
+          if (s && /(auto|scroll)/.test(s.overflowY) && box.scrollHeight > box.clientHeight) break;
+          box = box.parentElement;
+        }
+        if (!box || box === w.document.body) return;
+        const r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+        const dy = r.top < b.top + 8 ? r.top - b.top - 8 : r.bottom > b.bottom - 8 ? Math.min(r.top - b.top - 8, r.bottom - b.bottom + 8) : 0;
+        if (!dy) return;
+        const still = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        if (typeof box.scrollBy === 'function') box.scrollBy({ top: dy, behavior: still ? 'auto' : 'smooth' }); else box.scrollTop += dy;
+      }, 0);
+    }
     async function getJson(url) {
       const ctl = typeof AbortController === 'function' ? new AbortController() : null;
       const timer = ctl ? w.setTimeout(() => ctl.abort(), TIMEOUT_MS) : 0;
@@ -223,11 +251,23 @@
       try { frame = w.document.getElementById('mnWorldFrame'); } catch (e) { frame = null; }
       if (!frame || !ev || ev.source !== frame.contentWindow || ev.origin !== (w.location && w.location.origin)) return;
       const d = ev.data || {};
-      if (d.type === 'hu:environment-selected' && (d.id === focusWanted || d.via === 'pick')) {
-        focusWanted = '';
+      if (d.type === 'hu:environment-selected') {
+        if (st.gate !== 'open' || scope() !== 'equity') return;
         if (d.via === 'pick') { selectionVersion++; st.wanted = ''; }
+        if (d.id === focusWanted || d.via === 'pick') focusWanted = '';
+        /* ONE SELECTION FOR THE GLOBE AND THE FEED (event timeline slice S6): what the visitor chose on the globe (a tap) or through it (a
+           row, Show on globe, a deep link) marks its post; the tour's and the replay's own arrivals never move the feed */
+        if (d.via === 'pick' || d.via === 'focus') fromGlobe(d);
       }
       else if (d.type === 'hu:globe-ready' && focusWanted && scope() === 'equity' && hooks.focus) try { hooks.focus(focusWanted); } catch (e) {}
+    }
+    function fromGlobe(d) {
+      if (typeof d.id !== 'string' || !d.id) return;
+      const p = find(d.id) || livePost(d.id);
+      if (!p && !owned(d.id)) return;
+      const id = p ? p.id : d.id, revision = revisionOf(d.revision) || (p ? revisionOf(p.revision) : null);
+      if (st.selected !== id || st.selectedRevision !== revision) select(id, { push: true, revision });
+      if (d.via === 'pick') keepInView(id);
     }
     async function load(force) {
       if (st.gate !== 'open' || st.busy) return;
@@ -265,7 +305,7 @@
       if (st.gate !== 'open') { st.wanted = id; return; }
       st.wanted = '';
       const known = find(id);
-      if (known) { st.selected = known.id; st.note = ''; changed(); focus(known); }
+      if (known) { st.selected = known.id; st.selectedRevision = revisionOf(known.revision); st.note = ''; reveal(known); changed(); focus(known); }
       const r = await getJson(api + '/' + encodeURIComponent(id));
       if (gate !== gateVersion || st.gate !== 'open' || selection !== selectionVersion) return;
       const p = r.status === 200 && r.body && r.body.event ? timelinePost(r.body.event, clock()) : null;
@@ -277,30 +317,35 @@
         if (have && st.extra[p.id]) st.extra[p.id] = p;
         else if (have) { const i = st.posts.indexOf(have); if (i >= 0) st.posts[i] = p; }
         else st.extra[p.id] = p;
+        st.selectedRevision = revisionOf(p.revision);
         if (p.lat === null || p.lon === null) focusWanted = '';
         if (!known || known.id !== p.id) {
           if (known) { st.posts = st.posts.filter((row) => row.id !== known.id); delete st.extra[known.id]; }
           st.selected = p.id; st.note = '';
           /* an alias or a merge answers the canonical id: the address says the canonical id, with no new entry */
           if (fromAddress && p.id !== id) writeAddress(p.id, false);
-          changed(); focus(p); return;
+          reveal(p); changed(); focus(p); return;
         }
         changed(); return;
       }
       if (known && r.status !== 404) return;
       if (known) { st.posts = st.posts.filter((row) => row.id !== known.id); delete st.extra[known.id]; }
-      st.selected = ''; focusWanted = '';
+      st.selected = ''; st.selectedRevision = null; focusWanted = '';
       st.note = r.status === 404 ? (r.body && r.body.code === 'not_available' ? NOTES.held : NOTES.gone) : NOTES.failed;
       changed();
     }
     /* a visitor chose this event (Show on globe on a timeline post, or on a live post of a provider the store holds: the same
        canonical id): one history entry, the address names it; one not loaded yet is marked when its page arrives */
+    /* event timeline slice S6: one selection, keyed by canonical id and revision, for the store's events and the live posts alike (a
+       live post is marked, never written in the address: its id is not the store's); a chosen event the cursor hides is revealed */
     function select(id, opts2) {
-      const p = find(id);
-      if (!p && !(typeof id === 'string' && EVENT_ID.test(id) && OWNED.includes(providerOf(id)))) return false;
+      const o2 = opts2 || {};
+      const p = find(id) || (owned(id) ? null : livePost(id));
+      if (!p && !owned(id)) return false;
       selectionVersion++; st.wanted = ''; focusWanted = '';
-      st.selected = p ? p.id : id; st.note = '';
-      if (opts2 && opts2.push && eventIdFromSearch(w.location && w.location.search) !== st.selected) writeAddress(st.selected, true);
+      st.selected = p ? p.id : id; st.selectedRevision = revisionOf(o2.revision) || (p ? revisionOf(p.revision) : null); st.note = '';
+      if (o2.push && owned(st.selected) && eventIdFromSearch(w.location && w.location.search) !== st.selected) writeAddress(st.selected, true);
+      reveal(p);
       changed();
       return true;
     }
@@ -312,7 +357,7 @@
          line stands, as for the feed's own posts) */
       if (st.gate === 'refused') {
         gateVersion++; selectionVersion++; focusWanted = '';
-        st.posts = []; st.extra = {}; st.next = null; st.status = 'idle'; st.loadedAt = 0; st.failedAt = 0; st.busy = false; st.selected = ''; st.note = '';
+        st.posts = []; st.extra = {}; st.next = null; st.status = 'idle'; st.loadedAt = 0; st.failedAt = 0; st.busy = false; st.selected = ''; st.selectedRevision = null; st.note = '';
         st.wanted = eventIdFromSearch(w.location && w.location.search);
         changed();
         return;
@@ -324,7 +369,7 @@
       const id = eventIdFromSearch(w.location && w.location.search);
       selectionVersion++; st.wanted = ''; focusWanted = '';
       if (id === st.selected) return;
-      if (!id) { st.selected = ''; st.note = ''; changed(); return; }
+      if (!id) { st.selected = ''; st.selectedRevision = null; st.note = ''; changed(); return; }
       open(id, { fromAddress: true });
     }
     return {

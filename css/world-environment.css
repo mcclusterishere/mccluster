@@ -128,3 +128,22 @@ html.mn-feed-equity[data-we-feed="unavailable"] #weUnavailable,html.mn-feed-equi
 .mn__timeline-correction, .mn__timeline-tombstone { color:var(--mn-ink); }
 .mn__timeline-tombstone { font-weight:600; }
 .hu-editorial #mnFeed .mn__observation-post.is-current { padding-left:12px;box-shadow:inset 3px 0 0 var(--mn-ink); }
+
+/* The time control shares the public observations' scope and availability. */
+.mn__time-cursor { display:none; }
+html.mn-feed-equity[data-we-feed="ready"] .mn__time-cursor:not([hidden]) {
+  display:grid;
+  grid-template-columns:auto minmax(0, 1fr) fit-content(7em) auto;
+  align-items:center;
+  gap:8px;
+  padding:8px 0;
+  color:var(--mn-ink);
+  font:600 14px/1.35 var(--mn-ui,system-ui,sans-serif);
+}
+.mn__time-range { width:100%;min-width:0;height:44px;margin:0;accent-color:var(--mn-ink); }
+.mn__time-value { font-variant-numeric:tabular-nums; }
+.mn__time-live {
+  min-height:44px;min-width:44px;padding:0 8px;border:1px solid var(--mn-rule-2);
+  border-radius:8px;color:inherit;background:transparent;font:inherit;font-size:16px;
+}
+.mn__time-live[aria-pressed="true"] { font-weight:700;border-color:currentColor; }

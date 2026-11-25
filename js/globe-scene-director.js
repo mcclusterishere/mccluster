@@ -7,7 +7,10 @@
    ('env-director', bounded to duration + 600 ms); the dwell at a scene draws no frames at all. Any pointer, touch,
    wheel or key input pauses the tour; so does a hidden document. Under prefers-reduced-motion nothing moves by
    itself: play is refused, and next/prev/focus jump with camera.setView. The pure helpers below carry no viewer and
-   no clock, so the queue and the flight arithmetic are unit-tested on their own. */
+   no clock, so the queue and the flight arithmetic are unit-tested on their own.
+   Event timeline slice S6 (2026-11-19): a flight stopped on its way leaves the state naming the scene the camera last arrived at,
+   never the one it was flying to; the replay keeps its flights but is playback of the page's one time cursor (each arrival moves
+   the cursor, js/environment-layers.js), and a visitor's scrub of that cursor stops it and seeks it without moving the camera. */
 (function (root) {
   'use strict';
   const HOLD_TOUR_MS = 5000, HOLD_REPLAY_MS = 2500, LIMIT_TOUR = 12, LIMIT_REPLAY = 50, DAY_MS = 86400000, SAFETY_MS = 600;
@@ -77,7 +80,17 @@
       .sort((a, b) => { const ta = time(a.observed_at), tb = time(b.observed_at); if (ta === null && tb === null) return byId(a, b); if (ta === null) return 1; if (tb === null) return -1; return tb - ta || byId(a, b); })
       .slice(0, o.limit || LIMIT_TOUR).map(i => sceneOf(i, HOLD_TOUR_MS));
   }
-  const pure = Object.freeze({ buildQueue, flightDuration, shortestArcMidLon, greatCircleDeg, heightFor, normalizeLon, kindOf });
+  /* THE REPLAY IS PLAYBACK OF THE TIME CURSOR (event timeline slice S6, 2026-11-19; decision D15 as clarified, default adopted pending
+     Matthew's confirmation): the scene a replay stands at for a cursor time is the last quake recorded at or before it, -1 before
+     the first, the last one for a cursor at live (null) */
+  function seekIndex(scenes, atMs) {
+    const list = Array.isArray(scenes) ? scenes : [];
+    if (atMs === null || atMs === undefined) return list.length - 1;
+    let k = -1;
+    list.forEach((s, i) => { const t = time(s && s.observed_at); if (t !== null && t <= atMs) k = i; });
+    return k;
+  }
+  const pure = Object.freeze({ buildQueue, flightDuration, shortestArcMidLon, greatCircleDeg, heightFor, normalizeLon, kindOf, seekIndex });
 
   /* ---------- runtime ---------- */
   function create(options) {
@@ -91,6 +104,10 @@
     const onArrive = typeof o.onArrive === 'function' ? o.onArrive : () => {};
     let queueName = 'significant', queue = [], index = 0, playing = false, reason = null, destroyed = false;
     let flight = null, dwell = null;
+    /* event timeline slice S6: the scene the camera last arrived at (by id), and whether the index was put back on it (a flight
+       stopped on its way, a seek of the time cursor), so that Play and Next go on from there */
+    let arrivedId = null, resumeNext = false;
+    const arrivedIndex = () => (arrivedId === null ? -1 : queue.findIndex(s => s.id === arrivedId));
     const detachers = [];
 
     const state = () => { const scene = queue[index] || null; return { playing, index, total: queue.length, id: scene ? scene.id : null, title: scene ? scene.title : null, queue: queueName, reason }; };
@@ -127,6 +144,7 @@
     }
     function arrive(scene, how) {
       if (destroyed || how === 'cancel') return;
+      arrivedId = scene.id; resumeNext = false;
       onArrive(scene);
       if (playing) { clearDwell(); dwell = schedule(() => { dwell = null; advance(); }, scene.hold_ms); }
     }
@@ -146,34 +164,56 @@
          say play twice when the globe says ready twice, a hello answered after boot; review G1R-4) */
       if (playing && (flight || dwell !== null)) { tellState(); return; }
       if (reason === 'end') index = 0;
+      /* put back on a scene (or before the first) by a stopped flight or a seek: go on with the next one, the first after the last */
+      else if (resumeNext || index < 0) index = index + 1 >= queue.length ? 0 : index + 1;
+      resumeNext = false;
       clearDwell();
       playing = true; reason = null; tellState(); go();
     }
     function pause(why) {
       if (destroyed) return;
       clearDwell();
+      const flying = !!flight;
       if (viewer && viewer.camera && typeof viewer.camera.cancelFlight === 'function') viewer.camera.cancelFlight();
       if (flight) flight.finish('cancel');
+      /* A FLIGHT STOPPED ON ITS WAY NEVER REACHED ITS SCENE (event timeline slice S6; the reconciliation's V8 finding): the state named
+         the scene it was flying to while the globe still showed the one before it ("Paused at scene 2 of 12: <the alert>" beside the
+         label of scene 1). It names the scene the camera last arrived at again (none when it has not arrived at any), and Play or
+         Next go on from there; Previous goes back from there. */
+      if (flying) { index = arrivedIndex(); resumeNext = true; }
       playing = false; reason = why === undefined ? null : why; tellState();
     }
     function step(delta) {
       if (destroyed || !queue.length) return;
       clearDwell();
       if (flight) flight.finish('cancel');
-      index = (index + delta + queue.length) % queue.length;
+      index = index < 0 ? (delta > 0 ? 0 : queue.length - 1) : (index + delta + queue.length) % queue.length;
+      resumeNext = false;
       reason = null; tellState(); go();
     }
-    function stop() { if (destroyed) return; pause('off'); index = 0; tellState(); }
+    function stop() { if (destroyed) return; pause('off'); index = 0; arrivedId = null; resumeNext = false; tellState(); }
+    /* the replay follows the visitor's time cursor (event timeline slice S6, D15): the caller has stopped any flight (a scrub never
+       moves the camera); the replay stands at the last quake at or before the cursor and Play or Next go on with the one after it */
+    function seek(atMs) {
+      if (destroyed || queueName !== 'quakes-24h') return;
+      if (playing || flight) pause('time');
+      clearDwell();
+      index = seekIndex(queue, typeof atMs === 'number' && Number.isFinite(atMs) ? atMs : null);
+      resumeNext = true; playing = false; reason = 'time'; tellState();
+    }
     function interrupt(why) { if (destroyed) return; if (playing || flight) pause(why || 'input'); }
     function setQueue(items, opts) {
       if (destroyed) return;
       const currentId = queue[index] ? queue[index].id : null;
       queueName = opts && opts.queue === 'quakes-24h' ? 'quakes-24h' : 'significant';
       queue = buildQueue(items, { queue: queueName });
+      if (arrivedId !== null && !queue.some(s => s.id === arrivedId)) arrivedId = null;
       const keep = currentId === null ? -1 : queue.findIndex(s => s.id === currentId);
       if (keep >= 0) index = keep;
+      /* a state that names no scene (a flight stopped before any arrival, a cursor before the first quake) keeps naming none */
+      else if (currentId === null && index < 0 && !playing) index = -1;
       else {
-        index = 0;
+        index = 0; resumeNext = false;
         if (playing) { clearDwell(); if (flight) flight.finish('cancel'); if (queue.length) go(); else { playing = false; reason = 'empty'; } }
       }
       if (reason === 'end' && queue.length) reason = null;
@@ -193,7 +233,7 @@
       }
     }
     const director = Object.freeze({
-      pure, setQueue, play, pause, next: () => step(1), prev: () => step(-1), stop, interrupt, attachInput, state,
+      pure, setQueue, play, pause, next: () => step(1), prev: () => step(-1), stop, interrupt, attachInput, state, seek,
       queueIds: () => queue.map(s => s.id), scene: () => queue[index] || null,
       destroy() { if (destroyed) return; pause('off'); detachers.splice(0).forEach(fn => fn()); destroyed = true; }
     });

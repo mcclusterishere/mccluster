@@ -51,12 +51,24 @@ export function mcclusterEnvironmentAdapter(w) {
      css/world-environment.css). Once the panel has shown, a later failed refresh stays in the panel, which says so itself. */
   let shownOnce = false;
   const feedState = (value) => { if (!shownOnce) try { w.document?.documentElement.setAttribute('data-we-feed', value); } catch (_) {} };
+  /* THE STORE'S REVISION RIDES WITH THE PINS (event timeline slice S6, 2026-11-19: one canonical id and revision drive the post, the
+     globe object, the selection and the deep link). The feed's store-held rows carry their event's revision; the panel's pins keep
+     only the fields it knows, so the panel's messages to the globe pass through here (its sendGlobe hook) and each pin gets its row's
+     revision back. Nothing else in any message changes. */
+  const revisions = new Map();
+  const sendGlobe = (data) => {
+    let message = data;
+    if (data && data.type === 'hu:environment-pins' && Array.isArray(data.items) && revisions.size) message = { ...data, items: data.items.map((item) => (item && revisions.has(item.id) ? { ...item, revision: revisions.get(item.id) } : item)) };
+    try { w.document?.getElementById?.('mnWorldFrame')?.contentWindow?.postMessage(message, w.location.origin); } catch (_) {}
+  };
   const request = (path, options) => {
     if (path !== '') return transport.request(path, options);
     feedState('checking');
     return transport.request(path, options).then((body) => {
       let feed;
       try { feed = normalizeFeed(body); } catch (error) { feedState('unavailable'); return body; }
+      revisions.clear();
+      for (const event of feed.events) if (Number.isSafeInteger(event.revision) && event.revision > 0) revisions.set(event.id, event.revision);
       /* NO DATA (event timeline slice S0): every source answered and none reported an event; with a source down the panel explains it */
       if (!feed.events.length && feed.sources.length && feed.sources.every((s) => s.status === 'available')) { feedState('empty'); return body; }
       feedState('ready'); shownOnce = true;
@@ -79,7 +91,7 @@ export function mcclusterEnvironmentAdapter(w) {
     token,
     mode:()=>shown() ? 'environment' : 'feed',
     modeEvent:'mcc:world-environment', authEvent:'mcc:auth-changed', sessionStorageKey:'mccdb_session',
-    eventsEvent:'mcc:world-environment-events', significance,
+    eventsEvent:'mcc:world-environment-events', significance, sendGlobe,
     revealPanel() {
       w.document?.documentElement.classList.remove('wt-expanded');
       w.document?.querySelector('.mn__world-expand')?.setAttribute('aria-label','Expand the map');

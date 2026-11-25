@@ -17,6 +17,7 @@
      - Show on globe on another timeline post writes ?feed=equity&event=<id> as one history entry, the same event again adds
        none, and Back marks the linked event again;
      - Global keeps one observation post after at least six other items; nothing scrolls sideways at 390.
+   At 390, the time slider and quake replay are also checked against the feed, Cesium quake discs and camera.
    Then, once: a deep link by an alias lands on the canonical id with the address replaced (no new entry); a deep link to an
    unknown event says so in one line; the gate refusing (module disabled) asks the timeline nothing; and behind the sign-in door
    the news layer is off too and comes back when the door closes (carried release item 6).
@@ -24,6 +25,7 @@
    Serves this checkout at 127.0.0.1; no production call, no deployment, nothing applied anywhere but PGlite. Run:
      PGLITE_MODULE=<PGlite 0.3.x dist/index.js> CESIUM_DIR=<Build/Cesium of 1.131> node scripts/e2e/environment-timeline.e2e.mjs [outDir]
    Needs Playwright (PLAYWRIGHT_DIR if not resolvable). One page at a time. Exits non-zero on any failed check. */
+import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { readFile, mkdir } from 'node:fs/promises';
@@ -256,6 +258,105 @@ try {
       if (size.width === 390) { const f = await fits(page); check(scope, 'nothing scrolls sideways on Global at 390', f.sw === f.cw, f); }
       check(scope, 'the timeline was read through the Worker with no credential, and only after the panel\'s feed', requests.some((r) => r.by === 'page' && r.path === '/v1/world/environment/events'), requests.filter((r) => /environment/.test(r.path)).slice(0, 6).map((r) => r.path));
       check(scope, 'no page errors', errors.length === 0, errors.slice(0, 5));
+    } finally { await ctx.close(); }
+  }
+
+  /* The cursor gets its own page so manual input and tour state cannot change the deep-link cases. */
+  {
+    const scope = 'cursor-390';
+    plane.freshCache();
+    const { ctx, page, errors } = await openPage(SIZES[0], '?view=feed&feed=equity');
+    try {
+      const frame = await globeFrame(page);
+      const range = page.locator('#mnTimeRange');
+      await range.waitFor({ state: 'visible', timeout: 60000 });
+      await frame.waitForFunction(() => {
+        const layers = window.__mccEnvironmentLayers?.();
+        const viewer = window.HuGlobe?.viewer();
+        return layers?.ready && layers.counts.quakeDiscs === 3 && viewer?.scene.mode === Cesium.SceneMode.SCENE3D;
+      }, null, { timeout: 180000 });
+
+      // Pause from the panel and let existing flights finish before measuring a manual scrub.
+      const play = page.locator('#wePlay');
+      if (await play.textContent() === 'Play tour') await play.click();
+      await page.getByRole('button', { name: 'Pause tour', exact: true }).click();
+      await frame.waitForFunction(() => !window.__mccSceneDirector().playing
+        && window.__mccGlobeGovernor().holds.length === 0, null, { timeout: 60000 });
+      const pose = () => frame.evaluate(() => {
+        const { positionWC, directionWC, upWC } = window.HuGlobe.viewer().camera;
+        return [positionWC, directionWC, upWC].map(({ x, y, z }) => [x, y, z]);
+      });
+      const initialPose = await pose();
+      const quakeIds = [AID, BID, CID, VID];
+      async function expectState(at, feedIds, globeIds) {
+        await page.waitForFunction(({ at, feedIds }) => {
+          const rows = [...document.querySelectorAll('#mnFeed [data-timeline-post]')].map(el => el.dataset.observationPost);
+          return document.getElementById('mnTimeCursor')?.dataset.at === (at || 'live')
+            && new URLSearchParams(location.search).get('t') === at
+            && rows.length === feedIds.length && rows.every((id, i) => id === feedIds[i]);
+        }, { at, feedIds }, { timeout: 20000 });
+        await frame.waitForFunction(({ at, quakeIds, globeIds, tombstone }) => {
+          const cursor = window.__mccEnvironmentLayers().cursor;
+          if (cursor.at !== at || quakeIds.some(id => cursor.shown.includes(id) !== globeIds.includes(id)
+            || cursor.hidden.includes(id) !== (id !== tombstone && !globeIds.includes(id)))) return false;
+          // A glyph and its ground disc share a Cesium pick ID. Read the actual disc's show attribute,
+          // which remains observable even when that quake is on the Earth's far side.
+          const primitives = window.HuGlobe.viewer().scene.primitives;
+          const discs = [], pickIds = new Map();
+          for (let i = 0; i < primitives.length; i++) {
+            const p = primitives.get(i);
+            if (p instanceof Cesium.GroundPrimitive && p.ready) discs.push(p);
+            if (!(p instanceof Cesium.BillboardCollection)) continue;
+            for (let j = 0; j < p.length; j++) {
+              const pick = p.get(j).id;
+              if (pick?.layer === 'events' && pick.kind === 'quake') pickIds.set(pick.id, pick);
+            }
+          }
+          const published = quakeIds.filter(id => id !== tombstone);
+          if (pickIds.has(tombstone) || !published.every(id => pickIds.has(id))) return false;
+          return published.every(id => {
+            const pick = pickIds.get(id);
+            return discs.some(disc => disc.getGeometryInstanceAttributes(pick)?.show?.[0] === Number(globeIds.includes(id)));
+          });
+        }, { at, quakeIds, globeIds, tombstone: BID }, { timeout: 30000 });
+      }
+      for (const [action, time, feedIds, globeIds] of [
+        ['Home', VAN.observed_at, [VID], [VID]],
+        ['ArrowRight', C.observed_at, [CID, VID], [CID, VID]],
+        ['Live', null, [AID, BID, CID, VID], [AID, CID, VID]]
+      ]) {
+        if (action === 'Live') await page.locator('#mnTimeLive').click();
+        else await range.press(action);
+        await expectState(time, feedIds, globeIds);
+        const current = await pose();
+        for (let i = 0; i < current.length; i++) {
+          const drift = Math.hypot(...current[i].map((value, j) => value - initialPose[i][j]));
+          assert.ok(drift <= (i === 0 ? 0.01 : 1e-8), `${action}: camera vector ${i} moved by ${drift}`);
+        }
+        if (action !== 'ArrowRight') await page.screenshot({ path: join(OUT, `timeline-cursor-${action.toLowerCase()}-390.png`) });
+      }
+      await page.locator('#weReplay').click();
+      await frame.waitForFunction(() => window.__mccSceneDirector().queue === 'quakes-24h');
+      // Seek to Vanuatu after switching replay modes. Next must arrive at C and advance the page on its own.
+      // Go Live first in case enabling replay has already selected its oldest event.
+      await page.locator('#mnTimeLive').click();
+      await expectState(null, [AID, BID, CID, VID], [AID, CID, VID]);
+      // On the second pass the scrub leaves C selected. Its next arrival must still publish the replay time.
+      for (let pass = 0; pass < 2; pass++) {
+        await range.press('Home');
+        await expectState(VAN.observed_at, [VID], [VID]);
+        await page.locator('#weNext').click();
+        await expectState(C.observed_at, [CID, VID], [CID, VID]);
+        assert.equal((await env(frame)).selected?.id, CID);
+      }
+      await range.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: join(OUT, 'timeline-cursor-replay-next-390.png') });
+      const dimensions = await fits(page);
+      assert.deepEqual(dimensions, { sw: 390, cw: 390 });
+      assert.deepEqual(errors, []);
+      check(scope, 'keyboard scrubs preserve the camera; the feed, actual quake discs and replay share a time', true);
+    } catch (error) {
+      check(scope, 'shared time on the 390px globe and feed', false, String(error));
     } finally { await ctx.close(); }
   }
 
