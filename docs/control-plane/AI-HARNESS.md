@@ -24,6 +24,10 @@ The Control browser is a terminal into McCluster, not the owner of McCluster's e
 
 McCluster's VPS is a persistent execution environment. Its `HOME`, workspace, session/checkpoint, artifact, repository, and worktree roots survive individual web sessions and service restarts. Filesystem state is machine state, not canonical conversational memory: `ops_ai_threads` + `ops_ai_messages` remain the resident conversation record, and private cross-model memory remains in `ai_context`. Do not create a second transcript database, vector store, or shadow memory under the VPS filesystem.
 
+## Dispatch front end
+
+Owner messages can enter through the dispatch layer: a small resident model classifies each message against a deterministic routing table and hands it to an existing Core capability, a pending approval or a resident McCluster turn, recording the routing decision in `ai_context` first. See `docs/control-plane/DISPATCH-LAYER.md`.
+
 ## Privacy boundary
 
 Raw conversations, private reasoning artifacts supplied by providers, company-sensitive context, credentials, and unredacted context dumps MUST NOT be committed to this public repository.
