@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 796,
+  "candidate_count": 801,
   "capability_source_count": 107,
-  "support_only_count": 689,
+  "support_only_count": 694,
   "entries": [
     {
       "path": ".cursorrules",
@@ -586,6 +586,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+    },
+    {
+      "path": "core/ontology/graph-v2.json",
+      "classification": "data_graph_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
     },
     {
       "path": "create.html",
@@ -1220,6 +1227,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
+      "path": "docs/control-plane/ONTOLOGY-GRAPH-V2.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
     },
     {
       "path": "docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md",
@@ -4793,6 +4807,13 @@
       "rationale": "Renames the credited producer in catalogue and archive data and returns a rollback receipt."
     },
     {
+      "path": "supabase/pending/20261125010000_ops_ontology_graph_v2.sql",
+      "classification": "data_graph_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
+    },
+    {
       "path": "supabase/pending/PROMOTION-ORDER.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -5291,6 +5312,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Behaviour test for the pending label SQL. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "supabase/tests/ops_ontology_graph_v2.behaviour.sql",
+      "classification": "data_graph_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
+    },
+    {
+      "path": "supabase/tests/ops_ontology_graph_v2.stub.sql",
+      "classification": "data_graph_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
     },
     {
       "path": "supabase/tests/policy_fellowship_ladder.behaviour.sql",
