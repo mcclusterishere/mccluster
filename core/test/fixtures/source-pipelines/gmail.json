@@ -1,0 +1,39 @@
+{
+  "_note": "Synthetic Gmail API message resources (format=metadata). Invented people and example domains only.",
+  "cursor": { "after_ms": 1764000000000 },
+  "items": [
+    {
+      "id": "18c0000000000001", "threadId": "18c0000000000001", "internalDate": "1763910000000",
+      "labelIds": ["INBOX", "CATEGORY_PERSONAL", "IMPORTANT"],
+      "snippet": "SYNTHETIC SNIPPET THAT MUST NEVER BE STORED",
+      "payload": { "headers": [
+        { "name": "From", "value": "\"Jordan Example\" <Jordan.Example+events@example.org>" },
+        { "name": "To", "value": "Owner Test <owner.test@example.com>" },
+        { "name": "Subject", "value": "Photos for the Dec 5 gala, call me at 203-555-0142, code 948211" },
+        { "name": "Date", "value": "Sun, 23 Nov 2026 14:40:00 +0000" } ] }
+    },
+    {
+      "id": "18c0000000000002", "threadId": "18c0000000000001", "internalDate": "1763913600000",
+      "labelIds": ["SENT"],
+      "payload": { "headers": [
+        { "name": "From", "value": "owner.test@example.com" },
+        { "name": "To", "value": "jordan.example@example.org, \"Planner, Events\" <planner@venue.example.net>" },
+        { "name": "Cc", "value": "owner.test@example.com" },
+        { "name": "Subject", "value": "Re: Photos for the Dec 5 gala" } ],
+        "parts": [ { "filename": "" }, { "filename": "quote.pdf" } ] }
+    },
+    {
+      "id": "18c0000000000003", "threadId": "18c0000000000003", "internalDate": "1763920000000",
+      "labelIds": ["SPAM"],
+      "payload": { "headers": [ { "name": "From", "value": "spam@spam.example" } ] }
+    },
+    {
+      "id": "18c0000000000004", "threadId": "18c0000000000004", "internalDate": "1763930000000",
+      "labelIds": ["INBOX"],
+      "payload": { "headers": [
+        { "name": "From", "value": "owner.test@example.com" },
+        { "name": "To", "value": "owner.test@example.com" },
+        { "name": "Subject", "value": "note to self" } ] }
+    }
+  ]
+}
