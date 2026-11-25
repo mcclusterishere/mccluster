@@ -117,9 +117,10 @@ export async function claimLease(nodeId, { capabilities, implementations, leaseS
 // scheduler selects status='queued' FOR UPDATE SKIP LOCKED, so this
 // conditional update and a claim cannot both win. Null means a node already
 // holds the task and the caller must not run it anywhere else.
-export async function cancelQueuedComputeTask({ orgId, taskId, reason = 'canceled' } = {}, { restImpl = rest } = {}) {
+export async function cancelQueuedComputeTask({ orgId, taskId, reason = 'canceled', expectedRunAfter = null } = {}, { restImpl = rest } = {}) {
   if (!orgId || !taskId) return null;
   const params = new URLSearchParams({ id: eq(taskId), org_id: eq(orgId), status: 'eq.queued' });
+  if (expectedRunAfter !== null) params.set('run_after', eq(expectedRunAfter));
   const { body = [] } = await restImpl(`ops_compute_tasks?${params}`, {
     method: 'PATCH',
     headers: { Prefer: 'return=representation' },

@@ -6,7 +6,7 @@ import { authorizeOwnerSession, enrollCredential, issueGrant, verifyGrant } from
 import { acceptNonce, nodeByEnrollGrant, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
 import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
 import { handleJobRoute } from './jobs-routes.mjs';
-import { recordCompletionAttestation, resolveReceiptKey } from './jobs-service.mjs';
+import { recordCompletionAttestation, releaseAfterFailure, resolveReceiptKey, settleCompletion, startContributionSweep, validateCompletion } from './jobs-service.mjs';
 import { RUNNING_DEPLOYMENT_SHA } from '../runtime-revision.mjs';
 import { assertActiveScheduler, createSupabaseSchedulerStore, electionConfigFromEnv, SchedulerElection } from './scheduler-election.mjs';
 
@@ -296,7 +296,16 @@ async function route(req, res) {
     let result;
     if (parsed.action === 'start') result = await startLease(node.id, parsed.leaseId, body.lease_token, body.extend_seconds || 120);
     if (parsed.action === 'heartbeat') result = await heartbeatLease(node.id, parsed.leaseId, body.lease_token, body.progress || {}, body.extend_seconds || 120);
-    if (parsed.action === 'complete') result = await completeLease(node.id, parsed.leaseId, body.lease_token, body.result || {});
+    if (parsed.action === 'complete') {
+      // Metering (COMPUTE-CONTRIBUTION-LEDGER.md). With
+      // CORE_CONTRIBUTION_LEDGER_ENABLED unset this returns at once and the
+      // completion is exactly PR #823's. With the ledger on, an ai.* result
+      // for a task that holds an open reservation has its usage counters
+      // checked BEFORE the SQL commits it; a refusal is 422 with a named code
+      // and the lease stays as it was.
+      await validateCompletion({ leaseId: parsed.leaseId, result: body.result || {} });
+      result = await completeLease(node.id, parsed.leaseId, body.lease_token, body.result || {});
+    }
     if (parsed.action === 'fail') result = await failLease(node.id, parsed.leaseId, body.lease_token, body.error || 'compute node failure', body.retry !== false);
     if (!result) throw Object.assign(new Error('Lease transition rejected'), { status: 409, code: 'LEASE_REJECTED' });
     // The node's own signature over this accepted completion becomes part of
@@ -306,7 +315,17 @@ async function route(req, res) {
       // write; the write itself continues in the background and logs its outcome.
       const attest = recordCompletionAttestation({ node, leaseId: parsed.leaseId, path: url.pathname, headers: req.headers, result: body.result || {} });
       attest.then((outcome) => { if (outcome?.recorded === false && outcome.available === null) return; }).catch(() => {});
-      await Promise.race([attest, new Promise((resolve) => setTimeout(resolve, ATTESTATION_WAIT_MS).unref?.())]);
+      // Contribution ledger settle (off unless CORE_CONTRIBUTION_LEDGER_ENABLED=1):
+      // the scheduler settles, never the node; same bounded wait, logged outcome.
+      const settled = settleCompletion({ node, leaseId: parsed.leaseId, leaseToken: body.lease_token, result: body.result || {}, election });
+      settled.catch(() => {});
+      await Promise.race([Promise.all([attest, settled]), new Promise((resolve) => setTimeout(resolve, ATTESTATION_WAIT_MS).unref?.())]);
+    }
+    if (parsed.action === 'fail') {
+      // A terminal failure releases the task's reservation; a retry keeps it.
+      const released = releaseAfterFailure({ leaseId: parsed.leaseId, election });
+      released.catch(() => {});
+      await Promise.race([released, new Promise((resolve) => setTimeout(resolve, ATTESTATION_WAIT_MS).unref?.())]);
     }
     return json(res, 200, { ok: true, result });
   }
@@ -342,12 +361,20 @@ if (election) {
   // failed first call is an event, not a crash: the instance starts as standby.
   await election.start();
 }
+// The contribution ledger sweep runs where the scheduler election loop runs:
+// started right after it, asking the same election on every pass whether this
+// instance is the active scheduler (no election: the single scheduler is).
+// It settles done tasks whose settle did not land, releases the reservations
+// of failed, canceled and expired-in-queue tasks. Off (a no-op handle) unless
+// CORE_CONTRIBUTION_LEDGER_ENABLED=1.
+const ledgerSweep = startContributionSweep({ election, orgId: String(process.env.MCCLUSTER_ORG_ID || '').trim() || null });
 server.listen(PORT, HOST, () => {
   console.log(JSON.stringify({ event: 'compute_gateway_ready', host: HOST, port: PORT, protocol: COMPUTE_PROTOCOL, pid: process.pid, scheduler: election ? election.snapshot() : null }));
 });
 
 function shutdown(signal) {
   console.log(JSON.stringify({ event: 'compute_gateway_shutdown', signal }));
+  ledgerSweep.stop();
   // A clean stop releases the scheduler lease so the other side takes over at once.
   const released = election ? election.stop().catch(() => {}) : Promise.resolve();
   released.then(() => server.close(() => process.exit(0)));
