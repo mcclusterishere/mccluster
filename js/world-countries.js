@@ -205,7 +205,7 @@
   function mount(viewer, opts) {
     const C = window.Cesium, o = opts || {}, quiet = !!o.quiet;
     const reducedQ = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null, heat: null, heatTotal: 0, posts: null, heatFill: null, heatIds: {}, stateHeat: null, stateCounts: null, heatGen: 0, heatQuiet: false, members: null, stateMembers: null, membersGen: 0 };
+    const st = { mode: quiet ? 'auto' : readMode(safeStorage()), features: [], ready: false, selected: null, items: [], washAlpha: 1, lineAlpha: 1, stateAlpha: 0, borders: null, borderCount: 0, rwb: null, wash: null, flags: null, labels: null, highlight: null, outline: null, lastT: 0, camKey: '', failed: false, stateIndex: null, stateIndexAsked: false, stateIndexP: null, states: new Map(), selectedStates: null, selectGen: 0, areas: new Map(), selectedState: null, stateFill: null, stateOutline: null, tap: null, tapTimer: 0, down: null, heat: null, heatTotal: 0, posts: null, sharedCountries: null, sharedRegions: null, heatFill: null, heatIds: {}, stateHeat: null, stateCounts: null, heatGen: 0, heatQuiet: false, members: null, stateMembers: null, membersGen: 0 };
     const scratchColor = new C.Color(), scratchCarto = new C.Cartographic(), scratchCart3 = new C.Cartesian3(), scratchRect = new C.Rectangle(), view = [0, 0, 0, 0];
     const INK = C.Color.fromCssColorString('#f4f1ea');
     /* the borders are the map: clear enough to read on the day and the night side, in the feed's small globe too */
@@ -269,7 +269,8 @@
         '<span class="country-card__text"><b>' + escHtml(sp ? sp.name : p.name) + '</b>' + (sp ? '<small>' + escHtml(p.name) + '</small>' : missions) + '</span>' +
         '<button type="button" class="country-card__close" aria-label="' + (sp ? 'Show all of ' + escHtml(p.name) : 'Show every country') + '">×</button></div>' +
         '<div class="country-card__stats">' + (stats.newsOff ? '' : cell(stats.news, 'news · 24 h')) + (sp ? (stats.members === null ? '' : cell(stats.members, 'members')) : cell(stats.posts, 'posts') + (stats.membersUnder ? '<span class="country-card__stat"><b>&lt;' + stats.membersUnder + '</b><small>members</small></span>' : cell(stats.members, 'members'))) + '</div>' +
-        (!sp && stats.states ? '<small class="country-card__hint">Double-tap a state to choose it</small>' : '');
+        (!sp && stats.states ? '<small class="country-card__hint">Double-tap a state to choose it</small>' : '') +
+        (stats.sharing === null ? '' : '<small class="country-card__hint">' + escHtml(Number(stats.sharing).toLocaleString('en-US')) + ' opted in to region sharing</small>');
       card.querySelector('button').onclick = () => (sp ? selectState(null) : select(null));
       card.hidden = false;
       return n;
@@ -289,7 +290,10 @@
         else if (Number(m.countries[a2]) >= (Number(m.k) || 5)) members = Number(m.countries[a2]);
         else membersUnder = Number(m.k) || 5;
       }
-      return { news, newsOff: st.newsOff === true, posts: !sp && a2 && st.posts ? Number(st.posts[a2]) || 0 : null, members, membersUnder, states: !!(a2 && st.stateIndex && st.stateIndex[a2]) };
+      const sk = sp && window.MCC_WORLD_REGION_SCOPE ? window.MCC_WORLD_REGION_SCOPE.code(a2, sp.key) : null;
+      const shared = sp ? (sk && st.sharedRegions && st.sharedRegions[sk]) : (a2 && st.sharedCountries && st.sharedCountries[a2]);
+      const sharing = Number(shared) >= 5 ? Number(shared) : null;
+      return { news, newsOff: st.newsOff === true, posts: !sp && a2 && st.posts ? Number(st.posts[a2]) || 0 : null, members, membersUnder, sharing, states: !!(a2 && st.stateIndex && st.stateIndex[a2]) };
     }
     /* THE NEWS LAYER OFF (event timeline slice S4, decision D9, default adopted pending Matthew's confirmation): while the page has
        the news off for the Equity Uprise tab or the sign-in door (js/world-news-globe.js), the card drops its news count (never
@@ -397,6 +401,8 @@
       st.heat = data && data.countries && typeof data.countries === 'object' ? data.countries : null;
       st.heatTotal = st.heat ? Number(data.total) || 0 : 0;
       st.posts = data && data.posts && typeof data.posts === 'object' ? data.posts : null;
+      st.sharedCountries = data && data.shared_countries && typeof data.shared_countries === 'object' ? data.shared_countries : null;
+      st.sharedRegions = data && data.shared_subdivisions && typeof data.shared_subdivisions === 'object' ? data.shared_subdivisions : null;
       drawHeat();
       if (legend) { const hide = st.heatQuiet || !heatShown(); if (legend.hidden !== hide) { legend.hidden = hide; if (o.onLegend) o.onLegend(); } }
       if (st.selected) { drawStateHeat(); restat(); }

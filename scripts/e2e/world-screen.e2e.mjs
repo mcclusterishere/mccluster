@@ -231,7 +231,7 @@ async function routeBackends(ctx, world, { member, creator = true, verified = tr
     /* the news heat map's counts: the fixture's stories by the country each mentions, and Kenya's as places */
     if (u.pathname === '/v1/world/news-heat') {
       const c = u.searchParams.get('country');
-      if (c === null) return json(route, { ok: true, window_hours: 24, countries: HEAT_COUNTRIES, total: Object.values(HEAT_COUNTRIES).reduce((a, b) => a + b, 0), capped: false, posts: { KE: 3, US: 12 }, attribution: GDELT });
+      if (c === null) return json(route, { ok: true, window_hours: 24, countries: HEAT_COUNTRIES, total: Object.values(HEAT_COUNTRIES).reduce((a, b) => a + b, 0), capped: false, posts: { KE: 3, US: 12 }, shared_countries: { KE: 19 }, shared_subdivisions: {}, attribution: GDELT });
       if (c === 'KE') return json(route, { ok: true, window_hours: 24, cell_degrees: 0.05, country: 'KE', cells: [[36.8, -1.3, 8]], total: 8, capped: false, attribution: GDELT });
       return json(route, { ok: true, window_hours: 24, cell_degrees: 0.05, country: c, cells: [], total: 0, capped: false, attribution: GDELT });
     }
@@ -952,6 +952,7 @@ if (runs('editorial-state') && (!process.env.EDITORIAL_DEVICE || process.env.EDI
     /* and its missions (owner, 2026-11-17: "see X amount of news, X amount of missions"): the ones pinned in Kenya (none here) and the
        one open mission pinned nowhere, which can be done anywhere */
     check(scope,'it gives Kenya\'s counts: news today, missions (pinned there or nowhere), posts placed there, accounts from there (five or more, so shown)',JSON.stringify(pc.stats)===JSON.stringify(['8news · 24 h','1missions','3posts','19members'])&&/Kenya/.test(pc.text)&&/Double-tap a state to choose it/.test(pc.text),pc.stats);
+    check(scope,'voluntary sharing is separate from sign-in member counts',/19 opted in to region sharing/.test(pc.text),pc.text);
     await page.screenshot({path:join(OUT,scope+'-place-card.png')});
     await page.waitForFunction(()=>document.querySelectorAll('#mnFeed [data-news-id]').length>0,null,{timeout:8000}).catch(()=>{});
     const kenya = await page.locator('#mnFeed [data-news-id]').count();

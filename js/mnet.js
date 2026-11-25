@@ -1294,7 +1294,7 @@
   function placeStats(s) {
     var n = function (v) { return typeof v === "number" && isFinite(v) && v >= 0 ? Math.round(v) : null; };
     /* newsOff: the globe has the news off for the Equity Uprise tab or the door (decision D9, slice S4); the card drops the count */
-    return s && typeof s === "object" ? { news: n(s.news), newsOff: s.newsOff === true, posts: n(s.posts), members: n(s.members), membersUnder: n(s.membersUnder) || 0, states: s.states === true } : { news: null, newsOff: false, posts: null, members: null, membersUnder: 0, states: false };
+    return s && typeof s === "object" ? { news: n(s.news), newsOff: s.newsOff === true, posts: n(s.posts), members: n(s.members), membersUnder: n(s.membersUnder) || 0, sharing: n(s.sharing), states: s.states === true } : { news: null, newsOff: false, posts: null, members: null, membersUnder: 0, sharing: null, states: false };
   }
   /* THE PLACE'S MISSIONS (owner, 2026-11-17: "when you click on America, you should be able to say, see X amount of news, X
      amount of missions"): the open missions pinned in the place plus the open missions with no pin at all, since those can be
@@ -1317,7 +1317,8 @@
     var sub = st8 ? c.name : s.states ? "Double-tap a state to choose it" : "";
     card.innerHTML = '<div class="mn__place-head"><span class="mn__place-name"><b>' + esc(st8 ? st8.name : c.name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
       '<button type="button" class="mn__place-close" aria-label="' + esc(st8 ? "Show all of " + c.name : "Show every country") + '">\u00d7</button></div>' +
-      '<div class="mn__place-stats">' + (s.newsOff ? "" : cell(s.news, "news \u00b7 24 h")) + cell(placeMissionCount(c), "missions") + (st8 ? (s.members === null ? "" : cell(s.members, "members")) : cell(s.posts, "posts") + members) + '</div>';
+      '<div class="mn__place-stats">' + (s.newsOff ? "" : cell(s.news, "news \u00b7 24 h")) + cell(placeMissionCount(c), "missions") + (st8 ? (s.members === null ? "" : cell(s.members, "members")) : cell(s.posts, "posts") + members) + '</div>' +
+      (s.sharing === null ? "" : '<small class="mn__place-hint">' + esc(s.sharing.toLocaleString("en-US")) + " opted in to region sharing</small>");
     card.querySelector(".mn__place-close").onclick = function () { tellWorld(st8 ? { type: "hu:country-back" } : { type: "hu:select-country", code: null }); };
     card.hidden = false;
     placeCardRoom();
