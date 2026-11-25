@@ -1,0 +1,298 @@
+{
+ "ok": true,
+ "schema": "world-environment-eonet/v1",
+ "layer": "eonet",
+ "generated_at": "2026-11-17T20:00:00.000Z",
+ "sources": [
+  {
+   "id": "eonet",
+   "label": "NASA EONET",
+   "status": "stale",
+   "reason": "upstream_error",
+   "fetched_at": "2026-11-17T14:00:00.000Z",
+   "last_success_at": "2026-11-17T14:00:00.000Z",
+   "coverage": "Global open natural-event reports from the last 30 days; not exhaustive",
+   "attribution": "NASA Earth Observatory Natural Event Tracker (EONET)",
+   "license": "NASA open data; each event names the sources EONET drew it from",
+   "url": "https://eonet.gsfc.nasa.gov/"
+  }
+ ],
+ "events": [
+  {
+   "id": "eonet:EONET_fx_fire_1",
+   "title": "Fixture Ridge Fire, Montana",
+   "categories": [
+    "Wildfires"
+   ],
+   "kind": "fire",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_fire_1",
+   "reported_by": [
+    "fixture"
+   ],
+   "track": [
+    {
+     "date": "2026-11-16T00:00:00.000Z",
+     "placeholder_time": true,
+     "type": "Point",
+     "coordinates": [
+      -113.9,
+      46.9
+     ],
+     "magnitude": 45210.5,
+     "unit": "acres"
+    }
+   ],
+   "track_count": 1,
+   "track_truncated": false,
+   "geometry_dropped": 0,
+   "placeholder_times": 1
+  },
+  {
+   "id": "eonet:EONET_fx_fire_2",
+   "title": "Fixture Bushfire, Queensland",
+   "categories": [
+    "Wildfires"
+   ],
+   "kind": "fire",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_fire_2",
+   "reported_by": [
+    "fixture"
+   ],
+   "track": [
+    {
+     "date": "2026-11-15T00:00:00.000Z",
+     "placeholder_time": true,
+     "type": "Point",
+     "coordinates": [
+      146.1,
+      -23.4
+     ],
+     "magnitude": 12400,
+     "unit": "acres"
+    }
+   ],
+   "track_count": 1,
+   "track_truncated": false,
+   "geometry_dropped": 0,
+   "placeholder_times": 1
+  },
+  {
+   "id": "eonet:EONET_fx_storm_1",
+   "title": "Tropical Cyclone Fengal",
+   "categories": [
+    "Severe Storms"
+   ],
+   "kind": "cyclone",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_storm_1",
+   "reported_by": [
+    "fixture"
+   ],
+   "track": [
+    {
+     "date": "2026-11-13T00:00:00.000Z",
+     "placeholder_time": true,
+     "type": "Point",
+     "coordinates": [
+      85.6,
+      8.1
+     ],
+     "magnitude": 35,
+     "unit": "kts"
+    },
+    {
+     "date": "2026-11-14T06:00:00.000Z",
+     "placeholder_time": false,
+     "type": "Point",
+     "coordinates": [
+      84.9,
+      8.9
+     ],
+     "magnitude": 40,
+     "unit": "kts"
+    },
+    {
+     "date": "2026-11-15T12:00:00.000Z",
+     "placeholder_time": false,
+     "type": "Point",
+     "coordinates": [
+      84,
+      9.7
+     ],
+     "magnitude": 45,
+     "unit": "kts"
+    },
+    {
+     "date": "2026-11-16T00:00:00.000Z",
+     "placeholder_time": true,
+     "type": "Point",
+     "coordinates": [
+      83,
+      10.5
+     ],
+     "magnitude": 50,
+     "unit": "kts"
+    },
+    {
+     "date": "2026-11-17T06:00:00.000Z",
+     "placeholder_time": false,
+     "type": "Point",
+     "coordinates": [
+      82.1,
+      11.2
+     ],
+     "magnitude": 55,
+     "unit": "kts"
+    }
+   ],
+   "track_count": 5,
+   "track_truncated": false,
+   "geometry_dropped": 0,
+   "placeholder_times": 2
+  },
+  {
+   "id": "eonet:EONET_fx_storm_2",
+   "title": "Fixture Severe Storms, Oklahoma",
+   "categories": [
+    "Severe Storms"
+   ],
+   "kind": "storm",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_storm_2",
+   "reported_by": [
+    "fixture"
+   ],
+   "track": [
+    {
+     "date": "2026-11-17T12:00:00.000Z",
+     "placeholder_time": false,
+     "type": "Point",
+     "coordinates": [
+      -97.1,
+      35.3
+     ],
+     "magnitude": null,
+     "unit": null
+    }
+   ],
+   "track_count": 1,
+   "track_truncated": false,
+   "geometry_dropped": 0,
+   "placeholder_times": 0
+  },
+  {
+   "id": "eonet:EONET_fx_volcano_1",
+   "title": "Fixture Volcano, Sicily",
+   "categories": [
+    "Volcanoes"
+   ],
+   "kind": "volcano",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_volcano_1",
+   "reported_by": [
+    "fixture"
+   ],
+   "track": [
+    {
+     "date": "2026-11-15T00:00:00.000Z",
+     "placeholder_time": true,
+     "type": "Point",
+     "coordinates": [
+      14.99,
+      37.75
+     ],
+     "magnitude": null,
+     "unit": null
+    },
+    {
+     "date": "2026-11-16T00:00:00.000Z",
+     "placeholder_time": true,
+     "type": "Point",
+     "coordinates": [
+      14.99,
+      37.75
+     ],
+     "magnitude": null,
+     "unit": null
+    },
+    {
+     "date": "2026-11-17T00:00:00.000Z",
+     "placeholder_time": true,
+     "type": "Point",
+     "coordinates": [
+      14.99,
+      37.75
+     ],
+     "magnitude": null,
+     "unit": null
+    }
+   ],
+   "track_count": 3,
+   "track_truncated": false,
+   "geometry_dropped": 0,
+   "placeholder_times": 3
+  },
+  {
+   "id": "eonet:EONET_fx_ice_1",
+   "title": "Fixture Iceberg, Weddell Sea",
+   "categories": [
+    "Sea and Lake Ice"
+   ],
+   "kind": "ice",
+   "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_fx_ice_1",
+   "reported_by": [
+    "fixture"
+   ],
+   "track": [
+    {
+     "date": "2026-11-10T00:00:00.000Z",
+     "placeholder_time": true,
+     "type": "Polygon",
+     "polygons": [
+      [
+       [
+        [
+         -45.1,
+         -62.3
+        ],
+        [
+         -44.6,
+         -62.35
+        ],
+        [
+         -44.5,
+         -62.7
+        ],
+        [
+         -45,
+         -62.9
+        ],
+        [
+         -45.4,
+         -62.6
+        ],
+        [
+         -45.1,
+         -62.3
+        ]
+       ]
+      ]
+     ],
+     "magnitude": null,
+     "unit": null
+    }
+   ],
+   "track_count": 1,
+   "track_truncated": false,
+   "geometry_dropped": 0,
+   "placeholder_times": 1
+  }
+ ],
+ "count": 6,
+ "total": 6,
+ "skipped": 0,
+ "cap": 500,
+ "truncated": false,
+ "notes": {
+  "track": "track lists every geometry EONET reports for the event, oldest first: a storm's successive reported positions, not an inferred path or forecast.",
+  "time": "An entry with placeholder_time true is dated exactly 00:00 UTC, which EONET often uses when only the day is known; read its date, not its time of day.",
+  "coverage": "EONET is a curated, periodically updated catalogue of open events, not continuous telemetry; it is not exhaustive."
+ }
+}

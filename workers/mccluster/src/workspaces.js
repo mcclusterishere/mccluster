@@ -91,6 +91,14 @@ export async function resolveWorkspaces(env, user) {
       '&select=role,added_at,orgs(id,slug,name,kind,enabled)'
   );
 
+  // Only explicit database booleans establish tenant enablement. Missing/null
+  // or coerced values mean authorization evidence is unavailable, not enabled.
+  for (const row of (Array.isArray(rows) ? rows : [])) {
+    if (row?.orgs?.id && typeof row.orgs.enabled !== 'boolean') {
+      throw Object.assign(new Error('Workspace enablement could not be verified'), { status: 503 });
+    }
+  }
+
   const workspaces = (Array.isArray(rows) ? rows : [])
     .filter((row) => row?.orgs?.id)
     .map((row) => ({
@@ -98,7 +106,7 @@ export async function resolveWorkspaces(env, user) {
       slug: row.orgs.slug,
       name: row.orgs.name,
       kind: row.orgs.kind,
-      enabled: row.orgs.enabled !== false,
+      enabled: row.orgs.enabled === true,
       role: row.role,
       added_at: row.added_at || null
     }))

@@ -10,7 +10,8 @@
 
    - SEEN IS NOT AGREED. A document page's banner counts as seen the moment
      it is shown (answered or ignored), and so does any answer to the wall,
-     which covers the page and still needs "I agree" to enter. Once THIS
+     which covers the page and still needs "I agree" to enter, or to the
+     World's bar, which waits for an answer the way the wall does. Once THIS
      version is seen, neither the banner nor the wall shows again for it, on
      any page or any McCluster host. Agreement stays the separate, stronger
      record: js/analytics.js records nothing until it exists, and a feature
@@ -39,13 +40,20 @@
   "use strict";
   var VERSION = "2026-10-19";
   var KEY = "mcc_privacy_ack";    /* agreed: {version, accepted_at}; cookie mcc_privacy_ack=<VERSION> */
-  var SEEN = "mcc_privacy_seen";  /* banner shown, or "Not now": {version, seen_at}; cookie mcc_privacy_seen=<VERSION> */
+  var SEEN = "mcc_privacy_seen";  /* a document page's bar shown, or "Not now": {version, seen_at}; cookie mcc_privacy_seen=<VERSION> */
   var MAX_AGE = 34560000;         /* 400 days, the longest a browser keeps any cookie */
   var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
   var page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
   var host = String(location.hostname || "").toLowerCase();
-  var cookieDomain = host === "mccluster.org" || /\.mccluster\.org$/.test(host) ? "mccluster.org" : "";
+  /* the shared cookie's domain is the table's (window.MCC_SITE.cookie_domain, js/shell-boot.js; one place,
+     data/seo/domain-architecture.json): that domain and every host under it share the answer, anywhere else it stays
+     host-only. The published pages that load this file without js/shell-boot.js first (embed.html, door.html and others,
+     scripts/test/site-hosts-client.test.mjs) keep today's domain as the fallback. */
+  var cookieDomain = (function (site) {
+    var domain = String((site && site.cookie_domain) || "mccluster.org").toLowerCase();
+    return host === domain || host.slice(-(domain.length + 1)) === "." + domain ? domain : "";
+  })(w.MCC_SITE);
   var synced = "";
 
   function stored(area, key) {
@@ -109,7 +117,7 @@
     }
     return true;
   }
-  /* SEEN: agreed, or the banner was shown. This alone decides whether the notice shows. */
+  /* SEEN: agreed, "Not now", or a document page's bar shown. This alone decides whether the notice shows. */
   function readSeen() {
     if (readAck()) return true;
     var local = stored("localStorage", SEEN), sess = stored("sessionStorage", SEEN), cookie = cookieHas(SEEN);
@@ -133,7 +141,7 @@
     w.MCC_PRIVACY_ACK = value;
     return recordMember(value.accepted_at);
   }
-  /* the banner shown, or "Not now": seen, not agreed, and never a downgrade of an agreement */
+  /* a document page's bar shown, or "Not now": seen, not agreed, and never a downgrade of an agreement */
   function writeSeen() {
     if (readAck()) return;
     var value = { version: VERSION, seen_at: new Date().toISOString() };
@@ -169,8 +177,44 @@
     dismiss: writeSeen
   };
 
-  /* The policy itself must remain readable before acknowledgement. */
-  if (page === "privacy.html" || readSeen()) return;
+  /* The policy itself must remain readable before acknowledgement, and it is
+     where someone who answered "Not now" can still agree (the policy says so:
+     privacy.html#entry-notice). The page carries the control, hidden until
+     this script shows it. Agreeing here records the same agreement as the
+     notice; analytics start with the next page view. */
+  if (page === "privacy.html") {
+    var answer = function () {
+      var box = d.getElementById("mccPrivacyAnswer");
+      var status = d.getElementById("mccPrivacyAnswerStatus");
+      var agree = d.getElementById("mccPrivacyAnswerAgree");
+      if (!box || !status || !agree) return;
+      var show = function (justNow) {
+        if (readAck()) {
+          status.textContent = justNow
+            ? "You agreed to notice version " + VERSION + ". McCluster's analytics start with your next page."
+            : "You have agreed to notice version " + VERSION + " on this browser.";
+          agree.hidden = true;
+        } else {
+          status.textContent = readSeen()
+            ? "You answered \u201cNot now\u201d to notice version " + VERSION + ": McCluster's analytics are off."
+            : "You have not answered notice version " + VERSION + ": McCluster's analytics are off.";
+          agree.hidden = false;
+        }
+      };
+      show(false);
+      box.hidden = false;
+      agree.addEventListener("click", function () {
+        writeAck();
+        show(true);
+        /* the button hides, so focus moves to the answer it produced */
+        try { status.setAttribute("tabindex", "-1"); status.focus(); } catch (_) {}
+      });
+    };
+    if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", answer, { once: true });
+    else answer();
+    return;
+  }
+  if (readSeen()) return;
   var framed = true;
   try { framed = w.top !== w; } catch (_) {}
   if (framed) return;
@@ -184,33 +228,46 @@
     else wall();
   }
 
-  /* PUBLIC DOCUMENT PAGES: THE NOTICE AS A BANNER, NOT A WALL.
+  /* THE NOTICE AS A BANNER, NOT A WALL.
 
      A page that carries <meta name="mcc-privacy-notice" content="banner">
-     in its head (before this script) is a document meant to be read cold:
-     the résumé a hiring manager opens from an application, the press kit,
-     the engineering record, the music catalogue, the newsroom. On those
-     the notice is a bar along the bottom of the screen instead of a
-     full-screen dialog that hides the page.
+     in its head (before this script) shows the notice as a bar along the
+     bottom of the screen instead of a full-screen dialog that hides the
+     page. Two kinds of page do:
+
+     - PUBLIC DOCUMENT PAGES, meant to be read cold: the résumé a hiring
+       manager opens from an application, the press kit, the engineering
+       record, the music catalogue, the newsroom. Their bar counts as seen
+       as soon as it is shown (owner, 2026-10-20: "they see the privacy
+       policy, and then they never see it again"): whether it is agreed
+       to, dismissed with "Not now" or simply left, it does not come back.
+     - THE WORLD (mnet.html, at every door; owner, 2026-11-17: the wall
+       "becomes the existing banner mode ... so the globe and the missions
+       show at once"). The World is the house itself, not a document, so it
+       also carries <meta name="mcc-privacy-notice-seen" content="answered">:
+       its bar counts only once it is answered, the rule the wall keeps and
+       the one the Privacy Policy states for every page that is not a
+       document (privacy.html#entry-notice: "Leaving without answering is
+       not an answer, so the next page asks again"). Until an answer nothing
+       is recorded, not even that the bar was shown.
 
      Nothing about what is recorded changes. js/analytics.js still records
      nothing, sets no device or session id and registers no service worker
      until the notice is agreed to; this branch only decides whether the
-     words on the page can be read first. Agreeing here does not reload the
-     page, so recording begins on the next page view. The bar counts as
-     seen as soon as it is shown (owner, 2026-10-20: "they see the privacy
-     policy, and then they never see it again"): whether it is agreed to,
-     dismissed with "Not now" or simply left, it does not come back, and
-     nothing is recorded until someone agrees.
+     page can be read first. Agreeing here does not reload the page, so
+     recording begins on the next page view.
 
      Why: Google's guidance on interstitials says a dialog covering the
      content "make[s] it hard for Google and other search engines to
      understand your content" and recommends a banner instead; browser
      agents acting for a person hit the same wall; and a recruiter who has
-     to accept a policy before seeing a résumé often does not. Pages that
-     are the house itself (accounts, the network, the desks) keep the gate.
-     Opt a page in by adding the meta; there is no list to keep here. */
+     to accept a policy before seeing a résumé often does not. The other
+     pages that are the house itself (accounts, the desks, Control) keep
+     the gate. Opt a page in by adding the meta; there is no list to keep
+     here. */
   function banner() {
+    var seenMeta = d.querySelector('meta[name="mcc-privacy-notice-seen"]');
+    var onAnswer = !!seenMeta && seenMeta.getAttribute("content") === "answered";
     var bannerStyle = d.createElement("style");
     bannerStyle.id = "mccPrivacyNoticeStyle";
     bannerStyle.textContent =
@@ -219,16 +276,91 @@
       'color:#f5efe6;font:14px/1.4 system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.45)}' +
       '#mccPrivacyNotice p{margin:0 0 8px;color:#d8cfc3}' +
       '#mccPrivacyNotice .mccpn__actions{display:flex;flex-wrap:wrap;gap:6px}' +
-      '#mccPrivacyNotice a,#mccPrivacyNotice button{min-height:40px;border-radius:9px;padding:8px 12px;' +
+      '#mccPrivacyNotice a,#mccPrivacyNotice button{display:inline-flex;align-items:center;justify-content:center;' +
+      'min-height:44px;min-width:44px;border-radius:9px;padding:8px 12px;' +
       'font:inherit;font-weight:700;text-align:center;cursor:pointer}' +
+      '#mccPrivacyNotice a:focus-visible,#mccPrivacyNotice button:focus-visible{outline:3px solid #f5efe6;outline-offset:2px}' +
       '#mccPrivacyNotice a{border:1px solid rgba(255,255,255,.25);color:#f5efe6;text-decoration:none}' +
       '#mccPrivacyNotice .mccpn__agree{border:0;background:#f5efe6;color:#0b0908}' +
       '#mccPrivacyNotice .mccpn__later{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f5efe6}' +
       '@media (min-width:720px){#mccPrivacyNotice{left:auto;right:20px;bottom:20px;max-width:520px}}' +
+      /* The shared bottom bar is the navigation (AGENTS.md, Shared website
+         navigation) and stays in reach while the notice waits: wherever
+         js/tabbar.js has drawn it (body.has-appbar), the notice sits just
+         above it, where the house's other floating controls sit, at every
+         width (review LDR-F4, 2026-11-18: at 390 and 820 the notice covered
+         every tab of the World's bar). */
+      'body.has-appbar #mccPrivacyNotice{bottom:calc(var(--appbar-h,4.6rem) + env(safe-area-inset-bottom,0px) + .9rem)}' +
+      /* inside an open modal dialog (the World's bar, below) the notice is
+         the last thing in the sheet, held at the sheet's bottom edge while
+         the sheet scrolls, the way the World's reply box is */
+      'dialog[open]>#mccPrivacyNotice{position:sticky;left:auto;right:auto;bottom:0;margin:8px;max-width:none}' +
       /* a fixed bar prints on every page: never on paper (the résumé PDF
          is printed from these pages by tools/build-resume.mjs) */
       '@media print{#mccPrivacyNotice{display:none!important}}';
     (d.head || d.documentElement).appendChild(bannerStyle);
+
+    /* THE WORLD'S BAR STAYS IN REACH, AND SO DOES THE WORLD. A modal
+       <dialog> (showModal) sits in the top layer and makes the rest of the
+       page inert, so a bar left in <body> waits under it, dim and out of
+       reach: a shared ?mission= link opens its mission that way (review
+       LDR-F1, 2026-11-18). While a modal dialog is open the bar is the last
+       thing inside it, the one part of the page a modal dialog leaves
+       answerable, below the dialog's own buttons rather than over them; it
+       goes back to <body> when the dialog closes. While it waits, <html>
+       carries data-privacy-notice="waiting" and the bar's height (with its
+       gap) as --mcc-privacy-notice-h, so the World's feed can end that much
+       later and its last post still scroll clear of the bar (css/mnet.css).
+       Returns what lets all of this go once the bar is answered. Only a bar
+       that still waits for its answer does this: a document page's bar
+       counted as soon as it was shown. */
+    function keepAnswerable(bar) {
+      var root = d.documentElement, open = [], watch = null, sized = null, alive = true;
+      var size = function () {
+        var h = alive && root.style ? bar.offsetHeight || 0 : 0;
+        if (h > 0) root.style.setProperty("--mcc-privacy-notice-h", (h + 8) + "px");
+      };
+      var isModal = function (dlg) {
+        if (!dlg || !dlg.open || dlg.isConnected === false) return false;
+        try { return dlg.matches(":modal"); } catch (_) { return true; }
+      };
+      var place = function () {
+        if (!alive) return;
+        var host = d.body;
+        for (var i = open.length - 1; i >= 0; i -= 1) {
+          if (isModal(open[i])) { host = open[i]; break; }
+        }
+        if (bar.parentNode !== host) host.appendChild(bar);
+      };
+      var note = function (dlg) {
+        var at = open.indexOf(dlg);
+        if (isModal(dlg)) { if (at < 0) open.push(dlg); }
+        else if (at >= 0) open.splice(at, 1);
+      };
+      if (typeof w.MutationObserver === "function" && d.querySelectorAll) {
+        Array.prototype.forEach.call(d.querySelectorAll("dialog[open]"), note);
+        watch = new w.MutationObserver(function (records) {
+          records.forEach(function (rec) { if (rec.target && rec.target.tagName === "DIALOG") note(rec.target); });
+          place();
+        });
+        watch.observe(root, { attributes: true, attributeFilter: ["open"], subtree: true });
+        place();
+      }
+      root.setAttribute("data-privacy-notice", "waiting");
+      if (typeof w.ResizeObserver === "function") {
+        sized = new w.ResizeObserver(size);
+        sized.observe(bar);
+      }
+      size();
+      return function () {
+        alive = false;
+        if (watch) watch.disconnect();
+        if (sized) sized.disconnect();
+        root.removeAttribute("data-privacy-notice");
+        if (root.style) root.style.removeProperty("--mcc-privacy-notice-h");
+      };
+    }
+
     var mountBanner = function () {
       if (d.getElementById("mccPrivacyNotice")) return;
       var bar = d.createElement("div");
@@ -238,7 +370,8 @@
       bar.innerHTML =
         /* Short on purpose: Google's guidance is a banner that takes "a small
            fraction of the screen". The full notice is one tap away. */
-        '<p>Nothing from this visit is recorded until you agree to the Privacy Policy. ' +
+        '<p>McCluster&rsquo;s analytics stay off until you agree to the Privacy Policy; ' +
+        '&ldquo;Not now&rdquo; records only that you saw this notice. ' +
         'It is notice, not blanket consent: location and device permissions keep their own controls.</p>' +
         '<div class="mccpn__actions">' +
         '<button type="button" class="mccpn__agree" id="mccPrivacyNoticeAgree">I agree &amp; continue</button>' +
@@ -246,62 +379,109 @@
         '<button type="button" class="mccpn__later" id="mccPrivacyNoticeLater">Not now</button>' +
         '</div>';
       d.body.appendChild(bar);
-      writeSeen();
+      /* a document page's bar counts once it is shown; the World's waits for its answer */
+      if (!onAnswer) writeSeen();
+      var letGo = onAnswer ? keepAnswerable(bar) : function () {};
+      var close = function () {
+        bar.remove();
+        letGo();
+      };
       d.getElementById("mccPrivacyNoticeAgree").addEventListener("click", function () {
         writeAck();
-        bar.remove();
+        close();
       });
       d.getElementById("mccPrivacyNoticeLater").addEventListener("click", function () {
         writeSeen();
-        bar.remove();
+        close();
+      });
+      /* Escape from inside the bar is "Not now", the same as the dialog.
+         Inside a modal dialog it answers the bar and leaves that dialog open. */
+      bar.addEventListener("keydown", function (e) {
+        if (e.key !== "Escape" && e.key !== "Esc") return;
+        var host = bar.parentNode;
+        if (host && host !== d.body && host.tagName === "DIALOG" && e.preventDefault) e.preventDefault();
+        writeSeen();
+        close();
       });
     };
     if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", mountBanner, { once: true });
     else mountBanner();
   }
 
+  /* THE ENTRY DIALOG. Two answers, the same two the banner and the Privacy
+     Policy name ("I agree & continue" and "Not now"; pinned by
+     scripts/test/privacy-notice-policy.test.mjs):
+     - "I agree & continue" records agreement and reloads, so the page starts
+       with it in place (analytics may begin).
+     - "Not now" (or Escape) records only that the notice was seen, closes the
+       dialog and lets the visitor in without reloading. Nothing that needs
+       agreement starts: js/analytics.js stays off on this and every later
+       page until the visitor agrees, which they can still do on the Privacy
+       Policy page. Like every answer, it is not asked again for this version.
+     Leaving the page without answering is no answer: the next page asks. */
   function wall() {
     d.documentElement.setAttribute("data-privacy-gate", "pending");
     var style = d.createElement("style");
     style.id = "mccPrivacyGateStyle";
+    /* Mobile first: one column at phone width; min-width only ever adds room.
+       The overlay scrolls, and the card centres with auto margins, so a short
+       landscape phone can still reach every answer. */
     style.textContent =
       'html[data-privacy-gate="pending"] body{overflow:hidden!important}' +
       'html[data-privacy-gate="pending"] body>*:not(#mccPrivacyGate){visibility:hidden!important;pointer-events:none!important}' +
-      '#mccPrivacyGate{visibility:visible!important;position:fixed;inset:0;z-index:2147483647;' +
-      'display:grid;place-items:center;padding:20px;background:#0b0908;color:#f5efe6;font:16px/1.5 system-ui,sans-serif}' +
-      '#mccPrivacyGate .mccpg__card{width:min(100%,560px);padding:24px;border:1px solid rgba(255,255,255,.18);' +
-      'border-radius:18px;background:#15110f;box-shadow:0 24px 80px rgba(0,0,0,.5)}' +
+      '#mccPrivacyGate{visibility:visible!important;position:fixed;inset:0;z-index:2147483647;box-sizing:border-box;' +
+      'display:flex;overflow-y:auto;padding:16px;background:#0b0908;color:#f5efe6;font:16px/1.5 system-ui,sans-serif}' +
+      '#mccPrivacyGate *{box-sizing:border-box}' +
+      '#mccPrivacyGate .mccpg__card{margin:auto;width:min(100%,560px);min-width:0;padding:20px;border:1px solid rgba(255,255,255,.18);' +
+      'border-radius:18px;background:#15110f;box-shadow:0 24px 80px rgba(0,0,0,.5);overflow-wrap:anywhere}' +
       '#mccPrivacyGate h1{margin:0 0 12px;font-size:1.45rem;line-height:1.1}' +
+      '#mccPrivacyGate h1:focus{outline:none}' +
       '#mccPrivacyGate p{margin:0 0 14px;color:#d8cfc3}' +
-      '#mccPrivacyGate .mccpg__actions{display:grid;gap:10px;margin-top:18px}' +
-      '#mccPrivacyGate a,#mccPrivacyGate button{min-height:48px;border-radius:12px;padding:12px 16px;font:inherit;font-weight:700;text-align:center}' +
+      '#mccPrivacyGate .mccpg__actions{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:18px}' +
+      '#mccPrivacyGate a,#mccPrivacyGate button{display:flex;align-items:center;justify-content:center;min-height:48px;min-width:44px;' +
+      'border-radius:12px;padding:12px 16px;font:inherit;font-size:max(16px,1rem);font-weight:700;text-align:center;cursor:pointer}' +
       '#mccPrivacyGate a{border:1px solid rgba(255,255,255,.25);color:#f5efe6;text-decoration:none}' +
-      '#mccPrivacyGate button{border:0;background:#f5efe6;color:#0b0908;cursor:pointer}' +
-      '#mccPrivacyGate small{display:block;margin-top:12px;color:#a99d91}';
+      '#mccPrivacyGate .mccpg__agree{border:0;background:#f5efe6;color:#0b0908}' +
+      '#mccPrivacyGate .mccpg__later{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f5efe6}' +
+      '#mccPrivacyGate a:focus-visible,#mccPrivacyGate button:focus-visible{outline:3px solid #f5efe6;outline-offset:3px}' +
+      '#mccPrivacyGate small{display:block;margin-top:12px;color:#a99d91}' +
+      '@media (min-width:560px){#mccPrivacyGate{padding:24px}#mccPrivacyGate .mccpg__card{padding:24px}' +
+      '#mccPrivacyGate .mccpg__actions{grid-template-columns:repeat(2,minmax(0,1fr))}' +
+      '#mccPrivacyGate .mccpg__review{grid-column:1/-1}}';
     (d.head || d.documentElement).appendChild(style);
 
     function mount() {
       if (d.getElementById("mccPrivacyGate")) return;
+      var before = d.activeElement || null;
       var gate = d.createElement("div");
       gate.id = "mccPrivacyGate";
       gate.setAttribute("role", "dialog");
       gate.setAttribute("aria-modal", "true");
       gate.setAttribute("aria-labelledby", "mccPrivacyGateTitle");
+      gate.setAttribute("aria-describedby", "mccPrivacyGateBody");
       gate.innerHTML =
         '<div class="mccpg__card">' +
-        '<h1 id="mccPrivacyGateTitle">Privacy before entry</h1>' +
-        '<p>McCluster records account, device, network, location and activity data as described in the Privacy Policy. Optional live video, microphone audio and verification media are captured only in features that request them. Review the updated notice before entering.</p>' +
+        '<h1 id="mccPrivacyGateTitle" tabindex="-1">Privacy before entry</h1>' +
+        '<div id="mccPrivacyGateBody">' +
+        '<p>McCluster records account, device, network, location and activity data as described in the Privacy Policy. Optional live video, microphone audio and verification media are captured only in features that request them.</p>' +
+        '<p><b>McCluster&rsquo;s own analytics stay off until you agree.</b> &ldquo;Not now&rdquo; lets you in and records only that you saw this notice. Either answer is kept for this version of the policy, so it is not asked again; you can agree later on the Privacy Policy page.</p>' +
         '<p><b>This acknowledgement is not blanket consent.</b> Precise location and other protected device permissions still use their own browser or operating-system controls, and privacy signals remain honored.</p>' +
+        '</div>' +
         '<div class="mccpg__actions">' +
-        '<a href="/privacy.html">Review the Privacy Policy</a>' +
-        '<button type="button" id="mccPrivacyAgree">I agree &amp; continue</button>' +
+        '<button type="button" class="mccpg__agree" id="mccPrivacyAgree">I agree &amp; continue</button>' +
+        '<button type="button" class="mccpg__later" id="mccPrivacyLater">Not now</button>' +
+        '<a class="mccpg__review" href="/privacy.html">Review the Privacy Policy</a>' +
         '</div>' +
         '<small>Privacy notice version ' + VERSION + '</small>' +
         '</div>';
       d.body.appendChild(gate);
       var btn = d.getElementById("mccPrivacyAgree");
+      var later = d.getElementById("mccPrivacyLater");
+      var open = true;
       btn.addEventListener("click", function () {
+        if (!open) return;
         btn.disabled = true;
+        later.disabled = true;
         /* the page reloads to start with the agreement in place; a member's
            record gets a moment to be written first, never more than that */
         var reloaded = false;
@@ -309,6 +489,35 @@
         writeAck().then(go, go);
         setTimeout(go, 1500);
       });
+      /* "Not now": seen, not agreed. No reload: nothing that waits for
+         agreement started on this page, and nothing starts now. */
+      function notNow() {
+        if (!open || btn.disabled) return;
+        open = false;
+        writeSeen();
+        gate.remove();
+        if (style.remove) style.remove();
+        d.documentElement.removeAttribute("data-privacy-gate");
+        var back = before && before !== d.body && before.focus ? before : null;
+        try { (back || (d.querySelector && d.querySelector("main,[role=main]")) || d.body).focus({ preventScroll: true }); } catch (_) {}
+      }
+      later.addEventListener("click", notNow);
+      /* A modal dialog: Escape is "Not now", and Tab stays inside it. */
+      gate.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" || e.key === "Esc") {
+          if (e.preventDefault) e.preventDefault();
+          notNow();
+          return;
+        }
+        if (e.key !== "Tab" || !gate.querySelectorAll) return;
+        var items = Array.prototype.filter.call(gate.querySelectorAll("a[href],button:not([disabled])"), function (n) { return !n.disabled; });
+        if (!items.length) return;
+        var first = items[0], last = items[items.length - 1], at = d.activeElement;
+        if (e.shiftKey && (at === first || !gate.contains(at))) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (at === last || !gate.contains(at))) { e.preventDefault(); first.focus(); }
+      });
+      /* Focus starts on the agree button, the way it always has; the dialog
+         is labelled and described, so a screen reader hears the notice. */
       btn.focus();
     }
 

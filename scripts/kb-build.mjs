@@ -113,7 +113,8 @@ async function build() {
       } else if (pr.from != null) {
         lines.push(`From ${money(pr.from)} ${pr.per || ""}.`.trim());
         for (const r of pr.rate_lines || []) {
-          lines.push(`- ${r.label}: ${money(r.amount)} — ${r.unit}`);
+          lines.push(`- ${r.label}: ${money(r.amount)} — ${r.unit}` +
+            (r.minimum_hours ? ` · ${money(O.minimumFor(r))} base. ${r.service_area_note || ""} ${r.travel_note || ""}` : ""));
         }
       } else {
         lines.push(`${pr.display} ${pr.per || ""}`.trim() + ".");

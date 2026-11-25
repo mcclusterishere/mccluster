@@ -18,6 +18,7 @@ EXTERNAL_AUTHORITY={
 }
 WORKFLOWS={
     ".github/workflows/equity-uprise-core-v2-ci.yml",
+    ".github/workflows/equity-uprise-visual.yml",
     ".github/workflows/deploy-pages.yml",
 }
 AGENT_ENTRYPOINTS={

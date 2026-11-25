@@ -10,8 +10,9 @@ import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail, reply } from './lib/http.js';
 import { observeScheduled } from './lib/observability.js';
 import { ingestGdeltNews } from './world-news.js';
-import { companySiteResponse } from './company-site/router.js';
-import { humanUpriseResponse } from './human-uprise/router.js';
+import { createSiteRouter } from './platform/router.js';
+import { COMPANY_PARTS } from './company-site/router.js';
+import { WORLD_DOOR_PARTS } from './human-uprise/router.js';
 import { handleAuthHandoff } from './auth-handoff.js';
 import { preflightResponse } from './preflight.js';
 import { handleCreatorCheckout } from './creator-billing.js';
@@ -27,6 +28,7 @@ import { handleTravelRouting } from './travel-routing.js';
 import { handleAudioRooms } from './audio-sfu-rooms.js';
 import { handleRegionScope } from './world-region-feed.js';
 import { handleMemberFronts } from './member-fronts.js';
+import { coreSignedGate } from './world-core-reads.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -50,20 +52,24 @@ function healthResponse(request, env) {
   });
 }
 
+/* The site's hosts, by host, from the one generated table (./platform/router.js): the platform (the World at its
+   root, McCluster Corp's own pages: COMPANY_PARTS), its doors (www; the legacy-named World door, inert until the
+   owner routes it: WORLD_DOOR_PARTS, docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md) and Matthew's profile
+   host (never routed here before P3). Null for every other host, so the API below is untouched:
+   docs/control-plane/DOMAINS-AND-ENTITIES.md */
+const siteResponse = createSiteRouter({ company: COMPANY_PARTS, worldDoor: WORLD_DOOR_PARTS });
+
 export default {
   async fetch(request, env, ctx) {
-    /* McCluster Corp's property (mccluster.org, www.mccluster.org): the World
-       at its root, the company page at /company. Null for every other host,
-       so the API below is untouched. Inert until the owner routes the apex
-       to this Worker: docs/control-plane/DOMAINS-AND-ENTITIES.md */
-    const company = await companySiteResponse(request, env);
-    if (company) return company;
-    /* Human Uprise's own door (humanuprise.com, www): the World by host, the
-       same way. Null for every other host; inert until the owner routes it:
-       docs/action-network/EQUITY-UPRISE-PUBLIC-GLOBE-ENTRY.md */
-    const humanUprise = await humanUpriseResponse(request, env);
-    if (humanUprise) return humanUprise;
+    const site = await siteResponse(request, env);
+    if (site) return site;
     try {
+      /* McCluster Core's signature reaches only POST /v1/media/mcp, the two
+         media recovery operator routes and the read-only World layers the
+         news pairing reads; anything else that announces it is refused before
+         any other handler (./world-core-reads.js) */
+      const coreRead = await coreSignedGate(request, env);
+      if (coreRead) return coreRead;
       const url = new URL(request.url);
       if (request.method === 'GET' && (url.pathname === '/healthz' || url.pathname === '/v1/health')) {
         return healthResponse(request, env);

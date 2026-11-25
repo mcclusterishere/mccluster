@@ -1,19 +1,20 @@
 {
-  "name": "@mccluster/here-platform",
+  "name": "@mccluster/legacy-platform-archive",
   "private": true,
   "version": "0.1.0",
+  "description": "Archived predecessor to the canonical Cloudflare Worker at workers/mccluster. Do not deploy, migrate, or run as a backend. See DISABLED.md.",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "start": "node src/server.mjs",
-    "dev": "node --watch src/server.mjs",
-    "db:migrate": "node src/migrate.mjs",
-    "start:control": "node src/control-plane.mjs",
-    "start:building": "node src/building-node.mjs",
-    "topology:provision": "node src/provision-topology.mjs",
-    "node:credential": "node src/provision-node-credential.mjs"
+    "start": "node -e \"console.error('DISABLED: canonical backend is workers/mccluster'); process.exit(1)\"",
+    "dev": "node -e \"console.error('DISABLED: use workers/mccluster'); process.exit(1)\"",
+    "db:migrate": "node -e \"console.error('DISABLED: the only database is Supabase zmnhbrjyhxzhkxmhkexs; see platform/DISABLED.md'); process.exit(1)\"",
+    "start:control": "node -e \"console.error('DISABLED: see platform/DISABLED.md'); process.exit(1)\"",
+    "start:building": "node -e \"console.error('DISABLED: see platform/DISABLED.md'); process.exit(1)\"",
+    "topology:provision": "node -e \"console.error('DISABLED: see platform/DISABLED.md'); process.exit(1)\"",
+    "node:credential": "node -e \"console.error('DISABLED: see platform/DISABLED.md'); process.exit(1)\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.0.0",

@@ -1,0 +1,11 @@
+{
+  "note": "Exact copies of the Chem-108 (Molecule Fluent) study data and its pure scoring/alias core, vendored for the Game Hub's Molecule Rush. Do not edit here; change them in mcclusterishere/Chem-108 and re-copy, then update these hashes. Chem-108 is the owner's PRIVATE repository: vendoring publishes this card data on the public site (docs/game-hub/README.md). scripts/test/game-hub.test.mjs checks these hashes.",
+  "repository": "mcclusterishere/Chem-108",
+  "ref": "main",
+  "commit": "fb1b038dee3ed86c41a9931bf9c9874a76033412",
+  "files": {
+    "data.js": { "from": "dist/data.js", "sha256": "f93971d6a8ccf715c48dde1533774dc5173c623b2bdc58299ec89805e33b8575" },
+    "extra-data.js": { "from": "dist/extra-data.js", "sha256": "8e7f772fb96e7cda67203aa04d95135d462d61d5b59d897dee720ee19d679a46" },
+    "core.js": { "from": "dist/core.js", "sha256": "37481b924df6a3f2be5fc3d007c9252db3e0f012d5e8d929c829b4a99cee692f" }
+  }
+}

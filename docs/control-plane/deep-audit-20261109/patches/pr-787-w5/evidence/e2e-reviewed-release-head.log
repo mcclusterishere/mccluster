@@ -1,0 +1,16 @@
+# series head f8499fad: the PR's scripts/e2e/prim3-reviewed-release.e2e.mjs (runReviewedReleaseBrowser, 390 legacy, 1280 legacy, 390 square), unmodified, from the source checkout; driven by topology-e2e-driver.mjs with W5_JOURNEY=release (real Worker handleLearning over memory-rest.mjs, NOT the PostgreSQL/PostgREST harness); Chromium via Playwright 1.63.0; 2026-11-10T12:15:43Z, node v22.23.4
+DRIVER: worker /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5; journey module /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5/scripts/e2e/prim3-reviewed-release.e2e.mjs; served root (the module's own checkout); variant filter (all)
+Browser release journey 390px: review
+Browser release journey 390px: renderer ready
+Browser release journey 390px: action 0
+PASS 390px legacy real SQL review → existing tactical gameplay → inline validated checkpoints → debrief/reload; ordinary opponents, no state injection
+Browser release journey 1280px: review
+Browser release journey 1280px: renderer ready
+Browser release journey 1280px: action 0
+PASS 1280px legacy real SQL review → existing tactical gameplay → inline validated checkpoints → debrief/reload; ordinary opponents, no state injection
+Browser release journey 390px: review
+Browser release journey 390px: renderer ready
+Browser release journey 390px: action 0
+PASS 390px square real SQL review → existing tactical gameplay → inline validated checkpoints → debrief/reload; ordinary opponents, no state injection
+DRIVER: PASS in 263.2 s; fixture requests 166; releases 3; sessions 3; evidence rows 21
+exit=0

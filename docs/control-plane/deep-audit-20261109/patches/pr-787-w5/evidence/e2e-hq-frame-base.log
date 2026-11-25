@@ -1,0 +1,16 @@
+# FRAME SHOWN IN THE BROWSER, base source tree cf8c3cc7: recorded scratch variant (prints the brief's frame and the first question), variant equity-uprise-hq, served from the source checkout; Worker from the same tree over memory-rest.mjs; 2026-11-10T12:13:55Z
+DRIVER: worker /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base; journey module /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/w5-tools/prim3-topology-learning.serve-root.e2e.mjs; served root /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/wt-w5-merge-base; variant filter equity-uprise-hq
+Learning journey equity-uprise-hq/square 390px
+FRAME equity-uprise-hq/square: Equity Uprise HQ. X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile. Answer after a first action or turn, then after turns two and three. Combat progress is browser-reported.
+HTTP 404 https://matthew.mccluster.org/equity-uprise-preview/equity-uprise-building-core-v2.glb
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+HTTP 404 https://matthew.mccluster.org/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+HTTP 404 https://matthew.mccluster.org/equity-uprise-preview/equity-uprise-floor-07-core-v2.glb
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+HTTP 404 https://matthew.mccluster.org/docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-core-v2.glb
+CONSOLE ERROR Failed to load resource: the server responded with a status of 404 (Not Found)
+QUESTION equity-uprise-hq/square: X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile On an unobstructed square practice lattice, find the minimum number of neighbor steps from (1, 2) to (4, 4). This is not a route through walls or an AP cost.
+PASS equity-uprise-hq/square 390px brief → real turns → wrong/hinted/correct math → abandoned debrief/reload (no combat completion claim)
+DRIVER: PASS in 31.2 s; fixture requests 66; releases 1; sessions 1; evidence rows 9
+exit=0

@@ -61,25 +61,27 @@
     db: svg('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>'),
     flag: svg('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),
     lock: svg('<rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
-    expand: svg('<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>')
+    expand: svg('<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>'),
+    chart: svg('<path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/>')
   };
 
-  /* WORLD DATA: the groups of the owner's screen, each layer what it really is today. "planned" rows are Halo layers not
-     yet on this globe (docs/control-plane/HALO-ADMIN-GLOBE.md, phase 3); they are listed so the count is honest. */
+  /* WORLD DATA: only implemented sources belong in the operational layer picker. */
   const GROUPS = [
     { id: 'air', name: 'Air & sea', icon: 'plane', items: [{ id: 'flights', label: 'Aircraft', core: true }, { id: 'military', label: 'Military aircraft', short: 'Military' }, { id: 'vessels', label: 'Ships (AIS)', short: 'Ships' }] },
-    { id: 'earth', name: 'Earth & weather', icon: 'cloud', items: [{ id: 'quakes', label: 'Earthquakes', short: 'Quakes' }, { id: 'fires', label: 'Thermal hotspots (NASA FIRMS)', short: 'Thermal' }, { id: 'tides', label: 'Water levels (NOAA)', short: 'NOAA' }, { id: 'cyclones', label: 'Tropical cyclones (NOAA)', short: 'Cyclones' }, { id: 'perimeters', label: 'Wildfire perimeters', short: 'Perimeters' }] },
-    { id: 'infra', name: 'Infrastructure', icon: 'building', items: [{ id: 'networks', label: 'Networks', planned: true }, { id: 'dams', label: 'Dams', planned: true }, { id: 'sites', label: 'Data centres', short: 'Sites', planned: true }] },
+    { id: 'earth', name: 'Earth & weather', icon: 'cloud', items: [{ id: 'weather', label: 'Weather alerts (NOAA)', short: 'Alerts' }, { id: 'natural', label: 'Natural events (NASA)', short: 'Natural events' }, { id: 'quakes', label: 'Earthquakes', short: 'Quakes' }, { id: 'fires', label: 'Thermal hotspots (NASA FIRMS)', short: 'Thermal' }, { id: 'tides', label: 'Water levels (NOAA)', short: 'NOAA' }, { id: 'cyclones', label: 'Tropical cyclones (NOAA)', short: 'Cyclones' }, { id: 'perimeters', label: 'Wildfire perimeters', short: 'Perimeters' }] },
     { id: 'space', name: 'Space', icon: 'sat', items: [{ id: 'satellites', label: 'Satellites', core: true }, { id: 'launches', label: 'Launches', core: true }] },
-    { id: 'places', name: 'Places & media', icon: 'camera', items: [{ id: 'cctv', label: 'Cameras (CCTV)', short: 'Cameras', core: true }, { id: 'radio', label: 'Radio', planned: true }, { id: 'news', label: 'News', planned: true }] },
-    { id: 'ops', name: 'Field operations', icon: 'people', items: [{ id: 'missions', label: 'Missions', own: true }, { id: 'regions', label: 'Member regions (5 or more)', short: 'People', globe: true }, { id: 'intel', label: 'Intel events (evidence)', short: 'Evidence', core: true }] }
+    { id: 'places', name: 'Places & media', icon: 'camera', items: [{ id: 'cctv', label: 'Cameras (CCTV)', short: 'Cameras', core: true }] },
+    { id: 'ops', name: 'Field operations', icon: 'people', items: [{ id: 'missions', label: 'Missions', own: true }, { id: 'regions', label: 'Member regions (5 or more)', short: 'People', globe: true }, { id: 'intel', label: 'Intel events (evidence)', short: 'Evidence', core: true }] },
+    /* Markets (js/halo/markets.js): exchanges at their cities, and a country's GDP, listings and market news on a tap */
+    { id: 'markets', name: 'Markets', icon: 'chart', items: [{ id: 'markets', label: 'Exchanges, GDP and listings', short: 'Exchanges', mkt: true }] }
   ];
   const CONTEXT = ['Satellite imagery', 'Street map', 'Photoreal 3D cities', 'Country borders'];
   const ALL_ITEMS = GROUPS.flatMap((g) => g.items);
   const TONE = { cyan: '#45b8f4', amber: '#f2b448', red: '#ff7a7a', green: '#4fdf98', mute: '#7f90a6', white: '#eef3f9' };
 
   let G = null, V = null, C = null, mounted = false;
-  let ui = {}, vision = null, hud = null, layers = null, data = null, offs = [];
+  let ui = {}, vision = null, hud = null, layers = null, data = null, markets = null, offs = [];
+  let routeReady = false, restoringRoute = false;
   let view = 'world', sel = null, dtab = 'overview';
   let tabs = { missions: 'active', people: 'all', intel: 'feed' }, sorts = { missions: 'priority', people: 'activity' }, query = { missions: '', people: '', intel: '' };
   let area = 'earth', hours = 24, expanded = {}, missionsOn = true, collapsed = false, sheetOpen = false, mapFocus = false;
@@ -90,7 +92,7 @@
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const esc = (s) => (G ? G.esc(String(s == null ? '' : s)) : String(s == null ? '' : s));
   const reduced = () => !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const wide = () => !!(window.matchMedia && matchMedia('(min-width:768px)').matches);
+  const wide = () => !!(window.matchMedia && matchMedia('(min-width:1100px)').matches);
   const desk = () => !!(window.matchMedia && matchMedia('(min-width:1200px)').matches);
   const fin = (v) => typeof v === 'number' && Number.isFinite(v);
   const ms = (iso) => { const t = iso ? Date.parse(iso) : NaN; return Number.isFinite(t) ? t : null; };
@@ -108,8 +110,8 @@
   function due(iso) {
     const t = ms(iso);
     if (t === null) return 'No end date';
-    const d = new Date(t), today = new Date(), day = (x) => x.toISOString().slice(0, 10);
-    const tomorrow = new Date(Date.now() + 864e5);
+    const now = Date.now(), d = new Date(t), today = new Date(now), day = (x) => x.toISOString().slice(0, 10);
+    const tomorrow = new Date(now + 864e5);
     if (day(d) === day(today)) return 'Today, ' + hhmm(t) + ' UTC';
     if (day(d) === day(tomorrow)) return 'Tomorrow, ' + hhmm(t) + ' UTC';
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: d.getUTCFullYear() === today.getUTCFullYear() ? undefined : 'numeric', timeZone: 'UTC' });
@@ -140,12 +142,12 @@
   const placed = (m) => m && m.place && fin(m.place.lat) && fin(m.place.lon);
   const missionById = (id) => missions().find((m) => m.id === id) || null;
   const personById = (id) => peopleList().find((p) => p.m_uid === id) || null;
-  function missionTone(m) { return m.review ? 'amber' : m.status === 'active' ? 'cyan' : m.status === 'blocked' ? 'red' : m.status === 'completed' ? 'green' : 'mute'; }
-  function missionWord(m) { return { active: 'Active', planned: 'Planned', blocked: 'Paused', completed: 'Completed' }[m.status] || 'Unknown'; }
+  function missionTone(m) { return m.review ? 'amber' : m.status === 'active' ? 'cyan' : m.status === 'blocked' ? 'red' : m.status === 'completed' ? 'mute' : 'mute'; }
+  function missionWord(m) { return { active: 'Active', planned: 'Planned', blocked: 'Paused', completed: 'Closed' }[m.status] || 'Unknown'; }
   function missionProgress(m) {
     const c = m.counts || {}, joined = fin(c.joined) ? c.joined : 0, verified = fin(c.verified) ? c.verified : 0;
     const total = Math.max(joined, verified);
-    return { done: verified, total, pct: total ? Math.round(verified / total * 100) : 0 };
+    return { known: fin(c.joined) && fin(c.verified), done: verified, total, pct: total ? Math.round(verified / total * 100) : 0 };
   }
   const shortId = (id) => String(id || '').replace(/-/g, '').slice(0, 6).toUpperCase();
 
@@ -154,26 +156,35 @@
     if (it.planned) return false;
     if (it.own) return missionsOn;
     if (it.globe) return !!(G.regions && G.regions.shown());
+    if (it.mkt) return !!(markets && markets.on());
     return it.core ? G.layer.on(it.id) : !!(layers && layers.on(it.id));
   }
   function stateOf(it) {
     if (it.planned) return { state: 'planned', text: 'Planned' };
     if (it.own) { const s = data.peek('missions'), k = missions().filter(placed).length; return { state: missionsOn ? (s.error && !s.body ? 'error' : 'on') : 'off', text: missionsOn ? (s.body ? n(k) : s.error ? 'Unavailable' : 'Loading…') : '', fetched: s.at }; }
     if (it.globe) return { state: isOn(it) ? 'on' : 'off', text: isOn(it) ? 'Shown' : '' };
+    if (it.mkt) {
+      const m = markets ? markets.status() : { state: 'off' };
+      const words = { off: '', loading: 'Loading…', locked: 'Owner only', error: 'Unavailable' };
+      return { state: m.state, text: m.state === 'on' ? n(m.open) + ' open / ' + n(m.count) : words[m.state] || '', fetched: m.fetched };
+    }
     if (it.core) {
       if (G.layer.locked(it.id)) return { state: 'locked', text: 'Locked' };
       const on = G.layer.on(it.id), c = G.layer.count(it.id);
-      return { state: on ? 'on' : 'off', text: on ? n(c) : '' };
+      const detail=G.objects&&G.objects.stats(),budget=detail&&detail[it.id];
+      return { state: on ? 'on' : 'off', text: on ? (budget ? n(budget.shown)+' shown / '+n(budget.loaded)+' loaded' : n(c)) : '' };
     }
     const s = layers && layers.status(it.id);
     if (!s) return { state: 'off', text: '' };
     const words = { off: '', loading: 'Loading…', locked: 'Owner only', error: 'Unavailable', unavailable: s.reason === 'needs a key' ? 'Needs a key' : 'Unavailable' };
-    return { state: s.state, text: s.state === 'on' ? n(s.count) + (s.stale ? ' · stale' : '') : (words[s.state] || ''), stale: s.stale, fetched: s.fetched, reason: s.reason };
+    return { state: s.state, text: s.state === 'on' ? (['weather','natural'].includes(it.id) ? n(s.mapped)+' mapped / '+n(s.count)+' reports' : n(s.count)) + (s.stale ? ' · stale' : '') : (words[s.state] || ''), stale: s.stale, fetched: s.fetched, reason: s.reason };
   }
   async function setItem(it, on) {
+    if (!V && !it.own) return;
     if (it.planned || isOn(it) === !!on) return;
     if (it.own) { missionsOn = !!on; markSig = ''; }
     else if (it.globe) { if (G.regions) G.regions.show(!!on); }
+    else if (it.mkt) { if (markets) await markets.set(!!on); }
     else if (it.core) { if (!G.layer.locked(it.id)) await G.layer.toggle(it.id); }
     else if (layers) await layers.set(it.id, !!on);
     savePrefs(); schedulePaint();
@@ -181,6 +192,10 @@
   /* how a source is doing, in the screen's words: observed and fresh, calculated, stale, partial, missing a key, unavailable */
   function health(it) {
     const s = stateOf(it);
+    if (it.own) return dataHealth('missions');
+    if (it.mkt && s.state === 'on') return { tone: 'hollow', text: 'Hours from the regular schedule · tap a country for GDP and listings' };
+    if (it.id === 'cctv') return { tone: 'hollow', text: 'Catalog loaded · snapshots checked when opened' };
+    if (it.core && it.id !== 'satellites') return { tone: 'hollow', text: 'Snapshot loaded · freshness varies by source' };
     if (it.id === 'satellites') return { tone: 'cyan', text: 'Calculated from orbital elements' };
     if (it.id === 'tides' && s.state === 'on') return { tone: 'hollow', text: 'Reference: ' + n(layers.status('tides').count) + ' stations' };
     if (s.state === 'locked') return { tone: 'amber', text: 'Locked for this session' };
@@ -226,22 +241,25 @@
     const m = photoPhase === 'on' || photoPhase === 'loading' ? '3d' : G.basemap && G.basemap.get() === 'map' ? 'map' : 'sat';
     $$('[data-base]', ui.root).forEach((b) => {
       b.setAttribute('aria-pressed', b.dataset.base === m ? 'true' : 'false');
-      if (b.dataset.base === '3d') { b.disabled = photoPhase === 'unavailable'; b.title = photoPhase === 'unavailable' ? 'Photoreal 3D is unavailable (Cesium ion asset 2275207 not in the token scope?)' : ''; }
+      if (!V) { b.disabled=true; return; }
+      if (b.dataset.base === '3d') { b.disabled = photoPhase === 'unavailable'; b.title = photoPhase === 'unavailable' ? '3D cities are unavailable. Try again later.' : ''; }
     });
   }
 
   /* ---------- follow and orbit ---------- */
   function follow(target) {
     stopFollow();
-    if (!target || typeof target.position !== 'function') return;
+    if (!V || !target || typeof target.position !== 'function') return;
     const p0 = target.position();
     if (!p0) return;
+    V.camera.cancelFlight();
     followTarget = target;
     V.camera.lookAt(p0, new C.HeadingPitchRange(V.camera.heading, C.Math.toRadians(-35), target.range || 80000));
     let last = p0;
     followTick = () => {
       const p = followTarget && followTarget.position();
-      if (!p || C.Cartesian3.distance(p, last) < 0.5) return;
+      if (!p) { stopFollow(); return; }
+      if (C.Cartesian3.distance(p, last) < 0.5) return;
       last = p;
       V.camera.lookAt(p, new C.HeadingPitchRange(V.camera.heading, V.camera.pitch, C.Cartesian3.magnitude(V.camera.position)));
     };
@@ -251,6 +269,7 @@
     paintTools();
   }
   function stopFollow() {
+    setOrbit(false);
     if (followTick) { V.scene.preRender.removeEventListener(followTick); followTick = null; }
     if (followTarget) { followTarget = null; V.camera.lookAtTransform(C.Matrix4.IDENTITY); }
     if (ui.follow) ui.follow.hidden = true;
@@ -258,7 +277,7 @@
   }
   function setOrbit(on) {
     if (orbitTick) { V.scene.preRender.removeEventListener(orbitTick); orbitTick = null; }
-    if (!on || reduced()) { paintTools(); return; }
+    if (!V || !on || reduced()) { paintTools(); return; }
     orbitLast = 0;
     orbitTick = () => {
       const now = performance.now(), dt = orbitLast ? Math.min(0.1, (now - orbitLast) / 1000) : 0;
@@ -277,7 +296,7 @@
     return R / Math.sin(angle) - R;
   }
   function flyTo(lon, lat, height) {
-    if (!fin(lon) || !fin(lat)) return;
+    if (!V || !fin(lon) || !fin(lat)) return;
     stopFollow();
     /* a pick from a list turns the Earth to it and keeps the whole Earth in view, as on the owner's screens; Go there zooms */
     const h = fin(height) ? height : Math.max(V.camera.positionCartographic.height, wholeEarth());
@@ -287,6 +306,7 @@
   /* ---------- selection ---------- */
   function select(next, opts) {
     sel = next;
+    if (layers?.visuals) layers.visuals.select(next?.layer, next?.item);
     dtab = 'overview';
     detailSig = ''; markSig = '';
     const o = opts || {};
@@ -296,7 +316,7 @@
     }
     document.documentElement.dataset.haloDetail = sel ? 'open' : 'closed';
     if (ui.right) ui.right.dataset.open = sel ? 'true' : 'false';
-    schedulePaint();
+    rememberRoute(); schedulePaint();
   }
   function whereIs(s) {
     if (!s) return null;
@@ -350,7 +370,8 @@
     /* the chosen one is labelled first; any other is labelled only with no labelled neighbour within 900 km */
     items.slice().sort((a, b) => (b.chosen ? 1 : 0) - (a.chosen ? 1 : 0)).forEach((i) => {
       const position = C.Cartesian3.fromDegrees(i.lon, i.lat, 0), color = C.Color.fromCssColorString(TONE[i.tone] || TONE.cyan);
-      marks.points.add({ position, pixelSize: i.chosen ? 15 : 10, color, outlineColor: i.chosen ? C.Color.WHITE : color.withAlpha(0.32), outlineWidth: i.chosen ? 3 : 6, id: { haloPick: true, layer: 'halo-mark', sel: i.sel } });
+      const glyph = i.sel.kind === 'obs' ? HaloEvents.kindFor(i.sel.layer,i.sel.item) : i.sel.kind === 'mission' ? (view === 'people' ? 'person' : 'mission') : 'evidence';
+      marks.points.add({ position, imageId: 'halo-mark:' + glyph, image: HaloEvents.symbol(glyph), width: i.chosen ? 38 : 28, height: i.chosen ? 38 : 28, color, id: { haloPick: true, layer: 'halo-mark', sel: i.sel } });
       const room = !labelled.some((o) => km(o, i) < 900);
       if (i.label && room && (i.chosen || (!many && view !== 'world'))) {
         labelled.push(i);
@@ -363,25 +384,27 @@
   /* ---------- pick: what a tap on the Earth opens ---------- */
   function pick(e) {
     if (!mounted || !e) return false;
-    const id = e.id;
+    const id = e.id && e.id.haloObjectPick || e.id;
+    if (id && id.marketPick && markets) return markets.pick(id);
     if (id && id.haloPick && id.layer === 'halo-mark' && id.sel) { select(id.sel); openSheetIfPhone(); return true; }
     if (id && id.haloPick && layers) {
       const d = layers.describe(id);
       if (!d) return false;
+      stopFollow(); setOrbit(false);
       G.closeSheet();
       select({ kind: 'obs', id: id.layer + ':' + (id.item && (id.item.id || id.item.hex || id.item.mmsi || (id.item.lon + ',' + id.item.lat))), layer: id.layer, d, item: id.item }, { fly: false });
       return true;
     }
     if (id && id.layer === 'flights' && id.aircraft) {
       const a = id.aircraft;
-      G.openAircraft(id);
-      addFollow({ label: a.callsign || a.id || 'aircraft', range: 60000, position: () => C.Cartesian3.fromDegrees(a.lon, a.lat, Math.max(0, a.altitude ?? 9000)) });
+      stopFollow();setOrbit(false);G.openAircraft(id);
+      addFollow({ label: a.callsign || a.id || 'aircraft', range: 2500, position: () => C.Cartesian3.fromDegrees(a.lon, a.lat, Math.max(0, a.altitude ?? 0)) });
       return true;
     }
     if (id && id.layer === 'satellites' && id.sat) {
       const sat = id.sat;
-      G.openSatellite(sat);
-      addFollow({ label: sat.name || 'satellite', range: 900000, position: () => G.satPosition(sat) });
+      stopFollow();setOrbit(false);G.openSatellite(sat);
+      addFollow({ label: sat.name || 'satellite', range: 200000, position: () => G.satPosition(sat) });
       return true;
     }
     return false;
@@ -392,7 +415,8 @@
     if (!b) return;
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'cctv-act hx-follow-btn'; btn.textContent = 'Follow';
-    btn.onclick = () => { follow(target); G.closeSheet(); };
+    btn.onclick = () => { follow(target); if(G.hideInspection)G.hideInspection(); };
+    const orbit=document.createElement('button');orbit.type='button';orbit.className='cctv-act hx-follow-btn';orbit.textContent='Orbit object';orbit.disabled=reduced();orbit.onclick=()=>{follow(target);setOrbit(true);if(G.hideInspection)G.hideInspection();};b.appendChild(orbit);
     b.appendChild(btn);
   }
 
@@ -429,6 +453,7 @@
     paint(places, places.length || local.length ? (b && b.attribution ? String(b.attribution).slice(0, 80) : '') : (b ? 'Nothing found.' : 'Place search is unavailable right now.'));
   }
   function flyToPlace(x) {
+    if (!V) return;
     stopFollow();
     const bb = Array.isArray(x.bbox) && x.bbox.length === 4 && x.bbox.every(fin) ? x.bbox : null;
     const big = bb && (Math.abs(bb[2] - bb[0]) > 0.02 || Math.abs(bb[3] - bb[1]) > 0.02);
@@ -438,12 +463,13 @@
 
   /* ---------- share a view (owner only, like everything here) ---------- */
   function viewState() {
+    if (!V) return { v: view, item: sel };
     const c = V.camera.positionCartographic;
-    return { v: view, c: [C.Math.toDegrees(c.longitude), C.Math.toDegrees(c.latitude), Math.round(c.height), V.camera.heading, V.camera.pitch].map((x) => Math.round(x * 1e5) / 1e5), s: vision ? vision.get() : 'normal', h: !!(hud && hud.shown()), l: ALL_ITEMS.filter(isOn).map((it) => it.id) };
+    return { v: view, item: sel && {kind:sel.kind,id:sel.id}, section: tabs.intel, c: [C.Math.toDegrees(c.longitude), C.Math.toDegrees(c.latitude), Math.round(c.height), V.camera.heading, V.camera.pitch].map((x) => Math.round(x * 1e5) / 1e5), s: vision ? vision.get() : 'normal', h: !!(hud && hud.shown()), l: ALL_ITEMS.filter(isOn).map((it) => it.id) };
   }
   function shareLink() {
     const enc = btoa(unescape(encodeURIComponent(JSON.stringify(viewState())))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    const url = new URL(location.href); url.searchParams.set('halo', '1'); url.hash = 'halo=' + enc;
+    const url = new URL(location.href); url.searchParams.set('halo', '1'); url.searchParams.delete('item'); url.searchParams.delete('section'); url.searchParams.delete('hours'); url.searchParams.delete('q'); url.searchParams.delete('sort'); url.hash = 'halo=' + enc;
     return url.toString();
   }
   function readShared() {
@@ -458,11 +484,12 @@
   }
   async function apply(v, fly) {
     if (!v) return;
-    if (Array.isArray(v.c) && v.c.length === 5 && v.c.every(fin) && Math.abs(v.c[1]) <= 90 && Math.abs(v.c[0]) <= 180) {
+    if (V && Array.isArray(v.c) && v.c.length === 5 && v.c.every(fin) && Math.abs(v.c[1]) <= 90 && Math.abs(v.c[0]) <= 180) {
       const to = { destination: C.Cartesian3.fromDegrees(v.c[0], v.c[1], Math.max(50, Math.min(4e7, v.c[2]))), orientation: { heading: v.c[3], pitch: v.c[4], roll: 0 } };
       if (fly) V.camera.flyTo(Object.assign(to, { duration: reduced() ? 0 : 1.2 })); else V.camera.setView(to);
     }
     if (VIEWS.includes(v.v)) setView(v.v);
+    if (v.item && ['mission','person','evidence','brief','source'].includes(v.item.kind) && typeof v.item.id === 'string') select(v.item,{fly:false});
     if (vision && typeof v.s === 'string') vision.set(v.s);
     if (hud && typeof v.h === 'boolean') hud.show(v.h);
     /* the layer list is the exact state: what it names is on, everything else off (a shared view reproduces as shared) */
@@ -519,22 +546,47 @@
     const q = query.intel.toLowerCase(), since = Date.now() - hours * 3600e3;
     let rect = null;
     if (area === 'view') { try { rect = V.camera.computeViewRectangle(); } catch (e) { rect = null; } }
-    return feed().filter((f) => (f.t === null || f.t === undefined || f.t >= since || f.key === 'ais' || f.key === 'sats'))
+    return feed().filter((f) => (f.ongoing || f.t === null || f.t === undefined || f.t >= since || f.key === 'ais' || f.key === 'sats'))
       .filter((f) => !q || (f.title + ' ' + (f.place || '') + ' ' + f.source).toLowerCase().includes(q))
       .filter((f) => !rect || !fin(f.lat) || C.Rectangle.contains(rect, C.Cartographic.fromDegrees(f.lon, f.lat)));
   }
 
   /* ---------- sources (Intelligence → Sources and World → Source health) ---------- */
   function sources() {
-    const rows = ALL_ITEMS.filter((it) => !it.planned && !it.globe).map((it) => ({ id: it.id, name: it.label, on: isOn(it), h: isOn(it) ? health(it) : { tone: 'hollow', text: 'Off' }, prov: it.id === 'satellites' ? 'calculated' : it.id === 'tides' ? 'reference' : 'observed' }));
+    const rows = ALL_ITEMS.filter((it) => !it.planned && !it.globe).map((it) => ({ id: it.id, name: it.label, on: isOn(it), h: isOn(it) ? health(it) : { tone: 'hollow', text: 'Off' }, prov: it.id === 'weather' ? 'warning' : it.id === 'natural' || it.id === 'perimeters' ? 'reported' : it.id === 'satellites' ? 'calculated' : it.id === 'tides' ? 'reference' : 'observed' }));
     const hb = body('health'), hs = data.peek('health');
     if (hb || hs.error) {
       const sh = hb && hb.source_health, stale = sh && sh.stale;
-      rows.push({ id: 'intel-connector', name: 'Intelligence connector', on: true, prov: 'reported', h: hs.error && !hb ? { tone: 'red', text: hs.error === 'not deployed' ? 'Not deployed' : 'Could not reach the Worker' } : stale ? { tone: 'amber', text: 'Stale: last success ' + ago(ms(sh.last_success_at)) } : sh && sh.last_success_at ? { tone: 'green', text: 'Updated ' + ago(ms(sh.last_success_at)) } : { tone: 'amber', text: 'No successful run yet' } });
+      rows.push({ id: 'intel-connector', name: 'Intelligence connector', on: true, prov: 'reported', h: hs.error ? { tone: 'red', text: (hb ? 'Stale data · ' : '') + hs.error } : stale ? { tone: 'amber', text: 'Stale: last success ' + ago(ms(sh.last_success_at)) } : sh && sh.last_success_at ? { tone: 'green', text: 'Updated ' + ago(ms(sh.last_success_at)) } : { tone: 'amber', text: 'No successful run yet' } });
     }
     const ms2 = data.peek('missions');
-    rows.push({ id: 'missions-data', name: 'Missions and evidence', on: true, prov: 'reported', h: ms2.error && !ms2.body ? { tone: 'red', text: ms2.error === 'not deployed' ? 'Not deployed yet' : 'Could not reach the Worker' } : ms2.at ? { tone: 'green', text: 'Updated ' + ago(ms2.at) } : { tone: 'mute', text: 'Loading…' } });
+    rows.push({ id: 'missions-data', name: 'Missions and evidence', on: true, prov: 'reported', h: dataHealth('missions') });
     return rows;
+  }
+
+  function dataHealth(key) {
+    const s = data.peek(key), b = s.body;
+    if (s.error) return { tone: 'red', text: (b ? 'Stale data · ' : '') + s.error };
+    if (!b) return { tone: 'mute', text: s.loading ? 'Loading…' : 'Not loaded' };
+    const missing = Object.entries(b.sources || {}).filter(([,v]) => v !== 'ok').map(([k]) => k);
+    if (b.truncated || missing.length) return { tone: 'amber', text: [b.truncated ? 'Partial results · list capped' : '', missing.length ? 'Unavailable: ' + missing.join(', ') : ''].filter(Boolean).join(' · ') };
+    return { tone: 'green', text: 'Updated ' + ago(s.at) };
+  }
+  function coverage(key) {
+    const s = data.peek(key), b = s.body, h = dataHealth(key);
+    return '<p class="hx-note" role="status">' + esc(h.text) + (b && fin(b.total) ? ' · Showing ' + n((b.missions || b.people || []).length) + ' of ' + n(b.total) : '') + '</p>';
+  }
+  function taskLink(task, id) { return 'control.html?haloTask=' + task + (id ? '&amp;mission=' + encodeURIComponent(id) : '') + '#create:action-network'; }
+  function briefLink(b) { return BRIEFS + '?from=halo&amp;country=' + encodeURIComponent(b.country || '') + '&amp;day=' + encodeURIComponent(b.day || ''); }
+  function rememberRoute(replace = false) {
+    if (!mounted) return;
+    const u = new URL(location.href); u.searchParams.set('halo', view);
+    if (sel && ['mission','person','evidence','brief','source'].includes(sel.kind)) u.searchParams.set('item', sel.kind + ':' + sel.id); else u.searchParams.delete('item');
+    if(tabs[view])u.searchParams.set('section',tabs[view]);else u.searchParams.delete('section');
+    if(query[view])u.searchParams.set('q',query[view].slice(0,200));else u.searchParams.delete('q');
+    if(sorts[view])u.searchParams.set('sort',sorts[view]);else u.searchParams.delete('sort');
+    u.searchParams.set('hours',String(hours));
+    if (u.href !== location.href) { if (routeReady && !restoringRoute && !replace) history.pushState(null, '', u); else history.replaceState(null, '', u); }
   }
 
   /* ---------- painting ---------- */
@@ -546,6 +598,7 @@
   }
   function paint() {
     paintStrip(); paintList(); drawMarks(); paintDetail(); paintTimeline(); paintOperator(); paintBase();
+    if (!V) $$('[data-fly],[data-follow],[data-toggle-source]',ui.right).forEach(b => b.disabled = true);
   }
 
   function stat(v, label, tone, title) { return '<li data-tone="' + (tone || 'cyan') + '"' + (title ? ' title="' + esc(title) + '"' : '') + '><b>' + esc(v) + '</b>' + esc(label) + '</li>'; }
@@ -556,7 +609,7 @@
     if (view === 'world') {
       html = stat(v(c && c.active), 'Active missions') + stat(pb && fin(pb.online) ? n(pb.online) : '—', 'Members online', 'ink', 'Shown only when five or more are online') + stat(v(c && c.review), 'Awaiting review', 'amber');
     } else if (view === 'missions') {
-      html = stat(v(c && c.active), 'Active') + stat(v(c && c.blocked), 'Paused', 'amber') + stat(v(c && c.review), 'Awaiting review', 'amber') + stat(v(c && c.completed), 'Completed', 'ink');
+      html = stat(v(c && c.active), 'Active') + stat(v(c && c.blocked), 'Paused', 'amber') + stat(v(c && c.review), 'Awaiting review', 'amber') + stat(v(c && c.completed), 'Closed', 'ink');
     } else if (view === 'people') {
       const pv = (x) => (pc && fin(x) ? n(x) : '—');
       html = stat(pv(pc && pc.people), 'People') + stat(pb && fin(pb.online) ? n(pb.online) : '—', 'Online', 'ink', 'Shown only when five or more are online') + stat(pv(pc && pc.on_mission), 'On missions', 'ink') + stat(pv(pc && pc.awaiting_review), 'Awaiting review', 'amber');
@@ -567,12 +620,12 @@
     if (ui.stats.innerHTML !== html) ui.stats.innerHTML = html;
     const meta = META[view];
     ui.title.innerHTML = '<h1>' + esc(meta.title) + '</h1><p>' + esc(meta.sub) + '</p>';
-    const act = view === 'missions' ? { href: CONTROL, text: 'New mission' } : view === 'people' ? { href: CONTROL, text: 'Manage missions' } : view === 'intel' ? { href: BRIEFS, text: 'Daily briefs' } : null;
+    const act = view === 'missions' ? { href: taskLink('missions'), text: 'New mission' } : view === 'people' ? { href: taskLink('missions'), text: 'Manage missions' } : view === 'intel' ? { href: BRIEFS, text: 'Daily briefs' } : null;
     ui.action.hidden = !act;
     if (act) { ui.action.href = act.href; ui.action.innerHTML = ICON.plus + esc(act.text); }
-    const bad = ['missions', 'people'].some((k) => data.peek(k).error);
-    ui.live.dataset.state = bad ? 'warn' : 'ok';
-    ui.live.title = bad ? 'Some owner data could not be refreshed' : 'Connected to the Worker';
+    const bad = ['missions', 'people', 'evidence', 'health'].some((k) => ['red','amber'].includes(dataHealth(k).tone));
+    ui.live.dataset.state = bad || !body('missions') ? 'warn' : 'ok';
+    ui.live.title = bad ? 'Some owner data could not be refreshed' : 'Data loaded; see source health for coverage';
   }
   function paintClock() { if (ui.clock) ui.clock.textContent = hhmm(Date.now()) + ' UTC'; }
   function paintOperator() {
@@ -589,9 +642,10 @@
     ui.leftBody.innerHTML = '';
     listSig = '';
     if (view === 'world') {
-      ui.leftBody.innerHTML = '<ul class="hx-groups">' + GROUPS.map((g) => '<li class="hx-group" data-group="' + g.id + '"><div class="hx-group__row"><span class="hx-group__icon">' + ICON[g.icon] + '</span><span><span class="hx-group__name">' + esc(g.name) + '</span><span class="hx-group__sub">' + esc(g.items.slice(0, 3).map((i) => i.short || i.label).join(' · ') + (g.items.length > 3 ? ' +' + (g.items.length - 3) : '')) + '</span></span><label class="hx-switch"><input type="checkbox" aria-label="' + esc(g.name) + ': all available layers"><i></i></label><button type="button" class="hx-disclose" aria-expanded="false" aria-controls="hxg-' + g.id + '" aria-label="Show ' + esc(g.name) + ' layers">' + ICON.down + '</button></div>' +
+      ui.leftBody.innerHTML = '<button type="button" class="hx-btn" data-finance-open>Finance · paper trading</button><button type="button" class="hx-btn" data-camera-list>Browse camera snapshots</button><p class="hx-note">Listed cameras are not guaranteed live streams.</p><ul class="hx-groups">' + GROUPS.map((g) => '<li class="hx-group" data-group="' + g.id + '"><div class="hx-group__row"><span class="hx-group__icon">' + ICON[g.icon] + '</span><span><span class="hx-group__name">' + esc(g.name) + '</span><span class="hx-group__sub">' + esc(g.items.slice(0, 3).map((i) => i.short || i.label).join(' · ') + (g.items.length > 3 ? ' +' + (g.items.length - 3) : '')) + '</span></span><label class="hx-switch"><input type="checkbox" aria-label="' + esc(g.name) + ': all available layers"><i></i></label><button type="button" class="hx-disclose" aria-expanded="false" aria-controls="hxg-' + g.id + '" aria-label="Show ' + esc(g.name) + ' layers">' + ICON.down + '</button></div>' +
         '<ul class="hx-layers" id="hxg-' + g.id + '" hidden>' + g.items.map((it) => '<li class="hx-layer" data-item="' + it.id + '" data-state="off"><span class="hx-layer__name">' + esc(it.label) + '</span><span class="hx-layer__state" aria-live="polite"></span><label class="hx-switch"><input type="checkbox" aria-label="' + esc(it.label) + '"' + (it.planned ? ' disabled' : '') + '><i></i></label></li>').join('') + '</ul></li>').join('') + '</ul>' +
         '<div class="hx-section"><p class="hx-label">Source health</p><ul class="hx-health"></ul><button type="button" class="hx-more" data-go="sources">View all sources ' + ICON.arrow + '</button></div>';
+      const cam = $('[data-camera-list]', ui.leftBody); if (cam) cam.onclick = () => { select(null); G.cameras(); };
       GROUPS.forEach((g) => {
         const li = $('[data-group="' + g.id + '"]', ui.leftBody), dis = $('.hx-disclose', li), list = $('.hx-layers', li);
         const open = (o) => { dis.setAttribute('aria-expanded', o ? 'true' : 'false'); list.hidden = !o; expanded[g.id] = o; };
@@ -609,12 +663,12 @@
       if (view === 'people') filters = '<div class="hx-filters"><label class="hx-filter">' + ICON.sort + '<span class="hx-sr">Sort</span><select data-sort="people"><option value="activity">Last activity</option><option value="name">Name</option></select></label></div>';
       if (view === 'intel') filters = '<div class="hx-filters"><label class="hx-filter">' + ICON.filter + '<span class="hx-sr">Area</span><select data-area><option value="earth">Whole Earth</option><option value="view">In view</option></select></label><label class="hx-filter">' + ICON.clock + '<span class="hx-sr">Time</span><select data-hours><option value="1">Last hour</option><option value="6">Last 6 hours</option><option value="24">Last 24 hours</option></select></label></div>';
       ui.leftBody.innerHTML = '<label class="hx-find">' + ICON.search + '<span class="hx-sr">' + esc(placeholder) + '</span><input type="search" autocomplete="off" maxlength="80" placeholder="' + esc(placeholder) + '"></label>' +
-        '<div class="hx-seg" role="tablist" aria-label="' + esc(head[0]) + '">' + segs.map(([k, l]) => '<button type="button" role="tab" data-seg="' + k + '" aria-selected="false">' + esc(l) + ' <span class="hx-count">0</span></button>').join('') + '</div>' + filters + '<div class="hx-list"></div>';
+        '<div class="hx-seg" role="tablist" aria-label="' + esc(head[0]) + '">' + segs.map(([k, l]) => '<button type="button" role="tab" data-seg="' + k + '" aria-selected="false">' + esc(l) + ' <span class="hx-count">0</span></button>').join('') + '</div>' + filters + '<div class="hx-coverage"></div><div class="hx-list"></div>';
       const input = $('.hx-find input', ui.leftBody);
       input.value = query[view];
-      input.oninput = () => { query[view] = input.value; schedulePaint(); };
-      $$('[data-seg]', ui.leftBody).forEach((b) => { b.onclick = () => { tabs[view] = b.dataset.seg; if (!sel || !sel.pinned) sel = null; schedulePaint(); }; });
-      const s = $('[data-sort]', ui.leftBody); if (s) { s.value = sorts[view]; s.onchange = () => { sorts[view] = s.value; schedulePaint(); }; }
+      input.oninput = () => { query[view] = input.value; rememberRoute(true); schedulePaint(); };
+      $$('[data-seg]', ui.leftBody).forEach((b) => { b.onclick = () => { tabs[view] = b.dataset.seg; if (!sel || !sel.pinned) sel = null; rememberRoute(); schedulePaint(); }; });
+      const s = $('[data-sort]', ui.leftBody); if (s) { s.value = sorts[view]; s.onchange = () => { sorts[view] = s.value; rememberRoute(); schedulePaint(); }; }
       const a = $('[data-area]', ui.leftBody); if (a) { a.value = area; a.onchange = () => { area = a.value; schedulePaint(); }; }
       const hsel = $('[data-hours]', ui.leftBody); if (hsel) { hsel.value = String(hours); hsel.onchange = () => setHours(+hsel.value); }
     }
@@ -623,7 +677,7 @@
     const items = ALL_ITEMS;
     let avail = 0;
     items.forEach((it) => { if (!it.planned) avail++; });
-    ui.leftSub.textContent = avail + ' available · ' + CONTEXT.length + ' context · ' + items.filter((i) => i.planned).length + ' planned';
+    ui.leftSub.textContent = avail + ' available · ' + CONTEXT.length + ' context';
     GROUPS.forEach((g) => {
       const li = $('[data-group="' + g.id + '"]', ui.leftBody);
       if (!li) return;
@@ -634,7 +688,7 @@
         const row = $('[data-item="' + it.id + '"]', li), st = stateOf(it);
         row.dataset.state = st.state; $('input', row).checked = isOn(it);
         $('.hx-layer__state', row).textContent = st.text;
-        if (st.state === 'locked') $('input', row).disabled = true;
+        $('input', row).disabled = st.state === 'locked' || (!V && !it.own);
       });
     });
     const hl = $('.hx-health', ui.leftBody), on = ALL_ITEMS.filter((it) => !it.planned && isOn(it));
@@ -652,7 +706,7 @@
       '<span class="hx-card__title">' + esc(m.title) + '</span><span class="hx-card__place">' + esc(placed(m) ? m.place.label : 'No place on the map') + '</span>' +
       '<span class="hx-status" data-tone="' + missionTone(m) + '">' + esc(m.review ? 'Evidence ready' : missionWord(m)) + '</span>' +
       '<span class="hx-bar"><i style="width:' + p.pct + '%"></i></span>' +
-      '<span class="hx-card__meta"><span>' + n(p.done) + ' of ' + n(p.total) + ' verified' + (fin(c.pending_proofs) && c.pending_proofs ? ' · ' + n(c.pending_proofs) + ' to review' : '') + '</span><span>' + esc(m.ends_at ? 'Due ' + due(m.ends_at) : '') + '</span></span>' +
+      '<span class="hx-card__meta"><span>' + (p.known ? n(p.done) : '—') + ' of ' + (p.known ? n(p.total) : '—') + ' verified' + (fin(c.pending_proofs) && c.pending_proofs ? ' · ' + n(c.pending_proofs) + ' to review' : '') + '</span><span data-mission-due="' + esc(m.ends_at || '') + '"></span></span>' +
       '<span class="hx-faces"><span>' + faces + '</span>' + who + '</span></span>' + ICON.chev.replace('<svg', '<svg class="hx-card__chev"') + '</button></li>';
   }
   function personRow(p, cur) {
@@ -673,7 +727,7 @@
   function loadingOr(key, title, text) {
     const s = data.peek(key);
     if (!s.body && s.loading) return empty('Loading…', '');
-    if (!s.body && s.error) return empty(s.error === 'not deployed' ? 'Not deployed yet' : 'Could not load', s.error === 'not deployed' ? 'Deploy the Worker to bring this view its data.' : 'The Worker did not answer; it will be asked again shortly.');
+    if (!s.body && s.error) return empty(s.error === 'not deployed' ? 'Not deployed yet' : 'Could not load', s.error === 'not deployed' ? 'This source is not available yet.' : 'This source could not be refreshed. Retry or check again shortly.');
     return empty(title, text);
   }
   function paintList() {
@@ -688,7 +742,7 @@
       const rows = missionsFiltered();
       html = rows.length ? '<ul class="hx-cards">' + rows.map((m) => missionCard(m, cur && cur.kind === 'mission' && cur.id === m.id)).join('') + '</ul>' : loadingOr('missions', 'No missions here', tabs.missions === 'review' ? 'Nothing is waiting for review.' : 'Missions are written in the Control Room.');
       const closed = all.filter((m) => m.status === 'blocked' || m.status === 'completed').length;
-      html += tabs.missions === 'closed' ? '<button type="button" class="hx-more" data-closed="0">' + ICON.arrow.replace('<svg', '<svg style="transform:scaleX(-1)"') + ' Back to active missions</button>' : '<button type="button" class="hx-more" data-closed="1">View paused and completed (' + n(closed) + ') ' + ICON.arrow + '</button>';
+      html += tabs.missions === 'closed' ? '<button type="button" class="hx-more" data-closed="0">' + ICON.arrow.replace('<svg', '<svg style="transform:scaleX(-1)"') + ' Back to active missions</button>' : '<button type="button" class="hx-more" data-closed="1">View paused and closed (' + n(closed) + ') ' + ICON.arrow + '</button>';
       ui.leftSub.textContent = n(all.length) + ' missions';
     } else if (view === 'people') {
       const all = peopleList();
@@ -700,21 +754,33 @@
     } else {
       const f = feedFiltered(), briefs = (data.peekBriefs().body || {}).briefs || [], src = sources();
       counts.feed = f.length; counts.briefs = briefs.length; counts.sources = src.length;
-      if (tabs.intel === 'feed') html = f.length ? '<ul class="hx-cards">' + f.slice(0, 60).map((x) => feedCard(x, cur && sameSel(cur, x.sel))).join('') + '</ul>' : empty('Nothing in this window', 'Turn on Earthquakes, Thermal or Cyclones in World, widen the time, or wait for evidence to arrive.');
+      if (tabs.intel === 'feed') html = f.length ? '<ul class="hx-cards">' + f.map((x) => feedCard(x, cur && sameSel(cur, x.sel))).join('') + '</ul>' : empty('Nothing in this window', 'Turn on Earthquakes, Thermal or Cyclones in World, widen the time, or wait for evidence to arrive.');
       else if (tabs.intel === 'briefs') html = briefs.length ? '<ul class="hx-cards">' + briefs.map((b) => '<li><button type="button" class="hx-card" data-brief="' + esc(b.country) + '" aria-current="' + (cur && cur.kind === 'brief' && cur.id === b.country ? 'true' : 'false') + '"><span class="hx-thumb">' + ICON.doc + '</span><span><span class="hx-card__title">' + esc(b.country_name || b.country) + '</span><span class="hx-card__place">' + esc(String(b.overview || '').slice(0, 90)) + '</span><span class="hx-card__meta"><span class="hx-status" data-tone="' + (b.status === 'ready' || b.status === 'published' ? 'green' : 'amber') + '">' + esc(b.editorial_status || b.status || '') + '</span><span>' + esc(b.day || '') + '</span></span></span>' + ICON.chev.replace('<svg', '<svg class="hx-card__chev"') + '</button></li>').join('') + '</ul>' : (data.peekBriefs().loading ? empty('Loading…', '') : empty('No briefs yet', 'Daily country briefs are written through the day.'));
       else html = '<ul class="hx-health">' + src.map((r) => '<li><span class="hx-group__icon">' + ICON[r.id === 'satellites' ? 'sat' : r.id === 'tides' ? 'wave' : r.id === 'missions-data' ? 'flag' : 'db'] + '</span><button type="button" class="hx-more" style="display:block;text-align:left;width:100%" data-source="' + esc(r.id) + '"><b>' + esc(r.name) + '</b><small><span class="hx-dot" data-tone="' + r.h.tone + '"></span>' + esc(r.h.text) + '</small></button></li>').join('') + '</ul><a class="hx-more" href="' + BRIEFS + '">Open the daily briefs ' + ICON.arrow + '</a>';
-      if (tabs.intel === 'briefs' && !briefs.length && !data.peekBriefs().loading && !data.peekBriefs().at) data.briefs().then(schedulePaint);
       ui.leftSub.textContent = tabs.intel === 'feed' ? n(f.length) + ' signals' : tabs.intel === 'briefs' ? n(briefs.length) + ' briefs' : n(src.length) + ' sources';
     }
     $$('[data-seg]', ui.leftBody).forEach((b) => { b.setAttribute('aria-selected', b.dataset.seg === tabs[view] ? 'true' : 'false'); $('.hx-count', b).textContent = n(counts[b.dataset.seg] || 0); });
-    if (html === listSig) return;
+    // Freshness changes independently of the rows. Keep focused/pressed cards
+    // attached when only this status changes, so a polling repaint cannot eat a click.
+    const status = $('.hx-coverage', ui.leftBody);
+    const statusHTML = view === 'missions' ? coverage('missions') : view === 'people' ? coverage('people')
+      : tabs.intel === 'briefs' ? coverage('briefs') : coverage('evidence');
+    if (status && status.innerHTML !== statusHTML) status.innerHTML = statusHTML;
+    // Relative due dates also change with the clock, not the mission. Update
+    // their text in place so midnight cannot detach a focused/pressed card.
+    const paintDates = () => $$('[data-mission-due]', list).forEach((el) => {
+      const text = el.dataset.missionDue ? 'Due ' + due(el.dataset.missionDue) : '';
+      if (el.textContent !== text) el.textContent = text;
+    });
+    if (html === listSig) { paintDates(); return; }
     listSig = html;
     list.innerHTML = html;
+    paintDates();
     $$('[data-sel]', list).forEach((b) => { b.onclick = () => { const [k, ...rest] = b.dataset.sel.split(':'); select({ kind: k, id: rest.join(':') }); }; });
     $$('[data-feed]', list).forEach((b) => { b.onclick = () => { const f = feed().find((x) => x.key === b.dataset.feed); if (f) select(f.sel); }; });
     $$('[data-brief]', list).forEach((b) => { b.onclick = () => select({ kind: 'brief', id: b.dataset.brief }, { fly: false }); });
     $$('[data-source]', list).forEach((b) => { b.onclick = () => select({ kind: 'source', id: b.dataset.source }, { fly: false }); });
-    $$('[data-closed]', list).forEach((b) => { b.onclick = () => { tabs.missions = b.dataset.closed === '1' ? 'closed' : 'active'; schedulePaint(); }; });
+    $$('[data-closed]', list).forEach((b) => { b.onclick = () => { tabs.missions = b.dataset.closed === '1' ? 'closed' : 'active'; rememberRoute(); schedulePaint(); }; });
   }
 
   /* ---------- the detail panel ---------- */
@@ -766,15 +832,15 @@
     const teamGrid = (list) => '<ul class="hx-team">' + list.map((t) => '<li>' + avatar(t.name, t.avatar_url, '<i data-tone="' + ({ verified: 'green', submitted: 'amber', in_progress: 'cyan' }[t.status] || 'mute') + '"></i>') + '<span>' + esc(String(t.name || 'Member').split(/\s+/)[0]) + '</span></li>').join('') + '</ul>';
     if (dtab === 'overview') {
       html += (m.description ? '<p class="hx-lead">' + esc(String(m.description).split('\n')[0].slice(0, 160)) + '</p>' : '') +
-        '<div class="hx-bar" style="height:6px;margin-top:12px"><i style="width:' + p.pct + '%"></i></div><div class="hx-progress"><span>' + n(p.done) + ' of ' + n(p.total) + ' verified</span><span>' + p.pct + '%</span></div>' +
+        '<div class="hx-bar" style="height:6px;margin-top:12px"><i style="width:' + p.pct + '%"></i></div><div class="hx-progress"><span>' + (p.known ? n(p.done) : '—') + ' of ' + (p.known ? n(p.total) : '—') + ' verified</span><span>' + (p.known ? p.pct + '%' : '—') + '</span></div>' +
         '<dl class="hx-kv"><div><dt>Team</dt><dd>' + n(c.joined || team.length) + (fin(m.capacity) ? ' of ' + n(m.capacity) : '') + '</dd></div><div><dt>Due</dt><dd>' + esc(due(m.ends_at)) + '</dd></div></dl>' +
         '<div class="hx-section" style="border-top:0;margin-top:4px"><p class="hx-label">Team</p>' + (team.length ? teamGrid(team.slice(0, 6)) + '<p class="hx-note">' + esc(last ? 'Last activity ' + ago(last) : '') + '</p>' : '<p class="hx-note">No one has joined yet.</p>') + '</div>' +
         '<div class="hx-section"><p class="hx-label">Next steps</p><ul class="hx-chips" style="display:grid;gap:6px">' + nextSteps(m).map((s) => '<li>' + esc(s) + '</li>').join('') + '</ul></div>' +
-        (ev.length ? '<div class="hx-section"><p class="hx-label">Evidence · ' + n(ev.length) + (ev.length === 1 ? ' item' : ' items') + '</p>' + evidenceList(ev.slice(0, 3)) + '</div>' : '');
+        (ev.length ? '<div class="hx-section"><p class="hx-label">Recent evidence · ' + n(ev.length) + (ev.length === 1 ? ' item' : ' items') + '</p>' + evidenceList(ev.slice(0, 3)) + '</div>' : '');
     } else if (dtab === 'team') html += team.length ? '<div class="hx-section" style="border-top:0">' + teamGrid(team) + dl(team.map((t) => [t.name || 'Member', cap(String(t.status || '').replace('_', ' ')) + (t.since ? ' · ' + ago(ms(t.since)) : '')])) + '</div>' : '<p class="hx-note">No one has joined yet.</p>';
     else if (dtab === 'evidence') html += ev.length ? '<div class="hx-section" style="border-top:0">' + evidenceList(ev) + '</div>' : '<p class="hx-note">No evidence submitted yet.</p>';
     else html += '<div class="hx-section" style="border-top:0">' + activityList(missionEvents(m)) + '</div>';
-    const foot = (m.review ? '<a class="hx-cta" href="' + CONTROL + '">Review evidence ' + ICON.arrow + '</a>' : '<a class="hx-cta" href="' + CONTROL + '">Open in the Control Room ' + ICON.arrow + '</a>') +
+    const foot = (m.review ? '<a class="hx-cta" href="' + taskLink('reviews', m.id) + '">Review evidence ' + ICON.arrow + '</a>' : '<a class="hx-cta" href="' + taskLink('missions', m.id) + '">Open in the Control Room ' + ICON.arrow + '</a>') +
       '<div class="hx-pair">' + (sitePath(m.path) ? '<a class="hx-btn" href="' + esc(m.path) + '">Open mission</a>' : '<button type="button" class="hx-btn" disabled title="Not published">Open mission</button>') + '<button type="button" class="hx-btn" data-history>' + ICON.clock + 'Activity</button></div>';
     return { html, foot };
   }
@@ -821,7 +887,7 @@
       const near = fin(it.lat) ? nearMissions(it.lat, it.lon, 2) : [];
       if (near.length) html += '<div class="hx-section"><p class="hx-label">Missions within 300 km</p>' + near.map((x) => missionLink(x.m, Math.round(x.d) + ' km away')).join('') + '</div>';
     } else html += dl([['Source', d.credit || ''], ['Provenance', cap(prov)], ['Retrieved', layers && layers.status(s.layer) && layers.status(s.layer).fetched ? ago(layers.status(s.layer).fetched) : '—']]);
-    const foot = (d.link ? '<a class="hx-cta" href="' + esc(d.link) + '" target="_blank" rel="noopener noreferrer">View source ' + ICON.external + '</a>' : '') + '<div class="hx-pair"><button type="button" class="hx-btn" data-follow>' + ICON.locate + 'Follow</button><button type="button" class="hx-btn" data-fly>' + ICON.pin + 'Go there</button></div>';
+    const foot = (d.link ? '<a class="hx-cta" href="' + esc(d.link) + '" target="_blank" rel="noopener noreferrer">View source ' + ICON.external + '</a>' : '') + (d.position ? '<button type="button" class="hx-cta" data-event-orbit>Orbit object</button><div class="hx-pair"><button type="button" class="hx-btn" data-follow>' + ICON.locate + 'Follow</button><button type="button" class="hx-btn" data-fly>' + ICON.pin + 'Go there</button></div>' : '<p class="hx-note">This source supplies no map coordinates.</p>');
     return { html, foot };
   }
   function detailEvidence(e) {
@@ -832,7 +898,7 @@
     const near = nearMissions(e.lat, e.lon, 2);
     if (near.length) html += '<div class="hx-section"><p class="hx-label">Missions within 300 km</p>' + near.map((x) => missionLink(x.m, Math.round(x.d) + ' km away')).join('') + '</div>';
     const url = typeof e.source_url === 'string' && /^https:\/\//.test(e.source_url) ? e.source_url : '';
-    const foot = (e.review_status === 'unreviewed' ? '<a class="hx-cta" href="control.html#analytics">Review in the Control Room ' + ICON.arrow + '</a>' : '') + '<div class="hx-pair">' + (url ? '<a class="hx-btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + ICON.external + 'View source</a>' : '<button type="button" class="hx-btn" disabled>View source</button>') + '<button type="button" class="hx-btn" data-fly' + (fin(e.lat) ? '' : ' disabled') + '>' + ICON.pin + 'Go there</button></div>';
+    const foot = (e.review_status === 'unreviewed' ? '<p class="hx-note">Needs review. Review actions are not available in this view.</p>' : '') + '<div class="hx-pair">' + (url ? '<a class="hx-btn" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + ICON.external + 'View source</a>' : '<button type="button" class="hx-btn" disabled>View source</button>') + '<button type="button" class="hx-btn" data-fly' + (fin(e.lat) ? '' : ' disabled') + '>' + ICON.pin + 'Go there</button></div>';
     return { html, foot };
   }
   function detailBrief(code) {
@@ -842,7 +908,7 @@
     let html = head('Daily brief / ' + (b.day || ''), b.country_name || b.country, '', pill(b.editorial_status || b.status || 'Brief', 'mute', true));
     html += '<div class="hx-brief"><p>' + esc(b.overview || '') + '</p>' + (b.happened && b.happened.length ? '<p class="hx-label">What happened</p>' + list(b.happened) : '') + (b.may_mean && b.may_mean.length ? '<p class="hx-label">What it may mean</p>' + list(b.may_mean) : '') + (b.uncertain && b.uncertain.length ? '<p class="hx-label">Uncertain</p>' + list(b.uncertain) : '') +
       (Array.isArray(b.sources) && b.sources.length ? '<p class="hx-label">Sources</p><ul>' + b.sources.slice(0, 8).map((x) => '<li>' + (x && /^https:\/\//.test(x.url || '') ? '<a href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + esc(x.title || x.domain || x.url) + '</a>' : esc(x && x.title || '')) + '</li>').join('') + '</ul>' : '') + '</div>';
-    return { html, foot: '<a class="hx-btn" href="' + BRIEFS + '">Open the daily briefs</a>' };
+    return { html, foot: '<a class="hx-btn" href="' + briefLink(b) + '">Open this brief</a>' };
   }
   function detailSource(id) {
     const r = sources().find((x) => x.id === id);
@@ -859,7 +925,7 @@
     document.documentElement.dataset.haloDetail = sel ? 'open' : 'closed';
     ui.right.dataset.open = sel ? 'true' : 'false';
     const resolve = () => {
-      if (!cur) return { html: '<div class="hx-detail__top"><p class="hx-crumb">Nothing selected</p></div>' + empty('Tap anything on the Earth', 'Its detail opens here, with what its source said and how fresh it is.'), foot: '' };
+      if (!cur) return { html: '<div class="hx-detail__top"><p class="hx-crumb">Nothing selected</p></div>' + empty('Select a list item or map pin', 'Its detail opens here, with what its source said and how fresh it is.'), foot: '' };
       if (cur.kind === 'mission') { const m = missionById(cur.id); return m ? detailMission(m) : null; }
       if (cur.kind === 'person') { const p = personById(cur.id); return p ? detailPerson(p) : null; }
       if (cur.kind === 'obs') return detailObs(cur);
@@ -879,7 +945,8 @@
     $$('[data-dtab]', ui.detailBody).forEach((b) => { b.onclick = () => { dtab = b.dataset.dtab; detailSig = ''; paintDetail(); }; });
     $$('[data-sel]', ui.right).forEach((b) => { b.onclick = () => { const [k, ...rest] = b.dataset.sel.split(':'); if (k === 'mission' && view !== 'missions' && view !== 'world') setView('missions'); select({ kind: k, id: rest.join(':') }); }; });
     const hist = $('[data-history]', ui.detailFoot); if (hist) hist.onclick = () => { dtab = 'activity'; detailSig = ''; paintDetail(); };
-    const fol = $('[data-follow]', ui.detailFoot); if (fol && cur && cur.d) fol.onclick = () => follow({ label: cur.d.title, range: cur.d.range, position: cur.d.position });
+    const fol = $('[data-follow]', ui.detailFoot); if (fol && cur && cur.d && cur.d.position) fol.onclick = () => follow({ label: cur.d.title, range: cur.d.range, position: cur.d.position });
+    const eventOrbit = $('[data-event-orbit]', ui.detailFoot); if (eventOrbit && cur?.d?.position) eventOrbit.onclick = () => { follow({ label: cur.d.title, range: cur.d.range, position: cur.d.position }); setOrbit(true); if (!wide()) setMapFocus(true); };
     const fly = $('[data-fly]', ui.detailFoot); if (fly) fly.onclick = () => { const at = whereIs(cur); if (at) flyTo(at.lon, at.lat, at.close || 1.5e6); };
     const tog = $('[data-toggle-source]', ui.detailFoot); if (tog) tog.onclick = async () => { const it = ALL_ITEMS.find((x) => x.id === tog.dataset.toggleSource); if (it) { await setItem(it, !isOn(it)); detailSig = ''; schedulePaint(); } };
     loadThumbs(ui.detailBody);
@@ -889,7 +956,7 @@
   async function paintTide(box, id) {
     const b = await data.tide(id);
     if (!box.isConnected) return;
-    if (!b || !Array.isArray(b.observations)) { box.innerHTML = '<p class="hx-label">Water level</p><p class="hx-note">' + esc(data.peekTide(id).error === 'not deployed' ? 'Not deployed yet: deploy the Worker to read NOAA water levels.' : 'NOAA did not answer for this station.') + '</p>'; return; }
+    if (!b || !Array.isArray(b.observations)) { box.innerHTML = '<p class="hx-label">Water level</p><p class="hx-note">' + esc(data.peekTide(id).error === 'not deployed' ? 'Water levels are not available yet.' : 'NOAA did not answer for this station.') + '</p>'; return; }
     const pts = b.observations.map((o) => [ms(o[0]), o[1]]).filter((p) => fin(p[0]) && fin(p[1]));
     const latest = b.latest && fin(b.latest.value) ? b.latest : null;
     box.innerHTML = '<p class="hx-label">Water level</p>' + (latest ? '<p class="hx-big">' + latest.value.toFixed(2) + '<small>' + esc(b.units || 'm') + '</small></p><p class="hx-note">' + esc((b.datum || 'MLLW') + ' datum · ' + (latest.quality || '') + ' · observed ' + ago(ms(latest.observed_at))) + '</p>' : '<p class="hx-note">No recent reading.</p>') + '<div data-chart></div><p class="hx-note">' + esc(b.note || 'Observed water level, not a tide prediction.') + '</p>';
@@ -926,7 +993,7 @@
     hours = [1, 6, 24].includes(h) ? h : 24;
     if (ui.window) ui.window.value = String(hours);
     const hs = $('[data-hours]', ui.leftBody); if (hs) hs.value = String(hours);
-    savePrefs(); schedulePaint();
+    savePrefs(); rememberRoute(); schedulePaint();
   }
   function paintTimeline() {
     ui.timeTitle.textContent = META[view].time;
@@ -979,7 +1046,7 @@
     const set = (k, on) => { const b = $('[data-tool="' + k + '"]', ui.root); if (b) b.setAttribute('aria-pressed', on ? 'true' : 'false'); };
     set('hud', !!(hud && hud.shown())); set('orbit', !!orbitTick);
     const stop = $('[data-tool="stop"]', ui.root); if (stop) stop.hidden = !followTarget;
-    const orbit = $('[data-tool="orbit"]', ui.root); if (orbit) orbit.disabled = reduced();
+    const orbit = $('[data-tool="orbit"]', ui.root); if (orbit) orbit.disabled = !V || reduced();
   }
   function setPop(open) {
     ui.pop.hidden = !open;
@@ -988,10 +1055,19 @@
   }
 
   /* ---------- the frame ---------- */
-  /* the same World door the bar gives everyone (js/tabbar.js MCC_BAR.navigation.world), this site's World page without it */
+  /* an address on one of the site's own origins (window.MCC_SITE, js/shell-boot.js: the platform, its tenants, its doors) */
+  function siteAddress(href) {
+    const S = window.MCC_SITE;
+    if (!S || typeof S.isSiteOrigin !== 'function') return false;
+    let u;
+    try { u = new URL(href); } catch (e) { return false; }
+    return u.protocol === 'https:' && href.indexOf(u.origin + '/') === 0 && S.isSiteOrigin(u.origin);
+  }
+  /* the same World door the bar gives everyone (js/tabbar.js MCC_BAR.navigation.world) when it is the site's own or a
+     page of this site; this site's World page without it */
   function feedHref() {
     const w = window.MCC_BAR && window.MCC_BAR.navigation && window.MCC_BAR.navigation.world;
-    return typeof w === 'string' && /^(https:\/\/[a-z0-9.-]*mccluster\.org\/|[a-z0-9-]+\.html)/i.test(w) ? w : 'mnet.html?view=feed';
+    return typeof w === 'string' && (siteAddress(w) || /^[a-z0-9-]+\.html/i.test(w)) ? w : 'mnet.html?view=feed';
   }
   /* Mobile-only immersive globe. The panel and timeline return without changing
      any source, map selection or camera coordinates. */
@@ -1021,7 +1097,7 @@
   function build() {
     const root = document.createElement('div');
     root.className = 'hx'; root.id = 'haloShell';
-    const styles = (window.HaloVision ? HaloVision.STYLES : []).map((s) => '<button type="button" data-style="' + esc(s.id) + '" aria-pressed="false"><span>' + esc(s.label) + '</span><kbd>' + esc(s.key) + '</kbd></button>').join('');
+    const styles = (V && window.HaloVision ? HaloVision.STYLES : []).map((s) => '<button type="button" data-style="' + esc(s.id) + '" aria-pressed="false"><span>' + esc(s.label) + '</span><kbd>' + esc(s.key) + '</kbd></button>').join('');
     const base = '<div class="hx-base" role="group" aria-label="Base map"><button type="button" data-base="sat" aria-pressed="true">Satellite</button><button type="button" data-base="map" aria-pressed="false">Map</button><button type="button" data-base="3d" aria-pressed="false">3D cities</button></div>';
     root.innerHTML =
       '<div class="hx-top" role="banner"><div class="hx-top__row"><a class="hx-brand" href="action-globe.html?explore=1&amp;halo=1" aria-label="Hitman’s Halo"><img src="assets/img/hm-mark-96.png" alt="" width="96" height="96"><span>Hitman’s Halo</span></a>' +
@@ -1036,15 +1112,15 @@
       '<button type="button" class="hx-map-focus" aria-pressed="false" aria-label="Expand the interactive globe">' + ICON.expand + '<span>Full globe</span></button>' +
       '<div class="hx-pop" id="hxPop" hidden><p class="hx-label">Base map</p>' + base + '<p class="hx-label">Vision</p><div class="hx-styles">' + styles + '</div>' +
       '<div class="hx-tools" style="margin-top:6px"><button type="button" class="hx-tool" data-fx="sharpen" aria-pressed="false">Sharpen</button><button type="button" class="hx-tool" data-fx="bloom" aria-pressed="false">Bloom</button></div><p class="hx-note">Visual treatments only: they change how the Earth looks, not what any sensor saw.</p>' +
-      '<p class="hx-label">Tools</p><div class="hx-tools"><button type="button" class="hx-tool" data-tool="hud" aria-pressed="false">Telemetry HUD <kbd>H</kbd></button><button type="button" class="hx-tool" data-tool="orbit" aria-pressed="false">Orbit <kbd>O</kbd></button><button type="button" class="hx-tool" data-tool="stop" hidden>Stop following <kbd>Esc</kbd></button><button type="button" class="hx-tool" data-tool="share">Copy a link to this view</button><button type="button" class="hx-tool" data-tool="home">Back to the whole Earth</button></div><p class="hx-share" aria-live="polite"></p></div>' +
+      '<fieldset class="hx-density"><legend>Object detail & density</legend><label>Aircraft shown <input type="range" min="1" max="5000" value="5000" data-density="flights" aria-label="Aircraft shown"><output data-density-count="flights"></output></label><label>Satellites shown <input type="range" min="1" max="240" value="240" data-density="satellites" aria-label="Satellites shown"><output data-density-count="satellites"></output></label><label><input type="checkbox" data-models checked> Nearby 3D objects</label><p class="hx-note">Counts apply to loaded data. Nearby objects use 3D models; distant objects keep selectable symbols. Selected objects stay visible.</p></fieldset><fieldset class="hx-density"><legend>Living events</legend><label><input type="checkbox" data-event-motion checked> Animate event symbols</label><label>Animated detail budget<input type="range" min="0" max="48" value="48" data-event-density aria-label="Animated event detail"></label><p class="hx-note">Shapes identify event types. Motion and size are illustrative; positions and warning areas come from the source. Reduce motion or detail here.</p></fieldset><p class="hx-label">Tools</p><div class="hx-tools"><button type="button" class="hx-tool" data-tool="hud" aria-pressed="false">Telemetry HUD <kbd>H</kbd></button><button type="button" class="hx-tool" data-tool="orbit" aria-pressed="false">Orbit <kbd>O</kbd></button><button type="button" class="hx-tool" data-tool="stop" hidden>Stop following <kbd>Esc</kbd></button><button type="button" class="hx-tool" data-tool="share">Copy a link to this view</button><button type="button" class="hx-tool" data-tool="home">Back to the whole Earth</button></div><p class="hx-share" aria-live="polite"></p></div>' +
       '<div class="hx-ctl" role="toolbar" aria-label="Globe controls" aria-orientation="vertical"><button type="button" class="hx-compass" data-ctl="north" aria-label="Face north">' + ICON.north + '<b>N</b></button><button type="button" data-ctl="in" aria-label="Zoom in">' + ICON.plus + '</button><button type="button" data-ctl="out" aria-label="Zoom out">' + ICON.minus + '</button><button type="button" data-ctl="locate" aria-label="Near me (approximate)">' + ICON.locate + '</button></div>' +
       '<p class="hx-hint"><span class="hx-hint__narrow">' + ICON.hand + 'Drag to turn · Pinch to zoom</span><span class="hx-hint__wide">' + ICON.mouse + 'Drag to orbit · Scroll to zoom</span></p><ul class="hx-legend" aria-label="Legend"></ul>' + base + '</div>' +
       '<section class="hx-right hx-panel hx-detail" aria-label="Detail" data-open="false"><div class="hx-detail__body"></div><div class="hx-detail__foot"></div></section>' +
-      '<section class="hx-time" aria-label="Activity timeline"><h2></h2><div class="hx-time__mode" role="group" aria-label="Timeline mode"><button type="button" aria-pressed="true">Current</button><button type="button" disabled title="Replay arrives with the time machine (phase 4)">Replay</button></div><div class="hx-axis"></div><label><span class="hx-sr">Window</span><select class="hx-window"><option value="1">Last 1 h</option><option value="6">Last 6 h</option><option value="24">Last 24 h</option></select></label></section>' +
+      '<section class="hx-time" aria-label="Activity timeline"><h2></h2><div class="hx-time__mode" role="group" aria-label="Timeline mode"><button type="button" aria-pressed="true">Current</button><button type="button" disabled title="Replay is not available yet">Replay</button></div><div class="hx-axis"></div><label><span class="hx-sr">Window</span><select class="hx-window"><option value="1">Last 1 h</option><option value="6">Last 6 h</option><option value="24">Last 24 h</option></select></label></section>' +
       '<div class="hx-follow" hidden><span>Following <b></b></span><button type="button">Stop</button></div><div class="hx-hud-host"></div>';
     document.body.appendChild(root);
     ui = {
-      root, stats: $('.hx-stats', root), title: $('.hx-title', root), action: $('.hx-action', root), clock: $('.hx-clock time', root), live: $('.hx-live', root),
+      root, map: $('.hx-map', root), stats: $('.hx-stats', root), title: $('.hx-title', root), action: $('.hx-action', root), clock: $('.hx-clock time', root), live: $('.hx-live', root),
       operator: $('.hx-operator', root), opAvatar: $('[data-op]', root), left: $('.hx-left', root), leftTitle: $('.hx-panel__head h2', root), leftSub: $('.hx-panel__head p', root), leftBody: $('.hx-panel__body', root),
       right: $('.hx-right', root), detailBody: $('.hx-detail__body', root), detailFoot: $('.hx-detail__foot', root), search: $('.hx-search input', root), results: $('.hx-results', root),
       layersBtn: $('.hx-layers-btn', root), mapFocus: $('.hx-map-focus', root), pop: $('.hx-pop', root), share: $('.hx-share', root), legend: $('.hx-legend', root), compass: $('.hx-compass svg', root),
@@ -1058,6 +1134,7 @@
         setView(next); $('#hxTab-' + next).focus();
       };
     });
+    const refresh = document.createElement('button'); refresh.type='button'; refresh.className='hx-btn'; refresh.textContent='Refresh data'; refresh.onclick=async()=>{refresh.disabled=true;try{await data.retry();await data.briefs(true);if(markets&&markets.on())await markets.refresh();}finally{refresh.disabled=false;schedulePaint();}}; ui.leftTitle.after(refresh);
     ui.operator.onclick = () => { const chip = document.getElementById('mccAuthChip'); if (chip) chip.click(); else location.href = 'account.html'; };
     const toggleSheet = () => {
       if (wide()) { collapsed = !collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false'; savePrefs(); }
@@ -1070,7 +1147,13 @@
     $('.hx-search', root).onsubmit = (e) => { e.preventDefault(); search(ui.search.value); };
     let typing = 0;
     ui.search.oninput = () => { clearTimeout(typing); typing = setTimeout(() => search(ui.search.value), 350); };
-    ui.layersBtn.onclick = () => setPop(ui.pop.hidden);
+    if(V&&G.objects)G.objects.start();
+    function paintDensity(){const stats=G.objects&&G.objects.stats();for(const k of ['flights','satellites']){const o=$('[data-density-count="'+k+'"]',root),s=stats&&stats[k];o.textContent=s?s.shown+' shown / '+s.loaded+' loaded':'Map unavailable';}}
+    $$('[data-density]',root).forEach(input=>{input.disabled=!V;input.oninput=()=>{if(G.objects)G.objects.setLimit(input.dataset.density,input.value);paintDensity();};});
+    $('[data-models]',root).disabled=!V;$('[data-models]',root).onchange=e=>{if(G.objects)G.objects.setModels(e.target.checked);};
+    $('[data-event-motion]',root).onchange = e => layers?.visuals?.setAnimated(e.target.checked);
+    $('[data-event-density]',root).oninput = e => layers?.visuals?.setDensity(e.target.value);
+    ui.layersBtn.onclick = () => {paintDensity();setPop(ui.pop.hidden);};
     ui.mapFocus.onclick = () => setMapFocus(!mapFocus);
     $$('[data-base]', root).forEach((b) => { b.onclick = () => setBase(b.dataset.base); });
     $$('[data-style]', root).forEach((b) => { b.onclick = () => { if (vision) vision.set(b.dataset.style); paintVision(); savePrefs(); }; });
@@ -1094,6 +1177,7 @@
   }
   function onDocClick(e) {
     if (!ui.root) return;
+    if(e.target.closest('[data-finance-open]') && markets) { markets.openFinance(); return; }
     if (!ui.pop.hidden && !ui.pop.contains(e.target) && !ui.layersBtn.contains(e.target)) setPop(false);
     if (!ui.results.hidden && !ui.results.contains(e.target) && !$('.hx-search', ui.root).contains(e.target)) ui.results.hidden = true;
   }
@@ -1104,7 +1188,8 @@
       people: [['cyan', 'Mission place'], ['amber', 'Selected person’s mission']],
       intel: [['amber', 'Observed'], ['cyan', 'Calculated'], ['hollow', 'Reference']]
     }[view];
-    const html = L.map(([t, l]) => '<li><span class="hx-dot" data-tone="' + t + '"></span>' + esc(l) + '</li>').join('');
+    const eventKey = view === 'world' || view === 'intel' ? '<li class="hx-event-key">Animated event symbols · source positions</li>' : '';
+    const html = eventKey + L.map(([t, l]) => '<li><span class="hx-dot" data-tone="' + t + '"></span>' + esc(l) + '</li>').join('');
     if (ui.legend.innerHTML !== html) ui.legend.innerHTML = html;
   }
   function setView(next) {
@@ -1117,16 +1202,40 @@
     ui.left.setAttribute('aria-labelledby', 'hxTab-' + view);
     if (changed) {
       if (sel && !(view === 'world' || (view === 'missions' && sel.kind === 'mission') || (view === 'people' && sel.kind === 'person') || (view === 'intel' && ['obs', 'evidence', 'brief', 'source', 'feed'].includes(sel.kind)))) select(null);
-      timelineFor = null; markSig = ''; detailSig = '';
+      setPop(false); ui.results.hidden = true; G.closeSheet();
+      stopFollow(); setOrbit(false);
+      timelineFor = null; markSig = ''; detailSig = ''; listSig = '';
+      ui.detailBody.replaceChildren(); ui.detailFoot.replaceChildren();
       buildLeft();
+      // Choosing a list-based screen must expose its content, even after the
+      // World drawer was collapsed to explore the globe.
+      if (!wide()) {
+        sheetOpen = view !== 'world'; ui.left.dataset.expanded = String(sheetOpen);
+        $('.hx-grip', ui.root).setAttribute('aria-label', sheetOpen ? 'Shrink the list' : 'Expand the list');
+        $('.hx-collapse', ui.root).setAttribute('aria-label', sheetOpen ? 'Collapse the panel' : 'Expand the panel');
+      }
       /* Intelligence reads the Earth's own observations: earthquakes and cyclones come on with it */
-      if (view === 'intel' && layers) { ['quakes', 'cyclones'].forEach((id) => { if (!layers.on(id)) layers.set(id, true); }); data.get('evidence'); data.get('health'); data.briefs().then(schedulePaint); }
+      if (view === 'intel') { if (layers) ['quakes', 'cyclones'].forEach((id) => { if (!layers.on(id)) layers.set(id, true); }); data.get('evidence'); data.get('health'); data.briefs().then(schedulePaint); }
       if (view === 'missions' || view === 'world') data.get('missions');
       if (view === 'people') { data.get('people'); data.get('missions'); }
     }
-    paintLegend(); savePrefs(); schedulePaint();
+    paintLegend(); savePrefs(); rememberRoute(); paint();
   }
 
+  function readRouteFilters(q) {
+    const v=q.get('halo'),section=q.get('section');
+    const allowed={missions:['active','planned','review','closed'],people:['all','mission','available'],intel:['feed','briefs','sources']};
+    if(allowed[v]){if(allowed[v].includes(section))tabs[v]=section;query[v]=(q.get('q')||'').slice(0,200);}
+    if(['priority','due','title','newest','activity','name'].includes(q.get('sort'))&&sorts[v])sorts[v]=q.get('sort');
+    if([1,6,24].includes(+q.get('hours')))hours=+q.get('hours');
+  }
+  function restoreRoute() {
+    if(!mounted)return;restoringRoute=true;const q=new URLSearchParams(location.search),v=q.get('halo'),item=q.get('item')||'';
+    readRouteFilters(q);
+    if(ui.window)ui.window.value=String(hours);
+    setView(VIEWS.includes(v)?v:'world');buildLeft();
+    if(/^(mission|person|evidence|brief|source):.{1,150}$/.test(item)){const [kind,...id]=item.split(':');select({kind,id:id.join(':')},{fly:false});}else select(null,{fly:false});restoringRoute=false;
+  }
   function onKey(e) {
     if (!mounted || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
     const t = e.target;
@@ -1145,70 +1254,76 @@
     if (e.key === 'o' || e.key === 'O') setOrbit(!orbitTick);
   }
   function onCamera() {
-    if (ui.compass) ui.compass.style.transform = 'rotate(' + (-C.Math.toDegrees(V.camera.heading)).toFixed(1) + 'deg)';
+    if (V && ui.compass) ui.compass.style.transform = 'rotate(' + (-C.Math.toDegrees(V.camera.heading)).toFixed(1) + 'deg)';
   }
 
   function mount(globe, opts) {
-    if (mounted) { if (opts && opts.view) setView(opts.view); return; }
+    if (mounted) return;
     G = globe; V = G && G.viewer(); C = window.Cesium;
-    if (!V || !C || !G.owner()) return;
+    if (!G || !G.owner()) return;
     mounted = true;
     const html = document.documentElement;
-    html.classList.add('halo-on');
+    html.classList.add('halo-on'); html.classList.toggle('halo-no-map', !V); document.title='Hitman’s Halo · McCluster';
     /* the Earth in space, as on the owner's screens: stars on, the World's own mission pins step aside for Halo's */
-    saved = { sky: V.scene.skyBox ? V.scene.skyBox.show : null, bg: V.scene.backgroundColor.clone(), missions: G.missions ? G.missions.shown() : null };
-    if (V.scene.skyBox) V.scene.skyBox.show = true;
-    V.scene.backgroundColor = C.Color.fromCssColorString('#020610');
-    if (G.missions) G.missions.show(false);
-    vision = window.HaloVision ? HaloVision.mount(V) : null;
-    layers = window.HaloLayers ? HaloLayers.create(G) : null;
+    if (V) saved = { sky: V.scene.skyBox ? V.scene.skyBox.show : null, bg: V.scene.backgroundColor.clone(), missions: G.missions ? G.missions.shown() : null };
+    if (V && V.scene.skyBox) V.scene.skyBox.show = true;
+    if (V) V.scene.backgroundColor = C.Color.fromCssColorString('#020610');
+    if (V && G.missions) G.missions.show(false);
+    vision = V && window.HaloVision ? HaloVision.mount(V) : null;
+    layers = V && window.HaloLayers ? HaloLayers.create(G) : null;
     data = window.HaloData ? HaloData.create(G) : null;
-    build();
+    markets = V && window.HaloMarkets ? HaloMarkets.create(G, { changed: () => schedulePaint() }) : null;
+    build(); window.MCC_SHELL?.haloReady();
     setMapFocus(false);
-    hud = window.HaloHud ? HaloHud.mount(V, ui.hudHost) : null;
-    marks = { points: V.scene.primitives.add(new C.PointPrimitiveCollection()), labels: V.scene.primitives.add(new C.LabelCollection()) };
+    hud = V && window.HaloHud ? HaloHud.mount(V, ui.hudHost) : null;
+    if (V) marks = { points: V.scene.primitives.add(new C.BillboardCollection()), labels: V.scene.primitives.add(new C.LabelCollection()) };
     if (layers) offs.push(layers.onChange(() => schedulePaint()));
     if (data) offs.push(data.on(() => schedulePaint()));
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('keydown', onKey); window.addEventListener('popstate', restoreRoute);
     window.addEventListener('resize', onViewportResize);
-    V.camera.changed.addEventListener(onCamera);
-    const p = prefs(), shared = readShared();
+    if (V) V.camera.changed.addEventListener(onCamera);
+    const p = prefs(), shared = readShared(), route = new URLSearchParams(location.search);
+    readRouteFilters(route);
     expanded = p.expanded && typeof p.expanded === 'object' ? p.expanded : { air: true };
-    hours = [1, 6, 24].includes(p.hours) ? p.hours : 24; ui.window.value = String(hours);
+    hours = [1,6,24].includes(+route.get('hours')) ? +route.get('hours') : [1, 6, 24].includes(p.hours) ? p.hours : 24; ui.window.value = String(hours);
     collapsed = !!p.collapsed; ui.left.dataset.collapsed = collapsed ? 'true' : 'false';
     ['missions', 'people', 'profile'].forEach((k) => data.get(k));
     setView((opts && opts.view) || (VIEWS.includes(p.view) ? p.view : 'world'));
     if (shared) apply(shared, false);
     /* a first visit has no saved layers: the globe keeps what it shows by default */
     else apply({ s: typeof p.style === 'string' ? p.style : 'normal', h: !!p.hud, l: Array.isArray(p.layers) ? p.layers : null }, false);
-    paintVision(); paintTools(); paintClock(); onCamera();
+    const item=route.get('item')||'';if (/^(mission|person|evidence|brief|source):.{1,150}$/.test(item)) {const [kind,...id]=item.split(':');select({kind,id:id.join(':')},{fly:false});}
+    if (!V) {ui.left.dataset.expanded='true';ui.map.innerHTML='<p class="hx-empty">The 3D map is unavailable in this browser. Your data remains available below. <button type="button" class="hx-btn" data-retry-map>Retry map</button></p>'; $('[data-retry-map]',ui.map).onclick=()=>location.reload();}
+    paintVision(); paintTools(); paintClock(); onCamera(); routeReady=true;
     ui.poll = setInterval(() => { if (!document.hidden) schedulePaint(); }, 2000);
     ui.tick = setInterval(paintClock, 15000);
     /* the Earth's frame changed size: let Cesium see it, then frame the whole Earth in the space left for it */
-    requestAnimationFrame(() => { if (!mounted) return; V.resize(); if (!shared) G.home(); });
+    requestAnimationFrame(() => { if (!mounted || !V) return; V.resize(); if (!shared) G.home(); });
   }
 
   function unmount() {
     if (!mounted) return;
     mounted = false;
     clearInterval(ui.poll); clearInterval(ui.tick);
-    document.removeEventListener('keydown', onKey);
+    document.removeEventListener('keydown', onKey); window.removeEventListener('popstate', restoreRoute); routeReady=false;
     window.removeEventListener('resize', onViewportResize);
     document.removeEventListener('click', onDocClick, true);
-    V.camera.changed.removeEventListener(onCamera);
+    if (V) V.camera.changed.removeEventListener(onCamera);
     stopFollow(); setOrbit(false);
     if (photo || photoPhase !== 'off') { photoPhase = 'off'; if (photo && V.scene.primitives.contains(photo)) V.scene.primitives.remove(photo); photo = null; V.scene.globe.show = true; G.setPhotoreal(false); }
     offs.forEach((off) => off()); offs = [];
     if (marks) { V.scene.primitives.remove(marks.points); V.scene.primitives.remove(marks.labels); marks = null; }
+    if(G.objects)G.objects.stop();
     if (layers) layers.destroy();
+    if (markets) markets.destroy();
     if (vision) vision.destroy();
     if (hud) hud.destroy();
     if (data) data.destroy();
     if (saved) { if (V.scene.skyBox && saved.sky !== null) V.scene.skyBox.show = saved.sky; V.scene.backgroundColor = saved.bg; if (G.missions && saved.missions !== null) G.missions.show(saved.missions); saved = null; }
-    if (ui.root) ui.root.remove();
-    ui = {}; layers = null; vision = null; hud = null; data = null; sel = null; mapFocus = false;
+    G.closeSheet(); if (ui.root) ui.root.remove();
+    ui = {}; layers = null; markets = null; vision = null; hud = null; data = null; sel = null; mapFocus = false;
     const html = document.documentElement;
-    html.classList.remove('halo-on'); delete html.dataset.haloView; delete html.dataset.haloDetail; delete html.dataset.haloMap;
+    html.classList.remove('halo-on', 'halo-no-map'); delete html.dataset.haloView; delete html.dataset.haloDetail; delete html.dataset.haloMap;
     requestAnimationFrame(() => { try { V.resize(); } catch (e) { /* gone */ } });
   }
 
@@ -1218,7 +1333,7 @@
     const l = {};
     ALL_ITEMS.forEach((it) => { const s = stateOf(it); l[it.id] = { on: isOn(it), state: s.state, text: s.text }; });
     const cur = current();
-    return { mounted, view, selected: cur ? { kind: cur.kind, id: cur.id } : null, detailOpen: !!sel, style: vision ? vision.get() : null, hud: !!(hud && hud.shown()), orbit: !!orbitTick, following: followTarget ? followTarget.label : null, photoreal: photoPhase, layers: l, readout: hud && hud.readout ? hud.readout() : null, marks: marks ? marks.points.length : 0, hours, mapFocus, panelExpanded: sheetOpen };
+    return { events: layers?.visuals?.stats() || null, mounted, view, selected: cur ? { kind: cur.kind, id: cur.id } : null, detailOpen: !!sel, style: vision ? vision.get() : null, hud: !!(hud && hud.shown()), orbit: !!orbitTick, following: followTarget ? followTarget.label : null, photoreal: photoPhase, layers: l, readout: hud && hud.readout ? hud.readout() : null, marks: marks ? marks.points.length : 0, hours, mapFocus, panelExpanded: sheetOpen };
   }
 
   window.HaloConsole = Object.freeze({ mount, unmount, pick, state, follow, stopFollow, setView: (v) => mounted && setView(v), select: (s) => mounted && select(s), _share: { viewState: () => (mounted ? viewState() : null), link: () => (mounted ? shareLink() : null) } });

@@ -2,6 +2,97 @@
 
 > Update this file whenever completion, maturity, visual direction, or next work changes.
 
+## Production release evidence source coverage — 2026-11-20
+
+Classified the November 20 production schema snapshot as documentation support,
+following the existing November 18 snapshot boundary. The regenerated source
+coverage report passes **2,966/2,966 checks** across **767 sources: 104 capability
+sources and 663 support-only sources**. This records release evidence only;
+building geometry, floor programs, capability ownership and design maturity are
+unchanged.
+
+## Device placement and maker-reference repair — 2026-11-12 — DIAGNOSTIC AND SCOPED RENDERED GATES PASSED, owner review open
+
+The source repair now covers all **36 existing workstation hosts and 62 monitors**
+across B1–F6 through 98 explicit support/station bindings. No floor functions,
+Core V2 systems, recurring staff floors or live-control permissions changed.
+B1 technical stations and F2/F3 staff desks retain their furniture placement. F1's
+intake credenza is deepened for the selected Dell envelope. F4 gets coherent
+recording/editing and production stations, F5 gets five wider research carrels,
+and F6 keeps its command/briefing tables clear while Helen remains in her office.
+Only exactly superseded scenic screens are removed; keyboard, seat and capability
+identities are retained. Two F4 display IDs have explicit registered-screen
+replacement mappings instead of being falsely counted as existing scenic meshes.
+
+Seven floor model assignments use source-backed **partial exterior proxies** for
+Lenovo, Dell, Framework, System76, Apple, HP and ASUS. The eight-profile catalog
+also includes a closed ASUS ProArt laptop as an **L7 portable prospect only**.
+L7 remains the open roof, with no new permanent workstation. These are original
+scene meshes with published envelopes and simplified details, not manufacturer
+CAD, approved digital twins or verified physical installations. All sponsor
+states remain unconfirmed, physical assets not received, and live connections
+not connected. The ASUS ET900N G3/DGX Station profile covers its published main
+body only: unsized projecting handles/feet are omitted, and total installed
+height remains unverified.
+
+The generator consumes the complete binding set and manufacturer profiles. A
+separate authored workstation GLB and shared viewer layer are wired into normal
+building/floor views and PRIM3 integration; this is source integration, not browser
+or deployment approval. Unknown monitor state remains dark and sandbox state
+never asserts a live physical host.
+
+Final regenerated geometry passes the combined **`--strict --require-bound`**
+gate: **98/98 bindings**, **0 unsupported contacts**, **0 monitor-panel
+intersections**, including exact manufacturer model, origin and facing checks.
+Both `passed` and `bound_placement_passed` are true in the final v3 report.
+Electronics checks pass **86/86** plus the independent verifier; the canonical
+fabric retains **1,883 assets and 1,330 routed, port-complete connections**.
+Interior **120/120**, combined-building **46/46**, vertical-circulation **44/44**,
+program **466/466** and hardware **67/67** checks pass. F2/F3 station tests **7/7**,
+F4–F6 station tests **7/7**, and manufacturer-model tests **18/18** also pass.
+The post-regeneration root suite passed **2,522 Node tests (4 skipped) and 7 Python
+tests**. Dedicated viewer checks pass **9/9**, and lossless same-export cleanup
+checks pass **16/16**. Remote CI is a separate publication check.
+The original v1 baseline remains 98 unsupported contacts / 33 panel intersections;
+v2 records the historical F1-only pilot, not the current all-floor scope.
+
+Read `FLOOR-DEVICE-REPAIR-V1.md`, `DEVICE-PLACEMENT-RECONCILIATION.md` and
+`MANUFACTURER-MODEL-REFERENCES.md`. B1's separate MDF/rack room mismatch,
+manufacturer installation/thermal/service requirements, complete device fidelity,
+and final owner/material/physical-device review remain open. Local browser startup was blocked
+by the existing socket-permission failure; real CI browser captures are now
+available and exposed framing defects. No final design approval, physical commissioning, PR merge or production
+deployment is claimed.
+
+A read-only PR visual workflow now captures the actual canonical scene at phone
+and desktop widths from a loopback fixture server. It never deploys, calls
+production, uses credentials or changes shipped owner gates. It also exercises
+corrected late-loaded B1/F1 and facade visibility races. Initial captures verified
+all 98 device identities but exposed ceiling occlusion and narrow-screen framing
+failures. A follow-up adds a labeled, reversible 7.5 ft AFF isolated-floor cutaway,
+HUD-aware horizontal/vertical FOV fitting, and real chair-side host/monitor views.
+Room/stack/facade/infrastructure modes retain full architecture. Nineteen targeted
+checks pass with generated floor inputs required; no geometry or pixel threshold
+was changed. The subsequent run on `c17c20bf3cb98210431e9ff76f22887a760c1e1d`
+passes **110/110 checks at both 390 px and 1440 px**. Actual overviews and sampled
+station/mode/failure images pass scoped geometry visibility/support/framing review.
+All 66 original captures and reports are preserved in
+`references/device-repair-visual-v1/README.md`, with byte hashes and stated limits.
+LOW software rendering is not final material or physical-device performance
+approval. The record retains minor prefetch-status and non-room resize-reset issues.
+
+## Local screen and object reconstruction — 2026-11-03
+
+Unpublished repair based on physical-computer-lab source `18a518f2457eb7985c702e8e4a839ed0dc255a74`. Earlier unpushed patch artifacts were unavailable in this workspace; this is a fresh reconstruction, not proof of a previously saved change.
+
+- Screen hooks no longer fabricate glowing panels for unresolved placements or headless equipment. Exact authored meshes and the labelled directory remain the interaction paths. Ambiguous family identities fail closed; hidden ancestors are not selectable.
+- The screen demo now loads the existing componentized electronics fabric using its native absolute-feet transform, exposing only the selected floor’s monitor and host assemblies. All 62 monitor face/bezel pairs bind to exact IDs; modeled stands and ports remain in place. No discovery-hint placement is synthesized. Unmodeled targets are labeled directory-only. Full-GLB tests cover exact identities, mounts, coordinate alignment, hidden ancestors and excluded power receptacles. Visual mounting/collision quality is still unverified.
+- Native monitor face color/emission now derives from that exact monitor’s sandbox signal and host boot/login stage; bezel, mount and host materials are untouched. Labels explicitly identify sandbox state. Unknown/load-failed state stays dark and unavailable; rendering never advances boot or signs in. Full-canonical tests cover all 62 monitors through shutdown, POST, firmware, bootloader, login and desktop, plus sibling signal isolation. This is a state indicator, not a rendered desktop UI or verified visual QA.
+- Every canonical monitor uses its exact host/video connection, including studio and evidence monitors. Disconnecting one sibling monitor cannot borrow another monitor's signal. Headless computers do not invent a monitor, keyboard or mouse.
+- The terminal Object tab inspects exact canonical IDs, connections, peer ports and relationships. Supported computer-side cable operations remain sandbox-only; rack transit, arbitrary rewiring and unmodeled service controls are explicitly unavailable.
+- Complete asset registry, roof destinations, building HTML and all tracked GLBs recovered. Detailed floors 01–06 generated locally with official builders; authored inventories were not replaced by generated outputs.
+- Full-registry Node validation: 37 screen/mission/binding/object tests and 67 physical-computer checks pass; local recovery evidence records these runs. Browser/mobile visual validation remains blocked before page load by Chromium's `socket() failed: Operation not permitted`; no visual approval or production verification is claimed. Visual confirmation of physical monitor placement and complete device-level simulation remain unfinished.
+
 ## End goal
 
 A real, fully furnished, program-aware, navigable 3D headquarters from B1 through Level 7, with finished floor environments that assemble into one coherent building.
@@ -24,14 +115,87 @@ Core V2 is the active geometry authority:
 - Stair A X60–72 / Y54–72;
 - MEP/riser approximately X50–60 / Y66–72.
 
+## Bridgeport v2 source boundary — 2026-11-04
+
+Added the downtown navigation contract record as support-only. Its door/stair audit preserves the HQ as unanchored and records missing geographic landing/opening evidence; no building geometry, floor program or capability changed. Regenerated source coverage now classifies 614 sources (104 capability, 510 support-only).
+
+## City review source coverage — 2026-11-04
+
+The shared Bridgeport navigation integration adds its existing support-only contract to the reconciled City/PRIM3 ledger: 620 sources (104 capability, 516 support-only), with 2,378/2,378 checks passing. It preserves the missing geographic door/stair survey boundary and makes no building geometry or capability changes.
+
+Release integration reconciles the City and PRIM3 review source classifications without dropping either entry set. The combined checkout covers 619 sources (104 capability, 515 support-only), with 2,374/2,374 checks passing. This is source traceability only; building geometry, floor program and capability ownership are unchanged.
+
+Classified four City navigation/stair audit and test files as support-only after the Core V2 CI source-coverage failure. The clean source checkout now covers 613 sources (104 capability, 509 support-only), with 2,350/2,350 checks passing. This updates traceability only; no building geometry, floor program or runtime changed. The upstairs reproduction records the earlier runtime; the separate proposed repair is tracked in PR #739.
+
+## McCluster City expansion around the HQ — 2026-11-03
+
+The city grew four neighbourhoods around the unchanged HQ island (`docs/fictional-city/EXPANSION.md`). Its placement
+authority `core/data/fictional-city/places.v1.json` places the 72 ft plate rotated 180° at city (0, 88) so the Floor 1
+public entrance faces the footbridge; the island doorway still opens `prim3-transit.html?level=equity-uprise-hq`.
+Frames stay distinct (city metres Y-up, HQ GLBs metres Z-up, HQ adapter 12 ft cells, tactics 3.54 m tiles). No
+building source, package or program changed. New checks: an ordinary operative walks street → Stair B → B1 → Stair A
+→ Floor 1 on the real resolver with no role or unlock; the B1 mission's live camera outages now reach the screens'
+MISSION session (`HOOKS.screenFaults`), never WORKPLACE. Seven support-only sources were added to the source map
+(599 sources, 2,294/2,294 checks). The #714 server lab is not integrated into the stacked HQ; its MDF location conflict
+recorded below is unchanged.
+
+## Repo-source coverage — fictional-city integration, 2026-11-03
+
+The source ledger now classifies the nine new fictional-city and universe references as support-only, with no capability ownership. The regenerated `production/generated/equity-uprise-repo-source-coverage-report.json` covers **549 tracked-checkout sources: 102 capability sources and 447 support-only sources**. The city contributes a derived exterior/portal view and its documentation, navigation and tests; headquarters geometry, floor programs and existing capability mappings remain unchanged.
+
+## v3 INTERIORS + BRAND SLOTS + EGRESS RECONCILIATION + B1 NORMAL — 2026-11-03
+
+Owner, 2026-11-03: "I need different floor plans … at least the interior furniture … it's just too similar across and certain things aren't making sense as what they're shaped like … we should have a productized version of this where we could assign the building a new logo … the Stair A exit doesn't exist in the model. We have to make it … make everything better."
+
+Owner, 2026-11-03 (B1): "We can have B1. Everybody's welcome to B1 … Make it normal."
+
+**Done in this pass (source + deterministic outputs):**
+
+1. **Shared furniture kit + catalog.** `production/interiors/eu_furniture_kit.py` + `furniture-catalog-v3.json` (53 types with real dimensions: 17–19 in seats, 29–30 in tables/desks, 36 in benches/counters, 42 in standing tables; recipes for chairs with legs and backs, 5-star task/executive chairs, sofas, sectionals, banquettes, desks with monitors, workbenches with pegboard, carrels, library stacks, plinths, light stands, etc.). Repeated pieces share one glTF mesh (instanced nodes). No logo or lettering is ever furniture.
+2. **Per-floor layouts** (`production/<floor>/…-interior-layout-v3.json`) realize every inventory furniture record by id and add the named recurring staff stations from `workplace-occupancy-v1.json`. Program zones, cores and functions are unchanged; nothing moved between levels.
+   - **B1** — staff commons (pantry, lockers, table), Hassan Raza / Emre Yildiz stations, Minh Tran's real firmware bench, Jonas Weber's liaison console, Dmitri Volkov's guard desk; floating desk slabs replaced by real desks.
+   - **F1** — V1 lounge now faces its own table, intake chairs face the table, Passport Studio chairs clear the kiosks and reception, staffed reception, participant-services desks (Grace Mbala, Valeria Soto, McCluster hot desk); document station moved out of the elevator landing.
+   - **F2** — forum ring of lounge chairs, 6-seat listening circle (bench, two lounge chairs, pouf), cohort workshop (two trestle tables, 12 chairs, lectern, boards), cohort lead / operator desks.
+   - **F3** — networking booths + standing table, formal round interview room A, soft mentorship room B, field-operations room with plan table, technical bench and field desks.
+   - **F4** — L-sectional facing the media wall, gallery plinths + backless bench, recording booth, edit suite with producer seating (no longer behind the monitors), interview set (backdrop, lights, camera), brand/comms desks.
+   - **F5** — library stacks forming archive bays, carrel row on the south glass, analyst desks, reading corner; review-room seats no longer inside the secure surface / workstation.
+   - **F6** — executive high-back chairs at command, leather salon facing its display, round strategy table, boat briefing table, director's office corner, governance/risk desks, Halo viewing bench; Halo pocket kept clear.
+3. **Brand slots (productized logo).** All drawn-mark and stroke-lettering geometry removed from the facade; identity plates removed from F1–F6. Contract: `production/brand/brand-manifest.json` + `eu_brand_slots.py` (empty `brand-slot::<id>` nodes with extras) + `equity-uprise-brand-slots.mjs` (runtime: owner artwork only, proportional fit, never cropped). Default artwork `assets/img/equity-uprise-logo.webp`. Canopy-fascia slot empty until the owner supplies a horizontal lockup. Facade finish records for the old mark/backer/halo/wordmark are kept and marked `superseded_by_brand_slot_v3`.
+4. **Egress made real.** Stair A east exit now exists (Y55.0–58.2 on the Stair A landing) in the chassis, Floor 1 and the facade; the impossible Stair B north exit is relocated to the paired west door with the service leaf; discharge barriers moved from the stair doorways to the head of each B1 down-flight; Floor 1's local stair now matches the chassis (first tread used to sit in the doorway).
+5. **Other "doesn't make sense" fixes found by the new audit:** privacy-glass bands no longer cross room doorways (F3–F6); F3 interview displays no longer span the doors; F1 two-way panel no longer floats in front of the elevator; F1 vestibule no longer split by 9 ft full-height frames; B1 2 ft slot corridors widened (elevator landing X50.5–54, east spine, workshop/lab corridor, lab door to the spine), staging rack/carts out of the freight landing, emergency path markers flush in the floor instead of floating cubes, telecom console off the rack row.
+6. **Consistency audit** `production/interiors/audit_interior_consistency.py` (CI + deploy): furniture vs walls/equipment/furniture on the real GLBs, keep-clear zones, zone containment, door openings open and leading somewhere, 36 in route between elevator/stairs/freight, 24 in reach to every seat and work surface, exit doors in chassis+Floor 1+facade = egress plan, no drawn marks, brand artwork hash, copy-paste zone detection, vocabulary similarity < 0.6, phone budgets (≤ 40k triangles, ≤ 700 KB per floor). Current: **120/120**; floors 10–15k triangles, 211–302 KB.
+
+**Not done / needs owner input:** a horizontal lockup if the canopy should carry one; whether the crown should use the white variant at night; column positions (no structural columns are modeled anywhere, so the audit cannot check furniture against them); visual approval of the v3 interiors in the real viewer; the asset registry still ingests object inventories only (new v3 furnishing ids live in the layout files).
+
+## STATUS LEDGER — B1 → L7 (verified against generated reports, 2026-11-03)
+
+Classes: IMPLEMENTED / PARTIAL / PLACEHOLDER / BROKEN / NOT STARTED. Evidence = file + test.
+
+| Area | Status | Evidence |
+| --- | --- | --- |
+| Geometry / vertical continuity B1→L7 | IMPLEMENTED | `generated/equity-uprise-building-core-v2-report.json` 849 meshes 46/46; `equity-uprise-vertical-circulation-walkability-report.json` 44/44 |
+| Floor 1 exterior exits (main, Stair A, Stair B/service) | IMPLEMENTED (v3) | chassis + Floor 1 + facade reports `exit_doors`/`egress_doors`; audit "exists … where the egress plan says" |
+| Facade | IMPLEMENTED | `equity-uprise-facade-core-v2-report.json` 3875 meshes 48/48 |
+| Brand / identity | IMPLEMENTED as slots; artwork application PARTIAL | facade + F1–F6 `brand_slots`; runtime applier wired into `_unfinished/equity-uprise/equity-uprise-building-core-v2-3d.html` (facade only; floor viewers not yet) |
+| Room interiors B1, F1–F6 | IMPLEMENTED (v3, awaiting visual approval) | floor reports 18/18, 19/19, 15/15, 15/15, 24/24, 24/24, 26/26; `equity-uprise-interior-consistency-report.json` 120/120 |
+| Level 7 roof | IMPLEMENTED (review pass) | `equity-uprise-floor-07-core-v2-report.json` 283 meshes 15/15 |
+| Furnishings / material realism | PARTIAL | believable silhouettes + real dimensions; vertex-colour materials on floors (facade has PBR); no textures |
+| Navigation / collisions | PARTIAL | audit walk grids prove clearances; viewer Room Mode is camera-anchor based (Floor 1), no free-walk collision runtime |
+| Interactions | PARTIAL | Room Mode raycast targets on Floor 1 only |
+| Labs / inspectable equipment | IMPLEMENTED (sandbox) | lab-runtime verify steps 1–8 + distributed scenarios in CI; electronics Step 4A/4C verifies |
+| NPC occupancy / workplace behaviour | PARTIAL | roster `workplace-occupancy-v1.json`; v3 gives every named recurring person a physical station; no NPC models/behaviour; viewer shows anonymous synthetic occupancy markers in labs only |
+| Roof ecosystem travel | PLACEHOLDER | Level 7 routing contract + `F7-UPRISE-WORLD-PORTAL-01` (disabled, route-only); no live destination travel |
+| Viewer deployment | BROKEN for viewers / IMPLEMENTED for assets | viewers live under `_unfinished/equity-uprise/` and the publish step strips `_unfinished`; GLBs/JSON publish to `/equity-uprise-preview/` |
+| Building CI | IMPLEMENTED | `.github/workflows/equity-uprise-core-v2-ci.yml` (now also builds F1–F6 and runs the consistency audit) |
+
 ## Whole-building assembly — CONTINUITY VALIDATED / DETAILED F1–F7 STACK ACTIVE
 
 Current combined B1→roof chassis:
 - source: `production/build_equity_uprise_building_v2.py`
 - GLB: `production/generated/equity-uprise-building-core-v2.glb`
 - current report: `production/generated/equity-uprise-building-core-v2-report.json`
-- current committed chassis report: **840 meshes, 41/41 checks passing**
-- SHA-256: `afebd08c811d083b6ae957677cedbff51d4c629e36a19341eddc385b3e8e28c7`
+- current committed chassis report: **849 meshes, 46/46 checks passing** (v3, 2026-11-03: +5 exit-door checks; was 840 / 41/41)
+- SHA-256: see `production/generated/equity-uprise-building-core-v2-report.json` (regenerated deterministically by CI)
 - both protected stairs now have real served-level access openings rather than sealed south walls;
 - both stair systems close mathematically and physically from B1 through the +81 ft roof datum;
 - detailed Floors 1–7 are loaded into the working stack; B1 remains the future cinematic/detail refinement layer.
@@ -275,7 +439,7 @@ Level 7 is **implementation-complete for the current review pass but still await
 - both protected stairs include the complete **13.5 ft B1→Floor 1 rise** for isolated review;
 - passenger/freight/MEP core relationships remain aligned to Core V2;
 - standalone B1 viewer and detailed working-stack integration are implemented;
-- B1 is now a known staffed workplace floor; room-level operational/safety restrictions remain and all learner/instructor interaction remains SANDBOX-only;
+- B1 is a **normal, open floor** (owner, 2026-11-03: "We can have B1. Everybody's welcome to B1 … Make it normal."); plant, electrical, fire/water, flood, telecom and transfer-lock rooms keep their safety doors and live building systems stay simulation-only — that is life safety, not floor access;
 - tunnel geometry stops at the building-side Transfer Lock.
 
 Required references:
@@ -1148,6 +1312,31 @@ Current learner-facing floor-native coverage:
 This is the first usable layman diagnostic layer, not the final embodied simulation ceiling. Remaining learner-experience work is room-by-room camera/inspection coverage beyond Floor 1, richer synthetic people/report interactions, and visible physical consequences (for example lights, displays, connectivity and environmental behavior) driven by the existing sandbox state. One shared runtime, asset registry and canonical viewer remain authoritative.
 
 
+## Server Lab — STEP 10 HANDS-ON RACK / SERVER HARDWARE IMPLEMENTED (2026-11-03)
+
+Owner direction, 2026-11-03: the building is a real test environment: walk to a rack in 3D, open a server, identify its components, rebuild it and troubleshoot it like a real server, in levels. B1 is an open floor.
+
+Implemented (authority `SERVER-LAB-SPEC.md`):
+- MDF rack 01 (42U EIA-310; 482.6 mm / 44.45 mm per U; 600 × 1200 × 2000 mm) on the Step 4B manifest MDF data-rack anchor, mirroring `B1-TELECOM-RACKS-01-I001` and its registry assets; generic unbranded 2U and 1U two-socket server models and a component catalog with real dimensions, rules and failure-mode symptoms (`production/electronics/server-lab-hardware-v1.json`);
+- runtime `production/lab-runtime/equity-uprise-server-lab-runtime.mjs` + L4 pack + `verify_server_lab_v1.mjs` (Core V2 CI);
+- catalog IT-LAB-041..051 (51 labs); sandbox 1.2.0 server hardware faults;
+- owner-gated page `equity-uprise-server-lab-3d.html` (three.js 0.180): explore, L1 Identify, L2 Rebuild, L3 Bring-up, L4 Troubleshoot (8 fault scenarios), Step 6 assessment; Playwright run at 390 px and desktop (`scripts/e2e/server-lab.e2e.mjs`).
+
+Open: the B1 detailed builder places the telecom enclosure at X32–52 / Y22–34 while the electronics manifest anchors the MDF rack at (45, 62.8); recorded in the spec, not reconciled here. The lab page shows the MDF room, not the stacked building; entering it from the building viewer is next. Rack network devices remain schematic until promoted through Step 4C. Game Hub entry recommended in the spec (the hub is not on main yet).
+
+## Lab Runtime — STEP 11 HSEEP EXERCISES + LEARNING EVIDENCE BACKEND (2026-11-03)
+
+- Seven new HSEEP-structured exercises (`hseep-building-safety-scenario-pack-v1.json`): fire/smoke evacuation, shelter-in-place/severe weather, active-threat awareness tabletop (non-graphic, IS-907.A guidance only), hazmat release, full B1→roof evacuation with tunnel headcount (functional), disability-inclusive evacuation, building plan vs community EOP tabletop.
+- Team play: ICS positions and building roles per action, role-gated, with an ICS-214 activity log; EEG P/S/M/U drafts, hotwash, draft AAR/IP (human finalises and assigns owners).
+- Every existing pack scenario now carries an `hseep` block (type, objectives, EEG, hotwash).
+- Federal bindings cleaned up (IS-238 off the queue surge; CISA OT courses off the IT check-in outage; IS-235.C rebound to planning; IS-139.A recorded as retired; IS-700.B, 800.D, 317.A, 907.A, the FEMA PDS series and CISA 100W/210W added; NFPA 1660 supersedes 1600; IRS records flagged for refresh by 2026-11-30). See `../equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md`.
+- `INDUSTRY-CERTIFICATION-MAP.json` maps all 51 IT labs (the Step 4A ladder and the Server Lab IT-LAB-041..051) to CompTIA A+/Network+/Security+/Server+ and BICSI INST1; `LEARNING-PATHWAYS.json` holds the seven pathways.
+- Durable evidence: Supabase `learning_*` tables (migration `20261103182544_learning_evidence_v1.sql`, applied to production 2026-11-03 and recorded in `supabase/production-ledger.json`) through Worker routes `/v1/prim3/learning/*`, house owner only for now.
+
+Verification: `verify_hseep_scenarios_v1.mjs` PASS; all Step 1–9 verifiers PASS; `verify_federal_training_catalog.py` and `verify_learning_pathways.py` PASS.
+
+**NEXT:** integrate the Step 10 pack into the 3D viewer (Lab mode + roster/role picker); multiplayer presence for team drills; refresh the IRS records for the new tax year; remap Security+ when V8 objectives publish.
+
 ## B1 Workplace Derived-Artifact Refresh — 2026-09-24
 
 The B1 workplace canon now lives in source authority and deterministic generators. This reconciliation regenerates and commits the derived B1/Floor 1 production packages, plan references and verification reports so main-source and generated artifacts remain byte-current under the Core V2 freshness gate.
@@ -1156,3 +1345,16 @@ The B1 workplace canon now lives in source authority and deterministic generator
 ## Playable-Building Audit Derived-Report Refresh — 2026-09-24
 
 The playable-building audit and machine gap ledger are now tracked building context. This deterministic reconciliation refreshes the authority-hygiene report so its check count includes those new tracked sources.
+
+
+## Screens and screen apps — V1 IMPLEMENTED (2026-11-03)
+
+Owner, 2026-11-03: every screen in the building opens a whole page on your phone, with a way back into the building, "with a terminal".
+
+- `production/screens/build_screen_registry_v1.mjs` derives **148 screens** (B1 26 · F1 18 · F2 9 · F3 13 · F4 30 · F5 26 · F6 21 · L7 5) from the asset registry, floor inventories, B1 GLB, floor programs, electronics manifest and workplace occupancy; each bound to its canonical asset id, room, position (feet, Core V2 frame, with source), app, modes (WORKPLACE / TRAINING / PRIM3 MISSION) and access (B1 open per owner; SANDBOX only).
+- Apps: terminal (bash / IOS switch / BMC / UPS contexts over `equity-uprise-electronics-sandbox.mjs`), reception/check-in kiosk, NOC, camera console, F4 studio, F5 evidence browser, L7 departure board (data-driven from `data/seo/domain-architecture.json`), wall displays.
+- Enter/return contract and the viewer/game hook: `js/eu-screens/contract.mjs`, `js/eu-screens/enter.mjs`; demo `screens/building.html`. The canonical viewer itself is unchanged; it can adopt the hook.
+- TRAINING seeds one ticket per floor from the distributed scenario pack; every seed is fixable from a console (unit-tested). MISSION outages come from the PRIM3 game and never reach WORKPLACE.
+- Authority: `SCREENS-AND-SCREEN-APPS-SPEC.md`. The registry is derived data and not geometry authority; placement sources are recorded per screen.
+
+**NEXT:** wire `enter.mjs` into the canonical viewer's Room Mode and the PRIM3 game adapter; owner visual review of the apps on a phone.

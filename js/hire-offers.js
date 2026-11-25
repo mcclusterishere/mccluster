@@ -40,6 +40,15 @@
     }).join("") + "</ul>";
   }
 
+  /* the published website build prices, printed only when the ledger approves them */
+  function buildLines(b) {
+    if (!b || b.approved !== true || !(b.rate_lines || []).length) return "";
+    return '<ul class="rates rates--lines">' + b.rate_lines.map(function (r) {
+      return "<li><span class='rates__k'>" + esc(r.label) + "<span class='rates__u'>" + esc(r.unit) +
+        "</span></span><b>$" + M(r.amount) + "</b></li>";
+    }).join("") + "</ul>" + (b.note ? '<p class="rung__fine">' + esc(b.note) + "</p>" : "");
+  }
+
   /* ---------- the ground: a receipt and one big number, no service number ---------- */
   function runwayChapter(o) {
     var p = o.pricing || {}, draft = p.deposit || {};
@@ -51,7 +60,7 @@
       '<div class="chapter__money"><sup>$</sup>' + M(draft.amount || 33) +
       '<span class="chapter__per">optional first custom draft · once</span></div>' +
       '<a class="chapter__go" href="' + esc(o.next_step.href) + '">' + esc(o.next_step.label) + '</a>' +
-      '<p class="rung__fine">' + esc(draft.line || '') + '</p></div><div>' +
+      '<p class="rung__fine">' + esc(draft.line || '') + '</p>' + buildLines(p.builds) + '</div><div>' +
       chips(o.includes) +
       '<p class="rung__fine">Subscriptions, domains and any additional custom work are priced separately. Existing agreements remain unchanged.</p>' +
       '</div></div></section>';
@@ -101,16 +110,25 @@
       "</div>";
     }
 
+    if (o.id === "who-did-the-shoot" && mode === "m") {
+      out += '<p class="rung__fine">' + esc(O.eventPhotographyIntro(L)) + "</p>";
+    }
+
     /* the published rate lines for the project services */
     if (pr.rate_lines && pr.rate_lines.length) {
       /* data-shop keeps the package tray (js/shop.js) working on the new
          rate lines exactly as it did on the old hand-written cards */
       out += '<ul class="rates rates--lines">' + pr.rate_lines.map(function (r) {
-        return "<li data-shop=\"" + esc(r.id) + "\" data-shop-n=\"" + esc(r.label) +
-          "\" data-shop-p=\"" + esc(r.amount) + "\" data-shop-m=\"" +
-          esc(/^from/.test(r.unit) ? "from" : "once") + "\">" +
+        var minimum = r.minimum_hours ? O.minimumFor(r) : 0;
+        var name = r.label + (minimum ? " · " + r.minimum_hours + "-hour base" : "");
+        var unit = r.unit + (minimum ? " · $" + M(minimum) + " base" : "");
+        return "<li data-shop=\"" + esc(r.id) + "\" data-shop-n=\"" + esc(name) +
+          "\" data-shop-p=\"" + esc(minimum || r.amount) + "\" data-shop-m=\"" +
+          esc(minimum || /^from/.test(r.unit) ? "from" : "once") + "\" data-shop-min=\"" + minimum +
+          "\" data-shop-note=\"" + esc(r.travel_note || "") + "\">" +
           "<span class='rates__k'>" + esc(r.label) +
-          "<span class='rates__u'>" + esc(r.unit) + "</span></span><b>$" + M(r.amount) + "</b></li>";
+          "<span class='rates__u'>" + esc(unit) + (r.travel_note ? "<br>" + esc(r.travel_note) : "") +
+          "</span></span><b>$" + M(r.amount) + "</b></li>";
       }).join("") + "</ul>";
       if (pr.note) out += '<p class="rung__fine">' + esc(pr.note) + "</p>";
     }
@@ -229,7 +247,7 @@
     var eq = anti.pricing.equity, m = anti.pricing.m;
 
     calc.innerHTML =
-      "<h4>What Equity Uprise actually costs</h4>" +
+      "<h3>What Equity Uprise actually costs</h3>" +
       '<p class="calc__lede">Half the standard price, plus ' + eq.share_percent +
         "% of eligible connected online revenue, until " + eq.term_months + " months or the cap.</p>" +
       '<div class="calc__grid">' +

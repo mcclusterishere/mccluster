@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import { performStreetRoute } from './travel-routing-provider.js';
+import { performStreetRoute, routingProvider } from './travel-routing-provider.js';
 import { reserveRoutingQuota, releaseRoutingQuota } from './travel-routing-quota.js';
 
 const AIS_ENDPOINT = 'https://stream.aisstream.io/v0/stream';
@@ -113,9 +113,9 @@ export class HereTenantAgent extends DurableObject {
   // class coordinates that provider quota across all Worker locations.
   async routeTravel(input) {
     const read = this.ctx.storage.sql.exec("SELECT v FROM tenant_meta WHERE k = 'travel_routing_quota'").toArray();
-    const previous = parseJson(read[0]?.v, {}), reservation = reserveRoutingQuota(previous);
+    const previous = parseJson(read[0]?.v, {}), reservation = reserveRoutingQuota(previous, Date.now(), { provider: routingProvider(this.env) });
     if (!reservation.allowed) return { status: 429, retryAfter: reservation.retryAfter,
-      error: reservation.daily ? 'The free routing pilot has reached its daily limit. Please try again tomorrow.' : 'Street directions are busy. Please wait a moment and try again.' };
+      error: reservation.monthly ? 'Street routing has reached its monthly request budget. Please try again next month.' : reservation.daily ? 'Street routing has reached its daily request budget. Please try again tomorrow.' : 'Street directions are busy. Please wait a moment and try again.' };
     const token = crypto.randomUUID(), state = { ...reservation.state, token };
     const save = value => this.ctx.storage.sql.exec("INSERT INTO tenant_meta (k, v) VALUES ('travel_routing_quota', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v", JSON.stringify(value));
     save(state); // Synchronous SQL before any await: no concurrent reservation.

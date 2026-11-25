@@ -204,7 +204,7 @@
   $("fbiSurrender").addEventListener("change", syncForm);
 
   /* Photos go to the member's own private media through the same signed
-     upload Human Uprise uses; the Bureau shows them on signed links. */
+     upload Equity Uprise uses; the Bureau shows them on signed links. */
   function uploadPhoto(file, token) {
     return api("/v1/mnet/media/upload-url", { method: "POST", auth: true, body: { file_name: file.name, mime_type: file.type, byte_size: file.size } }).then(function (grant) {
       var path = grant && grant.upload && grant.upload.path, asset = grant && grant.asset, t = grant && grant.upload && grant.upload.token;

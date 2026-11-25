@@ -1,10 +1,12 @@
+import { CORS_ORIGINS } from '../platform/hosts.generated.js';
+
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 
+/* The site's own origins come first, from the generated table (CORS_ORIGINS: its tenants, the platform and the doors
+   the API answers; data/seo/domain-architecture.json), then the API itself, the satellite and local development. The
+   first is the answer to a request that names no allowed origin. */
 const DEFAULT_ORIGINS = [
-  'https://matthew.mccluster.org',
-  'https://mccluster.org',
-  'https://humanuprise.com',
-  'https://www.humanuprise.com',
+  ...CORS_ORIGINS,
   'https://api.mccluster.org',
   'https://esmer.mccluster.org',
   'https://mcclusterishere.github.io',
@@ -40,9 +42,27 @@ export function corsHeaders(request, env) {
   };
 }
 
+/* Every JSON answer from this API carries these. applyCors adds the ones a
+   bare response is missing and never clobbers a header a route chose; a
+   response that is not JSON (a document with a framing answer of its own)
+   is not told it may not be framed. */
+const SECURITY_HEADERS = {
+  'strict-transport-security': 'max-age=31536000; includeSubDomains',
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY'
+};
+function isJson(headers) {
+  return /^application\/json/i.test(headers.get('content-type') || '');
+}
+
 export function applyCors(request, env, response) {
   const headers = new Headers(response.headers);
   for (const [key, value] of Object.entries(corsHeaders(request, env))) headers.set(key, value);
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    if (headers.has(key)) continue;
+    if (key === 'x-frame-options' && !isJson(headers)) continue;
+    headers.set(key, value);
+  }
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -53,7 +73,7 @@ export function applyCors(request, env, response) {
 export function reply(request, env, data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...JSON_HEADERS, ...corsHeaders(request, env) }
+    headers: { ...JSON_HEADERS, ...SECURITY_HEADERS, ...corsHeaders(request, env) }
   });
 }
 

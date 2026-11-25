@@ -18,11 +18,19 @@ enabled = true
 head_sampling_rate = 0.01
 
 [vars]
+# Activate only after the reviewed core_signed_nonces_v1 migration is applied
+# and effective service-role INSERT access is verified on the canonical plane.
+CORE_REPLAY_STORE = "supabase"
 ALLOWED_ORIGINS = "https://matthew.mccluster.org,https://mccluster.org,https://humanuprise.com,https://www.humanuprise.com,https://esmer.mccluster.org,https://mcclusterishere.github.io,https://www.esmermusic.com,https://esmermusic.com,http://localhost:8787,http://127.0.0.1:8787,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8099,http://127.0.0.1:8099"
 MCCLUSTER_SUPABASE_PROJECT_REF = "zmnhbrjyhxzhkxmhkexs"
+# The static origin (data/seo/domain-architecture.json -> platform.static_origin; src/platform/hosts.generated.js
+# STATIC_ORIGIN): where the host router (src/platform/router.js) fetches the World and the files the site's hosts serve.
+# A fetch target, never a link; tests point it at a local server. It equals the table's static origin
+# (test/platform-router.test.mjs holds them together).
 PUBLIC_ORIGIN = "https://matthew.mccluster.org"
-APEX_ORIGIN = "https://mccluster.org"
 ALLOW_DEMO_IDENTITIES = "false"
+# Whip Equipped's Stripe return host (src/whip/worker.js appUrl): Whip is Matthew's separate company and its pages live
+# only on his host (url_ownership.profile_only). Every other return follows the request (returnOrigin, src/platform/).
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
 # The World's GDELT news ingest (src/world-news.js) on the five-minute cron. Its SQL is applied in
 # production (supabase/migrations/20261016151123_world_gdelt_gkg_news_v1.sql); "false" stops every fetch.
@@ -40,8 +48,10 @@ AUDIO_SFU_ROOMS_ENABLED = "false"
 # which signs the visitor's listening pass. Other regions, hands and speaking always need sign-in.
 AUDIO_ROOMS_VISITOR_LISTEN_ENABLED = "false"
 # Country-scoped public regional feeds and explicit author-assigned post countries.
-# Both migrations are applied and attested in the canonical 341-migration ledger.
-# Do not deploy this setting before exact-head public feed QA and release approval.
+# Production SQL applied: supabase/migrations/20261021173729_world_place_scope_v1.sql (version 20261021173729 is in
+# production's schema_migrations, read 2026-11-17). This branch turns the flag on for country-scoped public feeds
+# and explicit region sharing (PR 587). Region member counts come from 20261021173902_world_region_sharing_v1.sql.
+# Do not deploy until exact-head public feed QA and release approval.
 WORLD_PLACE_SCOPE_ENABLED = "true"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
@@ -49,6 +59,13 @@ SEEK_FIRST_ACCESS_REQUIRED = "false"
 # Owner-authorized internal collection; evidence canon and spatial archive migrations must be applied first.
 INTEL_USGS_COLLECTOR_ENABLED = "true"
 INTEL_USGS_SPATIAL_ARCHIVE_ENABLED = "true"
+# The E=UP environmental event timeline's USGS ingest (src/eup/environment/ingest.js, docs/control-plane/EUP-EVENT-TIMELINE.md
+# slice S3) on the five-minute cron. On from Release 1 of 2026-11-23, Matthew's go ("Switching the module on for sure,
+# alright?"; "ship it all baby"), with the event store applied in full (supabase/migrations/, parts 01 to 05, ledger 384).
+# Until he sets the USGS rule in Control a run reads the store's view once and stops: no USGS request, nothing stored. Until
+# he installs and enables the environment module in Control nothing it stores is public. "false" makes no USGS request and
+# no store call.
+EUP_ENVIRONMENT_USGS_INGEST_ENABLED = "true"
 # Identity verification levels: the Persona government-ID check stays OFF until the
 # owner approves the consent text, counsel review and Persona's terms. Secrets by name
 # only (wrangler secret put): PERSONA_API_KEY, PERSONA_TEMPLATE_ID, PERSONA_WEBHOOK_SECRET.

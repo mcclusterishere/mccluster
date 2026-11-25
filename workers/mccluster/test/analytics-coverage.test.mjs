@@ -32,6 +32,24 @@ test('invalid range does not perform any database reads',async()=>{
  await assert.rejects(dataCoverage(env,'house',new URL('https://api.test/?since=bad&until=2026-10-17'),{fetchImpl:()=>calls++}),/valid since/);
  assert.equal(calls,0);
 });
+test('coverage pages all datasets within the external-request budget even when every table is populated',async()=>{
+ let offset=0;const keys=[];
+ do {
+   let calls=0;
+   const result=await dataCoverage(env,'house',new URL('https://api.test/?since=2026-10-16&until=2026-10-17&limit=12&offset='+offset),{fetchImpl:async()=>{
+     assert.ok(++calls<=24,'leave headroom for authentication and owner lookup');return reply([],200,12);
+   }});
+   keys.push(...result.datasets.map(d=>d.key));offset=result.pagination.next_offset;
+ }while(offset!==null);
+ assert.deepEqual(keys,DATASETS.map(d=>d.key));
+});
+test('known empty datasets need one read and invalid pagination makes none',async()=>{
+ let calls=0;
+ const result=await dataCoverage(env,'house',new URL('https://api.test/?since=2026-10-16&until=2026-10-17'),{fetchImpl:async()=>{calls++;return reply([],200,0);}});
+ assert.equal(calls,DATASETS.length);assert.equal(result.summary.unavailable,0);
+ assert.ok(result.datasets.every(d=>d.window_count===0&&d.window_status==='measured'));
+ for(const params of ['limit=13','offset=-1','offset=999','limit=1.2'])await assert.rejects(dataCoverage(env,'house',new URL('https://api.test/?'+params),{fetchImpl:()=>{throw Error('must not fetch');}}),/valid dataset/);
+});
 test('business snapshot retains unrelated measurements when one source fails and never converts missing music totals to zero',async()=>{
  const original=globalThis.fetch;let active=0,peak=0;
  globalThis.fetch=async raw=>{

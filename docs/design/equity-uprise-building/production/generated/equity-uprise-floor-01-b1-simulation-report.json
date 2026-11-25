@@ -28,9 +28,9 @@
       "detail": "None"
     },
     {
-      "name": "B1 normal public access false",
+      "name": "B1 is a normal open floor (owner 2026-11-03)",
       "passed": true,
-      "detail": "False"
+      "detail": "True"
     },
     {
       "name": "B1 title matches shared core",
@@ -43,9 +43,9 @@
       "detail": "{'capability_branch': None, 'source_branch': None}"
     },
     {
-      "name": "B1 access uses role/safety authorization",
+      "name": "B1 access is open; room-level safety doors remain",
       "passed": true,
-      "detail": "role-and-safety-authorized"
+      "detail": "open-normal-floor"
     },
     {
       "name": "B1 training uses canonical sandbox geometry",
@@ -55,7 +55,7 @@
     {
       "name": "B1 floor is known with room-level restrictions",
       "passed": true,
-      "detail": "{'allowed': ['equity_uprise_staff', 'equity_uprise_instructor', 'equity_uprise_security', 'equity_uprise_facilities', 'field_t', 'mobility_operations', 'supervised_equity_uprise_learner'], 'floor_hidden': False, 'room_level_restrictions': True, 'competency_alone_sufficient': False, 'audit_required': True}"
+      "detail": "{'allowed': ['equity_uprise_facilities', 'equity_uprise_instructor', 'equity_uprise_security', 'equity_uprise_staff', 'everyone', 'field_t', 'mobility_operations', 'supervised_equity_uprise_learner'], 'floor_hidden': False, 'room_level_restrictions': True, 'competency_alone_sufficient': False, 'audit_required': True, 'note': 'Open floor. Room-level safety doors remain on plant, electrical, fire/water, flood, telecom and transfer-lock rooms; that is life safety, not floor access.'}"
     },
     {
       "name": "tunnel is not publicly visible",
@@ -110,7 +110,7 @@
     {
       "name": "B1 zone inside shell: b1-electrical-emergency",
       "passed": true,
-      "detail": "(32, 4, 52, 20)"
+      "detail": "(32, 4, 51, 20)"
     },
     {
       "name": "B1 zone clear of fixed core: b1-electrical-emergency",
@@ -120,7 +120,7 @@
     {
       "name": "B1 zone inside shell: b1-fire-water",
       "passed": true,
-      "detail": "(54, 4, 70, 20)"
+      "detail": "(55, 4, 70, 20)"
     },
     {
       "name": "B1 zone clear of fixed core: b1-fire-water",
@@ -130,7 +130,7 @@
     {
       "name": "B1 zone inside shell: b1-telecom-core",
       "passed": true,
-      "detail": "(32, 22, 52, 34)"
+      "detail": "(32, 22, 50, 34)"
     },
     {
       "name": "B1 zone clear of fixed core: b1-telecom-core",
@@ -140,7 +140,7 @@
     {
       "name": "B1 zone inside shell: b1-water-flood",
       "passed": true,
-      "detail": "(54, 22, 70, 32)"
+      "detail": "(55.5, 22, 70, 32)"
     },
     {
       "name": "B1 zone clear of fixed core: b1-water-flood",
@@ -150,7 +150,7 @@
     {
       "name": "B1 zone inside shell: b1-facilities-workshop",
       "passed": true,
-      "detail": "(2, 30, 16, 52)"
+      "detail": "(2, 30, 14.5, 50)"
     },
     {
       "name": "B1 zone clear of fixed core: b1-facilities-workshop",
@@ -160,7 +160,7 @@
     {
       "name": "B1 zone inside shell: b1-systems-lab",
       "passed": true,
-      "detail": "(18, 36, 52, 54)"
+      "detail": "(20, 37.5, 50.5, 54)"
     },
     {
       "name": "B1 zone clear of fixed core: b1-systems-lab",
@@ -400,12 +400,12 @@
     {
       "name": "Floor 1 directory shows known B1",
       "passed": true,
-      "detail": "{'normal_floor_selector': ['B1', '1', '2', '3', '4', '5', '6', '\u2191'], 'b1_selector_visibility': 'visible-controlled-technical-floor', 'ordinary_equity_uprise_admin_can_see_b1': True, 'journey_wall_shows_b1': False, 'public_directory_shows_b1': True, 'directory_label': 'B1 \u00b7 Technical Operations / Infrastructure', 'passenger_elevator': {'physical_b1_stop': True, 'b1_control_hidden_by_default': False, 'access': 'staff-or-authorized-participant'}, 'stairs': {'physical_b1_connection': True, 'floor1_downward_access': 'controlled-technical-floor', 'b1_to_floor1_egress': 'preserved'}, 'freight_elevator': {'physical_b1_stop': True, 'access': 'restricted-operational'}, 'training': {'entry': 'Building Systems Lab / B1 workplace', 'destination': 'canonical B1/tunnel SANDBOX geometry', 'live_systems': False, 'separate_secret_clone': False}}"
+      "detail": "{'normal_floor_selector': ['B1', '1', '2', '3', '4', '5', '6', '\u2191'], 'b1_selector_visibility': 'visible-normal-floor', 'ordinary_equity_uprise_admin_can_see_b1': True, 'journey_wall_shows_b1': False, 'public_directory_shows_b1': True, 'directory_label': 'B1 \u00b7 Technical Operations / Infrastructure', 'passenger_elevator': {'physical_b1_stop': True, 'b1_control_hidden_by_default': False, 'access': 'everyone'}, 'stairs': {'physical_b1_connection': True, 'floor1_downward_access': 'open-normal-use (evacuation-mode discharge barrier only)', 'b1_to_floor1_egress': 'preserved'}, 'freight_elevator': {'physical_b1_stop': True, 'access': 'restricted-operational'}, 'training': {'entry': 'Building Systems Lab / B1 workplace', 'destination': 'canonical B1/tunnel SANDBOX geometry', 'live_systems': False, 'separate_secret_clone': False}}"
     },
     {
       "name": "Floor 1 authorized admins can see B1",
       "passed": true,
-      "detail": "{'normal_floor_selector': ['B1', '1', '2', '3', '4', '5', '6', '\u2191'], 'b1_selector_visibility': 'visible-controlled-technical-floor', 'ordinary_equity_uprise_admin_can_see_b1': True, 'journey_wall_shows_b1': False, 'public_directory_shows_b1': True, 'directory_label': 'B1 \u00b7 Technical Operations / Infrastructure', 'passenger_elevator': {'physical_b1_stop': True, 'b1_control_hidden_by_default': False, 'access': 'staff-or-authorized-participant'}, 'stairs': {'physical_b1_connection': True, 'floor1_downward_access': 'controlled-technical-floor', 'b1_to_floor1_egress': 'preserved'}, 'freight_elevator': {'physical_b1_stop': True, 'access': 'restricted-operational'}, 'training': {'entry': 'Building Systems Lab / B1 workplace', 'destination': 'canonical B1/tunnel SANDBOX geometry', 'live_systems': False, 'separate_secret_clone': False}}"
+      "detail": "{'normal_floor_selector': ['B1', '1', '2', '3', '4', '5', '6', '\u2191'], 'b1_selector_visibility': 'visible-normal-floor', 'ordinary_equity_uprise_admin_can_see_b1': True, 'journey_wall_shows_b1': False, 'public_directory_shows_b1': True, 'directory_label': 'B1 \u00b7 Technical Operations / Infrastructure', 'passenger_elevator': {'physical_b1_stop': True, 'b1_control_hidden_by_default': False, 'access': 'everyone'}, 'stairs': {'physical_b1_connection': True, 'floor1_downward_access': 'open-normal-use (evacuation-mode discharge barrier only)', 'b1_to_floor1_egress': 'preserved'}, 'freight_elevator': {'physical_b1_stop': True, 'access': 'restricted-operational'}, 'training': {'entry': 'Building Systems Lab / B1 workplace', 'destination': 'canonical B1/tunnel SANDBOX geometry', 'live_systems': False, 'separate_secret_clone': False}}"
     },
     {
       "name": "Floor 1 training uses canonical B1 sandbox",

@@ -11,13 +11,29 @@ import vm from 'node:vm';
 const read = (p) => readFile(p, 'utf8');
 
 async function load() {
-  const context = { window: { CR: {} }, document: { activeElement: null }, console, URL, setTimeout, clearTimeout };
+  const context = { window: { CR: {} }, document: { activeElement: null }, console, URL, TextDecoder, setTimeout, clearTimeout };
   vm.createContext(context);
   vm.runInContext(await read('js/control-room/forensics.js'), context);
   return context.window.CR.forensics;
 }
 const host = () => ({ innerHTML: '', querySelector: () => null, querySelectorAll: () => [] });
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+test('location labels repair historical UTF-8 misdecoding without changing source records or HTML safety', async () => {
+  for (const [stored, expected] of [['Nuevo LeÃ\u0083Â³n', 'Nuevo León'], ['MÃ¼nchen', 'München'],
+    ['São Paulo', 'São Paulo'], ['東京', '東京'], ['Âland', 'Âland'], ['MÃ¼nchen <img>', 'München &lt;img&gt;']]) {
+    for (const mode of ['sessions', 'visitors']) {
+      const F = await load(), h = host(), row = { session_id: 'fixture', visitor_key: 'fixture', city: stored, country: 'MX', pages: [] };
+      F.state.mode = mode;
+      F.mount(h, { request: async () => ({ total: 1, counts: { all: 1 }, [mode]: [row] }),
+        range: { since: '2026-10-01T00:00:00Z', until: '2026-10-24T00:00:00Z' } });
+      await tick();
+      assert.ok(h.innerHTML.includes(expected + ', MX'), stored + ' in ' + mode);
+      assert.equal(row.city, stored, 'the stored measurement is retained');
+      assert.doesNotMatch(h.innerHTML, /<img>/);
+    }
+  }
+});
 
 const EVENTS = [
   { at: '2026-10-05T12:00:00Z', name: 'acquired', path: 'album.html', props: { src: 'instagram', med: 'trial_reel', cmp: 'launch' } },
@@ -240,15 +256,42 @@ test('errors: this site’s own errors lead, injected ones wait behind a toggle,
   F.state.showInjected = true;
   assert.match(F.render(), /window\.webkit\.messageHandlers/);
   assert.equal(F.describe({ name: 'signup_blocked', props: { reason: 'password_mismatch' } }).text, 'Sign-up refused: passwords did not match');
-  assert.match(F.describe({ name: 'js_error', props: { msg: 'x', origin: 'injected' } }).text, /^In-app browser error \(not this site\)/);
+  assert.match(F.describe({ name: 'js_error', props: { msg: 'x', origin: 'injected' } }).text, /^Browser diagnostic \(likely injected\)/);
 });
 
 test('the forensics stylesheet keeps the mobile-first rules', async () => {
   const css = await read('css/control-forensics.css');
-  const queries = css.match(/@media[^{]+/g) || [];
+  const queries = css.match(/@container[^{]+/g) || [];
   assert.ok(queries.length >= 2);
-  for (const q of queries) assert.match(q, /^@media \(min-width:\d+rem\)\s*$/, 'breakpoints only add: ' + q);
-  assert.doesNotMatch(css.replace(/minmax\(0,1fr\)/g, ''), /\b1fr\b/, 'never a bare 1fr');
+  for (const q of queries) assert.match(q, /^@container crf-(?:pane|host) \(min-width:\d+rem\)\s*$/, 'breakpoints only add: ' + q);
+  assert.doesNotMatch(css.replace(/minmax\(0,1fr\)|minmax\(min\(100%,9rem\),1fr\)/g, ''), /\b1fr\b/, 'never a bare 1fr');
   assert.match(css, /\.crf-search input,\.crf-sort select\{[^}]*font-size:max\(16px,/);
   assert.match(css, /\.crf--open \.crf-list\{display:none\}/, 'on a phone an open session takes the screen');
+});
+
+test('detail responses cannot overwrite back, filter, range or a newer session; retry targets the open record', async () => {
+ const F=await load(), buttons={};
+ const button=(selector,attrs={})=>buttons[selector]||(buttons[selector]={getAttribute:k=>attrs[k],closest:()=>null});
+ const session=button('[data-crf-session]',{'data-crf-session':'sess-fixture'});
+ const back=button('[data-crf-back]');
+ const filter=button('[data-crf-filter]',{'data-crf-filter':'signup'});
+ const retry=button('[data-crf-detail-retry]');
+ const h={innerHTML:'',querySelector:()=>null,querySelectorAll:q=>buttons[q]?[buttons[q]]:[]};
+ const pending=[];
+ const request=path=>path.includes('/sessions/')?new Promise((resolve,reject)=>pending.push({path,resolve,reject})):Promise.resolve({sessions:[],counts:{},total:0});
+ const range={since:'2026-10-01',until:'2026-10-25'};
+ F.mount(h,{request,range});await tick();
+ session.onclick();back.onclick();pending.shift().resolve({session:{session_id:'stale'}});await tick();
+ assert.equal(F.state.detail,null);assert.equal(F.state.loadingDetail,false);
+ session.onclick();filter.onclick();pending.shift().resolve({session:{session_id:'stale'}});await tick();
+ assert.equal(F.state.detail,null);assert.equal(F.state.filter,'signup');assert.equal(F.state.stack.length,0);
+ session.onclick();const old=pending.shift();session.onclick();const newer=pending.shift();
+ newer.resolve({session:{session_id:'newest'},events:[]});await tick();old.resolve({session:{session_id:'stale'},events:[]});await tick();
+ assert.equal(F.state.detail.session.session_id,'newest');
+ session.onclick();pending.shift().reject(new Error('Analytics database read failed'));await tick();
+ assert.match(h.innerHTML,/data-crf-detail-retry/);assert.equal(F.state.detail,null);
+ retry.onclick();assert.match(pending[0].path,/sessions\/sess-fixture$/);pending.shift().resolve({session:{session_id:'retried'},events:[]});await tick();
+ assert.equal(F.state.detail.session.session_id,'retried');
+ session.onclick();F.mount(h,{request,range:{since:'2026-10-20',until:'2026-10-25'}});
+ pending.shift().resolve({session:{session_id:'old-range'},events:[]});await tick();assert.equal(F.state.detail,null);
 });

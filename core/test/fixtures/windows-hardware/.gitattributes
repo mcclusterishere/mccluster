@@ -1,0 +1,5 @@
+# Byte-exact recordings of Windows command output: CRLF stays CRLF and is not
+# a whitespace error. No normalization on checkout or commit.
+*.txt -text -whitespace
+*.csv -text
+*.json -text

@@ -38,7 +38,7 @@ let chromium;
 try { ({ chromium } = require('playwright')); }
 catch { ({ chromium } = createRequire(join(process.env.PLAYWRIGHT_DIR || '/opt/node-tools/node_modules', 'x'))('playwright')); }
 
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.woff2': 'font/woff2' };
 const server = createServer(async (req, res) => {
   const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^([.][.][/\\])+/, '');
   const file = path === '/' ? 'index.html' : path;
@@ -69,13 +69,13 @@ const check = (ok, what) => { if (!ok) failures.push(what); console.log((ok ? 'o
 async function run(browser, width, name, opts = {}) {
   const db = JSON.parse(JSON.stringify(SCENARIOS[opts.scenario || name]));
   const calls = [];
-  const ctx = await browser.newContext({ viewport: { width, height: width < 500 ? 844 : 900 }, deviceScaleFactor: 1 });
+  const ctx = await browser.newContext({ serviceWorkers: 'block', viewport: { width, height: width < 500 ? 844 : 900 }, deviceScaleFactor: 1 });
   await ctx.addInitScript(([uid]) => {
     try { localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() })); } catch (_) {}
     try { localStorage.setItem('mccdb_session', JSON.stringify({ access_token: 'fixture-token', refresh_token: 'r', expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id: uid } })); } catch (_) {}
   }, [UID]);
-  await ctx.route('https://esm.sh/**', (route) => route.fulfill({ status: 200, contentType: 'text/javascript',
-    body: 'export function createClient(){return {storage:{from(){return {getPublicUrl(){return {data:{publicUrl:""}}},remove(){return Promise.resolve({})},uploadToSignedUrl(){return Promise.resolve({})}}}}}}' }));
+  /* supabase-js is self-hosted (vendor/supabase-js-2.57.0.mjs, served above as JavaScript): the real client
+     runs here, and every request it makes goes to the faked Supabase below */
   const state = (input) => OB.fallbackState({ creator: db.creator, network: db.network, platform: db.platform, linked: !!db.creator, input });
   await ctx.route(`${SB}/**`, async (route) => {
     const req = route.request();
@@ -118,7 +118,7 @@ async function run(browser, width, name, opts = {}) {
   });
   await ctx.route(/^https:\/\/api\.mccluster\.org\/(?!v1\/mnet\/bootstrap)/, (route) => route.fulfill({ status: 200, contentType: 'application/json',
     body: JSON.stringify({ ok: true, creator: !!db.creator, tracks: [], counts: {}, page_traffic: { views: 0, sources: {} } }) }));
-  await ctx.route(/^https:\/\/(?!zmnhbrjyhxzhkxmhkexs|api\.mccluster|esm\.sh)/, (route) => route.fulfill({ status: 204, body: '' }));
+  await ctx.route(/^https:\/\/(?!zmnhbrjyhxzhkxmhkexs|api\.mccluster)/, (route) => route.fulfill({ status: 204, body: '' }));
 
   const page = await ctx.newPage();
   const errors = [];
@@ -142,9 +142,10 @@ async function run(browser, width, name, opts = {}) {
     await page.goto(`${BASE}/creator.html${opts.query || ''}`, { waitUntil: 'load' });
   }
   /* settled: the page has decided between onboarding, studio and edit */
-  if (name === 'incomplete') await page.waitForURL((u) => u.pathname === '/mnet.html', { timeout: 15000 }).catch(() => {});
-  else await page.waitForFunction(() => ['creatorOnboard', 'creatorSummary', 'creatorIdentity']
+  const settled = () => page.waitForFunction(() => ['creatorOnboard', 'creatorSummary', 'creatorIdentity']
     .some((id) => document.getElementById(id) && !document.getElementById(id).hidden), null, { timeout: 10000 }).catch(() => {});
+  if (name === 'incomplete') await page.waitForURL((u) => u.pathname === '/mnet.html', { timeout: 15000 }).catch(() => {});
+  else await settled();
   await page.waitForTimeout(300);
   const tag = `${opts.prefix || 'after'}-${width}-${name}`;
   const fit = async (label) => {
@@ -170,7 +171,7 @@ async function run(browser, width, name, opts = {}) {
     check(become.length === 1 && become[0].body.p_accept_terms === true && become[0].body.p_handle === null, `${tag}: exactly one become call, terms accepted, nothing typed`);
     check(db.creator && db.creator.avatar_url === AVATAR, `${tag}: the profile picture became the artist picture`);
     await fit('studio'); await shot('2-studio');
-    await page.reload({ waitUntil: 'load' }); await page.waitForTimeout(400);
+    await page.reload({ waitUntil: 'load' }); await settled(); await page.waitForTimeout(400);
     check(!(await visible('#creatorOnboard')) && (await visible('#creatorSummary')), `${tag}: reload never shows the onboarding`);
   }
   if (name === 'incomplete') {

@@ -10,7 +10,10 @@ test('customer pixel is one line and site scoped', async()=>{
   const worker=await read('workers/mccluster/src/entry.js');
   assert.match(worker,/path === '\/a\.js'/);
   assert.ok(worker.includes("/^mca_[a-f0-9]{32}$/i"), 'loader must validate the public site-key shape');
-  assert.match(worker,/https:\/\/mccluster\.org\/js\/mc-analytics\.js/);
+  /* the loader names the SDK where the generated site table serves it: https://mccluster.org/js/mc-analytics.js today */
+  assert.match(worker,/siteUrl\('\/js\/mc-analytics\.js'\)/);
+  const { siteUrl } = await import('../../workers/mccluster/src/platform/hosts.generated.js');
+  assert.equal(siteUrl('/js/mc-analytics.js'), 'https://mccluster.org/js/mc-analytics.js');
   assert.match(sdk,/var ROOT = "mca:" \+ siteKey \+ ":"/);
   assert.match(sdk,/mca_consent|CONSENT_KEY/);
 });
@@ -303,7 +306,8 @@ test('owner analytics exposes the promised full suite without creating a second 
     'never revive the rejected global oldest-row bridge scan');
   assert.match(suite,/Accounts|accounts/i);
   assert.match(suite,/Platform activity/);
-  assert.match(suite,/Human Uprise/);
+  assert.match(suite,/Equity Uprise/);
+  assert.doesNotMatch(suite,/Human Uprise/,"the public brand is Equity Uprise (owner, 2026-10-28)");
   assert.match(suite,/Music journey/);
   assert.match(suite,/Commerce/);
   assert.match(html,/id="anOverviewTab"/);

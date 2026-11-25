@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-22.1",
+  "catalogVersion": "2026-11-24.1",
   "capabilities": [
     {
       "id": "core.resume",
       "title": "Resume working session",
-      "description": "Return durable McCluster session state \u2014 workspace, active and stale work, pending approvals, catalog version, system health and exact deploy commit \u2014 so a model can rehydrate after context loss. Read-only.",
+      "description": "Return durable McCluster session state \u2014 workspace, active and stale work, pending approvals, checkpointed workstreams, catalog version, system health and exact deploy commit \u2014 so a model can rehydrate after context loss. Read-only.",
       "domain": "control",
       "lifecycle": "active",
       "execution": "sync",
@@ -40,6 +40,236 @@
         "control",
         "continuity",
         "session"
+      ]
+    },
+    {
+      "id": "workstream.checkpoint",
+      "title": "Checkpoint a workstream",
+      "description": "Owner-attributed record of where a line of work stands (branch, head, pull request, next step) plus one optional append-only event (decision, done, verified, blocker, unblocked, note, open), written to the private context plane in one transaction. Idempotent on the operation key; refuses credentials and raw transcripts. Queues no job, changes no code, deploys nothing, sends nothing and approves no decision. MCP only: the write needs the actor that only the MCP path carries.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "workstream"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "workstream": {
+            "type": "object",
+            "required": [
+              "id"
+            ]
+          },
+          "event": {
+            "type": "object",
+            "required": [
+              "kind",
+              "text"
+            ]
+          },
+          "operation_key": {
+            "type": "string"
+          },
+          "provenance": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "continuity",
+        "context",
+        "provenance"
+      ]
+    },
+    {
+      "id": "workstream.list",
+      "title": "Read workstream checkpoints",
+      "description": "Read the checkpointed workstreams, active first, with their recent decisions, verified results, open questions and uncleared blockers, plus the generated resume packet. Read-only.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "workstream_id": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "max_sensitivity": {
+            "type": "string"
+          },
+          "max_chars": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "continuity",
+        "context"
+      ]
+    },
+    {
+      "id": "dispatch.turn",
+      "title": "Dispatch an owner message",
+      "description": "McCluster's conversational front end. Classifies one owner message (deterministic routing table, then the small resident model with a confidence threshold), records the routing decision in the private context plane before anything runs, then answers, asks one clarifying question, runs an approval-free capability on Core, or files a pending owner approval for anything the catalog gates. Never sends outside messages, merges, deploys to production, spends or deletes. MCP only: it needs the owner actor that only the MCP path carries. Idempotent on message_id.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "message_id",
+          "message"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "message_id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "thread_id": {
+            "type": "string"
+          },
+          "intent": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "optional explicit route (a catalog capability id or job.<job_type>); gated exactly the same"
+          },
+          "args": {
+            "type": "object",
+            "description": "optional structured arguments for the route; org_id is always set by dispatch"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "dispatch",
+        "conversation",
+        "routing",
+        "provenance"
+      ]
+    },
+    {
+      "id": "dispatch.get",
+      "title": "Read a dispatch turn",
+      "description": "Read one dispatch turn with its live job, approval and resident answer, plus a one-line relay for the conversation. Read-only.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "turn_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "turn_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "dispatch",
+        "conversation"
+      ]
+    },
+    {
+      "id": "dispatch.execute",
+      "title": "Start an approved dispatch",
+      "description": "Start a dispatch turn that was held for approval, only after the owner approved its control approval, before it expires, and only with the exact request that was approved. The database claims the turn once; a second call starts nothing. Owner only.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "turn_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "turn_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "dispatch",
+        "approval"
       ]
     },
     {
@@ -689,6 +919,78 @@
       ]
     },
     {
+      "id": "game.lore.read",
+      "title": "Read city lore",
+      "description": "Read the versioned city manifest or bounded authored business, NPC, item, brand and portal records. Read-only release data; no private memory, inference or purchases.",
+      "domain": "game",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "universe_id": {
+            "type": "string",
+            "enum": [
+              "mccluster-fictional-city"
+            ]
+          },
+          "section": {
+            "type": "string",
+            "enum": [
+              "manifest",
+              "brands",
+              "businesses",
+              "npcs",
+              "items",
+              "portals",
+              "neighborhoods",
+              "families",
+              "parcels"
+            ],
+            "default": "manifest"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+            "maxLength": 80
+          },
+          "business_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,79}$",
+            "maxLength": 80
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 24,
+            "default": 8
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "game",
+        "lore",
+        "city",
+        "read-only"
+      ]
+    },
+    {
       "id": "deploy.preview",
       "title": "Deploy preview",
       "description": "Publish an approved ref as a temporary static preview on McCluster-owned compute. Requires explicit self-hosted preview configuration.",
@@ -743,7 +1045,7 @@
     {
       "id": "ai.chat",
       "title": "Home-base AI chat",
-      "description": "Run a bounded conversational inference on McCluster-owned compute without naming a model or provider.",
+      "description": "Run a bounded conversational inference on McCluster-owned compute without naming a model or provider. Images ride on messages[].images as base64 (no data: prefix) and route the turn to a vision implementation; when no live node can see, the call fails with AI_CHAT_NO_VISION_NODE instead of answering from a text model.",
       "domain": "ai",
       "lifecycle": "active",
       "execution": "async",
@@ -761,7 +1063,39 @@
             "type": "string"
           },
           "messages": {
-            "type": "array"
+            "type": "array",
+            "maxItems": 200,
+            "items": {
+              "type": "object",
+              "required": [
+                "role",
+                "content"
+              ],
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "system",
+                    "user",
+                    "assistant",
+                    "tool"
+                  ]
+                },
+                "content": {
+                  "type": "string"
+                },
+                "images": {
+                  "type": "array",
+                  "maxItems": 4,
+                  "description": "base64 JPEG/PNG/WebP, each <=200000 decoded bytes, <=600000 per request, sniffed from bytes; routes the turn to a vision implementation",
+                  "items": {
+                    "type": "string",
+                    "contentEncoding": "base64",
+                    "maxLength": 266668
+                  }
+                }
+              }
+            }
           },
           "temperature": {
             "type": "number"
@@ -792,6 +1126,181 @@
       "tags": [
         "ai",
         "chat",
+        "self-hosted",
+        "compute"
+      ]
+    },
+    {
+      "id": "browser.act",
+      "title": "Drive the node browser",
+      "description": "Owner-only. Runs a bounded batch of browser actions in the compute node's own Chromium profile on allowlisted hosts and returns the page state, a screenshot and an action log. Only an owned node the owner installed with -Browser advertises it; absent until one is live; never exposed over MCP.",
+      "domain": "compute",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "owner",
+      "interfaces": [
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "actions"
+        ],
+        "properties": {
+          "actions": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 25,
+            "items": {
+              "type": "object",
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "read",
+                    "find",
+                    "click",
+                    "type",
+                    "select",
+                    "scroll",
+                    "wait",
+                    "screenshot",
+                    "back",
+                    "done"
+                  ]
+                },
+                "url": {
+                  "type": "string",
+                  "maxLength": 2048
+                },
+                "max_chars": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20000
+                },
+                "links": {
+                  "type": "boolean"
+                },
+                "forms": {
+                  "type": "boolean"
+                },
+                "role": {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "text": {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                "exact": {
+                  "type": "boolean"
+                },
+                "limit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20
+                },
+                "handle": {
+                  "type": "string",
+                  "pattern": "^h[0-9]{1,3}$"
+                },
+                "submit": {
+                  "type": "boolean"
+                },
+                "value": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "direction": {
+                  "type": "string",
+                  "enum": [
+                    "down",
+                    "up"
+                  ]
+                },
+                "amount": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10
+                },
+                "ms": {
+                  "type": "integer",
+                  "minimum": 100,
+                  "maximum": 10000
+                },
+                "for": {
+                  "type": "string",
+                  "enum": [
+                    "load",
+                    "networkidle"
+                  ]
+                },
+                "timeout_ms": {
+                  "type": "integer",
+                  "minimum": 1000,
+                  "maximum": 10000
+                },
+                "note": {
+                  "type": "string",
+                  "maxLength": 500
+                }
+              }
+            }
+          },
+          "max_steps": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 25
+          },
+          "max_ms": {
+            "type": "integer",
+            "minimum": 5000,
+            "maximum": 600000
+          },
+          "screenshot_on_done": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "implementation": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array"
+          },
+          "page": {
+            "type": "object"
+          },
+          "screenshot": {
+            "type": "object"
+          },
+          "refused": {
+            "type": "object"
+          },
+          "usage": {
+            "type": "object"
+          }
+        }
+      },
+      "tags": [
+        "browser",
+        "owner-only",
         "self-hosted",
         "compute"
       ]
@@ -1943,6 +2452,98 @@
           }
         }
       }
+    },
+    {
+      "id": "lyrics.align",
+      "title": "Time lyrics to audio",
+      "description": "Produce line- and word-timed lyrics for one release with the owned lyric machine: Demucs vocal separation, faster-whisper recognition on the vocal, the creator's lyric sheet (or DistroKid TTML / LRC) mapped to what is sung, and wav2vec2 CTC word alignment. Output is the data/lyrics JSON every player reads, marked reviewed:false; lyrics the owner reviewed are never replaced.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "track_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "track_id": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "music",
+        "lyrics",
+        "audio",
+        "self-hosted"
+      ]
+    },
+    {
+      "id": "stems.separate",
+      "title": "Separate a track into stems",
+      "description": "Split one track into every instrument with owned Demucs weights (htdemucs_6s: vocals, drums, bass, guitar, piano, other; htdemucs: four stems) plus an instrumental mix. Stems are stored privately in mcc-gated-audio/stems/<track_key>/ with a manifest in public.music_stem_sets, and served to the owner only through short-lived signed URLs.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "track_key": {
+            "type": "string"
+          },
+          "src": {
+            "type": "string"
+          },
+          "track_id": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "music",
+        "stems",
+        "audio",
+        "self-hosted",
+        "private"
+      ]
     }
   ],
   "bindings": [
@@ -1961,6 +2562,94 @@
       "features": {
         "read_only": true,
         "self_hosted": true
+      }
+    },
+    {
+      "id": "core.workstream-checkpoint",
+      "capability": "workstream.checkpoint",
+      "provider": "mccluster-core",
+      "tool": "core.workstream.checkpoint",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "self_hosted": true,
+        "provenance": true,
+        "idempotent": true
+      }
+    },
+    {
+      "id": "core.workstream-list",
+      "capability": "workstream.list",
+      "provider": "mccluster-core",
+      "tool": "core.workstream.list",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.dispatch-turn",
+      "capability": "dispatch.turn",
+      "provider": "mccluster-core",
+      "tool": "core.dispatch.turn",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "self_hosted": true,
+        "provenance": true,
+        "idempotent": true
+      }
+    },
+    {
+      "id": "core.dispatch-get",
+      "capability": "dispatch.get",
+      "provider": "mccluster-core",
+      "tool": "core.dispatch.get",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.dispatch-execute",
+      "capability": "dispatch.execute",
+      "provider": "mccluster-core",
+      "tool": "core.dispatch.execute",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "self_hosted": true,
+        "provenance": true,
+        "approval_bound": true
       }
     },
     {
@@ -2680,6 +3369,63 @@
       "features": {
         "read_only": false,
         "self_hosted": true
+      }
+    },
+    {
+      "id": "core.lyrics-align",
+      "capability": "lyrics.align",
+      "provider": "mccluster-core",
+      "tool": "core.lyrics.align",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 120,
+      "economics": {
+        "hosting": "owned",
+        "billing": "compute"
+      },
+      "features": {
+        "async": true,
+        "separator": "demucs htdemucs_6s",
+        "asr": "faster-whisper",
+        "aligner": "wav2vec2-ctc",
+        "paid_provider": false
+      }
+    },
+    {
+      "id": "core.stems-separate",
+      "capability": "stems.separate",
+      "provider": "mccluster-core",
+      "tool": "core.stems.separate",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 120,
+      "economics": {
+        "hosting": "owned",
+        "billing": "compute"
+      },
+      "features": {
+        "async": true,
+        "separator": "demucs htdemucs_6s",
+        "private_storage": true,
+        "paid_provider": false
+      }
+    },
+    {
+      "id": "core.game-lore-read",
+      "capability": "game.lore.read",
+      "provider": "mccluster-core",
+      "tool": "core.game.lore.read",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true,
+        "release_data": true
       }
     }
   ]

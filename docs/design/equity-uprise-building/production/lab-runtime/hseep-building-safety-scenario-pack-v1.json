@@ -1,0 +1,2041 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-hseep-building-safety-v1",
+  "pack_id": "EU-HSEEP-BUILDING-SAFETY",
+  "pack_version": "1.0.0",
+  "mode": "SIMULATION",
+  "execution_target": "SANDBOX",
+  "live_control_allowed": false,
+  "credential_is_not_competency": true,
+  "purpose": "Building-safety drills, functional exercises and tabletops structured the way FEMA structures exercises (HSEEP), with Incident Command roles and an ICS-214 activity log for team play.",
+  "learner_wording_rule": "Learner-facing copy says 'prepares you for' and links the official issuer. It never says certified, certificate earned here, or FEMA-certified.",
+  "doctrine": {
+    "hseep": {
+      "title": "Homeland Security Exercise and Evaluation Program (HSEEP), January 2020 revision",
+      "url": "https://www.fema.gov/emergency-managers/national-preparedness/exercises/hseep"
+    },
+    "exercise_types": {
+      "discussion-based": [
+        "seminar",
+        "workshop",
+        "tabletop",
+        "game"
+      ],
+      "operations-based": [
+        "drill",
+        "functional",
+        "full_scale"
+      ]
+    },
+    "eeg_ratings": {
+      "P": "Performed without challenges",
+      "S": "Performed with some challenges",
+      "M": "Performed with major challenges",
+      "U": "Unable to be performed"
+    },
+    "observation_types": [
+      "strength",
+      "area_for_improvement"
+    ],
+    "aar_ip_fields": {
+      "aar": [
+        "exercise_overview",
+        "exercise_type",
+        "objectives",
+        "core_capabilities",
+        "analysis_by_objective",
+        "strengths",
+        "areas_for_improvement",
+        "conclusion"
+      ],
+      "improvement_item": [
+        "item_code",
+        "objective_id",
+        "issue",
+        "corrective_action",
+        "core_capability",
+        "owner",
+        "start_date",
+        "due_date",
+        "status",
+        "closure_evidence"
+      ]
+    },
+    "automation_boundary": "The runtime may draft EEG ratings, a hotwash record and an AAR/IP. A human evaluator finalises them; improvement-item owners are always assigned by a person."
+  },
+  "ics": {
+    "positions": {
+      "incident_commander": "Incident Commander",
+      "safety_officer": "Safety Officer",
+      "public_information_officer": "Public Information Officer",
+      "liaison_officer": "Liaison Officer",
+      "operations_section_chief": "Operations Section Chief",
+      "planning_section_chief": "Planning Section Chief",
+      "logistics_section_chief": "Logistics Section Chief",
+      "finance_admin_section_chief": "Finance/Administration Section Chief"
+    },
+    "building_roles": {
+      "floor_warden": "Floor Warden",
+      "stairwell_monitor": "Stairwell Monitor",
+      "evacuation_assistant": "Evacuation Assistant (assigned helper)",
+      "accountability_lead": "Accountability Lead",
+      "player": "Occupant / Player"
+    },
+    "exercise_staff": {
+      "controller": "Controller",
+      "evaluator": "Evaluator",
+      "facilitator": "Facilitator",
+      "observer": "Observer"
+    },
+    "ics_214_fields": [
+      "incident_name",
+      "operational_period",
+      "name",
+      "ics_position",
+      "home_agency",
+      "resources_assigned",
+      "activity_log",
+      "prepared_by"
+    ],
+    "ics_214_reference": "https://training.fema.gov/icsresource/icsforms.aspx"
+  },
+  "semantic_baselines": {
+    "RUNTIME-OPS-ALARM": {
+      "state": "normal"
+    },
+    "RUNTIME-OPS-MUSTER": {
+      "state": "inactive"
+    },
+    "RUNTIME-OPS-COMMS": {
+      "state": "normal"
+    },
+    "RUNTIME-OPS-SERVICE-HAZARD": {
+      "state": "clear"
+    },
+    "RUNTIME-OPS-SMOKE": {
+      "state": "clear"
+    },
+    "RUNTIME-OPS-WEATHER": {
+      "state": "normal"
+    },
+    "RUNTIME-OPS-SHELTER": {
+      "state": "inactive"
+    },
+    "RUNTIME-OPS-THREAT": {
+      "state": "none"
+    },
+    "RUNTIME-OPS-TUNNEL-ROSTER": {
+      "state": "normal"
+    },
+    "RUNTIME-OPS-ASSIST-REGISTER": {
+      "state": "confidential_on_file"
+    },
+    "RUNTIME-OPS-PLAN": {
+      "state": "current"
+    }
+  },
+  "scenarios": [
+    {
+      "scenario_id": "EU-HSEEP-FIRE-SMOKE-V1",
+      "canonical_scenario_id": "fire_smoke_evacuation",
+      "title": "Fire and Smoke Evacuation",
+      "floor_scope": [
+        "F1"
+      ],
+      "federal_training_ids": [
+        "FEMA-IS-100-C",
+        "FEMA-IS-120-C",
+        "FEMA-IS-700-B"
+      ],
+      "reference_ids": [
+        "REF-OSHA-1910-38",
+        "REF-OSHA-1910-39",
+        "REF-NFPA-101"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "CORE-03",
+        "PSC-05"
+      ],
+      "fault_id": "smoke_reported_east",
+      "registry_bound_object_ids": [
+        "FIRE-ALARM"
+      ],
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-ALARM",
+          "state": "active"
+        },
+        {
+          "target": "RUNTIME-OPS-MUSTER",
+          "state": "required"
+        },
+        {
+          "target": "RUNTIME-OPS-SMOKE",
+          "state": "smoke_reported"
+        },
+        {
+          "target": "site-east-egress-walk",
+          "availability": "unavailable",
+          "condition": "smoke_on_route"
+        },
+        {
+          "target": "F1-PASS-ELEV-DOOR-01",
+          "condition": "not_for_occupant_evacuation"
+        },
+        {
+          "target": "F1-EGRESS-MAP-02",
+          "condition": "egress_guidance_active"
+        }
+      ],
+      "actions": [
+        {
+          "id": "fire-report",
+          "type": "decision",
+          "target": "FIRE-ALARM",
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player"
+          ],
+          "expected": {
+            "response": "activate_alarm_and_call_emergency_services"
+          }
+        },
+        {
+          "id": "fire-inspect",
+          "type": "inspect",
+          "target": "F1-EGRESS-MAP-02",
+          "requires": [
+            "fire-report"
+          ],
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player"
+          ]
+        },
+        {
+          "id": "fire-route",
+          "type": "decision",
+          "target": "site-north-egress-walk",
+          "requires": [
+            "fire-inspect"
+          ],
+          "roles": [
+            "floor_warden",
+            "incident_commander",
+            "player"
+          ],
+          "expected": {
+            "route": "site-north-egress-walk",
+            "use_elevator": false
+          }
+        },
+        {
+          "id": "fire-doors",
+          "type": "decision",
+          "target": "RUNTIME-OPS-SMOKE",
+          "requires": [
+            "fire-route"
+          ],
+          "roles": [
+            "floor_warden",
+            "incident_commander"
+          ],
+          "expected": {
+            "close_doors_behind": true
+          }
+        },
+        {
+          "id": "fire-assembly",
+          "type": "decision",
+          "target": "site-alternate-assembly",
+          "requires": [
+            "fire-route"
+          ],
+          "roles": [
+            "floor_warden",
+            "incident_commander",
+            "player"
+          ],
+          "expected": {
+            "assembly": "site-alternate-assembly"
+          }
+        },
+        {
+          "id": "fire-account",
+          "type": "decision",
+          "target": "RUNTIME-OPS-MUSTER",
+          "requires": [
+            "fire-assembly"
+          ],
+          "roles": [
+            "accountability_lead",
+            "incident_commander"
+          ],
+          "expected": {
+            "accounted": true,
+            "missing_reported_to_responders": true
+          }
+        },
+        {
+          "id": "fire-handoff",
+          "type": "decision",
+          "target": "site-responder-keep-clear",
+          "requires": [
+            "fire-account"
+          ],
+          "roles": [
+            "liaison_officer",
+            "incident_commander"
+          ],
+          "expected": {
+            "keep_clear": true,
+            "handoff": "last_known_locations_to_fire_service"
+          }
+        },
+        {
+          "id": "fire-close",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-ALARM",
+          "requires": [
+            "fire-handoff",
+            "fire-doors"
+          ],
+          "roles": [
+            "incident_commander"
+          ],
+          "expected": {
+            "all_clear_from": "fire_service"
+          }
+        }
+      ],
+      "source_scenario": {
+        "id": "fire_smoke_evacuation",
+        "evidence": [
+          "alarm and emergency call sequence",
+          "route choice away from smoke without elevator use",
+          "door-closing decision",
+          "accountability record",
+          "responder handoff"
+        ]
+      },
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "core_capabilities": [
+          "Operational Coordination",
+          "Public Information and Warning",
+          "On-scene Security, Protection, and Law Enforcement"
+        ],
+        "objectives": [
+          {
+            "objective_id": "FIRE-OBJ-1",
+            "text": "Raise the alarm and call emergency services before investigating."
+          },
+          {
+            "objective_id": "FIRE-OBJ-2",
+            "text": "Evacuate by a route away from the reported smoke, without the passenger elevator."
+          },
+          {
+            "objective_id": "FIRE-OBJ-3",
+            "text": "Account for every occupant and hand off missing-person locations to responders."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "FIRE-EEG-1",
+            "objective_id": "FIRE-OBJ-1",
+            "task": "Alarm activated and emergency services called",
+            "action_ids": [
+              "fire-report"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "FIRE-EEG-2",
+            "objective_id": "FIRE-OBJ-2",
+            "task": "Smoke-free route selected; elevator not used; doors closed behind",
+            "action_ids": [
+              "fire-inspect",
+              "fire-route",
+              "fire-doors"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "FIRE-EEG-3",
+            "objective_id": "FIRE-OBJ-3",
+            "task": "Headcount reconciled at the alternate assembly area",
+            "action_ids": [
+              "fire-assembly",
+              "fire-account"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "FIRE-EEG-4",
+            "objective_id": "FIRE-OBJ-3",
+            "task": "Responder keep-clear held and handoff given; all-clear only from the fire service",
+            "action_ids": [
+              "fire-handoff",
+              "fire-close"
+            ],
+            "critical": false
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step of the plan unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      },
+      "team": {
+        "min_players": 1,
+        "max_players": 12,
+        "roles_required": [
+          "incident_commander"
+        ],
+        "roles_optional": [
+          "floor_warden",
+          "accountability_lead",
+          "liaison_officer",
+          "player"
+        ]
+      },
+      "learner_copy": {
+        "summary": "Smoke is reported near the east exit. Raise the alarm, pick a safe way out, and make sure everyone is counted."
+      },
+      "safety_boundary": "Simulation only. Occupants never fight a fire in this drill; extinguisher use is not taught here."
+    },
+    {
+      "scenario_id": "EU-HSEEP-SHELTER-WEATHER-V1",
+      "canonical_scenario_id": "shelter_in_place_severe_weather",
+      "title": "Shelter in Place for Severe Weather",
+      "floor_scope": [
+        "F1"
+      ],
+      "federal_training_ids": [
+        "FEMA-IS-100-C",
+        "FEMA-IS-235-C",
+        "FEMA-IS-317-A",
+        "FEMA-IS-242-C"
+      ],
+      "reference_ids": [
+        "REF-OSHA-1910-38",
+        "REF-NFPA-1660"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "CORE-02",
+        "PSC-05"
+      ],
+      "fault_id": "severe_weather_warning",
+      "registry_bound_object_ids": [],
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-WEATHER",
+          "state": "warning_issued"
+        },
+        {
+          "target": "RUNTIME-OPS-SHELTER",
+          "state": "required"
+        },
+        {
+          "target": "RUNTIME-OPS-MUSTER",
+          "state": "required"
+        },
+        {
+          "target": "F1-DOOR-PUBLIC-OUTER",
+          "condition": "exterior_glazing_hazard"
+        }
+      ],
+      "actions": [
+        {
+          "id": "wx-confirm",
+          "type": "inspect",
+          "target": "RUNTIME-OPS-WEATHER",
+          "roles": [
+            "incident_commander",
+            "player"
+          ]
+        },
+        {
+          "id": "wx-decide",
+          "type": "decision",
+          "target": "RUNTIME-OPS-SHELTER",
+          "requires": [
+            "wx-confirm"
+          ],
+          "roles": [
+            "incident_commander"
+          ],
+          "expected": {
+            "response": "shelter_in_place_not_evacuate"
+          }
+        },
+        {
+          "id": "wx-announce",
+          "type": "decision",
+          "target": "RUNTIME-OPS-COMMS",
+          "requires": [
+            "wx-decide"
+          ],
+          "roles": [
+            "public_information_officer",
+            "incident_commander"
+          ],
+          "expected": {
+            "message": "move_to_interior_shelter_away_from_glass"
+          }
+        },
+        {
+          "id": "wx-move",
+          "type": "decision",
+          "target": "RUNTIME-OPS-SHELTER",
+          "requires": [
+            "wx-announce"
+          ],
+          "roles": [
+            "floor_warden",
+            "incident_commander",
+            "evacuation_assistant",
+            "player"
+          ],
+          "expected": {
+            "location": "interior_lowest_public_level_away_from_glass",
+            "visitors_included": true
+          }
+        },
+        {
+          "id": "wx-account",
+          "type": "decision",
+          "target": "RUNTIME-OPS-MUSTER",
+          "requires": [
+            "wx-move"
+          ],
+          "roles": [
+            "accountability_lead",
+            "incident_commander"
+          ],
+          "expected": {
+            "accounted": true
+          }
+        },
+        {
+          "id": "wx-allclear",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-WEATHER",
+          "requires": [
+            "wx-account"
+          ],
+          "roles": [
+            "incident_commander"
+          ],
+          "expected": {
+            "all_clear_from": "official_weather_or_emergency_management_source"
+          }
+        }
+      ],
+      "source_scenario": {
+        "id": "shelter_in_place_severe_weather",
+        "evidence": [
+          "warning confirmation",
+          "shelter-versus-evacuate decision",
+          "public announcement",
+          "accountability record",
+          "official all-clear"
+        ]
+      },
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "core_capabilities": [
+          "Public Information and Warning",
+          "Operational Coordination",
+          "Mass Care Services"
+        ],
+        "objectives": [
+          {
+            "objective_id": "WX-OBJ-1",
+            "text": "Confirm the warning from an official source and choose shelter over evacuation."
+          },
+          {
+            "objective_id": "WX-OBJ-2",
+            "text": "Move everyone, including visitors, to an interior area away from glass."
+          },
+          {
+            "objective_id": "WX-OBJ-3",
+            "text": "Hold until an official all-clear and keep a headcount."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "WX-EEG-1",
+            "objective_id": "WX-OBJ-1",
+            "task": "Warning confirmed and shelter decision made",
+            "action_ids": [
+              "wx-confirm",
+              "wx-decide"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "WX-EEG-2",
+            "objective_id": "WX-OBJ-2",
+            "task": "Clear announcement and move to interior shelter",
+            "action_ids": [
+              "wx-announce",
+              "wx-move"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "WX-EEG-3",
+            "objective_id": "WX-OBJ-3",
+            "task": "Headcount and official all-clear",
+            "action_ids": [
+              "wx-account",
+              "wx-allclear"
+            ],
+            "critical": false
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step of the plan unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      },
+      "team": {
+        "min_players": 1,
+        "max_players": 12,
+        "roles_required": [
+          "incident_commander"
+        ],
+        "roles_optional": [
+          "public_information_officer",
+          "floor_warden",
+          "accountability_lead",
+          "evacuation_assistant",
+          "player"
+        ]
+      },
+      "learner_copy": {
+        "summary": "A severe weather warning is issued for the area. Decide whether to stay or go, and get everyone somewhere safe inside."
+      },
+      "safety_boundary": "Simulation only. The interior shelter area is a training choice in the virtual building, not a certified storm shelter."
+    },
+    {
+      "scenario_id": "EU-HSEEP-ACTIVE-THREAT-TTX-V1",
+      "canonical_scenario_id": "active_threat_awareness",
+      "title": "Active Threat Awareness (Tabletop)",
+      "floor_scope": [
+        "F1"
+      ],
+      "federal_training_ids": [
+        "FEMA-IS-907-A",
+        "FEMA-IS-100-C"
+      ],
+      "reference_ids": [
+        "REF-DHS-ACTIVE-SHOOTER-PREPAREDNESS"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "CORE-02",
+        "PSC-05"
+      ],
+      "fault_id": "active_threat_report",
+      "registry_bound_object_ids": [],
+      "content_policy": {
+        "non_graphic": true,
+        "no_weapons_or_attackers_depicted": true,
+        "no_victims_depicted": true,
+        "tactics_beyond_official_guidance": false,
+        "content_notice_before_start": true,
+        "opt_out_without_penalty": true,
+        "guidance_source": "FEMA IS-907.A and DHS/CISA Active Shooter Preparedness: Run, Hide, Fight. Equity Uprise adds nothing beyond that guidance."
+      },
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-THREAT",
+          "state": "reported"
+        },
+        {
+          "target": "RUNTIME-OPS-COMMS",
+          "state": "emergency_notification_required"
+        },
+        {
+          "target": "RUNTIME-OPS-MUSTER",
+          "state": "required"
+        }
+      ],
+      "actions": [
+        {
+          "id": "threat-recognize",
+          "type": "inspect",
+          "target": "RUNTIME-OPS-THREAT",
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player"
+          ]
+        },
+        {
+          "id": "threat-run",
+          "type": "decision",
+          "target": "RUNTIME-OPS-THREAT",
+          "requires": [
+            "threat-recognize"
+          ],
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player"
+          ],
+          "expected": {
+            "first_choice": "leave_by_a_safe_route_if_one_exists",
+            "leave_belongings": true
+          }
+        },
+        {
+          "id": "threat-hide",
+          "type": "decision",
+          "target": "RUNTIME-OPS-THREAT",
+          "requires": [
+            "threat-run"
+          ],
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player"
+          ],
+          "expected": {
+            "if_no_safe_route": "hide_out_of_view_lock_or_block_door_silence_phone"
+          }
+        },
+        {
+          "id": "threat-last-resort",
+          "type": "decision",
+          "target": "RUNTIME-OPS-THREAT",
+          "requires": [
+            "threat-hide"
+          ],
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player"
+          ],
+          "expected": {
+            "last_resort": "follow_official_guidance_only_as_last_resort"
+          }
+        },
+        {
+          "id": "threat-call",
+          "type": "decision",
+          "target": "RUNTIME-OPS-COMMS",
+          "requires": [
+            "threat-run"
+          ],
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player"
+          ],
+          "expected": {
+            "call_911_when_safe": true
+          }
+        },
+        {
+          "id": "threat-arrival",
+          "type": "decision",
+          "target": "RUNTIME-OPS-THREAT",
+          "requires": [
+            "threat-call"
+          ],
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player"
+          ],
+          "expected": {
+            "when_police_arrive": "hands_visible_follow_instructions"
+          }
+        },
+        {
+          "id": "threat-reunify",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-MUSTER",
+          "requires": [
+            "threat-arrival",
+            "threat-last-resort"
+          ],
+          "roles": [
+            "accountability_lead",
+            "incident_commander"
+          ],
+          "expected": {
+            "accounted": true,
+            "reunification_by_authorities": true
+          }
+        }
+      ],
+      "source_scenario": {
+        "id": "active_threat_awareness",
+        "evidence": [
+          "recognition of the report",
+          "run-hide-fight decision order per official guidance",
+          "emergency call when safe",
+          "conduct when law enforcement arrives",
+          "accountability and reunification"
+        ]
+      },
+      "hseep": {
+        "exercise_type": "tabletop",
+        "exercise_category": "discussion-based",
+        "core_capabilities": [
+          "Public Information and Warning",
+          "Operational Coordination"
+        ],
+        "objectives": [
+          {
+            "objective_id": "THREAT-OBJ-1",
+            "text": "Describe the Run, Hide, Fight order from official guidance."
+          },
+          {
+            "objective_id": "THREAT-OBJ-2",
+            "text": "Describe when and how to call 911 and how to act when police arrive."
+          },
+          {
+            "objective_id": "THREAT-OBJ-3",
+            "text": "Describe how people are accounted for and reunified afterwards."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "THREAT-EEG-1",
+            "objective_id": "THREAT-OBJ-1",
+            "task": "Run, Hide, Fight order stated in sequence",
+            "action_ids": [
+              "threat-recognize",
+              "threat-run",
+              "threat-hide",
+              "threat-last-resort"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "THREAT-EEG-2",
+            "objective_id": "THREAT-OBJ-2",
+            "task": "911 call when safe; hands visible when police arrive",
+            "action_ids": [
+              "threat-call",
+              "threat-arrival"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "THREAT-EEG-3",
+            "objective_id": "THREAT-OBJ-3",
+            "task": "Accountability and reunification described",
+            "action_ids": [
+              "threat-reunify"
+            ],
+            "critical": false
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step of the plan unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      },
+      "team": {
+        "min_players": 1,
+        "max_players": 20,
+        "roles_required": [
+          "player"
+        ],
+        "roles_optional": [
+          "incident_commander",
+          "accountability_lead",
+          "facilitator"
+        ]
+      },
+      "learner_copy": {
+        "summary": "A discussion exercise about what to do if someone reports an active threat in the building. Nothing is shown; you talk through the official Run, Hide, Fight guidance."
+      },
+      "safety_boundary": "Discussion only. Non-graphic. No weapons, attackers or injuries are depicted, and no tactics beyond the official FEMA/DHS guidance are taught."
+    },
+    {
+      "scenario_id": "EU-HSEEP-HAZMAT-V1",
+      "canonical_scenario_id": "hazmat_release",
+      "title": "Hazardous Materials Release at the Service Entrance",
+      "floor_scope": [
+        "F1"
+      ],
+      "federal_training_ids": [
+        "CDC-EHTER-AWARENESS",
+        "FEMA-IS-100-C",
+        "FEMA-IS-200-C"
+      ],
+      "reference_ids": [
+        "REF-OSHA-1910-38"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "OPS-01",
+        "PSC-05"
+      ],
+      "fault_id": "unknown_release_service_apron",
+      "registry_bound_object_ids": [],
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-SERVICE-HAZARD",
+          "state": "unknown_release"
+        },
+        {
+          "target": "F1-DOOR-SERVICE-WEST",
+          "state": "restricted",
+          "availability": "unavailable"
+        },
+        {
+          "target": "site-service-apron-west",
+          "availability": "unavailable",
+          "condition": "release_zone"
+        },
+        {
+          "target": "F1-SPILL-01",
+          "condition": "not_for_unknown_release"
+        },
+        {
+          "target": "RUNTIME-OPS-MUSTER",
+          "state": "required"
+        }
+      ],
+      "actions": [
+        {
+          "id": "haz-recognize",
+          "type": "inspect",
+          "target": "site-service-apron-west",
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player"
+          ]
+        },
+        {
+          "id": "haz-isolate",
+          "type": "decision",
+          "target": "F1-DOOR-SERVICE-WEST",
+          "requires": [
+            "haz-recognize"
+          ],
+          "roles": [
+            "safety_officer",
+            "incident_commander",
+            "floor_warden"
+          ],
+          "expected": {
+            "access": "restricted",
+            "enter_or_clean_up": false
+          }
+        },
+        {
+          "id": "haz-report",
+          "type": "decision",
+          "target": "RUNTIME-OPS-COMMS",
+          "requires": [
+            "haz-isolate"
+          ],
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player"
+          ],
+          "expected": {
+            "response": "call_emergency_services_report_location_and_observations"
+          }
+        },
+        {
+          "id": "haz-protect",
+          "type": "decision",
+          "target": "RUNTIME-OPS-MUSTER",
+          "requires": [
+            "haz-report"
+          ],
+          "roles": [
+            "incident_commander"
+          ],
+          "expected": {
+            "action": "evacuate_upwind_by_east_route",
+            "assembly": "site-primary-assembly"
+          }
+        },
+        {
+          "id": "haz-clear",
+          "type": "decision",
+          "target": "site-responder-keep-clear",
+          "requires": [
+            "haz-protect"
+          ],
+          "roles": [
+            "liaison_officer",
+            "incident_commander"
+          ],
+          "expected": {
+            "keep_clear": true,
+            "share": "location_of_safety_data_sheets_only"
+          }
+        },
+        {
+          "id": "haz-close",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-SERVICE-HAZARD",
+          "requires": [
+            "haz-clear"
+          ],
+          "roles": [
+            "incident_commander"
+          ],
+          "expected": {
+            "all_clear_from": "hazmat_responders"
+          }
+        }
+      ],
+      "source_scenario": {
+        "id": "hazmat_release",
+        "evidence": [
+          "hazard recognition from outside the area",
+          "isolation without entry",
+          "report",
+          "upwind protective action",
+          "responder keep-clear and handoff"
+        ]
+      },
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "core_capabilities": [
+          "Environmental Response/Health and Safety",
+          "Operational Coordination",
+          "Public Information and Warning"
+        ],
+        "objectives": [
+          {
+            "objective_id": "HAZ-OBJ-1",
+            "text": "Recognise an unknown release and isolate the area without entering or cleaning up."
+          },
+          {
+            "objective_id": "HAZ-OBJ-2",
+            "text": "Report and move people upwind to a safe assembly area."
+          },
+          {
+            "objective_id": "HAZ-OBJ-3",
+            "text": "Keep the responder area clear and hand off to hazmat responders."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "HAZ-EEG-1",
+            "objective_id": "HAZ-OBJ-1",
+            "task": "Area isolated with no entry or clean-up attempt",
+            "action_ids": [
+              "haz-recognize",
+              "haz-isolate"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "HAZ-EEG-2",
+            "objective_id": "HAZ-OBJ-2",
+            "task": "Report made; upwind protective action chosen",
+            "action_ids": [
+              "haz-report",
+              "haz-protect"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "HAZ-EEG-3",
+            "objective_id": "HAZ-OBJ-3",
+            "task": "Keep-clear held; all-clear only from responders",
+            "action_ids": [
+              "haz-clear",
+              "haz-close"
+            ],
+            "critical": false
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step of the plan unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      },
+      "team": {
+        "min_players": 1,
+        "max_players": 10,
+        "roles_required": [
+          "incident_commander"
+        ],
+        "roles_optional": [
+          "safety_officer",
+          "liaison_officer",
+          "floor_warden",
+          "player"
+        ]
+      },
+      "learner_copy": {
+        "summary": "A strong chemical smell is reported at the delivery entrance. Keep people away, report it, and move everyone upwind."
+      },
+      "safety_boundary": "Simulation only. No entry, identification, containment or clean-up instruction; the spill kit is not for unknown releases."
+    },
+    {
+      "scenario_id": "EU-HSEEP-FULL-BUILDING-EVAC-V1",
+      "canonical_scenario_id": "full_building_evacuation",
+      "title": "Full Building Evacuation, B1 to Roof, with Tunnel Headcount",
+      "floor_scope": [
+        "B1",
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "L7"
+      ],
+      "federal_training_ids": [
+        "FEMA-IS-100-C",
+        "FEMA-IS-200-C",
+        "FEMA-IS-700-B",
+        "FEMA-IS-120-C",
+        "FEMA-IS-240-C",
+        "FEMA-IS-241-C"
+      ],
+      "reference_ids": [
+        "REF-OSHA-1910-38",
+        "REF-NFPA-101",
+        "REF-OSHA-1926-800"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "CORE-03",
+        "PSC-05",
+        "OPS-05"
+      ],
+      "fault_id": "general_alarm_all_floors",
+      "registry_bound_object_ids": [
+        "F2-STAIR-A-DOOR-01",
+        "F2-STAIR-B-DOOR-01",
+        "F3-STAIR-A-DOOR-01",
+        "F3-STAIR-B-DOOR-01",
+        "F4-STAIR-A-DOOR-01",
+        "F4-STAIR-B-DOOR-01",
+        "F5-STAIR-A-DOOR-01",
+        "F5-STAIR-B-DOOR-01",
+        "F6-STAIR-A-DOOR-01",
+        "F6-STAIR-B-DOOR-01",
+        "F7-STAIR-A-DOOR-01",
+        "F7-STAIR-B-DOOR-01",
+        "B1-STAIR-A-ENCLOSURE-01",
+        "B1-STAIR-B-ENCLOSURE-01",
+        "B1-FIRE-FACP-01",
+        "FIRE-ALARM"
+      ],
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-ALARM",
+          "state": "active"
+        },
+        {
+          "target": "FIRE-ALARM",
+          "state": "general_alarm"
+        },
+        {
+          "target": "B1-FIRE-FACP-01",
+          "condition": "alarm_annunciating"
+        },
+        {
+          "target": "RUNTIME-OPS-MUSTER",
+          "state": "required"
+        },
+        {
+          "target": "RUNTIME-OPS-TUNNEL-ROSTER",
+          "state": "reconcile_required"
+        },
+        {
+          "target": "F1-PASS-ELEV-DOOR-01",
+          "condition": "not_for_occupant_evacuation"
+        },
+        {
+          "target": "F1-BARRIER-STAIR-A-DOWN",
+          "state": "evacuation_barrier_active"
+        },
+        {
+          "target": "F1-BARRIER-STAIR-B-DOWN",
+          "state": "evacuation_barrier_active"
+        },
+        {
+          "target": "F2-STAIR-A-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F2-STAIR-B-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F3-STAIR-A-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F3-STAIR-B-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F4-STAIR-A-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F4-STAIR-B-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F5-STAIR-A-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F5-STAIR-B-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F6-STAIR-A-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F6-STAIR-B-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F7-STAIR-A-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "F7-STAIR-B-DOOR-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "B1-STAIR-A-ENCLOSURE-01",
+          "condition": "egress_in_use"
+        },
+        {
+          "target": "B1-STAIR-B-ENCLOSURE-01",
+          "condition": "egress_in_use"
+        }
+      ],
+      "actions": [
+        {
+          "id": "full-command",
+          "type": "decision",
+          "target": "RUNTIME-OPS-ALARM",
+          "roles": [
+            "incident_commander"
+          ],
+          "expected": {
+            "command_established": true,
+            "command_post": "site-primary-assembly"
+          }
+        },
+        {
+          "id": "full-facp",
+          "type": "inspect",
+          "target": "B1-FIRE-FACP-01",
+          "requires": [
+            "full-command"
+          ],
+          "roles": [
+            "safety_officer",
+            "incident_commander"
+          ]
+        },
+        {
+          "id": "full-sweep-upper",
+          "type": "decision",
+          "target": "RUNTIME-OPS-MUSTER",
+          "requires": [
+            "full-command"
+          ],
+          "roles": [
+            "floor_warden",
+            "incident_commander"
+          ],
+          "expected": {
+            "floors_swept": [
+              "F2",
+              "F3",
+              "F4",
+              "F5",
+              "F6",
+              "L7"
+            ],
+            "stairs": [
+              "stair-a",
+              "stair-b"
+            ],
+            "use_elevator": false
+          }
+        },
+        {
+          "id": "full-stair-monitor",
+          "type": "decision",
+          "target": "F1-BARRIER-STAIR-A-DOWN",
+          "requires": [
+            "full-sweep-upper"
+          ],
+          "roles": [
+            "stairwell_monitor",
+            "floor_warden"
+          ],
+          "expected": {
+            "discharge_at_level_1_not_continue_to_b1": true
+          }
+        },
+        {
+          "id": "full-b1-up",
+          "type": "decision",
+          "target": "B1-STAIR-A-ENCLOSURE-01",
+          "requires": [
+            "full-command"
+          ],
+          "roles": [
+            "floor_warden",
+            "incident_commander",
+            "operations_section_chief"
+          ],
+          "expected": {
+            "b1_occupants_exit_upward_by_protected_stairs": true
+          }
+        },
+        {
+          "id": "full-tunnel",
+          "type": "decision",
+          "target": "RUNTIME-OPS-TUNNEL-ROSTER",
+          "requires": [
+            "full-b1-up"
+          ],
+          "roles": [
+            "operations_section_chief",
+            "accountability_lead"
+          ],
+          "expected": {
+            "tunnel_roster_reconciled": true,
+            "unlock_live_tunnel": false
+          }
+        },
+        {
+          "id": "full-account",
+          "type": "decision",
+          "target": "RUNTIME-OPS-MUSTER",
+          "requires": [
+            "full-stair-monitor",
+            "full-tunnel"
+          ],
+          "roles": [
+            "accountability_lead",
+            "incident_commander"
+          ],
+          "expected": {
+            "accounted": true,
+            "unaccounted_reported_with_last_known_location": true
+          }
+        },
+        {
+          "id": "full-handoff",
+          "type": "decision",
+          "target": "site-responder-keep-clear",
+          "requires": [
+            "full-account"
+          ],
+          "roles": [
+            "liaison_officer",
+            "incident_commander"
+          ],
+          "expected": {
+            "keep_clear": true,
+            "no_reentry": true
+          }
+        },
+        {
+          "id": "full-close",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-ALARM",
+          "requires": [
+            "full-handoff",
+            "full-facp"
+          ],
+          "roles": [
+            "incident_commander"
+          ],
+          "expected": {
+            "all_clear_from": "fire_service"
+          }
+        }
+      ],
+      "source_scenario": {
+        "id": "full_building_evacuation",
+        "evidence": [
+          "command established",
+          "upper-floor sweeps by protected stairs",
+          "B1 upward egress",
+          "tunnel roster reconciliation",
+          "whole-building accountability record",
+          "responder handoff with no re-entry"
+        ]
+      },
+      "hseep": {
+        "exercise_type": "functional",
+        "exercise_category": "operations-based",
+        "core_capabilities": [
+          "Operational Coordination",
+          "Situational Assessment",
+          "Mass Search and Rescue Operations"
+        ],
+        "objectives": [
+          {
+            "objective_id": "FULL-OBJ-1",
+            "text": "Establish command and sweep every floor from B1 to the roof by the protected stairs."
+          },
+          {
+            "objective_id": "FULL-OBJ-2",
+            "text": "Reconcile B1 and tunnel occupancy without touching live underground controls."
+          },
+          {
+            "objective_id": "FULL-OBJ-3",
+            "text": "Produce a whole-building headcount and hand unaccounted persons to responders."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "FULL-EEG-1",
+            "objective_id": "FULL-OBJ-1",
+            "task": "Command established; panel checked by the safety officer",
+            "action_ids": [
+              "full-command",
+              "full-facp"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "FULL-EEG-2",
+            "objective_id": "FULL-OBJ-1",
+            "task": "Upper floors swept by Stair A/B; stairwells discharge at Level 1",
+            "action_ids": [
+              "full-sweep-upper",
+              "full-stair-monitor"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "FULL-EEG-3",
+            "objective_id": "FULL-OBJ-2",
+            "task": "B1 exits upward; tunnel roster reconciled; nothing live unlocked",
+            "action_ids": [
+              "full-b1-up",
+              "full-tunnel"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "FULL-EEG-4",
+            "objective_id": "FULL-OBJ-3",
+            "task": "Headcount reconciled and handed off; no re-entry",
+            "action_ids": [
+              "full-account",
+              "full-handoff",
+              "full-close"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step of the plan unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ],
+        "nfpa_note": "NFPA 101 requires drills in business occupancies above certain occupant loads or when more than 100 people are above or below the level of exit discharge; B1 and F2-L7 are above or below it. Frequency is set by the adopted code and the local authority having jurisdiction."
+      },
+      "team": {
+        "min_players": 3,
+        "max_players": 40,
+        "roles_required": [
+          "incident_commander",
+          "floor_warden",
+          "accountability_lead"
+        ],
+        "roles_optional": [
+          "safety_officer",
+          "stairwell_monitor",
+          "operations_section_chief",
+          "liaison_officer",
+          "evacuation_assistant",
+          "player",
+          "controller",
+          "evaluator"
+        ]
+      },
+      "learner_copy": {
+        "summary": "The general alarm sounds in every part of the building, from B1 to the roof. Run the whole evacuation as a team and prove everyone is out, including anyone in the tunnel."
+      },
+      "safety_boundary": "Functional exercise in the SANDBOX building: people and resources move only in simulation. No live tunnel, door or alarm control."
+    },
+    {
+      "scenario_id": "EU-HSEEP-ACCESSIBLE-EVAC-V1",
+      "canonical_scenario_id": "disability_inclusive_evacuation",
+      "title": "Disability-Inclusive Evacuation",
+      "floor_scope": [
+        "F1",
+        "F3"
+      ],
+      "federal_training_ids": [
+        "FEMA-IS-100-C",
+        "FEMA-IS-317-A",
+        "FEMA-IS-244-B"
+      ],
+      "reference_ids": [
+        "REF-OSHA-1910-38",
+        "REF-JAN-EMERGENCY-EVACUATION",
+        "REF-EEOC-EVACUATION"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "SHR-06",
+        "SHR-02",
+        "PSC-05"
+      ],
+      "fault_id": "alarm_with_assistance_needed",
+      "registry_bound_object_ids": [
+        "F3-STAIR-B-DOOR-01",
+        "F3-PASS-ELEV-DOOR-01"
+      ],
+      "privacy_rule": "The evacuation-assistance register is voluntary and confidential. The drill uses synthetic codes only; no names, conditions or medical details exist in the scenario, the runtime or the evidence.",
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-ALARM",
+          "state": "active"
+        },
+        {
+          "target": "RUNTIME-OPS-MUSTER",
+          "state": "required"
+        },
+        {
+          "target": "RUNTIME-OPS-ASSIST-REGISTER",
+          "state": "assistance_requested",
+          "condition": "synthetic_codes_only"
+        },
+        {
+          "target": "F3-PASS-ELEV-DOOR-01",
+          "condition": "not_for_occupant_evacuation"
+        },
+        {
+          "target": "F3-STAIR-B-DOOR-01",
+          "condition": "assisted_evacuation_point"
+        }
+      ],
+      "actions": [
+        {
+          "id": "access-register",
+          "type": "inspect",
+          "target": "RUNTIME-OPS-ASSIST-REGISTER",
+          "roles": [
+            "floor_warden",
+            "accountability_lead",
+            "incident_commander"
+          ]
+        },
+        {
+          "id": "access-helper",
+          "type": "decision",
+          "target": "RUNTIME-OPS-ASSIST-REGISTER",
+          "requires": [
+            "access-register"
+          ],
+          "roles": [
+            "floor_warden",
+            "incident_commander"
+          ],
+          "expected": {
+            "assigned_helpers": 2,
+            "self_identification": "voluntary_and_confidential",
+            "ask_person_how_to_help": true
+          }
+        },
+        {
+          "id": "access-refuge",
+          "type": "decision",
+          "target": "F3-STAIR-B-DOOR-01",
+          "requires": [
+            "access-helper"
+          ],
+          "roles": [
+            "evacuation_assistant",
+            "floor_warden"
+          ],
+          "expected": {
+            "location": "protected_stair_landing_assisted_evacuation_point",
+            "use_elevator": false,
+            "keep_mobility_device_with_person": true
+          }
+        },
+        {
+          "id": "access-comms",
+          "type": "decision",
+          "target": "F1-TWOWAY-01",
+          "requires": [
+            "access-refuge"
+          ],
+          "roles": [
+            "evacuation_assistant",
+            "floor_warden"
+          ],
+          "expected": {
+            "report_location_to": "incident_commander_and_fire_service"
+          }
+        },
+        {
+          "id": "access-handoff",
+          "type": "decision",
+          "target": "site-responder-keep-clear",
+          "requires": [
+            "access-comms"
+          ],
+          "roles": [
+            "liaison_officer",
+            "incident_commander"
+          ],
+          "expected": {
+            "tell_responders": "floor_and_stair_of_people_awaiting_assistance"
+          }
+        },
+        {
+          "id": "access-account",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-MUSTER",
+          "requires": [
+            "access-handoff"
+          ],
+          "roles": [
+            "accountability_lead",
+            "incident_commander"
+          ],
+          "expected": {
+            "accounted": true,
+            "helpers_accounted": true
+          }
+        }
+      ],
+      "source_scenario": {
+        "id": "disability_inclusive_evacuation",
+        "evidence": [
+          "confidential register use",
+          "helper assignment",
+          "assisted evacuation point without elevator",
+          "two-way communication",
+          "responder handoff of locations",
+          "accountability including helpers"
+        ]
+      },
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "core_capabilities": [
+          "Operational Coordination",
+          "Mass Search and Rescue Operations",
+          "Public Information and Warning"
+        ],
+        "objectives": [
+          {
+            "objective_id": "ACCESS-OBJ-1",
+            "text": "Use the voluntary, confidential assistance register and assign helpers."
+          },
+          {
+            "objective_id": "ACCESS-OBJ-2",
+            "text": "Move to the assisted evacuation point at the protected stair and keep communication open."
+          },
+          {
+            "objective_id": "ACCESS-OBJ-3",
+            "text": "Hand locations of people awaiting assistance to responders and account for everyone."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "ACCESS-EEG-1",
+            "objective_id": "ACCESS-OBJ-1",
+            "task": "Register used confidentially; two helpers assigned; person asked how to help",
+            "action_ids": [
+              "access-register",
+              "access-helper"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "ACCESS-EEG-2",
+            "objective_id": "ACCESS-OBJ-2",
+            "task": "Assisted evacuation point reached without the elevator; mobility device kept with the person",
+            "action_ids": [
+              "access-refuge",
+              "access-comms"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "ACCESS-EEG-3",
+            "objective_id": "ACCESS-OBJ-3",
+            "task": "Locations handed off; everyone including helpers accounted for",
+            "action_ids": [
+              "access-handoff",
+              "access-account"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step of the plan unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      },
+      "team": {
+        "min_players": 2,
+        "max_players": 12,
+        "roles_required": [
+          "floor_warden",
+          "evacuation_assistant"
+        ],
+        "roles_optional": [
+          "incident_commander",
+          "accountability_lead",
+          "liaison_officer",
+          "player"
+        ]
+      },
+      "learner_copy": {
+        "summary": "The alarm sounds and someone on Floor 3 has asked, in advance and in confidence, for help evacuating. Plan and carry out an evacuation that leaves nobody behind."
+      },
+      "safety_boundary": "Simulation only. The ADA does not itself require an evacuation plan, but a plan that exists must include people with disabilities. Elevator use in an emergency is decided by the fire service, never assumed."
+    },
+    {
+      "scenario_id": "EU-HSEEP-PLAN-TTX-V1",
+      "canonical_scenario_id": "emergency_plan_tabletop",
+      "title": "Building Emergency Plan versus Community EOP (Tabletop)",
+      "floor_scope": [
+        "F1"
+      ],
+      "federal_training_ids": [
+        "FEMA-IS-235-C",
+        "FEMA-IS-120-C",
+        "FEMA-IS-130-A",
+        "FEMA-IS-800-D",
+        "FEMA-IS-230-E"
+      ],
+      "reference_ids": [
+        "REF-OSHA-1910-38",
+        "REF-OSHA-1910-39",
+        "REF-NFPA-1660",
+        "REF-FEMA-HSEEP-2020"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "SHR-01",
+        "SHR-04",
+        "PSC-05"
+      ],
+      "fault_id": "plan_review_requested",
+      "registry_bound_object_ids": [],
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-PLAN",
+          "state": "under_review"
+        }
+      ],
+      "actions": [
+        {
+          "id": "plan-eap",
+          "type": "inspect",
+          "target": "RUNTIME-OPS-PLAN",
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player",
+            "facilitator"
+          ]
+        },
+        {
+          "id": "plan-elements",
+          "type": "decision",
+          "target": "RUNTIME-OPS-PLAN",
+          "requires": [
+            "plan-eap"
+          ],
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player",
+            "facilitator"
+          ],
+          "expected": {
+            "osha_1910_38_elements": [
+              "reporting",
+              "evacuation_routes",
+              "critical_operations",
+              "accountability",
+              "rescue_medical",
+              "contacts"
+            ]
+          }
+        },
+        {
+          "id": "plan-community",
+          "type": "decision",
+          "target": "RUNTIME-OPS-PLAN",
+          "requires": [
+            "plan-elements"
+          ],
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player",
+            "facilitator"
+          ],
+          "expected": {
+            "community_eop_links": [
+              "local_emergency_management",
+              "fire_service",
+              "public_warning"
+            ]
+          }
+        },
+        {
+          "id": "plan-gaps",
+          "type": "decision",
+          "target": "RUNTIME-OPS-PLAN",
+          "requires": [
+            "plan-community"
+          ],
+          "roles": [
+            "incident_commander",
+            "safety_officer",
+            "floor_warden",
+            "stairwell_monitor",
+            "evacuation_assistant",
+            "accountability_lead",
+            "liaison_officer",
+            "public_information_officer",
+            "operations_section_chief",
+            "player",
+            "facilitator"
+          ],
+          "expected": {
+            "improvement_items_recorded": true
+          }
+        },
+        {
+          "id": "plan-close",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-PLAN",
+          "requires": [
+            "plan-gaps"
+          ],
+          "roles": [
+            "facilitator",
+            "incident_commander"
+          ],
+          "expected": {
+            "aar_ip_drafted": true
+          }
+        }
+      ],
+      "source_scenario": {
+        "id": "emergency_plan_tabletop",
+        "evidence": [
+          "plan read against OSHA 1910.38 elements",
+          "links to the community EOP",
+          "gaps recorded as improvement items",
+          "AAR/IP draft"
+        ]
+      },
+      "hseep": {
+        "exercise_type": "tabletop",
+        "exercise_category": "discussion-based",
+        "core_capabilities": [
+          "Planning",
+          "Operational Coordination"
+        ],
+        "objectives": [
+          {
+            "objective_id": "PLAN-OBJ-1",
+            "text": "Check the building's emergency action plan against the OSHA 1910.38 minimum elements."
+          },
+          {
+            "objective_id": "PLAN-OBJ-2",
+            "text": "Identify where the building plan relies on the community emergency operations plan."
+          },
+          {
+            "objective_id": "PLAN-OBJ-3",
+            "text": "Record gaps as owned improvement items."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "PLAN-EEG-1",
+            "objective_id": "PLAN-OBJ-1",
+            "task": "All six EAP elements checked",
+            "action_ids": [
+              "plan-eap",
+              "plan-elements"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "PLAN-EEG-2",
+            "objective_id": "PLAN-OBJ-2",
+            "task": "Community EOP dependencies named",
+            "action_ids": [
+              "plan-community"
+            ],
+            "critical": false
+          },
+          {
+            "criterion_id": "PLAN-EEG-3",
+            "objective_id": "PLAN-OBJ-3",
+            "task": "Improvement items recorded and AAR/IP drafted",
+            "action_ids": [
+              "plan-gaps",
+              "plan-close"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step of the plan unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      },
+      "team": {
+        "min_players": 2,
+        "max_players": 20,
+        "roles_required": [
+          "facilitator"
+        ],
+        "roles_optional": [
+          "incident_commander",
+          "player",
+          "evaluator"
+        ]
+      },
+      "learner_copy": {
+        "summary": "A discussion exercise: read the building's emergency plan, compare it with what the town's emergency plan expects, and write down what needs fixing."
+      },
+      "safety_boundary": "Discussion only. The virtual building's plan is a teaching artifact, not a compliance review."
+    }
+  ]
+}

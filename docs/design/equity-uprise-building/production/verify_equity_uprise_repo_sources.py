@@ -31,6 +31,7 @@ SKIP_PREFIXES = (
     "docs/design/equity-uprise-building/",
 )
 SKIP_EXACT = {
+    ".git",  # A worktree uses a metadata pointer file rather than a directory.
     "docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md",
     "docs/design/EQUITY-UPRISE-REPO-AUDIT.md",
     "equity-uprise-building-core-v2-3d.html",

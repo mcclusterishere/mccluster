@@ -220,12 +220,12 @@
     {
       "name": "L0 PNG signature",
       "passed": true,
-      "detail": "bytes=79338"
+      "detail": "bytes=80224"
     },
     {
       "name": "L0 PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=79338"
+      "detail": "bytes=80224"
     },
     {
       "name": "L0 active plan triplet only",
@@ -2288,16 +2288,6 @@
       "detail": "FIRST AID KIT"
     },
     {
-      "name": "Floor 1 site SVG label NORTH / REAR EXIT DISCHARGE WALK",
-      "passed": true,
-      "detail": "NORTH / REAR EXIT DISCHARGE WALK"
-    },
-    {
-      "name": "Floor 1 site DXF label NORTH / REAR EXIT DISCHARGE WALK",
-      "passed": true,
-      "detail": "NORTH / REAR EXIT DISCHARGE WALK"
-    },
-    {
       "name": "Floor 1 site SVG label PUBLIC / ACCESSIBLE APPROACH",
       "passed": true,
       "detail": "PUBLIC / ACCESSIBLE APPROACH"
@@ -2398,6 +2388,16 @@
       "detail": "STAIR B EXIT DISCHARGE"
     },
     {
+      "name": "Floor 1 site SVG label WEST EXIT DISCHARGE WALK (STAIR B)",
+      "passed": true,
+      "detail": "WEST EXIT DISCHARGE WALK (STAIR B)"
+    },
+    {
+      "name": "Floor 1 site DXF label WEST EXIT DISCHARGE WALK (STAIR B)",
+      "passed": true,
+      "detail": "WEST EXIT DISCHARGE WALK (STAIR B)"
+    },
+    {
       "name": "Floor 1 site SVG label YOU ARE HERE / EGRESS MAP",
       "passed": true,
       "detail": "YOU ARE HERE / EGRESS MAP"
@@ -2420,12 +2420,12 @@
     {
       "name": "Floor 1 site PNG signature",
       "passed": true,
-      "detail": "bytes=68918"
+      "detail": "bytes=67797"
     },
     {
       "name": "Floor 1 site PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=68918"
+      "detail": "bytes=67797"
     },
     {
       "name": "Floor 1 site active plan triplet only",
@@ -2445,7 +2445,7 @@
     {
       "name": "contact sheet nontrivial size",
       "passed": true,
-      "detail": "bytes=134942"
+      "detail": "bytes=134894"
     }
   ]
 }

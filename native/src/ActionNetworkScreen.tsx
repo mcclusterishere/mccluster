@@ -1,5 +1,5 @@
 /**
- * Human Uprise, native.
+ * Equity Uprise, native.
  *
  * This replaces the old web-link placeholder with the same action-first
  * surfaces as mnet.js: feed, missions, groups, Action Record and account.
@@ -49,7 +49,7 @@ const VIEWS: { key: ViewKey; label: string }[] = [
 
 const TOUR_STEPS: { title: string; body: string; view?: ViewKey }[] = [
   {
-    title: 'Welcome to Human Uprise',
+    title: 'Welcome to Equity Uprise',
     body: "The place for doers. Don't just watch. Act. This takes about a minute.",
   },
   {
@@ -160,7 +160,7 @@ function AuthGate() {
           { paddingTop: insets.top + space.xxl, paddingBottom: 150 },
         ]}
       >
-        <Text style={s.kicker}>Human Uprise</Text>
+        <Text style={s.kicker}>Equity Uprise</Text>
         <Text style={s.hero}>DON’T JUST WATCH. ACT.</Text>
         <Text style={s.lede}>
           One M Account. Take a mission, prove the work, and build a verified Action Record.
@@ -249,7 +249,7 @@ function SignedInNetwork() {
     if (!context.tour_done_at) setTourOpen(true);
   }, [boot, tourAutoChecked]);
 
-  if (loading && !boot) return <Centered label="Loading Human Uprise…" />;
+  if (loading && !boot) return <Centered label="Loading Equity Uprise…" />;
   if (boot?.next_step === 'contact') {
     return (
       <View style={s.screen}>
@@ -258,7 +258,7 @@ function SignedInNetwork() {
           <Text style={s.kicker}>Account setup</Text>
           <Text style={s.title}>Finish your private contact details.</Text>
           <Text style={s.lede}>
-            Your legal name and mailing address are required before entering Human Uprise.
+            Your legal name and mailing address are required before entering Equity Uprise.
             They stay in your private account record and are not shown on your public profile.
           </Text>
           <Pressable
@@ -290,7 +290,7 @@ function SignedInNetwork() {
         }
       >
         <View style={[s.head, { paddingTop: insets.top + space.lg }]}>
-          <Text style={s.kicker}>Human Uprise</Text>
+          <Text style={s.kicker}>Equity Uprise</Text>
           <Text style={s.title}>Move with it.</Text>
           <Text style={s.lede}>
             The feed is a doorway. Missions and verified proof are the point.
@@ -400,7 +400,7 @@ function ProfileSetup({ boot, onDone }: { boot: NetworkBootstrap; onDone: () => 
         <Text style={s.kicker}>One setup</Text>
         <Text style={s.hero}>YOUR ACTION IDENTITY.</Text>
         <Text style={s.lede}>
-          This is the same profile you use on Human Uprise on the web.
+          This is the same profile you use on Equity Uprise on the web.
         </Text>
         <Field
           label="Handle"
@@ -490,7 +490,7 @@ function FeedView() {
           return (
             <Article key={item.post_id || `activity-${index}`}>
               <Actor actor={item.actor} when={item.occurred_at} />
-              <Text style={s.body}>{item.payload?.summary || item.payload?.text || 'Human Uprise activity'}</Text>
+              <Text style={s.body}>{item.payload?.summary || item.payload?.text || 'Equity Uprise activity'}</Text>
             </Article>
           );
         }
@@ -1307,7 +1307,7 @@ function NativeTour({
       <View style={s.tourScrim}>
         <View
           accessibilityRole="summary"
-          accessibilityLabel={`Human Uprise walkthrough, step ${step + 1} of ${TOUR_STEPS.length}`}
+          accessibilityLabel={`Equity Uprise walkthrough, step ${step + 1} of ${TOUR_STEPS.length}`}
           style={s.tourCard}
         >
           <Text style={s.kicker}>{step + 1} of {TOUR_STEPS.length}</Text>
@@ -1374,7 +1374,7 @@ function Actor({ actor, when }: { actor?: Record<string, any>; when?: string }) 
     actor?.mccluster_id ||
     actor?.handle ||
     actor?.name ||
-    'Human Uprise member';
+    'Equity Uprise member';
   return (
     <View style={s.rowBetween}>
       <Text style={s.rowTitle}>{String(name)}</Text>

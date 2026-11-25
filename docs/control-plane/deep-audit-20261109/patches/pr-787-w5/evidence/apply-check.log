@@ -1,0 +1,9 @@
+# apply check: scratch checkout at cf8c3cc7f642bf7e48a4b5e042df1e24203d2ecf; git am <the two patch files>; 2026-11-10T12:25:36Z, git version 2.43.0
+Applying: fix(prim3): publish the lattice-learning runtime the reviewed-mission page imports (W5)
+Applying: fix(prim3): teach an HQ or B1 cell as the plan's 12 ft (3.6576 m) and name the 3.54 m rule tile apart (W5)
+git am exit=0
+applied: 8f685e26 fix(prim3): teach an HQ or B1 cell as the plan's 12 ft (3.6576 m) and name the 3.54 m rule tile apart (W5);3857c35a fix(prim3): publish the lattice-learning runtime the reviewed-mission page imports (W5);
+tree after git am:          ccfb9a09a7ab88ad3fce34b7528014c078206ad1
+tree of the lane head f8499fad: ccfb9a09a7ab88ad3fce34b7528014c078206ad1
+EQUAL
+per patch: 0001 tree 2bbe9ed5edfa1ba93790e804a67ba62e86745690 vs lane 2bbe9ed5edfa1ba93790e804a67ba62e86745690

@@ -19,6 +19,8 @@ The broker currently discovers the canonical McCluster media MCP surface:
 
 and registers the canonical Worker health endpoint as an ordinary HTTP tool.
 
+Core authenticates to the media MCP by **signing each request** with `CORE_EDGE_SIGNING_KEY`, the key it already shares with the edge (protocol `mccluster-core/v1`, canonical label `MCCLUSTER-CORE-V1`; `core/src/broker-edge-auth.mjs` → `signCoreRequest`). Worker `mccluster` verifies it on `/v1/media/mcp` only (`workers/mccluster/src/media/core-signature.js`) and acts as the single house owner of org `mccluster`, failing closed on zero or several owners. The label differs from the edge → Core label, so a signature never verifies in the other direction. Before this, Core sent `MCCLUSTER_API_BEARER`, a stored Supabase user token that expires within the hour, so every media tool reached through Core answered `-32001 Authentication required` (2026-11-02). That bearer remains only as a fallback and is no longer needed.
+
 Additional MCP servers and HTTP tools may be registered through root-controlled environment JSON without giving credentials to the low-privilege OpenCode process.
 
 ## Local HTTP surface

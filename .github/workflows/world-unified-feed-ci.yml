@@ -10,7 +10,7 @@ on:
       - 'css/mnet.css'
       - 'css/world-news-globe.css'
       - 'workers/mccluster/src/platform-api.js'
-      - 'supabase/pending/world_news_discussions_v1.sql'
+      - 'supabase/migrations/20261021011443_royce_platform_actor.sql'
       - 'scripts/test/world-news-globe-source.test.mjs'
       - 'scripts/test/world-unified-feed.test.mjs'
       - 'scripts/test/world-news-comments.*.sql'
@@ -26,10 +26,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
       - name: Syntax, release boundaries and news comment authorization
@@ -55,12 +55,12 @@ jobs:
           --health-timeout 5s
           --health-retries 12
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
-      - name: Verify pending schema in disposable PostgreSQL only
+      - name: Verify the applied news-discussion schema in disposable PostgreSQL only
         env:
           PGHOST: 127.0.0.1
           PGPORT: '5432'
@@ -70,5 +70,5 @@ jobs:
         run: |
           set -euo pipefail
           psql -v ON_ERROR_STOP=1 -f scripts/test/world-news-comments.stub.sql
-          psql -v ON_ERROR_STOP=1 -f supabase/pending/world_news_discussions_v1.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261021011443_royce_platform_actor.sql
           psql -v ON_ERROR_STOP=1 -f scripts/test/world-news-comments.behavior.sql

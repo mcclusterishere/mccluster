@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f3f3ed">
+  <meta name="description" content="Build PRIM3 tactical levels with a modular 3D asset library, a numbered sector map, and playable mission testing.">
+  <meta name="robots" content="noindex, nofollow">
+  <title>PRIM3 — Level Forge</title>
+  <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+<!-- Owner only, like every PRIM3 game page (js/owner-only.mjs; owner, 2026-11-03: "keep it on my private account").
+     Nothing below the gate exists and none of the editor's scripts load until the server says this is the house owner.
+     The level API repeats the check server-side (requireHouseOwner) on every route. -->
+<section class="owner-gate" aria-live="polite" data-owner-gate data-owner-template="forgeTpl"
+  data-owner-load="vendor/playcanvas-2.23.1.min.js catalog.js model.js render.js ../js/backend.js cloud-client.js editor-ui.js">
+  <img class="owner-gate__mark" src="../assets/img/prim3-logo.png" alt="PRIM3" width="40" height="40">
+  <h1>Owner only</h1>
+  <p data-owner-msg>Checking access with the server…</p>
+</section>
+<template id="forgeTpl">
+<svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+  <symbol id="i-cursor" viewBox="0 0 24 24"><path d="m5 3 15 10-8 1-4 7z"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18m-6-6-3-3-3 3m6 12-3 3-3-3M6 9l-3 3 3 3m12-6 3 3-3 3"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="m3 7 9-4 9 4v10l-9 4-9-4zm0 0 9 5 9-5M12 12v9m-5-16 9 5"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M9 3v18m6-18v18M3 9h18M3 15h18"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="m9 15 6-6m-5-3 2-2a5 5 0 0 1 7 7l-2 2M7 11l-2 2a5 5 0 0 0 7 7l2-2"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M8 5 3 10l5 5M3 10h11a6 6 0 0 1 0 12" transform="translate(0 -2)"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="m16 5 5 5-5 5m5-5H10a6 6 0 0 0 0 12" transform="translate(0 -2)"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="m7 4 13 8-13 8z"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M4 3h13l4 4v14H3V3zm3 0v7h10V3M7 21v-7h10v7"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M20 8A9 9 0 1 0 21 14M20 3v6h-6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="1"/><path d="M16 8V3H3v13h5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M3 9V3h6m6 0h6v6M3 15v6h6m6 0h6v-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+</defs></svg>
+
+<main class="forge" id="forge" data-panel="assets">
+  <header class="topbar">
+    <a href="../control.html#create:level-forge" class="wordmark" aria-label="Back to Control, PRIM3 Level Forge"><img src="../assets/img/prim3-lockup-512.png" alt="PRIM3" width="512" height="366"></a><a class="control-return" href="../control.html#create:level-forge">‹ Control</a>
+    <div class="product-name"><span>LEVEL FORGE</span><small>BUILD YOUR BATTLEFIELD</small></div>
+    <div class="top-actions">
+      <button class="button quiet save-button" id="save-draft"><svg><use href="#i-save"/></svg><span>Save draft</span></button>
+      <button class="button primary" id="test-level"><svg><use href="#i-play"/></svg><span>Play test</span></button>
+      <button class="button icon-button" id="more-menu" aria-label="Level menu" aria-haspopup="menu" aria-expanded="false"><svg><use href="#i-more"/></svg></button>
+      <div class="popover level-menu" id="level-menu" role="menu" hidden>
+        <button role="menuitem" id="new-level">New blank level</button>
+        <button role="menuitem" id="starter-level">Load transit starter</button>
+        <button role="menuitem" id="open-drafts">Open saved draft</button>
+        <hr id="cloud-divider" hidden>
+        <button role="menuitem" id="cloud-save" hidden>Save cloud draft</button>
+        <button role="menuitem" id="cloud-open" hidden>Open cloud draft</button>
+        <button role="menuitem" id="cloud-freeze" hidden>Freeze playable version</button>
+        <button role="menuitem" id="cloud-versions" hidden>View frozen versions</button>
+        <hr>
+        <button role="menuitem" id="export-level">Export level JSON</button>
+        <button role="menuitem" id="import-level">Import level JSON</button>
+        <button role="menuitem" id="check-level">Check level</button>
+        <button role="menuitem" id="help-button">Controls &amp; shortcuts</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="document-bar" aria-label="Level details">
+    <div class="title-field"><span class="status-dot" aria-hidden="true"></span><input id="level-title" aria-label="Level title" maxlength="80" value="Transit / White Signal" spellcheck="false"></div>
+    <span class="save-status" id="save-status">This device · not yet saved</span>
+    <span class="bounds-pill" id="bounds-label">128 × 128</span>
+  </section>
+
+  <div class="workspace">
+    <aside class="asset-panel panel" id="asset-panel" aria-label="Asset library">
+      <div class="panel-heading"><div><p class="eyebrow">WHITE INDUSTRIAL / 01</p><h1>Asset library <span id="asset-total">24</span></h1></div><svg class="heading-icon"><use href="#i-box"/></svg></div>
+      <label class="search-box"><span aria-hidden="true">⌕</span><input type="search" id="asset-search" placeholder="Find an asset…" aria-label="Search asset library"></label>
+      <div class="category-tabs" id="category-tabs" aria-label="Asset categories"></div>
+      <div class="asset-grid" id="asset-grid" aria-live="polite"></div>
+      <div class="tray-tip"><span class="tiny-dot"></span><span id="tray-tip">Drag an asset into the scene, or select it and tap a position.</span></div>
+    </aside>
+
+    <section class="viewport-panel" aria-label="Level viewport">
+      <div class="viewport-toolbar">
+        <div class="tool-group" role="group" aria-label="Editing tools">
+          <button class="tool-button active" id="tool-select" data-tool="select" title="Select (V)" aria-pressed="true"><svg><use href="#i-cursor"/></svg><span>Select</span></button>
+          <button class="tool-button" id="tool-move" data-tool="move" title="Move selected (G)" aria-pressed="false"><svg><use href="#i-move"/></svg><span>Move</span></button>
+          <button class="tool-button" id="tool-link" data-tool="link" title="Add traversal link" aria-pressed="false"><svg><use href="#i-link"/></svg><span>Link</span></button>
+          <span class="tool-divider"></span>
+          <button class="tool-button icon-only" id="undo" title="Undo (Ctrl/⌘ Z)" aria-label="Undo" disabled><svg><use href="#i-undo"/></svg></button>
+          <button class="tool-button icon-only" id="redo" title="Redo (Ctrl/⌘ Shift Z)" aria-label="Redo" disabled><svg><use href="#i-redo"/></svg></button>
+        </div>
+        <div class="tool-group view-tools" role="group" aria-label="Camera">
+          <button class="tool-button active" id="view-3d" aria-pressed="true"><svg><use href="#i-box"/></svg><span>3D</span></button>
+          <button class="tool-button" id="view-top" aria-pressed="false"><svg><use href="#i-grid"/></svg><span>Top</span></button>
+          <button class="tool-button icon-only" id="fit-scene" aria-label="Fit whole level" title="Fit whole level"><svg><use href="#i-expand"/></svg></button>
+        </div>
+      </div>
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="level-canvas" aria-label="Interactive 3D level editor. Select an asset, then tap to place. Drag empty ground to orbit. Use the inspector for exact coordinates." tabindex="0"></canvas>
+        <div class="mode-badge" id="mode-badge"><span class="tiny-dot"></span><span id="mode-label">SCENE / SELECT</span></div>
+        <div class="placement-banner" id="placement-banner" hidden><strong id="placement-label"></strong><span id="placement-hint">Tap the battlefield to place</span><button id="cancel-placement" aria-label="Cancel placement"><svg><use href="#i-close"/></svg></button></div>
+        <div class="link-controls" id="link-controls" hidden><label>Endpoint layer<select id="link-layer"><option value="0">Ground</option><option value="1">Rooftop</option></select></label><label>Type<select id="link-type"><option value="stairs">Stairs</option><option value="ladder">Ladder</option></select></label></div>
+        <div class="scene-stats"><span id="object-count">0 OBJECTS</span><span id="geometry-status">128 × 128 SECTOR</span></div>
+        <div class="camera-zoom" role="group" aria-label="Zoom controls"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button></div>
+        <section class="sector" id="sector" aria-label="Numbered sector map">
+          <header><span>SECTOR MAP</span><span class="sector-north">N ↑</span><button id="sector-toggle" aria-label="Enlarge sector map" aria-expanded="false"><svg><use href="#i-expand"/></svg></button></header>
+          <canvas id="sector-map" width="480" height="480" aria-label="Sector map with X and Y coordinate rulers. Tap to focus a coordinate."></canvas>
+          <div class="sector-coordinate" id="sector-coordinate">X −64…+64 · Y −64…+64</div>
+        </section>
+        <div class="viewport-bottom"><span id="cursor-position">X — / Y — / Z 0</span><span id="renderer-mode">INITIALIZING</span></div>
+        <div class="initializing" id="initializing"><div class="loading-mark">P3</div><p>Preparing the battlefield…</p></div>
+      </div>
+    </section>
+
+    <nav class="mobile-tabs" aria-label="Editor panels"><button data-panel="assets" aria-selected="true"><svg><use href="#i-box"/></svg>Assets</button><button data-panel="inspect" aria-selected="false"><svg><use href="#i-cursor"/></svg>Inspector</button><button data-panel="objects" aria-selected="false"><svg><use href="#i-grid"/></svg>Objects <span id="mobile-count">0</span></button></nav>
+
+    <aside class="details-panel panel" aria-label="Object inspector">
+      <div class="panel-heading"><div><p class="eyebrow">PRECISION CONTROLS</p><h2>Inspector</h2></div><button class="small-button" id="deselect" title="Clear selection">Clear</button></div>
+      <div class="inspector-empty" id="inspector-empty"><svg><use href="#i-cursor"/></svg><h3>Give the scene a shape.</h3><p>Select an object to adjust its position, elevation, and rotation.</p><div class="origin-note"><span>◆</span><div><b>RELAY AT ORIGIN</b><p>The objective stays at X 0, Y 0. Build the approach around it.</p></div></div></div>
+      <div id="inspector-content" hidden>
+        <div class="selection-summary"><div class="selection-icon" id="selection-icon"><svg><use href="#i-box"/></svg></div><div><p class="eyebrow" id="selection-category">STRUCTURE</p><h3 id="selection-name">Warehouse</h3></div></div>
+        <form id="inspector-form">
+          <fieldset id="position-fields"><legend>Position</legend><div class="field-row"><label><span>X</span><input id="inspector-x" type="number" step="1" min="-64" max="63" required></label><label><span>Y</span><input id="inspector-y" type="number" step="1" min="-64" max="63" required></label></div></fieldset>
+          <fieldset id="object-fields"><legend>Transform</legend><div class="field-row"><label><span>Elevation</span><input id="inspector-elevation" type="number" min="0" max="24" step="1" value="0"></label><label><span>Scale</span><input id="inspector-scale" type="number" min="0.5" max="3" step="0.5" value="1"></label></div><label class="wide-field"><span>Rotation</span><select id="inspector-rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label></fieldset>
+          <fieldset id="spawn-fields" hidden><legend>Deployment</legend><label class="wide-field"><span>Surface</span><select id="inspector-layer"><option value="0">Ground</option><option value="1">Rooftop</option></select></label></fieldset>
+          <fieldset id="extraction-fields" hidden><legend>Extraction zone</legend><label class="wide-field"><span>Radius</span><input id="inspector-radius" type="number" min="2" max="16" step="1" value="8"></label></fieldset>
+          <fieldset id="connection-fields" hidden><legend>Traversal</legend><p class="connection-endpoints" id="connection-endpoints"></p><label class="wide-field"><span>Movement cost</span><input id="inspector-cost" type="number" min="1" max="128" step="1" value="12"></label></fieldset>
+          <button class="button apply-button" type="submit"><svg><use href="#i-check"/></svg>Apply changes</button>
+        </form>
+        <div class="selection-actions"><button class="button" id="rotate-selection" title="Rotate 90° (R)"><svg><use href="#i-rotate"/></svg>Rotate</button><button class="button" id="duplicate-selection" title="Duplicate (Ctrl/⌘ D)"><svg><use href="#i-copy"/></svg>Copy</button><button class="button danger" id="delete-selection" title="Delete selected"><svg><use href="#i-trash"/></svg><span class="sr-only">Delete</span></button></div>
+        <p class="selection-description" id="selection-description"></p>
+        <a class="model-download" id="model-download" download hidden><svg><use href="#i-download"/></svg>Download this 3D asset <span>GLB ↗</span></a>
+      </div>
+      <section class="level-check"><div><span class="tiny-dot" id="validation-dot"></span><strong id="validation-title">Level check</strong><button id="validation-open">Inspect</button></div><p id="validation-summary">Checking spawn points and mission objects.</p></section>
+    </aside>
+
+    <aside class="objects-panel panel" aria-label="Objects in this level"><div class="panel-heading"><div><p class="eyebrow">SCENE COLLECTION</p><h2>Objects <span id="list-count">0</span></h2></div></div><div class="objects-filter"><label><span>Show</span><select id="scene-filter"><option value="all">Everything</option><option value="objects">Placed assets</option><option value="spawns">Deployments</option><option value="connections">Traversal links</option></select></label></div><div class="object-list" id="object-list"></div></aside>
+  </div>
+
+  <footer class="statusbar"><span class="status-message" id="status-message" role="status">Select an asset and tap the battlefield to place it.</span><button id="desktop-objects" class="status-link">Scene objects</button><a href="../game-hub.html" class="status-link">Game Hub ↗</a></footer>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<input type="file" id="import-file" accept=".json,application/json" hidden>
+<dialog id="forge-dialog" class="forge-dialog"><header><h2 id="dialog-title">Level check</h2><button class="button icon-button" id="dialog-close" aria-label="Close dialog"><svg><use href="#i-close"/></svg></button></header><div id="dialog-body"></div><footer id="dialog-footer"></footer></dialog>
+</template>
+<script type="module" src="../js/owner-only.mjs"></script>
+</body>
+</html>

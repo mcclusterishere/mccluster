@@ -133,7 +133,7 @@
     var signedIn = !!(SUPA.uid && SUPA.uid());
     var html = '<h1>Verify it’s you</h1><p class="idv-lede">A short live video, reviewed by a person. Never public, never used to train AI.</p>' + levelTabs();
     if (!signedIn) {
-      html += note("Sign in first.") + '<p><a class="idv-btn idv-btn--primary" href="login.html?next=' + encodeURIComponent("identity-verify.html" + location.search) + '">Sign in</a></p>';
+      html += note("Sign in first.") + '<p><a class="idv-btn idv-btn--primary" href="account.html?next=' + encodeURIComponent("identity-verify.html" + location.search) + '">Sign in</a></p>';
       host.innerHTML = html; bind(); return;
     }
     if (S.error === "closed") { host.innerHTML = html + note("Identity verification is not switched on yet."); bind(); return; }

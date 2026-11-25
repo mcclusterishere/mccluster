@@ -104,7 +104,7 @@ test('opening a session returns its events and the visitor’s other sessions on
     profile: { display_name: 'Jane Doe', primary_email: 'jane@example.com', mccluster_id: 'janed', phone: '+15555550123' },
     rpc: { sessions: (b) => b.p_sessions ? { total: 1, sessions: [SESSION] } : { total: 2, sessions: [SESSION, { ...SESSION, session_id: 'sess-older1' }] } }
   });
-  const res = await withFetch(handler, () => get('/v1/analytics/sessions/sess-123456'));
+  const res = await withFetch(handler, () => get('/v1/analytics/sessions/sess-123456?include_history=1'));
   assert.equal(res.status, 200);
   const out = await res.json();
   assert.equal(out.session.session_id, 'sess-123456');
@@ -173,4 +173,30 @@ test('the visitor list whitelists its own filters and sorts', async () => {
   const b2 = bad.calls.find((c) => c.path === 'rpc/analytics_visitor_list').body;
   assert.equal(b2.p_filter, 'all', 'session-only filters do not leak into the visitor list');
   assert.equal(b2.p_sort, 'recent');
+});
+
+test('opening a session does not depend on the 180-day device history read', async () => {
+  const events=[{at:SESSION.started_at,name:'page_view',device_id:SESSION.device_id,uid:UID}];
+  const b=backend({events,rpc:{sessions:body=>{assert.ok(body.p_sessions,'no history aggregation in the critical read');return {sessions:[SESSION]};}}});
+  const res=await withFetch(b.handler,()=>get('/v1/analytics/sessions/sess-123456'));
+  const out=await res.json();assert.equal(res.status,200);assert.equal(out.events.length,1);
+  assert.equal(out.visitor.history_status,'not_loaded');assert.equal(out.visitor.sessions,null);assert.equal(out.visitor.total,null);
+  assert.ok(!b.calls.some(c=>c.path==='events'&&c.query.get('uid')),'no device discovery in critical read');
+});
+
+test('history timeout stays a genuine error; it is never an empty successful history', async () => {
+  const b=backend({events:[{at:SESSION.started_at,name:'page_view',device_id:SESSION.device_id}],rpc:{sessions:{sessions:[SESSION]}}});
+  const handler=(url,init)=>String(url).includes('rpc/analytics_session_list')&&JSON.parse(init.body).p_devices
+    ?reply({code:'57014',message:'canceling statement due to statement timeout'},500):b.handler(url,init);
+  await withFetch(handler,async()=>{
+    assert.equal((await get('/v1/analytics/sessions/sess-123456')).status,200);
+    await assert.rejects(()=>get('/v1/analytics/sessions/sess-123456?include_history=1'),e=>e.status===502&&e.db_code==='57014');
+  });
+});
+
+test('a genuine core events read failure is not converted to missing session or empty data', async () => {
+  const b=backend();
+  await withFetch((url,init)=>String(url).includes('/events?')?reply({code:'57014'},500):b.handler(url,init),async()=>{
+    await assert.rejects(()=>get('/v1/analytics/sessions/sess-123456'),e=>e.status===502&&e.db_code==='57014');
+  });
 });

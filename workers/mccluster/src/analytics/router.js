@@ -7,10 +7,12 @@ import { loadCommerceSummary } from '../commerce/summary.js';
 import { createCameraRoutes } from './cameras.js';
 import { dataCoverage, boundedReads, DATASETS } from './coverage.js';
 import {cleanInventory, socialCoverage} from './event-inventory.js';
-import { readBoundedRows, measurementContext } from './measurement.js';
+import { measurementContext } from './measurement.js';
+import { readAnalyticsPages } from './paged-reads.js';
 import { loadBusinessEventCounts } from './business-event-counts.js';
 import { databaseErrorMetadata, readFailureDiagnostics, successfulReadDiagnostics, visibleBusinessSnapshot } from './read-diagnostics.js';
 import { DICTIONARY_VERSION, DICTIONARY_SOURCE, EVENT_DICTIONARY, METRIC_DICTIONARY } from './measurement-dictionary.js';
+import { PROFILE_ORIGIN } from '../platform/hosts.generated.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json', 'cache-control': 'no-store' };
 const HOUSE_SLUG = 'mccluster';
@@ -81,9 +83,9 @@ async function sbRows(env, path) {
 }
 
 async function sbRowsPaged(env, path, maxRows = 100000) {
-  return readBoundedRows((start, end) => sbJson(env, path, {
+  return readAnalyticsPages((pagePath, start, end) => sbJson(env, pagePath, {
     headers: { range: `${start}-${end}` }
-  }), maxRows);
+  }), path, maxRows);
 }
 
 function finiteDate(value, fallback) {
@@ -1030,7 +1032,7 @@ async function handleSelfMusicAnalytics(request,env,user,url,path){
    for(const value of [e.props?.url,raw]){
      try{
        if(typeof value!=='string')continue;
-       const u=new URL(value,'https://matthew.mccluster.org/');
+       const u=new URL(value,PROFILE_ORIGIN+'/');
        if(u.pathname==='/music-creator.html'&&u.searchParams.get('handle')===handle)return true;
      }catch{}
    }

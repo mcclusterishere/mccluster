@@ -9,7 +9,7 @@ test('World has one mixed feed: news + posts, no separate News page or public ca
     get('mnet.html'), get('js/mnet.js'), get('js/world-news-globe.js'),
     get('js/travel/world-travel.mjs'), get('js/action-globe.js')
   ]);
-  assert.match(html,/data-world-mode="posts" aria-pressed="false">News feed<\/button>/);
+  assert.match(html,/data-world-mode="posts" aria-pressed="true">News feed<\/button>/);
   assert.match(html,/id="mnFeed"/);
   assert.doesNotMatch(html,/id="worldNewsDeck"|News around the world|Story locations are GDELT mentions|Full articles require publisher permission/);
   assert.doesNotMatch(html,/data-hu-feed=|From the community/);
@@ -55,7 +55,7 @@ test('World geolocations retain validated article mentions and premium marker id
 test('Native post and news comments share one UI; new news writes are flag gated and private', async () => {
   const [client,api,sql,html] = await Promise.all([
     get('js/mnet.js'), get('workers/mccluster/src/platform-api.js'),
-    get('supabase/pending/world_news_discussions_v1.sql'), get('mnet.html')
+    get('supabase/migrations/20261021011443_royce_platform_actor.sql'), get('mnet.html')
   ]);
   assert.match(client,/function discussionHtml\(/);
   assert.match(client,/function bindDiscussions\(/);

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111a1c">
+  <meta name="description" content="A playable PRIM3 tactical courtyard. Select an operative, preview a route and move the team to the relay.">
+  <title>PRIM3 — Courtyard</title>
+  <link rel="stylesheet" href="styles.css">
+  <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+  <!-- Nothing but this panel exists until the server says this is the house owner (js/owner-only.mjs); PlayCanvas,
+       the rules and the game load only after that yes (owner, 2026-11-03: "keep it on my private account"). -->
+  <section class="owner-gate" aria-live="polite" data-owner-gate data-owner-template="gameTpl" data-owner-load="vendor/playcanvas-2.23.1.min.js rules.js game.js">
+    <h1>Owner only</h1>
+    <p data-owner-msg>Checking access with the server…</p>
+  </section>
+  <template id="gameTpl">
+  <main class="game" id="prim3-game">
+    <header class="topbar">
+      <div class="page-title">PRIM3 / Courtyard</div>
+      <div class="top-actions"><span class="build-label">PLAYABLE PROTOTYPE</span><button class="icon-button" id="reset" aria-label="Restart exercise" title="Restart exercise">↺</button></div>
+    </header>
+
+    <section class="mission-strip" aria-label="Mission objective">
+      <span class="objective-symbol" aria-hidden="true">◇</span>
+      <div class="mission-copy"><span class="eyebrow">COURTYARD / 01</span><h1 id="mission-title">Establish the link</h1><p id="mission-detail">Move Aya beside the relay at <b>(7, 6)</b>.</p></div>
+      <div class="turn-readout"><span class="eyebrow">YOUR TURN</span><strong id="turn-number">01</strong></div>
+    </section>
+
+    <div class="battle-layout">
+      <section class="battlefield" aria-label="Three dimensional tactical courtyard">
+        <div class="scene" id="scene">
+          <canvas id="board" tabindex="0" aria-label="Tactical courtyard. Select E, R, or T, then tap a cyan tile to preview movement. Arrow keys can choose a tile; Enter confirms movement."></canvas>
+          <div class="scene-vignette" aria-hidden="true"></div>
+          <div class="camera-toolbar" aria-label="Camera controls">
+            <div class="segmented"><button data-view="3d" aria-pressed="true">3D</button><button data-view="overhead" aria-pressed="false">Top</button></div>
+            <button class="icon-button" id="camera-home" aria-label="Reset camera" title="Reset camera">⌖</button>
+          </div>
+          <div class="scene-caption"><span class="live-dot"></span><span id="scene-help">TAP AN OPERATIVE · DRAG TO ROTATE</span></div>
+          <div class="labels" id="labels">
+            <button class="unit-label" data-unit="E" aria-label="Select Arjun, Entry"><span>E</span><i></i></button>
+            <button class="unit-label" data-unit="R" aria-label="Select Rafael, Recon"><span>R</span><i></i></button>
+            <button class="unit-label" data-unit="T" aria-label="Select Aya, Technical"><span>T</span><i></i></button>
+            <span class="destination-label" id="destination-label" aria-label="Proposed destination">(3, 3)</span>
+            <span class="relay-label" id="relay-label">◇ <span>RELAY</span></span>
+          </div>
+          <div class="map-key"><span><i class="cyan-key"></i>Reachable</span><span><i class="amber-key"></i>Route</span><span class="axis-note">x → &nbsp; y ↓</span></div>
+          <div class="scene-loading" id="loading" role="status"><span class="loading-ring"></span><span>Preparing courtyard…</span></div>
+        </div>
+        <div class="squad-strip" aria-label="Your squad">
+          <button class="squad-unit" data-select="E" aria-pressed="true"><span class="squad-letter">E</span><span class="squad-name">Arjun<small>ENTRY · IN</small></span><span class="ap-dots" data-ap="E">●●</span></button>
+          <button class="squad-unit" data-select="R" aria-pressed="false"><span class="squad-letter">R</span><span class="squad-name">Rafael<small>RECON · BR</small></span><span class="ap-dots" data-ap="R">●●</span></button>
+          <button class="squad-unit" data-select="T" aria-pressed="false"><span class="squad-letter">T</span><span class="squad-name">Aya<small>TECH · JP</small></span><span class="ap-dots" data-ap="T">●●</span></button>
+        </div>
+      </section>
+
+      <aside class="command-panel" aria-label="Selected operative actions">
+        <div class="operative-heading"><span class="role-monogram" id="role-monogram">E</span><div class="operative-name"><span class="eyebrow" id="selected-role">FIELD E / ENTRY</span><h2 id="selected-name">Arjun Mehta</h2><span class="country-tag" id="selected-country">IN · India</span></div><div class="ap-readout"><strong id="selected-ap">2</strong><span>AP</span></div></div>
+        <nav class="context-actions" aria-label="Operative actions"><button id="action-move" aria-pressed="true"><span aria-hidden="true">↗</span>Move</button><button id="action-inspect" aria-pressed="false"><span aria-hidden="true">◎</span>Inspect</button><button id="action-hint" aria-pressed="false"><span aria-hidden="true">?</span>Get hint</button></nav>
+        <div class="action-content">
+          <div class="move-preview" id="move-preview">
+            <div class="preview-eyebrow"><span class="eyebrow" id="preview-label">MOVEMENT PREVIEW</span><span class="cost-pill" id="move-cost">1 AP</span></div>
+            <div class="route-readout"><span id="origin-coordinates">(1, 2)</span><span class="route-arrow" aria-hidden="true">→</span><strong id="target-coordinates">(3, 3)</strong></div>
+            <p class="route-detail" id="route-detail">3 grid steps · clear route</p>
+          </div>
+          <section class="inspect-card" id="inspect-card" hidden aria-label="Operative details"><h3 id="inspect-title">Entry operator</h3><p id="inspect-description"></p><dl><div><dt>Move range</dt><dd id="inspect-range"></dd></div><div><dt>Position</dt><dd id="inspect-position"></dd></div></dl></section>
+          <section class="hint-card" id="hint-card" hidden aria-label="Optional coordinate practice">
+            <div class="hint-heading"><span class="eyebrow">OPTIONAL / COORDINATES</span><button class="hint-close" id="hint-close" aria-label="Close optional practice">×</button></div>
+            <p id="hint-question">How many grid steps are in this highlighted route?</p>
+            <form id="hint-form"><label class="sr-only" for="hint-answer">Number of steps</label><input id="hint-answer" name="steps" inputmode="numeric" type="number" min="1" step="1" placeholder="Your answer" autocomplete="off"><button type="submit">Check</button></form>
+            <p class="hint-feedback" id="hint-feedback" aria-live="polite">Practice is optional. You can move at any time.</p>
+          </section>
+          <button class="connect-button" id="connect-relay" hidden>Connect relay <span>1 AP</span></button>
+          <p class="feedback" id="feedback" role="status" aria-live="polite">Choose a cyan tile to plan a move.</p>
+          <button class="confirm-button" id="confirm-move">Confirm move <span aria-hidden="true">↗</span></button>
+        </div>
+        <div class="turn-actions"><span id="turn-summary">6 squad AP available</span><button id="end-turn">End turn <span aria-hidden="true">→</span></button></div>
+      </aside>
+    </div>
+    <footer class="build-footer"><span>Turn-based movement · procedural character models</span><button id="how-to" aria-expanded="false">Controls</button></footer>
+    <div class="controls-note" id="controls-note" hidden>Tap a character or squad card, then a cyan tile. Confirm the move to spend 1 AP. Drag the board to rotate; use Top for an overhead view. Move Aya next to the relay, then Connect. End turn restores the squad’s AP. Arrow keys and Enter work while the board is focused.</div>
+  </main>
+  </template>
+  <script type="module" src="../../js/owner-only.mjs"></script>
+</body>
+</html>

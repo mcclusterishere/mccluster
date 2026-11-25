@@ -1,0 +1,1744 @@
+{
+ "duration_seconds": 97,
+ "language": "en",
+ "songTitle": "OSINT",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper small.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T19:23:35.581Z",
+  "confidence": 0.859,
+  "mismatched_lines": 9,
+  "sheet_lines": 26,
+  "heard_words": 273,
+  "ctc_aligned_lines": 35,
+  "timing": {
+   "align_seconds": 8.8,
+   "separate_seconds": 50.3,
+   "asr_seconds": 23.5,
+   "map_seconds": 0.2
+  }
+ },
+ "plain": "From getting these Os sent\nTo digging through OSINT\nGot open source intelligence\nI’ll show you where to go for it\nFrom getting these Os sent\nTo digging through OSINT\nGot open source intelligence\nI’ll show you where to go for it\n\nOSINT uses public sources. Social media and forums.\nLoad the info up record it; we gon’ use it to extort him.\nGaining access to a library’s data cache it was proprietary\nPaid me cash to keep me quiet. So don’t ask me why I’m quiet scary\nOoh these suckers really make me anxious. Loser bum affiliated gang shit\nThrough the mud my villains stay updated using vulnerability databases\nPublic and Private Information Sharing Centers do subscription payments\nknow a couple guys who pay but i am in for free I infiltrated\nCheck the traffic on your log tonight I’ve been playing with your system data\nThey say they never compromised but I see a lot of indicators\nFrom getting these Os sent\nTo digging through OSINT\nGot open source intelligence\nI’ll show you where to go for it\nFrom getting these Os sent\nTo digging through OSINT\nGot open source intelligence\nI’ll show you where to go for it\n\nThe onion router surfing, got ghost mode on Jumping\nthrough the darkness and the protocols I'm clicking cause\nI'm the only icon They all lean on And\nI'ma tell y 'all digging through old synth I\ngot that synth, that success, that's a bold synth\nI'm that shit.\nI smell like the bowl swish.\nI'm some cold shit.\nI'm that guy man getting these old sense",
+ "timed": {
+  "line": [
+   {
+    "begin": 4.146,
+    "end": 6.108,
+    "content": "From getting these Os sent",
+    "confidence": 0.56,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 4.146,
+      "end": 4.407,
+      "content": "From"
+     },
+     {
+      "begin": 4.488,
+      "end": 4.79,
+      "content": "getting"
+     },
+     {
+      "begin": 4.971,
+      "end": 5.172,
+      "content": "these"
+     },
+     {
+      "begin": 5.333,
+      "end": 5.394,
+      "content": "Os"
+     },
+     {
+      "begin": 5.615,
+      "end": 6.108,
+      "content": "sent"
+     }
+    ],
+    "align_score": 0.541
+   },
+   {
+    "begin": 6.108,
+    "end": 7.38,
+    "content": "To digging through OSINT",
+    "confidence": 0.739,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 6.108,
+      "end": 6.209,
+      "content": "To"
+     },
+     {
+      "begin": 6.27,
+      "end": 6.572,
+      "content": "digging"
+     },
+     {
+      "begin": 6.593,
+      "end": 6.815,
+      "content": "through"
+     },
+     {
+      "begin": 7.077,
+      "end": 7.38,
+      "content": "OSINT"
+     }
+    ],
+    "align_score": 0.724
+   },
+   {
+    "begin": 7.764,
+    "end": 9.337,
+    "content": "Got open source intelligence",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 7.764,
+      "end": 7.966,
+      "content": "Got"
+     },
+     {
+      "begin": 8.087,
+      "end": 8.269,
+      "content": "open"
+     },
+     {
+      "begin": 8.349,
+      "end": 8.571,
+      "content": "source"
+     },
+     {
+      "begin": 8.611,
+      "end": 9.337,
+      "content": "intelligence"
+     }
+    ],
+    "align_score": 0.96
+   },
+   {
+    "begin": 9.545,
+    "end": 11.136,
+    "content": "I’ll show you where to go for it",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 9.545,
+      "end": 9.706,
+      "content": "I’ll"
+     },
+     {
+      "begin": 9.746,
+      "end": 9.887,
+      "content": "show"
+     },
+     {
+      "begin": 9.968,
+      "end": 10.048,
+      "content": "you"
+     },
+     {
+      "begin": 10.129,
+      "end": 10.29,
+      "content": "where"
+     },
+     {
+      "begin": 10.33,
+      "end": 10.37,
+      "content": "to"
+     },
+     {
+      "begin": 10.451,
+      "end": 10.612,
+      "content": "go"
+     },
+     {
+      "begin": 10.733,
+      "end": 10.874,
+      "content": "for"
+     },
+     {
+      "begin": 11.015,
+      "end": 11.136,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.877
+   },
+   {
+    "begin": 11.444,
+    "end": 13.208,
+    "content": "From getting these Os sent",
+    "confidence": 0.56,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 11.444,
+      "end": 11.545,
+      "content": "From"
+     },
+     {
+      "begin": 11.625,
+      "end": 11.887,
+      "content": "getting"
+     },
+     {
+      "begin": 11.928,
+      "end": 12.27,
+      "content": "these"
+     },
+     {
+      "begin": 12.432,
+      "end": 12.512,
+      "content": "Os"
+     },
+     {
+      "begin": 12.693,
+      "end": 13.208,
+      "content": "sent"
+     }
+    ],
+    "align_score": 0.586
+   },
+   {
+    "begin": 13.208,
+    "end": 14.48,
+    "content": "To digging through OSINT",
+    "confidence": 0.75,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 13.208,
+      "end": 13.289,
+      "content": "To"
+     },
+     {
+      "begin": 13.39,
+      "end": 13.672,
+      "content": "digging"
+     },
+     {
+      "begin": 13.713,
+      "end": 13.935,
+      "content": "through"
+     },
+     {
+      "begin": 14.197,
+      "end": 14.48,
+      "content": "OSINT"
+     }
+    ],
+    "align_score": 0.549
+   },
+   {
+    "begin": 14.864,
+    "end": 16.1,
+    "content": "Got open source intelligence",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 14.864,
+      "end": 15.106,
+      "content": "Got"
+     },
+     {
+      "begin": 15.227,
+      "end": 15.388,
+      "content": "open"
+     },
+     {
+      "begin": 15.449,
+      "end": 15.691,
+      "content": "source"
+     },
+     {
+      "begin": 15.731,
+      "end": 16.1,
+      "content": "intelligence"
+     }
+    ],
+    "align_score": 0.808
+   },
+   {
+    "begin": 16.1,
+    "end": 18.703,
+    "content": "I’ll show you where to go for it",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 16.1,
+      "end": 16.463,
+      "content": "I’ll"
+     },
+     {
+      "begin": 16.906,
+      "end": 17.047,
+      "content": "show"
+     },
+     {
+      "begin": 17.127,
+      "end": 17.208,
+      "content": "you"
+     },
+     {
+      "begin": 17.289,
+      "end": 17.47,
+      "content": "where"
+     },
+     {
+      "begin": 17.49,
+      "end": 17.53,
+      "content": "to"
+     },
+     {
+      "begin": 17.571,
+      "end": 17.712,
+      "content": "go"
+     },
+     {
+      "begin": 17.832,
+      "end": 18.034,
+      "content": "for"
+     },
+     {
+      "begin": 18.703,
+      "end": 18.703,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.416
+   },
+   {
+    "begin": 18.703,
+    "end": 21.977,
+    "content": "OSINT uses public sources. Social media and forums.",
+    "confidence": 0.97,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 18.703,
+      "end": 18.964,
+      "content": "OSINT"
+     },
+     {
+      "begin": 19.064,
+      "end": 19.285,
+      "content": "uses"
+     },
+     {
+      "begin": 19.366,
+      "end": 19.667,
+      "content": "public"
+     },
+     {
+      "begin": 19.767,
+      "end": 20.169,
+      "content": "sources."
+     },
+     {
+      "begin": 20.471,
+      "end": 20.772,
+      "content": "Social"
+     },
+     {
+      "begin": 20.832,
+      "end": 21.093,
+      "content": "media"
+     },
+     {
+      "begin": 21.274,
+      "end": 21.455,
+      "content": "and"
+     },
+     {
+      "begin": 21.555,
+      "end": 21.977,
+      "content": "forums."
+     }
+    ],
+    "align_score": 0.808
+   },
+   {
+    "begin": 22.263,
+    "end": 25.542,
+    "content": "Load the info up record it; we gon’ use it to extort him.",
+    "confidence": 0.831,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 22.263,
+      "end": 22.424,
+      "content": "Load"
+     },
+     {
+      "begin": 22.484,
+      "end": 22.544,
+      "content": "the"
+     },
+     {
+      "begin": 22.625,
+      "end": 22.826,
+      "content": "info"
+     },
+     {
+      "begin": 22.986,
+      "end": 23.087,
+      "content": "up"
+     },
+     {
+      "begin": 23.167,
+      "end": 23.609,
+      "content": "record"
+     },
+     {
+      "begin": 23.69,
+      "end": 23.73,
+      "content": "it;"
+     },
+     {
+      "begin": 24.051,
+      "end": 24.132,
+      "content": "we"
+     },
+     {
+      "begin": 24.212,
+      "end": 24.313,
+      "content": "gon’"
+     },
+     {
+      "begin": 24.433,
+      "end": 24.514,
+      "content": "use"
+     },
+     {
+      "begin": 24.594,
+      "end": 24.634,
+      "content": "it"
+     },
+     {
+      "begin": 24.694,
+      "end": 24.835,
+      "content": "to"
+     },
+     {
+      "begin": 24.956,
+      "end": 25.378,
+      "content": "extort"
+     },
+     {
+      "begin": 25.542,
+      "end": 25.542,
+      "content": "him."
+     }
+    ],
+    "align_score": 0.705
+   },
+   {
+    "begin": 25.542,
+    "end": 28.978,
+    "content": "Gaining access to a library’s data cache it was proprietary",
+    "confidence": 0.625,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 25.542,
+      "end": 25.824,
+      "content": "Gaining"
+     },
+     {
+      "begin": 25.904,
+      "end": 26.125,
+      "content": "access"
+     },
+     {
+      "begin": 26.165,
+      "end": 26.246,
+      "content": "to"
+     },
+     {
+      "begin": 26.386,
+      "end": 26.406,
+      "content": "a"
+     },
+     {
+      "begin": 26.487,
+      "end": 27.25,
+      "content": "library’s"
+     },
+     {
+      "begin": 27.27,
+      "end": 27.532,
+      "content": "data"
+     },
+     {
+      "begin": 27.592,
+      "end": 27.813,
+      "content": "cache"
+     },
+     {
+      "begin": 27.873,
+      "end": 27.913,
+      "content": "it"
+     },
+     {
+      "begin": 27.954,
+      "end": 28.034,
+      "content": "was"
+     },
+     {
+      "begin": 28.114,
+      "end": 28.978,
+      "content": "proprietary"
+     }
+    ],
+    "align_score": 0.614
+   },
+   {
+    "begin": 29.062,
+    "end": 32.52,
+    "content": "Paid me cash to keep me quiet. So don’t ask me why I’m quiet scary",
+    "confidence": 0.633,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 29.062,
+      "end": 29.223,
+      "content": "Paid"
+     },
+     {
+      "begin": 29.263,
+      "end": 29.323,
+      "content": "me"
+     },
+     {
+      "begin": 29.404,
+      "end": 29.585,
+      "content": "cash"
+     },
+     {
+      "begin": 29.605,
+      "end": 29.645,
+      "content": "to"
+     },
+     {
+      "begin": 29.685,
+      "end": 29.805,
+      "content": "keep"
+     },
+     {
+      "begin": 29.846,
+      "end": 29.906,
+      "content": "me"
+     },
+     {
+      "begin": 29.986,
+      "end": 30.388,
+      "content": "quiet."
+     },
+     {
+      "begin": 30.408,
+      "end": 30.448,
+      "content": "So"
+     },
+     {
+      "begin": 30.83,
+      "end": 30.991,
+      "content": "don’t"
+     },
+     {
+      "begin": 31.192,
+      "end": 31.292,
+      "content": "ask"
+     },
+     {
+      "begin": 31.352,
+      "end": 31.393,
+      "content": "me"
+     },
+     {
+      "begin": 31.433,
+      "end": 31.533,
+      "content": "why"
+     },
+     {
+      "begin": 31.594,
+      "end": 31.674,
+      "content": "I’m"
+     },
+     {
+      "begin": 31.794,
+      "end": 32.076,
+      "content": "quiet"
+     },
+     {
+      "begin": 32.176,
+      "end": 32.52,
+      "content": "scary"
+     }
+    ],
+    "align_score": 0.799
+   },
+   {
+    "begin": 32.52,
+    "end": 36,
+    "content": "Ooh these suckers really make me anxious. Loser bum affiliated gang shit",
+    "confidence": 0.747,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 32.52,
+      "end": 33.043,
+      "content": "Ooh"
+     },
+     {
+      "begin": 33.063,
+      "end": 33.183,
+      "content": "these"
+     },
+     {
+      "begin": 33.224,
+      "end": 33.565,
+      "content": "suckers"
+     },
+     {
+      "begin": 33.605,
+      "end": 33.826,
+      "content": "really"
+     },
+     {
+      "begin": 33.907,
+      "end": 34.047,
+      "content": "make"
+     },
+     {
+      "begin": 34.088,
+      "end": 34.168,
+      "content": "me"
+     },
+     {
+      "begin": 34.349,
+      "end": 34.61,
+      "content": "anxious."
+     },
+     {
+      "begin": 34.67,
+      "end": 34.972,
+      "content": "Loser"
+     },
+     {
+      "begin": 34.992,
+      "end": 35.152,
+      "content": "bum"
+     },
+     {
+      "begin": 35.233,
+      "end": 35.976,
+      "content": "affiliated"
+     },
+     {
+      "begin": 36,
+      "end": 36,
+      "content": "gang"
+     },
+     {
+      "begin": 36,
+      "end": 36,
+      "content": "shit"
+     }
+    ],
+    "align_score": 0.734
+   },
+   {
+    "begin": 36,
+    "end": 39.918,
+    "content": "Through the mud my villains stay updated using vulnerability databases",
+    "confidence": 0.893,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 36,
+      "end": 36.563,
+      "content": "Through"
+     },
+     {
+      "begin": 36.603,
+      "end": 36.683,
+      "content": "the"
+     },
+     {
+      "begin": 36.744,
+      "end": 36.884,
+      "content": "mud"
+     },
+     {
+      "begin": 36.924,
+      "end": 37.005,
+      "content": "my"
+     },
+     {
+      "begin": 37.105,
+      "end": 37.387,
+      "content": "villains"
+     },
+     {
+      "begin": 37.427,
+      "end": 37.608,
+      "content": "stay"
+     },
+     {
+      "begin": 37.688,
+      "end": 38.17,
+      "content": "updated"
+     },
+     {
+      "begin": 38.251,
+      "end": 38.472,
+      "content": "using"
+     },
+     {
+      "begin": 38.512,
+      "end": 39.114,
+      "content": "vulnerability"
+     },
+     {
+      "begin": 39.235,
+      "end": 39.918,
+      "content": "databases"
+     }
+    ],
+    "align_score": 0.502
+   },
+   {
+    "begin": 40.003,
+    "end": 43.578,
+    "content": "Public and Private Information Sharing Centers do subscription payments",
+    "confidence": 0.881,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 40.003,
+      "end": 40.345,
+      "content": "Public"
+     },
+     {
+      "begin": 40.365,
+      "end": 40.425,
+      "content": "and"
+     },
+     {
+      "begin": 40.726,
+      "end": 41.048,
+      "content": "Private"
+     },
+     {
+      "begin": 41.088,
+      "end": 41.67,
+      "content": "Information"
+     },
+     {
+      "begin": 41.791,
+      "end": 42.072,
+      "content": "Sharing"
+     },
+     {
+      "begin": 42.112,
+      "end": 42.413,
+      "content": "Centers"
+     },
+     {
+      "begin": 42.453,
+      "end": 42.534,
+      "content": "do"
+     },
+     {
+      "begin": 42.614,
+      "end": 43.056,
+      "content": "subscription"
+     },
+     {
+      "begin": 43.136,
+      "end": 43.578,
+      "content": "payments"
+     }
+    ],
+    "align_score": 0.841
+   },
+   {
+    "begin": 43.983,
+    "end": 47.103,
+    "content": "know a couple guys who pay but i am in for free I infiltrated",
+    "confidence": 0.961,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 43.983,
+      "end": 44.084,
+      "content": "know"
+     },
+     {
+      "begin": 44.164,
+      "end": 44.184,
+      "content": "a"
+     },
+     {
+      "begin": 44.265,
+      "end": 44.486,
+      "content": "couple"
+     },
+     {
+      "begin": 44.546,
+      "end": 44.707,
+      "content": "guys"
+     },
+     {
+      "begin": 44.747,
+      "end": 44.807,
+      "content": "who"
+     },
+     {
+      "begin": 44.908,
+      "end": 45.089,
+      "content": "pay"
+     },
+     {
+      "begin": 45.189,
+      "end": 45.29,
+      "content": "but"
+     },
+     {
+      "begin": 45.43,
+      "end": 45.45,
+      "content": "i"
+     },
+     {
+      "begin": 45.531,
+      "end": 45.611,
+      "content": "am"
+     },
+     {
+      "begin": 45.732,
+      "end": 45.792,
+      "content": "in"
+     },
+     {
+      "begin": 45.852,
+      "end": 45.953,
+      "content": "for"
+     },
+     {
+      "begin": 46.033,
+      "end": 46.194,
+      "content": "free"
+     },
+     {
+      "begin": 46.255,
+      "end": 46.275,
+      "content": "I"
+     },
+     {
+      "begin": 46.395,
+      "end": 47.103,
+      "content": "infiltrated"
+     }
+    ],
+    "align_score": 0.676
+   },
+   {
+    "begin": 47.103,
+    "end": 50.221,
+    "content": "Check the traffic on your log tonight I’ve been playing with your system data",
+    "confidence": 0.986,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 47.103,
+      "end": 47.243,
+      "content": "Check"
+     },
+     {
+      "begin": 47.304,
+      "end": 47.384,
+      "content": "the"
+     },
+     {
+      "begin": 47.424,
+      "end": 47.705,
+      "content": "traffic"
+     },
+     {
+      "begin": 47.766,
+      "end": 47.866,
+      "content": "on"
+     },
+     {
+      "begin": 47.906,
+      "end": 48.007,
+      "content": "your"
+     },
+     {
+      "begin": 48.027,
+      "end": 48.188,
+      "content": "log"
+     },
+     {
+      "begin": 48.308,
+      "end": 48.65,
+      "content": "tonight"
+     },
+     {
+      "begin": 48.951,
+      "end": 49.051,
+      "content": "I’ve"
+     },
+     {
+      "begin": 49.091,
+      "end": 49.192,
+      "content": "been"
+     },
+     {
+      "begin": 49.232,
+      "end": 49.473,
+      "content": "playing"
+     },
+     {
+      "begin": 49.553,
+      "end": 49.734,
+      "content": "with"
+     },
+     {
+      "begin": 49.754,
+      "end": 49.835,
+      "content": "your"
+     },
+     {
+      "begin": 49.875,
+      "end": 50.136,
+      "content": "system"
+     },
+     {
+      "begin": 50.221,
+      "end": 50.221,
+      "content": "data"
+     }
+    ],
+    "align_score": 0.752
+   },
+   {
+    "begin": 50.221,
+    "end": 53.582,
+    "content": "They say they never compromised but I see a lot of indicators",
+    "confidence": 0.917,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 50.221,
+      "end": 50.663,
+      "content": "They"
+     },
+     {
+      "begin": 50.723,
+      "end": 50.824,
+      "content": "say"
+     },
+     {
+      "begin": 50.864,
+      "end": 50.944,
+      "content": "they"
+     },
+     {
+      "begin": 51.025,
+      "end": 51.185,
+      "content": "never"
+     },
+     {
+      "begin": 51.587,
+      "end": 52.23,
+      "content": "compromised"
+     },
+     {
+      "begin": 52.471,
+      "end": 52.551,
+      "content": "but"
+     },
+     {
+      "begin": 52.632,
+      "end": 52.652,
+      "content": "I"
+     },
+     {
+      "begin": 52.752,
+      "end": 52.873,
+      "content": "see"
+     },
+     {
+      "begin": 52.993,
+      "end": 53.013,
+      "content": "a"
+     },
+     {
+      "begin": 53.114,
+      "end": 53.274,
+      "content": "lot"
+     },
+     {
+      "begin": 53.335,
+      "end": 53.375,
+      "content": "of"
+     },
+     {
+      "begin": 53.495,
+      "end": 53.582,
+      "content": "indicators"
+     }
+    ],
+    "align_score": 0.676
+   },
+   {
+    "begin": 53.582,
+    "end": 55.886,
+    "content": "From getting these Os sent",
+    "confidence": 0.942,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 53.582,
+      "end": 54.186,
+      "content": "From"
+     },
+     {
+      "begin": 54.267,
+      "end": 54.528,
+      "content": "getting"
+     },
+     {
+      "begin": 54.589,
+      "end": 54.851,
+      "content": "these"
+     },
+     {
+      "begin": 55.092,
+      "end": 55.193,
+      "content": "Os"
+     },
+     {
+      "begin": 55.334,
+      "end": 55.886,
+      "content": "sent"
+     }
+    ],
+    "align_score": 0.501
+   },
+   {
+    "begin": 55.886,
+    "end": 57.416,
+    "content": "To digging through OSINT",
+    "confidence": 0.864,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 55.886,
+      "end": 55.987,
+      "content": "To"
+     },
+     {
+      "begin": 56.047,
+      "end": 56.309,
+      "content": "digging"
+     },
+     {
+      "begin": 56.349,
+      "end": 56.571,
+      "content": "through"
+     },
+     {
+      "begin": 56.853,
+      "end": 57.416,
+      "content": "OSINT"
+     }
+    ],
+    "align_score": 0.652
+   },
+   {
+    "begin": 57.546,
+    "end": 59.117,
+    "content": "Got open source intelligence",
+    "confidence": 0.914,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 57.546,
+      "end": 57.767,
+      "content": "Got"
+     },
+     {
+      "begin": 57.888,
+      "end": 58.049,
+      "content": "open"
+     },
+     {
+      "begin": 58.11,
+      "end": 58.311,
+      "content": "source"
+     },
+     {
+      "begin": 58.392,
+      "end": 59.117,
+      "content": "intelligence"
+     }
+    ],
+    "align_score": 0.875
+   },
+   {
+    "begin": 59.365,
+    "end": 60.501,
+    "content": "I’ll show you where to go for it",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 59.365,
+      "end": 59.506,
+      "content": "I’ll"
+     },
+     {
+      "begin": 59.526,
+      "end": 59.667,
+      "content": "show"
+     },
+     {
+      "begin": 59.748,
+      "end": 59.849,
+      "content": "you"
+     },
+     {
+      "begin": 59.929,
+      "end": 60.09,
+      "content": "where"
+     },
+     {
+      "begin": 60.11,
+      "end": 60.171,
+      "content": "to"
+     },
+     {
+      "begin": 60.251,
+      "end": 60.372,
+      "content": "go"
+     },
+     {
+      "begin": 60.501,
+      "end": 60.501,
+      "content": "for"
+     },
+     {
+      "begin": 60.501,
+      "end": 60.501,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.664
+   },
+   {
+    "begin": 60.501,
+    "end": 62.968,
+    "content": "From getting these Os sent",
+    "confidence": 0.634,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 60.501,
+      "end": 61.327,
+      "content": "From"
+     },
+     {
+      "begin": 61.407,
+      "end": 61.689,
+      "content": "getting"
+     },
+     {
+      "begin": 61.729,
+      "end": 62.051,
+      "content": "these"
+     },
+     {
+      "begin": 62.233,
+      "end": 62.313,
+      "content": "Os"
+     },
+     {
+      "begin": 62.474,
+      "end": 62.968,
+      "content": "sent"
+     }
+    ],
+    "align_score": 0.517
+   },
+   {
+    "begin": 62.968,
+    "end": 64.159,
+    "content": "To digging through OSINT",
+    "confidence": 0.75,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 62.968,
+      "end": 63.049,
+      "content": "To"
+     },
+     {
+      "begin": 63.13,
+      "end": 63.412,
+      "content": "digging"
+     },
+     {
+      "begin": 63.453,
+      "end": 63.695,
+      "content": "through"
+     },
+     {
+      "begin": 63.957,
+      "end": 64.159,
+      "content": "OSINT"
+     }
+    ],
+    "align_score": 0.461
+   },
+   {
+    "begin": 64.646,
+    "end": 65.7,
+    "content": "Got open source intelligence",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 64.646,
+      "end": 64.887,
+      "content": "Got"
+     },
+     {
+      "begin": 64.988,
+      "end": 65.129,
+      "content": "open"
+     },
+     {
+      "begin": 65.23,
+      "end": 65.451,
+      "content": "source"
+     },
+     {
+      "begin": 65.492,
+      "end": 65.7,
+      "content": "intelligence"
+     }
+    ],
+    "align_score": 0.835
+   },
+   {
+    "begin": 65.7,
+    "end": 67.922,
+    "content": "I’ll show you where to go for it",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse 1",
+    "words": [
+     {
+      "begin": 65.7,
+      "end": 65.841,
+      "content": "I’ll"
+     },
+     {
+      "begin": 66.667,
+      "end": 66.808,
+      "content": "show"
+     },
+     {
+      "begin": 66.888,
+      "end": 66.969,
+      "content": "you"
+     },
+     {
+      "begin": 67.029,
+      "end": 67.17,
+      "content": "where"
+     },
+     {
+      "begin": 67.211,
+      "end": 67.271,
+      "content": "to"
+     },
+     {
+      "begin": 67.331,
+      "end": 67.472,
+      "content": "go"
+     },
+     {
+      "begin": 67.593,
+      "end": 67.734,
+      "content": "for"
+     },
+     {
+      "begin": 67.875,
+      "end": 67.922,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.761
+   },
+   {
+    "begin": 67.922,
+    "end": 72.462,
+    "content": "The onion router surfing, got ghost mode on Jumping",
+    "confidence": 0.869,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 67.922,
+      "end": 68.343,
+      "content": "The"
+     },
+     {
+      "begin": 68.464,
+      "end": 68.685,
+      "content": "onion"
+     },
+     {
+      "begin": 68.785,
+      "end": 69.247,
+      "content": "router"
+     },
+     {
+      "begin": 69.347,
+      "end": 69.969,
+      "content": "surfing,"
+     },
+     {
+      "begin": 70.029,
+      "end": 70.21,
+      "content": "got"
+     },
+     {
+      "begin": 70.27,
+      "end": 70.491,
+      "content": "ghost"
+     },
+     {
+      "begin": 70.591,
+      "end": 70.912,
+      "content": "mode"
+     },
+     {
+      "begin": 71.374,
+      "end": 71.414,
+      "content": "on"
+     },
+     {
+      "begin": 72.057,
+      "end": 72.462,
+      "content": "Jumping"
+     }
+    ],
+    "added": true,
+    "align_score": 0.756
+   },
+   {
+    "begin": 72.462,
+    "end": 76.603,
+    "content": "through the darkness and the protocols I'm clicking cause",
+    "confidence": 0.819,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 72.462,
+      "end": 72.683,
+      "content": "through"
+     },
+     {
+      "begin": 72.744,
+      "end": 72.804,
+      "content": "the"
+     },
+     {
+      "begin": 72.924,
+      "end": 73.567,
+      "content": "darkness"
+     },
+     {
+      "begin": 73.627,
+      "end": 73.687,
+      "content": "and"
+     },
+     {
+      "begin": 73.707,
+      "end": 73.768,
+      "content": "the"
+     },
+     {
+      "begin": 73.828,
+      "end": 74.952,
+      "content": "protocols"
+     },
+     {
+      "begin": 75.334,
+      "end": 75.414,
+      "content": "I'm"
+     },
+     {
+      "begin": 75.575,
+      "end": 76.197,
+      "content": "clicking"
+     },
+     {
+      "begin": 76.237,
+      "end": 76.603,
+      "content": "cause"
+     }
+    ],
+    "added": true,
+    "align_score": 0.799
+   },
+   {
+    "begin": 76.603,
+    "end": 80.778,
+    "content": "I'm the only icon They all lean on And",
+    "confidence": 0.885,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 76.603,
+      "end": 76.723,
+      "content": "I'm"
+     },
+     {
+      "begin": 76.824,
+      "end": 76.984,
+      "content": "the"
+     },
+     {
+      "begin": 77.245,
+      "end": 77.526,
+      "content": "only"
+     },
+     {
+      "begin": 77.847,
+      "end": 78.47,
+      "content": "icon"
+     },
+     {
+      "begin": 78.891,
+      "end": 79.032,
+      "content": "They"
+     },
+     {
+      "begin": 79.333,
+      "end": 79.453,
+      "content": "all"
+     },
+     {
+      "begin": 79.533,
+      "end": 79.794,
+      "content": "lean"
+     },
+     {
+      "begin": 80.075,
+      "end": 80.156,
+      "content": "on"
+     },
+     {
+      "begin": 80.697,
+      "end": 80.778,
+      "content": "And"
+     }
+    ],
+    "added": true,
+    "align_score": 0.83
+   },
+   {
+    "begin": 80.923,
+    "end": 83.904,
+    "content": "I'ma tell y 'all digging through old synth I",
+    "confidence": 0.889,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 80.923,
+      "end": 81.084,
+      "content": "I'ma"
+     },
+     {
+      "begin": 81.165,
+      "end": 81.366,
+      "content": "tell"
+     },
+     {
+      "begin": 81.466,
+      "end": 81.486,
+      "content": "y"
+     },
+     {
+      "begin": 81.587,
+      "end": 81.768,
+      "content": "'all"
+     },
+     {
+      "begin": 81.828,
+      "end": 82.049,
+      "content": "digging"
+     },
+     {
+      "begin": 82.129,
+      "end": 82.35,
+      "content": "through"
+     },
+     {
+      "begin": 82.592,
+      "end": 82.732,
+      "content": "old"
+     },
+     {
+      "begin": 82.833,
+      "end": 83.717,
+      "content": "synth"
+     },
+     {
+      "begin": 83.904,
+      "end": 83.904,
+      "content": "I"
+     }
+    ],
+    "added": true,
+    "align_score": 0.461
+   },
+   {
+    "begin": 83.904,
+    "end": 86.718,
+    "content": "got that synth, that success, that's a bold synth",
+    "confidence": 0.951,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 83.904,
+      "end": 84.105,
+      "content": "got"
+     },
+     {
+      "begin": 84.245,
+      "end": 84.446,
+      "content": "that"
+     },
+     {
+      "begin": 84.587,
+      "end": 84.848,
+      "content": "synth,"
+     },
+     {
+      "begin": 84.909,
+      "end": 85.049,
+      "content": "that"
+     },
+     {
+      "begin": 85.15,
+      "end": 85.592,
+      "content": "success,"
+     },
+     {
+      "begin": 85.672,
+      "end": 85.833,
+      "content": "that's"
+     },
+     {
+      "begin": 85.914,
+      "end": 85.934,
+      "content": "a"
+     },
+     {
+      "begin": 86.034,
+      "end": 86.275,
+      "content": "bold"
+     },
+     {
+      "begin": 86.396,
+      "end": 86.718,
+      "content": "synth"
+     }
+    ],
+    "added": true,
+    "align_score": 0.689
+   },
+   {
+    "begin": 87.209,
+    "end": 88.016,
+    "content": "I'm that shit.",
+    "confidence": 0.934,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 87.209,
+      "end": 87.33,
+      "content": "I'm"
+     },
+     {
+      "begin": 87.451,
+      "end": 87.633,
+      "content": "that"
+     },
+     {
+      "begin": 87.774,
+      "end": 88.016,
+      "content": "shit."
+     }
+    ],
+    "added": true,
+    "align_score": 0.834
+   },
+   {
+    "begin": 88.325,
+    "end": 90.202,
+    "content": "I smell like the bowl swish.",
+    "confidence": 0.858,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 88.325,
+      "end": 88.345,
+      "content": "I"
+     },
+     {
+      "begin": 88.485,
+      "end": 88.787,
+      "content": "smell"
+     },
+     {
+      "begin": 88.908,
+      "end": 89.089,
+      "content": "like"
+     },
+     {
+      "begin": 89.23,
+      "end": 89.35,
+      "content": "the"
+     },
+     {
+      "begin": 89.531,
+      "end": 89.833,
+      "content": "bowl"
+     },
+     {
+      "begin": 90.014,
+      "end": 90.202,
+      "content": "swish."
+     }
+    ],
+    "added": true,
+    "align_score": 0.844
+   },
+   {
+    "begin": 90.202,
+    "end": 92.001,
+    "content": "I'm some cold shit.",
+    "confidence": 0.993,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 90.202,
+      "end": 90.948,
+      "content": "I'm"
+     },
+     {
+      "begin": 91.089,
+      "end": 91.27,
+      "content": "some"
+     },
+     {
+      "begin": 91.391,
+      "end": 91.713,
+      "content": "cold"
+     },
+     {
+      "begin": 91.854,
+      "end": 92.001,
+      "content": "shit."
+     }
+    ],
+    "added": true,
+    "align_score": 0.878
+   },
+   {
+    "begin": 92.001,
+    "end": 95.858,
+    "content": "I'm that guy man getting these old sense",
+    "confidence": 0.716,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 92.001,
+      "end": 92.664,
+      "content": "I'm"
+     },
+     {
+      "begin": 92.785,
+      "end": 92.945,
+      "content": "that"
+     },
+     {
+      "begin": 93.106,
+      "end": 93.447,
+      "content": "guy"
+     },
+     {
+      "begin": 93.809,
+      "end": 94.07,
+      "content": "man"
+     },
+     {
+      "begin": 94.211,
+      "end": 94.492,
+      "content": "getting"
+     },
+     {
+      "begin": 94.572,
+      "end": 94.874,
+      "content": "these"
+     },
+     {
+      "begin": 95.215,
+      "end": 95.416,
+      "content": "old"
+     },
+     {
+      "begin": 95.557,
+      "end": 95.858,
+      "content": "sense"
+     }
+    ],
+    "added": true,
+    "align_score": 0.565
+   }
+  ]
+ }
+}

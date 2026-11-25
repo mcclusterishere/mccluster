@@ -1,7 +1,10 @@
 import core from './worker.js';
+import { allowedOrigins } from '../lib/http.js';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
-function cors(env){return{'access-control-allow-origin':env.ALLOWED_ORIGIN||'*','access-control-allow-methods':'GET,POST,PATCH,DELETE,OPTIONS','access-control-allow-headers':'content-type,authorization,x-we-user-id,x-we-role','access-control-max-age':'86400'}}
+/* never '*': an origin that is not allowlisted gets the first allowlisted one, as ../lib/http.js answers */
+const corsOrigin=env=>env.ALLOWED_ORIGIN&&env.ALLOWED_ORIGIN!=='*'?env.ALLOWED_ORIGIN:allowedOrigins(env)[0];
+function cors(env){return{'access-control-allow-origin':corsOrigin(env),'access-control-allow-methods':'GET,POST,PATCH,DELETE,OPTIONS','access-control-allow-headers':'content-type,authorization,x-we-user-id,x-we-role','access-control-max-age':'86400'}}
 function reply(env,data,status=200){return new Response(JSON.stringify(data),{status,headers:{...JSON_HEADERS,...cors(env)}})}
 function fail(env,message,status=400,detail){return reply(env,{error:message,detail},status)}
 function sbHeaders(env,extra={}){return{apikey:env.SUPABASE_SERVICE_ROLE_KEY,authorization:`Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,'content-type':'application/json',...extra}}

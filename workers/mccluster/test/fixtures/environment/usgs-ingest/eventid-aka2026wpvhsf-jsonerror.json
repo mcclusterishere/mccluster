@@ -1,0 +1,24 @@
+{
+ "recorded": {
+  "request": "GET https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=aka2026wpvhsf&format=geojson&jsonerror=true",
+  "retrieved_at": "2026-11-19T04:52:14Z",
+  "http_status": 200,
+  "content_type": "application/json",
+  "cache_control": "public, max-age=60",
+  "trimmed": "nothing",
+  "credit": "U.S. Geological Survey, Earthquake Hazards Program (public domain, U.S. Government work)"
+ },
+ "body": {
+  "type": "Feature",
+  "metadata": {
+   "status": 409,
+   "generated": 1795063935000,
+   "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=aka2026wpvhsf&format=geojson&jsonerror=true",
+   "title": "Search Error",
+   "api": "2.8.4",
+   "count": 0,
+   "error": "The requested event has been deleted. To see information for deleted events, perform a search and use the \"includedeleted\" option."
+  },
+  "properties": null
+ }
+}

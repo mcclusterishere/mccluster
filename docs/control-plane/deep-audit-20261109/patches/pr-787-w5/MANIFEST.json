@@ -1,0 +1,332 @@
+{
+ "lane": "w5",
+ "finding_ids": [
+  "W5"
+ ],
+ "pr": 787,
+ "base_sha": "cf8c3cc7f642bf7e48a4b5e042df1e24203d2ecf",
+ "local_head_sha": "841736be6a9906ddd6a4b350876d1ce66c2c3b6a",
+ "patches": [
+  {
+   "file": "0001-fix-prim3-publish-the-lattice-learning-runtime-the-r.patch",
+   "sha256": "d4627c3ec90c62d02e21ef56b32204ad4306cad7ea31e4e9b906aadbffd27b08",
+   "subject": "fix(prim3): publish the lattice-learning runtime the reviewed-mission page imports (W5)"
+  },
+  {
+   "file": "0002-fix-prim3-teach-an-HQ-or-B1-cell-as-the-plan-s-12-ft.patch",
+   "sha256": "9ba315700769638e413f1f66e8750a83ea04217b909d3eac4c4e1c2885f1562b",
+   "subject": "fix(prim3): teach an HQ or B1 cell as the plan's 12 ft (3.6576 m) and name the 3.54 m rule tile apart (W5)"
+  }
+ ],
+ "files_changed": [
+  "PRIM3/game/halo/adaptive/topology-learning.mjs",
+  "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json",
+  "docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json",
+  "docs/prim3/TOPOLOGY-LEARNING.md",
+  "js/prim3-mission/released-app.mjs",
+  "js/prim3-mission/released-learning.mjs",
+  "js/prim3-mission/topology-learning.mjs",
+  "scripts/test/prim3-topology-learning.test.mjs",
+  "workers/mccluster/src/prim3/adaptive-learning.js"
+ ],
+ "tests": [
+  {
+   "command": "node --test scripts/test/prim3-topology-learning.test.mjs scripts/test/prim3-released-learning.test.mjs scripts/test/prim3-mission-client.test.mjs",
+   "result": "head f8499fad: 19 tests, 19 pass, 0 fail (17 existing + the 2 new W5 tests). Base cf8c3cc7: 17 tests, 17 pass (evidence/head-unit.log, evidence/base-unit.log)"
+  },
+  {
+   "command": "cd workers/mccluster && node --import ./test/support/offline-network.mjs --test test/prim3-*.test.mjs   (the 12 PRIM3 Worker test files, including prim3-adaptive-learning and prim3-learning that cover the touched adaptive-learning.js)",
+   "result": "head: 105 tests, 105 pass; base: 105 tests, 105 pass (evidence/head-worker-prim3.log, evidence/base-worker-prim3.log)"
+  },
+  {
+   "command": "node --test scripts/test/prim3-*.test.mjs   (the prim3-tactics.yml contract step)",
+   "result": "head: 177 tests, 174 pass, 0 fail, 3 skipped; base: 175 tests, 172 pass, 0 fail, 3 skipped. The same three environment skips both times (Floor 1 GLB is built at publish time; Prim3 checkout not found, twice) (evidence/head-prim3-root.log, evidence/base-prim3-root.log)"
+  },
+  {
+   "command": "node --test scripts/test/*.test.mjs   (the contracts job's root suite)",
+   "result": "head: 2055 tests, 2052 pass, 0 fail, 3 skipped; base: 2053 tests, 2050 pass, 0 fail, 3 skipped (same three skips); +2 = the two new tests (evidence/root-suite-head.summary.log, evidence/root-suite-base.summary.log; the full TAP logs were kept out of evidence for size)"
+  },
+  {
+   "command": "python3 -m unittest discover -s scripts/test -p 'test_*.py'",
+   "result": "head: Ran 7 tests, OK (evidence/python-head.log)"
+  },
+  {
+   "command": "cd PRIM3/game/halo && npm run validate   (prim3-halo-canon.yml; PRIM3/game/halo/** changed)",
+   "result": "head: campaign ok, 66 missions; 6 tests, 6 pass (evidence/head-halo-validate.log). Not run on the base"
+  },
+  {
+   "command": "python3 docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py; python3 docs/design/equity-uprise-building/production/audit_building_context.py",
+   "result": "head: 640 candidates (104 capability, 536 support-only), 2458/2458 checks, passed, and the committed coverage report is current (the run leaves the tree clean); building context audit PASS, 366 indexed files. Base: the same 640 and 2458/2458 (evidence/head-equity-uprise-sources.log, evidence/base-equity-uprise-sources.log). With only the source map put back to the base version the verifier fails: missing_from_map js/prim3-mission/topology-learning.mjs, stale_in_map PRIM3/game/halo/adaptive/topology-learning.mjs (evidence/source-map-needed.log), which is why patch 0001 moves the entry and regenerates the report"
+  },
+  {
+   "command": "COMBINED CHECK, scratch worktree: git checkout --detach <commit>; git merge --no-ff --no-commit claude/new-session-83ken5 (9bda5896); resolve the two conflicted files; node --test scripts/test/published-import-closure.test.mjs   (evidence/combined-check.sh)",
+   "result": "WITHOUT the series (cf8c3cc7): 2 tests, 1 pass, 1 fail, naming exactly js/prim3-mission/released-app.mjs and js/prim3-mission/released-learning.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips ...); exit 1 (evidence/combined-closure-without-series.log). WITH patch 0001 only (63c26995): 2/2, exit 0 (evidence/combined-closure-with-patch1-only.log). WITH the series (f8499fad): 2/2, exit 0 (evidence/combined-closure-with-series.log). The PR's three unit files on that merged tree: 19/19 (evidence/combined-unit-with-series.log)"
+  },
+  {
+   "command": "merge resolution used by the combined check (recorded, not kept as a patch)",
+   "result": "the merge conflicts in exactly two files, both generated Equity Uprise records: equity-uprise-repo-source-map-v2.json (both sides appended entries) and generated/equity-uprise-repo-source-coverage-report.json. Map: union of entries by path (evidence/union_source_map.py): 640 (PR side) + 691 (branch side) -> 696, 56 added from the branch side, no path classified differently by the two sides; re-derived directly from the two commits it is byte-identical, for both states (evidence/merge-resolution-determinism.log). Report: regenerated by the verifier on the merged tree: 696 candidates, 2682/2682 checks, passed, both with and without the series (evidence/combined-closure-*.log)"
+  },
+  {
+   "command": "PRIM3_BROWSER_TOOLS=<playwright 1.63.0 + three 0.180.0> CHROMIUM_PATH=/opt/pw-browsers/chromium node evidence/topology-e2e-driver.mjs <worktree> <worktree>/scripts/e2e/prim3-topology-learning.e2e.mjs   (the PR's journey, unmodified, from the source checkout; the driver supplies the real Worker handleLearning over evidence/memory-rest.mjs, see not_run)",
+   "result": "head: all 8 journeys PASS (transit-relay, equity-uprise-hq, equity-uprise-b1, equity-uprise-b1-attack, courtyard, city square 390, city hex 390, city hex 1280), 132.8 s, exit 0; repeated: 8/8 PASS, 130.6 s (evidence/e2e-topology-head.log, evidence/e2e-topology-head-run2.log). Base from the source checkout: 8/8 PASS, 117.2 s (evidence/e2e-topology-base.log): from the source tree the PRIM3/ import resolves, so the base passes; the defect shows only in the published tree (next entries)"
+  },
+  {
+   "command": "W5_JOURNEY=release PRIM3_BROWSER_TOOLS=<as above> CHROMIUM_PATH=/opt/pw-browsers/chromium node evidence/topology-e2e-driver.mjs <worktree> <worktree>/scripts/e2e/prim3-reviewed-release.e2e.mjs   (the PR's reviewed-release journeys: 390 legacy, 1280 legacy, 390 square)",
+   "result": "head: 3 PASS, 263.2 s, exit 0 (evidence/e2e-reviewed-release-head.log). The PASS lines say 'real SQL review': that is the script's fixed wording; here the store was memory-rest.mjs. Not run on the base"
+  },
+  {
+   "command": "PUBLISHED TREE, W5 isolated: evidence/combined-check.sh then evidence/build-export.sh (tracked files, deploy-pages.yml's own rm lines, __STAMP__) on the merged tree, served to Chromium by the recorded scratch variant evidence/prim3-topology-learning.serve-root.e2e.mjs (MCC_SERVE_ROOT plus diagnostic prints; diff in evidence/e2e-serve-root-variant.diff)",
+   "result": "WITHOUT the series (cf8c3cc7 + 9bda5896): the page never boots: HTTP 404 for PRIM3/game/halo/adaptive/topology-learning.mjs, 'Failed to fetch dynamically imported module .../js/prim3-mission/released-app.mjs', page.waitForFunction timeout 30000 ms, 0 fixture requests, exit 1 (evidence/e2e-export-merged-without-series.log). WITH the series (f8499fad + 9bda5896): all 8 journeys PASS, 106.0 s, exit 0 (evidence/e2e-export-merged-with-series.log); the HQ and B1 runs log 404s for the building GLBs because build-export.sh, like the audit branch's original, does not run deploy-pages.yml's equity-uprise-preview copy step and docs/ is stripped; the journeys pass without the models"
+  },
+  {
+   "command": "PUBLISHED TREE of the PR alone (not merged), same builder and variant",
+   "result": "base cf8c3cc7: never boots (404 for PRIM3/game/halo/adaptive/topology-learning.mjs) (evidence/e2e-export-base-alone.log). Series head alone: never boots either, at PRIM3/game/halo/generated/recipe.mjs, the W1 import that only the audit branch fixes (evidence/e2e-export-head-alone-blocked-by-w1.log). So the published page needs both: #787 rebased onto #793 plus this series"
+  },
+  {
+   "command": "frame shown in the browser: PRIM3_TOPOLOGY_VARIANT=equity-uprise-hq MCC_SERVE_ROOT=<source checkout> PRIM3_BROWSER_TOOLS=<as above> CHROMIUM_PATH=/opt/pw-browsers/chromium node evidence/topology-e2e-driver.mjs <source checkout> evidence/prim3-topology-learning.serve-root.e2e.mjs (the scratch variant on the base and head source checkouts; without MCC_SERVE_ROOT it serves the folder two levels above itself, not a checkout)",
+   "result": "base: brief 'Equity Uprise HQ. X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile.' and the first question opens with the same frame; head: 'Equity Uprise HQ. X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile.'; both journeys PASS (evidence/e2e-hq-frame-base.log, evidence/e2e-hq-frame-head.log). The published merged tree shows the same new text for HQ, B1 and B1 attack, and unchanged frames for the other variants (evidence/e2e-export-merged-with-series.log)"
+  },
+  {
+   "command": "python3 -I evidence/mutations.py <scratch checkout of the series head>",
+   "result": "10/10 mutations caught by the two W5 tests (cell 3.66 m, cell 3.54 m, rule-tile clause dropped, rule tile 3.66 m, origin x−4, only B1 defend reverted, Transit given the HQ cell, released-app.mjs or released-learning.mjs back on the private path, private path a second copy); checkout restored clean (evidence/mutations.log)"
+  },
+  {
+   "command": "WRANGLER_SEND_METRICS=false CI=1 wrangler versions upload --dry-run --outdir <scratch> --config workers/mccluster/wrangler.toml   (the contracts job's compile step; wrangler 4.156.0 from the main checkout's locked install)",
+   "result": "head: bundled, 2512.03 KiB / gzip 550.92 KiB, '--dry-run: exiting now.'; the bundle carries ../../js/prim3-mission/topology-learning.mjs and the adaptive engine, and the new HQ/B1 frame text 3 times (evidence/worker-bundle-head.log)"
+  },
+  {
+   "command": "git am <0001> <0002> on a scratch checkout of cf8c3cc7",
+   "result": "both apply; resulting tree ccfb9a09a7ab88ad3fce34b7528014c078206ad1 equals the lane head's tree, and the tree after 0001 equals 63c26995's (evidence/apply-check.log). git show --find-copies-harder -C on 0001: 'copy {PRIM3/game/halo/adaptive => js/prim3-mission}/topology-learning.mjs (100%)' (evidence/copy-detection.log)"
+  }
+ ],
+ "fail_before": [
+  {
+   "test": "scripts/test/prim3-topology-learning.test.mjs (the series' version) on the PR head cf8c3cc7, as is",
+   "output_excerpt": "Error [ERR_MODULE_NOT_FOUND]: Cannot find module '.../js/prim3-mission/topology-learning.mjs' | not ok 3 - scripts/test/prim3-topology-learning.test.mjs | tests 15, pass 14, fail 1 (evidence/unit-fail-before-as-is.log)"
+  },
+  {
+   "test": "scripts/test/prim3-topology-learning.test.mjs :: authored frames follow their level modules: an HQ/B1 cell is the plan's 12 ft WORLD_M, the 3.54 m rule tile is named apart (audit W5)   (scratch variant: the one runtime import pointed back at the PR head's PRIM3 copy, so each test reports)",
+   "output_excerpt": "not ok 18 | error: 'equity-uprise-hq: names the plan cell and the rule tile separately: X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile' | tests 19, pass 17, fail 2 (evidence/unit-fail-before-per-test.log)"
+  },
+  {
+   "test": "scripts/test/prim3-topology-learning.test.mjs :: the published mission UI imports the published runtime; the private path only re-exports it (audit W5)   (same scratch variant)",
+   "output_excerpt": "not ok 19 | error: 'js/prim3-mission/released-app.mjs imports the published runtime' (evidence/unit-fail-before-per-test.log)"
+  },
+  {
+   "test": "scripts/test/published-import-closure.test.mjs :: every literal local dependency of a published module survives the strip   (PR head cf8c3cc7 merged with claude/new-session-83ken5)",
+   "output_excerpt": "not ok 1 | js/prim3-mission/released-app.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips PRIM3/game/halo/adaptive/topology-learning.mjs) | js/prim3-mission/released-learning.mjs -> ../../PRIM3/game/halo/adaptive/topology-learning.mjs (publish strips ...) | tests 2, pass 1, fail 1 (evidence/combined-closure-without-series.log)"
+  },
+  {
+   "test": "Chromium, the reviewed-mission page from the PUBLISHED tree of cf8c3cc7 merged with claude/new-session-83ken5 (journey transit-relay)",
+   "output_excerpt": "HTTP 404 https://matthew.mccluster.org/PRIM3/game/halo/adaptive/topology-learning.mjs | CONSOLE ERROR TypeError: Failed to fetch dynamically imported module: https://matthew.mccluster.org/js/prim3-mission/released-app.mjs?v=localexport00 | page.waitForFunction: Timeout 30000ms exceeded | fixture requests 0 (evidence/e2e-export-merged-without-series.log)"
+  },
+  {
+   "test": "Chromium, what an HQ learner is told on the PR head (source checkout, journey equity-uprise-hq)",
+   "output_excerpt": "FRAME equity-uprise-hq/square: Equity Uprise HQ. X=x−3, Y=8−y; +X east, +Y north; 3.54 m/tile. ... (evidence/e2e-hq-frame-base.log)"
+  }
+ ],
+ "pass_after": [
+  "scripts/test/prim3-topology-learning.test.mjs: 5/5 including both W5 tests; with prim3-released-learning and prim3-mission-client 19/19 (evidence/head-unit.log)",
+  "scripts/test/published-import-closure.test.mjs on the series merged with claude/new-session-83ken5: 2/2 (also 2/2 with patch 0001 alone) (evidence/combined-closure-with-series.log, evidence/combined-closure-with-patch1-only.log)",
+  "Chromium, the PUBLISHED merged tree with the series: all 8 topology journeys PASS (evidence/e2e-export-merged-with-series.log)",
+  "Chromium, source checkout of the series head: the PR's topology journey 8/8 twice and its reviewed-release journey 3/3 (evidence/e2e-topology-head.log, evidence/e2e-topology-head-run2.log, evidence/e2e-reviewed-release-head.log)",
+  "Chromium, HQ learner on the series head: 'one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile' in the brief and in every question (evidence/e2e-hq-frame-head.log)",
+  "No regression: Worker PRIM3 105/105, root PRIM3 177 (174 pass, 3 env skips), root suite 2055 (2052 pass, 3 env skips, 0 fail), Python 7 OK, halo canon 6/6, Equity Uprise sources 2458/2458, building audit PASS, Worker bundle builds"
+ ],
+ "not_run": [
+  "The PR's own acceptance harness scripts/test-prim3-adaptive-postgres.mjs (PostgreSQL 17.6 and PostgREST 13.0.7 in Docker, the topology and reviewed-release journeys at the end): there is no Docker daemon here. The PostgREST v13.0.7 static release was downloaded, but running it was refused by this session's permission system, so it was deleted unused. Every browser journey here ran over evidence/memory-rest.mjs, an in-memory PostgREST double written for this lane (NOT PostgreSQL, NOT PostgREST), so the reviewed-release SQL, RLS, triggers, the hash chain and the harness's lock-contention, lost-acknowledgement, expiry and revocation steps were not exercised by this lane. The series changes no SQL and only one Worker import path",
+  "GitHub Actions on a patched head: nothing was pushed (prim3-adaptive-postgres.yml, prim3-tactics.yml, prim3-halo-canon.yml, the mcp-continuity-ci.yml contracts job). Of the contracts job, only the root node suite, the Python tests and the workers/mccluster compile step were run; npm test for core, the full workers/mccluster suite (only its 12 PRIM3 files) and workers/mccluster-mcp, the mccluster-mcp compile and the workerd HTTP contract step were not",
+  "Playwright 1.57.0 (the CI pin): every browser run used Playwright 1.63.0 with Chrome for Testing 153.0.8010.12, headless, software GL. No Firefox, WebKit or device",
+  "deploy-pages.yml's publish-time steps beyond the strip and the stamp (equity-uprise-preview copies, fictional-city, site0): the exported-tree runs therefore do not show the building models (404s logged), and are not a full rehearsal of the Pages artifact",
+  "On the base: the reviewed-release journeys and the halo canon validation (head only)",
+  "The live #787 head: only the local ref refs/remotes/origin/pr-787 (cf8c3cc7) was used; nothing was fetched, so it was not confirmed that the live PR head is still this commit",
+  "No deployment, no database, no provider access, no credentials; nothing pushed, no remote ref touched, no GitHub comment"
+ ],
+ "notes": "W5 on PR #787 head cf8c3cc7, two commits on branch fix-w5-20261110 (63c26995, f8499fad). PART 1, published runtime (patch 0001): js/prim3-mission/released-app.mjs and released-learning.mjs imported PRIM3/game/halo/adaptive/topology-learning.mjs, which deploy-pages.yml strips with the rest of PRIM3/. Done the way W1 promoted the recipe compiler: the runtime is copied byte-identical to js/prim3-mission/topology-learning.mjs (git: 100% copy), the two published importers, the Worker (workers/mccluster/src/prim3/adaptive-learning.js) and the unit test import it, and the private path becomes a one-line `export *` shim so PRIM3/game/halo/adaptive/engine.mjs, which imports './topology-learning.mjs', keeps resolving to the same module (the engine itself is unchanged). js/prim3-mission/** is already a path of prim3-adaptive-postgres.yml, so no workflow trigger changes. The Equity Uprise source map entry moves with the file (the shim no longer names the product) and the generated coverage report is regenerated: still 640 candidates and 2458/2458 checks. PART 2, teaching frame (patch 0002): the HQ, B1 defend and B1 attack frames said '3.54 m/tile'. Their level module (js/prim3-tactics/levels/equity-uprise-hq.mjs, re-exported by equity-uprise-b1.mjs) lays the plan at FT_PER_TILE = 12 ft and draws the level at WORLD_M = 12 x 0.3048 = 3.6576 m a cell; the rules keep TILE_M = 3.54 m (the module's own words, and PROJECT-STATE.md: 'HQ adapter 12 ft cells, tactics 3.54 m tiles'). The frames now read 'X=x−3, Y=8−y; +X east, +Y north; one cell is 12 ft (3.6576 m) on the building plan; tactical rules use the separate 3.54 m game tile'. Transit / Relay (drawn and ruled on TILE_M), the generated operation, the courtyard and the City are unchanged. Only display text moves: the frame appears in the brief and in the question prompt, never in the signed result (hint and feedback strings, expected answers and prim3.lattice-learning/v1 are unchanged), so existing signed sessions replay unchanged and no version bump is needed. The parity test reads FRAME, WORLD_M, TILE_M, FT and FT_PER_TILE from the Transit, HQ and B1 level modules; docs/prim3/TOPOLOGY-LEARNING.md records the runtime's location and the two scales. EQUITY UPRISE GATE: the frame text states the building's plan scale, so docs/design/equity-uprise-building/AGENTS.md and README.md were read and audit_building_context.py run (PASS) before editing, and the frame and scale passages of PROJECT-STATE.md and REFERENCE-AUTHORITY.md were checked; no geometry, plan, floor, program or capability changes, so the rest of that preflight was not read in full. FINDINGS FOR THE LEAD: (1) The published reviewed-mission page of #787 is broken twice over: by this W5 import and by the W1 import (released-app.mjs -> js/prim3-tactics/levels/generated.mjs -> PRIM3/game/halo/generated/recipe.mjs) that only the audit branch fixes; with this series alone the published page still fails, at recipe.mjs. It works once #787 is rebased onto #793 with this series (8/8 journeys from the published merged tree). (2) Merging the audit branch into #787 (git merge, the combined state tested here) conflicts only in the two generated Equity Uprise records; the union of map entries plus a regenerated report resolves it (696 candidates, 2682/2682), and the series then also applies with git am -3, giving the same tree as merging the series head (b8ee2991). A literal rebase is not that small: git rebase replays #787's five non-merge commits and stops at the first, 27f9f5d1, with conflicts in prim3-released-mission.html, scripts/test/prim3-mission-client.test.mjs and scripts/test/prim3-released-learning.test.mjs (which #787's own merges of main had resolved); git rebase --rebase-merges stops at the recreated cf8c3cc7 merge with those three plus the two generated records (evidence/skeptic-verification.log). OBSERVATIONS, NOT CHANGED (outside W5): every non-City question joins the frame and the sentence with no full stop ('... 3.54 m game tile On an unobstructed ...'; the same on the PR head with '3.54 m/tile On'), because latticeQuestion() writes `${axes} On ...` and the variant frames end without one; docs/prim3/ADAPTIVE-MISSION-ENGINE.md still says engine.mjs has no dependencies, stale since #787 added the topology import. TOOLING: Playwright 1.63.0 from /opt/node-tools, Chromium /opt/pw-browsers/chromium (Chrome for Testing 153.0.8010.12), three 0.180.0 from an earlier scratch install (the version the journeys assert); node 22.23.4; git 2.43.0. The scratch scripts used are in evidence/ (topology-e2e-driver.mjs, memory-rest.mjs, the serve-root journey variant and its diff, build-export.sh, combined-check.sh, union_source_map.py, mutations.py); the driver gained its W5_JOURNEY switch after the first head run (same code path otherwise), and the repeat run used the final driver. Commits carry the repository's configured git identity as author and committer, as in the other series. SKEPTIC VERIFICATION, 2026-11-10 (independent worktrees, the patches applied with git am on cf8c3cc7): every command above was re-run and every count matched (evidence/skeptic-verification.log); the new tests fail on the base for the stated reasons, and each fails on its own part alone (only the published-import test with the frames fixed, only the frame test after 0001); the independent union of the source map is byte-identical to union_source_map.py's in both states; base and series runtimes differ only in the frame and prompt of the three HQ/B1 variants across 11520 generated questions; at 390 px the HQ and B1 pages show no horizontal overflow while the new frame is on screen; the full workers/mccluster suite, not run by the lane, passes 1459/1459 on head and base. Corrections from that verification: FINDINGS (2) said a rebase was tested; it was a merge, and a literal rebase conflicts in three more files (reworded above); the frame-shown and reviewed-release commands gained the MCC_SERVE_ROOT and browser-tool settings they need to reproduce. Not changed, since it is in a patch: 0002's commit message says the 3.54 m tile is 3.3% smaller than the 3.6576 m cell; it is 3.2% smaller (the cell is 3.3% larger, the level module's own 'over').\n\nLEAD CORRECTION, 2026-11-10, after the skeptic verification: the commit message of patch 0002 said the 3.54 m tile is '3.3% smaller' than the 3.6576 m cell; it is 3.2% smaller (the cell is 3.3% larger). Only that sentence of the commit message changed: the commit was amended on branch fix-w5-20261110 (f8499fad -> 841736be), its tree is unchanged (ccfb9a09), patch 0001 is byte-identical, and patch 0002 was regenerated with git format-patch. The logs in evidence/ that name f8499fad describe the same tree.",
+ "evidence": [
+  {
+   "file": "evidence/apply-check.log",
+   "sha256": "3b0aea28844124708b6bcb1eeea7300536ad91a8cc864f585335b532acf28689"
+  },
+  {
+   "file": "evidence/base-equity-uprise-sources.log",
+   "sha256": "b4c239d4ce9ca29069b1fb828e93be05bd63e0089714de1c4f8d56b9c994f364"
+  },
+  {
+   "file": "evidence/base-prim3-root.log",
+   "sha256": "54d235b93d4f0785fb7aa0bd918e4823b994444267459bd02d2d9ddc44663c1c"
+  },
+  {
+   "file": "evidence/base-unit.log",
+   "sha256": "a177ecc22724725cadb3dedb5420a2886fc0a40640693b2b8659b5591680f211"
+  },
+  {
+   "file": "evidence/base-worker-prim3.log",
+   "sha256": "bfbfd51f85f10eb9ef2feafd2735949c04ccb69ef410f7fba349d2647e5cef0e"
+  },
+  {
+   "file": "evidence/build-export.sh",
+   "sha256": "231673b214708c2843439f72cf0d834ee96bd8c84061b21abf74a31a2e68c94a"
+  },
+  {
+   "file": "evidence/combined-check.sh",
+   "sha256": "8b9493708c3d1a71a4295e2b6b8727afb110dae35114570978d7c437fc213fe2"
+  },
+  {
+   "file": "evidence/combined-closure-with-patch1-only.log",
+   "sha256": "b3d3ffa96496fbfad4362ffc7b55ae41c292388cd5362715c1991a7f67da3e49"
+  },
+  {
+   "file": "evidence/combined-closure-with-series.log",
+   "sha256": "e8158459d9a7408b1e292869f39867d5b03da1179074552e0220497e72f54003"
+  },
+  {
+   "file": "evidence/combined-closure-without-series.log",
+   "sha256": "fdff3c7cfa6b61e5127b9a8160addfbe85a5f556d90224d432ab5234440d51a7"
+  },
+  {
+   "file": "evidence/combined-unit-with-series.log",
+   "sha256": "7635f5baac926bd28dd1fb3ff973b0b7798604419b4f387e71551e6daba9e1b4"
+  },
+  {
+   "file": "evidence/copy-detection.log",
+   "sha256": "43ef0d72aa52ca317a88eaba53e512d0c9b5b3403e5dfe3dcd1af705928c8439"
+  },
+  {
+   "file": "evidence/e2e-export-base-alone.log",
+   "sha256": "0bb00bb8e9d1c72fed9c3dc454c65a0f9051d829c3c65b4bf5938becce75a52b"
+  },
+  {
+   "file": "evidence/e2e-export-head-alone-blocked-by-w1.log",
+   "sha256": "010921e83c64b85b3f9f4e6c0cd98c42f8e239c40059fda56dae295c6684756e"
+  },
+  {
+   "file": "evidence/e2e-export-merged-with-series.log",
+   "sha256": "1f0be6c8fd94aad60c17eaace2341a34c104ae3c330589ff7dda1ad200cf70ab"
+  },
+  {
+   "file": "evidence/e2e-export-merged-without-series.log",
+   "sha256": "1b34012a7b6f2283b2dcc2272ca88a2b110986039585fe5d1e2597e82cba8303"
+  },
+  {
+   "file": "evidence/e2e-hq-frame-base.log",
+   "sha256": "4c06c1e5692ea5ad1b248fa93198de8dd08d34a927a63a694cc3e84da00b9acd"
+  },
+  {
+   "file": "evidence/e2e-hq-frame-head.log",
+   "sha256": "39f6f3fe9f19e1ba82ff6b542ef443d85ab3fbbaad78f8e55823a3e92833914e"
+  },
+  {
+   "file": "evidence/e2e-reviewed-release-head.log",
+   "sha256": "449a671f92b6b013eff8c34d9d688a58885f6929ae1079597e7be7448721cc79"
+  },
+  {
+   "file": "evidence/e2e-serve-root-variant.diff",
+   "sha256": "415a36f40af79d1fce756da4200965b2a026372e4c5aa63f1eb5faa3b8a803de"
+  },
+  {
+   "file": "evidence/e2e-topology-base.log",
+   "sha256": "aa0446706750bc162488ccd47172fb39d9a9bb014477104277bf7a776129f6c5"
+  },
+  {
+   "file": "evidence/e2e-topology-head-run2.log",
+   "sha256": "2a7172b694705ad278d92cae64fa164ba4a8bb2f292edb7fc7d46f6c913c102c"
+  },
+  {
+   "file": "evidence/e2e-topology-head.log",
+   "sha256": "56b923c1d20ea5f8234cd51f0cd8b6497e7b507c265ae3ba690adea4eadc6de0"
+  },
+  {
+   "file": "evidence/export-build.log",
+   "sha256": "4b58a340d9d4e18f77385eba4d8d796c4073dc764d3036992ac9d46f3345e3e5"
+  },
+  {
+   "file": "evidence/export-merge-with-series.log",
+   "sha256": "1832ee88495bb951ada1606665d3a9ef53e1a1d46f7af73ff9e027c89765c22a"
+  },
+  {
+   "file": "evidence/export-merge-without-series.log",
+   "sha256": "95f258716baf93aa1810bb85f79f38cf94659c31ae4d3da0d0013ab66a909265"
+  },
+  {
+   "file": "evidence/head-equity-uprise-sources.log",
+   "sha256": "b1d949692dc026a74ccbcedffeed286039f3881a4086cd7d7957286e861a53a2"
+  },
+  {
+   "file": "evidence/head-halo-validate.log",
+   "sha256": "863f4afd59a0025d53bcd8cbf7181f9013661c861acb8476d45b7ca127c8de7b"
+  },
+  {
+   "file": "evidence/head-prim3-root.log",
+   "sha256": "305701b56dbe9f5ec5be16c6130140ef0bd6380e688c6620be5039bad1487e15"
+  },
+  {
+   "file": "evidence/head-unit.log",
+   "sha256": "ab25b96d43f0f749a7cea229b7d8418a94cf24bad13724ed27178403d8ae6748"
+  },
+  {
+   "file": "evidence/head-worker-prim3.log",
+   "sha256": "ac6e5d8a49cd6d5dc5de6ddac834563d57e41df64e4a9d2c44735746683296d7"
+  },
+  {
+   "file": "evidence/memory-rest.mjs",
+   "sha256": "590926811fdf2d943ad7d7cf579df8950038d7acb52ee077a65ce5cb2a4cabb4"
+  },
+  {
+   "file": "evidence/merge-resolution-determinism.log",
+   "sha256": "8474d872bddcfc4c460b8b22cf150113bf9db1168158afcaa46d7bea0cd68ea5"
+  },
+  {
+   "file": "evidence/mutations.log",
+   "sha256": "a478faac58981c379bd098e46aed2771d49842b631cffe09bc304d6a586f6de9"
+  },
+  {
+   "file": "evidence/mutations.py",
+   "sha256": "a8f536d9b84b7f9e2ed48a44ce62dd76d729c679c2753d25679aad0e3565d5b1"
+  },
+  {
+   "file": "evidence/prim3-topology-learning.serve-root.e2e.mjs",
+   "sha256": "d9155fab9680e818c5e2822db76533c8da319045b18ce83ab410571d5619076c"
+  },
+  {
+   "file": "evidence/python-head.log",
+   "sha256": "d3c2f25e843bcea8e2a474cc3359426c4c53f459f0275bf5ba768286fd29906d"
+  },
+  {
+   "file": "evidence/root-suite-base.summary.log",
+   "sha256": "5f53dff0e9ac8b9beb5743819df8080f26064288f8b2e88dd70acfe59733bc2a"
+  },
+  {
+   "file": "evidence/root-suite-head.summary.log",
+   "sha256": "0eb47e7003586974cf02a104b5baf9994dcaaf279668eb7c7f9bc79c817c54ba"
+  },
+  {
+   "file": "evidence/skeptic-verification.log",
+   "sha256": "1cdf51b87cea4c744bfc44359ddf8003b8be3a698935ef59c0db393fc8bbbf1a"
+  },
+  {
+   "file": "evidence/source-map-needed.log",
+   "sha256": "691052a41598cdf512ff25f82a6e0690c7209630168af7801a1f55b03dbfe8e1"
+  },
+  {
+   "file": "evidence/topology-e2e-driver.mjs",
+   "sha256": "0234c472ae99325b4b05fed766d10ff54d34d983c2c32452cc540edc27135731"
+  },
+  {
+   "file": "evidence/union_source_map.py",
+   "sha256": "113a3844be9df5feb1e1623d4e04be3e860fd8ec8d1d233bfaaea820354aeb24"
+  },
+  {
+   "file": "evidence/unit-fail-before-as-is.log",
+   "sha256": "bddd5e5bf252247940885dfb43b6e38abccbe4804ada3723fb4142e58a482a3c"
+  },
+  {
+   "file": "evidence/unit-fail-before-per-test.log",
+   "sha256": "721aa563824e377342b2e990ca641b6834a2f06aa71abe85351c4ba0f73b3020"
+  },
+  {
+   "file": "evidence/worker-bundle-head.log",
+   "sha256": "bbb0e42cf29cebcdad13270dc243a94f36aa494c6dc29aae934fa403db4d12f6"
+  }
+ ]
+}

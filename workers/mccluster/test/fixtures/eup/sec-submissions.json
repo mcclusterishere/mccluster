@@ -1,0 +1,12 @@
+{
+  "cik": "1234567",
+  "entityType": "operating",
+  "name": "Synthetic Grid Components Inc",
+  "tickers": ["SYNG"],
+  "exchanges": ["Nasdaq"],
+  "addresses": {
+    "mailing": { "street1": "PO Box 100", "street2": null, "city": "Bridgeport", "stateOrCountry": "CT", "zipCode": "06604", "stateOrCountryDescription": "CT" },
+    "business": { "street1": "1 Synthetic Way", "street2": "Suite 400", "city": "Stamford", "stateOrCountry": "CT", "zipCode": "06901", "stateOrCountryDescription": "CT" }
+  },
+  "filings": { "recent": { "accessionNumber": ["0001234567-26-000010"], "form": ["10-K"], "filingDate": ["2026-02-27"] } }
+}

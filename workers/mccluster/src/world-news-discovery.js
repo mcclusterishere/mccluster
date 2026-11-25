@@ -58,6 +58,8 @@ import { reply, fail } from './lib/http.js';
 import { fetchNoCrossHostRedirect } from './lib/safe-fetch.js';
 import { isoFromGdelt, gdeltCodesFor } from './intel/news-country-codes.js';
 import { placeScopeEnabled } from './world-region-feed.js';
+import { SITE_HOSTS } from './platform/hosts.generated.js';
+import { CONTACT_ORIGIN } from './platform/contact.js';
 
 export const GDELT_LASTUPDATE = 'https://data.gdeltproject.org/gdeltv2/lastupdate.txt';
 export const GDELT_HOSTS = Object.freeze(['https://data.gdeltproject.org/gdeltv2/', 'https://storage.googleapis.com/data.gdeltproject.org/gdeltv2/']);
@@ -86,8 +88,8 @@ export const BLOCKED_DOMAINS = Object.freeze(new Set([
   'newswiretoday.com', 'massachusettsnewswire.com', 'standardnewswire.com', 'newsfilecorp.com', 'openpr.com', 'prweb.com',
   'prlog.org', 'odwyerpr.com', 'finanznachrichten.de', 'tickerreport.com', 'themarketsdaily.com', 'dailypolitical.com',
   'marketbeat.com', 'americanbankingnews.com', 'etfdailynews.com', 'miragenews.com', 'homelandsecuritynewswire.com', 'naslovi.net',
-  /* our own hosts: an article from the newsroom (company-site/news.js) is already a post in the World, never outside news */
-  'mccluster.org', 'humanuprise.com'
+  /* our own hosts (the generated table): an article from the newsroom (company-site/news.js) is already a post in the World, never outside news */
+  ...SITE_HOSTS
 ]));
 const TICKER_TITLE = [/\((NASDAQ|NYSE|NYSEARCA|NYSEAMERICAN|NYSEMKT|OTCMKTS|OTC|TSE|TSX|TSXV|LON|LSE|ASX|NSE|BOM|ETR|FRA|CVE):[A-Z0-9.\-]+\)/, /\$[A-Z]{1,5} Stock/, /Shares (Sold|Bought|Acquired) by/i, /Stock Position (Raised|Lowered|Increased|Decreased)/i];
 /* always out, whatever the title says */
@@ -327,7 +329,7 @@ async function timed(fetchImpl, url, init = {}, read = (r) => r.text(), allowedH
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    const res = await fetchNoCrossHostRedirect(url, { ...init, signal: controller.signal, headers: { 'user-agent': 'McCluster-World/1.0 (https://mccluster.org)', ...(init.headers || {}) } }, { fetchImpl, allowedHosts });
+    const res = await fetchNoCrossHostRedirect(url, { ...init, signal: controller.signal, headers: { 'user-agent': `McCluster-World/1.0 (${CONTACT_ORIGIN})`, ...(init.headers || {}) } }, { fetchImpl, allowedHosts });
     return { res, body: await read(res) };
   } finally {
     clearTimeout(timer);

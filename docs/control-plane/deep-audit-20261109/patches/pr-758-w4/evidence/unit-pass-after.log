@@ -1,0 +1,590 @@
+# lane w4, head 027efd52bde35d4a90c26915140fed3ef98cd582, base 90ce7c4ce2
+# node --test scripts/test/chem108-trial-account.test.mjs scripts/test/game-hub.test.mjs scripts/test/game-hub-capsule.test.mjs scripts/test/chem108-worked-example.test.mjs
+# trial.mjs sha256: c940d76d1f1c8948e3d823bcd59772225d3e65895f71642ff7eb4638fe85f33e
+TAP version 13
+# Subtest: audit W4 reproduction: an account lookup that answers after the session is gone verifies nothing
+ok 1 - audit W4 reproduction: an account lookup that answers after the session is gone verifies nothing
+  ---
+  duration_ms: 29.4576
+  type: 'test'
+  ...
+# Subtest: sign-out while the account lookup is still out: the late answer is dropped
+ok 2 - sign-out while the account lookup is still out: the late answer is dropped
+  ---
+  duration_ms: 9.265625
+  type: 'test'
+  ...
+# Subtest: signing out and back in as the same member: the answer asked before the sign-out is still late
+ok 3 - signing out and back in as the same member: the answer asked before the sign-out is still late
+  ---
+  duration_ms: 14.380763
+  type: 'test'
+  ...
+# Subtest: account switch in this tab: the first account's late answer cannot verify the second
+ok 4 - account switch in this tab: the first account's late answer cannot verify the second
+  ---
+  duration_ms: 15.17538
+  type: 'test'
+  ...
+# Subtest: account switch in another tab while verified: the page waits for the new account's own answer
+ok 5 - account switch in another tab while verified: the page waits for the new account's own answer
+  ---
+  duration_ms: 14.579085
+  type: 'test'
+  ...
+# Subtest: another account's session written with no event at all gets its own lookup; the old answer is not reused
+ok 6 - another account's session written with no event at all gets its own lookup; the old answer is not reused
+  ---
+  duration_ms: 14.461841
+  type: 'test'
+  ...
+# Subtest: verified, then signed out in another tab: the storage event ends it
+ok 7 - verified, then signed out in another tab: the storage event ends it
+  ---
+  duration_ms: 14.968501
+  type: 'test'
+  ...
+# Subtest: verified, then storage cleared in another tab: a cleared browser is a new guest, not a member
+ok 8 - verified, then storage cleared in another tab: a cleared browser is a new guest, not a member
+  ---
+  duration_ms: 7.443598
+  type: 'test'
+  ...
+# Subtest: verified, then the session is cleared with no event at all: the timer notices
+ok 9 - verified, then the session is cleared with no event at all: the timer notices
+  ---
+  duration_ms: 6.165787
+  type: 'test'
+  ...
+# Subtest: verified, then the session disappears while the tab is hidden: the return to the tab notices
+ok 10 - verified, then the session disappears while the tab is hidden: the return to the tab notices
+  ---
+  duration_ms: 6.330724
+  type: 'test'
+  ...
+# Subtest: restored from the back/forward cache after signing out elsewhere: the restored page is not verified
+ok 11 - restored from the back/forward cache after signing out elsewhere: the restored page is not verified
+  ---
+  duration_ms: 8.821543
+  type: 'test'
+  ...
+# Subtest: restored from the back/forward cache: an answer asked before the freeze does not count, the restored page asks again
+ok 12 - restored from the back/forward cache: an answer asked before the freeze does not count, the restored page asks again
+  ---
+  duration_ms: 9.189359
+  type: 'test'
+  ...
+# Subtest: a round only the account allowed closes at sign-out
+ok 13 - a round only the account allowed closes at sign-out
+  ---
+  duration_ms: 9.025645
+  type: 'test'
+  ...
+# Subtest: a round the trial still covers survives sign-out, stops claiming an account, and ends with the trial
+ok 14 - a round the trial still covers survives sign-out, stops claiming an account, and ends with the trial
+  ---
+  duration_ms: 7.962499
+  type: 'test'
+  ...
+# Subtest: tokens that name no account are only ever equal to themselves, and storage that keeps changing is not chased
+ok 15 - tokens that name no account are only ever equal to themselves, and storage that keeps changing is not chased
+  ---
+  duration_ms: 14.056172
+  type: 'test'
+  ...
+# Subtest: a member with an expired trial is verified by the answer for the stored session, and stays so while it is stored
+ok 16 - a member with an expired trial is verified by the answer for the stored session, and stays so while it is stored
+  ---
+  duration_ms: 9.796607
+  type: 'test'
+  ...
+# Subtest: canonical auth refreshing an expired token during the lookup: one question, and the member is verified
+ok 17 - canonical auth refreshing an expired token during the lookup: one question, and the member is verified
+  ---
+  duration_ms: 10.093696
+  type: 'test'
+  ...
+# Subtest: a session the account code refreshes on every call (a device clock an hour fast) is still verified, without a request loop
+ok 18 - a session the account code refreshes on every call (a device clock an hour fast) is still verified, without a request loop
+  ---
+  duration_ms: 9.669809
+  type: 'test'
+  ...
+# Subtest: the same account's token refreshed in another tab is not a sign-out: the round stays open
+ok 19 - the same account's token refreshed in another tab is not a sign-out: the round stays open
+  ---
+  duration_ms: 9.258498
+  type: 'test'
+  ...
+# Subtest: network failure keeps the guest preview playable and grants nothing from the stored token
+ok 20 - network failure keeps the guest preview playable and grants nothing from the stored token
+  ---
+  duration_ms: 9.66383
+  type: 'test'
+  ...
+# Subtest: a lookup that failed is asked again when the tab comes back, one request per account in flight
+ok 21 - a lookup that failed is asked again when the tab comes back, one request per account in flight
+  ---
+  duration_ms: 10.512029
+  type: 'test'
+  ...
+# Subtest: signing in from another tab verifies an expired guest without a reload
+ok 22 - signing in from another tab verifies an expired guest without a reload
+  ---
+  duration_ms: 8.045612
+  type: 'test'
+  ...
+# Subtest: a guest without a session never asks the account service
+ok 23 - a guest without a session never asks the account service
+  ---
+  duration_ms: 7.100499
+  type: 'test'
+  ...
+# Subtest: m1 ethane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 24 - m1 ethane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 3.380128
+  type: 'test'
+  ...
+# Subtest: m2 propane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 25 - m2 propane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.724597
+  type: 'test'
+  ...
+# Subtest: m3 butane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 26 - m3 butane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.549901
+  type: 'test'
+  ...
+# Subtest: m4 pentane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 27 - m4 pentane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.537522
+  type: 'test'
+  ...
+# Subtest: m5 hexane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 28 - m5 hexane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.697031
+  type: 'test'
+  ...
+# Subtest: m6 heptane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 29 - m6 heptane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.469707
+  type: 'test'
+  ...
+# Subtest: m7 octane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 30 - m7 octane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.52146
+  type: 'test'
+  ...
+# Subtest: m8 ethene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 31 - m8 ethene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 1.557855
+  type: 'test'
+  ...
+# Subtest: m9 propene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 32 - m9 propene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.499847
+  type: 'test'
+  ...
+# Subtest: m10 but-1-ene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 33 - m10 but-1-ene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.522
+  type: 'test'
+  ...
+# Subtest: m11 hex-1-ene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 34 - m11 hex-1-ene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.358643
+  type: 'test'
+  ...
+# Subtest: m12 ethyne: source identity, formula/valence, original anchors, parent and both answer paths
+ok 35 - m12 ethyne: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.257741
+  type: 'test'
+  ...
+# Subtest: m13 propyne: source identity, formula/valence, original anchors, parent and both answer paths
+ok 36 - m13 propyne: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.315559
+  type: 'test'
+  ...
+# Subtest: m14 but-2-yne: source identity, formula/valence, original anchors, parent and both answer paths
+ok 37 - m14 but-2-yne: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.242664
+  type: 'test'
+  ...
+# Subtest: m15 hept-3-yne: source identity, formula/valence, original anchors, parent and both answer paths
+ok 38 - m15 hept-3-yne: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.341109
+  type: 'test'
+  ...
+# Subtest: m16 buta-1,3-diene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 39 - m16 buta-1,3-diene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.340716
+  type: 'test'
+  ...
+# Subtest: m17 2-methylpropane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 40 - m17 2-methylpropane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.953858
+  type: 'test'
+  ...
+# Subtest: m18 2-methylbutane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 41 - m18 2-methylbutane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.272825
+  type: 'test'
+  ...
+# Subtest: m19 2,2-dimethylpropane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 42 - m19 2,2-dimethylpropane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.211028
+  type: 'test'
+  ...
+# Subtest: m20 2,3-dimethylpentane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 43 - m20 2,3-dimethylpentane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.20405
+  type: 'test'
+  ...
+# Subtest: m21 3-ethylpentane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 44 - m21 3-ethylpentane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.256763
+  type: 'test'
+  ...
+# Subtest: m22 2-chlorobutane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 45 - m22 2-chlorobutane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.205021
+  type: 'test'
+  ...
+# Subtest: m23 1-bromopropane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 46 - m23 1-bromopropane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.179647
+  type: 'test'
+  ...
+# Subtest: m24 methanol: source identity, formula/valence, original anchors, parent and both answer paths
+ok 47 - m24 methanol: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.201361
+  type: 'test'
+  ...
+# Subtest: m25 ethanol: source identity, formula/valence, original anchors, parent and both answer paths
+ok 48 - m25 ethanol: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.235767
+  type: 'test'
+  ...
+# Subtest: m26 propan-1-ol: source identity, formula/valence, original anchors, parent and both answer paths
+ok 49 - m26 propan-1-ol: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.236737
+  type: 'test'
+  ...
+# Subtest: m27 propan-2-ol: source identity, formula/valence, original anchors, parent and both answer paths
+ok 50 - m27 propan-2-ol: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.695221
+  type: 'test'
+  ...
+# Subtest: m28 ethanal: source identity, formula/valence, original anchors, parent and both answer paths
+ok 51 - m28 ethanal: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 1.676974
+  type: 'test'
+  ...
+# Subtest: m29 propanal: source identity, formula/valence, original anchors, parent and both answer paths
+ok 52 - m29 propanal: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 1.050714
+  type: 'test'
+  ...
+# Subtest: m30 propan-2-one: source identity, formula/valence, original anchors, parent and both answer paths
+ok 53 - m30 propan-2-one: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.366725
+  type: 'test'
+  ...
+# Subtest: m31 butan-2-one: source identity, formula/valence, original anchors, parent and both answer paths
+ok 54 - m31 butan-2-one: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 1.170659
+  type: 'test'
+  ...
+# Subtest: m32 ethanoic acid: source identity, formula/valence, original anchors, parent and both answer paths
+ok 55 - m32 ethanoic acid: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.572943
+  type: 'test'
+  ...
+# Subtest: m33 propanoic acid: source identity, formula/valence, original anchors, parent and both answer paths
+ok 56 - m33 propanoic acid: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.293876
+  type: 'test'
+  ...
+# Subtest: m34 ethyl ethanoate: source identity, formula/valence, original anchors, parent and both answer paths
+ok 57 - m34 ethyl ethanoate: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.224209
+  type: 'test'
+  ...
+# Subtest: m35 methoxyethane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 58 - m35 methoxyethane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.247645
+  type: 'test'
+  ...
+# Subtest: m36 ethanamine: source identity, formula/valence, original anchors, parent and both answer paths
+ok 59 - m36 ethanamine: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.270414
+  type: 'test'
+  ...
+# Subtest: m37 ethanamide: source identity, formula/valence, original anchors, parent and both answer paths
+ok 60 - m37 ethanamide: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.586475
+  type: 'test'
+  ...
+# Subtest: m38 cyclopropane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 61 - m38 cyclopropane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.458844
+  type: 'test'
+  ...
+# Subtest: m39 cyclopentane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 62 - m39 cyclopentane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.241878
+  type: 'test'
+  ...
+# Subtest: m40 cyclohexane: source identity, formula/valence, original anchors, parent and both answer paths
+ok 63 - m40 cyclohexane: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.208838
+  type: 'test'
+  ...
+# Subtest: m41 benzene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 64 - m41 benzene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.310024
+  type: 'test'
+  ...
+# Subtest: m42 toluene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 65 - m42 toluene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.27879
+  type: 'test'
+  ...
+# Subtest: m43 phenol: source identity, formula/valence, original anchors, parent and both answer paths
+ok 66 - m43 phenol: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.246268
+  type: 'test'
+  ...
+# Subtest: m44 aniline: source identity, formula/valence, original anchors, parent and both answer paths
+ok 67 - m44 aniline: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.363702
+  type: 'test'
+  ...
+# Subtest: m45 benzoic acid: source identity, formula/valence, original anchors, parent and both answer paths
+ok 68 - m45 benzoic acid: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.341747
+  type: 'test'
+  ...
+# Subtest: m46 bromobenzene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 69 - m46 bromobenzene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.885309
+  type: 'test'
+  ...
+# Subtest: m47 1,2-dimethylbenzene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 70 - m47 1,2-dimethylbenzene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.907296
+  type: 'test'
+  ...
+# Subtest: m48 1,3-dimethylbenzene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 71 - m48 1,3-dimethylbenzene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.356438
+  type: 'test'
+  ...
+# Subtest: m49 1,4-dimethylbenzene: source identity, formula/valence, original anchors, parent and both answer paths
+ok 72 - m49 1,4-dimethylbenzene: source identity, formula/valence, original anchors, parent and both answer paths
+  ---
+  duration_ms: 0.281764
+  type: 'test'
+  ...
+# Subtest: every structure uses the owner authoring compiler; edited drafts stay isolated and escaped
+ok 73 - every structure uses the owner authoring compiler; edited drafts stay isolated and escaped
+  ---
+  duration_ms: 15.142897
+  type: 'test'
+  ...
+# Subtest: specific error contrasts aliases against the actual question, without cross-card feedback
+ok 74 - specific error contrasts aliases against the actual question, without cross-card feedback
+  ---
+  duration_ms: 0.451486
+  type: 'test'
+  ...
+# Subtest: branch and positional-isomer locants follow the authored original atom paths
+ok 75 - branch and positional-isomer locants follow the authored original atom paths
+  ---
+  duration_ms: 0.125209
+  type: 'test'
+  ...
+# Subtest: capsule stays in viewport and reserves answers at 320x568
+ok 76 - capsule stays in viewport and reserves answers at 320x568
+  ---
+  duration_ms: 0.830723
+  type: 'test'
+  ...
+# Subtest: capsule stays in viewport and reserves answers at 390x844
+ok 77 - capsule stays in viewport and reserves answers at 390x844
+  ---
+  duration_ms: 0.149318
+  type: 'test'
+  ...
+# Subtest: capsule stays in viewport and reserves answers at 844x390
+ok 78 - capsule stays in viewport and reserves answers at 844x390
+  ---
+  duration_ms: 0.126133
+  type: 'test'
+  ...
+# Subtest: capsule stays in viewport and reserves answers at 1024x768
+ok 79 - capsule stays in viewport and reserves answers at 1024x768
+  ---
+  duration_ms: 0.129478
+  type: 'test'
+  ...
+# Subtest: modules.json validates: unique ids, a default, known kinds, albums that exist
+ok 80 - modules.json validates: unique ids, a default, known kinds, albums that exist
+  ---
+  duration_ms: 2.308917
+  type: 'test'
+  ...
+# Subtest: every module icon exists; image icons are owner-supplied artwork, used whole
+ok 81 - every module icon exists; image icons are owner-supplied artwork, used whole
+  ---
+  duration_ms: 0.524544
+  type: 'test'
+  ...
+# Subtest: music pairing: albums exist and are playable; only the course's own songs are Rhythm
+ok 82 - music pairing: albums exist and are playable; only the course's own songs are Rhythm
+  ---
+  duration_ms: 0.536892
+  type: 'test'
+  ...
+# Subtest: the player clamps a remembered place to the album and wraps at the end
+ok 83 - the player clamps a remembered place to the album and wraps at the end
+  ---
+  duration_ms: 0.475805
+  type: 'test'
+  ...
+# Subtest: vendored Chem-108 data matches SOURCE.json byte for byte
+ok 84 - vendored Chem-108 data matches SOURCE.json byte for byte
+  ---
+  duration_ms: 1.109178
+  type: 'test'
+  ...
+# Subtest: the deck is whole: 306 cards over 14 topics, 49 structures, 118 elements
+ok 85 - the deck is whole: 306 cards over 14 topics, 49 structures, 118 elements
+  ---
+  duration_ms: 0.348182
+  type: 'test'
+  ...
+# Subtest: ported alias and review rules agree with Chem-108's own core.js
+ok 86 - ported alias and review rules agree with Chem-108's own core.js
+  ---
+  duration_ms: 2.516744
+  type: 'test'
+  ...
+# Subtest: every question in every mode: the answer is present once, four distinct options, distractors from its own topic
+ok 87 - every question in every mode: the answer is present once, four distinct options, distractors from its own topic
+  ---
+  duration_ms: 175.346966
+  type: 'test'
+  ...
+# Subtest: Name It sometimes shows an accepted alias as the right option, and it scores
+ok 88 - Name It sometimes shows an accepted alias as the right option, and it scores
+  ---
+  duration_ms: 0.655171
+  type: 'test'
+  ...
+# Subtest: topics follow Chem-108 order and each mode filters to its own
+ok 89 - topics follow Chem-108 order and each mode filters to its own
+  ---
+  duration_ms: 0.633359
+  type: 'test'
+  ...
+# Subtest: scoring: streak multiplier, three lives, sixty seconds
+ok 90 - scoring: streak multiplier, three lives, sixty seconds
+  ---
+  duration_ms: 0.459849
+  type: 'test'
+  ...
+# Subtest: the save keeps best score per mode and accuracy per topic
+ok 91 - the save keeps best score per mode and accuracy per topic
+  ---
+  duration_ms: 0.291546
+  type: 'test'
+  ...
+# Subtest: the page: shared bar, noindex, module script, mobile-first CSS, no purple
+ok 92 - the page: shared bar, noindex, module script, mobile-first CSS, no purple
+  ---
+  duration_ms: 0.575109
+  type: 'test'
+  ...
+# Subtest: Chem 108 has a direct owner-only launch in the Game Hub, destination picker and Admin Apps
+ok 93 - Chem 108 has a direct owner-only launch in the Game Hub, destination picker and Admin Apps
+  ---
+  duration_ms: 1.502416
+  type: 'test'
+  ...
+# Subtest: optional music catalogue does not block game boot or the direct play route
+ok 94 - optional music catalogue does not block game boot or the direct play route
+  ---
+  duration_ms: 0.299965
+  type: 'test'
+  ...
+# Subtest: public Chem 108 preview is linked to guests but private Game Hub authority stays intact
+ok 95 - public Chem 108 preview is linked to guests but private Game Hub authority stays intact
+  ---
+  duration_ms: 0.381921
+  type: 'test'
+  ...
+# Subtest: guest gets exactly seven days from first explicit start, then account entry
+ok 96 - guest gets exactly seven days from first explicit start, then account entry
+  ---
+  duration_ms: 0.43721
+  type: 'test'
+  ...
+1..96
+# tests 96
+# suites 0
+# pass 96
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 341.166731
+exit=0

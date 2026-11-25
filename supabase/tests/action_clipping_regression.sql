@@ -438,10 +438,15 @@ begin
   perform pg_temp.sign_in(null);
   declare v_track uuid;
   begin
+    -- written as the service role: since music_release_payment_integrity_v1 (20261030001000) the
+    -- track guard treats a request with no role claim as a member, not as the server, and a member's
+    -- track may only reference audio it uploaded
+    perform set_config('request.jwt.claims', json_build_object('role', 'service_role')::text, true);
     insert into public.creator_tracks (uid, m_uid, title, audio_url, slug)
     values ((select v::uuid from t where k = 'u_creator'), (select v::uuid from t where k = 'm_creator'),
             'Regress Creator Cut', 'https://example.com/regress.mp3', 'regress-creator-cut')
     returning id into v_track;
+    perform pg_temp.sign_in(null);
     assert private.clip_song_url(null, v_track) = 'https://matthew.mccluster.org/album.html?track=' || v_track, 'creator tracks link to their player';
     assert private.clip_song_url((select v::uuid from t where k = 'song'), null) like 'https://matthew.mccluster.org/album.html?album=regress-album%',
            'catalogue songs link to their page';

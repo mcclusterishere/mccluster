@@ -27,6 +27,8 @@
 // traffic is most of what there is to learn. A signed-in visitor sends their
 // token anyway, and it is verified below rather than believed.
 
+import { SITE_HOSTS } from "../_shared/site-hosts.ts";
+
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -222,7 +224,8 @@ async function resolveAnalyticsSite(body: Record<string, unknown>, h: Headers_) 
     // Preserve NULL as the first-party analytics scope. Host is an observed
     // browser claim, not authentication; never trust a body-supplied hostname.
     const observed = requestHost(h);
-    const owned = new Set(['mccluster.org', 'www.mccluster.org', 'matthew.mccluster.org', 'humanuprise.com', 'www.humanuprise.com']);
+    // the site's own hosts, from the one table (../_shared/site-hosts.ts, generated)
+    const owned = new Set(SITE_HOSTS);
     return { siteId: null, host: observed && owned.has(observed) ? observed : null, consentMode: null, legacy: true };
   }
   if (!SITE_KEY.test(key)) return { error: "invalid site key", status: 403 };

@@ -517,3 +517,45 @@ The first PRIM3 reinforcement binding is `IT-LAB-017`: once the learner successf
 Generated roof electronics use the `L7-` prefix. Spatial binding therefore explicitly recognizes both canonical `F7-` scene anchors and generated `L7-` electronics IDs as Level 7; no fallback coordinates are introduced.
 
 Boundary: Step 9 adds no live device control, no construction/as-built claims, and no automatic human competency awards. Cross-floor traces remain scenario-scoped rather than exposing the complete cable graph.
+
+## Step 10 — Server Lab (hands-on rack and server hardware)
+
+Owner, 2026-11-03: the building is a real test environment where people walk to a rack, open a server, identify its parts, rebuild it and troubleshoot it, in levels. Full specification: `SERVER-LAB-SPEC.md`.
+
+- Catalog: IT-LAB-041..051 appended to the Step 4A ladder (FOUNDATION identify, TECHNICIAN rebuild, ADMIN bring-up, ADVANCED/EXPERT hardware faults). The catalog now holds 51 labs; Step 1 and Step 2 verifiers pin 51.
+- Step 2 sandbox 1.2.0 supports seven server hardware faults (`dimm_uncorrectable_error`, `raid_member_failed`, `psu_failed`, `fan_failed`, `server_nic_link_down`, `cmos_battery_depleted`, `firmware_mismatch`) on the canonical host asset, with the NIC fault taking the canonical DAC connection down and CMOS drift reaching the hosted NTP service.
+- L1–L3 run as `ServerLabExercise` (semantic validators: memory population, seating order, cabling plan, RAID math); L4 runs the Step 3 `GuidedScenarioRunner` over `server-lab-scenario-pack-v1.json`. All four wrap in the Step 6 `AssessedExercise`.
+- Boundary unchanged: SIMULATION, SANDBOX, no live control, `credential_is_not_competency`, no automated Verified / Applied / Mentor.
+
+## Step 11 — HSEEP building-safety exercises, team roles and the durable evidence record
+
+FEMA structures exercises with HSEEP (January 2020): an exercise type, objectives, Exercise Evaluation Guide (EEG) criteria rated **P / S / M / U**, a player hotwash, and an After-Action Report / Improvement Plan (AAR/IP) whose improvement items are owned and tracked to closure. Step 11 gives the runtime that shape.
+
+Canonical files:
+- `production/lab-runtime/hseep-building-safety-scenario-pack-v1.json` (`pack_id` `hseep-building-safety`, `pack_version` 1.0.0)
+- `production/lab-runtime/equity-uprise-hseep-runtime.mjs`
+- `production/lab-runtime/verify_hseep_scenarios_v1.mjs`
+
+New exercises (all SANDBOX, LIVE refused):
+
+| Scenario | HSEEP type | Floors | Federal preparation |
+|---|---|---|---|
+| `EU-HSEEP-FIRE-SMOKE-V1` fire and smoke evacuation | drill | F1 | IS-100.C, IS-120.C, IS-700.B; OSHA 1910.38/1910.39, NFPA 101 (reference) |
+| `EU-HSEEP-SHELTER-WEATHER-V1` shelter in place, severe weather | drill | F1 | IS-100.C, IS-235.C, IS-317.A, IS-242.C |
+| `EU-HSEEP-ACTIVE-THREAT-TTX-V1` active threat awareness | tabletop | F1 | IS-907.A, IS-100.C; CISA Run, Hide, Fight guidance |
+| `EU-HSEEP-HAZMAT-V1` hazardous materials release | drill | F1 | CDC EHTER Awareness, IS-100.C, IS-200.C |
+| `EU-HSEEP-FULL-BUILDING-EVAC-V1` B1 to roof with tunnel headcount | functional | B1, F1–F6, L7 | IS-100.C, IS-200.C, IS-700.B, IS-120.C, IS-240.C, IS-241.C; NFPA 101, OSHA 1926.800 (reference) |
+| `EU-HSEEP-ACCESSIBLE-EVAC-V1` disability-inclusive evacuation | drill | F1, F3 | IS-100.C, IS-317.A, IS-244.B; JAN, EEOC (reference) |
+| `EU-HSEEP-PLAN-TTX-V1` building plan versus community EOP | tabletop | F1 | IS-235.C, IS-120.C, IS-130.A, IS-800.D, IS-230.E; NFPA 1660 (reference) |
+
+Team play: every action names the ICS positions (Incident Commander, Safety Officer, PIO, Liaison, section chiefs) or building roles (floor warden, stairwell monitor, evacuation assistant, accountability lead) allowed to take it. A roster maps players to roles; required roles must be filled; an action by the wrong role is recorded as `role_refused`. Every action writes an ICS-214-shaped activity-log line.
+
+Evaluation: the runtime drafts EEG ratings from the ledger (P with no failed attempts, S with one, M with more, U if not performed), a hotwash record and a **draft** AAR/IP whose improvement items have no owner. A human evaluator finalises the AAR/IP and assigns owners (Worker route `PUT /v1/prim3/learning/exercises/:id/aar` refuses to finalise while an item is unowned).
+
+Content rules: the active-threat exercise is a tabletop, non-graphic, opt-out without penalty, and teaches nothing beyond the official FEMA IS-907.A / CISA guidance; the verifier rejects graphic or tactical vocabulary. The accessible-evacuation drill uses synthetic codes only; self-identification is voluntary and confidential; elevator use is never assumed. The hazmat drill gives no entry, identification or clean-up instruction.
+
+The existing CISA, building-operations, public-service and distributed packs now carry an `hseep` block per scenario (type, objectives, EEG criteria, hotwash prompts) pointing at this pack's doctrine. `EU-CISA-ITOT-039-V1` is classed as a functional exercise; the rest are drills.
+
+Durable record: lab sessions, hash-chained evidence events, competency ratings (automated ceiling Demonstrated, enforced by a database check), uploaded external certificates, pathway enrolment and the HSEEP exercise/EEG/AAR/IP/ICS-214 records live in Supabase `learning_*` tables (`supabase/migrations/20261103182544_learning_evidence_v1.sql`, applied to production 2026-11-03), written through Worker `mccluster` (`workers/mccluster/src/prim3/learning.js`). The browser runtime stays the simulator; it is no longer the only place evidence exists.
+
+Boundary: Step 11 adds no live control, no compliance certification of the virtual building, no medical, hazmat or tactical instruction, and no automated Verified/Applied/Mentor award. Viewer (`equity-uprise-building-core-v2-3d.html`) integration of the Step 11 pack is next work.

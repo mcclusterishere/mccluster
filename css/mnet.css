@@ -52,7 +52,7 @@ html, body { background: #0a0807; }
   transition: padding 0.35s var(--mn-ease), box-shadow 0.35s var(--mn-ease);
 }
 .mn__top.is-scrolled { padding-top: calc(8px + env(safe-area-inset-top, 0px)); padding-bottom: 8px; box-shadow: 0 1px 0 var(--mn-rule), 0 12px 30px -18px rgba(0, 0, 0, 0.9); }
-.mn__brand { display: inline-flex; align-items: center; gap: 10px; min-width: 0; margin-right: auto; color: inherit; text-decoration: none; }
+.mn__brand { display: inline-flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; margin-right: auto; color: inherit; text-decoration: none; }
 /* the supplied M artwork, scaled whole */
 .mn__brand-mark { flex: none; width: 34px; height: 34px; object-fit: contain; display: block; transition: transform 0.35s var(--mn-ease); }
 .mn__top.is-scrolled .mn__brand-mark { transform: scale(0.88); }
@@ -76,7 +76,8 @@ html, body { background: #0a0807; }
 /* ---------- signed out / profile gate ---------- */
 .mn__gate { padding: 40px 0 24px; }
 .mn__eyebrow { margin: 0; color: var(--mn-hot); font-weight: 800; font-size: 0.7rem; line-height: 1.2; letter-spacing: 0.2em; text-transform: uppercase; }
-.mn__gate h1 {
+/* the gate and onboarding titles are <h2> (the World's one <h1> is its feed headline); the same look */
+.mn__gate > h2, .mn__gate h2.mn__onboard-h {
   max-width: 14ch; margin: 10px 0 0;
   font-family: var(--mn-display); font-weight: 400; font-size: clamp(2.6rem, 12vw, 4.6rem); line-height: 0.92;
   letter-spacing: 0; text-transform: uppercase; overflow-wrap: anywhere;
@@ -234,6 +235,9 @@ a.mn__secondary { text-align: center; text-decoration: none; line-height: 24px; 
 .mn__author-meta { flex: 1; min-width: 0; text-align: left; }
 .mn__author-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mn-ink); font-weight: 800; font-size: 0.98rem; line-height: 1.25; }
 .mn__author-sub { margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mn-faint); font-weight: 600; font-size: 0.82rem; }
+/* Story characters on MNET: one small outlined badge, in the existing ink tokens. */
+.mn__character-badge { display: inline-block; margin-left: 6px; padding: 0 6px; border: 1px solid currentColor; border-radius: 999px; color: var(--mn-dim); font-size: 0.68rem; font-weight: 700; line-height: 1.5; letter-spacing: 0.02em; vertical-align: 1px; white-space: nowrap; }
+.mn__author-sub > .mn__character-badge { margin: 0 4px 0 0; }
 .mn__post-body { margin: 12px 0 0; color: var(--mn-ink); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1.02rem; line-height: 1.55; }
 .mn__post-media { display: grid; gap: 6px; margin: 12px 0 0; }
 .mn__post-media.is-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -409,6 +413,21 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__reply-box textarea { max-height: 8rem; resize: none; }
 .mn__reply-box .mn__post { margin: 0; min-height: 48px; }
 .mn__thread > .mn__status { padding: 0 14px 8px; }
+/* the mission's dialog (js/mnet.js, missionDetailHtml): room around its words, the source's own words set apart as a quotation
+   with their credit directly beneath, and the credit in full with its links (data/missions/drawdown/README.md) */
+#mnMissionDetail { padding: 12px 16px 2px; overflow-wrap: anywhere; }
+#mnMissionDetail > p { margin: 0 0 10px; line-height: 1.5; }
+.mn__mission-note { color: var(--mn-dim); }
+.mn__mission-note b { color: var(--mn-ink); }
+.mn__mission-about { margin: 12px 0; }
+.mn__mission-about blockquote { margin: 0; padding: 2px 0 2px 12px; border-left: 2px solid var(--mn-rule-2); color: var(--mn-ink); font-style: italic; line-height: 1.55; }
+.mn__mission-about figcaption { margin: 4px 0 0 14px; color: var(--mn-faint); font-size: 0.8rem; line-height: 1.4; }
+.mn__mission-credit { margin: 12px 0; padding: 10px 12px; border-radius: 12px; background: var(--mn-raise-2); box-shadow: inset 0 0 0 1px var(--mn-rule); color: var(--mn-dim); font-size: 0.82rem; line-height: 1.5; }
+.mn__mission-credit:focus, .mn__mission-credit:focus-visible { outline: 2px solid var(--mn-hot); outline-offset: 2px; }
+.mn__mission-credit .mn__eyebrow { margin: 0 0 4px; }
+.mn__mission-credit p { margin: 0; }
+.mn__mission-credit ul { margin: 6px 0 0; padding-left: 18px; }
+.mn__mission-credit a { color: var(--mn-ink); text-decoration: underline; text-underline-offset: 2px; }
 /* THE THUMBNAIL editor (owner, 2026-10-20): one column at every width, the frame as large as the sheet allows */
 .mn__thumb-dialog { overflow-y: auto; }
 .mn__thumb-dialog .mn__thread-head button { width: 44px; height: 44px; }
@@ -454,10 +473,10 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mng__seg.is-on { background: var(--mn-raise-2); color: var(--mn-ink); box-shadow: inset 0 0 0 1px var(--mn-rule); }
 .mng__grid { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
 .mng__card.is-target { box-shadow: inset 0 0 0 2px var(--mn-hot, #ff4d3d); }
-.mng__card { display: grid; grid-template-rows: auto 1fr; min-width: 0; overflow: hidden; border-radius: 18px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); }
+.mng__card { display: grid; grid-template-rows: auto minmax(0,1fr); min-width: 0; overflow: hidden; border-radius: 18px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); }
 .mng__cover { position: relative; height: 80px; }
 .mng__cover b { position: absolute; left: 14px; bottom: -20px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; background: var(--mn-ink); color: var(--mn-bg); font-weight: 900; font-size: 1.05rem; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
-.mng__body { display: grid; grid-template-rows: auto auto 1fr; gap: 4px; align-content: start; padding: 28px 16px 16px; }
+.mng__body { display: grid; grid-template-rows: auto auto minmax(0,1fr); gap: 4px; align-content: start; padding: 28px 16px 16px; }
 .mng__name { margin: 0; font-weight: 800; font-size: 1.05rem; line-height: 1.25; }
 .mng__purpose { margin: 0; color: var(--mn-dim); font-size: 0.88rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .mng__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; align-self: end; }
@@ -596,7 +615,7 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 /* the brand mark is the supplied artwork alone (no plate; CLAUDE.md rule 10) */
 .mn__actionboard,.mn__understand{margin:0 0 20px;padding:20px;border:1px solid var(--mn-rule-2);border-radius:22px;background:var(--mn-panel)}
 .mn__actionboard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}.mn__actionboard-head p,.mn__mission-strip p,.mn__understand p{margin:0;color:var(--mn-hot);font-size:.62rem;font-weight:900;letter-spacing:.18em}.mn__actionboard-head h2,.mn__understand h2{margin:4px 0 0;font-family:var(--mn-display);font-weight:400;text-transform:uppercase}.mn__actionboard-head>strong{font-size:1.15rem;white-space:nowrap}
-.mn__actionboard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.mn__actionboard-grid article{padding:13px;border:1px solid var(--mn-rule);border-radius:14px}.mn__actionboard-grid span,.mn__actionboard-grid small{display:block;color:var(--mn-dim);font-size:.68rem}.mn__actionboard-grid b{display:block;margin:4px 0;font-size:1.25rem}
+.mn__actionboard-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:16px}.mn__actionboard-grid article{padding:13px;border:1px solid var(--mn-rule);border-radius:14px}.mn__actionboard-grid span,.mn__actionboard-grid small{display:block;color:var(--mn-dim);font-size:.68rem}.mn__actionboard-grid b{display:block;margin:4px 0;font-size:1.25rem}
 .mn__mission-strip{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--mn-rule)}.mn__mission-strip h3{margin:3px 0 0;font-size:.9rem}.mn__mission-strip a,.mn__understand>a{color:var(--mn-hot);font-weight:800;text-decoration:none;white-space:nowrap}
 .mn__understand{display:flex;align-items:center;justify-content:space-between;gap:18px;background:linear-gradient(135deg,rgba(4,45,82,.32),var(--mn-panel))}.mn__understand small{display:block;max-width:62ch;margin-top:7px;color:var(--mn-dim);line-height:1.45}
 
@@ -642,6 +661,10 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__record-receipt { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 999px; background: var(--mn-hot); color: var(--mn-hot-ink); font-weight: 800; font-size: 0.82rem; text-decoration: none; }
 .mn__record-empty { margin: 12px 0 0; color: var(--mn-dim); font-size: 0.88rem; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) { .mn__record { animation: none; } }
+/* THE SMALL RED KICKERS BY NIGHT on the Action Record and the mission dialog (release review RS-7, 2026-11-19): the World's night
+   red (#e6002d, css/world-travel.css) reads 3.6 to 4.2:1 on their grounds, under 4.5:1 for 11 px type. They take a lifted crimson,
+   5.1:1 or better on every night ground they sit on; by day they keep the day red (css/daylight.css), 5.1:1 on white. */
+html:not([data-daylight="day"]) :is(#mnMissionsView, #mnMissionDialog) .mn__eyebrow { color: #ff4d6d; }
 .mn__record-unlock span { display: block; }
 .mn__fellow-note { margin-top: 6px; color: var(--mn-dim); font-size: 0.85rem; }
 .mn__fellow-open { margin-top: 10px; }
@@ -660,10 +683,6 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 .mn__check input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--mn-hot); }
 .mn__check span { display: grid; gap: 2px; color: var(--mn-dim); font-size: max(14px, .85rem); line-height: 1.4; }
 .mn__check b { color: var(--mn-ink); }
-.mn__feedmissions { margin-top: 28px; }
-.mn__feedmission { display: grid; gap: 4px; width: 100%; margin-top: 10px; padding: 14px; border: 0; border-radius: 14px; background: var(--mn-raise); box-shadow: inset 0 0 0 1px var(--mn-rule); color: var(--mn-ink); font: inherit; text-align: left; cursor: pointer; }
-.mn__feedmission b { font-size: 1.05rem; }
-.mn__feedmission > span:last-child { color: var(--mn-dim); font-size: .9rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .mn__record-share { min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; box-shadow: inset 0 0 0 1px var(--mn-hot); color: var(--mn-ink); font: 800 .8rem/1 var(--mn-ui); cursor: pointer; }
 .mn__record-shared { color: var(--mn-dim); font-size: .78rem; font-weight: 700; }
 
@@ -763,9 +782,12 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
 /* ---------- cinematic depth pass ----------
    Keep the product architecture quiet and readable, but let major surfaces
    feel like places rather than flat panels. Existing first-party campaign
-   artwork is used as atmosphere, never as content that must be read. */
+   artwork is used as atmosphere, never as content that must be read. A supplied mark is never atmosphere: filtered, scaled and
+   pushed past the box it was recoloured and cropped (AGENTS.md, "THE LOGOS ARE NOT YOURS TO DRAW"; release review RS-1, 2026-11-19,
+   the Equity Uprise emblem behind the member's Action Record), so no layer here paints one
+   (scripts/test/logo-css-backgrounds.test.mjs). */
 .mn__manifesto,.mn__actionboard,.mn__understand,#mnMissionsView{position:relative;isolation:isolate;overflow:hidden}
-.mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,#mnMissionsView::before{
+.mn__manifesto::before,.mn__actionboard::before,.mn__understand::before{
   content:"";position:absolute;inset:0;z-index:-2;background-position:center;background-size:cover;
   opacity:.28;filter:saturate(.8) contrast(1.08);transform:scale(1.035);
   transition:transform .9s var(--mn-ease),opacity .6s var(--mn-ease)
@@ -775,10 +797,8 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
   background:linear-gradient(110deg,rgba(10,8,7,.97) 5%,rgba(10,8,7,.76) 54%,rgba(10,8,7,.38)),
              linear-gradient(0deg,rgba(10,8,7,.88),transparent 65%)
 }
-.mn__manifesto::before{background-image:url("../assets/img/equity-uprise-logo.webp");background-size:58%;background-repeat:no-repeat;background-position:88% 50%;opacity:.18;filter:grayscale(.15) saturate(1.15)}
 .mn__actionboard::before{background-image:url("../assets/img/heal-the-3-cover.jpg");background-position:68% 45%;opacity:.22}
 .mn__understand::before{background-image:url("../assets/img/cia-mind-control-cover.jpg");background-position:74% 50%;opacity:.24}
-#mnMissionsView::before{background-image:url("../assets/img/equity-uprise-logo.webp");background-size:70%;background-repeat:no-repeat;background-position:115% 8%;opacity:.09}
 .mn__manifesto,.mn__actionboard,.mn__understand{
   box-shadow:inset 0 0 0 1px rgba(244,239,230,.12),0 24px 70px -42px rgba(0,0,0,.95);
   transition:transform .35s var(--mn-ease),box-shadow .35s var(--mn-ease)
@@ -800,7 +820,7 @@ button.mn__notification-action:disabled { opacity: 0.55; cursor: default; }
   .mn__manifesto:hover::before,.mn__actionboard:hover::before,.mn__understand:hover::before{transform:scale(1.07);opacity:.32}
 }
 @media (prefers-reduced-motion:reduce){
-  .mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,#mnMissionsView::before,
+  .mn__manifesto::before,.mn__actionboard::before,.mn__understand::before,
   .mn__manifesto,.mn__actionboard,.mn__understand,.mn__actionboard-grid article,.mn__post-card{transition:none!important;animation:none!important}
 }
 
@@ -908,6 +928,10 @@ html.mn-world-fit, html.mn-world-fit body { overflow: hidden; overscroll-behavio
 .mn-world-fit .mn__world-context { flex: none; min-height: clamp(92px, 14dvh, 150px); }
 /* the feed runs to the bottom of the screen, under the floating bar; its own padding keeps the last post reachable (owner, 2026-10-15) */
 .mn-world-fit .mn__world-feed { flex: 30 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: calc(var(--mn-bar-clear, 96px) + 4px); }
+/* while the privacy notice waits for its answer it sits just above the floating bar (js/live-content.js marks <html>
+   data-privacy-notice="waiting" and gives its height as --mcc-privacy-notice-h): the feed ends that much later, so its last
+   post still scrolls clear of the notice. Nothing changes once it is answered. */
+html[data-privacy-notice="waiting"] .mn__world-feed::after { content: ""; display: block; height: var(--mcc-privacy-notice-h, 0px); }
 @media (min-width: 600px) {
   .mn__world-home { margin: 0; border: 1px solid var(--mn-rule); border-radius: 22px; }
 }
@@ -1452,44 +1476,9 @@ body.has-appbar { padding-bottom: 0; }
 .mn__mission-card .mn__eup, #mnWorldFocusJoin .mn__eup { width: 32px; height: 32px; }
 #mnWorldFocusJoin { min-width: 52px; }
 
-/* ================================================================
-   THE EMBLEM OVER THE EARTH: "do something about it" (owner,
-   2026-10-15, addendum 8). The Equity Uprise artwork IS the control
-   (CLAUDE.md rule 10): the supplied white mark, complete and scaled
-   proportionally only. No plate, no tile, no ring, no caption, no name
-   beside it. The button is invisible; what you see is the owner's
-   artwork, a soft shadow so it reads over a bright Earth, and a slow
-   breath. Its accessible name says what it does. It opens missions.
-   ================================================================ */
-.mn__world-eup {
-  position: absolute; z-index: 3; left: 50%; bottom: 14px;
-  display: grid; place-items: center;
-  width: 100px; height: 100px; margin: 0 0 0 -50px; padding: 0;
-  border: 0; border-radius: 50%; background: transparent; color: inherit;
-  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-  animation: mn-eup-arrive 0.6s var(--mn-spring) 0.35s both, mn-eup-breathe 3.4s ease-in-out 1.4s infinite;
-}
-.mn__world-eup img {
-  display: block; width: 92px; height: 92px; object-fit: contain; pointer-events: none;
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.75));
-  transition: transform 0.25s var(--mn-ease);
-}
-.mn__world-eup:active img { transform: scale(0.92); transition-duration: 0.12s; }
-.mn .mn__world-eup:focus-visible { outline: 2px solid var(--mn-gold); outline-offset: 2px; }
-@media (hover: hover) and (pointer: fine) {
-  .mn__world-eup:hover img { transform: scale(1.1); }
-}
-@media (min-width: 600px) {
-  .mn__world-eup { width: 128px; height: 128px; margin-left: -64px; bottom: 22px; }
-  .mn__world-eup img { width: 120px; height: 120px; }
-}
-@keyframes mn-eup-arrive { from { opacity: 0; transform: translateY(14px) scale(0.8); } to { opacity: 1; transform: none; } }
-@keyframes mn-eup-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
-
 @media (prefers-reduced-motion: reduce) {
-  .mn__world-eup, .mn__world-eup img, .mn__menu, .mn__suggest, .mn__mission-card,
+  .mn__menu, .mn__suggest, .mn__mission-card,
   .mn__world-expand, .mn__world-live { animation: none !important; transition: none !important; }
-  .mn__world-eup:hover img, .mn__world-eup:active img { transform: none !important; }
   .mn :is(.mn__primary, .mn__post, .mn__secondary, .mn__ghost, .mn__world-go, .mn__world-locate, .mn__world-filter, .mn__world-close, .mn__world-chips > *, .mn__guest-in, .mn__guest-join, .mn__fund, .mn__fund-go, .mn__tour-cta, .mng__join, .mn__golive, .mn__record-receipt, .mn__record-share, .mn__world-expand, .mn__world-live):is(:hover, :active) { transform: none !important; }
 }
 

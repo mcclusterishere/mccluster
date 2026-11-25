@@ -1,0 +1,107 @@
+{
+  "schema": "here.city-arcade/v1",
+  "revision": "2026-11-03",
+  "title": "McCluster City Arcade",
+  "source": "Core fictional-city district.v1.json; shop ids are stable references, not duplicate lore",
+  "games": [
+    {
+      "id": "designer-kicks-sole-run",
+      "title": "Designer Kicks \u00b7 Sole Run",
+      "scope": "city",
+      "placeId": null,
+      "status": "playable",
+      "genre": "Street-running shoe collector",
+      "length": "2\u20133 minutes",
+      "blurb": "Follow glowing checkpoints through Bridgeport, starting with Robbery 1s. Take optional Fashion Police costume missions.",
+      "rating": "Teen candidate"
+    },
+    {
+      "id": "gauranfucking-tea-tea-rush",
+      "title": "Tea Rush",
+      "scope": "store",
+      "placeId": "gauranfucking-tea",
+      "status": "playable",
+      "genre": "Brew-and-deliver action",
+      "length": "75 seconds",
+      "blurb": "Run the counter. Brew the right blend, carry it to your customer and beat the clock.",
+      "rating": "Everyone candidate"
+    },
+    {
+      "id": "hordash-dispatch",
+      "title": "Dispatch Disaster",
+      "scope": "store",
+      "placeId": "hordash",
+      "status": "planned",
+      "genre": "Scheduling puzzle",
+      "length": "1\u20132 minutes",
+      "blurb": "Untangle a day of double-booked appointment mix-ups.",
+      "rating": "Pending content review"
+    },
+    {
+      "id": "mike-hawk-ballot",
+      "title": "Campaign Chaos",
+      "scope": "store",
+      "placeId": "mike-hawk",
+      "status": "planned",
+      "genre": "Satirical sorting puzzle",
+      "length": "1\u20132 minutes",
+      "blurb": "Arrange campaign posters and debate cards before the doors open.",
+      "rating": "Teen candidate"
+    },
+    {
+      "id": "robbery-1s-shoe-sort",
+      "title": "Shoe Sort",
+      "scope": "store",
+      "placeId": "robbery-1s",
+      "status": "planned",
+      "genre": "Pattern matching",
+      "length": "1 minute",
+      "blurb": "Match sneaker designs fast. The cursed pair stays on the shelf.",
+      "rating": "Everyone candidate"
+    },
+    {
+      "id": "hitman-gear-prop-lab",
+      "title": "Prop Lab",
+      "scope": "store",
+      "placeId": "hitman-gear",
+      "status": "planned",
+      "genre": "Wardrobe assembly",
+      "length": "1\u20132 minutes",
+      "blurb": "Dress a film extra with the right costume props.",
+      "rating": "Everyone candidate"
+    },
+    {
+      "id": "real-camera-men-frame-it",
+      "title": "Frame It",
+      "scope": "store",
+      "placeId": "real-camera-men",
+      "status": "planned",
+      "genre": "Composition challenge",
+      "length": "1 minute",
+      "blurb": "Line up subject and camera angle for the perfect comic shot.",
+      "rating": "Everyone candidate"
+    },
+    {
+      "id": "pressure-tv-edit-rush",
+      "title": "Edit Rush",
+      "scope": "store",
+      "placeId": "pressure-tv",
+      "status": "planned",
+      "genre": "Video sequence puzzle",
+      "length": "1\u20132 minutes",
+      "blurb": "Put out-of-order TV clips back into a coherent scene.",
+      "rating": "Everyone candidate"
+    },
+    {
+      "id": "baddies-on-wheels-parking",
+      "title": "Parking Panic",
+      "scope": "store",
+      "placeId": "baddies-on-wheels",
+      "status": "planned",
+      "genre": "Vehicle parking puzzle",
+      "length": "1\u20132 minutes",
+      "blurb": "Navigate an abstract parking-lot grid against a clock.",
+      "rating": "Everyone candidate"
+    }
+  ]
+}

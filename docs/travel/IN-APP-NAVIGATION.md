@@ -32,6 +32,22 @@ location, with a 30-second rerouting cooldown. Poor accuracy cannot advance the
 route or falsely report arrival. Ambiguous crossings favor continuity with the
 current progress instead of jumping to a later loop.
 
+The active GPS camera uses a street-scale, tilted, heading-up view (160–550 m
+camera range depending on mode, speed and accuracy). Device course is preferred;
+movement between accurate fixes supplies the course when the browser omits it.
+Stationary GPS jitter retains the last course. Each usable fix eases the camera
+to the traveler; dragging or zooming pauses follow until Recenter. A fresh fix
+already in memory engages follow as soon as Go is pressed. Reduced-motion
+preferences remove camera animation.
+
+Address taps/clicks commit the complete candidate label and coordinates before
+blur can shift the keyboard or suggestion list. Dragging/scrolling does not
+select an address; arrow keys, Enter and Escape remain supported. Drive, Walk
+and Bike use explicit contrasting selected/unselected colors in day and night.
+Route controls precede rentals and flight planning. During navigation the sheet
+shows the current turn, Stop/Recenter and route steps; Stop restores the editor.
+The existing owner-only Travel availability is unchanged.
+
 Stop, leaving Travel, hiding the page, leaving World, sign-out and switching an
 existing account cancel the applicable watches or in-flight work. Returning to
 Music also pauses navigation when World is retained for continuous audio. Late
@@ -101,7 +117,19 @@ requests**, and a **1,000-request UTC-day application budget**. That daily budge
 is our protective rollout cap, not a published FOSSGIS allowance. The object
 persists only quota timing, count and reservation identity, never route
 coordinates or a traveler's identity. Restarting an instance does not reset the
-budget. Upstream throttling adds a cooldown. Unauthenticated scripted callers
+budget. TomTom additionally stops at 20,000 attempts per UTC calendar month in
+this same ledger. Both successful and failed upstream attempts count; provider
+or credential switches do not reset it. Keyless pilot attempts are counted too,
+so switching to TomTom cannot erase usage. The keyless pilot still uses its daily
+policy, not TomTom's monthly refusal. Upstream throttling adds a cooldown.
+
+On upgrade, the ledger carries today's known count; it cannot reconstruct earlier
+legacy calls. This is an application budget, not a provider billing meter or a
+promise of zero charges: other apps/account usage and the provider's billing
+period may differ. Before enabling TomTom, confirm the selected account's current
+allowance and usage, preferably use a new dedicated application with no prior
+usage, and retain provider-side spending controls. Do not reset the ledger as a
+way to extend a quota. See [connection steps](TRAVEL-PROVIDER-CONNECTION.md). Unauthenticated scripted callers
 can consume this shared budget; the pilot prioritizes bounded upstream usage,
 and does not claim an availability SLA.
 

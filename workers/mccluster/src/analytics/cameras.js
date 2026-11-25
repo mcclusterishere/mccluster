@@ -1,6 +1,7 @@
 /* Owner Analytics reads the existing Halo bridge. No upstream URL or token is
    accepted from a browser. Catalog and verified image counts are independent. */
-import { cleanSource, HALO_DEFAULT_BASE } from '../world-cctv.js';
+import { cleanSource, HALO_DEFAULT_BASE, isHaloSnapshotSource } from '../world-cctv.js';
+import { Buffer } from 'node:buffer';
 
 const MAX_JSON_BYTES = 12 * 1024 * 1024;
 const MAX_FRAME_BYTES = 2 * 1024 * 1024;
@@ -25,9 +26,9 @@ async function boundedBody(response, max) {
 }
 
 async function haloRead(env, path, consume, fetchImpl) {
-  if (!env.HALO_INTERNAL_TOKEN) throw Object.assign(new Error('Halo connection is not configured'), { status: 503 });
+  if (!env.HALO_INTERNAL_TOKEN) throw Object.assign(new Error('Halo connection is not configured'), { status: 503, cameraCode: 'halo_not_configured' });
   const url = new URL(env.HALO_API_BASE || HALO_DEFAULT_BASE);
-  if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Invalid Halo connection');
+  if (url.protocol !== 'https:' || url.username || url.password) throw Object.assign(new Error('Invalid Halo connection'), {cameraCode:'halo_configuration_invalid',status:503});
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 14000);
   try {
@@ -37,10 +38,10 @@ async function haloRead(env, path, consume, fetchImpl) {
     });
     if (!response.ok || response.status >= 300) {
       await response.body?.cancel().catch(() => {});
-      throw Object.assign(new Error('Halo request failed'), { status: 502 });
+      throw Object.assign(new Error('Halo request failed'), { status: 502, cameraCode: response.status===401||response.status===403?'halo_authorization_failed':'halo_upstream_unavailable' });
     }
     return await consume(response);
-  } finally { clearTimeout(timer); }
+  } catch(error) { if(controller.signal.aborted)throw Object.assign(new Error('Halo timed out'),{status:504,cameraCode:'halo_timeout'});throw error; } finally { clearTimeout(timer); }
 }
 
 export function summarizeCatalog(data, now = new Date().toISOString()) {
@@ -87,16 +88,17 @@ export function rasterType(bytes) {
 }
 
 function base64(bytes) {
-  let result = '';
-  for (let at = 0; at < bytes.length; at += 8192) result += String.fromCharCode(...bytes.subarray(at, at + 8192));
-  return btoa(result);
+  // Native encoding avoids expanding every image byte into JS call arguments
+  // and a second binary string, which exhausted CPU during sustained checks.
+  return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString('base64');
 }
 
 export async function checkCamera(env, id, fetchImpl = fetch) {
   const checked_at = new Date().toISOString();
   try {
     return await haloRead(env, '/api/cctv/frame/' + encodeURIComponent(id), async response => {
-      if (response.headers.get('x-cctv-source') !== 'upstream-image') throw new Error('No upstream image');
+      // Halo labels decoded TxDOT API snapshots separately from direct images.
+      if (!isHaloSnapshotSource(response.headers.get('x-cctv-source'))) throw new Error('No upstream image');
       const bytes = await boundedBody(response, MAX_FRAME_BYTES), type = rasterType(bytes);
       if (!type || !String(response.headers.get('content-type')).startsWith(type)) throw new Error('Invalid image');
       return { id, checked_at, status: 'image_received', captured_at: response.headers.get('x-cctv-captured-at') || response.headers.get('last-modified') || null,
@@ -126,6 +128,10 @@ export function createCameraRoutes({ requireOwner, json, fetchImpl = fetch }) {
       }
       if (request.method !== 'GET') return json({ error: 'GET required' }, 405);
       return json(await loadCameraCatalog(env, fetchImpl));
-    } catch (error) { return json({ ok: false, error: error.status === 401 || error.status === 403 ? error.message : 'Camera measurement unavailable', retryable: true }, error.status || 502); }
+    } catch (error) {
+      const messages={halo_not_configured:'The Halo camera connection has not been configured. An operator must connect the existing Halo service before this catalog can be read.',halo_configuration_invalid:'The Halo service address is invalid. An operator must correct the existing connection settings.',halo_authorization_failed:'Halo rejected the camera connection. An operator must renew the existing service authorization.',halo_upstream_unavailable:'Halo could not supply the camera catalog. Retry when the camera service is available.',halo_timeout:'Halo took too long to return the camera catalog. Try again.'};
+      const code=error.cameraCode||'camera_unavailable';
+      return json({ok:false,error:error.status===401||error.status===403?error.message:messages[code]||'Camera measurement unavailable. Try again.',code,retryable:!['halo_not_configured','halo_configuration_invalid','halo_authorization_failed'].includes(code)},error.status||502);
+    }
   };
 }

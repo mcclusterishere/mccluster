@@ -1,0 +1,4220 @@
+{
+ "duration_seconds": 219,
+ "language": "en",
+ "songTitle": "Evil Twin (Middle Man)",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper small.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T19:00:36.096Z",
+  "confidence": 0.694,
+  "mismatched_lines": 17,
+  "sheet_lines": 74,
+  "heard_words": 655,
+  "ctc_aligned_lines": 77,
+  "timing": {
+   "align_seconds": 16.1,
+   "separate_seconds": 267,
+   "asr_seconds": 67.8,
+   "map_seconds": 0.4
+  }
+ },
+ "plain": "I gave her jewelry not to freeze her wrist\nShe cloning Double SSIDs with it\nThey logging in she crack a evil grin\nThat’s not my shorty that’s my evil twin\nI got a little hand in this, I got a little hand in that\nCame up from the projects+ a nigga manage that\nI been out here engineering shit\nScheming at the top of every pyramid\nEvil twin attacking call me pharaoh bitch\nLaughing to the bank the shits hilarious\nYou add a baddie on Insta\nThat’s my hitter with a finsta\nSee where you at, Lyft her\nShe walk past clipped ya\nShe broke your phone the screen drop\nYou let it go cause she’s hot\nPut lil bro at a kiosk\n“I fix your phone for the cheap Ack!”\nHe looking broke but he is not\nHomie controlling the big knots\nHe finna go in your sim slot\nYou won’t get smoke if I’m pissed off\nI am too corporate to lick shots\nI can’t afford to get pinched doggy do it\nI let ‘em both get a quick drop on it\nNow they performing a sim swap\nAll my day ones got libraries full of zero day attacks\nEven kiddie scripters get the bags using metasploit we on your ass\nCalled an audible on path, Intercept and pass the hash\nThen relay it back. Good replay attack.\nShawty playing man in the browser\nYou only the man in the browser\nI was making bands off routers\nFor you had hands on sour\nI was doing drive by downloads with no license Ack\nI was doing typo squats, I was with the cyber squad\nThey was tryna be my middle man, so I did a man in the middle hit\nTimes the attack with timing attacks what type of time I’m on? Militant.\nIan even squeeze triggers you triggered a logic bombs hidden in a script\nGot black hat privileges from a white privileged individual cause I’m lit\nScan a card I’m skimming that’s how I escalate my privilege then mix\nCross site request forgery, forged a signature to look legit\nI cut that check and I ain’t even touch that check\nGot so many identities I don’t know who I’ll wake up as next\nSo close to my enemies I know what they had for lunch and breakfast\nReserved one a dinner seat with my hit girl she’ll cut him for a necklace\nHe picked her up with Tennessee you the ten I see what the fuck was he expected?\nNiggas getting dumber by the second\nI don’t give a fuck about elections\nSent a bitch to lunch with politicians\nHe just tryna fuck a Harvard gymnast\nHe just skimmed a hundred off a million\nHe said nigger fuck the law I built it\nWe know he been on the children\nShit I seen be fucking with my head\nWe need him to unco something iller\nBelieve me when we done with him he’s dead\nHe was paying hundreds in the millions\nFaithfully to cover up his fetish\nI don’t even need to tell who did it\nThey be making fun of him on Reddit\nI see the news I don’t believe it\nI know it’s a distraction\nRaised in a city full of demons\none day I’ll leave it for a cabin\nTill then my team is out here taxing\nDoing shit you cant dream of or imagine\nFluid just like the sea cause I’m the captian\nSuper quick when I speak so I got captions\nNewest technology.\nNewest technology my shit is patented\nGrew this shit out the skreet yeah yeah\nGrew this shit out the skreet so I’m an advocate\n\nMy people count on me, yeah\n\nMy people count on me, my people count on me just like an abacus\n\nyeah My people count on me\n\nI gave her jewelry not to freeze her wrist\nShe cloning Double SSIDs with it\nThey logging in she crack a evil grin\nThat’s not my shorty that’s my evil twin",
+ "timed": {
+  "line": [
+   {
+    "begin": 2.824,
+    "end": 12.38,
+    "content": "I gave her jewelry not to freeze her wrist",
+    "confidence": 0,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 2.824,
+      "end": 2.844,
+      "content": "I"
+     },
+     {
+      "begin": 2.965,
+      "end": 3.185,
+      "content": "gave"
+     },
+     {
+      "begin": 3.305,
+      "end": 3.365,
+      "content": "her"
+     },
+     {
+      "begin": 3.385,
+      "end": 3.746,
+      "content": "jewelry"
+     },
+     {
+      "begin": 3.806,
+      "end": 4.006,
+      "content": "not"
+     },
+     {
+      "begin": 4.086,
+      "end": 4.146,
+      "content": "to"
+     },
+     {
+      "begin": 4.287,
+      "end": 6.31,
+      "content": "freeze"
+     },
+     {
+      "begin": 6.851,
+      "end": 7.091,
+      "content": "her"
+     },
+     {
+      "begin": 9.895,
+      "end": 12.38,
+      "content": "wrist"
+     }
+    ],
+    "align_score": 0.568
+   },
+   {
+    "begin": 12.38,
+    "end": 12.623,
+    "content": "She cloning Double SSIDs with it",
+    "confidence": 0.099,
+    "mismatch": true,
+    "heard": "It's",
+    "words": [
+     {
+      "begin": 12.38,
+      "end": 12.38,
+      "content": "She"
+     },
+     {
+      "begin": 12.38,
+      "end": 12.38,
+      "content": "cloning"
+     },
+     {
+      "begin": 12.38,
+      "end": 12.38,
+      "content": "Double"
+     },
+     {
+      "begin": 12.38,
+      "end": 12.38,
+      "content": "SSIDs"
+     },
+     {
+      "begin": 12.38,
+      "end": 12.38,
+      "content": "with"
+     },
+     {
+      "begin": 12.38,
+      "end": 12.623,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.096
+   },
+   {
+    "begin": 12.623,
+    "end": 12.86,
+    "content": "That’s not my shorty that’s my evil twin",
+    "confidence": 0.721,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 12.623,
+      "end": 12.824,
+      "content": "That’s"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "not"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "my"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "shorty"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "that’s"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "my"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "evil"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "twin"
+     }
+    ],
+    "align_score": 0.494
+   },
+   {
+    "begin": 12.86,
+    "end": 12.86,
+    "content": "They logging in she crack a evil grin",
+    "confidence": 0,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "They"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "logging"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "in"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "she"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "crack"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "a"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "evil"
+     },
+     {
+      "begin": 12.86,
+      "end": 12.86,
+      "content": "grin"
+     }
+    ],
+    "align_score": 0.035
+   },
+   {
+    "begin": 14.483,
+    "end": 17.984,
+    "content": "I got a little hand in this, I got a little hand in that",
+    "confidence": 0.818,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 14.483,
+      "end": 14.503,
+      "content": "I"
+     },
+     {
+      "begin": 14.663,
+      "end": 14.764,
+      "content": "got"
+     },
+     {
+      "begin": 14.884,
+      "end": 14.905,
+      "content": "a"
+     },
+     {
+      "begin": 14.965,
+      "end": 15.146,
+      "content": "little"
+     },
+     {
+      "begin": 15.186,
+      "end": 15.367,
+      "content": "hand"
+     },
+     {
+      "begin": 15.427,
+      "end": 15.467,
+      "content": "in"
+     },
+     {
+      "begin": 15.527,
+      "end": 15.648,
+      "content": "this,"
+     },
+     {
+      "begin": 15.688,
+      "end": 15.708,
+      "content": "I"
+     },
+     {
+      "begin": 15.768,
+      "end": 16.451,
+      "content": "got"
+     },
+     {
+      "begin": 16.472,
+      "end": 16.492,
+      "content": "a"
+     },
+     {
+      "begin": 16.572,
+      "end": 16.793,
+      "content": "little"
+     },
+     {
+      "begin": 16.833,
+      "end": 16.994,
+      "content": "hand"
+     },
+     {
+      "begin": 17.034,
+      "end": 17.074,
+      "content": "in"
+     },
+     {
+      "begin": 17.984,
+      "end": 17.984,
+      "content": "that"
+     }
+    ],
+    "align_score": 0.576
+   },
+   {
+    "begin": 17.984,
+    "end": 20.241,
+    "content": "Came up from the projects+ a nigga manage that",
+    "confidence": 0.535,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 17.984,
+      "end": 18.225,
+      "content": "Came"
+     },
+     {
+      "begin": 18.346,
+      "end": 18.406,
+      "content": "up"
+     },
+     {
+      "begin": 18.446,
+      "end": 18.607,
+      "content": "from"
+     },
+     {
+      "begin": 18.627,
+      "end": 18.687,
+      "content": "the"
+     },
+     {
+      "begin": 18.768,
+      "end": 19.331,
+      "content": "projects+"
+     },
+     {
+      "begin": 19.552,
+      "end": 19.572,
+      "content": "a"
+     },
+     {
+      "begin": 19.853,
+      "end": 20.034,
+      "content": "nigga"
+     },
+     {
+      "begin": 20.154,
+      "end": 20.241,
+      "content": "manage"
+     },
+     {
+      "begin": 20.241,
+      "end": 20.241,
+      "content": "that"
+     }
+    ],
+    "align_score": 0.353
+   },
+   {
+    "begin": 20.241,
+    "end": 22.343,
+    "content": "I been out here engineering shit",
+    "confidence": 0.833,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 20.241,
+      "end": 20.261,
+      "content": "I"
+     },
+     {
+      "begin": 21.087,
+      "end": 21.188,
+      "content": "been"
+     },
+     {
+      "begin": 21.269,
+      "end": 21.329,
+      "content": "out"
+     },
+     {
+      "begin": 21.369,
+      "end": 21.752,
+      "content": "here"
+     },
+     {
+      "begin": 21.873,
+      "end": 22.343,
+      "content": "engineering"
+     },
+     {
+      "begin": 22.343,
+      "end": 22.343,
+      "content": "shit"
+     }
+    ],
+    "align_score": 0.385
+   },
+   {
+    "begin": 22.343,
+    "end": 23.923,
+    "content": "Scheming at the top of every pyramid",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 22.343,
+      "end": 22.927,
+      "content": "Scheming"
+     },
+     {
+      "begin": 22.987,
+      "end": 23.048,
+      "content": "at"
+     },
+     {
+      "begin": 23.068,
+      "end": 23.149,
+      "content": "the"
+     },
+     {
+      "begin": 23.189,
+      "end": 23.37,
+      "content": "top"
+     },
+     {
+      "begin": 23.471,
+      "end": 23.511,
+      "content": "of"
+     },
+     {
+      "begin": 23.572,
+      "end": 23.753,
+      "content": "every"
+     },
+     {
+      "begin": 23.813,
+      "end": 23.923,
+      "content": "pyramid"
+     }
+    ],
+    "align_score": 0.645
+   },
+   {
+    "begin": 23.923,
+    "end": 25.421,
+    "content": "Evil twin attacking call me pharaoh bitch",
+    "confidence": 0.881,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 23.923,
+      "end": 24.507,
+      "content": "Evil"
+     },
+     {
+      "begin": 24.567,
+      "end": 24.688,
+      "content": "twin"
+     },
+     {
+      "begin": 24.748,
+      "end": 25.111,
+      "content": "attacking"
+     },
+     {
+      "begin": 25.131,
+      "end": 25.272,
+      "content": "call"
+     },
+     {
+      "begin": 25.292,
+      "end": 25.352,
+      "content": "me"
+     },
+     {
+      "begin": 25.421,
+      "end": 25.421,
+      "content": "pharaoh"
+     },
+     {
+      "begin": 25.421,
+      "end": 25.421,
+      "content": "bitch"
+     }
+    ],
+    "align_score": 0.399
+   },
+   {
+    "begin": 25.421,
+    "end": 27.465,
+    "content": "Laughing to the bank the shits hilarious",
+    "confidence": 0.757,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 25.421,
+      "end": 26.247,
+      "content": "Laughing"
+     },
+     {
+      "begin": 26.308,
+      "end": 26.348,
+      "content": "to"
+     },
+     {
+      "begin": 26.408,
+      "end": 26.469,
+      "content": "the"
+     },
+     {
+      "begin": 26.509,
+      "end": 26.67,
+      "content": "bank"
+     },
+     {
+      "begin": 26.691,
+      "end": 26.751,
+      "content": "the"
+     },
+     {
+      "begin": 26.832,
+      "end": 27.013,
+      "content": "shits"
+     },
+     {
+      "begin": 27.033,
+      "end": 27.465,
+      "content": "hilarious"
+     }
+    ],
+    "align_score": 0.367
+   },
+   {
+    "begin": 27.465,
+    "end": 28.38,
+    "content": "You add a baddie on Insta",
+    "confidence": 0.826,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 27.465,
+      "end": 27.787,
+      "content": "You"
+     },
+     {
+      "begin": 27.949,
+      "end": 28.049,
+      "content": "add"
+     },
+     {
+      "begin": 28.069,
+      "end": 28.09,
+      "content": "a"
+     },
+     {
+      "begin": 28.17,
+      "end": 28.38,
+      "content": "baddie"
+     },
+     {
+      "begin": 28.38,
+      "end": 28.38,
+      "content": "on"
+     },
+     {
+      "begin": 28.38,
+      "end": 28.38,
+      "content": "Insta"
+     }
+    ],
+    "align_score": 0.649
+   },
+   {
+    "begin": 28.38,
+    "end": 30.599,
+    "content": "That’s my hitter with a finsta",
+    "confidence": 0.667,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 28.38,
+      "end": 28.703,
+      "content": "That’s"
+     },
+     {
+      "begin": 29.53,
+      "end": 29.631,
+      "content": "my"
+     },
+     {
+      "begin": 29.711,
+      "end": 29.893,
+      "content": "hitter"
+     },
+     {
+      "begin": 29.913,
+      "end": 30.034,
+      "content": "with"
+     },
+     {
+      "begin": 30.094,
+      "end": 30.115,
+      "content": "a"
+     },
+     {
+      "begin": 30.215,
+      "end": 30.599,
+      "content": "finsta"
+     }
+    ],
+    "align_score": 0.359
+   },
+   {
+    "begin": 31.023,
+    "end": 32.648,
+    "content": "See where you at, Lyft her",
+    "confidence": 0.556,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 31.023,
+      "end": 31.346,
+      "content": "See"
+     },
+     {
+      "begin": 31.427,
+      "end": 31.608,
+      "content": "where"
+     },
+     {
+      "begin": 31.709,
+      "end": 31.77,
+      "content": "you"
+     },
+     {
+      "begin": 31.79,
+      "end": 31.83,
+      "content": "at,"
+     },
+     {
+      "begin": 31.871,
+      "end": 32.072,
+      "content": "Lyft"
+     },
+     {
+      "begin": 32.648,
+      "end": 32.648,
+      "content": "her"
+     }
+    ],
+    "align_score": 0.437
+   },
+   {
+    "begin": 32.648,
+    "end": 33.8,
+    "content": "She walk past clipped ya",
+    "confidence": 0.35,
+    "mismatch": true,
+    "heard": "won't it",
+    "words": [
+     {
+      "begin": 32.648,
+      "end": 32.729,
+      "content": "She"
+     },
+     {
+      "begin": 32.79,
+      "end": 32.911,
+      "content": "walk"
+     },
+     {
+      "begin": 32.992,
+      "end": 33.234,
+      "content": "past"
+     },
+     {
+      "begin": 33.497,
+      "end": 33.719,
+      "content": "clipped"
+     },
+     {
+      "begin": 33.76,
+      "end": 33.8,
+      "content": "ya"
+     }
+    ],
+    "align_score": 0.409
+   },
+   {
+    "begin": 34.266,
+    "end": 35.322,
+    "content": "She broke your phone the screen drop",
+    "confidence": 0.571,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 34.266,
+      "end": 34.347,
+      "content": "She"
+     },
+     {
+      "begin": 34.407,
+      "end": 34.568,
+      "content": "broke"
+     },
+     {
+      "begin": 34.589,
+      "end": 34.669,
+      "content": "your"
+     },
+     {
+      "begin": 34.709,
+      "end": 34.951,
+      "content": "phone"
+     },
+     {
+      "begin": 34.971,
+      "end": 35.032,
+      "content": "the"
+     },
+     {
+      "begin": 35.092,
+      "end": 35.322,
+      "content": "screen"
+     },
+     {
+      "begin": 35.322,
+      "end": 35.322,
+      "content": "drop"
+     }
+    ],
+    "align_score": 0.465
+   },
+   {
+    "begin": 35.322,
+    "end": 37.276,
+    "content": "You let it go cause she’s hot",
+    "confidence": 0.829,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 35.322,
+      "end": 35.584,
+      "content": "You"
+     },
+     {
+      "begin": 36.127,
+      "end": 36.228,
+      "content": "let"
+     },
+     {
+      "begin": 36.309,
+      "end": 36.349,
+      "content": "it"
+     },
+     {
+      "begin": 36.409,
+      "end": 36.53,
+      "content": "go"
+     },
+     {
+      "begin": 36.671,
+      "end": 36.792,
+      "content": "cause"
+     },
+     {
+      "begin": 36.812,
+      "end": 36.994,
+      "content": "she’s"
+     },
+     {
+      "begin": 37.074,
+      "end": 37.276,
+      "content": "hot"
+     }
+    ],
+    "align_score": 0.589
+   },
+   {
+    "begin": 37.623,
+    "end": 38.54,
+    "content": "Put lil bro at a kiosk",
+    "confidence": 0.333,
+    "mismatch": true,
+    "heard": "got little girl with the",
+    "words": [
+     {
+      "begin": 37.623,
+      "end": 37.724,
+      "content": "Put"
+     },
+     {
+      "begin": 37.744,
+      "end": 37.885,
+      "content": "lil"
+     },
+     {
+      "begin": 38.067,
+      "end": 38.167,
+      "content": "bro"
+     },
+     {
+      "begin": 38.228,
+      "end": 38.288,
+      "content": "at"
+     },
+     {
+      "begin": 38.349,
+      "end": 38.369,
+      "content": "a"
+     },
+     {
+      "begin": 38.45,
+      "end": 38.54,
+      "content": "kiosk"
+     }
+    ],
+    "align_score": 0.405
+   },
+   {
+    "begin": 38.54,
+    "end": 40.598,
+    "content": "“I fix your phone for the cheap Ack!”",
+    "confidence": 0.75,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 38.54,
+      "end": 38.56,
+      "content": "“I"
+     },
+     {
+      "begin": 39.327,
+      "end": 39.549,
+      "content": "fix"
+     },
+     {
+      "begin": 39.569,
+      "end": 39.67,
+      "content": "your"
+     },
+     {
+      "begin": 39.69,
+      "end": 39.871,
+      "content": "phone"
+     },
+     {
+      "begin": 39.892,
+      "end": 39.972,
+      "content": "for"
+     },
+     {
+      "begin": 39.992,
+      "end": 40.053,
+      "content": "the"
+     },
+     {
+      "begin": 40.114,
+      "end": 40.295,
+      "content": "cheap"
+     },
+     {
+      "begin": 40.517,
+      "end": 40.598,
+      "content": "Ack!”"
+     }
+    ],
+    "align_score": 0.218
+   },
+   {
+    "begin": 41.262,
+    "end": 42.86,
+    "content": "He looking broke but he is not",
+    "confidence": 0.333,
+    "mismatch": true,
+    "heard": "mishap now a little of",
+    "words": [
+     {
+      "begin": 41.262,
+      "end": 41.302,
+      "content": "He"
+     },
+     {
+      "begin": 41.382,
+      "end": 41.644,
+      "content": "looking"
+     },
+     {
+      "begin": 42.86,
+      "end": 42.86,
+      "content": "broke"
+     },
+     {
+      "begin": 42.86,
+      "end": 42.86,
+      "content": "but"
+     },
+     {
+      "begin": 42.86,
+      "end": 42.86,
+      "content": "he"
+     },
+     {
+      "begin": 42.86,
+      "end": 42.86,
+      "content": "is"
+     },
+     {
+      "begin": 42.86,
+      "end": 42.86,
+      "content": "not"
+     }
+    ],
+    "align_score": 0.385
+   },
+   {
+    "begin": 42.86,
+    "end": 44.439,
+    "content": "Homie controlling the big knots",
+    "confidence": 0.4,
+    "mismatch": true,
+    "heard": "of",
+    "words": [
+     {
+      "begin": 42.86,
+      "end": 43.002,
+      "content": "Homie"
+     },
+     {
+      "begin": 43.042,
+      "end": 43.326,
+      "content": "controlling"
+     },
+     {
+      "begin": 43.346,
+      "end": 43.407,
+      "content": "the"
+     },
+     {
+      "begin": 43.467,
+      "end": 43.649,
+      "content": "big"
+     },
+     {
+      "begin": 43.71,
+      "end": 44.439,
+      "content": "knots"
+     }
+    ],
+    "align_score": 0.236
+   },
+   {
+    "begin": 44.46,
+    "end": 45.141,
+    "content": "He finna go in your sim slot",
+    "confidence": 0.286,
+    "mismatch": true,
+    "heard": "to",
+    "words": [
+     {
+      "begin": 44.46,
+      "end": 44.501,
+      "content": "He"
+     },
+     {
+      "begin": 44.521,
+      "end": 44.663,
+      "content": "finna"
+     },
+     {
+      "begin": 44.683,
+      "end": 44.764,
+      "content": "go"
+     },
+     {
+      "begin": 44.825,
+      "end": 44.865,
+      "content": "in"
+     },
+     {
+      "begin": 44.926,
+      "end": 45.027,
+      "content": "your"
+     },
+     {
+      "begin": 45.088,
+      "end": 45.141,
+      "content": "sim"
+     },
+     {
+      "begin": 45.141,
+      "end": 45.141,
+      "content": "slot"
+     }
+    ],
+    "align_score": 0.407
+   },
+   {
+    "begin": 45.141,
+    "end": 47.361,
+    "content": "You won’t get smoke if I’m pissed off",
+    "confidence": 0.704,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 45.141,
+      "end": 46.028,
+      "content": "You"
+     },
+     {
+      "begin": 46.068,
+      "end": 46.168,
+      "content": "won’t"
+     },
+     {
+      "begin": 46.189,
+      "end": 46.269,
+      "content": "get"
+     },
+     {
+      "begin": 46.309,
+      "end": 46.491,
+      "content": "smoke"
+     },
+     {
+      "begin": 46.571,
+      "end": 46.612,
+      "content": "if"
+     },
+     {
+      "begin": 46.652,
+      "end": 46.712,
+      "content": "I’m"
+     },
+     {
+      "begin": 46.793,
+      "end": 47.361,
+      "content": "pissed"
+     },
+     {
+      "begin": 47.361,
+      "end": 47.361,
+      "content": "off"
+     }
+    ],
+    "align_score": 0.47
+   },
+   {
+    "begin": 47.361,
+    "end": 48.461,
+    "content": "I am too corporate to lick shots",
+    "confidence": 0.362,
+    "mismatch": true,
+    "heard": "run way the lake",
+    "words": [
+     {
+      "begin": 47.361,
+      "end": 47.382,
+      "content": "I"
+     },
+     {
+      "begin": 47.664,
+      "end": 47.745,
+      "content": "am"
+     },
+     {
+      "begin": 47.785,
+      "end": 47.926,
+      "content": "too"
+     },
+     {
+      "begin": 47.987,
+      "end": 48.249,
+      "content": "corporate"
+     },
+     {
+      "begin": 48.269,
+      "end": 48.33,
+      "content": "to"
+     },
+     {
+      "begin": 48.41,
+      "end": 48.461,
+      "content": "lick"
+     },
+     {
+      "begin": 48.461,
+      "end": 48.461,
+      "content": "shots"
+     }
+    ],
+    "align_score": 0.556
+   },
+   {
+    "begin": 48.461,
+    "end": 50.876,
+    "content": "I can’t afford to get pinched doggy do it",
+    "confidence": 0.866,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 48.461,
+      "end": 48.481,
+      "content": "I"
+     },
+     {
+      "begin": 49.326,
+      "end": 49.507,
+      "content": "can’t"
+     },
+     {
+      "begin": 49.528,
+      "end": 49.789,
+      "content": "afford"
+     },
+     {
+      "begin": 49.809,
+      "end": 49.85,
+      "content": "to"
+     },
+     {
+      "begin": 49.89,
+      "end": 49.991,
+      "content": "get"
+     },
+     {
+      "begin": 50.031,
+      "end": 50.272,
+      "content": "pinched"
+     },
+     {
+      "begin": 50.313,
+      "end": 50.554,
+      "content": "doggy"
+     },
+     {
+      "begin": 50.655,
+      "end": 50.735,
+      "content": "do"
+     },
+     {
+      "begin": 50.836,
+      "end": 50.876,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.668
+   },
+   {
+    "begin": 50.905,
+    "end": 51.902,
+    "content": "I let ‘em both get a quick drop on it",
+    "confidence": 0.559,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 50.905,
+      "end": 50.925,
+      "content": "I"
+     },
+     {
+      "begin": 51.006,
+      "end": 51.086,
+      "content": "let"
+     },
+     {
+      "begin": 51.127,
+      "end": 51.207,
+      "content": "‘em"
+     },
+     {
+      "begin": 51.248,
+      "end": 51.409,
+      "content": "both"
+     },
+     {
+      "begin": 51.449,
+      "end": 51.55,
+      "content": "get"
+     },
+     {
+      "begin": 51.59,
+      "end": 51.611,
+      "content": "a"
+     },
+     {
+      "begin": 51.691,
+      "end": 51.853,
+      "content": "quick"
+     },
+     {
+      "begin": 51.902,
+      "end": 51.902,
+      "content": "drop"
+     },
+     {
+      "begin": 51.902,
+      "end": 51.902,
+      "content": "on"
+     },
+     {
+      "begin": 51.902,
+      "end": 51.902,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.647
+   },
+   {
+    "begin": 51.902,
+    "end": 53.876,
+    "content": "Now they performing a sim swap",
+    "confidence": 0.606,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 51.902,
+      "end": 52.124,
+      "content": "Now"
+     },
+     {
+      "begin": 52.627,
+      "end": 52.748,
+      "content": "they"
+     },
+     {
+      "begin": 52.809,
+      "end": 53.211,
+      "content": "performing"
+     },
+     {
+      "begin": 53.252,
+      "end": 53.272,
+      "content": "a"
+     },
+     {
+      "begin": 53.332,
+      "end": 53.473,
+      "content": "sim"
+     },
+     {
+      "begin": 53.574,
+      "end": 53.876,
+      "content": "swap"
+     }
+    ],
+    "align_score": 0.615
+   },
+   {
+    "begin": 54.243,
+    "end": 57.404,
+    "content": "All my day ones got libraries full of zero day attacks",
+    "confidence": 0.818,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 54.243,
+      "end": 54.323,
+      "content": "All"
+     },
+     {
+      "begin": 54.383,
+      "end": 54.484,
+      "content": "my"
+     },
+     {
+      "begin": 54.604,
+      "end": 54.785,
+      "content": "day"
+     },
+     {
+      "begin": 54.986,
+      "end": 55.147,
+      "content": "ones"
+     },
+     {
+      "begin": 55.187,
+      "end": 55.348,
+      "content": "got"
+     },
+     {
+      "begin": 55.469,
+      "end": 55.951,
+      "content": "libraries"
+     },
+     {
+      "begin": 56.032,
+      "end": 56.172,
+      "content": "full"
+     },
+     {
+      "begin": 56.212,
+      "end": 56.253,
+      "content": "of"
+     },
+     {
+      "begin": 56.313,
+      "end": 56.514,
+      "content": "zero"
+     },
+     {
+      "begin": 56.574,
+      "end": 56.695,
+      "content": "day"
+     },
+     {
+      "begin": 56.775,
+      "end": 57.404,
+      "content": "attacks"
+     }
+    ],
+    "align_score": 0.553
+   },
+   {
+    "begin": 57.404,
+    "end": 60.804,
+    "content": "Even kiddie scripters get the bags using metasploit we on your ass",
+    "confidence": 0.515,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 57.404,
+      "end": 57.524,
+      "content": "Even"
+     },
+     {
+      "begin": 57.665,
+      "end": 57.866,
+      "content": "kiddie"
+     },
+     {
+      "begin": 57.886,
+      "end": 58.207,
+      "content": "scripters"
+     },
+     {
+      "begin": 58.248,
+      "end": 58.368,
+      "content": "get"
+     },
+     {
+      "begin": 58.448,
+      "end": 58.509,
+      "content": "the"
+     },
+     {
+      "begin": 58.569,
+      "end": 58.91,
+      "content": "bags"
+     },
+     {
+      "begin": 58.991,
+      "end": 59.131,
+      "content": "using"
+     },
+     {
+      "begin": 59.272,
+      "end": 59.754,
+      "content": "metasploit"
+     },
+     {
+      "begin": 59.814,
+      "end": 59.875,
+      "content": "we"
+     },
+     {
+      "begin": 59.895,
+      "end": 59.975,
+      "content": "on"
+     },
+     {
+      "begin": 60.116,
+      "end": 60.437,
+      "content": "your"
+     },
+     {
+      "begin": 60.804,
+      "end": 60.804,
+      "content": "ass"
+     }
+    ],
+    "align_score": 0.451
+   },
+   {
+    "begin": 60.804,
+    "end": 63.44,
+    "content": "Called an audible on path, Intercept and pass the hash",
+    "confidence": 0.498,
+    "mismatch": true,
+    "heard": "armpath, a",
+    "words": [
+     {
+      "begin": 60.804,
+      "end": 61.025,
+      "content": "Called"
+     },
+     {
+      "begin": 61.065,
+      "end": 61.125,
+      "content": "an"
+     },
+     {
+      "begin": 61.206,
+      "end": 61.487,
+      "content": "audible"
+     },
+     {
+      "begin": 61.708,
+      "end": 61.788,
+      "content": "on"
+     },
+     {
+      "begin": 61.909,
+      "end": 62.25,
+      "content": "path,"
+     },
+     {
+      "begin": 62.692,
+      "end": 63.074,
+      "content": "Intercept"
+     },
+     {
+      "begin": 63.134,
+      "end": 63.194,
+      "content": "and"
+     },
+     {
+      "begin": 63.234,
+      "end": 63.44,
+      "content": "pass"
+     },
+     {
+      "begin": 63.44,
+      "end": 63.44,
+      "content": "the"
+     },
+     {
+      "begin": 63.44,
+      "end": 63.44,
+      "content": "hash"
+     }
+    ],
+    "align_score": 0.717
+   },
+   {
+    "begin": 63.44,
+    "end": 66.96,
+    "content": "Then relay it back. Good replay attack.",
+    "confidence": 0.921,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 63.44,
+      "end": 64.666,
+      "content": "Then"
+     },
+     {
+      "begin": 64.726,
+      "end": 64.967,
+      "content": "relay"
+     },
+     {
+      "begin": 65.068,
+      "end": 65.108,
+      "content": "it"
+     },
+     {
+      "begin": 65.188,
+      "end": 65.41,
+      "content": "back."
+     },
+     {
+      "begin": 66.173,
+      "end": 66.314,
+      "content": "Good"
+     },
+     {
+      "begin": 66.354,
+      "end": 66.655,
+      "content": "replay"
+     },
+     {
+      "begin": 66.736,
+      "end": 66.96,
+      "content": "attack."
+     }
+    ],
+    "align_score": 0.757
+   },
+   {
+    "begin": 66.96,
+    "end": 68.877,
+    "content": "Shawty playing man in the browser",
+    "confidence": 0.81,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 66.96,
+      "end": 67.444,
+      "content": "Shawty"
+     },
+     {
+      "begin": 67.565,
+      "end": 67.787,
+      "content": "playing"
+     },
+     {
+      "begin": 67.888,
+      "end": 68.09,
+      "content": "man"
+     },
+     {
+      "begin": 68.171,
+      "end": 68.211,
+      "content": "in"
+     },
+     {
+      "begin": 68.271,
+      "end": 68.332,
+      "content": "the"
+     },
+     {
+      "begin": 68.473,
+      "end": 68.877,
+      "content": "browser"
+     }
+    ],
+    "align_score": 0.644
+   },
+   {
+    "begin": 68.905,
+    "end": 69.781,
+    "content": "You only the man in the browser",
+    "confidence": 0.852,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 68.905,
+      "end": 68.985,
+      "content": "You"
+     },
+     {
+      "begin": 69.086,
+      "end": 69.267,
+      "content": "only"
+     },
+     {
+      "begin": 69.328,
+      "end": 69.408,
+      "content": "the"
+     },
+     {
+      "begin": 69.469,
+      "end": 69.691,
+      "content": "man"
+     },
+     {
+      "begin": 69.781,
+      "end": 69.781,
+      "content": "in"
+     },
+     {
+      "begin": 69.781,
+      "end": 69.781,
+      "content": "the"
+     },
+     {
+      "begin": 69.781,
+      "end": 69.781,
+      "content": "browser"
+     }
+    ],
+    "align_score": 0.667
+   },
+   {
+    "begin": 69.781,
+    "end": 72.164,
+    "content": "I was making bands off routers",
+    "confidence": 0.942,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 69.781,
+      "end": 69.801,
+      "content": "I"
+     },
+     {
+      "begin": 70.244,
+      "end": 70.727,
+      "content": "was"
+     },
+     {
+      "begin": 70.787,
+      "end": 71.049,
+      "content": "making"
+     },
+     {
+      "begin": 71.15,
+      "end": 71.452,
+      "content": "bands"
+     },
+     {
+      "begin": 71.593,
+      "end": 71.694,
+      "content": "off"
+     },
+     {
+      "begin": 71.835,
+      "end": 72.164,
+      "content": "routers"
+     }
+    ],
+    "align_score": 0.548
+   },
+   {
+    "begin": 72.164,
+    "end": 73.02,
+    "content": "For you had hands on sour",
+    "confidence": 0.724,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 72.164,
+      "end": 72.305,
+      "content": "For"
+     },
+     {
+      "begin": 72.385,
+      "end": 72.466,
+      "content": "you"
+     },
+     {
+      "begin": 72.547,
+      "end": 72.748,
+      "content": "had"
+     },
+     {
+      "begin": 72.829,
+      "end": 73.02,
+      "content": "hands"
+     },
+     {
+      "begin": 73.02,
+      "end": 73.02,
+      "content": "on"
+     },
+     {
+      "begin": 73.02,
+      "end": 73.02,
+      "content": "sour"
+     }
+    ],
+    "align_score": 0.534
+   },
+   {
+    "begin": 73.02,
+    "end": 76.222,
+    "content": "I was doing drive by downloads with no license Ack",
+    "confidence": 0.78,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 73.02,
+      "end": 73.04,
+      "content": "I"
+     },
+     {
+      "begin": 73.161,
+      "end": 73.342,
+      "content": "was"
+     },
+     {
+      "begin": 73.422,
+      "end": 73.703,
+      "content": "doing"
+     },
+     {
+      "begin": 74.487,
+      "end": 74.729,
+      "content": "drive"
+     },
+     {
+      "begin": 74.809,
+      "end": 74.95,
+      "content": "by"
+     },
+     {
+      "begin": 75.111,
+      "end": 75.734,
+      "content": "downloads"
+     },
+     {
+      "begin": 75.754,
+      "end": 75.854,
+      "content": "with"
+     },
+     {
+      "begin": 75.895,
+      "end": 75.955,
+      "content": "no"
+     },
+     {
+      "begin": 76.116,
+      "end": 76.222,
+      "content": "license"
+     },
+     {
+      "begin": 76.222,
+      "end": 76.222,
+      "content": "Ack"
+     }
+    ],
+    "align_score": 0.364
+   },
+   {
+    "begin": 76.222,
+    "end": 80.081,
+    "content": "I was doing typo squats, I was with the cyber squad",
+    "confidence": 0.966,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 76.222,
+      "end": 76.242,
+      "content": "I"
+     },
+     {
+      "begin": 77.266,
+      "end": 77.427,
+      "content": "was"
+     },
+     {
+      "begin": 77.487,
+      "end": 77.708,
+      "content": "doing"
+     },
+     {
+      "begin": 77.788,
+      "end": 78.17,
+      "content": "typo"
+     },
+     {
+      "begin": 78.33,
+      "end": 78.672,
+      "content": "squats,"
+     },
+     {
+      "begin": 78.933,
+      "end": 78.953,
+      "content": "I"
+     },
+     {
+      "begin": 79.033,
+      "end": 79.114,
+      "content": "was"
+     },
+     {
+      "begin": 79.154,
+      "end": 79.274,
+      "content": "with"
+     },
+     {
+      "begin": 79.314,
+      "end": 79.375,
+      "content": "the"
+     },
+     {
+      "begin": 79.455,
+      "end": 79.756,
+      "content": "cyber"
+     },
+     {
+      "begin": 79.837,
+      "end": 80.081,
+      "content": "squad"
+     }
+    ],
+    "align_score": 0.709
+   },
+   {
+    "begin": 80.081,
+    "end": 82.64,
+    "content": "They was tryna be my middle man, so I did a man in the middle hit",
+    "confidence": 0.904,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 80.081,
+      "end": 80.403,
+      "content": "They"
+     },
+     {
+      "begin": 80.423,
+      "end": 80.503,
+      "content": "was"
+     },
+     {
+      "begin": 80.544,
+      "end": 80.765,
+      "content": "tryna"
+     },
+     {
+      "begin": 80.845,
+      "end": 80.905,
+      "content": "be"
+     },
+     {
+      "begin": 80.966,
+      "end": 81.066,
+      "content": "my"
+     },
+     {
+      "begin": 81.147,
+      "end": 81.368,
+      "content": "middle"
+     },
+     {
+      "begin": 81.428,
+      "end": 81.589,
+      "content": "man,"
+     },
+     {
+      "begin": 81.649,
+      "end": 81.73,
+      "content": "so"
+     },
+     {
+      "begin": 81.85,
+      "end": 81.87,
+      "content": "I"
+     },
+     {
+      "begin": 81.971,
+      "end": 82.111,
+      "content": "did"
+     },
+     {
+      "begin": 82.172,
+      "end": 82.192,
+      "content": "a"
+     },
+     {
+      "begin": 82.252,
+      "end": 82.433,
+      "content": "man"
+     },
+     {
+      "begin": 82.554,
+      "end": 82.594,
+      "content": "in"
+     },
+     {
+      "begin": 82.64,
+      "end": 82.64,
+      "content": "the"
+     },
+     {
+      "begin": 82.64,
+      "end": 82.64,
+      "content": "middle"
+     },
+     {
+      "begin": 82.64,
+      "end": 82.64,
+      "content": "hit"
+     }
+    ],
+    "align_score": 0.744
+   },
+   {
+    "begin": 82.64,
+    "end": 85.46,
+    "content": "Times the attack with timing attacks what type of time I’m on? Militant.",
+    "confidence": 0.446,
+    "mismatch": true,
+    "heard": "at you",
+    "words": [
+     {
+      "begin": 82.64,
+      "end": 82.862,
+      "content": "Times"
+     },
+     {
+      "begin": 82.902,
+      "end": 82.983,
+      "content": "the"
+     },
+     {
+      "begin": 83.003,
+      "end": 83.244,
+      "content": "attack"
+     },
+     {
+      "begin": 83.446,
+      "end": 83.627,
+      "content": "with"
+     },
+     {
+      "begin": 83.647,
+      "end": 83.909,
+      "content": "timing"
+     },
+     {
+      "begin": 83.929,
+      "end": 84.251,
+      "content": "attacks"
+     },
+     {
+      "begin": 84.271,
+      "end": 84.372,
+      "content": "what"
+     },
+     {
+      "begin": 84.453,
+      "end": 84.614,
+      "content": "type"
+     },
+     {
+      "begin": 84.654,
+      "end": 84.694,
+      "content": "of"
+     },
+     {
+      "begin": 84.714,
+      "end": 84.815,
+      "content": "time"
+     },
+     {
+      "begin": 84.876,
+      "end": 84.976,
+      "content": "I’m"
+     },
+     {
+      "begin": 85.037,
+      "end": 85.077,
+      "content": "on?"
+     },
+     {
+      "begin": 85.137,
+      "end": 85.46,
+      "content": "Militant."
+     }
+    ],
+    "align_score": 0.237
+   },
+   {
+    "begin": 86.203,
+    "end": 89.622,
+    "content": "Ian even squeeze triggers you triggered a logic bombs hidden in a script",
+    "confidence": 0.513,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 86.203,
+      "end": 86.786,
+      "content": "Ian"
+     },
+     {
+      "begin": 86.846,
+      "end": 87.007,
+      "content": "even"
+     },
+     {
+      "begin": 87.047,
+      "end": 87.268,
+      "content": "squeeze"
+     },
+     {
+      "begin": 87.328,
+      "end": 87.569,
+      "content": "triggers"
+     },
+     {
+      "begin": 87.609,
+      "end": 87.689,
+      "content": "you"
+     },
+     {
+      "begin": 87.73,
+      "end": 87.991,
+      "content": "triggered"
+     },
+     {
+      "begin": 88.091,
+      "end": 88.111,
+      "content": "a"
+     },
+     {
+      "begin": 88.211,
+      "end": 88.673,
+      "content": "logic"
+     },
+     {
+      "begin": 88.794,
+      "end": 89.115,
+      "content": "bombs"
+     },
+     {
+      "begin": 89.135,
+      "end": 89.336,
+      "content": "hidden"
+     },
+     {
+      "begin": 89.436,
+      "end": 89.517,
+      "content": "in"
+     },
+     {
+      "begin": 89.537,
+      "end": 89.557,
+      "content": "a"
+     },
+     {
+      "begin": 89.597,
+      "end": 89.622,
+      "content": "script"
+     }
+    ],
+    "align_score": 0.484
+   },
+   {
+    "begin": 89.622,
+    "end": 93.201,
+    "content": "Got black hat privileges from a white privileged individual cause I’m lit",
+    "confidence": 0.878,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 89.622,
+      "end": 90.024,
+      "content": "Got"
+     },
+     {
+      "begin": 90.124,
+      "end": 90.325,
+      "content": "black"
+     },
+     {
+      "begin": 90.425,
+      "end": 90.626,
+      "content": "hat"
+     },
+     {
+      "begin": 90.727,
+      "end": 91.289,
+      "content": "privileges"
+     },
+     {
+      "begin": 91.369,
+      "end": 91.51,
+      "content": "from"
+     },
+     {
+      "begin": 91.59,
+      "end": 91.61,
+      "content": "a"
+     },
+     {
+      "begin": 91.691,
+      "end": 91.872,
+      "content": "white"
+     },
+     {
+      "begin": 91.952,
+      "end": 92.293,
+      "content": "privileged"
+     },
+     {
+      "begin": 92.334,
+      "end": 92.816,
+      "content": "individual"
+     },
+     {
+      "begin": 92.916,
+      "end": 93.177,
+      "content": "cause"
+     },
+     {
+      "begin": 93.201,
+      "end": 93.201,
+      "content": "I’m"
+     },
+     {
+      "begin": 93.201,
+      "end": 93.201,
+      "content": "lit"
+     }
+    ],
+    "align_score": 0.683
+   },
+   {
+    "begin": 93.201,
+    "end": 96.619,
+    "content": "Scan a card I’m skimming that’s how I escalate my privilege then mix",
+    "confidence": 0.523,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 93.201,
+      "end": 93.643,
+      "content": "Scan"
+     },
+     {
+      "begin": 93.864,
+      "end": 93.884,
+      "content": "a"
+     },
+     {
+      "begin": 94.086,
+      "end": 94.246,
+      "content": "card"
+     },
+     {
+      "begin": 94.287,
+      "end": 94.347,
+      "content": "I’m"
+     },
+     {
+      "begin": 94.367,
+      "end": 94.649,
+      "content": "skimming"
+     },
+     {
+      "begin": 94.669,
+      "end": 94.789,
+      "content": "that’s"
+     },
+     {
+      "begin": 94.81,
+      "end": 94.97,
+      "content": "how"
+     },
+     {
+      "begin": 95.011,
+      "end": 95.031,
+      "content": "I"
+     },
+     {
+      "begin": 95.091,
+      "end": 95.533,
+      "content": "escalate"
+     },
+     {
+      "begin": 95.574,
+      "end": 95.694,
+      "content": "my"
+     },
+     {
+      "begin": 95.855,
+      "end": 96.197,
+      "content": "privilege"
+     },
+     {
+      "begin": 96.217,
+      "end": 96.358,
+      "content": "then"
+     },
+     {
+      "begin": 96.459,
+      "end": 96.619,
+      "content": "mix"
+     }
+    ],
+    "align_score": 0.246
+   },
+   {
+    "begin": 96.843,
+    "end": 100.058,
+    "content": "Cross site request forgery, forged a signature to look legit",
+    "confidence": 0.974,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 96.843,
+      "end": 97.084,
+      "content": "Cross"
+     },
+     {
+      "begin": 97.124,
+      "end": 97.285,
+      "content": "site"
+     },
+     {
+      "begin": 97.325,
+      "end": 97.687,
+      "content": "request"
+     },
+     {
+      "begin": 97.767,
+      "end": 98.229,
+      "content": "forgery,"
+     },
+     {
+      "begin": 98.45,
+      "end": 98.691,
+      "content": "forged"
+     },
+     {
+      "begin": 98.752,
+      "end": 98.772,
+      "content": "a"
+     },
+     {
+      "begin": 98.812,
+      "end": 99.455,
+      "content": "signature"
+     },
+     {
+      "begin": 99.475,
+      "end": 99.515,
+      "content": "to"
+     },
+     {
+      "begin": 99.555,
+      "end": 99.696,
+      "content": "look"
+     },
+     {
+      "begin": 99.756,
+      "end": 100.058,
+      "content": "legit"
+     }
+    ],
+    "align_score": 0.61
+   },
+   {
+    "begin": 100.744,
+    "end": 102.961,
+    "content": "I cut that check and I ain’t even touch that check",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 100.744,
+      "end": 100.764,
+      "content": "I"
+     },
+     {
+      "begin": 100.945,
+      "end": 101.126,
+      "content": "cut"
+     },
+     {
+      "begin": 101.267,
+      "end": 101.428,
+      "content": "that"
+     },
+     {
+      "begin": 101.568,
+      "end": 101.789,
+      "content": "check"
+     },
+     {
+      "begin": 101.89,
+      "end": 101.95,
+      "content": "and"
+     },
+     {
+      "begin": 101.97,
+      "end": 101.99,
+      "content": "I"
+     },
+     {
+      "begin": 102.031,
+      "end": 102.272,
+      "content": "ain’t"
+     },
+     {
+      "begin": 102.372,
+      "end": 102.513,
+      "content": "even"
+     },
+     {
+      "begin": 102.573,
+      "end": 102.915,
+      "content": "touch"
+     },
+     {
+      "begin": 102.961,
+      "end": 102.961,
+      "content": "that"
+     },
+     {
+      "begin": 102.961,
+      "end": 102.961,
+      "content": "check"
+     }
+    ],
+    "align_score": 0.555
+   },
+   {
+    "begin": 102.961,
+    "end": 106.462,
+    "content": "Got so many identities I don’t know who I’ll wake up as next",
+    "confidence": 0.923,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 102.961,
+      "end": 103.081,
+      "content": "Got"
+     },
+     {
+      "begin": 103.222,
+      "end": 103.564,
+      "content": "so"
+     },
+     {
+      "begin": 103.785,
+      "end": 104.046,
+      "content": "many"
+     },
+     {
+      "begin": 104.166,
+      "end": 104.829,
+      "content": "identities"
+     },
+     {
+      "begin": 104.87,
+      "end": 104.89,
+      "content": "I"
+     },
+     {
+      "begin": 104.91,
+      "end": 105.131,
+      "content": "don’t"
+     },
+     {
+      "begin": 105.171,
+      "end": 105.332,
+      "content": "know"
+     },
+     {
+      "begin": 105.472,
+      "end": 105.553,
+      "content": "who"
+     },
+     {
+      "begin": 105.573,
+      "end": 105.693,
+      "content": "I’ll"
+     },
+     {
+      "begin": 105.754,
+      "end": 105.975,
+      "content": "wake"
+     },
+     {
+      "begin": 106.115,
+      "end": 106.156,
+      "content": "up"
+     },
+     {
+      "begin": 106.357,
+      "end": 106.462,
+      "content": "as"
+     },
+     {
+      "begin": 106.462,
+      "end": 106.462,
+      "content": "next"
+     }
+    ],
+    "align_score": 0.499
+   },
+   {
+    "begin": 106.462,
+    "end": 109.901,
+    "content": "So close to my enemies I know what they had for lunch and breakfast",
+    "confidence": 0.768,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 106.462,
+      "end": 106.863,
+      "content": "So"
+     },
+     {
+      "begin": 107.044,
+      "end": 107.265,
+      "content": "close"
+     },
+     {
+      "begin": 107.305,
+      "end": 107.345,
+      "content": "to"
+     },
+     {
+      "begin": 107.406,
+      "end": 107.526,
+      "content": "my"
+     },
+     {
+      "begin": 107.667,
+      "end": 108.088,
+      "content": "enemies"
+     },
+     {
+      "begin": 108.39,
+      "end": 108.41,
+      "content": "I"
+     },
+     {
+      "begin": 108.49,
+      "end": 108.591,
+      "content": "know"
+     },
+     {
+      "begin": 108.671,
+      "end": 108.792,
+      "content": "what"
+     },
+     {
+      "begin": 108.812,
+      "end": 108.912,
+      "content": "they"
+     },
+     {
+      "begin": 108.992,
+      "end": 109.073,
+      "content": "had"
+     },
+     {
+      "begin": 109.153,
+      "end": 109.233,
+      "content": "for"
+     },
+     {
+      "begin": 109.294,
+      "end": 109.535,
+      "content": "lunch"
+     },
+     {
+      "begin": 109.595,
+      "end": 109.756,
+      "content": "and"
+     },
+     {
+      "begin": 109.856,
+      "end": 109.901,
+      "content": "breakfast"
+     }
+    ],
+    "align_score": 0.609
+   },
+   {
+    "begin": 109.901,
+    "end": 112.861,
+    "content": "Reserved one a dinner seat with my hit girl she’ll cut him for a necklace",
+    "confidence": 0.779,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 109.901,
+      "end": 110.604,
+      "content": "Reserved"
+     },
+     {
+      "begin": 110.684,
+      "end": 110.745,
+      "content": "one"
+     },
+     {
+      "begin": 110.805,
+      "end": 110.825,
+      "content": "a"
+     },
+     {
+      "begin": 110.906,
+      "end": 111.127,
+      "content": "dinner"
+     },
+     {
+      "begin": 111.207,
+      "end": 111.368,
+      "content": "seat"
+     },
+     {
+      "begin": 111.408,
+      "end": 111.529,
+      "content": "with"
+     },
+     {
+      "begin": 111.569,
+      "end": 111.689,
+      "content": "my"
+     },
+     {
+      "begin": 111.75,
+      "end": 111.89,
+      "content": "hit"
+     },
+     {
+      "begin": 111.991,
+      "end": 112.192,
+      "content": "girl"
+     },
+     {
+      "begin": 112.272,
+      "end": 112.453,
+      "content": "she’ll"
+     },
+     {
+      "begin": 112.533,
+      "end": 112.694,
+      "content": "cut"
+     },
+     {
+      "begin": 112.734,
+      "end": 112.795,
+      "content": "him"
+     },
+     {
+      "begin": 112.855,
+      "end": 112.861,
+      "content": "for"
+     },
+     {
+      "begin": 112.861,
+      "end": 112.861,
+      "content": "a"
+     },
+     {
+      "begin": 112.861,
+      "end": 112.861,
+      "content": "necklace"
+     }
+    ],
+    "align_score": 0.686
+   },
+   {
+    "begin": 112.861,
+    "end": 116.802,
+    "content": "He picked her up with Tennessee you the ten I see what the fuck was he expected?",
+    "confidence": 0.633,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 112.861,
+      "end": 113.001,
+      "content": "He"
+     },
+     {
+      "begin": 113.142,
+      "end": 113.403,
+      "content": "picked"
+     },
+     {
+      "begin": 113.705,
+      "end": 113.926,
+      "content": "her"
+     },
+     {
+      "begin": 113.966,
+      "end": 114.006,
+      "content": "up"
+     },
+     {
+      "begin": 114.066,
+      "end": 114.167,
+      "content": "with"
+     },
+     {
+      "begin": 114.207,
+      "end": 114.689,
+      "content": "Tennessee"
+     },
+     {
+      "begin": 114.79,
+      "end": 114.85,
+      "content": "you"
+     },
+     {
+      "begin": 114.91,
+      "end": 114.971,
+      "content": "the"
+     },
+     {
+      "begin": 115.091,
+      "end": 115.151,
+      "content": "ten"
+     },
+     {
+      "begin": 115.232,
+      "end": 115.252,
+      "content": "I"
+     },
+     {
+      "begin": 115.332,
+      "end": 115.453,
+      "content": "see"
+     },
+     {
+      "begin": 115.674,
+      "end": 115.754,
+      "content": "what"
+     },
+     {
+      "begin": 115.815,
+      "end": 115.875,
+      "content": "the"
+     },
+     {
+      "begin": 115.935,
+      "end": 116.096,
+      "content": "fuck"
+     },
+     {
+      "begin": 116.176,
+      "end": 116.237,
+      "content": "was"
+     },
+     {
+      "begin": 116.297,
+      "end": 116.337,
+      "content": "he"
+     },
+     {
+      "begin": 116.438,
+      "end": 116.802,
+      "content": "expected?"
+     }
+    ],
+    "align_score": 0.359
+   },
+   {
+    "begin": 116.802,
+    "end": 117.901,
+    "content": "Niggas getting dumber by the second",
+    "confidence": 0.81,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 116.802,
+      "end": 117.307,
+      "content": "Niggas"
+     },
+     {
+      "begin": 117.327,
+      "end": 117.549,
+      "content": "getting"
+     },
+     {
+      "begin": 117.569,
+      "end": 117.791,
+      "content": "dumber"
+     },
+     {
+      "begin": 117.851,
+      "end": 117.901,
+      "content": "by"
+     },
+     {
+      "begin": 117.901,
+      "end": 117.901,
+      "content": "the"
+     },
+     {
+      "begin": 117.901,
+      "end": 117.901,
+      "content": "second"
+     }
+    ],
+    "align_score": 0.553
+   },
+   {
+    "begin": 117.901,
+    "end": 120.059,
+    "content": "I don’t give a fuck about elections",
+    "confidence": 0.857,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 117.901,
+      "end": 117.922,
+      "content": "I"
+     },
+     {
+      "begin": 118.143,
+      "end": 118.869,
+      "content": "don’t"
+     },
+     {
+      "begin": 118.889,
+      "end": 119.01,
+      "content": "give"
+     },
+     {
+      "begin": 119.071,
+      "end": 119.091,
+      "content": "a"
+     },
+     {
+      "begin": 119.152,
+      "end": 119.333,
+      "content": "fuck"
+     },
+     {
+      "begin": 119.414,
+      "end": 119.635,
+      "content": "about"
+     },
+     {
+      "begin": 119.696,
+      "end": 120.059,
+      "content": "elections"
+     }
+    ],
+    "align_score": 0.631
+   },
+   {
+    "begin": 120.244,
+    "end": 121.736,
+    "content": "Sent a bitch to lunch with politicians",
+    "confidence": 0.373,
+    "mismatch": true,
+    "heard": "piece of for",
+    "words": [
+     {
+      "begin": 120.244,
+      "end": 120.385,
+      "content": "Sent"
+     },
+     {
+      "begin": 120.446,
+      "end": 120.466,
+      "content": "a"
+     },
+     {
+      "begin": 120.526,
+      "end": 120.688,
+      "content": "bitch"
+     },
+     {
+      "begin": 120.708,
+      "end": 120.748,
+      "content": "to"
+     },
+     {
+      "begin": 120.829,
+      "end": 120.99,
+      "content": "lunch"
+     },
+     {
+      "begin": 121.01,
+      "end": 121.111,
+      "content": "with"
+     },
+     {
+      "begin": 121.151,
+      "end": 121.736,
+      "content": "politicians"
+     }
+    ],
+    "align_score": 0.495
+   },
+   {
+    "begin": 121.968,
+    "end": 122.801,
+    "content": "He just tryna fuck a Harvard gymnast",
+    "confidence": 0.571,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 121.968,
+      "end": 122.008,
+      "content": "He"
+     },
+     {
+      "begin": 122.069,
+      "end": 122.21,
+      "content": "just"
+     },
+     {
+      "begin": 122.23,
+      "end": 122.432,
+      "content": "tryna"
+     },
+     {
+      "begin": 122.492,
+      "end": 122.694,
+      "content": "fuck"
+     },
+     {
+      "begin": 122.734,
+      "end": 122.755,
+      "content": "a"
+     },
+     {
+      "begin": 122.801,
+      "end": 122.801,
+      "content": "Harvard"
+     },
+     {
+      "begin": 122.801,
+      "end": 122.801,
+      "content": "gymnast"
+     }
+    ],
+    "align_score": 0.527
+   },
+   {
+    "begin": 122.801,
+    "end": 124.561,
+    "content": "He just skimmed a hundred off a million",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 122.801,
+      "end": 122.862,
+      "content": "He"
+     },
+     {
+      "begin": 123.103,
+      "end": 123.687,
+      "content": "just"
+     },
+     {
+      "begin": 123.848,
+      "end": 124.07,
+      "content": "skimmed"
+     },
+     {
+      "begin": 124.11,
+      "end": 124.13,
+      "content": "a"
+     },
+     {
+      "begin": 124.211,
+      "end": 124.453,
+      "content": "hundred"
+     },
+     {
+      "begin": 124.513,
+      "end": 124.561,
+      "content": "off"
+     },
+     {
+      "begin": 124.561,
+      "end": 124.561,
+      "content": "a"
+     },
+     {
+      "begin": 124.561,
+      "end": 124.561,
+      "content": "million"
+     }
+    ],
+    "align_score": 0.828
+   },
+   {
+    "begin": 124.561,
+    "end": 126.14,
+    "content": "He said nigger fuck the law I built it",
+    "confidence": 0.956,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 124.561,
+      "end": 124.602,
+      "content": "He"
+     },
+     {
+      "begin": 125.347,
+      "end": 125.488,
+      "content": "said"
+     },
+     {
+      "begin": 125.588,
+      "end": 125.77,
+      "content": "nigger"
+     },
+     {
+      "begin": 125.81,
+      "end": 125.991,
+      "content": "fuck"
+     },
+     {
+      "begin": 126.051,
+      "end": 126.112,
+      "content": "the"
+     },
+     {
+      "begin": 126.14,
+      "end": 126.14,
+      "content": "law"
+     },
+     {
+      "begin": 126.14,
+      "end": 126.14,
+      "content": "I"
+     },
+     {
+      "begin": 126.14,
+      "end": 126.14,
+      "content": "built"
+     },
+     {
+      "begin": 126.14,
+      "end": 126.14,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.588
+   },
+   {
+    "begin": 126.14,
+    "end": 128.081,
+    "content": "We know he been on the children",
+    "confidence": 0.512,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 126.14,
+      "end": 126.281,
+      "content": "We"
+     },
+     {
+      "begin": 126.442,
+      "end": 126.966,
+      "content": "know"
+     },
+     {
+      "begin": 127.188,
+      "end": 127.228,
+      "content": "he"
+     },
+     {
+      "begin": 127.288,
+      "end": 127.752,
+      "content": "been"
+     },
+     {
+      "begin": 127.812,
+      "end": 127.852,
+      "content": "on"
+     },
+     {
+      "begin": 127.893,
+      "end": 127.993,
+      "content": "the"
+     },
+     {
+      "begin": 128.074,
+      "end": 128.081,
+      "content": "children"
+     }
+    ],
+    "align_score": 0.536
+   },
+   {
+    "begin": 128.081,
+    "end": 130.125,
+    "content": "Shit I seen be fucking with my head",
+    "confidence": 0.654,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 128.081,
+      "end": 128.302,
+      "content": "Shit"
+     },
+     {
+      "begin": 128.343,
+      "end": 128.363,
+      "content": "I"
+     },
+     {
+      "begin": 128.484,
+      "end": 128.726,
+      "content": "seen"
+     },
+     {
+      "begin": 128.786,
+      "end": 128.867,
+      "content": "be"
+     },
+     {
+      "begin": 129.109,
+      "end": 129.532,
+      "content": "fucking"
+     },
+     {
+      "begin": 129.593,
+      "end": 129.794,
+      "content": "with"
+     },
+     {
+      "begin": 130.125,
+      "end": 130.125,
+      "content": "my"
+     },
+     {
+      "begin": 130.125,
+      "end": 130.125,
+      "content": "head"
+     }
+    ],
+    "align_score": 0.387
+   },
+   {
+    "begin": 130.125,
+    "end": 131.222,
+    "content": "We need him to unco something iller",
+    "confidence": 0.732,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 130.125,
+      "end": 130.185,
+      "content": "We"
+     },
+     {
+      "begin": 130.246,
+      "end": 130.367,
+      "content": "need"
+     },
+     {
+      "begin": 130.407,
+      "end": 130.488,
+      "content": "him"
+     },
+     {
+      "begin": 130.508,
+      "end": 130.588,
+      "content": "to"
+     },
+     {
+      "begin": 130.689,
+      "end": 130.891,
+      "content": "unco"
+     },
+     {
+      "begin": 131.112,
+      "end": 131.222,
+      "content": "something"
+     },
+     {
+      "begin": 131.222,
+      "end": 131.222,
+      "content": "iller"
+     }
+    ],
+    "align_score": 0.597
+   },
+   {
+    "begin": 131.222,
+    "end": 132.861,
+    "content": "Believe me when we done with him he’s dead",
+    "confidence": 0.934,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 131.222,
+      "end": 131.786,
+      "content": "Believe"
+     },
+     {
+      "begin": 131.846,
+      "end": 131.947,
+      "content": "me"
+     },
+     {
+      "begin": 132.108,
+      "end": 132.209,
+      "content": "when"
+     },
+     {
+      "begin": 132.289,
+      "end": 132.329,
+      "content": "we"
+     },
+     {
+      "begin": 132.43,
+      "end": 132.611,
+      "content": "done"
+     },
+     {
+      "begin": 132.652,
+      "end": 132.732,
+      "content": "with"
+     },
+     {
+      "begin": 132.793,
+      "end": 132.853,
+      "content": "him"
+     },
+     {
+      "begin": 132.861,
+      "end": 132.861,
+      "content": "he’s"
+     },
+     {
+      "begin": 132.861,
+      "end": 132.861,
+      "content": "dead"
+     }
+    ],
+    "align_score": 0.468
+   },
+   {
+    "begin": 132.861,
+    "end": 135.125,
+    "content": "He was paying hundreds in the millions",
+    "confidence": 0.697,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 132.861,
+      "end": 133.163,
+      "content": "He"
+     },
+     {
+      "begin": 133.687,
+      "end": 133.747,
+      "content": "was"
+     },
+     {
+      "begin": 133.808,
+      "end": 134.029,
+      "content": "paying"
+     },
+     {
+      "begin": 134.15,
+      "end": 134.452,
+      "content": "hundreds"
+     },
+     {
+      "begin": 134.513,
+      "end": 134.553,
+      "content": "in"
+     },
+     {
+      "begin": 134.573,
+      "end": 134.634,
+      "content": "the"
+     },
+     {
+      "begin": 134.734,
+      "end": 135.125,
+      "content": "millions"
+     }
+    ],
+    "align_score": 0.59
+   },
+   {
+    "begin": 135.125,
+    "end": 136.02,
+    "content": "Faithfully to cover up his fetish",
+    "confidence": 0.816,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 135.125,
+      "end": 135.528,
+      "content": "Faithfully"
+     },
+     {
+      "begin": 135.589,
+      "end": 135.649,
+      "content": "to"
+     },
+     {
+      "begin": 135.73,
+      "end": 135.992,
+      "content": "cover"
+     },
+     {
+      "begin": 136.02,
+      "end": 136.02,
+      "content": "up"
+     },
+     {
+      "begin": 136.02,
+      "end": 136.02,
+      "content": "his"
+     },
+     {
+      "begin": 136.02,
+      "end": 136.02,
+      "content": "fetish"
+     }
+    ],
+    "align_score": 0.834
+   },
+   {
+    "begin": 136.02,
+    "end": 138.224,
+    "content": "I don’t even need to tell who did it",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 136.02,
+      "end": 136.041,
+      "content": "I"
+     },
+     {
+      "begin": 136.484,
+      "end": 137.128,
+      "content": "don’t"
+     },
+     {
+      "begin": 137.208,
+      "end": 137.349,
+      "content": "even"
+     },
+     {
+      "begin": 137.37,
+      "end": 137.47,
+      "content": "need"
+     },
+     {
+      "begin": 137.51,
+      "end": 137.571,
+      "content": "to"
+     },
+     {
+      "begin": 137.692,
+      "end": 137.833,
+      "content": "tell"
+     },
+     {
+      "begin": 137.893,
+      "end": 137.953,
+      "content": "who"
+     },
+     {
+      "begin": 138.054,
+      "end": 138.195,
+      "content": "did"
+     },
+     {
+      "begin": 138.224,
+      "end": 138.224,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.55
+   },
+   {
+    "begin": 138.224,
+    "end": 139.442,
+    "content": "They be making fun of him on Reddit",
+    "confidence": 0.729,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 138.224,
+      "end": 138.567,
+      "content": "They"
+     },
+     {
+      "begin": 138.648,
+      "end": 138.688,
+      "content": "be"
+     },
+     {
+      "begin": 138.749,
+      "end": 139.011,
+      "content": "making"
+     },
+     {
+      "begin": 139.072,
+      "end": 139.193,
+      "content": "fun"
+     },
+     {
+      "begin": 139.273,
+      "end": 139.314,
+      "content": "of"
+     },
+     {
+      "begin": 139.394,
+      "end": 139.442,
+      "content": "him"
+     },
+     {
+      "begin": 139.442,
+      "end": 139.442,
+      "content": "on"
+     },
+     {
+      "begin": 139.442,
+      "end": 139.442,
+      "content": "Reddit"
+     }
+    ],
+    "align_score": 0.53
+   },
+   {
+    "begin": 139.442,
+    "end": 141.948,
+    "content": "I see the news I don’t believe it",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 139.442,
+      "end": 139.462,
+      "content": "I"
+     },
+     {
+      "begin": 139.683,
+      "end": 139.864,
+      "content": "see"
+     },
+     {
+      "begin": 140.106,
+      "end": 140.328,
+      "content": "the"
+     },
+     {
+      "begin": 140.428,
+      "end": 140.63,
+      "content": "news"
+     },
+     {
+      "begin": 140.73,
+      "end": 140.75,
+      "content": "I"
+     },
+     {
+      "begin": 140.771,
+      "end": 140.891,
+      "content": "don’t"
+     },
+     {
+      "begin": 140.932,
+      "end": 141.334,
+      "content": "believe"
+     },
+     {
+      "begin": 141.938,
+      "end": 141.948,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.588
+   },
+   {
+    "begin": 141.948,
+    "end": 143.144,
+    "content": "I know it’s a distraction",
+    "confidence": 0.987,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 141.948,
+      "end": 141.968,
+      "content": "I"
+     },
+     {
+      "begin": 142.089,
+      "end": 142.21,
+      "content": "know"
+     },
+     {
+      "begin": 142.311,
+      "end": 142.391,
+      "content": "it’s"
+     },
+     {
+      "begin": 142.472,
+      "end": 142.492,
+      "content": "a"
+     },
+     {
+      "begin": 142.532,
+      "end": 143.144,
+      "content": "distraction"
+     }
+    ],
+    "align_score": 0.579
+   },
+   {
+    "begin": 143.144,
+    "end": 144.906,
+    "content": "Raised in a city full of demons",
+    "confidence": 0.991,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 143.144,
+      "end": 143.446,
+      "content": "Raised"
+     },
+     {
+      "begin": 143.527,
+      "end": 143.587,
+      "content": "in"
+     },
+     {
+      "begin": 143.668,
+      "end": 143.688,
+      "content": "a"
+     },
+     {
+      "begin": 143.789,
+      "end": 144.01,
+      "content": "city"
+     },
+     {
+      "begin": 144.091,
+      "end": 144.252,
+      "content": "full"
+     },
+     {
+      "begin": 144.313,
+      "end": 144.353,
+      "content": "of"
+     },
+     {
+      "begin": 144.393,
+      "end": 144.906,
+      "content": "demons"
+     }
+    ],
+    "align_score": 0.525
+   },
+   {
+    "begin": 144.906,
+    "end": 146.244,
+    "content": "one day I’ll leave it for a cabin",
+    "confidence": 0.997,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 144.906,
+      "end": 144.986,
+      "content": "one"
+     },
+     {
+      "begin": 145.047,
+      "end": 145.168,
+      "content": "day"
+     },
+     {
+      "begin": 145.289,
+      "end": 145.43,
+      "content": "I’ll"
+     },
+     {
+      "begin": 145.45,
+      "end": 145.591,
+      "content": "leave"
+     },
+     {
+      "begin": 145.651,
+      "end": 145.691,
+      "content": "it"
+     },
+     {
+      "begin": 145.752,
+      "end": 145.893,
+      "content": "for"
+     },
+     {
+      "begin": 146.175,
+      "end": 146.195,
+      "content": "a"
+     },
+     {
+      "begin": 146.244,
+      "end": 146.244,
+      "content": "cabin"
+     }
+    ],
+    "align_score": 0.739
+   },
+   {
+    "begin": 146.244,
+    "end": 147.8,
+    "content": "Till then my team is out here taxing",
+    "confidence": 0.367,
+    "mismatch": true,
+    "heard": "in teammates, I Blue",
+    "words": [
+     {
+      "begin": 146.244,
+      "end": 146.707,
+      "content": "Till"
+     },
+     {
+      "begin": 146.787,
+      "end": 146.908,
+      "content": "then"
+     },
+     {
+      "begin": 146.948,
+      "end": 147.029,
+      "content": "my"
+     },
+     {
+      "begin": 147.11,
+      "end": 147.251,
+      "content": "team"
+     },
+     {
+      "begin": 147.311,
+      "end": 147.392,
+      "content": "is"
+     },
+     {
+      "begin": 147.472,
+      "end": 147.532,
+      "content": "out"
+     },
+     {
+      "begin": 147.553,
+      "end": 147.653,
+      "content": "here"
+     },
+     {
+      "begin": 147.714,
+      "end": 147.8,
+      "content": "taxing"
+     }
+    ],
+    "align_score": 0.42
+   },
+   {
+    "begin": 147.8,
+    "end": 149.765,
+    "content": "Doing shit you cant dream of or imagine",
+    "confidence": 0.615,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 147.8,
+      "end": 148.163,
+      "content": "Doing"
+     },
+     {
+      "begin": 148.365,
+      "end": 148.486,
+      "content": "shit"
+     },
+     {
+      "begin": 148.526,
+      "end": 148.607,
+      "content": "you"
+     },
+     {
+      "begin": 148.647,
+      "end": 148.768,
+      "content": "cant"
+     },
+     {
+      "begin": 148.808,
+      "end": 148.909,
+      "content": "dream"
+     },
+     {
+      "begin": 149.01,
+      "end": 149.091,
+      "content": "of"
+     },
+     {
+      "begin": 149.151,
+      "end": 149.192,
+      "content": "or"
+     },
+     {
+      "begin": 149.353,
+      "end": 149.765,
+      "content": "imagine"
+     }
+    ],
+    "align_score": 0.397
+   },
+   {
+    "begin": 149.765,
+    "end": 150.721,
+    "content": "Fluid just like the sea cause I’m the captian",
+    "confidence": 0.635,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 149.765,
+      "end": 150.007,
+      "content": "Fluid"
+     },
+     {
+      "begin": 150.047,
+      "end": 150.168,
+      "content": "just"
+     },
+     {
+      "begin": 150.188,
+      "end": 150.289,
+      "content": "like"
+     },
+     {
+      "begin": 150.329,
+      "end": 150.39,
+      "content": "the"
+     },
+     {
+      "begin": 150.45,
+      "end": 150.591,
+      "content": "sea"
+     },
+     {
+      "begin": 150.611,
+      "end": 150.721,
+      "content": "cause"
+     },
+     {
+      "begin": 150.721,
+      "end": 150.721,
+      "content": "I’m"
+     },
+     {
+      "begin": 150.721,
+      "end": 150.721,
+      "content": "the"
+     },
+     {
+      "begin": 150.721,
+      "end": 150.721,
+      "content": "captian"
+     }
+    ],
+    "align_score": 0.649
+   },
+   {
+    "begin": 150.721,
+    "end": 153.06,
+    "content": "Super quick when I speak so I got captions",
+    "confidence": 0.977,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 150.721,
+      "end": 151.647,
+      "content": "Super"
+     },
+     {
+      "begin": 151.687,
+      "end": 151.828,
+      "content": "quick"
+     },
+     {
+      "begin": 151.868,
+      "end": 151.969,
+      "content": "when"
+     },
+     {
+      "begin": 152.009,
+      "end": 152.029,
+      "content": "I"
+     },
+     {
+      "begin": 152.11,
+      "end": 152.251,
+      "content": "speak"
+     },
+     {
+      "begin": 152.291,
+      "end": 152.351,
+      "content": "so"
+     },
+     {
+      "begin": 152.452,
+      "end": 152.472,
+      "content": "I"
+     },
+     {
+      "begin": 152.553,
+      "end": 152.653,
+      "content": "got"
+     },
+     {
+      "begin": 152.714,
+      "end": 153.06,
+      "content": "captions"
+     }
+    ],
+    "align_score": 0.59
+   },
+   {
+    "begin": 153.06,
+    "end": 153.06,
+    "content": "Newest technology.",
+    "confidence": 0,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 153.06,
+      "end": 153.06,
+      "content": "Newest"
+     },
+     {
+      "begin": 153.06,
+      "end": 153.06,
+      "content": "technology."
+     }
+    ],
+    "align_score": 0.111
+   },
+   {
+    "begin": 153.163,
+    "end": 156.202,
+    "content": "Newest technology my shit is patented",
+    "confidence": 1,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 153.163,
+      "end": 153.364,
+      "content": "Newest"
+     },
+     {
+      "begin": 153.404,
+      "end": 153.967,
+      "content": "technology"
+     },
+     {
+      "begin": 154.75,
+      "end": 155.494,
+      "content": "my"
+     },
+     {
+      "begin": 155.614,
+      "end": 155.815,
+      "content": "shit"
+     },
+     {
+      "begin": 155.875,
+      "end": 155.915,
+      "content": "is"
+     },
+     {
+      "begin": 155.976,
+      "end": 156.202,
+      "content": "patented"
+     }
+    ],
+    "align_score": 0.535
+   },
+   {
+    "begin": 156.202,
+    "end": 158.063,
+    "content": "Grew this shit out the skreet yeah yeah",
+    "confidence": 0.549,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 156.202,
+      "end": 156.343,
+      "content": "Grew"
+     },
+     {
+      "begin": 156.383,
+      "end": 156.585,
+      "content": "this"
+     },
+     {
+      "begin": 156.605,
+      "end": 156.747,
+      "content": "shit"
+     },
+     {
+      "begin": 156.847,
+      "end": 156.928,
+      "content": "out"
+     },
+     {
+      "begin": 156.948,
+      "end": 157.009,
+      "content": "the"
+     },
+     {
+      "begin": 157.049,
+      "end": 157.312,
+      "content": "skreet"
+     },
+     {
+      "begin": 157.433,
+      "end": 157.675,
+      "content": "yeah"
+     },
+     {
+      "begin": 157.776,
+      "end": 158.063,
+      "content": "yeah"
+     }
+    ],
+    "align_score": 0.322
+   },
+   {
+    "begin": 158.063,
+    "end": 159.141,
+    "content": "Grew this shit out the skreet so I’m an advocate",
+    "confidence": 0.709,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 158.063,
+      "end": 158.164,
+      "content": "Grew"
+     },
+     {
+      "begin": 158.204,
+      "end": 158.285,
+      "content": "this"
+     },
+     {
+      "begin": 158.305,
+      "end": 158.386,
+      "content": "shit"
+     },
+     {
+      "begin": 158.466,
+      "end": 158.527,
+      "content": "out"
+     },
+     {
+      "begin": 158.567,
+      "end": 158.628,
+      "content": "the"
+     },
+     {
+      "begin": 158.688,
+      "end": 158.89,
+      "content": "skreet"
+     },
+     {
+      "begin": 158.91,
+      "end": 158.97,
+      "content": "so"
+     },
+     {
+      "begin": 159.071,
+      "end": 159.141,
+      "content": "I’m"
+     },
+     {
+      "begin": 159.141,
+      "end": 159.141,
+      "content": "an"
+     },
+     {
+      "begin": 159.141,
+      "end": 159.141,
+      "content": "advocate"
+     }
+    ],
+    "align_score": 0.247
+   },
+   {
+    "begin": 159.141,
+    "end": 160.44,
+    "content": "My people count on me, yeah",
+    "confidence": 0.947,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 159.141,
+      "end": 159.202,
+      "content": "My"
+     },
+     {
+      "begin": 159.363,
+      "end": 160.068,
+      "content": "people"
+     },
+     {
+      "begin": 160.089,
+      "end": 160.29,
+      "content": "count"
+     },
+     {
+      "begin": 160.351,
+      "end": 160.391,
+      "content": "on"
+     },
+     {
+      "begin": 160.44,
+      "end": 160.44,
+      "content": "me,"
+     },
+     {
+      "begin": 160.44,
+      "end": 160.44,
+      "content": "yeah"
+     }
+    ],
+    "added": true,
+    "align_score": 0.306
+   },
+   {
+    "begin": 160.44,
+    "end": 163.481,
+    "content": "My people count on me, my people count on me just like an abacus",
+    "confidence": 0.857,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 160.44,
+      "end": 160.581,
+      "content": "My"
+     },
+     {
+      "begin": 161.505,
+      "end": 161.727,
+      "content": "people"
+     },
+     {
+      "begin": 161.767,
+      "end": 161.927,
+      "content": "count"
+     },
+     {
+      "begin": 161.988,
+      "end": 162.028,
+      "content": "on"
+     },
+     {
+      "begin": 162.068,
+      "end": 162.128,
+      "content": "me,"
+     },
+     {
+      "begin": 162.189,
+      "end": 162.249,
+      "content": "my"
+     },
+     {
+      "begin": 162.41,
+      "end": 162.812,
+      "content": "people"
+     },
+     {
+      "begin": 162.872,
+      "end": 162.993,
+      "content": "count"
+     },
+     {
+      "begin": 163.073,
+      "end": 163.133,
+      "content": "on"
+     },
+     {
+      "begin": 163.194,
+      "end": 163.234,
+      "content": "me"
+     },
+     {
+      "begin": 163.395,
+      "end": 163.481,
+      "content": "just"
+     },
+     {
+      "begin": 163.481,
+      "end": 163.481,
+      "content": "like"
+     },
+     {
+      "begin": 163.481,
+      "end": 163.481,
+      "content": "an"
+     },
+     {
+      "begin": 163.481,
+      "end": 163.481,
+      "content": "abacus"
+     }
+    ],
+    "align_score": 0.383
+   },
+   {
+    "begin": 163.481,
+    "end": 165.576,
+    "content": "yeah My people count on me",
+    "confidence": 0.982,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 163.481,
+      "end": 164.287,
+      "content": "yeah"
+     },
+     {
+      "begin": 164.69,
+      "end": 164.75,
+      "content": "My"
+     },
+     {
+      "begin": 164.871,
+      "end": 165.073,
+      "content": "people"
+     },
+     {
+      "begin": 165.093,
+      "end": 165.234,
+      "content": "count"
+     },
+     {
+      "begin": 165.294,
+      "end": 165.335,
+      "content": "on"
+     },
+     {
+      "begin": 165.395,
+      "end": 165.576,
+      "content": "me"
+     }
+    ],
+    "added": true,
+    "align_score": 0.422
+   },
+   {
+    "begin": 166.244,
+    "end": 169.181,
+    "content": "I gave her jewelry not to freeze her wrist",
+    "confidence": 0.282,
+    "mismatch": true,
+    "heard": "advocate a jury night",
+    "words": [
+     {
+      "begin": 166.244,
+      "end": 166.264,
+      "content": "I"
+     },
+     {
+      "begin": 167.631,
+      "end": 167.912,
+      "content": "gave"
+     },
+     {
+      "begin": 167.973,
+      "end": 168.033,
+      "content": "her"
+     },
+     {
+      "begin": 168.073,
+      "end": 168.435,
+      "content": "jewelry"
+     },
+     {
+      "begin": 168.495,
+      "end": 168.636,
+      "content": "not"
+     },
+     {
+      "begin": 168.696,
+      "end": 168.797,
+      "content": "to"
+     },
+     {
+      "begin": 168.877,
+      "end": 169.159,
+      "content": "freeze"
+     },
+     {
+      "begin": 169.179,
+      "end": 169.181,
+      "content": "her"
+     },
+     {
+      "begin": 169.181,
+      "end": 169.181,
+      "content": "wrist"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.395
+   },
+   {
+    "begin": 169.181,
+    "end": 173.439,
+    "content": "She cloning Double SSIDs with it",
+    "confidence": 0.789,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 169.181,
+      "end": 170.868,
+      "content": "She"
+     },
+     {
+      "begin": 171.009,
+      "end": 171.371,
+      "content": "cloning"
+     },
+     {
+      "begin": 171.391,
+      "end": 171.752,
+      "content": "Double"
+     },
+     {
+      "begin": 171.853,
+      "end": 172.495,
+      "content": "SSIDs"
+     },
+     {
+      "begin": 172.555,
+      "end": 172.676,
+      "content": "with"
+     },
+     {
+      "begin": 173.399,
+      "end": 173.439,
+      "content": "it"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.554
+   },
+   {
+    "begin": 174.064,
+    "end": 176.779,
+    "content": "They logging in she crack a evil grin",
+    "confidence": 0.795,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 174.064,
+      "end": 174.205,
+      "content": "They"
+     },
+     {
+      "begin": 174.286,
+      "end": 174.688,
+      "content": "logging"
+     },
+     {
+      "begin": 174.768,
+      "end": 174.828,
+      "content": "in"
+     },
+     {
+      "begin": 174.929,
+      "end": 175.009,
+      "content": "she"
+     },
+     {
+      "begin": 175.09,
+      "end": 175.311,
+      "content": "crack"
+     },
+     {
+      "begin": 175.432,
+      "end": 175.452,
+      "content": "a"
+     },
+     {
+      "begin": 175.673,
+      "end": 175.874,
+      "content": "evil"
+     },
+     {
+      "begin": 175.934,
+      "end": 176.779,
+      "content": "grin"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.705
+   },
+   {
+    "begin": 177.182,
+    "end": 179.237,
+    "content": "That’s not my shorty that’s my evil twin",
+    "confidence": 0.583,
+    "mismatch": false,
+    "words": [
+     {
+      "begin": 177.182,
+      "end": 177.403,
+      "content": "That’s"
+     },
+     {
+      "begin": 177.605,
+      "end": 177.705,
+      "content": "not"
+     },
+     {
+      "begin": 177.786,
+      "end": 177.867,
+      "content": "my"
+     },
+     {
+      "begin": 177.988,
+      "end": 178.25,
+      "content": "shorty"
+     },
+     {
+      "begin": 178.371,
+      "end": 178.592,
+      "content": "that’s"
+     },
+     {
+      "begin": 178.653,
+      "end": 178.753,
+      "content": "my"
+     },
+     {
+      "begin": 178.874,
+      "end": 179.015,
+      "content": "evil"
+     },
+     {
+      "begin": 179.076,
+      "end": 179.237,
+      "content": "twin"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.439
+   }
+  ]
+ }
+}

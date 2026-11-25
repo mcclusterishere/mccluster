@@ -1,0 +1,2031 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-server-lab-troubleshooting-v1",
+  "mode": "SIMULATION",
+  "execution_target": "SANDBOX",
+  "live_control_allowed": false,
+  "credential_is_not_competency": true,
+  "purpose": "Level 4 (Troubleshoot) of the Equity Uprise Server Lab: injected hardware faults on the sandbox clone of B1-SRV-HYP-01-I001, run on the Step 3 guided-scenario runtime. Symptoms are rendered from production/electronics/server-lab-hardware-v1.json failure modes.",
+  "hardware_authority": "docs/design/equity-uprise-building/production/electronics/server-lab-hardware-v1.json",
+  "finding_choices": [
+    "dimm_uncorrectable_error",
+    "raid_member_failed",
+    "psu_failed",
+    "fan_failed",
+    "server_nic_link_down",
+    "cmos_battery_depleted",
+    "firmware_mismatch",
+    "cpu_ierr",
+    "heatsink_uneven_mount",
+    "bmc_unreachable",
+    "board_no_post"
+  ],
+  "firmware_components": [
+    "BIOS",
+    "BMC",
+    "NIC",
+    "RAID"
+  ],
+  "safety_rules": [
+    {
+      "code": "HOT_REMOVAL_OF_NON_HOT_SWAP_PART",
+      "severity": "major",
+      "critical": false,
+      "when": "a replace of a non-hot-swap part (DIMM, CPU, CMOS battery, OCP NIC) is attempted while the host is powered"
+    },
+    {
+      "code": "HEALTHY_MEMBER_REMOVED_FROM_DEGRADED_ARRAY",
+      "severity": "critical",
+      "critical": true,
+      "when": "a drive other than the failed member is pulled from a degraded RAID 5 array"
+    },
+    {
+      "code": "LAST_PSU_REMOVED",
+      "severity": "critical",
+      "critical": true,
+      "when": "the only healthy PSU is pulled while the host runs"
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "EU-SERVER-LAB-044-V1",
+      "source_lab_id": "IT-LAB-044",
+      "title": "Server Memory Failure",
+      "federal_training_ids": [],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "competency_ids": [
+        "OPS-01",
+        "OPS-04",
+        "CORE-08"
+      ],
+      "curriculum_objective_ids": [
+        "APLUS-C1-TS-HW",
+        "SERVERPLUS-D4-TS-HW"
+      ],
+      "viewer_focus": {
+        "level_id": "B1",
+        "rack_item_id": "RACK01-U18-HYP1",
+        "registry_asset_id": "B1-SRV-HYP-01-I001"
+      },
+      "floor_scope": [
+        "B1"
+      ],
+      "learner_ticket": "The virtualization host in MDF rack 01 is up, but the hypervisor says it has less memory than yesterday and the health light is amber.",
+      "learner_brief": "Find the failed memory module from the evidence, replace it safely and prove the host has all its memory back.",
+      "server_fault_bindings": {
+        "dimm_uncorrectable_error": {
+          "component_type": "dimm",
+          "component_id": "CPU1-DIMM-C1",
+          "slot": "CPU1 DIMM C1",
+          "installed_gb": 256,
+          "reduced_gb": 224,
+          "hot_swap": false
+        }
+      },
+      "symptoms": {
+        "dimm_uncorrectable_error": {
+          "front_panel": [
+            "Health LED amber"
+          ],
+          "component_led": "DIMM fault LED beside the slot lit amber (visible with the lid open)",
+          "post": [
+            "Memory error: uncorrectable ECC on CPU1 DIMM C1; DIMM disabled",
+            "Memory detected: 224 GB of 256 GB"
+          ],
+          "bmc_sel": [
+            "Memory: Uncorrectable ECC detected on CPU1 DIMM C1",
+            "Memory: CPU1 DIMM C1 disabled at POST"
+          ],
+          "beep_or_code": "POST memory warning prompt (press a key to continue)",
+          "os": [
+            "Total memory 224 GB instead of 256 GB",
+            "Hypervisor reports reduced host capacity"
+          ],
+          "fix": "Power off, unplug, replace the DIMM in CPU1 DIMM C1 with an identical module.",
+          "verify": "POST reports 256 GB with no memory errors; event cleared."
+        }
+      },
+      "objectives": [
+        {
+          "objective_id": "OBJ-044-DIAGNOSE",
+          "description": "Diagnose from LEDs, the event log and the boot capture.",
+          "required_action_ids": [
+            "044-inspect-front",
+            "044-read-sel",
+            "044-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-044-FIX",
+          "description": "Power down safely and replace the failed DIMM.",
+          "required_action_ids": [
+            "044-power-off",
+            "044-replace",
+            "044-power-on"
+          ]
+        },
+        {
+          "objective_id": "OBJ-044-VERIFY",
+          "description": "Verify full memory.",
+          "required_action_ids": [
+            "044-verify"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "requires_action_ids": [],
+          "action_id": "044-inspect-front",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Look at the server's LEDs"
+          },
+          "observation": {
+            "simulated_signal": "Health LED amber · DIMM fault LED beside the slot lit amber (visible with the lid open)"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "044-read-sel",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the management controller event log (SEL)"
+          },
+          "observation": {
+            "simulated_signal": "Memory: Uncorrectable ECC detected on CPU1 DIMM C1 · Memory: CPU1 DIMM C1 disabled at POST"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "044-read-host",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the boot (POST) capture and the host's own report"
+          },
+          "observation": {
+            "simulated_signal": "Memory error: uncorrectable ECC on CPU1 DIMM C1; DIMM disabled · Memory detected: 224 GB of 256 GB · Total memory 224 GB instead of 256 GB · Hypervisor reports reduced host capacity"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "044-read-sel"
+          ],
+          "action_id": "044-diagnose",
+          "action_type": "decision",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "diagnose",
+            "label": "Name the fault"
+          },
+          "expected_input": {
+            "findings": [
+              "dimm_uncorrectable_error"
+            ]
+          },
+          "observation": {
+            "accepted_finding": "Uncorrectable ECC error"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "044-diagnose"
+          ],
+          "action_id": "044-power-off",
+          "action_type": "perform",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "power",
+            "label": "Shut down, unplug both PSUs, ground yourself"
+          },
+          "observation": {
+            "simulated_change": "Host drained of VMs, shut down and unplugged; ESD strap on."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "044-power-off"
+          ],
+          "action_id": "044-replace",
+          "action_type": "mitigate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "component_type": "dimm",
+          "ui": {
+            "group": "fix",
+            "label": "Replace a part"
+          },
+          "expected_input": {
+            "component_id": "CPU1-DIMM-C1"
+          },
+          "resolve_fault_ids": [
+            "dimm_uncorrectable_error"
+          ],
+          "observation": {
+            "simulated_change": "Power off, unplug, replace the DIMM in CPU1 DIMM C1 with an identical module."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "044-replace"
+          ],
+          "action_id": "044-power-on",
+          "action_type": "perform",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "power",
+            "label": "Reconnect power and boot"
+          },
+          "observation": {
+            "simulated_change": "Host powered on and POST ran."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "044-power-on"
+          ],
+          "action_id": "044-verify",
+          "action_type": "validate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "requires_faults_absent": [
+            "dimm_uncorrectable_error"
+          ],
+          "ui": {
+            "group": "verify",
+            "label": "Verify the repair"
+          },
+          "observation": {
+            "validation": "POST reports 256 GB with no memory errors; event cleared."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "044-inspect-front",
+          "input": {}
+        },
+        {
+          "action_id": "044-read-sel",
+          "input": {}
+        },
+        {
+          "action_id": "044-read-host",
+          "input": {}
+        },
+        {
+          "action_id": "044-diagnose",
+          "input": {
+            "findings": [
+              "dimm_uncorrectable_error"
+            ]
+          }
+        },
+        {
+          "action_id": "044-power-off",
+          "input": {}
+        },
+        {
+          "action_id": "044-replace",
+          "input": {
+            "component_id": "CPU1-DIMM-C1"
+          }
+        },
+        {
+          "action_id": "044-power-on",
+          "input": {}
+        },
+        {
+          "action_id": "044-verify",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-SERVER-LAB-045-V1",
+      "source_lab_id": "IT-LAB-045",
+      "title": "Degraded RAID Member",
+      "federal_training_ids": [],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "competency_ids": [
+        "OPS-01",
+        "OPS-04",
+        "CORE-08"
+      ],
+      "curriculum_objective_ids": [
+        "APLUS-C1-TS-HW",
+        "SERVERPLUS-D4-TS-HW",
+        "SERVERPLUS-D4-TS-STORAGE"
+      ],
+      "viewer_focus": {
+        "level_id": "B1",
+        "rack_item_id": "RACK01-U18-HYP1",
+        "registry_asset_id": "B1-SRV-HYP-01-I001"
+      },
+      "floor_scope": [
+        "B1"
+      ],
+      "learner_ticket": "Storage alerts say the host's data array is degraded. Virtual machines are still running, slower than usual.",
+      "learner_brief": "Identify the failed drive, hot-swap only that drive, and watch the array rebuild. Pulling a healthy member from a degraded RAID 5 destroys the volume.",
+      "server_fault_bindings": {
+        "raid_member_failed": {
+          "component_type": "drive_sff",
+          "component_id": "BAY-02",
+          "slot": "Drive bay 2",
+          "hot_swap": true,
+          "array_members": [
+            "BAY-00",
+            "BAY-01",
+            "BAY-02",
+            "BAY-03"
+          ]
+        }
+      },
+      "symptoms": {
+        "raid_member_failed": {
+          "front_panel": [
+            "Health LED amber"
+          ],
+          "component_led": "Drive bay 2 status LED amber (others green, activity flashing)",
+          "post": [],
+          "bmc_sel": [
+            "Drive Slot: Drive bay 2 Drive fault",
+            "Storage: Virtual disk 0 degraded"
+          ],
+          "beep_or_code": null,
+          "os": [
+            "Volume online but degraded",
+            "Higher I/O latency; controller reports 1 failed physical disk"
+          ],
+          "fix": "Identify the failed bay (blue locate if unsure), hot-swap only that drive with an identical model; the controller starts the rebuild.",
+          "verify": "Rebuild completes; virtual disk 0 back to Optimal."
+        }
+      },
+      "objectives": [
+        {
+          "objective_id": "OBJ-045-DIAGNOSE",
+          "description": "Diagnose the degraded array.",
+          "required_action_ids": [
+            "045-inspect-front",
+            "045-read-sel",
+            "045-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-045-FIX",
+          "description": "Hot-swap the failed member.",
+          "required_action_ids": [
+            "045-replace"
+          ]
+        },
+        {
+          "objective_id": "OBJ-045-VERIFY",
+          "description": "Verify the rebuild.",
+          "required_action_ids": [
+            "045-verify"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "requires_action_ids": [],
+          "action_id": "045-inspect-front",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Look at the server's LEDs"
+          },
+          "observation": {
+            "simulated_signal": "Health LED amber · Drive bay 2 status LED amber (others green, activity flashing)"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "045-read-sel",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the management controller event log (SEL)"
+          },
+          "observation": {
+            "simulated_signal": "Drive Slot: Drive bay 2 Drive fault · Storage: Virtual disk 0 degraded"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "045-read-host",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the boot (POST) capture and the host's own report"
+          },
+          "observation": {
+            "simulated_signal": "Volume online but degraded · Higher I/O latency; controller reports 1 failed physical disk"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "045-read-sel"
+          ],
+          "action_id": "045-diagnose",
+          "action_type": "decision",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "diagnose",
+            "label": "Name the fault"
+          },
+          "expected_input": {
+            "findings": [
+              "raid_member_failed"
+            ]
+          },
+          "observation": {
+            "accepted_finding": "Failed RAID member drive"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "045-diagnose"
+          ],
+          "action_id": "045-replace",
+          "action_type": "mitigate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "component_type": "drive_sff",
+          "ui": {
+            "group": "fix",
+            "label": "Replace a part"
+          },
+          "expected_input": {
+            "component_id": "BAY-02"
+          },
+          "resolve_fault_ids": [
+            "raid_member_failed"
+          ],
+          "observation": {
+            "simulated_change": "Identify the failed bay (blue locate if unsure), hot-swap only that drive with an identical model; the controller starts the rebuild."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "045-replace"
+          ],
+          "action_id": "045-verify",
+          "action_type": "validate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "requires_faults_absent": [
+            "raid_member_failed"
+          ],
+          "ui": {
+            "group": "verify",
+            "label": "Verify the repair"
+          },
+          "observation": {
+            "validation": "Rebuild completes; virtual disk 0 back to Optimal."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "045-inspect-front",
+          "input": {}
+        },
+        {
+          "action_id": "045-read-sel",
+          "input": {}
+        },
+        {
+          "action_id": "045-diagnose",
+          "input": {
+            "findings": [
+              "raid_member_failed"
+            ]
+          }
+        },
+        {
+          "action_id": "045-replace",
+          "input": {
+            "component_id": "BAY-02"
+          }
+        },
+        {
+          "action_id": "045-verify",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-SERVER-LAB-046-V1",
+      "source_lab_id": "IT-LAB-046",
+      "title": "Server PSU Failure",
+      "federal_training_ids": [],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "competency_ids": [
+        "OPS-04",
+        "OPS-05",
+        "CORE-08"
+      ],
+      "curriculum_objective_ids": [
+        "APLUS-C1-TS-HW",
+        "SERVERPLUS-D4-TS-HW"
+      ],
+      "viewer_focus": {
+        "level_id": "B1",
+        "rack_item_id": "RACK01-U18-HYP1",
+        "registry_asset_id": "B1-SRV-HYP-01-I001"
+      },
+      "floor_scope": [
+        "B1"
+      ],
+      "learner_ticket": "Monitoring raised 'power redundancy lost' on the virtualization host. Nothing is down yet.",
+      "learner_brief": "Prove whether the feed or the power supply failed, restore 1+1 redundancy without an outage, and confirm it.",
+      "server_fault_bindings": {
+        "psu_failed": {
+          "component_type": "psu",
+          "component_id": "PSU2",
+          "slot": "PSU2",
+          "hot_swap": true
+        }
+      },
+      "symptoms": {
+        "psu_failed": {
+          "front_panel": [
+            "Health LED amber"
+          ],
+          "component_led": "PSU2 status LED amber (or off); the other PSU green",
+          "post": [],
+          "bmc_sel": [
+            "Power Supply: PSU2 Failure detected",
+            "Power Supply: Redundancy lost"
+          ],
+          "beep_or_code": null,
+          "os": [
+            "No outage; management alert only. The server now depends on one feed."
+          ],
+          "fix": "Confirm the cord and the B-feed PDU outlet are live, then hot-swap PSU2.",
+          "verify": "Both PSU LEDs green; management controller logs redundancy regained."
+        }
+      },
+      "objectives": [
+        {
+          "objective_id": "OBJ-046-DIAGNOSE",
+          "description": "Separate a dead feed from a dead power supply.",
+          "required_action_ids": [
+            "046-inspect-front",
+            "046-read-sel",
+            "046-inspect-pdu",
+            "046-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-046-FIX",
+          "description": "Hot-swap the failed PSU.",
+          "required_action_ids": [
+            "046-replace"
+          ]
+        },
+        {
+          "objective_id": "OBJ-046-VERIFY",
+          "description": "Verify redundancy.",
+          "required_action_ids": [
+            "046-verify"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "requires_action_ids": [],
+          "action_id": "046-inspect-front",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Look at the server's LEDs"
+          },
+          "observation": {
+            "simulated_signal": "Health LED amber · PSU2 status LED amber (or off); the other PSU green"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "046-read-sel",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the management controller event log (SEL)"
+          },
+          "observation": {
+            "simulated_signal": "Power Supply: PSU2 Failure detected · Power Supply: Redundancy lost"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "046-inspect-pdu",
+          "action_type": "inspect",
+          "target_selector": "B1-ICT-PDU-01-B",
+          "ui": {
+            "group": "inspect",
+            "label": "Check the B-feed PDU outlet"
+          },
+          "observation": {
+            "simulated_signal": "PDU B outlet 07: voltage present, 0.0 A drawn. The feed is live; the load behind it is not drawing power."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "046-read-sel",
+            "046-inspect-pdu"
+          ],
+          "action_id": "046-diagnose",
+          "action_type": "decision",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "diagnose",
+            "label": "Name the fault"
+          },
+          "expected_input": {
+            "findings": [
+              "psu_failed"
+            ]
+          },
+          "observation": {
+            "accepted_finding": "Power supply failure"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "046-diagnose"
+          ],
+          "action_id": "046-replace",
+          "action_type": "mitigate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "component_type": "psu",
+          "ui": {
+            "group": "fix",
+            "label": "Replace a part"
+          },
+          "expected_input": {
+            "component_id": "PSU2"
+          },
+          "resolve_fault_ids": [
+            "psu_failed"
+          ],
+          "observation": {
+            "simulated_change": "Confirm the cord and the B-feed PDU outlet are live, then hot-swap PSU2."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "046-replace"
+          ],
+          "action_id": "046-verify",
+          "action_type": "validate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "requires_faults_absent": [
+            "psu_failed"
+          ],
+          "ui": {
+            "group": "verify",
+            "label": "Verify the repair"
+          },
+          "observation": {
+            "validation": "Both PSU LEDs green; management controller logs redundancy regained."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "046-inspect-front",
+          "input": {}
+        },
+        {
+          "action_id": "046-read-sel",
+          "input": {}
+        },
+        {
+          "action_id": "046-inspect-pdu",
+          "input": {}
+        },
+        {
+          "action_id": "046-diagnose",
+          "input": {
+            "findings": [
+              "psu_failed"
+            ]
+          }
+        },
+        {
+          "action_id": "046-replace",
+          "input": {
+            "component_id": "PSU2"
+          }
+        },
+        {
+          "action_id": "046-verify",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-SERVER-LAB-047-V1",
+      "source_lab_id": "IT-LAB-047",
+      "title": "Server Fan Failure / Thermal Throttle",
+      "federal_training_ids": [],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "competency_ids": [
+        "OPS-01",
+        "OPS-04"
+      ],
+      "curriculum_objective_ids": [
+        "APLUS-C1-TS-HW",
+        "SERVERPLUS-D4-TS-HW"
+      ],
+      "viewer_focus": {
+        "level_id": "B1",
+        "rack_item_id": "RACK01-U18-HYP1",
+        "registry_asset_id": "B1-SRV-HYP-01-I001"
+      },
+      "floor_scope": [
+        "B1"
+      ],
+      "learner_ticket": "Batch jobs on the virtualization host are running slow and the rack is louder than usual.",
+      "learner_brief": "Connect the slowdown to the hardware, replace the failed part inside the hot-swap window and verify temperatures and clocks.",
+      "server_fault_bindings": {
+        "fan_failed": {
+          "component_type": "fan",
+          "component_id": "FAN-3",
+          "slot": "Fan 3",
+          "hot_swap": true
+        }
+      },
+      "symptoms": {
+        "fan_failed": {
+          "front_panel": [
+            "Health LED amber"
+          ],
+          "component_led": "Fan 3 fault LED amber; rotor stopped",
+          "post": [],
+          "bmc_sel": [
+            "Fan: Fan 3 RPM lower critical going low (0 RPM)",
+            "Fan: Redundancy lost",
+            "Temperature: CPU1 Temp upper non-critical going high"
+          ],
+          "beep_or_code": null,
+          "os": [
+            "CPU frequency throttled (thermal) under load",
+            "Remaining fans at high speed"
+          ],
+          "fix": "Hot-swap Fan 3 with the lid open, within the service window.",
+          "verify": "All fans report RPM in range; CPU temperature and clock speed back to normal."
+        }
+      },
+      "objectives": [
+        {
+          "objective_id": "OBJ-047-DIAGNOSE",
+          "description": "Correlate performance with sensors.",
+          "required_action_ids": [
+            "047-inspect-front",
+            "047-read-sel",
+            "047-read-host",
+            "047-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-047-FIX",
+          "description": "Hot-swap the failed fan.",
+          "required_action_ids": [
+            "047-replace"
+          ]
+        },
+        {
+          "objective_id": "OBJ-047-VERIFY",
+          "description": "Verify cooling.",
+          "required_action_ids": [
+            "047-verify"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "requires_action_ids": [],
+          "action_id": "047-inspect-front",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Look at the server's LEDs"
+          },
+          "observation": {
+            "simulated_signal": "Health LED amber · Fan 3 fault LED amber; rotor stopped"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "047-read-sel",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the management controller event log (SEL)"
+          },
+          "observation": {
+            "simulated_signal": "Fan: Fan 3 RPM lower critical going low (0 RPM) · Fan: Redundancy lost · Temperature: CPU1 Temp upper non-critical going high"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "047-read-host",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the boot (POST) capture and the host's own report"
+          },
+          "observation": {
+            "simulated_signal": "CPU frequency throttled (thermal) under load · Remaining fans at high speed"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "047-read-sel",
+            "047-read-host"
+          ],
+          "action_id": "047-diagnose",
+          "action_type": "decision",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "diagnose",
+            "label": "Name the fault"
+          },
+          "expected_input": {
+            "findings": [
+              "fan_failed"
+            ]
+          },
+          "observation": {
+            "accepted_finding": "Fan failure"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "047-diagnose"
+          ],
+          "action_id": "047-replace",
+          "action_type": "mitigate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "component_type": "fan",
+          "ui": {
+            "group": "fix",
+            "label": "Replace a part"
+          },
+          "expected_input": {
+            "component_id": "FAN-3"
+          },
+          "resolve_fault_ids": [
+            "fan_failed"
+          ],
+          "observation": {
+            "simulated_change": "Hot-swap Fan 3 with the lid open, within the service window."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "047-replace"
+          ],
+          "action_id": "047-verify",
+          "action_type": "validate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "requires_faults_absent": [
+            "fan_failed"
+          ],
+          "ui": {
+            "group": "verify",
+            "label": "Verify the repair"
+          },
+          "observation": {
+            "validation": "All fans report RPM in range; CPU temperature and clock speed back to normal."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "047-inspect-front",
+          "input": {}
+        },
+        {
+          "action_id": "047-read-sel",
+          "input": {}
+        },
+        {
+          "action_id": "047-read-host",
+          "input": {}
+        },
+        {
+          "action_id": "047-diagnose",
+          "input": {
+            "findings": [
+              "fan_failed"
+            ]
+          }
+        },
+        {
+          "action_id": "047-replace",
+          "input": {
+            "component_id": "FAN-3"
+          }
+        },
+        {
+          "action_id": "047-verify",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-SERVER-LAB-048-V1",
+      "source_lab_id": "IT-LAB-048",
+      "title": "Server NIC Link Down",
+      "federal_training_ids": [],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "competency_ids": [
+        "CORE-05",
+        "OPS-01",
+        "OPS-04"
+      ],
+      "curriculum_objective_ids": [
+        "APLUS-C1-TS-HW",
+        "SERVERPLUS-D4-TS-HW"
+      ],
+      "viewer_focus": {
+        "level_id": "B1",
+        "rack_item_id": "RACK01-U18-HYP1",
+        "registry_asset_id": "B1-SRV-HYP-01-I001"
+      },
+      "floor_scope": [
+        "B1"
+      ],
+      "learner_ticket": "The hypervisor warns that the host's network bond has lost a member. Services are still reachable.",
+      "learner_brief": "Work up the physical layer from the server port to the switch, fix the cheapest likely cause first and verify both links.",
+      "server_fault_bindings": {
+        "server_nic_link_down": {
+          "component_type": "dac_cable",
+          "component_id": "CBL-DAC-1",
+          "slot": "NIC port 1",
+          "hot_swap": true
+        }
+      },
+      "symptoms": {
+        "server_nic_link_down": {
+          "front_panel": [],
+          "component_led": "NIC port 1 link LED off; the other port green",
+          "post": [],
+          "bmc_sel": [
+            "Network: NIC port 1 link down"
+          ],
+          "beep_or_code": null,
+          "os": [
+            "Bond degraded: one member down",
+            "Hosted services still reachable on the surviving path"
+          ],
+          "fix": "Check the switch-side port and the DAC; reseat or replace the cable on NIC port 1. Do not replace the NIC until the cable is ruled out.",
+          "verify": "Both links up at 10 Gb/s; bond healthy on both members."
+        }
+      },
+      "objectives": [
+        {
+          "objective_id": "OBJ-048-DIAGNOSE",
+          "description": "Locate the failed link.",
+          "required_action_ids": [
+            "048-inspect-front",
+            "048-read-sel",
+            "048-inspect-switch",
+            "048-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-048-FIX",
+          "description": "Restore the link.",
+          "required_action_ids": [
+            "048-reseat"
+          ]
+        },
+        {
+          "objective_id": "OBJ-048-VERIFY",
+          "description": "Verify the bond.",
+          "required_action_ids": [
+            "048-verify"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "requires_action_ids": [],
+          "action_id": "048-inspect-front",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Look at the server's LEDs"
+          },
+          "observation": {
+            "simulated_signal": "NIC port 1 link LED off; the other port green"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "048-read-sel",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the management controller event log (SEL)"
+          },
+          "observation": {
+            "simulated_signal": "Network: NIC port 1 link down"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "048-read-host",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the boot (POST) capture and the host's own report"
+          },
+          "observation": {
+            "simulated_signal": "Bond degraded: one member down · Hosted services still reachable on the surviving path"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "048-inspect-switch",
+          "action_type": "inspect",
+          "target_selector": "B1-NET-CORE-SW-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Check the core switch port"
+          },
+          "observation": {
+            "simulated_signal": "Core switch 1, SFP+-IN-03: administratively up, no signal from the server side. Core switch 2, SFP+-IN-03: up, 10 Gb/s."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "048-read-sel",
+            "048-inspect-switch"
+          ],
+          "action_id": "048-diagnose",
+          "action_type": "decision",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "diagnose",
+            "label": "Name the fault"
+          },
+          "expected_input": {
+            "findings": [
+              "server_nic_link_down"
+            ]
+          },
+          "observation": {
+            "accepted_finding": "NIC port link down"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "048-diagnose"
+          ],
+          "action_id": "048-reseat",
+          "action_type": "mitigate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "component_type": "dac_cable",
+          "ui": {
+            "group": "fix",
+            "label": "Reseat or replace a cable"
+          },
+          "expected_input": {
+            "component_id": "CBL-DAC-1"
+          },
+          "resolve_fault_ids": [
+            "server_nic_link_down"
+          ],
+          "observation": {
+            "simulated_change": "Check the switch-side port and the DAC; reseat or replace the cable on NIC port 1. Do not replace the NIC until the cable is ruled out."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "048-reseat"
+          ],
+          "action_id": "048-verify",
+          "action_type": "validate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "requires_faults_absent": [
+            "server_nic_link_down"
+          ],
+          "ui": {
+            "group": "verify",
+            "label": "Verify the repair"
+          },
+          "observation": {
+            "validation": "Both links up at 10 Gb/s; bond healthy on both members."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "048-inspect-front",
+          "input": {}
+        },
+        {
+          "action_id": "048-read-sel",
+          "input": {}
+        },
+        {
+          "action_id": "048-inspect-switch",
+          "input": {}
+        },
+        {
+          "action_id": "048-diagnose",
+          "input": {
+            "findings": [
+              "server_nic_link_down"
+            ]
+          }
+        },
+        {
+          "action_id": "048-reseat",
+          "input": {
+            "component_id": "CBL-DAC-1"
+          }
+        },
+        {
+          "action_id": "048-verify",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-SERVER-LAB-049-V1",
+      "source_lab_id": "IT-LAB-049",
+      "title": "CMOS Battery / Clock Drift",
+      "federal_training_ids": [],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "competency_ids": [
+        "OPS-01",
+        "OPS-04",
+        "CORE-05"
+      ],
+      "curriculum_objective_ids": [
+        "APLUS-C1-TS-HW",
+        "SERVERPLUS-D4-TS-HW"
+      ],
+      "viewer_focus": {
+        "level_id": "B1",
+        "rack_item_id": "RACK01-U18-HYP1",
+        "registry_asset_id": "B1-SRV-HYP-01-I001"
+      },
+      "floor_scope": [
+        "B1"
+      ],
+      "learner_ticket": "After last night's power work the host came back with sign-in failures and certificate errors, and it stopped at a firmware prompt.",
+      "learner_brief": "Trace the errors to their hardware cause, replace the part with the host off, then restore settings and time.",
+      "server_fault_bindings": {
+        "cmos_battery_depleted": {
+          "component_type": "cmos_battery",
+          "component_id": "CMOS-BATTERY",
+          "slot": "CMOS battery",
+          "hot_swap": false
+        }
+      },
+      "symptoms": {
+        "cmos_battery_depleted": {
+          "front_panel": [
+            "Health LED amber after a power loss"
+          ],
+          "component_led": null,
+          "post": [
+            "CMOS checksum error: defaults loaded",
+            "System time 2000-01-01 00:00"
+          ],
+          "bmc_sel": [
+            "Battery: System board CMOS battery low"
+          ],
+          "beep_or_code": "POST stops at a firmware setup prompt",
+          "os": [
+            "Clock wrong by years: TLS certificate validation fails",
+            "Directory sign-in fails (clock skew over 5 minutes)",
+            "Time service on this host reports a huge offset"
+          ],
+          "fix": "Power off, unplug, replace the CR2032, restore firmware settings (UEFI boot, virtualization on), set time and resync NTP.",
+          "verify": "Time within a second of the NTP source; settings persist across a power cycle."
+        }
+      },
+      "objectives": [
+        {
+          "objective_id": "OBJ-049-DIAGNOSE",
+          "description": "Connect the clock to the errors.",
+          "required_action_ids": [
+            "049-read-sel",
+            "049-read-host",
+            "049-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-049-FIX",
+          "description": "Replace the battery and restore time.",
+          "required_action_ids": [
+            "049-power-off",
+            "049-replace",
+            "049-power-on",
+            "049-restore-time"
+          ]
+        },
+        {
+          "objective_id": "OBJ-049-VERIFY",
+          "description": "Verify time and settings.",
+          "required_action_ids": [
+            "049-verify"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "requires_action_ids": [],
+          "action_id": "049-inspect-front",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Look at the server's LEDs"
+          },
+          "observation": {
+            "simulated_signal": "Health LED amber after a power loss"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "049-read-sel",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the management controller event log (SEL)"
+          },
+          "observation": {
+            "simulated_signal": "Battery: System board CMOS battery low"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "049-read-host",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the boot (POST) capture and the host's own report"
+          },
+          "observation": {
+            "simulated_signal": "CMOS checksum error: defaults loaded · System time 2000-01-01 00:00 · Clock wrong by years: TLS certificate validation fails · Directory sign-in fails (clock skew over 5 minutes) · Time service on this host reports a huge offset"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "049-read-host"
+          ],
+          "action_id": "049-diagnose",
+          "action_type": "decision",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "diagnose",
+            "label": "Name the fault"
+          },
+          "expected_input": {
+            "findings": [
+              "cmos_battery_depleted"
+            ]
+          },
+          "observation": {
+            "accepted_finding": "Depleted CMOS battery"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "049-diagnose"
+          ],
+          "action_id": "049-power-off",
+          "action_type": "perform",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "power",
+            "label": "Shut down, unplug both PSUs, ground yourself"
+          },
+          "observation": {
+            "simulated_change": "Host drained of VMs, shut down and unplugged; ESD strap on."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "049-power-off"
+          ],
+          "action_id": "049-replace",
+          "action_type": "mitigate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "component_type": "cmos_battery",
+          "ui": {
+            "group": "fix",
+            "label": "Replace a part"
+          },
+          "expected_input": {
+            "component_id": "CMOS-BATTERY"
+          },
+          "resolve_fault_ids": [
+            "cmos_battery_depleted"
+          ],
+          "observation": {
+            "simulated_change": "Power off, unplug, replace the CR2032, restore firmware settings (UEFI boot, virtualization on), set time and resync NTP."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "049-replace"
+          ],
+          "action_id": "049-power-on",
+          "action_type": "perform",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "power",
+            "label": "Reconnect power and boot"
+          },
+          "observation": {
+            "simulated_change": "Host powered on and POST ran."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "049-power-on"
+          ],
+          "action_id": "049-restore-time",
+          "action_type": "perform",
+          "target_selector": "LOGIC-SVC-NTP",
+          "ui": {
+            "group": "fix",
+            "label": "Restore firmware settings and resync time"
+          },
+          "observation": {
+            "simulated_change": "UEFI boot and virtualization re-enabled; clock set and NTP resynchronized."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "049-restore-time"
+          ],
+          "action_id": "049-verify",
+          "action_type": "validate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "requires_faults_absent": [
+            "cmos_battery_depleted"
+          ],
+          "ui": {
+            "group": "verify",
+            "label": "Verify the repair"
+          },
+          "observation": {
+            "validation": "Time within a second of the NTP source; settings persist across a power cycle."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "049-read-sel",
+          "input": {}
+        },
+        {
+          "action_id": "049-read-host",
+          "input": {}
+        },
+        {
+          "action_id": "049-diagnose",
+          "input": {
+            "findings": [
+              "cmos_battery_depleted"
+            ]
+          }
+        },
+        {
+          "action_id": "049-power-off",
+          "input": {}
+        },
+        {
+          "action_id": "049-replace",
+          "input": {
+            "component_id": "CMOS-BATTERY"
+          }
+        },
+        {
+          "action_id": "049-power-on",
+          "input": {}
+        },
+        {
+          "action_id": "049-restore-time",
+          "input": {}
+        },
+        {
+          "action_id": "049-verify",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-SERVER-LAB-050-V1",
+      "source_lab_id": "IT-LAB-050",
+      "title": "Server Firmware Baseline Mismatch",
+      "federal_training_ids": [],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "competency_ids": [
+        "OPS-01",
+        "OPS-05",
+        "SHR-04"
+      ],
+      "curriculum_objective_ids": [
+        "APLUS-C1-TS-HW",
+        "SERVERPLUS-D4-TS-HW"
+      ],
+      "viewer_focus": {
+        "level_id": "B1",
+        "rack_item_id": "RACK01-U18-HYP1",
+        "registry_asset_id": "B1-SRV-HYP-01-I001"
+      },
+      "floor_scope": [
+        "B1"
+      ],
+      "learner_ticket": "Cluster validation flags host 1 after its RAID controller was replaced last week. Storage on that host runs in a degraded driver mode.",
+      "learner_brief": "Find what is out of baseline, plan the maintenance so no VM goes down, and apply updates in the order their dependencies need.",
+      "server_fault_bindings": {
+        "firmware_mismatch": {
+          "component_type": "raid_controller",
+          "component_id": "RAID-CTRL",
+          "slot": "RAID controller",
+          "hot_swap": true
+        }
+      },
+      "symptoms": {
+        "firmware_mismatch": {
+          "front_panel": [
+            "Health LED amber"
+          ],
+          "component_led": null,
+          "post": [],
+          "bmc_sel": [
+            "Firmware: Inventory mismatch: BIOS 2.3.1, controller 51.20 vs baseline BIOS 2.4.0, controller 52.26",
+            "Storage: Controller firmware version not supported by installed driver"
+          ],
+          "beep_or_code": null,
+          "os": [
+            "Storage driver loads in degraded mode; cluster validation flags the host"
+          ],
+          "fix": "Apply the baseline bundle in dependency order: management controller, then BIOS, then RAID controller, then NIC.",
+          "verify": "Inventory matches the baseline; cluster validation passes."
+        }
+      },
+      "objectives": [
+        {
+          "objective_id": "OBJ-050-DIAGNOSE",
+          "description": "Find the mismatch.",
+          "required_action_ids": [
+            "050-read-sel",
+            "050-read-inventory",
+            "050-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-050-FIX",
+          "description": "Plan and apply the baseline.",
+          "required_action_ids": [
+            "050-drain",
+            "050-apply-baseline"
+          ]
+        },
+        {
+          "objective_id": "OBJ-050-VERIFY",
+          "description": "Verify the inventory.",
+          "required_action_ids": [
+            "050-verify"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "requires_action_ids": [],
+          "action_id": "050-inspect-front",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Look at the server's LEDs"
+          },
+          "observation": {
+            "simulated_signal": "Health LED amber"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "050-read-sel",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the management controller event log (SEL)"
+          },
+          "observation": {
+            "simulated_signal": "Firmware: Inventory mismatch: BIOS 2.3.1, controller 51.20 vs baseline BIOS 2.4.0, controller 52.26 · Storage: Controller firmware version not supported by installed driver"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "050-read-inventory",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Compare firmware inventory with the baseline"
+          },
+          "observation": {
+            "simulated_signal": "Installed: management controller 7.10, BIOS 2.3.1, RAID controller 51.20, NIC 22.31. Baseline: management controller 7.20, BIOS 2.4.0, RAID controller 52.26, NIC 22.36."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "050-read-inventory"
+          ],
+          "action_id": "050-diagnose",
+          "action_type": "decision",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "diagnose",
+            "label": "Name the fault"
+          },
+          "expected_input": {
+            "findings": [
+              "firmware_mismatch"
+            ]
+          },
+          "observation": {
+            "accepted_finding": "Firmware below the platform baseline"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "050-diagnose"
+          ],
+          "action_id": "050-drain",
+          "action_type": "perform",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "power",
+            "label": "Put the host in maintenance mode (migrate its VMs)"
+          },
+          "observation": {
+            "simulated_change": "VMs migrated to hosts 2 and 3; host in maintenance mode."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "050-drain"
+          ],
+          "action_id": "050-apply-baseline",
+          "action_type": "mitigate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "fix_kind": "firmware_order",
+          "ui": {
+            "group": "fix",
+            "label": "Apply the baseline bundle (choose the order)"
+          },
+          "expected_input": {
+            "order": [
+              "BMC",
+              "BIOS",
+              "RAID",
+              "NIC"
+            ]
+          },
+          "resolve_fault_ids": [
+            "firmware_mismatch"
+          ],
+          "observation": {
+            "simulated_change": "Apply the baseline bundle in dependency order: management controller, then BIOS, then RAID controller, then NIC."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "050-apply-baseline"
+          ],
+          "action_id": "050-verify",
+          "action_type": "validate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "requires_faults_absent": [
+            "firmware_mismatch"
+          ],
+          "ui": {
+            "group": "verify",
+            "label": "Verify the repair"
+          },
+          "observation": {
+            "validation": "Inventory matches the baseline; cluster validation passes."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "050-read-sel",
+          "input": {}
+        },
+        {
+          "action_id": "050-read-inventory",
+          "input": {}
+        },
+        {
+          "action_id": "050-diagnose",
+          "input": {
+            "findings": [
+              "firmware_mismatch"
+            ]
+          }
+        },
+        {
+          "action_id": "050-drain",
+          "input": {}
+        },
+        {
+          "action_id": "050-apply-baseline",
+          "input": {
+            "order": [
+              "BMC",
+              "BIOS",
+              "RAID",
+              "NIC"
+            ]
+          }
+        },
+        {
+          "action_id": "050-verify",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-SERVER-LAB-051-V1",
+      "source_lab_id": "IT-LAB-051",
+      "title": "Multi-Fault Server Incident",
+      "federal_training_ids": [],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "competency_ids": [
+        "OPS-01",
+        "OPS-04",
+        "OPS-05",
+        "CORE-08"
+      ],
+      "curriculum_objective_ids": [
+        "APLUS-C1-TS-HW",
+        "SERVERPLUS-D4-TS-HW",
+        "SERVERPLUS-D4-TS-STORAGE"
+      ],
+      "viewer_focus": {
+        "level_id": "B1",
+        "rack_item_id": "RACK01-U18-HYP1",
+        "registry_asset_id": "B1-SRV-HYP-01-I001"
+      },
+      "floor_scope": [
+        "B1"
+      ],
+      "learner_ticket": "Two alerts at once on the virtualization host: one about power, one about storage. Both are still 'warning', not 'down'.",
+      "learner_brief": "Find every fault, then fix them in the safe order: a RAID rebuild stresses every drive, so restore power redundancy before you start one.",
+      "server_fault_bindings": {
+        "psu_failed": {
+          "component_type": "psu",
+          "component_id": "PSU2",
+          "slot": "PSU2",
+          "hot_swap": true
+        },
+        "raid_member_failed": {
+          "component_type": "drive_sff",
+          "component_id": "BAY-02",
+          "slot": "Drive bay 2",
+          "hot_swap": true,
+          "array_members": [
+            "BAY-00",
+            "BAY-01",
+            "BAY-02",
+            "BAY-03"
+          ]
+        }
+      },
+      "symptoms": {
+        "psu_failed": {
+          "front_panel": [
+            "Health LED amber"
+          ],
+          "component_led": "PSU2 status LED amber (or off); the other PSU green",
+          "post": [],
+          "bmc_sel": [
+            "Power Supply: PSU2 Failure detected",
+            "Power Supply: Redundancy lost"
+          ],
+          "beep_or_code": null,
+          "os": [
+            "No outage; management alert only. The server now depends on one feed."
+          ],
+          "fix": "Confirm the cord and the B-feed PDU outlet are live, then hot-swap PSU2.",
+          "verify": "Both PSU LEDs green; management controller logs redundancy regained."
+        },
+        "raid_member_failed": {
+          "front_panel": [
+            "Health LED amber"
+          ],
+          "component_led": "Drive bay 2 status LED amber (others green, activity flashing)",
+          "post": [],
+          "bmc_sel": [
+            "Drive Slot: Drive bay 2 Drive fault",
+            "Storage: Virtual disk 0 degraded"
+          ],
+          "beep_or_code": null,
+          "os": [
+            "Volume online but degraded",
+            "Higher I/O latency; controller reports 1 failed physical disk"
+          ],
+          "fix": "Identify the failed bay (blue locate if unsure), hot-swap only that drive with an identical model; the controller starts the rebuild.",
+          "verify": "Rebuild completes; virtual disk 0 back to Optimal."
+        }
+      },
+      "objectives": [
+        {
+          "objective_id": "OBJ-051-DIAGNOSE",
+          "description": "Name both faults.",
+          "required_action_ids": [
+            "051-inspect-front",
+            "051-read-sel",
+            "051-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-051-POWER",
+          "description": "Restore power redundancy first.",
+          "required_action_ids": [
+            "051-replace-psu"
+          ]
+        },
+        {
+          "objective_id": "OBJ-051-STORAGE",
+          "description": "Then replace the failed member.",
+          "required_action_ids": [
+            "051-replace-drive"
+          ]
+        },
+        {
+          "objective_id": "OBJ-051-VERIFY",
+          "description": "Verify both.",
+          "required_action_ids": [
+            "051-verify"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "requires_action_ids": [],
+          "action_id": "051-inspect-front",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Look at the server's LEDs"
+          },
+          "observation": {
+            "simulated_signal": "Health LED amber · PSU2 status LED amber (or off); the other PSU green · Drive bay 2 status LED amber (others green, activity flashing)"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "051-read-sel",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the management controller event log (SEL)"
+          },
+          "observation": {
+            "simulated_signal": "Power Supply: PSU2 Failure detected · Power Supply: Redundancy lost · Drive Slot: Drive bay 2 Drive fault · Storage: Virtual disk 0 degraded"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [],
+          "action_id": "051-read-host",
+          "action_type": "inspect",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "inspect",
+            "label": "Read the boot (POST) capture and the host's own report"
+          },
+          "observation": {
+            "simulated_signal": "No outage; management alert only. The server now depends on one feed. · Volume online but degraded · Higher I/O latency; controller reports 1 failed physical disk"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "051-read-sel"
+          ],
+          "action_id": "051-diagnose",
+          "action_type": "decision",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "ui": {
+            "group": "diagnose",
+            "label": "Name the fault"
+          },
+          "expected_input": {
+            "findings": [
+              "psu_failed",
+              "raid_member_failed"
+            ]
+          },
+          "observation": {
+            "accepted_finding": "Power supply failure + Failed RAID member drive"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "051-diagnose"
+          ],
+          "action_id": "051-replace-psu",
+          "action_type": "mitigate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "component_type": "psu",
+          "ui": {
+            "group": "fix",
+            "label": "Replace a part"
+          },
+          "expected_input": {
+            "component_id": "PSU2"
+          },
+          "resolve_fault_ids": [
+            "psu_failed"
+          ],
+          "observation": {
+            "simulated_change": "Confirm the cord and the B-feed PDU outlet are live, then hot-swap PSU2."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "051-replace-psu"
+          ],
+          "action_id": "051-replace-drive",
+          "action_type": "mitigate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "component_type": "drive_sff",
+          "ui": {
+            "group": "fix",
+            "label": "Replace a part"
+          },
+          "expected_input": {
+            "component_id": "BAY-02"
+          },
+          "resolve_fault_ids": [
+            "raid_member_failed"
+          ],
+          "observation": {
+            "simulated_change": "Identify the failed bay (blue locate if unsure), hot-swap only that drive with an identical model; the controller starts the rebuild."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "requires_action_ids": [
+            "051-replace-drive"
+          ],
+          "action_id": "051-verify",
+          "action_type": "validate",
+          "target_selector": "B1-SRV-HYP-01-I001",
+          "requires_faults_absent": [
+            "psu_failed",
+            "raid_member_failed"
+          ],
+          "ui": {
+            "group": "verify",
+            "label": "Verify the repair"
+          },
+          "observation": {
+            "validation": "Both PSU LEDs green; management controller logs redundancy regained. · Rebuild completes; virtual disk 0 back to Optimal."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "051-inspect-front",
+          "input": {}
+        },
+        {
+          "action_id": "051-read-sel",
+          "input": {}
+        },
+        {
+          "action_id": "051-diagnose",
+          "input": {
+            "findings": [
+              "psu_failed",
+              "raid_member_failed"
+            ]
+          }
+        },
+        {
+          "action_id": "051-replace-psu",
+          "input": {
+            "component_id": "PSU2"
+          }
+        },
+        {
+          "action_id": "051-replace-drive",
+          "input": {
+            "component_id": "BAY-02"
+          }
+        },
+        {
+          "action_id": "051-verify",
+          "input": {}
+        }
+      ]
+    }
+  ]
+}

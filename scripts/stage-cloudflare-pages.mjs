@@ -20,13 +20,13 @@ import { basename, dirname, join, resolve, sep } from 'node:path';
 const allowedDirectories = new Set([
   'assets','auth','oauth','action','closet','css','data','demos',
   'engineering','equity-uprise-preview','js','portfolio','site0',
-  'tracks','walls','whip','vendor'
+  'screens','tracks','walls','whip','vendor','prim3-level-builder'
 ]);
 /* This list is for web-delivered assets only. Site 0 authoring GLBs,
    CAD manifests and tools under assets/3d are NOT runtime assets:
    tools/publish-site0.sh separately promotes the approved runtime into site0/. */
 const publicAssetGroups = new Set([
-  'frames','flags','brand','img','video','audio','credentials','landmarks',
+  'frames','flags','img','video','audio','credentials','landmarks',
   'fonts','captions','resume','hitman','likeness','nfc','outfit'
 ]);
 const allowedExtensions = new Set([
@@ -44,6 +44,9 @@ const forbiddenFiles = new Set([
   'data/analytics/application-schema-inventory.json',
   'data/clients.json','whip/manufacturing-crm.json'
 ]);
+/* Whole folders of an allowed directory that are not web assets: the frozen Drawdown mission catalog (all 125 missions'
+   text and the source excerpts, drafts included) that no page reads (docs/control-plane/WORLD-MISSION-SOURCES.md, D10). */
+const forbiddenPrefixes = new Set([ 'data/missions/drawdown/' ]);
 const forbiddenSegments = /^(?:\.git|\.github|\.cursor|\.claude|node_modules|__tests__|tests?|scripts?|src|\.env(?:\..*)?|\.dev\.vars(?:\..*)?)$/i;
 const privateName = /(?:^|[/])(?:[^/]*\.(?:pem|key|crt|p12|pfx|sql|db|sqlite|ts|tsx|py|sh|service|timer|map|md|mdx|yaml|yml|toml|lock)|[^/]*(?:credentials|secrets?|private-key)[^/]*)$/i;
 const credentialPatterns = [
@@ -70,10 +73,10 @@ function shouldPublish(path) {
   const pieces = posix.split('/');
   if (pieces.some(x=>x.startsWith('.') || forbiddenSegments.test(x))) return false;
   if (forbiddenFiles.has(posix) || privateName.test(posix)) return false;
+  if ([...forbiddenPrefixes].some((p) => posix.startsWith(p))) return false;
   if (pieces.length > 1 && !allowedDirectories.has(pieces[0])) return false;
   if (pieces[0] === 'assets') {
     if (pieces.length < 3 || !publicAssetGroups.has(pieces[1])) return false;
-    if (pieces[1] === 'brand' && !/\.(?:png|jpe?g|webp|avif|svg|gif|css|json)$/i.test(posix)) return false;
     /* Credentials are the published PDFs plus the raster scans that pages such
        as policy.html and the credentials gallery load as posters and figures. */
     if (pieces[1] === 'credentials' && !/\.(?:pdf|jpe?g|png|webp|avif)$/i.test(posix)) return false;

@@ -1,0 +1,2200 @@
+{
+ "duration_seconds": 143,
+ "language": "en",
+ "songTitle": "Hundun (B-Side)",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:28:30.420Z",
+  "confidence": 0.702,
+  "mismatched_lines": 9,
+  "sheet_lines": 42,
+  "heard_words": 342,
+  "ctc_aligned_lines": 38,
+  "timing": {
+   "separate_seconds": 80.8,
+   "asr_seconds": 70.7,
+   "align_seconds": 12.3,
+   "map_seconds": 0.1
+  }
+ },
+ "plain": "YEAH! Then stack a hundun… yeah…\nYeah… A good friend once told me\n“First get yo monyon… then stack a hundun.”\n\nHe said “First get your monyon. Then stack a hundun\nFirst get your monyon. Then stack a hundun\nFirst get your monyon. Then stack a hundun\nFirst get your monyon. Then stack a hundun”\n\nI’m the dealer for the whole tribe.\nAlabama to the coastline.\nWe the family we got soul ties.\nBy your side just like roadside.\n\nI drive a VW used to drive a Nissan\nReprogram it if you lose a keyfob….\nAYE! Don’t loose the keyfob.\nHomie this a 2015 it’s a beater.\nYou don’t know what I been through.\nWhat you tryna get into?\nHe mental. Ran off with the rental\nGot spun like a spindle.\nPull up with the hitcrew…\nPulled up with the hit crew.\nWhat she wrote was so simple;\n\nFirst get your monyon. Then stack a hundun\nFirst get your monyon. Then stack a hundun\nFirst get your monyon. Then stack a hundun\nFirst get your monyon. Then stack a hundun\n\nYou already know you already know\nIf you need to get equipped with a whip, Call whip equipped send a little dough\nIt’s a foundation we gon’ build it slow send a little dough send a little dough\nIt’s a foundation we gon’ build it slow… Yeah!\nCame from the dirt the mud had to get it out the sand too\nI was walking with my people like Jesus in his sandals\nNoah how I turn the tide wait, Moses how I turn the tide now\nMotion like I’m burning tires. If you know me .I’mmoa bring the tribe out ARGH!\n\nI’m the dealer for the whole tribe (WOO!)\nAlabama to the coastline (WOO!)\nWe the family we got soul ties (WOO!)\nBy your side just like roadside\n\nFirst get your monyon. Then stack a hundun\nFirst get your monyon. Then stack a hundun\nFirst get your monyon. Then stack a hundun\nFirst get your monyon. Then stack a hundun",
+ "timed": {
+  "line": [
+   {
+    "begin": 0,
+    "end": 0.8,
+    "content": "YEAH! Then stack a hundun… yeah…",
+    "confidence": 0.133,
+    "mismatch": true,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 0,
+      "end": 0.8,
+      "content": "YEAH!"
+     },
+     {
+      "begin": 0.8,
+      "end": 0.8,
+      "content": "Then"
+     },
+     {
+      "begin": 0.8,
+      "end": 0.8,
+      "content": "stack"
+     },
+     {
+      "begin": 0.8,
+      "end": 0.8,
+      "content": "a"
+     },
+     {
+      "begin": 0.8,
+      "end": 0.8,
+      "content": "hundun…"
+     },
+     {
+      "begin": 0.8,
+      "end": 0.8,
+      "content": "yeah…"
+     }
+    ],
+    "align_score": 0.002
+   },
+   {
+    "begin": 2.54,
+    "end": 10.416,
+    "content": "Yeah… A good friend once told me",
+    "confidence": 0.857,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 2.54,
+      "end": 4.624,
+      "content": "Yeah…"
+     },
+     {
+      "begin": 8.813,
+      "end": 8.833,
+      "content": "A"
+     },
+     {
+      "begin": 8.933,
+      "end": 9.054,
+      "content": "good"
+     },
+     {
+      "begin": 9.134,
+      "end": 9.334,
+      "content": "friend"
+     },
+     {
+      "begin": 9.875,
+      "end": 9.995,
+      "content": "once"
+     },
+     {
+      "begin": 10.076,
+      "end": 10.276,
+      "content": "told"
+     },
+     {
+      "begin": 10.336,
+      "end": 10.416,
+      "content": "me"
+     }
+    ],
+    "align_score": 0.628
+   },
+   {
+    "begin": 11.683,
+    "end": 14.4,
+    "content": "“First get yo monyon… then stack a hundun.”",
+    "confidence": 0.322,
+    "mismatch": true,
+    "section": "Intro",
+    "heard": "your money on,",
+    "words": [
+     {
+      "begin": 11.683,
+      "end": 11.905,
+      "content": "“First"
+     },
+     {
+      "begin": 11.925,
+      "end": 12.005,
+      "content": "get"
+     },
+     {
+      "begin": 12.026,
+      "end": 12.146,
+      "content": "yo"
+     },
+     {
+      "begin": 12.227,
+      "end": 12.609,
+      "content": "monyon…"
+     },
+     {
+      "begin": 13.655,
+      "end": 13.776,
+      "content": "then"
+     },
+     {
+      "begin": 13.837,
+      "end": 13.998,
+      "content": "stack"
+     },
+     {
+      "begin": 14.098,
+      "end": 14.118,
+      "content": "a"
+     },
+     {
+      "begin": 14.179,
+      "end": 14.4,
+      "content": "hundun.”"
+     }
+    ],
+    "align_score": 0.275
+   },
+   {
+    "begin": 15.223,
+    "end": 18.36,
+    "content": "He said “First get your monyon. Then stack a hundun",
+    "confidence": 0.579,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 15.223,
+      "end": 15.283,
+      "content": "He"
+     },
+     {
+      "begin": 15.384,
+      "end": 15.525,
+      "content": "said"
+     },
+     {
+      "begin": 15.605,
+      "end": 15.806,
+      "content": "“First"
+     },
+     {
+      "begin": 15.846,
+      "end": 15.927,
+      "content": "get"
+     },
+     {
+      "begin": 15.987,
+      "end": 16.068,
+      "content": "your"
+     },
+     {
+      "begin": 16.108,
+      "end": 16.59,
+      "content": "monyon."
+     },
+     {
+      "begin": 17.576,
+      "end": 17.676,
+      "content": "Then"
+     },
+     {
+      "begin": 17.777,
+      "end": 17.918,
+      "content": "stack"
+     },
+     {
+      "begin": 17.978,
+      "end": 18.018,
+      "content": "a"
+     },
+     {
+      "begin": 18.078,
+      "end": 18.36,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.425
+   },
+   {
+    "begin": 19.502,
+    "end": 25.518,
+    "content": "First get your monyon. Then stack a hundun",
+    "confidence": 0.5,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 19.502,
+      "end": 19.703,
+      "content": "First"
+     },
+     {
+      "begin": 19.743,
+      "end": 19.823,
+      "content": "get"
+     },
+     {
+      "begin": 19.883,
+      "end": 19.963,
+      "content": "your"
+     },
+     {
+      "begin": 20.023,
+      "end": 20.485,
+      "content": "monyon."
+     },
+     {
+      "begin": 21.427,
+      "end": 21.588,
+      "content": "Then"
+     },
+     {
+      "begin": 21.688,
+      "end": 21.808,
+      "content": "stack"
+     },
+     {
+      "begin": 21.889,
+      "end": 21.909,
+      "content": "a"
+     },
+     {
+      "begin": 21.989,
+      "end": 25.518,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.477
+   },
+   {
+    "begin": 26.24,
+    "end": 28.4,
+    "content": "First get your monyon. Then stack a hundun",
+    "confidence": 0.29,
+    "mismatch": true,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 26.24,
+      "end": 26.341,
+      "content": "First"
+     },
+     {
+      "begin": 26.361,
+      "end": 26.422,
+      "content": "get"
+     },
+     {
+      "begin": 27.31,
+      "end": 27.431,
+      "content": "your"
+     },
+     {
+      "begin": 27.491,
+      "end": 27.633,
+      "content": "monyon."
+     },
+     {
+      "begin": 27.673,
+      "end": 27.774,
+      "content": "Then"
+     },
+     {
+      "begin": 27.794,
+      "end": 28.057,
+      "content": "stack"
+     },
+     {
+      "begin": 28.198,
+      "end": 28.218,
+      "content": "a"
+     },
+     {
+      "begin": 28.279,
+      "end": 28.4,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.123
+   },
+   {
+    "begin": 29.14,
+    "end": 29.92,
+    "content": "First get your monyon. Then stack a hundun”",
+    "confidence": 0.283,
+    "mismatch": true,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 29.14,
+      "end": 29.14,
+      "content": "First"
+     },
+     {
+      "begin": 29.14,
+      "end": 29.14,
+      "content": "get"
+     },
+     {
+      "begin": 29.14,
+      "end": 29.14,
+      "content": "your"
+     },
+     {
+      "begin": 29.14,
+      "end": 29.14,
+      "content": "monyon."
+     },
+     {
+      "begin": 29.14,
+      "end": 29.46,
+      "content": "Then"
+     },
+     {
+      "begin": 29.46,
+      "end": 29.66,
+      "content": "stack"
+     },
+     {
+      "begin": 29.66,
+      "end": 29.92,
+      "content": "a"
+     },
+     {
+      "begin": 29.92,
+      "end": 29.92,
+      "content": "hundun”"
+     }
+    ],
+    "align_score": 0.025
+   },
+   {
+    "begin": 32.002,
+    "end": 33.375,
+    "content": "I’m the dealer for the whole tribe.",
+    "confidence": 0.571,
+    "mismatch": false,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 32.002,
+      "end": 32.083,
+      "content": "I’m"
+     },
+     {
+      "begin": 32.103,
+      "end": 32.164,
+      "content": "the"
+     },
+     {
+      "begin": 32.224,
+      "end": 32.406,
+      "content": "dealer"
+     },
+     {
+      "begin": 32.487,
+      "end": 32.567,
+      "content": "for"
+     },
+     {
+      "begin": 32.588,
+      "end": 32.648,
+      "content": "the"
+     },
+     {
+      "begin": 32.668,
+      "end": 32.83,
+      "content": "whole"
+     },
+     {
+      "begin": 32.931,
+      "end": 33.375,
+      "content": "tribe."
+     }
+    ],
+    "align_score": 0.314
+   },
+   {
+    "begin": 33.946,
+    "end": 35.196,
+    "content": "Alabama to the coastline.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 33.946,
+      "end": 34.329,
+      "content": "Alabama"
+     },
+     {
+      "begin": 34.41,
+      "end": 34.47,
+      "content": "to"
+     },
+     {
+      "begin": 34.531,
+      "end": 34.611,
+      "content": "the"
+     },
+     {
+      "begin": 34.632,
+      "end": 35.196,
+      "content": "coastline."
+     }
+    ],
+    "align_score": 0.379
+   },
+   {
+    "begin": 35.848,
+    "end": 37.256,
+    "content": "We the family we got soul ties.",
+    "confidence": 0.818,
+    "mismatch": false,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 35.848,
+      "end": 35.909,
+      "content": "We"
+     },
+     {
+      "begin": 35.989,
+      "end": 36.049,
+      "content": "the"
+     },
+     {
+      "begin": 36.09,
+      "end": 36.271,
+      "content": "family"
+     },
+     {
+      "begin": 36.331,
+      "end": 36.391,
+      "content": "we"
+     },
+     {
+      "begin": 36.452,
+      "end": 36.552,
+      "content": "got"
+     },
+     {
+      "begin": 36.613,
+      "end": 36.754,
+      "content": "soul"
+     },
+     {
+      "begin": 36.854,
+      "end": 37.256,
+      "content": "ties."
+     }
+    ],
+    "align_score": 0.546
+   },
+   {
+    "begin": 37.805,
+    "end": 38.441,
+    "content": "By your side just like roadside.",
+    "confidence": 0.987,
+    "mismatch": false,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 37.805,
+      "end": 37.886,
+      "content": "By"
+     },
+     {
+      "begin": 37.926,
+      "end": 38.027,
+      "content": "your"
+     },
+     {
+      "begin": 38.047,
+      "end": 38.249,
+      "content": "side"
+     },
+     {
+      "begin": 38.289,
+      "end": 38.39,
+      "content": "just"
+     },
+     {
+      "begin": 38.41,
+      "end": 38.441,
+      "content": "like"
+     },
+     {
+      "begin": 38.441,
+      "end": 38.441,
+      "content": "roadside."
+     }
+    ],
+    "align_score": 0.583
+   },
+   {
+    "begin": 38.441,
+    "end": 40.957,
+    "content": "I drive a VW used to drive a Nissan",
+    "confidence": 0.598,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 38.441,
+      "end": 38.461,
+      "content": "I"
+     },
+     {
+      "begin": 38.541,
+      "end": 39.085,
+      "content": "drive"
+     },
+     {
+      "begin": 39.165,
+      "end": 39.185,
+      "content": "a"
+     },
+     {
+      "begin": 39.387,
+      "end": 39.467,
+      "content": "VW"
+     },
+     {
+      "begin": 39.608,
+      "end": 39.91,
+      "content": "used"
+     },
+     {
+      "begin": 40.111,
+      "end": 40.192,
+      "content": "to"
+     },
+     {
+      "begin": 40.232,
+      "end": 40.454,
+      "content": "drive"
+     },
+     {
+      "begin": 40.474,
+      "end": 40.494,
+      "content": "a"
+     },
+     {
+      "begin": 40.514,
+      "end": 40.957,
+      "content": "Nissan"
+     }
+    ],
+    "align_score": 0.348
+   },
+   {
+    "begin": 41.247,
+    "end": 42.959,
+    "content": "Reprogram it if you lose a keyfob….",
+    "confidence": 0.854,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 41.247,
+      "end": 41.871,
+      "content": "Reprogram"
+     },
+     {
+      "begin": 41.932,
+      "end": 41.992,
+      "content": "it"
+     },
+     {
+      "begin": 42.032,
+      "end": 42.113,
+      "content": "if"
+     },
+     {
+      "begin": 42.173,
+      "end": 42.274,
+      "content": "you"
+     },
+     {
+      "begin": 42.294,
+      "end": 42.375,
+      "content": "lose"
+     },
+     {
+      "begin": 42.395,
+      "end": 42.415,
+      "content": "a"
+     },
+     {
+      "begin": 42.435,
+      "end": 42.959,
+      "content": "keyfob…."
+     }
+    ],
+    "align_score": 0.427
+   },
+   {
+    "begin": 43.846,
+    "end": 44.38,
+    "content": "AYE! Don’t loose the keyfob.",
+    "confidence": 0.36,
+    "mismatch": true,
+    "section": "Verse",
+    "heard": "a",
+    "words": [
+     {
+      "begin": 43.846,
+      "end": 43.988,
+      "content": "AYE!"
+     },
+     {
+      "begin": 44.009,
+      "end": 44.13,
+      "content": "Don’t"
+     },
+     {
+      "begin": 44.151,
+      "end": 44.272,
+      "content": "loose"
+     },
+     {
+      "begin": 44.292,
+      "end": 44.353,
+      "content": "the"
+     },
+     {
+      "begin": 44.38,
+      "end": 44.38,
+      "content": "keyfob."
+     }
+    ],
+    "align_score": 0.374
+   },
+   {
+    "begin": 44.38,
+    "end": 46.799,
+    "content": "Homie this a 2015 it’s a beater.",
+    "confidence": 0.686,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 44.38,
+      "end": 44.783,
+      "content": "Homie"
+     },
+     {
+      "begin": 44.844,
+      "end": 45.086,
+      "content": "this"
+     },
+     {
+      "begin": 45.146,
+      "end": 45.166,
+      "content": "a"
+     },
+     {
+      "begin": 45.307,
+      "end": 46.033,
+      "content": "2015"
+     },
+     {
+      "begin": 46.134,
+      "end": 46.214,
+      "content": "it’s"
+     },
+     {
+      "begin": 46.275,
+      "end": 46.295,
+      "content": "a"
+     },
+     {
+      "begin": 46.355,
+      "end": 46.799,
+      "content": "beater."
+     }
+    ],
+    "align_score": 0.515
+   },
+   {
+    "begin": 47.325,
+    "end": 48.3,
+    "content": "You don’t know what I been through.",
+    "confidence": 0.857,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 47.325,
+      "end": 47.405,
+      "content": "You"
+     },
+     {
+      "begin": 47.446,
+      "end": 47.566,
+      "content": "don’t"
+     },
+     {
+      "begin": 47.627,
+      "end": 47.748,
+      "content": "know"
+     },
+     {
+      "begin": 48.03,
+      "end": 48.131,
+      "content": "what"
+     },
+     {
+      "begin": 48.171,
+      "end": 48.191,
+      "content": "I"
+     },
+     {
+      "begin": 48.3,
+      "end": 48.3,
+      "content": "been"
+     },
+     {
+      "begin": 48.3,
+      "end": 48.3,
+      "content": "through."
+     }
+    ],
+    "align_score": 0.72
+   },
+   {
+    "begin": 48.3,
+    "end": 50.675,
+    "content": "What you tryna get into?",
+    "confidence": 0.94,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 48.3,
+      "end": 48.522,
+      "content": "What"
+     },
+     {
+      "begin": 49.588,
+      "end": 49.689,
+      "content": "you"
+     },
+     {
+      "begin": 49.729,
+      "end": 50.031,
+      "content": "tryna"
+     },
+     {
+      "begin": 50.091,
+      "end": 50.212,
+      "content": "get"
+     },
+     {
+      "begin": 50.313,
+      "end": 50.675,
+      "content": "into?"
+     }
+    ],
+    "align_score": 0.631
+   },
+   {
+    "begin": 52.023,
+    "end": 54.001,
+    "content": "He mental. Ran off with the rental",
+    "confidence": 0.997,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 52.023,
+      "end": 52.104,
+      "content": "He"
+     },
+     {
+      "begin": 52.164,
+      "end": 52.546,
+      "content": "mental."
+     },
+     {
+      "begin": 53.491,
+      "end": 53.672,
+      "content": "Ran"
+     },
+     {
+      "begin": 53.753,
+      "end": 53.853,
+      "content": "off"
+     },
+     {
+      "begin": 53.913,
+      "end": 53.994,
+      "content": "with"
+     },
+     {
+      "begin": 54.001,
+      "end": 54.001,
+      "content": "the"
+     },
+     {
+      "begin": 54.001,
+      "end": 54.001,
+      "content": "rental"
+     }
+    ],
+    "align_score": 0.739
+   },
+   {
+    "begin": 54.001,
+    "end": 56.596,
+    "content": "Got spun like a spindle.",
+    "confidence": 0.965,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 54.001,
+      "end": 54.363,
+      "content": "Got"
+     },
+     {
+      "begin": 55.47,
+      "end": 55.812,
+      "content": "spun"
+     },
+     {
+      "begin": 55.872,
+      "end": 55.973,
+      "content": "like"
+     },
+     {
+      "begin": 56.013,
+      "end": 56.033,
+      "content": "a"
+     },
+     {
+      "begin": 56.073,
+      "end": 56.596,
+      "content": "spindle."
+     }
+    ],
+    "align_score": 0.695
+   },
+   {
+    "begin": 57.448,
+    "end": 58.478,
+    "content": "Pull up with the hitcrew…",
+    "confidence": 0.8,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 57.448,
+      "end": 57.61,
+      "content": "Pull"
+     },
+     {
+      "begin": 57.691,
+      "end": 57.751,
+      "content": "up"
+     },
+     {
+      "begin": 57.812,
+      "end": 57.933,
+      "content": "with"
+     },
+     {
+      "begin": 57.973,
+      "end": 58.054,
+      "content": "the"
+     },
+     {
+      "begin": 58.115,
+      "end": 58.478,
+      "content": "hitcrew…"
+     }
+    ],
+    "align_score": 0.502
+   },
+   {
+    "begin": 59.425,
+    "end": 61.204,
+    "content": "Pulled up with the hit crew.",
+    "confidence": 0.944,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 59.425,
+      "end": 59.646,
+      "content": "Pulled"
+     },
+     {
+      "begin": 59.666,
+      "end": 59.707,
+      "content": "up"
+     },
+     {
+      "begin": 59.767,
+      "end": 59.868,
+      "content": "with"
+     },
+     {
+      "begin": 59.888,
+      "end": 59.969,
+      "content": "the"
+     },
+     {
+      "begin": 60.009,
+      "end": 60.19,
+      "content": "hit"
+     },
+     {
+      "begin": 61.204,
+      "end": 61.204,
+      "content": "crew."
+     }
+    ],
+    "align_score": 0.265
+   },
+   {
+    "begin": 61.204,
+    "end": 62.335,
+    "content": "What she wrote was so simple;",
+    "confidence": 0.306,
+    "mismatch": true,
+    "section": "Verse",
+    "heard": "roll with the",
+    "words": [
+     {
+      "begin": 61.204,
+      "end": 61.305,
+      "content": "What"
+     },
+     {
+      "begin": 61.366,
+      "end": 61.426,
+      "content": "she"
+     },
+     {
+      "begin": 61.487,
+      "end": 61.669,
+      "content": "wrote"
+     },
+     {
+      "begin": 61.689,
+      "end": 61.77,
+      "content": "was"
+     },
+     {
+      "begin": 61.83,
+      "end": 61.87,
+      "content": "so"
+     },
+     {
+      "begin": 61.951,
+      "end": 62.335,
+      "content": "simple;"
+     }
+    ],
+    "align_score": 0.449
+   },
+   {
+    "begin": 62.444,
+    "end": 64.62,
+    "content": "First get your monyon. Then stack a hundun",
+    "confidence": 0.625,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 62.444,
+      "end": 62.645,
+      "content": "First"
+     },
+     {
+      "begin": 62.665,
+      "end": 62.765,
+      "content": "get"
+     },
+     {
+      "begin": 62.805,
+      "end": 62.926,
+      "content": "your"
+     },
+     {
+      "begin": 62.946,
+      "end": 63.348,
+      "content": "monyon."
+     },
+     {
+      "begin": 64.393,
+      "end": 64.514,
+      "content": "Then"
+     },
+     {
+      "begin": 64.594,
+      "end": 64.62,
+      "content": "stack"
+     },
+     {
+      "begin": 64.62,
+      "end": 64.62,
+      "content": "a"
+     },
+     {
+      "begin": 64.62,
+      "end": 64.62,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.44
+   },
+   {
+    "begin": 64.62,
+    "end": 69.48,
+    "content": "First get your monyon. Then stack a hundun",
+    "confidence": 0.625,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 64.62,
+      "end": 65.142,
+      "content": "First"
+     },
+     {
+      "begin": 66.327,
+      "end": 66.548,
+      "content": "get"
+     },
+     {
+      "begin": 66.568,
+      "end": 66.809,
+      "content": "your"
+     },
+     {
+      "begin": 66.849,
+      "end": 67.271,
+      "content": "monyon."
+     },
+     {
+      "begin": 68.295,
+      "end": 68.436,
+      "content": "Then"
+     },
+     {
+      "begin": 68.536,
+      "end": 68.677,
+      "content": "stack"
+     },
+     {
+      "begin": 68.737,
+      "end": 68.757,
+      "content": "a"
+     },
+     {
+      "begin": 68.837,
+      "end": 69.48,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.29
+   },
+   {
+    "begin": 70.246,
+    "end": 73.26,
+    "content": "First get your monyon. Then stack a hundun",
+    "confidence": 0.625,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 70.246,
+      "end": 70.467,
+      "content": "First"
+     },
+     {
+      "begin": 70.487,
+      "end": 70.588,
+      "content": "get"
+     },
+     {
+      "begin": 70.628,
+      "end": 70.729,
+      "content": "your"
+     },
+     {
+      "begin": 70.769,
+      "end": 71.251,
+      "content": "monyon."
+     },
+     {
+      "begin": 72.175,
+      "end": 72.356,
+      "content": "Then"
+     },
+     {
+      "begin": 72.416,
+      "end": 72.597,
+      "content": "stack"
+     },
+     {
+      "begin": 72.637,
+      "end": 72.657,
+      "content": "a"
+     },
+     {
+      "begin": 72.677,
+      "end": 73.26,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.366
+   },
+   {
+    "begin": 74.166,
+    "end": 77.32,
+    "content": "First get your monyon. Then stack a hundun",
+    "confidence": 0.625,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 74.166,
+      "end": 74.387,
+      "content": "First"
+     },
+     {
+      "begin": 74.407,
+      "end": 74.487,
+      "content": "get"
+     },
+     {
+      "begin": 74.548,
+      "end": 74.628,
+      "content": "your"
+     },
+     {
+      "begin": 74.688,
+      "end": 75.231,
+      "content": "monyon."
+     },
+     {
+      "begin": 76.115,
+      "end": 76.315,
+      "content": "Then"
+     },
+     {
+      "begin": 76.356,
+      "end": 76.516,
+      "content": "stack"
+     },
+     {
+      "begin": 76.577,
+      "end": 76.597,
+      "content": "a"
+     },
+     {
+      "begin": 76.657,
+      "end": 77.32,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.368
+   },
+   {
+    "begin": 79.984,
+    "end": 82.063,
+    "content": "You already know you already know",
+    "confidence": 0.922,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 79.984,
+      "end": 80.085,
+      "content": "You"
+     },
+     {
+      "begin": 80.226,
+      "end": 80.648,
+      "content": "already"
+     },
+     {
+      "begin": 80.729,
+      "end": 80.93,
+      "content": "know"
+     },
+     {
+      "begin": 81.071,
+      "end": 81.172,
+      "content": "you"
+     },
+     {
+      "begin": 81.272,
+      "end": 81.655,
+      "content": "already"
+     },
+     {
+      "begin": 81.735,
+      "end": 82.063,
+      "content": "know"
+     }
+    ],
+    "align_score": 0.854
+   },
+   {
+    "begin": 82.063,
+    "end": 85.918,
+    "content": "If you need to get equipped with a whip, Call whip equipped send a little dough",
+    "confidence": 0.839,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 82.063,
+      "end": 82.103,
+      "content": "If"
+     },
+     {
+      "begin": 82.163,
+      "end": 82.244,
+      "content": "you"
+     },
+     {
+      "begin": 82.324,
+      "end": 82.464,
+      "content": "need"
+     },
+     {
+      "begin": 82.505,
+      "end": 82.585,
+      "content": "to"
+     },
+     {
+      "begin": 82.685,
+      "end": 82.806,
+      "content": "get"
+     },
+     {
+      "begin": 82.906,
+      "end": 83.267,
+      "content": "equipped"
+     },
+     {
+      "begin": 83.308,
+      "end": 83.468,
+      "content": "with"
+     },
+     {
+      "begin": 83.549,
+      "end": 83.569,
+      "content": "a"
+     },
+     {
+      "begin": 83.649,
+      "end": 83.85,
+      "content": "whip,"
+     },
+     {
+      "begin": 83.95,
+      "end": 84.191,
+      "content": "Call"
+     },
+     {
+      "begin": 84.271,
+      "end": 84.452,
+      "content": "whip"
+     },
+     {
+      "begin": 84.552,
+      "end": 84.954,
+      "content": "equipped"
+     },
+     {
+      "begin": 84.974,
+      "end": 85.135,
+      "content": "send"
+     },
+     {
+      "begin": 85.215,
+      "end": 85.235,
+      "content": "a"
+     },
+     {
+      "begin": 85.315,
+      "end": 85.536,
+      "content": "little"
+     },
+     {
+      "begin": 85.596,
+      "end": 85.918,
+      "content": "dough"
+     }
+    ],
+    "align_score": 0.649
+   },
+   {
+    "begin": 86.844,
+    "end": 90.239,
+    "content": "It’s a foundation we gon’ build it slow send a little dough send a little dough",
+    "confidence": 0.59,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 86.844,
+      "end": 86.985,
+      "content": "It’s"
+     },
+     {
+      "begin": 87.045,
+      "end": 87.065,
+      "content": "a"
+     },
+     {
+      "begin": 87.186,
+      "end": 87.748,
+      "content": "foundation"
+     },
+     {
+      "begin": 87.808,
+      "end": 87.869,
+      "content": "we"
+     },
+     {
+      "begin": 87.929,
+      "end": 88.11,
+      "content": "gon’"
+     },
+     {
+      "begin": 88.15,
+      "end": 88.31,
+      "content": "build"
+     },
+     {
+      "begin": 88.371,
+      "end": 88.411,
+      "content": "it"
+     },
+     {
+      "begin": 88.451,
+      "end": 88.773,
+      "content": "slow"
+     },
+     {
+      "begin": 88.833,
+      "end": 88.993,
+      "content": "send"
+     },
+     {
+      "begin": 89.094,
+      "end": 89.114,
+      "content": "a"
+     },
+     {
+      "begin": 89.174,
+      "end": 89.415,
+      "content": "little"
+     },
+     {
+      "begin": 89.496,
+      "end": 89.717,
+      "content": "dough"
+     },
+     {
+      "begin": 89.737,
+      "end": 89.817,
+      "content": "send"
+     },
+     {
+      "begin": 89.877,
+      "end": 89.897,
+      "content": "a"
+     },
+     {
+      "begin": 89.918,
+      "end": 90.058,
+      "content": "little"
+     },
+     {
+      "begin": 90.139,
+      "end": 90.239,
+      "content": "dough"
+     }
+    ],
+    "align_score": 0.575
+   },
+   {
+    "begin": 90.784,
+    "end": 93.724,
+    "content": "It’s a foundation we gon’ build it slow… Yeah!",
+    "confidence": 0.956,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 90.784,
+      "end": 90.905,
+      "content": "It’s"
+     },
+     {
+      "begin": 90.985,
+      "end": 91.005,
+      "content": "a"
+     },
+     {
+      "begin": 91.106,
+      "end": 91.649,
+      "content": "foundation"
+     },
+     {
+      "begin": 91.709,
+      "end": 91.769,
+      "content": "we"
+     },
+     {
+      "begin": 91.849,
+      "end": 92.01,
+      "content": "gon’"
+     },
+     {
+      "begin": 92.05,
+      "end": 92.211,
+      "content": "build"
+     },
+     {
+      "begin": 92.271,
+      "end": 92.312,
+      "content": "it"
+     },
+     {
+      "begin": 92.352,
+      "end": 92.613,
+      "content": "slow…"
+     },
+     {
+      "begin": 93.176,
+      "end": 93.724,
+      "content": "Yeah!"
+     }
+    ],
+    "align_score": 0.824
+   },
+   {
+    "begin": 93.724,
+    "end": 97.179,
+    "content": "Came from the dirt the mud had to get it out the sand too",
+    "confidence": 0.786,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 93.724,
+      "end": 93.985,
+      "content": "Came"
+     },
+     {
+      "begin": 94.065,
+      "end": 94.166,
+      "content": "from"
+     },
+     {
+      "begin": 94.246,
+      "end": 94.306,
+      "content": "the"
+     },
+     {
+      "begin": 94.407,
+      "end": 94.628,
+      "content": "dirt"
+     },
+     {
+      "begin": 94.708,
+      "end": 94.789,
+      "content": "the"
+     },
+     {
+      "begin": 94.929,
+      "end": 95.251,
+      "content": "mud"
+     },
+     {
+      "begin": 95.311,
+      "end": 95.411,
+      "content": "had"
+     },
+     {
+      "begin": 95.492,
+      "end": 95.552,
+      "content": "to"
+     },
+     {
+      "begin": 95.632,
+      "end": 95.813,
+      "content": "get"
+     },
+     {
+      "begin": 95.934,
+      "end": 95.974,
+      "content": "it"
+     },
+     {
+      "begin": 96.074,
+      "end": 96.155,
+      "content": "out"
+     },
+     {
+      "begin": 96.215,
+      "end": 96.295,
+      "content": "the"
+     },
+     {
+      "begin": 96.396,
+      "end": 96.737,
+      "content": "sand"
+     },
+     {
+      "begin": 96.858,
+      "end": 97.179,
+      "content": "too"
+     }
+    ],
+    "align_score": 0.623
+   },
+   {
+    "begin": 97.765,
+    "end": 101.117,
+    "content": "I was walking with my people like Jesus in his sandals",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 97.765,
+      "end": 97.785,
+      "content": "I"
+     },
+     {
+      "begin": 97.845,
+      "end": 97.945,
+      "content": "was"
+     },
+     {
+      "begin": 98.026,
+      "end": 98.347,
+      "content": "walking"
+     },
+     {
+      "begin": 98.467,
+      "end": 98.628,
+      "content": "with"
+     },
+     {
+      "begin": 98.688,
+      "end": 98.748,
+      "content": "my"
+     },
+     {
+      "begin": 98.949,
+      "end": 99.23,
+      "content": "people"
+     },
+     {
+      "begin": 99.311,
+      "end": 99.471,
+      "content": "like"
+     },
+     {
+      "begin": 99.572,
+      "end": 99.933,
+      "content": "Jesus"
+     },
+     {
+      "begin": 100.033,
+      "end": 100.073,
+      "content": "in"
+     },
+     {
+      "begin": 100.154,
+      "end": 100.254,
+      "content": "his"
+     },
+     {
+      "begin": 100.334,
+      "end": 101.117,
+      "content": "sandals"
+     }
+    ],
+    "align_score": 0.856
+   },
+   {
+    "begin": 101.542,
+    "end": 105.237,
+    "content": "Noah how I turn the tide wait, Moses how I turn the tide now",
+    "confidence": 0.843,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 101.542,
+      "end": 101.803,
+      "content": "Noah"
+     },
+     {
+      "begin": 101.883,
+      "end": 101.984,
+      "content": "how"
+     },
+     {
+      "begin": 102.084,
+      "end": 102.104,
+      "content": "I"
+     },
+     {
+      "begin": 102.225,
+      "end": 102.405,
+      "content": "turn"
+     },
+     {
+      "begin": 102.586,
+      "end": 102.787,
+      "content": "the"
+     },
+     {
+      "begin": 102.867,
+      "end": 102.968,
+      "content": "tide"
+     },
+     {
+      "begin": 102.988,
+      "end": 103.129,
+      "content": "wait,"
+     },
+     {
+      "begin": 103.45,
+      "end": 103.751,
+      "content": "Moses"
+     },
+     {
+      "begin": 103.831,
+      "end": 103.952,
+      "content": "how"
+     },
+     {
+      "begin": 104.072,
+      "end": 104.093,
+      "content": "I"
+     },
+     {
+      "begin": 104.213,
+      "end": 104.394,
+      "content": "turn"
+     },
+     {
+      "begin": 104.494,
+      "end": 104.555,
+      "content": "the"
+     },
+     {
+      "begin": 104.635,
+      "end": 104.936,
+      "content": "tide"
+     },
+     {
+      "begin": 105.097,
+      "end": 105.237,
+      "content": "now"
+     }
+    ],
+    "align_score": 0.716
+   },
+   {
+    "begin": 105.383,
+    "end": 108.78,
+    "content": "Motion like I’m burning tires. If you know me .I’mmoa bring the tribe out ARGH!",
+    "confidence": 0.87,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 105.383,
+      "end": 105.684,
+      "content": "Motion"
+     },
+     {
+      "begin": 105.784,
+      "end": 105.925,
+      "content": "like"
+     },
+     {
+      "begin": 106.025,
+      "end": 106.085,
+      "content": "I’m"
+     },
+     {
+      "begin": 106.146,
+      "end": 106.447,
+      "content": "burning"
+     },
+     {
+      "begin": 106.567,
+      "end": 106.949,
+      "content": "tires."
+     },
+     {
+      "begin": 107.029,
+      "end": 107.069,
+      "content": "If"
+     },
+     {
+      "begin": 107.129,
+      "end": 107.21,
+      "content": "you"
+     },
+     {
+      "begin": 107.31,
+      "end": 107.43,
+      "content": "know"
+     },
+     {
+      "begin": 107.531,
+      "end": 107.611,
+      "content": "me"
+     },
+     {
+      "begin": 107.712,
+      "end": 107.932,
+      "content": ".I’mmoa"
+     },
+     {
+      "begin": 108.073,
+      "end": 108.314,
+      "content": "bring"
+     },
+     {
+      "begin": 108.334,
+      "end": 108.394,
+      "content": "the"
+     },
+     {
+      "begin": 108.515,
+      "end": 108.78,
+      "content": "tribe"
+     },
+     {
+      "begin": 108.78,
+      "end": 108.78,
+      "content": "out"
+     },
+     {
+      "begin": 108.78,
+      "end": 108.78,
+      "content": "ARGH!"
+     }
+    ],
+    "align_score": 0.6
+   },
+   {
+    "begin": 108.78,
+    "end": 112.977,
+    "content": "I’m the dealer for the whole tribe (WOO!)",
+    "confidence": 0.942,
+    "mismatch": false,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 108.78,
+      "end": 109.162,
+      "content": "I’m"
+     },
+     {
+      "begin": 110.085,
+      "end": 110.186,
+      "content": "the"
+     },
+     {
+      "begin": 110.266,
+      "end": 110.447,
+      "content": "dealer"
+     },
+     {
+      "begin": 110.527,
+      "end": 110.608,
+      "content": "for"
+     },
+     {
+      "begin": 110.648,
+      "end": 110.708,
+      "content": "the"
+     },
+     {
+      "begin": 110.748,
+      "end": 110.929,
+      "content": "whole"
+     },
+     {
+      "begin": 110.989,
+      "end": 111.27,
+      "content": "tribe"
+     },
+     {
+      "begin": 112.696,
+      "end": 112.977,
+      "content": "(WOO!)"
+     }
+    ],
+    "align_score": 0.331
+   },
+   {
+    "begin": 113.964,
+    "end": 116.736,
+    "content": "Alabama to the coastline (WOO!)",
+    "confidence": 0.981,
+    "mismatch": false,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 113.964,
+      "end": 114.346,
+      "content": "Alabama"
+     },
+     {
+      "begin": 114.426,
+      "end": 114.486,
+      "content": "to"
+     },
+     {
+      "begin": 114.546,
+      "end": 114.607,
+      "content": "the"
+     },
+     {
+      "begin": 114.647,
+      "end": 115.41,
+      "content": "coastline"
+     },
+     {
+      "begin": 116.595,
+      "end": 116.736,
+      "content": "(WOO!)"
+     }
+    ],
+    "align_score": 0.472
+   },
+   {
+    "begin": 117.823,
+    "end": 121.706,
+    "content": "We the family we got soul ties (WOO!)",
+    "confidence": 0.961,
+    "mismatch": false,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 117.823,
+      "end": 117.903,
+      "content": "We"
+     },
+     {
+      "begin": 117.944,
+      "end": 118.004,
+      "content": "the"
+     },
+     {
+      "begin": 118.084,
+      "end": 118.265,
+      "content": "family"
+     },
+     {
+      "begin": 118.325,
+      "end": 118.365,
+      "content": "we"
+     },
+     {
+      "begin": 118.426,
+      "end": 118.546,
+      "content": "got"
+     },
+     {
+      "begin": 118.586,
+      "end": 118.767,
+      "content": "soul"
+     },
+     {
+      "begin": 118.807,
+      "end": 119.289,
+      "content": "ties"
+     },
+     {
+      "begin": 121.706,
+      "end": 121.706,
+      "content": "(WOO!)"
+     }
+    ],
+    "align_score": 0.38
+   },
+   {
+    "begin": 121.706,
+    "end": 123.84,
+    "content": "By your side just like roadside",
+    "confidence": 0.916,
+    "mismatch": false,
+    "section": "Bridge",
+    "words": [
+     {
+      "begin": 121.706,
+      "end": 121.766,
+      "content": "By"
+     },
+     {
+      "begin": 121.827,
+      "end": 121.927,
+      "content": "your"
+     },
+     {
+      "begin": 121.988,
+      "end": 122.189,
+      "content": "side"
+     },
+     {
+      "begin": 122.209,
+      "end": 122.29,
+      "content": "just"
+     },
+     {
+      "begin": 122.31,
+      "end": 122.431,
+      "content": "like"
+     },
+     {
+      "begin": 122.451,
+      "end": 123.84,
+      "content": "roadside"
+     }
+    ],
+    "align_score": 0.357
+   },
+   {
+    "begin": 124.48,
+    "end": 125.42,
+    "content": "First get your monyon. Then stack a hundun",
+    "confidence": 0.375,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "money",
+    "words": [
+     {
+      "begin": 124.48,
+      "end": 125.08,
+      "content": "First"
+     },
+     {
+      "begin": 125.08,
+      "end": 125.22,
+      "content": "get"
+     },
+     {
+      "begin": 125.22,
+      "end": 125.42,
+      "content": "your"
+     },
+     {
+      "begin": 125.42,
+      "end": 125.42,
+      "content": "monyon."
+     },
+     {
+      "begin": 125.42,
+      "end": 125.42,
+      "content": "Then"
+     },
+     {
+      "begin": 125.42,
+      "end": 125.42,
+      "content": "stack"
+     },
+     {
+      "begin": 125.42,
+      "end": 125.42,
+      "content": "a"
+     },
+     {
+      "begin": 125.42,
+      "end": 125.42,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.116
+   },
+   {
+    "begin": 128.769,
+    "end": 129.92,
+    "content": "First get your monyon. Then stack a hundun",
+    "confidence": 0.375,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "money",
+    "words": [
+     {
+      "begin": 128.769,
+      "end": 128.991,
+      "content": "First"
+     },
+     {
+      "begin": 129.012,
+      "end": 129.153,
+      "content": "get"
+     },
+     {
+      "begin": 129.173,
+      "end": 129.254,
+      "content": "your"
+     },
+     {
+      "begin": 129.294,
+      "end": 129.415,
+      "content": "monyon."
+     },
+     {
+      "begin": 129.436,
+      "end": 129.516,
+      "content": "Then"
+     },
+     {
+      "begin": 129.577,
+      "end": 129.698,
+      "content": "stack"
+     },
+     {
+      "begin": 129.718,
+      "end": 129.738,
+      "content": "a"
+     },
+     {
+      "begin": 129.759,
+      "end": 129.92,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.214
+   },
+   {
+    "begin": 131.82,
+    "end": 133.2,
+    "content": "First get your monyon. Then stack a hundun",
+    "confidence": 0.375,
+    "mismatch": true,
+    "section": "Hook",
+    "heard": "money",
+    "words": [
+     {
+      "begin": 131.82,
+      "end": 132.82,
+      "content": "First"
+     },
+     {
+      "begin": 132.82,
+      "end": 133.02,
+      "content": "get"
+     },
+     {
+      "begin": 133.02,
+      "end": 133.2,
+      "content": "your"
+     },
+     {
+      "begin": 133.2,
+      "end": 133.2,
+      "content": "monyon."
+     },
+     {
+      "begin": 133.2,
+      "end": 133.2,
+      "content": "Then"
+     },
+     {
+      "begin": 133.2,
+      "end": 133.2,
+      "content": "stack"
+     },
+     {
+      "begin": 133.2,
+      "end": 133.2,
+      "content": "a"
+     },
+     {
+      "begin": 133.2,
+      "end": 133.2,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.103
+   },
+   {
+    "begin": 135.1,
+    "end": 139.74,
+    "content": "First get your monyon. Then stack a hundun",
+    "confidence": 0.589,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 135.1,
+      "end": 135.643,
+      "content": "First"
+     },
+     {
+      "begin": 136.828,
+      "end": 136.968,
+      "content": "get"
+     },
+     {
+      "begin": 136.988,
+      "end": 137.069,
+      "content": "your"
+     },
+     {
+      "begin": 137.129,
+      "end": 137.651,
+      "content": "monyon."
+     },
+     {
+      "begin": 138.555,
+      "end": 138.736,
+      "content": "Then"
+     },
+     {
+      "begin": 138.796,
+      "end": 138.937,
+      "content": "stack"
+     },
+     {
+      "begin": 138.997,
+      "end": 139.017,
+      "content": "a"
+     },
+     {
+      "begin": 139.077,
+      "end": 139.74,
+      "content": "hundun"
+     }
+    ],
+    "align_score": 0.3
+   }
+  ]
+ }
+}

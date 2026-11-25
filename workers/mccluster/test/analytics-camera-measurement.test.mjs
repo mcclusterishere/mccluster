@@ -26,6 +26,32 @@ test('owner authorization precedes all catalog and feed access',async()=>{
  const res=await route(new Request(url),env,{id:'member'},url,url.pathname);
  assert.equal(res.status,403);assert.equal(calls,0);
 });
+test('Halo TxDOT snapshots are measured while placeholder and unknown provenance remain unavailable',async()=>{
+ for(const sourceKind of ['txdot-snapshot','synthetic','streetview','unknown','']){
+  const result=await checkCamera(env,'txdot-aus-example',async()=>new Response(png,{headers:{'content-type':'image/png','x-cctv-source':sourceKind}}));
+  assert.equal(result.status,sourceKind==='txdot-snapshot'?'image_received':'unavailable');
+  if(sourceKind==='txdot-snapshot')assert.deepEqual(Uint8Array.from(Buffer.from(result.image.split(',')[1],'base64')),png);
+ }
+ const invalid=await checkCamera(env,'txdot-aus-example',async()=>new Response('<html>unavailable</html>',{headers:{'content-type':'image/jpeg','x-cctv-source':'txdot-snapshot'}}));
+ assert.equal(invalid.status,'unavailable');
+});
+test('full batches preserve bounded raster payload bytes and reject oversized streams',async()=>{
+ // Exercise transport and byte limits independently of the browser decode check.
+ const limit=2*1024*1024,bytes=new Uint8Array(limit);
+ for(let i=0;i<bytes.length;i++)bytes[i]=i%256;
+ bytes.set(png.subarray(0,8));bytes.set(png.subarray(-12),bytes.length-12);
+ const route=createCameraRoutes({requireOwner:async()=>{},json,fetchImpl:async()=>new Response(new ReadableStream({start(controller){
+  for(let at=0;at<bytes.length;at+=8191)controller.enqueue(bytes.subarray(at,at+8191));
+  controller.close();
+ }}),{headers:{'content-type':'image/png','x-cctv-source':'upstream-image'}})});
+ const url=new URL('https://api.mccluster.org/v1/analytics/cameras/check'),ids=Array.from({length:CAMERA_CHECK_BATCH},(_,i)=>'camera-'+i);
+ const response=await route(new Request(url,{method:'POST',body:JSON.stringify({ids})}),env,{},url,url.pathname);
+ assert.equal(response.status,200);
+ const body=await response.json();assert.equal(body.checks.length,CAMERA_CHECK_BATCH);
+ for(const check of body.checks){assert.equal(check.status,'image_received');assert.deepEqual(Uint8Array.from(Buffer.from(check.image.split(',')[1],'base64')),bytes);}
+ const oversized=await checkCamera(env,'oversized',async()=>new Response(new Uint8Array(limit+1),{headers:{'content-type':'image/png','x-cctv-source':'upstream-image'}}));
+ assert.equal(oversized.status,'unavailable');assert.equal(oversized.image,undefined);
+});
 test('checks bound fan-out and reject URLs, oversized batches, missing bodies and invalid catalog responses',async()=>{
  let calls=0;
  const route=createCameraRoutes({requireOwner:async()=>{},json,fetchImpl:async()=>{calls++;return json({});}});
@@ -53,4 +79,14 @@ test('stored coverage counts are owner-only, organization scoped, and never repl
   assert.equal(result.metrics.headlines.count,17);assert.equal(result.metrics.proofs.count,null);assert.equal(result.metrics.publishers.count,null);
   for(const table of ['ops_ingest_records','ops_ingest_connectors','control_observability_events'])assert.equal(calls.find(u=>u.pathname.endsWith('/'+table)).searchParams.get('org_id'),'eq.house');
  } finally {globalThis.fetch=previous;}
+});
+
+test('camera connection failures give the owner safe, actionable reasons',async()=>{
+ const url=new URL('https://api.mccluster.org/v1/analytics/cameras');
+ for(const [settings,status,code,message] of [[{},503,'halo_not_configured','has not been configured'],[env,401,'halo_authorization_failed','renew'],[env,503,'halo_upstream_unavailable','Retry']]){
+  const route=createCameraRoutes({requireOwner:async()=>{},json,fetchImpl:async()=>new Response('private upstream response',{status})});
+  const r=await route(new Request(url),settings,{},url,url.pathname),body=await r.json();
+  assert.equal(body.code,code);assert.ok(body.error.includes(message));assert.doesNotMatch(JSON.stringify(body),/test-only|private upstream response/);
+  assert.equal(body.retryable,code==='halo_upstream_unavailable');
+ }
 });

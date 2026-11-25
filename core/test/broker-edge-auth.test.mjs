@@ -138,3 +138,52 @@ test('canonical string binds method, path, timestamp, nonce and digest', () => {
 test('verifier construction requires a secret', () => {
   assert.throws(() => createEdgeVerifier({}), /requires a signing secret/i);
 });
+
+test('Core -> Worker signatures are domain-separated from Worker -> Core', async () => {
+  const { signCoreRequest, canonicalCoreRequest, CORE_PROTOCOL } = await import('../src/broker-edge-auth.mjs');
+  const bodyBytes = Buffer.from(JSON.stringify({ method: 'tools/list' }));
+  const headers = signCoreRequest({ secret: SECRET, method: 'POST', path: '/mcp', bodyBytes });
+  assert.equal(headers[EDGE_HEADERS.protocol], CORE_PROTOCOL);
+  const verifier = createEdgeVerifier({ secret: SECRET });
+  assert.throws(
+    () => verifier.verify({ method: 'POST', path: '/mcp', headers: { ...headers, [EDGE_HEADERS.protocol]: EDGE_PROTOCOL }, bodyBytes }),
+    /signature is not valid/i
+  );
+  assert.match(canonicalCoreRequest({ method: 'post', path: '/p', timestamp: 't', nonce: 'n', digest: 'd' }), /^MCCLUSTER-CORE-V1\nPOST\n\/p\nt\nn\nd$/);
+});
+
+test('mcp-http signs a server marked with signEnv over the exact body', async () => {
+  const { mcpRpc } = await import('../src/tools/mcp-http.mjs');
+  const { createHmac, createHash } = await import('node:crypto');
+  process.env.TEST_CORE_SIGNING_KEY = SECRET;
+  const original = globalThis.fetch;
+  let captured;
+  globalThis.fetch = async (url, init) => {
+    captured = { url: String(url), init };
+    return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: { tools: [] } }), { headers: { 'content-type': 'application/json' } });
+  };
+  try {
+    await mcpRpc({ url: 'https://api.mccluster.org/v1/media/mcp', signEnv: 'TEST_CORE_SIGNING_KEY' }, 'tools/list');
+  } finally {
+    globalThis.fetch = original;
+    delete process.env.TEST_CORE_SIGNING_KEY;
+  }
+  const h = captured.init.headers;
+  assert.equal(h[EDGE_HEADERS.protocol], 'mccluster-core/v1');
+  assert.equal(h[EDGE_HEADERS.digest], createHash('sha256').update(captured.init.body).digest('base64url'));
+  const canonical = ['MCCLUSTER-CORE-V1', 'POST', '/v1/media/mcp', h[EDGE_HEADERS.timestamp], h[EDGE_HEADERS.nonce], h[EDGE_HEADERS.digest]].join('\n');
+  assert.equal(h[EDGE_HEADERS.signature], createHmac('sha256', SECRET).update(canonical).digest('base64url'));
+});
+
+test('mcp-http sends no signature when the server is not marked', async () => {
+  const { mcpRpc } = await import('../src/tools/mcp-http.mjs');
+  const original = globalThis.fetch;
+  let headers;
+  globalThis.fetch = async (_url, init) => {
+    headers = init.headers;
+    return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: {} }), { headers: { 'content-type': 'application/json' } });
+  };
+  try { await mcpRpc({ url: 'https://example.com/mcp' }, 'tools/list'); }
+  finally { globalThis.fetch = original; }
+  assert.equal(headers[EDGE_HEADERS.signature], undefined);
+});

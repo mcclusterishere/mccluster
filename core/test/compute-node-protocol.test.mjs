@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { COMPUTE_PROTOCOL, validateCapabilityManifest, validateEnrollment } from '../src/compute/protocol.mjs';
+import { COMPUTE_PROTOCOL, HARDWARE_MODES, HARDWARE_MODE_RANK, clampYieldSeconds, claimableManifest, countLiveGpuNodes, enrollmentLabels, heartbeatLabels, ownedOnlyAdmitted, validateCapabilityManifest, validateEnrollment, validateInventory } from '../src/compute/protocol.mjs';
 import { generateNodeIdentity, nodeIdFromPublicKey, signRequest, verifySignedRequest } from '../src/compute/signature.mjs';
 
 test('node identity is deterministically derived from its public key', () => {
@@ -130,4 +131,89 @@ test('duplicate capability implementations fail closed', () => {
     { capability: 'video.generate', implementation: 'ltx.local' },
     { capability: 'video.generate', implementation: 'ltx.local' }
   ]), /Duplicate capability implementation/);
+});
+
+test('inventory keeps the per-GPU form, memory and vram_source fields and the runtime hardware_mode, still stripping unknown gpu keys', () => {
+  const inventory = validateInventory({
+    gpus: [{ vendor: 'amd', model: 'AMD Radeon 780M Graphics', vram_bytes: 536870912, form: 'integrated', memory: 'shared', vram_source: 'registry', local_path: 'not for the plane' }],
+    runtime: { hardware_mode: 'gpu-present-unverified', gpu_probe: { ok: true } }
+  });
+  assert.equal(inventory.gpus[0].form, 'integrated');
+  assert.equal(inventory.gpus[0].memory, 'shared');
+  assert.equal(inventory.gpus[0].vram_source, 'registry');
+  assert.equal(inventory.gpus[0].local_path, undefined, 'unknown gpu keys are still dropped');
+  assert.equal(inventory.runtime.hardware_mode, 'gpu-present-unverified');
+  const bare = validateInventory({ gpus: [{ vendor: 'nvidia', vram_bytes: 1 }] }).gpus[0];
+  assert.equal(bare.form, null);
+  assert.equal(bare.memory, null);
+  assert.equal(bare.vram_source, null);
+  const long = validateInventory({ gpus: [{ vendor: 'x', form: 'y'.repeat(100) }] }).gpus[0];
+  assert.equal(long.form.length, 40);
+});
+
+test('the hardware_mode vocabulary, its rank, the yield clamp and the live GPU count are shared protocol helpers', () => {
+  assert.deepEqual(HARDWARE_MODES, ['gpu-verified', 'gpu-present-unverified', 'cpu-only', 'unknown']);
+  assert.deepEqual(HARDWARE_MODE_RANK, { 'gpu-verified': 3, 'gpu-present-unverified': 2, 'cpu-only': 1, unknown: 0 });
+  assert.equal(clampYieldSeconds(30), 30);
+  assert.equal(clampYieldSeconds('45.9'), 45);
+  assert.equal(clampYieldSeconds(100000), 300);
+  assert.equal(clampYieldSeconds(-5), 0);
+  assert.equal(clampYieldSeconds(undefined), 0);
+  assert.equal(clampYieldSeconds('soon'), 0);
+  const nodes = [
+    { id: 'node_a', inventory: { runtime: { hardware_mode: 'gpu-verified' } } },
+    { id: 'node_b', inventory: { runtime: { hardware_mode: 'gpu-present-unverified' } } },
+    { id: 'node_c', inventory: { runtime: { hardware_mode: 'gpu-verified' } } },
+    { id: 'node_d', inventory: null },
+    { id: 'node_e' }
+  ];
+  assert.equal(countLiveGpuNodes(nodes, { excludeNodeId: 'node_a' }), 1, 'a node never counts itself');
+  assert.equal(countLiveGpuNodes(nodes, { excludeNodeId: 'node_z' }), 2);
+  assert.equal(countLiveGpuNodes(nodes), 2);
+  assert.equal(countLiveGpuNodes(null), 0);
+});
+
+test('a browser.act manifest entry with no model and a browser feature normalizes like any other, and its executor stays node-local', () => {
+  const [entry] = validateCapabilityManifest([{
+    capability: 'browser.act', implementation: 'chromium.local', backend: 'playwright', model: null, version: '1',
+    features: { browser: true, headed: false, screenshot: true, self_hosted: true }, max_concurrency: 1, min_vram_bytes: 0,
+    executor: { type: 'http', url: 'http://127.0.0.1:4791/execute', health_url: 'http://127.0.0.1:4791/ready', health_method: 'GET', health_timeout_ms: 3000, timeout_ms: 180000 }
+  }]);
+  assert.equal(entry.capability, 'browser.act');
+  assert.equal(entry.implementation, 'chromium.local');
+  assert.equal(entry.model, null);
+  assert.equal(entry.backend, 'playwright');
+  assert.deepEqual(entry.features, { browser: true, headed: false, screenshot: true, self_hosted: true });
+  assert.equal(entry.max_concurrency, 1);
+  assert.equal(entry.min_vram_bytes, 0);
+  assert.equal(entry.executor, undefined, 'the loopback executor never leaves the node');
+  const [vision] = validateCapabilityManifest([{ capability: 'ai.chat', implementation: 'qwen3-vl.8b.local', model: 'qwen3-vl:8b', features: { gpu: true, vision: true } }]);
+  assert.equal(vision.features.vision, true, 'features.vision survives normalization: the claim SQL matches it');
+});
+
+test('the Core package never grows a Playwright dependency: the browser executor resolves it from the node at start', () => {
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  for (const section of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies']) {
+    assert.equal(Object.hasOwn(pkg[section] || {}, 'playwright'), false, `${section} must not list playwright`);
+  }
+  assert.equal(pkg.scripts['compute:browser'], 'node src/compute/browser-executor.mjs');
+  assert.match(pkg.scripts['test:browser'], /browser-executor\.test\.mjs/);
+});
+
+// Review N2R-3: the owned-only rule reads the trust the enrolment recorded,
+// never a label a heartbeat can write.
+test('the enrolment records trust; heartbeat labels keep trust, role and the record; only an owned record admits browser.act', () => {
+  assert.deepEqual(enrollmentLabels({ site: 'a', trust: ' owned ', role: 'gpu-laptop', enrolled_trust: 'something-else' }), { site: 'a', trust: ' owned ', role: 'gpu-laptop', enrolled_trust: 'owned' });
+  assert.deepEqual(enrollmentLabels({ site: 'a', trust: 7, enrolled_trust: 'owned' }), { site: 'a', trust: 7 }, 'no string trust, no record; a sent record is ignored');
+  assert.deepEqual(enrollmentLabels(null), {});
+  const stored = { site: 'a', trust: 'partner', role: 'cpu-helper', enrolled_trust: 'partner', hardware_mode: 'cpu-only' };
+  assert.deepEqual(heartbeatLabels(stored, { site: 'b', trust: 'owned', role: 'gpu-laptop', enrolled_trust: 'owned', hardware_mode: 'gpu-verified' }), { site: 'b', trust: 'partner', role: 'cpu-helper', enrolled_trust: 'partner', hardware_mode: 'gpu-verified' });
+  assert.deepEqual(heartbeatLabels({ site: 'a' }, { site: 'a', trust: 'owned', role: 'gpu-laptop', enrolled_trust: 'owned' }), { site: 'a' }, 'a heartbeat cannot add what the enrolment did not set');
+  assert.equal(ownedOnlyAdmitted('browser.act', { trust: 'owned' }), false);
+  assert.equal(ownedOnlyAdmitted('browser.act', { trust: 'partner', enrolled_trust: 'owned' }), true);
+  assert.equal(ownedOnlyAdmitted('ai.chat', {}), true, 'only owned-only capabilities need the record');
+  const manifest = [{ capability: 'ai.chat', implementation: 'qwen3.8b.local' }, { capability: 'browser.act', implementation: 'chromium.local' }];
+  assert.deepEqual(claimableManifest(manifest, { trust: 'owned' }).map((item) => item.capability), ['ai.chat']);
+  assert.deepEqual(claimableManifest(manifest, { enrolled_trust: 'owned' }).map((item) => item.capability), ['ai.chat', 'browser.act']);
+  assert.deepEqual(claimableManifest(null, {}), []);
 });

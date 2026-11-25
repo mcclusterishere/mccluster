@@ -1,8 +1,9 @@
 import { rest, resolveHouseOrgId } from '../supabase.mjs';
 import { localAiChat } from '../compute/local-ai-client.mjs';
 import { validateActorComment } from './actor-news-comment.mjs';
+import { stopIfLeaseLost } from '../lease.mjs';
 
-export async function actorLiveComment(job, { query=rest, chat=localAiChat, resolveOrg=resolveHouseOrgId }={}) {
+export async function actorLiveComment(job, { query=rest, chat=localAiChat, resolveOrg=resolveHouseOrgId, signal }={}) {
   const org=await resolveOrg();
   if(job.org_id!==org) throw new Error('Live actor outside house authority');
   const rpc=async(name,data)=>(await query('rpc/'+name,{method:'POST',body:JSON.stringify(data)})).body;
@@ -20,6 +21,7 @@ export async function actorLiveComment(job, { query=rest, chat=localAiChat, reso
     {role:'user',content:JSON.stringify({source_text:context.source_text,messages:context.messages,source_post_id:context.source_post_id,comment:body})}],json:true,think:false,numCtx:4096,numPredict:120,temperature:0,priority:-30,metadata:{job_type:'actor_live_review',job_id:job.id}});
   const review=JSON.parse(checked?.message?.content||'{}');
   if(review.approved!==true) return {...base,published:false,reason:'review_withheld',review:{approved:false,reason:String(review.reason||'').slice(0,180)}};
+  stopIfLeaseLost(job, signal, 'publishing a live comment');
   const receipt=await rpc('ops_live_actor_publish',{p_job:job.id,p_org:org,p_body:body,p_model:response.model||'qwen3:8b',p_review:review});
   return {...base,...receipt,usage:response.usage||null};
 }

@@ -45,6 +45,7 @@
       if (!force && s.body && Date.now() - s.at < ttl) return Promise.resolve(s.body);
       s.busy = ask(path).then((body) => {
         if (!alive) return null;
+        if (body && body.unavailable) { s.error = 'Source unavailable'; return s.body; }
         s.body = body; s.at = Date.now(); s.error = '';
         return body;
       }, (e) => {
@@ -59,12 +60,11 @@
     const refresh = (key) => { const src = SOURCES[key]; return load(key, src.path, src.ttl, true); };
     const peek = (key) => { const s = slots[key]; return s ? { body: s.body, at: s.at, error: s.error, loading: !!s.busy } : { body: null, at: 0, error: '', loading: false }; };
 
-    function utcDay(offset) { const d = new Date(Date.now() - offset * 864e5); return d.toISOString().slice(0, 10); }
-    /* today's briefs if they exist, else yesterday's (they are written through the day) */
-    async function briefs() {
-      const today = await load('briefs:' + utcDay(0), '/v1/news-briefs?day=' + utcDay(0), 600e3, false);
-      if (today && Array.isArray(today.briefs) && today.briefs.length) { slots.briefs = slots['briefs:' + utcDay(0)]; return today; }
-      const before = await load('briefs:' + utcDay(1), '/v1/news-briefs?day=' + utcDay(1), 600e3, false);
+    function utcDay(offset) { const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); const p = Object.fromEntries(parts.map(x => [x.type, x.value])); return new Date(Date.UTC(+p.year, +p.month - 1, +p.day) - offset * 864e5).toISOString().slice(0, 10); }
+    /* Match the reading page: yesterday’s New York edition. */
+    async function briefs(force) {
+      // The reading page and Halo use the same New York yesterday edition.
+      const before = await load('briefs:' + utcDay(1), '/v1/news-briefs?day=' + utcDay(1), 600e3, !!force);
       slots.briefs = slots['briefs:' + utcDay(1)];
       return before;
     }
@@ -74,10 +74,11 @@
       return load('tide:' + id, '/v1/world/tides/' + id, 360e3, false);
     }
 
-    let timer = setInterval(() => { if (!document.hidden) ['missions', 'people'].forEach((k) => { if (slots[k]) get(k); }); }, 30e3);
+    let timer = setInterval(() => { if (!document.hidden) Object.keys(SOURCES).forEach((k) => { if (slots[k]) get(k); }); if (!document.hidden && slots.briefs) briefs(); }, 30e3);
 
     return {
       get, refresh, peek, briefs, tide,
+      retry() { return Promise.all(Object.keys(SOURCES).filter(k => slots[k]).map(refresh)); },
       peekBriefs: () => peek('briefs'),
       peekTide: (id) => peek('tide:' + id),
       on(fn) { listeners.add(fn); return () => listeners.delete(fn); },

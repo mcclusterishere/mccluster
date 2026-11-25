@@ -1,0 +1,677 @@
+{
+  "id": "designer-kicks-retail-factory",
+  "version": 1,
+  "provenance": "authored-game-interior",
+  "collection": [
+    {
+      "id": "collection-slot-01",
+      "status": "pending-design-and-integration",
+      "city": "Bridgeport",
+      "name": "Robbery 1s",
+      "number": 1,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-02",
+      "status": "pending-design-and-integration",
+      "city": "Waterbury",
+      "name": "Burglary Twos",
+      "number": 2,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-03",
+      "status": "pending-design-and-integration",
+      "city": "Hartford",
+      "name": "Arson Threes",
+      "number": 3,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-04",
+      "status": "pending-design-and-integration",
+      "city": "New Haven",
+      "name": "Hami Fours",
+      "number": 4,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-05",
+      "status": "pending-design-and-integration",
+      "city": "New Britain",
+      "name": "Assault Fives",
+      "number": 5,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-06",
+      "status": "pending-design-and-integration",
+      "city": "Manchester",
+      "name": "Stolen Sixes",
+      "number": 6,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-07",
+      "status": "pending-design-and-integration",
+      "city": "Orange",
+      "name": "Larceny Sevens",
+      "number": 7,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-08",
+      "status": "pending-design-and-integration",
+      "city": "Derby",
+      "name": "GTA Eights",
+      "number": 8,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-09",
+      "status": "pending-design-and-integration",
+      "city": "East Haven",
+      "name": "Larceny Nines",
+      "number": 9,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-10",
+      "status": "pending-design-and-integration",
+      "city": "Norwich",
+      "name": "Home Invasion Tens",
+      "number": 10,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-11",
+      "status": "pending-design-and-integration",
+      "city": "Hamden",
+      "name": "Repo Elevens",
+      "number": 11,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-12",
+      "status": "pending-design-and-integration",
+      "city": "Meriden",
+      "name": "Burglary Twelves",
+      "number": 12,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    },
+    {
+      "id": "collection-slot-13",
+      "status": "pending-design-and-integration",
+      "city": "Cromwell",
+      "name": "Stolen Thirteens",
+      "number": 13,
+      "offense": null,
+      "shoeModel": null,
+      "power": null,
+      "price": null,
+      "purchasable": false
+    }
+  ],
+  "floors": [
+    {
+      "id": "retail",
+      "label": "Showroom and backroom",
+      "elevation": 0,
+      "width": 18,
+      "depth": 14,
+      "fixtures": [
+        {
+          "id": "display-west-0",
+          "type": "display",
+          "x": -7.4,
+          "z": -1.9,
+          "w": 1.3,
+          "d": 2,
+          "h": 2.3
+        },
+        {
+          "id": "display-east-0",
+          "type": "display",
+          "x": 7.4,
+          "z": -1.9,
+          "w": 1.3,
+          "d": 2,
+          "h": 2.3
+        },
+        {
+          "id": "display-west-1",
+          "type": "display",
+          "x": -7.4,
+          "z": 0.7,
+          "w": 1.3,
+          "d": 2,
+          "h": 2.3
+        },
+        {
+          "id": "display-east-1",
+          "type": "display",
+          "x": 7.4,
+          "z": 0.7,
+          "w": 1.3,
+          "d": 2,
+          "h": 2.3
+        },
+        {
+          "id": "display-west-2",
+          "type": "display",
+          "x": -7.4,
+          "z": 3.3,
+          "w": 1.3,
+          "d": 2,
+          "h": 2.3
+        },
+        {
+          "id": "display-east-2",
+          "type": "display",
+          "x": 7.4,
+          "z": 3.3,
+          "w": 1.3,
+          "d": 2,
+          "h": 2.3
+        },
+        {
+          "id": "hero-display",
+          "type": "hero",
+          "x": 0,
+          "z": 0.1,
+          "w": 2.4,
+          "d": 1.6,
+          "h": 0.8
+        },
+        {
+          "id": "fitting-bench-west",
+          "type": "bench",
+          "x": -3.4,
+          "z": 3.6,
+          "w": 3.3,
+          "d": 1.2,
+          "h": 0.6
+        },
+        {
+          "id": "fitting-bench-east",
+          "type": "bench",
+          "x": 3.4,
+          "z": 3.6,
+          "w": 3.3,
+          "d": 1.2,
+          "h": 0.6
+        },
+        {
+          "id": "checkout",
+          "type": "checkout",
+          "x": -3.8,
+          "z": -1.8,
+          "w": 4.8,
+          "d": 1.1,
+          "h": 1.15
+        },
+        {
+          "id": "backroom-wall-west",
+          "type": "partition",
+          "x": -1.9,
+          "z": -3.6,
+          "w": 14.2,
+          "d": 0.18,
+          "h": 2.7
+        },
+        {
+          "id": "backroom-wall-east",
+          "type": "partition",
+          "x": 8.2,
+          "z": -3.6,
+          "w": 1.6,
+          "d": 0.18,
+          "h": 2.7
+        },
+        {
+          "id": "stock-rack",
+          "type": "stock",
+          "x": -7.4,
+          "z": -5.2,
+          "w": 1.4,
+          "d": 2.6,
+          "h": 2.5
+        },
+        {
+          "id": "packing-table",
+          "type": "packing",
+          "x": -3.4,
+          "z": -5.2,
+          "w": 3.5,
+          "d": 1.4,
+          "h": 1
+        }
+      ],
+      "targets": [
+        {
+          "id": "street",
+          "kind": "exit",
+          "x": 0,
+          "z": 5.8
+        },
+        {
+          "id": "counter",
+          "kind": "counter",
+          "x": -3.8,
+          "z": -0.25
+        },
+        {
+          "id": "collection",
+          "kind": "collection",
+          "x": 0,
+          "z": 1.6
+        },
+        {
+          "id": "backroom",
+          "kind": "waypoint",
+          "x": 6.3,
+          "z": -3.6
+        },
+        {
+          "id": "factory-stair",
+          "kind": "floor",
+          "floor": "factory",
+          "x": 6.3,
+          "z": -5.2
+        }
+      ],
+      "surfaces": [
+        {
+          "minX": -9,
+          "maxX": 9,
+          "minZ": -7,
+          "maxZ": 7
+        }
+      ],
+      "blockers": [
+        {
+          "id": "display-west-0",
+          "minX": -8.05,
+          "maxX": -6.75,
+          "minZ": -2.9,
+          "maxZ": -0.8999999999999999
+        },
+        {
+          "id": "display-east-0",
+          "minX": 6.75,
+          "maxX": 8.05,
+          "minZ": -2.9,
+          "maxZ": -0.8999999999999999
+        },
+        {
+          "id": "display-west-1",
+          "minX": -8.05,
+          "maxX": -6.75,
+          "minZ": -0.30000000000000004,
+          "maxZ": 1.7
+        },
+        {
+          "id": "display-east-1",
+          "minX": 6.75,
+          "maxX": 8.05,
+          "minZ": -0.30000000000000004,
+          "maxZ": 1.7
+        },
+        {
+          "id": "display-west-2",
+          "minX": -8.05,
+          "maxX": -6.75,
+          "minZ": 2.3,
+          "maxZ": 4.3
+        },
+        {
+          "id": "display-east-2",
+          "minX": 6.75,
+          "maxX": 8.05,
+          "minZ": 2.3,
+          "maxZ": 4.3
+        },
+        {
+          "id": "hero-display",
+          "minX": -1.2,
+          "maxX": 1.2,
+          "minZ": -0.7000000000000001,
+          "maxZ": 0.9
+        },
+        {
+          "id": "fitting-bench-west",
+          "minX": -5.05,
+          "maxX": -1.75,
+          "minZ": 3,
+          "maxZ": 4.2
+        },
+        {
+          "id": "fitting-bench-east",
+          "minX": 1.75,
+          "maxX": 5.05,
+          "minZ": 3,
+          "maxZ": 4.2
+        },
+        {
+          "id": "checkout",
+          "minX": -6.199999999999999,
+          "maxX": -1.4,
+          "minZ": -2.35,
+          "maxZ": -1.25
+        },
+        {
+          "id": "backroom-wall-west",
+          "minX": -9,
+          "maxX": 5.199999999999999,
+          "minZ": -3.69,
+          "maxZ": -3.5100000000000002
+        },
+        {
+          "id": "backroom-wall-east",
+          "minX": 7.3999999999999995,
+          "maxX": 9,
+          "minZ": -3.69,
+          "maxZ": -3.5100000000000002
+        },
+        {
+          "id": "stock-rack",
+          "minX": -8.1,
+          "maxX": -6.7,
+          "minZ": -6.5,
+          "maxZ": -3.9000000000000004
+        },
+        {
+          "id": "packing-table",
+          "minX": -5.15,
+          "maxX": -1.65,
+          "minZ": -5.9,
+          "maxZ": -4.5
+        }
+      ]
+    },
+    {
+      "id": "factory",
+      "label": "Shoe and clothing factory",
+      "elevation": -4.2,
+      "width": 18,
+      "depth": 14,
+      "fixtures": [
+        {
+          "id": "textile-rack",
+          "type": "textiles",
+          "x": -7.3,
+          "z": -4.8,
+          "w": 1.6,
+          "d": 3,
+          "h": 2.5
+        },
+        {
+          "id": "cutting-table",
+          "type": "cutting",
+          "x": -3.5,
+          "z": -4.5,
+          "w": 3.8,
+          "d": 1.8,
+          "h": 1
+        },
+        {
+          "id": "sole-press-a",
+          "type": "press",
+          "x": 0.6,
+          "z": -5,
+          "w": 1.6,
+          "d": 1.6,
+          "h": 2.1
+        },
+        {
+          "id": "sole-press-b",
+          "type": "press",
+          "x": 3.1,
+          "z": -5,
+          "w": 1.6,
+          "d": 1.6,
+          "h": 2.1
+        },
+        {
+          "id": "sewing-bank-west",
+          "type": "sewing",
+          "x": -6.4,
+          "z": -0.6,
+          "w": 3.2,
+          "d": 1.5,
+          "h": 1.2
+        },
+        {
+          "id": "sewing-bank-east",
+          "type": "sewing",
+          "x": -1.7,
+          "z": -0.6,
+          "w": 3.2,
+          "d": 1.5,
+          "h": 1.2
+        },
+        {
+          "id": "assembly-transfer",
+          "type": "conveyor",
+          "x": 3.8,
+          "z": -0.6,
+          "w": 4.4,
+          "d": 1.35,
+          "h": 0.9
+        },
+        {
+          "id": "finishing-table",
+          "type": "finishing",
+          "x": -6.2,
+          "z": 3.5,
+          "w": 3.2,
+          "d": 1.6,
+          "h": 1
+        },
+        {
+          "id": "garment-rail",
+          "type": "garments",
+          "x": -1.8,
+          "z": 3.5,
+          "w": 2.6,
+          "d": 1.1,
+          "h": 2
+        },
+        {
+          "id": "dispatch-rack",
+          "type": "stock",
+          "x": 3.1,
+          "z": 3.6,
+          "w": 2,
+          "d": 2.5,
+          "h": 2.5
+        }
+      ],
+      "targets": [
+        {
+          "id": "showroom-stair",
+          "kind": "floor",
+          "floor": "retail",
+          "x": 6.3,
+          "z": -5.2
+        },
+        {
+          "id": "textiles",
+          "kind": "inspect",
+          "x": -5.95,
+          "z": -4.8
+        },
+        {
+          "id": "cutting",
+          "kind": "inspect",
+          "x": -3.5,
+          "z": -2.9
+        },
+        {
+          "id": "pressing",
+          "kind": "inspect",
+          "x": 1.8,
+          "z": -3.5
+        },
+        {
+          "id": "sewing",
+          "kind": "inspect",
+          "x": -1.7,
+          "z": 1
+        },
+        {
+          "id": "assembly",
+          "kind": "inspect",
+          "x": 4.3,
+          "z": 1
+        },
+        {
+          "id": "finishing",
+          "kind": "inspect",
+          "x": -6.2,
+          "z": 5.2
+        },
+        {
+          "id": "clothing",
+          "kind": "inspect",
+          "x": -1.8,
+          "z": 5
+        },
+        {
+          "id": "dispatch",
+          "kind": "inspect",
+          "x": 4.8,
+          "z": 3.6
+        }
+      ],
+      "surfaces": [
+        {
+          "minX": -9,
+          "maxX": 9,
+          "minZ": -7,
+          "maxZ": 7
+        }
+      ],
+      "blockers": [
+        {
+          "id": "textile-rack",
+          "minX": -8.1,
+          "maxX": -6.5,
+          "minZ": -6.3,
+          "maxZ": -3.3
+        },
+        {
+          "id": "cutting-table",
+          "minX": -5.4,
+          "maxX": -1.6,
+          "minZ": -5.4,
+          "maxZ": -3.6
+        },
+        {
+          "id": "sole-press-a",
+          "minX": -0.20000000000000007,
+          "maxX": 1.4,
+          "minZ": -5.8,
+          "maxZ": -4.2
+        },
+        {
+          "id": "sole-press-b",
+          "minX": 2.3,
+          "maxX": 3.9000000000000004,
+          "minZ": -5.8,
+          "maxZ": -4.2
+        },
+        {
+          "id": "sewing-bank-west",
+          "minX": -8,
+          "maxX": -4.800000000000001,
+          "minZ": -1.35,
+          "maxZ": 0.15000000000000002
+        },
+        {
+          "id": "sewing-bank-east",
+          "minX": -3.3,
+          "maxX": -0.09999999999999987,
+          "minZ": -1.35,
+          "maxZ": 0.15000000000000002
+        },
+        {
+          "id": "assembly-transfer",
+          "minX": 1.5999999999999996,
+          "maxX": 6,
+          "minZ": -1.275,
+          "maxZ": 0.07500000000000007
+        },
+        {
+          "id": "finishing-table",
+          "minX": -7.800000000000001,
+          "maxX": -4.6,
+          "minZ": 2.7,
+          "maxZ": 4.3
+        },
+        {
+          "id": "garment-rail",
+          "minX": -3.1,
+          "maxX": -0.5,
+          "minZ": 2.95,
+          "maxZ": 4.05
+        },
+        {
+          "id": "dispatch-rack",
+          "minX": 2.1,
+          "maxX": 4.1,
+          "minZ": 2.35,
+          "maxZ": 4.85
+        }
+      ]
+    }
+  ]
+}

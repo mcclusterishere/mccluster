@@ -9,10 +9,9 @@ rebuilt twice, features keep shipping the whole time.
 - Installable web app: manifest + icons + THE KEEPER (sw.js offline
   layer) on all pages. "Add to Home Screen" works on iPhone and
   Android today, full-screen, no browser chrome.
-- Native Android shell: Capacitor (`org.mccluster.here`), site
-  bundled INSIDE the app (stores reject remote-URL boxes), data live
-  from Supabase. `build-android.yml` produces an installable APK
-  from CI. No Mac, no local SDK, the repo builds the app itself.
+- Native shell: superseded by `native/STORE-READINESS.md`. The app is
+  `native/` (React Native on Expo, `org.mccluster.here`); the root
+  Capacitor wrapper and `build-android.yml` are gone (2026-10).
 
 ## The shelves, ranked by certainty
 

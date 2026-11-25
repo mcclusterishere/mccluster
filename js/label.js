@@ -16,9 +16,13 @@
    THE BEAM     the record jumps to other screens (Cast/AirPlay)
                 when the platform offers a picker.
 
-   Plus the lock screen grows up: artwork with declared sizes,
-   live position state, ±10s — the car dashboard treats this
-   catalog like a streaming service because it is one.
+   The lock screen is no longer dressed here. It used to add
+   15-second skips beside previous and next (WebKit publishes them
+   as skip buttons, and iOS is reported to draw those instead of the
+   track buttons) and re-label one cover as a JPEG at 96, 192 and
+   512 px whatever the file was. js/now-playing.js owns the lock
+   screen for every player now: previous and next, the cover at its
+   true size and type, the position (music slice M2).
    ============================================================ */
 (function () {
   "use strict";
@@ -32,15 +36,51 @@
 
   /* ---------------- small furniture: toast + bottom sheet ---------------- */
   var toastEl = null, toastT = 0;
+  /* THE LINE RISES CLEAR OF THE FOOT OF THE SCREEN (music slice M3 follow-up; verification V-2). It sat at 96 px from
+     the bottom, where the deck bar rests, and for 3.4 s it covered the song's title and time. It now sits 8 px above
+     the higher of the deck bar (where it rests, while it shows) and the tab bar (the installed app's dock), and moves
+     when either does while it shows. With neither there, it keeps its place. */
+  function toastFloor() {
+    var floor = 0, vh = window.innerHeight || document.documentElement.clientHeight;
+    var bar = document.getElementById("deckbar");
+    if (bar && bar.dataset.off !== "1") {
+      var cs = getComputedStyle(bar);
+      if (cs.display !== "none" && bar.offsetHeight) floor = Math.max(floor, (parseFloat(cs.bottom) || 0) + bar.offsetHeight);
+    }
+    var tabs = document.querySelector(".appbar");
+    if (tabs && getComputedStyle(tabs).display !== "none") {
+      var r = tabs.getBoundingClientRect();
+      if (r.height) floor = Math.max(floor, vh - r.top);
+    }
+    return floor;
+  }
+  function placeToast() {
+    if (!toastEl || !toastEl.classList.contains("on")) return;
+    var floor = toastFloor();
+    toastEl.style.bottom = floor > 0 ? Math.round(floor + 8) + "px" : "";
+  }
+  function watchFoot() {
+    window.addEventListener("resize", placeToast);
+    var bar = document.getElementById("deckbar");
+    if (bar && window.MutationObserver) new MutationObserver(placeToast).observe(bar, { attributes: true, attributeFilter: ["data-off"] });
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(placeToast);
+      if (bar) ro.observe(bar);
+      var tabs = document.querySelector(".appbar");
+      if (tabs) ro.observe(tabs);
+    }
+  }
   function toast(msg) {
     if (!toastEl) {
       toastEl = document.createElement("div");
       toastEl.className = "ltoast";
       toastEl.setAttribute("role", "status");
       document.body.appendChild(toastEl);
+      watchFoot();
     }
     toastEl.textContent = msg;
     toastEl.classList.add("on");
+    placeToast();
     clearTimeout(toastT);
     toastT = setTimeout(function () { toastEl.classList.remove("on"); }, 3400);
   }
@@ -142,6 +182,7 @@
     var files = [], seen = {};
     function add(u) { if (u && !seen[u]) { seen[u] = 1; files.push(abs(u)); } }
     [].forEach.call(document.querySelectorAll("#tracks li"), function (li) {
+      if (li.hasAttribute("data-hold")) return;   // the held song is nobody's to keep offline (owner, 2026-11-23)
       add(li.getAttribute("data-src"));
       add(li.getAttribute("data-art"));
       add(li.getAttribute("data-lyrics"));
@@ -152,11 +193,28 @@
     return files;
   }
 
+  /* THE SAME AUDIO UNDER TWO NAMES (music slice M3 follow-up; review RL-10): the album asks for Dealer Plates
+     (B-Side) by its true name, .m4a, since music slice M3; a listener who kept Whip Equipped before that holds the
+     same audio under its old name, and sw.js answers either name from a copy kept under the other. So a copy kept
+     under either counts as kept, and nothing is downloaded again. The table is the worker's own. */
+  var SAME_AUDIO = [["/assets/audio/dealer-plates-b.m4a", "/assets/audio/dealer-plates-b.mp3"]];
+  function keptCopy(c, u) {
+    return c.match(u).then(function (hit) {
+      if (hit) return hit;
+      var path = new URL(u).pathname;
+      for (var i = 0; i < SAME_AUDIO.length; i++) {
+        var k = SAME_AUDIO[i].indexOf(path);
+        if (k >= 0) return c.match(new URL(SAME_AUDIO[i][1 - k], u).href);
+      }
+      return hit;
+    });
+  }
+
   function vaultState() {
     var files = manifestOfRows();
     if (!files.length) return Promise.resolve(null);
     return caches.open(VAULT).then(function (c) {
-      return Promise.all(files.map(function (u) { return c.match(u); }))
+      return Promise.all(files.map(function (u) { return keptCopy(c, u); }))
         .then(function (hits) {
           var kept = hits.filter(Boolean).length;
           return { files: files, kept: kept, total: files.length };
@@ -208,7 +266,7 @@
           function one(i) {
             if (i >= st.files.length) return Promise.resolve();
             var u = st.files[i];
-            return c.match(u).then(function (hit) {
+            return keptCopy(c, u).then(function (hit) {
               if (hit) { done++; return; }
               return fetch(u).then(function (res) {
                 if (!res.ok) throw new Error(res.status);
@@ -297,7 +355,9 @@
       var pg = on && on.querySelector("a[data-tpg]");
       var url = pg ? pg.href : (location.origin + location.pathname +
         (ALBUM !== "here" ? "?album=" + ALBUM : ""));
-      var payload = { title: title + " — Matthew McCluster", text: "Hear it on McCluster Sound.", url: url };
+      /* credited to the album's billed artist: McCluster for his own records (owner, 2026-11-23) */
+      var by = ((document.getElementById("albArtist") || {}).textContent || "").trim() || "McCluster";
+      var payload = { title: title + " — " + by, text: "Hear it on McCluster Sound.", url: url };
       track("track_share", { track: title });
       /* Some in-app browsers expose navigator.share and then refuse it; that
          rejection was swallowed and the button did nothing. A cancel
@@ -319,68 +379,21 @@
   }
 
   /* ================= THE BEAM ================= */
+  /* AirPlay where WebKit offers it, the same picker every music surface has, shown while
+     WebKit says a device is in range (js/now-playing.js; decision D-8). Elsewhere, the
+     browser's own cast picker where it has one (Remote Playback), as before. */
   var beamBtn = document.getElementById("nowBeam");
   if (beamBtn) {
-    if (deck.remote && deck.remote.prompt) {
+    var webkitBeam = !!(window.MCC_NOW_PLAYING && window.MCC_NOW_PLAYING.airplay && window.MCC_NOW_PLAYING.airplay(beamBtn, deck));
+    if (webkitBeam) {
+      beamBtn.addEventListener("click", function () { track("beam_open", { album: ALBUM }); });
+    } else if (deck.remote && deck.remote.prompt) {
       beamBtn.hidden = false;
       beamBtn.addEventListener("click", function () {
         track("beam_open", { album: ALBUM });
         deck.remote.prompt().catch(function () { toast("No other screens in range."); });
       });
-    } else if (window.WebKitPlaybackTargetAvailabilityEvent) {
-      beamBtn.hidden = false;
-      beamBtn.addEventListener("click", function () {
-        track("beam_open", { album: ALBUM });
-        try { deck.webkitShowPlaybackTargetPicker(); } catch (e) {}
-      });
     }
-  }
-
-  /* ============ THE LOCK SCREEN GROWS UP ============ */
-  if ("mediaSession" in navigator) {
-    try {
-      navigator.mediaSession.setActionHandler("seekbackward", function (d) {
-        deck.currentTime = Math.max(0, deck.currentTime - (d.seekOffset || 10));
-      });
-      navigator.mediaSession.setActionHandler("seekforward", function (d) {
-        deck.currentTime = Math.min(deck.duration || 1e9, deck.currentTime + (d.seekOffset || 10));
-      });
-    } catch (e) {}
-
-    /* artwork with declared sizes: dashboards and watches pick well */
-    deck.addEventListener("play", function () {
-      setTimeout(function () {
-        var md = navigator.mediaSession.metadata;
-        if (!md || !md.artwork || !md.artwork.length) return;
-        var src = md.artwork[0].src;
-        if (md.artwork[0].sizes) return; // already dressed
-        try {
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: md.title, artist: md.artist, album: md.album,
-            artwork: ["96x96", "192x192", "512x512"].map(function (s) {
-              return { src: src, sizes: s, type: "image/jpeg" };
-            }),
-          });
-        } catch (e) {}
-      }, 60);
-    });
-
-    /* live position: the scrubber on the lock screen tells the truth */
-    var lastPos = 0;
-    deck.addEventListener("timeupdate", function () {
-      if (!navigator.mediaSession.setPositionState) return;
-      var now = Date.now();
-      if (now - lastPos < 1000) return;
-      lastPos = now;
-      if (!isFinite(deck.duration) || !deck.duration) return;
-      try {
-        navigator.mediaSession.setPositionState({
-          duration: deck.duration,
-          playbackRate: deck.playbackRate || 1,
-          position: Math.min(deck.currentTime, deck.duration),
-        });
-      } catch (e) {}
-    });
   }
 
   /* ============ THE MARQUEE: the tab itself plays the record ============ */
@@ -433,7 +446,9 @@
       try { deck.volume = Math.max(0, left / 10000); } catch (e) {}
       if (left <= 0) {
         clearInterval(napTick);
-        deck.pause();
+        /* the page's own Pause: it also stops a song that is being picked up again after a dropped read, which a
+           plain deck.pause() on the already quiet deck did not (music slice M3, review PB-R2) */
+        if (window.MCC_NP_PAUSE) window.MCC_NP_PAUSE(); else deck.pause();
         try { deck.volume = 1; } catch (e) {}
         napAt = 0; napPaint(0);
         toast("The record tucked you in. Goodnight.");

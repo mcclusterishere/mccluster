@@ -1,0 +1,296 @@
+From 800128d9729c01aa597dd5c70689a0e3e55ee03b Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 10 Nov 2026 00:26:37 +0000
+Subject: [PATCH 2/3] test(privacy): restored pages, other tabs and handoff
+ waits in a real browser
+
+Adds 39 checks to the privacy section of
+scripts/e2e/music-world-continuity.e2e.mjs for audit findings A3 and A4.
+
+- Handoff: never answered (ten seconds, then both answers), the member's
+  own record answering in place, a member with no record, a page that
+  reloads signed in, and a refused handoff. A watcher installed before
+  any script of the page keeps the first moment the page was open to a
+  visitor who had not agreed. There must be none.
+- Restore: Go back then the browser's Forward, and the policy link, Agree,
+  then the browser's Back, against a real back/forward cache. Playwright's
+  headless shell has no such cache and Playwright switches it off besides,
+  so these run in a second browser, the full Chromium, started only when
+  they are reached.
+- Go back with nothing behind the entry, and a step back that stays in
+  the same document.
+- Agreement given in another tab of the same site (the storage event) and
+  on another McCluster host (the shared cookie, read when the browser
+  gives the tab focus again).
+
+Against the gate as it was before the previous commit, 19 of these checks
+fail and the suite stops at the first: "handoff wait: the page is behind
+the wall from its first paint".
+
+Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01RNT2Nvh5aJGtEzBMdqUF4T
+---
+ scripts/e2e/music-world-continuity.e2e.mjs | 231 ++++++++++++++++++++-
+ 1 file changed, 228 insertions(+), 3 deletions(-)
+
+diff --git a/scripts/e2e/music-world-continuity.e2e.mjs b/scripts/e2e/music-world-continuity.e2e.mjs
+index d5c931d0..dedfb437 100644
+--- a/scripts/e2e/music-world-continuity.e2e.mjs
++++ b/scripts/e2e/music-world-continuity.e2e.mjs
+@@ -12,8 +12,36 @@ const ROOT=fileURLToPath(new URL('../../',import.meta.url));
+ const OUT=process.argv[2]||'/tmp/music-world-continuity-proof';
+ const {chromium}=createRequire(join(process.env.PLAYWRIGHT_DIR||'/opt/node-tools/node_modules','x'))('playwright');
+ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox','--autoplay-policy=document-user-activation-required']});
++/* THE BACK/FORWARD CACHE NEEDS THE FULL BROWSER. Playwright's default headless shell has none, and Playwright switches
++   the cache off besides (--disable-back-forward-cache). The restore scenarios at the end run in a second browser, the
++   full Chromium in its own headless mode with the cache left on, started only when they are reached. A restored
++   document fires pageshow and no load event, so those scenarios wait on 'commit'. */
++const FULL=process.env.CHROMIUM_EXECUTABLE||process.env.CHROMIUM_PATH||undefined;
++let keeper=null;
+ const HOUSE='https://matthew.mccluster.org',WORLD='https://mccluster.org';
+ const USER='11111111-1111-4111-8111-111111111111';
++/* WATCH runs in every document before any script of the page. It keeps the first moment at which the page was NOT
++   behind the wall while the visitor had NOT agreed (fx_exposed; the Privacy Policy is readable before any answer, so it
++   is not counted), at which the question could be answered (fx_asked) and at which a session was stored (fx_signed), in
++   sessionStorage so a reload does not forget what the first document showed; and each pageshow, with whether the
++   browser restored the document, and each window focus it was given. */
++const WATCH=()=>{
++  const mark=k=>{try{if(!sessionStorage.getItem(k))sessionStorage.setItem(k,String(Date.now()));}catch(e){}};
++  const look=()=>{
++    if(!window.MCC_PRIVACY||!document.body)return;
++    let agreed=false;try{agreed=!!MCC_PRIVACY.accepted();}catch(e){}
++    if(!agreed&&!/\/privacy\.html$/.test(location.pathname)&&document.documentElement.getAttribute('data-privacy-gate')!=='pending')mark('fx_exposed');
++    const agree=document.getElementById('mccPrivacyAgree');
++    if(agree&&agree.getClientRects().length)mark('fx_asked');
++    try{if(localStorage.getItem('mccdb_session'))mark('fx_signed');}catch(e){}
++  };
++  /* observed from the document node: this runs before the page has a root element */
++  new MutationObserver(look).observe(document,{subtree:true,attributes:true,attributeFilter:['data-privacy-gate']});
++  (function tick(){look();requestAnimationFrame(tick);})();
++  window.__shows=[];window.__focuses=0;
++  addEventListener('pageshow',e=>window.__shows.push(e.persisted));
++  addEventListener('focus',()=>window.__focuses++);
++};
+ const MIME={'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.html':'text/html','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2'};
+ const result=[];
+ await mkdir(OUT,{recursive:true});
+@@ -27,9 +55,10 @@ function wav(seconds=24){
+ const AUDIO=wav();
+ const IMAGE=Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64');
+ function token(origin){return 'x.'+Buffer.from(JSON.stringify({sub:USER,exp:Math.floor(Date.now()/1000)+3600,email:'audio-fixture@invalid.test',origin})).toString('base64url')+'.y';}
+-async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html'}={}){
+-  const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
++async function setup(width=390,member=false,{parentScript,privacy=true,start='/listen.html',from=browser,watch=false}={}){
++  const context=await from.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
+   const requests=[],messages=[],errors=[];
++  if(watch)await context.addInitScript(WATCH);
+   await context.addInitScript(({HOUSE,member,token,privacy})=>{
+     if(privacy)localStorage.setItem('mcc_privacy_ack',JSON.stringify({version:'2026-10-19',accepted_at:new Date().toISOString()}));
+     if(member&&location.origin===HOUSE&&!localStorage.getItem('mccdb_session'))localStorage.setItem('mccdb_session',JSON.stringify({access_token:token,refresh_token:'fixture-house-refresh',expires_at:Math.floor(Date.now()/1000)+3600}));
+@@ -437,6 +466,202 @@ try{
+     check('privacy: no privacy console errors',privacyErrors(errors).length===0,errors);
+     await context.close();
+   }
++  /* A3 and A4 (deep audit, 2026-11-09). What each scenario may look at: */
++  const seen=p=>p.evaluate(()=>({exposed:sessionStorage.getItem('fx_exposed'),asked:sessionStorage.getItem('fx_asked'),signed:sessionStorage.getItem('fx_signed')}));
++  /* the page under the wall can be neither seen nor touched: every other child of the body is hidden, and the wall is what a tap lands on */
++  const under=p=>p.evaluate(()=>document.documentElement.getAttribute('data-privacy-gate')==='pending'&&[...document.body.children].filter(n=>n.id!=='mccPrivacyGate').every(n=>getComputedStyle(n).visibility==='hidden')&&!!document.elementFromPoint(innerWidth/2,innerHeight/2)?.closest('#mccPrivacyGate'));
++  /* the question is on the screen and BOTH answers can be pressed */
++  const asking=p=>p.evaluate(()=>['mccPrivacyAgree','mccPrivacyBack'].every(id=>{const n=document.getElementById(id);return !!n&&!n.disabled&&n.getClientRects().length>0;}));
++  const state=p=>p.evaluate(()=>({agree:document.getElementById('mccPrivacyAgree')?.disabled,back:document.getElementById('mccPrivacyBack')?.disabled,focus:document.activeElement?.id||document.activeElement?.tagName,gate:document.documentElement.getAttribute('data-privacy-gate'),accepted:window.MCC_PRIVACY?MCC_PRIVACY.accepted():null,url:location.href,entries:history.length,shows:window.__shows,nav:(performance.getEntriesByType('navigation')[0]||{}).type}));
++  const reply=(r,body,status=200)=>r.fulfill({status,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(body)});
++  /* the session Supabase hands a member whose OWN account record already agrees to this version of the notice */
++  const agreedMember=r=>reply(r,{access_token:'x.'+Buffer.from(JSON.stringify({sub:USER,exp:Math.floor(Date.now()/1000)+3600,email:'audio-fixture@invalid.test',user_metadata:{privacy_policy_version:'2026-10-19',privacy_acknowledged_at:'2026-10-19T12:00:00Z'}})).toString('base64url')+'.y',refresh_token:'fixture-world-refresh',expires_at:Math.floor(Date.now()/1000)+3600,user:{id:USER,email:'audio-fixture@invalid.test'}});
++  const carried=path=>WORLD+path+'#mcc_handoff='+encodeURIComponent(token(HOUSE));
++
++  /* A4: A SIGN-IN STILL BEING CARRIED IN WAITS BEHIND THE WALL. Before, the whole page stood open to a visitor who had
++     not agreed for as long as the handoff took, ten seconds when nobody answered, on a fragment anyone can write. */
++  {
++    /* nobody answers: the API never replies */
++    const {context,page,errors}=await setup(390,false,{privacy:false,start:'/privacy.html',watch:true});
++    const unanswered=[];
++    await context.route('https://api.mccluster.org/v1/auth/handoff',r=>{unanswered.push(r.request().method());});
++    const started=Date.now();
++    await page.goto(carried('/mnet.html?view=feed'),{waitUntil:'domcontentloaded'});
++    const held=await notice(page);
++    check('handoff wait: the page is behind the wall from its first paint',held.wall&&held.pending==='pending'&&await under(page),held);
++    check('handoff wait: one line says what is waited for, and no answer is offered yet',await page.locator('#mccPrivacyGateWait').isVisible()&&!await page.locator('#mccPrivacyAgree').isVisible()&&!await page.locator('#mccPrivacyBack').isVisible()&&!await page.locator('#mccPrivacyGateBody').isVisible()&&await page.evaluate(()=>document.activeElement?.id==='mccPrivacyGateTitle'&&document.getElementById('mccPrivacyGate').getAttribute('aria-describedby')==='mccPrivacyGateWait'),await state(page));
++    check('handoff wait: the wait fits a phone',await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth));
++    check('handoff wait: waiting is not agreeing, and analytics record nothing',await page.evaluate(()=>!MCC_PRIVACY.accepted()&&window.MCC_TRACK('privacy_fixture')===false&&!localStorage.getItem('mcc_privacy_ack'))&&!(await context.cookies(WORLD)).some(c=>c.name==='mcc_privacy_ack'));
++    check('handoff wait: the sign-in really is still on its way',unanswered.includes('POST')&&await page.evaluate(()=>!localStorage.getItem('mccdb_session')),unanswered);
++    await page.screenshot({path:join(OUT,'privacy-handoff-wait-390.png')});
++    await page.locator('#mccPrivacyAgree').waitFor({state:'visible',timeout:15000});
++    const waited=Date.now()-started;
++    check('handoff timeout: the question comes when the ten seconds are up, not before',waited>=10000,waited);
++    check('handoff timeout: it ends in both answers, working, with the page still behind the wall',await asking(page)&&await under(page)&&await page.evaluate(()=>document.activeElement?.id==='mccPrivacyAgree'&&!MCC_PRIVACY.accepted()),await state(page));
++    check('handoff timeout: the page was never open to a visitor who had not agreed',(await seen(page)).exposed===null&&!!(await seen(page)).asked,await seen(page));
++    await page.screenshot({path:join(OUT,'privacy-handoff-timeout-390.png')});
++    await Promise.all([page.waitForNavigation({waitUntil:'load'}),page.locator('#mccPrivacyAgree').click()]);
++    check('handoff timeout: agreeing then enters',none(await notice(page))&&await page.evaluate(()=>MCC_PRIVACY.accepted()));
++    check('handoff timeout: no privacy console errors',privacyErrors(errors).length===0,errors);
++    await context.close();
++  }
++  {
++    /* the World takes the session where it stands, and the member's own record answers */
++    const {context,page,errors}=await setup(390,false,{privacy:false,start:'/privacy.html',watch:true});
++    await context.route('**/auth/v1/verify',agreedMember);
++    await page.goto(carried('/mnet.html?view=feed'),{waitUntil:'domcontentloaded'});
++    await page.waitForFunction(()=>!!localStorage.getItem('mccdb_session')&&!document.documentElement.hasAttribute('data-privacy-gate'),null,{timeout:15000}).catch(()=>{});
++    const saw=await seen(page);
++    check("handoff: the arriving member's own record enters, and the question is never asked",none(await notice(page))&&saw.asked===null&&!!saw.signed&&await page.evaluate(()=>MCC_PRIVACY.accepted()),{saw,notice:await notice(page)});
++    check('handoff: the page was never open before the agreement was known',saw.exposed===null,saw);
++    check('handoff: entered in place, signed in, with no reload',await page.evaluate(()=>(performance.getEntriesByType('navigation')[0]||{}).type!=='reload'&&JSON.parse(localStorage.getItem('mccdb_session')).refresh_token==='fixture-world-refresh'&&!document.documentElement.classList.contains('mn-guest')));
++    check('handoff: with the wall down the page can be seen and touched',await page.evaluate(()=>!document.getElementById('mccPrivacyGateStyle')&&[...document.body.children].some(n=>n.offsetHeight>0&&getComputedStyle(n).visibility==='visible')));
++    check('handoff: the answer is kept for the next page',await page.evaluate(()=>JSON.parse(localStorage.getItem('mcc_privacy_ack')).accepted_at==='2026-10-19T12:00:00Z')&&(await context.cookies(WORLD)).some(c=>c.name==='mcc_privacy_ack'&&c.value==='2026-10-19'));
++    check('handoff: no privacy console errors',privacyErrors(errors).length===0,errors);
++    await context.close();
++  }
++  {
++    /* the same arrival with no record of this version: signed in, and asked as the sign-in lands */
++    const {context,page,requests}=await setup(390,false,{privacy:false,start:'/privacy.html',watch:true});
++    await page.goto(carried('/mnet.html?view=feed'),{waitUntil:'domcontentloaded'});
++    await page.locator('#mccPrivacyAgree').waitFor({state:'visible',timeout:15000});
++    const saw=await seen(page);
++    check('handoff: a member with no record is asked as the sign-in lands, not four seconds later',!!saw.signed&&Number(saw.asked)-Number(saw.signed)<2500&&await asking(page)&&await under(page),saw);
++    check('handoff: signed in is not agreed, and the page was never open',saw.exposed===null&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&!!localStorage.getItem('mccdb_session')),saw);
++    await Promise.all([page.waitForNavigation({waitUntil:'load'}),page.locator('#mccPrivacyAgree').click()]);
++    const wrote=requests.filter(r=>r.method==='PUT'&&new URL(r.url).pathname==='/auth/v1/user');
++    check("handoff: agreeing writes the member's own record with this host's session, then enters",wrote.length===1&&/^Bearer x\./.test(wrote[0].authorization||'')&&none(await notice(page))&&await page.evaluate(()=>MCC_PRIVACY.accepted()&&!!localStorage.getItem('mccdb_session')),wrote);
++    await context.close();
++  }
++  {
++    /* every other page reloads signed in: it stays behind the wall, unasked, until it does */
++    const {context,page}=await setup(390,false,{privacy:false,start:'/privacy.html',watch:true});
++    await context.route('**/auth/v1/verify',agreedMember);
++    await page.goto(carried('/account.html'),{waitUntil:'domcontentloaded'});
++    await page.waitForFunction(()=>(performance.getEntriesByType('navigation')[0]||{}).type==='reload'&&document.readyState==='complete'&&!!window.MCC_PRIVACY,null,{timeout:15000}).catch(()=>{});
++    const saw=await seen(page);
++    check('handoff: a page that reloads signed in stays behind the wall until it does, then enters on the record',none(await notice(page))&&saw.exposed===null&&saw.asked===null&&!!saw.signed&&await page.evaluate(()=>MCC_PRIVACY.accepted()&&(performance.getEntriesByType('navigation')[0]||{}).type==='reload'),{saw,state:await state(page)});
++    await context.close();
++  }
++  {
++    /* refused: a fragment that carries no sign-in at all */
++    const {context,page}=await setup(390,false,{privacy:false,start:'/privacy.html',watch:true});
++    await context.route('https://api.mccluster.org/v1/auth/handoff',r=>reply(r,{error:'forbidden'},403));
++    await page.goto(HOUSE+'/press.html#mcc_handoff=not-a-sign-in',{waitUntil:'load'});
++    await page.locator('#mccPrivacyAgree').waitFor({state:'visible',timeout:8000});
++    const saw=await seen(page);
++    check('handoff refused: the question, both answers working, and the page never open',await asking(page)&&await under(page)&&saw.exposed===null&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&!localStorage.getItem('mccdb_session')),saw);
++    const returned=page.waitForURL('**/privacy.html',{timeout:10000});
++    await page.locator('#mccPrivacyBack').click();
++    await returned;
++    check('handoff refused: Go back leaves, and nothing was agreed',!(await context.cookies(HOUSE)).some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>!MCC_PRIVACY.accepted()));
++    await context.close();
++  }
++
++  /* A3: GO BACK IS A TRANSITION, NOT AN END STATE. Before, Go back switched both answers off for good; a document the
++     browser kept and showed again, or never left, was a wall with nothing to press. */
++  keeper=await chromium.launch({...(FULL?{executablePath:FULL}:{channel:'chromium'}),ignoreDefaultArgs:['--disable-back-forward-cache'],args:['--no-sandbox']});
++  const kept=p=>p.waitForFunction(()=>window.__kept==='this very document'&&window.__shows.includes(true),null,{timeout:10000}).then(()=>true,()=>false);
++  {
++    /* Go back, then the browser's Forward: the back/forward cache shows the very document that was left */
++    const {context,page,errors}=await setup(390,false,{privacy:false,start:'/privacy.html',watch:true,from:keeper});
++    await page.goto(HOUSE+'/press.html',{waitUntil:'load'});
++    await page.evaluate(()=>{window.__kept='this very document';});
++    await page.locator('#mccPrivacyBack').click();
++    await page.waitForURL('**/privacy.html',{waitUntil:'commit',timeout:10000});
++    await page.goForward({waitUntil:'commit'});
++    check("restore: Go back, then the browser's Forward, shows the very document again from the back/forward cache",await kept(page),await page.evaluate(()=>({kept:window.__kept||null,shows:window.__shows,nav:(performance.getEntriesByType('navigation')[0]||{}).type})));
++    check('restore: it is still behind the wall, and both answers work',await under(page)&&await asking(page)&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&!localStorage.getItem('mcc_privacy_ack')),await state(page));
++    check('restore: focus is on the answer that was used, not moved onto Agree',await page.evaluate(()=>document.activeElement?.id==='mccPrivacyBack'),await state(page));
++    await page.screenshot({path:join(OUT,'privacy-restored-390.png')});
++    await page.locator('#mccPrivacyBack').click();
++    await page.waitForURL('**/privacy.html',{waitUntil:'commit',timeout:10000});
++    check('restore: Go back leaves a second time, and still records nothing',!(await context.cookies(HOUSE)).some(c=>c.name==='mcc_privacy_ack')&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&!localStorage.getItem('mcc_privacy_seen')));
++    await page.goForward({waitUntil:'commit'});
++    await page.waitForFunction(()=>window.__shows.filter(Boolean).length===2,null,{timeout:10000}).catch(()=>{});
++    await Promise.all([page.waitForNavigation({waitUntil:'load'}),page.locator('#mccPrivacyAgree').click()]);
++    check('restore: agreeing on the restored page enters',none(await notice(page))&&await page.evaluate(()=>MCC_PRIVACY.accepted()));
++    check('restore: no privacy console errors',privacyErrors(errors).length===0,errors);
++    await context.close();
++  }
++  {
++    /* the policy link, Agree there, then the browser's Back: the entry page is shown again with its wall still up */
++    const {context,page}=await setup(390,false,{privacy:false,start:'/press.html',watch:true,from:keeper});
++    await page.evaluate(()=>{window.__kept='this very document';});
++    await Promise.all([page.waitForURL('**/privacy.html',{waitUntil:'load',timeout:10000}),page.locator('#mccPrivacyGate .mccpg__review').click()]);
++    await page.locator('#mccPrivacyAnswerAgree').click();
++    await page.goBack({waitUntil:'commit'});
++    check("restore: the policy link, Agree there, then the browser's Back shows the entry page again from the back/forward cache",await kept(page),await page.evaluate(()=>({kept:window.__kept||null,shows:window.__shows})));
++    await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-privacy-gate'),null,{timeout:5000}).catch(()=>{});
++    check('restore: the agreement given on the policy page takes the wall down where it stands',none(await notice(page))&&await page.evaluate(()=>MCC_PRIVACY.accepted()&&(performance.getEntriesByType('navigation')[0]||{}).type==='navigate'&&[...document.body.children].some(n=>n.offsetHeight>0&&getComputedStyle(n).visibility==='visible')),await state(page));
++    await context.close();
++  }
++  {
++    /* a history with nothing behind this entry: the page was opened in a tab of its own (a Playwright page is born with
++       a blank entry behind it, a tab opened onto a link is not), the visitor read the policy and came BACK to it, so the
++       tab has two entries and Go back has nowhere to go */
++    const {context,page:opener}=await setup(390,false,{privacy:false,start:'/privacy.html',watch:true});
++    const [page]=await Promise.all([context.waitForEvent('page'),opener.evaluate(u=>{window.open(u,'_blank','noopener,noreferrer');},HOUSE+'/press.html')]);
++    await page.waitForLoadState('load');
++    await Promise.all([page.waitForURL('**/privacy.html',{waitUntil:'load',timeout:10000}),page.locator('#mccPrivacyGate .mccpg__review').click()]);
++    await page.goBack({waitUntil:'load'});
++    await page.locator('#mccPrivacyBack').click();
++    const during=await state(page);
++    check('no way back: while the browser is given its moment, neither answer can be pressed',during.entries===2&&during.agree===true&&during.back===true&&new URL(during.url).pathname==='/press.html'&&await under(page),during);
++    await page.waitForFunction(()=>document.getElementById('mccPrivacyBack')?.disabled===false,null,{timeout:6000}).catch(()=>{});
++    const after=await state(page);
++    check('no way back: still here, so both answers work again and nobody was let through',await asking(page)&&await under(page)&&!after.accepted&&new URL(after.url).pathname==='/press.html'&&after.focus==='mccPrivacyBack'&&(await seen(page)).exposed===null,after);
++    await page.locator('#mccPrivacyBack').click();
++    await page.waitForURL('about:blank',{timeout:10000}).catch(()=>{});
++    check('no way back: the next Go back leaves by the other way out, to a blank page',page.url()==='about:blank',page.url());
++    await context.close();
++  }
++  {
++    /* a step back that stays in this document (the page had put an entry of its own in the history) */
++    const {context,page}=await setup(390,false,{privacy:false,start:'/privacy.html',watch:true});
++    await page.goto(HOUSE+'/press.html',{waitUntil:'load'});
++    await page.evaluate(()=>history.pushState(null,'',location.pathname+'#deeper'));
++    await page.locator('#mccPrivacyBack').click();
++    const soon=await page.waitForFunction(()=>document.getElementById('mccPrivacyBack')?.disabled===false&&location.hash==='',null,{timeout:1000}).then(()=>true,()=>false);
++    check('same document: a step back that stays here gives both answers back at once, behind the same wall',soon&&await asking(page)&&await under(page)&&await page.evaluate(()=>!MCC_PRIVACY.accepted()&&document.activeElement?.id==='mccPrivacyBack'),await state(page));
++    const returned=page.waitForURL('**/privacy.html',{timeout:10000});
++    await page.locator('#mccPrivacyBack').click();
++    await returned;
++    check('same document: the next Go back leaves by history, to the page before',new URL(page.url()).pathname==='/privacy.html'&&await page.evaluate(()=>!MCC_PRIVACY.accepted()));
++    await context.close();
++  }
++  {
++    /* another tab of the same site agrees: this tab hears it and its wall comes down, without being touched */
++    const {context,page}=await setup(390,false,{privacy:false,start:'/press.html',watch:true});
++    const other=await context.newPage();
++    await other.goto(HOUSE+'/privacy.html',{waitUntil:'load'});
++    check('another tab: until someone agrees, this tab is still behind its wall',await under(page)&&await asking(page));
++    await other.locator('#mccPrivacyAnswerAgree').click();
++    await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-privacy-gate'),null,{timeout:5000}).catch(()=>{});
++    check('another tab: agreeing on the policy in another tab of this site takes this wall down where it stands',none(await notice(page))&&(await seen(page)).exposed===null&&await page.evaluate(()=>MCC_PRIVACY.accepted()&&(performance.getEntriesByType('navigation')[0]||{}).type==='navigate'),await state(page));
++    await context.close();
++  }
++  {
++    /* another McCluster host agrees in another tab: the shared cookie is read when this tab is looked at again. Playwright
++       tells every page it is focused; with that switched off for this tab, the browser's own focus event arrives. */
++    const {context,page}=await setup(390,false,{privacy:false,start:'/privacy.html',watch:true,from:keeper});
++    await page.goto(WORLD+'/mnet.html?view=feed',{waitUntil:'load'});
++    await (await context.newCDPSession(page)).send('Emulation.setFocusEmulationEnabled',{enabled:false});
++    const other=await context.newPage();
++    await other.bringToFront();
++    await other.goto(HOUSE+'/privacy.html',{waitUntil:'load'});
++    await other.locator('#mccPrivacyAnswerAgree').click();
++    await page.waitForTimeout(400);
++    check('another host: a tab nobody is looking at keeps its wall',(await notice(page)).wall&&await under(page)&&(await context.cookies(WORLD)).some(c=>c.name==='mcc_privacy_ack'),await state(page));
++    const before=await page.evaluate(()=>window.__focuses);
++    await page.bringToFront();
++    /* which signal reached the page is said in the check's own name, whatever the wall then did with it */
++    const given=await page.waitForFunction(n=>window.__focuses>n,before,{timeout:3000}).then(()=>true,()=>false);
++    if(!given)await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
++    await page.waitForFunction(()=>!document.documentElement.hasAttribute('data-privacy-gate'),null,{timeout:3000}).catch(()=>{});
++    check(`another host: coming back to the tab takes the wall down where it stands (${given?'the browser gave the tab focus':'this browser gave the tab no focus event, so the test dispatched one'})`,none(await notice(page))&&await page.evaluate(()=>MCC_PRIVACY.accepted()&&(performance.getEntriesByType('navigation')[0]||{}).type==='navigate'),await state(page));
++    await context.close();
++  }
+ }finally{
+-  await writeFile(join(OUT,'results.json'),JSON.stringify(result,null,2));await browser.close();
++  await writeFile(join(OUT,'results.json'),JSON.stringify(result,null,2));await browser.close();if(keeper)await keeper.close();
+ }
+-- 
+2.43.0
+

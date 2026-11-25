@@ -1,3 +1,5 @@
+> Superseded 2026-10 by `docs/control-plane/CANONICAL-ARCHITECTURE.md`: `apps/api` is an archive; the one API is Worker `mccluster`.
+
 # MIGRATION PLAN: the master report
 
 The one report the infrastructure brief demands, item by item.
@@ -49,6 +51,8 @@ a direct adapter replaces the bridge without touching order code.
 
 ## 7 · Native packaging path
 
+**Superseded by `native/STORE-READINESS.md` (2026-10): the app is the Expo
+project in `native/`; the root Capacitor wrapper was removed.** Historical:
 **Capacitor**: the Android shell already exists in-repo
 (`build-android.yml` bundles the site into `www/`; store-compliant).
 Add the iOS project on a Mac/CI Mac runner, wire Sign in with Apple,

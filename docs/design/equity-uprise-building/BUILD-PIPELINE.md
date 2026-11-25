@@ -40,6 +40,15 @@ Create/maintain a floor inventory covering:
 
 Each intentional object should have a stable ID, zone, quantity, dimensions/placement rule, material/style, function, and authority status.
 
+## 3A. Interior furnishing layer (v3)
+
+Furniture is data, not per-floor box code:
+- types and real dimensions: `production/interiors/furniture-catalog-v3.json` (+ recipes in `eu_furniture_kit.py`);
+- placements: `production/<floor>/…-interior-layout-v3.json` (stable ids; `realizes_inventory_id` for inventory furniture; occupant/source for named stations);
+- every floor must read as its own program (different zones, types, density); the consistency audit fails on copy-pasted zones.
+
+Brand marks are never modeled: identity positions are brand slots (`production/brand/brand-manifest.json`), filled at runtime from owner-supplied artwork.
+
 ## 4. Real floor 3D
 
 Build actual volumetric architecture:
@@ -67,6 +76,14 @@ Check:
 - room/program coverage;
 - route/public-private boundaries;
 - deterministic output.
+
+Run the model-consistency audit after building the floors:
+
+```bash
+python docs/design/equity-uprise-building/production/interiors/audit_interior_consistency.py
+```
+
+It checks furniture/wall/equipment intersections, keep-clear zones, door openings, the 36 in route and 24 in reach, Floor 1 exit doors against the egress plan, brand slots, copy-paste between floors and phone budgets on the real GLBs.
 
 ## 6. Visual QA
 

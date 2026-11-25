@@ -54,7 +54,7 @@ test('errors say whose they are: injected, opaque, third-party or the site’s o
   assert.equal(C.errorOrigin('https://cdn.example.net/lib.js', 'boom'), 'third_party');
   assert.equal(C.errorOrigin('https://matthew.mccluster.org/js/filament.js', 'boom'), 'site');
   const src = await read('js/analytics.js');
-  assert.match(src, /T\("js_error", \{[^}]*origin: errorOrigin\(e\.filename, e\.message\),[^}]*iab: IAB,[^}]*stack: stackTop\(e\.error\)/s);
+  assert.match(src, /T\("js_error", \{[^}]*origin: errorOrigin\(e\.filename, e\.message, e\.error && e\.error\.stack\),[^}]*iab: IAB,[^}]*stack: stackTop\(e\.error\)/s);
   assert.match(src, /T\("js_rejection", \{[^}]*origin:[^}]*iab: IAB/s);
   const sdk = await read('js/mc-analytics.js');
   assert.match(sdk, /js_error[\s\S]{0,200}msg/, 'the tenant SDK sends the message too');
@@ -73,8 +73,11 @@ test('requests that could only fail are gone', async () => {
   assert.doesNotMatch(worker, /rpc\/ai_harness_status/);
   const router = await read('workers/mccluster/src/analytics/router.js');
   assert.doesNotMatch(router, /sbCountFiltered\(env, 'events', /, 'business counts read the lean copy');
+  /* the waveform no longer decodes the song at all (music slice M1), so it has no
+     decode promise to drop: it reads the measured peaks, and a missing file leaves the classic line */
   const filament = await read('js/filament.js');
-  assert.match(filament, /var p = actx\.decodeAudioData\(buf, res, rej\);\s*if \(p && typeof p\.catch === "function"\) p\.catch\(rej\);/);
+  assert.doesNotMatch(filament, /decodeAudioData\(|new \(?window\.(?:webkit)?AudioContext/);
+  assert.match(filament, /else \{ peaks = null; seek\.classList\.remove\("wave-on"\); \}/);
   const tools = await read('js/control-room/work-tools.js');
   assert.match(tools, /PGRST205/, 'outreach says it is staged when its desk tables are absent');
 });
@@ -84,8 +87,16 @@ test('the album says what happened: failed plays, gated previews, no dead tip do
   assert.match(album, /function playFailed\(err, row\)[\s\S]{0,200}if \(name === "AbortError"\) return;/);
   assert.match(album, /window\.MCC_TRACK\("play_failed"/);
   assert.match(album, /function primeDeck\(\)/);
-  assert.match(album, /if \(wasPreview\) \{ previewNotice\(rows\[cur\], true\); return; \}/, 'a preview ending waits instead of jumping to another song');
-  assert.match(album, /artistLink\.href = "matthew-mccluster\.html"/, 'the house artist name opens his page');
+  /* a locked preview never stops the record (music slice M3, decision D-11's default): it says what it was and
+     the album moves on; this guard used to keep the old stop */
+  assert.match(album, /if \(wasPreview\) previewNotice\(rows\[cur\], true\);\n/, 'a preview ending says what it was');
+  assert.doesNotMatch(album, /if \(wasPreview\) \{ previewNotice\(rows\[cur\], true\); return; \}/, 'and the album moves on instead of stopping');
+  /* one McCluster (owner, 2026-11-23: "McCluster is the artist"): the house's artist name opens his one artist page */
+  assert.match(album, /ARTIST === HOUSE \? HOUSE_PAGE/, 'the house artist name opens his page');
+  assert.match(album, /var HOUSE_PAGE = "music-creator\.html\?handle=mccluster";/);
+  /* an act with its own artist page (data/albums.json artist_page) opens it: PRIM3 (owner, 2026-11-02) */
+  assert.match(album, /artistPage: alb\.artist_page \|\| ""/, 'the album reads the act\'s artist page');
+  assert.match(album, /artistLink\.href = artistHref;/, 'the billed name links where it should');
   assert.match(album, /window\.MCC_TRACK\("gated_preview_end"/);
   assert.doesNotMatch(album, /Tip the artist/);
   assert.match(album, /replace\(\/\[-_\]\+\/g, " "\)/, 'play counts match the normalized track key');
@@ -116,13 +127,14 @@ test('locked pages do not offer a theme they cannot change', async () => {
   assert.match(theme, /dual: !LOCK/);
 });
 
-test('pending database fixes stay gated; applied listener state is recorded in the production ledger', async () => {
+test('applied database fixes are recorded in the production ledger, not left pending', async () => {
   const pending = await readdir('supabase/pending');
   const migrations = await readdir('supabase/migrations');
-  const stillPending = 'public_music_reads_lean_v1.sql';
-  assert.ok(pending.includes(stillPending));
-  assert.ok(!migrations.some((m) => m.endsWith(stillPending)));
-  assert.match(await read('supabase/pending/' + stillPending), /set local lock_timeout = '5s';/);
+  // Applied in production 2026-10-29 (owner-approved) as 20261029011108_public_music_reads_lean_v1.
+  const lean = '20261029011108_public_music_reads_lean_v1.sql';
+  assert.ok(!pending.includes('public_music_reads_lean_v1.sql'));
+  assert.ok(migrations.includes(lean));
+  assert.match(await read('supabase/migrations/' + lean), /set local lock_timeout = '5s';/);
 
   // Applied after the isolated RLS and cross-device upsert contract passed.
   assert.ok(!pending.includes('listener_state_v1.sql'));

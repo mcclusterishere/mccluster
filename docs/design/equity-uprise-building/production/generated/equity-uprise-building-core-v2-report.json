@@ -2,9 +2,9 @@
   "building_id": "equity-uprise-building",
   "core_id": "equity-uprise-core-v2",
   "not_for_construction": true,
-  "glb_bytes": 523080,
-  "sha256": "afebd08c811d083b6ae957677cedbff51d4c629e36a19341eddc385b3e8e28c7",
-  "mesh_count": 840,
+  "glb_bytes": 528512,
+  "sha256": "2048139e259cac455ea6f24b1b098f23f3a282d49e8e944da1c8b86dfc49a73f",
+  "mesh_count": 849,
   "bounds_m": [
     [
       -7.315200000000001,
@@ -17,8 +17,8 @@
       27.53868
     ]
   ],
-  "checks_total": 41,
-  "checks_passed": 41,
+  "checks_total": 46,
+  "checks_passed": 46,
   "checks_failed": 0,
   "passed": true,
   "stair_transitions": [
@@ -317,6 +317,29 @@
       ]
     }
   ],
+  "exit_doors": [
+    {
+      "object_id": "F1-DOOR-STAIR-A-DISCHARGE",
+      "facade": "east",
+      "y1": 55.0,
+      "y2": 58.2,
+      "height_ft": 7.5
+    },
+    {
+      "object_id": "F1-DOOR-STAIR-B-DISCHARGE",
+      "facade": "west",
+      "y1": 54.3,
+      "y2": 57.1,
+      "height_ft": 7.5
+    },
+    {
+      "object_id": "F1-DOOR-SERVICE-WEST",
+      "facade": "west",
+      "y1": 57.1,
+      "y2": 59.9,
+      "height_ft": 7.5
+    }
+  ],
   "checks": [
     {
       "name": "eight levels including B1",
@@ -392,6 +415,75 @@
       "passed": true,
       "actual": 2,
       "expected": 2
+    },
+    {
+      "name": "F1-DOOR-STAIR-A-DISCHARGE modeled as a real opening + leaf where the egress plan says",
+      "passed": true,
+      "actual": {
+        "object_id": "F1-DOOR-STAIR-A-DISCHARGE",
+        "facade": "east",
+        "y1": 55.0,
+        "y2": 58.2,
+        "height_ft": 7.5
+      },
+      "expected": {
+        "facade": "east",
+        "x": 72,
+        "y1": 55.0,
+        "y2": 58.2
+      }
+    },
+    {
+      "name": "F1-DOOR-STAIR-B-DISCHARGE modeled as a real opening + leaf where the egress plan says",
+      "passed": true,
+      "actual": {
+        "object_id": "F1-DOOR-STAIR-B-DISCHARGE",
+        "facade": "west",
+        "y1": 54.3,
+        "y2": 57.1,
+        "height_ft": 7.5
+      },
+      "expected": {
+        "facade": "west",
+        "x": 0,
+        "y1": 54.3,
+        "y2": 57.1
+      }
+    },
+    {
+      "name": "F1-DOOR-SERVICE-WEST modeled as a real opening + leaf where the egress plan says",
+      "passed": true,
+      "actual": {
+        "object_id": "F1-DOOR-SERVICE-WEST",
+        "facade": "west",
+        "y1": 57.1,
+        "y2": 59.9,
+        "height_ft": 7.5
+      },
+      "expected": {
+        "facade": "west",
+        "x": 0,
+        "y1": 57.1,
+        "y2": 59.9
+      }
+    },
+    {
+      "name": "Stair A exit door opens onto the Stair A Floor 1 landing (Y54.75-58.25)",
+      "passed": true,
+      "actual": [
+        55.0,
+        58.2
+      ],
+      "expected": [
+        54.75,
+        58.25
+      ]
+    },
+    {
+      "name": "Stair B exit is reachable at Floor 1 level (not behind the stair mid-landing)",
+      "passed": true,
+      "actual": "west",
+      "expected": "west or south"
     },
     {
       "name": "exactly one Halo Globe instrument",

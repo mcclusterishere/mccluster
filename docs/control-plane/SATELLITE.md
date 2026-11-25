@@ -29,6 +29,6 @@ There is no Worker named `mccluster-core`. Do not create one.
 
 ## If you are ChatGPT, Claude, Codex, Cursor, Gemini, or Copilot
 
-You keep failing this ecosystem by treating every repo as greenfield. It is not. McCluster is the plane. Read `CLAUDE.md` next. Then work.
+You keep failing this ecosystem by treating every repo as greenfield. It is not. McCluster is the plane. This block is the head of the satellite's `AGENTS.md`. The satellite kit is this block plus the seven thin adapters copied from the control repo unchanged: `CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/mccluster.mdc`, `.github/copilot-instructions.md`, `.github/instructions/mccluster.instructions.md`. They point at the control repo's `AGENTS.md` and carry no rule of their own. The control repo's building block (its Equity Uprise building, Uprise World and PRIM3 Site 0 gates) is never copied to a satellite. Read `CLAUDE.md` next. Then work.
 
 Local product notes, if any, belong below this block. Do not delete this block.

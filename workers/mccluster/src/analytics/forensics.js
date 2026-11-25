@@ -86,7 +86,7 @@ export function createForensicRoutes({ json, sbJson, sbRows, sbRowsPaged, finite
       sessions: (out.sessions || []).map(forensicSession) });
   }
 
-  async function handleSessionDetail(request, env, user, sessionId) {
+  async function handleSessionDetail(request, env, user, sessionId, includeHistory = false) {
     await requireHouseOwner(env, user);
     if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
     const events = await sbRows(env,
@@ -100,10 +100,10 @@ export function createForensicRoutes({ json, sbJson, sbRows, sbRowsPaged, finite
     const session = forensicSession((summary.sessions || [])[0] || null);
     const deviceId = session?.device_id || events.find((e) => e.device_id)?.device_id || null;
     const uid = session?.uid || events.find((e) => e.uid)?.uid || null;
-    const devices = uid ? await devicesForUser(env, uid) : [];
+    const devices = includeHistory && uid ? await devicesForUser(env, uid) : [];
     if (deviceId && !devices.includes(deviceId)) devices.unshift(deviceId);
     const now = new Date();
-    const history = devices.length ? await sessionList(env, {
+    const history = includeHistory && devices.length ? await sessionList(env, {
       p_since: new Date(Math.min(first.getTime(), now.getTime() - HISTORY_DAYS * 86400000)).toISOString(),
       p_until: now.toISOString(), p_limit: 60, p_offset: 0, p_filter: 'any', p_sort: 'recent', p_devices: devices
     }) : { total: 0, sessions: [] };
@@ -115,8 +115,9 @@ export function createForensicRoutes({ json, sbJson, sbRows, sbRowsPaged, finite
       visitor: {
         key: uid ? `u:${uid}` : deviceId ? `d:${deviceId}` : null,
         uid, devices, profile: await profileFor(env, uid),
-        total: Number(history.total) || 0,
-        sessions: (history.sessions || []).map(forensicSession)
+        history_status: includeHistory ? 'ready' : 'not_loaded',
+        total: includeHistory ? Number(history.total) || 0 : null,
+        sessions: includeHistory ? (history.sessions || []).map(forensicSession) : null
       }
     });
   }
@@ -219,7 +220,7 @@ export function createForensicRoutes({ json, sbJson, sbRows, sbRowsPaged, finite
     const [, kind, id] = forensic;
     if (kind === 'sessions') {
       if (!SESSION_ID_RE.test(id)) return json({ ok: false, error: 'Invalid session id' }, 400);
-      return handleSessionDetail(request, env, user, id);
+      return handleSessionDetail(request, env, user, id, url.searchParams.get('include_history') === '1');
     }
     if (!VISITOR_KEY_RE.test(id)) return json({ ok: false, error: 'Invalid visitor key' }, 400);
     return handleVisitorDetail(request, env, user, id);

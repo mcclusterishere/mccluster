@@ -285,7 +285,10 @@ export async function observeControlRequest(request, env, ctx, handler) {
 
   const tracedRequest = new Request(request, { headers: inputHeaders });
   const url = new URL(tracedRequest.url);
-  const route = url.pathname.replace(/\/+$/, '') || '/';
+  /* The fal webhook may carry a per-job hint and its token in the path
+     (media/router.js webhookUrlFor). Events are readable by the organization's
+     owner, so the route kept here stops at the fixed prefix. */
+  const route = (url.pathname.replace(/\/+$/, '') || '/').replace(/^(\/v1\/media\/webhooks\/fal)\/.+$/, '$1');
   const store = {
     traceId, requestId, spanId: crypto.randomUUID(), parentSpanId,
     route, method: tracedRequest.method, events: [], dropped: 0

@@ -136,9 +136,10 @@ test('active LMS documentation no longer treats 63 as the whole course', async (
   assert.doesNotMatch(html, />63<\/dt>/);
 });
 
-test('course access and progress require an M Account while tuition remains free', async () => {
+test('course access and progress are private to the house owner (owner, 2026-11-03)', async () => {
   const source = await text(prim3Path);
-  assert.match(source, /M Account required for the free PRIM3 course/);
+  assert.match(source, /PRIM3 is private to the house owner/);
+  assert.match(source, /role=eq\.owner/);
   assert.match(source, /account_required: true/);
   assert.match(source, /price_cents: 0/);
   assert.match(source, /await requireLearner\(request, env\)/);

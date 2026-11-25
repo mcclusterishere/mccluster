@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "revision": "2026-11-03",
+  "project": "Whip Equipped",
+  "scope": "fictional album, film, and narrative game experience",
+  "owner": "Matthew McCluster",
+  "authority": "../WHIP-EQUIPPED-STORY.md",
+  "screenplay": "SCREENPLAY.md",
+  "decisions": "DECISIONS.md",
+  "lyrics": "LYRIC-SOURCES.md",
+  "timing": "TIMING.json",
+  "historical_treatment": "archive/2026-10-31-original-treatment.md",
+  "status": {
+    "story_direction": "owner-approved controlling decisions",
+    "screenplay": "current fictional dramatic adaptation; exact dialogue and staging are newly written",
+    "runtime_implementation": "not established by this documentation",
+    "real_car_flip_chronology": "initial three oral-history entries received 2026-11-03; supporting photo and transaction chronology remains incomplete"
+  },
+  "core_sequence": [
+    "test-drive",
+    "mr-lock-changer",
+    "whip-equipped",
+    "lana",
+    "repo-guy",
+    "hundun",
+    "all-in-the-details",
+    "towyard-killer",
+    "stand-on-business",
+    "dealer-plates",
+    "tears-wont-fall",
+    "salvage-title"
+  ],
+  "document_sequence": [
+    "test-drive",
+    "mr-lock-changer",
+    "whip-equipped",
+    "lana",
+    "repo-guy",
+    "hundun",
+    "all-in-the-details",
+    "towyard-killer",
+    "stand-on-business",
+    "dealer-plates",
+    "jet-pack",
+    "tears-wont-fall",
+    "salvage-title"
+  ],
+  "ending": [
+    "dealer-plates",
+    "tears-wont-fall",
+    "salvage-title"
+  ],
+  "earlier_interludes": [
+    {
+      "id": "jet-pack",
+      "sheet_title": "Jet Pass",
+      "recording_name": "Jet Pack",
+      "chronology_before": "dealer-plates",
+      "document_after": "dealer-plates",
+      "document_before": "tears-wont-fall",
+      "presentation": "explicit earlier flashback",
+      "optional": true,
+      "separate_from_vaunt": true
+    }
+  ],
+  "excluded_earlier_song_labels": [
+    "Parking Lot",
+    "Way Back",
+    "Choose the Wall / Fall"
+  ],
+  "presentation": {
+    "fatal_flight_song": "tears-wont-fall",
+    "fatal_flight_separate_from_vaunt": true,
+    "final_song": "salvage-title",
+    "final_song_after_alana_death": true,
+    "globe_or_vr_flight_experience": "owner concept; no route, asset, or runtime delivery asserted"
+  },
+  "chapter_contract": {
+    "before_dialogue_multiplier": 2,
+    "full_song_multiplier": 1,
+    "after_dialogue_multiplier": 2,
+    "total_multiplier": 5,
+    "uninterrupted_full_recording": true,
+    "dialogue_over_recording": false,
+    "shared_transition_double_counting": false,
+    "core_song_count": 12,
+    "optional_interlude_count": 1,
+    "total_before_scenes": 13,
+    "total_after_scenes": 13,
+    "total_video_treatments": 13,
+    "video_assets_completed_by_this_work": false
+  },
+  "characters": {
+    "mccluster": {
+      "criminal_capital": "knowingly accepted",
+      "fatal_flight": "independently chooses and causes the outcome"
+    },
+    "alana": {
+      "identity": "same woman from Test Drive through fatal flight",
+      "double_meaning": "Alana personifies Atlanta's promise becoming a trap",
+      "dies_in": "tears-wont-fall",
+      "post_death_appearances": "recognizable memories or subjective imagery only"
+    },
+    "cousin": {
+      "tablet_source": "received from McCluster before Mr. Lock Changer",
+      "activity": "misuses tablet for car theft",
+      "song_perspective": "coexists with McCluster's legitimate service business"
+    },
+    "prime": {
+      "role": "warns McCluster",
+      "orders_fatal_flight": false
+    },
+    "darrel": {
+      "role": "betrays the alliance",
+      "killed_by": "Made"
+    },
+    "made": {
+      "display_name": "Madé",
+      "kills": "Darrel",
+      "motive": "free coerced people, cancel debts, return documents and tools, preserve independent support"
+    }
+  },
+  "song_constraints": {
+    "mr-lock-changer": "Maintain legitimate service and criminal cousin perspectives, police anxiety, imitation, and humor.",
+    "repo-guy": "Rico illegally resold the same financed salvage car; no shots fired in the confrontation.",
+    "towyard-killer": "Impoundment and fee dispute; do not turn the song into a homicide based on its title.",
+    "stand-on-business": "Recap video with earlier imagery and business commitments.",
+    "dealer-plates": "Independent business control and legitimate/criminal duality; no first-ever license retcon.",
+    "tears-wont-fall": "Narrator remains in his car; aircraft is a simultaneous visual perspective.",
+    "salvage-title": "Final post-death drive-away with its own complete before and after scenes."
+  },
+  "source_precedence": [
+    "Newer explicit owner decisions",
+    "Current owner-approved canon recorded here and in the story guide",
+    "Owner lyric sheets and treatment where not superseded",
+    "Current screenplay dramatization",
+    "Catalog and measured recording evidence for their limited timing claims",
+    "Historical archive as non-controlling context"
+  ],
+  "repository_source_snapshot": {
+    "commit": "aa909fa131837f460b4c3e0abd4bb0fdaefc841e",
+    "historical_treatment_blob": "1c575bdb456d130a8cb0e12fe6e36e01df0f42a9",
+    "catalog_blob": "d0480aaaf6fd67e6feabe91da924ef7c74b28c67"
+  },
+  "update_contract": "Propagate a new owner decision to affected current documents, neighboring scenes, and timing when relevant; do not revive contradictory archived choices.",
+  "car_flip_sources": "CAR-FLIP-CHRONICLE.md",
+  "extended_road_scenes": "ROAD-YEARS.md",
+  "road_years": {
+    "source_intake_date": "2026-11-03",
+    "basis": "owner recollection; no supporting records supplied with this batch",
+    "recalled_year": 2024,
+    "year_verified": false,
+    "source_entry_ids": [
+      "FLIP-2024-01-camper",
+      "FLIP-2024-02-g20",
+      "FLIP-2024-03-econoline"
+    ],
+    "sequence": "Camper tentatively precedes G20; the G20 inquiry leads to the later different Econoline sale.",
+    "integration": {
+      "test-drive": "Brief earlier G20 living and travel recollection; Alana still first appears here.",
+      "hundun": "Majid support, camper and G20 costs, and brief earlier roadside imagery.",
+      "all-in-the-details": "G20 inquiry becomes a different green Econoline sale; the two buyers remain distinct."
+    },
+    "extended_scene_file": "ROAD-YEARS.md",
+    "extended_scene_duration_ms": null,
+    "extended_scenes_in_core_timing": false,
+    "buyer_designation": "Boston buyer; anonymized",
+    "buyer_reform": "Owner felt he may have changed the buyer’s heart; lasting change is unverified.",
+    "boundary": "The recalled legitimate flips do not corroborate fictional crimes. New dialogue, staging, family replies, and compressed chronology are dramatic adaptation.",
+    "open_details": [
+      "Exact dates and order",
+      "Econoline model year and E-150 designation",
+      "Econoline sale price: approximately 2600 or 2700 USD",
+      "Camper fuel: at least 300 USD, with 400 USD also recalled",
+      "AAA towing particulars and charge",
+      "G20 fuel, train fare, other costs, and DoorDash earnings",
+      "Boston vehicle-transport logistics and return journey",
+      "Supporting photographs and transaction records"
+    ]
+  }
+}

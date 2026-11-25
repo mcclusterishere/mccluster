@@ -1,0 +1,121 @@
+/* Control · System · E=Up (js/control-room/eup.js). Mobile first: one column at
+   phone width, room added at 720px and 1024px with min-width queries only;
+   every grid track is minmax(0,1fr) so one long record never widens the page;
+   form controls are at least 16px so iOS does not zoom. Tokens come from the
+   flat house system in css/style.css; nothing here draws a mark. */
+.cr-eup { min-width: 0; display: grid; gap: 1rem; padding-block-end: 2rem; }
+.cr-eup__head h2 { margin: 0; font-size: 1.5rem; }
+.cr-eup__kicker { margin: 0 0 .25rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.cr-eup__status { padding: .6rem .8rem; border: 1px solid color-mix(in srgb, currentColor 18%, transparent); border-radius: .6rem; font-size: .92rem; overflow-wrap: anywhere; }
+.cr-eup__tabs { display: flex; gap: .4rem; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; padding-block: .2rem; scrollbar-width: thin; }
+.cr-eup__tabs [role="tab"] { flex: 0 0 auto; min-height: 44px; padding: .5rem .9rem; border-radius: 999px; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; font: inherit; font-size: max(16px, .95rem); white-space: nowrap; cursor: pointer; }
+.cr-eup__tabs [role="tab"][aria-selected="true"] { background: color-mix(in srgb, currentColor 14%, transparent); border-color: currentColor; }
+.cr-eup__tabs [role="tab"]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup__stage { display: grid; gap: .5rem; min-width: 0; }
+.cr-eup__globe { position: relative; min-height: 220px; height: min(46vw, 320px); border-radius: .8rem; overflow: hidden; background: color-mix(in srgb, currentColor 6%, transparent); }
+.cr-eup__globe .crg-canvas, .cr-eup__globe canvas { width: 100%; height: 100%; display: block; }
+.cr-eup__geo { margin: 0; font-size: .9rem; overflow-wrap: anywhere; }
+.cr-eup__pane { min-width: 0; }
+.cr-eup__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; }
+.cr-eup__card { min-width: 0; padding: .9rem; border: 1px solid color-mix(in srgb, currentColor 16%, transparent); border-radius: .8rem; }
+.cr-eup__card h3 { margin: 0 0 .5rem; font-size: 1.05rem; overflow-wrap: anywhere; }
+.cr-eup__card h4 { margin: .9rem 0 .35rem; font-size: .95rem; overflow-wrap: anywhere; }
+.cr-eup__card p, .cr-eup__card li, .cr-eup__card small { overflow-wrap: anywhere; }
+.cr-eup__list { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.cr-eup__list ul { margin: .3rem 0 0 1rem; padding: 0; }
+.cr-eup__prov { margin: .25rem 0 0; font-size: .78rem; opacity: .8; }
+.cr-eup__chip { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; border: 1px solid color-mix(in srgb, currentColor 30%, transparent); vertical-align: middle; }
+.cr-eup__chip--current, .cr-eup__chip--active, .cr-eup__chip--done, .cr-eup__chip--enabled { border-color: #3fa66b; }
+.cr-eup__chip--stale, .cr-eup__chip--partial, .cr-eup__chip--held, .cr-eup__chip--paused, .cr-eup__chip--draft, .cr-eup__chip--dormant, .cr-eup__chip--draining { border-color: #d9a441; }
+.cr-eup__chip--not_installed, .cr-eup__chip--unknown { border-style: dashed; }
+.cr-eup__chip--unavailable, .cr-eup__chip--error, .cr-eup__chip--denied, .cr-eup__chip--not_configured { border-color: #d05a5a; }
+.cr-eup__note { margin: .5rem 0; padding: .6rem .75rem; border-radius: .6rem; border: 1px dashed color-mix(in srgb, currentColor 30%, transparent); font-size: .9rem; overflow-wrap: anywhere; }
+.cr-eup__note--denied, .cr-eup__note--error, .cr-eup__note--signed_out { border-style: solid; border-color: #d05a5a; }
+.cr-eup__note--unknown, .cr-eup__note--timeout, .cr-eup__note--not_configured, .cr-eup__note--not_implemented, .cr-eup__note--conflict, .cr-eup__note--busy { border-color: #d9a441; }
+.cr-eup__note--unknown, .cr-eup__note--conflict, .cr-eup__note--busy { border-style: solid; }
+.cr-eup__note--done { border-color: #3fa66b; }
+.cr-eup__crumb { display: flex; flex-wrap: wrap; gap: .35rem .5rem; align-items: baseline; margin: 0 0 .8rem; font-size: .9rem; }
+.cr-eup__crumb small { opacity: .7; }
+.cr-eup__link { background: none; border: 0; padding: 0; color: inherit; font: inherit; font-size: max(16px, 1rem); text-decoration: underline; cursor: pointer; min-height: 44px; text-align: left; }
+.cr-eup__search { display: grid; gap: .5rem; margin: 0 0 .9rem; }
+.cr-eup__search input { width: 100%; min-width: 0; max-width: 100%; font-size: max(16px, 1rem); min-height: 44px; padding: .4rem .6rem; border-radius: .5rem; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; }
+.cr-eup__actions { display: flex; flex-wrap: wrap; gap: .4rem; margin-block-start: .5rem; }
+.cr-eup__actions .cr-btn { min-height: 44px; font-size: max(16px, .95rem); }
+/* Module policy (Overview › Modules card). Phone first: one unit per row, a full-width reason field and
+   full-width 44px buttons stacked under it. A waiting button keeps focus (aria-disabled, not disabled). */
+.cr-eup__card h4 + .cr-eup__unit-line { margin-block-end: .7rem; }
+.cr-eup__units { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .7rem; }
+.cr-eup__unit { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; align-content: start; padding: .75rem; border: 1px solid color-mix(in srgb, currentColor 14%, transparent); border-radius: .6rem; }
+.cr-eup__unit:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup__unit .cr-eup__note { margin: 0; }
+.cr-eup__unit-head { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem; min-width: 0; }
+.cr-eup__unit-head strong { font-size: 1rem; }
+.cr-eup__unit-line, .cr-eup__drain { margin: 0; font-size: .85rem; line-height: 1.45; overflow-wrap: anywhere; }
+.cr-eup__unit-line { opacity: .85; }
+.cr-eup__drain { padding: .5rem .65rem; border-inline-start: 3px solid #d9a441; background: color-mix(in srgb, currentColor 5%, transparent); border-radius: .3rem; }
+.cr-eup__field { display: grid; grid-template-columns: minmax(0, 1fr); gap: .3rem; min-width: 0; font-size: .85rem; }
+.cr-eup__field input { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; font: inherit; font-size: max(16px, 1rem); min-height: 44px; padding: .4rem .6rem; border-radius: .5rem; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; }
+.cr-eup__field input:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup__actions--policy { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; margin-block-start: 0; }
+.cr-eup__actions--policy .cr-btn { width: 100%; min-width: 0; min-height: 44px; overflow-wrap: anywhere; }
+.cr-eup__actions .cr-btn[aria-disabled="true"] { opacity: .52; cursor: default; }
+.cr-eup__units + .cr-eup__prov { margin-block: .5rem; }
+/* League tab (js/control-room/eup-league.js). Phone first: one column, full-width fields and 44px buttons; its six
+   local views are a second row of tabs that scrolls sideways inside itself, never the page. Long ids, digests and
+   words wrap anywhere. The media element is as wide as its card and no wider. */
+.cr-eup-league { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; }
+.cr-eup-league__tabs { display: flex; gap: .4rem; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; padding-block: .2rem; scrollbar-width: thin; min-width: 0; }
+.cr-eup-league__tabs [role="tab"] { flex: 0 0 auto; min-height: 44px; padding: .45rem .8rem; border-radius: .6rem; border: 1px solid color-mix(in srgb, currentColor 22%, transparent); background: transparent; color: inherit; font: inherit; font-size: max(16px, .92rem); white-space: nowrap; cursor: pointer; }
+.cr-eup-league__tabs [role="tab"][aria-selected="true"] { background: color-mix(in srgb, currentColor 12%, transparent); border-color: currentColor; font-weight: 600; }
+.cr-eup-league__tabs [role="tab"]:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup-league__view { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .8rem; }
+.cr-eup-league h5 { margin: .8rem 0 .3rem; font-size: .92rem; overflow-wrap: anywhere; }
+.cr-eup-league__form { display: grid; grid-template-columns: minmax(0, 1fr); gap: .6rem; min-width: 0; margin-block: .5rem; }
+.cr-eup-league__cell { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .25rem; align-content: start; }
+.cr-eup-league__set { min-width: 0; margin: 0; padding: .6rem .7rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; border: 1px solid color-mix(in srgb, currentColor 14%, transparent); border-radius: .6rem; }
+.cr-eup-league__set legend { padding: 0 .3rem; font-size: .9rem; font-weight: 600; }
+.cr-eup-league .cr-eup__field textarea, .cr-eup-league .cr-eup__field select { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; font: inherit; font-size: max(16px, 1rem); min-height: 44px; padding: .4rem .6rem; border-radius: .5rem; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); background: transparent; color: inherit; }
+.cr-eup-league .cr-eup__field textarea { min-height: 5.5rem; resize: vertical; line-height: 1.45; }
+.cr-eup-league .cr-eup__field select option { color: #111; background: #fff; }
+.cr-eup-league .cr-eup__field textarea:focus-visible, .cr-eup-league .cr-eup__field select:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup-league__check { display: flex; align-items: center; gap: .6rem; min-height: 44px; min-width: 0; font-size: max(16px, .95rem); cursor: pointer; overflow-wrap: anywhere; }
+.cr-eup-league__check input { flex: 0 0 auto; width: 22px; height: 22px; margin: 0; }
+.cr-eup-league__check input:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.cr-eup-league__hint { margin: 0; font-size: .8rem; opacity: .8; overflow-wrap: anywhere; }
+.cr-eup-league__text { white-space: pre-wrap; overflow-wrap: anywhere; margin: .3rem 0; }
+.cr-eup-league__id { font-size: .82rem; overflow-wrap: anywhere; word-break: break-all; }
+.cr-eup-league__mission, .cr-eup-league__editor, .cr-eup-league__preview, .cr-eup-league__review, .cr-eup-league__confirm { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .4rem; }
+.cr-eup-league__mission { margin-block-start: .6rem; padding-block-start: .6rem; border-block-start: 1px solid color-mix(in srgb, currentColor 14%, transparent); }
+.cr-eup-league__mission h5 { margin-block-start: 0; font-size: 1rem; }
+.cr-eup-league__editor, .cr-eup-league__preview, .cr-eup-league__review { padding: .7rem; border-radius: .6rem; background: color-mix(in srgb, currentColor 5%, transparent); }
+.cr-eup-league__confirm { padding: .6rem .7rem; border-inline-start: 3px solid #d05a5a; background: color-mix(in srgb, currentColor 5%, transparent); border-radius: .3rem; }
+.cr-eup-league__card { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .45rem; }
+.cr-eup-league__card div { min-width: 0; }
+.cr-eup-league__card dt { font-size: .78rem; opacity: .75; }
+.cr-eup-league__card dd { margin: 0; overflow-wrap: anywhere; }
+.cr-eup-league__filter { display: grid; grid-template-columns: minmax(0, 1fr); gap: .4rem; min-width: 0; }
+.cr-eup-league__filter .cr-eup__actions { margin-block-start: 0; }
+.cr-eup-league__media { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: .3rem; padding-block: .3rem; }
+.cr-eup-league__player { min-width: 0; }
+.cr-eup-league__player audio, .cr-eup-league__player video { display: block; width: 100%; max-width: 100%; min-height: 44px; }
+.cr-eup-league .cr-eup__actions .cr-btn { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+@media (min-width: 720px) {
+  .cr-eup-league__form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cr-eup-league__form > .cr-eup-league__set, .cr-eup-league__cell--wide { grid-column: 1 / -1; }
+  .cr-eup-league__card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cr-eup-league__filter { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+}
+@media (min-width: 720px) {
+  .cr-eup__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cr-eup__card--wide { grid-column: 1 / -1; }
+  .cr-eup__search { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+  .cr-eup__actions--policy { display: flex; flex-wrap: wrap; }
+  .cr-eup__actions--policy .cr-btn { width: auto; max-width: 100%; }
+}
+@media (min-width: 1024px) {
+  .cr-eup__stage { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; }
+  .cr-eup__globe { height: 380px; }
+  .cr-eup__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cr-eup__units { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .cr-eup__tabs { scroll-behavior: auto; } }

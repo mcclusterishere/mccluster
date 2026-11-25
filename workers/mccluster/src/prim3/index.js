@@ -173,9 +173,17 @@ async function authUser(request, env) {
   return response.json();
 }
 
+/* Owner, 2026-11-03: "the whole learning management system is going to be on my
+   private account." The course and its progress are the house owner's only:
+   a signed-in M Account that is not the McCluster house owner gets 403. */
 async function requireLearner(request, env) {
   const user = await authUser(request, env);
-  if (!user) throw Object.assign(new Error('M Account required for the free PRIM3 course'), { status: 401 });
+  if (!user) throw Object.assign(new Error('Sign in with the house owner account'), { status: 401 });
+  const orgs = await dbRequest(env, 'orgs?slug=eq.mccluster&select=id&limit=1');
+  const houseId = Array.isArray(orgs) ? orgs[0]?.id : null;
+  if (!houseId) throw Object.assign(new Error('McCluster house organization is not configured'), { status: 503 });
+  const owners = await dbRequest(env, `org_members?org_id=eq.${encodeURIComponent(houseId)}&profile_id=eq.${encodeURIComponent(user.id)}&role=eq.owner&select=org_id&limit=1`);
+  if (!Array.isArray(owners) || !owners.length) throw Object.assign(new Error('PRIM3 is private to the house owner'), { status: 403 });
   return user;
 }
 

@@ -24,15 +24,16 @@
 import { hasNewsroomApproval } from '../newsroom-review.js';
 import { COMPANY_ORIGIN, PERSONAL_ORIGIN } from './pages.generated.js';
 import { moved, methodNotAllowed, SECURITY } from '../world-host.js';
+import { IDS, ENTITY_URLS } from '../platform/hosts.generated.js';
 
 export const NEWS_ROOT = '/news/';
 export const PUBLICATION = 'McCluster Corp';
-const ORG_ID = 'https://matthew.mccluster.org/#mccluster-corp';
-const PERSON_ID = 'https://matthew.mccluster.org/#matthew-mccluster';
-const PERSON_URL = 'https://matthew.mccluster.org/matthew-mccluster.html';
+const ORG_ID = IDS.organization;
+const PERSON_ID = IDS.person;
+const PERSON_URL = ENTITY_URLS.person;
 const AUTHOR = 'Matthew McCluster';
 const SITE_ID = `${COMPANY_ORIGIN}/#website`;
-const MARK = 'https://matthew.mccluster.org/assets/img/m-mark.png';
+const MARK = `${PERSONAL_ORIGIN}/assets/img/m-mark.png`;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ARTICLE = /^\/news\/(?:([a-z0-9-]{1,90})-)?([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
 const HEADLINE_MAX = 110;
@@ -299,7 +300,7 @@ ${articles.map((a) => `  <url>
 /* ---------- answers ---------- */
 const HTML_HEADERS = {
   ...SECURITY,
-  'content-security-policy': "default-src 'none'; img-src https://matthew.mccluster.org; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+  'content-security-policy': `default-src 'none'; img-src ${PERSONAL_ORIGIN}; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`
 };
 function answer(request, body, { status = 200, type = 'text/html; charset=utf-8', cache = 'no-store' } = {}) {
   return new Response(request.method === 'HEAD' ? null : body, { status, headers: { 'content-type': type, 'cache-control': cache, ...HTML_HEADERS } });

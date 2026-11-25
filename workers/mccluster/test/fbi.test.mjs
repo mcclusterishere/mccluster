@@ -4,29 +4,46 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { handlePlatformApi, fbiVerdict } from '../src/platform-api.js';
+import { linkRows, selectedColumns } from './support/auth-links.mjs';
 
 const ENV = { SUPABASE_URL: 'https://db.test', SUPABASE_SERVICE_ROLE_KEY: 'svc' };
 const MUID = '22222222-2222-4222-8222-222222222222';
 const OTHER = '44444444-4444-4444-8444-444444444444';
 const CASE = '33333333-3333-4333-8333-333333333333';
 const IMG = '55555555-5555-4555-8555-555555555555';
+const IMG2 = '99999999-9999-4999-8999-999999999999';
+/* A photo is the reporter's own upload: mnet-media/<their auth user id>/<uuid>-<name>.
+   The row that says so is written by the reporter, so it is checked before signing. */
+const AUTH = '66666666-6666-4666-8666-666666666666';
+const OTHER_AUTH = '77777777-7777-4777-8777-777777777777';
+const PHOTO = `${AUTH}/88888888-8888-4888-8888-888888888888-a.jpg`;
+const PHOTO_ROW = { id: IMG, bucket_id: 'mnet-media', object_path: PHOTO, owner_m_uid: MUID };
+const LINKS = [{ auth_user_id: AUTH, m_uid: MUID }, { auth_user_id: OTHER_AUTH, m_uid: OTHER }];
 const realFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = realFetch; });
 const ok = (d, s = 200) => new Response(JSON.stringify(d), { status: s });
 
-function fake({ signedIn = true, admin = false, assets = [{ id: IMG, media_type: 'image' }], reserved = null, caseRow = { id: CASE, kind: 'sighting', reporter_m_uid: OTHER } } = {}) {
+function fake({ signedIn = true, admin = false, assets = [{ id: IMG, media_type: 'image' }], reserved = null, caseRow = { id: CASE, kind: 'sighting', reporter_m_uid: OTHER }, photoRows = [PHOTO_ROW], links = LINKS, photoIds = [IMG], signAnswer = null, linkStatus = 200 } = {}) {
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const u = String(url), m = init.method || 'GET';
     calls.push({ u, m, body: init.body ? JSON.parse(init.body) : null, prefer: init.headers?.prefer });
     if (u.endsWith('/auth/v1/user')) return signedIn ? ok({ id: 'user-1' }) : ok({}, 401);
+    if (u.includes('/m_auth_user_links') && u.includes('select=auth_user_id')) return linkStatus === 200 ? ok(linkRows(u, links)) : ok({ message: 'link table unreachable' }, linkStatus);
     if (u.includes('/m_auth_user_links')) return ok([{ m_uid: MUID }]);
     if (u.endsWith('/rpc/eu_is_admin')) return ok(admin);
-    if (u.includes('/fbi_board?')) return ok([{ id: CASE, kind: 'sighting', title: 'Fake lows', media_asset_ids: [IMG], legit: 1, cap: 6, guilty: 0, acquitted: 0 }]);
-    if (u.includes('/network_media_assets?id=in.') && u.includes('select=id,bucket_id')) return ok([{ id: IMG, bucket_id: 'mnet-media', object_path: 'u/a.jpg' }]);
+    if (u.includes('/fbi_board?')) return ok([{ id: CASE, kind: 'sighting', title: 'Fake lows', media_asset_ids: photoIds, legit: 1, cap: 6, guilty: 0, acquitted: 0 }]);
+    if (u.includes('/fbi_cases?reporter_m_uid=')) return ok([{ id: CASE, kind: 'sighting', title: 'Fake lows', media_asset_ids: photoIds, status: 'pending', reporter_m_uid: MUID, legit: 0, cap: 0, guilty: 0, acquitted: 0 }]);
+    if (u.includes('/fbi_cases?status=eq.pending')) return ok([{ id: CASE, kind: 'sighting', title: 'Fake lows', media_asset_ids: photoIds, status: 'pending', reporter_m_uid: MUID, legit: 0, cap: 0, guilty: 0, acquitted: 0 }]);
+    if (u.includes('/network_media_assets?id=in.') && u.includes('select=id,bucket_id')) return ok(selectedColumns(u, photoRows));
     if (u.includes('/network_media_assets?') && m === 'PATCH') return ok(JSON.parse(init.body).status === 'attached' ? (reserved ?? assets) : []);
     if (u.includes('/network_media_assets?')) return ok(assets);
-    if (u.includes('/storage/v1/object/sign/mnet-media')) return ok([{ path: 'u/a.jpg', signedURL: '/object/sign/mnet-media/u/a.jpg?token=t' }]);
+    if (u.includes('/storage/v1/object/sign/')) {
+      // Storage signs whatever a service-role caller names, in any bucket: the Worker is the only gate.
+      const bucket = u.split('/storage/v1/object/sign/')[1];
+      const honest = (JSON.parse(init.body).paths || []).map((path) => ({ path, signedURL: `/object/sign/${bucket}/${path}?token=t` }));
+      return ok(signAnswer ? signAnswer(honest) : honest);
+    }
     if (u.includes('/fbi_cases?id=') && m === 'GET') return ok(caseRow ? [caseRow] : []);
     if (u.includes('/fbi_cases') && m === 'POST') return ok([{ id: CASE }], 201);
     if (u.includes('/fbi_cases?id=') && m === 'PATCH') return ok([{ id: CASE, status: JSON.parse(init.body).status }]);
@@ -57,7 +74,7 @@ test('the board is public, with signed photos and a verdict, and needs no sign-i
   assert.equal(res.status, 200);
   const { cases } = await res.json();
   assert.equal(cases[0].verdict, 'cap');
-  assert.equal(cases[0].photos[0], 'https://db.test/storage/v1/object/sign/mnet-media/u/a.jpg?token=t');
+  assert.equal(cases[0].photos[0], `https://db.test/storage/v1/object/sign/mnet-media/${PHOTO}?token=t`);
   assert.equal(cases[0].my_vote, null);
 });
 
@@ -149,4 +166,90 @@ test('a spam refusal from the database reaches the member as a 429', async () =>
   const res = await call('/v1/fbi/cases', 'POST', goodCase);
   assert.equal(res.status, 429);
   assert.match((await res.json()).error, /10 case files a day/);
+});
+
+/* THE PHOTO POINTER IS THE REPORTER'S TO EDIT. network_media_assets lets its
+   owner insert and update the row, bucket and path included, so a case photo
+   can be repointed after it is filed. The board, the desk and "my cases" all
+   sign what the row says: without a check, that is a signed link to any
+   private object, handed to the member who edited the row. */
+const signCalls = (calls) => calls.filter((c) => c.u.includes('/storage/v1/object/sign/'));
+const FORGED = [
+  { bucket_id: 'mcc-gated-audio', object_path: 'albums/i-am-here/01-master.wav' },
+  { bucket_id: 'creator-masters', object_path: PHOTO },
+  { bucket_id: 'learning-credentials', object_path: 'owner/transcript.pdf' },
+  { bucket_id: 'mnet-media', object_path: `${OTHER_AUTH}/88888888-8888-4888-8888-888888888888-a.jpg` },
+  { bucket_id: 'mnet-media', object_path: 'u/a.jpg' },
+  { bucket_id: 'mnet-media', object_path: `${AUTH}/../${OTHER_AUTH}/88888888-8888-4888-8888-888888888888-a.jpg` },
+];
+
+test('"my cases" never signs a photo row repointed at another bucket, prefix or path', async () => {
+  for (const forged of FORGED) {
+    const calls = fake({ photoRows: [{ ...PHOTO_ROW, ...forged }] });
+    const res = await call('/v1/fbi/mine');
+    assert.equal(res.status, 200);
+    const { cases } = await res.json();
+    assert.deepEqual(cases[0].photos, [], `${forged.bucket_id}/${forged.object_path} is not shown`);
+    assert.deepEqual(signCalls(calls), [], `${forged.bucket_id}/${forged.object_path} is never signed`);
+  }
+});
+
+test('the public board and the desk never sign a repointed photo either', async () => {
+  for (const forged of FORGED) {
+    const board = fake({ signedIn: false, photoRows: [{ ...PHOTO_ROW, ...forged }] });
+    const { cases } = await (await call('/v1/fbi/board', 'GET', null, false)).json();
+    assert.deepEqual(cases[0].photos, []);
+    assert.deepEqual(signCalls(board), []);
+
+    const desk = fake({ admin: true, photoRows: [{ ...PHOTO_ROW, ...forged }] });
+    const queue = await (await call('/v1/fbi/desk')).json();
+    assert.deepEqual(queue.cases[0].photos, []);
+    assert.deepEqual(signCalls(desk), []);
+  }
+});
+
+test('in a mixed case only the reporter\'s own upload is signed, and only in the upload bucket', async () => {
+  const calls = fake({
+    photoIds: [IMG, IMG2],
+    photoRows: [PHOTO_ROW, { id: IMG2, bucket_id: 'mcc-gated-audio', object_path: 'albums/i-am-here/01-master.wav', owner_m_uid: MUID }],
+  });
+  const { cases } = await (await call('/v1/fbi/mine')).json();
+  assert.deepEqual(cases[0].photos, [`https://db.test/storage/v1/object/sign/mnet-media/${PHOTO}?token=t`]);
+  const signs = signCalls(calls);
+  assert.equal(signs.length, 1);
+  assert.equal(signs[0].u, 'https://db.test/storage/v1/object/sign/mnet-media');
+  assert.deepEqual(signs[0].body.paths, [PHOTO]);
+});
+
+test('a photo whose upload prefix is not linked to its owner is not signed', async () => {
+  // the prefix is a real auth user, but one linked to somebody else
+  let calls = fake({ links: [{ auth_user_id: AUTH, m_uid: OTHER }] });
+  assert.deepEqual((await (await call('/v1/fbi/mine')).json()).cases[0].photos, []);
+  assert.deepEqual(signCalls(calls), []);
+  // or the row carries no owner to check against
+  calls = fake({ photoRows: [{ id: IMG, bucket_id: 'mnet-media', object_path: PHOTO }] });
+  assert.deepEqual((await (await call('/v1/fbi/mine')).json()).cases[0].photos, []);
+  assert.deepEqual(signCalls(calls), []);
+});
+
+test('a storage answer padded with entries nobody asked for, or with holes, hands out only the proven photo', async () => {
+  const evil = { path: 'albums/i-am-here/01-master.wav', signedURL: '/object/sign/mcc-gated-audio/albums/i-am-here/01-master.wav?token=EVIL' };
+  fake({ signAnswer: (honest) => [null, evil, ...honest, undefined, 7, 'x', {}] });
+  let res = await call('/v1/fbi/mine');
+  assert.equal(res.status, 200);
+  assert.deepEqual((await res.json()).cases[0].photos, [`https://db.test/storage/v1/object/sign/mnet-media/${PHOTO}?token=t`]);
+  // an answer of nothing but holes is no photo, not a failed page
+  fake({ signAnswer: () => [null] });
+  res = await call('/v1/fbi/mine');
+  assert.equal(res.status, 200);
+  assert.deepEqual((await res.json()).cases[0].photos, []);
+});
+
+test('when the link table cannot be read no photo is signed and the page fails instead of guessing', async () => {
+  for (const path of ['/v1/fbi/mine', '/v1/fbi/board']) {
+    const calls = fake({ linkStatus: 503 });
+    const res = await call(path, 'GET', undefined, path !== '/v1/fbi/board');
+    assert.ok(res.status >= 500, `${path} -> ${res.status}`);
+    assert.deepEqual(signCalls(calls), []);
+  }
 });

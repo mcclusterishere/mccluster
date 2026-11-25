@@ -68,19 +68,8 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-/* THE HITMAN DOOR — RETIRED 2026-08-17.
-
-   This block used to reach into the bar after boot and rewrite the fifth
-   tab: whatever a page had written there, it became HITMAN and pointed at
-   hitman-facility.html. The owner has now put the shake run in that
-   column, so the override is gone rather than left fighting js/tabbar.js
-   over the same tab.
-
-   HITMAN did not lose its door. This override was the ONLY route into
-   hitman-facility.html anywhere in the house, so removing it silently
-   would have orphaned the page — it is now a room in the map drawer
-   (js/masthead.js, "The house"), reachable from every page that carries
-   the bar, and the smoke suite checks that it is still linked.
+/* THE FIFTH-TAB OVERRIDE — RETIRED 2026-08-17. Nothing here rewrites the
+   bar after boot any more; js/tabbar.js owns every tab.
 
    PRIM3 is a different handoff: the owner explicitly replaced the Whip
    column with the curriculum while keeping Whip on disk. The tiny adapter

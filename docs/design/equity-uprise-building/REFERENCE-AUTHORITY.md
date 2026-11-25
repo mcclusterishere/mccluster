@@ -134,6 +134,8 @@ For any facade, glazing, exterior branding, interior-envelope, MEP, IT, plumbing
 - `production/facade/facade-module-inventory.json`
 - `production/facade/facade-finish-inventory.json`
 - `production/facade/equity-uprise-logo-vector.json` — exact approved repo logo geometry for 3D facade signage; sourced from `assets/img/equity-uprise-logo.webp` and the matching inline SVG.
+  **Superseded for 3D (2026-11-03):** no builder may turn this into geometry. 3D identity uses brand slots: `production/brand/brand-manifest.json` (owner-supplied artwork applied at runtime, proportional fit, never cropped/recoloured/traced).
+- `production/brand/brand-manifest.json` — brand-slot contract for the facade and identity walls.
 - `production/facade/build_equity_uprise_facade_v2.py`
 - `production/vertical-risers-core-v2.json`
 - `production/services/floor-services-addenda.json`
@@ -151,7 +153,7 @@ B1 restricted production package:
 - `docs/design/equity-uprise-building/production/basement-b1/README.md`
 - `docs/design/equity-uprise-building/production/basement-b1/basement-b1-scene-manifest.json`
 - companion material, lighting, camera, hotspot, routing and state JSON files in the same folder.
-- live access remains restricted; learner/instructor use is sandbox-only.
+- superseded 2026-11-03 by owner decision: B1 is a normal, open floor; plant/electrical/fire/flood/telecom/transfer-lock rooms keep safety doors and live building systems stay simulation-only (see `BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`).
 
 Floor 1 production package:
 - `docs/design/equity-uprise-building/production/floor-01/README.md`

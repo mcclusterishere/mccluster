@@ -8,8 +8,8 @@ Canonical ecosystem map for how the house is wired. Agents: if this disagrees wi
 
 ```
    mccluster.org (McCluster Corp)        matthew.mccluster.org (Matthew McCluster)
-        company property, Worker host route       personal property, GitHub Pages
-        (two properties, two entities: DOMAINS-AND-ENTITIES.md)
+        the platform, Worker host route           his profile, a tenant; GitHub Pages
+        (one platform, tenant properties, separate entities: DOMAINS-AND-ENTITIES.md)
                                                       │
                          Cloudflare project + Worker `mccluster`
                                       │               │
@@ -34,8 +34,8 @@ Canonical ecosystem map for how the house is wired. Agents: if this disagrees wi
 
 | Concern | Where |
 | --- | --- |
-| Matthew McCluster's pages | GitHub Pages from `mcclusterishere/mccluster` → matthew.mccluster.org |
-| McCluster Corp's pages | Worker `mccluster`, host-routed → mccluster.org (generated from `data/seo/company-site.json`; inert until routed) |
+| Matthew McCluster's profile (a tenant) | GitHub Pages from `mcclusterishere/mccluster` → matthew.mccluster.org (`url_ownership.profile` and `profile_only` in `data/seo/domain-architecture.json`; today it serves every page; from P3 Worker `mccluster` by host, with the pages that moved answering 301 to the platform) |
+| McCluster Corp's platform | Worker `mccluster`, host-routed → mccluster.org, set in one place (`platform.origin`; `tools/build-site-hosts.mjs` writes it everywhere): today the World at `/` and the company page at `/company` (generated from `data/seo/company-site.json`); from P1 every page, path for path |
 | Operator desk | McCluster Control |
 | API / webhooks | Cloudflare Worker `mccluster` |
 | Worker source | `workers/mccluster` |
@@ -74,8 +74,8 @@ The McCluster Network is the internal social layer for those identities: profile
 ## Adding a satellite
 
 1. Create the GitHub repo.
-2. Copy `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md` from this kit.
-3. Write an `AGENTS.md` that starts with the control-plane block and then any local law.
+2. Copy the seven thin agent adapters from this repo unchanged: `CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `.cursorrules`, `.cursor/rules/mccluster.mdc`, `.github/copilot-instructions.md`, `.github/instructions/mccluster.instructions.md`. They point at `AGENTS.md` and carry no rule of their own. Never copy the control repo's building block (the Equity Uprise building, Uprise World and PRIM3 Site 0 gates in its `AGENTS.md`): a satellite has no building.
+3. Write an `AGENTS.md` that starts with the control-plane block (`docs/control-plane/SATELLITE.md`, copied whole) and then any local law.
 4. Add a row to `docs/control-plane/registry.json`.
 5. Consume canonical McCluster identity. Do not add a satellite username/account namespace.
 6. Register app/org membership and permissions separately from identity.

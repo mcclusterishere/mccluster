@@ -32,7 +32,7 @@ test('base globe, missions, news and existing admin analytics are outside option
  for(const path of ['/action-globe.html','/v1/world/access','/v1/world/news','/v1/analytics/cameras','/v1/mnet/missions'])assert.equal(await guardWorldRelease(new Request('https://api.mccluster.org'+path),env,{fetchImpl:()=>{throw Error('not needed')}}),null);
 });
 /* Halo on the admin globe: every new feed, place search, Halo operations and water levels are owner-only through the same guard, before dispatch. */
-const HALO=[['/v1/world/layers/military','military'],['/v1/world/layers/quakes','quakes'],['/v1/world/layers/fires','fires'],['/v1/world/layers/perimeters','perimeters'],['/v1/world/layers/cyclones','cyclones'],['/v1/world/layers/vessels','vessels'],['/v1/world/geocode','search'],['/v1/world/halo/missions','halo-ops'],['/v1/world/halo/people','halo-ops'],['/v1/world/layers/tides','tides'],['/v1/world/tides/8518750','tides']];
+const HALO=[['/v1/world/layers/weather','weather'],['/v1/world/layers/natural','natural'],['/v1/world/layers/military','military'],['/v1/world/layers/quakes','quakes'],['/v1/world/layers/fires','fires'],['/v1/world/layers/perimeters','perimeters'],['/v1/world/layers/cyclones','cyclones'],['/v1/world/layers/vessels','vessels'],['/v1/world/geocode','search'],['/v1/world/halo/missions','halo-ops'],['/v1/world/halo/people','halo-ops'],['/v1/world/layers/tides','tides'],['/v1/world/tides/8518750','tides']];
 test('Halo feeds and place search are features of the release policy',()=>{
  for(const [,feature] of HALO){assert.ok(GLOBE_FEATURES.includes(feature),feature);assert.equal(globeRelease(feature,{}),'admin_preview');}
  for(const [path,feature] of HALO)assert.equal(globeFeatureForPath(path),feature,path);

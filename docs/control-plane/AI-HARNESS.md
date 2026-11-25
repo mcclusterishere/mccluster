@@ -24,6 +24,10 @@ The Control browser is a terminal into McCluster, not the owner of McCluster's e
 
 McCluster's VPS is a persistent execution environment. Its `HOME`, workspace, session/checkpoint, artifact, repository, and worktree roots survive individual web sessions and service restarts. Filesystem state is machine state, not canonical conversational memory: `ops_ai_threads` + `ops_ai_messages` remain the resident conversation record, and private cross-model memory remains in `ai_context`. Do not create a second transcript database, vector store, or shadow memory under the VPS filesystem.
 
+## Dispatch front end
+
+Owner messages can enter through the dispatch layer: a small resident model classifies each message against a deterministic routing table and hands it to an existing Core capability, a pending approval or a resident McCluster turn, recording the routing decision in `ai_context` first. See `docs/control-plane/DISPATCH-LAYER.md`.
+
 ## Privacy boundary
 
 Raw conversations, private reasoning artifacts supplied by providers, company-sensitive context, credentials, and unredacted context dumps MUST NOT be committed to this public repository.
@@ -78,6 +82,10 @@ A later statement may supersede an earlier memory. Do not silently overwrite his
 
 `ai_context.context_snapshots` stores compact Markdown summaries for model context windows. Snapshots are generated views of the private corpus, not the source of truth.
 
+## Workstream checkpoints
+
+Where a line of work stands (branch, pull request, decisions, verified results, blockers, the next step) is durable state, not something a context window is trusted to hold. Every harness resumes from `core.resume` at the start of a session and writes a checkpoint with `workstream.checkpoint` on each decision, commit, verified result and blocker, before compaction or handoff, and before ending. Checkpoints live in `ai_context` (`workstreams` and the append-only `workstream_events`), carry provenance, sensitivity and an operation key, link to `ops_objectives` and `ops_agent_jobs` by id instead of copying them, and never hold a credential or a raw transcript. The contract, the per-harness enforcement and its limits are in `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`. The SQL was applied as `20261124164529` on 2026-11-24 (`supabase/migrations/20261124164529_ai_context_workstreams_v1.sql`); Core promotion is tracked separately in `docs/control-plane/evidence/migration-audit-applied-2026-11-24.md`.
+
 ## Retrieval
 
 The private corpus supports:
@@ -107,6 +115,20 @@ Examples:
 The capability registry resolves the intent to a currently available binding. Bindings point at normalized tools discovered through MCP, HTTP, or approved local/native adapters. Provider-specific tools remain available for expert control and diagnostics but are not the durable workflow contract.
 
 This separation lets McCluster change providers without rewriting the website, prompts, or workflow definitions.
+
+Agent-only capabilities exist beside the MCP-exposed ones. `browser.act` (device-node slice N2,
+`docs/control-plane/AGENT-NODE-BROWSER.md`) is the first: a capability with interfaces `['agent']` only, risk
+`write`, approval `owner`, bound live only by compute nodes whose enrolment (gated by the owner's enrolment token)
+recorded trust `owned` and that advertise it (the owner's laptop, installed with `-Browser`), never listed over MCP
+and refused on `/mcp tools/call`. The resident agent loop reaches it as the tool `browser_act`, which exists for a
+turn only when the owner's own session submitted that turn with `allow_browser: true`; the Core checks the flag,
+the owner actor recorded on the durable turn at submit (never inferred from the flag) and the house org again on
+every call. What the
+browser reads comes back to the model wrapped as quoted evidence, never as instructions, and never in a system
+message; screenshots come back as bounded images on observation messages (the last two kept). Four independent
+gates (the edge, the broker, the Core tools, the fabric) and the Control Room's owner-only switch keep it away
+from every public client. Images in `ai.chat` follow the same rule as every other input: validated from their
+bytes by one module, routed to a vision implementation or refused with a clear code, never silently downgraded.
 
 ## Model adapters
 

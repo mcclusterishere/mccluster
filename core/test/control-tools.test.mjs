@@ -8,7 +8,7 @@ import { researchWeb } from '../src/tools/research.mjs';
 const names = new Set(CONTROL_TOOLS.map((tool) => tool.name));
 
 test('Core exposes repository objective code game world and web-research tools', () => {
-  for (const name of ['core.compute.task.get', 'core.ai.turn.submit', 'core.ai.turn.get', 'core.repo.inspect', 'core.objective.plan', 'core.code.build', 'core.game.build', 'core.world.generate', 'core.research.web', 'core.ontology.schema', 'core.ontology.query', 'core.ontology.neighbors', 'core.ontology.action.apply', 'core.ingest.connectors', 'core.ingest.records', 'core.ingest.run.begin', 'core.ingest.record.write', 'core.ingest.run.finish', 'core.entity.aliases', 'core.entity.resolve', 'core.facts.query', 'core.facts.claim']) {
+  for (const name of ['core.compute.task.get', 'core.ai.turn.submit', 'core.ai.turn.get', 'core.repo.inspect', 'core.objective.plan', 'core.code.build', 'core.game.build', 'core.world.generate', 'core.research.web', 'core.ontology.schema', 'core.ontology.query', 'core.ontology.neighbors', 'core.ontology.action.apply', 'core.ingest.connectors', 'core.ingest.records', 'core.ingest.run.begin', 'core.ingest.record.write', 'core.ingest.run.finish', 'core.entity.aliases', 'core.entity.resolve', 'core.facts.query', 'core.facts.claim', 'core.workstream.checkpoint', 'core.workstream.list']) {
     assert.ok(names.has(name), `missing ${name}`);
   }
 });
@@ -40,7 +40,7 @@ test('production capability catalog contains no planned lifecycle entries', asyn
   const catalog = JSON.parse(await readFile(new URL('../capabilities/catalog.json', import.meta.url), 'utf8'));
   const planned = catalog.capabilities.filter((capability) => capability.lifecycle === 'planned').map((capability) => capability.id);
   assert.deepEqual(planned, []);
-  const required = ['image.generate', 'video.generate', 'audio.generate', 'model3d.generate', 'world.generate', 'research.web', 'repo.inspect', 'code.build', 'game.build', 'deploy.preview', 'objective.plan', 'compute.task.get', 'ontology.schema', 'ontology.query', 'ontology.neighbors', 'ontology.action.apply', 'ingest.connectors', 'ingest.records', 'ingest.run.begin', 'ingest.record.write', 'ingest.run.finish', 'entity.aliases', 'entity.resolve', 'facts.query', 'facts.claim'];
+  const required = ['image.generate', 'video.generate', 'audio.generate', 'model3d.generate', 'world.generate', 'research.web', 'repo.inspect', 'code.build', 'game.build', 'deploy.preview', 'objective.plan', 'compute.task.get', 'ontology.schema', 'ontology.query', 'ontology.neighbors', 'ontology.action.apply', 'ingest.connectors', 'ingest.records', 'ingest.run.begin', 'ingest.record.write', 'ingest.run.finish', 'entity.aliases', 'entity.resolve', 'facts.query', 'facts.claim', 'workstream.checkpoint', 'workstream.list'];
   for (const id of required) {
     assert.equal(catalog.capabilities.find((capability) => capability.id === id)?.lifecycle, 'active', `${id} must be active`);
     assert.ok(catalog.bindings.some((binding) => binding.capability === id && binding.status === 'active'), `${id} must have an active binding`);
@@ -72,4 +72,46 @@ test('entity resolution fails closed without authenticated actor context', async
     }),
     /authenticated actor user_id must be a UUID/
   );
+});
+
+test('the catalog advertises ai.chat images on messages[] with the shared bounds, and browser.act as an owner-only agent capability without a static binding', async () => {
+  const catalog = JSON.parse(await readFile(new URL('../capabilities/catalog.json', import.meta.url), 'utf8'));
+  const chat = catalog.capabilities.find((capability) => capability.id === 'ai.chat');
+  const items = chat.inputSchema.properties.messages.items;
+  assert.equal(chat.inputSchema.properties.messages.maxItems, 200);
+  assert.deepEqual(items.required, ['role', 'content']);
+  assert.deepEqual(items.properties.role.enum, ['system', 'user', 'assistant', 'tool']);
+  assert.equal(items.properties.images.maxItems, 4);
+  assert.equal(items.properties.images.items.maxLength, 266668);
+  assert.equal(items.properties.images.items.contentEncoding, 'base64');
+  assert.match(items.properties.images.description, /200000/);
+  assert.match(chat.description, /AI_CHAT_NO_VISION_NODE/);
+  const browser = catalog.capabilities.find((capability) => capability.id === 'browser.act');
+  assert.ok(browser, 'browser.act is in the catalog');
+  assert.equal(browser.lifecycle, 'active');
+  assert.equal(browser.domain, 'compute');
+  assert.equal(browser.execution, 'async');
+  assert.equal(browser.risk, 'write');
+  assert.equal(browser.approval, 'owner');
+  assert.deepEqual(browser.interfaces, ['agent']);
+  assert.match(browser.description, /owner-only/i);
+  assert.match(browser.description, /never exposed over MCP/);
+  assert.equal(browser.inputSchema.properties.actions.maxItems, 25);
+  assert.deepEqual(browser.inputSchema.required, ['actions']);
+  assert.equal(catalog.bindings.some((binding) => binding.capability === 'browser.act'), false, 'live binding from owned nodes only');
+  assert.notEqual(catalog.catalogVersion, '2026-11-03.1', 'the catalog version moved with the schema');
+});
+
+test('core.ai.turn.submit accepts allow_browser only from an owner actor and bounds images to two', async () => {
+  const submit = CONTROL_TOOLS.find((tool) => tool.name === 'core.ai.turn.submit');
+  assert.equal(submit.inputSchema.properties.allow_browser.type, 'boolean');
+  assert.equal(submit.inputSchema.properties.images.maxItems, 2);
+  assert.equal(submit.inputSchema.properties.images.items.maxLength, 266668);
+  const args = { org_id: '00000000-0000-4000-8000-000000000001', thread_id: '00000000-0000-4000-8000-000000000002', message_id: '00000000-0000-4000-8000-000000000003', content: 'open the docs', allow_browser: true };
+  await assert.rejects(callControlTool('core.ai.turn.submit', args), (error) => error.code === 'BROWSER_OWNER_REQUIRED' && error.status === 403);
+  await assert.rejects(callControlTool('core.ai.turn.submit', args, { actor: { user_id: '00000000-0000-4000-8000-000000000009', kind: 'member' } }), (error) => error.code === 'BROWSER_OWNER_REQUIRED');
+  await assert.rejects(callControlTool('core.ai.turn.submit', args, { actor: { user_id: 'owner', kind: 'owner' } }), (error) => error.code === 'BROWSER_OWNER_REQUIRED', 'the actor id must be a UUID');
+  const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  await assert.rejects(callControlTool('core.ai.turn.submit', { ...args, allow_browser: false, images: [png, png, png] }), (error) => error.code === 'AI_TURN_IMAGES_TOO_MANY' && error.status === 400);
+  await assert.rejects(callControlTool('core.ai.turn.submit', { ...args, allow_browser: false, images: ['%%%'] }), (error) => error.code === 'AI_CHAT_IMAGE_INVALID');
 });

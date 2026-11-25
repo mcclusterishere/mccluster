@@ -1,0 +1,27 @@
+# merge-resolution determinism: for each combined-check state, the map resolved from the index stages (as combined-check.sh does) is compared with the union derived directly from the two commits; 2026-11-10T12:28:07Z
+## ours cf8c3cc7f642bf7e48a4b5e042df1e24203d2ecf + theirs claude/new-session-83ken5 9bda5896
+{
+ "ours_entries": 640,
+ "theirs_entries": 691,
+ "merged_entries": 696,
+ "added_from_theirs": 56,
+ "same_path_different_entry": [],
+ "header_keys_differing": [
+  "candidate_count",
+  "support_only_count"
+ ]
+}
+map resolved in the merge == union from the commits: identical (1ec06e98bf37769b…)
+## ours f8499fada78c8788f41b90b66dd661db9b1e07aa + theirs claude/new-session-83ken5 9bda5896
+{
+ "ours_entries": 640,
+ "theirs_entries": 691,
+ "merged_entries": 696,
+ "added_from_theirs": 56,
+ "same_path_different_entry": [],
+ "header_keys_differing": [
+  "candidate_count",
+  "support_only_count"
+ ]
+}
+map resolved in the merge == union from the commits: identical (d4e90115360ea9cb…)

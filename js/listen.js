@@ -41,7 +41,13 @@
      names a track, catalogue.json slugs it, and the telemetry recorded
      whatever string the player had on screen. Lowercased and stripped, all
      three land on the same key. */
-  function key(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
+  /* An accent is not a different letter to somebody typing: "VVS Made" finds VVS Madè. The marks are taken off
+     before anything else is stripped, on both sides of every comparison. */
+  function key(s) {
+    s = String(s || "");
+    if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
 
   /* THE ROTATION is this device's own saves, the same localStorage list
      album.html writes, in the same shape, so a heart tapped in either room
@@ -69,7 +75,11 @@
   var NEIGHBOURS = {};
   var AFFINITY_ROWS = 0;
   var q = "";
-  var chip = "all";
+  var TRACKS_READY = false;
+  var CATALOG_ERROR = false;
+  /* Recommendations remain off after the owner's 2026-11-23 direction. The 2026-11-24 request restores the full
+     browsable track list alongside albums and artists; it does not turn these recommendation rails back on. */
+  var SONG_RAILS = false;
   /* Whether anything actually ranked. The rail is headed on what the data
      can support: calling the shelf order "Most played" when no play has been
      counted yet is a claim the page cannot back, and it would read as one the
@@ -110,6 +120,9 @@
           gated: !!(t.gated || m.gated),
           length: m.length || "",
           credit: m.credit || "",
+          /* every artist credited on it, by name (js/music-credits.js): a search for a featured artist or a
+             producer finds the track even where the line shows the name another way ("guitar by Zakir") */
+          people: root.MCC_CREDITS ? root.MCC_CREDITS.names(albums, t).join(" ") : "",
           isrc: m.isrc || "",
           /* THE FALLBACK ORDER IS THE SHELF'S OWN, not the registry's.
              data/catalogue.json numbers the fifteen tracks it has registered
@@ -147,7 +160,7 @@
      --------------------------------------------------------------- */
   function matches(t, needle) {
     if (!needle) return true;
-    var hay = key(t.title + " " + t.album + " " + t.credit + " " + t.sub) + " " +
+    var hay = key(t.title + " " + t.album + " " + t.credit + " " + t.sub) + " " + key(t.people) + " " +
       String(t.isrc || "").toLowerCase();
     /* Every word has to appear somewhere, in any order, so "song write"
        finds "Write a Song". */
@@ -181,11 +194,12 @@
 
   function albumCard(a) {
     var n = (a.tracks || []).length;
+    /* what it is, plainly: the album and its artist (owner, 2026-11-23) */
     return '<a class="feat__card is-album" href="album.html?album=' + escAttr(a.slug) + '" data-cta="listen-album">' +
       '<img class="feat__bg" src="' + escAttr(a.art) + '" alt="" loading="lazy">' +
       '<span class="feat__smoke"></span>' +
       "<b>" + esc(a.name) + "</b>" +
-      "<small>" + esc(a.by || "") + "</small>" +
+      "<small>" + esc(a.artist || "McCluster") + "</small>" +
       '<span class="feat__acts">' +
         '<span class="feat__play">' + PLAY + "</span>" +
         '<span class="feat__n">' + n + (n === 1 ? " track" : " tracks") + "</span>" +
@@ -321,37 +335,42 @@
 
     /* A search is its own view: the rails are a browse aid and they get out
        of the way the moment somebody says what they came for. */
-    /* A search is its own view: the rails are a browse aid and they get out
-       of the way the moment somebody says what they came for. */
-    var showRails = !searching && chip !== "tracks";
+    var showRails = !searching;
     ["ffWrap", "finWrap", "riseWrap", "keptWrap", "deepWrap"].forEach(function (id) {
-      if (searching || chip !== "all") el(id).hidden = true;
+      if (searching || !SONG_RAILS) el(id).hidden = true;
     });
-    el("shelfWrap").hidden = searching || (chip !== "all" && chip !== "albums");
-    el("rotWrap").hidden = searching || !mine.length || (chip !== "all" && chip !== "saved");
-    el("allWrap").hidden = chip === "albums" && !searching;
+    el("shelfWrap").hidden = searching;
+    el("rotWrap").hidden = searching || !SONG_RAILS || !mine.length;
+    /* Every track is browsable before a listener knows its title. Search
+       narrows this same list, and clearing it restores the whole catalogue. */
+    el("allWrap").hidden = false;
+    el("allWrap").setAttribute("aria-busy", !TRACKS_READY && !CATALOG_ERROR ? "true" : "false");
+    el("browseMusic").hidden = searching;
 
     var count = el("count");
-    count.hidden = !searching;
-    if (searching) {
-      count.textContent = hits.length === 0
+    count.hidden = !TRACKS_READY;
+    if (TRACKS_READY) {
+      count.textContent = searching && hits.length === 0
         ? "Nothing matches “" + q.trim() + "”"
-        : hits.length + (hits.length === 1 ? " track" : " tracks");
+        : hits.length + (hits.length === 1 ? " track" : " tracks") +
+          (searching ? "" : " · " + ALBUMS.length + (ALBUMS.length === 1 ? " album" : " albums"));
     }
 
-    var list = hits;
-    if (!searching && chip === "saved") list = mine;
-
-    el("allK").textContent = searching ? "Results" : (chip === "saved" ? "Saved" : "Everything");
+    el("allK").textContent = searching ? "Results" : "All tracks";
     el("allWhy").textContent = searching
       ? "Matched on title, album, credit and registered code."
-      : (chip === "saved" ? "Every track you have saved on this device." : "All of it, in one list.");
-    el("all").innerHTML = list.map(row).join("") ||
-      '<li><span class="t">' + (searching
-        ? "No track by that name. Try an album, a credit, or clear the field."
-        : "Nothing saved yet. Tap a heart and it lands here.") + "</span></li>";
+      : "Every song, across every album. Play here or open a track for more.";
+    if (CATALOG_ERROR) {
+      el("all").innerHTML = '<li><span class="t">Tracks could not load. Refresh to try again.</span></li>';
+    } else if (!TRACKS_READY) {
+      el("all").innerHTML = '<li><span class="t">Loading tracks&hellip;</span></li>';
+    } else {
+      el("all").innerHTML = hits.map(row).join("") || (searching
+        ? '<li><span class="t">No track by that name. Try an album, a credit, or clear the field.</span></li>'
+        : '<li><span class="t">No tracks are available yet.</span></li>');
+    }
 
-    if (showRails) {
+    if (showRails && SONG_RAILS) {
       /* Each rail is one method, and it is on the page only when that method
          produced something. A recommender with nothing to say says nothing;
          it does not fall back to the top of the catalogue wearing a
@@ -371,8 +390,8 @@
       rail("rot",  "rotWrap",  mine.slice(0, 8).map(function (t) {
         return { t: t, why: "Saved on this device" };
       }));
-      el("shelf").innerHTML = ALBUMS.map(albumCard).join("");
     }
+    if (showRails) el("shelf").innerHTML = ALBUMS.map(albumCard).join("");
   }
 
   /* ---------------------------------------------------------------
@@ -403,6 +422,7 @@
     sb("v_track_affinity?select=track_key,other_key,score&rn=lte.6&order=score.desc"),
   ]).then(function (all) {
     build(all[0], all[1], all[2], all[3]);
+    TRACKS_READY = true;
     paint();
     if (root.MCC_TRACK) {
       root.MCC_TRACK("listen_view", {
@@ -411,7 +431,8 @@
       });
     }
   }).catch(function () {
-    el("all").innerHTML = '<li><span class="t">The shelf is warming up. Refresh in a moment.</span></li>';
+    CATALOG_ERROR = true;
+    paint();
   });
 
   /* ---------------------------------------------------------------
@@ -419,7 +440,10 @@
      --------------------------------------------------------------- */
   var box = el("q");
   var typed = null;
-  function clear() { box.value = ""; q = ""; el("qClear").hidden = true; paint(); }
+  function clear() {
+    box.value = "";
+    box.dispatchEvent(new Event("input", { bubbles: true }));
+  }
 
   box.addEventListener("input", function () {
     q = box.value;
@@ -451,17 +475,6 @@
 
   el("qClear").addEventListener("click", function () { clear(); box.focus(); });
 
-  el("chips").addEventListener("click", function (e) {
-    var b = e.target.closest("button[data-chip]");
-    if (!b) return;
-    chip = b.getAttribute("data-chip");
-    [].forEach.call(el("chips").querySelectorAll("button"), function (x) {
-      x.classList.toggle("on", x === b);
-    });
-    paint();
-    if (root.MCC_TRACK) root.MCC_TRACK("listen_chip", { chip: chip });
-  });
-
   /* The heart is live here, not decoration. A save made in the discovery
      room is the same act as one made in the album room and feeds the same
      ranking, so the room that recommends also collects. */
@@ -472,6 +485,6 @@
     var on = toggleSave(b.getAttribute("data-alb"), b.getAttribute("data-title"));
     b.classList.toggle("on", on);
     b.setAttribute("aria-pressed", on ? "true" : "false");
-    if (chip === "saved" || !el("rotWrap").hidden) paint();
+    if (!el("rotWrap").hidden) paint();
   });
 })(window);

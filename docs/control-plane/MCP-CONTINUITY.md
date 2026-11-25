@@ -118,6 +118,10 @@ on the remote allowlist) returns in one call:
 - work — active jobs, **stale running jobs reported separately**, queued jobs, recent failures, objectives
 - pending approvals — what a human owes the system
 - health — system contract version and recent signals
+- workstreams — where each line of work stands (branch, head, pull request, decisions, blockers, next step), read from
+  the checkpoints in the private context plane, with a generated resume packet. Written by `workstream.checkpoint`;
+  contract in `WORKSTREAM-CHECKPOINTS.md`. `sources.workstreams` is `missing` while
+  `supabase/migrations/20261124164529_ai_context_workstreams_v1.sql` is not applied, and the rest of the payload is unchanged
 - a `next_step_hint` leading with approvals, then stale leases, then failures
 
 Three deliberate choices.

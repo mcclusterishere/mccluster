@@ -3,7 +3,7 @@
 (function(){
   'use strict';
   window.CR=window.CR||{};
-  var H={health:null,healthError:null,sources:null,readiness:null,error:null,busy:false,source:'',query:'',inventory:null,inventoryError:null,inventoryBusy:false,eventInventory:null,eventError:null,eventBusy:false,eventQuery:'',fieldQuery:'',fieldLimit:30,panel:'datasets',datasetQuery:'',family:'',datasetStatus:'',dataset:'',records:null,runs:null,result:null,recordError:null,reading:false,seq:0};
+  var H={health:null,healthError:null,sources:null,readiness:null,error:null,busy:false,source:'',query:'',inventory:null,inventoryError:null,inventoryBusy:false,eventInventory:null,eventError:null,eventBusy:false,eventQuery:'',eventLimit:50,fieldQuery:'',fieldLimit:30,panel:'datasets',datasetQuery:'',family:'',datasetStatus:'',dataset:'',records:null,runs:null,result:null,recordError:null,reading:false,seq:0};
   var W={economy:'WLD',data:null,error:null,busy:false,seq:0};
   var WORKSPACE=[['Inbox','work:inbox'],['People','work:people'],['Projects','work:projects'],['Payments','work:payments'],['Renewals','work:renewals'],['Publishing','create:schedule'],['Library','create:library'],['Music','create:music'],['McCluster AI','ai'],['Apps','apps']];
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -22,7 +22,20 @@
   function overview(S,h){
     var d=S.data,t=(d.traffic||{}).totals||{},b=d.business&&d.business.snapshot||{},house=S.site==='__first_party__',science=d.audienceScience||{},aud=science.totals||{},cm=b.commerce||{},sales=cm.available?(b.window?cm.live_in_window:cm.live):null;
     var tracks=Array.isArray(d.content)?d.content:[],scope=S.range&&S.range.label||'Selected range';
-    var metrics='<div class="cu-metrics cu-overview-metrics" aria-label="Key metrics. Swipe for more.">'+metric('Unique visitors',num(t.visitors),'Distinct devices · '+scope,'audience')+metric('Page views',num(t.page_views),scope+' · all countries','audience')+(house?metric('New accounts',num(b.users&&b.users.created_in_window),scope+' · all countries','identity')+metric('Music plays',num(b.music&&b.music.plays&&b.music.plays.in_window),scope+' · all countries','content')+metric('Verified sales',cash(sales&&sales.net_cents),'Live · net of refunds','action')+metric('Awaiting review',num(sum(d.missions,'submitted')),'Mission assignments · all time','action'):metric('Sessions',num(t.sessions),scope,'audience')+metric('Events',num(t.events),scope,'content'))+'</div>';
+    function value(key,v){return S.errors&&S.errors[key]||!S.completed||!S.completed[key]?null:v;}
+    function status(keys){
+      if(keys.some(function(k){return S.errors&&S.errors[k];}))return 'Some data unavailable';
+      if(keys.some(function(k){return S.quality&&S.quality[k];}))return 'Some measurements incomplete';
+      return keys.every(function(k){return S.completed&&S.completed[k];})?'Reads ready':'Waiting for data';
+    }
+    function group(label,icon,body,keys,section){
+      return '<section class="cu-summary-group"><header><span class="cu-summary-icon" aria-hidden="true">'+icon+'</span><h2>'+esc(label)+'</h2><button type="button" data-cra-sec="'+section+'" aria-label="Explore '+label+'">Explore →</button></header><p class="cu-summary-status">'+esc(status(keys))+'</p><div class="cu-summary-values">'+body+'</div></section>';
+    }
+    var metrics='<section class="cu-summary" aria-label="Insights summary"><p class="cu-note">'+esc(scope)+' · '+esc(house?'McCluster first-party':S.site)+' · all countries. '+(S.loading?'Updating…':S.updatedAt?'Last updated '+esc(date(S.updatedAt)):'Not updated yet')+'</p><div class="cu-summary-groups" role="region" aria-label="Audience, Content and Business summaries. Scroll horizontally for more." tabindex="0">'+
+      group('Audience','◎',metric('Unique visitors',num(value('totals',t.visitors)),'Distinct devices · '+scope,'audience')+metric('Page views',num(value('totals',t.page_views)),scope,'audience')+(house?metric('New accounts',num(value('business',b.users&&b.users.created_in_window)),scope+' · attribution in Journeys','identity'):''),house?['totals','business']:['totals'],'audience')+
+      group('Content','♫',house?metric('Music plays',num(value('business',b.music&&b.music.plays&&b.music.plays.in_window)),scope,'content')+metric('Track starts',num(value('content',sum(d.content,'starts'))),scope+' · recorded player events','content'):metric('Events',num(value('totals',t.events)),scope+' · property','content')+metric('Sessions',num(value('totals',t.sessions)),scope+' · property','audience'),house?['business','content']:['totals'],'content')+
+      (house?group('Business','↗',metric('Verified sales',cash(value('business',sales&&sales.net_cents)),(b.window?scope:'All time')+' · live, net of refunds','action')+metric('Awaiting review',num(value('missions',sum(d.missions,'submitted'))),'Mission assignments · all time','action'),['business','missions'],'action'):'')+
+      '</div><p class="cu-note">Scroll sideways for each summary group. — means not available, not zero. Open a value for its full detail. Counts with different labels or time windows are not added together.</p></section>';
 
     var f=d.funnel,keys=[['arrived','Arrived'],['heard_something','Listened'],['made_an_account','Signed up'],['paid','Purchase reports']];
     function stageValue(key){
@@ -74,7 +87,7 @@
       rows([['Accounts connected',num(provider.connected_accounts)],
         ['Imported posts',num(provider.imported_posts)],['Provider insight snapshots',num(provider.metric_snapshots)],
         ['Provider state',provider.status||'Unknown']])+
-      (provider.reauthorization_required?'<p role="alert">Meta error 190: authorization needs renewal. '+esc(provider.next_step)+'</p>'+link('Open Channels','create:channels'):'<p>'+esc(provider.next_step||'')+'</p>')):'';
+      (provider.reauthorization_required?'<p role="alert">Meta error 190: authorization needs renewal. '+'Renew the existing Instagram authorization in the server’s Meta integration, then run verified media discovery. Channels lists the account but does not renew its authorization.</p>'+link('View registered channels','create:channels'):'<p>'+esc(provider.next_step||'')+'</p>')):'';
     if(H.eventBusy)return '<p role="status">Reading all stored first-party event names…</p>';
     if(H.eventError)return '<p role="alert">'+esc(H.eventError)+'</p><button type="button" data-cu-events-retry>Retry event inventory</button>';
     if(!d)return '<p>Event-name inventory is measured on demand, with taxonomy and raw/lean reconciliation.</p><button type="button" data-cu-events-retry>Read event inventory</button>';
@@ -86,7 +99,7 @@
       fact('Unclassified records',num(d.summary&&d.summary.unclassified_events),'Stored raw events, all time')+
       fact('Raw/lean mismatches',num(d.summary&&d.summary.mismatched_names),'Must be investigated, not backfilled blindly')+'</div>';
     var filters='<label class="cu-search">Find event name or stage<input id="cuEventQuery" type="search" value="'+esc(H.eventQuery)+'" placeholder="music_play, unclassified…"></label>';
-    var body='<div class="cu-dataset-list">'+matched.slice(0,150).map(function(r){
+    var body='<div class="cu-dataset-list">'+matched.slice(0,H.eventLimit).map(function(r){
       return '<details class="cu-dataset-row"><summary><b>'+esc(r.name)+'</b><small>'+esc(r.taxonomy_stage||'Unclassified')+' · 24h '+num(r.recent_24h)+' · 7d '+num(r.recent_7d)+' · lifetime '+num(r.raw_total)+'</small></summary>'+
         rows([['Raw events',num(r.raw_total)],['Lean projection',num(r.lean_total)],['Bot events',num(r.bot_rows)],
         ['First recorded',date(r.first_seen_at)],['Last recorded',date(r.last_seen_at)],
@@ -95,8 +108,8 @@
     }).join('')+'</div>';
     return card('Event dictionary','Raw vs lean, observed and unclassified records; client outcomes are not verified accounts, payments or mission completions.',
       '<p>Checked '+esc(date(d.measured_at))+'. '+(d.partial?'Provider source incomplete.':'Live database read, not a frozen snapshot.')+'</p>'+summary+filters+
-      '<p>'+num(matched.length)+' matching names · displaying up to 150. Taxonomy stages are review classifications, not proof of real-world outcomes.</p>'+body+
-      (matched.length>150?'<p>Refine the search to view all remaining names.</p>':'')) +nav;
+      '<p>'+num(matched.length)+' matching names · showing '+num(Math.min(matched.length,H.eventLimit))+'. Taxonomy stages are review classifications, not proof of real-world outcomes.</p>'+body+
+      (matched.length>H.eventLimit?'<button type="button" data-cu-more-events>Show more event names</button>':'')) +nav;
   }
   async function loadEvents(request,paint,force){
     if(H.eventBusy||(!force&&H.eventInventory))return;
@@ -127,7 +140,8 @@
     if(H.recordError)return '<p class="cu-warning" role="alert">'+esc(H.recordError)+'</p>';
     if(!H.records)return '<p>Select a source to inspect its stored records or request a snapshot.</p>';
     var r=H.result||{},records=H.records;
-    return '<div class="cu-record-head">'+badge(r.fetched_at?'Snapshot':'Archive')+'<span>'+num(records.length)+' returned records · showing up to 50</span></div><p class="cu-note">'+esc(r.attribution||'Source attribution is retained with each record.')+(r.note?' · '+esc(r.note):'')+(r.fetched_at?' · Retrieved '+esc(date(r.fetched_at)):' · Latest stored records, all dates')+'</p>'+(records.length?'<div class="cu-records">'+records.slice(0,50).map(function(x){var at=x.observed_at||x.last_seen_at;return '<details><summary><span>'+esc(x.name||x.external_id||x.entity_type||'Record')+'</span><small>'+esc(date(at))+'</small></summary><dl class="cu-rows"><div><dt>Source</dt><dd>'+esc(x.source_key||H.source)+'</dd></div><div><dt>Type</dt><dd>'+esc(x.entity_type||'Observation')+'</dd></div></dl><pre>'+esc(JSON.stringify({properties:x.properties||{},provenance:x.provenance||{},location:x.point||x.location||null},null,2).slice(0,12000))+'</pre></details>';}).join('')+'</div>':'<p>No records returned. This does not establish global coverage.</p>')+(Array.isArray(H.runs)?'<h3>Recent ingestion attempts</h3>'+rows(H.runs.slice(0,5).map(function(x){return [date(x.started_at),String(x.status||'Unknown')+' · '+num(x.records_written)+' written'];})): '');
+    if(H.source==='bls'&&r.source==='bls'&&window.CR.blsExplorer)return window.CR.blsExplorer.results(r);
+    return '<div class="cu-record-head">'+badge(r.fetched_at?'Snapshot':'Archive')+'<span>'+num(records.length)+' returned records · showing up to 50</span></div><p class="cu-note">'+esc(r.attribution||'Source attribution is retained with each record.')+(r.note?' · '+esc(r.note):'')+(r.fetched_at?' · Retrieved '+esc(date(r.fetched_at)):' · Latest stored records, all dates')+'</p>'+(records.length?'<div class="cu-records">'+records.slice(0,50).map(function(x){var at=x.observed_at||x.last_seen_at;return '<details><summary><span>'+esc(x.name||x.external_id||x.entity_type||'Record')+'</span><small>'+esc(date(at))+'</small></summary><dl class="cu-rows"><div><dt>Source</dt><dd>'+esc(x.source_key||H.source)+'</dd></div><div><dt>Type</dt><dd>'+esc(x.record_type||x.entity_type||x.event_type||x.observation_type||'Observation')+'</dd></div></dl><pre>'+esc(JSON.stringify({properties:x.properties||{},provenance:x.provenance||{},location:x.point||x.location||null},null,2).slice(0,12000))+'</pre></details>';}).join('')+'</div>':'<p>No records returned. This does not establish global coverage.</p>')+(Array.isArray(H.runs)?'<h3>Recent ingestion attempts</h3>'+rows(H.runs.slice(0,5).map(function(x){return [date(x.started_at),String(x.status||'Unknown')+' · '+num(x.records_written)+' written'];})): '');
   }
   function worldContext(){
     return card('World context','World Bank · latest published annual observations, not live',
@@ -155,10 +169,10 @@
     if(H.busy&&!H.sources)return news+card('World intelligence','Halo / GEV source families','<p role="status">Reading source permissions and readiness…</p>');
     var sources=H.sources||[],shown=sources.filter(function(s){return (s.name+' '+s.key+' '+(s.capabilities||[]).join(' ')).toLowerCase().includes(H.query.toLowerCase());}),selected=sources.find(function(s){return s.key===H.source;});
     var ready=H.readiness&&H.readiness.database_schema_ready,warning=H.error?'<p class="cu-warning" role="alert">'+esc(H.error)+'</p>':ready===false?'<p class="cu-warning">Spatial archive is not provisioned. Authorized transient snapshots remain available; saved history is unavailable.</p>':'';
-    return news+collectionHealth()+worldContext()+'<section class="cu-card"><div class="cu-heading"><h2>World intelligence</h2>'+button('Camera coverage','cameras')+'<button data-cu-refresh type="button">Refresh status</button></div><p>Transport, space, cameras, environment, infrastructure, economics and public records. Source permissions are enforced by the existing McCluster data plane.</p>'+warning+'<p class="cu-note">Status describes configuration, not a live feed. Halo retains its own provider credentials. These reads use McCluster’s existing broker.</p><label class="cu-search">Find a source<input id="cuSourceSearch" value="'+esc(H.query)+'" placeholder="Cameras, aircraft, weather, grants…" type="search"></label><p class="cu-note">'+sources.length+' registered sources · '+shown.length+' matching</p><div class="cu-source-grid">'+shown.map(function(s){return '<button type="button" data-cu-source="'+esc(s.key)+'" class="cu-source'+(s.key===H.source?' is-on':'')+'"><b>'+esc(s.name)+'</b><span>'+esc((s.capabilities||[]).join(' · '))+'</span><small>'+esc(sourceStatus(s))+' · '+esc(s.persistence)+'</small></button>';}).join('')+'</div></section>'+(selected?'<section class="cu-card"><h2>'+esc(selected.name)+'</h2><p>'+esc(selected.attribution||'Provider attribution applies.')+'</p><div class="cu-actions"><button data-cu-archive type="button"'+(ready===false||H.reading?' disabled':'')+'>Read stored records</button></div><form id="cuSnapshot"><label>Query parameters (JSON)<textarea id="cuParameters" data-source="'+esc(H.source)+'" rows="3" spellcheck="false">'+esc(H.parameters||'{}')+'</textarea></label><p class="cu-note">One requested snapshot. No automatic polling or archiving. Example coordinates are New Haven, Connecticut; change them for your query. Open Cameras for measured catalog coverage and image checks.</p><button type="submit"'+(H.reading||selected.entitlement&&selected.entitlement.allowed===false||selected.credential_required&&!selected.configured?' disabled':'')+'>Read provider snapshot</button></form>'+recordsHtml()+'</section>':'');
+    return news+collectionHealth()+worldContext()+'<section class="cu-card"><div class="cu-heading"><h2>World intelligence</h2>'+button('Camera coverage','cameras')+'<button data-cu-refresh type="button">Refresh status</button></div><p>Transport, space, cameras, environment, infrastructure, economics and public records. Source permissions are enforced by the existing McCluster data plane.</p>'+warning+'<p class="cu-note">Status describes configuration, not a live feed. Halo retains its own provider credentials. These reads use McCluster’s existing broker.</p><label class="cu-search">Find a source<input id="cuSourceSearch" value="'+esc(H.query)+'" placeholder="Cameras, aircraft, weather, grants…" type="search"></label><p class="cu-note">'+sources.length+' registered sources · '+shown.length+' matching</p><div class="cu-source-grid">'+shown.map(function(s){return '<button type="button" data-cu-source="'+esc(s.key)+'" class="cu-source'+(s.key===H.source?' is-on':'')+'"><b>'+esc(s.name)+'</b><span>'+esc((s.capabilities||[]).join(' · '))+'</span><small>'+esc(sourceStatus(s))+' · '+esc(s.persistence)+'</small></button>';}).join('')+'</div></section>'+(selected?'<section class="cu-card"><h2>'+esc(selected.name)+'</h2><p>'+esc(selected.attribution||'Provider attribution applies.')+'</p><div class="cu-actions"><button data-cu-archive type="button"'+(ready===false||H.reading?' disabled':'')+'>Read stored records</button></div>'+(H.source==='bls'&&window.CR.blsExplorer?window.CR.blsExplorer.form(H,selected):'<form id="cuSnapshot"><label>Query parameters (JSON)<textarea id="cuParameters" data-source="'+esc(H.source)+'" rows="3" spellcheck="false">'+esc(H.parameters||'{}')+'</textarea></label><p class="cu-note">One requested snapshot. No automatic polling or archiving. Example coordinates are New Haven, Connecticut; change them for your query. Open Cameras for measured catalog coverage and image checks.</p><button type="submit"'+(H.reading||selected.entitlement&&selected.entitlement.allowed===false||selected.credential_required&&!selected.configured?' disabled':'')+'>Read provider snapshot</button></form>')+recordsHtml()+'</section>':'');
   }
   async function load(request,paint){
-    if(H.busy)return;var seq=++H.seq;H.busy=true;H.error=null;paint();
+    if(H.busy)return;var seq=++H.seq;H.busy=true;H.error=null;H.reading=false;H.records=null;H.result=null;H.runs=null;H.recordError=null;H.sources=null;H.readiness=null;paint();
     var rs=await Promise.allSettled([request('/v1/seek-first/sources?lane=INTERNAL'),request('/v1/seek-first/readiness'),request('/v1/intel/health')]);
     if(seq!==H.seq)return;H.busy=false;H.sources=null;H.readiness=null;H.health=null;H.healthError=null;
     if(rs[2].status==='fulfilled'&&typeof rs[2].value.schema_ready==='boolean')H.health=rs[2].value;else H.healthError='Collector health could not be read.';
@@ -167,34 +181,36 @@
     paint();
   }
   async function read(request,paint,snapshot,parameters){
-    var source=H.sources&&H.sources.find(function(s){return s.key===H.source;});if(!source||H.reading)return;
+    var source=H.sources&&H.sources.find(function(s){return s.key===H.source;});if(!source||H.reading||source.entitlement&&source.entitlement.allowed===false)return;
     var seq=++H.seq;H.reading=true;H.records=null;H.result=null;H.runs=null;H.recordError=null;paint();
     try{
       if(snapshot){var body=Object.assign({},parameters,{lane:'INTERNAL',persist:false,include_raw:false});var d=await request('/v1/seek-first/fetch/'+encodeURIComponent(source.key),{method:'POST',body:body});if(!d.result||!Array.isArray(d.result.records))throw Error('Invalid snapshot response');if(seq!==H.seq)return;H.result=d.result;H.records=d.result.records;}
-      else {var results=await Promise.allSettled([request('/v1/seek-first/entities?source='+encodeURIComponent(source.key)+'&limit=50'),request('/v1/seek-first/ingestion-runs?source='+encodeURIComponent(source.key)+'&limit=5')]);if(seq!==H.seq)return;if(results[0].status!=='fulfilled'||!Array.isArray(results[0].value.entities))throw results[0].reason||Error('Archive response unavailable');H.records=results[0].value.entities;if(results[1].status==='fulfilled')H.runs=results[1].value.runs;}
+      else {var results=await Promise.allSettled([request('/v1/seek-first/records?source='+encodeURIComponent(source.key)+'&limit=50'),request('/v1/seek-first/ingestion-runs?source='+encodeURIComponent(source.key)+'&limit=5')]);if(seq!==H.seq)return;if(results[0].status!=='fulfilled'||!Array.isArray(results[0].value.records))throw results[0].reason||Error('Archive response unavailable');H.records=results[0].value.records;if(results[1].status==='fulfilled')H.runs=results[1].value.runs;}
     }catch(e){if(seq===H.seq)H.recordError=e.message||'Source read failed';}finally{if(seq===H.seq){H.reading=false;paint();}}
   }
   function bind(root,request,paint){
+    if(window.CR.blsExplorer)window.CR.blsExplorer.bind(root,H,function(p){read(request,paint,true,p);},paint);
     if(window.CR.newsContext)window.CR.newsContext.bind(root,request,paint);
     if(window.CR.connections)window.CR.connections.bind(root,request,paint);
     root.querySelectorAll('[data-cu-panel]').forEach(function(b){b.onclick=function(){H.panel=b.dataset.cuPanel;if(H.panel==='events')loadEvents(request,paint);paint();};});
     root.querySelectorAll('[data-cu-dataset]').forEach(function(b){b.onclick=function(){H.dataset=b.dataset.cuDataset;paint();var host=window.CR.analytics.state.host;var detail=host&&host.querySelector('[data-cu-dataset-detail]');if(detail)detail.scrollIntoView({block:'nearest'});};});
-    [['#cuDatasetSearch','datasetQuery'],['#cuDatasetFamily','family'],['#cuDatasetStatus','datasetStatus']].forEach(function(x){var el=root.querySelector(x[0]);if(el)el.onchange=function(){H[x[1]]=el.value;H.dataset='';paint();};});
+    [['#cuDatasetSearch','datasetQuery'],['#cuDatasetFamily','family'],['#cuDatasetStatus','datasetStatus']].forEach(function(x){var el=root.querySelector(x[0]);if(el)el[x[0]==='#cuDatasetSearch'?'oninput':'onchange']=function(){H[x[1]]=el.value;H.dataset='';paint();};});
     var retry=root.querySelector('[data-cu-coverage-retry]');if(retry)retry.onclick=function(){window.CR.analytics.loadCoverage(true);};
     var er=root.querySelector('[data-cu-events-retry]');if(er)er.onclick=function(){H.eventInventory=null;loadEvents(request,paint,true);};
-    var evq=root.querySelector('#cuEventQuery');if(evq)evq.onchange=function(){H.eventQuery=evq.value;paint();};
+    var evq=root.querySelector('#cuEventQuery');if(evq)evq.oninput=function(){H.eventQuery=evq.value;H.eventLimit=50;paint();};
+    var moreEvents=root.querySelector('[data-cu-more-events]');if(moreEvents)moreEvents.onclick=function(){H.eventLimit+=50;paint();};
     var directoryRetry=root.querySelector('[data-cu-inventory-retry]');if(directoryRetry)directoryRetry.onclick=function(){H.inventoryError=null;loadInventory(paint);};
 
     var world=root.querySelector('#cuWorldContext');if(world)world.onsubmit=function(e){e.preventDefault();loadWorld(request,paint,root.querySelector('#cuEconomy').value.trim().toUpperCase());};
-    var field=root.querySelector('#cuFieldSearch');if(field)field.onchange=function(){H.fieldQuery=field.value;H.fieldLimit=30;paint();};var more=root.querySelector('[data-cu-more-fields]');if(more)more.onclick=function(){H.fieldLimit+=30;paint();};
+    var field=root.querySelector('#cuFieldSearch');if(field)field.oninput=function(){H.fieldQuery=field.value;H.fieldLimit=30;paint();};var more=root.querySelector('[data-cu-more-fields]');if(more)more.onclick=function(){H.fieldLimit+=30;paint();};
     var refresh=root.querySelector('[data-cu-refresh]');if(refresh)refresh.onclick=function(){load(request,paint);};
-    var search=root.querySelector('#cuSourceSearch');if(search)search.onchange=function(){H.query=search.value;paint();};
+    var search=root.querySelector('#cuSourceSearch');if(search)search.oninput=function(){H.query=search.value;paint();};
     root.querySelectorAll('[data-cu-source]').forEach(function(b){b.onclick=function(){++H.seq;H.reading=false;H.source=b.dataset.cuSource;H.records=null;H.result=null;H.recordError=null;H.parameters=JSON.stringify(H.source==='cctv'?{provider:'austin',limit:100}:H.source==='celestrak'?{group:'stations'}:['usgs','open_meteo','adsb_lol','overpass','nominatim','tomtom'].includes(H.source)?{lat:41.31,lon:-72.93}: {},null,2);paint();};});
     var archive=root.querySelector('[data-cu-archive]');if(archive)archive.onclick=function(){read(request,paint,false);};
     var form=root.querySelector('#cuSnapshot');if(form)form.onsubmit=function(e){e.preventDefault();H.parameters=root.querySelector('#cuParameters').value;try{var p=JSON.parse(H.parameters);if(!p||Array.isArray(p)||typeof p!=='object')throw Error('Use a JSON object.');if(Object.keys(p).some(function(k){return /token|secret|password|api.?key|credential/i.test(k);}))throw Error('Provider credentials stay in server settings.');read(request,paint,true,p);}catch(e){H.recordError=e.message;paint();}};
   }
   function clearPrivate(){
-    ++H.seq;++W.seq;H.health=null;H.healthError=null;H.sources=null;H.readiness=null;H.error=null;H.busy=false;H.source='';H.records=null;H.result=null;H.runs=null;H.recordError=null;H.reading=false;H.inventory=null;H.inventoryError=null;H.inventoryBusy=false;H.eventInventory=null;H.eventError=null;H.eventBusy=false;H.eventQuery='';W.data=null;W.error=null;W.busy=false;
+    ++H.seq;++W.seq;H.health=null;H.healthError=null;H.sources=null;H.readiness=null;H.error=null;H.busy=false;H.source='';H.parameters='';H.records=null;H.result=null;H.runs=null;H.recordError=null;H.reading=false;H.inventory=null;H.inventoryError=null;H.inventoryBusy=false;H.eventInventory=null;H.eventError=null;H.eventBusy=false;H.eventQuery='';W.data=null;W.error=null;W.busy=false;
   }
   window.CR.analyticsUnified={overview:overview,operations:operations,coverage:coverage,datasetRows:datasetRows,geography:geography,inventory:inventory,loadInventory:loadInventory,intelligence:intelligence,load:load,bind:bind,state:H,worldState:W,worldContext:worldContext,loadWorld:loadWorld,sourceStatus:sourceStatus,clearPrivate:clearPrivate};
 })();

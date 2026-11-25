@@ -134,7 +134,7 @@ test('CCTV on the globe: shaded for guests (tap asks to sign in), locked with th
   assert.doesNotMatch(js, /prime\.mccluster\.org|\/api\/cctv\//, 'the page never talks to Halo directly');
   for (const words of ['Signed in', 'Privacy Policy agreed', 'A mission completed', 'Find a mission', 'I agree to the Privacy Policy']) assert.ok(js.includes(words), words);
   assert.match(js, /mnet\.html\?view=missions/);
-  assert.match(js, /No live frame from this camera right now\. Nothing is shown in its place\./);
+  assert.match(js, /No snapshot is available from this camera right now\./);
   /* location consent IS the privacy acknowledgement (owner, 2026-10-15): no separate consent route, no position sent */
   assert.doesNotMatch(js, /location-consent|location_consent|consent_store/);
   assert.match(js, /fetch\(SB\+'\/auth\/v1\/user',\{method:'PUT'[^\n]*privacy_policy_version:version,privacy_acknowledged_at:/, 'the member records the same two fields the join flow writes');
@@ -171,7 +171,9 @@ test('Whip Equipped: any signed-in member opens it; it says rides are not live a
   assert.match(whip, /By Whip Equipped LLC, a separate company\./);
   assert.match(whip, /sheet\('Transport',/, 'the World\'s directions sheet is Transport, never titled as Whip Equipped (rule 13)');
   assert.match(whip, /not approval/);
-  assert.match(js, /const WHIP_DRIVER_SIGNUP='https:\/\/matthew\.mccluster\.org\/whip\/driver\/'/);
+  /* the sign-up address comes from the table (window.MCC_SITE); today it is https://matthew.mccluster.org/whip/driver/, held
+     in scripts/test/site-hosts-client.test.mjs */
+  assert.match(js, /const WHIP_DRIVER_SIGNUP=window\.MCC_SITE\?window\.MCC_SITE\.siteUrl\('\/whip\/driver\/'\):'\/whip\/driver\/';/);
   assert.doesNotMatch(whip.replace(/https:\/\/matthew\.mccluster\.org\/whip\/driver\//g, ''), /McCluster|\/api\/rides|voter|registration/i, 'Whip attribution only; no ride request; no voter rule');
   assert.match(html, /id="ctlTransport"[^>]*aria-label="Transport: directions and Whip Equipped driver sign-up"/);
 });

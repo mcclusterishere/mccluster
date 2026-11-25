@@ -37,7 +37,7 @@ async function setup(width=390,role='owner'){
     const req=route.request(),u=new URL(req.url()),p=u.pathname;
     if(req.method()==='OPTIONS')return route.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
     if(u.origin===API){
-      if(p==='/v1/status')return json(route,behavior.owner?{ok:true,operator:{email:'fixture@invalid.test'}}:{error:'Forbidden'},behavior.owner?200:403);
+      if(p==='/v1/status'){if(behavior.authWait)await behavior.authWait;return json(route,behavior.owner?{ok:true,operator:{email:'fixture@invalid.test'}}:{error:'Forbidden'},behavior.owner?200:403);}
       if(p==='/v1/intel/connections'){
         calls.push({query:Object.fromEntries(u.searchParams),authorized:!!req.headers().authorization});
         if(behavior.mode==='failure')return json(route,{error:'Fixture graph unavailable'},503);
@@ -100,6 +100,14 @@ try{
   await page.screenshot({path:join(OUT,`connections-${width}.png`)});
   await page.locator('.cg-node [data-cg-node]').first().click();await page.waitForFunction(()=>!CR.connections.state.busy);
   check(`${width}: node navigation works`,calls.length===2);
+  // Both independent panels force a fresh owner check. Neither may cancel the
+  // other's verification and silently drop its requested result.
+  let releaseAuth;behavior.authWait=new Promise(resolve=>releaseAuth=resolve);
+  await page.locator('[data-cg-royce]').click();
+  await page.locator('#ncEconomy').fill('US');await page.locator('#ncCompare button[type=submit]').click();
+  releaseAuth();behavior.authWait=null;
+  await page.waitForFunction(()=>!CR.connections.state.busy&&!CR.newsContext.state.busy);
+  check(`${width}: simultaneous owner panels both retain results`,await page.locator('.cg-node').count()>0&&await page.locator('.nc-story').count()>0);
   behavior.mode='failure';await page.locator('[data-cg-royce]').click();await page.waitForFunction(()=>!CR.connections.state.busy);
   check(`${width}: errors clear stale results`,await page.locator('.cg-node').count()===0&&await page.locator('.cg-card [role=alert]').count()===1);
   await page.evaluate(()=>{window.dispatchEvent(new CustomEvent('mcc:auth-changed',{detail:{signed_in:false}}));});

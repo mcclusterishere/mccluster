@@ -8,31 +8,119 @@ the public World, mission applications, tax onboarding or feature-release toolin
 ## One bottom bar
 
 The server-verified house owner has Play, Control, the supplied M, Analytics and
-Globe. Control expands a bottom-anchored destination panel with All, Analytics,
-Operations, Studio, System and Products filters and text search. This avoids
-shrinking dozens of buttons into one row. Its groups swipe horizontally and its
-destination list scrolls independently; the page and bar stay in place.
+Globe. Control expands a bottom-anchored destination panel with All, Home,
+People, Sell, Create, Insights, System and Products filters and text search.
+This avoids shrinking dozens of buttons into one row. Its groups swipe
+horizontally and its destination list scrolls independently; the page and bar
+stay in place.
 
-All 35 native Control routes are read from `js/control-room/workspace-core.js`,
-the same inventory used by the owner workspace. Existing contract tests compare
-that inventory to the actual router's work/create/system views. Eight existing
-product/workspace doors are included: World, Your desk, Hitman's Halo, PRIM3,
-Whip, WE Manufacture, Asset Lab and Spatial Intelligence. Registered tenant apps
-remain in the existing Applications destination; no unverified app URL is added
-to the global bar automatically.
+Owner, 2026-11-02: "you tap it once and it'll open up the bar and then you tap
+it twice, it actually goes to the situation." One tap on the bar's Control
+button gives a light haptic tick and opens the panel, which leads with the six
+Control sections from NAV (with Control's live People and Sell counts when
+Control is the page underneath). Two taps within 350 ms (the World globe's
+double-tap gap) give a double tick and go straight to Control → Home → Today.
+Haptics use `navigator.vibrate` where it exists and are skipped under
+`prefers-reduced-motion`. There is still one bottom bar.
+
+Owner, 2026-11-02: "make sure there's a navigation back to … the main home of
+control." Inside Control the top bar's title is a crumb, `Control › <section>`;
+"Control" is a 44px link to Home → Today on every width. On Today it reads
+plain "Control".
+
+## Installed app: safe header and compact music bar
+
+Owner direction, 2026-11-20, from the installed iPhone screenshot: clear the
+status area, make the bottom bar about one-third smaller, and put playing music
+in the same bar with navigation in the middle and song information and controls
+at its sides.
+
+Installed presentation is detected from `navigator.standalone` or the standalone
+display-mode query, not the device's user agent. Only the top-level document
+consumes the World's physical top and side safe areas. A retained Music → World
+frame receives an already-safe viewport from its listening parent; its World,
+globe and account controls must not add those insets again. Both landscape
+orientations keep the header and navigation clear of the notch. Ordinary browser
+presentation stays unchanged.
+
+The installed capsule is 46 pixels high instead of approximately 68 pixels,
+with 44-pixel touch targets and the home-indicator clearance retained. The
+existing role-filtered navigation stays in its middle strip. When space is
+limited, that strip scrolls without removing destinations or shrinking buttons.
+The playing track's title and artist and its previous, play/pause and next
+controls occupy the sides. Where the bar's own Music button is the page's
+Play/Pause (Listen, while the dock shows Listen's own player), it is the one
+Play/Pause and the side holds Next alone; in the house owner's strip, which
+scrolls, it is pinned at the strip's start meanwhile, so it never scrolls out of
+reach. Where the dock shows another player's song (the World's, carried back to
+Listen from the Globe while Listen holds a record of its own), the Music button
+is the way to the music and the dock's own Play/Pause is the one. The dock never
+shows two. Opening the existing player keeps its deeper tools reachable.
+
+The dock reads and commands the existing Now Playing owner. It creates no audio
+element and no second playback lifecycle. A paused track remains resumable;
+clearing the owner removes the track controls. Legacy floating controls are
+suppressed only while the integrated dock can control that same player, so a
+failed or unsupported dock leaves the existing controls available. The separate
+React Native application is not the installed web shell shown in this request.
+
+`scripts/e2e/installed-app.e2e.mjs` checks actual rendered safe-area geometry,
+the compact bar, navigation reachability and retained playback with synthetic
+device insets and audio. It also checks the ordinary browser presentation.
+
+## One Control navigation definition
+
+Owner, 2026-10-30 (the consolidation mockup: "get that control room under
+wraps"): Control is six sections, Home, People, Sell, Create, Insights and
+System, defined once in `js/control-room/nav.js` (`window.CR.nav.NAV`). Every
+Control navigation surface reads it: the sidebar and phone section bar in
+`control.html`, the phone More sheet, the ⌘K palette, `js/control-registry.js`
+(the owner palette on other pages) and the route inventory in
+`js/control-room/workspace-core.js` that this shared bar's destination panel
+lists. Each NAV entry carries `was`, the old routes (`#work:*`, `#create:*`,
+`#ai`, `#analytics`, `#system:*`, `#apps`) and old names that fold into it, so
+every old link and bookmark lands on its new view and the palettes find a view
+by its old name. `scripts/test/control-nav.test.mjs` holds NAV to covering every
+old view and naming only renderers that exist.
+
+On control.html the shared bar keeps the bottom of the screen. The Control
+sections are that page's own index, not a second global bar: a row under the
+Control topbar on a phone and the sidebar from 1024px. Without the shared bar
+(a guest preview, or the bar failing to load) the same element is a floating
+bottom bar with Home, People, Sell, Create and More.
+
+Eight existing product/workspace doors are included in the destination panel:
+World, Your desk, Hitman's Halo, PRIM3, Whip, WE Manufacture, Asset Lab and
+Spatial Intelligence. PRIM3 World (`prim3-world.html`, owner 2026-11-02: the
+mission globe and World builder, "its own tab … only admin can see as its own
+app") is listed beside PRIM3 under Products. It is a door in this owner-only
+panel, not a sixth tab, and the page repeats the `/v1/status` owner check
+itself before it shows anything. The Game Hub (`game-hub.html`, owner 2026-11-03:
+"the learning hub is now the game hub") is listed beside PRIM3 under Products: a
+mini game per course with each course's paired music (`docs/game-hub/README.md`).
+Registered tenant apps remain in System → Apps; no
+unverified app URL is added to the global bar automatically.
 
 While already in Control, navigation changes the hash on the same document. The
 organization query, optional workspace presentation, editors and retained
 Analytics globe keep their existing lifecycle. Browser Back/Forward work normally.
-From a World host, Control points to Matthew's host using the bar's existing
-cross-origin sign-in handoff. Local chapter tabs, filters and editor tools remain
+From either host the bar's Control link goes to the platform, which serves
+Control at its own path (`control.html` is in `url_ownership.platform`), so on the
+platform the link stays on its origin and a session moves there through the carry
+page (stage P1 of the one-platform plan, `docs/control-plane/DOMAINS-AND-ENTITIES.md`).
+The owner's dock sections, the Home panel's Control destinations and the product doors
+(PRIM3, Game Hub, PRIM3 World, Hitman's Halo, E=Up, Whip, WE Manufacture) take the bar's own
+answer for each page (`MCC_BAR.navigation.page`, where the table serves it), never the dock's
+house (`navigation.house`), which the P1 amendment of 2026-11-24 keeps on Matthew's host until
+P3 for the song playing there (review V2-1, 2026-11-24; held on his host by
+`scripts/e2e/site-navigation.e2e.mjs`).
+Before P1, Control on a World host pointed to Matthew's host with the bar's
+cross-origin sign-in hand-off, whose writer is off since P1 (its reader only scrubs old links until P4 and trades nothing). Local chapter tabs, filters and editor tools remain
 local; they do not replace the global destination menu.
 
-Only after the shared module and stylesheet load do the verified owner's duplicate
-Control sidebar, Control mobile bar, workspace page tabs and workspace route
-selector disappear. If the shared module fails, the original Home link and Control
-navigation remain usable. The destination panel is a nonmodal popover: Escape and
-Close return focus to Control; moving focus outside closes it. Opening it does not
+If the shared module fails, the original Home link and the Control sections
+remain usable. The destination panel is a nonmodal popover: Escape and Close
+return focus to Control; moving focus outside closes it. Opening it does not
 automatically raise the phone keyboard.
 
 ## Profile and account

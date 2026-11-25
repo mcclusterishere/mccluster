@@ -15,18 +15,25 @@ export async function relevantMemory({ orgId, content, before }, search = search
 
 // Retain recent messages plus relevant archive excerpts, not a giant archive
 // dumped into every CPU inference. The complete transcript remains in Supabase.
-export function packHistory(rows, maxChars = 18000) {
+// Images (metadata.images on a user row) ride only on the current user message;
+// an older message keeps a marker in its text instead, so one vision turn
+// never replays every earlier image into the context window.
+export function packHistory(rows, maxChars = 18000, { currentId = null } = {}) {
   const messages = [];
   const messageIds = [];
   let remaining = maxChars;
+  const lastUserId = currentId ?? [...rows].reverse().find((row) => row?.role === 'user')?.id ?? null;
   for (const row of [...rows].reverse()) {
     if (!['user', 'assistant'].includes(row.role)) continue;
-    const content = String(row.content || '').trim();
+    const images = row.role === 'user' && Array.isArray(row.metadata?.images) ? row.metadata.images.filter((item) => typeof item === 'string' && item) : [];
+    const isCurrent = images.length > 0 && row.id != null && row.id === lastUserId;
+    let content = String(row.content || '').trim();
+    if (images.length && !isCurrent) content = `${content}\n[image attached]`.trim();
     if (!content) continue;
     if (messages.length && content.length > remaining) break;
     const included = content.slice(0, remaining);
     if (!included) break;
-    messages.unshift({ role: row.role, content: included });
+    messages.unshift({ role: row.role, content: included, ...(isCurrent ? { images } : {}) });
     if (row.id) messageIds.unshift(row.id);
     remaining -= included.length;
   }

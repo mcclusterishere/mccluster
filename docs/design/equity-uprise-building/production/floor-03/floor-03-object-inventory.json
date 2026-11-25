@@ -605,11 +605,12 @@
       "quantity": 1,
       "placement": {
         "bounds_ft": {
-          "x1": 5,
+          "x1": 2.8,
           "y1": 15.78,
-          "x2": 11,
+          "x2": 8.6,
           "y2": 15.98
-        }
+        },
+        "v3_note": "moved west: the old X5-11 span crossed the X9-12 door"
       },
       "style": "small low-brightness room display",
       "purpose": "Private authenticated interview/application context",
@@ -778,11 +779,12 @@
       "quantity": 1,
       "placement": {
         "bounds_ft": {
-          "x1": 19,
+          "x1": 16.8,
           "y1": 15.78,
-          "x2": 25,
+          "x2": 22.6,
           "y2": 15.98
-        }
+        },
+        "v3_note": "moved west: the old X19-25 span crossed the X23-26 door"
       },
       "style": "small low-brightness room display",
       "purpose": "Private authenticated interview/application context",

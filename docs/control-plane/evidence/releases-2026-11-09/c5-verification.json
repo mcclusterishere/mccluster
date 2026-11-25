@@ -1,0 +1,73 @@
+{
+  "rls": true,
+  "rows": 0,
+  "owner": "postgres",
+  "table": "core_signed_nonces",
+  "grants": [
+    {
+      "role": "anon",
+      "delete": false,
+      "insert": false,
+      "select": false,
+      "update": false
+    },
+    {
+      "role": "authenticated",
+      "delete": false,
+      "insert": false,
+      "select": false,
+      "update": false
+    },
+    {
+      "role": "service_role",
+      "delete": true,
+      "insert": true,
+      "select": true,
+      "update": true
+    }
+  ],
+  "columns": [
+    {
+      "name": "nonce",
+      "type": "text",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "name": "expires_at",
+      "type": "timestamp with time zone",
+      "default": null,
+      "nullable": "NO"
+    },
+    {
+      "name": "claimed_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "nullable": "NO"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "core_signed_nonces_pkey",
+      "definition": "CREATE UNIQUE INDEX core_signed_nonces_pkey ON public.core_signed_nonces USING btree (nonce)"
+    },
+    {
+      "name": "core_signed_nonces_expires_at_idx",
+      "definition": "CREATE INDEX core_signed_nonces_expires_at_idx ON public.core_signed_nonces USING btree (expires_at)"
+    }
+  ],
+  "migration": {
+    "name": "core_signed_nonces_v1",
+    "version": "20261109180829",
+    "statements": [
+      "-- Shared replay store for Core-signed mutating requests to Worker `mccluster`\n-- (workers/mccluster/src/media/core-signature.js, createSupabaseReplayStore).\n-- Audit 2026-11-09 finding C5: the per-isolate nonce cache let two isolates\n-- accept one captured signed mutation. A unique insert here is the atomic\n-- claim. Service-role only; no authenticated or anon grant.\n-- Activation: apply this, then set CORE_REPLAY_STORE = \"supabase\" in\n-- workers/mccluster/wrangler.toml [vars]. Until then mutating Core-signed\n-- calls answer 503 (fail closed); Core-signed World reads are unaffected.\ncreate table if not exists public.core_signed_nonces (\n  nonce text primary key,\n  expires_at timestamptz not null,\n  claimed_at timestamptz not null default now()\n);\ncreate index if not exists core_signed_nonces_expires_at_idx on public.core_signed_nonces (expires_at);\nalter table public.core_signed_nonces enable row level security;\nrevoke all on public.core_signed_nonces from anon, authenticated;\ncomment on table public.core_signed_nonces is\n  'Atomic replay claims for Core-signed mutating Worker requests; rows past expires_at may be swept.';\n"
+    ]
+  },
+  "constraints": [
+    {
+      "name": "core_signed_nonces_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (nonce)"
+    }
+  ]
+}

@@ -2,12 +2,37 @@
    account UI and a measured --mn-bar-clear above these audio controls. */
 .world-audio-open { overflow:hidden; }
 #mccWorldAudioShell { position:fixed;inset:0;z-index:2000;background:#090c11; }
+/* The retained listening document owns the physical safe area. Its World
+   frame and the nested globe receive an already-safe viewport, once. */
+html.mcc-installed-app.mcc-app-top #mccWorldAudioShell {
+  top:var(--mcc-app-safe-top,env(safe-area-inset-top,0px));
+  left:var(--mcc-app-safe-left,env(safe-area-inset-left,0px));
+  right:var(--mcc-app-safe-right,env(safe-area-inset-right,0px));
+}
+html.mcc-installed-app.mcc-app-top #mccWorldAudioShell::before {
+  content:"";position:absolute;bottom:100%;left:0;right:0;
+  height:var(--mcc-app-safe-top,env(safe-area-inset-top,0px));background:#090b0d;pointer-events:none;
+}
 #mccWorldAudioShell[hidden],#mccWorldAudioControls[hidden],.world-audio-status[hidden] { display:none!important; }
 #mccWorldAudioFrame { position:absolute;inset:0;width:100%;height:100%;border:0;background:#090c11; }
 body[data-world-audio-open]>.appbar { z-index:2200!important; }
 body[data-world-audio-open]>:not(.appbar):not(#mccWorldAudioShell):not(#mccWorldAudioControls):not(#mccDestinations):not(script):not(style):not(link) { visibility:hidden!important;pointer-events:none!important; }
 body[data-world-audio-open] #mccDestinations { z-index:2300; }
 body[data-world-audio-child]>.appbar { display:none!important; }
+/* The validated retained World is already inside its parent's safe viewport.
+   Frame env() values may be zero or inherited from the device; neither owns
+   another physical inset. Keep the account controls' local spacing instead. */
+html.mcc-installed-app:not(.mcc-app-top) body[data-world-audio-child="ready"][data-site-navigation] :is(#mccAuthChip,#mnMe) {
+  top:12px!important;right:12px!important;
+}
+html.mcc-installed-app:not(.mcc-app-top) body[data-world-audio-child="ready"][data-site-navigation] :is(#mnMenu,#mccProfileMenu) {
+  top:64px;right:12px;
+}
+/* A validated parent bridge says its installed dock owns the controls. The
+   child paints the World only; no duplicate floating player or header title. */
+html.mcc-app-dock-remote #mnWorldPlay,
+html.mcc-app-dock-remote #mnNowPlaying,
+html.mcc-app-dock-remote #mccWorldAudioControls { display:none!important; }
 .world-audio { position:fixed;z-index:2201;left:50%;transform:translateX(-50%);bottom:calc(var(--world-audio-nav-clear,88px) + 8px);width:min(560px,calc(100% - 24px));box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 44px 62px;align-items:center;gap:4px;padding:4px 7px;border:1px solid #ffffff2b;border-radius:16px;color:#f3efec;background:#11171ef5;box-shadow:0 8px 24px #0005;font-family:system-ui,sans-serif; }
 /* A World address popup lives in a lower-z-index cross-origin iframe.
    Hide only the transport chrome while the popup is selecting a location. */

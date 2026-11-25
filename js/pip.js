@@ -105,9 +105,40 @@
      sync is a convenience rather than the mechanism, and a listener whose
      network drops mid-song should not be told about a failed write of a
      number. Local state stays authoritative for the session; the remote row
-     only ever wins on first mount, and only when it is genuinely newer. */
+     wins only when it is genuinely newer, which is when another device played
+     since this one did (resume across devices, decision D-8, a default pending
+     Matthew; it was asked only when this device had nothing at all, so a phone
+     with yesterday's record never heard what the laptop played today). */
+  /* WHO ASKS. Pages that load js/backend.js reach the row through MCC_SUPA, as before. The listen page and
+     the artist page do not load it; there the shared sign-in (js/mcc-auth.js) makes the call, with a fresh
+     token and one more try after a refusal (MCC.authFetch, music slice M4), so a member's listen page can
+     read and write the same row (resume across devices, decision D-8). */
+  var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+  var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+  function asker() {
+    var S = window.MCC_SUPA, M = window.MCC;
+    if (S && S.url && S.key && S.token) {
+      return { url: S.url, key: S.key, uid: function () { return S.uid && S.uid(); },
+        call: function (url, opts) {
+          return S.token().then(function (tok) {
+            if (!tok) return null;
+            opts.headers.Authorization = "Bearer " + tok;
+            return fetch(url, opts);
+          });
+        } };
+    }
+    if (M && typeof M.authFetch === "function" && typeof M.account === "function") {
+      return { url: SB_URL, key: SB_KEY, uid: function () {
+          var a = M.account();
+          return a && /^[0-9a-f-]{36}$/i.test(a) ? a : null;
+        },
+        call: function (url, opts) { return M.authFetch(url, opts); } };
+    }
+    return null;
+  }
   function signedIn() {
-    return Boolean(window.MCC_SUPA && window.MCC_SUPA.url && window.MCC_SUPA.key && window.MCC_SUPA.token);
+    var a = asker();
+    return !!(a && a.uid());
   }
 
   /* NOT PROVISIONED IS AN ANSWER, NOT A RETRY. When the listener_state table
@@ -125,29 +156,26 @@
 
   function remote(method, body, keepalive) {
     if (!signedIn() || parked()) return Promise.resolve(null);
-    return window.MCC_SUPA.token().then(function (tok) {
-      if (!tok) return null;
-      var uid = window.MCC_SUPA.uid && window.MCC_SUPA.uid();
-      if (!uid) return null;
-      var headers = { apikey: window.MCC_SUPA.key, Authorization: "Bearer " + tok };
-      var url = window.MCC_SUPA.url + "/rest/v1/listener_state";
-      var opts = { method: method, headers: headers, cache: "no-store" };
-      /* The last write of a listen happens as the page is being torn down,
-         and an ordinary fetch is cancelled the moment that starts. keepalive
-         hands the request to the browser to finish without us. */
-      if (keepalive) opts.keepalive = true;
-      if (method === "GET") {
-        url += "?profile_id=eq." + encodeURIComponent(uid) + "&select=state,updated_at&limit=1";
-      } else {
-        headers["Content-Type"] = "application/json";
-        headers.Prefer = "resolution=merge-duplicates,return=minimal";
-        opts.body = JSON.stringify({ profile_id: uid, state: body });
-      }
-      return fetch(url, opts).then(function (r) {
-        if (r.status === 404) { park(); return null; }
-        if (!r.ok) return null;
-        return r.status === 204 ? null : r.json().catch(function () { return null; });
-      });
+    var a = asker(), uid = a.uid();
+    var headers = { apikey: a.key };
+    var url = a.url + "/rest/v1/listener_state";
+    var opts = { method: method, headers: headers, cache: "no-store" };
+    /* The last write of a listen happens as the page is being torn down,
+       and an ordinary fetch is cancelled the moment that starts. keepalive
+       hands the request to the browser to finish without us. */
+    if (keepalive) opts.keepalive = true;
+    if (method === "GET") {
+      url += "?profile_id=eq." + encodeURIComponent(uid) + "&select=state,updated_at&limit=1";
+    } else {
+      headers["Content-Type"] = "application/json";
+      headers.Prefer = "resolution=merge-duplicates,return=minimal";
+      opts.body = JSON.stringify({ profile_id: uid, state: body });
+    }
+    return Promise.resolve().then(function () { return a.call(url, opts); }).then(function (r) {
+      if (!r) return null;
+      if (r.status === 404) { park(); return null; }
+      if (!r.ok) return null;
+      return r.status === 204 ? null : r.json().catch(function () { return null; });
     }).catch(function () { return null; });
   }
 
@@ -180,6 +208,45 @@
     remote("POST", s, force);
   }
 
+  /* ---------- what the pocket may carry, and how it shows it ---------- */
+
+  /* a file's path on this site, however it was written (relative, rooted, or with this origin in front) */
+  function fileOf(u) {
+    return String(u || "").split(/[?#]/)[0].replace(/^[a-z]+:\/\/[^/]+/i, "").replace(/^\/+/, "").replace(/^\.\//, "");
+  }
+  /* WHOLE COVERS IN THE POCKET (owner, 2026-11-23: "The full covers aren't shown, and I agree. We should fix that.";
+     review QW-R2). A song whose picture is its album's cover (no film; its poster is the cover itself, or it has no
+     picture of its own and its album has a cover) is shown as that cover, whole: "cover". Anything else is a film and
+     its still: "film" (css/style.css, "WHOLE COVERS IN THE POCKET"). */
+  function pictureOf(s, albumArt) {
+    if (!s || s.music_video || s.video) return "film";
+    var art = s.art || albumArt || "";
+    if (!art) return "film";
+    if (!s.poster) return "cover";
+    return fileOf(s.poster) === fileOf(art) ? "cover" : "film";
+  }
+  /* A HELD OR GATED SONG IS NEVER THE POCKET'S (owner, 2026-11-23, the closing song of CIA Mind Control: "We keep the
+     song up, but it won't play"; review QW-R3). A record banked before the hold, on this device or in a member's
+     shared row, can still name it with its old public preview. The record's song is found in the catalogue by its
+     album and title, or by its file; held or gated, the pocket does not carry it: nothing mounts and nothing is read.
+     With no catalogue to ask (it could not be read), a preview file is never the pocket's to play. */
+  function songOf(s, albums) {
+    var src = fileOf(s.src), title = String(s.title || "").toLowerCase(), hit = null;
+    (albums || []).forEach(function (a) {
+      (a.tracks || []).forEach(function (t) {
+        if (hit) return;
+        if ((src && fileOf(t.src) === src) || (title && a.slug === s.album && String(t.title || "").toLowerCase() === title)) hit = t;
+      });
+    });
+    return hit;
+  }
+  function carries(s, albums) {
+    if (!s || !s.src) return false;
+    if (!albums) return !/-preview\.[a-z0-9]+$/i.test(fileOf(s.src));
+    var t = songOf(s, albums);
+    return !(t && (t.gated || t.hold));
+  }
+
   /* ---------- the album side: keep the position current ---------- */
   window.MCC_POCKET = {
     /* called by the album as it plays; force on the way out of the page */
@@ -194,29 +261,85 @@
     clearEverywhere: function () { clear(); if (signedIn()) remote("POST", {}); },
     pull: pullRemote,
     key: KEY,
+    /* what the pocket shows and what it may carry (pure; music pages and tests read them) */
+    picture: pictureOf,
+    carries: carries,
   };
   if (ownsPlayer) return;   // those pages have a better player than this one
+  /* a music view (music slice M5, js/music-shell.js) shows over the document that plays: a pocket here would be a
+     second player (the account page loads this file too) */
+  if (window.MCC_MUSIC_VIEW) return;
+
+  /* BEFORE ANY SOUND, THE DEVICE IS TOLD THIS IS MUSIC. js/now-playing.js
+     holds the one rule (the playback audio session iOS keeps going with the
+     screen locked) for every player. The music pages carry it already; the
+     pocket rides about fifty others, so it fetches the helper itself and only
+     mounts once it has run (or failed, or two and a half seconds passed: a
+     hung request never strands the record). */
+  function audioSession() { if (window.MCC_NOW_PLAYING) window.MCC_NOW_PLAYING.claim(); }
+  function withNowPlaying(go) {
+    if (window.MCC_NOW_PLAYING) { go(); return; }
+    var done = false, once = function () { if (!done) { done = true; go(); } };
+    var tag = document.querySelector("script[data-mcc-now-playing]");
+    if (!tag) {
+      tag = document.createElement("script");
+      tag.src = abs("js/now-playing.js?v=__STAMP__");
+      tag.setAttribute("data-mcc-now-playing", "");
+      document.head.appendChild(tag);
+    }
+    tag.addEventListener("load", once);
+    tag.addEventListener("error", once);
+    setTimeout(once, 2500);
+  }
+
+  /* the catalogue, read once a page: it says whether a record may ride here (carries) and what it rolls into */
+  var albumsAsked = null;
+  function catalogue() {
+    if (!albumsAsked) {
+      albumsAsked = fetch(abs("data/albums.json"), { cache: "force-cache" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { return d && Array.isArray(d.albums) ? d.albums : null; })
+        .catch(function () { return null; });
+    }
+    return albumsAsked;
+  }
+  /* may this record ride here? The catalogue is asked for two and a half seconds at most (a hung request never
+     strands the pocket); unanswered, the file's own name decides (carries) */
+  function vetted(rec) {
+    var late = new Promise(function (done) { setTimeout(function () { done(null); }, 2500); });
+    return Promise.race([catalogue(), late]).then(function (albums) { return carries(rec, albums); });
+  }
 
   var st = read();
 
-  /* A device that has never played anything has nothing local to go on. If
-     the listener is signed in, the record they left on another device is
-     worth asking for — that is the whole point of the shared row. Anonymous
-     visitors, which is most of them, fall out here immediately. */
-  if (!st) {
-    if (!signedIn()) return;
-    pullRemote().then(function (far) {
-      if (!far) return;
-      /* Arriving from another device is not a reason to start making noise:
-         autoplay would be refused here anyway, and a record the listener
-         started on their phone should not ambush their laptop. Hold it. */
-      far.playing = false;
-      write(far);
-      begin(far);
+  /* A signed-in listener's other devices may have played since this one did:
+     the shared row is asked (for a second and a half at most, so a slow
+     network never strands the record), and it wins only when it is newer.
+     Anonymous visitors, which is most of them, go straight on with what this
+     device holds, or fall out here when it holds nothing. */
+  if (!st && !signedIn()) return;
+  var asked = signedIn()
+    ? Promise.race([pullRemote(), new Promise(function (done) { setTimeout(function () { done(null); }, 1500); })])
+    : Promise.resolve(null);
+  asked.then(function (far) {
+    var rec = far || st;
+    if (!rec) return;
+    /* the catalogue's answer (2.5 s at most, above) and the lock screen's helper are waited for together, not one
+       after the other */
+    Promise.all([vetted(rec), new Promise(function (done) { withNowPlaying(done); })]).then(function (r) {
+      /* a held or gated song is not the pocket's (carries, above): this device's own record of it is put away so it
+         does not come back; a shared row naming it is left where it is, and nothing of it is copied here */
+      if (!r[0]) { if (!far) clear(); return; }
+      if (far) {
+        /* Arriving from another device is not a reason to start making noise:
+           autoplay would be refused here anyway, and a record the listener
+           started on their phone should not ambush their laptop. Hold it. */
+        far.playing = false;
+        write(far);
+      }
+      begin(rec);
     });
-    return;
-  }
-  begin(st);
+  });
 
   function begin(state) {
   st = state;
@@ -271,6 +394,10 @@
       + '<span class="pocket__sub"></span>'
       + "</div>"
       + '<button class="pocket__play" type="button" aria-label="Play or pause">' + svg(ICON.pause) + "</button>"
+      /* AirPlay where WebKit offers it, shown while a device is in range (js/now-playing.js; decision D-8) */
+      + '<button class="pocket__air" type="button" aria-label="Play on another device" hidden>'
+      + '<svg class="pocket__airic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12h-7"/><path d="M3 10a10 10 0 0 1 8 8"/><path d="M3 14a6 6 0 0 1 4.5 4.5"/><path d="M3 18h.5"/></svg>'
+      + "</button>"
       + '<button class="pocket__x" type="button" aria-label="Close the player">'
       + svg("M6 6l12 12M18 6L6 18", "pocket__xic") + "</button>"
       + '<i class="pocket__bar"><b></b></i>';
@@ -282,14 +409,30 @@
     box.querySelector(".pocket__title").textContent = st.title || "The record";
     box.querySelector(".pocket__sub").textContent = albumName(st.album);
 
-    if (st.poster) film.poster = abs(st.poster);
-    var musicVideo = st.music_video || st.video || "";
-    if (musicVideo) { film.src = abs(musicVideo); film.load(); }
+    paintPicture();
 
     /* the masthead pill lives in this exact corner at this exact height, so
        the page is told the pocket is here and the pill steps up above it */
     document.documentElement.classList.add("pocket-on");
     requestAnimationFrame(function () { box.classList.add("is-in"); });
+  }
+
+  /* THE TILE: a film and its still, or the album's cover, whole (pictureOf, above; review QW-R2). The film follows
+     the song the pocket holds, and a song with none drops the last one's. */
+  function paintPicture() {
+    var tile = box.querySelector(".pocket__tile");
+    var albumArt = albumInfo && albumInfo.art;
+    var cover = pictureOf(st, albumArt) === "cover";
+    tile.classList.toggle("pocket__tile--cover", cover);
+    var still = cover ? (st.poster || st.art || albumArt || "") : (st.poster || "");
+    if (still) film.poster = abs(still); else film.removeAttribute("poster");
+    var musicVideo = st.music_video || st.video || "";
+    if (musicVideo) {
+      if (film.getAttribute("src") !== abs(musicVideo)) { film.src = abs(musicVideo); film.load(); }
+    } else if (film.getAttribute("src")) {
+      film.removeAttribute("src");
+      try { film.load(); } catch (e) {}
+    }
   }
 
   /* the row carries the album SLUG, which is a URL word, not a record title */
@@ -305,7 +448,6 @@
     box.classList.add("is-held");
     playIc.setAttribute("d", ICON.play);
     sub("Tap to pick it back up");
-    setPlaybackState("paused");
   }
 
   /* ---------- the lock screen ---------- */
@@ -314,72 +456,33 @@
 
      Without this the record is an anonymous sound: the lock screen shows
      nothing, the headphone button does nothing, and pausing means finding the
-     tab again. MediaSession hands the OS the title, the record and the
-     artwork, and wires the hardware controls back to this widget — so it
-     behaves like every other thing that plays music on the device, including
-     while the phone is locked and the browser is in the background.
+     tab again. The device's Now Playing gets the title, the record and the
+     artwork, and its controls come back to this widget, so it behaves like
+     every other thing that plays music on the device.
 
-     The album page already did this; the pocket did not, so control was lost
-     the moment the listener left that one page. */
-  function media() {
-    return ("mediaSession" in navigator) ? navigator.mediaSession : null;
-  }
-
-  function setPlaybackState(state) {
-    var m = media();
-    if (!m) return;
-    try { m.playbackState = state; } catch (e) {}
-  }
-
-  function setMetadata() {
-    var m = media();
-    if (!m || typeof window.MediaMetadata !== "function") return;
-    var art = [];
-    if (st.poster) {
-      var poster = abs(st.poster);
-      /* One entry, unsized: the OS picks it up and scales it. Claiming sizes
-         we have not verified would just be wrong metadata. */
-      art.push({ src: poster });
-    }
-    try {
-      m.metadata = new window.MediaMetadata({
-        title: st.title || "The record",
-        artist: st.artist || "Matthew McCluster",
-        album: albumName(st.album),
-        artwork: art,
-      });
-    } catch (e) {}
-  }
-
-  function wireMediaControls() {
-    var m = media();
-    if (!m || !m.setActionHandler) return;
-    var on = function (name, fn) {
-      try { m.setActionHandler(name, fn); } catch (e) {}   /* unsupported action */
-    };
-    on("play", function () { if (audio && audio.paused) toggle(); });
-    on("pause", function () { if (audio && !audio.paused) toggle(); });
-    on("nexttrack", function () { if (audio) advance(); });
-    /* The OS stop control means the same thing the X means. */
-    on("stop", shut);
-    on("seekto", function (d) {
-      if (!audio || !d || typeof d.seekTime !== "number") return;
-      try { audio.currentTime = d.seekTime; } catch (e) {}
+     One owner writes the lock screen for every player (js/now-playing.js):
+     the pocket says which record it holds and what play, pause, previous,
+     next and stop mean here. It had no previous, and it showed the film's
+     poster unsized; the cover now is the album's own, at its true size and
+     type (music slice M2). */
+  var np = null, albumInfo = null;
+  function nowPlaying() {
+    if (np || !audio || !window.MCC_NOW_PLAYING || !window.MCC_NOW_PLAYING.bind) return np;
+    np = window.MCC_NOW_PLAYING.bind(audio, {
+      surface: "pocket",
+      track: function () {
+        var a = albumInfo || {};
+        return { title: st.title || "The record", artist: st.artist || a.artist || "McCluster",
+          album: a.name || albumName(st.album), art: st.art || a.art || "" };
+      },
+      play: function () { if (audio && audio.paused) toggle(); },
+      pause: function () { if (audio && !audio.paused) toggle(); },
+      previous: function () { if (audio) back(); },
+      next: function () { if (audio) advance(); },
+      /* the OS stop control means the same thing the X means */
+      stop: shut
     });
-  }
-
-  /* The scrubber on the lock screen needs a duration to draw. */
-  function setPositionState() {
-    var m = media();
-    if (!m || !m.setPositionState || !audio || !audio.duration) return;
-    if (!Number.isFinite(audio.duration)) return;
-    try {
-      m.setPositionState({
-        duration: audio.duration,
-        playbackRate: audio.playbackRate || 1,
-        position: Math.min(audio.currentTime, audio.duration),
-      });
-    } catch (e) {}
+    return np;
   }
 
   function start() {
@@ -412,12 +515,11 @@
        there, which is the point: the listener ends it, the file does not
        end it for them. */
     audio.addEventListener("ended", advance);
-    audio.addEventListener("durationchange", setPositionState);
     /* the song the album was playing goes on here: keep counting it */
     ledger(function (L) { if (!pocketListen) pocketListen = L.adopt(L.keyOf(st.src), pocketPlaying); });
 
-    setMetadata();
-    wireMediaControls();
+    nowPlaying();
+    if (window.MCC_NOW_PLAYING && window.MCC_NOW_PLAYING.airplay) window.MCC_NOW_PLAYING.airplay(box.querySelector(".pocket__air"), audio);
 
     /* A record that was paused when they left stays paused. Mounting it held
        gives them the transport back without starting sound they stopped. */
@@ -425,15 +527,13 @@
       playIc.setAttribute("d", ICON.play);
       box.classList.add("is-held");
       sub(wasPlaying ? "Tap to pick it back up" : albumName(st.album));
-      setPlaybackState("paused");
       return;
     }
 
+    audioSession();
     var pr = audio.play();
     if (pr && pr.then) {
       pr.then(function () {
-        setPlaybackState("playing");
-        setPositionState();
         var fp = film.play();
         if (fp && fp.catch) fp.catch(function () {});
       }).catch(markBlocked);
@@ -445,7 +545,6 @@
     var b = box.querySelector(".pocket__bar b");
     if (b) b.style.width = ((audio.currentTime / audio.duration) * 100).toFixed(2) + "%";
     if (lyric.lines.length) lyric.at(audio.currentTime);
-    setPositionState();   /* keeps the lock-screen scrubber honest */
     stash(!audio.paused);
   }
 
@@ -486,10 +585,9 @@
   var queue = null;      /* the album's tracks, once fetched */
 
   function loadAlbum() {
-    return fetch(abs("data/albums.json"), { cache: "force-cache" })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        var list = (d && d.albums) || [];
+    return catalogue()
+      .then(function (albums) {
+        var list = albums || [];
         /* match on the slug the album banked; fall back to the record that
            actually contains this file, so a renamed slug still rolls */
         var alb = list.filter(function (a) { return a.slug === st.album; })[0] ||
@@ -497,6 +595,9 @@
             return (a.tracks || []).some(function (t) { return t.src === st.src; });
           })[0];
         queue = alb ? (alb.tracks || []) : [];
+        albumInfo = alb ? { name: alb.name || "", art: alb.art || "", artist: alb.artist || "" } : null;
+        if (box) paintPicture();   /* the album's cover is known now */
+        if (np) np.update();
         return queue;
       })
       .catch(function () { queue = []; return queue; });
@@ -524,20 +625,41 @@
     document.head.appendChild(tag);
   }
 
-  function advance() {
+  function advance() { roll(1); }
+  /* back: the top of this song once it is a few seconds in, as the album's
+     own previous does; otherwise the song before it on the record */
+  function back() {
+    if (audio && audio.currentTime > 4) { try { audio.currentTime = 0; } catch (e) {} return; }
+    roll(-1);
+  }
+  function roll(step) {
     /* ended or skipped: the API decides whether the song was heard through */
     if (pocketListen && window.MCC_LISTENS) window.MCC_LISTENS.finish(pocketListen);
     pocketListen = null;
-    var roll = function (list) {
+    var go = function (list) {
       var i = -1;
       for (var k = 0; k < list.length; k++) if (list[k].src === st.src) { i = k; break; }
-      var next = list.length ? list[(i + 1) % list.length] : null;
-      /* no album, or an album of one: hold rather than loop a single track
-         forever, which is a different promise than "keep the record going" */
-      if (!next || next.src === st.src) { stash(false); box.classList.add("is-held"); return; }
+      var j = i + step;
+      /* ONE RECORD, START TO END (owner, 2026-11-23: "end of the album, and just leave"): Previous on its first song
+         starts that song again, and after its last song the pocket holds there, the lock screen handed back; it never
+         runs back round to the first song. A gated or held song is never played here (the album page plays its owner's
+         own play, and says why to anyone else). */
+      if (j < 0) { try { audio.currentTime = 0; } catch (e) {} return; }
+      var next = j < list.length ? list[j] : null;
+      if (!next || next.gated || next.hold) {
+        /* Next pressed while the song still plays stops it here too: the sound and the film first, then the stopped
+           state saved at once (a song left playing wrote playing:true back over it on its next timeupdate) */
+        try { audio.pause(); film.pause(); } catch (e) {}
+        playIc.setAttribute("d", ICON.play);
+        stash(false, true);
+        box.classList.add("is-held");
+        if (np) np.clear();
+        return;
+      }
 
       st.src = next.src;
-      st.video = next.video || "";
+      st.music_video = next.music_video || next.video || "";
+      st.video = st.music_video;   /* the legacy reader's name for the same film */
       st.poster = next.poster || "";
       st.lyrics = next.lyrics || "";
       st.title = next.title || "";
@@ -547,13 +669,13 @@
 
       box.querySelector(".pocket__title").textContent = st.title || "The record";
       sub(albumName(st.album));
-      if (st.poster) film.poster = abs(st.poster);
-      if (st.video) { film.src = abs(st.video); film.load(); }
+      paintPicture();
       loadLyrics();
-      setMetadata();   /* the lock screen is showing the last song otherwise */
+      if (np) np.update();   /* the lock screen is showing the last song otherwise */
 
       audio.src = abs(st.src);
       audio.currentTime = 0;
+      audioSession();
       var pr = audio.play();
       if (pr && pr.then) {
         pr.then(function () {
@@ -563,9 +685,9 @@
       lastStash = 0;
       stash(true);
       if (!next.gated) ledger(function (L) { pocketListen = L.start(L.keyOf(next), pocketPlaying); });
-      if (window.MCC_TRACK) window.MCC_TRACK("pocket_advance", { song: st.title });
+      if (window.MCC_TRACK) window.MCC_TRACK("pocket_advance", { song: st.title, step: step });
     };
-    if (queue) roll(queue); else loadAlbum().then(roll);
+    if (queue) go(queue); else loadAlbum().then(go);
   }
 
   function loadLyrics() {
@@ -588,6 +710,7 @@
   function toggle() {
     if (!audio) return;
     if (audio.paused) {
+      audioSession();
       var pr = audio.play();
       if (pr && pr.then) {
         pr.then(function () {
@@ -595,8 +718,6 @@
           box.classList.remove("is-held");
           playIc.setAttribute("d", ICON.pause);
           sub(albumName(st.album));
-          setPlaybackState("playing");
-          setPositionState();
           var fp = film.play(); if (fp && fp.catch) fp.catch(function () {});
         }).catch(markBlocked);
       }
@@ -604,7 +725,6 @@
       audio.pause();
       film.pause();
       playIc.setAttribute("d", ICON.play);
-      setPlaybackState("paused");
       stash(false);
     }
   }
@@ -614,14 +734,7 @@
     if (audio) { audio.pause(); audio.src = ""; audio = null; }
     /* Hand the lock screen back. Leaving stale metadata there implies a
        player that no longer exists. */
-    var m = media();
-    if (m) {
-      setPlaybackState("none");
-      try { m.metadata = null; } catch (e) {}
-      ["play", "pause", "nexttrack", "stop", "seekto"].forEach(function (name) {
-        try { m.setActionHandler(name, null); } catch (e) {}
-      });
-    }
+    if (np) np.clear();
     /* The stop button is the one control that means it everywhere. */
     window.MCC_POCKET.clearEverywhere();
     document.documentElement.classList.remove("pocket-on");

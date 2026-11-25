@@ -136,7 +136,62 @@
           "action_id": "029-validate-posture",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-029-DIAGNOSE",
+            "text": "Diagnose the simulated IT/OT segmentation exposure."
+          },
+          {
+            "objective_id": "OBJ-029-MITIGATE",
+            "text": "Apply a simulation-only least-privilege correction."
+          },
+          {
+            "objective_id": "OBJ-029-VALIDATE",
+            "text": "Validate the BAS-OT segment after mitigation."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-CISA-ITOT-029-V1-EEG-1",
+            "objective_id": "OBJ-029-DIAGNOSE",
+            "task": "Diagnose the simulated IT/OT segmentation exposure.",
+            "action_ids": [
+              "029-inspect-ot-vlan",
+              "029-inspect-firewall",
+              "029-submit-risk"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-CISA-ITOT-029-V1-EEG-2",
+            "objective_id": "OBJ-029-MITIGATE",
+            "task": "Apply a simulation-only least-privilege correction.",
+            "action_ids": [
+              "029-apply-least-privilege"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-CISA-ITOT-029-V1-EEG-3",
+            "objective_id": "OBJ-029-VALIDATE",
+            "task": "Validate the BAS-OT segment after mitigation.",
+            "action_ids": [
+              "029-validate-posture"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-CISA-ITOT-038-V1",
@@ -345,7 +400,65 @@
           "action_id": "038-validate-siem",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "drill",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-038-COLLECT",
+            "text": "Collect SIEM, network, BAS, and camera evidence."
+          },
+          {
+            "objective_id": "OBJ-038-CORRELATE",
+            "text": "Reconstruct the simulated sequence and classify the incident."
+          },
+          {
+            "objective_id": "OBJ-038-CLOSE",
+            "text": "Close and validate the simulated correlated incident."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-CISA-ITOT-038-V1-EEG-1",
+            "objective_id": "OBJ-038-COLLECT",
+            "task": "Collect SIEM, network, BAS, and camera evidence.",
+            "action_ids": [
+              "038-inspect-siem",
+              "038-inspect-network",
+              "038-inspect-bas",
+              "038-inspect-camera"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-CISA-ITOT-038-V1-EEG-2",
+            "objective_id": "OBJ-038-CORRELATE",
+            "task": "Reconstruct the simulated sequence and classify the incident.",
+            "action_ids": [
+              "038-submit-timeline",
+              "038-submit-classification"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-CISA-ITOT-038-V1-EEG-3",
+            "objective_id": "OBJ-038-CLOSE",
+            "task": "Close and validate the simulated correlated incident.",
+            "action_ids": [
+              "038-close-incident",
+              "038-validate-siem"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     },
     {
       "scenario_id": "EU-CISA-ITOT-039-V1",
@@ -548,7 +661,70 @@
           "action_id": "039-validate-building",
           "input": {}
         }
-      ]
+      ],
+      "hseep": {
+        "exercise_type": "functional",
+        "exercise_category": "operations-based",
+        "objectives": [
+          {
+            "objective_id": "OBJ-039-ASSESS",
+            "text": "Inspect the affected building, network, and BAS domains."
+          },
+          {
+            "objective_id": "OBJ-039-RESTORE",
+            "text": "Restore simulated power, network, then BAS state in dependency order."
+          },
+          {
+            "objective_id": "OBJ-039-VALIDATE",
+            "text": "Validate the whole-building sandbox after restoration."
+          }
+        ],
+        "eeg": [
+          {
+            "criterion_id": "EU-CISA-ITOT-039-V1-EEG-1",
+            "objective_id": "OBJ-039-ASSESS",
+            "task": "Inspect the affected building, network, and BAS domains.",
+            "action_ids": [
+              "039-inspect-building",
+              "039-inspect-core",
+              "039-inspect-bas",
+              "039-submit-causality"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-CISA-ITOT-039-V1-EEG-2",
+            "objective_id": "OBJ-039-RESTORE",
+            "task": "Restore simulated power, network, then BAS state in dependency order.",
+            "action_ids": [
+              "039-stabilize-power",
+              "039-restore-core",
+              "039-clear-bas-alarm"
+            ],
+            "critical": true
+          },
+          {
+            "criterion_id": "EU-CISA-ITOT-039-V1-EEG-3",
+            "objective_id": "OBJ-039-VALIDATE",
+            "task": "Validate the whole-building sandbox after restoration.",
+            "action_ids": [
+              "039-validate-building"
+            ],
+            "critical": true
+          }
+        ],
+        "hotwash_prompts": [
+          "What went well, and why? (strengths)",
+          "What should be done differently next time? (areas for improvement)",
+          "Was any step unclear, missing or unsafe?",
+          "Who should own each fix, and by when?"
+        ]
+      }
     }
-  ]
+  ],
+  "hseep": {
+    "doctrine_ref": "hseep-building-safety-scenario-pack-v1.json#/doctrine",
+    "aar_ip_fields_ref": "hseep-building-safety-scenario-pack-v1.json#/doctrine/aar_ip_fields",
+    "automation_boundary": "The runtime drafts EEG ratings and an AAR/IP; a human evaluator finalises them and assigns improvement owners."
+  }
 }

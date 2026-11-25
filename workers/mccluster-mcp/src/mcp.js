@@ -53,6 +53,7 @@ const REMOTE_CAPABILITIES = new Set([
   'media.model.recommend',
   'media.job.get',
   'repo.inspect',
+  'game.lore.read',
   'objective.plan',
   'ontology.schema',
   'ontology.query',
@@ -61,6 +62,32 @@ const REMOTE_CAPABILITIES = new Set([
   'ingest.records',
   'entity.aliases',
   'facts.query',
+  // workstream.list is the long form of core.resume's workstreams
+  // section: where each line of work stands, read back from the private
+  // context plane. Read-only.
+  'workstream.list',
+  // risk: write, approval: none, owner-attributed
+  //
+  // workstream.checkpoint is how an outside session (Claude Code, Codex,
+  // Cursor, any harness) writes down where the work stands so the next
+  // context window can read it back. It writes only the private context
+  // plane: it queues no job, runs no code, deploys nothing, sends nothing
+  // and approves no decision. Like everything on this route it is reached
+  // only by an authenticated house owner, the actor it records is the one
+  // stamped below (a client cannot name its own), and its org_id is
+  // overwritten with the house organization before dispatch.
+  'workstream.checkpoint',
+  // The dispatch front end (docs/control-plane/DISPATCH-LAYER.md).
+  // dispatch.turn (risk: write, approval: none) records a routing decision
+  // and only ever runs a capability whose own catalog approval is none;
+  // anything gated becomes a pending control approval, never a run.
+  // dispatch.get is read-only. dispatch.execute (approval: owner) starts a
+  // turn only after the owner approved it in Control; the database checks
+  // the approval, its expiry and its request hash. All three need the
+  // owner actor stamped below and run on the house organization only.
+  'dispatch.turn',
+  'dispatch.get',
+  'dispatch.execute',
   // risk: spend, approval: budget-gated
   'image.generate',
   'video.generate',
@@ -77,6 +104,20 @@ const REMOTE_CAPABILITIES = new Set([
   'ingest.run.finish',
   'entity.resolve',
   'facts.claim'
+]);
+
+// Tools whose org_id is never the caller's to choose: the edge overwrites it
+// with the house organization it has just verified the caller owns. The
+// resident conversation turn and the private context plane both belong to
+// the house and to no tenant.
+const HOUSE_ORG_ONLY = new Set([
+  'core.ai.turn.submit',
+  'core.ai.turn.get',
+  'workstream.checkpoint',
+  'workstream.list',
+  'dispatch.turn',
+  'dispatch.get',
+  'dispatch.execute'
 ]);
 
 function serviceHeaders(env) {
@@ -337,7 +378,7 @@ export async function handleCoreMcp(request, env, user) {
     const forwardedParams = { ...(rpc?.params ?? {}) };
     if (method === 'tools/call') {
       const toolName = forwardedParams.name;
-      if (toolName === 'core.ai.turn.submit' || toolName === 'core.ai.turn.get') {
+      if (HOUSE_ORG_ONLY.has(toolName)) {
         forwardedParams.arguments = {
           ...(forwardedParams.arguments || {}),
           org_id: houseOrg

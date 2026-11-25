@@ -1,0 +1,221 @@
+{
+  "schema_version": "1.0.0",
+  "status": "reference-training-profile-not-as-built",
+  "execution_target": "SANDBOX",
+  "live_control_allowed": false,
+  "frame": "bench-local millimetres; x right, y up, z front to rear; no building placement authority",
+  "provenance": {
+    "geometry": "Authored generic service-bench model; not a certified vendor motherboard or a physical equipment schedule. Standard component envelopes are references; socket, airflow and population rules are specific to this profile.",
+    "server_geometry": "server-lab-hardware-v1.json / SRV-2U-GEN via expandServerModel; exact existing model for virtualization hosts, illustrative training internals for the other 2U appliances.",
+    "workstation": "WS-BENCH-1 is a horizontal service chassis, not a claim that every furnished desk has this exact chassis.",
+    "safety": "No opening a PSU enclosure. Cold-service workflow requires shutdown, all AC cords disconnected and simulated ESD bonding. Never apply simulation instructions instead of the actual equipment service manual."
+  },
+  "workstation": {
+    "id": "WS-BENCH-1",
+    "label": "Generic 32 GB workstation training reference",
+    "chassis_mm": {
+      "w": 300,
+      "h": 240,
+      "d": 380
+    },
+    "memory_order": [
+      "RAM-A2",
+      "RAM-B2"
+    ],
+    "parts": [
+      {
+        "id": "BOARD",
+        "label": "Micro-ATX system board",
+        "type": "motherboard",
+        "box_mm": [
+          22,
+          94,
+          38,
+          244,
+          1.6,
+          244
+        ],
+        "sku": "BOARD-MATX",
+        "serviceable": false
+      },
+      {
+        "id": "CPU",
+        "label": "Socketed processor",
+        "type": "cpu",
+        "box_mm": [
+          74,
+          97,
+          98,
+          40,
+          8,
+          40
+        ],
+        "sku": "CPU-SIM-1"
+      },
+      {
+        "id": "COOLER",
+        "label": "CPU cooler",
+        "type": "heatsink",
+        "box_mm": [
+          59,
+          105,
+          83,
+          70,
+          58,
+          70
+        ],
+        "sku": "COOLER-SIM-1"
+      },
+      {
+        "id": "RAM-A2",
+        "label": "Channel A / slot A2",
+        "type": "dimm",
+        "box_mm": [
+          148,
+          98,
+          62,
+          5,
+          32,
+          133.35
+        ],
+        "sku": "DDR5-UDIMM-16",
+        "capacity_gb": 16
+      },
+      {
+        "id": "RAM-B2",
+        "label": "Channel B / slot B2",
+        "type": "dimm",
+        "box_mm": [
+          168,
+          98,
+          62,
+          5,
+          32,
+          133.35
+        ],
+        "sku": "DDR5-UDIMM-16",
+        "capacity_gb": 16
+      },
+      {
+        "id": "SSD",
+        "label": "M.2 2280 boot SSD",
+        "type": "m2_boot_module",
+        "box_mm": [
+          95,
+          98,
+          203,
+          80,
+          3,
+          22
+        ],
+        "sku": "NVME-1TB",
+        "capacity_gb": 1000
+      },
+      {
+        "id": "PSU1",
+        "label": "Enclosed power supply",
+        "type": "psu",
+        "box_mm": [
+          130,
+          8,
+          222,
+          150,
+          86,
+          140
+        ],
+        "sku": "PSU-500W",
+        "sealed": true
+      },
+      {
+        "id": "FAN",
+        "label": "Case exhaust fan",
+        "type": "fan",
+        "box_mm": [
+          12,
+          108,
+          313,
+          120,
+          120,
+          25
+        ],
+        "sku": "FAN-120"
+      },
+      {
+        "id": "CMOS",
+        "label": "RTC coin cell",
+        "type": "cmos_battery",
+        "box_mm": [
+          204,
+          98,
+          212,
+          20,
+          3.2,
+          20
+        ],
+        "sku": "CR2032"
+      },
+      {
+        "id": "TPM",
+        "label": "Trusted Platform Module",
+        "type": "tpm",
+        "box_mm": [
+          238,
+          98,
+          226,
+          20,
+          6,
+          14
+        ],
+        "sku": "TPM-SIM",
+        "serviceable": false
+      }
+    ]
+  },
+  "server": {
+    "id": "SRV-2U-GEN",
+    "label": "Generic dual-feed 2U training reference",
+    "model_id": "SRV-2U-GEN",
+    "initial_dimms": [
+      "CPU1-DIMM-A1",
+      "CPU1-DIMM-E1",
+      "CPU1-DIMM-C1",
+      "CPU1-DIMM-G1",
+      "CPU2-DIMM-A1",
+      "CPU2-DIMM-E1",
+      "CPU2-DIMM-C1",
+      "CPU2-DIMM-G1"
+    ],
+    "initial_drives": [
+      "BAY-00",
+      "BAY-01",
+      "BAY-02",
+      "BAY-03"
+    ]
+  },
+  "kit": [
+    {
+      "sku": "DDR5-UDIMM-16",
+      "label": "16 GB DDR5 UDIMM"
+    },
+    {
+      "sku": "DDR5-RDIMM-32",
+      "label": "32 GB DDR5 RDIMM (server)"
+    },
+    {
+      "sku": "DDR4-UDIMM-16",
+      "label": "16 GB DDR4 UDIMM \u2014 incompatible"
+    },
+    {
+      "sku": "PSU-500W",
+      "label": "500 W workstation PSU module"
+    },
+    {
+      "sku": "PSU-SERVER-MATCHED",
+      "label": "Matched server PSU module"
+    },
+    {
+      "sku": "PSU-1400W-OTHER",
+      "label": "Different PSU model \u2014 incompatible"
+    }
+  ]
+}

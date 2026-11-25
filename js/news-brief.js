@@ -10,6 +10,12 @@
   function name(iso) { try { return new Intl.DisplayNames([navigator.language || "en"], { type: "region" }).of(iso) || iso; } catch (_) { return iso; } }
   function status(text, kind) { var s = $("nbStatus"); s.textContent = text || ""; s.dataset.kind = kind || ""; }
   function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  /* an address of the site, where it is served (window.MCC_SITE, js/shell-boot.js, the first script on brief.html); without
+     the table it stays on this host */
+  function siteHref(path) {
+    var S = window.MCC_SITE;
+    return S && typeof S.siteUrl === "function" ? S.siteUrl(path) : path;
+  }
   function safeUrl(v) { try { var u = new URL(String(v)); return /^https?:$/.test(u.protocol) && !u.username && !u.password ? u.href : ""; } catch (_) { return ""; } }
   function nyYesterday() {
     var p = {}; new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" })
@@ -160,7 +166,7 @@
       var id = out && out.post && out.post.id;
       if (news && id && /^[0-9a-f-]{36}$/i.test(id)) {
         status("Published on the World feed under your name, and in the newsroom: ", "ok");
-        var a = document.createElement("a"); a.href = "https://mccluster.org/news/" + id; a.target = "_blank"; a.rel = "noopener"; a.textContent = "read the article";
+        var a = document.createElement("a"); a.href = siteHref("/news/" + id); a.target = "_blank"; a.rel = "noopener"; a.textContent = "read the article";
         $("nbStatus").appendChild(a);
       } else status("Published on the World feed under your name.", "ok");
     }).catch(function (e) { $("nbPublishStatus").textContent = e.message; }).finally(function () { $("nbPublishGo").disabled = false; });
@@ -173,7 +179,7 @@
     if (!$("nbLeadCountry").options.length) $("nbLeadCountry").innerHTML = ALL.slice().sort(function (a, b) { return name(a).localeCompare(name(b)); })
       .map(function (iso) { return '<option value="' + iso + '">' + esc(name(iso)) + "</option>"; }).join("");
     api("/v1/news-briefs/leads").then(function (r) {
-      if (!r.available) { $("nbLeadList").innerHTML = ""; $("nbLeadStatus").textContent = "Region leaders open once their table is applied."; $("nbLeadForm").hidden = true; return; }
+      if (!r.available) { $("nbLeadList").innerHTML = ""; $("nbLeadStatus").textContent = "Region leader management is not available yet."; $("nbLeadForm").hidden = true; return; }
       $("nbLeadForm").hidden = false;
       $("nbLeadList").innerHTML = r.leads.length ? r.leads.map(function (l) {
         return "<li>" + esc(l.name) + " · " + esc(name(l.country)) + ' <button class="nb__button" type="button" data-unlead="' + esc(l.m_uid) + '" data-country="' + esc(l.country) + '">Remove</button></li>';
@@ -190,7 +196,8 @@
   function boot() {
     $("nbLeadForm").addEventListener("submit", function (e) { e.preventDefault(); changeLead("POST", { handle: $("nbLeadHandle").value, country: $("nbLeadCountry").value }); });
     $("nbLeadList").addEventListener("click", function (e) { var b = e.target.closest("[data-unlead]"); if (b) changeLead("DELETE", { m_uid: b.getAttribute("data-unlead"), country: b.getAttribute("data-country") }); });
-    state.day = nyYesterday(); $("nbDay").value = state.day; $("nbDay").max = state.day;
+    var q=new URLSearchParams(location.search), day=q.get('day'); state.country=/^[A-Z]{2}$/.test(q.get('country')||'')?q.get('country'):''; state.day = /^\d{4}-\d{2}-\d{2}$/.test(day||'')&&day<=nyYesterday()?day:nyYesterday(); $("nbDay").value = state.day; $("nbDay").max = nyYesterday();
+    if(q.get('from')==='halo'){var back=document.createElement("a");back.href="action-globe.html?explore=1&halo=intel&section=briefs&item=brief:"+encodeURIComponent(state.country);back.textContent="← Back to Halo briefs";$("nbTitle").before(back);}
     $("nbDay").addEventListener("change", function () { if (/^\d{4}-\d{2}-\d{2}$/.test(this.value)) { state.day = this.value; load(); } });
     $("nbCountry").addEventListener("change", function () { state.country = this.value; paintBrief(); });
     $("nbAskGo").addEventListener("click", function () { ask(false); });

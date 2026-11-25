@@ -17,15 +17,36 @@
     return s ? s.replace(/js\/tabbar\.js.*$/, "") : "";
   })();
 
+  /* A MUSIC VIEW HAS NO BAR OF ITS OWN (music slice M5, js/music-shell.js). The retained music document under it
+     keeps the one bar, the account chip, the installed app's dock, the sign-in handoff and the World; a view builds
+     none of them and loads no World module. Its scripts that ask the bar (MCC_BAR) are given the retained one, and
+     the markup bar some pages carry, hidden before first paint by js/shell-boot.js, is taken out. */
+  if (window.MCC_MUSIC_VIEW) {
+    try { if (!window.MCC_BAR && window.MCC_MUSIC_VIEW.bar) window.MCC_BAR = window.MCC_MUSIC_VIEW.bar(); } catch (e) {}
+    Array.prototype.forEach.call(document.querySelectorAll(".appbar"), function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+    return;
+  }
+
   // Loaded on the globe's embedded document too: its first trusted touch can
   // reach the same-origin World soundtrack without an asynchronous message.
-  var worldAudioReady = null, worldAudioPending = null, worldAudioNotice = null;
+  var worldAudioReady = null, worldAudioPending = null, worldAudioNotice = null, worldCancelTap = null;
   function loadWorldAudio() {
     if (window.MCC_WORLD_AUDIO) return Promise.resolve(true);
     if (worldAudioReady) return worldAudioReady;
+    /* The World soundtrack is a player too: the one helper every player asks
+       before it plays (the playback audio session, js/now-playing.js) goes in
+       first. Neither is async, so the two run in the order they were added. */
+    if (!window.MCC_NOW_PLAYING && !document.querySelector("script[data-mcc-now-playing]")) {
+      var helper = document.createElement("script");
+      helper.src = ROOT + "js/now-playing.js?v=__STAMP__";
+      helper.async = false;
+      helper.setAttribute("data-mcc-now-playing", "");
+      document.head.appendChild(helper);
+    }
     worldAudioReady = new Promise(function (resolve) {
       var script = document.createElement("script");
       script.src = ROOT + "js/world-audio-continuity.js?v=__STAMP__";
+      script.async = false;
       script.onload = function () {
         var ready = !!window.MCC_WORLD_AUDIO;
         if (!ready) worldAudioReady = null;
@@ -37,39 +58,76 @@
     return worldAudioReady;
   }
   loadWorldAudio();
+  /* ONE PLAYER ACROSS MUSIC PAGES (music slice M5). A music page loaded as the top document (it says which on
+     <html data-music-view>) may stay the one document that plays while the other music pages open over it as
+     views (js/music-shell.js, which holds the routes and their one switch). */
+  if (window.parent === window && document.documentElement.hasAttribute("data-music-view") && !window.MCC_MUSIC_SHELL &&
+      !document.querySelector("script[data-mcc-music-shell]")) {
+    var musicShell = document.createElement("script");
+    musicShell.src = ROOT + "js/music-shell.js?v=__STAMP__";
+    musicShell.async = false;
+    musicShell.setAttribute("data-mcc-music-shell", "");
+    document.head.appendChild(musicShell);
+  }
 
-  /* ---------- THREE HOSTS, ONE BAR ----------
-     The World is served on a host of its own as well: the company's,
-     mccluster.org (owner, 2026-10-15: "we need mccluster.org to actually
-     show the World"; workers/mccluster/src/company-site/router.js), and
-     Equity Uprise's own door, humanuprise.com, when the owner routes it
-     (owner, 2026-10-14: "the globe experience as its own solo experience
-     ... interconnected with all the systems"; workers/mccluster/src/
-     human-uprise/router.js). Standing on either, Music and the M are
-     Matthew's site and link to it outright; the Globe stays home. Standing
-     on Matthew's site, the Globe goes to WORLD_ORIGIN, the company's root.
-     A session is per origin (localStorage), and the bar carries a member's
-     sign-in across (the handoff, below), so nobody signs in twice.
-
-     UNTIL THE OWNER ROUTES mccluster.org/* TO THE WORKER, the zone's
-     redirect rule sends https://mccluster.org/?view=feed to this house's
-     root with the World's query; the house forwards it on to the World
-     here (below), so the Globe tab works today and is direct the day the
-     route lands (docs/control-plane/DOMAINS-AND-ENTITIES.md, Activation). */
-  var WORLD_HOSTS = ["mccluster.org", "www.mccluster.org", "humanuprise.com", "www.humanuprise.com"];
-  var ON_WORLD_HOST = WORLD_HOSTS.indexOf(String(location.hostname).toLowerCase()) !== -1;
-  var HOUSE_ORIGIN = "https://matthew.mccluster.org/";
-  var WORLD_ORIGIN = "https://mccluster.org/";
-  /* where Matthew's rooms are, and where the World is, seen from here;
-     static files always come from ROOT (the World's host carries them) */
-  var HOUSE = ON_WORLD_HOST ? HOUSE_ORIGIN : ROOT;
-  var WORLD = ON_WORLD_HOST ? ROOT : (WORLD_ORIGIN || ROOT);
-  /* the World's address: the root of its own host, mnet.html elsewhere */
-  function worldAt(query) { return (ON_WORLD_HOST || WORLD_ORIGIN ? WORLD : WORLD + "mnet.html") + (query || ""); }
-  /* the house's root with the World's query is the World, sent here by the
-     zone rule above: on to mnet.html on this origin, query and fragment
-     (a carried sign-in) intact */
-  if (!ON_WORLD_HOST && /(?:^\?|&)view=/.test(location.search)) {
+  /* ---------- THE SITE'S HOSTS, ONE BAR (SPEC-PLATFORM 2.2 and 4) ----------
+     Which host serves which page, and where the World is, are the one table's (window.MCC_SITE: the generated block at
+     the top of js/shell-boot.js, from data/seo/domain-architecture.json), never a host written here. Each decision is
+     one small function below. From P1 the platform (mccluster.org) serves every page at its path, so standing on it the
+     bar is local: Music listen.html, the M the HERE front door (index.html), the Globe the World at its root. Standing on
+     Matthew's host (it serves every page until P3, and opens on his HERE page), the Globe points at the platform's World
+     and the M at his own root; Music, the account and an artist's page stay on his host until P3, so a song playing
+     there keeps playing (pageBase, the P1 amendment of 2026-11-24); every other page is the platform's. With P0's table
+     these functions answer what the literals they replaced did:
+     the World's hosts served the World and its rooms, and the bar linked Matthew's rooms on his host outright. With no
+     table (a preview, a local server) every link stays beside this page. A session is per origin (localStorage); the
+     carry (js/carry.js, P1) brings a member's sign-in to the platform, never in a URL.
+     Static files always come from ROOT (both hosts carry them). */
+  /* is this page on a host that serves the World at its root (the platform, its www door, a World door)? */
+  function onWorldHost() {
+    var S = window.MCC_SITE;
+    return !!S && S.isWorldHost(location.hostname);
+  }
+  /* is `path` the World's own address on `host` (this page's host when none is named): the World's document
+     (mnet.html) on any host, and the root of a World host; before P1 the old root document name there too, which the
+     Worker sent to the root. From P1 /index.html on the platform is the HERE front door, never the World. */
+  function isWorldPath(path, host) {
+    var S = window.MCC_SITE, p = String(path || "");
+    if (/(?:^|\/)mnet\.html$/.test(p)) return true;
+    if (!S || !S.isWorldHost(host == null ? location.hostname : host)) return false;
+    return p === S.world.root || (S.switches.platform_serves !== "everything" && p === S.platform.front_door_path);
+  }
+  /* where one of the site's pages (a path beside the root; query and fragment ride along) is linked from here: on the
+     site's own hosts, where the table serves it (from P1 the platform for all but Whip Equipped and the owner's own
+     pages, which are his host's alone; before P1 his host for all but the World's rooms), except the M, the HERE front
+     door, which on his host is his own root. Anywhere else, beside this page. */
+  function pageBase(path) {
+    var S = window.MCC_SITE;
+    if (!S || !S.hostRole(location.hostname)) return ROOT;
+    var p = "/" + String(path == null ? "" : path);
+    if (location.origin === S.profile.origin && S.cleanPath(p) === S.profile.root_path) return S.profile.origin + "/";
+    /* THE SONG KEEPS PLAYING ON HIS HOST UNTIL P3 (the P1 amendment of 2026-11-24, SPEC-PLATFORM 4). Matthew: "We must
+       prepare without breaking anything to do that" and "I want a singular fucking music engine with 1 fucking player at
+       all times". A door to another origin is a page load (js/music-shell.js decide()), which ends a song playing on his
+       album or artist page; so while his host serves every page (until P3 answers its 301s), the bar's doors to the
+       pages the one player opens over itself as views (Listen, an artist's page, the account: the music shell's view
+       routes) stay on his host, as at P0. Every other page is where the table serves it; the platform is unchanged. */
+    if (location.origin === S.profile.origin && S.switches.profile_host_routed !== true &&
+        /^\/(?:listen|music-creator|account)\.html$/.test(S.cleanPath(p))) return S.profile.origin + "/";
+    return S.servingOrigin(p) + "/";
+  }
+  function pageHref(path) { return pageBase(path) + path; }
+  /* the World's address seen from here: the root of this host when it is a World host, else the platform's World; with
+     no table, mnet.html beside this page */
+  function worldBase() {
+    var S = window.MCC_SITE;
+    if (!S) return ROOT + "mnet.html";
+    return onWorldHost() ? location.origin + S.world.root : S.platform.world_url;
+  }
+  function worldAt(query) { return worldBase() + (query || ""); }
+  /* the house's root with the World's query is the World: on to mnet.html on this origin, query and fragment (an old
+     link's carried sign-in) intact (once his host is routed, P3, the Worker answers it with a 301 to the platform) */
+  if (!onWorldHost() && /(?:^\?|&)view=/.test(location.search)) {
     var atRoot = false;
     try { atRoot = location.pathname.replace(/index\.html$/, "") === new URL(ROOT || "./", location.href).pathname; } catch (e) {}
     if (atRoot) { location.replace(ROOT + "mnet.html" + location.search + location.hash); return; }
@@ -125,15 +183,15 @@
     nav.className = "appbar";
     nav.setAttribute("aria-label", "Sections");
     nav.innerHTML =
-      '<a class="appbar__tab" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music">' +
+      '<a class="appbar__tab" id="appbarNP" href="' + pageHref("listen.html") + '" data-appnav="music">' +
         eqSvg(true) + '<span>Music</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'index.html" data-appnav="home">' +
+      '<a class="appbar__tab" href="' + pageHref("index.html") + '" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
       /* LAST COLUMN: the Globe, Equity Uprise's World screen. It replaced the
          Profile column (owner, 2026-10-14): Music | M | Globe for everyone.
          Account and profile are contextual now (the auth chip, the header
          avatar, and the Globe wing's Account room). */
-      '<a class="appbar__tab appbar__world" href="' + WORLD + 'mnet.html?view=feed" data-appnav="world">' +
+      '<a class="appbar__tab appbar__world" href="' + worldAt("?view=feed") + '" data-appnav="world">' +
         WORLD_SVG + '<span>Globe</span></a>';
     document.body.appendChild(nav);
     return nav;
@@ -159,6 +217,14 @@
      preview and the other renders inside somebody else's page, and our
      navigation belongs in neither. */
   var dock = document.querySelector(".appbar");
+  /* Installed music controls surround a stable navigation container. All role,
+     perspective and wing rebuilds replace only the tabs, leaving the live
+     transport's DOM and focus intact. In a browser the original bar is used. */
+  function barMarkup(value) {
+    var items = dock.querySelector(".appbar__tabs") || dock;
+    if (arguments.length) items.innerHTML = value;
+    return items.innerHTML;
+  }
   if (document.body.hasAttribute("data-no-appbar")) {
     if (dock && dock.parentNode) dock.parentNode.removeChild(dock);
     return;
@@ -233,26 +299,50 @@
     world: {
       home: "mnet.html?view=feed",
       slots: [
+        /* MISSIONS ARE THE ADMIN'S FOR NOW (owner, 2026-11-03: the Missions tab and the mission surfaces are hidden behind
+           admin until they are brought back). Kept, not deleted: the fifth field gates the room on the server's owner
+           answer (ADMIN_ON, GET /v1/status). For everyone else morph() keeps its column empty, so the wing still holds
+           two cells and the held tab never moves. */
         ["mnet.html?view=missions", "folk", "Missions", { title: "Equity Uprise missions",
-          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Equity Uprise." }],
+          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Equity Uprise." }, { admin: true }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
       ],
     },
   };
   /* every wing door resolves against its own host, wherever the page sits:
-     Matthew's rooms against the house, the World's rooms against the
-     World's door, and the account against the page's own host (a session
-     is per origin). The map is not a room, so it never takes a path. */
+     the site's pages where the table serves them, the World at the World's
+     address, and the account through sessionRoom (a session is per origin).
+     The map is not a room, so it never takes a path. */
   function resolveRoom(wing, path) {
     if (path === MAP) return MAP;
     if (path.indexOf("mnet.html") === 0) return worldAt(path.slice("mnet.html".length));
-    return (wing === "world" ? ROOT : HOUSE) + path;
+    return wing === "world" ? sessionRoom(path) : pageOrHere(path);
+  }
+  /* a page of the site, seen from that very page: the tab is this page (a tap goes back to the top, and on Listen it is
+     the player's own Play and Pause), never a load of the same page from another host, which would stop the song.
+     Anywhere else it is where the table serves the page (pageHref): from P1, on Matthew's host, the platform. */
+  function pageOrHere(path) {
+    return onPage(ROOT + path) ? ROOT + path : pageHref(path);
+  }
+  /* a room whose page reads this host's own session (the account): before P1 the page's own host, since a session is
+     per origin and nothing carried it there; from P1 where the table serves it (the platform, where the carry brings
+     the sign-in) */
+  function sessionRoom(path) {
+    var S = window.MCC_SITE;
+    return S && S.switches.carry === true ? pageHref(path) : ROOT + path;
+  }
+  /* the Music tab, drawn by this script or written into the page, points where its tap goes (WINGS.music.home): a
+     page link written beside this page would stay on this host */
+  function pointMusicTab() {
+    var music = dock.querySelector('[data-appnav="music"]');
+    if (music) music.href = WINGS.music.home;
   }
   Object.keys(WINGS).forEach(function (k) {
     WINGS[k].home = resolveRoom(k, WINGS[k].home);
     WINGS[k].slots.forEach(function (s) { s[0] = resolveRoom(k, s[0]); });
   });
+  pointMusicTab();
   /* ORDER is the bar's DOM order, and morph() reads it as such: the column a
      held tab keeps is its index here, so this list and the hand-written
      markup in every page must stay in step.
@@ -319,8 +409,8 @@
        editorial claim the pages do not make. Left for the owner to call. */
   };
   var PAGE_KEY = location.pathname.split("/").pop();
-  /* on the World's own host the root is the World, not the house */
-  if (ON_WORLD_HOST && (PAGE_KEY === "" || PAGE_KEY === "index.html")) PAGE_KEY = "mnet.html";
+  /* the World's own address lights the Globe: a World host's root, never the HERE front door (isWorldPath) */
+  if (isWorldPath(location.pathname)) PAGE_KEY = "mnet.html";
   var hereTab = dock.querySelector('[data-appnav="' + (PAGE_WING[PAGE_KEY] || "") + '"]');
   if (hereTab) hereTab.classList.add("is-here");
   /* The tab you are already on: a tap used to reload the same page (slow in
@@ -329,6 +419,9 @@
   dock.addEventListener("click", function (e) {
     var a = e.target && e.target.closest ? e.target.closest("a.appbar__tab.is-here") : null;
     if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    /* the Music tab on the player that gives the bar its transport is that player's Play or Pause (the tap
+       dispatch below), not a scroll: on listen.html this scroll took every tap (music slice M3 follow-up, V-3) */
+    if (a.getAttribute("data-appnav") === "music" && musicTransportHere(e)) return;
     var to;
     try { to = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
     /* "/" and "/index.html" are the same page (the HERE tab links the
@@ -338,7 +431,7 @@
     e.preventDefault();
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (err) { window.scrollTo(0, 0); }
   });
-  var HOME_BAR = dock.innerHTML;
+  var HOME_BAR = barMarkup();
   var wingOn = null;
   var AUTH_STATE = { signed_in: false, verified: false, user: null };
 
@@ -401,8 +494,9 @@
     }catch(e){}
   }
   /* Visiting the actual founder's profile is an explicit perspective switch.
-     Opening /index.html normally does not replace the signed-in member's home. */
-  var HOUSE_VISIT = !ON_WORLD_HOST && (/matthew-mccluster\.html$/.test(location.pathname) ||
+     Opening /index.html normally does not replace the signed-in member's home.
+     Wherever his pages are served (from P1 the platform too), never on the World. */
+  var HOUSE_VISIT = !isWorldPath(location.pathname) && (/matthew-mccluster\.html$/.test(location.pathname) ||
     new URLSearchParams(location.search).get("front")==="house");
   var PERSPECTIVE=readPerspective();
   if(HOUSE_VISIT && currentSubject()) {
@@ -423,19 +517,19 @@
     if (!p) {
       /* M is the McCluster platform home for everyone (owner, 2026-10-14);
          the member feed lives in World, not behind the emblem. */
-      homeTab.href = HOUSE + "index.html";
+      homeTab.href = pageHref("index.html");
       homeTab.setAttribute("aria-label", "Open the McCluster home");
       homeTab.removeAttribute("data-perspective");
       if (coin && (coin.tagName !== "IMG" || coin.classList.contains("appbar__m--creator"))) {
         coin.outerHTML = '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt="">';
       }
       if (label) label.textContent = HOUSE_LABEL;
-      WINGS.home.home = HOUSE + "index.html";
+      WINGS.home.home = pageHref("index.html");
       WINGS.home.slots[0] = HOUSE_ROOM;
       return;
     }
-    var door = HOUSE + (p.kind==="artist" ? "music-creator.html" : "member-front.html") +
-      "?handle=" + encodeURIComponent(p.handle);
+    var door = pageHref((p.kind==="artist" ? "music-creator.html" : "member-front.html") +
+      "?handle=" + encodeURIComponent(p.handle));
     homeTab.href = door;
     homeTab.setAttribute("aria-label", "Open " + p.name + "\u2019s front page");
     homeTab.setAttribute("data-perspective", p.handle);
@@ -450,7 +544,7 @@
       String(new URLSearchParams(location.search).get("handle") || "").toLowerCase() === p.handle;
     homeTab.classList.toggle("is-here", theirs);
     WINGS.home.home = door;
-    WINGS.home.slots[0] = [HOUSE + "index.html?front=house", "mmark", "McCluster", { title: "McCluster, the house",
+    WINGS.home.slots[0] = [pageHref("index.html?front=house"), "mmark", "McCluster", { title: "McCluster, the house",
       sub: "Matthew McCluster\u2019s front door: the M, the records and the World from his side." }];
   }
   function setPerspective(raw) {
@@ -460,7 +554,7 @@
     storePerspective(p);
     if (wingOn) revert();
     paintPerspective();
-    HOME_BAR = dock.innerHTML;
+    HOME_BAR = barMarkup();
     return true;
   }
   function clearPerspective() {
@@ -468,16 +562,18 @@
     storePerspective(null);
     if (wingOn) revert();
     paintPerspective();
-    HOME_BAR = dock.innerHTML;
+    HOME_BAR = barMarkup();
   }
   window.addEventListener("mcc:perspective",function(e) { if(AUTH_STATE.signed_in)setPerspective(e.detail); });
   window.addEventListener("mcc:perspective-house",function() {
     if(AUTH_STATE.signed_in)setPerspective({kind:"house"});
   });
   function resolveOwnPerspective(subject,user) {
-    var seq=++selfProfileEpoch;
-    if(!subject||!user||!window.MCC||typeof window.MCC.api!=="function")return;
-    window.MCC.api("/v1/mnet/bootstrap?app_key=mccluster-web").then(function(response) {
+    var seq=++selfProfileEpoch,token=(readAuthSession()||{}).access_token;
+    if(!subject||!user||!token)return;
+    /* With the token this lookup has just verified. MCC.api would refresh it once more wherever a session is stale
+       on every call: a second refresh for every page, landing under the owner check and under every other tab. */
+    fetch(API_ORIGIN+"/v1/mnet/bootstrap?app_key=mccluster-web",{headers:{authorization:"Bearer "+token,"content-type":"application/json"}}).then(function(response) {
       if(!response.ok)throw Error("Profile unavailable");
       return response.json();
     }).then(function(data) {
@@ -487,7 +583,7 @@
         name:profile.display_name||id.mccluster_id,avatar:profile.avatar_url});
       if(!PERSPECTIVE&&SELF_PROFILE&&!wingOn) {
         paintPerspective();
-        HOME_BAR=dock.innerHTML;
+        HOME_BAR=barMarkup();
       }
       // An open wing will pick up SELF_PROFILE when revert() restores the
       // closed bar. Never overwrite the wing's anchor while it is open.
@@ -551,7 +647,7 @@
       var label = tab.querySelector("span:last-child");
       var svg = tab.querySelector(":scope > svg");
       var av = tab.querySelector(".appbar__auth-avatar");
-      tab.href = signedIn ? worldAt("?view=profile") : ROOT + "account.html";
+      tab.href = signedIn ? worldAt("?view=profile") : sessionRoom("account.html");
       tab.setAttribute("aria-label", signedIn ? "Open your member workspace" : "Sign in or create an account");
       tab.classList.toggle("is-authenticated", !!signedIn);
       if (label) label.textContent = signedIn ? "Me" : "Sign in";
@@ -569,19 +665,25 @@
       chip.id = "mccAuthChip";
       chip.className = "mcc-auth-chip";
       chip.innerHTML = '<span class="mcc-auth-chip__dot" aria-hidden="true"></span><span class="mcc-auth-chip__text"></span>';
-      document.body.appendChild(chip);
+      /* inside a landmark, so a screen reader's region list reaches it; the
+         wrapper has no box of its own (the chip is fixed), so nothing moves */
+      var chipNav = document.createElement("nav");
+      chipNav.className = "mcc-auth-nav";
+      chipNav.setAttribute("aria-label", "Account");
+      chipNav.appendChild(chip);
+      document.body.appendChild(chipNav);
     }
-    chip.href = signedIn ? worldAt("?view=profile") : ROOT + "account.html";
+    chip.href = signedIn ? worldAt("?view=profile") : sessionRoom("account.html");
     chip.querySelector(".mcc-auth-chip__text").textContent = signedIn ? "Profile" : "Sign in";
     chip.setAttribute("aria-label", signedIn ? "Profile and account: " + name : "Sign in or create an account");
     window.MCC_AUTH_STATE = AUTH_STATE;
     try { window.dispatchEvent(new CustomEvent("mcc:auth-state", { detail: AUTH_STATE })); } catch (e) {}
-    if (!wingOn) HOME_BAR = dock.innerHTML;
+    if (!wingOn) HOME_BAR = barMarkup();
   }
-  /* ---------- THE OWNER'S FIVE TABS (owner, 2026-10-15: "admin first; push features down to other users later") ----------
-     For the house owner only, the bar widens to five: Play (the player), Home (the Control Room: the admin back end lives
+  /* ---------- THE OWNER'S SEVEN TABS (owner, 2026-10-15: "admin first; push features down to other users later") ----------
+     For the house owner only, the bar widens to seven: Play (the player), Inbox, Home (the Control Room: the admin back end lives
      under Home now), the M (as supplied, assets/img/m-mark.png: scaled, never redrawn, no plate added), Analytics (its
-     own tab, control.html#analytics) and the Globe. Everyone else keeps the three columns above.
+     own tab, control.html#analytics), the Globe and Games. Everyone else keeps the three columns above.
      Who is the owner is the server's answer, never this browser's: GET /v1/status, the same owner check the Control Room
      and js/owner-control-redirect.js use (requireHouseOwner in the Worker). The answer is remembered for this tab's
      session only for negative answers (sessionStorage, one minute, tied to the user).
@@ -593,25 +695,36 @@
      and lives under Home instead (the Control Room's account menu links the Desk: mnet.html?view=feed&desk). The
      "mcc:appbar-admin" event fires whenever this changes. */
   var ADMIN_KEY = "mcc_appbar_admin", ADMIN_TTL = 60000, ADMIN_ON = false, BASE_BAR = null;
-  var adminEpoch = 0, authEpoch = 0, adminSession = null;
+  var navPermissionReady = false, navPresentationReady = false;
+  function revealNavigation() {
+    if (navPermissionReady && navPresentationReady) window.MCC_SHELL?.navigationReady();
+  }
+  window.addEventListener('mcc:navigation-ready', function () { navPresentationReady = true; revealNavigation(); });
+  var adminEpoch = 0, authEpoch = 0, adminSession = null, adminFlight = null;
   var PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4.8v14.4L19 12z" fill="currentColor"/></svg>';
   var HOME_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 10.6 12 3.8l8.5 6.8"/><path d="M6 9v11h4.4v-5.6h3.2V20H18V9"/></svg>';
   var CHART_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="4.5" y="11" width="3" height="9" rx="1"/><rect x="10.5" y="4" width="3" height="16" rx="1"/><rect x="16.5" y="8" width="3" height="12" rx="1"/></svg>';
+  // Shared owner-only active-state registry. These links do not grant access;
+  // every destination retains its existing server gate.
+  var ADMIN_GAME_PAGES = ['city-arcade.html','fictional-city.html','game-hub.html','prim3.html','prim3-world.html','prim3-transit.html','prim3-range.html','prim3-courtyard.html','prim3-tactics-preview.html','equity-uprise-server-lab-3d.html'];
   function adminHere() {
+    if (ADMIN_GAME_PAGES.indexOf(PAGE_KEY) !== -1) return "games";
     /* the owner's globe is Hitman's Halo: lit while Halo is on screen */
+    if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("games")) return "games";
     if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("halo")) return "halo";
     if (!/control\.html$/.test(location.pathname)) return null;
-    return /^#analytics/i.test(location.hash) ? "analytics" : "admin-home";
+    if (/^#(?:people|inbox)(?::|$)|^#work(?::(?:inbox|people|companies|pipeline|tasks|clients|relationships|projects|deliverables|outreach|desk-bot))?$/i.test(location.hash)) return "admin-inbox";
+    return /^#(analytics|insights)/i.test(location.hash) ? "analytics" : "admin-home";
   }
   function adminBar() {
-    return '<a class="appbar__tab appbar__tab--icon" id="appbarNP" href="' + HOUSE + 'listen.html" data-appnav="music" aria-label="Play: the player">' + PLAY_SVG + '<span class="appbar__sr">Play</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'control.html#home" data-appnav="admin-home" aria-label="Home: the Control Room">' + HOME_SVG + '<span>Home</span></a>' +
-      '<a class="appbar__tab appbar__tab--mid" href="' + HOUSE + 'index.html" data-appnav="home"><img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span class="appbar__sr">' + textOf(HOUSE_LABEL) + '</span></a>' +
-      '<a class="appbar__tab" href="' + HOUSE + 'control.html#analytics" data-appnav="analytics" aria-label="Analytics">' + CHART_SVG + '<span>Analytics</span></a>' +
-      /* THE OWNER'S GLOBE IS HITMAN'S HALO (owner, 2026-10-22: "click the globe as matthew@mccluster.org ... It'll take you
-         to the user globe and not the Hitman Halo globe"). Everyone else's globe is the World; the owner reaches the World
-         feed from Halo's own header. Its key is "halo", not "world", so nothing that repaints the World door rewrites it. */
-      '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + HOUSE + 'action-globe.html?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo">' + WORLD_SVG + '<span class="appbar__sr">Hitman’s Halo</span></a>';
+    return '<a class="appbar__tab appbar__tab--icon" id="appbarNP" href="' + pageHref("listen.html") + '" data-appnav="music" aria-label="Play: the player">' + PLAY_SVG + '<span class="appbar__sr">Play</span></a>' +
+      '<a class="appbar__tab" href="' + pageHref("control.html#people:inbox:conversations") + '" data-appnav="admin-inbox" aria-label="Inbox"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Inbox</span></a>' +
+      '<a class="appbar__tab" href="' + pageHref("control.html#home") + '" data-appnav="admin-home" aria-label="Home: admin workspace">' + HOME_SVG + '<span>Home</span></a>' +
+      '<a class="appbar__tab appbar__tab--mid" href="' + pageHref("index.html") + '" data-appnav="home"><img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span class="appbar__sr">' + textOf(HOUSE_LABEL) + '</span></a>' +
+      '<a class="appbar__tab" href="' + pageHref("control.html#analytics") + '" data-appnav="analytics" aria-label="Analytics">' + CHART_SVG + '<span>Analytics</span></a>' +
+      /* The owner also needs the consumer World. Halo keeps its separate Products and Control doors. */
+      '<a class="appbar__tab appbar__tab--icon appbar__world" href="' + worldAt("?view=feed") + '" data-appnav="world" aria-label="Open the World globe">' + WORLD_SVG + '<span class="appbar__sr">World globe</span></a>' +
+      '<a class="appbar__tab" href="' + pageHref("game-hub.html") + '" data-appnav="games" aria-label="Games: courses, arcade and worlds"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="13" rx="4"/><path d="M6 12h6M9 9v6M16 11h1M18 14h1"/></svg><span>Games</span></a>';
   }
   function markAdminHere() {
     if (!ADMIN_ON) return;
@@ -624,10 +737,12 @@
   }
   function paintAdmin(on) {
     on = !!on;
+    navPermissionReady = true;
+    if (!on) revealNavigation();
     if (on === ADMIN_ON) { markAdminHere(); return; }
     if (wingOn) revert();
-    if (on) { BASE_BAR = dock.innerHTML; dock.innerHTML = adminBar(); }
-    else if (BASE_BAR !== null) { dock.innerHTML = BASE_BAR; BASE_BAR = null; }
+    if (on) { BASE_BAR = barMarkup(); barMarkup(adminBar()); }
+    else if (BASE_BAR !== null) { barMarkup(BASE_BAR); BASE_BAR = null; }
     ADMIN_ON = on;
     dock.classList.toggle("appbar--admin", on);
     if (on) document.body.setAttribute("data-appbar-admin", ""); else document.body.removeAttribute("data-appbar-admin");
@@ -635,7 +750,7 @@
     markAdminHere();
     var chipText = document.querySelector("#mccAuthChip .mcc-auth-chip__text");
     if (chipText && AUTH_STATE.signed_in) chipText.textContent = "Profile";
-    HOME_BAR = dock.innerHTML;
+    HOME_BAR = barMarkup();
     try { paintSound(); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent("mcc:appbar-admin", { detail: { admin: on } })); } catch (e) {}
   }
@@ -643,15 +758,23 @@
     try { var m = JSON.parse(sessionStorage.getItem(ADMIN_KEY) || "null"); return m && m.admin === false && m.sub === sub && Date.now() >= m.at && Date.now() - m.at < ADMIN_TTL ? m : null; } catch (e) { return null; }
   }
   function checkAdmin(force) {
-    var attempt = ++adminEpoch;
     var session = readAuthSession();
     var token = session && session.access_token, sub = token ? jwtPayload(token).sub : null;
-    if (!AUTH_STATE.signed_in || !token || !sub) { adminSession = null; try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} paintAdmin(false); return Promise.resolve(false); }
+    if (!AUTH_STATE.signed_in || !token || !sub) { ++adminEpoch; adminSession = null; adminFlight = null; try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} paintAdmin(false); return Promise.resolve(false); }
+    // Independent owner panels may verify together. Share only an in-flight
+    // check for this exact session and epoch; never reuse a completed grant.
+    if (adminFlight && adminFlight.token === token && adminFlight.epoch === adminEpoch) return adminFlight.promise;
+    var attempt = ++adminEpoch;
     var memo = !force && readAdminMemo(sub);
     if (memo) { paintAdmin(memo.admin); return Promise.resolve(memo.admin); }
     var controller = new AbortController(), timeout = setTimeout(function () { controller.abort(); }, 5000);
-    function current() { return attempt === adminEpoch && AUTH_STATE.signed_in && (readAuthSession() || {}).access_token === token; }
-    return fetch(API_ORIGIN + "/v1/status", { headers: { authorization: "Bearer " + token }, cache: "no-store", signal: controller.signal })
+    /* The answer is about the account, not the token that asked: a token refreshed for the same account while the
+       check was in the air (another request on the page, another tab) does not discard it. Discarded, nothing was
+       painted and the navigation stayed hidden until the shell's own fallback. */
+    function current() { return attempt === adminEpoch && AUTH_STATE.signed_in && currentSubject() === String(sub); }
+    var flight = { token: token, epoch: attempt, promise: null };
+    adminFlight = flight;
+    flight.promise = fetch(API_ORIGIN + "/v1/status", { headers: { authorization: "Bearer " + token }, cache: "no-store", signal: controller.signal })
       .then(function (r) {
         if (!current()) return false;
         /* Only definite answers are cached. An unavailable authority closes navigation. */
@@ -667,32 +790,76 @@
         paintAdmin(r.ok);
         return r.ok;
       }).catch(function () { if (current()) { paintAdmin(false); try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} } return false; })
-      .finally(function () { clearTimeout(timeout); });
+      .finally(function () { clearTimeout(timeout); if (adminFlight === flight) adminFlight = null; });
+    return flight.promise;
   }
   window.addEventListener("hashchange", markAdminHere);
   function loadCanonicalAuth() {
     if (window.MCC && typeof window.MCC.user === "function") return Promise.resolve(window.MCC);
-    return new Promise(function (resolve, reject) {
-      var existing = document.querySelector('script[data-mcc-auth-loader]');
-      if (existing) {
-        existing.addEventListener("load", function () { resolve(window.MCC); }, { once: true });
-        existing.addEventListener("error", reject, { once: true });
-        return;
-      }
+    if (authLoader) return authLoader;
+    if (authLoaderAttempts >= AUTH_LOADER_MAX_ATTEMPTS) return Promise.reject(new Error("auth loader gave up after " + authLoaderAttempts + " attempts"));
+    authLoaderAttempts += 1;
+    /* One shared attempt with a terminal state. A failed attempt removes its
+       script node and clears the shared promise, so the next focus/restore
+       recheck appends a fresh script instead of listening on a node whose
+       load/error event has already fired and will never repeat (audit A5). */
+    authLoader = new Promise(function (resolve, reject) {
+      var stale = document.querySelector('script[data-mcc-auth-loader]');
+      if (stale) { try { if (stale.parentNode) stale.parentNode.removeChild(stale); } catch (e) {} }
       var script = document.createElement("script");
+      var done = false, timer = null;
+      function finish(err) {
+        if (done) return;
+        done = true;
+        if (timer) clearTimeout(timer);
+        script.onload = null; script.onerror = null;
+        if (!err && !(window.MCC && typeof window.MCC.user === "function")) err = new Error("auth loader exported no MCC");
+        if (err) {
+          try { if (script.parentNode) script.parentNode.removeChild(script); } catch (e) {}
+          authLoader = null;
+          reject(err);
+          return;
+        }
+        resolve(window.MCC);
+      }
       script.src = ROOT + "js/mcc-auth.js?v=__STAMP__";
       script.async = true;
       script.setAttribute("data-mcc-auth-loader", "1");
-      script.onload = function () { resolve(window.MCC); };
-      script.onerror = reject;
+      script.onload = function () { finish(null); };
+      script.onerror = function (e) { finish(e instanceof Error ? e : new Error("auth loader failed")); };
+      timer = setTimeout(function () { finish(new Error("auth loader timed out")); }, AUTH_LOADER_DEADLINE_MS);
       document.head.appendChild(script);
     });
+    return authLoader;
   }
-  function refreshAuthState() {
+  var authLoader = null, authLoaderAttempts = 0;
+  var AUTH_LOADER_MAX_ATTEMPTS = 5, AUTH_LOADER_DEADLINE_MS = 20000;
+  /* A NEW TOKEN IS NOT A NEW SIGN-IN. The canonical client may refresh the token while it
+     fetches the user, and the user it returns was fetched with the refreshed one. So when
+     the stored token moved under a lookup but still names the account the lookup began
+     with (the JWT sub), and the answer is about that same account, the answer stands.
+     Anything else that moved (another account, a sign-out, no answer) is never painted
+     from the old answer: the session now stored is looked up again, AUTH_LOOKUPS lookups
+     at most for one auth event (the page opening, a sign-in or sign-out here, another
+     account or none in storage), and then the bar settles signed out. Three, because a
+     tab restored beside another can lose the refresh to it twice (that tab's lookup, then
+     a request of its page) and has no answer either time. A bar left signed out over a
+     stored session is not left for good: it asks again when that session is next written
+     or a page asks, once AUTH_REST has passed since its last lookup.
+     The lookup used to repeat for as long as the token kept changing, and a session that
+     is stale on every call (a device clock ahead of the server's, a short token lifetime)
+     changes it every time: one refresh and one lookup a turn, the bar never painted,
+     until the auth service answered 429 for everyone behind that address. */
+  var AUTH_LOOKUPS = 3, AUTH_REST = 30000, AGAIN = {}, authLookups = 0, authLookedAt = 0, authFlight = null;
+  function refreshAuthState(again) {
     var attempt = ++authEpoch;
     ++adminEpoch;
+    authLookups = again === AGAIN ? authLookups + 1 : 1;
+    authLookedAt = Date.now();
     var session = readAuthSession();
-    if (!session || session.access_token !== adminSession) paintAdmin(false);
+    var oldSubject = adminSession ? jwtPayload(adminSession).sub : null;
+    var newSubject = session?.access_token ? jwtPayload(session.access_token).sub : null;
+    if (!session || oldSubject && oldSubject !== newSubject) paintAdmin(false);
     if (!session || !session.access_token) {
       ++selfProfileEpoch; SELF_PROFILE=null; PERSPECTIVE=null;
       lastVerifiedSubject=""; storePerspective(null);
@@ -707,16 +874,25 @@
       PERSPECTIVE=readPerspective();
       lastVerifiedSubject=subject;
     }
-    var exp = Number(payload.exp || 0) * 1000;
+    /* A first answer before the lookup: the expiry the auth client stored on this device's clock. The token's exp
+       claim is the server's clock, so on a device an hour ahead it painted every member signed out first. */
+    var exp = (Number(session.expires_at) || Number(payload.exp || 0)) * 1000;
     paintAuthState(exp > Date.now(), null, false);
-    return loadCanonicalAuth().then(function (mcc) {
+    var flight = loadCanonicalAuth().then(function (mcc) {
       if (!mcc || typeof mcc.user !== "function") throw new Error("Auth unavailable");
       return mcc.user();
     }).then(function (user) {
       if (attempt !== authEpoch) return AUTH_STATE;
       // Canonical auth may refresh the token while fetching the user. Verify
-      // the new session instead of accepting an old result or leaving it pending.
-      if ((readAuthSession() || {}).access_token !== session.access_token) return refreshAuthState();
+      // the new session instead of accepting an old result or leaving it pending,
+      // within the budget: the same account's refreshed token keeps the answer it was fetched with.
+      var stored = readAuthSession() || {};
+      if (stored.access_token !== session.access_token &&
+          !(user && subject && String(user.id) === subject && currentSubject() === subject)) {
+        // Nothing stored any more is a sign-out. That path asks nobody, so it never waits on the budget.
+        if (authLookups < AUTH_LOOKUPS || !stored.access_token) return refreshAuthState(AGAIN);
+        user = null;
+      }
       paintAuthState(!!user, user, true);
       if(user && subject)resolveOwnPerspective(subject,user);
       checkAdmin();
@@ -728,6 +904,40 @@
       paintAuthState(false, null, true);
       paintAdmin(false);
       return AUTH_STATE;
+    });
+    function landed() { if (authFlight === flight) authFlight = null; }
+    authFlight = flight;
+    flight.then(landed, landed);
+    return flight;
+  }
+  /* THE BAR'S ANSWER FOR WHOEVER IS STORED NOW, for a page that asks (MCC_BAR.refreshAuth) and for another tab's
+     write. The account already on the bar keeps its answer: a lookup in the air is shared and a verified sign-in
+     stands, because a token refreshed for the same account is the same sign-in, not a change. Asking again would
+     refresh the token again wherever a session is stale on every call, and two tabs answered each other for ever.
+     Another account or a sign-out is an auth event and is looked up; so is that account's session while the bar
+     shows signed out (its lookup had no answer), for as long as the same budget lasts or once it has rested. */
+  function currentAuthState() {
+    var stored = currentSubject();
+    if (!stored || stored !== lastVerifiedSubject) return refreshAuthState();
+    if (authFlight) return authFlight;
+    if (AUTH_STATE.verified && !AUTH_STATE.signed_in) {
+      if (Date.now() - authLookedAt >= AUTH_REST) authLookups = 0;
+      if (authLookups < AUTH_LOOKUPS) return refreshAuthState(AGAIN);
+    }
+    return Promise.resolve(AUTH_STATE);
+  }
+
+
+  // Restore/focus is not a new sign-in. Share pending authentication and keep
+  // failed lookups within the existing budget. A verified account still asks
+  // the server about owner access, bypassing a cached negative after promotion.
+  function restoreAuthState() {
+    var subject = currentSubject();
+    if (!subject || subject !== lastVerifiedSubject) return currentAuthState();
+    var ready = authFlight || (AUTH_STATE.verified && AUTH_STATE.signed_in && Date.now() - authLookedAt >= AUTH_REST
+      ? refreshAuthState() : currentAuthState());
+    return ready.then(function (state) {
+      return state.verified && state.signed_in ? checkAdmin(true) : false;
     });
   }
 
@@ -745,21 +955,36 @@
      origins and checks the token with Supabase) for a one-time magic-link
      token, Supabase turns that into a session of THIS origin's own, it is
      stored the ordinary way, and the page reloads signed in. No password,
-     no second sign-in. A page that already holds a session keeps it. */
+     no second sign-in. A page that already holds a session keeps it.
+     FROM P1 THE WRITER IS OFF (SPEC-PLATFORM 2.6): no token rides in any
+     link; the carry (js/carry.js, below) brings the sign-in to the platform
+     instead. The reader only scrubs an old link from the address until P4,
+     and trades nothing: a token nobody writes any more is someone else's. */
   var API_ORIGIN = "https://api.mccluster.org";
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
-  var ECOSYSTEM = [HOUSE_ORIGIN.replace(/\/$/, ""), "https://mccluster.org", "https://www.mccluster.org", "https://humanuprise.com", "https://www.humanuprise.com"];
   var HANDOFF = "mcc_handoff";
+  /* a link to another of the site's own origins (the table's site_origins); with no table nothing crosses */
   function crossesHouse(url) {
-    return url && /^https?:$/.test(url.protocol) && url.origin !== location.origin && ECOSYSTEM.indexOf(url.origin) !== -1;
+    var S = window.MCC_SITE;
+    return !!(S && url && /^https?:$/.test(url.protocol) && url.origin !== location.origin && S.isSiteOrigin(url.origin));
+  }
+  /* the fragment hand-off writer: on until the carry is (P0), off from P1, off with no table */
+  function handoffWriterOn() {
+    var S = window.MCC_SITE;
+    return !!(S && S.switches && S.switches.carry !== true);
+  }
+  /* the fragment hand-off reader trades a token for a session only while the writer writes one (P0); from P1, and with
+     no table, a token in an address was put there by someone else, so it is scrubbed and traded for nothing */
+  function handoffReaderTrades() {
+    return handoffWriterOn();
   }
   /* the link, with the sign-in riding along when there is one to carry */
   function handoffHref(dest) {
     var url;
     try { url = new URL(dest, location.href); } catch (e) { return Promise.resolve(dest); }
     var stored = readAuthSession();
-    if (!crossesHouse(url) || !stored || !stored.access_token) return Promise.resolve(url.href);
+    if (!handoffWriterOn() || !crossesHouse(url) || !stored || !stored.access_token) return Promise.resolve(url.href);
     var fresh = window.MCC && typeof window.MCC.refreshIfNeeded === "function"
       ? window.MCC.refreshIfNeeded().then(function (s) { return (s && s.access_token) || stored.access_token; })
       : Promise.resolve(stored.access_token);
@@ -776,26 +1001,43 @@
     var hash = location.hash || "";
     var m = /(?:^#|&)mcc_handoff=([^&]*)/.exec(hash);
     if (!m) return Promise.resolve(false);
-    var token = decodeURIComponent(m[1] || "");
+    var token = null;
+    try { token = decodeURIComponent(m[1] || ""); } catch (e) { token = null; }
     var rest = hash.replace(/(?:^#|&)mcc_handoff=[^&]*/, "");
     if (rest === "#") rest = "";
     try { history.replaceState(null, "", location.pathname + location.search + rest); } catch (e) {}
-    if (!token || readAuthSession()) return Promise.resolve(false);
-    return fetch(API_ORIGIN + "/v1/auth/handoff", { method: "POST", headers: { authorization: "Bearer " + token, "content-type": "application/json" }, body: "{}" })
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("handoff refused")); })
+    /* From P1 the reader only scrubs: nothing is sent and nothing stored, and the pages waiting for a hand-off settle */
+    if (!handoffReaderTrades()) { emit("mcc:handoff", { ok: false, reason: "retired" }); return Promise.resolve(false); }
+    /* A malformed fragment is a finished handoff with a clear outcome, never
+       an exception out of the bar's initialisation. */
+    if (!token) { emit("mcc:handoff", { ok: false, reason: "malformed" }); return Promise.resolve(false); }
+    /* A usable account already on this host wins over an arriving one. Only a
+       stored session that can no longer be used (expired with nothing to
+       refresh it) may be replaced, and even then only if nothing changes it
+       while the handoff is verified. */
+    var existing = readAuthSession();
+    if (existing && storedSessionUsable(existing)) return Promise.resolve(false);
+    var before = sessionSlots();
+    return boundedFetchJson(API_ORIGIN + "/v1/auth/handoff", { method: "POST", headers: { authorization: "Bearer " + token, "content-type": "application/json" }, body: "{}" }, "handoff refused")
       .then(function (j) {
         if (!j || !j.token_hash) throw new Error("no token");
-        return fetch(SB_URL + "/auth/v1/verify", { method: "POST", headers: { apikey: SB_KEY, "content-type": "application/json" }, body: JSON.stringify({ type: "magiclink", token_hash: j.token_hash }) });
+        return boundedFetchJson(SB_URL + "/auth/v1/verify", { method: "POST", headers: { apikey: SB_KEY, "content-type": "application/json" }, body: JSON.stringify({ type: "magiclink", token_hash: j.token_hash }) }, "verify refused");
       })
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("verify refused")); })
       .then(function (s) {
         if (!s || !s.access_token) throw new Error("no session");
-        var session = JSON.stringify({
-          access_token: s.access_token, refresh_token: s.refresh_token || "",
-          expires_at: Number(s.expires_at) || Math.floor(Date.now() / 1000) + (Number(s.expires_in) || 3600)
-        });
-        localStorage.setItem("mccdb_session", session);
-        try { localStorage.setItem("mcc_sess_keep", session); } catch (e) {}
+        /* The commit boundary (audit A2): if either canonical slot changed
+           while the two requests were in flight, a newer sign-in or sign-out
+           on this host has won and the late handoff is dropped. */
+        var now = sessionSlots();
+        if (now.main !== before.main || now.keep !== before.keep) throw Object.assign(new Error("account changed during handoff"), { reason: "account_changed" });
+        /* Its expiry on this device's clock, as the auth client writes it (js/mcc-auth.js stampExpiry): expires_in
+           counts from this answer, while the server's expires_at is a time on the server's clock, kept beside it. */
+        var life = Number(s.expires_in) > 0 ? Number(s.expires_in) : 0, issued = Number(s.expires_at) > 0 ? Number(s.expires_at) : 0;
+        var arrived = { access_token: s.access_token, refresh_token: s.refresh_token || "",
+          expires_at: life ? Math.floor(Date.now() / 1000) + life : issued || Math.floor(Date.now() / 1000) + 3600 };
+        if (life && issued) arrived.server_expires_at = issued;
+        var session = JSON.stringify(arrived);
+        if (!writeSessionSlots(session, before)) throw Object.assign(new Error("session storage unavailable"), { reason: "storage" });
         /* NO SECOND PAINT (owner, 2026-10-20: no screen flashes). A page that can take the session where it stands says so
            by cancelling mcc:handoff (js/mnet.js, the World, which waited for it); it then hears the ordinary sign-in event
            and nothing reloads. Every other page reloads signed in, as before. */
@@ -803,16 +1045,54 @@
         location.reload();
         return true;
       })
-      .catch(function () { emit("mcc:handoff", { ok: false }); return false; });
+      .catch(function (e) { emit("mcc:handoff", { ok: false, reason: (e && e.reason) || "failed" }); return false; });
   }
-  /* ON THE WORLD'S HOST, A LINK TO ONE OF MATTHEW'S ROOMS LOOKS SAME-ORIGIN
-     (album.html, creator.html, a receipt), and the Worker would 301 it to his
-     site without the sign-in. The paths the host serves are listed here as the
-     Worker lists them (workers/mccluster/src/world-host.js); every other path
-     is the house's, so it goes there outright, carrying the sign-in. */
-  var WORLD_HOST_PATHS = /^\/(?:$|mnet\.html$|action-globe\.html$|action-policy\.html$|world-news\.html$|create\.html$|give\.html$|privacy\.html$|account\.html$|login\.html$|forgot-password\.html$|reset-password\.html$|onboard\.html$|sw\.js$|company$|robots\.txt$|sitemap\.xml$|llms\.txt$|action-network-|action\/|auth\/|js\/|css\/|assets\/|data\/|vendor\/)/;
+  function rawSlot(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function sessionSlots() { return { main: rawSlot("mccdb_session"), keep: rawSlot("mcc_sess_keep") }; }
+  /* Expired with no refresh token is the only stored session a handoff may
+     replace. Anything that still has an access token and either no expiry,
+     a future expiry or a refresh token stays: mcc-auth.js owns renewing it. */
+  function storedSessionUsable(s) {
+    if (!s || !s.access_token) return false;
+    var exp = Number(s.expires_at);
+    if (!exp) return true;
+    if (exp > Math.floor(Date.now() / 1000)) return true;
+    return !!s.refresh_token;
+  }
+  /* Paired write with rollback: both canonical slots change together or not
+     at all, restoring exactly what was there before. */
+  function writeSessionSlots(session, before) {
+    try { localStorage.setItem("mccdb_session", session); } catch (e) { return false; }
+    try { localStorage.setItem("mcc_sess_keep", session); }
+    catch (e) {
+      try { if (before.main === null) localStorage.removeItem("mccdb_session"); else localStorage.setItem("mccdb_session", before.main); } catch (e2) {}
+      return false;
+    }
+    return true;
+  }
+  var HANDOFF_DEADLINE_MS = 15000;
+  /* Headers and body are both covered by one deadline, so a stalled body
+     read cannot leave the handoff pending forever. */
+  function boundedFetchJson(url, init, refusal) {
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var timer = setTimeout(function () { if (!done) { done = true; reject(Object.assign(new Error("handoff timed out"), { reason: "timeout" })); } }, HANDOFF_DEADLINE_MS);
+      Promise.resolve().then(function () { return fetch(url, init); })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error(refusal)); })
+        .then(function (v) { if (!done) { done = true; clearTimeout(timer); resolve(v); } },
+              function (e) { if (!done) { done = true; clearTimeout(timer); reject(e); } });
+    });
+  }
+  /* ON THE WORLD'S HOST, A LINK TO A PAGE SERVED ELSEWHERE LOOKS SAME-ORIGIN,
+     and the Worker would 301 it there without the sign-in. Where each path is served
+     is the table's, as the Worker reads it (workers/mccluster/src/platform/
+     router.js): before P1 Matthew's rooms (album.html, creator.html, a receipt);
+     from P1 only Whip Equipped and the owner's own pages (profile_only). Such a
+     link goes there outright, carrying the sign-in while the writer is on. */
   function houseBound(url) {
-    return ON_WORLD_HOST && url.origin === location.origin && !WORLD_HOST_PATHS.test(url.pathname);
+    var S = window.MCC_SITE;
+    return !!S && onWorldHost() && url.origin === location.origin && !isWorldPath(url.pathname) &&
+      S.servingOrigin(url.pathname) !== location.origin;
   }
   /* any link on the page that crosses to another of the houses carries the sign-in */
   document.addEventListener("click", function (e) {
@@ -821,7 +1101,7 @@
     if (!a || a.target === "_blank" || a.hasAttribute("download") || a.closest(".appbar")) return;
     var url;
     try { url = new URL(a.getAttribute("href") || "", location.href); } catch (err) { return; }
-    if (houseBound(url)) url = new URL(url.pathname + url.search + url.hash, HOUSE_ORIGIN);
+    if (houseBound(url)) url = new URL(url.pathname + url.search + url.hash, window.MCC_SITE.servingOrigin(url.pathname));
     else if (!crossesHouse(url)) return;
     var stored = readAuthSession();
     if (!stored || !stored.access_token) { if (url.origin !== location.origin) { e.preventDefault(); navigateDocument(url.href); } return; }
@@ -830,10 +1110,88 @@
   });
 
   arriveWithHandoff().then(function (carried) { if (!carried) refreshAuthState(); });
+
+  /* ---------- THE CARRY (SPEC-PLATFORM 2.6, from P1) ----------
+     A platform page with no usable session loads js/carry.js, which asks Matthew's host once (a hidden frame of his
+     carry page; same site, so it reads his host's own storage) for the sign-in this browser holds there, and says the
+     one clear line where nothing could be carried. Never on his host (the one asked), never on a door, never with no
+     table, and never in a frame whose parent is this same origin (the globe inside the World: the World asks); the
+     World framed over Music on his host asks for itself. */
+  function carryWanted() {
+    var S = window.MCC_SITE;
+    var role = S && S.switches && S.switches.carry === true ? S.hostRole(location.hostname) : null;
+    if (!role || role.role !== "platform") return false;
+    if (window.parent !== window) {
+      try { if (window.parent.location.origin === location.origin) return false; } catch (e) { /* another origin's frame */ }
+    }
+    return !storedSessionUsable(readAuthSession());
+  }
+  /* never asked before (no mark): the World waits for the answer, as it waited for the hand-off */
+  function carryPending() {
+    if (!carryWanted()) return false;
+    try { return localStorage.getItem("mcc_carry_v1") === null; } catch (e) { return false; }
+  }
+  /* songs kept at the old address wait for their offer (SPEC-PLATFORM 2.7): js/carry.js says it on a top-level platform
+     page, signed in or not (the carry may have signed this browser in on an earlier page), until it is answered */
+  function keptWaiting() {
+    var S = window.MCC_SITE;
+    var role = S && S.switches && S.switches.carry === true ? S.hostRole(location.hostname) : null;
+    if (!role || role.role !== "platform" || window.parent !== window) return false;
+    try { return localStorage.getItem("mcc_carry_kept_v1") !== null; } catch (e) { return false; }
+  }
+  function startCarry() {
+    if (!carryWanted() && !keptWaiting()) return;
+    window.MCC_CARRY_PENDING = carryPending();
+    if (window.MCC_CARRY || document.querySelector("script[data-mcc-carry]")) return;
+    var carry = document.createElement("script");
+    carry.src = ROOT + "js/carry.js?v=__STAMP__";
+    carry.async = false;
+    carry.setAttribute("data-mcc-carry", "");
+    document.head.appendChild(carry);
+  }
+  startCarry();
+
+  /* ---------- THE INSTALLED APP MOVED (SPEC-PLATFORM 2.8, from P1) ----------
+     The app added to a Home Screen from Matthew's host keeps launching there (its start page, manifest.json and sw.js
+     stay on his host). Launched in standalone mode on his host, it says once that the app now lives on the platform,
+     in the bar's own peek card (index.html is not edited: this script, which the front door loads, draws it). */
+  function moveCardWanted() {
+    var S = window.MCC_SITE;
+    if (!S || !S.switches || S.switches.platform_serves !== "everything" || location.origin !== S.profile.origin) return false;
+    if (window.parent !== window) return false;
+    var installed = false;
+    try { installed = window.navigator.standalone === true || !!(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches); } catch (e) {}
+    if (!installed) return false;
+    try { return localStorage.getItem("mcc_app_moved_v1") === null; } catch (e) { return false; }
+  }
+  function showMoveCard() {
+    var S = window.MCC_SITE;
+    try { localStorage.setItem("mcc_app_moved_v1", new Date().toISOString()); } catch (e) { return; }
+    var card = document.createElement("section");
+    card.id = "mccAppMoved";
+    card.className = "dk-peek";
+    card.setAttribute("aria-label", "The app has moved");
+    card.innerHTML = '<div class="dk-peek__card"><div class="dk-peek__top"><span>' +
+      '<b role="status">The app now lives at ' + textOf(S.platform.host) + '.</b>' +
+      '<small>Open it there and add it to your Home Screen; your sign-in and kept songs come with you.</small></span></div>' +
+      '<div class="dk-peek__acts"><button class="dk-peek__go" type="button">Open ' + textOf(S.platform.host) + '</button>' +
+      '<button class="dk-peek__alt" type="button">Not now</button></div></div>';
+    var go = card.querySelector(".dk-peek__go"), not = card.querySelector(".dk-peek__alt");
+    go.style.minHeight = not.style.minHeight = "44px";
+    go.onclick = function () { location.href = S.platform.origin + S.platform.app_start_path; };
+    not.onclick = function () { card.remove(); };
+    document.body.appendChild(card);
+  }
+  if (moveCardWanted()) showMoveCard();
   window.addEventListener("storage", function (e) {
-    if (!e || e.key === "mccdb_session" || e.key === "mcc_sess_keep") refreshAuthState();
+    if (!e || e.key === "mccdb_session" || e.key === "mcc_sess_keep") currentAuthState();
   });
   window.addEventListener("mcc:auth-changed", refreshAuthState);
+  // iPad Safari may restore a page from the back-forward cache without a
+  // storage event. The permission still comes from the server, never the UI.
+  window.addEventListener("focus", function () {
+    if (!ADMIN_ON || currentSubject() !== lastVerifiedSubject) restoreAuthState();
+  });
 
   var ICONS = {
     film: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 5v4M12 5v4M17 5v4"/>',
@@ -899,27 +1257,88 @@
      bar's HTML, and both morph() and revert() rebuild the bar out of it, so
      a class on a tab does not survive a wing opening and closing mid-song.
      Every rebuild calls paintSound() for exactly that reason. */
-  var SOUND_ON = false;
+  var SOUND_ON = false, soundRevision = 0;
   function paintSound() {
     var mt = dock.querySelector('[data-appnav="music"]');
-    if (!mt) return;
+    /* a wing held open over the tab's column: no tab, so the installed app's dock keeps its own Play/Pause meanwhile */
+    if (!mt) { document.documentElement.classList.remove("mcc-music-tab-transport"); return; }
     /* one class, one meaning: is-sound swaps the tab's play triangle for the
        pause glyph. The stylesheet also carried an is-playing equaliser dance
        that nothing had ever applied to a tab; with the tab now drawn as a
        transport button there is no equaliser left to dance, so those rules
        went out of css/style.css rather than getting a first user here. */
     mt.classList.toggle("is-sound", SOUND_ON);
+    nameMusicTab(mt);
+  }
+  /* THE TAB'S NAME SAYS WHAT A TAP DOES (music slice M3 follow-up; review RF-3). Where the Music tab is the page's own
+     Play or Pause (musicTabTransport below, the same test the tap dispatch makes), a keyboard and a screen reader are
+     told so, in the words the installed app's dock and the World's transport use: "Pause music" while a song plays,
+     "Play music" while it does not. The play triangle and the pause glyph are drawn in CSS, which assistive technology
+     does not read, so on listen.html Enter on link "Music" paused the song and nothing said it would. Wherever the tab
+     still goes somewhere (another page, the World open over the player, a World still opening) it keeps the name its
+     markup gave it, kept in data-link-name because HOME_BAR snapshots carry whatever was painted last. */
+  function nameMusicTab(mt) {
+    if (!mt.hasAttribute("data-link-name")) mt.setAttribute("data-link-name", mt.getAttribute("aria-label") || "");
+    var own = mt.getAttribute("data-link-name"), plays = musicTabTransport();
+    if (plays) mt.setAttribute("aria-label", SOUND_ON ? "Pause music" : "Play music");
+    else if (own) mt.setAttribute("aria-label", own);
+    else mt.removeAttribute("aria-label");
+    /* the installed app's dock asks the same: where the tab is the Play/Pause, the dock shows none of its own, one
+       control and not two (the Release 1 dock fix; css/installed-app-dock.css) */
+    document.documentElement.classList.toggle("mcc-music-tab-transport", plays);
   }
   window.addEventListener("mcc:nowplaying", function (e) {
+    soundRevision++;
     SOUND_ON = !!(e.detail && e.detail.playing);
     paintSound();
   });
+  /* the World opening or closing over the player changes what the tab does (js/world-audio-continuity.js) */
+  window.addEventListener("mcc:world-audio-open", function () { paintSound(); });
+  window.addEventListener("mcc:music-view", function () { paintSound(); });   /* a view opened or closed (music slice M5) */
+  /* and on Listen, so does the player the installed app's dock shows (dockPlaysAnother, below): the tab asks again
+     whenever the Now Playing owner changes and when the dock comes or goes (the Release 1 dock fix) */
+  if (onPage(WINGS.music.home)) {
+    window.addEventListener("mcc:installed-dock", function () { paintSound(); });
+    (function followNowPlaying() {
+      var np = window.MCC_NOW_PLAYING;
+      if (np && typeof np.subscribe === "function") { np.subscribe(function () { paintSound(); }); return; }
+      var helper = document.querySelector("script[data-mcc-now-playing]");
+      if (helper) helper.addEventListener("load", followNowPlaying, { once: true });
+    })();
+  }
+
+  /* Does the page give the bar its transport (MCC_NP_PLAY and MCC_NP_PAUSE)? The World open (or opening) over the
+     player is the one exception: there the Music tab is the way back to the music, never its Pause. listen.html gives
+     the bar its transport too since the M3 follow-up (verification V-3), and the World opens over that page. */
+  function musicTransportHere(e) {
+    if (worldAudioPending || (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.active && window.MCC_WORLD_AUDIO.active())) return false;
+    /* a music view shown over the player (music slice M5): the tab is the way back to Listen there, never a transport */
+    if (window.MCC_MUSIC_SHELL && window.MCC_MUSIC_SHELL.view && window.MCC_MUSIC_SHELL.view()) return false;
+    if (e && e === worldCancelTap) return false;   // the tap that called off a World still opening stays in the music, never pauses it
+    return typeof window.MCC_NP_PLAY === "function" && typeof window.MCC_NP_PAUSE === "function";
+  }
+  /* THE INSTALLED APP'S DOCK SHOWS THE NOW PLAYING OWNER (js/installed-app-dock.js). On Listen that is this page's
+     engine, and the tab is its Play/Pause. A World song carried back from the Globe while Listen holds a record of its
+     own is another player: the dock's own Play/Pause is that song's, so the tab, which would take up the held record,
+     goes back to being the way to the music, or the dock would hold two (the Release 1 dock fix, verification
+     DFV-2). The browser has no dock, and its bar keeps the tab as it was. */
+  function dockPlaysAnother() {
+    if (!document.documentElement.classList.contains("mcc-app-dock-ready")) return false;
+    var s = null;
+    try { s = window.MCC_NOW_PLAYING && window.MCC_NOW_PLAYING.snapshot ? window.MCC_NOW_PLAYING.snapshot() : null; } catch (e) {}
+    return !!(s && s.title && s.canPlay && s.canPause && s.surface !== "listen");
+  }
+  /* a tap on the Music tab is the player's Play or Pause, not a way somewhere: on the page the tab points at, when that
+     page gives the bar its transport (the tap dispatch below and the tab's name both ask this, so they cannot disagree) */
+  function musicTabTransport(e) {
+    return onPage(WINGS.music.home) && musicTransportHere(e) && !dockPlaysAnother();
+  }
 
   /* the same idiom both of the album's own transport buttons use: ask what
      the deck is doing, then do the other thing. SOUND_ON stands in for
      deck.paused, because the bar cannot see the deck from here. */
   function transport() {
-    var was = SOUND_ON;
+    var was = SOUND_ON, revision = soundRevision;
     if (!was) window.MCC_NP_PLAY();
     else window.MCC_NP_PAUSE();
     if (window.MCC_TRACK) window.MCC_TRACK("bar_transport", { play: !was, page: location.pathname.split("/").pop() });
@@ -931,11 +1350,13 @@
        js/main.js both listen here and would otherwise sit holding a state
        the bar has already left. */
     setTimeout(function () {
-      if (SOUND_ON !== was) return; // the page answered; nothing to add
+      /* A Pause reply followed by a newer Play can return to the same boolean before this task runs.
+         Any announcement since this tap is an answer; an older fallback cannot overwrite it. */
+      if (soundRevision !== revision || SOUND_ON !== was) return;
       if (!was) return;             // we asked for sound and got none: already silent, already painted
       SOUND_ON = false;
       paintSound();
-      emit("mcc:nowplaying", { title: "I AM HERE", href: HOUSE + "album.html", playing: false });
+      emit("mcc:nowplaying", { title: "I AM HERE", href: pageHref("album.html"), playing: false });
     }, 0);
   }
 
@@ -952,10 +1373,12 @@
     if (here === "day" || here === "night") return here;
     try { return window.MCC_DAYLIGHT_CORE ? window.MCC_DAYLIGHT_CORE.estimate(new Date()) : ""; } catch (e) { return ""; }
   }
+  /* is this destination the World's screen: the World's own address on a World host, or on this one */
   function worldScreen(url) {
     if (!url || !/^https?:$/.test(url.protocol)) return false;
-    if (WORLD_HOSTS.indexOf(url.hostname) !== -1) return /^\/(?:index\.html|mnet\.html)?$/.test(url.pathname);
-    return url.origin === location.origin && /\/mnet\.html$/.test(url.pathname);
+    var S = window.MCC_SITE;
+    if (url.origin !== location.origin && !(S && S.isWorldHost(url.hostname))) return false;
+    return isWorldPath(url.pathname, url.hostname);
   }
   function veilOn(dest) {
     var root = document.documentElement, url = null, phase = "";
@@ -967,7 +1390,7 @@
   }
   function veilOff() { document.documentElement.classList.remove("pt-out", "pt-to-day", "pt-to-night"); }
   /* the arithmetic only, for the veil above: the World's own page has it already, nothing else on this page is touched */
-  if (!window.MCC_DAYLIGHT_CORE && !ON_WORLD_HOST) {
+  if (!window.MCC_DAYLIGHT_CORE && !onWorldHost()) {
     var daylightCore = document.createElement("script");
     daylightCore.src = ROOT + "js/daylight.js?v=__STAMP__";
     daylightCore.async = true;
@@ -1002,25 +1425,30 @@
     return false;
   }
 
+  /* from a music page the World's own address opens over the music (js/world-audio-continuity.js), and so does the
+     World's document or globe page where Music itself is served (his host's copy; from P1 the platform's too) */
   function musicWorldDestination(dest) {
     if (window.parent !== window || !(window.MCC_MUSIC || document.getElementById("deck"))) return false;
     try {
-      var u = new URL(dest, location.href);
-      return u.protocol === "https:" &&
-        (WORLD_HOSTS.indexOf(u.hostname) !== -1 && /^\/(?:mnet\.html|index\.html)?$/.test(u.pathname) ||
-         u.origin + "/" === HOUSE_ORIGIN && /\/(?:mnet|action-globe)\.html$/.test(u.pathname));
+      var u = new URL(dest, location.href), S = window.MCC_SITE;
+      return !!S && u.protocol === "https:" &&
+        (S.isWorldHost(u.hostname) && isWorldPath(u.pathname, u.hostname) ||
+         (u.origin === S.profile.origin || u.origin === S.servingOrigin("/listen.html")) && /\/(?:mnet|action-globe)\.html$/.test(u.pathname));
     } catch (_) { return false; }
   }
   function cancelWorldAudio() {
+    var was = worldAudioPending;
     worldAudioPending = null;
     if (worldAudioNotice) worldAudioNotice.remove();
     worldAudioNotice = null;
+    if (was) paintSound();   // the Music tab is the player's again
   }
   function waitForWorldAudio(dest) {
     if (window.MCC_WORLD_AUDIO || !musicWorldDestination(dest)) return false;
     cancelWorldAudio(); unpeek(); veilOff(); revert();
     if (window.MCC_MUSIC) window.MCC_MUSIC.closeNow();
     var pending = worldAudioPending = {href:dest};
+    paintSound();   // while the World is opening the Music tab calls it off, it pauses nothing
     var notice = worldAudioNotice = document.createElement("section");
     notice.id = "mccWorldAudioLoading"; notice.className = "dk-peek";
     notice.setAttribute("aria-label", "Open World");
@@ -1047,10 +1475,12 @@
 
   function sail(dest, wait) {
     cancelWorldAudio();
-    if (dest === MAP) { if (openMap()) return; dest = HOUSE + "index.html"; }
+    if (dest === MAP) { if (openMap()) return; dest = pageHref("index.html"); }
     unpeek();
     if (window.MCC_WORLD_AUDIO && window.MCC_WORLD_AUDIO.navigate(dest)) { veilOff(); revert(); return; }
     if (waitForWorldAudio(dest)) return;
+    /* a music page over the one player (a view), or the retained page revealed again (music slice M5) */
+    if (window.MCC_MUSIC_SHELL && window.MCC_MUSIC_SHELL.navigate(dest)) { veilOff(); revert(); return; }
     var url = null;
     try { url = new URL(dest, location.href); } catch (e) {}
     if (url && url.origin === location.origin && samePath(url.pathname) === samePath(location.pathname) && url.search === location.search) {
@@ -1074,7 +1504,7 @@
     var a = e.target.closest && e.target.closest("a[href]");
     if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
     if (waitForWorldAudio(a.href)) { e.preventDefault(); e.stopPropagation(); }
-    else if (worldAudioPending) cancelWorldAudio();
+    else if (worldAudioPending) { worldCancelTap = e; cancelWorldAudio(); }   // this tap called the World off: nothing more
   }, true);
 
   /* ---------- THE PEEK: one tap on a slot shows the room's widget ---------- */
@@ -1090,6 +1520,7 @@
     Object.keys(WINGS).forEach(function (k) {
       WINGS[k].slots.forEach(function (s) { if (s[0] === slotHref) def = s; });
     });
+    if (def && !roomAllowed(def)) return; // an admin-only room never opens for anyone else
     if (!def || !def[3]) { sail(slotHref, 0); return; }
     var p = def[3];
     var sub = (p.dyn && p.dyn()) || p.sub;
@@ -1113,6 +1544,8 @@
     emit("mcc:bar-peek", { href: slotHref });
   }
 
+  /* a room carrying { admin: true } opens only on the server's owner answer */
+  function roomAllowed(s) { return !(s && s[4] && s[4].admin) || ADMIN_ON === true; }
   function morph(key) {
     var w = WINGS[key];
     /* the owner's five-tab bar does not open wings: five columns cannot keep the anchor law with two-room wings */
@@ -1127,6 +1560,8 @@
     var anchor = tmp.querySelector('[data-appnav="' + key + '"]');
     if (anchor) anchor.classList.add("appbar__tab--wing", "is-active");
     var slotHtml = w.slots.map(function (s) {
+      /* an admin-only room: an empty, inert cell for everyone the server has not said is the owner */
+      if (!roomAllowed(s)) return '<span class="appbar__tab appbar__tab--slot appbar__tab--gated" aria-hidden="true"></span>';
       return '<a class="appbar__tab appbar__tab--slot" href="' + s[0] + '" data-dock="' + s[0] + '">' +
         ic(s[1]) + "<span>" + s[2] + "</span></a>";
     });
@@ -1147,7 +1582,7 @@
       else if (fixedTab) cells.push(fixedTab.outerHTML);
       else cells.push(slotHtml[si++] || "");
     }
-    dock.innerHTML = cells.join("");
+    barMarkup(cells.join(""));
     paintSound(); // the anchor is a fresh copy off HOME_BAR; it knows nothing yet
     emit("mcc:bar-morph", { wing: key });
   }
@@ -1157,10 +1592,10 @@
     unpeek();
     wingOn = null;
     dock.classList.remove("appbar--morph");
-    dock.innerHTML = HOME_BAR;
+    barMarkup(HOME_BAR);
     if (SELF_PROFILE && !PERSPECTIVE) {
       paintPerspective();
-      HOME_BAR = dock.innerHTML;
+      HOME_BAR = barMarkup();
     }
     paintSound(); // restore live audio after refreshing the current profile
   }
@@ -1222,7 +1657,7 @@
        A held press never reaches this line (the lpFired gate above swallows
        it), so hold-to-open-the-music-wing is untouched. */
     var dest = w ? w.home : (slot || a.getAttribute("href"));
-    if (key === "profile") dest = AUTH_STATE.signed_in ? worldAt("?view=profile") : ROOT + "account.html";
+    if (key === "profile") dest = AUTH_STATE.signed_in ? worldAt("?view=profile") : sessionRoom("account.html");
 
     /* This column used to open the desk widget in place instead of sailing
        anywhere, because the tab WAS Chat. It is the Closet now, and a tab
@@ -1232,9 +1667,7 @@
        second slot, and that slot still lands on sites.html, which is the
        conversation with a page around it. */
 
-    if (key === "music" && onPage(dest) &&
-        typeof window.MCC_NP_PLAY === "function" &&
-        typeof window.MCC_NP_PAUSE === "function") { transport(); return; }
+    if (key === "music" && musicTabTransport(e)) { transport(); return; }   // dest is WINGS.music.home here
     sail(dest, 0);
   });
 
@@ -1244,21 +1677,23 @@
     if (peekEl) unpeek();
     if (wingOn) revert();
   }, true);
-  window.addEventListener("pageshow", function () { clearTimeout(lpTimer); veilOff(); unpeek(); revert(); });
+  window.addEventListener("pageshow", function (event) { clearTimeout(lpTimer); veilOff(); unpeek(); revert(); if (event.persisted) restoreAuthState(); });
 
   window.MCC_BAR = {
     morph: morph,
     revert: revert,
     peek: peek,
     wing: function () { return wingOn; },
-    refreshAuth: refreshAuthState,
+    refreshAuth: currentAuthState,
     auth: function () { return AUTH_STATE; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,
     ownPerspective: function(){return SELF_PROFILE;},
     admin: function () { return ADMIN_ON; },
     verifyAdmin: function () { return checkAdmin(true); },
-    navigation: Object.freeze({root: ROOT, house: HOUSE, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); },
+    /* house: the installed dock's house (Listen's base: Matthew's host until P3 there, the P1 amendment); page: where the
+       table serves any other page, for js/site-navigation.js's Control and product doors (review V2-1) */
+    navigation: Object.freeze({root: ROOT, house: pageBase("listen.html"), page: pageHref, world: worldAt("?view=feed"), go: function (href) { sail(href, 0); },
       // The retained Music document uses the existing, origin-bound sign-in
       // handoff for its real World frame. Credentials never enter its messages.
       handoff: handoffHref})
@@ -1266,11 +1701,29 @@
   // One shared implementation on every page carrying the bar, including nested rooms.
   var navigationStyle = document.createElement("link");
   navigationStyle.rel = "stylesheet"; navigationStyle.href = ROOT + "css/site-navigation.css?v=__STAMP__";
-  navigationStyle.onload = function () { document.body.dataset.siteNavigation = "ready"; };
+  navigationStyle.onload = function () { document.body.dataset.siteNavigation = "ready"; window.dispatchEvent(new Event("mcc:navigation-style-ready")); };
+  navigationStyle.onerror = function () { navPresentationReady = true; revealNavigation(); };
   document.head.appendChild(navigationStyle);
   var navigationScript = document.createElement("script");
   navigationScript.src = ROOT + "js/site-navigation.js?v=__STAMP__";
+  navigationScript.onerror = function () { navPresentationReady = true; revealNavigation(); };
   document.head.appendChild(navigationScript);
+  /* Installed web apps get compact chrome and the same player's transport.
+     Ordinary browser documents do not load or mount the installed dock. */
+  function loadInstalledDock() {
+    if (window.parent !== window || !document.documentElement.classList.contains("mcc-installed-app") ||
+        document.querySelector("script[data-mcc-installed-dock]")) return;
+    var appDock = document.createElement("script");
+    appDock.src = ROOT + "js/installed-app-dock.js?v=__STAMP__";
+    appDock.async = false; appDock.setAttribute("data-mcc-installed-dock", "");
+    document.head.appendChild(appDock);
+  }
+  loadInstalledDock();
+  if (window.matchMedia) {
+    var installedMode = window.matchMedia("(display-mode: standalone)");
+    if (installedMode.addEventListener) installedMode.addEventListener("change", loadInstalledDock);
+    else if (installedMode.addListener) installedMode.addListener(loadInstalledDock);
+  }
   if (window.MCC_TRACK) window.MCC_TRACK("bar_boot", { page: location.pathname.split("/").pop() });
 
 })();

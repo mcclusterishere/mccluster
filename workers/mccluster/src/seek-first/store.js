@@ -104,13 +104,18 @@ function eventRow(orgId, result, item) {
 }
 
 function observationRow(orgId, result, item) {
+  // BLS timestamps are period anchors, not collection times. Fail closed if
+  // a future adapter regression omits one rather than silently dating it now.
+  if (result.source === 'bls' && (!item.observed_at || !Number.isFinite(Date.parse(item.observed_at)))) {
+    throw new GeoAdapterError('BLS observation period timestamp missing', 502, 'invalid_observation_timestamp');
+  }
   return {
     org_id: orgId,
     source_key: result.source,
     external_id: item.external_id ? String(item.external_id) : null,
     observation_type: item.observation_type || 'measurement',
     metric: item.metric || null,
-    value_number: Number.isFinite(Number(item.value_number)) ? Number(item.value_number) : null,
+    value_number: item.value_number !== null && item.value_number !== undefined && item.value_number !== '' && Number.isFinite(Number(item.value_number)) ? Number(item.value_number) : null,
     value_text: item.value_text === undefined || item.value_text === null ? null : String(item.value_text),
     unit: item.unit || null,
     location: wktPoint(item.point),
@@ -273,6 +278,32 @@ export async function listEntities(env, orgId, { source, entityType, limit = 100
   if (source) parts.push(`source_key=eq.${encodeURIComponent(source)}`);
   if (entityType) parts.push(`entity_type=eq.${encodeURIComponent(entityType)}`);
   return db(env, `seek_first_entities?${parts.join('&')}`);
+}
+
+// The Analytics archive includes every persisted record kind. Each table is
+// independently scoped and bounded before the newest observations are merged.
+export async function listSourceRecords(env, orgId, { source, limit = 50 } = {}) {
+  const take = Math.max(1, Math.min(Number(limit) || 50, 100));
+  const common = 'id,source_key,external_id,observed_at,provenance,location';
+  const families = [
+    ['entity', 'seek_first_entities', 'entity_type,name,properties,source_url'],
+    ['event', 'seek_first_events', 'event_type,name,properties,source_url,severity,status,starts_at,ends_at'],
+    ['observation', 'seek_first_observations', 'observation_type,metric,value_number,value_text,unit,payload']
+  ];
+  const records = [];
+  for (const [kind, table, columns] of families) {
+    const params = new URLSearchParams({ org_id: `eq.${orgId}`, source_key: `eq.${source}`,
+      select: `${common},${columns}`, order: 'observed_at.desc,id.desc', limit: String(take) });
+    const rows = await db(env, `${table}?${params}`);
+    if (!Array.isArray(rows)) throw new GeoAdapterError('Stored records response unavailable', 502, 'invalid_archive_response');
+    for (const row of rows) records.push({ ...row, kind,
+      record_type: row.entity_type || row.event_type || row.observation_type,
+      name: row.name || row.metric || row.external_id,
+      properties: kind === 'observation' ? { ...row.payload, metric: row.metric,
+        value_number: row.value_number, value_text: row.value_text, unit: row.unit } : row.properties });
+  }
+  return records.sort((a, b) => Date.parse(b.observed_at) - Date.parse(a.observed_at) ||
+    String(b.id).localeCompare(String(a.id)) || a.kind.localeCompare(b.kind)).slice(0, take);
 }
 
 export async function listIngestionRuns(env, orgId, { source, limit = 50 } = {}) {

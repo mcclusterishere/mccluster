@@ -1,3 +1,4 @@
+/* Portions derived from gods-eye-view (MIT, Copyright (c) 2026 Bilawal Sidhu): see THIRD-PARTY-NOTICES at the repository root. */
 /* Current release policy: world-release.js requires live house-owner preview
    before dispatch. The original adapter prerequisites below do not release data. */
 /* THE WORLD'S DATA LAYERS (owner, 2026-10-15: "we need some demo data …
@@ -46,6 +47,7 @@
    LL2_API_TOKEN raises their limit (15 calls an hour anonymous). */
 import { fail, reply } from './lib/http.js';
 import { fetchNoCrossHostRedirect, UpstreamError } from './lib/safe-fetch.js';
+import { CONTACT_ORIGIN } from './platform/contact.js';
 
 export const LAYERS = Object.freeze({
   flights: { public: true, ttl: 600, attribution: 'adsb.lol (ODbL 1.0) or OpenSky Network', max: 5000 },
@@ -69,7 +71,7 @@ export async function upstream(url, init = {}, fetchImpl = fetch, as = 'json', t
   let res;
   try {
     try {
-      res = await fetchNoCrossHostRedirect(url, { ...init, signal: controller.signal, headers: { accept: as === 'text' ? 'text/plain' : 'application/json', 'user-agent': 'McCluster-World/1.0 (https://mccluster.org)', ...(init.headers || {}) } }, { fetchImpl });
+      res = await fetchNoCrossHostRedirect(url, { ...init, signal: controller.signal, headers: { accept: as === 'text' ? 'text/plain' : 'application/json', 'user-agent': `McCluster-World/1.0 (${CONTACT_ORIGIN})`, ...(init.headers || {}) } }, { fetchImpl });
     } catch (error) {
       if (error instanceof UpstreamError) throw error;
       if (controller.signal.aborted || error?.name === 'AbortError') throw new UpstreamError('upstream_timeout', `provider timed out after ${timeoutMs} ms`);
@@ -316,9 +318,74 @@ export async function cachedLayer({ layer, key = layer, ttl, base = {}, rows, fe
     return { body: { ok: true, layer, fetched_at: null, ...base, unavailable: true, upstream_error: reason, ...providers, count: 0, [rows]: [] }, stale: false, error };
   }
 }
+/* ---------- source health, for the public environmental routes ----------
+   One record per provider: status available | stale | unavailable, and why.
+   reason is not_configured (a credential this Worker lacks), timeout, upstream_error
+   (refused, failed, rate-limited, redirected or answered with an error) or invalid_data
+   (answered, but not in a shape that can be used); null while available. fetched_at is
+   when the served copy was retrieved (null with nothing served); last_success_at is the
+   newest successful retrieval this Cloudflare location knows of, kept for a week apart
+   from the copy itself, never guessed. Only codes reach a record: no provider message,
+   URL or credential. */
+export const HEALTH_REASONS = Object.freeze(['not_configured', 'timeout', 'upstream_error', 'invalid_data']);
+const INVALID_DATA_CODES = new Set(['upstream_invalid_json', 'upstream_invalid_csv', 'upstream_invalid_station', 'upstream_empty', 'upstream_too_large', 'invalid_data']);
+export function healthReason(code) {
+  if (code === null || code === undefined || code === '') return null;
+  if (code === 'not_configured') return 'not_configured';
+  if (code === 'upstream_timeout' || code === 'timeout') return 'timeout';
+  return INVALID_DATA_CODES.has(code) ? 'invalid_data' : 'upstream_error';
+}
+const isoOrNull = (v) => (typeof v === 'string' && v.length <= 40 && Number.isFinite(Date.parse(v)) ? new Date(v).toISOString() : null);
+/* `source` is the provider's fixed description; `outcome` what trackedLayer (or cachedLayer) answered */
+export function sourceHealth(source, outcome = {}) {
+  const body = outcome && outcome.body && typeof outcome.body === 'object' ? outcome.body : { unavailable: true };
+  const unavailable = body.unavailable === true;
+  const stale = !unavailable && outcome.stale === true;
+  const fetched = unavailable ? null : isoOrNull(body.fetched_at);
+  return {
+    id: source.id, label: source.label,
+    status: unavailable ? 'unavailable' : stale ? 'stale' : 'available',
+    reason: unavailable || stale ? (healthReason(body.upstream_error) || 'upstream_error') : null,
+    fetched_at: fetched, last_success_at: fetched || isoOrNull(outcome.last_success_at),
+    coverage: source.coverage || null, attribution: source.attribution || null, license: source.license || null, url: source.url || null
+  };
+}
+
+/* cachedLayer, plus the last successful retrieval: written when a fetch succeeds, read
+   only when no copy can be served. A separate key, so a kept answer is never changed. */
+const LAST_SUCCESS_KEEP = 7 * 86400;
+function lastSuccessKey(name) {
+  return new Request(`https://cache.mccluster.internal/world/health/${name}`);
+}
+export async function trackedLayer(spec, env, fetchImpl, cacheImpl) {
+  const store = cacheImpl || (globalThis.caches && globalThis.caches.default) || null;
+  let refreshed = false;
+  const out = await cachedLayer({ ...spec, fetcher: async (e, f) => { const data = await spec.fetcher(e, f); refreshed = true; return data; } }, env, fetchImpl, cacheImpl);
+  const key = lastSuccessKey(spec.key || spec.layer);
+  let last = out.body && !out.body.unavailable ? isoOrNull(out.body.fetched_at) : null;
+  if (store && refreshed && last) {
+    await store.put(key, new Response(JSON.stringify({ last_success_at: last }), { headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${LAST_SUCCESS_KEEP}` } })).catch(() => {});
+  }
+  if (store && !last) {
+    const res = await store.match(key).catch(() => null);
+    const kept = res ? await res.json().catch(() => null) : null;
+    last = kept ? isoOrNull(kept.last_success_at) : null;
+  }
+  return { ...out, last_success_at: last };
+}
+
 function cached(layer, env, fetchImpl, cacheImpl) {
   const spec = LAYERS[layer];
   return cachedLayer({ layer, ttl: spec.ttl, base: { attribution: spec.attribution }, rows: layer === 'flights' ? 'aircraft' : layer, fetcher: FETCHERS[layer] }, env, fetchImpl, cacheImpl);
+}
+
+/* The same answer without the members check, for a caller the Worker has
+   already authorized as the house owner (McCluster Core's signed read,
+   ./world-core-reads.js). Never routed on its own. */
+export async function worldLayerAnswer(layer, env, { fetchImpl = fetch, cacheImpl = null } = {}) {
+  if (!Object.prototype.hasOwnProperty.call(LAYERS, layer)) return null;
+  const { body, stale } = await cached(layer, env, fetchImpl, cacheImpl);
+  return { ...body, stale: !!stale };
 }
 
 export async function handleWorldLayers(request, env, { fetchImpl = fetch, cacheImpl = null } = {}) {

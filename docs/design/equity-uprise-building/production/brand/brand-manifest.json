@@ -1,0 +1,394 @@
+{
+ "schema_version": "1.0.0",
+ "manifest_id": "equity-uprise-building-brand-manifest",
+ "status": "canonical-brand-slot-contract",
+ "purpose": "The building carries brand SLOTS, not drawn marks. Builders emit an empty, named node per slot (with this metadata in glTF node extras). Viewers and the game place the assigned owner-supplied artwork on each enabled slot at runtime as a single textured plane.",
+ "law": [
+  "Owner-supplied artwork is the only source of a mark (root AGENTS.md: THE LOGOS ARE NOT YOURS TO DRAW).",
+  "Scale the complete artwork proportionally to fit inside the slot (fit: contain). Never crop, stretch, trace, rebuild, recolour or add a plate, backer, halo or tile the file does not already contain.",
+  "No builder writes the mark out in words. An empty slot is correct when no supplied variant exists; ask the owner for it.",
+  "No purple."
+ ],
+ "coordinate_system": {
+  "frame": "shared Core V2 building frame, feet; origin SW exterior corner at Floor 1 FFE; X east, Y north, Z up",
+  "center_ft": "absolute building coordinates of the slot centre (Z is absolute, not floor-relative)",
+  "normal": "outward face direction of the plane",
+  "up": "plane up direction",
+  "glb_node": "brand-slot::<id> (empty node at the GLB origin with an identity transform; extras.brand_slot carries this record plus glb_origin_z_ft; the runtime positions the artwork from center_ft)"
+ },
+ "artwork": {
+  "default": {
+   "id": "equity-uprise-emblem",
+   "path": "assets/img/equity-uprise-logo.webp",
+   "source": "owner-supplied",
+   "provenance": "Named in root AGENTS.md as the Equity Uprise emblem; facade-logo authority already bound this file and hash.",
+   "pixel_size": [
+    160,
+    160
+   ],
+   "aspect": 1.0,
+   "sha256": "3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f",
+   "contains_own_tile": true
+  },
+  "dark-ground": {
+   "id": "equity-uprise-emblem-white",
+   "path": "assets/img/equity-uprise-mark-white.png",
+   "source": "owner-requested variant (owner 2026-10-15: 'make the actual ... sign white')",
+   "pixel_size": [
+    160,
+    160
+   ],
+   "aspect": 1.0,
+   "sha256": "994fb6d8221a2ed8344ff348211c83a5a143a2dde92139e046f77e34846bd130",
+   "transparent": true
+  },
+  "transparent": {
+   "id": "equity-uprise-emblem-no-tile",
+   "path": "assets/img/equity-uprise-mark.png",
+   "source": "owner-requested variant (owner 2026-10-15: 'cut the white part out ... keep the dark part')",
+   "pixel_size": [
+    160,
+    160
+   ],
+   "aspect": 1.0,
+   "sha256": "391dfbff08756e929507dca5258002a561abeb9acd069c2d9e0fb20df123cc42",
+   "transparent": true
+  },
+  "lockup-horizontal": null
+ },
+ "slots": [
+  {
+   "id": "facade-entry-portal",
+   "surface": "facade/south/entry-portal-header",
+   "level": 1,
+   "center_ft": [
+    36,
+    -0.62,
+    12.15
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 2.4,
+   "max_height_ft": 2.4,
+   "mount": "flush-panel",
+   "fit": "contain",
+   "artwork": "default",
+   "enabled": true,
+   "replaces_inventory_records": [
+    "FAC-BRAND-ENTRY-01",
+    "FAC-SIGN-LOGO-ENTRY-01",
+    "FAC-SIGN-BACKER-ENTRY-01",
+    "FAC-SIGN-HALO-ENTRY-01"
+   ]
+  },
+  {
+   "id": "facade-entry-canopy-fascia",
+   "surface": "facade/south/canopy-fascia",
+   "level": 1,
+   "center_ft": [
+    36,
+    -5.78,
+    9.8
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 10.0,
+   "max_height_ft": 0.8,
+   "mount": "flush-panel",
+   "fit": "contain",
+   "artwork": "lockup-horizontal",
+   "enabled": false,
+   "note": "Empty until the owner supplies a horizontal lockup. The mark is never written out in words or lettered by a builder.",
+   "replaces_inventory_records": [
+    "FAC-WORDMARK-ENTRY-01",
+    "FAC-SIGN-LETTER-WORDMARK-ENTRY-01"
+   ]
+  },
+  {
+   "id": "facade-crown-south",
+   "surface": "facade/south/crown-band",
+   "level": 6,
+   "center_ft": [
+    36,
+    -0.78,
+    79.4
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 3.0,
+   "max_height_ft": 3.0,
+   "mount": "halo-lit-panel",
+   "fit": "contain",
+   "artwork": "default",
+   "enabled": true,
+   "replaces_inventory_records": [
+    "FAC-BRAND-CROWN-01",
+    "FAC-SIGN-LOGO-CROWN-01",
+    "FAC-SIGN-BACKER-CROWN-01",
+    "FAC-SIGN-HALO-CROWN-01"
+   ]
+  },
+  {
+   "id": "facade-crown-east",
+   "surface": "facade/east/crown-band",
+   "level": 6,
+   "center_ft": [
+    72.78,
+    36,
+    79.4
+   ],
+   "normal": [
+    1,
+    0,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 3.0,
+   "max_height_ft": 3.0,
+   "mount": "halo-lit-panel",
+   "fit": "contain",
+   "artwork": "default",
+   "enabled": false,
+   "note": "Optional second crown position for a re-branded building."
+  },
+  {
+   "id": "facade-crown-west",
+   "surface": "facade/west/crown-band",
+   "level": 6,
+   "center_ft": [
+    -0.78,
+    36,
+    79.4
+   ],
+   "normal": [
+    -1,
+    0,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 3.0,
+   "max_height_ft": 3.0,
+   "mount": "halo-lit-panel",
+   "fit": "contain",
+   "artwork": "default",
+   "enabled": false,
+   "note": "Optional second crown position for a re-branded building."
+  },
+  {
+   "id": "f1-vestibule-identity",
+   "surface": "interior/F1/vestibule-inner-header",
+   "level": 1,
+   "center_ft": [
+    36,
+    8.84,
+    7.55
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 1.6,
+   "max_height_ft": 1.6,
+   "mount": "interior-glass-header",
+   "fit": "contain",
+   "artwork": "default",
+   "enabled": true,
+   "replaces_inventory_records": [
+    "F1-ENTRY-SIGN-01"
+   ]
+  },
+  {
+   "id": "f2-feature-wall-identity",
+   "surface": "interior/F2/feature-wall",
+   "level": 2,
+   "center_ft": [
+    36,
+    51.98,
+    22.95
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 1.2,
+   "max_height_ft": 1.2,
+   "mount": "interior-wall",
+   "fit": "contain",
+   "artwork": "default",
+   "enabled": true,
+   "replaces_inventory_records": [
+    "F2-IDENTITY-SIGN-01"
+   ]
+  },
+  {
+   "id": "f3-feature-wall-identity",
+   "surface": "interior/F3/feature-wall",
+   "level": 3,
+   "center_ft": [
+    36,
+    51.98,
+    36.45
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 1.2,
+   "max_height_ft": 1.2,
+   "mount": "interior-wall",
+   "fit": "contain",
+   "artwork": "default",
+   "enabled": true,
+   "replaces_inventory_records": [
+    "F3-IDENTITY-SIGN-01"
+   ]
+  },
+  {
+   "id": "f4-feature-wall-identity",
+   "surface": "interior/F4/feature-wall",
+   "level": 4,
+   "center_ft": [
+    36,
+    51.98,
+    49.95
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 1.2,
+   "max_height_ft": 1.2,
+   "mount": "interior-wall",
+   "fit": "contain",
+   "artwork": "default",
+   "enabled": true,
+   "replaces_inventory_records": [
+    "F4-IDENTITY-SIGN-01"
+   ]
+  },
+  {
+   "id": "f5-feature-wall-identity",
+   "surface": "interior/F5/feature-wall",
+   "level": 5,
+   "center_ft": [
+    36,
+    51.98,
+    63.45
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 1.2,
+   "max_height_ft": 1.2,
+   "mount": "interior-wall",
+   "fit": "contain",
+   "artwork": "default",
+   "enabled": true,
+   "replaces_inventory_records": [
+    "F5-IDENTITY-SIGN-01"
+   ]
+  },
+  {
+   "id": "f6-feature-wall-identity",
+   "surface": "interior/F6/feature-wall",
+   "level": 6,
+   "center_ft": [
+    36,
+    51.98,
+    76.95
+   ],
+   "normal": [
+    0,
+    -1,
+    0
+   ],
+   "up": [
+    0,
+    0,
+    1
+   ],
+   "max_width_ft": 1.2,
+   "max_height_ft": 1.2,
+   "mount": "interior-wall",
+   "fit": "contain",
+   "artwork": "default",
+   "enabled": true,
+   "replaces_inventory_records": [
+    "F6-IDENTITY-SIGN-01"
+   ]
+  }
+ ],
+ "assign_a_new_logo": [
+  "Add the owner-supplied file to the repo (never a traced or recreated copy).",
+  "Change artwork.default.path (and pixel_size / aspect / sha256) here \u2014 or add a new variant key and point individual slots' 'artwork' at it.",
+  "Set 'enabled': true on any optional slot (crown east/west, canopy fascia) that should carry it.",
+  "No builder or GLB changes are needed: slots are fixed geometry anchors, artwork is applied at runtime by production/brand/equity-uprise-brand-slots.mjs.",
+  "Run production/interiors/audit_interior_consistency.py \u2014 it verifies every enabled slot resolves to a real file whose hash matches."
+ ],
+ "runtime_ref": "equity-uprise-brand-slots.mjs",
+ "builder_ref": "eu_brand_slots.py",
+ "not_for_construction": true
+}

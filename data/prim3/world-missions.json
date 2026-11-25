@@ -1,0 +1,1289 @@
+{
+  "schema": "prim3.world-missions/v1",
+  "status": "draft",
+  "canon_status": "side-operation-draft",
+  "updated": "2026-11-02",
+  "owner_request": "2026-11-02: a mission in every region where there is a PRIM3 character; the three characters with the biggest backstories, from different countries, pinned on the globe with story missions drawn from their canon.",
+  "canon": {
+    "repo": "mcclusterishere/prim3",
+    "ref": "origin/main",
+    "order": "Prim3 root CANON.md outranks story/CAST-NATIONS.md (status PROPOSED). Every mission here is DRAFT game content and promotes nothing to canon."
+  },
+  "notes": [
+    "All mission text is DRAFT. Every mission is a non-canon side operation pending the owner's story consolidation: side operations create no episodes and change no relationships, injuries or deaths. Nothing here is owner approval.",
+    "Canon has the whole ensemble operating out of one headquarters in the United States. Each country's agent is on assignment there from HQ, not living there. The place is a city canon names for the character (Kariya for Aya Shinoda, Ulsan for Hana Lee), otherwise the national capital; canon names no compound, college or site.",
+    "Missions marked canon_depth 'episode' borrow the human problem and core line of the character's owned episode blueprint. 'background' missions draw on the character's CAST-NATIONS section only and stay generic for the character's lane, because canon gives them no owned mission.",
+    "No spoilers: cards and briefings disclose no reverse-reveal history. Hana Lee is described only as an ensemble member would openly know her: an engineer and robotics researcher from Ulsan and Aya Shinoda's mentor. Her mission needs owner review.",
+    "McCluster is not a freely deployable unit: his mission is one he calls in as a scripted Wildcard call, and the squad (Entry, Recon, Technical) deploys.",
+    "Real countries are settings, never enemies; hostiles on the board are an unidentified crew. No real-world operational instructions.",
+    "Hana Lee is not one of the 24 mains (CAST-NATIONS lists her with Aya Shinoda's attached characters), so South Korea is a 25th country beyond the 24 main nations.",
+    "Every mission plays on the one playable level, transit-relay (prim3-transit.html). Rules, map and saves are the level's own."
+  ],
+  "levels": [
+    {
+      "id": "transit-relay",
+      "title": "Transit / Relay",
+      "page": "prim3-transit.html"
+    }
+  ],
+  "regions": [
+    "Americas",
+    "Europe",
+    "Africa",
+    "Middle East",
+    "Asia",
+    "Oceania"
+  ],
+  "cast": [
+    {
+      "order": 1,
+      "name": "McCluster",
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "role": "Cohort path",
+      "lane": "Wildcard",
+      "main": true
+    },
+    {
+      "order": 2,
+      "name": "Aya Shinoda",
+      "country": {
+        "code": "JP",
+        "name": "Japan"
+      },
+      "role": "Field-T Technical Operator",
+      "lane": "T",
+      "main": true
+    },
+    {
+      "order": 3,
+      "name": "Arjun Mehta",
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "role": "Field-E Entry Operator",
+      "lane": "E",
+      "main": true
+    },
+    {
+      "order": 4,
+      "name": "Li Wei",
+      "country": {
+        "code": "CN",
+        "name": "China"
+      },
+      "role": "Authority / Director track",
+      "lane": "Authority",
+      "main": true
+    },
+    {
+      "order": 5,
+      "name": "Sari Wulandari",
+      "country": {
+        "code": "ID",
+        "name": "Indonesia"
+      },
+      "role": "Cohort-01 Operator",
+      "lane": "Cohort",
+      "main": true
+    },
+    {
+      "order": 6,
+      "name": "Hassan Raza",
+      "country": {
+        "code": "PK",
+        "name": "Pakistan"
+      },
+      "role": "Defense-03 Tech-Zone Guard",
+      "lane": "Defense",
+      "main": true
+    },
+    {
+      "order": 7,
+      "name": "Chioma Okeke",
+      "country": {
+        "code": "NG",
+        "name": "Nigeria"
+      },
+      "role": "Cohort-03 Lead track",
+      "lane": "Lead",
+      "main": true
+    },
+    {
+      "order": 8,
+      "name": "Rafael Costa",
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "role": "Field-R Overwatch",
+      "lane": "R",
+      "main": true
+    },
+    {
+      "order": 9,
+      "name": "Nusrat Rahman",
+      "country": {
+        "code": "BD",
+        "name": "Bangladesh"
+      },
+      "role": "Defense-02 Access Officer",
+      "lane": "Defense",
+      "main": true
+    },
+    {
+      "order": 10,
+      "name": "Dmitri Volkov",
+      "country": {
+        "code": "RU",
+        "name": "Russia"
+      },
+      "role": "Defense-01 Building Guard",
+      "lane": "Defense",
+      "main": true
+    },
+    {
+      "order": 11,
+      "name": "Oksana Bondarenko",
+      "country": {
+        "code": "UA",
+        "name": "Ukraine"
+      },
+      "role": "Field-R / Intelligence",
+      "lane": "R",
+      "main": true
+    },
+    {
+      "order": 12,
+      "name": "Yonas Bekele",
+      "country": {
+        "code": "ET",
+        "name": "Ethiopia"
+      },
+      "role": "Cohort-01 Operator",
+      "lane": "Cohort",
+      "main": true
+    },
+    {
+      "order": 13,
+      "name": "Valeria Soto",
+      "country": {
+        "code": "MX",
+        "name": "Mexico"
+      },
+      "role": "Cohort-02 Trainee",
+      "lane": "Cohort",
+      "main": true
+    },
+    {
+      "order": 14,
+      "name": "Amira Hassan",
+      "country": {
+        "code": "EG",
+        "name": "Egypt"
+      },
+      "role": "Authority-03 Mission Sponsor",
+      "lane": "Authority",
+      "main": true
+    },
+    {
+      "order": 15,
+      "name": "Miguel Santos",
+      "country": {
+        "code": "PH",
+        "name": "Philippines"
+      },
+      "role": "Defense-02 Access Officer",
+      "lane": "Defense",
+      "main": true
+    },
+    {
+      "order": 16,
+      "name": "Grace Mbala",
+      "country": {
+        "code": "CD",
+        "name": "Democratic Republic of the Congo"
+      },
+      "role": "Cohort Support",
+      "lane": "Support",
+      "main": true
+    },
+    {
+      "order": 17,
+      "name": "Minh Tran",
+      "country": {
+        "code": "VN",
+        "name": "Vietnam"
+      },
+      "role": "Field-T Technical Operator",
+      "lane": "T",
+      "main": true
+    },
+    {
+      "order": 18,
+      "name": "Leila Hosseini",
+      "country": {
+        "code": "IR",
+        "name": "Iran"
+      },
+      "role": "Authority / Analysis",
+      "lane": "Authority",
+      "main": true
+    },
+    {
+      "order": 19,
+      "name": "Emre Yıldız",
+      "country": {
+        "code": "TR",
+        "name": "Turkey"
+      },
+      "role": "Defense-01 Building Guard",
+      "lane": "Defense",
+      "main": true
+    },
+    {
+      "order": 20,
+      "name": "Jonas Weber",
+      "country": {
+        "code": "DE",
+        "name": "Germany"
+      },
+      "role": "System Liaison / Pylon Interface",
+      "lane": "Specialist",
+      "main": true
+    },
+    {
+      "order": 21,
+      "name": "Priya Srisawat",
+      "country": {
+        "code": "TH",
+        "name": "Thailand"
+      },
+      "role": "Marketing / Public Surface",
+      "lane": "Support",
+      "main": true
+    },
+    {
+      "order": 22,
+      "name": "Helen Clarke",
+      "country": {
+        "code": "GB",
+        "name": "United Kingdom"
+      },
+      "role": "Authority-02 Director",
+      "lane": "Authority",
+      "main": true
+    },
+    {
+      "order": 23,
+      "name": "Marc Dubois",
+      "country": {
+        "code": "FR",
+        "name": "France"
+      },
+      "role": "Mission Sponsor",
+      "lane": "Authority",
+      "main": true
+    },
+    {
+      "order": 24,
+      "name": "Thandiwe Nkosi",
+      "country": {
+        "code": "ZA",
+        "name": "South Africa"
+      },
+      "role": "Cohort-03 Lead peer",
+      "lane": "Lead",
+      "main": true
+    },
+    {
+      "order": 25,
+      "name": "Hana Lee",
+      "country": {
+        "code": "KR",
+        "name": "South Korea"
+      },
+      "role": "Engineer and robotics researcher · mentor to Aya Shinoda",
+      "lane": "T",
+      "main": false,
+      "attached_to": "Aya Shinoda"
+    }
+  ],
+  "missions": [
+    {
+      "id": "us-road-kit",
+      "featured": true,
+      "status": "draft",
+      "country": {
+        "code": "US",
+        "name": "United States"
+      },
+      "region": "Americas",
+      "place": "Washington, D.C.",
+      "lat": 38.9072,
+      "lon": -77.0369,
+      "character": {
+        "name": "McCluster",
+        "role": "Wildcard · calls the mission in"
+      },
+      "title": "Road Kit",
+      "episode": "S6E1 · Per Diem / Road Kit",
+      "briefing": "A remote emergency site needs minimum viable communications and compute from whatever a team can actually carry, power and staff. McCluster calls it in from HQ as a scripted Wildcard call, and his instinct is to take every ugly shift himself; this time the squad deploys. Pack only what has to travel, bring the relay up and rotate the work: the road kit includes the people carrying it.",
+      "objective": "The squad (Entry, Recon, Technical) links the field relay twice, then extracts. Nobody covers every chair.",
+      "level": "transit-relay",
+      "difficulty": "hard",
+      "canon_depth": "episode",
+      "note": "Drawn from the Road Kit blueprint and McCluster's infrastructure history. Guardrail: McCluster is not a freely deployable unit, so here he calls the mission in and the squad plays it (the blueprint itself makes him playable from launch). Canon names no site (Prim3 AGENTS: do not name the location), so the place is the national capital. No prequel history is disclosed.",
+      "sources": [
+        {
+          "file": "episodes/S06E01-PER-DIEM.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "episodes/S06E01-PER-DIEM.md",
+          "section": "Technical thesis"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        },
+        {
+          "file": "story/MCCLUSTER-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "15. Infrastructure develops during homelessness"
+        },
+        {
+          "file": "story/MCCLUSTER-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "28. PRIM3 anti-spoiler writing law"
+        },
+        {
+          "file": "story/MCCLUSTER-HITMAN-ORIGIN-CANON.md",
+          "section": "16. Infrastructure enters Equity Uprise's life"
+        },
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "01 — McCluster — United States — Cohort path"
+        }
+      ],
+      "side_operation": true,
+      "deployment": "wildcard-call"
+    },
+    {
+      "id": "jp-bad-input",
+      "featured": true,
+      "status": "draft",
+      "country": {
+        "code": "JP",
+        "name": "Japan"
+      },
+      "region": "Asia",
+      "place": "Kariya, Aichi",
+      "lat": 34.9893,
+      "lon": 136.9917,
+      "character": {
+        "name": "Aya Shinoda",
+        "role": "Field-T Technical Operator"
+      },
+      "title": "Bad Input",
+      "episode": "S3E2 · App Attacks / Bad Input",
+      "briefing": "A dispatch application reports states that do not match what the machines are physically doing, and people are moving on its word. Aya will not call a system healthy because the dashboard is green: she instruments, observes and asks which assumption nobody has proven. Minh sees part of the fault before she does, and this time the discovery stays his. A system's declared state is evidence, not reality.",
+      "objective": "Get T to the relay and verify it twice against physical evidence, then extract.",
+      "level": "transit-relay",
+      "difficulty": "hard",
+      "canon_depth": "episode",
+      "note": "Drawn from the Bad Input blueprint and Aya's Field-T dossier. Aya is on assignment in Kariya, her canon home region; the canon episode's site is not placed there.",
+      "sources": [
+        {
+          "file": "episodes/S03E02-APP-ATTACKS.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "episodes/S03E02-APP-ATTACKS.md",
+          "section": "Technical thesis"
+        },
+        {
+          "file": "story/AYA-SHINODA-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "1. Core identity at PRIM3 opening"
+        },
+        {
+          "file": "story/AYA-SHINODA-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "2. Place: Kariya, Aichi"
+        },
+        {
+          "file": "story/AYA-SHINODA-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "24. Aya enters Field-T"
+        },
+        {
+          "file": "story/AYA-SHINODA-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "28. Aya's technical perception pattern"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "kr-fails-safely",
+      "featured": true,
+      "status": "draft",
+      "country": {
+        "code": "KR",
+        "name": "South Korea"
+      },
+      "region": "Asia",
+      "place": "Ulsan",
+      "lat": 35.5384,
+      "lon": 129.3114,
+      "character": {
+        "name": "Hana Lee",
+        "role": "Engineer and robotics researcher · mentor to Aya Shinoda"
+      },
+      "title": "Fails Safely",
+      "briefing": "Hana Lee, an engineer and robotics researcher from Ulsan and Aya Shinoda's mentor, is called to an automated line that reports safe while the physical evidence disagrees. The pressure to keep it running is real, and her answer is the one she taught Aya: a good system does not merely work, it fails safely. Machines warn you before they fail if you know what counts as a warning.",
+      "objective": "Reach the relay and link it twice to confirm a survivable state, then extract everyone.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "background",
+      "note": "Needs owner review. Hana is described only as an ensemble member would openly know her: engineer, robotics researcher from Ulsan, Aya's mentor; the card says nothing about where she is now. The incident is a draft. South Korea is a 25th country beyond the 24 main nations; the place is Ulsan, her canon home.",
+      "sources": [
+        {
+          "file": "story/HANA-LEE-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "2. Ulsan childhood"
+        },
+        {
+          "file": "story/HANA-LEE-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "3. Education and technical formation"
+        },
+        {
+          "file": "story/HANA-LEE-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "7. What Hana teaches Aya"
+        },
+        {
+          "file": "story/HANA-LEE-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "15. Hana's decision priors"
+        },
+        {
+          "file": "story/AYA-HANA-INTELLIGENCE-CANON.md",
+          "section": "1. Hana Lee's public identity"
+        },
+        {
+          "file": "story/AYA-SHINODA-PSYCHOLOGICAL-BACKGROUND.md",
+          "section": "18. Hana Lee — mentor, older sister in engineering, and corrective philosophy"
+        },
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "48 attached secondaries"
+        }
+      ],
+      "side_operation": true,
+      "needs_owner_review": true
+    },
+    {
+      "id": "in-safe-access",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "IN",
+        "name": "India"
+      },
+      "region": "Asia",
+      "place": "New Delhi",
+      "lat": 28.6139,
+      "lon": 77.209,
+      "character": {
+        "name": "Arjun Mehta",
+        "role": "Field-E Entry Operator"
+      },
+      "title": "Safe Access",
+      "briefing": "A failing facility needs people inside before any technical plan means anything. Arjun treats entry as engineering: space, people, timing and exit routes are one system. Open the way for T and keep the route out clear.",
+      "objective": "Breach the service gate, cover T to the relay for two links, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "background",
+      "note": "Canon gives Arjun no owned mission; generic Field-E entry drawn from his background.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "03 — Arjun Mehta — India — Field-E Entry Operator"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "cn-exposure",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "CN",
+        "name": "China"
+      },
+      "region": "Asia",
+      "place": "Beijing",
+      "lat": 39.9042,
+      "lon": 116.4074,
+      "character": {
+        "name": "Li Wei",
+        "role": "Authority / Director track"
+      },
+      "title": "Exposure",
+      "episode": "S3E1 · Data Breach / Exposure",
+      "briefing": "A compromise has exposed personnel records, and the people in them are in the building watching themselves become categories. Li reads the institutional consequence of every technical choice: who gains authority, who loses deniability, who answers when the log is opened. Secure the link without letting governance become concealment.",
+      "objective": "Get T to the relay for two links, then extract. The data subject is a person before they are a row.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "episode",
+      "note": "Li co-owns Exposure with Leila Hosseini; this mission takes his side of it.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "04 — Li Wei — China — Authority / Director track"
+        },
+        {
+          "file": "episodes/S03E01-DATA-BREACH.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "id-elastic",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "ID",
+        "name": "Indonesia"
+      },
+      "region": "Asia",
+      "place": "Jakarta",
+      "lat": -6.2088,
+      "lon": 106.8456,
+      "character": {
+        "name": "Sari Wulandari",
+        "role": "Cohort-01 Operator"
+      },
+      "title": "Elastic",
+      "episode": "S5E3 · Trappin From The Cloud / Elastic",
+      "briefing": "A sudden demand spike pushes a critical service past its forecast, and everything expands at once: capacity, cost, workload and blast radius. Sari has wanted to operate at this scale; the reality is uglier. Keep the relay up and remember that scaling the service also scales the consequences of being wrong.",
+      "objective": "Link the relay twice under pressure, then extract.",
+      "level": "transit-relay",
+      "difficulty": "hard",
+      "canon_depth": "episode",
+      "note": "Only the episode's ensemble side is used.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "05 — Sari Wulandari — Indonesia — Cohort-01 Operator"
+        },
+        {
+          "file": "episodes/S05E03-TRAPPIN-FROM-THE-CLOUD.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "pk-tech-zone",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "PK",
+        "name": "Pakistan"
+      },
+      "region": "Asia",
+      "place": "Islamabad",
+      "lat": 33.6844,
+      "lon": 73.0479,
+      "character": {
+        "name": "Hassan Raza",
+        "role": "Defense-03 Tech-Zone Guard"
+      },
+      "title": "Tech Zone",
+      "briefing": "Doors, racks, cameras, power and people are one security boundary, and the most sensitive rooms are often guarded by routines nobody questions. Hassan sees the risk before a dashboard does. Hold the technical zone while T makes the link.",
+      "objective": "Keep T covered at the relay for two links, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "background",
+      "note": "Canon gives Hassan no owned mission; generic tech-zone defense drawn from his background.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "06 — Hassan Raza — Pakistan — Defense-03 Tech-Zone Guard"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "ng-four-colors",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "NG",
+        "name": "Nigeria"
+      },
+      "region": "Africa",
+      "place": "Abuja",
+      "lat": 9.0765,
+      "lon": 7.3986,
+      "character": {
+        "name": "Chioma Okeke",
+        "role": "Cohort-03 Lead track"
+      },
+      "title": "Four Colors",
+      "episode": "S2E2 · Red Blue Purple White Team / Four Colors",
+      "briefing": "A controlled red-versus-blue assessment is interrupted by a real facility anomaly that looks enough like an exercise inject for ambitious people to keep playing. Chioma's safest call makes her look like the first person to panic. Treat it as real and secure the link: a role is useful only while it still describes the problem.",
+      "objective": "Stop the exercise, link the relay twice, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "episode",
+      "note": "Chioma co-owns Four Colors with Thandiwe Nkosi; this mission takes her side of it.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "07 — Chioma Okeke — Nigeria — Cohort-03 Lead track"
+        },
+        {
+          "file": "episodes/S02E02-RED-BLUE-PURPLE-WHITE-TEAM.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "br-one-detail",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "BR",
+        "name": "Brazil"
+      },
+      "region": "Americas",
+      "place": "Brasília",
+      "lat": -15.7975,
+      "lon": -47.8919,
+      "character": {
+        "name": "Rafael Costa",
+        "role": "Field-R Overwatch"
+      },
+      "title": "One Detail",
+      "briefing": "Rafael learned remote sensing mapping disasters, and he will stare at an apparently empty scene until one detail changes. His gift is not superhuman eyesight; it is refusing to let boredom lower his standards. Take overwatch early so nobody has to become heroic.",
+      "objective": "Hold overwatch while T links the relay twice, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "background",
+      "note": "Rafael co-owns Open Book and Dumpster Signal, which this file gives to Oksana and Grace; his mission is generic Field-R overwatch drawn from his background.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "08 — Rafael Costa — Brazil — Field-R Overwatch"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "bd-permission-slip",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "BD",
+        "name": "Bangladesh"
+      },
+      "region": "Asia",
+      "place": "Dhaka",
+      "lat": 23.8103,
+      "lon": 90.4125,
+      "character": {
+        "name": "Nusrat Rahman",
+        "role": "Defense-02 Access Officer"
+      },
+      "title": "Permission Slip",
+      "episode": "S1E2 · White Grey Black Hat / Permission Slip",
+      "briefing": "A lawful operation at a multi-tenant edge facility gives the team strong authority and very little knowledge of the system inside. Nusrat leads, and she will hold the boundary without apologizing for having one. Capability is not permission. Permission is not knowledge.",
+      "objective": "Stay inside scope: link the relay twice, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "episode",
+      "note": "Nusrat co-owns Permission Slip with Miguel Santos; this mission takes her side of it.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "09 — Nusrat Rahman — Bangladesh — Defense-02 Access Officer"
+        },
+        {
+          "file": "episodes/S01E02-WHITE-GREY-BLACK-HAT.md",
+          "section": "Episode promise"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "ru-patient-zero",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "RU",
+        "name": "Russia"
+      },
+      "region": "Europe",
+      "place": "Moscow",
+      "lat": 55.7558,
+      "lon": 37.6173,
+      "character": {
+        "name": "Dmitri Volkov",
+        "role": "Defense-01 Building Guard"
+      },
+      "title": "Patient Zero",
+      "episode": "S3E3 · Virus Types / Patient Zero",
+      "briefing": "Several devices misbehave in different ways and the institution wants one culprit; Dmitri fits the convenient story. He believes professionalism begins where slogans end. Contain the problem and link the relay: similar symptoms can have different causes, and neither fact proves who is guilty.",
+      "objective": "Link the relay twice and extract. Evidence decides, not a passport.",
+      "level": "transit-relay",
+      "difficulty": "hard",
+      "canon_depth": "episode",
+      "note": "Dmitri co-owns Patient Zero with Oksana Bondarenko; this mission takes his side of it.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "10 — Dmitri Volkov — Russia — Defense-01 Building Guard"
+        },
+        {
+          "file": "episodes/S03E03-VIRUS-TYPES.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "ua-open-book",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "UA",
+        "name": "Ukraine"
+      },
+      "region": "Europe",
+      "place": "Kyiv",
+      "lat": 50.4501,
+      "lon": 30.5234,
+      "character": {
+        "name": "Oksana Bondarenko",
+        "role": "Field-R / Intelligence"
+      },
+      "title": "Open Book",
+      "episode": "S1E3 · OSINT / Open Book",
+      "briefing": "A critical equipment shipment has gone missing before a facility opening, and a junior coordinator is becoming the convenient explanation. Oksana refuses to let a clean story outrun the evidence. Three pages repeating one source are still one source.",
+      "objective": "Reconstruct what happened at the relay: link it twice, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "episode",
+      "note": "Oksana co-owns Open Book with Rafael Costa; this mission takes her side of it.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "11 — Oksana Bondarenko — Ukraine — Field-R / Intelligence"
+        },
+        {
+          "file": "episodes/S01E03-OSINT.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "et-dead-air",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "ET",
+        "name": "Ethiopia"
+      },
+      "region": "Africa",
+      "place": "Addis Ababa",
+      "lat": 9.03,
+      "lon": 38.74,
+      "character": {
+        "name": "Yonas Bekele",
+        "role": "Cohort-01 Operator"
+      },
+      "title": "Dead Air",
+      "episode": "S2E3 · Got Wifi / Dead Air",
+      "briefing": "Severe weather has damaged a crowded facility, and responder communications are failing inconsistently. Strong signal is being confused with usable service. Yonas wants to be the operator whose calm changes the room. Bars are not a service guarantee.",
+      "objective": "Restore a verified link at the relay twice, then extract.",
+      "level": "transit-relay",
+      "difficulty": "hard",
+      "canon_depth": "episode",
+      "note": "Yonas co-owns Dead Air with Sari Wulandari (whose mission here is Elastic).",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "12 — Yonas Bekele — Ethiopia — Cohort-01 Operator"
+        },
+        {
+          "file": "episodes/S02E03-GOT-WIFI.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "mx-clean-install",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "MX",
+        "name": "Mexico"
+      },
+      "region": "Americas",
+      "place": "Mexico City",
+      "lat": 19.4326,
+      "lon": -99.1332,
+      "character": {
+        "name": "Valeria Soto",
+        "role": "Cohort-02 Trainee"
+      },
+      "title": "Clean Install",
+      "episode": "S4E1 · Installation Types / Clean Install",
+      "briefing": "A remote, aging site has to be migrated under time pressure, and one shortcut would make Valeria look brilliant now while leaving hidden fragility for later. The test is whether she picks the option that looks less impressive because it is more responsible. Not everything worth preserving should be carried forward.",
+      "objective": "Rebuild the link from a trusted baseline: two relay links, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "episode",
+      "note": "",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "13 — Valeria Soto — Mexico — Cohort-02 Trainee"
+        },
+        {
+          "file": "episodes/S04E01-INSTALLATION-TYPES.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "eg-own-the-exit",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "EG",
+        "name": "Egypt"
+      },
+      "region": "Middle East",
+      "place": "Cairo",
+      "lat": 30.0444,
+      "lon": 31.2357,
+      "character": {
+        "name": "Amira Hassan",
+        "role": "Authority-03 Mission Sponsor"
+      },
+      "title": "Own the Exit",
+      "episode": "S5E2 · CapEx vs OpEx / Own the Exit",
+      "briefing": "A time-sensitive operation needs more capacity than the institution owns, and the cheapest, fastest option puts control of the way out in someone else's hands. Amira asks the question before launch that makes a bad assignment survivable. The cheapest route is not cheap if somebody else owns your exit.",
+      "objective": "Link the relay twice and bring everyone out through an exit you control.",
+      "level": "transit-relay",
+      "difficulty": "hard",
+      "canon_depth": "episode",
+      "note": "Amira co-owns Own the Exit with Marc Dubois; this mission takes her side of it.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "14 — Amira Hassan — Egypt — Authority-03 Mission Sponsor"
+        },
+        {
+          "file": "episodes/S05E02-CAP-EX-VS-OP-EX.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "ph-credential-chain",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "PH",
+        "name": "Philippines"
+      },
+      "region": "Asia",
+      "place": "Manila",
+      "lat": 14.5995,
+      "lon": 120.9842,
+      "character": {
+        "name": "Miguel Santos",
+        "role": "Defense-02 Access Officer"
+      },
+      "title": "Credential Chain",
+      "briefing": "Miguel learned in high-volume logistics that one bad credential creates a long chain of consequences. He is friendly enough that visitors forget he is evaluating them, and he wants a secure place that does not feel dehumanizing. Keep the boundary strict and the people treated well while T makes the link.",
+      "objective": "Cover T at the relay for two links, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "background",
+      "note": "Miguel co-owns Permission Slip, which this file gives to Nusrat; his mission is generic access defense drawn from his background.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "15 — Miguel Santos — Philippines — Defense-02 Access Officer"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "cd-dumpster-signal",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "CD",
+        "name": "Democratic Republic of the Congo"
+      },
+      "region": "Africa",
+      "place": "Kinshasa",
+      "lat": -4.4419,
+      "lon": 15.2663,
+      "character": {
+        "name": "Grace Mbala",
+        "role": "Cohort Support"
+      },
+      "title": "Dumpster Signal",
+      "episode": "S4E2 · Dive In / Dumpster Signal",
+      "briefing": "At an authorized, decommissioned facility, discarded objects and residual signals reveal more about the site's past than the paperwork does. Grace knows part of that picture belongs to people who never consented to become intelligence. When information is available, what makes using it legitimate?",
+      "objective": "Link the relay twice inside the authority you were given, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "episode",
+      "note": "Grace co-owns Dumpster Signal with Rafael Costa; this mission takes her side of it.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "16 — Grace Mbala — Democratic Republic of the Congo — Cohort Support"
+        },
+        {
+          "file": "episodes/S04E02-DIVE-IN.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "vn-firmware-truth",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "VN",
+        "name": "Vietnam"
+      },
+      "region": "Asia",
+      "place": "Hanoi",
+      "lat": 21.0278,
+      "lon": 105.8342,
+      "character": {
+        "name": "Minh Tran",
+        "role": "Field-T Technical Operator"
+      },
+      "title": "Firmware Truth",
+      "briefing": "Minh prefers devices that reveal their state through measurements rather than meetings. Here the gap between what the system claims and what the hardware is actually doing is the whole mission. Trust the measurement.",
+      "objective": "Get T to the relay, link it twice, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "background",
+      "note": "Minh co-owns Bad Input, which is Aya's featured mission here; his mission is generic Field-T work drawn from his background.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "17 — Minh Tran — Vietnam — Field-T Technical Operator"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "ir-trust-model",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "IR",
+        "name": "Iran"
+      },
+      "region": "Middle East",
+      "place": "Tehran",
+      "lat": 35.6892,
+      "lon": 51.389,
+      "character": {
+        "name": "Leila Hosseini",
+        "role": "Authority / Analysis"
+      },
+      "title": "Trust Model",
+      "briefing": "Leila can see when a security model is technically sound and politically naive. Before T touches the relay, she wants to know who is trusted, by whom, and why. Design trust that does not depend on pretending institutions are neutral.",
+      "objective": "Link the relay twice with a trust chain you can explain, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "background",
+      "note": "Leila co-owns Exposure, which this file gives to Li Wei; her mission is generic analysis work drawn from her background.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "18 — Leila Hosseini — Iran — Authority / Analysis"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "tr-gravity",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "TR",
+        "name": "Turkey"
+      },
+      "region": "Middle East",
+      "place": "Ankara",
+      "lat": 39.9334,
+      "lon": 32.8597,
+      "character": {
+        "name": "Emre Yıldız",
+        "role": "Defense-01 Building Guard"
+      },
+      "title": "Gravity Still Exists",
+      "briefing": "Emre thinks in fire doors, generators, crowds and routes: how a building behaves when the software layer has failed. He is the one who reminds a room full of cyber operators that smoke, water and gravity still exist. Make the site physically safe, then make the link.",
+      "objective": "Secure the route, link the relay twice, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "background",
+      "note": "Canon gives Emre no owned mission; generic building defense drawn from his background.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "19 — Emre Yıldız — Turkey — Defense-01 Building Guard"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "de-house-of-eyes",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "DE",
+        "name": "Germany"
+      },
+      "region": "Europe",
+      "place": "Berlin",
+      "lat": 52.52,
+      "lon": 13.405,
+      "character": {
+        "name": "Jonas Weber",
+        "role": "System Liaison / Pylon Interface"
+      },
+      "title": "House of Eyes",
+      "episode": "S4E3 · IoT / House of Eyes",
+      "briefing": "A connected building reports impossible states across doors, cameras, heating, meters and occupancy. Jonas believes it is corrupted telemetry around a fundamentally reliable system, and he may be wrong. A building can know a lot and still be wrong about the thing that matters.",
+      "objective": "Link the relay twice and confirm it by hand, then extract.",
+      "level": "transit-relay",
+      "difficulty": "hard",
+      "canon_depth": "episode",
+      "note": "",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "20 — Jonas Weber — Germany — System Liaison / Pylon Interface"
+        },
+        {
+          "file": "episodes/S04E03-IOT.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "th-human-layer",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "TH",
+        "name": "Thailand"
+      },
+      "region": "Asia",
+      "place": "Bangkok",
+      "lat": 13.7563,
+      "lon": 100.5018,
+      "character": {
+        "name": "Priya Srisawat",
+        "role": "Marketing / Public Surface"
+      },
+      "title": "The Human Layer",
+      "episode": "S2E1 · Anti Social Engineering / The Human Layer",
+      "briefing": "At a crowded public event, someone uses urgency, status cues and partly legitimate information to pressure staff across a boundary. Priya fears a harsh response will humiliate the people she built the atmosphere for; the boundary still has to hold. Trust is a relationship. Access is a decision.",
+      "objective": "Hold the boundary while T links the relay twice, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "episode",
+      "note": "Only the episode's ensemble side is used.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "21 — Priya Srisawat — Thailand — Marketing / Public Surface"
+        },
+        {
+          "file": "episodes/S02E01-ANTI-SOCIAL-ENGINEERING.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "gb-shared-responsibility",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "GB",
+        "name": "United Kingdom"
+      },
+      "region": "Europe",
+      "place": "London",
+      "lat": 51.5074,
+      "lon": -0.1278,
+      "character": {
+        "name": "Helen Clarke",
+        "role": "Authority-02 Director"
+      },
+      "title": "Shared Responsibility",
+      "episode": "S5E1 · IaaS/SaaS/PaaS / Shared Responsibility",
+      "briefing": "A mission-supporting service fails across infrastructure, platform and application boundaries, and every team can plausibly say it is not their layer. Helen owns the visible institution but cannot order expertise into existence. \"Not our layer\" can be technically correct and operationally useless.",
+      "objective": "Own the whole stack for one turn at a time: link the relay twice, then extract.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "episode",
+      "note": "Helen co-owns Shared Responsibility with Li Wei and Yonas Bekele; this mission takes her side of it.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "22 — Helen Clarke — United Kingdom — Authority-02 Director"
+        },
+        {
+          "file": "episodes/S05E01-IAAS-SAAS-PAAS.md",
+          "section": "Human problem"
+        },
+        {
+          "file": "story/EPISODE-MISSION-BIBLE.md",
+          "section": "7. Locked 21-episode ownership spine"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "fr-line-item",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "FR",
+        "name": "France"
+      },
+      "region": "Europe",
+      "place": "Paris",
+      "lat": 48.8566,
+      "lon": 2.3522,
+      "character": {
+        "name": "Marc Dubois",
+        "role": "Mission Sponsor"
+      },
+      "title": "Line Item",
+      "briefing": "Marc is comfortable with risk as long as it is quantified, funded and attached to an objective, and he can discuss a dangerous mission as calmly as a delayed component. This time the arithmetic has people in it. Bring them all home and find out what should never become a spreadsheet cell.",
+      "objective": "Link the relay twice, then extract with nobody written off.",
+      "level": "transit-relay",
+      "difficulty": "hard",
+      "canon_depth": "background",
+      "note": "Marc co-owns Own the Exit, which this file gives to Amira; his mission is generic sponsor pressure drawn from his background.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "23 — Marc Dubois — France — Mission Sponsor"
+        }
+      ],
+      "side_operation": true
+    },
+    {
+      "id": "za-consent-line",
+      "featured": false,
+      "status": "draft",
+      "country": {
+        "code": "ZA",
+        "name": "South Africa"
+      },
+      "region": "Africa",
+      "place": "Pretoria",
+      "lat": -25.7479,
+      "lon": 28.2293,
+      "character": {
+        "name": "Thandiwe Nkosi",
+        "role": "Cohort-03 Lead peer"
+      },
+      "title": "Consent Line",
+      "briefing": "Thandiwe has seen automation keep workers alive and seen it used to remove them from decisions. An automated site's safety system is running without the people it protects in the loop. Bring the link up in a way the people inside can see and answer.",
+      "objective": "Link the relay twice, then extract everyone.",
+      "level": "transit-relay",
+      "difficulty": "standard",
+      "canon_depth": "background",
+      "note": "Thandiwe co-owns Four Colors, which this file gives to Chioma; her mission is drawn from her worker-safety background.",
+      "sources": [
+        {
+          "file": "story/CAST-NATIONS.md",
+          "section": "24 — Thandiwe Nkosi — South Africa — Cohort-03 Lead peer"
+        }
+      ],
+      "side_operation": true
+    }
+  ]
+}

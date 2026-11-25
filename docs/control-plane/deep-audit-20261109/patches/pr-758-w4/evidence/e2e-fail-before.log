@@ -1,0 +1,32 @@
+# lane w4, head 027efd52bde35d4a90c26915140fed3ef98cd582, base 90ce7c4ce2
+# FAIL BEFORE: the committed e2e against the PR head's trial.mjs (first failure is fatal)
+# trial.mjs sha256: cca1aa6027032e5fb2427531e764feb299275e4d66ac3fede9e338fbd61edddd
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: an account answer that arrives after sign-out verifies nothing
++ actual - expected
+
+  {
++   account: false,
++   heading: 'Welcome back',
++   start: 'Play Chemistry'
+-   account: true,
+-   heading: 'Continue with an M Account',
+-   start: null
+  }
+
+    at file:///tmp/claude-0/-home-user-mccluster/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/wt/w4/scripts/e2e/game-hub-capsule.e2e.mjs:223:10
+    at async trialAccount (file:///tmp/claude-0/-home-user-mccluster/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/wt/w4/scripts/e2e/game-hub-capsule.e2e.mjs:214:7)
+    at async file:///tmp/claude-0/-home-user-mccluster/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/wt/w4/scripts/e2e/game-hub-capsule.e2e.mjs:218:2 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: { heading: 'Welcome back', start: 'Play Chemistry', account: false },
+  expected: { heading: 'Continue with an M Account', start: null, account: true },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.4
+exit=1

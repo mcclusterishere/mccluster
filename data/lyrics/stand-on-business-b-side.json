@@ -1,0 +1,1730 @@
+{
+ "duration_seconds": 121,
+ "language": "en",
+ "songTitle": "Stand On Business (B-Side)",
+ "source": "aligned",
+ "reviewed": false,
+ "machine": {
+  "version": "lyrics-machine/1",
+  "engine": {
+   "separator": "demucs htdemucs_6s",
+   "asr": "faster-whisper medium.en",
+   "aligner": "wav2vec2-ctc WAV2VEC2_ASR_BASE_960H"
+  },
+  "generated_at": "2026-10-31T18:29:13.097Z",
+  "confidence": 0.77,
+  "mismatched_lines": 6,
+  "sheet_lines": 20,
+  "heard_words": 240,
+  "ctc_aligned_lines": 29,
+  "timing": {
+   "separate_seconds": 62.8,
+   "asr_seconds": 136.7,
+   "align_seconds": 9,
+   "map_seconds": 0.1
+  }
+ },
+ "plain": "Stand on business with us you should stand on business with us.\nStand on business with us you should stand on business with us.\nStand on business with us you should stand on business with us.\n\nStand on business. Stand on.\n\nStand on business with us till your pockets get lil bigger\n\nStand on business. Stand on.\nStand on business. Stand on.\nStand on business. Stand on.\nStand on business. Stand on.\n\nBusiness plans I’ve written helped me flip these bands while business tripping\nIf you plan to rent a whip then I’m the man I’ll whip equip it;\n\na car jack when I'm on a jet\n\nHop the jet hit the auction next, federation mission.\nGot the bread? All set. Ain’t no flaking in us.\nUpcharge for the swap out you’ll be fly whipping\nBring insurance and your license if you plan on getting in it\nTold you not to speed if that danger fine hits don’t complain or cry kid\nJust stand on business with us.\n\nStand on business with us you should stand on business with us.\nStand on business with us you should stand on business with us.\nStand on business with us you should stand on business with us.\nStand on business with us till your pockets get lil bigger\n\nJust stand on business with us.\n\nStand on business. Stand on.\nStand on business. Stand on.\nStand on business. Stand on.\nStand on business. Stand on.\nStand on business. Stand on.\nStand on business. Stand on.\nStand on business. Stand on.\nStand on business. Stand on.\n\nbusiness. Let's get out of here.",
+ "timed": {
+  "line": [
+   {
+    "begin": 11.585,
+    "end": 14.461,
+    "content": "Stand on business with us you should stand on business with us.",
+    "confidence": 0.963,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 11.585,
+      "end": 11.786,
+      "content": "Stand"
+     },
+     {
+      "begin": 11.847,
+      "end": 11.927,
+      "content": "on"
+     },
+     {
+      "begin": 12.007,
+      "end": 12.329,
+      "content": "business"
+     },
+     {
+      "begin": 12.389,
+      "end": 12.57,
+      "content": "with"
+     },
+     {
+      "begin": 12.59,
+      "end": 12.63,
+      "content": "us"
+     },
+     {
+      "begin": 12.731,
+      "end": 12.811,
+      "content": "you"
+     },
+     {
+      "begin": 12.891,
+      "end": 13.012,
+      "content": "should"
+     },
+     {
+      "begin": 13.032,
+      "end": 13.233,
+      "content": "stand"
+     },
+     {
+      "begin": 13.293,
+      "end": 13.353,
+      "content": "on"
+     },
+     {
+      "begin": 13.454,
+      "end": 13.775,
+      "content": "business"
+     },
+     {
+      "begin": 13.836,
+      "end": 14.461,
+      "content": "with"
+     },
+     {
+      "begin": 14.461,
+      "end": 14.461,
+      "content": "us."
+     }
+    ],
+    "align_score": 0.445
+   },
+   {
+    "begin": 14.461,
+    "end": 27.562,
+    "content": "Stand on business with us you should stand on business with us.",
+    "confidence": 0.967,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 14.461,
+      "end": 14.661,
+      "content": "Stand"
+     },
+     {
+      "begin": 14.741,
+      "end": 14.802,
+      "content": "on"
+     },
+     {
+      "begin": 14.882,
+      "end": 17.045,
+      "content": "business"
+     },
+     {
+      "begin": 18.186,
+      "end": 18.386,
+      "content": "with"
+     },
+     {
+      "begin": 18.747,
+      "end": 20.209,
+      "content": "us"
+     },
+     {
+      "begin": 20.75,
+      "end": 21.15,
+      "content": "you"
+     },
+     {
+      "begin": 21.31,
+      "end": 22.552,
+      "content": "should"
+     },
+     {
+      "begin": 23.033,
+      "end": 23.413,
+      "content": "stand"
+     },
+     {
+      "begin": 23.513,
+      "end": 24.615,
+      "content": "on"
+     },
+     {
+      "begin": 25.115,
+      "end": 26.878,
+      "content": "business"
+     },
+     {
+      "begin": 26.938,
+      "end": 27.118,
+      "content": "with"
+     },
+     {
+      "begin": 27.338,
+      "end": 27.562,
+      "content": "us."
+     }
+    ],
+    "align_score": 0.51
+   },
+   {
+    "begin": 27.562,
+    "end": 28.845,
+    "content": "Stand on business with us you should stand on business with us.",
+    "confidence": 0.532,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 27.562,
+      "end": 27.804,
+      "content": "Stand"
+     },
+     {
+      "begin": 27.885,
+      "end": 27.945,
+      "content": "on"
+     },
+     {
+      "begin": 28.006,
+      "end": 28.309,
+      "content": "business"
+     },
+     {
+      "begin": 28.39,
+      "end": 28.531,
+      "content": "with"
+     },
+     {
+      "begin": 28.552,
+      "end": 28.592,
+      "content": "us"
+     },
+     {
+      "begin": 28.612,
+      "end": 28.673,
+      "content": "you"
+     },
+     {
+      "begin": 28.713,
+      "end": 28.834,
+      "content": "should"
+     },
+     {
+      "begin": 28.845,
+      "end": 28.845,
+      "content": "stand"
+     },
+     {
+      "begin": 28.845,
+      "end": 28.845,
+      "content": "on"
+     },
+     {
+      "begin": 28.845,
+      "end": 28.845,
+      "content": "business"
+     },
+     {
+      "begin": 28.845,
+      "end": 28.845,
+      "content": "with"
+     },
+     {
+      "begin": 28.845,
+      "end": 28.845,
+      "content": "us."
+     }
+    ],
+    "align_score": 0.316
+   },
+   {
+    "begin": 28.845,
+    "end": 30.88,
+    "content": "Stand on business. Stand on.",
+    "confidence": 0.6,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 28.845,
+      "end": 29.227,
+      "content": "Stand"
+     },
+     {
+      "begin": 29.348,
+      "end": 29.409,
+      "content": "on"
+     },
+     {
+      "begin": 29.51,
+      "end": 30.336,
+      "content": "business."
+     },
+     {
+      "begin": 30.376,
+      "end": 30.698,
+      "content": "Stand"
+     },
+     {
+      "begin": 30.779,
+      "end": 30.88,
+      "content": "on."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.271
+   },
+   {
+    "begin": 31.903,
+    "end": 33.84,
+    "content": "Stand on business with us till your pockets get lil bigger",
+    "confidence": 0.819,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 31.903,
+      "end": 32.165,
+      "content": "Stand"
+     },
+     {
+      "begin": 32.225,
+      "end": 32.265,
+      "content": "on"
+     },
+     {
+      "begin": 32.326,
+      "end": 32.668,
+      "content": "business"
+     },
+     {
+      "begin": 32.748,
+      "end": 32.929,
+      "content": "with"
+     },
+     {
+      "begin": 32.949,
+      "end": 33.009,
+      "content": "us"
+     },
+     {
+      "begin": 33.07,
+      "end": 33.23,
+      "content": "till"
+     },
+     {
+      "begin": 33.251,
+      "end": 33.331,
+      "content": "your"
+     },
+     {
+      "begin": 33.432,
+      "end": 33.753,
+      "content": "pockets"
+     },
+     {
+      "begin": 33.793,
+      "end": 33.84,
+      "content": "get"
+     },
+     {
+      "begin": 33.84,
+      "end": 33.84,
+      "content": "lil"
+     },
+     {
+      "begin": 33.84,
+      "end": 33.84,
+      "content": "bigger"
+     }
+    ],
+    "align_score": 0.428
+   },
+   {
+    "begin": 33.84,
+    "end": 34.643,
+    "content": "Stand on business. Stand on.",
+    "confidence": 0,
+    "mismatch": true,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 33.84,
+      "end": 33.942,
+      "content": "Stand"
+     },
+     {
+      "begin": 33.982,
+      "end": 34.023,
+      "content": "on"
+     },
+     {
+      "begin": 34.165,
+      "end": 34.389,
+      "content": "business."
+     },
+     {
+      "begin": 34.643,
+      "end": 34.643,
+      "content": "Stand"
+     },
+     {
+      "begin": 34.643,
+      "end": 34.643,
+      "content": "on."
+     }
+    ],
+    "align_score": 0.267
+   },
+   {
+    "begin": 34.643,
+    "end": 38.865,
+    "content": "Stand on business. Stand on.",
+    "confidence": 0.961,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 34.643,
+      "end": 35.024,
+      "content": "Stand"
+     },
+     {
+      "begin": 35.165,
+      "end": 35.225,
+      "content": "on"
+     },
+     {
+      "begin": 35.305,
+      "end": 36.971,
+      "content": "business."
+     },
+     {
+      "begin": 37.573,
+      "end": 37.995,
+      "content": "Stand"
+     },
+     {
+      "begin": 38.865,
+      "end": 38.865,
+      "content": "on."
+     }
+    ],
+    "align_score": 0.777
+   },
+   {
+    "begin": 38.865,
+    "end": 40.442,
+    "content": "Stand on business. Stand on.",
+    "confidence": 0.553,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 38.865,
+      "end": 39.41,
+      "content": "Stand"
+     },
+     {
+      "begin": 39.47,
+      "end": 39.571,
+      "content": "on"
+     },
+     {
+      "begin": 39.652,
+      "end": 39.914,
+      "content": "business."
+     },
+     {
+      "begin": 39.934,
+      "end": 40.237,
+      "content": "Stand"
+     },
+     {
+      "begin": 40.419,
+      "end": 40.442,
+      "content": "on."
+     }
+    ],
+    "align_score": 0.191
+   },
+   {
+    "begin": 40.442,
+    "end": 45.06,
+    "content": "Stand on business. Stand on.",
+    "confidence": 0.917,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 40.442,
+      "end": 40.824,
+      "content": "Stand"
+     },
+     {
+      "begin": 40.984,
+      "end": 41.025,
+      "content": "on"
+     },
+     {
+      "begin": 41.125,
+      "end": 42.771,
+      "content": "business."
+     },
+     {
+      "begin": 43.374,
+      "end": 43.835,
+      "content": "Stand"
+     },
+     {
+      "begin": 44.94,
+      "end": 45.06,
+      "content": "on."
+     }
+    ],
+    "align_score": 0.703
+   },
+   {
+    "begin": 45.584,
+    "end": 48.762,
+    "content": "Business plans I’ve written helped me flip these bands while business tripping",
+    "confidence": 0.926,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 45.584,
+      "end": 46.448,
+      "content": "Business"
+     },
+     {
+      "begin": 46.508,
+      "end": 46.689,
+      "content": "plans"
+     },
+     {
+      "begin": 46.769,
+      "end": 46.849,
+      "content": "I’ve"
+     },
+     {
+      "begin": 46.889,
+      "end": 47.17,
+      "content": "written"
+     },
+     {
+      "begin": 47.251,
+      "end": 47.391,
+      "content": "helped"
+     },
+     {
+      "begin": 47.411,
+      "end": 47.472,
+      "content": "me"
+     },
+     {
+      "begin": 47.572,
+      "end": 47.733,
+      "content": "flip"
+     },
+     {
+      "begin": 47.773,
+      "end": 47.913,
+      "content": "these"
+     },
+     {
+      "begin": 47.953,
+      "end": 48.114,
+      "content": "bands"
+     },
+     {
+      "begin": 48.154,
+      "end": 48.295,
+      "content": "while"
+     },
+     {
+      "begin": 48.335,
+      "end": 48.656,
+      "content": "business"
+     },
+     {
+      "begin": 48.676,
+      "end": 48.762,
+      "content": "tripping"
+     }
+    ],
+    "align_score": 0.426
+   },
+   {
+    "begin": 48.762,
+    "end": 51.844,
+    "content": "If you plan to rent a whip then I’m the man I’ll whip equip it;",
+    "confidence": 0.848,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 48.762,
+      "end": 48.862,
+      "content": "If"
+     },
+     {
+      "begin": 49.184,
+      "end": 49.264,
+      "content": "you"
+     },
+     {
+      "begin": 49.385,
+      "end": 49.606,
+      "content": "plan"
+     },
+     {
+      "begin": 49.646,
+      "end": 49.706,
+      "content": "to"
+     },
+     {
+      "begin": 49.787,
+      "end": 49.968,
+      "content": "rent"
+     },
+     {
+      "begin": 50.008,
+      "end": 50.028,
+      "content": "a"
+     },
+     {
+      "begin": 50.149,
+      "end": 50.249,
+      "content": "whip"
+     },
+     {
+      "begin": 50.35,
+      "end": 50.45,
+      "content": "then"
+     },
+     {
+      "begin": 50.511,
+      "end": 50.611,
+      "content": "I’m"
+     },
+     {
+      "begin": 50.651,
+      "end": 50.732,
+      "content": "the"
+     },
+     {
+      "begin": 50.852,
+      "end": 50.993,
+      "content": "man"
+     },
+     {
+      "begin": 51.094,
+      "end": 51.194,
+      "content": "I’ll"
+     },
+     {
+      "begin": 51.234,
+      "end": 51.355,
+      "content": "whip"
+     },
+     {
+      "begin": 51.455,
+      "end": 51.717,
+      "content": "equip"
+     },
+     {
+      "begin": 51.844,
+      "end": 51.844,
+      "content": "it;"
+     }
+    ],
+    "align_score": 0.522
+   },
+   {
+    "begin": 51.844,
+    "end": 53.08,
+    "content": "a car jack when I'm on a jet",
+    "confidence": 0.724,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 51.844,
+      "end": 51.864,
+      "content": "a"
+     },
+     {
+      "begin": 51.965,
+      "end": 52.166,
+      "content": "car"
+     },
+     {
+      "begin": 52.307,
+      "end": 52.569,
+      "content": "jack"
+     },
+     {
+      "begin": 52.73,
+      "end": 52.871,
+      "content": "when"
+     },
+     {
+      "begin": 52.991,
+      "end": 53.08,
+      "content": "I'm"
+     },
+     {
+      "begin": 53.08,
+      "end": 53.08,
+      "content": "on"
+     },
+     {
+      "begin": 53.08,
+      "end": 53.08,
+      "content": "a"
+     },
+     {
+      "begin": 53.08,
+      "end": 53.08,
+      "content": "jet"
+     }
+    ],
+    "added": true,
+    "align_score": 0.56
+   },
+   {
+    "begin": 53.08,
+    "end": 54.924,
+    "content": "Hop the jet hit the auction next, federation mission.",
+    "confidence": 0.222,
+    "mismatch": true,
+    "section": "Verse",
+    "heard": "jet",
+    "words": [
+     {
+      "begin": 53.08,
+      "end": 53.241,
+      "content": "Hop"
+     },
+     {
+      "begin": 53.302,
+      "end": 53.362,
+      "content": "the"
+     },
+     {
+      "begin": 53.443,
+      "end": 53.685,
+      "content": "jet"
+     },
+     {
+      "begin": 53.827,
+      "end": 53.968,
+      "content": "hit"
+     },
+     {
+      "begin": 53.988,
+      "end": 54.069,
+      "content": "the"
+     },
+     {
+      "begin": 54.129,
+      "end": 54.492,
+      "content": "auction"
+     },
+     {
+      "begin": 54.573,
+      "end": 54.755,
+      "content": "next,"
+     },
+     {
+      "begin": 54.775,
+      "end": 54.924,
+      "content": "federation"
+     },
+     {
+      "begin": 54.924,
+      "end": 54.924,
+      "content": "mission."
+     }
+    ],
+    "align_score": 0.226
+   },
+   {
+    "begin": 54.924,
+    "end": 57.922,
+    "content": "Got the bread? All set. Ain’t no flaking in us.",
+    "confidence": 0.891,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 54.924,
+      "end": 55.064,
+      "content": "Got"
+     },
+     {
+      "begin": 55.105,
+      "end": 55.185,
+      "content": "the"
+     },
+     {
+      "begin": 55.245,
+      "end": 55.486,
+      "content": "bread?"
+     },
+     {
+      "begin": 56.13,
+      "end": 56.25,
+      "content": "All"
+     },
+     {
+      "begin": 56.351,
+      "end": 56.532,
+      "content": "set."
+     },
+     {
+      "begin": 56.793,
+      "end": 56.893,
+      "content": "Ain’t"
+     },
+     {
+      "begin": 56.933,
+      "end": 56.994,
+      "content": "no"
+     },
+     {
+      "begin": 57.074,
+      "end": 57.476,
+      "content": "flaking"
+     },
+     {
+      "begin": 57.577,
+      "end": 57.617,
+      "content": "in"
+     },
+     {
+      "begin": 57.922,
+      "end": 57.922,
+      "content": "us."
+     }
+    ],
+    "align_score": 0.762
+   },
+   {
+    "begin": 57.922,
+    "end": 60.743,
+    "content": "Upcharge for the swap out you’ll be fly whipping",
+    "confidence": 0.968,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 57.922,
+      "end": 58.506,
+      "content": "Upcharge"
+     },
+     {
+      "begin": 58.566,
+      "end": 58.666,
+      "content": "for"
+     },
+     {
+      "begin": 58.727,
+      "end": 58.787,
+      "content": "the"
+     },
+     {
+      "begin": 58.847,
+      "end": 59.209,
+      "content": "swap"
+     },
+     {
+      "begin": 59.39,
+      "end": 59.491,
+      "content": "out"
+     },
+     {
+      "begin": 59.632,
+      "end": 59.792,
+      "content": "you’ll"
+     },
+     {
+      "begin": 59.813,
+      "end": 59.873,
+      "content": "be"
+     },
+     {
+      "begin": 59.973,
+      "end": 60.215,
+      "content": "fly"
+     },
+     {
+      "begin": 60.416,
+      "end": 60.743,
+      "content": "whipping"
+     }
+    ],
+    "align_score": 0.533
+   },
+   {
+    "begin": 60.743,
+    "end": 63.943,
+    "content": "Bring insurance and your license if you plan on getting in it",
+    "confidence": 0.989,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 60.743,
+      "end": 60.924,
+      "content": "Bring"
+     },
+     {
+      "begin": 61.004,
+      "end": 61.426,
+      "content": "insurance"
+     },
+     {
+      "begin": 61.567,
+      "end": 61.647,
+      "content": "and"
+     },
+     {
+      "begin": 61.667,
+      "end": 61.768,
+      "content": "your"
+     },
+     {
+      "begin": 61.848,
+      "end": 62.19,
+      "content": "license"
+     },
+     {
+      "begin": 62.27,
+      "end": 62.311,
+      "content": "if"
+     },
+     {
+      "begin": 62.371,
+      "end": 62.451,
+      "content": "you"
+     },
+     {
+      "begin": 62.552,
+      "end": 62.713,
+      "content": "plan"
+     },
+     {
+      "begin": 62.773,
+      "end": 62.833,
+      "content": "on"
+     },
+     {
+      "begin": 62.934,
+      "end": 63.255,
+      "content": "getting"
+     },
+     {
+      "begin": 63.356,
+      "end": 63.396,
+      "content": "in"
+     },
+     {
+      "begin": 63.476,
+      "end": 63.943,
+      "content": "it"
+     }
+    ],
+    "align_score": 0.726
+   },
+   {
+    "begin": 63.943,
+    "end": 67.62,
+    "content": "Told you not to speed if that danger fine hits don’t complain or cry kid",
+    "confidence": 0.85,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 63.943,
+      "end": 64.164,
+      "content": "Told"
+     },
+     {
+      "begin": 64.204,
+      "end": 64.285,
+      "content": "you"
+     },
+     {
+      "begin": 64.345,
+      "end": 64.465,
+      "content": "not"
+     },
+     {
+      "begin": 64.505,
+      "end": 64.566,
+      "content": "to"
+     },
+     {
+      "begin": 64.626,
+      "end": 64.967,
+      "content": "speed"
+     },
+     {
+      "begin": 65.128,
+      "end": 65.168,
+      "content": "if"
+     },
+     {
+      "begin": 65.228,
+      "end": 65.349,
+      "content": "that"
+     },
+     {
+      "begin": 65.409,
+      "end": 65.71,
+      "content": "danger"
+     },
+     {
+      "begin": 65.79,
+      "end": 66.131,
+      "content": "fine"
+     },
+     {
+      "begin": 66.172,
+      "end": 66.252,
+      "content": "hits"
+     },
+     {
+      "begin": 66.493,
+      "end": 66.653,
+      "content": "don’t"
+     },
+     {
+      "begin": 66.693,
+      "end": 67.015,
+      "content": "complain"
+     },
+     {
+      "begin": 67.115,
+      "end": 67.155,
+      "content": "or"
+     },
+     {
+      "begin": 67.215,
+      "end": 67.496,
+      "content": "cry"
+     },
+     {
+      "begin": 67.617,
+      "end": 67.62,
+      "content": "kid"
+     }
+    ],
+    "align_score": 0.724
+   },
+   {
+    "begin": 67.62,
+    "end": 67.9,
+    "content": "Stand on business with us you should stand on business with us.",
+    "confidence": 0.415,
+    "mismatch": true,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 67.62,
+      "end": 67.842,
+      "content": "Stand"
+     },
+     {
+      "begin": 67.862,
+      "end": 67.9,
+      "content": "on"
+     },
+     {
+      "begin": 67.9,
+      "end": 67.9,
+      "content": "business"
+     },
+     {
+      "begin": 67.9,
+      "end": 67.9,
+      "content": "with"
+     },
+     {
+      "begin": 67.9,
+      "end": 67.9,
+      "content": "us"
+     },
+     {
+      "begin": 67.9,
+      "end": 67.9,
+      "content": "you"
+     },
+     {
+      "begin": 67.9,
+      "end": 67.9,
+      "content": "should"
+     },
+     {
+      "begin": 67.9,
+      "end": 67.9,
+      "content": "stand"
+     },
+     {
+      "begin": 67.9,
+      "end": 67.9,
+      "content": "on"
+     },
+     {
+      "begin": 67.9,
+      "end": 67.9,
+      "content": "business"
+     },
+     {
+      "begin": 67.9,
+      "end": 67.9,
+      "content": "with"
+     },
+     {
+      "begin": 67.9,
+      "end": 67.9,
+      "content": "us."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.201
+   },
+   {
+    "begin": 67.9,
+    "end": 68.22,
+    "content": "Just stand on business with us.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 67.9,
+      "end": 68.22,
+      "content": "Just"
+     },
+     {
+      "begin": 68.22,
+      "end": 68.22,
+      "content": "stand"
+     },
+     {
+      "begin": 68.22,
+      "end": 68.22,
+      "content": "on"
+     },
+     {
+      "begin": 68.22,
+      "end": 68.22,
+      "content": "business"
+     },
+     {
+      "begin": 68.22,
+      "end": 68.22,
+      "content": "with"
+     },
+     {
+      "begin": 68.22,
+      "end": 68.22,
+      "content": "us."
+     }
+    ],
+    "align_score": 0.089
+   },
+   {
+    "begin": 69.562,
+    "end": 75.382,
+    "content": "Stand on business with us you should stand on business with us.",
+    "confidence": 0.828,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 69.562,
+      "end": 69.943,
+      "content": "Stand"
+     },
+     {
+      "begin": 70.064,
+      "end": 70.124,
+      "content": "on"
+     },
+     {
+      "begin": 70.224,
+      "end": 71.929,
+      "content": "business"
+     },
+     {
+      "begin": 71.969,
+      "end": 72.671,
+      "content": "with"
+     },
+     {
+      "begin": 72.811,
+      "end": 72.871,
+      "content": "us"
+     },
+     {
+      "begin": 72.912,
+      "end": 73.032,
+      "content": "you"
+     },
+     {
+      "begin": 73.092,
+      "end": 73.654,
+      "content": "should"
+     },
+     {
+      "begin": 73.754,
+      "end": 74.356,
+      "content": "stand"
+     },
+     {
+      "begin": 74.436,
+      "end": 74.496,
+      "content": "on"
+     },
+     {
+      "begin": 74.576,
+      "end": 74.897,
+      "content": "business"
+     },
+     {
+      "begin": 74.937,
+      "end": 75.382,
+      "content": "with"
+     },
+     {
+      "begin": 75.382,
+      "end": 75.382,
+      "content": "us."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.303
+   },
+   {
+    "begin": 75.382,
+    "end": 79.061,
+    "content": "Stand on business with us you should stand on business with us.",
+    "confidence": 0.833,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 75.382,
+      "end": 75.744,
+      "content": "Stand"
+     },
+     {
+      "begin": 75.884,
+      "end": 75.924,
+      "content": "on"
+     },
+     {
+      "begin": 76.045,
+      "end": 77.269,
+      "content": "business"
+     },
+     {
+      "begin": 77.47,
+      "end": 77.751,
+      "content": "with"
+     },
+     {
+      "begin": 77.932,
+      "end": 78.052,
+      "content": "us"
+     },
+     {
+      "begin": 78.253,
+      "end": 78.333,
+      "content": "you"
+     },
+     {
+      "begin": 78.454,
+      "end": 78.674,
+      "content": "should"
+     },
+     {
+      "begin": 78.695,
+      "end": 78.855,
+      "content": "stand"
+     },
+     {
+      "begin": 78.976,
+      "end": 79.056,
+      "content": "on"
+     },
+     {
+      "begin": 79.061,
+      "end": 79.061,
+      "content": "business"
+     },
+     {
+      "begin": 79.061,
+      "end": 79.061,
+      "content": "with"
+     },
+     {
+      "begin": 79.061,
+      "end": 79.061,
+      "content": "us."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.233
+   },
+   {
+    "begin": 79.061,
+    "end": 80.88,
+    "content": "Stand on business with us till your pockets get lil bigger",
+    "confidence": 0.636,
+    "mismatch": false,
+    "section": "Intro",
+    "words": [
+     {
+      "begin": 79.061,
+      "end": 79.162,
+      "content": "Stand"
+     },
+     {
+      "begin": 79.182,
+      "end": 79.222,
+      "content": "on"
+     },
+     {
+      "begin": 79.243,
+      "end": 79.465,
+      "content": "business"
+     },
+     {
+      "begin": 79.485,
+      "end": 79.566,
+      "content": "with"
+     },
+     {
+      "begin": 79.586,
+      "end": 79.627,
+      "content": "us"
+     },
+     {
+      "begin": 79.647,
+      "end": 79.748,
+      "content": "till"
+     },
+     {
+      "begin": 79.768,
+      "end": 79.889,
+      "content": "your"
+     },
+     {
+      "begin": 79.97,
+      "end": 80.314,
+      "content": "pockets"
+     },
+     {
+      "begin": 80.354,
+      "end": 80.455,
+      "content": "get"
+     },
+     {
+      "begin": 80.577,
+      "end": 80.658,
+      "content": "lil"
+     },
+     {
+      "begin": 80.738,
+      "end": 80.88,
+      "content": "bigger"
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.191
+   },
+   {
+    "begin": 83.76,
+    "end": 84.9,
+    "content": "Just stand on business with us.",
+    "confidence": 0.333,
+    "mismatch": true,
+    "section": "Verse",
+    "words": [
+     {
+      "begin": 83.76,
+      "end": 83.76,
+      "content": "Just"
+     },
+     {
+      "begin": 83.76,
+      "end": 84.4,
+      "content": "stand"
+     },
+     {
+      "begin": 84.4,
+      "end": 84.9,
+      "content": "on"
+     },
+     {
+      "begin": 84.9,
+      "end": 84.9,
+      "content": "business"
+     },
+     {
+      "begin": 84.9,
+      "end": 84.9,
+      "content": "with"
+     },
+     {
+      "begin": 84.9,
+      "end": 84.9,
+      "content": "us."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.059
+   },
+   {
+    "begin": 86.984,
+    "end": 91.4,
+    "content": "Stand on business. Stand on.",
+    "confidence": 0.876,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 86.984,
+      "end": 87.366,
+      "content": "Stand"
+     },
+     {
+      "begin": 87.506,
+      "end": 87.546,
+      "content": "on"
+     },
+     {
+      "begin": 87.667,
+      "end": 89.332,
+      "content": "business."
+     },
+     {
+      "begin": 89.935,
+      "end": 90.376,
+      "content": "Stand"
+     },
+     {
+      "begin": 91.299,
+      "end": 91.4,
+      "content": "on."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.624
+   },
+   {
+    "begin": 95.948,
+    "end": 96.92,
+    "content": "Stand on business. Stand on.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 95.948,
+      "end": 96.15,
+      "content": "Stand"
+     },
+     {
+      "begin": 96.252,
+      "end": 96.312,
+      "content": "on"
+     },
+     {
+      "begin": 96.373,
+      "end": 96.697,
+      "content": "business."
+     },
+     {
+      "begin": 96.738,
+      "end": 96.859,
+      "content": "Stand"
+     },
+     {
+      "begin": 96.879,
+      "end": 96.92,
+      "content": "on."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.132
+   },
+   {
+    "begin": 97.022,
+    "end": 99.194,
+    "content": "Stand on business. Stand on.",
+    "confidence": 0.6,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 97.022,
+      "end": 97.625,
+      "content": "Stand"
+     },
+     {
+      "begin": 97.686,
+      "end": 97.746,
+      "content": "on"
+     },
+     {
+      "begin": 97.826,
+      "end": 98.43,
+      "content": "business."
+     },
+     {
+      "begin": 98.651,
+      "end": 99.033,
+      "content": "Stand"
+     },
+     {
+      "begin": 99.154,
+      "end": 99.194,
+      "content": "on."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.49
+   },
+   {
+    "begin": 101.787,
+    "end": 103.08,
+    "content": "Stand on business. Stand on.",
+    "confidence": 0.6,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 101.787,
+      "end": 101.929,
+      "content": "Stand"
+     },
+     {
+      "begin": 101.989,
+      "end": 102.131,
+      "content": "on"
+     },
+     {
+      "begin": 102.191,
+      "end": 102.878,
+      "content": "business."
+     },
+     {
+      "begin": 102.898,
+      "end": 103.019,
+      "content": "Stand"
+     },
+     {
+      "begin": 103.039,
+      "end": 103.08,
+      "content": "on."
+     }
+    ],
+    "repeat": true,
+    "align_score": 0.189
+   },
+   {
+    "begin": 104.462,
+    "end": 109.024,
+    "content": "Stand on business. Stand on.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 104.462,
+      "end": 104.824,
+      "content": "Stand"
+     },
+     {
+      "begin": 104.944,
+      "end": 105.004,
+      "content": "on"
+     },
+     {
+      "begin": 105.105,
+      "end": 106.871,
+      "content": "business."
+     },
+     {
+      "begin": 107.392,
+      "end": 107.794,
+      "content": "Stand"
+     },
+     {
+      "begin": 109.024,
+      "end": 109.024,
+      "content": "on."
+     }
+    ],
+    "align_score": 0.514
+   },
+   {
+    "begin": 109.024,
+    "end": 110.481,
+    "content": "Stand on business. Stand on.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 109.024,
+      "end": 109.225,
+      "content": "Stand"
+     },
+     {
+      "begin": 109.306,
+      "end": 109.346,
+      "content": "on"
+     },
+     {
+      "begin": 109.467,
+      "end": 109.728,
+      "content": "business."
+     },
+     {
+      "begin": 110.252,
+      "end": 110.481,
+      "content": "Stand"
+     },
+     {
+      "begin": 110.481,
+      "end": 110.481,
+      "content": "on."
+     }
+    ],
+    "align_score": 0.371
+   },
+   {
+    "begin": 110.481,
+    "end": 112.535,
+    "content": "Stand on business. Stand on.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 110.481,
+      "end": 110.642,
+      "content": "Stand"
+     },
+     {
+      "begin": 110.763,
+      "end": 110.823,
+      "content": "on"
+     },
+     {
+      "begin": 110.924,
+      "end": 112.072,
+      "content": "business."
+     },
+     {
+      "begin": 112.132,
+      "end": 112.354,
+      "content": "Stand"
+     },
+     {
+      "begin": 112.495,
+      "end": 112.535,
+      "content": "on."
+     }
+    ],
+    "align_score": 0.174
+   },
+   {
+    "begin": 113.206,
+    "end": 114.88,
+    "content": "Stand on business. Stand on.",
+    "confidence": 1,
+    "mismatch": false,
+    "section": "Hook",
+    "words": [
+     {
+      "begin": 113.206,
+      "end": 113.628,
+      "content": "Stand"
+     },
+     {
+      "begin": 113.648,
+      "end": 113.689,
+      "content": "on"
+     },
+     {
+      "begin": 114.071,
+      "end": 114.88,
+      "content": "business."
+     },
+     {
+      "begin": 114.88,
+      "end": 114.88,
+      "content": "Stand"
+     },
+     {
+      "begin": 114.88,
+      "end": 114.88,
+      "content": "on."
+     }
+    ],
+    "align_score": 0.142
+   },
+   {
+    "begin": 114.88,
+    "end": 115.8,
+    "content": "business. Let's get out of here.",
+    "confidence": 0.785,
+    "mismatch": true,
+    "words": [
+     {
+      "begin": 114.88,
+      "end": 114.88,
+      "content": "business."
+     },
+     {
+      "begin": 114.88,
+      "end": 115.3,
+      "content": "Let's"
+     },
+     {
+      "begin": 115.3,
+      "end": 115.42,
+      "content": "get"
+     },
+     {
+      "begin": 115.42,
+      "end": 115.58,
+      "content": "out"
+     },
+     {
+      "begin": 115.58,
+      "end": 115.7,
+      "content": "of"
+     },
+     {
+      "begin": 115.7,
+      "end": 115.8,
+      "content": "here."
+     }
+    ],
+    "added": true,
+    "align_score": 0.041
+   }
+  ]
+ }
+}

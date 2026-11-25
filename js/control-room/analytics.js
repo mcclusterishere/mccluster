@@ -56,10 +56,10 @@
     function values(r){return la+" "+n(r[a])+(b?" · "+lb+" "+n(r[b]):"");}
     var p1=pts(a),p2=b?pts(b):"",area=p1+" "+X(rows.length-1)+","+(H-P.b)+" "+P.l+","+(H-P.b);
     var last=rows[rows.length-1],s=['<svg class="cra-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+e(la+(lb?" and "+lb:"")+" over time")+'">'];
-    [0,.25,.5,.75,1].forEach(function(q){var y=Y(mx*q);s.push('<line class="cra-gridline" x1="'+P.l+'" y1="'+y+'" x2="'+(W-P.r)+'" y2="'+y+'"/><text class="cra-axis" x="'+(P.l-6)+'" y="'+(y+3)+'" text-anchor="end">'+Math.round(mx*q)+'</text>');});
+    [0,.25,.5,.75,1].map(function(q){return Math.round(mx*q);}).filter(function(v,i,a){return a.indexOf(v)===i;}).forEach(function(v){var y=Y(v);s.push('<line class="cra-gridline" x1="'+P.l+'" y1="'+y+'" x2="'+(W-P.r)+'" y2="'+y+'"/><text class="cra-axis" x="'+(P.l-6)+'" y="'+(y+3)+'" text-anchor="end">'+v+'</text>');});
     s.push('<polygon class="cra-area" points="'+area+'"/><polyline class="cra-line" points="'+p1+'"/>');if(b)s.push('<polyline class="cra-line cra-line--alt" points="'+p2+'"/>');
     var step=opts.allLabels?1:(rows.length<=14?1:Math.max(1,Math.ceil(rows.length/8)));
-    rows.forEach(function(r,i){if(i%step===0||i===rows.length-1)s.push('<text class="cra-axis cra-axis--x" x="'+X(i)+'" y="'+(H-12)+'" text-anchor="middle">'+e(label(r))+'</text>');});
+    rows.forEach(function(r,i){if(i%step===0||i===rows.length-1)s.push('<text class="cra-axis cra-axis--x" x="'+X(i)+'" y="'+(H-12)+'" text-anchor="middle">'+e(hourly?label(r).replace(/:00(?=\s*[AP]M)/i,''):label(r))+'</text>');});
     rows.forEach(function(r,i){
       var x=X(i),prev=i?X(i-1):P.l,next=i<rows.length-1?X(i+1):W-P.r,left=i?(prev+x)/2:P.l,right=i<rows.length-1?(x+next)/2:W-P.r;
       var lab=label(r),val=values(r),on=i===rows.length-1?" is-on":"";
@@ -646,7 +646,11 @@
     var k=S.geo.eventType;if(!k)return"";var r=(S.data.contentEvents||[]).filter(function(x){return x.event_name===k;})[0];
     return'<div class="cra-filter"><span>'+e(k)+': '+(r?n(r.events)+' events · '+n(r.people)+' people · '+n(r.sessions)+' sessions':'none in this range')+'</span><button type="button" class="cra-filter__x" data-cra-event="">All events</button></div>';
   }
-  function tabs(){return'<nav class="cra-tabs">'+[["overview","Overview"],["intelligence","World intelligence"],["inventory","Data coverage"],["audience","Audience"],["adaptive","Adaptive"],["content","Content"],["identity","Identity"],["forensics","Forensics"],["setup","Setup"]].map(function(x){return'<button type="button" class="cra-tab'+(S.section===x[0]?" is-on":"")+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</nav>';}
+  function tabs(){
+    var groups=[["overview","Overview",[["overview","Overview"]]],["audience","Audience",[["audience","Audience"],["identity","Journeys"]]],["content","Content",[["content","Content"],["adaptive","Adaptive"]]],["action","Action & business",[["action","Action & business"]]],["intelligence","World intelligence",[["intelligence","World intelligence"],["cameras","Cameras"]]],["inventory","Data & setup",[["inventory","Data explorer"],["forensics","Site health"],["setup","Setup"]]]];
+    var group=groups.find(function(g){return g[2].some(function(x){return x[0]===S.section;});})||groups[0];
+    return '<nav class="cra-tabs" aria-label="Analytics views">'+groups.map(function(g){return '<button type="button" class="cra-tab'+(g===group?' is-on':'')+'" aria-pressed="'+(g===group)+'" data-cra-sec="'+g[0]+'">'+g[1]+'</button>';}).join('')+'</nav>'+(group[2].length>1?'<nav class="cu-inventory-tabs" aria-label="Analytics detail views">'+group[2].map(function(x){return '<button type="button" aria-pressed="'+(x[0]===S.section)+'" data-cra-sec="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</nav>':'');
+  }
   function ranges(){var ids=[["24h","24h"],["7d","7 days"],["30d","30 days"],["90d","90 days"],["all","All"],["custom","Custom"]];return'<div class="cra-ranges">'+ids.map(function(x){return'<button type="button" class="cra-range'+(S.rangeId===x[0]?" is-on":"")+'" data-cra-range="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div><div class="cra-custom"'+(S.rangeId==="custom"?"":" hidden")+'><label>From<input class="cra-date" id="craFrom" type="date" value="'+e(S.from)+'"></label><label>Through<input class="cra-date" id="craThrough" type="date" value="'+e(S.through)+'"></label><button class="cr-btn cr-btn--primary" data-cra-apply type="button">Apply</button></div>';}
   function overview(){
     var t=S.data.traffic||{},tot=t.totals||{},house=sid()===null;
@@ -813,11 +817,11 @@
     var funnel='<div class="cra-steps2">'+steps.map(function(x,i){var p=accounts?x[1]/accounts*100:0;return'<div class="cra-step2"><span class="cra-step2__n">'+(i+1)+'</span><div class="cra-step2__body"><div class="cra-step2__top"><b>'+e(x[0])+'</b><strong>'+n(x[1])+'</strong></div><div class="cra-step2__bar"><i style="--pct:'+Math.max(x[1]?2:0,p).toFixed(1)+'%"></i></div><small>'+(i?Math.round(p)+'% of accounts · ':"")+e(x[2])+'</small></div></div>';}).join("")+'</div>';
     /* songs, as a table you can read across */
     var songs=t.length?'<div class="cra-scroll"><table class="cra-table"><thead><tr><th>Song</th><th class="n">Listeners</th><th class="n">Last song before signup</th><th class="n">Heard on the way</th><th class="n">Signup rate (cohort needed)</th><th class="n">Typical time</th></tr></thead><tbody>'+
-      t.slice(0,20).map(function(x){return'<tr><td><b>'+e(x.track)+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.last_touch_accounts)+'</td><td class="n">'+n(x.assisted_accounts)+'</td><td class="n">'+"—"+'</td><td class="n">'+(x.avg_minutes_to_signup!=null?mins(x.avg_minutes_to_signup):"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No songs tied to signups in this range.</p>';
+      t.map(function(x){return'<tr><td><b>'+e(x.track)+'</b></td><td class="n">'+n(x.listeners)+'</td><td class="n">'+n(x.last_touch_accounts)+'</td><td class="n">'+n(x.assisted_accounts)+'</td><td class="n">'+"—"+'</td><td class="n">'+(x.avg_minutes_to_signup!=null?mins(x.avg_minutes_to_signup):"—")+'</td></tr>';}).join("")+'</tbody></table></div>':'<p>No songs tied to signups in this range.</p>';
     /* the accounts themselves, filtered by the path you tapped */
     /* the shared region and source filters narrow the paths and the accounts (the counts above stay the whole range) */
     var fj=journeys(),f=S.idFilter&&S.idFilter.path,list=f?fj.filter(function(j){return pathKey(j.source,j.last_track)===f;}):fj;
-    var cards=list.length?'<div class="cra-accts">'+list.slice(0,60).map(function(j){
+    var cards=list.length?'<div class="cra-accts">'+list.slice(0,S.journeyLimit||30).map(function(j){
       var name=[j.first_name,j.last_name].filter(Boolean).join(" ")||j.email||"Account",assisted=(j.assisted_tracks||[]).filter(function(x){return x!==j.last_track;});
       return'<article class="cra-acct"><div class="cra-acct__top"><b>'+e(name)+'</b><small>'+e(j.created_at?new Date(j.created_at).toLocaleString():"")+'</small></div>'+
         '<div class="cra-path__chain"><span class="cra-chip cra-chip--src">'+e(j.source||"direct")+'</span><span class="cra-path__arrow" aria-hidden="true">→</span>'+
@@ -830,7 +834,7 @@
     return lead+'<div class="cra-grid">'+card("How signups happened","Each step as a share of accounts created. Song attribution looks back 7 days on the same device; it shows what happened before, not what caused it.",funnel,true)+
       card("Source → track → account","Every route someone took to an account. Tap one to see those people."+(S.geo.region||S.geo.source?" Narrowed by "+[S.geo.region,S.geo.source].filter(Boolean).join(" · ")+".":""),flow({journeys:fj}),true)+
       card("Songs","Last song before signup is the song they heard right before joining. Heard on the way counts every song they played in the 7 days before.",songs,true)+
-      card("Accounts","Newest first."+(list.length>60?" Showing 60 of "+n(list.length)+".":""),filterNote+cards,true)+'</div>'+measurementNote(d)+err("identity");
+      card("Accounts","Newest first."+(list.length>(S.journeyLimit||30)?" Showing "+n(Math.min(S.journeyLimit||30,list.length))+" of "+n(list.length)+".":""),filterNote+cards+(list.length>(S.journeyLimit||30)?'<button type="button" class="cr-btn" data-cra-more-journeys>Show more accounts</button>':""),true)+'</div>'+measurementNote(d)+err("identity");
   }
   function pct(a,b){return b?Math.round(a/b*100)+"%":"0%";}
   /* FORENSICS is its own module (js/control-room/forensics.js): sessions you
@@ -1069,7 +1073,22 @@
   function loadCoverage(force){
     if(S.revoked||sid()!==null||!S.range||S.coverageLoading===S.seq||!force&&S.completed&&S.completed.coverage)return;
     var q=S.seq,r=S.range;S.coverageLoading=q;delete S.errors.coverage;paint();
-    return S.request('/v1/analytics/coverage?since='+encodeURIComponent(r.since)+'&until='+encodeURIComponent(r.until)).then(function(v){if(q===S.seq)applyResult({name:'coverage',ok:true,value:v});},function(error){if(q===S.seq)applyResult({name:'coverage',ok:false,error:error});}).finally(function(){if(q===S.seq){S.coverageLoading=null;paint();}});
+    var base='/v1/analytics/coverage?since='+encodeURIComponent(r.since)+'&until='+encodeURIComponent(r.until),combined=null;
+    function page(offset){
+      if(q!==S.seq||S.revoked)return Promise.reject(new Error('Analytics selection changed'));
+      return S.request(base+'&limit=12&offset='+offset).then(function(v){
+        if(!v||v.ok!==true||!Array.isArray(v.datasets))throw new Error('Invalid dataset coverage response');
+        if(!combined)combined=Object.assign({},v,{datasets:[],metrics:{},summary:{datasets:0,populated:0,empty:0,quiet:0,unavailable:0}});
+        combined.datasets=combined.datasets.concat(v.datasets);Object.assign(combined.metrics,v.metrics||{});
+        Object.keys(combined.summary).forEach(function(k){combined.summary[k]+=Number(v.summary&&v.summary[k])||0;});
+        var p=v.pagination,next=p&&p.next_offset;
+        if(p&&(p.offset!==offset||!Number.isSafeInteger(p.total)||p.total<combined.datasets.length))throw new Error('Invalid dataset coverage pagination');
+        if(next!=null){if(!Number.isSafeInteger(next)||next!==combined.datasets.length||next<=offset||next>=p.total)throw new Error('Invalid dataset coverage continuation');return page(next);}
+        if(p&&combined.datasets.length!==p.total)throw new Error('Incomplete dataset coverage');
+        delete combined.pagination;return combined;
+      });
+    }
+    return page(0).then(function(v){if(q===S.seq)applyResult({name:'coverage',ok:true,value:v});},function(error){if(q===S.seq)applyResult({name:'coverage',ok:false,error:error});}).finally(function(){if(q===S.seq){S.coverageLoading=null;paint();}});
   }
   function load(){
     if(S.revoked)return Promise.resolve();
@@ -1111,9 +1130,9 @@
       {name:"missions",run:function(){return site===null?rpc("action_mission_stats",{p_campaign:null}):Promise.resolve(null);}}
     ];
     /* Production PostgREST reports an 8-second authenticated statement limit.
-       Two independent dashboard reads at once leave capacity for ingestion and
+       One dashboard read at a time leaves capacity for ingestion and
        the owner-only business summary; each completed family still paints. */
-    return runLimited(tasks,2,function(x){
+    return runLimited(tasks,1,function(x){
       if(q!==S.seq)return;
       applyResult(x);
       S.error=(r.id==="24h"?S.errors.hourly:S.errors.daily)||S.errors.totals||null;
@@ -1157,7 +1176,8 @@
     var ge=root.querySelector("#craEvent");if(ge)ge.onchange=function(){S.geo.eventType=ge.value;paint();};
     root.querySelectorAll("[data-cra-region]").forEach(function(b){b.onclick=function(){var c=b.getAttribute("data-cra-region");pickRegion(c&&c===S.geo.region?"":c);};});
     root.querySelectorAll("[data-cra-event]").forEach(function(b){b.onclick=function(){S.geo.eventType=b.getAttribute("data-cra-event")||"";paint();};});
-    root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
+    var moreJourneys=root.querySelector("[data-cra-more-journeys]");if(moreJourneys)moreJourneys.onclick=function(){S.journeyLimit=(S.journeyLimit||30)+30;paint();};
+    root.querySelectorAll("[data-cra-path]").forEach(function(b){b.onclick=function(){var k=b.getAttribute("data-cra-path");S.journeyLimit=30;S.idFilter={path:(S.idFilter&&S.idFilter.path===k)?null:(k||null)};paint();};});
     root.querySelectorAll("[data-cra-sec]").forEach(function(b){b.onclick=function(){selectSection(b.getAttribute("data-cra-sec"));};});
     root.querySelectorAll("[data-cra-range]").forEach(function(b){b.onclick=function(){S.rangeId=b.getAttribute("data-cra-range");if(S.rangeId==="custom"&&!S.from){var now=new Date();S.through=inputDate(now);S.from=inputDate(new Date(now-7*86400000));paint();}else load();};});
     var from=root.querySelector("#craFrom"),through=root.querySelector("#craThrough");

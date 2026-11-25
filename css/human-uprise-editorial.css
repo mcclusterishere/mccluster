@@ -10,6 +10,9 @@ html.hu-editorial, .hu-editorial body { background:#090b0d; color:#eef0f1; }
   --w-edge:none; --w-rim:none; --w-glow:none; --w-shadow:none;
   max-width:none; padding:0 20px calc(var(--mn-bar-clear,96px) + 20px); font-weight:400;
 }
+/* the profile gate runs to the bottom of the screen under the bar (owner, 2026-10-15: no black band): its own padding clears the
+   bar, so the page keeps none under it; this rule is later than mnet.css's .mn-gate-on .mn and was taking that back */
+.hu-editorial.mn-gate-on .mn {padding-bottom:0;}
 .hu-editorial .mn__top, .hu-editorial .mn__top.is-scrolled {
   position:sticky;top:0;margin:0 -20px;padding:12px 76px 12px 20px;
   min-height:69px;gap:8px;background:#090b0df2;border-bottom:1px solid var(--mn-rule);
@@ -89,16 +92,7 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
 .hu-section-head {display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .hu-section-head h2,.hu-section-label {margin:0;padding:0;font:400 11px/1.4 var(--mn-ui);letter-spacing:.18em;text-transform:uppercase;color:var(--mn-dim);}
 .hu-section-label {margin:28px 0 12px;}
-.hu-editorial .mn__world-eup {position:static;width:44px;height:44px;min-height:44px;margin:0;padding:7px;transform:none;border:0;border-radius:0;background:transparent;box-shadow:none;filter:none;animation:none;transition:none;}
-.hu-editorial .mn__world-eup img {width:100%;height:100%;object-fit:contain;filter:none;}
-.hu-mission-row {display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;gap:16px;width:100%;min-height:110px;padding:18px 0;border:0;border-bottom:1px solid var(--mn-rule);text-align:left;background:transparent;color:var(--mn-ink);font:inherit;cursor:pointer;}
-.hu-mission-symbol {display:grid;place-items:center;width:64px;height:64px;border:1px solid #ffffff1a;border-radius:3px;background:#14191d;color:#9da8b0;}
-.hu-mission-symbol svg {width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;}
-.hu-mission-row strong {display:block;font-size:16px;line-height:1.35;font-weight:450;overflow-wrap:anywhere;}
-.hu-mission-row small {display:block;margin-top:6px;font-size:13px;line-height:1.4;color:var(--mn-dim);}
-.hu-mission-link {display:block;margin-top:9px;font-size:13px;color:var(--mn-dim);}
 .hu-all-missions {min-height:44px;padding:8px 0;border:0;background:transparent;color:var(--mn-dim);font:400 13px var(--mn-ui);cursor:pointer;}
-.hu-muted {color:var(--mn-dim);font-size:14px;line-height:1.5;}
 .hu-editorial .mn__guest-card {padding:14px 0;margin:0;border:0;border-bottom:1px solid var(--mn-rule);border-radius:0;background:transparent;box-shadow:none;}
 .hu-editorial .mn__guest-card p {margin:0 0 8px;color:var(--mn-dim);font-size:14px;}
 .hu-editorial .mn__guest-card button {padding:0 12px;min-height:44px;font-size:13px;font-weight:400;border:1px solid var(--mn-rule-2);background:#14191d;box-shadow:none;}
@@ -116,6 +110,9 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
 .hu-editorial #mnFeed .mn__actcard,.hu-editorial .mn__composer,.hu-editorial .mn__empty,.hu-editorial .mn__panel {background:#101518;border:1px solid var(--mn-rule);border-radius:6px;box-shadow:none;}
 .hu-editorial .mn__composer {margin-top:16px;}
 .hu-editorial .mn :is(.mn__primary,.mn__post,.mn__world-go,.mn__world-filter,.mn__world-locate,.mn__world-close,.mn__create,.mn__fund,.mn__globe-chip) {box-shadow:none;background-image:none;text-shadow:none;font-weight:500;}
+/* the mission dialog's actions (Take this mission, Submit mission proof) keep a solid red ground: the flat rule above takes
+   the gradient away and left white words on nothing, which vanished on the white daylight dialog (css/daylight.css) */
+.hu-editorial #mnMissionDialog .mn__primary {background-color:#c00028;color:#ffffff;}
 .hu-editorial .mn :is(button,a,input,summary,textarea):focus-visible {outline:2px solid #b4c4d0;outline-offset:3px;}
 @media (min-width:600px) {
   .hu-editorial .mn {padding-inline:32px;}
@@ -124,8 +121,6 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
   .hu-editorial .mn__search {display:flex;position:relative;inset:auto;margin:0 0 0 auto;max-width:460px;min-height:44px;box-shadow:none;background:#101316;border-color:#ffffff25;}
   .hu-editorial .hu-search-toggle {display:none;}
   .hu-editorial .mn__world-home {margin-inline:-32px;}
-  .hu-mission-row {grid-template-columns:88px minmax(0,1fr);gap:22px;}
-  .hu-mission-symbol {width:88px;height:72px;}
 }
 @media (min-width:1000px), (min-width:600px) and (orientation:landscape) {
   .hu-editorial.mn-world-on #mnFeedView:not([hidden]) {grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);margin-inline:-32px;}
@@ -143,9 +138,29 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
    hero. Mobile first; wider screens only get more room. */
 .hu-feed-scope {display:flex;gap:8px;margin:4px 0 12px;padding:2px 0 6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
 .hu-feed-scope::-webkit-scrollbar {display:none;}
-.hu-feed-scope button {flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid #ffffff2a;border-radius:24px;background:#12171c;color:#e4e8ec;font:400 14px var(--mn-ui);white-space:nowrap;cursor:pointer;}
+/* the tabs are form controls: never under 16px (AGENTS.md hard rule 14, the reading the panel's buttons follow; review RV2-7) */
+.hu-feed-scope button {flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid #ffffff2a;border-radius:24px;background:#12171c;color:#e4e8ec;font:400 max(16px,1em) var(--mn-ui);white-space:nowrap;cursor:pointer;}
 .hu-feed-scope button svg {width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none;}
 .hu-feed-scope [aria-pressed="true"] {background:#c00028;border-color:#f0284d;color:#fff;box-shadow:0 8px 24px -12px #ff1744aa;}
+.hu-feed-scope button:focus-visible {outline:2px solid #ffffff;outline-offset:2px;}
+/* THE EQUITY UPRISE TAB (owner, 2026-11-17: "the PNG logo that is there, put that on that tab, but don't make it ugly ...
+   Just keep it as is"): the supplied mark alone, scaled proportionally (the PNGs are square), a little larger than the
+   strip's 18px icons so the mark reads, inside the same 44px pill. No plate, filter or words: the white mark on the night
+   ground and the pressed red, the supplied dark mark on the white daylight ground (css/daylight.css). */
+.hu-feed-scope .hu-feed-scope__eup {padding:0 10px;}
+.hu-feed-scope .hu-eup-mark {display:block;width:40px;height:40px;object-fit:contain;flex:none;pointer-events:none;}
+.hu-feed-scope .hu-eup-mark--dark {display:none;}
+/* on the split desktop the feed column (about 490px at 1280) is narrower than the six tabs: the row wraps onto a second line, so
+   every tab sits inside the row and none hides past its edge with no sign that the row scrolls (review RV2-8); the phone and the
+   stacked tablet keep their one dragging row */
+@media (min-width:1000px) {
+  .hu-feed-scope {flex-wrap:wrap;}
+}
+/* the mission feed (the tab chosen): Environmental Justice, then the missions, then the completed series; the posting
+   chrome of Global steps aside */
+.mn-feed-equity #wtSocial :is(#mnGuestCard,#mnComposer,#mnLiveHero) {display:none!important;}
+.mn__completed {min-width:0;margin:12px 0 4px;}
+.mn__completed[hidden] {display:none;}
 .hu-editorial .mn__composer {margin-top:0;padding:8px 10px;border-radius:30px;}
 .hu-editorial .mn__composer-head {grid-template-columns:40px minmax(0,1fr) auto;gap:10px;}
 .hu-editorial .mn__composer textarea {font-size:max(16px,1rem);}
@@ -196,3 +211,31 @@ html.hu-editorial.mn-world-on, .hu-editorial.mn-world-on body {height:100%;overf
   .hu-editorial #mnFeed .mn__post-card.has-media {grid-template-columns:160px minmax(0,1fr);column-gap:16px;}
   .hu-editorial #mnFeed .mn__post-thumb .mn__post-media-loading {min-height:160px;}
 }
+/* MISSIONS AS POSTS (owner, 2026-11-17: "just another post in the newsfeed, not a big, large post, just the same size post as all
+   the other [posts]"): a post's card, rule and action row (js/mnet.js, missionPostHtml). Where a post shows its author's picture,
+   a plain line icon of what kind of work it is (never a mark); where the name and handle are, the mission's kind and field, then
+   its difficulty and points; the title in two lines at most; the description clamped to two; a quiet source line that opens the
+   credit; and Join (the supplied emblem alone at the strip's size, the variant made for the ground: white by night, the dark mark
+   by day, css/daylight.css), Details and Share. Compact 16px block padding leaves room for the full wrapped source and 44px
+   action targets. A mission post spends the same room on its head (the source line sits in the head's second
+   line beside the difficulty and points, where a post keeps its handle, wrapping rather than cut so the licence stays in view),
+   its title (15px, two lines at most), two lines of description at the size the feed's media cards use (15px) and a 44px
+   row (the emblem stays 40px). What a post does not have is the title line; a sourced mission's head
+   is one line taller at phone width (scripts/e2e/world-missions-guest.e2e.mjs measures mission posts against the ordinary posts
+   around them). */
+.hu-editorial #mnFeed .mn__mission-post {padding-block:16px;}
+.mn__mission-post-icon {flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--mn-rule-2);color:var(--mn-ink);}
+.mn__mission-post-icon svg {width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.hu-editorial #mnFeed .mn__mission-post .mn__post-head {margin:0 0 6px;}
+.hu-editorial #mnFeed .mn__mission-post .mn__author-sub {white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35;}
+.mn__mission-post-title {margin:0;color:var(--mn-ink);font:600 15px/1.3 var(--mn-ui);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.hu-editorial #mnFeed .mn__mission-post .mn__post-body {margin:2px 0 0;font-size:15px;line-height:1.4;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.mn__mission-post-source {display:inline;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;text-decoration:underline;text-decoration-color:var(--mn-rule-2);text-underline-offset:3px;cursor:pointer;overflow-wrap:anywhere;}
+.mn__mission-post-source:hover {color:var(--mn-ink);}
+.hu-editorial #mnFeed .mn__mission-post .mn__post-actions {margin-top:6px;}
+.hu-editorial #mnFeed .mn__mission-post .mn__action {min-width:44px;min-height:44px;}
+.mn__mission-join {justify-content:center;min-width:44px;min-height:40px;padding:0 2px;}
+.mn__mission-join .mn__eup {width:40px;height:40px;}
+.mn__mission-join .mn__eup--dark {display:none;}
+/* Local with only missions: the one line that says the place has no news today, above them */
+.mn__feed-note {margin:4px 0 6px;color:var(--mn-dim);font:400 14px/1.5 var(--mn-ui);}

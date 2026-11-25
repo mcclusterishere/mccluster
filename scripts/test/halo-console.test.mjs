@@ -12,21 +12,21 @@ test('the globe loads Halo only for the owner the Worker names, only on the full
   const js = read('js/action-globe.js');
   assert.match(js, /function isOwner\(\)\{const t=sessionToken\(\);return !!\(t&&access&&access\.release\?\.version==='globe-admin-preview\/v1'&&access\.release\.admin_preview===true&&accessToken===t\)\}/);
   const sync = js.slice(js.indexOf('function haloSync()'), js.indexOf('/* what the Halo console may use'));
-  assert.match(sync, /if\(!EXPLORE\|\|BARE\|\|!viewer\)return;/, 'only the full-screen globe mounts the view');
-  assert.match(sync, /if\(!owner\)\{if\(window\.HaloConsole\)HaloConsole\.unmount\(\);return\}/, 'role loss unmounts');
+  assert.match(sync, /if\(!EXPLORE\|\|BARE\|\|\(!viewer&&!haloMapFailed\)\)return;/, 'only the full-screen globe mounts the view');
+  assert.match(sync, /if\(!owner\)\{if\(access\|\|!sessionToken\(\)\)window\.MCC_SHELL\?\.haloReady\(\);if\(window\.HaloConsole\)HaloConsole\.unmount\(\);return\}/, 'role loss unmounts');
   assert.match(sync, /if\(HALO_OPEN===null\)return;/, 'the view opens only from a Halo link (?halo=…)');
   assert.ok(sync.indexOf('if(!owner)') < sync.indexOf('haloScript('), 'no Halo code is fetched before the owner answer');
   assert.match(sync, /enter\.hidden=!owner\|\|HALO_OPEN!==null;/, 'the header door shows for the owner only');
-  assert.match(sync, /Promise\.all\(\['css\/halo\.css','css\/halo-hud\.css'\]\.map\(haloStyle\)\)/, 'the styles land before the view mounts');
+  assert.match(sync, /Promise\.all\(\['css\/halo\.css','css\/halo-hud\.css','css\/halo-markets\.css'\]\.map\(haloStyle\)\)/, 'the styles land before the view mounts');
   assert.match(js, /paintLayerCredits\(\);haloSync\(\)\}/, 'every access repaint re-decides');
   assert.match(js, /const e=pickSolid\(p\.position\);if\(window\.HaloConsole&&HaloConsole\.pick\(e\)\)return;/, 'picks go to Halo first');
   assert.match(js, /halo\.id='ctlHalo';halo\.className='globe-ctl';halo\.hidden=true;halo\.href='action-globe\.html\?explore=1&halo=1';halo\.target='_top'/);
   assert.match(js, /const HU_V=\(\(\)=>\{try\{return new URL\(document\.currentScript\.src\)\.searchParams\.get\('v'\)\|\|''\}catch\(e\)\{return ''\}\}\)\(\);/);
-  for (const f of ['vision', 'hud', 'layers', 'data', 'chart', 'halo']) assert.ok(sync.includes("'js/halo/" + f + ".js'"), f + ' is loaded');
+  for (const f of ['vision', 'hud', 'layers', 'data', 'chart', 'markets', 'halo']) assert.ok(sync.includes("'js/halo/" + f + ".js'"), f + ' is loaded');
 });
 
 test('the view talks only to the Worker, through the globe bridge', () => {
-  for (const f of ['js/halo/halo.js', 'js/halo/layers.js', 'js/halo/data.js', 'js/halo/chart.js']) {
+  for (const f of ['js/halo/halo.js', 'js/halo/layers.js', 'js/halo/data.js', 'js/halo/chart.js', 'js/halo/markets.js']) {
     const js = read(f);
     assert.doesNotMatch(js, /https:\/\//, f + ' names no provider to call (official links are checked as patterns only)');
     assert.doesNotMatch(js, /fetch\((?!G\.api)/, f + ' fetches only G.api');
@@ -42,7 +42,7 @@ test('the view\'s layers are the Worker\'s release features', () => {
   const ctx = { window: {}, document: { addEventListener() {}, removeEventListener() {} } };
   vm.runInNewContext(read('js/halo/layers.js'), ctx);
   const ids = Object.keys(ctx.window.HaloLayers.SPECS).sort();
-  assert.deepEqual(ids, ['cyclones', 'fires', 'military', 'perimeters', 'quakes', 'tides', 'vessels']);
+  assert.deepEqual(ids, ['cyclones', 'fires', 'military', 'natural', 'perimeters', 'quakes', 'tides', 'vessels', 'weather']);
   const policy = read('packages/release-policy/globe.mjs');
   for (const id of ids) assert.match(policy, new RegExp("'" + id + "'"), id + ' is a release feature, owner-only by the guard');
   assert.match(policy, /\/v1\/world\/geocode/, 'place search is a release feature too');
@@ -102,21 +102,24 @@ test('the Control Room and the site menu no longer point at Seek First; every Ha
   assert.doesNotMatch(nav, /seek-first-handoff|context:'Seek First'/);
   /* one Halo (owner, 2026-10-22: "it takes you to multiple different places"): the menu's Hitman's Halo is the four screens,
      never the separate app, and there is no second Halo entry */
-  assert.match(nav, /label:'Hitman’s Halo', group:'Products', href:new URL\('action-globe\.html\?explore=1&halo=1', house\)\.href/);
+  /* the doors ask the bar where the page is (page(): the table's serving host), never the dock's house, which keeps Matthew's host until P3 (review V2-1, 2026-11-24); the door's target is unchanged */
+  assert.match(nav, /label:'Hitman’s Halo', group:'Products', href:page\('action-globe\.html\?explore=1&halo=1'\)/);
   assert.doesNotMatch(nav, /prime\.mccluster\.org|Halo on the globe/);
   for (const f of ['js/control-room-v2.js', 'js/control-room/workspace.js', 'js/control-room/workspace-core.js', 'js/action-globe.js', 'js/halo/halo.js'])
     assert.doesNotMatch(read(f), /prime\.mccluster\.org/, f + ' links no other Halo');
 });
 
-test('the owner\'s globe in the bar is Hitman\'s Halo; Halo carries the way to the World feed (owner, 2026-10-22)', () => {
+test('the owner globe opens the consumer World and Halo retains its separate door', () => {
   const bar = read('js/tabbar.js');
   const admin = bar.slice(bar.indexOf('function adminBar()'), bar.indexOf('function markAdminHere()'));
-  assert.match(admin, /href="' \+ HOUSE \+ 'action-globe\.html\?explore=1&amp;halo=1" data-appnav="halo" aria-label="Open Hitman’s Halo"/);
-  assert.doesNotMatch(admin, /worldAt\(|data-appnav="world"/, 'the owner bar has no second, user globe');
+  assert.ok(admin.includes('worldAt("?view=feed")'));
+  assert.match(admin, /data-appnav="world" aria-label="Open the World globe"/);
+  assert.doesNotMatch(admin, /data-appnav="halo"/, 'the existing seven-tab layout is retained');
+  assert.match(read('js/site-navigation.js'), /label:'Hitman’s Halo', group:'Products'/);
   /* lit while Halo is on screen */
   assert.match(bar, /action-globe\\\.html\$\/\.test\(location\.pathname\) && new URLSearchParams\(location\.search\)\.has\("halo"\)\) return "halo";/);
-  /* everyone else's globe is still the World */
-  assert.match(bar, /href="' \+ WORLD \+ 'mnet\.html\?view=feed" data-appnav="world"/);
+  /* everyone else's globe is still the World: its address is the table's (worldAt, SPEC-PLATFORM 4), no host literal */
+  assert.match(bar, /href="' \+ worldAt\("\?view=feed"\) \+ '" data-appnav="world"/);
   const halo = read('js/halo/halo.js');
   assert.match(halo, /<a class="hx-feed" href="' \+ esc\(feedHref\(\)\) \+ '" aria-label="Open the World feed"><span class="hx-feed__short">Feed<\/span><span class="hx-feed__long">World feed<\/span><\/a>/);
   assert.match(halo, /window\.MCC_BAR\.navigation\.world/);
@@ -131,6 +134,6 @@ test('the view keeps to the mobile rules: 44px targets, 16px inputs, minmax colu
   for (const sel of ['.hx-tabs button{', '.hx-seg button{', '.hx-operator{', '.hx-layers-btn{', '.hx-collapse{', '.hx-close{', '.hx-grip{', '.hx-disclose{', '.hx-axis__ev{', '.hx-cta,.hx-btn{', '.hx-brand{'])
     assert.match(css.slice(css.indexOf(sel)), /^[^}]*(min-height:44px|height:44px)/, sel + ' is a full tap target');
   assert.match(css, /\.hx-ctl button\{display:grid;place-items:center;width:44px;height:44px/);
-  assert.match(css, /@media \(min-width:768px\)/);
+  assert.match(css, /@media \(min-width:1100px\)/);
   assert.match(css, /@media \(min-width:1200px\)/);
 });

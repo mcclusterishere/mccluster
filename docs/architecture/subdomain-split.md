@@ -49,8 +49,9 @@ exists and the site goes dark. The safe order:
 3. Keep the old name alive: `here.mccluster.org` must redirect to
    `matthew.mccluster.org`; printed QR codes on garment labels and every
    link already shared point at it. GitHub Pages cannot redirect a host it no
-   longer serves; a Cloudflare redirect rule can, and so can a second tiny
-   Pages repo — the payload for that is in [`redirects/`](../../redirects/).
+   longer serves; a Cloudflare redirect rule can, and one now does (301 on
+   every path). The old meta-refresh payload, `redirects/`, was deleted on
+   2026-10-28; git history keeps it.
 4. Apex: `mccluster.org/*` → `matthew.mccluster.org/$1` redirect rule
    (Cloudflare free tier), or attach both domains to one Cloudflare Pages
    project if hosting has moved by then. Note the apex is currently served

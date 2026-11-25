@@ -152,3 +152,14 @@ test('requireMembership refuses a missing org_id rather than guessing one', asyn
     );
   });
 });
+
+for (const enabled of [undefined, null, 'true', 'false', 1, 0]) {
+  test('malformed enablement is unavailable rather than an enabled workspace: '+String(enabled), async () => {
+    const rows=[{role:'owner',orgs:{id:HOUSE,...(enabled===undefined?{}:{enabled})}}];
+    const be=backend({rows});
+    await withFetchMock(be.handler,async()=>{
+      await assert.rejects(resolveWorkspaces(env,USER),e=>e.status===503);
+      await assert.rejects(requireMembership(env,USER,HOUSE),e=>e.status===503);
+    });
+  });
+}

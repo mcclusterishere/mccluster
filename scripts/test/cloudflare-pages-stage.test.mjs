@@ -63,6 +63,20 @@ test('public-only staging strips even source accidentally retained by legacy gh-
   assert.equal(record.asset_count,8);
   assert.ok(/^[0-9a-f]{64}$/.test(record.manifest_sha256));
 });
+test('the frozen Drawdown mission catalog stays out of the export; the derived area map beside it is published',async()=>{
+  const f=await fixture();
+  await mkdir(join(f.input,'data','missions','drawdown'),{recursive:true});
+  await writeFile(join(f.input,'data','missions','drawdown','missions.json'),'{"missions":[]}');
+  await writeFile(join(f.input,'data','missions','drawdown','solutions-catalog.json'),'{"solutions":[]}');
+  await writeFile(join(f.input,'data','missions','drawdown-areas.json'),'{"schema":"mission-areas/v1"}');
+  const r=run(f);
+  assert.equal(r.status,0,r.stderr);
+  assert.equal(await exists(join(f.output,'data','missions','drawdown','missions.json')),false,'no draft mission text is published');
+  assert.equal(await exists(join(f.output,'data','missions','drawdown','solutions-catalog.json')),false,'no source excerpt or image address is published');
+  assert.equal(await exists(join(f.output,'data','missions','drawdown-areas.json')),true,'the slug-to-area map has no mission text and stays public');
+  const excluded=JSON.parse(await readFile(f.output+'.excluded.json','utf8'));
+  for (const p of ['data/missions/drawdown/missions.json','data/missions/drawdown/solutions-catalog.json']) assert.ok(excluded.excluded_paths.includes(p),p+' is in the exclusion report');
+});
 test('raw private main repository is refused instead of silently sanitized',async()=>{
   const f=await fixture();
   await writeFile(join(f.input,'AGENTS.md'),'Control security');

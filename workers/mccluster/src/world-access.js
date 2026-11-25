@@ -4,12 +4,15 @@
 import { globeRelease, GLOBE_RELEASE_VERSION } from '../../../packages/release-policy/globe.mjs';
 import { reply } from './lib/http.js';
 import { bearerUser } from './world-layers.js';
-import { service, uuid, privacyAcknowledged, missionCompleted, approximateLocation } from './world-cctv.js';
+import { service, uuid, privacyAcknowledged, missionCompleted, approximateLocation, isHouseOwner } from './world-cctv.js';
+import { siteUrl } from './platform/hosts.generated.js';
+export { isHouseOwner } from './world-cctv.js';
 
 export const LEVELS = Object.freeze(['public', 'fan', 'creator_business', 'eup', 'fellow', 'owner']);
 
 /* Whip Equipped LLC's own driver sign-up (the Driver app on Matthew's property, whip/driver/) */
-export const WHIP_DRIVER_SIGNUP_URL = 'https://matthew.mccluster.org/whip/driver/';
+/* Whip Equipped's driver sign-up: a profile_only page, served only on Matthew's host (the generated table) */
+export const WHIP_DRIVER_SIGNUP_URL = siteUrl('/whip/driver/');
 
 /* Legacy feature prerequisites remain separate from the release policy below. */
 export const LAYER_RULES = Object.freeze({
@@ -47,13 +50,6 @@ async function isCreator(env, userId, fetchImpl) {
   const rows = await service(env, `music_creator_profiles?m_uid=eq.${mUid}&status=eq.active&select=handle&limit=1`, fetchImpl).catch(() => []);
   return rows.length > 0;
 }
-export async function isHouseOwner(env, userId, fetchImpl) {
-  const orgs = await service(env, 'orgs?slug=eq.mccluster&select=id&limit=1', fetchImpl).catch(() => []);
-  const houseId = orgs[0] && orgs[0].id;
-  if (!houseId) return false;
-  const rows = await service(env, `org_members?org_id=eq.${encodeURIComponent(houseId)}&profile_id=eq.${userId}&role=eq.owner&select=role&limit=1`, fetchImpl).catch(() => []);
-  return rows.length > 0;
-}
 
 /* TODO(ladder) hooks: each returns false until docs/control-plane/POLICY-FELLOWSHIP-LADDER.md defines a verifiable rule */
 export const LADDER_HOOKS = {
@@ -83,7 +79,7 @@ export async function worldAccess(request, env, fetchImpl = fetch) {
     if (globeRelease(id, env) === 'withdrawn') { reason = 'feature_withdrawn'; next = null; }
     else if (level !== 'owner') { reason = 'admin_preview'; next = null; }
     else if (rank(level) < rank(rule.min)) { reason = rule.min === 'fan' ? 'sign_in_required' : `${rule.min}_required`; next = rule.min === 'fan' ? 'sign_in' : rule.min === 'creator_business' ? 'become_a_creator' : 'see_the_ladder'; }
-    else if (rule.cctv && !(cctv.signed_in && cctv.privacy_acknowledged && cctv.mission_completed)) {
+    else if (rule.cctv && !(cctv.signed_in && cctv.privacy_acknowledged && (cctv.mission_completed || level === 'owner'))) {
       reason = !cctv.privacy_acknowledged ? 'privacy_acknowledgement_required' : 'mission_required';
       next = !cctv.privacy_acknowledged ? 'acknowledge_privacy' : 'complete_a_mission';
     }

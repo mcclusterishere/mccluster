@@ -1,4 +1,5 @@
 import { SOURCE_CLASSES, PERSISTENCE } from './source-registry.js';
+import { CONTACT_ORIGIN } from '../platform/contact.js';
 
 /*
   Catalog federation.
@@ -757,7 +758,7 @@ export function extractPage(cat, body) {
 export async function discoverPage(cat, { offset = 0, limit = null, fetchImpl = fetch } = {}) {
   const { url } = pageRequest(cat, { offset, limit });
   const response = await fetchImpl(url, {
-    headers: { accept: 'application/json', 'user-agent': 'mccluster-seek-first-catalog/1.0 (+https://mccluster.org)' },
+    headers: { accept: 'application/json', 'user-agent': `mccluster-seek-first-catalog/1.0 (+${CONTACT_ORIGIN})` },
     signal: AbortSignal.timeout(30_000)
   });
   if (!response.ok) throw new Error(`${cat.key} catalog page failed: HTTP ${response.status}`);

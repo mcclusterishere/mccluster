@@ -82,9 +82,21 @@ async function measure(env,definition,orgId,window,fetchImpl) {
 }
 
 export async function dataCoverage(env,orgId,url,{fetchImpl=fetch,now=new Date()}={}) {
-  const window=windowFor(url),datasets=await boundedReads(DATASETS.map(d=>async()=>{
+  const window=windowFor(url);
+  // Leave room for authentication and owner checks under a 50-subrequest
+  // runtime budget. The current UI pages; unpaged callers remain compatible.
+  const paged=url.searchParams.has('offset')||url.searchParams.has('limit');
+  const offset=paged?Number(url.searchParams.get('offset')||0):0;
+  const limit=paged?Number(url.searchParams.get('limit')||12):DATASETS.length;
+  if(!Number.isSafeInteger(offset)||offset<0||offset>DATASETS.length||
+    !Number.isSafeInteger(limit)||limit<1||(paged&&limit>12))
+    throw Object.assign(new Error('Use a valid dataset offset and limit from 1 to 12'),{status:400});
+  const selected=DATASETS.slice(offset,offset+limit);
+  const datasets=await boundedReads(selected.map(d=>async()=>{
     const total=await measure(env,d,orgId,null,fetchImpl);
-    const recent=window&&total.status==='measured'?await measure(env,d,orgId,window,fetchImpl):null;
+    // An empty stored set has an empty time-window subset. Do not spend a
+    // second subrequest to count that same known empty set.
+    const recent=window&&total.status==='measured'?(total.count===0?total:await measure(env,d,orgId,window,fetchImpl)):null;
     const age=total.latest_at?Math.max(0,(now-Date.parse(total.latest_at))/3600000):null;
     const state=total.status!=='measured'?total.status:total.count===0?'empty':d.quietHours&&age!==null&&age>d.quietHours?'quiet':'populated';
     return {key:d.key,label:d.label,family:d.family,section:d.section,scope:d.scope,time_field:d.time,
@@ -97,5 +109,6 @@ export async function dataCoverage(env,orgId,url,{fetchImpl=fetch,now=new Date()
   // Preserve the original seven metric keys for existing consumers.
   const metrics=Object.fromEntries(datasets.map(d=>[d.key,{count:d.count,status:d.status}]));
   return {ok:true,schema:'analytics-coverage/v2',measured_at:now.toISOString(),scope:'Stored records · first-party and house organization',window,datasets,metrics,
+    ...(paged?{pagination:{offset,total:DATASETS.length,next_offset:offset+selected.length<DATASETS.length?offset+selected.length:null}}:{}),
     summary:{datasets:datasets.length,populated:datasets.filter(d=>d.state==='populated').length,empty:datasets.filter(d=>d.state==='empty').length,quiet:datasets.filter(d=>d.state==='quiet').length,unavailable:datasets.filter(d=>['missing','unavailable'].includes(d.state)||['missing','unavailable'].includes(d.window_status)).length}};
 }

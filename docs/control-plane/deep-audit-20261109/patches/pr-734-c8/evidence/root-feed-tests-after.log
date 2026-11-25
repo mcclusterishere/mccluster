@@ -1,0 +1,109 @@
+# head 9604a966354aaecba2f373e6e674b296ac269bb8 (series applied on 8255fb35); working tree clean; 2026-11-10T11:58:46Z; node v22.23.4
+# cwd repo root ; command: node --test scripts/test/world-news-feed.test.mjs scripts/test/world-unified-feed.test.mjs
+TAP version 13
+# Subtest: every AI comment carries a visible disclosure while preserving the character name
+ok 1 - every AI comment carries a visible disclosure while preserving the character name
+  ---
+  duration_ms: 7.87791
+  type: 'test'
+  ...
+# Subtest: one member post to one news item, as a single named constant
+ok 2 - one member post to one news item, as a single named constant
+  ---
+  duration_ms: 4.607884
+  type: 'test'
+  ...
+# Subtest: the news read is a bare public GET with no session, beside the posts, and it never breaks them
+ok 3 - the news read is a bare public GET with no session, beside the posts, and it never breaks them
+  ---
+  duration_ms: 3.562607
+  type: 'test'
+  ...
+# Subtest: a news card is the World card keyed data-news-id: first-party reader with no outbound headline link, and the place on the Earth
+ok 4 - a news card is the World card keyed data-news-id: first-party reader with no outbound headline link, and the place on the Earth
+  ---
+  duration_ms: 22.758302
+  type: 'test'
+  ...
+# Subtest: the GDELT credit is one quiet line over the feed, shown whenever news is, linking to the project in a new tab
+ok 5 - the GDELT credit is one quiet line over the feed, shown whenever news is, linking to the project in a new tab
+  ---
+  duration_ms: 3.48703
+  type: 'test'
+  ...
+# Subtest: a news card flies the Earth to the place it mentions, and the frame checks the numbers itself
+ok 6 - a news card flies the Earth to the place it mentions, and the frame checks the numbers itself
+  ---
+  duration_ms: 5.296157
+  type: 'test'
+  ...
+# Subtest: news cards fail closed until backend capability explicitly enables comment controls
+ok 7 - news cards fail closed until backend capability explicitly enables comment controls
+  ---
+  duration_ms: 3.522332
+  type: 'test'
+  ...
+# Subtest: Local reads the picked place's own news from the Worker: the stories the card counts, never a filter over the world's first page (owner, 2026-10-21)
+ok 8 - Local reads the picked place's own news from the Worker: the stories the card counts, never a filter over the world's first page (owner, 2026-10-21)
+  ---
+  duration_ms: 2.491792
+  type: 'test'
+  ...
+# Subtest: the pins on the Earth are the stories on the screen (owner, 2026-10-20: "I saw a post in Russia posted somewhere else on the map")
+ok 9 - the pins on the Earth are the stories on the screen (owner, 2026-10-20: "I saw a post in Russia posted somewhere else on the map")
+  ---
+  duration_ms: 6.690783
+  type: 'test'
+  ...
+# Subtest: a story names its country: the ISO code the Worker sends, else the place's last part without GDELT's gazetteer forms
+ok 10 - a story names its country: the ISO code the Worker sends, else the place's last part without GDELT's gazetteer forms
+  ---
+  duration_ms: 3.294359
+  type: 'test'
+  ...
+# Subtest: a picked state keeps the stories placed inside its shape, and checks the shape it is given
+ok 11 - a picked state keeps the stories placed inside its shape, and checks the shape it is given
+  ---
+  duration_ms: 3.50146
+  type: 'test'
+  ...
+# Subtest: a state picked or let go keeps the member's choice to place their post; another country clears it
+ok 12 - a state picked or let go keeps the member's choice to place their post; another country clears it
+  ---
+  duration_ms: 2.901478
+  type: 'test'
+  ...
+# Subtest: news discussions fail closed until approved database migration and flag activation
+ok 13 - news discussions fail closed until approved database migration and flag activation
+  ---
+  duration_ms: 33.406689
+  type: 'test'
+  ...
+# Subtest: news discussions authorize writes, preserve publisher boundary, and allow safe guest reads
+ok 14 - news discussions authorize writes, preserve publisher boundary, and allow safe guest reads
+  ---
+  duration_ms: 14.585286
+  type: 'test'
+  ...
+# Subtest: news comment availability is disabled until BOTH the flag and the database table are ready
+ok 15 - news comment availability is disabled until BOTH the flag and the database table are ready
+  ---
+  duration_ms: 2.983786
+  type: 'test'
+  ...
+# Subtest: batch comment visibility checks apply both directions of blocking in only two lookups
+ok 16 - batch comment visibility checks apply both directions of blocking in only two lookups
+  ---
+  duration_ms: 3.435235
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 146.729439
+exit=0
