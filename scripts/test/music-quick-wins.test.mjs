@@ -247,11 +247,14 @@ test('Q2 an old playlist link lands somewhere sensible, never a dead end', () =>
   assert.match(album, /if \(PL\) \{ location\.replace\(playlistDoor\(PL\)\); return; \}/, 'the page goes there before it paints anything');
 });
 
-test('Q2 the listen page shows Artists and Albums; the song rails rest until there is more music, and a search still finds songs', () => {
+test('Q2 the listen page keeps Artists and Albums and exposes All tracks; recommendation rails remain parked', () => {
   const html = read('listen.html'), js = read('js/listen.js');
-  assert.doesNotMatch(html, /<div class="chips" id="chips"/, 'no filter row: there are two things to list');
+  assert.doesNotMatch(html, /<div class="chips" id="chips"/, 'the playlist filter row stays retired');
   assert.match(js, /var SONG_RAILS = false;/, 'one switch rests the song rails (owner, 2026-11-23: "just list albums and artists right now")');
-  assert.match(js, /el\("allWrap"\)\.hidden = !searching;/, 'the song list is a search result, not a shelf');
+  // Owner, 2026-11-24: every track must also be visible and browsable.
+  // The full-script behavior is exercised in listening-room.test.mjs.
+  assert.doesNotMatch(html, /<section\b[^>]*\bid="allWrap"[^>]*\bhidden(?:\s|>)/, 'the track browser is visible on entry');
+  assert.match(html, /id="allK"[^>]*>All tracks<\//);
   assert.match(html, /<p class="lib__k">Albums<\/p>/);
   assert.match(read('js/music-community.js'), /'<p class="lib__k">Artists<\/p>'/);
   assert.doesNotMatch(html, /the songs people are actually reaching for/, 'the page does not promise rails it does not show');

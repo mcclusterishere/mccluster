@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 795,
+  "candidate_count": 796,
   "capability_source_count": 107,
-  "support_only_count": 688,
+  "support_only_count": 689,
   "entries": [
     {
       "path": ".cursorrules",
@@ -3707,6 +3707,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
+    },
+    {
+      "path": "scripts/test/listening-room.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Listening-room regression tests use an Equity Uprise album fixture to verify complete track browsing, search and loading states. Test support only; no independent building or program capability."
     },
     {
       "path": "scripts/test/logo-css-backgrounds.test.mjs",
