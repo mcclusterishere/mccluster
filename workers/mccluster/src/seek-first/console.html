@@ -347,6 +347,16 @@
       build: function (c) { return { lat: c.lat, lon: c.lon, radius_nm: 150 }; }
     },
     {
+      key: 'peeringdb', source: 'peeringdb', name: 'Internet facilities (PeeringDB)', color: '#60d8fa',
+      build: function (c) { return { bbox: c.bbox, limit: 250 }; },
+      hint: 'NONPROFIT/INTERNAL lane only. Provider coordinates are approximate.'
+    },
+    {
+      key: 'ripe_atlas', source: 'ripe_atlas', name: 'Network probes (RIPE Atlas)', color: '#b8a5ff',
+      build: function (c) { return { bbox: c.bbox, limit: 250 }; },
+      hint: 'ACADEMIC/INTERNAL lane only. Probe positions are privacy-obfuscated.'
+    },
+    {
       key: 'overpass', source: 'overpass', name: 'Infrastructure (OSM)', color: '#9bd17b',
       build: function (c) { return { lat: c.lat, lon: c.lon, radius_m: 3000, operation: 'infrastructure' }; }
     },
@@ -411,6 +421,37 @@
     } catch (e) {
       return fallback;
     }
+  }
+
+  // Refresh viewport-bound infrastructure layers when the globe stops moving.
+  // Skip world-scale views: provider bounds enforce a smaller query window.
+  function refreshInfrastructureLayers() {
+    var view = cameraCentre();
+    var bbox = view.bbox;
+    if (!bbox || bbox.length !== 4 || !bbox.every(Number.isFinite)) return;
+    if (bbox[2] <= bbox[0] || bbox[3] <= bbox[1]) return;
+    LAYER_SPECS.filter(function (spec) {
+      return spec.key === 'peeringdb' || spec.key === 'ripe_atlas';
+    }).forEach(function (spec) {
+      var node = document.querySelector('[data-layer="' + spec.key + '"]');
+      if (!node || node.getAttribute('data-on') !== '1') return;
+      var requestId = (spec.requestId || 0) + 1;
+      spec.requestId = requestId;
+      var maxSpan = spec.key === 'ripe_atlas' ? 20 : 40;
+      if (bbox[2] - bbox[0] > maxSpan || bbox[3] - bbox[1] > maxSpan) {
+        setMeta(node, 'Zoom in to load this viewport (' + maxSpan + '° maximum)', '');
+        if (state.layers[spec.key]) state.layers[spec.key].entities.removeAll();
+        return;
+      }
+      loadProvider(spec, requestId).then(function (summary) {
+        if (spec.requestId !== requestId || node.getAttribute('data-on') !== '1') return;
+        spec.attribution = summary.attribution;
+        setMeta(node, summary.records + ' records, ' + summary.mapped + ' mapped', '');
+        renderAttribution();
+      }).catch(function (error) {
+        if (spec.requestId === requestId) setMeta(node, error.message || 'Refresh failed', 'failed');
+      });
+    });
   }
 
   function dataSource(spec) {
@@ -492,18 +533,21 @@
     });
   }
 
-  function loadProvider(spec) {
+  function loadProvider(spec, requestId) {
     var body = spec.build ? spec.build(cameraCentre()) : {};
     body.persist = false;
     body.lane = 'INTERNAL';
     return api('/v1/seek-first/fetch/' + spec.source, { method: 'POST', body: body }).then(function (payload) {
       var result = (payload && payload.result) || {};
       var records = result.records || [];
+      if (requestId !== undefined && (spec.requestId !== requestId || !document.querySelector('[data-layer="' + spec.key + '"][data-on="1"]'))) {
+        return { records: records.length, mapped: 0, attribution: result.attribution, stale: true };
+      }
       var mapped = drawPoints(spec, records.map(function (row) {
         return {
           lat: row.point && row.point.lat, lon: row.point && row.point.lon,
           name: row.name || row.metric || row.event_type || spec.name,
-          description: describe(row.properties)
+          description: describe(Object.assign({}, row.properties || {}, { source_url: row.source_url || result.source_url, observed_at: row.observed_at, attribution: result.attribution }))
         };
       }));
       return { records: records.length, mapped: mapped, attribution: result.attribution };
@@ -515,6 +559,7 @@
     if (on) {
       node.setAttribute('data-on', '0');
       node.querySelector('button.toggle').textContent = 'Off';
+      spec.requestId = (spec.requestId || 0) + 1;
       if (state.layers[spec.key]) state.layers[spec.key].entities.removeAll();
       setMeta(node, spec.hint || '', '');
       renderAttribution();
@@ -523,9 +568,12 @@
     node.setAttribute('data-on', '1');
     node.querySelector('button.toggle').textContent = 'Loading';
     var loader = spec.kind === 'stored' ? loadStored : spec.kind === 'ais' ? loadAis : loadProvider;
+    var requestId = (spec.requestId || 0) + 1;
+    spec.requestId = requestId;
 
-    withTimeout(loader(spec), STEP_TIMEOUT_MS + 8000, spec.name)
+    withTimeout(loader(spec, requestId), STEP_TIMEOUT_MS + 8000, spec.name)
       .then(function (summary) {
+        if (spec.requestId !== requestId || node.getAttribute('data-on') !== '1' || summary.stale) return;
         node.querySelector('button.toggle').textContent = 'On';
         spec.attribution = summary.attribution;
         var detail = summary.records + ' records, ' + summary.mapped + ' mapped';
@@ -798,6 +846,7 @@
         var globeStep = step('globe', 'Globe');
         try {
           state.viewer = buildViewer();
+          state.viewer.camera.moveEnd.addEventListener(refreshInfrastructureLayers);
           // Named handle for operators in devtools and for automated boot tests.
           window.__gevViewer = state.viewer;
           mark(globeStep, 'ok', 'open imagery');
