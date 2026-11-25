@@ -303,7 +303,8 @@ Nothing is applied or deployed; the SQL is pending and the Core wiring is off un
   block, the validation codes and the submission-time ledger behaviour.
 - Tests: `core/test/contribution-ledger.test.mjs`, `core/test/metering-validation.test.mjs` (`node --test` with fakes, plus
   the real adapter against a fake daemon).
-- Not done: the desktop Contribute panel and the Windows node doctor changes (consent, limits, pause, revoke), the
+- The desktop Contribute panel lives on the stacked branch `prime/desktop-contribute-panel` (see COMPUTE-CONTRIBUTE-PANEL.md): opt-in toggle and contributed/earned unit display, written to the node state root. The panel never calls the Core.
+- Not done: wiring the Windows node doctor to refresh `contribution-balances.json` after a settle, the remaining doctor changes for consent, limits, pause and revoke on this branch, the
   owner tools for accounts, classes and reviews, and private-task routing by `ops_compute_private_grants` at claim time.
 - Known limits, each a chosen rule:
   - A task submitted through `POST /v1/compute/tasks` (not the job contract) is never reserved; its settle answers

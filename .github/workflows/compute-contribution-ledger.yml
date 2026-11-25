@@ -1,0 +1,60 @@
+# Disposable proofs for the contribution ledger and Contribute panel.
+# Never talks to production Supabase or OVH Core.
+name: Compute contribution ledger
+
+on:
+  pull_request:
+    paths:
+      - 'core/src/compute/contribution-ledger.mjs'
+      - 'core/src/compute/jobs-service.mjs'
+      - 'core/test/contribution-ledger.test.mjs'
+      - 'scripts/compute-ledger-ratio-check.mjs'
+      - 'scripts/compute-ledger-sql-check.mjs'
+      - 'scripts/compute-contribute-e2e.mjs'
+      - 'scripts/native-admin-test-db.mjs'
+      - 'desktop/contribute-panel/**'
+      - 'desktop/windows/src/Contribute*.cs'
+      - 'supabase/pending/compute_contribution_ledger_v1*'
+      - 'supabase/pending/compute_scheduler_lease_v1*'
+      - 'supabase/pending/compute_job_attestations_v1*'
+      - '.github/workflows/compute-contribution-ledger.yml'
+  push:
+    branches:
+      - prime/contribution-ledger
+      - prime/desktop-contribute-panel
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compute-contribution-ledger-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ledger-and-panel:
+    name: Ratio, panel and local routing
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Install pinned PGlite
+        run: npm install --prefix "$RUNNER_TEMP/pglite" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.5.10
+      - name: Contribution ledger unit tests
+        run: node --test core/test/contribution-ledger.test.mjs
+      - name: Contribute panel unit tests
+        if: hashFiles('desktop/contribute-panel/contribute-panel.test.mjs') != ''
+        run: node --test desktop/contribute-panel/contribute-panel.test.mjs
+      - name: 3-to-1 SQL ratio check
+        if: hashFiles('scripts/compute-ledger-ratio-check.mjs') != ''
+        env:
+          PGLITE_MODULE_PATH: ${{ runner.temp }}/pglite/node_modules/@electric-sql/pglite/dist/index.js
+        run: node scripts/compute-ledger-ratio-check.mjs
+      - name: Local two-node routing and credit deduction
+        if: hashFiles('scripts/compute-contribute-e2e.mjs') != ''
+        env:
+          PGLITE_MODULE_PATH: ${{ runner.temp }}/pglite/node_modules/@electric-sql/pglite/dist/index.js
+        run: node scripts/compute-contribute-e2e.mjs
