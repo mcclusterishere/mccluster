@@ -7,7 +7,8 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RootNamespace>McClusterDesktop</RootNamespace>
     <PlatformTarget>x64</PlatformTarget>
-    <Version>0.3.0</Version>
+    <!-- Must match the three-part form of AssemblyFileVersion in Version.cs. check-version.ps1 enforces this. -->
+    <Version>0.4.0</Version>
     <Description>EquityNet: the McCluster compute network client for Windows</Description>
     <Product>EquityNet</Product>
     <Company>McCluster Corp</Company>

@@ -27,9 +27,18 @@ if ($Sign -or $AllowUntimestamped) { throw 'Release verification requires timest
 if (-not $Dist) { $Dist = Join-Path $here 'dist' }
 if (-not $AppDir) { $AppDir = Join-Path $Dist 'app' }
 . (Join-Path $here 'release-payload.ps1')
+. (Join-Path $here 'check-version.ps1')
+$sourceVersion = Get-EquityNetSourceVersion -Root $here
 $setups = @(Get-ChildItem -LiteralPath $Dist -File -Filter 'EquityNet-Windows-x64-Setup-*.exe')
 if ($setups.Count -ne 1) { throw "Expected exactly one setup in $Dist; run build-inbox.ps1 -Installer first" }
 $setup = $setups[0]
+$expectedSetup = "EquityNet-Windows-x64-Setup-$sourceVersion.exe"
+if ($setup.Name -ne $expectedSetup) { throw "Setup $($setup.Name) does not match Version.cs / csproj / NSIS version $sourceVersion (expected $expectedSetup)" }
+$appExe = Join-Path $AppDir 'McCluster.exe'
+if (-not (Test-Path -LiteralPath $appExe)) { throw "McCluster.exe not found in $AppDir" }
+$appVersion = (Get-Item -LiteralPath $appExe).VersionInfo.FileVersion
+$appNormalized = $appVersion -replace '\.0$',''
+if ($appNormalized -ne $sourceVersion) { throw "McCluster.exe FileVersion $appVersion does not match source version $sourceVersion" }
 
 function Get-SignatureFacts([string]$path) {
   $sig = Get-AuthenticodeSignature $path

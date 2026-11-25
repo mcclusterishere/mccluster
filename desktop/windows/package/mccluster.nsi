@@ -3,22 +3,25 @@ RequestExecutionLevel user
 ManifestDPIAware True
 ; EquityNet (published by McCluster Corp). Compatibility: the install folder, McCluster.exe and the
 ; Uninstall\McClusterDesktop key keep their pre-rename names so this setup upgrades an existing install in place.
+; PRODUCT_VERSION must match src/Version.cs and the csproj <Version>. check-version.ps1 enforces it.
+!define PRODUCT_VERSION "0.4.0"
+!define PRODUCT_VERSION_QUAD "0.4.0.0"
 Name "EquityNet"
 Caption "EquityNet"
-OutFile "..\dist\EquityNet-Windows-x64-Setup-0.3.0.exe"
+OutFile "..\dist\EquityNet-Windows-x64-Setup-${PRODUCT_VERSION}.exe"
 InstallDir "$LOCALAPPDATA\McClusterDesktop\App"
 SetCompress auto
 SetCompressor /SOLID lzma
 ShowInstDetails show
 ShowUninstDetails show
 
-VIProductVersion "0.3.0.0"
+VIProductVersion "${PRODUCT_VERSION_QUAD}"
 VIAddVersionKey /LANG=1033 "ProductName" "EquityNet"
 VIAddVersionKey /LANG=1033 "FileDescription" "EquityNet setup"
 VIAddVersionKey /LANG=1033 "CompanyName" "McCluster Corp"
-VIAddVersionKey /LANG=1033 "FileVersion" "0.3.0.0"
-VIAddVersionKey /LANG=1033 "ProductVersion" "0.3.0.0"
-VIAddVersionKey /LANG=1033 "OriginalFilename" "EquityNet-Windows-x64-Setup-0.3.0.exe"
+VIAddVersionKey /LANG=1033 "FileVersion" "${PRODUCT_VERSION_QUAD}"
+VIAddVersionKey /LANG=1033 "ProductVersion" "${PRODUCT_VERSION_QUAD}"
+VIAddVersionKey /LANG=1033 "OriginalFilename" "EquityNet-Windows-x64-Setup-${PRODUCT_VERSION}.exe"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2026 McCluster Corp"
 
 !include "MUI2.nsh"
@@ -59,7 +62,7 @@ Section "EquityNet" SEC_APP
   CreateShortCut "$SMPROGRAMS\EquityNet.lnk" "$INSTDIR\McCluster.exe"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayName" "EquityNet"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "Publisher" "McCluster Corp"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayVersion" "0.3.0"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "DisplayIcon" "$INSTDIR\McCluster.exe"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "UninstallString" '$\"$INSTDIR\Uninstall.exe$\"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\McClusterDesktop" "InstallLocation" "$INSTDIR"

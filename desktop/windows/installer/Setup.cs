@@ -197,6 +197,7 @@ namespace McClusterDesktop
                 {
                     key.SetValue("DisplayName", "EquityNet");
                     key.SetValue("Publisher", "McCluster Corp");
+                    // manifest.Version is McCluster.exe FileVersion from Version.cs (0.4.0).
                     key.SetValue("DisplayVersion", manifest.Version);
                     key.SetValue("DisplayIcon", Path.Combine(root, "McCluster.exe"));
                     key.SetValue("UninstallString", "\"" + Path.Combine(root, "Uninstall.exe") + "\"");
