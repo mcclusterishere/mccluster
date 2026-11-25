@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { hashJson } from '../src/compute/jobs.mjs';
-import { LEDGER_ENV_FLAG, createLedgerRpc, estimateMaxUnitsMicro, leaseTokenHash, ledgerEnabled, operationKey, resolveModelClass, schedulerIdentity, taskCounterCaps, balances, receipt, release, reserve, settle } from '../src/compute/contribution-ledger.mjs';
+import { LEDGER_ENV_FLAG, createLedgerRpc, estimateMaxUnitsMicro, leaseTokenHash, DEFAULT_REDEMPTION_RATIO, ledgerEnabled, redemptionMint, operationKey, resolveModelClass, schedulerIdentity, taskCounterCaps, balances, receipt, release, reserve, settle } from '../src/compute/contribution-ledger.mjs';
 import { ledgerBalances, ledgerReceipt, releaseAfterFailure, releaseTaskReservation, settleCompletion, settleDoneTask, startContributionSweep, submitJob, sweepContributionLedger, validateCompletion } from '../src/compute/jobs-service.mjs';
 import { LEDGER_HOLD_RUN_AFTER, activateHeldTask, completingLeaseForSettle, isLedgerHold, openReservations, reservationForTask, staleHeldTasks } from '../src/compute/jobs-store.mjs';
 
@@ -89,6 +89,40 @@ function fakeLedger({ answers = {}, ledgerOn = true, classes = [CLASS], live = [
   };
   return { deps, calls, logs, reads, tasks, leases, reservations, canceled, activated, enqueued, faults };
 }
+
+
+test('redemptionMint: three contributed micro-units earn one spendable unit, with carry for the remainder', () => {
+  assert.equal(DEFAULT_REDEMPTION_RATIO, 3);
+  assert.deepEqual(redemptionMint(0), { mintedMicro: 0n, carryMicro: 0n });
+  assert.deepEqual(redemptionMint(1), { mintedMicro: 0n, carryMicro: 1n });
+  assert.deepEqual(redemptionMint(2), { mintedMicro: 0n, carryMicro: 2n });
+  assert.deepEqual(redemptionMint(3), { mintedMicro: 1n, carryMicro: 0n });
+  assert.deepEqual(redemptionMint(4), { mintedMicro: 1n, carryMicro: 1n });
+  assert.deepEqual(redemptionMint(5), { mintedMicro: 1n, carryMicro: 2n });
+  assert.deepEqual(redemptionMint(6), { mintedMicro: 2n, carryMicro: 0n });
+});
+
+test('redemptionMint: leftover carry is applied to the next job so splitting cannot game the floor', () => {
+  let carry = 0n;
+  const minted = [];
+  for (const units of [1, 1, 1, 1, 2, 3]) {
+    const r = redemptionMint(units, { carryMicro: carry });
+    minted.push(r.mintedMicro);
+    carry = r.carryMicro;
+  }
+  assert.deepEqual(minted, [0n, 0n, 1n, 0n, 1n, 1n]);
+  assert.equal(carry, 0n);
+  const totalContributed = 1 + 1 + 1 + 1 + 2 + 3;
+  const totalMinted = minted.reduce((a, b) => a + b, 0n);
+  assert.equal(totalMinted, BigInt(Math.floor(totalContributed / 3)));
+});
+
+test('redemptionMint: refuses negative units, carry or a ratio below 1', () => {
+  assert.throws(() => redemptionMint(-1), /units must be a non-negative integer/);
+  assert.throws(() => redemptionMint(1, { carryMicro: -1 }), /carry must be a non-negative integer/);
+  assert.throws(() => redemptionMint(3, { ratio: 0 }), /redemption ratio must be at least 1/);
+  assert.throws(() => redemptionMint(1.5), /units must be a non-negative integer/);
+});
 
 test('pure helpers: the flag, operation keys, token hash, class resolution, the task caps and the max-units estimate', () => {
   assert.equal(LEDGER_ENV_FLAG, 'CORE_CONTRIBUTION_LEDGER_ENABLED');

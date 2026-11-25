@@ -195,6 +195,8 @@ It then cancels held tasks older than the grace that never got a reservation.
 
 ## Tests the pilot must pass before anything is promoted
 
+`scripts/compute-ledger-ratio-check.mjs` is the focused 3-to-1 proof: exactly three contributed units mint one spendable unit, leftovers stay in carry, a replay does not mint twice, and an over-budget reserve is refused so the available balance never goes negative. `core/src/compute/contribution-ledger.mjs` `redemptionMint` is the same floor-and-remainder rule in JavaScript, covered by unit tests. The database remains the only writer of a mint.
+
 `scripts/compute-ledger-sql-check.mjs` over PGlite (same loader as the staging harness), each as its own
 case with the refusal code asserted:
 

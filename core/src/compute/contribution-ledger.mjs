@@ -25,6 +25,30 @@ export function ledgerEnabled(env = process.env) {
   return String(env?.[LEDGER_ENV_FLAG] ?? '').trim() === '1';
 }
 
+// Pure form of the SQL mint rule in compute_ledger_settle: a worker earns
+// floor((carry + accepted_units) / redemption_ratio) spendable micro-units,
+// and the remainder stays as carry so splitting jobs cannot game rounding.
+// PostgreSQL div/mod on non-negative bigints. The database is still the
+// only place that records a mint; this helper is for tests and the panel.
+export const DEFAULT_REDEMPTION_RATIO = 3;
+export function redemptionMint(unitsMicro, { carryMicro = 0, ratio = DEFAULT_REDEMPTION_RATIO } = {}) {
+  const units = toNonNegBigInt(unitsMicro, 'units');
+  const carry = toNonNegBigInt(carryMicro, 'carry');
+  const r = toNonNegBigInt(ratio, 'ratio');
+  if (r < 1n) throw new Error('redemption ratio must be at least 1');
+  const total = carry + units;
+  return { mintedMicro: total / r, carryMicro: total % r };
+}
+function toNonNegBigInt(value, name) {
+  if (typeof value === 'bigint') {
+    if (value < 0n) throw new Error(`${name} must be a non-negative integer`);
+    return value;
+  }
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 0 && Number.isSafeInteger(value)) return BigInt(value);
+  if (typeof value === 'string' && /^(0|[1-9][0-9]*)$/.test(value)) return BigInt(value);
+  throw new Error(`${name} must be a non-negative integer`);
+}
+
 // rpc(name, payload) posts to Supabase rpc/<name> and resolves the decoded
 // body; every call carries a network timeout so a black-holed write fails.
 export function createLedgerRpc(restImpl = rest, { timeoutMs = DEFAULT_RPC_TIMEOUT_MS } = {}) {
