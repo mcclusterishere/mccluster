@@ -371,8 +371,11 @@ body.music-v2 .music-launch .music-launch__terms a{display:inline;padding:0;bord
 .music-v2 .music-mini__play svg{width:21px;height:21px}
 
 /* ---------- FULL-SCREEN NOW PLAYING ---------- */
+/* Above the site tab bar (.appbar is z-index 200). Lyrics in the sheet can
+   push AirPlay into the bar's screen area; without this, the Home tab steals
+   the tap. */
 .music-now{
-  position:fixed;inset:0;z-index:140;
+  position:fixed;inset:0;z-index:240;
   display:block;pointer-events:none;opacity:0;
   background:#0d0d10;
   transition:opacity .18s ease
@@ -466,7 +469,7 @@ body.music-v2 .music-launch .music-launch__terms a{display:inline;padding:0;bord
 }
 .music-now__context span+span::before{content:"·";margin-right:7px}
 /* AirPlay where WebKit offers it, shown while a device is in range (js/now-playing.js); a 44px target */
-.music-now__devices{display:flex;justify-content:center;flex-wrap:wrap;gap:10px}
+.music-now__devices{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;flex:none}
 .music-now__sound{
   min-height:44px;margin-top:12px;border:0;border-radius:22px;padding:0 16px 0 12px;cursor:pointer;
   display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-size:12px;font-weight:700
