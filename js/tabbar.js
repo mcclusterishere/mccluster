@@ -757,6 +757,21 @@
   function readAdminMemo(sub) {
     try { var m = JSON.parse(sessionStorage.getItem(ADMIN_KEY) || "null"); return m && m.admin === false && m.sub === sub && Date.now() >= m.at && Date.now() - m.at < ADMIN_TTL ? m : null; } catch (e) { return null; }
   }
+  /* A transient miss (timeout, network, 5xx, 429) is not an answer about the account. Navigation still closes
+     while it is unanswered (fail closed), but the bar asks again a bounded number of times instead of waiting for the
+     next focus or page restore, so one slow /v1/status no longer leaves the owner on the three-tab bar (#756).
+     Only the server's 2xx grants; 401/403 stay definite denials and are never retried. */
+  var ADMIN_RETRY_DELAYS = [800, 2400], adminRetry = { sub: null, n: 0 };
+  function scheduleAdminRetry(sub) {
+    if (adminRetry.sub !== sub) adminRetry = { sub: sub, n: 0 };
+    if (adminRetry.n >= ADMIN_RETRY_DELAYS.length) return;
+    var after = adminEpoch, delay = ADMIN_RETRY_DELAYS[adminRetry.n++];
+    setTimeout(function () {
+      /* a newer check (focus, restore, sign-in) already asked; an account switch or sign-out ends the retry */
+      if (after !== adminEpoch || !AUTH_STATE.signed_in || currentSubject() !== String(sub)) return;
+      checkAdmin(true);
+    }, delay);
+  }
   function checkAdmin(force) {
     var session = readAuthSession();
     var token = session && session.access_token, sub = token ? jwtPayload(token).sub : null;
@@ -779,17 +794,19 @@
         if (!current()) return false;
         /* Only definite answers are cached. An unavailable authority closes navigation. */
         if (r.ok || r.status === 401 || r.status === 403) {
+          adminRetry = { sub: null, n: 0 };
           try {
             if (r.ok) sessionStorage.removeItem(ADMIN_KEY);
             else sessionStorage.setItem(ADMIN_KEY, JSON.stringify({ sub: sub, at: Date.now(), admin: r.ok }));
           } catch (e) {}
         } else {
           try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {}
+          scheduleAdminRetry(sub);
         }
         adminSession = r.ok ? token : null;
         paintAdmin(r.ok);
         return r.ok;
-      }).catch(function () { if (current()) { paintAdmin(false); try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} } return false; })
+      }).catch(function () { if (current()) { paintAdmin(false); try { sessionStorage.removeItem(ADMIN_KEY); } catch (e) {} scheduleAdminRetry(sub); } return false; })
       .finally(function () { clearTimeout(timeout); if (adminFlight === flight) adminFlight = null; });
     return flight.promise;
   }
