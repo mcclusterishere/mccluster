@@ -179,6 +179,8 @@ async function findListen(where,title,album){
 async function playListen(page,title='Who Did The Shoot',album='here',where=page){
   await (await findListen(where,title,album)).click();
   await page.waitForFunction(t=>window.MCC_MUSIC&&MCC_MUSIC.current()&&MCC_MUSIC.current().title===t&&!MCC_MUSIC.audio.paused&&MCC_MUSIC.audio.currentTime>.3,title,{timeout:15000});
+  // Return to browsing after finding the song so artists and albums can be selected while it plays.
+  await where.locator('#qClear').click();
 }
 async function playAlbumRow(page,n=1){
   await page.waitForSelector('#tracks li',{timeout:15000});
@@ -326,6 +328,7 @@ await scenario('s2',async()=>{
   await page.waitForFunction(()=>MCC_MUSIC.current()&&MCC_MUSIC.current().title!=='OSINT'&&!MCC_MUSIC.audio.paused,null,{timeout:12000});
   check('4. a catalogue song plays to its end and the engine\'s queue moves on',(await engine(page)).same,await engine(page));
   /* test 14: a view to another view: a new frame element (a fresh document), the old one gone once the new one painted, one entry */
+  await v.locator('#qClear').click();
   const len0=await page.evaluate(()=>history.length);
   await page.evaluate(()=>{document.getElementById('mccMusicViewFrame').__mark='listen';});
   await v.waitForSelector('a.artist[href*="handle=second-artist"]',{timeout:15000});
@@ -598,8 +601,8 @@ await scenario('s9',async()=>{
   await kv.locator('a.artist--house').click();
   /* one McCluster (Matthew, 2026-11-23, "Quick wins" Q1 in docs/music/MUSIC-RELEASE-20261119.md): his card on Listen
      is his artist page, never the house's root */
-  await k.page.waitForURL(/music-creator\.html\?handle=mccluster$/,{timeout:10000}).catch(()=>{});
-  check('12. McCluster\'s card on Listen opens his artist page (from a view too), never the house root',new URL(k.page.url()).pathname==='/music-creator.html'&&new URL(k.page.url()).searchParams.get('handle')==='mccluster',k.page.url());
+  await k.page.waitForURL(/artist\.html\?artist=mccluster$/,{timeout:10000}).catch(()=>{});
+  check('12. McCluster\'s card on Listen opens his artist page (from a view too), never the house root',new URL(k.page.url()).pathname==='/artist.html'&&new URL(k.page.url()).searchParams.get('artist')==='mccluster',k.page.url());
   await k.context.close();
 });
 await scenario('s10',async()=>{
@@ -811,12 +814,14 @@ await scenario('contained',async()=>{
   /* McCluster's album from his artist page shown as a view over Listen: a page load of the top, no album view entry */
   await page.goto(HOUSE+'/listen.html',{waitUntil:'load'});await page.evaluate(()=>{window.__docMark='listen';});
   await page.waitForSelector('a.artist--house',{timeout:15000});await page.locator('a.artist--house').click();
-  const hv=await waitView(page,/handle=mccluster/);
-  await hv.waitForSelector('#apHouseShelf a.ap-card[href="album.html?album=here"]',{timeout:15000});
-  await hv.locator('#apHouseShelf a.ap-card[href="album.html?album=here"]').click();
-  await page.waitForURL(/\/album\.html\?album=here$/,{timeout:10000}).catch(()=>{});await page.waitForLoadState('load');await sleep(600);
+  const hv=await waitView(page,/artist\.html\?artist=mccluster/);
+  const first=hv.locator('#artistSections a.row[href^="album.html?album=here&t="]').first();
+  await first.waitFor({timeout:15000});
+  const destination=new URL(await first.getAttribute('href'),HOUSE);
+  await first.click();
+  await page.waitForURL(destination.href,{timeout:10000});await page.waitForLoadState('load');await sleep(600);
   const fromView=await page.evaluate(()=>({mark:window.__docMark||null,path:location.pathname+location.search,state:history.state,frames:document.querySelectorAll('#mccMusicViewFrame').length}));
-  check('contained: an album link in an artist view is a page load of the top (no album view, no album view entry)',fromView.mark!=='listen'&&fromView.path==='/album.html?album=here'&&fromView.frames===0&&!(fromView.state&&fromView.state.mccMusicView),fromView);
+  check('contained: an album link in an artist view is a page load of the top (no album view, no album view entry)',fromView.mark!=='listen'&&fromView.path===destination.pathname+destination.search&&fromView.frames===0&&!(fromView.state&&fromView.state.mccMusicView),fromView);
   check('contained: no page error',log.errors.length===0,log.errors);
   await context.close();
 });

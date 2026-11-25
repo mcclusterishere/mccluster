@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 782,
-  "capability_source_count": 104,
-  "support_only_count": 678,
-  "checks_total": 3026,
-  "checks_passed": 3026,
+  "candidate_count": 795,
+  "capability_source_count": 107,
+  "support_only_count": 688,
+  "checks_total": 3075,
+  "checks_passed": 3075,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -71,6 +71,7 @@
     "action/league.html",
     "album.html",
     "analytics.html",
+    "artist.html",
     "assets/img/equity-uprise-logo.webp",
     "assets/img/equity-uprise-mark-white.png",
     "assets/img/equity-uprise-mark.png",
@@ -259,6 +260,9 @@
     "docs/inbox.md",
     "docs/legal/EXPOSURE-AUDIT.md",
     "docs/music-platform.md",
+    "docs/music/ARTIST-PAGES.md",
+    "docs/music/screenshots/artists-20261124/album-equity-uprise-390.png",
+    "docs/music/screenshots/artists-20261124/artist-equity-uprise-390.png",
     "docs/pay-now.md",
     "docs/prim3/EQUITY-UPRISE-BUILDING-IN-PRIM3.md",
     "docs/prim3/EQUITY-UPRISE-HQ-REVIEW.md",
@@ -349,7 +353,9 @@
     "js/mnet-live.js",
     "js/mnet-tour.js",
     "js/mnet.js",
+    "js/music-community.js",
     "js/music-creator-profile.js",
+    "js/music-credits.js",
     "js/now-playing.js",
     "js/offers.js",
     "js/onboard.js",
@@ -386,6 +392,7 @@
     "mccluster-corp.html",
     "mccluster-platform.html",
     "mnet.html",
+    "music-creator.html",
     "music-videos.html",
     "native/app/(tabs)/_layout.tsx",
     "native/app/(tabs)/create.tsx",
@@ -442,6 +449,7 @@
     "scripts/e2e/fixtures/eu-building-visual.mjs",
     "scripts/e2e/fixtures/platform-hosts-20261123.json",
     "scripts/e2e/globe-games.e2e.mjs",
+    "scripts/e2e/music-accounts.e2e.mjs",
     "scripts/e2e/prim3-artist.e2e.mjs",
     "scripts/e2e/prim3-direct-landings.e2e.mjs",
     "scripts/e2e/prim3-hq-stairs.e2e.mjs",
@@ -511,6 +519,7 @@
     "scripts/test/mission-pins-arcs-business.test.mjs",
     "scripts/test/mnet-real-network.test.mjs",
     "scripts/test/mobile-rule.test.mjs",
+    "scripts/test/music-credits.test.mjs",
     "scripts/test/music-direct-sales.test.mjs",
     "scripts/test/music-label.test.mjs",
     "scripts/test/native-action-network.test.mjs",
@@ -647,6 +656,10 @@
     "supabase/pending/20261029100000_privilege_hygiene_v1.rollback.sql",
     "supabase/pending/20261029100200_rls_initplan_select_wrap_v1.rollback.sql",
     "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql",
+    "supabase/pending/20261124130000_music_catalog_owner_credits.rollback.sql",
+    "supabase/pending/20261124130000_music_catalog_owner_credits.sql",
+    "supabase/pending/20261124190000_music_pax_stage_name.rollback.sql",
+    "supabase/pending/20261124190000_music_pax_stage_name.sql",
     "supabase/pending/PROMOTION-ORDER.md",
     "supabase/pending/README.md",
     "supabase/pending/eup_module_policy_v1.provenance.json",
@@ -796,7 +809,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "782 entries"
+      "detail": "795 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1972,6 +1985,21 @@
       "name": "analytics.html support rationale present",
       "passed": true,
       "detail": ""
+    },
+    {
+      "name": "artist.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "artist.html classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "artist.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
     },
     {
       "name": "assets/img/equity-uprise-logo.webp capability ids known",
@@ -5614,6 +5642,66 @@
       "detail": "support-only sources must not also claim capability ownership"
     },
     {
+      "name": "docs/music/ARTIST-PAGES.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/music/ARTIST-PAGES.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/music/ARTIST-PAGES.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/music/ARTIST-PAGES.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/music/screenshots/artists-20261124/album-equity-uprise-390.png capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/music/screenshots/artists-20261124/album-equity-uprise-390.png classified",
+      "passed": true,
+      "detail": "classification='presentation_support'"
+    },
+    {
+      "name": "docs/music/screenshots/artists-20261124/album-equity-uprise-390.png support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/music/screenshots/artists-20261124/album-equity-uprise-390.png support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/music/screenshots/artists-20261124/artist-equity-uprise-390.png capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/music/screenshots/artists-20261124/artist-equity-uprise-390.png classified",
+      "passed": true,
+      "detail": "classification='presentation_support'"
+    },
+    {
+      "name": "docs/music/screenshots/artists-20261124/artist-equity-uprise-390.png support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/music/screenshots/artists-20261124/artist-equity-uprise-390.png support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/pay-now.md capability ids known",
       "passed": true,
       "detail": ""
@@ -7359,6 +7447,21 @@
       "detail": ""
     },
     {
+      "name": "js/music-community.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/music-community.js classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "js/music-community.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
       "name": "js/music-creator-profile.js capability ids known",
       "passed": true,
       "detail": ""
@@ -7377,6 +7480,21 @@
       "name": "js/music-creator-profile.js support rationale present",
       "passed": true,
       "detail": ""
+    },
+    {
+      "name": "js/music-credits.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/music-credits.js classified",
+      "passed": true,
+      "detail": "classification='capability_source'"
+    },
+    {
+      "name": "js/music-credits.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
     },
     {
       "name": "js/now-playing.js capability ids known",
@@ -8070,6 +8188,26 @@
     },
     {
       "name": "mnet.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "music-creator.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "music-creator.html classified",
+      "passed": true,
+      "detail": "classification='shared_frontend_support'"
+    },
+    {
+      "name": "music-creator.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "music-creator.html support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -9160,6 +9298,26 @@
     },
     {
       "name": "scripts/e2e/globe-games.e2e.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/music-accounts.e2e.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/e2e/music-accounts.e2e.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/e2e/music-accounts.e2e.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/e2e/music-accounts.e2e.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -10535,6 +10693,26 @@
     },
     {
       "name": "scripts/test/mobile-rule.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/music-credits.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/music-credits.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/music-credits.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/music-credits.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -13155,6 +13333,86 @@
     },
     {
       "name": "supabase/pending/20261029100300_eu_runtime_and_media_rollup_v1.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261124130000_music_catalog_owner_credits.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261124130000_music_catalog_owner_credits.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/20261124130000_music_catalog_owner_credits.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261124130000_music_catalog_owner_credits.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261124130000_music_catalog_owner_credits.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261124130000_music_catalog_owner_credits.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/20261124130000_music_catalog_owner_credits.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261124130000_music_catalog_owner_credits.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261124190000_music_pax_stage_name.rollback.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261124190000_music_pax_stage_name.rollback.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/20261124190000_music_pax_stage_name.rollback.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261124190000_music_pax_stage_name.rollback.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261124190000_music_pax_stage_name.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/pending/20261124190000_music_pax_stage_name.sql classified",
+      "passed": true,
+      "detail": "classification='shared_backend_support'"
+    },
+    {
+      "name": "supabase/pending/20261124190000_music_pax_stage_name.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/pending/20261124190000_music_pax_stage_name.sql support rationale present",
       "passed": true,
       "detail": ""
     },

@@ -1,0 +1,42 @@
+{
+  "stage": "P1",
+  "captured_at": "2026-11-24T22:53:24.717Z",
+  "path": "/artist.html",
+  "rows": [
+    {
+      "url": "https://matthew.mccluster.org/artist.html",
+      "status": 404
+    },
+    {
+      "url": "https://here.mccluster.org/artist.html",
+      "status": 301,
+      "location": "https://matthew.mccluster.org/artist.html"
+    },
+    {
+      "url": "https://humanuprise.com/artist.html",
+      "dns": {
+        "google": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        },
+        "cloudflare": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        }
+      }
+    },
+    {
+      "url": "https://www.humanuprise.com/artist.html",
+      "dns": {
+        "google": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        },
+        "cloudflare": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        }
+      }
+    }
+  ]
+}

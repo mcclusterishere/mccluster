@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 782,
-  "capability_source_count": 104,
-  "support_only_count": 678,
+  "candidate_count": 795,
+  "capability_source_count": 107,
+  "support_only_count": 688,
   "entries": [
     {
       "path": ".cursorrules",
@@ -495,6 +495,15 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
+    },
+    {
+      "path": "artist.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Presents catalogue credits, group memberships and links to playable recordings."
     },
     {
       "path": "assets/img/equity-uprise-logo.webp",
@@ -1875,6 +1884,27 @@
       "support_only": false
     },
     {
+      "path": "docs/music/ARTIST-PAGES.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Describes release credits, artist profiles and the owner-maintained group roster."
+    },
+    {
+      "path": "docs/music/screenshots/artists-20261124/album-equity-uprise-390.png",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Phone-width album view captured for review."
+    },
+    {
+      "path": "docs/music/screenshots/artists-20261124/artist-equity-uprise-390.png",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Phone-width artist view captured for review."
+    },
+    {
       "path": "docs/pay-now.md",
       "classification": "capability_source",
       "capability_ids": [
@@ -2539,11 +2569,29 @@
       "rationale": "Action Network client; the ?group= deep link can open the Equity Uprise group. A mobilization surface, not a building capability (same rationale as mnet.html)."
     },
     {
+      "path": "js/music-community.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Builds the listening room artist and producer selectors from the recording catalogue."
+    },
+    {
       "path": "js/music-creator-profile.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/music-credits.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Resolves the catalogue’s release credits, producer roles and group membership."
     },
     {
       "path": "js/now-playing.js",
@@ -2808,6 +2856,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Action Network primary social/mobilization surface carrying the Equity Uprise founding mark; not a building capability."
+    },
+    {
+      "path": "music-creator.html",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Provides the creator profile markup for a catalogue-linked release credit."
     },
     {
       "path": "music-videos.html",
@@ -3216,6 +3271,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Browser checks for the owner-only globe Games overlay verify that its Bridgeport links reach the existing Equity Uprise HQ and B1 routes; verification support only, with no building program or geometry implementation."
+    },
+    {
+      "path": "scripts/e2e/music-accounts.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verifies music accounts and listener navigation between groups, members and producers."
     },
     {
       "path": "scripts/e2e/prim3-artist.e2e.mjs",
@@ -3701,6 +3763,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Repo-wide mobile-rule tests (zoomable viewports, min-width-only breakpoints, minmax(0,1fr) grid tracks); names Equity Uprise pages only in its allowlist; not a program capability."
+    },
+    {
+      "path": "scripts/test/music-credits.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests the catalogue credit rules and their rendering."
     },
     {
       "path": "scripts/test/music-direct-sales.test.mjs",
@@ -4687,6 +4756,34 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
+    },
+    {
+      "path": "supabase/pending/20261124130000_music_catalog_owner_credits.rollback.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Restores prior catalogue credit strings under matching guards."
+    },
+    {
+      "path": "supabase/pending/20261124130000_music_catalog_owner_credits.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Stages guarded catalogue credit corrections."
+    },
+    {
+      "path": "supabase/pending/20261124190000_music_pax_stage_name.rollback.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Uses the receipt to restore only the prior stage names the application changed."
+    },
+    {
+      "path": "supabase/pending/20261124190000_music_pax_stage_name.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Renames the credited producer in catalogue and archive data and returns a rollback receipt."
     },
     {
       "path": "supabase/pending/PROMOTION-ORDER.md",

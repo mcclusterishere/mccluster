@@ -114,6 +114,12 @@ test('the route table: stage 1 (Listen and the artist pages), the album containe
   const d = (href, from, top, shown) => core.decide(href, from, top, R, HOUSE + (shown || top.url));
   /* stage 1 */
   assert.equal(d('music-creator.html?handle=probe-artist', 'top', listenTop).action, 'view', 'Listen -> an artist page opens as a view');
+  const catalogueTop = { kind: 'artist', url: '/artist.html?artist=pax' };
+  assert.equal(d('artist.html?artist=zakir-elhajoui#produced', 'top', listenTop).action, 'view', 'opening a producer keeps the playing document');
+  assert.equal(d('artist.html?artist=pax', 'listen', catalogueTop, '/listen.html').action, 'reveal', 'return to the retained catalogue artist');
+  assert.equal(new URL(d('artist.html?artist=pax#produced', 'listen', catalogueTop, '/listen.html').url).hash, '#produced', 'the producer link reveals the retained profile at its production credits');
+  assert.equal(d('music-creator.html?handle=pax', 'top', catalogueTop).action, 'view', 'the account and catalogue pages are distinct even when their names match');
+  assert.equal(d('artist.html', 'top', listenTop).action, 'load', 'a bare catalogue template is not a music view');
   assert.equal(d('listen.html', 'artist', listenTop, '/music-creator.html?handle=probe-artist').action, 'reveal', 'an artist view -> Listen reveals the retained Listen');
   assert.equal(d('listen.html', 'top', artistTop).action, 'view', 'an artist page -> Listen opens Listen as a view');
   assert.equal(d('music-creator.html?handle=probe-artist', 'listen', artistTop, '/listen.html').action, 'reveal', 'back to the retained artist page is a reveal');

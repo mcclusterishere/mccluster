@@ -102,6 +102,63 @@ operator's review. If albums ever need their own rights, sales or analytics, the
 should become a table; until then this keeps the artist's work in one place
 with no new infrastructure.
 
+## Artists credited in the house catalogue
+
+Owner, 2026-11-24: every artist credited on any track, featured artists
+included, has an entry in the Artists row, and opening one shows everything
+they appear on.
+
+- **The structure** is in `data/albums.json`. `artists` is the registry
+  (slug, name, `kind` person or act, and optionally `page`, `handle` and the
+  `id` an existing graph already gives them). Every track carries `credits`:
+  `primary`, `lead`, `featured`, `producers` (with `produced_as`), other
+  stated `roles` ("guitar by", "beat by"), and a `note`. Each names artists
+  by slug. McCluster is one slug, `mccluster`, in every role.
+- **The words** are never typed. `js/music-credits.js` writes the credit line
+  from the structure. `node tools/build-music-credits.mjs` stores it as
+  `track.credit`, as `track.sub` (the same line without its trailing remark,
+  where somebody besides the record's own artist is on it), and as
+  `track.artist` (the names a player bills the song to) on a track whose
+  primary artists are neither McCluster nor the album's own artist: "Upset"
+  on the Singles shelf is Hitman Benji × Raheem × Rahndrx on every player and
+  on its album page, never McCluster's by default. Then run
+  `tools/build-music-registry.mjs` and `tools/build-catalogue.mjs`, which
+  carry the structure into `data/catalogue.json` and the catalogue's JSON-LD.
+- **An album's track rows** (`album.html`) print who is on each song and who
+  produced it (`rowLine`: a hand-written subtitle first, then the credit
+  line, each once). "prod. Pax Tha Collector" stays in the Money or the Power row.
+- The Artists row lists performers and group members, then active creators. The Producers
+  row links to the Produced section for each person with a production credit. A person
+  can appear in both rows. Both respond to the listening room's search.
+- Docket 516R belongs to Equity Uprise. Its registry entry lists the six member artist
+  slugs. Each member links back to the group. The Equity Uprise verified badge follows
+  artist and producer credits on releases billed to the group. Membership alone does
+  not grant the badge. A creator account can display it when the catalogue explicitly
+  identifies its handle. Account verification remains in the creator's handle line.
+- **Opening an artist shows everything they appear on.** Every card opens
+  the artist view, with two exceptions that already list everything: PRIM3
+  opens `prim3-artist.html` (all its songs are on the one record that names
+  that page; `pageListsAll` in `js/music-credits.js` checks this), and a
+  creator opens their own front page, which lists every track the catalogue
+  credits them on in a section of its own (`#apCatalogue`). McCluster's card
+  opens the artist view, not the house: the house does not list the records
+  he features on or produced for others. The view's first link is the house.
+  (Owner, 2026-10-14: McCluster's card opened the house. The rule of
+  2026-11-24 is newer and governs; the owner can reverse it in one line of
+  `js/music-community.js`.)
+- **The artist view** is `artist.html?artist=<slug>` (`js/music-artist.js`):
+  the artist's tracks, the ones they are featured on, the ones they produced
+  and any other credit, each row playable and linked to its album, the
+  credit line wrapped and never cut. An artist with a page of their own is
+  linked to it. Its event name, `music_artist_view`, is held in
+  `js/analytics.js` and not sent until the owner approves measuring it.
+- To add an artist, add them to `artists`, name their slug in a track's
+  `credits`, and run the three generators. Name a producer only when the
+  owner has; an absent producer means unknown.
+- `node --test scripts/test/music-credits.test.mjs` holds the owner's rules,
+  the line against the function, the row and the view. Music Platform CI
+  runs it with the three generators' `--check`.
+
 ## Checking it
 
 - `node --test scripts/test/music-creator-page.test.mjs` covers the album

@@ -121,18 +121,23 @@
      table does not hold waits the cap: the server counts no listen of it, so only the song just
      heard is at stake. */
   /* FINISH WAIT BEGIN: written by scripts/music-track-lengths.mjs; --check fails when it is stale */
-  /* each song's wait in ms: half its own margin, 5 s at most; the smallest is Towyard Killer's,
-     half of 3.7 s (65.7 s, counted after 62 s) */
+  /* each song's wait in ms: half its own margin, 5 s at most; the smallest is HitShake's,
+     half of 2.2 s (42.2 s, counted after 40 s) */
   var FINISH_WAIT_CAP_MS = 5000;
   var FINISH_WAIT_MS = {
-    "all-in-the-details": 4000, "anti-social-engineering": 2850, "antisocial": 4450, "app-attacks": 2550,
-    "data-breach": 5000, "dealer-plates": 2700, "dealer-plates-b": 2700, "deep-end": 4300, "dive-in": 4450,
+    "all-in-the-details": 4000, "alquifina-new-chick": 3000, "anti-social-engineering": 2850, "antisocial": 4450,
+    "app-attacks": 2550, "block-so-hot": 1950, "bussin-juggs": 3300, "data-breach": 5000, "dealer-plates": 2700,
+    "dealer-plates-b": 2700, "deep-end": 4300, "dive-in": 4450, "drunk-driving": 3550,
     "environmental-injustice": 4450, "environmental-injustice-brave": 5000, "evil-twin-middle-man": 5000,
-    "ghost-in-the-wires": 5000, "got-wifi": 2700, "heal-the-3rd-world": 4000, "here": 2550, "high-alert": 4300,
-    "hundun-b-side": 4000, "iot": 2050, "lana-b-side": 2150, "lightroom": 3650, "money-or-the-power": 5000,
-    "mr-lock-changer-remix": 3050, "osint": 2500, "per-diem": 2600, "please-set-me-free": 5000, "pull-up": 4200,
-    "raid-hot-site": 5000, "red-blue-purple-white-team": 2350, "repo-guy-b-side": 3100, "runway-walk": 3200,
-    "salvage-title-b-side": 2550, "stand-on-business-b-side": 3350, "test-drive": 2600, "towyard-killer": 1850,
+    "fire": 3500, "ghost-in-the-wires": 5000, "got-wifi": 2700, "heal-the-3rd-world": 4000, "here": 2550,
+    "high-alert": 4300, "hit-mode": 2000, "hitlist": 3550, "hitshake": 1100, "hundun-b-side": 4000, "iot": 2050,
+    "lana-b-side": 2150, "lightroom": 3650, "money-or-the-power": 5000, "mr-lock-changer-remix": 3050,
+    "new-phone": 3050, "no-friend": 4300, "numb": 5000, "one-gon-ride": 2550, "osint": 2500, "other-side": 4550,
+    "outta-tune": 1350, "per-diem": 2600, "please-set-me-free": 5000, "promises": 5000, "pull-up": 4200,
+    "raid-hot-site": 5000, "recipe": 2550, "red-blue-purple-white-team": 2350, "repo-guy-b-side": 3100,
+    "rolling-with-me": 3900, "runway-walk": 3200, "salvage-title-b-side": 2550, "see-me-up": 3750,
+    "sound-trust-anthem": 5000, "spell": 2500, "stand-on-business-b-side": 3350, "studio-trapped": 1850,
+    "test-drive": 2600, "tinderella": 5000, "towyard-killer": 1850, "trackout": 1600, "up-for-days": 5000,
     "upset": 5000, "vaunt": 2700, "who-did-the-shoot": 3400, "write-a-song": 3700, "you-the-feds": 5000
   };
   /* FINISH WAIT END */

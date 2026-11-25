@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark" data-music-view="artist">
+<head><script src="js/shell-boot.js?v=__STAMP__"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Artist · McCluster Music</title>
+  <meta name="description" content="An artist in the McCluster catalogue: every track they are on, grouped by what they did there, each one playable.">
+  <!-- No canonical: this is one template for every artist (?artist=<slug>), like music-creator.html (?handle=). A
+       static canonical would fold every artist into the bare address, which is not a page to rank
+       (scripts/test/seo-entity-pages.test.mjs QUERY_TEMPLATES). It is not in the sitemap. -->
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    /* THE ARTIST VIEW (js/music-artist.js): the listening room's own column, rows and headings (css/music-room.css),
+       with a header for whoever this is. Phone first; nothing here is taken back at a breakpoint. */
+    html, body { background: var(--ink); }
+    .ls { max-width: 42rem; margin: 0 auto;
+      padding: clamp(1rem, 3vh, 1.6rem) clamp(1.1rem, 4vw, 2rem) 10rem; }
+    .ls__sec[hidden] { display: none; }
+    .ls__note { margin-top: 2.4rem; color: var(--cream-dim); font-size: 0.8rem; line-height: 1.7;
+      font-family: var(--ui); }
+    .ls__note a { color: var(--ruby-text); text-decoration: none; }
+    .av { display: flex; align-items: center; gap: 1rem; margin: 1.6rem 0 1.8rem; min-width: 0; }
+    main.ls .av .av__pic { flex: none; width: 4.5rem; height: 4.5rem; font-size: 1.5rem; }
+    .av__text { min-width: 0; }
+    main.ls .av .greet { margin: 0; overflow-wrap: anywhere; }
+    main.ls .av .greet__sub { margin: 0.35rem 0 0; }
+    .av__own { display: inline-block; margin: 0 0 1.4rem; font-family: var(--ui); font-weight: 700; font-size: 0.85rem;
+      color: var(--ruby-text); text-decoration: none; }
+    .av__own[hidden] { display: none; }
+    .ls .tr { margin-top: 0.6rem; }
+    /* the credit is why this artist is on the page ("Produced by Zakir Elhajoui & McCluster", "guitar by Zakir"):
+       it wraps here and is never cut with an ellipsis */
+    main.ls .tr .t small { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.35; }
+  </style>
+  <link rel="stylesheet" href="css/music-room.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
+  <script src="js/live-content.js?v=__STAMP__"></script>
+</head>
+<body class="songpage music-room music-room--listen music-v2">
+  <main class="ls">
+
+    <header class="music-contextbar">
+      <a class="music-contextbar__brand" href="listen.html" aria-label="McCluster Music home">
+        <img src="assets/img/m-mark.png" alt="">
+        <span>Music</span>
+      </a>
+      <nav class="music-contextbar__nav" aria-label="Music">
+        <a href="listen.html">Listen</a>
+        <a href="catalogue.html">Library</a>
+        <a href="creator.html">Creator Studio</a>
+        <button class="music-contextbar__icon" id="themeFlip" type="button" aria-label="Light or dark">
+          <svg viewBox="0 0 24 24"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
+        </button>
+      </nav>
+    </header>
+
+    <!-- WHO THIS IS. The picture is the artist's initial, never a mark drawn for them; the name and the count come
+         from data/albums.json (js/music-artist.js). -->
+    <div class="av">
+      <span class="artist__pic artist__pic--initial av__pic" id="artistPic" aria-hidden="true"></span>
+      <div class="av__text">
+        <h1 class="greet" id="artistName">Artist</h1>
+        <span class="artist__credit-badge" id="artistCreditBadge" hidden>Equity Uprise verified</span>
+        <p class="greet__sub" id="artistSummary">Opening the shelf&hellip;</p>
+      </div>
+    </div>
+    <a class="av__own" id="artistOwn" href="listen.html" data-cta="artist-own-page" hidden></a>
+
+    <!-- EVERYTHING THEY APPEAR ON, grouped by what they did: their own tracks, the ones they are on, the ones they
+         produced, any other stated credit. Each row plays in the one player and opens its album. -->
+    <div id="artistSections"></div>
+
+    <p class="ls__note">Credits are the catalogue's own, read from one record per track.
+      Every artist is in <a href="listen.html">the listening room</a>; the registered discography is <a href="catalogue.html">the catalog</a>.</p>
+
+  </main>
+
+  <!-- THE BAR: Music · Equity Uprise · HERE · Whip · Profile. -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="listen.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <!-- the Globe, written here as js/tabbar.js draws it, so the bar never paints a retired Profile tab first (owner, 2026-10-20) -->
+    <a class="appbar__tab appbar__world" href="https://mccluster.org/?view=feed" data-appnav="world" aria-label="Open the World globe">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4.3" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg>
+      <span>Globe</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/listen-ledger.js?v=__STAMP__"></script>
+  <script src="js/gated-audio.js?v=__STAMP__"></script>
+  <script src="js/now-playing.js?v=__STAMP__"></script>
+  <script src="js/music-engine.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/music-credits.js?v=__STAMP__"></script>
+  <script src="js/music-artist.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script src="js/control-room/nav.js?v=__STAMP__"></script>
+  <script src="js/control-registry.js?v=__STAMP__"></script>
+  <script src="js/control-palette.js?v=__STAMP__" defer></script>
+  <script src="js/site-editor.js?v=__STAMP__" defer></script>
+</body>
+</html>

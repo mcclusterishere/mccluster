@@ -32,8 +32,16 @@ const NOT_A_PAGE_HERE = {
   "/closet/": "a folder: its indexable pages are listed on their own",
   "/site0/": "promoted from _unfinished/site0-game at deploy by tools/publish-site0.sh; not in the tree the sitemap builder checks"
 };
-/* A per-record page addressed by query (?handle=): the bare URL is not a page to rank, and a static canonical would fold every record into it. */
-const QUERY_TEMPLATES = new Set(["/music-creator.html"]);
+/* A per-record page addressed by query (?handle=, ?artist=): the bare URL is not a page to rank, and a static canonical would fold every record into it. */
+const QUERY_TEMPLATES = new Set(["/music-creator.html", "/artist.html"]);
+
+test("a query template has no static canonical and is not in the sitemap", () => {
+  const listed = new Set(json("data/seo/sitemap-pages.json").pages.map((p) => p.url.slice(SITE.length)));
+  for (const path of QUERY_TEMPLATES) {
+    assert.doesNotMatch(read(fileFor(path)), /<link rel="canonical"/, `${path}: one address would stand for every record`);
+    assert.ok(!listed.has(path), `${path} is not a page to rank`);
+  }
+});
 /* Indexable pages that were in no ownership group before the record's v2 (2026-11-23), which classifies every
    published page, and that the sitemap has never listed. P0 changes nothing a crawler sees; P2 builds each host's
    sitemap from the record and takes these in, then this list empties. A page here that is listed or noindex fails. */

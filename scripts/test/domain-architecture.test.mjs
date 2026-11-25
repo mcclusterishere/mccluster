@@ -62,8 +62,8 @@ const PAGES = publishedHtml();
 const ID_PREFIX = "https://matthew.mccluster.org/";
 const ID_FIXTURE = [
   "#album", "#equity-uprise", "#matthew-mccluster", "#mccluster-corp", "#southern-connecticut-state-university",
-  "#website", "#whip-equipped", "card.html", "catalogue.html", "catalogue.html#album-cia-mind-control",
-  "catalogue.html#album-equity-uprise", "catalogue.html#album-heal-the-3", "catalogue.html#album-prim3",
+  "#website", "#whip-equipped", "card.html", "catalogue.html", "catalogue.html#album-audio-engineer", "catalogue.html#album-cia-mind-control",
+  "catalogue.html#album-equity-uprise", "catalogue.html#album-heal-the-3", "catalogue.html#album-in-hot-pursuit", "catalogue.html#album-prim3", "catalogue.html#album-tinderfessions",
   "catalogue.html#album-vaunt-ep", "catalogue.html#album-whip-equipped", "catalogue.html#anti-social-engineering",
   "catalogue.html#antisocial", "catalogue.html#app-attacks", "catalogue.html#artist-equity-uprise",
   "catalogue.html#data-breach", "catalogue.html#dealer-plates", "catalogue.html#dealer-plates-b",

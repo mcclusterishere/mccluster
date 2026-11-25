@@ -64,6 +64,7 @@
   function url(href, base) { try { return new URL(href, base || root.location.href); } catch (e) { return null; } }
   function kindOf(u) {
     if (!u) return null;
+    if (u.pathname === "/artist.html") return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(u.searchParams.get("artist") || "") ? "artist" : null;
     var m = /^\/(listen|music-creator|album|account)\.html$/.exec(u.pathname);
     if (!m) return null;
     if (m[1] === "music-creator") return HANDLE.test(String(u.searchParams.get("handle") || "").trim().toLowerCase()) ? "artist" : null;
@@ -73,6 +74,7 @@
      t= only names a row), Listen whatever its query */
   function identity(u, kind) {
     var q = u.searchParams;
+    if (kind === "artist" && u.pathname === "/artist.html") return "catalogue:" + q.get("artist");
     if (kind === "artist") return "artist:" + String(q.get("handle") || "").trim().toLowerCase();
     if (kind === "album") return "album:" + String(q.get("album") || "here").toLowerCase() + "|" + String(q.get("playlist") || "").toLowerCase() + "|" + String(q.get("track") || "");
     return kind;
@@ -107,8 +109,10 @@
     if (!here || u.origin !== here.origin) return { action: "load", url: u.href };
     if (u.pathname === here.pathname && u.search === here.search) return { action: u.hash ? "native" : "scroll", url: u.href };
     var kind = kindOf(u), topU = top ? url(top.url, here.href) : null;
-    if (kind && topU && kind === top.kind && identity(u, kind) === identity(topU, kind))
+    if (kind && topU && kind === top.kind && identity(u, kind) === identity(topU, kind)) {
+      if (u.pathname === "/artist.html" && u.hash === "#produced") topU.hash = u.hash;
       return { action: "reveal", url: topU.href, t: kind === "album" ? String(u.searchParams.get("t") || "") : "" };
+    }
     if (kind && routes[kind] && routes[kind].view) {
       /* a sign-in link without next, opened from a music page, comes back to that page (a default for Matthew to
          confirm; today the chip's sign-in lands on the World). Settings (stay=1) go nowhere after. Over the account view
@@ -270,7 +274,7 @@
   function go(d, opts) {
     opts = opts || {};
     if (d.action === "view") { openView(d.url, opts); return true; }
-    if (d.action === "reveal") { reveal({ t: d.t, replace: opts.replace }); return true; }
+    if (d.action === "reveal") { reveal({ t: d.t, url: d.url, replace: opts.replace }); return true; }
     if (d.action === "scroll") { scrollShown(); return true; }
     if (d.action === "world" && root.MCC_WORLD_AUDIO && root.MCC_WORLD_AUDIO.navigate(d.url)) return true;
     if (d.action === "world" || d.action === "load") { pageLoad(d.url, opts.replaceTop); return true; }
@@ -371,7 +375,7 @@
       if (opts.history !== "none") {
         var st = { mccMusicShell: { top: true, scroll: topScroll } };
         if (!opts.replace) remember();
-        setState(st, TOP.abs, !opts.replace);
+        setState(st, opts.url || TOP.abs, !opts.replace);
       }
       var v = current;
       current = null;
@@ -382,6 +386,10 @@
       hideFail();
       focusBack();
       emit("mcc:music-view", { open: false });
+    }
+    if (opts.url && url(opts.url).hash === "#produced") {
+      var produced = doc.getElementById("produced");
+      if (produced) produced.scrollIntoView();
     }
     if (opts.t) ask(opts.t);
   }

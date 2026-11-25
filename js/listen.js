@@ -41,7 +41,13 @@
      names a track, catalogue.json slugs it, and the telemetry recorded
      whatever string the player had on screen. Lowercased and stripped, all
      three land on the same key. */
-  function key(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
+  /* An accent is not a different letter to somebody typing: "VVS Made" finds VVS Madè. The marks are taken off
+     before anything else is stripped, on both sides of every comparison. */
+  function key(s) {
+    s = String(s || "");
+    if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  }
 
   /* THE ROTATION is this device's own saves, the same localStorage list
      album.html writes, in the same shape, so a heart tapped in either room
@@ -115,6 +121,9 @@
           gated: !!(t.gated || m.gated),
           length: m.length || "",
           credit: m.credit || "",
+          /* every artist credited on it, by name (js/music-credits.js): a search for a featured artist or a
+             producer finds the track even where the line shows the name another way ("guitar by Zakir") */
+          people: root.MCC_CREDITS ? root.MCC_CREDITS.names(albums, t).join(" ") : "",
           isrc: m.isrc || "",
           /* THE FALLBACK ORDER IS THE SHELF'S OWN, not the registry's.
              data/catalogue.json numbers the fifteen tracks it has registered
@@ -152,7 +161,7 @@
      --------------------------------------------------------------- */
   function matches(t, needle) {
     if (!needle) return true;
-    var hay = key(t.title + " " + t.album + " " + t.credit + " " + t.sub) + " " +
+    var hay = key(t.title + " " + t.album + " " + t.credit + " " + t.sub) + " " + key(t.people) + " " +
       String(t.isrc || "").toLowerCase();
     /* Every word has to appear somewhere, in any order, so "song write"
        finds "Write a Song". */
@@ -419,7 +428,10 @@
      --------------------------------------------------------------- */
   var box = el("q");
   var typed = null;
-  function clear() { box.value = ""; q = ""; el("qClear").hidden = true; paint(); }
+  function clear() {
+    box.value = "";
+    box.dispatchEvent(new Event("input", { bubbles: true }));
+  }
 
   box.addEventListener("input", function () {
     q = box.value;

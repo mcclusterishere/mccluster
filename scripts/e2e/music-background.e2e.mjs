@@ -1092,18 +1092,28 @@ try {
       focus: document.activeElement === document.querySelector('.appbar [data-appnav="music"]'), y: Math.round(scrollY) }));
     await listenPlay(page);
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3 && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 15000 });
-    await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'instant' }));
+    // Search results can be shorter than 300 scrollable pixels. Use a reachable interior position
+    // so a jump to either the top or the bottom fails, even with a single matching song.
+    const position = await page.evaluate(() => {
+      const scroller = document.scrollingElement;
+      const target = Math.min(300, Math.floor((scroller.scrollHeight - scroller.clientHeight) / 2));
+      window.scrollTo({ top: target, behavior: 'instant' });
+      return target;
+    });
+    const beforeFocus = await state();
+    check('listen, before focusing the Music tab: the results have scrolled to an interior position',
+      position > 0 && beforeFocus.y === position, { position, beforeFocus });
     await page.locator('.appbar [data-appnav="music"]').focus();
     check('listen, keyboard on the Music tab while a song plays: it is told as "Pause music"', await told() === 'link "Pause music"', await told());
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => MCC_MUSIC.audio.paused && !document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 5000 }).catch(() => {});
     const paused = await state();
     check('listen, Enter on the Music tab: the song pauses, the page stays where it was and the focus on the tab, now told as "Play music"',
-      paused.paused && paused.mini === 'Play' && paused.focus && paused.y === 300 && await told() === 'link "Play music"', { paused, told: await told() });
+      paused.paused && paused.mini === 'Play' && paused.focus && paused.y === position && await told() === 'link "Play music"', { paused, told: await told() });
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 5000 }).catch(() => {});
     const playing = await state();
-    check('listen, Enter again: the song plays and the tab is told as "Pause music"', !playing.paused && playing.focus && await told() === 'link "Pause music"', { playing, told: await told() });
+    check('listen, Enter again: the song plays in place and the tab is told as "Pause music"', !playing.paused && playing.focus && playing.y === position && await told() === 'link "Pause music"', { playing, told: await told() });
     await page.waitForFunction(() => !!window.MCC_WORLD_AUDIO, null, { timeout: 15000 });
     await page.locator('.appbar [data-appnav="world"]').click();
     await page.waitForFunction(() => window.MCC_WORLD_AUDIO.active(), null, { timeout: 5000 }).catch(() => {});

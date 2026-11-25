@@ -152,7 +152,9 @@ function communityRail(profiles) {
     body: { classList: { contains: (c) => c === 'music-room--listen' } },
     querySelector: (s) => s === '.ls' ? ls : null,
     getElementById: (id) => {
-      if (id === 'artistsRow' && els.has('artistsWrap')) { if (!els.has('artistsRow')) els.set('artistsRow', { id: 'artistsRow', innerHTML: '' }); return els.get('artistsRow'); }
+      if ((id === 'artistsRow' && els.has('artistsWrap')) || (id === 'producersRow' && els.has('producersWrap'))) {
+        if (!els.has(id)) els.set(id, { id, innerHTML: '' });
+      }
       return el(id);
     },
     createElement: (t) => {
@@ -183,13 +185,13 @@ test('Q1 the Artists rail shows McCluster once, as the artist, first; no house c
   const r = communityRail([OTHER, MCC_PROFILE]);
   const before = cards(r.rail());
   assert.ok(before.length >= 1, 'McCluster is painted before the directory answers');
-  assert.equal(before[0].href, 'music-creator.html?handle=mccluster', 'before the answer: McCluster opens his artist page');
+  assert.equal(before[0].href, 'artist.html?artist=mccluster', 'before the answer: McCluster opens his artist page');
   await r.answered; await settle(); await settle();
   const after = cards(r.rail());
-  assert.equal(after[0].href, 'music-creator.html?handle=mccluster', 'McCluster is first, and opens his artist page: ' + JSON.stringify(after));
+  assert.equal(after[0].href, 'artist.html?artist=mccluster', 'McCluster is first, and opens his artist page: ' + JSON.stringify(after));
   assert.match(after[0].text, /McCluster/);
-  assert.match(after[0].text, /\bArtist\b/, 'his card says what he is: an artist');
-  assert.equal(after.filter((c) => /handle=mccluster\b/.test(c.href)).length, 1, 'one McCluster, not two: ' + JSON.stringify(after));
+  assert.match(after[0].text, /@mccluster\b/, 'the catalogue card identifies his handle');
+  assert.equal(after.filter((c) => /[?&](?:artist|handle)=mccluster(?:[&#]|$)/.test(c.href)).length, 1, 'one McCluster, not two: ' + JSON.stringify(after));
   assert.equal(after.filter((c) => /McCluster/.test(c.text)).length, 1, 'one card names McCluster');
   assert.ok(!after.some((c) => c.href === 'index.html'), 'no card opens the house as if it were an artist');
   assert.doesNotMatch(r.rail() + (r.wrap() ? r.wrap().innerHTML : ''), /the house/i, 'nothing on the rail calls McCluster "the house"');
@@ -653,13 +655,14 @@ function sender() {
   return { track: (n, p) => context.MCC_TRACK(n, p), async flush() { document.visibilityState = 'hidden'; (listeners.visibilitychange || []).forEach((fn) => fn()); await settle(); },
     names: () => sent.flatMap((b) => b.events.map((e) => e.name)) };
 }
-test('Q7 approved: the dropped connection and the song that would not load are sent, and nothing is held back', async () => {
+test('Q7 approved: the approved dropped connection and failed song are sent', async () => {
   const s = sender();
   s.track('music_interrupted', { reason: 'error', at_s: 42, attempt: 0, path: 'public' });
   s.track('music_error', { code: 4 });
+  s.track('music_artist_view', { artist: 'pax', tracks: 1 });
   await s.flush();
   assert.deepEqual(s.names().filter((n) => /^music_/.test(n)).sort(), ['music_error', 'music_interrupted']);
-  assert.doesNotMatch(read('js/analytics.js'), /AWAITING_APPROVAL/, 'the hold is gone');
+  assert.equal(s.names().filter((n) => n === 'music_artist_view').length, 0, 'the catalogue view still awaits approval');
 });
 
 test('Q7 both are in the measurement dictionary, with what they mean and who sends them', async () => {
