@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 795,
+  "candidate_count": 796,
   "capability_source_count": 107,
-  "support_only_count": 688,
-  "checks_total": 3075,
-  "checks_passed": 3075,
+  "support_only_count": 689,
+  "checks_total": 3079,
+  "checks_passed": 3079,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -511,6 +511,7 @@
     "scripts/test/homelessness-action.test.mjs",
     "scripts/test/human-uprise-door.test.mjs",
     "scripts/test/identity-verification-levels.test.mjs",
+    "scripts/test/listening-room.test.mjs",
     "scripts/test/logo-css-backgrounds.test.mjs",
     "scripts/test/member-desk.test.mjs",
     "scripts/test/mission-catalog-sources-sql.test.mjs",
@@ -809,7 +810,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "795 entries"
+      "detail": "796 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -10533,6 +10534,26 @@
     },
     {
       "name": "scripts/test/identity-verification-levels.test.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/listening-room.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/listening-room.test.mjs classified",
+      "passed": true,
+      "detail": "classification='test_support'"
+    },
+    {
+      "name": "scripts/test/listening-room.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/listening-room.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
