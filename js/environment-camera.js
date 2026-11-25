@@ -101,9 +101,18 @@
         last = { id: target.id, mode, how, at: Date.now(), duration };
         settled(how);
       }
+      function atFrame() {
+        try {
+          const cam = viewer.camera, cart = cam && cam.positionCartographic;
+          if (!cart || !finite(cart.height) || !finite(cam.pitch)) return false;
+          return Math.abs(cart.height - frame.rangeM) < 20000 && Math.abs(cam.pitch / RAD - frame.pitchDeg) < 2;
+        } catch (e) { return false; }
+      }
       flight = record;
       hold('env-focus', bound);
-      safety = schedule(() => finish('timeout'), bound);
+      /* Under a slow renderer Cesium can place the camera and still not fire complete
+         before this bound. If the pose is already the regional frame, the push landed. */
+      safety = schedule(() => finish(atFrame() ? 'complete' : 'timeout'), bound);
       viewer.camera.flyToBoundingSphere(p.sphere, { offset: p.offset, duration, easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT, complete: () => finish('complete'), cancel: () => finish('cancel') });
       requestRender('push');
       return mode;
