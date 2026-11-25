@@ -15,6 +15,7 @@ import {
   directFulfilmentRefusal, directUploadPath, downloadNameFor, downloadRefusal, offerKeyFor, offerSaleRefusal, priceProblem, ATTEMPT_KEY_RE, REFUSAL_HTTP,
   tokenRevealAllowed
 } from '../../supabase/functions/_shared/music-direct.ts';
+import { RETURN_FALLBACK_ORIGIN, RETURN_ORIGINS, STAGE } from '../../supabase/functions/_shared/site-hosts.ts';
 
 const read = (p) => readFile(p, 'utf8');
 
@@ -131,7 +132,10 @@ test('every track in data/albums.json maps to a catalogue key of the shape the d
   /* the original seed, plus the pending seeds for the Whip Equipped and PRIM3 tracks added 2026-10-31 */
   const seed = await read('supabase/migrations/20261003233747_action_network_live_governance_v1.sql')
     + await read('supabase/pending/20261031180100_whip_equipped_catalog_objects.sql')
-    + await read('supabase/pending/20261031190000_prim3_catalog_objects.sql');
+    + await read('supabase/pending/20261031190000_prim3_catalog_objects.sql')
+    + await read('supabase/pending/20261123180000_tinderfessions_catalog_objects.sql')
+    + await read('supabase/pending/20261123190000_in_hot_pursuit_catalog_objects.sql')
+    + await read('supabase/pending/20261124120000_audio_engineer_catalog_objects.sql');
   for (const a of albums) for (const t of a.tracks) {
     const key = catalogKeyOf(a.slug, t.title);
     assert.match(key, /^[a-z0-9-]+:[a-z0-9-]+$/);
@@ -174,10 +178,20 @@ test('price, file and sale-window checks', () => {
   assert.equal(offerSaleRefusal(null, NOW), 'offer_unavailable');
 });
 
-test('CORS answers only Matthew\'s property', () => {
-  assert.deepEqual(ALLOWED_ORIGINS, ['https://matthew.mccluster.org']);
-  assert.equal(corsHeaders('https://matthew.mccluster.org')['Access-Control-Allow-Origin'], 'https://matthew.mccluster.org');
+test('CORS answers only the origins that serve the site\'s pages (the generated return list)', () => {
+  /* supabase/functions/_shared/site-hosts.ts; scripts/test/supabase-function-returns.test.mjs drives the
+     hostile origins through the functions themselves */
+  assert.deepEqual([...ALLOWED_ORIGINS], [...RETURN_ORIGINS]);
+  assert.equal(SITE, RETURN_FALLBACK_ORIGIN);
+  if (STAGE === 'P0') {
+    /* today: the platform and Matthew's property; anything else gets the profile host, the only origin answered before */
+    assert.deepEqual([...ALLOWED_ORIGINS], ['https://mccluster.org', 'https://matthew.mccluster.org']);
+    assert.equal(SITE, 'https://matthew.mccluster.org');
+  }
+  for (const o of RETURN_ORIGINS) assert.equal(corsHeaders(o)['Access-Control-Allow-Origin'], o);
   assert.equal(corsHeaders('https://evil.example')['Access-Control-Allow-Origin'], SITE);
+  assert.equal(corsHeaders('https://evilmccluster.org')['Access-Control-Allow-Origin'], SITE);
+  assert.equal(corsHeaders('http://mccluster.org')['Access-Control-Allow-Origin'], SITE);
   assert.equal(corsHeaders(null)['Access-Control-Allow-Origin'], SITE);
   assert.doesNotMatch(corsHeaders(null)['Access-Control-Allow-Headers'], /authorization/);
   assert.match(corsHeaders(null, true)['Access-Control-Allow-Headers'], /authorization/);
@@ -187,10 +201,11 @@ test('CORS answers only Matthew\'s property', () => {
 
 test('music-direct-checkout: server price, platform account, stored session, purchase page returns', async () => {
   const src = await read('supabase/functions/music-direct-checkout/index.ts');
-  assert.match(src, /const HOUSE = "https:\/\/matthew\.mccluster\.org";/);
-  assert.equal(SITE, 'https://matthew.mccluster.org', 'HOUSE equals the shared SITE');
-  assert.match(src, /success_url: `\$\{HOUSE\}\/purchase\.html\?session_id=\{CHECKOUT_SESSION_ID\}`/);
-  assert.match(src, /cancel_url: `\$\{HOUSE\}\/purchase\.html\?canceled=1/);
+  /* the purchase page follows the request: the generated return rule, the same list CORS answers */
+  assert.match(src, /const SITE = returnOrigin\(req\.headers\.get\("origin"\)\);/);
+  assert.match(src, /import \{ returnOrigin \} from "\.\.\/_shared\/site-hosts\.ts";/);
+  assert.match(src, /success_url: `\$\{SITE\}\/purchase\.html\?session_id=\{CHECKOUT_SESSION_ID\}`/);
+  assert.match(src, /cancel_url: `\$\{SITE\}\/purchase\.html\?canceled=1/);
   assert.doesNotMatch(src, /end-racism|campaign_key/, 'no campaign page, no campaign');
   assert.doesNotMatch(src, /stripeAccount|transfer_data|on_behalf_of/, 'platform account only');
   assert.match(src, /unit_amount: o\.price_cents/, 'price from the offer row');

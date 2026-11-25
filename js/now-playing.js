@@ -102,12 +102,15 @@
   /* ---------- the covers: true size and type, read from the files ---------- */
   /* ARTWORK BEGIN: written by scripts/music-artwork.mjs from the files themselves; --check fails on a stale entry */
   var ARTWORK = {
+    "assets/img/audio-engineer-cover.png": { sizes: "1254x1254", type: "image/png" },
     "assets/img/cia-mind-control-cover.jpg": { sizes: "544x246", type: "image/jpeg" },
     "assets/img/equity-uprise-logo.webp": { sizes: "160x160", type: "image/webp" },
     "assets/img/heal-the-3-cover.jpg": { sizes: "1024x1024", type: "image/jpeg" },
     "assets/img/here-cover.jpg": { sizes: "1024x682", type: "image/jpeg" },
+    "assets/img/in-hot-pursuit-cover.jpg": { sizes: "1254x1254", type: "image/jpeg" },
     "assets/img/m-mark.png": { sizes: "256x256", type: "image/png" },
     "assets/img/prim3-logo.png": { sizes: "256x256", type: "image/png" },
+    "assets/img/tinderfessions-cover.jpg": { sizes: "1400x1400", type: "image/jpeg" },
     "assets/img/vaunt-logo.webp": { sizes: "200x200", type: "image/webp" },
     "assets/img/wing-whip-poster.jpg": { sizes: "1280x890", type: "image/jpeg" }
   };

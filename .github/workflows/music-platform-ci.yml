@@ -72,6 +72,22 @@ on:
       - 'workers/mccluster/src/analytics/measurement-dictionary.js'
       - 'scripts/test/music-measurement.test.mjs'
       - 'scripts/test/music-offline-vault.test.mjs'
+      - 'artist.html'
+      - 'data/catalogue.json'
+      - 'tools/build-music-credits.mjs'
+      - 'tools/build-music-registry.mjs'
+      - 'tools/build-catalogue.mjs'
+      - 'scripts/test/music-credits.test.mjs'
+      - 'js/shell-boot.js'
+      - 'account.html'
+      - 'scripts/test/music-shell.test.mjs'
+      - 'scripts/e2e/music-shell.e2e.mjs'
+      - 'js/listen.js'
+      - 'js/member-desk.js'
+      - 'js/member-desk-core.js'
+      - 'js/song-test.js'
+      - 'scripts/test/music-quick-wins.test.mjs'
+      - 'scripts/e2e/music-quick-wins.e2e.mjs'
       - '.github/workflows/music-platform-ci.yml'
   push:
     branches: [main]
@@ -145,13 +161,29 @@ on:
       - 'workers/mccluster/src/analytics/measurement-dictionary.js'
       - 'scripts/test/music-measurement.test.mjs'
       - 'scripts/test/music-offline-vault.test.mjs'
+      - 'artist.html'
+      - 'data/catalogue.json'
+      - 'tools/build-music-credits.mjs'
+      - 'tools/build-music-registry.mjs'
+      - 'tools/build-catalogue.mjs'
+      - 'scripts/test/music-credits.test.mjs'
+      - 'js/shell-boot.js'
+      - 'account.html'
+      - 'scripts/test/music-shell.test.mjs'
+      - 'scripts/e2e/music-shell.e2e.mjs'
+      - 'js/listen.js'
+      - 'js/member-desk.js'
+      - 'js/member-desk-core.js'
+      - 'js/song-test.js'
+      - 'scripts/test/music-quick-wins.test.mjs'
+      - 'scripts/e2e/music-quick-wins.e2e.mjs'
 
 permissions:
   contents: read
 
 jobs:
   music-contract:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
@@ -208,7 +240,7 @@ jobs:
         run: |
           node scripts/music-artwork.mjs --check
           node --test scripts/test/now-playing-contract.test.mjs
-      - name: A new event name waits for approval and is not sent; the names sent before still go
+      - name: The approved listening events go out once per dropped connection or failed song; no name waits for approval
         run: |
           node --check js/analytics.js
           node --test scripts/test/music-measurement.test.mjs
@@ -216,9 +248,30 @@ jobs:
         run: |
           node --check sw.js
           node --test scripts/test/music-offline-vault.test.mjs
+      - name: Who is on a record (the credit lines are the structure's own words, the registry and the catalogue page are current, the owner's credit rules hold)
+        run: |
+          node --check js/music-credits.js
+          node --check js/music-artist.js
+          node tools/build-music-credits.mjs --check
+          node tools/build-music-registry.mjs --check
+          node tools/build-catalogue.mjs --check
+          node --test scripts/test/music-credits.test.mjs
+      - name: One player across music pages (the route table and its one switch, the album contained, a card's play button left to the player, history, the live head, which frame is adopted, the engine in a view)
+        run: |
+          node --check js/music-shell.js
+          node --check js/shell-boot.js
+          node --test scripts/test/music-shell.test.mjs
+      - name: Quick wins (one McCluster profile, albums and artists only, whole covers, a creator never asked to join, the held closing song, an album stops after its last song, the approved events)
+        run: |
+          node --check js/listen.js
+          node --check js/gated-audio.js
+          node --check js/member-desk-core.js
+          node --check js/member-desk.js
+          node --check js/creator-onboarding.js
+          node --test scripts/test/music-quick-wins.test.mjs
 
   music-edge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
@@ -267,6 +320,14 @@ jobs:
         env:
           PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
         run: node scripts/e2e/control-music-review.e2e.mjs /tmp/music-proof/control-review
+      - name: One player across music pages (a song plays on across Listen, an artist page and sign-in; a card's play button plays its song; the album a page of its own in Release 2; Back, Forward, deep links, the live head, the World; 320 to 1280 px)
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/music-shell.e2e.mjs /tmp/music-proof/shell
+      - name: Quick wins in Chromium (one McCluster profile, albums and artists, whole covers, no join offer for a creator, the held closing song's pop-up, an album stops after its last song; 320 to 1280 px)
+        env:
+          PLAYWRIGHT_DIR: /tmp/music-qa/node_modules
+        run: node scripts/e2e/music-quick-wins.e2e.mjs /tmp/music-proof/quick-wins
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:

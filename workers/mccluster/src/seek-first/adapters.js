@@ -2,6 +2,7 @@ import { boundedJson } from '../../../../js/travel/route-core.mjs';
 import { normalizeAustinCameras } from './camera-catalog.js';
 import { PERSISTENCE, sourceByKey, sourceConfigured } from './source-registry.js';
 import { fetchNoCrossHostRedirect, UpstreamError } from '../lib/safe-fetch.js';
+import { CONTACT_ORIGIN } from '../platform/contact.js';
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_PROVIDER_ROWS = 2000;
@@ -102,7 +103,7 @@ async function providerFetch(url, init = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
       signal: controller.signal,
       headers: {
         accept: 'application/json',
-        'user-agent': 'McCluster-Spatial/1.0 (https://mccluster.org)',
+        'user-agent': `McCluster-Spatial/1.0 (${CONTACT_ORIGIN})`,
         ...(init.headers || {})
       }
     });
@@ -566,7 +567,7 @@ async function bls(input, env) {
   let data;
   try {
     const response = await fetch(url, { method: 'POST', redirect: 'manual', signal: controller.signal,
-      headers: { 'content-type': 'application/json', accept: 'application/json', 'user-agent': 'McCluster-Spatial/1.0 (https://mccluster.org)' }, body: JSON.stringify(body) });
+      headers: { 'content-type': 'application/json', accept: 'application/json', 'user-agent': `McCluster-Spatial/1.0 (${CONTACT_ORIGIN})` }, body: JSON.stringify(body) });
     if (!response.ok) {
       await response.body?.cancel();
       throw new GeoAdapterError('BLS request unavailable', response.status === 429 ? 429 : 502, 'provider_error');

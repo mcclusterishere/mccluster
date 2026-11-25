@@ -366,16 +366,24 @@ try {
 
   /* ---------- the mission card hands the World its mission; two and 500 missions; one country ---------- */
   if (runs('pulse')) {
+    /* The cards settle independently; a ready mission does not mean news has arrived. */
+    const waitForCard = (page, id, text) => page.waitForFunction(({ id, text }) => {
+      const card = document.getElementById(id);
+      return !!card && !card.hidden && card.textContent.includes(text);
+    }, { id, text }, { timeout: 10000 }).then(() => true, () => false);
     for (const [list, kicker, label] of [[TWO_MISSIONS, 'Open now · 2 missions', 'two'], [MANY_MISSIONS, 'Open now · 500+ missions', '500']]) {
       const { ctx, page } = await openWorld(browser, server.base, DEVICES[1280], '/mnet.html?view=feed', { phase: 'night', missions: list, heat: label === 'two' ? 'single' : 'three', dpr: 1 });
       try {
         await worldReady(page);
         await openBy(page, 'signin');
-        await pulseSettled(page);
-        await page.waitForTimeout(400);
+        const newsText = label === 'two' ? 'News from 1 country' : 'News from 3 countries';
+        const [missionReady, newsReady] = await Promise.all([
+          waitForCard(page, 'wgPulseMission', kicker),
+          waitForCard(page, 'wgPulseNews', newsText)
+        ]);
         const cards = (await doorFrame(page)).cards;
-        check('pulse-' + label, `${list.length} open missions read "${kicker}"`, cards[0].text.includes(kicker), cards[0]);
-        check('pulse-' + label, label === 'two' ? 'one country reads "News from 1 country"' : 'three countries read "News from 3 countries"', cards[1].text.includes(label === 'two' ? 'News from 1 country' : 'News from 3 countries'), cards[1]);
+        check('pulse-' + label, `${list.length} open missions read "${kicker}"`, missionReady && cards[0].text.includes(kicker), cards[0]);
+        check('pulse-' + label, label === 'two' ? 'one country reads "News from 1 country"' : 'three countries read "News from 3 countries"', newsReady && cards[1].text.includes(newsText), cards[1]);
         if (label === 'two') {
           await page.click('#wgPulseMission .wg-card__go');
           await page.waitForSelector('#mnMissionDialog[open]', { timeout: 10000 });

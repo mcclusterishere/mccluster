@@ -12,6 +12,8 @@
 // a cross-origin failure arrives as a bare "Script error.". Older events have
 // no origin of their own, so the same rules the collector now applies are
 // applied here to classify them.
+import { PROFILE_HOST, SITE_HOSTS, COOKIE_DOMAIN } from '../platform/hosts.generated.js';
+
 const INJECTED_MSG = /webkit\.messageHandlers|Java object is gone|__gCrWeb|instantSearchSDKJSBridge|zaloJSV2|ucbrowser|vivoNewsDetailPage/i;
 const INJECTED_SRC = /^(iabjs|chrome-extension|moz-extension|safari-extension|safari-web-extension|webkit-masked-url|resource):/i;
 
@@ -23,7 +25,13 @@ function autofillDiagnostic(file, msg, stack) {
       !/\.(?:m?js)(?:[?:#]|$)/i.test(String(stack || ""));
   }
 
-export function errorOrigin(props, siteHost = 'matthew.mccluster.org') {
+/* the site's own hosts (the generated table) and every host under its registrable domain are first party */
+function ownHost(hostname) {
+  const h = String(hostname).toLowerCase();
+  return SITE_HOSTS.includes(h) || h === COOKIE_DOMAIN || h.endsWith('.' + COOKIE_DOMAIN);
+}
+
+export function errorOrigin(props, siteHost = PROFILE_HOST) {
   const p = props && typeof props === 'object' ? props : {};
   const msg = String(p.msg || p.message || '');
   const src = String(p.src || p.file || '');
@@ -39,7 +47,7 @@ export function errorOrigin(props, siteHost = 'matthew.mccluster.org') {
   if (src) {
     try {
       const u = new URL(src);
-      if (u.hostname && u.hostname !== siteHost && !/(^|\.)mccluster\.org$/i.test(u.hostname)) return 'third_party';
+      if (u.hostname && u.hostname !== siteHost && !ownHost(u.hostname)) return 'third_party';
     } catch { /* relative or odd: treat as the site's own */ }
   }
   return 'site';

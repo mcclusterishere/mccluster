@@ -198,8 +198,8 @@ test('commerceCall routes each event type exactly as the webhook does', async ()
     'an unpaid completion waits for async_payment_succeeded');
 });
 
-test('pending reconciler v3 serialises deliveries and is exercised in CI', async () => {
-  const v3 = await read('supabase/pending/commerce_stripe_reconciler_v3.sql');
+test('applied reconciler v3 serialises deliveries and is exercised in CI', async () => {
+  const v3 = await read('supabase/migrations/20261124164724_commerce_stripe_reconciler_v3.sql');
   assert.match(v3, /perform pg_advisory_xact_lock\(hashtext\('commerce:stripe_subscription:' \|\| p_subscription\)\);[\s\S]*?perform pg_advisory_xact_lock\(hashtext\('commerce:stripe_reference:' \|\| p_reference\)\);/,
     'one lock order: subscription, then payment reference');
   for (const [fn, lock] of [
@@ -216,10 +216,10 @@ test('pending reconciler v3 serialises deliveries and is exercised in CI', async
   assert.match(v3, /if v_old\.verification = 'provider_verified' then/, 'a verified row is never rewritten');
   assert.match(v3, /'commerce\.stripe\.payment_promoted'/, 'a promotion is audited');
   assert.match(v3, /if v_refunded <= v_pay\.refunded_cents then/, 'a repeated or older refund changes nothing');
-  assert.equal((await readdir('supabase/migrations')).some((f) => /commerce_stripe_reconciler_v3/.test(f)), false, 'v3 is not claimed as applied before it is');
+  assert.ok((await readdir('supabase/migrations')).includes('20261124164724_commerce_stripe_reconciler_v3.sql'), 'v3 uses its actual production ledger version');
   const ci = await read('.github/workflows/api-economic-core-ci.yml');
-  const apply = ci.indexOf('-f supabase/pending/commerce_stripe_reconciler_v3.sql');
-  assert.ok(apply > ci.indexOf('-f supabase/tests/commerce_stripe_reconciler_regression.sql'), 'v1/v2 suite first, on production\'s shape');
+  const apply = ci.indexOf('-f supabase/migrations/20261124164724_commerce_stripe_reconciler_v3.sql');
+  assert.ok(apply > ci.indexOf('-f supabase/tests/commerce_stripe_reconciler_regression.sql'), 'existing regressions precede the idempotent reapply');
   assert.ok(ci.indexOf('-f supabase/tests/commerce_stripe_reconciler_v3_regression.sql') > apply, 'then the v3 suite');
   assert.ok(ci.indexOf('bash supabase/tests/commerce_stripe_concurrency.sh') > apply, 'then the race');
 });

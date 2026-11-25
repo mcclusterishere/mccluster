@@ -171,7 +171,9 @@ test('Whip Equipped: any signed-in member opens it; it says rides are not live a
   assert.match(whip, /By Whip Equipped LLC, a separate company\./);
   assert.match(whip, /sheet\('Transport',/, 'the World\'s directions sheet is Transport, never titled as Whip Equipped (rule 13)');
   assert.match(whip, /not approval/);
-  assert.match(js, /const WHIP_DRIVER_SIGNUP='https:\/\/matthew\.mccluster\.org\/whip\/driver\/'/);
+  /* the sign-up address comes from the table (window.MCC_SITE); today it is https://matthew.mccluster.org/whip/driver/, held
+     in scripts/test/site-hosts-client.test.mjs */
+  assert.match(js, /const WHIP_DRIVER_SIGNUP=window\.MCC_SITE\?window\.MCC_SITE\.siteUrl\('\/whip\/driver\/'\):'\/whip\/driver\/';/);
   assert.doesNotMatch(whip.replace(/https:\/\/matthew\.mccluster\.org\/whip\/driver\//g, ''), /McCluster|\/api\/rides|voter|registration/i, 'Whip attribution only; no ride request; no voter rule');
   assert.match(html, /id="ctlTransport"[^>]*aria-label="Transport: directions and Whip Equipped driver sign-up"/);
 });

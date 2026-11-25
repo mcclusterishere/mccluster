@@ -53,8 +53,16 @@ test("the album is Cyber Security Specialist, billed to PRIM3, at the same slug"
   assert.equal(cat.length, 13);
   for (const t of cat) {
     assert.equal(t.album, "Cyber Security Specialist", t.slug);
-    assert.ok(t.credit === "PRIM3" || t.slug === "got-wifi", `${t.slug}: credited to PRIM3`);
+    /* owner, 2026-11-24: "the cyber security album was produced fully by McCluster. Scored and produced":
+       the act is still PRIM3, and every one of the 13 names the producer; Got WiFi? keeps its own line */
+    assert.equal(t.credit, t.slug === "got-wifi"
+      ? "The PRIM3 blue-team anthem · Scored and produced by McCluster"
+      : "PRIM3 · Scored and produced by McCluster", `${t.slug}: PRIM3's record, scored and produced by McCluster`);
   }
+  assert.equal(p3.by, "Music to build to. Scored and produced by McCluster.", "the album's own line carries the credit");
+  for (const t of p3.tracks) assert.match(t.credit, /Scored and produced by McCluster$/, `${t.title}: the shelf states the credit itself`);
+  /* rule B (McCluster and Zakir Elhajoui) has exceptions the owner has not listed: nothing here claims it */
+  assert.doesNotMatch(JSON.stringify(p3), /Zakir|Elhajoui/, "no co-producer is claimed on this album");
   /* album.html bills it and links the name to the act's page */
   const album = read("album.html");
   assert.match(album, /artistPage: alb\.artist_page \|\| ""/);
@@ -66,20 +74,39 @@ test("every Cyber Security Specialist recording is by the PRIM3 act, never Matth
   const album = graph.find((n) => n["@id"] === `${SITE}/catalogue.html#album-prim3`);
   assert.equal(album.name, "Cyber Security Specialist");
   assert.deepEqual(ids(album.byArtist), [ACT]);
+  assert.deepEqual(ids(album.producer), [PERSON], "the album's producer is the person, by his one @id");
   const recs = graph.filter((n) => n["@type"] === "MusicRecording" && n.inAlbum && n.inAlbum["@id"] === album["@id"]);
   assert.ok(recs.length >= 1, "Got WiFi? (registered) is in the catalogue graph");
   for (const r of recs) {
     assert.deepEqual(ids(r.byArtist), [ACT], `${r.name}: byArtist PRIM3`);
-    assert.ok(!JSON.stringify(r).includes(PERSON), `${r.name}: no credit for Matthew is claimed`);
+    /* Matthew is the producer and nothing else: the act stays the artist (owner, 2026-11-24) */
+    assert.deepEqual(ids(r.producer), [PERSON], `${r.name}: produced by McCluster`);
+    const { producer, ...rest } = r;
+    assert.ok(!JSON.stringify(rest).includes(PERSON), `${r.name}: no credit for Matthew beyond producer`);
+    assert.match(r.description, /Scored and produced by McCluster$/, `${r.name}: the credit line`);
   }
+  /* the producer is the one Person the graph already defines, not a second identity */
+  assert.equal(graph.filter((n) => n["@type"] === "Person" && /McCluster/.test(n.name || "")).length, 1);
   const act = graph.find((n) => n["@id"] === ACT && n["@type"] === "MusicGroup");
   assert.equal(act.name, "PRIM3");
   /* the artist page lists all 13, each by the act */
   const page = nodes(ld(read("prim3-artist.html")));
   const pageRecs = page.filter((n) => n["@type"] === "MusicRecording");
   assert.equal(pageRecs.length, 13);
-  for (const r of pageRecs) assert.deepEqual(ids(r.byArtist), [ACT], `${r.name}: byArtist PRIM3 on its page`);
-  assert.ok(!JSON.stringify(ld(read("prim3-artist.html"))).includes(PERSON), "the act's page credits Matthew as nothing");
+  for (const r of pageRecs) {
+    assert.deepEqual(ids(r.byArtist), [ACT], `${r.name}: byArtist PRIM3 on its page`);
+    assert.deepEqual(ids(r.producer), [PERSON], `${r.name}: produced by McCluster on its page`);
+  }
+  const pageAlbum = page.find((n) => n["@type"] === "MusicAlbum");
+  assert.deepEqual(ids(pageAlbum.byArtist), [ACT]);
+  assert.deepEqual(ids(pageAlbum.producer), [PERSON]);
+  /* on the act's page Matthew is the producer and nothing else: every other mention of his @id is the
+     one reference node that names him */
+  const rest = JSON.parse(JSON.stringify(ld(read("prim3-artist.html")), (k, v) => (k === "producer" ? undefined : v)));
+  for (const block of rest) block["@graph"] = block["@graph"].filter((n) => !(n["@type"] === "Person" && n["@id"] === PERSON));
+  assert.ok(!JSON.stringify(rest).includes(PERSON), "the act's page credits Matthew as producer and as nothing else");
+  assert.match(read("prim3-artist.html"), /Scored and produced by McCluster\./, "the page says it in words");
+  assert.doesNotMatch(read("prim3-artist.html"), /No other credits are listed yet/);
 });
 
 test("PRIM3 the act is its own entity: defined once in the graph, on its page, not on Matthew's profile", () => {
@@ -97,7 +124,7 @@ test("PRIM3 the act is its own entity: defined once in the graph, on its page, n
   assert.equal(e.id, ACT);
   assert.equal(e.managed_by, "matthew_mccluster");
   assert.match(e.management, /no content moves|No content moves|no auth link/i);
-  assert.ok(arch.url_ownership.company_hosted_on_personal_for_compatibility.includes("/prim3-artist.html"));
+  assert.ok(arch.url_ownership.platform.includes("/prim3-artist.html"), "the act's page is the platform's: PRIM3 is McCluster Corp's, never Matthew's profile");
   assert.match(read("docs/control-plane/DOMAINS-AND-ENTITIES.md"), /PRIM3 the artist is its own entity/);
   execFileSync("node", ["tools/build-prim3-artist.mjs", "--check"], { cwd: ROOT, stdio: "pipe" });
 });

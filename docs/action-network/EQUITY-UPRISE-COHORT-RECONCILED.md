@@ -8,7 +8,7 @@ Authoritative existing roster: `data/fellows.json` (nine fellows). Music release
 | ashan-voyage | A$hon Voyage | No contribution confirmed in this release's display credits |
 | ocho-gr8 | Ocho Gr8 | Environmental Injustice; Brave mix; Money or the Power |
 | angel-kastro | Angel Kastro | Environmental Injustice; Brave mix |
-| pax | Pax | Money or the Power (production) |
+| pax | Pax Tha Collector | Money or the Power (production) |
 | old-jay | Old Jay | Money or the Power |
 | stay-tru | Stay Tru | No contribution confirmed in this release's display credits |
 | eugene-izuazu | Eugene Izuazu | No contribution confirmed in this release's display credits |

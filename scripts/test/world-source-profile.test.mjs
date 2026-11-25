@@ -16,11 +16,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { shippedSite } from './support/mcc-site.mjs';
 
 /* west of Greenwich: a date read as UTC midnight shows the day before here */
 process.env.TZ = 'America/Los_Angeles';
 
 const require = createRequire(import.meta.url);
+/* the module reads the site's hosts from window.MCC_SITE when it loads (js/shell-boot.js runs first on mnet.html):
+   today's table, so the World's hosts, the shared link and the company page are today's */
+globalThis.MCC_SITE = shippedSite();
 const P = require('../../js/world-source-profile.js');
 const W = require('../../js/mission-source-words.js');
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -64,10 +68,10 @@ test('the address: ?source=<slug> with &area and &preview, a ?mission= wins, the
   assert.equal(P.restHref('matthew.mccluster.org', '?source=project-drawdown'), '/mnet.html');
   assert.deepEqual(P.withoutSource({ mccSource: 'project-drawdown', mccMission: id(1) }), { mccMission: id(1) });
   assert.equal(P.withoutSource({ mccSource: 'project-drawdown' }), null);
-  /* Share: the company's World on every host, the same origin the bar's Globe goes to */
-  const origin = /var WORLD_ORIGIN = "([^"]+)";/.exec(read('js/tabbar.js'));
-  assert.ok(origin, 'js/tabbar.js still names WORLD_ORIGIN');
-  assert.equal(P.SHARE_ORIGIN, origin[1]);
+  /* Share: the company's World on every host, the same address the bar's Globe goes to: the platform's World in the one
+     table (worldAt in js/tabbar.js reads it there since P1; before, the bar named it in WORLD_ORIGIN) */
+  assert.match(read('js/tabbar.js'), /return onWorldHost\(\) \? location\.origin \+ S\.world\.root : S\.platform\.world_url;/);
+  assert.equal(P.SHARE_ORIGIN, shippedSite().platform.world_url);
   assert.equal(P.shareLink('project-drawdown'), 'https://mccluster.org/?source=project-drawdown');
   assert.equal(P.shareLink('<x>'), '');
 });

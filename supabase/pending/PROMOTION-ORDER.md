@@ -1,5 +1,20 @@
 # Promotion order for `supabase/pending/`
 
+## Production update — 2026-11-24
+
+The audit applied `ai_context_workstreams_v1` (`20261124164529`),
+`commerce_stripe_reconciler_v3` (`20261124164724`),
+`equity_uprise_clipping_sources` (`20261124164851`), and
+`action_bounty_claim_existing_row_guard_v1` (`20261124164904`). Their exact files
+are now under `supabase/migrations/`. A concurrent session also applied
+`member_fronts_shared_revision_directory` (`20261124164026`); its actual stored SQL
+is recorded there. **Do not apply the older `member_fronts_v1.sql` over it.**
+The ledger is 389 at this checkpoint. The actual receipt and remaining release
+steps are `docs/control-plane/evidence/migration-audit-applied-2026-11-24.md`;
+the complete candidate audit is `docs/control-plane/evidence/migration-audit-2026-11-24.md`.
+This dated update supersedes the historical pending labels for those five changes below.
+
+
 Written 2026-10-27 from each file's header, the dependency it states, the
 objects it creates, and `live-callers.json` (which names shipped code calls
 today). Every file is applied with the steps in `README.md` ("To promote one")
@@ -683,7 +698,7 @@ PostgreSQL 16.15 and 17.7 on 2026-11-19). The route over the real SQL: `scripts/
 
 ## 15. AI context workstream checkpoints (written 2026-11-23)
 
-**Pending. Never applied. Owner approval required.** Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`.
+**Applied 2026-11-24 as `20261124164529`.** Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`. The procedure below documents the original pre-apply requirements; production must not replay it.
 
 | File (+ rollback) | Creates | Callers | Proof before apply |
 |---|---|---|---|
@@ -716,3 +731,46 @@ It leaves `ai_context.decisions` untouched. Core needs no rollback: without the 
 
 **Records** after the apply: move the file to `supabase/migrations/` under its ledger version; the ledger, the drift
 contract, the schema manifest from the CI reset, a new production snapshot; this section and `README.md`.
+
+## 16. Tinderfessions catalog objects (written 2026-11-23; Rolling With Me added as the bonus opener the same day)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261123180000_tinderfessions_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's Tinderfessions (keys `tinderfessions:*`), upserted like the Whip Equipped and PRIM3 seeds | the shelf in `data/albums.json` (album `tinderfessions`); the live discovery and direct-sale lookups by catalog key | `scripts/test/action-network-live-governance.test.mjs` and `scripts/test/music-direct-sales.test.mjs` read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+
+## 17. In Hot Pursuit catalog objects (written 2026-11-23)
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261123190000_in_hot_pursuit_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of Benji Chase's In Hot Pursuit (keys `in-hot-pursuit:*`), upserted like section 16 | the shelf in `data/albums.json` (album `in-hot-pursuit`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+
+## 18. Audio Engineer catalog objects (written 2026-11-24)
+
+**Pending. Never applied.**
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261124120000_audio_engineer_catalog_objects.sql` (+ `.rollback.sql`) | `public.music_catalog_objects` rows for every shelf song of McCluster's Audio Engineer EP (keys `audio-engineer:*`), upserted like section 16 | the shelf in `data/albums.json` (album `audio-engineer`) | the same two catalog-key tests read it; apply with the release that ships the album. Rollback archives the rows. Never applied here. |
+
+## 19. Music catalog rows: the owner's credit rules of 2026-11-24 (written 2026-11-24)
+
+**Pending. Never applied.**
+
+| File (+ rollback) | Changes | Callers | Proof before apply |
+|---|---|---|---|
+| `20261124130000_music_catalog_owner_credits.sql` (+ `.rollback.sql`) | three `public.music_catalog_objects` rows seeded on 2026-10-03: `singles:upset` names its artists (Hitman Benji × Raheem × Rahndrx) instead of McCluster; the two Environmental Injustice rows' `credit_line` gains the producer the owner set. No row is added or removed, no schema changes. | every reader of `artist_name` / `credit_line` (`workers/mccluster/src/platform-api.js`, the Control Room's clipping and direct-sales desks, `supabase/functions/music-direct-access`) | `scripts/test/music-credits.test.mjs` holds the words equal to `data/albums.json`. Each update is guarded by the seeded words, so it is idempotent and leaves a hand-corrected row alone. Apply with the release that ships these credits, on the owner's approval. Rollback restores the seeded words. |
+
+Not changed, and the owner's to decide: the seeded rows whose `credit_line` is the album's tagline ("Have no fear.",
+"Scored by Dealer Plates.", "Between the albums.") rather than a credit; the Tinderfessions seed's
+"Hitman Records, 2020." (section 16, as its commit made it); and the artist column of the historical rows in
+`20261013180000_qt6kv_creator_isrc_ledger.sql`, which lists Upset and the Equity Uprise songs under McCluster.
+
+## 20. Pax Tha Collector stage name
+
+Pending owner approval for `20261124190000_music_pax_stage_name.sql`. The Docket catalogue
+row for Money or the Power and three artist/producer credits in two archive works use
+the current stage name. The public catalogue and archive readers consume these fields.
+The forward statement returns one JSON rollback receipt. Save the receipt from the
+approved application with its release evidence. Subsequent runs can return an empty
+receipt. The paired rollback takes the original receipt in the session setting
+`mccluster.pax_stage_name_receipt` and checks each current value before restoring it.

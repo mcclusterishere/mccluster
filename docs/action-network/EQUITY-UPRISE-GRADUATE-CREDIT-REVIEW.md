@@ -11,7 +11,7 @@ Source: `data/albums.json`, album slug `equity-uprise` (Docket 516R).
 | Ocho | Environmental Injustice and Brave mix featured artist; Money or the Power feature | Deduplicate one person across tracks |
 | Los Fidel | Please Set Me Free artist credit | Verify whether this denotes one person or a group |
 | Old Jay | Money or the Power feature | Verify graduate status |
-| PAX | Money or the Power producer credit | Verify graduation and identity |
+| Pax Tha Collector | Money or the Power producer credit | Verify graduation and identity |
 | McCluster | Multiple track/beat credits | Program founder; do not automatically count as graduate |
 
 ## Graduation site provisioning requirements

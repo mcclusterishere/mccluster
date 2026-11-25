@@ -1,5 +1,7 @@
 # Commerce reconciler — Stripe
 
+> Production update, 2026-11-24: commerce v3 (`20261124164724`) and clipping sources (`20261124164851`) are applied. The dated receipt in `evidence/migration-audit-applied-2026-11-24.md` supersedes older pending status below.
+
 A paid checkout becomes the canonical commercial record: the buyer as a lead,
 a paid order, a provider-verified payment, and the follow-up work the sale
 implies. Before this, `checkout` and `music-checkout` took money and nothing
@@ -15,7 +17,7 @@ recorded it anywhere McCluster could see. `stripe_events` held no rows, every
 | Signature check, routing, Stripe look-ups | `supabase/functions/stripe-webhook/index.ts` |
 | Sale metadata carried on the payment | `supabase/functions/checkout/index.ts` (`payment_intent_data` / `subscription_data`) |
 | Database functions + provenance columns | `supabase/migrations/20261006021431_commerce_stripe_reconciler_v1.sql`, `20261006023453_commerce_stripe_reconciler_v2.sql` (both live) |
-| Concurrency, owner-typed payments, partial refunds | `supabase/pending/commerce_stripe_reconciler_v3.sql` (**pending: not applied in production**) |
+| Concurrency, owner-typed payments, partial refunds | `supabase/migrations/20261124164724_commerce_stripe_reconciler_v3.sql` (**pending: not applied in production**) |
 | Database regressions (API Economic Core CI) | `supabase/tests/commerce_stripe_reconciler_regression.sql` (v1/v2, rerun on v3), `supabase/tests/commerce_stripe_reconciler_v3_regression.sql`, `supabase/tests/commerce_stripe_concurrency.sh` |
 | Webhook replay in random orders, repeats and races | `scripts/stripe-test/replay.mjs` (API Economic Core CI, `--runs 3`) |
 | Stripe test mode against the real site | `scripts/stripe-test/stripe-test-mode.mjs` |
@@ -132,7 +134,7 @@ psql "$DB" -v ON_ERROR_STOP=1 -f supabase/tests/commerce_stripe_reconciler_regre
 node scripts/stripe-test/replay.mjs --db "$DB" --runs 3        # v2: the v3 scenarios are skipped and named
 bash supabase/tests/commerce_stripe_concurrency.sh "$DB"        # v2: FAILS, showing the race v3 fixes
 
-psql "$DB" --single-transaction -v ON_ERROR_STOP=1 -f supabase/pending/commerce_stripe_reconciler_v3.sql
+psql "$DB" --single-transaction -v ON_ERROR_STOP=1 -f supabase/migrations/20261124164724_commerce_stripe_reconciler_v3.sql
 psql "$DB" -v ON_ERROR_STOP=1 -f supabase/tests/commerce_stripe_reconciler_regression.sql
 psql "$DB" -v ON_ERROR_STOP=1 -f supabase/tests/commerce_stripe_reconciler_v3_regression.sql
 bash supabase/tests/commerce_stripe_concurrency.sh "$DB"        # v3: both races end refunded
@@ -270,7 +272,7 @@ commit;
    connected sellers. `stripe_events` has never held a row, so either the
    endpoint is missing or no sale has completed since it was added.
 2. **Stripe test mode.** The three setup steps under "Repeatable testing".
-3. **Apply reconciler v3.** Apply `supabase/pending/commerce_stripe_reconciler_v3.sql`
+3. **Apply reconciler v3.** Apply `supabase/migrations/20261124164724_commerce_stripe_reconciler_v3.sql`
    and promote it as `supabase/pending/README.md` describes. The webhook
    works before and after it.
 4. **Edge Function deploys.** Add the `SUPABASE_ACCESS_TOKEN` Actions secret

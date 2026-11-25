@@ -65,6 +65,7 @@
    across isolates, so the true ceiling is a small multiple of these). */
 import { fail, reply } from './lib/http.js';
 import { bearerUser } from './world-layers.js';
+import { CONTACT_ORIGIN } from './platform/contact.js';
 
 export const HALO_DEFAULT_BASE = 'https://prime.mccluster.org';
 export const LIMITS = Object.freeze({ eligibility: 30, sources: 6, frame: 60 });
@@ -188,7 +189,7 @@ async function halo(env, path, fetchImpl, accept) {
     const res = await fetchImpl(`${base}${path}`, {
       redirect: 'manual',
       signal: controller.signal,
-      headers: { accept, 'x-halo-internal': env.HALO_INTERNAL_TOKEN, 'user-agent': 'McCluster-World/1.0 (+https://mccluster.org)' }
+      headers: { accept, 'x-halo-internal': env.HALO_INTERNAL_TOKEN, 'user-agent': `McCluster-World/1.0 (+${CONTACT_ORIGIN})` }
     });
     if (res.status >= 300 && res.status < 400) {
       if (res.body && res.body.cancel) await res.body.cancel().catch(() => {});

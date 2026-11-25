@@ -2,6 +2,7 @@ import { createGeneration } from '../media/router.js';
 import { credentialRefForConfiguredChannel, requireOrgId, requireOrgRole } from './security.js';
 import { graphGet, tokenFor, OUTBOX_BUCKET } from './meta.js';
 import { recordAudit } from '../lib/audit.js';
+import { returnOrigin } from '../platform/hosts.generated.js';
 
 function headers(env) {
   return {
@@ -40,10 +41,12 @@ async function primaryMuid(env, userId) {
   return rows?.[0]?.m_uid || null;
 }
 
-function actionMissionUrl(missionId, campaignId, contentId, source = 'instagram') {
+/* the mission in the World, on the origin the owner published from when that origin serves pages (the generated return
+   origins, exact match on the request's Origin), else where the World's document is served today (SPEC-PLATFORM 2.9) */
+function actionMissionUrl(missionId, campaignId, contentId, source = 'instagram', origin = null) {
   const q = new URLSearchParams({ view: 'missions', mission: missionId, content: contentId, src: source });
   if (campaignId) q.set('campaign', campaignId);
-  return `https://matthew.mccluster.org/mnet.html?${q.toString()}`;
+  return `${returnOrigin(origin)}/mnet.html?${q.toString()}`;
 }
 
 async function ensureActionNetworkPost(env, content) {
@@ -330,7 +333,7 @@ async function queuePublish(request, env, user) {
 
   const contentId = crypto.randomUUID();
   const source = String(account.platform || 'instagram').toLowerCase();
-  const actionUrl = actionMissionId ? actionMissionUrl(actionMissionId, actionCampaignId, contentId, source) : null;
+  const actionUrl = actionMissionId ? actionMissionUrl(actionMissionId, actionCampaignId, contentId, source, request.headers.get('origin')) : null;
   const finalCaption = actionUrl ? [masterCaption, `Take action: ${actionUrl}`].filter(Boolean).join('\n\n') : masterCaption;
   if (finalCaption.length > 2200) {
     throw Object.assign(new Error('The caption plus its Equity Uprise link is over Instagram\'s 2,200-character limit'), { status: 400 });

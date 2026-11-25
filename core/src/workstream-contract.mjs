@@ -12,7 +12,7 @@
    ingest unchanged. This module validates, bounds and refuses; it does
    no I/O and reads no environment, so the Core tool, the sync script
    and the tests all run the same rules. The database enforces every
-   one of them again (supabase/pending/ai_context_workstreams_v1.sql):
+   one of them again (supabase/migrations/20261124164529_ai_context_workstreams_v1.sql):
    this file is the fast, clear refusal, the SQL is the wall.
 
    Contract: docs/control-plane/WORKSTREAM-CHECKPOINTS.md

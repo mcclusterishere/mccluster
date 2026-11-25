@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme-lock="dark">
+<html lang="en" data-theme-lock="dark" data-music-view="listen">
 <head><script src="js/shell-boot.js?v=__STAMP__"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -64,8 +64,8 @@
     .ls__sec[hidden] { display: none; }
     /* the offer for whoever is looking (js/creator-onboarding.js): a hidden answer is gone, a pending one keeps its
        space; if no answer comes (no script, or a server that never replies) the neutral door shows after 6 s */
-    .music-launch .music-launch__offer [hidden] { display: none; }
-    .music-launch__offer[data-offer-pending] { visibility: hidden; animation: music-offer-reveal 0s linear 6s forwards; }
+    .music-launch [data-offer][hidden] { display: none; }
+    .music-launch[data-offer-pending] { visibility: hidden; animation: music-offer-reveal 0s linear 6s forwards; }
     @keyframes music-offer-reveal { to { visibility: visible; } }
   </style>
   <link rel="stylesheet" href="css/music-room.css?v=__STAMP__">
@@ -94,23 +94,16 @@
     </header>
 
     <h1 class="greet">Listen now.</h1>
-    <p class="greet__sub">McCluster records, independent creators, and the songs people are actually reaching for &mdash; all in one player.</p>
+    <p class="greet__sub">McCluster&rsquo;s albums and independent creators, all in one player.</p>
     <p class="greet__sub"><strong>Put your music into action.</strong> Every creator is part of Equity Uprise. Follow the person behind the record, then move with what the music starts.</p>
 
     <div class="ls__find">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
       <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
-             placeholder="Search every track, album or credit" aria-label="Search the catalogue">
+             placeholder="Search every track, album or artist" aria-label="Search the catalogue">
       <button id="qClear" type="button" aria-label="Clear the search" hidden>&times;</button>
     </div>
     <p class="ls__count" id="count" hidden></p>
-
-    <div class="chips" id="chips" role="group" aria-label="Filter">
-      <button type="button" class="on" data-chip="all" aria-pressed="true">All</button>
-      <button type="button" data-chip="albums" aria-pressed="false">Albums</button>
-      <button type="button" data-chip="tracks" aria-pressed="false">Tracks</button>
-      <button type="button" data-chip="saved" aria-pressed="false">Saved</button>
-    </div>
 
     <!-- ONE TAP (owner, 2026-10-20): with a finished profile, Become a creator makes the artist page from it, asking
          nothing, and opens Creator Studio (js/creator-onboarding.js, the door). The tap accepts the Creator Terms, and
@@ -119,12 +112,19 @@
          music slice M4): js/creator-onboarding.js shows the one offer for whoever is looking. A guest is asked to sign
          in, a member who is not a creator gets the one tap, a creator opens Creator Studio, and the house owner also
          gets his review desk. A signed-in visitor's offer keeps its space, unseen, until the server has answered. -->
-    <section class="music-launch" aria-label="Creator Studio">
-      <div>
+    <section class="music-launch" aria-label="Creator Studio" data-creator-offer data-offer-pending>
+      <!-- the words follow the account too (owner, 2026-11-23: "The shit should know whether you have a creator's
+           account or not already"): the join pitch is for a guest and a member who can join; a creator, and the house
+           owner, read their studio, never the pitch -->
+      <div class="music-launch__pitch" data-offer="signin become" hidden>
         <span>For artists &amp; creators</span>
         <strong>Put your music in the same ecosystem people are listening in.</strong>
       </div>
-      <div class="music-launch__offer" data-creator-offer data-offer-pending>
+      <div class="music-launch__pitch" data-offer="studio">
+        <span>Creator Studio</span>
+        <strong>Your artist page, your releases and your albums.</strong>
+      </div>
+      <div class="music-launch__offer">
         <div class="music-launch__go" data-offer="signin" hidden>
           <a href="account.html?next=creator.html">Sign in</a>
           <small class="music-launch__terms">Your artist page is made from your profile. New here? <a href="mnet.html?join=1&amp;next=creator.html">Create an account</a></small>
@@ -135,7 +135,7 @@
         </div>
         <div class="music-launch__go" data-offer="studio">
           <a href="creator.html">Open Creator Studio</a>
-          <small class="music-launch__terms">Your releases, albums and rates.</small>
+          <small class="music-launch__terms">Releases, albums and rates.</small>
         </div>
         <small class="music-launch__terms" data-offer="review" hidden>Your tools: <a href="control.html#sell:music:catalog">Music review &amp; catalog</a></small>
       </div>
@@ -143,7 +143,11 @@
 
     <!-- THE DECK. Every rail below is one algorithm, and it only exists on
          the page when that algorithm has something to say. A rail headed
-         with a method and filled with a fallback is worse than no rail. -->
+         with a method and filled with a fallback is worse than no rail.
+         JUST ALBUMS AND ARTISTS, RIGHT NOW (owner, 2026-11-23): the song rails
+         rest behind one switch in js/listen.js (SONG_RAILS) until there is more
+         music; the page is the Artists rail and the Albums shelf, and a search
+         still finds every song. -->
 
     <section class="ls__sec" id="ffWrap" aria-label="Because you played" hidden>
       <p class="lib__k" id="ffK">Because you played it</p>
@@ -187,13 +191,13 @@
       <div class="feat" id="shelf"></div>
     </section>
 
-    <section class="ls__sec" id="allWrap" aria-label="Every track">
-      <p class="lib__k" id="allK">Songs</p>
-      <p class="lib__why" id="allWhy">All of it, in one list.</p>
+    <section class="ls__sec" id="allWrap" aria-label="Search results" hidden>
+      <p class="lib__k" id="allK">Results</p>
+      <p class="lib__why" id="allWhy">Matched on title, album, credit and registered code.</p>
       <ul class="tr" id="all"><li><span class="t">Opening the shelf&hellip;</span></li></ul>
     </section>
 
-    <p class="ls__note">Written &amp; performed by Matthew McCluster unless credited otherwise.
+    <p class="ls__note">McCluster&rsquo;s own records are written &amp; performed by Matthew McCluster; every other record names its artist.
       The registered discography, with ISRC codes, is <a href="catalogue.html">the catalog</a>.
       Licensing &amp; sync: <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a></p>
 
@@ -225,6 +229,7 @@
   <script src="js/now-playing.js?v=__STAMP__"></script>
   <script src="js/music-engine.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/music-credits.js?v=__STAMP__"></script>
   <script src="js/listen.js?v=__STAMP__"></script>
   <script src="js/music-community.js?v=__STAMP__"></script>
   <script defer src="js/pip.js?v=__STAMP__"></script>

@@ -1,5 +1,6 @@
 import { GeoAdapterError } from './adapters.js';
 import { fetchNoCrossHostRedirect, UpstreamError } from '../lib/safe-fetch.js';
+import { CONTACT_ORIGIN } from '../platform/contact.js';
 
 const MAX_ROWS = 2000;
 
@@ -35,7 +36,7 @@ async function jsonFetch(url, init = {}) {
       signal: controller.signal,
       headers: {
         accept: 'application/json',
-        'user-agent': 'McCluster-Spatial/1.0 (https://mccluster.org)',
+        'user-agent': `McCluster-Spatial/1.0 (${CONTACT_ORIGIN})`,
         ...(init.headers || {})
       }
     });

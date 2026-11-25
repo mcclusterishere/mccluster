@@ -1,4 +1,4 @@
--- Rollback of supabase/pending/ai_context_workstreams_v1.sql (migration name ai_context_workstreams_v1_rollback).
+-- Rollback of supabase/migrations/20261124164529_ai_context_workstreams_v1.sql (migration name ai_context_workstreams_v1_rollback).
 -- PENDING ONLY. Never applied. Never a forward migration. Owner approval required; applied as postgres.
 -- All or nothing. It refuses (55000), changing nothing, while either table holds a row: the checkpoint log is the
 -- record of where the work stood, and dropping it is a data deletion, not a schema change. To delete that record

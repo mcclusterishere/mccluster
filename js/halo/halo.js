@@ -1055,10 +1055,19 @@
   }
 
   /* ---------- the frame ---------- */
-  /* the same World door the bar gives everyone (js/tabbar.js MCC_BAR.navigation.world), this site's World page without it */
+  /* an address on one of the site's own origins (window.MCC_SITE, js/shell-boot.js: the platform, its tenants, its doors) */
+  function siteAddress(href) {
+    const S = window.MCC_SITE;
+    if (!S || typeof S.isSiteOrigin !== 'function') return false;
+    let u;
+    try { u = new URL(href); } catch (e) { return false; }
+    return u.protocol === 'https:' && href.indexOf(u.origin + '/') === 0 && S.isSiteOrigin(u.origin);
+  }
+  /* the same World door the bar gives everyone (js/tabbar.js MCC_BAR.navigation.world) when it is the site's own or a
+     page of this site; this site's World page without it */
   function feedHref() {
     const w = window.MCC_BAR && window.MCC_BAR.navigation && window.MCC_BAR.navigation.world;
-    return typeof w === 'string' && /^(https:\/\/[a-z0-9.-]*mccluster\.org\/|[a-z0-9-]+\.html)/i.test(w) ? w : 'mnet.html?view=feed';
+    return typeof w === 'string' && (siteAddress(w) || /^[a-z0-9-]+\.html/i.test(w)) ? w : 'mnet.html?view=feed';
   }
   /* Mobile-only immersive globe. The panel and timeline return without changing
      any source, map selection or camera coordinates. */
