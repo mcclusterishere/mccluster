@@ -370,6 +370,24 @@ function policyEvidence(job, output) {
       break;
     }
 
+    case 'entity_match_scan': {
+      requireValue(job, output.executor === 'entity_match_scan:v1', 'entity match scan must identify its executor');
+      for (const field of ['objects_scanned', 'pairs_compared', 'auto_linked', 'queued_for_review']) {
+        requireValue(job, finite(output[field]) && Number(output[field]) >= 0, `entity match scan must report ${field}`);
+      }
+      requireValue(job, output?.safety?.merges === false && output?.safety?.deletes === false && output?.safety?.reversible === true,
+        'entity match scan must prove it only links, reversibly');
+      records.push({
+        kind: 'entity_resolution',
+        matcher_version: text(output.matcher_version),
+        objects_scanned: Number(output.objects_scanned),
+        auto_linked: Number(output.auto_linked),
+        queued_for_review: Number(output.queued_for_review),
+        run_ids: Array.isArray(output.run_ids) ? output.run_ids.map((id) => text(id)).filter(Boolean) : [],
+      });
+      break;
+    }
+
     case 'host_health': {
       requireValue(job, validDate(output.checked_at), 'host health must report checked_at');
       requireValue(job, Boolean(text(output?.host?.hostname)), 'host health must report hostname');
