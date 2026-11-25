@@ -45,26 +45,53 @@ Routing table: `core/src/dispatch/routes.mjs`. In order:
 3. **Model** at confidence ≥ 0.70 (`MCCLUSTER_DISPATCH_THRESHOLD`): accepted. Below it: **clarify** (one question,
    nothing runs).
 4. **Model down**: a rule at ≥ 0.60 is accepted; anything weaker is answered conversationally (changes nothing).
-5. A route still missing a required argument (repository, ref, track) becomes **clarify**. Repository, ref and
-   track ids are only ever taken from the message text; a model-invented one is dropped.
+5. A route still missing a required argument (the catalog's `inputSchema.required`) becomes **clarify**.
+   Repository, ref, UUIDs, meeting links and quoted text are only ever taken from the message text; a
+   model-invented one is dropped. The model never supplies booleans (e.g. `transcription_authorized`).
+6. A caller may pass `intent` (a route id) and `args` (structured arguments) with the message. That skips
+   classification only: refusals still run first, and the gate is exactly the same.
 
-| Intent | Core tool | Catalog gate today |
-| --- | --- | --- |
-| `status.resume` | `core.resume` | runs (read) |
-| `workstream.list` | `core.workstream.list` | runs (read) |
-| `research.web` | `core.research.web` | runs (read) |
-| `repo.inspect` | `core.repo.inspect` | runs (read) |
-| `objective.plan` | `core.objective.plan` -> `objective_plan` job | runs (write, approval none; plans only safe analysis jobs) |
-| `lyrics.align` | `core.lyrics.align` -> `lyrics_align` job | runs (write, approval none) |
-| `stems.separate` | `core.stems.separate` -> `stems_separate` job | runs (write, approval none) |
-| `code.build` | `core.code.build` -> `code_patch` job | **held** (review-required) |
-| `game.build` | `core.game.build` -> `game_studio_cycle` job | **held** (review-required) |
-| `deploy.preview` | `core.deploy.preview` -> `preview_deploy` job | **held** (review-required) |
-| `world.generate` | `core.world.generate` | **held** (spend, budget-gated) |
+### Coverage
+
+Every capability in `core/capabilities/catalog.json` and every job type in `core/src/runner.mjs` has a route or a
+named exclusion with a reason. `core/test/dispatch-coverage.test.mjs` fails if one is added without that decision.
+
+* **Catalog capabilities (48 OVH, plus the 3 `dispatch.*` tools): 46 of 48 routed.** One route per capability,
+  id = capability id; risk, approval and required arguments are read from the catalog entry. Calls go through the
+  broker's capability registry (the same resolve/bind/fallback path as an MCP `tools/call`).
+  Excluded: `browser.act` (owner-only, drives the owner's browser inside a resident turn) and `site.edit` (public
+  website, owner-only in Control); the `dispatch.*` trio never routes into itself.
+* **Runner job types (31 types across 29 executor files): 24 of 29 executor files reachable.**
+  * 14 direct job routes, intent `job.<job_type>`, enqueued with the existing `enqueueJob` on `ops_agent_jobs`:
+    `host_health`, `ai_diagnostics`, `repo_health`, `local_analysis`, `game_build_plan` (run); `portfolio_plan`,
+    `objective_reflection`, `objective_synthesis`, `game_playtest`, `weather_region_snapshot`,
+    `world_news_pairing` (held, review-required); `prim3_agent_news`, `character_post`, `actor_news_comment`
+    (held, owner-policy-gated: they post publicly).
+  * 8 through a capability: `code_patch` (code.build), `objective_plan`, `game_studio_cycle` (game.build),
+    `preview_deploy` (deploy.preview), `lyrics_align`, `stems_separate`, `meeting_delegate_dispatch` and
+    `meeting_delegate_collect` (meeting.delegate.*); `resident_ai_turn` through the answer path.
+  * 8 excluded: `lead_rescore` (outreach), `sms_assistant_turn` (outside message, needs an inbound SMS),
+    `actor_live_comment` (started by the database with a receipt), and the game studio continuations
+    `game_media_collect`, `game_owner_decision`, `game_implementation_collect`, `game_branch_smoke`,
+    `game_release_decision` (they need a cycle's own state or approval packet; reached through game.build).
+  * Executor files not reachable from chat: `lead-rescore`, `sms-assistant-turn`, `actor-live-comment`,
+    `game-branch-smoke`, `game-release-decision`. `host-health-collect` is a helper of `host-health`.
+
+### Gates today (60 routes)
+
+* **Run (31)**: core.resume, workstream.list/checkpoint, system.health, media.models.search,
+  media.model.recommend, media.job.get, research.web, repo.inspect, game.lore.read, ai.chat, compute.task.get,
+  objective.plan, ontology.schema/query/neighbors, ingest.connectors/records, entity.aliases, facts.query,
+  meeting.delegate.status/transcript/session.get/chat.read, lyrics.align, stems.separate, job.host_health,
+  job.ai_diagnostics, job.repo_health, job.local_analysis, job.game_build_plan.
+* **Held for owner approval (29)**: every paid generator (media/image/video/audio/model3d/world.generate, spend
+  budget-gated), code.build, game.build, deploy.preview, ontology.action.apply, ingest writes, entity.resolve,
+  facts.claim, meeting.delegate.schedule/join/cancel/chat.send/speak, and the 9 gated job routes above.
 
 The gate is read from the catalog at call time (`core/src/dispatch/policy.mjs`): approval `none` with risk read or
-write runs; any other approval value, or risk spend/deploy/destructive, is held. Never dispatched: `browser.act`
-and `site.edit` (owner-only), outreach (`out_*`, `lead_rescore`), production merges and deploys.
+write runs; any other approval value, or risk spend/deploy/destructive, is held; a capability that is not
+active, or not exposed to `mcp`/`agent`, is refused. Never dispatched: `browser.act` and `site.edit`
+(owner-only), outreach (`out_*`, `lead_rescore`), production merges and deploys.
 
 ## Approvals and audit
 
@@ -105,7 +132,7 @@ it, like Control already polls `core.ai.turn.get`.
 * `workers/mccluster-mcp/src/mcp.js` (remote allowlist + house-org-only)
 * `supabase/pending/20261124235900_ai_context_dispatch_v1.sql` (+ `.rollback.sql`),
   `supabase/tests/ai_context_dispatch.{stub,behaviour}.sql`, `.github/workflows/ai-context-dispatch-db.yml`
-* Tests: `core/test/dispatch-layer.test.mjs` (`npm --prefix core run test:dispatch`)
+* Tests: `core/test/dispatch-layer.test.mjs`, `core/test/dispatch-coverage.test.mjs` (`npm --prefix core run test:dispatch`)
 
 ## Going live (owner steps)
 

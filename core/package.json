@@ -27,7 +27,7 @@
     "test:reflection": "node --test test/reflection-policy.test.mjs test/objective-reflection-runtime.test.mjs test/local-ai-gate.test.mjs",
     "test:objective-synthesis": "node --test test/objective-synthesis-policy.test.mjs",
     "test:comms": "node --test test/comms-policy.test.mjs",
-    "test:dispatch": "node --test test/dispatch-layer.test.mjs",
+    "test:dispatch": "node --test test/dispatch-layer.test.mjs test/dispatch-coverage.test.mjs",
     "test:initiative-os": "node --test test/initiative-os.test.mjs",
     "test:evidence": "node --test test/completion-evidence.test.mjs",
     "test:system-health": "node --test test/system-health.test.mjs",

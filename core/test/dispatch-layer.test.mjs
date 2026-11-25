@@ -6,6 +6,7 @@ import { classifyDeterministic, classifyWithModel, decide, parseModelOutput, gro
 import { gateFor, requireOwner } from '../src/dispatch/policy.mjs';
 import { dispatchTurn, executeDispatch, getDispatch, requestHash, relayText, makeRpc, DISPATCH_NOT_APPLIED } from '../src/dispatch/dispatch.mjs';
 import { CONTROL_TOOLS } from '../src/tools/control.mjs';
+import { MEETING_TOOLS } from '../src/tools/meeting.mjs';
 
 const catalog = JSON.parse(await readFile(new URL('../capabilities/catalog.json', import.meta.url), 'utf8'));
 const ORG = '00000000-0000-4000-8000-000000000001';
@@ -17,14 +18,15 @@ const limits = { strong: STRONG, threshold: THRESHOLD, fallback: 0.6 };
 
 /* ---------- routing table ---------- */
 
-test('every route names a live catalog capability and an existing Core control tool', () => {
-  const tools = new Set(CONTROL_TOOLS.map((tool) => tool.name));
+test('every route names a live catalog capability (or a runner job) and an existing Core tool', () => {
+  const tools = new Set([...CONTROL_TOOLS, ...MEETING_TOOLS].map((tool) => tool.name)); // interactive meeting tools are listed only where enabled
   for (const route of DISPATCH_ROUTES) {
+    assert.ok(!route.tool.startsWith('core.dispatch.') && !route.capability.startsWith('dispatch.'), 'dispatch never routes into itself');
+    if (route.via === 'job') { assert.equal(route.tool, `job:${route.jobType}`); continue; }
     const entry = catalog.capabilities.find((capability) => capability.id === route.capability);
     assert.ok(entry, `${route.capability} is in the catalog`);
     assert.equal(entry.lifecycle, 'active');
-    if (route.tool !== 'core.deploy.preview') assert.ok(tools.has(route.tool), `${route.tool} is a control tool`); // preview is listed only on hosts that configure it
-    assert.ok(!route.tool.startsWith('core.dispatch.'), 'dispatch never routes into itself');
+    if (route.transport === 'local-control' && route.tool !== 'core.deploy.preview') assert.ok(tools.has(route.tool), `${route.tool} is a control tool`); // preview is listed only on hosts that configure it
   }
   for (const never of NEVER_DISPATCHED) assert.equal(DISPATCH_ROUTES.some((route) => route.capability === never), false, `${never} is not routable`);
   assert.equal(DISPATCH_ROUTES.some((route) => /out_|outreach|lead_rescore|site\.edit|browser/.test(route.tool + route.capability)), false);
@@ -32,7 +34,7 @@ test('every route names a live catalog capability and an existing Core control t
 
 test('the gate comes from the catalog: approval-free routes run, everything else is held', () => {
   for (const route of DISPATCH_ROUTES) {
-    const entry = catalog.capabilities.find((capability) => capability.id === route.capability);
+    const entry = route.via === 'job' ? route : catalog.capabilities.find((capability) => capability.id === route.capability);
     const gate = gateFor(route, catalog);
     const expectRun = entry.approval === 'none' && !['spend', 'deploy', 'destructive'].includes(entry.risk);
     assert.equal(gate.decision, expectRun ? 'run' : 'approval', `${route.intent}: ${entry.risk}/${entry.approval}`);
@@ -41,13 +43,13 @@ test('the gate comes from the catalog: approval-free routes run, everything else
   assert.equal(gateFor(routeFor('world.generate'), catalog).decision, 'approval');
   assert.equal(gateFor(routeFor('deploy.preview'), catalog).decision, 'approval');
   assert.equal(gateFor(routeFor('objective.plan'), catalog).decision, 'run');
-  assert.equal(gateFor(routeFor('status.resume'), catalog).decision, 'run');
+  assert.equal(gateFor(routeFor('core.resume'), catalog).decision, 'run');
   assert.equal(gateFor({ capability: 'browser.act', tool: 'x' }, catalog).decision, 'refused');
   assert.equal(gateFor({ capability: 'site.edit', tool: 'x' }, catalog).decision, 'refused');
   assert.equal(gateFor({ capability: 'not.real', tool: 'x' }, catalog).decision, 'refused');
   // A catalog that relaxes nothing: if code.build ever became approval none
   // but spend risk, it would still be held.
-  const relaxed = { capabilities: [{ id: 'code.build', lifecycle: 'active', risk: 'spend', approval: 'none' }] };
+  const relaxed = { capabilities: [{ id: 'code.build', lifecycle: 'active', risk: 'spend', approval: 'none', interfaces: ['mcp'] }] };
   assert.equal(gateFor(routeFor('code.build'), relaxed).decision, 'approval');
 });
 
@@ -55,8 +57,8 @@ test('the gate comes from the catalog: approval-free routes run, everything else
 
 test('the deterministic table routes the obvious messages', () => {
   const cases = [
-    ['what is the status right now', 'status.resume'],
-    ['catch me up', 'status.resume'],
+    ['what is the status right now', 'core.resume'],
+    ['catch me up', 'core.resume'],
     ['show my workstreams', 'workstream.list'],
     ['fix the footer spacing bug in mcclusterishere/mccluster', 'code.build'],
     ['inspect mcclusterishere/mccluster', 'repo.inspect'],
@@ -122,7 +124,7 @@ test('decide: strong rule, model above and below the threshold, model down, miss
   const weak = classifyDeterministic('the gallery page loads slowly sometimes');
   assert.ok(weak.confidence < STRONG);
   // model above threshold is accepted
-  let d = decide(weak, { ok: true, intent: 'objective.plan', confidence: 0.8, slots: {}, reply: 'I will plan that.' }, limits);
+  let d = decide(weak, { ok: true, intent: 'objective.plan', confidence: 0.8, slots: {}, reply: 'I will plan that.' }, limits, 'the gallery page loads slowly sometimes');
   assert.equal(d.route, 'capability'); assert.equal(d.intent, 'objective.plan');
   // below threshold: clarify, nothing routed
   d = decide(weak, { ok: true, intent: 'objective.plan', confidence: 0.5, slots: {}, reply: '' }, limits);
@@ -131,14 +133,14 @@ test('decide: strong rule, model above and below the threshold, model down, miss
   d = decide(weak, { ok: false, error: 'LOCAL_AI_NO_FABRIC_NODE' }, limits);
   assert.equal(d.route, 'answer');
   // model unavailable, the table is moderate: fallback accepted
-  d = decide(classifyDeterministic('can you analyze last week'), { ok: false, error: 'down' }, limits);
+  d = decide(classifyDeterministic('can you analyze last week'), { ok: false, error: 'down' }, limits, 'can you analyze last week');
   assert.equal(d.intent, 'objective.plan'); assert.equal(d.route, 'capability');
   // a route without its required argument asks for it
-  d = decide(weak, { ok: true, intent: 'code.build', confidence: 0.95, slots: {}, reply: '' }, limits);
+  d = decide(weak, { ok: true, intent: 'code.build', confidence: 0.95, slots: {}, reply: '' }, limits, 'the gallery page loads slowly sometimes');
   assert.equal(d.route, 'clarify'); assert.deepEqual(d.missing, ['repository']); assert.match(d.reply, /repository/);
   // a strong rule does not need the model
-  d = decide(classifyDeterministic('status'), null, limits);
-  assert.equal(d.intent, 'status.resume'); assert.equal(d.route, 'capability');
+  d = decide(classifyDeterministic('status'), null, limits, 'status');
+  assert.equal(d.intent, 'core.resume'); assert.equal(d.route, 'capability');
 });
 
 test('the front end is the smallest resident Ollama model, called locally with a schema', async () => {

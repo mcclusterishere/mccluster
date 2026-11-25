@@ -10,9 +10,9 @@
                 one the front-end model's own short reply is returned.
      clarify    the front end is not confident, or a required detail
                 is missing: one question back, nothing runs.
-     run        a catalog capability whose approval is "none": the
-                existing Core control tool runs or enqueues it on the
-                ops_agent_jobs queue the OVH runners claim.
+     run        a route whose approval is "none": a catalog capability
+                through the Core capability registry, or a runner job
+                type enqueued on ops_agent_jobs for the OVH runners.
      approval   anything the catalog gates: a pending
                 public.control_approvals row (shown in Control next to
                 every other approval). Nothing runs until the owner
@@ -30,8 +30,8 @@
    Storage:  supabase/pending/20261124235900_ai_context_dispatch_v1.sql
    ============================================================ */
 
-import { createHash } from 'node:crypto';
-import { DISPATCH_SCHEMA, routeFor } from './routes.mjs';
+import { createHash, randomUUID } from 'node:crypto';
+import { DISPATCH_SCHEMA, routeFor, buildArgs } from './routes.mjs';
 import { classifyDeterministic, classifyWithModel, decide, dispatchModel, thresholds } from './classify.mjs';
 import { gateFor, requireOwner } from './policy.mjs';
 
@@ -105,6 +105,45 @@ export async function loadDispatchContext({ orgId, message, actorId }, { rpc, me
   return out;
 }
 
+/* Find a queued job id in whatever a tool or capability returned: the
+   control tools answer {job_id}, a capability call wraps the tool result
+   as {result: {result: ...}}, a fresh ops_agent_jobs row has {id, job_type}. */
+export function jobIdOf(value, depth = 0) {
+  if (!value || typeof value !== 'object' || depth > 4) return null;
+  for (const key of ['job_id', 'jobId']) if (UUID.test(String(value[key] || ''))) return String(value[key]).toLowerCase();
+  if (value.job_type && UUID.test(String(value.id || ''))) return String(value.id).toLowerCase();
+  for (const key of ['result', 'job', 'task']) {
+    const found = jobIdOf(value[key], depth + 1);
+    if (found) return found;
+  }
+  return null;
+}
+
+/* Run one routed call. Three paths, all existing Core machinery:
+     job route         -> enqueueJob on ops_agent_jobs for the OVH runner
+     catalog route     -> the broker's capability registry (the same
+                          resolve/bind/fallback path an MCP call takes)
+     local-control     -> the Core control tool, when no registry is wired */
+export async function runRoute(route, toolArgs, { orgId, actor, turnId }, deps = {}) {
+  if (route.via === 'job') {
+    if (typeof deps.enqueue !== 'function') throw Object.assign(new Error('job queue is not wired for dispatch'), { status: 503, code: 'DISPATCH_NOT_WIRED' });
+    const row = await deps.enqueue({
+      jobId: randomUUID(),
+      orgId,
+      jobType: route.jobType,
+      targetType: route.targetType,
+      targetId: toolArgs.target_id,
+      input: { ...(toolArgs.input || {}), dispatch_turn_id: turnId },
+      priority: 30,
+      maxAttempts: 2,
+    });
+    return { job_id: row?.id ?? null, job_type: route.jobType };
+  }
+  if (typeof deps.callCapability === 'function') return deps.callCapability(route.capability, toolArgs, { actor });
+  if (route.transport === 'local-control' && typeof deps.callTool === 'function') return deps.callTool(route.tool, toolArgs, { actor });
+  throw Object.assign(new Error(`${route.capability} needs the Core capability registry, which is not wired here`), { status: 503, code: 'DISPATCH_NOT_WIRED' });
+}
+
 function boundedResult(value, max = 8000) {
   const text = JSON.stringify(value ?? null);
   if (text.length <= max) return value ?? null;
@@ -126,15 +165,16 @@ export async function dispatchTurn(args = {}, options = {}, deps = {}) {
   const message = clean(args.message, 12000);
   if (!message) throw Object.assign(new Error('message is required'), { status: 400, code: 'DISPATCH_INVALID_INPUT' });
   const threadId = args.thread_id ? requireUuid(args.thread_id, 'thread_id') : null;
-  const { rpc, chat, callTool, catalog, submitAnswer, memory, env = process.env } = deps;
-  if (typeof rpc !== 'function' || typeof callTool !== 'function') throw Object.assign(new Error('dispatch is not wired'), { status: 503, code: 'DISPATCH_NOT_WIRED' });
+  const { rpc, chat, catalog, submitAnswer, memory, env = process.env } = deps;
+  if (typeof rpc !== 'function') throw Object.assign(new Error('dispatch is not wired'), { status: 503, code: 'DISPATCH_NOT_WIRED' });
 
   const limits = thresholds(env);
   const context = await loadDispatchContext({ orgId, message, actorId }, { rpc, memory });
-  const deterministic = classifyDeterministic(message);
+  const hint = { intent: typeof args.intent === 'string' ? args.intent.trim() : null, args: args.args };
+  const deterministic = classifyDeterministic(message, hint);
   const skipModel = deterministic.source === 'refusal' || deterministic.confidence >= limits.strong;
   const model = skipModel ? null : await classifyWithModel(message, { chat, model: dispatchModel(env), context: context.summary });
-  const decision = decide(deterministic, model, limits);
+  const decision = decide(deterministic, model, limits, message, { messageId });
 
   let routeKind = decision.route;
   let route = null, gate = null, toolArgs = null, hash = null;
@@ -142,7 +182,8 @@ export async function dispatchTurn(args = {}, options = {}, deps = {}) {
     route = routeFor(decision.intent);
     gate = gateFor(route, catalog);
     routeKind = gate.decision === 'run' ? 'run' : gate.decision === 'approval' ? 'approval' : 'refused';
-    toolArgs = { ...route.build(decision.slots || {}, message), org_id: orgId };
+    toolArgs = { ...(decision.args || buildArgs(route, decision.slots || {}, message, { messageId })) };
+    if (route.takesOrg) toolArgs.org_id = orgId;
     hash = requestHash(route.tool, toolArgs);
   }
   if (routeKind === 'answer' && !threadId && !decision.reply) {
@@ -184,10 +225,10 @@ export async function dispatchTurn(args = {}, options = {}, deps = {}) {
 
   if (routeKind === 'run') {
     try {
-      const result = await callTool(route.tool, toolArgs, { actor: options.actor });
-      const jobId = UUID.test(String(result?.job_id || '')) ? String(result.job_id) : null;
+      const result = await runRoute(route, toolArgs, { orgId, actor: options.actor, turnId: turn.id }, deps);
+      const jobId = jobIdOf(result);
       const status = jobId ? 'queued' : 'done';
-      await rpc('ops_ai_dispatch_attach', { p_org: orgId, p_turn: turn.id, p_patch: { status, job_id: jobId, result: jobId ? { queued: true, job_type: result?.job_type ?? null } : boundedResult(result) } });
+      await rpc('ops_ai_dispatch_attach', { p_org: orgId, p_turn: turn.id, p_patch: { status, job_id: jobId, result: jobId ? { queued: true, job_type: result?.job_type ?? route?.jobType ?? null } : boundedResult(result) } });
       return { ...base, status, job_id: jobId, result: jobId ? null : boundedResult(result, 4000) };
     } catch (error) {
       const message = clean(error?.message || error, 1000);
@@ -270,7 +311,7 @@ export async function executeDispatch(args = {}, options = {}, deps = {}) {
   const actorId = requireOwner(options.actor);
   const orgId = requireUuid(args.org_id, 'org_id');
   const turnId = requireUuid(args.turn_id, 'turn_id');
-  const { rpc, callTool, catalog } = deps;
+  const { rpc, catalog } = deps;
   // The database decides: owner actor, pending turn, approval approved,
   // unexpired and bound to the same request hash. It flips the turn to
   // "executing" in the same statement, so a second call gets nothing.
@@ -282,15 +323,15 @@ export async function executeDispatch(args = {}, options = {}, deps = {}) {
   const args2 = turn.args || {};
   // Belt and braces: the claimed call must still be exactly the routed
   // tool with exactly the approved arguments for this organization.
-  if (!route || route.tool !== turn.tool || gate.decision === 'refused' || args2.org_id !== orgId || requestHash(turn.tool, args2) !== turn.request_hash) {
+  if (!route || route.tool !== turn.tool || gate.decision === 'refused' || (route.takesOrg && args2.org_id !== orgId) || (!route.takesOrg && 'org_id' in args2) || requestHash(turn.tool, args2) !== turn.request_hash) {
     await rpc('ops_ai_dispatch_attach', { p_org: orgId, p_turn: turnId, p_patch: { status: 'failed', error: 'approved request no longer matches the routing table; nothing ran' } }).catch(() => null);
     throw Object.assign(new Error('approved request no longer matches the routing table; nothing ran'), { status: 409, code: 'DISPATCH_REQUEST_CHANGED' });
   }
   try {
-    const result = await callTool(turn.tool, args2, { actor: options.actor });
-    const jobId = UUID.test(String(result?.job_id || '')) ? String(result.job_id) : null;
+    const result = await runRoute(route, args2, { orgId, actor: options.actor, turnId }, deps);
+    const jobId = jobIdOf(result);
     const status = jobId ? 'queued' : 'done';
-    await rpc('ops_ai_dispatch_attach', { p_org: orgId, p_turn: turnId, p_patch: { status, job_id: jobId, result: jobId ? { queued: true, job_type: result?.job_type ?? null } : boundedResult(result) } });
+    await rpc('ops_ai_dispatch_attach', { p_org: orgId, p_turn: turnId, p_patch: { status, job_id: jobId, result: jobId ? { queued: true, job_type: result?.job_type ?? route?.jobType ?? null } : boundedResult(result) } });
     return { schema: DISPATCH_SCHEMA, turn_id: turnId, executed: true, status, job_id: jobId, relay: jobId ? 'Approved and started on McCluster Core.' : 'Approved and done.' };
   } catch (error) {
     const message = clean(error?.message || error, 1000);

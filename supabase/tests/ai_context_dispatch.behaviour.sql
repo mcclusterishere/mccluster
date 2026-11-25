@@ -55,6 +55,18 @@ begin
   exception when no_data_found then ok := true; end;
   assert ok, 'a settled turn cannot be re-attached';
 
+  -- a direct runner job route (tool job:<type>) records and attaches too
+  r := public.ops_ai_dispatch_record(org, owner, jsonb_build_object('operation_key', 'dispatch:4a4a4a4a-4a4a-4a4a-8a4a-4a4a4a4a4a4a',
+        'message', 'run a host health check', 'intent', 'job.host_health', 'route', 'run', 'capability', 'job.host_health',
+        'tool', 'job:host_health', 'args', jsonb_build_object('target_id', 'ovh-mccluster-core', 'input', '{}'::jsonb), 'request_hash', h, 'risk_class', 'low'));
+  assert r->'turn'->>'tool' = 'job:host_health' and r->'turn'->>'status' = 'routed', 'job routes are recorded';
+  ok := false;
+  begin perform public.ops_ai_dispatch_record(org, owner, jsonb_build_object('operation_key', 'dispatch:4b4b4b4b-4b4b-4b4b-8b4b-4b4b4b4b4b4b',
+        'message', 'x', 'intent', 'job.host_health', 'route', 'run', 'capability', 'job.host_health',
+        'tool', 'Job Host Health; drop', 'args', '{}'::jsonb, 'request_hash', h));
+  exception when check_violation then ok := true; end;
+  assert ok, 'a malformed tool name is refused';
+
   -- approval route: a pending control approval bound to the hash
   r := public.ops_ai_dispatch_record(org, owner, jsonb_build_object('operation_key', 'dispatch:55555555-5555-4555-8555-555555555555',
         'message', 'fix the footer in mcclusterishere/mccluster', 'intent', 'code.build', 'route', 'approval', 'capability', 'code.build',

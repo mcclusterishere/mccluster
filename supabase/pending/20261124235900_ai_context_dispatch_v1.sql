@@ -53,7 +53,7 @@ create table if not exists ai_context.dispatch_turns (
   intent text not null check (intent ~ '^[a-z][a-z0-9_.-]{1,63}$'),
   route text not null check (route in ('answer', 'clarify', 'run', 'approval', 'refused')),
   capability text check (capability is null or capability ~ '^[a-z][a-z0-9_.-]{1,63}$'),
-  tool text check (tool is null or tool ~ '^core\.[a-z0-9_.-]{1,80}$'),
+  tool text check (tool is null or tool ~ '^[a-z][a-z0-9_.:-]{1,80}$'),
   args jsonb not null default '{}'::jsonb check (jsonb_typeof(args) = 'object' and octet_length(args::text) <= 32000),
   request_hash text check (request_hash is null or request_hash ~ '^[0-9a-f]{64}$'),
   classifier jsonb not null default '{}'::jsonb check (jsonb_typeof(classifier) = 'object' and octet_length(classifier::text) <= 16000),

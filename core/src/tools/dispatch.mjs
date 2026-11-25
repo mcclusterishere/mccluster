@@ -15,7 +15,7 @@
    ============================================================ */
 
 import { readFileSync } from 'node:fs';
-import { rest } from '../supabase.mjs';
+import { rest, enqueueJob } from '../supabase.mjs';
 import { localAiChat } from '../compute/local-ai-client.mjs';
 import { submitResidentAiTurn, getResidentAiTurn } from '../resident-ai.mjs';
 import { relevantMemory } from '../resident-context.mjs';
@@ -32,7 +32,7 @@ const ID = { type: 'string', description: 'UUID' };
 export const DISPATCH_TOOLS = Object.freeze([
   {
     name: 'core.dispatch.turn', title: 'Dispatch an owner message',
-    description: 'McCluster\'s conversational front end. Classifies one owner message with the routing table and the small resident model, records the routing decision (ai_context.dispatch_turns + ai_context.decisions) and then: answers (resident McCluster turn when thread_id is given), asks one clarifying question, runs an approval-free catalog capability on Core, or files a pending owner approval for anything the catalog gates. Never sends outside messages, merges, deploys to production, spends or deletes. Owner session only. Idempotent on message_id.',
+    description: 'McCluster\'s conversational front end. Classifies one owner message with the routing table and the small resident model, records the routing decision (ai_context.dispatch_turns + ai_context.decisions) and then: answers (resident McCluster turn when thread_id is given), asks one clarifying question, runs an approval-free catalog capability or OVH runner job on Core, or files a pending owner approval for anything the catalog gates. Never sends outside messages, merges, deploys to production, spends or deletes. Owner session only. Idempotent on message_id.',
     inputSchema: {
       type: 'object',
       required: ['org_id', 'message_id', 'message'],
@@ -41,6 +41,8 @@ export const DISPATCH_TOOLS = Object.freeze([
         message_id: { ...ID, description: 'client-generated UUID for this message; a retry with the same id replays the recorded outcome' },
         message: { type: 'string', minLength: 1, maxLength: 12000 },
         thread_id: { ...ID, description: 'optional active ops_ai_threads id; conversational answers then come from a durable resident McCluster turn' },
+        intent: { type: 'string', maxLength: 80, description: 'optional explicit route (a catalog capability id or job.<job_type>); skips classification but is gated exactly the same' },
+        args: { type: 'object', description: 'optional structured arguments for the route; only names the route accepts are used, org_id is always set by dispatch' },
       },
       additionalProperties: false,
     },
@@ -57,11 +59,29 @@ export const DISPATCH_TOOLS = Object.freeze([
   },
 ]);
 
+/* The broker wires its capability registry in here once it exists, so a
+   dispatched catalog route takes the same resolve/bind/fallback path an
+   MCP tools/call does. Recursion into dispatch itself is refused. */
+let capabilityCaller = null;
+export function setDispatchCapabilityCaller(fn) {
+  capabilityCaller = typeof fn === 'function' ? fn : null;
+}
+
+function guardedCapabilityCaller() {
+  if (!capabilityCaller) return null;
+  return (id, args, options) => {
+    if (String(id).startsWith('dispatch.')) throw Object.assign(new Error('dispatch cannot route into itself'), { status: 400 });
+    return capabilityCaller(id, args, options);
+  };
+}
+
 export function dispatchDependencies(callTool, overrides = {}) {
   return {
     rpc: makeRpc(rest),
     chat: localAiChat,
     callTool,
+    callCapability: guardedCapabilityCaller(),
+    enqueue: enqueueJob,
     catalog: loadCatalog(),
     submitAnswer: submitResidentAiTurn,
     getAnswer: getResidentAiTurn,
