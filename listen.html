@@ -22,6 +22,8 @@
     html, body { background: var(--ink); }
     .ls { max-width: 42rem; margin: 0 auto;
       padding: clamp(1rem, 3vh, 1.6rem) clamp(1.1rem, 4vw, 2rem) 10rem; }
+    /* Keep the edge-to-edge rails inside the available width when a scrollbar takes space. */
+    body.music-v2.music-room--listen .ls { width: min(var(--music-shell), calc(100% - 24px)); }
 
     .ls__top { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
     .ls__ava { width: 2.1rem; height: 2.1rem; border-radius: 50%; display: block; }
@@ -45,6 +47,7 @@
       background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.045));
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.13); }
     #q::placeholder { color: var(--cream-dim); font-weight: 600; }
+    .music-v2.music-room--listen #q { font-size: max(16px, 1rem); }
     #q::-webkit-search-cancel-button { display: none; }
     #q:focus { outline: none;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 2px var(--ruby-hot); }
@@ -53,6 +56,13 @@
       background: rgba(255,255,255,0.12); color: var(--cream); font-size: 1.05rem; line-height: 1; }
     .ls__count { font-family: var(--ui); font-weight: 700; font-size: 0.78rem; color: var(--cream-dim);
       margin: 0.7rem 0.3rem 0; }
+    .ls__browse { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1rem 0 1.5rem; }
+    .ls__browse[hidden] { display: none; }
+    .ls__browse a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px;
+      padding: 0.5rem 1rem; border: 1px solid currentColor; border-radius: 100px;
+      color: var(--cream); font-family: var(--ui); font-size: 0.9rem; font-weight: 700; text-decoration: none; }
+    .ls__browse a:focus-visible { outline: 2px solid var(--ruby-hot); outline-offset: 3px; }
+    #allWrap, #shelfWrap { scroll-margin-top: 1rem; }
 
     /* the album card in a rail: the art is the card, not a thumbnail */
     .feat__card.is-album > small { min-height: 0; }
@@ -100,10 +110,14 @@
     <div class="ls__find">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
       <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
-             placeholder="Search every track, album or credit" aria-label="Search the catalogue">
+             placeholder="Search every track, album or artist" aria-label="Search the catalogue">
       <button id="qClear" type="button" aria-label="Clear the search" hidden>&times;</button>
     </div>
-    <p class="ls__count" id="count" hidden></p>
+    <p class="ls__count" id="count" role="status" aria-live="polite" hidden></p>
+    <nav class="ls__browse" id="browseMusic" aria-label="Browse music">
+      <a href="#allWrap">All tracks</a>
+      <a href="#shelfWrap">Albums</a>
+    </nav>
 
     <!-- ONE TAP (owner, 2026-10-20): with a finished profile, Become a creator makes the artist page from it, asking
          nothing, and opens Creator Studio (js/creator-onboarding.js, the door). The tap accepts the Creator Terms, and
@@ -144,10 +158,9 @@
     <!-- THE DECK. Every rail below is one algorithm, and it only exists on
          the page when that algorithm has something to say. A rail headed
          with a method and filled with a fallback is worse than no rail.
-         JUST ALBUMS AND ARTISTS, RIGHT NOW (owner, 2026-11-23): the song rails
-         rest behind one switch in js/listen.js (SONG_RAILS) until there is more
-         music; the page is the Artists rail and the Albums shelf, and a search
-         still finds every song. -->
+         The recommendation rails rest behind SONG_RAILS in js/listen.js.
+         Owner, 2026-11-24: every track is also visible and browsable without a
+         search. The full track list below the albums is always available. -->
 
     <section class="ls__sec" id="ffWrap" aria-label="Because you played" hidden>
       <p class="lib__k" id="ffK">Because you played it</p>
@@ -191,13 +204,13 @@
       <div class="feat" id="shelf"></div>
     </section>
 
-    <section class="ls__sec" id="allWrap" aria-label="Search results" hidden>
-      <p class="lib__k" id="allK">Results</p>
-      <p class="lib__why" id="allWhy">Matched on title, album, credit and registered code.</p>
-      <ul class="tr" id="all"><li><span class="t">Opening the shelf&hellip;</span></li></ul>
+    <section class="ls__sec" id="allWrap" aria-labelledby="allK" aria-busy="true">
+      <h2 class="lib__k" id="allK">All tracks</h2>
+      <p class="lib__why" id="allWhy">Every song, across every album. Play here or open a track for more.</p>
+      <ul class="tr" id="all"><li><span class="t">Loading tracks&hellip;</span></li></ul>
     </section>
 
-    <p class="ls__note">Written &amp; performed by McCluster unless credited otherwise.
+    <p class="ls__note">McCluster&rsquo;s own records are written &amp; performed by Matthew McCluster; every other record names its artist.
       The registered discography, with ISRC codes, is <a href="catalogue.html">the catalog</a>.
       Licensing &amp; sync: <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a></p>
 
@@ -229,6 +242,7 @@
   <script src="js/now-playing.js?v=__STAMP__"></script>
   <script src="js/music-engine.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/music-credits.js?v=__STAMP__"></script>
   <script src="js/listen.js?v=__STAMP__"></script>
   <script src="js/music-community.js?v=__STAMP__"></script>
   <script defer src="js/pip.js?v=__STAMP__"></script>

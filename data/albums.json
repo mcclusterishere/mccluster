@@ -9,6 +9,16 @@
    "tracks": [
     {
      "title": "Who Did The Shoot",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/who-did-the-shoot.mp3",
      "poster": "assets/frames/hero_0001.jpg",
      "lyrics": "data/lyrics/who-did-the-shoot.json",
@@ -63,6 +73,16 @@
     },
     {
      "title": "Runway Walk",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/runway-walk.mp3",
      "poster": "assets/frames/vauntlive_0001.jpg",
      "pulse": "#ff5a5c",
@@ -85,6 +105,16 @@
     },
     {
      "title": "Write a Song",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/write-a-song.mp3",
      "poster": "assets/frames/studio360_0001.jpg",
      "pulse": "#c1121f",
@@ -108,7 +138,16 @@
     {
      "title": "Here",
      "sub": "the title track",
-     "credit": "",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/here.mp3",
      "poster": "assets/frames/keynote_0001.jpg",
      "pulse": "#ff3040",
@@ -131,6 +170,16 @@
     },
     {
      "title": "Antisocial",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/antisocial.mp3",
      "poster": "assets/frames/nightscroll_0001.jpg",
      "lyrics": "data/lyrics/antisocial.json",
@@ -192,6 +241,16 @@
     },
     {
      "title": "Lightroom",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/lightroom.mp3",
      "poster": "assets/frames/editors_0001.jpg",
      "pulse": "#f0453f",
@@ -231,11 +290,21 @@
    "artist_page": "prim3-artist.html",
    "tag": "The study tapes",
    "art": "assets/img/prim3-logo.png",
-   "by": "Music to build to.",
+   "by": "Music to build to. Scored and produced by McCluster.",
    "tracks": [
     {
      "title": "Got WiFi?",
-     "credit": "The PRIM3 blue-team anthem",
+     "credit": "The PRIM3 blue-team anthem · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "note": "The PRIM3 blue-team anthem",
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/got-wifi.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/got-wifi.json",
@@ -245,6 +314,16 @@
     },
     {
      "title": "High Alert",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/high-alert.m4a",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/high-alert.json",
@@ -252,6 +331,16 @@
     },
     {
      "title": "OSINT",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/osint.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/osint.json",
@@ -259,6 +348,16 @@
     },
     {
      "title": "Anti-Social Engineering (Draft)",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/anti-social-engineering.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/anti-social-engineering.json",
@@ -266,6 +365,16 @@
     },
     {
      "title": "Red, Blue, Purple, White Team",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/red-blue-purple-white-team.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/red-blue-purple-white-team.json",
@@ -273,6 +382,16 @@
     },
     {
      "title": "Data Breach",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/data-breach.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/data-breach.json",
@@ -280,6 +399,16 @@
     },
     {
      "title": "App Attacks",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/app-attacks.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/app-attacks.json",
@@ -287,6 +416,16 @@
     },
     {
      "title": "Dive In",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/dive-in.mp3",
      "lyrics_generation": "awaiting-vocal-take",
      "poster": "assets/frames/prim3_0001.jpg",
@@ -294,6 +433,16 @@
     },
     {
      "title": "IOT (Draft)",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/iot.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/iot.json",
@@ -301,6 +450,16 @@
     },
     {
      "title": "Per Diem (Draft)",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/per-diem.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/per-diem.json",
@@ -308,6 +467,16 @@
     },
     {
      "title": "RAID (Hot Site)",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/raid-hot-site.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/raid-hot-site.json",
@@ -315,6 +484,16 @@
     },
     {
      "title": "Evil Twin (Middle Man)",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/evil-twin-middle-man.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/evil-twin-middle-man.json",
@@ -322,6 +501,16 @@
     },
     {
      "title": "Ghost in the Wires",
+     "credit": "PRIM3 · Scored and produced by McCluster",
+     "credits": {
+      "primary": [
+       "prim3"
+      ],
+      "producers": [
+       "mccluster"
+      ],
+      "produced_as": "scored"
+     },
      "src": "assets/audio/ghost-in-the-wires.mp3",
      "poster": "assets/frames/prim3_0001.jpg",
      "lyrics": "data/lyrics/ghost-in-the-wires.json",
@@ -339,8 +528,24 @@
    "tracks": [
     {
      "title": "Environmental Injustice",
-     "sub": "McCluster ft. Angel Kastro & Ocho",
-     "credit": "McCluster ft. Angel Kastro & Ocho · the Equity Uprise anthem",
+     "sub": "McCluster ft. Angel Kastro & Ocho · the Equity Uprise anthem · Produced by McCluster",
+     "credit": "McCluster ft. Angel Kastro & Ocho · the Equity Uprise anthem · Produced by McCluster",
+     "credits": {
+      "primary": [
+       "equity-uprise"
+      ],
+      "lead": [
+       "mccluster"
+      ],
+      "featured": [
+       "angel-kastro",
+       "ocho"
+      ],
+      "note": "the Equity Uprise anthem",
+      "producers": [
+       "mccluster"
+      ]
+     },
      "src": "assets/audio/environmental-injustice.mp3",
      "poster": "assets/frames/uprise_0001.jpg",
      "reel": "data/reels/environmental-injustice.json",
@@ -350,7 +555,25 @@
     },
     {
      "title": "Environmental Injustice (Brave mix)",
-     "sub": "McCluster ft. Angel Kastro & Ocho · the GA edition",
+     "sub": "McCluster ft. Angel Kastro & Ocho · the GA edition · Produced by Zakir Elhajoui & McCluster",
+     "credit": "McCluster ft. Angel Kastro & Ocho · the GA edition · Produced by Zakir Elhajoui & McCluster",
+     "credits": {
+      "primary": [
+       "equity-uprise"
+      ],
+      "lead": [
+       "mccluster"
+      ],
+      "featured": [
+       "angel-kastro",
+       "ocho"
+      ],
+      "note": "the GA edition",
+      "producers": [
+       "zakir-elhajoui",
+       "mccluster"
+      ]
+     },
      "src": "assets/audio/environmental-injustice-brave.mp3",
      "poster": "assets/frames/uprise_0001.jpg",
      "lyrics": "data/lyrics/environmental-injustice-brave.dk.json",
@@ -361,6 +584,21 @@
     {
      "title": "Please Set Me Free",
      "sub": "Los Fidel · beat by McCluster",
+     "credit": "Los Fidel · beat by McCluster",
+     "credits": {
+      "primary": [
+       "equity-uprise"
+      ],
+      "lead": [
+       "los-fidel"
+      ],
+      "roles": [
+       {
+        "role": "beat",
+        "artist": "mccluster"
+       }
+      ]
+     },
      "src": "assets/audio/please-set-me-free.mp3",
      "poster": "assets/frames/church_0001.jpg",
      "lyrics": "data/lyrics/please-set-me-free.json",
@@ -370,7 +608,22 @@
     },
     {
      "title": "Money or the Power",
-     "sub": "ft. Ocho, McCluster & Old Jay · prod. PAX",
+     "sub": "Equity Uprise ft. Ocho, McCluster & Old Jay · prod. Pax Tha Collector",
+     "credit": "Equity Uprise ft. Ocho, McCluster & Old Jay · prod. Pax Tha Collector",
+     "credits": {
+      "primary": [
+       "equity-uprise"
+      ],
+      "featured": [
+       "ocho",
+       "mccluster",
+       "old-jay"
+      ],
+      "producers": [
+       "pax"
+      ],
+      "produced_as": "prod"
+     },
      "src": "assets/audio/money-or-the-power.mp3",
      "poster": "assets/frames/moneyglitch_0001.jpg",
      "lyrics": "data/lyrics/money-or-the-power.dk.json",
@@ -389,7 +642,19 @@
    "tracks": [
     {
      "title": "Deep End",
-     "sub": "the dark side · McCluster × VVS Madè",
+     "sub": "McCluster × VVS Madè · the dark side · Produced by McCluster & Zakir Elhajoui",
+     "credit": "McCluster × VVS Madè · the dark side · Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster",
+       "vvs-made"
+      ],
+      "note": "the dark side",
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/deep-end.m4a",
      "poster": "assets/frames/warroom_0001.jpg",
      "lyrics": "data/lyrics/deep-end.json",
@@ -399,7 +664,19 @@
     },
     {
      "title": "Heal the 3rd World",
-     "sub": "the light side · McCluster × VVS Madè",
+     "sub": "McCluster × VVS Madè · the light side · Produced by McCluster & Zakir Elhajoui",
+     "credit": "McCluster × VVS Madè · the light side · Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster",
+       "vvs-made"
+      ],
+      "note": "the light side",
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/heal-the-3rd-world.m4a",
      "poster": "assets/frames/angel_0001.jpg",
      "music_video": "assets/video/angel.mp4",
@@ -416,7 +693,25 @@
    "tracks": [
     {
      "title": "Vaunt (Acoustic)",
-     "credit": "The Vaunt Private Flights jingle · guitar by Zakir · from the Vaunt EP (with \"Jet Pass\")",
+     "credit": "The Vaunt Private Flights jingle · guitar by Zakir · Produced by McCluster & Zakir Elhajoui · from the Vaunt EP (with \"Jet Pass\")",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "note": "The Vaunt Private Flights jingle",
+      "roles": [
+       {
+        "role": "guitar",
+        "artist": "zakir-elhajoui",
+        "as": "Zakir"
+       }
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ],
+      "after": "from the Vaunt EP (with \"Jet Pass\")"
+     },
      "src": "assets/audio/vaunt.mp3",
      "poster": "assets/frames/vauntlive_0001.jpg",
      "music_video": "assets/video/vauntlive.mp4",
@@ -433,6 +728,16 @@
    "tracks": [
     {
      "title": "Test Drive",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/test-drive.mp3",
      "poster": "assets/img/wing-whip-poster.jpg",
      "lyrics": "data/lyrics/test-drive.json",
@@ -441,6 +746,16 @@
     },
     {
      "title": "Salvage Title (B-Side)",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/salvage-title-b-side.m4a",
      "poster": "assets/img/wing-whip-poster.jpg",
      "lyrics": "data/lyrics/salvage-title-b-side.json",
@@ -449,6 +764,16 @@
     },
     {
      "title": "Repo Guy (B-Side)",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/repo-guy-b-side.mp3",
      "poster": "assets/img/wing-whip-poster.jpg",
      "lyrics": "data/lyrics/repo-guy-b-side.json",
@@ -457,6 +782,16 @@
     },
     {
      "title": "Hundun (B-Side)",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/hundun-b-side.mp3",
      "poster": "assets/img/wing-whip-poster.jpg",
      "lyrics": "data/lyrics/hundun-b-side.json",
@@ -465,7 +800,16 @@
     },
     {
      "title": "Dealer Plates (A-Side)",
-     "credit": "Prod. Zakir & McCluster",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/dealer-plates.mp3",
      "poster": "assets/frames/whip_0001.jpg",
      "lyrics": "data/lyrics/dealer-plates.json",
@@ -476,7 +820,16 @@
     },
     {
      "title": "Dealer Plates (B-Side)",
-     "credit": "Prod. Zakir & McCluster",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/dealer-plates-b.m4a",
      "poster": "assets/img/wing-whip-poster.jpg",
      "music_video": "assets/video/dealer-plates-b-video.mp4",
@@ -485,6 +838,16 @@
     },
     {
      "title": "Towyard Killer",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/towyard-killer.m4a",
      "poster": "assets/img/wing-whip-poster.jpg",
      "lyrics": "data/lyrics/towyard-killer.json",
@@ -493,6 +856,16 @@
     },
     {
      "title": "Mr. Lock Changer (Remix)",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/mr-lock-changer-remix.mp3",
      "poster": "assets/img/wing-whip-poster.jpg",
      "lyrics": "data/lyrics/mr-lock-changer-remix.json",
@@ -501,6 +874,16 @@
     },
     {
      "title": "Lana (B-Side)",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/lana-b-side.mp3",
      "poster": "assets/img/wing-whip-poster.jpg",
      "lyrics": "data/lyrics/lana-b-side.json",
@@ -509,6 +892,16 @@
     },
     {
      "title": "Stand On Business (B-Side)",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/stand-on-business-b-side.m4a",
      "poster": "assets/img/wing-whip-poster.jpg",
      "lyrics": "data/lyrics/stand-on-business-b-side.json",
@@ -517,6 +910,16 @@
     },
     {
      "title": "All in the Details",
+     "credit": "Produced by McCluster & Zakir Elhajoui",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster",
+       "zakir-elhajoui"
+      ]
+     },
      "src": "assets/audio/all-in-the-details.mp3",
      "poster": "assets/img/wing-whip-poster.jpg",
      "lyrics": "data/lyrics/all-in-the-details.json",
@@ -534,7 +937,16 @@
    "tracks": [
     {
      "title": "Upset",
-     "credit": "Hitman Halo × Raheem × Rahndrx",
+     "sub": "Hitman Benji × Raheem × Rahndrx",
+     "credit": "Hitman Benji × Raheem × Rahndrx",
+     "artist": "Hitman Benji × Raheem × Rahndrx",
+     "credits": {
+      "primary": [
+       "hitman-benji",
+       "raheem",
+       "rahndrx"
+      ]
+     },
      "src": "assets/audio/upset.mp3",
      "poster": "assets/frames/coffeecam_0001.jpg",
      "lyrics": "data/lyrics/upset.json",
@@ -554,18 +966,36 @@
    "tracks": [
     {
      "title": "You the Feds",
+     "credit": "KKK",
+     "credits": {
+      "primary": [
+       "kkk"
+      ]
+     },
      "src": "assets/audio/you-the-feds.m4a",
      "poster": "assets/img/cia-mind-control-cover.jpg",
      "seconds": 232.9
     },
     {
      "title": "Pull Up",
+     "credit": "KKK",
+     "credits": {
+      "primary": [
+       "kkk"
+      ]
+     },
      "src": "assets/audio/pull-up.mp3",
      "poster": "assets/img/cia-mind-control-cover.jpg",
      "seconds": 150.4
     },
     {
      "title": "Niggy Nigg Niggr",
+     "credit": "KKK",
+     "credits": {
+      "primary": [
+       "kkk"
+      ]
+     },
      "src": "assets/audio/niggy-nigg-preview.mp3",
      "poster": "assets/img/cia-mind-control-cover.jpg",
      "gated": {
@@ -600,6 +1030,456 @@
      "hold": "profile"
     }
    ]
+  },
+  {
+   "slug": "tinderfessions",
+   "name": "Tinderfessions",
+   "artist": "Benji Chase",
+   "tag": "The album · 2020",
+   "art": "assets/img/tinderfessions-cover.jpg",
+   "by": "",
+   "listen_elsewhere": [
+    {
+     "service": "Apple Music",
+     "url": "https://music.apple.com/us/album/tinderfessions/1540850727"
+    },
+    {
+     "service": "Spotify",
+     "url": "https://open.spotify.com/album/4WFLlYVdrCM7iYKdOOHSS7"
+    },
+    {
+     "service": "Amazon Music",
+     "url": "https://music.amazon.com/albums/B08NS11N38"
+    }
+   ],
+   "tracks": [
+    {
+     "title": "Rolling With Me",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/rolling-with-me.m4a",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 150.8
+    },
+    {
+     "title": "Tinderella",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/tinderella.m4a",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 212.1
+    },
+    {
+     "title": "Alquifina (New Chick)",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/alquifina-new-chick.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 113
+    },
+    {
+     "title": "Bussin' Juggs",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/bussin-juggs.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 118.6
+    },
+    {
+     "title": "One Gon' Ride (feat. Jiddy)",
+     "sub": "Benji Chase ft. Jiddy",
+     "credit": "Benji Chase ft. Jiddy",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ],
+      "featured": [
+       "jiddy"
+      ]
+     },
+     "src": "assets/audio/one-gon-ride.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 98.1
+    },
+    {
+     "title": "Recipe",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/recipe.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 96.1
+    },
+    {
+     "title": "Spell",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/spell.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 96
+    },
+    {
+     "title": "Fire",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/fire.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 134
+    },
+    {
+     "title": "Promises",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/promises.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 238.7
+    },
+    {
+     "title": "Drunk Driving",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/drunk-driving.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 127.1
+    },
+    {
+     "title": "No Friend",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/no-friend.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 167.6
+    },
+    {
+     "title": "Numb",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/numb.mp3",
+     "poster": "assets/img/tinderfessions-cover.jpg",
+     "seconds": 215.6
+    }
+   ]
+  },
+  {
+   "slug": "in-hot-pursuit",
+   "name": "In Hot Pursuit",
+   "artist": "Benji Chase",
+   "tag": "The album",
+   "art": "assets/img/in-hot-pursuit-cover.jpg",
+   "by": "",
+   "tracks": [
+    {
+     "title": "HitShake",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/hitshake.m4a",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 42.2
+    },
+    {
+     "title": "Hitlist",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/hitlist.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 125.1
+    },
+    {
+     "title": "Hit Mode",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/hit-mode.m4a",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 72
+    },
+    {
+     "title": "See Me Up",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/see-me-up.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 132.5
+    },
+    {
+     "title": "Other Side",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/other-side.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 173.1
+    },
+    {
+     "title": "New Phone",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/new-phone.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 117.1
+    },
+    {
+     "title": "Block So Hot",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/block-so-hot.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 62.9
+    },
+    {
+     "title": "Up For Days",
+     "credit": "Benji Chase",
+     "credits": {
+      "primary": [
+       "benji-chase"
+      ]
+     },
+     "src": "assets/audio/up-for-days.mp3",
+     "poster": "assets/img/in-hot-pursuit-cover.jpg",
+     "seconds": 216.5
+    }
+   ]
+  },
+  {
+   "slug": "audio-engineer",
+   "name": "Audio Engineer",
+   "tag": "The EP · 4 tracks",
+   "art": "assets/img/audio-engineer-cover.png",
+   "by": "",
+   "tracks": [
+    {
+     "title": "Outta Tune",
+     "credit": "Produced by McCluster",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster"
+      ]
+     },
+     "src": "assets/audio/outta-tune.mp3",
+     "poster": "assets/img/audio-engineer-cover.png",
+     "seconds": 36.7
+    },
+    {
+     "title": "Studio Trapped",
+     "credit": "Produced by McCluster",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster"
+      ]
+     },
+     "src": "assets/audio/studio-trapped.mp3",
+     "poster": "assets/img/audio-engineer-cover.png",
+     "seconds": 54.7
+    },
+    {
+     "title": "Sound Trust Anthem",
+     "credit": "Produced by McCluster",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "mccluster"
+      ]
+     },
+     "src": "assets/audio/sound-trust-anthem.mp3",
+     "poster": "assets/img/audio-engineer-cover.png",
+     "seconds": 194.5
+    },
+    {
+     "title": "Trackout",
+     "credit": "Co-produced by Tazzy Jay & McCluster",
+     "credits": {
+      "primary": [
+       "mccluster"
+      ],
+      "producers": [
+       "tazzy-jay",
+       "mccluster"
+      ],
+      "produced_as": "co"
+     },
+     "src": "assets/audio/trackout.mp3",
+     "poster": "assets/img/audio-engineer-cover.png",
+     "seconds": 51.2
+    }
+   ]
+  }
+ ],
+ "artists": [
+  {
+   "slug": "mccluster",
+   "name": "McCluster",
+   "kind": "person",
+   "page": "index.html",
+   "handle": "mccluster",
+   "id": "https://matthew.mccluster.org/#matthew-mccluster"
+  },
+  {
+   "slug": "zakir-elhajoui",
+   "name": "Zakir Elhajoui",
+   "kind": "person"
+  },
+  {
+   "slug": "prim3",
+   "name": "PRIM3",
+   "kind": "act",
+   "page": "prim3-artist.html",
+   "id": "https://matthew.mccluster.org/prim3-artist.html#prim3-artist"
+  },
+  {
+   "slug": "equity-uprise",
+   "name": "Equity Uprise",
+   "kind": "act",
+   "id": "https://matthew.mccluster.org/catalogue.html#artist-equity-uprise",
+   "members": [
+    "mccluster",
+    "angel-kastro",
+    "ocho",
+    "los-fidel",
+    "old-jay",
+    "pax"
+   ]
+  },
+  {
+   "slug": "angel-kastro",
+   "name": "Angel Kastro",
+   "kind": "person"
+  },
+  {
+   "slug": "ocho",
+   "name": "Ocho",
+   "kind": "person"
+  },
+  {
+   "slug": "los-fidel",
+   "name": "Los Fidel",
+   "kind": "person"
+  },
+  {
+   "slug": "old-jay",
+   "name": "Old Jay",
+   "kind": "person"
+  },
+  {
+   "slug": "pax",
+   "name": "Pax Tha Collector",
+   "kind": "person"
+  },
+  {
+   "slug": "vvs-made",
+   "name": "VVS Madè",
+   "kind": "person"
+  },
+  {
+   "slug": "hitman-benji",
+   "name": "Hitman Benji",
+   "kind": "person"
+  },
+  {
+   "slug": "raheem",
+   "name": "Raheem",
+   "kind": "person"
+  },
+  {
+   "slug": "rahndrx",
+   "name": "Rahndrx",
+   "kind": "person"
+  },
+  {
+   "slug": "kkk",
+   "name": "KKK",
+   "kind": "act"
+  },
+  {
+   "slug": "benji-chase",
+   "name": "Benji Chase",
+   "kind": "person"
+  },
+  {
+   "slug": "jiddy",
+   "name": "Jiddy",
+   "kind": "person"
+  },
+  {
+   "slug": "tazzy-jay",
+   "name": "Tazzy Jay",
+   "kind": "person"
   }
  ]
 }

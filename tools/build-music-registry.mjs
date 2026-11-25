@@ -77,15 +77,21 @@ export function build({ albums, ledger, lengths }) {
       };
       if (t.gated) row.gated = true;
       if (isrc) row.isrc = isrc;
+      /* who is on it, as structure: the same record data/albums.json holds, naming artists in `artists` by slug
+         (js/music-credits.js). `credit` above is the line tools/build-music-credits.mjs wrote from it. */
+      if (t.credits) row.credits = t.credits;
       tracks.push(row);
     }
   }
-  return {
+  const out = {
     generated_by: "tools/build-music-registry.mjs",
     isrc_prefix: prefix,
     count: tracks.length,
     tracks
   };
+  /* the artists registry, for a reader that has only this file */
+  if (Array.isArray(albums.artists)) out.artists = albums.artists;
+  return out;
 }
 
 export async function load() {

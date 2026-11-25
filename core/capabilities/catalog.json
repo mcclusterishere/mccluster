@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-11-23.1",
+  "catalogVersion": "2026-11-24.1",
   "capabilities": [
     {
       "id": "core.resume",
@@ -141,6 +141,135 @@
         "control",
         "continuity",
         "context"
+      ]
+    },
+    {
+      "id": "dispatch.turn",
+      "title": "Dispatch an owner message",
+      "description": "McCluster's conversational front end. Classifies one owner message (deterministic routing table, then the small resident model with a confidence threshold), records the routing decision in the private context plane before anything runs, then answers, asks one clarifying question, runs an approval-free capability on Core, or files a pending owner approval for anything the catalog gates. Never sends outside messages, merges, deploys to production, spends or deletes. MCP only: it needs the owner actor that only the MCP path carries. Idempotent on message_id.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "message_id",
+          "message"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "message_id": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "thread_id": {
+            "type": "string"
+          },
+          "intent": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "optional explicit route (a catalog capability id or job.<job_type>); gated exactly the same"
+          },
+          "args": {
+            "type": "object",
+            "description": "optional structured arguments for the route; org_id is always set by dispatch"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "dispatch",
+        "conversation",
+        "routing",
+        "provenance"
+      ]
+    },
+    {
+      "id": "dispatch.get",
+      "title": "Read a dispatch turn",
+      "description": "Read one dispatch turn with its live job, approval and resident answer, plus a one-line relay for the conversation. Read-only.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "turn_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "turn_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "dispatch",
+        "conversation"
+      ]
+    },
+    {
+      "id": "dispatch.execute",
+      "title": "Start an approved dispatch",
+      "description": "Start a dispatch turn that was held for approval, only after the owner approved its control approval, before it expires, and only with the exact request that was approved. The database claims the turn once; a second call starts nothing. Owner only.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner",
+      "interfaces": [
+        "mcp"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "turn_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "turn_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "dispatch",
+        "approval"
       ]
     },
     {
@@ -2468,6 +2597,59 @@
       "features": {
         "read_only": true,
         "self_hosted": true
+      }
+    },
+    {
+      "id": "core.dispatch-turn",
+      "capability": "dispatch.turn",
+      "provider": "mccluster-core",
+      "tool": "core.dispatch.turn",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "self_hosted": true,
+        "provenance": true,
+        "idempotent": true
+      }
+    },
+    {
+      "id": "core.dispatch-get",
+      "capability": "dispatch.get",
+      "provider": "mccluster-core",
+      "tool": "core.dispatch.get",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "core.dispatch-execute",
+      "capability": "dispatch.execute",
+      "provider": "mccluster-core",
+      "tool": "core.dispatch.execute",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "self_hosted": true,
+        "provenance": true,
+        "approval_bound": true
       }
     },
     {

@@ -114,7 +114,11 @@ Rules that follow from it:
   act of PRIM3, defined in full on its page `prim3-artist.html` and in
   `data/seo/entity-graph.json` → `music_acts.prim3`; every Cyber Security
   Specialist recording is `byArtist` that node, never Matthew's `@id` (he
-  appears only where a track's credits name him; none do yet). The album keeps
+  appears only where a track's credits name him: since the owner's rule of
+  2026-11-24, "the cyber security album was produced fully by McCluster.
+  Scored and produced", he is the `producer` of the album and of all 13
+  recordings, and the credit line reads "Scored and produced by McCluster";
+  a producer credit, never an artist credit). The album keeps
   its slug `prim3` and catalog keys `prim3:*`, so no URL moves.
   "Managed by Matthew McCluster" is account control, not authorship: PRIM3 is
   its own M identity with no login, and Matthew's account acts for it as its
@@ -133,10 +137,10 @@ page (the static tree `deploy-pages.yml` publishes) in exactly one set, by its
 URL path, and `scripts/test/domain-architecture.test.mjs` fails on a page in
 none or in two:
 
-- **`platform`** (132 pages): its home is the platform. The World
+- **`platform`** (133 pages): its home is the platform. The World
   (`mnet.html`) and its rooms, music (`listen.html`, `album.html`,
   `catalogue.html`, `license.html`, `music-videos.html`, `music-creator.html`,
-  `/tracks/…`, `prim3-artist.html`), Creator Studio, the account and sign-in,
+  `/tracks/…`, `artist.html`, `prim3-artist.html`), Creator Studio, the account and sign-in,
   checkout, and McCluster Corp's products: the product map
   (`mccluster-corp.html`), the Docket 516R record, the Action Network
   (`/action/`, `action-globe.html`), the campaign pages, PRIM3, McCluster

@@ -583,6 +583,8 @@ window.MCC_TRACK = (function () {
      music_error on 2026-11-23 ("For 6, I approved them"), and both are reviewed rows there now: one event per dropped
      connection or failed song, never one per read (docs/music/MUSIC-RELEASE-20261119.md, "Quick wins"). */
   return function (name, params) {
+    /* The catalogue artist view awaits measurement approval. */
+    if (name === "music_artist_view") return;
     params = params || {};
     if (ACQ && !params.acq) params.acq = ACQ.src + "/" + ACQ.med + (ACQ.cmp ? "/" + ACQ.cmp : "");
     queueEvent(name, params);

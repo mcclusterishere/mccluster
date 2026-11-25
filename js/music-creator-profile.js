@@ -292,6 +292,8 @@
     if (desc) desc.setAttribute("content", (p.bio || (p.artist_name + " on McCluster Music.")).slice(0, 300));
     $("creatorHandle").textContent = "@" + p.handle + (p.verification_state === "verified" ? " · verified" : "") + " · McCluster Music";
     setName(p.artist_name);
+    $("creatorArtist").dataset.catalogueName = p.artist_name || "";
+    $("creatorArtist").dataset.creatorHandle = p.handle;
     $("creatorBio").textContent = p.bio || (IS_HOUSE ? "Every McCluster album, on McCluster Music." : "Independent artist on McCluster Music.");
     var avatar = PAGE.safeArtwork(p.avatar_url);
     if (avatar) { $("creatorAvatar").src = avatar; $("creatorAvatar").alt = p.artist_name; $("creatorAvatar").hidden = false; }
@@ -360,7 +362,9 @@
     if (!wrap || !shelf) return;
     fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(function (d) {
-        var list = ((d && d.albums) || []).filter(function (a) { return a && a.slug && !a.artist; });
+        var list = ((d && d.albums) || []).filter(function (a) {
+          return a && a.slug && !a.artist && !root.MCC_CREDITS.albumBilling(d, a);
+        });
         if (!list.length) return;
         shelf.innerHTML = list.map(function (a) {
           var n = (a.tracks || []).length;

@@ -17,11 +17,11 @@
   </url>
   <url>
     <loc>https://matthew.mccluster.org/album.html</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-24</lastmod>
   </url>
   <url>
     <loc>https://matthew.mccluster.org/listen.html</loc>
-    <lastmod>2026-10-24</lastmod>
+    <lastmod>2026-11-24</lastmod>
   </url>
   <url>
     <loc>https://matthew.mccluster.org/portfolio.html</loc>
@@ -29,7 +29,7 @@
   </url>
   <url>
     <loc>https://matthew.mccluster.org/catalogue.html</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <image:image><image:loc>https://matthew.mccluster.org/assets/img/here-cover.jpg</image:loc></image:image>
     <image:image><image:loc>https://matthew.mccluster.org/assets/img/prim3-logo.png</image:loc></image:image>
     <image:image><image:loc>https://matthew.mccluster.org/assets/img/equity-uprise-logo.webp</image:loc></image:image>
@@ -38,10 +38,13 @@
     <image:image><image:loc>https://matthew.mccluster.org/assets/img/wing-whip-poster.jpg</image:loc></image:image>
     <image:image><image:loc>https://matthew.mccluster.org/assets/img/m-mark.png</image:loc></image:image>
     <image:image><image:loc>https://matthew.mccluster.org/assets/img/cia-mind-control-cover.jpg</image:loc></image:image>
+    <image:image><image:loc>https://matthew.mccluster.org/assets/img/tinderfessions-cover.jpg</image:loc></image:image>
+    <image:image><image:loc>https://matthew.mccluster.org/assets/img/in-hot-pursuit-cover.jpg</image:loc></image:image>
+    <image:image><image:loc>https://matthew.mccluster.org/assets/img/audio-engineer-cover.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://matthew.mccluster.org/prim3-artist.html</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-24</lastmod>
   </url>
   <url>
     <loc>https://matthew.mccluster.org/creator.html</loc>

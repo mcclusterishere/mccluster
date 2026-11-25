@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { RUNNING_DEPLOYMENT_SHA } from './runtime-revision.mjs';
 import { createCapabilityRegistry } from './capabilities/registry.mjs';
 import { capabilityCallPolicy, mapCapabilityCallError, requireCapabilityInterface } from './capabilities/call-policy.mjs';
+import { setDispatchCapabilityCaller } from './tools/dispatch.mjs';
 import { createToolRegistry } from './tools/registry.mjs';
 import { createEdgeVerifier, DEFAULT_EDGE_CLOCK_SKEW_MS } from './broker-edge-auth.mjs';
 import { emitCoreEvent } from './observability.mjs';
@@ -17,6 +18,13 @@ const edgeVerifier = EDGE_SIGNING_KEY
   : null;
 const registry = createToolRegistry();
 const capabilities = createCapabilityRegistry({ toolRegistry: registry });
+// Dispatched catalog routes go through this same registry and the same
+// interface check an MCP tools/call gets (mcp or agent).
+setDispatchCapabilityCaller((id, args, options) => {
+  requireCapabilityInterface(capabilities, id, ['mcp', 'agent']);
+  const policy = capabilityCallPolicy(capabilities, id, args, options);
+  return capabilities.call(id, args, policy.options).catch((error) => { throw mapCapabilityCallError(error, policy); });
+});
 
 if (!['127.0.0.1', '::1', 'localhost'].includes(HOST)) {
   throw new Error('Core tool broker must bind to loopback');

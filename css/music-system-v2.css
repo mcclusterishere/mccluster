@@ -735,6 +735,22 @@ body.music-v2 .appbar__tab.is-active{color:#fff}
   .music-v2 .music-now__artwrap.has-video .music-now__art{opacity:1}
 }
 
+/* Release credits are catalogue facts shared by the listening room and artist profiles. */
+.artist__credit-badge {
+  display: inline-block;
+  max-width: 100%;
+  padding: .18rem .4rem;
+  border: 1px solid currentColor;
+  border-radius: .45rem;
+  color: inherit;
+  font: 700 .7rem/1.2 var(--ui, sans-serif);
+  overflow-wrap: anywhere;
+}
+.artist__credit-badge[hidden] { display: none; }
+.artist-relations { margin: 1.25rem 0; }
+.artist-relations h2 { font: 700 1rem/1.3 var(--ui, sans-serif); }
+.artist-relations ul { display: flex; flex-wrap: wrap; gap: .25rem 1rem; list-style: none; margin: .5rem 0; padding: 0; }
+.artist-relations a { display: inline-block; padding: .4rem 0; color: inherit; text-decoration: underline; }
 /* WHOLE COVERS (owner, 2026-11-23: "The full covers aren't shown, and I agree. We should fix that." ... "as long as
    everything's uniform"). Every cover on every music surface is the whole supplied artwork, scaled to fit inside the
    same square box: nothing cropped, nothing drawn behind it (no plate, no tint, no glow), nothing laid over it, no

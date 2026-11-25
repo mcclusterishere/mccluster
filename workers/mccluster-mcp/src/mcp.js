@@ -77,6 +77,17 @@ const REMOTE_CAPABILITIES = new Set([
   // stamped below (a client cannot name its own), and its org_id is
   // overwritten with the house organization before dispatch.
   'workstream.checkpoint',
+  // The dispatch front end (docs/control-plane/DISPATCH-LAYER.md).
+  // dispatch.turn (risk: write, approval: none) records a routing decision
+  // and only ever runs a capability whose own catalog approval is none;
+  // anything gated becomes a pending control approval, never a run.
+  // dispatch.get is read-only. dispatch.execute (approval: owner) starts a
+  // turn only after the owner approved it in Control; the database checks
+  // the approval, its expiry and its request hash. All three need the
+  // owner actor stamped below and run on the house organization only.
+  'dispatch.turn',
+  'dispatch.get',
+  'dispatch.execute',
   // risk: spend, approval: budget-gated
   'image.generate',
   'video.generate',
@@ -103,7 +114,10 @@ const HOUSE_ORG_ONLY = new Set([
   'core.ai.turn.submit',
   'core.ai.turn.get',
   'workstream.checkpoint',
-  'workstream.list'
+  'workstream.list',
+  'dispatch.turn',
+  'dispatch.get',
+  'dispatch.execute'
 ]);
 
 function serviceHeaders(env) {

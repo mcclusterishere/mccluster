@@ -378,6 +378,7 @@ export const SITE_TABLE: SiteTable = deepFreeze<SiteTable>({
       "/album.html",
       "/analytics.html",
       "/archive.html",
+      "/artist.html",
       "/auth/",
       "/auth/seek-first-handoff.html",
       "/auth/seek-first-start.html",

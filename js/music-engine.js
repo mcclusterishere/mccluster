@@ -546,8 +546,8 @@
             var item = Object.assign({}, t, {
               albumSlug: a.slug,
               albumName: a.name,
-              /* the album's billed artist; `by` is its tagline ("Have no fear."), never a name */
-              artist: a.artist || "McCluster",
+              /* Prefer the song’s own billing on a mixed release, then the album artist. */
+              artist: t.artist || a.artist || "McCluster",
               art: a.art
             });
             by[key(a.slug, t.title)] = item;

@@ -1,6 +1,7 @@
 /* THE MUSIC QUICK WINS, IN A REAL BROWSER (docs/music/MUSIC-RELEASE-20261119.md, "Quick wins (2026-11-23)").
    ============================================================
-   Matthew, 2026-11-23: one McCluster profile, the artist (Q1); just albums and artists (Q2); whole covers, uniform
+   Matthew, 2026-11-23: one McCluster profile, the artist (Q1); albums and artists (Q2, amended 2026-11-24 to include
+   every browsable track); whole covers, uniform
    (Q3); a creator is never asked to join (Q4); the closing song of CIA Mind Control stays listed but does not play,
    and says why (Q5); an album stops after its last song (Q6). Q7 (the approved listening events) is held by
    scripts/test/music-quick-wins.test.mjs.
@@ -236,9 +237,9 @@ const SCENARIOS = {
     await seed(page, {});
     await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
     await until(page, () => document.querySelectorAll('#artistsRow a.artist').length >= 2);
-    const rail = await page.evaluate(() => Array.from(document.querySelectorAll('#artistsRow a.artist')).map((a) => ({ href: a.getAttribute('href'), text: a.textContent.replace(/\s+/g, ' ').trim() })));
-    check(rail[0] && rail[0].href === 'music-creator.html?handle=mccluster' && /McCluster/.test(rail[0].text) && /Artist/.test(rail[0].text), 'Q1 listen: McCluster is first, the artist, and opens his artist page', rail);
-    check(rail.filter((a) => /McCluster/.test(a.text)).length === 1, 'Q1 listen: one McCluster on the Artists rail, not two', rail);
+    const rail = await page.evaluate(() => Array.from(document.querySelectorAll('#artistsRow a.artist')).map((a) => ({ href: a.getAttribute('href'), name: a.querySelector('b')?.textContent, handle: a.querySelector('small')?.textContent })));
+    check(rail[0] && rail[0].href === 'artist.html?artist=mccluster' && rail[0].name === 'McCluster' && rail[0].handle === '@mccluster', 'Q1 listen: McCluster is first, the artist, and opens his artist page', rail);
+    check(rail.filter((a) => a.name === 'McCluster').length === 1, 'Q1 listen: one McCluster on the Artists rail, not two', rail);
     check(!rail.some((a) => a.href === 'index.html') && !(await page.evaluate(() => /the house/i.test(document.getElementById('artistsWrap').textContent))), 'Q1 listen: no "house" card or words on the rail', rail);
     await fits(page, 'Q1 listen at 390');
     await shot(page, 'listen-390-artists-one-mccluster', { at: '#artistsWrap' });
@@ -248,9 +249,10 @@ const SCENARIOS = {
     const ap = await page.evaluate(() => ({ name: document.getElementById('creatorArtist').textContent.replace(/\s+/g, ' ').trim(),
       albums: Array.from(document.querySelectorAll('#apHouseShelf a.ap-card')).map((a) => ({ href: a.getAttribute('href'), title: a.querySelector('b') && a.querySelector('b').textContent })),
       empty: /No published releases yet/.test(document.body.innerText) }));
-    const houseAlbums = CATALOG.filter((a) => !a.artist).map((a) => 'album.html?album=' + a.slug);
+    const houseAlbums = CATALOG.filter((a) => !a.artist && a.tracks.every((t) => t.credits.primary.includes('mccluster'))).map((a) => 'album.html?album=' + a.slug);
     check(/McCluster/.test(ap.name), 'Q1 his artist page is McCluster', ap);
     check(houseAlbums.every((h) => ap.albums.some((x) => x.href === h)) && ap.albums.length === houseAlbums.length, 'Q1 his artist page carries his records, each opening its album', { ap, houseAlbums });
+    check(!ap.albums.some((a) => a.href === 'album.html?album=singles'), 'Q1 the Singles shelf billed to Hitman Benji and collaborators stays off McCluster’s own albums', ap.albums);
     check(!ap.empty, 'Q1 his artist page never says it has no releases', ap);
     await fits(page, 'Q1 McCluster\'s artist page at 390');
     await shot(page, 'artist-390-mccluster-one-profile');
@@ -285,23 +287,31 @@ const SCENARIOS = {
       const page = await ctx.newPage();
       await seed(page, {});
       await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
+      await page.locator('#producersRow a[data-name="Pax Tha Collector"]').waitFor();
       await until(page, () => document.querySelectorAll('#shelf .feat__card').length > 0 && document.querySelectorAll('#artistsRow a.artist').length >= 2);
       const v = await page.evaluate(() => {
         const vis = (e) => { if (!e || e.closest('[hidden]')) return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
         return { heads: Array.from(document.querySelectorAll('.ls .lib__k')).filter(vis).map((e) => e.textContent.trim()),
           chips: !!document.getElementById('chips') && vis(document.getElementById('chips')),
           albums: Array.from(document.querySelectorAll('#shelf a.feat__card')).map((a) => a.getAttribute('href')),
-          songs: vis(document.getElementById('allWrap')) };
+          songs: vis(document.getElementById('allWrap')),
+          tracks: Array.from(document.querySelectorAll('#all button[data-music-play]')).map((b) => b.getAttribute('data-album') + '|' + b.getAttribute('data-track')).sort() };
       });
-      check(JSON.stringify(v.heads) === JSON.stringify(['Artists', 'Albums']), `Q2 listen at ${width}: Artists and Albums, nothing else`, v.heads);
+      const allTracks = CATALOG.flatMap((a) => a.tracks.map((t) => a.slug + '|' + t.title)).sort();
+      check(JSON.stringify(v.heads) === JSON.stringify(['Artists', 'Producers', 'Albums', 'All tracks']), `Q2 listen at ${width}: artists, producers, albums and all tracks are browsable on entry`, v.heads);
       check(!v.chips, `Q2 listen at ${width}: no filter row`, v);
       check(CATALOG.every((a) => v.albums.includes('album.html?album=' + a.slug)), `Q2 listen at ${width}: every album is reachable`, v.albums);
-      check(!v.songs, `Q2 listen at ${width}: no song list until a search asks for one`, v);
+      check(v.songs && JSON.stringify(v.tracks) === JSON.stringify(allTracks), `Q2 listen at ${width}: every catalogue track is visible with its playback identity`, v);
       if (width === 390) await fits(page, 'Q2 listen at 390');
       await shot(page, `listen-${width}-albums-and-artists`, { full: true });
       await page.fill('#q', 'heal');
       await until(page, () => document.querySelectorAll('#all li a.row').length > 0);
       check(await page.evaluate(() => !document.getElementById('allWrap').hidden && document.querySelectorAll('#all li a.row').length >= 2), `Q2 listen at ${width}: a search still finds the songs`);
+      await page.click('#qClear');
+      check(await page.evaluate((expected) => {
+        const tracks = Array.from(document.querySelectorAll('#all button[data-music-play]')).map((b) => b.getAttribute('data-album') + '|' + b.getAttribute('data-track')).sort();
+        return !document.getElementById('allWrap').hidden && document.getElementById('allK').textContent === 'All tracks' && JSON.stringify(tracks) === JSON.stringify(expected);
+      }, allTracks), `Q2 listen at ${width}: clearing search restores every track`);
       await ctx.close();
     }
     const { ctx } = await context(browser, plane, 390);

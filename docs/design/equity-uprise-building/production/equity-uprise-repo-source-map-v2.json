@@ -14,9 +14,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 783,
-  "capability_source_count": 104,
-  "support_only_count": 679,
+  "candidate_count": 802,
+  "capability_source_count": 107,
+  "support_only_count": 695,
   "entries": [
     {
       "path": ".cursorrules",
@@ -497,6 +497,15 @@
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared site page; adds no distinct program capability."
     },
     {
+      "path": "artist.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Presents catalogue credits, group memberships and links to playable recordings."
+    },
+    {
       "path": "assets/img/equity-uprise-logo.webp",
       "classification": "presentation_support",
       "capability_ids": [],
@@ -576,7 +585,14 @@
       "classification": "building_projection_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180° placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+      "rationale": "McCluster City geography/placement authority places the existing HQ on its island with a documented 180\u00b0 placement of the 72 ft plate and the existing doorway anchor; city parcels and streets only, no building geometry, floor program, access policy or capability."
+    },
+    {
+      "path": "core/ontology/graph-v2.json",
+      "classification": "data_graph_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
     },
     {
       "path": "create.html",
@@ -1211,6 +1227,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Control-plane design/record document; mentions Equity Uprise only as the program context for shared intelligence, fellowship, identity or mission governance. Defines no building geometry or new program capability."
+    },
+    {
+      "path": "docs/control-plane/ONTOLOGY-GRAPH-V2.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
     },
     {
       "path": "docs/control-plane/OVH-510-CONTRACT-AND-AUTH-RUNBOOK.md",
@@ -1875,6 +1898,27 @@
       "support_only": false
     },
     {
+      "path": "docs/music/ARTIST-PAGES.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Describes release credits, artist profiles and the owner-maintained group roster."
+    },
+    {
+      "path": "docs/music/screenshots/artists-20261124/album-equity-uprise-390.png",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Phone-width album view captured for review."
+    },
+    {
+      "path": "docs/music/screenshots/artists-20261124/artist-equity-uprise-390.png",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Phone-width artist view captured for review."
+    },
+    {
       "path": "docs/pay-now.md",
       "classification": "capability_source",
       "capability_ids": [
@@ -2243,7 +2287,7 @@
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Control · Sell · Music · Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+      "rationale": "Control \u00b7 Sell \u00b7 Music \u00b7 Artists, the label's 'Acting as' switcher. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
     },
     {
       "path": "js/control-room/nav.js",
@@ -2539,11 +2583,29 @@
       "rationale": "Action Network client; the ?group= deep link can open the Equity Uprise group. A mobilization surface, not a building capability (same rationale as mnet.html)."
     },
     {
+      "path": "js/music-community.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Builds the listening room artist and producer selectors from the recording catalogue."
+    },
+    {
       "path": "js/music-creator-profile.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Names Equity Uprise as the public brand of McCluster Corp's movement platform (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; formerly Human Uprise) in public-facing copy, metadata or labels; shared frontend/app code; adds no distinct program capability."
+    },
+    {
+      "path": "js/music-credits.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Resolves the catalogue\u2019s release credits, producer roles and group membership."
     },
     {
       "path": "js/now-playing.js",
@@ -2817,6 +2879,13 @@
       "rationale": "Action Network primary social/mobilization surface carrying the Equity Uprise founding mark; not a building capability."
     },
     {
+      "path": "music-creator.html",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Provides the creator profile markup for a catalogue-linked release credit."
+    },
+    {
       "path": "music-videos.html",
       "classification": "shared_site_support",
       "capability_ids": [],
@@ -3029,7 +3098,7 @@
       "classification": "shared_site_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Role-tailored cut of the résumé (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
+      "rationale": "Role-tailored cut of the r\u00e9sum\u00e9 (matthew-mccluster.html); references Equity Uprise as the founder's fellowship but does not define a program capability."
     },
     {
       "path": "screens/building.html",
@@ -3159,7 +3228,7 @@
       "classification": "test_support",
       "capability_ids": [],
       "support_only": true,
-      "rationale": "Captures actual canonical B1–L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
+      "rationale": "Captures actual canonical B1\u2013L7 WebGL views and checks authored device identity, isolation and unavailable state using local test assets."
     },
     {
       "path": "scripts/e2e/eu-screens.e2e.mjs",
@@ -3223,6 +3292,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Browser checks for the owner-only globe Games overlay verify that its Bridgeport links reach the existing Equity Uprise HQ and B1 routes; verification support only, with no building program or geometry implementation."
+    },
+    {
+      "path": "scripts/e2e/music-accounts.e2e.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Verifies music accounts and listener navigation between groups, members and producers."
     },
     {
       "path": "scripts/e2e/prim3-artist.e2e.mjs",
@@ -3654,6 +3730,13 @@
       "rationale": "Test or behaviour harness for shared Action Network / intelligence governance; references Equity Uprise context but defines no program capability."
     },
     {
+      "path": "scripts/test/listening-room.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Listening-room regression tests use an Equity Uprise album fixture to verify complete track browsing, search and loading states. Test support only; no independent building or program capability."
+    },
+    {
       "path": "scripts/test/logo-css-backgrounds.test.mjs",
       "classification": "test_support",
       "capability_ids": [],
@@ -3708,6 +3791,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Repo-wide mobile-rule tests (zoomable viewports, min-width-only breakpoints, minmax(0,1fr) grid tracks); names Equity Uprise pages only in its allowlist; not a program capability."
+    },
+    {
+      "path": "scripts/test/music-credits.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Tests the catalogue credit rules and their rendering."
     },
     {
       "path": "scripts/test/music-direct-sales.test.mjs",
@@ -4696,6 +4786,41 @@
       "rationale": "Schema reconciliation SQL from the 2026-10-28 production audit that names Equity Uprise (eu_*) tables, policies or functions among many others; database hygiene, not a building capability."
     },
     {
+      "path": "supabase/pending/20261124130000_music_catalog_owner_credits.rollback.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Restores prior catalogue credit strings under matching guards."
+    },
+    {
+      "path": "supabase/pending/20261124130000_music_catalog_owner_credits.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Stages guarded catalogue credit corrections."
+    },
+    {
+      "path": "supabase/pending/20261124190000_music_pax_stage_name.rollback.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Uses the receipt to restore only the prior stage names the application changed."
+    },
+    {
+      "path": "supabase/pending/20261124190000_music_pax_stage_name.sql",
+      "classification": "shared_backend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Renames the credited producer in catalogue and archive data and returns a rollback receipt."
+    },
+    {
+      "path": "supabase/pending/20261125010000_ops_ontology_graph_v2.sql",
+      "classification": "data_graph_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
+    },
+    {
       "path": "supabase/pending/PROMOTION-ORDER.md",
       "classification": "documentation_support",
       "capability_ids": [],
@@ -5194,6 +5319,20 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Behaviour test for the pending label SQL. The label model (owner, 2026-11-02: one account, several music artists). It names Equity Uprise only as the house owner's second managed music act (its MusicGroup, catalogue.html#artist-equity-uprise), beside PRIM3. No building, spatial or program capability is added."
+    },
+    {
+      "path": "supabase/tests/ops_ontology_graph_v2.behaviour.sql",
+      "classification": "data_graph_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
+    },
+    {
+      "path": "supabase/tests/ops_ontology_graph_v2.stub.sql",
+      "classification": "data_graph_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Ontology graph v2 (pending, owner-gated) maps existing eu_meetings, eu_releases, eu_recordings and eu_release_tracks rows into the McCluster operational ontology as meeting, release and track objects with a release_has_track link; it reads those tables only and defines no Equity Uprise building geometry, program, access or capability."
     },
     {
       "path": "supabase/tests/policy_fellowship_ladder.behaviour.sql",

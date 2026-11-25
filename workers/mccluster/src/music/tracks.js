@@ -205,5 +205,125 @@ export const TRACKS = {
     "title": "Niggy Nigg Niggr",
     "album": "cia-mind-control",
     "gated": true
+  },
+  "rolling-with-me": {
+    "title": "Rolling With Me",
+    "album": "tinderfessions",
+    "seconds": 150.8
+  },
+  "tinderella": {
+    "title": "Tinderella",
+    "album": "tinderfessions",
+    "seconds": 212.1
+  },
+  "alquifina-new-chick": {
+    "title": "Alquifina (New Chick)",
+    "album": "tinderfessions",
+    "seconds": 113
+  },
+  "bussin-juggs": {
+    "title": "Bussin' Juggs",
+    "album": "tinderfessions",
+    "seconds": 118.6
+  },
+  "one-gon-ride": {
+    "title": "One Gon' Ride (feat. Jiddy)",
+    "album": "tinderfessions",
+    "seconds": 98.1
+  },
+  "recipe": {
+    "title": "Recipe",
+    "album": "tinderfessions",
+    "seconds": 96.1
+  },
+  "spell": {
+    "title": "Spell",
+    "album": "tinderfessions",
+    "seconds": 96
+  },
+  "fire": {
+    "title": "Fire",
+    "album": "tinderfessions",
+    "seconds": 134
+  },
+  "promises": {
+    "title": "Promises",
+    "album": "tinderfessions",
+    "seconds": 238.7
+  },
+  "drunk-driving": {
+    "title": "Drunk Driving",
+    "album": "tinderfessions",
+    "seconds": 127.1
+  },
+  "no-friend": {
+    "title": "No Friend",
+    "album": "tinderfessions",
+    "seconds": 167.6
+  },
+  "numb": {
+    "title": "Numb",
+    "album": "tinderfessions",
+    "seconds": 215.6
+  },
+  "hitshake": {
+    "title": "HitShake",
+    "album": "in-hot-pursuit",
+    "seconds": 42.2
+  },
+  "hitlist": {
+    "title": "Hitlist",
+    "album": "in-hot-pursuit",
+    "seconds": 125.1
+  },
+  "hit-mode": {
+    "title": "Hit Mode",
+    "album": "in-hot-pursuit",
+    "seconds": 72
+  },
+  "see-me-up": {
+    "title": "See Me Up",
+    "album": "in-hot-pursuit",
+    "seconds": 132.5
+  },
+  "other-side": {
+    "title": "Other Side",
+    "album": "in-hot-pursuit",
+    "seconds": 173.1
+  },
+  "new-phone": {
+    "title": "New Phone",
+    "album": "in-hot-pursuit",
+    "seconds": 117.1
+  },
+  "block-so-hot": {
+    "title": "Block So Hot",
+    "album": "in-hot-pursuit",
+    "seconds": 62.9
+  },
+  "up-for-days": {
+    "title": "Up For Days",
+    "album": "in-hot-pursuit",
+    "seconds": 216.5
+  },
+  "outta-tune": {
+    "title": "Outta Tune",
+    "album": "audio-engineer",
+    "seconds": 36.7
+  },
+  "studio-trapped": {
+    "title": "Studio Trapped",
+    "album": "audio-engineer",
+    "seconds": 54.7
+  },
+  "sound-trust-anthem": {
+    "title": "Sound Trust Anthem",
+    "album": "audio-engineer",
+    "seconds": 194.5
+  },
+  "trackout": {
+    "title": "Trackout",
+    "album": "audio-engineer",
+    "seconds": 51.2
   }
 };

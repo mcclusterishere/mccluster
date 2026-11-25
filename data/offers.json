@@ -128,6 +128,37 @@
           "credited_to": null,
           "line": "A one-time $33 first-draft build for customers who do not choose an available design. This is not a hosting deposit or a recurring fee. Additional revisions or custom development require a separate quote."
         },
+        "builds": {
+          "label": "website builds",
+          "approved": true,
+          "note": "Published build prices for a site we build for you. Domain registration and the Creator Platform subscription are billed separately.",
+          "rate_lines": [
+            {
+              "id": "web-template",
+              "label": "Template website",
+              "amount": 1500,
+              "unit": "one-time build"
+            },
+            {
+              "id": "web-custom",
+              "label": "Custom website",
+              "amount": 4000,
+              "unit": "one-time build"
+            },
+            {
+              "id": "web-ecommerce",
+              "label": "Ecommerce website",
+              "amount": 6000,
+              "unit": "one-time build"
+            },
+            {
+              "id": "web-care",
+              "label": "Care plan",
+              "amount": 99,
+              "unit": "per month"
+            }
+          ]
+        },
         "start": {
           "label": "choose a platform subscription",
           "approved": false,
@@ -442,15 +473,22 @@
             {
               "id": "photo-event",
               "label": "Event photography",
-              "amount": 201,
+              "amount": 250,
               "unit": "per hour · 3-hour minimum",
-              "priced_by": "golden-33",
-              "was": 310,
+              "was": 201,
               "market_median": 300,
               "market_checked": "2026-08-29",
               "minimum_hours": 3,
               "travel_note": "Travel is quoted as a separate line item and agreed before booking.",
-              "service_area_note": "Event photography across Connecticut, within approximately 75 minutes of New Haven."
+              "service_area_note": "Event photography across Connecticut, within approximately 75 minutes of New Haven.",
+              "priced_note": "Owner-set at $250/hour on 2026-11-24 (national average plus a premium). No longer priced by the golden-33 ceiling; was is the previous published hourly rate."
+            },
+            {
+              "id": "photo-event-full",
+              "label": "Event photography · full coverage",
+              "amount": 750,
+              "unit": "per event",
+              "travel_note": "Travel is quoted as a separate line item and agreed before booking."
             },
             {
               "id": "vid-half",
@@ -560,26 +598,50 @@
         "m": {
           "approved": true,
           "cadence": "campaign",
-          "from": 525,
+          "from": 350,
           "note": "Third-party budgets (influencer, paid media, travel, licensing) are quoted as separate lines.",
           "rate_lines": [
             {
               "id": "scoring",
-              "label": "Custom scoring",
+              "label": "Custom scoring · commercial",
               "amount": 525,
+              "unit": "from · per finished minute"
+            },
+            {
+              "id": "scoring-indie",
+              "label": "Custom scoring · indie and web",
+              "amount": 350,
               "unit": "from · per finished minute"
             },
             {
               "id": "sync",
               "label": "Sync license",
+              "amount": 450,
+              "unit": "from · web and social · one year · non-exclusive"
+            },
+            {
+              "id": "sync-ads",
+              "label": "Sync license · paid ads",
               "amount": 875,
-              "unit": "from · web · one year · non-exclusive"
+              "unit": "from · paid ads · one year · non-exclusive"
             },
             {
               "id": "jingle",
-              "label": "Jingle · brand anthem",
-              "amount": 1690,
-              "unit": "from · written, produced, yours"
+              "label": "Jingle · brand anthem · local",
+              "amount": 2000,
+              "unit": "from · local business · written, produced, yours"
+            },
+            {
+              "id": "jingle-regional",
+              "label": "Jingle · brand anthem · regional",
+              "amount": 5000,
+              "unit": "from · regional brand · written, produced, yours"
+            },
+            {
+              "id": "campaign-local",
+              "label": "Local creative campaign",
+              "amount": 5000,
+              "unit": "flat · one local campaign end to end"
             },
             {
               "id": "campaign-full",

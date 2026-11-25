@@ -146,10 +146,12 @@ html[data-theme="light"] .tr .hrt {
   box-shadow: 0 0 0 1px rgba(244, 239, 230, 0.18); }
 .artist__pic--house { border-radius: 0; background: none; box-shadow: none; object-fit: contain; }
 .artist__pic--initial { display: grid; place-items: center; font: 800 1.1rem/1 var(--ui); color: var(--cream); }
-.artist > b { font-family: var(--ui); font-weight: 800; font-size: 0.72rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.artist > b { font-family: var(--ui); font-weight: 800; font-size: 0.72rem; max-width: 100%; overflow-wrap: anywhere; line-height: 1.25; }
 .artist > small { font-family: var(--ui); font-weight: 600; font-size: 0.6rem; color: var(--cream-dim); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .artist:hover > b, .artist:focus-visible > b { color: var(--ruby-hot, #e5383b); }
 .artist:focus-visible { outline: none; }
 .artist:focus-visible .artist__pic { box-shadow: 0 0 0 2px var(--ruby-hot, #e5383b); }
 html[data-theme="light"] .artist__pic--house { content: url("../assets/img/m-mark-dark.png"); }
-@media (min-width: 600px) { .artists__row { gap: 1.1rem; } .artist { width: 5.2rem; } .artist__pic { width: 4rem; height: 4rem; } }
+.artist[hidden] { display: none; }
+/* with room, and a mouse that cannot fling a rail, every artist is on the page: the row wraps instead of scrolling */
+@media (min-width: 600px) { .artists__row { gap: 1.1rem; flex-wrap: wrap; overflow-x: visible; row-gap: 1rem; } .artist { width: 5.2rem; } .artist__pic { width: 4rem; height: 4rem; } }
