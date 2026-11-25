@@ -202,8 +202,15 @@ try {
  check('privacy','making owner profile private hides saved publication',await visitor.page.getAttribute('html','data-front-state')!=='ready');
  world.visibility='public';
  page.once('dialog',d=>d.accept());await page.click('[data-act="unpublish"]');await page.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.msg==='Taken down. Your draft is kept.');
- await visitor.page.reload({waitUntil:'domcontentloaded'});await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')!=='loading');
- check('unpublish','take down keeps draft and removes public page',!!world.projects[0].draft&&!world.projects[0].published&&await visitor.page.getAttribute('html','data-front-state')!=='ready');
+ /* A reload of the visitor who just watched the published films can hang on
+    leftover media (the later first-visit cases already isolate that). Open the
+    taken-down page in a fresh context so this check waits on a new document. */
+ const takenDown=await setup({width:390,height:844},null);
+ try {
+   await takenDown.page.goto(BASE+'/front.html?project=first-project',{waitUntil:'domcontentloaded'});
+   await takenDown.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')!=='loading');
+   check('unpublish','take down keeps draft and removes public page',!!world.projects[0].draft&&!world.projects[0].published&&await takenDown.page.getAttribute('html','data-front-state')!=='ready');
+ } finally { await takenDown.ctx.close(); }
  await page.fill('[name="words.eyebrow"]','UNSAVED ALICE SECRET');
  // The real auth handler clears the old document synchronously and then reloads.
  // Wait for that navigation before starting the unrelated invalid-slug journey;
