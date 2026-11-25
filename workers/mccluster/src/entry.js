@@ -234,20 +234,30 @@ async function dispatchRequest(request, env, ctx) {
       const auth = request.headers.get('authorization');
       if (auth) headers.authorization = auth;
 
+      /* #538: a bounded wait. The collector's own deadlines end within ~36 s
+         (auth 3 + lookups 4+4 + two 12 s inserts); past 40 s the browser is
+         told to retry (its outbox resends the same event IDs) instead of the
+         request hanging until the platform kills it. */
+      const collectorDeadline = new AbortController();
+      const collectorTimer = setTimeout(() => collectorDeadline.abort(), 40000);
       try {
         const upstream = await fetch(`${env.SUPABASE_URL}/functions/v1/collect`, {
           method: 'POST',
           headers,
-          body: await request.text()
+          body: await request.text(),
+          signal: collectorDeadline.signal
         });
         return new Response(await upstream.text(), {
           status: upstream.status,
           headers: { ...cors, 'content-type': 'application/json' }
         });
       } catch (error) {
-        return new Response(JSON.stringify({ ok: false, reason: 'collector unreachable' }), {
-          status: 502, headers: { ...cors, 'content-type': 'application/json' }
+        const timedOut = collectorDeadline.signal.aborted;
+        return new Response(JSON.stringify({ ok: false, reason: timedOut ? 'collector deadline exceeded' : 'collector unreachable', retryable: true }), {
+          status: timedOut ? 504 : 502, headers: { ...cors, 'content-type': 'application/json' }
         });
+      } finally {
+        clearTimeout(collectorTimer);
       }
     }
 

@@ -12,14 +12,23 @@ const source = (await readFile(new URL('../../supabase/functions/collect/index.t
 const uuid = '123e4567-e89b-42d3-a456-426614174000';
 const event = { id:uuid, name:'page_view', path:'/test', props:{label:'a synthetic visit'} };
 
-async function collector({tenant=false, errors=[], initialCommitOnFailure=false, quiet=false}={}) {
+async function collector({tenant=false, errors=[], initialCommitOnFailure=false, quiet=false, hang=[], env={}}={}) {
   const persisted = new Map(), requests=[];
   let handler, authRequests=0;
   const ctx={
-    Deno:{env:{get:k=>k==='SUPABASE_URL'?'https://local.test':'a-placeholder'},serve:fn=>{handler=fn;}},
-    Request,Response,Headers,URL,TextEncoder,console,crypto:webcrypto,setTimeout,SITE_HOSTS,
+    Deno:{env:{get:k=>k==='SUPABASE_URL'?'https://local.test':(k in env?String(env[k]):'a-placeholder')},serve:fn=>{handler=fn;}},
+    Request,Response,Headers,URL,TextEncoder,console,crypto:webcrypto,setTimeout,clearTimeout,AbortSignal,SITE_HOSTS,
     fetch:async (url,init={})=>{
       const u=String(url),method=init.method||'GET';
+      /* an upstream that never answers: only the collector's own deadline can end the wait */
+      const stalled=hang.find(h=>u.includes(h));
+      if(stalled){
+        if(u.includes('/rest/v1/events?'))requests.push({url:u,method,headers:init.headers,rows:JSON.parse(init.body)});
+        return new Promise((_,reject)=>{
+          if(!init.signal)return;
+          init.signal.addEventListener('abort',()=>reject(Object.assign(new Error('aborted'),{name:'AbortError'})));
+        });
+      }
       if(u.includes('/auth/v1/user')){
         authRequests++;
         return new Response(JSON.stringify({id:'33333333-3333-4333-8333-333333333333'}),{status:200});
@@ -47,13 +56,13 @@ async function collector({tenant=false, errors=[], initialCommitOnFailure=false,
   };
   vm.runInNewContext(stripTypeScriptTypes(source,{mode:'strip'}),ctx,{timeout:3000});
   assert.equal(typeof handler,'function');
-  const send=async(e=event)=>{
+  const send=async(e=event,extra={})=>{
     const body=tenant?
       {site_key:'mca_'+'a'.repeat(32),consent_state:'cookieless',device_id:'must-be-dropped',session_id:'must-be-dropped',events:[e]}:
       {device_id:'synthetic-browser',session_id:'synthetic-visit',events:[e]};
     const req=new Request('https://api.mccluster.org/functions/v1/collect',{method:'POST',
       headers:{'content-type':'application/json','user-agent':'test-browser','origin':'https://tenant.example.test',
-        ...(tenant?{'authorization':'Bearer synthetic-valid-token'}:{}),...(quiet?{'dnt':'1'}:{})},
+        ...(tenant?{'authorization':'Bearer synthetic-valid-token'}:{}),...(quiet?{'dnt':'1'}:{}),...extra},
       body:JSON.stringify(body)});
     const r=await handler(req);
     return {status:r.status,body:await r.json()};
@@ -173,4 +182,49 @@ test('pending retries are canceled when consent is withdrawn or privacy signals 
   assert.match(house,/if \(!mccPrivacyAcknowledged\(\) \|\| privacySignal\(\)\) return null;/);
   assert.match(sdk,/function attempt\(tries\) \{[\s\S]*?if \(!canSend\(\)\) return Promise\.resolve\(null\);/);
   assert.match(sdk,/storageSet\(localStorage, CONSENT_KEY, "denied"\)/);
+});
+
+/* #538: under PostgREST load the collector used to wait until the Edge wall-clock limit (546/504 after ~140 s).
+   Every upstream call now ends at a bounded deadline with an explicit retryable answer. */
+const FAST={COLLECT_AUTH_DEADLINE_MS:60,COLLECT_LOOKUP_DEADLINE_MS:60,COLLECT_INSERT_DEADLINE_MS:80};
+
+test('an insert that never answers ends at the deadline with a retryable 503, retried once with the same IDs',async()=>{
+  const c=await collector({hang:['/rest/v1/events?'],env:FAST});
+  const started=Date.now();
+  const res=await c.send();
+  assert.ok(Date.now()-started<2000,'bounded by the deadline, not the platform limit');
+  assert.equal(res.status,503);
+  assert.equal(res.body.ok,false);
+  assert.equal(res.body.retryable,true);
+  assert.equal(c.requests.length,2,'one bounded resend');
+  assert.equal(c.requests[0].rows[0].id,c.requests[1].rows[0].id);
+  assert.equal(c.persisted.size,0,'never acknowledged without a receipt');
+});
+
+test('a stalled sign-in lookup does not hold the event: it is written without attribution',async()=>{
+  const c=await collector({hang:['/auth/v1/user'],env:FAST});
+  const started=Date.now();
+  const res=await c.send(event,{authorization:'Bearer synthetic-valid-token'});
+  assert.ok(Date.now()-started<2000);
+  assert.equal(res.status,200);
+  assert.equal(res.body.written,1);
+  assert.equal([...c.persisted.values()][0].uid,null,'an unverified token never attributes an event');
+});
+
+test('a stalled site-key lookup answers a retryable error instead of hanging',async()=>{
+  const c=await collector({tenant:true,hang:['/rest/v1/analytics_sites?'],env:FAST});
+  const started=Date.now();
+  const res=await c.send();
+  assert.ok(Date.now()-started<2000);
+  assert.equal(res.status,502);
+  assert.equal(res.body.retryable,true);
+  assert.equal(c.persisted.size,0);
+});
+
+test('deadlines can be tuned only within fixed bounds and never disabled',async()=>{
+  const source=await readFile(new URL('../../supabase/functions/collect/index.ts',import.meta.url),'utf8');
+  assert.match(source,/deadlineMs\("COLLECT_INSERT_DEADLINE_MS", 12000, 50, 30000\)/);
+  assert.match(source,/deadlineMs\("COLLECT_AUTH_DEADLINE_MS", 3000, 50, 10000\)/);
+  assert.match(source,/deadlineMs\("COLLECT_LOOKUP_DEADLINE_MS", 4000, 50, 10000\)/);
+  assert.equal(source.match(/await fetch\(/g).length,1,'the only raw fetch is inside timedFetch; every upstream call has a deadline');
 });

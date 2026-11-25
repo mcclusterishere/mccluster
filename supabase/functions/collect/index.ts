@@ -41,6 +41,30 @@ const MAX_PATH = 300;
 const MAX_REF = 500;
 const MAX_UA = 500;
 
+/* DEADLINES (#538). Every upstream call here used to wait as long as the
+   platform let it: under PostgREST load the function sat until the Edge
+   wall-clock limit and answered 546/504 after ~140 seconds, holding the
+   browser's request (and the Worker's) the whole time. Each call now has a
+   bounded deadline, so a slow database turns into a fast, explicitly
+   retryable 503 that the browser outbox keeps and resends with the same
+   event IDs (the primary key makes that resend harmless). Worst case is
+   auth + two lookups + two inserts, well under the platform limit. The
+   environment may tune these within fixed bounds; it can never disable them. */
+const deadlineMs = (name: string, fallback: number, min: number, max: number) => {
+  const v = Number(Deno.env.get(name));
+  return Number.isFinite(v) && v >= min && v <= max ? Math.floor(v) : fallback;
+};
+const AUTH_DEADLINE_MS = deadlineMs("COLLECT_AUTH_DEADLINE_MS", 3000, 50, 10000);
+const LOOKUP_DEADLINE_MS = deadlineMs("COLLECT_LOOKUP_DEADLINE_MS", 4000, 50, 10000);
+const INSERT_DEADLINE_MS = deadlineMs("COLLECT_INSERT_DEADLINE_MS", 12000, 50, 30000);
+/* fetch with a deadline that covers the headers AND the body */
+async function timedFetch(url: string, init: Record<string, unknown>, ms: number) {
+  const r = await fetch(url, { ...init, signal: AbortSignal.timeout(ms) });
+  const text = await r.text();
+  return { ok: r.ok, status: r.status, text };
+}
+const parse = (text: string): unknown => { try { return JSON.parse(text); } catch { return null; } };
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
@@ -174,11 +198,11 @@ function validIp(ip: string | null): string | null {
 async function resolveUid(auth: string | null): Promise<string | null> {
   if (!auth || !/^Bearer\s+\S/i.test(auth)) return null;
   try {
-    const r = await fetch(`${SB}/auth/v1/user`, {
+    const r = await timedFetch(`${SB}/auth/v1/user`, {
       headers: { apikey: SRV, Authorization: auth },
-    });
+    }, AUTH_DEADLINE_MS);
     if (!r.ok) return null;
-    const u = await r.json();
+    const u = parse(r.text) as { id?: unknown } | null;
     return typeof u?.id === "string" ? u.id : null;
   } catch {
     return null;
@@ -210,11 +234,11 @@ function requestHost(h: Headers_): string | null {
 }
 
 async function serviceRows(path: string): Promise<Record<string, unknown>[]> {
-  const r = await fetch(`${SB}/rest/v1/${path}`, {
+  const r = await timedFetch(`${SB}/rest/v1/${path}`, {
     headers: { apikey: SRV, Authorization: `Bearer ${SRV}`, Accept: "application/json" },
-  });
+  }, LOOKUP_DEADLINE_MS);
   if (!r.ok) throw new Error(`service lookup ${r.status}`);
-  const rows = await r.json().catch(() => []);
+  const rows = parse(r.text) ?? [];
   return Array.isArray(rows) ? rows : [];
 }
 
@@ -252,7 +276,7 @@ async function resolveAnalyticsSite(body: Record<string, unknown>, h: Headers_) 
       legacy: false,
     };
   } catch {
-    return { error: "site verification unavailable", status: 502 };
+    return { error: "site verification unavailable", status: 502, retryable: true };
   }
 }
 
@@ -275,7 +299,9 @@ Deno.serve(async (req) => {
 
   const h = req.headers;
   const site = await resolveAnalyticsSite(body, h);
-  if ("error" in site) return json({ ok: false, reason: site.error }, site.status);
+  if ("error" in site) {
+    return json({ ok: false, reason: site.error, ...("retryable" in site ? { retryable: true } : {}) }, site.status);
+  }
   const consentState = str(body.consent_state, 32);
   if (!site.legacy && site.consentMode !== "cookieless" && consentState !== "granted") {
     return json({ ok: true, written: 0, reason: "consent required" });
@@ -371,9 +397,9 @@ Deno.serve(async (req) => {
   };
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const r = await fetch(endpoint, options);
+      const r = await timedFetch(endpoint, options, INSERT_DEADLINE_MS);
       if (r.ok) {
-        const inserted = await r.json().catch(() => null);
+        const inserted = parse(r.text);
         if (!Array.isArray(inserted)) {
           // No safe receipt means an ambiguous commit. The stable IDs make
           // one retry harmless, but never report an unverified write as done.
@@ -382,13 +408,14 @@ Deno.serve(async (req) => {
         }
         return json({ ok: true, received: rows.length, written: inserted.length });
       }
-      const detail = (await r.text()).slice(0, 300);
+      const detail = r.text.slice(0, 300);
       const retryable = r.status === 429 || r.status >= 500 || /57014|statement timeout|canceling statement/i.test(detail);
       if (!retryable || attempt === 1)
         return json({ ok: false, reason: `insert ${r.status}`, retryable }, 502);
     } catch {
+      /* a deadline or transport failure is an ambiguous commit: the same IDs make one resend safe */
       if (attempt === 1)
-        return json({ ok: false, reason: "insert transport unavailable", retryable: true }, 502);
+        return json({ ok: false, reason: "insert unavailable before deadline", retryable: true }, 503);
     }
     // Bounded recovery from a canceled PostgREST transaction; never loop on
     // policy/validation errors or claim a success without an insert receipt.
