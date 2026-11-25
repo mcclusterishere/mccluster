@@ -1194,7 +1194,7 @@
     card.innerHTML = '<div class="mn__place-head"><span class="mn__place-name"><b>' + esc(st8 ? st8.name : c.name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' +
       '<button type="button" class="mn__place-close" aria-label="' + esc(st8 ? "Show all of " + c.name : "Show every country") + '">\u00d7</button></div>' +
       '<div class="mn__place-stats">' + cell(s.news, "news \u00b7 24 h") + (st8 ? (s.members === null ? "" : cell(s.members, "members")) : cell(s.posts, "posts") + members) + '</div>' +
-      (s.sharing === null ? "" : '<small class="mn__place-hint">' + esc(s.sharing.toLocaleString("en-US")) + " opted in to region sharing</small>');
+      (s.sharing === null ? "" : '<small class="mn__place-hint">' + esc(s.sharing.toLocaleString("en-US")) + " opted in to region sharing</small>");
     card.querySelector(".mn__place-close").onclick = function () { tellWorld(st8 ? { type: "hu:country-back" } : { type: "hu:select-country", code: null }); };
     card.hidden = false;
     placeCardRoom();
