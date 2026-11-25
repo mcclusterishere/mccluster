@@ -211,15 +211,17 @@
   else boot();
 
   var NEEDMAP = {
-    "photo-event": "Photography", "photo-portrait": "Photography",
+    "photo-event": "Photography", "photo-event-full": "Photography", "photo-portrait": "Photography",
     "photo-half": "Photography", "photo-full": "Photography",
     "vid-half": "Video / brand film", "vid-full": "Video / brand film",
     "brand-film": "Video / brand film", "music-video": "Video / brand film",
     "event-film": "Video / brand film",
     "web-build": "Web design / build", "hosting": "Web design / build",
     "webmgmt": "Web design / build", "social": "Social media management",
-    "sync": "Music / original scoring", "scoring": "Music / original scoring",
-    "jingle": "Music / original scoring", "teardown": "Creative direction",
+    "sync": "Music / original scoring", "sync-ads": "Music / original scoring",
+    "scoring": "Music / original scoring", "scoring-indie": "Music / original scoring",
+    "jingle": "Music / original scoring", "jingle-regional": "Music / original scoring",
+    "teardown": "Creative direction",
   };
   function needs() {
     var out = [];

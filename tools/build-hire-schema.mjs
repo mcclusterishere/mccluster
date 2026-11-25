@@ -65,6 +65,8 @@ function offerFor(id, line) {
     o.priceSpecification = { "@type": "PriceSpecification", minPrice: money(line.amount), priceCurrency: "USD" };
   } else if (/per hour/i.test(unit)) {
     o.priceSpecification = { "@type": "UnitPriceSpecification", price: money(line.amount), priceCurrency: "USD", unitCode: "HUR", unitText: "hour" };
+  } else if (/per month/i.test(unit)) {
+    o.priceSpecification = { "@type": "UnitPriceSpecification", price: money(line.amount), priceCurrency: "USD", unitCode: "MON", unitText: "month" };
   } else {
     o.price = money(line.amount);
   }
@@ -115,7 +117,8 @@ function offersOf(o) {
       url: `${SITE}/hire.html`
     });
   }
-  for (const line of m.rate_lines || []) {
+  const builds = p.builds && p.builds.approved === true ? p.builds.rate_lines || [] : [];
+  for (const line of [...builds, ...(m.rate_lines || [])]) {
     if (line.approved === false || typeof line.amount !== "number") continue;
     out.push(offerFor(o.id, line));
   }

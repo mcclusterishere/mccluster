@@ -40,6 +40,15 @@
     }).join("") + "</ul>";
   }
 
+  /* the published website build prices, printed only when the ledger approves them */
+  function buildLines(b) {
+    if (!b || b.approved !== true || !(b.rate_lines || []).length) return "";
+    return '<ul class="rates rates--lines">' + b.rate_lines.map(function (r) {
+      return "<li><span class='rates__k'>" + esc(r.label) + "<span class='rates__u'>" + esc(r.unit) +
+        "</span></span><b>$" + M(r.amount) + "</b></li>";
+    }).join("") + "</ul>" + (b.note ? '<p class="rung__fine">' + esc(b.note) + "</p>" : "");
+  }
+
   /* ---------- the ground: a receipt and one big number, no service number ---------- */
   function runwayChapter(o) {
     var p = o.pricing || {}, draft = p.deposit || {};
@@ -51,7 +60,7 @@
       '<div class="chapter__money"><sup>$</sup>' + M(draft.amount || 33) +
       '<span class="chapter__per">optional first custom draft · once</span></div>' +
       '<a class="chapter__go" href="' + esc(o.next_step.href) + '">' + esc(o.next_step.label) + '</a>' +
-      '<p class="rung__fine">' + esc(draft.line || '') + '</p></div><div>' +
+      '<p class="rung__fine">' + esc(draft.line || '') + '</p>' + buildLines(p.builds) + '</div><div>' +
       chips(o.includes) +
       '<p class="rung__fine">Subscriptions, domains and any additional custom work are priced separately. Existing agreements remain unchanged.</p>' +
       '</div></div></section>';
