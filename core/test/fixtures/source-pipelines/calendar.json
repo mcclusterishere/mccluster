@@ -1,0 +1,21 @@
+{
+  "_note": "Synthetic Google Calendar event resources. Invented people and example domains only.",
+  "cursor": { "sync_token": "synthetic-sync-token-1" },
+  "items": [
+    {
+      "id": "evt_synthetic_001", "status": "confirmed", "summary": "Gala coverage for jordan@example.org (203-555-0142)",
+      "description": "SYNTHETIC DESCRIPTION THAT MUST NEVER BE STORED",
+      "location": "1 Example Plaza, New Haven, CT",
+      "start": { "dateTime": "2026-12-05T18:00:00-05:00" }, "end": { "dateTime": "2026-12-05T22:00:00-05:00" },
+      "organizer": { "self": true },
+      "attendees": [ { "email": "owner.test@example.com", "self": true }, { "email": "Jordan.Example@example.org" }, { "email": "planner@venue.example.net" } ],
+      "hangoutLink": "https://meet.example.com/abc-defg-hij",
+      "updated": "2026-11-23T15:00:00Z"
+    },
+    { "id": "evt_synthetic_002", "status": "cancelled" },
+    {
+      "id": "evt_synthetic_003", "status": "confirmed", "summary": "Studio day",
+      "start": { "date": "2026-12-10" }, "end": { "date": "2026-12-11" }, "updated": "2026-11-20T12:00:00Z"
+    }
+  ]
+}

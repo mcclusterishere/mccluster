@@ -1,0 +1,24 @@
+{
+  "_note": "Synthetic Stripe API objects (test mode shapes). Invented ids and example domains only.",
+  "cursor": { "charge": 1763900000, "refund": 1763900500, "invoice": 1763800000, "customer": 1763800000 },
+  "items": [
+    {
+      "id": "ch_3SyntheticCharge01", "object": "charge", "created": 1763900000, "livemode": false,
+      "amount": 20000, "amount_refunded": 5000, "currency": "USD", "status": "succeeded",
+      "customer": "cus_SyntheticCust01", "payment_intent": "pi_3SyntheticIntent01",
+      "billing_details": { "email": "Jordan.Example@example.org", "name": "Jordan Example", "phone": "+12035550142",
+        "address": { "line1": "1 Example Plaza" } },
+      "payment_method_details": { "card": { "brand": "visa", "last4": "4242", "exp_month": 12, "exp_year": 2030 } },
+      "description": "Starter package for Jordan Example",
+      "metadata": { "offer": "starter", "client_phone": "203-555-0142", "notes": "SYNTHETIC NOTE" }
+    },
+    { "id": "re_SyntheticRefund01", "object": "refund", "created": 1763900500, "amount": 5000, "currency": "usd",
+      "status": "succeeded", "charge": "ch_3SyntheticCharge01", "livemode": false },
+    { "id": "in_SyntheticInvoice01", "object": "invoice", "created": 1763800000, "amount_paid": 50000, "total": 50000,
+      "currency": "usd", "status": "paid", "customer": "cus_SyntheticCust01", "customer_email": "jordan.example@example.org",
+      "customer_name": "Jordan Example", "subscription": null, "livemode": false, "metadata": { "package": "full coverage" } },
+    { "id": "cus_SyntheticCust01", "object": "customer", "created": 1763800000, "email": "jordan.example@example.org",
+      "name": "Jordan Example", "phone": "+12035550142", "address": { "line1": "1 Example Plaza" }, "livemode": false },
+    { "id": "po_SyntheticPayout01", "object": "payout", "created": 1763800000, "amount": 1000, "currency": "usd" }
+  ]
+}

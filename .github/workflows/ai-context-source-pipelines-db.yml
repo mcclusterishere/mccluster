@@ -1,0 +1,48 @@
+name: AI Context Source Pipelines (isolated PostgreSQL)
+on:
+  pull_request:
+    paths:
+      - 'supabase/pending/20261125012000_ai_context_source_pipelines_v1*.sql'
+      - 'supabase/tests/ai_context_source_pipelines.*.sql'
+      - 'core/src/pipelines/**'
+      - 'core/test/source-pipelines.test.mjs'
+      - 'core/test/fixtures/source-pipelines/**'
+      - '.github/workflows/ai-context-source-pipelines-db.yml'
+permissions:
+  contents: read
+jobs:
+  sql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16.6
+        env:
+          POSTGRES_PASSWORD: pipelines_fixture_only
+          POSTGRES_DB: pipelines_db
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: pipelines_fixture_only
+      PGDATABASE: pipelines_db
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/ai_context_source_pipelines.stub.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261125012000_ai_context_source_pipelines_v1.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261125012000_ai_context_source_pipelines_v1.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/ai_context_source_pipelines.behaviour.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261125012000_ai_context_source_pipelines_v1.rollback.sql
+      - run: test "$(psql -tAc "select to_regclass('ai_context.source_messages') is null")" = t
+      - name: Pipeline code against the same SQL (PGlite)
+        working-directory: core
+        run: |
+          npm install --prefix /tmp/sp-db --ignore-scripts --no-audit --no-fund --no-save @electric-sql/pglite@0.3.14
+          PGLITE_MODULE=/tmp/sp-db/node_modules/@electric-sql/pglite/dist/index.js node --test test/source-pipelines.test.mjs
