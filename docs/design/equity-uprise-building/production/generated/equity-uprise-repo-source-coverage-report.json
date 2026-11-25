@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 801,
+  "candidate_count": 803,
   "capability_source_count": 107,
-  "support_only_count": 694,
-  "checks_total": 3099,
-  "checks_passed": 3099,
+  "support_only_count": 696,
+  "checks_total": 3107,
+  "checks_passed": 3107,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -411,6 +411,8 @@
     "native/src/mcc.tsx",
     "native/src/proofMedia.ts",
     "newsroom.html",
+    "outreach-pipeline/src/compose.mjs",
+    "outreach-pipeline/src/text-rules.mjs",
     "packages/equity-uprise/environment/README.md",
     "packages/equity-uprise/environment/manifest.json",
     "packages/release-policy/globe.mjs",
@@ -815,7 +817,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "801 entries"
+      "detail": "803 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -8569,6 +8571,46 @@
     },
     {
       "name": "newsroom.html support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "outreach-pipeline/src/compose.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "outreach-pipeline/src/compose.mjs classified",
+      "passed": true,
+      "detail": "classification='incidental_text_match'"
+    },
+    {
+      "name": "outreach-pipeline/src/compose.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "outreach-pipeline/src/compose.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "outreach-pipeline/src/text-rules.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "outreach-pipeline/src/text-rules.mjs classified",
+      "passed": true,
+      "detail": "classification='incidental_text_match'"
+    },
+    {
+      "name": "outreach-pipeline/src/text-rules.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "outreach-pipeline/src/text-rules.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
