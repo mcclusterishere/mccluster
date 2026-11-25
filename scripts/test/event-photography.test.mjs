@@ -42,12 +42,12 @@ function onboarding(state) {
 }
 const eventState = {offer:'who-did-the-shoot', mode:'m', projectType:'event', photoNeeds:['event'], eventHours:'3'};
 
-test('ledger retains $201/hour and derives $603 minimum without inventing travel', () => {
+test('ledger retains $250/hour and derives $750 minimum without inventing travel', () => {
   const {api} = sandbox(), L = ledger(), r = api.eventPhotographyLine(L);
-  assert.equal(r.amount, 201); assert.equal(r.minimum_hours, 3); assert.equal(api.minimumFor(r), 603);
+  assert.equal(r.amount, 250); assert.equal(r.minimum_hours, 3); assert.equal(api.minimumFor(r), 750);
   assert.match(r.unit, /3-hour minimum/);
   assert.match(api.eventPhotographyIntro(L), /Connecticut, within approximately 75 minutes of New Haven/);
-  assert.match(api.eventPhotographyIntro(L), /\$603 for 3 hours/);
+  assert.match(api.eventPhotographyIntro(L), /\$750 for 3 hours/);
   assert.match(api.eventPhotographyTerms(L), /Travel.*separate line item.*agreed before booking/);
   assert.equal(Object.hasOwn(r, 'travel_amount'), false);
   const o = api.offerOf(L,'who-did-the-shoot');
@@ -59,7 +59,7 @@ test('quotes enforce three hours and reject missing, malformed, negative and non
   for (const value of [undefined, null, '', '  ', false, [], {}, 'no', NaN, Infinity, 'Infinity', -3, 0, 1, 2, 2.99, 1e100]) {
     assert.equal(api.eventPhotographyQuote(L,value).valid,false,String(value));
   }
-  for (const [hours,base] of [[3,603],['3',603],[3.5,703.5],[4,804]]) {
+  for (const [hours,base] of [[3,750],['3',750],[3.5,875],[4,1000]]) {
     const q=api.eventPhotographyQuote(L,hours);
     assert.equal(q.valid,true);assert.equal(q.base,base);assert.equal(Object.hasOwn(q,'total'),false);
   }
@@ -102,8 +102,8 @@ test('hire renderer passes the derived minimum into the actual package cards', (
   vm.runInContext(source,context);
   const L=api.derive(ledger());
   const html=context.window.testModePanel(L,api.offerOf(L,'who-did-the-shoot'),'m');
-  assert.match(html,/data-shop="photo-event"[^>]*data-shop-p="603"[^>]*data-shop-m="from"[^>]*data-shop-min="603"/);
-  assert.match(html,/3-hour minimum · \$603 base/);
+  assert.match(html,/data-shop="photo-event"[^>]*data-shop-p="750"[^>]*data-shop-m="from"[^>]*data-shop-min="750"/);
+  assert.match(html,/3-hour minimum · \$750 base/);
   assert.match(html,/Travel is quoted as a separate line item and agreed before booking/);
   assert.doesNotMatch(html,/two-hour minimum/);
 });
@@ -114,9 +114,9 @@ test('package discounts cannot reduce event photography below its minimum', () =
   source=source.replace('  window.MCC_SHOP = {','  window.testShop = { totals, summary, set: function(i,p) { items=i; picked=p; } };\n  window.MCC_SHOP = {');
   vm.runInContext(source,context);
   const shop=context.window.testShop;
-  const items={event:{id:'photo-event',n:'Event photography · 3-hour base',p:603,m:'from',minimum:603,note:'Travel quoted separately and agreed before booking.'},portrait:{id:'portrait',n:'Portrait',p:285,m:'once'}};
-  shop.set(items,['event']);assert.equal(shop.totals().onceOff,603);
-  shop.set(items,['event','portrait']);assert.equal(shop.totals().onceOff,603+285*.95);
+  const items={event:{id:'photo-event',n:'Event photography · 3-hour base',p:750,m:'from',minimum:750,note:'Travel quoted separately and agreed before booking.'},portrait:{id:'portrait',n:'Portrait',p:285,m:'once'}};
+  shop.set(items,['event']);assert.equal(shop.totals().onceOff,750);
+  shop.set(items,['event','portrait']);assert.equal(shop.totals().onceOff,750+285*.95);
   assert.match(shop.summary(),/minimums apply/);assert.match(shop.summary(),/Travel quoted separately/);
 });
 
@@ -124,9 +124,9 @@ test('onboarding adds duration only for event photography in standard mode', () 
   const {form}=onboarding({...eventState});
   const step=form.brief().find(s=>s.id==='w_event_hours');
   assert.equal(step.kind,'number');assert.equal(form.validate(step),true);
-  assert.match(form.renderReview(),/\$603 for 3 hours/);
+  assert.match(form.renderReview(),/\$750 for 3 hours/);
   assert.match(form.renderReview(),/Quote pending; not included in the base/);
-  assert.match(form.answerLines().join('\n'),/\$603 service base.*separate quote pending agreement/);
+  assert.match(form.answerLines().join('\n'),/\$750 service base.*separate quote pending agreement/);
   assert.equal(onboarding({...eventState,mode:'equity'}).form.brief().some(s=>s.id==='w_event_hours'),false);
   assert.equal(onboarding({...eventState,photoNeeds:[],videoNeeds:['highlight'],deliverables:['raw']}).form.brief().some(s=>s.id==='w_event_hours'),false);
 });
@@ -149,15 +149,15 @@ test('review Change links are handled before choice-button filtering', () => {
 test('structured offer keeps hourly price, minimum quantity, service area and separate travel', () => {
   const L=ledger(),graph=buildGraph(L),service=graph['@graph'].find(s=>s['@id'].endsWith('#who-did-the-shoot'));
   const offer=service.offers.find(o=>o.name==='Event photography');
-  assert.equal(offer.priceSpecification.price,201);assert.equal(offer.priceSpecification.unitCode,'HUR');
-  assert.equal(offer.eligibleQuantity.minValue,3);assert.match(offer.description,/\$603 base/);
+  assert.equal(offer.priceSpecification.price,250);assert.equal(offer.priceSpecification.unitCode,'HUR');
+  assert.equal(offer.eligibleQuantity.minValue,3);assert.match(offer.description,/\$750 base/);
   assert.match(offer.description,/approximately 75 minutes/);assert.match(offer.description,/Travel.*agreed before booking/);
   assert.ok(read('hire.html').includes(renderBlock(L)));
 });
 
 test('generated knowledge follows the same event minimum and quote-first sales path', () => {
   const sql=execFileSync(process.execPath,['scripts/kb-build.mjs'],{cwd:new URL('../../',import.meta.url),encoding:'utf8'});
-  assert.match(sql,/Event photography: \$201 — per hour · 3-hour minimum · \$603 base/);
+  assert.match(sql,/Event photography: \$250 — per hour · 3-hour minimum · \$750 base/);
   assert.match(sql,/Request a shoot quote: https:\/\/matthew.mccluster.org\/onboard.html\?offer=who-did-the-shoot/);
   assert.doesNotMatch(sql,/two-hour minimum/);
 });
