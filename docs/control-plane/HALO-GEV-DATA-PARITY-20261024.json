@@ -1,0 +1,200 @@
+{
+  "upstream_repository": "bilawalsidhu/gods-eye-view",
+  "upstream_commit": "9d3548c27c2cd4bf80ea39cbb3f0634ab1c5a06b",
+  "date": "2026-10-24",
+  "complete": false,
+  "layers": [
+    {
+      "upstream_layer": "air-quality",
+      "halo_layer": "airquality",
+      "status": "implemented_unreleased",
+      "note": "Implemented in this branch: ECCC AQHI, Canada only; production verification pending."
+    },
+    {
+      "upstream_layer": "ais-live-vessels",
+      "halo_layer": "vessels",
+      "status": "existing_partial",
+      "note": "Existing layer needs detailed field, coverage and interaction parity verification."
+    },
+    {
+      "upstream_layer": "alpr-cameras",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Provider and Halo rendering integration outstanding; no placeholder UI added."
+    },
+    {
+      "upstream_layer": "bhote-koshi-2026",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Specific historical event dataset, not a live feed; validate provenance and import as historical evidence."
+    },
+    {
+      "upstream_layer": "bhote-koshi-locator",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Reference boundary/locator for the historical event, not live telemetry."
+    },
+    {
+      "upstream_layer": "bikeshare",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Existing GBFS adapter; operator discovery, per-feed rights and station availability rendering required."
+    },
+    {
+      "upstream_layer": "cctv",
+      "halo_layer": "cctv",
+      "status": "existing_partial",
+      "note": "Existing layer needs detailed field, coverage and interaction parity verification."
+    },
+    {
+      "upstream_layer": "directions",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Routing acquisition and route renderer required."
+    },
+    {
+      "upstream_layer": "earthquakes",
+      "halo_layer": "quakes",
+      "status": "existing_partial",
+      "note": "Existing layer needs detailed field, coverage and interaction parity verification."
+    },
+    {
+      "upstream_layer": "fire-perimeters",
+      "halo_layer": "perimeters",
+      "status": "existing_partial",
+      "note": "Existing layer needs detailed field, coverage and interaction parity verification."
+    },
+    {
+      "upstream_layer": "flights",
+      "halo_layer": "flights",
+      "status": "existing_partial",
+      "note": "Existing layer needs detailed field, coverage and interaction parity verification."
+    },
+    {
+      "upstream_layer": "gnss-integrity",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Provider and Halo rendering integration outstanding; no placeholder UI added."
+    },
+    {
+      "upstream_layer": "local-dams",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Real upstream bundled GeoJSON dataset; Halo placeholder removed earlier was not a data integration. Needs bounded import and attribution."
+    },
+    {
+      "upstream_layer": "local-datacenters",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Real upstream bundled OSM-derived GeoJSON dataset; needs bounded import and attribution."
+    },
+    {
+      "upstream_layer": "local-firms",
+      "halo_layer": "fires",
+      "status": "existing_partial",
+      "note": "Existing layer needs detailed field, coverage and interaction parity verification."
+    },
+    {
+      "upstream_layer": "military",
+      "halo_layer": "military",
+      "status": "existing_partial",
+      "note": "Existing layer needs detailed field, coverage and interaction parity verification."
+    },
+    {
+      "upstream_layer": "military-awareness",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Derived view over aircraft/vessels/installations; must retain derivation and uncertainty."
+    },
+    {
+      "upstream_layer": "military-installations",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Provider and Halo rendering integration outstanding; no placeholder UI added."
+    },
+    {
+      "upstream_layer": "radio",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Existing canonical Radio Browser adapter; correct coordinate mapping and Halo rendering/audio still required."
+    },
+    {
+      "upstream_layer": "recent-imagery",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Imagery source, dates, coverage and comparison renderer required."
+    },
+    {
+      "upstream_layer": "rocket-launches",
+      "halo_layer": "launches",
+      "status": "existing_partial",
+      "note": "Existing layer needs detailed field, coverage and interaction parity verification."
+    },
+    {
+      "upstream_layer": "satellites",
+      "halo_layer": "satellites",
+      "status": "existing_partial",
+      "note": "Existing layer needs detailed field, coverage and interaction parity verification."
+    },
+    {
+      "upstream_layer": "street-level",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Mapillary provider and credential path plus imagery renderer required."
+    },
+    {
+      "upstream_layer": "telegeography-submarine-cables",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Bundled dataset has separate usage terms; entitlement must be established before import."
+    },
+    {
+      "upstream_layer": "traffic",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Upstream includes simulated vehicles; simulation must not be labeled observed traffic. TomTom requires a key."
+    },
+    {
+      "upstream_layer": "transit",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Provider and Halo rendering integration outstanding; no placeholder UI added."
+    },
+    {
+      "upstream_layer": "weather-cyclones",
+      "halo_layer": "cyclones",
+      "status": "existing_partial",
+      "note": "Existing layer needs detailed field, coverage and interaction parity verification."
+    },
+    {
+      "upstream_layer": "weather-lightning",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Provider and Halo rendering integration outstanding; no placeholder UI added."
+    },
+    {
+      "upstream_layer": "weather-radar",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Provider and Halo rendering integration outstanding; no placeholder UI added."
+    },
+    {
+      "upstream_layer": "weather-satellite",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Provider and Halo rendering integration outstanding; no placeholder UI added."
+    },
+    {
+      "upstream_layer": "wind",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Provider and Halo rendering integration outstanding; no placeholder UI added."
+    },
+    {
+      "upstream_layer": "local-adsb",
+      "halo_layer": null,
+      "status": "not_integrated",
+      "note": "Requires an actual local receiver and an authorized connection; cannot fabricate receiver traffic."
+    }
+  ]
+}

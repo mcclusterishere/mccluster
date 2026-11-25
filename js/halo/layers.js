@@ -14,6 +14,7 @@
   const SPECS = Object.freeze({
     weather: Object.freeze({ label: 'Weather alerts (NOAA)', rows: 'events', every: 120000, color: '#d1d5df' }),
     natural: Object.freeze({ label: 'Natural events (NASA)', rows: 'events', every: 600000, color: '#dfae9b' }),
+    airquality: Object.freeze({ label: 'Air quality (Canada AQHI)', rows: 'readings', every: 600000, color: '#4cc9f0' }),
     military: Object.freeze({ label: 'Military flights', rows: 'aircraft', every: 30000, color: '#ffbf3c' }),
     vessels: Object.freeze({ label: 'Ships (AIS)', rows: 'vessels', every: 60000, color: '#5ad1c4' }),
     quakes: Object.freeze({ label: 'Earthquakes', rows: 'quakes', every: 60000, color: '#ff7a59' }),
@@ -92,6 +93,17 @@
     const draw = {
       weather(id, rows) { state[id].items = rows.filter(r => r && typeof r.id === 'string' && !window.HaloEvents?.expired(r)); state[id].count = state[id].items.length; },
       natural(id, rows) { draw.weather(id, rows); },
+      airquality(id, rows) {
+        const v = viewer(), pts = new C.PointPrimitiveCollection(), L = state[id];
+        rows.forEach(r => {
+          if (!r || !lonLat(r.lon, r.lat) || !finite(r.value)) return;
+          const item = { ...r, name: text(r.name, 160) };
+          const color = r.stale ? '#7f90a6' : r.value <= 3 ? '#4cc9f0' : r.value <= 6 ? '#ffd43b' : r.value <= 10 ? '#ff6b35' : '#c1121f';
+          pts.add({ position: C.Cartesian3.fromDegrees(r.lon, r.lat), pixelSize: 9, color: C.Color.fromCssColorString(color), id: pickId(id, item) });
+          L.items.push(item);
+        });
+        v.scene.primitives.add(pts); L.prims.push(pts); L.count = pts.length;
+      },
       military(id, rows) {
         const v = viewer(), col = new C.BillboardCollection(), L = state[id];
         rows.forEach((r) => {
@@ -211,7 +223,7 @@
          so a stale answer reads its real age, not the time of this request */
       const provided = body ? Date.parse(body.fetched_at) : NaN;
       L.checked = Date.now(); L.fetched = Number.isFinite(provided) ? provided : body ? L.checked : L.fetched;
-      L.reason = reason; L.stale = !!(body && body.stale); L.credit = body ? text(body.credit || body.attribution, 80) : '';
+      L.reason = reason; L.stale = !!(body && (body.stale || body.observation_stale)); L.credit = body ? text(body.credit || body.attribution, 80) : '';
       if (body && !body.unavailable) {
         clear(id, true);
         const rows = Array.isArray(body[SPECS[id].rows]) ? body[SPECS[id].rows] : [];
@@ -254,6 +266,7 @@
       const credit = L.credit || SPECS[pick.layer].label;
       switch (pick.layer) {
         case 'weather': case 'natural': return { title: it.name || it.event || 'Natural event', rows: [['Type', it.event || 'Unknown'], ['Source', it.source || credit], ['Reported', when(it.observed_at)], ['Expires', it.expires_at ? when(it.expires_at) : 'No expiry supplied'], ['Severity', it.severity || 'Not supplied'], ['Certainty', it.certainty || 'Not supplied'], ['Location', it.location_kind === 'reported_point' ? 'Reported position' : it.location_kind === 'area_label' ? 'Label on the reported area boundary' : 'No coordinates supplied']], note: (it.description || '') + (it.instructions ? '\n' + it.instructions : '') + '\nAnimated representation of the event type, enlarged for visibility. It is not a live image, measured size, or confirmed storm position. ' + (pick.layer === 'weather' ? 'NOAA alert area; a warning is not confirmation of a tornado on the ground.' : 'Latest NASA EONET report; an open report does not establish ongoing activity at this instant.'), credit, position: lonLat(it.lon,it.lat) ? at(0) : null, range: 160000, link: /^https:\/\/(api.weather.gov\/alerts\/|eonet.gsfc.nasa.gov\/api\/v3\/events\/)/.test(it.url || '') ? it.url : '' };
+        case 'airquality': return { title: it.name || 'Air-quality station', rows: [['Index', 'AQHI ' + it.label], ['Band', it.band], ['Observed', when(it.observed_at)], ['Freshness', it.stale ? 'Stale' : 'Current']], note: 'ECCC Canadian stations only. AQHI is not the US AQI scale. Readings older than six hours are excluded.', credit, position: at(0), range: 60000 };
         case 'military': return { title: it.callsign || it.hex || 'Military aircraft', rows: [['Type', it.type || 'Unknown'], ['Altitude', fmt(it.alt, 'ft', 3.28084)], ['Ground speed', fmt(it.speed, 'kn', 1.94384)], ['Track', fmt(it.track, '°')], ['Squawk', it.squawk || 'Unknown'], ['ICAO', it.hex || 'Unknown']], note: (it.emergency ? 'Emergency squawk broadcast. ' : '') + 'Broadcast by the aircraft’s own transponder (ADS-B). Many military aircraft never broadcast; this is not every one.', credit, position: at(Math.max(0, it.alt ?? 0)), range: 60000 };
         case 'vessels': return { title: it.name || 'MMSI ' + it.mmsi, rows: [['MMSI', it.mmsi || 'Unknown'], ['Speed', finite(it.sog) ? it.sog.toFixed(1) + ' kn' : 'Unknown'], ['Course', fmt(it.cog, '°')], ['Heading', fmt(it.heading, '°')]], note: 'The ship’s own AIS broadcast, received from shore. Ships far from a receiver are not shown.', credit, position: at(0), range: 25000 };
         case 'quakes': return { title: (finite(it.mag) ? 'M' + it.mag.toFixed(1) + ' · ' : '') + (it.place || 'Earthquake'), rows: [['Magnitude', finite(it.mag) ? it.mag.toFixed(1) : 'Unknown'], ['Depth', fmt(it.depth, 'km')], ['Time', when(it.time)], ['Tsunami flag', it.tsunami ? 'Yes' : 'No'], ['PAGER alert', it.alert || 'None']], link: it.url && /^https:\/\/earthquake\.usgs\.gov\//.test(it.url) ? it.url : '', note: 'USGS, last 24 hours. Animated rings and fracture symbol identify the event, not a measured fault or real-time seismic wave. Magnitude and location may be revised.', credit, position: at(0), range: 400000 };

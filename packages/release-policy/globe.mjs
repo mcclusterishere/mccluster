@@ -8,7 +8,7 @@
    people), NOAA water levels ('tides': /v1/world/layers/tides and
    /v1/world/tides/*) and Core's Connecticut weather snapshot ('weather':
    /v1/world/weather/*, alongside the NWS alerts layer). */
-export const GLOBE_FEATURES = Object.freeze(['flights','satellites','launches','intel','music','cctv','audience','transport','ion','military','quakes','fires','perimeters','cyclones','vessels','search','halo-ops','tides','weather','natural']);
+export const GLOBE_FEATURES = Object.freeze(['flights','satellites','launches','intel','music','cctv','audience','transport','ion','military','quakes','fires','perimeters','cyclones','vessels','search','halo-ops','tides','weather','natural','airquality']);
 export const GLOBE_RELEASE_VERSION = 'globe-admin-preview/v1';
 export function globeRelease(feature, env = {}) {
   if (!GLOBE_FEATURES.includes(feature)) return 'withdrawn';
