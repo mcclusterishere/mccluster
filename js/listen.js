@@ -75,11 +75,10 @@
   var NEIGHBOURS = {};
   var AFFINITY_ROWS = 0;
   var q = "";
-  /* JUST ALBUMS AND ARTISTS, RIGHT NOW (owner, 2026-11-23: "We don't have enough music to necessarily even have
-     playlists right now. So just list albums and artists right now."). The page is the Artists rail
-     (js/music-community.js) and the Albums shelf; the filter row is gone, and the song rails (Because you played it,
-     Continue listening, Trending now, Most saved, Hidden gems, Your library) rest behind this one switch until there
-     is more music, their methods unchanged. A search still finds every song. */
+  var TRACKS_READY = false;
+  var CATALOG_ERROR = false;
+  /* Recommendations remain off after the owner's 2026-11-23 direction. The 2026-11-24 request restores the full
+     browsable track list alongside albums and artists; it does not turn these recommendation rails back on. */
   var SONG_RAILS = false;
   /* Whether anything actually ranked. The rail is headed on what the data
      can support: calling the shelf order "Most played" when no play has been
@@ -336,29 +335,40 @@
 
     /* A search is its own view: the rails are a browse aid and they get out
        of the way the moment somebody says what they came for. */
-    /* A search is its own view: the rails are a browse aid and they get out
-       of the way the moment somebody says what they came for. */
     var showRails = !searching;
     ["ffWrap", "finWrap", "riseWrap", "keptWrap", "deepWrap"].forEach(function (id) {
       if (searching || !SONG_RAILS) el(id).hidden = true;
     });
     el("shelfWrap").hidden = searching;
     el("rotWrap").hidden = searching || !SONG_RAILS || !mine.length;
-    /* the song list is a search result, not a shelf */
-    el("allWrap").hidden = !searching;
+    /* Every track is browsable before a listener knows its title. Search
+       narrows this same list, and clearing it restores the whole catalogue. */
+    el("allWrap").hidden = false;
+    el("allWrap").setAttribute("aria-busy", !TRACKS_READY && !CATALOG_ERROR ? "true" : "false");
+    el("browseMusic").hidden = searching;
 
     var count = el("count");
-    count.hidden = !searching;
-    if (searching) {
-      count.textContent = hits.length === 0
+    count.hidden = !TRACKS_READY;
+    if (TRACKS_READY) {
+      count.textContent = searching && hits.length === 0
         ? "Nothing matches “" + q.trim() + "”"
-        : hits.length + (hits.length === 1 ? " track" : " tracks");
+        : hits.length + (hits.length === 1 ? " track" : " tracks") +
+          (searching ? "" : " · " + ALBUMS.length + (ALBUMS.length === 1 ? " album" : " albums"));
     }
 
-    el("allK").textContent = "Results";
-    el("allWhy").textContent = "Matched on title, album, credit and registered code.";
-    if (searching) el("all").innerHTML = hits.map(row).join("") ||
-      '<li><span class="t">No track by that name. Try an album, a credit, or clear the field.</span></li>';
+    el("allK").textContent = searching ? "Results" : "All tracks";
+    el("allWhy").textContent = searching
+      ? "Matched on title, album, credit and registered code."
+      : "Every song, across every album. Play here or open a track for more.";
+    if (CATALOG_ERROR) {
+      el("all").innerHTML = '<li><span class="t">Tracks could not load. Refresh to try again.</span></li>';
+    } else if (!TRACKS_READY) {
+      el("all").innerHTML = '<li><span class="t">Loading tracks&hellip;</span></li>';
+    } else {
+      el("all").innerHTML = hits.map(row).join("") || (searching
+        ? '<li><span class="t">No track by that name. Try an album, a credit, or clear the field.</span></li>'
+        : '<li><span class="t">No tracks are available yet.</span></li>');
+    }
 
     if (showRails && SONG_RAILS) {
       /* Each rail is one method, and it is on the page only when that method
@@ -412,6 +422,7 @@
     sb("v_track_affinity?select=track_key,other_key,score&rn=lte.6&order=score.desc"),
   ]).then(function (all) {
     build(all[0], all[1], all[2], all[3]);
+    TRACKS_READY = true;
     paint();
     if (root.MCC_TRACK) {
       root.MCC_TRACK("listen_view", {
@@ -420,7 +431,8 @@
       });
     }
   }).catch(function () {
-    el("all").innerHTML = '<li><span class="t">The shelf is warming up. Refresh in a moment.</span></li>';
+    CATALOG_ERROR = true;
+    paint();
   });
 
   /* ---------------------------------------------------------------
