@@ -252,7 +252,7 @@ test('Q2 the listen page keeps Artists and Albums and exposes All tracks; recomm
   assert.doesNotMatch(html, /<div class="chips" id="chips"/, 'the playlist filter row stays retired');
   assert.match(js, /var SONG_RAILS = false;/, 'one switch rests the song rails (owner, 2026-11-23: "just list albums and artists right now")');
   // Owner, 2026-11-24: every track must also be visible and browsable.
-  // The full-script behavior is exercised in listen-track-browser.test.mjs.
+  // The full-script behavior is exercised in listening-room.test.mjs.
   assert.doesNotMatch(html, /<section\b[^>]*\bid="allWrap"[^>]*\bhidden(?:\s|>)/, 'the track browser is visible on entry');
   assert.match(html, /id="allK"[^>]*>All tracks<\//);
   assert.match(html, /<p class="lib__k">Albums<\/p>/);
