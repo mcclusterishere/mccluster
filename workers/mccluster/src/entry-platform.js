@@ -32,6 +32,7 @@ import { handleWorldDirectory } from './world-directory.js';
 import { handleMusicWorkspace } from './music-workspace.js';
 import { handleMemberFronts } from './member-fronts.js';
 import { handleManagedProjects } from './managed-projects.js';
+import { handleProjectTiles } from './project-tiles.js';
 import { handleCreatorDomains } from './creator-domains.js';
 import { handleCreatorDomainOrders } from './creator-domain-orders.js';
 import { handleCreatorDomainHost } from './creator-domain-host.js';
@@ -65,7 +66,7 @@ export default {
        at its root, the company page at /company. Null for every other host,
        so the API below is untouched. Inert until the owner routes the apex
        to this Worker: docs/control-plane/DOMAINS-AND-ENTITIES.md */
-    const domain = await handleCreatorDomainHost(request, env, { authorizeEntitlement: hasActiveSitePlan });
+    const domain = await handleCreatorDomainHost(request, env, { authorizeEntitlement: hasActiveSitePlan, projectPublic: handleManagedProjects, projectTilesPublic: handleProjectTiles });
     if (domain) return domain;
     const company = await companySiteResponse(request, env);
     if (company) return company;
@@ -116,9 +117,9 @@ export default {
       if (archive) return archive;
       /* every account's front page: the house page's experience with its own words and media (./member-fronts.js) */
       // Purchases remain unavailable without a complete reviewed registrar/checkout adapter.
-      const domainOrders = await handleCreatorDomainOrders(request, env, { authorizeEntitlement: hasActiveSitePlan });
+      const domainOrders = await handleCreatorDomainOrders(request, env, { authorizeEntitlement: hasActiveSitePlan, projectPublic: handleManagedProjects, projectTilesPublic: handleProjectTiles });
       if (domainOrders) return domainOrders;
-      const domains = await handleCreatorDomains(request, env, { authorizeEntitlement: hasActiveSitePlan });
+      const domains = await handleCreatorDomains(request, env, { authorizeEntitlement: hasActiveSitePlan, projectPublic: handleManagedProjects, projectTilesPublic: handleProjectTiles });
       if (domains) return domains;
       const projects = await handleManagedProjects(request, env);
       if (projects) return projects;

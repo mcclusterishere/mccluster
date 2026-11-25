@@ -183,6 +183,10 @@
       .then(function (r) { return r.json().then(function (b) { return { status: r.status, body: b }; }); })
       .then(function (r) {
         var registry = w.MCC_FRONT_PROJECTS && w.MCC_FRONT_PROJECTS.get(projectSlug);
+        var tileURL = "website-studio-view.html?project=" + encodeURIComponent(projectSlug);
+        if (r.status === 200 && r.body && r.body.ok && r.body.presentation === "tiles" && r.body.url === tileURL) {
+          location.replace(new URL(tileURL, document.baseURI).href); return;
+        }
         if (r.status === 200 && r.body && r.body.ok && r.body.config && (!r.body.registry_key || registry && r.body.registry_key === projectSlug)) { start(r.body); return; }
         if (r.status === 404 && r.body && r.body.code === "project_not_found" && registry) { start(registry); return; }
         empty(r.status === 404 ? "No public project here" : "This project cannot be read right now", "The project may be unpublished or temporarily unavailable.", [{ label: "Your projects", href: "customer-projects.html" }]);

@@ -29,10 +29,16 @@ export function nameSiloAdapter({ apiKey, fetchImpl, allowLive = false }) {
       return { domain, action, currency: 'USD', registrar_cost: cost, purchasable: false };
     },
     register({ domain, years, contactId, paymentId }) {
+      domain = hostname(domain);
+      if (!Number.isInteger(years) || years < 1 || years > 10) throw new Error('Invalid registration term');
       if (!contactId) throw new Error('Verified registrant contact is required');
-      return call('registerDomain', { domain, years: String(years), contact_id: contactId, payment_id: paymentId, private: '1', auto_renew: '0' });
+      return call('registerDomain', { domain, years: String(years), contact_id: contactId, ...(paymentId ? {payment_id:paymentId} : {}), private: '1', auto_renew: '0' });
     },
-    renew({ domain, years, paymentId }) { return call('renewDomain', { domain, years: String(years), payment_id: paymentId }); }
+    renew({ domain, years, paymentId }) {
+      domain = hostname(domain);
+      if (!Number.isInteger(years) || years < 1 || years > 10) throw new Error('Invalid renewal term');
+      return call('renewDomain', { domain, years: String(years), ...(paymentId ? {payment_id:paymentId} : {}) });
+    }
   };
 }
 /* store.claim atomically changes funded -> executing and returns order, or null. It MUST
@@ -51,7 +57,10 @@ export async function fulfillDomainOrder(id, { store, registrar, enabled = false
   try {
     const result = await registrar[order.action]({ domain: order.hostname, years: order.years, contactId: order.registrant_contact_id, paymentId: order.payment_id });
     // 301/302 can mean purchased using fallback nameservers/contact. Never retry or call these complete.
-    const confirmed = String(result.code) === '300' && result.domain === order.hostname && (order.registrar_cents === undefined || Math.round(Number(result.order_amount) * 100) === order.registrar_cents);
+    // A malformed/sub-cent charge must not be rounded into an expected amount.
+    const amount = String(result.order_amount ?? '');
+    const cents = /^\d+\.\d{2}$/.test(amount) ? Number(amount.replace('.', '')) : NaN;
+    const confirmed = String(result.code) === '300' && result.domain === order.hostname && (order.registrar_cents === undefined || (Number.isSafeInteger(cents) && cents === order.registrar_cents));
     outcome = confirmed ? { status: 'fulfilled', registrar_amount: result.order_amount } : { status: 'reconciliation_required', registrar_code: String(result.code || ''), reason: 'Confirm ownership, registrant and charge at registrar before further action' };
   } catch (e) { outcome = e.noCharge ? { status: 'refund_required', reason: e.message } : { status: 'reconciliation_required', reason: 'Registrar outcome unknown; do not repeat purchase or renewal' }; }
   const persisted = await store.finish(id, outcome);
