@@ -19,6 +19,9 @@ test('region opt-in stays separate from latest-sign-in account counts', () => {
  assert.match(worker,/shared_countries:/);
  assert.match(globe,/opted in to region sharing/);
  assert.match(globe,/\/v1\/world\/members/);
+ const page=read('js/mnet.js');
+ assert.match(page,/opted in to region sharing/);
+ assert.match(page,/sharing: n\(s.sharing\)/);
 });
 test('named legacy subdivisions have stable, bounded scoped identifiers', () => {
  const w={};vm.runInNewContext(read('js/world-region-scope.js'),{window:w});
