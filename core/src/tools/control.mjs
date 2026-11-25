@@ -9,6 +9,7 @@ import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
 import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
 import { activeMeetingTools, callMeetingTool } from './meeting.mjs';
 import { WORKSTREAM_TOOLS, callWorkstreamTool } from './workstream.mjs';
+import { ENTITY_MATCH_TOOLS, callEntityMatchTool } from './entity-match.mjs';
 import { submitResidentAiTurn, getResidentAiTurn } from '../resident-ai.mjs';
 import { GAME_LORE_INPUT_SCHEMA, readGameLore } from '../game-lore.mjs';
 
@@ -122,7 +123,7 @@ const BASE_TOOLS = [
   }
 ];
 
-BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS, ...WORKSTREAM_TOOLS);
+BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS, ...ENTITY_MATCH_TOOLS, ...WORKSTREAM_TOOLS);
 BASE_TOOLS.push(...activeMeetingTools());
 
 if (PREVIEW_CONFIGURED) {
@@ -279,6 +280,8 @@ export async function callControlTool(name, args = {}, options = {}) {
   }
 
   if (name.startsWith('core.ontology.')) return callOntologyTool(name, args, options);
+  // Automated duplicate matching first: the older core.entity.* alias tools live in ingestion.
+  if (name.startsWith('core.entity.match.')) return callEntityMatchTool(name, args, options);
   if (name.startsWith('core.ingest.') || name.startsWith('core.entity.') || name.startsWith('core.facts.')) {
     return callIngestionTool(name, args, options);
   }

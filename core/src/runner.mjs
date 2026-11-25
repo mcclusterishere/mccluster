@@ -30,6 +30,7 @@ import { weatherRegionSnapshot } from './executors/weather-region-snapshot.mjs';
 import { aiDiagnostics } from './executors/ai-diagnostics.mjs';
 import { lyricsAlign } from './executors/lyrics-align.mjs';
 import { stemsSeparate } from './executors/stems-separate.mjs';
+import { entityMatchScan } from './executors/entity-match-scan.mjs';
 import { emitCoreEvent, jobTraceId } from './observability.mjs';
 
 const executors = new Map([
@@ -64,6 +65,7 @@ const executors = new Map([
   ['actor_live_comment', actorLiveComment],
   ['lyrics_align', lyricsAlign],
   ['stems_separate', stemsSeparate],
+  ['entity_match_scan', entityMatchScan],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));

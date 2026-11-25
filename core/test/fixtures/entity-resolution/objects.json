@@ -1,0 +1,16 @@
+[
+  { "id": "10000000-0000-4000-8000-000000000001", "type_key": "lead", "object_key": "crm:lead:1", "display_name": "Dana Reyes", "properties": { "email": "Dana.Reyes+events@Example.org", "phone": "(203) 555-0147" } },
+  { "id": "10000000-0000-4000-8000-000000000002", "type_key": "client", "object_key": "stripe:cus_2", "display_name": "Dana Reyes", "properties": { "contact": { "email": "dana.reyes@example.org" } } },
+  { "id": "10000000-0000-4000-8000-000000000003", "type_key": "lead", "object_key": "crm:lead:3", "display_name": "Chris Okafor", "properties": { "company": "Harbor Lights LLC" } },
+  { "id": "10000000-0000-4000-8000-000000000004", "type_key": "client", "object_key": "gmail:c4", "display_name": "Okafor, Chris", "properties": { "name": "Chris Okafor", "company": "Harbor Lights" } },
+  { "id": "10000000-0000-4000-8000-000000000005", "type_key": "venue", "object_key": "places:5", "display_name": "The Loft", "properties": { "website": "https://www.theloftct.com/events" } },
+  { "id": "10000000-0000-4000-8000-000000000006", "type_key": "venue", "object_key": "crm:venue:6", "display_name": "Loft Inc", "properties": { "domain": "theloftct.com", "email": "booking@theloftct.com" } },
+  { "id": "10000000-0000-4000-8000-000000000007", "type_key": "contact", "object_key": "gmail:c7", "display_name": "Sam Lee", "properties": { "email": "sam@another.example" } },
+  { "id": "10000000-0000-4000-8000-000000000008", "type_key": "contact", "object_key": "gmail:c8", "display_name": "Jordan Lee", "properties": { "phone": "+1 203 555 0199" } },
+  { "id": "10000000-0000-4000-8000-000000000009", "type_key": "lead", "object_key": "crm:lead:9", "display_name": "Morgan Lee", "properties": { "phone": "203.555.0199" } },
+  { "id": "10000000-0000-4000-8000-00000000000a", "type_key": "lead", "object_key": "crm:lead:10", "display_name": "Taylor Brooks", "properties": { "email": "t.brooks@gmail.com" } },
+  { "id": "10000000-0000-4000-8000-00000000000b", "type_key": "company", "object_key": "crm:co:11", "display_name": "Taylor Brooks Photography", "properties": { "email": "tbrooks@gmail.com" } },
+  { "id": "10000000-0000-4000-8000-00000000000c", "type_key": "organization", "object_key": "org:mccluster", "display_name": "McCluster", "properties": {} },
+  { "id": "10000000-0000-4000-8000-00000000000d", "type_key": "lead", "object_key": "crm:lead:13", "display_name": "Alex Kim", "properties": { "email": "alex@kimstudio.com" } },
+  { "id": "10000000-0000-4000-8000-00000000000e", "type_key": "client", "object_key": "stripe:cus_14", "display_name": "Alexandra Kim", "properties": { "email": "akim@othermail.example" } }
+]
