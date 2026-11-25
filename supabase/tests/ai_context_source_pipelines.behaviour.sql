@@ -1,4 +1,4 @@
--- Behaviour of supabase/pending/20261125010000_ai_context_source_pipelines_v1.sql after ai_context_source_pipelines.stub.sql.
+-- Behaviour of supabase/pending/20261125012000_ai_context_source_pipelines_v1.sql after ai_context_source_pipelines.stub.sql.
 -- Disposable database only. Synthetic data only. Every check raises on failure.
 do $t$
 declare

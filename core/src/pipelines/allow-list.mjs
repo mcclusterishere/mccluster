@@ -1,5 +1,5 @@
 // The exact fields each connector may send. Mirrors ai_context.source_allowed_keys in
-// supabase/pending/20261125010000_ai_context_source_pipelines_v1.sql; a test keeps the two equal.
+// supabase/pending/20261125012000_ai_context_source_pipelines_v1.sql; a test keeps the two equal.
 export const ALLOWED_KEYS = Object.freeze({
   'google.gmail': Object.freeze(['external_id', 'thread_id', 'occurred_at', 'direction', 'labels', 'counterparty_hashes',
     'counterparty_domains', 'subject_redacted', 'attachment_count']),

@@ -2,7 +2,7 @@ name: AI Context Source Pipelines (isolated PostgreSQL)
 on:
   pull_request:
     paths:
-      - 'supabase/pending/20261125010000_ai_context_source_pipelines_v1*.sql'
+      - 'supabase/pending/20261125012000_ai_context_source_pipelines_v1*.sql'
       - 'supabase/tests/ai_context_source_pipelines.*.sql'
       - 'core/src/pipelines/**'
       - 'core/test/source-pipelines.test.mjs'
@@ -36,10 +36,10 @@ jobs:
         with:
           node-version: '22'
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/ai_context_source_pipelines.stub.sql
-      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261125010000_ai_context_source_pipelines_v1.sql
-      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261125010000_ai_context_source_pipelines_v1.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261125012000_ai_context_source_pipelines_v1.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261125012000_ai_context_source_pipelines_v1.sql
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/ai_context_source_pipelines.behaviour.sql
-      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261125010000_ai_context_source_pipelines_v1.rollback.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261125012000_ai_context_source_pipelines_v1.rollback.sql
       - run: test "$(psql -tAc "select to_regclass('ai_context.source_messages') is null")" = t
       - name: Pipeline code against the same SQL (PGlite)
         working-directory: core

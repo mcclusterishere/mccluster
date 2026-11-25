@@ -2,7 +2,7 @@
 -- projections of Gmail, Google Calendar and Stripe into the house organization, written through the existing
 -- universal ingestion contract (public.ops_ingest_connectors / ops_ingest_runs / ops_ingest_records).
 -- PENDING ONLY. Never applied to production. Owner approval required before any apply.
--- Contract: docs/control-plane/SOURCE-PIPELINES.md. Rollback: 20261125010000_ai_context_source_pipelines_v1.rollback.sql.
+-- Contract: docs/control-plane/SOURCE-PIPELINES.md. Rollback: 20261125012000_ai_context_source_pipelines_v1.rollback.sql.
 -- Needs, already in production: ai_context.workstream_require_house (ai_context_workstreams_v1), public.orgs,
 -- public.org_members, public.ops_ingest_connectors, public.ops_ingest_runs, public.ops_ingest_records
 -- (universal_ingestion_entity_resolution_v1).

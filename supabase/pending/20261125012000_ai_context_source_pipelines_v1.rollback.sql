@@ -1,4 +1,4 @@
--- ROLLBACK for ai_context_source_pipelines_v1 (20261125010000_ai_context_source_pipelines_v1.sql). Owner approval required.
+-- ROLLBACK for ai_context_source_pipelines_v1 (20261125012000_ai_context_source_pipelines_v1.sql). Owner approval required.
 -- Drops only what the forward file created. ops_ingest_runs and ops_ingest_records rows it wrote are kept as audit
 -- history; the three connectors are disabled, not deleted, because those rows reference them.
 begin;

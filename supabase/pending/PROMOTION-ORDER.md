@@ -774,3 +774,11 @@ The forward statement returns one JSON rollback receipt. Save the receipt from t
 approved application with its release evidence. Subsequent runs can return an empty
 receipt. The paired rollback takes the original receipt in the session setting
 `mccluster.pax_stage_name_receipt` and checks each current value before restoring it.
+
+## 21. AI context source pipelines (written 2026-11-25)
+
+**Pending. Never applied.** Contract: `docs/control-plane/SOURCE-PIPELINES.md`.
+
+| File (+ rollback) | Creates | Callers | Proof before apply |
+|---|---|---|---|
+| `20261125012000_ai_context_source_pipelines_v1.sql` (+ `.rollback.sql`) | `ops_ingest_connectors` rows `google.gmail`, `google.calendar`, `stripe.api` for the house org; owner-only tables `ai_context.source_messages`, `ai_context.source_calendar_events`, `ai_context.source_payments`; RPCs `ops_ai_source_ingest`, `_cursor`, `_query`, `_prune` (service_role execute only) | `core/src/pipelines/` (not scheduled; dry run by default) | needs `ai_context_workstreams_v1` and `universal_ingestion_entity_resolution_v1` (both applied). `.github/workflows/ai-context-source-pipelines-db.yml` runs stub, forward twice, `supabase/tests/ai_context_source_pipelines.behaviour.sql`, rollback, and `core/test/source-pipelines.test.mjs` against the same SQL in PGlite. Rollback drops what it created, keeps ingest runs and records, and disables the three connectors. |

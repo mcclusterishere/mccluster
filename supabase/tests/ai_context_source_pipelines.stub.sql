@@ -1,4 +1,4 @@
--- Minimal pre-state for supabase/pending/20261125010000_ai_context_source_pipelines_v1.sql on a disposable database.
+-- Minimal pre-state for supabase/pending/20261125012000_ai_context_source_pipelines_v1.sql on a disposable database.
 -- Only the columns the source pipeline SQL touches (shapes from universal_ingestion_entity_resolution_v1 and
 -- ai_context_workstreams_v1). Synthetic ids only. Never run against production.
 do $$ begin

@@ -16,7 +16,7 @@ const KEY = 'test-only-pii-hash-key-0123456789abcdef';
 const SELF = ['owner.test@example.com'];
 const fx = (n) => fileURLToPath(new URL(`./fixtures/source-pipelines/${n}.json`, import.meta.url));
 const load = async (n) => JSON.parse(await readFile(fx(n), 'utf8'));
-const sqlUrl = new URL('../../supabase/pending/20261125010000_ai_context_source_pipelines_v1.sql', import.meta.url);
+const sqlUrl = new URL('../../supabase/pending/20261125012000_ai_context_source_pipelines_v1.sql', import.meta.url);
 const ENV = {
   MCCLUSTER_PII_HASH_KEY: KEY, GMAIL_INGEST_SELF_ADDRESSES: SELF.join(','),
 };
@@ -231,7 +231,7 @@ test('end to end against the real pending SQL in PGlite', { skip: !process.env.P
   const db = new PGlite();
   const sql = (p) => readFile(new URL(`../../supabase/${p}`, import.meta.url), 'utf8');
   await db.exec(await sql('tests/ai_context_source_pipelines.stub.sql'));
-  await db.exec(await sql('pending/20261125010000_ai_context_source_pipelines_v1.sql'));
+  await db.exec(await sql('pending/20261125012000_ai_context_source_pipelines_v1.sql'));
   const org = '00000000-0000-4000-8000-000000000001';
   const owner = '00000000-0000-4000-8000-0000000000aa';
   const call = async (fn, args) => (await db.query(`select public.${fn}(${args.map((_, i) => `$${i + 1}`).join(',')}) as r`, args)).rows[0].r;

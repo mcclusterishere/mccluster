@@ -1,6 +1,6 @@
 # Source pipelines: Gmail, Google Calendar and Stripe into Supabase
 
-Status: **draft, not live.** The SQL is pending (`supabase/pending/20261125010000_ai_context_source_pipelines_v1.sql`),
+Status: **draft, not live.** The SQL is pending (`supabase/pending/20261125012000_ai_context_source_pipelines_v1.sql`),
 nothing is scheduled, and no credentials are configured. The default run is a dry run into memory.
 
 ## What it is
@@ -58,7 +58,7 @@ Output is counts and run ids only, never record contents.
 
 ## Turning it on (owner steps)
 
-1. Approve and apply `supabase/pending/20261125010000_ai_context_source_pipelines_v1.sql` (rollback alongside).
+1. Approve and apply `supabase/pending/20261125012000_ai_context_source_pipelines_v1.sql` (rollback alongside).
 2. On the OVH Core host, set in `core.env`: `MCCLUSTER_PII_HASH_KEY`, `MCCLUSTER_OWNER_PROFILE_ID`, and per source the variables in `core/core.env.example`.
 3. Google: create an OAuth client in a McCluster Corp Google Cloud project, enable the Gmail and Calendar APIs, and mint one refresh token per source with only its scope.
 4. Stripe: create a restricted key with Read on Charges, Refunds, Invoices and Customers.
