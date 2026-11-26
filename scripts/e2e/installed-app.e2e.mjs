@@ -105,9 +105,10 @@ async function setup(device, installed, owner = false, world = false, {dockModul
     }
     if ([HOUSE,WORLD].includes(u.origin)) {
       if (lyricFixture && p.startsWith('/data/lyrics/')) {
-        if (lyricFixture !== 'line-only' && p === '/data/lyrics/who-did-the-shoot.json') return json(r, {timed:{line:[{begin:0,end:8,words:[
+        if (lyricFixture === 'even' && p === '/data/lyrics/who-did-the-shoot.json') return json(r, {source:'imported',machine:{word_timing:'even'},timed:{line:[{begin:0,end:8,words:[{begin:0,end:8,content:'estimated'}]}]}});
+        if (lyricFixture !== 'line-only' && p === '/data/lyrics/who-did-the-shoot.json') return json(r, {source:'imported',machine:{word_timing:'audio'},timed:{line:[{begin:0,end:8,confidence:1,words:[
           {begin:0,end:1,content:'first'},{begin:2,end:3,content:'second'},{begin:5,end:6,content:'third'}
-        ]},{begin:9,end:10,mismatch:true,words:[{begin:9,end:10,content:'reject'}]}]}});
+        ]},{begin:9,end:10,mismatch:true,words:[{begin:9,end:10,content:'reject'}]},{begin:11,end:12,confidence:.5,words:[{begin:11,end:12,content:'interpolated'}]}]}});
         return json(r, {lines:[{t:0,text:'Not timed by word'}]});
       }
 
@@ -750,6 +751,9 @@ async function dockWordLyrics(phone, installed) {
     await page.evaluate(() => { MCC_MUSIC.audio.currentTime = 9.25; });
     await page.waitForFunction(() => document.querySelector('.appbar__lyric-word')?.textContent === '');
     check(scope + ': a mismatched line displays no inferred words', await word.textContent() === '');
+    await page.evaluate(() => { MCC_MUSIC.audio.currentTime = 11.25; });
+    await page.waitForFunction(() => Math.abs(MCC_MUSIC.audio.currentTime - 11.25) < .02 && !MCC_MUSIC.audio.seeking);
+    check(scope + ': a partly interpolated imported line stays blank', await word.textContent() === '');
     await page.evaluate(() => { MCC_MUSIC.audio.currentTime = 5.20; });
     await page.waitForFunction(() => document.querySelector('.appbar__lyric-word')?.textContent === 'third');
     await page.screenshot({path:join(OUT,`dock-lyrics-${phone.name}-${installed ? "installed" : "browser"}.png`)});
@@ -757,6 +761,21 @@ async function dockWordLyrics(phone, installed) {
     await page.waitForFunction(() => MCC_MUSIC.current()?.title === 'Runway Walk');
     await word.waitFor({state:'hidden'});
     check(scope + ': changing to a line-timed track clears the word without retaining a blank column', await word.textContent() === '');
+    await noErrors(run,scope);
+  } catch (error) { await failed(run,scope,error); }
+  finally { await context.close(); }
+}
+async function dockRejectsEvenLyrics(phone, installed) {
+  const run = await setup(phone,installed,false,false,{lyricFixture:'even'});
+  const { page,context } = run, scope = phone.name + (installed ? ' installed' : ' browser') + ' estimated words';
+  try {
+    const lyricResponse = page.waitForResponse(r => r.url().endsWith('/data/lyrics/who-did-the-shoot.json'));
+    await play(page);
+    const response = await lyricResponse;
+    await response.finished();
+    await page.waitForFunction(() => MCC_MUSIC.audio.currentTime > .25);
+    const result = await page.locator('.appbar').evaluate(d => ({words:d.classList.contains('has-word-lyrics'),value:d.querySelector('.appbar__lyric-word')?.textContent}));
+    check(scope + ': even-split imports do not reserve the lyric column or show a word', !result.words && result.value === '', result);
     await noErrors(run,scope);
   } catch (error) { await failed(run,scope,error); }
   finally { await context.close(); }
@@ -782,7 +801,7 @@ async function originalCompactGeometry(phone) {
   } catch (error) { await failed(run,scope,error); }
   finally { await context.close(); }
 }
-const DOCK_FIX = [['reference compact geometry',originalCompactGeometry],['synced words browser',phone=>dockWordLyrics(phone,false)],['synced words installed',phone=>dockWordLyrics(phone,true)],['installed Listen one Play/Pause',listenOnePause],['installed album one Play/Pause',albumOnePause],
+const DOCK_FIX = [['reference compact geometry',originalCompactGeometry],['synced words browser',phone=>dockWordLyrics(phone,false)],['synced words installed',phone=>dockWordLyrics(phone,true)],['estimated words browser',phone=>dockRejectsEvenLyrics(phone,false)],['estimated words installed',phone=>dockRejectsEvenLyrics(phone,true)],['installed Listen one Play/Pause',listenOnePause],['installed album one Play/Pause',albumOnePause],
   ['installed Listen muted',listenMuted],['installed Listen reconnecting',listenReconnecting],['browser Listen',phone => unifiedListen(phone)],
   ['unified member browser',phone => unifiedListen(phone,false,'member')],['unified member installed',phone => unifiedListen(phone,true,'member')],
   ['unified owner browser',phone => unifiedListen(phone,false,'owner')],['unified owner installed',phone => unifiedListen(phone,true,'owner')],

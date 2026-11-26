@@ -88,8 +88,14 @@
     }).then(function (data) {
       if (lyricLoad !== load || !lyricSlot) return;
       var lines = data && data.timed && data.timed.line;
-      if (!Array.isArray(lines)) return;
-      lyricWords = lines.filter(function (line) { return line && !line.mismatch && Array.isArray(line.words); })
+      var timing = data && data.machine && data.machine.word_timing;
+      // Imported LRC can contain plausible-looking arrays that were evenly
+      // divided or interpolated. Do not present those as audio-synced.
+      if (!Array.isArray(lines) || timing === "even") return;
+      lyricWords = lines.filter(function (line) {
+        if (!line || line.mismatch || !Array.isArray(line.words)) return false;
+        return data.source !== "imported" || (timing === "audio" && line.confidence === 1);
+      })
         .flatMap(function (line) { return line.words; }).filter(function (w) {
           return w && Number.isFinite(w.begin) && Number.isFinite(w.end) && w.begin >= 0 && w.end > w.begin &&
             typeof w.content === "string" && /^\S+$/.test(w.content.trim());
