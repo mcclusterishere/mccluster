@@ -41,21 +41,21 @@ consumes the World's physical top and side safe areas. A retained Music → Worl
 frame receives an already-safe viewport from its listening parent; its World,
 globe and account controls must not add those insets again. Both landscape
 orientations keep the header and navigation clear of the notch. Ordinary browser
-presentation stays unchanged.
+layout is unchanged when no track is available.
 
-The installed capsule is 46 pixels high instead of approximately 68 pixels,
-with 44-pixel touch targets and the home-indicator clearance retained. The
+The shared capsule is 46 pixels high while the browser has a selected track and
+at rest or during playback in installed web apps, with 44-pixel touch targets and the home-indicator clearance retained. The
 existing role-filtered navigation stays in its middle strip. When space is
 limited, that strip scrolls without removing destinations or shrinking buttons.
-The playing track's title and artist and its previous, play/pause and next
-controls occupy the sides. Where the bar's own Music button is the page's
-Play/Pause (Listen, while the dock shows Listen's own player), it is the one
-Play/Pause and the side holds Next alone; in the house owner's strip, which
-scrolls, it is pinned at the strip's start meanwhile, so it never scrolls out of
-reach. Where the dock shows another player's song (the World's, carried back to
-Listen from the Globe while Listen holds a record of its own), the Music button
-is the way to the music and the dock's own Play/Pause is the one. The dock never
-shows two. Opening the existing player keeps its deeper tools reachable.
+Track title, artist and Previous are on the left; Play/Pause and Next are
+on the right, outside the scrollable tabs. This restores the original compact
+layout (PR #820) without the duplicate Play/Pause from later releases.
+The tabs retain navigation even while a track is playing. If the integrated
+transport cannot mount, the legacy controls remain available. An optional
+slot after Next displays one word at the current audio time from canonical,
+word-timed lyrics. Line-only, mismatched, and unsupported tracks leave it
+empty. The rapid word ticker is decorative to assistive technology; the
+existing full lyrics player remains available.
 
 The dock reads and commands the existing Now Playing owner. It creates no audio
 element and no second playback lifecycle. A paused track remains resumable;
@@ -66,7 +66,7 @@ React Native application is not the installed web shell shown in this request.
 
 `scripts/e2e/installed-app.e2e.mjs` checks actual rendered safe-area geometry,
 the compact bar, navigation reachability and retained playback with synthetic
-device insets and audio. It also checks the ordinary browser presentation.
+device insets and audio. It also checks the ordinary browser at rest and the shared bar during playback. Guest, member and owner navigation remain role-filtered in both modes.
 
 ## One Control navigation definition
 

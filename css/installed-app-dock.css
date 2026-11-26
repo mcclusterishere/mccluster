@@ -1,113 +1,96 @@
-/* Only the installed app: 46px instead of the former 68.4px capsule.
+/* The installed app and active web music dock use the same 46px capsule.
    The 44px controls and the device's home-indicator inset remain usable. */
-html.mcc-installed-app { --appbar-h:46px; }
-html.mcc-installed-app .appbar {
+html:is(.mcc-installed-app,.mcc-app-dock-active) { --appbar-h:46px; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar {
   height:46px;box-sizing:border-box;padding:1px;gap:0;border-radius:25px;
   bottom:calc(8px + env(safe-area-inset-bottom,0px));overflow:visible;
 }
-html.mcc-installed-app .appbar__tabs {
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__tabs {
   display:flex;align-items:center;min-width:0;max-width:100%;height:44px;
   overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:none;
   scroll-snap-type:x proximity;touch-action:pan-x pan-y pinch-zoom;
 }
-html.mcc-installed-app .appbar__tabs::-webkit-scrollbar { display:none; }
-html.mcc-installed-app .appbar:not(.appbar--admin) .appbar__tabs { width:max-content;justify-self:center; }
-html.mcc-installed-app .appbar .appbar__tabs .appbar__tab {
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__tabs::-webkit-scrollbar { display:none; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar:not(.appbar--admin) .appbar__tabs { width:max-content;justify-self:center; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar .appbar__tabs .appbar__tab {
   width:44px;min-width:44px;height:44px;min-height:44px;flex:0 0 44px;
   box-sizing:border-box;border-radius:22px;scroll-snap-align:start;gap:1px;
 }
-html.mcc-installed-app .appbar .appbar__tab svg { width:20px;height:20px; }
-html.mcc-installed-app .appbar .appbar__m { width:25px;height:25px; }
-html.mcc-installed-app .appbar .appbar__tab[data-appnav="music"]::before { top:calc(50% - 7px); }
-html.mcc-installed-app .appbar--admin .appbar__tabs { flex:1 1 auto; }
-html.mcc-installed-app .appbar--admin {
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar .appbar__tab svg { width:20px;height:20px; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar .appbar__m { width:25px;height:25px; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar .appbar__tab[data-appnav="music"]::before { top:calc(50% - 7px); }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar--admin .appbar__tabs { flex:1 1 auto; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar--admin {
   left:max(4px,var(--mcc-app-safe-left,env(safe-area-inset-left,0px)));
   right:max(4px,var(--mcc-app-safe-right,env(safe-area-inset-right,0px)));
   width:auto;
 }
-html.mcc-installed-app .appbar--admin .appbar__tabs .appbar__tab { border-radius:12px; }
-html.mcc-installed-app .appbar--admin .appbar__tab > span:not(.appbar__sr) {
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar--admin .appbar__tabs .appbar__tab { border-radius:12px; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar--admin .appbar__tab > span:not(.appbar__sr) {
   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;line-height:11px;
 }
-html.mcc-installed-app .appbar--admin .appbar__tab.is-here::after { bottom:0;height:2px; }
-html.mcc-installed-app.mcc-app-dock-active .appbar {
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar--admin .appbar__tab.is-here::after { bottom:0;height:2px; }
+html.mcc-app-dock-active .appbar {
   left:max(8px,var(--mcc-app-safe-left,env(safe-area-inset-left,0px)));
   right:max(8px,var(--mcc-app-safe-right,env(safe-area-inset-right,0px)));width:auto;
   max-width:960px;display:grid;grid-template-columns:minmax(88px,1fr) minmax(44px,132px) minmax(88px,1fr);
   justify-content:normal;scroll-padding:0;
 }
-html.mcc-installed-app .appbar__music-left,
-html.mcc-installed-app .appbar__music-right { display:flex;align-items:center;min-width:0;height:44px; }
-html.mcc-installed-app .appbar__music-right { justify-content:flex-end; }
-html.mcc-installed-app .appbar__music-left[hidden],
-html.mcc-installed-app .appbar__music-right[hidden] { display:none!important; }
-html.mcc-installed-app .appbar button[data-app-player] {
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-left,
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-right { display:flex;align-items:center;min-width:0;height:44px; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-right { justify-content:flex-end; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-left[hidden],
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-right[hidden] { display:none!important; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar button[data-app-player] {
   min-width:44px;min-height:44px;width:44px;height:44px;flex:0 0 44px;
   border:0;border-radius:22px;padding:0;margin:0;background:none;color:inherit;cursor:pointer;
   display:grid;place-items:center;box-sizing:border-box;touch-action:manipulation;
 }
-html.mcc-installed-app .appbar button[data-app-player] svg { width:18px;height:18px;fill:currentColor;stroke:none; }
-html.mcc-installed-app .appbar button[data-app-player]:disabled { opacity:.35;cursor:default; }
-html.mcc-installed-app .appbar button[data-app-player]:focus-visible { outline:2px solid currentColor;outline-offset:-2px; }
-html.mcc-installed-app .appbar button.appbar__music-info {
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar button[data-app-player] svg { width:18px;height:18px;fill:currentColor;stroke:none; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar button[data-app-player]:disabled { opacity:.35;cursor:default; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar button[data-app-player]:focus-visible { outline:2px solid currentColor;outline-offset:-2px; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar button.appbar__music-info {
   min-width:0;width:auto;flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;
   align-items:stretch;text-align:left;border-radius:6px;padding:0 3px 0 0;overflow:hidden;
 }
-html.mcc-installed-app .appbar__music-info span { display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-html.mcc-installed-app .appbar__music-info [data-app-player="title"] { font:600 12px/15px system-ui,sans-serif; }
-html.mcc-installed-app .appbar__music-info [data-app-player="artist"] { font:400 10px/13px system-ui,sans-serif;opacity:.78; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-info span { display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-info [data-app-player="title"] { font:600 12px/15px system-ui,sans-serif; }
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-info [data-app-player="artist"] { font:400 10px/13px system-ui,sans-serif;opacity:.78; }
 /* Why the music is quiet, in its full words at every width: a line of its own across the top of the dock while it
    applies; the controls stay where they were, on the row below. Under the title it was cut by the column's width,
    "Reconnectin…" at 390 px and a few letters at 320 (music slice M3 follow-up). */
-html.mcc-installed-app .appbar__music-status { display:none; }
-html.mcc-installed-app.mcc-app-dock-active .appbar.has-status { height:auto;grid-template-rows:auto 44px; }
-html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__music-left,
-html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__tabs,
-html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__music-right { grid-row:2; }
-html.mcc-installed-app.mcc-app-dock-active .appbar.has-status > .appbar__music-status {
+html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-status { display:none; }
+html.mcc-app-dock-active .appbar.has-status { height:auto;grid-template-rows:auto 44px; }
+html.mcc-app-dock-active .appbar.has-status > .appbar__music-left,
+html.mcc-app-dock-active .appbar.has-status > .appbar__tabs,
+html.mcc-app-dock-active .appbar.has-status > .appbar__music-right { grid-row:2; }
+html.mcc-app-dock-active .appbar.has-status > .appbar__music-status {
   display:block;grid-column:1 / -1;grid-row:1;min-width:0;padding:5px 14px 0 45px;
   font:600 11px/14px system-ui,sans-serif;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-/* ONE PLAY/PAUSE (the Release 1 dock fix). Where the red Music tab is the page's own Play/Pause (js/tabbar.js marks
-   it: listen.html, the engine's song or held record, no World open or opening, and the dock showing that same player),
-   it is the one control and the dock shows none of its own. Everywhere else the dock's own is the one control, and the
-   tab, the way to the music there (the album: it opens the shelf; the World over the music; Listen while a World song
-   carried back from the Globe plays there), wears its play triangle at rest (css/style.css), never a second pause
-   glyph. On its red coin (the album, the room it points at) the triangle stays white, as the pause glyph it replaces
-   was, so it never vanishes into the coin. */
-html.mcc-installed-app.mcc-music-tab-transport[data-app-player-surface="listen"] .appbar button[data-app-player="play"] { display:none; }
-html.mcc-installed-app.mcc-app-dock-active:not(.mcc-music-tab-transport) .appbar .appbar__tab[data-appnav="music"].is-sound::before {
-  top:calc(50% - 7px);left:calc(50% + 1px);width:13px;height:14px;color:inherit;background:currentColor;filter:none;
-  clip-path:polygon(0 0,100% 50%,0 100%);
+/* Keep the original track and navigation positions at 390px. Only the
+   lyric-capable track reserves room; at tighter widths the center can scroll. */
+.appbar__lyric-word { display:none; }
+html.mcc-app-dock-active .appbar.has-word-lyrics {
+  grid-template-columns:minmax(88px,1fr) minmax(44px,132px) minmax(116px,1fr);
 }
-html.mcc-installed-app.mcc-app-dock-active:not(.mcc-music-tab-transport) .appbar .appbar__tab[data-appnav="music"].is-sound.is-here::before,
-html.mcc-installed-app.mcc-app-dock-active:not(.mcc-music-tab-transport) .appbar .appbar__tab[data-appnav="music"].is-sound.is-active::before { color:#fff; }
-/* Where the tab is the one Play/Pause, its play triangle at rest is white on its red coin too, as its pause glyph is:
-   the room's grey (css/music-system-v2.css) was about 1.2:1 on the red, and with the dock's own Play gone it was the
-   only Play there (verification DFV-3). The owner's tab wears no coin and is white already: the owner's bar marks it
-   aria-current, which css/music-system-v2.css lights. */
-html.mcc-installed-app.mcc-music-tab-transport .appbar:not(.appbar--admin) .appbar__tab[data-appnav="music"].is-here:not(.is-sound)::before,
-html.mcc-installed-app.mcc-music-tab-transport .appbar:not(.appbar--admin) .appbar__tab[data-appnav="music"].is-active:not(.is-sound)::before { color:#fff; }
-/* The one Play/Pause never scrolls out of reach (verification DFV-1; BAR-RESTORE 4.2): the house owner's strip
-   scrolls (ten tabs in 132 px), so while the Music tab is the Play/Pause it is pinned at the strip's start, on the
-   bar's own ground (body.music-v2 .appbar, Listen), the other tabs passing under it. Every other tab keeps 44 px of
-   room before it, so the strip brings it to rest, and scrolls it into view, clear of the pin (js/site-navigation.js
-   reveals a focused tab the same way); the pinned tab, always in view, is no place to rest. */
-html.mcc-installed-app.mcc-music-tab-transport .appbar--admin .appbar__tabs > .appbar__tab[data-appnav="music"] {
-  position:sticky;left:0;z-index:1;background:#0e0e10;scroll-snap-align:none;
+html.mcc-app-dock-active .appbar.has-word-lyrics .appbar__lyric-word {
+  display:block;flex:0 0 28px;min-width:0;text-align:center;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;font:600 10px/13px system-ui,sans-serif;color:inherit;
 }
-html.mcc-installed-app.mcc-music-tab-transport .appbar--admin .appbar__tabs > .appbar__tab:not([data-appnav="music"]) { scroll-margin-inline-start:44px; }
+html.mcc-app-dock-active .appbar .appbar__tab[data-appnav="music"].is-here::before,
+html.mcc-app-dock-active .appbar .appbar__tab[data-appnav="music"].is-active::before { color:#fff; }
 /* Hide only the corresponding owner's duplicate floating chrome, after the
    integrated controls are ready. Its full player and its audio stay alive. */
-html.mcc-installed-app.mcc-app-dock-active[data-app-player-surface="listen"] .music-mini,
-html.mcc-installed-app.mcc-app-dock-active[data-app-player-surface="album"] .deckbar,
-html.mcc-installed-app.mcc-app-dock-active[data-app-player-surface="pocket"]:not(.mcc-app-player-expanded) .pocket,
-html.mcc-installed-app.mcc-app-dock-active #mccWorldAudioControls,
-html.mcc-installed-app.mcc-app-dock-active #mnWorldPlay,
-html.mcc-installed-app.mcc-app-dock-active #mnNowPlaying { display:none!important; }
+html.mcc-app-dock-active .music-mini,
+html.mcc-app-dock-active .deckbar,
+html.mcc-app-dock-active[data-app-player-surface="pocket"]:not(.mcc-app-player-expanded) .pocket,
+html.mcc-app-dock-active #mccWorldAudioControls,
+html.mcc-app-dock-active #mnWorldPlay,
+html.mcc-app-dock-active #mnNowPlaying { display:none!important; }
 @media (min-width:600px) {
-  html.mcc-installed-app.mcc-app-dock-active .appbar { grid-template-columns:minmax(120px,1fr) minmax(132px,440px) minmax(120px,1fr); }
-  html.mcc-installed-app .appbar__music-info [data-app-player="title"] { font-size:13px; }
-  html.mcc-installed-app .appbar__music-info [data-app-player="artist"] { font-size:11px; }
+  html.mcc-app-dock-active .appbar, html.mcc-app-dock-active .appbar.has-word-lyrics { grid-template-columns:minmax(120px,1fr) minmax(132px,440px) minmax(120px,1fr); }
+  html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-info [data-app-player="title"] { font-size:13px; }
+  html:is(.mcc-installed-app,.mcc-app-dock-active) .appbar__music-info [data-app-player="artist"] { font-size:11px; }
 }
 @media print { #mccInstalledDock { display:none!important; } }

@@ -741,6 +741,7 @@
       track: function () {
         return current ? { title: current.title, artist: current.artist || "McCluster", album: current.albumName || "", art: current.art } : null;
       },
+      lyrics: function () { return currentAccess === "full" && current && !current.creatorTrackId ? current.lyrics : ""; },
       play: function () { return resumeCurrent(); },
       pause: pauseCurrent,
       previous: function () { return playAdjacent(-1); },
