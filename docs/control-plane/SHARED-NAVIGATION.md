@@ -59,8 +59,7 @@ empty. The rapid word ticker is decorative to assistive technology; the
 existing full lyrics player remains available.
 
 The dock reads and commands the existing Now Playing owner. It creates no audio
-element and no second playback lifecycle. A paused track remains resumable;
-clearing the owner removes the track controls. Legacy floating controls are
+element and no second playback lifecycle. A paused track stays resumable. Listen can show a saved position before playback without claiming the device's media session or replacing another active owner. Legacy floating controls are
 suppressed only while the integrated dock can control that same player, so a
 failed or unsupported dock leaves the existing controls available. The separate
 React Native application is not the installed web shell shown in this request.

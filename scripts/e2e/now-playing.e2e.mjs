@@ -403,8 +403,13 @@ try {
     await page.evaluate(() => { const e = new Event('webkitplaybacktargetavailabilitychanged'); e.availability = 'available'; document.querySelector('.pocket__audio').dispatchEvent(e); });
     await page.waitForTimeout(200);
     const air = page.locator('.pocket .pocket__air');
-    const box = await air.boundingBox().catch(() => null);
-    check('pocket: AirPlay shows with a device in range, a 44 px target that fits the tile', await air.isVisible() && box && box.width >= 44 && box.height >= 44, box);
+    const details = page.locator('.appbar [data-app-player="open"]');
+    await details.click();
+    await air.waitFor({ state: 'visible' });
+    const box = await air.boundingBox();
+    check('pocket: expanded details show AirPlay with a device in range, a 44 px target that fits the tile', box && box.width >= 44 && box.height >= 44, box);
+    await air.click();
+    check('pocket: AirPlay opens the picker for the same audio', await page.evaluate(() => window.__airplay === 1 && !document.querySelector('.pocket__audio').paused));
     check('catalogue with the pocket and AirPlay at 390: the page fits the screen', await fits(page));
     if (SHOTS) await page.screenshot({ path: join(OUT, 'catalogue-390-pocket-airplay.png') });
     await press(page, 'stop');
@@ -542,7 +547,10 @@ try {
       check('resume: the listen page holds the record left on another device, without playing it', held.shown && held.title === runway.title && !held.playing, held);
       if (SHOTS) await page.screenshot({ path: join(OUT, 'listen-390-resume-held.png') });
       check('resume: listen at 390 with the held record fits', await fits(page));
-      await page.locator('.appbar [data-app-player="play"]').click();
+      const play = page.locator('.appbar').getByRole('button', { name: 'Play music', exact: true });
+      await play.waitFor({ state: 'visible' });
+      check('resume: the saved position does not claim the device media session', await page.evaluate(() => navigator.mediaSession.metadata === null && MCC_MUSIC.audio.paused));
+      await play.click();
       await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > 0, null, { timeout: 15000 }).catch(() => {});
       const t = await page.evaluate(() => MCC_MUSIC.audio.currentTime);
       check('resume: one tap picks it up at its second', t >= 41 && t < 60, { t });

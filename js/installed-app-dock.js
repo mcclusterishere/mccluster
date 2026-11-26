@@ -13,6 +13,13 @@
   if (!dock) return;
   function installed() { return html.classList.contains("mcc-installed-app"); }
   function api() { return root.MCC_NOW_PLAYING; }
+  function snapshot() {
+    var p = api(), s = p && typeof p.snapshot === "function" ? p.snapshot() : null;
+    if (s) return s;
+    var e = root.MCC_MUSIC, h = e && typeof e.resumeOffer === "function" ? e.resumeOffer() : null;
+    return h ? { surface:"listen", title:h.title, artist:h.artist, note:"Pick up at " + h.position,
+      playing:false, canPlay:true, canPause:false, canPrevious:false, canNext:false, held:true } : null;
+  }
   function icon(path) { return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + path + '"/></svg>'; }
   var PLAY = icon("M8 5l11 7-11 7z"), PAUSE = icon("M6 5h4v14H6zM14 5h4v14h-4z");
   function button(name, label, drawing) {
@@ -26,7 +33,7 @@
     if (info) info.setAttribute("aria-expanded", "false");
   }
   function openPlayer() {
-    var s = api() && api().snapshot(); if (!s) return;
+    var s = snapshot(); if (!s) return;
     /* Returning from retained World reveals the real listening document and
        its full player. Seeking, queue, volume and AirPlay stay there. */
     if (root.MCC_WORLD_AUDIO && root.MCC_WORLD_AUDIO.active()) {
@@ -96,7 +103,7 @@
     // A browser World has its own map-side transport and clearance contract.
     // Keep the shipping layout there, even under the retained music document.
     if (!installed() && (html.hasAttribute("data-world-mode") || html.classList.contains("world-audio-open"))) return false;
-    return !!(s && s.title && s.canPlay && s.canPause && typeof p.command === "function");
+    return !!(s && s.title && s.canPlay && (s.held || (s.canPause && p && typeof p.command === "function")));
   }
   function mount() {
     if (tabs || !styleReady) return;
@@ -126,7 +133,8 @@
     if (!b || !dock.contains(b) || b.disabled) return;
     var name = b.dataset.appPlayer;
     if (name === "open") { openPlayer(); return; }
-    var p = api(), s = p && p.snapshot(); if (!s) return;
+    var p = api(), s = snapshot(); if (!s) return;
+    if (s.held) { if (name === "play") root.MCC_MUSIC.resumeHeld(); return; }
     p.command(name === "play" ? s.playing ? "pause" : "play" : name);
   }
   function setActive(next) {
@@ -136,7 +144,7 @@
     root.dispatchEvent(new CustomEvent("mcc:installed-dock", {detail:{active:active}}));
   }
   function paint() {
-    var p = api(), s = p && typeof p.snapshot === "function" ? p.snapshot() : null;
+    var p = api(), s = snapshot();
     var usable = hasTransport(p, s);
     if (!tabs) { if (installed() || usable) mount(); return; }
     if (!usable && !installed()) { unmount(); return; }
@@ -194,6 +202,7 @@
     mode = next; paint();
   }).observe(html, {attributes:true, attributeFilter:["class"]});
   root.addEventListener("mcc:world-audio-open", paint);
+  root.addEventListener("mcc:nowplaying", paint);
   root.addEventListener("mcc:lyric-clock", paintWord);
   doc.addEventListener("visibilitychange", paintWord);
   doc.addEventListener("keydown", function (e) {
