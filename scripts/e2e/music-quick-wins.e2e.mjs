@@ -347,10 +347,10 @@ const SCENARIOS = {
     await until(page, () => document.querySelectorAll('#all li .th').length > 0);
     coverOk(await page.evaluate(COVER_STYLE, '#all .th'), 'Q3 listen rows', { span: true });
     await page.click('#all li button.music-inline-play');
-    await until(page, () => !!document.getElementById('musicMiniArt') && document.getElementById('musicMiniArt').complete && !document.getElementById('musicMini').hidden);
-    coverOk(await page.evaluate(COVER_STYLE, '#musicMiniArt'), 'Q3 listen mini player');
-    await shot(page, 'listen-390-mini-player-whole-cover');
-    await page.evaluate(() => window.MCC_MUSIC.openNow());
+    const dockInfo = page.locator('.appbar [data-app-player="open"]');
+    await dockInfo.waitFor({state:'visible'});
+    check(await page.locator('#musicMini').isHidden() && await dockInfo.locator('img').count() === 0, 'Q3 Listen uses the compact text-only dock, without a separate cover strip');
+    await dockInfo.click();
     await until(page, () => document.getElementById('musicNow') && document.getElementById('musicNow').classList.contains('is-open'));
     await sleep(500);
     coverOk(await page.evaluate(COVER_STYLE, '#musicNowArt'), 'Q3 listen Now Playing sheet');
@@ -373,9 +373,9 @@ const SCENARIOS = {
     await shot(page, 'album-390-hero-whole-cover');
     await page.click('#playAll');
     await until(page, () => { const d = document.getElementById('deck'); return !d.paused && d.duration > 0 && d.currentTime > 0.3; });
-    coverOk(await page.evaluate(COVER_STYLE, '.deckbar__art'), 'Q3 album mini player (the deck bar)');
-    await shot(page, 'album-390-mini-player-whole-cover');
-    await page.click('.deckbar__art');
+    await dockInfo.waitFor({state:'visible'});
+    check(await page.locator('#deckbar').isHidden() && await dockInfo.locator('img').count() === 0, 'Q3 album uses the compact text-only dock, without a separate cover strip');
+    await dockInfo.click();
     await until(page, () => document.getElementById('now').dataset.on === '1');
     await sleep(500);
     const sheet = await page.evaluate(() => { const w = document.querySelector('.now__art'), cs = getComputedStyle(w), f = getComputedStyle(document.getElementById('nowFilm'));
@@ -404,6 +404,21 @@ const SCENARIOS = {
     const em = await page.evaluate(() => { const cs = getComputedStyle(document.getElementById('art')); return { fit: cs.objectFit, radius: cs.borderTopLeftRadius }; });
     check(em.fit === 'contain' && em.radius === '0px', 'Q3 embedded player: the whole cover', em);
     await ctx.close();
+
+    const fallback = await context(browser, makePlane(), 390);
+    await fallback.ctx.route('**/js/installed-app-dock.js*', route => route.abort());
+    const legacy = await fallback.ctx.newPage();
+    await seed(legacy, {});
+    await legacy.goto(HOUSE + '/listen.html', {waitUntil:'load'});
+    await legacy.fill('#q', 'cia mind control');
+    await legacy.locator('#all li button.music-inline-play').first().click();
+    await until(legacy, () => { const art = document.getElementById('musicMiniArt'); return art?.complete && art.naturalWidth > 0 && !document.getElementById('musicMini').hidden; });
+    coverOk(await legacy.evaluate(COVER_STYLE, '#musicMiniArt'), 'Q3 Listen fallback mini player');
+    await legacy.goto(HOUSE + '/album.html?album=cia-mind-control', {waitUntil:'load'});
+    await legacy.locator('#playAll').click();
+    await legacy.locator('.deckbar__art').waitFor({state:'visible'});
+    coverOk(await legacy.evaluate(COVER_STYLE, '.deckbar__art'), 'Q3 album fallback deck bar');
+    await fallback.ctx.close();
   },
 
   /* ---------------------------------------------------------------- Q4 */
@@ -510,7 +525,7 @@ const SCENARIOS = {
       /* Next into it */
       await page.click(`#tracks li:nth-child(${PREV + 1})`);
       await until(page, () => !document.getElementById('deck').paused && document.getElementById('deck').currentTime > 0.2);
-      await page.click('#tpNext');
+      await page.locator('.appbar [data-app-player="next"]').click();
       const next = await holdOpen(page);
       await sleep(400);
       const st = await page.evaluate((f) => ({ paused: document.getElementById('deck').paused, on: (new Function('return (' + f + ')()'))() }), onIndex.toString());
@@ -582,7 +597,7 @@ const SCENARIOS = {
     await page.click('#playAll');
     /* Play on a song at its end starts it again; Next is pressed while it is heard */
     await until(page, () => { const d = document.getElementById('deck'); return !d.paused && d.currentTime > 0.2; });
-    await page.click('#tpNext');
+    await page.locator('.appbar [data-app-player="next"]').click();
     await sleep(600);
     const nx = await page.evaluate(() => { const d = document.getElementById('deck'); return { paused: d.paused, at: d.currentTime, dur: d.duration, on: document.querySelector('#tracks li.on').getAttribute('data-title') }; });
     check(nx.paused && nx.on === HEAL.tracks[HEAL.tracks.length - 1].title && Math.abs(nx.at - nx.dur) < 0.3, 'Q6 album: Next past the last song stops it at the end', nx);
@@ -817,7 +832,7 @@ const SCENARIOS = {
       await until(page, (sel) => { const r = document.querySelector(sel); return r && r.getAttribute('data-gate') === 'earned'; }, HELD, 15000);
       await page.click(HELD);
       const played = await until(page, () => /__master\.wav$/.test(document.getElementById('deck').currentSrc) && !document.getElementById('deck').paused && document.getElementById('deck').currentTime > 0.3, null, 15000);
-      await page.click('#tpPlay');
+      await page.locator('.appbar [data-app-player="play"]').click();
       await sleep(1500);
       const kept = await page.evaluate(() => localStorage.getItem('mcc-pocket') || '');
       check(played, 'QW-R7 the house owner: his own play of the closing song plays the master', { played });
@@ -872,13 +887,13 @@ const SCENARIOS = {
     const playing = await until(page, () => { const d = document.getElementById('deck'); return /__master\.wav$/.test(d.currentSrc) && !d.paused && d.currentTime > 1.5; }, null, 15000);
     check(playing && claims === 1, 'owner: his own play of the closing song, one claim, the master', { playing, claims });
     check((await card()) === before && /earned play/.test(before || ''), 'owner: his song test card keeps his own line while his play is on', { same: (await card()) === before });
-    for (const how of ['the deck bar\'s Play', 'its row', 'the lock screen\'s play']) {
-      await page.click('#tpPlay');
+    for (const how of ['the compact dock\'s Play', 'its row', 'the lock screen\'s play']) {
+      await page.locator('.appbar [data-app-player="play"]').click();
       await until(page, () => document.getElementById('deck').paused, null, 5000);
       const at = await page.evaluate(() => document.getElementById('deck').currentTime);
       if (how === 'its row') await page.click(HELD);
       else if (how === 'the lock screen\'s play') await page.evaluate(() => window.MCC_NOW_PLAYING.command('play'));
-      else await page.click('#tpPlay');
+      else await page.locator('.appbar [data-app-player="play"]').click();
       await sleep(1200);
       const s = await page.evaluate(() => { const d = document.getElementById('deck'); return { paused: d.paused, t: d.currentTime, master: /__master\.wav$/.test(d.currentSrc), popup: !!(document.getElementById('mccHold') || {}).open }; });
       check(!s.paused && s.master && s.t >= at - 0.05 && claims === 1 && !s.popup, `owner: paused and played again by ${how}, it picks up where it paused with the same play (no second claim, never from 0:00)`, { at, s, claims });

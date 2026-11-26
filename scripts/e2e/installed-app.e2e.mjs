@@ -662,7 +662,11 @@ async function listenWorldSong(phone, installed = true) {
     await page.waitForFunction(() => !!window.MCC_BAR && !!window.MCC_WORLD_AUDIO && !!window.MCC_MUSIC);
     if (installed) await page.waitForFunction(() => document.documentElement.classList.contains('mcc-app-dock-ready'));
     await page.waitForFunction(() => typeof window.MCC_NP_PLAY === 'function' && !MCC_MUSIC.current() && /Pick up at/.test(document.getElementById('musicMiniAlbum')?.textContent || ''));
-    await tabSays(page,'^Play music$');
+    const heldPlay = page.locator('.appbar').getByRole('button',{name:'Play music',exact:true});
+    await heldPlay.waitFor({state:'visible'});
+    check(scope + ': a saved position offers one right-hand Play without acquiring the media session',
+      await musicTab(page) === 'link "Music"' && await named(page,/^Play music$/) === 1 &&
+      await page.evaluate(() => MCC_NOW_PLAYING.snapshot() === null && MCC_MUSIC.audio.paused));
     await retainedWorld(page);
     await page.waitForFunction(() => MCC_NOW_PLAYING.snapshot()?.surface === 'world' && MCC_NOW_PLAYING.snapshot().playing);
     await Promise.all([page.waitForURL(url => !url.searchParams.has('world')), page.locator('.appbar [data-appnav="music"]').click()]);
