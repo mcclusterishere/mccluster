@@ -707,6 +707,8 @@
   // every destination retains its existing server gate.
   var ADMIN_GAME_PAGES = ['city-arcade.html','fictional-city.html','game-hub.html','prim3.html','prim3-world.html','prim3-transit.html','prim3-range.html','prim3-courtyard.html','prim3-tactics-preview.html','equity-uprise-server-lab-3d.html'];
   function adminHere() {
+    var view = window.MCC_MUSIC_SHELL && window.MCC_MUSIC_SHELL.view();
+    if (view && location.pathname === "/game-hub.html") return "games";
     if (ADMIN_GAME_PAGES.indexOf(PAGE_KEY) !== -1) return "games";
     /* the owner's globe is Hitman's Halo: lit while Halo is on screen */
     if (/action-globe\.html$/.test(location.pathname) && new URLSearchParams(location.search).has("games")) return "games";
@@ -1291,7 +1293,7 @@
   });
   /* the World opening or closing over the player changes what the tab does (js/world-audio-continuity.js) */
   window.addEventListener("mcc:world-audio-open", function () { paintSound(); });
-  window.addEventListener("mcc:music-view", function () { paintSound(); });   /* a view opened or closed (music slice M5) */
+  window.addEventListener("mcc:music-view", function () { markAdminHere(); paintSound(); });   /* a view opened or closed (music slice M5) */
   /* Mounting or losing the right-hand transport returns the center tabs to
      navigation or restores the existing fallback. */
   window.addEventListener("mcc:installed-dock", function () { paintSound(); });
