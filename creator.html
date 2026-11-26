@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/creator-onboarding.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/creator-studio.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
@@ -72,6 +73,28 @@
     </section>
 
     <div class="creator-grid" id="creatorApp" hidden>
+      <!-- THE STUDIO SHELL (first slice of the redesign): four local chapters. js/creator-studio-shell.js moves the
+           cards below into their chapter by the ids they already have, and gives the row its tab roles; no id, form or field changes. Without that
+           script every card still shows, in one column, as before. -->
+      <div class="cs-sentinel" id="creatorChaptersMark" aria-hidden="true"></div>
+      <div class="cs-tabs" id="creatorChapters" aria-label="Creator Studio chapters">
+        <a class="cs-tab" id="cs-tab-make" href="#make" data-chapter="make">Make</a>
+        <a class="cs-tab" id="cs-tab-releases" href="#releases" data-chapter="releases">Releases</a>
+        <a class="cs-tab" id="cs-tab-page" href="#page" data-chapter="page">Page</a>
+        <a class="cs-tab" id="cs-tab-stats" href="#stats" data-chapter="stats">Stats</a>
+      </div>
+      <div class="cs-panel" id="cs-panel-make" data-chapter="make">
+        <section class="creator-card wide" id="takeBench" aria-labelledby="takeBenchHeading">
+          <h2 id="takeBenchHeading">Take bench</h2>
+          <p>Record or import one take, trim it, fade it, and send it into a release. Takes stay on this device, and nothing is uploaded from here.</p>
+          <div class="tb" id="takeBenchMount"><p class="tb-empty">The take bench has not loaded. It needs JavaScript; if scripts are on, reload the page. Releases still work without it.</p></div>
+        </section>
+      </div>
+      <div class="cs-panel" id="cs-panel-releases" data-chapter="releases" hidden></div>
+      <div class="cs-panel" id="cs-panel-page" data-chapter="page" hidden></div>
+      <div class="cs-panel" id="cs-panel-stats" data-chapter="stats" hidden>
+        <p class="cs-empty">Stats show here once you are signed in and your page or tracks have recorded activity. If they do not load, open this chapter again in a moment.</p>
+      </div>
       <section class="creator-card wide cme" id="creatorSummary" hidden aria-label="Your creator profile">
         <span class="cob__avatar" id="cmeAvatar" aria-hidden="true"></span>
         <div class="cob__who"><b id="cmeName"></b><span id="cmeHandle"></span></div>
@@ -213,6 +236,8 @@
   <script src="js/music-creator-page.js?v=__STAMP__"></script>
   <script src="js/creator-onboarding.js?v=__STAMP__"></script>
   <script src="js/lyric-sheet.js?v=__STAMP__"></script>
+  <script src="js/creator-studio-shell.js?v=__STAMP__"></script>
+  <script src="js/creator-studio-take.js?v=__STAMP__"></script>
   <script type="module" src="js/music-creator-studio.js?v=__STAMP__"></script>
   <script src="js/music-self-analytics.js?v=__STAMP__" defer></script>
   <script src="js/site-editor.js?v=__STAMP__" defer></script>

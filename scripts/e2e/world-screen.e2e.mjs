@@ -1281,9 +1281,18 @@ if (runs('editorial-video-composer') && (!process.env.EDITORIAL_DEVICE || proces
     const card = await thumbOf(page, posted.id).evaluate((n) => { const v = n.querySelector('video'); return v ? { poster: v.getAttribute('poster'), preload: v.getAttribute('preload') } : null; }).catch(() => null);
     check(scope, 'the new post in the feed shows the picture that was taken, not black', !!card && (card.poster || '').startsWith(`https://zmnhbrjyhxzhkxmhkexs.supabase.co/storage/v1/object/sign/mnet-media/auth-you/${pId}-`) && card.preload === 'metadata', card);
     await page.waitForFunction((id) => { const v = document.querySelector(`#mnFeed article[data-post-id="${id}"] video`); return v && v.readyState >= 1; }, posted.id, { timeout: 8000 }).catch(() => {});
-    await page.locator(`#mnFeed article[data-post-id="${posted.id}"]`).evaluate((a) => a.scrollIntoView({ block: 'center' }));
-    await page.waitForTimeout(600);
-    await page.locator(`#mnFeed article[data-post-id="${posted.id}"]`).screenshot({ path: join(OUT, scope + '-feed-card.png') });
+    const postedThumbnail = thumbOf(page, posted.id);
+    await postedThumbnail.evaluate((node) => node.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    // Capture the live feed once the posted thumbnail is actually visible at its centre.
+    // An element screenshot also waits for the entire article to stop moving across frames.
+    await page.waitForFunction((id) => {
+      const thumb = document.querySelector(`#mnFeed article[data-post-id="${id}"] [data-mnet-media]`);
+      if (!thumb) return false;
+      const rect = thumb.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 &&
+        thumb.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
+    }, posted.id, { polling: 100, timeout: 10000 });
+    await page.screenshot({ path: join(OUT, scope + '-feed-card.png') });
     check(scope, 'no JavaScript errors', errors.length === 0, errors);
   } finally {
     const diagnostic = await page.evaluate(() => window.__composerPosterTrace || null).catch(() => null);

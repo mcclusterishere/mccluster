@@ -684,13 +684,35 @@ export function judgeLocal(local, fixture, site, addressOf = null) {
    have ... and no request for a document on Matthew's host". The crawl above holds the answers; this opens the pages
    (the P1 review, P1A-4). Chromium at 390 px, phone first; the same in-process hosts as the local crawl (localFetcher);
    nobody signed in, the visitor's privacy answer given so a page runs everything it runs for a visitor who agreed;
-   service workers blocked; McCluster's API and Supabase answered with empty lists; every other host refused, alike on
-   both hosts. The baseline is the same document on Matthew's host, which serves it as before P0: what both copies log is
+   service workers blocked; McCluster's API and Supabase answered with empty lists; the guest globe gets pinned Cesium
+   and offline map tiles. All other external hosts are refused alike. The baseline is the same document on Matthew's host,
+   which serves it as before P0: what both copies log is
    not the platform's doing. A page whose platform copy logs nothing and asks for no document on his host passes
    without opening his copy; any other is opened on both hosts, and an error that only the platform's copy logs is
    counted only when it comes back on a second pair of visits. */
 export const BROWSER_LAUNCH_ARGS = Object.freeze(['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage']);
 const SERVICES = Object.freeze({ api: 'api.mccluster.org', supabase: /\.supabase\.co$/ });
+
+// Use the same verified Cesium build as the other globe fixtures, not a no-content
+// response that would hide errors without exercising the guest globe.
+export function globeFixture(url, directory = process.env.CESIUM_DIR) {
+  if (!directory || url.search) return null;
+  const prefix = '/downloads/cesiumjs/releases/1.131/Build/Cesium/';
+  let relative;
+  if (url.origin === 'https://cesium.com' && url.pathname.startsWith(prefix)) {
+    relative = url.pathname.slice(prefix.length);
+    if (!relative.split('/').every((part) => /^[a-z0-9_.-]+$/i.test(part) && part !== '.' && part !== '..')) return null;
+  } else if (url.origin === 'https://tile.openstreetmap.org') {
+    const tile = url.pathname.match(/^\/(\d{1,2})\/(\d{1,6})\/(\d{1,6})\.png$/);
+    if (!tile) return null;
+    const [, z, x, y] = tile.map(Number);
+    if (z > 19 || x >= 2 ** z || y >= 2 ** z) return null;
+    relative = 'Assets/Textures/NaturalEarthII/0/0/0.jpg';
+  } else return null;
+  const file = join(directory, relative);
+  if (!existsSync(file) || !statSync(file).isFile()) return null;
+  return { contentType: MIME[extname(file).toLowerCase()] || 'application/octet-stream', body: readFileSync(file) };
+}
 
 /* the pages the platform serves: the World at its root, the HERE front door, every platform and profile page (the World's
    document name only answers 301 to the root on the platform) */
@@ -742,7 +764,7 @@ export async function browserAcceptance(site, { root = ROOT, outDir = null, only
     return route.fulfill({ status, contentType: 'application/json', headers: { 'access-control-allow-origin': origin || '*', 'access-control-allow-credentials': 'true' }, body: JSON.stringify(body) });
   };
   async function open(url) {
-    const v = { url, status: null, final: null, nav: null, errors: [], documents: [] };
+    const v = { url, status: null, final: null, nav: null, errors: [], documents: [], requestFailures: [] };
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, reducedMotion: 'reduce', serviceWorkers: 'block' });
     try {
       ctx.setDefaultTimeout(20000);
@@ -765,6 +787,10 @@ export async function browserAcceptance(site, { root = ROOT, outDir = null, only
           if (u.pathname.startsWith('/rest/v1/')) return json(route, 200, []);
           return json(route, 200, { ok: true, items: [], tracks: [], posts: [], events: [], missions: [], layers: [], features: [], sources: [], notifications: [], sessions: [] });
         }
+        if (req.method() === 'GET') {
+          const asset = globeFixture(u);
+          if (asset) return route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*' }, ...asset });
+        }
         if (!site.hostRole(u.hostname)) return route.abort();
         if (!['GET', 'HEAD'].includes(req.method())) return route.fulfill({ status: 405, body: '' });
         if (/\.(mp3|m4a|aac|wav|ogg|mp4|webm|mov)$/i.test(u.pathname)) return route.fulfill({ status: 204, body: '' });
@@ -780,6 +806,9 @@ export async function browserAcceptance(site, { root = ROOT, outDir = null, only
         return route.fulfill({ status: res.status, headers, body: Buffer.from(await res.arrayBuffer()) });
       });
       const page = await ctx.newPage();
+      page.on('requestfailed', (req) => {
+        v.requestFailures.push({ url: req.url(), method: req.method(), type: req.resourceType(), error: req.failure()?.errorText || null });
+      });
       page.on('pageerror', (e) => v.errors.push(errorText(site, `pageerror: ${e && e.message || e}`)));
       page.on('console', (m) => { if (m.type() === 'error') v.errors.push(errorText(site, `console: ${m.text()}`)); });
       try {
