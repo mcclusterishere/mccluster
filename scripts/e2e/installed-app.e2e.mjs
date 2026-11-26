@@ -54,7 +54,7 @@ async function setInsets(cdp, insets) {
    reads (the Release 1 dock fix): read = { key, n } (n: that file's nth read); it answers null for the plain bytes,
    { cut } for a short 206 of at most that many bytes of the real file (the browser asks for the rest with a Range
    read) or { status } instead of the bytes. */
-async function setup(device, installed, owner = false, world = false, {dockModule = true, path = '', drop = null, member = false, lyricFixture = false} = {}) {
+async function setup(device, installed, owner = false, world = false, {dockModule = true, path = '', drop = null, member = false, lyricFixture = false, platformMusic = false, denyGameOwner = false} = {}) {
   const context = await browser.newContext({viewport:device.viewport,isMobile:true,hasTouch:true,reducedMotion:'reduce',serviceWorkers:'block'});
   context.setDefaultTimeout(15000);
   const errors = [], requests = [], blocked = [], reads = {};
@@ -82,7 +82,11 @@ async function setup(device, installed, owner = false, world = false, {dockModul
     requests.push({origin:u.origin,path:p,method:req.method()});
     if (req.method() === 'OPTIONS') return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*'}});
     if (u.hostname === 'api.mccluster.org') {
-      if (p === '/v1/status') return json(r, {ok:owner}, owner ? 200 : 403);
+      if (p === '/v1/status') {
+        const gameCheck = new URL(req.frame().url()).pathname === '/game-hub.html';
+        const allowed = owner && !(gameCheck && denyGameOwner);
+        return json(r, {ok:allowed}, allowed ? 200 : 403);
+      }
       if (p === '/v1/auth/handoff') return json(r, {token_hash:'fixture-one-use-hash'});
       if (p === '/v1/workspaces/me') return json(r, {ok:true,default_org_id:'fixture-org',profile:{id:USER},workspaces:owner ? [{org_id:'fixture-org',slug:'mccluster',name:'McCluster',kind:'studio',role:'owner',enabled:true}] : []});
       if (p === '/v1/mnet/bootstrap') return json(r, {ok:true,profile:{display_name:'Fixture owner',onboarding_complete:true},identity:{m_uid:USER,mccluster_id:'fixture-owner'},needs_onboarding:false,stats:{}});
@@ -140,7 +144,7 @@ async function setup(device, installed, owner = false, world = false, {dockModul
   const page = await context.newPage(); page.on('pageerror', e => errors.push(e.message));
   const cdp = await context.newCDPSession(page);
   await setInsets(cdp, device.insets);
-  await page.goto(world ? WORLD + '/' : HOUSE + (path || '/listen.html'), {waitUntil:'load'});
+  await page.goto(world ? WORLD + '/' : (platformMusic ? WORLD : HOUSE) + (path || '/listen.html'), {waitUntil:'load'});
   await page.waitForFunction(() => !!window.MCC_BAR && !!window.MCC_WORLD_AUDIO);
   await page.locator('.appbar').waitFor({state:'visible'});
   if (owner) await page.waitForFunction(() => MCC_BAR.admin() && document.querySelectorAll('.appbar [data-appnav]').length >= 10);
@@ -801,7 +805,42 @@ async function originalCompactGeometry(phone) {
   } catch (error) { await failed(run,scope,error); }
   finally { await context.close(); }
 }
-const DOCK_FIX = [['reference compact geometry',originalCompactGeometry],['synced words browser',phone=>dockWordLyrics(phone,false)],['synced words installed',phone=>dockWordLyrics(phone,true)],['estimated words browser',phone=>dockRejectsEvenLyrics(phone,false)],['estimated words installed',phone=>dockRejectsEvenLyrics(phone,true)],['installed Listen one Play/Pause',listenOnePause],['installed album one Play/Pause',albumOnePause],
+async function gameHubKeepsMusic(phone, installed, denied = false) {
+  const run = await setup(phone,installed,true,false,{platformMusic:true,denyGameOwner:denied});
+  const {page,context} = run, scope = phone.name + ' ' + (installed ? 'installed' : 'browser') + ' Games continuity' + (denied ? ' owner denied' : '');
+  try {
+    await play(page);
+    await page.evaluate(() => { window.__originalAudio = MCC_MUSIC.audio; });
+    const before = await audio(page);
+    const freshOwner = page.waitForResponse(r => r.url().endsWith('/v1/status') && r.request().frame().url().includes('/game-hub.html'));
+    await page.locator('.appbar [data-appnav="games"]').click();
+    await page.waitForURL(WORLD + '/game-hub.html');
+    await page.locator('#mccMusicViewFrame').waitFor({timeout:3000});
+    check(scope + ': only the original top document is retained', await page.evaluate(() => __originalAudio === MCC_MUSIC.audio && !__appUnloads));
+    await page.waitForFunction(t => MCC_MUSIC.audio.currentTime > t && !MCC_MUSIC.audio.paused, before.time);
+    check(scope + ': the original song and audio continue', (await audio(page)).same && (await audio(page)).title === before.title && (await audio(page)).playing === 1);
+    const response = await freshOwner, frame = page.frameLocator('#mccMusicViewFrame');
+    check(scope + ': the Game Hub gets its own owner decision', response.status() === (denied ? 403 : 200));
+    if (denied) {
+      await frame.locator('html[data-owner-access="closed"]').waitFor();
+      check(scope + ': a stale parent owner answer never unlocks the games', !await frame.locator('#ghMain').count() && !await frame.locator('#ghCapsule').count());
+    } else {
+      await frame.locator('#ghModules [data-module]').first().waitFor({state:'attached'});
+      await frame.locator('[data-capsule-toggle]').click();
+      check(scope + ': game controls stay usable without a duplicate player', await frame.locator('#ghModules [data-module]').first().isVisible() &&
+        !await frame.locator('[data-hub-music-play]').isVisible() && await page.locator('.appbar [data-app-player="play"]').isVisible());
+      check(scope + ': Games is selected in the same compact dock', await page.locator('.appbar [data-appnav="games"]').getAttribute('aria-current') === 'page' &&
+        await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth));
+    }
+    await page.goBack({waitUntil:'commit'});
+    await page.waitForURL(WORLD + '/listen.html');
+    await page.waitForFunction(() => !MCC_MUSIC_SHELL.view());
+    check(scope + ': Back restores Listen without replacing or stopping the audio', (await audio(page)).same && !(await audio(page)).paused);
+    await noErrors(run,scope);
+  } catch (error) { await failed(run,scope,error); }
+  finally { await context.close(); }
+}
+const DOCK_FIX = [['Games continuity browser',p=>gameHubKeepsMusic(p,false)],['Games continuity installed',p=>gameHubKeepsMusic(p,true)],['Games continuity owner denied',p=>gameHubKeepsMusic(p,false,true)],['reference compact geometry',originalCompactGeometry],['synced words browser',phone=>dockWordLyrics(phone,false)],['synced words installed',phone=>dockWordLyrics(phone,true)],['estimated words browser',phone=>dockRejectsEvenLyrics(phone,false)],['estimated words installed',phone=>dockRejectsEvenLyrics(phone,true)],['installed Listen one Play/Pause',listenOnePause],['installed album one Play/Pause',albumOnePause],
   ['installed Listen muted',listenMuted],['installed Listen reconnecting',listenReconnecting],['browser Listen',phone => unifiedListen(phone)],
   ['unified member browser',phone => unifiedListen(phone,false,'member')],['unified member installed',phone => unifiedListen(phone,true,'member')],
   ['unified owner browser',phone => unifiedListen(phone,false,'owner')],['unified owner installed',phone => unifiedListen(phone,true,'owner')],

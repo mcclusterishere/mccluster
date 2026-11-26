@@ -34,7 +34,19 @@ async function boot() {
   let musicSelection;
   const player = { setModule(...selection) { musicSelection = selection; } };
   // Optional music must not hold up the study interface on a slow/failed request.
-  createSharedMusic({ root: $('#ghMusic') }).then(transport => {
+  const retained = window.MCC_MUSIC_VIEW?.kind === 'games' ? window.MCC_MUSIC_VIEW.engine() : null;
+  if (window.MCC_MUSIC_VIEW?.kind === 'games') {
+    // The parent dock is the only transport. The Games picker stays usable.
+    $('#ghCapsule').setAttribute('aria-label', 'Game controls');
+    const course = $('[data-course-soundtrack]');
+    player.setModule = (module, album) => {
+      const first = album?.tracks?.[0];
+      course.disabled = !first || !retained;
+      course.onclick = first && retained ? () => retained.play(album.slug, first.title).catch(() => {
+        $('[data-music-status]').textContent = 'Course soundtrack did not load.';
+      }) : null;
+    };
+  } else createSharedMusic({ root: $('#ghMusic') }).then(transport => {
     player.setModule = (...selection) => transport.setModule(...selection);
     if (musicSelection) player.setModule(...musicSelection);
   }).catch(() => {

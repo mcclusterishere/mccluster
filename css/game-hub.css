@@ -220,3 +220,7 @@ body.gh-body{overflow:hidden;padding-bottom:0}
 .gh-body #musicMini{display:none!important}
 
 .gh-capsule-status{font-size:14px;color:var(--gh-dim);margin:6px;overflow-wrap:anywhere}
+
+/* In a retained Game Hub, music controls only exist in the parent dock. */
+html.mcc-music-view #ghMusic{display:none}
+html.mcc-music-view .gh-capsule-row{grid-template-columns:44px 62px}

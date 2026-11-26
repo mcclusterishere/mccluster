@@ -46,7 +46,8 @@
     listen: { top: true, view: true },
     artist: { top: true, view: true },
     album: { top: false, view: false },
-    account: { top: false, view: true }
+    account: { top: false, view: true },
+    games: { top: false, view: true }
   };
   /* What stays on screen and reachable over a view: the shell itself, the one bar and its chip, menus and peeks, the
      engine's mini player and Now sheet, the album's deck bar, sheet, status line and toast, the World's frame and
@@ -64,6 +65,7 @@
   function url(href, base) { try { return new URL(href, base || root.location.href); } catch (e) { return null; } }
   function kindOf(u) {
     if (!u) return null;
+    if (u.pathname === "/game-hub.html") return "games";
     if (u.pathname === "/artist.html") return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(u.searchParams.get("artist") || "") ? "artist" : null;
     var m = /^\/(listen|music-creator|album|account)\.html$/.exec(u.pathname);
     if (!m) return null;
@@ -113,6 +115,7 @@
       if (u.pathname === "/artist.html" && u.hash === "#produced") topU.hash = u.hash;
       return { action: "reveal", url: topU.href, t: kind === "album" ? String(u.searchParams.get("t") || "") : "" };
     }
+    if (kind === "games" && (!root.MCC_SITE || u.origin !== root.MCC_SITE.platform.origin)) return { action: "load", url: u.href };
     if (kind && routes[kind] && routes[kind].view) {
       /* a sign-in link without next, opened from a music page, comes back to that page (a default for Matthew to
          confirm; today the chip's sign-in lands on the World). Settings (stay=1) go nowhere after. Over the account view
@@ -216,7 +219,12 @@
   var topScroll = 0, topOpener = null, owner = "", guest = null, failCard = null;
 
   function shownHref() { return current ? current.href : TOP ? TOP.abs : root.location.href; }
-  function route(href, from) { return decide(href, from || "top", TOP, ROUTES, from && from !== "top" && current ? current.href : shownHref()); }
+  function route(href, from) {
+    var d = decide(href, from || "top", TOP, ROUTES, from && from !== "top" && current ? current.href : shownHref());
+    if (d.kind === "games" && !(root.MCC_BAR && root.MCC_BAR.admin && root.MCC_BAR.admin() && root.MCC_MUSIC && root.MCC_MUSIC.current()))
+      return { action: "load", url: d.url };
+    return d;
+  }
   function worldOpen() { var w = root.MCC_WORLD_AUDIO; return !!(w && w.active && w.active()); }
   function emit(name, detail) { try { root.dispatchEvent(new root.CustomEvent(name, { detail: detail || {} })); } catch (e) {} }
   function setState(st, href, push) {
@@ -581,7 +589,7 @@
       var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
       /* a play button inside a link is the view's player's (js/music-engine.js view mode), from the tap's own target up */
       if (!a || (a.target && a.target !== "_self") || a.hasAttribute("download") || e.target.closest("[data-music-play]")) return;
-      var d = decide(a.href, v.kind, TOP, ROUTES, v.href);
+      var d = route(a.href, v.kind);
       if (d.action === "native") return;
       e.preventDefault();
       if (d.action === "scroll") { try { win.scrollTo({ top: 0, behavior: "smooth" }); } catch (x) { win.scrollTo(0, 0); } return; }
@@ -637,6 +645,8 @@
     });
     if (vd.head) mo.observe(vd.head, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["content", "href"] });
     v.cleanup.push(function () { mo.disconnect(); });
+    /* Games uses its own fresh owner-only.mjs decision, never the parent's admin state. */
+    if (v.kind === "games") return;
     /* the owner's offers on a view read the retained bar's server answer (creator-onboarding.js) */
     var admin = function () {
       try {

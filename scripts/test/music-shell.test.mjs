@@ -160,6 +160,17 @@ test('the route table: stage 1 (Listen and the artist pages), the album containe
   assert.equal(d('/album.html?album=here', 'account', listenTop, '/account.html').action, 'load', 'a sign-in that goes on to the album is a page load of the top (the album is not retained)');
 });
 
+test('Game Hub retention is limited to the existing platform origin, not a new top music document', () => {
+  const { core } = shell();
+  const top = { kind:'listen', url:'/listen.html' };
+  const platform = "https://mccluster.org";
+  assert.equal(core.retains('games'), false);
+  assert.equal(core.decide('/game-hub.html', 'top', top, undefined, platform + '/listen.html').action, 'view');
+  assert.equal(core.decide(platform + '/game-hub.html', 'top', top, undefined, HOUSE + '/listen.html').action, 'load');
+  assert.equal(core.decide('/game-hub.html', 'top', top, undefined, HOUSE + '/listen.html').action, 'load');
+  assert.equal(core.decide('/control.html', 'games', top, undefined, platform + '/game-hub.html').action, 'load');
+});
+
 test('one switch: with every route off nothing opens as a view and nothing is retained (the behaviour at dc0185aa)', () => {
   const { core } = shell();
   const off = {}; for (const k of Object.keys(core.ROUTES)) off[k] = { top: false, view: false };
