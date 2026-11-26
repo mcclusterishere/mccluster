@@ -21,6 +21,18 @@ import { isHouseOwner } from './world-access.js';
 
 export const FRONTS_PREFIX = '/v1/fronts';
 const HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
+/* One save or publish per account per second (the editor waits and retries once on 429, so Save then Publish still works). The API-wide limiter (enforceApiRateLimit) still runs first; this
+   stops one signed-in account from hammering its own row (and the public page cache) with a script. */
+export const FRONT_SAVE_INTERVAL_MS = 1000;
+const REVISION_MAX = 2147483647;
+/* The applied schema (supabase/migrations/20261124164026_member_fronts_shared_revision_directory.sql) serves a page
+   publicly only when the account's network profile exists and is 'public' (member_fronts_private.public_page and
+   .directory). The Worker holds the same line, so it never reports a page as live that the database would hide. */
+const PUBLIC_VISIBILITY = 'public';
+function nextRevision(row) {
+  const r = row && Number.isInteger(row.revision) && row.revision > 0 ? row.revision : 0;
+  return Math.min(r + 1, REVISION_MAX);
+}
 
 function headers(env, extra = {}) {
   return { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, accept: 'application/json', 'content-type': 'application/json', ...extra };
@@ -65,7 +77,7 @@ function refuse(request, env, message, status, detail) {
   return res;
 }
 
-export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {}) {
+export async function handleMemberFronts(request, env, { fetchImpl = fetch, saveIntervalMs = FRONT_SAVE_INTERVAL_MS } = {}) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
   if (path !== FRONTS_PREFIX && !path.startsWith(FRONTS_PREFIX + '/')) return null;
@@ -79,13 +91,20 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {
     const acct = await account(env, user, fetchImpl);
     if (!acct.m_uid || !acct.handle) return refuse(request, env, 'Finish your account first: your front page lives at your handle', 409, { code: 'handle_required' });
     const prefix = mediaPrefix(env.SUPABASE_URL, user.id);
-    const rows = await service(env, `member_fronts?m_uid=eq.${acct.m_uid}&select=draft,published,published_at,updated_at,removed_at,handle&limit=1`, {}, fetchImpl);
+    const rows = await service(env, `member_fronts?m_uid=eq.${acct.m_uid}&select=draft,published,published_at,updated_at,removed_at,handle,revision&limit=1`, {}, fetchImpl);
     const row = (rows && rows[0]) || null;
+    // Publishing must not claim success for a page the public read route hides.
+    // Never change the member's profile visibility as a side effect of publishing.
+    const profiles = await service(env, `network_profiles?m_uid=eq.${acct.m_uid}&select=visibility&limit=1`, {}, fetchImpl);
+    const profile = profiles && profiles[0];
+    const publishBlocker = row?.removed_at ? 'removed' : !profile ? 'profile_required' : profile.visibility !== PUBLIC_VISIBILITY ? 'private_profile' : null;
+    const availability = { profile_visibility: profile?.visibility || null, publish_blocker: publishBlocker,
+      publicly_available: Boolean(row?.published && !publishBlocker) };
 
     if (rest === 'me' && request.method === 'GET') {
       return send(request, env, { ok: true, handle: acct.handle, name: acct.name, avatar: acct.avatar, media_prefix: prefix, max_bytes: FRONT_MAX_BYTES,
         draft: row ? row.draft : null, published: row ? row.published : null, published_at: row ? row.published_at : null,
-        updated_at: row ? row.updated_at : null, removed: !!(row && row.removed_at), url: `front.html?u=${encodeURIComponent(acct.handle)}` });
+        updated_at: row ? row.updated_at : null, removed: !!(row && row.removed_at), ...availability, url: `front.html?u=${encodeURIComponent(acct.handle)}` });
     }
     if (rest === 'me' && request.method === 'POST') {
       let body;
@@ -95,15 +114,30 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {
       if (!checked.ok) return refuse(request, env, 'The front page is too large', 413, { size: checked.size, max: FRONT_MAX_BYTES });
       const publish = body.publish === true;
       if (publish && row && row.removed_at) return refuse(request, env, 'This front page was taken down by McCluster and cannot be published', 403, { code: 'removed' });
+      if (publish && publishBlocker) return refuse(request, env,
+        publishBlocker === 'private_profile' ? 'Your profile is not public. Make it public before publishing your front page.' : 'Complete your profile before publishing your front page.',
+        409, { code: publishBlocker, recovery_url: publishBlocker === 'private_profile' ? 'mccluster-creator-studio.html' : 'mnet.html?view=profile' });
+      if (row && row.updated_at) {
+        const since = Date.now() - Date.parse(row.updated_at);
+        if (Number.isFinite(since) && since >= 0 && since < saveIntervalMs) {
+          const res = refuse(request, env, 'Saving too fast. Wait a moment and try again.', 429, { code: 'save_throttled', retry_after_ms: saveIntervalMs - since });
+          res.headers.set('retry-after', String(Math.ceil((saveIntervalMs - since) / 1000)));
+          return res;
+        }
+      }
       const now = new Date().toISOString();
-      const fields = { m_uid: acct.m_uid, auth_user_id: user.id, handle: acct.handle, draft: checked.config, updated_at: now };
-      if (publish) { fields.published = checked.config; fields.published_at = now; }
+      const revision = nextRevision(row);
+      /* keep the applied schema's revision columns true, so its own RPCs (member_front_save) see every Worker write */
+      const fields = { m_uid: acct.m_uid, auth_user_id: user.id, handle: acct.handle, draft: checked.config, updated_at: now, revision };
+      if (publish) { fields.published = checked.config; fields.published_at = now; fields.published_revision = revision; }
       await service(env, 'member_fronts?on_conflict=m_uid', { method: 'POST', headers: { prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(fields) }, fetchImpl);
       return send(request, env, { ok: true, handle: acct.handle, draft: checked.config, published: publish ? checked.config : (row ? row.published : null),
-        published_at: publish ? now : (row ? row.published_at : null), dropped: checked.dropped, url: `front.html?u=${encodeURIComponent(acct.handle)}` });
+        published_at: publish ? now : (row ? row.published_at : null), ...availability,
+        publicly_available: !publishBlocker && (publish || Boolean(row?.published)),
+        dropped: checked.dropped, url: `front.html?u=${encodeURIComponent(acct.handle)}` });
     }
     if (rest === 'me/published' && request.method === 'DELETE') {
-      if (row) await service(env, `member_fronts?m_uid=eq.${acct.m_uid}`, { method: 'PATCH', headers: { prefer: 'return=minimal' }, body: JSON.stringify({ published: null, published_at: null, updated_at: new Date().toISOString() }) }, fetchImpl);
+      if (row) await service(env, `member_fronts?m_uid=eq.${acct.m_uid}`, { method: 'PATCH', headers: { prefer: 'return=minimal' }, body: JSON.stringify({ published: null, published_at: null, published_revision: null, revision: nextRevision(row), updated_at: new Date().toISOString() }) }, fetchImpl);
       return send(request, env, { ok: true, published: null });
     }
     return refuse(request, env, 'Method not allowed', 405);
@@ -118,7 +152,9 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {
     let body = {};
     try { body = await request.json(); } catch { body = {}; }
     const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 300) : '';
-    await service(env, `member_fronts?handle=eq.${takedown[1]}`, { method: 'PATCH', headers: { prefer: 'return=minimal' }, body: JSON.stringify({ removed_at: new Date().toISOString(), removed_reason: reason || null, published: null, published_at: null }) }, fetchImpl);
+    const found = await service(env, `member_fronts?handle=eq.${takedown[1]}&select=revision&limit=1`, {}, fetchImpl);
+    const target = (found && found[0]) || null;
+    if (target) await service(env, `member_fronts?handle=eq.${takedown[1]}`, { method: 'PATCH', headers: { prefer: 'return=minimal' }, body: JSON.stringify({ removed_at: new Date().toISOString(), removed_reason: reason || null, published: null, published_at: null, published_revision: null, revision: nextRevision(target), updated_at: new Date().toISOString() }) }, fetchImpl);
     return send(request, env, { ok: true, handle: takedown[1], removed: true });
   }
 
@@ -128,10 +164,10 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch } = {
     const rows = await service(env, `member_fronts?handle=eq.${rest}&removed_at=is.null&published=not.is.null&select=m_uid,auth_user_id,handle,published,published_at&limit=1`, {}, fetchImpl);
     const row = rows && rows[0];
     if (!row) return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
-    /* a private profile has no public front page either */
+    /* only a public profile has a public front page (the applied schema's public_page holds the same line) */
     const prof = await service(env, `network_profiles?m_uid=eq.${row.m_uid}&select=display_name,avatar_url,headline,visibility&limit=1`, {}, fetchImpl);
     const p = (prof && prof[0]) || {};
-    if (p.visibility === 'private') return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
+    if (!prof?.length || p.visibility !== PUBLIC_VISIBILITY) return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
     /* checked again on the way out: a row can only ever show its own account's media */
     const checked = validateFront(row.published, { mediaPrefix: mediaPrefix(env.SUPABASE_URL, row.auth_user_id) });
     if (!checked.ok) return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });

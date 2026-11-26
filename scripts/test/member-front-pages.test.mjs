@@ -110,7 +110,10 @@ test('the editor: every signed-in account, its own folder, its draft through the
   assert.match(html, /<meta name="robots" content="noindex,follow">/);
   assert.match(html, /js\/front-media\.js/);
   assert.match(html, /js\/front-studio\.js/);
-  assert.match(js, /api\("\/v1\/fronts\/me", \{ method: "POST", body: \{ config: S\.draft, publish: publish \} \}\)/);
+  assert.match(js, /post\(\{ config: S\.draft, publish: publish \}\)/);
+  /* the save goes through the Worker; on its per-account throttle (429 save_throttled) the editor waits once and retries */
+  assert.match(js, /function post\(body\) \{\s*return api\("\/v1\/fronts\/me", \{ method: "POST", body: body \}\)/);
+  assert.match(js, /err\.status === 429 && detail && detail\.code === "save_throttled"/);
   assert.match(js, /api\("\/v1\/fronts\/me\/published", \{ method: "DELETE" \}\)/);
   /* uploads go to the account's folder named by the Worker, with the account's own session */
   assert.match(media, /x\.open\("POST", sb\(\)\.url \+ "\/storage\/v1\/object\/" \+ BUCKET \+ "\/" \+ path\)/);

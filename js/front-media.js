@@ -33,7 +33,9 @@
         x.setRequestHeader("authorization", "Bearer " + token);
         x.setRequestHeader("apikey", sb().key);
         x.setRequestHeader("content-type", type);
-        x.setRequestHeader("x-upsert", "true");
+        /* never overwrite: every path here carries a fresh stamp, and the bucket refuses updates (a published page's
+           files must not change under it: 20261124164026_member_fronts_shared_revision_directory.sql) */
+        x.setRequestHeader("x-upsert", "false");
         x.setRequestHeader("cache-control", "max-age=31536000");
         if (onProgress && x.upload) x.upload.onprogress = function (e) { if (e.lengthComputable) onProgress(e.loaded / e.total); };
         x.onload = function () {
