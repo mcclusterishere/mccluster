@@ -168,11 +168,12 @@
     var root = $("fsRoot"); if (!root) return;
     if (S.state !== "ready") {
       var t = { loading: ["Opening your editor…", ""], signin: ["Sign in to build your front page", "Your front page is yours: sign in and it opens here."], handle: ["Choose your handle first", "Your front page lives at your handle (front.html?u=you). Finish your account, then come back."], off: ["Front pages are not switched on yet", S.error || "The editor will open here as soon as they are."], error: ["The editor could not open", S.error] }[S.state] || ["", ""];
-      var act = S.state === "signin" ? '<a class="fs-btn" href="account.html?next=front-studio.html">Sign in</a>' : S.state === "handle" ? '<a class="fs-btn" href="account.html">Finish my account</a>' : "";
+      var act = S.state === "signin" ? '<a class="fs-btn" href="account.html?next=front-studio.html">Sign in</a>' : S.state === "handle" ? '<a class="fs-btn" href="account.html?next=front-studio.html">Finish my account</a>' : S.state === "loading" ? "" : '<button type="button" class="fs-btn" id="fsRetry">Try again</button>';
       root.innerHTML = '<section class="fs-gate"><h1>' + e(t[0]) + '</h1><p>' + e(t[1]) + '</p>' + act + '</section>';
+      if ($("fsRetry")) $("fsRetry").onclick = function () { S.state = "loading"; paint(); boot(); };
       return;
     }
-    var me = S.me, live = me.published ? "Live at front.html?u=" + me.handle + (me.published_at ? " since " + new Date(me.published_at).toLocaleString() : "") : "Not published yet";
+    var me = S.me, live = me.published && !me.publish_blocker ? "Live at front.html?u=" + me.handle + (me.published_at ? " since " + new Date(me.published_at).toLocaleString() : "") : me.published ? "Your saved page is not publicly available." : "Not published yet";
     if (!root.querySelector("#fsForm")) {
       root.innerHTML =
         '<header class="fs-head"><div><p class="fs-k">Your front page</p><h1>' + e(me.name || me.handle) + '</h1><p class="fs-live" id="fsLive"></p></div>' +
@@ -192,13 +193,14 @@
     }
     $("fsLive").textContent = live;
     $("fsOpen").href = "front.html?u=" + encodeURIComponent(me.handle);
-    $("fsOpen").hidden = !me.published;
+    $("fsOpen").hidden = !me.published || !!me.publish_blocker;
     $("fsUnpublish").hidden = !me.published;
     var problems = bad();
     $("fsStatus").innerHTML = (S.dirty ? '<p class="fs-dirty">Unsaved changes: shown in the preview only.</p>' : "") +
+      (me.publish_blocker === "private_profile" || me.publish_blocker === "profile_required" ? '<p class="fs-bad">' + (me.publish_blocker === "private_profile" ? 'Your profile is private.' : 'Finish your profile first.') + ' You can save a draft. <a href="' + (me.publish_blocker === "private_profile" ? 'mccluster-creator-studio.html' : 'mnet.html?view=profile') + '" target="_blank" rel="noopener">Open profile settings</a>, then <button type="button" data-act="refresh-access">check publishing access</button>.</p>' : "") +
       (problems.length ? '<p class="fs-bad" role="alert">Fix ' + e(problems.join(", ")) + ' before saving.</p>' : "") +
       (S.msg ? '<p class="' + (S.bad ? "fs-bad" : "fs-ok") + '" role="status">' + e(S.msg) + '</p>' : "");
-    Array.prototype.forEach.call(root.querySelectorAll("#fsTop button"), function (b) { var a = b.getAttribute("data-act"); b.disabled = S.saving || busy() || ((a === "save" || a === "publish") && problems.length > 0); });
+    Array.prototype.forEach.call(root.querySelectorAll("#fsTop button"), function (b) { var a = b.getAttribute("data-act"); b.disabled = S.saving || busy() || (a === "publish" && !!me.publish_blocker) || ((a === "save" || a === "publish") && problems.length > 0); });
     Array.prototype.forEach.call(root.querySelectorAll("[data-device]"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-device") === S.device)); });
   }
   /* the shell first (the first paint builds it), then the settings into it */
@@ -223,6 +225,17 @@
   function viewer() { var f = frameWin(); try { return f && f.__MCC_VR && f.__MCC_VR.live ? f.__MCC_VR.viewer : null; } catch (_) { return null; } }
   function act(a, btn) {
     var c = S.draft, i = Number(btn && btn.getAttribute("data-i"));
+    if (a === "refresh-access") {
+      if (S.saving) return;
+      S.saving = true; paint();
+      api("/v1/fronts/me").then(function (me) {
+        S.me = me; // Keep the local draft and dirty flag: checking access is not a reload.
+        S.msg = me.publish_blocker ? "Publishing is still unavailable. Your draft is kept." : "Ready to publish.";
+        S.bad = !!me.publish_blocker;
+      }).catch(function (err) { S.msg = "Could not check publishing access: " + err.message; S.bad = true; })
+        .then(function () { S.saving = false; paint(); });
+      return;
+    }
     if (a === "tag") { var v = ensure(c, "vr"); v.spots = v.spots || []; v.spots.push({ yaw: 0, pitch: 0, label: "", href: "" }); S.dirty = true; paintForm(); return; }
     if (a === "untag") { c.vr.spots.splice(i, 1); S.dirty = true; paintForm(); livePreview(); return; }
     if (a === "link") { c.links = c.links || []; c.links.push({ label: "", href: "" }); S.dirty = true; paintForm(); return; }
@@ -251,11 +264,14 @@
     S.saving = true; S.msg = publish ? "Publishing…" : "Saving…"; S.bad = false; paint();
     api("/v1/fronts/me", { method: "POST", body: { config: S.draft, publish: publish } }).then(function (b) {
       S.draft = clone(b.draft) || {}; S.me.draft = b.draft; S.dirty = false;
+      S.me.publish_blocker = b.publish_blocker || null; S.me.profile_visibility = b.profile_visibility;
       if (publish) { S.me.published = b.published; S.me.published_at = b.published_at; }
       var dropped = (b.dropped || []).length ? " Not kept: " + b.dropped.join(", ") + "." : "";
       S.msg = (publish ? "Published. Everyone sees it at front.html?u=" + b.handle + "." : "Draft saved.") + dropped; S.bad = !!dropped;
       paintForm(); reloadPreview(true); sweep();
     }).catch(function (err) {
+      var code = err.body && err.body.detail && err.body.detail.code;
+      if (code === "private_profile" || code === "profile_required" || code === "removed") S.me.publish_blocker = code;
       S.msg = (publish ? "Not published: " : "Not saved: ") + (err.status === 403 && err.body && err.body.detail && err.body.detail.code === "removed" ? "McCluster took this page down." : err.message);
       S.bad = true;
     }).then(function () { S.saving = false; paint(); });
