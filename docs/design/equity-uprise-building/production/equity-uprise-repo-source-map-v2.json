@@ -2592,6 +2592,13 @@
       "rationale": "Builds the listening room artist and producer selectors from the recording catalogue."
     },
     {
+      "path": "js/profile-music.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Joins the visible member profile and the existing public catalogue by canonical account identity; it does not define a distinct capability."
+    },
+    {
       "path": "js/music-creator-profile.js",
       "classification": "shared_frontend_support",
       "capability_ids": [],

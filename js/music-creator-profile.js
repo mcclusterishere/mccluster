@@ -5,7 +5,7 @@
    its tracklist, the rest of the albums on a shelf, and the singles. It reads
    only what RLS shows the public: an active creator profile (with the albums
    the creator arranged in Creator Studio, settings.albums) and that
-   creator's PUBLISHED tracks. Albums and their rules: js/music-creator-page.js. */
+   creator's PUBLISHED tracks. The separately permissioned Equity Uprise account profile can appear alongside it. Albums and their rules: js/music-creator-page.js. */
 (function (root) {
   "use strict";
   var doc = root.document;
@@ -155,12 +155,6 @@
     var site = PAGE.safeLink(p.website_url);
     if (site) doors.push('<a class="ap-door" href="' + attr(site) + '" rel="noopener nofollow ugc" target="_blank">Website</a>');
     $("apDoors").innerHTML = doors.join("");
-    var identityLink = doc.createElement("a");
-    identityLink.className = "ap-door creator-action-network";
-    identityLink.href = "mnet.html?profile=" + encodeURIComponent(p.handle);
-    identityLink.textContent = "Put this music into action → @" + p.handle;
-    identityLink.setAttribute("aria-label", "Open " + p.artist_name + " on Equity Uprise");
-    $("apDoors").appendChild(identityLink);
     ownerDoors(p);
   }
   /* THE ARTIST'S OWN TOOLS, ON THEIR OWN PAGE (owner, 2026-10-21: "I have a whole account on Hitman Benji ... I never
@@ -191,7 +185,12 @@
         $("apDoors").insertBefore(edit, $("apDoors").firstChild);
       }).catch(function () {});
   }
-  if (root.MCC && root.MCC.onAccountChange) root.MCC.onAccountChange(function () { if (state.p) ownerDoors(state.p); });
+  function showAccountProfile(p) {
+    if (root.MCC_PROFILE_MUSIC) root.MCC_PROFILE_MUSIC.showProfile($("creatorAccountProfile"), p.m_uid, IS_HOUSE ? HOUSE_ARTIST : "");
+  }
+  if (root.MCC && root.MCC.onAccountChange) root.MCC.onAccountChange(function () {
+    if (state.p) { ownerDoors(state.p); showAccountProfile(state.p); }
+  });
 
   /* ---------- the rate sheet and booking requests ---------- */
   function renderRates(p) {
@@ -280,6 +279,7 @@
 
   function renderPage(p, tracks, offers) {
     state.p = p;
+    showAccountProfile(p);
     state.byTrack = {};
     (offers || []).forEach(function (o) { (state.byTrack[o.track_id] || (state.byTrack[o.track_id] = [])).push(o); });
     state.cat = PAGE.publicCatalogue(p.settings || {}, tracks || []);
@@ -310,7 +310,9 @@
     /* Every published track goes to the player in page order: the featured
        album, the other albums, then the singles, so Next follows the page. */
     var hash = (location.hash.match(/^#album=(alb_[a-z0-9]{6,24})$/) || [])[1];
-    var first = cat.albums.filter(function (a) { return a.id === hash; })[0] ||
+    var release = (location.hash.match(/^#release-([0-9a-f-]{36})$/i) || [])[1];
+    var first = cat.albums.find(function(a) { return release && a.rows.some(function(t) { return t.id === release; }); }) ||
+      cat.albums.filter(function (a) { return a.id === hash; })[0] ||
       cat.albums.filter(function (a) { return a.id === cat.featured; })[0] || cat.albums[0] || null;
     var ordered = (first ? [first] : []).concat(cat.albums.filter(function (a) { return a !== first; }));
     if (root.MCC_MUSIC) {
@@ -396,7 +398,16 @@
           .catch(function () { return []; })
       ]);
     })
-    .then(function (all) { renderPage(all[0], all[1], all[2]); })
+    .then(function (all) {
+      renderPage(all[0], all[1], all[2]);
+      var release = /^#release-([0-9a-f-]{36})$/i.exec(root.location.hash);
+      if (release) {
+        var button = Array.from(doc.querySelectorAll("button[data-creator-track]")).find(function(b) {
+          return b.dataset.creatorTrack === release[1];
+        });
+        if (button) { button.scrollIntoView({block:"center"}); button.focus({preventScroll:true}); }
+      }
+    })
     .catch(function () { profileError("This artist's page is unavailable."); });
 
   if ($("apBookForm")) {

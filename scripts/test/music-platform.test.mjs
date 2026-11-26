@@ -256,7 +256,7 @@ test('Creator Studio release submission rolls back partial uploads and isolates 
   assert.match(studio,/Release submitted, but the license offer was not saved/);
 });
 
-test("Music creator profiles converge on Action Network identity",async()=>{const js=await read("js/music-creator-profile.js");assert.match(js,/Put this music into action/);assert.match(js,/mnet\.html\?profile=/);});
+test("Music creator profiles resolve the same account before linking to Action Network",async()=>{const js=await read("js/music-creator-profile.js");const bridge=await read("js/profile-music.js");assert.match(js,/showProfile\(\$\("creatorAccountProfile"\), p\.m_uid/);assert.match(bridge,/b\.profile\?\.m_uid === id/);assert.match(bridge,/mnet\.html\?profile=/);});
 
 
 test('public play counts use the dedicated album-play track index', async()=>{

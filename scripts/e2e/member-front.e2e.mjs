@@ -82,7 +82,7 @@ async function setup(viewport,account){
       if(p==='/v1/status')return json(route,{error:'Forbidden'},403);
       const a=who(req.headers().authorization);
       if(p==='/v1/mnet/bootstrap')return a?json(route,{identity:{m_uid:a.m_uid,mccluster_id:a.handle||null},profile:{display_name:a.name,avatar_url:''}}):json(route,{error:'Sign in'},401);
-      if(p.startsWith('/v1/mnet/people/')){const h=decodeURIComponent(p.split('/').pop()),t=ACCOUNTS.find(x=>x.handle===h);return t?json(route,{identity:{mccluster_id:t.handle},profile:{display_name:t.name,headline:'Producer',bio:''},counts:{posts:3,followers:10,following:2}}):json(route,{error:'No such member'},404);}
+      if(p.startsWith('/v1/mnet/people/')){const h=decodeURIComponent(p.split('/').pop()),t=ACCOUNTS.find(x=>x.handle===h||x.m_uid===h);return a&&t?json(route,{identity:{mccluster_id:t.handle},profile:{m_uid:t.m_uid,display_name:t.name,headline:'Producer',bio:''},counts:{posts:3,followers:10,following:2}}):json(route,{error:'No such member'},404);}
       return json(route,{ok:true,items:[],threads:[],apps:[],events:[],tenants:[],total:0});
     }
     if(u.origin===SB){
@@ -370,7 +370,7 @@ try{
     for(const [acct,mine] of [[BENJI,true],[VISITOR,false]]){
       app=await setup({width:390,height:844},acct);
       await app.page.goto(BASE+'/music-creator.html?handle=benji.chase',{waitUntil:'domcontentloaded'});
-      await app.page.waitForSelector('#apDoors .creator-action-network',{timeout:30000}).catch(()=>{});
+      await app.page.waitForSelector('#creatorAccountProfile .creator-action-network',{timeout:30000});
       if(mine)await app.page.waitForSelector('#apOwnerFront',{timeout:15000}).catch(()=>{});else await app.page.waitForTimeout(1500);
       const doors=await app.page.evaluate(()=>({front:(document.getElementById('apOwnerFront')||{}).getAttribute?.('href')||null,edit:(document.getElementById('apOwnerEdit')||{}).getAttribute?.('href')||null}));
       check(scope,mine?'on his artist page he gets "Edit my artist page" and "Build my front page"':'a visitor to his artist page gets neither',mine?doors.front==='front-studio.html'&&doors.edit==='creator.html?edit=profile':!doors.front&&!doors.edit,doors);
