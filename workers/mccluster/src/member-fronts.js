@@ -21,9 +21,9 @@ import { isHouseOwner } from './world-access.js';
 
 export const FRONTS_PREFIX = '/v1/fronts';
 const HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
-/* One save or publish per account every few seconds. The API-wide limiter (enforceApiRateLimit) still runs first; this
+/* One save or publish per account per second (the editor waits and retries once on 429, so Save then Publish still works). The API-wide limiter (enforceApiRateLimit) still runs first; this
    stops one signed-in account from hammering its own row (and the public page cache) with a script. */
-export const FRONT_SAVE_INTERVAL_MS = 3000;
+export const FRONT_SAVE_INTERVAL_MS = 1000;
 const REVISION_MAX = 2147483647;
 /* The applied schema (supabase/migrations/20261124164026_member_fronts_shared_revision_directory.sql) serves a page
    publicly only when the account's network profile exists and is 'public' (member_fronts_private.public_page and

@@ -259,10 +259,21 @@
         .catch(function (err) { S.msg = "Not taken down: " + err.message; S.bad = true; }).then(function () { S.saving = false; paint(); });
     }
   }
+  /* the Worker allows one save per account per second (429 save_throttled): wait the time it names and try once more */
+  function post(body) {
+    return api("/v1/fronts/me", { method: "POST", body: body }).catch(function (err) {
+      var detail = err && err.body && err.body.detail;
+      if (err && err.status === 429 && detail && detail.code === "save_throttled") {
+        var wait = Math.min(Math.max(Number(detail.retry_after_ms) || 1000, 200), 5000) + 100;
+        return new Promise(function (r) { setTimeout(r, wait); }).then(function () { return api("/v1/fronts/me", { method: "POST", body: body }); });
+      }
+      throw err;
+    });
+  }
   function save(publish) {
     if (bad().length || busy()) return;
     S.saving = true; S.msg = publish ? "Publishing…" : "Saving…"; S.bad = false; paint();
-    api("/v1/fronts/me", { method: "POST", body: { config: S.draft, publish: publish } }).then(function (b) {
+    post({ config: S.draft, publish: publish }).then(function (b) {
       S.draft = clone(b.draft) || {}; S.me.draft = b.draft; S.dirty = false;
       S.me.publish_blocker = b.publish_blocker || null; S.me.profile_visibility = b.profile_visibility;
       if (publish) { S.me.published = b.published; S.me.published_at = b.published_at; }
