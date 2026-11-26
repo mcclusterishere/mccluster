@@ -88,7 +88,7 @@ test('the experience scripts load from beside analytics.js, wherever the page is
   const names=['experience.js','mcc-model-adapter.js','adaptive-surfaces.js'];
   assert.deepEqual(run('https://mccluster.org/js/analytics.js?v=7'),names.map((n)=>`https://mccluster.org/js/${n}?v=7`),'a page in a folder on the platform');
   assert.deepEqual(run('https://matthew.mccluster.org/js/analytics.js'),names.map((n)=>`https://matthew.mccluster.org/js/${n}`),'no query');
-  assert.deepEqual(run('http://127.0.0.1:8080/js/analytics.js?v=__STAMP__'),names.map((n)=>`http://127.0.0.1:8080/js/${n}?v=__STAMP__`),'a local copy');
+  assert.deepEqual(run('http://127.0.0.1:8080/js/analytics.js?v=c1f3e54aa594'),names.map((n)=>`http://127.0.0.1:8080/js/${n}?v=c1f3e54aa594`),'a local copy');
   assert.deepEqual(run(null),names.map((n)=>`js/${n}`),'no current script: the page\'s own address, as before');
   assert.deepEqual(run('https://mccluster.org/assets/bundle.js?v=2'),names.map((n)=>`js/${n}?v=2`),'a file of another name: as before');
 });

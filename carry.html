@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<script src="js/shell-boot.js?v=__STAMP__"></script>
+<script src="js/shell-boot.js?v=c1f3e54aa594"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
@@ -43,7 +43,7 @@
     if (w.MCC && typeof w.MCC.refreshIfNeeded === "function") return Promise.resolve(w.MCC);
     return new Promise(function (resolve) {
       var s = d.createElement("script");
-      s.src = "js/mcc-auth.js?v=__STAMP__";
+      s.src = "js/mcc-auth.js?v=c1f3e54aa594";
       s.onload = function () { resolve(w.MCC || null); };
       s.onerror = function () { resolve(null); };
       d.head.appendChild(s);

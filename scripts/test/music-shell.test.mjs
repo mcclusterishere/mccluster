@@ -679,7 +679,7 @@ test('each stage page carries its view marker on <html> only, with js/shell-boot
     const html = /<html\b[^>]*>/.exec(src)[0];
     assert.match(html, new RegExp(`\\bdata-music-view="${kind}"`), `${page} names its kind on <html>`);
     assert.equal((src.match(/data-music-view=/g) || []).length, 1, `${page}: the marker is on <html> and nowhere else`);
-    assert.match(src, /<head><script src="js\/shell-boot\.js\?v=__STAMP__"><\/script>/, `${page}: js/shell-boot.js is the first thing in its head`);
+    assert.match(src, /<head><script src="js\/shell-boot\.js\?v=c1f3e54aa594"><\/script>/, `${page}: js/shell-boot.js is the first thing in its head`);
   }
   assert.doesNotMatch(read('index.html'), /data-music-view/, 'the front page is never a view (hard rule 3)');
 });
@@ -814,7 +814,7 @@ test('JRN-2: the first Listen view over an artist page loads the listen ledger a
   const scripts = () => r.win.document.head.appended.filter((n) => /(^|\/)js\//.test(String(n.src || ''))).map((n) => String(n.src).replace(/^.*?(?=js\/)/, ''));
   assert.equal(r.S.navigate('listen.html'), true, 'the artist page opens Listen as a view');
   r.t.advance(0);
-  assert.deepEqual(scripts(), ['js/listen-ledger.js?v=__STAMP__', 'js/pip.js?v=__STAMP__'], 'the ledger, then the pocket, the same files Listen loads');
+  assert.deepEqual(scripts(), ['js/listen-ledger.js?v=c1f3e54aa594', 'js/pip.js?v=c1f3e54aa594'], 'the ledger, then the pocket, the same files Listen loads');
   r.S.navigate('music-creator.html?handle=probe-artist');   /* back to the artist page (a reveal) */
   r.S.navigate('listen.html'); r.t.advance(0);
   assert.equal(scripts().length, 2, 'once per document');

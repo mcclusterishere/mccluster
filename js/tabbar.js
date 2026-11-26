@@ -38,14 +38,14 @@
        first. Neither is async, so the two run in the order they were added. */
     if (!window.MCC_NOW_PLAYING && !document.querySelector("script[data-mcc-now-playing]")) {
       var helper = document.createElement("script");
-      helper.src = ROOT + "js/now-playing.js?v=__STAMP__";
+      helper.src = ROOT + "js/now-playing.js?v=c1f3e54aa594";
       helper.async = false;
       helper.setAttribute("data-mcc-now-playing", "");
       document.head.appendChild(helper);
     }
     worldAudioReady = new Promise(function (resolve) {
       var script = document.createElement("script");
-      script.src = ROOT + "js/world-audio-continuity.js?v=__STAMP__";
+      script.src = ROOT + "js/world-audio-continuity.js?v=c1f3e54aa594";
       script.async = false;
       script.onload = function () {
         var ready = !!window.MCC_WORLD_AUDIO;
@@ -64,7 +64,7 @@
   if (window.parent === window && document.documentElement.hasAttribute("data-music-view") && !window.MCC_MUSIC_SHELL &&
       !document.querySelector("script[data-mcc-music-shell]")) {
     var musicShell = document.createElement("script");
-    musicShell.src = ROOT + "js/music-shell.js?v=__STAMP__";
+    musicShell.src = ROOT + "js/music-shell.js?v=c1f3e54aa594";
     musicShell.async = false;
     musicShell.setAttribute("data-mcc-music-shell", "");
     document.head.appendChild(musicShell);
@@ -822,7 +822,7 @@
         }
         resolve(window.MCC);
       }
-      script.src = ROOT + "js/mcc-auth.js?v=__STAMP__";
+      script.src = ROOT + "js/mcc-auth.js?v=c1f3e54aa594";
       script.async = true;
       script.setAttribute("data-mcc-auth-loader", "1");
       script.onload = function () { finish(null); };
@@ -1144,7 +1144,7 @@
     window.MCC_CARRY_PENDING = carryPending();
     if (window.MCC_CARRY || document.querySelector("script[data-mcc-carry]")) return;
     var carry = document.createElement("script");
-    carry.src = ROOT + "js/carry.js?v=__STAMP__";
+    carry.src = ROOT + "js/carry.js?v=c1f3e54aa594";
     carry.async = false;
     carry.setAttribute("data-mcc-carry", "");
     document.head.appendChild(carry);
@@ -1392,7 +1392,7 @@
   /* the arithmetic only, for the veil above: the World's own page has it already, nothing else on this page is touched */
   if (!window.MCC_DAYLIGHT_CORE && !onWorldHost()) {
     var daylightCore = document.createElement("script");
-    daylightCore.src = ROOT + "js/daylight.js?v=__STAMP__";
+    daylightCore.src = ROOT + "js/daylight.js?v=c1f3e54aa594";
     daylightCore.async = true;
     daylightCore.setAttribute("data-daylight-core", "");
     document.head.appendChild(daylightCore);
@@ -1700,12 +1700,12 @@
   };
   // One shared implementation on every page carrying the bar, including nested rooms.
   var navigationStyle = document.createElement("link");
-  navigationStyle.rel = "stylesheet"; navigationStyle.href = ROOT + "css/site-navigation.css?v=__STAMP__";
+  navigationStyle.rel = "stylesheet"; navigationStyle.href = ROOT + "css/site-navigation.css?v=c1f3e54aa594";
   navigationStyle.onload = function () { document.body.dataset.siteNavigation = "ready"; window.dispatchEvent(new Event("mcc:navigation-style-ready")); };
   navigationStyle.onerror = function () { navPresentationReady = true; revealNavigation(); };
   document.head.appendChild(navigationStyle);
   var navigationScript = document.createElement("script");
-  navigationScript.src = ROOT + "js/site-navigation.js?v=__STAMP__";
+  navigationScript.src = ROOT + "js/site-navigation.js?v=c1f3e54aa594";
   navigationScript.onerror = function () { navPresentationReady = true; revealNavigation(); };
   document.head.appendChild(navigationScript);
   /* Installed web apps get compact chrome and the same player's transport.
@@ -1714,7 +1714,7 @@
     if (window.parent !== window || !document.documentElement.classList.contains("mcc-installed-app") ||
         document.querySelector("script[data-mcc-installed-dock]")) return;
     var appDock = document.createElement("script");
-    appDock.src = ROOT + "js/installed-app-dock.js?v=__STAMP__";
+    appDock.src = ROOT + "js/installed-app-dock.js?v=c1f3e54aa594";
     appDock.async = false; appDock.setAttribute("data-mcc-installed-dock", "");
     document.head.appendChild(appDock);
   }

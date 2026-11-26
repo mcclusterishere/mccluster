@@ -277,7 +277,7 @@ test('the wiring: a chip in Missions & fellows, init from its init, three tags i
   assert.match(an, /if\(window\.CR\.missionSources&&A\.tab==="sources"\)window\.CR\.missionSources\.bind\(root\);/);
   assert.match(an, /if\(window\.CR\.missionSources\)window\.CR\.missionSources\.init\(opts\);/);
   const html = read('control.html');
-  const tags = ['<link rel="stylesheet" href="css/control-mission-sources.css?v=__STAMP__">', '<script src="js/mission-source-words.js?v=__STAMP__"></script>', '<script src="js/control-room/mission-sources.js?v=__STAMP__"></script>'];
+  const tags = ['<link rel="stylesheet" href="css/control-mission-sources.css?v=c1f3e54aa594">', '<script src="js/mission-source-words.js?v=c1f3e54aa594"></script>', '<script src="js/control-room/mission-sources.js?v=c1f3e54aa594"></script>'];
   const at = tags.map((t) => html.indexOf(t));
   assert.ok(at.every((i) => i > html.indexOf('js/control-room/identity-review.js') && i < html.indexOf('js/control-room-v2.js')), 'after identity-review.js, before the shell');
   const nav = read('js/control-room/nav.js');

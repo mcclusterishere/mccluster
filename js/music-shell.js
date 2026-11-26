@@ -242,7 +242,7 @@
   function style() {
     if (doc.getElementById("mccMusicShellStyle")) return;
     var l = doc.createElement("link");
-    l.id = "mccMusicShellStyle"; l.rel = "stylesheet"; l.href = ROOT + "css/music-shell.css?v=__STAMP__";
+    l.id = "mccMusicShellStyle"; l.rel = "stylesheet"; l.href = ROOT + "css/music-shell.css?v=c1f3e54aa594";
     doc.head.appendChild(l);
   }
 
@@ -715,7 +715,7 @@
       [["MCC_LISTENS", "js/listen-ledger.js"], ["MCC_POCKET", "js/pip.js"]].forEach(function (p) {
         if (root[p[0]]) return;
         var s = doc.createElement("script");
-        s.src = ROOT + p[1] + "?v=__STAMP__";
+        s.src = ROOT + p[1] + "?v=c1f3e54aa594";
         s.async = false;
         doc.head.appendChild(s);
       });
@@ -735,11 +735,11 @@
     root.MCC_MUSIC_GUEST = { restore: false, owns: function () { return owner === "engine"; } };
     if (!doc.querySelector('link[href*="css/music-engine.css"]')) {
       var l = doc.createElement("link");
-      l.rel = "stylesheet"; l.href = ROOT + "css/music-engine.css?v=__STAMP__";
+      l.rel = "stylesheet"; l.href = ROOT + "css/music-engine.css?v=c1f3e54aa594";
       doc.head.appendChild(l);
     }
     var s = doc.createElement("script");
-    s.src = ROOT + "js/music-engine.js?v=__STAMP__";
+    s.src = ROOT + "js/music-engine.js?v=c1f3e54aa594";
     s.async = false;
     s.onload = function () {
       guest.ready = true;

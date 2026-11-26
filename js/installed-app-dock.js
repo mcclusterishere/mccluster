@@ -144,7 +144,7 @@
     if (expanded && !e.target.closest?.(".pocket,[data-app-player='open']")) closeDetails();
   }, {passive:true});
   var style = doc.createElement("link"); style.rel = "stylesheet";
-  style.href = ROOT + "css/installed-app-dock.css?v=__STAMP__";
+  style.href = ROOT + "css/installed-app-dock.css?v=c1f3e54aa594";
   style.onload = function () { styleReady = true; mount(); connect(); paint(); };
   doc.head.appendChild(style);
   connect();

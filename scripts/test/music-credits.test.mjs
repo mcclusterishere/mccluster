@@ -399,7 +399,7 @@ test("the Artists row: McCluster first, everybody credited, a profile merged by 
   const community = read("js/music-community.js");
   assert.match(community, /searchBox\.addEventListener\("input", narrowArtists\);/);
   assert.match(community, /wrap\.hidden = \(hideWhenEmpty \|\| words\.length > 0\) && shown === 0;/, "a search that names no artist takes the row out of the way");
-  assert.match(read("listen.html"), /js\/music-credits\.js\?v=__STAMP__"><\/script>\n  <script src="js\/listen\.js/, "the credits reader loads before the room");
+  assert.match(read("listen.html"), /js\/music-credits\.js\?v=c1f3e54aa594"><\/script>\n  <script src="js\/listen\.js/, "the credits reader loads before the room");
 });
 
 test("the artist view renders an artist's appearances, grouped by role, playable, linked to the album", () => {
@@ -437,7 +437,7 @@ test("the artist view renders an artist's appearances, grouped by role, playable
   assert.doesNotMatch(page, /<link rel="canonical"/, "one template for every artist: no address that would fold them all into one");
   assert.equal((page.match(/<h1\b/g) || []).length, 1);
   for (const id of ["artistPic", "artistName", "artistSummary", "artistOwn", "artistSections"]) assert.ok(page.includes(`id="${id}"`), id);
-  const order = ["js/now-playing.js", "js/music-engine.js", "js/music-credits.js", "js/music-artist.js"].map((f) => page.indexOf(`<script src="${f}?v=__STAMP__">`));
+  const order = ["js/now-playing.js", "js/music-engine.js", "js/music-credits.js", "js/music-artist.js"].map((f) => page.indexOf(`<script src="${f}?v=c1f3e54aa594">`));
   assert.ok(order.every((i) => i > 0) && order.join() === [...order].sort((a, b) => a - b).join(), "the player, then the credits reader, then the view");
   assert.match(page, /<span class="artist__pic artist__pic--initial av__pic" id="artistPic" aria-hidden="true"><\/span>/, "an initial, never a drawn mark");
   assert.doesNotMatch(page, /<img[^>]*id="artistPic"|<svg[^>]*artist/i);
@@ -473,7 +473,7 @@ test("the artist view renders an artist's appearances, grouped by role, playable
   assert.match(read("css/music-artist.css"), /\.ap-track img\.ap-track__cover\{object-fit:contain;background:none\}/, "a record's cover is shown whole there");
   /* in the artist view the credit wraps: it is the reason the artist is on the page */
   assert.match(page, /main\.ls \.tr \.t small \{ white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere;/);
-  const at = (f) => creator.indexOf(`<script src="${f}?v=__STAMP__">`);
+  const at = (f) => creator.indexOf(`<script src="${f}?v=c1f3e54aa594">`);
   assert.ok(at("js/music-engine.js") > 0 && at("js/music-engine.js") < at("js/music-credits.js") && at("js/music-credits.js") < at("js/music-artist.js"), "the player, the credits reader, then the line");
   /* the same bar as the listening room, no new global navigation */
   const bar = (h) => /<nav class="appbar"[\s\S]*?<\/nav>/.exec(h)[0];
@@ -511,7 +511,7 @@ test("\"written & performed by Matthew McCluster\" stands only under records tha
   /* a song with no film shows its cover in the now sheet whole: supplied artwork is scaled, never cropped */
   assert.match(page, /\.now__film\.is-cover \{ object-fit: contain; \}/);
   assert.match(page, /nowFilm\.classList\.toggle\("is-cover", !src\);/);
-  assert.ok(page.indexOf('js/music-credits.js?v=__STAMP__') > 0);
+  assert.ok(page.indexOf('js/music-credits.js?v=c1f3e54aa594') > 0);
   for (const f of ["listen.html", "catalogue.html", "llms.txt"]) assert.doesNotMatch(read(f), /unless credited otherwise/, `${f}: the blanket line is gone`);
   for (const f of ["listen.html", "catalogue.html"]) assert.match(read(f), /McCluster&rsquo;s own records are written &amp; performed by Matthew McCluster; every other record names its artist\./);
   /* and every record that is not his does name its artist in the line a list shows */
