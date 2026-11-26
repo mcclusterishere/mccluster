@@ -665,3 +665,42 @@ test('restore during an account switch or sign-out never paints the previous own
   device.store(null); bar.window.dispatchEvent({ type: 'pageshow', persisted: true }); await device.quiet();
   assert.deepEqual(bar.state(), SIGNED_OUT); assert.equal(bar.adminPaints.at(-1), false);
 });
+
+/* #756: one slow or failed /v1/status used to leave the owner on the three-tab bar until the next focus or restore. */
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+test('a transient owner-check failure closes navigation, then a bounded retry restores the owner bar', async () => {
+  const device = profile({ owners: ['owner'] }); device.seed('owner'); device.fail('status');
+  const bar = device.open(); await device.quiet();
+  assert.equal(bar.adminPaints.at(-1), false, 'an unavailable authority fails closed');
+  assert.equal(bar.adminPaints.includes(true), false);
+  device.fail('status', false);
+  await wait(1000); await device.quiet();
+  assert.equal(bar.adminPaints.at(-1), true, 'the retry asks the server again and only its 2xx grants');
+  assert.equal(device.counts.status, 2);
+});
+
+test('owner-check retries stop after two attempts while the authority stays down', async () => {
+  const device = profile({ owners: ['owner'] }); device.seed('owner'); device.fail('status');
+  const bar = device.open(); await device.quiet();
+  await wait(3600); await device.quiet();
+  assert.equal(device.counts.status, 3, 'one check plus two bounded retries, no loop');
+  assert.equal(bar.adminPaints.includes(true), false);
+});
+
+test('a definite 403 is never retried and never grants the owner bar', async () => {
+  const device = profile({ owners: [] }); device.seed('member');
+  const bar = device.open(); await device.quiet();
+  await wait(1000); await device.quiet();
+  assert.equal(device.counts.status, 1);
+  assert.equal(bar.adminPaints.includes(true), false);
+});
+
+test('a retry pending across a sign-out never paints the owner bar', async () => {
+  const device = profile({ owners: ['owner'] }); device.seed('owner'); device.fail('status');
+  const bar = device.open(); await device.quiet();
+  device.fail('status', false); device.store(null);
+  bar.window.dispatchEvent({ type: 'pageshow', persisted: true }); await device.quiet();
+  await wait(1000); await device.quiet();
+  assert.equal(bar.adminPaints.includes(true), false);
+});
