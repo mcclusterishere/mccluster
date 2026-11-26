@@ -1,0 +1,14 @@
+{
+  "name": "@mccluster/demo-outreach",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Demo outreach for the records and genealogy audience. Draft mode by default; a gated send mode capped at 5 initial letters per run, no follow ups.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "run:draft": "node bin/demo-outreach.mjs run",
+    "sendlist": "node bin/demo-outreach.mjs sendlist --out state/sendlist.json",
+    "status": "node bin/demo-outreach.mjs status"
+  }
+}

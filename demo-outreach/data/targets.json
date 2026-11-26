@@ -1,0 +1,20 @@
+{
+  "default": "mccluster",
+  "targets": {
+    "mccluster": {
+      "url": "https://github.com/mcclusterishere/mccluster",
+      "summary": "It is the code behind my site and civic platform: plain HTML pages over a Postgres backend where Row Level Security decides who can read what, with offline tests that prove the permission wall, and a public archive that explains a Connecticut Siting Council docket in plain English.",
+      "relevance": "I am building toward the same kind of open, tested record for how official documents classified race, and how people can get them corrected."
+    },
+    "ftp": {
+      "url": "https://mcclusterishere.github.io/Foundational-Truth-Project/",
+      "summary": "It is an open research atlas of the early Americas with 48 evidence cards, colonial era maps from the Library of Congress, and a record for each claim that keeps the observation, the interpretation and its limits apart.",
+      "relevance": "I want the next chapter to cover the paper record: how census and vital records classified Native people, and what a correction request needs to show."
+    },
+    "apex": {
+      "url": "https://github.com/mcclusterishere/Apex-tactical-corporation",
+      "summary": "Its research papers lay out how official race labels were made, including Walter Plecker and the 1924 Racial Integrity Act, the 1950 census instruction on mixed Indian and Negro households, and the limits of commercial DNA tests, with every claim marked documented, contested or excluded.",
+      "relevance": "I want it to be useful to families correcting a vital record and to the people who study these records."
+    }
+  }
+}
