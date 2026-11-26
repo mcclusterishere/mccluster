@@ -4,8 +4,10 @@
    that joins the compute fabric (docs/control-plane/WINDOWS-NODE.md). Static checks, always:
 
    (a) the switches the runbook names exist (Report, Install, RepoPath, NodeName, Enroll, Models,
-       Benchmark, Model, KeepAwake, ModelsPath, Vulkan, StateRoot, Tier, and since slice N2 Browser
-       and BrowserHeaded) with SupportsShouldProcess, and the library guard that lets the pwsh tests
+       Benchmark, Model, KeepAwake, ModelsPath, Vulkan, StateRoot, Tier, since slice N2 Browser
+       and BrowserHeaded, and since the contribution contract Pause, Resume, Limits with IdleOnly,
+       OnACOnly, MaxConcurrency, CpuBusyPercent, BatteryFloorPercent, ThermalLimitC, Revoke and
+       Uninstall) with SupportsShouldProcess, and the library guard that lets the pwsh tests
        dot-source it without running anything;
    (b) nothing is downloaded or evaluated outside -Browser: no Invoke-Expression, iex,
        DownloadString, DownloadFile or Start-BitsTransfer, every URL literal is loopback or the Core
@@ -34,6 +36,7 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { execFileSync, spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { claimGate, deviceProbeCommand, parseDeviceProbe } from "../../core/src/compute/node-agent-config.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SCRIPT = "core/windows/mccluster-node.ps1";
@@ -46,10 +49,10 @@ const BROWSER_DOC = "docs/control-plane/AGENT-NODE-BROWSER.md";
 const read = (f) => readFileSync(join(ROOT, f), "utf8");
 const SKIP_LINE = "windows-node-script: pwsh not available, PowerShell tests skipped (unverified here)";
 
-const SWITCHES = ["Report", "Install", "Enroll", "Models", "Benchmark", "KeepAwake", "Browser", "BrowserHeaded"];
+const SWITCHES = ["Report", "Install", "Enroll", "Models", "Benchmark", "KeepAwake", "Browser", "BrowserHeaded", "Pause", "Resume", "Limits", "Revoke", "Uninstall", "IdleOnly", "OnACOnly"];
 /* the one version -Browser installs; pinned in the doctor exactly once */
 const PLAYWRIGHT_PIN = "1.63.0";
-const VALUES = ["RepoPath", "NodeName", "Model", "ModelsPath", "Vulkan", "StateRoot", "Tier", "ComputeUrl", "OrgId"];
+const VALUES = ["RepoPath", "NodeName", "Model", "ModelsPath", "Vulkan", "StateRoot", "Tier", "ComputeUrl", "OrgId", "MaxConcurrency", "CpuBusyPercent", "BatteryFloorPercent", "ThermalLimitC"];
 /* a Windows user-profile path (raw or JSON-escaped), a UNC host (two backslashes at a path start,
    so a JSON-escaped PNP id or a regex like \\SYSTEM is not one), an e-mail, or a non-loopback IPv4 */
 const PRIVATE_STRINGS = /[A-Za-z]:\\{1,2}Users\\{1,2}|(?<![\\\w])\\\\[A-Za-z0-9]|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|\b(?!127\.0\.0\.1\b)\d{1,3}(?:\.\d{1,3}){3}\b/;
@@ -283,4 +286,48 @@ test("PowerShell parse and core/windows/tests/mccluster-node.tests.ps1 (pwsh on 
   const run = spawnSync(pwsh.command, ["-NoProfile", "-NonInteractive", "-File", join(ROOT, TESTS)], { encoding: "utf8", env, timeout: 300_000 });
   console.log(run.stdout);
   assert.equal(run.status, 0, `pwsh tests failed (${pwsh.version}):\n${run.stdout}\n${run.stderr}`);
+});
+
+test("release signs before hashing and packaging, then verifies the extracted binaries", (t) => {
+  const build = read("desktop/windows/build-inbox.ps1");
+  let previous = -1;
+  for (const marker of ["Set-ReleaseSignature $exe", "$manifestFiles +=", "$zip.CreateEntry('manifest.json'", "& $csc @setupArgs", "Set-ReleaseSignature $candidate", "& $instTestExe $candidate $OutDir", "Move-Item $candidate $setupExe", "release-gate.ps1') @gateArgs"]) {
+    const position = build.indexOf(marker);
+    assert.ok(position > previous, "release build order at " + marker);
+    previous = position;
+  }
+  const pwsh = findPwsh();
+  if (!pwsh) return t.skip(SKIP_LINE);
+  const result = spawnSync(pwsh.command, ["-NoProfile", "-NonInteractive", "-File", join(ROOT, "desktop/windows/tests/ReleasePackageTests.ps1")], { encoding: "utf8", timeout: 45_000 });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test("Windows idle-only claims follow last input across tick counter rollover", (t) => {
+  const pwsh = findPwsh();
+  if (!pwsh) return t.skip(SKIP_LINE);
+  const command = deviceProbeCommand("win32");
+  const probe = Buffer.from(command.args.at(-1), "base64").toString("utf16le");
+  const cases = [
+    { name: "after 25 days of uptime", now: 25 * 86_400_000, elapsed: 300_000, seconds: 300 },
+    { name: "across the sign bit", now: 0x80000010, elapsed: 299_999, seconds: 299 },
+    { name: "across full rollover", now: 100_000, elapsed: 300_000, seconds: 300 },
+    { name: "input immediately before the sample", now: 0xfffffff0, elapsed: 999, seconds: 0 },
+    { name: "a future input timestamp", now: 20_000, elapsed: -10, seconds: 0 }
+  ];
+  for (const { name, now, elapsed, seconds } of cases) {
+    // Supply only the native session, clock, last-input and WMI readings. Run the
+    // shipped PowerShell/C# probe, its JSON parser, and the actual claim gate.
+    const last = (now - elapsed) >>> 0;
+    const fixture = "function Get-CimInstance { throw 'no fixture hardware' }\n" + probe
+      .replace("[System.Diagnostics.Process]::GetCurrentProcess().SessionId", "1")
+      .replace("Environment.TickCount", "(" + (now | 0) + ")")
+      .replace(/^\s*\[DllImport\("user32\.dll"\)\].*GetLastInputInfo[^;]+;/m,
+        "\n  static bool GetLastInputInfo(ref LASTINPUTINFO info) { info.dwTime = " + last + "U; return true; }");
+    const encoded = Buffer.from(fixture, "utf16le").toString("base64");
+    const output = execFileSync(pwsh.command, ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded], { encoding: "utf8", timeout: 30_000 });
+    const device = parseDeviceProbe(output);
+    assert.equal(device.idle_source, "lastinput", name);
+    assert.equal(device.idle_seconds, seconds, name);
+    assert.equal(claimGate({ limits: { idle_only: true }, idleThresholdSeconds: 300, device }).allowed, seconds >= 300, name);
+  }
 });
