@@ -167,3 +167,19 @@ What the browser test covers, all at 390 and 1280 with no sideways scroll and no
   - `&card=1` keeps the card;
   - his own card shows "Edit my front page".
 - **Edge cases:** a missing page says so; "Take it down" unpublishes and keeps the draft.
+
+## Status 2026-11-25: open to every new account
+
+- Production has the table, the `front-media` bucket and their policies: they arrived as
+  `supabase/migrations/20261124164026_member_fronts_shared_revision_directory.sql` (applied 2026-11-24 by a concurrent
+  session). Do not apply `supabase/pending/member_fronts_v1.sql` over it. Before that apply `/v1/fronts` answered 503
+  ("Front pages are not switched on yet") and the editor showed its "off" state.
+- The Worker keeps writing the table with the service role, and now also keeps the applied schema's `revision` and
+  `published_revision` columns true, so the database's own `member_front_*` RPCs and directory see every Worker write.
+- Publishing and the public read require a network profile whose visibility is `public`, the same line as
+  `member_fronts_private.public_page` (a missing, private or network-only profile can save a draft, not publish).
+- One save or publish per account every 3 seconds (429 `save_throttled`), on top of the API-wide limiter.
+- Uploads never overwrite (`x-upsert: false`); every path carries a fresh stamp and the bucket refuses updates.
+- account.html links the builder for every signed-in account.
+- Proofs: `workers/mccluster/test/member-fronts.test.mjs`, `scripts/test/member-front-pages.test.mjs`,
+  `scripts/test-member-fronts-db.sh` (pending file) and `scripts/test-member-fronts-applied-db.sh` (the applied schema).

@@ -45,7 +45,9 @@ function db(seed = {}) {
   };
   return { fetchImpl, calls, t };
 }
-const call = (d, path, opts) => handleMemberFronts(req(path, opts), ENV, { fetchImpl: d.fetchImpl });
+/* the per-account save throttle has its own test below; the flows here save back to back on purpose */
+const call = (d, path, opts) => handleMemberFronts(req(path, opts), ENV, { fetchImpl: d.fetchImpl, saveIntervalMs: 0 });
+const callThrottled = (d, path, opts) => handleMemberFronts(req(path, opts), ENV, { fetchImpl: d.fetchImpl });
 const FILM = (name, n = 120) => ({ base: `${PREFIX}${name}/`, count: n, ext: 'webp', sm: true });
 const CONFIG = {
   words: { title1: 'HITMAN', title2: 'BENJI', eyebrow: 'Producer · Atlanta', door1: { label: 'Hear the tape', href: 'https://example.com/tape' }, door2: { label: 'Book me', href: 'javascript:alert(1)' } },
@@ -205,4 +207,85 @@ test('before the table exists, the routes say front pages are not on yet, never 
   for (const [path, opts] of [['/v1/fronts/me', { token: 'benji' }], ['/v1/fronts/benji.chase', {}]]) {
     await assert.rejects(handleMemberFronts(req(path, opts), ENV, { fetchImpl: missing }), (e) => e.status === 503 && e.message === 'Front pages are not switched on yet');
   }
+});
+
+/* ---------- open to every new account (2026-11-25) ---------- */
+
+test('a brand-new account with a handle opens the builder, saves, and publishes without any grant, plan or owner gate', async () => {
+  const d = db();
+  const me = await call(d, '/v1/fronts/me', { token: 'benji' });
+  assert.equal(me.status, 200);
+  const body = await me.json();
+  assert.equal(body.draft, null, 'nothing saved yet');
+  assert.equal(body.publish_blocker, null, 'a public profile can publish');
+  const pub = await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: { words: { title1: 'NEW' } }, publish: true } });
+  assert.equal(pub.status, 200);
+  assert.equal((await call(d, '/v1/fronts/benji.chase')).status, 200);
+  for (const c of d.calls) assert.ok(!/creator_billing|cohort|entitle|org_members/.test(c.path), 'no paid or owner gate is consulted: ' + c.path);
+});
+
+test('the Worker keeps the applied schema\'s revision columns true on save, publish, take down and house takedown', async () => {
+  const d = db();
+  await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG } });
+  assert.equal(d.t.member_fronts[0].revision, 1);
+  assert.equal(d.t.member_fronts[0].published_revision, undefined, 'a draft save publishes nothing');
+  await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG, publish: true } });
+  assert.equal(d.t.member_fronts[0].revision, 2);
+  assert.equal(d.t.member_fronts[0].published_revision, 2);
+  await call(d, '/v1/fronts/me/published', { method: 'DELETE', token: 'benji' });
+  assert.equal(d.t.member_fronts[0].revision, 3);
+  assert.equal(d.t.member_fronts[0].published_revision, null);
+  await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG, publish: true } });
+  await call(d, '/v1/fronts/benji.chase/takedown', { method: 'POST', token: 'owner', body: { reason: 'Reported content' } });
+  const row = d.t.member_fronts[0];
+  assert.equal(row.revision, 5);
+  assert.equal(row.published_revision, null);
+  assert.ok(row.removed_at);
+});
+
+test('only a public profile is served or published: network-only matches the database\'s public_page and is held back', async () => {
+  const d = db({ profiles: [{ m_uid: BENJI_M, display_name: 'Benji', visibility: 'network' }] });
+  const pub = await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG, publish: true } });
+  assert.equal(pub.status, 409);
+  assert.equal((await pub.json()).detail.code, 'private_profile');
+  d.t.member_fronts = [{ m_uid: BENJI_M, auth_user_id: BENJI, handle: 'benji.chase', draft: {}, published: { words: { title1: 'OLD' } }, published_at: '2026-11-01T00:00:00Z', removed_at: null }];
+  assert.equal((await call(d, '/v1/fronts/benji.chase')).status, 404, 'a page published before the profile went network-only is not served');
+});
+
+test('one account cannot hammer its own row: a save right after another is refused with 429 and writes nothing', async () => {
+  const d = db();
+  assert.equal((await callThrottled(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG } })).status, 200);
+  const writes = d.calls.filter((c) => c.method === 'POST' && c.path === '/rest/v1/member_fronts').length;
+  const again = await callThrottled(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG, publish: true } });
+  assert.equal(again.status, 429);
+  assert.ok(Number(again.headers.get('retry-after')) >= 1);
+  assert.equal((await again.json()).detail.code, 'save_throttled');
+  assert.equal(d.calls.filter((c) => c.method === 'POST' && c.path === '/rest/v1/member_fronts').length, writes);
+  d.t.member_fronts[0].updated_at = new Date(Date.now() - 10_000).toISOString();
+  assert.equal((await callThrottled(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: CONFIG, publish: true } })).status, 200, 'after the interval it saves again');
+});
+
+test('script injection never reaches a published page: script, data and protocol-relative links and markup are dropped', async () => {
+  const d = db();
+  const evil = {
+    words: { title1: '<script>alert(1)</script>', door1: { label: 'x', href: 'javascript:alert(1)' }, door2: { label: 'y', href: '//evil.example/x' } },
+    links: [{ label: 'a', href: 'data:text/html,<script>1</script>' }, { label: 'b', href: 'vbscript:msgbox(1)' }, { label: 'c', href: 'https://ok.example/"onmouseover=alert(1)' }],
+    vr: { spots: [{ yaw: 0, pitch: 0, label: 'z', href: 'JaVaScRiPt:alert(1)' }] }
+  };
+  const res = await call(d, '/v1/fronts/me', { method: 'POST', token: 'benji', body: { config: evil, publish: true } });
+  assert.equal(res.status, 200);
+  const page = await (await call(d, '/v1/fronts/benji.chase')).json();
+  const text = JSON.stringify(page.config);
+  assert.ok(!/javascript:|vbscript:|data:text|\/\/evil|onmouseover/i.test(text), text);
+  /* words are stored as text; js/front-member.js writes them with textContent, never innerHTML */
+  const reader = readFileSync(new URL('../../../js/front-member.js', import.meta.url), 'utf8');
+  assert.match(reader, /textContent/);
+});
+
+test('the builder is linked from every signed-in account page, and uploads never overwrite a stored file', () => {
+  const account = readFileSync(new URL('../../../account.html', import.meta.url), 'utf8');
+  assert.match(account, /id="acDesk"[\s\S]*href="front-studio\.html"[\s\S]*id="acSecurityTitle"/, 'the signed-in desk links the builder');
+  const media = readFileSync(new URL('../../../js/front-media.js', import.meta.url), 'utf8');
+  assert.match(media, /"x-upsert", "false"/);
+  assert.doesNotMatch(media, /"x-upsert", "true"/);
 });
