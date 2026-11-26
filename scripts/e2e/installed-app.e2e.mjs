@@ -266,14 +266,17 @@ async function browserBaseline(device) {
     const withoutInset = await dockGeometry(page);
     await setInsets(cdp,device.insets);
     check(scope + ': a safe-area value does not change browser bar height', near(before.dock.height,withoutInset.dock.height,.1), {before:before.dock.height,withoutInset:withoutInset.dock.height});
-    await play(page); const frame = await retainedWorld(page);
+    await play(page);
+    const musicDock = await dockGeometry(page);
+    check(scope + ': active Music uses the unified compact browser dock', musicDock.wrapped && near(musicDock.dock.height,46,1));
+    const frame = await retainedWorld(page);
     const frameBox = await page.locator('#mccWorldAudioFrame').boundingBox();
     check(scope + ': retained browser World still fills the original viewport', near(frameBox.x,0,.1) && near(frameBox.y,0,.1) && near(frameBox.width,device.viewport.width,.1) && near(await frame.locator('.mn').evaluate(n => n.getBoundingClientRect().top),0,.1), frameBox);
     await frame.locator('#mccAuthChip').waitFor({state:'visible'});
     const browserAccount = await frame.locator('#mccAuthChip').boundingBox();
     check(scope + ': browser account retains its existing env-based position', near(browserAccount.y,Math.max(12,device.insets.top)) && near(device.viewport.width-browserAccount.x-browserAccount.width,Math.max(12,device.insets.right)), browserAccount);
     const after = await dockGeometry(page);
-    check(scope + ': music and World use the unified compact browser dock', after.wrapped && near(after.dock.height,46,1) && after.scrollWidth === after.clientWidth, after);
+    check(scope + ': retained World keeps its shipping browser navigation and map-side controls', !after.wrapped && near(after.dock.height,before.dock.height,1) && after.scrollWidth === after.clientWidth && await page.locator('#mccWorldAudioControls .world-audio__play').isVisible(), after);
     await noErrors(run,scope); return before.dock.height;
   } catch (error) { await failed(run,scope,error); }
   finally { await context.close(); }

@@ -41,7 +41,8 @@ consumes the World's physical top and side safe areas. A retained Music → Worl
 frame receives an already-safe viewport from its listening parent; its World,
 globe and account controls must not add those insets again. Both landscape
 orientations keep the header and navigation clear of the notch. Ordinary browser
-layout is unchanged when no track is available.
+layout is unchanged when no track is available. The browser World and its retained
+map view keep their existing map-side transport and bottom navigation; closing the map restores the compact Music dock.
 
 The shared capsule is 46 pixels high while the browser has a selected track and
 at rest or during playback in installed web apps, with 44-pixel touch targets and the home-indicator clearance retained. The

@@ -246,7 +246,7 @@ try {
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused, null, { timeout: 5000 }).catch(() => {});
     check('listen: play from the lock screen plays again', (await np(page)).state === 'playing');
     /* AirPlay where WebKit offers it: in the Now Playing sheet, shown once a device is in range */
-    await page.locator('#musicMiniOpen').click();
+    await page.locator('.appbar [data-app-player="open"]').or(page.locator('#musicMiniOpen:visible')).click();
     await page.waitForTimeout(500);
     const air = page.locator('#musicNowAirplay');
     check('listen: the Now Playing sheet has an AirPlay button, hidden until a device is in range', await air.count() === 1 && !(await air.isVisible()));
@@ -267,7 +267,7 @@ try {
     await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
     await (await findSong(page, 'here', 'Who Did The Shoot')).click();
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused, null, { timeout: 15000 });
-    await page.locator('#musicMiniOpen').click();
+    await page.locator('.appbar [data-app-player="open"]').or(page.locator('#musicMiniOpen:visible')).click();
     await page.waitForTimeout(400);
     check('listen without WebKit\'s picker (Chrome, Firefox): no AirPlay button shows', !(await page.locator('#musicNowAirplay').isVisible().catch(() => false)));
     await context.close();
@@ -289,7 +289,7 @@ try {
     await page.waitForFunction(t => document.querySelector('#tracks li.on')?.getAttribute('data-title') === t, here.tracks[0].title, { timeout: 10000 }).catch(() => {});
     check('album: previous (in the first seconds of a song) plays the row before', await playingTitle(page) === here.tracks[0].title, await np(page));
     /* the AirPlay button of the open sheet (the album's beam) follows WebKit's availability */
-    await page.locator('.deckbar__meta').click();
+    await page.locator('.appbar [data-app-player="open"]').click();
     await page.waitForTimeout(500);
     const beam = page.locator('#nowBeam');
     check('album: the AirPlay button waits for a device in range', !(await beam.isVisible()),
@@ -542,7 +542,7 @@ try {
       check('resume: the listen page holds the record left on another device, without playing it', held.shown && held.title === runway.title && !held.playing, held);
       if (SHOTS) await page.screenshot({ path: join(OUT, 'listen-390-resume-held.png') });
       check('resume: listen at 390 with the held record fits', await fits(page));
-      await page.locator('#musicMiniPlay').click();
+      await page.locator('.appbar [data-app-player="play"]').click();
       await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > 0, null, { timeout: 15000 }).catch(() => {});
       const t = await page.evaluate(() => MCC_MUSIC.audio.currentTime);
       check('resume: one tap picks it up at its second', t >= 41 && t < 60, { t });

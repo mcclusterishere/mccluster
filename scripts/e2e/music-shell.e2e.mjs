@@ -385,14 +385,14 @@ await scenario('s4',async()=>{
   /* test 6: pause and mute stay deliberate across three switches */
   const {context,page}=await setup();
   await playListen(page);await markEngine(page);
-  await page.locator('#musicMiniPlay').click();await page.waitForFunction(()=>MCC_MUSIC.audio.paused);
+  await page.locator('.appbar [data-app-player="play"]').click();await page.waitForFunction(()=>MCC_MUSIC.audio.paused);
   const t0=(await engine(page)).t;await page.evaluate(()=>{window.__trans=[];});
   await page.locator('a.artist[href*="handle=probe-artist"]').first().click();await settle(page,1200);
   await page.goBack();await settle(page,900);await page.goForward();await settle(page,1200);
   const e=await engine(page);
   check('6. paused, then three switches: still paused, the same second, no play',e.same&&e.paused&&Math.abs(e.t-t0)<.05&&!(await trans(page)||['?']).includes('play'),{e,t0,trans:await trans(page)});
   await page.goBack();await settle(page,800);
-  await page.locator('#musicMiniPlay').click();await page.waitForFunction(()=>!MCC_MUSIC.audio.paused);
+  await page.locator('.appbar [data-app-player="play"]').click();await page.waitForFunction(()=>!MCC_MUSIC.audio.paused);
   await page.evaluate(()=>{MCC_MUSIC.audio.muted=true;});
   await page.locator('a.artist[href*="handle=probe-artist"]').first().click();await settle(page,1200);
   await page.goBack();await settle(page,900);await page.goForward();await settle(page,1200);
@@ -905,12 +905,13 @@ await scenario('s16',async()=>{
      transport, the pocket holds its song; the engine is never loaded there, so there is no owner to choose */
   const {context,page}=await setup({start:'/album.html?album=here'});
   await playAlbumRow(page,1);await markDeck(page);
+  await page.locator('.appbar [data-app-player="play"]').waitFor();
   const s1=await page.evaluate(()=>({engine:!!window.MCC_MUSIC,guest:!!window.MCC_MUSIC_GUEST,engineScript:!!document.querySelector('script[src*="js/music-engine.js"]'),owner:document.documentElement.getAttribute('data-music-owner'),
     deckbar:getComputedStyle(document.getElementById('deckbar')).display!=='none'&&getComputedStyle(document.getElementById('deckbar')).visibility!=='hidden',
     mini:!!document.getElementById('musicMini'),pocket:(JSON.parse(localStorage.getItem('mcc-pocket')||'{}')||{}).title,row:document.querySelectorAll('#tracks li')[1].getAttribute('data-title')}));
   check('19. the album page holds one player, its deck: no engine beside it, no mini player, no owner flag',!s1.engine&&!s1.guest&&!s1.engineScript&&s1.owner===null&&!s1.mini,s1);
   check('19. exactly one element plays',(await playing(page)).n===1,await playing(page));
-  check('19. the deck bar shows',s1.deckbar,s1);
+  check('19. the compact dock replaces the separate deck bar',!s1.deckbar&&await page.locator('.appbar [data-app-player="play"]').isVisible(),s1);
   check('19. the pocket holds the deck\'s song',s1.pocket===s1.row,s1);
   await page.locator('#tracks li').nth(2).click();
   await page.waitForFunction(()=>!document.getElementById('deck').paused&&document.getElementById('npTitle').textContent===document.querySelectorAll('#tracks li')[2].getAttribute('data-title'),null,{timeout:12000});await sleep(500);
@@ -924,11 +925,11 @@ await scenario('s17',async()=>{
      album, so its own controls act on its deck on the album page itself, as at Release 1 */
   const {context,page}=await setup({start:'/album.html?album=here'});
   await playAlbumRow(page,1);await markDeck(page);
-  await page.locator('#tpPlay').click();await page.waitForFunction(()=>document.getElementById('deck').paused,null,{timeout:5000}).catch(()=>{});
+  await page.locator('.appbar [data-app-player="play"]').click();await page.waitForFunction(()=>document.getElementById('deck').paused,null,{timeout:5000}).catch(()=>{});
   check('20. the deck bar\'s Pause pauses the deck',await page.evaluate(()=>document.getElementById('deck').paused));
-  await page.locator('#tpPlay').click();await page.waitForFunction(()=>!document.getElementById('deck').paused,null,{timeout:5000}).catch(()=>{});
+  await page.locator('.appbar [data-app-player="play"]').click();await page.waitForFunction(()=>!document.getElementById('deck').paused,null,{timeout:5000}).catch(()=>{});
   const row0=await page.evaluate(()=>document.getElementById('npTitle').textContent);
-  await page.locator('#deckbar .deckbar__meta').click();await sleep(600);
+  await page.locator('.appbar [data-app-player="open"]').click();await sleep(600);
   await page.locator('#nowNext').click();await sleep(900);
   check('20. the sheet\'s Next moves the deck on',await page.evaluate(()=>document.getElementById('npTitle').textContent)!==row0&&(await deck(page)).same,{row0});
   await page.locator('#nowDown').click().catch(()=>{});await sleep(400);
@@ -940,14 +941,14 @@ await scenario('s17',async()=>{
   check('20. the World\'s compact transport pauses the deck, the album\'s one player (no engine beside it)',await page.evaluate(()=>document.getElementById('deck').paused&&!window.MCC_MUSIC&&!document.documentElement.hasAttribute('data-music-owner')));
   check('20. never a view over the album',await frames(page)===0);
   await context.close();
-  /* the deck's words during a dropped read show on the deck bar (music slice M3, unchanged) */
+  /* the deck's words during a dropped read show on the compact dock (music slice M3, unchanged) */
   HOLD.cut=170000;
   const c=await setup({start:'/album.html?album=here'});
   try{
     await playAlbumRow(c.page,1);
-    await c.page.waitForFunction(()=>/Reconnecting|Connection lost/.test(document.getElementById('deckbar').innerText),null,{timeout:30000}).catch(()=>{});
-    const words=await c.page.evaluate(()=>({bar:document.getElementById('deckbar').innerText,delivery:window.MCC_DECK_DELIVERY&&MCC_DECK_DELIVERY()}));
-    check('20. during a dropped read the deck bar says Reconnecting\u2026 or Connection lost (M3 unchanged)',/Reconnecting|Connection lost/.test(words.bar)&&!!words.delivery&&!!words.delivery.state,words);
+    await c.page.waitForFunction(()=>/Reconnecting|Connection lost/.test((document.querySelector('.appbar [data-app-player="status"]')?.innerText || '')),null,{timeout:30000}).catch(()=>{});
+    const words=await c.page.evaluate(()=>({bar:(document.querySelector('.appbar [data-app-player="status"]')?.innerText || ''),delivery:window.MCC_DECK_DELIVERY&&MCC_DECK_DELIVERY()}));
+    check('20. during a dropped read the compact dock says Reconnecting\u2026 or Connection lost (M3 unchanged)',/Reconnecting|Connection lost/.test(words.bar)&&!!words.delivery&&!!words.delivery.state,words);
   }finally{HOLD.cut=0;await c.context.close();}
   /* the installed app's dock acts on the deck, and its Music tab is a page load of Listen (no view over the album) */
   const i=await setup({start:'/album.html?album=here',standalone:true});

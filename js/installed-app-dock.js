@@ -93,6 +93,9 @@
     }).catch(function () {});
   }
   function hasTransport(p, s) {
+    // A browser World has its own map-side transport and clearance contract.
+    // Keep the shipping layout there, even under the retained music document.
+    if (!installed() && (html.hasAttribute("data-world-mode") || html.classList.contains("world-audio-open"))) return false;
     return !!(s && s.title && s.canPlay && s.canPause && typeof p.command === "function");
   }
   function mount() {
@@ -190,6 +193,7 @@
     var next = installed(); if (next === mode) return;
     mode = next; paint();
   }).observe(html, {attributes:true, attributeFilter:["class"]});
+  root.addEventListener("mcc:world-audio-open", paint);
   root.addEventListener("mcc:lyric-clock", paintWord);
   doc.addEventListener("visibilitychange", paintWord);
   doc.addEventListener("keydown", function (e) {
