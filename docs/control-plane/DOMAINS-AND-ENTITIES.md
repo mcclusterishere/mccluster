@@ -137,7 +137,7 @@ page (the static tree `deploy-pages.yml` publishes) in exactly one set, by its
 URL path, and `scripts/test/domain-architecture.test.mjs` fails on a page in
 none or in two:
 
-- **`platform`** (133 pages): its home is the platform. The World
+- **`platform`** (136 pages): its home is the platform. The World
   (`mnet.html`) and its rooms, music (`listen.html`, `album.html`,
   `catalogue.html`, `license.html`, `music-videos.html`, `music-creator.html`,
   `/tracks/…`, `artist.html`, `prim3-artist.html`), Creator Studio, the account and sign-in,

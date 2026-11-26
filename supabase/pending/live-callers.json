@@ -185,6 +185,76 @@
         "workers/mccluster/src/creator-site-view.js"
       ]
     },
+    "eu_fellow_accept_invite": {
+      "kind": "function",
+      "pending": "eu_fellow_onboarding_v1.sql",
+      "callers": [
+        "js/fellow-onboarding.js"
+      ]
+    },
+    "eu_fellow_apply": {
+      "kind": "function",
+      "pending": "eu_fellow_onboarding_v1.sql",
+      "callers": [
+        "js/fellow-onboarding.js"
+      ]
+    },
+    "eu_fellow_desk": {
+      "kind": "function",
+      "pending": "eu_fellow_onboarding_v1.sql",
+      "callers": [
+        "js/fellow-onboarding.js"
+      ]
+    },
+    "eu_fellow_invite_preview": {
+      "kind": "function",
+      "pending": "eu_fellow_onboarding_v1.sql",
+      "callers": [
+        "js/fellow-onboarding.js"
+      ]
+    },
+    "eu_fellow_issue_invite": {
+      "kind": "function",
+      "pending": "eu_fellow_onboarding_v1.sql",
+      "callers": [
+        "js/fellow-onboarding.js"
+      ]
+    },
+    "eu_fellow_onboarding_step": {
+      "kind": "function",
+      "pending": "eu_fellow_onboarding_v1.sql",
+      "callers": [
+        "js/fellow-onboarding.js"
+      ]
+    },
+    "eu_fellow_review": {
+      "kind": "function",
+      "pending": "eu_fellow_onboarding_v1.sql",
+      "callers": [
+        "js/fellow-onboarding.js"
+      ]
+    },
+    "eu_fellow_revoke_invite": {
+      "kind": "function",
+      "pending": "eu_fellow_onboarding_v1.sql",
+      "callers": [
+        "js/fellow-onboarding.js"
+      ]
+    },
+    "eu_fellow_set_requests_open": {
+      "kind": "function",
+      "pending": "eu_fellow_onboarding_v1.sql",
+      "callers": [
+        "js/fellow-onboarding.js"
+      ]
+    },
+    "eu_fellow_status": {
+      "kind": "function",
+      "pending": "eu_fellow_onboarding_v1.sql",
+      "callers": [
+        "js/fellow-onboarding.js"
+      ]
+    },
     "eup_civic_read": {
       "kind": "function",
       "pending": "eup_intake_v1.sql",

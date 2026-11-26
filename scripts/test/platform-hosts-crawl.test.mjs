@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ROOT, localFetcher, githubPages, workerEnv, crawlPlan, crawlUrls, diffCrawls, judgeServesEverything, stageJudged, COMPARED_HEADERS, cloudflareNormalized, addressReader,
-  browserPages, hisCopy, errorText, judgePage, absentAddress, readFixture, withAddedPage, localCrawl, judgeLocal } from '../e2e/platform-hosts.e2e.mjs';
+  browserPages, hisCopy, errorText, judgePage, absentAddress, readFixture, withAddedPage, withAddedPages, readAddedPages, localCrawl, judgeLocal } from '../e2e/platform-hosts.e2e.mjs';
 import { siteTable, readRecord } from '../../tools/build-site-hosts.mjs';
 
 const imp = (rel) => import(pathToFileURL(join(ROOT, rel)).href);
@@ -260,7 +260,9 @@ test('post-P0 artist observations preserve the original baseline and enforce eac
   const path = '/artist.html';
   const observation = JSON.parse(readFileSync(join(ROOT, 'scripts/e2e/fixtures/platform-hosts-artist-20261124.json'), 'utf8'));
   const frozen = readFixture();
-  const fixture = withAddedPage(frozen, observation, SITE);
+  /* the other pages added after P0 (the Equity Uprise fellowship, 2026-11-25) carry their own dated observations */
+  const others = readAddedPages(ROOT).filter((o) => o.path !== path);
+  const fixture = withAddedPages(withAddedPage(frozen, observation, SITE), others, SITE);
   const local = await localCrawl(SITE);
   const addressOf = await addressReader(ROOT);
   const check = (input) => judgeLocal(input, fixture, SITE, addressOf);

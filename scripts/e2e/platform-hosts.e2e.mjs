@@ -64,7 +64,20 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const SCHEMA = 'mccluster-platform-hosts-crawl/v1';
 export const FIXTURE_SCHEMA = 'mccluster-platform-hosts-fixture/v1';
 export const FIXTURE = 'scripts/e2e/fixtures/platform-hosts-20261123.json';
-const ADDED_PAGE_FIXTURE = 'scripts/e2e/fixtures/platform-hosts-artist-20261124.json';
+/* One dated observation per page added after P0, each captured live with --capture-added-page. The original
+   snapshot is never rewritten; every observation is appended to it, in this order. */
+export const ADDED_PAGE_FIXTURES = [
+  'scripts/e2e/fixtures/platform-hosts-artist-20261124.json',
+  'scripts/e2e/fixtures/platform-hosts-uprise-fellowship-20261125.json',
+  'scripts/e2e/fixtures/platform-hosts-equity-uprise-cohort-2026-20261125.json',
+  'scripts/e2e/fixtures/platform-hosts-fellow-onboarding-20261125.json',
+];
+export function readAddedPages(root = ROOT) {
+  return ADDED_PAGE_FIXTURES.map((f) => JSON.parse(readFileSync(join(root, f), 'utf8')));
+}
+export function withAddedPages(frozen, observations, site) {
+  return observations.reduce((fixture, observation) => withAddedPage(fixture, observation, site), frozen);
+}
 const DNS_RESOLVERS = {
   google: 'https://dns.google/resolve',
   cloudflare: 'https://cloudflare-dns.com/dns-query'
@@ -934,8 +947,7 @@ async function main(argv) {
   const out = arg(argv, '--out');
   if (out) writeFileSync(out, JSON.stringify(local, null, 1) + '\n');
   const frozen = readFixture();
-  const observation = JSON.parse(readFileSync(join(ROOT, ADDED_PAGE_FIXTURE), 'utf8'));
-  const fixture = site.stage === 'P0' ? frozen : withAddedPage(frozen, observation, site);
+  const fixture = site.stage === 'P0' ? frozen : withAddedPages(frozen, readAddedPages(), site);
   const verdict = judgeLocal(local, fixture, site, await addressReader());
   for (const [host, s] of Object.entries(summarize(local))) console.log(`  ${host}: ${JSON.stringify(s.status)}`);
   for (const a of verdict.added) console.log(`added   ${a} (this tree publishes it; production does not yet)`);

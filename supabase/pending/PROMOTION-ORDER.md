@@ -774,3 +774,11 @@ The forward statement returns one JSON rollback receipt. Save the receipt from t
 approved application with its release evidence. Subsequent runs can return an empty
 receipt. The paired rollback takes the original receipt in the session setting
 `mccluster.pax_stage_name_receipt` and checks each current value before restoring it.
+
+## 21. Equity Uprise fellow onboarding and the 2026 cohort (written 2026-11-25)
+
+**Pending. Never applied.** Needs the owner's approval, and must land before December 31, 2026 for the 2026 cohort to form on time.
+
+| File (+ rollback) | Changes | Callers | Proof before apply |
+|---|---|---|---|
+| `eu_fellow_onboarding_v1.sql` (+ `.rollback.sql`) | three forced-RLS tables (`eu_fellow_cohorts`, `eu_fellow_enrollments`, `eu_fellow_invites`, invites hashed and closed to the API); security definer RPCs `eu_fellow_status`, `eu_fellow_invite_preview`, `eu_fellow_apply`, `eu_fellow_accept_invite`, `eu_fellow_withdraw`, `eu_fellow_onboarding_step`, and admin-only `eu_fellow_review`, `eu_fellow_issue_invite`, `eu_fellow_revoke_invite`, `eu_fellow_set_requests_open`, `eu_fellow_desk`; seeds the `action_cohorts` row "Equity Uprise · Cohort 2026" on campaign `equity-uprise-003` and its `eu_fellow_cohorts` row (forms by 2026-12-31, requests closed). A third onboarding step moves a fellow into `action_cohort_members`. | `fellow-onboarding.html` via `js/fellow-onboarding.js` (listed in `live-callers.json` until applied) | `scripts/test-eu-fellow-onboarding-db.sh` (CI: `eu-fellow-onboarding-db.yml`) applies it twice over the gamification migration, runs `supabase/tests/eu_fellow_onboarding.behaviour.sql`, proves the rollback refuses while the roster has fellows, rolls back and re-applies. Needs `20261005054036_equity_uprise_group_docket_516r` (campaign `equity-uprise-003`) applied first. After applying: refresh the schema manifest and production snapshot, then remove the `eu_fellow_*` entries from `live-callers.json`. |

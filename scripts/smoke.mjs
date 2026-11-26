@@ -769,6 +769,45 @@ try {
       check("onboard: and keeps counting", await p.evaluate(() =>
         /^Step \d+ of \d+$/.test(document.getElementById("obStep")?.textContent.trim() || "")));
     }],
+    /* THE FELLOWSHIP: the invite-only landing, the 2026 cohort page and the
+       onboarding walk (supabase/pending/eu_fellow_onboarding_v1.sql). The
+       landing's Cohort 1 numbers must be the archive's own, never typed. */
+    ["uprise-fellowship.html", async (p) => {
+      check("fellowship: says invite only up top", await p.evaluate(() =>
+        /by invitation only/i.test(document.querySelector(".uf-seal")?.textContent || "")));
+      check("fellowship: the pitch is the headline", await p.evaluate(() =>
+        /write the change you want to see/i.test(document.querySelector("h1")?.textContent || "")));
+      const nums = await p.evaluate(async () => {
+        const a = await (await fetch("data/action/docket-516r-archive.json", { cache: "no-cache" })).json();
+        return { want: [a.participants.length, a.works.length],
+          got: [document.querySelector('[data-uf-count="participants"]')?.textContent.trim(),
+                document.querySelector('[data-uf-count="works"]')?.textContent.trim()].map(Number),
+          songs: document.querySelectorAll("#ufSongs li").length };
+      });
+      check("fellowship: Cohort 1 numbers are the archive's", nums.got[0] === nums.want[0] && nums.got[1] === nums.want[1] && nums.songs === nums.want[1],
+        JSON.stringify(nums));
+      check("fellowship: every door leads into onboarding or a cohort", await p.evaluate(() =>
+        !!document.querySelector('a[href="fellow-onboarding.html"]') && !!document.querySelector('a[href="fellow-onboarding.html#request"]')
+        && !!document.querySelector('a[href="docket-516r-cohort.html"]') && !!document.querySelector('a[href="equity-uprise-cohort-2026.html"]')));
+    }],
+    ["equity-uprise-cohort-2026.html", async (p) => {
+      check("cohort 2026: forming, invite only, and names nobody it has not confirmed", await p.evaluate(async () => {
+        const c = await (await fetch("data/action/equity-uprise-2026-cohort.json", { cache: "no-cache" })).json();
+        const roster = document.getElementById("ufRoster");
+        return c.cohort.admission === "invite_only" && c.cohort.forms_by === "2026-12-31"
+          && (c.fellows.length ? roster.querySelectorAll("li").length === c.fellows.length : /no fellows are announced yet/i.test(roster.textContent));
+      }));
+    }],
+    ["fellow-onboarding.html", async (p) => {
+      check("fellow onboarding: noindex (a walk, not a page to rank)", await p.evaluate(() =>
+        /noindex/.test(document.querySelector('meta[name="robots"]')?.content || "")));
+      check("fellow onboarding: says where the desk stands when it cannot answer", await p.evaluate(() => {
+        const t = document.getElementById("foStatus")?.textContent || "";
+        return t.length > 10 && !/^Checking/.test(t);
+      }));
+      check("fellow onboarding: ships no service key", await p.evaluate(() =>
+        !/service_role|eyJ[A-Za-z0-9_-]{40,}/.test(document.documentElement.innerHTML)));
+    }],
     ["console.html", async (p) => {
       check("console: the door stands when signed out", await p.evaluate(() =>
         !document.getElementById("cxDoor")?.hidden && document.getElementById("cxDesk")?.hidden));

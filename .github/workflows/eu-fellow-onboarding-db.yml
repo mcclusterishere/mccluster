@@ -1,0 +1,42 @@
+name: Equity Uprise fellow onboarding
+permissions:
+  contents: read
+on:
+  pull_request:
+    paths:
+      - 'supabase/pending/eu_fellow_onboarding_v1*.sql'
+      - 'supabase/tests/eu_fellow_onboarding.*.sql'
+      - 'supabase/tests/supabase_api_roles.stub.sql'
+      - 'supabase/tests/mnet_network_tables.stub.sql'
+      - 'supabase/migrations/20261002061056_action_network_gamification_v1.sql'
+      - 'scripts/test-eu-fellow-onboarding-db.sh'
+      - '.github/workflows/eu-fellow-onboarding-db.yml'
+  workflow_dispatch:
+jobs:
+  eu-fellow-onboarding:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
+      - name: Invite-only onboarding, RLS, invitations and the 2026 cohort seed
+        run: bash scripts/test-eu-fellow-onboarding-db.sh

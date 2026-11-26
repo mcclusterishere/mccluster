@@ -1,0 +1,42 @@
+{
+  "stage": "P1",
+  "captured_at": "2026-11-26T00:36:59.655Z",
+  "path": "/uprise-fellowship.html",
+  "rows": [
+    {
+      "url": "https://matthew.mccluster.org/uprise-fellowship.html",
+      "status": 404
+    },
+    {
+      "url": "https://here.mccluster.org/uprise-fellowship.html",
+      "status": 301,
+      "location": "https://matthew.mccluster.org/uprise-fellowship.html"
+    },
+    {
+      "url": "https://humanuprise.com/uprise-fellowship.html",
+      "dns": {
+        "google": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        },
+        "cloudflare": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        }
+      }
+    },
+    {
+      "url": "https://www.humanuprise.com/uprise-fellowship.html",
+      "dns": {
+        "google": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        },
+        "cloudflare": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        }
+      }
+    }
+  ]
+}
