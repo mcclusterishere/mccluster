@@ -1,0 +1,42 @@
+{
+  "schema": "equityuprise-tenants/v0-staging",
+  "status": "STAGING ONLY. Not read by any deployed code, not bound to any Worker route, zone or wrangler config.",
+  "relation_to_production": "Mirrors the tenant rows already in production (supabase/migrations/20261114015120_equity_uprise_platform_registry.sql: orgs equity-uprise = platform, mccluster = organization tenant, one artist tenant per music creator) and adds the one thing that table does not hold yet: which hostnames belong to which tenant. When approved this file becomes a door/tenant entry in data/seo/domain-architecture.json (the one record) and, if wanted, rows in the proposed eu_platform_tenant_hosts table.",
+  "owner": {
+    "key": "equity-uprise",
+    "org_slug": "equity-uprise",
+    "display_name": "Equity Uprise",
+    "operator": "McCluster Corp",
+    "hosts": ["equityuprise.com"],
+    "aliases": ["www.equityuprise.com"],
+    "root": "/",
+    "serves": "the platform: every platform page path for path (stage F of SPEC-PLATFORM 2.10)"
+  },
+  "tenants": [
+    {
+      "key": "mccluster",
+      "org_slug": "mccluster",
+      "kind": "organization",
+      "display_name": "McCluster Corp",
+      "hosts": ["mccluster.org"],
+      "aliases": ["www.mccluster.org"],
+      "root": "/company",
+      "own_paths": ["/company", "/news/"],
+      "after_stage_f": "keeps /company and /news/; every other platform path answers 301 to the same path on equityuprise.com"
+    },
+    {
+      "key": "matthew",
+      "org_slug": "mccluster",
+      "kind": "artist",
+      "display_name": "Matthew McCluster (McCluster, the artist)",
+      "hosts": ["matthew.mccluster.org"],
+      "aliases": ["here.mccluster.org"],
+      "root": "/index.html",
+      "sets": ["profile", "profile_only"],
+      "after_stage_f": "unchanged: his profile host, profile pages keep their home here"
+    }
+  ],
+  "legacy_doors": [
+    { "host": "humanuprise.com", "aliases": ["www.humanuprise.com"], "to": "owner", "answer": "301 same path and query" }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "_note": "Proposed additions to data/seo/domain-architecture.json -> doors at F0. Not applied: they change generated host lists and measured headers (TENANT-MODEL.md). Apply with node tools/build-site-hosts.mjs --write and update the pinned measurements in the same change.",
+  "equityuprise.com": { "to": "platform", "served_by": "worker:mccluster", "state": "inert until the owner routes it", "api_cors": false,
+    "today": "WordPress.com nameservers and a Coming Soon placeholder (DISCOVERY.md).",
+    "target": "F0: zone on Cloudflare, Worker route; 301 to the platform, same path and query, in one hop. Stage F: becomes the platform (platform.next)." },
+  "www.equityuprise.com": { "to": "platform", "served_by": "worker:mccluster", "state": "inert until the owner routes it", "api_cors": false,
+    "today": "CNAME to the apex on WordPress.com DNS.",
+    "target": "F0: 301 to the platform in one hop. Stage F: 301 to https://equityuprise.com." }
+}
