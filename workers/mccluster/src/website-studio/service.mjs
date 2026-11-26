@@ -1,6 +1,7 @@
 // Reused from PR493 head9ad0503; standalone draft/publication endpoints removed.
 // Project ownership and publication live in project-tiles.js; this module owns media only.
 import {assertDocument,resourceBindings} from '../../../../js/website-studio/contract.mjs';
+import {writeSiteObject} from '../customer-site-storage.js';
 const PREFIX='/v1/creator-sites/studio';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FILES={'desktop.mp4':'video/mp4','phone.mp4':'video/mp4','video.mp4':'video/mp4','poster.jpg':'image/jpeg','panorama.jpg':'image/jpeg','audio.m4a':'audio/mp4'};
@@ -43,7 +44,12 @@ export function supabaseStore(env,fetcher=fetch){
   select,patch,sign,
   rpc(name,args){return data('/rest/v1/rpc/'+name,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(args)});},
   async exists(path,expected){const r=await raw('/storage/v1/object/authenticated/mnet-media/'+path,{method:'HEAD'});if(Number(r.headers.get('content-length'))!==expected)throw fail(400,'Uploaded size differs from the registered source');},
-  async put(path,bytes,type){return raw('/storage/v1/object/mnet-media/'+path,{method:'POST',headers:{'content-type':type,'x-upsert':'true'},body:bytes});}
+  async put(path,bytes,type){
+   const owner=path.split('/')[1];if(!UUID.test(owner))throw fail(400,'Invalid media owner');
+   const links=await select('m_auth_user_links',{m_uid:'eq.'+owner,is_primary:'eq.true',limit:'2'},'auth_user_id');
+   if(links.length!==1)throw fail(503,'Media ownership needs reconciliation');
+   return writeSiteObject({db:supabaseStore(env,fetcher),env,user:links[0].auth_user_id,bucket:'mnet-media',path,bytes:bytes.byteLength,body:new Response(bytes).body,type,fetchImpl:fetcher});
+  }
  };
 }
 async function asset(db,owner,key,purpose='preview'){
@@ -125,7 +131,7 @@ export async function handleWebsiteStudio(request,env,deps={}){
  }
  if(p==='/uploads'&&request.method==='POST'){
   const b=await json(request);if(!Number.isSafeInteger(b.bytes)||b.bytes<1||b.bytes>67108864)throw fail(400,'Use a file no larger than 64 MiB');if(b.rights_confirmed!==true)throw fail(400,'Confirm that you may use this media');
-  const s=assertSettings(b.settings),key=crypto.randomUUID();const r=await db.rpc('studio_register_upload_v2',{p_actor:actor.m_uid,p_id:key,p_bytes:b.bytes,p_kind:s.kind,p_settings:s});return answer({asset_id:key,upload_url:await db.sign(r.path,true),state:'awaiting_upload'});
+  const s=assertSettings(b.settings),key=crypto.randomUUID();await db.rpc('studio_register_upload_v2',{p_actor:actor.m_uid,p_id:key,p_bytes:b.bytes,p_kind:s.kind,p_settings:s});return answer({asset_id:key,upload_url:'https://api.mccluster.org/v1/customer-site/media?asset='+key,upload_method:'POST',requires_authorization:true,state:'awaiting_upload'});
  }
  const am=p.match(/^\/assets\/([a-f0-9-]{36})\/(complete|approve|withdraw)$/);
  if(am&&request.method==='POST'){

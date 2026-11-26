@@ -346,7 +346,13 @@
     if (PAGE_PROFILE && window.__MCC_FRONT_GOTO) { window.__MCC_FRONT_GOTO("top"); return; }
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (err) { window.scrollTo(0, 0); }
   });
-  var HOME_BAR = dock.innerHTML;
+  // Tenant branding changes destinations, not the persistent transport.
+  function barMarkup(value) {
+    var items = dock.querySelector(".appbar__tabs") || dock;
+    if (arguments.length) items.innerHTML = value;
+    return items.innerHTML;
+  }
+  var HOME_BAR = barMarkup();
   var wingOn = null;
   var AUTH_STATE = { signed_in: false, verified: false, user: null };
 
@@ -418,11 +424,42 @@
       // Custom-domain HTML uses the canonical static base. Permit only that
       // asset directory in addition to same-origin logos, never arbitrary hosts.
       var suppliedAsset = image.origin === assets.origin && image.pathname.indexOf(assets.pathname + "assets/") === 0;
-      if ((image.origin === location.origin || suppliedAsset) && /^https?:$/.test(image.protocol)) logo = image.href;
+      // Published front config validates ownership before this presentation call.
+      // Only the canonical public front-media bucket is an additional image source;
+      // never trust arbitrary avatar hosts, private buckets, credentials or queries.
+      var ownedFrontMedia = image.origin === "https://zmnhbrjyhxzhkxmhkexs.supabase.co" &&
+        /^\/storage\/v1\/object\/public\/front-media\/[0-9a-f-]{36}\/(?:projects\/[a-z0-9][a-z0-9-]{2,39}\/)?[a-z0-9_-]+\.(?:png|jpe?g|webp)$/i.test(image.pathname) && !image.search && !image.hash && !image.username && !image.password;
+      if ((image.origin === location.origin || suppliedAsset || ownedFrontMedia) && /^https?:$/.test(image.protocol)) logo = image.href;
     } catch (e) {}
     return { kind: "page", handle: "page-profile", name: name, home: home.href, avatar: logo };
   }
   var PAGE_PROFILE = cleanPageProfile(window.MCC_PAGE_PROFILE);
+  var SITE_POLICY = window.MCC_SITE_POLICY || null;
+  function paintSitePolicy() {
+    if (ADMIN_ON) { dock.style.gridTemplateColumns = ""; return; }
+    var tab=dock.querySelector('[data-appnav="world"]');if(!tab)return;
+    var disabled=SITE_POLICY&&SITE_POLICY.world!==true;
+    tab.hidden=!!disabled;tab.style.display=disabled?'none':'';
+    // In the compact bar, the tabs are the center strip. Never resize the outer
+    // grid: it also holds track details, playback buttons and timed lyrics.
+    var compact=dock.querySelector(".appbar__tabs")||document.documentElement.classList.contains("mcc-installed-app");
+    dock.style.gridTemplateColumns=disabled&&!compact?'repeat(2,minmax(0,1fr))':'';
+    if(SITE_POLICY&&SITE_POLICY.world===true) {
+      try{var dest=new URL(SITE_POLICY.world_href,document.baseURI);if(dest.origin===new URL(ROOT,location.href).origin&&/\/customer-world\.html$/.test(dest.pathname)){tab.href=dest.href;WINGS.world.home=dest.href;}}catch(e){}
+    }
+  }
+  window.addEventListener("mcc:installed-dock", function () {
+    // Unmount can emit before it has moved the destination links back.
+    queueMicrotask(paintSitePolicy);
+  });
+  function setSitePolicy(policy) {
+    SITE_POLICY=policy&&typeof policy.world==='boolean'?policy:null;
+    window.MCC_SITE_POLICY=SITE_POLICY;
+    if(wingOn)revert();
+    var tab=dock.querySelector('[data-appnav="world"]');if(tab)tab.href=worldAt('?view=feed');WINGS.world.home=worldAt('?view=feed');
+    paintSitePolicy();HOME_BAR=barMarkup();
+    window.dispatchEvent(new CustomEvent('mcc:site-policy-changed'));
+  }
   if (!PAGE_PROFILE && location.hostname === "matthew.mccluster.org" && (/^(index\.html)?$/.test(PAGE_KEY) || PAGE_KEY === "matthew-mccluster.html")) {
     PAGE_PROFILE = cleanPageProfile({name:"Matthew McCluster", home:HOUSE+"index.html", logo:ROOT+"assets/img/m-mark.png"});
   }
@@ -430,10 +467,11 @@
     PAGE_PROFILE = cleanPageProfile(raw);
     if (wingOn) revert();
     paintPerspective();
-    HOME_BAR = dock.innerHTML;
+    HOME_BAR = barMarkup();
     return !!PAGE_PROFILE;
   }
   function paintPerspective() {
+    paintSitePolicy();
     var homeTab = dock.querySelector('[data-appnav="home"]');
     if (!homeTab) return;
     homeTab.href = HOUSE + "platform-home.html";
@@ -477,7 +515,7 @@
     storePerspective(p);
     if (wingOn) revert();
     paintPerspective();
-    HOME_BAR = dock.innerHTML;
+    HOME_BAR = barMarkup();
     return true;
   }
   function clearPerspective() {
@@ -485,7 +523,7 @@
     storePerspective(null);
     if (wingOn) revert();
     paintPerspective();
-    HOME_BAR = dock.innerHTML;
+    HOME_BAR = barMarkup();
   }
   window.addEventListener("mcc:perspective",function(e) { if(AUTH_STATE.signed_in)setPerspective(e.detail); });
   window.addEventListener("mcc:perspective-house",function() {
@@ -504,7 +542,7 @@
         name:profile.display_name||id.mccluster_id,avatar:profile.avatar_url});
       if(!PERSPECTIVE&&SELF_PROFILE&&!wingOn) {
         paintPerspective();
-        HOME_BAR=dock.innerHTML;
+        HOME_BAR=barMarkup();
       }
       // An open wing will pick up SELF_PROFILE when revert() restores the
       // closed bar. Never overwrite the wing's anchor while it is open.
@@ -593,7 +631,7 @@
     chip.setAttribute("aria-label", signedIn ? "Profile and account: " + name : "Sign in or create an account");
     window.MCC_AUTH_STATE = AUTH_STATE;
     try { window.dispatchEvent(new CustomEvent("mcc:auth-state", { detail: AUTH_STATE })); } catch (e) {}
-    if (!wingOn) HOME_BAR = dock.innerHTML;
+    if (!wingOn) HOME_BAR = barMarkup();
   }
   /* ---------- THE OWNER'S FIVE TABS (owner, 2026-10-15: "admin first; push features down to other users later") ----------
      For the house owner only, the bar widens to five: Play (the player), Home (the Control Room: the admin back end lives
@@ -650,8 +688,8 @@
     if (!on) revealNavigation();
     if (on === ADMIN_ON) { markAdminHere(); return; }
     if (wingOn) revert();
-    if (on) { BASE_BAR = dock.innerHTML; dock.innerHTML = adminBar(); }
-    else if (BASE_BAR !== null) { dock.innerHTML = BASE_BAR; BASE_BAR = null; }
+    if (on) { BASE_BAR = barMarkup(); barMarkup(adminBar()); }
+    else if (BASE_BAR !== null) { barMarkup(BASE_BAR); BASE_BAR = null; }
     ADMIN_ON = on;
     dock.classList.toggle("appbar--admin", on);
     if (on) document.body.setAttribute("data-appbar-admin", ""); else document.body.removeAttribute("data-appbar-admin");
@@ -659,7 +697,7 @@
     markAdminHere();
     var chipText = document.querySelector("#mccAuthChip .mcc-auth-chip__text");
     if (chipText && AUTH_STATE.signed_in) chipText.textContent = "Profile";
-    HOME_BAR = dock.innerHTML;
+    HOME_BAR = barMarkup();
     try { paintSound(); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent("mcc:appbar-admin", { detail: { admin: on } })); } catch (e) {}
   }
@@ -1180,7 +1218,7 @@
       else if (fixedTab) cells.push(fixedTab.outerHTML);
       else cells.push(slotHtml[si++] || "");
     }
-    dock.innerHTML = cells.join("");
+    barMarkup(cells.join(""));
     paintSound(); // the anchor is a fresh copy off HOME_BAR; it knows nothing yet
     emit("mcc:bar-morph", { wing: key });
   }
@@ -1190,10 +1228,10 @@
     unpeek();
     wingOn = null;
     dock.classList.remove("appbar--morph");
-    dock.innerHTML = HOME_BAR;
+    barMarkup(HOME_BAR);
     if (SELF_PROFILE && !PERSPECTIVE) {
       paintPerspective();
-      HOME_BAR = dock.innerHTML;
+      HOME_BAR = barMarkup();
     }
     paintSound(); // restore live audio after refreshing the current profile
   }
@@ -1287,6 +1325,7 @@
     refreshAuth: refreshAuthState,
     auth: function () { return AUTH_STATE; },
     pageProfile: function (p) { return arguments.length ? setPageProfile(p) : PAGE_PROFILE; },
+    sitePolicy: function (p) { return arguments.length ? setSitePolicy(p) : SITE_POLICY; },
     perspective: function (p) { return arguments.length ? setPerspective(p) : PERSPECTIVE; },
     clearPerspective: clearPerspective,
     ownPerspective: function(){return SELF_PROFILE;},

@@ -164,7 +164,11 @@ try {
   assert.deepEqual(errors,[]);
   results.push({width,height,pass:true,checks:'scroll-first arrival/scrubbing, portfolio, ordering, deep entry, album/back, cabin consent/Escape/home, contextual branding/fallback/cross-profile reset, auth transition, overflow, JS errors'});
   console.log('PASS',width,height);
-  } catch(error) { await historySnapshot('failure'); throw error; }
+  } catch(error) {
+    try { await historySnapshot('failure'); }
+    catch(diagnosticError) { console.error('History diagnostic unavailable:',diagnosticError.message); }
+    throw error;
+  }
   await context.close();
  }
 } finally {await writeFile(join(OUT,'results.json'),JSON.stringify(results,null,2));await browser.close();}

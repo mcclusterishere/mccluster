@@ -1,5 +1,7 @@
 (function () {
   'use strict';
+  var offersTemplate=new URLSearchParams(location.search).get('template')==='offers';
+  if(offersTemplate){var account=document.querySelector('a[href="account.html?next=customer-projects.html"]');if(account)account.href='account.html?next='+encodeURIComponent('customer-projects.html?template=offers');}
   var list=document.getElementById('projectList'), message=document.getElementById('projectMessage'), form=document.getElementById('projectCreate'), generation=0;
   function node(tag,text) { var n=document.createElement(tag); n.textContent=text; return n; }
   async function api(path, init) {
@@ -25,6 +27,7 @@
         c.appendChild(node('p',p.removed_at ? 'Removed · address retained' : p.published_at ? 'Publication saved · check public availability in editor' : 'Private draft'));
         if(!p.removed_at){var a=node('a','Edit project');a.className='site-action';a.href='project-studio.html?project='+encodeURIComponent(p.slug);c.appendChild(a);
           var tile=node('a','Edit three-tile template');tile.className='site-action';tile.href='website-studio.html?project='+encodeURIComponent(p.slug);c.appendChild(tile);
+          var modules=node('a','Website modules');modules.className='site-action';modules.href='customer-site.html?project='+encodeURIComponent(p.slug);c.appendChild(modules);
           var remove=node('button','Remove project');remove.type='button';remove.className='site-action';
           remove.addEventListener('click',async function(){
             if(!window.confirm('Remove '+p.name+'? Its page will stop being public and its address cannot be reused.'))return;
@@ -37,7 +40,7 @@
     } catch(e){if(seq===generation) message.textContent=e.message;}
   }
   form.addEventListener('submit',async function(e){e.preventDefault();var button=form.querySelector('button');button.disabled=true;
-    try {var data=await api('',{method:'POST',body:JSON.stringify({name:document.getElementById('projectName').value,slug:document.getElementById('projectSlug').value})}); location.href='project-studio.html?project='+encodeURIComponent(data.slug);}
+    try {var data=await api('',{method:'POST',body:JSON.stringify({name:document.getElementById('projectName').value,slug:document.getElementById('projectSlug').value})}); location.href='project-studio.html?project='+encodeURIComponent(data.slug)+(offersTemplate?'&template=offers':'');}
     catch(e){message.textContent=e.message;}finally{button.disabled=false;}
   });
   document.getElementById('projectRetry').addEventListener('click',load);

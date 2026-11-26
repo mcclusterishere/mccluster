@@ -4,7 +4,7 @@
    node scripts/e2e/managed-projects.e2e.mjs [outDir]
    Storage/auth fixture harness adapted from member-front.e2e.mjs. */
 import {createRequire} from 'node:module';
-import {readFile,mkdir} from 'node:fs/promises';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {join,extname,resolve,sep} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const ROOT=process.env.ROOT || fileURLToPath(new URL('../../',import.meta.url));
@@ -74,6 +74,14 @@ async function setup(viewport,account,{holdReload=false}={}){
     const req=route.request(),u=new URL(req.url()),p=u.pathname;
     if(req.method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
     if(u.origin==='https://api.mccluster.org'){
+      if(p==='/v1/customer-site/media'&&req.method()==='POST'){
+        // Browser transport fixture only; authoritative quota/concurrency is tested in Worker/SQL suites.
+        const a=who(req.headers().authorization),path=u.searchParams.get('path')||'';
+        if(!a||!path.startsWith(a.id+'/projects/second-project/'))return json(route,{error:'Not your upload'},403);
+        const body=req.postDataBuffer()||world.pickedImage||await readFile(join(FIX,'notround.jpg'));
+        world.objects.set(path,{type:req.headers()['content-type'],body});world.uploads.push(path);
+        return json(route,{ok:true});
+      }
       if(p.startsWith('/v1/projects') || p.startsWith('/v1/fronts')){
         world.calls.push({path:p,method:req.method()});
         /* the real Worker route, over the in-memory database */
@@ -198,6 +206,62 @@ try {
  check('responsive','editor has no 390px overflow',await overflow(page)===0);
  await page.screenshot({path:join(OUT,'project-editor-phone.png'),fullPage:true});
  await visitor.page.screenshot({path:join(OUT,'project-public-phone.png'),fullPage:true});
+ // The basic offers layout uses this same owner editor/publisher without Studio processing.
+ const offerEditor=await app.ctx.newPage();await offerEditor.goto(BASE+'/project-studio.html?project=second-project&template=offers',{waitUntil:'domcontentloaded'});
+ await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.draft?.layout==='offers');
+ await offerEditor.click('[data-act="offer-example"]');await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.draft?.offer_page?.cards?.length===3&&!window.__MCC_FRONT_STUDIO.saving);
+ await offerEditor.fill('[name="offer_page.title"]','<img src=x onerror=alert(1)> Our offers');
+ await offerEditor.fill('[name="offer_page.cards.0.experiences.0.title"]','Build together');
+ await uploadInto(offerEditor,'offer0','notround.jpg');
+ check('offers','ordinary image upload uses the website media endpoint',world.uploads.some(p=>p.startsWith(BENJI.id+'/projects/second-project/still-')));
+ await offerEditor.click('[data-act="save"]');await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.msg==='Draft saved.');
+ const imageUrl=world.projects[1].draft.offer_page.cards[0].image;
+ check('offers','saved image survives orphan cleanup',!!imageUrl&&world.objects.has(imageUrl.split('/front-media/')[1]));
+ await offerEditor.reload({waitUntil:'domcontentloaded'});await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.state==='ready');
+ check('offers','saved text and nine experiences recover on reload',(await studio(offerEditor)).draft.offer_page.cards.reduce((n,c)=>n+c.experiences.length,0)===9);
+ await offerEditor.click('[data-act="publish"]');await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO?.msg.startsWith('Published.'));
+ const offerPublic=await visitor.ctx.newPage();await offerPublic.goto(BASE+'/front.html?project=second-project',{waitUntil:'domcontentloaded'});await offerPublic.waitForFunction(()=>document.documentElement.dataset.frontState==='ready');
+ check('offers','published HTML-like title stays literal text without creating elements',await offerPublic.locator('.so-hero h1').textContent()==='<img src=x onerror=alert(1)> Our offers'&&await offerPublic.locator('.so-hero img').count()===0);
+ check('offers','nine experiences render through the ordinary public front',await offerPublic.locator('.so-experiences li').count()===9&&await offerPublic.locator('.so-experiences strong').first().textContent()==='Build together. ');
+ check('offers','management goes to canonical owner editor without credentials',await offerPublic.locator('.so-manage').getAttribute('href')===BASE+'/project-studio.html?project=second-project');
+ for(const width of [390,1440]){await offerPublic.setViewportSize({width,height:900});check('offers','published layout has no '+width+'px overflow',await overflow(offerPublic)===0);await offerPublic.screenshot({path:join(OUT,'offers-public-'+width+'.png'),fullPage:true});}
+ // Keep adversarial evidence above; prepare a clean ordinary-owner template for visual review.
+ await offerEditor.click('[data-act="offer-example"]');await offerEditor.waitForFunction(()=>!window.__MCC_FRONT_STUDIO.saving&&window.__MCC_FRONT_STUDIO.draft.offer_page.title==='Build something people belong to.');
+ await offerEditor.click('[data-act="publish"]');await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO.msg.startsWith('Published.'));
+ world.projects[1].name='Equity Uprise fixture';
+ world.pickedImage=await readFile(join(ROOT,'assets/img/equity-uprise-mark-white.png'));
+ await offerEditor.setInputFiles('[data-upload="offer-logo"]',{name:'equity-uprise-mark-white.png',mimeType:'image/png',buffer:world.pickedImage});
+ await offerEditor.waitForFunction(()=>!window.__MCC_FRONT_STUDIO.busy['offer-logo']&&!!window.__MCC_FRONT_STUDIO.draft.offer_page.logo);
+ await offerEditor.waitForFunction(()=>document.getElementById('fsFrame')?.contentDocument?.querySelector('.so-logo')?.complete);
+ check('offers-logo','owner preview loads the actual supplied logo upload',await previewFrame(offerEditor).locator('.so-logo').evaluate(img=>img.naturalWidth>0));
+ await offerEditor.click('[data-act="publish"]');await offerEditor.waitForFunction(()=>window.__MCC_FRONT_STUDIO.msg.startsWith('Published.'));
+ const logoUrl=world.projects[1].published.offer_page.logo;
+ check('offers-logo','published logo bytes survive owner cleanup',world.objects.has(logoUrl.split('/front-media/')[1]));
+ await offerPublic.reload({waitUntil:'domcontentloaded'});await offerPublic.waitForFunction(()=>document.documentElement.dataset.frontLayout==='offers');
+ await offerPublic.waitForFunction(()=>document.querySelector('.so-logo')?.complete&&document.querySelector('[data-appnav="home"] img')?.complete);
+ check('offers-logo','published page and contextual navigation use the owned logo',await offerPublic.locator('.so-logo').getAttribute('src')===logoUrl&&await offerPublic.locator('[data-appnav="home"] img').getAttribute('src')===logoUrl);
+ await offerPublic.goto(BASE+'/front.html?project=first-project',{waitUntil:'domcontentloaded'});await offerPublic.waitForFunction(()=>document.documentElement.dataset.frontState==='ready');
+ check('offers-logo','switching tenant clears previous logo',await offerPublic.locator('[data-appnav="home"] img').count()===0);
+ await offerPublic.goto(BASE+'/front.html?project=second-project',{waitUntil:'domcontentloaded'});await offerPublic.waitForFunction(()=>document.documentElement.dataset.frontLayout==='offers');
+ for(const width of [390,1440]){
+  await offerPublic.setViewportSize({width,height:900});
+  const cards=offerPublic.locator('.so-card');
+  for(let i=0;i<3;i++){
+   await cards.nth(i).scrollIntoViewIfNeeded();
+   check('offers-visual','card '+i+' at '+width+' is visible with all three experiences',await cards.nth(i).isVisible()&&await cards.nth(i).locator('.so-experiences li').count()===3);
+   await cards.nth(i).screenshot({path:join(OUT,'equity-card-'+i+'-'+width+'.png')});
+  }
+  await offerPublic.evaluate(()=>window.scrollTo(0,0));await offerPublic.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+  check('offers-visual','owned template has a readable dark background at '+width,await offerPublic.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(17, 21, 20)');
+  await offerPublic.evaluate(()=>window.scrollTo(0,950));await offerPublic.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+  await offerPublic.screenshot({path:join(OUT,'equity-middle-'+width+'.png')});
+  await writeFile(join(OUT,'equity-layout-'+width+'.json'),JSON.stringify(await offerPublic.evaluate(()=>({transition:!!document.activeViewTransition,at:scrollY,hit:document.elementFromPoint(100,100)?.outerHTML,root:{rect:document.documentElement.getBoundingClientRect().toJSON(),height:getComputedStyle(document.documentElement).height,background:getComputedStyle(document.documentElement).backgroundColor},body:{rect:document.body.getBoundingClientRect().toJSON(),height:getComputedStyle(document.body).height},cards:[...document.querySelectorAll('.so-card')].map(c=>({rect:c.getBoundingClientRect().toJSON(),visibility:getComputedStyle(c).visibility}))})),null,2));
+  await offerPublic.evaluate(()=>window.scrollTo(0,0));await offerPublic.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+  await offerPublic.screenshot({path:join(OUT,'equity-top-'+width+'.png')});
+  await offerPublic.screenshot({path:join(OUT,'equity-owned-'+width+'.png'),fullPage:true});
+ }
+ await offerEditor.screenshot({path:join(OUT,'offers-editor-phone.png'),fullPage:true});
+ await offerEditor.close();await offerPublic.close();
  world.visibility='private';await visitor.page.reload({waitUntil:'domcontentloaded'});await visitor.page.waitForFunction(()=>document.documentElement.getAttribute('data-front-state')!=='loading');
  check('privacy','making owner profile private hides saved publication',await visitor.page.getAttribute('html','data-front-state')!=='ready');
  world.visibility='public';

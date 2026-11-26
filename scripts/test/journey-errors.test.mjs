@@ -85,7 +85,10 @@ test('the album says what happened: failed plays, gated previews, no dead tip do
   assert.match(album, /window\.MCC_TRACK\("play_failed"/);
   assert.match(album, /function primeDeck\(\)/);
   assert.match(album, /if \(wasPreview\) \{ previewNotice\(rows\[cur\], true\); return; \}/, 'a preview ending waits instead of jumping to another song');
-  assert.match(album, /artistLink\.href = "matthew-mccluster\.html"/, 'the house artist name opens his page');
+  assert.match(album, /artistLink\.href = artistProfile\.home/, 'the artist link uses its explicit stable-ID profile');
+  const catalog=JSON.parse(await read('data/albums.json'));
+  const house=catalog.albums.find(a=>a.slug==='here');
+  assert.equal(catalog.artist_profiles[house.artist_profile_id].home,'matthew-mccluster.html', 'the house artist retains his personal page');
   assert.match(album, /window\.MCC_TRACK\("gated_preview_end"/);
   assert.doesNotMatch(album, /Tip the artist/);
   assert.match(album, /replace\(\/\[-_\]\+\/g, " "\)/, 'play counts match the normalized track key');

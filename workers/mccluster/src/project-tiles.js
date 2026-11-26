@@ -1,6 +1,7 @@
 /* PR493's template/revision/private-media contracts attached to the existing managed project owner.
    No alternate identity, project registry, entitlement grant or public media bucket. */
 import {reply} from './lib/http.js';
+import {siteModuleProjection} from './customer-site-modules.js';
 import {assertDocument} from '../../../js/website-studio/contract.mjs';
 import {supabaseStore,resolveDocument,limitedBytes,handleWebsiteStudio,fail} from './website-studio/service.mjs';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -44,14 +45,15 @@ export async function handleProjectTiles(request,env,deps={}){
   const visibility=await profile(db,project.m_uid);
   if(publicRead){
    if(project.presentation!=='tiles'||!project.studio_revision_id||visibility!=='public')throw fail(404,'Project is not public');
-   await projectTileAccess(db,env,project.owner_user_id,project.studio_org_id);
+   if(project.studio_org_id)await projectTileAccess(db,env,project.owner_user_id,project.studio_org_id);
+   else if(env.CUSTOMER_SITE_OFFER_ENABLED!=='true')throw fail(503,'Free website publication is not enabled');
    const revisions=await db.select('creator_site_revisions',{id:'eq.'+project.studio_revision_id,owner_m_uid:'eq.'+project.m_uid,draft_id:'eq.'+project.studio_draft_id,limit:'1'});
    if(!revisions[0])throw fail(404,'Published revision unavailable');
-   return send({...await resolveDocument(db,project.m_uid,revisions[0].document,'publish'),project:slug,revision:revisions[0].draft_revision,published_at:project.studio_published_at});
+   return send({...await resolveDocument(db,project.m_uid,revisions[0].document,'publish'),project:slug,revision:revisions[0].draft_revision,published_at:project.studio_published_at,site_modules:await siteModuleProjection(env,project.owner_user_id,'project',slug,deps.fetchImpl,db)});
   }
   if(action==='templates'&&request.method==='GET')return send({templates:await db.select('creator_site_template_versions',{status:'eq.active'},'template_key,version,definition,guidance')});
   const draft=project.studio_draft_id?(await db.select('creator_site_drafts',{id:'eq.'+project.studio_draft_id,owner_m_uid:'eq.'+actor.m_uid,limit:'1'}))[0]:null;
-  if(!action&&request.method==='GET')return send({project:slug,draft:draft||null,presentation:project.presentation||'front',published_revision:project.studio_revision_id||null,profile_visibility:visibility});
+  if(!action&&request.method==='GET')return send({project:slug,draft:draft||null,presentation:project.presentation||'front',published_revision:project.studio_revision_id||null,profile_visibility:visibility,free_publication:env.CUSTOMER_SITE_OFFER_ENABLED==='true'});
   if(!action&&request.method==='PUT'){
    const b=await json(request);assertDocument(b.document);if(!Number.isSafeInteger(b.expected_revision)||b.expected_revision<0)throw fail(400,'Expected revision required');
    const saved=await db.rpc('project_tile_save_v1',{p_user:actor.auth_uid,p_actor:actor.m_uid,p_slug:slug,p_expected:b.expected_revision,p_document:b.document});return send(saved);
@@ -63,10 +65,11 @@ export async function handleProjectTiles(request,env,deps={}){
    const b=await json(request);if(!draft||b.expected_revision!==draft.revision||b.confirm_public!==true)throw fail(409,'Save and review the current revision before publishing');
    if(visibility!=='public')throw fail(409,'Set your profile public before publishing');
    if(project.registry_key)throw fail(409,'This project has a protected repository presentation');
-   await projectTileAccess(db,env,actor.auth_uid,b.org_id,{fetchImpl:deps.fetchImpl||fetch,provider:true});
+   const free=env.CUSTOMER_SITE_OFFER_ENABLED==='true';
+   if(!free)await projectTileAccess(db,env,actor.auth_uid,b.org_id,{fetchImpl:deps.fetchImpl||fetch,provider:true});
    if(draft.document.tiles.some(t=>!t.source_ref))throw fail(400,'Each tile needs approved media');
    await resolveDocument(db,actor.m_uid,draft.document,'publish');
-   const result=await db.rpc('project_tile_publish_v1',{p_user:actor.auth_uid,p_actor:actor.m_uid,p_slug:slug,p_expected:draft.revision,p_org:b.org_id});
+   const result=await db.rpc(free?'project_tile_publish_free_v1':'project_tile_publish_v1',{p_user:actor.auth_uid,p_actor:actor.m_uid,p_slug:slug,p_expected:draft.revision,...(free?{}:{p_org:b.org_id})});
    return send({...result,published:true,presentation:'tiles',url:'https://matthew.mccluster.org/website-studio-view.html?project='+slug});
   }
   return send({error:'Method not allowed'},405);

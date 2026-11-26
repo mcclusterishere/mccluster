@@ -115,7 +115,8 @@ test('the editor: every signed-in account, its own folder, its draft through the
   assert.match(js, /var ownPath = projectMode.*"\/v1\/fronts\/me"/);
   assert.match(js, /var publishedPath = projectMode.*"\/v1\/fronts\/me\/published"/);
   /* uploads go to the account's folder named by the Worker, with the account's own session */
-  assert.match(media, /x\.open\("POST", sb\(\)\.url \+ "\/storage\/v1\/object\/" \+ BUCKET \+ "\/" \+ path\)/);
+  assert.match(media, /x\.open\("POST", "https:\/\/api\.mccluster\.org\/v1\/customer-site\/media\?path=" \+ encodeURIComponent\(path\)\)/);
+  assert.match(media, /"x-site-bytes", String\(blob\.size\)/);
   assert.match(media, /"authorization", "Bearer " \+ token/);
   /* what a page no longer uses leaves the account's folder after each save, publish and take-down */
   assert.match(media, /function sweep\(prefixPath, configs\)/);

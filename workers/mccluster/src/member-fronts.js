@@ -18,6 +18,7 @@
 import { reply, fail } from './lib/http.js';
 import { validateFront, mediaPrefix, FRONT_MAX_BYTES } from '../../../packages/front-config/index.mjs';
 import { isHouseOwner } from './world-access.js';
+import {siteModuleProjection} from './customer-site-modules.js';
 
 export const FRONTS_PREFIX = '/v1/fronts';
 const HANDLE = /^[a-z0-9][a-z0-9._-]{2,39}$/;
@@ -148,7 +149,7 @@ export async function handleMemberFronts(request, env, { fetchImpl = fetch, expe
     const checked = validateFront(row.published, { mediaPrefix: mediaPrefix(env.SUPABASE_URL, row.auth_user_id), blockedMediaPrefixes: [mediaPrefix(env.SUPABASE_URL, row.auth_user_id) + "projects/"] });
     if (!checked.ok) return refuse(request, env, 'No front page here yet', 404, { code: 'no_front' });
     return send(request, env, { ok: true, handle: row.handle, name: p.display_name || row.handle, avatar: p.avatar_url || '', headline: p.headline || '',
-      config: checked.config, published_at: row.published_at }, 200, 'public, max-age=60');
+      config: checked.config, published_at: row.published_at, site_modules:await siteModuleProjection(env,row.auth_user_id,'front','me',fetchImpl) }, 200, env.CUSTOMER_SITE_OFFER_ENABLED==='true'?'private, no-store':'public, max-age=60');
   }
   return refuse(request, env, 'Not found', 404);
 }

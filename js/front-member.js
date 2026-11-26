@@ -73,6 +73,9 @@
     if (/^https:/i.test(href)) { a.target = "_blank"; a.rel = "noopener"; }
   }
   function fill(page) {
+    w.MCC_SITE_POLICY=page.site_modules||null;
+    if(w.MCC_BAR&&w.MCC_BAR.sitePolicy)w.MCC_BAR.sitePolicy(w.MCC_SITE_POLICY);
+    else w.dispatchEvent(new CustomEvent('mcc:site-policy-changed'));
     var t = words(page), c = page.config || {}, m = c.media || {};
     Array.prototype.forEach.call(d.querySelectorAll("[data-fw]"), function (el) { text(el, t[el.getAttribute("data-fw")]); });
     /* the hero's and the close's letters are built by the engine from data-word */
@@ -108,7 +111,7 @@
     c.scenes = c.scenes || {};
     if (!m.scene1 && !m.scene2 && !m.cabin) c.scenes.vaunt = false;
     if (!m.night) c.scenes.night = false;
-    c.scenes.world = true; // the shared World entry belongs to every public page
+    c.scenes.world = !w.MCC_SITE_POLICY || w.MCC_SITE_POLICY.world === true;
     return c;
   }
   function start(page) {
@@ -127,12 +130,21 @@
     // Public presentation belongs to the viewed page, not the signed-in viewer.
     // The shared bar validates the same-origin destination/logo independently.
     if (!isProject && !inStudio) {
-      var pageProfile = {name: page.name || page.handle, logo: page.avatar || "",
+      var pageProfile = {name: page.name || page.handle, logo: page.config?.offer_page?.logo || page.avatar || "",
         home: hostBinding ? location.pathname : "front.html?" + (projectSlug ? "project=" + encodeURIComponent(projectSlug) : "u=" + encodeURIComponent(page.handle))};
       w.MCC_PAGE_PROFILE = pageProfile;
       if (w.MCC_BAR && w.MCC_BAR.pageProfile) w.MCC_BAR.pageProfile(pageProfile);
     }
     var config = settings(page);
+    if(config.layout==='offers'&&!isProject&&w.MCC_SITE_OFFERS){
+      d.documentElement.setAttribute('data-front-layout','offers');
+      d.getElementById('top').hidden=true;d.getElementById('frontFoot').hidden=true;
+      var offers=w.MCC_SITE_OFFERS.render(page);d.getElementById('top').before(offers);
+      w.MCC_FRONT_SOURCE={handle:page.handle,name:page.name,config:config,studio:inStudio};
+      d.documentElement.setAttribute('data-front-state','ready');
+      w.dispatchEvent(new CustomEvent('mcc:site-policy-changed'));
+      return;
+    }
     if (isProject) {
       d.documentElement.setAttribute("data-front-project", params.get("project"));
       d.querySelectorAll('[data-project-detail]').forEach(function (el) { el.hidden = false; });

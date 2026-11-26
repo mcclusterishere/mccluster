@@ -33,6 +33,7 @@
 import { PAGES, COMPANY_ORIGIN, PERSONAL_ORIGIN } from './pages.generated.js';
 import { moved, isWorldRoom, isDocument, methodNotAllowed, upstreamOrigin, passThrough, SECURITY } from '../world-host.js';
 import { isNewsPath, newsroomResponse } from './news.js';
+import {customerSiteAddressResponse} from '../customer-site-addresses.js';
 
 const APEX = 'mccluster.org';
 const WWW = 'www.mccluster.org';
@@ -74,6 +75,7 @@ export async function companySiteResponse(request, env = {}, fetchImpl = fetch) 
 
   /* the old root document name is the root here, not the album */
   const path = url.pathname === '/index.html' ? '/' : url.pathname;
+  if(!ownsPath(path)) {const site=await customerSiteAddressResponse(request,env,fetchImpl);if(site)return site;}
   if (host === WWW) return moved(ownsPath(path) ? `${COMPANY_ORIGIN}${path}${url.search}` : `${PERSONAL_ORIGIN}${url.pathname}${url.search}`);
   if (path !== url.pathname) return moved(`${COMPANY_ORIGIN}${path}${url.search}`);
   /* the World's document name is the root here, query and all */

@@ -2,9 +2,12 @@
 import {readFile} from 'node:fs/promises';
 import {projectTilesFixture,A,ORG} from './project-tiles-fixture.mjs';
 import {handleProjectTiles} from '../../src/project-tiles.js';
+import {handleCustomerSiteStorage,writeSiteObject} from '../../src/customer-site-storage.js';
 export async function studioProcessingFixture(){
  const f=await projectTilesFixture(),objects=new Map();
  const read=path=>readFile(new URL('../../../../'+path,import.meta.url),'utf8');
+ await f.sql.exec('create schema storage;grant usage on schema storage to service_role;create table storage.objects(bucket_id text,name text,metadata jsonb);alter table storage.objects enable row level security;grant select on storage.objects to service_role;');
+ await f.sql.exec(await read('supabase/pending/customer_site_storage_v1.sql'));
  await f.sql.exec(`alter table media_jobs alter column id set default gen_random_uuid();alter table media_jobs add column org_id uuid,add column created_by uuid,add column provider text,add column provider_model_id text,add column capability text,add column prompt text,add column input jsonb,add column routing jsonb,add column estimated_cost_cents integer;
  create table ops_compute_nodes(id text primary key);
  -- PGlite exposes PostgreSQL sha256(bytea); this is the pgcrypto digest signature used by canonical enqueue.
@@ -21,16 +24,16 @@ export async function studioProcessingFixture(){
  f.env.WEBSITE_STUDIO_PROCESSOR_ENABLED='true';
  f.db.sign=async(path,upload=false)=>'https://zmnhbrjyhxzhkxmhkexs.supabase.co/storage/v1/object/'+(upload?'upload/sign/':'sign/')+'mnet-media/'+path+'?token=fixture';
  f.db.exists=async(path,expected)=>{if(objects.get(path)?.byteLength!==Number(expected))throw Object.assign(Error('Uploaded size differs from the registered source'),{status:400});};
- f.db.put=async(path,bytes)=>{objects.set(path,new Uint8Array(bytes));};
+ const provider={head:async(bucket,path)=>objects.get(path)?.length??null,put:async(bucket,path,stream)=>{const bytes=new Uint8Array(await new Response(stream).arrayBuffer());objects.set(path,bytes);await f.sql.query('delete from storage.objects where bucket_id=$1 and name=$2',[bucket,path]);await f.sql.query('insert into storage.objects values($1,$2,$3)',[bucket,path,JSON.stringify({size:bytes.length})]);}};
+ f.db.put=async(path,bytes,type)=>writeSiteObject({db:f.db,env:f.env,user:A,bucket:'mnet-media',path,bytes:bytes.length,body:new Response(bytes).body,type,storageImpl:provider});
  async function request(path,method='GET',body,token='fixture-alice'){
   return handleProjectTiles(new Request('https://api.mccluster.org/v1/creator-sites/studio'+path,{method,headers:{authorization:'Bearer '+token},body:body===undefined?undefined:body instanceof Uint8Array?body:JSON.stringify(body)}),f.env,{db:f.db,fetchImpl:f.fetchImpl});
  }
  async function call(...args){const r=await request(...args);return {status:r.status,body:await r.json()};}
  const fetcher=async(input,init={})=>{
   const u=new URL(input);
-  if(u.origin==='https://api.mccluster.org')return handleProjectTiles(new Request(u,{...init}),f.env,{db:f.db,fetchImpl:f.fetchImpl});
+  if(u.origin==='https://api.mccluster.org'){const req=new Request(u,{...init});return await handleCustomerSiteStorage(req,f.env,{db:f.db,storageImpl:provider})||handleProjectTiles(req,f.env,{db:f.db,fetchImpl:f.fetchImpl});}
   const marker='/mnet-media/',path=u.pathname.slice(u.pathname.indexOf(marker)+marker.length);
-  if(init.method==='PUT'&&u.pathname.includes('/upload/sign/')){objects.set(path,new Uint8Array(await new Response(init.body).arrayBuffer()));return new Response('{}');}
   if(u.origin==='https://zmnhbrjyhxzhkxmhkexs.supabase.co'&&objects.has(path))return new Response(objects.get(path));
   throw Error('Unexpected fixture network request: '+u.origin+u.pathname);
  };

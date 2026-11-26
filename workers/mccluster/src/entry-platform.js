@@ -31,6 +31,11 @@ import { handleRegionScope } from './world-region-feed.js';
 import { handleWorldDirectory } from './world-directory.js';
 import { handleMusicWorkspace } from './music-workspace.js';
 import { handleMemberFronts } from './member-fronts.js';
+import { handleCustomerSiteModules } from './customer-site-modules.js';
+import { handleCustomerSiteStorage } from './customer-site-storage.js';
+import { handleCustomerSiteWorld } from './customer-site-world.js';
+import { handleCustomerSiteAddress } from './customer-site-addresses.js';
+import { handleCustomerSiteAdvertising } from './customer-site-advertising.js';
 import { handleManagedProjects } from './managed-projects.js';
 import { handleProjectTiles } from './project-tiles.js';
 import { handleCreatorDomains } from './creator-domains.js';
@@ -111,6 +116,16 @@ export default {
       if (identity) return identity;
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
+      const siteModules = await handleCustomerSiteModules(request, env);
+      if (siteModules) return siteModules;
+      const siteWorld = await handleCustomerSiteWorld(request, env);
+      if (siteWorld) return siteWorld;
+      const siteStorage = await handleCustomerSiteStorage(request, env);
+      if (siteStorage) return siteStorage;
+      const siteAddress = await handleCustomerSiteAddress(request, env);
+      if (siteAddress) return siteAddress;
+      const siteAdvertising = await handleCustomerSiteAdvertising(request, env);
+      if (siteAdvertising) return siteAdvertising;
       /* one M Account, every host: the sign-in handoff (auth-handoff.js) */
       const handoff = await handleAuthHandoff(request, env);
       if (handoff) return handoff;

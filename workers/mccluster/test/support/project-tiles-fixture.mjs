@@ -22,7 +22,7 @@ export async function projectTilesFixture(){
  create table media_jobs(id uuid primary key,status text,result jsonb,error jsonb,completed_at timestamptz,updated_at timestamptz);
  create table network_posts(id uuid,author_m_uid uuid,visibility text,media jsonb,deleted_at timestamptz,removed_at timestamptz);
  `);
- for(const file of ['managed_projects_v1.sql','website_studio_v2.sql','project_tiles_v1.sql'])await sql.exec(await readFile(new URL('../../../../supabase/pending/'+file,import.meta.url),'utf8'));
+ for(const file of ['managed_projects_v1.sql','website_studio_v2.sql','project_tiles_v1.sql','project_tiles_free_v1.sql','customer_site_modules_v1.sql'])await sql.exec(await readFile(new URL('../../../../supabase/pending/'+file,import.meta.url),'utf8'));
  // Domain integration adds this separately; only the fixture models it here.
  await sql.exec('alter table managed_projects add column id uuid unique default gen_random_uuid();');
  for(const id of [A,B]){
