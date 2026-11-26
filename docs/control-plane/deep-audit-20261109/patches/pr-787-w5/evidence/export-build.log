@@ -1,6 +1,0 @@
-strip rm -rf: docs packages apps scripts supabase .github tests node_modules redirects tools _unfinished workers platform core native ar PRIM3 dns audit .cursor assets/3d/prim3-site0
-strip rm -f: README.md wrangler.toml wrangler.jsonc package.json package-lock.json AGENTS.md CLAUDE.md CODEX.md GEMINI.md .cursorrules .mcp.json CITATION.cff
-export of cf8c3cc7f642bf7e48a4b5e042df1e24203d2ecf built at /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/w5-export-merged-without: PRIM3/ present? no; js/prim3-mission: app.mjs client.mjs released-app.mjs released-learning.mjs 
-strip rm -rf: docs packages apps scripts supabase .github tests node_modules redirects tools _unfinished workers platform core native ar PRIM3 dns audit .cursor assets/3d/prim3-site0
-strip rm -f: README.md wrangler.toml wrangler.jsonc package.json package-lock.json AGENTS.md CLAUDE.md CODEX.md GEMINI.md .cursorrules .mcp.json CITATION.cff
-export of f8499fada78c8788f41b90b66dd661db9b1e07aa built at /tmp/claude-0/-home-user/837dc966-2a9c-597b-ab55-b955b1d35f73/scratchpad/pr-fixes2/w5-export-merged-with: PRIM3/ present? no; js/prim3-mission: app.mjs client.mjs released-app.mjs released-learning.mjs topology-learning.mjs 

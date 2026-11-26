@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0019_shake_delivery.
--- Executable reconstruction SQL: supabase/replay_migrations/0019_shake_delivery.sql
--- Intentionally no-op in production; this version is already registered live.

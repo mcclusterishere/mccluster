@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0023_brain.
--- Executable reconstruction SQL: supabase/replay_migrations/0023_brain.sql
--- Intentionally no-op in production; this version is already registered live.

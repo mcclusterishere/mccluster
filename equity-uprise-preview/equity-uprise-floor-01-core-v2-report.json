@@ -1,0 +1,1578 @@
+{
+  "scene_id": "equity-uprise-floor-01",
+  "version": "hybrid-v1-design-core-v2-truth-1",
+  "design_formula": "V1 interior quality + assembled-building stacking behavior + Core V2 truth",
+  "not_for_construction": true,
+  "mesh_count": 279,
+  "glb_bytes": 225996,
+  "sha256": "4992357ba2d8d76c8f1d0f6551e18057450476fd572ea134e7bc821407e1d159",
+  "bounds_m": [
+    [
+      0.0,
+      0.0,
+      -0.1524
+    ],
+    [
+      21.945600000000002,
+      21.945600000000002,
+      4.1148
+    ]
+  ],
+  "extents_ft": [
+    72.0,
+    72.0,
+    13.999999999999998
+  ],
+  "inventory_records": 67,
+  "inventory_records_modeled": 67,
+  "inventory_records_missing": [],
+  "interior_layout": "floor-01-interior-layout-v3.json",
+  "furniture": {
+    "furniture_items": 35,
+    "furniture_types": 16,
+    "furniture_type_list": [
+      "armchair_lounge",
+      "coffee_table_round",
+      "credenza",
+      "desk",
+      "desk_dual",
+      "high_table",
+      "lateral_file",
+      "mfp",
+      "planter_floor",
+      "planter_tall",
+      "rug",
+      "side_chair",
+      "side_table",
+      "sofa_3",
+      "table_rect",
+      "task_chair"
+    ],
+    "furniture_unique_meshes": 17,
+    "furniture_triangles_instanced": 6788,
+    "furniture_triangles_unique": 2436
+  },
+  "furniture_placements": [
+    {
+      "id": "F1-LOUNGE-SOFA-01",
+      "type": "sofa_3",
+      "category": "seating",
+      "x": 6.5,
+      "y": 15.5,
+      "rot_deg": 0.0,
+      "w_ft": 7.0,
+      "d_ft": 3.0,
+      "h_ft": 2.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-LOUNGE-SOFA-01",
+      "zone": "orientation-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          3.0,
+          14.0
+        ],
+        [
+          10.0,
+          14.0
+        ],
+        [
+          10.0,
+          17.0
+        ],
+        [
+          3.0,
+          17.0
+        ]
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-CHAIR-01",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 13.1,
+      "y": 17.0,
+      "rot_deg": 48.72,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-LOUNGE-CHAIR-01",
+      "zone": "orientation-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          13.246,
+          15.2085
+        ],
+        [
+          14.8954,
+          17.0872
+        ],
+        [
+          12.954,
+          18.7915
+        ],
+        [
+          11.3046,
+          16.9128
+        ]
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-CHAIR-02",
+      "type": "armchair_lounge",
+      "category": "seating",
+      "x": 13.1,
+      "y": 23.6,
+      "rot_deg": 126.19,
+      "w_ft": 2.5,
+      "d_ft": 2.5833,
+      "h_ft": 2.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-LOUNGE-CHAIR-02",
+      "zone": "orientation-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 18
+      },
+      "footprint": [
+        [
+          14.8805,
+          23.3539
+        ],
+        [
+          13.4044,
+          25.3715
+        ],
+        [
+          11.3195,
+          23.8461
+        ],
+        [
+          12.7956,
+          21.8285
+        ]
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-TABLE-01",
+      "type": "coffee_table_round",
+      "category": "table",
+      "x": 8.4,
+      "y": 20.6,
+      "rot_deg": 0.0,
+      "w_ft": 4.0,
+      "d_ft": 4.0,
+      "h_ft": 1.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-LOUNGE-TABLE-01",
+      "zone": "orientation-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 18
+      },
+      "footprint": [
+        [
+          6.4,
+          18.6
+        ],
+        [
+          10.4,
+          18.6
+        ],
+        [
+          10.4,
+          22.6
+        ],
+        [
+          6.4,
+          22.6
+        ]
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-RUG-01",
+      "type": "rug",
+      "category": "decor",
+      "x": 9.85,
+      "y": 19.95,
+      "rot_deg": 0.0,
+      "w_ft": 14.6667,
+      "d_ft": 14.9167,
+      "h_ft": 0.0417,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-LOUNGE-RUG-01",
+      "zone": "orientation-lounge",
+      "blocks": false,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          2.5167,
+          12.4917
+        ],
+        [
+          17.1833,
+          12.4917
+        ],
+        [
+          17.1833,
+          27.4083
+        ],
+        [
+          2.5167,
+          27.4083
+        ]
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-PLANT-01",
+      "type": "planter_tall",
+      "category": "decor",
+      "x": 3.4,
+      "y": 25.6,
+      "rot_deg": 0.0,
+      "w_ft": 1.6667,
+      "d_ft": 1.6667,
+      "h_ft": 7.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-LOUNGE-PLANT-01",
+      "zone": "orientation-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          2.5667,
+          24.7667
+        ],
+        [
+          4.2333,
+          24.7667
+        ],
+        [
+          4.2333,
+          26.4333
+        ],
+        [
+          2.5667,
+          26.4333
+        ]
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-SIDE-TABLE-01",
+      "type": "side_table",
+      "category": "table",
+      "x": 11.5,
+      "y": 14.9,
+      "rot_deg": 0.0,
+      "w_ft": 1.5,
+      "d_ft": 1.5,
+      "h_ft": 1.6667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "orientation-lounge",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          10.75,
+          14.15
+        ],
+        [
+          12.25,
+          14.15
+        ],
+        [
+          12.25,
+          15.65
+        ],
+        [
+          10.75,
+          15.65
+        ]
+      ]
+    },
+    {
+      "id": "F1-INTAKE-TABLE-01",
+      "type": "table_rect",
+      "category": "table",
+      "x": 9.0,
+      "y": 38.0,
+      "rot_deg": 0.0,
+      "w_ft": 6.0,
+      "d_ft": 3.0,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-INTAKE-TABLE-01",
+      "zone": "intake",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          6.0,
+          36.5
+        ],
+        [
+          12.0,
+          36.5
+        ],
+        [
+          12.0,
+          39.5
+        ],
+        [
+          6.0,
+          39.5
+        ]
+      ]
+    },
+    {
+      "id": "F1-INTAKE-CHAIR-01",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 6.0,
+      "y": 35.8,
+      "rot_deg": 0.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-INTAKE-CHAIR-01",
+      "zone": "intake",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          5.2083,
+          34.925
+        ],
+        [
+          6.7917,
+          34.925
+        ],
+        [
+          6.7917,
+          36.675
+        ],
+        [
+          5.2083,
+          36.675
+        ]
+      ]
+    },
+    {
+      "id": "F1-INTAKE-CHAIR-02",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 12.0,
+      "y": 35.8,
+      "rot_deg": 0.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-INTAKE-CHAIR-02",
+      "zone": "intake",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          11.2083,
+          34.925
+        ],
+        [
+          12.7917,
+          34.925
+        ],
+        [
+          12.7917,
+          36.675
+        ],
+        [
+          11.2083,
+          36.675
+        ]
+      ]
+    },
+    {
+      "id": "F1-INTAKE-CHAIR-03",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 6.0,
+      "y": 40.2,
+      "rot_deg": -180.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-INTAKE-CHAIR-03",
+      "zone": "intake",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          6.7917,
+          41.075
+        ],
+        [
+          5.2083,
+          41.075
+        ],
+        [
+          5.2083,
+          39.325
+        ],
+        [
+          6.7917,
+          39.325
+        ]
+      ]
+    },
+    {
+      "id": "F1-INTAKE-CHAIR-04",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 12.0,
+      "y": 40.2,
+      "rot_deg": -180.0,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-INTAKE-CHAIR-04",
+      "zone": "intake",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          12.7917,
+          41.075
+        ],
+        [
+          11.2083,
+          41.075
+        ],
+        [
+          11.2083,
+          39.325
+        ],
+        [
+          12.7917,
+          39.325
+        ]
+      ]
+    },
+    {
+      "id": "F1-INTAKE-CREDENZA-01",
+      "type": "credenza",
+      "category": "storage",
+      "x": 4.6,
+      "y": 42.65,
+      "rot_deg": 180.0,
+      "w_ft": 4.0,
+      "d_ft": 2.1667,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-INTAKE-CREDENZA-01",
+      "zone": "intake",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 30
+      },
+      "footprint": [
+        [
+          6.6,
+          43.7333
+        ],
+        [
+          2.6,
+          43.7333
+        ],
+        [
+          2.6,
+          41.5667
+        ],
+        [
+          6.6,
+          41.5667
+        ]
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-TABLE-01",
+      "type": "table_rect",
+      "category": "table",
+      "x": 26.75,
+      "y": 35.6,
+      "rot_deg": 0.0,
+      "w_ft": 9.5,
+      "d_ft": 3.1667,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-PASSPORT-TABLE-01",
+      "zone": "passport-studio",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          22.0,
+          34.0167
+        ],
+        [
+          31.5,
+          34.0167
+        ],
+        [
+          31.5,
+          37.1833
+        ],
+        [
+          22.0,
+          37.1833
+        ]
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-TABLE-02",
+      "type": "table_rect",
+      "category": "table",
+      "x": 39.75,
+      "y": 40.8,
+      "rot_deg": 0.0,
+      "w_ft": 9.5,
+      "d_ft": 3.1667,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-PASSPORT-TABLE-02",
+      "zone": "passport-studio",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          35.0,
+          39.2167
+        ],
+        [
+          44.5,
+          39.2167
+        ],
+        [
+          44.5,
+          42.3833
+        ],
+        [
+          35.0,
+          42.3833
+        ]
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-01",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 23.6,
+      "y": 38.3,
+      "rot_deg": -180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-PASSPORT-CHAIR-01",
+      "zone": "passport-studio",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          24.6833,
+          39.3833
+        ],
+        [
+          22.5167,
+          39.3833
+        ],
+        [
+          22.5167,
+          37.2167
+        ],
+        [
+          24.6833,
+          37.2167
+        ]
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-02",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 27.0,
+      "y": 38.3,
+      "rot_deg": -180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-PASSPORT-CHAIR-02",
+      "zone": "passport-studio",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          28.0833,
+          39.3833
+        ],
+        [
+          25.9167,
+          39.3833
+        ],
+        [
+          25.9167,
+          37.2167
+        ],
+        [
+          28.0833,
+          37.2167
+        ]
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-03",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 30.4,
+      "y": 38.3,
+      "rot_deg": -180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-PASSPORT-CHAIR-03",
+      "zone": "passport-studio",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          31.4833,
+          39.3833
+        ],
+        [
+          29.3167,
+          39.3833
+        ],
+        [
+          29.3167,
+          37.2167
+        ],
+        [
+          31.4833,
+          37.2167
+        ]
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-04",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 36.6,
+      "y": 38.1,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-PASSPORT-CHAIR-04",
+      "zone": "passport-studio",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          35.5167,
+          37.0167
+        ],
+        [
+          37.6833,
+          37.0167
+        ],
+        [
+          37.6833,
+          39.1833
+        ],
+        [
+          35.5167,
+          39.1833
+        ]
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-05",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 40.0,
+      "y": 38.1,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-PASSPORT-CHAIR-05",
+      "zone": "passport-studio",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          38.9167,
+          37.0167
+        ],
+        [
+          41.0833,
+          37.0167
+        ],
+        [
+          41.0833,
+          39.1833
+        ],
+        [
+          38.9167,
+          39.1833
+        ]
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-06",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 43.4,
+      "y": 38.1,
+      "rot_deg": 0.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-PASSPORT-CHAIR-06",
+      "zone": "passport-studio",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          42.3167,
+          37.0167
+        ],
+        [
+          44.4833,
+          37.0167
+        ],
+        [
+          44.4833,
+          39.1833
+        ],
+        [
+          42.3167,
+          39.1833
+        ]
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-DOC-01",
+      "type": "high_table",
+      "category": "table",
+      "x": 46.2,
+      "y": 35.8,
+      "rot_deg": 90.0,
+      "w_ft": 4.0,
+      "d_ft": 2.0,
+      "h_ft": 3.5,
+      "z_ft": 0.0,
+      "realizes_inventory_id": "F1-PASSPORT-DOC-01",
+      "zone": "passport-studio",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "all": 36
+      },
+      "footprint": [
+        [
+          47.2,
+          33.8
+        ],
+        [
+          47.2,
+          37.8
+        ],
+        [
+          45.2,
+          37.8
+        ],
+        [
+          45.2,
+          33.8
+        ]
+      ]
+    },
+    {
+      "id": "F1-RECEPTION-CHAIR-01",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 32.6,
+      "y": 48.6,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "reception",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          33.6833,
+          49.6833
+        ],
+        [
+          31.5167,
+          49.6833
+        ],
+        [
+          31.5167,
+          47.5167
+        ],
+        [
+          33.6833,
+          47.5167
+        ]
+      ]
+    },
+    {
+      "id": "F1-RECEPTION-CHAIR-02",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 35.8,
+      "y": 48.6,
+      "rot_deg": 180.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "reception",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          36.8833,
+          49.6833
+        ],
+        [
+          34.7167,
+          49.6833
+        ],
+        [
+          34.7167,
+          47.5167
+        ],
+        [
+          36.8833,
+          47.5167
+        ]
+      ]
+    },
+    {
+      "id": "F1-DESK-GRACE-MBALA",
+      "type": "desk_dual",
+      "category": "work",
+      "x": 68.6,
+      "y": 22.0,
+      "rot_deg": 90.0,
+      "w_ft": 5.5,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          69.85,
+          19.25
+        ],
+        [
+          69.85,
+          24.75
+        ],
+        [
+          67.35,
+          24.75
+        ],
+        [
+          67.35,
+          19.25
+        ]
+      ]
+    },
+    {
+      "id": "F1-DESK-GRACE-MBALA-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 66.0,
+      "y": 22.0,
+      "rot_deg": -90.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          64.9167,
+          23.0833
+        ],
+        [
+          64.9167,
+          20.9167
+        ],
+        [
+          67.0833,
+          20.9167
+        ],
+        [
+          67.0833,
+          23.0833
+        ]
+      ]
+    },
+    {
+      "id": "F1-DESK-GRACE-VISITOR-01",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 62.8,
+      "y": 20.6,
+      "rot_deg": -66.37,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          61.681,
+          20.9746
+        ],
+        [
+          62.3157,
+          19.524
+        ],
+        [
+          63.919,
+          20.2254
+        ],
+        [
+          63.2843,
+          21.676
+        ]
+      ]
+    },
+    {
+      "id": "F1-DESK-GRACE-VISITOR-02",
+      "type": "side_chair",
+      "category": "seating",
+      "x": 62.8,
+      "y": 23.4,
+      "rot_deg": -113.63,
+      "w_ft": 1.5833,
+      "d_ft": 1.75,
+      "h_ft": 2.75,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          62.3157,
+          24.476
+        ],
+        [
+          61.681,
+          23.0254
+        ],
+        [
+          63.2843,
+          22.324
+        ],
+        [
+          63.919,
+          23.7746
+        ]
+      ]
+    },
+    {
+      "id": "F1-HOTDESK-VALERIA-SOTO",
+      "type": "desk",
+      "category": "work",
+      "x": 68.6,
+      "y": 9.0,
+      "rot_deg": 90.0,
+      "w_ft": 5.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          69.85,
+          6.5
+        ],
+        [
+          69.85,
+          11.5
+        ],
+        [
+          67.35,
+          11.5
+        ],
+        [
+          67.35,
+          6.5
+        ]
+      ]
+    },
+    {
+      "id": "F1-HOTDESK-VALERIA-SOTO-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 66.0,
+      "y": 9.0,
+      "rot_deg": -90.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          64.9167,
+          10.0833
+        ],
+        [
+          64.9167,
+          7.9167
+        ],
+        [
+          67.0833,
+          7.9167
+        ],
+        [
+          67.0833,
+          10.0833
+        ]
+      ]
+    },
+    {
+      "id": "F1-HOTDESK-MCCLUSTER",
+      "type": "desk",
+      "category": "work",
+      "x": 68.6,
+      "y": 14.6,
+      "rot_deg": 90.0,
+      "w_ft": 5.0,
+      "d_ft": 2.5,
+      "h_ft": 2.4167,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": true,
+      "seat": false,
+      "clearance_in": {
+        "front": 42
+      },
+      "footprint": [
+        [
+          69.85,
+          12.1
+        ],
+        [
+          69.85,
+          17.1
+        ],
+        [
+          67.35,
+          17.1
+        ],
+        [
+          67.35,
+          12.1
+        ]
+      ]
+    },
+    {
+      "id": "F1-HOTDESK-MCCLUSTER-CHAIR",
+      "type": "task_chair",
+      "category": "seating",
+      "x": 66.0,
+      "y": 14.6,
+      "rot_deg": -90.0,
+      "w_ft": 2.1667,
+      "d_ft": 2.1667,
+      "h_ft": 3.25,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": true,
+      "is_surface": false,
+      "seat": true,
+      "clearance_in": {
+        "front": 24,
+        "pull_out": 36
+      },
+      "footprint": [
+        [
+          64.9167,
+          15.6833
+        ],
+        [
+          64.9167,
+          13.5167
+        ],
+        [
+          67.0833,
+          13.5167
+        ],
+        [
+          67.0833,
+          15.6833
+        ]
+      ]
+    },
+    {
+      "id": "F1-SERVICES-FILE-01",
+      "type": "lateral_file",
+      "category": "storage",
+      "x": 69.6,
+      "y": 28.4,
+      "rot_deg": 90.0,
+      "w_ft": 3.0,
+      "d_ft": 1.6667,
+      "h_ft": 3.3333,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 36
+      },
+      "footprint": [
+        [
+          70.4333,
+          26.9
+        ],
+        [
+          70.4333,
+          29.9
+        ],
+        [
+          68.7667,
+          29.9
+        ],
+        [
+          68.7667,
+          26.9
+        ]
+      ]
+    },
+    {
+      "id": "F1-SERVICES-MFP-01",
+      "type": "mfp",
+      "category": "equipment",
+      "x": 69.8,
+      "y": 3.0,
+      "rot_deg": 90.0,
+      "w_ft": 2.0,
+      "d_ft": 2.1667,
+      "h_ft": 3.6667,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {
+        "front": 36
+      },
+      "footprint": [
+        [
+          70.8833,
+          2.0
+        ],
+        [
+          70.8833,
+          4.0
+        ],
+        [
+          68.7167,
+          4.0
+        ],
+        [
+          68.7167,
+          2.0
+        ]
+      ]
+    },
+    {
+      "id": "F1-SERVICES-PLANT-01",
+      "type": "planter_floor",
+      "category": "decor",
+      "x": 56.5,
+      "y": 3.0,
+      "rot_deg": 0.0,
+      "w_ft": 2.0,
+      "d_ft": 2.0,
+      "h_ft": 5.0,
+      "z_ft": 0.0,
+      "realizes_inventory_id": null,
+      "zone": "participant-services",
+      "blocks": true,
+      "tucks_under": false,
+      "is_surface": false,
+      "seat": false,
+      "clearance_in": {},
+      "footprint": [
+        [
+          55.5,
+          2.0
+        ],
+        [
+          57.5,
+          2.0
+        ],
+        [
+          57.5,
+          4.0
+        ],
+        [
+          55.5,
+          4.0
+        ]
+      ]
+    }
+  ],
+  "brand_slots": [
+    "brand-slot::f1-vestibule-identity"
+  ],
+  "exit_doors": [
+    {
+      "object_id": "F1-DOOR-SERVICE-WEST",
+      "facade": "west",
+      "x": 0,
+      "y1": 57.1,
+      "y2": 59.9
+    },
+    {
+      "object_id": "F1-DOOR-STAIR-A-DISCHARGE",
+      "facade": "east",
+      "x": 72,
+      "y1": 55.0,
+      "y2": 58.2
+    },
+    {
+      "object_id": "F1-DOOR-STAIR-B-DISCHARGE",
+      "facade": "west",
+      "x": 0,
+      "y1": 54.3,
+      "y2": 57.1
+    }
+  ],
+  "triangles": 10164,
+  "checks_total": 19,
+  "checks_passed": 19,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "72ft building width",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "72ft building depth",
+      "passed": true,
+      "actual": 72.0,
+      "expected": 72
+    },
+    {
+      "name": "inventory records loaded",
+      "passed": true,
+      "actual": 67,
+      "expected": 67
+    },
+    {
+      "name": "all inventory records represented in 3D",
+      "passed": true,
+      "actual": 67,
+      "expected": 67
+    },
+    {
+      "name": "passenger elevator retained",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "freight elevator retained",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Stair A retained",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Stair B retained",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Journey Wall modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Reception modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Orientation Lounge modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Intake modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Passport Studio modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Directory modeled",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "vestibule identity is a brand slot",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "v3 layout realizes every inventory furniture record",
+      "passed": true,
+      "actual": [],
+      "expected": null
+    },
+    {
+      "name": "F1-DOOR-STAIR-A-DISCHARGE door opening + leaf modeled at the egress-plan location",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "F1-DOOR-STAIR-B-DISCHARGE door opening + leaf modeled at the egress-plan location",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "F1-DOOR-SERVICE-WEST door opening + leaf modeled at the egress-plan location",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    }
+  ]
+}

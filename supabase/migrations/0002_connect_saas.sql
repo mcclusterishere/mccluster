@@ -1,4 +1,0 @@
--- REPLAY_ANCHOR_ONLY
--- Production ledger anchor for 0002_connect_saas.
--- Executable reconstruction SQL: supabase/replay_migrations/0002_connect_saas.sql
--- Intentionally no-op in production; this version is already registered live.
