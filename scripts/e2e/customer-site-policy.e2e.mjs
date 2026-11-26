@@ -26,6 +26,33 @@ try{
  await page.evaluate(()=>window.MCC_BAR.sitePolicy({world:false}));await page.waitForFunction(()=>document.querySelector('#guestWorld').hidden&&document.querySelector('#guestWorld iframe').contentWindow.location.href==='about:blank');assert.equal(globeRequests,1);
  await page.evaluate(()=>window.MCC_BAR.sitePolicy(null));assert.equal(await tab.isVisible(),true);assert.match(await tab.getAttribute('href'),/mccluster.org\//);
  for(const width of [390,1440]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);}
+ // Exercise both nav-only and compact-dock shapes without serializing transport.
+ await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>{
+   const dock=document.querySelector('.appbar'), tabs=document.createElement('div');
+   tabs.className='appbar__tabs';
+   while(dock.firstChild)tabs.append(dock.firstChild);
+   const prev=document.createElement('button'), play=document.createElement('button');
+   prev.textContent='Previous';play.textContent='Play';
+   dock.append(prev,tabs,play);
+   window.__dockFixture={dock,tabs,prev,play};
+   const style=document.createElement('style');
+   style.textContent='.appbar {display:grid;width:calc(100% - 16px);grid-template-columns:88px minmax(0,1fr) 88px}.appbar__tabs{display:flex;min-width:0}';
+   document.head.append(style);
+ });
+ const compact=()=>page.evaluate(()=>{
+   const f=window.__dockFixture,c=element=>Math.round(element.getBoundingClientRect().x);
+   return [c(f.prev),c(f.tabs),c(f.play),f.dock.firstChild===f.prev&&f.dock.lastChild===f.play];
+ });
+ const initial=await compact();
+ await page.evaluate(()=>window.MCC_BAR.sitePolicy({world:false}));
+ assert.equal(await tab.isVisible(),false);
+ assert.deepEqual(await compact(),initial,'World off must not move transport or replace the nodes');
+ assert.equal(await page.evaluate(()=>window.__dockFixture.dock.style.gridTemplateColumns),'');
+ await page.evaluate(()=>window.MCC_BAR.sitePolicy(null));
+ assert.equal(await tab.isVisible(),true);
+ assert.deepEqual(await compact(),initial,'Reset must preserve the compact bar');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth===document.documentElement.clientWidth),true);
  enabled=false;await page.reload();await page.getByText('World is switched off for this website').waitFor();assert.equal(await tab.isVisible(),false);assert.equal(await page.getByText('Public fixture update').count(),0);
  console.log('PASS: tenant World projection, actual shared bottom-tab removal/restoration, disabled direct read, account-independent global navigation, 390/1440 layout');
 }finally{await browser.close();}
