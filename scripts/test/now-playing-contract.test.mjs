@@ -477,7 +477,7 @@ for (const withSession of [true, false]) {
     const state = p.snapshot();
     assert.equal(state.title, 'Here'); assert.equal(state.artist, 'Fixture artist');
     assert.equal(state.playing, true); assert.equal(Object.isFrozen(state), true);
-    assert.deepEqual(Object.keys(state).sort(), ['album','artist','canNext','canPause','canPlay','canPrevious','note','playing','status','surface','title'],
+    assert.deepEqual(Object.keys(state).sort(), ['album','artist','canNext','canPause','canPlay','canPrevious','lyricPath','note','playing','status','surface','title'],
       'no media element, source URL or player mutation is exposed (status: why a player is quiet, music slice M3 review; note: a lasting word, the Release 1 dock fix)');
     assert.equal(p.command('pause'), true); assert.equal(p.snapshot().playing, false);
     assert.equal(p.command('play'), true); assert.equal(p.snapshot().playing, true);
@@ -494,6 +494,28 @@ for (const withSession of [true, false]) {
    the player quiets its element and tries again. The lock screen said "paused" and offered only Play, which tried at
    once, so nothing could stop the tries; and the installed app's dock, which hides the mini player, said nothing at
    all. A player may now tell the owner what the listener asked for (playing) and why it is quiet (status). */
+test('the lyric clock follows the owning media and exposes only a static canonical file', () => {
+  const {win} = browser();
+  const p = win.MCC_NOW_PLAYING, m = media({duration:20});
+  let lyric = 'https://example.invalid/signed.json';
+  const h = p.bind(m,{track:()=>({title:'Fixture'}),lyrics:()=>lyric,play:()=>m.play(),pause:()=>m.pause()});
+  m.play();
+  assert.equal(p.snapshot().lyricPath,'');
+  lyric = 'data/lyrics/fixture.json';
+  h.update();
+  assert.equal(p.snapshot().lyricPath,lyric);
+  m.currentTime = 2.75;
+  assert.equal(p.lyricPosition().time,2.75);
+  assert.equal(p.lyricPosition().advancing,true);
+  m.pause();
+  assert.equal(p.lyricPosition().advancing,false);
+  lyric = 'data/lyrics/../fixture.json';
+  h.update();
+  assert.equal(p.snapshot().lyricPath,'');
+  h.clear();
+  assert.equal(p.lyricPosition(),null);
+});
+
 test('a player in trouble: the lock screen and the installed app\'s dock follow what the listener asked for, and say why it is quiet', () => {
   const { win, session } = browser();
   const NP = win.MCC_NOW_PLAYING, m = media();

@@ -145,16 +145,29 @@
     var d = describe(owner);
     if (!d) return null;
     var s = owner.spec;
-    var status = "", note = "";
+    var status = "", note = "", lyricPath = "";
     try { status = typeof s.status === "function" ? String(s.status() || "") : ""; } catch (e) {}
     try { note = typeof s.note === "function" ? String(s.note() || "") : ""; } catch (e) {}
+    try {
+      var path = typeof s.lyrics === "function" ? s.lyrics() : "";
+      if (typeof path === "string" && /^data\/lyrics\/[a-z0-9._-]+\.json$/i.test(path)) lyricPath = path;
+    } catch (e) {}
     /* status: why the player is quiet for a while, in a few words ("Reconnecting…", "Connection lost · tap play"), for
        a surface that shows no player of its own (the installed app's dock hides the mini player); note: a word that
        lasts ("Muted"), which that surface says in place of the artist (the Release 1 dock fix) */
     return Object.freeze({ surface: s.surface || "player", title: d.title, artist: d.artist, album: d.album,
-      playing: playing(owner), status: status, note: note,
+      playing: playing(owner), status: status, note: note, lyricPath: lyricPath,
       canPlay: typeof s.play === "function", canPause: typeof s.pause === "function",
       canPrevious: typeof s.previous === "function", canNext: typeof s.next === "function" });
+  }
+  function lyricPosition() {
+    var m = owner && owner.media;
+    if (!m || !Number.isFinite(m.currentTime) || m.ended) return null;
+    return {time:m.currentTime, advancing:!m.paused && !m.seeking};
+  }
+  function lyricClockChanged(b) {
+    if (owner === b && typeof root.CustomEvent === "function" && typeof root.dispatchEvent === "function")
+      root.dispatchEvent(new root.CustomEvent("mcc:lyric-clock"));
   }
   function publish() {
     var value = snapshot(), signature = JSON.stringify(value);
@@ -304,7 +317,8 @@
     on("playing", function () { if (owner === b) { state(b); position(b, true); publish(); } });
     on("pause", function () { if (owner === b) { state(b); position(b, true); publish(); } });
     on("ended", function () { if (owner === b) { state(b); position(b, true); publish(); } });
-    on("seeked", function () { position(b, true); });
+    on("seeked", function () { position(b, true); lyricClockChanged(b); });
+    on("seeking", function () { lyricClockChanged(b); });
     on("ratechange", function () { position(b, true); });
     on("durationchange", function () { metadata(b); position(b, true); if (owner === b) publish(); });
     on("loadedmetadata", function () { metadata(b); position(b, true); if (owner === b) publish(); });
@@ -434,6 +448,7 @@
     artwork: artwork,
     airplay: airplay,
     snapshot: snapshot,
+    lyricPosition: lyricPosition,
     subscribe: subscribe,
     command: command,
     owner: function () { return owner ? owner.spec.surface || "player" : null; }

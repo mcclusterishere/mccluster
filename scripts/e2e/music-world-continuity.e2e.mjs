@@ -151,21 +151,22 @@ try{
     let release;
     const held=new Promise(resolve=>release=resolve);
     const {context,page}=await setup(390,false,{parentScript:()=>held});
-    /* review RF-3: the Music tab's name says what a tap on it does (js/tabbar.js); while a World opening is pending a tap
-       calls it off and pauses nothing, so the tab keeps its own name; once called off it is the player's Pause again */
+    // Holding the ordered World helper also delays the dock script. Exercise the fallback first, then the compact dock.
     const told=async()=>{const s=await page.locator('.appbar [data-appnav="music"]').ariaSnapshot();const m=/^- (\w+) "([^"]*)"/.exec(s.trim());return m?`${m[1]} "${m[2]}"`:s;};
+    const pause = page.locator('.appbar').getByRole('button', {name:'Pause music',exact:true});
     await play(page);await page.evaluate(()=>window.__originalAudio=MCC_MUSIC.audio);
     await page.locator('.appbar [data-appnav="world"]').click();
     await page.locator('#mccWorldAudioLoading').waitFor();
     check('while a World opening is pending, the Music tab is told as link "Music" (a tap calls it off, it pauses nothing)',await told()==='link "Music"',await told());
     await page.locator('[data-world-audio-cancel]').click();
     check('Stay in Music cancels a pending World opening',await page.locator('#mccWorldAudioLoading').count()===0&&await page.evaluate(()=>__unloads===0&&!MCC_MUSIC.audio.paused));
-    check('after Stay in Music the Music tab is the player\'s Pause again ("Pause music")',await told()==='link "Pause music"',await told());
+    check('after Stay in Music, the loading dock has not mounted and the fallback can still Pause',await told()==='link "Pause music"'&&await pause.count()===0,await told());
     await page.locator('.appbar [data-appnav="world"]').click();
     await page.locator('.appbar [data-appnav="music"]').click();
     release(true);await page.waitForFunction(()=>!!window.MCC_WORLD_AUDIO);await page.waitForTimeout(100);
     check('explicit Music destination cancels queued World even when its helper arrives later',await page.locator('#mccWorldAudioLoading').count()===0&&await page.evaluate(()=>!MCC_WORLD_AUDIO.active()&&__unloads===0&&__originalAudio===MCC_MUSIC.audio&&!MCC_MUSIC.audio.paused));
-    check('after the Music tab called the World off, it is the player\'s Pause again ("Pause music")',await told()==='link "Pause music"',await told());
+    await pause.waitFor();
+    check('after the dock loads, navigation and playback have separate names',await told()==='link "Music"'&&await pause.count()===1,await told());
     await context.close();
   }
   for(const width of [390,1280]){

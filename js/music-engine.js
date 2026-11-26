@@ -741,6 +741,7 @@
       track: function () {
         return current ? { title: current.title, artist: current.artist || "McCluster", album: current.albumName || "", art: current.art } : null;
       },
+      lyrics: function () { return currentAccess === "full" && current && !current.creatorTrackId ? current.lyrics : ""; },
       play: function () { return resumeCurrent(); },
       pause: pauseCurrent,
       previous: function () { return playAdjacent(-1); },
@@ -1449,6 +1450,12 @@
     registerCreatorTrack: registerCreatorTrack,
     pause: pauseCurrent,
     resume: resumeCurrent,
+    // A restored position is an offer, not the device's active media owner.
+    resumeOffer: function () {
+      if (current || !held) return null;
+      return { title: held.item.title, artist: held.item.artist || "", position: fmt(held.at) };
+    },
+    resumeHeld: resumeHeld,
     next: function () { return playAdjacent(1); },
     previous: function () { return playAdjacent(-1); },
     openNow: openNow,

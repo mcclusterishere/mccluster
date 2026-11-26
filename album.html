@@ -1589,6 +1589,10 @@
             album: r.getAttribute("data-album-name") || document.getElementById("albName").textContent,
             art: r.getAttribute("data-art") || document.getElementById("albArt").getAttribute("src") };
         },
+        lyrics: function () {
+          var r = cur >= 0 && rows[cur];
+          return r && (!r.hasAttribute("data-gated-bucket") || r.hasAttribute("data-granted")) ? r.getAttribute("data-lyrics") : "";
+        },
         play: function () { play(); },
         pause: function () { pauseDeck(); },
         previous: function () { prev(); },

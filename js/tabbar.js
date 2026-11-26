@@ -217,9 +217,8 @@
      preview and the other renders inside somebody else's page, and our
      navigation belongs in neither. */
   var dock = document.querySelector(".appbar");
-  /* Installed music controls surround a stable navigation container. All role,
-     perspective and wing rebuilds replace only the tabs, leaving the live
-     transport's DOM and focus intact. In a browser the original bar is used. */
+  /* When integrated music controls are mounted, role, perspective and wing
+     rebuilds replace only the tabs, leaving the live transport and focus intact. */
   function barMarkup(value) {
     var items = dock.querySelector(".appbar__tabs") || dock;
     if (arguments.length) items.innerHTML = value;
@@ -1261,13 +1260,13 @@
   function paintSound() {
     var mt = dock.querySelector('[data-appnav="music"]');
     /* a wing held open over the tab's column: no tab, so the installed app's dock keeps its own Play/Pause meanwhile */
-    if (!mt) { document.documentElement.classList.remove("mcc-music-tab-transport"); return; }
+    if (!mt) return;
     /* one class, one meaning: is-sound swaps the tab's play triangle for the
        pause glyph. The stylesheet also carried an is-playing equaliser dance
        that nothing had ever applied to a tab; with the tab now drawn as a
        transport button there is no equaliser left to dance, so those rules
        went out of css/style.css rather than getting a first user here. */
-    mt.classList.toggle("is-sound", SOUND_ON);
+    mt.classList.toggle("is-sound", SOUND_ON && !document.documentElement.classList.contains("mcc-app-dock-active"));
     nameMusicTab(mt);
   }
   /* THE TAB'S NAME SAYS WHAT A TAP DOES (music slice M3 follow-up; review RF-3). Where the Music tab is the page's own
@@ -1281,11 +1280,9 @@
     if (!mt.hasAttribute("data-link-name")) mt.setAttribute("data-link-name", mt.getAttribute("aria-label") || "");
     var own = mt.getAttribute("data-link-name"), plays = musicTabTransport();
     if (plays) mt.setAttribute("aria-label", SOUND_ON ? "Pause music" : "Play music");
+    else if (document.documentElement.classList.contains("mcc-app-dock-active")) mt.setAttribute("aria-label", "Music");
     else if (own) mt.setAttribute("aria-label", own);
     else mt.removeAttribute("aria-label");
-    /* the installed app's dock asks the same: where the tab is the Play/Pause, the dock shows none of its own, one
-       control and not two (the Release 1 dock fix; css/installed-app-dock.css) */
-    document.documentElement.classList.toggle("mcc-music-tab-transport", plays);
   }
   window.addEventListener("mcc:nowplaying", function (e) {
     soundRevision++;
@@ -1295,17 +1292,9 @@
   /* the World opening or closing over the player changes what the tab does (js/world-audio-continuity.js) */
   window.addEventListener("mcc:world-audio-open", function () { paintSound(); });
   window.addEventListener("mcc:music-view", function () { paintSound(); });   /* a view opened or closed (music slice M5) */
-  /* and on Listen, so does the player the installed app's dock shows (dockPlaysAnother, below): the tab asks again
-     whenever the Now Playing owner changes and when the dock comes or goes (the Release 1 dock fix) */
-  if (onPage(WINGS.music.home)) {
-    window.addEventListener("mcc:installed-dock", function () { paintSound(); });
-    (function followNowPlaying() {
-      var np = window.MCC_NOW_PLAYING;
-      if (np && typeof np.subscribe === "function") { np.subscribe(function () { paintSound(); }); return; }
-      var helper = document.querySelector("script[data-mcc-now-playing]");
-      if (helper) helper.addEventListener("load", followNowPlaying, { once: true });
-    })();
-  }
+  /* Mounting or losing the right-hand transport returns the center tabs to
+     navigation or restores the existing fallback. */
+  window.addEventListener("mcc:installed-dock", function () { paintSound(); });
 
   /* Does the page give the bar its transport (MCC_NP_PLAY and MCC_NP_PAUSE)? The World open (or opening) over the
      player is the one exception: there the Music tab is the way back to the music, never its Pause. listen.html gives
@@ -1317,21 +1306,11 @@
     if (e && e === worldCancelTap) return false;   // the tap that called off a World still opening stays in the music, never pauses it
     return typeof window.MCC_NP_PLAY === "function" && typeof window.MCC_NP_PAUSE === "function";
   }
-  /* THE INSTALLED APP'S DOCK SHOWS THE NOW PLAYING OWNER (js/installed-app-dock.js). On Listen that is this page's
-     engine, and the tab is its Play/Pause. A World song carried back from the Globe while Listen holds a record of its
-     own is another player: the dock's own Play/Pause is that song's, so the tab, which would take up the held record,
-     goes back to being the way to the music, or the dock would hold two (the Release 1 dock fix, verification
-     DFV-2). The browser has no dock, and its bar keeps the tab as it was. */
-  function dockPlaysAnother() {
-    if (!document.documentElement.classList.contains("mcc-app-dock-ready")) return false;
-    var s = null;
-    try { s = window.MCC_NOW_PLAYING && window.MCC_NOW_PLAYING.snapshot ? window.MCC_NOW_PLAYING.snapshot() : null; } catch (e) {}
-    return !!(s && s.title && s.canPlay && s.canPause && s.surface !== "listen");
-  }
-  /* a tap on the Music tab is the player's Play or Pause, not a way somewhere: on the page the tab points at, when that
-     page gives the bar its transport (the tap dispatch below and the tab's name both ask this, so they cannot disagree) */
+  /* When the dock is active its right-hand Play/Pause is the only one.
+     If it cannot mount, retain the Music tab's old playback fallback. */
   function musicTabTransport(e) {
-    return onPage(WINGS.music.home) && musicTransportHere(e) && !dockPlaysAnother();
+    return onPage(WINGS.music.home) && musicTransportHere(e) &&
+      !document.documentElement.classList.contains("mcc-app-dock-active");
   }
 
   /* the same idiom both of the album's own transport buttons use: ask what
@@ -1708,21 +1687,13 @@
   navigationScript.src = ROOT + "js/site-navigation.js?v=__STAMP__";
   navigationScript.onerror = function () { navPresentationReady = true; revealNavigation(); };
   document.head.appendChild(navigationScript);
-  /* Installed web apps get compact chrome and the same player's transport.
-     Ordinary browser documents do not load or mount the installed dock. */
-  function loadInstalledDock() {
-    if (window.parent !== window || !document.documentElement.classList.contains("mcc-installed-app") ||
-        document.querySelector("script[data-mcc-installed-dock]")) return;
+  /* Use the same Now Playing controls inside the shared bar in both displays.
+     Embedded documents keep their host's navigation and never mount a second dock. */
+  if (window.parent === window && !document.querySelector("script[data-mcc-installed-dock]")) {
     var appDock = document.createElement("script");
     appDock.src = ROOT + "js/installed-app-dock.js?v=__STAMP__";
     appDock.async = false; appDock.setAttribute("data-mcc-installed-dock", "");
     document.head.appendChild(appDock);
-  }
-  loadInstalledDock();
-  if (window.matchMedia) {
-    var installedMode = window.matchMedia("(display-mode: standalone)");
-    if (installedMode.addEventListener) installedMode.addEventListener("change", loadInstalledDock);
-    else if (installedMode.addListener) installedMode.addListener(loadInstalledDock);
   }
   if (window.MCC_TRACK) window.MCC_TRACK("bar_boot", { page: location.pathname.split("/").pop() });
 

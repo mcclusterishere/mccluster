@@ -425,6 +425,7 @@
     if (root.MCC_NOW_PLAYING && root.MCC_NOW_PLAYING.bind) root.MCC_NOW_PLAYING.bind(audio, {
       surface: "world",
       track: function () { return song ? {title:song.title, artist:song.artist || "McCluster", album:song.albumName || "", art:song.art || ""} : null; },
+      lyrics: function () { return lyricsBySlug && lyricsBySlug[slugOf(audio)] || ""; },
       play: function () { if (audio.paused || audio.ended) startTheme(); },
       pause: function () { pauseBy = "lock_screen"; preference.paused = true; savePreference(); audio.pause(); paint(); },
       previous: previousSong,

@@ -263,8 +263,8 @@ const deckUi = page => page.evaluate(() => {
   return { paused: d.paused, t: d.currentTime, muted: d.muted, src: d.currentSrc, time: document.getElementById('npTime').textContent,
     status: s && !s.hidden ? s.textContent : '', ms: navigator.mediaSession ? navigator.mediaSession.playbackState : null,
     button: /M7 5h3\.4v14H7z/.test(document.getElementById('tpPlayIc').innerHTML) ? 'Pause' : 'Play',
-    /* the bar's own transport (its Music tab: is-sound shows the pause glyph) and the album's Play all */
-    bar: (() => { const t = document.querySelector('[data-appnav="music"]'); return t ? (t.classList.contains('is-sound') ? 'Pause' : 'Play') : null; })(),
+    /* The visible transport lives to the right of the navigation tabs. */
+    bar: document.querySelector('.appbar [data-app-player="play"]')?.getAttribute('aria-label') || null,
     playAll: (document.getElementById('playAll') || {}).textContent || '' };
 });
 const deckState = page => page.evaluate(() => { const d = document.getElementById('deck'); return { t: d.currentTime, paused: d.paused, src: d.currentSrc }; });
@@ -322,7 +322,7 @@ try {
     const peaks = requests.filter(q => q.url === HOUSE + '/data/peaks/' + key + '.json');
     check('album: the measured peaks are read once for the song', peaks.length === 1, peaks);
 
-    await page.locator('.deckbar__meta').click();
+    await page.locator('.appbar [data-app-player="open"]').click();
     await page.waitForFunction(() => document.getElementById('now').getAttribute('data-on') === '1');
     await page.waitForTimeout(400);
     const wave = await page.evaluate(() => {
@@ -585,7 +585,7 @@ try {
     check('album drop: the deck is quiet and says Reconnecting…; the deck bar and the lock screen offer Pause, which stops the tries', down.paused && /^Reconnecting… · /.test(down.time) && down.button === 'Pause' && down.ms === 'playing', down);
     check('album drop: one short line says where it stopped and that it is picking up there', /^The connection dropped at 0:0\d\. Picking up there…$/.test(down.status), down.status);
     check('album drop: the bar\'s own transport and Play all offer Pause too (the browser\'s own pause after the error made them say Play)',
-      down.bar === 'Pause' && /Pause/.test(down.playAll), { bar: down.bar, playAll: down.playAll });
+      down.bar === 'Pause music' && /Pause/.test(down.playAll), { bar: down.bar, playAll: down.playAll });
     check('album drop at 390: the page fits the screen with the line', await fits(page));
     await page.screenshot({ path: join(OUT, 'album-390-reconnecting.png') });
     const at = (await page.evaluate(() => window.__trace.filter(e => e.t === 'error').map(e => e.at)))[0] || 0;
@@ -677,7 +677,8 @@ try {
       check('stored World mute: a Music song is not silenced by it', !heard.muted && heard.label === 'Full track', heard);
       await page.evaluate(() => { MCC_MUSIC.audio.muted = true; });
       await page.waitForFunction(() => document.getElementById('musicMiniAccess').textContent === 'Muted');
-      const sound = page.locator('#musicMiniSound');
+      await page.locator('.appbar [data-app-player="open"]').click();
+      const sound = page.locator('#musicNowSound');
       const box = await sound.boundingBox();
       check('a muted Music song says Muted and shows its own Unmute (44 px)', await sound.isVisible() && box && box.height >= 44 && box.width >= 44, box);
       check('listen at 390 with Unmute showing: the page fits the screen', await fits(page));
@@ -687,10 +688,10 @@ try {
       check('Unmute brings the sound back on the Music page', !un.muted && un.label === 'Full track' && !(await sound.isVisible()), un);
       check('the World keeps its own stored mute', await page.evaluate(() => JSON.parse(localStorage.getItem('mcc_world_audio_preference') || '{}').muted === true));
       await page.evaluate(() => { MCC_MUSIC.audio.muted = true; });
-      await page.waitForFunction(() => !document.getElementById('musicMiniSound').hidden);
-      await page.focus('#musicMiniSound'); await page.keyboard.press('Enter');
+      await page.waitForFunction(() => !document.getElementById('musicNowSound').hidden);
+      await page.focus('#musicNowSound'); await page.keyboard.press('Enter');
       const kb = await page.evaluate(() => ({ muted: MCC_MUSIC.audio.muted, active: document.activeElement && (document.activeElement.id || document.activeElement.tagName) }));
-      check('Unmute from the keyboard keeps the focus in the player, on its Play/Pause (review RL-4: it fell to the page)', !kb.muted && kb.active === 'musicMiniPlay', kb);
+      check('Unmute from the keyboard keeps the focus in the player, on its Play/Pause (review RL-4: it fell to the page)', !kb.muted && kb.active === 'musicNowPlay', kb);
       check('stored World mute, listen: no script errors', errors.length === 0, errors);
       await context.close();
     }
@@ -702,7 +703,8 @@ try {
       await page.waitForFunction(() => { const d = document.getElementById('deck'); return !d.paused && d.currentTime > .3; }, null, { timeout: 15000 });
       check('stored World mute: the album deck is not silenced by it', !(await deckUi(page)).muted);
       await page.evaluate(() => { document.getElementById('deck').muted = true; });
-      const sound = page.locator('#deckSound');
+      await page.locator('.appbar [data-app-player="open"]').click();
+      const sound = page.locator('#nowSound');
       await sound.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
       const box = await sound.boundingBox();
       check('a muted deck says Muted and shows its own Unmute (44 px)', /^Muted · /.test((await deckUi(page)).time) && box && box.height >= 44 && box.width >= 44, { time: (await deckUi(page)).time, box });
@@ -711,10 +713,10 @@ try {
       await sound.click();
       check('Unmute brings the deck\'s sound back', !(await deckUi(page)).muted && !(await sound.isVisible()));
       await page.evaluate(() => { document.getElementById('deck').muted = true; });
-      await page.waitForFunction(() => !document.getElementById('deckSound').hidden);
-      await page.focus('#deckSound'); await page.keyboard.press('Enter');
+      await page.waitForFunction(() => !document.getElementById('nowSound').hidden);
+      await page.focus('#nowSound'); await page.keyboard.press('Enter');
       const kb = await page.evaluate(() => ({ muted: document.getElementById('deck').muted, active: document.activeElement && (document.activeElement.id || document.activeElement.tagName) }));
-      check('album: Unmute from the keyboard keeps the focus in the player, on its Play/Pause (review RL-4)', !kb.muted && kb.active === 'tpPlay', kb);
+      check('album: Unmute from the keyboard keeps the focus in the player, on its Play/Pause (review RL-4)', !kb.muted && kb.active === 'nowPlay', kb);
       check('stored World mute, album: no script errors', errors.length === 0, errors);
       await context.close();
     }
@@ -800,7 +802,7 @@ try {
       const before = await ui();
       check(`${where}: while it is picked up again the one button is Pause (review PB-R3: only Play, which tried again at once)`, before.button === 'Pause', before);
       const clickAt = Date.now();
-      await page.click(where === 'listen' ? '#musicMiniPlay' : '#tpPlay');
+      await page.click('.appbar [data-app-player="play"]');
       down = false;                                    // the network comes back
       await sleep(10000);
       const after = await ui();
@@ -858,7 +860,7 @@ try {
       const { context, page, errors } = await setup({ width });
       await albumPlay(page);
       await page.waitForFunction(() => { const d = document.getElementById('deck'); return !d.paused && d.currentTime > .3; }, null, { timeout: 15000 });
-      await page.locator('.deckbar__meta').click();
+      await page.locator('.appbar [data-app-player="open"]').click();
       await sleep(700);
       await page.evaluate(() => { document.getElementById('deck').muted = true; });
       await page.waitForFunction(() => !document.getElementById('nowSound').hidden, null, { timeout: 5000 }).catch(() => {});
@@ -1026,72 +1028,68 @@ try {
     }
   });
 
-  /* verification V-3: on listen.html the bar's middle button kept its play triangle while a song played (the engine never
-     sent mcc:nowplaying), and a tap scrolled to the top */
-  await scenario('listen page: the bar\'s middle button shows what plays and drives the engine, as on the album', async () => {
+  await scenario('listen page: the bar\'s right-hand button shows what plays and drives the engine, as on the album', async () => {
     const song = 'who-did-the-shoot.mp3';
     const fault = drop({ match: k => k === song, first: { cut: 480000 }, hold: 9000, down: 60000 });
     const { context, page, errors, reads } = await setup({ width: 390, deliver: fault.deliver });
     await page.goto(HOUSE + '/listen.html', { waitUntil: 'load' });
     const wdts = await findSong(page, 'here', 'Who Did The Shoot');
-    const tab = () => page.evaluate(() => { const t = document.querySelector('.appbar [data-appnav="music"]'); return { sound: !!t && t.classList.contains('is-sound'), y: Math.round(scrollY) }; });
+    const tab = () => page.evaluate(() => { const t = document.querySelector('.appbar [data-app-player="play"]'); return { sound: !!t && t.getAttribute('aria-label') === 'Pause music', y: Math.round(scrollY) }; });
     const engine = () => page.evaluate(() => ({ paused: MCC_MUSIC.audio.paused, button: document.getElementById('musicMiniPlay').getAttribute('aria-label'), state: MCC_MUSIC.delivery().state }));
-    /* review RF-3: what a keyboard or a screen reader is told about the tab (its role and name, as the browser computes
+    /* review RF-3: what a keyboard or a screen reader is told about the transport (its role and name, as the browser computes
        them); the play triangle and the pause glyph are drawn in CSS, which assistive technology does not read */
-    const told = async () => { const s = await page.locator('.appbar [data-appnav="music"]').ariaSnapshot(); const m = /^- (\w+) "([^"]*)"/.exec(s.trim()); return m ? `${m[1]} "${m[2]}"` : s; };
-    check('listen, nothing chosen: the middle button shows its play triangle', !(await tab()).sound);
-    check('listen, nothing chosen: the bar\'s Music tab is told as link "Music" (a tap scrolls to the top)', await told() === 'link "Music"', await told());
+    const told = async () => { const s = await page.locator('.appbar [data-app-player="play"]').ariaSnapshot(); const m = /^- (\w+) "([^"]*)"/.exec(s.trim()); return m ? `${m[1]} "${m[2]}"` : s; };
+    check('listen, nothing chosen: Music is a navigation link and there is no dock playback button',
+      await page.getByRole('link', { name: 'Music', exact: true }).and(page.locator('.appbar a[data-appnav="music"]')).count() === 1 &&
+      !(await page.locator('.appbar [data-app-player="play"]').isVisible()));
     await wdts.click();
     await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3, null, { timeout: 15000 });
-    await page.waitForFunction(() => document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 3000 }).catch(() => {});
-    check('listen, a song playing: the middle button shows Pause, as on the album', (await tab()).sound, await tab());
-    check('listen, a song playing: the bar\'s Music tab is told as "Pause music", what a tap does (it was link "Music")', await told() === 'link "Pause music"', await told());
+    await page.waitForFunction(() => document.querySelector('.appbar [data-app-player="play"]').getAttribute('aria-label') === 'Pause music', null, { timeout: 3000 }).catch(() => {});
+    check('listen, a song playing: the right-hand button shows Pause, as on the album', (await tab()).sound, await tab());
+    check('listen, a song playing: the bar\'s Play/Pause button is told as "Pause music", what a tap does', await told() === 'button "Pause music"', await told());
     /* instant, as the next scenario does: the page's html{scroll-behavior:smooth} turned scrollTo(0, 300) into a glide of
        about a third of a second from where the row's click left it (769 here), and CI read the place mid-glide (311), then
        300 after the tap, as if the tap had moved the page */
     await page.evaluate(() => window.scrollTo({ top: 300, behavior: 'instant' }));
     await sleep(300);
     const before = await tab();
-    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.locator('.appbar [data-app-player="play"]').click();
     await page.waitForFunction(() => MCC_MUSIC.audio.paused, null, { timeout: 3000 }).catch(() => {});
     await sleep(400);
     const paused = await engine(), after = await tab();
-    check('listen: a tap on it pauses the song, as on the album (it scrolled to the top and the song played on)',
+    check('listen: a tap on it pauses the song, as on the album without scrolling',
       paused.paused && paused.button === 'Play' && !after.sound && after.y === before.y, { paused, before, after });
-    check('listen, paused from the bar: the Music tab is told as "Play music"', await told() === 'link "Play music"', await told());
-    await page.locator('.appbar [data-appnav="music"]').click();
+    check('listen, paused from the bar: the Play/Pause button is told as "Play music"', await told() === 'button "Play music"', await told());
+    await page.locator('.appbar [data-app-player="play"]').click();
     /* play() unpauses the element at once; the bar hears of it from the element's play event, a moment later */
-    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 5000 }).catch(() => {});
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && document.querySelector('.appbar [data-app-player="play"]').getAttribute('aria-label') === 'Pause music', null, { timeout: 5000 }).catch(() => {});
     const again = await engine(), againTab = await tab();
     check('listen: a second tap plays it again, and the button says so', !again.paused && againTab.sound, { again, tab: againTab });
-    check('listen, played again from the bar: the Music tab is told as "Pause music"', await told() === 'link "Pause music"', await told());
+    check('listen, played again from the bar: the Play/Pause button is told as "Pause music"', await told() === 'button "Pause music"', await told());
     await page.waitForFunction(() => MCC_MUSIC.delivery().state === 'reconnecting', null, { timeout: 20000 }).catch(() => {});
     const down = await engine();
-    check('listen, the song being picked up again: the middle button is Pause, as the mini player\'s is', down.state === 'reconnecting' && down.button === 'Pause' && (await tab()).sound, { down, tab: await tab() });
-    check('listen, the song being picked up again: the Music tab is told as "Pause music", as the mini player\'s button is', await told() === 'link "Pause music"', await told());
-    await page.locator('.appbar [data-appnav="music"]').click();
+    check('listen, the song being picked up again: the right-hand button is Pause, as the mini player\'s is', down.state === 'reconnecting' && down.button === 'Pause' && (await tab()).sound, { down, tab: await tab() });
+    check('listen, the song being picked up again: the Play/Pause button is told as "Pause music", as the mini player\'s button is', await told() === 'button "Pause music"', await told());
+    await page.locator('.appbar [data-app-player="play"]').click();
     await sleep(300);
     const n = reads.length;
     await sleep(3500);
     const stopped = await engine();
     check('listen: its tap stops the tries (nothing more is read) and it shows Play', stopped.paused && stopped.button === 'Play' && !(await tab()).sound && reads.length === n,
       { stopped, reads: reads.slice(n).map(q => q.key + '@' + q.start) });
-    check('listen, the tries stopped from the bar: the Music tab is told as "Play music"', await told() === 'link "Play music"', await told());
+    check('listen, the tries stopped from the bar: the Play/Pause button is told as "Play music"', await told() === 'button "Play music"', await told());
     check('listen, the bar\'s button: no script errors', errors.length === 0, errors);
     await context.close();
   });
 
-  /* review RF-3: on listen.html the bar's Music tab plays and pauses the song, and a keyboard or a screen reader was told
-     link "Music" (to listen.html) whatever it did. Its name now says what a tap does, in the words of the installed app's
-     dock and the World's transport; with the World open over the player the tab is the way back to the music (the
-     World's own handler closes it), never the player's Pause, so it keeps its own name there */
-  await scenario('listen page: the bar\'s Music tab tells a keyboard and a screen reader what a tap does (Enter, and the World over the player)', async () => {
+  /* Keyboard and World navigation must preserve the same audio owner and the correct control labels. */
+  await scenario('listen page: the bar\'s Play/Pause button tells a keyboard and a screen reader what a tap does (Enter, and the World over the player)', async () => {
     const { context, page, errors } = await setup({ width: 390 });
-    const told = async () => { const s = await page.locator('.appbar [data-appnav="music"]').ariaSnapshot(); const m = /^- (\w+) "([^"]*)"/.exec(s.trim()); return m ? `${m[1]} "${m[2]}"` : s; };
+    const told = async () => { const s = await page.locator('.appbar [data-app-player="play"]').ariaSnapshot(); const m = /^- (\w+) "([^"]*)"/.exec(s.trim()); return m ? `${m[1]} "${m[2]}"` : s; };
     const state = () => page.evaluate(() => ({ paused: MCC_MUSIC.audio.paused, mini: document.getElementById('musicMiniPlay').getAttribute('aria-label'),
-      focus: document.activeElement === document.querySelector('.appbar [data-appnav="music"]'), y: Math.round(scrollY) }));
+      focus: document.activeElement === document.querySelector('.appbar [data-app-player="play"]'), y: Math.round(scrollY) }));
     await listenPlay(page);
-    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3 && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 15000 });
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3 && document.querySelector('.appbar [data-app-player="play"]').getAttribute('aria-label') === 'Pause music', null, { timeout: 15000 });
     // Search results can be shorter than 300 scrollable pixels. Use a reachable interior position
     // so a jump to either the top or the bottom fails, even with a single matching song.
     const position = await page.evaluate(() => {
@@ -1101,84 +1099,80 @@ try {
       return target;
     });
     const beforeFocus = await state();
-    check('listen, before focusing the Music tab: the results have scrolled to an interior position',
+    check('listen, before focusing the Play/Pause button: the results have scrolled to an interior position',
       position > 0 && beforeFocus.y === position, { position, beforeFocus });
-    await page.locator('.appbar [data-appnav="music"]').focus();
-    check('listen, keyboard on the Music tab while a song plays: it is told as "Pause music"', await told() === 'link "Pause music"', await told());
+    await page.locator('.appbar [data-app-player="play"]').focus();
+    check('listen, keyboard on the Play/Pause button while a song plays: it is told as "Pause music"', await told() === 'button "Pause music"', await told());
     await page.keyboard.press('Enter');
-    await page.waitForFunction(() => MCC_MUSIC.audio.paused && !document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 5000 }).catch(() => {});
+    await page.waitForFunction(() => MCC_MUSIC.audio.paused && document.querySelector('.appbar [data-app-player="play"]').getAttribute('aria-label') === 'Play music', null, { timeout: 5000 }).catch(() => {});
     const paused = await state();
-    check('listen, Enter on the Music tab: the song pauses, the page stays where it was and the focus on the tab, now told as "Play music"',
-      paused.paused && paused.mini === 'Play' && paused.focus && paused.y === position && await told() === 'link "Play music"', { paused, told: await told() });
+    check('listen, Enter on the Play/Pause button: the song pauses, the page stays where it was and the focus on the button, now told as "Play music"',
+      paused.paused && paused.mini === 'Play' && paused.focus && paused.y === position && await told() === 'button "Play music"', { paused, told: await told() });
     await page.keyboard.press('Enter');
-    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 5000 }).catch(() => {});
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && document.querySelector('.appbar [data-app-player="play"]').getAttribute('aria-label') === 'Pause music', null, { timeout: 5000 }).catch(() => {});
     const playing = await state();
-    check('listen, Enter again: the song plays in place and the tab is told as "Pause music"', !playing.paused && playing.focus && playing.y === position && await told() === 'link "Pause music"', { playing, told: await told() });
+    check('listen, Enter again: the song plays in place and the button is told as "Pause music"', !playing.paused && playing.focus && playing.y === position && await told() === 'button "Pause music"', { playing, told: await told() });
     await page.waitForFunction(() => !!window.MCC_WORLD_AUDIO, null, { timeout: 15000 });
     await page.locator('.appbar [data-appnav="world"]').click();
     await page.waitForFunction(() => window.MCC_WORLD_AUDIO.active(), null, { timeout: 5000 }).catch(() => {});
     await sleep(300);
-    check('listen with the World open over it: the Music tab is told as link "Music" (a tap goes back to the music, it pauses nothing)',
-      await page.evaluate(() => window.MCC_WORLD_AUDIO.active()) && await told() === 'link "Music"', await told());
-    await page.locator('.appbar [data-appnav="music"]').click();
-    await page.waitForFunction(() => !window.MCC_WORLD_AUDIO.active(), null, { timeout: 5000 }).catch(() => {});
-    await sleep(300);
+    const music = page.locator('.appbar a[data-appnav="music"]');
+    check('listen with the World open: Music is a navigation link, not a playback action',
+      await page.evaluate(() => window.MCC_WORLD_AUDIO.active()) && /^- link "Music"/.test((await music.ariaSnapshot()).trim()));
+    await music.click();
+    await page.waitForFunction(() => !window.MCC_WORLD_AUDIO.active(), null, { timeout: 5000 });
     const back = { world: await page.evaluate(() => window.MCC_WORLD_AUDIO.active()), told: await told(), ...(await state()) };
-    check('listen, back from the World with the song still playing: the Music tab is the player\'s Pause again', !back.world && !back.paused && back.told === 'link "Pause music"', back);
-    check('listen, the Music tab\'s name: the page fits the screen', await fits(page));
-    check('listen, the Music tab\'s name: no script errors', errors.length === 0, errors);
+    check('listen, back from the World: the song keeps playing and the right-hand control offers Pause',
+      !back.world && !back.paused && back.told === 'button "Pause music"', back);
+    check('listen, the Play/Pause button\'s name: the page fits the screen', await fits(page));
+    check('listen, the Play/Pause button\'s name: no script errors', errors.length === 0, errors);
     await context.close();
   });
 
-  /* PR #825's CI (a Release 1 follow-up to 3f12e039, which fixed the bar): the check above failed on a busy runner. The
-     second Enter reached the page before the first one's queued media events and the bar's look for an answer (a 0 ms
-     timer in js/tabbar.js's transport()); the first Enter's late timeupdate told the bar the song played again, and then
-     that look saw the value it started from, took it for no answer and said "nothing is playing". The song played on
-     under a tab that said "Play music", and a tap on it did nothing. Here the two taps reach the page in one task, and the
-     first tap's queued timeupdate is run in that task too, so the player has said the song plays again before either
-     look can run: CI's order, every time. */
-  await scenario('listen page: two taps on the Music tab before the page has run the first one\'s queued work leave the tab saying what the player does', async () => {
+  /* Preserve the rapid double-toggle check with a stale media event in between renders. */
+  await scenario('listen page: two taps on the Play/Pause button before the page has run the first one\'s queued work leave the button saying what the player does', async () => {
     const { context, page, errors } = await setup({ width: 390 });
     const state = () => page.evaluate(() => {
-      const t = document.querySelector('.appbar [data-appnav="music"]');
+      const t = document.querySelector('.appbar [data-app-player="play"]');
       return { paused: MCC_MUSIC.audio.paused, mini: document.getElementById('musicMiniPlay').getAttribute('aria-label'),
-        sound: t.classList.contains('is-sound'), label: t.getAttribute('aria-label') };
+        sound: t.getAttribute('aria-label') === 'Pause music', label: t.getAttribute('aria-label') };
     });
     await listenPlay(page);
-    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3 && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 15000 });
+    await page.waitForFunction(() => !MCC_MUSIC.audio.paused && MCC_MUSIC.audio.currentTime > .3 && document.querySelector('.appbar [data-app-player="play"]').getAttribute('aria-label') === 'Pause music', null, { timeout: 15000 });
     await page.evaluate(() => {
-      const t = document.querySelector('.appbar [data-appnav="music"]');
+      const t = document.querySelector('.appbar [data-app-player="play"]');
       t.click();                                                  // Pause: the player answers at once
       t.click();                                                  // Play, before the first tap's queued work has run
-      MCC_MUSIC.audio.dispatchEvent(new Event('timeupdate'));     // the first tap's queued timeupdate, ahead of its look
+      MCC_MUSIC.audio.dispatchEvent(new Event('timeupdate'));     // a media event from the first tap arrives late
     });
     await sleep(1000);
     const now = await state();
-    check('listen, two taps on the Music tab in one moment: the song plays again and the tab shows and says "Pause music", as the mini player does',
+    check('listen, two taps on the Play/Pause button in one moment: the song plays again and the button shows and says "Pause music", as the mini player does',
       !now.paused && now.mini === 'Pause' && now.sound && now.label === 'Pause music', now);
     await sleep(2500);
     const later = await state();
-    check('listen, two taps on the Music tab in one moment, 2.5 s later: still "Pause music" while the song plays',
+    check('listen, two taps on the Play/Pause button in one moment, 2.5 s later: still "Pause music" while the song plays',
       !later.paused && later.mini === 'Pause' && later.sound && later.label === 'Pause music', later);
-    await page.locator('.appbar [data-appnav="music"]').click();
+    await page.locator('.appbar [data-app-player="play"]').click();
     await page.waitForFunction(() => MCC_MUSIC.audio.paused, null, { timeout: 3000 }).catch(() => {});
     await sleep(300);
     const paused = await state();
-    check('listen, then one more tap on the Music tab pauses the song (it was a Play that did nothing over a playing song)',
+    check('listen, then one more tap on the Play/Pause button pauses the song (it was a Play that did nothing over a playing song)',
       paused.paused && paused.mini === 'Play' && !paused.sound && paused.label === 'Play music', paused);
-    check('listen, two taps on the Music tab in one moment: no script errors', errors.length === 0, errors);
+    check('listen, two taps on the Play/Pause button in one moment: no script errors', errors.length === 0, errors);
     await context.close();
   });
 
-  /* review RF-3, the other side: where the tab still opens the shelf it keeps its own name, even while a song plays and
-     the tab shows the pause glyph (on the album a tap opens listen.html) */
-  await scenario('album: while a song plays, the bar\'s Music tab keeps its own name (a tap there opens the shelf)', async () => {
+  await scenario('album: Music stays a navigation link alongside the right-hand Pause button', async () => {
     const { context, page, errors } = await setup({ width: 390 });
     await albumPlay(page);
-    await page.waitForFunction(() => !document.getElementById('deck').paused && document.querySelector('.appbar [data-appnav="music"]').classList.contains('is-sound'), null, { timeout: 15000 });
-    const s = await page.locator('.appbar [data-appnav="music"]').ariaSnapshot();
-    check('album, a song playing: the bar\'s Music tab is told as link "Music", not as a Pause it is not', /^- link "Music"/.test(s.trim()), s);
-    check('album, the bar\'s Music tab: no script errors', errors.length === 0, errors);
+    await page.waitForFunction(() => !document.getElementById('deck').paused);
+    const dock = page.locator('.appbar');
+    await dock.getByRole('button', { name: 'Pause music', exact: true }).waitFor();
+    check('album, a song playing: Music and Pause are separate controls',
+      await dock.getByRole('link', { name: 'Music', exact: true }).count() === 1 &&
+      await dock.getByRole('button', { name: 'Pause music', exact: true }).count() === 1);
+    check('album, the navigation link and transport: no script errors', errors.length === 0, errors);
     await context.close();
   });
 
