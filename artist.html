@@ -44,6 +44,7 @@
   <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="css/profile-music.css?v=__STAMP__">
 </head>
 <body class="songpage music-room music-room--listen music-v2">
   <main class="ls">
@@ -77,6 +78,7 @@
 
     <!-- EVERYTHING THEY APPEAR ON, grouped by what they did: their own tracks, the ones they are on, the ones they
          produced, any other stated credit. Each row plays in the one player and opens its album. -->
+    <section class="pmusic" id="artistProfile" aria-label="Profile" hidden></section>
     <div id="artistSections"></div>
 
     <p class="ls__note">Credits are the catalogue's own, read from one record per track.
@@ -110,6 +112,7 @@
   <script src="js/music-engine.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script src="js/music-credits.js?v=__STAMP__"></script>
+  <script src="js/profile-music.js?v=__STAMP__"></script>
   <script src="js/music-artist.js?v=__STAMP__"></script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
   <script src="js/control-room/nav.js?v=__STAMP__"></script>

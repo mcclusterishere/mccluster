@@ -66,7 +66,7 @@
         html: items.map(function (x) { return row(doc, x); }).join("") };
     }).filter(function (s) { return s.count > 0; });
     return {
-      slug: artist.slug, name: artist.name, kind: artist.kind, initial: initialOf(artist.name), total: total,
+      slug: artist.slug, name: artist.name, kind: artist.kind, explicitHandle: artist.kind === "person" ? artist.handle || "" : "", initial: initialOf(artist.name), total: total,
       /* their own page, when they have one (data/albums.json artists[].page, a same-site .html file) */
       page: /^[a-z0-9-]+\.html$/.test(artist.page || "") ? artist.page : "",
       summary: label + " · on " + total + (total === 1 ? " track" : " tracks") + " in the McCluster catalogue",
@@ -76,21 +76,15 @@
 
   root.MCC_ARTIST_VIEW = { view: view, GROUPS: GROUPS };
 
-  /* the catalogue artist a creator profile is, by handle or by name: the same rule the Artists row merges on
-     (js/music-community.js), so a card that opens a creator's page still leads to everything they appear on */
-  function same(x) { return String(x || "").toLowerCase().replace(/[^a-z0-9À-ɏ]+/g, ""); }
-  function artistFor(doc, handle, name) {
-    var found = null;
-    ((doc && doc.artists) || []).forEach(function (a) {
-      if (found || !a || !a.slug) return;
-      if (root.MCC_CREDITS.equityCredit(doc, a.slug)) {
-        if (a.handle && a.handle.toLowerCase() === String(handle || "").toLowerCase()) found = a;
-        return;
-      }
-      var h = same(handle);
-      if ((h && (h === same(a.slug) || (a.handle && h === same(a.handle)))) || (name && same(name) === same(a.name))) found = a;
+  /* Explicit catalogue handle only: artist names are editable and a match
+     is not proof that the account owns the recorded credits. */
+  function artistFor(doc, handle) {
+    var h = String(handle || "").toLowerCase();
+    if (!h) return null;
+    var matches = ((doc && doc.artists) || []).filter(function (a) {
+      return a && a.slug && a.kind === "person" && a.handle && a.handle.toLowerCase() === h;
     });
-    return found;
+    return matches.length === 1 ? matches[0] : null;
   }
 
   root.MCC_ARTIST_VIEW.artistFor = artistFor;
@@ -192,6 +186,11 @@
     el("artistPic").textContent = v.initial;
     el("artistSummary").textContent = v.summary + ".";
     el("artistCreditBadge").hidden = !v.equityCredit;
+    if (v.explicitHandle && root.MCC_PROFILE_MUSIC) {
+      var showAccount = function () { root.MCC_PROFILE_MUSIC.showProfile(el("artistProfile"), "", v.explicitHandle); };
+      showAccount();
+      if (root.MCC?.onAccountChange) root.MCC.onAccountChange(showAccount);
+    }
     if (v.page) {
       var own = el("artistOwn");
       own.href = v.page;

@@ -64,7 +64,9 @@ function render(data){
      their own page (the bar keeps following whoever they look at) */
   $('mfBuild').hidden=!mine;
   $('mfBack').hidden=mine||!self;
-  void frontPage(personId,name,mine);
+  Promise.resolve(window.MCC_PROFILE_MUSIC?.showMusic($('mfMusic'),data)).catch(()=>false).then(hasMusic=>{
+    if(record===data) return frontPage(personId,name,mine,hasMusic);
+  });
   $('mfOwnerPanel').hidden=!mine;
   $('mfDriverPanel').hidden=true;
   $('mfWhip').hidden=true;
@@ -79,7 +81,7 @@ function render(data){
 }
 
 /* the published front page of this person, if there is one (GET /v1/fronts/:handle is public) */
-async function frontPage(personId,name,mine){
+async function frontPage(personId,name,mine,hasMusic=false){
   $('mfFront').hidden=true;
   try{
     const r=await fetch('https://api.mccluster.org/v1/fronts/'+encodeURIComponent(personId),{headers:{accept:'application/json'},credentials:'omit'});
@@ -88,7 +90,7 @@ async function frontPage(personId,name,mine){
     const url='front.html?u='+encodeURIComponent(personId);
     $('mfFront').href=url;$('mfFront').textContent=(mine?'My front page':'Enter '+name+'\u2019s front page')+' \u2197';$('mfFront').hidden=false;
     if(mine)$('mfBuild').textContent='Edit my front page';
-    else if(query.get('card')!=='1')location.replace(url);
+    else if(!hasMusic&&query.get('card')!=='1')location.replace(url);
   }catch{/* no front page, or it cannot be read: the card stays */}
 }
 $('mfBack').onclick=()=>{
@@ -185,6 +187,7 @@ window.addEventListener('mcc:auth-changed',()=>{
   if(!window.MCC?.session?.()?.access_token) {
     ++sessionEpoch;
     self=null;identity=null;record=null;
+    window.MCC_PROFILE_MUSIC?.clear($('mfMusic'));
     $('mfCustomize').hidden=true;$('mfOwnerPanel').hidden=true;$('mfDriverPanel').hidden=true;$('mfWhip').hidden=true;$('mfOperatorPanel').hidden=true;
     message('Signed out. Your private editing controls are no longer available.');
     return;

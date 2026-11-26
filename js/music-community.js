@@ -40,7 +40,7 @@
   /* EVERY CREDITED ARTIST HAS AN ENTRY. Owner, 2026-11-24: an artist who is credited on any track, featured
      artists included, is in this row, and opening one shows everything they appear on. The catalogue's artists come
      from data/albums.json through js/music-credits.js (roster: on at least one track); a creator profile with the
-     same handle or the same name is the same artist, drawn once, with their own page and picture. An artist with
+     only an explicit catalogue handle links an artist to an account page. An artist with
      no profile opens the artist view (artist.html) and shows their initial, never a mark drawn for them. */
   var ROSTER = [], PRODUCERS = [];
   function creditBadge(on) {
@@ -49,14 +49,11 @@
   var PROFILES = [];
   function same(x) { return String(x || "").toLowerCase().replace(/[^a-z0-9À-ɏ]+/g, ""); }
   function profileOf(a, profiles) {
-    var found = null;
-    for (var i = 0; i < profiles.length && !found; i++) {
-      var p = profiles[i];
-      if (!p || !p.handle) continue;
-      var h = same(p.handle);
-      if (h === same(a.slug) || (a.handle && h === same(a.handle)) || (p.artist_name && same(p.artist_name) === same(a.name))) found = p;
-    }
-    return found;
+    if (!a.handle) return null;
+    var matches = profiles.filter(function (p) {
+      return p && p.handle && String(p.handle).toLowerCase() === String(a.handle).toLowerCase();
+    });
+    return matches.length === 1 ? matches[0] : null;
   }
   function catalogueCard(a) {
     return '<a class="artist" href="' + attr(a.href) + '" data-name="' + attr(a.name) + '">' +
@@ -107,9 +104,7 @@
       var available = (profiles || []).filter(function (x) {
         return x && x.handle && String(x.handle).toLowerCase() !== HOUSE_HANDLE && !shown[String(x.handle).toLowerCase()];
       });
-      var p = a.equityCredit
-        ? available.find(function (x) { return a.handle && a.handle.toLowerCase() === x.handle.toLowerCase(); })
-        : profileOf(a, available);
+      var p = profileOf(a, available);
       /* An editable account name can match a recording artist. Only a catalogue-linked handle
          may carry their release badge to an account page. Otherwise open the catalogue entry. */
       if (p) {

@@ -1,0 +1,11 @@
+.pmusic[hidden] { display: none; }
+.pmusic { display: grid; gap: .65rem; margin-block: 1.25rem; padding: 1rem; min-width: 0;
+  border: 1px solid currentColor; border-radius: 1rem; overflow-wrap: anywhere; }
+.pmusic h2, .pmusic p, .pmusic ul { margin: 0; }
+.pmusic p { white-space: pre-wrap; }
+.pmusic ul { list-style: none; padding: 0; }
+.pmusic li { display: grid; grid-template-columns: minmax(0, 1fr); gap: .15rem; }
+.pmusic li + li { border-top: 1px solid color-mix(in srgb,currentColor 22%,transparent); }
+.pmusic small { padding-block-end: .5rem; }
+.pmusic a { display: flex; align-items: center; width: fit-content; min-height: 44px; max-width: 100%;
+  text-decoration: underline; text-underline-offset: .2em; }

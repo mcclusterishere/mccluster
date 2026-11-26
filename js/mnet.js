@@ -757,7 +757,7 @@
         if(publicHandle && /^[a-z0-9][a-z0-9._-]{2,39}$/.test(publicHandle.toLowerCase()) && !state.guest)openPerson(publicHandle.toLowerCase());
       } catch (_) {}
       /* A deep link to a mission or a group wins over the first-run tour. */
-      if (!/[?&](mission|group|view)=/.test(location.search) && window.MCC_TOUR && window.MCC_TOUR.autoStart) window.MCC_TOUR.autoStart(boot);
+      if (!/[?&](mission|group|view|profile)=/.test(location.search) && window.MCC_TOUR && window.MCC_TOUR.autoStart) window.MCC_TOUR.autoStart(boot);
       if (window.MCC_LIVE) window.MCC_LIVE.start();
       return loadFeed(true).then(function () { loadNotificationsSilently(); refreshMessageBadge(); });
     });
@@ -3280,14 +3280,17 @@
     if(decline)decline.onclick=function(){decline.disabled=true;sbRpc("answer_connection",{p_connection_id:c.id,p_accept:false}).then(done).catch(function(){decline.disabled=false;});};
   }
 
+  var personProfileEpoch=0;
   function openPerson(handle) {
     if(!handle)return;
+    var epoch=++personProfileEpoch;
     try { history.replaceState(null,"","mnet.html?profile="+encodeURIComponent(handle)); } catch (_) {}
     var dlg=$("mnPersonDialog"); $("mnPersonBody").innerHTML='<div class="mn__empty">Loading profile…</div>'; dlg.showModal();
     Promise.all([
       api("/v1/mnet/people/"+encodeURIComponent(handle)),
       api("/v1/mnet/people/"+encodeURIComponent(handle)+"/posts?limit=20")
     ]).then(function (all) {
+      if(epoch!==personProfileEpoch)return;
       var data=all[0], posts=all[1].posts||[], p=data.profile||{}, id=data.identity||{}, presentation=data.presentation||{}, name=p.display_name||id.display_name||id.mccluster_id||"Member";
       /* One shared center-tab perspective for every member, not only artists.
          The public record from the API supplies the canonical name and image. */
@@ -3303,7 +3306,8 @@
         (p.headline?'<p class="mn__profile-headline">'+esc(p.headline)+'</p>':'')+(p.bio?'<p class="mn__profile-bio">'+esc(p.bio)+'</p>':'')+
         '<div class="mn__profile-counts"><span><strong>'+Number(data.counts&&data.counts.followers||0)+'</strong> followers</span><span><strong>'+Number(data.counts&&data.counts.following||0)+'</strong> following</span><span><strong>'+Number(data.counts&&data.counts.posts||0)+'</strong> posts</span></div>'+
         '<div class="mn__person-actions"><button class="is-primary" type="button" id="mnPersonFollow">'+(data.following?"Following":"Follow")+'</button>'+connectButtonHtml(data.connection)+'<button type="button" id="mnPersonMessage">Message</button><button type="button" id="mnPersonMute">'+(data.muted?"Unmute":"Mute")+'</button><button type="button" class="mn__danger" id="mnPersonBlock">Block</button><button type="button" id="mnPersonReport">Report</button></div>'+
-        '<div class="mn__person-posts" id="mnPersonPosts">'+(posts.length?posts.map(function(x){return postCard(x);}).join(""):'<div class="mn__empty">No posts yet.</div>')+'</div></div></div>';
+        '<section class="pmusic" id="mnPersonMusic" aria-label="Music" hidden></section><div class="mn__person-posts" id="mnPersonPosts">'+(posts.length?posts.map(function(x){return postCard(x);}).join(""):'<div class="mn__empty">No posts yet.</div>')+'</div></div></div>';
+      if(window.MCC_PROFILE_MUSIC) window.MCC_PROFILE_MUSIC.showMusic($("mnPersonMusic"),data).catch(function(){});
       bindFeedActions($("mnPersonPosts"));
       if(p.m_uid){
         sbRpc("antisocial_public_collaborations",{p_member_m_uid:p.m_uid}).then(function(credits){
@@ -3320,7 +3324,7 @@
       $("mnPersonMute").onclick=function(){api("/v1/mnet/people/"+encodeURIComponent(handle)+"/mute",{method:data.muted?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
       $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Equity Uprise."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
       $("mnPersonReport").onclick=function(){var details=prompt("What should the moderators know?","");if(details===null)return;api("/v1/mnet/reports",{method:"POST",body:{target_type:"profile",target_id:data.profile&&data.profile.m_uid||id.mccluster_id,reason:"other",details:details}}).then(function(){alert("Report submitted.");});};
-    }).catch(function (e) { $("mnPersonBody").innerHTML='<div class="mn__empty">'+esc(e.message||"Could not load profile.")+'</div>'; });
+    }).catch(function (e) { if(epoch!==personProfileEpoch)return; $("mnPersonBody").innerHTML='<div class="mn__empty">'+esc(e.message||"Could not load profile.")+'</div>'; });
   }
 
   /* message requests waiting: the Messages badge in the account menu and

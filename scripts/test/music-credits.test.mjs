@@ -362,7 +362,7 @@ test("the Artists row: McCluster first, everybody credited, a profile merged by 
   const roster = C.roster(DOC).filter((a) => a.slug !== "mccluster");
   /* every catalogue artist is in the row, in the registry's order, before the creators the catalogue does not know */
   assert.deepEqual(cards.slice(1, 1 + roster.length).map((c) => c.name), roster.map((a) => a.name));
-  assert.deepEqual(cards.slice(1 + roster.length).map((c) => c.name), ["New Voice", "@ocho", "@anothercreator"]);
+  assert.deepEqual(cards.slice(1 + roster.length).map((c) => c.name), ["@benjichase", "New Voice", "@ocho", "@anothercreator"]);
   /* an artist with no profile: the artist view, their initial, how much they are on */
   const fidel = cards.find((c) => c.name === "Los Fidel");
   assert.deepEqual(fidel, { href: "artist.html?artist=los-fidel", name: "Los Fidel", small: "1 track", img: false, initial: "L" });
@@ -374,9 +374,11 @@ test("the Artists row: McCluster first, everybody credited, a profile merged by 
 
   assert.equal(cards.find((c) => c.name === "Equity Uprise").href, "artist.html?artist=equity-uprise");
   assert.equal(cards.find((c) => c.name === "PRIM3").href, "prim3-artist.html", "an act with its own page opens it");
-  /* an artist with a profile: their own page and picture, once (handle benjichase is slug benji-chase; handle ocho is slug ocho) */
+  /* Unlinked profiles have their own account cards and cannot absorb catalogue credits. */
   const benji = cards.filter((c) => /benji chase/i.test(c.name));
-  assert.deepEqual(benji, [{ href: "music-creator.html?handle=benjichase", name: "Benji Chase", small: "@benjichase", img: true, initial: "" }]);
+  assert.equal(benji.length, 1);
+  assert.equal(benji[0].href, "artist.html?artist=benji-chase");
+  assert.equal(cards.find(c => c.name === "@benjichase").href, "music-creator.html?handle=benjichase");
   assert.equal(cards.find(c => c.name === "@ocho").href, "music-creator.html?handle=ocho");
   assert.equal(cards.find(c => c.name === "@anothercreator").small, "@anothercreator · verified");
   /* nothing is drawn for anybody: a picture is a stored avatar or the supplied M, else a letter */
@@ -447,9 +449,9 @@ test("the artist view renders an artist's appearances, grouped by role, playable
   assert.doesNotMatch(page, /user-scalable=no|maximum-scale=1/);
   /* a creator's own page keeps its page and gains one line to the same list, matched as the Artists row merges */
   const who = (handle, name) => { const a = window.MCC_ARTIST_VIEW.artistFor(DOC, handle, name); return a ? a.slug : null; };
-  assert.equal(who("hitman-benji", ""), "hitman-benji");
-  assert.equal(who("benjichase", ""), "benji-chase", "a handle is its slug without the punctuation");
-  assert.equal(who("bc.official", "Benji Chase"), "benji-chase", "or the same name");
+  assert.equal(who("hitman-benji", ""), null, "an unlinked credit slug is not an account");
+  assert.equal(who("benjichase", ""), null, "punctuation folding cannot authorize a credit");
+  assert.equal(who("bc.official", "Benji Chase"), null, "editable names do not link profiles");
   assert.equal(who("royce.r01", "Royce"), null, "a creator the catalogue does not credit gets no line");
   assert.equal(who("", ""), null);
   assert.equal(who("another-account", "Ocho"), null, "a chosen account display name cannot claim release verification");

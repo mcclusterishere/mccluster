@@ -43,6 +43,7 @@
   <script>(function(){var h=document.documentElement,s=null,q=location.search;try{s=JSON.parse(localStorage.getItem("mccdb_session")||"null")}catch(e){}if(!(s&&s.access_token)&&!/(?:^#|&)mcc_handoff=[^&]/.test(location.hash)){h.classList.add("mn-guest");if(/(?:^\?|&)signin=1(?:&|$)/.test(q))h.classList.add("mn-boot-signin")}else{var v=(/(?:^\?|&)view=([a-z]+)(?:&|$)/.exec(q)||[])[1];if(/^(?:live|clips|discover|groups|messages|profile)$/.test(v||"")&&!/(?:^\?|&)(?:group|mission)=[^&]/.test(q)){h.setAttribute("data-boot-view",v);h.classList.remove("mn-world-on")}}try{if(window.parent!==window&&/(?:^\?|&)mcc_audio=1(?:&|$)/.test(q)){h.classList.add("mn-music-frame");var o=new URL(document.referrer).origin;if(/^https:\/\/(?:matthew\.mccluster\.org|(?:www\.)?mccluster\.org|(?:www\.)?humanuprise\.com)$/.test(o)){var say=function(t){window.parent.postMessage({channel:"mcc-world-audio-v1",type:t},o)};say("alive");new PerformanceObserver(function(l){if(l.getEntriesByName("first-contentful-paint").length)say("painted")}).observe({type:"paint",buffered:true})}}}catch(e){}})();</script>
   <link rel="stylesheet" href="css/docket-cohort-showcase.css?v=__STAMP__"><link rel="stylesheet" href="css/world-news-globe.css?v=__STAMP__">
   <script src="js/live-content.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="css/profile-music.css?v=__STAMP__">
 </head>
 <body class="songpage has-appbar">
   <!-- ONE FEED, MISSIONS IN IT (owner, 2026-11-17: "the missions should low key just be placed in the newsfeed instead of
@@ -796,6 +797,8 @@
   <script src="js/world-environment-timeline.js?v=__STAMP__"></script>
   <script src="js/world-gate.js?v=__STAMP__"></script>
   <script src="js/video-poster.js?v=__STAMP__"></script>
+  <script src="js/music-credits.js?v=__STAMP__"></script>
+  <script src="js/profile-music.js?v=__STAMP__"></script>
   <script src="js/mnet.js?v=__STAMP__"></script>
   <script src="js/mission-source-words.js?v=__STAMP__"></script><script src="js/world-source-profile.js?v=__STAMP__"></script>
   <script src="js/docket-cohort-showcase.js?v=__STAMP__"></script><script src="js/world-news-globe.js?v=__STAMP__"></script>
