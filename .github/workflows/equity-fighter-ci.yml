@@ -1,0 +1,44 @@
+name: Equity Fighter CI
+# The chat layer package (packages/equity-fighter): typecheck and unit tests with
+# mocked adapters, harness and Supabase. Pull requests into main and pushes to
+# main only (AGENTS.md rule 2: no feature-branch push trigger).
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/equity-fighter/**"
+      - "core/capabilities/catalog.json"
+      - "core/src/broker-edge-auth.mjs"
+      - ".github/workflows/equity-fighter-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/equity-fighter/**"
+      - "core/capabilities/catalog.json"
+      - "core/src/broker-edge-auth.mjs"
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: packages/equity-fighter
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Every adapter is off by default
+        run: |
+          set -euo pipefail
+          for p in SLACK TELEGRAM WHATSAPP DISCORD; do
+            grep -Fx "EQUITY_FIGHTER_${p}_ENABLED=false" .env.example
+          done
+          grep -Fx "EQUITY_FIGHTER_ENABLED=false" .env.example
