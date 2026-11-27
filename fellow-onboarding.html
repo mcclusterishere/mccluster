@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head><script src="js/shell-boot.js?v=__STAMP__"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#07080b">
+  <title>Fellow onboarding · Equity Uprise</title>
+  <link rel="canonical" href="https://matthew.mccluster.org/fellow-onboarding.html">
+  <link rel="icon" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/uprise-fellowship.css?v=__STAMP__">
+  <!-- Deferred in order: the private invitation fragment is read and removed
+       before anything else can see the URL (same rule as cohort-claim.html). -->
+  <script src="js/fellow-onboarding.js?v=__STAMP__" defer></script>
+  <script src="js/mcc-auth.js?v=__STAMP__" defer></script>
+  <script src="js/tabbar.js?v=__STAMP__" defer></script>
+</head>
+<body class="uf">
+  <!-- THE FELLOW ONBOARDING FLOW: invitation or request, review by the desk,
+       three onboarding steps, fellow. Every write is a server function in
+       supabase/pending/eu_fellow_onboarding_v1.sql; this page only draws the
+       doors that would open, and the database refuses the rest. Separate from
+       the Action Network fellowship queue and from onboard.html. -->
+  <header class="uf-top">
+    <a class="uf-brand" href="uprise-fellowship.html" aria-label="The Equity Uprise Fellowship">
+      <img src="assets/img/equity-uprise-mark-white.png" alt="" width="34" height="34">
+      <span>EQUITY <span>UPRISE</span></span>
+    </a>
+    <nav aria-label="Fellowship"><a href="uprise-fellowship.html">The fellowship</a><a href="equity-uprise-cohort-2026.html">Cohort 2026</a></nav>
+  </header>
+  <main class="uf-page">
+    <div class="uf-wrap" style="max-width:760px">
+      <p class="uf-seal">By invitation only</p>
+      <p class="uf-kicker">Fellow onboarding</p>
+      <h1>Become a fellow.</h1>
+      <p class="uf-lede" id="foIntro">Open the private link from your invitation, or ask for one when requests are open. Then finish three steps and take your seat in the cohort.</p>
+      <p class="uf-status" id="foStatus" role="status" aria-live="polite">Checking the fellowship desk…</p>
+      <noscript><p class="uf-panel">Onboarding needs JavaScript to reach your M Account. You can still read about <a href="uprise-fellowship.html">the fellowship</a> and <a href="equity-uprise-cohort-2026.html">the 2026 cohort</a>.</p></noscript>
+
+      <section class="uf-panel" id="foInvite" hidden aria-labelledby="foInviteTitle">
+        <h2 id="foInviteTitle">You have an invitation</h2>
+        <p id="foInviteLine">This invitation is for the Equity Uprise 2026 cohort.</p>
+      </section>
+
+      <section class="uf-panel" id="foAccount" hidden aria-labelledby="foAccountTitle">
+        <h2 id="foAccountTitle">Your M Account</h2>
+        <p id="foAccountState">Sign in with the M Account you want to use as a fellow.</p>
+        <form id="foSignIn" class="uf-form">
+          <label>Email<input id="foEmail" type="email" autocomplete="username" required></label>
+          <label>Password<input id="foPassword" type="password" autocomplete="current-password" required></label>
+          <div class="uf-actions"><button class="uf-btn uf-btn--primary" type="submit">Sign in</button><a class="uf-btn" href="account.html" target="_blank" rel="noopener noreferrer">Create an account</a></div>
+        </form>
+      </section>
+
+      <section class="uf-panel" id="foApply" hidden aria-labelledby="foApplyTitle">
+        <h2 id="foApplyTitle">Tell us the change you want to see</h2>
+        <p id="foApplyNote">Your answers go to the desk. A person reads every one.</p>
+        <form id="foApplyForm" class="uf-form">
+          <label>The name you create under<input id="foName" maxlength="120" required></label>
+          <label>What you make <small>Artist, producer, engineer, writer…</small><input id="foDiscipline" maxlength="120"></label>
+          <label>The change you want to see <small>At least 40 characters. What does your community need, and what will you make about it?</small><textarea id="foStatement" minlength="40" maxlength="3000" required></textarea></label>
+          <label>Links to your work <small>Up to five, one per line, each starting with https://</small><textarea id="foLinks" rows="3"></textarea></label>
+          <div class="uf-actions"><button class="uf-btn uf-btn--primary" id="foApplySubmit" type="submit">Send</button></div>
+        </form>
+      </section>
+
+      <section class="uf-panel" id="foState" hidden aria-labelledby="foStateTitle">
+        <h2 id="foStateTitle">Where you are</h2>
+        <p id="foStateLine"></p>
+        <ul class="uf-checks" id="foChecks" hidden>
+          <li data-step="agreement">Fellow agreement</li>
+          <li data-step="intro">Short intro</li>
+          <li data-step="work_plan">Work plan</li>
+        </ul>
+      </section>
+
+      <section class="uf-panel" id="foSteps" hidden aria-labelledby="foStepsTitle">
+        <h2 id="foStepsTitle">Onboarding</h2>
+        <form class="uf-form" data-step="agreement">
+          <p>As a fellow you make original work, credit the people you make it with, keep other people's private information out of it, and treat the cohort with respect. Type <b>I agree</b> to accept.</p>
+          <label>Fellow agreement<input name="value" autocomplete="off" required></label>
+          <div class="uf-actions"><button class="uf-btn uf-btn--primary" type="submit">Accept the agreement</button></div>
+        </form>
+        <form class="uf-form" data-step="intro">
+          <label>Your intro <small>20 to 600 characters. How the cohort and the public will meet you.</small><textarea name="value" minlength="20" maxlength="600" required></textarea></label>
+          <div class="uf-actions"><button class="uf-btn uf-btn--primary" type="submit">Save my intro</button></div>
+        </form>
+        <form class="uf-form" data-step="work_plan">
+          <label>Your work plan <small>40 to 3,000 characters. What you will write, record or make with the cohort.</small><textarea name="value" minlength="40" maxlength="3000" required></textarea></label>
+          <div class="uf-actions"><button class="uf-btn uf-btn--primary" type="submit">Save my work plan</button></div>
+        </form>
+      </section>
+
+      <section class="uf-panel" id="foDesk" hidden aria-labelledby="foDeskTitle">
+        <h2 id="foDeskTitle">The desk</h2>
+        <p class="uf-muted">Only the owner and admins see this. The server checks again on every action.</p>
+        <div class="uf-actions"><button class="uf-btn" id="foToggleRequests" type="button">Open requests</button></div>
+        <form id="foInviteForm" class="uf-form">
+          <label>New invitation for <small>A private note for the desk, such as the person's name</small><input id="foInviteLabel" maxlength="120"></label>
+          <label>Lasts <select id="foInviteDays"><option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option></select></label>
+          <div class="uf-actions"><button class="uf-btn uf-btn--ruby" type="submit">Create invitation link</button></div>
+        </form>
+        <p id="foInviteOut" hidden>Copy this link now. It is shown once and cannot be recovered. <code class="uf-code" id="foInviteLink"></code></p>
+        <h3 style="margin-top:20px">Requests and fellows</h3>
+        <div id="foQueue"></div>
+        <h3 style="margin-top:20px">Invitations</h3>
+        <div id="foInvites"></div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

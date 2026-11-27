@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "_comment": "The 2026 Equity Uprise cohort, mirrored from Cohort 1 (data/action/docket-516r-archive.json). The database rows are seeded by supabase/pending/eu_fellow_onboarding_v1.sql (action_cohorts a8813ab5-f066-47c2-976c-c19581b3cb71 under campaign equity-uprise-003, and eu_fellow_cohorts equity-uprise-2026). fellows stays empty until people accept and finish onboarding; add a person here only with their consent and after the desk confirms them. No members, dates or venues are invented.",
+  "cohort": {
+    "slug": "equity-uprise-2026",
+    "cohort_id": "a8813ab5-f066-47c2-976c-c19581b3cb71",
+    "campaign_id": "equity-uprise-003",
+    "organization_slug": "equity-uprise",
+    "program_name": "Equity Uprise",
+    "title": "Equity Uprise · Cohort 2026",
+    "year": 2026,
+    "status": "forming",
+    "admission": "invite_only",
+    "forms_by": "2026-12-31",
+    "mission_title": "Write the Change",
+    "summary": "The second Equity Uprise cohort: artists, musicians and makers who write the change they want to see, invited into the fellowship before December 31, 2026.",
+    "modeled_on": "docket-516r-2025",
+    "canonical_url": "https://matthew.mccluster.org/equity-uprise-cohort-2026.html",
+    "onboarding_url": "https://matthew.mccluster.org/fellow-onboarding.html"
+  },
+  "fellows": [],
+  "works": [],
+  "event": null
+}

@@ -1,0 +1,42 @@
+{
+  "stage": "P1",
+  "captured_at": "2026-11-26T00:37:00.604Z",
+  "path": "/fellow-onboarding.html",
+  "rows": [
+    {
+      "url": "https://matthew.mccluster.org/fellow-onboarding.html",
+      "status": 404
+    },
+    {
+      "url": "https://here.mccluster.org/fellow-onboarding.html",
+      "status": 301,
+      "location": "https://matthew.mccluster.org/fellow-onboarding.html"
+    },
+    {
+      "url": "https://humanuprise.com/fellow-onboarding.html",
+      "dns": {
+        "google": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        },
+        "cloudflare": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        }
+      }
+    },
+    {
+      "url": "https://www.humanuprise.com/fellow-onboarding.html",
+      "dns": {
+        "google": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        },
+        "cloudflare": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        }
+      }
+    }
+  ]
+}

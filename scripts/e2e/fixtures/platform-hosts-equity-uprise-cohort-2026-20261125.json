@@ -1,0 +1,42 @@
+{
+  "stage": "P1",
+  "captured_at": "2026-11-26T00:37:00.107Z",
+  "path": "/equity-uprise-cohort-2026.html",
+  "rows": [
+    {
+      "url": "https://matthew.mccluster.org/equity-uprise-cohort-2026.html",
+      "status": 404
+    },
+    {
+      "url": "https://here.mccluster.org/equity-uprise-cohort-2026.html",
+      "status": 301,
+      "location": "https://matthew.mccluster.org/equity-uprise-cohort-2026.html"
+    },
+    {
+      "url": "https://humanuprise.com/equity-uprise-cohort-2026.html",
+      "dns": {
+        "google": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        },
+        "cloudflare": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        }
+      }
+    },
+    {
+      "url": "https://www.humanuprise.com/equity-uprise-cohort-2026.html",
+      "dns": {
+        "google": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        },
+        "cloudflare": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        }
+      }
+    }
+  ]
+}
