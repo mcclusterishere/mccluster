@@ -27,6 +27,8 @@ import { prim3AgentNews } from './executors/prim3-agent-news.mjs';
 import { characterPost } from './executors/character-post.mjs';
 import { worldNewsPairing } from './executors/world-news-pairing.mjs';
 import { weatherRegionSnapshot } from './executors/weather-region-snapshot.mjs';
+import { studentOpportunitySnapshot } from './executors/student-opportunity-snapshot.mjs';
+import { JOB_TYPE as STUDENT_OPPORTUNITY_JOB } from './student-opportunities.mjs';
 import { aiDiagnostics } from './executors/ai-diagnostics.mjs';
 import { lyricsAlign } from './executors/lyrics-align.mjs';
 import { stemsSeparate } from './executors/stems-separate.mjs';
@@ -61,6 +63,7 @@ const executors = new Map([
   ['character_post', characterPost],
   ['world_news_pairing', worldNewsPairing],
   ['weather_region_snapshot', weatherRegionSnapshot],
+  [STUDENT_OPPORTUNITY_JOB, studentOpportunitySnapshot],
   ['actor_live_comment', actorLiveComment],
   ['lyrics_align', lyricsAlign],
   ['stems_separate', stemsSeparate],

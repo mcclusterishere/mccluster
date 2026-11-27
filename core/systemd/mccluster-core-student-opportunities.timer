@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily read-only DOE opportunity scan (not enabled by default)
+
+[Timer]
+OnCalendar=*-*-* 13:00:00 UTC
+RandomizedDelaySec=30min
+Persistent=false
+Unit=mccluster-core-student-opportunities.service
+
+[Install]
+WantedBy=timers.target
