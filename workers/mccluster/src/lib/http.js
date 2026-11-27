@@ -33,7 +33,9 @@ export function corsHeaders(request, env) {
   const allowOrigin = origin && allowlist.includes(origin) ? origin : allowlist[0];
   return {
     'access-control-allow-origin': allowOrigin,
-    'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
+    // Only the owner timeline replaces its whole revisioned plan with PUT.
+    'access-control-allow-methods': new URL(request.url).pathname === '/v1/prim3/learning/course-studio/timeline'
+      ? 'GET,PUT,OPTIONS' : 'GET,POST,PATCH,DELETE,OPTIONS',
     'access-control-allow-headers': 'authorization,content-type,x-we-user-id,x-we-role,stripe-signature,x-mccluster-org-id,x-mccluster-trace-id,x-mccluster-parent-span-id',
     'access-control-expose-headers': 'x-mccluster-trace-id,x-mccluster-request-id',
     'access-control-allow-credentials': 'true',

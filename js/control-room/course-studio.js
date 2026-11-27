@@ -137,7 +137,15 @@
         b.append(el('strong',c.title),el('span',label(c)),el('span',(states[c.state]||'Status unknown')+(c.state==='ready'?' · '+progress(c):'')));
         library.append(b);
       });
-      body.replaceChildren(library,createPanel(data),plan(data.cadence));
+      const timeline=button('Degree timeline',()=>{
+        if(!active||busy||!root.CR.degreeTimeline)return;
+        stop(); selected=null; const n=++generation;
+        const mount=el('div',null,'cs-timeline'); body.replaceChildren(mount); note.textContent='';
+        root.CR.degreeTimeline.mount(mount,{call,back:home,openCourse:id=>detail(id,true),valid:()=>valid(n)&&mount.isConnected,
+          denied:e=>failure(e,'Unable to open the timeline.')});
+      });
+      const degree=panel('Plan your degree'); degree.append(el('p','Map classes, exams and credentials to the requirements of each school.'),timeline);
+      body.replaceChildren(degree,library,createPanel(data),plan(data.cadence));
     }
     async function home() {
       stop(); selected=null; const n=++generation; body.replaceChildren(); note.textContent='Loading courses…';

@@ -786,3 +786,48 @@ record. Per-file owner approval is required to apply anything to production.
 With the Worker flag unset/off, promote and verify the Core executor first;
 old runners quarantine unsupported work. Only then review Worker release and
 enabling `COURSE_STUDIO_ENABLED` as separate decisions. No public ports needed.
+
+## Private Credential Timeline (opt-in)
+
+`learning_studio_credential_timeline_v1.sql` is pending, not applied. It adds
+one logged `public.learning_studio_timelines` row per verified house owner
+for a private plan, without a second history table, ops job, score or
+institutional record. It depends only on `auth.users`, `public.orgs` and
+`public.org_members`, not the Course Studio SQL or Core runner. The Worker
+route also reads the existing pending `learning_studio_summary` view for
+linked practice, so Course Studio's schema must be applied before enabling
+the route even though this migration itself can be rehearsed independently.
+
+The only intended service caller is `workers/mccluster/src/prim3/credential-timeline.js`
+at `/v1/prim3/learning/course-studio/timeline`. The Worker gets the owner UUID
+from the verified house-owner session, not from the submitted plan, and uses
+the canonical enabled house org. It scopes the service-only read by that UUID.
+The service-only invoker function `learning_studio_save_timeline` checks the
+house membership again and saves atomically at the expected revision: revision
+0 creates a row at 1, exact revision advances it by 1, and a miss/replay
+returns 0 without overwriting the stored plan. RLS and privilege revocations
+deny direct browser roles. The service role is trusted; someone possessing
+its secret could supply any valid house owner's UUID. No document, note,
+credential verification or communication is sent to a school.
+
+Proof before apply: set `PGLITE_MODULE_PATH` to the pinned PGlite 0.5.10
+`dist/index.js` and run
+`node supabase/pending/learning_studio_credential_timeline_v1.test.mjs`.
+This is an in-memory rehearsal, not a production check or a native concurrent
+race test. It exercises both SQL roles and RLS, two owners, an admin and an
+owner of another org, disabled/revoked membership, invalid input redaction,
+revision conflicts including a response-loss replay, rollback guard and re-apply.
+
+With `CREDENTIAL_TIMELINE_ENABLED` off, compare the current production ledger
+and the checked-in record; verify the canonical auth/organization prerequisites,
+including the service role's SELECT on the membership tables. Apply the exact
+SQL only on the owner's approval. Check schema, RLS, expected grants and empty
+state before enabling the Worker route separately. Record only statuses/counts
+and synthetic fixtures, never a real plan or identifiers. Follow the normal
+ledger, evidence, drift-contract and caller-inventory steps in `README.md`.
+
+Rollback: first disable the route (and allow in-flight writes to finish).
+The paired SQL takes an exclusive lock and only drops its own objects if the
+table is empty. Otherwise it refuses and keeps all plans, including a saved
+empty plan. Keep the disabled route and the private data rather than forcing a
+drop. Cleanup or export of someone's records would require separate approval.

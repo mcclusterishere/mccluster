@@ -6,6 +6,10 @@ on:
       - 'css/control-course-studio.css'
       - 'js/control-room/nav.js'
       - 'js/control-room/course-studio.js'
+      - 'js/control-room/degree-timeline.js'
+      - 'workers/mccluster/src/lib/http.js'
+      - 'workers/mccluster/src/prim3/credential-timeline.js'
+      - 'workers/mccluster/test/credential-timeline.test.mjs'
       - 'workers/mccluster/src/prim3/course-studio.js'
       - 'workers/mccluster/src/prim3/learning.js'
       - 'core/src/course-studio/**'
@@ -15,8 +19,10 @@ on:
       - 'core/src/notifier.mjs'
       - 'core/test/course-study-build.test.mjs'
       - 'supabase/pending/learning_studio_v1*.sql'
+      - 'supabase/pending/learning_studio_credential_timeline_v1*'
       - 'scripts/test-course-studio-db.mjs'
       - 'scripts/e2e/control-course-studio.e2e.mjs'
+      - 'scripts/e2e/control-degree-timeline.e2e.mjs'
       - '.github/workflows/course-studio.yml'
   workflow_dispatch:
 permissions:
@@ -36,8 +42,11 @@ jobs:
       - name: Exercise private queue and database; test rounded numeric challenges
         run: |
           node --test core/test/course-study-build.test.mjs core/test/completion-evidence.test.mjs scripts/test/control-nav.test.mjs
+          node --test workers/mccluster/test/credential-timeline.test.mjs
           PGLITE_MODULE_PATH="$RUNNER_TEMP/course-studio/node_modules/@electric-sql/pglite/dist/index.js" node scripts/test-course-studio-db.mjs
+          PGLITE_MODULE_PATH="$RUNNER_TEMP/course-studio/node_modules/@electric-sql/pglite/dist/index.js" node supabase/pending/learning_studio_credential_timeline_v1.test.mjs
       - name: Exercise phone and desktop owner entry (synthetic, no production credentials)
         run: |
           "$RUNNER_TEMP/course-studio/node_modules/.bin/playwright" install --with-deps chromium
           PLAYWRIGHT_DIR="$RUNNER_TEMP/course-studio/node_modules" node scripts/e2e/control-course-studio.e2e.mjs
+          PLAYWRIGHT_DIR="$RUNNER_TEMP/course-studio/node_modules" node scripts/e2e/control-degree-timeline.e2e.mjs

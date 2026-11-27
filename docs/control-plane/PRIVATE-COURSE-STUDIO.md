@@ -46,3 +46,35 @@ for PostgREST and the browser test uses a synthetic API. Neither proves a runnin
 OVH version, a production site or a real signed-in owner's session. Before release,
 require an isolated deployed Core + authenticated end-to-end receipt, approval for
 the pending SQL file, then normal revision-specific release checks.
+
+## Private Degree & Credential Timeline (separate rollout)
+
+From Control → Create → Course Studio, open the degree timeline. Start by adding
+a goal and a milestone, or import a version 1 plan file. The preview reads the
+file in the browser; saving sends only normalized planning fields to the owner's
+API, never the original file. A degree audit or transcript **is not** a plan
+file. Read academic evidence privately and enter only the receiving institution,
+equivalent requirement, credit amount, evidence type and evidence date. Never
+enter credentials, student identifiers or a transcript. No school or MCP is
+connected. The school links open official help; they do not authorize access.
+
+Study status (planned/in progress/passed/completed) is independent of each
+school's proposed, preapproved or posted credit. Changing a verified entry
+requires explicit confirmation. Only dated, owner-confirmed posted credit
+counts, within one receiving school; duplicate equivalencies count once and
+conflicting amounts are flagged and excluded. A linked Course Studio practice
+score refreshes on read but never changes the school's record. Goals, dates,
+dependencies, next actions and conditional budgets are editable.
+Monthly badges and annual exam-backed certifications are separate study targets.
+Only a completed badge or a passed certification with a self-reported earned date
+counts toward that period. Planned dates and CLEP exams do not count as awards.
+
+GET and PUT `/v1/prim3/learning/course-studio/timeline` require the
+authenticated house owner and both `COURSE_STUDIO_ENABLED` and
+`CREDENTIAL_TIMELINE_ENABLED`. PUT replaces a plan only at its current revision;
+reload rather than overwriting a concurrent change. The Worker scopes every
+read to the authenticated owner. The database write rechecks membership, takes
+the expected revision and does not expose plans to ordinary roles. Plan data
+does not enter job queues, language models, public artifacts or registrar APIs.
+The timeline migration and rollback are pending a separate owner decision;
+see the updated promotion order and the isolated SQL and UI rehearsals.
