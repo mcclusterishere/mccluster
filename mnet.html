@@ -425,6 +425,19 @@
           <button type="button" data-mn-view="discover"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 18.5a4.5 4.5 0 0 1 7 0"/></svg>People</button>
         </nav>
         <div id="mnTimeCursor" class="mn__time-cursor" hidden></div>
+        <section class="mn__ice" aria-label="Arctic sea ice archive">
+          <label class="mn__ice-toggle"><input type="checkbox" id="mnIceToggle"> Arctic sea ice archive</label>
+          <div id="mnIceDetails" hidden>
+            <label for="mnIceDay">Observation day</label>
+            <select id="mnIceDay"><option value="">Choose a dated snapshot</option></select>
+            <button type="button" id="mnIceFocus">View Arctic</button>
+            <p id="mnIceStatus" role="status"></p>
+            <p>Daily satellite estimate: fraction of ocean covered by ice. Not thickness, drift or deformation. Move the shared Time slider or choose a day above.</p>
+            <ul class="mn__ice-key" aria-label="Sea ice concentration"><li>Below 15%</li><li>15 to &lt;40%</li><li>40 to &lt;70%</li><li>70 to &lt;90%</li><li>90 to 100%</li></ul>
+            <p>Unshaded: land, coast, missing or outside coverage. <a id="mnIceImage" target="_blank" rel="noopener" hidden>Open flat image</a> · <a id="mnIceSource" target="_blank" rel="noopener" hidden>Source GeoTIFF</a></p>
+            <a href="https://doi.org/10.7265/a98x-0f50" target="_blank" rel="noopener">NOAA/NSIDC Sea Ice Index v4 · Fetterer et al. (2025)</a>
+          </div>
+        </section>
         <!-- ENVIRONMENTAL JUSTICE, behind the Equity Uprise tab and above its missions (owner, 2026-11-17; from 2026-11-07 it
              was a mode button in the centre of the globe). The panel shows and hides itself (js/world-environment-mccluster.mjs). -->
         <section id="wePanel" class="we-panel" aria-labelledby="weTitle" hidden></section>
@@ -794,7 +807,8 @@
   <script src="js/image-resize.js?v=__STAMP__"></script>
   <script src="js/world-mission-posts.js?v=__STAMP__"></script>
   <script src="js/world-environment-posts.js?v=__STAMP__"></script>
-  <script src="js/world-environment-cursor.js?v=__STAMP__"></script>
+  <script src="js/arctic-sea-ice.js?v=__STAMP__"></script>
+<script src="js/world-environment-cursor.js?v=__STAMP__"></script>
   <script src="js/world-environment-timeline.js?v=__STAMP__"></script>
   <script src="js/world-gate.js?v=__STAMP__"></script>
   <script src="js/video-poster.js?v=__STAMP__"></script>

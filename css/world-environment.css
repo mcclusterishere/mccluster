@@ -147,3 +147,19 @@ html.mn-feed-equity[data-we-feed="ready"] .mn__time-cursor:not([hidden]) {
   border-radius:8px;color:inherit;background:transparent;font:inherit;font-size:16px;
 }
 .mn__time-live[aria-pressed="true"] { font-weight:700;border-color:currentColor; }
+
+/* Read-only daily ice archive shares the gated Equity time control. */
+.mn__ice { display:none; min-width:0; font:500 14px/1.5 var(--mn-ui,system-ui,sans-serif); color:var(--mn-ink); }
+html.mn-feed-equity[data-we-feed="ready"] .mn__ice { display:block; }
+.mn__ice-toggle { display:inline-flex; align-items:center; gap:8px; min-height:44px; cursor:pointer; font-weight:650; }
+.mn__ice #mnIceDetails { border-inline-start:2px solid var(--mn-rule-2); padding:4px 12px 12px; margin-bottom:12px; }
+.mn__ice select,.mn__ice button { min-height:44px; font:inherit; font-size:16px; max-inline-size:100%; }
+.mn__ice p { margin:6px 0; }
+.mn__ice a { color:inherit; text-decoration:underline; }
+.mn__ice-key { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:4px 12px; }
+.mn__ice-key li::before { content:''; display:inline-block; width:12px; height:12px; border:1px solid #767676; margin-right:4px; vertical-align:middle; }
+.mn__ice-key li:nth-child(1)::before {background:#1a416f}
+.mn__ice-key li:nth-child(2)::before {background:#277e9d}
+.mn__ice-key li:nth-child(3)::before {background:#41c1c9}
+.mn__ice-key li:nth-child(4)::before {background:#92e4dc}
+.mn__ice-key li:nth-child(5)::before {background:#eefff9}

@@ -236,6 +236,7 @@
 
   /* ---------- runtime ---------- */
   const DOT_HEIGHT = 2000, BUILD_MAX_MS = 30000, FADE_MS = 400, FADE_MAX_MS = 1000, REPLAY_FADE_MS = 300, FOCUS_SAFETY_MS = 600, PENDING_FOCUS_MS = 30000;
+  let arctic = null, iceDay = null;
   let viewer = null, Cesium = null, tell = () => {}, governor = null, director = null, client = null, doc = null, mounted = false;
   let on = false, eventsOn = false, lodState = 'far', replayMode = null, pendingFocus = null, pendingFocusTimer = null, viewTarget = '3d';
   const layersOn = { fires: true, perimeters: true, alerts: true, eonet: true, tides: true };
@@ -1004,6 +1005,7 @@
   /* ---------- activation ---------- */
   function activate() {
     on = true;
+    if (arctic) arctic.show(iceDay);
     if (governor) governor.enable();
     onActive(true);
     for (const layer of LAYER_KEYS) { states[layer] = null; results[layer] = null; }
@@ -1019,7 +1021,7 @@
     stopFade(); clearRipple(); clearShakemap(); clearRupture();
     if (client) client.stop();
     for (const owner of ['env-select', 'env-ripple', 'env-focus', 'env-director', 'env-replay', 'env-build']) release(owner);
-    on = false;
+    on = false; iceDay = null; if (arctic) arctic.show(null);
     onActive(false);
     applyVisibility();
     if (governor) governor.disable();
@@ -1091,6 +1093,8 @@
     else if (d.type === 'hu:environment-scene') sceneAction(d.action);
     else if (d.type === 'hu:environment-view') view(d.mode);
     else if (d.type === 'hu:environment-time') timeFromPage(d);
+    else if (d.type === 'hu:environment-arctic-ice') { iceDay = d.day; if (arctic) arctic.show(on ? iceDay : null); }
+    else if (d.type === 'hu:environment-arctic-view' && on && arctic) arctic.focus();
     return true;
   }
   function mount(options) {
@@ -1108,6 +1112,7 @@
     if (director && typeof director.attachInput === 'function') director.attachInput({ canvas: viewer.scene.canvas, document: doc });
     /* event timeline slice S5: the quake marks, the ripple and the push, when their modules are loaded (action-globe.html) */
     const shared = { viewer, Cesium, document: doc, add: addPrim, remove: removePrim, hold, release, requestRender, motionAllowed, reducedMotion: () => !motionAllowed(), now };
+    if (root.MCC_ARCTIC_ICE) arctic = root.MCC_ARCTIC_ICE.createGlobe({viewer, Cesium, requestRender, tell});
     if (root.MCC_ENVIRONMENT_QUAKE_MARKS) marks = root.MCC_ENVIRONMENT_QUAKE_MARKS.create(shared);
     if (root.MCC_ENVIRONMENT_RIPPLE) rippler = root.MCC_ENVIRONMENT_RIPPLE.create(Object.assign({ onEnd: () => updateLegend() }, shared));
     if (root.MCC_ENVIRONMENT_CAMERA) { cam = root.MCC_ENVIRONMENT_CAMERA.create(shared); cam.attachInput({ canvas: viewer.scene.canvas, document: doc }); }
@@ -1128,7 +1133,7 @@
   function debug() {
     const terminal = s => s && s.status !== 'loading';
     return {
-      on, lod: lodState, ready: !on || (LAYER_KEYS.every(k => terminal(states[k])) && building.size === 0), built: building.size === 0,
+      arcticIce: arctic ? arctic.state() : null, on, lod: lodState, ready: !on || (LAYER_KEYS.every(k => terminal(states[k])) && building.size === 0), built: building.size === 0,
       counts: JSON.parse(JSON.stringify(counts)), states: Object.fromEntries(Object.entries(states).map(([k, s]) => [k, s ? { status: s.status, reason: s.reason, count: s.count, total: s.total, truncated: s.truncated, fetched_at: s.fetched_at, last_success_at: s.last_success_at, attribution: s.attribution, license: s.license, coverage: s.coverage } : null])),
       selected: selected ? { id: selected.id, layer: selected.layer, kind: selected.kind } : null, ripple: rippleNow(), lastRipple: rippler ? rippler.last() : null, pendingFocus, legend: legendLines.slice(),
       replay: replayMode, layersOn: Object.assign({}, layersOn), eventsOn, policy: !!(client && client.isPolicy()), picks: picks.size, shakemap: shakemap ? { quakeId: shakemap.quakeId, lines: counts.shakemapLines, unavailable: shakemap.unavailable || null } : null,
@@ -1141,6 +1146,7 @@
   }
   function destroy() {
     if (!mounted) return;
+    if (arctic) arctic.destroy(); arctic = null; iceDay = null;
     if (onFrame) { viewer.scene.preRender.removeEventListener(onFrame); onFrame = null; }
     if (cam) { cam.destroy(); cam = null; }
     deactivate();

@@ -122,6 +122,7 @@
     const st = { want: timeFromSearch(w.location && w.location.search), at: null, marks: [], posts: [], seq: 0 };
     st.at = effectiveAt(st.marks, st.want);
     let hooks = {}, host = null, range = null, value = null, live = null, addressTimer = 0, sentAt;
+    let ice = null;
     const inTab = () => w.MCC_FEED_SCOPE?.get?.() === 'equity';
     const frameWindow = () => { try { const f = w.document.getElementById('mnWorldFrame'); return f ? f.contentWindow : null; } catch (e) { return null; } };
     const iso = (t) => (t === null ? null : new Date(t).toISOString());
@@ -147,6 +148,9 @@
        a keyboard on it keeps its focus through every step) */
     function build() {
       if (host || !w.document) return;
+      if (!ice && w.MCC_ARCTIC_ICE) ice = w.MCC_ARCTIC_ICE.createPage(w, {
+        sync: () => sync(st.posts), at: () => st.at, set: t => set(t, {input:true})
+      });
       host = w.document.getElementById('mnTimeCursor');
       if (!host) return;
       host.innerHTML = '<label class="mn__time-label" for="mnTimeRange">Time</label>' +
@@ -160,14 +164,16 @@
     function paint() {
       build();
       if (!host) return;
+      if (ice) ice.paint(st.at);
       const m = st.marks, d = describe(st.posts, st.at, clock());
       host.hidden = m.length < 2;
       host.setAttribute('data-at', st.at === null ? 'live' : iso(st.at));
       range.max = String(Math.max(0, m.length - 1));
       const pos = String(positionOf(m, st.at));
       if (range.value !== pos) range.value = pos;
-      range.setAttribute('aria-valuetext', d.text);
-      value.textContent = d.short;
+      const archiveDay = ice && w.MCC_ARCTIC_ICE.dayAt(ice.dates(), st.at);
+      range.setAttribute('aria-valuetext', archiveDay ? archiveDay + ' UTC, daily ice snapshot. ' + d.text : d.text);
+      value.textContent = archiveDay ? archiveDay + ' UTC' : d.short;
       value.setAttribute('aria-hidden', 'true');
       live.setAttribute('aria-pressed', String(d.live));
     }
@@ -189,7 +195,7 @@
     /* the tab's observations, every one (before the search narrows them): the marks follow them, and the list shown is the cursor's */
     function sync(posts) {
       st.posts = Array.isArray(posts) ? posts : [];
-      const marks = marksOf(st.posts);
+      const marks = ice ? w.MCC_ARCTIC_ICE.withDays(marksOf(st.posts), ice.dates()) : marksOf(st.posts);
       if (marks.length !== st.marks.length || marks.some((t, i) => t !== st.marks[i])) {
         st.marks = marks;
         const before = st.at;
@@ -211,7 +217,8 @@
       try { frame = w.document.getElementById('mnWorldFrame'); } catch (e) { frame = null; }
       if (!frame || !ev || ev.source !== frame.contentWindow || ev.origin !== (w.location && w.location.origin)) return;
       const d = ev.data || {};
-      if (d.type === 'hu:globe-ready') { tellFrame(false, true); return; }
+      if (d.type === 'hu:globe-ready') { tellFrame(false, true); if (ice) ice.paint(st.at, true); return; }
+      if (d.type === 'hu:environment-arctic-state') { if (ice) ice.onState(d); return; }
       if (d.type !== 'hu:environment-time-state' || !inTab() || !st.marks.length) return;
       /* the globe moved the cursor (the replay): taken only when the globe had heard the page's latest input */
       if (!Number.isSafeInteger(d.ack) || d.ack !== st.seq) return;
@@ -232,6 +239,7 @@
         w.addEventListener('popstate', onPop);
         w.addEventListener('mcc:feed-scope', () => {
           st.seq += 1;
+          if (ice) ice.onScope();
           if (!inTab()) w.clearTimeout(addressTimer);
           tellFrame(false, true);
         });
