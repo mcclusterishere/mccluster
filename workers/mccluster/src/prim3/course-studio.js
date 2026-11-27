@@ -1,4 +1,5 @@
 import { COURSE_STUDIO_SOURCES } from '../../../../core/src/course-studio/source-catalog.mjs';
+import { routeCredentialTimeline } from './credential-timeline.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const cadence = Object.freeze({years:4, exams_per_year:4, badges_per_month:1});
@@ -49,6 +50,7 @@ function publicBundle(bundle) {
 export async function routeCourseStudio(request,env,user,parts,db){
   if(!UUID.test(user?.id||'')) reject('Owner identity required',403);
   if(env.COURSE_STUDIO_ENABLED!=='true') reject('Course Studio is not enabled',503);
+  if(parts.length===1&&parts[0]==='timeline') return routeCredentialTimeline(request,env,user,db);
   const [id,action]=parts, method=request.method, own='owner_id=eq.'+user.id;
   if(!id&&!parts.length&&method==='GET'){
     const rows=await db(env,'learning_studio_summary?select=id,school,course_code,title,term,state,total,completed,score&order=created_at.desc&limit=100&'+own);

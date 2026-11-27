@@ -7,6 +7,16 @@
     "applied_awaiting_evidence: applied in production by a dated receipt (version present in supabase/production-ledger.json and its exact SQL under supabase/migrations/), but supabase/schema-manifest.json and the latest production snapshot were not regenerated at import time. Each entry names the migration file and the receipt. The test fails once evidence shows the name, so this list only shrinks; regenerate the manifest with the supported clean reset and capture a snapshot to retire the entries."
   ],
   "pending_only": {
+    "learning_studio_save_timeline": {
+      "kind": "function",
+      "pending": "learning_studio_credential_timeline_v1.sql",
+      "callers": ["workers/mccluster/src/prim3/credential-timeline.js"]
+    },
+    "learning_studio_timelines": {
+      "kind": "table",
+      "pending": "learning_studio_credential_timeline_v1.sql",
+      "callers": ["workers/mccluster/src/prim3/credential-timeline.js"]
+    },
     "learning_studio_answer": {
       "kind": "function",
       "pending": "learning_studio_v1.sql",
@@ -30,7 +40,7 @@
     "learning_studio_summary": {
       "kind": "table",
       "pending": "learning_studio_v1.sql",
-      "callers": ["workers/mccluster/src/prim3/course-studio.js"]
+      "callers": ["workers/mccluster/src/prim3/course-studio.js", "workers/mccluster/src/prim3/credential-timeline.js"]
     },
     "action_environment_missions": {
       "kind": "table",
