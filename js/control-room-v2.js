@@ -56,6 +56,7 @@
     aiRouteSelection: "auto",
     aiRouteTarget: "",
     aiRoutePreferenceKey: null,
+    aiRoutePreferences: {},
     aiImplementation: "qwen3.8b.local",
     aiReviewOf: null,
     aiDevices: [],
@@ -185,29 +186,33 @@
     var choices = schema && schema.properties && schema.properties.target;
     return Boolean(choices && Array.isArray(choices.enum) && choices.enum.indexOf(target) !== -1);
   }
-  function aiRoutePreferenceKey() {
+  function aiRouteScope() {
     if (!aiBrowserOwner(state) || !authority.principal || authority.principal === "opaque") return "";
     return "mcc.owner-ai.route." + authority.principal + "." + state.org.id;
   }
   function rememberAiRoute() {
-    var key = aiRoutePreferenceKey();
-    if (!key) return;
-    try {
-      window.sessionStorage.setItem(key, JSON.stringify({ selection: state.aiRouteSelection, implementation: state.aiImplementation, target: state.aiRouteTarget }));
-    } catch (e) { /* The selection remains in memory when storage is unavailable. */ }
+    var scope = aiRouteScope();
+    if (!scope) return;
+    var key = scope + "." + (state.selectedAiThreadId || "draft");
+    var saved = { selection: state.aiRouteSelection, implementation: state.aiImplementation, target: state.aiRouteTarget };
+    state.aiRoutePreferences[key] = saved;
+    try { window.sessionStorage.setItem(key, JSON.stringify(saved)); } catch (e) { /* In-memory choices survive chat switches. */ }
   }
   function restoreAiRoute() {
-    var key = aiRoutePreferenceKey();
-    if (!key || state.aiRoutePreferenceKey === key) return;
+    var scope = aiRouteScope();
+    if (!scope) return;
+    var key = scope + "." + (state.selectedAiThreadId || "draft");
+    if (state.aiRoutePreferenceKey === key) return;
     state.aiRoutePreferenceKey = key;
+    var saved = state.aiRoutePreferences[key];
     try {
-      var saved = JSON.parse(window.sessionStorage.getItem(key));
-      if (saved && typeof saved.selection === "string" && typeof saved.implementation === "string") {
-        state.aiRouteSelection = saved.selection;
-        state.aiImplementation = saved.implementation;
-        state.aiRouteTarget = saved.target || "";
-      }
-    } catch (e) { /* A browser without session storage starts with the default picker. */ }
+      if (!saved) saved = JSON.parse(window.sessionStorage.getItem(key));
+      if (state.selectedAiThreadId) window.sessionStorage.setItem(scope + ".active", state.selectedAiThreadId);
+    } catch (e) { /* Storage is optional. */ }
+    state.aiRouteSelection = saved && typeof saved.selection === "string" ? saved.selection : "auto";
+    state.aiImplementation = saved && typeof saved.implementation === "string" ? saved.implementation : "qwen3.8b.local";
+    state.aiRouteTarget = saved && typeof saved.target === "string" ? saved.target : "";
+    state.aiAllowBrowser = false;
   }
   function aiRouteProblem() {
     if (!aiRouteSupported()) return state.aiRouteSelection !== "auto" ? "This Core does not support choosing a worker yet." : "";
@@ -544,7 +549,7 @@
     }).catch(function (error) { state.aiChatError = "Earlier conversations could not be read: " + (error.message || "Reconnect and try again."); }).then(function () { delete state.pending.aiMoreThreads; render(); });
   }
 
-  function createAiThread() {
+  function createAiThread(carryDraftRoute) {
     if (!state.org || !state.org.id) return Promise.reject(new Error("McCluster organization is unavailable"));
     if (state.pending.aiThreadCreate) return Promise.reject(new Error("A new chat is already being created"));
     state.pending.aiThreadCreate = true;
@@ -557,6 +562,7 @@
       if (!thread || !thread.id) throw new Error("Chat thread was not created");
       state.aiThreads.unshift(thread);
       state.selectedAiThreadId = thread.id;
+      if (carryDraftRoute === true) rememberAiRoute();
       state.aiMessages[thread.id] = [];
       state.aiChatDraft = "";
       syncSelectedAiRun();
@@ -925,7 +931,7 @@
     if (requestedRoute && requestedRoute.target) allowBrowser = false;
     var threadPromise = state.selectedAiThreadId
       ? Promise.resolve(aiThreadById(state.selectedAiThreadId))
-      : createAiThread();
+      : createAiThread(true);
 
     return threadPromise.then(function (thread) {
       if (!thread) throw new Error("Select or create a chat first");
@@ -1781,6 +1787,7 @@
     if (!aiBrowserOwner(state)) return '<section class="cr-ai-owner-gate"><h2>Owner AI workspace</h2><p>Sign in as the McCluster house owner to chat with your models and manage your devices.</p><p>The server verifies this access on every request.</p></section>';
     var ae = OWNER_AI.esc;
     if (!state.selectedAiThreadId && state.aiThreads.length) state.selectedAiThreadId = state.aiThreads[0].id;
+    restoreAiRoute();
     syncSelectedAiRun();
     var selected = aiThreadById(state.selectedAiThreadId), messages = selected ? aiMessagesFor(selected.id) : [];
     var messageError = selected && state.pending["aiMessages:" + selected.id + ":error"];
@@ -5000,6 +5007,7 @@
   /* The shell's place survives an account change; nothing else in `state`. */
   var SHELL_KEYS = ["route", "leaf", "section", "surface", "workView", "createView", "systemView", "analyticsSection", "analyticsApplied", "health", "publicRecord"];
   function concealPrivateState() {
+    if (ownerDesktop) ownerDesktop.clear();
     if (authority.abort) { try { authority.abort.abort(); } catch (e) {} authority.abort = null; }
     if (authority.scope) { try { authority.scope.abort(); } catch (e) {} authority.scope = null; }
     stopAiVoiceListening(true); stopAiVoiceSpeech();
@@ -5168,7 +5176,6 @@
       /* Refresh re-reads the per-view sources too, not just the shell's. */
       if (force && state.musicOrders) loadMusicOrders(true);
       state.workspace = (a.workspace && a.workspace.membership) || null;
-      restoreAiRoute();
       state.audit = pickRows(state.sources.audit, "events");
       state.coreBridge = dataOf(state.sources.coreBridge);
       var coreToolsPayload = dataOf(state.sources.coreTools);
@@ -5189,7 +5196,11 @@
       state.aiThreads = rowsOf(state.sources.aiThreads);
       state.aiThreadOffset = state.aiThreads.length; state.aiThreadHasMore = state.aiThreads.length === 100;
       if (state.selectedAiThreadId && !aiThreadById(state.selectedAiThreadId)) state.selectedAiThreadId = null;
-      if (!state.selectedAiThreadId && state.aiThreads.length) state.selectedAiThreadId = state.aiThreads[0].id;
+      if (!state.selectedAiThreadId && state.aiThreads.length) {
+        var scope = aiRouteScope(), previous = null;
+        try { if (scope) previous = window.sessionStorage.getItem(scope + ".active"); } catch (e) {}
+        state.selectedAiThreadId = previous && aiThreadById(previous) ? previous : state.aiThreads[0].id;
+      }
       state.mediaAssets = rowsOf(state.sources.mediaAssets); state.mediaJobs = rowsOf(state.sources.mediaJobs);
       state.campaigns = rowsOf(state.sources.campaigns); state.variants = rowsOf(state.sources.variants);
       state.publishJobs = rowsOf(state.sources.publishJobs); state.posts = rowsOf(state.sources.posts);
@@ -5284,6 +5295,47 @@
       });
     }
   });
+
+  var ownerDesktop = null;
+  if (window.CR.ownerDesktop && location.origin === "https://mccluster.org" && location.pathname === "/control.html") {
+    ownerDesktop = window.CR.ownerDesktop.install({
+      uuid: newAiTurnId,
+      access: function () {
+        if (location.href !== "https://mccluster.org/control.html#home:ask" || window.top !== window ||
+            state.surface !== "ai" || authority.reloading || authority.spent || !aiBrowserOwner(state) ||
+            !state.workspace.enabled || state.workspace.org_id !== state.org.id || !state.sources.workspace?.ok ||
+            !authority.principal || authority.principal === "opaque" || storedPrincipal() !== authority.principal) return null;
+        return { gen: authority.gen, principal: authority.principal, org: state.org.id };
+      },
+      schema: async function () {
+        var tools = (await coreMcp("tools/list", {}))?.tools;
+        return { submit: aiToolSchema(tools, "core.ai.turn.submit"), canStop: Boolean(aiToolSchema(tools, "core.ai.turn.stop")) };
+      },
+      devices: function (org) { return callCoreTool("core.compute.devices.list", { org_id: org }); },
+      ready: OWNER_AI.targetReady,
+      thread: function (org, id) {
+        return supa("ops_ai_threads?select=id,org_id,created_by,status&org_id=eq." + encodeURIComponent(org) + "&id=eq." + encodeURIComponent(id) + "&limit=1");
+      },
+      threads: function (org, subject) {
+        return supa("ops_ai_threads?select=id,org_id,created_by,status,title&org_id=eq." + encodeURIComponent(org) +
+          "&created_by=eq." + encodeURIComponent(subject) + "&status=eq.active&order=last_message_at.desc,id.desc&limit=40");
+      },
+      turns: function (org, subject, id) {
+        return supa("ops_ai_messages?select=id,org_id,thread_id,role,content,route:metadata->workspace_route,actor:metadata->>actor_user_id," +
+          "actor_kind:metadata->>actor_kind,job:metadata->>agent_job_id,status:metadata->>task_status&role=eq.user&org_id=eq." +
+          encodeURIComponent(org) + "&thread_id=eq." + encodeURIComponent(id) + "&metadata->>actor_user_id=eq." + encodeURIComponent(subject) +
+          "&metadata->>actor_kind=eq.owner&metadata->workspace_route->>target=in.(ovh,prime,connected)&order=created_at.desc,id.desc&limit=40");
+      },
+      createThread: function (org, id) {
+        return supa("ops_ai_threads?on_conflict=id", { method: "POST", body: { id: id, org_id: org, title: "New chat" },
+          prefer: "resolution=ignore-duplicates,return=minimal" });
+      },
+      submit: function (args) { return callCoreTool("core.ai.turn.submit", args); },
+      get: function (args) { return callCoreTool("core.ai.turn.get", args); },
+      stop: function (args) { return callCoreTool("core.ai.turn.stop", args); }
+    });
+    Object.defineProperty(window, "McClusterOwnerChatV1", { value: ownerDesktop.api });
+  }
 
   function init() { state.aiHistoryOpen = Boolean(window.matchMedia && window.matchMedia("(min-width:960px)").matches); bindAuthorityLifecycle(); bindAuth(); bindShell(); bindActions(document); tryResume(); setTimeout(tryResume, 700); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();

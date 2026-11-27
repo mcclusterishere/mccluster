@@ -162,6 +162,46 @@ test('a pin survives a reload and cannot submit after losing its worker, schema 
   assert.equal(calls(f, 'core.ai.turn.submit').length, 0);
 });
 
+test('each chat restores its exact worker and model across switches and reload', async t => {
+  const f = fixture(), sessionStore = new Map();
+  const firstDevice = f.devices[0], secondDevice = f.devices[2];
+  firstDevice.target = 'prime'; secondDevice.target = 'ovh';
+  for (const d of [firstDevice, secondDevice]) {
+    d.target_ready = true; d.models[0].target_ready = true;
+  }
+  firstDevice.models.push({ implementation: 'qwen3-vl.4b.local', model: 'qwen3-vl:4b', ready: true, target_ready: true });
+  const page = await openOwner(f, t, { sessionStore });
+  page.select('crAiDevice', 'node:' + firstDevice.node_id);
+  page.select('crAiModel', 'qwen3-vl.4b.local');
+  await page.click('ai-new-thread'); await page.settle();
+  const secondChat = page.state().selectedAiThreadId;
+  assert.equal(page.state().aiRouteSelection, 'auto');
+  assert.equal(page.state().aiImplementation, 'qwen3.8b.local');
+  page.select('crAiDevice', 'node:' + secondDevice.node_id);
+  await page.click('ai-select-thread', 'thread-1'); await page.settle();
+  assert.equal(page.state().aiRouteTarget, 'prime');
+  assert.equal(page.state().aiImplementation, 'qwen3-vl.4b.local');
+  page.close();
+  const reopened = await openOwner(f, t, { sessionStore });
+  assert.equal(reopened.state().selectedAiThreadId, 'thread-1');
+  assert.equal(reopened.state().aiRouteSelection, 'node:' + firstDevice.node_id);
+  assert.equal(reopened.state().aiImplementation, 'qwen3-vl.4b.local');
+  await reopened.click('ai-select-thread', secondChat); await reopened.settle();
+  assert.equal(reopened.state().aiRouteSelection, 'node:' + secondDevice.node_id);
+  assert.equal(reopened.state().aiImplementation, 'qwen3.8b.local');
+});
+
+test('the first submitted draft keeps its worker after acquiring a durable chat ID', async t => {
+  const f = fixture(); f.threads.length = 0;
+  const page = await openOwner(f, t);
+  page.select('crAiDevice', 'node:mac-a');
+  page.type('crAiComposer', 'Keep my pin'); await page.click('ai-send'); await page.settle();
+  const sent = calls(f, 'core.ai.turn.submit')[0].args;
+  assert.equal(page.state().selectedAiThreadId, sent.thread_id);
+  assert.equal(sent.route.node_id, 'mac-a');
+  assert.equal(page.state().aiRouteSelection, 'node:mac-a');
+});
+
 test('image preview retains its resized dimensions and byte count in the new composer', async t => {
   const f = fixture(), page = await openOwner(f, t);
   /* Encoding is exercised by the real Chromium image fixture. Here its
