@@ -1,0 +1,54 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Owner chat cross-stack fixture</title>
+<button id="fixtureSignIn">Synthetic sign-in</button>
+<script>/* OWNER_DESKTOP_SOURCE */</script>
+<script>
+const principal = 'fixture-owner', org = 'fixture-org', node = 'node_' + 'a'.repeat(40);
+const impl = 'qwen3.8b.local', model = 'qwen3:8b';
+const threads = new Map(), runs = new Map();
+let owner = false, substitute = false, submissions = 0;
+document.getElementById('fixtureSignIn').onclick = () => { owner = true; };
+
+function reply(run) {
+  const { thread_id, message_id, content, route } = run.args;
+  const pin = { route:'fabric', node_id:substitute ? 'node_' + 'b'.repeat(40) : node, node_name:'Fixture CPU',
+    model, implementation:impl, hardware_mode:'cpu-only' };
+  return {
+    turn:{ id:message_id, org_id:org, job_type:'resident_ai_turn', status:run.stopped ? 'canceled' : run.status,
+      input:{ assistant_message_id:run.replyId } },
+    user_message:{ id:message_id, org_id:org, thread_id, role:'user',
+      metadata:{ actor_user_id:principal, actor_kind:'owner', agent_job_id:message_id, workspace_route:route } },
+    assistant_message:{ role:'assistant', id:run.replyId, thread_id, org_id:org, model, implementation:impl,
+      compute_task_id:run.taskId, content, metadata:{ agent_job_id:message_id, task_status:'done', requested_route:route, node:pin } }
+  };
+}
+
+// This fixture supplies only the existing first-party I/O that the real facade consumes.
+window.McClusterOwnerChatV1 = CR.ownerDesktop.install({
+  access:() => owner ? { principal, org, gen:1 } : null,
+  uuid:() => crypto.randomUUID(),
+  schema:async () => ({ canStop:true, submit:{ properties:{ route:{ properties:{ target:{ enum:['ovh','prime','connected'] } } } } } }),
+  devices:async () => ({ devices:[{ target:'ovh', node_id:node, display_name:'Fixture CPU', target_ready:true,
+    models:[{ model, implementation:impl, ready:true, target_ready:true }] }] }),
+  ready:device => device.target_ready,
+  threads:async () => [...threads.values()],
+  thread:async (_, id) => threads.has(id) ? [threads.get(id)] : [],
+  createThread:async (_, id) => threads.set(id, { id, org_id:org, created_by:principal, status:'active', title:'Earlier fixture' }),
+  turns:async (_, __, id) => [...runs.values()].filter(run => run.args.thread_id === id).map(run => ({
+    org_id:org, thread_id:id, role:'user', id:run.args.message_id, actor:principal, actor_kind:'owner',
+    job:run.args.message_id, content:run.args.content, route:run.args.route, status:run.status
+  })),
+  submit:async args => {
+    submissions++;
+    runs.set(args.message_id, { args, replyId:crypto.randomUUID(), taskId:crypto.randomUUID(), status:submissions === 1 ? 'done' : 'running' });
+    return { queued:true, thread_id:args.thread_id, turn_id:args.message_id, user_message_id:args.message_id, route:args.route };
+  },
+  get:async args => reply(runs.get(args.turn_id)),
+  stop:async args => {
+    const run = runs.get(args.turn_id);
+    run.stopped = true;
+    return { stopped:true, status:'canceled', turn_id:args.turn_id };
+  }
+}).api;
+</script>

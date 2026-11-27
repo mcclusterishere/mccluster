@@ -23,6 +23,38 @@ Core owns remote conversation state and dispatch. An unavailable target leaves
 the turn unsubmitted. Check the serving worker, model and Core task in its
 receipt. **Projects** opens the existing first-party project workspace.
 
+### Hands-free calls on Windows
+
+Run `desktop/windows/prepare-voice-pack.ps1` once on the Windows device to
+download the five pinned assets into `%LOCALAPPDATA%\McClusterDesktop\voice`.
+The script checks each download before installing the pack. To keep a preview
+isolated, select a new local folder with `-Destination` and set
+`MCCLUSTER_VOICE_PACK` to that absolute path for the preview process. Close
+and reopen Chats after installing. The app verifies its local pack before
+enabling calls.
+
+Select the chat, execution target and model. **Start call with mic** opens the
+Windows input device. Speak, pause for the end of your turn, and listen for the
+reply. Speaking again interrupts playback. A headset helps prevent loudspeaker
+feedback. **Mute** closes the microphone until **Unmute**. **End call** closes
+capture and stops the current turn or playback. The status identifies listening,
+recognition, waiting for the selected chat, synthesis and speaking.
+
+Vosk recognizes English and Piper synthesizes replies on this PC. Audio lives
+in memory during the call. The recognized words and verified answer use the
+chat's existing text history. Prime local keeps that history on this device.
+Remote voice requires the signed-in owner workspace, an eligible worker and
+support for canceling the exact Core turn. Pick a new chat to change the
+execution target after sending a message.
+
+The optional pack uses [Vosk 0.3.45](https://github.com/alphacep/vosk-api/tree/v0.3.45)
+and its [Apache-2.0 small US-English 0.15 weights](https://alphacephei.com/vosk/models).
+The [2023.11.14-2 Piper runtime](https://github.com/rhasspy/piper/releases/tag/2023.11.14-2)
+is MIT-licensed and includes separately licensed components such as eSpeak NG.
+The [voice author designates the LJSpeech medium weights as public domain](https://brycebeattie.com/files/tts/).
+The [pinned voice model card](https://huggingface.co/rhasspy/piper-voices/blob/1162a9173d0ce503555aed757976b7a9912eae4c/en/en_US/ljspeech/medium/MODEL_CARD)
+documents the training data. Inference runs on the model selected in the chat.
+
 This Windows interface complements the TypeScript channel adapters in draft
 [#849](https://github.com/mcclusterishere/mccluster/pull/849). The owner
 picker is reviewed in [#869](https://github.com/mcclusterishere/mccluster/pull/869)

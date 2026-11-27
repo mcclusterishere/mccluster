@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace McClusterDesktop
 {
-    internal sealed class PrimeChatForm : Form
+    internal sealed partial class PrimeChatForm : Form
     {
         private static readonly string[] Routes = { "local", "prime", "ovh", "connected" };
         private static readonly string[] RouteNames = { "Prime (local only)", "Prime via OVH", "OVH CPU", "Connected inference" };
@@ -17,6 +17,7 @@ namespace McClusterDesktop
             internal string MessageId = Guid.NewGuid().ToString("D");
             internal string Question;
             internal OwnerChatRun Run;
+            internal OwnerChatTarget Target;
         }
         private sealed class ThreadView
         {
@@ -27,9 +28,12 @@ namespace McClusterDesktop
             internal OwnerChatTarget Binding;
             internal readonly List<RemoteTurn> Remote = new List<RemoteTurn>();
             internal string Draft = "";
-            internal bool Started { get { return Local.Turns.Count > 0 || Remote.Count > 0; } }
+            internal string SavedTitle;
+            internal bool HistoryLoaded;
+            internal bool Started { get { return SavedTitle != null || Local.Turns.Count > 0 || Remote.Count > 0; } }
             public override string ToString()
             {
+                if (SavedTitle != null) return SavedTitle + " · Core";
                 if (Route == "local") return Local.Label;
                 string title = Remote.Count == 0 ? "New chat" : Remote[0].Question.Replace('\r', ' ').Replace('\n', ' ');
                 return (title.Length <= 46 ? title : title.Substring(0, 45) + "…") + " · " + RouteNames[Array.IndexOf(Routes, Route)];
@@ -75,6 +79,10 @@ namespace McClusterDesktop
             : this(store, openOwnerWorkspace, null, null) { }
 
         internal PrimeChatForm(JobStore store, Action openOwnerWorkspace, Action openProjects, IOwnerChatTransport transport)
+            : this(store, openOwnerWorkspace, openProjects, transport, new OfflineCallSpeech(), new WinMmCallAudio()) { }
+
+        internal PrimeChatForm(JobStore store, Action openOwnerWorkspace, Action openProjects, IOwnerChatTransport transport,
+            ICallSpeech speech, ICallAudio audio)
         {
             this.store = store;
             runner = new JobRunner(store);
@@ -89,7 +97,7 @@ namespace McClusterDesktop
             ForeColor = Color.WhiteSmoke;
             Font = new Font("Segoe UI", 10f);
             speakerFont = new Font(Font, FontStyle.Bold);
-            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(14), ColumnCount = 1, RowCount = 8 };
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(14), ColumnCount = 1, RowCount = 9 };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             for (int i = 0; i < layout.RowCount; i++)
                 layout.RowStyles.Add(i == 4 ? new RowStyle(SizeType.Percent, 100) : new RowStyle(SizeType.AutoSize));
@@ -104,9 +112,9 @@ namespace McClusterDesktop
 
             var chatRow = Row();
             chatRow.Controls.Add(Caption("Chats"));
-            threadPicker.SelectedIndexChanged += delegate {
+            threadPicker.SelectedIndexChanged += async delegate {
                 var selected = threadPicker.SelectedItem as ThreadView;
-                if (!rebinding && selected != null && selected != current) SelectThread(selected);
+                if (!rebinding && selected != null && selected != current) { SelectThread(selected); await LoadSelectedHistory(); }
             };
             chatRow.Controls.Add(threadPicker);
             ButtonStyle(newChat, "newChat", "New chat");
@@ -183,12 +191,13 @@ namespace McClusterDesktop
             send.Click += async delegate { await Send(); };
             actions.Controls.Add(send);
             ButtonStyle(stop, "stop", "Stop");
-            stop.Click += delegate { StopTurn(); };
+            stop.Click += async delegate { if (active != null) StopTurn(); else if (Pending != null) await StopPending(); };
             actions.Controls.Add(stop);
             ButtonStyle(receipt, "receipt", "View receipt");
             receipt.Click += delegate { ShowReceipt(); };
             actions.Controls.Add(receipt);
             layout.Controls.Add(actions, 0, 7);
+            ConfigureCall(layout, speech, audio);
 
             Shown += async delegate {
                 try { foreach (var saved in await Task.Run(() => LocalConversation.Restore(store))) threads.Add(new ThreadView { Local = saved,
@@ -203,6 +212,7 @@ namespace McClusterDesktop
             };
             VisibleChanged += async delegate { if (Visible && firstShown && active == null && !checking) await Probe(); };
             FormClosing += delegate(object sender, FormClosingEventArgs e) {
+                EndVoiceCall();
                 if (active != null && e.CloseReason == CloseReason.UserClosing)
                 { e.Cancel = true; closeAfterStop = true; StopTurn(); }
                 else if (active != null) active.Cancel();
@@ -231,6 +241,7 @@ namespace McClusterDesktop
         private void Visit(Action open)
         {
             if (open == null || active != null) return;
+            EndVoiceCall();
             if (!IsLocal) transcript.Clear();
             Hide();
             open();
@@ -293,9 +304,12 @@ namespace McClusterDesktop
 
         private void ClearRemoteViews()
         {
+            if (!IsLocal) EndVoiceCall();
             foreach (ThreadView t in threads.Where(x => x.Route != "local").ToList())
             {
-                t.Remote.Clear(); t.Binding = null; t.Draft = ""; t.CoreId = Guid.NewGuid().ToString("D");
+                t.Remote.Clear(); t.Binding = null; t.Draft = ""; t.SavedTitle = null; t.HistoryLoaded = false;
+                if (t.Route == "saved") t.Route = "ovh";
+                t.CoreId = Guid.NewGuid().ToString("D");
                 if (t != current) threads.Remove(t);
             }
             if (current != null && !IsLocal) { latestReceipt = null; transcript.Clear(); prompt.Clear(); }
@@ -315,10 +329,23 @@ namespace McClusterDesktop
                     {
                         var found = await core.DiscoverAsync();
                         if (IsDisposed) return;
-                        var sessionId = found.Select(x => x.SessionId).FirstOrDefault();
+                        var sessionId = core.SessionId;
                         if (account != null && sessionId != account) ClearRemoteViews();
                         account = sessionId;
                         endpoints = found;
+                        var summaries = await core.ListThreadsAsync(sessionId);
+                        if (IsDisposed) return;
+                        foreach (var summary in summaries)
+                        {
+                            var chat = threads.FirstOrDefault(t => t.CoreId == summary.ThreadId);
+                            if (chat == null) { chat = new ThreadView { CoreId = summary.ThreadId, Route = "saved" }; threads.Add(chat); }
+                            chat.SavedTitle = summary.Title;
+                        }
+                        foreach (var stale in threads.Where(t => t.SavedTitle != null && !summaries.Any(s => s.ThreadId == t.CoreId)).ToList())
+                        {
+                            threads.Remove(stale);
+                            if (stale == current) { current = new ThreadView(); threads.Insert(0, current); }
+                        }
                         coreFailure = "";
                     }
                     catch (Exception ex)
@@ -342,6 +369,38 @@ namespace McClusterDesktop
                 checking = false;
                 if (!IsDisposed) SelectThread(current);
             }
+            if (!IsDisposed) await LoadSelectedHistory();
+        }
+
+        private async Task LoadSelectedHistory()
+        {
+            var thread = current;
+            if (checking || active != null || thread == null || thread.SavedTitle == null || thread.HistoryLoaded || account == null) return;
+            checking = true;
+            status.Text = "Loading saved Core turns…";
+            UpdateControls();
+            try
+            {
+                var saved = await core.ListTurnsAsync(account, thread.CoreId);
+                var verified = new List<RemoteTurn>();
+                foreach (var turn in saved)
+                {
+                    if (IsDisposed) return;
+                    var run = turn.Status == "done"
+                        ? await core.GetAsync(turn.Target, thread.CoreId, turn.TurnId)
+                        : new OwnerChatRun { ThreadId = thread.CoreId, TurnId = turn.TurnId, Status = turn.Status,
+                            Error = turn.Status == "canceled" ? "Stopped by the owner." : "No completed answer." };
+                    verified.Add(new RemoteTurn { MessageId = turn.TurnId, Question = turn.Prompt, Target = turn.Target, Run = run });
+                }
+                if (IsDisposed) return;
+                thread.Remote.Clear(); thread.Remote.AddRange(verified); thread.HistoryLoaded = true;
+                if (verified.Count > 0) { thread.Binding = verified[verified.Count - 1].Target; thread.Route = thread.Binding.Target; }
+                SelectThread(thread);
+            }
+            catch (OwnerChatAuthorityException ex)
+            { ClearRemoteViews(); account = null; endpoints.Clear(); coreFailure = ex.Message; if (!IsDisposed) SelectThread(current); }
+            catch (Exception ex) { if (!IsDisposed) status.Text = ex.Message; }
+            finally { checking = false; if (!IsDisposed) UpdateControls(); }
         }
 
         private void ShowAvailability()
@@ -349,6 +408,7 @@ namespace McClusterDesktop
             if (current == null) return;
             if (IsLocal) status.Text = models.SelectedIndex < 0 && localModels.Count > 0 ? "Select an installed local model." : localState;
             else if (!string.IsNullOrEmpty(coreFailure)) status.Text = coreFailure;
+            else if (current.Route == "saved") status.Text = "Open the owner workspace to view this conversation. Start a new chat here to select a target.";
             else if (models.Items.Count == 0) status.Text = current.Route == "prime" ? "Prime is unavailable through OVH. Check pairing, worker availability and the advertised model." :
                 current.Route == "ovh" ? "OVH CPU has no verified model available for this account." : "No connected worker is verified for this account.";
             else if (models.SelectedIndex < 0) status.Text = "Select an available worker and model.";
@@ -359,30 +419,32 @@ namespace McClusterDesktop
         private void UpdateControls()
         {
             bool idle = current != null && active == null && !checking;
+            bool inCall = call != null && call.Active;
             bool ready = IsLocal ? models.SelectedIndex >= 0 : core != null && models.SelectedItem is Endpoint && SameBinding(current.Binding, ((Endpoint)models.SelectedItem).Value);
             bool pending = !IsLocal && Pending != null;
-            prompt.Enabled = idle && !pending;
-            models.Enabled = idle && models.Items.Count > 0 && (IsLocal || !current.Started);
-            targets.Enabled = idle && !current.Started;
-            threadPicker.Enabled = idle;
-            newChat.Enabled = idle;
+            prompt.Enabled = idle && !pending && !inCall;
+            models.Enabled = idle && !inCall && models.Items.Count > 0 && (IsLocal || !current.Started);
+            targets.Enabled = idle && !inCall && !current.Started;
+            threadPicker.Enabled = idle && !inCall;
+            newChat.Enabled = idle && !inCall;
             bool canCheckSaved = pending && Pending.Run != null && core != null && current.Binding != null &&
                 current.Binding.SessionId == account && string.IsNullOrEmpty(coreFailure);
-            send.Enabled = idle && (canCheckSaved || (ready && (pending || !string.IsNullOrWhiteSpace(prompt.Text))));
+            send.Enabled = idle && !inCall && (canCheckSaved || (ready && (pending || !string.IsNullOrWhiteSpace(prompt.Text))));
             send.Text = pending ? (Pending.Run == null ? "Retry same turn" : "Check Core turn") : (IsLocal ? "Send locally" : "Send via OVH");
-            stop.Enabled = active != null && !active.IsCancellationRequested;
-            stop.Text = IsLocal ? "Stop" : "Stop waiting";
+            stop.Enabled = (active != null && !active.IsCancellationRequested) || (idle && pending && current.Binding != null && account == current.Binding.SessionId);
+            stop.Text = IsLocal ? "Stop" : "Stop Core turn";
             receipt.Enabled = active == null && latestReceipt != null;
-            refresh.Enabled = idle;
-            ownerWorkspace.Enabled = active == null;
-            projects.Enabled = projects.Tag != null && active == null;
+            refresh.Enabled = idle && !inCall;
+            ownerWorkspace.Enabled = active == null && !inCall;
+            projects.Enabled = projects.Tag != null && active == null && !inCall;
+            UpdateCallControls(idle && ready && !pending && string.IsNullOrWhiteSpace(prompt.Text));
         }
 
         private void StopTurn()
         {
             if (active == null) return;
             active.Cancel();
-            status.Text = IsLocal ? "Stopping the local turn…" : "Stopped waiting. Core keeps any accepted turn.";
+            status.Text = IsLocal ? "Stopping the local turn…" : (closeAfterStop && !voiceInFlight ? "Closing the local view. Core keeps the turn." : "Requesting Stop from Core…");
             UpdateControls();
         }
 
@@ -433,22 +495,29 @@ namespace McClusterDesktop
                     if (t.Run.Status == "done")
                     {
                         Append("McCluster", t.Run.Content, accent);
-                        latestReceipt = "Selected " + RouteNames[Array.IndexOf(Routes, current.Route)] + " · " + current.Binding.Model +
+                        latestReceipt = "Selected " + RouteNames[Array.IndexOf(Routes, t.Target.Target)] + " · " + t.Target.Model +
                             Environment.NewLine + "Served by " + t.Run.NodeName + " · " + t.Run.Model + " · " + t.Run.HardwareMode +
                             Environment.NewLine + "Node " + t.Run.NodeId + Environment.NewLine + "Thread " + t.Run.ThreadId +
                             Environment.NewLine + "Turn " + t.Run.TurnId + Environment.NewLine + "Compute task " + t.Run.ComputeTaskId;
                         Append("Core execution receipt", latestReceipt, muted);
                     }
-                    else if (t.Run.Status == "failed") Append("Turn ended", t.Run.Error, muted);
+                    else if (t.Run.Status == "failed" || t.Run.Status == "canceled") Append("Turn ended", t.Run.Error, muted);
                 }
             }
         }
 
         private async Task Send()
         {
-            if (!send.Enabled || active != null) return;
-            string question = prompt.Text.Trim();
-            active = new CancellationTokenSource();
+            if (send.Enabled) await SendSelected(prompt.Text.Trim(), CancellationToken.None, false);
+        }
+
+        private async Task<string> SendSelected(string question, CancellationToken token, bool spoken)
+        {
+            if (current == null || active != null || checking) return null;
+            token.ThrowIfCancellationRequested();
+            active = CancellationTokenSource.CreateLinkedTokenSource(token);
+            string answer = null;
+            voiceInFlight = spoken;
             UpdateControls();
             try
             {
@@ -459,9 +528,21 @@ namespace McClusterDesktop
                     prompt.Clear(); Append("You", question, muted);
                     status.Text = "Running " + selected + " on this device…";
                     await runner.Run(job, null, active.Token);
-                    if (!IsDisposed) { RenderHistory(); status.Text = job.State == JobState.Done ? "Local turn complete." : "Local turn " + job.State + "."; }
+                    if (!IsDisposed)
+                    {
+                        RenderHistory();
+                        status.Text = job.State == JobState.Done ? "Local turn complete." : "Local turn " + job.State + ".";
+                        if (spoken && job.State == JobState.Done)
+                            using (var key = DeviceKey.Load(store.Root))
+                                if (LocalConversation.Verifies(job, key.KeyId)) answer = Json.Str(job.Result, "content");
+                    }
                 }
-                else await SendCore(question);
+                else
+                {
+                    await SendCore(question);
+                    var turn = current.Remote.LastOrDefault();
+                    if (turn != null && turn.Run != null && turn.Run.Status == "done") answer = turn.Run.Content;
+                }
             }
             catch (OwnerChatAuthorityException ex)
             {
@@ -484,7 +565,7 @@ namespace McClusterDesktop
             }
             finally
             {
-                active.Dispose(); active = null;
+                active.Dispose(); active = null; voiceInFlight = false;
                 if (!IsDisposed)
                 {
                     BindThreads();
@@ -492,32 +573,61 @@ namespace McClusterDesktop
                     if (closeAfterStop) Close(); else prompt.Focus();
                 }
             }
+            return token.IsCancellationRequested ? null : answer;
         }
 
         private async Task SendCore(string question)
         {
-            var endpoint = current.Binding;
             var turn = Pending;
+            var endpoint = turn == null ? current.Binding : turn.Target;
             if (turn == null)
             {
-                turn = new RemoteTurn { Question = question };
+                turn = new RemoteTurn { Question = question, Target = endpoint };
                 current.Remote.Add(turn);
                 prompt.Clear();
                 Append("You", question, muted);
             }
             status.Text = "Waiting for Core…";
-            if (turn.Run == null)
-                turn.Run = await core.SubmitAsync(endpoint, current.CoreId, turn.MessageId, turn.Question);
-            for (int reads = 0; reads < 90 && turn.Run.Status == "pending"; reads++)
+            try
             {
-                active.Token.ThrowIfCancellationRequested();
-                // A stopped wait can reconnect through Get without submitting again.
-                if (reads != 0) await Task.Delay(2000, active.Token);
-                turn.Run = await core.GetAsync(endpoint, current.CoreId, turn.Run.TurnId);
+                if (turn.Run == null)
+                    turn.Run = await core.SubmitAsync(endpoint, current.CoreId, turn.MessageId, turn.Question);
+                for (int reads = 0; reads < 90 && turn.Run.Status == "pending"; reads++)
+                {
+                    active.Token.ThrowIfCancellationRequested();
+                    if (reads != 0) await Task.Delay(2000, active.Token);
+                    turn.Run = await core.GetAsync(endpoint, current.CoreId, turn.Run.TurnId);
+                }
+            }
+            catch (OwnerChatAuthorityException) { throw; }
+            catch (Exception) { if (!active.IsCancellationRequested) throw; }
+            // A lost submit acknowledgement can still leave this exact turn running on Core.
+            if (active.IsCancellationRequested && (turn.Run == null || turn.Run.Status == "pending"))
+            {
+                if (closeAfterStop && !voiceInFlight) return;
+                await ConfirmStop(turn);
             }
             if (IsDisposed) return;
             RenderHistory();
             status.Text = turn.Run.Status == "pending" ? "Core is still running. Check this turn again." : "Core turn " + turn.Run.Status + ".";
+        }
+
+        private async Task ConfirmStop(RemoteTurn turn)
+        {
+            await core.StopAsync(turn.Target, current.CoreId, turn.MessageId);
+            turn.Run = new OwnerChatRun { ThreadId = current.CoreId, TurnId = turn.MessageId, Status = "canceled", Error = "Stopped by the owner." };
+        }
+
+        private async Task StopPending()
+        {
+            var turn = Pending;
+            if (turn == null || active != null) return;
+            active = new CancellationTokenSource();
+            UpdateControls();
+            try { await ConfirmStop(turn); if (!IsDisposed) { RenderHistory(); status.Text = "Core confirmed the turn stopped."; } }
+            catch (OwnerChatAuthorityException ex) { ClearRemoteViews(); account = null; endpoints.Clear(); coreFailure = ex.Message; if (!IsDisposed) SelectThread(current); }
+            catch (Exception ex) { if (!IsDisposed) status.Text = ex.Message; }
+            finally { active.Dispose(); active = null; if (!IsDisposed) { UpdateControls(); if (closeAfterStop) Close(); } }
         }
 
         private void ShowReceipt()

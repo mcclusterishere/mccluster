@@ -54,6 +54,8 @@ namespace McClusterDesktop
     {
         private readonly IOwnerChatPage page;
         public string SessionId { get; private set; }
+        private string writableSession;
+        private int discoveryGeneration;
         private static readonly Regex NodeId = new Regex(@"\Anode_[0-9a-f]{24,64}\z");
         private static readonly Regex Implementation = new Regex(@"\A[a-z0-9][a-z0-9._:-]{0,99}\z");
 
@@ -85,20 +87,41 @@ namespace McClusterDesktop
                 throw new InvalidOperationException("Select a verified worker and model in the signed-in owner workspace.");
         }
 
+        private async Task<Dictionary<string, object>> RequestAsync(OwnerChatOperation operation, Dictionary<string, object> arguments)
+        {
+            int generation = discoveryGeneration;
+            try { return await page.RequestAsync(operation, arguments); }
+            catch (OwnerChatAuthorityException)
+            {
+                if (generation == discoveryGeneration)
+                {
+                    ++discoveryGeneration;
+                    SessionId = null;
+                    writableSession = null;
+                }
+                throw;
+            }
+        }
+
         public async Task<List<OwnerChatTarget>> DiscoverAsync()
         {
-            Dictionary<string, object> result;
-            try { result = await page.RequestAsync(OwnerChatOperation.Discover, new Dictionary<string, object>()); }
-            catch { SessionId = null; throw; }
+            int generation = ++discoveryGeneration;
+            writableSession = null;
+            var result = await RequestAsync(OwnerChatOperation.Discover, new Dictionary<string, object>());
+            if (generation != discoveryGeneration) throw new OwnerChatAuthorityException("A newer workspace check is available. Refresh the chat targets.");
+            SessionId = null;
             string session = Field(result, "session_id", 36);
             IList nodes = Json.List(result, "targets");
             if (!IsGuid(session) || nodes == null || nodes.Count > 64) throw Unverified();
+            bool canStop = object.Equals(Json.Get(result, "can_stop"), true);
+            if (!canStop && nodes.Count > 0) throw new InvalidOperationException("Core must support stopping a turn before native chat can send one.");
             var targets = new List<OwnerChatTarget>();
             foreach (object node in nodes)
             {
                 targets.Add(ReadTarget(node, session));
             }
             SessionId = session;
+            writableSession = canStop ? session : null;
             return targets;
         }
 
@@ -119,7 +142,7 @@ namespace McClusterDesktop
         public async Task<List<OwnerChatThread>> ListThreadsAsync(string sessionId)
         {
             RequireSession(sessionId);
-            var result = await page.RequestAsync(OwnerChatOperation.History, new Dictionary<string, object> { { "session_id", sessionId } });
+            var result = await RequestAsync(OwnerChatOperation.History, new Dictionary<string, object> { { "session_id", sessionId } });
             var threads = Json.List(result, "threads");
             if (threads == null || threads.Count > 40) throw Unverified();
             var items = new List<OwnerChatThread>();
@@ -137,7 +160,7 @@ namespace McClusterDesktop
         {
             RequireSession(sessionId);
             if (!IsGuid(threadId)) throw Unverified();
-            var result = await page.RequestAsync(OwnerChatOperation.History, new Dictionary<string, object> { { "session_id", sessionId }, { "thread_id", threadId } });
+            var result = await RequestAsync(OwnerChatOperation.History, new Dictionary<string, object> { { "session_id", sessionId }, { "thread_id", threadId } });
             var turns = Json.List(result, "turns");
             if (Field(result, "thread_id", 36) != threadId || turns == null || turns.Count > 40) throw Unverified();
             var items = new List<OwnerChatTurn>();
@@ -155,7 +178,8 @@ namespace McClusterDesktop
         {
             var args = Arguments(target, threadId, turnId);
             args.Add("turn_id", turnId);
-            var result = await page.RequestAsync(OwnerChatOperation.Stop, args);
+            var result = await RequestAsync(OwnerChatOperation.Stop, args);
+            RequireSession(target.SessionId);
             if (ReadState(result, threadId, turnId).Status != "canceled") throw new InvalidOperationException("Core did not confirm that the turn was stopped. Reconnect to check the receipt.");
         }
 
@@ -171,11 +195,13 @@ namespace McClusterDesktop
         public async Task<OwnerChatRun> SubmitAsync(OwnerChatTarget target, string threadId, string messageId, string content)
         {
             var args = Arguments(target, threadId, messageId);
+            if (writableSession != target.SessionId) throw new InvalidOperationException("Refresh the worker list to confirm Core can stop this turn.");
             if (string.IsNullOrWhiteSpace(content) || content.Length > 12000)
                 throw new InvalidOperationException("Enter a message of up to 12,000 characters.");
             args.Add("message_id", messageId);
             args.Add("content", content);
-            var result = await page.RequestAsync(OwnerChatOperation.Submit, args);
+            var result = await RequestAsync(OwnerChatOperation.Submit, args);
+            RequireSession(target.SessionId);
             var run = ReadState(result, threadId, messageId);
             if (run.Status != "pending") throw Unverified();
             return run;
@@ -192,7 +218,8 @@ namespace McClusterDesktop
         {
             var args = Arguments(target, threadId, turnId);
             args.Add("turn_id", turnId);
-            var result = await page.RequestAsync(OwnerChatOperation.Get, args);
+            var result = await RequestAsync(OwnerChatOperation.Get, args);
+            RequireSession(target.SessionId);
             var run = ReadState(result, threadId, turnId);
             if (run.Status == "pending") return run;
             if (run.Status == "failed")

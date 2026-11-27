@@ -23,7 +23,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\..\packages\equity-fighter\windows\LocalConversation.cs" Link="EquityFighter\LocalConversation.cs" />
-    <Compile Include="..\..\..\packages\equity-fighter\windows\PrimeChatForm.cs" Link="EquityFighter\PrimeChatForm.cs" />
+    <Compile Include="..\..\..\packages\equity-fighter\windows\PrimeChat*.cs" Link="EquityFighter\%(Filename)%(Extension)" />
+    <Compile Include="..\..\..\packages\equity-fighter\windows\Call*.cs" Link="EquityFighter\%(Filename)%(Extension)" />
+    <Compile Include="..\..\..\packages\equity-fighter\windows\OfflineCallSpeech.cs" Link="EquityFighter\OfflineCallSpeech.cs" />
     <Reference Include="System.Management" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web.Extensions" />

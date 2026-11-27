@@ -84,7 +84,10 @@ New-Item -ItemType Directory -Force $OutDir | Out-Null
 $src = Join-Path $here 'src'
 $sources = Get-ChildItem (Join-Path $src '*.cs') | Sort-Object Name | ForEach-Object { $_.FullName }
 $fighter = Join-Path $here '..\..\packages\equity-fighter\windows'
-$sources += (Join-Path $fighter 'LocalConversation.cs'), (Join-Path $fighter 'PrimeChatForm.cs')
+$fighterRuntime = @((Join-Path $fighter 'LocalConversation.cs'), (Join-Path $fighter 'OfflineCallSpeech.cs'))
+$fighterRuntime += @(Get-ChildItem -LiteralPath $fighter -Filter 'Call*.cs' -File | Sort-Object Name | Select-Object -ExpandProperty FullName)
+$sources += $fighterRuntime
+$sources += @(Get-ChildItem -LiteralPath $fighter -Filter 'PrimeChat*.cs' -File | Sort-Object Name | Select-Object -ExpandProperty FullName)
 $refNames = @('mscorlib.dll','System.dll','System.Core.dll','System.Drawing.dll','System.Windows.Forms.dll','System.Net.Http.dll','System.Management.dll','System.Web.Extensions.dll','System.Runtime.Serialization.dll','System.Security.dll','System.IO.Compression.dll','System.IO.Compression.FileSystem.dll')
 $refs = $refNames | ForEach-Object {
   $p = Join-Path $fw $_
@@ -115,7 +118,7 @@ if ($Tests -or $Installer) {
   New-Item -ItemType Directory -Force $testOut | Out-Null
   $testExe = Join-Path $testOut 'McClusterTests.exe'
   $testSources = @('NavigationPolicy.cs','Json.cs','LocalJobs.cs','DeviceInventory.cs','LocalRuntime.cs','Proof.cs','ExoProbe.cs','Contribution.cs','CoreJobs.cs','PanelRuns.cs','OwnerChatTransport.cs') | ForEach-Object { Join-Path $src $_ }
-  $testSources += (Join-Path $fighter 'LocalConversation.cs')
+  $testSources += $fighterRuntime
   $testSources += (Get-ChildItem (Join-Path $here 'tests\*.cs') | ForEach-Object { $_.FullName })
   $testArgs = @('/nologo','/noconfig','/nostdlib+','/warnaserror+','/target:exe','/platform:x64','/langversion:5',"/out:$testExe") + $refs + $testSources
   & $csc @testArgs

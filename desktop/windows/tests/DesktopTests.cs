@@ -24,6 +24,7 @@ internal static class DesktopTests
         {
             NavigationPolicyChecks();
             OwnerChatTests.Run(Assert);
+            CallSessionTests.Run();
             JobStoreChecks();
             AdapterChecks();
             ProofChecks();

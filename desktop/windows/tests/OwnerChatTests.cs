@@ -11,10 +11,22 @@ internal static class OwnerChatTests
         internal readonly string Node = "node_" + new string('a', 40), Model = "qwen3:8b", Impl = "qwen3.8b.local";
         internal string Served, Hardware = "cpu-only", Runtime, ReturnedTurn, ComputeTaskId = Guid.NewGuid().ToString();
         internal Dictionary<string, object> Submitted;
+        internal bool SignedIn = true, CanStop = true, ConfirmedStop = true;
         public Task<Dictionary<string, object>> RequestAsync(OwnerChatOperation op, Dictionary<string, object> args)
         {
+            if (!SignedIn) throw new OwnerChatAuthorityException("The house owner has signed out.");
+            if (op == OwnerChatOperation.History)
+            {
+                if (!args.ContainsKey("thread_id"))
+                    return Task.FromResult(new Dictionary<string, object> { { "threads", new object[] { new Dictionary<string, object> { { "thread_id", Thread }, { "title", "A previous run" } } } } });
+                return Task.FromResult(new Dictionary<string, object> { { "thread_id", Thread }, { "turns", new object[] { new Dictionary<string, object> {
+                    { "turn_id", Turn }, { "prompt", "History fixture" }, { "status", "done" }, { "target", "ovh" }, { "node_id", Node }, { "name", "Owner CPU" }, { "implementation", Impl }, { "model", Model }
+                } } } });
+            }
+            if (op == OwnerChatOperation.Stop)
+                return Task.FromResult(new Dictionary<string, object> { { "thread_id", Thread }, { "turn_id", Turn }, { "status", ConfirmedStop ? "canceled" : "pending" } });
             if (op == OwnerChatOperation.Discover)
-                return Task.FromResult(new Dictionary<string, object> { { "session_id", Session }, { "targets", new object[] {
+                return Task.FromResult(new Dictionary<string, object> { { "can_stop", CanStop }, { "session_id", Session }, { "targets", new object[] {
                     new Dictionary<string, object> { { "target", "ovh" }, { "name", "Owner CPU" }, { "node_id", Node }, { "implementation", Impl }, { "model", Model } }
                 } } });
             if (op == OwnerChatOperation.Submit) Submitted = args;
@@ -38,6 +50,27 @@ internal static class OwnerChatTests
             && Json.Str(fixture.Submitted, "content") == "Benign fixture prompt.", "only the narrow owner-turn inputs are sent");
         var answer = transport.GetAsync(target, fixture.Thread, fixture.Turn).GetAwaiter().GetResult();
         check(answer.NodeId == fixture.Node && answer.ComputeTaskId == fixture.ComputeTaskId && answer.HardwareMode == "cpu-only" && answer.Content == "Fixture answer.", "a matching execution receipt permits display");
+        var oldThread = transport.ListThreadsAsync(transport.SessionId).GetAwaiter().GetResult()[0];
+        var oldTurn = transport.ListTurnsAsync(transport.SessionId, oldThread.ThreadId).GetAwaiter().GetResult()[0];
+        check(oldTurn.TurnId == fixture.Turn && oldTurn.Target.NodeId == target.NodeId && oldTurn.Prompt == "History fixture", "remote history retains a recoverable turn key and original pin");
+        transport.StopAsync(target, fixture.Thread, fixture.Turn).GetAwaiter().GetResult();
+        fixture.ConfirmedStop = false;
+        bool stopped = true;
+        try { transport.StopAsync(target, fixture.Thread, fixture.Turn).GetAwaiter().GetResult(); }
+        catch (InvalidOperationException) { stopped = false; }
+        check(!stopped, "a still-pending response cannot confirm cancellation");
+        fixture.SignedIn = false;
+        try { transport.GetAsync(target, fixture.Thread, fixture.Turn).GetAwaiter().GetResult(); }
+        catch (OwnerChatAuthorityException) { }
+        check(transport.SessionId == null, "authority loss on receipt lookup invalidates the native account binding");
+        fixture.SignedIn = true;
+        fixture.CanStop = false;
+        bool advertised = true;
+        try { transport.DiscoverAsync().GetAwaiter().GetResult(); }
+        catch (InvalidOperationException) { advertised = false; }
+        check(!advertised, "a worker without durable stop support cannot be advertised");
+        fixture.CanStop = true;
+        transport.DiscoverAsync().GetAwaiter().GetResult();
         foreach (Action mutate in new Action[] {
             delegate { fixture.Served = "node_" + new string('b', 40); },
             delegate { fixture.Runtime = "qwen3:4b"; }, delegate { fixture.Hardware = "gpu-verified"; },

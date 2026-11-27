@@ -41,3 +41,6 @@ jobs:
           $version = ($project.Project.ItemGroup.PackageReference | Where-Object Include -eq 'Microsoft.Web.WebView2').Version
           $webView = Join-Path $env:RUNNER_TEMP "equitynet-packages/microsoft.web.webview2/$version"
           & ./desktop/windows/build-inbox.ps1 -WebView2Dir $webView -Tests
+      - name: Exercise the owner transport in WebView2 with an isolated account fixture
+        shell: pwsh
+        run: ./desktop/windows/tests/Test-OwnerChatWebView.ps1 -AppDir ./desktop/windows/dist/app
