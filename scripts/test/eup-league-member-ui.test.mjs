@@ -283,7 +283,7 @@ test('the page is neutral, noindex and linked from nowhere; it loads only what t
   assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/);
   assert.doesNotMatch(html, /user-scalable|maximum-scale/);
   assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, 'one h1');
-  assert.match(html, /<title>Equity Uprise<\/title>/, 'the static title names no program');
+  assert.match(html, /<title>Equity Quantized<\/title>/, 'the static title names no program');
   const visible = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ');
   assert.doesNotMatch(visible, /Environmental Justice League|Write a song|mission|campaign/i, 'nothing in the static page names the program, a campaign or a mission');
   for (const src of ['/js/backend.js', '/js/eup-league-capture.js', '/js/eup-league-member.js', '/css/eup-league-member.css', '/js/live-content.js']) assert.ok(html.includes(`${src}?v=__STAMP__`), src);
@@ -337,7 +337,7 @@ test('signed out: only the neutral state, a sign-in link, and no request at all'
   assert.match(s.text(), /Not available/);
   assert.match(s.main.innerHTML, /href="\/account\.html\?next=%2Faction%2Fleague\.html"/);
   assert.doesNotMatch(s.text(), /Environmental Justice League|Write a song|campaign/i);
-  assert.equal(s.doc.title, 'Equity Uprise');
+  assert.equal(s.doc.title, 'Equity Quantized');
 });
 
 test('401 and 404 render nothing but the neutral state; a malformed ok answer is not shown either', async () => {
@@ -346,7 +346,7 @@ test('401 and 404 render nothing but the neutral state; a malformed ok answer is
     await settle();
     assert.equal(el(s, '[data-eul-unavailable]')?.getAttribute('data-eul-unavailable'), kind, JSON.stringify(answer).slice(0, 80));
     assert.doesNotMatch(s.text(), /Environmental Justice League|Write a song|Test fixture campaign/);
-    assert.equal(s.doc.title, 'Equity Uprise');
+    assert.equal(s.doc.title, 'Equity Quantized');
   }
 });
 
@@ -362,7 +362,7 @@ test('ok: the League renders, every read is a request, and requests carry the tr
   await settle();
   assert.match(s.text(), /Environmental Justice League/);
   assert.match(s.text(), /Write a song for a healthier world/);
-  assert.equal(s.doc.title, 'Environmental Justice League · Equity Uprise');
+  assert.equal(s.doc.title, 'Environmental Justice League · Equity Quantized');
   click(s, 'reload'); await settle();
   assert.equal(s.srv.calls.filter((c) => c.path === '').length, 2, 'the read is asked again, never cached');
   const init = s.srv.calls[0].init;

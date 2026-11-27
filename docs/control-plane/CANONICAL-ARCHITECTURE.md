@@ -25,16 +25,18 @@ Activation is a reviewed deployment, separate from implementing this extraction.
 
 ## Public properties
 
+The app is Equity Quantized (owner, 2026-11-27); its former Equity Uprise name remains in compatibility identifiers and historical records. The civic programme, music act and physical building retain Equity Uprise.
+
 One platform, tenant properties, separate entities (`docs/control-plane/DOMAINS-AND-ENTITIES.md`,
 `data/seo/domain-architecture.json`). Stage now: P1, the platform serves everything: every page answers at its path on the platform, and Matthew's host keeps answering every page (what P1 changes: `edge.now.p1_changes`; what P0 changed before it: `edge.now.p0_changes`). P2 (planned) moves each page's canonical, sitemap entry, share card and WebSite to its set's host; P3 (planned) makes Matthew's host answer 301 to the same path on the platform for the pages that moved.
 
 | Host | Role | Entity | Served by |
 | --- | --- | --- | --- |
-| `mccluster.org` | the platform, set in one place (`platform.origin`; `equityuprise.com` at stage F) | McCluster Corp (Organization) | Worker `mccluster`, host-routed: today the Equity Uprise World at `/` (owner, 2026-10-15), the HERE front door at `/index.html` and every other page at its path with the static files they load (passed through from the static origin via `workers/mccluster/src/world-host.js`, since P1), the company page at `/company` generated from `data/seo/company-site.json`, the company's news at `/news/` and its own crawler files; `/mnet.html` and a World query on `/index.html` 301 to `/`, and Whip Equipped's and the owner's own pages (`profile_only`) 301 to `matthew.mccluster.org` |
+| `mccluster.org` | the platform, set in one place (`platform.origin`; `equityuprise.com` at stage F) | McCluster Corp (Organization) | Worker `mccluster`, host-routed: today the Equity Quantized World at `/` (owner, 2026-10-15), the HERE front door at `/index.html` and every other page at its path with the static files they load (passed through from the static origin via `workers/mccluster/src/world-host.js`, since P1), the company page at `/company` generated from `data/seo/company-site.json`, the company's news at `/news/` and its own crawler files; `/mnet.html` and a World query on `/index.html` 301 to `/`, and Whip Equipped's and the owner's own pages (`profile_only`) 301 to `matthew.mccluster.org` |
 | `matthew.mccluster.org` | a tenant: Matthew's personal profile | Matthew McCluster (Person) | GitHub Pages from this repository; from P3 Worker `mccluster` by host, with the pages that moved answering 301 to the platform |
 | `humanuprise.com` | a door | McCluster Corp (Organization) | Worker `mccluster`, host-routed (`workers/mccluster/src/human-uprise`): built and inert until the owner routes it; once routed, 301 to the platform (owner default of 2026-11-23; the router answers so since P1) |
 
-Serving the platform, its tenants and its doors is public ingress and routing inside the one Worker; it adds no Worker, store or identity. The hosts are written from the record by `tools/build-site-hosts.mjs` into `workers/mccluster/src/platform/hosts.generated.js`, the block at the top of `js/shell-boot.js` that sets `window.MCC_SITE`, and `supabase/functions/_shared/site-hosts.ts`. Equity Uprise shares the M Account identity spine and canonical Supabase project, not a second login system.
+Serving the platform, its tenants and its doors is public ingress and routing inside the one Worker; it adds no Worker, store or identity. The hosts are written from the record by `tools/build-site-hosts.mjs` into `workers/mccluster/src/platform/hosts.generated.js`, the block at the top of `js/shell-boot.js` that sets `window.MCC_SITE`, and `supabase/functions/_shared/site-hosts.ts`. Equity Quantized shares the M Account identity spine and canonical Supabase project, not a second login system.
 
 ## Canonical orchestration
 

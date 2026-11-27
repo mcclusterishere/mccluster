@@ -30,7 +30,7 @@ const sitemapFor = (origin) => '<?xml version="1.0" encoding="UTF-8"?>\n' +
 
 /* The World's head on a door: the World's front door there, so the noindex gives way to the door's canonical
    (../world-host.js). */
-const headFor = (origin) => ({ origin, siteName: 'Equity Uprise' });
+const headFor = (origin) => ({ origin, siteName: 'Equity Quantized' });
 export function worldHead(html) {
   return worldHeadFor(html, headFor(HUMAN_UPRISE_ORIGIN));
 }

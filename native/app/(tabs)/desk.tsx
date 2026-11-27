@@ -57,7 +57,7 @@ export default function DeskScreen() {
         </Text>
         <Door label="Hire the studio" href={`${ORIGIN}/hire.html`} />
         <Door label="Client console" href={`${ORIGIN}/console.html`} />
-        <Door label="Equity Uprise" href={`${ORIGIN}/equity-uprise.html`} />
+        <Door label="Equity Quantized" href={`${ORIGIN}/equity-uprise.html`} />
       </View>
 
       <Text style={s.foot}>McCluster Corp · {album.name}</Text>

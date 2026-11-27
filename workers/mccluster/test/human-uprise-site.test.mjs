@@ -33,7 +33,7 @@ function upstream(pages = {}) {
   };
   return { asked, fetchImpl };
 }
-const MNET = '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <title>Equity Uprise · McCluster</title>\n  <meta name="viewport" content="width=device-width">\n  <meta name="robots" content="noindex">\n</head>\n<body></body></html>';
+const MNET = '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <title>Equity Quantized · McCluster</title>\n  <meta name="viewport" content="width=device-width">\n  <meta name="robots" content="noindex">\n</head>\n<body></body></html>';
 const PAGES = {
   '/mnet.html': { type: 'text/html; charset=utf-8', body: MNET },
   '/action-globe.html': { type: 'text/html; charset=utf-8', body: '<!doctype html><title>Globe</title>' },
@@ -89,9 +89,9 @@ test('P0, before P1: the root is the World: mnet.html from the personal origin, 
   const html = await r.text();
   assert.match(html, /<link rel="canonical" href="https:\/\/humanuprise\.com\/">/);
   assert.match(html, /<meta property="og:url" content="https:\/\/humanuprise\.com\/">/);
-  assert.match(html, /<meta property="og:site_name" content="Equity Uprise">/, 'the public brand (owner, 2026-10-28), on the legacy-named host');
+  assert.match(html, /<meta property="og:site_name" content="Equity Quantized">/, 'the public brand (owner, 2026-10-28), on the legacy-named host');
   assert.doesNotMatch(html, /name="robots" content="noindex"/, 'the noindex that belongs to Matthew\'s site does not follow the World here');
-  assert.match(html, /<title>Equity Uprise · McCluster<\/title>/, 'the page is otherwise untouched');
+  assert.match(html, /<title>Equity Quantized · McCluster<\/title>/, 'the page is otherwise untouched');
 });
 
 test('P0, before P1: the root keeps its deep links: the query rides to the World unchanged', async () => {

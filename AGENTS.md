@@ -4,6 +4,21 @@ This file is the law for every McCluster repository, every Cloudflare project, a
 
 If you skip it, you will invent a second backend, race a git push, or break a client product. That is exactly how the last agents failed.
 
+## Current app name: Equity Quantized (owner, 2026-11-27)
+
+The app itself is **Equity Quantized**, formerly Equity Uprise / Equity Uprise
+World. Use the current name in app display copy, page and share titles,
+SoftwareApplication metadata, installed-platform-app metadata and accessible
+navigation names. This supersedes earlier app naming directions below;
+quoted owner instructions and dated history retain their original wording.
+
+This is a display-name change. McCluster Corp, Matthew McCluster, the distinct
+Equity Uprise civic programme and music act, the physical Equity Uprise building,
+supplied logo artwork, hosts, routes, filenames, package IDs, entity `@id`s and
+backend contracts retain their identities. The HERE app installed from Matthew's
+profile host is separate; only the platform-installed app names Equity Quantized.
+No rename here authorizes deployment or a legal/entity change.
+
 ## The plane
 
 | Piece | Canonical |

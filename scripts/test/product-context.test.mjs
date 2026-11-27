@@ -19,6 +19,8 @@ test("McCluster Corp product context is wired into the public authority graph", 
   const company = "https://mccluster.org/";
   const orgId = "https://matthew.mccluster.org/#mccluster-corp";
 
+  assert.equal(context.product_model.layers.find((layer) => layer.id === "participation").name, "Equity Quantized");
+  assert.equal(entity.software.action_network.name, "Equity Quantized");
   assert.equal(context.schema_version, "mccluster-product-context/v1");
   assert.equal(context.organization["@id"], orgId);
   assert.equal(context.organization.url, company, "the Organization's url is the company property (data/seo/domain-architecture.json)");
@@ -30,7 +32,7 @@ test("McCluster Corp product context is wired into the public authority graph", 
   assert.ok(corp.includes("data/product-context.json"));
   for (const label of ["McCluster Platform", "Equity Uprise", "PRIM3"]) assert.ok(corp.includes(label), label + " must be explained");
   /* owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise; the participation product is still explained */
-  assert.ok(corp.includes("<b>Equity Uprise</b> (formerly the Uprise Action Network): mission, act, proof, review, verified record."), "the participation product must be explained under its public brand");
+  assert.ok(corp.includes("<b>Equity Quantized</b> (formerly Equity Uprise / the Uprise Action Network): mission, act, proof, review, verified record."), "the participation product must be explained under its public brand");
   assert.ok(!corp.includes("Human Uprise"), "the product map names the public brand, Equity Uprise");
   assert.ok(home.includes(`"url": "${company}"`), "home Organization must point at the company property");
   assert.ok(profile.includes(`"url": "${company}"`), "profile Organization must point at the company property");

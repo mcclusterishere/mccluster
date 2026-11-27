@@ -178,7 +178,7 @@ test('the page wires them: one read of the open missions, the details asked once
   assert.match(post, /var sub = \[meta \? esc\(meta\) : "", source \? '<button class="mn__mission-post-source" type="button" data-mission-credit="' \+ esc\(m\.id\) \+ '">' \+ esc\(source\) \+ '<\/button>' : ""\]\.filter\(Boolean\)\.join\(" \\u00b7 "\);/);
   assert.match(post, /\(sub \? '<div class="mn__author-sub">' \+ sub \+ '<\/div>' : ''\)/);
   assert.match(post, /aria-label="Join this mission">' \+ EUP_MARKS \+ '<\/button>/, 'the emblem alone is the join, with no words beside it');
-  assert.doesNotMatch(post, /Equity Uprise/i, 'the brand is never written out on a post');
+  assert.doesNotMatch(post, /Equity Quantized/i, 'the brand is never written out on a post');
   assert.match(js, /var EUP_MARKS = '<img class="mn__eup mn__eup--white" src="assets\/img\/equity-uprise-mark-white\.png" alt="" width="40" height="40">' \+\s*'<img class="mn__eup mn__eup--dark" src="assets\/img\/equity-uprise-mark\.png" alt="" width="40" height="40">';/, 'the two supplied marks, scaled only (square, as supplied), at the strip\'s size');
   assert.match(js, /if \(m\) acceptWorldMission\(\{ id: m\.id, title: m\.title \}\);/, 'Join is the one join every mission entry shares');
   assert.match(js, /openMission\(id, credit \? \{ at: "credit" \} : null\);/, 'Details and the source line open the dialog');
@@ -365,7 +365,7 @@ test('a failed missions read is read again on Try again or when the tab is chose
   assert.equal((host.innerHTML.match(/data-mission-post=/g) || []).length, 3);
 });
 
-test('a country tapped on the globe: Global or News turn to Local and come back when it is let go; the Equity Uprise tab is never left', () => {
+test('a country tapped on the globe: Global or News turn to Local and come back when it is let go; the Equity Quantized tab is never left', () => {
   const js = read('js/mnet.js');
   const open = '} else if (d.type === "hu:country") {', close = '} else if (d.type === "hu:place-stats") {';
   const a = js.indexOf(open), b = js.indexOf(close, a);
@@ -394,7 +394,7 @@ test('a country tapped on the globe: Global or News turn to Local and come back 
   calls.length = 0;
   const eq = make('equity', 'posts');
   eq.run({ type: 'hu:country', country: US });
-  assert.deepEqual(calls, ['render'], 'the Equity Uprise tab is kept: its missions narrow to the place\'s and the panel stays');
+  assert.deepEqual(calls, ['render'], 'the Equity Quantized tab is kept: its missions narrow to the place\'s and the panel stays');
   assert.equal(eq.state.feedScope, 'equity');
   assert.deepEqual([eq.state.world.country.code, eq.state.world.country.missionIds, eq.label.textContent], ['US', [id(2)], 'United States']);
   eq.run({ type: 'hu:country', country: null });
@@ -440,7 +440,7 @@ test('the strip: a mouse drag never lands as a tap, and a key\'s click on a tab 
    local, equity up, global, live news people."). The row as mnet.html ships it, the keys js/mnet.js accepts, the start rule, and
    the arrow keys walking the row's buttons in that order. The browser side (no mode bar, no such words, 390/820/1280, night and
    day) is scripts/e2e/world-missions-guest.e2e.mjs. */
-test('the feed\'s row reads Local, the Equity Uprise tab, Global, Live, News, People; Global is chosen on load; the arrow keys walk it in that order', () => {
+test('the feed\'s row reads Local, the Equity Quantized tab, Global, Live, News, People; Global is chosen on load; the arrow keys walk it in that order', () => {
   const html = read('mnet.html'), js = read('js/mnet.js');
   const row = /<nav class="hu-feed-scope" id="mnFeedScope"[^>]*>([\s\S]*?)<\/nav>/.exec(html)[1];
   const buttons = [...row.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)].map(([, attrs, inner]) => ({
@@ -448,7 +448,7 @@ test('the feed\'s row reads Local, the Equity Uprise tab, Global, Live, News, Pe
     name: (/aria-label="([^"]+)"/.exec(attrs) || [])[1] || inner.replace(/<[^>]+>/g, '').trim(),
     pressed: (/aria-pressed="(true|false)"/.exec(attrs) || [])[1] || null
   }));
-  assert.deepEqual(buttons.map((b) => b.name), ['Local', 'Equity Uprise', 'Global', 'Live', 'News', 'People']);
+  assert.deepEqual(buttons.map((b) => b.name), ['Local', 'Equity Quantized', 'Global', 'Live', 'News', 'People']);
   assert.deepEqual(buttons.map((b) => b.key), ['local', 'equity', 'global', 'live', 'news', 'discover']);
   assert.deepEqual(buttons.filter((b) => b.pressed === 'true').map((b) => b.key), ['global'], 'Global is chosen on load');
   assert.doesNotMatch(row, /Everything/, 'the whole stream is labelled Global again');
@@ -467,7 +467,7 @@ test('the feed\'s row reads Local, the Equity Uprise tab, Global, Live, News, Pe
   els[0].focus();
   const walked = [doc.activeElement.name];
   for (let k = 0; k < 6; k++) walked.push(press('ArrowRight'));
-  assert.deepEqual(walked, ['Local', 'Equity Uprise', 'Global', 'Live', 'News', 'People', 'Local']);
+  assert.deepEqual(walked, ['Local', 'Equity Quantized', 'Global', 'Live', 'News', 'People', 'Local']);
   assert.equal(press('ArrowLeft'), 'People');
   assert.equal(press('Home'), 'Local');
   assert.equal(press('End'), 'People');

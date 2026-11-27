@@ -581,7 +581,7 @@
     if (shell) return;
     loadStyle(); shell = doc.createElement("section"); shell.id = "mccWorldAudioShell";
     shell.setAttribute("aria-label", "World"); shell.hidden = true;
-    frame = doc.createElement("iframe"); frame.id = "mccWorldAudioFrame"; frame.title = "Equity Uprise World";
+    frame = doc.createElement("iframe"); frame.id = "mccWorldAudioFrame"; frame.title = "Equity Quantized World";
     frame.allow = "geolocation; autoplay; fullscreen; camera; microphone";
     frame.allowFullscreen = true; frame.referrerPolicy = "strict-origin-when-cross-origin";
     status = doc.createElement("div"); status.className = "world-audio-status";
@@ -630,7 +630,7 @@
     /* the address and the title the World opens over are the ones shown now: a music view's, when one is shown
        (music slice M5), and they come back when it closes */
     if (!wasOpen) titleBefore = doc.title;
-    concealMusic(); doc.title = "World · Equity Uprise";
+    concealMusic(); doc.title = "World · Equity Quantized";
     if (!wasOpen && !options.history) {
       var address = new URL(location.href); address.searchParams.set("world", "1");
       history.pushState(Object.assign({}, history.state, {mccWorldAudio:{href:clean}}), "", address.href);

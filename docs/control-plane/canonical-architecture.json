@@ -103,7 +103,7 @@
     "authority": "docs/control-plane/DOMAINS-AND-ENTITIES.md and data/seo/domain-architecture.json",
     "rule": "One platform, tenant properties, separate entities; never collapse them. Serving the platform and its tenants is ingress and routing inside Worker mccluster, not a new Worker, store or identity.",
     "stage": "P1 (the platform serves everything): every page answers at its path on the platform, and Matthew's host keeps answering every page (data/seo/domain-architecture.json -> edge.now.p1_changes; what P0 changed before it: edge.now.p0_changes). stage_now and edge.now say what is live; each later stage updates them in its own change. P2 (planned) moves each page's canonical, sitemap entry, share card and WebSite to its set's host; P3 (planned) makes Matthew's host answer 301 to the same path on the platform for the pages that moved.",
-    "public_brand": "Equity Uprise (owner, 2026-10-28: the public brand is Equity Uprise, not Human Uprise). The human_uprise key below is a legacy technical identifier for the humanuprise.com host; what that host serves names Equity Uprise.",
+    "public_brand": "Equity Quantized is the app name (owner, 2026-11-27), formerly Equity Uprise / Equity Uprise World. The human_uprise key and humanuprise.com host are legacy technical identifiers. Equity Uprise remains a distinct civic programme and music identity; stable entities and infrastructure do not change.",
     "platform": {
       "host": "mccluster.org",
       "origin_setting": "data/seo/domain-architecture.json -> platform.origin, written into the Worker, the pages and the edge functions by tools/build-site-hosts.mjs",

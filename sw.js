@@ -141,7 +141,7 @@ self.addEventListener("push", function (e) {
   var d = {};
   try { d = e.data ? e.data.json() : {}; } catch (_) {}
   var url = typeof d.url === "string" && d.url.charAt(0) === "/" && d.url.charAt(1) !== "/" ? d.url : "/mnet.html?view=notifications";
-  e.waitUntil(self.registration.showNotification(String(d.title || "Equity Uprise").slice(0, 80), {
+  e.waitUntil(self.registration.showNotification(String(d.title || "Equity Quantized").slice(0, 80), {
     body: String(d.body || "").slice(0, 160), tag: String(d.tag || "mcc-alerts").slice(0, 40), renotify: true,
     icon: "/assets/img/icon-192.png", badge: "/assets/img/icon-192.png", data: { url: url }
   }));

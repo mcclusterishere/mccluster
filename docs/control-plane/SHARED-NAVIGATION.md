@@ -5,6 +5,8 @@ control bar used across the site. Profile and account belong at the top right.
 This implements navigation; it does not claim a completed redesign of each editor,
 the public World, mission applications, tax onboarding or feature-release tooling.
 
+The World app is named **Equity Quantized** (owner, 2026-11-27). App navigation and accessible names use that name; supplied artwork, route keys and the distinct civic programme keep their existing identities.
+
 ## One bottom bar
 
 The server-verified house owner has Play, Control, the supplied M, Analytics and

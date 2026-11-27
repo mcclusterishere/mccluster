@@ -268,7 +268,7 @@ const strip = (page) => page.evaluate(() => [...document.querySelectorAll('#mnFe
    page's and the globe frame's rendered text (innerText) and the names of everything rendered (aria-label, title, alt); "above
    the row" is every control the feed column renders before the row, and a mode button anywhere. The chosen tab is in the row's
    visible box, its ground differs from an unchosen tab's, and its words or mark read on it. */
-const ROW = ['Local', 'Equity Uprise', 'Global', 'Live', 'News', 'People'];
+const ROW = ['Local', 'Equity Quantized', 'Global', 'Live', 'News', 'People'];
 const ROW_KEYS = ['local', 'equity', 'global', 'live', 'news', 'discover'];
 const guestView = (page) => page.evaluate(async () => {
   /* a tab just chosen eases into its colours (css/style.css: buttons take .22s): read them once the row has settled */
@@ -317,7 +317,7 @@ async function walkRow(page) {
 }
 /* the row as the owner asked for it, at this size and in this phase */
 function checkRow(scope, view, chosen) {
-  check(scope, 'the row reads Local, the Equity Uprise tab, Global, Live, News, People, in that order, and nothing else', JSON.stringify(view.buttons.map((b) => b.name)) === JSON.stringify(ROW)
+  check(scope, 'the row reads Local, the Equity Quantized tab, Global, Live, News, People, in that order, and nothing else', JSON.stringify(view.buttons.map((b) => b.name)) === JSON.stringify(ROW)
     && JSON.stringify(view.buttons.map((b) => b.key)) === JSON.stringify(ROW_KEYS) && !view.buttons.some((b) => /everything/i.test(b.name)), view.buttons);
   check(scope, `one tab is chosen, ${chosen}, in view in the row and marked: its own ground, its words or mark legible on it`, view.chosen && view.chosen.key === chosen && view.buttons.filter((b) => b.pressed === 'true').length === 1
     && view.chosen.inView && view.chosen.ground !== view.chosen.unchosen && (view.chosen.ratio === null ? view.chosen.mark.length === 1 : view.chosen.ratio >= 4.5), view.chosen);
@@ -378,7 +378,7 @@ try {
         check(scope, 'the arrow keys walk the row in the owner\'s order and wrap; Home and End reach its ends', JSON.stringify(walk.right) === JSON.stringify([...ROW, ROW[0]]) && walk.left === ROW[5] && walk.end === ROW[5] && walk.home === ROW[0], walk);
         const row = await strip(page);
         const eup = row.find((b) => b.key === 'equity');
-        check(scope, 'the Equity Uprise tab is the supplied white mark alone by night, square-scaled, no words, named for assistive technology', eup.words === '' && eup.name === 'Equity Uprise' && eup.marks.length === 1
+        check(scope, 'the Equity Quantized tab is the supplied white mark alone by night, square-scaled, no words, named for assistive technology', eup.words === '' && eup.name === 'Equity Quantized' && eup.marks.length === 1
           && eup.marks[0].src === 'assets/img/equity-uprise-mark-white.png' && eup.marks[0].alt === '' && eup.marks[0].w === eup.marks[0].h && eup.marks[0].w >= 24 && eup.marks[0].w <= 44, eup);
         check(scope, 'the globe frame and the expanded globe ask for the missions (no missions=0)', !/missions=0/.test(shell.frame) && !/missions=0/.test(shell.expand), shell);
         const globe = globeOf(page);
@@ -456,7 +456,7 @@ try {
         /* the arrow keys walk the row: the Equity Uprise tab is next after Local */
         await page.focus('#mnFeedScope [data-feed-scope="local"]');
         await page.keyboard.press('ArrowRight');
-        check(scope, 'the row is reachable by keyboard and the arrow key after Local is the Equity Uprise tab', await page.evaluate(() => document.activeElement && document.activeElement.dataset.feedScope === 'equity'));
+        check(scope, 'the row is reachable by keyboard and the arrow key after Local is the Equity Quantized tab', await page.evaluate(() => document.activeElement && document.activeElement.dataset.feedScope === 'equity'));
         /* the Equity Uprise tab: the mission posts, with Environmental Justice above them */
         await page.keyboard.press('Enter');
         await page.waitForSelector('#wePanel:not([hidden])', { timeout: 15000 }).catch(() => {});
@@ -477,13 +477,13 @@ try {
             note: getComputedStyle(document.getElementById('weUnavailable')).display,
             composer: document.getElementById('mnComposer').getClientRects().length > 0, guestCard: document.getElementById('mnGuestCard').getClientRects().length > 0, mode: window.MCC_WORLD_MODE.get() };
         });
-        check(scope, 'the Equity Uprise tab shows the mission posts, newest first, and the environmental observation posts, nothing else (no member posts or news), with the Environmental Justice panel above them', tab.scope === 'equity' && tab.pressed === 'true' && JSON.stringify(tab.others) === '["equity"]'
+        check(scope, 'the Equity Quantized tab shows the mission posts, newest first, and the environmental observation posts, nothing else (no member posts or news), with the Environmental Justice panel above them', tab.scope === 'equity' && tab.pressed === 'true' && JSON.stringify(tab.others) === '["equity"]'
           && tab.panel && /See the evidence/.test(tab.heading) && tab.above && tab.missions === MISSIONS.length && tab.observations === ENVIRONMENT.events.length && tab.articles === MISSIONS.length + tab.observations && JSON.stringify(tab.order) === JSON.stringify(NEWEST)
           && tab.posts === 0 && tab.news === 0 && tab.note === 'none' && !tab.composer && !tab.guestCard && tab.mode === 'posts', tab);
         await page.waitForFunction(() => /Fixture government observation/.test(document.getElementById('wePanel').textContent), null, { timeout: 15000 }).catch(() => {});
         check(scope, 'the panel lists the official report on the same globe', await page.evaluate(() => /Fixture government observation/.test(document.getElementById('wePanel').textContent)));
         size = await fits(page);
-        check(scope, 'nothing scrolls sideways on the Equity Uprise tab', size.sw === size.cw, size);
+        check(scope, 'nothing scrolls sideways on the Equity Quantized tab', size.sw === size.cw, size);
         await page.evaluate(() => { const f = document.getElementById('mnWorldFeed'), a = document.querySelector('#mnFeed [data-mission-post]'); if (f && a) f.scrollTop += a.getBoundingClientRect().top - f.getBoundingClientRect().top - 120; });
         await page.waitForTimeout(300);
         await page.screenshot({ path: join(OUT, `guest-equity-${device.name}.png`) });
@@ -513,7 +513,7 @@ try {
           await page.keyboard.press('Enter');
           await page.waitForTimeout(300);
           const firstEnter = await page.evaluate(() => window.MCC_FEED_SCOPE.get());
-          check(scope, 'after a drag released outside the strip, the first Enter on the Equity Uprise tab chooses it', firstEnter === 'equity', firstEnter);
+          check(scope, 'after a drag released outside the strip, the first Enter on the Equity Quantized tab chooses it', firstEnter === 'equity', firstEnter);
           await page.click('#mnFeedScope [data-feed-scope="global"]');
           await page.waitForSelector('#mnFeed [data-post-id]', { timeout: 15000 }).catch(() => {});
         }
@@ -581,7 +581,7 @@ try {
           joinGround: getComputedStyle(document.getElementById('mnMissionJoin')).backgroundColor, joinInk: getComputedStyle(document.getElementById('mnMissionJoin')).color,
           status: document.getElementById('mnMissionDialogStatus').textContent, scope: window.MCC_FEED_SCOPE.get(), view: !document.getElementById('mnFeedView').hidden,
           signin: !document.getElementById('mnSignedOut').hidden, mission: new URL(location.href).searchParams.get('mission'), credit: !!document.getElementById('mnMissionCredit') }));
-        check(scope, 'a guest\'s ?mission= opens that mission\'s dialog over the World, with Join, the Equity Uprise tab under it', dialog.title === 'Give someone a free ride' && /Offer a ride/.test(dialog.detail) && dialog.join
+        check(scope, 'a guest\'s ?mission= opens that mission\'s dialog over the World, with Join, the Equity Quantized tab under it', dialog.title === 'Give someone a free ride' && /Offer a ride/.test(dialog.detail) && dialog.join
           && dialog.joinText === 'Take this mission' && /Sign in to join this mission/.test(dialog.status) && dialog.scope === 'equity' && dialog.view && !dialog.signin && dialog.mission === RIDE, dialog);
         check(scope, 'a mission with no details has no credit section', !dialog.credit, dialog);
         /* Join is a solid red button with white words by day and by night, never white words on nothing */
@@ -721,7 +721,7 @@ try {
       const picked = await page.evaluate(() => ({ scope: window.MCC_FEED_SCOPE.get(), pressed: document.querySelector('#mnFeedScope [aria-pressed="true"]').dataset.feedScope, panel: !document.getElementById('wePanel').hidden && getComputedStyle(document.getElementById('wePanel')).display !== 'none',
         missions: [...document.querySelectorAll('#mnFeed [data-mission-post]')].map((a) => a.getAttribute('data-mission-post')), note: (document.querySelector('#mnFeed [data-mission-feed-place]') || {}).textContent || '',
         others: document.querySelectorAll('#mnFeed [data-post-id], #mnFeed [data-news-id]').length, card: /United States/.test(document.getElementById('mnPlaceCard').textContent) }));
-      check(scope, 'a country tapped on the Equity Uprise tab keeps the tab and its panel, and narrows the list to the place\'s missions (pinned there or nowhere) under one line that says so', picked.scope === 'equity' && picked.pressed === 'equity' && picked.panel && picked.card
+      check(scope, 'a country tapped on the Equity Quantized tab keeps the tab and its panel, and narrows the list to the place\'s missions (pinned there or nowhere) under one line that says so', picked.scope === 'equity' && picked.pressed === 'equity' && picked.panel && picked.card
         && JSON.stringify(picked.missions) === JSON.stringify(US_MISSIONS) && picked.note === 'Missions in United States: the ones pinned there and the ones that can be done anywhere.' && picked.others === 0, picked);
       await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
       await page.waitForTimeout(1500);
@@ -873,7 +873,7 @@ try {
       await page.waitForSelector('#mnFeed [data-mission-post]', { timeout: 30000 });
       await page.waitForTimeout(2500);
       const seen = await page.evaluate(() => ({ scope: window.MCC_FEED_SCOPE.get(), line: document.getElementById('mnFeedStatus').textContent, shown: document.getElementById('mnFeedStatus').getClientRects().length > 0, dialog: document.getElementById('mnMissionDialog').open }));
-      check(scope, 'a link to a mission that is gone lands on the Equity Uprise tab and says so in the feed\'s line, after the feed has loaded', seen.scope === 'equity' && seen.shown && seen.line === 'That mission is not available any more.' && !seen.dialog, seen);
+      check(scope, 'a link to a mission that is gone lands on the Equity Quantized tab and says so in the feed\'s line, after the feed has loaded', seen.scope === 'equity' && seen.shown && seen.line === 'That mission is not available any more.' && !seen.dialog, seen);
       await page.click('#mnFeedScope [data-feed-scope="global"]');
       await page.waitForTimeout(800);
       check(scope, 'choosing another tab lets the line rest', await page.evaluate(() => document.getElementById('mnFeedStatus').textContent === ''));
@@ -919,7 +919,7 @@ try {
     const { ctx, page, world, errors } = await open(VIEWPORTS[0], '/mnet.html?view=missions');
     try {
       await page.waitForFunction(() => window.MCC_FEED_SCOPE.get() === 'equity', null, { timeout: 30000 }).catch(() => {});
-      check(scope, 'a guest\'s ?view=missions chooses the Equity Uprise tab and asks nobody to sign in', await page.evaluate(() => window.MCC_FEED_SCOPE.get() === 'equity' && document.getElementById('mnSignedOut').hidden && !document.getElementById('mnFeedView').hidden));
+      check(scope, 'a guest\'s ?view=missions chooses the Equity Quantized tab and asks nobody to sign in', await page.evaluate(() => window.MCC_FEED_SCOPE.get() === 'equity' && document.getElementById('mnSignedOut').hidden && !document.getElementById('mnFeedView').hidden));
       await page.waitForSelector('#mnFeed [data-mission-post]', { timeout: 30000 }).catch(() => {});
       check(scope, 'and lists the open missions as posts', await page.evaluate((n) => document.querySelectorAll('#mnFeed [data-mission-post]').length === n, MISSIONS.length));
       await page.click('#mnFeedScope [data-feed-scope="global"]');
@@ -927,7 +927,7 @@ try {
       await page.fill('#mnSearchInput', 'river');
       await page.waitForSelector('#mnSuggest:not([hidden]) [data-mn-feed="equity"]', { timeout: 10000 });
       await page.click('#mnSuggest [data-mn-feed="equity"]');
-      check(scope, 'All missions in the search opens the Equity Uprise tab', await page.evaluate(() => window.MCC_FEED_SCOPE.get() === 'equity' && document.getElementById('mnSignedOut').hidden && document.getElementById('mnSuggest').hidden));
+      check(scope, 'All missions in the search opens the Equity Quantized tab', await page.evaluate(() => window.MCC_FEED_SCOPE.get() === 'equity' && document.getElementById('mnSignedOut').hidden && document.getElementById('mnSuggest').hidden));
       const heard = noise(world);
       check(scope, 'zero console errors and no 4xx', heard.console.length === 0 && heard.bad.length === 0, heard);
       check(scope, 'no JavaScript errors', errors.length === 0, errors);
@@ -1068,7 +1068,7 @@ try {
       await page.click('.wt-world-modes [data-world-mode="travel"]');
       check(scope, 'Travel opens for the house owner', await page.evaluate(() => window.MCC_WORLD_MODE.get() === 'travel' && document.getElementById('wtPlanner').getClientRects().length > 0));
       await page.click('.wt-world-modes [data-world-mode="posts"]');
-      check(scope, 'the owner\'s strip has the Equity Uprise tab too', await page.evaluate(() => !!document.querySelector('#mnFeedScope [data-feed-scope="equity"]') && window.MCC_WORLD_MODE.get() === 'posts'));
+      check(scope, 'the owner\'s strip has the Equity Quantized tab too', await page.evaluate(() => !!document.querySelector('#mnFeedScope [data-feed-scope="equity"]') && window.MCC_WORLD_MODE.get() === 'posts'));
       const size = await fits(page);
       check(scope, 'nothing scrolls sideways for the owner', size.sw === size.cw, size);
       await page.screenshot({ path: join(OUT, `owner-${device.name}.png`) });
