@@ -18,6 +18,13 @@ namespace McClusterDesktop
             "humanuprise.com"
         };
 
+        // Native panel actions select a page. All account and turn data stays
+        // inside that page's first-party session.
+        internal static bool IsPanelDestination(string url)
+        {
+            return url == Home || url == OwnerChat;
+        }
+
         internal static Uri HttpsTarget(string text)
         {
             if (string.IsNullOrWhiteSpace(text) || text.Length > 8192 || text.IndexOf('\\') >= 0)

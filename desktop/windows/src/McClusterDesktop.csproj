@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net48</TargetFramework>
@@ -22,6 +22,8 @@
     <LangVersion>5</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\..\packages\equity-fighter\windows\LocalConversation.cs" Link="EquityFighter\LocalConversation.cs" />
+    <Compile Include="..\..\..\packages\equity-fighter\windows\PrimeChatForm.cs" Link="EquityFighter\PrimeChatForm.cs" />
     <Reference Include="System.Management" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web.Extensions" />

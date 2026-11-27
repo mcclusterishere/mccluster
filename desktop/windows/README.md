@@ -8,6 +8,30 @@ Status: built and run on one owner Windows device (the in-box compiler, `build-i
 project (`src/McClusterDesktop.csproj`) is kept in step but is **not built on this branch** (no .NET SDK on
 the build device). A signed release is not claimed. What is and is not verified is listed at the end.
 
+## Chat on Prime
+
+Open **Chat** in the Windows toolbar, choose an installed model, type a message
+and select **Send**. Equity Fighter's Windows interface is compiled into the
+EquityNet executable from `packages/equity-fighter/windows`. In local mode,
+EquityNet sends the turn through its existing device job runner to loopback
+Ollama. Follow-ups use verified prior job receipts from that window. The
+receipt records the model and has local-device scope. A new chat starts a new
+conversation.
+
+**Owner workspace** opens McCluster's first-party sign-in and owner chat in the
+app's protected web pane. The website owns authentication and role checks.
+When the owner picker and its Core dependencies are available, select Prime
+there for a durable, signed dispatch and check the serving worker in the
+reply details. An offline or unpaired Prime needs a fresh signed check-in.
+A successful local reply is evidence for the local route only.
+
+This Windows interface complements the TypeScript channel adapters in draft
+[#849](https://github.com/mcclusterishere/mccluster/pull/849). The owner
+picker is reviewed in [#869](https://github.com/mcclusterishere/mccluster/pull/869)
+on [#821](https://github.com/mcclusterishere/mccluster/pull/821). The dispatch
+layer merged in [#843](https://github.com/mcclusterishere/mccluster/pull/843);
+its running production version remains unverified.
+
 ## Name and compatibility (EquityNet rename)
 
 This app is **EquityNet**, published by McCluster Corp: the compute and network layer where your own devices

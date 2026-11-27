@@ -667,7 +667,7 @@ namespace McClusterDesktop
             }
             else
             {
-                runButton.Text = "Submit via signed-in site";
+                runButton.Text = "Open owner workspace";
                 runButton.Enabled = online;
                 openChatButton.Enabled = online;
             }
@@ -682,10 +682,9 @@ namespace McClusterDesktop
                 // Remote and group work is owned by the OVH Core and submitted by the
                 // owner's authenticated site session (core.ai.turn.submit). The native
                 // shell deliberately has no token bridge, so it opens that surface.
-                store.Log("remote_submission_routed_to_site", "target", targetRemote.Checked ? JobTarget.RemoteWorker : JobTarget.VerifiedGroup);
-                try { Clipboard.SetText(draftBox.Text ?? ""); } catch (Exception) { }
+                store.Log("owner_workspace_open_requested", "target", targetRemote.Checked ? JobTarget.RemoteWorker : JobTarget.VerifiedGroup);
                 navigate(NavigationPolicy.OwnerChat);
-                MessageBox.Show(this, "Remote and group jobs are submitted from the signed-in Ask McCluster surface, which the Core stores and streams back. Your draft was copied to the clipboard.", "Submit via the site", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this, "Sign in to the owner workspace, choose an available target, and send your message there. Your draft stays in the Compute panel.", "Open owner workspace", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             if (runs.LocalBusy) { runs.CancelLocal(); return; }

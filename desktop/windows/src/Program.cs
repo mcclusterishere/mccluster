@@ -253,13 +253,21 @@ namespace McClusterDesktop
         private readonly ToolStripButton home = new ToolStripButton("Home");
         private readonly ToolStripButton browser = new ToolStripButton("Open in browser");
         private readonly ToolStripButton compute = new ToolStripButton("Compute");
+        private readonly ToolStripButton chat = new ToolStripButton("Chat");
+        private PrimeChatForm chatWindow;
         private readonly ToolStripLabel origin = new ToolStripLabel("mccluster.org");
-        private readonly JobStore store = JobStore.Default();
+        private readonly JobStore store;
         private readonly StatusPanel panel;
         private bool noticePending;
+        private string startupPage = NavigationPolicy.Home;
+        private bool webViewUnavailable;
+        private bool navigationReady;
 
-        internal DesktopWindow()
+        internal DesktopWindow() : this(JobStore.Default()) { }
+
+        internal DesktopWindow(JobStore store)
         {
+            this.store = store;
             Text = "EquityNet";
             Width = 1350;
             Height = 870;
@@ -271,7 +279,7 @@ namespace McClusterDesktop
             bar.GripStyle = ToolStripGripStyle.Hidden;
             compute.CheckOnClick = true;
             compute.Checked = true;
-            bar.Items.AddRange(new ToolStripItem[] { back, forward, reload, home, new ToolStripSeparator(), browser, compute, new ToolStripSeparator(), origin });
+            bar.Items.AddRange(new ToolStripItem[] { back, forward, reload, home, new ToolStripSeparator(), browser, chat, compute, new ToolStripSeparator(), origin });
             panel = new StatusPanel(store, Navigate);
             Controls.Add(view);
             Controls.Add(panel);
@@ -282,6 +290,12 @@ namespace McClusterDesktop
             home.Click += delegate { Navigate(NavigationPolicy.Home); };
             browser.Click += delegate { OpenBrowser(NavigationPolicy.BrowserPage(view.Source == null ? null : view.Source.AbsoluteUri)); };
             compute.CheckedChanged += delegate { panel.Visible = compute.Checked; };
+            chat.Click += delegate
+            {
+                if (chatWindow != null && !chatWindow.IsDisposed) { chatWindow.Activate(); return; }
+                chatWindow = new PrimeChatForm(store, delegate { compute.Checked = false; Navigate(NavigationPolicy.OwnerChat); });
+                chatWindow.Show(this);
+            };
             SetNavigationButtons();
             Shown += Initialize;
             FormClosed += delegate { store.Log("window_closed", null); };
@@ -289,7 +303,16 @@ namespace McClusterDesktop
 
         private void Navigate(string url)
         {
-            if (view.CoreWebView2 != null) view.CoreWebView2.Navigate(url);
+            if (!NavigationPolicy.IsPanelDestination(url)) return;
+            if (webViewUnavailable)
+            {
+                ShowNotice("The signed-in workspace needs WebView2. Reopen EquityNet after restoring the runtime. Your local chat is available in this app.");
+                return;
+            }
+            // A panel click during startup must survive until navigation
+            // protection and the first-party account profile are ready.
+            startupPage = url;
+            if (navigationReady) view.CoreWebView2.Navigate(url);
         }
 
         private async void Initialize(object sender, EventArgs args)
@@ -300,7 +323,7 @@ namespace McClusterDesktop
             Task status = panel.Probe();
             try
             {
-                string userData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "McClusterDesktop", "Profile");
+                string userData = Path.Combine(store.Root, "Profile");
                 Directory.CreateDirectory(userData);
                 CoreWebView2Environment env = await CoreWebView2Environment.CreateAsync(null, userData, null);
                 if (IsDisposed) return;
@@ -352,19 +375,22 @@ namespace McClusterDesktop
                     if (!evt.IsSuccess && evt.WebErrorStatus != CoreWebView2WebErrorStatus.OperationCanceled)
                         ShowNotice("Could not load the site (" + evt.WebErrorStatus + "). The Compute panel shows what still runs on this device.");
                 };
-                engine.Navigate(NavigationPolicy.Home);
+                navigationReady = true;
+                engine.Navigate(startupPage);
                 SetNavigationButtons();
             }
             catch (WebView2RuntimeNotFoundException)
             {
                 if (IsDisposed) return;
+                webViewUnavailable = true;
                 store.Log("webview2_runtime_missing", null);
                 MessageBox.Show(this, "The Microsoft Edge WebView2 Runtime is missing. Install the official Evergreen Runtime from Microsoft, then reopen EquityNet. Local jobs in the Compute panel still work.",
                     "Microsoft WebView2 required", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                store.Log("webview2_error", "error", ex.GetType().Name + ": " + ex.Message);
+                webViewUnavailable = true;
+                store.Log("webview2_error", "error", ex.GetType().Name);
                 if (!IsDisposed)
                     MessageBox.Show(this, "EquityNet could not open its WebView2 session (" + ex.GetType().Name + "). You can still use Open in browser and the Compute panel.",
                         "EquityNet", MessageBoxButtons.OK, MessageBoxIcon.Warning);

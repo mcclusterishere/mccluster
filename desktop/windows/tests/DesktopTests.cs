@@ -48,6 +48,10 @@ internal static class DesktopTests
     private static void NavigationPolicyChecks()
     {
         Assert(NavigationPolicy.Home == "https://mccluster.org/", "production launch origin");
+        Assert(NavigationPolicy.OwnerChat == "https://mccluster.org/control.html#home:ask" && NavigationPolicy.IsPanelDestination(NavigationPolicy.OwnerChat), "the owner action opens the canonical signed-in room");
+        Assert(NavigationPolicy.IsPanelDestination(NavigationPolicy.Home), "the native Home action is supported");
+        foreach (string url in new[] { null, "", NavigationPolicy.OwnerChat + "&message=sample", "https://mccluster.org/control.html?target=auto#home:ask", "https://mccluster.org/account.html", "https://matthew.mccluster.org/control.html#home:ask", "https://external.example/" })
+            Assert(!NavigationPolicy.IsPanelDestination(url), "native chat cannot forward data or select arbitrary destinations");
         Assert(NavigationPolicy.IsFirstParty(NavigationPolicy.HttpsTarget(NavigationPolicy.OwnerChat)), "owner chat route is first party");
         foreach (string url in new[] { "https://mccluster.org/", "https://mccluster.org/account.html", "HTTPS://MCCLUSTER.ORG:443/path", "https://matthew.mccluster.org/album.html", "https://humanuprise.com/" })
             Assert(NavigationPolicy.IsFirstParty(NavigationPolicy.HttpsTarget(url)), "first-party allowed: " + url);
@@ -107,11 +111,58 @@ internal static class DesktopTests
             // Listing is newest first.
             List<LocalJob> list = store.List();
             Assert(list.Count == 3 && string.CompareOrdinal(list[0].CreatedAt, list[2].CreatedAt) >= 0, "jobs list newest first");
+            LocalConversationChecks(store);
         }
         finally
         {
             try { Directory.Delete(root, true); } catch (Exception) { }
         }
+    }
+
+    private static void LocalConversationChecks(JobStore store)
+    {
+        var session = new LocalConversation();
+        LocalJob first = session.Create(store, "fixture-model", "First question");
+        Assert(Json.Str(first.Input, "device") == DeviceChoice.Ollama && first.Target == JobTarget.LocalDevice &&
+            Json.Num(first.Input, "max_attempts") == 1, "native chat pins loopback Ollama for one attempt");
+        Assert(LocalConversation.Messages(store, first, "First question").Count == 1, "a new chat has only its own message");
+        first.State = JobState.Done;
+        first.Result = new Dictionary<string, object> { { "content", "First answer" } };
+        first.Receipt = new Dictionary<string, object> { { "job_id", first.Id }, { "state", JobState.Done },
+            { "input_sha256", Canonical.Sha256Hex(Canonical.Json(first.Input)) },
+            { "output_sha256", Canonical.Sha256Hex(Canonical.Json(first.Result)) } };
+        using (DeviceKey key = DeviceKey.Load(store.Root)) key.Sign(first.Receipt);
+        store.Save(first);
+        LocalJob second = session.Create(store, "fixture-model", "Follow up");
+        List<object> messages = LocalConversation.Messages(store, second, "Follow up");
+        Assert(messages.Count == 3 && Json.Str(messages[0], "role") == "user" &&
+            Json.Str(messages[1], "role") == "assistant" && Json.Str(messages[1], "content") == "First answer" &&
+            Json.Str(messages[2], "content") == "Follow up", "follow-up uses verified turns with their original roles");
+        LocalJob separate = new LocalConversation().Create(store, "fixture-model", "New conversation");
+        Assert(Json.List(separate.Input, "history_jobs").Count == 0, "new conversation excludes earlier local jobs");
+        separate.Input["history_jobs"] = new[] { first.Id };
+        bool refused = false;
+        try { LocalConversation.Messages(store, separate, "New conversation"); } catch (InvalidDataException) { refused = true; }
+        Assert(refused, "even a valid same-device job from another conversation is refused");
+        first.Result["content"] = "Modified answer";
+        store.Save(first);
+        refused = false;
+        try { LocalConversation.Messages(store, second, "Follow up"); } catch (InvalidDataException) { refused = true; }
+        Assert(refused, "altered prior answers never reach local inference");
+        first.Result["content"] = "First answer";
+        first.Receipt.Remove("output_sha256");
+        using (DeviceKey key = DeviceKey.Load(store.Root)) key.Sign(first.Receipt);
+        store.Save(first);
+        refused = false;
+        try { LocalConversation.Messages(store, second, "Follow up"); } catch (InvalidDataException) { refused = true; }
+        Assert(refused, "a signature without an output hash cannot verify a previous chat answer");
+        separate.Input["history_jobs"] = new[] { "../outside" };
+        refused = false;
+        try { LocalConversation.Messages(store, separate, "New conversation"); } catch (InvalidDataException) { refused = true; }
+        Assert(refused, "invalid history file names refused before lookup");
+        refused = false;
+        try { session.Create(store, "fixture-model", new string('x', LocalConversation.MaxPrompt + 1)); } catch (ArgumentException) { refused = true; }
+        Assert(refused, "oversized local prompts are refused before creating a job");
     }
 
     private static void AdapterChecks()

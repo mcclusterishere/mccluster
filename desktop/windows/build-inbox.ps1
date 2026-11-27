@@ -83,6 +83,8 @@ foreach ($f in @($wvCore, $wvForms, $wvLoader)) {
 New-Item -ItemType Directory -Force $OutDir | Out-Null
 $src = Join-Path $here 'src'
 $sources = Get-ChildItem (Join-Path $src '*.cs') | Sort-Object Name | ForEach-Object { $_.FullName }
+$fighter = Join-Path $here '..\..\packages\equity-fighter\windows'
+$sources += (Join-Path $fighter 'LocalConversation.cs'), (Join-Path $fighter 'PrimeChatForm.cs')
 $refNames = @('mscorlib.dll','System.dll','System.Core.dll','System.Drawing.dll','System.Windows.Forms.dll','System.Net.Http.dll','System.Management.dll','System.Web.Extensions.dll','System.Runtime.Serialization.dll','System.Security.dll','System.IO.Compression.dll','System.IO.Compression.FileSystem.dll')
 $refs = $refNames | ForEach-Object {
   $p = Join-Path $fw $_
@@ -113,6 +115,7 @@ if ($Tests -or $Installer) {
   New-Item -ItemType Directory -Force $testOut | Out-Null
   $testExe = Join-Path $testOut 'McClusterTests.exe'
   $testSources = @('NavigationPolicy.cs','Json.cs','LocalJobs.cs','DeviceInventory.cs','LocalRuntime.cs','Proof.cs','ExoProbe.cs','Contribution.cs','CoreJobs.cs','PanelRuns.cs') | ForEach-Object { Join-Path $src $_ }
+  $testSources += (Join-Path $fighter 'LocalConversation.cs')
   $testSources += (Get-ChildItem (Join-Path $here 'tests\*.cs') | ForEach-Object { $_.FullName })
   $testArgs = @('/nologo','/noconfig','/nostdlib+','/warnaserror+','/target:exe','/platform:x64','/langversion:5',"/out:$testExe") + $refs + $testSources
   & $csc @testArgs
@@ -140,7 +143,7 @@ if ($Installer) {
     $head = (& $gitExe -C $here rev-parse HEAD 2>$null)
     if ($Release -and ($LASTEXITCODE -ne 0 -or $head -notmatch '^[0-9a-f]{40}$')) { throw 'Git could not verify the release source revision.' }
     if ($head -match '^[0-9a-f]{40}$') { if ($SourceCommit -and $SourceCommit -ne $head -and -not $head.StartsWith($SourceCommit)) { throw "-SourceCommit $SourceCommit does not match HEAD $head" }; $SourceCommit = $head }
-    $sourceDirty = [bool]((& $gitExe -C $here status --porcelain -- . 2>$null) | Where-Object { $_ })
+    $sourceDirty = [bool]((& $gitExe -C $here status --porcelain -- . ../../packages/equity-fighter/windows 2>$null) | Where-Object { $_ })
     if ($LASTEXITCODE -ne 0) { throw 'Git could not determine whether the desktop source is clean.' }
     if ($sourceDirty -and -not $AllowDirty) { throw 'the desktop/windows tree has uncommitted changes; commit them or pass -AllowDirty (the manifest will say built_from_clean_tree=false)' }
   } elseif ($SourceCommit -and $SourceCommit -notmatch '^[0-9a-f]{7,40}$') { throw '-SourceCommit must be a hex commit id' }
