@@ -81,7 +81,7 @@ test('every catalog capability is routed or explicitly excluded, never both', ()
 
 test('every runner job type is a job route, reached through a capability, or explicitly excluded', async () => {
   const { map } = await runnerJobTypes();
-  assert.equal(map.size, 31, 'runner job types');
+  assert.equal(map.size, 32, 'runner job types');
   const jobRoutes = new Set(DISPATCH_ROUTES.filter((route) => route.via === 'job').map((route) => route.jobType));
   for (const jobType of map.keys()) {
     const ways = [jobRoutes.has(jobType), Object.hasOwn(JOB_TYPES_VIA_CAPABILITY, jobType), Object.hasOwn(EXCLUDED_JOB_TYPES, jobType)].filter(Boolean).length;
@@ -101,10 +101,10 @@ test('a capability that claims to reach a job type really enqueues it in its Cor
   }
 });
 
-test('all 29 executor files are accounted for: reachable, excluded, or a helper', async () => {
+test('all 30 executor files are accounted for: reachable, excluded, or a helper', async () => {
   const { map, files } = await runnerJobTypes();
   const onDisk = (await readdir(new URL('../src/executors/', import.meta.url))).filter((name) => name.endsWith('.mjs')).map((name) => name.replace(/\.mjs$/, ''));
-  assert.equal(onDisk.length, 29);
+  assert.equal(onDisk.length, 30);
   const HELPERS = { 'host-health-collect': 'host_health' }; // imported by host-health.mjs, no job type of its own
   const reachable = (jobType) => ROUTE_BY_INTENT.has(`job.${jobType}`) || Object.hasOwn(JOB_TYPES_VIA_CAPABILITY, jobType);
   const status = {};
@@ -116,7 +116,7 @@ test('all 29 executor files are accounted for: reachable, excluded, or a helper'
   }
   assert.equal(Object.values(status).filter((s) => s === 'unaccounted').length, 0);
   assert.deepEqual(Object.keys(status).filter((file) => status[file] === 'excluded').sort(),
-    ['actor-live-comment', 'game-branch-smoke', 'game-release-decision', 'lead-rescore', 'sms-assistant-turn']);
+    ['actor-live-comment', 'course-study-build', 'game-branch-smoke', 'game-release-decision', 'lead-rescore', 'sms-assistant-turn']);
   assert.equal(Object.values(status).filter((s) => s === 'reachable' || s === 'helper').length, 24);
 });
 

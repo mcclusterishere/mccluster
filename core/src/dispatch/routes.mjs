@@ -41,6 +41,7 @@ export const EXCLUDED_CAPABILITIES = Object.freeze({
 
 /* Runner job types a chat message never enqueues directly. */
 export const EXCLUDED_JOB_TYPES = Object.freeze({
+  course_study_build: 'Only the house-owner learning route pairs this job atomically with a private course. Never enqueue from chat or free text.',
   lead_rescore: 'Outreach CRM scoring (out_*). The outreach routine owns it; chat does not touch outreach.',
   sms_assistant_turn: 'Replies to an inbound SMS over the phone gateway: an outside message, and it needs the inbound message it answers.',
   actor_live_comment: 'Started by the database for a live session (live_actor_participation) with a receipt the executor checks; a chat-started job would fail that check.',
