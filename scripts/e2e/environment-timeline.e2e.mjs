@@ -98,9 +98,10 @@ const json = (route, body, status = 200) => route.fulfill({ status, contentType:
 
 await mkdir(OUT, { recursive: true });
 const launchOptions = process.env.E2E_GL_ARGS === '1' || process.env.CI ? { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] } : {};
+if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE) launchOptions.executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
 const browser = await chromium.launch(launchOptions);
 
-async function openPage(size, query, { reducedMotion = 'no-preference' } = {}) {
+async function openPage(size, query, { reducedMotion = 'no-preference', neutralBase = false } = {}) {
   const mobile = size.width < 1000;
   const ctx = await browser.newContext({ viewport: { width: size.width, height: size.height }, deviceScaleFactor: 1, isMobile: mobile, hasTouch: mobile, serviceWorkers: 'block', reducedMotion });
   await ctx.addInitScript(() => { localStorage.setItem('mcc_privacy_ack', JSON.stringify({ version: '2026-10-19', accepted_at: new Date().toISOString() })); localStorage.setItem('mnet_tour_seen', '1'); });
@@ -141,7 +142,7 @@ async function openPage(size, query, { reducedMotion = 'no-preference' } = {}) {
       if (p === '/rest/v1/action_missions') return json(route, MISSIONS);
       return json(route, []);
     }
-    if (url.hostname === 'gibs.earthdata.nasa.gov' || url.hostname === 'tile.openstreetmap.org') return route.fulfill({ status: 200, contentType: 'image/jpeg', headers: CORS, body: TILE });
+    if (url.hostname === 'gibs.earthdata.nasa.gov' || url.hostname === 'tile.openstreetmap.org') return route.fulfill({ status: 200, contentType: neutralBase ? 'image/png' : 'image/jpeg', headers: CORS, body: neutralBase ? Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGOQUDMCAADKAHFx7TDlAAAAAElFTkSuQmCC','base64') : TILE });
     return route.fulfill({ status: 204, headers: CORS, body: '' });
   });
   await plane.attach(page);
@@ -179,6 +180,37 @@ const shot = async (page, name) => { try { await page.screenshot({ path: join(OU
 
 const SIZES = [{ width: 390, height: 844 }, { width: 820, height: 1180 }, { width: 1280, height: 800 }];
 try {
+  // The real World host + its Cesium iframe and the real archived files; no API key or live Earthdata service.
+  for (const size of [SIZES[0], SIZES[2]]) {
+    const scope = 'arctic-' + size.width;
+    plane.freshCache();
+    const { ctx, page } = await openPage(size, '?view=feed&feed=equity', {neutralBase:true});
+    try {
+      const frame = await globeFrame(page);
+      await page.locator('#mnIceToggle').waitFor({state:'visible'});
+      await page.locator('#mnIceToggle').check();
+      await page.waitForFunction(() => document.querySelector('#mnIceDay')?.options.length > 1);
+      const options = await page.locator('#mnIceDay option').evaluateAll(els => els.map(e=>e.value).filter(Boolean));
+      const full = day => frame.waitForFunction(d => { const i = window.__mccEnvironmentLayers?.()?.arcticIce; return i?.day === d && i.status === 'ready'; }, day, {timeout:60000});
+      await full(options.at(-1));
+      await page.locator('#mnIceFocus').click();
+      await page.locator('#mnIceDay').selectOption(options[0]);
+      await full(options[0]);
+      await page.locator('#mnTimeRange').focus();
+      await page.keyboard.press('ArrowRight');
+      await full(options[1]);
+      const bounds = await fits(page);
+      check(scope, 'real ice imagery tracks an arrow step on the shared cursor without overflow', bounds.sw === bounds.cw, {options,bounds,frame:(await env(frame)).arcticIce});
+      await page.waitForTimeout(650); // texture upload follows the imagery provider's ready promise
+      await shot(page, scope + '-archive');
+      await page.locator('#mnTimeLive').click();
+      await frame.waitForFunction(() => window.__mccEnvironmentLayers?.()?.arcticIce?.status === 'off');
+      check(scope, 'Live clears dated imagery and labels the absence', (await page.locator('#mnIceStatus').innerText()).includes('no verified live'));
+      await setScope(page,'global');
+      check(scope, 'archive control leaves with its scope', !(await page.locator('#mnIceToggle').isVisible()));
+    } finally { await ctx.close(); }
+  }
+  if (process.env.E2E_ARCTIC_ONLY !== '1') {
   /* ---------- the deep link, at every width ---------- */
   for (const size of SIZES) {
     const scope = String(size.width);
@@ -419,6 +451,7 @@ try {
       check(scope, 'the door closed: the news layer is back as it was', closed && backOn, await news(frame));
       check(scope, 'no page errors', errors.length === 0, errors.slice(0, 5));
     } finally { await ctx.close(); }
+  }
   }
 } finally {
   await browser.close();

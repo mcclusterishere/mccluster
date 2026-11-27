@@ -1,0 +1,106 @@
+{
+  "product": "NOAA/NSIDC Sea Ice Index v4, daily northern concentration",
+  "doi": "https://doi.org/10.7265/a98x-0f50",
+  "sourceCRS": "EPSG:3411",
+  "outputCRS": "EPSG:4326",
+  "bounds": [
+    -180,
+    45,
+    180,
+    90
+  ],
+  "dimensions": [
+    1440,
+    180
+  ],
+  "colors": [
+    "#000000",
+    "#1a416f",
+    "#277e9d",
+    "#41c1c9",
+    "#92e4dc",
+    "#eefff9"
+  ],
+  "frames": [
+    {
+      "day": "2020-03-15",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/geotiff/2020/03_Mar/N_20200315_concentration_v4.0.tif",
+      "sourceSHA256": "596ff47c9c45d662cbdd3cae6105c7663f49c025a9fb4dd67fe1823d928a43fb",
+      "image": "2020-03-15.png",
+      "imageSHA256": "4a327b599b47d5101a1d498a450e2773a10746ced5b9e938a818caa59d84b350",
+      "bytes": 9862
+    },
+    {
+      "day": "2020-06-15",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/geotiff/2020/06_Jun/N_20200615_concentration_v4.0.tif",
+      "sourceSHA256": "5baad87a114f8ab4778c87dbf271de4360e594acbf55b220af0e846c0d969c51",
+      "image": "2020-06-15.png",
+      "imageSHA256": "ec1158ab1027a02073a8467defffae967b116fd0d40aa696e26b7355e15ea5e6",
+      "bytes": 10458
+    },
+    {
+      "day": "2020-09-15",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/geotiff/2020/09_Sep/N_20200915_concentration_v4.0.tif",
+      "sourceSHA256": "2ffdc5982a7f0bd9cd0a2ca258c5afb49754ea73c283ab55282916821c05bbdf",
+      "image": "2020-09-15.png",
+      "imageSHA256": "9ceabc774903cd1177b61d24b82ae79a009e3a92de7213d3ca1412c5d1e85087",
+      "bytes": 7817
+    },
+    {
+      "day": "2026-11-19",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/geotiff/2026/11_Nov/N_20261119_concentration_v4.0.tif",
+      "sourceSHA256": "56e8f76e7f2fabf2d0a7c84e283c1ad43ea34645337218288aeb49b443beaa76",
+      "image": "2026-11-19.png",
+      "imageSHA256": "99cf88bdced91b624abf98d1ab28301f454a9d5f1873443ee0095c8960e0b178",
+      "bytes": 9056
+    },
+    {
+      "day": "2026-11-20",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/geotiff/2026/11_Nov/N_20261120_concentration_v4.0.tif",
+      "sourceSHA256": "d78dab4204c07d3503e676ba2f5d63da649c0c7bf2e2cab06fac28ca8cad50da",
+      "image": "2026-11-20.png",
+      "imageSHA256": "b802f86afad6b57c4e593761e8813b54c074681fc8e4cd2bcf890afde28d4553",
+      "bytes": 8892
+    },
+    {
+      "day": "2026-11-21",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/geotiff/2026/11_Nov/N_20261121_concentration_v4.0.tif",
+      "sourceSHA256": "456fdc6cf31db524acb84ded335faff0063ad6cba68e6d15e7f51e7bbeae3a29",
+      "image": "2026-11-21.png",
+      "imageSHA256": "1a46561df3bde4a4ab133af36c00d2d88d6f0756b21fe9b3f1bba98b9bf5a018",
+      "bytes": 9069
+    },
+    {
+      "day": "2026-11-22",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/geotiff/2026/11_Nov/N_20261122_concentration_v4.0.tif",
+      "sourceSHA256": "217ed2466b764bba836388a449fac7614d527367a5d1b4a223db5d27758f14ae",
+      "image": "2026-11-22.png",
+      "imageSHA256": "6823d06eb83eb4515c8889be02040c42c871f0ac6e4a1552b2d3a8617f1b6531",
+      "bytes": 9280
+    },
+    {
+      "day": "2026-11-23",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/geotiff/2026/11_Nov/N_20261123_concentration_v4.0.tif",
+      "sourceSHA256": "6d494eaa96886072b04c32dad878a2c02111ea7d71b300b571352fd1e293855e",
+      "image": "2026-11-23.png",
+      "imageSHA256": "4b3237043fdbbb4431c79155f7112965ce0cf0f75d87df8d40301f2b1d554049",
+      "bytes": 9040
+    },
+    {
+      "day": "2026-11-24",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/geotiff/2026/11_Nov/N_20261124_concentration_v4.0.tif",
+      "sourceSHA256": "1c7c0579e34f9e1b4fc927715404bc6e05ef7fbd0c30024f1052056f8a7c7bfd",
+      "image": "2026-11-24.png",
+      "imageSHA256": "a79500fd30c6a50172ce9faed4590b2cf45819aa77c339e9b18626f58effa3df",
+      "bytes": 9098
+    },
+    {
+      "day": "2026-11-25",
+      "url": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/geotiff/2026/11_Nov/N_20261125_concentration_v4.0.tif",
+      "sourceSHA256": "eeabf848a4446c5975081ff1789d90b7f93a7cb93e4dff8ed72a4570e64f52aa",
+      "image": "2026-11-25.png",
+      "imageSHA256": "156f16d87b3b5d0e0707522eb13b8f4e1067c72c09bb8fa8bf51ffd5dc660a3b",
+      "bytes": 9334
+    }
+  ]
+}
