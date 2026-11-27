@@ -409,6 +409,7 @@ export const SITE_TABLE: SiteTable = deepFreeze<SiteTable>({
       "/docket-516r-cohort.html",
       "/ecosystem.html",
       "/embed.html",
+      "/equiquant.html",
       "/equity-uprise-server-lab-3d.html",
       "/equity-uprise.html",
       "/feed.html",

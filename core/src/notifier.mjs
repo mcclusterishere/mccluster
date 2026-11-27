@@ -79,12 +79,14 @@ export async function sendSms(message) {
 }
 
 export async function notifyJobSuccess(job, output) {
+  if (job?.job_type === 'equiquant_mosaic_replay') return { sent: false, reason: 'private_research_job' };
   const explicit = job?.input?.notify_owner === true;
   if (!explicit && !SUCCESS_NOTIFY_TYPES.has(job?.job_type)) return { sent: false, reason: 'not_routable' };
   return sendSms(successMessage(job, output));
 }
 
 export async function notifyJobFailure(job, error, status = 'failed') {
+  if (job?.job_type === 'equiquant_mosaic_replay') return { sent: false, reason: 'private_research_job' };
   if (status !== 'failed') return { sent: false, reason: 'retry_pending' };
   const message = compact(error?.message || error || 'unknown failure', 500);
   return sendSms(`McCluster ALERT: ${job?.job_type || 'job'} failed after retries. ${message}`);

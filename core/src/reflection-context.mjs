@@ -1,3 +1,5 @@
+import { SHARED_JOB_FILTER } from './equiquant-mosaic-contract.mjs';
+
 // Do not feed recursive job outputs or raw health telemetry back into the model.
 export const REFLECTION_USER_BYTES = 6000;
 const text = (value, max = 240) => typeof value === 'string' ? value.slice(0, max) : '';
@@ -51,6 +53,7 @@ export async function loadReflectionJobs(rest, orgId, sinceHours, nowMs = Date.n
     select: 'id,job_type,target_type,target_id,status,attempts,max_attempts,last_error,updated_at,summary:output->>summary',
     order: 'updated_at.desc,id.desc', limit: '12',
   });
+  query.append('job_type', SHARED_JOB_FILTER);
   const { body } = await rest(`ops_agent_jobs?${query}`);
   if (!Array.isArray(body)) throw new Error('Reflection job evidence unavailable');
   return body;

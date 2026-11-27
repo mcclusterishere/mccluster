@@ -28,6 +28,7 @@
    Every one of them now has a regression test that would fail loudly.
    ============================================================ */
 
+import { SHARED_JOB_FILTER } from '../equiquant-mosaic-contract.mjs';
 import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import { recentJobs, recentObjectives, rest, workerId } from '../supabase.mjs';
@@ -247,7 +248,7 @@ export async function systemHealth(orgId) {
  * session, which is precisely the backlog it most needs to see. */
 export async function queuedJobs(orgId) {
   return rows(
-    `ops_agent_jobs?org_id=eq.${encodeURIComponent(orgId)}&status=eq.queued`
+    `ops_agent_jobs?org_id=eq.${encodeURIComponent(orgId)}&status=eq.queued&job_type=${SHARED_JOB_FILTER}`
     + '&select=id,job_type,target_id,status,attempts,run_after,created_at,updated_at'
     + '&order=created_at.asc&limit=100'
   );
@@ -292,7 +293,7 @@ export function partitionQueue(jobs, nowMs = Date.now(), staleMs = STALE_QUEUE_M
  * to contain it. So every running job is fetched regardless of age. */
 export async function runningJobs(orgId) {
   return rows(
-    `ops_agent_jobs?org_id=eq.${encodeURIComponent(orgId)}&status=eq.running`
+    `ops_agent_jobs?org_id=eq.${encodeURIComponent(orgId)}&status=eq.running&job_type=${SHARED_JOB_FILTER}`
     + '&select=id,job_type,target_id,status,attempts,created_at,updated_at'
     + '&order=updated_at.asc&limit=100'
   );

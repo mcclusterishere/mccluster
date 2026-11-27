@@ -7,7 +7,7 @@
    control-room-v2.js, the ⌘K list, js/control-registry.js and the route list
    in js/control-room/workspace-core.js). Every one of those now reads NAV.
 
-   Shape: six sections → items (the section's tabs) → optional views (a
+   Shape: sections → items (the section's tabs) → optional views (a
    segmented control inside the item). Each entry carries:
      id        stable id, unique inside its parent
      label     what the operator reads
@@ -149,6 +149,9 @@
          window.CR.eup; its five sections are local tabs, never six NAV tabs.
          The old-style "#products:eup" hash lands here too. */
       v("eup", "E=Up", "slot", ["#products:eup", "Products · E=Up", "E=Up", "e up", "equity uprise admin", "environmental justice league", "civic league", "companies & finance", "sources & review", "offices", "legislation", "elections"], { module: "eup" })
+    ] },
+    { id: "research", label: "R&D", icon: "search", phone: false, ownerOnly: true, blurb: "Research and development with Equity Quantized.", items: [
+      v("workspace", "Equity Quantized", "research.workspace", ["Research and Development", "Research Workspace", "Algorithms Lab", "MOSAiC", "sea ice"])
     ] }
   ];
 

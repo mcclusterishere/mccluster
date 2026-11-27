@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import { addSignal, houseOrgId, recentJobs, rest } from './supabase.mjs';
 import { sendSms } from './notifier.mjs';
 
@@ -125,7 +126,7 @@ async function main() {
   console.log(JSON.stringify({ event: 'core_digest', ...digest, recorded: true, duplicate_window: duplicate, window_id: windowId, signal_id: signal.id || null, org_id: orgId, sms }));
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
   main().catch((error) => {
     console.error(JSON.stringify({ event: 'core_digest_failed', message: error.message }));
     process.exitCode = 1;

@@ -43,3 +43,21 @@ test('canonical house selector works, foreign house member is denied', async () 
   const denied = await simulate(new Request('https://api.mccluster.org/v1/ai?org_id=' + HOUSE), { houseOwner: false });
   assert.equal(denied.response.status, 403);
 });
+
+test('house owner job lookup cannot return a private research job outside the project entry', async t => {
+  const privateId = '10000000-0000-4000-8000-000000000001';
+  const sharedId = '10000000-0000-4000-8000-000000000002';
+  const jobs = [{ id: privateId, job_type: 'equiquant_mosaic_replay', target_id: 'private-project' },
+    { id: sharedId, job_type: 'repo_health', target_id: 'shared-repository' }];
+  t.mock.method(globalThis, 'fetch', async path => {
+    const url = new URL(path);
+    if (url.pathname.endsWith('/orgs')) return json([{id: HOUSE}]);
+    if (url.pathname.endsWith('/org_members')) return json([{org_id: HOUSE, role: 'owner'}]);
+    if (url.pathname.endsWith('/ops_agent_jobs')) return json(jobs.filter(row =>
+      url.searchParams.get('id') === 'eq.' + row.id && url.searchParams.get('job_type') !== 'neq.' + row.job_type));
+    throw Error('Unexpected endpoint');
+  });
+  const get = id => handleAiRequest(new Request('https://api.test/v1/ai/jobs/' + id), env, OWNER);
+  assert.equal((await get(privateId)).status, 404);
+  assert.deepEqual((await (await get(sharedId)).json()).job, jobs[1]);
+});

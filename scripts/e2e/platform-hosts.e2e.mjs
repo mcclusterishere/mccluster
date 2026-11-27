@@ -64,7 +64,10 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const SCHEMA = 'mccluster-platform-hosts-crawl/v1';
 export const FIXTURE_SCHEMA = 'mccluster-platform-hosts-fixture/v1';
 export const FIXTURE = 'scripts/e2e/fixtures/platform-hosts-20261123.json';
-const ADDED_PAGE_FIXTURE = 'scripts/e2e/fixtures/platform-hosts-artist-20261124.json';
+const ADDED_PAGE_FIXTURES = [
+  'scripts/e2e/fixtures/platform-hosts-artist-20261124.json',
+  'scripts/e2e/fixtures/platform-hosts-equiquant-20261127.json'
+];
 const DNS_RESOLVERS = {
   google: 'https://dns.google/resolve',
   cloudflare: 'https://cloudflare-dns.com/dns-query'
@@ -851,6 +854,16 @@ export function readFixture(root = ROOT) {
   if (!v || v.schema !== FIXTURE_SCHEMA || !Array.isArray(v.rows)) throw new Error(`${FIXTURE} is not a ${FIXTURE_SCHEMA} fixture`);
   return v;
 }
+export function comparisonFixture(site, root = ROOT) {
+  let fixture = readFixture(root);
+  if (site.stage !== 'P0') {
+    for (const file of ADDED_PAGE_FIXTURES) {
+      const observation = JSON.parse(readFileSync(join(root, file), 'utf8'));
+      fixture = withAddedPage(fixture, observation, site);
+    }
+  }
+  return fixture;
+}
 function printDiff(diffs, out = console.log) {
   for (const d of diffs) {
     if (d.change !== 'differs') { out(`${d.change.padEnd(7)} ${d.url}`); continue; }
@@ -933,9 +946,7 @@ async function main(argv) {
   const local = await localCrawl(site);
   const out = arg(argv, '--out');
   if (out) writeFileSync(out, JSON.stringify(local, null, 1) + '\n');
-  const frozen = readFixture();
-  const observation = JSON.parse(readFileSync(join(ROOT, ADDED_PAGE_FIXTURE), 'utf8'));
-  const fixture = site.stage === 'P0' ? frozen : withAddedPage(frozen, observation, site);
+  const fixture = comparisonFixture(site);
   const verdict = judgeLocal(local, fixture, site, await addressReader());
   for (const [host, s] of Object.entries(summarize(local))) console.log(`  ${host}: ${JSON.stringify(s.status)}`);
   for (const a of verdict.added) console.log(`added   ${a} (this tree publishes it; production does not yet)`);

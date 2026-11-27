@@ -1,0 +1,42 @@
+{
+  "stage": "P1",
+  "captured_at": "2026-11-27T19:21:45.686Z",
+  "path": "/equiquant.html",
+  "rows": [
+    {
+      "url": "https://matthew.mccluster.org/equiquant.html",
+      "status": 404
+    },
+    {
+      "url": "https://here.mccluster.org/equiquant.html",
+      "status": 301,
+      "location": "https://matthew.mccluster.org/equiquant.html"
+    },
+    {
+      "url": "https://humanuprise.com/equiquant.html",
+      "dns": {
+        "google": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        },
+        "cloudflare": {
+          "A": "NODATA",
+          "AAAA": "NODATA"
+        }
+      }
+    },
+    {
+      "url": "https://www.humanuprise.com/equiquant.html",
+      "dns": {
+        "google": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        },
+        "cloudflare": {
+          "A": "NXDOMAIN",
+          "AAAA": "NXDOMAIN"
+        }
+      }
+    }
+  ]
+}

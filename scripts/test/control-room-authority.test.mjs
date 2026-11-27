@@ -38,6 +38,15 @@ async function openAs(sub, hash, opts = {}) {
   assert.ok(await ready(page, (sub === 'owner-a' ? A : B) + '-operator'), sub + "'s default load committed");
   return page;
 }
+test("an owner of another workspace cannot open the house R&D entry through Control", async () => {
+  const page = await openAs('member-b', '#home:today');
+  assert.doesNotMatch(page.el('crSections').innerHTML, /data-section="research"/);
+  await page.go('#research:workspace');
+  await page.settle();
+  assert.doesNotMatch(page.surface(), /crResearchWorkspace|equiquant\.html/);
+  assert.ok(page.appShown(), 'the other Control destinations stay available');
+});
+
 /* Account A works through every view that keeps its own private state, and
    leaves two unsent drafts. */
 async function useEveryView(page) {

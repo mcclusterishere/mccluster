@@ -1,6 +1,6 @@
 /* McCluster Control Room
-   Six sections from ONE navigation definition (js/control-room/nav.js):
-   Home / People / Sell / Create / Insights / System. The sidebar, the phone
+   Sections come from one navigation definition (js/control-room/nav.js).
+   The sidebar, the phone
    bottom bar, the More sheet, the ⌘K palette and the owner bar's destination
    panel all read NAV; old routes (#work:*, #create:*, #ai, #analytics,
    #system:*, #apps) land through each entry's `was` list.
@@ -2764,6 +2764,10 @@
     if (id === "sell") return openOrders().length;
     return 0;
   }
+  function sectionAvailable(section) {
+    return !section.ownerOnly || Boolean(state.sources.status && state.sources.status.ok &&
+      state.workspace && state.workspace.enabled && state.workspace.role === "owner" && isHouseWorkspace(state.org));
+  }
   function renderNav() {
     var host = $("crSections");
     var current = state.leaf || NAVI.resolve(state.route);
@@ -2771,7 +2775,7 @@
     /* the shared bar's Control panel shows the same counts as the sections */
     window.CR.navBadges = { people: sectionBadge("people"), sell: sectionBadge("sell") };
     if (host) {
-      var items = NAV.map(function (s) {
+      var items = NAV.filter(sectionAvailable).map(function (s) {
         var on = s.id === sec, badge = sectionBadge(s.id);
         var subs = '<ul class="cr-sections__subs">' + s.items.map(function (it) {
           var here = on && current.item && current.item.id === it.id;
@@ -2781,7 +2785,7 @@
           navIcon(s.icon) + '<span class="cr-sections__label">' + esc(s.label) + '</span>' +
           (badge ? '<span class="cr-sections__badge" aria-label="' + badge + ' waiting">' + (badge > 99 ? "99+" : badge) + '</span>' : "") + '</a>' + subs + '</li>';
       }).join("");
-      var overflowOn = NAVI.moreSections().some(function (s) { return s.id === sec; });
+      var overflowOn = NAVI.moreSections().filter(sectionAvailable).some(function (s) { return s.id === sec; });
       var healthy = Boolean(state.health && state.health.ok);
       host.innerHTML =
         '<a class="cr-sections__brand" href="#home:today" data-nav-route="#home:today" aria-label="Control Room home"><img src="assets/img/hm-mark-wide.webp" alt=""><b>Home</b></a>' +
@@ -2814,7 +2818,7 @@
   function openMore() {
     var sheet = $("crMoreSheet"); if (!sheet) return;
     sheet.innerHTML = '<div class="cr-more__box" role="document"><p class="cr-eyebrow">More</p><ul class="cr-more__list">' +
-      NAVI.moreSections().map(function (s) {
+      NAVI.moreSections().filter(sectionAvailable).map(function (s) {
         return '<li><a class="cr-rowi cr-rowi--link" href="' + esc(s.route) + '" data-nav-route="' + esc(s.route) + '"><span class="cr-ico">' + navIcon(s.icon) + '</span><span class="cr-rowi__main"><span class="cr-rowi__title">' + esc(s.label) + '</span><span class="cr-rowi__sub">' + esc(s.items.map(function (x) { return x.label; }).join(" · ")) + '</span></span></a></li>';
       }).join("") + '</ul><button class="cr-btn cr-btn--ghost" type="button" data-more-close>Close</button></div>';
     sheet.hidden = false; sheet.classList.add("is-open");
@@ -3141,6 +3145,13 @@
     var r = entry.leaf.renderer || "";
     if (r === "home.ask") return renderAi();
     if (r === "sell.orders") return renderSellOrders();
+    if (r === "research.workspace") {
+      var path = "equiquant.html?org=" + encodeURIComponent(state.org.id);
+      var href = window.MCC_BAR && window.MCC_BAR.navigation.page ? window.MCC_BAR.navigation.page(path) : path;
+      return '<section class="cr-panel2"><header class="cr-panel2__head"><h2>Research workspace</h2></header>' +
+        '<div class="cr-panel2__body"><p>Work with collaborators on a private project. In the Algorithms Lab, replay the MOSAiC sea-ice study and compare model results.</p>' +
+        '<p><a class="cr-btn cr-btn--primary" id="crResearchWorkspace" href="' + esc(href) + '">Open research workspace</a></p></div></section>';
+    }
     if (r === "insights.halo") return renderHalo();
     if (r === "slot") return renderSlot(entry);
     if (r === "apps") return renderApps();
@@ -3151,6 +3162,10 @@
   }
   function renderLeaf() {
     var entry = state.leaf || NAVI.resolve(state.route).entry;
+    if (!sectionAvailable(entry.section)) {
+      if (!state.sources.status || state.loading) return empty("Verifying owner access", "Checking this account and workspace.");
+      return '<div id="crResearchDenied">' + empty("Owner access required", "Open your account to see research projects you have been invited to.") + '</div>';
+    }
     if (state.surface === "home") return renderToday();
     return sectionHead(entry) + '<div class="cr-leaf" data-cr-leaf="' + esc(entry.leaf.route) + '">' + leafBody(entry) + '</div>';
   }
@@ -3184,7 +3199,8 @@
     /* A page being replaced shows only why (and a way to reload by hand if
        the browser held the reload back). */
     if (authority.reloading) { root.innerHTML = '<div class="cr-canvas">' + noticeHtml() + '</div>'; root.setAttribute("data-cr-mount", "notice"); bindActions(root); return; }
-    if (state.loading && !state.status && !state.health && state.surface !== "analytics") root.innerHTML = noticeHtml() + renderLoading();
+    if (state.leaf && !sectionAvailable(state.leaf.section)) root.innerHTML = noticeHtml() + renderLeaf();
+    else if (state.loading && !state.status && !state.health && state.surface !== "analytics") root.innerHTML = noticeHtml() + renderLoading();
     /* Analytics keeps its mount between Control Room repaints: it owns its own
        paint, and its globe frame (the 60/40 layout) would reload the Earth on
        every unrelated state change if the mount were rebuilt. */
@@ -3653,7 +3669,7 @@
   /* ⌘K: every NAV leaf (searchable by its old names through `was`), then
      the three object shortcuts. Typing anything else hands it to McCluster. */
   function paletteCommands(q) {
-    var nav = NAVI.search(q).map(function (e) { return { label: e.label, blurb: e.blurb, route: e.route, group: e.group }; });
+    var nav = NAVI.search(q).filter(function (e) { return sectionAvailable(NAVI.section(e.section)); }).map(function (e) { return { label: e.label, blurb: e.blurb, route: e.route, group: e.group }; });
     var verbs = [
       { label: "Show failed work", blurb: "Workload, filtered to failures", action: "goto-failed", group: "Do" },
       { label: "Open waiting conversations", blurb: "Threads whose last message came in", action: "goto-waiting", group: "Do" },

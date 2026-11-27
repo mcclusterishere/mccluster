@@ -18,10 +18,25 @@ const OLD={
 const OLD_BARE=['home','ai','analytics','apps'];
 const COMPAT={'inbox.html':'#work:inbox','crm.html':'#work:pipeline','desk.html':'#work:outreach','admin.html':'#work:operations','management.html':'#create:channels','music-admin.html':'#create:music','vault.html':'#create:music','lanes.html':'#create:music','studio.html':'#create:projects','insights.html':'#analytics'};
 
-test('six sections; four on the phone bar, the rest behind More',()=>{
-  assert.deepEqual(N.NAV.map(s=>s.id),['home','people','sell','create','insights','system']);
+test('R&D joins the existing sections while the phone bar keeps its four destinations',()=>{
+  assert.deepEqual(N.NAV.map(s=>s.id),['home','people','sell','create','insights','system','research']);
   assert.deepEqual(N.phoneSections().map(s=>s.id),['home','people','sell','create']);
   for(const s of N.NAV){assert.ok(s.label&&s.icon&&N.ICONS[s.icon],s.id+' needs a label and a drawn icon');assert.ok(s.items.length,s.id+' has no items');}
+});
+
+test('R&D owns the research workspace and is discoverable by its lab name',()=>{
+  const route='#research:workspace';
+  const entry=N.resolve('#research').entry;
+  assert.equal(entry.section.label,'R&D');
+  assert.equal(entry.section.ownerOnly,true);
+  assert.equal(entry.leaf.route,route);
+  assert.equal(entry.leaf.label,'Equity Quantized');
+  assert.equal(entry.leaf.renderer,'research.workspace');
+  assert.ok(N.moreSections().includes(entry.section));
+  assert.ok(!N.phoneSections().includes(entry.section));
+  assert.equal(N.search('R&D')[0].route,route);
+  assert.equal(N.search('Algorithms Lab')[0].route,route);
+  assert.equal(N.resolve('#ai').entry.leaf.route,'#home:ask');
 });
 
 test('every route is unique, canonical, and resolves to itself',()=>{
@@ -100,7 +115,7 @@ test('the palette finds a view by its old name',()=>{
 
 test('every navigation surface reads NAV; none keeps its own list',async()=>{
   const [html,v2,reg,core,site,polish]=await Promise.all(['control.html','js/control-room-v2.js','js/control-registry.js','js/control-room/workspace-core.js','js/site-navigation.js','js/control-room-polish.js'].map(read));
-  assert.match(v2,/function renderNav\(\)[\s\S]*NAV\.map\(function \(s\)/,'sidebar and phone bar');
+  assert.match(v2,/function renderNav\(\)[\s\S]*NAV\.filter\(sectionAvailable\)\.map\(function \(s\)/,'sidebar and phone bar');
   assert.match(v2,/NAVI\.moreSections\(\)/,'More sheet');
   assert.match(v2,/function paletteCommands\(q\)[\s\S]*NAVI\.search\(q\)/,'⌘K palette');
   assert.match(reg,/var SURFACES = N\.entries\(\)/,'registry');

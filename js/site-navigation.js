@@ -13,8 +13,9 @@
   const dock = document.querySelector('.appbar');
   const get = id => document.getElementById(id);
   let coreReady, panel, profile, installed = false, group = 'All', opening = 0, lastControlTap = null;
-  // The six Control sections come from NAV (js/control-room/nav.js); Products are the product doors.
-  const groups = ['All', 'Home', 'Inbox', 'Sell', 'Create', 'Analytics', 'System', 'Products'];
+  function destinationGroups() {
+    return ['All', ...window.CR.nav.NAV.map(section => section.label), 'Products'];
+  }
   function element(tag, className, text) {
     const el = document.createElement(tag); el.className = className;
     if (text) el.textContent = text; return el;
@@ -71,7 +72,7 @@
     button?.setAttribute('aria-expanded', 'false');
     if (focus) button?.focus();
   }
-  /* The six Control sections, straight from NAV, with the live counts Control
+  /* The Control sections, straight from NAV, with the live counts Control
      publishes when it is the page underneath (window.CR.navBadges). */
   function renderSections() {
     const host = get('mccSections'), N = window.CR?.nav;
@@ -98,7 +99,7 @@
     const items = entries().filter(item => (group === 'All' || item.group === group) &&
       query.split(/\s+/).every(word => `${item.label} ${item.group} ${item.context} ${item.hash || ''}`.toLowerCase().includes(word)));
     const list = get('mccDestinationList'); list.replaceChildren();
-    groups.slice(1).forEach(name => {
+    destinationGroups().slice(1).forEach(name => {
       const rows = items.filter(item => item.group === name); if (!rows.length) return;
       const section = element('section', 'mcc-destinations__group');
       section.appendChild(element('h3', '', name));
@@ -113,7 +114,7 @@
       });
       section.appendChild(grid); list.appendChild(section);
     });
-    get('mccDestinationCount').textContent = items.length ? `${items.length} destinations` : 'No destinations match. Try another search.';
+    get('mccDestinationCount').textContent = items.length ? `${items.length} destination${items.length === 1 ? '' : 's'}` : 'No destinations match. Try another search.';
     panel.querySelectorAll('[data-destination-group]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.destinationGroup === group)));
   }
   function createPanel() {
@@ -126,7 +127,7 @@
       '<nav class="mcc-sections" id="mccSections" aria-label="Home sections"></nav>' +
       '<div class="mcc-destinations__groups" role="group" aria-label="Destination groups"></div>' +
       '<nav id="mccDestinationList" aria-label="Admin destinations"></nav><p id="mccDestinationCount" role="status" aria-live="polite"></p>';
-    groups.forEach(name => {
+    destinationGroups().forEach(name => {
       const button = element('button', '', name); button.type = 'button'; button.dataset.destinationGroup = name;
       button.onclick = () => {group = name; render(); get('mccDestinationList').scrollTop = 0;};
       panel.querySelector('.mcc-destinations__groups').appendChild(button);
@@ -222,7 +223,7 @@
   function syncDockSections() {
     const N = window.CR?.nav;
     if (!bar.admin() || !N) {updateDockHints();return;}
-    N.NAV.filter(section => !['home','people','insights'].includes(section.id)).forEach(section => {
+    N.NAV.filter(section => ['sell','create','system'].includes(section.id)).forEach(section => {
       let link = dock.querySelector('[data-dock-section="'+section.id+'"]');
       if (!link) {
         link = element('a', 'appbar__tab'); link.dataset.appnav = 'admin-'+section.id; link.dataset.dockSection = section.id;

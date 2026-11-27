@@ -142,6 +142,7 @@ async function getOwnerJob(env, orgId, jobId) {
   const params = new URLSearchParams({
     id: `eq.${jobId}`,
     org_id: `eq.${orgId}`,
+    job_type: 'neq.equiquant_mosaic_replay',
     select: 'id,org_id,job_type,target_type,target_id,status,priority,input,output,last_error,attempts,max_attempts,locked_by,locked_at,created_at,updated_at',
     limit: '1'
   });

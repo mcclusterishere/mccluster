@@ -1,3 +1,4 @@
+import { MOSAIC_JOB, SHARED_JOB_FILTER } from './equiquant-mosaic-contract.mjs';
 import os from 'node:os';
 import { randomBytes } from 'node:crypto';
 import { assertCompletionEvidence } from './completion-evidence.mjs';
@@ -71,7 +72,7 @@ export async function resolveHouseOrgId() {
   return row.id;
 }
 
-export async function recoverStaleJobs({ now = new Date(), houseOrgId = null } = {}) {
+export async function recoverStaleJobs({ now = new Date(), houseOrgId = null, scope = {} } = {}) {
   const orgId = houseOrgId || await resolveHouseOrgId();
   const nowIso = now.toISOString();
   const cutoff = new Date(now.getTime() - STALE_JOB_MS).toISOString();
@@ -79,7 +80,7 @@ export async function recoverStaleJobs({ now = new Date(), houseOrgId = null } =
   const params = new URLSearchParams({
     org_id: `eq.${orgId}`,
     status: 'eq.running',
-    locked_at: `lt.${cutoff}`,
+    locked_at: `lt.${cutoff}`, ...scope,
     select: 'id,org_id,attempts,max_attempts,locked_at,locked_by',
     order: 'locked_at.asc',
     limit: '100',
@@ -108,7 +109,7 @@ export async function recoverStaleJobs({ now = new Date(), houseOrgId = null } =
       id: `eq.${job.id}`,
       org_id: `eq.${orgId}`,
       status: 'eq.running',
-      locked_at: `eq.${job.locked_at}`,
+      locked_at: `eq.${job.locked_at}`, ...scope,
     });
     const { body: updated = [] } = await rest(`ops_agent_jobs?${match.toString()}`, {
       method: 'PATCH',
@@ -159,24 +160,36 @@ export async function quarantineUnsupportedJobs(supportedTypes, { now = new Date
   return quarantined;
 }
 
-export async function claimNext(supportedTypes) {
+function mosaicClaimScope(capability, mosaicOnly) {
+  if (mosaicOnly) return {
+    job_type: 'eq.' + MOSAIC_JOB, 'input->>target': 'eq.' + capability.target,
+    'input->>hardware_sha256': 'eq.' + capability.hardware_sha256, 'input->>node_version': 'eq.' + capability.node_version,
+  };
+  if (!capability) return { job_type: SHARED_JOB_FILTER };
+  const matched = 'and(job_type.eq.' + MOSAIC_JOB + ',input->>target.eq.' + capability.target +
+    ',input->>hardware_sha256.eq.' + capability.hardware_sha256 + ',input->>node_version.eq.' + capability.node_version + ')';
+  return { or: '(job_type.' + SHARED_JOB_FILTER + ',' + matched + ')' };
+}
+
+export async function claimNext(supportedTypes, { capability = null, mosaicOnly = false } = {}) {
   const supported = new Set(supportedTypes);
-  if (!supported.size) return null;
+  if (!supported.size || (mosaicOnly && !capability)) return null;
+  const scope = supported.has(MOSAIC_JOB) ? mosaicClaimScope(capability, mosaicOnly) : {};
   const orgId = await resolveHouseOrgId();
 
   const sweepNow = Date.now();
   if (sweepNow - lastStaleSweepAt >= STALE_SWEEP_MS) {
     lastStaleSweepAt = sweepNow;
     const sweepDate = new Date(sweepNow);
-    await recoverStaleJobs({ now: sweepDate, houseOrgId: orgId });
-    await quarantineUnsupportedJobs([...supported], { now: sweepDate, houseOrgId: orgId });
+    await recoverStaleJobs({ now: sweepDate, houseOrgId: orgId, scope });
+    if (!mosaicOnly) await quarantineUnsupportedJobs([...supported], { now: sweepDate, houseOrgId: orgId });
   }
 
   const now = new Date().toISOString();
   const params = new URLSearchParams({
     org_id: `eq.${orgId}`,
     status: 'eq.queued',
-    run_after: `lte.${now}`,
+    run_after: `lte.${now}`, ...scope,
     select: '*',
     order: 'priority.desc,run_after.asc,created_at.asc',
     limit: '50',
@@ -185,8 +198,18 @@ export async function claimNext(supportedTypes) {
 
   for (const job of rows) {
     if (job.org_id !== orgId || !supported.has(job.job_type)) continue;
+    if (mosaicOnly && job.job_type !== MOSAIC_JOB) continue;
+    const restrictions = {};
+    if (job.job_type === MOSAIC_JOB) {
+      const { target, hardware_sha256: hardware, node_version: version } = job.input || {};
+      if (!capability || target !== capability.target || hardware !== capability.hardware_sha256 || version !== capability.node_version) continue;
+      restrictions['input->>target'] = 'eq.' + target;
+      restrictions['input->>hardware_sha256'] = 'eq.' + hardware;
+      restrictions['input->>node_version'] = 'eq.' + version;
+      restrictions.job_type = 'eq.' + MOSAIC_JOB;
+    }
     const attempts = Number(job.attempts || 0) + 1;
-    const patchParams = new URLSearchParams({ id: `eq.${job.id}`, org_id: `eq.${orgId}`, status: 'eq.queued' });
+    const patchParams = new URLSearchParams({ id: `eq.${job.id}`, org_id: `eq.${orgId}`, status: 'eq.queued', ...restrictions });
     const { body: claimed = [] } = await rest(`ops_agent_jobs?${patchParams.toString()}`, {
       method: 'PATCH',
       headers: { Prefer: 'return=representation' },
@@ -332,7 +355,7 @@ export async function failJob(job, error) {
 export async function recentJobs({ orgId, sinceHours = 12, limit = 25 } = {}) {
   const since = new Date(Date.now() - Math.max(1, Number(sinceHours)) * 3_600_000).toISOString();
   const params = new URLSearchParams({
-    updated_at: `gte.${since}`,
+    updated_at: `gte.${since}`, job_type: SHARED_JOB_FILTER,
     select: 'id,org_id,job_type,target_type,target_id,status,priority,output,last_error,attempts,max_attempts,created_at,updated_at',
     order: 'updated_at.desc',
     limit: String(Math.min(100, Math.max(1, Number(limit) || 25))),

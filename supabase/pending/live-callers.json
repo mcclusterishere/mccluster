@@ -7,6 +7,13 @@
     "applied_awaiting_evidence: applied in production by a dated receipt (version present in supabase/production-ledger.json and its exact SQL under supabase/migrations/), but supabase/schema-manifest.json and the latest production snapshot were not regenerated at import time. Each entry names the migration file and the receipt. The test fails once evidence shows the name, so this list only shrinks; regenerate the manifest with the supported clean reset and capture a snapshot to retire the entries."
   ],
   "pending_only": {
+    "equiquant_action": {
+      "kind": "function",
+      "pending": "equiquant_v1.sql",
+      "callers": [
+        "workers/mccluster/src/equiquant.js"
+      ]
+    },
     "action_environment_missions": {
       "kind": "table",
       "pending": "20261107120000_world_environment_v1.sql",
