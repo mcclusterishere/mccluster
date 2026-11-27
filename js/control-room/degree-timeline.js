@@ -2,7 +2,7 @@
    browser view. Only the normalized plan record crosses the owner API. */
 (function(root){
   'use strict';
-  const KINDS={exam:'CLEP / other exam',course:'Course / paid class',badge:'Badge',certification:'Certification',task:'Task'};
+  const KINDS={exam:'CLEP / other exam',course:'Course / paid class',badge:'Badge',certification:'Exam-backed certification',task:'Task'};
   const STATUS={planned:'Planned',studying:'In progress',passed:'Passed',completed:'Completed'};
   const CREDIT={proposed:'Proposed',preapproved:'Preapproved (not posted)',posted:'Posted (dated evidence recorded)'};
   const EVIDENCE={'':'Not recorded',degree_audit:'Degree audit',transcript:'Transcript',registrar:'Registrar confirmation'};
@@ -42,6 +42,7 @@
   function unique(a,label){if(a.length!==new Set(a).size)bad(label+' cannot contain duplicates.');}
   function approved(d){return d.status==='preapproved'||d.status==='posted';}
   function eligible(i){return i.status==='passed'||i.status==='completed';}
+  function award(i){return (i.kind==='badge'&&i.status==='completed')||(i.kind==='certification'&&i.status==='passed');}
   function safeHttps(u){try{const a=new URL(u);return a.protocol==='https:'&&!a.username&&!a.password;}catch(_){return false;}}
   function sanitize(raw,{importing=false}={}){
     object(raw,'Plan'); if(raw.version!==1)bad('Use a version 1 plan template.');
@@ -64,6 +65,11 @@
         })};
       if(i.end<i.start)bad('A target date cannot be before its start date.');
       if(i.status==='passed'&&!['exam','certification'].includes(i.kind))bad('Passed applies to exams and certifications. Use Completed for this milestone.');
+      const earned=date(r.earned_on,'Earned date',true);
+      if(earned){
+        if(!award(i)||earned>today())bad('Use a non-future earned date only for a completed badge or a passed exam-backed certification.');
+        i.earned_on=earned;
+      }
       const linked=r.study_course_id;
       // Imports cannot supply persistent IDs for another system. Link a private practice course in the on-screen editor instead.
       if(!importing&&linked){
@@ -124,7 +130,7 @@
     return shape(old)!==shape(next);
   }
   function mount(host,{call,back,openCourse,valid,denied}){
-    let state,mode='term',busy=false,serial=0;
+    let state,mode='term',busy=false,serial=0,awardStart=Number(today().slice(0,4));
     const title=h('Degree timeline'), actions=el('div',null,'tl-actions'), body=el('div',null,'tl-body'), note=el('p');note.setAttribute('role','status');note.setAttribute('data-tl-status','');
     const exit=b('Back to Course Studio',()=>{if(!busy){serial++;back();}});
     actions.append(exit); host.replaceChildren(actions,title,el('p','Private planning. Schools decide whether a course or exam meets their requirements. Nothing here syncs with a registrar or awards credit.'),note,body);
@@ -215,7 +221,11 @@
           const pass=status.querySelector('[value=passed]');
           pass.disabled=!['exam','certification'].includes(kind.value);
           if(pass.disabled&&status.value==='passed')status.value='completed';
-        };kind.addEventListener('change',statusOptions);statusOptions();
+          const showEarned=award({kind:kind.value,status:status.value});
+          earned.disabled=!showEarned;earned.parentElement.hidden=!showEarned;
+        };
+        const earned=field(f,'Actual earned date (optional)',row?.earned_on,{type:'date',max:today()});
+        kind.addEventListener('change',statusOptions);status.addEventListener('change',statusOptions);statusOptions();
         const start=field(f,'Start date',row?.start,{type:'date',required:true});
         const end=field(f,'Target date',row?.end,{type:'date',required:true});
         const nextAction=field(f,'Next action',row?.next_action,{maxLength:400});
@@ -245,6 +255,7 @@
           const next=clone(state.plan), value={id:row?.id??crypto.randomUUID(),label:label.value,kind:kind.value,start:start.value,end:end.value,
             status:status.value,next_action:nextAction.value,prerequisites:prereq(),goal_ids:goals(),destinations:records.map(fn=>fn())};
           if(linked.value)value.study_course_id=linked.value;
+          if(!earned.disabled&&earned.value)value.earned_on=earned.value;
           next.items=row?next.items.map(i=>i.id===row.id?value:i):[...next.items,value];return {next,confirmed:confirm.checked};
         };
       });
@@ -273,6 +284,7 @@
           const item=el('li',null,'tl-stage');
           const blocked=array(i.prerequisites).map(id=>items.get(id)).filter(x=>x&&!eligible(x));
           item.append(el('p',KINDS[i.kind]+' · '+STATUS[i.status],'cs-label'),h(i.label,'h5'),el('p',printable(i.start)+' to '+printable(i.end)));
+          if(award(i))item.append(el('p',i.earned_on?'Self-reported earned date: '+printable(i.earned_on):'Earned date not recorded; not assigned to a period.'));
           if(i.next_action)item.append(el('p','Next: '+i.next_action));
           if(i.prerequisites?.length)item.append(el('p', 'Prerequisites: '+i.prerequisites.map(id=>items.get(id)?.label||'Unavailable').join(', ')));
           if(blocked.length)item.append(el('p','Still needs: '+blocked.map(x=>x.label).join(', '),'tl-warning'));
@@ -297,14 +309,50 @@
       }
       return p;
     }
+    function cadence(plan,preview){
+      const p=panel('Credential pace');
+      p.append(el('p','Four-year targets: 16 exam-backed certifications (4 each year) and 48 badges (1 each month). These are planning targets, not credits or credentials awarded by Course Studio.'));
+      const qualified=plan.items.filter(award), missing=qualified.filter(i=>!i.earned_on);
+      const counts=(rows,kind)=>rows.filter(i=>i.kind===kind).length;
+      const quantity=(n,noun)=>n+' '+noun+(n===1?'':'s');
+      const within=qualified.filter(i=>i.earned_on&&Number(i.earned_on.slice(0,4))>=awardStart&&Number(i.earned_on.slice(0,4))<awardStart+4);
+      const outside=qualified.filter(i=>i.earned_on&&!within.includes(i));
+      if(!preview){
+        const form=el('form',null,'tl-form tl-cadence-form');
+        const start=field(form,'Four-year window starts',awardStart,{type:'number',min:2000,max:2096,step:1,required:true});
+        const apply=b('Show window',null);apply.type='submit';form.append(apply);p.append(form);
+        form.onsubmit=e=>{
+          e.preventDefault();const year=Number(start.value);
+          if(!Number.isInteger(year)||year<2000||year>2096)return;
+          awardStart=year;draw();body.querySelector('[aria-label="Four-year window starts"]')?.focus();
+        };
+      }
+      p.append(el('p','Earned in '+awardStart+'–'+(awardStart+3)+' (self-reported): '+counts(within,'certification')+' of 16 certifications · '+counts(within,'badge')+' of 48 badges.'));
+      p.append(el('p','Undated, not assigned to a period: '+quantity(counts(missing,'certification'),'certification')+' · '+quantity(counts(missing,'badge'),'badge')+'.'));
+      if(outside.length)p.append(el('p','Earned outside this window: '+quantity(counts(outside,'certification'),'certification')+' · '+quantity(counts(outside,'badge'),'badge')+'.'));
+      p.append(el('p','A passed exam-backed certification or a completed badge counts only on its actual earned date. CLEP, regular classes, exam registration and study progress do not count.'));
+      for(let year=awardStart;year<awardStart+4;year++){
+        const dated=within.filter(i=>i.earned_on.startsWith(year+'-'));
+        const area=el('details',null,'tl-cadence-year'), summary=el('summary',year+': '+counts(dated,'certification')+' of 4 certifications · '+counts(dated,'badge')+' of 12 badges');
+        const months=el('ul',null,'tl-cadence-months');
+        for(let month=0;month<12;month++){
+          const monthKey=year+'-'+String(month+1).padStart(2,'0');
+          const label=new Intl.DateTimeFormat('en-US',{month:'long',timeZone:'UTC'}).format(new Date(monthKey+'-01T00:00:00Z'));
+          const eligible=dated.filter(i=>i.kind==='badge'&&i.earned_on.startsWith(monthKey)).length;
+          months.append(el('li',label+': '+eligible+' of 1 badge target'));
+        }
+        area.append(summary,months);p.append(area);
+      }
+      return p;
+    }
     function overview(plan,preview=false){
       const nodes=[], stats=el('div',null,'tl-figures');
       const count=kind=>plan.items.filter(i=>i.kind===kind), earned=rows=>rows.filter(eligible).length;
-      const exams=count('exam'),courses=count('course'),credentials=[...count('badge'),...count('certification')];
+      const exams=count('exam'),courses=count('course'),tasks=count('task');
       stats.append(figure('Exams',earned(exams)+' / '+exams.length,'Passed/completed · self-reported'),
         figure('Classes',earned(courses)+' / '+courses.length,'Completed · self-reported'),
-        figure('Credentials',earned(credentials)+' / '+credentials.length,'Badge/certification milestones · self-reported'));
-      nodes.push(stats);
+        figure('Tasks',earned(tasks)+' / '+tasks.length,'Finished · self-reported'));
+      nodes.push(stats,cadence(plan,preview));
       const upNext=panel('Next actions');
       const pending=plan.items.filter(i=>!eligible(i)&&i.next_action).sort((a,b)=>a.end.localeCompare(b.end)||a.label.localeCompare(b.label));
       if(!pending.length)upNext.append(el('p','Add a next action to a milestone to see it here.'));

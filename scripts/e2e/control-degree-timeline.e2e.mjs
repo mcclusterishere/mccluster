@@ -24,6 +24,12 @@ const sample={
   item('THIRD','Review lab','course','completed',[ref('Example College','LAB 105',2)]),
   item('FOURTH','Alternate lab','course','completed',[ref('Example College','LAB 105',4)]),
   item('FIFTH','Plan the next term','task','planned',[],['FIRST'],['ID-TO-REMAP']),
+  {...item('SIXTH','Exam-backed networking credential','certification','passed'),earned_on:'2025-03-05'},
+  {...item('SEVENTH','Lab participation badge','badge','completed'),earned_on:'2025-05-05'},
+  item('EIGHTH','Workshop badge','badge','completed'),
+  item('NINTH','Credential registration','certification','studying'),
+  item('TENTH','Credential coursework','certification','completed'),
+  {...item('ELEVENTH','Archived badge','badge','completed'),earned_on:'2024-11-12'},
  ]
 };
 async function setup(width,logged=true,hasOwner=true){
@@ -106,6 +112,19 @@ try {
   for(const forbidden of ['drop-secret','drop-raw','drop-student','ID-TO-REMAP','FIRST',practice])assert.ok(!saved.includes(forbidden),forbidden);
   await visible(p,'3 posted credits · 0 preapproved · 0 proposed');await visible(p,'4 posted credits · 0 preapproved · 0 proposed');
   await visible(p,/Conflicting units excluded for: LAB 105/);await heading(p,'Sep – Dec 2026');
+  await fill(p,'Four-year window starts','2025');await btn(p,'Show window').click();
+  await visible(p,'Earned in 2025–2028 (self-reported): 1 of 16 certifications · 1 of 48 badges.');
+  await visible(p,'Undated, not assigned to a period: 0 certifications · 1 badge.');
+  await visible(p,'Earned outside this window: 0 certifications · 1 badge.');
+  await text(p,'2025: 1 of 4 certifications · 1 of 12 badges').click();
+  await visible(p,'May: 1 of 1 badge target');await visible(p,'March: 0 of 1 badge target');
+  await fits(p,width,'Expanded credential cadence');
+  await btn(p,'Edit Workshop badge').click();await fill(p,'Actual earned date (optional)','2025-05-06');
+  await btn(p,'Save milestone').click();await visible(p,'Earned in 2025–2028 (self-reported): 1 of 16 certifications · 2 of 48 badges.');
+  assert.equal(db.plan.items.find(i=>i.label==='Workshop badge').earned_on,'2025-05-06');
+  await btn(p,'Edit Placement examination').click();
+  assert.equal(await p.getByLabel('Actual earned date (optional)',{exact:true}).isVisible(),false);
+  await btn(p,'Cancel').click();
   await btn(p,'By month').click();await heading(p,'September 2026');await fits(p,width,'Populated timeline');
   await shot(p,'synthetic-degree-timeline-'+width);
   await btn(p,'Edit Plan the next term').click();

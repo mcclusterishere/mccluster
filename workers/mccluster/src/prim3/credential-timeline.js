@@ -36,12 +36,17 @@ export function normalizePlan(raw,today=new Date().toISOString().slice(0,10)){
   const goals=list(raw.goals,20,'goals').map(g=>{keys(g,['id','label','school']);return {id:id(g.id),label:string(g.label,160),school:string(g.school,120)};});
   const goalIds=new Set(unique(goals.map(g=>g.id),'goal identifiers'));
   const items=list(raw.items,100,'items').map(i=>{
-    keys(i,['id','label','kind','start','end','status','next_action','prerequisites','destinations','goal_ids','study_course_id']);
+    keys(i,['id','label','kind','start','end','status','next_action','prerequisites','destinations','goal_ids','study_course_id','earned_on']);
     const row={id:id(i.id),label:string(i.label,160),kind:member(KINDS,i.kind,'item kind'),start:day(i.start,'start date'),end:day(i.end,'end date'),
       status:member(STATES,i.status,'study status'),next_action:string(i.next_action??'',400,false),
       prerequisites:unique(list(i.prerequisites??[],12,'prerequisites').map(id),'prerequisites'),destinations:[]};
     if(row.end<row.start)err('End date must not precede start');
     if(row.status==='passed'&&!['exam','certification'].includes(row.kind))err('Passed applies to an exam or certification');
+    if(i.earned_on!==undefined&&i.earned_on!==''){
+      const awarded=row.kind==='certification'&&row.status==='passed'||row.kind==='badge'&&row.status==='completed';
+      if(!awarded||day(i.earned_on,'earned date')>today)err('An earned date requires a passed certification or completed badge and cannot be in the future');
+      row.earned_on=i.earned_on;
+    }
     if(i.goal_ids?.length){row.goal_ids=unique(list(i.goal_ids,12,'linked goals').map(id),'linked goals');if(row.goal_ids.some(g=>!goalIds.has(g)))err('Unknown goal');}
     else if(i.goal_ids!==undefined)list(i.goal_ids,12,'linked goals');
     if(i.study_course_id!==undefined&&i.study_course_id!==''){if(!UUID.test(i.study_course_id)||typeof i.study_course_id!=='string')err('Invalid linked practice course');row.study_course_id=i.study_course_id.toLowerCase();}

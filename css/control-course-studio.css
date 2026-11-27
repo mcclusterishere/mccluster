@@ -36,6 +36,7 @@
 .tl-figure small { grid-column: 1 / -1; color: var(--cr-dim); }
 .tl-form label, .tl-form fieldset { min-width: 0; }
 .tl-form label { display: grid; gap: .3rem; margin: .3rem 0; }
+.tl-form label[hidden] { display: none; }
 .tl-form input:not([type=checkbox]), .tl-form select, .tl-form textarea { min-width: 0; width: 100%; max-width: 100%; min-height: 44px; padding: .5rem; color: var(--cr-text); background: var(--cr-panel-2); border: 1px solid var(--cr-line-strong); border-radius: .45rem; font: inherit; font-size: max(16px, 1rem); }
 .tl-form textarea { resize: vertical; }
 .tl-check, .tl-form .tl-check { display: flex; align-items: center; gap: .6rem; min-height: 44px; }
@@ -47,6 +48,9 @@
 .tl-stage::before { content: ""; position: absolute; background: var(--cr-text); width: .45rem; height: .45rem; border-radius: 50%; inset-inline-start: -1.11rem; top: 1.2rem; }
 .tl-credit-list li { border-block-start: 1px solid var(--cr-line); padding: .35rem 0; }
 .tl-warning { color: #f2d28b; }
+.tl-cadence-year { border-block-start: 1px solid var(--cr-line); padding-block: .25rem; }
+.tl-cadence-year summary { min-height: 44px; cursor: pointer; padding-block: .65rem; }
+.tl-cadence-months { display: grid; grid-template-columns: minmax(0, 1fr); gap: .4rem; margin-block: .25rem .6rem; padding-inline-start: 1.3rem; }
 .tl-body > .cs-panel > ol { margin: 0; padding-inline-start: 1.25rem; }
 .tl-body > .cs-panel > ol > li { padding-block: .3rem; }
 @media (min-width: 44rem) {
@@ -54,4 +58,5 @@
   .cs-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cs-form fieldset, .cs-form button { grid-column: 1 / -1; }
   .tl-figures { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tl-cadence-months { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

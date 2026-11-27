@@ -65,6 +65,9 @@ counts, within one receiving school; duplicate equivalencies count once and
 conflicting amounts are flagged and excluded. A linked Course Studio practice
 score refreshes on read but never changes the school's record. Goals, dates,
 dependencies, next actions and conditional budgets are editable.
+Monthly badges and annual exam-backed certifications are separate study targets.
+Only a completed badge or a passed certification with a self-reported earned date
+counts toward that period. Planned dates and CLEP exams do not count as awards.
 
 GET and PUT `/v1/prim3/learning/course-studio/timeline` require the
 authenticated house owner and both `COURSE_STUDIO_ENABLED` and

@@ -37,6 +37,16 @@ test('no cross-school or duplicate accumulation; disputed amounts excluded',()=>
   ));
   assert.deepEqual(creditSummary(p),[{school:'Example A',posted_credits:3,conflicts:['EX 222']},{school:'Example B',posted_credits:4,conflicts:[]}]);
 });
+test('cadence: actual reported award date only for an earned badge or passed certification; never infer a date from a study target',()=>{
+  for(const [kind,status] of [['badge','completed'],['certification','passed']]){
+    assert.equal(normalizePlan(plan(item('a',{kind,status,earned_on:'2025-03-04'}))).items[0].earned_on,'2025-03-04');
+    assert.equal(normalizePlan(plan(item('a',{kind,status}))).items[0].earned_on,undefined);
+    assert.throws(()=>normalizePlan(plan(item('a',{kind,status,earned_on:'2099-03-04'}))));
+  }
+  for(const [kind,status] of [['exam','passed'],['certification','studying'],['badge','planned'],['certification','completed']]){
+    assert.throws(()=>normalizePlan(plan(item('a',{kind,status,earned_on:'2025-03-04'}))));
+  }
+});
 test('owner route: scoped read, dated confirmation, CAS, denied identities, separate academic and practice state',async t=>{
   const plans=new Map();let calls=0;const wire=[];
   const gate={requireHouseOwner:async req=>{const token=req.headers.get('authorization');if(!token)throw Object.assign(Error('Sign in'),{status:401});
