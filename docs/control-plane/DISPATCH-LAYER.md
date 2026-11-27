@@ -61,7 +61,7 @@ named exclusion with a reason. `core/test/dispatch-coverage.test.mjs` fails if o
   broker's capability registry (the same resolve/bind/fallback path as an MCP `tools/call`).
   Excluded: `browser.act` (owner-only, drives the owner's browser inside a resident turn) and `site.edit` (public
   website, owner-only in Control); the `dispatch.*` trio never routes into itself.
-* **Runner job types (31 types across 29 executor files): 24 of 29 executor files reachable.**
+* **Runner job types (32 types across 30 executor files): 24 of 30 executor files reachable.**
   * 14 direct job routes, intent `job.<job_type>`, enqueued with the existing `enqueueJob` on `ops_agent_jobs`:
     `host_health`, `ai_diagnostics`, `repo_health`, `local_analysis`, `game_build_plan` (run); `portfolio_plan`,
     `objective_reflection`, `objective_synthesis`, `game_playtest`, `weather_region_snapshot`,
@@ -70,11 +70,12 @@ named exclusion with a reason. `core/test/dispatch-coverage.test.mjs` fails if o
   * 8 through a capability: `code_patch` (code.build), `objective_plan`, `game_studio_cycle` (game.build),
     `preview_deploy` (deploy.preview), `lyrics_align`, `stems_separate`, `meeting_delegate_dispatch` and
     `meeting_delegate_collect` (meeting.delegate.*); `resident_ai_turn` through the answer path.
-  * 8 excluded: `lead_rescore` (outreach), `sms_assistant_turn` (outside message, needs an inbound SMS),
+  * 9 excluded: `course_study_build` (private Course Studio submission only),
+    `lead_rescore` (outreach), `sms_assistant_turn` (outside message, needs an inbound SMS),
     `actor_live_comment` (started by the database with a receipt), and the game studio continuations
     `game_media_collect`, `game_owner_decision`, `game_implementation_collect`, `game_branch_smoke`,
     `game_release_decision` (they need a cycle's own state or approval packet; reached through game.build).
-  * Executor files not reachable from chat: `lead-rescore`, `sms-assistant-turn`, `actor-live-comment`,
+  * Executor files not reachable from chat: `course-study-build`, `lead-rescore`, `sms-assistant-turn`, `actor-live-comment`,
     `game-branch-smoke`, `game-release-decision`. `host-health-collect` is a helper of `host-health`.
 
 ### Gates today (60 routes)

@@ -39,6 +39,7 @@
    PATCH /v1/prim3/learning/improvements/:id */
 import { fail, reply } from '../lib/http.js';
 import { routeAdaptive, ADAPTIVE_PACK } from './adaptive-learning.js';
+import { routeCourseStudio } from './course-studio.js';
 import PATHWAYS from '../../../../docs/design/equity-uprise-development/LEARNING-PATHWAYS.json' with { type: 'json' };
 import FEDERAL from '../../../../docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG.json' with { type: 'json' };
 import INDUSTRY from '../../../../docs/design/equity-uprise-development/INDUSTRY-CERTIFICATION-MAP.json' with { type: 'json' };
@@ -763,6 +764,10 @@ async function route(request, env, options, path) {
   const [head, id, sub] = parts;
 
   // Deliberately stays owner-only even if the general learning audience opens later.
+  if (head === 'course-studio') {
+    const owner = await options.requireHouseOwner(request, env);
+    return done(await routeCourseStudio(request, env, owner, parts.slice(1), db));
+  }
   if (head === 'adaptive') {
     const user = await options.requireHouseOwner(request, env);
     return done(await routeAdaptive(request, env, user, parts.slice(1), db));

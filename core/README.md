@@ -8,6 +8,7 @@ The runner polls `ops_agent_jobs`, atomically claims only job types it actually 
 
 Allowlisted executors:
 
+- `course_study_build` - reads the private course paired to its house job, verifies the selected math and atomic-notation readings from the fixed Course Studio catalog, and produces four original numerical rounds plus two cited brief items per chapter. Only the currently leased attempt can persist the private bundle. The shared queue records its digest and counts, not the school, student, sources or answers. A retry after the bundle was saved reuses it. Run `node --test test/course-study-build.test.mjs` from `core/` for the offline checks. The curated packs are study aids, not a verified school syllabus; no LMS access, provider model, or page code execution is involved.
 - `repo_health` — fetches repository state and can run already-installed local tests; it never installs packages during a health check.
 - `local_analysis` — sends a bounded analysis task to the local Ollama model. Its evidence scope is explicitly `job_input_only`.
 - `code_patch` — creates a disposable Git worktree, asks a separate low-privilege OpenCode service to edit it with the local model, rejects sensitive-path diffs, commits the accepted diff, refuses a commit that fails `git diff --check` before any push (completion evidence requires `verification.git_diff_check`), optionally pushes a branch, and attempts to open a **draft PR**. It never auto-merges or deploys.

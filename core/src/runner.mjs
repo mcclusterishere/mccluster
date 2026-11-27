@@ -30,6 +30,7 @@ import { weatherRegionSnapshot } from './executors/weather-region-snapshot.mjs';
 import { aiDiagnostics } from './executors/ai-diagnostics.mjs';
 import { lyricsAlign } from './executors/lyrics-align.mjs';
 import { stemsSeparate } from './executors/stems-separate.mjs';
+import { courseStudyBuild } from './executors/course-study-build.mjs';
 import { emitCoreEvent, jobTraceId } from './observability.mjs';
 
 const executors = new Map([
@@ -64,6 +65,7 @@ const executors = new Map([
   ['actor_live_comment', actorLiveComment],
   ['lyrics_align', lyricsAlign],
   ['stems_separate', stemsSeparate],
+  ['course_study_build', courseStudyBuild],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
@@ -89,7 +91,7 @@ async function execute(job) {
   const executor = executors.get(job.job_type);
   if (!executor) throw new Error(`unsupported job type: ${job.job_type}`);
   const startedAt = new Date().toISOString();
-  log('job_started', { job_id: job.id, job_type: job.job_type, target_id: job.target_id, attempt: job.attempts, lease: job.locked_by || null });
+  log('job_started', { job_id: job.id, job_type: job.job_type, target_id: job.job_type === 'course_study_build' ? undefined : job.target_id, attempt: job.attempts, lease: job.locked_by || null });
   /* Audit finding C3: a heartbeat that matches zero rows means another attempt
      owns this job now. Abort the executor, and never mark done afterwards: the
      newer attempt owns the outcome, and ours is recorded as lost, not finished. */
