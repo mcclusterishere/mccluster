@@ -10,8 +10,8 @@ import json
 import sys
 import numpy as np
 import rasterio
-from rasterio.transform import from_bounds
-from rasterio.warp import reproject, Resampling
+from rasterio.transform import rowcol
+from rasterio.warp import transform
 from PIL import Image
 
 OUT = Path(__file__).resolve().parents[1] / 'data/environment/arctic-ice'
@@ -25,6 +25,12 @@ sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
 
 def build(source_dir, output):
     output.mkdir(parents=True, exist_ok=True)
+    # Transform each destination pixel center, not GDAL's approximate scanlines:
+    # a fractional-source-pixel warp tolerance can change the bin near ice edges.
+    west, south, east, north = BOUNDS
+    lon, lat = np.meshgrid(west + (np.arange(WIDTH) + 0.5) * (east-west)/WIDTH,
+                           north - (np.arange(HEIGHT) + 0.5) * (north-south)/HEIGHT)
+    xs, ys = transform('EPSG:4326', 'EPSG:3411', lon.ravel(), lat.ravel())
     frames = []
     for day in DAYS:
         d = date.fromisoformat(day)
@@ -43,10 +49,12 @@ def build(source_dir, output):
             sample[native < 150] = 1
             for boundary, code in [(150, 2), (400, 3), (700, 4), (900, 5)]:
                 sample[(native >= boundary) & (native <= 1000)] = code
-            dest = np.zeros((HEIGHT, WIDTH), dtype='uint8')
-            reproject(sample, dest, src_transform=src.transform, src_crs=src.crs,
-                      dst_transform=from_bounds(*BOUNDS, WIDTH, HEIGHT), dst_crs='EPSG:4326',
-                      resampling=Resampling.nearest, dst_nodata=0)
+            rows, cols = rowcol(src.transform, xs, ys)
+            rows, cols = np.asarray(rows), np.asarray(cols)
+            valid = (rows >= 0) & (rows < src.height) & (cols >= 0) & (cols < src.width)
+            dest = np.zeros(WIDTH * HEIGHT, dtype='uint8')
+            dest[valid] = sample[rows[valid], cols[valid]]
+            dest = dest.reshape(HEIGHT, WIDTH)
         image = Image.fromarray(dest)
         image.putpalette([x for color in PALETTE for x in color])
         path = output / (day + '.png')
