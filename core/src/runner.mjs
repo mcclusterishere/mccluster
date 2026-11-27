@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'node:url';
+import { equiquantMosaicReplay } from './executors/equiquant-mosaic-replay.mjs';
 import { claimNext, completeJob, failJob, heartbeat, workerId } from './supabase.mjs';
 import { prepareClaimedDagJob } from './objective-dag-store.mjs';
 import { buildCompletionEvidence } from './completion-evidence.mjs';
@@ -33,6 +35,7 @@ import { stemsSeparate } from './executors/stems-separate.mjs';
 import { emitCoreEvent, jobTraceId } from './observability.mjs';
 
 const executors = new Map([
+  ['equiquant_mosaic_replay', equiquantMosaicReplay],
   ['repo_health', repoHealth],
   ['local_analysis', localAnalysis],
   ['code_patch', codePatch],
@@ -161,7 +164,7 @@ async function execute(job) {
   } finally { clearInterval(timer); }
 }
 
-async function cycle() {
+export async function runCoreCycle() {
   const claimed = await claimNext([...executors.keys()]);
   if (!claimed) return false;
 
@@ -189,13 +192,13 @@ async function cycle() {
 async function main() {
   log('core_runner_started', { supported_job_types: [...executors.keys()], once });
   if (once) {
-    const didWork = await cycle();
+    const didWork = await runCoreCycle();
     log('core_runner_once_complete', { did_work: didWork });
     return;
   }
   while (!stopping) {
     try {
-      const didWork = await cycle();
+      const didWork = await runCoreCycle();
       if (!didWork) await sleep(pollMs);
     } catch (error) {
       log('core_cycle_failed', { message: error.message });
@@ -205,11 +208,13 @@ async function main() {
   log('core_runner_stopped');
 }
 
-for (const signal of ['SIGTERM', 'SIGINT']) {
-  process.on(signal, () => { stopping = true; log('core_runner_stopping', { signal }); });
-}
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  for (const signal of ['SIGTERM', 'SIGINT']) {
+    process.on(signal, () => { stopping = true; log('core_runner_stopping', { signal }); });
+  }
 
-main().catch((error) => {
-  log('core_runner_crashed', { message: error.message, stack: error.stack });
-  process.exitCode = 1;
-});
+  main().catch((error) => {
+    log('core_runner_crashed', { message: error.message, stack: error.stack });
+    process.exitCode = 1;
+  });
+}

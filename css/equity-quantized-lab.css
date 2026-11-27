@@ -1,0 +1,16 @@
+#eq-algorithms-lab { min-width: 0; overflow-wrap: anywhere; }
+#eq-algorithms-lab select { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; font-size: max(16px, 1em); }
+#eq-algorithms-lab label { display: block; }
+#eq-algorithms-lab caption { text-align: start; padding-block: .5rem; }
+#eq-algorithms-lab table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+#eq-algorithms-lab th, #eq-algorithms-lab td { padding: .4rem .25rem; text-align: end; }
+#eq-algorithms-lab th:first-child { text-align: start; }
+#eq-algorithms-lab summary { cursor: pointer; padding-block: .7rem; }
+#eq-algorithms-lab dd { margin: 0 0 .65rem; overflow-wrap: anywhere; font-family: ui-monospace, monospace; }
+#eq-algorithms-lab .eq-lab-equation { font-family: ui-monospace, monospace; font-size: 1.125em; }
+#eq-algorithms-lab .eq-lab-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; }
+#eq-algorithms-lab [hidden] { display: none; }
+#eq-lab-feedback:empty { display: none; }
+@media (min-width: 42rem) {
+  #eq-algorithms-lab .eq-lab-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

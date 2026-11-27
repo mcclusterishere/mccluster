@@ -9,6 +9,7 @@
 
    Never throws and never blocks for long: observability must not be the
    reason a job fails. Arguments, prompts and outputs are not recorded. */
+import { MOSAIC_JOB } from './equiquant-mosaic-contract.mjs';
 import { randomUUID } from 'node:crypto';
 import { rest } from './supabase.mjs';
 
@@ -78,6 +79,9 @@ export function coreEventRow(fields = {}) {
 }
 
 export async function emitCoreEvent(fields = {}) {
+  if (fields.resourceType === 'ops_agent_job' && fields.name?.startsWith(`core.job.${MOSAIC_JOB}.`)) {
+    return { recorded: false, reason: 'private_research_job' };
+  }
   const row = coreEventRow(fields);
   if (!row) return { recorded: false, reason: 'org_and_name_required' };
   try {

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Equity Quantized · Research workspace</title>
+  <script src="js/shell-boot.js?v=__STAMP__"></script>
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/equiquant.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/equity-quantized-lab.css?v=__STAMP__">
+  <script defer src="js/backend.js?v=__STAMP__"></script>
+  <script defer src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script defer src="js/workspace.js?v=__STAMP__"></script>
+  <script defer src="js/equity-quantized-lab.js?v=__STAMP__"></script>
+  <script defer src="js/equiquant.js?v=__STAMP__"></script>
+  <script defer src="js/tabbar.js?v=__STAMP__"></script>
+</head>
+<body>
+  <main class="eq-workspace" data-private>
+    <header class="eq-mast">
+      <img class="eq-mark" src="assets/img/equity-quantized-e-equals-q.png" alt="Equity Quantized E=Q emblem" width="1536" height="1024">
+      <h1>Equity Quantized</h1>
+      <p>Private research projects</p>
+    </header>
+    <p id="eq-status" role="status" aria-live="polite">Opening your workspace…</p>
+    <noscript>Enable JavaScript to open your private workspace.</noscript>
+    <a id="eq-signin" href="account.html?next=%2Fequiquant.html" hidden>Sign in with your M Account</a>
+    <button type="button" id="eq-retry" hidden>Reload workspace</button>
+    <div id="eq-desk" hidden>
+      <div class="eq-toolbar">
+        <label>Workspace <select id="eq-workspace"></select></label>
+        <button type="button" id="eq-refresh">Refresh</button>
+      </div>
+      <details class="eq-identity"><summary>Your workspace profile ID</summary><code id="eq-who"></code></details>
+      <div class="eq-layout">
+        <aside aria-label="Research projects">
+          <h2>Your projects</h2>
+          <ul id="eq-projects" class="eq-list"></ul>
+          <form id="eq-create-form" hidden>
+            <label>New project title <input id="eq-title" maxlength="160" required></label>
+            <button id="eq-create">Create private project</button>
+          </form>
+        </aside>
+        <article id="eq-project" hidden aria-labelledby="eq-heading">
+          <h2 id="eq-heading" tabindex="-1"></h2>
+          <p id="eq-membership"></p>
+          <button id="eq-accept" type="button" hidden>Accept invitation</button>
+          <div id="eq-content" hidden>
+            <section id="eq-algorithms-lab"></section>
+            <section>
+              <h3>Project members</h3>
+              <ul id="eq-members" class="eq-list"></ul>
+              <form id="eq-invite-form" hidden>
+                <label>Workspace member profile ID <input id="eq-profile" autocomplete="off" spellcheck="false" required></label>
+                <p>Invite a verified member of this workspace. Their invitation appears in Your projects.</p>
+                <button id="eq-invite">Invite to project</button>
+              </form>
+            </section>
+            <section>
+              <h3>Contribution evidence</h3>
+              <ul id="eq-evidence-list" class="eq-list"></ul>
+              <form id="eq-evidence-form">
+                <label>Your credit name <input id="eq-name" maxlength="100" required></label>
+                <label>Your CRediT role <select id="eq-role" required></select></label>
+                <label>What did you contribute? <textarea id="eq-statement" rows="3" maxlength="1000" required></textarea></label>
+                <label class="eq-check"><input type="checkbox" id="eq-consent" required> I consent to recording this evidence in the project. If selected, my credit name will appear as a citation author with this CRediT role. My statement stays in the project.</label>
+                <button id="eq-evidence">Record my contribution</button>
+              </form>
+            </section>
+            <section>
+              <h3>Release credits</h3>
+              <p id="eq-release-status"></p>
+              <form id="eq-review-form" hidden>
+                <label>Completed replay <select id="eq-review-run" required></select></label>
+                <fieldset><legend>Contributions to credit</legend><div id="eq-review-options"></div></fieldset>
+                <label class="eq-check"><input type="checkbox" id="eq-confirm" required> I approve the selected names as citation authors and their CRediT roles for this result. Saving creates a private, fixed record.</label>
+                <button id="eq-review">Save reviewed credits</button>
+              </form>
+              <div id="eq-release" hidden>
+                <ul id="eq-credits" class="eq-list"></ul>
+                <dl id="eq-release-record"></dl>
+                <button type="button" id="eq-citation">Download citation (CSL-JSON)</button>
+              </div>
+            </section>
+          </div>
+        </article>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

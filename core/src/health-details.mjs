@@ -1,3 +1,4 @@
+import { MOSAIC_JOB } from './equiquant-mosaic-contract.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { readFile } from 'node:fs/promises';
@@ -35,7 +36,7 @@ export async function failureDetails(rest, orgId, nowMs = Date.now(), maxRows = 
     const exhausted = unique.filter(row => Number(row.attempts || 0) >= Math.max(1, Number(row.max_attempts || 1))).length;
     return {sampled_at: iso(nowMs), window_hours: 24, complete, matched_count: expected, scanned_count: unique.length,
       retry_exhausted_count: complete ? exhausted : null, retry_exhausted_lower_bound: exhausted,
-      recent_failures: unique.slice(0, 12), error: complete ? null : 'failure_detail_scan_incomplete'};
+      recent_failures: unique.filter(row => row.job_type !== MOSAIC_JOB).slice(0, 12), error: complete ? null : 'failure_detail_scan_incomplete'};
   } catch (error) {
     return {sampled_at: iso(nowMs), window_hours: 24, complete: false, scanned_count: rows.length,
       retry_exhausted_count: null, recent_failures: [], error: code(error)};

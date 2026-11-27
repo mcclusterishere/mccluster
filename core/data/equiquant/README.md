@@ -1,0 +1,7 @@
+# MOSAiC replay input
+
+`observations.json` is the unmodified derived table from the [MOSAiC scaling pilot at commit 523112d](https://github.com/mcclusterishere/mccluster/tree/523112ddbcd2b9dfcc16891437f83a5781d045fb/tools/research/mosaic-scaling). The table contains 13 sampled weekly acquisition pairs, four sensitivity configurations and three projected target scales (2.8, 5.6 and 11.2 km).
+
+Observations derived from Luisa von Albedyll and Nils Hutter (2023), *High-resolution sea ice drift and deformation from sequential SAR images in the Transpolar Drift during MOSAiC 2019/2020*. The pilot aggregated the signed gradient fields into regional rates. The derived table retains [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). [Dataset DOI](https://doi.org/10.1594/PANGAEA.958449)
+
+Core refits the selected model using the committed observations. It hashes the compact, recursively key-sorted UTF-8 result JSON with SHA-256 after rounding numerical outputs to ten decimal places. Each reference hash comes from the same projection of the pilot's [validation.json](https://github.com/mcclusterishere/mccluster/blob/523112ddbcd2b9dfcc16891437f83a5781d045fb/tools/research/mosaic-scaling/results/validation.json), whose original byte hash is `d8bf3774c046fda94ddc8775996b6ebf5397c2385d50aadceeaa155232285d7e`. A match covers the training counts, classifications, thresholds, errors and summary scores for every held-out week.

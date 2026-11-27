@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { digestWindowId } from '../src/digest.mjs';
 
 // Audit finding C7: a failed daily report write still exited 0, so the systemd
 // timer looked successful with no canonical report. Loopback-free synthetic fetch.
 const ORG = '123e4567-e89b-42d3-a456-426614174000';
-const DIGEST = new URL('../src/digest.mjs', import.meta.url).pathname;
+const DIGEST = fileURLToPath(new URL('../src/digest.mjs', import.meta.url));
 
 async function run(mockSource, env = {}) {
   const dir = await mkdtemp('/tmp/mccluster-digest-test-');
@@ -243,4 +243,23 @@ test('C7b: with no MCCLUSTER_ORG_ID the digest resolves the house org by slug an
   assert.deepEqual(seen.reportLookups, [`eq.${ORG}`]);
   assert.equal(seen.posts.length, 1);
   assert.equal(seen.posts[0].org_id, ORG);
+});
+
+test('the shared digest has no private project run details', async () => {
+  const result = await run(`globalThis.fetch = async (url, init = {}) => {
+    const path = new URL(url);
+    if (path.pathname.endsWith('/ops_agent_jobs')) {
+      const jobs = [
+        { job_type:'equiquant_mosaic_replay', status:'done', target_type:'equiquant_project', target_id:'private-project-id' },
+        { job_type:'local_analysis', status:'done', target_type:'manual', target_id:'shared-analysis' }
+      ];
+      return Response.json(jobs.filter(row => path.searchParams.get('job_type') !== 'neq.' + row.job_type));
+    }
+    if (path.pathname.endsWith('/ops_signals') && init.method === 'POST') return Response.json([{id:'fixture'}]);
+    return Response.json([]);
+  };`);
+  assert.equal(result.status, 0, result.stderr);
+  const digest = JSON.parse(result.stdout);
+  assert.match(digest.body, /shared-analysis/);
+  assert.doesNotMatch(digest.body, /private-project-id|equiquant_mosaic_replay/);
 });

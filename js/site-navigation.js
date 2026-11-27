@@ -60,6 +60,7 @@
       /* the admin-only E=Up product workspace (owner, 2026-11-09: "an admin only experience … the E=Up tab in the admin
          experience"): Control › System › E=Up; the Worker's /v1/eup routes repeat the owner check on every request */
       {label:'E=Up', group:'Products', href:page('control.html#system:eup'), context:'Admin only · League · Civic · Companies · Sources'},
+      {label:'Equity Quantized', group:'Products', href:page('equiquant.html'), context:'Private research projects'},
       {label:'Whip', group:'Products', href:page('whip.html'), context:'Mobility'},
       {label:'WE Manufacture', group:'Products', href:page('we-manufacture.html'), context:'Manufacturing'}
     ]);

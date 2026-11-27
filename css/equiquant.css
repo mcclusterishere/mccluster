@@ -1,0 +1,56 @@
+/* Keep validation and keyboard focus aligned with the visible private form. */
+html { scroll-behavior: auto; }
+.eq-workspace {
+  max-width: 72rem;
+  margin: auto;
+  padding: max(4.5rem, env(safe-area-inset-top)) clamp(1rem, 4vw, 3rem) 8rem;
+  color: var(--cream);
+  font: 1rem/1.5 var(--ui);
+  overflow-wrap: anywhere;
+}
+.eq-workspace [hidden] { display: none !important; }
+.eq-workspace :is(.eq-mast, aside, article, section, form, label, fieldset, select, dl, dd) { min-width: 0; }
+.eq-mast { border-bottom: 1px solid var(--edge); padding-bottom: 1.25rem; }
+.eq-mark { display: block; width: clamp(6.25rem, 20vw, 9rem); max-width: 100%; height: auto; margin: 0 0 .75rem; }
+.eq-workspace h1 { font: 400 clamp(2.6rem, 8vw, 5.25rem)/1.02 var(--display); margin: .25rem 0 .5rem; }
+.eq-workspace h2 { font-size: clamp(1.4rem, 3.5vw, 2rem); line-height: 1.2; }
+.eq-workspace h3 { font-size: 1.25rem; line-height: 1.3; }
+.eq-workspace :is(form, fieldset, .eq-layout, .eq-list, #eq-review-options) { display: grid; gap: .8rem; }
+.eq-workspace form, .eq-workspace fieldset { border: 0; padding: 0; margin: 1.1rem 0 0; }
+.eq-workspace label, .eq-workspace legend { font-weight: 650; }
+.eq-workspace .eq-check { display: flex; gap: .65rem; align-items: baseline; font-weight: 400; }
+.eq-workspace .eq-check input { flex: none; inline-size: 1.15rem; block-size: 1.15rem; accent-color: var(--ruby); }
+.eq-workspace :is(input:not([type=checkbox]), textarea, select) {
+  display: block; box-sizing: border-box; width: 100%; min-height: 44px;
+  margin-top: .28rem; padding: .65rem .8rem; border: 1px solid var(--edge);
+  border-radius: .55rem; background: var(--ink-2); color: var(--cream); font: inherit;
+  font-size: max(16px, 1rem);
+}
+.eq-workspace textarea { resize: vertical; }
+.eq-workspace button {
+  justify-self: start; min-height: 44px; max-width: 100%; padding: .55rem .85rem;
+  border: 1px solid var(--edge); border-radius: .55rem; background: var(--ink-2);
+  color: var(--cream); font: 650 1rem/1.3 var(--ui); cursor: pointer; overflow-wrap: anywhere;
+}
+.eq-workspace button:hover, .eq-workspace button[aria-current="true"] { border-color: var(--cream); }
+.eq-workspace button:disabled { opacity: .58; cursor: wait; }
+.eq-workspace :is(a, button, input, textarea, select):focus-visible { outline: 2px solid var(--cream); outline-offset: 3px; }
+.eq-workspace #eq-status { min-height: 1.5em; margin: 1rem 0; }
+.eq-workspace #eq-status[data-error] { color: var(--ruby-text, var(--cream)); }
+.eq-toolbar { display: flex; flex-wrap: wrap; gap: .8rem; align-items: end; margin-bottom: 1.5rem; }
+.eq-toolbar label { flex: 1 1 12rem; max-width: 25rem; }
+.eq-identity { margin: -.5rem 0 1rem; }
+.eq-identity summary { width: fit-content; padding-block: .55rem; cursor: pointer; }
+.eq-layout { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 1.75rem; }
+.eq-workspace aside, .eq-workspace article { border-top: 2px solid var(--edge); padding-top: 1rem; }
+.eq-workspace article section { margin: 1.45rem 0 0; padding: 1.15rem 0 0; border-top: 1px solid var(--edge); }
+.eq-workspace .eq-list { list-style: none; margin: .75rem 0; padding: 0; gap: .45rem; }
+.eq-workspace .eq-list li, .eq-workspace dd { margin: 0; }
+.eq-workspace .eq-list span { display: block; color: var(--cream-dim); }
+.eq-workspace dl { margin: 1rem 0; }
+.eq-workspace dt { font-weight: 650; margin-top: .55rem; }
+.eq-workspace dd { font: .9rem/1.55 monospace; }
+.eq-workspace legend { padding: 0 0 .5rem; }
+@media (min-width: 52rem) {
+  .eq-layout { grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); gap: 2.5rem; }
+}

@@ -1,3 +1,4 @@
+import { SHARED_JOB_FILTER } from './equiquant-mosaic-contract.mjs';
 import { rest, ownedRunningParams, leaseLostError } from './supabase.mjs';
 import { classifyDependencyRows, dependencyEvidenceFromRows, dependencyIdsFromJob } from './dependency-policy.mjs';
 
@@ -61,7 +62,7 @@ async function dependencyState(job) {
 
   const params = new URLSearchParams({
     org_id: `eq.${job.org_id}`,
-    id: `in.(${ids.join(',')})`,
+    id: `in.(${ids.join(',')})`, job_type: SHARED_JOB_FILTER,
     select: 'id,org_id,job_type,target_type,target_id,status,output,last_error,updated_at',
     limit: String(ids.length),
   });

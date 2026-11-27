@@ -1,3 +1,4 @@
+import { SHARED_JOB_FILTER } from './equiquant-mosaic-contract.mjs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { rest, enqueueJob } from './supabase.mjs';
@@ -185,7 +186,7 @@ export async function executeResidentTool(name, args, context, dependencies = {}
   }
   if (name === 'job_read') {
     if (!/^[0-9a-f-]{36}$/i.test(args.job_id)) throw new Error('A valid job UUID is required');
-    const params = new URLSearchParams({ org_id: `eq.${orgId}`, id: `eq.${args.job_id}`, select: 'id,job_type,status,output,last_error,created_at,updated_at', limit: '1' });
+    const params = new URLSearchParams({ org_id: `eq.${orgId}`, id: `eq.${args.job_id}`, job_type: SHARED_JOB_FILTER, select: 'id,job_type,status,output,last_error,created_at,updated_at', limit: '1' });
     const { body } = await query(`ops_agent_jobs?${params}`);
     if (!body?.length) throw new Error('Job not found in this organization');
     return body[0];

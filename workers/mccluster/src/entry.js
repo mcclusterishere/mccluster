@@ -21,6 +21,7 @@ import { handleAnalyticsRequest } from './analytics/router.js';
 import { handleExperienceRequest } from './experience/router.js';
 import { handleMusicRequest } from './music/router.js';
 import { requireMembership, resolveWorkspaces } from './workspaces.js';
+import { handleEquiquant } from './equiquant.js';
 import { setLeadStatus } from './leads.js';
 import { handleWorkRequest } from './work.js';
 import { checkoutReceipt } from './commerce/receipt.js';
@@ -55,7 +56,7 @@ const FAL_WEBHOOK_PATH = /^\/v1\/media\/webhooks\/fal(?:\/([0-9a-f]{8}-[0-9a-f]{
 const MEDIA_RECONCILE_PATH = /^\/v1\/media\/jobs\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/reconcile$/;
 
 /* Routes below that authenticate before checking the method. */
-const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/experience', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability', '/v1/clips'];
+const AUTH_FIRST_PREFIXES = ['/v1/analytics', '/v1/experience', '/v1/social', '/v1/comms', '/v1/ai', '/v1/music', '/v1/work', '/v1/observability', '/v1/clips', '/v1/equiquant'];
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -371,6 +372,8 @@ async function dispatchRequest(request, env, ctx) {
         return fail(request, env, error.message || 'Core status request failed', error.status || 500, error.detail);
       }
     }
+
+    if (path === '/v1/equiquant') return handleEquiquant(request, env, authUser);
 
     /* WHICH WORKSPACES THIS TOKEN MAY OPEN. Ahead of every module route
        on purpose: a page calls this first and hands the chosen org_id to

@@ -1,3 +1,4 @@
+import { SHARED_JOB_FILTER } from './equiquant-mosaic-contract.mjs';
 import os from 'node:os';
 import { randomBytes } from 'node:crypto';
 import { assertCompletionEvidence } from './completion-evidence.mjs';
@@ -332,7 +333,7 @@ export async function failJob(job, error) {
 export async function recentJobs({ orgId, sinceHours = 12, limit = 25 } = {}) {
   const since = new Date(Date.now() - Math.max(1, Number(sinceHours)) * 3_600_000).toISOString();
   const params = new URLSearchParams({
-    updated_at: `gte.${since}`,
+    updated_at: `gte.${since}`, job_type: SHARED_JOB_FILTER,
     select: 'id,org_id,job_type,target_type,target_id,status,priority,output,last_error,attempts,max_attempts,created_at,updated_at',
     order: 'updated_at.desc',
     limit: String(Math.min(100, Math.max(1, Number(limit) || 25))),

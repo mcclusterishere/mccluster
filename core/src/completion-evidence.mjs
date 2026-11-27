@@ -1,3 +1,4 @@
+import { MOSAIC_SOURCE, MOSAIC_EXECUTOR, replaySelection } from './equiquant-mosaic-contract.mjs';
 import { createHash } from 'node:crypto';
 
 export const COMPLETION_EVIDENCE_SCHEMA = 'mccluster-completion-evidence/v1';
@@ -346,6 +347,17 @@ function policyEvidence(job, output) {
       requireValue(job, validHttpsUrl(output.preview_url), 'preview deployment must report a valid HTTPS URL');
       requireValue(job, Boolean(text(output.provider)), 'preview deployment must identify provider');
       records.push({ kind: 'deployment', environment: 'preview', provider: text(output.provider), url: text(output.preview_url), production: false, repository: text(output.repository), ref: text(output.ref) });
+      break;
+    }
+
+    case 'equiquant_mosaic_replay': {
+      const { scenario, resultSha256, heldOutMse } = replaySelection(job);
+      requireValue(job, output.executor === MOSAIC_EXECUTOR && output.scenario === scenario, 'replay selection mismatch');
+      requireValue(job, Object.entries(MOSAIC_SOURCE).every(([key, value]) => output[key] === value), 'replay source mismatch');
+      requireValue(job, output.held_out_mse === heldOutMse && output.folds === 13, 'replay score mismatch');
+      requireValue(job, typeof output.result_json === 'string' && output.result_sha256 === resultSha256 &&
+        createHash('sha256').update(output.result_json).digest('hex') === resultSha256, 'replay result mismatch');
+      records.push({ kind: 'equiquant_replay', project_id: job.target_id, scenario, ...MOSAIC_SOURCE, result_sha256: resultSha256 });
       break;
     }
 
