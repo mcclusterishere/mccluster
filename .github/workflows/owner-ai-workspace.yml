@@ -2,13 +2,14 @@ name: Owner AI workspace
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, codex/owner-ai-workspace-20261122]
     paths:
       - '.github/workflows/owner-ai-workspace.yml'
       - 'control.html'
       - 'css/control-room-v2.css'
       - 'js/control-room-v2.js'
       - 'js/control-room/owner-ai.js'
+      - 'js/control-room/owner-desktop.js'
       - 'core/**'
       - 'workers/mccluster-mcp/src/mcp.js'
       - 'supabase/**/*compute*.sql'
@@ -84,6 +85,8 @@ jobs:
             core/test/owner-workspace-recovery.test.mjs \
             core/test/owner-stream.test.mjs \
             core/test/ollama-cancellation.test.mjs \
+            core/test/ollama-implementations.test.mjs \
+            core/test/resident-ai-turn.test.mjs \
             core/test/node-agent-stream-lifecycle.test.mjs \
             core/test/compute-lease-runtime.test.mjs \
             core/test/node-agent-config.test.mjs \
@@ -93,6 +96,7 @@ jobs:
           node --test \
             scripts/test/owner-ai-presentation.test.mjs \
             scripts/test/owner-ai-workspace.test.mjs \
+            scripts/test/owner-ai-desktop.test.mjs \
             scripts/test/owner-ai-staging-page.test.mjs \
             scripts/test/control-ai-browser.test.mjs \
             scripts/test/control-surface.test.mjs \

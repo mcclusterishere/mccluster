@@ -81,6 +81,26 @@ test('owner session to signed worker: parallel streamed durable turns, stop, rev
     assert.equal(reviewed.assistant_message.metadata.review_of_turn_id, first.turn_id);
     assert.ok(workers[1].requests.at(-1).messages.some(message => message.content.includes('<answer_to_review>')));
 
+    const connectedRoute = { mode: 'node', node_id: workers[1].nodeId, implementation: 'qwen3.8b.local', target: 'connected' };
+    const otherRequests = workers[0].requests.length;
+    const connected = await call('core.ai.turn.submit', {
+      thread_id: await thread('Named connected worker'), message_id: randomUUID(),
+      content: 'Reply with the word ready.', route: connectedRoute,
+    });
+    await executeClaim();
+    const connectedTurn = await call('core.ai.turn.get', { turn_id: connected.turn_id });
+    const answer = connectedTurn.assistant_message;
+    assert.deepEqual(answer.metadata.requested_route, connectedRoute);
+    assert.equal(answer.metadata.node.node_id, workers[1].nodeId);
+    assert.equal(answer.metadata.agent_job_id, connected.turn_id);
+    assert.equal(answer.model, 'qwen3:8b');
+    assert.equal(answer.metadata.fallback_reason, null);
+    assert.deepEqual(answer.metadata.tool_receipts, []);
+    assert.equal(workers[1].requests.at(-1).tools?.length || 0, 0);
+    assert.equal(workers[0].requests.length, otherRequests);
+    const lease = await db.query('select node_id from ops_compute_leases where task_id = $1 and status = $2', [answer.compute_task_id, 'done']);
+    assert.deepEqual(lease.rows, [{ node_id: workers[1].nodeId }]);
+
     workers[0].generation.delayMs = 1000;
     const stopped = await submit(await thread('Stop this run'), workers[0]);
     const stoppingJob = executeClaim().then(() => null, error => error);

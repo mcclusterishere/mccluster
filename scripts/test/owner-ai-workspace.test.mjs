@@ -25,10 +25,21 @@ function fixture() {
     messages: { 'thread-1': [] }, turns: new Map(), calls: [], devices: [device('mac-a', 'Studio iMac'), device('mac-b', 'Second iMac'), device('ovh', 'OVH', 'linux')],
     enrollments: [], pairs: [], credentialCount: 0, rejectSubmit: false
   };
+  // A prospective issuer schema for staging only. The live tool may still be Mac-only.
+  f.primeIssuer = (available, schema = true) => {
+    f.primeCapability = available;
+    f.tools = CONTROL_TOOLS.map(tool => {
+      if (tool.name !== 'core.compute.enrollment.create') return tool;
+      const properties = { ...tool.inputSchema.properties };
+      if (schema) properties.profile = { type: 'string', enum: ['device', 'prime'] };
+      else delete properties.profile;
+      return { ...tool, inputSchema: { ...tool.inputSchema, properties } };
+    });
+  };
   f.finish = (id, fallback = '') => {
     const t = f.turns.get(id); assert.ok(t, 'fixture turn exists');
     t.status = 'done'; t.user.metadata.task_status = 'done';
-    t.assistant = { id: 'reply-' + id, org_id: ORG, thread_id: t.args.thread_id, role: 'assistant', content: '# A concrete next step\n\nUse **independent jobs** for parallel work.\n\n```js\nconst answer = "fixture output";\n```', model: 'qwen3:8b', implementation: 'qwen3.8b.local', created_at: now(), metadata: { agent_job_id: id, task_status: 'done', node: t.node, fallback_reason: fallback } };
+    t.assistant = { id: 'reply-' + id, org_id: ORG, thread_id: t.args.thread_id, role: 'assistant', content: '# A concrete next step\n\nUse **independent jobs** for parallel work.\n\n```js\nconst answer = "fixture output";\n```', model: 'qwen3:8b', implementation: 'qwen3.8b.local', created_at: now(), metadata: { agent_job_id: id, task_status: 'done', node: t.node, requested_route: t.args.route, fallback_reason: fallback } };
     f.messages[t.args.thread_id].push(t.assistant);
   };
   f.overrides = [
@@ -44,15 +55,16 @@ function fixture() {
       return rows.slice(offset, offset + limit);
     } },
     { match: e => e.path === '/v1/core/mcp', body: (_body, e) => {
-      if (e.rpc.method === 'tools/list') return rpc(e, { tools: CONTROL_TOOLS });
+      if (e.rpc.method === 'tools/list') return rpc(e, { tools: f.tools || CONTROL_TOOLS });
       const name = e.rpc.params?.name, args = e.rpc.params?.arguments || {};
       f.calls.push({ name, args });
-      if (name === 'core.compute.devices.list') return rpc(e, toolText({ devices: f.devices, enrollments: f.enrollments, enrollment_available: true, coordinator: 'McCluster Core on OVH' }));
+      if (name === 'core.compute.devices.list') return rpc(e, toolText({ devices: f.devices, enrollments: f.enrollments, enrollment_available: true, prime_enrollment_available: f.primeCapability, coordinator: 'McCluster Core on OVH' }));
       if (name === 'core.compute.pairs.list') return rpc(e, toolText({ pairs: f.pairs }));
       if (name === 'core.compute.enrollment.create') {
         const id = args.enrollment_id || 'enrollment-' + (f.enrollments.length + 1);
         const setup = { org_id: ORG, compute_url: 'https://compute.mccluster.org', enrollment_id: id, display_name: args.display_name, platform: 'darwin', implementation: 'qwen3.8b.local', model: 'qwen3:8b', context: 4096, max_leases: 1 };
-        const pending = { id, enrollment_id: id, display_name: args.display_name, platform: 'darwin', created_at: now(), expires_at: new Date(Date.now() + 600000).toISOString(), state: 'pending' };
+        if (args.profile === 'prime') Object.assign(setup, { platform: 'win32', profile: 'prime', implementation: 'qwen3-vl.4b.local', model: 'qwen3-vl:4b' }, f.setupOverride);
+        const pending = { id, enrollment_id: id, display_name: args.display_name, platform: setup.platform, profile: args.profile || 'device', created_at: now(), expires_at: new Date(Date.now() + 600000).toISOString(), state: 'pending' };
         f.enrollments = f.enrollments.filter(x => x.id !== id).concat(pending);
         const credential = 'mcen1_' + String(++f.credentialCount).padStart(43, 'A');
         f.lastCredential = credential;
@@ -112,6 +124,96 @@ async function until(check, timeout = 3000) {
 }
 const calls = (f, name) => f.calls.filter(x => x.name === name);
 
+test('named worker actions submit exact signed-dispatch intent and recover historical receipts', async t => {
+  const f = fixture();
+  const targets = [['ovh', 'OVH CPU'], ['prime', 'Prime GPU'], ['connected', 'Connected inference']];
+  f.devices = targets.map(([target]) => {
+    const d = device('worker-' + target, 'Worker ' + target);
+    d.target = target; d.target_ready = true; d.models[0].target_ready = true;
+    return d;
+  });
+  const page = await openOwner(f, t);
+  for (const [target, label] of targets) {
+    const id = 'worker-' + target;
+    page.select('crAiDevice', 'node:' + id);
+    assert.match(page.surface(), /Browser and agent tools are off/);
+    page.type('crAiComposer', 'Return the fixture word'); await page.click('ai-send'); await page.settle();
+    const sent = calls(f, 'core.ai.turn.submit').at(-1).args;
+    assert.deepEqual(sent.route, { mode: 'node', node_id: id, target, implementation: 'qwen3.8b.local' });
+    assert.equal(sent.allow_browser, undefined);
+    f.finish(sent.message_id);
+    await until(() => !page.state().aiChatPending);
+    assert.ok(page.surface().includes('Selected: ' + label));
+    assert.ok(page.surface().includes('Served by: Worker ' + target));
+  }
+  assert.equal(calls(f, 'core.ai.turn.submit').length, 3);
+});
+
+test('a pin survives a reload and cannot submit after losing its worker, schema or model readiness', async t => {
+  const f = fixture(), sessionStore = new Map();
+  const d = f.devices[0]; d.target = 'prime'; d.target_ready = true; d.models[0].target_ready = false;
+  const first = await openOwner(f, t, { sessionStore });
+  first.select('crAiDevice', 'node:' + d.node_id);
+  first.type('crAiComposer', 'Wait for GPU evidence'); await first.click('ai-send');
+  assert.equal(calls(f, 'core.ai.turn.submit').length, 0);
+  first.close();
+  f.devices = [];
+  const second = await openOwner(f, t, { sessionStore });
+  assert.equal(second.state().aiRouteSelection, 'node:' + d.node_id);
+  assert.equal(second.state().aiRouteTarget, 'prime');
+  assert.ok(second.surface().includes('value="node:' + d.node_id + '" selected>Prime GPU'));
+  second.type('crAiComposer', 'Keep the original worker'); await second.click('ai-send');
+  assert.equal(calls(f, 'core.ai.turn.submit').length, 0);
+  second.state().coreTools = second.state().coreTools.map(tool => {
+    if (tool.name !== 'core.ai.turn.submit') return tool;
+    const old = structuredClone(tool); delete old.inputSchema.properties.route.properties.target;
+    return old;
+  });
+  second.module.render(); await second.click('ai-send');
+  assert.match(second.surface(), /Core cannot enforce the selected compute target/);
+  assert.equal(calls(f, 'core.ai.turn.submit').length, 0);
+});
+
+test('each chat restores its exact worker and model across switches and reload', async t => {
+  const f = fixture(), sessionStore = new Map();
+  const firstDevice = f.devices[0], secondDevice = f.devices[2];
+  firstDevice.target = 'prime'; secondDevice.target = 'ovh';
+  for (const d of [firstDevice, secondDevice]) {
+    d.target_ready = true; d.models[0].target_ready = true;
+  }
+  firstDevice.models.push({ implementation: 'qwen3-vl.4b.local', model: 'qwen3-vl:4b', ready: true, target_ready: true });
+  const page = await openOwner(f, t, { sessionStore });
+  page.select('crAiDevice', 'node:' + firstDevice.node_id);
+  page.select('crAiModel', 'qwen3-vl.4b.local');
+  await page.click('ai-new-thread'); await page.settle();
+  const secondChat = page.state().selectedAiThreadId;
+  assert.equal(page.state().aiRouteSelection, 'auto');
+  assert.equal(page.state().aiImplementation, 'qwen3.8b.local');
+  page.select('crAiDevice', 'node:' + secondDevice.node_id);
+  await page.click('ai-select-thread', 'thread-1'); await page.settle();
+  assert.equal(page.state().aiRouteTarget, 'prime');
+  assert.equal(page.state().aiImplementation, 'qwen3-vl.4b.local');
+  page.close();
+  const reopened = await openOwner(f, t, { sessionStore });
+  assert.equal(reopened.state().selectedAiThreadId, 'thread-1');
+  assert.equal(reopened.state().aiRouteSelection, 'node:' + firstDevice.node_id);
+  assert.equal(reopened.state().aiImplementation, 'qwen3-vl.4b.local');
+  await reopened.click('ai-select-thread', secondChat); await reopened.settle();
+  assert.equal(reopened.state().aiRouteSelection, 'node:' + secondDevice.node_id);
+  assert.equal(reopened.state().aiImplementation, 'qwen3.8b.local');
+});
+
+test('the first submitted draft keeps its worker after acquiring a durable chat ID', async t => {
+  const f = fixture(); f.threads.length = 0;
+  const page = await openOwner(f, t);
+  page.select('crAiDevice', 'node:mac-a');
+  page.type('crAiComposer', 'Keep my pin'); await page.click('ai-send'); await page.settle();
+  const sent = calls(f, 'core.ai.turn.submit')[0].args;
+  assert.equal(page.state().selectedAiThreadId, sent.thread_id);
+  assert.equal(sent.route.node_id, 'mac-a');
+  assert.equal(page.state().aiRouteSelection, 'node:mac-a');
+});
+
 test('image preview retains its resized dimensions and byte count in the new composer', async t => {
   const f = fixture(), page = await openOwner(f, t);
   /* Encoding is exercised by the real Chromium image fixture. Here its
@@ -149,6 +251,63 @@ test('owner enrollment survives target-Mac handoff without persisting or putting
   assert.notEqual(f.lastCredential, secret, 'target Mac explicitly requests a newly issued credential');
   await target.otherTab(s => s.delete('mccdb_session'));
   assert.equal(target.state().aiEnrollment, null); assert.ok(!target.dom().includes('mcen1_'));
+});
+
+test('Pair Prime requires both Core declarations and a deliberate Windows 4B selection', async t => {
+  for (const [capability, schema] of [[false, true], [true, false]]) {
+    const f = fixture(); f.primeIssuer(capability, schema);
+    const page = await openOwner(f, t); await page.action('ai-panel', { 'data-panel': 'devices' });
+    assert.match(page.surface(), /data-action="ai-pair-prime" disabled>Pair Prime/);
+    await page.click('ai-pair-prime');
+    assert.equal(calls(f, 'core.compute.enrollment.create').length, 0);
+    assert.doesNotMatch(page.surface(), /id="crAiPrimeProfile"/);
+  }
+
+  const f = fixture(); f.primeIssuer(true);
+  const page = await openOwner(f, t); await page.action('ai-panel', { 'data-panel': 'devices' });
+  await page.click('ai-pair-prime');
+  assert.match(page.surface(), /Enrolment token \(shown once by the owner(?:&#39;|&apos;|')s Core\)/);
+  const command = page.surface().match(/id="crAiSetupCommand">([^<]+)/)?.[1];
+  assert.equal(command, '.\\core\\windows\\mccluster-node.ps1 -Enroll');
+  assert.equal(calls(f, 'core.compute.enrollment.create').length, 0);
+  assert.match(page.surface(), /id="crAiPrimeName"[^>]*placeholder="Configured node name"/);
+  assert.doesNotMatch(page.surface(), /id="crAiPrimeName"[^>]*value="/);
+  assert.match(page.surface(), /%ProgramData%\\mccluster-node/);
+  assert.match(page.surface(), /current binding and leaves the new credential unused/);
+  await page.click('ai-prime-enroll');
+  assert.match(page.surface(), /Choose the Windows 4B profile/);
+  page.select('crAiPrimeProfile', 'prime'); await page.click('ai-prime-enroll');
+  assert.equal(calls(f, 'core.compute.enrollment.create').length, 0);
+  page.select('crAiPrimeProfile', 'prime'); page.type('crAiPrimeName', 'two words');
+  await page.click('ai-prime-enroll'); assert.equal(calls(f, 'core.compute.enrollment.create').length, 0);
+  page.select('crAiPrimeProfile', 'prime'); page.type('crAiPrimeName', 'owner-windows-pilot');
+  await page.click('ai-prime-enroll'); await page.settle();
+  const expected = { org_id: ORG, platform: 'win32', profile: 'prime', display_name: 'owner-windows-pilot' };
+  assert.deepEqual(calls(f, 'core.compute.enrollment.create').map(c => c.args), [expected]);
+  assert.match(page.surface(), /type="password"[^>]*mcen1_/);
+  assert.doesNotMatch(page.surface(), /Download setup file|Download Mac worker/);
+  assert.ok(!page.surface().match(/id="crAiSetupCommand">([^<]+)/)[1].includes(f.lastCredential));
+  assert.ok(!JSON.stringify([...page.storage, ...page.fetchLog]).includes(f.lastCredential));
+  await page.click('ai-forget-enrollment'); assert.ok(!page.dom().includes(f.lastCredential));
+  await page.click('ai-finish-enrollment', 'enrollment-1'); await page.settle();
+  assert.deepEqual(calls(f, 'core.compute.enrollment.create').at(-1).args, { ...expected, enrollment_id: 'enrollment-1' });
+});
+
+test('Prime setup discards a mismatched response or a response arriving after Close setup', async t => {
+  const f = fixture(); f.primeIssuer(true);
+  const page = await openOwner(f, t); await page.action('ai-panel', { 'data-panel': 'devices' });
+  await page.click('ai-pair-prime');
+  f.setupOverride = { model: 'qwen3:8b' };
+  page.select('crAiPrimeProfile', 'prime'); page.type('crAiPrimeName', 'owner-windows-gpu');
+  await page.click('ai-prime-enroll'); await page.settle();
+  assert.match(page.surface(), /different worker profile/);
+  assert.equal(page.state().aiEnrollment, null); assert.ok(!page.dom().includes(f.lastCredential));
+  f.setupOverride = {};
+  const held = page.hold(e => e.rpc?.params?.name === 'core.compute.enrollment.create');
+  page.select('crAiPrimeProfile', 'prime'); page.type('crAiPrimeName', 'owner-windows-gpu');
+  await page.click('ai-prime-enroll'); assert.equal(held.pending.length, 1);
+  await page.click('ai-forget-enrollment'); held.release(); await page.settle();
+  assert.equal(page.state().aiEnrollment, null); assert.ok(!page.dom().includes(f.lastCredential));
 });
 
 test('individual worker controls show real states, recovery, and forbid an unavailable pin', async t => {
@@ -203,7 +362,8 @@ test('stop, retry and explicit second-worker review use durable tool contracts',
   const retried = calls(f, 'core.ai.turn.submit')[1].args;
   assert.equal(retried.content, first.content); assert.notEqual(retried.message_id, first.message_id);
   f.finish(retried.message_id); await until(() => page.surface().includes('data-action="ai-review"'));
-  await page.click('ai-review', 'reply-' + retried.message_id); page.select('crAiDevice', 'node:mac-a');
+  await page.click('ai-review', 'reply-' + retried.message_id);
+  assert.equal(page.state().aiRouteSelection, 'node:mac-a');
   assert.match(page.surface(), /Choose a different worker/); await page.click('ai-send'); assert.equal(calls(f, 'core.ai.turn.submit').length, 2);
   page.select('crAiDevice', 'node:mac-b'); await page.click('ai-send'); await page.settle();
   const review = calls(f, 'core.ai.turn.submit')[2].args;

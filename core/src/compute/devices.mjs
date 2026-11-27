@@ -5,7 +5,7 @@ import { createHash, createPublicKey, randomBytes, randomUUID } from 'node:crypt
 import { rest } from '../supabase.mjs';
 import { keyFingerprint, nodeIdFromPublicKey } from './signature.mjs';
 import { validateEnrollment, validateNodeId } from './protocol.mjs';
-import { OWNER_MODELS } from './owner-routing.mjs';
+import { OWNER_MODELS, ownerComputeTarget, ownerTargetReady } from './owner-routing.mjs';
 
 export const ENROLLMENT_TTL_MS = 10 * 60_000;
 export const ENROLLMENT_PREFIX = 'mcen1_';
@@ -96,8 +96,10 @@ export function deviceSummary(node, tests = [], now = Date.now()) {
   } else if (modelReady) {
     state = 'model_ready'; recovery = 'The local model is available. Run the device test to verify a job through Core.';
   }
+  const target = ownerComputeTarget(node);
   return {
     id: node.id, node_id: node.id, display_name: node.display_name,
+    target, target_ready: ownerTargetReady(node, target, null, now),
     state, state_label: { connected: 'Connected', model_ready: 'Model ready', test_passed: 'Test passed', offline: 'Offline', paused: 'Paused', revoked: 'Revoked' }[state],
     node_state: node.state, recovery,
     platform: node.inventory?.platform || 'unknown', arch: node.inventory?.arch || 'unknown',
@@ -105,7 +107,7 @@ export function deviceSummary(node, tests = [], now = Date.now()) {
     hardware_mode: node.inventory?.runtime?.hardware_mode || 'unknown',
     last_seen_at: node.last_seen_at, enrolled_at: node.enrolled_at,
     max_leases: node.max_leases || 1, active_jobs: Number(node.load?.running_leases || 0),
-    capabilities, models: capabilities.filter((entry) => entry.capability === 'ai.chat').map((entry) => ({ implementation: entry.implementation, model: entry.model || OWNER_MODELS[entry.implementation] || null, ready: live && node.state === 'online' && !node.revoked_at && !node.pair_cleanup_required })),
+    capabilities, models: capabilities.filter((entry) => entry.capability === 'ai.chat').map((entry) => ({ implementation: entry.implementation, model: entry.model || OWNER_MODELS[entry.implementation] || null, target_ready: ownerTargetReady(node, target, entry.implementation, now), ready: live && node.state === 'online' && !node.revoked_at && !node.pair_cleanup_required })),
     eligible: live && node.state === 'online' && !node.revoked_at && !node.pair_cleanup_required && modelReady,
     cleanup_required: node.pair_cleanup_required === true,
     cleanup: node.pair_cleanup_details || null,

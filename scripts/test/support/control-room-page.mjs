@@ -177,7 +177,7 @@ const abortError = () => Object.assign(new Error('The operation was aborted.'), 
 
 /* Opens control.html#<hash> for whoever the shared storage holds. `storage`
    (a Map) is shared between pages to simulate a reload or a second tab. */
-export async function openControl({ hash = '#home:today', storage = new Map(), search = '', hold = null, sessionStore = new Map(), initialOverrides = [] } = {}) {
+export async function openControl({ hash = '#home:today', origin = 'https://matthew.mccluster.org', storage = new Map(), search = '', hold = null, sessionStore = new Map(), initialOverrides = [] } = {}) {
   const elements = staticElements();
   const dynamic = new Map();
   const listeners = new Map();
@@ -199,7 +199,7 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
   };
   const sessionStorage = { getItem: k => sessionStore.has(k) ? sessionStore.get(k) : null, setItem: (k, v) => sessionStore.set(k, String(v)), removeItem: k => sessionStore.delete(k) };
   const location = {
-    hash, search, pathname: '/control.html', origin: 'https://matthew.mccluster.org',
+    hash, search, pathname: '/control.html', origin,
     get href() { return this.origin + this.pathname + this.search + this.hash; },
     set href(v) { location.assigned = v; },
     reload() { reloads += 1; },
@@ -277,7 +277,7 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
     static revokeObjectURL() {}
   }
   Object.assign(win, {
-    window: win, self: win, document, localStorage: local, sessionStorage, location, history,
+    window: win, self: win, top: win, document, localStorage: local, sessionStorage, location, history,
     navigator: { language: 'en-US', clipboard: { writeText: async value => { clipboard.push(value); } } }, console: { log() {}, warn() {}, info() {}, error: (...a) => errors.push(a.join(' ')) },
     setTimeout: fixtureTimeout, clearTimeout, setInterval: fixtureInterval, clearInterval, setImmediate, queueMicrotask,
     Promise, JSON, Math, Date, Object, Array, String, Number, Boolean, Error, TypeError, RegExp, Map, Set, WeakMap, Symbol, Intl, URL: FixtureURL, URLSearchParams, Blob,
@@ -310,6 +310,7 @@ export async function openControl({ hash = '#home:today', storage = new Map(), s
   run('js/control-room/format.js');
   run('js/control-room/sources.js');
   run('js/control-room/owner-ai.js');
+  if (read('control.html').includes('js/control-room/owner-desktop.js')) run('js/control-room/owner-desktop.js');
   win.CR.media = {
     init() {}, renderPanel: () => '', state: { catalog: {} }, loadCatalog: () => Promise.resolve(),
     trackedJobs: () => [], generatedAssets: () => [], handleAction: () => false, bind() {}

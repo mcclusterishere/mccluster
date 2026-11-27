@@ -437,6 +437,8 @@ function turnHarness({ metadata, content = 'what is in this picture?' }) {
     }
     if (url.includes('/rest/v1/ops_ai_messages?') && url.includes('id=eq.' + USER) && method === 'GET') return json([userRow]);
     if (url.includes('/rest/v1/ops_ai_messages?') && url.includes('thread_id=eq.' + THREAD) && method === 'GET') return json([userRow]);
+    if (url.endsWith('/rest/v1/rpc/ops_ai_checkpoint_workspace_turn')) { calls.patches.push({ metadata: JSON.parse(init.body).p_metadata }); return json(true); }
+    if (url.endsWith('/rest/v1/rpc/ops_ai_complete_workspace_turn')) { calls.persisted = JSON.parse(init.body).p_message; return json(true); }
     if (url.includes('/rest/v1/ops_ai_messages?') && method === 'PATCH') { calls.patches.push(JSON.parse(String(init.body))); return json([userRow]); }
     if (url.includes('/rest/v1/ops_ai_messages?on_conflict=id') && method === 'POST') { calls.persisted = JSON.parse(String(init.body)); return json([{ ...calls.persisted, created_at: '2026-11-17T22:01:00Z' }]); }
     if (url === 'http://127.0.0.1:4790/execute') { calls.adapter += 1; return json({ model: 'qwen3:8b', implementation: 'core-local', content: 'must not happen', queue_wait_ms: 1 }); }
@@ -445,6 +447,67 @@ function turnHarness({ metadata, content = 'what is in this picture?' }) {
   };
   return { calls, fetchImpl };
 }
+
+test('a named owner target receives one tool-free turn even for a current question with unavailable memory', async (t) => {
+  const route = { mode: 'node', node_id: 'node_' + 'a'.repeat(32), implementation: 'qwen3.8b.local', target: 'ovh' };
+  const user = { actor_kind: 'owner', actor_user_id: OWNER, workspace_route: route };
+  const priorOrg = process.env.MCCLUSTER_ORG_ID;
+  process.env.MCCLUSTER_ORG_ID = ORG;
+  t.after(() => {
+    if (priorOrg === undefined) delete process.env.MCCLUSTER_ORG_ID; else process.env.MCCLUSTER_ORG_ID = priorOrg;
+  });
+  await assert.rejects(submitResidentAiTurn({
+    orgId: ORG, threadId: THREAD, messageId: USER, content: 'Use the browser', route, allowBrowser: true,
+    actor: { kind: 'owner', user_id: OWNER },
+  }, {
+    restImpl: async path => {
+      assert.equal(path, 'rpc/compute_owner_workspace_status');
+      return { body: { version: 1, node_pinning: true, pair_reservations: true, turn_stop: true } };
+    },
+  }), { code: 'AI_ROUTE_TOOLS_DISABLED' });
+
+  for (const modelRequestsTool of [false, true]) {
+    const { calls, fetchImpl } = turnHarness({ metadata: user, content: 'What did I say in my saved memory about the news today?' });
+    const priorFetch = globalThis.fetch;
+    globalThis.fetch = fetchImpl;
+    let rounds = 0, executions = 0;
+    try {
+      const output = await residentAiTurnWith({ ...job(), locked_by: 'fixture', attempts: 1 }, {
+        agentDependencies: {
+          chat: async input => {
+            rounds++;
+            assert.deepEqual(input.ownerRoute, route);
+            assert.equal(input.tools, undefined);
+            assert.match(input.messages[0].content, /PRIVATE MEMORY STATUS: unavailable/);
+            return {
+              message: modelRequestsTool
+                ? { content: '', tool_calls: [{ function: { name: 'analysis_queue', arguments: {} } }] }
+                : { content: 'I could not verify the saved memory.' },
+              model: 'qwen3:8b', implementation: route.implementation,
+              node: { route: 'fabric', node_id: route.node_id }, compute_task_id: JOB,
+            };
+          },
+          execute: async () => { executions++; },
+        },
+      });
+      assert.equal(rounds, 1);
+      assert.equal(executions, 0);
+      assert.equal(calls.broker, 0);
+      assert.deepEqual(calls.persisted.metadata.current_research, { attempted: false });
+      assert.deepEqual(calls.persisted.metadata.requested_route, route);
+      if (modelRequestsTool) {
+        assert.equal(output.error_code, 'AI_ROUTE_TOOLS_DISABLED');
+        assert.equal(calls.persisted.metadata.inference, 'refused');
+        assert.equal(calls.persisted.model, null);
+      } else {
+        assert.equal(calls.persisted.model, 'qwen3:8b');
+        assert.equal(calls.persisted.metadata.node.node_id, route.node_id);
+      }
+    } finally {
+      globalThis.fetch = priorFetch;
+    }
+  }
+});
 
 test('an image turn with no live vision node persists an honest refusal within the turn instead of retrying, and the adapter never sees the image', async () => {
   const savedOrg = process.env.MCCLUSTER_ORG_ID; const savedFabric = process.env.MCCLUSTER_LOCAL_AI_FABRIC; const savedVision = process.env.MCCLUSTER_OLLAMA_VISION_MODEL;

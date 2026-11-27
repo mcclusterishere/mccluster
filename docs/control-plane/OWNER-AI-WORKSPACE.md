@@ -122,6 +122,18 @@ worker or model produces an explicit unavailable state. Owner routes disable
 the adapter's silent missing-model fallback. Auto is the healthy eligible
 worker pool; successful and recovered runs show their actual lease holder.
 
+In the owner chat, **Run on** can pin **OVH CPU**, **Prime GPU**, or
+**Connected inference** to an exact enrolled worker and model. The last option
+names the individual worker that OVH dispatches to. A two-Mac shared-model
+benchmark remains a separate Deep Reasoning option.
+
+Named requests carry `{mode: 'node', target: 'ovh' | 'prime' | 'connected',
+node_id, implementation}` through the existing owner-authenticated submit
+route. A named turn runs inference only. If the selected target, model or
+required execution evidence is unavailable, the turn stops. Switching workers
+requires a new selection. Reply details show the selected route, the serving
+worker and model, and the saved run and compute task when available.
+
 Each 16 GB M1 iMac starts with qwen3:8b, one active lease, a 4K local benchmark
 context, and a measured headroom gate. Context settings from the Mac installer
 remain distinct from OVH's existing resident context tuning. Larger and vision
