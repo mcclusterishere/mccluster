@@ -27,7 +27,7 @@ const auth={requireHouseOwner:async req=>{
 }};
 async function api(path='',body,user=owner,overrides={}){
   const init={headers:{'content-type':'application/json',...(user?{authorization:'Bearer '+user}:{})}};
-  if(body!==undefined){init.method='POST';init.body=JSON.stringify(body);}
+  if(body!==undefined){init.method=path==='/timeline'?'PUT':'POST';init.body=JSON.stringify(body);}
   const result=await handleLearning(new Request(urlFor(path),init),{...env,...overrides},auth);
   assert.match(result.headers.get('cache-control'),/no-store/);return {status:result.status,...await result.json()};
 }
@@ -40,17 +40,21 @@ async function localRest(target,init={}){
   const query=(s,params=[])=>db.query(s,params);
   try{
     if(route.startsWith('rpc/')){
-      const name=route.slice(4);assert.ok(['learning_studio_submit','learning_studio_finish','learning_studio_answer','learning_studio_retry'].includes(name));
+      const name=route.slice(4);assert.ok(['learning_studio_submit','learning_studio_finish','learning_studio_answer','learning_studio_retry','learning_studio_save_timeline'].includes(name));
       const names=Object.keys(body);
       const result=await query('select public.'+oid(name)+'('+names.map((k,i)=>oid(k)+'=> $'+(i+1)).join(',')+') as data',
-        names.map(k=>k==='p_bundle'||k==='p_urls'?JSON.stringify(body[k]):body[k]));
+        names.map(k=>['p_bundle','p_urls','p_plan'].includes(k)?JSON.stringify(body[k]):body[k]));
       return Response.json(result.rows[0].data);
     }
-    assert.ok(['orgs','ops_agent_jobs','learning_studio_courses','learning_studio_summary'].includes(route));
+    assert.ok(['orgs','ops_agent_jobs','learning_studio_courses','learning_studio_summary','learning_studio_timelines'].includes(route));
     const filters=[],params=[];const param=(v)=>{params.push(v);return '$'+params.length;};
     for(const [key,opValue] of url.searchParams){
       if(['order','limit','select'].includes(key))continue;
       const cut=opValue.indexOf('.'),op=opValue.slice(0,cut),val=opValue.slice(cut+1);
+      if(op==='in'&&key==='id'){
+        assert.match(val,/^\([0-9a-f,-]+\)$/i);
+        filters.push('t.id in ('+val.slice(1,-1).split(',').map(param).join(',')+')');continue;
+      }
       const operator={eq:'=',lt:'<',lte:'<='}[op];assert.ok(operator);filters.push('t.'+oid(key)+operator+param(val));
     }
     const where=filters.length?' where '+filters.join(' and '):'';
@@ -78,6 +82,7 @@ try {
   await db.query("insert into org_members values ($1,$2,'owner'),($1,$3,'owner')",[org,owner,other]);
   await db.exec('grant select on orgs,org_members to service_role; grant all on ops_agent_jobs to service_role;');
   await db.exec(ddl);await db.exec(rollback);await db.exec(ddl);
+  await db.exec(await read('supabase/pending/learning_studio_credential_timeline_v1.sql'));
   for(const role of ['anon','authenticated']){
     await db.exec('set role '+role);
     await assert.rejects(db.query('select * from learning_studio_courses'),/permission denied/i);
@@ -120,6 +125,24 @@ try {
   }
   const reopened=await api('/'+id);assert.equal(reopened.course.score,4*sources.length);assert.equal(reopened.answers.length,4*sources.length);
   assert.equal((await api()).courses[0].completed,4*sources.length);
+  // Actual Worker → narrow local REST adapter → real timeline SQL → owner reload.
+  // No transcript, registrar, external account, live OVH or private learner record.
+  const timeline=(body,actor=owner)=>api('/timeline',body,actor,{CREDENTIAL_TIMELINE_ENABLED:'true'});
+  assert.equal((await timeline(undefined,null)).status,401);assert.equal((await timeline(undefined,guest)).status,403);
+  assert.equal((await timeline()).revision,0);
+  const milestone={id:'sample',kind:'exam',label:'Sample examination',status:'passed',start:'2025-01-01',end:'2025-02-01',
+    study_course_id:id,next_action:'Check school records',prerequisites:[],destinations:[
+      {school:'Example School',equivalent:'EX 101',credits:3,status:'posted',evidence_date:'2025-02-02',evidence_type:'degree_audit'}]};
+  const saveBody={expected_revision:0,plan:{version:1,goals:[],items:[milestone]}};
+  assert.equal((await timeline(saveBody)).status,400);
+  assert.equal((await timeline({...saveBody,confirm_evidence:true},other)).status,409);
+  assert.equal((await timeline({...saveBody,confirm_evidence:true})).revision,1);
+  assert.equal((await timeline({...saveBody,confirm_evidence:true})).status,409);
+  const reloaded=await timeline();assert.equal(reloaded.plan.items[0].study_course_id,id);
+  assert.equal(reloaded.practice.find(p=>p.id===id).completed,4*sources.length);
+  assert.equal(reloaded.credit_summary[0].posted_credits,3);
+  assert.equal((await timeline(undefined,other)).revision,0);
+  console.log('PASS: authorized timeline route, linked real completed study job, receiving-school evidence confirmation, SQL save/reload, conflict replay and owner isolation.');
   const queued=await api('',{...data,request_id:randomUUID()});const retryJob=await claimNext(['course_study_build']);
   await db.query("update ops_agent_jobs set status='failed' where id=$1",[retryJob.id]);
   assert.equal((await api('/'+queued.id+'/retry',{},other)).status,409);assert.equal((await api('/'+queued.id+'/retry',{})).status,200);
