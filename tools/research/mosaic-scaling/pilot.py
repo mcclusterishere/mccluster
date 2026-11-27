@@ -88,7 +88,10 @@ def extract(path, rec):
         lat = f["latitude"][:]
         g = np.array([f[k][:] for k in KEYS])
         flag = f["sea_ice_drift_reliability_flag"][:]
-        valid = np.all(np.isfinite(g),axis=0) & np.isfinite(f["valid_shape"][:]) & np.isfinite(flag) & np.isfinite(lat)
+        valid = np.all(np.isfinite(g),axis=0) & np.isfinite(flag) & np.isfinite(lat)
+        has_shape = "valid_shape" in f
+        if has_shape:
+            valid &= np.isfinite(f["valid_shape"][:])
         g[:,~valid] = np.nan
         ix, iy = (np.rint((v-ORIGIN)/GRID).astype(int) for v in (x,y))
         projected = ix[np.any(valid,axis=0)]
@@ -96,7 +99,8 @@ def extract(path, rec):
             raise ValueError("entire file lacks valid drift gradients")
         split = .5 * (projected.min() + projected.max())
         ks = stereo_k(lat[valid])
-        out = dict(rec, observed_ground_km_per_nominal_km=[float(1/ks.max()), float(1/ks.min())], scenarios={})
+        out = dict(rec, optional_shape_mask_present=has_shape,
+                   observed_ground_km_per_nominal_km=[float(1/ks.max()), float(1/ks.min())], scenarios={})
         for name,(coverage,shift,swap) in SCENARIOS.items():
             left,right = ("right","left") if swap else ("left","right")
             try:
