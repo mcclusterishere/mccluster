@@ -1,0 +1,46 @@
+name: EquityNet Windows chat
+
+on:
+  pull_request:
+    branches: [main, prime/equity-fighter-desktop]
+    paths:
+      - 'desktop/windows/**'
+      - 'packages/equity-fighter/windows/**'
+      - '.github/workflows/equitynet-windows-chat.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  windows-chat:
+    name: Build and test the Windows chat client
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          sparse-checkout: |
+            desktop/windows
+            packages/equity-fighter/windows
+            core/windows
+            core/node-manifests
+      - name: Compile the SDK project
+        shell: pwsh
+        run: |
+          $project = 'desktop/windows/src/McClusterDesktop.csproj'
+          $packages = Join-Path $env:RUNNER_TEMP 'equitynet-packages'
+          dotnet restore $project --packages $packages --configfile desktop/windows/src/NuGet.Config
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet build $project --no-restore -c Release
+      - name: Compile with the Windows in-box compiler and run desktop tests
+        shell: powershell
+        run: |
+          $project = [xml](Get-Content -Raw desktop/windows/src/McClusterDesktop.csproj)
+          $version = ($project.Project.ItemGroup.PackageReference | Where-Object Include -eq 'Microsoft.Web.WebView2').Version
+          $webView = Join-Path $env:RUNNER_TEMP "equitynet-packages/microsoft.web.webview2/$version"
+          & ./desktop/windows/build-inbox.ps1 -WebView2Dir $webView -Tests
+      - name: Exercise the owner transport in WebView2 with an isolated account fixture
+        shell: pwsh
+        run: ./desktop/windows/tests/Test-OwnerChatWebView.ps1 -AppDir ./desktop/windows/dist/app

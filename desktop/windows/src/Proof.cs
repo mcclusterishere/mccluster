@@ -374,17 +374,20 @@ namespace McClusterDesktop
         }
 
         // Sourced public data with timestamps: the live revision, the local runtime, the model identity.
-        public static async Task<List<object>> PublicSources(OllamaStatus ollama, string model)
+        public static async Task<List<object>> PublicSources(OllamaStatus ollama, string model, bool includeSite = true)
         {
             var list = new List<object>();
-            ProbeResult api = await LocalRuntime.GetJson(LocalRuntime.ApiHealth).ConfigureAwait(false);
-            var site = new Dictionary<string, object>();
-            site["source"] = LocalRuntime.ApiHealth;
-            site["deployment_sha"] = api.Body == null ? null : McClusterDesktop.Json.Str(api.Body, "deployment_sha");
-            site["checked_at"] = api.Body == null ? null : McClusterDesktop.Json.Str(api.Body, "checked_at");
-            site["observed_at"] = api.CheckedAt.ToString("o", CultureInfo.InvariantCulture);
-            site["reachable"] = api.Reachable;
-            list.Add(site);
+            if (includeSite)
+            {
+                ProbeResult api = await LocalRuntime.GetJson(LocalRuntime.ApiHealth).ConfigureAwait(false);
+                var site = new Dictionary<string, object>();
+                site["source"] = LocalRuntime.ApiHealth;
+                site["deployment_sha"] = api.Body == null ? null : McClusterDesktop.Json.Str(api.Body, "deployment_sha");
+                site["checked_at"] = api.Body == null ? null : McClusterDesktop.Json.Str(api.Body, "checked_at");
+                site["observed_at"] = api.CheckedAt.ToString("o", CultureInfo.InvariantCulture);
+                site["reachable"] = api.Reachable;
+                list.Add(site);
+            }
             var rt = new Dictionary<string, object>();
             rt["source"] = ollama.Url + "/api/version";
             rt["ollama_version"] = ollama.Version;

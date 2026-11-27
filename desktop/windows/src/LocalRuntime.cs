@@ -39,6 +39,7 @@ namespace McClusterDesktop
         public string Url;
         public List<OllamaModel> Models = new List<OllamaModel>();
         public bool GpuEvidence; // a loaded model with size_vram > 0 (the node agent's rule)
+        public readonly HashSet<string> GpuModels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         public string LoadedSummary;
     }
 
@@ -203,7 +204,12 @@ namespace McClusterDesktop
                 {
                     double size = Json.Num(item, "size");
                     double vram = Json.Num(item, "size_vram");
-                    if (vram > 0) status.GpuEvidence = true;
+                    if (vram > 0)
+                    {
+                        status.GpuEvidence = true;
+                        string loadedName = Json.Str(item, "name") ?? Json.Str(item, "model");
+                        if (!string.IsNullOrEmpty(loadedName)) status.GpuModels.Add(loadedName);
+                    }
                     int percent = size > 0 ? (int)Math.Round(vram / size * 100) : 0;
                     parts.Add(Json.Str(item, "name") + " (" + percent + "% GPU)");
                 }

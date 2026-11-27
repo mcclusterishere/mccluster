@@ -23,6 +23,8 @@ internal static class DesktopTests
         try
         {
             NavigationPolicyChecks();
+            OwnerChatTests.Run(Assert);
+            CallSessionTests.Run();
             JobStoreChecks();
             AdapterChecks();
             ProofChecks();
@@ -48,6 +50,11 @@ internal static class DesktopTests
     private static void NavigationPolicyChecks()
     {
         Assert(NavigationPolicy.Home == "https://mccluster.org/", "production launch origin");
+        Assert(NavigationPolicy.OwnerChat == "https://mccluster.org/control.html#home:ask" && NavigationPolicy.IsPanelDestination(NavigationPolicy.OwnerChat), "the owner action opens the canonical signed-in room");
+        Assert(NavigationPolicy.IsPanelDestination(NavigationPolicy.OwnerProjects) && NavigationPolicy.OwnerProjects == "https://mccluster.org/control.html#create:projects", "the Projects control opens its authenticated first-party route");
+        Assert(NavigationPolicy.IsPanelDestination(NavigationPolicy.Home), "the native Home action is supported");
+        foreach (string url in new[] { null, "", NavigationPolicy.OwnerChat + "&message=sample", "https://mccluster.org/control.html?target=auto#home:ask", "https://mccluster.org/account.html", "https://matthew.mccluster.org/control.html#home:ask", "https://external.example/" })
+            Assert(!NavigationPolicy.IsPanelDestination(url), "native chat cannot forward data or select arbitrary destinations");
         Assert(NavigationPolicy.IsFirstParty(NavigationPolicy.HttpsTarget(NavigationPolicy.OwnerChat)), "owner chat route is first party");
         foreach (string url in new[] { "https://mccluster.org/", "https://mccluster.org/account.html", "HTTPS://MCCLUSTER.ORG:443/path", "https://matthew.mccluster.org/album.html", "https://humanuprise.com/" })
             Assert(NavigationPolicy.IsFirstParty(NavigationPolicy.HttpsTarget(url)), "first-party allowed: " + url);
@@ -107,11 +114,117 @@ internal static class DesktopTests
             // Listing is newest first.
             List<LocalJob> list = store.List();
             Assert(list.Count == 3 && string.CompareOrdinal(list[0].CreatedAt, list[2].CreatedAt) >= 0, "jobs list newest first");
+            LocalConversationChecks(store);
         }
         finally
         {
             try { Directory.Delete(root, true); } catch (Exception) { }
         }
+    }
+
+    private static void LocalConversationChecks(JobStore store)
+    {
+        var session = new LocalConversation();
+        LocalJob first = session.Create(store, "fixture-model", "First question");
+        Assert(Json.Str(first.Input, "device") == DeviceChoice.Ollama && first.Target == JobTarget.LocalDevice &&
+            Json.Num(first.Input, "max_attempts") == 1, "native chat pins loopback Ollama for one attempt");
+        Assert(LocalConversation.Messages(store, first, "First question").Count == 1, "a new chat has only its own message");
+        first.State = JobState.Done;
+        first.Result = new Dictionary<string, object> { { "content", "First answer" } };
+        first.Receipt = new Dictionary<string, object> { { "job_id", first.Id }, { "state", JobState.Done },
+            { "schema", "mccluster-desktop-receipt/2" }, { "kind", JobKind.Chat },
+            { "evidence_scope", "local_device_only" }, { "hosted_inference_used", false },
+            { "input_sha256", Canonical.Sha256Hex(Canonical.Json(first.Input)) },
+            { "output_sha256", Canonical.Sha256Hex(Canonical.Json(first.Result)) } };
+        using (DeviceKey key = DeviceKey.Load(store.Root)) key.Sign(first.Receipt);
+        store.Save(first);
+        LocalJob second = session.Create(store, "fixture-model", "Follow up");
+        List<object> messages = LocalConversation.Messages(store, second, "Follow up");
+        Assert(messages.Count == 3 && Json.Str(messages[0], "role") == "user" &&
+            Json.Str(messages[1], "role") == "assistant" && Json.Str(messages[1], "content") == "First answer" &&
+            Json.Str(messages[2], "content") == "Follow up", "follow-up uses verified turns with their original roles");
+        LocalJob separate = new LocalConversation().Create(store, "fixture-model", "New conversation");
+        Assert(Json.List(separate.Input, "history_jobs").Count == 0, "new conversation excludes earlier local jobs");
+        separate.Input["history_jobs"] = new[] { first.Id };
+        bool refused = false;
+        try { LocalConversation.Messages(store, separate, "New conversation"); } catch (InvalidDataException) { refused = true; }
+        Assert(refused, "even a valid same-device job from another conversation is refused");
+        first.Result["content"] = "Modified answer";
+        store.Save(first);
+        refused = false;
+        try { LocalConversation.Messages(store, second, "Follow up"); } catch (InvalidDataException) { refused = true; }
+        Assert(refused, "altered prior answers never reach local inference");
+        first.Result["content"] = "First answer";
+        first.Receipt.Remove("output_sha256");
+        using (DeviceKey key = DeviceKey.Load(store.Root)) key.Sign(first.Receipt);
+        store.Save(first);
+        refused = false;
+        try { LocalConversation.Messages(store, second, "Follow up"); } catch (InvalidDataException) { refused = true; }
+        Assert(refused, "a signature without an output hash cannot verify a previous chat answer");
+        separate.Input["history_jobs"] = new[] { "../outside" };
+        refused = false;
+        try { LocalConversation.Messages(store, separate, "New conversation"); } catch (InvalidDataException) { refused = true; }
+        Assert(refused, "invalid history file names refused before lookup");
+        refused = false;
+        try { session.Create(store, "fixture-model", new string('x', LocalConversation.MaxPrompt + 1)); } catch (ArgumentException) { refused = true; }
+        Assert(refused, "oversized local prompts are refused before creating a job");
+        RestoredConversationChecks(store);
+    }
+
+    private static void SaveChatFixture(JobStore store, LocalJob job, string state, string detail, string finished)
+    {
+        job.State = state;
+        job.Receipt = new Dictionary<string, object> {
+            { "schema", "mccluster-desktop-receipt/2" }, { "job_id", job.Id }, { "kind", JobKind.Chat },
+            { "state", state }, { "evidence_scope", "local_device_only" }, { "hosted_inference_used", false },
+            { "finished_at", finished }, { "input_sha256", Canonical.Sha256Hex(Canonical.Json(job.Input)) } };
+        if (state == JobState.Done)
+        {
+            job.Result = new Dictionary<string, object> { { "content", detail } };
+            job.Receipt["output_sha256"] = Canonical.Sha256Hex(Canonical.Json(job.Result));
+        }
+        else { job.Error = detail; job.Receipt["failure"] = detail; }
+        using (DeviceKey key = DeviceKey.Load(store.Root)) key.Sign(job.Receipt);
+        store.Save(job);
+    }
+
+    private static void RestoredConversationChecks(JobStore store)
+    {
+        var older = new LocalConversation();
+        var recent = new LocalConversation();
+        var legacy = older.Create(store, "model", "  First\n question ");
+        legacy.Input.Remove("local_chat_route");
+        legacy.Input.Remove("local_chat_title");
+        SaveChatFixture(store, legacy, JobState.Done, "Earlier answer", "2026-11-26T20:00:00Z");
+        var failed = older.Create(store, "model", "Question that stopped");
+        SaveChatFixture(store, failed, JobState.Failed, "canceled by the owner", "2026-11-26T21:00:00Z");
+        failed.Error = "Unsigned replacement";
+        failed.Result = new Dictionary<string, object> { { "content", "Unsigned answer" } };
+        store.Save(failed);
+        var latest = recent.Create(store, "model", "Different conversation");
+        SaveChatFixture(store, latest, JobState.Done, "Latest answer", "2026-11-26T22:00:00Z");
+        recent.Create(store, "model", "Still unsigned");
+        var standalone = new LocalConversation().Create(store, "model", "From Compute");
+        standalone.Input.Remove("local_chat_id");
+        SaveChatFixture(store, standalone, JobState.Done, "Standalone result", "2026-11-26T23:00:00Z");
+        var forged = new LocalConversation().Create(store, "model", "Do not display");
+        SaveChatFixture(store, forged, JobState.Done, "An answer", "2026-11-26T23:00:00Z");
+        forged.Input["local_chat_id"] = older.Id;
+        store.Save(forged);
+        var restored = LocalConversation.Restore(new JobStore(store.Root));
+        Assert(restored.Count == 2 && restored[0].Id == recent.Id && restored[1].Id == older.Id,
+            "restart groups only signed native turns and orders threads by signed completion time");
+        Assert(restored[0].Turns.Count == 1 && restored[1].Turns.Count == 2 && restored[1].Turns[0].Id == legacy.Id &&
+            restored[1].Turns[1].Id == failed.Id, "recovered turn order excludes standalone, unsigned and tampered rows");
+        Assert(restored[1].Title == "First question" && restored[1].Route == "prime" && restored[1].Label.Contains("Prime"),
+            "legacy native jobs recover the local route and normalized first prompt");
+        Assert(restored[1].Turns[1].Error == "canceled by the owner" && restored[1].Turns[1].Result == null,
+            "reopened cancellation uses signed failure text and displays no unsigned output");
+        var continued = restored[1].Create(store, "model", "Continue");
+        var history = LocalConversation.Messages(store, continued, "Continue");
+        Assert(Json.Str(continued.Input, "local_chat_id") == older.Id && Json.Str(continued.Input, "local_chat_route") == "prime" &&
+            history.Count == 3 && Json.Str(history[1], "content") == "Earlier answer",
+            "a restored chat continues its exact thread and sends only its verified successful prior turn");
     }
 
     private static void AdapterChecks()

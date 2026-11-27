@@ -1,0 +1,32 @@
+<!doctype html><meta charset="utf-8"><title>Owner chat transport fixture</title><button id="fixtureSignIn">Synthetic sign-in</button>
+<script>
+const session='cc333333-3333-4333-8333-333333333333', node='node_'+'a'.repeat(40), task='aa111111-1111-4111-8111-111111111111';
+const result=new Map(), runs=new Map(); let owner=false, substitute=false, submissions=0;
+document.getElementById('fixtureSignIn').onclick=()=>{owner=true};
+window.McClusterOwnerChatV1={
+  begin(id,op,args){
+    if(!owner) return {status:'error',code:'OWNER_REQUIRED'};
+    if(op!=='discover' && args.session_id!==session) return {status:'error',code:'CHANGED'};
+    let response;
+    if(op==='discover') response={can_stop:true,session_id:session,targets:[{target:'ovh',name:'Fixture CPU',node_id:node,implementation:'qwen3.8b.local',model:'qwen3:8b'}]};
+    else if(op==='submit'){
+      submissions++; runs.set(args.message_id,args);
+      response={thread_id:args.thread_id,turn_id:args.message_id,status:'pending'};
+    } else if(op==='history'){
+      const saved=Array.from(runs.values())[0];
+      response=args.thread_id?{thread_id:saved.thread_id,turns:[{turn_id:saved.message_id,prompt:saved.content,status:'done',target:'ovh',node_id:node,name:'Fixture CPU',implementation:saved.implementation,model:'qwen3:8b'}]}:{threads:[{thread_id:saved.thread_id,title:'Earlier fixture'}]};
+    } else if(op==='stop'){
+      const saved=runs.get(args.turn_id); if(!saved)return {status:'error',code:'REJECTED'};saved.stopped=true;
+      response={thread_id:saved.thread_id,turn_id:saved.message_id,status:'canceled'};
+    } else if(op==='get'){
+      const saved=runs.get(args.turn_id); if(!saved) return {status:'error',code:'REJECTED'};
+      response={thread_id:saved.thread_id,turn_id:saved.message_id,status:'done',target:saved.target,node_id:substitute?'node_'+'b'.repeat(40):saved.node_id,
+        implementation:saved.implementation,model:'qwen3:8b',hardware_mode:'cpu-only',compute_task_id:task,node_name:'Fixture CPU',content:saved.content};
+    } else return {status:'error',code:'REJECTED'};
+    setTimeout(()=>result.set(id,response),40);
+    return {status:'pending'};
+  },
+  take(id){ if(!owner)return {status:'error',code:'OWNER_REQUIRED'};if(!result.has(id))return {status:'pending'};
+    const value=result.get(id);result.delete(id);return {status:'ok',result:value}; }
+};
+</script>
