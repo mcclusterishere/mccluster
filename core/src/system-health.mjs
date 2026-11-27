@@ -1,4 +1,5 @@
 import { assertCompletionEvidence } from './completion-evidence.mjs';
+import { COMPUTE_HEARTBEAT_WINDOW_MS, computeNodePresence } from './compute/node-presence.mjs';
 
 export const SYSTEM_HEALTH_SCHEMA = 'mccluster-system-health/v1';
 export const SYSTEM_CONTRACT_MIGRATION = '20260914191500';
@@ -80,28 +81,33 @@ export function verifyRecentCompletionEvidence(jobs, { proofContractSince = PROO
   return result;
 }
 
-export function classifyComputeNodes(nodes, { nowMs = Date.now(), onlineWindowMs = 5 * 60_000 } = {}) {
+export function classifyComputeNodes(nodes, { nowMs = Date.now() } = {}) {
   const normalized = (Array.isArray(nodes) ? nodes : []).map((node) => {
-    const seenAge = ageMs(node?.last_seen_at, nowMs);
     const state = text(node?.state || node?.status || 'unknown').toLowerCase();
-    const unavailable = ['disabled', 'revoked', 'quarantined'].includes(state);
-    const online = seenAge !== null && seenAge <= onlineWindowMs && !unavailable && state === 'online';
+    const presence = computeNodePresence(node, { nowMs });
     return {
       id: node?.id || null,
       name: node?.display_name || node?.name || null,
       state,
       status: state,
       last_seen_at: node?.last_seen_at || null,
-      age_ms: seenAge,
-      online,
+      age_ms: presence.heartbeat_age_ms,
+      online: presence.state === 'online',
+      presence,
       capabilities: Array.isArray(node?.capabilities) ? node.capabilities : node?.capabilities || null,
     };
   });
+  const counts = { online: 0, stale: 0, offline: 0, inactive: 0, unknown: 0 };
+  for (const node of normalized) counts[node.presence.state]++;
+  const notReporting = counts.stale + counts.offline + counts.unknown;
   return {
     node_count: normalized.length,
-    online: normalized.filter((node) => node.online).length,
-    stale_or_offline: normalized.filter((node) => !node.online).length,
-    status: normalized.length === 0 ? 'idle' : normalized.some((node) => node.online) ? 'ready' : 'degraded',
+    online: counts.online,
+    stale_or_offline: normalized.length - counts.online,
+    presence_counts: counts,
+    presence_checked_at: new Date(nowMs).toISOString(),
+    presence_stale_after_ms: COMPUTE_HEARTBEAT_WINDOW_MS,
+    status: notReporting ? 'degraded' : counts.online ? 'ready' : 'idle',
     nodes: normalized.slice(0, 25),
   };
 }
@@ -205,8 +211,13 @@ export function aggregateSystemHealth(snapshot, { nowMs = Date.now() } = {}) {
     degradation(degradationList, 'edge', 'cloudflare_unreachable', 'warning', 'Canonical Cloudflare edge health probe failed.', edge.error ? { error: edge.error } : null);
   }
 
-  if (compute.node_count > 0 && compute.online === 0) {
+  const unavailableCompute = compute.presence_counts
+    ? compute.presence_counts.stale + compute.presence_counts.offline + compute.presence_counts.unknown
+    : compute.stale_or_offline;
+  if (unavailableCompute > 0 && compute.online === 0) {
     degradation(degradationList, 'compute', 'all_nodes_offline', 'warning', 'Registered specialized compute nodes are all stale or offline.');
+  } else if (unavailableCompute > 0 && compute.online > 0) {
+    degradation(degradationList, 'compute', 'partial_nodes_unavailable', 'warning', `${unavailableCompute} registered compute node(s) are not reporting current availability; ${compute.online} still online.`);
   }
 
   if (prim3.status === 'degraded') {

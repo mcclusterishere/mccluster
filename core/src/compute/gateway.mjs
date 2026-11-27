@@ -3,6 +3,7 @@ import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, clampYieldSeconds, claimableMa
 import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedRequest } from './signature.mjs';
 import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
 import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
+import { COMPUTE_HEARTBEAT_WINDOW_MS, computeNodePresence } from './node-presence.mjs';
 
 const HOST = process.env.CORE_COMPUTE_HOST || '127.0.0.1';
 const PORT = Number(process.env.CORE_COMPUTE_PORT || 4788);
@@ -135,7 +136,13 @@ async function route(req, res) {
   if (url.pathname === '/v1/compute/nodes' && req.method === 'GET') {
     requireSecret(req, 'CORE_COMPUTE_ADMIN_TOKEN', 'Compute admin');
     const orgId = adminOrg(url.searchParams.get('org_id'));
-    return json(res, 200, { nodes: await listNodes({ orgId }) });
+    const nodes = await listNodes({ orgId });
+    const nowMs = Date.now();
+    return json(res, 200, {
+      nodes: nodes.map((node) => ({ ...node, presence: computeNodePresence(node, { nowMs }) })),
+      presence_checked_at: new Date(nowMs).toISOString(),
+      presence_stale_after_ms: COMPUTE_HEARTBEAT_WINDOW_MS,
+    });
   }
 
   if (url.pathname === '/v1/compute/capabilities' && req.method === 'GET') {

@@ -18,6 +18,7 @@ import { COMPUTE_PROTOCOL } from '../src/compute/protocol.mjs';
 const GATEWAY = fileURLToPath(new URL('../src/compute/gateway.mjs', import.meta.url));
 const ORG = '00000000-0000-4000-8000-0000000000aa';
 const ENROLL = 'enrol-fixture-value';
+const ADMIN = 'admin-fixture-value';
 const CAPABILITIES = [
   { capability: 'ai.chat', implementation: 'qwen3.8b.local', backend: 'ollama', model: 'qwen3:8b', features: { chat: true, self_hosted: true } },
   { capability: 'browser.act', implementation: 'chromium.local', backend: 'playwright', model: null, features: { browser: true, screenshot: true, self_hosted: true } }
@@ -39,7 +40,16 @@ function startFakeSupabase() {
     db.calls.push({ method: req.method, path, query: Object.fromEntries(url.searchParams), body });
     const reply = (status, value) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(value)); };
     const id = String(url.searchParams.get('id') || '').replace(/^eq\./, '');
-    if (path === 'ops_compute_nodes' && req.method === 'GET') return reply(200, id ? (db.nodes.has(id) ? [db.nodes.get(id)] : []) : []);
+    if (path === 'ops_compute_nodes' && req.method === 'GET') {
+      if (id) return reply(200, db.nodes.has(id) ? [db.nodes.get(id)] : []);
+      const org = url.searchParams.get('org_id')?.replace(/^eq\./, '');
+      const state = url.searchParams.get('state')?.replace(/^eq\./, '');
+      const after = Date.parse(url.searchParams.get('last_seen_at')?.replace(/^gte\./, '') || '');
+      return reply(200, [...db.nodes.values()].filter((row) =>
+        (!org || row.org_id === org) && (!state || row.state === state) &&
+        (!Number.isFinite(after) || Date.parse(row.last_seen_at) >= after)
+      ).map(({ public_key_pem, ...row }) => row));
+    }
     if (path === 'ops_compute_nodes' && req.method === 'POST') {
       const row = { ...body, state: body.state || 'online' };
       db.nodes.set(body.id, row);
@@ -71,7 +81,7 @@ async function freePort() {
 before(async () => {
   supabase = await startFakeSupabase();
   const port = await freePort();
-  const env = { ...process.env, CORE_COMPUTE_PORT: String(port), CORE_COMPUTE_ENROLL_TOKEN: ENROLL, MCCLUSTER_ORG_ID: ORG, SUPABASE_URL: `http://127.0.0.1:${supabase.address().port}`, SUPABASE_SECRET_KEY: 'fixture-key' };
+  const env = { ...process.env, CORE_COMPUTE_PORT: String(port), CORE_COMPUTE_ENROLL_TOKEN: ENROLL, CORE_COMPUTE_ADMIN_TOKEN: ADMIN, MCCLUSTER_ORG_ID: ORG, SUPABASE_URL: `http://127.0.0.1:${supabase.address().port}`, SUPABASE_SECRET_KEY: 'fixture-key' };
   delete env.CORE_COMPUTE_HOST;
   delete env.SUPABASE_SERVICE_ROLE_KEY;
   gateway = spawn(process.execPath, [GATEWAY], { env, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -115,6 +125,41 @@ async function signed(identity, path, body) {
 }
 
 const lastCall = (method, path) => db.calls.filter((call) => call.method === method && call.path === path).at(-1);
+
+test('admin fleet shows a stale registered device and its signed heartbeat makes it discoverable again', async () => {
+  const node = generateNodeIdentity();
+  await enrol(node, { site: 'fleet-presence-fixture' });
+  const row = db.nodes.get(node.nodeId);
+  row.last_seen_at = new Date(Date.now() - 4 * 60_000).toISOString();
+  const fleet = `${base}/v1/compute/nodes`;
+  const headers = { authorization: `Bearer ${ADMIN}` };
+  assert.equal((await fetch(fleet)).status, 401);
+  assert.equal((await fetch(`${fleet}?org_id=00000000-0000-4000-8000-0000000000bb`, { headers })).status, 403);
+  const read = async (path, key) => {
+    const response = await fetch(`${base}/v1/compute/${path}`, { headers });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    const body = await response.json();
+    return key ? body[key] : body;
+  };
+  const before = await read('nodes');
+  const stale = before.nodes.find((item) => item.id === node.nodeId);
+  assert.equal(stale.state, 'online', 'configured state remains backward-compatible');
+  assert.equal(stale.presence.state, 'stale');
+  assert.ok(stale.presence.heartbeat_age_ms >= 4 * 60_000);
+  assert.equal(before.presence_stale_after_ms, 180_000);
+  assert.ok(Number.isFinite(Date.parse(before.presence_checked_at)));
+  assert.ok(!(await read('capabilities', 'implementations')).some((row) => row.node_id === node.nodeId));
+  const liveLookup = lastCall('GET', 'ops_compute_nodes').query;
+  assert.equal(liveLookup.state, 'eq.online');
+  assert.ok(liveLookup.last_seen_at?.startsWith('gte.'));
+
+  assert.equal((await signed(node, '/v1/compute/heartbeat', {})).ok, true);
+  const after = (await read('nodes', 'nodes')).find((item) => item.id === node.nodeId);
+  assert.equal(after.presence.state, 'online');
+  assert.ok(after.presence.heartbeat_age_ms < 30_000);
+  assert.ok((await read('capabilities', 'implementations')).some((row) => row.node_id === node.nodeId));
+});
 
 test('enrolment records the trust; a heartbeat cannot rewrite trust, role or the record, while its other labels still update', async () => {
   const node = generateNodeIdentity();
