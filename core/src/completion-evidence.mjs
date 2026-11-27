@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { JOB_TYPE as STUDENT_OPPORTUNITY_JOB, SCHEMA as OPPORTUNITY_SCHEMA, EXECUTOR as OPPORTUNITY_EXECUTOR, SOURCES as OPPORTUNITY_SOURCES } from './student-opportunities.mjs';
 
 export const COMPLETION_EVIDENCE_SCHEMA = 'mccluster-completion-evidence/v1';
 
@@ -367,6 +368,22 @@ function policyEvidence(job, output) {
         target_company_id: job?.target_type === 'company' ? text(job?.target_id) : null,
         target_score_present: Boolean(output.target_score),
       });
+      break;
+    }
+
+    case STUDENT_OPPORTUNITY_JOB: {
+      requireValue(job, output.executor === OPPORTUNITY_EXECUTOR && output.schema === OPPORTUNITY_SCHEMA && validDate(output.checked_at), 'invalid opportunity snapshot executor, schema or date');
+      const statuses = output.observations;
+      requireValue(job, Array.isArray(statuses) && statuses.length === OPPORTUNITY_SOURCES.length && statuses.every((row, index) =>
+        row?.id === OPPORTUNITY_SOURCES[index].id && row.source === 'https://science.osti.gov' + OPPORTUNITY_SOURCES[index].path &&
+        ['observed', 'unavailable'].includes(row.state)), 'official observation evidence is incomplete');
+      const count = statuses.filter((row) => row.state === 'observed').length;
+      requireValue(job, output.state === (count === statuses.length ? 'observed' : count ? 'partial' : 'unavailable'), 'opportunity evidence state mismatch');
+      requireValue(job, Array.isArray(output.opportunities) && output.opportunities.length <= 24 && output.opportunities.every((row) =>
+        row?.paid === true && validDate(row.deadline_at) && statuses.some((item) => item.state === 'observed' && item.source === row.source) &&
+        ['new', 'unchanged', 'updated'].includes(row.change)), 'invalid opportunity evidence rows');
+      records.push({ kind: 'public_discovery_receipt', checked_at: output.checked_at, state: output.state, sources_observed: count,
+        opportunities: output.opportunities.length, changed: output.opportunities.filter((row) => row.change !== 'unchanged').length });
       break;
     }
 

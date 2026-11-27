@@ -1,4 +1,5 @@
 import { sendOwnerSmsViaRelay } from './comms-owner-notify.mjs';
+import { JOB_TYPE as STUDENT_OPPORTUNITY_JOB } from './student-opportunities.mjs';
 
 const SUCCESS_NOTIFY_TYPES = new Set([
   'code_patch',
@@ -79,12 +80,14 @@ export async function sendSms(message) {
 }
 
 export async function notifyJobSuccess(job, output) {
+  if (job?.job_type === STUDENT_OPPORTUNITY_JOB) return { sent: false, reason: 'discovery_receipt_only' };
   const explicit = job?.input?.notify_owner === true;
   if (!explicit && !SUCCESS_NOTIFY_TYPES.has(job?.job_type)) return { sent: false, reason: 'not_routable' };
   return sendSms(successMessage(job, output));
 }
 
 export async function notifyJobFailure(job, error, status = 'failed') {
+  if (job?.job_type === STUDENT_OPPORTUNITY_JOB) return { sent: false, reason: 'discovery_receipt_only' };
   if (status !== 'failed') return { sent: false, reason: 'retry_pending' };
   const message = compact(error?.message || error || 'unknown failure', 500);
   return sendSms(`McCluster ALERT: ${job?.job_type || 'job'} failed after retries. ${message}`);
