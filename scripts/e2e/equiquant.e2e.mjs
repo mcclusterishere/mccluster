@@ -2,7 +2,7 @@
    runs the pending schema in disposable PostgreSQL (WASM). Only GoTrue, the
    PostgREST transport, and unrelated account chrome are substituted. */
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { mkdir, readFile } from 'node:fs/promises';
 import { createRequire, registerHooks } from 'node:module';
@@ -40,6 +40,10 @@ const db = new PGlite();
 const env = { SUPABASE_URL: 'https://isolated.invalid', SUPABASE_SERVICE_ROLE_KEY: 'fixture-service',
   EQUIQUANT_ENABLED: 'true' };
 Object.assign(process.env, env, { SUPABASE_SECRET_KEY: '', MCCLUSTER_SMS_NOTIFY: 'false', MCCLUSTER_CORE_ID: 'isolated-equiquant' });
+// This is the isolated runner process on the selected computer. A remote target
+// is eligible only after its own runtime supplies a fresh capability.
+process.env.MCCLUSTER_EQUIQUANT_TARGET = 'prime';
+const target = 'prime';
 const org = randomUUID();
 const sessions = new Map();
 const apiOrigin = 'https://api.mccluster.org', siteOrigin = 'https://mccluster.org';
@@ -96,6 +100,8 @@ const ident = key => { assert.match(key,/^[a-z_]+$/); return '"' + key + '"'; };
 const one = async (sql, params=[]) => (await db.query(sql,params)).rows[0];
 const bearer = hdr => (new Headers(hdr)).get('authorization')?.replace(/^Bearer /i,'');
 const telemetry = [];
+let distortNextState;
+let observedCapability;
 async function isolatedFetch(target, init={}) {
   const url = new URL(target), path = url.pathname.replace('/rest/v1/', '');
   assert.equal(url.origin, env.SUPABASE_URL, 'Unexpected network destination');
@@ -119,11 +125,21 @@ async function isolatedFetch(target, init={}) {
     assert.equal(url.searchParams.get('slug'),'eq.mccluster');
     return Response.json((await db.query("select id,enabled from orgs where slug='mccluster'")).rows);
   }
+  if (path === 'rpc/equiquant_attest_target') {
+    const row = await one('select public.equiquant_attest_target($1) as result',[JSON.stringify(body.p_attestation)]);
+    observedCapability = body.p_attestation;
+    return Response.json(row.result);
+  }
   if (path === 'rpc/equiquant_action') {
     try {
       const row = await one('select equiquant_action($1,$2,$3,$4,$5) as result',[
         body.p_actor,body.p_org,body.p_action,body.p_project,JSON.stringify(body.p_data)
       ]);
+      if (distortNextState && body.p_action==='state') {
+        const distort = distortNextState;
+        distortNextState = undefined;
+        distort(row.result);
+      }
       return Response.json(row.result);
     } catch (err) {
       if (!err.code) throw err;
@@ -133,13 +149,21 @@ async function isolatedFetch(target, init={}) {
     }
   }
   assert.equal(path,'ops_agent_jobs','Unexpected isolated database route');
+  if (url.searchParams.get('status') === 'eq.queued') {
+    assert.equal(url.searchParams.get('job_type'),'eq.equiquant_mosaic_replay');
+    assert.equal(url.searchParams.get('input->>target'),'eq.prime');
+    assert.equal(url.searchParams.get('input->>hardware_sha256'),'eq.'+observedCapability.hardware_sha256);
+    assert.equal(url.searchParams.get('input->>node_version'),'eq.'+process.versions.node);
+  }
   const args = [], filters = [];
   const bind = val => '$' + args.push(val);
   for (const [field, expression] of url.searchParams) {
     if (['select','order','limit'].includes(field)) continue;
     const dot = expression.indexOf('.'), op = {eq:'=',lt:'<',lte:'<='}[expression.slice(0,dot)];
     assert.ok(op);
-    filters.push(ident(field) + op + bind(expression.slice(dot+1)));
+    const queueInputField = /^input->>(target|hardware_sha256|node_version)$/.exec(field);
+    const column = queueInputField ? "input->>'"+queueInputField[1]+"'" : ident(field);
+    filters.push(column + op + bind(expression.slice(dot+1)));
   }
   const where = filters.length ? ' where '+filters.join(' and ') : '';
   let sql;
@@ -240,7 +264,7 @@ async function fits(page, stage) {
 async function openProject(page, title) {
   await page.locator('#eq-projects').getByRole('button',{name:new RegExp(title)}).click();
 }
-function verifyRun(run, scenario) {
+function verifyRun(run, scenario, capability, outerElapsedNs) {
   assert.equal(run.scenario,scenario);
   assert.equal(run.status,'done');
   assert.equal(run.dataset_doi,doi);
@@ -249,6 +273,31 @@ function verifyRun(run, scenario) {
   assert.equal(run.result_sha256,pins[scenario][0]);
   assert.ok(Math.abs(run.held_out_mse-pins[scenario][1]) < 1e-9);
   assert.equal(run.folds,13);
+
+  const measured = run.execution;
+  const models = {
+    pooled:'5374cae4064179f0e65f0c5874220129955c426677bc6084fe0250d61e418ed2',
+    group_levels:'6e22a780cfd26067de53d7df5cde9ab74f56db5c93ebf01b66eb6939440eaf1b',
+    group_slopes:'f7bcc64b96eb31dcf31ed0e6c0ab73374b5c7c4da69b9d1eefa84808f5b28f9c'
+  };
+  assert.equal(measured.model_sha256,models[scenario]);
+  const code = readFileSync(join(root,'core/src/equiquant-kernel.mjs'));
+  assert.equal(measured.code_sha256,createHash('sha256').update(code).digest('hex'));
+  assert.equal(measured.spec_sha256,'f12502819b7a9769ea22ae6c0bbfc079b669b3cb4ede2c55513ae7bb3a53be62');
+  assert.equal(measured.target,target);
+  assert.equal(measured.backend,'node_cpu');
+  assert.equal(measured.precision,'binary64');
+  assert.equal(measured.node_version.replace(/^v/,''),process.versions.node);
+  assert.equal(measured.hardware_sha256,capability.hardware_sha256);
+  for (const field of ['code_sha256','spec_sha256','model_sha256','hardware_sha256']) {
+    assert.match(measured[field],/^[a-f0-9]{64}$/,field);
+  }
+  assert.ok(Number.isSafeInteger(measured.elapsed_ns) && measured.elapsed_ns>0 &&
+    BigInt(measured.elapsed_ns)<=outerElapsedNs,'Runtime must fit inside the independently timed Core cycle');
+  assert.equal(run.execution_verified,true,'Worker must verify the stored execution signature');
+  assert.ok(!Object.hasOwn(measured,'signing_public_key'),'Signing keys stay inside the verification boundary');
+  console.log('Observed '+measured.target+' '+measured.backend+' '+measured.precision+
+    ' on '+measured.node_version+' in '+(measured.elapsed_ns/1e6).toFixed(3)+' ms ('+scenario+')');
 }
 let browser;
 const realFetch = globalThis.fetch;
@@ -256,6 +305,9 @@ try {
   await seed();
   globalThis.fetch = isolatedFetch;
   const { runCoreCycle } = await import('../../core/src/runner.mjs');
+  const { refreshMosaicCapability, mosaicMachineSha256 } = await import('../../core/src/equiquant-runtime.mjs');
+  assert.equal(process.env.MCCLUSTER_EQUIQUANT_MACHINE_SHA256,mosaicMachineSha256(),
+    'Supply the machine fingerprint for the Prime computer designated for this rehearsal');
   browser = await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE || undefined,
     args:['--disable-background-networking','--disable-component-update','--host-resolver-rules=MAP * ~NOTFOUND']});
   const title = 'Sample project - MOSAiC deformation holdouts';
@@ -307,6 +359,37 @@ try {
   await collaborator.locator('#eq-toy-scale').selectOption('11.2');
   await collaborator.locator('#eq-dataset > summary').click();
   await collaborator.locator('.eq-toy > summary').click();
+  const beforeCapability = await api(member,'replay',project,{scenario:'pooled',target});
+  assert.ok([409,503].includes(beforeCapability.status),'The backend must verify the local target before queuing');
+  await refreshMosaicCapability();
+  assert.equal(observedCapability.hardware_sha256,mosaicMachineSha256());
+  const capabilities = await act(collaborator,'#eq-refresh','state');
+  const local = capabilities.targets.find(t=>t.id===target);
+  assert.ok(local?.available,'Expected the real local CPU self-check to establish eligibility');
+  // Simulate a single damaged transport response. The database and the real
+  // runner's attestation remain intact for the rest of this workflow.
+  distortNextState = state=>{ state.targets.find(t=>t.id===target).attestation.signature = 'damaged'; };
+  const changedTarget = await api(member,'replay',project,{scenario:'pooled',target});
+  assert.equal(changedTarget.status,409);
+  assert.equal(distortNextState,undefined);
+  const localChoice = collaborator.locator('#eq-target');
+  await localChoice.selectOption(target);
+  for (const remote of ['ovh_core','connected_inference']) {
+    const choice = capabilities.targets.find(t=>t.id===remote);
+    assert.equal(choice?.available,false);
+    assert.ok(choice.reason);
+    const option = localChoice.locator('option[value="'+remote+'"]');
+    const label = remote === 'ovh_core' ? 'Unavailable' : 'Unsupported';
+    assert.ok(await option.isDisabled());
+    assert.ok((await option.textContent()).includes(label));
+    const description = collaborator.locator('#eq-target-status li').filter({
+      hasText: remote === 'ovh_core' ? 'OVH Core' : 'Connected inference'
+    });
+    assert.ok((await description.textContent()).includes(label));
+    const refused = await api(member,'replay',project,{scenario:'pooled',target:remote});
+    assert.ok([400,409,503].includes(refused.status),remote+' must not be routable without a compatible capability');
+  }
+  assert.equal((await one('select count(*)::int as n from ops_agent_jobs')).n,0);
   const jobs = {};
   for (const scenario of Object.keys(pins)) {
     await collaborator.locator('#eq-scenario').selectOption(scenario);
@@ -314,14 +397,20 @@ try {
     const run = queued.runs.find(r=>r.scenario===scenario);
     assert.equal(run.status,'queued');
     jobs[scenario] = run.job_id;
+    const started = process.hrtime.bigint();
     assert.equal(await runCoreCycle(),true);
+    const outerElapsedNs = process.hrtime.bigint()-started;
     const updated = await act(collaborator,'#eq-refresh','state');
-    verifyRun(updated.runs.find(r=>r.job_id===run.job_id),scenario);
+    const receipt = updated.runs.find(r=>r.job_id===run.job_id);
+    verifyRun(receipt,scenario,observedCapability,outerElapsedNs);
+    const { output } = await one('select output from ops_agent_jobs where id=$1',[run.job_id]);
+    assert.equal(receipt.result_sha256,createHash('sha256').update(output.result_json).digest('hex'));
+    assert.ok(output.execution.signature && output.execution.signing_public_key,'Persisted output needs signed execution evidence');
     const row = await one('select status,attempts,input from ops_agent_jobs where id=$1',[run.job_id]);
-    assert.deepEqual(row,{status:'done',attempts:1,input:{scenario}});
+    assert.deepEqual(row,{status:'done',attempts:1,input:{scenario,target,hardware_sha256:observedCapability.hardware_sha256,node_version:process.versions.node}});
     console.log('PASS '+scenario+' held-out MSE '+pins[scenario][1]+', SHA-256 '+pins[scenario][0]);
   }
-  const retry = await api(member,'replay',project,{scenario:'group_levels'});
+  const retry = await api(member,'replay',project,{scenario:'group_levels',target});
   const repeats = (await retry.json()).runs.filter(r=>r.scenario==='group_levels');
   assert.deepEqual(repeats.map(r=>r.job_id),[jobs.group_levels]);
   assert.equal(await runCoreCycle(),false);
@@ -334,15 +423,46 @@ try {
   const comparison = collaborator.locator('#eq-comparison');
   await comparison.waitFor();
   assert.match(await comparison.innerText(),/0\.0?81|0\.33|0\.25/);
+  assert.match(await collaborator.locator('#eq-compare-time').innerText(),/Measured replay time.*First.*Second/);
+  const latest = await (await api(member,'state',project)).json();
+  const groupCount = await collaborator.locator('#eq-compare-context option').count();
+  assert.equal(groupCount,1,'All actual runs shared the tested Prime hardware');
+  // Presentation-only compatibility fixtures use a detached laboratory panel.
+  // No synthetic hardware is enrolled, run or submitted as scientific evidence.
+  const guards = await collaborator.evaluate(runs=>{
+    const panel = document.createElement('div');
+    const other = structuredClone(runs[0]);
+    other.job_id = 'different-hardware-fixture';
+    other.execution.hardware_sha256 = '0'.repeat(64);
+    const unverified = {...runs[1],job_id:'unverified-fixture',execution_verified:false};
+    window.EquityQuantizedLab.render(panel,{runs:[...runs,other,unverified]});
+    const select = panel.querySelector('#eq-compare-context');
+    const first = panel.querySelector('#eq-compare-a');
+    const real = [...first.options].map(s=>s.value);
+    select.selectedIndex=1;
+    select.dispatchEvent(new Event('change'));
+    return {groups:select.length,real,hidden:panel.querySelector('#eq-compare-fields').hidden,
+      comparisonTime:panel.querySelector('#eq-compare-time').textContent};
+  }, latest.runs);
+  assert.equal(guards.groups,2);
+  assert.deepEqual(guards.real.sort(),Object.values(jobs).sort());
+  assert.equal(guards.hidden,true);
+  assert.equal(guards.comparisonTime,'');
   await fits(collaborator,'Reloaded model comparison');
   const review = {job_id:jobs.group_levels,evidence_ids:[evidence.id],confirmed:true};
   assert.ok([403,404].includes((await api(member,'review',project,review)).status));
+  distortNextState = state=>{ state.runs.find(run=>run.job_id===review.job_id).execution.signature='damaged'; };
+  assert.equal((await api(owner,'review',project,review)).status,409);
+  assert.equal(distortNextState,undefined);
   await act(lead,'#eq-refresh','state');
   await lead.locator('#eq-review-run').selectOption(jobs.group_levels);
   await lead.locator('#eq-review-options input[type=checkbox]').first().check();
   await lead.locator('#eq-confirm').check();
   const reviewed = await act(lead,'#eq-review','review');
   assert.ok(reviewed.release);
+  distortNextState = state=>{ state.release.run.execution.signature='damaged'; };
+  assert.equal((await api(owner,'citation',project)).status,409);
+  assert.equal(distortNextState,undefined);
   const downloadPending = lead.waitForEvent('download');
   const exported = await act(lead,'#eq-citation','citation');
   const download = await downloadPending;
@@ -354,6 +474,10 @@ try {
   assert.ok(!text.includes(member.user.id));
   assert.ok(!text.includes('Compared held-out deformation estimates'), 'Evidence stays inside the project');
   assert.deepEqual(citation.author,[{literal:'Sample Contributor'}]);
+  const chosenExecution = reviewed.release.run.execution;
+  for (const key of ['target','precision','code_sha256','spec_sha256','model_sha256','hardware_sha256','elapsed_ns']) {
+    assert.ok(text.includes(String(chosenExecution[key])), 'Reviewed citation lacks '+key);
+  }
   await lead.reload();
   if (!await lead.locator('#eq-citation').isVisible()) await openProject(lead,title);
   await lead.locator('#eq-citation').waitFor();
@@ -372,6 +496,15 @@ try {
         const y = el.getBoundingClientRect().top + window.scrollY;
         window.scrollTo({top:Math.max(0,y-24),behavior:'instant'});
       });
+      const selector = lead.locator('#eq-target');
+      await selector.selectOption(target);
+      assert.equal(await selector.inputValue(),target);
+      assert.match(await selector.locator('option:checked').textContent(),/Prime/);
+      const capabilityDetails = lead.locator('#eq-target-status').locator('..');
+      if (!await capabilityDetails.evaluate(el=>el.open)) await capabilityDetails.locator('summary').click();
+      await anchor(lead.locator('label[for=eq-target]'));
+      await lead.screenshot({path:prefix+'-targets.png'});
+      await capabilityDetails.locator('summary').click();
       await anchor(lead.getByRole('heading',{name:'Saved project runs'}));
       await lead.screenshot({path:prefix+'-lab.png'});
       await anchor(lead.getByRole('heading',{name:'Release credits'}));
@@ -381,6 +514,9 @@ try {
     }
   }
   await db.exec('reset role');
+  const unrelated = await one("insert into ops_agent_jobs(org_id,job_type) values ($1,'lead_rescore') returning id",[org]);
+  assert.equal(await runCoreCycle(),false,'Prime research worker must leave ordinary Core jobs queued');
+  assert.equal((await one('select status from ops_agent_jobs where id=$1',[unrelated.id])).status,'queued');
   await assertResearchGuards(db,org);
   assert.deepEqual(errors,[]);
   console.log('PASS verified collaborator invite, self-consented evidence, three fenced Core jobs, separate owner review and downloaded citation. Disposable PostgreSQL, no hosted services.');

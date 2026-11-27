@@ -98,6 +98,29 @@
       Number.isFinite(run.held_out_mse);
   }
 
+  const targetNames = {
+    prime: "Prime / local", ovh_core: "OVH Core", connected_inference: "Connected inference"
+  };
+  const hash = value => typeof value === "string" && /^[a-f0-9]{64}$/i.test(value);
+  const present = value => typeof value === "string" && value.trim().length > 0;
+  function verifiedRun(run) {
+    // The server validates the signature and stores the receipt. Historical runs can
+    // still be read when they predate execution evidence.
+    if (!run) return false;
+    const ex = run.execution;
+    return run.execution_verified === true && run.status === "done" && completed(run) && ex && Object.hasOwn(targetNames, ex.target) &&
+      (run.target == null || ex.target === run.target) &&
+      [ex.hardware_sha256, ex.code_sha256, ex.spec_sha256, ex.model_sha256, run.observations_sha256].every(hash) &&
+      [ex.backend, ex.precision, ex.node_version,
+        run.dataset_doi, run.source_commit].every(present) &&
+      Number.isSafeInteger(ex.elapsed_ns) && ex.elapsed_ns > 0;
+  }
+
+  function timeText(ns) {
+    return ns < 1000 ? ns + " ns" : ns < 1000000 ? (ns / 1000).toFixed(2) + " μs" :
+      (ns / 1000000).toLocaleString(undefined, {maximumFractionDigits: 3}) + " ms";
+  }
+
   function renderReceipts(container, runs) {
     container.replaceChildren();
     if (!runs.length) {
@@ -107,29 +130,162 @@
     for (const run of runs) {
       const details = document.createElement("details");
       const summary = document.createElement("summary");
-      summary.textContent = modelName(run.scenario) + " · " + run.status +
-        (completed(run) ? " · score " + run.held_out_mse.toFixed(6) : "");
+      const requested = run.target || (verifiedRun(run) ? run.execution.target : null);
+      const name = Object.hasOwn(targetNames, requested) ? targetNames[requested] : null;
+      summary.textContent = [modelName(run.scenario), name, run.status].filter(Boolean).join(" · ");
       const dl = document.createElement("dl");
       addFact(dl, "Core job", run.job_id);
-      if (completed(run) && Number.isInteger(run.folds)) addFact(dl, "Held-out weeks scored", String(run.folds));
-      if (run.dataset_doi) addFact(dl, "Dataset DOI", run.dataset_doi);
-      if (run.source_commit) addFact(dl, "Pilot commit", run.source_commit);
-      if (run.observations_sha256) addFact(dl, "Derived observations SHA-256", run.observations_sha256);
-      if (run.result_sha256) addFact(dl, "Result SHA-256", run.result_sha256);
+      if (verifiedRun(run)) {
+        addFact(dl, "Held-out log MSE", run.held_out_mse.toFixed(6));
+        if (Number.isInteger(run.folds)) addFact(dl, "Held-out weeks scored", String(run.folds));
+        const ex = run.execution;
+        addFact(dl, "Measured replay time", timeText(ex.elapsed_ns));
+        addFact(dl, "Verified execution target", name);
+        addFact(dl, "Backend", ex.backend);
+        addFact(dl, "Arithmetic precision", ex.precision);
+        addFact(dl, "Runtime version", ex.node_version);
+        addFact(dl, "Hardware SHA-256", ex.hardware_sha256);
+        addFact(dl, "Model SHA-256", ex.model_sha256);
+        addFact(dl, "Code SHA-256", ex.code_sha256);
+        addFact(dl, "Experiment specification SHA-256", ex.spec_sha256);
+        addFact(dl, "Dataset DOI", run.dataset_doi);
+        addFact(dl, "Pilot commit", run.source_commit);
+        addFact(dl, "Derived observations SHA-256", run.observations_sha256);
+        addFact(dl, "Result SHA-256", run.result_sha256);
+      } else if (run.status === "unverified" || run.status === "done") {
+        addFact(dl, "Execution evidence", "This receipt could not be verified. Its score and timing are unavailable for comparison or citation.");
+      }
       details.append(summary, dl);
       container.append(details);
     }
   }
 
-  function render(container, { runs = [], dataset, onRun } = {}) {
+  function renderTargets(get, targets, previous, onRun) {
+    const select = get("eq-target");
+    const replay = get("eq-replay");
+    const allowed = new Map(targets.filter(target => target && Object.hasOwn(targetNames, target.id)).map(target => [target.id, target]));
+    select.append(option("", "Choose a target"));
+    const status = get("eq-target-status");
+    for (const [id, name] of Object.entries(targetNames)) {
+      const target = allowed.get(id);
+      const label = target?.label || name;
+      const enabled = target?.available === true;
+      const state = enabled ? "Available" : id === "connected_inference" ? "Unsupported" : "Unavailable";
+      const item = option(id, label + (enabled ? "" : " · " + state));
+      item.disabled = !enabled;
+      select.append(item);
+      const row = document.createElement("li");
+      row.textContent = label + " · " + state + ". " +
+        (target?.reason || (enabled ? "Verified for this experiment." : "Capability could not be verified."));
+      status.append(row);
+    }
+    // A refresh never substitutes another device if the chosen target goes away.
+    if (previous && Object.hasOwn(targetNames, previous)) select.value = previous;
+    const text = get("eq-target-capability");
+    function show() {
+      const target = allowed.get(select.value);
+      replay.disabled = typeof onRun !== "function" || target?.available !== true;
+      if (!select.value) {
+        text.textContent = [...allowed.values()].some(t => t.available === true) ? "Choose where to run the selected model." :
+          "No verified executor is currently available for this experiment.";
+      } else if (target?.available === true) {
+        text.textContent = [target.backend, target.precision, target.node_version].filter(Boolean).join(" · ") ||
+          "Verified for this experiment.";
+      } else {
+        text.textContent = target?.reason || "Capability could not be verified.";
+      }
+    }
+    select.addEventListener("change", show);
+    show();
+    replay.addEventListener("click", async () => {
+      const target = allowed.get(select.value);
+      if (target?.available !== true || !onRun) return;
+      replay.disabled = true;
+      try {
+        await onRun(get("eq-scenario").value, target.id);
+      } catch {
+        get("eq-lab-feedback").textContent = "The run could not be queued. Refresh the project to check its status.";
+      } finally {
+        show();
+      }
+    });
+  }
+
+  function renderComparison(get, runs, previous) {
+    const groups = new Map();
+    for (const run of runs.filter(verifiedRun)) {
+      const ex = run.execution;
+      // Model hashes may differ by design. All measurements, code, runtime and
+      // execution conditions must otherwise match for the held-out comparison.
+      const key = JSON.stringify([run.dataset_doi, run.source_commit, run.observations_sha256,
+        ex.target, ex.hardware_sha256, ex.backend, ex.precision, ex.node_version, ex.code_sha256, ex.spec_sha256]);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(run);
+    }
+    const context = get("eq-compare-context");
+    const first = get("eq-compare-a"), second = get("eq-compare-b");
+    const summary = get("eq-comparison");
+    if (!groups.size) {
+      get("eq-compare-settings").hidden = true;
+      summary.textContent = "Complete two verified runs on the same target, hardware and precision to compare scores.";
+      return;
+    }
+    for (const [key, entries] of groups) {
+      const ex = entries[0].execution;
+      context.append(option(key, [targetNames[ex.target], ex.precision, ex.hardware_sha256.slice(0, 8)].join(" · ")));
+    }
+    if (groups.has(previous.group)) context.value = previous.group;
+    function compare() {
+      get("eq-compare-time").textContent = "";
+      const entries = groups.get(context.value);
+      const a = entries.find(run => run.job_id === first.value);
+      const b = entries.find(run => run.job_id === second.value);
+      if (!a || !b || a.job_id === b.job_id) {
+        summary.textContent = "Choose two different runs with matching execution conditions.";
+        return;
+      }
+      const diff = b.held_out_mse - a.held_out_mse;
+      const verdict = diff === 0 ? "Both runs have the same held-out log MSE." :
+        "The " + (diff < 0 ? "second" : "first") + " run has lower held-out log MSE by " + Math.abs(diff).toFixed(6) + ".";
+      summary.textContent = "First " + a.held_out_mse.toFixed(6) + " · Second " + b.held_out_mse.toFixed(6) + ". " + verdict;
+      get("eq-compare-time").textContent = "Measured replay time · First " + timeText(a.execution.elapsed_ns) +
+        " · Second " + timeText(b.execution.elapsed_ns) + ".";
+    }
+    function chooseContext() {
+      const entries = groups.get(context.value);
+      first.replaceChildren();
+      second.replaceChildren();
+      get("eq-compare-time").textContent = "";
+      get("eq-compare-fields").hidden = entries.length < 2;
+      if (entries.length < 2) {
+        summary.textContent = "Only one verified run matches this execution context. Complete another model here to compare.";
+        return;
+      }
+      for (const run of entries) {
+        first.append(option(run.job_id, modelName(run.scenario)));
+        second.append(option(run.job_id, modelName(run.scenario)));
+      }
+      first.value = entries.find(run => run.job_id === previous.a)?.job_id ?? entries[0].job_id;
+      second.value = entries.find(run => run.job_id === previous.b && run.job_id !== first.value)?.job_id ??
+        entries.find(run => run.job_id !== first.value).job_id;
+      compare();
+    }
+    context.addEventListener("change", chooseContext);
+    first.addEventListener("change", compare);
+    second.addEventListener("change", compare);
+    chooseContext();
+  }
+
+  function render(container, { runs = [], dataset, targets, onRun } = {}) {
     const get = id => container.querySelector("#" + id);
     const previous = get("eq-scenario")?.value;
     const previousWeek = get("eq-observation")?.value;
     const datasetOpen = get("eq-dataset")?.open ?? false;
     const previousGroup = get("eq-toy-group")?.value;
     const previousScale = get("eq-toy-scale")?.value;
-    const previousA = get("eq-compare-a")?.value;
-    const previousB = get("eq-compare-b")?.value;
+    const previousTarget = get("eq-target")?.value;
+    const previousComparison = { group: get("eq-compare-context")?.value,
+      a: get("eq-compare-a")?.value, b: get("eq-compare-b")?.value };
     // The template is static. All project data enters the page through textContent.
     container.innerHTML = `
       <h2>Algorithms Lab</h2>
@@ -171,14 +327,22 @@
         week and excludes neighboring weeks and overlapping acquisitions from training.
         The median activity in the training weeks sets the cutoff between low and high activity.
         Lower mean squared log error across the held-out weeks is better.</p>
+      <label for="eq-target">Execution target</label>
+      <select id="eq-target" aria-describedby="eq-target-capability"></select>
+      <p id="eq-target-capability" aria-live="polite"></p>
+      <details><summary>Target capabilities</summary><ul id="eq-target-status"></ul></details>
       <button id="eq-replay" type="button">Queue selected model</button>
       <p id="eq-lab-feedback" role="status"></p>
       <h3>Saved project runs</h3><div id="eq-lab-runs"></div>
       <h3>Compare held-out scores</h3>
-      <div class="eq-lab-fields" id="eq-compare-fields">
+      <div id="eq-compare-settings">
+        <label for="eq-compare-context">Matched execution context</label>
+        <select id="eq-compare-context"></select>
+        <div class="eq-lab-fields" id="eq-compare-fields">
         <div><label for="eq-compare-a">First run</label><select id="eq-compare-a"></select></div>
         <div><label for="eq-compare-b">Second run</label><select id="eq-compare-b"></select></div>
-      </div><p id="eq-comparison" role="status"></p>`;
+        </div>
+      </div><p id="eq-comparison" role="status"></p><p id="eq-compare-time" aria-live="polite"></p>`;
 
     showDataset(get, dataset, previousWeek);
     get("eq-dataset").open = datasetOpen;
@@ -210,56 +374,10 @@
     }
     for (const field of [select, get("eq-toy-group"), get("eq-toy-scale")]) field.addEventListener("change", showModel);
     showModel();
-    const replay = get("eq-replay");
-    replay.disabled = typeof onRun !== "function";
-    replay.addEventListener("click", async () => {
-      replay.disabled = true;
-      try {
-        await onRun(select.value);
-      } catch {
-        get("eq-lab-feedback").textContent = "Could not queue this run. Refresh the project and check its saved runs before retrying.";
-      } finally {
-        replay.disabled = false;
-      }
-    });
-
+    renderTargets(get, Array.isArray(targets) ? targets : [], previousTarget, onRun);
     renderReceipts(get("eq-lab-runs"), runs);
-    const scored = runs.filter(completed);
-    const comparison = get("eq-comparison");
-    const fields = get("eq-compare-fields");
-    if (scored.length < 2) {
-      fields.hidden = true;
-      comparison.textContent = "Complete two project runs to compare their scores.";
-      return;
-    }
-    const first = get("eq-compare-a"), second = get("eq-compare-b");
-    for (const run of scored) {
-      const label = modelName(run.scenario);
-      first.append(option(run.job_id, label));
-      second.append(option(run.job_id, label));
-    }
-    first.value = scored.find(run => run.job_id === previousA)?.job_id ?? scored[0].job_id;
-    second.value = scored.find(run => run.job_id === previousB)?.job_id ?? scored.find(run => run.job_id !== first.value).job_id;
-    function compare() {
-      const a = scored.find(run => run.job_id === first.value);
-      const b = scored.find(run => run.job_id === second.value);
-      if (a.job_id === b.job_id) {
-        comparison.textContent = "Choose two different runs.";
-        return;
-      }
-      if (!["dataset_doi", "source_commit", "observations_sha256"].every(key => a[key] && a[key] === b[key])) {
-        comparison.textContent = "These runs use different or incomplete source records. Choose two runs from the same pilot revision.";
-        return;
-      }
-      const diff = b.held_out_mse - a.held_out_mse;
-      const verdict = diff === 0 ? "Both runs have the same score." :
-        "The " + (diff < 0 ? "second" : "first") + " run has lower held-out error by " + Math.abs(diff).toFixed(6) + ".";
-      comparison.textContent = "First " + a.held_out_mse.toFixed(6) + " · Second " + b.held_out_mse.toFixed(6) + ". " + verdict;
-    }
-    first.addEventListener("change", compare);
-    second.addEventListener("change", compare);
-    compare();
+    renderComparison(get, runs, previousComparison);
   }
 
-  window.EquityQuantizedLab = Object.freeze({render});
+  window.EquityQuantizedLab = Object.freeze({render, verifiedRun});
 })();

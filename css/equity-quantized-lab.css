@@ -1,6 +1,9 @@
 #eq-algorithms-lab { min-width: 0; overflow-wrap: anywhere; }
 #eq-algorithms-lab select { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; font-size: max(16px, 1em); }
 #eq-algorithms-lab label { display: block; }
+#eq-algorithms-lab h3 { margin-top: 1.2rem; }
+#eq-target-status { display: grid; gap: .35rem; padding-inline-start: 1.2rem; margin: 0 0 .7rem; }
+#eq-compare-time { margin-top: .35rem; color: var(--cream-dim); }
 #eq-algorithms-lab caption { text-align: start; padding-block: .5rem; }
 #eq-algorithms-lab table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 #eq-algorithms-lab th, #eq-algorithms-lab td { padding: .4rem .25rem; text-align: end; }

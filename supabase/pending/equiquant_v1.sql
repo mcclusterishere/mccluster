@@ -29,7 +29,7 @@ create table equiquant.research_credit_evidence (
   role text not null check (role in (
     'Conceptualization', 'Data curation', 'Formal analysis', 'Funding acquisition',
     'Investigation', 'Methodology', 'Project administration', 'Resources', 'Software',
-    'Supervision', 'Validation', 'Visualization', 'Writing – original draft', 'Writing – review & editing'
+    'Supervision', 'Validation', 'Visualization', 'Writing - original draft', 'Writing - review & editing'
   )),
   credit_name text not null check (length(credit_name) between 1 and 100),
   statement text not null check (length(statement) between 1 and 1000),
@@ -42,19 +42,93 @@ create table equiquant.research_credit_evidence (
 create table equiquant.mosaic_model_pins (
   scenario text primary key,
   result_sha256 text not null unique,
-  held_out_mse numeric not null
+  held_out_mse numeric not null,
+  model_sha256 text not null unique
 );
 insert into equiquant.mosaic_model_pins values
- ('pooled', '1ff244cbd378d568008aacb022beeddb4ddd3f56b1f1f8efdfdd7ddc56bfeddf', 0.3340546369),
- ('group_levels', '2c92416ed00303e53775306edfb97e3fd3ff725ff580e8cdc34015401b27b782', 0.2529111721),
- ('group_slopes', 'b0fe5ad9536b8681eae1eb1f1aadcb4df8d4e020abd6d0bd99bfbe631d9f9fa6', 0.2556166798);
+ ('pooled', '1ff244cbd378d568008aacb022beeddb4ddd3f56b1f1f8efdfdd7ddc56bfeddf', 0.3340546369, '5374cae4064179f0e65f0c5874220129955c426677bc6084fe0250d61e418ed2'),
+ ('group_levels', '2c92416ed00303e53775306edfb97e3fd3ff725ff580e8cdc34015401b27b782', 0.2529111721, '6e22a780cfd26067de53d7df5cde9ab74f56db5c93ebf01b66eb6939440eaf1b'),
+ ('group_slopes', 'b0fe5ad9536b8681eae1eb1f1aadcb4df8d4e020abd6d0bd99bfbe631d9f9fa6', 0.2556166798, 'f7bcc64b96eb31dcf31ed0e6c0ab73374b5c7c4da69b9d1eefa84808f5b28f9c');
+-- A runner publishes a signed self-test over the existing service-role channel.
+-- Browser credentials cannot register capabilities. The server dates their expiry.
+create table equiquant.mosaic_runner_capabilities (
+  worker_id text primary key,
+  target text not null check (target in ('prime','ovh_core')),
+  observed_at timestamptz not null,
+  attestation jsonb not null
+);
+create index equiquant_target_freshness on equiquant.mosaic_runner_capabilities(target, observed_at desc);
+
+create function equiquant.register_mosaic_capability(a jsonb) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  observed timestamptz;
+  hashes jsonb;
+begin
+  select jsonb_object_agg(scenario,model_sha256) into hashes from equiquant.mosaic_model_pins;
+  if jsonb_typeof(a) is distinct from 'object' or octet_length(a::text)>8192
+     or a - array['target','backend','precision','hardware_sha256','code_sha256','spec_sha256',
+                  'observations_sha256','model_hashes','node_version','worker_id','signing_public_key',
+                  'signature','observed_at'] <> '{}'::jsonb
+     or coalesce(a->>'target','') not in ('prime','ovh_core')
+     or a->>'backend' is distinct from 'node_cpu' or a->>'precision' is distinct from 'binary64'
+     or a->>'code_sha256' is distinct from '52ad9f8d364159868b83532e1f811d92653a8e2ae199d791d28119592ac9b21e'
+     or a->>'spec_sha256' is distinct from 'f12502819b7a9769ea22ae6c0bbfc079b669b3cb4ede2c55513ae7bb3a53be62'
+     or a->>'observations_sha256' is distinct from '6539910bd6218f85f8a2bd436ca73f544e722f2d207e8c6c3098d371c37f4c63'
+     or a->'model_hashes' is distinct from hashes
+     or coalesce(a->>'hardware_sha256','') !~ '^[0-9a-f]{64}$'
+     or coalesce(a->>'worker_id','') !~ '^[A-Za-z0-9_.:-]{1,160}$'
+     or coalesce(a->>'node_version','') !~ '^[0-9]+[.][0-9]+[.][0-9]+$'
+     or coalesce(a->>'signing_public_key','') !~ '^[A-Za-z0-9_-]{59}$'
+     or coalesce(a->>'signature','') !~ '^[A-Za-z0-9_-]{86}$'
+     or coalesce(a->>'observed_at','') !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z$'
+  then raise exception using errcode='PT400',message='Target did not attest the pinned model, specification and precision'; end if;
+  observed := (a->>'observed_at')::timestamptz;
+  if observed < clock_timestamp()-interval '120 seconds' or observed > clock_timestamp()+interval '5 seconds' then
+    raise exception using errcode='PT409',message='Request a fresh target self-test';
+  end if;
+  insert into equiquant.mosaic_runner_capabilities(worker_id,target,observed_at,attestation)
+    values(a->>'worker_id',a->>'target',observed,a)
+    on conflict(worker_id) do update set target=excluded.target,observed_at=excluded.observed_at,attestation=excluded.attestation
+    where equiquant.mosaic_runner_capabilities.observed_at < excluded.observed_at
+       or equiquant.mosaic_runner_capabilities.attestation = excluded.attestation;
+  if not found then raise exception using errcode='PT409',message='A newer target self-test is registered'; end if;
+  return jsonb_build_object('ok',true);
+end $$;
+
+create function public.equiquant_attest_target(p_attestation jsonb) returns jsonb
+language sql security invoker set search_path = '' as $$
+  select equiquant.register_mosaic_capability(p_attestation)
+$$;
+
+create function equiquant.mosaic_target_choices(p_org uuid) returns jsonb
+language sql stable set search_path = '' as $$
+  select jsonb_agg(jsonb_build_object('id',t.id,'label',t.label,'available',c.attestation is not null,
+    'reason',case when t.id='connected_inference' then 'The inference service does not run this binary64 experiment.'
+                  when o.id is null then 'Core replay is unavailable for this workspace.'
+                  when c.attestation is null then 'No fresh self-test for this experiment and precision.'
+                  else 'Verified for the pinned binary64 experiment.' end)
+    || case when c.attestation is null then '{}'::jsonb else jsonb_build_object(
+        'attestation',c.attestation,'backend',c.attestation->'backend','precision',c.attestation->'precision',
+        'hardware_sha256',c.attestation->'hardware_sha256','node_version',c.attestation->'node_version') end order by t.pos)
+  from (values (1,'prime','Prime / local'),(2,'ovh_core','OVH Core'),(3,'connected_inference','Connected inference')) t(pos,id,label)
+    left join public.orgs o on o.id=p_org and o.enabled and o.slug='mccluster'
+    left join lateral (select attestation from equiquant.mosaic_runner_capabilities
+       where target=t.id and o.id is not null and observed_at >= statement_timestamp()-interval '120 seconds'
+       order by observed_at desc,worker_id limit 1) c on true
+$$;
+
 create table equiquant.research_replay_jobs (
   job_id uuid primary key,
   project_id uuid not null references equiquant.research_projects(id),
   scenario text not null references equiquant.mosaic_model_pins,
+  target text not null check (target in ('prime','ovh_core')),
+  hardware_sha256 text not null,
+  node_version text not null,
+  claim_attestation jsonb,
   created_at timestamptz not null default now()
 );
-create index equiquant_runs_by_project on equiquant.research_replay_jobs(project_id, scenario, created_at desc);
+create index equiquant_runs_by_project on equiquant.research_replay_jobs(project_id, target, scenario, hardware_sha256, node_version, created_at desc);
 create table equiquant.research_result_receipts (
   job_id uuid primary key references equiquant.research_replay_jobs,
   snapshot jsonb not null,
@@ -77,6 +151,33 @@ create trigger immutable_credit_review before update or delete on equiquant.rese
 create trigger immutable_attestation before update or delete on equiquant.research_credit_evidence
   for each row execute function equiquant.reject_research_record_edit();
 
+-- Bind an actual lease issuer to its fresh, matching self-test when claiming.
+-- Reclaim may select a new process key on the same hardware and Node runtime.
+create function equiquant.bind_mosaic_runner() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare
+  r equiquant.research_replay_jobs;
+  a jsonb;
+begin
+  select * into r from equiquant.research_replay_jobs where job_id=new.id;
+  if not found or new.locked_by is null or new.locked_by !~ '^[^#]+#[^#]+$' then
+    raise exception using errcode='PT409',message='The requested target is unavailable for this lease';
+  end if;
+  select c.attestation into a from equiquant.mosaic_runner_capabilities c
+    where c.worker_id=split_part(new.locked_by,'#',1) and c.target=r.target
+      and c.attestation->>'hardware_sha256'=r.hardware_sha256 and c.attestation->>'node_version'=r.node_version
+      and c.observed_at>=clock_timestamp()-interval '120 seconds' for share;
+  if not found or new.input is distinct from jsonb_build_object(
+       'scenario',r.scenario,'target',r.target,'hardware_sha256',r.hardware_sha256,'node_version',r.node_version) then
+    raise exception using errcode='PT409',message='The requested target is unavailable for this lease';
+  end if;
+  update equiquant.research_replay_jobs set claim_attestation=a where job_id=new.id;
+  return new;
+end $$;
+create trigger equiquant_bind_replay_claim before update of status on public.ops_agent_jobs
+  for each row when (new.job_type='equiquant_mosaic_replay' and new.status='running' and old.status='queued')
+  execute function equiquant.bind_mosaic_runner();
+
 -- The existing runner writes its lease-fenced completion. The same transaction
 -- snapshots only a bound job and independently hashes the actual result bytes.
 create function equiquant.capture_mosaic_receipt() returns trigger language plpgsql
@@ -84,16 +185,29 @@ security definer set search_path = '' as $$
 declare
   model equiquant.mosaic_model_pins;
   result_text text := new.output->>'result_json';
+  a jsonb;
+  execution jsonb := new.output->'execution';
   doi constant text := '10.1594/PANGAEA.958449';
   source_sha constant text := '523112ddbcd2b9dfcc16891437f83a5781d045fb';
   observations_sha constant text := '6539910bd6218f85f8a2bd436ca73f544e722f2d207e8c6c3098d371c37f4c63';
 begin
+  select r.claim_attestation into a from equiquant.research_replay_jobs r where r.job_id=new.id;
   select m.* into model from equiquant.research_replay_jobs r
     join equiquant.research_projects p on p.id=r.project_id
     join equiquant.mosaic_model_pins m on m.scenario=r.scenario
     where r.job_id=new.id and p.org_id=new.org_id and p.id::text=new.target_id
-      and new.target_type='equiquant_project' and new.input=jsonb_build_object('scenario',r.scenario);
+      and new.target_type='equiquant_project' and new.input=jsonb_build_object('scenario',r.scenario,'target',r.target,'hardware_sha256',r.hardware_sha256,'node_version',r.node_version);
   if not found or old.status is distinct from 'running' or old.locked_by is null or old.attempts < 1
+     or a is null or a->>'worker_id' is distinct from split_part(old.locked_by,'#',1)
+     or jsonb_typeof(execution) is distinct from 'object'
+     or execution - array['target','backend','precision','hardware_sha256','code_sha256','spec_sha256',
+                         'model_sha256','node_version','worker_id','signing_public_key','elapsed_ns','signature'] <> '{}'::jsonb
+     or (execution - array['elapsed_ns','signature','model_sha256']) is distinct from
+        (a - array['model_hashes','observations_sha256','observed_at','signature'])
+     or execution->>'model_sha256' is distinct from model.model_sha256
+     or coalesce(execution->>'signature','') !~ '^[A-Za-z0-9_-]{86}$'
+     or jsonb_typeof(execution->'elapsed_ns') is distinct from 'number'
+     or coalesce(execution->>'elapsed_ns','') !~ '^[1-9][0-9]{0,14}$'
      or new.output->>'scenario' is distinct from model.scenario
      or new.output->>'dataset_doi' is distinct from doi
      or new.output->>'source_commit' is distinct from source_sha
@@ -111,6 +225,7 @@ begin
   insert into equiquant.research_result_receipts(job_id,snapshot,result_json)
     values(new.id,jsonb_build_object('job_id',new.id,'scenario',model.scenario,'status','done',
       'dataset_doi',doi,'source_commit',source_sha,'observations_sha256',observations_sha,
+      'target',a->'target','hardware_sha256',a->'hardware_sha256','execution',execution,'attestation',a,
       'result_sha256',model.result_sha256,'held_out_mse',model.held_out_mse,'folds',13),result_text);
   return new;
 end $$;
@@ -144,9 +259,13 @@ end $$;
 
 
 -- No private title, identity, invite, or credit statement enters the shared queue.
-create function equiquant.request_mosaic_replay(p_project uuid,p_org uuid,p_scenario text) returns void
-language plpgsql set search_path = '' as $$
-declare new_job uuid;
+create function equiquant.request_mosaic_replay(p_project uuid,p_org uuid,p_scenario text,p_target text,p_signature text)
+returns void language plpgsql set search_path = '' as $$
+declare
+  new_job uuid;
+  capability jsonb;
+  hardware text;
+  runtime_version text;
 begin
   if not exists (select 1 from equiquant.mosaic_model_pins where scenario=p_scenario) then
     raise exception using errcode='PT400',message='Choose a supported sea-ice model';
@@ -154,18 +273,30 @@ begin
   if not exists (select 1 from public.orgs where id=p_org and slug='mccluster' and enabled is true) then
     raise exception using errcode='PT409',message='Core replay is unavailable for this workspace';
   end if;
-  -- The caller holds the project lock. Repeated submissions share a live or
-  -- completed job. After a terminal failure the new job gets its own identity.
+  -- The Worker verified this signed self-test. Match it again inside the
+  -- enqueue transaction. A stale token cannot select a different runtime.
+  select attestation into capability from equiquant.mosaic_runner_capabilities
+    where target=p_target and attestation->>'signature'=p_signature
+      and observed_at>=clock_timestamp()-interval '120 seconds' for share;
+  if not found then
+    raise exception using errcode='PT409',message='A fresh, compatible target self-test is required. Refresh and try again.';
+  end if;
+  hardware := capability->>'hardware_sha256';
+  runtime_version := capability->>'node_version';
+  -- The project lock serializes submissions for the same target/model/runtime.
+  -- Hardware and runtime changes must produce another measurement.
   if exists (select 1 from equiquant.research_replay_jobs r left join public.ops_agent_jobs j on j.id=r.job_id
              left join equiquant.research_result_receipts c on c.job_id=r.job_id
-             where r.project_id=p_project and r.scenario=p_scenario
+             where r.project_id=p_project and r.scenario=p_scenario and r.target=p_target
+               and r.hardware_sha256=hardware and r.node_version=runtime_version
                and (c.job_id is not null or j.status in ('queued','running'))) then
     return;
   end if;
   insert into public.ops_agent_jobs(org_id,job_type,target_type,target_id,input)
     values(p_org,'equiquant_mosaic_replay','equiquant_project',p_project::text,
-           jsonb_build_object('scenario',p_scenario)) returning id into new_job;
-  insert into equiquant.research_replay_jobs(job_id,project_id,scenario) values(new_job,p_project,p_scenario);
+           jsonb_build_object('scenario',p_scenario,'target',p_target,'hardware_sha256',hardware,'node_version',runtime_version)) returning id into new_job;
+  insert into equiquant.research_replay_jobs(job_id,project_id,scenario,target,hardware_sha256,node_version)
+    values(new_job,p_project,p_scenario,p_target,hardware,runtime_version);
 end $$;
 
 -- All credit IDs are selected explicitly and their order becomes citation order.
@@ -183,7 +314,7 @@ begin
     raise exception using errcode='PT400',message='Confirm the credit review and select evidence';
   end if;
   if jsonb_array_length(requested) not between 1 and 100 or job is null then
-    raise exception using errcode='PT400',message='Select one completed run and 1–100 credit records';
+    raise exception using errcode='PT400',message='Select one completed run and 1-100 credit records';
   end if;
   select snapshot into prior from equiquant.research_release_credits where project_id=p_project.id;
   if found then
@@ -219,12 +350,14 @@ returns jsonb language sql stable set search_path = '' as $$
   select jsonb_build_object(
     'project',jsonb_build_object('id',p_project.id,'title',p_project.title,
       'owner_id',p_project.owner_id,'membership',p_membership),
+    'targets',equiquant.mosaic_target_choices(p_project.org_id),
     'members',coalesce((select jsonb_agg(to_jsonb(m)-'project_id' order by m.profile_id)
       from equiquant.research_project_members m where m.project_id=p_project.id),'[]'::jsonb),
     'evidence',coalesce((select jsonb_agg(to_jsonb(e)-'project_id' order by e.consented_at,e.id)
       from equiquant.research_credit_evidence e where e.project_id=p_project.id),'[]'::jsonb),
     'runs',coalesce((select jsonb_agg(coalesce(c.snapshot,jsonb_build_object(
-      'job_id',r.job_id,'scenario',r.scenario,'status',coalesce(j.status,'unavailable')))
+      'job_id',r.job_id,'scenario',r.scenario,'target',r.target,'hardware_sha256',r.hardware_sha256,
+      'node_version',r.node_version,'status',coalesce(j.status,'unavailable')))
       order by r.created_at,r.job_id) from equiquant.research_replay_jobs r
       left join public.ops_agent_jobs j on j.id=r.job_id
       left join equiquant.research_result_receipts c on c.job_id=r.job_id where r.project_id=p_project.id),'[]'::jsonb),
@@ -259,7 +392,7 @@ begin
     when 'list' then array[]::text[] when 'create' then array['title']
     when 'state' then array[]::text[] when 'invite' then array['profile_id']
     when 'accept' then array[]::text[] when 'evidence' then array['role','credit_name','statement','consent']
-    when 'replay' then array['scenario'] when 'review' then array['evidence_ids','confirmed','job_id'] end;
+    when 'replay' then array['scenario','target','capability_signature'] when 'review' then array['evidence_ids','confirmed','job_id'] end;
   if allowed_keys is null or jsonb_typeof(p_data) is distinct from 'object'
      or p_data - allowed_keys <> '{}'::jsonb then
     raise exception using errcode='PT400',message='Unsupported research action or fields';
@@ -275,7 +408,7 @@ begin
       raise exception using errcode='PT403',message='Workspace owner or staff access required to create a project';
     end if;
     if jsonb_typeof(p_data->'title') is distinct from 'string' or length(project_title) not between 1 and 160 then
-      raise exception using errcode='PT400',message='Enter a project title of 1–160 characters';
+      raise exception using errcode='PT400',message='Enter a project title of 1-160 characters';
     end if;
     p_project := coalesce(p_project,gen_random_uuid());
     insert into equiquant.research_projects(id,org_id,owner_id,title) values(p_project,p_org,p_actor,project_title)
@@ -334,7 +467,7 @@ begin
       raise exception using errcode='PT400',message='Choose a supported CRediT role';
     end;
   when 'replay' then
-    perform equiquant.request_mosaic_replay(p_project,p_org,p_data->>'scenario');
+    perform equiquant.request_mosaic_replay(p_project,p_org,p_data->>'scenario',p_data->>'target',p_data->>'capability_signature');
   when 'review' then
     perform equiquant.freeze_project_credits(project,p_actor,p_data);
   else null;
@@ -352,13 +485,15 @@ $$;
 alter table equiquant.research_projects enable row level security;
 alter table equiquant.research_project_members enable row level security;
 alter table equiquant.mosaic_model_pins enable row level security;
+alter table equiquant.mosaic_runner_capabilities enable row level security;
 alter table equiquant.research_credit_evidence enable row level security;
 alter table equiquant.research_replay_jobs enable row level security;
 alter table equiquant.research_result_receipts enable row level security;
 alter table equiquant.research_release_credits enable row level security;
 revoke all on all tables in schema equiquant from public, anon, authenticated, service_role;
 revoke all on all functions in schema equiquant from public, anon, authenticated, service_role;
-revoke all on function public.equiquant_action(uuid,uuid,text,uuid,jsonb) from public, anon, authenticated;
-grant execute on function equiquant.apply_project_action(uuid,uuid,text,uuid,jsonb),
+revoke all on function public.equiquant_attest_target(jsonb),public.equiquant_action(uuid,uuid,text,uuid,jsonb) from public, anon, authenticated;
+grant execute on function equiquant.register_mosaic_capability(jsonb),public.equiquant_attest_target(jsonb),
+  equiquant.apply_project_action(uuid,uuid,text,uuid,jsonb),
   public.equiquant_action(uuid,uuid,text,uuid,jsonb) to service_role;
 commit;

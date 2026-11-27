@@ -1,5 +1,7 @@
 /* Keep validation and keyboard focus aligned with the visible private form. */
 html { scroll-behavior: auto; }
+/* The shared Profile chip keeps its dark fill on the light coat. */
+body:has(> .eq-workspace) #mccAuthChip { color: #f4efe6; }
 .eq-workspace {
   max-width: 72rem;
   margin: auto;

@@ -1,3 +1,4 @@
+import { verifyMosaicExecution } from './equiquant-verify.mjs';
 import { MOSAIC_SOURCE, MOSAIC_EXECUTOR, replaySelection } from './equiquant-mosaic-contract.mjs';
 import { createHash } from 'node:crypto';
 
@@ -357,6 +358,11 @@ function policyEvidence(job, output) {
       requireValue(job, output.held_out_mse === heldOutMse && output.folds === 13, 'replay score mismatch');
       requireValue(job, typeof output.result_json === 'string' && output.result_sha256 === resultSha256 &&
         createHash('sha256').update(output.result_json).digest('hex') === resultSha256, 'replay result mismatch');
+      if (job.input.target) {
+        requireValue(job, verifyMosaicExecution(job, output.execution), 'invalid target execution receipt');
+      } else {
+        requireValue(job, output.execution === undefined, 'legacy replay cannot attest a target');
+      }
       records.push({ kind: 'equiquant_replay', project_id: job.target_id, scenario, ...MOSAIC_SOURCE, result_sha256: resultSha256 });
       break;
     }

@@ -133,6 +133,7 @@
     else projects[index] = project;
     paintProject(project);
     const runs = state.runs || [];
+    const targets = Array.isArray(state.targets) ? state.targets.filter(target => target?.id) : [];
     const canReview = project.membership === 'owner' && ['owner', 'staff'].includes(active.role);
     byId('invite-form').hidden = !canReview;
     const names = new Map(state.evidence.map(entry => [entry.profile_id, entry.credit_name]));
@@ -149,16 +150,27 @@
       return entry;
     });
     window.EquityQuantizedLab.render(byId('algorithms-lab'), {
-      runs, dataset: state.dataset, onRun: scenario => mutate('replay', { scenario }, 'Replay request recorded.')
+      runs, dataset: state.dataset, targets,
+      onRun: (scenario, target) => mutate('replay', { scenario, target }, 'Replay request recorded.')
     });
-    const completed = runs.filter(run => run.result_sha256 && run.status === 'done');
+    const completed = runs.filter(window.EquityQuantizedLab.verifiedRun);
     const release = state.release;
     byId('review-form').hidden = !canReview || !!release || !completed.length || !state.evidence.length;
     byId('release').hidden = !release;
-    byId('release-status').textContent = release ? 'Private release credits approved.' :
+    const verifiedRelease = release && window.EquityQuantizedLab.verifiedRun(release.run);
+    byId('citation').hidden = !verifiedRelease;
+    byId('release-status').textContent = release ?
+      (verifiedRelease ? 'Private release credits approved.' :
+        'Historical release credits. This record lacks verified execution evidence for a citation export.') :
       'The project owner can approve selected contributions after a replay completes.';
-    byId('review-run').replaceChildren(...completed.map(run =>
-      new Option((scenarioNames[run.scenario] || run.scenario) + ' · ' + run.result_sha256.slice(0, 12), run.job_id)));
+    const targetLabel = id => targets.find(target => target.id === id)?.label || id;
+    byId('review-run').replaceChildren(...completed.map(run => {
+      const ex = run.execution;
+      const label = [scenarioNames[run.scenario] || run.scenario, targetLabel(ex.target), ex.precision];
+      const alternatives = completed.filter(other => other.scenario === run.scenario && other.execution.target === ex.target);
+      if (alternatives.length > 1) label.push(ex.hardware_sha256.slice(0, 10), run.job_id.slice(0, 8));
+      return new Option(label.join(' · '), run.job_id);
+    }));
     byId('review-options').replaceChildren();
     byId('confirm').checked = false;
     for (const evidence of state.evidence) {
@@ -177,6 +189,10 @@
     record.replaceChildren();
     for (const [term, value] of [
       ['Reviewed by', release.reviewed_by], ['Reviewed at', release.reviewed_at],
+      ['Selected model', scenarioNames[release.run.scenario] || release.run.scenario],
+      ...(verifiedRelease ? [['Verified execution target', targetLabel(release.run.execution.target)],
+        ['Arithmetic precision', release.run.execution.precision]] : []),
+      ['Core job', release.run.job_id],
       ['Dataset DOI', release.run.dataset_doi], ['Source commit', release.run.source_commit],
       ['Observations SHA-256', release.run.observations_sha256], ['Result SHA-256', release.run.result_sha256]
     ]) record.append(make('dt', term), make('dd', value));

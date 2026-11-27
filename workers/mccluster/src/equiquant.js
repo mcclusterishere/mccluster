@@ -1,5 +1,6 @@
 import observations from '../../../core/data/equiquant/observations.json' with { type: 'json' };
 import { MOSAIC_SOURCE } from '../../../core/src/equiquant-mosaic-contract.mjs';
+import { displayProject, targetAvailable, verifiedRun } from './equiquant-verification.js';
 import { fail, reply } from './lib/http.js';
 import { requireMembership } from './workspaces.js';
 
@@ -24,7 +25,7 @@ const isId = value => typeof value === 'string' && UUID.test(value);
 const ACTION_FIELDS = new Map(Object.entries({
   list: [], state: [], create: ['title'], invite: ['profile_id'], accept: [],
   evidence: ['role', 'credit_name', 'statement', 'consent'],
-  replay: ['scenario'], review: ['evidence_ids', 'confirmed', 'job_id'], citation: []
+  replay: ['scenario', 'target'], review: ['evidence_ids', 'confirmed', 'job_id'], citation: []
 }));
 
 const SCENARIOS = ['pooled', 'group_levels', 'group_slopes'];
@@ -76,6 +77,7 @@ async function parseInput(request) {
   }
   if (!onlyFields(data, ACTION_FIELDS.get(action))) throw problem('Unexpected action fields.');
   if (action === 'replay' && !SCENARIOS.includes(data.scenario)) throw problem('Choose an available model.');
+  if (action === 'replay' && !['prime', 'ovh_core', 'connected_inference'].includes(data.target)) throw problem('Choose an execution target.');
   if (action === 'invite' && !isId(data.profile_id)) throw problem('Enter a workspace member profile ID.');
   if (action === 'review' && (!isId(data.job_id) || !Array.isArray(data.evidence_ids) ||
       !data.evidence_ids.length || !data.evidence_ids.every(isId) || data.confirmed !== true)) {
@@ -108,10 +110,37 @@ function citationExport(release) {
         'MOSAiC pilot commit ' + run.source_commit,
         'Observations SHA-256 ' + run.observations_sha256,
         'Model ' + run.scenario + ', Core job ' + run.job_id,
-        'Result SHA-256 ' + run.result_sha256
+        'Result SHA-256 ' + run.result_sha256,
+        'Model SHA-256 ' + run.execution.model_sha256,
+        'Executor code SHA-256 ' + run.execution.code_sha256,
+        'Experiment spec SHA-256 ' + run.execution.spec_sha256,
+        'Target ' + run.execution.target + ', backend ' + run.execution.backend + ', precision ' + run.execution.precision,
+        'Hardware SHA-256 ' + run.execution.hardware_sha256 + ', Node ' + run.execution.node_version,
+        'Measured refit runtime ' + run.execution.elapsed_ns + ' ns'
       ].join('. ') + '.'
     }
   };
+}
+
+async function projectAction(env, user, input, action, data = {}) {
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
+  const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/equiquant_action', {
+    method: 'POST',
+    headers: { apikey: key, authorization: 'Bearer ' + key, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      p_actor: user.id, p_org: input.org_id, p_project: input.project_id,
+      p_action: action, p_data: data
+    })
+  });
+  const result = await res.json().catch(() => null);
+  if (!res.ok || !result) {
+    const code = result?.code;
+    // PT4xx denotes a deliberately raised business error with a safe message.
+    if (/^PT4\d\d$/.test(code)) throw problem(result.message, Number(code.slice(2)));
+    const [status, message] = Object.hasOwn(DB_ERRORS, code) ? DB_ERRORS[code] : [503, 'The research workspace is unavailable.'];
+    throw problem(message, status);
+  }
+  return result;
 }
 
 export async function handleEquiquant(request, env, authenticate) {
@@ -123,26 +152,30 @@ export async function handleEquiquant(request, env, authenticate) {
     if (env.EQUIQUANT_ENABLED !== 'true') throw problem('The research workspace is unavailable.', 503);
     const input = await parseInput(request);
     await requireMembership(env, user, input.org_id);
-    const key = env.SUPABASE_SERVICE_ROLE_KEY;
-    const res = await fetch(env.SUPABASE_URL + '/rest/v1/rpc/equiquant_action', {
-      method: 'POST',
-      headers: { apikey: key, authorization: 'Bearer ' + key, 'content-type': 'application/json' },
-      body: JSON.stringify({
-        p_actor: user.id, p_org: input.org_id, p_project: input.project_id,
-        p_action: input.action === 'citation' ? 'state' : input.action, p_data: input.data
-      })
-    });
-    const result = await res.json().catch(() => null);
-    if (!res.ok || !result) {
-      const code = result?.code;
-      // PT4xx denotes a deliberately raised business error with a safe message.
-      if (/^PT4\d\d$/.test(code)) throw problem(result.message, Number(code.slice(2)));
-      const [status, message] = Object.hasOwn(DB_ERRORS, code) ? DB_ERRORS[code] : [503, 'The research workspace is unavailable.'];
-      throw problem(message, status);
+    let data = input.data;
+    if (input.action === 'review' || input.action === 'replay') {
+      const state = await projectAction(env, user, input, 'state');
+      if (input.action === 'review') {
+        const selected = state.runs?.find(run => run.job_id === data.job_id);
+        if (!await verifiedRun(selected, input.org_id, input.project_id)) {
+          throw problem('Choose a completed run with a verified execution receipt.', 409);
+        }
+      } else {
+        const selected = state.targets?.find(target => target.id === data.target);
+        if (!await targetAvailable(selected)) throw problem('Unsupported target for this model and precision.', 409);
+        data = { ...data, capability_signature: selected.attestation.signature };
+      }
     }
+    const result = await projectAction(env, user, input, input.action === 'citation' ? 'state' : input.action, data);
     let payload = result;
-    if (input.action === 'citation') payload = citationExport(result.release);
-    else if (['owner', 'member'].includes(result.project?.membership)) payload = { ...result, dataset };
+    if (input.action === 'citation') {
+      if (!await verifiedRun(result.release?.run, input.org_id, input.project_id)) {
+        throw problem('A reviewed release with a verified execution receipt is required.', 409);
+      }
+      payload = citationExport(result.release);
+    } else if (['owner', 'member'].includes(result.project?.membership)) {
+      payload = { ...(await displayProject(result, input.org_id)), dataset };
+    }
     response = reply(request, env, payload);
   } catch (error) {
     response = fail(request, env, error.status < 500 ? error.message : 'The research workspace is unavailable.', error.status || 503);

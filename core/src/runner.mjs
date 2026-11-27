@@ -1,4 +1,5 @@
 import { pathToFileURL } from 'node:url';
+import { refreshMosaicCapability } from './equiquant-runtime.mjs';
 import { equiquantMosaicReplay } from './executors/equiquant-mosaic-replay.mjs';
 import { claimNext, completeJob, failJob, heartbeat, workerId } from './supabase.mjs';
 import { prepareClaimedDagJob } from './objective-dag-store.mjs';
@@ -165,7 +166,14 @@ async function execute(job) {
 }
 
 export async function runCoreCycle() {
-  const claimed = await claimNext([...executors.keys()]);
+  const configuredTarget = process.env.MCCLUSTER_EQUIQUANT_TARGET;
+  const capability = await refreshMosaicCapability().catch(error => {
+    log('equiquant_capability_unavailable', { message: error.message });
+    return null;
+  });
+  const claimed = await claimNext([...executors.keys()], {
+    capability, mosaicOnly: Boolean(configuredTarget && configuredTarget !== 'ovh_core'),
+  });
   if (!claimed) return false;
 
   const prepared = await prepareClaimedDagJob(claimed);

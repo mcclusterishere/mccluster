@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readMosaicInputs, measuredMosaicFit } from '../src/equiquant-refit.mjs';
+import { MOSAIC_EXECUTOR, MOSAIC_SOURCE } from '../src/equiquant-mosaic-contract.mjs';
 import { equiquantMosaicReplay } from '../src/executors/equiquant-mosaic-replay.mjs';
 import { assertCompletionEvidence, buildCompletionEvidence } from '../src/completion-evidence.mjs';
 import { notifyJobSuccess, notifyJobFailure } from '../src/notifier.mjs';
@@ -21,7 +23,9 @@ const expected = {
 for (const [scenario, [mse, digest]] of Object.entries(expected)) {
   test(`MOSAiC ${scenario} reproduces the reference scores and folds`, async () => {
     const claimed = { ...job, input: { scenario } };
-    const replay = await equiquantMosaicReplay(claimed);
+    const observations = await readMosaicInputs();
+    const { elapsedNs, modelSha256, ...resultFields } = measuredMosaicFit(observations, scenario);
+    const replay = { executor: MOSAIC_EXECUTOR, ...MOSAIC_SOURCE, scenario, ...resultFields };
     assert.equal(replay.held_out_mse, mse);
     assert.equal(replay.result_sha256, digest);
     const result = JSON.parse(replay.result_json);
@@ -29,7 +33,7 @@ for (const [scenario, [mse, digest]] of Object.entries(expected)) {
     for (const name of ['primary', 'strict_coverage', 'shift_8_cells', 'swap_sides']) {
       assert.equal(result.configurations[name].folds.length, 13);
     }
-    assert.deepEqual(replay, await equiquantMosaicReplay({ ...claimed, attempts: 2 }));
+    assert.equal(measuredMosaicFit(observations, scenario).result_sha256, digest);
     const output = buildCompletionEvidence(claimed, replay);
     assert.equal(assertCompletionEvidence(claimed, output), true);
     assert.throws(() => buildCompletionEvidence(claimed, { ...replay, result_json: '{}' }), /result mismatch/);
@@ -44,7 +48,8 @@ test('only the fixed input and project queue target are accepted', async () => {
     await assert.rejects(equiquantMosaicReplay({ ...job, input }), /allowlisted/);
   }
   await assert.rejects(equiquantMosaicReplay({ ...job, target_type: 'other', input: { scenario: 'pooled' } }), /workspace-scoped/);
-  await assert.rejects(equiquantMosaicReplay({ ...job, input: { scenario: 'pooled' } }, { signal: AbortSignal.abort() }), { name: 'AbortError' });
+  await assert.rejects(equiquantMosaicReplay({ ...job, input: { scenario: 'pooled' } }), /verified MOSAiC execution target/);
+  await assert.rejects(readMosaicInputs(AbortSignal.abort()), { name: 'AbortError' });
 });
 
 test('private replay success and failure cannot trigger outbound communication', async () => {
