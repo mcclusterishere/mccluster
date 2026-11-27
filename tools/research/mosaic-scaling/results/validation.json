@@ -1,0 +1,922 @@
+{
+  "primary": {
+    "n_weeks": 13,
+    "n_scored": 13,
+    "full_sample_proxy_median_per_day": 0.03138850177592457,
+    "full_sample_signed_slopes": {
+      "lower": -0.30405229642161247,
+      "higher": -0.27192228166176424
+    },
+    "mean_held_out_log_mse": {
+      "pooled": 0.33405463690151344,
+      "group_levels": 0.25291117206468605,
+      "group_slopes": 0.25561667984604325
+    },
+    "median_held_out_shape_error": {
+      "pooled": 0.09169242117118159,
+      "group_levels": 0.09169242117118159,
+      "group_slopes": 0.0940847111277916
+    },
+    "weeks_slopes_beat_levels": 2,
+    "folds": [
+      {
+        "week": "2019-10-14",
+        "n_train": 11,
+        "threshold_per_day": 0.03027411987067538,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.8134408443300555,
+          "group_levels": 0.4007994418907552,
+          "group_slopes": 0.4023883253302798
+        },
+        "shape_error": {
+          "pooled": 0.10986228082893046,
+          "group_levels": 0.10986228082893046,
+          "group_slopes": 0.12022082144213453
+        }
+      },
+      {
+        "week": "2019-10-21",
+        "n_train": 10,
+        "threshold_per_day": 0.028807925174547916,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.004852999598283748,
+          "group_levels": 0.12404274049699471,
+          "group_slopes": 0.12556879745399616
+        },
+        "shape_error": {
+          "pooled": 0.05818278549088807,
+          "group_levels": 0.05818278549088829,
+          "group_slopes": 0.07532809544241137
+        }
+      },
+      {
+        "week": "2019-10-28",
+        "n_train": 10,
+        "threshold_per_day": 0.028807925174547916,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.5830094388244029,
+          "group_levels": 1.3867153630129732,
+          "group_slopes": 1.4038635532588852
+        },
+        "shape_error": {
+          "pooled": 0.3375518100305679,
+          "group_levels": 0.33755181003056767,
+          "group_slopes": 0.373715814254334
+        }
+      },
+      {
+        "week": "2019-11-04",
+        "n_train": 10,
+        "threshold_per_day": 0.03314063474695812,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.4532286012596629,
+          "group_levels": 0.07156830683098482,
+          "group_slopes": 0.06654505375884583
+        },
+        "shape_error": {
+          "pooled": 0.12503058938092493,
+          "group_levels": 0.12503058938092493,
+          "group_slopes": 0.08998760288357976
+        }
+      },
+      {
+        "week": "2019-11-11",
+        "n_train": 10,
+        "threshold_per_day": 0.032081864214176525,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.2274368374493768,
+          "group_levels": 0.03865721701513774,
+          "group_slopes": 0.038682633564560386
+        },
+        "shape_error": {
+          "pooled": 0.015476364374205298,
+          "group_levels": 0.015476364374205298,
+          "group_slopes": 0.015476364374205298
+        }
+      },
+      {
+        "week": "2019-11-18",
+        "n_train": 10,
+        "threshold_per_day": 0.032639055166801115,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.6786817631884015,
+          "group_levels": 0.2490871895153067,
+          "group_slopes": 0.24663900290501437
+        },
+        "shape_error": {
+          "pooled": 0.13542117650449081,
+          "group_levels": 0.13542117650449081,
+          "group_slopes": 0.12110580139044269
+        }
+      },
+      {
+        "week": "2019-11-25",
+        "n_train": 10,
+        "threshold_per_day": 0.032639055166801115,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.014232972072070462,
+          "group_levels": 0.17140575406266048,
+          "group_slopes": 0.1739292887174463
+        },
+        "shape_error": {
+          "pooled": 0.13632130804009512,
+          "group_levels": 0.13632130804009512,
+          "group_slopes": 0.14956203063592888
+        }
+      },
+      {
+        "week": "2019-12-02",
+        "n_train": 10,
+        "threshold_per_day": 0.03494837909045926,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.05648435234417596,
+          "group_levels": 0.0839992281944324,
+          "group_slopes": 0.08930370216179562
+        },
+        "shape_error": {
+          "pooled": 0.017650408743452806,
+          "group_levels": 0.017650408743452806,
+          "group_slopes": 0.08920711642354506
+        }
+      },
+      {
+        "week": "2019-12-09",
+        "n_train": 10,
+        "threshold_per_day": 0.032639055166801115,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.0764255554153706,
+          "group_levels": 0.01133274297047201,
+          "group_slopes": 0.011969710813415697
+        },
+        "shape_error": {
+          "pooled": 0.05694160054772013,
+          "group_levels": 0.056941600547719684,
+          "group_slopes": 0.06479041315929046
+        }
+      },
+      {
+        "week": "2019-12-16",
+        "n_train": 10,
+        "threshold_per_day": 0.032639055166801115,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.13530950060740862,
+          "group_levels": 0.007557886466445879,
+          "group_slopes": 0.008758550619043487
+        },
+        "shape_error": {
+          "pooled": 0.09169242117118159,
+          "group_levels": 0.09169242117118159,
+          "group_slopes": 0.1010371037249671
+        }
+      },
+      {
+        "week": "2019-12-23",
+        "n_train": 10,
+        "threshold_per_day": 0.030831310823299974,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.44762378589768254,
+          "group_levels": 0.2748978074874771,
+          "group_slopes": 0.28588086601670687
+        },
+        "shape_error": {
+          "pooled": 0.18528841348117275,
+          "group_levels": 0.18528841348117275,
+          "group_slopes": 0.22540271507729148
+        }
+      },
+      {
+        "week": "2019-12-30",
+        "n_train": 10,
+        "threshold_per_day": 0.032639055166801115,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.845721393119601,
+          "group_levels": 0.40930898322004605,
+          "group_slopes": 0.4102106422012102
+        },
+        "shape_error": {
+          "pooled": 0.08659933253930796,
+          "group_levels": 0.08659933253930774,
+          "group_slopes": 0.0940847111277916
+        }
+      },
+      {
+        "week": "2020-01-06",
+        "n_train": 11,
+        "threshold_per_day": 0.03138850177592457,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.006262235613180813,
+          "group_levels": 0.05847257567723232,
+          "group_slopes": 0.059276711197362164
+        },
+        "shape_error": {
+          "pooled": 0.07044832068937357,
+          "group_levels": 0.07044832068937334,
+          "group_slopes": 0.07854405877052417
+        }
+      }
+    ]
+  },
+  "strict_coverage": {
+    "n_weeks": 13,
+    "n_scored": 13,
+    "full_sample_proxy_median_per_day": 0.03138850177592457,
+    "full_sample_signed_slopes": {
+      "lower": -0.3052216079463228,
+      "higher": -0.2724002458904663
+    },
+    "mean_held_out_log_mse": {
+      "pooled": 0.3306213621050374,
+      "group_levels": 0.24463425439425188,
+      "group_slopes": 0.2471250641068109
+    },
+    "median_held_out_shape_error": {
+      "pooled": 0.08996992106833779,
+      "group_levels": 0.08996992106833734,
+      "group_slopes": 0.09453934027649691
+    },
+    "weeks_slopes_beat_levels": 2,
+    "folds": [
+      {
+        "week": "2019-10-14",
+        "n_train": 11,
+        "threshold_per_day": 0.03027411987067538,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.782813936106529,
+          "group_levels": 0.3776136716757951,
+          "group_slopes": 0.37917578790026596
+        },
+        "shape_error": {
+          "pooled": 0.10999690675960783,
+          "group_levels": 0.1099969067596076,
+          "group_slopes": 0.12017692720896078
+        }
+      },
+      {
+        "week": "2019-10-21",
+        "n_train": 10,
+        "threshold_per_day": 0.028807925174547916,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.004097384019601706,
+          "group_levels": 0.11452125062749496,
+          "group_slopes": 0.11587304333430985
+        },
+        "shape_error": {
+          "pooled": 0.05715998381205689,
+          "group_levels": 0.05715998381205645,
+          "group_slopes": 0.07276642639031317
+        }
+      },
+      {
+        "week": "2019-10-28",
+        "n_train": 10,
+        "threshold_per_day": 0.028807925174547916,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.5650808619491531,
+          "group_levels": 1.3387730404461686,
+          "group_slopes": 1.3550556459849312
+        },
+        "shape_error": {
+          "pooled": 0.33506821818452037,
+          "group_levels": 0.33506821818452037,
+          "group_slopes": 0.3697223541327914
+        }
+      },
+      {
+        "week": "2019-11-04",
+        "n_train": 10,
+        "threshold_per_day": 0.03314063474695812,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.4419768305438511,
+          "group_levels": 0.06762333709904472,
+          "group_slopes": 0.06258658131500908
+        },
+        "shape_error": {
+          "pooled": 0.1249998950415272,
+          "group_levels": 0.1249998950415272,
+          "group_slopes": 0.08983228865134985
+        }
+      },
+      {
+        "week": "2019-11-11",
+        "n_train": 10,
+        "threshold_per_day": 0.032081864214176525,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.22039514194658041,
+          "group_levels": 0.03552421054757862,
+          "group_slopes": 0.035542291115595974
+        },
+        "shape_error": {
+          "pooled": 0.015476364374205298,
+          "group_levels": 0.015476364374205298,
+          "group_slopes": 0.015476364374205298
+        }
+      },
+      {
+        "week": "2019-11-18",
+        "n_train": 10,
+        "threshold_per_day": 0.032639055166801115,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.6786331224114178,
+          "group_levels": 0.24817861181750722,
+          "group_slopes": 0.245638216653856
+        },
+        "shape_error": {
+          "pooled": 0.1354080025080897,
+          "group_levels": 0.13540800250808926,
+          "group_slopes": 0.1205186060231056
+        }
+      },
+      {
+        "week": "2019-11-25",
+        "n_train": 10,
+        "threshold_per_day": 0.032639055166801115,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.014957242892559263,
+          "group_levels": 0.1734849359614563,
+          "group_slopes": 0.17598267703607443
+        },
+        "shape_error": {
+          "pooled": 0.1375520455454049,
+          "group_levels": 0.13755204554540468,
+          "group_slopes": 0.15055622486517217
+        }
+      },
+      {
+        "week": "2019-12-02",
+        "n_train": 10,
+        "threshold_per_day": 0.03494837909045926,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.07601027163917058,
+          "group_levels": 0.06059720958614482,
+          "group_slopes": 0.06488009669448752
+        },
+        "shape_error": {
+          "pooled": 0.016705957736109944,
+          "group_levels": 0.016705957736109944,
+          "group_slopes": 0.08045467440154264
+        }
+      },
+      {
+        "week": "2019-12-09",
+        "n_train": 10,
+        "threshold_per_day": 0.032639055166801115,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.08199037963105392,
+          "group_levels": 0.008941353603122175,
+          "group_slopes": 0.009550206633091994
+        },
+        "shape_error": {
+          "pooled": 0.05619904794068953,
+          "group_levels": 0.056199047940689306,
+          "group_slopes": 0.06380918847936168
+        }
+      },
+      {
+        "week": "2019-12-16",
+        "n_train": 10,
+        "threshold_per_day": 0.032639055166801115,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.12294519371325063,
+          "group_levels": 0.006012240043453627,
+          "group_slopes": 0.007084020176796779
+        },
+        "shape_error": {
+          "pooled": 0.08996992106833779,
+          "group_levels": 0.08996992106833734,
+          "group_slopes": 0.09850003501043836
+        }
+      },
+      {
+        "week": "2019-12-23",
+        "n_train": 10,
+        "threshold_per_day": 0.030831310823299974,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.4249335668776097,
+          "group_levels": 0.2549937561641609,
+          "group_slopes": 0.2656024190213011
+        },
+        "shape_error": {
+          "pooled": 0.18209264038467454,
+          "group_levels": 0.18209264038467454,
+          "group_slopes": 0.22151912776997973
+        }
+      },
+      {
+        "week": "2019-12-30",
+        "n_train": 10,
+        "threshold_per_day": 0.032639055166801115,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.878715787681363,
+          "group_levels": 0.43221182267796693,
+          "group_slopes": 0.4330473769251426
+        },
+        "shape_error": {
+          "pooled": 0.08766045567501957,
+          "group_levels": 0.08766045567501934,
+          "group_slopes": 0.09453934027649691
+        }
+      },
+      {
+        "week": "2020-01-06",
+        "n_train": 11,
+        "threshold_per_day": 0.03138850177592457,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.005527987953346789,
+          "group_levels": 0.06176986687538066,
+          "group_slopes": 0.06260747059767932
+        },
+        "shape_error": {
+          "pooled": 0.07114912890004899,
+          "group_levels": 0.07114912890004921,
+          "group_slopes": 0.0794896479214986
+        }
+      }
+    ]
+  },
+  "shift_8_cells": {
+    "n_weeks": 13,
+    "n_scored": 13,
+    "full_sample_proxy_median_per_day": 0.03080292270566321,
+    "full_sample_signed_slopes": {
+      "lower": -0.30797248785540554,
+      "higher": -0.2739079761443486
+    },
+    "mean_held_out_log_mse": {
+      "pooled": 0.32131271802378525,
+      "group_levels": 0.24701201762118996,
+      "group_slopes": 0.2500577127744196
+    },
+    "median_held_out_shape_error": {
+      "pooled": 0.10463111648063017,
+      "group_levels": 0.10463111648062973,
+      "group_slopes": 0.103703221563898
+    },
+    "weeks_slopes_beat_levels": 2,
+    "folds": [
+      {
+        "week": "2019-10-14",
+        "n_train": 11,
+        "threshold_per_day": 0.030465148780681503,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.8035503533064423,
+          "group_levels": 0.40393311962721445,
+          "group_slopes": 0.4052134644441698
+        },
+        "shape_error": {
+          "pooled": 0.10887286321520406,
+          "group_levels": 0.10887286321520406,
+          "group_slopes": 0.1173619085142601
+        }
+      },
+      {
+        "week": "2019-10-21",
+        "n_train": 10,
+        "threshold_per_day": 0.028855150808092474,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.008122217968341923,
+          "group_levels": 0.13513412262054178,
+          "group_slopes": 0.13733454836960896
+        },
+        "shape_error": {
+          "pooled": 0.07095398467825142,
+          "group_levels": 0.07095398467825187,
+          "group_slopes": 0.09129680479251401
+        }
+      },
+      {
+        "week": "2019-10-28",
+        "n_train": 10,
+        "threshold_per_day": 0.028855150808092474,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.5418740907414502,
+          "group_levels": 1.311674193830913,
+          "group_slopes": 1.330053787112091
+        },
+        "shape_error": {
+          "pooled": 0.32880330474662567,
+          "group_levels": 0.32880330474662567,
+          "group_slopes": 0.368349023528052
+        }
+      },
+      {
+        "week": "2019-11-04",
+        "n_train": 10,
+        "threshold_per_day": 0.033132208122382364,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.4548303677632128,
+          "group_levels": 0.07942143979478566,
+          "group_slopes": 0.07445090178720483
+        },
+        "shape_error": {
+          "pooled": 0.12689326994521943,
+          "group_levels": 0.12689326994521966,
+          "group_slopes": 0.0929843801184862
+        }
+      },
+      {
+        "week": "2019-11-11",
+        "n_train": 10,
+        "threshold_per_day": 0.03204087071806293,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.2371441873802985,
+          "group_levels": 0.047944418222612396,
+          "group_slopes": 0.048043896635241466
+        },
+        "shape_error": {
+          "pooled": 0.011128131781350747,
+          "group_levels": 0.011128131781350525,
+          "group_slopes": 0.016524313477007002
+        }
+      },
+      {
+        "week": "2019-11-18",
+        "n_train": 10,
+        "threshold_per_day": 0.03220975768055378,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.6932619396793361,
+          "group_levels": 0.26925983957589267,
+          "group_slopes": 0.26682171836901336
+        },
+        "shape_error": {
+          "pooled": 0.12777681538404795,
+          "group_levels": 0.12777681538404773,
+          "group_slopes": 0.11255990733547105
+        }
+      },
+      {
+        "week": "2019-11-25",
+        "n_train": 10,
+        "threshold_per_day": 0.03220975768055378,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.015359987771073917,
+          "group_levels": 0.1695230215248937,
+          "group_slopes": 0.1727318158146627
+        },
+        "shape_error": {
+          "pooled": 0.1401685814210054,
+          "group_levels": 0.1401685814210054,
+          "group_slopes": 0.15639828212685258
+        }
+      },
+      {
+        "week": "2019-12-02",
+        "n_train": 10,
+        "threshold_per_day": 0.03470793005976378,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.0406068551369743,
+          "group_levels": 0.10071681202198353,
+          "group_slopes": 0.10774145006961167
+        },
+        "shape_error": {
+          "pooled": 0.018352450646247798,
+          "group_levels": 0.01835245064624802,
+          "group_slopes": 0.103703221563898
+        }
+      },
+      {
+        "week": "2019-12-09",
+        "n_train": 10,
+        "threshold_per_day": 0.03220975768055378,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.05971996325986064,
+          "group_levels": 0.018762284701715145,
+          "group_slopes": 0.019583520669147616
+        },
+        "shape_error": {
+          "pooled": 0.06306040132504798,
+          "group_levels": 0.06306040132504753,
+          "group_slopes": 0.07216971779371706
+        }
+      },
+      {
+        "week": "2019-12-16",
+        "n_train": 10,
+        "threshold_per_day": 0.03220975768055378,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.12744518746252712,
+          "group_levels": 0.008532756888304951,
+          "group_slopes": 0.009864288313735486
+        },
+        "shape_error": {
+          "pooled": 0.10463111648063017,
+          "group_levels": 0.10463111648062973,
+          "group_slopes": 0.11377595384846884
+        }
+      },
+      {
+        "week": "2019-12-23",
+        "n_train": 10,
+        "threshold_per_day": 0.030634035743172354,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.4339193076378694,
+          "group_levels": 0.2668423299521737,
+          "group_slopes": 0.27789896650294593
+        },
+        "shape_error": {
+          "pooled": 0.18257007137068326,
+          "group_levels": 0.18257007137068326,
+          "group_slopes": 0.22342064762786573
+        }
+      },
+      {
+        "week": "2019-12-30",
+        "n_train": 10,
+        "threshold_per_day": 0.03220975768055378,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.7539844087143055,
+          "group_levels": 0.35259383888956813,
+          "group_slopes": 0.35358344796126784
+        },
+        "shape_error": {
+          "pooled": 0.08814551868546339,
+          "group_levels": 0.08814551868546294,
+          "group_slopes": 0.09619795253475472
+        }
+      },
+      {
+        "week": "2020-01-06",
+        "n_train": 11,
+        "threshold_per_day": 0.03080292270566321,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.007246467487515905,
+          "group_levels": 0.04681805142487028,
+          "group_slopes": 0.047428460018754524
+        },
+        "shape_error": {
+          "pooled": 0.056419683805590815,
+          "group_levels": 0.05641968380559104,
+          "group_slopes": 0.06402182137013224
+        }
+      }
+    ]
+  },
+  "swap_sides": {
+    "n_weeks": 13,
+    "n_scored": 13,
+    "full_sample_proxy_median_per_day": 0.030336104194311594,
+    "full_sample_signed_slopes": {
+      "lower": -0.35586294515165906,
+      "higher": -0.2939283399231645
+    },
+    "mean_held_out_log_mse": {
+      "pooled": 0.26487075605288607,
+      "group_levels": 0.19522623298929045,
+      "group_slopes": 0.19718819795974246
+    },
+    "median_held_out_shape_error": {
+      "pooled": 0.0849646528431367,
+      "group_levels": 0.08496465284313648,
+      "group_slopes": 0.09403580158980063
+    },
+    "weeks_slopes_beat_levels": 6,
+    "folds": [
+      {
+        "week": "2019-10-14",
+        "n_train": 11,
+        "threshold_per_day": 0.029720288183756504,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.19586541670577692,
+          "group_levels": 0.008638506088955266,
+          "group_slopes": 0.007633714446381878
+        },
+        "shape_error": {
+          "pooled": 0.043334950614719814,
+          "group_levels": 0.043334950614719814,
+          "group_slopes": 0.030795216395969716
+        }
+      },
+      {
+        "week": "2019-10-21",
+        "n_train": 10,
+        "threshold_per_day": 0.02946428174474211,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.013005159202080036,
+          "group_levels": 0.17708175172192683,
+          "group_slopes": 0.18749221589553025
+        },
+        "shape_error": {
+          "pooled": 0.11548570425903026,
+          "group_levels": 0.11548570425903026,
+          "group_slopes": 0.17015476528328533
+        }
+      },
+      {
+        "week": "2019-10-28",
+        "n_train": 10,
+        "threshold_per_day": 0.03002819618903405,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.15846645005858134,
+          "group_levels": 0.63995730709833,
+          "group_slopes": 0.6524579106519418
+        },
+        "shape_error": {
+          "pooled": 0.19484564578463526,
+          "group_levels": 0.19484564578463526,
+          "group_slopes": 0.2381506477246036
+        }
+      },
+      {
+        "week": "2019-11-04",
+        "n_train": 10,
+        "threshold_per_day": 0.03281822231562453,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.04069762566002338,
+          "group_levels": 0.05806294789265622,
+          "group_slopes": 0.05712561075514854
+        },
+        "shape_error": {
+          "pooled": 0.03768674852239129,
+          "group_levels": 0.03768674852239151,
+          "group_slopes": 0.030634455500855307
+        }
+      },
+      {
+        "week": "2019-11-11",
+        "n_train": 10,
+        "threshold_per_day": 0.030573539144049915,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.06148108585798856,
+          "group_levels": 0.00626479627096222,
+          "group_slopes": 0.00632294149316729
+        },
+        "shape_error": {
+          "pooled": 0.004021056271178214,
+          "group_levels": 0.004021056271178436,
+          "group_slopes": 0.010167926378745529
+        }
+      },
+      {
+        "week": "2019-11-18",
+        "n_train": 10,
+        "threshold_per_day": 0.030573539144049915,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.6791877923884222,
+          "group_levels": 0.260630564571789,
+          "group_slopes": 0.2572091479225804
+        },
+        "shape_error": {
+          "pooled": 0.12241676653622569,
+          "group_levels": 0.12241676653622546,
+          "group_slopes": 0.09926600503380012
+        }
+      },
+      {
+        "week": "2019-11-25",
+        "n_train": 10,
+        "threshold_per_day": 0.030009624699757972,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.04177652553747933,
+          "group_levels": 0.021049621558007908,
+          "group_slopes": 0.023574350290767276
+        },
+        "shape_error": {
+          "pooled": 0.0849646528431367,
+          "group_levels": 0.08496465284313648,
+          "group_slopes": 0.10490989148737895
+        }
+      },
+      {
+        "week": "2019-12-02",
+        "n_train": 10,
+        "threshold_per_day": 0.033055657265362845,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.11445088047110079,
+          "group_levels": 0.012292842816398987,
+          "group_slopes": 0.012022659986950632
+        },
+        "shape_error": {
+          "pooled": 0.0407958425781767,
+          "group_levels": 0.04079584257817648,
+          "group_slopes": 0.0407958425781767
+        }
+      },
+      {
+        "week": "2019-12-09",
+        "n_train": 10,
+        "threshold_per_day": 0.03026563113877237,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.05187952361765,
+          "group_levels": 0.0265238541405876,
+          "group_slopes": 0.027855736590251635
+        },
+        "shape_error": {
+          "pooled": 0.049492051365247924,
+          "group_levels": 0.0494920513652477,
+          "group_slopes": 0.06668798109731844
+        }
+      },
+      {
+        "week": "2019-12-16",
+        "n_train": 10,
+        "threshold_per_day": 0.030573539144049915,
+        "high": true,
+        "log_mse": {
+          "pooled": 0.022514679421795216,
+          "group_levels": 0.05306634402546794,
+          "group_slopes": 0.05226643129844827
+        },
+        "shape_error": {
+          "pooled": 0.10021277898135539,
+          "group_levels": 0.10021277898135517,
+          "group_slopes": 0.09403580158980063
+        }
+      },
+      {
+        "week": "2019-12-23",
+        "n_train": 10,
+        "threshold_per_day": 0.03002819618903405,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.37886852944341615,
+          "group_levels": 0.1904561936565191,
+          "group_slopes": 0.19480526236521623
+        },
+        "shape_error": {
+          "pooled": 0.1446352393205994,
+          "group_levels": 0.14463523932059963,
+          "group_slopes": 0.16565915464100622
+        }
+      },
+      {
+        "week": "2019-12-30",
+        "n_train": 10,
+        "threshold_per_day": 0.030573539144049915,
+        "high": true,
+        "log_mse": {
+          "pooled": 1.532208085803506,
+          "group_levels": 1.056506128264979,
+          "group_slopes": 1.057353443565809
+        },
+        "shape_error": {
+          "pooled": 0.14170367082825108,
+          "group_levels": 0.14170367082825108,
+          "group_slopes": 0.1461194828811192
+        }
+      },
+      {
+        "week": "2020-01-06",
+        "n_train": 11,
+        "threshold_per_day": 0.030336104194311594,
+        "high": false,
+        "log_mse": {
+          "pooled": 0.15291807451969908,
+          "group_levels": 0.027410170754196078,
+          "group_slopes": 0.02732714821445878
+        },
+        "shape_error": {
+          "pooled": 0.04869445760831925,
+          "group_levels": 0.048694457608319475,
+          "group_slopes": 0.048694457608319475
+        }
+      }
+    ]
+  }
+}
