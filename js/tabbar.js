@@ -303,8 +303,8 @@
            admin until they are brought back). Kept, not deleted: the fifth field gates the room on the server's owner
            answer (ADMIN_ON, GET /v1/status). For everyone else morph() keeps its column empty, so the wing still holds
            two cells and the held tab never moves. */
-        ["mnet.html?view=missions", "folk", "Missions", { title: "Equity Uprise missions",
-          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Equity Uprise." }, { admin: true }],
+        ["mnet.html?view=missions", "folk", "Missions", { title: "Equity Quantized missions",
+          sub: "Pick a mission, do the work, send proof. Verified action builds your record on Equity Quantized." }, { admin: true }],
         ["account.html?stay=1", "key", "Account", { title: "Your M Account",
           sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
       ],

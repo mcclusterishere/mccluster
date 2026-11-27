@@ -34,7 +34,7 @@
      Equity Uprise is for. Wording follows the product contract: no
      points for opinions, no likes-for-rewards, nobody gets labelled. */
   var STEPS = [
-    { title: "Welcome to Equity Uprise",
+    { title: "Welcome to Equity Quantized",
       body: "The place for doers. Don't just watch. Act. This takes about a minute." },
     { view: "feed", target: "#mnWorld", title: "The world is your feed",
       body: "The Earth on top, the people under it. Tap a red pin to see a mission and the posts about it. Search finds places, people, groups and missions. Your bell has your alerts; your picture has your profile, messages and settings." },

@@ -2072,7 +2072,7 @@
       : state.createView === "clipping"
         ? (window.CR.clipping ? window.CR.clipping.render() : empty("Clipping unavailable", "The native Control module did not load."))
       : state.createView === "action-network"
-        ? (window.CR.actionNetwork ? window.CR.actionNetwork.render() : empty("Equity Uprise unavailable", "The native Control module did not load."))
+        ? (window.CR.actionNetwork ? window.CR.actionNetwork.render() : empty("Equity Quantized unavailable", "The native Control module did not load."))
       : state.createView === "funding"
         ? (window.CR.fundingIntelligence ? window.CR.fundingIntelligence.render() : empty("Funding Intelligence unavailable", "The module did not load."))
       : state.createView === "song-test"

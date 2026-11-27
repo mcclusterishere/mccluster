@@ -11,7 +11,7 @@ import RoomScreen from '../../src/RoomScreen';
 export default function CreateRoom() {
   return (
     <RoomScreen
-      kicker="Equity Uprise"
+      kicker="Equity Quantized"
       title="Create"
       lede="Record it, trim it, say what it is, and post it now or later."
       page="create.html"

@@ -65,19 +65,19 @@
       '<div class="mn__cliprow"><select class="mn__input" id="mnClipPlatform" aria-label="Platform">' + opts + '</select>' +
       '<input class="mn__input" id="mnClipHandle" placeholder="@yourhandle" autocomplete="off" aria-label="Handle">' +
       '<button class="mn__primary" type="button" data-clip-add-account>Add</button></div>' +
-      '<p class="mn__hint">Your verified accounts travel with you across Equity Uprise campaigns. YouTube and TikTok are not connected yet, so clips there cannot be verified or paid.</p></div>';
+      '<p class="mn__hint">Your verified accounts travel with you across Equity Quantized campaigns. YouTube and TikTok are not connected yet, so clips there cannot be verified or paid.</p></div>';
   }
 
   function campaignCard(c) {
     var claim = claimOf(c.mission_id);
-    var song = c.song ? esc(c.song.title) + ' · ' + esc(c.song.artist) : (c.track ? esc(c.track.title) : (c.source_kind === 'music' ? '' : 'Equity Uprise source'));
+    var song = c.song ? esc(c.song.title) + ' · ' + esc(c.song.artist) : (c.track ? esc(c.track.title) : (c.source_kind === 'music' ? '' : 'Equity Quantized source'));
     var terms = usd(c.base_cpm_cents) + ' per 1,000 verified views after ' + n(c.min_views) + ' views' +
       (c.per_clip_cap_cents ? ' · up to ' + usd(c.per_clip_cap_cents) + ' a clip' : "") +
       (c.per_clipper_cap_cents ? ' · up to ' + usd(c.per_clipper_cap_cents) + ' a clipper' : "") +
       (c.bonus_account_cents ? ' · ' + usd(c.bonus_account_cents) + ' per new fan account' : "") +
       (c.bonus_listen_cents ? ' · ' + usd(c.bonus_listen_cents) + ' per full listen' : "");
     var plats = (c.platforms || []).map(label).join(", ");
-    var body = '<article class="mn__panel mn__clipcard"><p class="mn__eyebrow">' + esc(c.operator_brand || 'Equity Uprise') + ' · Clip &amp; get paid' + (c.creator ? ' · ' + esc(c.creator.artist_name) : "") + '</p>' +
+    var body = '<article class="mn__panel mn__clipcard"><p class="mn__eyebrow">' + esc(c.operator_brand || 'Equity Quantized') + ' · Clip &amp; get paid' + (c.creator ? ' · ' + esc(c.creator.artist_name) : "") + '</p>' +
       '<h3>' + esc(c.title) + '</h3><p class="mn__clipsong">' + song + '</p><p><b>' + terms + '</b></p>' +
       '<p class="mn__hint">' + esc(plats) + ' · ' + usd(c.budget_left_cents) + ' left · ' + n(c.clippers) + ' clippers' + (c.ends_at ? ' · post by ' + esc(day(c.ends_at)) : "") + '</p>' +
       (c.rules ? '<p>' + esc(c.rules) + '</p>' : "") +

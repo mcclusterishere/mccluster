@@ -73,7 +73,7 @@ test('the door\'s markup: a dialog without aria-modal, the supplied crest once o
   assert.ok(d.indexOf('class="wg-stage"') < d.indexOf('id="wgSheet"'), 'the stage first, then the sheet (DOM order is reading order)');
   /* the visible words: the brand is the mark, never written; the company is named once; no other entity */
   const words = d.replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, ' ');
-  for (const bad of ['Equity Uprise', 'Human Uprise', 'Matthew McCluster', 'I AM HERE', 'Whip Equipped', 'PRIM3']) assert.ok(!words.includes(bad), bad);
+  for (const bad of ['Equity Quantized', 'Equity Uprise', 'Human Uprise', 'Matthew McCluster', 'I AM HERE', 'Whip Equipped', 'PRIM3']) assert.ok(!words.includes(bad), bad);
   assert.match(d, /<p class="wg-colophon">A McCluster Corp program\.<\/p>/);
   assert.match(d, /<p class="mn__hint" id="mnCreateNote" hidden><b>Next:<\/b> your profile, where we can reach you, and your phone\. One short page each\.<\/p>/);
   /* the onboarding pages keep their markup */

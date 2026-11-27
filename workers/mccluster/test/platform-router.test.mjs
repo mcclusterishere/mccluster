@@ -38,7 +38,7 @@ function rewritten() {
   const F = JSON.parse(JSON.stringify(record));
   F.platform.origin = EQ;
   F.platform.website_id = `${EQ}/#website`;
-  F.platform.site_name = 'Equity Uprise';
+  F.platform.site_name = 'Equity Quantized';
   F.platform.own_paths = { generated: ['/robots.txt', '/sitemap.xml', '/llms.txt'], subtrees: [] };
   F.tenants.company = { host: 'mccluster.org', entity: record.entities.mccluster_corp.id, website_id: `${PLAT}/#website`, site_name: 'McCluster Corp', root: '/company', sets: [], own_paths: { generated: ['/company'], subtrees: ['/news'] } };
   F.doors = {
@@ -583,11 +583,11 @@ test('the heads: the platform\'s World head is the company generator\'s today, a
   assert.deepEqual(COMPANY_PARTS.head(P0), WORLD_HEAD);
   assert.deepEqual(worldHeadOf(P0), WORLD_HEAD, 'the table alone writes today\'s head, byte for byte');
   assert.equal(COMPANY_PARTS.head(F1).origin, EQ, 'another platform origin gets its own canonical');
-  assert.equal(COMPANY_PARTS.head(F1).siteName, 'Equity Uprise');
+  assert.equal(COMPANY_PARTS.head(F1).siteName, 'Equity Quantized');
   const door = await routerFor(P0)(new Request(`${HU}/`), {}, github());
   const html = await door.text();
   assert.match(html, /<link rel="canonical" href="https:\/\/humanuprise\.com\/">/);
-  assert.match(html, /<meta property="og:site_name" content="Equity Uprise">/);
+  assert.match(html, /<meta property="og:site_name" content="Equity Quantized">/);
   const robots = await routerFor(P0)(new Request(`${HU}/robots.txt`), {}, () => { throw new Error('must not fetch'); });
   assert.match(await robots.text(), /Sitemap: https:\/\/humanuprise\.com\/sitemap\.xml/);
 });

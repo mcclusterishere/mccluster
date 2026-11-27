@@ -45,7 +45,7 @@
     }));
     // Existing product doors; these are links, not newly granted entitlements.
     return native.concat([
-      {label:'World', group:'Products', href:world, context:'Equity Uprise'},
+      {label:'World', group:'Products', href:world, context:'Equity Quantized'},
       {label:'Policy', group:'Products', href:world + '&policy=1', context:'Owner preview · Go Live · Globe · Feed'},
       {label:'Your desk', group:'Inbox', href:new URL('mnet.html?view=feed&desk', root).href, context:'Personal work'},
       /* ONE HALO (owner, 2026-10-22: "it takes you to multiple different places. Not everything is consolidated"): every

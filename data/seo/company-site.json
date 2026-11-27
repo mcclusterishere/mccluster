@@ -1,6 +1,6 @@
 {
   "schema_version": "mccluster-company-site/v1",
-  "updated_at": "2026-10-15",
+  "updated_at": "2026-11-27",
   "_readme": [
     "THE COMPANY PROPERTY, mccluster.org: McCluster Corp's house.",
     "tools/build-company-site.mjs renders this file plus data/seo/entity-graph.json into",
@@ -17,7 +17,7 @@
   "world": {
     "href": "https://mccluster.org/",
     "cta": "Open the World",
-    "line": "the Equity Uprise World: the Earth, its missions and the member feed, McCluster Corp's platform, served at the company's root (humanuprise.com is its own door later)."
+    "line": "the Equity Quantized World: the Earth, its missions and the member feed, McCluster Corp's platform, served at the company's root (humanuprise.com is its own door later)."
   },
   "meta": {
     "title": "McCluster Corp · Technology, Education, Civic, Media & Creative Products and Services",
@@ -60,9 +60,9 @@
     },
     {
       "entity": "action_network",
-      "name": "Equity Uprise World",
+      "name": "Equity Quantized",
       "kind": "Software product",
-      "line": "Equity Uprise's action-first campaign network: a campaign leads to a mission, the mission asks for proof, and a reviewer verifies the action.",
+      "line": "The action-first app: a campaign leads to a mission, the mission asks for proof, and a reviewer verifies the action.",
       "href": "https://mccluster.org/",
       "cta": "Open the World"
     },
@@ -109,7 +109,7 @@
     },
     {
       "title": "Participants",
-      "body": "Campaigns run on Equity Uprise: join a campaign, take a mission, submit proof, and a reviewer verifies the action.",
+      "body": "Campaigns run on Equity Quantized: join a campaign, take a mission, submit proof, and a reviewer verifies the action.",
       "href": "https://matthew.mccluster.org/action/",
       "cta": "Join a campaign"
     },

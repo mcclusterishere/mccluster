@@ -35,9 +35,9 @@ on the platform for every page that moved.
 
 | | The platform `https://mccluster.org/` | Matthew's profile `https://matthew.mccluster.org/` |
 | --- | --- | --- |
-| Whose house | **McCluster Corp**, the platform's operator; Equity Uprise is the public brand | **Matthew McCluster**; McCluster is his artist name, the same Person |
-| Answers | At its root, the Equity Uprise World (where is the movement, what can I do today); at `/company`, what is McCluster Corp? Since P1, every page of the site at its path | Who is Matthew McCluster, what has he made, what does he do? |
-| Share preview | McCluster Corp, explained; the World's root shares as "Equity Uprise · McCluster" | Matthew McCluster, not "only the album" |
+| Whose house | **McCluster Corp**, the platform's operator; Equity Quantized is the app name | **Matthew McCluster**; McCluster is his artist name, the same Person |
+| Answers | At its root, the Equity Quantized World (where is the movement, what can I do today); at `/company`, what is McCluster Corp? Since P1, every page of the site at its path | Who is Matthew McCluster, what has he made, what does he do? |
+| Share preview | McCluster Corp, explained; the World's root shares as "Equity Quantized · McCluster" | Matthew McCluster, not "only the album" |
 | Entity | Organization `https://matthew.mccluster.org/#mccluster-corp` | Person `https://matthew.mccluster.org/#matthew-mccluster` |
 | WebSite node | `https://mccluster.org/#website`, published by the Organization | `https://matthew.mccluster.org/#website`, published by the Person |
 | Source | the static site this repo publishes, fetched from `platform.static_origin` (every page at its path and the static files, since P1, `workers/mccluster/src/world-host.js`; at P0 only `/`, the World, `mnet.html`, with its rooms), plus the generated company pages (`data/seo/company-site.json` → `tools/build-company-site.mjs` → `workers/mccluster/src/company-site/pages.generated.js`) | static HTML at the repository root: the `profile` and `profile_only` pages; today it serves every page of the static site |
@@ -52,14 +52,31 @@ Matthew's profile; it is not the semantic identity of the profile, and it is
 never the platform's homepage: since P1 the platform serves the HERE page at
 `/index.html`, never at `/`.
 
+## Current app name: Equity Quantized (owner, 2026-11-27)
+
+The app itself is **Equity Quantized**, formerly Equity Uprise / Equity Uprise
+World. Use the current name in app display copy, page and share titles,
+SoftwareApplication metadata, installed-platform-app metadata and accessible
+navigation names. This supersedes earlier app naming directions below;
+quoted owner instructions and dated history retain their original wording.
+
+This is a display-name change. McCluster Corp, Matthew McCluster, the distinct
+Equity Uprise civic programme and music act, the physical Equity Uprise building,
+supplied logo artwork, hosts, routes, filenames, package IDs, entity `@id`s and
+backend contracts retain their identities. The HERE app installed from Matthew's
+profile host is separate; only the platform-installed app names Equity Quantized.
+No rename here authorizes deployment or a legal/entity change.
+
 ## The public brand is Equity Uprise (owner, 2026-10-28)
 
+Historical naming decision, superseded for the app by the current name above.
+
 Owner, 2026-10-28: **the public brand is Equity Uprise, not Human Uprise.**
-Every public-facing name says Equity Uprise: the World root's title,
+Every current app-facing name says Equity Quantized: the World root's title,
 description, Open Graph and Twitter tags and JSON-LD `name` on
-`mccluster.org` ("Equity Uprise · McCluster"), page titles and descriptions,
+`mccluster.org` ("Equity Quantized · McCluster"), page titles and descriptions,
 headings and product copy, `llms.txt`, the company page and the entity graph
-(the platform's SoftwareApplication is "Equity Uprise World", keeping its
+(the platform's SoftwareApplication is "Equity Quantized", keeping its
 stable `@id` and listing its former names as `alternateName`). The company
 stays the site: `og:site_name` on `mccluster.org` is McCluster Corp, and the
 Organization's `@id` and `url` do not move.
@@ -77,7 +94,7 @@ records (audits, migration notes) keep the name they were written with.
 ```
 Matthew McCluster  (Person, matthew.mccluster.org)
 ├── founder of ─► McCluster Corp  (Organization, url https://mccluster.org/)
-│                 ├── Equity Uprise            the public brand (owner, 2026-10-28): the public-interest project and its movement-creation social platform, the Equity Uprise World (formerly "Human Uprise", before that the Uprise Action Network)
+│                 ├── Equity Uprise            the public-interest project; Equity Quantized is its action-first app (formerly Equity Uprise World / Human Uprise / the Uprise Action Network)
 │                 ├── PRIM3                    learning project / product
 │                 │   └── PRIM3 (the artist)   its music act, its own entity (MusicGroup); artist of Cyber Security Specialist
 │                 ├── McCluster Platform       the technical platform operated for McCluster Corp
@@ -265,7 +282,7 @@ host, his carry page aside, or an error the page's copy there does not log):**
   `www.mccluster.org/news` does the same at P0 and P1 alike.
 - **The platform's app starts on the World**: the platform's `manifest.json`
   carries `start_url` `/` (`platform.app_start_path`,
-  `owner_decisions.platform_app_start`); every other member is the published
+  `owner_decisions.platform_app_start`); its name, short name and description identify Equity Quantized (owner, 2026-11-27); every other member is the published
   file's. Matthew's host serves the file unchanged, so the app installed from
   his host keeps starting on its HERE page.
 - **The bar is local on the platform**: Music `listen.html`, the M the HERE
@@ -437,7 +454,7 @@ without checking the MX and TXT records survive.
 actually show the World." So the platform's root is the World, by the same
 mechanics as the `humanuprise.com` door below (`workers/mccluster/src/
 world-host.js`, shared by both routers), and the bar's Globe goes there from
-Matthew's site. Equity Uprise is McCluster Corp's platform, so the platform's
+Matthew's site. Equity Quantized is McCluster Corp's platform, so the platform's
 root stays company-first: canonical `https://mccluster.org/`, `og:site_name`
 McCluster Corp, a WebPage node that belongs to `https://mccluster.org/#website`
 and is about the Organization (the same stable `@id`). The company page,
@@ -468,9 +485,9 @@ Three hosts, still two entities. The World is McCluster Corp's platform
 (the Organization above), so `humanuprise.com` is a company host, not a third
 entity and not Matthew's. Owner, 2026-10-14: the World (the globe, the context
 strip, the feed) is its own solo experience at its own address,
-interconnected with the rest. Since 2026-10-28 the public brand is Equity
-Uprise (above): the host keeps its legacy name, and what it serves names
-Equity Uprise (`og:site_name` "Equity Uprise"). **The owner's current
+interconnected with the rest. The app is now Equity Quantized (owner,
+2026-11-27); the host keeps its legacy name, and what it serves names
+Equity Quantized (`og:site_name` "Equity Quantized"). **The owner's current
 decision** (default of 2026-11-23, `owner_decisions.humanuprise_com`, the
 owner's to change): once routed, `humanuprise.com` answers 301 to the
 platform, same path and query; the router answers so since P1. Until the
@@ -478,7 +495,7 @@ owner routes it, the host stays built and inert.
 
 | | `https://humanuprise.com/` |
 | --- | --- |
-| Whose | McCluster Corp's platform, the Equity Uprise World |
+| Whose | McCluster Corp's platform, the Equity Quantized World |
 | Answers | Today (built, inert until routed): once routed, 301 to the platform for every path (since P1; before P1 it would have served the World) |
 | Entity | Organization `https://matthew.mccluster.org/#mccluster-corp` (the same stable `@id`) |
 | Source | the World, `mnet.html`, as published by this repo; nothing is duplicated |

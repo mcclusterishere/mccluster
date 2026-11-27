@@ -69,7 +69,7 @@
   function launchForm(){
     if(!C.songs)loadForm();
     var songs=(C.songs||[]).map(function(s){return'<option value="'+e(s.id)+'">'+e(s.album_title+" · "+s.track_title)+'</option>';}).join("");
-    var sources=(C.sources||[]).map(function(s){return'<option value="'+e(s.id)+'">'+e((s.title||"Untitled Equity Uprise post")+" · "+s.status)+'</option>';}).join("");
+    var sources=(C.sources||[]).map(function(s){return'<option value="'+e(s.id)+'">'+e((s.title||"Untitled Equity Quantized post")+" · "+s.status)+'</option>';}).join("");
     var files=(C.files||[]).map(function(f){var name=String(f.object_path||"").split("/").pop();
       return'<label class="cro-check"><input type="checkbox" data-clip-file="'+e(f.id)+'" data-kind="'+e(f.media_type)+'"> '+e(f.media_type)+' · '+e(name)+'</label>';}).join("");
     var action=C.sourceType==="action";
@@ -81,7 +81,7 @@
       '<section class="cro-card"><h3>1 · Source</h3><div class="cro-form">'+
       '<label>Campaign title<input id="clTitle" maxlength="160" required placeholder="'+(action?"Amplify this action":"Clip this release")+'"></label>'+
       '<label>Creator / campaign brand<input id="clBrand" maxlength="120" placeholder="Your creator name or brand"></label>'+
-      (action?'<label>Equity Uprise source<select id="clSource"><option value="">Choose approved content…</option>'+sources+'</select></label>'+
+      (action?'<label>Equity Quantized source<select id="clSource"><option value="">Choose approved content…</option>'+sources+'</select></label>'+
         '<label class="cro-span-2">Send traffic here<input id="clDestination" type="url" placeholder="'+e(actionExample())+'"></label>':
         '<label>Song<select id="clSong"><option value="">Choose a song…</option>'+songs+'</select></label>')+
       '</div></section>'+
@@ -114,7 +114,7 @@
       '<div class="cro-form"><fieldset class="cro-span-2">'+(files||'<p class="cro-meta">No ready uploads yet.</p>')+'</fieldset>'+
       (!action?'<label>Moment label<input id="clMoment" maxlength="120" placeholder="The hook"></label><label>Starts · seconds<input id="clMomentStart" type="number" min="0"></label><label>Ends · seconds<input id="clMomentEnd" type="number" min="1"></label>':'')+
       '</div></section>'+
-      '<section class="cro-card"><h3>5 · Review</h3><p><b>'+e(action?"Equity Uprise action distribution":"Equity Uprise × creator music distribution")+'</b></p>'+
+      '<section class="cro-card"><h3>5 · Review</h3><p><b>'+e(action?"Equity Quantized action distribution":"Equity Quantized × creator music distribution")+'</b></p>'+
       '<p class="cro-meta">Draft first. Funding is recorded separately before launch. Views only count from the platform API; collab acceptance is human-reviewed until Instagram exposes proof.</p>'+
       '<button class="cr-btn cr-btn--primary" type="button" data-clip-create>Create campaign draft</button></section></div>';
   }
@@ -243,7 +243,7 @@
       });},"Draft created. Add funding, then go live.");};
     root.querySelectorAll("[data-clip-status]").forEach(function(b){b.onclick=function(){var s=b.getAttribute("data-clip-status");
       if(s==="ended"&&!confirm("End this campaign? Clippers stop submitting; clips already tracked keep settling."))return;
-      run(b,function(){return rpc("clip_campaign_set_status",{p_mission:C.sel,p_status:s});},s==="live"?"Live on Equity Uprise.":"Campaign "+s+".");};});
+      run(b,function(){return rpc("clip_campaign_set_status",{p_mission:C.sel,p_status:s});},s==="live"?"Live on Equity Quantized.":"Campaign "+s+".");};});
     var fund=root.querySelector("[data-clip-fund]");
     if(fund)fund.onclick=function(){var amt=cents("clFundAmt"),prov=val("clFundProvider")||"internal",ref=val("clFundRef")||null;
       if(!amt||amt<=0){C.msg="Enter an amount.";C.bad=true;redraw();return;}

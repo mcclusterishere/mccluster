@@ -130,7 +130,7 @@
       v("data", "Data explorer", "analytics.inventory", ["data coverage", "dataset health", "inventory"]),
       v("halo", "Halo globe", "insights.halo", ["Hitman's Halo", "halo", "globe", "action globe"])
     ] },
-    { id: "system", label: "System", icon: "system", phone: false, blurb: "Platform, jobs, apps, build and Equity Uprise operations.", items: [
+    { id: "system", label: "System", icon: "system", phone: false, blurb: "Platform, jobs, apps, build and Equity Quantized operations.", items: [
       v("overview", "Overview", "system.overview", ["#system:overview", "System · Overview", "health", "topology", "ovh", "cloudflare", "supabase", "infrastructure", "deployments"]),
       v("command", "Command", "system.command", ["#system:command", "System · Command", "capability bus", "objective", "approvals"]),
       v("workload", "Workload", "system.workload", ["#system:workload", "System · Workload", "jobs", "agents", "runs", "queues", "failures", "core"]),
@@ -138,7 +138,7 @@
       v("resources", "Resources", "system.resources", ["#system:resources", "System · Resources", "providers", "usage", "spend", "api", "integrations", "ai costs"]),
       v("apps", "Apps", "apps", ["#apps", "Apps", "whip", "prim3", "manufacture", "specialized workspaces"]),
       v("build", "Build", "create.build", ["#create:build", "Create · Build", "build code", "code", "draft pull request"]),
-      v("uprise", "Equity Uprise ops", null, [], { views: [
+      v("uprise", "Equity Quantized ops", null, [], { views: [
         v("missions", "Missions & fellows", "create.action-network", ["#create:action-network", "Create · Action network", "missions", "fellows", "identity review", "memos", "uprise", "mobilize", "mission sources", "source page", "project drawdown"]),
         v("funding", "Funding", "create.funding", ["#create:funding", "Create · Funding", "grants", "opportunity intelligence", "bounties"])
       ] }),

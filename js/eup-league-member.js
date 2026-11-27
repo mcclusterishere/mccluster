@@ -761,7 +761,7 @@
 
     function alive(e) { return !destroyed && (e === undefined || e === epoch); }
     function say(text) { if (announcer) announcer.textContent = text || ''; }
-    function setTitle() { if (doc && opts.manageTitle !== false) doc.title = model.phase === 'ready' ? 'Environmental Justice League · Equity Uprise' : 'Equity Uprise'; }
+    function setTitle() { if (doc && opts.manageTitle !== false) doc.title = model.phase === 'ready' ? 'Environmental Justice League · Equity Quantized' : 'Equity Quantized'; }
     /* Where keyboard focus goes after a capture step removes the control that had it: Stop while recording, Send on
        the preview, and the file upload when no device could be used. */
     var pendingFocus = null;

@@ -36,7 +36,11 @@ Here · Antisocial
 The current Whip Equipped album and film storyline, full screenplay, source
 precedence, and timing map are indexed in [Whip Equipped canon](docs/music/WHIP-EQUIPPED-STORY.md).
 
-## The Equity Uprise platform
+## The Equity Quantized app
+
+Equity Quantized is the app, formerly Equity Uprise / Equity Uprise World (owner, 2026-11-27): the World globe, member feed, missions and verified action. Existing addresses and technical identifiers stay compatible. The separate civic programme, music act and physical building retain Equity Uprise.
+
+## The Equity Uprise fellowship platform
 
 A fellowship of fellowships: people say what they care about, and the
 platform points them at real programs and helps them apply. Postgres with

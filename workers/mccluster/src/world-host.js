@@ -273,15 +273,18 @@ export async function passThrough(request, upstream, fetchImpl, { root = false, 
   return new Response(request.method === 'HEAD' ? null : res.body, { status: res.status, headers: out });
 }
 
-/* The installed app's manifest on a host whose app starts elsewhere (SPEC-PLATFORM 2.8; the platform's app opens on the
-   World, the owner's default of 2026-11-23): the published file with its start_url replaced and every other member as
-   it is. A body that is not a manifest object is handed on as it came. The body changes, so the upstream validator goes. */
+/* The platform's installed app opens on the World (SPEC-PLATFORM 2.8) and names the app Equity Quantized
+   (owner, 2026-11-27). Matthew's host serves the published HERE manifest unchanged. All other members, including
+   IDs, scope, icons and shortcuts, stay as published. Invalid manifest bodies are handed on unchanged. */
 export function appManifest(text, start, headers) {
   headers.delete('etag');
   let manifest;
   try { manifest = JSON.parse(text); } catch { return text; }
   if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return text;
   manifest.start_url = start;
+  manifest.name = 'Equity Quantized';
+  manifest.short_name = 'Equity Quantized';
+  manifest.description = 'The World, its people and missions: turn what you care about into verified action.';
   return JSON.stringify(manifest, null, 1) + '\n';
 }
 

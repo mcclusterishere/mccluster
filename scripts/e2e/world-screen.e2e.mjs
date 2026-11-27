@@ -722,7 +722,7 @@ if(runs('travel')||ONLY.startsWith('travel-')) for(const device of DEVICES.filte
       await capture(() => writeFile(join(OUT, scope + '-completed-marker-failure.json'), JSON.stringify(diagnostic, null, 2)));
       throw error;
     }
-    check(scope,'the completed capstone has its own public marker under the Equity Uprise tab',await page.isVisible('#mnCompletedSeries')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
+    check(scope,'the completed capstone has its own public marker under the Equity Quantized tab',await page.isVisible('#mnCompletedSeries')&&await globe.evaluate(()=>__huCompletedMissions().events===1&&__huCompletedMissions().pins===1&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
     await page.click('#mnFeedScope [data-feed-scope="global"]');
     await globe.waitForFunction(()=>!__huCompletedMissions().on&&__huCompletedMissions().pins===0);
     check(scope,'Global hides completed markers and private navigation overlays',await globe.evaluate(()=>__huCompletedMissions().pins===0&&!__huNavigation().locationVisible&&!__huNavigation().routeVisible));
@@ -820,7 +820,7 @@ if(runs('mission-archive')) {
     const globe=page.frame({url:/action-globe\.html/});
     await page.waitForSelector('#mnCompletedSeries .dc-series__card',{state:'attached'});
     await globe.waitForFunction(()=>__huCompletedMissions().pins===1&&Math.abs(__huIon().height-900000)<500);
-    check(scope,'completed link opens the Equity Uprise tab on the feed without requesting travel location',await page.getAttribute('html','data-world-mode')==='posts'&&await page.evaluate(()=>MCC_FEED_SCOPE.get()==='equity'&&__travelGeoRequests===0&&__travelWatchStarts===0));
+    check(scope,'completed link opens the Equity Quantized tab on the feed without requesting travel location',await page.getAttribute('html','data-world-mode')==='posts'&&await page.evaluate(()=>MCC_FEED_SCOPE.get()==='equity'&&__travelGeoRequests===0&&__travelWatchStarts===0));
     const focus=await globe.evaluate(()=>__huFocusPlace());
     check(scope,'archive and real globe readiness produce the capstone focus',focus?.lat===event.latitude&&focus?.lon===event.longitude&&await globe.evaluate(()=>__huCompletedMissions().on&&!__huNavigation().location&&!__huNavigation().routeVisible),focus);
     await page.click('.wt-world-modes [data-world-mode=travel]');
@@ -1378,7 +1378,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     check(scope,'the World is one feed: no centre mode bar (no Travel, Missions or E=UP), the feed is what it shows',shell.travelOff&&shell.mode==='posts'&&!shell.tabs&&shell.modes.length===0&&shell.feed&&shell.posts>0&&!shell.planner,shell);
     /* the row under the globe, in the owner's order (owner, 2026-11-18: "It should just be local, equity up, global, live news people"):
        Local, the Equity Uprise tab (the supplied mark alone), Global (pressed on load), Live, News, People */
-    check(scope,'the feed row reads Local, the Equity Uprise tab (image only), Global (pressed), Live, News, People',JSON.stringify(shell.strip.map(b=>b.name))===JSON.stringify(['Local','Equity Uprise','Global','Live','News','People'])
+    check(scope,'the feed row reads Local, the Equity Quantized tab (image only), Global (pressed), Live, News, People',JSON.stringify(shell.strip.map(b=>b.name))===JSON.stringify(['Local','Equity Quantized','Global','Live','News','People'])
       &&shell.strip[2].pressed==='true'&&shell.strip[2].key==='global'&&shell.strip[1].key==='equity'&&shell.strip[1].words===''&&shell.strip[1].imgs===2,shell.strip);
     check(scope,'the globe, and the expanded globe, draw the public missions',!/missions=0/.test(shell.frame)&&!/missions=0/.test(shell.expand),shell);
     await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()>0,null,{timeout:25000}).catch(()=>{});
@@ -1390,7 +1390,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     /* the swipe deck and its preview are gone (owner, 2026-11-17: "I don't like it"); the clip-campaign door stays the house owner's */
     const deck = await page.evaluate(()=>({gone:[...document.querySelectorAll('.hu-mission-preview,#huMissionList,#mnWorldEup,#mnFeedMissions,.mn-swipe,.mn-swipe__card')].map(el=>el.id||el.className),deckScript:!!window.MCC_MISSION_DECK,
       clipDoor:document.getElementById('mnClipDoor').getClientRects().length>0,allMissions:[...document.querySelectorAll('[data-mn-feed="equity"]')].length}));
-    check(scope,'no swipe deck, no deck preview and no Open missions rail; All missions opens the Equity Uprise tab; no clip-campaign door',deck.gone.length===0&&!deck.deckScript&&!deck.clipDoor&&deck.allMissions===2,deck);
+    check(scope,'no swipe deck, no deck preview and no Open missions rail; All missions opens the Equity Quantized tab; no clip-campaign door',deck.gone.length===0&&!deck.deckScript&&!deck.clipDoor&&deck.allMissions===2,deck);
     const promoted = await page.evaluate(()=>{const t=document.body.innerText;return {rail:!!document.getElementById('mnRail'),words:/WAYS TO MOVE|Campaigns & missions|See campaigns/i.test(t)};});
     check(scope,'Ways to move is gone: no campaigns or missions promoted on the feed',!promoted.rail&&!promoted.words,promoted);
     /* the feed is the one mode: a sideways swipe never leaves it for Travel (or for any mode that is gone) */
@@ -1405,7 +1405,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
       order:document.getElementById('mnFeedScope').compareDocumentPosition(document.getElementById('wePanel'))&Node.DOCUMENT_POSITION_FOLLOWING&&document.getElementById('wePanel').compareDocumentPosition(document.getElementById('mnFeed'))&Node.DOCUMENT_POSITION_FOLLOWING}));
     /* the open missions as posts (six: the clip job is the Clips tab's), nothing else; this fixture's Environmental Justice source
        answers 401, so the tab shows the one honest line in the panel's place, never a broken panel (owner, 2026-11-17) */
-    check(scope,'the Equity Uprise tab shows the mission posts, no posts or news, with Environmental Justice above them (one honest line while its source is unavailable)',tab.pressed==='true'&&tab.scope==='equity'&&(tab.panel||tab.note)&&!(tab.panel&&tab.note)&&tab.missions===6&&tab.posts===0&&tab.news===0&&!!tab.order,tab);
+    check(scope,'the Equity Quantized tab shows the mission posts, no posts or news, with Environmental Justice above them (one honest line while its source is unavailable)',tab.pressed==='true'&&tab.scope==='equity'&&(tab.panel||tab.note)&&!(tab.panel&&tab.note)&&tab.missions===6&&tab.posts===0&&tab.news===0&&!!tab.order,tab);
     await page.screenshot({path:join(OUT,scope+'-equity.png')});
     await page.click('#mnFeedScope [data-feed-scope="global"]');
     check(scope,'leaving the tab returns to the whole feed, and the panel goes',await page.evaluate(()=>document.getElementById('wePanel').hidden&&window.MCC_FEED_SCOPE.get()==='global'&&document.querySelectorAll('#mnFeed [data-post-id]').length>0));
@@ -1475,7 +1475,7 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>(!process.env.EDIT
     await globe.waitForFunction(()=>typeof window.__huMissionPins==='function'&&window.__huMissionPins()>0,null,{timeout:25000}).catch(()=>{});
     check(scope,'the Earth carries the mission pins for the owner, as for everyone',await globe.evaluate(()=>window.__huMissionPins()>0&&!document.documentElement.classList.contains('globe-no-missions')));
     /* the missions are in the feed's Equity Uprise tab for the owner too; there is no Missions mode */
-    check(scope,'no Missions or E=UP mode for the owner either; the Equity Uprise tab is in the strip',await page.evaluate(()=>!document.querySelector('.wt-world-modes [data-world-mode="missions"],.wt-world-modes [data-world-mode="environment"]')&&!!document.querySelector('#mnFeedScope [data-feed-scope="equity"]')));
+    check(scope,'no Missions or E=UP mode for the owner either; the Equity Quantized tab is in the strip',await page.evaluate(()=>!document.querySelector('.wt-world-modes [data-world-mode="missions"],.wt-world-modes [data-world-mode="environment"]')&&!!document.querySelector('#mnFeedScope [data-feed-scope="equity"]')));
     await page.click('.wt-world-modes [data-world-mode=travel]');
     check(scope,'Travel opens for the owner',await page.evaluate(()=>document.documentElement.dataset.worldMode==='travel'));
     /* the next World opens with Travel straight away: no second opening */
@@ -1549,10 +1549,10 @@ if (runs('editorial')) for (const device of DEVICES.filter(d=>!process.env.EDITO
     const eup=await page.evaluate(()=>{const b=document.querySelector('#mnFeedScope [data-feed-scope="equity"]'),shown=[...b.querySelectorAll('img')].filter(i=>i.getClientRects().length),r=shown[0]?.getBoundingClientRect();
       return{pressed:b.getAttribute('aria-pressed'),name:b.getAttribute('aria-label'),words:b.textContent.trim(),shown:shown.map(i=>i.getAttribute('src')),w:r&&Math.round(r.width),h:r&&Math.round(r.height),
         panel:!document.getElementById('wePanel').hidden&&(getComputedStyle(document.getElementById('wePanel')).display!=='none'||getComputedStyle(document.getElementById('weUnavailable')).display==='block'),deck:!!document.querySelector('.mn-swipe,.hu-mission-preview,#mnWorldEup'),sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth};});
-    check(scope,'the Equity Uprise tab is the supplied mark alone, scaled, pressed, with Environmental Justice above the mission feed and no deck',eup.pressed==='true'&&eup.name==='Equity Uprise'&&eup.words===''&&eup.shown.length===1&&eup.w===eup.h&&eup.w>=24&&eup.panel&&!eup.deck&&eup.sw===eup.cw,eup);
+    check(scope,'the Equity Quantized tab is the supplied mark alone, scaled, pressed, with Environmental Justice above the mission feed and no deck',eup.pressed==='true'&&eup.name==='Equity Quantized'&&eup.words===''&&eup.shown.length===1&&eup.w===eup.h&&eup.w>=24&&eup.panel&&!eup.deck&&eup.sw===eup.cw,eup);
     /* the row in the owner's order (2026-11-18): after Local, the Equity Uprise tab */
     await page.focus('#mnFeedScope [data-feed-scope="local"]');await page.keyboard.press('ArrowRight');
-    check(scope,'the arrow keys walk the row: after Local, the Equity Uprise tab',await page.evaluate(()=>document.activeElement&&document.activeElement.dataset.feedScope==='equity'));
+    check(scope,'the arrow keys walk the row: after Local, the Equity Quantized tab',await page.evaluate(()=>document.activeElement&&document.activeElement.dataset.feedScope==='equity'));
     await page.screenshot({path:join(OUT,scope+'-equity.png')});
     if(!member){
       const dayM=await page.evaluate(()=>{const h=document.documentElement,was=h.getAttribute('data-daylight');h.setAttribute('data-daylight','day');const m=document.querySelector('.appbar__tab[data-appnav="home"] .appbar__m'),c=m?getComputedStyle(m).content:'';if(was===null)h.removeAttribute('data-daylight');else h.setAttribute('data-daylight',was);return c;});

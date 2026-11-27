@@ -39,8 +39,8 @@ const PAGE_HEADERS = {
 /* The World's head on the company host: company-first, stable @ids
    (data/seo/domain-architecture.json). The WebSite node itself is declared
    on /company with the Organization; the root only belongs to it. */
-const WORLD_NAME = 'Equity Uprise · McCluster';
-const WORLD_DESCRIPTION = 'Equity Uprise is McCluster Corp\'s movement platform: the World\'s globe, live context and member feed, where people find the movement and turn what they care about into verified action.';
+const WORLD_NAME = 'Equity Quantized · McCluster';
+const WORLD_DESCRIPTION = 'Equity Quantized is McCluster Corp\'s movement platform: the World\'s globe, live context and member feed, where people find the movement and turn what they care about into verified action.';
 const WORLD_NODE = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'WebPage',

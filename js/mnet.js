@@ -410,7 +410,7 @@
     st.className = "mn__field-state" + (kind ? " is-" + kind : "");
     st.textContent = kind === "bad" ? "taken" : "";
     if (field) field.classList.toggle("is-bad", kind === "bad");
-    if (hint) hint.textContent = text || "Your handle across Equity Uprise.";
+    if (hint) hint.textContent = text || "Your handle across Equity Quantized.";
   }
   function checkHandle() {
     var v = $("mnHandle").value.trim();
@@ -1208,7 +1208,7 @@
     return '<div class="mn__actcard">' +
       '<p class="mn__actcard-eyebrow">Verified action</p>' +
       '<p class="mn__actcard-title">' + esc(c.title) + '</p>' +
-      '<p class="mn__actcard-foot">Equity Uprise · Don\u2019t just watch. Act.</p>' +
+      '<p class="mn__actcard-foot">Equity Quantized · Don\u2019t just watch. Act.</p>' +
       '<div class="mn__actcard-row">' +
         (c.mission_open ? '<a class="mn__primary mn__primary--eup" href="' + esc(missionHref(c.mission_id)) + '" data-take-mission="' + esc(c.mission_id) + '" aria-label="Join this mission and do it">' + EUP_MARK + '</a>' : '') +
         '<a class="mn__quiet" href="' + esc(receiptHref(c.assignment_id)) + '">Receipt</a>' +
@@ -1794,7 +1794,7 @@
     url.searchParams.set("post", b.dataset.post);
     var link = url.toString();
     if (navigator.share) {
-      navigator.share({ title:"Equity Uprise", url:link }).catch(function () {});
+      navigator.share({ title:"Equity Quantized", url:link }).catch(function () {});
     } else if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(link).then(function () { b.textContent = "Copied"; }).catch(function () { window.prompt("Copy post link",link); });
     } else window.prompt("Copy post link",link);
@@ -3318,7 +3318,7 @@
       bindConnectButton($("mnPersonBody"), data.connection, p.m_uid||id.m_uid||data.m_uid, function(){openPerson(handle);});
       $("mnPersonMessage").onclick=function(){startConversation({mccluster_id:handle});};
       $("mnPersonMute").onclick=function(){api("/v1/mnet/people/"+encodeURIComponent(handle)+"/mute",{method:data.muted?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
-      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Equity Uprise."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
+      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Equity Quantized."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
       $("mnPersonReport").onclick=function(){var details=prompt("What should the moderators know?","");if(details===null)return;api("/v1/mnet/reports",{method:"POST",body:{target_type:"profile",target_id:data.profile&&data.profile.m_uid||id.mccluster_id,reason:"other",details:details}}).then(function(){alert("Report submitted.");});};
     }).catch(function (e) { $("mnPersonBody").innerHTML='<div class="mn__empty">'+esc(e.message||"Could not load profile.")+'</div>'; });
   }
@@ -4415,7 +4415,7 @@
      server counts them, so the form only appears when it will be accepted. */
   function fellowshipBlock(verified){
     var f=missions.fellowship||{}, need=Number(f.needed)||FELLOWSHIP_MIN_VERIFIED, app=f.application, left=f.eligible?0:Math.max(0,need-verified);
-    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are a Equity Uprise fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
+    if(app&&app.status==="accepted")return '<div class="mn__record-unlock is-open"><b>You are an Equity Uprise fellow.</b>'+(app.review_note?'<span class="mn__fellow-note">'+esc(app.review_note)+'</span>':"")+'</div>';
     if(app&&app.status==="submitted")return '<div class="mn__record-unlock is-open"><b>Your fellowship application is in review.</b> You will see the decision here.</div>';
     if(left>0)return '<p class="mn__record-unlock"><b>'+left+' more verified '+(left===1?"action":"actions")+'</b> until you can apply for the fellowship.</p>';
     var declined=app&&app.status==="declined";

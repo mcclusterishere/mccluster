@@ -96,7 +96,7 @@
     social: { href: "sites.html", label: "See the four offers" },
     shoot: { href: "hire.html", label: "The rate card" },
     music: { href: "hire.html", label: "The rate card" },
-    campaign: { href: "equity-uprise.html", label: "Equity Uprise" },
+    campaign: { href: "equity-uprise.html", label: "Equity Quantized" },
     other: { href: "hire.html", label: "The rate card" },
   };
 

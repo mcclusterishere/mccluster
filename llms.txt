@@ -3,13 +3,14 @@
 > Matthew McCluster's property: who he is, what he has made and what he
 > does, across technology, infrastructure, platforms, creative direction,
 > photography and music. He founded McCluster Corp, which runs the
-> McCluster Platform and Control, Equity Uprise,
+> McCluster Platform and Control, Equity Quantized, Equity Uprise,
 > PRIM3 and commercial creative and technical services; several of those
 > product pages are hosted here. Everything below that is described as
 > public is readable without an account.
 
 McCluster Corp, the company he founded, is a separate entity with its own property, https://mccluster.org/
 (its own llms.txt is at https://mccluster.org/llms.txt once that host is routed). Do not merge the two:
+Equity Quantized is the app, formerly Equity Uprise / Equity Uprise World; the distinct civic programme and music act retain the Equity Uprise name. Its routes, hosts and entity IDs are unchanged.
 Whip Equipped LLC is Matthew's separate company, and McCluster Corp's products (Equity Uprise, PRIM3, the McCluster Platform) are the company's, even where their pages are hosted here.
 McCluster Corp is based in Bridgeport, Connecticut; a 2025 Connecticut public-charity registration certificate is preserved in the public record, and current renewal status is not asserted here.
 Who and what this site is about, as one machine-readable graph with stable @ids:

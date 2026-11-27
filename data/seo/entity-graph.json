@@ -424,8 +424,9 @@
     "action_network": {
       "@type": "SoftwareApplication",
       "@id": "https://matthew.mccluster.org/mnet.html#uprise-action-network",
-      "name": "Equity Uprise World",
+      "name": "Equity Quantized",
       "alternateName": [
+        "Equity Uprise World",
         "Equity Uprise",
         "Human Uprise",
         "Uprise Action Network",

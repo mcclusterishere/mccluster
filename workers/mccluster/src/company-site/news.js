@@ -187,7 +187,7 @@ ${extraHead}${graph ? `  <script type="application/ld+json">${ld(graph)}</script
 ${body}
     </main>
     <footer>
-      <a href="${NEWS_ROOT}">All news</a><a href="${COMPANY_ORIGIN}/news/feed.xml">RSS</a><a href="${COMPANY_ORIGIN}/company">About McCluster Corp</a><a href="${COMPANY_ORIGIN}/">Equity Uprise</a>
+      <a href="${NEWS_ROOT}">All news</a><a href="${COMPANY_ORIGIN}/news/feed.xml">RSS</a><a href="${COMPANY_ORIGIN}/company">About McCluster Corp</a><a href="${COMPANY_ORIGIN}/">Equity Quantized</a>
       <p>© ${new Date().getUTCFullYear()} ${PUBLICATION}.</p>
     </footer>
   </div>

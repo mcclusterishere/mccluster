@@ -314,7 +314,7 @@ function github(asked = []) {
   };
 }
 
-test('the platform\'s manifest.json starts the app added from mccluster.org on the World; nothing else in it changes, and Matthew\'s copy is his', async () => {
+test('the platform\'s manifest.json starts the app added from mccluster.org on the World; names Equity Quantized, keeps its other members, and Matthew\'s copy is his', async () => {
   assert.equal(SITE.platform.app_start_path, record.platform.app_start_path, 'the table carries the record\'s app start');
   assert.equal(record.platform.app_start_path, '/', 'the owner\'s default of 2026-11-23 (owner_decisions.platform_app_start): the World');
   assert.match(record.owner_decisions.platform_app_start.decision, /^On the World\./);
@@ -327,7 +327,10 @@ test('the platform\'s manifest.json starts the app added from mccluster.org on t
   assert.equal(r.headers.get('etag'), null, 'the body changed, so the upstream validator does not describe it');
   const body = await r.json();
   assert.equal(body.start_url, '/', 'the World, the platform\'s root');
-  assert.deepEqual({ ...body, start_url: MANIFEST.start_url }, MANIFEST, 'every other member as published');
+  assert.equal(body.name, 'Equity Quantized');
+  assert.equal(body.short_name, 'Equity Quantized');
+  assert.match(body.description, /verified action/);
+  assert.deepEqual({ ...body, start_url: MANIFEST.start_url, name: MANIFEST.name, short_name: MANIFEST.short_name, description: MANIFEST.description }, MANIFEST, 'every other member as published');
   assert.equal(MANIFEST.start_url, './index.html', 'the file itself, which Matthew\'s host serves, still opens his HERE page');
   const head = await router(new Request(`${PLAT}/manifest.json`, { method: 'HEAD' }), {}, github());
   assert.equal(head.status, 200);

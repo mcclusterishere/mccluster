@@ -169,7 +169,7 @@ async function visibility(viewport) {
       await s.page.locator('[data-eul-unavailable="' + kind + '"]').waitFor({ timeout: 15000 });
       const t = await text(s.page);
       check(scope, (as || 'signed out') + ': neutral "Not available" state, nothing else', /Not available/.test(t) && !/Environmental Justice League|Write a song|healthier world|campaign/i.test(await s.page.evaluate(() => document.body.innerText)), t);
-      check(scope, (as || 'signed out') + ': the page title names no program', (await s.page.title()) === 'Equity Uprise');
+      check(scope, (as || 'signed out') + ': the page title names no program', (await s.page.title()) === 'Equity Quantized');
       check(scope, (as || 'signed out') + ': ' + (as ? 'offers another account' : 'offers sign-in, and asked the API nothing'), as ? /Use another account/.test(t) : /Sign in/.test(t) && plane.log.slice(before).every((e) => !e.path.startsWith(C.PREFIX.member)));
       await audit(scope, (as || 'signed out'), plane, s);
       await s.page.screenshot({ path: join(OUT, `visibility-${as || 'signed-out'}-${viewport.width}.png`), fullPage: true });
@@ -213,7 +213,7 @@ async function journey(viewport) {
     await waitText(page, /Missions open to you/);
     let t = await text(page);
     check(scope, 'the invited tester sees the League heading and the song mission', /Environmental Justice League/.test(await page.locator('h1').innerText()) && /Write a song for a healthier world/.test(t), t.slice(0, 300));
-    check(scope, 'the title names the program only after the read answered ok', (await page.title()) === 'Environmental Justice League · Equity Uprise', await page.title());
+    check(scope, 'the title names the program only after the read answered ok', (await page.title()) === 'Environmental Justice League · Equity Quantized', await page.title());
     check(scope, 'no camera or microphone was asked for on load or render', (await gum(page)) === 0);
     await audit(scope, 'catalogue', plane, s);
 
