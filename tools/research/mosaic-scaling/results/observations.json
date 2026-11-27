@@ -1,0 +1,717 @@
+[
+  {
+    "week": "2019-10-14",
+    "start": "2019-10-15T06:02:00",
+    "end": "2019-10-16T06:43:00",
+    "hours": 24.683333333333334,
+    "file": "pairs_20191015T06021571_20191016T06431571_drift_and_deformation.nc",
+    "sha256": "d5565e592c244394ab61e368e65c55fe248ae12780f77ea8531d4484f5241888",
+    "optional_shape_mask_present": false,
+    "observed_ground_km_per_nominal_km": [
+      1.0272789144527896,
+      1.0301254787873944
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.04767180328690292,
+        "target_per_day": [
+          0.06173281657753216,
+          0.055459222365482556,
+          0.05086556787876635
+        ],
+        "proxy_tiles": 121,
+        "target_tiles": 294
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.04767180328690292,
+        "target_per_day": [
+          0.0603715553076631,
+          0.054223397320824804,
+          0.04969161874628696
+        ],
+        "proxy_tiles": 121,
+        "target_tiles": 285
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.04622465267031478,
+        "target_per_day": [
+          0.06106795075719409,
+          0.054803367683139766,
+          0.050120197923705596
+        ],
+        "proxy_tiles": 109,
+        "target_tiles": 271
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.0663658417661002,
+        "target_per_day": [
+          0.0412775687613497,
+          0.03345631922782879,
+          0.028839690431533768
+        ],
+        "proxy_tiles": 286,
+        "target_tiles": 125
+      }
+    }
+  },
+  {
+    "week": "2019-10-21",
+    "start": "2019-10-21T06:51:00",
+    "end": "2019-10-22T05:54:00",
+    "hours": 23.05,
+    "file": "pairs_20191021T06511571_20191022T05541571_drift_and_deformation.nc",
+    "sha256": "18a8ca11d57b0fa097beb78f26e727e7b9d6823e9ad803318ada2d5caf136d83",
+    "optional_shape_mask_present": false,
+    "observed_ground_km_per_nominal_km": [
+      1.0273366509777877,
+      1.0301086129238601
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.03600714962324086,
+        "target_per_day": [
+          0.029137737244251217,
+          0.022462666481326592,
+          0.018178320300251877
+        ],
+        "proxy_tiles": 95,
+        "target_tiles": 262
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.03600714962324086,
+        "target_per_day": [
+          0.029160736174302277,
+          0.022487193002896713,
+          0.018197530090066777
+        ],
+        "proxy_tiles": 95,
+        "target_tiles": 260
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.03579926746408322,
+        "target_per_day": [
+          0.028670781308479516,
+          0.021937339148550353,
+          0.01737361552777084
+        ],
+        "proxy_tiles": 108,
+        "target_tiles": 271
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.035300340436937465,
+        "target_per_day": [
+          0.02938873749649678,
+          0.02099060761462164,
+          0.01546589710216997
+        ],
+        "proxy_tiles": 260,
+        "target_tiles": 96
+      }
+    }
+  },
+  {
+    "week": "2019-10-28",
+    "start": "2019-10-28T06:43:00",
+    "end": "2019-10-29T05:46:00",
+    "hours": 23.05,
+    "file": "pairs_20191028T06431572_20191029T05461572_drift_and_deformation.nc",
+    "sha256": "08ab4a587a186cef9eacf6078e70d28a4dc59cdfcb9f128e344bc39abcad6e40",
+    "optional_shape_mask_present": true,
+    "observed_ground_km_per_nominal_km": [
+      1.0278775292906928,
+      1.0303949156927577
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.03388960855767766,
+        "target_per_day": [
+          0.02188372184967505,
+          0.013728229769803167,
+          0.008111136148166985
+        ],
+        "proxy_tiles": 177,
+        "target_tiles": 374
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.03388960855767766,
+        "target_per_day": [
+          0.021930966515508604,
+          0.013758803262299047,
+          0.008155081866969066
+        ],
+        "proxy_tiles": 177,
+        "target_tiles": 369
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.033616592655444345,
+        "target_per_day": [
+          0.02215413802378872,
+          0.013897639496519834,
+          0.008329518318436
+        ],
+        "proxy_tiles": 163,
+        "target_tiles": 370
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.030810974093788232,
+        "target_per_day": [
+          0.0245372077363086,
+          0.016572505143637648,
+          0.01116312184693145
+        ],
+        "proxy_tiles": 370,
+        "target_tiles": 179
+      }
+    }
+  },
+  {
+    "week": "2019-11-04",
+    "start": "2019-11-04T03:19:00",
+    "end": "2019-11-05T04:00:00",
+    "hours": 24.683333333333334,
+    "file": "pairs_20191104T03191572_20191105T04001572_drift_and_deformation.nc",
+    "sha256": "108fd5b02ee2f55646fd78f2fe5283dbc4ef901603eb11029fd2363af403d848",
+    "optional_shape_mask_present": true,
+    "observed_ground_km_per_nominal_km": [
+      1.028053053535895,
+      1.0305736572332176
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.03138850177592457,
+        "target_per_day": [
+          0.019722827202280326,
+          0.014388867243859562,
+          0.011109197697400717
+        ],
+        "proxy_tiles": 260,
+        "target_tiles": 280
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.03138850177592457,
+        "target_per_day": [
+          0.019739038036264565,
+          0.01438752230231467,
+          0.01110019482876681
+        ],
+        "proxy_tiles": 260,
+        "target_tiles": 278
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.03080292270566321,
+        "target_per_day": [
+          0.019559988441495486,
+          0.01424170924997618,
+          0.010933866473137236
+        ],
+        "proxy_tiles": 268,
+        "target_tiles": 298
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.02418907856118389,
+        "target_per_day": [
+          0.02578787124663145,
+          0.019577706796784042,
+          0.015802176085303717
+        ],
+        "proxy_tiles": 278,
+        "target_tiles": 265
+      }
+    }
+  },
+  {
+    "week": "2019-11-11",
+    "start": "2019-11-14T03:35:00",
+    "end": "2019-11-15T03:27:00",
+    "hours": 23.866666666666667,
+    "file": "pairs_20191114T03351573_20191115T03271573_drift_and_deformation.nc",
+    "sha256": "11f845c4eb40593416686ffacd2aa0f93d704230c42a2ceace5215282fd07c7b",
+    "optional_shape_mask_present": true,
+    "observed_ground_km_per_nominal_km": [
+      1.028108576080001,
+      1.0305893535460873
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.02634709029944346,
+        "target_per_day": [
+          0.018994160826774967,
+          0.015263376145169108,
+          0.012650966399572998
+        ],
+        "proxy_tiles": 263,
+        "target_tiles": 332
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.02634709029944346,
+        "target_per_day": [
+          0.018994160826774967,
+          0.015263376145169108,
+          0.012650966399572998
+        ],
+        "proxy_tiles": 263,
+        "target_tiles": 332
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.026641256251910203,
+        "target_per_day": [
+          0.018802807272499295,
+          0.015049587304671975,
+          0.012247296632993664
+        ],
+        "proxy_tiles": 274,
+        "target_tiles": 336
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.022829301632547903,
+        "target_per_day": [
+          0.021606798297737245,
+          0.017063984010746942,
+          0.013410366868936109
+        ],
+        "proxy_tiles": 332,
+        "target_tiles": 264
+      }
+    }
+  },
+  {
+    "week": "2019-11-18",
+    "start": "2019-11-18T05:30:00",
+    "end": "2019-11-19T03:43:00",
+    "hours": 22.216666666666665,
+    "file": "pairs_20191118T05301574_20191119T03431574_drift_and_deformation.nc",
+    "sha256": "663d004596f73a4914318c58a3edf5b5d4a384c6466b84ef387e441ea4e392eb",
+    "optional_shape_mask_present": true,
+    "observed_ground_km_per_nominal_km": [
+      1.0282755232723237,
+      1.030569017251462
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.06509000865984667,
+        "target_per_day": [
+          0.05859790786870394,
+          0.05312619858206938,
+          0.0491844575745068
+        ],
+        "proxy_tiles": 270,
+        "target_tiles": 236
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.06527522225774945,
+        "target_per_day": [
+          0.05819822224547223,
+          0.05271912575176512,
+          0.048768871351612265
+        ],
+        "proxy_tiles": 268,
+        "target_tiles": 235
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.06422297396446294,
+        "target_per_day": [
+          0.05894035586305154,
+          0.0534995924345176,
+          0.04863817798532254
+        ],
+        "proxy_tiles": 255,
+        "target_tiles": 250
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.06417862700238926,
+        "target_per_day": [
+          0.056610750687752946,
+          0.0495132942654872,
+          0.0444413814564265
+        ],
+        "proxy_tiles": 235,
+        "target_tiles": 270
+      }
+    }
+  },
+  {
+    "week": "2019-11-25",
+    "start": "2019-11-25T03:43:00",
+    "end": "2019-11-26T03:35:00",
+    "hours": 23.866666666666667,
+    "file": "pairs_20191125T03431574_20191126T03351574_drift_and_deformation.nc",
+    "sha256": "8ee3f1168b0db70d0046ad02f1e6e68ff2d587c417f3dc43116e3080fc430553",
+    "optional_shape_mask_present": true,
+    "observed_ground_km_per_nominal_km": [
+      1.0281890438354278,
+      1.0305464863958889
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.025590254335417627,
+        "target_per_day": [
+          0.026311704087368066,
+          0.023733700089095294,
+          0.022172263308718233
+        ],
+        "proxy_tiles": 236,
+        "target_tiles": 273
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.025590254335417627,
+        "target_per_day": [
+          0.026334978143199635,
+          0.023776358926144207,
+          0.0222467062047819
+        ],
+        "proxy_tiles": 236,
+        "target_tiles": 270
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.026159137647901443,
+        "target_per_day": [
+          0.02607012400577135,
+          0.02352102470812494,
+          0.02200854295466602
+        ],
+        "proxy_tiles": 226,
+        "target_tiles": 299
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.029720288183756504,
+        "target_per_day": [
+          0.02133229957578171,
+          0.01793959015201445,
+          0.015637960064888254
+        ],
+        "proxy_tiles": 272,
+        "target_tiles": 241
+      }
+    }
+  },
+  {
+    "week": "2019-12-02",
+    "start": "2019-12-02T04:24:00",
+    "end": "2019-12-03T03:27:00",
+    "hours": 23.05,
+    "file": "pairs_20191202T04241575_20191203T03271575_drift_and_deformation.nc",
+    "sha256": "d2a327fb92342eb457ecb72994c2cbba2fcb1c26cf2dc3a2691f9031bb465b1c",
+    "optional_shape_mask_present": true,
+    "observed_ground_km_per_nominal_km": [
+      1.0290769628070666,
+      1.0305626471772367
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.03027411987067538,
+        "target_per_day": [
+          0.025131292204277282,
+          0.019935814490647588,
+          0.016382647921103728
+        ],
+        "proxy_tiles": 153,
+        "target_tiles": 174
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.03027411987067538,
+        "target_per_day": [
+          0.02430508117720653,
+          0.019142831307156667,
+          0.015589273593222612
+        ],
+        "proxy_tiles": 153,
+        "target_tiles": 168
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.030465148780681503,
+        "target_per_day": [
+          0.025432574862472954,
+          0.02035763095583913,
+          0.016904599223786163
+        ],
+        "proxy_tiles": 153,
+        "target_tiles": 166
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.030336104194311594,
+        "target_per_day": [
+          0.02304499909259867,
+          0.0168796329192168,
+          0.013414797426449302
+        ],
+        "proxy_tiles": 168,
+        "target_tiles": 155
+      }
+    }
+  },
+  {
+    "week": "2019-12-09",
+    "start": "2019-12-09T03:27:00",
+    "end": "2019-12-10T01:39:00",
+    "hours": 22.2,
+    "file": "pairs_20191209T03271575_20191210T01391575_drift_and_deformation.nc",
+    "sha256": "5fb20a752a396473560471d1eabd8c74b63f0dff349cc90009495ac84147af92",
+    "optional_shape_mask_present": false,
+    "observed_ground_km_per_nominal_km": [
+      1.0283854489710222,
+      1.0305201704795492
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.027341730478420454,
+        "target_per_day": [
+          0.021870157248820264,
+          0.018549905406934325,
+          0.016001224337253567
+        ],
+        "proxy_tiles": 350,
+        "target_tiles": 282
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.027341730478420454,
+        "target_per_day": [
+          0.02164108637363704,
+          0.01835418773755686,
+          0.015820573286728104
+        ],
+        "proxy_tiles": 350,
+        "target_tiles": 277
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.027245152835503446,
+        "target_per_day": [
+          0.022283095524600696,
+          0.01893189866329938,
+          0.01634771466522746
+        ],
+        "proxy_tiles": 358,
+        "target_tiles": 268
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.02505724670172779,
+        "target_per_day": [
+          0.022611069783350295,
+          0.01835760347793587,
+          0.015552406346786247
+        ],
+        "proxy_tiles": 277,
+        "target_tiles": 357
+      }
+    }
+  },
+  {
+    "week": "2019-12-16",
+    "start": "2019-12-16T04:08:00",
+    "end": "2019-12-17T03:11:00",
+    "hours": 23.05,
+    "file": "pairs_20191216T04081576_20191217T03111576_drift_and_deformation.nc",
+    "sha256": "ef2bfeb0faf4d5f65ae52b5c2434f09e68fe807095d4743e081adbd5ad983b36",
+    "optional_shape_mask_present": false,
+    "observed_ground_km_per_nominal_km": [
+      1.0287426721805606,
+      1.030561599826153
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.03639073688525913,
+        "target_per_day": [
+          0.04110859991772719,
+          0.03692367934878235,
+          0.03336969625880578
+        ],
+        "proxy_tiles": 184,
+        "target_tiles": 165
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.03639073688525913,
+        "target_per_day": [
+          0.04026325232867959,
+          0.036095126334386426,
+          0.032524023479139706
+        ],
+        "proxy_tiles": 184,
+        "target_tiles": 162
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.03721539371331151,
+        "target_per_day": [
+          0.03983735646361835,
+          0.03575972521905693,
+          0.032940884743827704
+        ],
+        "proxy_tiles": 159,
+        "target_tiles": 185
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.04534267747270864,
+        "target_per_day": [
+          0.03141847843045878,
+          0.027095570017708716,
+          0.024450516504970717
+        ],
+        "proxy_tiles": 162,
+        "target_tiles": 184
+      }
+    }
+  },
+  {
+    "week": "2019-12-23",
+    "start": "2019-12-23T04:00:00",
+    "end": "2019-12-24T03:02:00",
+    "hours": 23.033333333333335,
+    "file": "pairs_20191223T04001577_20191224T03021577_drift_and_deformation.nc",
+    "sha256": "f4430ec0f4bc459ed77a535dc3f60ce67a9d9c504ef07b3642325d9037fbadcb",
+    "optional_shape_mask_present": true,
+    "observed_ground_km_per_nominal_km": [
+      1.0286788646774223,
+      1.030559855468327
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.02123851770729354,
+        "target_per_day": [
+          0.017144288210144246,
+          0.012622124747674794,
+          0.00792406329013442
+        ],
+        "proxy_tiles": 171,
+        "target_tiles": 206
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.02123851770729354,
+        "target_per_day": [
+          0.017285236300278384,
+          0.012707808668736732,
+          0.008028079322716129
+        ],
+        "proxy_tiles": 171,
+        "target_tiles": 198
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.02154454918951593,
+        "target_per_day": [
+          0.017286912663475165,
+          0.0126516413187464,
+          0.007975876480275517
+        ],
+        "proxy_tiles": 181,
+        "target_tiles": 184
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.02148145429347616,
+        "target_per_day": [
+          0.016572081779453855,
+          0.01189829171319403,
+          0.00773882609379221
+        ],
+        "proxy_tiles": 198,
+        "target_tiles": 173
+      }
+    }
+  },
+  {
+    "week": "2019-12-30",
+    "start": "2019-12-30T03:52:00",
+    "end": "2019-12-31T03:43:00",
+    "hours": 23.85,
+    "file": "pairs_20191230T03521577_20191231T03431577_drift_and_deformation.nc",
+    "sha256": "dae987f27c8f6c072ff273fae0859e859675913607d3296067c5fa474aefd775",
+    "optional_shape_mask_present": false,
+    "observed_ground_km_per_nominal_km": [
+      1.0286031071752342,
+      1.0305966420213233
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.09245467637532559,
+        "target_per_day": [
+          0.06770302843351622,
+          0.0604503736216086,
+          0.054324451975609464
+        ],
+        "proxy_tiles": 201,
+        "target_tiles": 271
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.09276669118613601,
+        "target_per_day": [
+          0.06821889665951139,
+          0.06094820052774159,
+          0.05474358790083107
+        ],
+        "proxy_tiles": 200,
+        "target_tiles": 262
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.08925411127965707,
+        "target_per_day": [
+          0.06401901532540552,
+          0.05707717703080523,
+          0.05140795832933238
+        ],
+        "proxy_tiles": 217,
+        "target_tiles": 267
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.0766724182536477,
+        "target_per_day": [
+          0.08390899019376089,
+          0.07662225068459182,
+          0.07122144968523422
+        ],
+        "proxy_tiles": 262,
+        "target_tiles": 202
+      }
+    }
+  },
+  {
+    "week": "2020-01-06",
+    "start": "2020-01-06T05:21:00",
+    "end": "2020-01-07T04:24:00",
+    "hours": 23.05,
+    "file": "pairs_20200106T05211578_20200107T04241578_drift_and_deformation.nc",
+    "sha256": "9d2f0068338042f5e4a64a0c4e88d3ae9eedf0b5a760772f055f14d0da5f67c1",
+    "optional_shape_mask_present": false,
+    "observed_ground_km_per_nominal_km": [
+      1.0289588054172933,
+      1.030583853554885
+    ],
+    "scenarios": {
+      "primary": {
+        "proxy_per_day": 0.021094245122273984,
+        "target_per_day": [
+          0.025073205754792927,
+          0.021182356714051907,
+          0.01882038799458271
+        ],
+        "proxy_tiles": 185,
+        "target_tiles": 288
+      },
+      "strict_coverage": {
+        "proxy_per_day": 0.020724611325747048,
+        "target_per_day": [
+          0.025073205754792927,
+          0.021182356714051907,
+          0.01882038799458271
+        ],
+        "proxy_tiles": 182,
+        "target_tiles": 288
+      },
+      "shift_8_cells": {
+        "proxy_per_day": 0.020425425210989435,
+        "target_per_day": [
+          0.024819833435587926,
+          0.02086721942233074,
+          0.01807363487025702
+        ],
+        "proxy_tiles": 177,
+        "target_tiles": 319
+      },
+      "swap_sides": {
+        "proxy_per_day": 0.029208275305727716,
+        "target_per_day": [
+          0.01807884100293153,
+          0.014787759354646535,
+          0.010973336454219908
+        ],
+        "proxy_tiles": 288,
+        "target_tiles": 186
+      }
+    }
+  }
+]
