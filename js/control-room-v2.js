@@ -1010,6 +1010,17 @@
     if (state.aiHealth && state.aiHealth.stale) items.push({ title: "Host health is stale", sub: "Core has not recorded a fresh host health result.", kind: "warn", action: "system-workload" });
     var hostProblem = hostHealthProblem();
     if (hostProblem) items.push({ title: hostProblem.title, sub: hostProblem.sub, kind: hostProblem.kind, action: "system-overview" });
+    var fleet = state.aiHealth && !state.aiHealth.stale && state.aiHealth.health && state.aiHealth.health.compute;
+    var presence = fleet && fleet.presence_counts;
+    if (presence) {
+      var online = Number(presence.online) || 0;
+      var unavailable = (Number(presence.stale) || 0) + (Number(presence.offline) || 0) + (Number(presence.unknown) || 0);
+      if (unavailable > 0) items.push({
+        title: "Compute devices need attention",
+        sub: unavailable + " of " + (online + unavailable) + " enrolled devices not reporting at the last check. " + online + " online.",
+        kind: "warn", action: "system-overview"
+      });
+    }
     var failed = state.jobs.filter(function (j) { return j.status === "failed"; });
     if (failed.length) items.push({ title: failed.length + " failed workload" + (failed.length === 1 ? "" : "s"), sub: "Inspect the execution queue and failure output.", kind: "bad", action: "system-workload" });
     var awaiting = state.threads.filter(function (t) { return threadInQueue(t, "inbound"); });

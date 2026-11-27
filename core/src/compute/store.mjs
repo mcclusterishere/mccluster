@@ -1,4 +1,5 @@
 import { rest } from '../supabase.mjs';
+import { COMPUTE_HEARTBEAT_WINDOW_MS } from './node-presence.mjs';
 
 async function rpc(name, payload, restImpl = rest) {
   const { body } = await restImpl(`rpc/${name}`, { method: 'POST', body: JSON.stringify(payload) });
@@ -204,7 +205,7 @@ export async function listNodes(options = {}) {
   if (orgId) params.set('org_id', eq(orgId));
   if (liveOnly) {
     params.set('state', 'eq.online');
-    params.set('last_seen_at', `gte.${new Date(Date.now() - 180_000).toISOString()}`);
+    params.set('last_seen_at', `gte.${new Date(Date.now() - COMPUTE_HEARTBEAT_WINDOW_MS).toISOString()}`);
   }
   const { body = [] } = await rest(`ops_compute_nodes?${params}`);
   return body;

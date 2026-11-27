@@ -343,6 +343,23 @@ no token and no identity exist), which is how the doctor enrols once and then re
 
 ## Heartbeat and liveness
 
+The admin-only `GET /v1/compute/nodes` preserves the registry's `state` and
+adds each node's observed `presence`. The timestamps are Core's, not the
+device's. `presence_checked_at` and `presence_stale_after_ms` describe the
+snapshot. An `online` record whose heartbeat is older than three minutes is
+`stale`; a missing/invalid heartbeat is `unknown`. Draining, disabled,
+quarantined and revoked records are `inactive`. This is heartbeat evidence,
+not a guarantee of free capacity or of capability, device identity or GPU
+attestation for any particular job.
+
+The existing owner system-health view reads the same definition from the
+Core host-health snapshot. A partially unavailable fleet is degraded even
+while one node remains online; an intentionally inactive node alone does
+not generate a heartbeat warning. Control's Needs you shows the device count
+from the last valid snapshot without burying it under unrelated host warnings.
+The view remains a timestamped snapshot, not a live desktop connection or
+a hardware receipt.
+
 `POST /v1/compute/heartbeat`
 
 A signed heartbeat refreshes:

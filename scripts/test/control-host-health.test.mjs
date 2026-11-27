@@ -15,8 +15,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
+import { classifyComputeNodes } from '../../core/src/system-health.mjs';
 
-const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
+const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 const control = read('js/control-room-v2.js');
 /* One top-level function of the page, or nothing when this copy lacks it. */
 const fn = (name) => {
@@ -32,7 +33,7 @@ const reconcileFailed = { component: 'deployment', code: 'reconcile_cycle_failed
   detail: { stage: 'fetch', exit_code: 128, interrupted: false, consecutive_failed_cycles: 7 } };
 const ledgerDrift = { component: 'supabase', code: 'supabase_migration_ledger_drift', severity: 'critical', message: 'Live migration ledger differs from the contract.' };
 
-function page(aiHealth) {
+function page(aiHealth, pattern = /host/i) {
   const context = { window: {}, Date, String, Array, Number, Object, Math, Intl };
   vm.createContext(context);
   vm.runInContext(read('js/control-room/format.js'), context);
@@ -49,7 +50,7 @@ ${fn('hostHealthProblem')}${fn('serviceRows')}${fn('attentionItems')}
 this.rows = serviceRows(); this.items = attentionItems();`, context);
   const tile = context.rows.find((row) => row.key === 'host');
   // Copied out of the vm's realm so that strict deep equality compares values only.
-  return { tile: { value: tile.value, kind: tile.kind }, host: Array.from(context.items, (item) => ({ ...item })).filter((item) => /host/i.test(item.title)) };
+  return { tile: { value: tile.value, kind: tile.kind }, host: Array.from(context.items, (item) => ({ ...item })).filter((item) => pattern.test(item.title)) };
 }
 const snapshot = (overall, degradation = [], extra = {}) => ({ ok: true, overall, stale: false, checked_at: new Date(Date.now() - 60_000).toISOString(), health: { overall, degradation }, ...extra });
 
@@ -84,4 +85,28 @@ test('a healthy, stale or missing result is shown as before', () => {
   assert.deepEqual(stale.tile, { value: 'Refresh', kind: 'warn' });
   assert.deepEqual(stale.host.map((item) => [item.title, item.kind, item.action]), [['Host health is stale', 'warn', 'system-workload']]);
   assert.deepEqual(page(null), { tile: { value: 'Refresh', kind: 'warn' }, host: [] });
+});
+
+test('Control surfaces the fleet mismatch apart from general host findings, and clears it when the device returns', () => {
+  const nowMs = Date.now();
+  const nodes = [
+    { state: 'online', last_seen_at: new Date(nowMs - 20_000).toISOString() },
+    { state: 'online', last_seen_at: new Date(nowMs - 4 * 60_000).toISOString() },
+    { state: 'revoked', last_seen_at: new Date(nowMs - 4 * 60_000).toISOString() },
+  ];
+  const health = snapshot('fail', [ledgerDrift, reconcileFailed]);
+  health.health.compute = classifyComputeNodes(nodes, { nowMs });
+  const visible = () => page(health, /Compute devices/).host;
+  assert.deepEqual(visible(), [{
+    title: 'Compute devices need attention', sub: '1 of 2 enrolled devices not reporting at the last check. 1 online.',
+    kind: 'warn', action: 'system-overview',
+  }]);
+  health.stale = true;
+  assert.deepEqual(visible(), []);
+  health.stale = false;
+  delete health.health.compute.presence_counts;
+  assert.deepEqual(visible(), [], 'the old snapshot lacks the new evidence');
+  nodes[1].last_seen_at = nodes[0].last_seen_at;
+  health.health.compute = classifyComputeNodes(nodes, { nowMs });
+  assert.deepEqual(visible(), []);
 });

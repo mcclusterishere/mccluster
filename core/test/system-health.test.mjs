@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildCompletionEvidence } from '../src/completion-evidence.mjs';
+import { COMPUTE_HEARTBEAT_WINDOW_MS } from '../src/compute/node-presence.mjs';
 import {
   SYSTEM_CONTRACT_MIGRATION,
   SYSTEM_HEALTH_SCHEMA,
@@ -153,6 +154,48 @@ test('compute freshness uses the canonical node state field', () => {
   assert.equal(nodes.stale_or_offline, 2);
   assert.equal(nodes.nodes[0].state, 'online');
   assert.equal(nodes.nodes[2].online, false);
+  assert.equal(nodes.status, 'degraded');
+  assert.deepEqual(nodes.presence_counts, { online: 1, stale: 1, offline: 0, inactive: 1, unknown: 0 });
+  assert.deepEqual(nodes.nodes.map((node) => node.presence.state), ['online', 'stale', 'inactive']);
+});
+
+test('compute snapshot matches the inclusive three-minute lease window and does not treat missing evidence as online', () => {
+  const seenAt = (ms) => new Date(NOW - ms).toISOString();
+  const result = classifyComputeNodes([
+    { state: 'online', last_seen_at: seenAt(COMPUTE_HEARTBEAT_WINDOW_MS) },
+    { state: 'online', last_seen_at: seenAt(COMPUTE_HEARTBEAT_WINDOW_MS + 1) },
+    { state: 'online' },
+    { state: 'online', last_seen_at: 'invalid' },
+    { state: 'offline', last_seen_at: seenAt(100) },
+    { state: 'draining', last_seen_at: seenAt(100) },
+    { state: 'revoked', last_seen_at: seenAt(100) },
+  ], { nowMs: NOW });
+  assert.equal(result.presence_checked_at, new Date(NOW).toISOString());
+  assert.equal(result.presence_stale_after_ms, 180_000);
+  assert.deepEqual(result.nodes.map((node) => node.presence.state), ['online', 'stale', 'unknown', 'unknown', 'offline', 'inactive', 'inactive']);
+  assert.equal(result.nodes[2].age_ms, null);
+  assert.deepEqual(result.presence_counts, { online: 1, stale: 1, offline: 1, inactive: 2, unknown: 2 });
+});
+
+test('host health warns before the last device disappears, and reports recovery on the next fresh snapshot', () => {
+  const snapshot = healthySnapshot();
+  const classify = (nodes) => classifyComputeNodes(nodes, { nowMs: NOW });
+  const current = { state: 'online', last_seen_at: new Date(NOW - 10_000).toISOString() };
+  const stale = { state: 'online', last_seen_at: new Date(NOW - 183_000).toISOString() };
+  const check = () => aggregateSystemHealth(snapshot, { nowMs: NOW });
+  snapshot.compute = classify([current, stale]);
+  assert.equal(check().overall, 'degraded');
+  assert.deepEqual(check().degradation.map((item) => item.code), ['partial_nodes_unavailable']);
+  snapshot.compute = classify([stale]);
+  assert.deepEqual(check().degradation.map((item) => item.code), ['all_nodes_offline']);
+  snapshot.compute = classify([{ ...stale, state: 'draining' }]);
+  assert.equal(snapshot.compute.status, 'idle');
+  assert.equal(check().overall, 'ok');
+  snapshot.compute = { status: 'unknown', error: 'registry unavailable' };
+  assert.deepEqual(check().degradation.map((item) => item.code), ['compute_inventory_unavailable']);
+  snapshot.compute = classify([current, current]);
+  assert.equal(snapshot.compute.status, 'ready');
+  assert.equal(check().overall, 'ok');
 });
 
 test('owner approvals are pending only until a later decision exists', () => {
