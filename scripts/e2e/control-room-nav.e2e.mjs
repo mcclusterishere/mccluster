@@ -1,6 +1,6 @@
-/* Control Room: six sections from one NAV, browser proof. Real control.html and
+/* Control Room: sections from one NAV, browser proof. Real control.html and
    modules from this checkout; EVERY network call is a synthetic fixture (sample
-   names, no production data). At 390, 820 and 1280 px it proves: each of the six
+   names, no production data). At 390, 820 and 1280 px it proves: each of the seven
    sections renders; the sidebar / phone bar, the More sheet and the ⌘K palette are
    all drawn from window.CR.nav; old routes (#work:*, #create:*, #ai, #analytics,
    #system:*, #apps and the old routers' aliases) land on their new view; a mount
@@ -100,7 +100,7 @@ const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth-docu
 async function settle(page){await page.waitForFunction(()=>window.CR&&window.CR.nav&&!document.getElementById('crApp').hidden&&document.getElementById('crSurface').childElementCount>0,null,{timeout:20000});await page.waitForTimeout(600);}
 async function goto(page,hash){await page.evaluate(h=>{location.hash=h;},hash);await page.waitForFunction(h=>{const want=CR.nav.resolve(h).entry.leaf.route;return document.getElementById('crSurface').getAttribute('data-cr-route')===want&&location.hash===want;},hash,{timeout:15000});await page.waitForTimeout(500);}
 
-const SECTIONS=['home','people','sell','create','insights','system'];
+const SECTIONS=['home','people','sell','create','insights','system','research'];
 const OLD=[['#work:inbox','#people:inbox:conversations'],['#work:desk-bot','#people:inbox:ai-reply'],['#work:crm','#people:deals:pipeline'],['#work:people','#people:contacts'],['#work:operations','#sell:store:operations'],['#work:payments','#sell:payments:payments'],
   ['#create:music','#sell:music:catalog'],['#create:build','#system:build'],['#create:library','#create:projects:library'],['#create:socials','#create:publish:channels'],['#create:funding','#system:uprise:funding'],
   ['#ai','#home:ask'],['#apps','#system:apps'],['#system:logs','#system:observability'],['#home','#home:today'],['#analytics','#insights:overview']];
@@ -124,7 +124,7 @@ try{
     check(scope,'sidebar items come from NAV',JSON.stringify(nav.subs)===JSON.stringify(nav.expectedSubs));
     if(await page.locator('body[data-admin-navigation]').count())check(scope,'shared navigator replaces duplicated section rail',!await page.locator('#crSections').isVisible());
     else if(vp.width<1024)check(scope,'phone bar: Home People Sell Create + More',JSON.stringify(nav.phone)===JSON.stringify(['home','people','sell','create'])&&nav.more,nav.phone);
-    else check(scope,'desktop sidebar is visible with all six sections',await page.evaluate(()=>{const n=document.getElementById('crSections');const r=n.getBoundingClientRect();return r.left===0&&r.width>200&&[...n.querySelectorAll('[data-section]')].every(a=>a.getBoundingClientRect().width>0);}));
+    else check(scope,'desktop sidebar is visible with all Control sections',await page.evaluate(()=>{const n=document.getElementById('crSections');const r=n.getBoundingClientRect();return r.left===0&&r.width>200&&[...n.querySelectorAll('[data-section]')].every(a=>a.getBoundingClientRect().width>0);}));
 
     /* every section renders, without overflow, and is screenshotted */
     for(const s of SECTIONS){
@@ -217,7 +217,7 @@ try{
     if(vp.width<1024&&await page.locator('#crMore').isVisible()){
       await page.locator('#crMore').click();await page.waitForTimeout(200);
       const more=await page.evaluate(()=>[...document.querySelectorAll('#crMoreSheet [data-nav-route]')].map(a=>a.dataset.navRoute));
-      check(scope,'More lists Insights and System',JSON.stringify(more)===JSON.stringify(['#insights','#system']),more);
+      check(scope,'More lists Analytics, System and R&D',JSON.stringify(more)===JSON.stringify(['#insights','#system','#research']),more);
       if(vp.width===390)await page.screenshot({path:join(OUT,'more-390.png')});
       await page.keyboard.press('Escape');
       check(scope,'Escape closes More',await page.locator('#crMoreSheet').isHidden());
@@ -235,7 +235,7 @@ try{
         const panel=await page.evaluate(()=>({ids:[...document.querySelectorAll('#mccSections [data-control-section]')].map(a=>a.dataset.controlSection),nav:CR.nav.NAV.filter(s=>s.id!=='insights').map(s=>s.id),
           small:[...document.querySelectorAll('#mccSections [data-control-section]')].filter(a=>{const r=a.getBoundingClientRect();return r.height<44||r.width<44;}).length,vib:window.__vib.slice(),
           badge:document.querySelector('#mccSections [data-control-section="people"] .mcc-section__badge')?.textContent||null}));
-        check(scope+' '+where,'one tap: a haptic tick and the six NAV sections above the bar',JSON.stringify(panel.ids)===JSON.stringify(panel.nav)&&JSON.stringify(panel.vib)==='[10]',panel);
+        check(scope+' '+where,'one tap: a haptic tick and the owner NAV sections above the bar',JSON.stringify(panel.ids)===JSON.stringify(panel.nav)&&JSON.stringify(panel.vib)==='[10]',panel);
         check(scope+' '+where,'section targets are at least 44px',panel.small===0,panel.small);
         if(where==='control')check(scope,'the panel carries Control\'s live People count',panel.badge==='2',panel.badge);
         check(scope+' '+where,'one bottom bar with the panel open',await page.locator('.appbar').count()===1&&(where!=='control'||await page.locator('#crSections').evaluate(el=>getComputedStyle(el).position!=='fixed')));

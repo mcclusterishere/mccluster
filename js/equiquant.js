@@ -233,6 +233,11 @@
         byId('signin').hidden = false;
         return;
       }
+      const requestedOrg = new URLSearchParams(location.search).get('org');
+      if (requestedOrg && requestedOrg !== active.orgId) {
+        if (!workspace.select(requestedOrg)) throw new Error('This account cannot open the selected workspace.');
+        active = workspace.current();
+      }
       if (!active.orgId) { message('This account has no enabled workspace.'); return; }
       byId('workspace').replaceChildren(...active.workspaces.filter(org => org.enabled)
         .map(org => new Option(org.name, org.org_id, false, org.org_id === active.orgId)));
@@ -263,7 +268,14 @@
 
   byId('role').append(new Option('Select your role', ''), ...roles.map(role => new Option(role, role)));
   byId('workspace').addEventListener('change', () => {
-    if (workspace.select(byId('workspace').value)) load();
+    const orgId = byId('workspace').value;
+    if (!workspace.select(orgId)) return;
+    const url = new URL(location.href);
+    if (url.searchParams.has('org')) {
+      url.searchParams.set('org', orgId);
+      history.replaceState(history.state, '', url);
+    }
+    load();
   });
   byId('retry').addEventListener('click', () => location.reload());
   byId('refresh').addEventListener('click', () => task(refresh));

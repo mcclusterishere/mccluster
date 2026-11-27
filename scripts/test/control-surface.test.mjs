@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT=join(dirname(fileURLToPath(import.meta.url)),'..','..');
-const read=(p)=>readFile(join(ROOT,p),'utf8');
+const read=async(p)=>(await readFile(join(ROOT,p),'utf8')).replace(/\r\n/g,'\n');
 const fileOf=(href)=>String(href).split(/[?#]/)[0];
 
 async function registry(){
@@ -27,12 +27,12 @@ test('the operator registry has one physical admin destination',async()=>{
   }
 });
 
-test('Control is six sections from one NAV definition, and the old views are derived from it',async()=>{
+test('Control sections and legacy views share one NAV definition',async()=>{
   const [html,js,nav]=await Promise.all([read('control.html'),read('js/control-room-v2.js'),read('js/control-room/nav.js')]);
   const scope={window:{}};
   new Function('window',nav.replace('typeof window === "undefined" ? globalThis : window','window'))(scope.window);
   const N=scope.window.CR.nav;
-  assert.deepEqual(N.NAV.map(s=>s.id),['home','people','sell','create','insights','system']);
+  assert.deepEqual(N.NAV.map(s=>s.id),['home','people','sell','create','insights','system','research']);
   /* one nav element in the page, drawn from NAV; no hand-written rail or bottom bar */
   assert.match(html,/<nav class="cr-sections" id="crSections"/);
   assert.doesNotMatch(html,/data-surface=|class="cr-rail|class="cr-bottom/);
@@ -110,7 +110,7 @@ test('mobile Control navigation stays five primary destinations',async()=>{
   const N=scope.window.CR.nav;
   /* four phone sections plus More: the bar never becomes a room directory */
   assert.deepEqual(N.phoneSections().map(s=>s.id),['home','people','sell','create']);
-  assert.deepEqual(N.moreSections().map(s=>s.id),['insights','system']);
+  assert.deepEqual(N.moreSections().map(s=>s.id),['insights','system','research']);
   assert.match(js,/id="crMore" aria-haspopup="dialog"/);
 });
 

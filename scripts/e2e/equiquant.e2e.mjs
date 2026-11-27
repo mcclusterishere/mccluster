@@ -118,6 +118,14 @@ async function isolatedFetch(target, init={}) {
   }
   if (path === 'org_members') {
     const id = url.searchParams.get('profile_id')?.slice(3);
+    if (url.searchParams.has('role')) {
+      assert.equal(url.searchParams.get('role'),'eq.owner');
+      const house = url.searchParams.get('org_id')?.slice(3);
+      return Response.json((await db.query(
+        "select org_id,role from org_members where profile_id=$1 and org_id=$2 and role='owner'",
+        [id,house]
+      )).rows);
+    }
     const result = await db.query('select m.role,m.added_at,to_jsonb(o) as orgs from org_members m join orgs o on o.id=m.org_id where m.profile_id=$1',[id]);
     return Response.json(result.rows);
   }
@@ -125,6 +133,12 @@ async function isolatedFetch(target, init={}) {
     assert.equal(url.searchParams.get('slug'),'eq.mccluster');
     return Response.json((await db.query("select id,enabled from orgs where slug='mccluster'")).rows);
   }
+  // The owner gate is real. Its adjacent monitoring counters contain no fixture activity.
+  if (new Headers(init.headers).get('prefer') === 'count=exact' &&
+      ['platform_apps','site_requests','inbox_messages','inbox_conversations'].includes(path)) {
+    return Response.json([],{headers:{'content-range':'*/0'}});
+  }
+  if (path === 'inbox_channels') return Response.json([]);
   if (path === 'rpc/equiquant_attest_target') {
     const row = await one('select public.equiquant_attest_target($1) as result',[JSON.stringify(body.p_attestation)]);
     observedCapability = body.p_attestation;
@@ -197,6 +211,71 @@ function api(session,action,project_id,data={}) {
 const mime = {'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json',
   '.html':'text/html','.svg':'image/svg+xml','.woff2':'font/woff2','.png':'image/png','.webp':'image/webp'};
 const errors = [];
+// Check the tab inside the same compact owner navigation used in the product.
+async function enterResearchFromControl(page, width, height) {
+  await page.setViewportSize({width,height});
+  const checked = page.waitForResponse(r=>new URL(r.url()).pathname==='/v1/status' && r.request().method()==='GET');
+  await page.goto(siteOrigin+'/control.html#home:today',{waitUntil:'domcontentloaded'});
+  const status = await checked;
+  assert.equal(status.status(),200);
+  assert.equal((await status.json()).operator.id,owner.user.id);
+  const menu = page.locator('#mccControlToggle');
+  await menu.click();
+  const sections = page.locator('#mccSections');
+  const tab = sections.getByRole('link',{name:'R&D',exact:true});
+  await tab.waitFor();
+  const existing = ['home','people','sell','create','system'];
+  const sectionIds = await sections.locator('[data-control-section]').evaluateAll(links=>links.map(a=>a.dataset.controlSection));
+  assert.deepEqual(sectionIds.filter(id=>id!=='research'),existing);
+  assert.equal(sectionIds.filter(id=>id==='research').length,1);
+  const dock = page.locator('.appbar.appbar--admin');
+  const dockTabs = await dock.locator('[data-appnav]').evaluateAll(links=>links.map(a=>a.dataset.appnav));
+  for (const id of ['music','admin-inbox','admin-home','home','analytics','world','games','admin-sell','admin-create','admin-system']) {
+    assert.ok(dockTabs.includes(id),'Existing dock destination missing: '+id);
+  }
+  assert.ok(!dockTabs.includes('admin-research'),'The research section should use the existing owner menu');
+  const box = await dock.boundingBox();
+  assert.ok(box && box.height<100 && box.width<=width && box.y+box.height<=height+1,'Compact dock must fit');
+  await tab.click();
+  await page.waitForURL('**/control.html*#research:workspace');
+  const workspaceLink = page.locator('#crResearchWorkspace');
+  await workspaceLink.waitFor();
+  assert.equal(new URL(await workspaceLink.getAttribute('href'),siteOrigin).searchParams.get('org'),org);
+  await menu.click();
+  await sections.locator('[data-control-section="research"][aria-current="true"]').waitFor();
+  const group = page.locator('#mccDestinations [data-destination-group="R&D"]');
+  await group.click();
+  assert.equal(await group.getAttribute('aria-pressed'),'true');
+  const destination = page.locator('#mccDestinationList a[data-control-route="#research:workspace"]');
+  await destination.waitFor();
+  assert.match(await destination.innerText(),/Equity Quantized/);
+  const tabBox = await tab.boundingBox();
+  assert.ok(tabBox && tabBox.x>=0 && tabBox.x+tabBox.width<=width+1 && tabBox.y>=0 && tabBox.y+tabBox.height<=height,'R&D tab must be reachable');
+  assert.ok(await tab.evaluate(el=>{
+    const r=el.getBoundingClientRect();
+    return el.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2));
+  }),'R&D tab center must receive input');
+  const geometry = await page.evaluate(()=>[document.documentElement.clientWidth,document.documentElement.scrollWidth]);
+  assert.deepEqual(geometry,[width,width],'Control page overflow');
+  if (process.env.EQUIQUANT_NAV_QA_OUT) {
+    await mkdir(process.env.EQUIQUANT_NAV_QA_OUT,{recursive:true});
+    // Control's production environment chip is static. Label the disposable
+    // screenshot honestly while leaving the actual navigation untouched.
+    const environmentChip = page.locator('.cr-env');
+    const environmentLabel = await environmentChip.textContent();
+    await environmentChip.evaluate(el=>{el.textContent='ISOLATED FIXTURE';});
+    try {
+      await page.screenshot({path:join(process.env.EQUIQUANT_NAV_QA_OUT,'sample-rd-admin-navigation-'+width+'.png')});
+    } finally {
+      await environmentChip.evaluate((el,label)=>{el.textContent=label;},environmentLabel);
+    }
+  }
+  await page.locator('#mccDestinationsClose').click();
+  await workspaceLink.click();
+  await page.waitForURL('**/equiquant.html*');
+  await page.locator('#eq-title').waitFor();
+  console.log('PASS R&D owner tab, existing sections, compact dock and Equity Quantized entry at '+width+' px');
+}
 async function openProduct(browser, session) {
   const context = await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block',reducedMotion:'reduce'});
   await context.addInitScript(s=>{
@@ -206,7 +285,7 @@ async function openProduct(browser, session) {
   await context.route('**/*',async route=>{
     const r = route.request(), url = new URL(r.url());
     try {
-      if (url.origin===apiOrigin && ['/v1/equiquant','/v1/workspaces/me'].includes(url.pathname)) {
+      if (url.origin===apiOrigin && ['/v1/equiquant','/v1/workspaces/me','/v1/status'].includes(url.pathname)) {
         const response = await dispatch(new Request(url,{method:r.method(),headers:r.headers(),body:r.postData() || undefined}));
         return await route.fulfill({status:response.status,headers:Object.fromEntries(response.headers.entries()),body:Buffer.from(await response.arrayBuffer())});
       }
@@ -219,11 +298,7 @@ async function openProduct(browser, session) {
       if (url.hostname.endsWith('.supabase.co') || url.origin===apiOrigin) {
         let body = [];
         if (url.pathname==='/auth/v1/user' && session) body = session.user;
-        if (url.pathname==='/v1/status' && session===owner) {
-          body = {ok:true,operator:{email:owner.user.email},database:{reachable:true}};
-        }
-        const status = url.pathname==='/v1/status' && session!==owner ? 403 : 200;
-        return await route.fulfill({status,contentType:'application/json',headers:{
+        return await route.fulfill({status:200,contentType:'application/json',headers:{
           'access-control-allow-origin':siteOrigin,'access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'
         },body:JSON.stringify(body)});
       }
@@ -236,11 +311,21 @@ async function openProduct(browser, session) {
   page.setDefaultTimeout(12000);
   page.on('pageerror',e=>errors.push(e.message));
   if (session===owner) {
-    await page.goto(siteOrigin+'/control.html#home:today',{waitUntil:'domcontentloaded'});
-    await page.locator('#mccControlToggle').click();
-    await page.locator('#mccDestinationSearch').fill('Equity Quantized');
-    await page.locator('#mccDestinations a[href$="equiquant.html"]').click();
+    await enterResearchFromControl(page,1440,1000);
+    await enterResearchFromControl(page,390,844);
   } else {
+    const verdict = page.waitForResponse(r=>new URL(r.url()).pathname==='/v1/status' && r.request().method()==='GET');
+    const memberships = page.waitForResponse(r=>new URL(r.url()).pathname==='/v1/workspaces/me' && r.request().method()==='GET');
+    await page.goto(siteOrigin+'/control.html#research:workspace',{waitUntil:'domcontentloaded'});
+    assert.equal((await verdict).status(),403);
+    const workspaces = (await (await memberships).json()).workspaces;
+    assert.equal(workspaces.find(w=>w.org_id===org).role,'viewer');
+    const denied = page.locator('#crResearchDenied');
+    await denied.waitFor();
+    assert.match(await denied.innerText(),/owner access required/i);
+    assert.equal(await page.locator('#crResearchWorkspace').count(),0);
+    assert.equal(await page.locator('[data-section="research"]').count(),0);
+    assert.equal(await page.locator('#mccControlToggle').count(),0);
     await page.goto(siteOrigin+'/account.html?stay=1',{waitUntil:'domcontentloaded'});
     await page.locator('#acDesk').getByRole('link',{name:'Equity Quantized research projects'}).click();
   }

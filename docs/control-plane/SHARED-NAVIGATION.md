@@ -71,8 +71,7 @@ device insets and audio. It also checks the ordinary browser presentation.
 ## One Control navigation definition
 
 Owner, 2026-10-30 (the consolidation mockup: "get that control room under
-wraps"): Control is six sections, Home, People, Sell, Create, Insights and
-System, defined once in `js/control-room/nav.js` (`window.CR.nav.NAV`). Every
+wraps"): Control began with Home, People, Sell, Create, Insights and System, defined once in `js/control-room/nav.js` (`window.CR.nav.NAV`). Every
 Control navigation surface reads it: the sidebar and phone section bar in
 `control.html`, the phone More sheet, the ⌘K palette, `js/control-registry.js`
 (the owner palette on other pages) and the route inventory in
@@ -82,6 +81,8 @@ lists. Each NAV entry carries `was`, the old routes (`#work:*`, `#create:*`,
 every old link and bookmark lands on its new view and the palettes find a view
 by its old name. `scripts/test/control-nav.test.mjs` holds NAV to covering every
 old view and naming only renderers that exist.
+
+R&D has its own Control section at `control.html#research:workspace` for the Equity Quantized research workspace and Algorithms Lab. The house owner's destination panel lists it under R&D. On phones the fallback Control section bar places it in More alongside Analytics and System. The compact dock keeps its existing destinations. Ask McCluster stays in Home.
 
 On control.html the shared bar keeps the bottom of the screen. The Control
 sections are that page's own index, not a second global bar: a row under the
