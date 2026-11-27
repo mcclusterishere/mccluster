@@ -169,6 +169,9 @@ async function submitWorkspaceTurn({ orgId, threadId, messageId, assistantMessag
   requireWorkspaceOwner(orgId, actor);
   await assertWorkspaceSchema(restImpl);
   const requestedRoute = normalizeOwnerRoute(route);
+  if (requestedRoute.target && allowBrowser === true) {
+    throw workspaceError('AI_ROUTE_TOOLS_DISABLED', 'This compute selection runs inference only. Turn off browser access to send this message.', 400);
+  }
   const turnImages = normalizeImages(images, content);
   if ((turnImages.length || allowBrowser === true) && !requestedRoute.implementation.includes('-vl.')) throw workspaceError('AI_MODEL_NEEDS_VISION', 'Choose a connected vision model to use images or the browser.', 400);
   let reviewSource = null;

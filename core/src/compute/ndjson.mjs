@@ -21,11 +21,23 @@ export async function readJsonLines(response, onItem, { maxBytes = 1_500_000, ma
   if (buffered.trim()) await onItem(JSON.parse(buffered));
 }
 
-export async function collectOllamaStream(response, onProgress, { now = () => performance.now(), startedAt = now() } = {}) {
+export function requireOllamaModel(actual, expected) {
+  if (actual !== expected) {
+    throw Object.assign(new Error('Ollama did not confirm the exact selected model.'), {
+      status: 502, code: 'AI_ROUTE_MODEL_MISMATCH', retryable: false,
+    });
+  }
+}
+
+export async function collectOllamaStream(response, onProgress, { now = () => performance.now(), startedAt = now(), expectedModel } = {}) {
   let content = '', thinkingChars = 0, final = null, sequence = 0, firstTokenMs = null;
   const toolCalls = [];
   await readJsonLines(response, async (item) => {
     if (item.error) throw Object.assign(new Error('Ollama stream failed'), { code: 'OLLAMA_UPSTREAM_ERROR' });
+    if (expectedModel) {
+      if (final) throw Object.assign(new Error('Ollama sent data after completion'), { code: 'INFERENCE_INVALID_RESPONSE' });
+      requireOllamaModel(item.model, expectedModel);
+    }
     const delta = typeof item.message?.content === 'string' ? item.message.content : '';
     if (delta && firstTokenMs === null) firstTokenMs = Math.max(0, now() - startedAt);
     content += delta;

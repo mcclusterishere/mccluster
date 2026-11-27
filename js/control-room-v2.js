@@ -54,6 +54,8 @@
     aiToolsOpen: false,
     aiPanel: "chat",
     aiRouteSelection: "auto",
+    aiRouteTarget: "",
+    aiRoutePreferenceKey: null,
     aiImplementation: "qwen3.8b.local",
     aiReviewOf: null,
     aiDevices: [],
@@ -176,25 +178,60 @@
     state.aiChatTask = run && run.task || null;
   }
   function aiRouteSupported() { return aiDeclared(aiToolSchema(state.coreTools, "core.ai.turn.submit"), "route"); }
-  function selectedAiRoute() { return OWNER_AI.route(state.aiRouteSelection, state.aiImplementation); }
+  function selectedAiRoute() { return OWNER_AI.route(state.aiRouteSelection, state.aiImplementation, state.aiRouteTarget); }
+  function aiTargetSupported(target) {
+    var tool = aiToolSchema(state.coreTools, "core.ai.turn.submit");
+    var schema = tool && tool.properties && tool.properties.route;
+    var choices = schema && schema.properties && schema.properties.target;
+    return Boolean(choices && Array.isArray(choices.enum) && choices.enum.indexOf(target) !== -1);
+  }
+  function aiRoutePreferenceKey() {
+    if (!aiBrowserOwner(state) || !authority.principal || authority.principal === "opaque") return "";
+    return "mcc.owner-ai.route." + authority.principal + "." + state.org.id;
+  }
+  function rememberAiRoute() {
+    var key = aiRoutePreferenceKey();
+    if (!key) return;
+    try {
+      window.sessionStorage.setItem(key, JSON.stringify({ selection: state.aiRouteSelection, implementation: state.aiImplementation, target: state.aiRouteTarget }));
+    } catch (e) { /* The selection remains in memory when storage is unavailable. */ }
+  }
+  function restoreAiRoute() {
+    var key = aiRoutePreferenceKey();
+    if (!key || state.aiRoutePreferenceKey === key) return;
+    state.aiRoutePreferenceKey = key;
+    try {
+      var saved = JSON.parse(window.sessionStorage.getItem(key));
+      if (saved && typeof saved.selection === "string" && typeof saved.implementation === "string") {
+        state.aiRouteSelection = saved.selection;
+        state.aiImplementation = saved.implementation;
+        state.aiRouteTarget = saved.target || "";
+      }
+    } catch (e) { /* A browser without session storage starts with the default picker. */ }
+  }
   function aiRouteProblem() {
     if (!aiRouteSupported()) return state.aiRouteSelection !== "auto" ? "This Core does not support choosing a worker yet." : "";
     var route = selectedAiRoute();
+    if (state.aiRouteTarget && !aiTargetSupported(state.aiRouteTarget)) return "This Core cannot enforce the selected compute target.";
+    if (route.mode === "unavailable") return "This target has no verified worker selection. Refresh Devices or choose an available worker.";
     if (state.aiReviewOf) {
       if (route.mode !== "node") return "Choose a specific second worker to review this saved result.";
       var reviewed = aiMessagesFor(state.selectedAiThreadId).find(function (message) { return message.role === "assistant" && message.metadata && message.metadata.agent_job_id === state.aiReviewOf; });
       if (reviewed && OWNER_AI.receipt(reviewed).node_id === route.node_id) return "Choose a different worker from the one that produced this answer.";
     }
     if (state.aiAttachments.length && route.mode === "pair") return "The shared-model route currently accepts text only. Remove the images or choose an individual vision worker.";
-    if (state.aiAttachments.length && route.implementation === "qwen3.8b.local") return "Qwen3 8B handles text. Choose a ready vision model for these images, or remove the attachments.";
+    if (state.aiAttachments.length && ["qwen3.8b.local", "qwen3.14b.local"].indexOf(route.implementation) !== -1) return "The selected model handles text. Choose a ready vision model for these images, or remove the attachments.";
     if (route.mode === "node") {
       var d = state.aiDevices.find(function (x) { return OWNER_AI.deviceId(x) === route.node_id; });
+      if (state.aiDeviceError) return "Worker readiness could not be refreshed. Open Devices and refresh before using a pinned worker.";
       if (!d || !d.eligible) return "The selected device is unavailable. Choose another worker or Auto.";
-      if (!(d.models || []).some(function (m) { return m.implementation === route.implementation && m.ready; })) return "The selected model is not ready on this device. Open Devices to test or prepare it.";
+      if (OWNER_AI.targetRole(d) !== (route.target || "")) return "The selected worker's target has changed. Choose its current entry before sending.";
+      if (route.target && !OWNER_AI.targetReady(d)) return "The selected target no longer has a verified check-in. Refresh Devices before sending.";
+      if (!(d.models || []).some(function (m) { return m.implementation === route.implementation && m.ready === true && (!route.target || m.target_ready === true); })) return "The selected model is not ready on this device. Open Devices to test or prepare it.";
     }
     if (route.mode === "pair") {
       var pair = state.aiPairs.find(function (x) { return String(x.id || x.pair_id) === route.pair_id; });
-      if (!pair || !(pair.ready === true)) return "Deep Reasoning is unavailable until this pair passes its shared-model benchmark.";
+      if (state.aiDeviceError || state.aiPairError || !pair || !(pair.ready === true)) return "Deep Reasoning is unavailable until both Macs pass their shared-model benchmark.";
     }
     return "";
   }
@@ -885,6 +922,7 @@
     var inputMode = opts.inputMode === "voice" ? "voice" : "text";
     var attachments = state.aiAttachments.slice();
     var allowBrowser = state.aiAllowBrowser === true && support.turnBrowser;
+    if (requestedRoute && requestedRoute.target) allowBrowser = false;
     var threadPromise = state.selectedAiThreadId
       ? Promise.resolve(aiThreadById(state.selectedAiThreadId))
       : createAiThread();
@@ -1750,7 +1788,7 @@
     var support = aiCoreWord();
     var voiceCaps = aiVoiceCapabilities(), run = selectedAiRun(), problem = aiRouteProblem();
     var runningCount = Object.keys(state.aiRuns).filter(function (id) { return state.aiRuns[id].pending; }).length;
-    var workspaceHead = '<header class="cr-ai-workspace__head"><div><span class="cr-ai-eyebrow">Equity Upreneurs · owner workspace</span><h1>McCluster AI</h1><p>Think, build, and review with your own workers.</p></div><div class="cr-ai-workspace__state"><span class="cr-ai-state' + (ready ? ' cr-ai-state--connected' : '') + '">' + (ready ? 'Core connected' : 'Core unavailable') + '</span>' + (runningCount ? '<span>' + runningCount + ' active run' + (runningCount === 1 ? '' : 's') + '</span>' : '') + '</div></header>';
+    var workspaceHead = '<header class="cr-ai-workspace__head"><div><span class="cr-ai-eyebrow">Equity Upreneurs · owner workspace</span><h1>McCluster AI</h1><p>Choose the worker and model for your next message.</p></div><div class="cr-ai-workspace__state"><span class="cr-ai-state' + (ready ? ' cr-ai-state--connected' : '') + '">' + (ready ? 'Core connected' : 'Core unavailable') + '</span>' + (runningCount ? '<span>' + runningCount + ' active run' + (runningCount === 1 ? '' : 's') + '</span>' : '') + '</div></header>';
     var tabs = '<div class="cr-ai-localnav" aria-label="AI workspace views">' + [["chat", "Chat"], ["devices", "Devices"], ["runs", "Run history"]].map(function (item) {
       return '<button class="cr-ai-localnav__tab' + (state.aiPanel === item[0] ? ' is-on' : '') + '" type="button" data-action="ai-panel" data-panel="' + item[0] + '" aria-pressed="' + (state.aiPanel === item[0]) + '">' + item[1] + '</button>';
     }).join("") + '</div>';
@@ -1772,8 +1810,17 @@
       var label = mine ? "You" : message.role === "assistant" ? "McCluster AI" : titleCase(message.role);
       var status = mine && ["failed", "canceled"].indexOf(meta.task_status) >= 0 ? ' · ' + (meta.task_status === 'canceled' ? 'Stopped' : 'Failed') : '';
       var speak = !mine && voiceCaps.synthesis ? '<button class="cr-ai-textbtn" type="button" data-action="ai-speak-message" data-id="' + ae(message.id) + '" aria-label="Speak this McCluster AI reply">Speak</button>' : '';
-      var controls = !mine ? '<div class="cr-ai-message__actions"><button class="cr-ai-textbtn" type="button" data-action="ai-copy-message" data-id="' + ae(message.id) + '">Copy</button>' + speak + '<button class="cr-ai-textbtn" type="button" data-action="ai-retry" data-id="' + ae(message.id) + '"' + (state.aiChatPending ? ' disabled' : '') + '>Retry</button>' + (receipt.turn_id && aiDeclared(aiToolSchema(state.coreTools, "core.ai.turn.submit"), "review_of_turn_id") ? '<button class="cr-ai-textbtn" type="button" data-action="ai-review" data-id="' + ae(message.id) + '"' + (state.aiChatPending ? ' disabled' : '') + '>Review on another worker</button>' : '') + '</div>' : (status ? '<button class="cr-ai-textbtn" type="button" data-action="ai-retry" data-id="' + ae(message.id) + '"' + (state.aiChatPending ? ' disabled' : '') + '>Retry with current selection</button>' : '');
-      var runReceipt = !mine ? '<details class="cr-ai-receipt"><summary>' + ae(receipt.label) + '</summary>' + (receipt.turn_id ? '<span>Run ' + ae(receipt.turn_id) + '</span>' : '<span>This older reply has no durable run receipt.</span>') + (receipt.node_id ? '<span>Worker ' + ae(receipt.node_id) + '</span>' : '') + '</details>' + (receipt.fallback ? '<p class="cr-ai-fallback">Fallback: ' + ae(receipt.fallback) + '</p>' : '') : '';
+      var controls = !mine ? '<div class="cr-ai-message__actions"><button class="cr-ai-textbtn" type="button" data-action="ai-copy-message" data-id="' + ae(message.id) + '">Copy</button>' + speak + '<button class="cr-ai-textbtn" type="button" data-action="ai-retry" data-id="' + ae(message.id) + '"' + (state.aiChatPending ? ' disabled' : '') + '>Retry with current selection</button>' + (receipt.turn_id && aiDeclared(aiToolSchema(state.coreTools, "core.ai.turn.submit"), "review_of_turn_id") ? '<button class="cr-ai-textbtn" type="button" data-action="ai-review" data-id="' + ae(message.id) + '"' + (state.aiChatPending ? ' disabled' : '') + '>Review on another worker</button>' : '') + '</div>' : (status ? '<button class="cr-ai-textbtn" type="button" data-action="ai-retry" data-id="' + ae(message.id) + '"' + (state.aiChatPending ? ' disabled' : '') + '>Retry with current selection</button>' : '');
+      var runReceipt = !mine ? '<details class="cr-ai-receipt"><summary class="cr-ai-receipt-line">' + ae(receipt.label) + '</summary>' +
+        '<span>Selected: ' + ae(OWNER_AI.requestedTarget(receipt.requested)) + '</span>' +
+        (receipt.requested && receipt.requested.node_id ? '<span>Selected worker ' + ae(receipt.requested.node_id) + '</span>' : '') +
+        (receipt.requested && receipt.requested.implementation ? '<span>Requested implementation ' + ae(receipt.requested.implementation) + '</span>' : '') +
+        '<span>Served by: ' + ae(receipt.served) + (receipt.model ? ' · ' + ae(receipt.model) : '') + '</span>' +
+        (receipt.backend ? '<span>Backend: ' + ae(receipt.backend) + '</span>' : '') +
+        (receipt.turn_id ? '<span>Run ' + ae(receipt.turn_id) + '</span>' : '<span>This older reply has no durable run receipt.</span>') +
+        (receipt.task_id ? '<span>Compute task ' + ae(receipt.task_id) + '</span>' : '') +
+        (receipt.node_ids.length ? '<span>Workers ' + ae(receipt.node_ids.join(", ")) + '</span>' : receipt.node_id ? '<span>Worker ' + ae(receipt.node_id) + '</span>' : '') + '</details>' +
+        (receipt.fallback ? '<p class="cr-ai-fallback">Fallback: ' + ae(receipt.fallback) + '</p>' : '') : '';
       return '<article class="cr-ai-message cr-ai-message--' + (mine ? "user" : "assistant") + '" data-ai-message="' + ae(message.id) + '"><div class="cr-ai-message__meta"><span>' + ae(label) + '</span><span>' + ae(ago(message.created_at) + status) + '</span>' + (mine ? '' : aiNodeBadgeHtml(message)) + '</div>' + (mine ? aiUserImagesHtml(message) : '') + '<div class="cr-ai-message__body' + (mine ? '' : ' cr-ai-markdown') + '">' + (mine ? ae(message.content || "") : OWNER_AI.markdown(message.content || "")) + '</div>' + (mine ? '' : aiErrorHtml(message) + aiResearchHtml(message) + aiBrowserHtml(message)) + runReceipt + controls + '</article>';
     }).join("");
     if (selected && state.aiMessagesHasMore[selected.id]) body = '<div class="cr-ai-earlier"><button class="cr-btn" type="button" data-action="ai-earlier-messages"' + (state.pending['aiEarlier:' + selected.id] || state.aiChatPending ? ' disabled' : '') + '>Load earlier messages</button></div>' + body;
@@ -1787,21 +1834,59 @@
     state.aiDevices.forEach(function (device) { (device.models || []).forEach(function (model) { if (model.implementation && !modelOptions.some(function (x) { return x.implementation === model.implementation; })) modelOptions.push(model); }); });
     var pairSelected = selectedAiRoute().mode === 'pair';
     if (pairSelected) modelOptions = [{ implementation: 'qwen3.5.27b.pair', model: 'Qwen3.5 27B · MLX 4-bit' }];
+    if (!pairSelected && !modelOptions.some(function (m) { return m.implementation === state.aiImplementation; })) {
+      modelOptions.push({ implementation: state.aiImplementation, model: state.aiImplementation + " · unavailable" });
+    }
     var modelSelect = '<label class="cr-ai-picker"><span>Model</span><select id="crAiModel" aria-label="Model"' + (!aiRouteSupported() || state.aiChatPending || pairSelected ? ' disabled' : '') + '>' + modelOptions.map(function (model) { return '<option value="' + ae(model.implementation) + '"' + (state.aiImplementation === model.implementation || pairSelected ? ' selected' : '') + '>' + ae(model.model || model.implementation) + '</option>'; }).join("") + '</select></label>';
-    var deviceOptions = '<option value="auto"' + (state.aiRouteSelection === 'auto' ? ' selected' : '') + '>Auto · healthy worker</option>' + state.aiDevices.map(function (device) { var value = 'node:' + OWNER_AI.deviceId(device); return '<option value="' + ae(value) + '"' + (state.aiRouteSelection === value ? ' selected' : '') + '>' + ae(OWNER_AI.deviceName(device)) + (device.eligible ? Number(device.active_jobs) > 0 ? ' · busy' : '' : ' · ' + ae(OWNER_AI.stateLabel(device))) + '</option>'; }).join("");
-    deviceOptions += state.aiPairs.length ? state.aiPairs.map(function (pair) { var value = 'pair:' + (pair.id || pair.pair_id); return '<option value="' + ae(value) + '"' + (state.aiRouteSelection === value ? ' selected' : '') + '>Deep Reasoning · ' + ae(pair.name || 'Mac pair') + (pair.ready === true ? '' : ' · unavailable') + '</option>'; }).join("") : '<option disabled>Deep Reasoning · pair not verified</option>';
-    var deviceSelect = '<label class="cr-ai-picker"><span>Run on</span><select id="crAiDevice" aria-label="Run on"' + (!aiRouteSupported() || state.aiChatPending ? ' disabled' : '') + '>' + deviceOptions + '</select></label>';
+    var supportedFamilies = OWNER_AI.familyStatus(state.aiDevices, state.aiDevicesLoaded && !state.aiDeviceError);
+    var families = supportedFamilies.map(function (family) {
+      return aiTargetSupported(family.key) ? family : Object.assign({}, family, { status: "Not confirmed" });
+    });
+    var options = [{ value: "auto", label: "Auto · healthy worker" }];
+    families.forEach(function (family) {
+      var members = state.aiDevices.filter(function (d) { return OWNER_AI.targetRole(d) === family.key; });
+      if (!members.length || !aiTargetSupported(family.key)) {
+        options.push({ value: "missing:" + family.key, label: family.label + " · " + family.status });
+        return;
+      }
+      members.forEach(function (device) {
+        var label = family.label;
+        if (family.key === "connected" || members.length > 1) label += " · " + OWNER_AI.deviceName(device);
+        if (!OWNER_AI.targetReady(device)) label += " · " + (device.state === "offline" ? "Offline" : "Unavailable");
+        else if (Number(device.active_jobs) > 0) label += " · busy";
+        options.push({ value: "node:" + OWNER_AI.deviceId(device), label: label });
+      });
+    });
+    state.aiDevices.filter(function (d) { return !OWNER_AI.targetRole(d); }).forEach(function (device) {
+      var suffix = !device.eligible ? " · " + OWNER_AI.stateLabel(device) : Number(device.active_jobs) > 0 ? " · busy" : "";
+      options.push({ value: "node:" + OWNER_AI.deviceId(device), label: OWNER_AI.deviceName(device) + suffix });
+    });
+    state.aiPairs.forEach(function (pair) {
+      options.push({ value: "pair:" + (pair.id || pair.pair_id), label: "Deep Reasoning · " + (pair.name || "Mac pair") + (pair.ready === true ? "" : " · unavailable") });
+    });
+    if (!options.some(function (option) { return option.value === state.aiRouteSelection; })) {
+      options.push({ value: state.aiRouteSelection, label: OWNER_AI.requestedTarget(selectedAiRoute()) + " · unavailable" });
+    }
+    var deviceOptions = options.map(function (option) {
+      return '<option value="' + ae(option.value) + '"' + (option.value === state.aiRouteSelection ? ' selected' : '') + '>' + ae(option.label) + '</option>';
+    }).join("");
+    var deviceSelect = '<label class="cr-ai-picker"><span>Run on</span><select id="crAiDevice" aria-label="Run on"' + (state.aiChatPending ? ' disabled' : '') + '>' + deviceOptions + '</select></label>';
+    var familyStatus = '<ul class="cr-ai-targets" aria-label="Compute readiness">' + families.map(function (f) {
+      return '<li><b>' + ae(f.label) + '</b><span' + (f.status === "Ready" ? ' class="cr-ai-targets__ready"' : '') + '>' + ae(f.status) + '</span></li>';
+    }).join("") + '</ul>';
     var attachRow = (support.turnImages ? '<div class="cr-ai-attach"><button class="cr-btn cr-ai-attach__btn" type="button" data-action="ai-attach"' + (!ready || state.aiChatPending || state.aiAttachments.length >= AI_IMAGE_MAX ? ' disabled' : '') + '>Attach image</button><input id="crAiAttach" type="file" accept="image/*" multiple class="cr-ai-attach__input" aria-label="Attach up to two images" tabindex="-1"><span class="cr-ai-attach__hint" id="crAiAttachHint">' + state.aiAttachments.length + '/2 images · resized on this device</span></div>' : aiCapabilityLine('images', support)) +
       (state.aiAttachments.length ? '<div class="cr-ai-thumbs">' + state.aiAttachments.map(function (a, i) { return '<div class="cr-ai-thumb"><img src="' + ae(a.preview) + '" alt="' + ae(a.name || 'Attached image') + '"><button class="cr-ai-thumb__remove" type="button" data-action="ai-remove-attachment" data-index="' + i + '" aria-label="Remove image">×</button><span class="cr-ai-thumb__meta">' + ae((a.width && a.height ? a.width + '×' + a.height + ' · ' : '') + aiKb(a.bytes)) + '</span></div>'; }).join('') + '</div>' : '');
     var browserSwitch = '';
-    if (aiBrowserSwitchVisible(state, support)) {
+    if (state.aiRouteTarget) {
+      browserSwitch = '<p class="cr-ai-capability">This target answers directly with the selected model. Browser and agent tools are off.</p>';
+    } else if (aiBrowserSwitchVisible(state, support)) {
       var readiness = aiBrowserReadiness(messages);
       browserSwitch = '<div class="cr-ai-browser-switch"><span class="cr-ai-browser-switch__text"><b>Use the browser</b><span>' + (state.aiAllowBrowser ? 'Enabled for this turn on an allowed device.' : 'Off for this turn.') + '</span><span class="cr-ai-browser-switch__ready" data-ai-browser-ready="' + ae(readiness.state) + '">' + ae(readiness.text) + '</span></span><button class="cr-switch' + (state.aiAllowBrowser ? ' is-on' : '') + '" type="button" role="switch" aria-checked="' + state.aiAllowBrowser + '" aria-label="Use the browser for this turn" data-action="ai-browser-toggle"' + (!ready || state.aiChatPending ? ' disabled' : '') + '></button></div>';
     } else browserSwitch = aiCapabilityLine('browser', support);
     return '<div class="cr-ai-workspace">' + workspaceHead + tabs + banners + '<div class="cr-ai-chat"><details class="cr-ai-chat__sidebar" id="crAiHistory"' + (state.aiHistoryOpen ? ' open' : '') + '><summary>Conversations <span>' + state.aiThreads.length + '</span></summary><div class="cr-ai-chat__sidehead"><button class="cr-btn cr-btn--primary" type="button" data-action="ai-new-thread"' + (state.pending.aiThreadCreate ? ' disabled' : '') + '>+ New chat</button><label class="sr-only" for="crAiHistorySearch">Search loaded conversations</label><input id="crAiHistorySearch" class="cr-input" type="search" placeholder="Search loaded chats" value="' + ae(state.aiHistorySearch) + '"></div><div class="cr-ai-chat__threads">' + threads + '</div>' + (state.aiThreadHasMore ? '<button class="cr-ai-textbtn" type="button" data-action="ai-more-threads"' + (state.pending.aiMoreThreads ? ' disabled' : '') + '>Load earlier conversations</button>' : '') + '<div class="cr-ai-history__foot"><span>Search covers loaded titles and messages in opened chats.</span><a href="#create:projects" data-nav-route="#create:projects">Open projects</a><span>Linking projects to chats needs implementation.</span></div></details><section class="cr-ai-chat__main"><header class="cr-ai-chat__head"><div><b>' + ae(selected ? selected.title : 'New conversation') + '</b><p>' + (state.aiChatPending ? 'You can start another conversation while this job runs.' : 'Saved across devices through your owner account.') + '</p></div><button class="cr-ai-textbtn" type="button" data-action="ai-refresh-thread">Reconnect</button></header><div class="cr-ai-chat__messages" id="crAiMessages">' + (messageError ? sourceBanner(messageError, 'Conversation') : '') + body + '</div><footer class="cr-ai-chat__composer">' +
       (state.aiChatError ? '<p class="cr-fail" role="alert">' + ae(state.aiChatError) + '</p>' : '') + (state.aiVoiceError ? '<p class="cr-fail cr-ai-voice-error">' + ae(state.aiVoiceError) + '</p>' : '') +
       (state.aiReviewOf ? '<div class="cr-ai-notice">Reviewing a saved result. Choose a different worker below.<button class="cr-ai-textbtn" type="button" data-action="ai-cancel-review">Cancel review</button></div>' : '') +
-      '<div class="cr-ai-routing">' + modelSelect + deviceSelect + '</div>' + (problem ? '<p class="cr-ai-route-error" role="status">' + ae(problem) + '</p>' : '') + (!aiRouteSupported() ? '<p class="cr-ai-capability">Device routing needs the updated Core. This deployment uses its existing automatic route.</p>' : '') +
+      '<div class="cr-ai-routing">' + modelSelect + deviceSelect + '</div>' + familyStatus + (problem ? '<p class="cr-ai-route-error" role="status">' + ae(problem) + '</p>' : '') + (!aiRouteSupported() ? '<p class="cr-ai-capability">This Core supports automatic routing only.</p>' : '') +
       '<div class="cr-ai-chat__composerbox"><textarea class="cr-textarea" id="crAiComposer" rows="3" placeholder="Message McCluster…" aria-label="Message McCluster AI"' + (!ready || state.aiChatPending || state.aiVoiceListening ? ' disabled' : '') + '></textarea><div class="cr-ai-composer__actions"><details class="cr-ai-compose-tools" id="crAiComposeTools"><summary>Attachments &amp; tools</summary><div>' + attachRow + browserSwitch + '<p class="cr-muted">Document uploads and project knowledge need implementation. Images use a compatible vision model.</p></div></details><button class="cr-btn cr-btn--voice' + (state.aiVoiceListening ? ' is-listening' : '') + '" type="button" data-action="ai-voice-toggle"' + (!ready || state.aiChatPending || !voiceCaps.recognition ? ' disabled' : '') + ' aria-pressed="' + state.aiVoiceListening + '">' + (state.aiVoiceListening ? 'Stop mic' : 'Talk') + '</button>' +
       (state.aiChatPending ? '<button class="cr-btn cr-btn--danger" type="button" data-action="ai-stop"' + (!coreToolAvailable('core.ai.turn.stop') || !state.aiChatTask || state.aiChatTask.status === 'submitting' || run && run.stopRequested ? ' disabled' : '') + '>' + (run && run.stopRequested ? 'Stopping…' : 'Stop') + '</button>' : '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-send"' + (!ready || state.aiVoiceListening || problem ? ' disabled' : '') + '>Send</button>') + '</div></div>' +
       (state.aiVoiceListening || state.aiVoiceSpeaking || state.aiVoiceTranscript ? '<div class="cr-ai-voice-status" role="status"><span>' + (state.aiVoiceListening ? 'Listening…' : state.aiVoiceSpeaking ? 'Speaking reply' : '') + '</span>' + (state.aiVoiceTranscript ? '<span>' + ae(state.aiVoiceTranscript) + '</span>' : '') + (state.aiVoiceSpeaking ? '<button class="cr-ai-textbtn" type="button" data-action="ai-stop-speaking">Stop voice</button>' : '') + '</div>' : '') +
@@ -4055,7 +4140,6 @@
     } else if (action === "ai-review") {
       var reviewed = aiMessageById(id); if (!reviewed) return true;
       state.aiReviewOf = reviewed.metadata && reviewed.metadata.agent_job_id;
-      state.aiRouteSelection = "auto";
       state.aiChatDraft = "Review this saved answer for accuracy, missing evidence and practical improvements. Explain any corrections clearly.";
       render(); if ($("crAiDevice")) $("crAiDevice").focus();
     } else if (action === "ai-cancel-review") {
@@ -4107,7 +4191,7 @@
     else if (action === "ai-send") { var aiInput = $("crAiComposer"); sendAiMessage(aiInput && aiInput.value, { inputMode: "text", speakReply: false }); }
     else if (action === "ai-attach") { var picker = $("crAiAttach"); if (picker) picker.click(); }
     else if (action === "ai-remove-attachment") { var at = Number(el && el.getAttribute("data-index")); if (Number.isInteger(at) && at >= 0) state.aiAttachments.splice(at, 1); render(); }
-    else if (action === "ai-browser-toggle") { state.aiAllowBrowser = !state.aiAllowBrowser; render(); }
+    else if (action === "ai-browser-toggle" && !state.aiRouteTarget) { state.aiAllowBrowser = !state.aiAllowBrowser; render(); }
     else if (action === "ai-voice-toggle") { if (state.aiVoiceListening) { stopAiVoiceListening(false); render(); } else startAiVoiceTurn(); }
     else if (action === "ai-stop-speaking") { stopAiVoiceSpeech(); render(); }
     else if (action === "ai-speak-message") { var voiceMessage = aiMessageById(el && el.getAttribute("data-id")); if (voiceMessage && voiceMessage.role === "assistant") speakAiText(voiceMessage.content); }
@@ -4703,9 +4787,15 @@
       document.querySelectorAll("[data-ai-history-search]").forEach(function (item) { item.hidden = query && item.getAttribute("data-ai-history-search").indexOf(query) < 0; });
     });
     var aiModel = $("crAiModel");
-    if (aiModel) aiModel.addEventListener("change", function () { state.aiImplementation = aiModel.value; render(); });
+    if (aiModel) aiModel.addEventListener("change", function () { state.aiImplementation = aiModel.value; rememberAiRoute(); render(); });
     var aiDevice = $("crAiDevice");
-    if (aiDevice) aiDevice.addEventListener("change", function () { state.aiRouteSelection = aiDevice.value; state.aiChatError = null; render(); });
+    if (aiDevice) aiDevice.addEventListener("change", function () {
+      state.aiRouteSelection = aiDevice.value;
+      var device = state.aiDevices.find(function (item) { return "node:" + OWNER_AI.deviceId(item) === aiDevice.value; });
+      state.aiRouteTarget = device ? OWNER_AI.targetRole(device) : aiDevice.value.indexOf("missing:") === 0 ? aiDevice.value.slice(8) : "";
+      if (state.aiRouteTarget) state.aiAllowBrowser = false;
+      state.aiChatError = null; rememberAiRoute(); render();
+    });
     var aiComposerInput = $("crAiComposer");
     if (aiComposerInput) {
       aiComposerInput.value = state.aiChatDraft || "";
@@ -5078,6 +5168,7 @@
       /* Refresh re-reads the per-view sources too, not just the shell's. */
       if (force && state.musicOrders) loadMusicOrders(true);
       state.workspace = (a.workspace && a.workspace.membership) || null;
+      restoreAiRoute();
       state.audit = pickRows(state.sources.audit, "events");
       state.coreBridge = dataOf(state.sources.coreBridge);
       var coreToolsPayload = dataOf(state.sources.coreTools);

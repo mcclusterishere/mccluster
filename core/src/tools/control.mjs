@@ -11,7 +11,7 @@ import { activeMeetingTools, callMeetingTool } from './meeting.mjs';
 import { submitResidentAiTurn, getResidentAiTurn, stopResidentAiTurn } from '../resident-ai.mjs';
 import { DEVICE_TOOLS, callDeviceTool } from './devices.mjs';
 import { PAIR_TOOLS, callPairTool } from './pairs.mjs';
-import { requireWorkspaceOwner } from '../compute/owner-routing.mjs';
+import { OWNER_TARGETS, requireWorkspaceOwner } from '../compute/owner-routing.mjs';
 import { WORKSTREAM_TOOLS, callWorkstreamTool } from './workstream.mjs';
 import { GAME_LORE_INPUT_SCHEMA, readGameLore } from '../game-lore.mjs';
 
@@ -130,7 +130,7 @@ if (OWNER_WORKSPACE_ENABLED) {
   BASE_TOOLS.push(...DEVICE_TOOLS, ...PAIR_TOOLS);
   const submit = BASE_TOOLS.find(tool => tool.name === 'core.ai.turn.submit');
   Object.assign(submit.inputSchema.properties, {
-    route: { type: 'object', properties: { mode: { type: 'string', enum: ['auto', 'node', 'pair'] }, node_id: { type: 'string' }, pair_id: { type: 'string' }, implementation: { type: 'string' } }, additionalProperties: false },
+    route: { type: 'object', properties: { mode: { type: 'string', enum: ['auto', 'node', 'pair'] }, target: { type: 'string', enum: OWNER_TARGETS, description: 'An explicit inference-only target pinned to node_id.' }, node_id: { type: 'string' }, pair_id: { type: 'string' }, implementation: { type: 'string' } }, additionalProperties: false },
     review_of_turn_id: { type: 'string' },
   });
   BASE_TOOLS.push({ name: 'core.ai.turn.stop', title: 'Stop a saved conversation run', description: 'Stop an owner conversation run, cancel its outstanding compute leases and fence late results.', inputSchema: { type: 'object', required: ['org_id', 'turn_id'], properties: { org_id: { type: 'string' }, turn_id: { type: 'string' } }, additionalProperties: false } });

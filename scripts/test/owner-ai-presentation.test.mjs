@@ -10,6 +10,35 @@ vm.runInContext(source, context);
 const ui = context.window.CR.ownerAi;
 const plain = value => JSON.parse(JSON.stringify(value));
 
+test('named targets require a current, positive Core assessment and distinguish missing inventory', () => {
+  const now = Date.parse('2026-11-27T19:30:00Z');
+  const seen = new Date(now - 20_000).toISOString();
+  const ovh = { target: 'ovh', eligible: true, target_ready: true, last_seen_at: seen };
+  const stale = { ...ovh, target: 'prime', state: 'offline', last_seen_at: new Date(now - 180_000).toISOString() };
+  const connected = { ...ovh, target: 'connected' };
+  const status = (devices, known) => plain(ui.familyStatus(devices, known, now)).map(f => f.status);
+  assert.deepEqual(status([ovh, stale, connected], true), ['Ready', 'Offline', 'Ready']);
+  assert.deepEqual(status([ovh, stale, connected], false), ['Not confirmed', 'Not confirmed', 'Not confirmed']);
+  assert.deepEqual(status([{ display_name: 'owner-windows-gpu', eligible: true }, { ...ovh, target_ready: false }], true), ['Unavailable', 'Needs pairing', 'Unavailable']);
+  assert.equal(ui.targetReady({ ...ovh, last_seen_at: new Date(now + 3000).toISOString() }, now), false);
+  assert.equal(ui.targetReady({ ...ovh, eligible: false }, now), false);
+});
+
+test('a saved receipt uses the original requested target and the recorded serving worker', () => {
+  const selected = { mode: 'node', node_id: 'fixture-prime', implementation: 'qwen3-vl.4b.local', target: 'prime' };
+  assert.deepEqual(plain(ui.route('node:fixture-prime', selected.implementation, 'prime')), selected);
+  assert.equal(ui.route('missing:prime').mode, 'unavailable');
+  assert.equal(ui.requestedTarget(selected), 'Prime GPU');
+  assert.equal(ui.requestedTarget({ mode: 'node', node_id: 'old-id' }), 'old-id');
+  assert.equal(ui.requestedTarget(null), 'Not recorded');
+  const receipt = ui.receipt({ compute_task_id: 'task-1', metadata: { requested_route: selected, node: { route: 'fabric', node_name: 'Recorded Windows worker', node_id: 'fixture-prime', model: 'qwen3-vl:4b' } } });
+  assert.equal(receipt.backend, 'McCluster compute');
+  assert.equal(receipt.served, 'Recorded Windows worker');
+  assert.equal(receipt.task_id, 'task-1');
+  assert.deepEqual(plain(receipt.requested), selected);
+  assert.equal(ui.receipt({ metadata: { node: { route: 'pair' } } }).backend, 'Two-Mac shared runtime');
+});
+
 test('Markdown renders readable prose and literal code without trusting raw HTML or URLs', () => {
   const html = ui.markdown('# Plan\n\nA **clear** answer with `x < 3`.\n\n- first\n- second\n\n1. One\n2. Two\n\n> A note\n\n```js\nconst value = "<script>";\n```');
   assert.match(html, /<h3>Plan<\/h3>/);

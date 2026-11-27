@@ -93,15 +93,45 @@
   }
   function stateLabel(device) { return STATES[deviceState(device)][0]; }
   function recovery(device) { return String(device && device.recovery || STATES[deviceState(device)][1]); }
-  function route(selection, implementation) {
+  function route(selection, implementation, target) {
     var value = String(selection || "auto"), result = { mode: "auto", implementation: implementation || "qwen3.8b.local" };
-    if (value.indexOf("node:") === 0) { result.mode = "node"; result.node_id = value.slice(5); }
+    if (value.indexOf("node:") === 0) { result.mode = "node"; result.node_id = value.slice(5); if (target) result.target = target; }
     else if (value.indexOf("pair:") === 0) { result.mode = "pair"; result.pair_id = value.slice(5); result.implementation = "qwen3.5.27b.pair"; }
+    else if (value !== "auto") result.mode = "unavailable";
     return result;
   }
   function nodeLabel(node) {
     if (!node || typeof node !== "object") return "Device not yet reported";
     return node.node_name || node.display_name || node.node_id || (node.route === "local" ? "OVH" : "Device not yet reported");
+  }
+  var TARGET_LABELS = { ovh: "OVH CPU", prime: "Prime GPU", connected: "Connected inference" };
+  function targetRole(device) {
+    var target = device && device.target;
+    return Object.prototype.hasOwnProperty.call(TARGET_LABELS, target) ? target : "";
+  }
+  function targetReady(device, now) {
+    var age = (now == null ? Date.now() : now) - Date.parse(device && device.last_seen_at);
+    return Boolean(targetRole(device) && device.target_ready === true && device.eligible === true &&
+      Number.isFinite(age) && age >= 0 && age < 180000);
+  }
+  function familyStatus(devices, inventoryKnown, now) {
+    return Object.keys(TARGET_LABELS).map(function (key) {
+      var members = devices.filter(function (device) { return targetRole(device) === key; });
+      var status = "Not confirmed";
+      if (inventoryKnown) {
+        if (members.some(function (device) { return targetReady(device, now); })) status = "Ready";
+        else if (members.length && members.every(function (device) { return device.state === "offline"; })) status = "Offline";
+        else if (key === "prime" && !members.length) status = "Needs pairing";
+        else status = "Unavailable";
+      }
+      return { key: key, label: TARGET_LABELS[key], status: status };
+    });
+  }
+  function requestedTarget(requested) {
+    if (!requested || typeof requested !== "object") return "Not recorded";
+    if (requested.mode === "node") return TARGET_LABELS[targetRole(requested)] || requested.node_id || "Not recorded";
+    if (requested.mode === "pair") return "Deep Reasoning (two-Mac pair)";
+    return requested.mode === "auto" ? "Auto" : "Not recorded";
   }
   function receipt(message) {
     message = message || {};
@@ -111,8 +141,11 @@
     if (node.hardware_mode) parts.push(node.hardware_mode);
     var rate = Number(node.generation_tokens_per_second);
     if (Number.isFinite(rate) && rate > 0) parts.push(rate.toFixed(1) + " tok/s");
-    return { label: parts.join(" · "), fallback: fallback ? String(fallback) : "", node_id: node.node_id || null, turn_id: meta.agent_job_id || null };
+    return { label: parts.join(" · "), fallback: fallback ? String(fallback) : "", node_id: node.node_id || null, turn_id: meta.agent_job_id || null,
+      requested: meta.requested_route || null, served: nodeLabel(node), model: node.model || message.model || null,
+      task_id: message.compute_task_id || null, node_ids: Array.isArray(node.node_ids) ? node.node_ids : [],
+      backend: node.route === "fabric" ? "McCluster compute" : node.route === "local" ? "Core local" : node.route === "pair" ? "Two-Mac shared runtime" : null };
   }
   window.CR = window.CR || {};
-  window.CR.ownerAi = { esc: esc, safeLink: safeLink, markdown: markdown, route: route, deviceState: deviceState, deviceName: deviceName, deviceId: deviceId, stateLabel: stateLabel, recovery: recovery, nodeLabel: nodeLabel, receipt: receipt, cleanupCommand: cleanupCommand };
+  window.CR.ownerAi = { esc: esc, safeLink: safeLink, markdown: markdown, route: route, deviceState: deviceState, deviceName: deviceName, deviceId: deviceId, stateLabel: stateLabel, recovery: recovery, nodeLabel: nodeLabel, receipt: receipt, cleanupCommand: cleanupCommand, targetRole: targetRole, targetReady: targetReady, familyStatus: familyStatus, requestedTarget: requestedTarget };
 })();

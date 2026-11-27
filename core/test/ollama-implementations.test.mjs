@@ -23,7 +23,13 @@ function fakeOllama(state) {
     if (req.url === '/api/ps') return state.psStatus ? json(state.psStatus, { error: 'ps failed' }) : json(200, { models: state.running || [] });
     if (req.url === '/api/chat') {
       if (!state.installed.includes(body.model)) return json(404, { error: `model "${body.model}" not found, try pulling it first` });
-      return json(200, { message: { role: 'assistant', content: `from ${body.model}` }, done_reason: 'stop', eval_count: 4, eval_duration: 1e9, prompt_eval_count: 4, prompt_eval_duration: 1e9 });
+      const model = Object.hasOwn(state, 'reportedModel') ? state.reportedModel : body.model;
+      if (body.stream) {
+        res.setHeader('content-type', 'application/x-ndjson');
+        const frames = state.frames || [{ model, message: { content: 'streamed answer' }, done: false }, { model, done: true }];
+        return res.end(frames.map(frame => JSON.stringify(frame)).join('\n') + '\n');
+      }
+      return json(200, { model, done: true, message: { role: 'assistant', content: `from ${body.model}` }, done_reason: 'stop', eval_count: 4, eval_duration: 1e9, prompt_eval_count: 4, prompt_eval_duration: 1e9 });
     }
     if (req.url === '/api/pull') return json(200, { status: 'success' });
     if (req.url === '/api/version') return json(200, { version: 'test-version' });
@@ -130,6 +136,58 @@ test('a missing mapped model falls back to the default model and says so', { tim
   assert.equal(out.body.fallback_from, 'qwen3:14b');
   assert.equal(out.body.model_source, 'implementation');
   assert.deepEqual(a.chats().map((c) => c.model), ['qwen3:14b', 'qwen3:8b']);
+});
+
+test('strict execution requires the selected model from the daemon and never uses the default after a failed pin', async t => {
+  const model = 'qwen3:8b';
+  const state = { installed: [model] };
+  const adapter = await withAdapter(t, state, { MCCLUSTER_OLLAMA_IMPLEMENTATIONS: MAP });
+  const turn = { capability: 'ai.chat', implementation: 'qwen3.8b.local', input: { prompt: 'hello', model, strict_model: true } };
+  const exact = await adapter.post('/execute', turn);
+  assert.equal(exact.status, 200);
+  assert.equal(exact.body.runtime_model, model);
+  const inconsistent = await adapter.post('/execute', { ...turn, implementation: 'qwen3.14b.local' });
+  assert.equal(inconsistent.body.code, 'AI_ROUTE_MODEL_MISMATCH');
+  assert.equal(adapter.chats().length, 1, 'a conflicting configured mapping never reached Ollama');
+  for (const reportedModel of ['qwen3:14b', undefined]) {
+    state.reportedModel = reportedModel;
+    const refused = await adapter.post('/execute', turn);
+    assert.equal(refused.status, 502);
+    assert.equal(refused.body.code, 'AI_ROUTE_MODEL_MISMATCH');
+    assert.equal(refused.body.content, undefined);
+  }
+  state.installed = [];
+  const missing = await adapter.post('/execute', { ...turn, implementation: 'qwen3.14b.local', input: { ...turn.input, model: 'qwen3:14b' } });
+  assert.equal(missing.status, 404);
+  assert.deepEqual(adapter.chats().map(chat => chat.model), [model, model, model, 'qwen3:14b']);
+});
+
+test('hardware pins withhold streaming text until fresh residency evidence matches this exact model', async t => {
+  const model = 'qwen3:8b', other = 'qwen3:14b';
+  const state = { installed: [model, other], running: [] };
+  const adapter = await withAdapter(t, state, { MCCLUSTER_OLLAMA_IMPLEMENTATIONS: MAP });
+  const execute = async hardware => {
+    const input = { prompt: 'hello', model, required_hardware: hardware };
+    const response = await fetch(adapter.url + '/execute', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/x-ndjson' },
+      body: JSON.stringify({ capability: 'ai.chat', implementation: 'qwen3.8b.local', input }) });
+    return (await response.text()).trim().split('\n').map(line => JSON.parse(line));
+  };
+  const cpu = { name: model, size: 1024, size_vram: 0 }, gpu = { ...cpu, size_vram: 512 };
+  state.running = [cpu, { ...gpu, name: other }];
+  const [success] = await execute('cpu-only');
+  assert.deepEqual([success.type, success.result.content, success.result.runtime_model, success.result.hardware_mode], ['result', 'streamed answer', model, 'cpu-only']);
+  assert.equal(adapter.chats()[0].options.num_gpu, 0);
+  for (const running of [state.running, [], [{ ...gpu, size_vram: undefined }], [cpu, gpu]]) {
+    state.running = running;
+    assert.deepEqual(await execute('gpu-verified'), [{ type: 'error', code: 'AI_ROUTE_HARDWARE_MISMATCH', retryable: false }]);
+  }
+  state.running = [gpu];
+  assert.equal((await execute('gpu-verified'))[0].result.hardware_mode, 'gpu-verified');
+  assert.equal((await execute('cpu-only'))[0].code, 'AI_ROUTE_HARDWARE_MISMATCH');
+  state.psStatus = 503;
+  assert.equal((await execute('gpu-verified'))[0].code, 'AI_ROUTE_HARDWARE_MISMATCH');
+  state.frames = [{ model: other, message: { content: 'wrong worker output' } }, { model, done: true }];
+  assert.deepEqual(await execute('gpu-verified'), [{ type: 'error', code: 'AI_ROUTE_MODEL_MISMATCH', retryable: false }]);
 });
 
 test('MCCLUSTER_OLLAMA_THINK_MODELS is the exact think set when given', { timeout: 15000 }, async (t) => {

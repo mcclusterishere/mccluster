@@ -196,13 +196,13 @@ export async function computeTaskById({ orgId, taskId } = {}) {
 
 export async function listNodes(options = {}) {
   const normalized = typeof options === 'string' ? { orgId: options } : (options || {});
-  const { orgId, liveOnly = false, limit = 100 } = normalized;
+  const { orgId, liveOnly = false, limit = 100, includeCleanup = process.env.CORE_OWNER_AI_WORKSPACE_ENABLED === '1' } = normalized;
   const params = new URLSearchParams({
     select: 'id,org_id,display_name,key_fingerprint,protocol_version,agent_version,state,inventory,capabilities,labels,load,max_leases,enrolled_at,last_seen_at,revoked_at,updated_at',
     order: 'last_seen_at.desc',
     limit: String(Math.min(500, Math.max(1, Number(limit) || 100)))
   });
-  if (process.env.CORE_OWNER_AI_WORKSPACE_ENABLED === '1') params.set('select', params.get('select') + ',pair_cleanup_required,pair_cleanup_details');
+  if (includeCleanup) params.set('select', params.get('select') + ',pair_cleanup_required,pair_cleanup_details');
   if (orgId) params.set('org_id', eq(orgId));
   if (liveOnly) {
     params.set('state', 'eq.online');

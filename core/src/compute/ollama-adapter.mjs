@@ -2,7 +2,7 @@ import http from 'node:http';
 import { inferenceFetch, inferenceJson, inferenceError } from './inference-http.mjs';
 import { inferenceSettings, inferenceUsage } from './inference-settings.mjs';
 import { validateChatImages } from './ai-chat-images.mjs';
-import { collectOllamaStream } from './ndjson.mjs';
+import { collectOllamaStream, requireOllamaModel } from './ndjson.mjs';
 
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.MCCLUSTER_OLLAMA_ADAPTER_PORT || 4790);
@@ -127,6 +127,22 @@ function callerAbortedError() {
   });
 }
 
+async function servedHardware(model, signal) {
+  // Run-scoped observation on the same daemon as /api/chat. A cached sample or
+  // a different resident model cannot identify where this answer was served.
+  const deadline = AbortSignal.any([signal, AbortSignal.timeout(3_000)]);
+  try {
+    const response = await inferenceFetch(`${OLLAMA}/api/ps`, { signal: deadline, maxBytes: 256_000 });
+    if (!response.ok) return null;
+    const data = await inferenceJson(response);
+    const matching = Array.isArray(data.models) ? data.models.filter(item => modelMatches(item, model)) : [];
+    if (matching.length !== 1) return null;
+    const { size, size_vram: vram } = matching[0];
+    if (!Number.isSafeInteger(size) || size <= 0 || !Number.isSafeInteger(vram) || vram < 0) return null;
+    return vram > 0 ? 'gpu-verified' : 'cpu-only';
+  } catch { signal.throwIfAborted(); return null; }
+}
+
 async function execute(body, queuedAt, callerSignal, onProgress) {
   const queueWaitMs = Math.max(0, Date.now() - queuedAt);
   if (body.capability !== 'ai.chat') {
@@ -148,6 +164,12 @@ async function execute(body, queuedAt, callerSignal, onProgress) {
   // put in front of a model that cannot see.
   const { images: imagesIn } = validateChatImages(input);
   const { model: requestedModel, source: modelSource } = pickModel(body);
+  const requiredHardware = input.required_hardware;
+  if (requiredHardware !== undefined && !['cpu-only', 'gpu-verified'].includes(requiredHardware)) {
+    throw Object.assign(new Error('Unsupported hardware requirement.'), { status: 400, code: 'AI_ROUTE_INVALID' });
+  }
+  const strict = input.strict_model === true || requiredHardware !== undefined;
+  if (strict && input.model !== undefined) requireOllamaModel(requestedModel, input.model);
   if (imagesIn > 0 && !VISION_MODELS.has(requestedModel)) {
     throw Object.assign(new Error(`model ${requestedModel} does not take images`), { status: 400, code: 'AI_CHAT_IMAGE_MODEL_NOT_VISION' });
   }
@@ -177,16 +199,20 @@ async function execute(body, queuedAt, callerSignal, onProgress) {
             temperature: settings.temperature,
             num_ctx: settings.num_ctx,
             num_predict: settings.num_predict,
+            ...(requiredHardware === 'cpu-only' ? { num_gpu: 0 } : {}),
             ...(settings.num_thread ? { num_thread: settings.num_thread } : {}),
           },
         }),
         signal,
       });
       const data = response.ok && onProgress
-        ? await collectOllamaStream(response, progress => onProgress({ ...progress, model, implementation: body.implementation || null }), { startedAt: requestStartedAt })
+        ? await collectOllamaStream(response,
+          requiredHardware ? undefined : progress => onProgress({ ...progress, model, implementation: body.implementation || null }),
+          { startedAt: requestStartedAt, expectedModel: strict ? model : undefined })
         : await inferenceJson(response);
       return { response, data };
     } catch (error) {
+      if (error.code === 'AI_ROUTE_MODEL_MISMATCH') throw error;
       throw inferenceError(error, { signal, peer: 'ollama' });
     }
   };
@@ -196,7 +222,7 @@ async function execute(body, queuedAt, callerSignal, onProgress) {
   let { response, data } = await callOllama(usedModel);
   // A missing mapped model falls back to the default model, except when the
   // request carries images and the default cannot see them.
-  if (input.strict_model !== true && !response.ok && usedModel !== MODEL && (imagesIn === 0 || VISION_MODELS.has(MODEL)) && (response.status === 404 || /not found|pull/i.test(String(data?.error || '')))) {
+  if (!strict && !response.ok && usedModel !== MODEL && (imagesIn === 0 || VISION_MODELS.has(MODEL)) && (response.status === 404 || /not found|pull/i.test(String(data?.error || '')))) {
     fallbackFrom = usedModel; usedModel = MODEL;
     ({ response, data } = await callOllama(usedModel));
   }
@@ -206,9 +232,23 @@ async function execute(body, queuedAt, callerSignal, onProgress) {
       code: 'OLLAMA_UPSTREAM_ERROR'
     });
   }
+  if (strict) {
+    requireOllamaModel(data.model, usedModel);
+    if (data.done !== true) throw Object.assign(new Error('Ollama did not confirm completion.'), {
+      status: 502, code: 'INFERENCE_INVALID_RESPONSE', retryable: false,
+    });
+  }
+  const hardwareMode = requiredHardware ? await servedHardware(data.model, signal) : null;
+  if (requiredHardware && hardwareMode !== requiredHardware) {
+    throw Object.assign(new Error('Ollama did not confirm the selected model on the required hardware.'), {
+      status: 502, code: 'AI_ROUTE_HARDWARE_MISMATCH', retryable: false,
+    });
+  }
 
   return {
-    model: usedModel,
+    model: strict ? data.model : usedModel,
+    ...(strict ? { runtime_model: data.model } : {}),
+    ...(hardwareMode ? { hardware_mode: hardwareMode } : {}),
     model_source: modelSource,
     ...(fallbackFrom ? { fallback_from: fallbackFrom } : {}),
     implementation: body.implementation || null,

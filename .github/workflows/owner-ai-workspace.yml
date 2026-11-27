@@ -2,7 +2,7 @@ name: Owner AI workspace
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, codex/owner-ai-workspace-20261122]
     paths:
       - '.github/workflows/owner-ai-workspace.yml'
       - 'control.html'
@@ -84,6 +84,8 @@ jobs:
             core/test/owner-workspace-recovery.test.mjs \
             core/test/owner-stream.test.mjs \
             core/test/ollama-cancellation.test.mjs \
+            core/test/ollama-implementations.test.mjs \
+            core/test/resident-ai-turn.test.mjs \
             core/test/node-agent-stream-lifecycle.test.mjs \
             core/test/compute-lease-runtime.test.mjs \
             core/test/node-agent-config.test.mjs \

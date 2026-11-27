@@ -28,7 +28,7 @@ function fixture() {
   f.finish = (id, fallback = '') => {
     const t = f.turns.get(id); assert.ok(t, 'fixture turn exists');
     t.status = 'done'; t.user.metadata.task_status = 'done';
-    t.assistant = { id: 'reply-' + id, org_id: ORG, thread_id: t.args.thread_id, role: 'assistant', content: '# A concrete next step\n\nUse **independent jobs** for parallel work.\n\n```js\nconst answer = "fixture output";\n```', model: 'qwen3:8b', implementation: 'qwen3.8b.local', created_at: now(), metadata: { agent_job_id: id, task_status: 'done', node: t.node, fallback_reason: fallback } };
+    t.assistant = { id: 'reply-' + id, org_id: ORG, thread_id: t.args.thread_id, role: 'assistant', content: '# A concrete next step\n\nUse **independent jobs** for parallel work.\n\n```js\nconst answer = "fixture output";\n```', model: 'qwen3:8b', implementation: 'qwen3.8b.local', created_at: now(), metadata: { agent_job_id: id, task_status: 'done', node: t.node, requested_route: t.args.route, fallback_reason: fallback } };
     f.messages[t.args.thread_id].push(t.assistant);
   };
   f.overrides = [
@@ -111,6 +111,56 @@ async function until(check, timeout = 3000) {
   assert.ok(check(), 'expected UI state arrived before deadline');
 }
 const calls = (f, name) => f.calls.filter(x => x.name === name);
+
+test('named worker actions submit exact signed-dispatch intent and recover historical receipts', async t => {
+  const f = fixture();
+  const targets = [['ovh', 'OVH CPU'], ['prime', 'Prime GPU'], ['connected', 'Connected inference']];
+  f.devices = targets.map(([target]) => {
+    const d = device('worker-' + target, 'Worker ' + target);
+    d.target = target; d.target_ready = true; d.models[0].target_ready = true;
+    return d;
+  });
+  const page = await openOwner(f, t);
+  for (const [target, label] of targets) {
+    const id = 'worker-' + target;
+    page.select('crAiDevice', 'node:' + id);
+    assert.match(page.surface(), /Browser and agent tools are off/);
+    page.type('crAiComposer', 'Return the fixture word'); await page.click('ai-send'); await page.settle();
+    const sent = calls(f, 'core.ai.turn.submit').at(-1).args;
+    assert.deepEqual(sent.route, { mode: 'node', node_id: id, target, implementation: 'qwen3.8b.local' });
+    assert.equal(sent.allow_browser, undefined);
+    f.finish(sent.message_id);
+    await until(() => !page.state().aiChatPending);
+    assert.ok(page.surface().includes('Selected: ' + label));
+    assert.ok(page.surface().includes('Served by: Worker ' + target));
+  }
+  assert.equal(calls(f, 'core.ai.turn.submit').length, 3);
+});
+
+test('a pin survives a reload and cannot submit after losing its worker, schema or model readiness', async t => {
+  const f = fixture(), sessionStore = new Map();
+  const d = f.devices[0]; d.target = 'prime'; d.target_ready = true; d.models[0].target_ready = false;
+  const first = await openOwner(f, t, { sessionStore });
+  first.select('crAiDevice', 'node:' + d.node_id);
+  first.type('crAiComposer', 'Wait for GPU evidence'); await first.click('ai-send');
+  assert.equal(calls(f, 'core.ai.turn.submit').length, 0);
+  first.close();
+  f.devices = [];
+  const second = await openOwner(f, t, { sessionStore });
+  assert.equal(second.state().aiRouteSelection, 'node:' + d.node_id);
+  assert.equal(second.state().aiRouteTarget, 'prime');
+  assert.ok(second.surface().includes('value="node:' + d.node_id + '" selected>Prime GPU'));
+  second.type('crAiComposer', 'Keep the original worker'); await second.click('ai-send');
+  assert.equal(calls(f, 'core.ai.turn.submit').length, 0);
+  second.state().coreTools = second.state().coreTools.map(tool => {
+    if (tool.name !== 'core.ai.turn.submit') return tool;
+    const old = structuredClone(tool); delete old.inputSchema.properties.route.properties.target;
+    return old;
+  });
+  second.module.render(); await second.click('ai-send');
+  assert.match(second.surface(), /Core cannot enforce the selected compute target/);
+  assert.equal(calls(f, 'core.ai.turn.submit').length, 0);
+});
 
 test('image preview retains its resized dimensions and byte count in the new composer', async t => {
   const f = fixture(), page = await openOwner(f, t);
@@ -203,7 +253,8 @@ test('stop, retry and explicit second-worker review use durable tool contracts',
   const retried = calls(f, 'core.ai.turn.submit')[1].args;
   assert.equal(retried.content, first.content); assert.notEqual(retried.message_id, first.message_id);
   f.finish(retried.message_id); await until(() => page.surface().includes('data-action="ai-review"'));
-  await page.click('ai-review', 'reply-' + retried.message_id); page.select('crAiDevice', 'node:mac-a');
+  await page.click('ai-review', 'reply-' + retried.message_id);
+  assert.equal(page.state().aiRouteSelection, 'node:mac-a');
   assert.match(page.surface(), /Choose a different worker/); await page.click('ai-send'); assert.equal(calls(f, 'core.ai.turn.submit').length, 2);
   page.select('crAiDevice', 'node:mac-b'); await page.click('ai-send'); await page.settle();
   const review = calls(f, 'core.ai.turn.submit')[2].args;

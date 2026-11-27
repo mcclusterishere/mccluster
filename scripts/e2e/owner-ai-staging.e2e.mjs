@@ -64,11 +64,13 @@ function observe(page) {
       if (!id || !value?.turn) return;
       const record = observed.get(id) || { id, statuses: [], chunks: 0, node_id: null, terminal: false };
       record.statuses.push(value.turn.status);
+      record.target = value.user_message?.metadata?.workspace_route?.target || record.target || null;
+      if (record.target && value.progress?.status !== 'done' && value.progress?.content) record.premature_output = true;
       record.node_id = value.progress?.node?.node_id || value.assistant_message?.metadata?.node?.node_id || record.node_id;
       if (value.progress?.content) record.chunks += 1;
       record.terminal = ['done', 'failed', 'canceled'].includes(value.turn.status);
       record.last_seen_at = Date.now(); observed.set(id, record);
-      const active = [...observed.values()].filter(item => !item.terminal && item.chunks > 0 && Date.now() - item.last_seen_at < 5000);
+      const active = [...observed.values()].filter(item => !item.terminal && item.node_id && Date.now() - item.last_seen_at < 5000);
       if (new Set(active.map(item => item.node_id).filter(Boolean)).size >= 2) parallelObserved = true;
     })().catch(() => {}).finally(() => responseTasks.delete(pending));
     responseTasks.add(pending);
@@ -133,17 +135,22 @@ async function selectThread(page, id) {
   await page.locator(`[data-action="ai-select-thread"][data-id="${id}"]`).click();
 }
 async function send(page, nodeId, content) {
-  await page.locator('#crAiDevice').selectOption(`node:${nodeId}`);
+  await page.locator('#crAiDevice').selectOption(nodeId ? `node:${nodeId}` : 'auto');
   await page.locator('#crAiComposer').fill(content); await action(page, 'ai-send').click();
   await action(page, 'ai-stop').waitFor();
 }
 async function partial(page) {
   await until(async () => await page.locator('#crAiProgress').count() > 0 && /Staging test output\./.test(await page.locator('#crAiProgress').innerText()), 'No actual streamed partial text appeared before completion.');
 }
+async function claimed(page, name) {
+  const label = page.locator('.cr-ai-message--pending .cr-ai-node');
+  await until(async () => await label.count() > 0 && (await label.innerText()) === name, `No signed worker claim was shown for ${name}.`);
+}
 async function completed(page, name, previous = 0) {
   await until(async () => await assistant(page).count() > previous && !await action(page, 'ai-stop').count(), `No final reply from ${name}.`, 60_000);
   const receipt = await assistant(page).last().locator('.cr-ai-receipt > summary').innerText();
-  check(`Final receipt names ${name}`, receipt.includes(name), { receipt });
+  if (name) check(`Final receipt names ${name}`, receipt.includes(name), { receipt });
+  else check('Auto completed with a recorded serving device', Boolean(receipt) && !receipt.includes('Device not yet reported'), { receipt });
   check(`Reply from ${name} is explicitly synthetic`, /synthetic/.test(await assistant(page).last().innerText()));
 }
 async function install(page, name) {
@@ -202,20 +209,28 @@ try {
   for (const width of [390, 820, 1280]) { await page.setViewportSize({ width, height: width === 820 ? 1180 : 900 }); await layout(page, width, 'devices'); }
   phase = 'parallel pinned conversations';
   const firstThread = await newChat(page); await send(page, first, 'Show the staged execution path through this first Mac worker.');
-  await partial(page); check('First pinned job renders actual partial model text', true);
+  await claimed(page, firstName);
   const secondThread = await newChat(page); await send(page, second, 'Run this independent staged task on the second Mac worker.');
-  await partial(page); check('Second pinned job renders actual partial model text', true);
+  await claimed(page, secondName);
   await completed(page, secondName);
   await selectThread(page, firstThread); await completed(page, firstName);
-  if (parallelObserved) check('Different worker conversations had overlapping observed streamed progress', true);
+  await Promise.allSettled([...responseTasks]);
+  const connected = [...observed.values()].filter(record => record.target === 'connected');
+  check('Both named jobs used their selected signed workers', [first, second].every(id => connected.some(record => record.node_id === id)));
+  check('Named jobs withhold model text until the worker receipt is verified', connected.every(record => !record.premature_output));
+  if (parallelObserved) check('Different worker conversations had overlapping observed leases', true);
   else skip('Overlapping worker execution in the browser observation', 'Both independent pinned jobs completed, but browser polling did not capture both before terminal completion. The signed runtime E2E separately checks concurrency.');
   phase = 'responsive chat and reconnect';
   for (const width of [390, 820, 1280]) { await page.setViewportSize({ width, height: width === 820 ? 1180 : 900 }); await layout(page, width, 'chat'); }
   await page.reload({ waitUntil: 'domcontentloaded' }); await page.locator('.cr-ai-workspace').waitFor();
   await selectThread(page, firstThread); await assistant(page).first().waitFor();
   check('Reload recovers the durable conversation and worker receipt', (await assistant(page).last().locator('.cr-ai-receipt > summary').innerText()).includes(firstName));
+  phase = 'automatic route streaming';
+  await newChat(page); await send(page, null, 'Stream synthetic model text on the automatic route.');
+  await partial(page); check('Auto renders actual partial model text before completion', true);
+  await completed(page);
   phase = 'stop, retry and review';
-  await newChat(page); await send(page, first, 'Produce a staged answer so I can stop the run.'); await partial(page);
+  await newChat(page); await send(page, first, 'Produce a staged answer so I can stop the run.'); await claimed(page, firstName);
   await action(page, 'ai-stop').click();
   await until(async () => !await action(page, 'ai-stop').count() && /Stopped/.test(await page.locator('.cr-ai-message--user').last().innerText()), 'Stop was not durably reflected in the conversation.');
   check('Stop becomes a durable stopped message', true);

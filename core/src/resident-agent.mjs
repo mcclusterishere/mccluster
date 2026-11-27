@@ -75,7 +75,7 @@ export async function runResidentAgent({ messages, context, metadata, checkpoint
   const scope = { ...context, turnDeadline: deadline };
   for (let round = 0; round <= maxRounds; round += 1) {
     if (signal?.aborted) throw signal.reason;
-    const allowTools = round < maxRounds && calls < maxCalls && Date.now() < deadline - 30000;
+    const allowTools = !ownerRoute?.target && round < maxRounds && calls < maxCalls && Date.now() < deadline - 30000;
     const response = await chat({
       messages: history, tools: allowTools ? toolList : undefined,
       think: false, temperature: 0.3, numCtx, numPredict: allowTools ? 1024 : 1536,
@@ -88,6 +88,7 @@ export async function runResidentAgent({ messages, context, metadata, checkpoint
     measurements.push({ round, model: response.model, implementation: response.implementation ?? null, queue_wait_ms: response.queue_wait_ms, usage: response.usage || {}, settings: response.settings, done_reason: response.done_reason, node: response.node ?? null });
     const requested = response.message?.tool_calls || [];
     if (!requested.length) return { ...response, tool_receipts: receipts, inference_rounds: measurements, duration_ms: Date.now() - started, ...(browser.tasks.length ? { browser } : {}) };
+    if (ownerRoute?.target) throw Object.assign(new Error('The selected model requested a tool during an inference-only turn.'), { code: 'AI_ROUTE_TOOLS_DISABLED' });
     if (!allowTools) throw new Error('Model requested tools after its execution budget was exhausted');
     history.push(response.message);
     for (const call of requested) {
