@@ -77,6 +77,19 @@ function policyEvidence(job, output) {
   const records = [];
 
   switch (type) {
+    case 'course_study_build': {
+      // The entire raw result is persisted with the job. Never simply ignore
+      // extra fields here: a private course or answer must not escape in one.
+      const keys = ['executor', 'bundle_sha256', 'source_count', 'brief_count', 'round_count'];
+      requireValue(job, Object.keys(output).every(k => keys.includes(k)) &&
+        output.executor === 'course_study_build:v1' && typeof output.bundle_sha256 === 'string' &&
+        /^[0-9a-f]{64}$/.test(output.bundle_sha256) && [1, 2, 3].includes(output.source_count) &&
+        output.brief_count === 2 * output.source_count && output.round_count === 4 * output.source_count,
+      'private study completion requires only the bounded persisted-bundle digest and counts');
+      records.push({ kind: 'private_study_bundle', sha256: output.bundle_sha256, sources: output.source_count,
+        brief_items: output.brief_count, rounds: output.round_count });
+      break;
+    }
     case 'actor_live_comment': {
       requireValue(job, output.actor_key === job.target_id, 'live actor must match job');
       if (output.published === true) {

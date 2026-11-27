@@ -774,3 +774,15 @@ The forward statement returns one JSON rollback receipt. Save the receipt from t
 approved application with its release evidence. Subsequent runs can return an empty
 receipt. The paired rollback takes the original receipt in the session setting
 `mccluster.pax_stage_name_receipt` and checks each current value before restoring it.
+
+## Private Course Studio (opt-in, independent)
+
+`learning_studio_v1.sql` is a proposal, not an applied migration. Requires the
+canonical org/owner records and `ops_agent_jobs`. It has no dependency on the
+separate public portfolio proposal. Rehearse the SQL, receipt fencing, retries,
+answer isolation and rollback in a disposable database first
+(`scripts/test-course-studio-db.mjs`). Rollback refuses to erase any course
+record. Per-file owner approval is required to apply anything to production.
+With the Worker flag unset/off, promote and verify the Core executor first;
+old runners quarantine unsupported work. Only then review Worker release and
+enabling `COURSE_STUDIO_ENABLED` as separate decisions. No public ports needed.
