@@ -8,22 +8,20 @@ Status: built and run on one owner Windows device (the in-box compiler, `build-i
 project (`src/McClusterDesktop.csproj`) is kept in step but is **not built on this branch** (no .NET SDK on
 the build device). A signed release is not claimed. What is and is not verified is listed at the end.
 
-## Chat on Prime
+## Equity Fighter chats
 
-Open **Chat** in the Windows toolbar, choose an installed model, type a message
-and select **Send**. Equity Fighter's Windows interface is compiled into the
-EquityNet executable from `packages/equity-fighter/windows`. In local mode,
-EquityNet sends the turn through its existing device job runner to loopback
-Ollama. Follow-ups use verified prior job receipts from that window. The
-receipt records the model and has local-device scope. A new chat starts a new
-conversation.
+Open **Chat** in EquityNet's Windows toolbar. In **Chats**, start a conversation,
+choose **Run on**, then select the exact model or worker. **Prime (local only)**
+uses the device job runner and loopback Ollama. Reopening the module restores
+local threads from this device's signed jobs. **View receipt** shows the selected
+model, the serving runtime and hardware evidence for the turn.
 
-**Owner workspace** opens McCluster's first-party sign-in and owner chat in the
-app's protected web pane. The website owns authentication and role checks.
-When the owner picker and its Core dependencies are available, select Prime
-there for a durable, signed dispatch and check the serving worker in the
-reply details. An offline or unpaired Prime needs a fresh signed check-in.
-A successful local reply is evidence for the local route only.
+**Prime via OVH**, **OVH CPU** and **Connected inference** use the same composer.
+Choose **Owner workspace** to sign in to the first-party page, return to Chats
+and refresh to see the eligible workers. The page retains the account session.
+Core owns remote conversation state and dispatch. An unavailable target leaves
+the turn unsubmitted. Check the serving worker, model and Core task in its
+receipt. **Projects** opens the existing first-party project workspace.
 
 This Windows interface complements the TypeScript channel adapters in draft
 [#849](https://github.com/mcclusterishere/mccluster/pull/849). The owner

@@ -10,6 +10,7 @@ namespace McClusterDesktop
     {
         internal const string Home = "https://mccluster.org/";
         internal const string OwnerChat = "https://mccluster.org/control.html#home:ask";
+        internal const string OwnerProjects = "https://mccluster.org/control.html#create:projects";
 
         private static readonly HashSet<string> FirstParty = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -22,7 +23,7 @@ namespace McClusterDesktop
         // inside that page's first-party session.
         internal static bool IsPanelDestination(string url)
         {
-            return url == Home || url == OwnerChat;
+            return url == Home || url == OwnerChat || url == OwnerProjects;
         }
 
         internal static Uri HttpsTarget(string text)

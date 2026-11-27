@@ -292,8 +292,11 @@ namespace McClusterDesktop
             compute.CheckedChanged += delegate { panel.Visible = compute.Checked; };
             chat.Click += delegate
             {
-                if (chatWindow != null && !chatWindow.IsDisposed) { chatWindow.Activate(); return; }
-                chatWindow = new PrimeChatForm(store, delegate { compute.Checked = false; Navigate(NavigationPolicy.OwnerChat); });
+                if (chatWindow != null && !chatWindow.IsDisposed) { chatWindow.Show(); chatWindow.Activate(); return; }
+                chatWindow = new PrimeChatForm(store,
+                    delegate { compute.Checked = false; Navigate(NavigationPolicy.OwnerChat); },
+                    delegate { compute.Checked = false; Navigate(NavigationPolicy.OwnerProjects); },
+                    new OwnerChatTransport(view));
                 chatWindow.Show(this);
             };
             SetNavigationButtons();

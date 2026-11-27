@@ -114,7 +114,7 @@ if ($Tests -or $Installer) {
   $testOut = Join-Path $dist 'tests'
   New-Item -ItemType Directory -Force $testOut | Out-Null
   $testExe = Join-Path $testOut 'McClusterTests.exe'
-  $testSources = @('NavigationPolicy.cs','Json.cs','LocalJobs.cs','DeviceInventory.cs','LocalRuntime.cs','Proof.cs','ExoProbe.cs','Contribution.cs','CoreJobs.cs','PanelRuns.cs') | ForEach-Object { Join-Path $src $_ }
+  $testSources = @('NavigationPolicy.cs','Json.cs','LocalJobs.cs','DeviceInventory.cs','LocalRuntime.cs','Proof.cs','ExoProbe.cs','Contribution.cs','CoreJobs.cs','PanelRuns.cs','OwnerChatTransport.cs') | ForEach-Object { Join-Path $src $_ }
   $testSources += (Join-Path $fighter 'LocalConversation.cs')
   $testSources += (Get-ChildItem (Join-Path $here 'tests\*.cs') | ForEach-Object { $_.FullName })
   $testArgs = @('/nologo','/noconfig','/nostdlib+','/warnaserror+','/target:exe','/platform:x64','/langversion:5',"/out:$testExe") + $refs + $testSources
