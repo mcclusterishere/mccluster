@@ -16,7 +16,7 @@ async function collect({ headers = {}, body }) {
   const ctx = {
     Deno: { env: { get: name => name === 'SUPABASE_URL' ? 'https://local.test.supabase.co' : 'not-a-real-secret' },
       serve: fn => { handler = fn; } },
-    Response, Request, Headers, TextEncoder, URL, console, crypto: webcrypto, setTimeout, SITE_HOSTS,
+    Response, Request, Headers, TextEncoder, URL, console, crypto: webcrypto, setTimeout, clearTimeout, AbortSignal, SITE_HOSTS,
     fetch: async (url, init = {}) => {
       const href = String(url);
       calls.push({ href, method: init.method || 'GET', body: init.body });
