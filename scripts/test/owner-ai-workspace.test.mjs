@@ -25,6 +25,17 @@ function fixture() {
     messages: { 'thread-1': [] }, turns: new Map(), calls: [], devices: [device('mac-a', 'Studio iMac'), device('mac-b', 'Second iMac'), device('ovh', 'OVH', 'linux')],
     enrollments: [], pairs: [], credentialCount: 0, rejectSubmit: false
   };
+  // A prospective issuer schema for staging only. The live tool may still be Mac-only.
+  f.primeIssuer = (available, schema = true) => {
+    f.primeCapability = available;
+    f.tools = CONTROL_TOOLS.map(tool => {
+      if (tool.name !== 'core.compute.enrollment.create') return tool;
+      const properties = { ...tool.inputSchema.properties };
+      if (schema) properties.profile = { type: 'string', enum: ['device', 'prime'] };
+      else delete properties.profile;
+      return { ...tool, inputSchema: { ...tool.inputSchema, properties } };
+    });
+  };
   f.finish = (id, fallback = '') => {
     const t = f.turns.get(id); assert.ok(t, 'fixture turn exists');
     t.status = 'done'; t.user.metadata.task_status = 'done';
@@ -44,15 +55,16 @@ function fixture() {
       return rows.slice(offset, offset + limit);
     } },
     { match: e => e.path === '/v1/core/mcp', body: (_body, e) => {
-      if (e.rpc.method === 'tools/list') return rpc(e, { tools: CONTROL_TOOLS });
+      if (e.rpc.method === 'tools/list') return rpc(e, { tools: f.tools || CONTROL_TOOLS });
       const name = e.rpc.params?.name, args = e.rpc.params?.arguments || {};
       f.calls.push({ name, args });
-      if (name === 'core.compute.devices.list') return rpc(e, toolText({ devices: f.devices, enrollments: f.enrollments, enrollment_available: true, coordinator: 'McCluster Core on OVH' }));
+      if (name === 'core.compute.devices.list') return rpc(e, toolText({ devices: f.devices, enrollments: f.enrollments, enrollment_available: true, prime_enrollment_available: f.primeCapability, coordinator: 'McCluster Core on OVH' }));
       if (name === 'core.compute.pairs.list') return rpc(e, toolText({ pairs: f.pairs }));
       if (name === 'core.compute.enrollment.create') {
         const id = args.enrollment_id || 'enrollment-' + (f.enrollments.length + 1);
         const setup = { org_id: ORG, compute_url: 'https://compute.mccluster.org', enrollment_id: id, display_name: args.display_name, platform: 'darwin', implementation: 'qwen3.8b.local', model: 'qwen3:8b', context: 4096, max_leases: 1 };
-        const pending = { id, enrollment_id: id, display_name: args.display_name, platform: 'darwin', created_at: now(), expires_at: new Date(Date.now() + 600000).toISOString(), state: 'pending' };
+        if (args.profile === 'prime') Object.assign(setup, { platform: 'win32', profile: 'prime', implementation: 'qwen3-vl.4b.local', model: 'qwen3-vl:4b' }, f.setupOverride);
+        const pending = { id, enrollment_id: id, display_name: args.display_name, platform: setup.platform, profile: args.profile || 'device', created_at: now(), expires_at: new Date(Date.now() + 600000).toISOString(), state: 'pending' };
         f.enrollments = f.enrollments.filter(x => x.id !== id).concat(pending);
         const credential = 'mcen1_' + String(++f.credentialCount).padStart(43, 'A');
         f.lastCredential = credential;
@@ -239,6 +251,63 @@ test('owner enrollment survives target-Mac handoff without persisting or putting
   assert.notEqual(f.lastCredential, secret, 'target Mac explicitly requests a newly issued credential');
   await target.otherTab(s => s.delete('mccdb_session'));
   assert.equal(target.state().aiEnrollment, null); assert.ok(!target.dom().includes('mcen1_'));
+});
+
+test('Pair Prime requires both Core declarations and a deliberate Windows 4B selection', async t => {
+  for (const [capability, schema] of [[false, true], [true, false]]) {
+    const f = fixture(); f.primeIssuer(capability, schema);
+    const page = await openOwner(f, t); await page.action('ai-panel', { 'data-panel': 'devices' });
+    assert.match(page.surface(), /data-action="ai-pair-prime" disabled>Pair Prime/);
+    await page.click('ai-pair-prime');
+    assert.equal(calls(f, 'core.compute.enrollment.create').length, 0);
+    assert.doesNotMatch(page.surface(), /id="crAiPrimeProfile"/);
+  }
+
+  const f = fixture(); f.primeIssuer(true);
+  const page = await openOwner(f, t); await page.action('ai-panel', { 'data-panel': 'devices' });
+  await page.click('ai-pair-prime');
+  assert.match(page.surface(), /Enrolment token \(shown once by the owner(?:&#39;|&apos;|')s Core\)/);
+  const command = page.surface().match(/id="crAiSetupCommand">([^<]+)/)?.[1];
+  assert.equal(command, '.\\core\\windows\\mccluster-node.ps1 -Enroll');
+  assert.equal(calls(f, 'core.compute.enrollment.create').length, 0);
+  assert.match(page.surface(), /id="crAiPrimeName"[^>]*placeholder="Configured node name"/);
+  assert.doesNotMatch(page.surface(), /id="crAiPrimeName"[^>]*value="/);
+  assert.match(page.surface(), /%ProgramData%\\mccluster-node/);
+  assert.match(page.surface(), /current binding and leaves the new credential unused/);
+  await page.click('ai-prime-enroll');
+  assert.match(page.surface(), /Choose the Windows 4B profile/);
+  page.select('crAiPrimeProfile', 'prime'); await page.click('ai-prime-enroll');
+  assert.equal(calls(f, 'core.compute.enrollment.create').length, 0);
+  page.select('crAiPrimeProfile', 'prime'); page.type('crAiPrimeName', 'two words');
+  await page.click('ai-prime-enroll'); assert.equal(calls(f, 'core.compute.enrollment.create').length, 0);
+  page.select('crAiPrimeProfile', 'prime'); page.type('crAiPrimeName', 'owner-windows-pilot');
+  await page.click('ai-prime-enroll'); await page.settle();
+  const expected = { org_id: ORG, platform: 'win32', profile: 'prime', display_name: 'owner-windows-pilot' };
+  assert.deepEqual(calls(f, 'core.compute.enrollment.create').map(c => c.args), [expected]);
+  assert.match(page.surface(), /type="password"[^>]*mcen1_/);
+  assert.doesNotMatch(page.surface(), /Download setup file|Download Mac worker/);
+  assert.ok(!page.surface().match(/id="crAiSetupCommand">([^<]+)/)[1].includes(f.lastCredential));
+  assert.ok(!JSON.stringify([...page.storage, ...page.fetchLog]).includes(f.lastCredential));
+  await page.click('ai-forget-enrollment'); assert.ok(!page.dom().includes(f.lastCredential));
+  await page.click('ai-finish-enrollment', 'enrollment-1'); await page.settle();
+  assert.deepEqual(calls(f, 'core.compute.enrollment.create').at(-1).args, { ...expected, enrollment_id: 'enrollment-1' });
+});
+
+test('Prime setup discards a mismatched response or a response arriving after Close setup', async t => {
+  const f = fixture(); f.primeIssuer(true);
+  const page = await openOwner(f, t); await page.action('ai-panel', { 'data-panel': 'devices' });
+  await page.click('ai-pair-prime');
+  f.setupOverride = { model: 'qwen3:8b' };
+  page.select('crAiPrimeProfile', 'prime'); page.type('crAiPrimeName', 'owner-windows-gpu');
+  await page.click('ai-prime-enroll'); await page.settle();
+  assert.match(page.surface(), /different worker profile/);
+  assert.equal(page.state().aiEnrollment, null); assert.ok(!page.dom().includes(f.lastCredential));
+  f.setupOverride = {};
+  const held = page.hold(e => e.rpc?.params?.name === 'core.compute.enrollment.create');
+  page.select('crAiPrimeProfile', 'prime'); page.type('crAiPrimeName', 'owner-windows-gpu');
+  await page.click('ai-prime-enroll'); assert.equal(held.pending.length, 1);
+  await page.click('ai-forget-enrollment'); held.release(); await page.settle();
+  assert.equal(page.state().aiEnrollment, null); assert.ok(!page.dom().includes(f.lastCredential));
 });
 
 test('individual worker controls show real states, recovery, and forbid an unavailable pin', async t => {

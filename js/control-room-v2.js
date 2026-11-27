@@ -67,6 +67,8 @@
     aiPairError: null,
     aiDeviceNotice: null,
     aiEnrollmentAvailable: false,
+    aiPrimeEnrollmentAvailable: false,
+    aiSetupRequest: null,
     aiEnrollment: null,
     aiEnrollmentReveal: false,
     aiInstaller: null,
@@ -1598,11 +1600,15 @@
       state.aiDevices = Array.isArray(values[0].devices) ? values[0].devices : [];
       state.aiEnrollments = Array.isArray(values[0].enrollments) ? values[0].enrollments : [];
       state.aiEnrollmentAvailable = values[0].enrollment_available === true;
+      state.aiPrimeEnrollmentAvailable = values[0].prime_enrollment_available === true;
       state.aiPairs = Array.isArray(values[1].pairs) ? values[1].pairs : [];
       state.aiPairError = values[1].error || null;
       state.aiDeviceError = null;
     }).catch(function (error) {
-      if (authorityHolds(snapshot)) state.aiDeviceError = error.message || "Devices could not be read. Try Refresh devices.";
+      if (authorityHolds(snapshot)) {
+        state.aiPrimeEnrollmentAvailable = false;
+        state.aiDeviceError = error.message || "Devices could not be read. Try Refresh devices.";
+      }
     }).then(function () {
       if (!authorityHolds(snapshot)) return;
       state.aiDevicesLoaded = true; delete state.pending.aiDevices; render();
@@ -1643,26 +1649,48 @@
     if (!state.aiEnrollment || !state.aiEnrollment.setup) return;
     /* A fixed allowlist prevents any future credential field from entering the file. */
     var source = state.aiEnrollment.setup, setup = {};
+    if (source.profile === "prime") return;
     ["org_id", "compute_url", "enrollment_id", "display_name", "platform", "implementation", "model", "context", "max_leases"].forEach(function (key) { if (source[key] !== undefined) setup[key] = source[key]; });
     var blob = new Blob([JSON.stringify(setup, null, 2) + "\n"], { type: "application/json" });
     var url = URL.createObjectURL(blob), anchor = document.createElement("a");
     anchor.href = url; anchor.download = "mccluster-device-setup.json"; anchor.click();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
+  function primeEnrollmentAvailable() {
+    var schema = aiToolSchema(state.coreTools, "core.compute.enrollment.create");
+    var profile = schema && schema.properties && schema.properties.profile;
+    return state.aiEnrollmentAvailable && state.aiPrimeEnrollmentAvailable && profile && Array.isArray(profile.enum) && profile.enum.indexOf("prime") >= 0;
+  }
+  function closeAiSetup() {
+    state.aiSetupRequest = null; state.aiEnrollment = null; state.aiEnrollmentReveal = false; state.aiAddDeviceOpen = false;
+  }
   function issueAiEnrollment(enrollmentId) {
     if (state.pending.aiDeviceMutation || !aiBrowserOwner(state)) return;
     var snapshot = authoritySnapshot();
-    var nameInput = $("crAiDeviceName"), name = nameInput && nameInput.value.trim();
-    var existing = state.aiEnrollments.find(function (e) { return String(e.enrollment_id || e.id) === String(enrollmentId); });
-    if (existing) name = existing.display_name;
+    var existing = enrollmentId && state.aiEnrollments.find(function (e) { return String(e.enrollment_id || e.id) === String(enrollmentId); });
+    if (enrollmentId && !existing) return;
+    var prime = existing ? existing.profile === "prime" : state.aiAddDeviceOpen === "prime";
+    if (existing && existing.platform !== (prime ? "win32" : "darwin")) return;
+    if (prime && !primeEnrollmentAvailable()) return;
+    var nameInput = $(prime ? "crAiPrimeName" : "crAiDeviceName");
+    var name = existing ? existing.display_name : nameInput && nameInput.value.trim();
+    if (prime && !existing && (!$("crAiPrimeProfile") || $("crAiPrimeProfile").value !== "prime")) {
+      state.aiDeviceError = "Choose the Windows 4B profile."; render(); return;
+    }
+    if (prime && !/^[a-zA-Z0-9._-]{1,64}$/.test(name || "")) {
+      state.aiDeviceError = "Enter the configured Windows node name (1–64 letters, digits, dots, hyphens or underscores)."; render(); return;
+    }
     if (!name) { state.aiDeviceError = "Give this Mac a name so you can recognize it in chat."; render(); return; }
-    var args = { org_id: state.org.id, display_name: name, platform: "darwin" };
+    var args = { org_id: state.org.id, display_name: name, platform: prime ? "win32" : "darwin" };
+    if (prime) args.profile = "prime";
     if (enrollmentId) args.enrollment_id = enrollmentId;
+    var request = {}; state.aiSetupRequest = request;
     state.pending.aiDeviceMutation = true; state.aiDeviceError = null; state.aiEnrollment = null; render();
     return callCoreTool("core.compute.enrollment.create", args).then(function (result) {
-      if (!authorityHolds(snapshot)) return;
+      if (!authorityHolds(snapshot) || state.aiSetupRequest !== request || state.surface !== "ai" || state.aiPanel !== "devices") return;
       if (!result.credential || !result.enrollment_id || !result.setup || !Number.isFinite(Date.parse(result.expires_at))) throw new Error("Core did not return a complete enrollment. Try again.");
-      state.aiEnrollment = result; state.aiEnrollmentReveal = false; state.aiAddDeviceOpen = true;
+      if (prime && (result.setup.profile !== "prime" || result.setup.platform !== "win32" || result.setup.implementation !== "qwen3-vl.4b.local" || result.setup.model !== "qwen3-vl:4b" || result.setup.max_leases !== 1)) throw new Error("Core returned a different worker profile. Check the Prime enrollment service.");
+      state.aiEnrollment = result; state.aiEnrollmentReveal = false; state.aiAddDeviceOpen = prime ? "prime" : true;
       var id = result.enrollment_id;
       setTimeout(function () {
         if (authorityHolds(snapshot) && state.aiEnrollment && state.aiEnrollment.enrollment_id === id && Date.parse(state.aiEnrollment.expires_at) <= Date.now()) {
@@ -1670,7 +1698,7 @@
         }
       }, Math.max(0, Date.parse(result.expires_at) - Date.now()) + 50);
       return loadOwnerDevices(true);
-    }).catch(function (error) { if (authorityHolds(snapshot)) state.aiDeviceError = error.message || "Enrollment could not be created."; }).then(function () { if (authorityHolds(snapshot)) { delete state.pending.aiDeviceMutation; render(); } });
+    }).catch(function (error) { if (authorityHolds(snapshot) && state.aiSetupRequest === request) state.aiDeviceError = error.message || "Enrollment could not be created."; }).then(function () { if (authorityHolds(snapshot)) { delete state.pending.aiDeviceMutation; render(); } });
   }
   function mutateAiDevice(nodeId, action) {
     if (state.pending.aiDeviceMutation || !aiBrowserOwner(state)) return;
@@ -1711,6 +1739,22 @@
       return loadOwnerDevices(true);
     }).catch(function (error) { state.aiDeviceError = error.message || "A supported distributed runtime is not ready on these Macs."; }).then(function () { delete state.pending.aiDeviceMutation; render(); });
   }
+  function renderAiCredential(enrollment) {
+    var ae = OWNER_AI.esc;
+    return enrollment.credential ? '<div class="cr-ai-credential"><input id="crAiCredential" type="' + (state.aiEnrollmentReveal ? "text" : "password") + '" value="' + ae(enrollment.credential) + '" readonly autocomplete="off" spellcheck="false" aria-label="Single-use enrollment credential"><button class="cr-btn" type="button" data-action="ai-reveal-credential">' + (state.aiEnrollmentReveal ? "Hide" : "Reveal") + '</button><button class="cr-btn" type="button" data-action="ai-copy-credential">Copy credential</button></div>' : '<p class="cr-ai-capability">Credential expired or cleared. Choose Finish setup to issue a new one.</p>';
+  }
+  function renderPrimeSetup(enrollment, busy) {
+    var ae = OWNER_AI.esc;
+    var command = ".\\core\\windows\\mccluster-node.ps1 -Enroll";
+    var prompt = "Enrolment token (shown once by the owner's Core)";
+    var controls = enrollment ? '<p>Single use · expires ' + ae(formatDate(enrollment.expires_at)) + '.</p>' + renderAiCredential(enrollment) :
+      '<label>Worker profile<select id="crAiPrimeProfile" class="cr-select" data-ai-preserve><option value="">Choose a profile</option><option value="prime">Windows 4B · Qwen3-VL 4B</option></select></label>' +
+      '<label>Configured Windows node name<input id="crAiPrimeName" class="cr-input" data-ai-preserve placeholder="Configured node name" maxlength="64" autocomplete="off" spellcheck="false"></label><p>Enter <code>node_name</code> from <code>node.config.json</code> in your worker’s state directory. The default is <code>%ProgramData%\\mccluster-node</code>.</p>' +
+      '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-prime-enroll"' + (busy || !primeEnrollmentAvailable() ? ' disabled' : '') + '>Create pairing credential</button>';
+    return '<section class="cr-ai-setup" aria-label="Pair Prime"><div class="cr-ai-sectionhead"><h3>' + (enrollment ? 'Pair ' + ae(enrollment.display_name) : 'Pair Prime') + '</h3><button class="cr-ai-textbtn" type="button" data-action="ai-forget-enrollment">Close setup</button></div>' + controls +
+      '<ol class="cr-ai-setup__steps"><li><b>On the configured Prime PC</b><p>From the reviewed checkout, run this in PowerShell. If the worker uses a custom state directory, append <code>-StateRoot</code> and its quoted path.</p><pre class="cr-ai-setup__command"><code id="crAiSetupCommand">' + ae(command) + '</code></pre><button class="cr-btn" type="button" data-action="ai-copy-setup-command">Copy setup command</button></li>' +
+      '<li><b>Paste the credential at this masked prompt</b><pre class="cr-ai-setup__command"><code>' + ae(prompt) + '</code></pre><p>Press Enter. If Core recognizes the existing signing identity, the worker reconnects under its current binding and leaves the new credential unused. Prime becomes selectable after Core verifies the signed heartbeat, GPU and model.</p></li></ol></section>';
+  }
   function renderAiDevices() {
     var ae = OWNER_AI.esc, busy = state.pending.aiDeviceMutation ? " disabled" : "";
     var available = coreToolAvailable("core.compute.devices.list");
@@ -1718,13 +1762,14 @@
     var enrollment = state.aiEnrollment;
     if (enrollment && Date.parse(enrollment.expires_at) <= Date.now()) enrollment.credential = null;
     var add = "";
-    if (state.aiAddDeviceOpen) {
+    if (state.aiAddDeviceOpen === "prime") add = renderPrimeSetup(enrollment, busy);
+    else if (state.aiAddDeviceOpen) {
       if (!enrollment) add = '<section class="cr-ai-setup"><h3>Add a Mac</h3><p>Use this Mac, or start here and finish on another Mac. The worker runs only after you explicitly install it. Wi-Fi is enough.</p><label>Device name<input id="crAiDeviceName" class="cr-input" data-ai-preserve autocomplete="off" maxlength="80" placeholder="Studio iMac"></label><button class="cr-btn cr-btn--primary" type="button" data-action="ai-enroll"' + busy + '>Create setup</button><p class="cr-muted">Starting on your laptop? Create setup now, then sign in to this workspace on the target Mac and choose Finish setup below.</p></section>';
       else {
         var command = 'node ' + (state.aiInstaller ? 'mccluster-macos-worker/' : '') + 'core/macos/mccluster-node.mjs install --setup-file ./mccluster-device-setup.json';
         var packageStep = state.aiInstaller ? '<p>Download and unzip the reviewed worker package on this Mac. Install Node 20 or newer and Ollama, then run <code>ollama pull qwen3:8b</code>. Keep Ollama local.</p><a class="cr-btn" href="downloads/mccluster-macos-worker.zip" download>Download Mac worker</a><details class="cr-ai-receipt"><summary>Package checksum</summary><span>SHA-256 ' + ae(state.aiInstaller.sha256) + '</span></details>' + (state.aiInstaller.physical_mac_verified ? '' : '<p class="cr-muted">Installer tests pass in the test environment. Installation on a physical Mac still needs verification.</p>') : '<p>The downloadable package is unavailable on this deployment. Use the reviewed McCluster worker checkout. Install Node 20 or newer and Ollama, then run <code>ollama pull qwen3:8b</code>. Keep Ollama local.</p>';
         add = '<section class="cr-ai-setup" aria-label="Mac setup"><div class="cr-ai-sectionhead"><h3>Set up ' + ae(enrollment.display_name) + '</h3><button class="cr-ai-textbtn" type="button" data-action="ai-forget-enrollment">Close setup</button></div><ol class="cr-ai-setup__steps"><li><b>On the target Mac</b>' + packageStep + '</li><li><b>Save the setup file beside the worker folder</b><p>This file contains the coordinator address and device settings. It contains no credential.</p><button class="cr-btn" type="button" data-action="ai-download-setup">Download setup file</button></li><li><b>Install the worker</b><pre class="cr-ai-setup__command"><code id="crAiSetupCommand">' + ae(command) + '</code></pre><button class="cr-btn" type="button" data-action="ai-copy-setup-command">Copy setup command</button></li><li><b>Paste the credential only at the installer’s private prompt</b><p>Single use · expires ' + ae(formatDate(enrollment.expires_at)) + '. It must never go into a command or address bar.</p>' +
-          (enrollment.credential ? '<div class="cr-ai-credential"><input id="crAiCredential" type="' + (state.aiEnrollmentReveal ? "text" : "password") + '" value="' + ae(enrollment.credential) + '" readonly autocomplete="off" spellcheck="false" aria-label="Single-use enrollment credential"><button class="cr-btn" type="button" data-action="ai-reveal-credential">' + (state.aiEnrollmentReveal ? "Hide" : "Reveal") + '</button><button class="cr-btn" type="button" data-action="ai-copy-credential">Copy credential</button></div>' : '<p class="cr-ai-capability">Credential expired or cleared. Choose Finish setup to issue a new one.</p>') +
+          renderAiCredential(enrollment) +
           '</li></ol><p class="cr-muted">One active job · Qwen3 8B · 4K test context. The installer creates and protects this Mac’s own signing key. Open this workspace on the Mac to finish there; no credential is carried in the link.</p></section>';
       }
     }
@@ -1742,7 +1787,9 @@
         (s !== "revoked" ? '<button class="cr-btn" type="button" data-action="ai-device-' + (s === "paused" ? "resume" : "pause") + '" data-id="' + ae(id) + '"' + (busy || s === 'paused' && device.resume_available === false ? ' disabled' : '') + '>' + (s === "paused" ? "Resume" : "Pause") + '</button><button class="cr-btn" type="button" data-action="ai-device-test" data-id="' + ae(id) + '"' + (busy || !canUse || s === "paused" ? " disabled" : "") + '>Test device</button><button class="cr-ai-textbtn" type="button" data-action="ai-device-revoke" data-id="' + ae(id) + '"' + busy + '>Revoke</button>' : "") + '</div></article>';
     }).join("");
     var pending = state.aiEnrollments.map(function (item) {
-      return '<article class="cr-ai-device cr-ai-device--pending"><div class="cr-ai-sectionhead"><h3>' + ae(item.display_name || "New Mac") + '</h3><span class="cr-ai-state">Pending</span></div><p>' + ae(item.recovery || "Sign in on the target Mac to finish installing its worker.") + '</p><small>' + (item.expired ? "Previous credential expired" : "Credential expires " + ae(formatDate(item.expires_at))) + '</small><button class="cr-btn" type="button" data-action="ai-finish-enrollment" data-id="' + ae(item.enrollment_id || item.id) + '"' + busy + '>Finish setup</button></article>';
+      var isPrime = item.profile === "prime";
+      var canFinish = isPrime ? item.platform === "win32" && primeEnrollmentAvailable() : item.platform === "darwin";
+      return '<article class="cr-ai-device cr-ai-device--pending"><div class="cr-ai-sectionhead"><h3>' + ae(item.display_name || (isPrime ? "Prime" : "New Mac")) + '</h3><span class="cr-ai-state">Pending</span></div><p>' + ae(item.recovery || (isPrime ? "Finish pairing on the configured Prime PC." : "Sign in on the target Mac to finish installing its worker.")) + '</p><small>' + (item.expired ? "Previous credential expired" : "Credential expires " + ae(formatDate(item.expires_at))) + '</small><button class="cr-btn" type="button" data-action="ai-finish-enrollment" data-id="' + ae(item.enrollment_id || item.id) + '"' + (busy || !canFinish ? ' disabled' : '') + '>Finish setup</button></article>';
     }).join("");
     var macs = state.aiDevices.filter(function (d) { return d.platform === "darwin" && d.state !== "revoked"; });
     var macOptions = '<option value="">Choose a Mac</option>' + macs.map(function (d) { return '<option value="' + ae(OWNER_AI.deviceId(d)) + '">' + ae(OWNER_AI.deviceName(d)) + '</option>'; }).join("");
@@ -1756,9 +1803,10 @@
         (benchmark.time_to_first_token_ms != null ? '<p>First token ' + ae(benchmark.time_to_first_token_ms) + ' ms · ' + ae(benchmark.output_tokens_per_second || "not reported") + ' tok/s</p>' + (peaks ? '<ul class="cr-ai-device__metrics">' + peaks + '</ul>' : '<p class="cr-muted">Per-device peak memory not reported.</p>') + (benchmark.runtime ? '<p class="cr-ai-device__spec">' + ae([benchmark.runtime.name, benchmark.runtime.version, benchmark.runtime.commit].filter(Boolean).join(' · ')) + '</p>' : '') : '<p class="cr-muted">No real-device performance measurements yet.</p>') +
         '<button class="cr-btn" type="button" data-action="ai-pair-benchmark" data-id="' + ae(pair.id || pair.pair_id) + '"' + (busy || !coreToolAvailable("core.compute.pair.benchmark") ? " disabled" : "") + '>Run shared-model benchmark</button></article>';
     }).join("");
-    return '<section class="cr-ai-devices"><div class="cr-ai-sectionhead"><div><h2>Your workers</h2><p>McCluster Core on OVH coordinates the queue. Each device connects outward; Ollama stays local.</p></div><button class="cr-btn cr-btn--primary" type="button" data-action="ai-add-device"' + (busy || !state.aiEnrollmentAvailable ? " disabled" : "") + '>Add this device</button><button class="cr-btn" type="button" data-action="ai-refresh-devices"' + (state.pending.aiDevices ? " disabled" : "") + '>Refresh devices</button></div>' +
+    return '<section class="cr-ai-devices"><div class="cr-ai-sectionhead"><div><h2>Your workers</h2><p>McCluster Core on OVH coordinates the queue. Each device connects outward; Ollama stays local.</p></div><button class="cr-btn cr-btn--primary" type="button" data-action="ai-add-device"' + (busy || !state.aiEnrollmentAvailable ? " disabled" : "") + '>Add this device</button><button class="cr-btn" type="button" data-action="ai-pair-prime"' + (busy || !primeEnrollmentAvailable() ? ' disabled' : '') + '>Pair Prime</button><button class="cr-btn" type="button" data-action="ai-refresh-devices"' + (state.pending.aiDevices ? " disabled" : "") + '>Refresh devices</button></div>' +
       (state.aiDeviceError ? '<p class="cr-fail" role="alert">' + ae(state.aiDeviceError) + '</p>' : '') + (state.aiDeviceNotice ? '<p class="cr-ai-notice" role="status">' + ae(state.aiDeviceNotice) + '</p>' : '') +
-      (!state.aiEnrollmentAvailable ? '<p class="cr-ai-capability">Enrollment is unavailable on this Core. Its enrollment service must be configured before a worker can be added.</p>' : '') + add +
+      (!state.aiEnrollmentAvailable ? '<p class="cr-ai-capability">Enrollment is unavailable on this Core. Its enrollment service must be configured before a worker can be added.</p>' : '') +
+      (state.aiDevicesLoaded && state.aiEnrollmentAvailable && !primeEnrollmentAvailable() ? '<p class="cr-ai-capability">Prime pairing is unavailable on this Core.</p>' : '') + add +
       '<div class="cr-ai-devicegrid">' + cards + pending + (!cards && !pending ? '<div class="cr-ai-blank"><h3>' + (state.pending.aiDevices ? "Reading devices…" : "Add your first worker") + '</h3><p>A browser session is your remote control. Install the worker explicitly on each Mac that should do the work.</p></div>' : '') + '</div>' +
       '<section class="cr-ai-pairs"><div class="cr-ai-sectionhead"><div><h2>Deep Reasoning pairs</h2><p>Two enrolled Macs, one verified shared-model runtime. Model traffic stays on their local network.</p></div><button class="cr-btn" type="button" data-action="ai-pair-create"' + (busy || macs.length < 2 || !coreToolAvailable("core.compute.pair.create") ? " disabled" : "") + '>Create pair</button></div>' + (state.aiPairError ? '<p class="cr-ai-capability">Pair readiness unavailable: ' + ae(state.aiPairError) + '</p>' : '') + pairForm +
       '<div class="cr-ai-devicegrid">' + (pairCards || '<div class="cr-ai-blank"><h3>Not verified on your Macs yet</h3><p>Start with two independent Qwen3 8B workers. A pair becomes ready only after local discovery, memory checks and a shared-model benchmark pass. A 27B model is a candidate, not a fit guarantee.</p></div>') + '</div></section></section>';
@@ -4109,7 +4157,7 @@
     var id = el && el.getAttribute("data-id");
     if (action === "ai-panel") {
       state.aiPanel = el.getAttribute("data-panel");
-      if (state.aiPanel !== "devices") { state.aiEnrollment = null; state.aiEnrollmentReveal = false; state.aiAddDeviceOpen = false; }
+      if (state.aiPanel !== "devices") closeAiSetup();
       render(); if (state.aiPanel === "devices") loadOwnerDevices(true);
     } else if (action === "ai-new-thread") {
       stopAiVoiceListening(true); stopAiVoiceSpeech(); state.aiPanel = "chat"; state.aiChatError = null; state.aiReviewOf = null; state.aiAttachments = [];
@@ -4160,10 +4208,12 @@
         render(); return loadAiMessages(threadId, true);
       }).catch(function (error) { setAiRun(threadId, { stopRequested: false }); if (state.selectedAiThreadId === threadId) state.aiChatError = error.message || "Stop was not confirmed. Reconnect to check the run."; render(); });
     } else if (action === "ai-refresh-devices") loadOwnerDevices(true);
-    else if (action === "ai-add-device") { state.aiAddDeviceOpen = true; state.aiEnrollment = null; state.aiDeviceError = null; render(); }
+    else if (action === "ai-add-device") { closeAiSetup(); state.aiAddDeviceOpen = true; state.aiDeviceError = null; render(); }
+    else if (action === "ai-pair-prime" && aiBrowserOwner(state) && primeEnrollmentAvailable()) { closeAiSetup(); state.aiAddDeviceOpen = "prime"; state.aiDeviceError = null; render(); }
+    else if (action === "ai-prime-enroll" && state.aiAddDeviceOpen === "prime") issueAiEnrollment(null);
     else if (action === "ai-enroll") issueAiEnrollment(null);
     else if (action === "ai-finish-enrollment") issueAiEnrollment(id);
-    else if (action === "ai-forget-enrollment") { state.aiEnrollment = null; state.aiEnrollmentReveal = false; state.aiAddDeviceOpen = false; render(); }
+    else if (action === "ai-forget-enrollment") { closeAiSetup(); render(); }
     else if (action === "ai-reveal-credential") { state.aiEnrollmentReveal = !state.aiEnrollmentReveal; render(); }
     else if (action === "ai-copy-credential") { if (state.aiEnrollment && state.aiEnrollment.credential) aiCopyText(state.aiEnrollment.credential, el); }
     else if (action === "ai-copy-setup-command") aiCopyText($("crAiSetupCommand") && $("crAiSetupCommand").textContent, el);
@@ -5247,7 +5297,7 @@
       if (location.hash === state.route) return;
       var before = state.surface;
       readHash(); setHash(true);
-      if (before === "ai" && state.surface !== "ai") { stopAiVoiceListening(true); stopAiVoiceSpeech(); state.aiEnrollment = null; state.aiEnrollmentReveal = false; state.aiAddDeviceOpen = false; }
+      if (before === "ai" && state.surface !== "ai") { stopAiVoiceListening(true); stopAiVoiceSpeech(); closeAiSetup(); }
       state.selectedProjectId = null; closeInspector(); closeMore(); render();
     });
   }
