@@ -1,0 +1,5 @@
+# Godot's import cache and the exported builds stay out of git
+.godot/
+build/
+# copied from assets/3d/prim3-site0/ by build.sh (the master is not duplicated in git)
+assets/site0/
