@@ -35,7 +35,10 @@ The CSV, the proxy script and the 7 SVGs are also copied, with hashes, into `hq-
 - `EU_HQ_Interiors_v2.blend` (Blender 4.2 format, self-contained).
 - Scripts: `build_hq_interior_v2.py`, `eu_hq_kit.py`, `hq_interior_v2_layout.py`, `verify_hq_interior_v2.py`,
   `render_hq_interior_v2.py`, `compose_review_sheets.py`.
-- `hq-interior-v2-verification.json`: 61/61 checks pass in a fresh Blender process.
+- `hq-interior-v2-verification.json`: 80/80 checks pass in a fresh Blender process (v2.1).
+- **v2.1 merge** (`hq_interior_v2_merge.py`): the existing v3 interior layer, the restored builder objects and the
+  device layer are back (213/286 v3 pieces kept, 73 superseded with reasons, 70/86 F1–F6 devices). See the README's
+  v2.1 section before changing any placement: do NOT redraw what already exists; enhance it.
 - `hq-interior-v2-asset-inventory.csv` and `EU_HQ_Interiors_v2-build-report.json`.
 - `PROJECT-STATE.md`, `MASTER-INDEX.md` and `BUILDING-FILE-INDEX.json` updated. The context audit, repo-source gate
   (3,099/3,099) and program-coverage gate pass.
@@ -47,6 +50,8 @@ Windows Claude app needs updating). `System32` should be removed from that list.
 
 **Open tasks, in order:**
 
+0. **Upgrade, don't replace.** The v3 pieces are lower-detail meshes than the v2 kit. The next quality pass is to swap
+   their meshes in place (same IDs, sizes and positions), not to re-place furniture.
 1. **Review renders.** If the cloud session committed `renders/` (29 JPEGs: `F0X_TOP/EYE/BOARD`, `F06_HALO_SUITE`,
    `F01_ENTRY`, `BEFORE_F01_*`, `BEFORE_F06_*`) plus `renders/compare/`, review them. If it did not, they were lost with
    the container: re-render with `render_hq_interior_v2.py`, then run `compose_review_sheets.py`.
@@ -55,7 +60,7 @@ Windows Claude app needs updating). `System32` should be removed from that list.
    The commands are in `README.md` → "Where it was built":
    - generate the gitignored F1–F6 GLBs with the official floor builders
    - run `build_hq_interior_v2.py --repo . --pack <pack> --out <new .blend>`
-   - run `verify_hq_interior_v2.py` (expect 61/61)
+   - run `verify_hq_interior_v2.py` (expect 80/80)
    - run `render_hq_interior_v2.py --samples 64` or more; set `cycles.device = GPU` if available
 3. **Compare and report.** Compare the renders against the boards (`renders/compare/*_board_vs_rebuild.jpg`) and report
    honestly where they match and where they don't.
@@ -64,6 +69,9 @@ Windows Claude app needs updating). `System32` should be removed from that list.
    - The Halo underside sits at 6.0 ft AFF, below door headroom.
    - The two L7 deviations: 7.4 moved out of `F7-MECH-UNIT-01`; 7.5 is realised by the existing `F7-MECH-UNIT-02`.
    - Visual approval of the inferred board dressing (all `S…` tags in the inventory).
+   - v2.1: a new home for the three F6 preparation desks (and devices `F6-USER-WS-04..06`) displaced by Matthew's suite.
+   - v2.1: staff named at both an anchored station and their existing desk — replace, or second work point?
+   - The `get-it-back` music-video scene on Prime uses the canonical Floor 6 Core v2 model, not this set; keep them separate.
 
 **Gotchas already solved; keep them:**
 

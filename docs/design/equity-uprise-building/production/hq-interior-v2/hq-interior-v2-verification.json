@@ -13,12 +13,12 @@
     {
       "check": "every kit instance resolves to its master",
       "passed": true,
-      "detail": "342 instances, broken=[]"
+      "detail": "259 instances, broken=[]"
     },
     {
       "check": "repeated assets are instanced (no duplicated kit meshes)",
       "passed": true,
-      "detail": "67 masters, 342 instances, mean reuse 5.3x"
+      "detail": "67 masters, 259 instances, mean reuse 4.2x"
     },
     {
       "check": "F01 has separate collections ('Shell', 'ArchFinishes', 'Furniture', 'Equipment', 'Lighting', 'Cameras', 'Interaction_and_Anchors')",
@@ -37,10 +37,10 @@
       "check": "F01 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F01_TOP",
         "CAM_F01_ENTRY",
         "CAM_F01_BOARD",
-        "CAM_F01_EYE"
+        "CAM_F01_EYE",
+        "CAM_F01_TOP"
       ]
     },
     {
@@ -60,8 +60,8 @@
       "check": "F02 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F02_BOARD",
         "CAM_F02_EYE",
+        "CAM_F02_BOARD",
         "CAM_F02_TOP"
       ]
     },
@@ -82,9 +82,9 @@
       "check": "F03 top + eye cameras",
       "passed": true,
       "detail": [
+        "CAM_F03_TOP",
         "CAM_F03_BOARD",
-        "CAM_F03_EYE",
-        "CAM_F03_TOP"
+        "CAM_F03_EYE"
       ]
     },
     {
@@ -105,8 +105,8 @@
       "passed": true,
       "detail": [
         "CAM_F04_BOARD",
-        "CAM_F04_TOP",
-        "CAM_F04_EYE"
+        "CAM_F04_EYE",
+        "CAM_F04_TOP"
       ]
     },
     {
@@ -148,10 +148,10 @@
       "check": "F06 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F06_HALO_SUITE",
-        "CAM_F06_TOP",
         "CAM_F06_BOARD",
-        "CAM_F06_EYE"
+        "CAM_F06_EYE",
+        "CAM_F06_HALO_SUITE",
+        "CAM_F06_TOP"
       ]
     },
     {
@@ -172,8 +172,8 @@
       "passed": true,
       "detail": [
         "CAM_F07_BOARD",
-        "CAM_F07_EYE",
-        "CAM_F07_TOP"
+        "CAM_F07_TOP",
+        "CAM_F07_EYE"
       ]
     },
     {
@@ -192,7 +192,8 @@
         "SRC_F04_builder_v2_before",
         "SRC_F05_builder_v2_before",
         "SRC_F06_builder_v2_before",
-        "SRC_F07_builder_v2_before"
+        "SRC_F07_builder_v2_before",
+        "_tmp_devices"
       ]
     },
     {
@@ -738,6 +739,165 @@
       "check": "F07 no furniture/equipment intersecting walls, cores or stairs",
       "passed": true,
       "detail": []
+    },
+    {
+      "check": "F01 existing v3 interior layer: every piece kept or superseded with a recorded reason",
+      "passed": true,
+      "detail": {
+        "layout": 35,
+        "kept": 21,
+        "superseded": 14,
+        "missing": [],
+        "unexplained": []
+      }
+    },
+    {
+      "check": "F01 existing device layer: every kept device stands on a kept support",
+      "passed": true,
+      "detail": {
+        "devices": 4,
+        "dropped": 4,
+        "orphans": []
+      }
+    },
+    {
+      "check": "F01 no kept existing piece overlaps a pack piece (vertex hulls, same height band, > 0.25 sq ft)",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F02 existing v3 interior layer: every piece kept or superseded with a recorded reason",
+      "passed": true,
+      "detail": {
+        "layout": 48,
+        "kept": 44,
+        "superseded": 4,
+        "missing": [],
+        "unexplained": []
+      }
+    },
+    {
+      "check": "F02 existing device layer: every kept device stands on a kept support",
+      "passed": true,
+      "detail": {
+        "devices": 4,
+        "dropped": 0,
+        "orphans": []
+      }
+    },
+    {
+      "check": "F02 no kept existing piece overlaps a pack piece (vertex hulls, same height band, > 0.25 sq ft)",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F03 existing v3 interior layer: every piece kept or superseded with a recorded reason",
+      "passed": true,
+      "detail": {
+        "layout": 49,
+        "kept": 43,
+        "superseded": 6,
+        "missing": [],
+        "unexplained": []
+      }
+    },
+    {
+      "check": "F03 existing device layer: every kept device stands on a kept support",
+      "passed": true,
+      "detail": {
+        "devices": 8,
+        "dropped": 0,
+        "orphans": []
+      }
+    },
+    {
+      "check": "F03 no kept existing piece overlaps a pack piece (vertex hulls, same height band, > 0.25 sq ft)",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F04 existing v3 interior layer: every piece kept or superseded with a recorded reason",
+      "passed": true,
+      "detail": {
+        "layout": 52,
+        "kept": 43,
+        "superseded": 9,
+        "missing": [],
+        "unexplained": []
+      }
+    },
+    {
+      "check": "F04 existing device layer: every kept device stands on a kept support",
+      "passed": true,
+      "detail": {
+        "devices": 21,
+        "dropped": 3,
+        "orphans": []
+      }
+    },
+    {
+      "check": "F04 no kept existing piece overlaps a pack piece (vertex hulls, same height band, > 0.25 sq ft)",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F05 existing v3 interior layer: every piece kept or superseded with a recorded reason",
+      "passed": true,
+      "detail": {
+        "layout": 55,
+        "kept": 36,
+        "superseded": 19,
+        "missing": [],
+        "unexplained": []
+      }
+    },
+    {
+      "check": "F05 existing device layer: every kept device stands on a kept support",
+      "passed": true,
+      "detail": {
+        "devices": 24,
+        "dropped": 0,
+        "orphans": []
+      }
+    },
+    {
+      "check": "F05 no kept existing piece overlaps a pack piece (vertex hulls, same height band, > 0.25 sq ft)",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F06 existing v3 interior layer: every piece kept or superseded with a recorded reason",
+      "passed": true,
+      "detail": {
+        "layout": 47,
+        "kept": 26,
+        "superseded": 21,
+        "missing": [],
+        "unexplained": []
+      }
+    },
+    {
+      "check": "F06 existing device layer: every kept device stands on a kept support",
+      "passed": true,
+      "detail": {
+        "devices": 9,
+        "dropped": 9,
+        "orphans": []
+      }
+    },
+    {
+      "check": "F06 no kept existing piece overlaps a pack piece (vertex hulls, same height band, > 0.25 sq ft)",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "existing interior layer restored: v3 pieces kept + superseded account for all of them",
+      "passed": true,
+      "detail": {
+        "layout": 286,
+        "kept": 213,
+        "superseded": 73
+      }
     }
   ],
   "notes": [
@@ -757,6 +917,32 @@
       "reason": "CSV 7.5 is a visual plant proxy; the canonical L7 model already carries that plant as F7-MECH-UNIT-02 (X41-46 Y62-68). Realised by tagging the existing unit; no duplicate added."
     }
   ],
+  "merge": {
+    "1": {
+      "kept": 23,
+      "clashes": []
+    },
+    "2": {
+      "kept": 46,
+      "clashes": []
+    },
+    "3": {
+      "kept": 47,
+      "clashes": []
+    },
+    "4": {
+      "kept": 50,
+      "clashes": []
+    },
+    "5": {
+      "kept": 47,
+      "clashes": []
+    },
+    "6": {
+      "kept": 31,
+      "clashes": []
+    }
+  },
   "stack": {
     "1": {
       "passenger": [
@@ -1031,7 +1217,7 @@
     "7": []
   },
   "summary": {
-    "passed": 61,
-    "total": 61
+    "passed": 80,
+    "total": 80
   }
 }
