@@ -777,7 +777,9 @@ receipt. The paired rollback takes the original receipt in the session setting
 
 ## 21. Equity Fighter chat layer state (written 2026-11-25)
 
-Pending owner approval for `20261125003000_equity_fighter_chat_v1.sql` (rollback
+**Applied 2026-11-28** with the owner's approval, after `ai_context_dispatch_v1`: now
+`supabase/migrations/20261128094204_equity_fighter_chat_v1.sql` (dispatch is
+`supabase/migrations/20261128094143_ai_context_dispatch_v1.sql`); ledger 391. Was `20261125003000_equity_fighter_chat_v1.sql` (rollback
 `20261125003000_equity_fighter_chat_v1.rollback.sql`). Additive: four service-role-only tables, `ef_identities`,
 `ef_messages`, `ef_runs`, `ef_steps`, RLS forced, no policies, no anon/authenticated grants. Needs only `public.orgs`;
 apply after (or with) `20261124235900_ai_context_dispatch_v1.sql`, since the gateway is useless until dispatch is
@@ -786,7 +788,8 @@ live. Contract: `docs/control-plane/EQUITY-FIGHTER.md`. The rollback refuses whi
 
 ## 22. Core job table recency indexes (written 2026-11-28)
 
-Pending owner approval for `ops_agent_jobs_recency_indexes_v1.sql` (rollback
+**Applied 2026-11-28** with the owner's approval (both indexes valid; reflection's health read is an index scan,
+1.4 ms). Index builds run outside the migration ledger, so the file stays here as the record. `ops_agent_jobs_recency_indexes_v1.sql` (rollback
 `ops_agent_jobs_recency_indexes_v1.rollback.sql`). Additive: two `CREATE INDEX CONCURRENTLY` statements on
 `public.ops_agent_jobs`, applied one at a time outside a transaction. Independent of every other file. Proof:
 `explain` of `select id from ops_agent_jobs where org_id = $1 and job_type <> 'host_health' and updated_at >= now() - interval '18 hours' order by updated_at desc, id desc limit 12`

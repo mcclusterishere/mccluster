@@ -1,5 +1,5 @@
 /* Supabase state for Equity Fighter (pending SQL:
-   supabase/pending/20261125003000_equity_fighter_chat_v1.sql, NOT applied).
+   supabase/migrations/20261128094204_equity_fighter_chat_v1.sql, applied 2026-11-28).
 
      ef_identities  who may talk to the agent: owner (allowlisted or paired)
                     or blocked, per platform user id. Revocable.

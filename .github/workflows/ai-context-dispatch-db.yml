@@ -2,7 +2,8 @@ name: AI Context Dispatch (isolated PostgreSQL)
 on:
   pull_request:
     paths:
-      - 'supabase/pending/20261124235900_ai_context_dispatch_v1*.sql'
+      - 'supabase/migrations/20261128094143_ai_context_dispatch_v1.sql'
+      - 'supabase/pending/20261124235900_ai_context_dispatch_v1.rollback.sql'
       - 'supabase/tests/ai_context_dispatch.*.sql'
       - '.github/workflows/ai-context-dispatch-db.yml'
 permissions:
@@ -30,8 +31,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/ai_context_dispatch.stub.sql
-      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261124235900_ai_context_dispatch_v1.sql
-      - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261124235900_ai_context_dispatch_v1.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261128094143_ai_context_dispatch_v1.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261128094143_ai_context_dispatch_v1.sql
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/ai_context_dispatch.behaviour.sql
       - run: psql -v ON_ERROR_STOP=1 -f supabase/pending/20261124235900_ai_context_dispatch_v1.rollback.sql
       - run: test "$(psql -tAc "select to_regclass('ai_context.dispatch_turns') is null")" = t

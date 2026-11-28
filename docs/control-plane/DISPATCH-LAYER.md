@@ -1,8 +1,9 @@
 # McCluster dispatch layer
 
-Status: **built, not live.** Code is in Core and the MCP edge; the storage SQL is pending
-(`supabase/pending/20261124235900_ai_context_dispatch_v1.sql`) and needs the owner's approval to apply.
-Until it is applied every dispatch tool answers `503 DISPATCH_NOT_APPLIED` and nothing is routed or run.
+Status: **live storage (2026-11-28).** Code is in Core and the MCP edge; the storage SQL was applied in production
+with the owner's approval on 2026-11-28 as `supabase/migrations/20261128094143_ai_context_dispatch_v1.sql`
+(rollback `supabase/pending/20261124235900_ai_context_dispatch_v1.rollback.sql`). Where it is missing, every
+dispatch tool answers `503 DISPATCH_NOT_APPLIED` and nothing is routed or run.
 
 ## What it is
 
@@ -133,14 +134,14 @@ it, like Control already polls `core.ai.turn.get`.
 * `core/src/dispatch/routes.mjs`, `classify.mjs`, `policy.mjs`, `dispatch.mjs`, `core/src/tools/dispatch.mjs`
 * `core/capabilities/catalog.json` (`dispatch.turn`, `dispatch.get`, `dispatch.execute`, catalog `2026-11-24.1`)
 * `workers/mccluster-mcp/src/mcp.js` (remote allowlist + house-org-only)
-* `supabase/pending/20261124235900_ai_context_dispatch_v1.sql` (+ `.rollback.sql`),
+* `supabase/migrations/20261128094143_ai_context_dispatch_v1.sql` (rollback in `supabase/pending/`),
   `supabase/tests/ai_context_dispatch.{stub,behaviour}.sql`, `.github/workflows/ai-context-dispatch-db.yml`
 * Tests: `core/test/dispatch-layer.test.mjs`, `core/test/dispatch-coverage.test.mjs` (`npm --prefix core run test:dispatch`)
 
 ## Going live (owner steps)
 
 1. Review and merge the pull request (merging to `main` deploys the Worker and Core).
-2. Apply `supabase/pending/20261124235900_ai_context_dispatch_v1.sql` with approval, per `supabase/pending/README.md`.
+2. ~~Apply the storage SQL.~~ Done 2026-11-28.
 3. Confirm `qwen3:4b-instruct-2507-q4_K_M` is pulled on the OVH adapter (it is in its deploy pull list).
 4. Connect the MCP endpoint in Grok Bot (or another client) as Matthew.
 

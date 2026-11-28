@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 389,
-  "latest_version": "20261124164904",
-  "latest_name": "action_bounty_claim_existing_row_guard_v1",
-  "ledger_sha256": "08f933eb60484f323e910569915afa365684deba0d5063fbd2c88ece5592bf8b",
+  "migration_count": 391,
+  "latest_version": "20261128094204",
+  "latest_name": "equity_fighter_chat_v1",
+  "ledger_sha256": "3638928f45e4d4f4553134e4560484d5267e1fb904d05836ea3d412e49bd1370",
   "migrations": [
     {
       "version": "0001",
@@ -1562,6 +1562,14 @@
     {
       "version": "20261124164904",
       "name": "action_bounty_claim_existing_row_guard_v1"
+    },
+    {
+      "version": "20261128094143",
+      "name": "ai_context_dispatch_v1"
+    },
+    {
+      "version": "20261128094204",
+      "name": "equity_fighter_chat_v1"
     }
   ]
 }

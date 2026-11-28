@@ -1,4 +1,4 @@
--- Minimal pre-state for supabase/pending/20261124235900_ai_context_dispatch_v1.sql on a disposable database.
+-- Minimal pre-state for supabase/migrations/20261128094143_ai_context_dispatch_v1.sql on a disposable database.
 -- Only the columns the dispatch SQL touches. Never run against production.
 do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then create role anon nologin; end if;

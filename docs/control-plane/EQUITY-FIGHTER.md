@@ -1,18 +1,18 @@
 # Equity Fighter: the chat layer
 
-Status (2026-11-28): **code complete for phases 1-2, not live.** Code is in `packages/equity-fighter`. The dispatch
-layer it calls is merged to main (`core/src/dispatch`, `docs/control-plane/DISPATCH-LAYER.md`), but its SQL
-(`supabase/pending/20261124235900_ai_context_dispatch_v1.sql`) and this layer's SQL
-(`supabase/pending/20261125003000_equity_fighter_chat_v1.sql`) are both still pending: production has no
-`ai_context.dispatch_turns` and no `ef_*` tables. Nothing is deployed and every platform is off by default.
+Status (2026-11-28): **code complete for phases 1-2; storage live, gateway not running yet.** Code is in
+`packages/equity-fighter`. The dispatch layer it calls is merged (`core/src/dispatch`,
+`docs/control-plane/DISPATCH-LAYER.md`). With the owner's approval of 2026-11-28 both storage migrations are applied
+in production: `supabase/migrations/20261128094143_ai_context_dispatch_v1.sql` and
+`supabase/migrations/20261128094204_equity_fighter_chat_v1.sql` (rollbacks stay in `supabase/pending/`). Every
+platform is off by default and the gateway is not installed anywhere.
 
-What has to happen, in order, for it to be live (each step is the owner's):
+What still has to happen for it to be live (each step is the owner's):
 
-1. Apply the dispatch SQL, then the Equity Fighter SQL (`supabase/pending/PROMOTION-ORDER.md`, section 21).
-2. Write `/etc/mccluster/equity-fighter.env` on the OVH box (from `packages/equity-fighter/.env.example`) with
+1. Write `/etc/mccluster/equity-fighter.env` on the OVH box (from `packages/equity-fighter/.env.example`) with
    `EQUITY_FIGHTER_ENABLED=true`, the house org and owner ids, the Supabase secret key, the Core broker token and
    signing key, and one platform (Telegram is the quickest: a @BotFather token and his numeric user id).
-3. Run `sudo bash packages/equity-fighter/deploy/install-ovh.sh` there (below), publish `/webhooks/telegram` through
+2. Run `sudo bash packages/equity-fighter/deploy/install-ovh.sh` there (below), publish `/webhooks/telegram` through
    Core's tunnel and call Telegram `setWebhook`.
 
 ## Three names, three layers
@@ -132,7 +132,7 @@ any value, so a misconfigured env file is visible in one request.
 
 ## What Matthew must provide
 
-1. Approve the dispatch-layer SQL (#843) and this PR's SQL (`20261125003000_equity_fighter_chat_v1.sql`).
+1. ~~Approve the dispatch-layer SQL and this layer's SQL.~~ Done: both applied 2026-11-28 (above).
 2. Hosting choice (above) and, for it, `SUPABASE_SECRET_KEY` and either the owner session (edge) or
    `CORE_BROKER_URL` / `CORE_BROKER_TOKEN` / `CORE_EDGE_SIGNING_KEY` (core).
 3. `MCCLUSTER_ORG_ID` (house org) and `EQUITY_FIGHTER_OWNER_USER_ID` (his auth user id).

@@ -27,7 +27,7 @@
    turn with its live ops_agent_jobs row, approval and resident turn.
 
    Contract: docs/control-plane/DISPATCH-LAYER.md
-   Storage:  supabase/pending/20261124235900_ai_context_dispatch_v1.sql
+   Storage:  supabase/migrations/20261128094143_ai_context_dispatch_v1.sql
    ============================================================ */
 
 import { createHash, randomUUID } from 'node:crypto';
@@ -35,7 +35,7 @@ import { DISPATCH_SCHEMA, routeFor, buildArgs } from './routes.mjs';
 import { classifyDeterministic, classifyWithModel, decide, dispatchModel, thresholds } from './classify.mjs';
 import { gateFor, requireOwner } from './policy.mjs';
 
-export const DISPATCH_PENDING_SQL = 'supabase/pending/20261124235900_ai_context_dispatch_v1.sql';
+export const DISPATCH_PENDING_SQL = 'supabase/migrations/20261128094143_ai_context_dispatch_v1.sql';
 export const DISPATCH_NOT_APPLIED = 'DISPATCH_NOT_APPLIED';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
