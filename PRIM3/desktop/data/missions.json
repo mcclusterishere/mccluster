@@ -196,7 +196,144 @@
       }
      }
     }
-   ]
+   ],
+   "environment": {
+    "theme": "L1 through-road at night: asphalt lane, concrete barriers, parked containers, sodium lamps",
+    "ground": "asphalt_02",
+    "ground_scale": 0.35,
+    "apron": "concrete_pavement",
+    "wall": "concrete_wall_006",
+    "wall_m": 3.4,
+    "high": [
+     "container-12",
+     "high-cover-4"
+    ],
+    "low": [
+     "low-barrier-4"
+    ],
+    "lamp_color": "ffa458",
+    "lamps": [
+     [
+      0,
+      4
+     ],
+     [
+      0,
+      11
+     ],
+     [
+      21,
+      4
+     ],
+     [
+      21,
+      11
+     ],
+     [
+      10,
+      15
+     ]
+    ],
+    "exposure": 1.2,
+    "sky_energy": 0.9,
+    "ambient": 0.8,
+    "fog": "121b24",
+    "fog_density": 0.01,
+    "moon": "bfd2ff",
+    "moon_energy": 1.0,
+    "dressing": [
+     [
+      "warehouse-16",
+      -5,
+      7,
+      16,
+      12,
+      9,
+      90
+     ],
+     [
+      "container-12",
+      -3.2,
+      1.5,
+      12,
+      2.5,
+      2.6,
+      90
+     ],
+     [
+      "container-12",
+      -3.2,
+      14,
+      12,
+      2.5,
+      2.6,
+      90
+     ],
+     [
+      "tower-8",
+      26,
+      3,
+      8,
+      8,
+      12,
+      0
+     ],
+     [
+      "warehouse-16",
+      27,
+      12,
+      16,
+      12,
+      9,
+      90
+     ],
+     [
+      "tree-8",
+      4,
+      -3,
+      4.5,
+      4.5,
+      6.8,
+      0
+     ],
+     [
+      "tree-8",
+      17,
+      -3.5,
+      4.8,
+      4.8,
+      7.2,
+      0
+     ],
+     [
+      "rock-cluster",
+      13,
+      19,
+      4,
+      2.3,
+      1.6,
+      30
+     ],
+     [
+      "fence-8",
+      6,
+      18.5,
+      8,
+      0.15,
+      2.6,
+      0
+     ],
+     [
+      "fence-8",
+      15,
+      18.5,
+      8,
+      0.15,
+      2.6,
+      0
+     ]
+    ]
+   }
   },
   {
    "id": "site0-drone-pad",
@@ -384,7 +521,123 @@
       "gates"
      ]
     }
-   ]
+   ],
+   "environment": {
+    "theme": "L2 drone pad: worn deck, corrugated hangar walls, freight crates and HVAC, cold floodlights",
+    "ground": "concrete_floor_worn_001",
+    "ground_scale": 0.4,
+    "apron": "metal_grate_rusty",
+    "wall": "corrugated_iron_02",
+    "wall_m": 3.6,
+    "high": [
+     "crate-2",
+     "hvac-3"
+    ],
+    "low": [
+     "pipe-stack-6",
+     "low-barrier-4"
+    ],
+    "lamp_color": "a8d4ff",
+    "lamps": [
+     [
+      0,
+      3
+     ],
+     [
+      0,
+      11
+     ],
+     [
+      11,
+      0
+     ],
+     [
+      11,
+      14
+     ],
+     [
+      19,
+      4
+     ],
+     [
+      19,
+      10
+     ]
+    ],
+    "exposure": 1.15,
+    "sky_energy": 0.75,
+    "ambient": 0.7,
+    "fog": "0f1820",
+    "fog_density": 0.012,
+    "moon": "c8dcff",
+    "moon_energy": 1.2,
+    "moon_yaw": 20,
+    "dressing": [
+     [
+      "catwalk-8",
+      -4,
+      7,
+      8,
+      4,
+      5.2,
+      90
+     ],
+     [
+      "tower-8",
+      28,
+      2,
+      8,
+      8,
+      12,
+      0
+     ],
+     [
+      "hvac-3",
+      27,
+      11,
+      3,
+      2.4,
+      1.8,
+      0
+     ],
+     [
+      "hvac-3",
+      -3,
+      13,
+      3,
+      2.4,
+      1.8,
+      90
+     ],
+     [
+      "container-12",
+      12,
+      -3,
+      12,
+      2.5,
+      2.6,
+      0
+     ],
+     [
+      "pipe-stack-6",
+      28,
+      7,
+      2.6,
+      6,
+      1.6,
+      0
+     ],
+     [
+      "warehouse-16",
+      12,
+      19,
+      16,
+      12,
+      9,
+      0
+     ]
+    ]
+   }
   },
   {
    "id": "site0-heavy-hall",
@@ -634,7 +887,121 @@
       "gates"
      ]
     }
-   ]
+   ],
+   "environment": {
+    "theme": "B3 heavy deployment hall: underground, worn slab, staged containers and pipe runs, cold work lights, haze",
+    "ground": "concrete_floor_worn_001",
+    "ground_scale": 0.3,
+    "apron": "concrete_floor_worn_001",
+    "wall": "concrete_wall_006",
+    "wall_m": 4.2,
+    "high": [
+     "container-12"
+    ],
+    "low": [
+     "pipe-stack-6",
+     "low-barrier-4"
+    ],
+    "lamp_color": "e6eeff",
+    "lamps": [
+     [
+      0,
+      4
+     ],
+     [
+      0,
+      12
+     ],
+     [
+      25,
+      4
+     ],
+     [
+      25,
+      12
+     ],
+     [
+      9,
+      0
+     ],
+     [
+      17,
+      0
+     ],
+     [
+      6,
+      15
+     ],
+     [
+      20,
+      15
+     ]
+    ],
+    "exposure": 1.25,
+    "sky_energy": 0.18,
+    "ambient": 0.35,
+    "fog": "0b1016",
+    "fog_density": 0.022,
+    "moon": "9fb4d8",
+    "moon_energy": 0.45,
+    "moon_yaw": -10,
+    "dressing": [
+     [
+      "container-12",
+      -3.2,
+      4,
+      12,
+      2.5,
+      2.6,
+      90
+     ],
+     [
+      "container-12",
+      -3.2,
+      12,
+      12,
+      2.5,
+      2.6,
+      90
+     ],
+     [
+      "container-12",
+      29,
+      4,
+      12,
+      2.5,
+      2.6,
+      90
+     ],
+     [
+      "container-12",
+      29,
+      12,
+      12,
+      2.5,
+      2.6,
+      90
+     ],
+     [
+      "pipe-stack-6",
+      13,
+      -3,
+      2.6,
+      6,
+      1.6,
+      90
+     ],
+     [
+      "catwalk-8",
+      13,
+      19.5,
+      8,
+      4,
+      5.2,
+      0
+     ]
+    ]
+   }
   }
  ]
 }

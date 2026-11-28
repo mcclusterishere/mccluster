@@ -8,6 +8,8 @@ signal restart
 const R := preload("res://scripts/rules.gd")
 const AI := preload("res://scripts/ai.gd")
 const UI := preload("res://scripts/ui.gd")
+const Env := preload("res://scripts/environment.gd")
+const Ops := preload("res://scripts/operators.gd")
 
 const ROLE_COLOR := {"E": Color(0.98, 0.6, 0.22), "R": Color(0.4, 0.86, 0.45), "T": Color(0.25, 0.75, 0.98)}
 const THREAT_COLOR := Color(0.9, 0.24, 0.22)
@@ -85,68 +87,19 @@ func tile_center(x: int, y: int) -> Vector3:
 	return Vector3(x + 0.5, 0.0, y + 0.5)
 
 func _build_world() -> void:
-	var env := WorldEnvironment.new()
-	var e := Environment.new()
-	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.03, 0.035, 0.05)
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.55, 0.6, 0.7)
-	e.ambient_light_energy = 0.55
-	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	e.glow_enabled = true
-	env.environment = e
-	add_child(env)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-55, -35, 0)
-	sun.light_energy = 1.1
-	sun.shadow_enabled = true
-	sun.directional_shadow_max_distance = 90.0
-	add_child(sun)
-
 	var w := int(state.width)
 	var h := int(state.height)
-	_box(Vector3(w, 0.1, h), Vector3(w / 2.0, -0.05, h / 2.0), _mat(Color(0.11, 0.12, 0.14)))
-	# grid lines
-	var grid_mat := _mat(Color(0.3, 0.36, 0.44), 0.0, 0.35)
-	for x in w + 1:
-		_box(Vector3(0.02, 0.01, h), Vector3(x, 0.005, h / 2.0), grid_mat)
-	for y in h + 1:
-		_box(Vector3(w, 0.01, 0.02), Vector3(w / 2.0, 0.005, y), grid_mat)
-	# extraction
-	var ex_mat := _mat(UI.GOOD, 0.6, 0.35)
-	for c in state.extraction.get("cells", []):
-		_box(Vector3(0.96, 0.02, 0.96), tile_center(int(c.x), int(c.y)) + Vector3(0, 0.02, 0), ex_mat)
-	# blockers
-	var wall_mat := _mat(Color(0.28, 0.31, 0.36))
-	var high_mat := _mat(Color(0.36, 0.38, 0.34))
-	var low_mat := _mat(Color(0.42, 0.4, 0.33))
-	var gate_mat := _mat(Color(0.75, 0.55, 0.15), 0.3)
-	for k in state.blockers:
-		var b: Dictionary = state.blockers[k]
-		var xy := String(k).split(":")
-		var x := int(xy[0])
-		var y := int(xy[1])
-		var p := tile_center(x, y)
-		match String(b.kind):
-			"WALL":
-				block_meshes[k] = _box(Vector3(1, 2.2, 1), p + Vector3(0, 1.1, 0), wall_mat)
-			"GATE":
-				block_meshes[k] = _box(Vector3(0.9, 2.0, 0.3 if _gate_runs_x(x, y) else 0.9), p + Vector3(0, 1.0, 0), gate_mat)
-			"HIGH":
-				block_meshes[k] = _box(Vector3(0.9, 1.7, 0.9), p + Vector3(0, 0.85, 0), high_mat)
-			"LOW":
-				block_meshes[k] = _box(Vector3(0.92, 0.8, 0.92), p + Vector3(0, 0.4, 0), low_mat)
-	# objective nodes
+	var built := Env.build(self, state, mission)
+	block_meshes = built.blocks
+	node_meshes = built.nodes
 	for n in state.nodes:
-		var p := tile_center(int(n.at.x), int(n.at.y))
-		var mi := _box(Vector3(0.7, 1.1, 0.7), p + Vector3(0, 0.55, 0), _mat(UI.WARN, 1.2))
-		node_meshes[n.id] = mi
 		var lbl := Label3D.new()
 		lbl.text = n.label
 		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		lbl.font_size = 40
-		lbl.pixel_size = 0.006
-		lbl.position = p + Vector3(0, 1.7, 0)
+		lbl.font_size = 36
+		lbl.pixel_size = 0.0035
+		lbl.outline_size = 8
+		lbl.position = tile_center(int(n.at.x), int(n.at.y)) + Vector3(0, Env.M(3.4), 0)
 		lbl.modulate = UI.WARN
 		lbl.no_depth_test = true
 		add_child(lbl)
@@ -163,7 +116,7 @@ func _build_world() -> void:
 	camera = Camera3D.new()
 	camera.fov = 50
 	pivot.add_child(camera)
-	zoom = clampf(maxf(w, h) * 0.78, 11.0, 24.0)
+	zoom = clampf(maxf(w, h) * 0.5, 8.5, 13.0)
 	# start between the middle of the board and the squad, so both the squad and the objective show
 	var cx := 0.0
 	var cy := 0.0
@@ -171,54 +124,25 @@ func _build_world() -> void:
 	for u in squad:
 		cx += u.x + 0.5
 		cy += u.y + 0.5
-	pivot.position = Vector3(w / 2.0, 0, h / 2.0).lerp(Vector3(cx / squad.size(), 0, cy / squad.size()), 0.5)
+	pivot.position = Vector3(w / 2.0, 0, h / 2.0).lerp(Vector3(cx / squad.size(), 0, cy / squad.size()), 0.65)
 	_place_camera()
 
 func _gate_runs_x(x: int, y: int) -> bool:
 	return state.blockers.has(R._k(x - 1, y)) or state.blockers.has(R._k(x + 1, y))
 
 func _make_unit(u: Dictionary) -> void:
-	var root := Node3D.new()
+	var n := Ops.make(u)
+	var root: Node3D = n.root
 	root.position = tile_center(int(u.x), int(u.y))
+	# face the middle of the board (the models face +Z)
+	var to := Vector3(state.width / 2.0, 0, state.height / 2.0) - root.position
+	root.rotation.y = atan2(to.x, to.z)
 	add_child(root)
-	var color: Color = ROLE_COLOR.get(String(u.role), Color.WHITE) if u.faction == "PLAYER" else THREAT_COLOR
-	var body := MeshInstance3D.new()
-	var cap := CapsuleMesh.new()
-	cap.radius = 0.26
-	cap.height = 1.4
-	body.mesh = cap
-	body.material_override = _mat(color, 0.15)
-	body.position = Vector3(0, 0.7, 0)
-	root.add_child(body)
-	var head := MeshInstance3D.new()
-	var visor := BoxMesh.new()
-	visor.size = Vector3(0.3, 0.08, 0.12)
-	head.mesh = visor
-	head.material_override = _mat(Color(0.1, 0.1, 0.12))
-	head.position = Vector3(0, 1.22, -0.22)
-	root.add_child(head)
-	var ring := MeshInstance3D.new()
-	var torus := TorusMesh.new()
-	torus.inner_radius = 0.36
-	torus.outer_radius = 0.44
-	ring.mesh = torus
-	ring.material_override = _mat(UI.ACCENT, 2.0)
-	ring.position = Vector3(0, 0.03, 0)
-	ring.visible = false
-	root.add_child(ring)
-	var lbl := Label3D.new()
-	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	lbl.font_size = 48
-	lbl.pixel_size = 0.008
-	lbl.outline_size = 10
-	lbl.position = Vector3(0, 1.75, 0)
-	lbl.no_depth_test = true
-	root.add_child(lbl)
-	unit_nodes[u.id] = {"root": root, "body": body, "ring": ring, "label": lbl}
+	unit_nodes[u.id] = n
 
 func _place_camera() -> void:
 	pivot.rotation.y = yaw
-	camera.position = Vector3(0, zoom * 0.95, zoom * 0.72)
+	camera.position = Vector3(0, zoom * 0.95, zoom * 0.55)
 	camera.look_at(pivot.global_position, Vector3.UP)
 
 func _process(delta: float) -> void:
@@ -266,10 +190,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			zoom = maxf(6.0, zoom - 1.2)
+			zoom = maxf(3.5, zoom * 0.88)
 			_place_camera()
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			zoom = minf(40.0, zoom + 1.2)
+			zoom = minf(30.0, zoom * 1.12)
 			_place_camera()
 		elif event.button_index == MOUSE_BUTTON_LEFT and not busy:
 			_click(_pick_tile(event.position))
@@ -438,9 +362,9 @@ func _perform(action: Dictionary, by_player: bool) -> Dictionary:
 			_log("[color=#5cdb80]The gate opens.[/color]")
 			for k in ev.cells:
 				if block_meshes.has(k):
-					var mi: MeshInstance3D = block_meshes[k]
-					var tw := create_tween()
-					tw.tween_property(mi, "position:y", -1.1, 0.6)
+					for gp in block_meshes[k]:
+						var tw := create_tween()
+						tw.tween_property(gp, "position:y", gp.position.y - 0.95, 0.8)
 	for x in state.units:
 		var b: Dictionary = before[x.id]
 		if not b.dead and x.dead:
@@ -480,19 +404,19 @@ func _shot(a: Dictionary, t: Dictionary, res: Dictionary) -> void:
 	if dir.length() > 0.01:
 		an.look_at(an.position + dir, Vector3.UP)
 	await _tracer(a, t, res.hit)
-	_float_text(tn.position + Vector3(0, 2.1, 0), ("CRIT %d" % res.damage if res.critical else "HIT %d" % res.damage) if res.hit else "MISS", UI.DANGER if res.hit else UI.MUTED)
+	_float_text(tn.position + Vector3(0, Env.M(2.8), 0), ("CRIT %d" % res.damage if res.critical else "HIT %d" % res.damage) if res.hit else "MISS", UI.DANGER if res.hit else UI.MUTED)
 
 func _tracer(a: Dictionary, t: Dictionary, hit: bool) -> void:
 	if a == null or t == null:
 		return
-	var p1: Vector3 = unit_nodes[a.id].root.position + Vector3(0, 1.0, 0)
-	var p2: Vector3 = unit_nodes[t.id].root.position + Vector3(0, 1.0, 0)
+	var p1: Vector3 = unit_nodes[a.id].root.position + Vector3(0, Env.M(1.35), 0)
+	var p2: Vector3 = unit_nodes[t.id].root.position + Vector3(0, Env.M(1.3), 0)
 	if not hit:
-		p2 += Vector3(randf_range(-0.6, 0.6), randf_range(0.2, 0.7), randf_range(-0.6, 0.6))
+		p2 += Vector3(randf_range(-0.25, 0.25), randf_range(0.05, 0.25), randf_range(-0.25, 0.25))
 	var mi := MeshInstance3D.new()
 	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.025
-	cyl.bottom_radius = 0.025
+	cyl.top_radius = 0.008
+	cyl.bottom_radius = 0.008
 	cyl.height = p1.distance_to(p2)
 	mi.mesh = cyl
 	mi.material_override = _mat(Color(1.0, 0.85, 0.4), 4.0)
@@ -510,15 +434,15 @@ func _float_text(pos: Vector3, text: String, color: Color) -> void:
 	var l := Label3D.new()
 	l.text = text
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	l.font_size = 64
-	l.pixel_size = 0.006
+	l.font_size = 56
+	l.pixel_size = 0.0035
 	l.outline_size = 12
 	l.modulate = color
 	l.no_depth_test = true
 	l.position = pos
 	add_child(l)
 	var tw := create_tween()
-	tw.tween_property(l, "position:y", pos.y + 0.9, 0.9)
+	tw.tween_property(l, "position:y", pos.y + 0.4, 0.9)
 	tw.parallel().tween_property(l, "modulate:a", 0.0, 0.9)
 	tw.tween_callback(l.queue_free)
 
@@ -529,18 +453,20 @@ func _sync_units() -> void:
 		root.position = tile_center(int(u.x), int(u.y))
 		var seen: bool = R.visible_to_squad(state, u)
 		root.visible = seen and not R.is_extracted(u)
-		var body: MeshInstance3D = n.body
+		var body: Node3D = n.body
 		if u.dead:
-			body.rotation_degrees = Vector3(90, 0, 0)
-			body.position = Vector3(0, 0.28, 0)
-			body.transparency = 0.45
+			body.rotation_degrees = Vector3(-88, 0, 0)
+			body.position = Vector3(0, Env.M(0.15), Env.M(0.2))
+			n.team.visible = false
 		elif u.downed:
-			body.rotation_degrees = Vector3(70, 0, 0)
-			body.position = Vector3(0, 0.35, 0)
+			body.rotation_degrees = Vector3(-80, 0, 0)
+			body.position = Vector3(0, Env.M(0.2), Env.M(0.2))
+		elif u.hunkered:
+			body.rotation_degrees = Vector3(12, 0, 0)
+			body.position = Vector3(0, -Env.M(0.25), 0)
 		else:
 			body.rotation_degrees = Vector3.ZERO
-			body.position = Vector3(0, 0.7, 0)
-			body.transparency = 0.35 if u.concealed else 0.0
+			body.position = Vector3.ZERO
 		n.ring.visible = u.id == selected_id
 		var flags := ""
 		if u.overwatch:
@@ -553,13 +479,14 @@ func _sync_units() -> void:
 		n.label.text = "" if u.dead else "%s  %d/%d%s" % [tag, int(u.hp), int(u.maxHp), flags]
 		n.label.modulate = (ROLE_COLOR.get(String(u.role), Color.WHITE) if u.faction == "PLAYER" else THREAT_COLOR).lightened(0.25)
 	for nd in state.nodes:
-		var mi: MeshInstance3D = node_meshes[nd.id]
-		var c := UI.WARN
+		var parts: Dictionary = node_meshes[nd.id]
+		var c := Color("ffb547")
 		if nd.state == "OPEN":
 			c = UI.ACCENT
 		elif nd.state == "VERIFIED":
 			c = UI.GOOD
-		mi.material_override = _mat(c, 1.2)
+		parts.beacon.material_override = Env.glow(c, 4.0)
+		parts.light.light_color = c
 
 func _clear(node: Node3D) -> void:
 	for c in node.get_children():
@@ -572,8 +499,8 @@ func _draw_reach() -> void:
 	var u = _selected()
 	if u == null or state.phase != "PLAYER" or busy or int(u.ap) <= 0:
 		return
-	var move_mat := _mat(UI.ACCENT, 0.8, 0.28)
-	var dash_mat := _mat(UI.WARN, 0.6, 0.3)
+	var move_mat := _mat(Env.OVER.reach, 0.3, 0.16)
+	var dash_mat := _mat(Env.OVER.reach, 0.12, 0.07)
 	var full := R.compute_reach(state, u, int(u.moveRange) * (2 if int(u.ap) >= 2 else 1))
 	for t in full.cost:
 		if t == Vector2i(int(u.x), int(u.y)):
@@ -583,10 +510,10 @@ func _draw_reach() -> void:
 		var c: int = full.cost[t]
 		if c <= int(u.moveRange):
 			reach_move[t] = true
-			_box(Vector3(0.9, 0.02, 0.9), tile_center(t.x, t.y) + Vector3(0, 0.03, 0), move_mat, overlay)
+			_box(Vector3(0.86, 0.01, 0.86), tile_center(t.x, t.y) + Vector3(0, 0.02, 0), move_mat, overlay)
 		elif int(u.ap) >= 2:
 			reach_dash[t] = true
-			_box(Vector3(0.55, 0.02, 0.55), tile_center(t.x, t.y) + Vector3(0, 0.03, 0), dash_mat, overlay)
+			_box(Vector3(0.86, 0.01, 0.86), tile_center(t.x, t.y) + Vector3(0, 0.02, 0), dash_mat, overlay)
 	# cover markers next to the hovered tile are drawn by the path preview
 
 func _draw_path_preview() -> void:
@@ -607,12 +534,12 @@ func _draw_path_preview() -> void:
 		return
 	var reach := R.compute_reach(state, u, int(u.moveRange) * 2)
 	var path := R.path_to(reach, hover_tile)
-	var dot := _mat(Color.WHITE, 1.0, 0.85)
+	var dot := _mat(Env.OVER.path, 2.0, 0.95)
 	for step in path:
 		var s := MeshInstance3D.new()
 		var sm := SphereMesh.new()
-		sm.radius = 0.07
-		sm.height = 0.14
+		sm.radius = 0.04
+		sm.height = 0.08
 		s.mesh = sm
 		s.material_override = dot
 		s.position = tile_center(step.x, step.y) + Vector3(0, 0.12, 0)
@@ -754,11 +681,12 @@ func _build_hud() -> void:
 	bcol.add_child(tip_label)
 
 	var side := UI.panel()
-	side.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
-	side.offset_left = -360
+	side.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	side.offset_left = -380
 	side.offset_right = -16
 	side.offset_top = 84
-	side.offset_bottom = -330
+	side.offset_bottom = 84 + 150
+	side.modulate = Color(1, 1, 1, 0.92)
 	hud.add_child(side)
 	log_label = RichTextLabel.new()
 	log_label.bbcode_enabled = true

@@ -18,7 +18,14 @@ if [ "$want" != "$have" ]; then
 fi
 mkdir -p "$here/assets/site0"
 cp "$master" "$here/assets/site0/"
-[ "${1:-}" = "--sync" ] && { echo "Site 0 master copied ($have)."; exit 0; }
+# the web game's own art, used as it is: operator models and carried items, the CC0 PBR textures and
+# night HDRI, and the White Industrial kit (assets/3d/*/ stay the single source; nothing is duplicated in git)
+mkdir -p "$here/assets/web/operators/items" "$here/assets/web/tactics" "$here/assets/web/kit"
+cp "$repo"/assets/3d/prim3-operators/{E,R,T}.glb "$repo"/assets/3d/prim3-operators/manifest.json "$here/assets/web/operators/"
+cp "$repo"/assets/3d/prim3-operators/items/*.glb "$here/assets/web/operators/items/"
+cp -r "$repo"/assets/3d/prim3-tactics/pbr "$repo"/assets/3d/prim3-tactics/hdri "$repo"/assets/3d/prim3-tactics/CREDITS.md "$here/assets/web/tactics/"
+cp -r "$repo"/assets/3d/prim3-kit/white-industrial/models "$repo"/assets/3d/prim3-kit/white-industrial/catalog.json "$here/assets/web/kit/"
+[ "${1:-}" = "--sync" ] && { echo "Site 0 master ($have) and the web game's art copied in."; exit 0; }
 
 cd "$here"
 "$godot" --headless --path . --import >/dev/null 2>&1 || "$godot" --headless --path . --editor --quit >/dev/null 2>&1 || true

@@ -3,3 +3,5 @@
 build/
 # copied from assets/3d/prim3-site0/ by build.sh (the master is not duplicated in git)
 assets/site0/
+# the web game's art (assets/3d/prim3-operators, prim3-tactics, prim3-kit), copied in by build.sh
+assets/web/

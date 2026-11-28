@@ -37,7 +37,8 @@ test('the dice and shot vectors the Godot tests check are the web resolver\'s ow
 test('the desktop project answers Core\'s godot launch contract', () => {
   const project = read('project.godot');
   assert.match(project, /run\/main_scene="res:\/\/scenes\/main\.tscn"/, 'staging-gate reads run/main_scene');
-  assert.match(project, /gl_compatibility/, 'GL Compatibility keeps older laptop GPUs working');
+  assert.match(project, /rendering_method="forward_plus"/, 'Forward+ for the web game\'s lit look (shadows, SSAO, HDRI)');
+  assert.match(project, /fallback_to_opengl3=true/, 'falls back to OpenGL on laptops without Vulkan/D3D12');
   const studio = read('scripts/studio.gd');
   const args = buildGodotArgs({ projectPath: desk, scenario: { id: 'X', seed: 3, max_steps: 9 } });
   for (const flag of args.filter((a) => a.startsWith('--mccluster-'))) {
@@ -57,6 +58,22 @@ test('the Site 0 master is copied in at build time, checked against its manifest
   assert.ok(build.includes('sha256sum'), 'build.sh refuses a master that does not match its manifest');
   assert.ok(read('scripts/facility.gd').includes('PRIM3_Site0_Master_Facility_v04.glb'), 'the viewer shows v04, the canonical master');
   for (const banned of ['v02', 'v03', 'Handoff']) assert.ok(!read('scripts/facility.gd').includes(banned), `no ${banned}`);
+});
+
+test('the board reuses the web game\'s art, copied in at build time and never duplicated in git', () => {
+  assert.match(read('.gitignore'), /^assets\/web\/$/m);
+  const build = read('build.sh');
+  for (const src of ['assets/3d/prim3-operators', 'assets/3d/prim3-tactics', 'assets/3d/prim3-kit/white-industrial']) assert.ok(build.includes(src), `build.sh copies ${src}`);
+  for (const role of ['E', 'R', 'T']) assert.ok(fs.existsSync(path.join(root, 'assets/3d/prim3-operators', `${role}.glb`)), `${role} loadout model exists`);
+  const missions = JSON.parse(read('data/missions.json')).missions;
+  const catalog = JSON.parse(fs.readFileSync(path.join(root, 'assets/3d/prim3-kit/white-industrial/catalog.json'), 'utf8'));
+  const ids = new Set(catalog.assets.map((a) => a.id));
+  for (const m of missions) {
+    assert.ok(m.environment && m.environment.ground && m.environment.wall, `${m.id} has its own environment`);
+    for (const id of [...m.environment.high, ...m.environment.low, ...(m.environment.dressing || []).map((d) => d[0])]) assert.ok(ids.has(id), `${m.id}: kit asset ${id} exists`);
+    for (const set of [m.environment.ground, m.environment.wall, m.environment.apron].filter(Boolean)) assert.ok(fs.existsSync(path.join(root, 'assets/3d/prim3-tactics/pbr', `${set}_diff.jpg`)), `${m.id}: PBR set ${set} exists`);
+  }
+  assert.equal(new Set(missions.map((m) => m.environment.ground + m.environment.wall + m.environment.fog)).size, missions.length, 'each mission looks different');
 });
 
 test('the three missions are well formed', () => {

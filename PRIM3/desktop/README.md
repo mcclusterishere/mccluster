@@ -1,7 +1,12 @@
 # PRIM3 desktop
 
-The PC build of the PRIM3 tactical game, made with **Godot 4.4** (GDScript, GL Compatibility
-renderer so it runs on ordinary laptop GPUs). It exports to a single Windows `.exe` and a Linux
+The PC build of the PRIM3 tactical game, made with **Godot 4.4** (GDScript, Forward+ renderer,
+falling back to OpenGL on laptops without Vulkan or Direct3D 12). It draws with the web game's own
+art: the E/R/T loadout models from `assets/3d/prim3-operators`, the Poly Haven PBR surfaces and night
+HDRI from `assets/3d/prim3-tactics`, and the white-industrial kit from `assets/3d/prim3-kit`, at the
+web game's scale (one tile is 3.54 m, operators 1.75 m). `build.sh` copies that art into
+`assets/web/` (gitignored), so nothing is duplicated in git. Each mission has its own environment
+block in `data/missions.json` (ground, walls, cover kit, lamps, fog, moon, dressing). It exports to a single Windows `.exe` and a Linux
 binary. The web game (`prim3*.html`, `js/prim3-tactics/`) is unchanged and stays the version that
 runs in a browser and on phones.
 
