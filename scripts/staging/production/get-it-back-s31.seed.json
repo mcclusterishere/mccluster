@@ -1,0 +1,22 @@
+{
+  "_comment": "Staging seed for the s31 proof: the get-it-back production project with the one Unreal Level Sequence approved for this run (the stand-in s31 sequence proven on Prime). Ids only: the worker maps gib-s31-proof / s31-standin to files through its own executor config (unreal_projects). No master, no actor consent: the actor is a stand-in and the shot is silent.",
+  "id": "get-it-back",
+  "title": "GET IT BACK",
+  "status": "active",
+  "assets": [
+    {
+      "asset_id": "s31-standin",
+      "version": 1,
+      "kind": "unreal_sequence",
+      "path": "unreal/gib-s31-proof/s31-standin",
+      "approved": true,
+      "editable": false,
+      "label": "s31 stand-in Level Sequence (in-editor queue proven on Prime, UE 5.8.4, AMD Radeon, D3D12)",
+      "metadata": { "unreal_project_id": "gib-s31-proof", "shot_ids": ["s31"], "frame_start": 0, "frame_end": 119 }
+    }
+  ],
+  "shots": [
+    { "shot_id": "s31", "episode": "get-it-back", "fps": 24 }
+  ],
+  "consents": []
+}

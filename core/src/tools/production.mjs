@@ -31,11 +31,12 @@ const PROJECT = { type: 'string', pattern: '^[a-z0-9][a-z0-9-]{1,62}$' };
 const UUID = { type: 'string', maxLength: 64 };
 const SHOT_MANIFEST = {
   type: 'object',
-  description: 'mccluster-shot-render/1: project_id, shot_id, take, engine (unreal|blender), frames {start,end,fps}, resolution {width,height}, source {master, master_sha256, set_asset, set_version, export_id, camera, subjects[], props[]}, audio {path, offset_s, line_id}, actors [{id, pose, performance}], checks {scale, framing, phone_grip, timing, expect_duration_s}, note. Paths are project-relative.',
-  required: ['project_id', 'shot_id', 'frames', 'source'],
+  description: 'mccluster-shot-render/1: project_id, shot_id, take, engine (unreal|blender), frames {start,end,fps}, resolution {width,height}, unreal {project_id, sequence_id} (approved ids: render that Level Sequence, no master needed), source {master, master_sha256, set_asset, set_version, export_id, camera, subjects[], props[]}, audio {path, offset_s, line_id}, actors [{id, pose, performance}], checks {scale, framing, phone_grip, timing, expect_duration_s}, note. Paths are project-relative.',
+  required: ['project_id', 'shot_id', 'frames'],
   properties: {
     schema: { type: 'string' }, project_id: PROJECT, episode: { type: 'string' }, shot_id: { type: 'string' }, take: { type: 'integer', minimum: 1 },
     engine: { type: 'string', enum: ['unreal', 'blender'] }, frames: { type: 'object' }, resolution: { type: 'object' }, source: { type: 'object' },
+    unreal: { type: 'object', required: ['project_id', 'sequence_id'], properties: { project_id: { type: 'string', pattern: '^[a-z0-9][a-z0-9_.-]{0,63}$' }, sequence_id: { type: 'string', pattern: '^[a-z0-9][a-z0-9_.-]{0,63}$' } }, additionalProperties: false },
     audio: { type: 'object' }, actors: { type: 'array' }, checks: { type: 'object' }, note: { type: 'string', maxLength: 2000 }
   }
 };
@@ -48,8 +49,8 @@ export const PRODUCTION_TOOLS = Object.freeze([
   },
   {
     name: 'core.production.asset.lookup', title: 'Look up production assets',
-    description: 'List registered assets of a production project by kind (master, set, prop, audio, recording, export) and an optional name query. Read-only.',
-    inputSchema: { type: 'object', required: ['org_id', 'project_id'], properties: { org_id: ORG, project_id: PROJECT, kind: { type: 'string', enum: ['master', 'set', 'prop', 'audio', 'recording', 'export', 'character', 'script'] }, query: { type: 'string', maxLength: 80 }, limit: { type: 'integer', minimum: 1, maximum: 200 } }, additionalProperties: false }
+    description: 'List registered assets of a production project by kind (master, set, prop, audio, recording, export, unreal_sequence) and an optional name query. Read-only.',
+    inputSchema: { type: 'object', required: ['org_id', 'project_id'], properties: { org_id: ORG, project_id: PROJECT, kind: { type: 'string', enum: ['master', 'set', 'prop', 'audio', 'recording', 'export', 'character', 'script', 'unreal_sequence'] }, query: { type: 'string', maxLength: 80 }, limit: { type: 'integer', minimum: 1, maximum: 200 } }, additionalProperties: false }
   },
   {
     name: 'core.production.shot.validate', title: 'Validate a shot',

@@ -1,0 +1,14 @@
+{
+  "schema": "mccluster-shot-render/1",
+  "project_id": "get-it-back",
+  "episode": "get-it-back",
+  "shot_id": "s31",
+  "take": 1,
+  "engine": "unreal",
+  "frames": { "start": 0, "end": 119, "fps": 24 },
+  "resolution": { "width": 720, "height": 1280 },
+  "unreal": { "project_id": "gib-s31-proof", "sequence_id": "s31-standin" },
+  "actors": [],
+  "checks": { "expect_duration_s": 5 },
+  "note": "s31 through Core: stand-in actor, silent, in-editor Movie Render Queue on Prime"
+}

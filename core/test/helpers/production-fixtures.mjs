@@ -4,6 +4,8 @@
 // queue with the same semantics the Supabase RPCs have (idempotency key,
 // bounded attempts, atomic cancel of a queued task).
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export const ORG = '00000000-0000-4000-8000-000000000001';
 export const OWNER = { user_id: '00000000-0000-4000-8000-0000000000aa', kind: 'owner', source: 'cloudflare-owner-session' };
@@ -92,4 +94,66 @@ export function memoryCompute({ now = () => new Date() } = {}) {
     }
   };
   return api;
+}
+
+// A SIMULATED UnrealEditor.exe for the in-editor render: it does what the
+// real editor + tools/production/unreal/mcc_render_sequence.py do on disk
+// (frames in the job's output folder, the result file, the engine log)
+// and nothing else. Real renders are verified on Prime only.
+export const RADEON_LOG = [
+  'LogInit: Display: Engine Version: 5.8.4-58902052+++UE5+Release-5.8',
+  'LogD3D12RHI: Display: Creating D3D12 RHI with Max Feature Level SM6',
+  'LogD3D12RHI: Found D3D12 adapter 0: AMD Radeon RX 7800 XT (VendorId: 1002, DeviceId: 747e, SubSysId: 0, Revision: 00c8',
+  'LogD3D12RHI: Found D3D12 adapter 1: Microsoft Basic Render Driver (VendorId: 1414, DeviceId: 008c, SubSysId: 0000, Revision: 0000',
+  'LogD3D12RHI: Chosen D3D12 Adapter Id = 0',
+  'LogInit: RHI Adapter Info:',
+  'LogInit:             Name : AMD Radeon RX 7800 XT',
+  'LogInit:   Driver Version : 32.0.21025.1024 (internal:32.0.21025.1024, unified:25.10.2)'
+].join('\n');
+export const WARP_LOG = [
+  'LogInit: Display: Engine Version: 5.8.4-58902052+++UE5+Release-5.8',
+  'LogD3D12RHI: Display: Creating D3D12 RHI with Max Feature Level SM5',
+  'LogD3D12RHI: Found D3D12 adapter 0: Microsoft Basic Render Driver (VendorId: 1414, DeviceId: 008c, SubSysId: 0000, Revision: 0000',
+  'LogD3D12RHI: Chosen D3D12 Adapter Id = 0',
+  'LogInit: RHI Adapter Info:',
+  'LogInit:             Name : Microsoft Basic Render Driver'
+].join('\n');
+
+export function simulateInEditorRender(args, env, { frames = 120, log = RADEON_LOG, result = true, executorSuccess = true, writeFrames = true, startFrame = null } = {}) {
+  const job = JSON.parse(fs.readFileSync(env.MCC_UNREAL_JOB, 'utf8'));
+  const abslog = args.find((a) => a.startsWith('-abslog=')).slice('-abslog='.length);
+  fs.writeFileSync(abslog, `${log}\nLogMovieRenderPipeline: Display: Finished rendering\n`);
+  fs.mkdirSync(job.output_dir, { recursive: true });
+  const first = startFrame ?? job.frames.start;
+  if (writeFrames) for (let i = 0; i < frames; i += 1) fs.writeFileSync(path.join(job.output_dir, `frame.${String(first + i).padStart(4, '0')}.png`), 'png');
+  if (result) fs.writeFileSync(job.result, JSON.stringify({ schema: 'mccluster-unreal-render-result/1', job_id: job.job_id, ok: executorSuccess, executor_success: executorSuccess, engine_version: '5.8.4-58902052+++UE5+Release-5.8', map: job.map, sequence: job.sequence, output_dir: job.output_dir, frames_written: frames, error: executorSuccess ? null : 'Movie Render Queue reported failure' }));
+  return job;
+}
+
+// The proven s31 job on Prime as a typed sequence-mode manifest: an
+// approved Unreal project and Level Sequence by id, the shot range, and
+// nothing else (no master, no command, no path). 120 frames, 24 fps,
+// 720x1280, five seconds, silent, stand-in actor.
+export const S31_UNREAL = Object.freeze({ project_id: 'gib-s31-proof', sequence_id: 's31-standin' });
+
+export function s31SequenceManifest(overrides = {}) {
+  return {
+    schema: 'mccluster-shot-render/1',
+    project_id: 'get-it-back',
+    episode: 'get-it-back',
+    shot_id: 's31',
+    take: 1,
+    engine: 'unreal',
+    frames: { start: 0, end: 119, fps: 24 },
+    resolution: { width: 720, height: 1280 },
+    unreal: { ...S31_UNREAL },
+    actors: [],
+    checks: { expect_duration_s: 5 },
+    note: 'proof: stand-in actor, silent',
+    ...overrides
+  };
+}
+
+export function s31SequenceAsset(overrides = {}) {
+  return { asset_id: 's31-standin', version: 1, kind: 'unreal_sequence', path: 'unreal/gib-s31-proof/s31-standin', approved: true, editable: false, label: 'S31 stand-in Level Sequence (proven on Prime)', metadata: { unreal_project_id: 'gib-s31-proof', shot_ids: ['s31'], frame_start: 0, frame_end: 119 }, ...overrides };
 }

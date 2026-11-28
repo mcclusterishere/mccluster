@@ -77,10 +77,18 @@ export function createProductionService({ store, compute, now = () => new Date()
       retake_of: job.retake_of || null,
       compute_task_id: job.compute_task_id || null,
       attempts: task ? { used: task.attempts, max: task.max_attempts } : null,
-      worker: output?.worker || (lease?.node_id ? { node_id: lease.node_id } : (task?.locked_by_node_id ? { node_id: task.locked_by_node_id } : null)),
-      progress: lease?.progress && Object.keys(lease.progress).length ? lease.progress : null,
+      // The node that held the lease is the worker of record; the executor
+      // adds its hostname and adapter but does not know the node id.
+      worker: workerOf(output, task, lease),
+      // Live progress belongs to a running job; a finished one reports its outputs.
+      progress: ['running', 'cancel_requested'].includes(productionStatus(task, job)) && lease?.progress && Object.keys(lease.progress).length ? lease.progress : null,
       engine_version: output?.engine || null,
       unreal: output?.unreal || null,
+      device: output?.device || null,
+      output_dir: output?.output_dir || null,
+      // The one file a client opens: the verified preview of a succeeded
+      // job (null until then, and null when the worker reported none).
+      preview: previewOf(task, output, lease),
       checks: output?.checks || null,
       checks_passed: output ? checksPassed(output) : null,
       playback: output?.playback || null,
@@ -94,13 +102,26 @@ export function createProductionService({ store, compute, now = () => new Date()
     };
   }
 
+  function workerOf(output, task, lease) {
+    const nodeId = output?.worker?.node_id || lease?.node_id || task?.locked_by_node_id || null;
+    if (!output?.worker && !nodeId) return null;
+    return { ...(output?.worker || {}), node_id: nodeId };
+  }
+
+  function previewOf(task, output, lease = null) {
+    if (!output || productionStatus(task) !== 'succeeded' || output.playback?.decoded_ok !== true) return null;
+    const item = (output.outputs || []).find((o) => o.kind === 'preview_mp4' && o.sha256);
+    if (!item) return null;
+    return { path: item.path, project_path: item.project_path, sha256: item.sha256, bytes: item.bytes, frames: output.playback.frames, duration_s: output.playback.duration_s, width: output.playback.width, height: output.playback.height, node_id: workerOf(output, task, lease)?.node_id || null };
+  }
+
   function safeOutput(raw) {
     try { return validateRenderOutput(raw); }
     catch (error) { return { ok: false, error: `worker output rejected: ${error.message}`, outputs: [], checks: {} }; }
   }
 
   // Record the artifacts a finished task reported (idempotent upsert).
-  async function syncArtifacts(job, task) {
+  async function syncArtifacts(job, task, lease = null) {
     if (!task || task.status !== 'done' || !task.output) return [];
     const output = safeOutput(task.output);
     const rows = output.outputs.map((item) => ({
@@ -114,7 +135,7 @@ export function createProductionService({ store, compute, now = () => new Date()
       project_path: item.project_path,
       sha256: item.sha256,
       bytes: item.bytes,
-      node_id: output.worker?.node_id || task.locked_by_node_id || null,
+      node_id: output.worker?.node_id || lease?.node_id || task.locked_by_node_id || null,
       storage: 'node-local',
       simulated: output.simulated === true,
       metadata: { label: item.label, engine: output.engine, unreal: output.unreal }
@@ -259,7 +280,7 @@ export function createProductionService({ store, compute, now = () => new Date()
       const lease = job.compute_task_id && store.leaseProgress ? await store.leaseProgress(job.compute_task_id).catch(() => null) : null;
       const status = productionStatus(task, job);
       if (status !== job.status) await store.updateJob(orgId, job.id, { status });
-      const artifacts = await syncArtifacts(job, task);
+      const artifacts = await syncArtifacts(job, task, lease);
       return { job: publicJob({ ...job, status }, task, lease), artifacts: artifacts.length ? artifacts.map(publicArtifact) : undefined };
     },
 

@@ -31,6 +31,10 @@ import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
+  UNREAL_RENDER_RESULT_SCHEMA, UNREAL_SEQUENCE_ADAPTER, copyProject, editorArgs, frameRun, freshOutputDir, loadUnrealRegistry,
+  parseUnrealLog, projectFingerprint, resolveApprovedSequence, verifyDevice
+} from './unreal-sequence.mjs';
+import {
   PRODUCTION_PROTOCOL, PRODUCTION_WORKER_CAPABILITIES, RENDER_OUTPUT_SCHEMA, SHOT_EXPORT_SCHEMA, UNREAL_SUPPORTED,
   isRelativeProjectPath, manifestHash, normalizeFacetrack, normalizeShotRender, normalizeTranscript
 } from './contract.mjs';
@@ -68,6 +72,15 @@ export function loadExecutorConfig(raw, { platform = process.platform } = {}) {
     adaptersDir: raw.adapters_dir ? path.resolve(raw.adapters_dir) : DEFAULT_ADAPTERS_DIR,
     timeouts: { export: 900_000, build: 1_800_000, render: 3_600_000, encode: 600_000, facetrack: 1_800_000, transcript: 1_800_000, ...(raw.timeouts || {}) },
     unrealProjectName: /^[A-Za-z][A-Za-z0-9]{2,30}$/.test(raw.unreal_project_name || '') ? raw.unreal_project_name : 'McCPreviz',
+    // Approved Unreal projects and Level Sequences (sequence mode). A job
+    // names ids from here; it never names a path, a map or an argument.
+    unrealProjects: (() => { try { return loadUnrealRegistry(raw.unreal_projects, { platform }); } catch (error) { throw new ExecutorError(error.message, { code: 'CONFIG_INVALID' }); } })(),
+    // The GPU every Unreal render must show in its own log (build mode too).
+    unrealDevice: {
+      rhi: 'd3d12',
+      requireAdapter: typeof raw.unreal_device?.require_adapter === 'string' && /^[A-Za-z0-9 ()._-]{2,80}$/.test(raw.unreal_device.require_adapter) ? raw.unreal_device.require_adapter : null,
+      renderOffscreen: raw.unreal_device?.render_offscreen === true
+    },
     platform
   };
 }
@@ -299,9 +312,54 @@ export function createProductionExecutor(config, { runner = defaultRunner({ plat
     return { dir, uproject };
   }
 
+  // The proven path on Prime: the editor opens the project and the
+  // in-editor queue (PIE executor) renders the sequence. Returns only when
+  // the result file, the frames on disk and the GPU in the engine log all
+  // agree; the editor exiting proves nothing by itself.
+  async function renderInEditor({ engine, jobId, uproject, map, sequence, framesDir, manifest, jobDir, log, settings = {}, device, signal }) {
+    const resultFile = path.join(jobDir, 'unreal_render_result.json');
+    const jobFile = path.join(jobDir, 'unreal_render_job.json');
+    const renderLog = path.join(jobDir, 'unreal_render.log');
+    fsImpl.rmSync(resultFile, { force: true });
+    fsImpl.writeFileSync(jobFile, JSON.stringify({ job_id: jobId, map, sequence, output_dir: framesDir, result: resultFile, frames: { start: manifest.frames.start, end: manifest.frames.end, fps: manifest.frames.fps }, resolution: manifest.resolution, settings }, null, 1));
+    setProgress(jobId, { step: 'render', detail: 'Movie Render Queue (in-editor, PIE executor)', frames_total: manifest.frames.count, frames_done: 0 });
+    let editorError = null;
+    // Progress is the frames on disk: the editor writes no stdout on Windows
+    // when it logs to a file, so its output lines cannot be counted.
+    const ticker = setInterval(() => { const done = countFrames(framesDir); if (done != null) setProgress(jobId, { frames_done: done }); }, 2000);
+    ticker.unref?.();
+    try {
+      await runner(engine.editor, editorArgs({ uproject, script: adapter('unreal/mcc_render_sequence.py'), abslog: renderLog, rhi: device.rhi, renderOffscreen: device.renderOffscreen }),
+        { env: { MCC_UNREAL_JOB: jobFile }, logFile: log, timeoutMs: config.timeouts.render, signal });
+    } catch (error) {
+      if (error.code === 'CANCELED') throw error;
+      editorError = error;
+    } finally {
+      clearInterval(ticker);
+    }
+    const logText = fsImpl.existsSync(renderLog) ? fsImpl.readFileSync(renderLog, 'utf8') : '';
+    const seen = parseUnrealLog(logText);
+    const deviceCheck = verifyDevice(seen, device);
+    const result = readJson(resultFile);
+    const run = frameRun(fsImpl.existsSync(framesDir) ? fsImpl.readdirSync(framesDir) : []);
+    const detail = { result, device: seen, frames: run, editor_error: editorError ? String(editorError.message) : null };
+    if (!deviceCheck.pass) throw new ExecutorError(`Unreal did not render on the required GPU: ${deviceCheck.detail}`, { code: 'GPU_NOT_VERIFIED', status: 422, detail });
+    if (editorError) throw new ExecutorError(`Unreal editor failed: ${editorError.message}`, { code: 'UNREAL_RENDER_FAILED', retryable: true, detail });
+    if (result?.schema !== UNREAL_RENDER_RESULT_SCHEMA || result.job_id !== jobId) throw new ExecutorError('the editor exited without writing this job\'s render result', { code: 'UNREAL_NO_RESULT', retryable: true, detail });
+    if (result.ok !== true || result.executor_success !== true) throw new ExecutorError(`Movie Render Queue did not succeed: ${result.error || 'executor reported failure'}`, { code: 'UNREAL_RENDER_FAILED', retryable: true, detail });
+    if (run.count !== manifest.frames.count || !run.contiguous) throw new ExecutorError(`Movie Render Queue wrote ${run.count} of ${manifest.frames.count} frames${run.count && !run.contiguous ? ' (not contiguous)' : ''}`, { code: 'RENDER_INCOMPLETE', retryable: true, detail });
+    setProgress(jobId, { frames_done: run.count });
+    return { result, device: { ...seen, gpu_verified: true }, deviceCheck, run, renderLog };
+  }
+
+  function countFrames(dir) {
+    try { return fsImpl.readdirSync(dir).filter((f) => /\.png$/i.test(f)).length; } catch { return null; }
+  }
+
   async function renderUnreal({ input, manifest, signal }) {
     const engine = detect(config.tools.unreal_root);
     if (!engine.ok) throw new ExecutorError(`Unreal is not usable on this node: ${engine.reason || 'editor, Python or Movie Render Queue missing'}`, { code: 'ENGINE_UNSUPPORTED', status: 503, detail: engine });
+    if (manifest.unreal) return renderUnrealSequence({ input, manifest, signal, engine });
     const root = projectRoot(manifest.project_id);
     const { shotDir, jobDir, log } = jobDirs(root, manifest, input.job_id, 'unreal');
     const started = now().toISOString();
@@ -318,18 +376,16 @@ export function createProductionExecutor(config, { runner = defaultRunner({ plat
       { env: { MCC_UNREAL_JOB: buildFile }, logFile: log, timeoutMs: config.timeouts.build, signal });
     const build = readJson(buildResult);
     if (!build?.ok) throw new ExecutorError(`Unreal build step failed: ${build?.error || 'no result written'}`, { code: 'UNREAL_BUILD_FAILED', detail: build });
-    setProgress(input.job_id, { step: 'render', detail: 'Movie Render Queue', frames_total: manifest.frames.count });
-    let rendered = 0;
-    await runner(engine.editor, [project.uproject, build.map, '-game', `-MoviePipelineConfig=${build.queue_manifest}`, '-windowed', `-ResX=${manifest.resolution.width}`, `-ResY=${manifest.resolution.height}`, '-log', '-unattended', '-nosplash', '-NoLoadingScreen', '-NoTextureStreaming', '-NoSound', `-abslog=${path.join(jobDir, 'unreal_render.log')}`],
-      { logFile: log, timeoutMs: config.timeouts.render, signal, onLine: (line) => { if (/MovieRenderPipeline.*Frame|LogMovieRenderPipeline.*\[\s*\d+\s*\//.test(line)) setProgress(input.job_id, { frames_done: ++rendered }); } });
-    const frames = fsImpl.readdirSync(framesDir).filter((f) => /\.(png|exr|jpg)$/i.test(f)).sort();
-    if (frames.length !== manifest.frames.count) throw new ExecutorError(`Movie Render Queue wrote ${frames.length} of ${manifest.frames.count} frames`, { code: 'RENDER_INCOMPLETE', retryable: true });
+    // The built sequence renders through the same in-editor queue as
+    // sequence mode (the -game -MoviePipelineConfig launch failed on Prime).
+    const rendered = await renderInEditor({ engine, jobId: input.job_id, uproject: project.uproject, map: build.map, sequence: build.sequence, framesDir, manifest, jobDir, log, device: config.unrealDevice, signal });
+    const frames = Array.from({ length: rendered.run.count });
     setProgress(input.job_id, { step: 'encode', detail: 'preview MP4' });
     const preview = path.join(shotDir, `${manifest.shot_id}_t${String(manifest.take).padStart(3, '0')}_unreal.mp4`);
-    await encodePreview({ framesDir, framePattern: build.frame_pattern || `${manifest.shot_id}.%04d.png`, startNumber: build.frame_start_number ?? 0, manifest, root, outFile: preview, log, signal });
+    await encodePreview({ framesDir, framePattern: rendered.run.pattern, startNumber: rendered.run.start, manifest, root, outFile: preview, log, signal });
     setProgress(input.job_id, { step: 'verify', detail: 'playback probe' });
     const playback = await probe(preview, { log, signal });
-    const checks = { ...(build.checks || {}), timing: timingCheck(manifest, playback) };
+    const checks = { ...(build.checks || {}), device: rendered.deviceCheck, timing: timingCheck(manifest, playback) };
     const checksFile = path.join(shotDir, 'checks.json');
     fsImpl.writeFileSync(checksFile, JSON.stringify(checks, null, 1));
     const outputs = [
@@ -355,11 +411,88 @@ export function createProductionExecutor(config, { runner = defaultRunner({ plat
       take: manifest.take,
       engine: { name: 'unreal', version: engine.version, changelist: engine.changelist, executable: engine.editor },
       worker: { node_id: process.env.MCCLUSTER_NODE_ID || null, hostname: os.hostname(), adapter: 'mccluster-unreal-mrq/1' },
-      unreal: { uproject: project.uproject, map: build.map, sequence: build.sequence },
+      unreal: { uproject: project.uproject, map: build.map, sequence: build.sequence, mode: 'build' },
+      device: deviceReport(rendered.device),
+      output_dir: shotDir,
       outputs,
       checks,
       playback,
       error: playback.decoded_ok === true && checks.timing.pass === true ? null : `preview is not playable as specified: ${checks.timing.detail}`,
+      started_at: started,
+      finished_at: now().toISOString()
+    };
+  }
+
+  function deviceReport(device) {
+    return { rhi: device.rhi, adapter: device.adapter, vendor_id: device.vendor_id, driver: device.driver, software: device.software === true, gpu_verified: device.gpu_verified === true, evidence: device.evidence || [] };
+  }
+
+  // Sequence mode: an approved Level Sequence in an approved project, by
+  // id. A per-job copy of the project is rendered (isolate: copy), so the
+  // working project is never opened, and the render lands in a new folder.
+  async function renderUnrealSequence({ input, manifest, signal, engine }) {
+    const { project: approved, sequence } = resolveApprovedSequence(config.unrealProjects, manifest);
+    const root = projectRoot(manifest.project_id);
+    if (!fsImpl.existsSync(approved.uproject)) throw new ExecutorError(`approved Unreal project ${approved.id} is missing on this node`, { code: 'UNREAL_PROJECT_MISSING', status: 422 });
+    const started = now().toISOString();
+    const jobDir = path.join(root, 'jobs', input.job_id);
+    fsImpl.mkdirSync(jobDir, { recursive: true });
+    const log = path.join(jobDir, 'worker.log');
+    const outputDir = freshOutputDir(root, manifest, input.job_id, { now: now(), fsImpl });
+    const framesDir = path.join(outputDir, 'frames');
+    const sourceDir = path.dirname(approved.uproject);
+    const before = projectFingerprint(sourceDir, { fsImpl });
+    fsImpl.appendFileSync(log, `${JSON.stringify({ event: 'unreal_sequence_start', job_id: input.job_id, engine: { version: engine.version, changelist: engine.changelist, editor: engine.editor }, unreal_project: approved.id, sequence_id: manifest.unreal.sequence_id, sequence: sequence.sequence, map: sequence.map, frames: manifest.frames, resolution: manifest.resolution, output_dir: outputDir, isolate: approved.isolate, project_fingerprint: before })}\n`);
+    let uproject = approved.uproject;
+    if (approved.isolate === 'copy') {
+      setProgress(input.job_id, { step: 'prepare', detail: 'copying the approved Unreal project for this job' });
+      const copyDir = path.join(jobDir, 'unreal-project', path.basename(sourceDir));
+      fsImpl.rmSync(copyDir, { recursive: true, force: true });
+      copyProject(sourceDir, copyDir, { fsImpl });
+      uproject = path.join(copyDir, path.basename(approved.uproject));
+    }
+    const rendered = await renderInEditor({ engine, jobId: input.job_id, uproject, map: sequence.map, sequence: sequence.sequence, framesDir, manifest, jobDir, log, settings: sequence.settings, device: { rhi: approved.rhi, requireAdapter: approved.requireAdapter, renderOffscreen: approved.renderOffscreen }, signal });
+    const after = projectFingerprint(sourceDir, { fsImpl });
+    setProgress(input.job_id, { step: 'encode', detail: 'preview MP4' });
+    const preview = path.join(outputDir, `${manifest.shot_id}_t${String(manifest.take).padStart(3, '0')}_unreal.mp4`);
+    await encodePreview({ framesDir, framePattern: rendered.run.pattern, startNumber: rendered.run.start, manifest, root, outFile: preview, log, signal });
+    setProgress(input.job_id, { step: 'verify', detail: 'decode and count every frame' });
+    const playback = await probe(preview, { log, signal });
+    const checks = {
+      frames: { pass: rendered.run.count === manifest.frames.count && rendered.run.contiguous, detail: `${rendered.run.count} contiguous frames ${rendered.run.first}..${rendered.run.last}`, measured: { frames: rendered.run.count, expected: manifest.frames.count } },
+      device: rendered.deviceCheck,
+      project_preserved: { pass: before.sha256 === after.sha256, detail: before.sha256 === after.sha256 ? `approved project unchanged (${before.files} files)` : 'the approved Unreal project changed during the job', measured: { before: before.sha256, after: after.sha256, files: before.files } },
+      timing: timingCheck(manifest, playback),
+      resolution: { pass: playback.width === manifest.resolution.width && playback.height === manifest.resolution.height, detail: `${playback.width}x${playback.height}`, measured: { width: playback.width, height: playback.height } }
+    };
+    const checksFile = path.join(outputDir, 'checks.json');
+    fsImpl.writeFileSync(checksFile, JSON.stringify(checks, null, 1));
+    const resultFile = path.join(jobDir, 'unreal_render_result.json');
+    const outputs = [
+      artifact('preview_mp4', preview, root, 'Unreal Movie Render Queue preview (in-editor)'),
+      { kind: 'frames', path: framesDir, project_path: path.relative(root, framesDir).split(path.sep).join('/'), sha256: null, bytes: null, label: `${rendered.run.count} frames` },
+      artifact('checks', checksFile, root),
+      artifact('render_result', resultFile, root, 'editor render result'),
+      artifact('log', log, root, 'worker log'),
+      artifact('log', rendered.renderLog, root, 'unreal_render.log'),
+      { kind: 'level_sequence', path: sequence.sequence, project_path: null, sha256: null, bytes: null, label: `${manifest.unreal.sequence_id} in ${approved.id}` }
+    ];
+    const ok = playback.decoded_ok === true && Object.values(checks).every((c) => c.pass === true);
+    return {
+      schema: RENDER_OUTPUT_SCHEMA,
+      ok,
+      job_id: input.job_id,
+      shot_id: manifest.shot_id,
+      take: manifest.take,
+      engine: { name: 'unreal', version: engine.version, changelist: engine.changelist, executable: engine.editor },
+      worker: { node_id: process.env.MCCLUSTER_NODE_ID || null, hostname: os.hostname(), adapter: UNREAL_SEQUENCE_ADAPTER },
+      unreal: { uproject: approved.uproject, map: sequence.map, sequence: sequence.sequence, project_id: approved.id, sequence_id: manifest.unreal.sequence_id, mode: 'sequence' },
+      device: deviceReport(rendered.device),
+      output_dir: outputDir,
+      outputs,
+      checks,
+      playback,
+      error: ok ? null : `render is not accepted: ${Object.entries(checks).filter(([, c]) => !c.pass).map(([k, c]) => `${k}: ${c.detail}`).join('; ')}`,
       started_at: started,
       finished_at: now().toISOString()
     };
@@ -489,6 +622,8 @@ export function createProductionExecutor(config, { runner = defaultRunner({ plat
       node_label: config.nodeLabel,
       capabilities: config.capabilities,
       projects: Object.keys(config.projects),
+      // Approved Unreal ids only (no paths): what sequence-mode jobs may name.
+      unreal_projects: Object.fromEntries(Object.values(config.unrealProjects).map((p) => [p.id, { production_project: p.productionProject, rhi: p.rhi, require_adapter: p.requireAdapter, isolate: p.isolate, sequences: Object.keys(p.sequences) }])),
       engines: {
         unreal: unreal ? { ok: unreal.ok, version: unreal.version || null, changelist: unreal.changelist || null, reason: unreal.reason || null } : null,
         blender: has('blender'),

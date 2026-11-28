@@ -11,7 +11,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { createProductionExecutor, loadExecutorConfig, resolveInProject, detectUnreal } from '../src/production/executor.mjs';
 import { normalizeShotRender, manifestHash, PRODUCTION_PROTOCOL, validateRenderOutput } from '../src/production/contract.mjs';
-import { s31Manifest } from './helpers/production-fixtures.mjs';
+import { s31Manifest, simulateInEditorRender } from './helpers/production-fixtures.mjs';
 
 function sandbox() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcc-prod-exec-'));
@@ -51,7 +51,7 @@ function simulatedRunner(calls, { frames = 120, duration = 5 } = {}) {
       globalThis.__framesDir = ue.frames_dir;
       void shotDir;
     } else if (file === FAKE_UE.editor) {
-      for (let i = 0; i < frames; i += 1) fs.writeFileSync(path.join(globalThis.__framesDir, `s31.${String(i).padStart(4, '0')}.png`), 'png');
+      simulateInEditorRender(args, opts.env, { frames });
       opts.onLine?.('LogMovieRenderPipeline: [ 1 / 120 ]');
     } else if (path.basename(file) === 'ffmpeg') {
       const out = args[args.length - 1];
@@ -105,7 +105,7 @@ test('executor: refuses unknown actions, disabled capabilities and tampered mani
   await assert.rejects(ex.execute(wrongMaster), { code: 'MASTER_VERSION_MISMATCH' });
 });
 
-test('executor (SIMULATED runner): Unreal flow exports, builds, renders through MRQ, encodes and reports', async () => {
+test('executor (SIMULATED runner): Unreal build flow exports, builds, renders in the editor queue, encodes and reports', async () => {
   const { root, tools, sha } = sandbox();
   const calls = [];
   const ex = createProductionExecutor(loadExecutorConfig({ projects: { 'get-it-back': root }, capabilities: ['production.render.unreal'], tools }), { runner: simulatedRunner(calls), detect: () => FAKE_UE });
@@ -123,7 +123,12 @@ test('executor (SIMULATED runner): Unreal flow exports, builds, renders through 
   // Every process is started with an argument list: no shell, no script text from the job.
   for (const c of calls) assert.ok(Array.isArray(c.args) && c.args.every((a) => typeof a === 'string'));
   assert.ok(calls[1].args.some((a) => a.startsWith('-ExecutePythonScript=') && a.endsWith(path.join('unreal', 'mcc_build_shot.py'))));
-  assert.ok(calls[2].args.includes('-game') && calls[2].args.some((a) => a.startsWith('-MoviePipelineConfig=')));
+  // The render uses the in-editor queue that worked on Prime, not -game -MoviePipelineConfig.
+  assert.ok(calls[2].args.some((a) => a.startsWith('-ExecutePythonScript=') && a.endsWith(path.join('unreal', 'mcc_render_sequence.py'))));
+  assert.ok(calls[2].args.includes('-d3d12'));
+  assert.ok(!calls[2].args.includes('-game') && !calls[2].args.some((a) => a.startsWith('-MoviePipelineConfig=')));
+  assert.equal(out.checks.device.pass, true);
+  assert.equal(out.device.adapter, 'AMD Radeon RX 7800 XT');
   // Negative audio offset: the line starts 0.621 s after the first frame.
   const enc = calls[3].args;
   assert.ok(enc.join(' ').includes('adelay=621:all=1,apad'));

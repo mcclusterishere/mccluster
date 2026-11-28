@@ -1,5 +1,5 @@
 {
-  "_comment": "Example for Prime. Copy to %LOCALAPPDATA%\\McCluster\\production-executor.json (outside git) and set MCCLUSTER_PRODUCTION_CONFIG to it. Paths marked <...> must be filled in on the machine.",
+  "_comment": "Example for Prime. Copy to %LOCALAPPDATA%\\McCluster\\production-executor.json (outside git) and set MCCLUSTER_PRODUCTION_CONFIG to it. Paths marked <...> must be filled in on the machine. unreal_projects is the owner's registry of approved Unreal projects and Level Sequences: a job names only these ids. tools/production/unreal/find-proven-render.ps1 prints the s31 entry from the project and logs that rendered the proof.",
   "node_label": "prime",
   "projects": {
     "get-it-back": "C:\\Users\\<you>\\AppData\\Local\\McCluster\\Productions\\get-it-back"
@@ -15,6 +15,29 @@
     "ffprobe": "<path to ffprobe.exe>"
   },
   "unreal_project_name": "McCPreviz",
+  "unreal_device": {
+    "require_adapter": "Radeon"
+  },
+  "unreal_projects": {
+    "gib-s31-proof": {
+      "production_project": "get-it-back",
+      "uproject": "<absolute path to the isolated project copy that rendered the proof>.uproject",
+      "isolate": "copy",
+      "rhi": "d3d12",
+      "require_adapter": "Radeon",
+      "render_offscreen": false,
+      "sequences": {
+        "s31-standin": {
+          "map": "/Game/<map the proof queue rendered>",
+          "sequence": "/Game/<Level Sequence the proof queue rendered>",
+          "shot_ids": ["s31"],
+          "frame_start": 0,
+          "frame_end": 119,
+          "settings": { "spatial_samples": 1, "temporal_samples": 1 }
+        }
+      }
+    }
+  },
   "timeouts": {
     "export": 900000,
     "build": 1800000,

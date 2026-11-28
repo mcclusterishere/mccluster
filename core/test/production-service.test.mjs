@@ -246,3 +246,50 @@ test('tools: nine named actions, none takes a command, and the actor comes from 
   assert.equal(ok.project.id, 'get-it-back');
   await assert.rejects(callProductionTool('core.production.shell', { org_id: ORG }, { actor: OWNER }, { svc }), { code: 'TOOL_NOT_FOUND' });
 });
+
+test('service: a sequence-mode s31 job — approved sequence, live progress while running, the lease node and a preview once done', async () => {
+  const { s31SequenceManifest, s31SequenceAsset } = await import('./helpers/production-fixtures.mjs');
+  const p = project();
+  p.assets.push(s31SequenceAsset());
+  const store = memoryProductionStore({ projects: [p], orgOwners: [{ org_id: ORG, profile_id: OWNER.user_id }] });
+  const compute = memoryCompute();
+  const svc = createProductionService({ store, compute });
+  const { job } = await svc.renderSubmit({ orgId: ORG, actor: OWNER, manifest: s31SequenceManifest(), source: 'creator-suite' });
+  assert.equal(job.status, 'queued');
+  assert.equal(job.preview, null);
+  const task = compute.claim('node_prime', ['production.render.unreal']);
+  assert.deepEqual(task.input.manifest.unreal, { project_id: 'gib-s31-proof', sequence_id: 's31-standin' });
+  assert.equal(task.input.manifest.source.master, null);
+  store._leases.set(task.id, { node_id: 'node_prime', status: 'running', progress: { step: 'render', frames_done: 61, frames_total: 120 } });
+  const running = (await svc.jobGet({ orgId: ORG, actor: OWNER, jobId: job.id })).job;
+  assert.equal(running.status, 'running');
+  assert.equal(running.progress.frames_done, 61);
+  // Done: the executor reports no node id; the lease node is the worker of record.
+  compute.complete(task.id, simulatedOutput(task, {
+    worker: { node_id: null, hostname: 'prime', adapter: 'mccluster-unreal-sequence/1' },
+    unreal: { uproject: 'C:/proof/GIBProof.uproject', map: '/Game/Proof/S31_Map', sequence: '/Game/Proof/S31_Seq', project_id: 'gib-s31-proof', sequence_id: 's31-standin', mode: 'sequence' },
+    device: { rhi: 'D3D12', adapter: 'AMD Radeon RX 7800 XT', vendor_id: '0x1002', driver: '32.0', software: false, gpu_verified: true, evidence: ['LogD3D12RHI: Found D3D12 adapter 0: AMD Radeon RX 7800 XT (VendorId: 1002'] },
+    output_dir: 'C:/p/renders/unreal/s31/t001-abcdef12-20261128T101858Z',
+    playback: { duration_s: 5, frames: 120, width: 720, height: 1280, has_audio: false, codec: 'h264', decoded_ok: true }
+  }));
+  compute.tasks.get(task.id).locked_by_node_id = null; // the lease RPC clears it on completion
+  const done = (await svc.jobGet({ orgId: ORG, actor: OWNER, jobId: job.id })).job;
+  assert.equal(done.status, 'succeeded');
+  assert.equal(done.progress, null, 'a finished job shows no stale progress');
+  assert.equal(done.worker.node_id, 'node_prime');
+  assert.equal(done.worker.adapter, 'mccluster-unreal-sequence/1');
+  assert.equal(done.device.adapter, 'AMD Radeon RX 7800 XT');
+  assert.equal(done.output_dir, 'C:/p/renders/unreal/s31/t001-abcdef12-20261128T101858Z');
+  assert.equal(done.preview.frames, 120);
+  assert.equal(done.preview.sha256, 'a'.repeat(64));
+  // A failed render never offers a preview to open.
+  const { job: retake } = await svc.renderSubmit({ orgId: ORG, actor: OWNER, retakeOf: job.id, changes: { note: 'one change' } });
+  assert.equal(retake.take, 2);
+  const t2 = compute.claim('node_prime', ['production.render.unreal']);
+  assert.equal(t2.input.manifest.shot_id, 's31');
+  compute.complete(t2.id, simulatedOutput(t2, { ok: false, error: 'render is not accepted: device: no GPU' }));
+  const failed = (await svc.jobGet({ orgId: ORG, actor: OWNER, jobId: retake.id })).job;
+  assert.equal(failed.status, 'failed');
+  assert.equal(failed.preview, null);
+  assert.equal(compute.claim('node_prime', ['production.render.unreal']), null, 'nothing else was queued');
+});

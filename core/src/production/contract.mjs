@@ -61,6 +61,9 @@ export const SHOT_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 export const ACTOR_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 export const ASSET_ID = /^[a-z0-9][a-z0-9_.-]{0,127}$/;
 export const SHA256 = /^[a-f0-9]{64}$/;
+// Approved Unreal ids. A job names a project and a Level Sequence by id
+// only; the worker maps each id to files through its owner's registry.
+export const UNREAL_ID = /^[a-z0-9][a-z0-9_.-]{0,63}$/;
 // A project-relative path: forward slashes, no drive, no leading slash,
 // no '..' segment, no NUL, a short allowlist of characters. Workers
 // resolve it under the project root THEY were configured with; a job can
@@ -177,9 +180,26 @@ export function normalizeShotRender(raw) {
     if (!(v >= BOUNDS.minEdge && v <= BOUNDS.maxEdge) || v % 2) errors.push(`${label} must be an even integer ${BOUNDS.minEdge}..${BOUNDS.maxEdge}`);
   }
 
+  // Sequence mode: render an approved, already-built Level Sequence in an
+  // approved Unreal project (the proven in-editor path). No master, no
+  // export, no build: the job names the two ids and the shot range.
+  let unrealRef = null;
+  if (raw.unreal != null) {
+    if (!isObject(raw.unreal)) errors.push('unreal must be an object');
+    else {
+      const projectRef = str(raw.unreal.project_id, 64);
+      const sequenceRef = str(raw.unreal.sequence_id, 64);
+      if (!UNREAL_ID.test(projectRef)) errors.push('unreal.project_id is invalid');
+      if (!UNREAL_ID.test(sequenceRef)) errors.push('unreal.sequence_id is invalid');
+      unrealRef = { project_id: projectRef, sequence_id: sequenceRef };
+      if (engine !== 'unreal') errors.push('unreal.project_id and unreal.sequence_id need engine unreal');
+    }
+  }
+
   const source = isObject(raw.source) ? raw.source : {};
+  const sourceOptional = Boolean(unrealRef) && source.master == null;
   const normalizedSource = {
-    master: relPath(source.master, 'source.master', errors),
+    master: sourceOptional ? null : relPath(source.master, 'source.master', errors),
     master_sha256: hashOrNull(source.master_sha256, 'source.master_sha256', errors),
     set_asset: source.set_asset == null ? null : (ASSET_ID.test(str(source.set_asset, 128)) ? str(source.set_asset, 128) : (errors.push('source.set_asset is invalid'), null)),
     set_version: source.set_version == null ? null : int(source.set_version),
@@ -193,7 +213,7 @@ export function normalizeShotRender(raw) {
     props: Array.isArray(source.props) ? source.props.map((s) => str(s, 160)).filter(Boolean).slice(0, 64) : []
   };
   if (normalizedSource.set_version != null && !(normalizedSource.set_version >= 1)) errors.push('source.set_version must be a positive integer');
-  if (!normalizedSource.camera) errors.push('source.camera is required');
+  if (!normalizedSource.camera && !unrealRef) errors.push('source.camera is required');
 
   const audio = raw.audio == null ? null : (isObject(raw.audio) ? {
     path: relPath(raw.audio.path, 'audio.path', errors),
@@ -235,6 +255,7 @@ export function normalizeShotRender(raw) {
     engine,
     frames: { start, end, fps, count, duration_s: Number(duration.toFixed(6)), cut },
     resolution: { width, height },
+    unreal: unrealRef,
     source: normalizedSource,
     audio,
     actors: normalizedActors,
@@ -312,8 +333,24 @@ export function validateShotAgainstProject(manifest, project) {
 
   const assets = Array.isArray(project.assets) ? project.assets : [];
   const byPath = new Map(assets.filter((a) => a?.path).map((a) => [a.path, a]));
-  const master = byPath.get(manifest.source.master);
-  if (!master) errors.push(`master ${manifest.source.master} is not a registered project asset`);
+  const master = manifest.source.master ? byPath.get(manifest.source.master) : null;
+  if (manifest.unreal) {
+    // The sequence must be registered and approved for this project, in the
+    // Unreal project the job names, and (when the record lists shots) for
+    // this shot. The worker checks the same ids against its own registry.
+    const sequence = assets.find((a) => a?.kind === 'unreal_sequence' && a.asset_id === manifest.unreal.sequence_id);
+    const meta = isObject(sequence?.metadata) ? sequence.metadata : {};
+    if (!sequence) errors.push(`Unreal sequence ${manifest.unreal.sequence_id} is not a registered project asset`);
+    else if (sequence.approved !== true) errors.push(`Unreal sequence ${manifest.unreal.sequence_id} is not approved`);
+    else if (meta.unreal_project_id !== manifest.unreal.project_id) errors.push(`Unreal sequence ${manifest.unreal.sequence_id} is not approved in Unreal project ${manifest.unreal.project_id}`);
+    else if (Array.isArray(meta.shot_ids) && meta.shot_ids.length && !meta.shot_ids.includes(manifest.shot_id)) errors.push(`Unreal sequence ${manifest.unreal.sequence_id} is not approved for shot ${manifest.shot_id}`);
+    else if (Number.isInteger(meta.frame_start) && Number.isInteger(meta.frame_end) && (manifest.frames.start < meta.frame_start || manifest.frames.end > meta.frame_end)) {
+      errors.push(`frames ${manifest.frames.start}-${manifest.frames.end} are outside the approved range of ${manifest.unreal.sequence_id} (${meta.frame_start}-${meta.frame_end})`);
+    }
+  }
+  if (!manifest.source.master) {
+    if (!manifest.unreal) errors.push('source.master is required');
+  } else if (!master) errors.push(`master ${manifest.source.master} is not a registered project asset`);
   else {
     if (master.kind !== 'master') errors.push(`${manifest.source.master} is registered as ${master.kind}, not a master`);
     if (manifest.source.master_sha256 && master.sha256 && master.sha256 !== manifest.source.master_sha256) {
@@ -349,7 +386,11 @@ export function validateShotAgainstProject(manifest, project) {
   // Shot record: frames inside the shot's registered range, if any.
   const shots = Array.isArray(project.shots) ? project.shots : [];
   const shot = shots.find((s) => s.shot_id === manifest.shot_id);
-  if (shot && Number.isInteger(shot.start_frame) && Number.isInteger(shot.end_frame)) {
+  // Sequence mode counts frames in the Level Sequence's own timeline,
+  // bounded by the approved range above, not the episode's.
+  if (manifest.unreal) {
+    if (!shot) warnings.push(`shot ${manifest.shot_id} has no shot record`);
+  } else if (shot && Number.isInteger(shot.start_frame) && Number.isInteger(shot.end_frame)) {
     if (manifest.frames.end < shot.start_frame || manifest.frames.start > shot.end_frame) {
       errors.push(`frames ${manifest.frames.start}-${manifest.frames.end} do not overlap shot ${shot.shot_id} (${shot.start_frame}-${shot.end_frame})`);
     } else if (manifest.frames.start < shot.start_frame || manifest.frames.end > shot.end_frame) {
@@ -361,7 +402,7 @@ export function validateShotAgainstProject(manifest, project) {
     errors.push(`frames give ${manifest.frames.duration_s} s, expected ${manifest.checks.expect_duration_s} s`);
   }
   if (manifest.checks.phone_grip && !manifest.source.props.length) errors.push('checks.phone_grip needs the phone in source.props');
-  if (manifest.engine === 'unreal' && !manifest.source.export_id) warnings.push('no export_id: the worker exports a new version of the set and shot from the master first');
+  if (manifest.engine === 'unreal' && !manifest.unreal && !manifest.source.export_id) warnings.push('no export_id: the worker exports a new version of the set and shot from the master first');
   return { ok: errors.length === 0, errors, warnings };
 }
 
@@ -386,6 +427,7 @@ export function planRetake(previousJob, changes = {}) {
   const prev = previousJob.manifest;
   if (changes.shot_id && changes.shot_id !== prev.shot_id) throw new ProductionContractError('a retake re-renders only its own shot', { code: 'RETAKE_SCOPE' });
   if (changes.project_id && changes.project_id !== prev.project_id) throw new ProductionContractError('a retake stays in its project', { code: 'RETAKE_SCOPE' });
+  if (changes.unreal !== undefined) throw new ProductionContractError('a retake renders the same approved Unreal project and sequence', { code: 'RETAKE_SCOPE' });
   const allowed = ['source', 'audio', 'actors', 'checks', 'note', 'engine', 'resolution', 'frames'];
   const next = { ...prev };
   for (const key of allowed) if (changes[key] !== undefined) next[key] = isObject(prev[key]) && isObject(changes[key]) ? { ...prev[key], ...changes[key] } : changes[key];
@@ -425,7 +467,7 @@ export function productionStatus(task, job = {}) {
 
 /* ---------- worker output manifest ---------- */
 
-const OUTPUT_KINDS = new Set(['preview_mp4', 'frames', 'log', 'export', 'unreal_project', 'level_sequence', 'checks', 'curves', 'transcript', 'receipt', 'blend']);
+const OUTPUT_KINDS = new Set(['preview_mp4', 'frames', 'log', 'export', 'unreal_project', 'level_sequence', 'checks', 'curves', 'transcript', 'receipt', 'blend', 'render_result']);
 
 export function validateRenderOutput(raw) {
   const errors = [];
@@ -462,7 +504,17 @@ export function validateRenderOutput(raw) {
       name: str(raw.engine.name, 40), version: str(raw.engine.version, 40), changelist: raw.engine.changelist ?? null, executable: str(raw.engine.executable, 400) || null
     } : null,
     worker: isObject(raw.worker) ? { node_id: str(raw.worker.node_id, 80) || null, hostname: str(raw.worker.hostname, 120) || null, adapter: str(raw.worker.adapter, 80) || null } : null,
-    unreal: isObject(raw.unreal) ? { uproject: str(raw.unreal.uproject, 400) || null, map: str(raw.unreal.map, 300) || null, sequence: str(raw.unreal.sequence, 300) || null } : null,
+    unreal: isObject(raw.unreal) ? {
+      uproject: str(raw.unreal.uproject, 400) || null, map: str(raw.unreal.map, 300) || null, sequence: str(raw.unreal.sequence, 300) || null,
+      project_id: str(raw.unreal.project_id, 64) || null, sequence_id: str(raw.unreal.sequence_id, 64) || null, mode: str(raw.unreal.mode, 40) || null
+    } : null,
+    // The device the engine actually rendered on, read from its own log.
+    device: isObject(raw.device) ? {
+      rhi: str(raw.device.rhi, 40) || null, adapter: str(raw.device.adapter, 200) || null, vendor_id: str(raw.device.vendor_id, 20) || null,
+      driver: str(raw.device.driver, 120) || null, software: raw.device.software === true, gpu_verified: raw.device.gpu_verified === true,
+      evidence: Array.isArray(raw.device.evidence) ? raw.device.evidence.slice(0, 12).map((line) => str(line, 300)) : []
+    } : null,
+    output_dir: str(raw.output_dir, 1000) || null,
     outputs: normalized,
     checks: normalizedChecks,
     playback: isObject(raw.playback) ? {
