@@ -52,9 +52,19 @@ Windows Claude app needs updating). `System32` should be removed from that list.
 
 0. **Upgrade, don't replace.** Done for 131 pieces (README → "Meshes upgraded in place"). Remaining v3 meshes (task
    chairs, files, carrels, F4 set gear, rugs) can be upgraded the same way once a better kit master exists.
-1. **Review renders.** If the cloud session committed `renders/` (29 JPEGs: `F0X_TOP/EYE/BOARD`, `F06_HALO_SUITE`,
-   `F01_ENTRY`, `BEFORE_F01_*`, `BEFORE_F06_*`) plus `renders/compare/`, review them. If it did not, they were lost with
-   the container: re-render with `render_hq_interior_v2.py`, then run `compose_review_sheets.py`.
+1. **Renders: DONE for v2.1 (cloud CPU, 2026-11-28).** `renders/` holds 29 JPEGs rendered from the committed v2.1
+   `EU_HQ_Interiors_v2.blend`, which was re-verified at 81/81 before rendering: `F0X_TOP` (plan, cut at 9.5 ft AFF),
+   `F0X_EYE` (datum 36,28 at 1.65 m), `F0X_BOARD` (framed like the board), `F06_HALO_SUITE`, `F01_ENTRY`, and
+   `BEFORE_F01_*` / `BEFORE_F06_*` (official builder models, same cameras and ceiling lights). `renders/compare/` holds
+   `F0X_board_vs_rebuild.jpg` for all seven floors and `F0X_before_after_{TOP,EYE,BOARD}.jpg` for F1 and F6. Settings:
+   Cycles CPU, 40 samples + OIDN, AgX, 1280×720 (plans 1200×1200). These are review quality, not final beauty
+   renders. Re-render on a GPU (step 2) for presentation quality.
+   Review notes: the floors read as their boards (palettes, feature walls, PRIM2 wall, suspended Halo, suite, roof
+   overlook). Differences that are deliberate: F6 shows the restored east-wall desk line (existing layer kept, plus the
+   relocated prep desks); the boards' stair positions, F6 pedestal, F6 12-seat table, F5 glazed east room and F7 pergola are not
+   built (plan wins). The superseded v2 renders were not committed.
+   If you change the build, re-render with `render_hq_interior_v2.py`, then run
+   `compose_review_sheets.py <png dir> <pack dir> <hq-interior-v2 dir>`.
 2. **Rebuild and render on Prime**, with local Blender and its GPU, from the pack already on Prime. Save to a NEW path
    in the Show project, for example `...\HQ Blender Studio\EU_HQ_Interiors_v2.blend`. Keep the existing HQ files intact.
    The commands are in `README.md` → "Where it was built":
@@ -62,7 +72,7 @@ Windows Claude app needs updating). `System32` should be removed from that list.
    - run `build_hq_interior_v2.py --repo . --pack <pack> --out <new .blend>`
    - run `verify_hq_interior_v2.py` (expect 81/81)
    - run `render_hq_interior_v2.py --samples 64` or more; set `cycles.device = GPU` if available
-3. **Compare and report.** Compare the renders against the boards (`renders/compare/*_board_vs_rebuild.jpg`) and report
+3. **Compare and report** (first pass done, see step 1). After a GPU re-render, compare the renders against the boards (`renders/compare/*_board_vs_rebuild.jpg`) and report
    honestly where they match and where they don't.
 4. **Owner decisions still open:**
    - McCluster office artwork for the empty slot `F06_BRAND_SLOT_mccluster-office`.

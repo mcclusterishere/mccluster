@@ -41,10 +41,10 @@ def sheet(cells, name, h=560):
 
 for f in range(1, 8):
     sheet([(pack / BOARDS[f], f"Approved board {f:02d} (visual direction)"),
-           (final / f"F0{f}_BOARD.png", f"Rebuild v2 — F0{f} board-matching view"),
-           (final / f"F0{f}_TOP.png", f"Rebuild v2 — F0{f} plan check (north up)")], f"F0{f}_board_vs_rebuild.jpg")
+           (final / f"F0{f}_BOARD.png", f"Rebuild v2.1 — F0{f} board-matching view"),
+           (final / f"F0{f}_TOP.png", f"Rebuild v2.1 — F0{f} plan check (north up)")], f"F0{f}_board_vs_rebuild.jpg")
 for f in (1, 6):
     for k in ("TOP", "EYE", "BOARD"):
         sheet([(final / f"BEFORE_F0{f}_{k}.png", f"BEFORE — official builder F0{f} ({k.lower()})"),
-               (final / f"F0{f}_{k}.png", f"AFTER — Interior Rebuild v2 F0{f} ({k.lower()})")], f"F0{f}_before_after_{k}.jpg")
+               (final / f"F0{f}_{k}.png", f"AFTER — Interior Rebuild v2.1 F0{f} ({k.lower()})")], f"F0{f}_before_after_{k}.jpg")
 print("composed")
