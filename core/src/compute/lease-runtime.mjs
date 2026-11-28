@@ -67,13 +67,34 @@ export class LeaseAuthority {
   }
 }
 
+// Executor progress is bounded before it is sent: a handful of scalar
+// fields and short strings, so a heartbeat stays small.
+export function boundedProgress(input) {
+  const out = {};
+  for (const [key, value] of Object.entries(input).slice(0, 16)) {
+    if (!/^[a-z][a-z0-9_]{0,39}$/.test(key)) continue;
+    if (typeof value === 'number' && Number.isFinite(value)) out[key] = value;
+    else if (typeof value === 'boolean') out[key] = value;
+    else if (typeof value === 'string') out[key] = value.slice(0, 300);
+  }
+  return out;
+}
+
 // request(path, body, signal) returns the decoded gateway response. Its caller
 // must enforce a network timeout, including reading the response body.
+// progress(task) may return the executor's own progress object, sent with
+// each lease heartbeat. A heartbeat reply with cancel_requested (the owner
+// canceled the task while this node held it) stops the executor and
+// reports a final, non-retried failure while the lease is still ours.
 export async function runLease({ lease, nodeId, sentAt, request, execute, signal, clock = systemClock,
-  renewMs = 30_000, watchMs = 250, marginMs = 1000, onEvent = () => {},
+  renewMs = 30_000, watchMs = 250, marginMs = 1000, onEvent = () => {}, progress = null,
   setIntervalImpl = setInterval, clearIntervalImpl = clearInterval }) {
   const authority = new LeaseAuthority({ lease, nodeId, sentAt, clock, marginMs });
   const leaseSignal = authority.controller.signal;
+  const work = new AbortController();
+  let cancelRequested = false;
+  const stopWork = () => { if (!work.signal.aborted) work.abort(leaseSignal.reason); };
+  leaseSignal.addEventListener('abort', stopWork, { once: true });
   const base = `/v1/compute/leases/${lease.lease_id}`;
   const body = { lease_token: lease.lease_token };
   const abort = () => authority.lose(signal.reason || leaseError('Node shutdown'));
@@ -102,9 +123,21 @@ export async function runLease({ lease, nodeId, sentAt, request, execute, signal
       renewal = (async () => {
         try {
           authority.assertCurrent();
-          const reply = await request(`${base}/heartbeat`, { ...body, extend_seconds: 120, progress: { state: 'running' } }, leaseSignal);
+          let reported = { state: 'running' };
+          if (typeof progress === 'function') {
+            try {
+              const extra = await progress(lease.task);
+              if (extra && typeof extra === 'object' && !Array.isArray(extra)) reported = { ...boundedProgress(extra), state: 'running' };
+            } catch (error) { onEvent('lease_progress_read_failed', error); }
+          }
+          const reply = await request(`${base}/heartbeat`, { ...body, extend_seconds: 120, progress: reported }, leaseSignal);
           if (reply?.ok !== true) throw authority.lose('Lease renewal was not acknowledged');
           authority.confirm(reply.result, renewedAt);
+          if (reply.cancel_requested === true && !cancelRequested) {
+            cancelRequested = true;
+            onEvent('lease_cancel_requested', leaseError('Task canceled by its owner', 'TASK_CANCELED'));
+            work.abort(leaseError('Task canceled by its owner', 'TASK_CANCELED'));
+          }
         } catch (error) {
           if ([401, 403, 409].includes(error.status)) authority.lose(error);
           onEvent('lease_heartbeat_failed', error);
@@ -112,7 +145,8 @@ export async function runLease({ lease, nodeId, sentAt, request, execute, signal
       })();
     }, renewMs);
     heartbeat?.unref?.();
-    const result = await execute(lease.task, leaseSignal);
+    const result = await execute(lease.task, work.signal);
+    if (cancelRequested) throw leaseError('Task canceled by its owner', 'TASK_CANCELED');
     finishing = true;
     clearIntervalImpl(heartbeat);
     // No in-flight renewal may race completion or resurrect local authority.
@@ -130,15 +164,18 @@ export async function runLease({ lease, nodeId, sentAt, request, execute, signal
     if (!leaseSignal.aborted && !completing) {
       try {
         authority.assertCurrent();
-        await request(`${base}/fail`, { ...body, error: error.message, retry: error.retryable !== false }, leaseSignal);
+        await request(`${base}/fail`, cancelRequested
+          ? { ...body, error: 'CANCELED: task canceled by its owner', retry: false }
+          : { ...body, error: error.message, retry: error.retryable !== false }, leaseSignal);
       } catch (reportError) { onEvent('lease_failure_report_failed', reportError); }
     }
     onEvent('lease_execution_stopped', error);
-    return { status: leaseSignal.aborted ? 'authority_lost' : 'unconfirmed', task_id: lease.task.id, lease_id: lease.lease_id, attempt: lease.attempt };
+    return { status: leaseSignal.aborted ? 'authority_lost' : (cancelRequested ? 'canceled' : 'unconfirmed'), task_id: lease.task.id, lease_id: lease.lease_id, attempt: lease.attempt };
   } finally {
     clearIntervalImpl(watcher);
     clearIntervalImpl(heartbeat);
     signal?.removeEventListener('abort', abort);
+    leaseSignal.removeEventListener('abort', stopWork);
     authority.lose('Lease execution finished');
   }
 }

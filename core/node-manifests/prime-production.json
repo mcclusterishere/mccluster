@@ -1,0 +1,127 @@
+{
+  "_comment": "Prime: Unreal Movie Render Queue and the local Blender fallback for the production pipeline (docs/control-plane/PRODUCTION-PIPELINE.md). The executor is core/src/production/executor.mjs on 127.0.0.1:4792. Owned-only capabilities: the node must be enrolled with trust 'owned'.",
+  "max_leases": 1,
+  "labels": {
+    "site": "prime",
+    "trust": "owned",
+    "role": "production-render"
+  },
+  "capabilities": [
+    {
+      "capability": "production.render.unreal",
+      "implementation": "unreal.mrq.prime",
+      "backend": "unreal",
+      "model": "Unreal Engine 5.8 Movie Render Queue",
+      "version": "1",
+      "features": {
+        "engine": "unreal",
+        "level_sequence": true,
+        "movie_render_queue": true,
+        "gpu": true,
+        "offline": true
+      },
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "protocol",
+          "job_id",
+          "kind",
+          "manifest",
+          "manifest_sha256"
+        ],
+        "properties": {
+          "protocol": {
+            "const": "mccluster-production/1"
+          },
+          "job_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "manifest": {
+            "type": "object"
+          },
+          "manifest_sha256": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "const": "mccluster-render-output/1"
+          }
+        }
+      },
+      "max_concurrency": 1,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4792/execute",
+        "progress_url": "http://127.0.0.1:4792/progress",
+        "health_url": "http://127.0.0.1:4792/ready",
+        "health_method": "GET",
+        "health_timeout_ms": 2500,
+        "timeout_ms": 3600000
+      }
+    },
+    {
+      "capability": "production.render.blender",
+      "implementation": "blender.local.prime",
+      "backend": "blender",
+      "model": "Blender 5.3",
+      "version": "1",
+      "features": {
+        "engine": "blender",
+        "fallback": true,
+        "offline": true
+      },
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "protocol",
+          "job_id",
+          "kind",
+          "manifest",
+          "manifest_sha256"
+        ],
+        "properties": {
+          "protocol": {
+            "const": "mccluster-production/1"
+          },
+          "job_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "manifest": {
+            "type": "object"
+          },
+          "manifest_sha256": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "const": "mccluster-render-output/1"
+          }
+        }
+      },
+      "max_concurrency": 1,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4792/execute",
+        "progress_url": "http://127.0.0.1:4792/progress",
+        "health_url": "http://127.0.0.1:4792/ready",
+        "health_method": "GET",
+        "health_timeout_ms": 2500,
+        "timeout_ms": 3600000
+      }
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "_comment": "Shiloh: MediaPipe face tracking and Faster Whisper transcripts for the production pipeline. The executor is core/src/production/executor.mjs on 127.0.0.1:4792. Owned-only capabilities: the node must be enrolled with trust 'owned'.",
+  "max_leases": 1,
+  "labels": {
+    "site": "shiloh",
+    "trust": "owned",
+    "role": "production-inference"
+  },
+  "capabilities": [
+    {
+      "capability": "production.facetrack.mediapipe",
+      "implementation": "mediapipe.facelandmarker.shiloh",
+      "backend": "mediapipe",
+      "model": "MediaPipe Face Landmarker",
+      "version": "1",
+      "features": {
+        "face_track": true,
+        "blendshapes": true,
+        "offline": true
+      },
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "protocol",
+          "job_id",
+          "kind",
+          "manifest",
+          "manifest_sha256"
+        ],
+        "properties": {
+          "protocol": {
+            "const": "mccluster-production/1"
+          },
+          "job_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "manifest": {
+            "type": "object"
+          },
+          "manifest_sha256": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "const": "mccluster-render-output/1"
+          }
+        }
+      },
+      "max_concurrency": 1,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4792/execute",
+        "progress_url": "http://127.0.0.1:4792/progress",
+        "health_url": "http://127.0.0.1:4792/ready",
+        "health_method": "GET",
+        "health_timeout_ms": 2500,
+        "timeout_ms": 1800000
+      }
+    },
+    {
+      "capability": "production.transcript.whisper",
+      "implementation": "faster-whisper.shiloh",
+      "backend": "faster-whisper",
+      "model": "Faster Whisper",
+      "version": "1",
+      "features": {
+        "transcript": true,
+        "word_timestamps": true,
+        "offline": true
+      },
+      "input_schema": {
+        "type": "object",
+        "required": [
+          "protocol",
+          "job_id",
+          "kind",
+          "manifest",
+          "manifest_sha256"
+        ],
+        "properties": {
+          "protocol": {
+            "const": "mccluster-production/1"
+          },
+          "job_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "manifest": {
+            "type": "object"
+          },
+          "manifest_sha256": {
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "const": "mccluster-render-output/1"
+          }
+        }
+      },
+      "max_concurrency": 1,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4792/execute",
+        "progress_url": "http://127.0.0.1:4792/progress",
+        "health_url": "http://127.0.0.1:4792/ready",
+        "health_method": "GET",
+        "health_timeout_ms": 2500,
+        "timeout_ms": 1800000
+      }
+    }
+  ]
+}

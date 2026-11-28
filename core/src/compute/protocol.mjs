@@ -139,7 +139,16 @@ export function capabilityIds(manifest) {
 // Windows doctor deletes from the node after enrolling) and never by a
 // heartbeat, which a node signs with its own key alone. labels.trust is what
 // a node asserts; it is not the authority.
-export const OWNED_ONLY_CAPABILITIES = new Set(['browser.act']);
+// The production workers (core/src/production/contract.mjs) are owned-only
+// too: recordings, actor likeness and unreleased masters are processed
+// only on machines the owner enrolled as owned.
+export const OWNED_ONLY_CAPABILITIES = new Set([
+  'browser.act',
+  'production.render.unreal',
+  'production.render.blender',
+  'production.facetrack.mediapipe',
+  'production.transcript.whisper'
+]);
 export const ENROLLED_TRUST_LABEL = 'enrolled_trust';
 // Labels the enrolment fixes: a heartbeat keeps the stored value (or leaves the
 // label out when the enrolment did not set it); enrolling again changes them.

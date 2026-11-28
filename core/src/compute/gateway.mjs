@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, clampYieldSeconds, claimableManifest, countLiveGpuNodes, enrollmentLabels, heartbeatLabels, validateCapabilityManifest, validateEnrollment, validateInventory, validateLoad, validateNodeId } from './protocol.mjs';
 import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedRequest } from './signature.mjs';
-import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
+import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease, taskCancelRequested } from './store.mjs';
 import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
 
 const HOST = process.env.CORE_COMPUTE_HOST || '127.0.0.1';
@@ -217,6 +217,13 @@ async function route(req, res) {
     if (parsed.action === 'complete') result = await completeLease(node.id, parsed.leaseId, body.lease_token, body.result || {});
     if (parsed.action === 'fail') result = await failLease(node.id, parsed.leaseId, body.lease_token, body.error || 'compute node failure', body.retry !== false);
     if (!result) throw Object.assign(new Error('Lease transition rejected'), { status: 409, code: 'LEASE_REJECTED' });
+    // An owner's cancel of a task this node holds (production.job.cancel,
+    // production_request_compute_cancel) rides back on the heartbeat. A
+    // failed read never fails the heartbeat.
+    if (parsed.action === 'heartbeat' && result?.task_id) {
+      const cancel = await taskCancelRequested(result.task_id).catch(() => false);
+      if (cancel) return json(res, 200, { ok: true, result, cancel_requested: true });
+    }
     return json(res, 200, { ok: true, result });
   }
 

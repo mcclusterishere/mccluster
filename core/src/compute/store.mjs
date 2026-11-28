@@ -121,6 +121,16 @@ export async function cancelQueuedComputeTask({ orgId, taskId, reason = 'cancele
   return Array.isArray(body) && body.length ? body[0] : null;
 }
 
+// True when the owner asked to cancel a task a node holds: the cancel RPC
+// stamps metadata.cancel_requested_at (production_request_compute_cancel).
+export async function taskCancelRequested(taskId, { restImpl = rest } = {}) {
+  if (!taskId) return false;
+  const params = new URLSearchParams({ id: eq(taskId), select: 'status,metadata', limit: '1' });
+  const { body = [] } = await restImpl(`ops_compute_tasks?${params}`);
+  const row = Array.isArray(body) ? body[0] : null;
+  return Boolean(row && ['leased', 'running'].includes(row.status) && row.metadata?.cancel_requested_at);
+}
+
 export async function startLease(nodeId, leaseId, leaseToken, extendSeconds = 120) {
   return rpc('compute_start_lease', {
     p_node_id: nodeId,

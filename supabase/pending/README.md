@@ -630,3 +630,16 @@ otherwise unchanged. Contract: `docs/control-plane/WORKSTREAM-CHECKPOINTS.md`. O
 rollback: `PROMOTION-ORDER.md`, section 15. Test:
 `PGLITE_MODULE_PATH=<pinned PGlite>/dist/index.js node scripts/ai-context-workstreams-sql-check.mjs`
 (disposable database; apply twice, privileges, behaviour, rollback, re-apply). Never applied here.
+
+Pending: `production_pipeline_v1.sql` (+ `.rollback.sql`) adds the production
+job records (`production_projects`, `_members`, `_assets`, `_consents`,
+`_shots`, `_jobs`, `_artifacts`; RLS on, no client policies, service role only)
+and `production_request_compute_cancel`, which cancels a queued compute task or
+marks a leased/running one so its node stops on the next heartbeat. Contract and
+callers: `docs/control-plane/PRODUCTION-PIPELINE.md`, `core/src/production/`.
+It depends only on `orgs`, `ops_compute_tasks` and `ops_compute_nodes`. Checked
+2026-11-28 on a disposable Postgres 16 with stubs of those three tables: apply,
+cancel behaviour (queued, running, done, other org), anon/authenticated refused,
+rollback, re-apply twice. Not applied in production; it needs the owner's
+approval. Until it is applied the `core.production.*` tools answer 503
+`PRODUCTION_NOT_APPLIED`.

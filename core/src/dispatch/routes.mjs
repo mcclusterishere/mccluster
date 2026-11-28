@@ -115,6 +115,15 @@ const HINTS = {
   'meeting.delegate.speak': { summary: 'Speak quoted text in the meeting (owner-policy gated).', url: 'meeting_url', quote: 'text' },
   'lyrics.align': { summary: 'Owned lyric timing for one uploaded track.', uuid: 'track_id' },
   'stems.separate': { summary: 'Owned stem separation for one track.', uuid: 'track_id', requiredAny: [['track_id', 'track_key']] },
+  'production.project.get': { summary: 'Read a production project: shots, versioned assets, consent state.' },
+  'production.asset.lookup': { summary: 'Look up registered production assets by kind or name.' },
+  'production.shot.validate': { summary: 'Validate a shot render manifest against the project (structured manifest in args).' },
+  'production.render.submit': { summary: 'Queue one shot render or a retake on an owned worker (structured manifest or retake_of in args).', uuid: 'retake_of' },
+  'production.job.get': { summary: 'Read a production job: worker, engine version, progress, outputs.', uuid: 'job_id' },
+  'production.job.cancel': { summary: 'Cancel a production job.', uuid: 'job_id' },
+  'production.artifact.get': { summary: 'Read the artifacts a production job produced.', uuid: 'job_id' },
+  'production.facetrack.submit': { summary: 'Queue a consented face-track range (structured manifest in args).' },
+  'production.transcript.submit': { summary: 'Queue a transcript of a registered media file (structured manifest in args).' },
 };
 
 /* Direct job routes: executors with no capability of their own,
