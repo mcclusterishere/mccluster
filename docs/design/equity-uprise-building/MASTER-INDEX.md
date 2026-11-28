@@ -2,6 +2,8 @@
 
 > This is the human-readable map. The exhaustive file list is `BUILDING-FILE-INDEX.json`.
 
+[Owner-reviewed HQ interior concept boards and Blender asset map](references/hq-interior-concept-v2/README.md) (F1–F7; visual and prop-placement reference only).
+
 ## 0. Mandatory context
 
 - `AGENTS.md` — local agent contract.
