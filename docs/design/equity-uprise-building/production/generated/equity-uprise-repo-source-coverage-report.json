@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 801,
+  "candidate_count": 802,
   "capability_source_count": 107,
-  "support_only_count": 694,
-  "checks_total": 3099,
-  "checks_passed": 3099,
+  "support_only_count": 695,
+  "checks_total": 3103,
+  "checks_passed": 3103,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -178,6 +178,7 @@
     "docs/control-plane/SECURITY-POSTURE.md",
     "docs/control-plane/SPATIAL-INTELLIGENCE.md",
     "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md",
+    "docs/control-plane/SUPABASE-HARDENING-2026-11-28.md",
     "docs/control-plane/WORLD-ENVIRONMENT.md",
     "docs/control-plane/WORLD-FEED-AND-MISSIONS-20261117.md",
     "docs/control-plane/WORLD-GLOBE-FEED-AND-ANALYTICS.md",
@@ -815,7 +816,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "801 entries"
+      "detail": "802 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -4014,6 +4015,26 @@
     },
     {
       "name": "docs/control-plane/STRIPE-RECONCILER-CLAUDE-HANDOFF.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/SUPABASE-HARDENING-2026-11-28.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/control-plane/SUPABASE-HARDENING-2026-11-28.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/control-plane/SUPABASE-HARDENING-2026-11-28.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/control-plane/SUPABASE-HARDENING-2026-11-28.md support rationale present",
       "passed": true,
       "detail": ""
     },
