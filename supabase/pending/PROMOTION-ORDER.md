@@ -783,3 +783,11 @@ Pending owner approval for `20261125003000_equity_fighter_chat_v1.sql` (rollback
 apply after (or with) `20261124235900_ai_context_dispatch_v1.sql`, since the gateway is useless until dispatch is
 live. Contract: `docs/control-plane/EQUITY-FIGHTER.md`. The rollback refuses while any table holds rows unless
 `mccluster.equity_fighter_drop_data = 'on'` is set after an export.
+
+## 22. Core job table recency indexes (written 2026-11-28)
+
+Pending owner approval for `ops_agent_jobs_recency_indexes_v1.sql` (rollback
+`ops_agent_jobs_recency_indexes_v1.rollback.sql`). Additive: two `CREATE INDEX CONCURRENTLY` statements on
+`public.ops_agent_jobs`, applied one at a time outside a transaction. Independent of every other file. Proof:
+`explain` of `select id from ops_agent_jobs where org_id = $1 and job_type <> 'host_health' and updated_at >= now() - interval '18 hours' order by updated_at desc, id desc limit 12`
+uses `ops_agent_jobs_org_recent_idx`, and `objective_reflection` stops failing with a statement timeout.

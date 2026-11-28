@@ -1,9 +1,19 @@
 # Equity Fighter: the chat layer
 
-Status: **draft, not live.** Code is in `packages/equity-fighter`; its storage SQL is pending
-(`supabase/pending/20261125003000_equity_fighter_chat_v1.sql`) and it depends on the dispatch layer
-(draft PR #843, `docs/control-plane/DISPATCH-LAYER.md`), whose own SQL is also pending. Nothing is deployed and every
-platform is off by default.
+Status (2026-11-28): **code complete for phases 1-2, not live.** Code is in `packages/equity-fighter`. The dispatch
+layer it calls is merged to main (`core/src/dispatch`, `docs/control-plane/DISPATCH-LAYER.md`), but its SQL
+(`supabase/pending/20261124235900_ai_context_dispatch_v1.sql`) and this layer's SQL
+(`supabase/pending/20261125003000_equity_fighter_chat_v1.sql`) are both still pending: production has no
+`ai_context.dispatch_turns` and no `ef_*` tables. Nothing is deployed and every platform is off by default.
+
+What has to happen, in order, for it to be live (each step is the owner's):
+
+1. Apply the dispatch SQL, then the Equity Fighter SQL (`supabase/pending/PROMOTION-ORDER.md`, section 21).
+2. Write `/etc/mccluster/equity-fighter.env` on the OVH box (from `packages/equity-fighter/.env.example`) with
+   `EQUITY_FIGHTER_ENABLED=true`, the house org and owner ids, the Supabase secret key, the Core broker token and
+   signing key, and one platform (Telegram is the quickest: a @BotFather token and his numeric user id).
+3. Run `sudo bash packages/equity-fighter/deploy/install-ovh.sh` there (below), publish `/webhooks/telegram` through
+   Core's tunnel and call Telegram `setWebhook`.
 
 ## Three names, three layers
 
@@ -97,11 +107,28 @@ infrastructure name is needed:
 * **Recommended: mount in Worker `mccluster`** under `/v1/equity-fighter/webhooks/*` (spec path
   `workers/mccluster/src/equity-fighter/`), relay on a cron trigger. No new Worker, so no change to
   `docs/control-plane/canonical-architecture.json`. Not done in this PR because it changes the live Worker.
-* **Or run beside Core on OVH** (`npm start`, loopback, published through Core's existing authenticated tunnel)
-  with `EQUITY_FIGHTER_HARNESS_TRANSPORT=core` (the same signed machine hop `workers/mccluster-mcp` uses). That would
-  need a systemd unit and a line in the deploy reconciler, also not in this PR.
+* **Or run beside Core on OVH** (loopback, published through Core's existing authenticated tunnel) with
+  `EQUITY_FIGHTER_HARNESS_TRANSPORT=core` (the same signed machine hop `workers/mccluster-mcp` uses). This is the
+  fastest path to a persistent bot because it changes nothing in the live Worker; see "Run it on OVH".
 * `transport=edge` uses Matthew's Supabase session token against `https://api.mccluster.org/v1/core/mcp`. Session
   tokens expire (about an hour), so edge is for trials until a service-to-edge credential is agreed.
+
+## Run it on OVH
+
+`packages/equity-fighter/deploy/mccluster-equity-fighter.service` runs `dist/node.js` as `mccluster-core` on
+`127.0.0.1:4790`, after the tool broker, with `EQUITY_FIGHTER_HARNESS_TRANSPORT=core` and
+`CORE_BROKER_URL=http://127.0.0.1:4777` set in the unit and everything else (secrets included) in
+`/etc/mccluster/equity-fighter.env`, which never enters Git. `Restart=always`; the relay loop (every 20 s) resumes
+crashed runs and delivers finished jobs and approvals, so it keeps working while nobody is watching.
+
+`packages/equity-fighter/deploy/install-ovh.sh` (root, owner-run) builds the package in a temporary directory,
+installs `dist/` to `/opt/mccluster/equity-fighter` keeping the previous build, installs the unit and stops there
+when the env file is missing. With the env file it enables and restarts the service, waits for `/health` and rolls
+back to the previous build if it does not answer. It is deliberately **not** part of `scripts/deploy-ovh-core.sh`:
+Core's deploy stays exactly as it is until the owner chooses to fold this in.
+
+`GET /health` lists every reason the gateway is off (missing flag, id, key, platform credential) without printing
+any value, so a misconfigured env file is visible in one request.
 
 ## What Matthew must provide
 
