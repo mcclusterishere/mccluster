@@ -35,7 +35,7 @@ The CSV, the proxy script and the 7 SVGs are also copied, with hashes, into `hq-
 - `EU_HQ_Interiors_v2.blend` (Blender 4.2 format, self-contained).
 - Scripts: `build_hq_interior_v2.py`, `eu_hq_kit.py`, `hq_interior_v2_layout.py`, `verify_hq_interior_v2.py`,
   `render_hq_interior_v2.py`, `compose_review_sheets.py`.
-- `hq-interior-v2-verification.json`: 80/80 checks pass in a fresh Blender process (v2.1).
+- `hq-interior-v2-verification.json`: 81/81 checks pass in a fresh Blender process (v2.1).
 - **v2.1 merge** (`hq_interior_v2_merge.py`): the existing v3 interior layer, the restored builder objects and the
   device layer are back (219/286 v3 pieces kept, 67 superseded with reasons, 79/86 F1–F6 devices). See the README's
   v2.1 section before changing any placement: do NOT redraw what already exists; enhance it.
@@ -60,7 +60,7 @@ Windows Claude app needs updating). `System32` should be removed from that list.
    The commands are in `README.md` → "Where it was built":
    - generate the gitignored F1–F6 GLBs with the official floor builders
    - run `build_hq_interior_v2.py --repo . --pack <pack> --out <new .blend>`
-   - run `verify_hq_interior_v2.py` (expect 80/80)
+   - run `verify_hq_interior_v2.py` (expect 81/81)
    - run `render_hq_interior_v2.py --samples 64` or more; set `cycles.device = GPU` if available
 3. **Compare and report.** Compare the renders against the boards (`renders/compare/*_board_vs_rebuild.jpg`) and report
    honestly where they match and where they don't.

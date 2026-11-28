@@ -6,6 +6,14 @@
       "detail": 0
     },
     {
+      "check": "nothing loose in the scene root (every object sits in a named collection)",
+      "passed": true,
+      "detail": {
+        "count": 0,
+        "sample": []
+      }
+    },
+    {
       "check": "no missing image files",
       "passed": true,
       "detail": []
@@ -37,10 +45,10 @@
       "check": "F01 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F01_BOARD",
-        "CAM_F01_TOP",
         "CAM_F01_EYE",
-        "CAM_F01_ENTRY"
+        "CAM_F01_ENTRY",
+        "CAM_F01_TOP",
+        "CAM_F01_BOARD"
       ]
     },
     {
@@ -60,9 +68,9 @@
       "check": "F02 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F02_BOARD",
+        "CAM_F02_EYE",
         "CAM_F02_TOP",
-        "CAM_F02_EYE"
+        "CAM_F02_BOARD"
       ]
     },
     {
@@ -82,9 +90,9 @@
       "check": "F03 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F03_BOARD",
+        "CAM_F03_EYE",
         "CAM_F03_TOP",
-        "CAM_F03_EYE"
+        "CAM_F03_BOARD"
       ]
     },
     {
@@ -105,8 +113,8 @@
       "passed": true,
       "detail": [
         "CAM_F04_TOP",
-        "CAM_F04_EYE",
-        "CAM_F04_BOARD"
+        "CAM_F04_BOARD",
+        "CAM_F04_EYE"
       ]
     },
     {
@@ -126,9 +134,9 @@
       "check": "F05 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F05_BOARD",
+        "CAM_F05_TOP",
         "CAM_F05_EYE",
-        "CAM_F05_TOP"
+        "CAM_F05_BOARD"
       ]
     },
     {
@@ -148,8 +156,8 @@
       "check": "F06 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F06_TOP",
         "CAM_F06_HALO_SUITE",
+        "CAM_F06_TOP",
         "CAM_F06_BOARD",
         "CAM_F06_EYE"
       ]
@@ -171,9 +179,9 @@
       "check": "F07 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F07_TOP",
         "CAM_F07_BOARD",
-        "CAM_F07_EYE"
+        "CAM_F07_EYE",
+        "CAM_F07_TOP"
       ]
     },
     {
@@ -192,8 +200,7 @@
         "SRC_F04_builder_v2_before",
         "SRC_F05_builder_v2_before",
         "SRC_F06_builder_v2_before",
-        "SRC_F07_builder_v2_before",
-        "_tmp_devices"
+        "SRC_F07_builder_v2_before"
       ]
     },
     {
@@ -1217,7 +1224,7 @@
     "7": []
   },
   "summary": {
-    "passed": 80,
-    "total": 80
+    "passed": 81,
+    "total": 81
   }
 }

@@ -1,6 +1,6 @@
 # Equity Uprise HQ — Interior Rebuild v2 (Floors 1–7), Blender set
 
-> Status: **editable Blender set built and machine-verified (80/80 checks), now merged with the existing furnished
+> Status: **editable Blender set built and machine-verified (81/81 checks), now merged with the existing furnished
 > floors (v2.1, below); visual approval by the owner is open.**
 > Schematic visualization only. **NOT FOR CONSTRUCTION.** Generated images are never geometry authority.
 
@@ -105,7 +105,7 @@ blender -b <file> --python ...\hq-interior-v2\render_hq_interior_v2.py -- --outd
 | `hq_interior_v2_merge.py` | v2.1 merge rules with the existing v3 interior layer, devices and restored objects (pure Python) |
 | `verify_hq_interior_v2.py` | fresh-process reopen and verification; writes the report and the inventory |
 | `render_hq_interior_v2.py` | review renders (top-down, eye level, board-matching, before/after) |
-| `hq-interior-v2-verification.json` | 80/80 checks with details (stacking, routes, collisions, merge, deviations) |
+| `hq-interior-v2-verification.json` | 81/81 checks with details (stacking, routes, collisions, merge, deviations) |
 | `hq-interior-v2-asset-inventory.csv` | every placed asset keyed to the overlay tags, with source and inferred/anchored status |
 | `EU_HQ_Interiors_v2-build-report.json` | source GLB hashes, pack hashes, per-floor counts |
 | `source/` | hash-checked copies of `asset-map.csv`, `place-asset-proxies.py` and the seven `F0X-Asset-Placement.svg` |
@@ -180,7 +180,7 @@ steel throughout. To restyle one object, edit its custom properties; to restyle 
   routing beacon (7.1), overlook bench, bollards and planters (7.2, 7.3), weather console (7.4, moved, see below),
   plant (7.5 = the existing L7 mechanical unit). Signage stays destination-agnostic.
 
-## Verification (fresh-process reopen) — 80/80
+## Verification (fresh-process reopen) — 81/81
 
 From `hq-interior-v2-verification.json`:
 
@@ -201,6 +201,7 @@ From `hq-interior-v2-verification.json`:
 - v2.1: the walking routes count the kept existing furniture as obstacles. Every v3 piece on F1–F6 is either present
   or superseded with a recorded reason (213 + 73 = 286). Every kept device stands on a kept support. No kept existing
   piece overlaps a pack piece (convex hulls of the real vertices, same height band, > 0.25 sq ft).
+  Nothing sits loose in the scene root (the device import had left 724 originals visible there; fixed).
 - One Halo Globe, centre (55, 12) at 8.25 ft AFF, radius 2.25 ft, nothing beneath it; one PRIM2 screen; both interaction
   anchors exist and point at their objects; the McCluster office slot is on F6 only; no logo or wordmark geometry.
 

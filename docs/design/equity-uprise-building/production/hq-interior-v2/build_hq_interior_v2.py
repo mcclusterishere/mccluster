@@ -821,6 +821,10 @@ def place_devices(f, C, merge):
         p = PROD / "electronics" / "generated" / "equity-uprise-workstations-v1.glb"
         bpy.ops.import_scene.gltf(filepath=str(p))
         new = [o for o in bpy.data.objects if o not in before]
+        for o in new:                   # the importer links to the scene root in background mode
+            for c_ in list(o.users_collection):
+                c_.objects.unlink(o)
+            tmp.objects.link(o)
         fix = Matrix.Scale(FT, 4) @ ROT_FIX
         bpy.context.view_layer.update()
         for o in new:
@@ -1202,6 +1206,14 @@ for f in range(1, 8):
     if merge:
         REPORT["floors"][f]["merge"] = merge
         FC["eu_merge"] = json.dumps(merge)
+
+# the imported device originals were only a source for the per-floor copies (which share their mesh data)
+if _DEVICES:
+    for o in list(_DEVICES["objs"]):
+        bpy.data.objects.remove(o)
+    tmp_ = bpy.data.collections.get("_tmp_devices")
+    if tmp_:
+        bpy.data.collections.remove(tmp_)
 
 # ------------------------------------------------------------------ world, sun, render defaults
 world = bpy.data.worlds.new("EU_Sky")

@@ -60,6 +60,8 @@ def wbbox(o, m=None):
 missing_imgs = [i.name for i in bpy.data.images if i.source == "FILE" and i.filepath and not i.packed_file
                 and not os.path.exists(bpy.path.abspath(i.filepath))]
 check("file reopens with no linked libraries", len(bpy.data.libraries) == 0, len(bpy.data.libraries))
+loose = [o.name for o in bpy.context.scene.collection.objects]
+check("nothing loose in the scene root (every object sits in a named collection)", not loose, {"count": len(loose), "sample": loose[:5]})
 check("no missing image files", not missing_imgs, missing_imgs)
 inst = [o for o in bpy.data.objects if o.instance_type == "COLLECTION"]
 broken = [o.name for o in inst if not o.instance_collection or not o.instance_collection.all_objects]

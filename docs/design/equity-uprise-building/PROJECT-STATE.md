@@ -11,7 +11,7 @@ now keeps that layer and reconciles it with the pack piece by piece: **219 of 28
 the board palettes, 67 superseded by the approved anchors that re-make them (each with a recorded reason), 31 builder
 objects restored, 83 board-dressing rows dropped as redundant, **79 of 86 F1–F6 devices kept** on their bound supports,
 existing pieces moved off room doors and walls (5) or relocated as a group (the three F6 preparation desks). Re-made tables keep their existing seating (F2 eight forum armchairs, F3 six
-exchange chairs, F5 eight policy chairs, F6 six executive chairs). A fresh-process verification passes **80/80** (the
+exchange chairs, F5 eight policy chairs, F6 six executive chairs). A fresh-process verification passes **81/81** (the
 original 61 plus routes that count furniture, piece-to-piece overlap by real vertex hulls, device supports, and
 per-floor accounting of the existing layer). The F6 preparation desks displaced by Matthew's suite now sit next to
 Helen's office along the east wall, with their chairs and devices (owner decision). Open: staff named both at an
@@ -398,7 +398,7 @@ Required references:
 
 - detailed real 3D floor active at **FFE +54 ft**;
 - **431 meshes**;
-- **80/80 inventory records** represented;
+- **81/81 inventory records** represented;
 - **22/22 checks passing**;
 - Policy Lab, RESEARCH / EVIDENCE / RECORD wall, Evidence + Proof Archive, Source Review, Publication / Submission Review and Research / Publication Navigator;
 - visual-completeness gate and true isolation active;
