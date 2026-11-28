@@ -1301,6 +1301,13 @@
       "rationale": "Stripe reconciler handoff names Equity Uprise only in a list of CI workflows and the portfolio scope; commerce documentation, not a building capability."
     },
     {
+      "path": "docs/control-plane/SUPABASE-HARDENING-2026-11-28.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Supabase advisor triage naming existing role helpers; documents platform security and performance without changing building program or geometry."
+    },
+    {
       "path": "docs/control-plane/WORLD-ENVIRONMENT.md",
       "classification": "documentation_support",
       "capability_ids": [],
