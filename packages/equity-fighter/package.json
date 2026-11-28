@@ -1,0 +1,23 @@
+{
+  "name": "@mccluster/equity-fighter",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Equity Fighter: McCluster's chat layer. Official Slack and Telegram (WhatsApp Business Cloud API and Discord behind flags) connected to the McCluster AI Harness dispatch layer. It owns no jobs, identity or routing: messages go to dispatch.turn, gated work becomes a pending owner approval in Control, and state lives in Supabase.",
+  "type": "module",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run",
+    "start": "node dist/node.js",
+    "pair-code": "npm run build --silent && node scripts/pair-code.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

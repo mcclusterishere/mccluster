@@ -9,11 +9,12 @@
    ["private","postgres","anon=U;authenticated=U"],
    ["public","pg_database_owner","PUBLIC=U;anon=U;authenticated=U"]
   ]},
-  "relations": {"md5": "08b000da54b9a5c7fa30fdce59d78ea7", "rows": [
+  "relations": {"md5": "4501e4a67c5e9536db632a3f9ceb193a", "rows": [
    ["ai_context","artifact_links","r",true,false,"",13,"b774fceb642e","b3b16d106caf","ff696abe0b16","",""],
    ["ai_context","context_snapshots","r",true,false,"",11,"5a3dd3b31e14","763fdc6a8354","bbf14d876094","",""],
    ["ai_context","conversations","r",true,false,"",13,"73aa22ced17b","882731ea3d27","e574df182ad5","",""],
    ["ai_context","decisions","r",true,false,"",16,"98821b360358","56a30cde8c33","5c94ac9b0138","",""],
+   ["ai_context","dispatch_turns","r",true,false,"",23,"d4d4b09e7523","a488ff5c2d4e","9353e33ffb4d","",""],
    ["ai_context","ingestion_receipts","r",true,false,"",10,"98808cb10602","df387e5b99db","1c2fe3e86cc1","",""],
    ["ai_context","memory_items","r",true,false,"",18,"70d131b6aa4b","209e92e40ee4","854affdc8741","",""],
    ["ai_context","messages","r",true,false,"",14,"9899d77680f5","134a5c06dd95","cb8795837b8a","",""],
@@ -166,6 +167,10 @@
    ["public","domain_rate","r",true,false,"",3,"7a06cd711ba6","084545803c01","682668f85499","",""],
    ["public","domain_tlds","r",true,false,"",6,"68e28fc1bc6f","998dd4843757","c17754c49d7b","","anon=damrw;authenticated=damrw"],
    ["public","drivers","r",true,false,"",19,"555422895c3a","51c355d7c0e5","2da5452548f8","","anon=damrw;authenticated=damrw"],
+   ["public","ef_identities","r",true,true,"",9,"d4a09cd3828a","e7dd4df6e207","63108f3628c7","",""],
+   ["public","ef_messages","r",true,true,"",10,"5d1a83280647","60c539afd59f","367910b42f05","",""],
+   ["public","ef_runs","r",true,true,"",20,"315910b5e2d7","735b9c679026","4f4b599f22bd","",""],
+   ["public","ef_steps","r",true,true,"",7,"fa0f0068b25e","9e52b1f339dc","f7f5144bd425","",""],
    ["public","engagement_modules","r",true,false,"",6,"8faa062f1df8","4b6ac275f0f3","b34cfb6c1bc4","","anon=damrw;authenticated=damrw"],
    ["public","engagement_state","v",false,false,"on",15,"c6dac0bc00dc","d41d8cd98f00","d41d8cd98f00","33b9095a05f9","anon=mr;authenticated=mr"],
    ["public","engagements","r",true,false,"",12,"a30a67a84f24","733142bfe5dd","0872bba1e707","","anon=damrw;authenticated=damrw"],
@@ -578,7 +583,9 @@
    ["public","world_news_pairs","r",true,false,"",14,"5de761fbdc0f","76b13db8ea63","55500d48ba73","",""],
    ["public","world_region_sharing","r",true,true,"",5,"4b843b55af0a","24a36f9e1660","42bce73daf3b","",""]
   ]},
-  "functions": {"md5": "00b87d513766996f078b02748d2f29f9", "rows": [
+  "functions": {"md5": "f63ceebcb065f68de81bf4f6f0182772", "rows": [
+   ["ai_context","dispatch_require_owner","p_org uuid, p_actor uuid","void",false,"s","search_path=\"\"","8a847910f58b",""],
+   ["ai_context","dispatch_turn_json","p_row ai_context.dispatch_turns","jsonb",false,"s","search_path=\"\"","acd1a7a67c8f",""],
    ["ai_context","workstream_ceiling","p_provenance jsonb","integer",false,"i","search_path=\"\"","5b2fc2cd3474",""],
    ["ai_context","workstream_event_json","p_row ai_context.workstream_events, p_text_max integer","jsonb",false,"s","search_path=\"\"","0ab76a249587",""],
    ["ai_context","workstream_events_append_only","","trigger",false,"v","search_path=\"\"","12ed201a041e",""],
@@ -1115,6 +1122,10 @@
    ["public","normalize_mccluster_id","p_value text","text",false,"i","search_path=pg_catalog, public","f5fa25219c68","PUBLIC=X;anon=X;authenticated=X"],
    ["public","ops_actor_publish_comment","p_org_id uuid, p_actor_key text, p_article_id uuid, p_job_id uuid, p_body text, p_model text","jsonb",false,"v","search_path=\"\"","0e70098054f8",""],
    ["public","ops_ai_context_search","p_org_id uuid, p_query text, p_limit integer, p_before timestamp with time zone","jsonb",false,"s","search_path=\"\"","fef56f826929",""],
+   ["public","ops_ai_dispatch_attach","p_org uuid, p_turn uuid, p_patch jsonb","jsonb",true,"v","search_path=\"\"","19cc97972fbc",""],
+   ["public","ops_ai_dispatch_claim","p_org uuid, p_actor uuid, p_turn uuid","jsonb",true,"v","search_path=\"\"","1f32dfaa3067",""],
+   ["public","ops_ai_dispatch_get","p_org uuid, p_turn uuid","jsonb",true,"s","search_path=\"\"","fcd3a561dfbf",""],
+   ["public","ops_ai_dispatch_record","p_org uuid, p_actor uuid, p_turn jsonb","jsonb",true,"v","search_path=\"\"","e3994531798e",""],
    ["public","ops_ai_knowledge_consolidate","p_org_id uuid, p_day date","jsonb",false,"v","search_path=\"\"","98a9232e99a7",""],
    ["public","ops_ai_knowledge_read","p_org_id uuid, p_query text, p_days integer","jsonb",false,"s","search_path=\"\"","711f94364a94",""],
    ["public","ops_ai_submit_turn","p_org_id uuid, p_thread_id uuid, p_user_message_id uuid, p_assistant_message_id uuid, p_content text, p_input_mode text","TABLE(user_message_id uuid, assistant_message_id uuid, job_id uuid, job_status text)",false,"v","search_path=public, pg_temp","2435a4c760eb",""],

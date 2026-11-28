@@ -1,0 +1,49 @@
+# Equity Fighter on the OVH McCluster Core box, beside the tool broker.
+# Not installed by scripts/deploy-ovh-core.sh: the owner installs it once with
+# packages/equity-fighter/deploy/install-ovh.sh after approving the hosting choice
+# and the pending SQL (docs/control-plane/EQUITY-FIGHTER.md, "Run it on OVH").
+# Loopback only: webhooks reach it through Core's existing authenticated tunnel.
+# Every platform stays off until its flag and credentials are in the env file.
+[Unit]
+Description=Equity Fighter: McCluster chat layer (Slack/Telegram -> dispatch layer)
+After=network-online.target mccluster-core-tool-broker.service
+Wants=network-online.target mccluster-core-tool-broker.service
+
+[Service]
+Type=simple
+User=mccluster-core
+Group=mccluster-core
+WorkingDirectory=/opt/mccluster/equity-fighter
+Environment=HOME=/var/lib/mccluster-core
+Environment=NODE_ENV=production
+Environment=EQUITY_FIGHTER_HOST=127.0.0.1
+Environment=EQUITY_FIGHTER_PORT=4790
+Environment=EQUITY_FIGHTER_HARNESS_TRANSPORT=core
+Environment=CORE_BROKER_URL=http://127.0.0.1:4777
+EnvironmentFile=/etc/mccluster/equity-fighter.env
+ExecStart=/usr/bin/node /opt/mccluster/equity-fighter/dist/node.js
+Restart=always
+RestartSec=5
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+MemoryMax=256M
+CPUQuota=25%
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

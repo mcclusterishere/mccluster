@@ -27,6 +27,31 @@ test('reflection queries house-scoped non-health metadata, not full outputs', as
   }
 });
 
+test('recent jobs are ranked on narrow columns, then JSON is read only for those ids', async () => {
+  const a = '11111111-1111-4111-8111-111111111111', b = '22222222-2222-4222-8222-222222222222';
+  const seen = [];
+  const rest = async path => {
+    const q = new URL(path, 'http://test').searchParams; seen.push(q);
+    return {body: seen.length === 1 ? [{id: a}, {id: b}] : [{id: b, job_type: 'x'}, {id: a, job_type: 'y'}, {id: 'other-tenant'}]};
+  };
+  const rows = await loadReflectionJobs(rest, 'house', 18, 0);
+  assert.deepEqual(rows.map(r => r.id), [a, b]);
+  assert.equal(seen[0].get('select'), 'id');
+  assert.equal(seen[0].get('order'), 'updated_at.desc,id.desc');
+  assert.equal(seen[0].get('limit'), '12');
+  assert.equal(seen[1].get('id'), `in.(${a},${b})`);
+  assert.equal(seen[1].has('order'), false);
+  assert.ok(seen[1].get('select').includes('summary:output->>summary'));
+  for (const q of seen) { assert.equal(q.get('org_id'), 'eq.house'); assert.equal(q.get('job_type'), 'neq.host_health'); }
+});
+
+test('recent jobs: empty window makes one read; a malformed id is refused', async () => {
+  let calls = 0;
+  assert.deepEqual(await loadReflectionJobs(async () => { calls++; return {body: []}; }, 'house', 18, 0), []);
+  assert.equal(calls, 1);
+  await assert.rejects(loadReflectionJobs(async () => ({body: [{id: 'x) or (1=1'}]}), 'house', 18, 0), /identity invalid/);
+});
+
 test('reflection permits a compact health summary but no arbitrary nested fields', () => {
   const out = compactReflectionContext({health: {overall: 'degraded', failures: '42', parity: 'true', sha_match: 'true', deployed_sha: 'a'.repeat(40), output: {secret: 'hidden'}}});
   assert.equal(out.context.health.failed_jobs_24h, 42);

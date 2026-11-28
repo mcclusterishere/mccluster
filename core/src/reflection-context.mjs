@@ -44,16 +44,35 @@ export function compactReflectionContext({ objective, maxJobs, objectives = [], 
   return { context, json: JSON.stringify(context), bytes: Buffer.byteLength(JSON.stringify(context)) };
 }
 
+const JOB_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function loadReflectionJobs(rest, orgId, sinceHours, nowMs = Date.now()) {
-  const query = new URLSearchParams({
+  // Pick the newest ids with narrow columns first, then read output->>summary for
+  // those rows only. Extracting JSON in the ranking query made Postgres detoast
+  // every matching output before the top-N sort: with ~1,500 jobs a day (most of
+  // them PRIM3 news with large outputs) the read hit the statement timeout, and
+  // that was the main reason objective_reflection failed (19 of 29 failures,
+  // 2026-11-25..28). Same shape as loadReflectionHealth below.
+  const identityQuery = new URLSearchParams({
     org_id: `eq.${orgId}`, job_type: 'neq.host_health',
     updated_at: `gte.${new Date(nowMs - sinceHours * 3600000).toISOString()}`,
+    select: 'id', order: 'updated_at.desc,id.desc', limit: '12',
+  });
+  const { body: identities } = await rest(`ops_agent_jobs?${identityQuery}`);
+  if (!Array.isArray(identities)) throw new Error('Reflection job evidence unavailable');
+  const ids = identities.map(row => row?.id).filter(id => JOB_ID.test(id || ''));
+  if (ids.length !== identities.length) throw new Error('Reflection job identity invalid');
+  if (!ids.length) return [];
+  const query = new URLSearchParams({
+    id: `in.(${ids.join(',')})`, org_id: `eq.${orgId}`, job_type: 'neq.host_health',
     select: 'id,job_type,target_type,target_id,status,attempts,max_attempts,last_error,updated_at,summary:output->>summary',
-    order: 'updated_at.desc,id.desc', limit: '12',
+    limit: String(ids.length),
   });
   const { body } = await rest(`ops_agent_jobs?${query}`);
   if (!Array.isArray(body)) throw new Error('Reflection job evidence unavailable');
-  return body;
+  // Keep the ranking order; a row deleted between the reads is simply absent.
+  const rank = new Map(ids.map((id, index) => [id, index]));
+  return body.filter(row => rank.has(row?.id)).sort((a, b) => rank.get(a.id) - rank.get(b.id));
 }
 
 export async function loadReflectionHealth(rest, orgId) {

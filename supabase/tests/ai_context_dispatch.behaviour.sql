@@ -1,4 +1,4 @@
--- Behaviour of supabase/pending/20261124235900_ai_context_dispatch_v1.sql after ai_context_dispatch.stub.sql.
+-- Behaviour of supabase/migrations/20261128094143_ai_context_dispatch_v1.sql after ai_context_dispatch.stub.sql.
 -- Disposable database only. Every check raises on failure.
 do $t$
 declare
