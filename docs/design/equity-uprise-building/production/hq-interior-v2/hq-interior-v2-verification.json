@@ -13,12 +13,12 @@
     {
       "check": "every kit instance resolves to its master",
       "passed": true,
-      "detail": "387 instances, broken=[]"
+      "detail": "390 instances, broken=[]"
     },
     {
       "check": "repeated assets are instanced (no duplicated kit meshes)",
       "passed": true,
-      "detail": "67 masters, 387 instances, mean reuse 6.0x"
+      "detail": "67 masters, 390 instances, mean reuse 6.1x"
     },
     {
       "check": "F01 has separate collections ('Shell', 'ArchFinishes', 'Furniture', 'Equipment', 'Lighting', 'Cameras', 'Interaction_and_Anchors')",
@@ -37,9 +37,9 @@
       "check": "F01 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F01_EYE",
         "CAM_F01_BOARD",
         "CAM_F01_TOP",
+        "CAM_F01_EYE",
         "CAM_F01_ENTRY"
       ]
     },
@@ -126,8 +126,8 @@
       "check": "F05 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F05_EYE",
         "CAM_F05_BOARD",
+        "CAM_F05_EYE",
         "CAM_F05_TOP"
       ]
     },
@@ -148,10 +148,10 @@
       "check": "F06 top + eye cameras",
       "passed": true,
       "detail": [
+        "CAM_F06_TOP",
         "CAM_F06_HALO_SUITE",
-        "CAM_F06_EYE",
         "CAM_F06_BOARD",
-        "CAM_F06_TOP"
+        "CAM_F06_EYE"
       ]
     },
     {
@@ -171,9 +171,9 @@
       "check": "F07 top + eye cameras",
       "passed": true,
       "detail": [
-        "CAM_F07_EYE",
+        "CAM_F07_TOP",
         "CAM_F07_BOARD",
-        "CAM_F07_TOP"
+        "CAM_F07_EYE"
       ]
     },
     {
@@ -870,8 +870,8 @@
       "passed": true,
       "detail": {
         "layout": 47,
-        "kept": 26,
-        "superseded": 21,
+        "kept": 32,
+        "superseded": 15,
         "missing": [],
         "unexplained": []
       }
@@ -880,8 +880,8 @@
       "check": "F06 existing device layer: every kept device stands on a kept support",
       "passed": true,
       "detail": {
-        "devices": 9,
-        "dropped": 9,
+        "devices": 18,
+        "dropped": 0,
         "orphans": []
       }
     },
@@ -895,8 +895,8 @@
       "passed": true,
       "detail": {
         "layout": 286,
-        "kept": 213,
-        "superseded": 73
+        "kept": 219,
+        "superseded": 67
       }
     }
   ],
@@ -939,7 +939,7 @@
       "clashes": []
     },
     "6": {
-      "kept": 31,
+      "kept": 37,
       "clashes": []
     }
   },

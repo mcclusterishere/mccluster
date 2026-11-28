@@ -292,12 +292,12 @@ floor,overlay_tag,asset_id,blender_object,kit_master,x_ft,y_ft,envelope_ft,mater
 4,,F4-DESK-PRIYA-SRISAWAT,F04_F4-DESK-PRIYA-SRISAWAT::WORKPOINT,WORKPOINT (upgraded from desk_dual),56.0,2.25,5.5 x 2.5 x 2.4,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),brand-comms
 4,,F4-EDIT-VISITOR-CHAIR-01,F04_F4-EDIT-VISITOR-CHAIR-01::CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND (upgraded from armchair_lounge),19.3,13.6,3.5 x 3.5 x 2.6,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),edit-suite
 4,,F4-GALLERY-CHAIR-01,F04_F4-GALLERY-CHAIR-01::CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND (upgraded from armchair_lounge),14.6,21.2,3.4 x 3.4 x 2.6,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),culture-gallery
-4,,F4-GALLERY-FRAME-01,F04_F4-GALLERY-FRAME-01::surface,existing builder object,1.34,20.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
-4,,F4-GALLERY-FRAME-02,F04_F4-GALLERY-FRAME-02::frame,existing builder object,1.34,23.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
-4,,F4-GALLERY-FRAME-03,F04_F4-GALLERY-FRAME-03::frame,existing builder object,1.34,26.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
+4,,F4-GALLERY-FRAME-01,F04_F4-GALLERY-FRAME-01::frame,existing builder object,1.34,20.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
+4,,F4-GALLERY-FRAME-02,F04_F4-GALLERY-FRAME-02::surface,existing builder object,1.34,23.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
+4,,F4-GALLERY-FRAME-03,F04_F4-GALLERY-FRAME-03::surface,existing builder object,1.34,26.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
 4,,F4-GALLERY-FRAME-04,F04_F4-GALLERY-FRAME-04::frame,existing builder object,1.34,29.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
-4,,F4-GALLERY-FRAME-05,F04_F4-GALLERY-FRAME-05::frame,existing builder object,1.34,32.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
-4,,F4-GALLERY-FRAME-06,F04_F4-GALLERY-FRAME-06::surface,existing builder object,1.34,35.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
+4,,F4-GALLERY-FRAME-05,F04_F4-GALLERY-FRAME-05::surface,existing builder object,1.34,32.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
+4,,F4-GALLERY-FRAME-06,F04_F4-GALLERY-FRAME-06::frame,existing builder object,1.34,35.15,0.2 x 2.3 x 2.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
 4,,F4-GALLERY-PLANT-01,F04_F4-GALLERY-PLANT-01::PLANT_TREE,PLANT_TREE (upgraded from planter_tall),16.6,37.2,1.6 x 1.7 x 3.6,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),culture-gallery
 4,,F4-GALLERY-PLINTH-01,F04_F4-GALLERY-PLINTH-01::plinth_display,plinth_display,5.0,19.8,1.5 x 1.5 x 4.4,board palette,existing v3 interior layout (kept; restyled with the board palette),culture-gallery
 4,,F4-GALLERY-PLINTH-02,F04_F4-GALLERY-PLINTH-02::plinth_display,plinth_display,5.0,35.4,1.5 x 1.5 x 4.4,board palette,existing v3 interior layout (kept; restyled with the board palette),culture-gallery
@@ -403,9 +403,9 @@ floor,overlay_tag,asset_id,blender_object,kit_master,x_ft,y_ft,envelope_ft,mater
 5,,F5-USER-WS-08,F05_DEV_F5-USER-WS-08,manufacturer exterior proxy,,,,,existing device layer (kept),support F5-CARREL-05
 5,,F5-ARCHIVE-CABINET-01,F05_F5-ARCHIVE-CABINET-01::ARCHIVE_CABINET_6x6,ARCHIVE_CABINET_6x6 (upgraded from library_stack),6.4,20.0,6.0 x 2.0 x 7.0,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),evidence-archive
 5,,F5-ARCHIVE-CABINET-03,F05_F5-ARCHIVE-CABINET-03::ARCHIVE_CABINET_6x6,ARCHIVE_CABINET_6x6 (upgraded from library_stack),6.4,30.4,6.0 x 2.0 x 7.0,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),evidence-archive
-5,,F5-ARCHIVE-FRAME-01,F05_F5-ARCHIVE-FRAME-01::record,existing builder object,1.34,20.4,0.2 x 2.8 x 2.9,board palette,existing floor builder object (restored; dropped by the first v2 build),
+5,,F5-ARCHIVE-FRAME-01,F05_F5-ARCHIVE-FRAME-01::frame,existing builder object,1.34,20.4,0.2 x 2.8 x 2.9,board palette,existing floor builder object (restored; dropped by the first v2 build),
 5,,F5-ARCHIVE-FRAME-02,F05_F5-ARCHIVE-FRAME-02::caption,existing builder object,1.34,24.1,0.2 x 2.8 x 2.9,board palette,existing floor builder object (restored; dropped by the first v2 build),
-5,,F5-ARCHIVE-FRAME-03,F05_F5-ARCHIVE-FRAME-03::caption,existing builder object,1.34,27.8,0.2 x 2.8 x 2.9,board palette,existing floor builder object (restored; dropped by the first v2 build),
+5,,F5-ARCHIVE-FRAME-03,F05_F5-ARCHIVE-FRAME-03::record,existing builder object,1.34,27.8,0.2 x 2.8 x 2.9,board palette,existing floor builder object (restored; dropped by the first v2 build),
 5,,F5-ARCHIVE-FRAME-04,F05_F5-ARCHIVE-FRAME-04::frame,existing builder object,1.34,31.5,0.2 x 2.8 x 2.9,board palette,existing floor builder object (restored; dropped by the first v2 build),
 5,,F5-ARCHIVE-FRAME-05,F05_F5-ARCHIVE-FRAME-05::caption,existing builder object,1.34,35.2,0.2 x 2.8 x 2.9,board palette,existing floor builder object (restored; dropped by the first v2 build),
 5,,F5-ARCHIVE-RUG-01,F05_F5-ARCHIVE-RUG-01::rug,rug,9.5,36.0,10.0 x 7.0 x 0.0,board palette,existing v3 interior layout (kept; restyled with the board palette),evidence-archive
@@ -437,7 +437,7 @@ floor,overlay_tag,asset_id,blender_object,kit_master,x_ft,y_ft,envelope_ft,mater
 5,,F5-POLICY-CHAIR-07,F05_F5-POLICY-CHAIR-07::CHAIR_SIDE,CHAIR_SIDE (upgraded from side_chair_wood),38.0,44.6,1.6 x 1.7 x 3.0,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),policy-lab
 5,,F5-POLICY-CHAIR-08,F05_F5-POLICY-CHAIR-08::CHAIR_SIDE,CHAIR_SIDE (upgraded from side_chair_wood),42.5,44.6,1.6 x 1.7 x 3.0,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),policy-lab
 5,,F5-POLICY-POWER-01,F05_F5-POLICY-POWER-01::module,existing builder object,36.0,41.0,1.6 x 0.6 x 0.1,board palette,existing floor builder object (restored; dropped by the first v2 build),
-5,,F5-PUB-DISPLAY-01,F05_F5-PUB-DISPLAY-01::bezel,existing builder object,23.5,15.88,7.0 x 0.3 x 2.6,board palette,existing floor builder object (restored; dropped by the first v2 build),
+5,,F5-PUB-DISPLAY-01,F05_F5-PUB-DISPLAY-01::screen,existing builder object,23.5,15.88,7.0 x 0.3 x 2.6,board palette,existing floor builder object (restored; dropped by the first v2 build),
 5,,F5-PUB-WORKSTATION-01,F05_F5-PUB-WORKSTATION-01::screen,existing builder object,18.65,7.5,1.8 x 5.1 x 4.5,board palette,existing floor builder object (restored; dropped by the first v2 build),
 5,,F5-READING-BOOKCASE-01,F05_F5-READING-BOOKCASE-01::BOOKCASE_LOW,BOOKCASE_LOW (upgraded from bookcase_low),51.0,20.6,6.0 x 1.3 x 3.5,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),research-floor
 5,,F5-READING-CHAIR-01,F05_F5-READING-CHAIR-01::CHAIR_LEATHER,CHAIR_LEATHER (upgraded from armchair_club),48.0,15.0,3.9 x 3.9 x 3.1,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),research-floor
@@ -447,7 +447,7 @@ floor,overlay_tag,asset_id,blender_object,kit_master,x_ft,y_ft,envelope_ft,mater
 5,,F5-RESEARCH-BOOKCASE-01,F05_F5-RESEARCH-BOOKCASE-01::BOOKCASE,BOOKCASE (upgraded from bookcase),70.4,2.3,1.2 x 3.0 x 7.0,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),research-floor
 5,,F5-RESEARCH-PLANT-01,F05_F5-RESEARCH-PLANT-01::PLANT_TREE,PLANT_TREE (upgraded from planter_tall),59.6,11.0,1.6 x 1.7 x 3.6,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),research-floor
 5,,F5-SOURCE-DISPLAY-01,F05_F5-SOURCE-DISPLAY-01::screen,existing builder object,7.5,15.88,5.0 x 0.3 x 2.6,board palette,existing floor builder object (restored; dropped by the first v2 build),
-5,,F5-SOURCE-SECURE-SURFACE-01,F05_F5-SOURCE-SECURE-SURFACE-01::cap,existing builder object,3.5,8.5,1.9 x 7.1 x 3.7,board palette,existing floor builder object (restored; dropped by the first v2 build),
+5,,F5-SOURCE-SECURE-SURFACE-01,F05_F5-SOURCE-SECURE-SURFACE-01::case,existing builder object,3.5,8.5,1.9 x 7.1 x 3.7,board palette,existing floor builder object (restored; dropped by the first v2 build),
 5,,,F05_S5.10/1/chair_CHAIR_TASK,CHAIR_TASK,29.0,30.65,,,board dressing (inferred placement),seat for S5.10/1
 5,,,F05_S5.10/1/lamp_LAMP_DESK,LAMP_DESK,27.45,32.6,,,board dressing (inferred placement),task light for S5.10/1
 5,,,F05_S5.10/1/screen_LAPTOP,LAPTOP,29.0,32.65,,,board dressing (inferred placement),desktop equipment for S5.10/1
@@ -499,11 +499,26 @@ floor,overlay_tag,asset_id,blender_object,kit_master,x_ft,y_ft,envelope_ft,mater
 6,,F6-USER-MON-02-02,F06_DEV_F6-USER-MON-02-02,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-DESK-LI-WEI
 6,,F6-USER-MON-03-01,F06_DEV_F6-USER-MON-03-01,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-DESK-MARC-DUBOIS
 6,,F6-USER-MON-03-02,F06_DEV_F6-USER-MON-03-02,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-DESK-MARC-DUBOIS
+6,,F6-USER-MON-04-01,F06_DEV_F6-USER-MON-04-01,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-BRIEFING-PREP-DESK-01
+6,,F6-USER-MON-04-02,F06_DEV_F6-USER-MON-04-02,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-BRIEFING-PREP-DESK-01
+6,,F6-USER-MON-05-01,F06_DEV_F6-USER-MON-05-01,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-BRIEFING-PREP-DESK-02
+6,,F6-USER-MON-05-02,F06_DEV_F6-USER-MON-05-02,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-BRIEFING-PREP-DESK-02
+6,,F6-USER-MON-06-01,F06_DEV_F6-USER-MON-06-01,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-BRIEFING-PREP-DESK-03
+6,,F6-USER-MON-06-02,F06_DEV_F6-USER-MON-06-02,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-BRIEFING-PREP-DESK-03
 6,,F6-USER-WS-01,F06_DEV_F6-USER-WS-01,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-OFFICE-HELEN-CLARKE-DESK
 6,,F6-USER-WS-02,F06_DEV_F6-USER-WS-02,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-DESK-LI-WEI
 6,,F6-USER-WS-03,F06_DEV_F6-USER-WS-03,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-DESK-MARC-DUBOIS
+6,,F6-USER-WS-04,F06_DEV_F6-USER-WS-04,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-BRIEFING-PREP-DESK-01
+6,,F6-USER-WS-05,F06_DEV_F6-USER-WS-05,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-BRIEFING-PREP-DESK-02
+6,,F6-USER-WS-06,F06_DEV_F6-USER-WS-06,manufacturer exterior proxy,,,,,existing device layer (kept),support F6-BRIEFING-PREP-DESK-03
 6,,F6-BRIEFING-CREDENZA-01,F06_F6-BRIEFING-CREDENZA-01::CREDENZA,CREDENZA (upgraded from credenza),20.0,5.0,4.0 x 1.5 x 2.4,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),partner-briefing
 6,,F6-BRIEFING-DISPLAY-01,F06_F6-BRIEFING-DISPLAY-01::bezel,existing builder object,23.5,15.88,7.0 x 0.3 x 2.6,board palette,existing floor builder object (restored; dropped by the first v2 build),
+6,,F6-BRIEFING-PREP-DESK-01-CHAIR,F06_F6-BRIEFING-PREP-DESK-01-CHAIR::task_chair,task_chair,66.44,34.5,1.9 x 2.0 x 3.2,board palette,existing v3 interior layout (kept; restyled with the board palette),governance-desks (relocated preparation desk)
+6,,F6-BRIEFING-PREP-DESK-01,F06_F6-BRIEFING-PREP-DESK-01::WORKPOINT,WORKPOINT (upgraded from desk),69.0,34.5,2.5 x 6.0 x 2.4,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),command-preparation
+6,,F6-BRIEFING-PREP-DESK-02-CHAIR,F06_F6-BRIEFING-PREP-DESK-02-CHAIR::task_chair,task_chair,66.44,41.0,1.9 x 2.0 x 3.2,board palette,existing v3 interior layout (kept; restyled with the board palette),governance-desks (relocated preparation desk)
+6,,F6-BRIEFING-PREP-DESK-02,F06_F6-BRIEFING-PREP-DESK-02::WORKPOINT,WORKPOINT (upgraded from desk),69.0,41.0,2.5 x 6.0 x 2.4,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),command-preparation
+6,,F6-BRIEFING-PREP-DESK-03-CHAIR,F06_F6-BRIEFING-PREP-DESK-03-CHAIR::task_chair,task_chair,66.44,47.5,1.9 x 2.0 x 3.2,board palette,existing v3 interior layout (kept; restyled with the board palette),governance-desks (relocated preparation desk)
+6,,F6-BRIEFING-PREP-DESK-03,F06_F6-BRIEFING-PREP-DESK-03::WORKPOINT,WORKPOINT (upgraded from desk),69.0,47.5,2.5 x 6.0 x 2.4,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),command-preparation
 6,,F6-COMMAND-CHAIR-01,F06_F6-COMMAND-CHAIR-01::task_chair_exec,task_chair_exec,30.0,37.1,2.2 x 2.0 x 3.8,board palette,existing v3 interior layout (kept; restyled with the board palette),command
 6,,F6-COMMAND-CHAIR-02,F06_F6-COMMAND-CHAIR-02::task_chair_exec,task_chair_exec,36.0,37.1,2.2 x 2.0 x 3.8,board palette,existing v3 interior layout (kept; restyled with the board palette),command
 6,,F6-COMMAND-CHAIR-03,F06_F6-COMMAND-CHAIR-03::task_chair_exec,task_chair_exec,42.0,37.1,2.2 x 2.0 x 3.8,board palette,existing v3 interior layout (kept; restyled with the board palette),command
@@ -526,13 +541,13 @@ floor,overlay_tag,asset_id,blender_object,kit_master,x_ft,y_ft,envelope_ft,mater
 6,,F6-OFFICE-RUG-01,F06_F6-OFFICE-RUG-01::rug,rug,65.4,13.45,10.0 x 4.0 x 0.0,board palette,existing v3 interior layout (kept; restyled with the board palette),director-office
 6,,F6-SALON-CHAIR-01,F06_F6-SALON-CHAIR-01::CHAIR_LEATHER,CHAIR_LEATHER (upgraded from armchair_club),5.6,22.8,3.9 x 3.9 x 3.1,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),salon
 6,,F6-SALON-CHAIR-02,F06_F6-SALON-CHAIR-02::CHAIR_LEATHER,CHAIR_LEATHER (upgraded from armchair_club),5.6,33.2,3.9 x 3.9 x 3.1,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),salon
-6,,F6-SALON-INFO-01,F06_F6-SALON-INFO-01::screen,existing builder object,0.9,28.0,0.2 x 6.0 x 4.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
+6,,F6-SALON-INFO-01,F06_F6-SALON-INFO-01::bezel,existing builder object,0.9,28.0,0.2 x 6.0 x 4.8,board palette,existing floor builder object (restored; dropped by the first v2 build),
 6,,F6-SALON-PLANT-01,F06_F6-SALON-PLANT-01::PLANT_TREE,PLANT_TREE (upgraded from planter_tall),3.0,36.0,1.6 x 1.7 x 3.6,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),salon
 6,,F6-SALON-PLANT-02,F06_F6-SALON-PLANT-02::PLANT_FLOOR,PLANT_FLOOR (upgraded from planter_floor),19.5,22.0,2.0 x 1.9 x 3.6,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),salon
 6,,F6-SALON-RUG-01,F06_F6-SALON-RUG-01::rug,rug,9.6,28.0,14.0 x 15.0 x 0.0,board palette,existing v3 interior layout (kept; restyled with the board palette),salon
 6,,F6-SALON-SIDE-TABLE-01,F06_F6-SALON-SIDE-TABLE-01::SIDE_TABLE,SIDE_TABLE (upgraded from side_table),16.4,33.8,1.5 x 1.5 x 1.7,board palette,existing v3 interior layout (kept; mesh upgraded in place to the board kit),salon
-6,,F6-STRATEGY-DISPLAY-01,F06_F6-STRATEGY-DISPLAY-01::bezel,existing builder object,7.5,15.88,5.0 x 0.3 x 2.6,board palette,existing floor builder object (restored; dropped by the first v2 build),
-6,,F6-STRATEGY-SECURE-STORAGE-01,F06_F6-STRATEGY-SECURE-STORAGE-01::case,existing builder object,3.5,8.0,1.9 x 6.1 x 3.9,board palette,existing floor builder object (restored; dropped by the first v2 build),
+6,,F6-STRATEGY-DISPLAY-01,F06_F6-STRATEGY-DISPLAY-01::screen,existing builder object,7.5,15.88,5.0 x 0.3 x 2.6,board palette,existing floor builder object (restored; dropped by the first v2 build),
+6,,F6-STRATEGY-SECURE-STORAGE-01,F06_F6-STRATEGY-SECURE-STORAGE-01::cap,existing builder object,3.5,8.0,1.9 x 6.1 x 3.9,board palette,existing floor builder object (restored; dropped by the first v2 build),
 6,,,F06_S6.10/seat01_CHAIR_SIDE,CHAIR_SIDE,12.94,24.94,,,board dressing (inferred placement),seat at S6.10
 6,,,F06_S6.10/seat02_CHAIR_SIDE,CHAIR_SIDE,9.06,24.94,,,board dressing (inferred placement),seat at S6.10
 6,,,F06_S6.10/seat03_CHAIR_SIDE,CHAIR_SIDE,9.06,21.06,,,board dressing (inferred placement),seat at S6.10

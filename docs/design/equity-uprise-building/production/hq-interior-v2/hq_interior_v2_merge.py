@@ -159,8 +159,16 @@ def anchor_of(tag):
 
 
 # Whole existing zones an owner requirement replaces (recorded as superseded, with the reason).
-ZONE_SUPERSEDE = {6: {"command-preparation": "R0 zone replaced by Matthew McCluster's executive suite beside the "
-                                             "Halo Globe (owner brief); the three preparation desks need a new home"}}
+ZONE_SUPERSEDE = {}
+
+# Existing pieces relocated as a rigid group (the piece, its "-CHAIR", and the devices bound to it):
+# id -> (new centre x, new centre y, new v3 rotation deg, reason). Owner decision 2026-11-28.
+_PREP = "owner: the F6 preparation desks move next to Helen's office, continuing the governance desk line along the east wall"
+RELOCATE = {6: {
+    "F6-BRIEFING-PREP-DESK-01": (69.0, 34.5, 90.0, _PREP),
+    "F6-BRIEFING-PREP-DESK-02": (69.0, 41.0, 90.0, _PREP),
+    "F6-BRIEFING-PREP-DESK-03": (69.0, 47.5, 90.0, _PREP),
+}}
 PRIORITY_BOARD = {}
 
 

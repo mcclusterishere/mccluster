@@ -706,6 +706,20 @@ def merge_floor(f, EXIST, placed):
             o.matrix_world = Matrix.Translation(d) @ o.matrix_world
             o["eu_moved"] = why
         moved[key] = {"from": [it["x"], it["y"]], "to": [nx, ny], "reason": why}
+    for key, (nx, ny, nrot, why) in MG.RELOCATE.get(f, {}).items():
+        it = V3[f].get(key)
+        if not it or key not in EXIST:
+            continue
+        T = (Matrix.Translation((nx * FT, ny * FT, 0)) @ rotz(nrot - float(it.get("rot_deg") or 0))
+             @ Matrix.Translation((-it["x"] * FT, -it["y"] * FT, 0)))
+        RIGID.setdefault(f, {})[key] = T
+        for k in (key, key + "-CHAIR"):
+            for o in EXIST.get(k, []):
+                o.matrix_world = T @ o.matrix_world
+                o["eu_moved"] = why
+                o["eu_zone"] = "governance-desks (relocated preparation desk)"
+            moved[k] = {"from": [V3[f][k]["x"], V3[f][k]["y"]] if k in V3[f] else None,
+                        "to_group_of": key, "new_centre": [nx, ny], "new_rot_deg": nrot, "reason": why}
     bpy.context.view_layer.update()
     ex = existing_records(f, EXIST)
     pl = [r for r in (placed_record(f, row, e) for row, e in placed if e is not None) if r]
@@ -789,6 +803,7 @@ def upgrade_existing(f, C, EXIST, merge):
 
 
 _DEVICES = None
+RIGID = {}   # floor -> {station id: world transform applied to that relocated station and its devices}
 
 
 def place_devices(f, C, merge):
@@ -832,12 +847,15 @@ def place_devices(f, C, merge):
             out["dropped"][aid] = f"support {st} is not kept in this merge (superseded or replaced by an anchor)"
             continue
         out["kept"].append(aid)
+        R_ = RIGID.get(f, {}).get(st) or RIGID.get(f, {}).get(sup_node)
         for o in obs:
             if o.type != "MESH":
                 continue
             n = o.copy()
             n.parent = None
-            n.matrix_world = o.matrix_world.copy()
+            n.matrix_world = (R_ @ o.matrix_world) if R_ else o.matrix_world.copy()
+            if R_:
+                n["eu_moved"] = "moved with its relocated station " + st
             n.name = f"F{f:02d}_DEV_{o.name.split('.')[0]}"
             n["eu_source"] = "existing device layer (equity-uprise-workstations-v1.glb; manufacturer exterior proxy)"
             n["eu_device_id"] = aid

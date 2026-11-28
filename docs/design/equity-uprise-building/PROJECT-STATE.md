@@ -7,14 +7,15 @@
 **v2.1 (same day): merged with the existing furnished floors.** The first v2 build had dropped the whole v3 interior
 layer (286 catalog-sized pieces with stable IDs, including the named staff desks), about 100 other builder objects
 (room displays, gallery/archive frames) and never loaded the device layer. `production/hq-interior-v2/hq_interior_v2_merge.py`
-now keeps that layer and reconciles it with the pack piece by piece: **213 of 286 v3 pieces kept** and restyled with
-the board palettes, 73 superseded by the approved anchors that re-make them (each with a recorded reason), 31 builder
-objects restored, 83 board-dressing rows dropped as redundant, **70 of 86 F1–F6 devices kept** on their bound supports,
-4 existing pieces moved off room doors. Re-made tables keep their existing seating (F2 eight forum armchairs, F3 six
+now keeps that layer and reconciles it with the pack piece by piece: **219 of 286 v3 pieces kept** and restyled with
+the board palettes, 67 superseded by the approved anchors that re-make them (each with a recorded reason), 31 builder
+objects restored, 83 board-dressing rows dropped as redundant, **79 of 86 F1–F6 devices kept** on their bound supports,
+existing pieces moved off room doors and walls (5) or relocated as a group (the three F6 preparation desks). Re-made tables keep their existing seating (F2 eight forum armchairs, F3 six
 exchange chairs, F5 eight policy chairs, F6 six executive chairs). A fresh-process verification passes **80/80** (the
 original 61 plus routes that count furniture, piece-to-piece overlap by real vertex hulls, device supports, and
-per-floor accounting of the existing layer). New owner decisions: the F6 preparation desks displaced by Matthew's
-suite, and staff named both at an anchor and at their existing desk. 128 kept pieces then had their meshes
+per-floor accounting of the existing layer). The F6 preparation desks displaced by Matthew's suite now sit next to
+Helen's office along the east wall, with their chairs and devices (owner decision). Open: staff named both at an
+anchor and at their existing desk. 131 kept pieces then had their meshes
 upgraded in place to the board kit (same IDs, positions and catalog footprints). Read the folder README's v2.1 section.
 
 A new, separate editable Blender file, `production/hq-interior-v2/EU_HQ_Interiors_v2.blend` (Blender 4.2 LTS format),

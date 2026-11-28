@@ -1885,17 +1885,7 @@
       "ffe_ft": 67.5,
       "merge": {
         "devices": {
-          "dropped": {
-            "F6-USER-MON-04-01": "support F6-BRIEFING-PREP-DESK-01 is not kept in this merge (superseded or replaced by an anchor)",
-            "F6-USER-MON-04-02": "support F6-BRIEFING-PREP-DESK-01 is not kept in this merge (superseded or replaced by an anchor)",
-            "F6-USER-MON-05-01": "support F6-BRIEFING-PREP-DESK-02 is not kept in this merge (superseded or replaced by an anchor)",
-            "F6-USER-MON-05-02": "support F6-BRIEFING-PREP-DESK-02 is not kept in this merge (superseded or replaced by an anchor)",
-            "F6-USER-MON-06-01": "support F6-BRIEFING-PREP-DESK-03 is not kept in this merge (superseded or replaced by an anchor)",
-            "F6-USER-MON-06-02": "support F6-BRIEFING-PREP-DESK-03 is not kept in this merge (superseded or replaced by an anchor)",
-            "F6-USER-WS-04": "support F6-BRIEFING-PREP-DESK-01 is not kept in this merge (superseded or replaced by an anchor)",
-            "F6-USER-WS-05": "support F6-BRIEFING-PREP-DESK-02 is not kept in this merge (superseded or replaced by an anchor)",
-            "F6-USER-WS-06": "support F6-BRIEFING-PREP-DESK-03 is not kept in this merge (superseded or replaced by an anchor)"
-          },
+          "dropped": {},
           "kept": [
             "F6-USER-MON-01-01",
             "F6-USER-MON-01-02",
@@ -1903,12 +1893,99 @@
             "F6-USER-MON-02-02",
             "F6-USER-MON-03-01",
             "F6-USER-MON-03-02",
+            "F6-USER-MON-04-01",
+            "F6-USER-MON-04-02",
+            "F6-USER-MON-05-01",
+            "F6-USER-MON-05-02",
+            "F6-USER-MON-06-01",
+            "F6-USER-MON-06-02",
             "F6-USER-WS-01",
             "F6-USER-WS-02",
-            "F6-USER-WS-03"
+            "F6-USER-WS-03",
+            "F6-USER-WS-04",
+            "F6-USER-WS-05",
+            "F6-USER-WS-06"
           ]
         },
         "existing_moved": {
+          "F6-BRIEFING-PREP-DESK-01": {
+            "from": [
+              37,
+              4
+            ],
+            "new_centre": [
+              69.0,
+              34.5
+            ],
+            "new_rot_deg": 90.0,
+            "reason": "owner: the F6 preparation desks move next to Helen's office, continuing the governance desk line along the east wall",
+            "to_group_of": "F6-BRIEFING-PREP-DESK-01"
+          },
+          "F6-BRIEFING-PREP-DESK-01-CHAIR": {
+            "from": [
+              37,
+              6.65
+            ],
+            "new_centre": [
+              69.0,
+              34.5
+            ],
+            "new_rot_deg": 90.0,
+            "reason": "owner: the F6 preparation desks move next to Helen's office, continuing the governance desk line along the east wall",
+            "to_group_of": "F6-BRIEFING-PREP-DESK-01"
+          },
+          "F6-BRIEFING-PREP-DESK-02": {
+            "from": [
+              45,
+              4
+            ],
+            "new_centre": [
+              69.0,
+              41.0
+            ],
+            "new_rot_deg": 90.0,
+            "reason": "owner: the F6 preparation desks move next to Helen's office, continuing the governance desk line along the east wall",
+            "to_group_of": "F6-BRIEFING-PREP-DESK-02"
+          },
+          "F6-BRIEFING-PREP-DESK-02-CHAIR": {
+            "from": [
+              45,
+              6.65
+            ],
+            "new_centre": [
+              69.0,
+              41.0
+            ],
+            "new_rot_deg": 90.0,
+            "reason": "owner: the F6 preparation desks move next to Helen's office, continuing the governance desk line along the east wall",
+            "to_group_of": "F6-BRIEFING-PREP-DESK-02"
+          },
+          "F6-BRIEFING-PREP-DESK-03": {
+            "from": [
+              37,
+              14.4
+            ],
+            "new_centre": [
+              69.0,
+              47.5
+            ],
+            "new_rot_deg": 90.0,
+            "reason": "owner: the F6 preparation desks move next to Helen's office, continuing the governance desk line along the east wall",
+            "to_group_of": "F6-BRIEFING-PREP-DESK-03"
+          },
+          "F6-BRIEFING-PREP-DESK-03-CHAIR": {
+            "from": [
+              37,
+              17.05
+            ],
+            "new_centre": [
+              69.0,
+              47.5
+            ],
+            "new_rot_deg": 90.0,
+            "reason": "owner: the F6 preparation desks move next to Helen's office, continuing the governance desk line along the east wall",
+            "to_group_of": "F6-BRIEFING-PREP-DESK-03"
+          },
           "F6-SALON-PLANT-02": {
             "from": [
               16.4,
@@ -1924,6 +2001,12 @@
         "kept_ids": [
           "F6-BRIEFING-CREDENZA-01",
           "F6-BRIEFING-DISPLAY-01",
+          "F6-BRIEFING-PREP-DESK-01",
+          "F6-BRIEFING-PREP-DESK-01-CHAIR",
+          "F6-BRIEFING-PREP-DESK-02",
+          "F6-BRIEFING-PREP-DESK-02-CHAIR",
+          "F6-BRIEFING-PREP-DESK-03",
+          "F6-BRIEFING-PREP-DESK-03-CHAIR",
           "F6-COMMAND-CHAIR-01",
           "F6-COMMAND-CHAIR-02",
           "F6-COMMAND-CHAIR-03",
@@ -1956,6 +2039,9 @@
         ],
         "mesh_upgrade": {
           "kept_v3_mesh": {
+            "F6-BRIEFING-PREP-DESK-01-CHAIR": "task_chair",
+            "F6-BRIEFING-PREP-DESK-02-CHAIR": "task_chair",
+            "F6-BRIEFING-PREP-DESK-03-CHAIR": "task_chair",
             "F6-COMMAND-CHAIR-01": "task_chair_exec",
             "F6-COMMAND-CHAIR-02": "task_chair_exec",
             "F6-COMMAND-CHAIR-03": "task_chair_exec",
@@ -1978,6 +2064,30 @@
                 0.667,
                 0.993,
                 1.007
+              ]
+            },
+            "F6-BRIEFING-PREP-DESK-01": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.5,
+                1.25,
+                0.967
+              ]
+            },
+            "F6-BRIEFING-PREP-DESK-02": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.5,
+                1.25,
+                0.967
+              ]
+            },
+            "F6-BRIEFING-PREP-DESK-03": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.5,
+                1.25,
+                0.967
               ]
             },
             "F6-DESK-LI-WEI": {
@@ -2091,6 +2201,12 @@
         "restored_superseded": {},
         "v3_kept": [
           "F6-BRIEFING-CREDENZA-01",
+          "F6-BRIEFING-PREP-DESK-01",
+          "F6-BRIEFING-PREP-DESK-01-CHAIR",
+          "F6-BRIEFING-PREP-DESK-02",
+          "F6-BRIEFING-PREP-DESK-02-CHAIR",
+          "F6-BRIEFING-PREP-DESK-03",
+          "F6-BRIEFING-PREP-DESK-03-CHAIR",
           "F6-COMMAND-CHAIR-01",
           "F6-COMMAND-CHAIR-02",
           "F6-COMMAND-CHAIR-03",
@@ -2125,12 +2241,6 @@
           "F6-BRIEFING-CHAIR-04": "R2 seat of F6-BRIEFING-TABLE-01 (R1 superseded by approved anchor 6.5 (WORKPOINT_5x2.5))",
           "F6-BRIEFING-CHAIR-05": "R2 seat of F6-BRIEFING-TABLE-01 (R1 superseded by approved anchor 6.5 (WORKPOINT_5x2.5))",
           "F6-BRIEFING-CHAIR-06": "R2 seat of F6-BRIEFING-TABLE-01 (R1 superseded by approved anchor 6.5 (WORKPOINT_5x2.5))",
-          "F6-BRIEFING-PREP-DESK-01": "R0 zone replaced by Matthew McCluster's executive suite beside the Halo Globe (owner brief); the three preparation desks need a new home",
-          "F6-BRIEFING-PREP-DESK-01-CHAIR": "R0 zone replaced by Matthew McCluster's executive suite beside the Halo Globe (owner brief); the three preparation desks need a new home",
-          "F6-BRIEFING-PREP-DESK-02": "R0 zone replaced by Matthew McCluster's executive suite beside the Halo Globe (owner brief); the three preparation desks need a new home",
-          "F6-BRIEFING-PREP-DESK-02-CHAIR": "R0 zone replaced by Matthew McCluster's executive suite beside the Halo Globe (owner brief); the three preparation desks need a new home",
-          "F6-BRIEFING-PREP-DESK-03": "R0 zone replaced by Matthew McCluster's executive suite beside the Halo Globe (owner brief); the three preparation desks need a new home",
-          "F6-BRIEFING-PREP-DESK-03-CHAIR": "R0 zone replaced by Matthew McCluster's executive suite beside the Halo Globe (owner brief); the three preparation desks need a new home",
           "F6-BRIEFING-TABLE-01": "R1 superseded by approved anchor 6.5 (WORKPOINT_5x2.5)",
           "F6-COMMAND-TABLE-01": "R1 re-made as approved anchor 6.1 (COMMAND_TABLE) at the same point; its seating is kept",
           "F6-SALON-SOFA-01": "R1 superseded by approved anchor 6.3 (LOUNGE_BANQUETTE)",

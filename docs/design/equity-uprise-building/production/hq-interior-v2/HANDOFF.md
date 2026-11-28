@@ -37,7 +37,7 @@ The CSV, the proxy script and the 7 SVGs are also copied, with hashes, into `hq-
   `render_hq_interior_v2.py`, `compose_review_sheets.py`.
 - `hq-interior-v2-verification.json`: 80/80 checks pass in a fresh Blender process (v2.1).
 - **v2.1 merge** (`hq_interior_v2_merge.py`): the existing v3 interior layer, the restored builder objects and the
-  device layer are back (213/286 v3 pieces kept, 73 superseded with reasons, 70/86 F1–F6 devices). See the README's
+  device layer are back (219/286 v3 pieces kept, 67 superseded with reasons, 79/86 F1–F6 devices). See the README's
   v2.1 section before changing any placement: do NOT redraw what already exists; enhance it.
 - `hq-interior-v2-asset-inventory.csv` and `EU_HQ_Interiors_v2-build-report.json`.
 - `PROJECT-STATE.md`, `MASTER-INDEX.md` and `BUILDING-FILE-INDEX.json` updated. The context audit, repo-source gate
@@ -50,7 +50,7 @@ Windows Claude app needs updating). `System32` should be removed from that list.
 
 **Open tasks, in order:**
 
-0. **Upgrade, don't replace.** Done for 128 pieces (README → "Meshes upgraded in place"). Remaining v3 meshes (task
+0. **Upgrade, don't replace.** Done for 131 pieces (README → "Meshes upgraded in place"). Remaining v3 meshes (task
    chairs, files, carrels, F4 set gear, rugs) can be upgraded the same way once a better kit master exists.
 1. **Review renders.** If the cloud session committed `renders/` (29 JPEGs: `F0X_TOP/EYE/BOARD`, `F06_HALO_SUITE`,
    `F01_ENTRY`, `BEFORE_F01_*`, `BEFORE_F06_*`) plus `renders/compare/`, review them. If it did not, they were lost with
@@ -69,7 +69,7 @@ Windows Claude app needs updating). `System32` should be removed from that list.
    - The Halo underside sits at 6.0 ft AFF, below door headroom.
    - The two L7 deviations: 7.4 moved out of `F7-MECH-UNIT-01`; 7.5 is realised by the existing `F7-MECH-UNIT-02`.
    - Visual approval of the inferred board dressing (all `S…` tags in the inventory).
-   - v2.1: a new home for the three F6 preparation desks (and devices `F6-USER-WS-04..06`) displaced by Matthew's suite.
+   - Resolved: the three F6 preparation desks now sit next to Helen's office (east wall), with their chairs and devices.
    - v2.1: staff named at both an anchored station and their existing desk — replace, or second work point?
    - The `get-it-back` music-video scene on Prime uses the canonical Floor 6 Core v2 model, not this set; keep them separate.
 

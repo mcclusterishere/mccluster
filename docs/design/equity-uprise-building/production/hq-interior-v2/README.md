@@ -40,22 +40,22 @@ stay where their bound support stays. Every decision, with its reason, is in `EU
 | F3 | 43 / 49 | 6 | 4 | 26 | 8 / 8 | 2 |
 | F4 | 43 / 52 | 9 | 7 | 12 | 21 / 24 | 2 |
 | F5 | 36 / 55 | 19 | 11 | 11 | 24 / 24 | 0 |
-| F6 | 26 / 47 | 21 | 5 | 9 | 9 / 18 | 1 |
-| **Total** | **213 / 286** | **73** | **31** | **83** | **70 / 86** | **5** |
+| F6 | 32 / 47 | 15 | 5 | 9 | 18 / 18 | 7 |
+| **Total** | **219 / 286** | **67** | **31** | **83** | **79 / 86** | **11** |
 
 Notable outcomes: F2 keeps its eight forum armchairs (the historical eight-seat composition) around the approved oval
 table instead of the board's twelve; F3 keeps its six exchange chairs; the named staff desks on every floor (Grace,
 Valeria, Chioma, Thandiwe, Sari, Nusrat, Arjun, Rafael, Aya, Priya, Maren, Oksana, Leila, Amira, Li, Marc, Helen) are
 back; the F2 cohort workshop, F3 field-ops planning, F4 interview set and brand studio, F5 carrels and reading corner
 and F6 director's office are back. Superseded pieces are mostly the tables/chairs the anchors re-make (intake, passport,
-source/publication review, strategy/briefing rooms) and the F6 preparation desks.
+source/publication review, strategy/briefing rooms) and the F6 strategy and briefing room furniture.
 
 Moved existing pieces (the walking routes now count furniture as obstacles, and these blocked a room door or grazed
 a wall): `F3-LOUNGE-PLANT-02`, `F3-INTERVIEW-B-PLANT-01`, `F4-RECORDING-SCREEN-01`, `F4-EDIT-VISITOR-CHAIR-01`,
 `F6-SALON-PLANT-02`; the board's F6 salon
 round table moved north from Y21.4 to Y23 with diagonal seats for the same reason.
 
-**Meshes upgraded in place.** After the merge, 128 kept v3 pieces have their mesh swapped for the matching board-kit
+**Meshes upgraded in place.** After the merge, 131 kept v3 pieces have their mesh swapped for the matching board-kit
 master (`MG.UPGRADE`): side and wood chairs, lounge and club armchairs, meeting tables, desks, stools, planters, side,
 coffee and round tables, credenzas, bookcases, library stacks (archive shelving), sofas, banquettes, poufs and mobile
 boards. Each is a kit instance with the same ID (`eu_existing_id`), world position and facing (v3 faces +Y, the kit
@@ -248,9 +248,10 @@ the F6 screen (no wordmark is modelled; the screen is the interface).
 
 ## Open items
 
-- **F6 preparation desks (v2.1):** Matthew's suite (owner brief) occupies the existing `command-preparation` zone, so
-  `F6-BRIEFING-PREP-DESK-01..03` and their devices (`F6-USER-WS-04..06` with monitors) are out of this set. They need
-  a new home on F6, or the suite moves; owner decision.
+- **F6 preparation desks (resolved, owner 2026-11-28):** Matthew's suite occupies the old `command-preparation` zone, so
+  `F6-BRIEFING-PREP-DESK-01..03` moved next to Helen's office, continuing Li's and Marc's governance desk line along
+  the east wall (centres X69 / Y34.5, 41, 47.5, facing west). Each desk moved as a rigid group with its chair and its
+  bound devices (`F6-USER-WS-04..06` and their monitors), so every device still sits on its own desk (`MG.RELOCATE`).
 - **Duplicate people (v2.1):** the CSV names Grace (1.2), Valeria (1.3), Chioma (2.5), Thandiwe (2.7), Sari (2.6),
   Nusrat (3.3), Arjun (3.5), Rafael (3.6), Aya (3.4), Oksana (5.4), Leila (5.5), Amira (5.6), Li (6.4), Marc (6.5) and
   Helen (6.6), plus Priya (4.6) and Maren (4.5), at the anchored stations, while the kept workplace layer still has their own named desks. Both are in the
