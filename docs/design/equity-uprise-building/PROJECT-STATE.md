@@ -2,6 +2,29 @@
 
 > Update this file whenever completion, maturity, visual direction, or next work changes.
 
+## HQ interior rebuild v2 (Floors 1–7) — Blender set — 2026-11-28 — BUILT AND MACHINE-VERIFIED, owner visual approval open
+
+A new, separate editable Blender file, `production/hq-interior-v2/EU_HQ_Interiors_v2.blend` (Blender 4.2 LTS format),
+rebuilds the Floor 1–7 interiors on the unchanged Core V2 shell from the approved HQ Interior Concept v2 pack
+(seven GPT Image boards, seven north-up overlays, `asset-map.csv` with 52 anchors, `place-asset-proxies.py`; reference
+branch `docs/equity-uprise-hq-interior-concepts`, draft PR #871). The shell is the official builders' geometry, copied
+with new finishes; the canonical chassis, B1 and the official F1–F7 "before" models are imported unchanged and excluded.
+Boards drive furniture, materials, equipment, lighting and mood only. B1 stays the crew hub (existing model, unchanged).
+F6 has one suspended Halo Globe (no plinth) and the PRIM2 screen as separate interactive objects with named interaction
+anchors, Matthew McCluster's executive suite as story staging beside them, and the only McCluster office brand slot
+(empty; no artwork drawn). Repeated assets are instanced (67 kit masters, 343 instances).
+
+A fresh-process verification passes **61/61**: reopen and assets, collection structure, 52/52 anchors (two documented
+L7 deviations: 7.4 moved out of `F7-MECH-UNIT-01`; 7.5 realised by the existing `F7-MECH-UNIT-02`), Core V2 shaft/stair
+lines and FFEs on every floor, identical passenger door through the F6 arrival, overlay rooms closed by the shell,
+36 in routes plus door-threshold access to every anchor, no furniture/wall intersections, Halo/PRIM2/brand-slot rules.
+Review renders (plan, eye level, board-matching, F1/F6 before/after) are in `production/hq-interior-v2/renders/`.
+
+Built in the cloud session's Linux container with the Blender 4.2.0 module because Prime was not connected; no file on
+Prime was read or written. Open: owner visual approval on Prime, McCluster office artwork for the F6 slot, and the Halo
+underside at 6.0 ft AFF (canonical envelope) below normal headroom. No geometry authority, floor program, capability,
+website, Worker or database changed. Read `production/hq-interior-v2/README.md`.
+
 ## Production release evidence source coverage — 2026-11-20
 
 Classified the November 20 production schema snapshot as documentation support,

@@ -1,0 +1,347 @@
+floor,overlay_tag,asset_id,blender_object,kit_master,x_ft,y_ft,envelope_ft,material_hint,source,note
+1,1.1,RECEPTION_COUNTER,F01_1.1_RECEPTION_COUNTER,RECEPTION_COUNTER,36.0,45.5,10 x 2.3 x 3.5,Oak,asset-map.csv v2 (approved anchor),Miguel: visitor badges and access
+1,1.2,PASSPORT_STATION,F01_1.2_PASSPORT_STATION,PASSPORT_STATION,30.0,37.0,5 x 2.5 x 3,Oak,asset-map.csv v2 (approved anchor),Grace: scanner and privacy screen
+1,1.3,HOT_DESK,F01_1.3_HOT_DESK,WORKPOINT_5x2.5,43.0,37.0,5 x 2.5 x 2.5,Oak,asset-map.csv v2 (approved anchor),Valeria: laptop and drawer
+1,1.4,LOUNGE_BANQUETTE,F01_1.4_LOUNGE_BANQUETTE,LOUNGE_BANQUETTE,9.0,17.0,8 x 2.2 x 3,Felt,asset-map.csv v2 (approved anchor),Orientation seats
+1,1.5,CONSULT_TABLE,F01_1.5_CONSULT_TABLE,CONSULT_TABLE,8.0,38.0,4 x 2.5 x 2.5,Oak,asset-map.csv v2 (approved anchor),Private intake
+1,1.6,DIRECTORY_KIOSK,F01_1.6_DIRECTORY_KIOSK,DIRECTORY_KIOSK,50.0,26.5,1.5 x 1.2 x 5,Steel,asset-map.csv v2 (approved anchor),Building directory
+1,1.7,JOURNEY_DISPLAY,F01_1.7_JOURNEY_DISPLAY,JOURNEY_DISPLAY,36.0,51.5,12 x 0.8 x 5.5,Glass,asset-map.csv v2 (approved anchor),Journey Wall
+1,,,F01_1.1/01_CHAIR_TASK,CHAIR_TASK,34.0,47.45,,,companion of overlay 1.1 (inferred placement),seat at 1.1
+1,,,F01_1.1/02_CHAIR_TASK,CHAIR_TASK,38.0,47.45,,,companion of overlay 1.1 (inferred placement),seat at 1.1
+1,,,F01_1.1/lamp_LAMP_DESK,LAMP_DESK,40.4,44.9,,,companion of overlay 1.1 (inferred placement),counter lamp
+1,,,F01_1.1/plant_PLANT_DESK,PLANT_DESK,31.8,44.9,,,companion of overlay 1.1 (inferred placement),counter plant
+1,,,F01_1.1/screen1_MONITOR,MONITOR,34.0,46.75,,,companion of overlay 1.1 (inferred placement),staff monitor
+1,,,F01_1.1/screen2_MONITOR,MONITOR,38.0,46.75,,,companion of overlay 1.1 (inferred placement),badge/access monitor
+1,,,F01_1.2/chair_CHAIR_TASK,CHAIR_TASK,30.0,35.0,,,companion of overlay 1.2 (inferred placement),seat for 1.2
+1,,,F01_1.2/screen_MONITOR,MONITOR,30.0,37.25,,,companion of overlay 1.2 (inferred placement),desktop equipment for 1.2
+1,,,F01_1.3/chair_CHAIR_TASK,CHAIR_TASK,43.0,35.0,,,companion of overlay 1.3 (inferred placement),seat for 1.3
+1,,,F01_1.3/lamp_LAMP_DESK,LAMP_DESK,40.95,37.2,,,companion of overlay 1.3 (inferred placement),task light for 1.3
+1,,,F01_1.3/screen_LAPTOP,LAPTOP,43.0,37.25,,,companion of overlay 1.3 (inferred placement),desktop equipment for 1.3
+1,,,F01_1.5/n/01_CHAIR_SIDE,CHAIR_SIDE,7.0,39.6,,,companion of overlay 1.5 (inferred placement),seat at 1.5/n
+1,,,F01_1.5/n/02_CHAIR_SIDE,CHAIR_SIDE,9.0,39.6,,,companion of overlay 1.5 (inferred placement),seat at 1.5/n
+1,,,F01_1.5/s/01_CHAIR_SIDE,CHAIR_SIDE,7.0,36.4,,,companion of overlay 1.5 (inferred placement),seat at 1.5/s
+1,,,F01_1.5/s/02_CHAIR_SIDE,CHAIR_SIDE,9.0,36.4,,,companion of overlay 1.5 (inferred placement),seat at 1.5/s
+1,,,F01_S1.1/chair_CHAIR_TASK,CHAIR_TASK,36.5,35.0,,,board dressing (inferred placement),seat for S1.1
+1,,,F01_S1.1/plant_PLANT_DESK,PLANT_DESK,38.6,37.3,,,board dressing (inferred placement),desk plant for S1.1
+1,,,F01_S1.1/screen_MONITOR,MONITOR,36.5,37.25,,,board dressing (inferred placement),desktop equipment for S1.1
+1,,,F01_S1.10_LAMP_FLOOR,LAMP_FLOOR,15.6,16.6,,,board dressing (inferred placement),lounge floor lamp
+1,,,F01_S1.11_RUG,RUG,9.0,21.5,,,board dressing (inferred placement),orientation rug
+1,,,F01_S1.12_CREDENZA,CREDENZA,5.6,42.9,,,board dressing (inferred placement),intake credenza (prior inventory F1-INTAKE-CREDENZA-01)
+1,,,F01_S1.13_MONITOR,MONITOR,6.2,42.95,,,board dressing (inferred placement),intake display (prior F1-INTAKE-DISPLAY-01)
+1,,,F01_S1.14_LAMP_DESK,LAMP_DESK,3.4,42.95,,,board dressing (inferred placement),credenza lamp
+1,,,F01_S1.15_PLANT_FLOOR,PLANT_FLOOR,14.4,42.4,,,board dressing (inferred placement),intake plant
+1,,,F01_S1.16_FRAME_ART,FRAME_ART,8.0,43.72,,,board dressing (inferred placement),landscape print
+1,,,F01_S1.17_RUG,RUG,8.0,38.0,,,board dressing (inferred placement),intake rug
+1,,,F01_S1.18_PLANT_FLOOR,PLANT_FLOOR,51.5,22.6,,,board dressing (inferred placement),directory plant
+1,,,F01_S1.19_COAT_RACK,COAT_RACK,6.5,8.0,,,board dressing (inferred placement),Arrival & Intake coat rack (owner: preserve); position inferred from board
+1,,,F01_S1.1_PASSPORT_STATION,PASSPORT_STATION,36.5,37.0,,,board dressing (inferred placement),second passport station: board shows a row of stations; prior inventory had three passport kiosks
+1,,,F01_S1.20_SOFA_LONG,SOFA_LONG,25.5,21.6,,,board dressing (inferred placement),atrium sectional (olive)
+1,,,F01_S1.21_CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND,22.6,15.8,,,board dressing (inferred placement),atrium boucle chair
+1,,,F01_S1.22_CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND,28.4,15.8,,,board dressing (inferred placement),atrium boucle chair
+1,,,F01_S1.23_COFFEE_TABLE_ROUND,COFFEE_TABLE_ROUND,25.5,18.6,,,board dressing (inferred placement),atrium coffee table
+1,,,F01_S1.24_RUG,RUG,25.5,18.7,,,board dressing (inferred placement),atrium jute rug
+1,,,F01_S1.25_LAMP_FLOOR,LAMP_FLOOR,30.4,22.6,,,board dressing (inferred placement),atrium floor lamp
+1,,,F01_S1.26_PLANT_TREE,PLANT_TREE,30.15,6.0,,,board dressing (inferred placement),vestibule tree (west)
+1,,,F01_S1.27_PLANT_TREE,PLANT_TREE,41.85,6.0,,,board dressing (inferred placement),vestibule tree (east)
+1,,,F01_S1.28_PLANT_TREE,PLANT_TREE,21.2,11.4,,,board dressing (inferred placement),atrium tree
+1,,,F01_S1.29_PLANT_TREE,PLANT_TREE,50.8,11.4,,,board dressing (inferred placement),atrium tree
+1,,,F01_S1.2_CAFE_TABLE,CAFE_TABLE,6.5,19.7,,,board dressing (inferred placement),orientation cafe table
+1,,,F01_S1.30_PENDANT_LINEAR,PENDANT_LINEAR,33.25,37.6,,,board dressing (inferred placement),passport pendant
+1,,,F01_S1.31_PENDANT_LINEAR,PENDANT_LINEAR,43.0,37.6,,,board dressing (inferred placement),workpoint pendant
+1,,,F01_S1.32_PENDANT_DRUM,PENDANT_DRUM,8.0,38.0,,,board dressing (inferred placement),intake pendant
+1,,,F01_S1.3_CAFE_TABLE,CAFE_TABLE,11.5,19.7,,,board dressing (inferred placement),orientation cafe table
+1,,,F01_S1.4_POUF,POUF,6.5,22.3,,,board dressing (inferred placement),olive pouf
+1,,,F01_S1.5_POUF,POUF,11.5,22.3,,,board dressing (inferred placement),olive pouf
+1,,,F01_S1.6_CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND,5.0,25.6,,,board dressing (inferred placement),boucle armchair
+1,,,F01_S1.7_CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND,10.0,25.6,,,board dressing (inferred placement),boucle armchair
+1,,,F01_S1.8_SIDE_TABLE,SIDE_TABLE,7.5,25.6,,,board dressing (inferred placement),lounge side table
+1,,,F01_S1.9_PLANT_FLOOR,PLANT_FLOOR,3.4,14.0,,,board dressing (inferred placement),lounge plant
+2,2.1,FORUM_TABLE,F02_2.1_FORUM_TABLE,FORUM_TABLE,36.0,39.0,12 x 10 x 2.5,Oak,asset-map.csv v2 (approved anchor),Power and discussion microphone
+2,2.2,LOUNGE_BANQUETTE,F02_2.2_LOUNGE_BANQUETTE,LOUNGE_BANQUETTE,8.0,21.0,8 x 2.2 x 3,Felt,asset-map.csv v2 (approved anchor),Listening lounge
+2,2.3,CHECKIN_KIOSK,F02_2.3_CHECKIN_KIOSK,CHECKIN_KIOSK,50.0,26.5,1.5 x 1.2 x 5,Steel,asset-map.csv v2 (approved anchor),Member check-in
+2,2.4,FORUM_DISPLAY,F02_2.4_FORUM_DISPLAY,MEDIA_WALL_14,36.0,51.5,14 x 0.8 x 5.5,Glass,asset-map.csv v2 (approved anchor),Conversation prompts
+2,2.5,WORKPOINT,F02_2.5_WORKPOINT,WORKPOINT,14.0,27.0,4 x 2 x 2.5,Oak,asset-map.csv v2 (approved anchor),Chioma cohort workpoint
+2,2.6,WORKPOINT,F02_2.6_WORKPOINT,WORKPOINT,28.0,47.0,4 x 2 x 2.5,Oak,asset-map.csv v2 (approved anchor),Sari telecom setup
+2,2.7,WORKPOINT,F02_2.7_WORKPOINT,WORKPOINT,44.0,47.0,4 x 2 x 2.5,Oak,asset-map.csv v2 (approved anchor),Thandiwe cohort workpoint
+2,,,F02_2.1/plant_PLANT_DESK,PLANT_DESK,36.0,39.0,,,companion of overlay 2.1 (inferred placement),forum centrepiece
+2,,,F02_2.1/seat01_CHAIR_SIDE,CHAIR_SIDE,43.1,40.64,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat02_CHAIR_SIDE,CHAIR_SIDE,41.2,43.49,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat03_CHAIR_SIDE,CHAIR_SIDE,37.9,45.13,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat04_CHAIR_SIDE,CHAIR_SIDE,34.1,45.13,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat05_CHAIR_SIDE,CHAIR_SIDE,30.8,43.49,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat06_CHAIR_SIDE,CHAIR_SIDE,28.9,40.64,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat07_CHAIR_SIDE,CHAIR_SIDE,28.9,37.36,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat08_CHAIR_SIDE,CHAIR_SIDE,30.8,34.51,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat09_CHAIR_SIDE,CHAIR_SIDE,34.1,32.87,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat10_CHAIR_SIDE,CHAIR_SIDE,37.9,32.87,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat11_CHAIR_SIDE,CHAIR_SIDE,41.2,34.51,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.1/seat12_CHAIR_SIDE,CHAIR_SIDE,43.1,37.36,,,companion of overlay 2.1 (inferred placement),seat at 2.1
+2,,,F02_2.5/chair_CHAIR_TASK,CHAIR_TASK,14.0,25.25,,,companion of overlay 2.5 (inferred placement),seat for 2.5
+2,,,F02_2.5/lamp_LAMP_DESK,LAMP_DESK,12.45,27.2,,,companion of overlay 2.5 (inferred placement),task light for 2.5
+2,,,F02_2.5/screen_LAPTOP,LAPTOP,14.0,27.25,,,companion of overlay 2.5 (inferred placement),desktop equipment for 2.5
+2,,,F02_2.6/chair_CHAIR_TASK,CHAIR_TASK,28.0,45.25,,,companion of overlay 2.6 (inferred placement),seat for 2.6
+2,,,F02_2.6/plant_PLANT_DESK,PLANT_DESK,29.6,47.3,,,companion of overlay 2.6 (inferred placement),desk plant for 2.6
+2,,,F02_2.6/screen_LAPTOP,LAPTOP,28.0,47.25,,,companion of overlay 2.6 (inferred placement),desktop equipment for 2.6
+2,,,F02_2.7/chair_CHAIR_TASK,CHAIR_TASK,44.0,45.25,,,companion of overlay 2.7 (inferred placement),seat for 2.7
+2,,,F02_2.7/lamp_LAMP_DESK,LAMP_DESK,42.45,47.2,,,companion of overlay 2.7 (inferred placement),task light for 2.7
+2,,,F02_2.7/screen_LAPTOP,LAPTOP,44.0,47.25,,,companion of overlay 2.7 (inferred placement),desktop equipment for 2.7
+2,,,F02_S2.10_LAMP_FLOOR,LAMP_FLOOR,2.9,24.0,,,board dressing (inferred placement),lounge floor lamp
+2,,,F02_S2.11_PLANT_FLOOR,PLANT_FLOOR,51.4,30.6,,,board dressing (inferred placement),check-in plant
+2,,,F02_S2.12_PLANT_TREE,PLANT_TREE,24.8,50.0,,,board dressing (inferred placement),feature-wall tree
+2,,,F02_S2.13_PLANT_TREE,PLANT_TREE,47.2,50.0,,,board dressing (inferred placement),feature-wall tree
+2,,,F02_S2.14_PLANT_TREE,PLANT_TREE,68.6,4.6,,,board dressing (inferred placement),south-east corner tree
+2,,,F02_S2.15_PLANT_TREE,PLANT_TREE,3.4,4.6,,,board dressing (inferred placement),south-west corner tree
+2,,,F02_S2.1_RUG,RUG,36.0,39.0,,,board dressing (inferred placement),terracotta forum rug
+2,,,F02_S2.2_PENDANT_DRUM,PENDANT_DRUM,32.5,39.0,,,board dressing (inferred placement),forum pendant
+2,,,F02_S2.3_PENDANT_DRUM,PENDANT_DRUM,39.5,39.0,,,board dressing (inferred placement),forum pendant
+2,,,F02_S2.4_CAFE_TABLE,CAFE_TABLE,5.5,23.7,,,board dressing (inferred placement),listening cafe table
+2,,,F02_S2.5_CAFE_TABLE,CAFE_TABLE,10.5,23.7,,,board dressing (inferred placement),listening cafe table
+2,,,F02_S2.6_CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND,5.5,26.4,,,board dressing (inferred placement),boucle chair
+2,,,F02_S2.7_CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND,10.2,26.4,,,board dressing (inferred placement),boucle chair
+2,,,F02_S2.8_RUG,RUG,8.0,23.8,,,board dressing (inferred placement),lounge rug
+2,,,F02_S2.9_PLANT_TREE,PLANT_TREE,3.3,16.6,,,board dressing (inferred placement),lounge tree
+3,3.1,EXCHANGE_TABLE,F03_3.1_EXCHANGE_TABLE,EXCHANGE_TABLE,36.0,41.0,16 x 4 x 2.5,Oak,asset-map.csv v2 (approved anchor),Central opportunity exchange
+3,3.2,WORKPOINT,F03_3.2_WORKPOINT,WORKPOINT,7.0,28.0,4 x 2 x 2.5,Oak,asset-map.csv v2 (approved anchor),Matthew fellowship desk
+3,3.3,WORKPOINT,F03_3.3_WORKPOINT,WORKPOINT,25.0,46.0,4 x 2 x 2.5,Oak,asset-map.csv v2 (approved anchor),Nusrat operations
+3,3.4,TECH_BENCH,F03_3.4_TECH_BENCH,TECH_BENCH,45.0,47.0,6 x 2.2 x 3,Steel,asset-map.csv v2 (approved anchor),Aya: antistatic mat and meter
+3,3.5,WORKPOINT,F03_3.5_WORKPOINT,WORKPOINT,25.0,33.0,4 x 2 x 2.5,Oak,asset-map.csv v2 (approved anchor),Arjun safety planning
+3,3.6,WORKPOINT,F03_3.6_WORKPOINT,WORKPOINT,45.0,33.0,4 x 2 x 2.5,Oak,asset-map.csv v2 (approved anchor),Rafael monitor station
+3,3.7,CONSULT_TABLE,F03_3.7_CONSULT_TABLE,CONSULT_TABLE,8.0,10.0,4 x 2.5 x 2.5,Oak,asset-map.csv v2 (approved anchor),Interview A
+3,3.8,CONSULT_TABLE,F03_3.8_CONSULT_TABLE,CONSULT_TABLE,22.0,10.0,4 x 2.5 x 2.5,Oak,asset-map.csv v2 (approved anchor),Interview B
+3,3.9,CHECKIN_KIOSK,F03_3.9_CHECKIN_KIOSK,CHECKIN_KIOSK,50.0,26.5,1.5 x 1.2 x 5,Steel,asset-map.csv v2 (approved anchor),Meeting check-in
+3,,,F03_3.1/n/01_CHAIR_SIDE,CHAIR_SIDE,29.6,43.75,,,companion of overlay 3.1 (inferred placement),seat at 3.1/n
+3,,,F03_3.1/n/02_CHAIR_SIDE,CHAIR_SIDE,32.8,43.75,,,companion of overlay 3.1 (inferred placement),seat at 3.1/n
+3,,,F03_3.1/n/03_CHAIR_SIDE,CHAIR_SIDE,36.0,43.75,,,companion of overlay 3.1 (inferred placement),seat at 3.1/n
+3,,,F03_3.1/n/04_CHAIR_SIDE,CHAIR_SIDE,39.2,43.75,,,companion of overlay 3.1 (inferred placement),seat at 3.1/n
+3,,,F03_3.1/n/05_CHAIR_SIDE,CHAIR_SIDE,42.4,43.75,,,companion of overlay 3.1 (inferred placement),seat at 3.1/n
+3,,,F03_3.1/plant_PLANT_DESK,PLANT_DESK,36.0,41.0,,,companion of overlay 3.1 (inferred placement),exchange centrepiece
+3,,,F03_3.1/s/01_CHAIR_SIDE,CHAIR_SIDE,29.6,38.25,,,companion of overlay 3.1 (inferred placement),seat at 3.1/s
+3,,,F03_3.1/s/02_CHAIR_SIDE,CHAIR_SIDE,32.8,38.25,,,companion of overlay 3.1 (inferred placement),seat at 3.1/s
+3,,,F03_3.1/s/03_CHAIR_SIDE,CHAIR_SIDE,36.0,38.25,,,companion of overlay 3.1 (inferred placement),seat at 3.1/s
+3,,,F03_3.1/s/04_CHAIR_SIDE,CHAIR_SIDE,39.2,38.25,,,companion of overlay 3.1 (inferred placement),seat at 3.1/s
+3,,,F03_3.1/s/05_CHAIR_SIDE,CHAIR_SIDE,42.4,38.25,,,companion of overlay 3.1 (inferred placement),seat at 3.1/s
+3,,,F03_3.2/chair_CHAIR_TASK,CHAIR_TASK,7.0,26.25,,,companion of overlay 3.2 (inferred placement),seat for 3.2
+3,,,F03_3.2/lamp_LAMP_DESK,LAMP_DESK,5.45,28.2,,,companion of overlay 3.2 (inferred placement),task light for 3.2
+3,,,F03_3.2/screen_MONITOR,MONITOR,7.0,28.25,,,companion of overlay 3.2 (inferred placement),desktop equipment for 3.2
+3,,,F03_3.3/chair_CHAIR_TASK,CHAIR_TASK,25.0,44.25,,,companion of overlay 3.3 (inferred placement),seat for 3.3
+3,,,F03_3.3/plant_PLANT_DESK,PLANT_DESK,26.6,46.3,,,companion of overlay 3.3 (inferred placement),desk plant for 3.3
+3,,,F03_3.3/screen_MONITOR,MONITOR,25.0,46.25,,,companion of overlay 3.3 (inferred placement),desktop equipment for 3.3
+3,,,F03_3.4/stool_STOOL,STOOL,45.0,45.3,,,companion of overlay 3.4 (inferred placement),bench stool
+3,,,F03_3.5/chair_CHAIR_TASK,CHAIR_TASK,25.0,31.25,,,companion of overlay 3.5 (inferred placement),seat for 3.5
+3,,,F03_3.5/lamp_LAMP_DESK,LAMP_DESK,23.45,33.2,,,companion of overlay 3.5 (inferred placement),task light for 3.5
+3,,,F03_3.5/screen_LAPTOP,LAPTOP,25.0,33.25,,,companion of overlay 3.5 (inferred placement),desktop equipment for 3.5
+3,,,F03_3.6/chair_CHAIR_TASK,CHAIR_TASK,45.0,31.25,,,companion of overlay 3.6 (inferred placement),seat for 3.6
+3,,,F03_3.6/screen1_MONITOR,MONITOR,44.0,33.3,,,companion of overlay 3.6 (inferred placement),monitor station
+3,,,F03_3.6/screen2_MONITOR,MONITOR,46.0,33.3,,,companion of overlay 3.6 (inferred placement),monitor station
+3,,,F03_3.7/credenza_CREDENZA,CREDENZA,3.15,10.0,,,companion of overlay 3.7 (inferred placement),interview credenza
+3,,,F03_3.7/lamp_LAMP_DESK,LAMP_DESK,3.15,12.2,,,companion of overlay 3.7 (inferred placement),credenza lamp
+3,,,F03_3.7/n/01_CHAIR_SIDE,CHAIR_SIDE,7.0,11.6,,,companion of overlay 3.7 (inferred placement),seat at 3.7/n
+3,,,F03_3.7/n/02_CHAIR_SIDE,CHAIR_SIDE,9.0,11.6,,,companion of overlay 3.7 (inferred placement),seat at 3.7/n
+3,,,F03_3.7/s/01_CHAIR_SIDE,CHAIR_SIDE,7.0,8.4,,,companion of overlay 3.7 (inferred placement),seat at 3.7/s
+3,,,F03_3.7/s/02_CHAIR_SIDE,CHAIR_SIDE,9.0,8.4,,,companion of overlay 3.7 (inferred placement),seat at 3.7/s
+3,,,F03_3.8/credenza_CREDENZA,CREDENZA,26.85,10.0,,,companion of overlay 3.8 (inferred placement),interview credenza
+3,,,F03_3.8/lamp_LAMP_DESK,LAMP_DESK,26.85,12.2,,,companion of overlay 3.8 (inferred placement),credenza lamp
+3,,,F03_3.8/n/01_CHAIR_SIDE,CHAIR_SIDE,21.0,11.6,,,companion of overlay 3.8 (inferred placement),seat at 3.8/n
+3,,,F03_3.8/n/02_CHAIR_SIDE,CHAIR_SIDE,23.0,11.6,,,companion of overlay 3.8 (inferred placement),seat at 3.8/n
+3,,,F03_3.8/s/01_CHAIR_SIDE,CHAIR_SIDE,21.0,8.4,,,companion of overlay 3.8 (inferred placement),seat at 3.8/s
+3,,,F03_3.8/s/02_CHAIR_SIDE,CHAIR_SIDE,23.0,8.4,,,companion of overlay 3.8 (inferred placement),seat at 3.8/s
+3,,,F03_S3.10_BOOKCASE,BOOKCASE,2.85,31.2,,,board dressing (inferred placement),network library
+3,,,F03_S3.11_CAFE_TABLE,CAFE_TABLE,14.6,30.4,,,board dressing (inferred placement),lounge round table
+3,,,F03_S3.12_CHAIR_SIDE,CHAIR_SIDE,14.6,28.0,,,board dressing (inferred placement),lounge chair
+3,,,F03_S3.13_CHAIR_SIDE,CHAIR_SIDE,14.6,32.8,,,board dressing (inferred placement),lounge chair
+3,,,F03_S3.14_LAMP_FLOOR,LAMP_FLOOR,3.5,17.0,,,board dressing (inferred placement),lounge floor lamp
+3,,,F03_S3.15_PLANT_FLOOR,PLANT_FLOOR,17.0,32.8,,,board dressing (inferred placement),lounge plant
+3,,,F03_S3.16_WHITEBOARD_MOBILE,WHITEBOARD_MOBILE,50.0,45.0,,,board dressing (inferred placement),field-ops planning board
+3,,,F03_S3.17_PLANT_TREE,PLANT_TREE,68.6,4.6,,,board dressing (inferred placement),corner tree
+3,,,F03_S3.18_PLANT_TREE,PLANT_TREE,57.0,48.6,,,board dressing (inferred placement),elevator lobby plant
+3,,,F03_S3.1_RUG,RUG,36.0,41.0,,,board dressing (inferred placement),exchange rug
+3,,,F03_S3.2_PENDANT_LINEAR,PENDANT_LINEAR,32.0,41.0,,,board dressing (inferred placement),exchange pendant
+3,,,F03_S3.3_PENDANT_LINEAR,PENDANT_LINEAR,40.0,41.0,,,board dressing (inferred placement),exchange pendant
+3,,,F03_S3.4_PLANT_FLOOR,PLANT_FLOOR,12.8,5.4,,,board dressing (inferred placement),interview A plant
+3,,,F03_S3.5_PLANT_FLOOR,PLANT_FLOOR,17.4,5.4,,,board dressing (inferred placement),interview B plant
+3,,,F03_S3.6_SOFA_3SEAT,SOFA_3SEAT,4.1,22.0,,,board dressing (inferred placement),network lounge sofa (teal)
+3,,,F03_S3.7_COFFEE_TABLE_ROUND,COFFEE_TABLE_ROUND,8.4,22.0,,,board dressing (inferred placement),lounge coffee table
+3,,,F03_S3.8_CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND,12.2,22.0,,,board dressing (inferred placement),lounge armchair
+3,,,F03_S3.9_RUG,RUG,8.0,22.0,,,board dressing (inferred placement),lounge rug
+4,4.1,LISTENING_SEATING,F04_4.1_LISTENING_SEATING_group_anchor,unique object,36.0,38.0,12 x 6 x 3,Felt,asset-map.csv v2 (approved anchor),Screening seating group envelope
+4,4.2,RELEASE_DISPLAY,F04_4.2_RELEASE_DISPLAY,RELEASE_WALL,36.0,51.5,14 x 0.8 x 5.5,Glass,asset-map.csv v2 (approved anchor),Release Wall
+4,4.3,ARCHIVE_CABINET,F04_4.3_ARCHIVE_CABINET,ARCHIVE_CABINET,6.0,28.0,5 x 1.8 x 4.5,Walnut,asset-map.csv v2 (approved anchor),Framed releases and culture archive
+4,4.4,VOCAL_RIG,F04_4.4_VOCAL_RIG,VOCAL_RIG,9.0,10.0,3 x 3 x 6,Steel,asset-map.csv v2 (approved anchor),Vocal mic pop filter and interface
+4,4.5,EDIT_DESK,F04_4.5_EDIT_DESK,EDIT_DESK,24.0,10.0,6 x 2.5 x 2.5,Walnut,asset-map.csv v2 (approved anchor),Maren: dual displays and headphones
+4,4.6,WORKPOINT,F04_4.6_WORKPOINT,WORKPOINT,13.0,34.0,4 x 2 x 2.5,Walnut,asset-map.csv v2 (approved anchor),Priya brand review
+4,4.7,CHECKIN_KIOSK,F04_4.7_CHECKIN_KIOSK,CHECKIN_KIOSK,50.0,26.5,1.5 x 1.2 x 5,Steel,asset-map.csv v2 (approved anchor),Release Control
+4,4.8,GEAR_LOCKER,F04_4.8_GEAR_LOCKER,GEAR_LOCKER,39.0,67.0,5 x 1.8 x 6,Steel,asset-map.csv v2 (approved anchor),Labeled camera light and stand cases
+4,,,F04_4.1/chairE_CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND,40.8,39.9,,,companion of overlay 4.1 (inferred placement),screening armchair
+4,,,F04_4.1/chairW_CHAIR_LOUNGE_ROUND,CHAIR_LOUNGE_ROUND,31.2,39.9,,,companion of overlay 4.1 (inferred placement),screening armchair
+4,,,F04_4.1/console_BOOKCASE_LOW,BOOKCASE_LOW,36.0,34.25,,,companion of overlay 4.1 (inferred placement),record console behind sofa
+4,,,F04_4.1/lampE_LAMP_FLOOR,LAMP_FLOOR,41.4,36.4,,,companion of overlay 4.1 (inferred placement),screening lamp
+4,,,F04_4.1/lampW_LAMP_FLOOR,LAMP_FLOOR,30.6,36.4,,,companion of overlay 4.1 (inferred placement),screening lamp
+4,,,F04_4.1/sofa_SOFA_LONG,SOFA_LONG,36.0,36.4,,,companion of overlay 4.1 (inferred placement),screening sofa (leather)
+4,,,F04_4.1/table_COFFEE_TABLE_ROUND,COFFEE_TABLE_ROUND,36.0,39.9,,,companion of overlay 4.1 (inferred placement),screening table
+4,,,F04_4.5/chair_CHAIR_TASK,CHAIR_TASK,24.0,8.0,,,companion of overlay 4.5 (inferred placement),seat for 4.5
+4,,,F04_4.5/screen1_MONITOR,MONITOR,23.0,10.6,,,companion of overlay 4.5 (inferred placement),edit display
+4,,,F04_4.5/screen2_MONITOR,MONITOR,25.0,10.6,,,companion of overlay 4.5 (inferred placement),edit display
+4,,,F04_4.6/chair_CHAIR_TASK,CHAIR_TASK,13.0,32.25,,,companion of overlay 4.6 (inferred placement),seat for 4.6
+4,,,F04_4.6/lamp_LAMP_DESK,LAMP_DESK,11.45,34.2,,,companion of overlay 4.6 (inferred placement),task light for 4.6
+4,,,F04_4.6/screen_LAPTOP,LAPTOP,13.0,34.25,,,companion of overlay 4.6 (inferred placement),desktop equipment for 4.6
+4,,,F04_S4.10_CREDENZA,CREDENZA,21.0,15.0,,,board dressing (inferred placement),edit suite credenza
+4,,,F04_S4.11_PLANT_FLOOR,PLANT_FLOOR,30.0,5.3,,,board dressing (inferred placement),edit suite plant
+4,,,F04_S4.12/chair_CHAIR_TASK,CHAIR_TASK,30.5,28.65,,,board dressing (inferred placement),seat for S4.12
+4,,,F04_S4.12/plant_PLANT_DESK,PLANT_DESK,32.1,30.7,,,board dressing (inferred placement),desk plant for S4.12
+4,,,F04_S4.12/screen_LAPTOP,LAPTOP,30.5,30.65,,,board dressing (inferred placement),desktop equipment for S4.12
+4,,,F04_S4.12_WORKPOINT,WORKPOINT,30.5,30.4,,,board dressing (inferred placement),production desk: board shows two desks south of the screening group; prior inventory F4-PRODUCTION-DESK
+4,,,F04_S4.13/chair_CHAIR_TASK,CHAIR_TASK,41.5,28.65,,,board dressing (inferred placement),seat for S4.13
+4,,,F04_S4.13/lamp_LAMP_DESK,LAMP_DESK,39.95,30.6,,,board dressing (inferred placement),task light for S4.13
+4,,,F04_S4.13/screen_LAPTOP,LAPTOP,41.5,30.65,,,board dressing (inferred placement),desktop equipment for S4.13
+4,,,F04_S4.13_WORKPOINT,WORKPOINT,41.5,30.4,,,board dressing (inferred placement),production desk: board; prior inventory F4-PRODUCTION-DESK
+4,,,F04_S4.14_ROAD_CASE,ROAD_CASE,40.3,62.6,,,board dressing (inferred placement),labelled road case
+4,,,F04_S4.15_ROAD_CASE,ROAD_CASE,40.3,62.6,,,board dressing (inferred placement),stacked road case
+4,,,F04_S4.16_PLANT_TREE,PLANT_TREE,23.4,49.6,,,board dressing (inferred placement),release-wall plant
+4,,,F04_S4.17_PLANT_TREE,PLANT_TREE,48.6,49.6,,,board dressing (inferred placement),release-wall plant
+4,,,F04_S4.1_RUG,RUG,36.0,38.2,,,board dressing (inferred placement),burgundy listening rug
+4,,,F04_S4.2_VITRINE,VITRINE,12.6,23.6,,,board dressing (inferred placement),culture archive vitrine (glass case)
+4,,,F04_S4.3_RUG,RUG,9.5,27.0,,,board dressing (inferred placement),gallery runner
+4,,,F04_S4.4_PLANT_FLOOR,PLANT_FLOOR,16.6,36.6,,,board dressing (inferred placement),gallery plant
+4,,,F04_S4.5/1_FRAME_ART,FRAME_ART,0.85,20.4,,,board dressing (inferred placement),framed release on archive wall
+4,,,F04_S4.5/2_FRAME_ART,FRAME_ART,0.85,23.6,,,board dressing (inferred placement),framed release on archive wall
+4,,,F04_S4.5/3_FRAME_ART,FRAME_ART,0.85,31.6,,,board dressing (inferred placement),framed release on archive wall
+4,,,F04_S4.5/4_FRAME_ART,FRAME_ART,0.85,34.8,,,board dressing (inferred placement),framed release on archive wall
+4,,,F04_S4.6_CREDENZA,CREDENZA,3.2,10.0,,,board dressing (inferred placement),recording desk / interface
+4,,,F04_S4.7_SPEAKER_PAIR,SPEAKER_PAIR,3.2,10.0,,,board dressing (inferred placement),recording monitors
+4,,,F04_S4.8_RUG,RUG,8.5,9.5,,,board dressing (inferred placement),recording rug
+4,,,F04_S4.9_LAMP_FLOOR,LAMP_FLOOR,13.6,5.4,,,board dressing (inferred placement),recording lamp
+5,5.1,POLICY_TABLE,F05_5.1_POLICY_TABLE,POLICY_TABLE,36.0,41.0,16 x 5 x 2.5,Oak,asset-map.csv v2 (approved anchor),Policy lab table
+5,5.2,ARCHIVE_CABINET,F05_5.2_ARCHIVE_CABINET,ARCHIVE_CABINET_6x6,7.0,35.0,6 x 1.8 x 6,Steel,asset-map.csv v2 (approved anchor),Proof collection; ballast/load unresolved
+5,5.3,CONSULT_TABLE,F05_5.3_CONSULT_TABLE,CONSULT_TABLE_5x2.5,10.0,27.0,5 x 2.5 x 2.5,Oak,asset-map.csv v2 (approved anchor),Archive reading station
+5,5.4,WORKPOINT,F05_5.4_WORKPOINT,WORKPOINT_5x2.5,8.0,10.0,5 x 2.5 x 2.5,Oak,asset-map.csv v2 (approved anchor),Oksana source review
+5,5.5,WORKPOINT,F05_5.5_WORKPOINT,WORKPOINT_5x2.5,24.0,10.0,5 x 2.5 x 2.5,Oak,asset-map.csv v2 (approved anchor),Leila authority and publication review
+5,5.6,WORKPOINT,F05_5.6_WORKPOINT,WORKPOINT,46.0,46.0,4 x 2 x 2.5,Oak,asset-map.csv v2 (approved anchor),Amira ethics review
+5,5.7,CHECKIN_KIOSK,F05_5.7_CHECKIN_KIOSK,CHECKIN_KIOSK,50.0,26.5,1.5 x 1.2 x 5,Steel,asset-map.csv v2 (approved anchor),Research navigator
+5,5.8,EVIDENCE_LOCKER,F05_5.8_EVIDENCE_LOCKER,EVIDENCE_LOCKER,38.0,67.0,5 x 2 x 6,Steel,asset-map.csv v2 (approved anchor),Secure evidence storage
+5,,,F05_5.1/docs_DOC_STACK,DOC_STACK,32.5,40.6,,,companion of overlay 5.1 (inferred placement),open briefs
+5,,,F05_5.1/n/01_CHAIR_SIDE,CHAIR_SIDE,30.0,44.25,,,companion of overlay 5.1 (inferred placement),seat at 5.1/n
+5,,,F05_5.1/n/02_CHAIR_SIDE,CHAIR_SIDE,34.0,44.25,,,companion of overlay 5.1 (inferred placement),seat at 5.1/n
+5,,,F05_5.1/n/03_CHAIR_SIDE,CHAIR_SIDE,38.0,44.25,,,companion of overlay 5.1 (inferred placement),seat at 5.1/n
+5,,,F05_5.1/n/04_CHAIR_SIDE,CHAIR_SIDE,42.0,44.25,,,companion of overlay 5.1 (inferred placement),seat at 5.1/n
+5,,,F05_5.1/plant_PLANT_DESK,PLANT_DESK,36.0,41.0,,,companion of overlay 5.1 (inferred placement),policy table centrepiece
+5,,,F05_5.1/s/01_CHAIR_SIDE,CHAIR_SIDE,30.0,37.75,,,companion of overlay 5.1 (inferred placement),seat at 5.1/s
+5,,,F05_5.1/s/02_CHAIR_SIDE,CHAIR_SIDE,34.0,37.75,,,companion of overlay 5.1 (inferred placement),seat at 5.1/s
+5,,,F05_5.1/s/03_CHAIR_SIDE,CHAIR_SIDE,38.0,37.75,,,companion of overlay 5.1 (inferred placement),seat at 5.1/s
+5,,,F05_5.1/s/04_CHAIR_SIDE,CHAIR_SIDE,42.0,37.75,,,companion of overlay 5.1 (inferred placement),seat at 5.1/s
+5,,,F05_5.3/docs_DOC_STACK,DOC_STACK,9.6,27.0,,,companion of overlay 5.3 (inferred placement),archive folios
+5,,,F05_5.3/lamp_LAMP_DESK,LAMP_DESK,11.9,27.4,,,companion of overlay 5.3 (inferred placement),reading lamp
+5,,,F05_5.3/n/01_CHAIR_SIDE,CHAIR_SIDE,9.0,28.55,,,companion of overlay 5.3 (inferred placement),seat at 5.3/n
+5,,,F05_5.3/n/02_CHAIR_SIDE,CHAIR_SIDE,11.0,28.55,,,companion of overlay 5.3 (inferred placement),seat at 5.3/n
+5,,,F05_5.3/s/01_CHAIR_SIDE,CHAIR_SIDE,9.0,25.45,,,companion of overlay 5.3 (inferred placement),seat at 5.3/s
+5,,,F05_5.3/s/02_CHAIR_SIDE,CHAIR_SIDE,11.0,25.45,,,companion of overlay 5.3 (inferred placement),seat at 5.3/s
+5,,,F05_5.4/chair_CHAIR_TASK,CHAIR_TASK,8.0,8.0,,,companion of overlay 5.4 (inferred placement),seat for 5.4
+5,,,F05_5.4/guest_CHAIR_SIDE,CHAIR_SIDE,8.0,12.7,,,companion of overlay 5.4 (inferred placement),source review guest
+5,,,F05_5.4/lamp_LAMP_DESK,LAMP_DESK,5.95,10.2,,,companion of overlay 5.4 (inferred placement),task light for 5.4
+5,,,F05_5.4/screen_MONITOR,MONITOR,8.0,10.25,,,companion of overlay 5.4 (inferred placement),desktop equipment for 5.4
+5,,,F05_5.5/chair_CHAIR_TASK,CHAIR_TASK,24.0,8.0,,,companion of overlay 5.5 (inferred placement),seat for 5.5
+5,,,F05_5.5/guest_CHAIR_SIDE,CHAIR_SIDE,24.0,12.7,,,companion of overlay 5.5 (inferred placement),publication review guest
+5,,,F05_5.5/lamp_LAMP_DESK,LAMP_DESK,21.95,10.2,,,companion of overlay 5.5 (inferred placement),task light for 5.5
+5,,,F05_5.5/screen_MONITOR,MONITOR,24.0,10.25,,,companion of overlay 5.5 (inferred placement),desktop equipment for 5.5
+5,,,F05_5.6/chair_CHAIR_TASK,CHAIR_TASK,46.0,44.25,,,companion of overlay 5.6 (inferred placement),seat for 5.6
+5,,,F05_5.6/lamp_LAMP_DESK,LAMP_DESK,44.45,46.2,,,companion of overlay 5.6 (inferred placement),task light for 5.6
+5,,,F05_5.6/screen_MONITOR,MONITOR,46.0,46.25,,,companion of overlay 5.6 (inferred placement),desktop equipment for 5.6
+5,,,F05_S5.10/1/chair_CHAIR_TASK,CHAIR_TASK,29.0,30.65,,,board dressing (inferred placement),seat for S5.10/1
+5,,,F05_S5.10/1/lamp_LAMP_DESK,LAMP_DESK,27.45,32.6,,,board dressing (inferred placement),task light for S5.10/1
+5,,,F05_S5.10/1/screen_LAPTOP,LAPTOP,29.0,32.65,,,board dressing (inferred placement),desktop equipment for S5.10/1
+5,,,F05_S5.10/1_WORKPOINT,WORKPOINT,29.0,32.4,,,board dressing (inferred placement),research carrel: board shows three; prior inventory F5-CARREL-01..06
+5,,,F05_S5.10/2/chair_CHAIR_TASK,CHAIR_TASK,36.0,30.65,,,board dressing (inferred placement),seat for S5.10/2
+5,,,F05_S5.10/2/lamp_LAMP_DESK,LAMP_DESK,34.45,32.6,,,board dressing (inferred placement),task light for S5.10/2
+5,,,F05_S5.10/2/screen_MONITOR,MONITOR,36.0,32.65,,,board dressing (inferred placement),desktop equipment for S5.10/2
+5,,,F05_S5.10/2_WORKPOINT,WORKPOINT,36.0,32.4,,,board dressing (inferred placement),research carrel: board shows three; prior inventory F5-CARREL-01..06
+5,,,F05_S5.10/3/chair_CHAIR_TASK,CHAIR_TASK,43.0,30.65,,,board dressing (inferred placement),seat for S5.10/3
+5,,,F05_S5.10/3/lamp_LAMP_DESK,LAMP_DESK,41.45,32.6,,,board dressing (inferred placement),task light for S5.10/3
+5,,,F05_S5.10/3/screen_LAPTOP,LAPTOP,43.0,32.65,,,board dressing (inferred placement),desktop equipment for S5.10/3
+5,,,F05_S5.10/3_WORKPOINT,WORKPOINT,43.0,32.4,,,board dressing (inferred placement),research carrel: board shows three; prior inventory F5-CARREL-01..06
+5,,,F05_S5.11_PLANT_TREE,PLANT_TREE,23.4,49.6,,,board dressing (inferred placement),policy-wall plant
+5,,,F05_S5.12_PLANT_TREE,PLANT_TREE,49.0,49.6,,,board dressing (inferred placement),policy-wall plant
+5,,,F05_S5.13_PLANT_FLOOR,PLANT_FLOOR,30.2,5.4,,,board dressing (inferred placement),review room plant
+5,,,F05_S5.1_RUG,RUG,36.0,41.0,,,board dressing (inferred placement),olive policy rug
+5,,,F05_S5.2_PENDANT_LINEAR,PENDANT_LINEAR,32.0,41.0,,,board dressing (inferred placement),policy pendant
+5,,,F05_S5.3_PENDANT_LINEAR,PENDANT_LINEAR,40.0,41.0,,,board dressing (inferred placement),policy pendant
+5,,,F05_S5.4_ARCHIVE_CABINET_6x6,ARCHIVE_CABINET_6x6,3.0,22.4,,,board dressing (inferred placement),archive shelving (west wall)
+5,,,F05_S5.5_ARCHIVE_CABINET_6x6,ARCHIVE_CABINET_6x6,3.0,28.6,,,board dressing (inferred placement),archive shelving (west wall)
+5,,,F05_S5.6_MAP_CABINET,MAP_CABINET,14.6,33.0,,,board dressing (inferred placement),olive flat-file cabinet
+5,,,F05_S5.7_RUG,RUG,10.0,27.0,,,board dressing (inferred placement),reading rug
+5,,,F05_S5.8_BOOKCASE,BOOKCASE,3.0,10.0,,,board dressing (inferred placement),source library
+5,,,F05_S5.9_CREDENZA,CREDENZA,21.0,15.0,,,board dressing (inferred placement),publication credenza
+6,6.1,COMMAND_TABLE,F06_6.1_COMMAND_TABLE,COMMAND_TABLE,36.0,41.0,16 x 5 x 2.5,Stone,asset-map.csv v2 (approved anchor),Command table and conference audio
+6,6.2,COMMAND_DISPLAY,F06_6.2_COMMAND_DISPLAY_console,unique object,36.0,51.5,14 x 0.8 x 6,Glass,asset-map.csv v2 (approved anchor),"Institutional wall, one authorized PRIM2 interface"
+6,6.3,LOUNGE_BANQUETTE,F06_6.3_LOUNGE_BANQUETTE,LOUNGE_BANQUETTE,9.0,28.0,8 x 2.2 x 3,Felt,asset-map.csv v2 (approved anchor),Institutional salon
+6,6.4,WORKPOINT,F06_6.4_WORKPOINT,WORKPOINT_5x2.5,8.0,10.0,5 x 2.5 x 2.5,Walnut,asset-map.csv v2 (approved anchor),Li governance review
+6,6.5,WORKPOINT,F06_6.5_WORKPOINT,WORKPOINT_5x2.5,24.0,10.0,5 x 2.5 x 2.5,Walnut,asset-map.csv v2 (approved anchor),Marc partner briefing
+6,6.6,WORKPOINT,F06_6.6_WORKPOINT,WORKPOINT,26.0,46.0,4 x 2 x 2.5,Walnut,asset-map.csv v2 (approved anchor),Helen executive command
+6,6.7,CHECKIN_KIOSK,F06_6.7_CHECKIN_KIOSK,CHECKIN_KIOSK,50.0,26.5,1.5 x 1.2 x 5,Steel,asset-map.csv v2 (approved anchor),Roof transition; no promise of lift service
+6,6.8,HALO_GLOBE,F06_HALO_GLOBE,unique object,55.0,12.0,4.5 x 4.5 x 4.5,Glass,asset-map.csv v2 (approved anchor),Suspended sphere. Center 8.25 ft AFF. No plinth. Preserve walking clearance.
+6,,,F06_6.1/lampE_LAMP_DESK,LAMP_DESK,40.0,41.0,,,companion of overlay 6.1 (inferred placement),brass table lamp
+6,,,F06_6.1/lampW_LAMP_DESK,LAMP_DESK,32.0,41.0,,,companion of overlay 6.1 (inferred placement),brass table lamp
+6,,,F06_6.1/n/01_CHAIR_TASK,CHAIR_TASK,31.0,44.25,,,companion of overlay 6.1 (inferred placement),seat at 6.1/n
+6,,,F06_6.1/n/02_CHAIR_TASK,CHAIR_TASK,36.0,44.25,,,companion of overlay 6.1 (inferred placement),seat at 6.1/n
+6,,,F06_6.1/n/03_CHAIR_TASK,CHAIR_TASK,41.0,44.25,,,companion of overlay 6.1 (inferred placement),seat at 6.1/n
+6,,,F06_6.1/plant_PLANT_DESK,PLANT_DESK,36.0,41.0,,,companion of overlay 6.1 (inferred placement),table centrepiece
+6,,,F06_6.1/s/01_CHAIR_TASK,CHAIR_TASK,31.0,37.75,,,companion of overlay 6.1 (inferred placement),seat at 6.1/s
+6,,,F06_6.1/s/02_CHAIR_TASK,CHAIR_TASK,36.0,37.75,,,companion of overlay 6.1 (inferred placement),seat at 6.1/s
+6,,,F06_6.1/s/03_CHAIR_TASK,CHAIR_TASK,41.0,37.75,,,companion of overlay 6.1 (inferred placement),seat at 6.1/s
+6,,,F06_6.4/chair_CHAIR_TASK,CHAIR_TASK,8.0,8.0,,,companion of overlay 6.4 (inferred placement),seat for 6.4
+6,,,F06_6.4/guest/01_CHAIR_SIDE,CHAIR_SIDE,6.75,12.7,,,companion of overlay 6.4 (inferred placement),seat at 6.4/guest
+6,,,F06_6.4/guest/02_CHAIR_SIDE,CHAIR_SIDE,9.25,12.7,,,companion of overlay 6.4 (inferred placement),seat at 6.4/guest
+6,,,F06_6.4/lamp_LAMP_DESK,LAMP_DESK,5.95,10.2,,,companion of overlay 6.4 (inferred placement),task light for 6.4
+6,,,F06_6.4/screen_MONITOR,MONITOR,8.0,10.25,,,companion of overlay 6.4 (inferred placement),desktop equipment for 6.4
+6,,,F06_6.5/chair_CHAIR_TASK,CHAIR_TASK,24.0,8.0,,,companion of overlay 6.5 (inferred placement),seat for 6.5
+6,,,F06_6.5/guest/01_CHAIR_SIDE,CHAIR_SIDE,22.75,12.7,,,companion of overlay 6.5 (inferred placement),seat at 6.5/guest
+6,,,F06_6.5/guest/02_CHAIR_SIDE,CHAIR_SIDE,25.25,12.7,,,companion of overlay 6.5 (inferred placement),seat at 6.5/guest
+6,,,F06_6.5/lamp_LAMP_DESK,LAMP_DESK,21.95,10.2,,,companion of overlay 6.5 (inferred placement),task light for 6.5
+6,,,F06_6.5/screen_MONITOR,MONITOR,24.0,10.25,,,companion of overlay 6.5 (inferred placement),desktop equipment for 6.5
+6,,,F06_6.6/chair_CHAIR_TASK,CHAIR_TASK,26.0,44.25,,,companion of overlay 6.6 (inferred placement),seat for 6.6
+6,,,F06_6.6/lamp_LAMP_DESK,LAMP_DESK,24.45,46.2,,,companion of overlay 6.6 (inferred placement),task light for 6.6
+6,,,F06_6.6/screen_MONITOR_WIDE,MONITOR_WIDE,26.0,46.25,,,companion of overlay 6.6 (inferred placement),desktop equipment for 6.6
+6,,,F06_S6.10/seat01_CHAIR_SIDE,CHAIR_SIDE,13.75,21.4,,,board dressing (inferred placement),seat at S6.10
+6,,,F06_S6.10/seat02_CHAIR_SIDE,CHAIR_SIDE,11.0,24.15,,,board dressing (inferred placement),seat at S6.10
+6,,,F06_S6.10/seat03_CHAIR_SIDE,CHAIR_SIDE,8.25,21.4,,,board dressing (inferred placement),seat at S6.10
+6,,,F06_S6.10/seat04_CHAIR_SIDE,CHAIR_SIDE,11.0,18.65,,,board dressing (inferred placement),seat at S6.10
+6,,,F06_S6.10_ROUND_TABLE_4,ROUND_TABLE_4,11.0,21.4,,,board dressing (inferred placement),salon round table
+6,,,F06_S6.11_LAMP_FLOOR,LAMP_FLOOR,15.8,30.2,,,board dressing (inferred placement),salon floor lamp
+6,,,F06_S6.12_PLANT_TREE,PLANT_TREE,16.4,36.4,,,board dressing (inferred placement),salon tree
+6,,,F06_S6.13_BOOKCASE,BOOKCASE,3.0,10.0,,,board dressing (inferred placement),strategy room library
+6,,,F06_S6.14_CREDENZA_STONE,CREDENZA_STONE,21.0,14.95,,,board dressing (inferred placement),briefing credenza
+6,,,F06_S6.15_PLANT_TREE,PLANT_TREE,23.4,49.6,,,board dressing (inferred placement),command-wall plant
+6,,,F06_S6.16_PLANT_TREE,PLANT_TREE,48.6,49.6,,,board dressing (inferred placement),command-wall plant
+6,,,F06_S6.17_PLANT_FLOOR,PLANT_FLOOR,68.8,4.4,,,board dressing (inferred placement),corner plant
+6,,,F06_S6.1_RUG,RUG,36.0,41.0,,,board dressing (inferred placement),command rug
+6,,,F06_S6.2_PENDANT_LINEAR,PENDANT_LINEAR,32.0,41.0,,,board dressing (inferred placement),command pendant
+6,,,F06_S6.3_PENDANT_LINEAR,PENDANT_LINEAR,40.0,41.0,,,board dressing (inferred placement),command pendant
+6,,,F06_S6.4_COFFEE_TABLE_ROUND,COFFEE_TABLE_ROUND,9.0,31.3,,,board dressing (inferred placement),salon coffee table
+6,,,F06_S6.5_CHAIR_LEATHER,CHAIR_LEATHER,5.6,34.4,,,board dressing (inferred placement),salon armchair
+6,,,F06_S6.6_CHAIR_LEATHER,CHAIR_LEATHER,12.4,34.4,,,board dressing (inferred placement),salon armchair
+6,,,F06_S6.7_RUG,RUG,9.0,31.0,,,board dressing (inferred placement),salon rug
+6,,,F06_S6.8_BOOKCASE,BOOKCASE,2.85,26.4,,,board dressing (inferred placement),salon library
+6,,,F06_S6.9_BOOKCASE,BOOKCASE,2.85,21.6,,,board dressing (inferred placement),salon library
+6,,,F06_S6.M10_SIDE_TABLE,SIDE_TABLE,47.4,12.0,,,board dressing (inferred placement),globe-view side table
+6,,,F06_S6.M11_RUG,RUG,42.0,9.0,,,board dressing (inferred placement),suite rug
+6,,,F06_S6.M12_SCREEN_PANEL_SMOKED,SCREEN_PANEL_SMOKED,37.0,16.9,,,board dressing (inferred placement),suite screen (furniture height)
+6,,,F06_S6.M13_SCREEN_PANEL_SMOKED,SCREEN_PANEL_SMOKED,46.5,16.9,,,board dressing (inferred placement),suite screen (furniture height)
+6,,,F06_S6.M14_PLANT_TREE,PLANT_TREE,35.8,4.2,,,board dressing (inferred placement),suite tree
+6,,,F06_S6.M15_PLANT_FLOOR,PLANT_FLOOR,48.6,3.0,,,board dressing (inferred placement),suite plant
+6,,,F06_S6.M1_EXEC_DESK,EXEC_DESK,42.0,8.0,,,board dressing (inferred placement),Matthew McCluster executive desk (story staging)
+6,,,F06_S6.M2_CHAIR_TASK,CHAIR_TASK,42.0,6.05,,,board dressing (inferred placement),executive chair
+6,,,F06_S6.M3_MONITOR_WIDE,MONITOR_WIDE,42.0,8.6,,,board dressing (inferred placement),executive display
+6,,,F06_S6.M4_LAMP_DESK,LAMP_DESK,44.6,8.4,,,board dressing (inferred placement),executive lamp
+6,,,F06_S6.M5_CHAIR_SIDE,CHAIR_SIDE,40.6,10.7,,,board dressing (inferred placement),suite guest chair
+6,,,F06_S6.M6_CHAIR_SIDE,CHAIR_SIDE,43.4,10.7,,,board dressing (inferred placement),suite guest chair
+6,,,F06_S6.M7_CREDENZA_STONE,CREDENZA_STONE,42.0,1.7,,,board dressing (inferred placement),suite credenza at sealed south glazing
+6,,,F06_S6.M8_CHAIR_LEATHER,CHAIR_LEATHER,47.0,9.6,,,board dressing (inferred placement),globe-view armchair
+6,,,F06_S6.M9_CHAIR_LEATHER,CHAIR_LEATHER,47.0,14.4,,,board dressing (inferred placement),globe-view armchair
+7,7.1,ROUTING_BEACON,F07_7.1_ROUTING_BEACON,ROUTING_BEACON,48.0,27.0,2 x 1.5 x 5,Steel,asset-map.csv v2 (approved anchor),Yonas continuity station; destinations digital
+7,7.2,ROOF_BENCH,F07_7.2_ROOF_BENCH,ROOF_BENCH,24.0,3.0,6 x 1.8 x 2.8,Steel,asset-map.csv v2 (approved anchor),South city overlook; retain edge separation
+7,7.3,BOLLARD_LIGHT,F07_7.3_BOLLARD_LIGHT,BOLLARD_LIGHT,43.0,4.0,0.5 x 0.5 x 2.5,Steel,asset-map.csv v2 (approved anchor),Shielded overlook light
+7,7.4,WEATHER_CONSOLE,F07_7.4_WEATHER_CONSOLE,WEATHER_CONSOLE,31.5,66.0,3 x 1.5 x 4,Steel,asset-map.csv v2 (approved anchor),Arjun and Emre duty point; not weather-rated design
+7,7.5,MEP_PLACEHOLDER,F07_F7-MECH-UNIT-02,unique object,43.5,65.0,6 x 3 x 4,Steel,asset-map.csv v2 (approved anchor),Visual plant proxy; retain service access
+7,,,F07_S7.1_BOLLARD_LIGHT,BOLLARD_LIGHT,15.0,4.0,,,board dressing (inferred placement),overlook bollard (repeat of 7.3)
+7,,,F07_S7.2_BOLLARD_LIGHT,BOLLARD_LIGHT,33.0,4.0,,,board dressing (inferred placement),overlook bollard (repeat of 7.3)
+7,,,F07_S7.3_PLANTER_ROOF,PLANTER_ROOF,18.6,3.4,,,board dressing (inferred placement),overlook planter
+7,,,F07_S7.4_PLANTER_ROOF,PLANTER_ROOF,29.6,3.4,,,board dressing (inferred placement),overlook planter
+7,,,F07_S7.5_PLANTER_ROOF,PLANTER_ROOF,38.4,3.4,,,board dressing (inferred placement),overlook planter

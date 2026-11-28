@@ -1,0 +1,1037 @@
+{
+  "checks": [
+    {
+      "check": "file reopens with no linked libraries",
+      "passed": true,
+      "detail": 0
+    },
+    {
+      "check": "no missing image files",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "every kit instance resolves to its master",
+      "passed": true,
+      "detail": "342 instances, broken=[]"
+    },
+    {
+      "check": "repeated assets are instanced (no duplicated kit meshes)",
+      "passed": true,
+      "detail": "67 masters, 342 instances, mean reuse 5.3x"
+    },
+    {
+      "check": "F01 has separate collections ('Shell', 'ArchFinishes', 'Furniture', 'Equipment', 'Lighting', 'Cameras', 'Interaction_and_Anchors')",
+      "passed": true,
+      "detail": [
+        "F01_Shell",
+        "F01_ArchFinishes",
+        "F01_Furniture",
+        "F01_Equipment",
+        "F01_Lighting",
+        "F01_Cameras",
+        "F01_Interaction_and_Anchors"
+      ]
+    },
+    {
+      "check": "F01 top + eye cameras",
+      "passed": true,
+      "detail": [
+        "CAM_F01_TOP",
+        "CAM_F01_ENTRY",
+        "CAM_F01_BOARD",
+        "CAM_F01_EYE"
+      ]
+    },
+    {
+      "check": "F02 has separate collections ('Shell', 'ArchFinishes', 'Furniture', 'Equipment', 'Lighting', 'Cameras', 'Interaction_and_Anchors')",
+      "passed": true,
+      "detail": [
+        "F02_Shell",
+        "F02_ArchFinishes",
+        "F02_Furniture",
+        "F02_Equipment",
+        "F02_Lighting",
+        "F02_Cameras",
+        "F02_Interaction_and_Anchors"
+      ]
+    },
+    {
+      "check": "F02 top + eye cameras",
+      "passed": true,
+      "detail": [
+        "CAM_F02_BOARD",
+        "CAM_F02_EYE",
+        "CAM_F02_TOP"
+      ]
+    },
+    {
+      "check": "F03 has separate collections ('Shell', 'ArchFinishes', 'Furniture', 'Equipment', 'Lighting', 'Cameras', 'Interaction_and_Anchors')",
+      "passed": true,
+      "detail": [
+        "F03_Shell",
+        "F03_ArchFinishes",
+        "F03_Furniture",
+        "F03_Equipment",
+        "F03_Lighting",
+        "F03_Cameras",
+        "F03_Interaction_and_Anchors"
+      ]
+    },
+    {
+      "check": "F03 top + eye cameras",
+      "passed": true,
+      "detail": [
+        "CAM_F03_BOARD",
+        "CAM_F03_EYE",
+        "CAM_F03_TOP"
+      ]
+    },
+    {
+      "check": "F04 has separate collections ('Shell', 'ArchFinishes', 'Furniture', 'Equipment', 'Lighting', 'Cameras', 'Interaction_and_Anchors')",
+      "passed": true,
+      "detail": [
+        "F04_Shell",
+        "F04_ArchFinishes",
+        "F04_Furniture",
+        "F04_Equipment",
+        "F04_Lighting",
+        "F04_Cameras",
+        "F04_Interaction_and_Anchors"
+      ]
+    },
+    {
+      "check": "F04 top + eye cameras",
+      "passed": true,
+      "detail": [
+        "CAM_F04_BOARD",
+        "CAM_F04_TOP",
+        "CAM_F04_EYE"
+      ]
+    },
+    {
+      "check": "F05 has separate collections ('Shell', 'ArchFinishes', 'Furniture', 'Equipment', 'Lighting', 'Cameras', 'Interaction_and_Anchors')",
+      "passed": true,
+      "detail": [
+        "F05_Shell",
+        "F05_ArchFinishes",
+        "F05_Furniture",
+        "F05_Equipment",
+        "F05_Lighting",
+        "F05_Cameras",
+        "F05_Interaction_and_Anchors"
+      ]
+    },
+    {
+      "check": "F05 top + eye cameras",
+      "passed": true,
+      "detail": [
+        "CAM_F05_BOARD",
+        "CAM_F05_TOP",
+        "CAM_F05_EYE"
+      ]
+    },
+    {
+      "check": "F06 has separate collections ('Shell', 'ArchFinishes', 'Furniture', 'Equipment', 'Lighting', 'Cameras', 'Interaction_and_Anchors')",
+      "passed": true,
+      "detail": [
+        "F06_Shell",
+        "F06_ArchFinishes",
+        "F06_Furniture",
+        "F06_Equipment",
+        "F06_Lighting",
+        "F06_Cameras",
+        "F06_Interaction_and_Anchors"
+      ]
+    },
+    {
+      "check": "F06 top + eye cameras",
+      "passed": true,
+      "detail": [
+        "CAM_F06_HALO_SUITE",
+        "CAM_F06_TOP",
+        "CAM_F06_BOARD",
+        "CAM_F06_EYE"
+      ]
+    },
+    {
+      "check": "F07 has separate collections ('Shell', 'ArchFinishes', 'Furniture', 'Equipment', 'Lighting', 'Cameras', 'Interaction_and_Anchors')",
+      "passed": true,
+      "detail": [
+        "F07_Shell",
+        "F07_ArchFinishes",
+        "F07_Furniture",
+        "F07_Equipment",
+        "F07_Lighting",
+        "F07_Cameras",
+        "F07_Interaction_and_Anchors"
+      ]
+    },
+    {
+      "check": "F07 top + eye cameras",
+      "passed": true,
+      "detail": [
+        "CAM_F07_BOARD",
+        "CAM_F07_EYE",
+        "CAM_F07_TOP"
+      ]
+    },
+    {
+      "check": "B1 crew hub kept (existing canonical B1, unchanged)",
+      "passed": true,
+      "detail": 348
+    },
+    {
+      "check": "source reference collections present and excluded from the view layer",
+      "passed": true,
+      "detail": [
+        "SRC_CoreV2_combined_chassis",
+        "SRC_F01_builder_v2_before",
+        "SRC_F02_builder_v2_before",
+        "SRC_F03_builder_v2_before",
+        "SRC_F04_builder_v2_before",
+        "SRC_F05_builder_v2_before",
+        "SRC_F06_builder_v2_before",
+        "SRC_F07_builder_v2_before"
+      ]
+    },
+    {
+      "check": "52/52 approved anchors realised as named objects",
+      "passed": true,
+      "detail": {
+        "missing": []
+      }
+    },
+    {
+      "check": "anchored assets sit on their CSV X/Y (<= 0.05 ft) unless a documented source-geometry deviation",
+      "passed": true,
+      "detail": {
+        "undocumented": [],
+        "documented_deviations": [
+          {
+            "tag": "7.4",
+            "asset_id": "WEATHER_CONSOLE",
+            "offset_ft": 6.5,
+            "reason": "CSV (38,66) falls inside the canonical L7 model's F7-MECH-UNIT-01 (X35-40 Y62-68); moved to the nearest clear duty point west of the service band, plant access kept clear."
+          },
+          {
+            "tag": "7.5",
+            "asset_id": "MEP_PLACEHOLDER",
+            "offset_ft": 2.5,
+            "reason": "CSV 7.5 is a visual plant proxy; the canonical L7 model already carries that plant as F7-MECH-UNIT-02 (X41-46 Y62-68). Realised by tagging the existing unit; no duplicate added."
+          }
+        ]
+      }
+    },
+    {
+      "check": "canonical chassis passenger shaft X54-62 / Y34-44 (combined GLB)",
+      "passed": true,
+      "detail": [
+        54.0,
+        34.0,
+        -13.5,
+        62.0,
+        44.0,
+        89.0
+      ]
+    },
+    {
+      "check": "F01 shafts/stairs on Core V2 lines and slab at FFE 0.0 ft",
+      "passed": true,
+      "detail": {
+        "passenger": [
+          53.67,
+          33.68,
+          62.33,
+          44.32
+        ],
+        "freight": [
+          0.0,
+          59.68,
+          8.33,
+          72.0
+        ],
+        "stair_b": [
+          7.67,
+          53.67,
+          18.33,
+          72.0
+        ],
+        "stair_a": [
+          59.68,
+          53.67,
+          72.0,
+          72.0
+        ],
+        "slab_top_ft": 0.0
+      }
+    },
+    {
+      "check": "F02 shafts/stairs on Core V2 lines and slab at FFE 13.5 ft",
+      "passed": true,
+      "detail": {
+        "passenger": [
+          53.67,
+          33.68,
+          62.33,
+          44.32
+        ],
+        "freight": [
+          0.0,
+          59.68,
+          8.33,
+          72.0
+        ],
+        "stair_b": [
+          7.67,
+          53.67,
+          18.33,
+          72.0
+        ],
+        "stair_a": [
+          59.68,
+          53.67,
+          72.0,
+          72.0
+        ],
+        "slab_top_ft": 13.49999992240445
+      }
+    },
+    {
+      "check": "F03 shafts/stairs on Core V2 lines and slab at FFE 27.0 ft",
+      "passed": true,
+      "detail": {
+        "passenger": [
+          53.67,
+          33.68,
+          62.33,
+          44.32
+        ],
+        "freight": [
+          0.0,
+          59.68,
+          8.33,
+          72.0
+        ],
+        "stair_b": [
+          7.67,
+          53.67,
+          18.33,
+          72.0
+        ],
+        "stair_a": [
+          59.68,
+          53.67,
+          72.0,
+          72.0
+        ],
+        "slab_top_ft": 26.9999998448089
+      }
+    },
+    {
+      "check": "F04 shafts/stairs on Core V2 lines and slab at FFE 40.5 ft",
+      "passed": true,
+      "detail": {
+        "passenger": [
+          53.67,
+          33.68,
+          62.33,
+          44.32
+        ],
+        "freight": [
+          0.0,
+          59.68,
+          8.33,
+          72.0
+        ],
+        "stair_b": [
+          7.67,
+          53.67,
+          18.33,
+          72.0
+        ],
+        "stair_a": [
+          59.68,
+          53.67,
+          72.0,
+          72.0
+        ],
+        "slab_top_ft": 40.50000133163972
+      }
+    },
+    {
+      "check": "F05 shafts/stairs on Core V2 lines and slab at FFE 54.0 ft",
+      "passed": true,
+      "detail": {
+        "passenger": [
+          53.67,
+          33.68,
+          62.33,
+          44.32
+        ],
+        "freight": [
+          0.0,
+          59.68,
+          8.33,
+          72.0
+        ],
+        "stair_b": [
+          7.67,
+          53.67,
+          18.33,
+          72.0
+        ],
+        "stair_a": [
+          59.68,
+          53.67,
+          72.0,
+          72.0
+        ],
+        "slab_top_ft": 53.9999996896178
+      }
+    },
+    {
+      "check": "F06 shafts/stairs on Core V2 lines and slab at FFE 67.5 ft",
+      "passed": true,
+      "detail": {
+        "passenger": [
+          53.67,
+          33.68,
+          62.33,
+          44.32
+        ],
+        "freight": [
+          0.0,
+          59.68,
+          8.33,
+          72.0
+        ],
+        "stair_b": [
+          7.67,
+          53.67,
+          18.33,
+          72.0
+        ],
+        "stair_a": [
+          59.68,
+          53.67,
+          72.0,
+          72.0
+        ],
+        "slab_top_ft": 67.49999804759588
+      }
+    },
+    {
+      "check": "passenger elevator door identical on F1-F6 (incl. F6 arrival), west face X54 Y37-41",
+      "passed": true,
+      "detail": {
+        "1": [
+          53.88,
+          37.0,
+          41.0
+        ],
+        "2": [
+          53.88,
+          37.0,
+          41.0
+        ],
+        "3": [
+          53.88,
+          37.0,
+          41.0
+        ],
+        "4": [
+          53.88,
+          37.0,
+          41.0
+        ],
+        "5": [
+          53.88,
+          37.0,
+          41.0
+        ],
+        "6": [
+          53.88,
+          37.0,
+          41.0
+        ]
+      }
+    },
+    {
+      "check": "L7 passenger overrun over the same shaft; no roof elevator stop modelled",
+      "passed": true,
+      "detail": [
+        54.0,
+        34.0,
+        81.0,
+        62.0,
+        44.0,
+        89.3
+      ]
+    },
+    {
+      "check": "every enclosed room and core shaft on the 7 overlay plans is closed by the shell (only door-width openings <= 3.5 ft)",
+      "passed": true,
+      "detail": {
+        "failures": {},
+        "door_openings": {
+          "1": [
+            "INTAKE / VERIFICATION CONSULTATION E [3.0]",
+            "RESTROOM A S [3.0]",
+            "RESTROOM B S [3.0]",
+            "FREIGHT / SERVICE ELEVATOR S [0.08]",
+            "STAIR B S [3.0]",
+            "PASSENGER ELEVATOR W [0.06]",
+            "STAIR A S [3.0]",
+            "STAIR A E [3.2]"
+          ],
+          "2": [
+            "RESTROOM A S [3.0]",
+            "RESTROOM B S [3.0]"
+          ],
+          "3": [
+            "RESTROOM A S [3.0]",
+            "RESTROOM B S [3.0]"
+          ],
+          "7": [
+            "STAIR B S [3.0]",
+            "STAIR A S [3.0]"
+          ]
+        }
+      }
+    },
+    {
+      "check": "exactly one Halo Globe",
+      "passed": true,
+      "detail": [
+        "F06_HALO_GLOBE"
+      ]
+    },
+    {
+      "check": "Halo centre (55,12) at 8.25 ft AFF on F6, r 2.25 ft",
+      "passed": true,
+      "detail": [
+        55.0,
+        12.0,
+        75.75
+      ]
+    },
+    {
+      "check": "Halo is suspended: no plinth/pedestal under the sphere",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "IA_F06_HALO_GLOBE exists, targets F06_HALO_GLOBE, and F06_HALO_GLOBE is a separate interactive object",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "IA_F06_PRIM2_SCREEN exists, targets F06_PRIM2_SCREEN, and F06_PRIM2_SCREEN is a separate interactive object",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "one PRIM2 interface screen",
+      "passed": true,
+      "detail": [
+        "F06_PRIM2_SCREEN"
+      ]
+    },
+    {
+      "check": "McCluster office branding only on F6 (one empty brand slot, no artwork drawn)",
+      "passed": true,
+      "detail": [
+        "F06_BRAND_SLOT_mccluster-office"
+      ]
+    },
+    {
+      "check": "no modelled logo/wordmark geometry",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F01 walking routes: arrival -> stairs/freight/corridor/room doors (36 in open floor; 3 ft door leaves)",
+      "passed": true,
+      "detail": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in",
+        "Entry vestibule (public entrance)": "36in",
+        "Reception 1.1 visitor side": "36in",
+        "room door 1": "36in"
+      }
+    },
+    {
+      "check": "F01 every anchored asset reachable (36 in open floor; rooms via their 3 ft door)",
+      "passed": true,
+      "detail": {
+        "through_door": [
+          "1.5"
+        ],
+        "unreachable": []
+      }
+    },
+    {
+      "check": "F01 no furniture/equipment intersecting walls, cores or stairs",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F02 walking routes: arrival -> stairs/freight/corridor/room doors (36 in open floor; 3 ft door leaves)",
+      "passed": true,
+      "detail": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in"
+      }
+    },
+    {
+      "check": "F02 every anchored asset reachable (36 in open floor; rooms via their 3 ft door)",
+      "passed": true,
+      "detail": {
+        "through_door": [],
+        "unreachable": []
+      }
+    },
+    {
+      "check": "F02 no furniture/equipment intersecting walls, cores or stairs",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F03 walking routes: arrival -> stairs/freight/corridor/room doors (36 in open floor; 3 ft door leaves)",
+      "passed": true,
+      "detail": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in",
+        "room door 1": "36in",
+        "room door 2": "36in"
+      }
+    },
+    {
+      "check": "F03 every anchored asset reachable (36 in open floor; rooms via their 3 ft door)",
+      "passed": true,
+      "detail": {
+        "through_door": [
+          "3.7",
+          "3.8"
+        ],
+        "unreachable": []
+      }
+    },
+    {
+      "check": "F03 no furniture/equipment intersecting walls, cores or stairs",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F04 walking routes: arrival -> stairs/freight/corridor/room doors (36 in open floor; 3 ft door leaves)",
+      "passed": true,
+      "detail": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in",
+        "room door 1": "36in",
+        "room door 2": "36in"
+      }
+    },
+    {
+      "check": "F04 every anchored asset reachable (36 in open floor; rooms via their 3 ft door)",
+      "passed": true,
+      "detail": {
+        "through_door": [
+          "4.4",
+          "4.5",
+          "4.8"
+        ],
+        "unreachable": []
+      }
+    },
+    {
+      "check": "F04 no furniture/equipment intersecting walls, cores or stairs",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F05 walking routes: arrival -> stairs/freight/corridor/room doors (36 in open floor; 3 ft door leaves)",
+      "passed": true,
+      "detail": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in",
+        "room door 1": "36in",
+        "room door 2": "36in"
+      }
+    },
+    {
+      "check": "F05 every anchored asset reachable (36 in open floor; rooms via their 3 ft door)",
+      "passed": true,
+      "detail": {
+        "through_door": [
+          "5.4",
+          "5.5",
+          "5.8"
+        ],
+        "unreachable": []
+      }
+    },
+    {
+      "check": "F05 no furniture/equipment intersecting walls, cores or stairs",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F06 walking routes: arrival -> stairs/freight/corridor/room doors (36 in open floor; 3 ft door leaves)",
+      "passed": true,
+      "detail": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in",
+        "room door 1": "36in",
+        "room door 2": "36in"
+      }
+    },
+    {
+      "check": "F06 every anchored asset reachable (36 in open floor; rooms via their 3 ft door)",
+      "passed": true,
+      "detail": {
+        "through_door": [
+          "6.4",
+          "6.5"
+        ],
+        "unreachable": []
+      }
+    },
+    {
+      "check": "F06 no furniture/equipment intersecting walls, cores or stairs",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "F07 walking routes: arrival -> stairs/freight/corridor/room doors (36 in open floor; 3 ft door leaves)",
+      "passed": true,
+      "detail": {
+        "Stair B headhouse": "36in",
+        "City overlook": "36in",
+        "Routing beacon 7.1": "36in",
+        "Weather console 7.4 (operator side)": "36in",
+        "Plant access face of MECH units (service band)": "36in"
+      }
+    },
+    {
+      "check": "F07 every anchored asset reachable (36 in open floor; rooms via their 3 ft door)",
+      "passed": true,
+      "detail": {
+        "through_door": [],
+        "unreachable": []
+      }
+    },
+    {
+      "check": "F07 no furniture/equipment intersecting walls, cores or stairs",
+      "passed": true,
+      "detail": []
+    }
+  ],
+  "notes": [
+    "Halo Globe underside is 6.0 ft AFF (canonical spec): below normal 6'-8\" door headroom; a floor inlay marks the envelope."
+  ],
+  "anchor_deviations": [
+    {
+      "tag": "7.4",
+      "asset_id": "WEATHER_CONSOLE",
+      "offset_ft": 6.5,
+      "reason": "CSV (38,66) falls inside the canonical L7 model's F7-MECH-UNIT-01 (X35-40 Y62-68); moved to the nearest clear duty point west of the service band, plant access kept clear."
+    },
+    {
+      "tag": "7.5",
+      "asset_id": "MEP_PLACEHOLDER",
+      "offset_ft": 2.5,
+      "reason": "CSV 7.5 is a visual plant proxy; the canonical L7 model already carries that plant as F7-MECH-UNIT-02 (X41-46 Y62-68). Realised by tagging the existing unit; no duplicate added."
+    }
+  ],
+  "stack": {
+    "1": {
+      "passenger": [
+        53.67,
+        33.68,
+        62.33,
+        44.32
+      ],
+      "freight": [
+        0.0,
+        59.68,
+        8.33,
+        72.0
+      ],
+      "stair_b": [
+        7.67,
+        53.67,
+        18.33,
+        72.0
+      ],
+      "stair_a": [
+        59.68,
+        53.67,
+        72.0,
+        72.0
+      ],
+      "slab_top_ft": 0.0
+    },
+    "2": {
+      "passenger": [
+        53.67,
+        33.68,
+        62.33,
+        44.32
+      ],
+      "freight": [
+        0.0,
+        59.68,
+        8.33,
+        72.0
+      ],
+      "stair_b": [
+        7.67,
+        53.67,
+        18.33,
+        72.0
+      ],
+      "stair_a": [
+        59.68,
+        53.67,
+        72.0,
+        72.0
+      ],
+      "slab_top_ft": 13.49999992240445
+    },
+    "3": {
+      "passenger": [
+        53.67,
+        33.68,
+        62.33,
+        44.32
+      ],
+      "freight": [
+        0.0,
+        59.68,
+        8.33,
+        72.0
+      ],
+      "stair_b": [
+        7.67,
+        53.67,
+        18.33,
+        72.0
+      ],
+      "stair_a": [
+        59.68,
+        53.67,
+        72.0,
+        72.0
+      ],
+      "slab_top_ft": 26.9999998448089
+    },
+    "4": {
+      "passenger": [
+        53.67,
+        33.68,
+        62.33,
+        44.32
+      ],
+      "freight": [
+        0.0,
+        59.68,
+        8.33,
+        72.0
+      ],
+      "stair_b": [
+        7.67,
+        53.67,
+        18.33,
+        72.0
+      ],
+      "stair_a": [
+        59.68,
+        53.67,
+        72.0,
+        72.0
+      ],
+      "slab_top_ft": 40.50000133163972
+    },
+    "5": {
+      "passenger": [
+        53.67,
+        33.68,
+        62.33,
+        44.32
+      ],
+      "freight": [
+        0.0,
+        59.68,
+        8.33,
+        72.0
+      ],
+      "stair_b": [
+        7.67,
+        53.67,
+        18.33,
+        72.0
+      ],
+      "stair_a": [
+        59.68,
+        53.67,
+        72.0,
+        72.0
+      ],
+      "slab_top_ft": 53.9999996896178
+    },
+    "6": {
+      "passenger": [
+        53.67,
+        33.68,
+        62.33,
+        44.32
+      ],
+      "freight": [
+        0.0,
+        59.68,
+        8.33,
+        72.0
+      ],
+      "stair_b": [
+        7.67,
+        53.67,
+        18.33,
+        72.0
+      ],
+      "stair_a": [
+        59.68,
+        53.67,
+        72.0,
+        72.0
+      ],
+      "slab_top_ft": 67.49999804759588
+    }
+  },
+  "routes": {
+    "1": {
+      "route_targets": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in",
+        "Entry vestibule (public entrance)": "36in",
+        "Reception 1.1 visitor side": "36in",
+        "room door 1": "36in"
+      },
+      "anchors_reached_through_a_door_threshold": [
+        "1.5"
+      ],
+      "anchors_unreachable": []
+    },
+    "2": {
+      "route_targets": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in"
+      },
+      "anchors_reached_through_a_door_threshold": [],
+      "anchors_unreachable": []
+    },
+    "3": {
+      "route_targets": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in",
+        "room door 1": "36in",
+        "room door 2": "36in"
+      },
+      "anchors_reached_through_a_door_threshold": [
+        "3.7",
+        "3.8"
+      ],
+      "anchors_unreachable": []
+    },
+    "4": {
+      "route_targets": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in",
+        "room door 1": "36in",
+        "room door 2": "36in"
+      },
+      "anchors_reached_through_a_door_threshold": [
+        "4.4",
+        "4.5",
+        "4.8"
+      ],
+      "anchors_unreachable": []
+    },
+    "5": {
+      "route_targets": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in",
+        "room door 1": "36in",
+        "room door 2": "36in"
+      },
+      "anchors_reached_through_a_door_threshold": [
+        "5.4",
+        "5.5",
+        "5.8"
+      ],
+      "anchors_unreachable": []
+    },
+    "6": {
+      "route_targets": {
+        "Stair A door": "36in",
+        "Stair B door": "36in",
+        "Freight door": "36in",
+        "corridor": "36in",
+        "room door 1": "36in",
+        "room door 2": "36in"
+      },
+      "anchors_reached_through_a_door_threshold": [
+        "6.4",
+        "6.5"
+      ],
+      "anchors_unreachable": []
+    },
+    "7": {
+      "route_targets": {
+        "Stair B headhouse": "36in",
+        "City overlook": "36in",
+        "Routing beacon 7.1": "36in",
+        "Weather console 7.4 (operator side)": "36in",
+        "Plant access face of MECH units (service band)": "36in"
+      },
+      "anchors_reached_through_a_door_threshold": [],
+      "anchors_unreachable": []
+    }
+  },
+  "collisions": {
+    "1": [],
+    "2": [],
+    "3": [],
+    "4": [],
+    "5": [],
+    "6": [],
+    "7": []
+  },
+  "summary": {
+    "passed": 61,
+    "total": 61
+  }
+}

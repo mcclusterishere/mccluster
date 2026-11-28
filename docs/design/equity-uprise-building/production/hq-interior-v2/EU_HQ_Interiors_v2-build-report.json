@@ -1,0 +1,110 @@
+{
+  "asset_map_sha256": "2ce899cfe9018868dfc3b65d8449b69dd57e50b4ab4189db7aa8fd8d8cb3ec84",
+  "blender": "4.2.0",
+  "build_id": "eu-hq-interior-v2",
+  "floors": {
+    "1": {
+      "builder_objects_by_bucket": {
+        "ceiling": 4,
+        "drop": 109,
+        "equipment": 8,
+        "finish": 17,
+        "lifesafety": 18,
+        "shell": 141
+      },
+      "collection": "F01_Arrival_Intake",
+      "ffe_ft": 0.0,
+      "placed_rows": 57
+    },
+    "2": {
+      "builder_objects_by_bucket": {
+        "ceiling": 1,
+        "drop": 110,
+        "equipment": 4,
+        "finish": 10,
+        "lifesafety": 7,
+        "shell": 107
+      },
+      "collection": "F02_Public_Forum",
+      "ffe_ft": 13.5,
+      "placed_rows": 44
+    },
+    "3": {
+      "builder_objects_by_bucket": {
+        "ceiling": 1,
+        "drop": 95,
+        "equipment": 4,
+        "finish": 9,
+        "lifesafety": 7,
+        "shell": 123
+      },
+      "collection": "F03_Fellowship_Network",
+      "ffe_ft": 27.0,
+      "placed_rows": 63
+    },
+    "4": {
+      "builder_objects_by_bucket": {
+        "ceiling": 6,
+        "drop": 131,
+        "equipment": 10,
+        "finish": 21,
+        "lifesafety": 7,
+        "shell": 140
+      },
+      "collection": "F04_Media_Culture",
+      "ffe_ft": 40.5,
+      "placed_rows": 47
+    },
+    "5": {
+      "builder_objects_by_bucket": {
+        "ceiling": 6,
+        "drop": 132,
+        "equipment": 15,
+        "finish": 18,
+        "lifesafety": 7,
+        "shell": 141
+      },
+      "collection": "F05_Policy_Proof",
+      "ffe_ft": 54.0,
+      "placed_rows": 59
+    },
+    "6": {
+      "builder_objects_by_bucket": {
+        "ceiling": 6,
+        "drop": 146,
+        "equipment": 15,
+        "finish": 24,
+        "lifesafety": 7,
+        "lighting": 3,
+        "shell": 141
+      },
+      "collection": "F06_Executive_Command",
+      "ffe_ft": 67.5,
+      "placed_rows": 64
+    },
+    "7": {
+      "builder_objects_by_bucket": {
+        "drop": 8,
+        "equipment": 23,
+        "finish": 95,
+        "lighting": 19,
+        "shell": 138
+      },
+      "collection": "F07_Roof_Mobility",
+      "ffe_ft": 81.0,
+      "placed_rows": 10
+    }
+  },
+  "proxy_script_sha256": "2415327e9d9c167e9c88406ff1e6d5b228d7825fcf364bd46f2d2b332854583b",
+  "source_glbs": {
+    "equity-uprise-basement-b1-core-v2.glb": "adaf020157ebe6aa0404d4192d14ee00fdf7d72f144c7506a566895ebd647a56",
+    "equity-uprise-building-core-v2.glb": "2048139e259cac455ea6f24b1b098f23f3a282d49e8e944da1c8b86dfc49a73f",
+    "equity-uprise-floor-01-core-v2.glb": "4992357ba2d8d76c8f1d0f6551e18057450476fd572ea134e7bc821407e1d159",
+    "equity-uprise-floor-02-core-v2.glb": "71beccdbca6b6e648372f41823f7dd3e615bf244cee1c6ce26d3f33a688a038e",
+    "equity-uprise-floor-03-core-v2.glb": "1fb6eb06b9e0f482af0370ab9c8741fc3fa5280ae0f14ceb5475aad961a6a492",
+    "equity-uprise-floor-04-core-v2.glb": "ce5c00c886234ee6d428f948f8cf4d260eb73a1b14ef73b2d305e1f29506a48c",
+    "equity-uprise-floor-05-core-v2.glb": "393ba52361f78e09bd384964cc114922c17efc721422e7feefad25fac04243e5",
+    "equity-uprise-floor-06-core-v2.glb": "bd7b2102e0519cc5da57912715d0fb2637af388169ba51cf73cdb4c494e9a7c7",
+    "equity-uprise-floor-07-core-v2.glb": "aee60fb4828a7dc1f907e5d8ac326fa7140b03ff6c556b10f94d61ca1773fd67"
+  }
+}
