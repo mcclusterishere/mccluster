@@ -476,19 +476,25 @@ for f in range(1, 7):
             pts.extend(map(tuple, w[:, :2]))
             zl, zh = min(zl, w[:, 2].min()), max(zh, w[:, 2].max())
         return MG.hull(pts), zl - FFE[f], zh - FFE[f]
-    EX = {}
-    for k, obs in present.items():
-        if any(o.get("eu_v3_type") == "rug" for o in obs) or "-POWER-" in k:
-            continue
-        EX[k] = hull_of([(o, o.matrix_world) for o in obs if o.type == "MESH"])
-    PK = {}
+    PK, PX = {}, {}
+    fnames = {o.name for o in members(FLOORS[f])}
     for di in dg.object_instances:
         if not di.is_instance or di.object.type != "MESH" or not di.parent:
             continue
         par = di.parent.original
-        if par.name not in {o.name for o in members(FLOORS[f])} or par.get("eu_kit") in MG.NO_COLLIDE_KITS:
+        if par.name not in fnames:
+            continue
+        if par.get("eu_existing_id"):
+            PX.setdefault(par["eu_existing_id"], []).append((di.object.original, di.matrix_world.copy()))
+            continue
+        if par.get("eu_kit") in MG.NO_COLLIDE_KITS:
             continue
         PK.setdefault(par.name, []).append((di.object.original, di.matrix_world.copy()))
+    EX = {}
+    for k, obs in present.items():
+        if any(o.get("eu_v3_type") == "rug" for o in obs) or "-POWER-" in k:
+            continue
+        EX[k] = hull_of([(o, o.matrix_world) for o in obs if o.type == "MESH"] + PX.get(k, []))
     PKH = {k: hull_of(v) for k, v in PK.items()}
     clashes = []
     for a_, (ha, za, zb) in EX.items():
@@ -505,10 +511,12 @@ for f in range(1, 7):
           not clashes, clashes[:10])
     for k, obs in sorted(present.items()):
         o = obs[0]
-        lo = [min(wbbox(x)[0][i] for x in obs) for i in range(3)]
-        hi = [max(wbbox(x)[1][i] for x in obs) for i in range(3)]
+        bxs = [foot[x.name] if x.name in foot else wbbox(x) for x in obs]
+        lo = [min(b_[0][i] for b_ in bxs) for i in range(3)]
+        hi = [max(b_[1][i] for b_ in bxs) for i in range(3)]
         INV.append({"floor": f, "overlay_tag": "", "asset_id": k, "blender_object": o.name,
-                    "kit_master": o.get("eu_v3_type", "existing builder object"),
+                    "kit_master": (o.get("eu_kit") + " (upgraded from " + o.get("eu_v3_type") + ")") if o.get("eu_kit")
+                    else o.get("eu_v3_type", "existing builder object"),
                     "x_ft": round((lo[0] + hi[0]) / 2, 2), "y_ft": round((lo[1] + hi[1]) / 2, 2),
                     "envelope_ft": f"{hi[0] - lo[0]:.1f} x {hi[1] - lo[1]:.1f} x {hi[2] - lo[2]:.1f}", "material_hint": "board palette",
                     "source": o.get("eu_source", "existing"), "note": o.get("eu_zone", "")})

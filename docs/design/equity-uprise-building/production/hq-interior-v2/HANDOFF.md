@@ -50,8 +50,8 @@ Windows Claude app needs updating). `System32` should be removed from that list.
 
 **Open tasks, in order:**
 
-0. **Upgrade, don't replace.** The v3 pieces are lower-detail meshes than the v2 kit. The next quality pass is to swap
-   their meshes in place (same IDs, sizes and positions), not to re-place furniture.
+0. **Upgrade, don't replace.** Done for 128 pieces (README → "Meshes upgraded in place"). Remaining v3 meshes (task
+   chairs, files, carrels, F4 set gear, rugs) can be upgraded the same way once a better kit master exists.
 1. **Review renders.** If the cloud session committed `renders/` (29 JPEGs: `F0X_TOP/EYE/BOARD`, `F06_HALO_SUITE`,
    `F01_ENTRY`, `BEFORE_F01_*`, `BEFORE_F06_*`) plus `renders/compare/`, review them. If it did not, they were lost with
    the container: re-render with `render_hq_interior_v2.py`, then run `compose_review_sheets.py`.

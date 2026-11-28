@@ -38,10 +38,10 @@ stay where their bound support stays. Every decision, with its reason, is in `EU
 | F1 | 21 / 35 | 14 | 2 | 10 | 4 / 8 | 0 |
 | F2 | 44 / 48 | 4 | 2 | 15 | 4 / 4 | 0 |
 | F3 | 43 / 49 | 6 | 4 | 26 | 8 / 8 | 2 |
-| F4 | 43 / 52 | 9 | 7 | 12 | 21 / 24 | 1 |
+| F4 | 43 / 52 | 9 | 7 | 12 | 21 / 24 | 2 |
 | F5 | 36 / 55 | 19 | 11 | 11 | 24 / 24 | 0 |
 | F6 | 26 / 47 | 21 | 5 | 9 | 9 / 18 | 1 |
-| **Total** | **213 / 286** | **73** | **31** | **83** | **70 / 86** | **4** |
+| **Total** | **213 / 286** | **73** | **31** | **83** | **70 / 86** | **5** |
 
 Notable outcomes: F2 keeps its eight forum armchairs (the historical eight-seat composition) around the approved oval
 table instead of the board's twelve; F3 keeps its six exchange chairs; the named staff desks on every floor (Grace,
@@ -50,12 +50,22 @@ back; the F2 cohort workshop, F3 field-ops planning, F4 interview set and brand 
 and F6 director's office are back. Superseded pieces are mostly the tables/chairs the anchors re-make (intake, passport,
 source/publication review, strategy/briefing rooms) and the F6 preparation desks.
 
-Moved existing pieces (the walking routes now count furniture as obstacles, and these blocked a room door):
-`F3-LOUNGE-PLANT-02`, `F3-INTERVIEW-B-PLANT-01`, `F4-RECORDING-SCREEN-01`, `F6-SALON-PLANT-02`; the board's F6 salon
+Moved existing pieces (the walking routes now count furniture as obstacles, and these blocked a room door or grazed
+a wall): `F3-LOUNGE-PLANT-02`, `F3-INTERVIEW-B-PLANT-01`, `F4-RECORDING-SCREEN-01`, `F4-EDIT-VISITOR-CHAIR-01`,
+`F6-SALON-PLANT-02`; the board's F6 salon
 round table moved north from Y21.4 to Y23 with diagonal seats for the same reason.
 
-Known limit: the v3 kit's pieces are lower in detail than the v2 kit's (e.g. the F6 executive chairs read as blocky
-in close-ups). They keep their catalog sizes and IDs; upgrading their meshes in place is the natural next pass.
+**Meshes upgraded in place.** After the merge, 128 kept v3 pieces have their mesh swapped for the matching board-kit
+master (`MG.UPGRADE`): side and wood chairs, lounge and club armchairs, meeting tables, desks, stools, planters, side,
+coffee and round tables, credenzas, bookcases, library stacks (archive shelving), sofas, banquettes, poufs and mobile
+boards. Each is a kit instance with the same ID (`eu_existing_id`), world position and facing (v3 faces +Y, the kit
+-Y, so +180 deg), scaled to the v3 catalog footprint; tables, desks and storage also take the catalog height, so
+clearances, device supports and device heights are unchanged, while seats and plants keep the kit's proportions. They
+pick up the kit's wood-grain, stone and fabric shaders and the floor's board palette. The scale applied is stored on
+each instance (`eu_upgrade_scale`). Task and executive task chairs stay v3: the kit's task chair is a plainer slab
+(checked in the F6 eye render), as do rugs, files, carrels, the F4 set equipment, the sectional, the L-desk and other
+specialist pieces the kit has no equivalent for. Two upgraded pieces grazed a wall and were nudged 0.5–1.2 ft
+(`F3-INTERVIEW-B-PLANT-01`, `F4-EDIT-VISITOR-CHAIR-01`; recorded in `ADJUST`).
 
 ## Where it was built, and how to get it onto Prime
 

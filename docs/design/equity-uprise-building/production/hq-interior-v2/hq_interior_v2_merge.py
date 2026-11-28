@@ -40,9 +40,10 @@ RESTORE_PREFIXES = {
 # furniture; every move is recorded in the build report.
 ADJUST = {
     3: {"F3-LOUNGE-PLANT-02": (4.6, 18.9, "trough planter stood 2.1 ft in front of the Interview A door (X9-12): moved west along the lounge edge"),
-        "F3-INTERVIEW-B-PLANT-01": (26.4, 4.2, "planter stood inside the Interview B doorway (X23-26): moved to the room's south-east corner")},
+        "F3-INTERVIEW-B-PLANT-01": (26.4, 5.4, "planter stood inside the Interview B doorway (X23-26): moved to the room's south-east corner")},
     6: {"F6-SALON-PLANT-02": (19.5, 22.0, "planter pinched the approach to the strategy-room door to 2.4 ft between it and the room wall: moved north-east, clear of the door band")},
-    4: {"F4-RECORDING-SCREEN-01": (6.4, 13.4, "acoustic screen left 1.1 ft of the recording-room door (X10.5-13.5) clear: moved west, still behind the vocal rig")},
+    4: {"F4-EDIT-VISITOR-CHAIR-01": (19.3, 13.6, "upgraded armchair grazed the edit-suite north privacy glazing (Y15.8): moved 0.5 ft south"),
+        "F4-RECORDING-SCREEN-01": (6.4, 13.4, "acoustic screen left 1.1 ft of the recording-room door (X10.5-13.5) clear: moved west, still behind the vocal rig")},
 }
 
 # kits whose footprint is round (a polygon approximates the circle/ellipse)
@@ -283,3 +284,18 @@ def hull(points):
             up.pop()
         up.append(p)
     return lo[:-1] + up[:-1]
+
+
+# v3 catalog type -> board-kit master that replaces its mesh in place (same ID, position, catalog footprint and
+# height). Types not listed keep their v3 mesh (specialist pieces the kit has no equivalent for).
+UPGRADE = {
+    # task_chair / task_chair_exec stay v3: the kit's task chair is a plainer slab (checked in the F6 eye render)
+    "side_chair": "CHAIR_SIDE",
+    "side_chair_wood": "CHAIR_SIDE", "armchair_lounge": "CHAIR_LOUNGE_ROUND", "armchair_club": "CHAIR_LEATHER",
+    "table_rect": "MEETING_TABLE_7x3.5", "desk": "WORKPOINT", "desk_dual": "WORKPOINT", "desk_operator": "WORKPOINT",
+    "stool_bar": "STOOL", "stool_counter": "STOOL", "planter_tall": "PLANT_TREE", "planter_floor": "PLANT_FLOOR",
+    "side_table": "SIDE_TABLE", "coffee_table_round": "COFFEE_TABLE_ROUND", "table_round": "ROUND_TABLE_4",
+    "credenza": "CREDENZA", "bookcase": "BOOKCASE", "bookcase_low": "BOOKCASE_LOW",
+    "library_stack": "ARCHIVE_CABINET_6x6", "sofa_3": "SOFA_3SEAT", "banquette": "LOUNGE_BANQUETTE", "pouf": "POUF",
+    "whiteboard_mobile": "WHITEBOARD_MOBILE", "pinboard_mobile": "WHITEBOARD_MOBILE",
+}

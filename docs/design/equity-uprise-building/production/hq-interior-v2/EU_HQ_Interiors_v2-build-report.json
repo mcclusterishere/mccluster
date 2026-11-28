@@ -56,6 +56,117 @@
           "F1-SERVICES-MFP-01",
           "F1-SERVICES-PLANT-01"
         ],
+        "mesh_upgrade": {
+          "kept_v3_mesh": {
+            "F1-DESK-GRACE-MBALA-CHAIR": "task_chair",
+            "F1-HOTDESK-MCCLUSTER-CHAIR": "task_chair",
+            "F1-HOTDESK-VALERIA-SOTO-CHAIR": "task_chair",
+            "F1-LOUNGE-RUG-01": "rug",
+            "F1-PASSPORT-CHAIR-04": "task_chair",
+            "F1-RECEPTION-CHAIR-01": "task_chair",
+            "F1-RECEPTION-CHAIR-02": "task_chair",
+            "F1-SERVICES-FILE-01": "lateral_file",
+            "F1-SERVICES-MFP-01": "mfp"
+          },
+          "upgraded": {
+            "F1-DESK-GRACE-MBALA": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F1-DESK-GRACE-VISITOR-01": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F1-DESK-GRACE-VISITOR-02": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F1-HOTDESK-MCCLUSTER": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.25,
+                1.25,
+                0.967
+              ]
+            },
+            "F1-HOTDESK-VALERIA-SOTO": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.25,
+                1.25,
+                0.967
+              ]
+            },
+            "F1-INTAKE-CREDENZA-01": {
+              "kit": "CREDENZA",
+              "scale": [
+                0.667,
+                1.435,
+                1.007
+              ]
+            },
+            "F1-LOUNGE-CHAIR-02": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F1-LOUNGE-PLANT-01": {
+              "kit": "PLANT_TREE",
+              "scale": [
+                0.519,
+                0.519,
+                0.519
+              ]
+            },
+            "F1-LOUNGE-SIDE-TABLE-01": {
+              "kit": "SIDE_TABLE",
+              "scale": [
+                1.154,
+                1.154,
+                0.901
+              ]
+            },
+            "F1-LOUNGE-TABLE-01": {
+              "kit": "COFFEE_TABLE_ROUND",
+              "scale": [
+                1.25,
+                1.25,
+                0.988
+              ]
+            },
+            "F1-PASSPORT-TABLE-02": {
+              "kit": "MEETING_TABLE_7x3.5",
+              "scale": [
+                1.357,
+                0.905,
+                0.967
+              ]
+            },
+            "F1-SERVICES-PLANT-01": {
+              "kit": "PLANT_FLOOR",
+              "scale": [
+                0.785,
+                0.785,
+                0.785
+              ]
+            }
+          }
+        },
         "pack_rows_dropped": {
           "1.1/01": "R3 CHAIR_TASK companions of 1.1 give way to the existing composition (F1-RECEPTION-CHAIR-01)",
           "1.1/02": "R3 CHAIR_TASK companions of 1.1 give way to the existing composition (F1-RECEPTION-CHAIR-01)",
@@ -187,6 +298,315 @@
           "F2-WORKSHOP-TABLE-A",
           "F2-WORKSHOP-TABLE-B"
         ],
+        "mesh_upgrade": {
+          "kept_v3_mesh": {
+            "F2-COHORT-FILE-01": "lateral_file",
+            "F2-COHORT-HUDDLE-TABLE-01": "high_table",
+            "F2-DESK-CHIOMA-OKEKE-CHAIR": "task_chair",
+            "F2-DESK-SARI-WULANDARI-CHAIR": "task_chair",
+            "F2-DESK-THANDIWE-NKOSI-CHAIR": "task_chair",
+            "F2-LOUNGE-RUG-01": "rug",
+            "F2-WORKSHOP-LECTERN-01": "lectern"
+          },
+          "upgraded": {
+            "F2-COHORT-HUDDLE-STOOL-1": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F2-COHORT-HUDDLE-STOOL-2": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F2-COHORT-HUDDLE-STOOL-3": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F2-COHORT-HUDDLE-STOOL-4": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F2-COHORT-PLANT-01": {
+              "kit": "PLANT_FLOOR",
+              "scale": [
+                0.785,
+                0.785,
+                0.785
+              ]
+            },
+            "F2-COHORT-PLANT-02": {
+              "kit": "PLANT_TREE",
+              "scale": [
+                0.519,
+                0.519,
+                0.519
+              ]
+            },
+            "F2-DESK-CHIOMA-OKEKE": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F2-DESK-SARI-WULANDARI": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.5,
+                1.333,
+                0.967
+              ]
+            },
+            "F2-DESK-THANDIWE-NKOSI": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F2-FORUM-CHAIR-01": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F2-FORUM-CHAIR-02": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F2-FORUM-CHAIR-03": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F2-FORUM-CHAIR-04": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F2-FORUM-CHAIR-05": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F2-FORUM-CHAIR-06": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F2-FORUM-CHAIR-07": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F2-FORUM-CHAIR-08": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F2-LOUNGE-CHAIR-01": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F2-LOUNGE-PLANT-01": {
+              "kit": "PLANT_TREE",
+              "scale": [
+                0.519,
+                0.519,
+                0.519
+              ]
+            },
+            "F2-LOUNGE-PLANT-02": {
+              "kit": "PLANT_FLOOR",
+              "scale": [
+                0.785,
+                0.785,
+                0.785
+              ]
+            },
+            "F2-LOUNGE-POUF-01": {
+              "kit": "POUF",
+              "scale": [
+                1.042,
+                1.042,
+                1.042
+              ]
+            },
+            "F2-WORKSHOP-BOARD-01": {
+              "kit": "WHITEBOARD_MOBILE",
+              "scale": [
+                1.463,
+                1.667,
+                1.056
+              ]
+            },
+            "F2-WORKSHOP-BOARD-02": {
+              "kit": "WHITEBOARD_MOBILE",
+              "scale": [
+                1.463,
+                1.667,
+                1.056
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-A1": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-A2": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-A3": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-A4": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-A5": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-A6": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-B1": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-B2": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-B3": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-B4": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-B5": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-CHAIR-B6": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F2-WORKSHOP-TABLE-A": {
+              "kit": "MEETING_TABLE_7x3.5",
+              "scale": [
+                1.143,
+                0.857,
+                0.967
+              ]
+            },
+            "F2-WORKSHOP-TABLE-B": {
+              "kit": "MEETING_TABLE_7x3.5",
+              "scale": [
+                1.143,
+                0.857,
+                0.967
+              ]
+            }
+          }
+        },
         "pack_rows_dropped": {
           "2.1/seat01": "R3 CHAIR_SIDE companions of 2.1 give way to the existing composition (F2-FORUM-CHAIR-03)",
           "2.1/seat02": "R3 CHAIR_SIDE companions of 2.1 give way to the existing composition (F2-FORUM-CHAIR-03)",
@@ -300,7 +720,7 @@
             "reason": "planter stood inside the Interview B doorway (X23-26): moved to the room's south-east corner",
             "to": [
               26.4,
-              4.2
+              5.4
             ]
           },
           "F3-LOUNGE-PLANT-02": {
@@ -364,6 +784,237 @@
           "F3-OPPORTUNITY-POWER-01",
           "F3-PEOPLE-DISPLAY-01"
         ],
+        "mesh_upgrade": {
+          "kept_v3_mesh": {
+            "F3-BENCH-AYA-SHINODA": "workbench",
+            "F3-DESK-ARJUN-MEHTA-CHAIR": "task_chair",
+            "F3-DESK-MCCLUSTER-FELLOWSHIP-CHAIR": "task_chair",
+            "F3-DESK-NUSRAT-RAHMAN-CHAIR": "task_chair",
+            "F3-DESK-RAFAEL-COSTA-CHAIR": "task_chair",
+            "F3-FIELD-FILE-01": "lateral_file",
+            "F3-FIELD-PLAN-TABLE-01": "flat_file",
+            "F3-FIELD-TOOL-CHEST-01": "tool_chest",
+            "F3-LOUNGE-HIGH-TABLE-01": "high_table",
+            "F3-LOUNGE-PLANT-02": "planter_trough",
+            "F3-LOUNGE-RUG-01": "rug",
+            "F3-OPPORTUNITY-CHAIR-01": "task_chair",
+            "F3-OPPORTUNITY-CHAIR-02": "task_chair",
+            "F3-OPPORTUNITY-CHAIR-03": "task_chair",
+            "F3-OPPORTUNITY-CHAIR-04": "task_chair",
+            "F3-OPPORTUNITY-CHAIR-05": "task_chair",
+            "F3-OPPORTUNITY-CHAIR-06": "task_chair"
+          },
+          "upgraded": {
+            "F3-BENCH-AYA-SHINODA-STOOL": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F3-DESK-ARJUN-MEHTA": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F3-DESK-MCCLUSTER-FELLOWSHIP": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.25,
+                1.25,
+                0.967
+              ]
+            },
+            "F3-DESK-NUSRAT-RAHMAN": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F3-DESK-RAFAEL-COSTA": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.5,
+                1.333,
+                0.967
+              ]
+            },
+            "F3-FIELD-PLAN-BOARD-01": {
+              "kit": "WHITEBOARD_MOBILE",
+              "scale": [
+                1.463,
+                1.667,
+                1.056
+              ]
+            },
+            "F3-FIELD-PLAN-STOOL-1": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F3-FIELD-PLAN-STOOL-2": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F3-FIELD-PLAN-STOOL-3": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F3-FIELD-PLAN-STOOL-4": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F3-FIELD-RACK-01": {
+              "kit": "BOOKCASE_LOW",
+              "scale": [
+                0.417,
+                1.111,
+                1.458
+              ]
+            },
+            "F3-INTERVIEW-A-CHAIR-01": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F3-INTERVIEW-A-CHAIR-02": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F3-INTERVIEW-A-CHAIR-03": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F3-INTERVIEW-A-CHAIR-04": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F3-INTERVIEW-A-CREDENZA-01": {
+              "kit": "CREDENZA",
+              "scale": [
+                0.833,
+                0.993,
+                1.007
+              ]
+            },
+            "F3-INTERVIEW-B-CHAIR-03": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F3-INTERVIEW-B-CHAIR-04": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F3-INTERVIEW-B-PLANT-01": {
+              "kit": "PLANT_FLOOR",
+              "scale": [
+                0.785,
+                0.785,
+                0.785
+              ]
+            },
+            "F3-LOUNGE-CHAIR-01": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F3-LOUNGE-CHAIR-02": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F3-LOUNGE-PLANT-01": {
+              "kit": "PLANT_TREE",
+              "scale": [
+                0.519,
+                0.519,
+                0.519
+              ]
+            },
+            "F3-LOUNGE-SOFA-01": {
+              "kit": "LOUNGE_BANQUETTE",
+              "scale": [
+                0.875,
+                0.985,
+                0.93
+              ]
+            },
+            "F3-LOUNGE-STOOL-03": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F3-LOUNGE-STOOL-04": {
+              "kit": "STOOL",
+              "scale": [
+                1.111,
+                1.111,
+                1.111
+              ]
+            },
+            "F3-LOUNGE-TABLE-01": {
+              "kit": "MEETING_TABLE_7x3.5",
+              "scale": [
+                0.857,
+                0.714,
+                0.967
+              ]
+            }
+          }
+        },
         "pack_rows_dropped": {
           "3.1/n/01": "R3 CHAIR_SIDE companions of 3.1 give way to the existing composition (F3-OPPORTUNITY-CHAIR-01)",
           "3.1/n/02": "R3 CHAIR_SIDE companions of 3.1 give way to the existing composition (F3-OPPORTUNITY-CHAIR-01)",
@@ -500,6 +1151,17 @@
           ]
         },
         "existing_moved": {
+          "F4-EDIT-VISITOR-CHAIR-01": {
+            "from": [
+              19.3,
+              14.1
+            ],
+            "reason": "upgraded armchair grazed the edit-suite north privacy glazing (Y15.8): moved 0.5 ft south",
+            "to": [
+              19.3,
+              13.6
+            ]
+          },
           "F4-RECORDING-SCREEN-01": {
             "from": [
               10.4,
@@ -564,6 +1226,209 @@
           "F4-SET-MONITOR-01",
           "F4-SET-SIDE-TABLE-01"
         ],
+        "mesh_upgrade": {
+          "kept_v3_mesh": {
+            "F4-BRAND-EASEL-01": "easel",
+            "F4-DESK-MAREN-QUILL-CHAIR": "task_chair",
+            "F4-DESK-PRIYA-SRISAWAT-CHAIR": "task_chair",
+            "F4-GALLERY-PLINTH-01": "plinth_display",
+            "F4-GALLERY-PLINTH-02": "plinth_display",
+            "F4-GALLERY-PLINTH-03": "plinth_display",
+            "F4-GALLERY-RUG-01": "rug",
+            "F4-LISTENING-RUG-01": "rug",
+            "F4-LISTENING-SECTIONAL-01": "sectional_l",
+            "F4-LISTENING-TABLE-01": "coffee_table",
+            "F4-PRODUCTION-DESK-01-CHAIR": "task_chair",
+            "F4-PRODUCTION-DESK-02-CHAIR": "task_chair",
+            "F4-PRODUCTION-DESK-03-CHAIR": "task_chair",
+            "F4-PRODUCTION-DESK-04-CHAIR": "task_chair",
+            "F4-RECORDING-CHAIR-01": "task_chair",
+            "F4-RECORDING-SCREEN-01": "acoustic_screen",
+            "F4-SET-BACKDROP-01": "backdrop",
+            "F4-SET-CAMERA-01": "camera_tripod",
+            "F4-SET-LIGHT-01": "light_stand",
+            "F4-SET-LIGHT-02": "light_stand",
+            "F4-SET-MONITOR-01": "monitor_cart"
+          },
+          "upgraded": {
+            "F4-BRAND-MOODBOARD-01": {
+              "kit": "WHITEBOARD_MOBILE",
+              "scale": [
+                1.463,
+                1.667,
+                1.056
+              ]
+            },
+            "F4-BRAND-REVIEW-CHAIR-1": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F4-BRAND-REVIEW-CHAIR-2": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F4-BRAND-REVIEW-CHAIR-3": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F4-BRAND-REVIEW-TABLE-01": {
+              "kit": "ROUND_TABLE_4",
+              "scale": [
+                0.875,
+                0.875,
+                0.986
+              ]
+            },
+            "F4-BRAND-STORAGE-01": {
+              "kit": "CREDENZA",
+              "scale": [
+                1.0,
+                1.104,
+                1.007
+              ]
+            },
+            "F4-DESK-MAREN-QUILL": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F4-DESK-PRIYA-SRISAWAT": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F4-EDIT-VISITOR-CHAIR-01": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F4-GALLERY-CHAIR-01": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F4-GALLERY-PLANT-01": {
+              "kit": "PLANT_TREE",
+              "scale": [
+                0.519,
+                0.519,
+                0.519
+              ]
+            },
+            "F4-GALLERY-TABLE-01": {
+              "kit": "SIDE_TABLE",
+              "scale": [
+                1.154,
+                1.154,
+                0.901
+              ]
+            },
+            "F4-LISTENING-CHAIR-01": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F4-LISTENING-CHAIR-02": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F4-PRODUCTION-DESK-01": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.5,
+                1.25,
+                0.967
+              ]
+            },
+            "F4-PRODUCTION-DESK-02": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.5,
+                1.25,
+                0.967
+              ]
+            },
+            "F4-PRODUCTION-DESK-03": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.5,
+                1.25,
+                0.967
+              ]
+            },
+            "F4-PRODUCTION-DESK-04": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.5,
+                1.25,
+                0.967
+              ]
+            },
+            "F4-RECORDING-WORKSURFACE-01": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.25,
+                1.0,
+                0.967
+              ]
+            },
+            "F4-SET-CHAIR-01": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F4-SET-CHAIR-02": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F4-SET-SIDE-TABLE-01": {
+              "kit": "SIDE_TABLE",
+              "scale": [
+                1.154,
+                1.154,
+                0.901
+              ]
+            }
+          }
+        },
         "pack_rows_dropped": {
           "4.1/chairE": "R3 CHAIR_LOUNGE_ROUND companions of 4.1 give way to the existing composition (F4-LISTENING-SECTIONAL-01)",
           "4.1/chairW": "R3 CHAIR_LOUNGE_ROUND companions of 4.1 give way to the existing composition (F4-LISTENING-SECTIONAL-01)",
@@ -740,6 +1605,181 @@
           "F5-SOURCE-DISPLAY-01",
           "F5-SOURCE-SECURE-SURFACE-01"
         ],
+        "mesh_upgrade": {
+          "kept_v3_mesh": {
+            "F5-ARCHIVE-RUG-01": "rug",
+            "F5-CARREL-01": "carrel",
+            "F5-CARREL-01-CHAIR": "task_chair",
+            "F5-CARREL-02": "carrel",
+            "F5-CARREL-02-CHAIR": "task_chair",
+            "F5-CARREL-03": "carrel",
+            "F5-CARREL-03-CHAIR": "task_chair",
+            "F5-CARREL-04": "carrel",
+            "F5-CARREL-04-CHAIR": "task_chair",
+            "F5-CARREL-05": "carrel",
+            "F5-CARREL-05-CHAIR": "task_chair",
+            "F5-CARREL-06": "carrel",
+            "F5-CARREL-06-CHAIR": "task_chair",
+            "F5-DESK-AMIRA-HASSAN-CHAIR": "task_chair",
+            "F5-DESK-LEILA-HOSSEINI-CHAIR": "task_chair",
+            "F5-DESK-OKSANA-BONDARENKO-CHAIR": "task_chair",
+            "F5-READING-RUG-01": "rug"
+          },
+          "upgraded": {
+            "F5-ARCHIVE-CABINET-01": {
+              "kit": "ARCHIVE_CABINET_6x6",
+              "scale": [
+                0.935,
+                1.111,
+                1.167
+              ]
+            },
+            "F5-ARCHIVE-CABINET-03": {
+              "kit": "ARCHIVE_CABINET_6x6",
+              "scale": [
+                0.935,
+                1.111,
+                1.167
+              ]
+            },
+            "F5-DESK-AMIRA-HASSAN": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F5-DESK-LEILA-HOSSEINI": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F5-DESK-OKSANA-BONDARENKO": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F5-POLICY-CHAIR-01": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F5-POLICY-CHAIR-02": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F5-POLICY-CHAIR-03": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F5-POLICY-CHAIR-04": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F5-POLICY-CHAIR-05": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F5-POLICY-CHAIR-06": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F5-POLICY-CHAIR-07": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F5-POLICY-CHAIR-08": {
+              "kit": "CHAIR_SIDE",
+              "scale": [
+                0.931,
+                1.094,
+                1.013
+              ]
+            },
+            "F5-READING-BOOKCASE-01": {
+              "kit": "BOOKCASE_LOW",
+              "scale": [
+                0.5,
+                1.111,
+                1.458
+              ]
+            },
+            "F5-READING-CHAIR-01": {
+              "kit": "CHAIR_LEATHER",
+              "scale": [
+                1.1,
+                1.181,
+                1.14
+              ]
+            },
+            "F5-READING-CHAIR-02": {
+              "kit": "CHAIR_LEATHER",
+              "scale": [
+                1.1,
+                1.181,
+                1.14
+              ]
+            },
+            "F5-READING-TABLE-01": {
+              "kit": "SIDE_TABLE",
+              "scale": [
+                1.154,
+                1.154,
+                0.901
+              ]
+            },
+            "F5-RESEARCH-BOOKCASE-01": {
+              "kit": "BOOKCASE",
+              "scale": [
+                0.75,
+                0.972,
+                1.077
+              ]
+            },
+            "F5-RESEARCH-PLANT-01": {
+              "kit": "PLANT_TREE",
+              "scale": [
+                0.519,
+                0.519,
+                0.519
+              ]
+            }
+          }
+        },
         "pack_rows_dropped": {
           "5.1/n/01": "R3 CHAIR_SIDE companions of 5.1 give way to the existing composition (F5-POLICY-CHAIR-01)",
           "5.1/n/02": "R3 CHAIR_SIDE companions of 5.1 give way to the existing composition (F5-POLICY-CHAIR-01)",
@@ -914,6 +1954,122 @@
           "F6-STRATEGY-DISPLAY-01",
           "F6-STRATEGY-SECURE-STORAGE-01"
         ],
+        "mesh_upgrade": {
+          "kept_v3_mesh": {
+            "F6-COMMAND-CHAIR-01": "task_chair_exec",
+            "F6-COMMAND-CHAIR-02": "task_chair_exec",
+            "F6-COMMAND-CHAIR-03": "task_chair_exec",
+            "F6-COMMAND-CHAIR-04": "task_chair_exec",
+            "F6-COMMAND-CHAIR-05": "task_chair_exec",
+            "F6-COMMAND-CHAIR-06": "task_chair_exec",
+            "F6-DESK-LI-WEI-CHAIR": "task_chair",
+            "F6-DESK-MARC-DUBOIS-CHAIR": "task_chair",
+            "F6-GOVERNANCE-FILE-01": "lateral_file",
+            "F6-HALO-VIEW-BENCH-01": "bench_gallery",
+            "F6-OFFICE-HELEN-CLARKE-CHAIR": "task_chair_exec",
+            "F6-OFFICE-HELEN-CLARKE-DESK": "desk_exec_l",
+            "F6-OFFICE-RUG-01": "rug",
+            "F6-SALON-RUG-01": "rug"
+          },
+          "upgraded": {
+            "F6-BRIEFING-CREDENZA-01": {
+              "kit": "CREDENZA",
+              "scale": [
+                0.667,
+                0.993,
+                1.007
+              ]
+            },
+            "F6-DESK-LI-WEI": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F6-DESK-MARC-DUBOIS": {
+              "kit": "WORKPOINT",
+              "scale": [
+                1.375,
+                1.25,
+                0.967
+              ]
+            },
+            "F6-OFFICE-BOOKCASE-01": {
+              "kit": "BOOKCASE",
+              "scale": [
+                0.75,
+                0.972,
+                1.077
+              ]
+            },
+            "F6-OFFICE-CREDENZA-01": {
+              "kit": "CREDENZA",
+              "scale": [
+                1.0,
+                1.104,
+                1.007
+              ]
+            },
+            "F6-OFFICE-GUEST-CHAIR-01": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F6-OFFICE-GUEST-CHAIR-02": {
+              "kit": "CHAIR_LOUNGE_ROUND",
+              "scale": [
+                0.995,
+                1.031,
+                1.013
+              ]
+            },
+            "F6-SALON-CHAIR-01": {
+              "kit": "CHAIR_LEATHER",
+              "scale": [
+                1.1,
+                1.181,
+                1.14
+              ]
+            },
+            "F6-SALON-CHAIR-02": {
+              "kit": "CHAIR_LEATHER",
+              "scale": [
+                1.1,
+                1.181,
+                1.14
+              ]
+            },
+            "F6-SALON-PLANT-01": {
+              "kit": "PLANT_TREE",
+              "scale": [
+                0.519,
+                0.519,
+                0.519
+              ]
+            },
+            "F6-SALON-PLANT-02": {
+              "kit": "PLANT_FLOOR",
+              "scale": [
+                0.785,
+                0.785,
+                0.785
+              ]
+            },
+            "F6-SALON-SIDE-TABLE-01": {
+              "kit": "SIDE_TABLE",
+              "scale": [
+                1.154,
+                1.154,
+                0.901
+              ]
+            }
+          }
+        },
         "pack_rows_dropped": {
           "6.1/n/01": "R3 CHAIR_TASK companions of 6.1 give way to the existing composition (F6-COMMAND-CHAIR-01)",
           "6.1/n/02": "R3 CHAIR_TASK companions of 6.1 give way to the existing composition (F6-COMMAND-CHAIR-01)",

@@ -731,6 +731,63 @@ def merge_floor(f, EXIST, placed):
     }
 
 
+def upgrade_existing(f, C, EXIST, merge):
+    """Swap each kept v3 piece's mesh for the matching board-kit master, in place: same ID, world position and
+    facing (v3 faces +Y, the kit faces -Y, so +180 deg), scaled to the v3 catalog footprint and height so
+    clearances, supports and device heights are unchanged."""
+    pal = L.PALETTE[f]
+    done, kept = {}, {}
+    for key in merge["kept_ids"]:
+        it = V3[f].get(key)
+        kit = MG.UPGRADE.get(it["type"]) if it else None
+        if not kit or kit not in KITS:
+            if it:
+                kept[key] = it["type"]
+            continue
+        obs = [o for o in EXIST.get(key, []) if o.name in bpy.data.objects]
+        if not obs:
+            continue
+        src = obs[0]
+        mw = src.matrix_world
+        rot = math.degrees(math.atan2(mw[1][0], mw[0][0]))
+        spec = CATALOG[it["type"]]
+        dims = spec.get("dims_in", {})
+        size = it.get("size") or {}
+        w = (size.get("w_in") or dims.get("w") or 24) / 12.0
+        d = (size.get("d_in") or dims.get("d") or 24) / 12.0
+        h = (size.get("h_in") or dims.get("h") or 30) / 12.0
+        lo, hi = kit_bb(kit)
+        kw, kd, kh = hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]
+        sx, sy, sz = w / kw, d / kd, h / kh
+        if kit in ("PLANT_TREE", "PLANT_FLOOR"):
+            sx = sy = min(sx, sy)
+        if kit in ("PLANT_TREE", "PLANT_FLOOR") or MG.is_seat(it["type"]):
+            sz = (sx + sy) / 2      # keep the kit's proportions; only work surfaces and storage take the catalog height
+        cx, cy = (lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2
+        e = bpy.data.objects.new(f"F{f:02d}_{key}::{kit}", None)
+        e.instance_type = "COLLECTION"
+        e.instance_collection = KITS[kit]
+        e.empty_display_size = 0.3
+        e.matrix_world = (Matrix.Translation((mw.translation.x, mw.translation.y, mw.translation.z)) @ rotz(rot + 180.0)
+                          @ Matrix.Diagonal((sx, sy, sz, 1.0)) @ Matrix.Translation((-cx * FT, -cy * FT, -lo[2] * FT)))
+        for k in ("wood", "fabric", "stone", "accent", "rug"):
+            e[f"eu_{k}"] = list(S(pal[k])[:3])
+        e["eu_metallic"] = float(pal["metallic"])
+        e["eu_kit"] = kit
+        e["eu_existing_id"] = key
+        e["eu_v3_type"] = it["type"]
+        e["eu_zone"] = it.get("zone") or ""
+        e["eu_source"] = "existing v3 interior layout (kept; mesh upgraded in place to the board kit)"
+        e["eu_upgrade_scale"] = [round(sx, 3), round(sy, 3), round(sz, 3)]
+        if src.get("eu_moved"):
+            e["eu_moved"] = src["eu_moved"]
+        C["furniture"].objects.link(e)
+        for o in obs:
+            bpy.data.objects.remove(o)
+        done[key] = {"kit": kit, "scale": [round(sx, 3), round(sy, 3), round(sz, 3)]}
+    return {"upgraded": done, "kept_v3_mesh": kept}
+
+
 _DEVICES = None
 
 
@@ -1115,6 +1172,7 @@ for f in range(1, 8):
     merge = merge_floor(f, EXIST, placed) if f <= 6 else None
     placed = [bpy.data.objects[n] for n in _names if n in bpy.data.objects]
     if f <= 6:
+        merge["mesh_upgrade"] = upgrade_existing(f, C, EXIST, merge)
         merge["devices"] = place_devices(f, C, merge)
     if f == 6:
         f6_special(C, M)

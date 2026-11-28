@@ -14,7 +14,8 @@ objects restored, 83 board-dressing rows dropped as redundant, **70 of 86 F1–F
 exchange chairs, F5 eight policy chairs, F6 six executive chairs). A fresh-process verification passes **80/80** (the
 original 61 plus routes that count furniture, piece-to-piece overlap by real vertex hulls, device supports, and
 per-floor accounting of the existing layer). New owner decisions: the F6 preparation desks displaced by Matthew's
-suite, and staff named both at an anchor and at their existing desk. Read the folder README's v2.1 section.
+suite, and staff named both at an anchor and at their existing desk. 128 kept pieces then had their meshes
+upgraded in place to the board kit (same IDs, positions and catalog footprints). Read the folder README's v2.1 section.
 
 A new, separate editable Blender file, `production/hq-interior-v2/EU_HQ_Interiors_v2.blend` (Blender 4.2 LTS format),
 rebuilds the Floor 1–7 interiors on the unchanged Core V2 shell from the approved HQ Interior Concept v2 pack
