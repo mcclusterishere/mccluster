@@ -774,3 +774,13 @@ The forward statement returns one JSON rollback receipt. Save the receipt from t
 approved application with its release evidence. Subsequent runs can return an empty
 receipt. The paired rollback takes the original receipt in the session setting
 `mccluster.pax_stage_name_receipt` and checks each current value before restoring it.
+
+## 21. Public bucket listing and foreign-key covering indexes (written 2026-11-28)
+
+**Pending. Never applied.** From the Supabase security and performance review of 2026-11-28
+(`docs/control-plane/SUPABASE-HARDENING-2026-11-28.md`). Independent of every other section and of each other.
+
+| File (+ rollback) | Changes | Callers | Proof before apply |
+|---|---|---|---|
+| `20261128090000_storage_public_bucket_listing_v1.sql` (+ `.rollback.sql`) | drops the four bucket-wide SELECT policies on `storage.objects` for `creator-artwork`, `creator-previews`, `cuts` and `mnet-avatars` (anyone could list every path), adds an owner-only SELECT for each with the predicate its DELETE policy already uses. Public URLs are unchanged. Defines no name. | readers use `/object/public/` URLs, which skip RLS; owner `remove()` (`js/music-creator-studio.js`) and avatar upsert (`js/mnet.js`) keep the SELECT they need | `bash scripts/test-storage-listing-db.sh` (scratch Postgres: finding reproduced, apply, behaviour, rollback, re-apply twice). After apply: anon `POST /storage/v1/object/list/cuts` answers `[]`, and a creator can still remove an unreleased upload. |
+| `supabase/ops/fk_cover_v1_idx.sql` (not a migration) | seven `CREATE INDEX CONCURRENTLY` on the foreign keys of the four tables over 25,000 rows | none | run each statement alone, outside a transaction; check `indisvalid` after each |
