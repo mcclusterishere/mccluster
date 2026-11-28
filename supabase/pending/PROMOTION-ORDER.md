@@ -774,3 +774,12 @@ The forward statement returns one JSON rollback receipt. Save the receipt from t
 approved application with its release evidence. Subsequent runs can return an empty
 receipt. The paired rollback takes the original receipt in the session setting
 `mccluster.pax_stage_name_receipt` and checks each current value before restoring it.
+
+## 21. Equity Fighter chat layer state (written 2026-11-25)
+
+Pending owner approval for `20261125003000_equity_fighter_chat_v1.sql` (rollback
+`20261125003000_equity_fighter_chat_v1.rollback.sql`). Additive: four service-role-only tables, `ef_identities`,
+`ef_messages`, `ef_runs`, `ef_steps`, RLS forced, no policies, no anon/authenticated grants. Needs only `public.orgs`;
+apply after (or with) `20261124235900_ai_context_dispatch_v1.sql`, since the gateway is useless until dispatch is
+live. Contract: `docs/control-plane/EQUITY-FIGHTER.md`. The rollback refuses while any table holds rows unless
+`mccluster.equity_fighter_drop_data = 'on'` is set after an export.
