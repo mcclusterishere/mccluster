@@ -1,0 +1,212 @@
+{
+ "note": "Generated from js/prim3-tactics/tactical-resolver.mjs by scripts/test/prim3-desktop.test.mjs; the Godot rules tests must reproduce these numbers.",
+ "rolls": [
+  {
+   "seed": 1,
+   "rolls": [
+    80,
+    31,
+    58,
+    89,
+    39,
+    16,
+    73,
+    94
+   ]
+  },
+  {
+   "seed": 20261128,
+   "rolls": [
+    67,
+    26,
+    64,
+    68,
+    87,
+    69,
+    52,
+    65
+   ]
+  },
+  {
+   "seed": 4294967295,
+   "rolls": [
+    81,
+    3,
+    31,
+    49,
+    32,
+    68,
+    28,
+    46
+   ]
+  },
+  {
+   "seed": 123456789,
+   "rolls": [
+    71,
+    53,
+    49,
+    72,
+    63,
+    12,
+    76,
+    73
+   ]
+  }
+ ],
+ "previews": [
+  {
+   "a": {
+    "x": 2,
+    "y": 10,
+    "aim": 80,
+    "crit": 10
+   },
+   "t": {
+    "x": 2,
+    "y": 2
+   },
+   "cover": {
+    "type": "HIGH",
+    "sides": [
+     "S"
+    ]
+   },
+   "expect": {
+    "hitChance": 32,
+    "critChance": 10,
+    "cover": "HIGH",
+    "flanked": false,
+    "distance": 8
+   },
+   "reactionHitChance": 17
+  },
+  {
+   "a": {
+    "x": 2,
+    "y": 10,
+    "aim": 80,
+    "crit": 10
+   },
+   "t": {
+    "x": 2,
+    "y": 2
+   },
+   "cover": {
+    "type": "LOW",
+    "sides": [
+     "S"
+    ]
+   },
+   "expect": {
+    "hitChance": 52,
+    "critChance": 10,
+    "cover": "LOW",
+    "flanked": false,
+    "distance": 8
+   },
+   "reactionHitChance": 37
+  },
+  {
+   "a": {
+    "x": 9,
+    "y": 2,
+    "aim": 72,
+    "crit": 10
+   },
+   "t": {
+    "x": 2,
+    "y": 2
+   },
+   "cover": {
+    "type": "HIGH",
+    "sides": [
+     "S"
+    ]
+   },
+   "expect": {
+    "hitChance": 83,
+    "critChance": 30,
+    "cover": "NONE",
+    "flanked": true,
+    "distance": 7
+   },
+   "reactionHitChance": 68
+  },
+  {
+   "a": {
+    "x": 3,
+    "y": 3,
+    "aim": 62,
+    "crit": 5
+   },
+   "t": {
+    "x": 2,
+    "y": 2
+   },
+   "cover": null,
+   "hunkered": true,
+   "expect": {
+    "hitChance": 42,
+    "critChance": 5,
+    "cover": "NONE",
+    "flanked": false,
+    "distance": 2
+   },
+   "reactionHitChance": 27
+  },
+  {
+   "a": {
+    "x": 14,
+    "y": 2,
+    "aim": 60,
+    "crit": 10
+   },
+   "t": {
+    "x": 2,
+    "y": 2
+   },
+   "cover": {
+    "type": "LOW",
+    "sides": [
+     "E",
+     "N"
+    ]
+   },
+   "expect": {
+    "hitChance": 16,
+    "critChance": 10,
+    "cover": "LOW",
+    "flanked": false,
+    "distance": 12
+   },
+   "reactionHitChance": 5
+  },
+  {
+   "a": {
+    "x": 2,
+    "y": 3,
+    "aim": 95,
+    "crit": 60
+   },
+   "t": {
+    "x": 2,
+    "y": 2
+   },
+   "cover": {
+    "type": "HIGH",
+    "sides": [
+     "N"
+    ]
+   },
+   "expect": {
+    "hitChance": 95,
+    "critChance": 75,
+    "cover": "NONE",
+    "flanked": true,
+    "distance": 1
+   },
+   "reactionHitChance": 95
+  }
+ ]
+}
